@@ -1,0 +1,100 @@
+Special directory for prototyping plasticity, to find out just
+what kind of infrastructure is needed, what the property API
+might need to look like, and so forth.
+
+The file "plasticity.max" is an earlier attempt to build a prototype
+OOF-style plasticity solver in maxima, which was abandoned because
+of the lack of a suitable object structure in maxima.  The only way
+to aggregate data is to make multiply nested lists, and the number of
+layers of indirection was causing a lot of confusion.
+
+The core of the effort is the file "plasticity.py", which defines an
+OOF-style mesh object, with elements and nodes and degrees of freedom,
+and implements plasticity.  Some short-cuts are taken, it's not an exact
+duplicate of the OOF scheme, but it is hoped that it's similar enough
+to make moving the prototype into OOF proper easy.
+
+Support files inlucde the rather overbuilt position class, and
+smallmatrix.[h,C,spy,swg].  This is a stand-alone version of the
+smallmatrix class, extracted from the main OOF code, and used here for
+all linear-algebra operations.  This means, of course, that the prototype
+code solves its master stiffness matrix by LU decomposition, rather
+than using an iterative sparse solver, which may lead to small numerical
+differences between the prototype and the eventual real OOF code.
+
+The provided Makefile builds the SWIG'd smallmatrix class locally, and has
+some system-specific stuff which might not work in non-Linux environments.
+
+To build smallmatrix on the Mac:
+
+> swig -python -shadow -c++ -o smallmatrixcmodule.C -dnone smallmatrix.swg
+> gcc -fno-strict-aliasing -Wno-long-double -no-cpp-precomp -mno-fused-madd -DNDEBUG -g -O3 -Wall -I/sw/include/python2.3 -c smallmatrixcmodule.C -o smallmatrixcmodule.o
+> c++ -bundle -undefined dynamic_lookup smallmatrixcmodule.o -o smallmatrixc.so -headerpad_max_install_names -faltivec -framework vecLib
+
+The file "plas2.py" is a second version of the plasticity code,
+this time using a multiple-field, assumed-strain method, which might
+give better load/displacement curves.
+
+The file "plas3.py" is a refinement of the plas2 approach, except this
+one doesn't do any stress interpolation at solution time, it only
+does it if you ask for the stress at a non-gauss-point afterwards,
+i.e. when measuring the force on the system.  This makes the solution
+process faster.
+
+The file "plas4.py" is built on plas3, of course, and will be used to
+explore adding kinematic and isotropic hardening to the point-wise model.
+After that works, it'll probably be time to move all this junk into
+OOF proper.
+
+The file "plast_crude.py" is a snapshot of an older version of 
+"plasticity.py" (version 1.17, in fact), modified to fix the indexing
+bug discovered in late February, to reproduce the comparison data
+which lead to all the excitement in the first place.
+
+  The indexing bug is worth some discussion.  The correct way to
+understand the scheme used by these programs is that they specify the
+nine-parameter plastic strain with six variables, consisting of the
+diagonal and upper off-diagonal components of the plastic strain
+tensor.  The lower off-diagonal components of the plastic strain
+tensor are functions of their symmetric counterparts in the upper
+off-diagonal -- rather trivial functions, to be sure, but the
+functional relationship is important.
+
+  The (tensor) flow rule has the feature that it is symmetric if the
+stress is symmetric, so as it turns out, we only need six equations to
+verify consistency, but there are still in princple nine stress
+variables, and in particular, when constructing the matrix (either in
+weak or strong form), when you take the derivatives of the components
+of the flow rule with respect to off-diagonal plastic strains, you
+must remember to sum over *both* upper and lower diagonals, the lower
+diagonal derivatives being deduced from the upper ones by applying the
+chain rule through the functional relationship -- again, in practice,
+this is trivial, but understanding this relationship is crucial to
+getting the index summation right.
+
+  The symptom of incorrect index summation was that the flow
+rule violates isotropy, giving different answers for a diagonal shear
+as opposed to the 45-degree rotation of that shear, which has only
+off-diagonal components.
+
+
+  The file "plas5.py", probably the last in the series, is for
+exploring the implications of plane stress plasticity.  Is it 
+sufficient to allow the elastic part of the system to handle the
+plane-stress constraint, or do we have to do something extra, and if
+so, what?  The answer turns out to be, letting the elastic part 
+handle the plane stress works just fine.
+
+  The file "plas6.py" goes one step further -- instead of doing the plastic
+relaxation locally at each gausspoint, a large nonlinear stiffness
+matrix is contructed, including the plasticity constraint at each of
+the violating guasspoints from the elastic step.  This is what OOF will
+(probably) actually do, using a nonlinear solver on the whole business.
+  Except that it doesn't -- plas6 is too fiddly to get right,
+and all the index switch-hitting needs to be done in OOF anyways,
+so this will be done, if at all, in the main OOF code.
+
+
+  New file "oop_elastic.py" completes the circle -- this is 
+based on plas5.py, and is not plastic at all, it's a matrix-checker
+for the out-of-plane elastic code.  

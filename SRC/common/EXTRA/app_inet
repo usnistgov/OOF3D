@@ -1,0 +1,48 @@
+# -*- python -*-
+
+# Simple application -- listens on the initial "srvr" socket
+# for an internet connection to arrive, then answers
+# rather trivial questions.
+
+import string, socket, os
+
+sock_buf_size = 80
+
+# INET socket. Use of INADDR_ANY causes automatic binding to
+# an available local port at listen-time -- we can then query the
+# bound name and make it available.
+sockaddr = ("127.0.0.1", socket.INADDR_ANY)
+
+srvr = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+srvr.bind(sockaddr)
+srvr.listen(1)
+
+(host, port) = srvr.getsockname()
+print "Local port is ", port
+
+(comm, addr) = srvr.accept()
+srvr.close() # We got what we wanted, now turn it off.
+
+print "Connected."
+
+input_string = ""
+
+def process(strng):
+    print "Processing ", strng
+    return strng.split(".")
+
+while 1:
+    data_in = comm.recv(sock_buf_size)
+    if not data_in:
+        break
+    
+    input_string += data_in
+
+    input_set = input_string.split("\n")
+    input_string = input_set[-1]
+    for s in input_set[:-1]:
+        res = process(s)
+        for r in res:
+            comm.send(r+"\n")
+        
+comm.close()

@@ -1,0 +1,1 @@
+removefile('nonrect.log')

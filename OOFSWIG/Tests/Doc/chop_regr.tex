@@ -1,0 +1,33 @@
+\documentstyle[11pt]{article}
+\setlength{\parindent}{0.0in}
+\setlength{\textwidth}{6.5in}
+\setlength{\oddsidemargin}{0.0in}
+\pagestyle{headings}
+\begin{document}
+{\Large \bf  Chop }\\
+{\tt [ Python Module : swig ]  }\\
+   This file tests chopping of comment blocks   
+\\{\tt \bf foobar(int ) }
+\\
+\makebox[0.5in]{}\begin{minipage}[t]{6in}
+{\tt [ returns int  ]  }\\
+  ***********************************************************
+ * This is a block comment.                                 *
+ *                                                          *
+ * It should get chopped so that only text remains.         *
+ ***********************************************************  
+\\
+
+\end{minipage}\\
+
+{\tt \bf grok(double ) }
+\\
+\makebox[0.5in]{}\begin{minipage}[t]{6in}
+{\tt [ returns int  ]  }\\
+   This comment should not be chopped because it's too short   
+\\
+
+\end{minipage}\\
+
+
+\end{document}

@@ -1,0 +1,8 @@
+# Operation: Integral
+# Output: Total Energy
+# Domain: EntireMesh
+# Sampling: ContinuumSampleSet(order=automatic)
+# Columns:
+# 1. time
+# 2. integral of Total Energy
+0.0, 0.0003

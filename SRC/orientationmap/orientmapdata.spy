@@ -1,0 +1,144 @@
+# -*- python -*-
+# $RCSfile: orientmapdata.spy,v $
+# $Revision: 1.11.10.1 $
+# $Author: langer $
+# $Date: 2014/09/27 22:34:41 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+_readerregistry = {}
+
+from ooflib.SWIG.common import switchboard
+from ooflib.SWIG.common import timestamp
+from ooflib.SWIG.engine import material
+from ooflib.SWIG.orientationmap import orientmapproperty
+from ooflib.SWIG.engine.property.orientation import orientation
+from ooflib.SWIG.engine import ooferror2
+from ooflib.common import debug
+from ooflib.common import enum
+from ooflib.common import microstructure
+from ooflib.common.IO import xmlmenudump
+
+## The OrientMapType enum initially has no values.  The values are created
+## when OrientMapReaders are registered.
+
+class OrientMapType(enum.EnumClass()):
+    tip="Specify the format of an Orientation Map file."
+    discussion = xmlmenudump.loadFile('DISCUSSIONS/orientationmap/enum/format.xml')
+
+def registerOrientMapReaderClass(format, readerclass, help=None):
+    enum.addEnumName(OrientMapType, format, help=help)
+    _readerregistry[format] = readerclass
+
+def getOrientMapReaderClass(format):
+    return _readerregistry[format]
+
+# OrientMapReaders can have an optional postProcess method, which is
+# called only from Python.  An empty default version is defined here.
+# It's calle after the orientation data has been associated with a
+# Microstructure.
+
+def _readerPostProcess(self, microstructure):
+    pass
+
+OrientMapReaderPtr.postProcess = _readerPostProcess
+
+##############
+
+# Utility function which must be called whenever the orientation map
+# in a Microstructure changes.  It sends the "material changed" signal
+# for all Materials in the Microstructure that use orientation map
+# data.
+
+def orientationmapNotify(ms):
+    matls = material.getMaterials(ms)
+    for matl in matls:
+        try:
+            orient = matl.fetchProperty("Orientation")
+        except ooferror2.ErrNoSuchProperty:
+            pass
+        else:
+            if isinstance(orient, orientmapproperty.OrientationMapPropPtr):
+                switchboard.notify("material changed", matl.name())
+    switchboard.notify("OrientationMap changed", ms)
+    switchboard.notify("redraw")
+
+########################################
+
+## The OrientMapPlugIn class ensures that a Python reference is kept for
+## each OrientMap object, until its Microstructure is destroyed, at
+## which time the OrientMapPlugIn is destroyed automatically.
+
+class OrientMapPlugIn(microstructure.MicrostructurePlugIn):
+    def __init__(self, ms):
+        microstructure.MicrostructurePlugIn.__init__(self, ms)
+        self.data = None
+        self.filename = None
+        self.timestamp = timestamp.TimeStamp()
+    def set_data(self, data, filename):
+        self.data = data
+        self.filename = filename
+    def clear(self):
+        self.data = None
+        self.filename = None
+        self.timestamp.increment()
+
+microstructure.registerMicrostructurePlugIn(OrientMapPlugIn, "OrientationMap")
+
+# The following utility functions take a Microstructure object as an
+# argument (not a MicrostructureContext).
+
+def getOrientationMap(ms):
+    return ms.getPlugIn('OrientationMap').data
+
+def getOrientationMapTimestamp(ms):
+    return ms.getPlugIn('OrientationMap').timestamp
+
+def getOrientationMapFile(ms):
+    return ms.getPlugIn('OrientationMap').filename
+
+def clearOrientationMap(ms):
+    ms.getPlugIn('OrientationMap').clear()
+
+############################################
+
+# Return the orientation at a point in a Microstructure, along with
+# info about how it was obtained.
+
+def getOrientationAtPoint(ms, point):
+    # First look for a Material containing an explicit Orientation Property
+    mat = material.getMaterialFromPoint(ms, point)
+    if mat:
+        try:
+            orientprop = mat.fetchProperty("Orientation")
+            if isinstance(orientprop, orientation.OrientationPropPtr):
+                return orientprop.orientation(), "Property"
+        except ooferror2.ErrNoSuchProperty:
+            pass
+    # Look for an Orientation Map, whether or not there's an
+    # OrientationMapProp.
+    orientmap = getOrientationMap(ms)
+    if orientmap:
+        return orientmap.angle(point), "Map"
+
+############################################
+
+def addPixelsToGroup(microstructure, groupname, pixels):
+    microstructure.reserve()
+    microstructure.begin_writing()
+    try:
+        group, newness = microstructure.getObject().getGroup(groupname)
+        group.add(pixels)
+    finally:
+        microstructure.end_writing()
+        microstructure.cancel_reservation()
+    if newness:
+        switchboard.notify("new pixel group", group)
+    switchboard.notify("changed pixel group", group, microstructure.name())
+    switchboard.notify("redraw")

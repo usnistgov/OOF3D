@@ -1,0 +1,52 @@
+(*
+  $RCSfile: supertri.math,v $
+  $Revision: 1.1 $
+  $Author: reida $
+  $Date: 2001/01/09 21:17:17 $
+          *)
+
+(* A Mathematica model of the triangular superparametric element,
+   for the purpose of testing the integration routines. *)
+
+(* Assumes the usual master space, a triangle with corners at
+   (0,0), (1,0), and (0,1), with nodes at the corners and the
+   midpoints of the sides.  The nodes are numbered counterclockwise
+   starting from 1 at the origin. *)
+
+sfuns[x_,y_]:={ 2*x^2+4*x*y+2*y^2-3*x-3*y+1, 
+                    4*(-x^2-x*y+x),
+                    2*x^2-x, 4*x*y, 2*y^2-y, 4*(-y^2-x*y+y) }
+
+(* Change the coordinates to reflect what's really happening. *)
+
+coords:={ { 0, 0}, { 1/2, 0}, {1 , 0}, {3/5, 3/5}, {0, 1}, {0, 1/2} }
+
+fromMaster[x_,y_]:={ Sum[ coords[[i]][[1]]*sfuns[x,y][[i]], {i,1,6} ],
+                       Sum[ coords[[i]][[2]]*sfuns[x,y][[i]], {i,1,6}] }
+
+
+
+(* For this special case, the area integral within the parametric
+   boundary has a special, tractable form, I think. *)
+
+x[t_]:=Simplify[fromMaster[t,1-t]][[1]]
+
+bdy[t_]:=Simplify[fromMaster[t,1-t]][[2]]
+
+krnl[x_,y_]:=1;  (* for area, function is 1 *)
+
+(* Ifun as defined here embodies many special cases, the parameter
+   t must go from 0 to 1, there can only be one parametrized
+   boundary, and it must be described by the global functions
+   bdx[] and bdy[]. *)
+
+Ifun[k_]:= Integrate[ Integrate[ k[bdx[t],y],{y,0,bdy[t]}]*bdx'[t],{t,0,1}]
+
+
+
+
+
+
+
+
+

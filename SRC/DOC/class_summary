@@ -1,0 +1,315 @@
+// -*- text -*-
+// $RCSfile: class_summary,v $
+// $Revision: 1.1 $
+// $Author: langer $
+// $Date: 2001/12/04 21:22:25 $
+
+
+Coord:
+  A point in 2-space.
+  Implemented as an instance of the template class BaseCoord, so that
+  Coord and MasterCoord can be distinct types.
+
+---
+
+IndexType:
+  A template class used for indexing arrays, etc. An IndexType acts
+  just like an integer. Different IndexTypes are distinct types, so
+  the compiler will prevent you from using the wrong one.
+
+  NodeIndex is used to enumerate the nodes in an element.
+  SpaceIndex is used to enumerate dimensions.
+
+---
+
+Field:
+     name          used for I/O
+     active/inactive
+     defined/undefined
+     index
+     dimension  (how many numbers are required to specify field at a point)
+
+  The field class doesn't contain the actual field values, it's just
+  used to manage the degrees of freedom (eg as an index into the lists
+  of degrees of freedom at each node.)
+     
+  One instance of this class exists for each field. Ie, field.h will
+  contain
+      extern Field temperature;
+      extern Field displacement; 
+
+  Subclasses for different kinds of fields:
+  ScalarField, VectorField<dimension>, TensorField<dimension>, etc.
+
+  Fields are defined if they have values stored at nodes. They are
+  active if their values will be solved for.
+
+  The value of a field at a node is obtained by field(node) [for
+  scalar fields] or field(node, i) [for vector fields].
+
+----
+
+DegreeOfFreedom:
+     value
+     fixed or free?
+
+  Subclasses for different kinds of fields, ScalarDegreeOfFreedom,
+  etc.  Possibly the subclasses could be templated:
+  DegreeOfFreedom<ScalarField>.  See note 2
+  
+I no longer think we need to keep original values and displacements
+for all degrees of freedom.
+
+
+----
+
+Node:
+    list of (pointers to?) Degrees Of Freedom.  See note 2
+    index
+    Coord original_position;
+    Coord position(); // original position + displacement
+ 
+----
+
+Element:
+    pointer to Material.
+    pointer to ShapeFunction.
+    ElementNodeIterators that are used for accessing nodes. See below.
+    number of shape functions used for mapping
+    number of shape functions used for function interpolation
+    function that returns a GaussPoint for integration.
+    nonvirtual functions for computing stiffness matrix, right hand side.
+    mapping functions for converting from physical coordinates to
+       element coordinates.
+    virtual function that returns a pointer to a MasterElement.
+
+  Subclasses for different shapes and orders. (linear triangle, 8
+  point quad, etc).
+
+  When asked for its contribution to the stiffness matrix or rhs, the
+  element just asks its Material to do the real work, eg:
+   Element::make_stiffness(...) { material->make_stiffness(this, ...); }
+
+  ShapeFunction is a separate class so that different interpolation
+  methods can be used.
+
+  Elements may be isoparametric, subparametric, or superparametric,
+  although these need not be formal subclasses. Isoparametric elements
+  use the same set of shapefunctions for mapping the element geometry
+  as they do for interpolating the fields.  Subparametric elements use
+  fewer shapefunctions for the geometry, and superparametric elements
+  use more.
+  
+  Iterators for iterating over map nodes & interpolation nodes...
+    virtual ElementNodeIterator *parnode_iterator();
+    virtual ElementNodeIterator *mapnode_iterator();
+  Returned by virtual functions.  Providing access to nodes in this
+  way allows the interface to be the same for sub-, super-, and
+  isoparametric elements.  The connection between a Node and a
+  shapefunction is made ONLY via the ElementNodeIterator:
+     ElementNodeIterator n;
+     n.node() is a pointer to a node.
+     n.sf_index() is the index of a shape function.  This shape
+         function is non-zero at node n.node().
+  For convenience, all Element routines (shapefun, dshapefun) which
+  need to know the correspondence between node and shapefunction
+  actually take the ElementNodeIterator as a argument:
+
+     for(ElementNodeIterator n=element->node_iterator(); !n.end(); ++n) {
+        Node *node = n.node();
+	ShapeFunctionIndex ni = n.sf_index();
+     }
+
+----
+
+MasterElement:
+
+   Keeps track of all the stuff that's shared between all elements of
+   a given type, mainly the lists of gauss points.  There is just one
+   instance of each kind of MasterElement.
+
+----
+
+Material:
+    list of pointers to Properties
+    registry of particular properties
+    nonvirtual functions for computing stiffness matrix, right hand side
+
+  The Material is just a collection of properties.
+
+  The Material computes the stiffness matrix and rhs by asking each
+  Property to do the real work:
+   Material::stiffnessmatrix(Element* el) { 
+      loop over Properties
+         property[i]->stiffnessmatrix(el, this);
+
+  The "particular properties" are ones that might need to be
+  referenced by other properties. Eg, the thermal expansion property
+  will need to know the elasticity, so that it can ask for Cijkl.  So
+  when an Elasticity property is added to the list in the Material, it
+  registers itself as an "Elasticity" property.  The thermal expansion
+  property will look in the registry to find the "Elasticity" property,
+  and will store a pointer to it.  This will all happen when the material
+  is constructed, so there will be no overhead during the actual calculation.
+
+----
+
+Property:
+  Each additive term in the equations of motion (or energy
+  functional) is a separate Property.
+
+  Subclasses for Elasticity, ThermalExpansion, ThermalConductivity,
+  etc.  Elasticity will have further subclasses Isotropic, Hexagonal,
+  etc.
+
+  Properties add their own contributions to the stiffness matrix and
+  rhs with Property::make_stiffness(Element*, Material*).  They use the
+  Element pointer to get shape functions and Integrators.
+
+  Certain kinds of properties may make no contribution to the
+  stiffness matrix, but may contribute instead to the rhs through
+  body_forces(Element*, Material*).
+
+  They also may contribute to flux boundary conditions by integrating
+  a given flux across a Boundary and contributing to the rhs.
+
+  Given nodal fields, a Property can compute it's contribution to a
+  specified Flux (used after equilibration, to compute forces of
+  constraint). 
+
+  When Properties are created, they can register themselves in the
+  Material's registry [eg, material->registry.register(this, "Elasticity")].
+  After all of a Material's Properties are created, the Properties can
+  use the registry to find other Properties that they may need to
+  refer to [ Property *otherproperty=material->registry.retrieve("Elasticity")].
+
+----
+
+Mesh:
+
+  Lists of Elements, Nodes, DegreesOfFreedom.
+  Equilibration methods.
+  General control.
+
+----
+
+MasterCoord:
+
+  A point in the coordinate system of the master element.
+  Implemented as an instance of the template class BaseCoord, so that
+  Coord and MasterCoord can be distinct types.
+
+----
+
+GaussPoint:  Gaussian Integration Point  -- see gausspoint.h for the
+                                            way this really works.
+  Coord coord -- position in real space
+  MasterCoord mc --- position of point in master element's parameter space
+  weight --- include jacobian factor, since gauss weight and jacobian
+            are never needed separately. (is that true?)
+  index --- used by shape function for fast function lookup
+  
+  operator++ -- go to next gauss point
+  bool end() -- are we done integrating?
+
+  
+----
+
+ShapeFunction:  see shapefunction.h
+
+   The ShapeFunction class computes a whole set of shape functions,
+   differentiated by the ShapeFunctionIndex argument.  The connection
+   between shape functions and nodes is made by the
+   ElementNodeIterator, which is described in the discussion of
+   Element, above.
+
+   Only to be evaluated in master element coordinates.  Keeps a table
+   of values at the Element's Gauss points, since those will be the
+   ones used most often.  There's one instance of each ShapeFunction
+   class for each type of Element, not for each Element itself.
+
+   operator()(i, MasterCoord):  value of function i
+   operator()(i, GaussPoint):  value at precomputed Gauss point.
+   double deriv(i, SpaceIndex, GaussPoint)  derivatives with respect
+                                            to master coords
+   The index i is a ShapeFunctionIndex.
+
+   If the shape function also has to be evaluated in physical
+   coordinates, then it will have to keep a pointer to the
+   element, and we'll need a separate ShapeFunction object for each
+   individual Element. So to compute shape functions in real space,
+   use the Element's mapping functions to compute a master coordinate.
+
+   The ShapeFunction class isn't actually called directly, it's called
+   through the base Element's shapefun() and dshapefun() methods, so
+   unless you're programming new Elements you shouldn't have to know
+   anything about it.
+
+   There are cpu-intensive quantities that depend on both the
+   ShapeFunction and the Element (such as the determinant of the
+   jacobian at the gauss points).  These values should be cached for
+   reuse, but since an Element has two ShapeFunctions, the
+   ShapeFunction must do the caching.  The cache is kept only so long
+   as we're doing computation on the same Element.
+
+-----------
+
+Equation:  (incomplete)
+
+Columns in the global stiffness matrix are indexed by the
+DegreeOfFreedom class.  Rows are indexed by the Equation class: eg,
+the heat equation *at a particular node* corresponds to one row of the
+matrix.  The Node uses the Equation class to return an index into the
+matrix.  Each equation that the program can solve has a single global
+Equation object.  int Node::eqno(Equation, int component) returns a
+matrix row number. The equation numbers at a node are allocated as
+they're needed (as the Property classes build the matrix), so that the
+matrix doesn't get bigger than necessary.  The Mesh keeps track of
+which equation numbers are available (Mesh::neweqn, Grid::reseteqns).
+
+---
+
+FieldIndex:
+
+Base class for objects which index the components of Fields and
+Fluxes.  Derived classes include ScalarFieldIndex (trivial),
+VectorFieldIndex, and VoigtIndex. The FieldIndex can be incremented
+and can be converted to an integer.
+
+FieldIterator:
+
+Wrapper for FieldIndex so that Flux and Field classes can (in effect)
+return a pointer to the appropriate type of FieldIndex, initialized
+appropriately.  The classes have to return a pointer so that the
+virtual functions in FieldIndex can be used.  The wrapper frees the
+user from worrying about deallocating the pointer.
+
+-----------
+
+NOTES
+
+1. The usual field is displacement, not position, but each
+   DegreeOfFreedom has an initial value and a deviation, so the
+   displacement is the deviation of the position.  Using position
+   instead of displacement means that the Node's position doesn't have
+   to be stored separately.  OBSOLETE
+
+
+2.  I can think of two ways of storing the Degrees of freedom in the
+    Nodes.  The DegreeOfFreedom can be a simple class, always
+    representing a scalar, and more complicated fields will just take
+    up more than one spot in the Node's list.  This will be more
+    efficient in terms of storage, but will require more complicated
+    bookkeeping. The other way is to have subclasses for different
+    kinds of Degrees of Freedom, which means that the Node has to keep
+    a list of pointers.
+
+    Since sometimes the flags (fixed, free, etc) for the degrees of
+    freedom will be set separately for the different components of a
+    field, it makes more sense to make the DegreeOfFreedom class store
+    a scalar degree of freedom, and let the field handle the
+    bookkeeping.  So node[field] will return the composite (scalar,
+    vector) degree of freedom, but node.dof(field, i) will return the
+    DegreeOfFreedom class object for the i^th component of the field.
+
+

@@ -1,0 +1,407 @@
+(* 
+   $RCSfile: plane_stress.math,v $
+   $Revision: 1.1 $
+   $Author: reida $
+   $Date: 2005/07/29 21:11:45 $
+            *)
+
+(* Mathematica file with an OOF2 work-alike which solves a 
+   small nine-element mesh, where the central element is 
+   elastically softer than the surrounding eight elements, and where
+   the whole system is vertically in tension.  This uses an 
+   experimental Lagrange-multiplier-based scheme to do the plane-stress
+   constraint, the idea being to see if we can get this stress to be 
+   zero at every point in the system, and not just on average over
+   given shape functions. *)
+
+(* This file began life as an OOF2 matrix-checking file. *)
+
+(* Get matrix operations. *)
+
+<< LinearAlgebra`MatrixManipulation`
+
+(* Nodes are given by their x and y coordinates. *)
+
+Nodes:={{ 0, 0}, { 1, 0}, { 2, 0}, { 3, 0}, 
+        { 0, 1}, { 1, 1}, { 2, 1}, { 3, 1},
+        { 0, 2}, { 1, 2}, { 2, 2}, { 3, 2},
+        { 0, 3}, { 1, 3}, { 2, 3}, { 3, 3}}
+
+
+(* Elements are defined by one-based indexes into the node array, in
+   counterclockwise order.  The first element is the central one with
+   the different constitutive rule. *)
+
+Elements:={{6,7,11,10}, {1,2,6,5}, {2,3,7,6}, {3,4,8,7}, 
+                            {5,6,10,9}, {7,8,12,11},
+                      	{9,10,14,13}, {10,11,15,14}, {11,12,16,15}}
+
+
+(* xi and zeta are default coordinates in the master space.  
+   Apparently-unmotivated derivatives with respect to xi and zeta
+   may appear elsewhere because of this.  Functions are in
+   counterclockwise order in master space. *)
+
+MasterFns:={ (1/4)*(1-xi)*(1-zeta), (1/4)*(1+xi)*(1-zeta),
+             (1/4)*(1+xi)*(1+zeta), (1/4)*(1-xi)*(1+zeta)  }
+
+
+(* Elasticity:  Avoid potential errors from Voigt 
+   notation by just building the four-component matrix
+   of elastic constants.  It's pretty much arbitrary. *)
+
+(************************************************************)
+(*********************    PHYSICS   *************************)
+(************************************************************)
+
+(* Elastic stiffness, in Cijkl form. *)
+(* Voigt correspondence is: 
+   1 -> 1,1
+   2 -> 2,2
+   3 -> 3,3
+   4 -> 2,3
+   5 -> 1,3
+   6 -> 1,2  *)
+
+VoigtMtx:={{ 1, 6, 5},
+           { 6, 2, 4},
+           { 5, 4, 3}}
+
+
+StiffCmtx:={ { 1.0, 0.5, 0.5, 0.0, 0.0, 0.0 },
+             { 0.5, 1.0, 0.5, 0.0, 0.0, 0.0 },
+             { 0.5, 0.5, 1.0, 0.0, 0.0, 0.0 },
+             { 0.0, 0.0, 0.0, 0.25, 0.0, 0.0 },
+             { 0.0, 0.0, 0.0, 0.0, 0.25, 0.0 },
+             { 0.0, 0.0, 0.0, 0.0, 0.0, 0.25 } }
+
+SoftCmtx:={ { 0.8, 0.4, 0.4, 0.0, 0.0, 0.0 },
+            { 0.4, 0.8, 0.4, 0.0, 0.0, 0.0 },
+            { 0.4, 0.4, 0.8, 0.0, 0.0, 0.0 },
+            { 0.0, 0.0, 0.0, 0.20, 0.0, 0.0 },
+            { 0.0, 0.0, 0.0, 0.0, 0.20, 0.0 },
+            { 0.0, 0.0, 0.0, 0.0, 0.0, 0.20 } }
+
+
+StiffFourCmtx:= Table[Table[Table[Table[ 
+                     StiffCmtx[[ VoigtMtx[[i,j]], VoigtMtx[[k,l]] ]],
+                         {l,1,3}], {k,1,3}], {j,1,3}], {i,1,3}]
+
+SoftFourCmtx:=  Table[Table[Table[Table[ 
+                     SoftCmtx[[ VoigtMtx[[i,j]], VoigtMtx[[k,l]] ]],
+                         {l,1,3}], {k,1,3}], {j,1,3}], {i,1,3}]
+
+(*************************************************************)
+(*************************************************************)
+
+(* The DOFs are, in order:
+    ux, uy, ux,z, uy,z, uz,z, lambda1, lambda2, lambda3.
+    The corresponding order for the equations, at each node, is
+    the order of those functional derivatives.
+
+  The index of a given DOF in the master list is weird because of 
+    one-based indexing, but for node k (1..16), it's, e.g., 
+    8*(k-1)+1 for ux, 8*(k-1)+2 for uy, etc.
+*)
+
+
+(* ELEMENT OPERATIONS *)
+
+(* Generate a real-space position from node indices. Result is
+   the vector {x(xi,zeta),y(xi,zeta)} *)
+
+FromMaster[el_]:={Simplify[ 
+                     Sum[Nodes[[el[[i]]]][[1]]*MasterFns[[i]], {i,1,4}]],
+                    Simplify[ 
+                     Sum[Nodes[[el[[i]]]][[2]]*MasterFns[[i]], {i,1,4}]] }
+
+
+(* Jacobian of the coordinate transformation -- unfortunately
+   "Jacobian" is a Mathematica reserved word.  Just for 
+   clarity, what this means in the coords here is:
+   
+    (df/dxi, df/dzeta) = J.(df/dx, df/dy)     
+
+   For linear elements, the Jacobian is a matrix of constants, but for
+   higher-order elements, it could be a function of xi and zeta. *)
+
+
+Jacobn[el_]:=Module[{evec},
+  evec=FromMaster[el];
+  {{D[evec[[1]],xi], D[evec[[2]],xi]},
+   {D[evec[[1]],zeta], D[evec[[2]],zeta]}} ]
+
+
+(* Real-space derivatives of the sfidx-th shape function 
+   of element el.  Returns a vector, (d/dx, d/dy), of derivs. *)
+
+DShapeFun[sfidx_, el_]:= Module[{},
+  Inverse[Jacobn[el]].{D[MasterFns[[sfidx]],xi], D[MasterFns[[sfidx]],zeta]} ]
+
+
+(* Integrate an argument over an element. *)
+
+ElIgt[arg_, el_]:=Integrate[ arg*Det[Jacobn[el]], {xi,-1,1},{zeta,-1,1}]
+
+(* Index-contraction routine, because Mathematica insists on contracting
+   adjacent indices only. *)
+  
+Ctrct[stf_,strn_]:=Module[{i,j,k,l},
+  Table[ Sum[Sum[ stf[[i]][[j]][[k]][[l]]*strn[[k]][[l]], {l,1,3}],{k,1,3}],
+          {i,1,3},{j,1,3}] ]
+
+(************************************************************************)
+
+
+(* The way this works is we imagine that there exists an "energy",
+   which is made up of two parts, a "user-supplied" part and a
+   "constraint" part.  In fact, the user does not supply an energy,
+   but rather the functional derivatives of this energy with respect
+   to the in-plane degrees of freedom.
+
+   So we have Pi = uPi + cPi, where the cPi has the genral form of
+   Integral(lambdai*stresszi).  The derivatives of this with respect
+   to the lambdas give us the plane-stress equations, and the other
+   derivatives modify the matrix.
+
+*)
+
+
+(* Strain tensor -- given a degree of freedom index, shape 
+   function index, and element, this function returns the portion
+   of the strain tensor which is associated with the DOF, as a
+   function of xi and zeta for the associated element. *)
+
+Ekl[el_,sfi_,dof_]:=Module[{sf, dsf},
+  sf = MasterFns[[sfi]];
+  dsf = DShapeFun[sfi,el];  (* Vector derivative. *)
+  Switch[ dof,  
+    1, (* Terms multiplied by the ux coefficient *)
+    {{       dsf[[1]], (1/2)*dsf[[2]], 0},
+     { (1/2)*dsf[[2]],             0 , 0},
+     {              0,             0,  0} },
+    2, (* Terms multiplied by the uy coefficient *)
+    {{             0, (1/2)*dsf[[1]], 0},
+     {(1/2)*dsf[[1]],       dsf[[2]], 0},
+     {             0,              0, 0} },
+    3, (* Terms multiplied by the uz,x coefficient *)
+    {{       0, 0, (1/2)*sf},
+     {       0, 0,        0},
+     {(1/2)*sf, 0,        0} },
+    4, (* Terms multiplied by the uz,y coefficient *)
+    {{0,        0,        0},
+     {0,        0, (1/2)*sf},
+     {0, (1/2)*sf,        0} },
+    5, (* Terms multiplied by the uz,z coefficient. *)
+    {{0, 0,  0},
+     {0, 0,  0},
+     {0, 0, sf}},
+    _, (* Default, zero. *)
+    {{0, 0, 0},
+     {0, 0, 0},
+     {0, 0, 0}}    
+  ] 
+]
+
+(* Compute the stress, explicitly as a function of sfi and dof indices
+for a given element, and of course the Cijkl, and implicitly as a
+function of xi and zeta. *)
+
+Sigmaij[c_, el_, sfi_, dof_]:=Module[{},
+  Ctrct[c, Ekl[el,sfi,dof]]
+]
+
+
+(* Returns the stress field as a function of the master coordinates on 
+   the element.  Requires that the full solution vector be passed in, 
+   along with the constitutive relation. *)
+NumericSigmaij[c_,el_,soln_]:=Module[{sig,ni,dof,midx},
+  sig={{0,0,0},{0,0,0},{0,0,0}}; 
+  For[ni=1,ni<=4,ni++,
+    For[dof=1,dof<=5,dof++, 
+      midx=8*(el[[ni]]-1)+dof;
+      sig+=soln[[midx]]*Sigmaij[c,el,ni,dof];
+    ]
+  ];
+  sig
+];
+
+
+(* Make this element's contribution to the master stiffness matrix. *)
+ElContrib[el_,cmtx_]:=Module[{ni,mi,dof,ncol,rowbase,sf,
+                   	     sfdev,sfdvec,v1contrib,v2contrib},
+  For[ni=1,ni<=4,ni++, (* Nodes *)
+    For[dof=1,dof<=8,dof++,   (* Degrees of freedom. *)
+      ncol=8*(el[[ni]]-1)+dof;  (* Matrix column of this dof. *)
+      
+      (* "User"-supplied part, elastic constitutive rule.*)
+      stress = Sigmaij[cmtx, el, ni, dof];
+      planestress = SubMatrix[stress, {1,1}, {2,2}];      
+
+      For[mi=1,mi<=4,mi++,  (* Nodes for equation SFs. *)
+        rowbase=8*(el[[mi]]-1);
+
+        sf = MasterFns[[mi]];
+        sfdev=DShapeFun[mi,el];
+	sfdvec=sfdev.planestress; (* Shape-func derivs times in-plane stress *)
+        stiffness[rowbase+1,ncol]+=ElIgt[sfdvec[[1]],el];
+        stiffness[rowbase+2,ncol]+=ElIgt[sfdvec[[2]],el];
+
+	v1contrib = (1/2)*(stress[[1]][[3]]+stress[[3]][[1]]);
+	stiffness[rowbase+3,ncol]+=ElIgt[v1contrib*sf,el];
+
+        v2contrib = (1/2)*(stress[[2]][[3]]+stress[[3]][[2]]);
+	stiffness[rowbase+4,ncol]+=ElIgt[v2contrib*sf,el];
+
+        stiffness[rowbase+5,ncol]+=ElIgt[stress[[3]][[3]]*sf,el];
+      ]  
+    ]
+  ]
+];
+
+(* Make this element's contributions to the constraint part of the 
+   stiffness matrix. *)
+ElConstrain[el_,cmtx_]:=Module[{ni,mi,dof,eqn,row,col,
+                                rowsf,colsf,colstress,drowsf,igand},
+                                
+  For[ni=1,ni<=4,ni++,
+    colsf=MasterFns[[ni]];
+    For[dof=1,dof<=8,dof++,
+      col=8*(el[[ni]]-1)+dof;
+      colstress=Sigmaij[cmtx,el,ni,dof];
+      
+      For[mi=1,mi<=4,mi++,
+        rowsf=MasterFns[[mi]];
+	drowsf=DShapeFun[mi,el];
+        For[eqn=1,eqn<=8,eqn++, 
+          row=8*(el[[mi]]-1)+eqn;
+
+	  Switch[ eqn, 
+            1, (* Derivative with respect to ux *)
+              Switch[ dof, 
+                6, igand=drowsf[[1]]*colsf*cmtx[[3]][[1]][[1]][[1]]+
+                         drowsf[[2]]*colsf*cmtx[[3]][[1]][[1]][[2]],
+                7, igand=drowsf[[1]]*colsf*cmtx[[3]][[2]][[1]][[1]]+
+                         drowsf[[2]]*colsf*cmtx[[3]][[2]][[1]][[2]],
+                8, igand=drowsf[[1]]*colsf*cmtx[[3]][[3]][[1]][[1]]+
+                         drowsf[[2]]*colsf*cmtx[[3]][[3]][[1]][[2]],
+                _, igand=0],
+            2, (* Deriv with respect to uy *)
+              Switch[ dof, 
+                6, igand=drowsf[[1]]*colsf*cmtx[[3]][[1]][[2]][[1]]+
+                         drowsf[[2]]*colsf*cmtx[[3]][[1]][[2]][[2]],
+                7, igand=drowsf[[1]]*colsf*cmtx[[3]][[2]][[2]][[1]]+
+                         drowsf[[2]]*colsf*cmtx[[3]][[2]][[2]][[2]],
+                8, igand=drowsf[[1]]*colsf*cmtx[[3]][[3]][[2]][[1]]+
+                         drowsf[[2]]*colsf*cmtx[[3]][[3]][[2]][[2]],
+                _, igand=0],
+            3, (* Deriv with respect to ux,z *)
+              Switch[ dof, 
+                6, igand=rowsf*colsf*cmtx[[3]][[1]][[1]][[3]],
+                7, igand=rowsf*colsf*cmtx[[3]][[2]][[1]][[3]],
+                8, igand=rowsf*colsf*cmtx[[3]][[3]][[1]][[3]],
+                _, igand=0],
+            4, (* Deriv with respect to uy,z *)
+              Switch[ dof, 
+                6, igand=rowsf*colsf*cmtx[[3]][[1]][[2]][[3]],
+                7, igand=rowsf*colsf*cmtx[[3]][[2]][[2]][[3]],
+                8, igand=rowsf*colsf*cmtx[[3]][[3]][[2]][[3]],
+                _, igand=0],
+            5, (* Deriv with respect to uy,z *)
+              Switch[ dof, 
+                6, igand=rowsf*colsf*cmtx[[3]][[1]][[3]][[3]],
+                7, igand=rowsf*colsf*cmtx[[3]][[2]][[3]][[3]],
+                8, igand=rowsf*colsf*cmtx[[3]][[3]][[3]][[3]],
+                _, igand=0],
+            6, (* Deriv with respect to lambda_1 *)
+	      igand=rowsf*colstress[[3]][[1]],
+            7, 
+              igand=rowsf*colstress[[3]][[2]],
+            8,
+              igand=rowsf*colstress[[3]][[3]] 
+          ];
+          stiffness[row,col]+=ElIgt[igand,el];        
+        ]
+      ]
+    ]          
+  ]        
+];
+
+
+StiffStart:=Module[{i,j},
+  For[i=1,i<=8*Length[Nodes],i++,
+    For[j=1,j<=8*Length[Nodes],j++,
+      stiffness[i,j]=0;
+    ];
+  ];
+]
+
+MakeMatrix:=Module[{i,j,el}, 
+  StiffStart;
+
+  (* Build the stiffness matrix. *)
+  ElContrib[Elements[[1]],SoftFourCmtx];
+  ElConstrain[Elements[[1]],SoftFourCmtx];
+  For[i=2,i<=Length[Elements],i++,
+    Print["Contribution from element ", i];
+    ElContrib[Elements[[i]],StiffFourCmtx];
+    ElConstrain[Elements[[i]],StiffFourCmtx];
+  ];
+
+  (* Return stiffness[i,j] as a proper linear-algebra matrix. *)
+  Array[stiffness,{8*Length[Nodes], 8*Length[Nodes]} ]
+]
+
+
+
+(* This code has hard-coded Dirichlet boundary conditions.  The x
+   displacement at (0,0) is constrained to be 0, the y displacement
+   on the bottom is zero, and the y displacement on the top is positive
+   0.1.  The DOFs are 1, 2, 10, 18, 26, 98, 106, 114, 122. *)
+
+(* The passed-in matrix is assumed to be 128x128.  The return value of
+   this module is the vector of all the degrees of freedom, all nicely 
+   solved and everything. *)
+SolveSystem[mtx_]:=Module[{aset,cset,cvals,amtx,cmtx,rhs,res,
+                           fullres,i,j,am,cm},
+  aset={3,4,5,6,7,8,9,
+        11,12,13,14,15,16,17,
+        19,20,21,22,23,24,25,
+        27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,
+        50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,
+        70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,
+        90,91,92,93,94,95,96,97,
+        99,100,101,102,103,104,105,
+        107,108,109,110,111,112,113,
+        115,116,117,118,119,120,121,
+        123,124,125,126,127,128};
+  cset={1,2,10,18,26,98,106,114,122};
+  cvals={0,0,0,0,0,0.1,0.1,0.1,0.1};
+  
+  amtx = Array[am, {Length[aset],Length[aset]}];
+  For[i=1,i<=Length[aset],i++,
+    For[j=1,j<=Length[aset],j++, 
+      am[i,j]=mtx[[aset[[i]]]][[aset[[j]]]];
+    ]
+  ];
+
+  cmtx = Array[cm, {Length[aset], Length[cset]}];
+  For[i=1,i<=Length[aset],i++,
+    For[j=1,j<=Length[cset],j++, 
+      cm[i,j]=mtx[[aset[[i]]]][[cset[[j]]]];
+    ]
+  ];
+
+  rhs = -cmtx.cvals;
+  res = LinearSolve[amtx,rhs];
+
+  fullres=Array[rf, 128];
+  For[i=1,i<=Length[aset],i++,
+    rf[aset[[i]]]=res[[i]];
+  ];
+  For[i=1,i<=Length[cset],i++,
+    rf[cset[[i]]]=cvals[[i]];
+  ];
+
+  fullres
+]

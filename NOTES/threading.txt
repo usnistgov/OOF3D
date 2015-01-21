@@ -1,0 +1,95 @@
+
+
+
+  Some notes about the correct use of locking and threads in the OOF
+code:
+
+  The purpose of using threading in OOF is to allow the GUI to be
+responsive to user input while computationally intensive tasks are
+underway.  In the threaded environment, the timing of data access
+becomes unknown in general, and the standard solution to this problem
+is to use blocking mutual-exclusion locks to control access to shared
+data.
+
+  Over the course of OOF development, we have had a number of
+difficulties with lock contention and deadlocks, in spite of taking
+considerable care in the placement and scope of locks.
+
+  As a result, we have formulated some application-level rules, whose
+consistent application should make deadlocks easier to avoid.
+
+  The goals/rules are:
+
+  1) The main thread should (almost) never block.
+
+  2) GTK is not in general thread-safe, so all GTK calls must
+       be made on the same thread -- the main thread is the obvious
+       choice, since it's the one on which the start-up code will
+       run the gtk event loop, and therefore the one on which 
+       widget signal callbacks and idle callbacks will run.
+
+  To assist with implementation of these rules, the "lock.acquire"
+function has been modified to throw an exception if it is called on
+the main thread.  This makes violating rule 1 a run-time error.
+
+  Developers are strongly encouraged to make liberal use of
+"debug.mainthreadTest()" in code which makes GTK calls, so that as far
+as possible, calling GTK from the wrong thread will be an obvious
+run-time error.
+  
+  SLocks:
+
+  It turns out that rule 1 cannot be made absolute -- there are places
+where thread-independent locks are desirable, and
+harmless. Consequently, a new "SLock" class has been developed.  This
+class is functionally identical to a regular lock, but does not throw
+an exception if acquired on the main thread.
+
+  SLocks should only be acquired under circumstances where their prompt
+release is certain, and does not depend on the timing or existence of
+other locks or threads.  Switchboard notifications and gtk calls in
+particular should not be made inside SLock-protected code, since these
+can result in the transfer of control to other threads.
+
+
+  Using these rules, the way to write a routine with "mixed" character,
+which requires both locking and GTK communications, is to have the
+routine be entered on a subthread, and set whatever locks it needs
+there, and then perform main-thread actions using
+mainthread.runBlock(...) or mainthread.run(...).  The former is more
+useful than the latter, because of timing issues -- you acquired the
+lock for a reason, you should block until the functions you're calling
+have come back.
+
+  So, for example, you might have, inside an object, something like:
+
+import mainthread
+import debug
+import subthread
+
+def locking_gtk_callback(self, gtk_obj, data):
+  debug.mainthreadTest()  # Run on main thread as gtk-callback.
+  context = self.extract_context(gtk_obj)  # GUI op on main thread
+  subthread.execute(self.locking_gtk_callback_subthread, 
+                      (gtk_obj, data, context))
+
+def locking_gtk_callback_subthread(self, gtk_obj, data, context):
+  context.begin_writing() # Acquire lock on subthread
+  try:
+    context.modify(data)
+  finally:
+    context.end_writing() 
+  mainthread.runBlock(self.gui_sensitize, (context, gtk_obj)) 
+
+
+  
+  One result of this scheme is that there are now quite a lot of
+subthreads created and run.  There may be OSs on which this turns out
+to be a serious problem, if thread resources are exhausted, for
+instance.  There are opportunities to economize on threads in various
+places, where switchboard callbacks on some pages could be selectively
+moved to be requestCallback instead of requestCallbackMain, and the
+callback function could be changed to the "_subthread" version.  The
+pixelPage, and some of the toolbox GUIs, may present such
+opportunites, should the need arise.
+

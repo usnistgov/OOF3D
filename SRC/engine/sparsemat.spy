@@ -1,0 +1,124 @@
+# -*- python -*-
+# $RCSfile: sparsemat.spy,v $
+# $Revision: 1.3.10.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:44:52 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.common import debug
+from ooflib.SWIG.common import doublevec
+import types
+
+def _SparseMat_size(self):
+    return (self.nrows(), self.ncols())
+SparseMatPtr.size = _SparseMat_size
+
+def _SparseMat___iadd__(self, other):
+    if isinstance(other, SparseMatPtr):
+        self.add(1.0, other)
+        return self
+    return NotImplemented
+SparseMatPtr.__iadd__ = _SparseMat___iadd__
+
+def _SparseMat___add__(self, other):
+    result = self.clone()
+    result += other
+    return result
+SparseMatPtr.__add__ = _SparseMat___add__
+
+def _SparseMat___isub__(self, other):
+    if isinstance(other, SparseMatPtr):
+        self.add(-1.0, other)
+        return self
+    return NotImplemented
+SparseMatPtr.__isub__ = _SparseMat___isub__
+
+def _SparseMat___sub__(self, other):
+    result = self.clone()
+    result -= other
+    return result
+SparseMatPtr.__sub__ = _SparseMat___sub__
+
+def _SparseMat___mul__(self, x):
+    if isinstance(x, SparseMatPtr):
+        return self.matrixmultiply(x)
+    if isinstance(x, doublevec.DoubleVecPtr):
+        result = doublevec.DoubleVec(self.nrows())
+        self.axpy(1.0, x, result)
+        return result
+    result = self.clone()
+    result *= x
+    return result
+SparseMatPtr.__mul__ = _SparseMat___mul__
+
+def _SparseMat___rmul__(self, x):
+    if isinstance(x, doublevec.DoubleVecPtr):
+        result = doublevec.DoubleVec(self.nrows())
+        self.axpy_trans(1.0, x, result)
+        return result
+    result = self.clone()
+    result *= x
+    return result
+SparseMatPtr.__rmul__ = _SparseMat___rmul__
+
+def _SparseMat___imul__(self, x):
+    if type(x) is types.FloatType or type(x) is types.IntType:
+        self.scale(x)               # defined in sparsemat.swg only
+        return self
+    return NotImplemented
+SparseMatPtr.__imul__ = _SparseMat___imul__
+
+def _SparseMat___idiv__(self, x):
+    if type(x) is types.FloatType or type(x) is types.IntType:
+        self.scale(1./x)            # defined in sparsemat.swg only
+        return self
+    return NotImplemented
+SparseMatPtr.__idiv__ = _SparseMat___idiv__
+
+def _SparseMat__div__(self, x):
+    result = self.clone()
+    result /= x
+    return result
+SparseMatPtr.__div__ = _SparseMat__div__
+    
+################################################
+
+from ooflib.common import debug
+
+def _SparseMatIterator_next(self):
+    debug.fmsg()
+    if self.done():
+        debug.fmsg("done!")
+        raise StopIteration
+    result = (self.row(), self.col(), self.value())
+    debug.fmsg("incrementing")
+    self.increment()
+    return result
+SparseMatIteratorPtr.next = _SparseMatIterator_next
+SparseMatRowIteratorPtr.next = _SparseMatIterator_next
+
+def _SparseMatIterator_iter(self):
+    return self
+SparseMatIteratorPtr.__iter__ = _SparseMatIterator_iter
+SparseMatRowIteratorPtr.__iter__ = _SparseMatIterator_iter
+
+
+def _SparseMat_diagonal(self):
+    # This is just for debugging.  We've worked really hard to make it
+    # difficult to get at the individual entries in a SparseMat or
+    # DoubleVec, so we have to work really hard to get them here.
+    diag = [0]*self.nrows()
+    for i in range(self.nrows()):
+        unit = doublevec.DoubleVec(self.nrows())
+        unit.increment(i, 1.0)
+        diag[i] = unit.dot(self.inefficient_get_column(i))
+    return diag
+SparseMatPtr.stupid_diagonal = _SparseMat_diagonal
+

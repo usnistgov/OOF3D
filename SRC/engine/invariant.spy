@@ -1,0 +1,104 @@
+# -*- python -*-
+# $RCSfile: invariant.spy,v $
+# $Revision: 1.5.12.3 $
+# $Author: langer $
+# $Date: 2014/07/15 00:55:53 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.SWIG.common import switchboard
+from ooflib.SWIG.engine import outputval
+from ooflib.SWIG.engine import symmmatrix
+from ooflib.common import cregisteredclass
+from ooflib.common import debug
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+
+cregisteredclass.registerCClass(InvariantPtr)
+InvariantPtr.tip = "Invariants of vectors and tensors."
+InvariantPtr.discussion = xmlmenudump.loadFile(
+    'DISCUSSIONS/engine/reg/invariant.xml')
+
+# Maintain lists of which Invariants can be applied to which kinds of
+# OutputVals.  The keys to the _invmap dict are OutputValPtr classes.
+# The values are lists of Invariant Registrations.
+
+_invmap = {}                           
+def _newInvariant():
+    global _invmap
+    _invmap = {}
+    for registration in InvariantPtr.registry:
+        for outvalclass in registration.sources:
+            _invmap.setdefault(outvalclass, []).append(registration)
+
+switchboard.requestCallback(InvariantPtr, _newInvariant)
+
+def okInvariant(registration, outvalclass):
+    for invariandclass, invariantlist in _invmap.items():
+        if issubclass(outvalclass, invariandclass):
+            return registration in invariantlist
+    return False
+    
+##########################
+
+cregisteredclass.Registration(
+    "Magnitude",
+    InvariantPtr,
+    Magnitude,
+    ordering=0,
+    sources=[outputval.VectorOutputValPtr,
+             symmmatrix.SymmMatrix3Ptr],
+    tip="Magnitude (L2 or Frobenius norm) of a vector or tensor.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/invariant.xml'))
+
+cregisteredclass.Registration(
+    "Trace",
+    InvariantPtr,
+    MatrixTrace,
+    ordering=1,
+    sources=[symmmatrix.SymmMatrix3Ptr],
+    tip="Trace of a symmetric tensor.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/trace.xml'))
+
+cregisteredclass.Registration(
+    "SecondInvariant",
+    InvariantPtr,
+    SecondInvariant,
+    ordering=2,
+    sources=[symmmatrix.SymmMatrix3Ptr],
+    tip="Second invariant of a symmetric tensor.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/2nd_invariant.xml'))
+
+cregisteredclass.Registration(
+    "Determinant",
+    InvariantPtr,
+    Determinant,
+    ordering=2,
+    sources=[symmmatrix.SymmMatrix3Ptr],
+    tip="Determinant of a symmetric tensor.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/determinant.xml'))
+
+cregisteredclass.Registration(
+    "Deviator",
+    InvariantPtr,
+    Deviator,
+    ordering=3,
+    sources=[symmmatrix.SymmMatrix3Ptr],
+    tip="Magnitude of deviatoric part of a symmetric tensor.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/deviator.xml'))
+
+###############################
+
+class InvariantParameter(parameter.RegisteredParameter):
+    def __init__(self, name, value=None, default=None, tip=None, auxData={}):
+        parameter.RegisteredParameter.__init__(self, name, InvariantPtr,
+                                               value, default, tip, auxData)
+    def clone(self):
+        return self.__class__(self.name, self.value, self.default, self.tip,
+                              self.auxData)

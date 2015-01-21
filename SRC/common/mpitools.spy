@@ -1,0 +1,344 @@
+# -*- python -*-
+# $RCSfile: mpitools.spy,v $
+# $Revision: 1.5.18.1 $
+# $Author: langer $
+# $Date: 2014/09/27 22:33:53 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+import atexit
+import string
+import sys
+from ooflib.common import debug
+from ooflib.common.IO import menuparser
+
+## wrapper for _mpi_initialize.
+## mpi_finalize is registered so that when python exits it gets called
+
+def Initialize(argv):
+    _Initialize(argv)
+    mpi_state = Initialized()
+    ## print "mpi state = ", mpi_state
+    if mpi_state :
+        atexit.register(Finalize)
+        Barrier() ## is this really necessary?
+        return
+    debug.fmsg("MPI did not initialize!! Quitting...")
+    sys.exit()
+
+# Communication functions
+# In "mpitools.spy"
+# Send_"TYPE"(value, destination, tag=0)
+# Recv_"TYPE"(origin, tag=0)
+# These will wrap actual mpi calls that are written in
+# "mpitools.h", "mpitools.C", & "mpitools.swg"
+
+_SZTAG = 8173
+
+# BLOCKING
+def Send_Bool(value, destination, tag=0):
+    _Send_Int(int(value), destination, tag)
+
+def Recv_Bool(origin, tag=0):
+    return bool(_Recv_Int(origin, tag))
+
+def Send_Int(value, destination, tag=0):
+    _Send_Int(value, destination, tag)
+
+def Recv_Int(origin, tag=0):
+    return _Recv_Int(origin, tag)
+
+def Sendrecv_Int(value, destination, tag=0):
+    return _Sendrecv_Int(value, destination, tag)
+
+def Sendrecv_Ints(value, destinations, tag=0):
+    # Assumed Send-tag == Recv-tag.
+    if type(value) == type(1):  # just an integer
+        value = [value]*len(destinations)
+    return [Sendrecv_Int(v, d, tag)
+            for (v,d) in zip(value, destinations)]
+
+def Send_Double(value, destination, tag=0):
+    _Send_Double(value, destination, tag)
+
+def Recv_Double(origin, tag=0):
+    return _Recv_Double(origin, tag)
+
+def Send_String(value, destination, tag=0, size=0):
+    if not size:
+        _Send_Int(len(value), destination, _SZTAG)
+    _Send_String(value, destination, tag)
+
+def Recv_String(origin, tag=0, size=0):
+    if not size:
+        size = _Recv_Int(origin, _SZTAG)
+    return _Recv_String(origin, size, tag)
+
+def Send_IntVec(vector, destination, tag=0, size=0):
+    if not size:  # size of the vector is not known to the receiver
+        _Send_Int(len(vector), destination, _SZTAG)
+    _Send_IntVec(vector, destination, tag)
+
+def Recv_IntVec(origin, tag=0, size=0):
+    if not size:
+        size = _Recv_Int(origin, _SZTAG)
+    return _Recv_IntVec(origin, size, tag)
+
+def Send_DoubleVec(vector, destination, tag=0, size=0):
+    if not size:
+        Send_Int(len(vector), destination, _SZTAG)
+    _Send_DoubleVec(vector, destination, tag)
+
+def Recv_DoubleVec(origin, tag=0, size=0):
+    if not size:
+        size = _Recv_Int(origin, _SZTAG)
+    return _Recv_DoubleVec(origin, size, tag)
+
+# NON-BLOCKING
+def Isend_Bool(value, destinations, tag=0):
+    _Isend_Int(int(value), destinations, tag)
+
+def Isend_Int(value, destinations, tag=0):
+    _Isend_Int(value, destinations, tag)
+
+def Isend_Ints(values, destinations, tag=0):
+    _Isend_Ints(values, destinations, tag)
+
+def Irecv_Bools(origins, tag=0):
+    ints = _Irecv_Ints(origins, tag)
+    return [bool(i) for i in ints]
+
+def Irecv_Ints(origins, tag=0):
+    return _Irecv_Ints(origins, tag)
+
+def Isend_Double(value, destinations, tag=0):
+    _Isend_Double(value, destinations, tag)
+
+def Isend_String(value, destinations, tag=0, size=0):
+    if not size:
+        Isend_Int(len(value), destinations, _SZTAG)
+    _Isend_String(value, destinations, tag)
+    
+def Isend_Strings(values, destinations, tag=0, size=0):
+    sizes = [len(v) for v in values]
+    if not size:
+        _Isend_Ints(sizes, destinations, _SZTAG)
+    reduced = reduce(lambda x,y: x+y, values)
+    _Isend_Strings(reduced, sizes, destinations, tag)
+    
+def Isend_IntVecs(vectors, destinations, tag=0, size=0):
+    # sizes of vectors
+    sizes = [len(v) for v in vectors]
+    if not size:
+        _Isend_Ints(sizes, destinations, _SZTAG)
+    # reduced vector
+    reduced = reduce(lambda x,y: x+y, vectors)
+    _Isend_IntVecs(reduced, sizes, destinations, tag)
+
+def Isend_DoubleVec(vector, destinations, tag=0, size=0):
+    if not size:
+        _Isend_Int(len(vector), destinations, _SZTAG)
+    _Isend_DoubleVec(vector, destinations, tag)
+
+def Isend_DoubleVecs(vectors, destinations, tag=0, size=0):
+    sizes = [len(v) for v in vectors]
+    if not size:
+        _Isend_Ints(sizes, destinations, _SZTAG)
+    # reduced vector
+    reduced = reduce(lambda x,y: x+y, vectors)
+    _Isend_DoubleVecs(reduced, sizes, destinations, tag)
+
+def Irecv_DoubleVecs(origins, tag=0, size=0):  # size = [...]
+    if not size:
+        size = _Irecv_Ints(origins, _SZTAG)
+    values = _Irecv_DoubleVecs(origins, size, tag)
+    vectors = [[] for i in range(len(origins))]
+    count = 0
+    for v, s in zip(vectors, size):
+        for i in range(s):
+            v.append(values[count])
+            count += 1
+    return vectors
+
+def Iprobe(origin, tag=0):
+    return _Iprobe(origin, tag)
+
+# Collective communications
+
+def Allreduce_IntSum(value):
+    return _Allreduce_IntSum(value)
+
+def Allreduce_DoubleSum(value):
+    return _Allreduce_DoubleSum(value)
+            
+def Allgather_Int(value):  # returns a list of integers.
+    return _Allgather_Int(value)
+
+def Allgather_IntVec(vector, size_known=0):
+    _size = Size()
+    if not size_known:
+        size_known = Allgather_Int(len(vector))
+    maxSize = max(size_known)
+    # Allreduce prohibits empty vector ... so
+    if not vector:
+        vector = [0]
+    reducedVector = _Allgather_IntVec(vector, maxSize)
+
+    # Recover the reduced vector
+    vectors = [[i for i in reducedVector[j*maxSize:j*maxSize+size_known[j]]]
+               for j in range(_size)]
+    return vectors
+
+def Allgather_DoubleVec(vector, size_known=0):
+    _size = Size()
+    if not size_known:
+        size_known = Allgather_Int(len(vector))
+    maxSize = max(size_known)
+    # Allreduce prohibits empty vector ... so
+    if not vector:
+        vector = [0.]
+    reducedVector = _Allgather_DoubleVec(vector, maxSize)
+
+    # Recovering the reduced vector
+    vectors = [[i for i in reducedVector[j*maxSize:j*maxSize+size_known[j]]]
+               for j in range(_size)]
+    return vectors
+    
+
+class SendPipe:
+    ## Wrapper class for point-to-point
+    ## encoded send communication.
+    ## Its matching class is
+    ## ReceivePipe
+    def __init__(self, destination):
+        self.destination = destination
+        
+    def newDestination(self,new_dest):
+        ## How about Los Cabos, San Lucas?
+        self.destination = new_dest
+        
+    def sendBytes(bytes, destination = None):
+        if destination is not None:
+            send_string(bytes, destination)
+        else:
+            send_string(bytes,self.destination)
+            
+    def sendLine(line, destination = None):
+        self.sendBytes(line+"\n", dest)
+            
+
+class ReceivePipe (menuparser.InputSource):
+    ## Wrapper class for point-to-point
+    ## encoded receive communication.
+    ## Its matching class is
+    ## SendPipe
+    def __init__(self, origin):
+        self.origin = origin
+        self.buffer = 800
+        self.data = ""
+    def getLine(self, origin = None):
+        if origin is not None:
+            return recieve_string(origin)
+        else:
+            return receive_string(self.origin)
+    def getBytes(self, n, origin = None):
+        ## first, if we are listening from a
+        ## different processor, set the right
+        ## direction
+        real_org = self.origin
+        if origin is not None:
+            real_org = origin
+        ## Now, read from the mpi channel until
+        ## a number n of bytes has been received
+        while 1:
+            self._read(realorg)
+            res = self.data[:n]
+            self.data = self.data[n:]
+            return res
+    def _read(self, from_here):
+        self.data += receive_string(from_here)
+        
+class MPI_Source(menuparser.InputSource):
+    ## Wraper for a broadcast receive.
+    ## Collective communication
+    ## Its matching class is MPI_BcastPort
+    def __init__(self, origin=0):
+        self.origin = origin
+        self.position = 0
+        self.size = 0
+        self.string = ""
+    def getLine(self):
+        return receive_broadcast_string(self.origin) ## all processes listen to front-end
+
+    def getBytes(self, n):
+        if self.position>= self.size:
+            self.string = self.getLine()
+            self.position = 0
+            self.size = len(self.string)
+        end = self.position + n
+        if end > self.size:
+            end = self.size
+        result = self.string[self.position:end]
+        self.position = end
+        return result
+
+class MPI_BcastPort:
+    ## Wrapper for a broadcast send.
+    ## Collective communication
+    ## Its matching class is MPI_Source
+    def __init__(self, origin = 0):
+        self.origin = origin
+        self.string = ""
+        self.size = 0
+        self.position = 0
+    def sendLine(self, message): ## send a full string
+        broadcast_string(message, self.origin)
+    ## sending a set of bytes is a two step process:
+    ## 1. acquire the string
+    ## 2. send bytes of size N of the string until the
+    ##    maximum size of the string has been reached.
+    ## e.g.,
+    ##      port.acquireLine(msg)
+    ##      while port.sendBytes(N) is None:
+    ##              pass
+    def acquireLine(self, message):
+        self.string = message
+        self.size = len(message)
+        self.position = 0
+    def sendBytes(self, n):
+        end = self.position + n
+        if end > self.size:
+            end = self.size
+        result = self.string[self.position:end]
+        self.position = end
+        self.sendLine(result)
+        if end > self.size:
+            return 1
+        return None
+
+
+
+
+####################################################################
+
+import traceback
+
+class PyMPIException(MPIException):
+    def __init__(self, message, processor):
+        stack = traceback.extract_stack()
+        # The actual error is two up from us in the stack.
+        (file, lineno, func, txt) = stack[-2] 
+        MPIException.__init__(self, message, file, lineno, processor)
+    def __repr__(self):
+        return self.message() 
+
+def _MPIException___repr__(self):
+    return "processor: " + self.processor + "\n" + self.message()+"\n("+self.filename()+":"+"%d"%self.lineno() + ")"
+
+MPIException.__repr__ = _MPIException___repr__

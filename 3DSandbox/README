@@ -1,0 +1,13 @@
+Demo of a possible interface for OOF3D, modeled after the graphics
+window in OOF2.  This loads the 3D microstructure data which is in the
+pgm or mini directories and stored as slices.  The widgets allow you
+to control the view.
+
+To run you will need to have:
+
+1.  oof2 installed in a path known to python
+2.  vtk with python vtk installed
+3.  gtkglext and pygtkglext
+
+To run, type "python demo3d.py"
+

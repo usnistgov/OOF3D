@@ -1,0 +1,38 @@
+# -*- python -*-
+# $RCSfile: cskeletonnode2.spy,v $
+# $Revision: 1.1.2.4 $
+# $Author: langer $
+# $Date: 2013/06/06 19:37:19 $
+
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+def _CPinnedNodeTracker___repr__(self):
+    return "CPinnedNodeTracker(skel=%s)" % self.getSkeleton()
+
+CPinnedNodeTracker.__repr__ = _CPinnedNodeTracker___repr__
+
+def _CDeputyPinnedNodeTracker___repr__(self):
+    return "CDeputyPinnedNodeTracker(skel=%s)" % self.getSkeleton()
+
+CDeputyPinnedNodeTracker.__repr__ = _CDeputyPinnedNodeTracker___repr__
+
+
+def _CPinnedNodeTracker___eq__(self, other):
+    if isinstance(other, CPinnedNodeTrackerPtr) and other.this == self.this:
+        return 1
+    return 0
+
+CPinnedNodeTrackerPtr.__eq__ = _CPinnedNodeTracker___eq__
+
+def _CPinnedNodeTracker___ne__(self, other):
+    return not self.__eq__(other)
+
+CPinnedNodeTrackerPtr.__ne__ = _CPinnedNodeTracker___ne__

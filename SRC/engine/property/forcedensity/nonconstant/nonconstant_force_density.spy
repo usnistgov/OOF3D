@@ -1,0 +1,36 @@
+# -*- python -*-
+# $RCSfile: nonconstant_force_density.spy,v $
+# $Revision: 1.8.8.2 $
+# $Author: langer $
+# $Date: 2013/11/08 20:45:41 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+
+from ooflib.common.IO import parameter
+from ooflib.engine import problem
+from ooflib.engine import propertyregistration
+
+
+PropertyRegistration = propertyregistration.PropertyRegistration
+
+
+## Nonconstant force density Example
+
+reg = PropertyRegistration(
+    'Mechanical:ForceDensity:TestNonconstantForceDensity',
+    TestNonconstantForceDensity,
+    "ooflib.SWIG.engine.property.forcedensity.nonconstant.nonconstant_force_density",102,
+    [parameter.IntParameter('testno', 1, tip="Test number for the nonconstant force density property.")],
+    propertyType="ForceDensity",
+    secret=True,
+    tip="Test property for nonconstant force density."
+    )
+
+reg.eqnInfo( equations=[problem.ForceBalanceEquation], time_dependent=True )

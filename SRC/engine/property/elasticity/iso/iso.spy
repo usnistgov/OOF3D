@@ -1,0 +1,57 @@
+# -*- python -*-
+# $RCSfile: iso.spy,v $
+# $Revision: 1.7.8.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:45:31 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.engine import problem
+from ooflib.engine import propertyregistration
+from ooflib.engine.IO import isocijkl
+
+PropertyRegistration = propertyregistration.PropertyRegistration
+
+class IsoElasticityProp(CIsoElasticityProp):
+    def __init__(self, registration, name, cijkl):
+        CIsoElasticityProp.__init__(self, registration, self, name,
+                                    cijkl.tensorForm())
+
+# Property class registration code
+reg = IsotropicElasticity = PropertyRegistration(
+    "Mechanical:Elasticity:Isotropic", IsoElasticityProp,
+    "ooflib.SWIG.engine.property.elasticity.iso.iso", 10,
+    [isocijkl.IsotropicCijklParameter('cijkl',
+                          isocijkl.IsotropicRank4TensorCij(c11=1.0, c12=0.5),
+                                            tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip='Isotropic linear elasticity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/isoelastic.xml')
+)
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
+             time_derivs=[0])
+
+# Super-cautious destructor, to avoid complaints at shut-down time.
+# Code recommended by SWIG authors in mailing list at
+# <http://mailman.cs.uchicago.edu/pipermail/swig/2002-April.txt>,
+# look for message with subject: [Swig] Shadow class as a global
+# This trick needs to be applied to derived classes, and the classes
+# must have a swigged destructor.
+
+def property_ptr_del(self, destruct=isoc.delete_CIsoElasticityProp):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+
+CIsoElasticityPropPtr.__del__ = property_ptr_del
+

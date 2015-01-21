@@ -1,0 +1,66 @@
+# -*- python -*-
+# $RCSfile: cskeletongroups.spy,v $
+# $Revision: 1.1.2.5 $
+# $Author: langer $
+# $Date: 2013/05/16 18:57:31 $
+
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+
+# Python object identity doesn't work, because the same CObject
+# returned to Python via SWIG gets wrapped in different objects each
+# time it's returned.
+
+
+def _CGroupTracker___eq__(self, other):
+    if isinstance(other, CGroupTrackerPtr) and other.this == self.this:
+        return 1
+    return 0
+
+CGroupTrackerPtr.__eq__ = _CGroupTracker___eq__
+
+def _CGroupTracker___ne__(self, other):
+    return not self.__eq__(other)
+
+CGroupTrackerPtr.__ne__ = _CGroupTracker___ne__
+
+
+# def _CGroupTracker___repr__(self):
+#     return "CGroupTracker(%d)" % id(self)
+
+# CGroupTracker.__repr__ = _CGroupTracker___repr__
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+class DeputyGroupTracker(CDeputyGroupTracker):
+    def __init__(self, tracker):
+        self.tracker = tracker
+        CDeputyGroupTracker.__init__(self, tracker)
+    # def __getattr__(self, attr):
+    #     return getattr(self.tracker, attr)
+    def get_group_size(self, name):
+        return self.tracker.get_group_size(name)
+
+    def add_group(self, name):
+        pass
+    def clear_group(self, name):
+        pass
+    def remove_group(self, name):
+        pass
+    def rename_group(self, oldname, newname):
+        pass
+    def add(self, name, object):
+        pass
+    def remove(self, name, object):
+        pass
+    def sheriff(self):
+        return self.tracker.sheriff()
+    def __repr__(self):
+        return "DeputyGroupTracker"

@@ -1,0 +1,35 @@
+OOF.Microstructure.New(name='microstructure', width=1.0, height=1.0, width_in_pixels=10, height_in_pixels=10)
+OOF.Material.New(name='material', material_type='bulk')
+OOF.Material.Add_property(name='material', property='Mechanical:Elasticity:Isotropic')
+OOF.Material.Add_property(name='material', property='Mechanical:MassDensity:ConstantMassDensity')
+OOF.Material.Assign(material='material', microstructure='microstructure', pixels=all)
+OOF.Skeleton.New(name='skeleton', microstructure='microstructure', x_elements=4, y_elements=4, skeleton_geometry=QuadSkeleton(left_right_periodicity=False,top_bottom_periodicity=False))
+OOF.Mesh.New(name='mesh', skeleton='microstructure:skeleton', element_types=['D2_2', 'T3_3', 'Q4_4'])
+OOF.Subproblem.Field.Define(subproblem='microstructure:skeleton:mesh:default', field=Displacement)
+OOF.Subproblem.Field.Activate(subproblem='microstructure:skeleton:mesh:default', field=Displacement)
+OOF.Mesh.Field.In_Plane(mesh='microstructure:skeleton:mesh', field=Displacement)
+OOF.Subproblem.Equation.Activate(subproblem='microstructure:skeleton:mesh:default', equation=Force_Balance)
+OOF.Mesh.Boundary_Conditions.New(name='bc', mesh='microstructure:skeleton:mesh', condition=DirichletBC(field=Displacement,field_component='x',equation=Force_Balance,eqn_component='x',profile=ConstantProfile(value=0.0),boundary='left'))
+OOF.Mesh.Boundary_Conditions.New(name='bc<2>', mesh='microstructure:skeleton:mesh', condition=DirichletBC(field=Displacement,field_component='y',equation=Force_Balance,eqn_component='y',profile=ConstantProfile(value=0.0),boundary='left'))
+
+OOF.Mesh.Set_Field_Initializer(mesh='microstructure:skeleton:mesh', field=Displacement, initializer=FuncTwoVectorFieldInit(fx='0.1*x',fy='0.0'))
+
+OOF.Mesh.Scheduled_Output.New(mesh='microstructure:skeleton:mesh', name=AutomaticName('GraphicsUpdate'), output=GraphicsUpdate())
+OOF.Mesh.Scheduled_Output.Schedule.Set(mesh='microstructure:skeleton:mesh', output=AutomaticName('GraphicsUpdate'), scheduletype=AbsoluteOutputSchedule(), schedule=Periodic(delay=0.0,interval=0.10000000000000001))
+
+# Static
+OOF.Subproblem.Set_Solver(subproblem='microstructure:skeleton:mesh:default', linearity=Linear(), solver=StaticDriver(matrixmethod=ConjugateGradient(preconditioner=ILUPreconditioner(),tolerance=1e-13,max_iterations=1000)))
+OOF.Mesh.Apply_Field_Initializers_at_Time(mesh='microstructure:skeleton:mesh', time=0.0)
+OOF.Mesh.Solve(mesh='microstructure:skeleton:mesh', endtime=0.0, stepsize=0)
+# Make copy for reference -- solver_test.py compares to it later
+OOF.Mesh.Copy(mesh='microstructure:skeleton:mesh', name='mesh<2>', copy_field=True, copy_equation=True, copy_bc=True)
+
+# Backward Euler
+OOF.Mesh.Apply_Field_Initializers_at_Time(mesh='microstructure:skeleton:mesh', time=0.0)
+OOF.Subproblem.Set_Solver(subproblem='microstructure:skeleton:mesh:default', linearity=Linear(), solver=UniformDriver(stepper=BackwardEuler(matrixmethod=BiConjugateGradient(preconditioner=ILUPreconditioner(),tolerance=1e-13,max_iterations=1000))))
+OOF.Mesh.Solve(mesh='microstructure:skeleton:mesh', endtime=1.0, stepsize=0.099999999999999978)
+
+# Static
+OOF.Subproblem.Set_Solver(subproblem='microstructure:skeleton:mesh:default', linearity=Linear(), solver=StaticDriver(matrixmethod=ConjugateGradient(preconditioner=ILUPreconditioner(),tolerance=1e-13,max_iterations=1000)))
+OOF.Mesh.Apply_Field_Initializers_at_Time(mesh='microstructure:skeleton:mesh', time=0.0)
+OOF.Mesh.Solve(mesh='microstructure:skeleton:mesh', endtime=0.0, stepsize=0.099999999999999978)

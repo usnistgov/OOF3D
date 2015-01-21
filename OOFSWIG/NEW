@@ -1,0 +1,174 @@
+New Features in SWIG 1.1
+------------------------
+
+1.   %apply directive added to apply typemaps to new datatypes.
+
+2.   %clear directive added (opposite of %apply).
+
+3.   -co option added.   This will extract a file from the SWIG
+     library and place it in the current directory. For example :
+
+             swig -tcl -co wish.i
+
+4.   %checkout directive added.  Does the same thing as -co, but
+     can be placed in an interface file.
+
+5.   %echo directive added.  Allows an interface file to print a
+     warning/diagnostic message.
+
+6.   SWIG will now look in the SWIG library for files before
+     reporting 'file not found.'   This makes it extremely easy
+     to wrap library files.
+
+7.   Most of the examples have now been compiled under Windows NT.
+
+8.   pointer.i library added.  Provides high-level access to C pointers.
+
+9.   exception.i library added.  Provides language-independent
+     exception handling.
+
+10.  constraint.i library added.  Allows you to apply constraints to
+     various function arguments.
+
+11.  typemaps.i library added.  Provides a collection of common
+     typemaps for managing pointer arguments and other objects.
+
+12.  %new directive added.  This gives SWIG a hint that a function is
+     returning a new object.
+
+13.  "check" typemap added to allow constraint programming.
+
+New Features in SWIG 1.1b5
+--------------------------
+
+1.   Pointer type-checking performance for C++ derived classes has
+     been improved dramatically.
+
+2.   User-definable exception handling mechanism added using the
+     %except directive.
+
+3.   %import directive has been added to provide better handling
+     of multiple files.
+
+4.   -l command line option added to make it easier to build special
+     configurations.  For example :
+
+             swig -tcl -lwish.i interface.i
+
+     Builds a wish executable with the functions in interface.i
+
+5.   Better support for multi-dimensional arrays.
+
+6.   Improved typemap support for arrays.
+
+7.   Support for Activeware Perl for Win32 added.
+
+8.   Better support for Win95 and WinNT platforms added.  Tcl, Perl, and
+     Python modules should now all be compatible.
+
+9.   Preliminary work on a Macintosh port.
+
+10.  Tons of bug fixes.  See the CHANGES file.
+
+
+New Features in SWIG 1.1b3/1.1b4
+--------------------------------
+1.   Multiple inheritance supported.
+
+2.   Default/optional arguments now supported.
+
+3.   %inline %{ %} directive simplifies process of
+     adding helper functions.
+
+          %inline %{
+               int foobar() {
+                   printf("Hello world\n");
+               }
+          %}
+
+     is the same as the following :
+
+          %{
+               int foobar() {
+                   printf("Hello world\n");
+               }
+          %}
+          int foobar();
+
+4.   Typemap support added via the %typemap() directive.
+
+5.   Updated configuration script with more options.
+
+6.   Output arguments added (via typemaps).
+
+7.   Nested structure declarations now supported. For example :
+
+     struct foo {
+            int type;
+            union {
+                 int ivalue;
+                 float fvalue;
+                 double dvalue;
+            } rep;
+     };
+
+8.   %addmethods directive modified to work outside of a class
+     definition.  For example :
+
+     %addmethods ClassFoo {
+           int new_method() {
+                   ...
+           };
+           int new_method2() {
+                   ...
+           };
+     }
+
+     This will attach two new methods to the class ClassFoo when
+     encountered.
+
+        
+New Features in SWIG 1.1b2
+--------------------------
+
+1.   Documentation system has been completely rewritten
+     (see the file Doc/doc.ps)
+
+New Features in SWIG 1.1b1
+--------------------------
+
+1.   %{, %} block (which was required in SWIG 1.0) is now optional.
+     This means that interface files like this are legal :
+
+	%module foobar
+
+	int foo(double);
+	double bar(int);
+	... etc ...
+
+2.   New %extern directive provides better support for multiple
+     files.   Use it like %include.  For example :
+
+	%extern types.i
+
+     This directive only grabs type/class information out of a
+     file.   This is useful if you have a module that depends
+     on a common collection of types or baseclasses.
+
+3.   Perl5 shadow classes
+
+     (See the Examples/perl5 directory for more information.)
+
+4.   Any declaration declared as 'static' is now ignored.
+
+5.   C preprocessor directives have been improved and rewritten.
+     
+6.   Fixed a few parsing errors.
+
+7.   Parser is somewhat more memory efficient.
+
+8.   Some bugs in the Python module fixed.
+
+
+
+

@@ -1,0 +1,207 @@
+// -*- text -*-
+// $RCSfile: TODO,v $
+// $Revision: 1.1 $
+// $Author: reida $
+// $Date: 2001/12/03 22:15:30 $
+
+
+Encapsulate Field data (defined_index, etc) into a FieldData struct,
+and store a vector<FieldData*> in Mesh.  DONE
+
+Mesh destructor should delete all Elements, Nodes, and FieldDatas.
+
+Python should maintain a list of all Materials.
+
+After reading a data file, all new Materials should be
+cross_reference()d automatically.  DONE
+
+Each Material should have a bool xrefd flag which is set when
+cross_reference() is called, and unset when AddProperty() is called.
+NOT DONE, but shouldn't be... Python material operations take care of
+calling cross_reference when it's needed.
+
+Before cross referencing, any previous cross referencing must be
+forgotten.  This allows new Properties to be added to a previously
+used Material.  DONE
+
+When adding nodes *after* fields are defined, make sure that doflist
+is allocated correctly.  DONE
+
+Fix area calculation:  testbdy -n 3 -b -q  DONE
+
+Are DoF's being created at mapping nodes for superparametric elements?
+They shouldn't be...
+
+Optimization:  All elements compute their area by integrating. 
+Simple elements should override and do it more efficiently.
+--> comment moved to OPTIMIZATION file.
+
+Element repr strings not set for most (all?) elements.
+Should be constructable?
+
+Double-check about const-ifying nodes in the Element class,
+do it if possible.  Ditto for BCs.
+
+
+Fix the NodeIterator and FuncNodeIterator.  The NodeIterator used to
+loop over all of the nodes in the Mesh, but that was before FuncNodes
+were derived from Nodes.  Now there needs to be a FuncNodeIterator (or
+some other way of accessing all of the FuncNodes), but it's hard to do
+because the Mesh stores all of the Nodes in one list.
+
+Element::builder functions use dynamic_cast<>s to convert Node* to
+FuncNode*.  This is ugly.  Can it be done better?
+
+In ghostmesh, when creating real elements, is it faster to remove
+edges from the dictionary after they've been used?  That will keep the
+dictionary small, and maybe make it faster to use.  But there will be
+some overhead in removing edges.  
+  If so, the remaining edges in the dictionary will be the boundary
+of the system itself, i.e. all edges which are not shared.  Is this
+a useful object? 
+  ANSWER:  The two techniques are indistinguishable on the basis 
+of speed for up to 100x100 meshes, and I (AR) can't think of a 
+good use for the leftover data.  Currently set to delete edges
+when finished with them, ergo DONE.
+
+
+In the Node** global typemap (in oof.swg), once we're satisfied the
+scheme works, change PyList_GetItem to the faster, non-error-checked
+macro PyList_GET_ITEM.
+Anywhere else?  Yes, both of them "SetItem."  One occurrence in each
+of boundary.swg and elementreg.swg.  Grep says no occurrences of
+"GetItem" in any .swg file.
+DONE
+
+Boundary conditions:  There are an increasing number of places
+where boundary conditions should throw exceptions, but instead
+fail silently -- flux BC's do this in the Python callback, if
+they get the wrong thing, for instance.  Related:  FluxBC's
+don't check if their flux is active; Fixed/Float BC's don't
+check to see if their field is defined/active.  They should.
+
+Also, if you ask for a non-existent component of a nodal 
+equation, it dumps core -- this would be another good place
+for some kind of sensible exception.  Also for DOF. 
+Probably lots of other places too.
+
+Flux boundary conditions:  Can only specify the flux in the 
+lab frame, should be able to specify it in the normal frame also.
+  DONE.
+
+---
+
+CornerNodeIterator
+
+Should be able to add an integer to all ElementNodeIterators to get
+another ElementNodeIterator of the same subclass.  Should wrap around
+properly.  DONE
+
+---
+Output:
+
+  An efficient and structured output scheme could work 
+as follows.  The goal is to get the value of a field
+at a point.
+ 1: Python will call an edge or element method, with a field and
+    a list of indices which can be converted to MasterCoords
+    (or possibly Coords.)
+ 2: The element or edge will ask the field for its field iterator,
+    and use it to iterate over components.  For each component,
+    it will ask a field evaluation routine for the scalar value 
+    of that component at a given Coord or MasterCoord.
+ 3: The passed-back result will be a tuple of tuples.  The outermost
+    tuple will have one entry for each passed-in index.  These items
+    will be tuples of scalars representing each of the components 
+    of the evaluated field.  They are guaranteed to be in iterator order.
+ 4: If, later on, one of the Python Output classes needs to do 
+    something complicated (e.g. compute the local principal axes of a 
+    symmetric tensor field) it can use the field iterator to establish
+    a correspondence between the values in the tuple and any higher
+    order structure.  
+
+    New routines required:  A field evaluation routine that takes
+    an element, an integer component, and a MasterCoord or Coord,
+    and does the actual interpolation on the element.=======
+
+Done for edges.
+---
+
+Check that all operator='s return a reference, not a const reference.
+Same for operator*=, etc.   DONE
+
+
+Add ability to fix components of a field at individual nodes,
+to de-singularize matrices.  This will work like a fixed boundary 
+condition at the application level.  DONE
+
+
+Deal with NaN's in the preconditioners for singular matrices. 
+These arise from a divide-by-zero that occurs at construction-time,
+so it's a danger even if the preconditioner is not used. 
+  What is additionally confusing is that not every singular
+matrix gives rise to this behavior, e.g. two-floating-BC
+isoparametric meshes larger than 1 don't seem to show this
+problem.  Status:  Added to ilupre_double.C
+                   Added to icpre_double.C also, apparently on May 16.
+
+
+---
+
+The Mesh.node_iterator should use the same trick that
+Material.fetchProperty uses to return derived types to Python.  Then
+there'd be no need for ErrNotAFuncNode.  DONE via PythonExportable class.
+
+---
+
+In problem.py, why do we need to tell forcebalance_eqn about
+stress_flux in both the DivergenceEquation constructor and in
+uses_flux()?  WE DON'T.  FIXED
+
+---
+
+Is Node::displaced_position() archaic and vestigial?
+
+---
+
+In property class hierarchy, the "ThermalExpansion" property 
+currently does nothing with respect to orientation.  This is 
+because orientation is expected to be redone so that some
+materials can have local (or locally-varying?) orientations.
+Orientation-sensitivity should be added to this class at
+that time.
+
+Investigate mysterious slow-down in heterogeneous systems, 
+e.g. in testbodyforce.py, when the bottom boundary is fixed,
+the top only has the weight of the heavy material on it, there
+are no other BC's applied, you are using subparametric elements,
+and the ratio between the elastic constants of the heavy vs.
+massless material is more than 100:1, equilibration begins to
+require many thousands of iterations.
+  Discovery:  This is only true for the GMRES solver, which 
+seems to be quite sensitive to matrix quality.  BiCG can 
+solve the foregoing case, at 1000:1 heterogeneity for a 3x4
+mesh (the defaults for testbodyforce) in 32 iterations.
+These are the only two solvers tried so far.
+  Further info:  Additional experimentation indicates that the
+GMRES solver is generally poorly behaved for matrices which are
+column-permutations of symmetric matrices.  
+
+---
+  
+  Figure out how to handle exceptions raised inside of Python
+callbacks.  See the discussion in NOTES.  DONE.
+
+---
+
+Fix comments re elmdict in ghostmesh.py.  They describe an obsolete
+mechanism.
+
+---
+System stuff:
+ 
+  Move correct configure script to the OOF2 directory of the source
+tree before releasing the thing.  Modify configure script to fail
+if SWIG is not present, or alternatively, include SWIG-generated
+files in the "source" distribution, as we are already doing with
+glade.

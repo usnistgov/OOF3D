@@ -1,0 +1,419 @@
+# -*- python -*-
+# $RCSfile: piezoelectricity.spy,v $
+# $Revision: 1.8.8.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:46:01 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+from ooflib.SWIG.engine import rank3tensor
+from ooflib.SWIG.engine import symmmatrix
+from ooflib.common import utils
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.engine import problem
+from ooflib.engine import propertyregistration
+
+PropertyRegistration = propertyregistration.PropertyRegistration
+
+# The different types of piezoelectricity differ only in their dijk
+# parameters, which are all subclasses of Rank3Tensor.  Each of the
+# PropertyRegistrations can register AnisotropicPiezoElectricity
+# directly.
+        
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Triclinic:C1',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",319,
+    [rank3tensor.C1Rank3TensorParameter(
+            'dijk',
+            rank3tensor.C1Rank3Tensor(
+                d11=1, d12=1, d13=1, d14=1, d15=1, d16=1,
+                d21=1, d22=1, d23=1, d24=1, d25=1, d26=1,
+                d31=1, d32=1, d33=1, d34=1, d35=1, d36=1),
+            tip="Point group C1 (aka 1) piezoelectricity tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='C1 piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Monoclinic:C2',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",318,
+    [rank3tensor.C2Rank3TensorParameter(
+            'dijk',
+            rank3tensor.C2Rank3Tensor(d14=1, d16=1,
+                                      d21=1, d22=1, d23=1, d25=1, 
+                                      d34=1, d36=1),
+            tip="Point group C2 (aka 2) piezoelectricity tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='C2 piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Monoclinic:Cs',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",317,
+    [rank3tensor.CsRank3TensorParameter(
+            'dijk',
+            rank3tensor.CsRank3Tensor(d11=1, d12=1, d13=1, d15=1,
+                                      d24=1, d26=1,
+                                      d31=1, d32=1, d33=1, d35=1),
+            tip="Point group Cs (aka m) piezoelectricity tensor."     
+            # tip="point group m (with a single mirror plane) piezoelectricity tensor."
+            )],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='Cs piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Orthorhombic:D2',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",316,
+    [rank3tensor.D2Rank3TensorParameter(
+            'dijk',
+            rank3tensor.D2Rank3Tensor(d14=1.0, d25=1.0, d36=1.0),
+            tip="Point group D2 (aka 222) piezoelectricity tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='D2 piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Orthorhombic:C2v',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",315,
+    [rank3tensor.C2vRank3TensorParameter(
+            'dijk',
+            rank3tensor.C2vRank3Tensor(d15=1, d24=1, d31=1, d32=1, d33=1),
+            tip="Point group C2v (aka mm2) piezoelectricity tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='C2v piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Tetragonal:C4',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",314,
+    [rank3tensor.C4Rank3TensorParameter(
+            'dijk',
+            rank3tensor.C4Rank3Tensor(d14=1, d15=1, d31=1, d33=1),
+            tip="Point group C4 (aka 4) piezoelectricity tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='C4 piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Tetragonal:C4i',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",313,
+    [rank3tensor.C4iRank3TensorParameter(
+            'dijk',
+            rank3tensor.C4iRank3Tensor(d14=1, d15=1, d31=1, d36=1),
+            tip="Point group C4i (aka bar{4}) piezoelectric tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='C4i piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Tetragonal:D4',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",312,
+    [rank3tensor.D4Rank3TensorParameter(
+            'dijk',
+            rank3tensor.D4Rank3Tensor(d14=1),
+            tip="Point group D4 (aka 422) piezoelectric tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='C4i piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Tetragonal:C4v',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",311,
+    [rank3tensor.C4vRank3TensorParameter(
+            'dijk',
+            rank3tensor.C4vRank3Tensor(d15=1.0, d31=1.0, d33=1.0),
+            tip="Point group C4v (aka 4mm) piezoelectricity tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='C4v piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Tetragonal:D2d',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",310,
+    [rank3tensor.D2dRank3TensorParameter(
+            'dijk',
+            rank3tensor.D2dRank3Tensor(d14=1, d36=1),
+            tip="Point group D2d (aka bar{4}2m) piezoelectric tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='D2d piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Trigonal:C3',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",309,
+    [rank3tensor.C3Rank3TensorParameter(
+            'dijk',
+            rank3tensor.C3Rank3Tensor(d11=1, d14=1, d15=1, d22=1, d31=1, d33=1),
+            tip="Point group C3 (aka 3) piezoelectric tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='C3 piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Trigonal:D3',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",308,
+    [rank3tensor.D3Rank3TensorParameter(
+            'dijk',
+            rank3tensor.D3Rank3Tensor(d11=1, d14=1),
+            tip="Point group D3 (aka 32) piezoelectric tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='D3 piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Trigonal:C3v',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",307,
+    [rank3tensor.C3vRank3TensorParameter(
+            'dijk',
+            rank3tensor.C3vRank3Tensor(d15=1, d22=1, d31=1, d33=1),
+            tip="Point group C3v (aka 3m) piezoelectric tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='C3v piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Hexagonal:C6',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",306,
+    [rank3tensor.C6Rank3TensorParameter(
+            'dijk',
+            rank3tensor.C6Rank3Tensor(d14=1, d15=1.0, d31=1.0, d33=1.0),
+            tip="Point group C6 (aka 6) piezoelectric tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='C6 piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Hexagonal:D6i',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",305,
+    [rank3tensor.D6iRank3TensorParameter(
+            'dijk',
+            rank3tensor.D6iRank3Tensor(d11=1, d22=1),
+            tip="Point group D6i (aka bar{6}) piezoelectric tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='D6i piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Hexagonal:D6',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",304,
+    [rank3tensor.D6Rank3TensorParameter(
+            'dijk',
+            rank3tensor.D6Rank3Tensor(d14=1),
+            tip="Point group D6 (aka 622) piezoelectric tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='D6 piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Hexagonal:C6v',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",303,
+    [rank3tensor.C6vRank3TensorParameter(
+            'dijk',
+            rank3tensor.C6vRank3Tensor(d15=1.0, d31=1.0, d33=1.0),
+            tip="Point group C6v (aka 6mm) piezoelectric tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='C6v piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Hexagonal:D3h',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",302,
+    [rank3tensor.D3hRank3TensorParameter(
+            'dijk',
+            rank3tensor.D3hRank3Tensor(d22=1),
+            tip="Point group D3h (aka bar{6}m2) piezoelectric tensor.")],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='D3h piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PiezoElectricity:Cubic:Td',
+    AnisotropicPiezoElectricity,
+    "ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity",301,
+    [rank3tensor.TdRank3TensorParameter(
+            'dijk',
+            rank3tensor.TdRank3Tensor(d14=1),
+            tip="Point group Td (aka 23, bar{4}3m, or T) piezoelectric tensor.")
+     ],
+    outputs=["Strain", "Energy"],
+    propertyType="PiezoElectricity",
+    tip='Td piezoelectricity.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/piezoelectricity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization, problem.Stress],
+             fields=[problem.Displacement, problem.Voltage],
+             time_derivs=[0])

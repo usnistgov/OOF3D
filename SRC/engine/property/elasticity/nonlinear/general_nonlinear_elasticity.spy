@@ -1,0 +1,52 @@
+# -*- python -*-
+# $RCSfile: general_nonlinear_elasticity.spy,v $
+# $Revision: 1.8.8.2 $
+# $Author: langer $
+# $Date: 2013/11/08 20:45:35 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+from ooflib.common.IO import parameter
+from ooflib.engine import problem
+from ooflib.engine import propertyregistration
+
+
+PropertyRegistration = propertyregistration.PropertyRegistration
+
+
+## General Nonlinear Elasticity test property without the analytical derivative
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:TestGeneralNonlinearElasticityNoDeriv',
+    TestGeneralNonlinearElasticityNoDeriv,
+    "ooflib.SWIG.engine.property.elasticity.nonlinear.general_nonlinear_elasticity",201,
+    [parameter.IntParameter('testno', 1, tip="Test number for the general nonlinear elasticity property.")],
+    propertyType="Elasticity",
+    secret=True,
+    tip="General nonlinear elasticity with no derivative used for testing."
+    )
+
+reg.fluxInfo( fluxes=[problem.Stress], fields=[problem.Displacement],
+              time_derivs=[0], nonlinear=True )
+
+
+## General Nonlinear Elasticity test property
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:TestGeneralNonlinearElasticity',
+    TestGeneralNonlinearElasticity,
+    "ooflib.SWIG.engine.property.elasticity.nonlinear.general_nonlinear_elasticity",202,
+    [parameter.IntParameter('testno', 1, tip="Test number for the general nonlinear elasticity property.")],
+    propertyType="Elasticity",
+    secret=True,
+    tip="Test property for general nonlinear elasticity."
+    )
+
+reg.fluxInfo( fluxes=[problem.Stress], fields=[problem.Displacement],
+              time_derivs=[0], nonlinear=True )

@@ -1,0 +1,156 @@
+# -*- python -*-
+# $RCSfile: voxelfilter.spy,v $
+# $Revision: 1.1.2.9 $
+# $Author: langer $
+# $Date: 2014/11/25 22:08:30 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.SWIG.common import switchboard
+from ooflib.common import debug
+from ooflib.common import cregisteredclass
+from ooflib.common.IO import parameter
+from ooflib.common.IO import pixelgroupparam
+
+cregisteredclass.registerCClass(VoxelFilterPtr)
+
+# VoxelFilterRegistrations take an optional sbcallbacks arg, which is
+# a dictionary of (signal:callback) pairs.  When the switchboard sends
+# the given signal, the given callback is called, with a
+# "registration" kwarg which tells the callback which type of
+# VoxelFilterRegistration requested the callback.  The callback can
+# use getVoxelFilters() to find all the relevant VoxelFilters and do
+# something with them.
+
+class VoxelFilterRegistration(cregisteredclass.Registration):
+    def __init__(self, name, subclass, ordering, params=[],
+                 secret=0, sbcallbacks={}, **kwargs):
+        cregisteredclass.Registration.__init__(
+            self, name, VoxelFilterPtr, subclass, ordering, params=params,
+            secret=secret, **kwargs)
+        if sbcallbacks:
+            for (signal, callback) in sbcallbacks.items():
+                switchboard.requestCallback(signal, callback, registration=self)
+
+# Use the sbcallbacks kwarg for VoxelFilterRegistration to install
+# this function as a switchboard callback that indicates that a filter
+# has been changed and its layer needs to be redrawn.
+
+def filterModified(*args, **kwargs):
+    registration = kwargs['registration']
+    for philtre in getVoxelFilters():
+        if philtre.getRegistration().subclass is registration.subclass:
+            philtre.setModified()
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+VoxelFilterRegistration(
+    "All",
+    AllVoxels,
+    ordering=0,
+    tip="Don't exclude any voxels.")
+
+VoxelFilterRegistration(
+    "Active",
+    ActiveVoxels,
+    ordering=2,
+    sbcallbacks={"active area modified":filterModified},
+    tip="Include only voxels in the current Active Area.")
+
+VoxelFilterRegistration(
+    "Selected",
+    SelectedVoxels,
+    ordering=0.5,
+    tip="Include only the currently selected voxels.")
+
+VoxelFilterRegistration(
+    "Group",
+    VoxelGroupFilter,
+    ordering=1,
+    params=[
+        pixelgroupparam.PixelGroupParameter('group',
+                                            tip='Voxel group to be included.')
+        ],
+    tip="Include the voxels in the given group."
+    )
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Registrations for VoxelFilters that create boolean combinations of
+# other VoxelFilters.
+
+class VoxelFilterParam(parameter.RegisteredParameter):
+    def __init__(self, name, value=None, default=None, tip=None, auxData={}):
+        parameter.RegisteredParameter.__init__(self, name, VoxelFilterPtr,
+                                               value, default, tip, auxData)
+
+abparams = [
+    VoxelFilterParam('a', value=AllVoxels(), default=AllVoxels()),
+    VoxelFilterParam('b', value=AllVoxels(), default=AllVoxels())
+]
+
+VoxelFilterRegistration(
+    "Intersection",
+    VoxelIntersection,
+    ordering=100,
+    params=abparams,
+    tip="Include voxels that match both of the given conditions.")
+
+VoxelFilterRegistration(
+    "Union",
+    VoxelUnion,
+    ordering=101,
+    params=abparams,
+    tip="Include voxels that match either of the given conditions.")
+
+VoxelFilterRegistration(
+    "Xor",
+    VoxelXor,
+    ordering=102,
+    params=abparams,
+    tip="Include voxels that match exactly one of the given conditions.")
+
+VoxelFilterRegistration(
+    "Not",
+    VoxelNot,
+    ordering=103,
+    params=[
+        VoxelFilterParam('a', value=AllVoxels(), default=AllVoxels())],
+    tip="Include voxels that don't match the given condition.")
+    
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Some VoxelFilters need to catch some switchboard signals and
+# indicate that they've been modified.  The filter's registration
+# should have a dictionary of signal:callback pairs.
+
+## Do we need this?  Isn't it redundant with the callback
+## requested in VoxelFilterRegistration?
+
+# def genericSwitchboardCallback(*args, **kwargs):
+#     filters = getVoxelFilters()
+#     signal = kwargs['signal']
+#     for philtre in filters:
+#         reg = philtre.getRegistration()
+#         try:
+#             callbacks = reg.sbcallbacks
+#         except AttributeError:
+#             pass
+#         else:
+#             try:
+#                 cb = callbacks[signal]
+#             except KeyError:
+#                 pass
+#             else:
+#                 cb(philtre)
+    
+# switchboard.requestCallback("active area modified",
+#                             genericSwitchboardCallback,
+#                             signal="active area modified")

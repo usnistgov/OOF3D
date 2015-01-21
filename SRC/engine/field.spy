@@ -1,0 +1,68 @@
+# -*- python -*-
+# $RCSfile: field.spy,v $
+# $Revision: 1.7.4.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:44:23 $
+
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+import types
+from ooflib.common import debug
+from ooflib.common import utils
+from ooflib.SWIG.engine import fieldindex
+
+FieldPtr.__repr__ = FieldPtr.name
+CompoundFieldPtr.__repr__ = CompoundFieldPtr.name
+ScalarFieldPtr.__repr__ = ScalarFieldPtr.name
+TwoVectorFieldPtr.__repr__ = TwoVectorFieldPtr.name
+ThreeVectorFieldPtr.__repr__ = ThreeVectorFieldPtr.name
+SymmetricTensorFieldPtr.__repr__ = SymmetricTensorFieldPtr.name
+
+#-----------------
+
+def _Field___cmp__(self, other):
+    if not isinstance(other, FieldPtr): return -1
+    if self.objectid() < other.objectid(): return -1
+    if self.objectid() > other.objectid(): return 1
+    return 0
+
+FieldPtr.__cmp__ = _Field___cmp__
+
+def _Field___hash__(self):
+    return self.objectid()
+
+FieldPtr.__hash__ = _Field___hash__
+
+################
+
+_allFields = {}                 # dict of Fields keyed by name
+
+# allCompoundFields is like _allFields, but it only includes
+# CompoundFields.  It's an OrderedDict because it's used to list
+# Fields in the GUI, where we want the order to be predictable.
+# allCompoundFields is used externally.
+allCompoundFields = utils.OrderedDict()
+
+def newField(fld):
+    _allFields[fld.name()] = fld
+
+def newCompoundField(fld):
+    newField(fld)
+    allCompoundFields[fld.name()] = fld
+
+def getField(name):
+    return _allFields[name]
+
+def allFields():
+    return _allFields.values()
+
+from ooflib.SWIG.engine.freedom import DegreeOfFreedomPtr
+
+

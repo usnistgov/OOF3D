@@ -1,0 +1,219 @@
+// -*- text -*-
+// $RCSfile: README,v $
+// $Revision: 1.5.18.1 $
+// $Author: langer $
+// $Date: 2014/09/27 22:34:14 $
+
+/* This software was produced by NIST, an agency of the U.S. government,
+ * and by statute is not subject to copyright in the United States.
+ * Recipients of this software assume all responsibilities associated
+ * with its operation, modification and maintenance. However, to
+ * facilitate maintenance we ask that before distributing modified
+ * versions of this software, you first contact the authors at
+ * oof_manager@nist.gov. 
+ */
+
+INSTALLATION
+
+In this directory, type
+
+python setup.py install [--prefix=directory]
+
+The optional --prefix argument specifies where to install the
+gtklogger module, if you don't want to use the standard location.
+The installer will create a directory called
+   prefix/lib/python2.x/site-packages/gtklogger
+which will contain all of the gtklogger files.  If you're installing
+in a non-standard location, you'll want to add
+prefix/lib/python2.x/site-packages to your PYTHONPATH environment
+variable.
+
+Alternatively, you can skip the installation entirely and just put the
+current directory in your PYTHONPATH.
+
+OVERVIEW
+
+These routines provide GUI logging and replay for PyGTK, at the gtk
+signal level.  The idea is to be able to reproduce the way in which a
+GUI drives its underlying code, without bothering to reproduce the way
+in which X11 drives the GUI.  Recording X11 events would produce large
+unreadable log files, which would break if the GUI were redesigned.
+The philosophy here is to log only those actions that actually have an
+effect (namely, those that produce gtk signals that the program is
+connected to) and to assign those actions to *named* widgets.  If the
+GUI changes, but the names stay the same, there's at least a chance
+that a previously recorded script will still work properly.
+
+Because it's not possible (yet) to redefine pygtk class methods, it's
+necessary to make a bunch of changes to pygtk code in order to use the
+logging routines.
+
+All calls to GObject.connect for a signal which is emitted as a direct
+result of a user's action should be replaced by calls to
+gtklogger.connect.  Unlike GObject.connect, which returns an integer
+id, gtklogger.connect returns an object which has 'block' and
+'unblock' methods.  These simplify the handling of signals, somewhat.
+It is important to ensure that manipulating widgets from within the
+program does not result in logged signals.  This code
+    entry = gtk.Entry()
+    gtklogger.connect(entry, 'changed', callback)
+    entry.set_text("hello, world!")
+will create a log file entry unrelated to the user's actions.  This
+code should be used instead:
+    entry = gtk.Entry()
+    signal = gtklogger.connect(entry, 'changed', callback)
+    signal.block()
+    entry.set_text("hello, world!")
+    signal.unblock()
+(The paranoid will use a try/finally block to ensure that
+signal.unblock was called in all circumstances.)
+
+All gtk.Widgets that emit signals that need to be replayed have to
+have names assigned by gtklogger.setWidgetName.  (These names are
+*not* the same as those set by gtk.Widget.set_name.)  All top level
+widgets (eg, gtk.Windows) need to have names set by
+gtklogger.newTopLevelWidget.  Intermediate Widgets, such as gtk.Paneds
+and gtk.Boxes that don't emit signals but contain Widgets that do, can
+have names but aren't required to do so.  The only requirement is that
+the sequence of names, going from a top level widget through
+intermediate widgets to a signalling widget, uniquely specifies the
+signalling widget.
+
+GObjects that aren't Widgets but nonetheless emit signals must be
+"adopted" by an associated Widget, using gtklogger.adoptGObject.  The
+arguments to adoptGObject specify how to extract the GObject from its
+adoptive parent.  The parent must be named by gtklogger.setWidgetName
+or gtklogger.newTopLevelWidget.  See the comments for the adoptGObject
+code, below, for more details.
+
+Instead of assigning submenus with gtk.MenuItem.set_submenu, use
+gtklogger.set_submenu(menuitem, submenu).  The submenu will behave as
+if it's been adopted by its parent menu.
+
+All gtk.Dialogs should be replaced by gtklogger.Dialogs.  Other
+dialogs, such as gtk.FileChooserDialog, should not be used.  Dialogs
+should be named with gtklogger.newTopLevelWidget.
+
+Recording Log Files
+
+To start recording a log file, call gtklogger.start(filename).  Call
+gtklogger.stop() to stop recording.  The optional 'debugLevel'
+argument to start() is an integer with the following meanings:
+  0   No debugging output
+  1   Reports signals which can't be logged because the widget has no
+      handler, the handler doesn't handle the signal, or the widget has no
+      name.
+  2   Echoes log lines to the terminal. (Default)
+  3   Reports signals which can't be logged because the widget doesn't have
+      a top-level parent.  This is usually *not* an error.
+  4   Reports more things that are probably only useful when debugging
+      the logging code itself.
+(Each debug level includes all the output from the previous level.)
+
+Replaying Log Files
+
+To play back a log file, call gtklogger.replay(filename) and then
+start the gtk main loop, if it's not already running.  Optional
+arguments to gtklogger.replay are:
+  beginCB:    callback function to be called just after the replay
+              mechanism is installed on the gobject main loop, but
+              before any log lines are run.
+  finishCB:   callback function to be called when done replaying
+  debugLevel: see comments for start(), above.
+  threaded:   must be set to True if the program uses threads
+  exceptHook: function to be called when an exception is raised
+              while replaying.  The arguments to the function are
+              the exception and the current line number from the logfile.
+              The function should return True if it has
+              handled the exception, and False if the exception
+              should be propagated further.  In either case, no
+              more lines will be executed from the log file.  Note
+              that the function will be called from within a
+              gtk.threads_enter(), gtk.threads_leave() pair if
+              threaded==True.
+  rerecord:   See below
+  checkpoints: Boolean, indicating if checkpoints should be respected
+               (default is True).
+
+Instrumenting Log Files
+
+Sometimes it's sufficient to see if a log file just plays to
+completion without raising an exception, but often it's necessary to
+run additional tests while replaying a file.  Log files are passed
+line by line to the Python interpreter, so it's possible to insert
+single lines of Python code into them.  In particular, it's possible
+to insert "assert" statements to make sure that GUI operations have
+the desired effects.
+
+If an assert statement needs to execute externally defined functions,
+there are two ways of making those functions available.  One is for
+the log file to simply import the module containing the function.  The
+other is for the program defining the function to call
+gtklogger.replayDefine(name, obj), which will insert the given object
+into the replay namespace, using the given name.
+
+Long lines in the log file may be continued on the next line by ending
+the first line with a backslash.  This is necessary even within
+parentheses, because the logfile parser is not a full Python
+interpreter.  Because the parser reads only one line at a time, it's
+not possible to include anything that requires indented blocks of
+Python code.  Such code should instead be moved to a function in a
+module that's imported by the log file.
+
+Comments and blank lines are allowed in log files.
+
+Checkpoints
+
+Log file lines are executed sequentially by idle callbacks in the gtk
+main loop.  If a line has side effects that occur via other idle
+callbacks, or are executed in a separate thread, it's possible that
+the *next* line of the log file may be executed before all of the side
+effects have occured.  Sometimes it's important to wait for the side
+effects.  For example, if one line of the log file simulates a button
+press, which initiates a long calculation that fills an array *on a
+separate thread*, and the next line of the log file performs a
+calculation on that array, the playback mechanism must know that it
+can't run the second line until the thread has finished.  It's not
+sufficient simply to wait for the first line to return, because it
+will return long before the subthread finishes.
+
+In such cases, put a call to gtklogger.checkpoint() in your code at
+the point where the long calculation *finishes*.  The argument to
+checkpoint() is a comment string of your choosing.  When recording a
+log file, the call to checkpoint() inserts a line "checkpoint
+<comment>" in the file.  When replaying, this line is not passed to
+the Python interpreter, but instead instructs the replay mechanism to
+wait until the checkpoint() function is called, with the same comment
+string.  In effect, the replay script pauses until the program catches
+up to it.
+
+Note that the same checkpoint comment can occur more than once.  The
+script will not proceed past the nth occurrence of a checkpoint line
+unless there have been at least n corresponding calls to the
+checkpoint() function.  Also note that it's ok if a replaying script
+reaches checkpoints in a different order than they were reached while
+recording, as can happen in threaded programs.
+
+The function checkpoint_count() can be useful when debugging problems
+with checkpoints, especially if you're trying to add checkpoint lines
+to a script that was recorded before you realized that you needed
+checkpoint() calls in the program.  (checkpoint_count has been made
+more or less obsolete by the re-recording capability, however.)
+
+Re-recording Log Files
+
+If you've added checkpoints to a program *after* recording and
+instrumenting a log file, it's a pain to insert the checkpoints into
+the log file manually, or to re-record the log and instrument it
+again.  You can instead replay the log file and pass the "rerecord"
+keyword argument to gtklogger.replay().  The value of the argument is
+the name of a new log file.  After the old log has been run, the new
+file will contain all of the old log lines, instrumentation, and
+comments, but the checkpoints will be updated.  When re-recording,
+"assert" statements in the old log are *not* executed -- they're just
+copied into the new log file.  This is because the old assert
+statements might fail since the checkpoints in the old file are
+incorrect.  It may be necessary to manually move the assert statements
+in the new file if they're incorrectly positioned with respect to the
+new checkpoints.
+

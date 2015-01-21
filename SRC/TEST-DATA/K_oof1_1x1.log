@@ -1,0 +1,4 @@
+initialize uniform nx = 1
+initialize uniform ny = 1
+initialize uniform hexagonal gray=0.5 planestrain=false orientation=0 c11=1 c12=0.5 c13=0 c33=1 c44=0 alpha11=1 alpha33=1
+output grid matrix Kii

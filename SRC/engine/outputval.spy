@@ -1,0 +1,184 @@
+# -*- python -*-
+# $RCSfile: outputval.spy,v $
+# $Revision: 1.8.4.5 $
+# $Author: langer $
+# $Date: 2014/11/05 16:54:26 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+from ooflib.common import debug
+import types
+
+_labels = ["X-component", "Y-component", "Z-component"]
+
+# Header and representation data for OutputValPtr classes ---
+# used by analysis machinery to format the output.
+
+# Return appropriate subset of "X", "Y", "Z" if size is less than
+# three, otherwise return numeric component indices starting from 1.
+def _VectorOutputValPtr_label_list(self):
+    s = self.size()
+    if s <= len(_labels):
+        return _labels[:s]
+    else:
+        return [`x`+'-component' for x in range(1,s+1)]
+
+VectorOutputValPtr.label_list = _VectorOutputValPtr_label_list
+
+def _ScalarOutputValPtr_label_list(self):
+    return ["Value"]
+
+ScalarOutputValPtr.label_list = _ScalarOutputValPtr_label_list
+
+#################################################################
+
+# Hack that allows VectorOutputVal to be indexed by an int as well as
+# an IndexP.
+
+_getitem = VectorOutputValPtr.__getitem__
+
+def _VectorOutputValPtr_getitem_(self, i):
+    if type(i) is types.IntType:
+        if i >= self.size():
+            raise IndexError
+        return self.getItemInt(i)
+    return _getitem(self, i)
+
+
+VectorOutputValPtr.__getitem__ = _VectorOutputValPtr_getitem_
+
+#################################################################
+
+# Arithmetic operations for the OutputValPtr subclasses.  These must
+# create a new object which Python has ownership of, otherwise data
+# can get lost. 
+
+def _VectorOutputValPtr___add__(self, other):
+    res = self.clone()
+    res._add(other)
+    return res
+
+VectorOutputValPtr.__add__ = _VectorOutputValPtr___add__
+VectorOutputValPtr.__radd__ = _VectorOutputValPtr___add__
+
+
+def _VectorOutputValPtr___sub__(self, other):
+    res = self.clone()
+    res._sub(other)
+    return res
+
+VectorOutputValPtr.__sub__ = _VectorOutputValPtr___sub__
+
+def _ScalarOutputValPtr___add__(self, other):
+    res = ScalarOutputVal(self.value())
+    res._add(other)
+    return res
+
+ScalarOutputValPtr.__add__ = _ScalarOutputValPtr___add__
+ScalarOutputValPtr.__radd__ = _ScalarOutputValPtr___add__
+
+
+def _ScalarOutputValPtr___sub__(self, other):
+    res = ScalarOutputVal(self.value())
+    res._sub(other)
+    return res
+
+ScalarOutputValPtr.__sub__ = _ScalarOutputValPtr___sub__
+
+def _OutputVal___pow__(self, power):
+    bozo = self.clone()
+    bozo.component_pow(power)
+    return bozo
+
+OutputValPtr.__pow__ = _OutputVal___pow__
+
+
+# Multiplication and division only defined for scalar operands, of course.
+
+def _VectorOutputValPtr___mul__(self, other):
+    res = self.clone()
+    res._mul(other)
+    return res
+
+VectorOutputValPtr.__mul__ = _VectorOutputValPtr___mul__
+VectorOutputValPtr.__rmul__ = _VectorOutputValPtr___mul__
+
+
+def _VectorOutputValPtr___div__(self, other):
+    res = self.clone()
+    res._mul(1.0/other)
+    return res
+
+VectorOutputValPtr.__div__ = _VectorOutputValPtr___div__
+
+
+def _ScalarOutputValPtr___mul__(self, other):
+    res = ScalarOutputVal(self.value())
+    res._mul(other)
+    return res
+
+ScalarOutputValPtr.__mul__ = _ScalarOutputValPtr___mul__
+ScalarOutputValPtr.__rmul__ = _ScalarOutputValPtr___mul__
+
+
+def _ScalarOutputValPtr___div__(self, other):
+    res = ScalarOutputVal(self.value())
+    res._mul(1.0/other)
+    return res
+
+ScalarOutputValPtr.__div__ = _ScalarOutputValPtr___div__
+
+# We need rdiv as well as div in order to compute 1/ScalarOutputVal.
+def _ScalarOutputValPtr__rdiv__(self, other):
+    return other * (1.0/self.value())
+
+ScalarOutputValPtr.__rdiv__ = _ScalarOutputValPtr__rdiv__
+    
+
+##############################
+
+def _OutputVal__pow__(self, x):
+    clone = self.clone()
+    clone.component_pow(x)
+    return clone
+
+OutputValPtr.__pow__ = _OutputVal__pow__
+
+##############################
+
+def _OutputValue___repr__(self):
+    return `self.valuePtr()`
+
+OutputValuePtr.__repr__ = _OutputValue___repr__
+
+
+def _OutputValue__add__(self):
+    res = OutputValue(self)
+    res._add(other)
+    return res
+
+OutputValuePtr.__add__ = _OutputValue__add__
+
+def _OutputValue__mul__(self,other):
+    res = OutputValue(self)
+    res._mul(other)
+    return res
+
+OutputValuePtr.__mul__ = _OutputValue__mul__
+
+##############################
+
+from ooflib.common.IO import parameter
+
+## OutputValParameter is (probably) just used when specifying inputs
+## for Outputs.
+
+class OutputValParameter(parameter.Parameter):
+    types=(OutputValPtr,)

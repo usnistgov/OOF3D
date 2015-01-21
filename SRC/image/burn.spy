@@ -1,0 +1,98 @@
+# -*- python -*-
+# $RCSfile: burn.spy,v $
+# $Revision: 1.3.18.4 $
+# $Author: langer $
+# $Date: 2012/09/05 18:57:15 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+from ooflib.SWIG.common import config
+from ooflib.SWIG.common.IO import vtkutils
+from ooflib.SWIG.image import pixelselectioncourieri
+from ooflib.common import debug
+from ooflib.common import enum
+from ooflib.common import pixelselectionmethod
+from ooflib.common import primitives
+from ooflib.common import utils
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+
+
+class ColorNorm(enum.EnumClass(
+    ('L1', 'The sum of the absolute values of the RGB differences.'),
+    ('L2',
+     'The square root of the sum of the squares of the RGB differences.'))):
+    tip="Ways of measuring the difference between two colors."
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/image/enum/colornorm.xml')
+    
+L1 = ColorNorm('L1')
+L2 = ColorNorm('L2')
+utils.OOFdefine('ColorNorm', ColorNorm)
+
+BurnSelection = pixelselectioncourieri.BurnSelection
+
+class Burn(pixelselectionmethod.SelectionMethod):
+    def __init__(self, local_flammability, global_flammability,
+                 color_space_norm,
+                 next_nearest):
+        self.local_flammability = local_flammability
+        self.global_flammability = global_flammability
+        self.color_space_norm = color_space_norm
+        self.next_nearest = next_nearest
+    def select(self, immidge, gfxwindow, points, view, selector):
+        ms = immidge.getMicrostructure()
+        if config.dimension() == 2:
+            startpt = ms.pixelFromPoint(points[0])
+        else:                   # 3D
+            cell = gfxwindow.findClickedCell (immidge, points[0], view)
+            if cell is None:
+                return
+            startcoord = vtkutils.cell2coord(cell)
+            startpt = ms.pixelFromPoint(startcoord)
+        if immidge.getSelectionContext().getObject().checkpixel(startpt):
+            b = BasicBurner(self.local_flammability, self.global_flammability,
+                            self.color_space_norm==L2, self.next_nearest)
+            selector(BurnSelection(ms, b, immidge.getObject(), startpt))
+
+
+burnSelectorRegistration = pixelselectionmethod.PixelSelectionRegistration(
+    'Burn',
+    Burn,
+    ordering=1.0,
+    params=[
+    parameter.FloatRangeParameter('local_flammability',
+                                  range=(0, 1, 0.001), value=0.1,
+                                  tip='Maximum difference in neighboring pixel values across which a burn will extend.'),
+    parameter.FloatRangeParameter('global_flammability',
+                                  range=(0, 1, 0.001), value=0.2,
+                                  tip='Difference from initial pixel value beyond which a burn will not spread.'),
+    enum.EnumParameter('color_space_norm', ColorNorm, value=L1,
+                       tip="How to compute the difference between two colors in RGB space."),
+    parameter.BooleanParameter('next_nearest', value=0,
+                               tip="Burn next-nearest neighbors?")],
+    events=['up'],
+    whoclasses=['Image'],
+    tip="Select a contiguous set of similar pixels, using a forest fire algorithm.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/image/reg/burn.xml'))
+
+
+##class RGBBurn(pixelselectionmethod.SelectionMethod):
+##    def __init__(self, red_flammability, green_flammability, blue_flammability):
+##        self.red_flammability = red_flammability
+##        self.green_flammability = green_flammability
+##        self.blue_flammability = blue_flammability
+##    def select(self, immidge, points, selector):
+##        debug.fmsg('Not implemented!')
+
+##Registration('RGBBurn', pixelselect.SelectionMethod, RGBBurn, ordering=1.1,
+##             params=[Parameter('red_flammability', IntType, 10),
+##                     Parameter('green_flammability', IntType, 10),
+##                     Parameter('blue_flammability', IntType, 10)],
+##             events=['up'],
+##             tip="Select a contiguous set of similar pixels, using a slightly different forest fire algorithm.")

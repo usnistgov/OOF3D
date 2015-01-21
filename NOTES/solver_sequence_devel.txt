@@ -1,0 +1,202 @@
+
+How the solution is computed in the "devel" case...
+
+In this case, there may be subproblems, and time-dependence.
+
+Parameters of the "Solve" menu are:
+  - the mesh 
+  - the matrixdriver, subclass of solverdriver.Driver
+  - the timedriver, subclass of timedrivers.TimeDriver. 
+
+The matrixdriver:
+
+  solverdriver.Driver objects solve an Ax=b linear algebra problem.  The
+NewtonDriver class creates a NewtonIterationManager at construction
+time to communicate with the progress bar.  The LinearDriver class
+does not have a manager, it just does a straight solution.  Both
+classes build "core" objects when their driver_apply method is called.
+  
+  Driver 
+    LinearDriver 
+    NewtonDriver
+
+  SolverIterationManager
+    NewtonIterationManager
+
+  Drivers have as parameters a "method", which is contained in a
+LinearSolverParameter.  The "method" is used to actually solve the
+thing.
+
+  LinearSolver classes are things like GMRES, CG, etc., and they take a
+preconditioner argument, along with a variety of control parameters
+(Krylov dimension, etc.).  This code is not written by us.
+
+
+The timedriver:
+
+  TimeDriver
+    Null
+    Evolver
+
+The Null timedriver sets its steppermethod to "NullScheme" in the
+init.  It has an "apply" method, which takes a solverdriver and a
+meshcontext, and it simply calls solverdriver.apply, and then some
+book-keeping and clean-up routines.
+
+The Evolver takes more complicated arguments, it requires a
+steppermethod argument and a timeadaptermethod argument.  These are
+subclasses of steppingscheme.TimeDependentPtr and
+timestepadapter.TimeStepAdapterPtr, respectively.  This class's
+"apply" method iterates the timeadaptermethod, repeatedly calling
+apply and update, until the iterate call returns false, presumably.
+
+Stepping schemes are mostly C objects, with some overrides in
+steppingscheme.spy.
+
+The class hierarchy is:
+
+SteppingScheme
+  NullScheme
+  TimeDependent
+    QuasiStatic
+    Kinetic
+
+NullScheme does not appear to be registered, but it's the one that's
+explicitly instanced by the Null time-driver, so it is used.
+
+The QuasiStatic stepping scheme does not appear to have any dynamics,
+it just increments the local time and computes successive equilibria. 
+
+The Kinetic stepping scheme takes a FiniteDifferenceBase object as a
+parameter, which sets the value of the "theta" parameter, which sets
+the degree of implicitness of the solution.  This actually has some
+dynamics (though not second-order-in-time inertial-type dynamics).
+
+FiniteDifferenceBase
+  Euler
+  CrankNicolson
+  Galerkin
+  BackwardDifferences
+  Liniger
+  Custom
+
+... all of which differ by their values of a single parameter, which
+is the "theta" for the kinetic method, controlling the degree of
+implicitness of the differencing scheme.
+
+
+TimeStepAdapter objects are also mostly C++.
+
+TimeStepAdapter
+  NullAdapter
+
+This object controls whether or not the evolving computation continues
+or is stopped.  It takes as parameters a tolerance, a delta-t, and
+some book-keeping data.  The only instance, the NullAdapter, does not
+do any adaptation, so it's difficult to assess what the correct
+functionality is supposed to be.
+
+There is also a TimeStepAdapterManager class, which has comments
+indicating that it can accept or reject solutions.  It has functions
+"accept" and "reject", which write DOFs into the mesh, either the new
+ones, or the saved original ones, depending.
+
+There is also a ProblemManager object, which is the thing which makes
+lists of subproblems, and decides how to solve them.  It has a
+corresponding problemmanagermenu, which is apparently not used.
+
+There is no capability for 2nd-order-in-time dynamics.
+
+
+Also note:
+
+make_linear_system in femesh builds the three matrices.  This is a
+potential problem for constraint equations.  Maybe the size of c and m
+can be adjusted without adding contents?
+
+*********************************************************
+
+Construction of the conductivity matrix:
+
+  femesh.make_linear_system iterates over elements, calls:
+    element->make_linear_system(this, stiffness, c_matrix, m_matrix,
+                                      *body_force_rhs)
+    element checks for a material, and if it finds one, calls:
+      mat->make_linear_system(mesh, this, stiffness, cmtx, mmtx, rhs)
+     
+Material::make_linear_system:
+
+  Does all the usual static stuff, then...
+  set_time_derivatives(mesh, el, c_matrix, m_matrix)
+
+  For each equation in the mesh:
+    For each of its time-derivatives:
+      For each property contributing to the time-derivative:
+        Compute the integration order.
+        For each gauss-point of the current element, call:
+          td->make_matrix(mesh, el, gpt, c_matrix, m_matrix)
+          Make-matrix checks matrices, and calls:
+            make_conductivity_matrix(mesh, el, gpt, c_matrix)
+            
+TimeDerivative::make_conductivity_matrix:
+  mesh, element, gauss-point, matrix:
+  For each node:
+    For each component of the time derivative:
+      Compute the row of the global stiffness matrix.
+      Mark it as in-plane
+      For each field:
+        If the field is defined, active, and in-plane:
+          For each node:
+            For each component of the field:
+              Compute the product of shapefunctions times the weight
+                          times fetch_property (the conductance).
+              Add it to the rowno, dof entry of c_matrix.
+              Mark the column of c_matrix by planarity/group.
+
+      
+Apparent errors: 
+---------------- 
+
+  TimeDerivative::make_matrix doesn't do anything different to build the
+m_matrix, it just calls the same make_conductivity_matrix with
+m_matrix instead of c_matrix.  This will interrogate the same
+properties for the same time derivative objects, and make m_matrix a
+copy of c_matrix.  This presumably reflects the undeveloped nature of
+the second-time-derivative stuff (for which, for example, there is no
+steppingscheme).
+
+  The c_matrix's row-group and column-group entries will be wrong -- the
+nature of the construction process is that out-of-plane rows and
+columns are not processed, so the grouping calls in
+TimeDerivative::make_conductivity_matrix will only set the -1 values
+for the in-plane parts.  The out-of-plane parts will, by default,
+remain all zero, incorrectly indicating a single giant block at node
+0.  But the c_matrix, m_matrix, and master stiffness matrix's blocking
+data should all be the same anyways, so probably the right thing to do
+is to move the blocking stuff out of the StiffnessMatrix class, and/or
+enhance the StiffnessMatrix class so that it contains all three
+matrices and one copy of the blocking data.
+
+
+Additional thoughts:
+--------------------
+
+  We may want to get rid of the AutoMatrix class -- it recently got in
+the way of modifying the K-matrix construction in the kinetic stepping
+scheme, where in-place modification of CSRmatrix entries was
+desirable.  
+
+  Independently of the AutoMatrix issue, it may be that in-place
+modification of CSRmatrix entries is avoidable, or alternatively, that
+the use of a CSRmatrix at the K-construction step of the solution
+process is not required.
+
+  Do we want expression templates to do things with matrices?
+Useful for eliminating temporaries in complex expressions.
+
+
+A Day In the Life of the A-Matrix:
+----------------------------------
+
+  Instrumenting the automatrix reveals that the A-matrix is never
+copied or assigned.  

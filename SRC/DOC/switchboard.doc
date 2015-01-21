@@ -1,0 +1,73 @@
+-*- text -*-
+$RCSfile: switchboard.doc,v $
+$Revision: 1.1 $
+$Author: langer $
+$Date: 2002/11/12 19:47:57 $
+
+The switchboard allows parts of the program to tell other parts that
+something of importance has happened, without having to know that
+those other parts even exist.  One part of the program sends a message
+through the switchboard, and other parts that have subscribed to that
+message receive it, and can take appropriate actions.
+
+In particular, the non-gui parts of the program use the switchboard to
+tell the gui that something has changed, and that the gui needs to
+update itself.  The non-gui can't just call the gui directly, since
+the gui might not be running.  But there's no problem with issuing a
+switchboard message even if nobody's listening to it.
+
+The calls are:
+
+switchboard.notify(message, args, ...)
+  message is the message being sent, and args are extra arguments
+  being sent along with it.  This is how a message is sent.
+
+switchboard.requestCallback(message, callback)
+  message is the message being sent, and callback is a function to be
+  invoked when the message is received.  This is how a subscription is
+  registered.  The arguments to the callback function are the
+  additional arguments that were passed to notify().
+
+  switchboard.requestCallback returns a _SwitchboardCallback object.
+
+switchboard.removeCallback(callback)
+  Unsubscribes to a message.  The argument is the _SwitchboardCallback
+  object returned by requestCallback().
+
+The _SwitchboardCallback object itself has two public methods, block()
+and unblock(), which can be used to temporarily suppress and
+unsuppress the callback.  The calls are cumulative -- a callback that
+has been blocked x times requires x unblocks before it is
+unsuppressed.
+
+Messages:
+
+The only restriction on messages is that they are hashable objects,
+because they're stored in a dictionary.  In the simplest case,
+messages are plain strings.  However in many cases it's useful to tie
+messages to particular instances of objects, and to use an (object,
+string) tuple.
+
+Since messages allow communication between arbitrary parts of the
+program, the set of messages in use is really global data.  When
+adding a new message, it's important that it not conflict with
+existing messages.  Therefore, all messages should be listed here.
+
+This listing is one per line, so that it can be sorted easily.  To
+learn the arguments to the callback, search the code for the notify()
+call for the message.
+
+"new active area":
+"new pixels for active area":
+"redraw": graphics windows should check to see if they need to be redrawn
+"open graphics window": a new graphics window has been opened
+"close graphics window": a graphics window has been closed
+(GhostGfxWindow, 'layers changed'): graphics window layers have changed
+"layereditor close":
+"new layer to edit": layereditor is starting a new layer
+"layereditor ready": layereditor has a complete layer defined
+("new output layer component", "Where"): 
+("new output layer component", "What"): 
+("new output layer component", "How"): 
+("new output layer component", "Who"): 
+"new output":

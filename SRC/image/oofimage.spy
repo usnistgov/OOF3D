@@ -1,0 +1,98 @@
+# -*- python -*-
+# $RCSfile: oofimage.spy,v $
+# $Revision: 1.12.10.3 $
+# $Author: fyc $
+# $Date: 2014/07/31 17:59:23 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.SWIG.common import ooferror
+from ooflib.common import parallel_enable
+from ooflib.common import primitives
+from ooflib.image.imagecontext import *
+import os
+
+def readImage(filename, **kwargs):
+    # 'height' and 'width' keywords are optional.  If neither is
+    # given, the height and width are the image size in pixels.  If
+    # just one is given, the other is determined from the aspect
+    # ratio.  If both are given, the image may be distorted.
+
+    # Colons in image names are disallowed, because we use them as
+    # separators in the labeltree.
+    basename = os.path.basename(filename).replace(':','.')
+    
+    image = OOFImage(basename, filename)
+    # Set physical size of image
+    pixelsize = image.sizeInPixels()    # iPoint
+    given_height = kwargs.has_key('height')
+    given_width = kwargs.has_key('width')
+    if not (given_height or given_width):
+        width = float(pixelsize.x)
+        height = float(pixelsize.y)
+    elif given_width and given_height:
+        width = float(kwargs['width'])
+        height = float(kwargs['height'])
+    else:
+        aspect = float(pixelsize.x)/pixelsize.y
+        if given_width:
+            width = float(kwargs['width'])
+            height = width/aspect
+        elif given_height:
+            height = float(kwargs['height'])
+            width = height*aspect
+    image.setSize(primitives.Point(width, height))
+
+    return image
+
+def _getTimeStamp_optional_args(self, *args):
+    return self._getTimeStamp()
+OOFImagePtr.getTimeStamp = _getTimeStamp_optional_args
+
+def getImage(imagename):
+    ## returns the actual image
+    ## imagename = microstructurename:image_name OR imagename = [microstructurename, image_name]
+    return imageContexts[imagename].getObject()
+
+def pushModification(imagename, image):
+    imageContexts[imagename].pushModification(image)
+
+def undoModification(imagename):
+    imageContexts[imagename].undoModification()
+
+def redoModification(imagename):
+    imageContexts[imagename].redoModification()
+
+def undoable(imagename):
+    return imageContexts[imagename].undoable()
+
+def redoable(imagename):
+    return imageContexts[imagename].redoable()
+
+
+ooferror.registerErrorClass(ImageMagickError)
+
+
+# Super-cautious destructor for SWIG'd OOFImage class.
+# Works around a SWIG bug.
+
+def oofimage_ptr_del(self, destruct=oofimagec.delete_OOFImage):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+
+OOFImagePtr.__del__ = oofimage_ptr_del
+
+
+# Parallel image send/recv
+if parallel_enable.enabled():
+    def Send_Image(image, destinations, tag=0):
+        _Send_Image(image, destinations, tag)
+
+    def Recv_Image(origin, tag=0):
+        return _Recv_Image(origin, tag)

@@ -1,0 +1,26 @@
+multiline_wrap.c
+
+
+
+1.  Section 1
+=============
+
+foo 
+        [ returns int  ]
+        This is a Multiline comment
+
+bar 
+        [ returns double  ]
+        This is a multiline block comment 
+
+2.  Section 2
+=============
+
+grok 
+        [ returns int  ]
+        This is a multiline comment before a declaration
+
+frob { double  } 
+        [ returns int  ]
+        This is another multiline block comment before a declaration 
+

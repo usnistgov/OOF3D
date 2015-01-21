@@ -1,0 +1,293 @@
+// -*- text -*-
+// $RCSfile: interfaces.txt,v $
+// $Revision: 1.12 $
+// $Author: rlua $
+// $Date: 2007/12/14 16:13:00 $
+-------------------------------------------------------------------------
+Dec. 14, 2007
+Regression tests that would fail if 'top','bottom','left','right' are defined
+on the Interfaces page instead of the Skeleton Boundaries page are indicated
+with an asterisk (*):
+
+    "fundamental_test",
+*    "microstructure_test",
+    "image_test",
+    "pixel_test",
+    "activearea_test",
+*    "microstructure_extra_test",
+*    "skeleton_basic_test",
+    "skeleton_select_test",
+*    "skeleton_bdy_test",
+*    "skeleton_periodic_test",
+*    "skeleton_periodic_bdy_test"
+    "skeleton_selectionmod_test",
+*    "skeleton_extra_test",
+    "material_property_test",
+    "pixel_extra_test",
+*    "mesh_test",
+    "subproblem_test",
+*    "mesh_modify_test",
+*    "solver_test",
+*    "boundary_condition_test",
+*    "output_test",
+*    "subproblem_test_extra",
+    "r3tensorrotationbug",
+    "interface_test"
+
+-------------------------------------------------------------------------
+Dec. 7, 2007
+Define a virtual material or pixelgroup called "<North>","<South>","<East>","<West>".
+Also add a parameter called "<Any>".
+     To define the usual 'top' boundary, one could specify an interface between
+"<North>" and "<Any>", or specify an interface around "<North>".
+
+-------------------------------------------------------------------------
+Dec. 6, 2007
+Four of us got together in the computer/arcade room.
+1. Create a mesh boundary for each interface definition.
+2. 'top', 'bottom', 'left', 'right' are default interface names instead of skeleton boundaries.
+   Which raises the question, how to define the 'top' boundary as an interface?
+   Possibilities: (1) 'top', etc. are created automatically and are immutable/undeletable.
+   (2) Create a new InterfaceDef that specifies the 'top' boundary etc. If 'top' is deleted, user
+   can choose to create another one later.
+3. When assigning/deleting interface materials, add a skeleton parameter. If skeleton=<all>,
+   list the skeleton boundary names that are common to all the skeletons in the microstructure.
+4. Undecided on a more elegent rule in specifying the interface material for an edge that belongs
+   to several interfaces/boundaries.
+
+-------------------------------------------------------------------------
+November 29, 2007
+Description of the status of interface construction in OOF2.
+
+1. Basic effect of defining an interface or boundary:
+If it is defined along interior edges of a mesh,
+the mesh gets split along the interface, in the sense that any two elements that
+share an edge belonging to the interface do not have nodes in common (except for the
+end points of a connected piece of the interface, if the endpoint does not terminate
+on the external edge of the mesh.).
+
+*To turn this splitting effect off, open skeleton.py, jump to the femesh method,
+and set split_interface to False.
+
+Interface materials may be assigned to interfaces and skeleton boundaries.
+When a mesh is created, an Edgement is created for each edge belonging to an
+interface or skeleton boundary.
+Each edgement stores a list of names of interfaces and skeleton boundaries.
+*The last interface or skeleton boundary in the list determines the material
+and orientation of the Edgement.* (This may not be an obvious choice.
+If the last interface in the list does not have a material, but the others
+in the list do, then the Edgement will not have a material assigned to it.
+This may be undesirable.) The orientation of an Edgement refers to which
+'bulk' element is on the 'left' side of the Edgement's edge.
+
+Because there is no longer a 1-1 correspondence between skeleton nodes
+and realmesh nodes, the meshindex attribute of a skeleton node has been removed.
+(The meshindex carried by skeleton elements is still there of course.)
+
+2. There is an option to create a skeleton boundary based on an interface definition.
+This skeleton boundary is independent of the interface. Since the interface may
+be composed of disconnected edges, the skeleton boundary in this case
+(and only in this case) is allowed to be non-sequenceable.
+The "Add segments" modifier is not allowed for such boundaries.
+Once a boundary is tagged as not sequenceable, subsequent modifications
+will not change this tag for non-sequenceability.
+
+3. The surface tension property is equivalent to applying a Force BC
+   on the end-nodes of each edge. The direction of the force is along the edge.
+   This is correct for small-deformations.
+   The stiffness matrix contributions are made in Property::end_element.
+
+4. What triggers a mesh rebuild (if at least one interface is defined on the microstructure):
+   (1) Interfaces get added or removed.
+   (2) Bulk materials get deleted.
+   (3) Bulk materials get assigned to pixels.
+   (4) Pixel groups get destroyed or changed.
+   Modifications to skeleton boundaries do *not* trigger a rebuild of the mesh.
+
+5. Thread-safety may be an issue, particularly in interfaceplugin.py.
+
+6. Continuity and JumpBC are implemented using FloatBC on pairs of 'partner' nodes
+   in the Edgement. The sense or direction of the continuity constraints are
+   (value on 'right' side) - (value on 'left' side) = jumpvalue.
+   The hidden BCs are constructed in femesh.spy.
+
+7. EdgementDisplay is provided for inspecting edgements. These only display
+   one side (the 'left') of the interface or boundary (this can be seen when the mesh is deformed).
+   Note that edgements are created automatically for normal edge boundaries
+   (e.g. 'top', 'bottom', 'left', 'right').
+
+8. It would have been easy to put buttons in the Skeleton Boundaries Page that lets one
+   assign interface materials to boundaries, but I decided to let the user assign materials
+   to skeleton boundaries (as well as to interfaces) via the Materials Page instead.
+
+9. The MS plugin handling the list of interfaces and material assignments, as well as the
+   registered classes that implement the interface definitions, are found in interfaceplugin.py.
+
+10. Other important files: femesh.spy, skeleton.py,
+		           interfacemenu.py, interfaceparameters.py,
+			   interfacePage.py, interfacewidget.py,
+			   TEST/interface_test.py ...
+
+-------------------------------------------------------------------------
+September 26, 2007
+
+1. Skeleton boundaries CAN be created from Interfaces,
+   even if the interface is non-sequenceable.
+2. Interface names must be unique from Skeleton boundary names.
+3. When specifying a field discontinuity BC, the input is a list of
+   Interfaces and Edge boundaries derived from Skeleton boundaries.
+
+-------------------------------------------------------------------------
+September 13, 2007
+
+1. Skel Boundaries automatically created from interfaces
+2. If such a boundary is not contiguous don't let certain types
+   of boundary conditions be applied.
+3. Interface materials can be applied on the interface page,
+   material page, and skeleton bdy page.
+4. All boundaries are split in the mesh, but implicit floating bcs
+   tie nodes together by default.
+5. Materials assigned to interfaces in the skeleton bdy page are *not* propagated
+   to the underlying interface, because the skeleton bdy page refers to just one skeleton.
+   At mesh construction time, will have to check skeleton bdy, then interface,
+   when looking for interface material.
+6. Cohesion, friction, surface tension are interface material properties.
+6a. Discontinuities, etc are boundary conditions.
+7. Discontinuities specified relative to the left (or right) side of a split node pair,
+   so fixed bc can intersect with split node.
+
+--------------------------------------------------------------------------
+July 6, 2007
+
+Hi Rhonald --
+
+Here's a summary of things from our meeting today -- you said you  
+wanted something in writing to remind you (or was it to have evidence  
+in case we change our minds again later?)
+
+1.  When a mesh is created, all 1D interfaces in the skeleton result  
+in split nodes in the mesh.
+
+2.  All split nodes have implicit floating boundary conditions that  
+enforce field continuity across the interface.  These boundary  
+conditions are hidden from the user, just like the ones that  
+implement periodicity.
+
+3.  Field discontinuities are imposed by Dirichlet, Neumann, or  
+floating boundary conditions on the interface.  Explicitly imposed  
+boundary conditions trump the implicit ones.
+
+4.  Surface tension is an interface Property, not a boundary  
+condition.  There will be other interface properties, eventually.
+
+5.  We may be able to use the current user interface page layout, or  
+we may want to add a new page that handles both interfacial  
+properties and boundary conditions.
+
+5a. If we're using the current page layout, when assigning an  
+interfacial property or boundary condition to an interface, the  
+widget for choosing the interface should have a pull-down list of  
+existing named interfaces, and a button for creating a new named  
+interface.  New named interfaces can be created by specifying the  
+pixel groups and materials on either side, or by boolean operations  
+on other groups, etc.  How can named interfaces be edited, renamed,  
+or destroyed?
+
+I remembered one more item from our discussion -- there's no need to  
+automatically subdivide interfaces.  If two interfaces intersect and  
+the user wants to apply different boundary conditions on either side  
+of the intersection, then the user should define new skeleton  
+boundaries on either side.  If the user wants to have different  
+conditions on either side of a discontinuity (for example, to have  
+different surface tensions on either side of a crack that is  
+following a material boundary), it ought to be possible to devise an  
+interfacial property that does the job.
+
+  -- Steve
+
+----------------------------------------------------------------------------
+(Old)
+
+Materials can be added to pixels in a Microstructure, as usual, or to
+MaterialInterfaces.  MaterialInterfaces are specified by giving the
+names of the two Materials on either side.  The interfaces are
+directed by saying which Material is on the right.  (This is done with
+Materials, not with pixel groups, because there's no guarantee that
+Skeleton edges correspond to pixel group boundaries.)
+
+When specifying the Materials for an interface, it's possible to use
+regular expressions.  The code will be smart enough NOT to make a
+interface between two identical materials.  If both Materials are
+given by "*", then boundaries are created between all adjacent
+elements that have different materials.
+
+It's possible that one of the Materials is 'None', so that properties
+may be assigned to the exterior borders.
+
+If regular expressions are too complicated for the user to deal with,
+we can define MaterialSets, which are constructed by boolean
+operations on Materials:
+
+   Material name [is | contains| begins with | ends with] <string>
+   Material contains Property whose name [is | contains | etc] <string>
+
+Then MaterialInterfaces can be created from two Materials *or*
+MaterialSets.
+
+InterfacialProperties can be added to any Material.  The
+InterfacialProperties will only be used if the Material is explicitly
+added to a MaterialInterface  in the Microstructure.  (Should it be
+used for every exterior edge of the Material?)
+
+One dimensional elements are created when a Skeleton creates a Mesh.
+They live only in the Mesh, and not in the Skeleton.  If a
+MaterialInterface is defined for the two Materials in the Elements on
+either side of a Segment, and if a Material has been assigned to that
+MaterialInterface, then that Segment is made into a one dimensional
+element.
+
+If the MaterialInterfaces in a Microstructure change, then the Mesh
+will be out of date.  It should be possible to add and remove one
+dimensional elements pretty easily without having to recreate the
+whole mesh.  If wouldn't be that hard to recreate the mesh and copy
+the fields over, though.
+
+There also needs to be a mechanism for assigning Materials to
+SkeletonBoundaries.  This will allow cracks to be introduced, for
+example.
+
+----------------
+
+One-D Elements:
+
+Should *always* contain split nodes, even if they're not necessary.
+It will probably be easier to add constraint equations saying that the
+fields are the same on both halves of a split node, rather than to
+figure out when split nodes are necessary.
+
+Because each 1D element adds nodes, it also has to add equations.
+Sometimes these come from its Properties.  If the Properties don't
+imply enough equations, new equations have to be created
+automatically.  These should just impose field continuity.
+
+----------------
+
+Properties:
+
+Do we need/want a separate class for InterfacialProperties, or do we
+just add virtual functions to the existing Property class?  Do we add
+an 'interfacial=1' flag to the PropertyRegistration?  I don't know.
+
+The fluxmatrix function for InterfacialProperties will have to
+somehow know the Materials of the Elements on either side.  This can
+be done during the cross_reference step.
+
+SurfaceTension:
+  Adds a contribution to the stress, proportional to the 1-d strain.
+  Could depend on the orientation of the Materials on either side.
+
+(Dis)Continuity:
+  Fields can have a specified jump, possibly zero.
+
+InducedFlux:  (not the best name?)
+  Flux depends on field discontinuity or value.

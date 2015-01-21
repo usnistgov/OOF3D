@@ -1,0 +1,208 @@
+A few words about SWIG's implementation in general:
+---------------------------------------------------
+
+SWIG is written entirely in C++.  While I have always been a little
+skeptical of the portability of C++, I have made every attempt to make
+SWIG as portable as possible.  Here are a few things to note when
+tracking down problems :
+
+     1.  SWIG is written in C++, but only makes use of
+         fairly standard features--classes, single inheritance,
+         virtual functions, and a little operator overloading.
+
+     2.  Templates and multiple inheritance are not used.
+
+     3.  SWIG uses only ANSI C libraries (ie. there are no
+         C++ specific libraries or STL functions used by SWIG).
+
+Think of SWIG as an object oriented ANSI C program... (this
+may or may not be a good thing depending on your point of view)
+
+The SWIG compilation consists of two parts.  First, the parser and
+internal code is compiled into a library file called 'libswig.a'.  The
+individual language modules are compiled separately and linked with
+libswig.a to form the executable 'swig'.
+
+The following file suffixes are used :
+
+	.cxx           - C++ source code
+        .h             - Header files (you knew this)
+        .y             - YACC parser file
+        .i             - SWIG interface files
+        .swg           - SWIG configuration files (used by various SWIG language
+                         modules).
+
+Problems Building SWIG
+----------------------
+
+1.   When linking, I get an error about missing libraries for
+     libg++.a or libstc++.a. 
+
+     -	These libraries are installed with the libg++ package
+        (which is separate from g++). 
+
+     -  I don't think SWIG needs these libraries, but sometimes
+        g++ is hardwired to look for them anyway.
+
+     -  Try using a different C++ compiler (if available)
+
+     -  Try the following 'hack' (after linking fails the first time)
+
+		ln -s libswig.a ./libg++.a
+		ln -s libswig.a ./libstc++.a
+		make
+
+2.   I get an error message about a missing 'alloca' function.
+
+     -  Put -DNEED_ALLOC in the compiler flags.  You'll need to
+        edit the file SWIG/Makefile to do this.
+
+3.   The compilation pukes on the file parser.y (or parser.cxx).   
+
+     -  This file must be processed by bison, yacc, or byacc.  Given the
+        choice, use bison.  	
+
+     -  Some (fortunately rare) C++ compilers don't seem to work
+        at all--especially very old versions of g++.  It may be
+        necessary to upgrade (at last resort).
+
+Problems running SWIG
+---------------------
+1.   SWIG core dumps immediately.  This problem has been reported on
+     some older Linux systems and may be due to a buggy libc or g++
+     installation.
+
+2.   SWIG reports errors about not being able to find certain files
+     and reports a possible installation problem.  This is often
+     caused by forgetting to do a 'make install'
+
+3.   SWIG no longer works on old files or reports weird errors.  
+     If installing SWIG 1.1 over a previous version of SWIG,
+     make sure you do 'make install' before using it.   Mixing of
+     SWIG versions is not recommended and can lead to both
+     compiler and runtime errors.
+
+Problems building SWIG examples or modules.
+------------------------------------------
+
+All SWIG examples rely on the file 'Makefile.template' in the top
+level directory.  The configure script is sometimes only partially
+successful at setting it up, so you may need to edit it by hand to
+solve the following problems.
+
+To test the Makefile.template file, do a 'make testbuild' in
+the top level directory.  This will attempt to build a variety
+of extensions.  Error messages will be left in the 'Tests/Build'
+directory for you to look at and make corrections (if necessary).
+
+1.   When I build a C++ module for dynamic loading, I get a linking
+     error reporting missing libraries for lg++, lstdc++, or lgcc.
+
+     -  Check the definition of CPP_DLLIBS in Makefile.template
+     -  Try changing the link process to 'c++ -shared'.
+
+2.   I can't build a static version of tclsh 
+
+     -  Make sure Makefile.template is looking at the right version of Tcl
+     -  Check the Tcl header files at your site.   If they are named something
+        like 'tcl7.4h' instead of 'tcl.h', pass the following options to SWIG
+
+		-htcl tcl7.4.h -htk tk4.0.h
+
+3.   I can't build a static version of wish
+
+     -  Make sure you are using the correct versions of Tcl and Tk.
+     -  Check to make sure the link line looks like this :
+
+		-ltk -ltcl -lX11
+
+	Order is important here
+
+     -  Some machines, may require socket and dynamic loading libraries
+        to be linked as well. For example :
+
+                -ltk -ltcl -lX11 -lsocket -lnsl -ldl -lm 
+		
+4.   I can't build a Tcl7.5 dynamic module
+
+     -  Dynamic loading is not supported on all machines
+     -  Look at the man page on your compiler and linker to see how
+        shared libraries are created.   SWIG's configure script tries
+        to guess, but it's not always successful.  Here are the
+        dynamic loading procedures for a few different machines :
+
+	Solaris :    ld -G file.o -o file.so
+        Irix    :    ld -shared file.o -o file.so
+        Linux   :    gcc -fpic file.c -c             # Compile C code like this
+                     gcc -shared file.o -o file.so   # Link using gcc
+
+    
+5.   I can't build a C++ Tcl7.5. dynamic module
+
+     -  Dynamic loading and C++ is particularly tricky
+     -  Do not use static constructors.   They won't work.
+     -  You may need to link with additional libraries.   These libraries
+        are specified by the CPP_DLLIBS variable in 'Makefile.template'
+
+6.   I can't build a static version of Perl5 with C code
+
+     -  Perl header files use a 'bool' datatype which is not supported
+        by some C compilers.  This problem can be overcome by digging
+        around in the header files abit.   A brute force solution is to
+	add something like -Dbool=char to the compile line.
+
+     -  Perl5.003 seems to build much better than previous versions.
+        You may want to upgrade if you haven't already.
+
+     -  In order to compile, SWIG needs to locate libperl.a.  Usually
+        this is found in a directory like this :
+
+   	      /usr/lib/perl5/powerpc-linux/5.003/CORE
+
+7.   I can't build any version of Perl5 with C++
+
+     -  Some C++ compilers (most notably g++) hate line 69 in 'proto.h'.
+	To fix this problem, compile with '-Dexplict='.
+
+     -  Note : C++ seems to work alot better with Perl 5.003 than older versions
+   
+8.   I can't build a static version of Python
+
+     -  Make sure Makefile.template points to the correct version of
+        the Python library
+
+     -  SWIG uses the same set of Python modules as your installed copy.
+        If you are using tkinter, you will need to add the appropriate
+        Tcl/Tk/X11 libraries to the link line.
+
+     -  The file embed.i is used to provide code for performing a
+        static rebuild.  This only works with Python1.4.   If you
+        are using Python1.3, simply make a symlink from embed.i to
+        embed13.i.   The file embed14.i is the embedding module for
+        Python 1.4
+
+9.   I can't make a static C++ extension to Python
+
+     -  Python's main program isn't very C++ friendly.  SWIG uses 
+        the code in embed.i (which I think works), but you may
+ 	have to edit it by hand if it doesn't compile.
+
+10.  No matter what I do, C++ extensions don't work.
+
+     -  Take a look at the file Doc/c++-dynamic.   Read the man pages
+        on your linker/C++ compiler.  The SWIG mailing list archives 
+        often have messages about this.  Check them out at :
+
+              http://bifrost.lanl.gov/~dmb/Archive/archives.html
+
+        As a last resort, you can pray to the C++ gods....
+
+
+        
+
+
+
+
+
+
+

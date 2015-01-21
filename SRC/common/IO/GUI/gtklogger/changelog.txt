@@ -1,0 +1,22 @@
+# -*- text -*-
+# $RCSfile: changelog.txt,v $
+# $Revision: 1.1 $
+# $Author: langer $
+# $Date: 2007/09/20 15:23:38 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@ctcms.nist.gov. 
+
+	  
+1.1 The logger for gtk.ComboBox now records the string stored in
+    current value, if possible.  If underlying model for the ComboBox
+    isn't storing a string, then the logger records an integer row
+    number (which is the old behavior).  The new method is more robust
+    when new entries are added.
+
+1.0 Initial released version.

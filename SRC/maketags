@@ -1,0 +1,18 @@
+#!/bin/bash 
+#etags --c++ `find . -name "*.[Ch]"`
+rm -f TAGS
+FINDPREFIX=""
+getopts "S" optset
+if [ $? != 0 ]; then
+  # No options specified, prune SWIG directory.
+  FINDPREFIX="-path ./SWIG -prune -o "
+elif [ $optset == "?" ]; then
+  # Wrong option found.
+  echo "Usage: maketags [-S]; -S includes SWIG subdirectory."
+  exit 4 
+fi
+# If -S was found, leave FINDPREFIX alone, find will do SWIG subdirectory.
+# The "-print" for each category are apparently required in conjunction 
+# with the "prune" operation, otherwise 'find' just prints all the ones 
+# that return true, including the prune operation itself.
+find . $FINDPREFIX -name "*.[Ch]" -print -o -name "*.spy" -print -o -name "*.py" -print -o -name "*.swg" -print | xargs etags -a

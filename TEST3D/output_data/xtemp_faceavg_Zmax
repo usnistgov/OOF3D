@@ -1,0 +1,9 @@
+# Operation: Average and Deviation
+# Output: Temperature
+# Domain: FaceBoundaryDomain(boundary='Zmax',side='BACK')
+# Sampling: ContinuumSampleSet(order=2)
+# Columns:
+# 1. time
+# 2. average of Temperature
+# 3. standard deviation of Temperature
+0.0, 5.0, 2.88675134595

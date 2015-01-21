@@ -1,0 +1,2 @@
+--sc 09000_bug_materialwrite/create_ms.log --da 09000_bug_materialwrite/overwrite.mat --sc=09000_bug_materialwrite/redraw_trigger.log
+

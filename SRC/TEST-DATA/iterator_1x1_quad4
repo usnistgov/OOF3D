@@ -1,0 +1,56 @@
+--- All Nodes
+Node(0,0,0)
+Node(1,1,0)
+Node(3,1,1)
+Node(2,0,1)
+ --- offset by 1
+Node(1,1,0)
+Node(3,1,1)
+Node(2,0,1)
+ --- offset and reset
+Node(1,1,0)
+Node(3,1,1)
+Node(2,0,1)
+Node(0,0,0)
+--- Map Nodes
+Node(0,0,0)
+Node(1,1,0)
+Node(3,1,1)
+Node(2,0,1)
+ --- offset by 1
+Node(1,1,0)
+Node(3,1,1)
+Node(2,0,1)
+ --- offset and reset
+Node(1,1,0)
+Node(3,1,1)
+Node(2,0,1)
+Node(0,0,0)
+--- Func Nodes
+FuncNode(0,0,0)
+FuncNode(1,1,0)
+FuncNode(3,1,1)
+FuncNode(2,0,1)
+ --- offset by 1
+FuncNode(1,1,0)
+FuncNode(3,1,1)
+FuncNode(2,0,1)
+ --- offset and reset
+FuncNode(1,1,0)
+FuncNode(3,1,1)
+FuncNode(2,0,1)
+FuncNode(0,0,0)
+--- Corner Nodes
+Node(0,0,0)
+Node(1,1,0)
+Node(3,1,1)
+Node(2,0,1)
+ --- offset by 1
+Node(1,1,0)
+Node(3,1,1)
+Node(2,0,1)
+ --- offset and reset
+Node(1,1,0)
+Node(3,1,1)
+Node(2,0,1)
+Node(0,0,0)

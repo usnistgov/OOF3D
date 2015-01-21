@@ -1,0 +1,118 @@
+#######################################################################
+# $Header: /users/langer/FE/CVSoof/OOF2/OOFSWIG/Modules/Makefile.in,v 1.2.2.2 2014/06/27 20:28:05 langer Exp $
+# Simplified Wrapper and Interface Generator (SWIG)
+# 
+# Makefile for version 1.0 Final
+# Dave Beazley
+# August 1, 1996
+#
+# This makefile is now mostly constructed by ./configure.
+#
+# $Log: Makefile.in,v $
+# Revision 1.2.2.2  2014/06/27 20:28:05  langer
+# Copied Lulu's modified swig into OOFSWIG, and changed setup.py so that
+# it automatically builds and uses it.  The --with-swig option to setup.py
+# is still respected, if it's given, but it shouldn't be necessary any more.
+#
+# Changed make_dist so that the swig output files aren't included in
+# the distribution, and removed the --skip-swig option from setup.py.
+# Since everybody has swig now, it's no longer necessary.  This will
+# make the build take a little bit longer, but users won't have to
+# combine the build and install steps anymore.
+#
+# Removed the bit in pyexp.swg that suppressed the warnings that the old
+# swig code generated.  This means that if you use --with-swig, you'll
+# probably get lots of warnings.
+#
+# Added some explicit (char*) casts in PyObject_CallMethod calls in
+# swig typemaps, to get rid of warnings in swig generated code.
+# For unknown reasons, PyObject_CallMethod has char * arguments instead
+# of const char* arguments.   Other similar Python API calls use const.
+#
+# Revision 1.2  2014/06/26 16:04:43  lck
+# *** empty log message ***
+#
+# Revision 1.2  1999/08/17 03:31:30  beazley
+# Minor cleanup. Removed Perl4
+#
+# Revision 1.1.1.1  1999/02/28 02:00:50  beazley
+# Swig1.1
+#
+# Revision 1.1  1996/08/12 01:55:02  dmb
+# Initial revision
+#
+#######################################################################
+
+#.KEEP_STATE:
+
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+# Set your C++ compiler here.   g++ works on most machines,
+# but you might have to change it depending on your installation.
+#
+CC      = @CXX@
+
+#
+# Set the prefix below to indicate where you want SWIG to install its
+# files.   Normally this is /usr/local
+# 
+
+prefix     = @prefix@
+
+# Location of the SWIG library.  Is normally put in /usr/local/lib/swig_lib
+# The SWIG library contains configuration files and library modules
+# so you should install it someplace where it can be easily accessed.
+
+SWIG_LIB = $(prefix)/lib/swig_lib
+
+########################################################################
+# Normally, you shouldn't have to change anything below this point     #
+########################################################################
+
+WRAPOBJS = swigmain.o  python.o pycpp.o  debug.o
+WRAPSRCS = swigmain.cxx  python.cxx pycpp.cxx  debug.cxx
+WRAPHEADERS = ../Include/swig.h  python.h  debug.h wrap.h
+
+TARGET  = ../swig.x
+CFLAGS  = @CFLAGS@ -DSWIG_LIB='"$(SWIG_LIB)"' -DSWIG_CC='"$(CC)"' @DEFS@
+INCLUDE = -I../Include -I../SWIG
+LIBS    = -L.. -lswig
+SHELL  = /bin/sh
+
+#
+#
+#
+# Rules for creation of a .o file from .cxx
+.SUFFIXES: .cxx
+.cxx.o: 
+	$(CC) $(INCLUDE) $(CFLAGS) -c -o $*.o $<
+
+all:    $(TARGET) 
+
+$(TARGET): $(WRAPOBJS) $(WRAPHEADERS) ../libswig.a
+	$(CC) $(INCLUDE) $(WRAPOBJS) $(LIBS) -o $(TARGET)
+
+swigmain.o: swigmain.cxx 
+python.o: python.cxx 
+pycpp.o: pycpp.cxx
+
+Makefile:	$(srcdir)/Makefile.in ../config.status
+		(cd ..; CONFIG_FILES=Modules/Makefile $(SHELL) config.status)
+
+.PRECIOUS:	Makefile
+
+clean::
+	rm -f *.o $(TARGET) 
+
+nuke::
+	rm -f Makefile *~ #* core a.out 
+
+wc::	
+	wc $(WRAPSRCS) *.h 
+
+# I use this to build final releases from the RCS directory.   Probably
+# not very useful to anyone else...
+co::
+	co $(WRAPSRCS) $(WRAPHEADERS) $(PARSER)

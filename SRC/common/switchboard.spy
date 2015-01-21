@@ -1,0 +1,290 @@
+# -*- python -*-
+# $RCSfile: switchboard.spy,v $
+# $Revision: 1.7.12.3 $
+# $Author: langer $
+# $Date: 2014/09/27 22:33:56 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+"""
+
+Class to handle communication between various pieces of OOF.  Classes
+can send the switchboard a message when they've done something important,
+and can request callbacks when the Switchboard receives a message.
+
+"""
+
+from ooflib.SWIG.common import lock
+from ooflib.common import debug
+from ooflib.common import subthread
+from ooflib.common import thread_enable
+from ooflib.common import mainthread
+
+import sys
+import types
+
+
+class _SwitchboardCallbackBase:
+    def __init__(self, msgname, func, caller, args, kwargs):
+        self.msgname = msgname
+        self.caller = caller            # code line that requested the callback
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+        self.blocked = 0
+#     def __del__(self):
+#         debug.fmsg("Deleting", self.__class__.__name__, self.func)
+    def block(self):
+        self.blocked += 1
+    def unblock(self):
+        self.blocked -= 1
+    def is_blocked(self):
+        return self.blocked > 0
+    def perform(self, *args, **kwargs):
+        pass
+    def __repr__(self):
+        return 'SwitchboardCallbackBase(%s, %s)' % (`self.msgname`, `self.func`)
+
+
+# Transfer control to the main thread.  
+class _SwitchboardCallback (_SwitchboardCallbackBase):
+    def __init__(self, msgname, func, caller, args, kwargs):
+        _SwitchboardCallbackBase.__init__(self, msgname, func, caller,
+                                          args, kwargs)
+    def perform(self, *args, **kwargs):
+        if not self.is_blocked():  # If block is zero or negative, do the call.
+            kwargs.update(self.kwargs)      # is this safe?
+            if switchboard.verbose:
+                debug.fmsg("mainthread execution requested by", self.caller)
+            mainthread.runBlock(self.func, self.args + args, kwargs)
+            
+    def __repr__(self):
+        return 'SwitchboardCallback(%s, %s)' % (`self.msgname`, `self.func`)
+
+
+# Do the callback immediately on the local thread, unless the local
+# thread is the main thread.  This is the default.
+class _SwitchboardCallbackThread (_SwitchboardCallbackBase):
+    def __init__(self, msgname, func, caller, args, kwargs):
+        _SwitchboardCallbackBase.__init__(self, msgname, func, caller,
+                                          args, kwargs)
+    
+    def perform(self, *args, **kwargs):
+        if not self.is_blocked():  # If block is zero or negative, do the call.
+            kwargs.update(self.kwargs)      # is this safe?
+            if switchboard.verbose:
+                debug.fmsg("subthread execution requested by", self.caller)
+            if not mainthread.mainthread():
+                self.func(*(self.args + args), **kwargs)
+            else:
+                subthread.execute(self.func, self.args+args, kwargs)
+            
+    def __repr__(self):
+        return 'SwitchboardCallbackThread(%s, %s)' % (`self.msgname`,
+                                                      `self.func`)
+
+class _SwitchboardTaskList:
+    def __init__(self, msgname, verbose):
+        self.callbacks = []
+        self.msgname = msgname
+        # if verbose:
+        #     print >> sys.stderr, "_SwitchboardTaskList.ctor: getting lock"
+        self.lock = lock.SLock()
+        # if verbose:
+        #     print >> sys.stderr, "_SwitchboardTaskList.ctor: got lock"
+
+    def registerCallback(self, func, caller, args, kwargs, child_thread,
+                         verbose):
+        # if verbose:
+        #     debug.fmsg(func)
+        if not child_thread:
+            cb = _SwitchboardCallback(self.msgname, func, caller, args, kwargs)
+        else:
+            cb = _SwitchboardCallbackThread(self.msgname, func, caller,
+                                            args, kwargs)
+        # if verbose:
+        #     print >> sys.stderr, "_SwitchboardTaskList.registerCallback: waiting for lock"
+        self.lock.acquire()
+        # if verbose:
+        #     print >> sys.stderr, "_SwitchboardTaskList.registerCallback: got lock"
+        try:
+            self.callbacks.append(cb)
+        finally:
+            self.lock.release()
+        # if verbose:
+        #     print >> sys.stderr, "_SwitchboardTaskList.registerCallback: done"
+        return cb
+    def removeCallback(self, callback):
+        self.lock.acquire()
+        try:
+            self.callbacks.remove(callback)
+        finally:
+            self.lock.release()
+    def perform(self, *args, **kwargs):
+        # Callbacks sometimes remove themselves, which modifies the
+        # self.callbacks list, so iterate over a copy, and acquire
+        # that copy while the list is locked.
+        self.lock.acquire()
+        try:
+            callbacks = self.callbacks[:]
+        finally:
+            self.lock.release()
+        for callback in callbacks:
+            callback.perform(*args, **kwargs)
+
+    
+class _Switchboard:
+    def __init__(self):
+        self.taskdict = {}
+        self.verbose = 0
+        self.lock = lock.SLock()
+    def _defineMessage(self, msgname, verbose=False):
+        # This is only called when self.lock has already been acquired.
+        # if verbose:
+        #     print >> sys.stderr, "_Switchboard._defineMessage: getting tasklist"
+        tasklist = _SwitchboardTaskList(msgname, verbose)
+        # if verbose:
+        #     print >> sys.stderr, "_Switchboard._defineMessage: got tasklist"
+        self.taskdict[msgname] = tasklist
+        return tasklist
+    def notify(self, msgname, *args, **kwargs):
+        try:
+            self.lock.acquire()
+            try:
+                task = self.taskdict[msgname]
+            finally:
+                self.lock.release()
+        except KeyError:
+            pass
+        else:
+            if self.verbose:
+                debug.fmsg('performing', msgname, args, kwargs)
+            task.perform(*args, **kwargs)
+            if self.verbose:
+                debug.fmsg('done', msgname)
+
+    def cnotify(self, oofmessage):
+        # Messages passed from C++ may be either simple strings or
+        # OOFMessage instances. The OOFMessage class has swigged
+        # methods that make it act like a list of PyObjects.
+        if type(oofmessage)==types.StringType:
+            self.notify(oofmessage)
+        else:
+            # Convert OOFMessage object into arglist
+            self.notify(oofmessage.name(), *tuple(oofmessage))
+
+            
+    # Message names passed in from Python need not be strings,
+    # the only requirement is that they be hashable.  LabelTree,
+    # for instance, uses (instance, string) pairs as msgnames.
+    def requestCallbackMain(self, msgname, func, caller, *args, **kwargs):
+        verbose = kwargs.get("verbose", False) # local to this call!
+        # if verbose:
+        #     print >> sys.stderr, "_Switchboard.requestCallbackMain"
+        try:
+            del kwargs["verbose"]
+        except KeyError:
+            pass
+
+        self.lock.acquire()
+        # if verbose:
+        #     print >> sys.stderr, "_Switchboard.requestCallbackMain: got lock"
+        try:
+            try:
+                tasklist = self.taskdict[msgname]
+            except KeyError:
+                # if verbose:
+                #     print >> sys.stderr, "_Switchboard.requestCallbackMain: calling _defineMessage"
+                tasklist = self._defineMessage(msgname, verbose)
+                # if verbose:
+                #     print >> sys.stderr, "_Switchboard.requestCallbackMain: back from _defineMessage"
+            except TypeError:
+                debug.fmsg("Offending message is", msgname)
+                raise
+            return tasklist.registerCallback(func, caller,
+                                             args, kwargs,
+                                             child_thread=False,
+                                             verbose=verbose)
+        finally:
+            self.lock.release()
+            # if verbose:
+            #     print >> sys.stderr, "_Switchboard.requestCallbackMain: done"
+
+    def requestCallback(self, msgname, func, caller, *args, **kwargs):
+        self.lock.acquire()
+        try:
+            try:
+                tasklist = self.taskdict[msgname]
+            except KeyError:
+                tasklist = self._defineMessage(msgname)
+            return tasklist.registerCallback(func, caller,
+                                             args, kwargs,
+                                             verbose=False,
+                                             child_thread=True)
+        finally:
+            self.lock.release()
+
+    
+    # Removes a callback from the tasklist, and removes the tasklist
+    # from the taskdict if its list has become empty.
+    def removeCallback(self, action):
+        self.lock.acquire()
+        try:
+            task = self.taskdict[action.msgname]
+            task.removeCallback(action)
+            if len(task.callbacks)==0:
+#                 debug.fmsg("Removing last callback for", action.msgname)
+                del self.taskdict[action.msgname]
+        finally:
+            self.lock.release()
+    # Switchboard entries for block and unblock -- in most cases,
+    # it's probably clearer to just locally block and unblock
+    # the SwitchboardCallback (returned from the requestCallback)
+    # directly, but these entry points are available for full
+    # generality.
+    #   Should catch KeyError and do something sensible?
+    def blockCallback(self, action):
+        self.lock.acquire()
+        try:
+            self.taskdict[action.msgname].block()
+        finally:
+            self.lock.release()
+    def unblockCallback(self, action):
+        self.lock.acquire()
+        try:
+            self.taskdict[action.msgname].unblock()
+        finally:
+            self.lock.release()
+
+
+switchboard = _Switchboard()
+init_switchboard_api(switchboard.cnotify)
+
+def requestCallback(msgname, func, *args, **kwargs):
+    caller = debug.callerID()
+    return switchboard.requestCallback(msgname, func, caller, *args, **kwargs)
+
+def notify(msgname, *args, **kwargs):
+    if switchboard.verbose:
+        debug.dumpCaller()
+    switchboard.notify(msgname, *args, **kwargs)
+    
+def removeCallback(action):
+    switchboard.removeCallback(action)
+
+def requestCallbackMain(msgname, func, *args, **kwargs):
+    caller = debug.callerID()
+    return switchboard.requestCallbackMain(msgname, func, caller,
+                                           *args, **kwargs)
+
+def verbose(menuitem, flag):
+    old = switchboard.verbose
+    switchboard.verbose = flag
+    return old

@@ -1,0 +1,41 @@
+// -*- text -*-
+// $RCSfile: changelog3.txt,v $
+// $Revision: 1.1.2.4 $
+// $Author: langer $
+// $Date: 2014/12/08 19:41:50 $
+
+/* This software was produced by NIST, an agency of the U.S. government,
+ * and by statute is not subject to copyright in the United States.
+ * Recipients of this software assume all responsibilities associated
+ * with its operation, modification and maintenance. However, to
+ * facilitate maintenance we ask that before distributing modified
+ * versions of this software, you first contact the authors at
+ * oof_manager@nist.gov. 
+ */
+
+3.0.2
+
+Fixed a bug involving cloning graphics windows with hidden display layers.
+
+3.0.1
+
+The interval parameter for output schedules now can't be set to zero,
+and the delay can't be negative.
+
+Fixed a bug in setup.py wrt --with-swig.
+
+Fixed setup.py so that it understands "linux3".
+
+If a mesh is saved while it's being solved, its saved status is stored
+as "Unsolved" rather than "Solving".
+
+Field initializers can now be copied.
+
+Graphics windows are cleared properly when objects are deleted.
+
+Fixed the bug that was causing the skeleton material display to be
+incorrect sometimes.
+
+Fixed the skeleton quality display.
+
+Fixed an error in the calculation of the tetrahedron shape energy.

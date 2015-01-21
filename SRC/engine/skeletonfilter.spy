@@ -1,0 +1,186 @@
+# -*- python -*-
+# $RCSfile: skeletonfilter.spy,v $
+# $Revision: 1.1.2.9 $
+# $Author: langer $
+# $Date: 2014/11/25 22:08:31 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.SWIG.common import switchboard
+from ooflib.SWIG.engine import cskeletonmodifier
+from ooflib.common import cregisteredclass
+from ooflib.common import debug
+from ooflib.common.IO import parameter
+from ooflib.engine.IO import materialparameter
+from ooflib.engine.IO import skeletongroupparams
+
+cregisteredclass.registerCClass(SkeletonFilterPtr)
+
+# See comment in voxelfilter.spy about callbacks.
+
+class SkeletonFilterRegistration(cregisteredclass.Registration):
+    def __init__(self, name, subclass, ordering, params=[],
+                 secret=0, sbcallbacks={}, **kwargs):
+        cregisteredclass.Registration.__init__(
+            self, name, SkeletonFilterPtr, subclass, ordering, params=params,
+            secret=secret, **kwargs)
+        if sbcallbacks:
+            for (signal, callback) in sbcallbacks.items():
+                switchboard.requestCallback(signal, callback, registration=self)
+
+def filterModified(*args, **kwargs):
+    registration = kwargs['registration']
+    for philtre in getSkeletonFilters():
+        if philtre.getRegistration().subclass is registration.subclass:
+            philtre.setModified()
+
+# NullFilter must be registered before it's used as a default argument
+# for other SkeletonFilters, or the type checking in the
+# SkeletonFilterParams will fail.
+
+SkeletonFilterRegistration(
+    "All",
+    NullFilter,
+    ordering=0,
+    tip="Include all objects.")
+
+SkeletonFilterRegistration(
+    "Material",
+    MaterialFilter,
+    ordering=4,
+    params=[
+        materialparameter.AnyMaterialParameter("material", "<Any>")
+        ],
+    tip="Include only elements of the given Material.")
+
+SkeletonFilterRegistration(
+    "Homogeneity",
+    HomogeneityFilter,
+    ordering=5.0,
+    params=[
+        parameter.FloatRangeParameter(
+            "min", (0, 1, 0.01), value=0.0,
+            tip="Include homogeneities greater than or equal to this value."),
+        parameter.FloatRangeParameter(
+            "max", (0, 1, 0.01), value=1.0,
+            tip="Include homogeneities less than this value.")],
+    tip="Only include elements with homogeneities in the given range.")
+
+SkeletonFilterRegistration(
+    "Shape Energy",
+    ShapeEnergyFilter,
+    ordering=5.1,
+    params=[
+        parameter.FloatRangeParameter(
+            "min", (0, 1, 0.01), value=0.0,
+            tip="Include shape energies greater than or equal to this value."),
+        parameter.FloatRangeParameter(
+            "max", (0, 1, 0.01), value=1.0,
+            tip="Include shape energies less than or equal to this value.")],
+    tip="Only include elements with shape energies in the given range.  Low energies are better shapes.")
+
+SkeletonFilterRegistration(
+    "Element Quality",
+    ElementQualityFilter,
+    ordering=5.2,
+    params=[
+        cskeletonmodifier.alphaParameter,
+        parameter.FloatRangeParameter(
+            "min", (0, 1, 0.01), value=0.0,
+            tip="Include energies greater than or equal to this value."),
+        parameter.FloatRangeParameter(
+            "max", (0, 1, 0.01), value=1.0,
+            tip="Include energies less than or equal to this value.")],
+    tip="Only include elements with E within the given range.  E = alpha*homogeneity + (1-alpha)*shape energy.")
+        
+                                      
+
+#SkeletonFilterRegistration(
+#    "Node Group",
+#    NodeGroupFilter,
+#    ordering=1,
+#    params=[
+#        skeletongroupparams.NodeGroupParameter('nodegroup',
+#                                            tip='Skeleton node group to be included.')
+#        ],
+#    tip="Include only nodes in the given group."
+#    )
+#
+#SkeletonFilterRegistration(
+#    "Segment Group",
+#    SegmentGroupFilter,
+#    ordering=2,
+#    params=[
+#        skeletongroupparams.SegmentGroupParameter('segmentgroup',
+#                                            tip='Skeleton segment group to be included.')
+#        ],
+#    tip="Include only segments in the given group."
+#    )
+
+SkeletonFilterRegistration(
+    "Element Group",
+    ElementGroupFilter,
+    ordering=3,
+    params=[
+        skeletongroupparams.ElementGroupParameter('elementgroup',
+                                            tip='Skeleton element group to be included.')
+        ],
+    tip="Include only elements in the given group."
+    )
+
+SkeletonFilterRegistration(
+    "Selected",
+    SelectedElementFilter,
+    ordering=2,
+    sbcallbacks={"changed element selection":filterModified},
+    tip="Include only the currently selected elements.")
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+class SkeletonFilterParam(parameter.RegisteredParameter):
+    def __init__(self, name, value=None, default=None, tip=None, auxData={}):
+        parameter.RegisteredParameter.__init__(self, name, SkeletonFilterPtr,
+                                               value, default, tip, auxData)
+
+abparams=[
+    SkeletonFilterParam('a', value=NullFilter(), default=NullFilter()),
+    SkeletonFilterParam('b', value=NullFilter(), default=NullFilter())]
+
+SkeletonFilterRegistration(
+    "Intersection",
+    IntersectionFilter,
+    ordering=100,
+    params=abparams,
+    tip="Include elements that meet both of the given criteria.")
+
+SkeletonFilterRegistration(
+    "Union",
+    UnionFilter,
+    ordering=101,
+    params=abparams,
+    tip="Include elements that meet at least one of the given criteria.")
+
+SkeletonFilterRegistration(
+    "Xor",
+    XorFilter,
+    ordering=102,
+    params=abparams,
+    tip="Include elements that meet exactly one of the given criteria.")
+
+SkeletonFilterRegistration(
+    "Not",
+    NotFilter,
+    ordering=103,
+    params=[
+        SkeletonFilterParam('filter', value=NullFilter(), 
+                            default=NullFilter())
+        ],
+    tip="Include elements that don't meet the given criterion.")
+
+

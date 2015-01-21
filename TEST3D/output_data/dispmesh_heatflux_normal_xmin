@@ -1,0 +1,8 @@
+# Operation: Average
+# Output: Heat_Flux dot surface normal
+# Domain: FaceBoundaryDomain(boundary='Xmin',side='BACK')
+# Sampling: ContinuumSampleSet(order=automatic)
+# Columns:
+# 1. time
+# 2. average of Value
+0.0, 1.0

@@ -1,0 +1,181 @@
+# -*- python -*-
+# $RCSfile: thermalexpansion.spy,v $
+# $Revision: 1.5.8.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:46:05 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+from ooflib.SWIG.engine import symmmatrix
+from ooflib.common import utils
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.engine import problem
+from ooflib.engine import propertyregistration
+
+PropertyRegistration = propertyregistration.PropertyRegistration
+
+T0tip = "Temperature at which the thermal expansion vanishes."
+#########
+
+reg = PropertyRegistration(
+    'Couplings:ThermalExpansion:Isotropic', IsotropicThermalExpansion,
+    "ooflib.SWIG.engine.property.thermalexpansion.thermalexpansion",200,
+    [parameter.FloatParameter('alpha', 1.0,
+                              tip="Thermal expansion coefficient."),
+     parameter.FloatParameter('T0', 0.0, tip=T0tip)],
+    outputs=["Strain", "Energy"],
+    propertyType="ThermalExpansion",
+    tip='Isotropic thermal expansion',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/isothermalexp.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Temperature],
+             time_derivs=[0])
+
+#########
+
+reg = PropertyRegistration(
+    'Couplings:ThermalExpansion:Anisotropic:Triclinic',
+    AnisotropicThermalExpansion,
+    "ooflib.SWIG.engine.property.thermalexpansion.thermalexpansion",210,
+    [symmmatrix.TriclinicRank2TensorParameter(
+            'alpha',
+            symmmatrix.TriclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+            tip="Thermal expansion tensor."),
+     parameter.FloatParameter('T0', 0.0, tip=T0tip)],
+    outputs=["Strain", "Energy"],
+    propertyType="ThermalExpansion",
+    tip='Triclinic thermal expansion',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisothermalexp.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Temperature], 
+             time_derivs=[0])
+
+#########
+
+reg = PropertyRegistration(
+    'Couplings:ThermalExpansion:Anisotropic:Monoclinic',
+    AnisotropicThermalExpansion,
+    "ooflib.SWIG.engine.property.thermalexpansion.thermalexpansion",209,
+    [symmmatrix.MonoclinicRank2TensorParameter(
+            'alpha',
+            symmmatrix.MonoclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+            tip="Thermal expansion tensor."),
+     parameter.FloatParameter('T0', 0.0, tip=T0tip)],
+    outputs=["Strain", "Energy"],
+    propertyType="ThermalExpansion",
+    tip='Monoclinic thermal expansion.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisothermalexp.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Temperature],
+             time_derivs=[0])
+
+#########
+
+reg = PropertyRegistration(
+    'Couplings:ThermalExpansion:Anisotropic:Orthorhombic',
+    AnisotropicThermalExpansion,
+    "ooflib.SWIG.engine.property.thermalexpansion.thermalexpansion",208,
+    [symmmatrix.OrthorhombicRank2TensorParameter(
+            'alpha',
+            symmmatrix.OrthorhombicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+            tip="Thermal expansion tensor."),
+     parameter.FloatParameter('T0', 0.0, tip=T0tip)],
+    outputs=["Strain", "Energy"],
+    propertyType="ThermalExpansion",
+    tip='Orthorhombic thermal expansion.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisothermalexp.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Temperature],
+             time_derivs=[0])
+
+#########
+
+reg = PropertyRegistration(
+    'Couplings:ThermalExpansion:Anisotropic:Tetragonal',
+    AnisotropicThermalExpansion,
+    "ooflib.SWIG.engine.property.thermalexpansion.thermalexpansion",207,
+    [symmmatrix.TetragonalRank2TensorParameter(
+            'alpha',
+            symmmatrix.TetragonalRank2Tensor(xx=1.0, zz=0.5),
+            tip="Thermal expansion tensor."),
+     parameter.FloatParameter('T0', 0.0, tip=T0tip)],
+    outputs=["Strain", "Energy"],
+    propertyType="ThermalExpansion",
+    tip='Tetragonal thermal expansion.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisothermalexp.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Temperature],
+             time_derivs=[0])
+
+#########
+
+reg = PropertyRegistration(
+    'Couplings:ThermalExpansion:Anisotropic:Trigonal',
+    AnisotropicThermalExpansion,
+    "ooflib.SWIG.engine.property.thermalexpansion.thermalexpansion",206,
+    [symmmatrix.TrigonalRank2TensorParameter(
+            'alpha',
+            symmmatrix.TrigonalRank2Tensor(xx=1.0, zz=0.5),
+            tip="Thermal expansion tensor."),
+     parameter.FloatParameter('T0', 0.0, tip=T0tip)],
+    outputs=["Strain", "Energy"],
+    propertyType="ThermalExpansion",
+    tip='Trigonal thermal expansion.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisothermalexp.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Temperature],
+             time_derivs=[0])
+
+#########
+
+reg = PropertyRegistration(
+    'Couplings:ThermalExpansion:Anisotropic:Hexagonal',
+    AnisotropicThermalExpansion,
+    "ooflib.SWIG.engine.property.thermalexpansion.thermalexpansion",205,
+    [symmmatrix.HexagonalRank2TensorParameter(
+            'alpha',
+            symmmatrix.HexagonalRank2Tensor(xx=1.0, zz=0.5),
+            tip="Thermal expansion tensor."),
+     parameter.FloatParameter('T0', 0.0, tip=T0tip)],
+    outputs=["Strain", "Energy"],
+    propertyType="ThermalExpansion",
+    tip='Hexagonal thermal expansion.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisothermalexp.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Temperature],
+             time_derivs=[0])
+
+#########
+
+reg = PropertyRegistration(
+    'Couplings:ThermalExpansion:Anisotropic:Cubic',
+    AnisotropicThermalExpansion,
+    "ooflib.SWIG.engine.property.thermalexpansion.thermalexpansion",204,
+    [symmmatrix.CubicRank2TensorParameter(
+            'alpha',
+            symmmatrix.CubicRank2Tensor(xx=1.0),
+            tip="Thermal expansion tensor."),
+     parameter.FloatParameter('T0', 0.0, tip=T0tip)],
+    outputs=["Strain", "Energy"],
+    propertyType="ThermalExpansion",
+    tip='Cubic thermal expansion.',
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisothermalexp.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Temperature],
+             time_derivs=[0])

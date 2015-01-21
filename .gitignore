@@ -1,0 +1,14 @@
+*.pyc
+*.o
+SRC/SWIG3D/*
+builddir-threePoint0-7-13-08-debug3d/*
+OOFSWIG/Makefile
+OOFSWIG/Makefile.template
+OOFSWIG/Modules/Makefile
+OOFSWIG/Runtime/Makefile
+OOFSWIG/SWIG/Makefile
+OOFSWIG/config.log
+OOFSWIG/config.status
+OOFSWIG/swig_lib/python/Makefile
+OOFSWIG/libswig.a
+OOFSWIG/swig.x

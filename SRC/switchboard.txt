@@ -1,0 +1,420 @@
+# -*- text -*-
+# $RCSfile: switchboard.txt,v $
+# $Revision: 1.75 $
+# $Author: langer $
+# $Date: 2008/06/17 15:26:24 $
+
+# This file is an attempt to catalog the switchboard messages so that
+# we don't keep creating new messages when an existing one will serve
+# the purpose.  Consult this file before adding new messages.  Update
+# this file when adding or removing messages.
+#
+# Messages are more or less grouped by topic.  Comments say what the
+# message is for, if it's not obvious from the message itself.  The
+# format is
+#
+#  message (arguments) comments
+#     more comments are indented
+#
+# When the message is listed as a class name, the actual message is an
+# instance of the class (exceptions are noted).
+
+RegisteredClass subclass () Sent when a new Registration is created
+   for a RegisteredClass.  Caught by GUI objects and automatically
+   created that list members of a RegisteredClass.
+
+"active area modified" () Sent by aa modification routines, caught by aaPage.
+"stored active areas changed" () Sent by aa modification routines,
+   caught by aa Page.
+"Active Area Selected" () Received by active area GUI toolbox. Not sent?
+
+"modified image" (modifier, image name) Sent by doImageMod function
+   and imagemenu. Caught by ImagePage.
+"images changed in microstructure" () Sent by Microstructure, received
+   by microstructurePage.
+
+"redraw" () Tell GhostGfxWindow(s) that contents may have changed.
+
+"new pixel group" (PixelGroup) new group has been created in CMicrostructure.
+    Caught by MicrostructurePage and PixelGroupWidget.
+"destroy pixel group" (PixelGroup, ms name) group has been destroyed in CMicrostructure.
+    Caught by MicrostructurePage, PixelGroupWidget and Skeleton.
+"renamed pixel group" (group, oldname, newname) Sent by pixel group
+   menu command, received by widgets and pages that list groups.
+"changed pixel group" (PixelGroup, ms name) Sent by pixelgroup menu 
+   operations when a pixel group's contents or flags have changed. Caught  
+   by MicrostructurePage and pixelinfoGUI, and also the Skeleton class.
+"changed pixel groups" (ms name) Sent by the AutoGroup command when a
+  whole bunch of pixel groups have changed, to avoid sending a whole
+  bunch of "changed pixel group" signals.  Caught by the same objects
+  that catch "changed pixel group".
+
+"new pixel selection" (method, pointlist) Sent by pixelselect.py and
+   selectionmod.py when a selection method is applied.  Caught by
+   various GUI components.  Updates Historians in toolboxes.
+"pixel selection changed" () Sent by low-level selection modification
+   routines in selection.py, and by pixel selection toolbox.  Received
+   by PixelPage and MicrostructurePage.
+"modified pixel selection" (modifier) Sent after a selection modifier
+   has been applied.  Updates historian in PixelPage.
+
+"open graphics window" (window) GfxWindowManager has created a window.
+    Caught by LayerEditorGUI and any module that wants to add to the
+    gfxwindow's menu.
+"close graphics window" (window) GfxWindowManager has destroyed a window.
+    Caught by LayerEditorGUI.
+
+(gfxwindow, 'layers changed') Sent by GhostGfxWindow when layers have
+    been added, edited, hidden, shown, or reordered.  Caught by
+    toolboxes that display info about the top layer.
+
+(toolbox, 'new layers') Sent by non-GUI toolboxes as a follow-up to
+    'layers changed'.  Caught by their GUI counterparts.  The purpose
+    is so that when both the GUI and non-GUI toolboxes both need to
+    respond, the response order is controlled.
+
+(toolbox, 'clear') Sent by a non-GUI toolbox after handling a "clear"
+     command.  Caught by the GUI counterpart.
+
+"new pixelinfo plugin" () Sent by pixelinfoGUI.registerPlugInClass
+   when a new way of displaying attributes of Microstructure and Image
+   pixels is defined.  Caught by PixelInfoToolboxGUI.
+
+"new toolbox class" (insertion point) Sent when a new ToolBox class is
+   registered.  Received by GhostGfxWindow.
+
+
+"new progressbar" Sent by ThreadManager.newProgressBar to ActivityViewer, if in graphics mode.In text mode, it gracefully passes.
+
+"made reservation" Reserves the writing privileges to the data
+      associated to a menuitem. Locks Who object for writing.
+      Other threads can still read if the writing thread is not
+      actually writing. Sent by Who class. GUI sensitizes
+      accordingly.
+"cancelled reservation" Gives-up writing privileges to the data
+      associated to a menuitem. Unlocks the Who object for other
+      threads or menuitems for writing. Sent by Who class. GUI
+      sensitizes accordingly.
+
+"rename who" (classname, oldpath, newname) Sent by Who.rename to
+   WhoClass and LayerWidget.
+("rename who", classname) (oldpath, newname) Variant of the above,
+   sent to WhoWidget.
+("whodoundo push", classname) (WhoDoUndo obj, previous _obj, current _obj)
+   Sent by WhoDoUndo when a new object has been pushed onto its
+   undobuffer.  Received by GenericGroupSet in skeletongroups.py and
+   SelectionBase in skeletonselectable.py.  Triggers operations that
+   are required when the undobuffer changes its contents (eg,
+   selection and group propagation), as opposed to operations required
+   when the current object changes.
+("who changed", classname) (WhoDoUndo) Called by WhoDoUndo when the
+   current object on the undobuffer has changed, either by push, undo,
+   or redo.  Also sent by SkeletonIO after reading new bits into a
+   Skeleton.  Received by GUI objects that need to reflect the
+   changes.
+"new who class" (classname) Sent by WhoClass.__init__ to WhoWidget.
+"new who" (name, path) Sent by WhoClass.add when an object is added to
+   the class.  Caught by GhostGfxWindow (triggers creation of default
+   layers and redraw) and MeshNameParameterWidget.
+("new who", classname) (path) Class specific version of the
+   above. Caught by GUI pages and widgets that list who objects.
+"preremove who" (classname, path) Sent by WhoClass, just before
+   removing an object from the class.  Caught by GhostGfxWindow and
+   SkeletonContext.
+("preremove who", classname) (path) Class specific version of the
+   above.
+"remove who" (classname, path) Sent by WhoClass after removing a Who
+   object.  Caught by pages and widgets.
+("remove who", classname) (path) Class specific version of the above.
+
+
+"deselect all gfxlayers" Sent by LayerEditor to GhostGfxWindows when
+   creating a new layerset.  Should wait for completion so that new
+   layer isn't sent while old layer is selected.
+
+PixelInfoToolbox () Sent by PixelInfoToolbox to PixelInfoToolboxGUI to
+   tell it to update its display.
+
+"write message" (message, type)  Sent by MessageManager to MessageWindows.
+Also received by the reporter_GUI module to autoraise the message window.
+
+(LabelTree, "insert") (node, leaf) Object inserted in LabelTree. Sent
+   by LabelTree. Caught by GfxLabelTree.
+(LabelTree, "delete") (node) Object removed from LabelTree.  Sent by
+   LabelTree, caught by GfxLabelTree. 
+(LabelTree, "rename") (node)  Object renamed in LabelTree.  Sent by
+   LabelTree, caught by GfxLabelTree.
+
+(SkeletonInfoToolbox, "skeleton changed") (context) Sent by
+    SkeletonInfoToolbox to GUI toolbox when it receives ('who
+    changed', 'Skeleton').
+(MeshInfoToolbox, "skeleton changed") (context) Received by
+    meshinfoGUI toolbox.  Not sent!  Perhaps it's meant to be "mesh
+    changed".
+"Skeleton modified" (skeleton, modifier) Sent by Skeleton modification
+   commands to SkeletonPage.  Updates Historian.
+
+Skeleton selections have three associated signals for each of the
+   selection modes (currently "Element", "Node", and "Segment").  The
+   signals themselves are stored in the SkeletonSelectionMode objects,
+   and should always be referred to via those objects, and not
+   explicitly by name.
+SkeletonSelectionMode.changedselectionsignal () Sent whenever the
+   selection changes.  Caught by SkeletonSelectionToolboxGUI and
+   SkeletonSelectionPage.  The actual signals are:
+       "changed element selection"
+       "changed node selection"
+       "changed segment selection"
+SkeletonSelectionMode.newselectionsignal (method, pointlist) Sent when
+   a new Skeleton selection is made.  Caught by the
+   SkeletonSelectionToolboxGUI to update its historian.  The actual
+   signals are:
+       "new element selection"
+       "new node selection"
+       "new segment selection"
+SkeletonSelectionMode.modifierappliedsignal (modifier) Sent by
+   SkeletonSelectionMode.modifierApplied(), which is called when a
+   selection modifier is applied. It's caught by the
+   SkeletonSelectionPage and updates the historian. The actual signals
+   are:
+       "element selection modified"
+       "node selection modified"
+       "segment selection modified"
+      
+
+(GhostGfxWindow, "query mesh") (querier) Sent by MeshInfoToolbox.
+   Received by meshinfoGUI.MeshToolboxGUI.
+(GhostGfxWindow, "query skeleton") (querier) Sent by
+   SkeletonInfoToolbox.  Received by skeletoninfoGUI.SkeletonToolboxGUI.
+
+(GhostGfxWindow, "new node selection") (method, pointlist, selection)
+   Sent by SkeletonSelectionToolbox (NodeMode). Caught by
+   genericselectGUI via SkeletonSelectionToolboxModeGUI.
+(GhostGfxWindow, "new element selection") (method, pointlist, selection)
+   Sent by SkeletonSelectionToolbox (ElementMode).  Caught by
+   genericselectGUI via SkeletonSelectionToolboxModeGUI.
+(GhostGfxWindow, "new segment selection") (method, pointlist, selection)
+   Sent by SkeletonSelectionToolbox (SegmentMode).  Caught by
+   genericselectGUI via SkeletonSelectionToolboxModeGUI.
+
+"material changed" (material) Sent by Materials when Properties are
+   added, removed, or reparametrized.  Caught by the MaterialMSPlugin,
+   which relays the information to the Meshes that use the Material.
+
+"mesh changed" (meshcontext) Sent whenever something internal to a
+   mesh has changed (mostly boundary conditions, since fields and eqns
+   have been moved to the subproblems).  Caught by the Solver page,
+   the Mesh Info toolbox, and the Mesh Data viewers, and in the 
+   tutorials.
+
+"subproblem changed" (subproblem context) Sent whenever something
+   internal to a subproblem has changed (fields defined, etc).
+   Caught in the adaptive mesh tutorial, among other places.
+
+"subproblem redefined" (subproblem path) Sent by
+   SubproblemContext.redefined(), which is called when the pixel
+   groups, material assignments, etc that define the geographical
+   extent of a subproblem have been changed. Caught by other
+   subproblems that depend on the redefined one.
+
+"mesh solved" (meshcontext) Sent after each equilibration
+   command. Caught by the Solver page.
+
+"new equation" () Sent by problem.advertiseEquation.  Caught by EquationPage.
+"new master element" () Sent by C++ MasterElement constructor.  Caught by
+   meshmenu.
+
+"new field" () Sent by problem.advertiseField.  Caught by FieldPage.
+"define field" (femesh, field) Sent by C++ FEMesh::define_field(). Not
+   caught.
+"undefine field" (mesh, field) ditto.
+"field defined" (mesh name, field name, defined) Sent by meshIO and
+   meshmenu to boundaryCondPage and fieldPage.  "defined" arg is 0 or
+   1 depending on whether field is being defined or undefined.
+"field activated" (mesh name, field name, active) See above. Caught by
+   fieldPage only.
+"field inplane" (mesh name, field name, inplane) See above.
+"equation activated" (mesh name, eqn name, active) See above. Caught
+   by EquationWidget, boundarycondPage, and fieldPage.
+"kinetics activated" (mesh name, eqn name, active) See above. Caught
+   by EquationWidget
+"dynamics activated" (mesh name, eqn name, active) See above. Caught
+   by EquationWidget
+(GhostGfxWindow, "node selected for move") (selection) Caught by movenodeGUI
+   and movenodeext (obsolete?).  Sent by non-gui and gui MoveNodeToolboxes.
+ 
+"materials changed in microstructure" (Microstructure) Caught by
+   engine's pixelinfoGUI and skeletoninfoGUI. Sent by materialmenu.
+   Also caught in conjugate.py.
+"prop_added_to_material" (MaterialProps, property name, property
+   registration) Sent by MaterialProps.  Caught by MaterialsPage.
+"prop_removed_from_material" (MaterialProps, property name,
+   registration) Sent by MaterialProps.  Caught by MaterialsPage. 
+"new_material" (name) Sent by MaterialManager.  Caught by
+   MaterialsPage and MaterialsWidget.
+"remove_material" (material) Sent by MaterialManager.  Caught by
+   MaterialsPage and MaterialsWidget.
+"new property" (property registration) Sent by PropertyManager. Caught
+   by MaterialsPage to select the new Property.
+
+"field initialized" () Sent by initField in meshmenu.  Caught by fieldPage.
+
+"new pinned nodes" (PinnedNodeSelection) Sent by PinnedNodeSelection.
+   Caught by PinnedNodesToolboxGUI.
+
+(GhostGfxWindow, "new boundary set") (boundaryset) Sent by non-gui
+   skeleton boundary toolbox to gui toolbox.
+(GhostGfxWindow, "new boundary config") Sent by skeletonbdytoolbox to
+    skeletonboundaryext when it gets the "new boundary configuration"
+    signal. Obsolete in new graphics layer scheme? 
+
+"boundary conditions changed" (Mesh, BC, promotion) 
+   Sent by Mesh when bc's are added, removed, or renamed.  "promotion"
+   variable is 1 if this is a float-to-Dirichlet promotion operation, 
+   in which case the signal recipient may want to do something different.
+   Caught by BoundaryCondPage to update the visible BC list. 
+"profiles changed" () Sent by ProfileManager when profiles are
+   added, or removed.  Caught by BoundaryCondPage and
+   ProfileNameWidget.  Also caught by the profileIO module to 
+   enable/disable the profile-save menu item.
+"profile renamed" (oldname, newname) Sent by ProfileManager.  Caught
+   by NamedProfile, BoundaryCondPage, and ProfileNameWidget.
+"profile edited" (name) Sent by ProfileManager. Caught by NamedProfile.
+"new namedprofile obj" (NamedProfile) Sent by NamedProfile when its
+   underlying Profile changes.  Caught by BC.
+
+"new boundary configuration" (SkeletonContext) Sent by SkeletonContext
+   after pushModification and bdyPropagate (ie, after the skeleton
+   stack or boundaries have changed).  Caught by SkeletonBoundaryPage
+   and widgets.
+"new boundary created" (SkeletonContext) Sent by SkeletonContext when
+   a new Edge or Point boundary has been created.  Caught by
+   SkeletonBoundaryPage. 
+"boundary removed" (SkeletonContext) Sent by SkeletonContext, caught
+   by SkeletonBoundaryPage.
+"boundary renamed" (SkeletonContext) Sent by SkeletonContext, caught
+   by SkeletonBoundaryPage.
+"boundary selected" (SkeletonContext) Sent by SkeletonContext, caught
+   by SkeletonBoundaryPage.
+"boundary unselected" (SkeletonContext) Sent by SkeletonContext, caught
+   by SkeletonBoundaryPage.
+
+"groupset member added" (SkeletonContext, GenericGroupSet, name)  Sent
+   by GenericGroupSet when a new group is added to a SkeletonContext.
+   Caught by SkeletonGroupWidget and SkeletonSelectionPage.
+"groupset changed" (SkeletonContext, GenericGroupSet) Sent by
+   GenericGroupSet when a group is removed, or in response to a ("who
+   changed", "Skeleton") signal.
+"groupset member renamed" (SkeletonContext, GenericGroupSet, newname)
+   Sent by GenericGroupSet when a group is renamed.  Caught by
+   SkeletonGroupWidget. 
+"groupset member resized" (SkeletonContext, GenericGroupSet,
+   groupname)  Sent by GenericGroupSet when objects are added to or
+   removed from a group.  Caught by various gui components.
+
+"new groupset members" (SkeletonContext, GenericGroupSet) Sent by
+   GenericGroupSet when its members change (ie, groups are created,
+   renamed, etc).  Caught by SkeletonGroupWidget and
+   SkeletonSelectionPage. 
+"new groupset sizes" (SkeletonContext, GenericGroupSet) Sent by
+   GenericGroupSet when group membership changes.  Caught by
+   SkeletonSelectionPage and SkeletonToolboxGUI.
+
+"new refinement ruleset" (name) Sent by RefinementRuleSet
+   constructor.  Caught by refinemethod.py to update RuleSet enum.
+
+ParameterWidget (interactive)  Sent by all ParameterWidgets when their
+   state changes.  interactive==1 if the change was a direct result of
+   user interaction.
+
+('validity', widget) (validity) Sent by ParameterWidget.setValidity
+   when the validity of the widget's state changes.  Caught by GUI
+   components (mainly "OK" buttons) that need to sensitize themselves
+   according to the state of another widget.
+
+( gfxwindow, "new contourmap layer")() 
+   Sent by GfxWindow when the current_contourmap_method has been reset.
+   Caught by the "Mesh Cross Section" toolbox. 
+   This signal is required because the "layers changed" signal, which
+   otherwise would make sense, comes too early in the process.
+
+"cross sections changed" ()
+   Sent by a CrossSectionSet object when cross sections are added
+   or removed.  Caught by the GUI Mesh CS toolbox to update the 
+   "current cross section" datum.  Also caught by the 
+   MeshCrossSectionParamWidget.
+("cross section renamed", Mesh) (oldname, newname)
+   Sent by a Mesh after changing the name of a cross section.  Caught
+   by the MeshCrossSectionParamWidget. 
+
+( gfxwindow, "set mesh cs state") (state)
+  Sent by the menu callbacks for the
+  gfxwindow.File.Clear_Mesh_Crosssection and Latest_Mesh_Crosssection
+  menu items.  Caught by the MeshCrossSectionDisplay object, and used
+  to update the cross_section argument.
+
+"destinations changed" ()
+  Sent by a DestinationParamWidget when it changes the list of known
+  files.  Received by other DestinationParamWidget instances so they
+  can update their lists.
+
+"skeleton nodes moved" (skeleton_context)
+  Sent by the FiddleNodes postProcess class after it has finished
+  writing new node data to a skeleton.  Caught by the skeletonPage,
+  and used to refresh the info display.
+
+"mesh boundaries changed" (mesh)
+  Sent by the functions in mesh.py which handle the propagation of 
+  skeleton boundary changes into the mesh.  Caught by the 
+  ContextBoundaryWidget to update itself, and also by the 
+  meshPage and the boundarycondPage to update their lists of 
+  boundaries.  BoundaryAnalysisPage does *not* have to catch 
+  this, because only the boundary widget changes, and it already
+  catches the signal itself.
+
+("illegal-move status changed", MoveNodeToolbox) (status)
+  Sent by the MoveNodeToolbox when its accept-illegal-moves flag 
+  changes state.  Sends the new state of this flag.  Caught by
+  the corresponding MoveNodeToolboxGUI object, and used to 
+  reset its indicator/button.
+("node selected", MoveNodeToolbox) () Sent by the MoveNodeToolbox when
+  a node has been selected.  Caught by the gui part of the toolbox.
+
+("new subproblem", subproblemname, meshname)
+  Sent by New subproblem menu item after SubProblem object has been
+  instantiated. Caught by SubProblem page GUI.
+
+"change font" (fontname)
+  Sent by Font menu menu commands. Caught by GUI to change the widget
+  font.
+
+"change fixed font" (fontname)
+  Sent by Font menu menu commands.  Caught by various GUI components
+  to change the text display font.
+
+"pinnednode ringbuffer resize" (size)
+("skelselection ringbuffer resize", modename) (size)
+  Sent by menu commands to all SkeletonSelection or
+  PinnedNodeSelection objects to tell them to change their ringbuffer
+  size.  In principle, this could be done without the switchboard, but
+  it's just so much easier to use the switchboard.
+
+"Mesh modified" (meshpath, modifier) Sent by the handler for OOF.Mesh.Modify.
+  Caught by the meshPage.
+
+#Interface branch
+#Messages parallel that for skeleton boundaries
+"new interface created" (Microstructure) Sent by InterfaceMSPlugIn when
+   a new named interface has been created.  Caught by InterfacePage. 
+"interface removed" (Microstructure) Sent by InterfaceMSPlugIn, caught
+   by InterfacePage.
+"interface renamed" (Microstructure) Sent by InterfaceMSPlugIn, caught
+   by InterfacePage.
+"interface selected" (Microstructure,interfacename) Sent by InterfaceMSPlugIn,
+   caught by InterfacePage.
+"interface unselected" (Microstructure) Sent by InterfaceMSPlugIn, caught
+   by InterfacePage.
+
+# Time dependence & new solution scheme
+"subproblem solvability changed" (Subproblem context) Sent by menu
+   items, caught by timePage.

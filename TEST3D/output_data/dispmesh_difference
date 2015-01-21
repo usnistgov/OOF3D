@@ -1,0 +1,8 @@
+# Operation: Integral
+# Output: (0.125-x*y*z)
+# Domain: EntireMesh
+# Sampling: ContinuumSampleSet(order=automatic)
+# Columns:
+# 1. time
+# 2. integral of (0.125-x*y*z)
+0.0, 0.0

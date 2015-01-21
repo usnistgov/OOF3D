@@ -1,0 +1,41 @@
+# -*- python -*-
+# $RCSfile: crationalizers.spy,v $
+# $Revision: 1.1.4.3 $
+# $Author: langer $
+# $Date: 2011/10/20 20:50:26 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.common import cregisteredclass
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+
+cregisteredclass.registerCClass(RationalizerPtr)
+RationalizerPtr.registry = []    
+RationalizerPtr.tip = "Specific tools to remove badly shaped Elements from Skeletons."
+RationalizerPtr.discussion = xmlmenudump.loadFile('DISCUSSIONS/engine/reg/rationalizer.xml')
+
+
+cregisteredclass.Registration(
+    'Remove Bad Tetrahedra',
+    RationalizerPtr,
+    RemoveBadTetrahedra,
+    gerund = 'removing bad tetrahedra',
+    ordering=20000,                     # do this last!
+    params=[
+    parameter.FloatRangeParameter(
+            'acute_angle', (0.0, 45.0, 0.5),
+            value = 15.0,
+            tip = 'Minimum acceptable acute interior angle, in degrees'),
+    parameter.FloatRangeParameter(
+            'obtuse_angle', (90.0, 180.0, 1.0),
+            value = 150.0,
+            tip = 'Maximum acceptable obtuse interior angle, in degrees')],
+    tip = 'Remove triangles with extreme interior solid angles.',
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/ration_sharp.xml'))

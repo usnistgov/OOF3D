@@ -1,0 +1,18 @@
+# Operation: Integral
+# Output: Heat_Flux dot surface normal
+# Domain: FaceBoundaryDomain(boundary='Ymax',side='FRONT')
+# Sampling: ContinuumSampleSet(order=automatic)
+# Columns:
+# 1. time
+# 2. integral of Value
+0.0, -1.0
+0.1, -1.0
+0.2, -1.0
+0.3, -1.0
+0.4, -1.0
+0.5, -1.0
+0.6, -1.0
+0.7, -1.0
+0.8, -1.0
+0.9, -1.0
+1.0, -1.0

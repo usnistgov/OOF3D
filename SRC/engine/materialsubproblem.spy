@@ -1,0 +1,95 @@
+# -*- python -*-
+# $RCSfile: materialsubproblem.spy,v $
+# $Revision: 1.13.2.3 $
+# $Author: langer $
+# $Date: 2014/09/17 17:47:59 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.common import debug
+from ooflib.common import registeredclass
+from ooflib.engine import materialmanager
+from ooflib.engine import subproblemtype
+from ooflib.engine.IO import materialparameter
+
+# Redefine the MaterialSubProblem init so that it converts the Material
+# name to a Material object.
+
+_old_init_ = CMaterialSubProblem.__init__
+def _CMaterialSubProblem___init__(self, material):
+    self.material = material            # material name
+    _old_init_(self, materialmanager.getMaterial(self.material))
+
+CMaterialSubProblem.__init__ = _CMaterialSubProblem___init__
+
+# def _MaterialSubProblem_getMaterials(self):
+#     return [materialmanager.getMaterial(self.material)]
+    
+# MaterialSubProblems need to know if materials have been assigned to
+# pixels, so that they can reset their cached lists of nodes, etc.  To
+# do this, a MaterialSubProbNotifier object is installed as a
+# switchboard callback. 
+
+class MaterialSubProbNotifier:
+    def __init__(self, subpctxt):
+        self.subpctxt = subpctxt
+        param = subpctxt.subptype.getRegistration().getParameter('material')
+        self.material = param.value
+    def matchanged(self, microstructure):
+        ## switchboard callback for "materials changed in microstructure"
+        if self.subpctxt.getMicrostructure().name() == microstructure.name():
+            self.subpctxt.redefined()
+    def matremoved(self, matobj):
+        if matobj.name == self.material:
+            self.subpctxt.reserve()
+            self.subpctxt.begin_writing()
+            try:
+                self.subpctxt.destroy()
+            finally:
+                self.subpctxt.end_writing()
+                self.subpctxt.cancel_reservation()
+
+def _startup(subpctxt):
+    # Called by the SubProblemContext when it's created.
+    notifier = MaterialSubProbNotifier(subpctxt)
+
+    ## These callbacks are automatically deleted when the
+    ## SubproblemContext is destroyed.
+    subpctxt.requestCallback("materials changed in microstructure",
+                             notifier.matchanged)
+    subpctxt.requestCallback("remove_material", notifier.matremoved)
+
+
+##############
+
+class MaterialSubProblem(subproblemtype.SubProblemType):
+    def __init__(self, material):
+        self.material = material
+    def create(self):
+        return CMaterialSubProblem(self.material)
+
+registeredclass.Registration(
+    "Material",
+    subproblemtype.SubProblemType,
+    MaterialSubProblem,
+    ordering=2,
+    params=[materialparameter.MeshMaterialParameter('material',
+                                         tip="Use elements with this Material")
+    ],
+    startup=_startup,
+    tip="A subproblem defined on all Elements composed of a given Material.",
+    discussion="""<para>
+
+    A <classname>MaterialSubProblem</classname> includes all &elems;
+    with the given &material; type.  The &material; type of an &elem;
+    is the &material; type of the <link linkend="Section-Concepts-Skeleton-Homogeneity">dominant pixel</link> within the &elem;.
+
+    </para>"""
+    )
+                             

@@ -1,0 +1,113 @@
+SWIG 1.1 Porting Guide
+June 22, 1997
+
+Interface files
+===============
+
+Interface files written for SWIG 1.0 should work with SWIG 1.1.
+However, the following features are now deprecated or have been
+replaced by a better version.  Warning messages may be issued in
+certain cases.
+
+1.  The %{,%} block is no longer required in interface files.
+
+2.  The '%init funcname' directive is no longer supported.  
+    Use '%module modname' instead.
+
+3.  The %alpha and %raw directives are no longer supported due to the
+    documentation system rewrite.  Use the following instead :
+
+         %style nosort
+         %style sort
+
+4.  The %name() directive can no longer be applied with an 'empty'
+    name.  This was allowed for classes and structures in 1.0, but
+    is no longer allowed in 1.1.
+
+5.  NULL pointers are now allowed in function calls.  The -DALLOW_NULL
+    flag is obsolete and ignored.  To prevent NULL pointers from being
+    passed, the SWIG constraints.i library file can be used instead :
+
+	%include constraints.i
+        %apply Pointer NONNULL { void *, Vector * };
+
+
+SWIG C++ API
+============
+
+The 'Language' class used to build SWIG modules has changed and is no
+longer fully compatible with SWIG 1.0 (this was unavoidable). As a
+result, language modules written for 1.0 will need to be modified to
+work with 1.1.  Please read the chapter on "Extending SWIG" for all of
+the gory details.
+
+1.  The declare_const() method now has an extra argument
+
+      void declare_const(char *name, char *iname, DataType *type, char *value);
+
+2.  The set_module() method now takes a NULL-terminated list of 
+    module names :
+
+      void set_module(char *modname, char **other_modules);
+
+3.  A new method create_command() is now required.
+
+      void create_command(char *cname, char *scriptname);
+
+    This function is used to create scripting language commands and is
+    needed to support some code-generation optimization features
+    in version 1.1.
+
+4.  The following functions are deprecated and no longer required
+    in a Language module :
+
+          usage_var()
+          usage_func()
+          usage_const()
+          set_init()
+
+5.  The following functions have been modified in the C++ API
+
+         cpp_open_class()
+         cpp_inherit()
+         cpp_static_var()          * ADDED *
+         cpp_close_start()         * DELETED *
+         
+
+6.  The documentation system has been completely rewritten. 
+    Language modules must now produce their own documentation
+    entries.
+
+7.  Typemaps.  Use of typemaps is language specific.  Old SWIG
+    modules will have to be modified in order to use them
+    effectively.
+
+8.  New language methods (optional)
+
+        type_mangle(DataType *t);
+        add_typedef(DataType *t, char *name);
+	cpp_class_decl(char *classname, char *ctyle, char *name);
+        pragma(char *lang, char *op, char *value);
+        import(char *filename);
+
+
+9.  Other changes.  Changes have been made to virtually all
+    SWIG datatypes and internal functions.   Old language
+    modules may run into compatibilities here and there.
+
+10. An example.  Perhaps the best way to port an old language
+    module to SWIG 1.1 is look at an older module in the 1.1
+    release.  The Perl4 module is a good example of a 1.0 
+    module that has been retrofitted to work in SWIG 1.1.
+
+
+Rewriting a language module
+===========================
+
+SWIG 1.1 provides a number of advanced features (like typemaps)
+that greatly simplify the process of writing a language module.
+You may consider looking the Examples/lang example to see a
+"modern" language module.   Unlike the old approach, the new
+system involves about 75% less C++ coding and is significantly
+more flexible.
+

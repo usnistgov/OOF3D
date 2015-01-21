@@ -1,0 +1,8 @@
+# Operation: Integral
+# Output: 1.0
+# Domain: PlanarCrossSectionDomain(normal=VectorDirection(x=1,y=1,z=0),offset=0.1,side='FRONT')
+# Sampling: ContinuumSampleSet(order=automatic)
+# Columns:
+# 1. time
+# 2. integral of 1.0
+0.0, 2.0

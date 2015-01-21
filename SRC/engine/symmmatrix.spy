@@ -1,0 +1,379 @@
+# -*- python -*-
+# $RCSfile: symmmatrix.spy,v $
+# $Revision: 1.14.4.2 $
+# $Author: langer $
+# $Date: 2014/11/05 16:54:35 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+from ooflib.SWIG.engine import fieldindex
+from ooflib.common import debug
+from ooflib.common import enum
+from ooflib.common import registeredclass
+from ooflib.common import utils
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.engine.IO import output
+import string
+import struct
+import types
+
+# See the note in symmatrix.swg -- SymmMatrix3.__getitem__ works
+# differently than SymmMatrix.__getitem__!
+
+def _SymmMatrix___setitem__(self,idx,val):
+    size = self.size()
+    if len(idx)==2 and 0<=idx[0]<size and 0<=idx[1]<size:
+        self.set(idx[0],idx[1],val)
+    else:
+        raise KeyError("Index out of bounds in SymmMatrix")
+
+SymmMatrixPtr.__setitem__ = _SymmMatrix___setitem__
+
+def _SymmMatrix___getitem__(self,idx):
+    size = self.size()
+    if len(idx)==2 and 0<=idx[0]<size and 0<=idx[1]<size:
+        return self.get(idx[0],idx[1])
+    else:
+        raise KeyError("Index out of bounds in SymmMatrix")
+
+SymmMatrixPtr.__getitem__ = _SymmMatrix___getitem__
+
+# Do NOT add __getitem__ for SymmMatrix3!  It gets its
+# __getitem__ from OutputVal.
+
+# Mathematica-compatible repr, for debugging.
+def _SymmMatrix___repr__(self):
+    rowlist = []
+    for i in range(self.size()):
+        collist = []
+        for j in range(self.size()):
+            collist.append("%f" % self.get(i,j))
+        rowlist.append("{ " + string.join(collist,", ") + " }")
+    return "SymmMatrix { " + string.join(rowlist,", ") + " }"
+
+SymmMatrixPtr.__repr__ = _SymmMatrix___repr__
+
+################################################
+################################################
+
+# The 3x3 Symmetric Matrix gets special treatment
+
+# Redefine the init so that it accepts keyword arguments (swigged
+# functions don't allow keywords).  Have unspecified entries default
+# to zero.
+
+_oldSymmMatrix3___init__ = SymmMatrix3.__init__
+def _SymmMatrix3___init__(self, xx=0.0, yy=0.0, zz=0.0,
+                          yz=0.0, xz=0.0, xy=0.0):
+    _oldSymmMatrix3___init__(self, xx, yy, zz, yz, xz, xy)
+SymmMatrix3.__init__ = _SymmMatrix3___init__
+    
+voigtIndices = ((0,0), (1,1), (2,2), (1,2), (0,2), (0,1))
+voigtNames = ('xx', 'yy', 'zz', 'yz', 'xz', 'xy')
+
+# Arithmetic, similar to other OutputVal objects.
+
+def _SymmMatrix3Ptr___add__(self, other):
+    res = SymmMatrix3()
+    res._add(self)
+    res._add(other)
+    return res
+
+SymmMatrix3Ptr.__add__ = _SymmMatrix3Ptr___add__
+
+def _SymmMatrix3Ptr___sub__(self, other):
+    res = SymmMatrix3()
+    res._add(self)
+    res._sub(other)
+    return res
+
+SymmMatrix3Ptr.__sub__ = _SymmMatrix3Ptr___sub__
+
+def _SymmMatrix3Ptr___mul__(self, other):
+    res = SymmMatrix3()
+    res._add(self)
+    res._mul(other)
+    return res
+
+SymmMatrix3Ptr.__mul__ = _SymmMatrix3Ptr___mul__
+SymmMatrix3Ptr.__rmul__ = _SymmMatrix3Ptr___mul__
+
+def _SymmMatrix3Ptr___div__(self, other):
+    res = SymmMatrix3()
+    res._add(self)
+    res._mul(1.0/other)
+    return res
+
+SymmMatrix3Ptr.__div__ = _SymmMatrix3Ptr___div__
+
+# Override parent class's __imul__ with one that
+# is guaranteed to return the identical "self" object --
+# important for OutputVal objects not to lose ownership
+# of the underlying C object.
+def _SymmMatrix3Ptr___imul__(self, other):
+    self._mul(other)
+    return self
+
+SymmMatrix3Ptr.__imul__ = _SymmMatrix3Ptr___imul__
+
+def _SymmMatrix3Ptr_label_list(self):
+    return ["XX", "YY", "ZZ", "YZ", "XZ", "XY"]
+
+SymmMatrix3Ptr.label_list = _SymmMatrix3Ptr_label_list
+
+
+################################################
+################################################
+
+
+class VoigtComponent(enum.EnumClass(*voigtNames)): pass
+
+def _SymmMatrix3_voigtValues(self):
+    return [self.get(*voigtIndices[i]) for i in range(6)]
+
+SymmMatrix3.voigtValues = _SymmMatrix3_voigtValues
+
+def _SymmMatrix3___repr__(self):
+    args = ["%s=%s" % nv for nv in zip(voigtNames, self.voigtValues())]
+    return "SymmMatrix3(%s)" % string.join(args, ',')
+
+SymmMatrix3.__repr__ = _SymmMatrix3___repr__
+
+def _SymmMatrix3_component(self, component): # used in Output, below
+    # component is a VoigtComponent Enum object
+    return self.get(*voigtIndices[component.index()])
+SymmMatrix3Ptr.component = _SymmMatrix3_component
+
+utils.OOFdefine('SymmMatrix3', SymmMatrix3)
+
+############
+
+    
+## Triclinic is essentially SymmMatrix3, but with a different __repr__.
+class TriclinicRank2Tensor(SymmMatrix3):
+    def __repr__(self):
+        args = ["%s=%s" % nv for nv in zip(voigtNames, self.voigtValues())]
+        return "TriclinicRank2Tensor(%s)" % string.join(args, ',')
+
+utils.OOFdefine('TriclinicRank2Tensor', TriclinicRank2Tensor)
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 2 Tensors:TriclinicRank2Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/triclinicrank2.xml'),
+    ordering=210)
+
+
+############
+
+class SymmMatrix3Parameter(parameter.Parameter):
+    types = (SymmMatrix3Ptr,)
+    structfmt =">6d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        return struct.pack(SymmMatrix3Parameter.structfmt, *value.voigtValues())
+    def binaryRead(self, parser):
+        b = parser.getBytes(SymmMatrix3Parameter.structsize)
+        vv = struct.unpack(SymmMatrix3Parameter.structfmt, b)
+        return SymmMatrix3(*vv)
+    ## Since SymmMatrix3Parameter is only a base class for other
+    ## parameters, it doesn't have it's own valueDesc function or an
+    ## XMLObjectDoc.
+
+# Since TriclinicRank2Tensors have a special widget which returns
+# right type, they also need their own parameter type, primarily as a
+# device on which to hang the widget.
+class TriclinicRank2TensorParameter(SymmMatrix3Parameter):
+    def valueDesc(self):
+        return "A <link linkend='Object-TriclinicRank2Tensor'><classname>TriclinicRank2Tensor</classname></link> object."
+
+## For Monoclinic symmetric rank two tensor properties
+class MonoclinicRank2Tensor(SymmMatrix3):
+    def __init__(self, xx=1, yy = 1, zz = 1, xz = 0.5):
+        SymmMatrix3.__init__(self, xx=xx, yy=yy, zz=zz, xz=xz)
+    def __repr__(self):
+        xx = self.get(0,0)
+        yy = self.get(1,1)
+        zz = self.get(2,2)
+        xz = self.get(0,2)
+        return "MonoclinicRank2Tensor(xx=%s, yy=%s, zz=%s, xz=%s)" \
+               % (xx, yy, zz, xz)
+
+utils.OOFdefine('MonoclinicRank2Tensor', MonoclinicRank2Tensor)
+
+class MonoclinicRank2TensorParameter(parameter.Parameter):
+    types = (MonoclinicRank2Tensor,)
+    structfmt =">4d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        return struct.pack(MonoclinicRank2TensorParameter.structfmt,
+                           value.get(0,0), value.get(1,1), value.get(2,2),
+                           value.get(0,2))
+    def binaryRead(self, parser):
+        b = parser.getBytes(MonoclinicRank2TensorParameter.structsize)
+        vv = struct.unpack(MonoclinicRank2TensorParameter.structfmt, b)
+        return MonoclinicRank2Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-MonoclinicRank2Tensor'><classname>MonoclinicRank2Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 2 Tensors:MonoclinicRank2Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/monoclinicrank2.xml'),
+    ordering=206)
+
+## For Orthorhombic symmetric rank two tensor properties
+class OrthorhombicRank2Tensor(SymmMatrix3):
+    def __init__(self, xx=1, yy = 1, zz = 1):
+        SymmMatrix3.__init__(self, xx=xx, yy=yy, zz=zz)
+    def __repr__(self):
+        xx = self.get(0,0)
+        yy = self.get(1,1)
+        zz = self.get(2,2)
+        return "OrthorhombicRank2Tensor(xx=%s, yy=%s, zz=%s)" % (xx, yy, zz)
+
+utils.OOFdefine('OrthorhombicRank2Tensor', OrthorhombicRank2Tensor)
+
+class OrthorhombicRank2TensorParameter(parameter.Parameter):
+    types = (OrthorhombicRank2Tensor,)
+    structfmt =">3d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        return struct.pack(OrthorhombicRank2TensorParameter.structfmt,
+                           value.get(0,0), value.get(1,1), value.get(2,2))
+    def binaryRead(self, parser):
+        b = parser.getBytes(OrthorhombicRank2TensorParameter.structsize)
+        vv = struct.unpack(OrthorhombicRank2TensorParameter.structfmt, b)
+        return OrthorhombicRank2Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-OrthorhombicRank2Tensor'><classname>OrthorhombicRank2Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 2 Tensors:OrthorhombicRank2Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/orthorhombicrank2.xml'),
+    ordering=205)
+
+
+## For Tetragonal, Trigonal, Hexagonal, symmetric rank two tensor
+## properties Tetragonal, Trigonal, and Hexagonal RankTwoTensor
+## classes are just wrappers (makeup, really) so that the UI shows a
+## consistent interface.  All the functionality is stored in
+## IsotropicPlaneRank2Tensor.
+
+## Base class for Tetragonal, Trigonal, and Hexagonal rank two tensors
+class IsotropicPlaneRank2Tensor(SymmMatrix3):
+    def __init__(self, xx=1, zz=1):
+        SymmMatrix3.__init__(self, xx=xx, yy=xx, zz=zz)
+    def __repr__(self):
+        xx = self.get(0,0)
+        zz = self.get(2,2)
+        return self.__class__.__name__ + "(xx=%s, zz=%s)" %(xx, zz)
+    
+class TetragonalRank2Tensor(IsotropicPlaneRank2Tensor):
+    pass
+utils.OOFdefine('TetragonalRank2Tensor', TetragonalRank2Tensor)
+
+class TrigonalRank2Tensor(IsotropicPlaneRank2Tensor):
+    pass
+utils.OOFdefine('TrigonalRank2Tensor', TrigonalRank2Tensor)
+
+class HexagonalRank2Tensor(IsotropicPlaneRank2Tensor):
+    pass        
+utils.OOFdefine('HexagonalRank2Tensor', HexagonalRank2Tensor)
+
+class IsotropicPlaneParameter(parameter.Parameter):
+    ## base class for Tetragonal, Trigonal, and Hexagonal Rank2Tensor objects
+    ## should never be directly called. Only subclasses must be called
+    structfmt =">dd"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        return struct.pack(IsotropicPlaneParameter.structfmt,
+                           value.get(0,0), value.get(2,2))
+    
+class TetragonalRank2TensorParameter(IsotropicPlaneParameter):
+    types = (TetragonalRank2Tensor,)
+    def binaryRead(self, parser):
+        b = parser.getBytes(IsotropicPlaneParameter.structsize)
+        vv = struct.unpack(IsotropicPlaneParameter.structfmt, b)
+        return TetragonalRank2Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-TetragonalRank2Tensor'><classname>TetragonalRank2Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 2 Tensors:TetragonalRank2Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/tetragonalrank2.xml'),
+    ordering=203)
+
+
+utils.OOFdefine('HexagonalRank2Tensor', HexagonalRank2Tensor)
+
+class TrigonalRank2TensorParameter(IsotropicPlaneParameter):
+    types = (TrigonalRank2Tensor,)
+    def binaryRead(self, parser):
+        b = parser.getBytes(IsotropicPlaneParameter.structsize)
+        vv = struct.unpack(IsotropicPlaneParameter.structfmt, b)
+        return TrigonalRank2Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-TrigonalRank2Tensor'><classname>TrigonalRank2Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 2 Tensors:TrigonalRank2Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/trigonalrank2.xml'),
+    ordering=202)
+
+    
+class HexagonalRank2TensorParameter(IsotropicPlaneParameter):
+    types = (HexagonalRank2Tensor,)
+    def binaryRead(self, parser):
+        ## never called. overwritten by subclases
+        b = parser.getBytes(IsotropicPlaneParameter.structsize)
+        vv = struct.unpack(IsotropicPlaneParameter.structfmt, b)
+        return HexagonalRank2Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-HexagonalRank2Tensor'><classname>HexagonalRank2Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 2 Tensors:HexagonalRank2Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/hexagonalrank2.xml'),
+    ordering=201)
+    
+    
+## For Cubic rank two tensor properties
+
+class CubicRank2Tensor (SymmMatrix3):
+    def __init__(self, xx=1):
+        self.xx = xx
+        SymmMatrix3.__init__(self, xx=self.xx, yy=self.xx, zz=self.xx)
+    def __repr__(self):
+        return "CubicRank2Tensor(xx=%s)" %self.xx
+    
+utils.OOFdefine('CubicRank2Tensor', CubicRank2Tensor)
+
+class CubicRank2TensorParameter(parameter.Parameter):
+    types = (CubicRank2Tensor,)
+    structfmt =">d"
+    ## the format is ">Nd"
+    ## > refers to a portable byte ordering
+    ## N means the number of parameters that it takes
+    ## d means that the parameters are double
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        return struct.pack(CubicRank2TensorParameter.structfmt, value.xx)
+    def binaryRead(self, parser):
+        b = parser.getBytes(CubicRank2TensorParameter.structsize)
+        vv = struct.unpack(CubicRank2TensorParameter.structfmt, b)
+        return CubicRank2Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-CubicRank2Tensor'><classname>CubicRank2Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 2 Tensors:CubicRank2Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/cubicrank2.xml'),
+    ordering=200)
+    

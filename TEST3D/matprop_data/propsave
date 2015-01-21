@@ -1,0 +1,3 @@
+# OOF version 2.0
+FileVersion(number=1.0, format='ascii')
+Property.Color(name='bloo', color=RGBColor(red=0.10000,green=0.10000,blue=0.90000))

@@ -1,0 +1,73 @@
+# -*- python -*-
+# $RCSfile: ooferror.spy,v $
+# $Revision: 1.10.2.1 $
+# $Author: langer $
+# $Date: 2012/03/13 15:01:07 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+# Routine to set up the callback that converts C++ exceptions to
+# Python exceptions.  This gets automatically run when oofcpp is
+# imported, which guarantees that it will be in place before any
+# high-level calls from "pure Python" happen.
+
+from ooflib.common import debug
+
+def pyErrorCallback(str):
+    try:
+        errorstring = "raise " + str
+        exec errorstring
+    except TypeError:
+        debug.fmsg("Error while raising exception! str=", errorstring,
+                   type(errorstring))
+        raise
+
+def registerErrorClass(eclass):
+    "Allow an error class to be raised from the SWIGged wrapper functions."
+    g = globals()
+    g[eclass.__name__] = eclass
+
+pyErrorInit(pyErrorCallback)
+
+registerErrorClass(ErrNoProgress)
+
+##################################
+
+import traceback
+
+class ErrPyProgrammingError(ErrProgrammingError):
+    def __init__(self, message):
+        stack = traceback.extract_stack()
+        # The actual error is two up from us in the stack.
+        (file, lineno, func, txt) = stack[-2] 
+        ErrProgrammingError.__init__(self, message, file, lineno)
+    def __repr__(self):
+        return self.summary() 
+        
+
+def _ErrProgrammingError___repr__(self):
+    return self.summary()+"\n("+self.filename()+":"+"%d"%self.lineno() + ")"
+
+ErrProgrammingError.__repr__ = _ErrProgrammingError___repr__
+
+
+
+class ErrDataFileError(ErrUserError):
+    pass
+
+class ErrWarning(ErrUserError):
+    pass
+
+# At the python level, make all OOF error classes have a __str__ that
+# is the same as the __repr__.
+def _ErrError___repr__(self):
+    return self.__repr__()
+
+ErrErrorPtr.__str__  = _ErrError___repr__

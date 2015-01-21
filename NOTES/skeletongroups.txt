@@ -1,0 +1,62 @@
+// -*- text -*-
+// $RCSfile: skeletongroups.txt,v $
+// $Revision: 1.1 $
+// $Author: langer $
+// $Date: 2005/06/02 17:56:30 $
+
+Subproblems, internal boundaries, and the locations of surface
+properties can be specified by providing element groups or segment groups.
+
+Element groups can be specified by boolean combinations of the
+following sets:
+
+     1) All elements
+
+     2) Selected elements
+
+     3) Material name [is | contains | begins with | ends with] <string>
+
+     4) Material contains Property whose name
+		 [is | contains | begins with | ends with] <string>
+
+     5) Dominant pixel is in PixelGroup whose name
+		 [is | contains | begins with | ends with] <string>
+
+     6) Dominant pixel has color <Color> in image <Image>
+
+     7) Homogeneity is [less | greater] than <value>.
+
+     8) ???
+   
+Definitions 3-? are *dynamic*.  If the Microstructure or Image
+changes, so do the element groups.  The groups definitions can be
+stored abstractly and only converted into lists of Elements when
+necessary.
+
+Dynamic rules can be specified when a group is created.  We may want
+to keep a clear distinction between dynamic and static groups, making
+it impossible to add elements by hand to a dynamic group.
+
+
+Segment groups can be specified by boolean combinations of:
+
+    1) All segments
+
+    2) Selected segments
+
+    3) Segments bounding element group whose name
+          [is | contains | begins with | ends with] <string>
+
+    4) Segments of elements whose Material name
+          [is | contains | begins with | ends with] <string> 
+
+    5) ???
+
+Again, definitions 3-? are dynamic.  A group created with the boolean
+'and' of two definition 3s will contain only the segments shared by
+the two element groups.  Definition 4 and other similar to it aren't
+strictly necessary, since they can be written in terms of definition 3
+and an element group definition.
+
+
+Node groups could be treated similarly.

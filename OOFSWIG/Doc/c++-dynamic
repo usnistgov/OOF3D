@@ -1,0 +1,390 @@
+
+From: fp@rose.fpp.tm.informatik.uni-frankfurt.de (Frank Pilhofer)
+Newsgroups: comp.lang.tcl
+ Subject: Making C++ loadable modules work
+Date: Sun, 23 Mar 1997 16:03:06 GMT
+Organization: Frank Pilhofer Projects Network
+Lines: 379
+NNTP-Posting-Host: dialin083.rz.uni-frankfurt.de
+X-Newsreader: NN version 6.5.1
+
+
+Making C++ loadable modules work
+================================
+
+
+A question frequently popping up on comp.lang.tcl is why loadable
+modules written in C++ `won't work'. More precisely, they cannot
+be loaded due to unresolved externals.
+
+This text tries to explain the difference and tries to give some
+advice on how to make your C++ modules work. It assumes that you
+know about the concept of shared libraries, and that you have
+already managed to make C loadable modules work.
+
+In the past, some people have suggested that simply recompiling Tcl
+with a C++ compiler helps. I have checked this through on quite a
+few systems, but it never changed anything. Anyway, in most cases,
+recompiling and replacing your current tclsh is not necessary.
+
+
+The Basics
+----------
+
+Tcl loadable modules are realized as shared libraries. They must be
+compiled for position-independence because they may be mapped into
+memory at different addresses each time the library is loaded. This
+is contrary to static linking; because on Unix systems each program
+has a separate address space starting at zero, addresses of functions
+from static libraries (that are merged directly into the executable)
+can be precomputed at linking time. With shared libraries, the process
+of address computation is performed at runtime by the dynamic linker.
+
+Whenever you use an external function, you must make the linker know
+where the function can be resolved from. This can be done explicitely
+on the linker's command line with the '-l' option, but some libraries
+are also implicitely linked, for example the basic C library that
+provides functions such as printf().
+
+If you use `gcc' to link your programs, you can make implicit libraries
+visible by using the `-v'.
+
+If you link with a shared library, only a reference is included in the
+executable to where the shared library is located. If linking with a
+static library, all referenced code from the library is directly
+copied into the executable, because such code cannot be loaded at
+runtime because of the address-computation problem.
+
+Apart from the C library, there may be other implicitely linked
+libraries, which provides functions used internally by the compiler.
+gcc, for example, imports some floating-point operations from the
+`gcc' library.
+
+Loading a loadable module in Tcl is essentially a dynamic linking
+operation. The shared library containing the module code is mapped
+into memory. Before Tcl can continue, the dynamic linker springs
+into action, trying to resolve the external functions you are using.
+For example, one of these functions is probably `Tcl_SetResult()',
+which the dynamic linker can find in the original executable or in
+the already-loaded Tcl shared library. The same for all other
+functions you use, until the dynamic linker finishes after updating
+all references to external functions you are making.
+
+So far, so good. Now let's try to do the same with C++ code.
+
+
+So what's the problem?
+----------------------
+
+One of the favourite functions you are probably using in C++ code is
+the `new' operator. Now this is not a trivial function, so the com-
+piler replaces the new operator with a call to an external function
+providing the required functionality. For the g++ compiler, the
+function is named `__builtin_new', which is again provided by the
+`gcc' library of internally used functions.
+
+Now if you do not take any precautions and try to load the module
+into Tcl, the load fails, because the dynamic linker cannot find
+__builtin_new anywhere. Tcl itself does not use the function, and
+thus it was not packed into the tclsh executable. No reference exists
+where the function can be found: it is an ``unresolved external'',
+which is what Tcl's load command will probably complain about.
+Therefore, you must make sure to provide this function.
+
+Some native C++ compilers, for example the HP-UX CC compiler, luckily
+provide their internal functions as a shared library, in this case
+in the `C' library. Now to provide the dynamic linker with the required
+information where to find the compiler's internal functions, all you
+have to do is to link your shared library with the `-lC' option. This
+is simple.
+
+Other compilers, including g++, do not provide their internal functions
+in a shared library. The `gcc' library is not compiled as a shared
+library, hence its functions must always be statically linked into the
+basic executable.
+
+However, because Tcl does not use the new operator by itself, the static
+linker did not see the necessity to include the __builtin_new function.
+If you link your module with the gcc library, it won't load because of
+non-relocatable code (within the gcc library). If you do not link your
+module with the gcc library, it won't load because of unresolved
+references.
+
+Duh. Fine alternative.
+
+Okay, so now you know why you can't load your modules. If you do not
+use g++, the names of the internal functions will be different (for
+example `__nw__FUi' for HP-UX's CC compiler), but the result is quite
+the same. So let's think of a workaround.
+
+
+Solutions
+---------
+
+The first one we already know. If the necessary functions are provided
+in a shared library, all you have to do is to find out the name of the
+internal library and then to link your module with a reference to this
+library.
+
+With g++, the advantage is that you have access to the source code of
+the internal functions and are free to mess around with them. I have
+had success with any of three strategies here.
+
+
+ (1) One solution is to force the static linker to add all necessary
+     code of all potentially relevant internal functions to the basic
+     Tcl library. Selective linking is only performed when linking in
+     libraries, but not with object files. So you can build an
+     `extended' Tclsh using the following commands:
+
+       ar xv /where/ever/libgcc.a
+       gcc -o mytclsh tclAppInit.c -ltcl *.o
+
+     This builds `mytclsh', which behaves no different than the original,
+     but in which the functions like __builtin_new are already present by
+     `force-linking' them in. They are thus freely available to use by
+     your C++ module.
+
+     This has the disadvantage that you need a `special' tclsh. You can be
+     pretty sure of no conflicts if you replace your original tclsh by the
+     extended one, still it would be better to live without it.
+
+ (2) You can also sit down and re-implement the necessary functions your-
+     self. They aren't very complicated, and you can copy from the original
+     in the gcc source code. Jan Nijtmans has performed this task; his
+     code is available among my `tclobj' distribution; they are also part
+     of his Tcl Plus-Patches as `_builtin.c' and `_eprintf.c'.
+
+     You can then compile this replacement code yourself and link it with
+     your loadable module.
+
+     This is my preferred solution and works very well. The potential dis-
+     advantage is that the GNU folks are free to mess around with the
+     behaviour of their internal functions, so we cannot be sure if the
+     code will work with future gcc versions.
+
+ (3) A third solution is to recompile the gcc library as shared library.
+     It has been some time since I tried this, but apparently the following
+     works:
+
+     (in the gcc source directory)
+       ./configure
+       make CC=gcc GCC_FOR_TARGET=gcc GCC_PASSES= \
+                FIXINCLUDES=Makefile.in CFLAGS=-fPIC \
+		libgcc.a
+     (change to an empty directory)
+       ar xv /your/brand/new/libgcc.a
+       gcc -shared -o libmygcc.so *.o
+
+     The above make actually builds the first stage of gcc, but
+     preventing these unnecessary compiles is more difficult.
+
+     You can then link your module with '-lmygcc' and everything is
+     fine.
+
+
+I am currently using the second approach on many systems, from Ultrix
+to Linux and SunOS. It should work on many more.
+
+If you do not use gcc/g++ but your system's native compilers, your problem
+is that you do not have sourcecode that you can compile at your leisure.
+If it is a modern system, chances are that there is a shared library with
+the necessary functions, and all you have to do is to find out which
+functions are missing, and which libraries you need to search. You can
+usually do some experiments here, looking at the unresolved externals you
+get when loading, and then searching for these functions in the system
+libraries using `nm'. All the better if you can get the compiler to print
+you the complete command it uses for linking (thus you get to know the
+`internal' libraries by name).
+
+If the internal library does not come as shared library, you can still
+use the strategy (1) from above, forcing the linker to merge all
+necessary functions into a custom tclsh.
+
+
+Hacks and hints:
+----------------
+
+  o  Modern ELF systems (Linux, SunOS 5.x, Digital Unix) do not refuse
+     to load non-PIC code, and it seems to work pretty well. Although
+     this would greatly simplify your task, I've been told that it's a
+     bad thing to do, especially if the shared library is attached to
+     more than one process. So don't try this at home, always compile
+     PIC!
+
+  o  If using the HPUX native compilers, you apparently have to link
+     your C++ shared library with the `cxxhead.o' module, which you
+     can get from /lib/libcxx.a:
+
+       ar xv /lib/libcxx.a cxxhead.o
+       ld -b -o myshlib.so myshlib.o cxxhead.o
+
+  o  If you do not get a list of unresolved externals when loading a
+     module with unresolved externals in Tcl (but only an error message
+     saying that references are unresolved), you may want to hack the
+     Tcl source code. For example on HPUX and other systems that use
+     `shl_load' dynamic loading, you can change
+
+        handle = shl_load (fileName, BIND_IMMEDIATE|BIND_VERBOSE, 0L);
+                                                   ^^^^^^^^^^^^^^
+
+     in unix/tclLoadShl.c to get a list of missing externals upon a
+     failing `load'.
+
+  o  On AIX 4.x, you must slightly patch the script that Tcl provides
+     for linking a loadable module, which is among the distribution
+     files as `unix/ldAix'. Edit this file, look for the definition
+     of nmots, and add the `-C' flag:
+
+     nmopts="-g -C"
+               ^^^
+
+     This prevents nm from demangling C++ symbol names. When using
+     xlc/xlC, you must also add the `-lC' library when linking.
+
+  o  When using gcc/g++ on Ultrix, do not use `-fPIC' but `-G 0'
+     instead.
+
+  o  When fooling with shared libraries, don't forget to adjust your
+     LD_LIBRARY_PATH environment variable: it contains a list of
+     directories to be searched for shared libraries. This does
+     usually not include the local directory!
+
+  o  On Digital Unix, SunOS 5.x and probably other ELF systems, link
+     your modules with `gcc -shared', or global constructors do not
+     work (see below).
+
+  o  When using cc/cxx on Digital Unix, link your shared libraries
+     with "-L/usr/lib/cmplrs/cxx -lcxx".
+
+
+"All right, but I still can't use iostreams!"
+---------------------------------------------
+
+That's because iostreams and other classes are provided by yet another
+library. If you use g++, these are provided by the `stdc++' library,
+which is again linked in implicitely without manual intervention. If
+you are lucky, your system has a shared libstdc++ library, and all you
+have to do is to specify the right options to the linker.
+
+However, if your libstdc++ is not shared, you're in bad shape. You have
+the options of recompiling the g++ library (which is the package that
+libstdc++ comes in) into a shared library, or you can fall back to
+strategy (1) above, force-linking the complete library into a custom
+tclsh (thus expanding it by a few hundred kilobytes ...)
+
+
+Global Constructors
+-------------------
+
+Another troublesome issue are constructors for global objects in shared
+libraries. Global objects must be initialized before any function within
+the library is entered. However, many systems don't do this properly.
+This means that the objects would not be initialized, and performing any
+operation on them may produce unexpected results.
+
+On systems where Tcl just simulates shared libraries, like on Ultrix,
+you can be sure that global constructors `don't work' (i.e. they are
+not called). Compiler, linker, and the dynamic linker must cooperate
+for everything to work properly.
+
+The ELF standard takes the special requirements of C++ code in shared
+libraries into account; on these systems (including for example Linux,
+Digital Unix and SunOS 5.x), global constructors are likely to work,
+but still the *cooperation* of the components is important. On Digital
+Unix and SunOS 5.x, using g++, global constructors did not work using
+Tcl's default linking operation, but linking with `gcc -shared' helped.
+
+If you are using gcc/g++, I suggest to install the GNU binutils as
+well. Using the GNU ld that comes with the binutils package might
+improve things on some systems. (I did not try this myself, though.)
+
+I could not get global constructors to work on HPUX. It might be
+possible, but I haven't found out how. When linking a shared library,
+you can specify symbols to be called upon initialization on the
+linker's command line using `+I'. If you give all names of global
+constructors this way, the constructors will be called as desired.
+You can scan your code for constructors with `nm'; if using g++,
+they contain the substring `_GLOBAL_.I.'. This process is awkward
+and error-prone. I have not found a way to automate it.
+
+On AIX, I also failed getting global constructors to work.
+
+The configuration script of my `Tclobj' package includes a check
+whether global constructors work or not. You can also easily perform
+the check yourself - just make a small module with a global object
+whose constructor prints some message. If this message is printed
+upon loading the module, you're fine. You might also wish to experiment
+with the options to your compiler and linker to improve the matter; if
+you succeed, let me know.
+
+In your own code, you could avoid using global objects `FooBar Global'
+by using dynamic objects `FooBar *Global' instead, which are then
+allocated using `new' in an initialization procedure. Sure, this
+involves edititng all references to the object, but it's portable.
+
+It has also been mentioned that static objects inside a function may
+be a problem, but I disagree. Initializing local static objects has
+not been a problem on any system. According to my C++ reference, ANSI
+states that such objects are initialized when first entering the
+function. This means that the necessary call to the constructor is
+part of the function's code and not part of a global initialization.
+
+To summarize my results of global constructors on different platforms:
+
+  o  Linux: No problem.
+
+  o  SunOS 5.x and Digital Unix using gcc/g++: Use `gcc -shared' for
+     linking instead of the commands used by Tcl.
+
+  o  HPUX: With manual intervention only.
+
+  o  AIX, Ultrix: No.
+
+
+Epilogue
+--------
+
+There is more to shared libraries than mentioned here, and you should
+not use this text as sole reference. If you have developer's documen-
+tation for your system, you should consult it to learn much more;
+another source of information can be the `ld' manual page. I cannot
+guarantee that everything I've said here is true.
+
+The author of this text is by no means an expert on the topic of shared
+libraries. I rather try to not giving up on a problem until it is solved.
+What I know, I have learned from experience. Much experience was gathered
+while trying to get my `tclobj' package to run on different systems.
+`Tclobj' allows you to integrate C++ classes and objects into the Tcl
+language. Many of the tricks above are distilled in its autoconf script;
+if you are out of ideas, you might want to download the package and have
+a look at what it tries to do.
+
+Thanks to Jan Nijtmans for hints and advice and his implementations of
+gcc's internal functions (_eprintf.c, _builtin.c), which are also part
+of his Plus patches for Tcl.
+
+
+References
+----------
+
+ [1] The `tclobj' package. Frank Pilhofer.
+     http://www.uni-frankfurt.de/~fp/Tools/tclobj/
+
+ [2] Tcl Plus Patches. Jan Nijtmans.
+     http://www.cogsci.kun.nl/tkpvm/pluspatch.html
+
+ [3] ELF: From The Programmer's Perspective. Hongjiu Lu.
+     ftp://sunsite.unc.edu/pub/Linux/GCC/elf.latex.tar.gz
+     http://www.debian.org/Documentation/elf/elf.html
+
+
+     ------------------------------------------------------------
+			    Frank Pilhofer
+		    fp@informatik.uni-frankfurt.de
+
+-- 
+ + Frank Pilhofer                        fp@informatik.uni-frankfurt.de  +
+ |                                      http://www.uni-frankfurt.de/~fp/ |
+ +---- Life would be a very great deal less weird without you.  - DA ----+
+

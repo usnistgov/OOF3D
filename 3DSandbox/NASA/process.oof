@@ -1,0 +1,6 @@
+OOF.Microstructure.Create_From_ImageFile(filename='/Users/vrc/OOFDATA/3D/CarbonFiberSubset100/MXCT048_NASA_Ames_sampleC_*.tiff', microstructure_name='ms', height=automatic, width=automatic, depth=automatic)
+OOF.Windows.Graphics.New()
+OOF.Image.Modify.MedianFilter(image='ms:MXCT048_NASA_Ames_sampleC_*.tiff', radius=2)
+OOF.Image.Modify.MedianFilter(image='ms:MXCT048_NASA_Ames_sampleC_*.tiff', radius=2)
+OOF.Image.Modify.ThresholdImage(image='ms:MXCT048_NASA_Ames_sampleC_*.tiff', T=0.44)
+OOF.Graphics_1.Settings.Color.Background(color=RGBColor(red=0.74603,green=0.77778,blue=1.00000))

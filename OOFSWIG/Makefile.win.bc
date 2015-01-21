@@ -1,0 +1,104 @@
+# ---------------------------------------------------------------------------
+# Makefile.win
+#
+# Dave Beazley
+# June 24, 1997
+#
+# This file is used to build all of the examples in the 'Examples' directory
+# under Windows 95/NT.    This assumes that you are using Borland C++ 5.x.
+#
+# By default this only builds DLLs.
+# ---------------------------------------------------------------------------
+
+# Location of the Borland C++ directory
+TOOLS         = e:\bc5
+
+# The C/C++ compiler
+CC            = bcc32.exe
+
+# The linker
+LINK          = tlink32.exe
+
+# Include directories for your compiler
+INCLUDE32     = -I"$(TOOLS)\include"
+
+# Target machine
+MACHINE       = 
+
+# Startup code for the DLL (for example C0D32.obj)
+STARTUP      = C0D32.obj
+
+# Import library
+IMPORT       = IMPORT32.lib
+
+# Runtime library
+RUNTIME      = CW32MT.lib
+
+# Linker options
+LOPT      = 
+
+# C compiler flags
+CFLAGS    =  -c -w- $(OPTS)
+
+# SWIG Installation
+SWIG      = c:\swig1.1\swig
+
+# Now munge the files provided
+# SRCS     = list of source files
+# WRAPFILE = Outfile file for SWIG
+
+SRCS         = $(SRCS) $(WRAPFILE)
+
+# Get rid of /Tp option from Visual C++ and change it to -P for BC++
+RSRCS        = $(SRCS:/Tp=-P )
+
+# Form object files
+CXXOBJS        = $(SRCS:.cxx=.obj) 
+COBJS          = $(CXXOBJS:.c=.obj)
+OBJS           = $(COBJS:/Tp=)
+
+
+
+# ------------------------------------------------------------------
+# Python settings
+# 
+# PY_INCLUDES  = Include files for your Python installation.  Typically
+#                you need the python-1.5\Include python-1.5\ and python-1.5\PC
+#                directories here.
+# PYLIB        = The location of the Python library
+# ------------------------------------------------------------------
+
+
+PY_INCLUDES  = -Id:\python-1.5\Include -Id:\python-1.5 -Id:\python-1.5\PC
+PYLIB        = d:\python-1.5\PCbuild\Debug\python15.lib
+PYFLAGS      = /D __WIN32__
+
+python::
+	@echo Borland makefile for Python extensions not implemented yet.
+
+
+
+clean::
+	del *.obj
+	del *.dll
+	del *.exp
+	del *.lib
+	del *.pdb
+	del *.map
+	del *_wrap*
+	del *~
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

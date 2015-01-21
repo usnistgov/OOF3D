@@ -1,0 +1,59 @@
+# -*- python -*-
+# $RCSfile: equation.spy,v $
+# $Revision: 1.5.10.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:44:20 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+from ooflib.common import debug
+from ooflib.common import utils
+import types
+
+def _Equation___hash_(self):
+    return self.objectid()
+
+EquationPtr.__hash__ = _Equation___hash_
+
+def _Equation___cmp__(self, other):
+    if not isinstance(other, EquationPtr): return -1
+    if self.objectid() < other.objectid(): return -1
+    if self.objectid() > other.objectid(): return 1
+    return 0
+
+EquationPtr.__cmp__ = _Equation___cmp__
+
+EquationPtr.__repr__ = EquationPtr.name
+
+
+DivergenceEquationPtr.__repr__ = DivergenceEquationPtr.name
+
+PlaneFluxEquationPtr.__repr__ = PlaneFluxEquationPtr.name
+
+from ooflib.SWIG.engine.nodalequation import NodalEquationPtr
+
+# AllEquations acts like a list of Equations
+class _AllEquations:
+    def __getitem__(self, indx):
+        if type(indx) == types.IntType:
+            if indx >= countEquations() or indx < 0:
+                raise IndexError("Bad equation index: " + str(indx))
+            return getEquationByIndex(indx)
+        elif type(indx) == types.StringType:
+            return getEquationByName(indx)
+    def __len__(self):
+        return countEquations()
+
+allEquations = _AllEquations()
+
+def getEquation(name):
+    return getEquationByName(name)
+
+utils.OOFdefine('getEquation', getEquation)
+

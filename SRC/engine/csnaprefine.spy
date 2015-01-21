@@ -1,0 +1,48 @@
+# -*- python -*-
+# $RCSfile: csnaprefine.spy,v $
+# $Revision: 1.1.4.5 $
+# $Author: fyc $
+# $Date: 2014/02/18 16:38:14 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+from ooflib.common import cregisteredclass
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.SWIG.engine import cskeletonmodifier
+from ooflib.SWIG.engine import crefinementcriterion
+
+
+
+################################################
+
+
+SnapRefineReg = cregisteredclass.Registration(
+    'Snap Refine',
+    cskeletonmodifier.CSkeletonModifierBasePtr,
+    SnapRefine,
+    ordering=400,
+    params=[
+        parameter.RegisteredParameter(
+            'targets',
+            RefinementTargets,
+            tip='Target elements to be refined.'),
+        crefinementcriterion.RefinementCriterionParameter('criterion'),
+        parameter.FloatRangeParameter(
+            'min_distance',
+            (0.01, 3.0, 0.01),
+            value=1.0,
+            tip=
+            """Minimum distance between nodes and transition points in units of the maximum pixel dimension."""),
+        cskeletonmodifier.alphaParameter
+            ],
+    tip="Subdivide elements along pixel boundaries.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/snaprefine.xml')
+    )

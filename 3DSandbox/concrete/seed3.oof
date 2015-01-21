@@ -1,0 +1,22 @@
+OOF.File.LoadStartUp.Data(filename='try3x3.oofdata')
+from time import *
+
+OOF.Help.Debug.Sanity_Check(skeleton="ms2:skeleton", quick=1)
+OOF.Skeleton.Modify(skeleton='ms2:skeleton', modifier=SnapRefine(targets=CheckHomogeneity(threshold=0.9),criterion=Unconditionally(),min_distance=1,alpha=0.7))
+print "AFTER SNAP REFINE", time()
+OOF.Help.Debug.Sanity_Check(skeleton="ms2:skeleton", quick=1)
+OOF.Skeleton.Modify(skeleton='ms2:skeleton', modifier=SnapNodes(targets=SnapHeterogenous(threshold=0.90000000000000002),criterion=Unconditional(alpha=0.90000000000000002)))
+print "AFTER SNAP 1", time()
+OOF.Help.Debug.Sanity_Check(skeleton="ms2:skeleton", quick=1)
+OOF.Skeleton.Modify(skeleton='ms2:skeleton', modifier=SnapNodes(targets=SnapHeterogenous(threshold=0.90000000000000002),criterion=Unconditional(alpha=0.90000000000000002)))
+print "AFTER SNAP 2", time()
+OOF.Help.Debug.Sanity_Check(skeleton="ms2:skeleton", quick=1)
+OOF.Skeleton.Modify(skeleton='ms2:skeleton', modifier=SnapNodes(targets=SnapHeterogenous(threshold=0.90000000000000002),criterion=Unconditional(alpha=0.90000000000000002)))
+print "AFTER SNAP 3", time()
+OOF.Help.Debug.Sanity_Check(skeleton="ms2:skeleton", quick=1)
+OOF.Skeleton.Modify(skeleton='ms2:skeleton', modifier=SurfaceSmooth(targets=SelectedNodes(),criterion=AverageEnergy(alpha=0.29999999999999999),T=0.0,iteration=FixedIteration(iterations=5)))
+print "AFTER SURFACE SMOOTH", time()
+OOF.Help.Debug.Sanity_Check(skeleton="ms2:skeleton", quick=1)
+
+
+

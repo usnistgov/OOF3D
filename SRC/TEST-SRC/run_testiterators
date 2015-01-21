@@ -1,0 +1,49 @@
+#!/bin/csh
+# 
+# In the new testing scheme, we assume that the testnodeiterator is
+# reachable from the current directory, but that the comparison
+# data may be elsewhere.
+# setenv PYTHONPATH $1
+# set PDIR=$1
+
+set DATAPATH=$1
+set PDIR="."
+
+
+python $PDIR/testnodeiterator.py -n 1    | diff - $DATAPATH/iterator_1x1_tri3 >& /dev/null
+if ($status) then
+	echo tri3 failed
+	exit 1
+endif
+
+python $PDIR/testnodeiterator.py -n 1 -p | diff - $DATAPATH/iterator_1x1_tri_6_3
+if ($status) then
+	echo tri_6_3 failed
+	exit 1
+endif
+
+python $PDIR/testnodeiterator.py -n 1 -b | diff - $DATAPATH/iterator_1x1_tri6 >& /dev/null
+if ($status) then
+	echo tri6 failed
+	exit 1
+endif
+
+python $PDIR/testnodeiterator.py -n 1 -q    | diff - $DATAPATH/iterator_1x1_quad4 >& /dev/null
+if ($status) then
+	echo quad4 failed
+	exit 1
+endif
+
+python $PDIR/testnodeiterator.py -n 1 -q -b | diff - $DATAPATH/iterator_1x1_quad8 >& /dev/null
+if ($status) then
+	echo quad8 failed
+	exit 1
+endif
+
+python $PDIR/testnodeiterator.py -n 1 -q -p | diff - $DATAPATH/iterator_1x1_quad_8_4 >& /dev/null
+if ($status) then
+	echo quad_8_4 failed
+	exit 1
+endif
+
+echo ok

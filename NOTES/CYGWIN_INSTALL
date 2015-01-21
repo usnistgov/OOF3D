@@ -1,0 +1,79 @@
+Download setup.exe from the Cygwin website (www.cygwin.com)
+
+Run setup.exe.
+
+Click Next
+
+Select Install from Internet, click Next
+
+Pick a root directory (where the files will end up)
+The default of C:\cygwin is usually fine. Click next until you get to the mirror selection.
+
+You need to download cygwin from an official cygwin mirror, and get gnome from another site.  Unfortunately, not all of the cygwin mirrors work, so you'll need to find a working one first. Take your best guess and click next.
+
+Once you find one that works, it will give a list of package categories. Now, click back so you can add in the URL for the GTK libraries.
+
+In the blank by add URL, paste in http://cygnome.sourceforge.net/install . Click Add. Now you should have two sites highlighted, your original one and the one you added at the bottom. If that is not the case, ctrl-click your original mirror. Click Next.
+
+You can install everything, but there is a minimum set that must be installed. If you pick just those, cygwin will also install their dependencies.
+
+Make sure you have at least these selected:
+Devel->cvs
+Devel->gcc
+Devel->make
+Devel->swig
+Net->openssh
+Interpreters->python
+GNOME-libs->gtk+
+GNOME-libs-devel->gtk+-devel
+GNOME-libs->imlib
+GNOME-libs-devel->imlib-devel
+GNOME-libs->gnome-libs
+GNOME-libs-devel->gnome-libs
+Graphics->jbigkit
+Libs->libxml2
+Libs->libpng12-devel
+
+Click Next
+
+Pick what icons you want, and click Finish. Click OK on the dialog box after it finishes with all of the DOS windows.
+
+Startup Cygwin
+
+Download packages.tar.bz2 from the website and put them in the cygwin root directory (C:\cygwin).
+
+Unpack them:
+cd /
+bzip2 -d packages.tar.bz2 -c | tar xv
+
+Retrieve the OOF2 source code. For example:
+mkdir OOF
+cd OOF
+eval `ssh-agent`		(those are backticks, not single quotes)
+ssh-add /cygdrive/a/id_rsa	(your private ssh key)
+cvs -d :ext:kstemen@higgins.nist.gov:/users/langer/FE/CVSoof checkout OOF2
+
+Add files to path:
+export PATH=/usr/bin/swig-1.1-883:$PATH:/opt/gnome/bin
+
+Now go into the OOF2 directory, make a build directory, configure it, and then compile it:
+cd OOF2
+mkdir CYGWIN
+cd CYGWIN
+../configure
+make
+
+Setup python:
+export PYTHONPATH=.:/usr/local/lib/python2.2/site-packages
+
+Start X Windows (run all of these commands from the same window):
+XWin &
+export DISPLAY=:0.0
+
+Give yourself a window manager:
+twm&
+
+Startup OOF2:
+python oof.py -g
+
+A box should appear in your XWindows window. When it does, click somewhere in the XWindows window.

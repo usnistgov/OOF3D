@@ -1,0 +1,133 @@
+# -*- python -*-
+# $RCSfile: progressbar.txt,v $
+# $Revision: 1.1 $
+# $Author: langer $
+# $Date: 2008/06/24 21:16:43 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@ctcms.nist.gov. 
+
+
+
+# Thoughts on a new ProgressBar class
+
+# The main problem with the old class is that there's no way to have
+# more than one progress bar for a thread.  For timestepping, we need
+# multiple bars -- overall progress towards the target time, stiffness
+# matrix construction, matrix solution, and possibly non-linear
+# convergence.  This requires major reworking of the progress bar class,
+# so we should also take the opportunity to simplify the API, which is a
+# bit of a mess.
+
+# Requirements:
+
+# Split into back end and front end (gui) classes.  Back end can exist
+# independently of front end.  Back end should be C++. Front end
+# should be Python.
+
+# Independent of threads.  The task associated with one progress bar
+# might be distributed over many threads, or one thread may be peforming
+# tasks associated with many progress bars.
+
+# Hierarchical.  One task can have subtasks that display their own
+# progress bars.  Only the top bar in the hierarchy has a stop button.
+# Pressing the stop button stops all tasks in the hierarchy. 
+
+# Need a master ProgressBarManager object that keeps track of which
+# Progress objects and ProgressBars are still active, and destroys
+# those that aren't needed anymore.  If there's no GUI
+
+#######################
+
+# Pseudocode snippets:
+
+enum ProgressBarType:  
+     Activity   # Just indicates that something is happening
+     Fractional # Measures progress towards a goal
+
+# Back end classes
+
+# These should actually be implemented in C++ so that C++ code can
+# report its progress with little overhead.
+
+class Progress: 
+
+      def __init__(self, parent=None):
+           self.stop = False 
+           self.text = ""
+           self.children = []
+           # if parent==None, install this in a list of top-level
+           # progress objects
+
+      def newChild(self, ProgressBarType):
+          # return a new Progress object below this one hierarchically
+
+      def stopRecursively():
+          self.stop = True
+          for child in self.children:
+              child.stopRecursively()
+
+      def setMessage(self, text):
+          self.text = text
+
+      def queryStop(self):
+          return self.stop
+
+      # When done, call one of these:
+      def succeeded(): ...
+      def failed(): ...
+      def aborted(): ...
+
+class FractionalProgress(Progress):
+      def __init__(self):
+           self.fraction = 0
+      def setFraction(self, x): # ... 0 <= x <= 1
+          self.fraction = x
+
+def ActivityProgress(Progress):
+      def __init__(self):
+         self.counter = 0L
+      def increment(self):
+          # increment counter, roll over to 0 if at maxint
+          
+
+# Front end classes   
+
+class ProgressBar:
+   def __init__(self, progress, activitywindow):
+       # construct widget and add to activitywindow.
+       # if Progress.parent == None, construct Stop button.
+       # install self.update as as gtk timeout callback.
+       #
+
+   def destroy(self):
+       ...
+
+   def stopButtonCB(self, ...):
+       # set stop==True in self.progress and all its children
+
+# We need text and GUI subclasses for each type of ProgressBar
+class ActivityProgressBarGUI(ProgressBar):
+    def __init__(self, progress, activitywindow):
+        self.counter = progress.counter
+        ProgressBar.__init__(...)
+    def update(self):
+        if self.counter != self.progress.counter:
+            self.counter = self.progress.counter
+            self.gtk.pulse()
+            self.gtk.set_text(self.progress.text)
+
+class FractionalProgressBarGUI(ProgressBar):
+    def update(self):
+        self.gtk.set_fraction(self.progress.fraction)
+        self.gtk.set_text(self.progress.text)
+
+
+###
+
+# ProgressBarManager

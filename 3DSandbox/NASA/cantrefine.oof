@@ -1,0 +1,6 @@
+OOF.File.LoadStartUp.Data(filename='ms.oofdata')
+OOF.Settings.UndoBuffer_Size.Skeleton(size=2)
+OOF.Skeleton.New(name='skeleton', microstructure='ms', x_elements=10, y_elements=10, z_elements=8, skeleton_geometry=TetraSkeleton(arrangement='moderate',left_right_periodicity=False,top_bottom_periodicity=False,front_back_periodicity=False))
+OOF.Skeleton.Modify(skeleton='ms:skeleton', modifier=Refine(targets=CheckHomogeneity(threshold=1),criterion=Unconditionally(),alpha=0.69999999999999996))
+OOF.Skeleton.Modify(skeleton='ms:skeleton', modifier=Refine(targets=CheckHomogeneity(threshold=0.94999999999999996),criterion=Unconditionally(),alpha=0.69999999999999996))
+OOF.Skeleton.Modify(skeleton='ms:skeleton', modifier=SnapNodes(targets=SnapHeterogenous(threshold=0.90000000000000002),criterion=Unconditional(alpha=0.90000000000000002)))

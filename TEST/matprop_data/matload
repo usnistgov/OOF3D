@@ -1,0 +1,4 @@
+# OOF version 2.0
+FileVersion(number=1.0, format='ascii')
+Property.Color(name='check', color=RGBColor(red=0.20000000000000001,green=0.29999999999999999,blue=0.40000000000000002))
+Material(name='load', properties=['Color:check'])

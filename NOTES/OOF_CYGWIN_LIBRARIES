@@ -1,0 +1,83 @@
+I first installed all of Cygwin and gnome as described in the other cygwin installation document, except I installed everything instead of individual packages. Use these steps instead of using the files in packages.tar.bz2. Keep in mind when you download the files that IE sometimes mangles the extension and will turn .tar.gz into tar.tar.
+
+The cygwin binary of image magick at ftp://ftp.imagemagick.org/pub/ImageMagick/binaries/ImageMagick-i686-pc-cygwin.tar.gz did not work. Whoever built it did a very poor job. All the paths were based on their home directory, Cristy. Also it only contained the magick library, not Magick++.
+
+I downloaded the source of Image Magick in the file ImageMagick-5.5.7-10.tar.bz2 from http://sourceforge.net/project/showfiles.php?group_id=24099
+Then ran:
+./configure --enable-shared
+make
+make install
+I actually ran make a few times. I remember some errors, but they seemed to disappear. Either I typed something wrong the first few times, or it actually takes a few tries. The Magick++ library was built, but as a static library. OOF didn't seem to mind that; it just made the program bigger. You can manually build a shared object with:
+cd Magick++/lib
+g++ -shared -g -O2 -L/usr/X11R6/lib -L/usr/X11R6/lib -L/usr/lib  -L/usr/X11R6/lib -L/usr/X11R6/lib -L/usr/lib -o .libs/cygMagick++-0.dll Blob.o BlobRef.o CoderInfo.o Color.o Drawable.o Exception.o Functions.o Geometry.o Image.o ImageRef.o Montage.o Options.o Pixels.o STL.o Thread.o TypeMetric.o ../../magick/.libs/libMagick.dll.a
+
+I got gtk canvas from http://www.atai.org/gtk-canvas/gtk-canvas-0.1.1.tar.gz.
+The standard commands worked:
+./configure
+make
+make install
+
+I downloaded pygtk from ftp://ftp.gtk.org/pub/gtk/python/v1.2/pygtk-0.6.11.tar.gz
+The semi case insensitive windows file system has trouble with GTK.py and gtk.py. When you untar it, do it once, then rename GTK.py to GTK_.py. Then explictly untar gtk.py.
+Start it off with:
+./configure
+make
+make install
+
+It doesn't copy over GTK_.py and gtk.py correctly. Running these commands should fix it:
+rm /usr/local/lib/python2.2/site-packages/gtk-1.2/gtk.py
+cp gtk.py /usr/local/lib/python2.2/site-packages/gtk-1.2
+cp GTK_.py /usr/local/lib/python2.2/site-packages/gtk-1.2
+
+Edit the file /usr/local/lib/python2.2/site-packages/gtk-1.2/gtk.py and switch
+from GTK import *
+to
+from GTK_ import *
+
+I guess it screws up _gtkmodule.dll too. I rebuilt it with:
+gcc  -g -O2 -shared  -o _gtkmodule.dll -module -avoid-version gtkmodule.o -L/opt/gnome/lib -L/usr/X11R6/lib -lgtk -lgdk -lgmodule -lgthread -lglib -lintl -lXext -lX11 -L/usr/lib/python2.2/config -lpython2.2
+cp _gtkmodule.dll /usr/local/lib/python2.2/site-packages/gtk-1.2
+
+swig1.1-883.tar.gz came from http://sourceforge.net/project/showfiles.php?group_id=1645
+./configure
+make
+don't do make install
+
+mkdir /bin/swig-1.1-883
+cp swig.exe /bin/swig-1.1-883
+cp -R swig_lib /usr/local/lib
+
+http://www.netlib.org/blas/blas.tgz
+mkdir blas
+unpack in that directory
+g77 -c *.f
+ar rs libblas.a *.o
+cp libblas.a /lib
+
+http://www.netlib.org/lapack/lapack.tgz
+Make these changes:
+diff make.inc /cygdrive/c/cygwin.bak/home/kstemen/LAPACK/make.inc
+19c19
+< FORTRAN  = f77
+---
+> FORTRAN  = g77
+22c22
+< OPTS     = -u -f -dalign -native -xO5 -xarch=v8plusa
+---
+> OPTS     = -u -f -dalign
+26c26
+< LOADER   = f77
+---
+> LOADER   = g77
+28c28
+< LOADOPTS = -f -dalign -native -xO5 -xarch=v8plusa
+---
+> LOADOPTS = -f -dalign
+43c43
+< BLASLIB     = -xlic_lib=sunperf
+---
+> BLASLIB     = -lblas
+
+run make
+ignore errors
+copy lapack_SUN4SOL2.a to /lib/liblapack.a

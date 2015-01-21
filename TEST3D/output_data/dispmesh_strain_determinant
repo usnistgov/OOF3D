@@ -1,0 +1,9 @@
+# Operation: Range
+# Output: Determinant(Geometric Strain)
+# Domain: EntireMesh
+# Sampling: GridSampleSet(x_points=4,y_points=4,z_points=4,show_x=True,show_y=True,show_z=True)
+# Columns:
+# 1. time
+# 2. min Determinant(Geometric Strain)
+# 3. max Determinant(Geometric Strain)
+0.0, 0.0, 0.0

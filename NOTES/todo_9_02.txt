@@ -1,0 +1,74 @@
+To do for an initial release of OOF2 (version 2.0)
+
+* Complete the mesh construction tools
+  * Assign materials to pixels.
+  * Finish the pixel group utilities
+  * Select pixels in a Microstructure, not just an Image 
+  * Finish the mesh construction GUI
+  * Create a mesh toolbox for the graphics window
+    * manually move nodes
+    * manually add edges
+    * pin down nodes
+    * query elements
+  * Add OOF1 mesh modification commands
+    * Annealing
+    * Refine by selection/depth/size/interface/group
+    * Edge swapping
+    * Smoothing
+  * Simple (non adaptive) quad and triangular mesh directly from pixels.
+ 
+* Element groups
+* Active areas 
+* Firewalls (may not be necessary, if active areas are implemented well)
+
+* Boundary condition GUI
+  * Define edges & sets of edges
+  * Define boundary conditions
+  * Apply conditions to edges
+* Physics GUI (choose equations to solve)
+* Solver GUI
+* GUIs for pixel and element info
+
+* ppm2oof demography pixel selection tool
+
+* More predefined outputs
+  * Von Mises stress
+  * Energy of various sorts
+* Output along cross sections
+* Output averaged over element groups
+* Output values at position of mouse click
+* Statistical output
+
+* Save mesh, microstructure, image
+* Save & restore entire program state
+
+* Converter for OOF1 goof files
+
+* Documentation for implementing new material properties, fields, and outputs
+
+=====================================================
+
+To do for a later release (but not much later)   (version 2.1)
+
+* Separation into front & back end processes
+* Extended solver:
+  * Plasticity
+  * Incremental solver
+  * Time dependence
+  * Auxilliary fields
+  * Nonlinear solver
+* More physics (Edwin's OOF1 modifications)
+* Line elements
+* Investigate Windows port
+* Adaptive mesh using a posteriori error estimators
+* Automatic grain boundary detection
+* Effective properties
+
+=====================================================
+
+To do still later (version 2.x, x>1)
+
+* Parallelization
+* 3 dimensions
+* Coupling to Molecular dynamics simulations
+* Coupling to, incorporation of, or incorporation into fracture codes (FRANC?)

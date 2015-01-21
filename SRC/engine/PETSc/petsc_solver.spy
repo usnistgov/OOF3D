@@ -1,0 +1,311 @@
+# -*- python -*-
+# $RCSfile: petsc_solver.spy,v $
+# $Revision: 1.6.18.1 $
+# $Author: langer $
+# $Date: 2014/09/27 22:34:23 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+from ooflib.common import cregisteredclass
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.SWIG.engine.PETSc.petsc_preconditioner import PETScPreconditionerWrapPtr
+
+# *************************************
+# PETScII
+# *************************************
+
+cregisteredclass.registerCClass(PETScLinearSolverPtr)
+
+PETScLinearSolverPtr.tip = "Solution methods for linear matrix equations using PETSc."
+PETScLinearSolverPtr.discussion = \
+              xmlmenudump.loadFile('DISCUSSIONS/engine/reg/linear_solver.xml')
+
+# Special class so linear solver parameters can have a special
+# makeWidget -- see solverPage.py.
+class PETScLinearSolverParameter(parameter.RegisteredParameter):
+    def __init__(self, name, value=None, default=None, tip=None):
+        parameter.RegisteredParameter.__init__(
+            self, name, PETScLinearSolverPtr,
+            value=value, default=default, tip=tip)
+
+class LinearSolverRegistration(cregisteredclass.Registration):
+    def __init__(self, name, regclass, subclass, ordering, params=[],
+                 secret=0, symmetric=None, **kwargs):
+        self.symmetric = symmetric
+        cregisteredclass.Registration.__init__(self, name, regclass,
+                                               subclass, ordering,
+                                               params=params,
+                                               secret=secret, **kwargs)
+
+LinearSolverRegistration(
+    "KSPRICHARDSON",
+    PETScLinearSolverPtr,
+    PETScKSPRICHARDSONSolver,
+    ordering=100,
+    params=[
+    parameter.IntParameter("max_iterations", 100000,
+                           tip="maximum number of iterations to perform"),
+    parameter.FloatParameter("relative_tolerance", 1.e-5,
+                             tip="tolerance in the residual norm relative to the rhs"),
+    parameter.FloatParameter("absolute_tolerance", 1.e-50,
+                             tip="tolerance in the absolute size of the residual norm"),
+    parameter.FloatParameter("dtolerance", 1.e5,
+                             tip="tolerance in the relative increase of the residual relative to the rhs"),
+    parameter.RegisteredParameter("preconditioner",
+                                  PETScPreconditionerWrapPtr,
+                                  tip="Black magic for making the matrix more easily solvable")
+    ],
+    tip="PETSc KSPRICHARDSON solver",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/gmres.xml')
+    )
+
+LinearSolverRegistration(
+    "KSPCHEBYCHEV",
+    PETScLinearSolverPtr,
+    PETScKSPCHEBYCHEVSolver,
+    ordering=200,
+    params=[
+    parameter.IntParameter("max_iterations", 100000,
+                           tip="maximum number of iterations to perform"),
+    parameter.FloatParameter("relative_tolerance", 1.e-5,
+                             tip="tolerance of the residual norm relative to the rhs"),
+    parameter.FloatParameter("absolute_tolerance", 1.e-50,
+                             tip="tolerance for the absolute size of the residual norm"),
+    parameter.FloatParameter("dtolerance", 1.e5,
+                             tip="relative increase in the residual relative to the rhs"),
+    parameter.RegisteredParameter("preconditioner",
+                                  PETScPreconditionerWrapPtr,
+                                  tip="Black magic for making the matrix more easily solvable")
+    ],
+    tip="PETSc KSPCHEBYCHEV solver",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/gmres.xml')
+    )
+
+#make this one first on the ordering list
+LinearSolverRegistration(
+    "KSPCG",
+    PETScLinearSolverPtr,
+    PETScKSPCGSolver,
+    ordering=10,
+    params=[
+    parameter.IntParameter("max_iterations", 1000,
+                           tip="maximum number of iterations to perform"),
+    parameter.FloatParameter("relative_tolerance", 1.e-13,
+                             tip="tolerance of the residual norm relative to the rhs"),
+    parameter.FloatParameter("absolute_tolerance", 1.e-50,
+                             tip="tolerance for the absolute size of the residual norm"),
+    parameter.FloatParameter("dtolerance", 1.e5,
+                             tip="relative increase in the residual relative to the rhs"),
+    parameter.RegisteredParameter("preconditioner",
+                                  PETScPreconditionerWrapPtr,
+                                  tip="Black magic for making the matrix more easily solvable")
+    ],
+    tip="PETSc KSPCG solver",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/gmres.xml')
+    )
+
+LinearSolverRegistration(
+    "KSPBICG",
+    PETScLinearSolverPtr,
+    PETScKSPBICGSolver,
+    ordering=400,
+    params=[
+    parameter.IntParameter("max_iterations", 100000,
+                           tip="maximum number of iterations to perform"),
+    parameter.FloatParameter("relative_tolerance", 1.e-5,
+                             tip="tolerance of the residual norm relative to the rhs"),
+    parameter.FloatParameter("absolute_tolerance", 1.e-50,
+                             tip="tolerance for the absolute size of the residual norm"),
+    parameter.FloatParameter("dtolerance", 1.e5,
+                             tip="relative increase in the residual relative to the rhs"),
+    parameter.RegisteredParameter("preconditioner",
+                                  PETScPreconditionerWrapPtr,
+                                  tip="Black magic for making the matrix more easily solvable")
+    ],
+    tip="PETSc KSPBICG solver",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/gmres.xml')
+    )
+
+LinearSolverRegistration(
+    "KSPGMRES",
+    PETScLinearSolverPtr,
+    PETScKSPGMRESSolver,
+    ordering=500,
+    params=[
+    parameter.IntParameter("max_iterations", 100000,
+                           tip="maximum number of iterations to perform"),
+    parameter.FloatParameter("relative_tolerance", 1.e-5,
+                             tip="tolerance of the residual norm relative to the rhs"),
+    parameter.FloatParameter("absolute_tolerance", 1.e-50,
+                             tip="tolerance for the absolute size of the residual norm"),
+    parameter.FloatParameter("dtolerance", 1.e5,
+                             tip="relative increase in the residual relative to the rhs"),
+    parameter.RegisteredParameter("preconditioner",
+                                  PETScPreconditionerWrapPtr,
+                                  tip="Black magic for making the matrix more easily solvable")
+    ],
+    tip="PETSc KSPGMRES solver",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/gmres.xml')
+    )
+
+LinearSolverRegistration(
+    "KSPBCGS",
+    PETScLinearSolverPtr,
+    PETScKSPBCGSSolver,
+    ordering=600,
+    params=[
+    parameter.IntParameter("max_iterations", 100000,
+                           tip="maximum number of iterations to perform"),
+    parameter.FloatParameter("relative_tolerance", 1.e-5,
+                             tip="tolerance of the residual norm relative to the rhs"),
+    parameter.FloatParameter("absolute_tolerance", 1.e-50,
+                             tip="tolerance for the absolute size of the residual norm"),
+    parameter.FloatParameter("dtolerance", 1.e5,
+                             tip="relative increase in the residual relative to the rhs"),
+    parameter.RegisteredParameter("preconditioner",
+                                  PETScPreconditionerWrapPtr,
+                                  tip="Black magic for making the matrix more easily solvable")
+    ],
+    tip="PETSc KSPBCGS solver",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/gmres.xml')
+    )
+
+LinearSolverRegistration(
+    "KSPCGS",
+    PETScLinearSolverPtr,
+    PETScKSPCGSSolver,
+    ordering=700,
+    params=[
+    parameter.IntParameter("max_iterations", 100000,
+                           tip="maximum number of iterations to perform"),
+    parameter.FloatParameter("relative_tolerance", 1.e-5,
+                             tip="tolerance of the residual norm relative to the rhs"),
+    parameter.FloatParameter("absolute_tolerance", 1.e-50,
+                             tip="tolerance for the absolute size of the residual norm"),
+    parameter.FloatParameter("dtolerance", 1.e5,
+                             tip="relative increase in the residual relative to the rhs"),
+    parameter.RegisteredParameter("preconditioner",
+                                  PETScPreconditionerWrapPtr,
+                                  tip="Black magic for making the matrix more easily solvable")
+    ],
+    tip="PETSc KSPCGS solver",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/gmres.xml')
+    )
+
+LinearSolverRegistration(
+    "KSPTFQMR",
+    PETScLinearSolverPtr,
+    PETScKSPTFQMRSolver,
+    ordering=800,
+    params=[
+    parameter.IntParameter("max_iterations", 100000,
+                           tip="maximum number of iterations to perform"),
+    parameter.FloatParameter("relative_tolerance", 1.e-5,
+                             tip="tolerance of the residual norm relative to the rhs"),
+    parameter.FloatParameter("absolute_tolerance", 1.e-50,
+                             tip="tolerance for the absolute size of the residual norm"),
+    parameter.FloatParameter("dtolerance", 1.e5,
+                             tip="relative increase in the residual relative to the rhs"),
+    parameter.RegisteredParameter("preconditioner",
+                                  PETScPreconditionerWrapPtr,
+                                  tip="Black magic for making the matrix more easily solvable")
+    ],
+    tip="PETSc KSPTFQMR solver",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/gmres.xml')
+    )
+
+LinearSolverRegistration(
+    "KSPTCQMR",
+    PETScLinearSolverPtr,
+    PETScKSPTCQMRSolver,
+    ordering=900,
+    params=[
+    parameter.IntParameter("max_iterations", 100000,
+                           tip="maximum number of iterations to perform"),
+    parameter.FloatParameter("relative_tolerance", 1.e-5,
+                             tip="tolerance of the residual norm relative to the rhs"),
+    parameter.FloatParameter("absolute_tolerance", 1.e-50,
+                             tip="tolerance for the absolute size of the residual norm"),
+    parameter.FloatParameter("dtolerance", 1.e5,
+                             tip="relative increase in the residual relative to the rhs"),
+    parameter.RegisteredParameter("preconditioner",
+                                  PETScPreconditionerWrapPtr,
+                                  tip="Black magic for making the matrix more easily solvable")
+    ],
+    tip="PETSc KSPTCQMR solver",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/gmres.xml')
+    )
+
+LinearSolverRegistration(
+    "KSPCR",
+    PETScLinearSolverPtr,
+    PETScKSPCRSolver,
+    ordering=1000,
+    params=[
+    parameter.IntParameter("max_iterations", 100000,
+                           tip="maximum number of iterations to perform"),
+    parameter.FloatParameter("relative_tolerance", 1.e-5,
+                             tip="tolerance of the residual norm relative to the rhs"),
+    parameter.FloatParameter("absolute_tolerance", 1.e-50,
+                             tip="tolerance for the absolute size of the residual norm"),
+    parameter.FloatParameter("dtolerance", 1.e5,
+                             tip="relative increase in the residual relative to the rhs"),
+    parameter.RegisteredParameter("preconditioner",
+                                  PETScPreconditionerWrapPtr,
+                                  tip="Black magic for making the matrix more easily solvable")
+    ],
+    tip="PETSc KSPCR solver",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/gmres.xml')
+    )
+
+LinearSolverRegistration(
+    "KSPLSQR",
+    PETScLinearSolverPtr,
+    PETScKSPLSQRSolver,
+    ordering=1100,
+    params=[
+    parameter.IntParameter("max_iterations", 100000,
+                           tip="maximum number of iterations to perform"),
+    parameter.FloatParameter("relative_tolerance", 1.e-5,
+                             tip="tolerance of the residual norm relative to the rhs"),
+    parameter.FloatParameter("absolute_tolerance", 1.e-50,
+                             tip="tolerance for the absolute size of the residual norm"),
+    parameter.FloatParameter("dtolerance", 1.e5,
+                             tip="relative increase in the residual relative to the rhs"),
+    parameter.RegisteredParameter("preconditioner",
+                                  PETScPreconditionerWrapPtr,
+                                  tip="Black magic for making the matrix more easily solvable")
+    ],
+    tip="PETSc KSPLSQR solver",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/gmres.xml')
+    )
+
+LinearSolverRegistration(
+    "KSPPREONLY",
+    PETScLinearSolverPtr,
+    PETScKSPPREONLYSolver,
+    ordering=1200,
+    params=[
+    parameter.IntParameter("max_iterations", 100000,
+                           tip="maximum number of iterations to perform"),
+    parameter.FloatParameter("relative_tolerance", 1.e-5,
+                             tip="tolerance in the residual norm relative to the rhs"),
+    parameter.FloatParameter("absolute_tolerance", 1.e-50,
+                             tip="tolerance in the absolute size of the residual norm"),
+    parameter.FloatParameter("dtolerance", 1.e5,
+                             tip="tolerance in the relative increase of the residual relative to the rhs"),
+    parameter.RegisteredParameter("preconditioner",
+                                  PETScPreconditionerWrapPtr,
+                                  tip="Black magic for making the matrix more easily solvable")
+    ],
+    tip="PETSc KSPPREONLY solver",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/gmres.xml')
+    )

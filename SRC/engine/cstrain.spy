@@ -1,0 +1,165 @@
+# -*- python -*-
+# $RCSfile: cstrain.spy,v $
+# $Revision: 1.6.4.2 $
+# $Author: langer $
+# $Date: 2014/04/26 22:57:07 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.SWIG.engine import fieldindex
+from ooflib.SWIG.engine import planarity
+from ooflib.SWIG.engine import symmmatrix
+from ooflib.SWIG.engine.IO import propertyoutput
+from ooflib.common import debug
+from ooflib.common import enum
+from ooflib.common import registeredclass
+from ooflib.common.IO import parameter
+
+class StrainType(registeredclass.RegisteredClass):
+    registry = []
+    def name(self):
+        return self._name
+    def iterator(self, plnrty):
+        return fieldindex.getSymTensorIterator(plnrty)
+    def iterator_all(self):
+        return fieldindex.getSymTensorIterator(planarity.ALL_INDICES)
+    def newOutputValue(self):
+        return symmmatrix.newSymTensorOutputValue()
+    tip="Different varieties of strain."
+    discussion="""<para>
+    <classname>StrainType</classname> objects are used to pick strain
+    varieties in <link
+    linkend='Section-Output'><classname>Outputs</classname></link>.
+    </para>"""
+ 
+class GeometricStrain(StrainType):
+    _name="Geometric"
+
+registeredclass.Registration(
+    "Geometric Strain",
+    StrainType,
+    GeometricStrain,
+    ordering=0,
+    tip="The symmetric derivative of the displacement field.",
+    discussion=r""" <para>The geometric strain,
+    <inlineequation><alt role="tex">\(\epsilon_{ij}\)</alt></inlineequation>
+    is the symmetric derivative of the Displacement field,
+    <inlineequation><alt role="tex">\(u\)</alt></inlineequation>. 
+    It depends only on the
+    field, and not on any material properties. Specifically,
+    <equation><alt role="tex">\[
+    \epsilon_{ij} = \frac12\left({\frac{\partial u_i}{\partial x_j}} + 
+                    {\frac{\partial u_j}{\partial x_i}}\right)
+     \]</alt></equation>
+     </para>
+    """)
+
+class NonlinearGeometricStrain(StrainType):
+    _name="Nonlinear Geometric"
+
+registeredclass.Registration(
+    "Nonlinear Geometric Strain",
+    StrainType,
+    NonlinearGeometricStrain,
+    ordering=0.1,
+    tip="Rotationally invariant symmetric derivative of the displacement field.",
+    discussion=r"""
+    <para>
+      The nonlinear geometric strain is the rotationally invariant
+      form of the <xref linkend="RegisteredClass-GeometricStrain"/>.
+      It is the form of the strain used by the <link
+      linkend="MenuItem-OOF.Property.Parametrize.Mechanical.Elasticity.LargeStrain">large
+      strain</link> elasticity properties.  Specifically,
+      <equation><alt role="tex">\[
+      \epsilon_{ij} = \frac12\left({\frac{\partial u_i}{\partial x_j}} + 
+                    {\frac{\partial u_j}{\partial x_i}} +
+                    {\frac{\partial u_k}{\partial x_i}}
+                    {\frac{\partial u_k}{\partial x_j}}
+                    \right)
+      \]</alt></equation>
+      where <inlineequation><alt role="tex">\(\epsilon_{ij}\)</alt></inlineequation>
+      is the strain, <inlineequation><alt role="tex">\(u\)</alt></inlineequation>
+      is the displacement, and the repeated index k is summed.
+    </para> """
+    )
+
+class ElasticStrain(StrainType):
+    _name="Elastic"
+
+registeredclass.Registration(
+    "Elastic Strain",
+    StrainType,
+    ElasticStrain,
+    ordering=1,
+    tip="The part of the geometric strain that contributes to stress.",
+    discussion="""
+    <para> The elastic strain is the part of the <link
+    linkend='RegisteredClass-GeometricStrain'>geometric strain</link>
+    that multiplies the elastic modulus when computing the stress.
+    For example, in a system with only elasticity and thermal
+    expansion, the elastic strain is the geometric strain minus the
+    <link linkend='RegisteredClass-ThermalStrain'>thermal
+    strain</link>. </para>
+    """)
+
+class ThermalStrain(StrainType):
+    _name="Thermal"
+
+registeredclass.Registration(
+    "Thermal Strain",
+    StrainType,
+    ThermalStrain,
+    ordering=2,
+    tip="Strain induced by thermal expansion",
+    discussion="""
+    <para> The thermal strain is the <link
+    linkend='MenuItem-OOF.Property.Parametrize.Couplings.ThermalExpansion.Isotropic'>
+    thermal expansion coefficient</link> times the
+    temperature. </para>
+    """)
+
+class PiezoelectricStrain(StrainType):
+    _name="Piezoelectric"
+
+registeredclass.Registration(
+    "Piezoelectric Strain",
+    StrainType,
+    PiezoelectricStrain,
+    ordering=3,
+    tip="Strain induced by electric fields in piezoelectric materials",
+    discussion="""<para>
+    The piezoelectric strain is the piezoelectric tensor times the
+    electric field.
+    </para>""")
+
+
+
+class StrainTypeParameter(parameter.RegisteredParameter):
+    def __init__(self, name, value=None, default=None, tip=None, auxData={}):
+        parameter.RegisteredParameter.__init__(self, name, StrainType,
+                                               value, default, tip, auxData)
+    def clone(self):
+        return StrainTypeParameter(self.name, self.value, self.default,
+                                   self.tip)
+
+propertyoutput.SymmMatrix3PropertyOutputRegistration(
+    "Strain",
+    initializer=POInitGeometricStrain(),
+    parameters=[StrainTypeParameter("type", default=GeometricStrain(),
+                                   tip='The type of strain to compute')],
+    ordering=4,
+    tip='Compute a strain',
+    srepr=lambda s: s.resolveAlias("type").value.name() + " Strain",
+    discussion="""
+
+    <para>Compute some variety of strain on the &mesh;.  The parameter
+    <varname>type</varname> determines exactly which strain is
+    computed.</para>
+    
+    """)

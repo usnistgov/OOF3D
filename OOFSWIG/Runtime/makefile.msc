@@ -1,0 +1,56 @@
+# Modified for use with Microsoft Developer Studio V6.0
+# Bob Techentin, February 10, 1999
+#
+# Makefile for producing SWIG runtime libraries. 
+#
+# The SWIG runtime library consists of the pointer-type checker
+# and other support functions.  Multi-file SWIG modules 
+# generally link with these libraries.
+#
+# The Windows version of the runtime libraries are static.
+# Note the "-" command prefix ignores errors during compiles
+# and links, because you might not have all languages.
+
+!include <..\Win\make_win.in>
+
+SWIG_RUNTIME = $(prefix)/lib
+dSWIG_RUNTIME = $(dprefix)\lib
+
+AR = lib.exe
+
+
+all:	tcl_lib tcl8_lib py_lib perl_lib
+
+
+install:
+	@echo "Installing runtime libraries"
+	@if not exist $(dSWIG_RUNTIME) mkdir $(dSWIG_RUNTIME)
+	if exist swigpy.lib copy swigpy.lib $(dSWIG_RUNTIME)
+	if exist swigpl.lib copy swigpl.lib $(dSWIG_RUNTIME)
+
+install95:
+	@echo "Installing runtime libraries"
+	@if not exist $(dSWIG_RUNTIME) mkdir $(dSWIG_RUNTIME)
+	if exist swigpy.lib copy swigpy.lib $(dSWIG_RUNTIME) /Y
+	if exist swigpl.lib copy swigpl.lib $(dSWIG_RUNTIME) /Y
+
+clean::
+	del /f *.obj
+	del /f *.lib
+	del /f *.c
+	del /f *.swg
+	del /f core
+
+# ----------------------------------------------------------------------
+# Python run-time library
+# ----------------------------------------------------------------------
+
+PYTHON_INCLUDE = -Ic:\apps\python-1.5\Include -Ic:\apps\python-1.5 -Ic:\apps\python-1.5\PC
+
+# Python library
+
+py_lib:
+	-..\swig.exe -python -co -o libpy.c -I../swig_lib python.swg
+	-$(CC) -c -DSWIG_GLOBAL $(PYTHON_INCLUDE) libpy.c
+	-$(AR) /out:swigpy.lib libpy.obj
+

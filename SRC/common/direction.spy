@@ -1,0 +1,157 @@
+# -*- python -*-
+# $RCSfile: direction.spy,v $
+# $Revision: 1.2.2.10 $
+# $Author: langer $
+# $Date: 2014/07/31 19:28:46 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+# Wrappers  for   the  CDirection  classes,   so  that  they   can  be
+# ConvertibleRegisteredClasses.
+
+## TODO 3.1: Allow ConvertibleRegisteredClasses to be implemented in C++
+## and get rid of these wrappers.  See orientationmatrix.py for more
+## comments in a similar situation.
+
+from ooflib.SWIG.common import ooferror
+from ooflib.common import debug
+from ooflib.common import registeredclass
+from ooflib.common.IO import parameter
+
+import math
+
+class Direction(registeredclass.ConvertibleRegisteredClass):
+    registry = []
+    def unitVector(self):
+        return self.cdirection.unitVector()
+    def dot(self, vec):
+        return self.cdirection.dot(vec)
+    def coord(self):
+        return self.cdirection.coord()
+
+    # This is hack which wouldn't be necessary if we had C++
+    # ConvertibleRegisteredClasses.  The problem is that when a
+    # CDirection is returned from C++, it's not a Direction, and can't
+    # be used to initialize a RegisteredParameter.  
+    @staticmethod
+    def rewrap(direction):
+        if isinstance(direction, CUnitVectorDirectionPtr):
+            return VectorDirection(direction.x(), direction.y(), direction.z())
+        if isinstance(direction, CAngleDirectionPtr):
+            return AngleDirection(math.degrees(direction.theta()),
+                                  math.degrees(direction.phi()))
+        if isinstance(direction, CDirectionXPtr):
+            return DirectionX()
+        if isinstance(direction, CDirectionYPtr):
+            return DirectionY()
+        if isinstance(direction, CDirectionZPtr):
+            return DirectionZ()
+        raise ooferror.ErrPyProgrammingError("Direction.rewrap failed!")
+
+class DirectionRegistration(registeredclass.ConvertibleRegistration):
+    def __init__(self, name, subclass, ordering,
+                 from_base, params=[], tip=None, discussion=None):
+        registeredclass.ConvertibleRegistration.__init__(
+            self, name,
+            Direction, subclass, ordering=ordering,
+            from_base=from_base,
+            params=params,
+            tip=tip, discussion=discussion)
+    def getParamValuesAsBase(self):
+        temp = self()
+        return temp.unitVector()
+
+class VectorDirection(Direction):
+    def __init__(self, x, y, z):
+        self.cdirection = CUnitVectorDirection(x, y, z)
+        self.x = x
+        self.y = y
+        self.z = z
+
+def _vector_from_base(self, base):
+    return [base.x(), base.y(), base.z()]
+
+DirectionRegistration(
+    'Vector',
+    VectorDirection,
+    2,
+    from_base=_vector_from_base,
+    params=[
+        parameter.FloatParameter(
+            'x', 0, tip="The x component of the direction."),
+        parameter.FloatParameter(
+            'y', 0, tip="The y component of the direction."),
+        parameter.FloatParameter(
+            'z', 0, tip="The z component of the direction.")],
+    tip="A direction in space in the form of a vector.  The vector will be normalized automatically."
+    )
+
+class AngleDirection(Direction):
+    def __init__(self, theta, phi):
+        self.cdirection = CAngleDirection(math.radians(theta), 
+                                          math.radians(phi))
+        self.theta = theta
+        self.phi = phi
+
+def _angle_from_base(self, base):
+    return [base.theta()*180/math.pi, base.phi()*180/math.pi]
+
+DirectionRegistration(
+    'Angles',
+    AngleDirection,
+    3,
+    from_base=_angle_from_base,
+    params=[
+        parameter.FloatRangeParameter(
+            'theta', (0, 180, 1), 0.0,
+            tip="Inclination from the z axis, in degrees."),
+        parameter.FloatRangeParameter(
+            'phi', (0, 360, 1), 0.0,
+            tip="Azimuth from the x axis, in degrees.")],
+    tip="A direction in space in the form of inclination and azimuth.")
+
+
+class DirectionX(Direction):
+    def __init__(self):
+        self.cdirection = CDirectionX()
+
+class DirectionY(Direction):
+    def __init__(self):
+        self.cdirection = CDirectionY()
+
+class DirectionZ(Direction):
+    def __init__(self):
+        self.cdirection = CDirectionZ()
+
+def _XYZ_from_base(self, base):
+    return ()
+
+DirectionRegistration(
+    'X',
+    DirectionX,
+    1.1,
+    from_base=_XYZ_from_base,
+    tip="The X direction."
+)
+
+DirectionRegistration(
+    'Y',
+    DirectionY,
+    1.2,
+    from_base=_XYZ_from_base,
+    tip="The Y direction."
+)
+
+DirectionRegistration(
+    'Z',
+    DirectionZ,
+    1.3,
+    from_base=_XYZ_from_base,
+    tip="The Z direction."
+)

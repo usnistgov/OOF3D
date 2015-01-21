@@ -1,0 +1,5 @@
+This file is here just so that cvs won't remove this subdirectory,
+which is here so that it won't remove the parent directory, which
+should have no files in it.  It's there to make sure that the program
+raises the correct error when trying to read image files from an
+empty directory.

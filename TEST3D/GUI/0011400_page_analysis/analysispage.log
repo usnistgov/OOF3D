@@ -1,0 +1,2 @@
+# OOF version (unreleased)
+OOF.File.Load.Data(filename='TEST_DATA/two_walls.mesh')

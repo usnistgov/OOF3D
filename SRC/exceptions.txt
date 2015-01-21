@@ -1,0 +1,797 @@
+# -*- text -*-
+# $RCSfile: exceptions.txt,v $
+# $Revision: 1.7 $
+# $Author: reida $
+# $Date: 2003/11/19 19:16:19 $
+
+# The Master List of Thrown or Raised Exceptions.  This lists every
+# possible exception that the OOF code actually throws, where it is
+# caught, and what it means.  Most of these are not caught, and are
+# unrecoverable, in the sense that the operation that was underway
+# when the exception occurred is not continuable, as control has been
+# lost.  Exceptions(hah!) as noted.
+
+# This is a first step in rationalizing the error handling.
+
+
+common/ooferror.C: ErrProgrammingError.
+Thrown inside a test function.  Uses the rarely-used two-argument
+constructor.  
+
+common/IO/GUI/oofcanvas.C:  ErrNoCanvas, 21 occurrences.
+Thrown at the top of most canvas functions if the canvas pointer
+inside the OOFCanvas instance is null.  
+
+common/geometry.h: ErrBadIndex.
+Thrown by the templated CRectangle_ class's index-retrieval
+operator (operator[]) if the integer index is less an 0 or
+more than 3.
+
+common/pythonexportable.h: PythonError.
+Thrown by the PythonExportable class's pythonObject when it 
+calls out to Python to get the actual python object, if the
+result is null.
+
+common/typemaps.swg: PythonError, 8 occurrences.
+Many typemaps do Python calls to retrieve objects, and if the 
+return is null, throw PythonError.
+
+common/switchboard.C: PythonError, 2 occurrences.
+Both versions of the C++ "notify" function throw PythonError if
+the Python "notifier" call returns null.
+
+common/pixelgroup.swg: IndexError
+Thrown by the PixelGroup's __getitem__ added method if the 
+index is out of range.
+
+common/smallmatrix.C: ErrProgrammingError, 7 occurrences.
+Thrown by SmallMatrix operations in the case of size mismatches
+between the two operands in matrix arithmetic or assignment,
+or if a non-square matrix is solved or tranposed.
+
+engine/element.C: ErrUserError, 4 occurrences.
+Thrown by members of the Element class if interpolation is attempted
+on an undefined field, or if edge construction gets inconsistent 
+nodes.
+
+engine/femesh.C: ErrProgrammingError, 2 occurrences.
+Thrown if an attempt is made to retrieve the stiffness matrix prior
+to its construction, likewise for the boundary_rhs.
+
+engine/femesh.C: ErrSetupError.
+Throw by the FEMesh's solve routine if the stiffness matrix 
+is not square.
+
+engine/typemaps.swg: PythonError.
+Thrown by the CompoundFieldVec* "out" typemap if the CompoundField
+class cannot be retrieved from the SWIG.engine.field module.
+
+engine/edge.C: ErrProgrammingError.
+Thrown if an attempt is made to get an EdgeNodeIterator from
+an incomplete BoundaryEdge instance.
+
+engine/edgeset.C: ErrProgrammingError.
+Thrown by EdgeSet::addEdge_ if the edge you're trying to add does
+not "link up" (i.e. have its starting node in common with the 
+trailing node of the EdgeSet).
+
+engine/elementnodeiterator.C: ErrProgrammingError, 3 occurrences.
+Thrown by ElementNodeIterator assignment operator if the operand
+has a different element pointer.  Also thrown by the 
+ElementCornerNodeIterator's "funcnode_iterator" and "mapnode_iterator"
+functions if the new iterator reaches the end of its iteration 
+before encountering the current node of the CornerNodeIterator.
+This means the new iterator cannot be started consistently.
+
+engine/equation.C: ErrProgrammingError.
+Thrown by DivergenceEquation::make_stiffness if the divergence
+of the flux does not match the dimension of the equation.
+
+engine/field.C: ErrProgrammingError.
+Thrown by getField if the passed-in name is not found in the list
+of known fields.
+
+engine/field.swg: PythonError.
+Thrown by fieldInitCallback if the call to the field initialization 
+function returns null.
+
+engine/flux.C: ErrProgrammingError.
+Thrown by getFlux if the passed-in name is not found in the list
+of known fluxes.
+
+engine/flux.C: ErrSetupError, 2 occurrences.
+Thrown by the SymmetricTensorFlux's BCCallback routine if either
+the returned tuple is the wrong size, or if the returned object
+is not a tuple (but is still non-null).
+
+engine/flux.C: PythonError, 2 occurrences.
+Thrown by the flux BCCallbacks if the PyEval_CallObject returns
+null.
+
+engine/masterelement.C: ErrUserError.
+Thrown by MasterElement::masteredge if the edge indicated by the
+passed-in nodes is not found.
+
+engine/masterlement.C: ErrResourceShortage.
+Thrown by MasterElement::gptable if a gauss point table of the
+requested order cannot be found.
+
+engine/material.C: ErrRedundantProperty.
+Thrown by MaterialPropertyRegistry::registr if there is already 
+a property registered under the passed-in tag.  Prevents duplicate
+elasticities, for example.
+
+engine/material.C: ErrNoSuchProperty, 2 occurrences.
+Thrown by Material::remove1Property if the property to be removed
+is not present in the material, and by Material::fetchProperty if
+the requested property cannot be found.
+
+engine/pypropertywrapper.swg: ErrProgrammingError, PythonError, 8 occurrences
+Each property API function wrapper throws ErrProgrmamingError if
+the corresponding attribute is found in the wrapped class, but is not
+callable, and throws PythonError if the wrapped function returns null.
+
+engine/sparselink.h: ErrProgrammingError, 2 occurrences.
+The const-return and non-const-return versions of the templated
+operater() functions throw this if index is out of bounds.
+
+engine/symmmatrix.C: ErrProgrammingError, 2 occurrences.
+SymmMatrix::transform can throw this if the transformation matrix
+has the wrong dimension.  SymmMatrix::allocate throws it if the 
+"m" pointer is non-null, indicating that the matrix has already been
+allocated.
+
+engine/cskeleton.C:  ErrBadIndex, 2 occurrences.
+CSkeletonQuad::shapefun and CSkeletonTriange::shapefun can throw
+this if the index of the requested shape function is out of bounds.
+
+engine/SparseLib++/icpre_double.C: ErrSetupError
+Thrown by the ICFactor function if the preconditioner cannot be
+constructed because of a zero factor.
+
+engine/SparseLib++/ilupre_double.C: ErrSetupError
+Thrown by the ILU preconditioner constructor if a zero divisor
+is encountered during construction.
+
+engine/SparseLib++/diagpre_double.C: ErrSetupError
+Thrown by the diagonal preconditioner constructor if a zero element
+is encountered on the diagonal.
+
+engine/element/quad4shapefunction.C: ErrBadIndex, 3 occurrences.
+Thrown by Quad4ShapeFunction::value if the index of the requested
+shape function is out of bounds.  Also thrown by 
+Quad4ShapeFunction::masterderiv if either the shape function index
+or the spatial index of the derivative is out of bounds.
+
+./engine/element/quad8shapefunction.C: ErrBadIndex, 3 occurrences.
+Same semantics as for Quad4ShapeFunction, above.
+
+engine/element/tri3shapefunction.C: ErrBadIndex
+Tri3ShapeFunction::value throws this if the shape function index is
+out of bounds.  
+
+engine/element/tri6shapefunction.C: ErrBadIndex, 3 occurrences.
+Same semantics as for Quad4ShapeFunction, above.
+
+
+engine/element/edge2shapefunction.C: ErrBadIndex, 3 occurrences.
+Same semantics as for Quad4ShapeFunction, above.
+
+engine/element/edge3shapefunction.C: ErrBadIndex, 3 occurrences.
+Same semantics as for Quad4ShapeFunction, above.
+
+
+engine/property/elasticity/elasticity.C: ErrProgrammingError
+Thrown by the Elasticity::fluxmatrix routine if the passed-in flux
+is not the stress.
+
+engine/property/heatconductivity/heatconductivity.C: ErrProgrammingError, 2x
+Thrown by HeatConductivityProp::fluxmatrix if the passed-in flux
+is not the heat flux, and by HeatSourceProp::fluxrhs if the passed-in
+flux is not the heat flux.
+
+engine/property/massdensity/massdensity.C: ErrProgrammingError
+Thrown by MassDensityProp::fluxrhs if the passed-in flux is not the stress.
+
+engine/property/thermalexpansion/thermalexpansion.C: ErrProgrammingError, 2x
+Thrown by ThermalExpansionProp::fluxmatrix if the passed-in flux is
+not the stress, and by ThermalExpansionProp::fluxrhs if the passed-in
+flux is not the stress.
+
+engine/blockpre_double.C: ErrSetupError
+Thrown by the block preconditioner constructor if, while processing 
+column entries, it cannot find a block on the diagonal with a row
+corresponding to the current column.
+
+image/oofimage.C: ImageMagickError
+Caught (as Magick::Exception) and re-thrown by the OOFImage 
+constructor if emitted when an image is constructed from a file.
+
+TEST-SRC/*.C: Various excpetions thrown in obsolete testing code.
+
+
+common/ooferror_.py: generic "raise" 
+pyErrorCallback is the function which actually raises C++ errors in Python.
+
+common/IO/GUI/subWindow.py: TypeError
+Raised by subWindow constructor when the passed-in menu is not either
+an OOFMenuItem instance or a string.
+
+common/IO/GUI/chooser.py: "No names!"
+String raised by the module-level "chooser" function (which brings
+up a ChooserDialog) if no names are provided.
+
+common/IO/GUI/parameterwidgets.py: exceptions[0]
+ParameterTable.get_values collects exceptions as it goes along
+assigning values to paramters, then, if there are more than zero, it
+raises the first one.
+
+common/IO/GUI/questioner.py: ErrSetupError
+The _Questioner class raises this if an attempt is made to 
+construct a questioner dialog box with no possible answers.
+
+common/IO/GUI/console.py: EOFError, 2 occurrences.
+File-emulation functions "readline" and "read" raise EOFError.
+
+common/IO/GUI/regclassfactory.py: ErrPyProgrammingError
+RegsiteredClassListFactory.set_defaults raises a programming error,
+because there is no unique registration object.
+
+common/IO/GUI/threadcallGUI.py: generic "raise"
+main_thread_call_block_gui function needs to catch exceptions
+from the main execution block, release the global data lock,
+then re-raise the exception.
+
+common/IO/mainmenu.py: ErrPyProgrammingError
+Frequently-changing exception, for testing the exception-handling.
+
+common/IO/oofmenu.py: NameError, 2 occurrences.
+OOFMenuItem __init__ raises this if the passed-in name does not
+begin with an alpha or underscore, or if it has non-numeric, 
+non-alpha, nonunderscores within it.
+
+common/IO/oofmenu.py: AttributeError
+OOFMenuItem __init__ parses the keyword arguments, and raises this
+exception if an unrecognized keyword is encountered.
+
+common/IO/oofmenu.py: KeyError, 2 occurrences.
+OOFMenuItem.getItem and removeItem raise this if the passed-in
+name is not present as a subitem.
+
+common/IO/oofmenu.py: TypeError
+OOFMenuItem.get_arg raises TypeError if the requested name is not
+in self.params. 
+
+common/IO/oofmenu.py: generic "raise"
+callWithArgDict, the tail of all the call paths, catches and reraises
+TypeError if it is raised by the enclosed worker.start() call.
+
+common/IO/oofmenu.py: "OOFMenuItem.log: No root menu?"
+OOFMenuItem.log raises this if self.root() returns self, indicating
+(?) that it's not attached to the main menu tree.
+
+common/IO/oofmenu.py: AttributeError
+OOFMenuItem.__getattr__ raises this if the requested attribute is
+not found in the self.items list.
+
+/common/IO/parameter.py: TypeError
+Parameter module function raiseTypeError raises a type error, fleshing
+out the message.
+
+common/IO/parameter.py: ParameterMismatch
+ParameterBase.set raises this if it catches a TypeError from the
+enclosed call to self.checker.
+
+common/IO/parameter.py: ErrPyProgrammingError, 3 occurrences.
+ParameterBase class functions "makeWidget", "binaryRepr", and 
+"binaryRead" are meant to be overridden in derived classes;
+base versions raise these exceptions.
+
+common/IO/parameter.py: ErrPyProgrammingError, 2 occurrences.
+SimpleParameter's binaryRepr and binaryRead functions throw
+exceptions.
+
+common/IO/parameter.py: ParameterMismatch
+BooleanParameter.set raises this if the value is not 0 or 1.
+
+common/IO/parameter.py: ParameterMismatch
+_RangeParameter.set raises this if the local type check fails.
+
+common/IO/parameter.py: ValueError
+_RangeParamter.set raises ValueError if the passed-in value is of 
+the correct type but is out of range.
+
+common/IO/parameter.py: TypeError, 3 occurrences.
+ListOfTuplesOfIntsParameter.checker raises TypeError if any level of
+the type checking (list, list of tuples, tuples of ints) fails.
+
+common/IO/parameter.py: TypeError, 3 occurrences.
+ListOfTuplesOfFloatsParameter..checker can fail at any of the three levels.
+
+common/IO/parameter.py: TypeError, 4 occurrences.
+ListOfTuplesOfIntFloatsParameter.checker can fail if the value type
+is not a list, if the list does not contain tuples, if the first
+slot in the tuple is not an int, or if subsequent slots are not floats.
+
+common/IO/parameter.py: TypeError
+RegisteredParameter.checker fails with a TypeError if none of the 
+conditionals are true.
+
+common/IO/parameter.py: TypeError
+RegisteredListParameter.checker fails with a TypeError if the argument
+is not a list or a tuple.
+
+common/IO/parameter.py: ParameterMismatch
+AutomaticNameParameter.set raises ParameterMismatch if the enclosed
+checker call raises a TypeError.
+
+common/IO/parameter.py: AttributeError
+AutomaticNameParameter.__getattr__ raises attribute error if the 
+requested attribute is not 'value'.
+
+common/IO/parameter.py: TypeError, 2 occurrences.
+ParameterGroup.__radd__ and __add__ raise this if the type of the
+other operand is not ListType.
+
+common/IO/parameter.py: IndexError
+ParameterGroup.__getitem__ raises this if passed-in index is a string
+but is not found as a name of one of the self.params.
+
+common/IO/parameter.py: TypeError
+ParameterGroup.__getitem__ raises this if the type of the index is 
+not integer or string.
+
+common/IO/gfxmanager.py: KeyError
+GfxWindowManager.getWindow raises this if the passed-in name is 
+not found as the name of a window in self.windows.
+
+common/IO/output.py: InputMismatch
+Raised if the Input class's set routine's enclosed checker call
+raises a TypeError.
+
+common/IO/output.py: TypeError
+Raised by the Output's __init__ function if the passed-in func 
+is not callable.
+
+common/IO/output.py:  ValueError
+Raised by Output.plugInput if the output does not take any inputs, 
+i.e. an attempt has been made to plug an input into an output that
+doesn't want any.
+
+common/IO/output.py: ValueError
+Raised by Output.plugInput if the search for the appropriate input
+slot with the right name fails to find a match.
+
+common/IO/output.py: ValueError
+Raised by Output.plugInput if the search over inputs fails to find 
+a match.
+
+
+common/IO/output.py: ValueError
+Output.plugParameter raises this if the output instance takes no 
+parameters.
+
+common/IO/output.py:  ValueError
+Raised by Output.plugParameter if the name search for a matching
+parameter slot fails.
+
+common/IO/output.py: ValueError
+Raised by Output.plugParameter if an input cannot be found for
+the passed-in parameter. 
+
+common/IO/output.py: ValueError
+Raised by Output.plugParameter if plugging the parameter into 
+several inputs does not result in a match.
+
+common/IO/output.py: "Setting parameters by number is not implemented!"
+Raised by Output.plugParameter if the index-specific search is
+reached -- for inputs, there is code here, but for parameters, 
+there is no implementation.
+
+common/IO/output.py: ValueError
+Module-level function registerOutputType raises this if a duplicate
+registration is attempted.
+
+common/IO/outputdevice.py: UnsupportedOperation
+OutputDevice.unsupported function raises this exception.
+
+common/IO/psoutput.py: "PSoutput: unknown units"
+Raised by PSoutput.__init__ if passed-in units cannot be found in
+unitscale.keys().
+
+common/IO/psoutput.py: "PSoutput: unknown page format"
+Raised by PSoutput.__init__ if passed-in format is not
+'landscape' or 'portrait'.
+
+common/IO/whoville.py: ValueError
+WhoClass.add raises this if the passed-in name results in a path
+that is the wrong length for the hierarchy level.
+
+common/IO/whoville.py: KeyError
+Raised by WhoClass.__getitem__ if the passed-in "which" results 
+in a null object.  Complains about internal nodes not being retrievable.
+
+common/IO/whoville.py: ValueError, 2 occurrences.
+WhoParameter's __init__ can raise these if the passed-in 
+whoclass is not an instance, or if the instance passed in is not
+a subclass of Who or WhoClass.
+
+common/IO/whoville.py TypeError
+WhoParameter.checker can raise this if the passed-in object is
+not a string that's in the tree, or a Who instance.
+
+common/IO/whoville.py: TypeError
+WhoClassParameter.checker can raise this if it doesn't get a
+WhoClass name.
+
+common/IO/menuparser.py: ErrDataFileError
+Raised by MenuParser.run1 if the preceding getArguments call returns
+None.
+
+common/IO/menuparser.py: "Somebody forgot to define %s.getMenuItem()" 
+MenuParseMode.getMenuItem is a stub which raises this exception.
+
+common/IO/menuparser.py: "Somebody forgot to define %s.getArguments()" 
+MenuParseMode.getArguments is a stub which raises this exception.
+
+common/IO/menuparser.py: ErrDataFileError
+AsciiMenuParser.processQuote raises this if it runs off the end of
+a buffer before it finds a closing quote.
+
+
+common/IO/menuparser.py: ErrDataFileError
+Raised by AsciiMenuParser.getIdentifier if the retrieved token is not
+a legal command.
+
+common/IO/menuparser.py: ErrDataFileError
+AsciiMenuParser.getArguments raises this if nextToken returns None.
+
+common/IO/menuparser.py: ErrDataFileError
+AsciiMenuParser.getArguments raises this if a retrieved token is
+not a valid keyword for the menu item.
+
+common/IO/menuparser.py: ErrDataFileError
+AsciiMenuParser.getArgumentValue raises this if, while evaluating
+the argument in the OOF namespace, a KeyError is raised.
+
+common/coord_.py: IndexError
+Added __getitem__ function in CoordPtr raises this if the passed-in
+index is out of bounds.
+
+common/labeltree.py: TypeError
+Module-level makePath function raises this if the passed-in name is
+not None, not a list, and not a string.
+
+common/labeltree.py: KeyError
+LabelTreeNode.subTree raises this if teh passed-in name is non-null,
+but is not found in self.nodes.
+
+common/labeltree.py: ErrUserError
+LabelTree.delete raises this if the named node for deletion 
+is not a child node.
+
+common/utils.py: TypeError, 2 occurrences.
+UniqueList.__add__ and __radd__ require that only sequence types can
+be appended, and only ordinary lists can be appended-to.
+
+common/strfunction.py: ParameterMismatch
+XYStrFunctionParameter.set raises this if the passed-in value
+is not a StringType, XYStrFunction instance, or None.
+
+common/enum.py: ValueError
+Raised by Enum.__init__ if the passed-in initial name is not in the
+allowed class-level list of names.
+
+common/enum.py: ParameterMismatch
+EnumParameter.set raises this if the passed-in value is not 
+either none, an instance of the local enumclass, or a string
+representing an allowed enum member.
+
+common/primitives.py: IndexError, 2x
+Point.__getitem__ and __setitem__ check the range on the passed-in index.
+
+common/primitives.py: TypeError
+Point.__mul__ raises this if other is not a Point, a float, or an int.
+
+common/primitives.py: print "Power operation only defined..."
+Printed (*not* raised!!) by Point.__pow__ if exponent is not 2.
+
+common/primitives.py: generic "raise"
+Rectangle.swallow re-raises the AttributeError if it arises from
+the attempt to retrieve the enclosing_rectangle() of the passed-in obj.
+
+common/ringbuffer.py: IndexError, 5 occurrences.
+Ringbuffer functions pop, current, prev, next, and __getitem__ 
+do index-checking.
+
+common/restrictedlist.py: TypeError, 2 occurrences.
+RestrictedList.__setitem__ and __add__ do type checking on the
+passed-in values.
+
+common/smallmatrix_.py: KeyError, 2 occurrences.
+SmallMatrixPtr __getitem__ and __setitem__ do strange index-checking --
+if the *length* of the index object is wrong, KeyError is raised.
+
+common/smallmatrix_.py: TypeError
+SmallMatrixPtr.__mul__ requires that the other operand also be a
+SmallMatrixPtr.
+
+common/registeredclass.py: NameError
+Raised by the Registration.__init__ if the OOFeval of the 
+subclass name does *not* get a NameError, indicating that the name
+already exists in that namespace.
+
+engine/IO/contour.py: ContourError
+ContourCell.cornerno raises this if the passed-in point is not 
+any of the corners. 
+
+engine/IO/contour.py: ContourError
+Contour_EnterViaEdge.next raises an error if can't find an edge through
+which to depart.
+
+engine/IO/contour.py: ContourError("impossible situation")
+Contour_CloseBdyAtCorner.next prints some diagnositics and raises
+an error if several conditional fail to clear up the situation.
+
+engine/IO/contour.py: err
+module-level findContours, while looping over contour states,
+catches any ContourErrors which arise, prints diagnostics, and 
+reraises the error.
+
+engine/IO/matrix.py: KeyError
+SymMat3.__setitem__ raises this error if the passed-in key is 
+not found in its "data" member.  
+
+engine/IO/materialmenu.py: TypeError
+MaterialParameter.checker checks if the passed-in variable is a
+material name.
+
+engine/IO/materialmenu.py: TypeError, 2 occurrences.
+ListOfMaterialsParameter.checker raises these if the passed-in 
+variable is not a list, or if any of the list items are not 
+material names. 
+
+engine/IO/skeletongroupmenu.py: ErrUserError, 5 occurrences.
+Module-level functions _new_group, _remove_group, _copy_group,
+_rename_group, and _clear_group will not create groups if they 
+already exist, or destroy them if they don't.
+
+engine/IO/meshparameters.py: ParameterMismatch
+Raised by ComponentParameter.set if the type of x cannot be
+resolved.
+
+engine/IO/meshIO.py: ErrUserError
+Module-level function getMasterElementDict raises this if any of 
+the passed-in master elements cannot be found in masterdict.
+
+engine/mesh.py: ErrSetupError, 2x
+Mesh.addBdyCondition and Mesh.renameBdyCondition raise these if the added
+name already exists, or if the old name cannot be found.
+
+engine/boundary.py: ErrSetupError
+LocatedCondition.__call__ raises this if the "here" at which it should
+be evaluated has not been set.
+
+engine/boundary.py: ErrSetupError, 3x
+EdgeBoundary.addFloatCondition and addFixedCondition raise these errors
+if there is a collision.  addForceCondition raises it directly.
+
+engine/boundary.py: ErrSetupError, 3x
+PointBoundary.addFloatCondition and addFixedCondition raise these
+if there is a collision.  addFluxCondition raises it directly.
+
+engine/contourcell_.py: IndexError
+Raised by ContourCellSkeletonPtr.__getitem__ if the index is out 
+of bounds.
+
+engine/skeleton.py: RuntimeError
+Skeleton.newElement raises this if the length of the nodes
+argument is not 3 or 4.
+
+engine/skeleton.py: ErrPyProgrammingError, 2x
+Skeleton.makeEdgeBoundary raises this if the boundary name already 
+exists in one of the boundary dictionaries, or if a singleton segment
+boundary is passed in with no starting node.
+
+engine/skeleton.py: ErrPyProgrammingError
+Skeleton.makePointBoundary raises this if the boundary name already 
+exists in one of the boundary dictionaries.
+
+engine/elementnodeiterator_.py: IndexError
+ElementNodeIteratorPtr, ElementFuncNodeIteratorPtr, and 
+ElementCornerNodeIteratorPtr __getitem__ functions raise this
+error if, when __getitem__ is called, the iterator is already
+at the end().
+
+engine/equation_.py: IndexError, 2x
+_AllEquations.__getitem__ raises this if the numerical index 
+is out of range, or if the string index cannot be found.
+
+engine/eulerangle_.py: TypeError
+Overloaded __init__ for EulerAngle SWIG'd class.  Checks the length
+of its argument list, and if no applicable C++ constructor exists,
+raises this exception.
+
+engine/field_.py: IndexError, 3x
+_AllFields.__getitem__ raises this if the numerical index is 
+out of range, if the index gets a NameError on evaluation in the 
+OOF namespace, or if it is otherwise not an instance ofa  FieldPtr.
+
+engine/flux_.py: IndexError.
+_AllFluxes.__getitem__ raises this if the numerical index is out
+of range or if the name is not found.
+
+engine/propertyregistration.py: KeyError.
+Raised by PropertyManager.__setitem__ if a duplicate name has been
+passed in, and the parameter values of the new entry differ from
+the duplicate.
+
+engine/propertyregistration.py: ErrSetupError, 2x
+PropertyRegistration.collision raises this if a difference is found
+between the parameter values of the current registration and the 
+passed-in parameter list, for either a named or unnamed property.
+
+engine/skeletonelement.py: ErrPyProgrammingError
+SkeletonElement.clone raises this directly -- cloning the parent
+class is not allowed.
+
+engine/masterelement_.py: TypeError
+MasterElementPtr.isbdy raises this if the length of the passed-in
+argument tuple is not 1 or 2.
+
+engine/materialmanager.py: KeyError
+MaterialProps.__setitem__ raises this if the passed-in key is
+already present in the self.data dictionary.
+
+engine/materialmanager.py: KeyError
+MaterialManager.add raises this if the passed-in material name is 
+already in the dictionary.
+
+engine/sparselink_.py: IndexError
+SparseLinMatIterator.__getitem__ raises this if the iterator is 
+not less than self.end.
+
+engine/symmmatrix_.py: KeyError, 2x
+SymmMatrixPtr.__setitem__ and __getitem__ raise this if their 
+argument is not the right length, or if either component of it
+is larger than the matrix size. 
+
+engine/refinemethod.py: generic "raise"
+RefinementRuleSet.getRule gets a KeyError if a rule of the appropriate
+signature is not found; if it has no parent, it reraises the KeyError.
+
+engine/property/elasticity/cijkl_.py: IndexError, 2x
+CijklPtr.__setitem__ and __getitem__ raise this if the length
+of the passed-in index object is not 2 or 4.
+
+engine/property/plasticity/plasticity.py: ErrUserError
+Raised by yield_test in TestPlasticityProp if the matrix
+solution has a nonzero return code.
+
+engine/femesh_.py: ErrSetupError
+FEMeshPtr.newEdgeBoundary and newPointBoundary raise this if 
+the named boundary already exists.
+
+engine/femesh_.py: ErrSetupError
+FEMeshPtr.flbtraverse_ raises this if it encounters a boundary
+which does not have .intersected, or if it cannot consistently
+combine intersecting floating boundaries.
+
+engine/femesh_.py: IndexError, 3x
+FuncNodeIteratorPtr, ElementNodeIteratorPtr, and NodeIteratorPtr 
+__getitem__ functions raise this if they are at the end().
+
+engine/profile.py: ErrSetupError(
+NormalProfile.__call__ raises this if the length of the tuple
+is not 1 or 2.
+
+engine/boundarybuilder.py: ErrUserError
+BoundaryConstructor raises this if the passed-in name is None.
+
+engine/boundarybuilder.py: ErrUserError
+Module-level function _segset2seglist raises this if the passed-in
+segment set has zero length.
+
+engine/boundarybuilder.py: ErrUserError, 2x
+Module-level function _segset2seglist raises these if the segment
+set does not form a loop and the desired direction is clockwise or
+counterclockwise, or if it does form a loop but isn't clockwise
+or counterclockwise. 
+
+engine/skeletonboundary.py: SequenceError, 3x
+SkeletonEdgeBoundary.sequence can raise this if it finds
+a branch (i.e. a node which appears in more than two edges)
+in its edge set, if the number of unmatched nodes is not 
+zero or one or does not equal the number of startnodes, 
+or if the sequenced set forms disjoint loops.
+
+engine/skeletonboundary.py: ErrSetupError
+SkeletonEdgeBoundary.append raises this if the passed-in segment
+cannot be hooked up to the boundary in a topologically sensible way.
+
+engine/skeletonboundary.py: ErrSetupError
+SkeletonEdgeBoundary.delete raises this if the segments presented
+for deletion are not all present in the boundary, or if the 
+segment set is not connected to the boundary.
+
+engine/skeletonboundary.py: ErrPyProgrammingError
+Raised by ExteriorSkeletonEdgeBoundary.addEdge if an interior edge
+is passed in for addition.
+
+engine/skeletonboundary.py: ErrPyProgrammingError
+Module-level function edgesFromSegs can raise this if it can't 
+find the counterpart of either the start or end node in the target
+set.
+
+engine/skeletoncontext.py: ErrUserError
+SkeletonContext.removeBoundary raises this if an attempt is made
+to remove a boundary that is not present.
+
+engine/skeletoncontext.py: ErrSetupError
+SkeletonContext.renameBoundary raises this if the new name of the
+boundary is already in use.
+
+engine/skeletoncontext.py: ErrPyProgrammingError
+Raised by SkeletonContext.renameBoundary if a boundary with 
+the old name cannot be found.
+
+engine/skeletoncontext.py: ErrSetupError
+SkeletonContext.appendSegstoBdy can raise this if the boundary name 
+is not found in the list of edge boundaries.
+
+engine/skeletoncontext.py: ErrSetupError
+SkeletonContext.addNodestoBdy raises this if the boundary name 
+does not correspond to a point boundary.
+
+engine/skeletoncontext.py: ErrSetupError
+SkeletonContext.removeSegsfromBdy can raise this if the boundary is
+not found in the list of edge boundaries.
+
+engine/skeletoncontext.py: ErrSetupError
+SkeletonContext.removeNodesfromBdy raises this if the boundary name 
+does not correspond to a point boundary.
+
+engine/bdycondition.py: ErrPyProgrammingeError
+FloatBC.propagate_ can raise this if propagation extends to a FloatBC
+that is in the wrong traversal state.
+
+engine/bdycondition.py: ErrSetupError
+FluxBC.__call__ raises this if the assigned flux is not active.
+
+engine/snapnode.py: ErrPyProgrammingError
+SnapSelected.__call__ raises this if it gets an index error from
+the enclosed getaparents()[-1] call.
+
+engine/skeletonsegment.py: ErrPyProgrammingError
+SkeletonSegment.addElement raises this if a second element
+is added to the segment.
+
+engine/skeletonsegment.py: SequenceError, 5x
+Module-level function segSequence raises this if it finds a branch
+in the segment set, or if it can't find the start node in either 
+the resulting sequence set or loop, or if the segments are
+disjoint, or if they resolve into disconnected loops.
+
+engine/skeletonsegment.py: ErrPyProgrammingError
+Raised by SkeletonEdge.set_direction if one or another of
+the passed-in nodes cannot be found in the segment.
+
+engine/skeletonsegment.py: ErrPyProgrammingError
+Raised by SkeletonEdge.edgesFromSegs if the child of the 
+first node in the ordered_node list is not at the beginning
+or the end of the generated node list.
+
+engine/swapelement.py: ErrPyProgrammingError
+SwapMergeMethod.selected raises this if the enclosed
+element.getParents()[-1] gets an index error.
+
+
+
+# EXTRA stuff deferred.
+./common/EXTRA/displayprof.py:            raise UserWarning("Invalid profile file?")
+./common/EXTRA/gfxprof.py:            raiseAlert("Invalid profile file!")
+./common/EXTRA/gfxprof.py:def raiseAlert(message):
+./common/EXTRA/profiler.py:        is called or returns, or when an exception is raised or
+./common/EXTRA/profiler.py:                raise "Profiling error!  Caller is not on stack!"
+./common/EXTRA/profiler.py:        elif eventtype == 'e':          # exception raised or propagated
+./common/EXTRA/profiler.py:            raise AttributeError

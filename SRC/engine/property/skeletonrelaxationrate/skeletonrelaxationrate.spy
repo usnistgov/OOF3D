@@ -1,0 +1,35 @@
+# -*- python -*-
+# $RCSfile: skeletonrelaxationrate.spy,v $
+# $Revision: 1.5.8.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:46:03 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.SWIG.engine import cskeletonmodifier
+from ooflib.common.IO import parameter
+from ooflib.engine import problem
+from ooflib.engine import propertyregistration
+
+PropertyRegistration = propertyregistration.PropertyRegistration
+
+SkeletonRelaxationRateTensor = PropertyRegistration(
+    'SkeletonRelaxationRate', SkeletonRelaxationRate,
+    "ooflib.SWIG.engine.property.skeletonrelaxationrate.skeletonrelaxationrate",
+    9000,
+    [parameter.FloatParameter('gamma', 1,), # force prefactor
+     cskeletonmodifier.alphaParameter],
+    outputs=[],
+    propertyType="SkeletonRelaxationRate",
+    secret=True)
+    
+SkeletonRelaxationRateTensor.fluxInfo(fluxes=[problem.Stress],
+                                      fields=[problem.Displacement],
+                                      time_derivs=[0],
+                                      nonlinear=False)

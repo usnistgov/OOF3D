@@ -1,0 +1,131 @@
+# -*- python -*-
+# $RCSfile: petsc_preconditioner.spy,v $
+# $Revision: 1.5.18.1 $
+# $Author: langer $
+# $Date: 2014/09/27 22:34:22 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.common import cregisteredclass
+from ooflib.common.IO import xmlmenudump
+from types import *
+
+cregisteredclass.registerCClass(PETScPreconditionerWrapPtr)
+
+PETScPreconditionerWrapPtr.tip = \
+                "Preconditioners for efficient solution of matrix equations."
+PETScPreconditionerWrapPtr.discussion = xmlmenudump.loadFile(
+    'DISCUSSIONS/engine/reg/preconditioner.xml')
+
+class PETScPreconditionerRegistration(cregisteredclass.Registration):
+    def __init__(self, name, subclass, ordering,
+                 params=[], secret=0, **kwargs):
+        cregisteredclass.Registration.__init__(
+            self, name, PETScPreconditionerWrap,
+            subclass, ordering, params, secret, **kwargs)
+
+PETScPreconditionerRegistration(
+    "JACOBI",
+    PETScJACOBIPreconditioner,
+    ordering=100,
+    params=[],
+    tip="Jacobi",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/ilu_preconditioner.xml')
+    )
+
+PETScPreconditionerRegistration(
+    "BJACOBI",
+    PETScBJACOBIPreconditioner,
+    ordering=200,
+    params=[],
+    tip="Block Jacobi",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/ilu_preconditioner.xml')
+    )
+
+PETScPreconditionerRegistration(
+    "SOR",
+    PETScSORPreconditioner,
+    ordering=300,
+    params=[],
+    tip="SOR",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/ilu_preconditioner.xml')
+    )
+
+PETScPreconditionerRegistration(
+    "EISENSTAT",
+    PETScEISENSTATPreconditioner,
+    ordering=400,
+    params=[],
+    tip="SOR with Eisenstat trick",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/ilu_preconditioner.xml')
+    )
+
+PETScPreconditionerRegistration(
+    "ICC",
+    PETScICCPreconditioner,
+    ordering=500,
+    params=[],
+    tip="Incomplete Cholesky",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/ilu_preconditioner.xml')
+    )
+
+#make this one first on the ordering list
+PETScPreconditionerRegistration(
+    "ILU",
+    PETScILUPreconditioner,
+    ordering=600,
+    params=[],
+    tip="Incomplete LU",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/ilu_preconditioner.xml')
+    )
+
+PETScPreconditionerRegistration(
+    "ASM",
+    PETScASMPreconditioner,
+    ordering=700,
+    params=[],
+    tip="Additive Schwarz",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/ilu_preconditioner.xml')
+    )
+
+PETScPreconditionerRegistration(
+    "KSP",
+    PETScKSPPreconditioner,
+    ordering=800,
+    params=[],
+    tip="Linear Solver",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/ilu_preconditioner.xml')
+    )
+
+PETScPreconditionerRegistration(
+    "LU",
+    PETScLUPreconditioner,
+    ordering=10,
+    params=[],
+    tip="LU",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/ilu_preconditioner.xml')
+    )
+
+PETScPreconditionerRegistration(
+    "CHOLESKY",
+    PETScCHOLESKYPreconditioner,
+    ordering=1000,
+    params=[],
+    tip="Cholesky",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/ilu_preconditioner.xml')
+    )
+
+PETScPreconditionerRegistration(
+    "NONE",
+    PETScNONEPreconditioner,
+    ordering=1100,
+    params=[],
+    tip="No preconditioning",
+#    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/ilu_preconditioner.xml')
+    )

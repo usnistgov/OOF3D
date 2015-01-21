@@ -1,0 +1,1 @@
+removefile('skelpagerationalize.log')

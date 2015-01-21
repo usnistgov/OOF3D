@@ -1,0 +1,154 @@
+# -*- python -*-
+# $RCSfile: contour.spy,v $
+# $Revision: 1.3.4.3 $
+# $Author: langer $
+# $Date: 2013/11/08 20:44:57 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+# OBSOLETE IN 3D
+from ooflib.SWIG.common import config
+assert config.dimension() == 2
+
+from ooflib.common import debug
+from ooflib.common import primitives
+from ooflib.common.IO import whoville
+
+# The swig typemap for ContourCellSet.getCorners returns a list of
+# swig address strings, which we have to convert to actual swigged
+# ContourCoords here:
+
+swig_ContourCellSet_getCorners = ContourCellSetPtr.getCorners
+
+def _ContourCellSet_getCorners(self):
+    strlist= swig_ContourCellSet_getCorners(self)
+    return map(ContourCoordPtr, strlist)
+ContourCellSetPtr.getCorners = _ContourCellSet_getCorners
+
+
+class Contour(CContour):
+    # Class representing a single contour of a function.  This class
+    # does not figure out which line segments are part of the contour,
+    # but it does assemble those segments into a set of curves and
+    # loops.
+
+    def map(self, mesh, element, posOutput):
+        # Use the posOutput Output to map the contours from master
+        # space to display space.
+        self.curves = self.getCurves()
+        self.loops = self.getLoops()
+        
+        self.curves = [primitives.Curve(posOutput.evaluate(mesh, [element],
+                                                           [curve]))
+                       for curve in self.curves]
+
+        self.loops = [primitives.Polygon(posOutput.evaluate(mesh, [element],
+                                                            [loop]))
+                      for loop in self.loops]
+        
+    def draw(self, device):
+        for curve in self.curves:
+            device.draw_curve(curve)
+        for loop in self.loops:
+            device.draw_polygon(loop)
+
+
+    # The swig typemaps used by CContour.getCurves and
+    # CContour.getLoops return lists of lists SwigPtr strings, which
+    # get converted into MasterCoordPtr objects here:
+    
+    def getCurves(self):
+        swigCurves = CContour.getCurves(self)
+        return map(lambda x : map(MasterCoordPtr, x), swigCurves)
+
+    def getLoops(self):
+        swigLoops = CContour.getLoops(self)
+        return map(lambda x : map(MasterCoordPtr, x), swigLoops)
+
+    def __repr__(self):
+        return "Contour(value=%f, curves=%s, loops=%s)" % (self.value,
+                                                           self.getCurves(),
+                                                           self.getLoops())
+        
+#########################
+
+def findContours(mesh, element,
+                 posOutput,             # Output for positions of nodes
+                 valueOutput,           # Output for function being plotted
+                 clevels,               # list of contour levels
+                 nbins,                 # number of cells in each direction
+                 closecontours):        # close contours at element perimeter?
+##    debug.fmsg(element)
+    # Compute the contours crossing an element.
+    # This would be an Element method, but it's more convenient to put
+    # it here.
+    master = element.masterelement()
+    cells = contourCellCache(master, nbins) # ContourCellSet object
+
+    # Create a Contour object for each value provided
+    contours = [Contour(clevels[i], i) for i in range(len(clevels))]
+
+    # Evaluate the output function at the corners of the cells.
+    cellcorners = cells.getCorners()
+    cornervalues = map(float,
+                       valueOutput.evaluate(mesh, [element], [cellcorners]))
+    # Assign values, and find the element maximum and minimum.
+    elmax = None
+    elmin = None
+    for val, corner in zip(cornervalues, cellcorners):
+        corner.value = val
+        elmax = max(elmax, val)
+        # None is less than every floating-point number, so we
+        # need to check for it explicitly.
+        if elmin is None:
+            elmin = val
+        else:
+            elmin = min(elmin, val)
+    
+    # Find the contour intercepts on all of the cell edges.
+    cells.findIntercepts(clevels)
+
+    for contour in contours:
+##        debug.fmsg('contour=', contour.value)
+        contour.compute(cells, master, closecontours)
+
+    for contour in contours:
+        contour.map(mesh, element, posOutput)
+
+##    debug.fmsg('done')
+    return (contours, elmin, elmax)
+
+###################
+
+def _ContourCoord___repr__(self):
+    try:
+        return "ContourCoord(%f, %f, [%f])" % (self[0], self[1], self.value)
+    except AttributeError:
+        return "ContourCoord(%f, %f)" % (self[0], self[1])
+
+ContourCoordPtr.__repr__ = _ContourCoord___repr__
+
+## ## ##
+
+# WhoProxy for the topmost contourable mesh -- this one is potentially
+# confusing -- it returns the mesh associated with the topmost
+# contourable layer in the graphics window, unless there is no such
+# layer, in which case it returns the topmost mesh.
+
+class ContourableMesh(whoville.WhoProxyClass):
+    def resolve(self, proxy, gfxwindow):
+        layer = gfxwindow.topcontourable()
+        if layer:
+            return layer.who().resolve(gfxwindow)
+        else:
+            return gfxwindow.topwho( ('Mesh') )
+    def getTimeStamp(self, proxy, gfxwindow):
+        return gfxwindow.getLayerChangeTimeStamp()
+
+ContourableMesh('<contourable>')

@@ -1,0 +1,10 @@
+# Operation: Average
+# Output: Stress dot surface normal
+# Domain: FaceBoundaryDomain(boundary='Xmin',side='BACK')
+# Sampling: ContinuumSampleSet(order=automatic)
+# Columns:
+# 1. time
+# 2. average of X-component
+# 3. average of Y-component
+# 4. average of Z-component
+0.0, 0.0, -0.025, -0.025

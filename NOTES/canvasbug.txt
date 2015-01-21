@@ -1,0 +1,76 @@
+// $RCSfile: canvasbug.txt,v $
+// $Revision: 1.1 $
+// $Author: reida $
+// $Date: 2005/11/30 16:38:23 $
+
+
+There's something wrong with the canvas, that causes it to print these
+warnings:
+
+> *** attempt to put segment in horiz list twice
+
+  The warnings typically occur when drawing skeletons or meshes on the
+canvas, for microstructures which are approximately one physical unit
+in size, and when the element size is around 1/12 of a unit, and 
+the elements are not drawn in raster order.
+
+  The message itself comes from the libart rendering library, and 
+apparently has something to do with intersection checking or 
+self-intersection checking.  The code where the message originates
+has comments indicating that what has happened is that some kind of 
+basic sanity check has failed, the list of segments to be drawn is
+apparently corrupted, and the current segment will be skipped.
+
+  As far as can be determined, nothing is drawn incorrectly when
+this message occurs.
+
+  This *may* be an example of gnome bug 316583,
+<http://bugzilla.gnome.org/show_bug.cgi?id=316583>, which is also
+marked as a duplicate of gnome bug 317136 
+<http://bugzilla.gnome.org/show_bug.cgi?id=317136>, which is about
+rendering problems with libart and the gnome canvas.  
+
+  A comment from Alexander Larsson regarding gnome bug 317136 
+suggests that it will probably not be fixed, since libart is not
+being maintained, and "the future of antialiased rendering lies
+with Cairo".
+
+ 
+  HOWEVER:
+
+  Attempts to replicate the bug behavior using an isolated test
+canvas have not been successful.  This leaves open the possibility
+that the bug actually lies in the OOF code.
+
+  To attempt to reproduce it, all the calls made to the OOFCanvas 
+in the bug scenario were recorded, and "played back" to an OOFCanvas
+object which was running standalone outside of OOF.  The standalone
+canvas did not exhibit the bug behavior.
+  
+  The bug may be related to the scroll-window context of the 
+embedded OOFCanvas, or to some other interaction of the canvas with
+its gtk environment.  
+
+  The bug occurs in both threaded and unthreaded mode, and with both
+a buffered and unbuffered canvas.
+
+  It is of course possible that the attempt to reproduce the bug was
+incomplete in some way.
+
+  To reproduce the bug, do the following:
+  - Start OOF with no arguments.
+  - Create a 1x1 microstructure, with pixel size 10x10, with no image.
+  - Create a 4x4 quad element skeleton
+  - Unconditionally trisect all elements of the skeleton.
+  - Open a graphics window.
+
+  You will see many (about 40) occurrences of the "attempt to put 
+segment in horiz list twice" message.  
+
+  Note that the bug does not occur if you directly create and draw
+a 12x12 skeleton on the 1x1 microstructure -- it apparently is 
+related to the order in which the skeleton's polygons are drawn.
+
+  A work-around to avoid the messages is apparently to ensure that
+one is always working with a large enough microstructure.
+

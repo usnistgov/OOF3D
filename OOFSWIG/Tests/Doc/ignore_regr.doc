@@ -1,0 +1,34 @@
+Ignore
+
+This file contains comments that should be ignored 
+
+1.  Section 1
+=============
+
+$a
+        [ Global : int a ]
+
+$b
+        [ Global : int b ]
+
+2.  Section 2
+=============
+Section 2 comment. Not ignored 
+
+$c
+        [ Global : int c ]
+        This is comment for 'c' 
+
+$d
+        [ Global : int d ]
+        This is a comment for 'd' 
+
+3.  Section 3
+=============
+
+$e
+        [ Global : int e ]
+
+$f
+        [ Global : int f ]
+

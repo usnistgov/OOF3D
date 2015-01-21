@@ -1,0 +1,27 @@
+Triangles.
+Made stiffness matrix
+Completed BC consistency checks.
+Applied flux boundary conditions, if any.
+Applied fixed boundary conditions, if any.
+Applied force boundary conditions, if any.
+Mapped equations.
+Applied floating boundary conditions, if any.
+Equilibration succeeded in 71 iterations
+residual =  9.09075831001e-06
+Expanded floating BC's, if any.
+-0.359590946393 0.122325790472
+-0.112249317478 -0.0595964628247
+0.0606412405947 -0.0758143578622
+0.248348085675 -0.0425458872222
+-0.0617338634055 -0.030327912074
+-0.0205886023288 -0.108043715003
+0.0197577612751 -0.122445575834
+0.0360746276277 -0.0526099587215
+-0.00452356948487 -0.0782424870035
+0.0021260913353 -0.109679631842
+-0.00245125910624 -0.109018946496
+0.00264957525225 -0.0807704364512
+0.0 -0.1
+0.0 -0.1
+0.0 -0.1
+0.0 -0.1

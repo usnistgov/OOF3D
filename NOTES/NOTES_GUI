@@ -1,0 +1,181 @@
+-*- mode: text -*-
+$RCSfile: NOTES_GUI,v $
+$Revision: 1.1 $
+$Author: reida $
+$Date: 2001/12/03 22:15:30 $
+
+Things the GUI must be able to do. Items in this list do not
+necessarily correspond to particular interface widgets.
+
+
+Physics:
+    List Fields and Equations automatically.
+    Define and Activate Fields.
+    Activate Equations.
+    Initialize Fields.
+    Set in-plane flags for Fields and Fluxes.
+
+Materials:
+  Properties:
+    List all Property classes, and all parametrized named instances.
+    Create a parametrized instance from a Property class.
+    Copy a parametrized instance.
+    Name a parametrized instance.
+    Edit the parameters of an instance.
+    Delete a parametrized instance.
+  Parameters:
+    Set values graphically, where possible.
+    Allow keyboard input whenever GUI input is not precise.
+    Display values concisely, without requiring a pop up window.
+    Editable 2D graph to set non-linear properties (eg modulus as fn of strain).
+    Read non-linear parameter data from a file. 
+  Materials:
+    Create a named Material.
+    Add a parametrized Property to a Material via a Link or a
+      Copy.  (A Link doesn't give the Material its own Property
+      instance, so editing the instance can affect more than one
+      Material.)
+    Remove Property instances from a Material.
+  Load Materials and Properties from a file.
+  Indicate badly formed Materials (redundant and/or missing properties)
+
+
+Mesh Generation:
+   Read Mesh from a file.
+   Read GhostMesh from a file.  (GhostMesh specifies geometry and
+     materials, not element type.)
+   Create rectangular GhostMesh.
+   Define Element Groups.
+   Select/unselect Elements via GUI or ElementGroup.
+   Assign Materials to selected Elements of Mesh or GhostMesh.
+   Convert GhostMesh to Mesh by assigning Element type.
+   Add Line Elements at interfaces.
+   Split Nodes at cracks.
+
+Element and Node Groups:
+   Create group.
+   Delete group.
+   Add selected Element/Node to group.
+   Remove selected Element/Node from group.
+   Boolean operations on groups.
+
+Boundary Conditions:
+   Define and name Boundaries.
+   Undefine Boundaries.
+   Define Boundary Conditions.
+       Fixed Field component.
+       Fixed normal component of Flux.
+       Linear combination of the above.
+       All can be specified as functions of position or other Fields.
+   Remove Boundary Conditions from Boundaries.
+   Delete Boundary Condition definitions.
+
+Solution:
+   Choose solution method, preconditioner.
+       Linear
+       Non-Linear
+   Set tolerance, max iterations.
+   Solve.
+   Adaptive refinement controls.
+   Thread control.
+     Solve in this thread.
+     Create new thread.
+       Local or Remote?
+   Stop button.
+
+Graphical Output:
+   2D Plot of specified function on the Mesh.
+      Different ways of positioning the Elements:  (WHERE)
+	  At undisplaced positions.
+	  At displaced positions.
+	  With displacements determined by arbitrary user-specified
+	    function of Fields, Fluxes, and position.
+      Toggle display of features.  (WHO)
+	 Element edges.
+	 Element interior.
+	 Nodes.
+	 Boundaries.
+      Set function to plot:  (WHAT)
+	 Predefined functions.
+	    Components, Magnitudes, Invariants of Fields and Fluxes.
+	    Material color.
+	    Other natural quantities, eg, Elastic Energy.
+	 Arbitrary functions of position, Fields, and Fluxes.
+	 Functions of Elements, not of position.
+	    Mutation state  (when, how, why...).
+	    Intrinsic color.
+	    Adaptive refinement error estimator.
+	 Restrict output to Elements with a given Material or in a given
+	    Group.
+	 Restrict output to Elements satisfying a user specified criterion.
+      Set display method:  (HOW)
+	 Contours.
+	 Filled contours.
+	 Vectors.
+      Miscellaneous graphics operations.
+         Set antialiasing.
+         Set color scheme.
+         Scroll bars.
+         Save image to file.
+      Superimpose outputs.
+	 Define layering order.
+	 Change layering order.
+	 Hide/show layer.
+      Cross Section.
+	 Draw a line on the output window and plot function value
+            along the line.
+      Time should be displayed somewhere, when relevant.
+      Display (and print) color scale with labels.
+      Set Color map.
+      Set range of values to be shown.
+      Set update time: (WHEN)
+         Never
+         After equilibration
+         During equilibration (every x iterations).
+      Stop button.
+
+   1D plot of function vs time.
+
+Interaction with Graphics Window:
+   Click to show Field at Node.
+   Click to show plotted function value interpolated inside Element.
+   Click to show Boundary Conditions applied at a Node.
+   Click or drag to select and unselect Nodes.
+   Click or drag to select and unselect Elements.
+   Set mode for selection.
+     Union with previous selection.
+     Replace previous selection.
+     XOR with previous selection (toggle).
+
+File Output:
+   For all functions that can be plotted in the Graphical Output.
+   Function value
+     At Nodes.
+     At Element Gauss points.
+     Interpolated onto regular grid.
+  Statistics of function value over Mesh.
+  Restrict all of the above to a Material type or ElementGroup.
+
+Effective Properties:
+  Run virtual experiments.
+  Display and save results.
+
+
+Save:
+   Write goof file.
+   Optional ingredients:
+      Mesh
+      Ghost Mesh
+      Material & Property definitions
+
+Python Definitions:
+   Terminal-like window for running Python.  All input values are
+     evaluated in this window's namespace.
+
+Command logging:
+    All operations have a CLI equivalent.
+    All operations are logged.
+    The log file can be saved.
+    A log file can be loaded and executed.
+
+Error Handling:

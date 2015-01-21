@@ -1,0 +1,11 @@
+// -*- text -*-
+// $RCSfile: README,v $
+// $Revision: 1.2 $
+// $Author: langer $
+// $Date: 2008/06/17 19:02:29 $
+
+The software in this directory is from Iterative Matrix Templates,
+http://math.nist.gov/iml++/
+
+Some files have been modified to some extent for OOF2.
+

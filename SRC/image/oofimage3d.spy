@@ -1,0 +1,265 @@
+# -*- python -*-
+# $RCSfile: oofimage3d.spy,v $
+# $Revision: 1.3.6.12 $
+# $Author: fyc $
+# $Date: 2014/07/29 21:23:12 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+from ooflib.SWIG.common import ooferror
+from ooflib.common import debug
+from ooflib.common import utils
+from ooflib.common import parallel_enable
+from ooflib.common import primitives
+from ooflib.common import registeredclass
+from ooflib.common.IO import filenameparam
+from ooflib.common.IO import parameter
+from ooflib.common.IO import reporter
+from ooflib.common.IO import whoville
+import ooflib.common.microstructure
+from ooflib.image import imagecontext
+import os
+import re
+import string
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# FileOrder classes determine how the files containing 3D image slices
+# are ordered.  AlphabeticalOrder just orders the files by the
+# alphabetical order of their names.  If the file names differ by
+# embedded integers that are *not* padded with zeros, this can fail.
+# The files a1.jpg, a2.jpg, ..., a10.jpg will be ordered a1.jpg,
+# a10.jpg, a2.jpg, ...  NumericalOrder looks for sequences of digits
+# in the file names and sorts the names as if the digits were numbers,
+# not numerals.
+
+class FileOrder(registeredclass.RegisteredClass):
+    registry = []
+
+class AlphabeticalOrder(FileOrder):
+    def sort(self, filenames):
+        return sorted(filenames)
+
+registeredclass.Registration(
+    "Alphabetical",
+    FileOrder,
+    AlphabeticalOrder,
+    ordering=1,
+    tip="Sort file names alphabetically (eg: f1, f10, f2, f3, ...).")
+
+class NumericalOrder(FileOrder):
+    def sort(self, filenames):
+        return sorted(filenames, key=_extractDigits)
+
+def _extractDigits(name):
+    splitname = re.split("([0-9]+)", name)
+    for i, x in enumerate(splitname):
+        if x.isdigit():
+            splitname[i] = int(x)
+    return splitname
+
+registeredclass.Registration(
+    "Numerical",
+    FileOrder,
+    NumericalOrder,
+    ordering=0,
+    tip="Sort file names numerically (eg: f1, f2, f3, ..., f10).")
+
+# Unsorted is useful only in scripts, so it's secret and doesn't
+# appear in the GUI.  In the GUI there's currently no way of selecting
+# files in an arbitrary order.
+
+class Unsorted(FileOrder):
+    def sort(self, filenames):
+        return filenames
+
+registeredclass.Registration(
+    "Unsorted",
+    FileOrder,
+    Unsorted,
+    ordering=2,
+    secret=True,
+    tip="Don't sort file names.")
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Ways of specifying the file names containing 3D image slices.
+
+class ThreeDImageSpecification(registeredclass.RegisteredClass):
+    registry = []
+    def __init__(self, directory):
+        self.directory = directory
+
+#=--=##=--=##=--=##=--=##=--=#
+
+class ThreeDImageDirectory(ThreeDImageSpecification):
+    def __init__(self, directory, sort):
+        ThreeDImageSpecification.__init__(self, directory)
+        self.sort = sort
+    def fileNames(self):
+        items = os.listdir(self.directory)
+        names = self.sort.sort(
+            [os.path.join(self.directory, name)
+             for name in items
+             if name[0] != '.'])
+        return [name for name in names if os.path.isfile(name)]
+
+registeredclass.Registration(
+    "Entire Directory",
+    ThreeDImageSpecification,
+    ThreeDImageDirectory,
+    ordering=0,
+    params=[filenameparam.DirectoryNameParameter("directory"),
+            parameter.RegisteredParameter("sort", FileOrder)],
+    tip="Load all of the files in a given directory."
+    )
+
+#=--=##=--=##=--=##=--=##=--=#
+
+class ThreeDImageList(ThreeDImageSpecification):
+    def __init__(self, directory, files, sort):
+        ThreeDImageSpecification.__init__(self, directory)
+        self.files = files
+        self.sort = sort
+    def fileNames(self):
+        names = [os.path.join(self.directory, f) 
+                 for f in self.sort.sort(self.files)]
+        for name in names:
+            if not os.path.isfile(name):
+                raise ooferror.ErrUserError("File %s does not exist!" % name)
+        return names
+
+registeredclass.Registration(
+    "Listed Files",
+    ThreeDImageSpecification,
+    ThreeDImageList,
+    ordering=2,
+    params=[filenameparam.ImpliedDirectoryNameParameter("directory"),
+            filenameparam.FileListParameter("files"),
+            parameter.RegisteredParameter("sort", FileOrder)],
+    tip="Load the given set of image files from a given directory." 
+    )
+
+#=--=##=--=##=--=##=--=##=--=#
+
+# Load image files matching a given pattern (regular expression, as
+# defined in Python).
+
+# We do the pattern matching ourselves, rather than letting vtk do it,
+# because vtk assumes that the filenames matching the pattern are to
+# be sorted numerically and don't include leading 0's (eg, file1,
+# instead of file001).  By doing it ourselves and giving vtk a list of
+# names instead of a pattern we don't impose a particular style on the
+# user.
+
+class ThreeDImagePattern(ThreeDImageSpecification):
+    def __init__(self, directory, pattern, sort):
+        ThreeDImageSpecification.__init__(self, directory)
+        self.pattern = pattern
+        self.sort = sort
+    def fileNames(self):
+        # When the input was expected to be a filename pattern of the
+        # sort that ls uses, this code was used to translate it to a
+        # regular expression.  The problem with it is that it matches
+        # too much: there's no way to match "abc001" without also
+        # matching "abc1234.gif".  TODO 3.1: Allow the user to choose
+        # which kind of pattern to use.
+        # # Translate filename patterns to regular expressions.
+        # # * ==> .*?   (any sequence of characters)
+        # # ? ==> .     (any single character)
+        # ## This conversion is not robust, since it doesn't check to
+        # ## see that the characters that it's replacing aren't
+        # ## escaped.  Doing it right is probably not worth the
+        # ## effort.  How many people use '?' and '*' in file names?
+        # pattern = self.pattern.replace(".", r"\.")
+        # pattern = pattern.replace("?", ".")
+        # pattern = pattern.replace("*", ".*?")
+        # # Make sure the pattern ends with '$' so that it won't match
+        # # substrings.
+        # if pattern[-1] != "$":
+        #     pattern = pattern + "$"
+
+        try:
+            cpattern = re.compile(self.pattern)
+        except re.exception:
+            raise ooferror.ErrUserError("Invalid pattern: %s" % self.pattern)
+
+        matches = [f for f in os.listdir(self.directory) if cpattern.match(f)]
+        names = self.sort.sort(matches)
+        files = [os.path.join(self.directory, name) for name in names]
+        return [f for f in files if os.path.isfile(f)]
+
+registeredclass.Registration(
+    "Pattern",
+    ThreeDImageSpecification,
+    ThreeDImagePattern,
+    ordering=1,
+    params=[filenameparam.DirectoryNameParameter("directory"),
+            filenameparam.PatternParameter(
+            "pattern",
+            tip="'*' matches any string. '?' matches any character."),
+            parameter.RegisteredParameter("sort", FileOrder)],
+    tip="Load image files with names matching a given pattern from a given directory.")
+        
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+def readImage(specifier, **kwargs):
+    # specifier is a ThreeDImageSpecification instance
+    dirname = specifier.directory
+    imgname = os.path.basename(os.path.normpath(dirname))
+    files = specifier.fileNames()
+    reporter.report("Reading %d file%s." % (len(files), "s"*(len(files)!=1)))
+    if not files:
+        raise ooferror.ErrUserError("No image files found.")
+    height = kwargs.get('height', -1)
+    depth = kwargs.get('depth', -1)
+    width = kwargs.get('width', -1)
+    size = primitives.Point(width, height, depth)
+
+    image = OOFImage3D(imgname, files, size)
+    return image
+
+# TODO MER: much of this code is repeated from oofimage.spy, perhaps
+# should be consolidated?
+def _getTimeStamp_optional_args(self, *args):
+    return self._getTimeStamp()
+OOFImage3DPtr.getTimeStamp = _getTimeStamp_optional_args
+
+def getImage(imagename):
+    # Returns the actual image.
+    # imagename = microstructurename:image_name 
+    # OR imagename = [microstructurename, image_name]
+    return imagecontext.imageContexts[imagename].getObject()
+
+def pushModification(imagename, image):
+    imagecontext.imageContexts[imagename].pushModification(image)
+
+def undoModification(imagename):
+    imagecontext.imageContexts[imagename].undoModification()
+
+def redoModification(imagename):
+    imagecontext.imageContexts[imagename].redoModification()
+
+def undoable(imagename):
+    return imagecontext.imageContexts[imagename].undoable()
+
+def redoable(imagename):
+    return imagecontext.imageContexts[imagename].redoable()
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Super-cautious destructor for SWIG'd OOFImage class.
+# Works around a SWIG bug.
+
+def oofimage3d_ptr_del(self, destruct=oofimage3dc.delete_OOFImage3D):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+
+OOFImage3DPtr.__del__ = oofimage3d_ptr_del

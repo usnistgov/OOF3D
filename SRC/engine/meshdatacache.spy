@@ -1,0 +1,79 @@
+# -*- python -*-
+# $RCSfile: meshdatacache.spy,v $
+# $Revision: 1.2.10.4 $
+# $Author: langer $
+# $Date: 2014/10/10 02:48:37 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.common import enum
+from ooflib.common import registeredclass
+from ooflib.common.IO import oofmenu
+from ooflib.common.IO import xmlmenudump
+from ooflib.engine import meshmod
+
+## TODO: Add tests for changing the data cache type.
+
+class CacheType(enum.EnumClass(
+        ('Memory', 'Store time steps in memory'),
+        ('Disk', 'Store time steps in files'))):
+    tip = "How to store data for previous time steps."
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/enum/cachetype.xml')
+
+
+class SetMeshDataCacheType(meshmod.MeshModification):
+    def __init__(self, cachetype):
+        self.cachetype = cachetype
+    def apply(self, meshcontext):
+        if (self.cachetype == 'Memory' and 
+            isinstance(meshcontext.datacache, DiskDataCache)):
+            meshcontext.replaceDataCache(MemoryDataCache())
+        elif (self.cachetype == 'Disk' and
+              isinstance(meshcontext.datacache, MemoryDataCache)):
+            meshcontext.replaceDataCache(DiskDataCache())
+       
+cacheTypeParam = enum.EnumParameter('cachetype', CacheType, value='Memory',
+                           tip='Type of cache to use for time step data.')     
+                                                     
+dataCacheReg = registeredclass.Registration(
+    'Set Data Cache Type',
+    meshmod.MeshModification,
+    SetMeshDataCacheType,
+    ordering=10,
+    params=[cacheTypeParam],
+    tip='Choose to cache time step data in memory or on disk.',
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/setcachetype.xml'))
+
+
+def newMeshDataCache():
+    if dataCacheReg.getParameter('cachetype').value == 'Memory':
+        return MemoryDataCache()
+    else:
+        return DiskDataCache()
+
+def getMeshDataCacheType(cache):
+    if isinstance(cache, MemoryDataCache):
+        return 'Memory'
+    if isinstance(cache, DiskDataCache):
+        return 'Disk'
+
+###############
+
+class ClearMeshDataCache(meshmod.MeshModification):
+    def apply(self, meshcontext):
+        meshcontext.clearDataCache()
+
+registeredclass.Registration(
+    'Clear Data Cache',
+    meshmod.MeshModification,
+    ClearMeshDataCache,
+    ordering=11,
+    tip='Remove cached field values for all times except the current time.',
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/clearcache.xml'))
+

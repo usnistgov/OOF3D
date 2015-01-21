@@ -1,0 +1,201 @@
+# -*- python -*-
+# $RCSfile: activearea.spy,v $
+# $Revision: 1.6.18.12 $
+# $Author: langer $
+# $Date: 2014/09/14 02:26:51 $
+
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+## The active regions of a Microstructure are stored in an ActiveArea
+## object, which is basically the same as a PixelSelection.
+## ActiveAreas and PixelSelections share a C++ base class,
+## CPixelSelection.  Each Python Microstructure holds a Python
+## ActiveAreaContext, which is the WhoDoUndoClass for ActiveAreas.
+## The CMicrostructures contain a pointer to the current ActiveArea in
+## the ActiveAreaContext.
+
+## In the CPixelSelection object, it's the INactive pixels that are
+## explicitly stored, so that clearing the ActiveArea is the same as
+## making all pixels active.
+
+from ooflib.SWIG.common import switchboard
+from ooflib.SWIG.common import config
+from ooflib.common import color
+from ooflib.common import debug
+from ooflib.common.IO import mainmenu
+from ooflib.common.IO import oofmenu
+from ooflib.common.IO import parameter
+from ooflib.common.IO import whoville
+from ooflib.common.IO import ghostgfxwindow
+from ooflib.common.IO import bitoverlaydisplay
+from ooflib.common.IO import topwho            # defines <top activearea>
+
+## TODO MER: The NamedActiveArea class isn't needed in OOF3D, because
+## the C++ ActiveArea class is derived from SubAttribute, which has
+## name() and rename() methods.  OOF2 didn't have SubAttribute and
+## needed NamedActiveArea.
+
+# class NamedActiveArea:
+#     def __init__(self, name, activearea):
+#         self.name = name
+#         self.activearea = activearea
+#     def set_name(self, nm):
+#         debug.dumpTrace()
+#         self._name = nm
+#     def get_name(self):
+#         return self._name
+#     name = property(fget=get_name, fset=set_name)
+
+#####################################
+
+class ActiveAreaContext(whoville.WhoDoUndo):
+    def __init__(self, path, classname, obj, parent):
+        # override==1 means that all pixels are active, despite what's
+        # stored in the pixel selection.
+        self._override = 0
+        whoville.WhoDoUndo.__init__(self, path, classname, obj, parent)
+    def start(self):
+        newselection = self.getObject().clone()
+        self.pushModification(newselection)
+    # Active area modification methods must use the *WithoutCheck
+    # methods of the underlying CPixelSelection class, because the
+    # other methods check for active pixels.
+    def deactivate(self, selectioncourier):
+        self.select(selectioncourier)
+    def select(self, selectioncourier):
+        self.getObject().selectWithoutCheck(selectioncourier)
+        switchboard.notify('pixel selection changed', self)
+    def clearAndActivate(self, selectioncourier):
+        self.getObject().clearWithoutCheck()
+        self.getObject().invertWithoutCheck()
+        self.getObject().unselectWithoutCheck(selectioncourier)
+        switchboard.notify('pixel selection changed', self)
+    def activate(self, selectioncourier):
+        self.unselect(selectioncourier)
+    def unselect(self, selectioncourier):
+        self.getObject().unselectWithoutCheck(selectioncourier)
+        switchboard.notify('pixel selection changed', self)
+    def toggle(self, selectioncourier):
+        self.getObject().toggleWithoutCheck(selectioncourier)
+        switchboard.notify('pixel selection changed', self)
+    def clear(self):
+        self.getObject().clearWithoutCheck()
+    def invert(self):
+        self.getObject().invertWithoutCheck()
+    def undo(self):
+        self.undoModification()
+    def redo(self):
+        self.redoModification()
+    def clearable(self):
+        return not self.empty()
+    def size(self):
+        return len(self.getObject())
+    def empty(self):
+        return self.getObject().empty()
+    def override(self, flag):
+        # Keep the C++ flags in the ActiveAreas synchronized
+        # with the Python flag in the ActiveAreaContext.
+        for aa in self.undobuffer:
+            aa.override(flag)
+        # self.getTimeStamp(None).increment()
+        self._override = flag
+    def getOverride(self):
+        return self._override
+    def isActive(self, pixel):
+        return self.getObject().isActive(pixel)
+    def getBitmap(self):        # TODO OPT: Is this still needed?
+        if not self._override:
+            return self.getObject().getBitmap()
+    def getPixelSet(self):
+        if not self._override:
+            aa = self.getObject()
+            if aa is not None:
+                return aa.getPixelGroup()
+    # This doesn't do what you think.  Active areas store lists of
+    # *inactive* pixels, and this returns the list of selected pixels,
+    # which are *inactive*.  Did I mention *inactive*?
+#     def getSelection(self):
+#         return self.getObject().members()
+    def getSelectionAsGroup(self):
+        return self.getObject().getPixelGroup()
+
+activeareaWhoClass = whoville.WhoDoUndoClass(
+    'Active Area',
+    instanceClass=ActiveAreaContext,
+    ordering=998,
+    secret=(config.dimension() == 3),
+    proxyClasses=['<top activearea>'])
+
+if config.dimension() == 2:
+    defaultActiveAreaColor = color.white
+    defaultActiveAreaOpacity = 0.8
+
+
+    def _setDefaultActiveAreaParams(menuitem, color, opacity):
+        global defaultActiveAreaColor
+        global defaultActiveAreaOpacity
+        defaultActiveAreaColor = color
+        defaultActiveAreaOpacity = opacity
+
+    mainmenu.gfxdefaultsmenu.Pixels.addItem(oofmenu.OOFMenuItem(
+        'Active_Area',
+        callback=_setDefaultActiveAreaParams,
+        ordering=3,
+        params=[
+                color.ColorParameter(
+                    'color',
+                    defaultActiveAreaColor,
+                    tip='Color of inactive pixels.'),
+                parameter.FloatRangeParameter(
+                    'opacity',
+                    (0., 1., 0.01), defaultActiveAreaOpacity,
+                    tip=
+                    'Opacity of inactive pixels. 0 is transparent, 1 is opaque.'
+                    )
+                ],
+        help="Set default parameters for displaying active areas.",
+        discussion="""<para>
+
+        Set default parameters for the <xref
+        linkend="RegisteredClass:BitmapOverlayDisplayMethod"/> that is
+        used to display <link
+        linkend="Section:Concepts:Microstructure:ActiveArea">active
+        areas</link>.  This command can be put in the &oof2rc; file to
+        set defaults for all &oof2; sessions.
+
+        </para>"""))
+
+    def predefinedActiveAreaLayer():
+        return bitoverlaydisplay.bitmapOverlay(
+            color=defaultActiveAreaColor,
+            tintOpacity=defaultActiveAreaOpacity)
+
+    ghostgfxwindow.PredefinedLayer('Active Area', '<top activearea>',
+                                   predefinedActiveAreaLayer)
+
+#####
+
+# Create the one and only ActiveAreasAttributeRegistration object.
+aa_attr_reg = ActiveAreasAttributeRegistration()
+
+# writeData command, called from microstructureIO.py in the definition
+# of pixel categories.  Writes out the active areas to which the
+# representative pixel belongs, or False if there are none.
+def _AAReg_writeData(self, datafile, ms, reppxl):
+    if reppxl is None:
+        return False
+    alist = areaListFromPixel(ms, reppxl);
+    namelist = alist.names()
+    if len(namelist)==0:
+        return False
+    datafile.argument('active_areas', namelist)
+    return True
+
+ActiveAreasAttributeRegistrationPtr.writeData = _AAReg_writeData

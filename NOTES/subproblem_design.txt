@@ -1,0 +1,269 @@
+ -*- text -*-
+$RCSfile: subproblem_design.txt,v $
+$Revision: 1.3 $
+$Author: reida $
+$Date: 2006/03/28 16:15:32 $
+
+
+  This file is the conceptual successor of NOTES.timestepping.
+
+
+Thoughs on subproblems, solvers, etc.:
+--------------------------------------
+
+
+  At the highest level, it's useful to make a fundamental distinction
+between the subproblem objects on the one hand, and linear algebra 
+objects on the other hand.  
+
+  Subproblems seem like a natural unit of encapsulation for all of the 
+physical details of a problem.  They should contain:
+  - Geometric data -- nodes, segments, elements, boundaries, 
+      including line elements.  These should refer to mesh data,
+      they should not duplicate mesh objects.  
+  - Physical data -- fields, equaitons, materials, properties, and 
+      boundary conditions.  Equality and inequality constraints
+      are in this category.
+  - State data -- the solved DOFs for particular times; whether or not
+      inequality constraints are violated in the current state.
+
+ 
+  The fundamental job of the subproblem is to provide the M, C, and S 
+matrices and the r vector, along with metadata indicating which rows
+and columns are dependent/independent or free/fixed, as well as which
+are in-plane or out-of-plane.  The solver may use this info to stabilize
+or separate the linear algebra problem.
+
+
+Solvers:
+--------
+
+  The fundamental task of the solver is to take a subproblem from
+a current time t to a new time t + dt.  
+
+  The basic method is:
+   - Get M,C,S,r from subproblem.
+   - Construct linear algebra problem from these 
+       (extract free/indep part, apply float bcs, combine MCS into K)
+   - Solve Kx=b
+   - Write x back into subproblem.
+
+  For equilibration, dt=0, you just solve Sx=b locally.
+  For quasi-static problems, get MCSr at time t+dt (boundary conditions
+    or inactive fields may be time-dependent), and solve. 
+  For kinetic/dynamic case, get MCSr, and build Kb from them, then 
+    solve Kx=b for x.
+
+  Two related special cases arise:
+   - If the problem is nonlinear, the matrices are functions of the 
+     degrees of freedom.  You must step several times, generating new
+     matrices at each step, and solving for the increment. 
+   - If there are inequality constraints, after solving the system,
+     you want to have the subproblem add them in as equality constraints
+     where they are violated, and solve it again.
+
+
+Issues/Details:
+--------------
+
+  Logistically speaking, there should always be at least one
+subproblem.  Meshes contain the actual elements, funcnodes, and 
+edges in the boundaries.  This should be extended to include
+line elements.
+  
+  For both line elements and equality constraints, there will be fields
+and equations which are defined only on some nodes and not others.
+Furthermore, for the inequality constraints, they will be dynamically
+applied (as equality constraints) after violations of the inequality
+have been detected.
+  Consequently, since nodes are (in this context) static, and
+equations/fields are dynamic, the thing to do may be to keep a list,
+for each equation/field, of the nodes to which it applies, and a
+separate subproblem-local DOF list not in the actual nodes.  It must
+still be possible to rapidly compute an index into the matrix, given a
+node, a field, and a field component, since the matrix-construction
+machinery will want to do this.
+  Equation ordering is either deduced from DOF ordering (via conjugacy) 
+or else it doesn't matter.  Also, equations don't contain any data.
+
+
+  C-matrix construction (the thing multiplying the time-derivative of
+the DOFs) must become much more sophisticated, in order to handle,
+e.g., the viscoleastic case, where the contributions to the C-matrix
+are not trivial.  In viscoelasticity, there is a term proportional 
+to the rate of change of strain, which is the divergence of a kind 
+of "viscous stress". 
+  The generalized creep (Maxwell/Kelvin) case is even more complicated,
+in this case you get an internal degree of freedom, which has to 
+be handled.
+ 
+  There can in the general case be "surprise" degrees of freedom -- for
+instance, in plasticity, while the plastic strain and various plastic
+parameters may be defined everywhere, the actual DOF which appears in
+the linear algebra problem is the parameter "gamma", and components of
+the plastic strain *increment* for this iteration.  Presumably in this
+case the plasticity property will know how to find and use this data.
+In the case of dynamic (second-derivative-in-time) problems, the rates
+of change of all of the DOFs also become DOFs, but in a different way
+-- they're not added to the list of DOFs, they should be in a separate
+list.
+
+
+  Subproblems need to communicate with other subproblems in order to
+establish boundary conditions (fluxes/fields) between them.
+Subproblems may want to query their neighbors about the value of their
+fields at intermediate times not directly solved-for -- subproblems
+should interpolate to answer these questions.  This means subproblems
+will want to keep at least last-time-step data, memory permitting.
+
+  Since boundaries between subproblems are shared, the natural 
+scope for them is the mesh -- they can be understood as geometric
+objects.  Special boundary conditions ("deduce flux from subproblem A")
+may be required to get values into the subproblem matrix construction
+process.
+
+
+More details:
+------------
+
+  Much of the murkiness of the current code involves the names of the
+objects, which evolved gradually while the functionality was still
+being explored.  These classes should be rationally renamed.
+
+  Speaking of incomprehensible names, in the folowing "MCSr" 
+refers to the M-mass-matrix, C-conducitivity-matrix, 
+S-master-stiffenss-matrix, and r-right-hand-side combo.
+
+  What you need to specify to get it done:
+
+
+
+  LinearizedProblem: Natural encapsulation unit.
+    - Thing which takes the MCSr system, with profiles etc., and
+        constructs the A.x = -(C.x(fixed))-r(indep) system. 
+    - The same thing can return the C or M matrices.
+    This object ought, in fact, to be the MCSr system object itself,
+    and in fact the stiffness matrix probably can already do this
+    (except the M and C stuff).
+
+
+  TimeIncrementer: (Advancer?  TimeAdvancer? Maturation? 
+                    Developer? Evolution? Progress?)
+    - Takes a subproblem from t to t+dt.
+    
+    Equilibration:
+      - "Reset" subproblem (release inequality constraints)  
+      - Get MCSr system at target time (t=0 default)
+      - Solve Ax=b problem (may be nonlinear and require fresh As.)
+      - Write DOFs into subproblem
+      - Ask subproblem if it has violated inequality constraints
+      - If so:
+          - Get new MCSr system at target time
+          - Solve Ax=b problem (may, again, be nonlinear)
+          - Write DOFs into subproblem.
+      1
+    Quasistatic:
+      - For target time t+dt:
+        - Do Equilibration, as above.
+
+    NB The difference between "equilibrate" and "quasistatic" is
+    mostly in how they're called -- operationally, they're the same.
+
+    Kinetic/Dynamic:
+      - "Reset" subproblem
+      - Get MCSr system at time t and t+dt. 
+      - Construct Kx=b system from MCSr -- includes extraction of 
+           A matrix, BCs, possible stabiliziation stuff.
+      - Solve Kx=b for x(t+dt) -- may be nonlinear and require new K and bs.
+      - Write DOFs into subproblem
+      - Check for violated inequality constraints.
+      - If so:
+         - Get expanded MCSr system at times t and t+dt
+         - Construct Kx=b system from MCSr.
+         - Solve Kx=b for x(t+dt). 
+         - Write DOFs into subproblem 
+    
+  Hooks: 
+    - Kinetic/Dynamic solvers should check if adaptive time-stepping
+      is required, by validating/invalidating solutions/residuals.
+    - All solvers should run "post-process", of course, so that
+      plasticity props can transfer plastic-strain increments into
+      the plastic strain fields, etc.
+
+
+
+  Note: 
+
+  For the case of intersecting Dirichlet/Floating boundary conditions
+which intersect in the mesh but not in the subproblem, it is
+particularly obvious that boundary conditions probably should live in
+the mesh, so that intersections can be checked for validity.
+
+
+=========
+  Subproblems have numerous interactions, but these are well
+sequestered within/between the objects, so it's possible to defer
+these until after the foregoing stuff works, and concentrate 
+instead on new functionality for extra fields, and so forth,
+and just treat the mesh in devel-1 as "the" subproblem.
+=========
+
+  Equality Constraints:
+  ---------------------
+
+  Equality constraints are "easy" in the sense that they permamently add
+equations and degrees of freedom to the mesh/subproblem, and do not
+need to be dealt with dynamically.  But a general mechanism for
+specifying them ought to be in place.  One possibility is to make them
+properties.  Downside: Constraints do not contribute to fluxes, and
+are not generally constitutive -- they may be expected to refer to the
+geometry of a particular sample.  They may also be nonlocal, the
+canonical example being a periodic boundary condition.
+
+  
+  Inequality Constraints:
+  -----------------------
+
+  Inequality constraints *are* dynamic, and in addition, may arise from
+properties (plasticity being the obvious example) or geometry (surface
+interpenetration being the obvious example), so a general mechanism
+for handling these would have to do all of that.
+
+
+  Constraints in General:
+  -----------------------
+
+  For both types of constraints, it makes sense to have the DOF/eqns
+defined somewhere other than in every node -- probably in a special
+list in the subproblem, which indicates to which nodes they belong.
+
+  Along the same lines as boundary conditions, it might make sense for
+users to be able to add non-property constraints at the mesh level,
+and for subproblems to automatically understand their role in these
+things.
+
+  But properties need to be able to add things to their subproblem, it
+doesn't make sense for a property to add a constraint to parts of the
+mesh in which it does not participate.
+
+  In fact, properties maybe only need to add constraints to particular
+elements -- if a property is adding the constraint, it's not going to
+be geometric in character, so that is likely to work.
+
+  This may gum up the property API.  But, in fact, for plasticity, the
+constraint (stress is inside/outside the yield surface) is expressed
+in terms that only the property is equipped to understand anyways, so
+this is not wrong.
+
+
+  The Plasticity Property in Particular:
+  --------------------------------------
+
+  Must enforce an inequality constraint, and activate it at the
+appropriate times, and then make contributions to the various
+rows/columns of the stiffness matrix.  It probably needs a new routine
+("makeequation"?) to do this, unless a fictitious flux is invented.
+
+  Unlike the case with flux-contributing properties, one does not expect
+there to be multiple contributors to constraint equations.
+  

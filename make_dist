@@ -1,0 +1,241 @@
+#!/usr/bin/env python
+# $RCSfile: make_dist,v $
+# $Revision: 1.7.8.9 $
+# $Author: langer $
+# $Date: 2014/07/07 22:06:27 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+# Script for building a distribution of OOF2 using python distutils.
+# Takes care of cvs and distutils stuff, and sets the version number
+# in the packaged source code.
+
+# The options are:
+#    --version     a string of nonpunctuation characters and dots (required)
+#    --comment     a string containing no dots (optional)
+#    --branch      a cvs branch tag (optional)
+
+import getopt
+import os
+import os.path
+import shutil
+import sys
+import tempfile
+import time
+
+options = ['version=', 'comment=', 'branch=', 'dryrun', 'help', 'noclean',
+           'notag']
+
+def state_options_and_quit():
+    print >> sys.stderr,  \
+"""Options are:
+version=<version number>  version number can contain numbers, letters, and dots
+comment=<comment>         comment cannot contain dots or spaces 
+branch=<cvs tag>          build from the given branch, not the cvs head
+  comment and branch are optional, version is required.
+
+Debugging options are:
+noclean                   don't remove temp directory
+notag                     don't tag files
+dryrun                    don't actually do anything in distutils
+help                      print this
+"""
+    sys.exit()
+
+cvsmodule = 'OOF2'
+
+def run_cmd(*args):
+    cmd = ' '.join(args)
+    print >> sys.stderr, cmd
+    status = os.system(cmd)
+    if status != 0:
+        print >> sys.stderr, "make_dist failed."
+        sys.exit(status)
+
+version = None
+comment = None
+branch = None
+dryrun = False
+noclean = False
+notag = False
+dimension = 2
+
+try:
+    optlist, args = getopt.getopt(sys.argv[1:], '', options)
+except getopt.error, message:
+    print message
+    sys.exit()
+
+for opt in optlist:
+    if opt[0] == '--version':
+        version = opt[1]
+    elif opt[0] == '--comment':
+        comment = opt[1]
+    elif opt[0] == '--branch':
+        branch = opt[1]
+    elif opt[0] == '--noclean':
+        noclean = True
+    elif opt[0] == '--notag':
+        notag = True
+    elif opt[0] == '--help':
+        state_options_and_quit()
+
+print >> sys.stderr, "Building OOF2 distribution named", version
+
+startdir = os.getcwd()
+
+# Find the name of the CVS Root.
+cvsrootfile = file(os.path.join('CVS','Root'), 'r')
+cvsroot = cvsrootfile.readline().strip()
+
+# Create a temp directory.
+tempdir = tempfile.mkdtemp(prefix='oof2-tempdir-'+version+'-')
+print >> sys.stderr, "Using temp directory", tempdir
+
+# cd to the temp directory
+os.chdir(tempdir)
+
+try:
+    # Check out a copy of OOF2 in the temp directory
+    cmd = ['cvs -d', cvsroot, 'checkout -P']
+    if branch:
+        cmd.extend(['-r', branch])
+    cmd.append(cvsmodule)
+    run_cmd(*cmd)
+
+    # Clean out unwanted leftover empty directories.  (This shouldn't be
+    # necessary since we're using the "-P" flag with "cvs checkout", but
+    # it seems not to be working, at least on OS X.)
+    run_cmd('cvs update -P')
+
+    os.chdir(cvsmodule)
+
+    # Get version-dependent information
+    import localexclusions
+    import distname
+
+    # Create a cvs tag for the distribution, and tag the files.  This is
+    # slow, so use --notag if just testing the script, but don't use
+    # --notag when creating an actual distribution.
+    if not notag:
+        if comment:
+            tag = "package-" + version + "--" + comment
+        else:
+            tag = "package-" + version
+        tag = tag.replace('.', '-')
+        tag = tag.replace(' ', '-')
+        if branch:
+            run_cmd('cvs tag -c -r', branch, tag)
+        else:
+            run_cmd('cvs tag -c', tag)
+
+    # Set the version number
+    tmpfile, tmpfilename = tempfile.mkstemp(dir=tempdir)
+    run_cmd('sed "s?unreleased?%s?" setup.py > %s' % (version, tmpfilename))
+    print >> sys.stderr, "Moving", tmpfilename, "to setup.py"
+    os.rename(tmpfilename, 'setup.py')
+    run_cmd('sed "s?(unreleased)?%s?" SRC/common/oofversion.py > %s'
+            % (version, tmpfilename))
+    print >> sys.stderr, "Moving", tmpfilename, "to SRC/common/oofversion.py"
+    os.rename(tmpfilename, 'SRC/common/oofversion.py')
+
+    # Make a timestamp file for the distribution.
+    timefile = file("package_date", "w")
+    print >> timefile, time.ctime()
+    timefile.close()
+
+    os.chdir(tempdir)
+
+    # Change the name of the top directory to "oof2-version" or
+    # "oof3d-version", which ever is appropriate.
+
+    distdir = distname.distname + "-" + version
+    os.rename(cvsmodule, distdir)
+
+    # Make the MANIFEST file. 
+
+    # If we don't provide an MANIFEST, or let distutils build it from a
+    # MANIFEST.in template, then it tries to include the swig output files
+    # since they're contained in setup.py's packages list.  But those
+    # files don't exist in cvs, so the distutils sdist command will fail.
+    # We have to construct an explicit list of files to include, which is
+    # everything that's in cvs except for the files listed below:
+
+
+    globalExcludeDirs = [
+        "CVS"
+    ] + localexclusions.globalExcludeDirs
+
+    excludeDirs = [
+        "math", 
+        "NOTES", 
+        "3DSandbox",
+        "SRC/TEST-DATA", "SRC/TEST-SRC",
+        "SRC/common/EXTRA",
+        "SRC/engine/EXTRA",
+        "SRC/engine/PETSc",
+        "SRC/image/GRAINBDY", "SRC/image/imagemanip"
+    ] + localexclusions.excludeDirs
+
+    globalExcludeFiles = [
+        ".cvsignore"
+    ] + localexclusions.globalExcludeFiles
+
+    excludeFiles = [
+        "localexclusions.py", "distname.py",
+        "make_dist",
+        "oof2-build", "oof2-clean",
+        "SRC/header", "SRC/header.py",
+        "SRC/maketags"
+    ] + localexclusions.excludeFiles
+
+    excludeDirs = [os.path.join(distdir, f) for f in excludeDirs]
+    excludeFiles = [os.path.join(distdir, f) for f in excludeFiles]
+
+    def getFiles(path, manifest):
+        if os.path.isdir(path):
+            files = os.listdir(path) # just file name, no path components
+            for f in files:
+                if path != ".":
+                    fname = os.path.join(path, f)
+                else:
+                    fname = f
+                if (os.path.isfile(fname) and f not in globalExcludeFiles and
+                    fname not in excludeFiles) :
+                    print >> manifest, fname
+                if (os.path.isdir(fname) and f not in globalExcludeDirs and
+                    fname not in excludeDirs):
+                    getFiles(fname, manifest)
+
+    manifest = open("MANIFEST", "w")
+    getFiles(distdir, manifest)   
+    manifest.close()
+
+    # Build the distribution.
+
+    distfilename = distdir + ".tar.gz"
+    print >> sys.stderr, "Distribution file is", distfilename
+    run_cmd("tar -T MANIFEST -czf", distfilename)
+    print >> sys.stderr, "Moving", distfilename, "to", startdir
+    os.rename(distfilename, os.path.join(startdir, distfilename))
+
+finally:
+    if not noclean:
+        print >> sys.stderr, "Removing", tempdir
+        shutil.rmtree(tempdir)
+    else:
+        print >> sys.stderr, "Not removing", tempdir
+
+
+print >> sys.stderr, "Done.", distfilename, "is ready."
+print >> sys.stderr, \
+"""To publish it, copy it to WEBPAGES/oof2/source and edit
+WEBPAGES/oof2/index.html.  Remember to check that the README file in
+WEBPAGES/oof2/source is up to date."""

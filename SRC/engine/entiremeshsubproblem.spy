@@ -1,0 +1,59 @@
+# -*- python -*-
+# $RCSfile: entiremeshsubproblem.spy,v $
+# $Revision: 1.6.2.2 $
+# $Author: fyc $
+# $Date: 2014/04/18 20:00:01 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.engine import subproblemtype
+from ooflib.common import registeredclass
+
+class EntireMeshSubProblem(subproblemtype.SubProblemType):
+    def __init__(self):
+	self.dependents = []
+    
+    def create(self):
+        #self.instance = CEntireMeshSubProblem()
+        #return self.instance
+        return CEntireMeshSubProblem()
+   
+    #def cleanup(self):
+        #self.instance = None
+
+    def add_dependent(self, dependent):
+        if dependent not in self.dependents:
+           self.dependents.append(dependent)
+
+    def remove_dependent(self, dependent):
+	 if dependent in self.dependents:
+            self.dependents.remove(dependent)
+
+    def get_dependents(self):
+	return self.dependents
+
+entiremeshreg = registeredclass.Registration(
+    "EntireMesh",
+    subproblemtype.SubProblemType,
+    EntireMeshSubProblem,
+    ordering=0,
+    tip="A 'subproblem' that includes the entire Mesh.",
+    discussion="""<para>
+
+    An <classname>EntireMeshSubProblem</classname> includes all
+    &elems; in the &mesh;.  The <userinput>default</userinput>
+    &subproblem; created whenever a &mesh; is created is a
+    <classname>EntireMeshSubProblem</classname>.  Because
+    &subproblems; can overlap, there can be more than one
+    <classname>EntireMeshSubProblem</classname> in the same &mesh;.
+    To be useful, though, they should have different &fields; or
+    &equations; defined on them.
+
+    </para>"""
+    )

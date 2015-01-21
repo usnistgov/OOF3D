@@ -1,0 +1,65 @@
+# -*- python -*-
+# $RCSfile: corientation.spy,v $
+# $Revision: 1.1.4.2 $
+# $Author: langer $
+# $Date: 2013/11/08 20:42:57 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+## See the comment about super-cautious destructors in iso.spy.
+## COrientBunge seems to need this.  At least, while debugging
+## orientationmap/tsl.py, certain ways of aborting the program lead to
+## a mess of exceptions that are eliminated by adding the
+## super-cautious constructor.  So I've added it for all COrientation
+## subclasses, just to be consistent.
+
+def COrientABG_ptr_del(self, destruct=corientationc.delete_COrientABG):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+
+COrientABGPtr.__del__ = COrientABG_ptr_del
+
+def COrientBunge_ptr_del(self, destruct=corientationc.delete_COrientBunge):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+
+COrientBungePtr.__del__ = COrientBunge_ptr_del
+
+def COrientQuaternion_ptr_del(self,
+                              destruct=corientationc.delete_COrientQuaternion):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+
+COrientQuaternionPtr.__del__ = COrientQuaternion_ptr_del
+
+def COrientX_ptr_del(self, destruct=corientationc.delete_COrientX):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+
+COrientXPtr.__del__ = COrientX_ptr_del
+
+def COrientXYZ_ptr_del(self, destruct=corientationc.delete_COrientXYZ):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+
+COrientXYZPtr.__del__ = COrientXYZ_ptr_del
+
+def COrientAxis_ptr_del(self, destruct=corientationc.delete_COrientAxis):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+
+COrientAxisPtr.__del__ = COrientAxis_ptr_del
+
+def COrientRodrigues_ptr_del(self,
+                             destruct=corientationc.delete_COrientRodrigues):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+
+COrientRodriguesPtr.__del__ = COrientRodrigues_ptr_del

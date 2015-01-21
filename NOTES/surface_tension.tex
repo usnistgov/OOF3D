@@ -1,0 +1,274 @@
+\documentclass[10pt,a4paper]{article}
+
+\bibliographystyle{plain}
+\usepackage{latexsym}
+\usepackage{algorithm,algorithmic}
+\usepackage{amssymb,amsthm}
+\usepackage{amsmath,amsfonts}
+\usepackage{mathrsfs}
+\usepackage{enumerate}
+\usepackage{graphicx,psfrag}
+\usepackage{comment}
+%\usepackage[notcite,notref]{showkeys}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{remark}{Remark}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem{assumption}{Assumption}[section]
+\newtheorem{definition}{{Definition}}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{question}{Question}
+
+
+\author{G\"unay Do\u gan}
+\title{Computing Surface Tension}
+
+\begin{document}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Our goal is to compute a displacement field $\vec{u}$ that minimizes
+the energy
+%
+\begin{equation}\label{E:energy}
+E(\vec{u}) = \int_\mathcal{D} \left( \frac{1}{2}\sigma_{ij}\varepsilon_{ij} 
+-\vec{f}\cdot\vec{u} \right) dx + \gamma \int_{\Gamma(\vec{u})} d\Gamma.
+\end{equation}
+%
+The energy \eqref{E:energy} has two components: the elastic energy and 
+the surface tension, which is given by the surface area of 
+the displaced surface
+%
+\begin{equation}\label{E:displaced-surface}
+\Gamma(\vec{u}) = \{\vec{x} + \vec{u}(\vec{x}), \vec{x} \in \Gamma_0 \}.
+\end{equation}
+%
+To find a minimizer of the energy \eqref{E:energy}, we take 
+its first variation $\delta E(\vec{u};\vec{\phi})$ 
+with respect to a test function $\vec{\phi}$ and seek 
+$\vec{u}$ that satisfies
+\[
+\delta E(\vec{u};\vec{\phi}) = 0, \quad \forall \vec{\phi}
+\]
+or more explicitly
+%
+\begin{equation}\label{E:1st-variation}
+\int_\mathcal{D} \left( \frac{1}{2} D\vec{u}:C D\vec{\phi} 
+- \vec{f}\cdot\vec{\phi} \right) dx 
++ \gamma \int_{\Gamma(\vec{u})} \kappa \vec{\phi}\cdot\hat{n} \, d\Gamma = 0,
+\quad \forall \vec{\phi}.
+\end{equation}
+%
+Given the first variation \eqref{E:1st-variation}, we could
+attempt to write an iterative scheme to compute $\vec{u}$
+that satisfies, for example,
+%
+\begin{equation}\label{E:1st-iterative-scheme}
+\int_\mathcal{D} \left( \frac{1}{2} D\vec{u}^{n+1}:C D\vec{\phi} 
+- \vec{f}\cdot\vec{\phi} \right) dx 
+= -\gamma \int_{\Gamma(\vec{u}^n)} \kappa \vec{\phi}\cdot\hat{n} \, d\Gamma,
+\quad \forall \vec{\phi}.
+\end{equation}
+%
+In this way, we separate the linear and nonlinear parts
+and treat the nonlinear part explicitly without the need
+for a nonlinear solve at each step of iterations.
+To use this scheme, we would still need to verify 
+that the scheme converges to a solution. 
+There are other issues that need to be addressed 
+as well. The right hand side in \eqref{E:1st-iterative-scheme}
+is an integral computed on the displaced surface
+$\Gamma(\vec{u})$. Therefore, at each iteration, 
+we need to move the surface $\Gamma$ to its displaced
+position and then evaluate the surface integral. 
+Moreover, evaluating the integral requires computing
+the curvature of the displaced curve $\Gamma(\vec{u})$.
+Ideally we would like to avoid both tracking the displaced
+curve and computing its curvature. For this reason,
+in the following, we rederive the first variation
+of the surface tension term in \eqref{E:energy}. 
+Our goal is to obtain an expression that is
+evaluated on the initial surface $\Gamma_0$
+and does not require the curvature of the surface.
+For the moment, we restrict our attention 
+to parametric planar curves in 2d. 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{First variation of curve length}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+We start by taking the first variation of
+%
+\begin{equation}\label{E:curve-length}
+E(\Gamma_0) = \int_{\Gamma_0} d\Gamma = \int_{s_1}^{s_2} |\Gamma_0'(s)|ds
+\end{equation}
+%
+with respect to a given parametric curve
+\[
+\Gamma_0(s) = \left( x(s), y(s) \right), \quad s_1 \leqslant s \leqslant s_2.
+\]
+Let us write \eqref{E:curve-length} more explicitly
+%
+\begin{align*}
+\Gamma_0'(s)&=\left( x'(s), y'(s) \right), \\
+|\Gamma_0'(s)|&=\left( |x'(s)|^2 + |y'(s)|^2 \right)^\frac{1}{2}
+\end{align*}
+%
+\[
+\Rightarrow  E(\Gamma_0) = \int_{s_1}^{s_2} \left( |x'(s)|^2 + |y'(s)|^2 \right)^\frac{1}{2} ds.
+\]
+We define the perturbed curve
+\[
+\Gamma_\varepsilon(s) = \left( x(s)+\varepsilon \phi(s), y(s) + \varepsilon \psi(s) \right)
+\]
+and compute
+\[
+\delta E(\Gamma_0) = \lim_{\varepsilon \rightarrow 0} \frac{E(\Gamma_\varepsilon) - E(\Gamma)}{\varepsilon}
+= \frac{d}{d\varepsilon} E(\Gamma_\varepsilon) |_{\varepsilon=0}.
+\]
+We need to take the derivative of
+\[
+E(\Gamma_\varepsilon) = \int_{s_1}^{s_2} \left( |x'(s)+\varepsilon \phi'(s)|^2 + |y'(s) + \varepsilon \psi'(s)|^2 \right)^\frac{1}{2} ds
+\]
+with respect to $\varepsilon$. We start with
+%
+\begin{equation*}
+\frac{d}{d\varepsilon} |\Gamma_\varepsilon'| 
+= \frac{(x'(s)+\varepsilon \phi'(s)) \phi'(s) + (y'(s) + \varepsilon \psi'(s))\psi'(s) }{\left( |x'(s)+\varepsilon \phi'(s)|^2 + |y'(s) + \varepsilon \psi'(s)|^2 \right)^{\frac{1}{2}}},
+\end{equation*}
+%
+and
+%
+\begin{equation*}
+\frac{d}{d\varepsilon} |\Gamma_\varepsilon'|_{\varepsilon=0} = \frac{x'(s)\phi'(s) + y'(s)\psi'(s)}{\left( |x'(s)|^2 + |y'(s)|^2 \right)^{\frac{1}{2}}}.
+\end{equation*}
+%
+We have
+\[
+\delta E(\Gamma_0) = \int_{s_1}^{s_2} \frac{x'(s)\phi'(s) + y'(s)\psi'(s)}{\left( |x'(s)|^2 + |y'(s)|^2 \right)^{\frac{1}{2}}} ds.
+\]
+Let us integrate $\phi', \psi'$ by parts (with the simplifying assumption that
+$ \int_{s_1}^{s_2} = \oint$, that is, we integrate over a closed curve).
+Start with
+%
+\begin{align*}
+\left(  \frac{x'(s)}{\left( |x'(s)|^2 + |y'(s)|^2 \right)^{\frac{1}{2}}} \right)'
+&=x''(s)\frac{1}{\left( |x'(s)|^2 + |y'(s)|^2 \right)^{\frac{1}{2}}} 
+- x'(s)\frac{1}{2}\frac{(2x'(s)x''(s) + 2y'(s)y''(s))}{\left( |x'(s)|^2 + |y'(s)|^2 \right)^{\frac{3}{2}}} \\
+&= \frac{x''\left( |x'|^2 + |y'|^2 \right) - x'x'x''-x'y'y''}{\left( |x'(s)|^2 + |y'(s)|^2 \right)^{\frac{3}{2}}} \\
+&= -y'(s)\kappa(s) \\
+&= -y' \frac{x'y'' - x''y'}{\left( |x'|^2 + |y'|^2 \right)^{\frac{3}{2}}} \\
+\left(  \frac{y'(s)}{\left( |x'(s)|^2 + |y'(s)|^2 \right)^{\frac{1}{2}}} \right)' 
+&= x' \frac{x'y'' - x''y'}{\left( |x'|^2 + |y'|^2 \right)^{\frac{3}{2}}} \\
+&= x'(s)\kappa(s).
+\end{align*}
+%
+\begin{align*}
+\Rightarrow \delta E(\Gamma_0) &= \int \kappa(s) \left( -y'(s)\phi(s) + x'(s)\psi(s) \right) \frac{1}{|\Gamma_0'(s)|} |\Gamma_0'(s)| ds, \\
+\Rightarrow \delta E(\Gamma_0) &= \int \kappa(s) \vec{\varphi}\cdot \hat{n}(s)|\Gamma_0'(s)| ds,
+\end{align*}
+where $\vec{\varphi} = (\phi(s),\psi(s))$ and $\hat{n} = \frac{1}{|\Gamma_0'(s)|}(-y'(s),x(s))$.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Variation with respect to displacement}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Now we take the first variation of $E(\Gamma_u)$ with 
+respect to the displacement field $\vec{u}$ (\emph{not $\Gamma_u$})
+where $\Gamma_u$ is $\Gamma_0$ displaced by $\vec{u}$, that is,
+\[
+\Gamma_u(s) = \Gamma_0(s) + \vec{u}\cdot (x(s),y(s)) = \left( x(s)+u(x(s),y(s)), y(s)+v(x(s),y(s)) \right).
+\]
+We will need the derivative of $\Gamma_u(s)$
+%
+\begin{align*}
+\Gamma_u'(s) &= \left( x' + \nabla u \cdot (x',y'), y' + \nabla v \cdot (x',y') \right) \\
+\Gamma_u'(s) &= \Gamma_0'(s) + D\vec{u} \Gamma_0'(s) = (I + D\vec{u}) \Gamma_0'(s) \\
+\Gamma_u'(s) &= \left( x' + \nabla u \cdot \Gamma_0', y' + \nabla v \cdot \Gamma_0' \right) .
+\end{align*}
+%
+Note $D\vec{u} = \left( \begin{array}{c} \nabla u^T \\ \nabla v^T \end{array} \right)$. \\
+Now we write
+\[
+|\Gamma_u'(s)| = \left( |x' + \nabla u \cdot \Gamma_0'|^2 + |y' + \nabla v \cdot \Gamma_0'|^2  \right)^\frac{1}{2}
+\]
+also the perturbed version (by $u \rightarrow u+\varepsilon\phi$, $v \rightarrow v+\varepsilon\psi$)
+\[
+|\Gamma_\varepsilon'(s)| = \left( |x' + \nabla u \cdot \Gamma_0'+ \varepsilon\nabla\phi \cdot \Gamma_0'|^2 + |y' + \nabla v \cdot \Gamma_0'+ \varepsilon\nabla\psi \cdot \Gamma_0'|^2  \right)^\frac{1}{2}.
+\]
+Differentiate $|\Gamma_\varepsilon'|$ with respect to $\varepsilon$ and evaluate at $\varepsilon=0$
+%
+\begin{equation*}
+\frac{d}{d\varepsilon}|\Gamma_\varepsilon'| 
+= \frac{1}{2}\left( \ldots \right)^\frac{1}{2}
+2 \left( (x' + \nabla u \cdot \Gamma_0'+ \varepsilon\nabla\phi \cdot \Gamma_0')\nabla\phi\cdot\Gamma_0' +
+(y' + \nabla v \cdot \Gamma_0'+ \varepsilon\nabla\psi \cdot \Gamma_0')\nabla\psi\cdot\Gamma_0' \right),
+\end{equation*}
+%
+\begin{equation*}
+\frac{d}{d\varepsilon}|\Gamma_\varepsilon'| |_{\varepsilon=0} =
+\frac{ \left( (x' + \nabla u \cdot \Gamma_0')\nabla\phi\cdot\Gamma_0' +
+(y' + \nabla v \cdot \Gamma_0')\nabla\psi\cdot\Gamma_0' \right) }
+{\left( |x' + \nabla u \cdot \Gamma_0'|^2 + |y' + \nabla v \cdot \Gamma_0'|^2  \right)^\frac{1}{2}},
+\end{equation*}
+%
+whence we obtain the first variation of $E(\Gamma_u)$
+%
+\begin{equation}\label{E:displaced_curve_1st_variation}
+\delta E(\Gamma_u) = \int_{s_1}^{s_2}
+\frac{ \left( (x' + \nabla u \cdot \Gamma_0')\nabla\phi\cdot\Gamma_0' +
+(y' + \nabla v \cdot \Gamma_0')\nabla\psi\cdot\Gamma_0' \right) }
+{\left( |x' + \nabla u \cdot \Gamma_0'|^2 + |y' + \nabla v \cdot \Gamma_0'|^2  \right)^\frac{1}{2}} ds.
+\end{equation}
+%
+Note $(\phi)' = (\phi(x(s),y(s)))'=\nabla\phi\cdot\Gamma_0'$, $(\psi)'=\nabla\psi\cdot\Gamma_0'$. 
+
+We integrate $(\phi)',(\psi)'$ by parts as we did for $E(\Gamma_0)$ and obtain
+%
+\begin{equation*}
+\delta E(\Gamma_u) = \int \kappa_u(s) \vec{\varphi}(x,y) \cdot \hat{n}_u |\Gamma_u'(s)| ds,
+\end{equation*}
+%
+where $\vec{\varphi}(x,y)=(\phi(x,y),\psi(x,y))$ and
+\[
+\hat{n}_u(s)=\frac{1}{|\Gamma_u'(s)|} (-y_u'(s),x_u'(s)), \qquad
+\kappa_u(s) = \frac{x_u' y_u'' - x_u'' y_u'}{\left( |x_u'|^2 + |y_u'|^2 \right)^{\frac{1}{2}}}. 
+\]
+
+Let us rearrange the terms in \eqref{E:displaced_curve_1st_variation}.
+First recall that the tangent vector $\hat{\tau}$ is given by
+\[
+\hat{tau} = \frac{\Gamma_0'}{|\Gamma_0'|} = \frac{1}{|\Gamma_0'|} (x',y'), \qquad 
+\hat{tau} = (\tau_x,\tau_y).
+\]
+Rewrite $\delta E(\Gamma_u)$  in \eqref{E:displaced_curve_1st_variation}:
+%
+\begin{align*}
+\delta E(\Gamma_u) &= \int
+\frac{|\Gamma_0'|^2}{|\Gamma_0'|}
+\frac{ \frac{x'}{|\Gamma_0'|} \nabla\phi \cdot \frac{\Gamma_0' }{|\Gamma_0'|}
++ \frac{y'}{|\Gamma_0'|} \nabla\psi \cdot \frac{\Gamma_0' }{|\Gamma_0'|}
++ \nabla u \cdot \frac{\Gamma_0'}{|\Gamma_0'|} \nabla\phi \cdot \frac{\Gamma_0'}{|\Gamma_0'|} 
++ \nabla v \cdot \frac{\Gamma_0'}{|\Gamma_0'|} \nabla\psi \cdot \frac{\Gamma_0'}{|\Gamma_0'|} }
+{\left[ \left( \frac{x'}{|\Gamma_0'|} + \nabla u \cdot \frac{\Gamma_0'}{|\Gamma_0'|} \right)^2 +          
+\left( \frac{y'}{|\Gamma_0'|} + \nabla v \cdot \frac{\Gamma_0'}{|\Gamma_0'|} \right)^2  \right]^\frac{1}{2}} ds \\
+\delta E(\Gamma_u) &= \int
+\frac{\tau_x \nabla\phi \cdot \hat{\tau} + \tau_y \nabla\psi \cdot \hat{\tau}
++ \nabla u \cdot \hat{\tau} \nabla\phi \cdot \hat{\tau}
++ \nabla v \cdot \hat{\tau} \nabla\psi \cdot \hat{\tau}}
+{\left[ (\tau_x + \nabla u \cdot \hat{\tau})^2 + (\tau_y + \nabla v \cdot \hat{\tau})^2 \right]} ds.
+\end{align*}
+%
+This can be written compactly as
+\[
+\delta E(\Gamma_u) = \int
+\frac{\hat{\tau}^T (I + D\vec{u})^T D\vec{\varphi} \hat{\tau}}{|(I+D\vec{u})\hat{\tau}|} ds.
+\]
+
+\end{document}

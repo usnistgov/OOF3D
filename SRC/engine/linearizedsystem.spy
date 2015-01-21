@@ -1,0 +1,32 @@
+# -*- python -*-
+# $RCSfile: linearizedsystem.spy,v $
+# $Revision: 1.3.18.3 $
+# $Author: langer $
+# $Date: 2014/10/09 01:48:55 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.common import debug
+
+def LinearizedSystem_clone(self):
+    # debug.fmsg("cloning LinearizedSystem")
+    bozo = self.clone_()
+    # debug.fmsg("done cloning LinearizedSystem")
+    bozo.computed = self.computed.clone() # TimeStamp
+    return bozo
+
+LinearizedSystemPtr.clone = LinearizedSystem_clone
+
+# Super-cautious destructor.  Works around a SWIG bug.
+
+def linsys_ptr_del(self, destruct=linearizedsystemc.delete_LinearizedSystem):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+
+LinearizedSystemPtr.__del__ = linsys_ptr_del

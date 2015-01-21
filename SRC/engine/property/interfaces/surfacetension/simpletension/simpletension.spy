@@ -1,0 +1,48 @@
+# -*- python -*-
+# $RCSfile: simpletension.spy,v $
+# $Revision: 1.3.8.2 $
+# $Author: langer $
+# $Date: 2013/11/08 20:45:57 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+from ooflib.engine import propertyregistration
+from ooflib.engine import problem
+from ooflib.common.IO import parameter
+
+from ooflib.engine.IO import interfaceparameters
+
+from ooflib.common import runtimeflags
+
+import types
+
+#The following string is placed in builtinprops.py
+#import ooflib.SWIG.engine.property.interfaces.surfacetension.simpletension.simpletension
+
+if runtimeflags.surface_mode:
+    reg = propertyregistration.PropertyRegistration(
+        'Mechanical:Interface:SurfaceTension:Isotropic', SimpleTension,
+        "ooflib.SWIG.engine.property.interfaces.surfacetension.simpletension.simpletension",210,
+        [
+        parameter.FloatParameter('gamma_left', 0.01, tip="value of the surface tension"),
+        parameter.FloatParameter('gamma_right', 0.01, tip="value of the surface tension")
+        ],
+        propertyType="_interfaces_surfacetension",
+        interfaceCompatibility=interfaceparameters.COMPATIBILITY_INTERFACE_ONLY,
+        tip='Constant surface tension')
+    
+    
+    reg.eqnInfo(equations=[problem.ForceBalanceEquation],
+                fields=[problem.Displacement],
+                time_derivs=[0],)
+
+            
+# reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
+#              time_derivs=[0])

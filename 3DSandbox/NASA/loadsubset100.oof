@@ -1,0 +1,3 @@
+OOF.Microstructure.Create_From_ImageFile(filename='/Users/vrc/OOFDATA/3D/CarbonFiberSubset100/MXCT048_NASA_Ames_sampleC_*.tiff', microstructure_name='ms', height=automatic, width=automatic, depth=automatic)
+OOF.Windows.Graphics.New()
+

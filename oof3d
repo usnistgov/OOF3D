@@ -1,0 +1,40 @@
+#!python
+# -*- python -*-
+# $RCSfile: oof3d,v $
+# $Revision: 1.3.8.1 $
+# $Author: langer $
+# $Date: 2012/05/03 15:06:19 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+# This is the start-up script for oof3d.  It is installed as an
+# executable file in the bin directory, *not* the python library.
+# "import oof3d" statements refer to the oof3d module in the library,
+# not to this file.
+
+import sys
+import os
+
+# need to set path so that it imports the oof package that we want
+import oof3d
+sys.path.append(os.path.dirname(oof3d.__file__))
+
+# All user input is evaluated in this environment, so first import
+# useful things like the math library.
+from math import *
+
+# The real start-up code is in ooflib.common.oof.  Until it is loaded,
+# no modules containing oof C++ code can be used.  Therefore, don't
+# even try loading any other oof code (not even the debug module)
+# before here!
+
+from ooflib.common import oof
+oof.run()
+
+sys.exit()

@@ -1,0 +1,61 @@
+# -*- python -*-
+# $RCSfile: fieldindex.spy,v $
+# $Revision: 1.3.10.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:44:24 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+import string
+
+# Defining __repr__ here doesn't work, because the derived classes
+# will override it.
+
+def _shortrepr(self):
+    comps = self.components()
+    return string.join(["xyz"[x] for x in comps], '')
+
+FieldIndex.shortrepr = _shortrepr
+FieldIterator.shortrepr = _shortrepr
+IndexPPtr.shortrepr = _shortrepr
+IteratorPPtr.shortrepr = _shortrepr
+
+#############
+
+# def IteratorP_next(self):
+#     if self.end():
+#         raise StopIteration
+#     self.increment()
+
+# IteratorPPtr.next = IteratorP_next
+
+#############
+
+# Super-cautious destructors, to avoid complaints at shut-down time.
+# Code recommended by SWIG authors in mailing list at
+# <http://mailman.cs.uchicago.edu/pipermail/swig/2002-April.txt>,
+# look for message with subject: [Swig] Shadow class as a global
+
+def iteratorp_ptr_del(self, destruct=fieldindexc.delete_IteratorP):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+
+IteratorPPtr.__del__ = iteratorp_ptr_del
+
+def indexp_ptr_del(self, destruct=fieldindexc.delete_IndexP):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+        
+IndexPPtr.__del__ = indexp_ptr_del
+
+def fieldindex_ptr_del(self, destruct=fieldindexc.delete_FieldIndex):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+
+FieldIndexPtr.__del__ = fieldindex_ptr_del

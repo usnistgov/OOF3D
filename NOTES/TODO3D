@@ -1,0 +1,43 @@
+// -*- text -*-
+// $RCSfile: TODO3D,v $
+// $Revision: 1.1.2.3 $
+// $Author: langer $
+// $Date: 2014/07/03 15:23:20 $
+
+
+Pre Alpha
+
+VTK issues:
+  Build pipelines when layers are created, not at render time.
+  Visibility of edges when skeleton/mesh wireframe drawn over image.
+  Clipping problems.
+  Redrawing too often?
+
+Regression and GUI tests:
+  Write tests
+  Fix bugs in meshing, solving, viewing
+
+Post-Alpha
+
+Parallelization:
+  OpenMP Worker
+  Easy things to parallelize:
+    Voxel grouping
+    Anneal, w/o partitioning
+    Refine w/o partitioning?
+    Matrix construction
+    Vector operations during time stepping
+  Find canned matrix solvers
+
+GUI Improvements
+  Allowing clipping
+  Get rid of the layer editor.
+  Interactive clipping plane editing.
+  More filters -- pixel group, element group, etc.
+
+Merge with OOF2
+  Time stepping
+  Nonlinear solvers
+  All other improvements from the last n years
+
+Documentation

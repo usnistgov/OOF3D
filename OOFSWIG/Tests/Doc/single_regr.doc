@@ -1,0 +1,20 @@
+single_wrap.c
+
+
+
+$a
+        [ Global : int a ]
+        A comment to the right 
+
+$b
+        [ Global : int b ]
+        A comment to the left 
+
+$c
+        [ Global : int c ]
+        A comment to the right 
+
+$d
+        [ Global : int d ]
+        A comment after 
+

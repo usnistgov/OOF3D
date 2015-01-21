@@ -1,0 +1,27 @@
+# -*- python -*-
+# $RCSfile: crystalsymmetry.spy,v $
+# $Revision: 1.2.4.2 $
+# $Author: langer $
+# $Date: 2013/11/08 20:43:34 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.common import enum
+
+# Don't change this Enum without also changing crystalsymmetry.h.
+class AnisoCrystalSymmetry(enum.EnumClass(
+        "Tetragonal",
+        "Hexagonal",
+        "Cubic",
+        "Trigonal",
+        "Orthorhombic",
+        "Monoclinic",
+        "Triclinic")):
+    pass
+

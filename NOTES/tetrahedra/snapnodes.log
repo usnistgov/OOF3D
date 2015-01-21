@@ -1,0 +1,835 @@
+This is pdfeTeX, Version 3.141592-1.21a-2.2 (Web2C 7.5.4) (format=pdflatex 2008.6.30)  18 JUL 2008 16:07
+entering extended mode
+**snapnodes.tex
+(./snapnodes.tex
+LaTeX2e <2003/12/01>
+Babel <v3.8d> and hyphenation patterns for american, french, german, ngerman, b
+ahasa, basque, bulgarian, catalan, croatian, czech, danish, dutch, esperanto, e
+stonian, finnish, greek, icelandic, irish, italian, latin, magyar, norsk, polis
+h, portuges, romanian, russian, serbian, slovak, slovene, spanish, swedish, tur
+kish, ukrainian, nohyphenation, loaded.
+(/sw/share/texmf-dist/tex/latex/base/article.cls
+Document Class: article 2004/02/16 v1.4f Standard LaTeX document class
+(/sw/share/texmf-dist/tex/latex/base/size10.clo
+File: size10.clo 2004/02/16 v1.4f Standard LaTeX file (size option)
+)
+\c@part=\count79
+\c@section=\count80
+\c@subsection=\count81
+\c@subsubsection=\count82
+\c@paragraph=\count83
+\c@subparagraph=\count84
+\c@figure=\count85
+\c@table=\count86
+\abovecaptionskip=\skip41
+\belowcaptionskip=\skip42
+\bibindent=\dimen102
+)
+(/sw/share/texmf-dist/tex/latex/graphics/graphicx.sty
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/sw/share/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 1999/03/16 v1.13 key=value parser (DPC)
+\KV@toks@=\toks14
+)
+(/sw/share/texmf-dist/tex/latex/graphics/graphics.sty
+Package: graphics 2001/07/07 v1.0n Standard LaTeX Graphics (DPC,SPQR)
+
+(/sw/share/texmf-dist/tex/latex/graphics/trig.sty
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+(/sw/share/texmf-dist/tex/latex/graphics/graphics.cfg
+File: graphics.cfg 2005/02/03 v1.3 graphics configuration of teTeX/TeXLive
+)
+Package graphics Info: Driver file: pdftex.def on input line 80.
+
+(/sw/share/texmf-dist/tex/latex/graphics/pdftex.def
+File: pdftex.def 2002/06/19 v0.03k graphics/color for pdftex
+\Gread@gobject=\count87
+))
+\Gin@req@height=\dimen103
+\Gin@req@width=\dimen104
+)
+(/sw/share/texmf-dist/tex/latex/graphics/color.sty
+Package: color 1999/02/16 v1.0i Standard LaTeX Color (DPC)
+
+(/sw/share/texmf-dist/tex/latex/graphics/color.cfg
+File: color.cfg 2005/02/03 v1.3 color configuration of teTeX/TeXLive
+)
+Package color Info: Driver file: pdftex.def on input line 125.
+)
+(/sw/share/texmf-dist/tex/latex/subfigure/subfigure.sty
+Package: subfigure 2002/07/30 v2.1.4 subfigure package
+\subfigtopskip=\skip43
+\subfigcapskip=\skip44
+\subfigcaptopadj=\dimen105
+\subfigbottomskip=\skip45
+\subfigcapmargin=\dimen106
+\subfiglabelskip=\skip46
+\c@subfigure=\count88
+\c@lofdepth=\count89
+\c@subtable=\count90
+\c@lotdepth=\count91
+
+****************************************
+* Local config file subfigure.cfg used *
+****************************************
+(/sw/share/texmf-dist/tex/latex/subfigure/subfigure.cfg)
+\subfig@top=\skip47
+\subfig@bottom=\skip48
+)
+(/sw/share/texmf-dist/tex/latex/preprint/fullpage.sty
+Package: fullpage 1999/02/23 1.1 (PWD)
+\FP@margin=\skip49
+) (./snapnodes.aux)
+\openout1 = `snapnodes.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 8.
+LaTeX Font Info:    ... okay on input line 8.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 8.
+LaTeX Font Info:    ... okay on input line 8.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 8.
+LaTeX Font Info:    ... okay on input line 8.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 8.
+LaTeX Font Info:    ... okay on input line 8.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 8.
+LaTeX Font Info:    ... okay on input line 8.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 8.
+LaTeX Font Info:    ... okay on input line 8.
+
+(/sw/share/texmf-dist/tex/context/base/supp-pdf.tex
+(/sw/share/texmf-dist/tex/context/base/supp-mis.tex
+loading : Context Support Macros / Miscellaneous (2004.10.26)
+\protectiondepth=\count92
+\scratchcounter=\count93
+\scratchtoks=\toks15
+\scratchdimen=\dimen107
+\scratchskip=\skip50
+\scratchmuskip=\muskip10
+\scratchbox=\box26
+\scratchread=\read1
+\scratchwrite=\write3
+\zeropoint=\dimen108
+\onepoint=\dimen109
+\onebasepoint=\dimen110
+\minusone=\count94
+\thousandpoint=\dimen111
+\onerealpoint=\dimen112
+\emptytoks=\toks16
+\nextbox=\box27
+\nextdepth=\dimen113
+\everyline=\toks17
+\!!counta=\count95
+\!!countb=\count96
+\recursecounter=\count97
+)
+loading : Context Support Macros / PDF (2004.03.26)
+\nofMPsegments=\count98
+\nofMParguments=\count99
+\MPscratchCnt=\count100
+\MPscratchDim=\dimen114
+\MPnumerator=\count101
+\everyMPtoPDFconversion=\toks18
+)
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 12.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 12.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 12.
+ <tet.png, id=1, 513.92pt x 513.92pt>
+File: tet.png Graphic file (type png)
+ <use tet.png> [1
+
+{/sw/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <./tet.png>]
+<TetFaceSnapper.png, id=15, 513.92pt x 513.92pt>
+File: TetFaceSnapper.png Graphic file (type png)
+ <use TetFaceSnapper.png>
+<TetFaceSnapper-1.png, id=16, 513.92pt x 513.92pt>
+File: TetFaceSnapper-1.png Graphic file (type png)
+ <use TetFaceSnapper-1.png>
+<TetFaceSnapper-2.png, id=17, 513.92pt x 513.92pt>
+File: TetFaceSnapper-2.png Graphic file (type png)
+ <use TetFaceSnapper-2.png>
+<TetFaceSnapper-3.png, id=18, 513.92pt x 513.92pt>
+File: TetFaceSnapper-3.png Graphic file (type png)
+ <use TetFaceSnapper-3.png>
+<TetFaceSnapper-4.png, id=19, 513.92pt x 513.92pt>
+File: TetFaceSnapper-4.png Graphic file (type png)
+ <use TetFaceSnapper-4.png>
+<TetFaceSnapper-5.png, id=20, 513.92pt x 513.92pt>
+File: TetFaceSnapper-5.png Graphic file (type png)
+ <use TetFaceSnapper-5.png>
+[2
+
+ <./TetFaceSnapper.png> <./TetFaceSnapper-1.png> <./TetFaceSnapper-2.png> <./Te
+tFaceSnapper-3.png> <./TetFaceSnapper-4.png> <./TetFaceSnapper-5.png>]
+<TetFourEdgeSnapper1.png, id=30, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1.png>
+<TetFourEdgeSnapper1-1.png, id=31, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-1.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-1.png>
+<TetFourEdgeSnapper1-2.png, id=32, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-2.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-2.png>
+<TetFourEdgeSnapper1-3.png, id=33, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-3.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-3.png>
+<TetFourEdgeSnapper1-4.png, id=34, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-4.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-4.png>
+<TetFourEdgeSnapper1-5.png, id=35, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-5.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-5.png>
+<TetFourEdgeSnapper1-6.png, id=36, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-6.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-6.png>
+<TetFourEdgeSnapper1-7.png, id=37, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-7.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-7.png>
+<TetFourEdgeSnapper1-8.png, id=38, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-8.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-8.png>
+<TetFourEdgeSnapper1-9.png, id=39, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-9.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-9.png>
+<TetFourEdgeSnapper1-10.png, id=40, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-10.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-10.png>
+<TetFourEdgeSnapper1-11.png, id=41, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-11.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-11.png>
+<TetFourEdgeSnapper1-12.png, id=42, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-12.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-12.png>
+<TetFourEdgeSnapper1-13.png, id=43, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-13.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-13.png>
+<TetFourEdgeSnapper1-14.png, id=44, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-14.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-14.png>
+<TetFourEdgeSnapper1-15.png, id=45, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-15.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-15.png>
+<TetFourEdgeSnapper1-16.png, id=46, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-16.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-16.png>
+<TetFourEdgeSnapper1-17.png, id=47, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-17.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-17.png>
+<TetFourEdgeSnapper1-18.png, id=48, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-18.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-18.png>
+<TetFourEdgeSnapper1-19.png, id=49, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-19.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-19.png>
+<TetFourEdgeSnapper1-20.png, id=50, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-20.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-20.png>
+<TetFourEdgeSnapper1-21.png, id=51, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-21.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-21.png>
+<TetFourEdgeSnapper1-22.png, id=52, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-22.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-22.png>
+<TetFourEdgeSnapper1-23.png, id=53, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-23.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-23.png>
+<TetFourEdgeSnapper1-24.png, id=54, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-24.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-24.png>
+<TetFourEdgeSnapper1-25.png, id=55, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-25.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-25.png>
+<TetFourEdgeSnapper1-26.png, id=56, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-26.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-26.png>
+<TetFourEdgeSnapper1-27.png, id=57, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-27.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-27.png>
+<TetFourEdgeSnapper1-28.png, id=58, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-28.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-28.png>
+<TetFourEdgeSnapper1-29.png, id=59, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-29.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-29.png>
+File: TetFourEdgeSnapper1-29.png Graphic file (type png)
+ <use TetFourEdgeSnapper1-29.png>
+<TetFourEdgeSnapper1-31.png, id=60, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-31.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-31.png>
+<TetFourEdgeSnapper1-32.png, id=61, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-32.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-32.png>
+<TetFourEdgeSnapper1-33.png, id=62, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-33.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-33.png>
+<TetFourEdgeSnapper1-34.png, id=63, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-34.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-34.png>
+<TetFourEdgeSnapper1-35.png, id=64, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-35.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-35.png>
+<TetFourEdgeSnapper1-36.png, id=65, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-36.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-36.png>
+<TetFourEdgeSnapper1-37.png, id=66, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-37.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-37.png>
+<TetFourEdgeSnapper1-38.png, id=67, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-38.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-38.png>
+<TetFourEdgeSnapper1-39.png, id=68, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-39.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-39.png>
+<TetFourEdgeSnapper1-40.png, id=69, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-40.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-40.png>
+<TetFourEdgeSnapper1-41.png, id=70, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-41.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-41.png>
+<TetFourEdgeSnapper1-42.png, id=71, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper1-42.png Graphic file (type png)
+
+<use TetFourEdgeSnapper1-42.png>
+
+LaTeX Warning: Float too large for page by 57.60854pt on input line 113.
+
+[3
+
+ <./TetFourEdgeSnapper1.png> <./TetFourEdgeSnapper1-1.png> <./TetFourEdgeSnappe
+r1-2.png> <./TetFourEdgeSnapper1-3.png> <./TetFourEdgeSnapper1-4.png> <./TetFou
+rEdgeSnapper1-5.png> <./TetFourEdgeSnapper1-6.png> <./TetFourEdgeSnapper1-7.png
+> <./TetFourEdgeSnapper1-8.png>] [4 <./TetFourEdgeSnapper1-9.png> <./TetFourEdg
+eSnapper1-10.png> <./TetFourEdgeSnapper1-11.png> <./TetFourEdgeSnapper1-12.png>
+ <./TetFourEdgeSnapper1-13.png> <./TetFourEdgeSnapper1-14.png> <./TetFourEdgeSn
+apper1-15.png> <./TetFourEdgeSnapper1-16.png> <./TetFourEdgeSnapper1-17.png> <.
+/TetFourEdgeSnapper1-18.png> <./TetFourEdgeSnapper1-19.png> <./TetFourEdgeSnapp
+er1-20.png> <./TetFourEdgeSnapper1-21.png> <./TetFourEdgeSnapper1-22.png> <./Te
+tFourEdgeSnapper1-23.png> <./TetFourEdgeSnapper1-24.png>] [5 <./TetFourEdgeSnap
+per1-25.png> <./TetFourEdgeSnapper1-26.png> <./TetFourEdgeSnapper1-27.png> <./T
+etFourEdgeSnapper1-28.png> <./TetFourEdgeSnapper1-29.png> <./TetFourEdgeSnapper
+1-31.png> <./TetFourEdgeSnapper1-32.png> <./TetFourEdgeSnapper1-33.png> <./TetF
+ourEdgeSnapper1-34.png> <./TetFourEdgeSnapper1-35.png> <./TetFourEdgeSnapper1-3
+6.png> <./TetFourEdgeSnapper1-37.png> <./TetFourEdgeSnapper1-38.png> <./TetFour
+EdgeSnapper1-39.png> <./TetFourEdgeSnapper1-40.png> <./TetFourEdgeSnapper1-41.p
+ng> <./TetFourEdgeSnapper1-42.png>]
+<TetFourEdgeSnapper2.png, id=81, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2.png>
+<TetFourEdgeSnapper2-1.png, id=82, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-1.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-1.png>
+<TetFourEdgeSnapper2-2.png, id=83, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-2.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-2.png>
+<TetFourEdgeSnapper2-3.png, id=84, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-3.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-3.png>
+<TetFourEdgeSnapper2-4.png, id=85, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-4.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-4.png>
+<TetFourEdgeSnapper2-5.png, id=86, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-5.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-5.png>
+<TetFourEdgeSnapper2-6.png, id=87, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-6.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-6.png>
+<TetFourEdgeSnapper2-7.png, id=88, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-7.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-7.png>
+<TetFourEdgeSnapper2-8.png, id=89, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-8.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-8.png>
+<TetFourEdgeSnapper2-9.png, id=90, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-9.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-9.png>
+<TetFourEdgeSnapper2-10.png, id=91, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-10.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-10.png>
+<TetFourEdgeSnapper2-11.png, id=92, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-11.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-11.png>
+<TetFourEdgeSnapper2-12.png, id=93, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-12.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-12.png>
+<TetFourEdgeSnapper2-13.png, id=94, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-13.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-13.png>
+<TetFourEdgeSnapper2-14.png, id=95, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-14.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-14.png>
+<TetFourEdgeSnapper2-15.png, id=96, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-15.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-15.png>
+<TetFourEdgeSnapper2-16.png, id=97, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-16.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-16.png>
+<TetFourEdgeSnapper2-17.png, id=98, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-17.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-17.png>
+<TetFourEdgeSnapper2-18.png, id=99, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-18.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-18.png>
+<TetFourEdgeSnapper2-19.png, id=100, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-19.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-19.png>
+<TetFourEdgeSnapper2-20.png, id=101, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-20.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-20.png>
+<TetFourEdgeSnapper2-21.png, id=102, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-21.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-21.png>
+<TetFourEdgeSnapper2-22.png, id=103, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-22.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-22.png>
+<TetFourEdgeSnapper2-23.png, id=104, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-23.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-23.png>
+<TetFourEdgeSnapper2-24.png, id=105, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-24.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-24.png>
+<TetFourEdgeSnapper2-25.png, id=106, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-25.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-25.png>
+<TetFourEdgeSnapper2-26.png, id=107, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-26.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-26.png>
+<TetFourEdgeSnapper2-27.png, id=108, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-27.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-27.png>
+<TetFourEdgeSnapper2-28.png, id=109, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-28.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-28.png>
+<TetFourEdgeSnapper2-29.png, id=110, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-29.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-29.png>
+<TetFourEdgeSnapper2-30.png, id=111, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-30.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-30.png>
+<TetFourEdgeSnapper2-31.png, id=112, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-31.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-31.png>
+<TetFourEdgeSnapper2-32.png, id=113, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-32.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-32.png>
+<TetFourEdgeSnapper2-33.png, id=114, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-33.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-33.png>
+<TetFourEdgeSnapper2-34.png, id=115, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-34.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-34.png>
+<TetFourEdgeSnapper2-35.png, id=116, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-35.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-35.png>
+<TetFourEdgeSnapper2-36.png, id=117, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-36.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-36.png>
+<TetFourEdgeSnapper2-37.png, id=118, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-37.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-37.png>
+<TetFourEdgeSnapper2-38.png, id=119, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-38.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-38.png>
+<TetFourEdgeSnapper2-39.png, id=120, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-39.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-39.png>
+<TetFourEdgeSnapper2-40.png, id=121, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-40.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-40.png>
+<TetFourEdgeSnapper2-41.png, id=122, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-41.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-41.png>
+<TetFourEdgeSnapper2-42.png, id=123, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-42.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-42.png>
+<TetFourEdgeSnapper2-43.png, id=124, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-43.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-43.png>
+<TetFourEdgeSnapper2-44.png, id=125, 513.92pt x 513.92pt>
+File: TetFourEdgeSnapper2-44.png Graphic file (type png)
+
+<use TetFourEdgeSnapper2-44.png> [6
+
+ <./TetFourEdgeSnapper2.png> <./TetFourEdgeSnapper2-1.png> <./TetFourEdgeSnappe
+r2-2.png> <./TetFourEdgeSnapper2-3.png> <./TetFourEdgeSnapper2-4.png> <./TetFou
+rEdgeSnapper2-5.png> <./TetFourEdgeSnapper2-6.png> <./TetFourEdgeSnapper2-7.png
+> <./TetFourEdgeSnapper2-8.png> <./TetFourEdgeSnapper2-9.png> <./TetFourEdgeSna
+pper2-10.png> <./TetFourEdgeSnapper2-11.png> <./TetFourEdgeSnapper2-12.png>] [7
+ <./TetFourEdgeSnapper2-13.png> <./TetFourEdgeSnapper2-14.png> <./TetFourEdgeSn
+apper2-15.png> <./TetFourEdgeSnapper2-16.png> <./TetFourEdgeSnapper2-17.png> <.
+/TetFourEdgeSnapper2-18.png> <./TetFourEdgeSnapper2-19.png> <./TetFourEdgeSnapp
+er2-20.png> <./TetFourEdgeSnapper2-21.png> <./TetFourEdgeSnapper2-22.png> <./Te
+tFourEdgeSnapper2-23.png> <./TetFourEdgeSnapper2-24.png> <./TetFourEdgeSnapper2
+-25.png> <./TetFourEdgeSnapper2-26.png> <./TetFourEdgeSnapper2-27.png> <./TetFo
+urEdgeSnapper2-28.png>] [8 <./TetFourEdgeSnapper2-29.png> <./TetFourEdgeSnapper
+2-30.png> <./TetFourEdgeSnapper2-31.png> <./TetFourEdgeSnapper2-32.png> <./TetF
+ourEdgeSnapper2-33.png> <./TetFourEdgeSnapper2-34.png> <./TetFourEdgeSnapper2-3
+5.png> <./TetFourEdgeSnapper2-36.png> <./TetFourEdgeSnapper2-37.png> <./TetFour
+EdgeSnapper2-38.png> <./TetFourEdgeSnapper2-39.png> <./TetFourEdgeSnapper2-40.p
+ng> <./TetFourEdgeSnapper2-41.png> <./TetFourEdgeSnapper2-42.png> <./TetFourEdg
+eSnapper2-43.png> <./TetFourEdgeSnapper2-44.png>] <TetThreeEdgeSnapper.png, id=
+136, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper.png>
+<TetThreeEdgeSnapper-1.png, id=137, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-1.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-1.png>
+<TetThreeEdgeSnapper-2.png, id=138, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-2.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-2.png>
+<TetThreeEdgeSnapper-3.png, id=139, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-3.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-3.png>
+<TetThreeEdgeSnapper-4.png, id=140, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-4.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-4.png>
+<TetThreeEdgeSnapper-5.png, id=141, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-5.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-5.png>
+<TetThreeEdgeSnapper-6.png, id=142, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-6.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-6.png>
+<TetThreeEdgeSnapper-7.png, id=143, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-7.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-7.png>
+<TetThreeEdgeSnapper-8.png, id=144, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-8.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-8.png>
+<TetThreeEdgeSnapper-9.png, id=145, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-9.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-9.png>
+<TetThreeEdgeSnapper-10.png, id=146, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-10.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-10.png>
+<TetThreeEdgeSnapper-11.png, id=147, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-11.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-11.png>
+<TetThreeEdgeSnapper-12.png, id=148, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-12.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-12.png>
+<TetThreeEdgeSnapper-13.png, id=149, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-13.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-13.png>
+<TetThreeEdgeSnapper-14.png, id=150, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-14.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-14.png>
+<TetThreeEdgeSnapper-15.png, id=151, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-15.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-15.png>
+<TetThreeEdgeSnapper-16.png, id=152, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-16.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-16.png>
+<TetThreeEdgeSnapper-17.png, id=153, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-17.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-17.png>
+<TetThreeEdgeSnapper-18.png, id=154, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-18.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-18.png>
+<TetThreeEdgeSnapper-19.png, id=155, 513.92pt x 513.92pt>
+File: TetThreeEdgeSnapper-19.png Graphic file (type png)
+
+<use TetThreeEdgeSnapper-19.png> [9
+
+ <./TetThreeEdgeSnapper.png> <./TetThreeEdgeSnapper-1.png> <./TetThreeEdgeSnapp
+er-2.png> <./TetThreeEdgeSnapper-3.png> <./TetThreeEdgeSnapper-4.png> <./TetThr
+eeEdgeSnapper-5.png> <./TetThreeEdgeSnapper-6.png> <./TetThreeEdgeSnapper-7.png
+> <./TetThreeEdgeSnapper-8.png> <./TetThreeEdgeSnapper-9.png> <./TetThreeEdgeSn
+apper-10.png> <./TetThreeEdgeSnapper-11.png> <./TetThreeEdgeSnapper-12.png>] [1
+0 <./TetThreeEdgeSnapper-13.png> <./TetThreeEdgeSnapper-14.png> <./TetThreeEdge
+Snapper-15.png> <./TetThreeEdgeSnapper-16.png> <./TetThreeEdgeSnapper-17.png> <
+./TetThreeEdgeSnapper-18.png> <./TetThreeEdgeSnapper-19.png>] <TriangularBaseSn
+apper.png, id=162, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper.png Graphic file (type png)
+
+<use TriangularBaseSnapper.png>
+<TriangularBaseSnapper-1.png, id=163, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-1.png Graphic file (type png)
+
+<use TriangularBaseSnapper-1.png>
+<TriangularBaseSnapper-2.png, id=164, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-2.png Graphic file (type png)
+
+<use TriangularBaseSnapper-2.png>
+<TriangularBaseSnapper-3.png, id=165, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-3.png Graphic file (type png)
+
+<use TriangularBaseSnapper-3.png>
+<TriangularBaseSnapper-4.png, id=166, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-4.png Graphic file (type png)
+
+<use TriangularBaseSnapper-4.png>
+<TriangularBaseSnapper-5.png, id=167, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-5.png Graphic file (type png)
+
+<use TriangularBaseSnapper-5.png>
+<TriangularBaseSnapper-6.png, id=168, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-6.png Graphic file (type png)
+
+<use TriangularBaseSnapper-6.png>
+<TriangularBaseSnapper-7.png, id=169, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-7.png Graphic file (type png)
+
+<use TriangularBaseSnapper-7.png>
+<TriangularBaseSnapper-8.png, id=170, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-8.png Graphic file (type png)
+
+<use TriangularBaseSnapper-8.png>
+<TriangularBaseSnapper-9.png, id=171, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-9.png Graphic file (type png)
+
+<use TriangularBaseSnapper-9.png>
+File: TriangularBaseSnapper-9.png Graphic file (type png)
+ <use TriangularBaseSnapper-9.png>
+<TriangularBaseSnapper-11.png, id=172, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-11.png Graphic file (type png)
+
+<use TriangularBaseSnapper-11.png>
+<TriangularBaseSnapper-12.png, id=173, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-12.png Graphic file (type png)
+
+<use TriangularBaseSnapper-12.png>
+<TriangularBaseSnapper-13.png, id=174, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-13.png Graphic file (type png)
+
+<use TriangularBaseSnapper-13.png>
+<TriangularBaseSnapper-14.png, id=175, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-14.png Graphic file (type png)
+
+<use TriangularBaseSnapper-14.png>
+<TriangularBaseSnapper-15.png, id=176, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-15.png Graphic file (type png)
+
+<use TriangularBaseSnapper-15.png>
+<TriangularBaseSnapper-16.png, id=177, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-16.png Graphic file (type png)
+
+<use TriangularBaseSnapper-16.png>
+<TriangularBaseSnapper-17.png, id=178, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-17.png Graphic file (type png)
+
+<use TriangularBaseSnapper-17.png>
+<TriangularBaseSnapper-18.png, id=179, 513.92pt x 513.92pt>
+File: TriangularBaseSnapper-18.png Graphic file (type png)
+
+<use TriangularBaseSnapper-18.png> [11
+
+ <./TriangularBaseSnapper.png> <./TriangularBaseSnapper-1.png> <./TriangularBas
+eSnapper-2.png> <./TriangularBaseSnapper-3.png> <./TriangularBaseSnapper-4.png>
+ <./TriangularBaseSnapper-5.png> <./TriangularBaseSnapper-6.png> <./TriangularB
+aseSnapper-7.png> <./TriangularBaseSnapper-8.png> <./TriangularBaseSnapper-9.pn
+g> <./TriangularBaseSnapper-11.png> <./TriangularBaseSnapper-12.png>] [12 <./Tr
+iangularBaseSnapper-13.png> <./TriangularBaseSnapper-14.png> <./TriangularBaseS
+napper-15.png> <./TriangularBaseSnapper-16.png> <./TriangularBaseSnapper-17.png
+> <./TriangularBaseSnapper-18.png>]
+<OppositeTetEdgeSnapper.png, id=186, 513.92pt x 513.92pt>
+File: OppositeTetEdgeSnapper.png Graphic file (type png)
+
+<use OppositeTetEdgeSnapper.png>
+<OppositeTetEdgeSnapper-1.png, id=187, 513.92pt x 513.92pt>
+File: OppositeTetEdgeSnapper-1.png Graphic file (type png)
+
+<use OppositeTetEdgeSnapper-1.png>
+<OppositeTetEdgeSnapper-2.png, id=188, 513.92pt x 513.92pt>
+File: OppositeTetEdgeSnapper-2.png Graphic file (type png)
+
+<use OppositeTetEdgeSnapper-2.png>
+<OppositeTetEdgeSnapper-3.png, id=189, 513.92pt x 513.92pt>
+File: OppositeTetEdgeSnapper-3.png Graphic file (type png)
+
+<use OppositeTetEdgeSnapper-3.png>
+<OppositeTetEdgeSnapper-4.png, id=190, 513.92pt x 513.92pt>
+File: OppositeTetEdgeSnapper-4.png Graphic file (type png)
+
+<use OppositeTetEdgeSnapper-4.png>
+<OppositeTetEdgeSnapper-5.png, id=191, 513.92pt x 513.92pt>
+File: OppositeTetEdgeSnapper-5.png Graphic file (type png)
+
+<use OppositeTetEdgeSnapper-5.png>
+<OppositeTetEdgeSnapper-6.png, id=192, 513.92pt x 513.92pt>
+File: OppositeTetEdgeSnapper-6.png Graphic file (type png)
+
+<use OppositeTetEdgeSnapper-6.png>
+<OppositeTetEdgeSnapper-7.png, id=193, 513.92pt x 513.92pt>
+File: OppositeTetEdgeSnapper-7.png Graphic file (type png)
+
+<use OppositeTetEdgeSnapper-7.png>
+<OppositeTetEdgeSnapper-8.png, id=194, 513.92pt x 513.92pt>
+File: OppositeTetEdgeSnapper-8.png Graphic file (type png)
+
+<use OppositeTetEdgeSnapper-8.png> [13
+
+ <./OppositeTetEdgeSnapper.png> <./OppositeTetEdgeSnapper-1.png> <./OppositeTet
+EdgeSnapper-2.png> <./OppositeTetEdgeSnapper-3.png> <./OppositeTetEdgeSnapper-4
+.png> <./OppositeTetEdgeSnapper-5.png> <./OppositeTetEdgeSnapper-6.png> <./Oppo
+siteTetEdgeSnapper-7.png> <./OppositeTetEdgeSnapper-8.png>] <TriangularTwoEdgeS
+napper.png, id=199, 513.92pt x 513.92pt>
+File: TriangularTwoEdgeSnapper.png Graphic file (type png)
+
+<use TriangularTwoEdgeSnapper.png>
+<TriangularTwoEdgeSnapper-1.png, id=200, 513.92pt x 513.92pt>
+File: TriangularTwoEdgeSnapper-1.png Graphic file (type png)
+
+<use TriangularTwoEdgeSnapper-1.png>
+<TriangularTwoEdgeSnapper-2.png, id=201, 513.92pt x 513.92pt>
+File: TriangularTwoEdgeSnapper-2.png Graphic file (type png)
+
+<use TriangularTwoEdgeSnapper-2.png>
+<TriangularTwoEdgeSnapper-3.png, id=202, 513.92pt x 513.92pt>
+File: TriangularTwoEdgeSnapper-3.png Graphic file (type png)
+
+<use TriangularTwoEdgeSnapper-3.png>
+<TriangularTwoEdgeSnapper-4.png, id=203, 513.92pt x 513.92pt>
+File: TriangularTwoEdgeSnapper-4.png Graphic file (type png)
+
+<use TriangularTwoEdgeSnapper-4.png>
+<TriangularTwoEdgeSnapper-5.png, id=204, 513.92pt x 513.92pt>
+File: TriangularTwoEdgeSnapper-5.png Graphic file (type png)
+
+<use TriangularTwoEdgeSnapper-5.png>
+<TriangularTwoEdgeSnapper-6.png, id=205, 513.92pt x 513.92pt>
+File: TriangularTwoEdgeSnapper-6.png Graphic file (type png)
+
+<use TriangularTwoEdgeSnapper-6.png> [14
+
+ <./TriangularTwoEdgeSnapper.png> <./TriangularTwoEdgeSnapper-1.png> <./Triangu
+larTwoEdgeSnapper-2.png> <./TriangularTwoEdgeSnapper-3.png> <./TriangularTwoEdg
+eSnapper-4.png> <./TriangularTwoEdgeSnapper-5.png> <./TriangularTwoEdgeSnapper-
+6.png>]
+<SingleNodeSnapper.png, id=209, 513.92pt x 513.92pt>
+File: SingleNodeSnapper.png Graphic file (type png)
+
+<use SingleNodeSnapper.png>
+<SingleNodeSnapper-1.png, id=210, 513.92pt x 513.92pt>
+File: SingleNodeSnapper-1.png Graphic file (type png)
+
+<use SingleNodeSnapper-1.png>
+<SingleNodeSnapper-2.png, id=211, 513.92pt x 513.92pt>
+File: SingleNodeSnapper-2.png Graphic file (type png)
+
+<use SingleNodeSnapper-2.png> [15
+
+ <./SingleNodeSnapper.png> <./SingleNodeSnapper-1.png> <./SingleNodeSnapper-2.p
+ng>] (./snapnodes.aux) ) 
+Here is how much of TeX's memory you used:
+ 1873 strings out of 94500
+ 36224 string characters out of 1176114
+ 65023 words of memory out of 1500000
+ 4925 multiletter control sequences out of 10000+50000
+ 7280 words of font info for 26 fonts, out of 1200000 for 2000
+ 580 hyphenation exceptions out of 8191
+ 25i,7n,24p,225b,244s stack positions out of 5000i,500n,6000p,200000b,5000s
+PDF statistics:
+ 214 PDF objects out of 65536
+ 0 named destinations out of 20000
+ 756 words of extra memory for PDF output out of 65536
+</sw/share/texmf-dist/fonts/type1/bluesky/cm/cmr8.pfb><
+/sw/share/texmf-dist/fonts/type1/bluesky/cm/cmbx12.pfb></sw/share/texmf-dist/fo
+nts/type1/bluesky/cm/cmr10.pfb></sw/share/texmf-dist/fonts/type1/bluesky/cm/cmr
+12.pfb></sw/share/texmf-dist/fonts/type1/bluesky/cm/cmr17.pfb>
+Output written on snapnodes.pdf (15 pages, 2389086 bytes).

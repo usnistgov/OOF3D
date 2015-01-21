@@ -1,0 +1,5 @@
+-*- text -*-
+
+OOF's Image module contains code for image processing and
+segmentation.  It allows the user to select and name groups of
+pixels.  It does not know anything about Materials or Meshes.

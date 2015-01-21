@@ -1,0 +1,10 @@
+
+OOF.File.Load.Data(filename="skel1")	
+OOF.File.Save.Skeleton(filename="skel2", mode="w", format="ascii", skeleton="ms:skeleton")
+OOF.Skeleton.Modify(skeleton='ms:skeleton', modifier=Rationalize(targets=BadlyShapedElements(threshold=0.80000000000000004),criterion=AverageEnergy(alpha=0.29999999999999999),method=SpecificRationalization(rationalizers=[RemoveBadTetrahedra(acute_angle=15,obtuse_angle=150)])))
+OOF.File.Save.Skeleton(filename="skel3", mode="w", format="ascii", skeleton="ms:skeleton")
+OOF.Skeleton.Modify(skeleton='ms:skeleton', modifier=Rationalize(targets=BadlyShapedElements(threshold=0.80000000000000004),criterion=AverageEnergy(alpha=0.29999999999999999),method=SpecificRationalization(rationalizers=[RemoveBadTetrahedra(acute_angle=15,obtuse_angle=150)])))
+OOF.File.Save.Skeleton(filename="skel4", mode="w", format="ascii", skeleton="ms:skeleton")
+OOF.Skeleton.Modify(skeleton='ms:skeleton', modifier=SnapRefine(targets=CheckHomogeneity(threshold=0.9),criterion=Unconditionally(),min_distance=1,alpha=0.7))
+OOF.Skeleton.Modify(skeleton='ms:skeleton', modifier=SurfaceSmooth(criterion=AverageEnergy(alpha=0.29999999999999999),T=0.0,gamma=0.4,iteration=FixedIteration(iterations=10)))
+

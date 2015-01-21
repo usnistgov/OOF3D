@@ -1,0 +1,3 @@
+# OOF version 2.0
+FileVersion(number=1.0, format='ascii')
+Profile.New(name='save_test', profile=LinearProfile(start=10.0,end=3.141))

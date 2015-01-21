@@ -1,0 +1,63 @@
+# -*- python -*-
+# $RCSfile: coord.spy,v $
+# $Revision: 1.4.10.3 $
+# $Author: langer $
+# $Date: 2012/05/02 21:24:55 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.SWIG.common import config
+from ooflib.common.IO import parameter
+from ooflib.common import primitives
+from ooflib.common import utils
+
+utils.OOFdefine('Coord', Coord)
+utils.OOFdefine('ICoord', ICoord)
+
+if config.dimension() == 2:
+    CoordPtr.__repr__ = lambda self:"Coord(%g,%g)" % (self[0],self[1])
+    ICoordPtr.__repr__ = lambda self: "ICoord(%d,%d)" % (self[0], self[1])
+elif config.dimension() == 3:
+    CoordPtr.__repr__ = lambda self:"Coord(%g,%g,%g)" % (self[0],self[1],self[2])
+    ICoordPtr.__repr__ = lambda self: "ICoord(%d,%d,%d)" % (self[0], self[1],self[2])
+    
+
+# Add argument checking to the swigged getitem method.
+def _Coord___getitem__(self, indx):
+    if indx >= config.dimension() or indx < 0:
+        raise IndexError
+    return self.getitem(indx)
+
+CoordPtr.__getitem__ = _Coord___getitem__
+
+
+
+def _Coord___cmp__(self, other):
+    if not isinstance(other, CoordPtr): return -1
+    if self[0] < other[0]: return -1
+    if self[0] > other[0]: return 1
+    if self[1] < other[1]: return -1
+    if self[1] > other[1]: return 1
+    if config.dimension == 3:
+        if self[2] < other[2]: return -1
+        if self[2] > other[2]: return 1
+    return 0
+
+CoordPtr.__cmp__ = _Coord___cmp__
+
+def _Coord___hash__(self):
+    return hash(self[0]) & hash(self[1])
+
+CoordPtr.__hash__ = _Coord___hash__
+
+class CoordParameter(parameter.Parameter):
+    types=(primitives.Point, Coord)
+
+
+origin = Coord(*(0,)*config.dimension())

@@ -1,0 +1,962 @@
+// -*- text -*-
+// $RCSfile: todo-post3.0.0.txt,v $
+// $Revision: 1.1.2.9 $
+// $Author: langer $
+// $Date: 2015/01/05 19:00:13 $
+
+
+This list is a summary of TODOs in the OOF3D code as of the release of
+3.0.0.  It doesn't list every TODO individually.  Some topics, mainly
+parallelization, adaptive mesh refinement, interfaces, plasticity, and
+merging 2D into 3D have many TODOs in the code but are represented by
+just a few items in this list.  TODOs referring to documentation or
+that are only relevant to 2D are not included.
+
+
+--------------------------------------------------------------------------
+Bugs:
+
+* Storing Mesh status as "Solving" in a data file isn't helpful.  TODO
+  in meshIO.py.  EASY, HIGH PRIORITY  **DONE**
+
+* Copying field initializers doesn't work.  TODO in meshmenu.py.
+  EASY, HIGH PRIORITY  **DONE**
+
+* Create Microstructure and Skeleton, open graphics window, delete
+  Microstructure.  Skeleton is still displayed.  Also, deleting a
+  displayed image doesn't delete it from the window. HIGH PRIORITY **DONE**
+
+* Clearing a graphics window doesn't clear the skeleton selection
+  layers, and possibly other layers with a proxy who object.  TODOs in
+  ghostgfxwindow.py, displaymethods.py.  HIGH PRIORITY, EASY? **DONE**
+
+* Skeletons aren't clipped properly when there are multiple
+  intersecting clipping planes. (vtk bug?)  HARD
+
+* Skeleton material color isn't always displayed correctly.  TODO in
+  displaymethods.py.  HIGH PRIORITY **DONE**
+
+* Fix SkeletonQualityDisplay.  TODO in displaymethods.py.  vtk LUT is
+  wrong after modifying the Skeleton?  HIGH PRIORITY  ** DONE**
+
+* Hidden layers aren't hidden in cloned graphics windows.  HIGH
+  PRIORITY **DONE**
+
+* Fix whatever's causing badhomog.log to fail.  HIGH PRIORITY, HARD
+  A test inside an #ifdef DEBUG block in elementFaceContribution()
+  fails when this script is run:
+OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImagePattern(directory='ms_data/5color/',pattern='slice(0|([1-9][0-9]*))\\.png',sort=NumericalOrder()), microstructure_name='5color', height=automatic, width=automatic, depth=automatic)
+OOF.Image.AutoGroup(image='5color:5color', name_template='%c')
+OOF.Skeleton.New(name='skeleton', microstructure='5color', x_elements=6, y_elements=6, z_elements=6, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
+OOF.Skeleton.Modify(skeleton='5color:skeleton', modifier=Refine(targets=CheckHomogeneity(threshold=0.9),criterion=Unconditionally(),alpha=0.3))
+OOF.Skeleton.Modify(skeleton='5color:skeleton', modifier=SnapNodes(targets=SnapAll(),criterion=AverageEnergy(alpha=0.3)))
+
+
+* It should be impossible to append to an image file.  TODOs in
+  imagemenu.py.  HIGH PRIORITY.
+
+* Possible bug?  TODO in CSkeletonSelectable::removeDown re checking
+  parents.  HIGH PRIORITY, EASY
+
+* Get rid of mesh and meshctxt in the swigged CSubProblem python
+  class.  TODO in csubproblem.spy.  HIGH PRIORITY, EASY
+
+* Fix cases in which FixIllegal doesn't work.  TODO in fixillegal.C
+  EASY?
+
+* Large strain isn't handled correctly.  HIGH PRIORITY, HARD
+
+* PDF output doesn't work, but may be a vtk bug.  TODO in
+  imageformat.C.  HARD
+
+* Fix error messages from the LabelTree.  TODO in labeltree.py.  EASY?
+  **DONE**
+
+* Boundary modifiers RemoveFaces and RemoveSegments need to check that
+  the remaining boundary is well formed.  TODO in boundarymodifer.py.
+  LOW PRIORITY
+
+* Restrict times in MeshTimes to times from meshes actually displayed
+  in the graphics window.  TODO in animationtimes.py.  HARD?, LOW
+  PRIORITY
+
+* Fix time handling in MeshDisplayMethod.setSource().  TODO in
+  displaymethods.py.  HARD? 
+
+* Compute norms correctly in nonlinear solvers.  TODO in
+  nonlinearsolvercore.py.   HIGH PRIORITY
+
+* Fix output times for a restarted computation with a geometric
+  schedule.  TODO in outputschedule.py.  EASY?  LOW PRIORITY
+
+* Fix pin nodes inversion.  TODO in pinnodesmodifier.py.  EASY?  LOW
+  PRIORITY
+
+* C++ properties can't get cijkl from pyelasticity properties.  TODO
+  in pyelasticity.py.  HARD, LOW PRIORITY
+  
+* Check that skel.disconnect doesn't have to be called in
+  SkeletonContext.__init__.  TODO in skeletoncontext.py.  HIGH
+  PRIORITY
+  
+* interpolateValues() needs to know the stepper order.  TODO in
+  subproblemcontext.py.  HARD
+
+* The GUI should not allow just one dimension of a loaded image to be
+  "automatic".  TODO in imagemenu.py.   LOW PRIORITY
+
+* Cloning a window containing only an image and then showing the image
+  layer in the clone displays the image with a black border.  The
+  border disappears when the image is rotated.  LOW PRIORITY
+
+
+End Bugs
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+Missing features:
+
+
+* Abaqus output.  EASY, HIGH PRIORITY
+
+* Mesh Data viewer.   HIGH PRIORITY
+
+* Mouse-based selection of voxels and skeleton components, including
+  rubberbands. (After vtk 6 upgrade?)  HARD, HIGH PRIORITY
+  
+* Mouse-based editing of clipping planes.  (After vtk6 upgrade?)
+  HARD, HIGH PRIORITY
+  
+* Mouse-based node motion.  TODO in movenode.py.  HARD, HIGH PRIORITY
+
+* Mesh Cross Section toolbox, and mouse-based editing of cross
+  sections.  (After vtk 6 upgrade?)
+
+* User-configurable mouse buttons.  Left => select, Middle => change
+  view, etc.
+
+* Read EBSD files.  HIGH PRIORITY
+
+* Automatic Skeleton generation.  TODOs in skeletonPage.py and
+  skeletonmenu.py.  HIGH PRIORITY
+
+* Periodic boundary conditions.  HARD
+
+* Higher order elements.  TODOs in cskeleton2.C, cskeletonelement.C,
+  femesh.C, and elsewhere.  HIGH PRIORITY
+
+* Adaptive mesh refinement.  HARD, HIGH PRIORITY
+
+* Skeleton relaxation.  EASY?
+
+* Materials assigned to skeleton element groups. TODOs in
+  CSkeletonElement::material, skeletongroupmenu.py, and
+  skeletonSelectionPage.py.  HARD? HIGH PRIORITY
+
+* Save active areas and unmeshable pixel groups in data files.  TODOs
+  in cmicrostructure.spy and pixelgroupmenu.py.  HIGH PRIORITY
+
+* Add tooltips to ReportErrorGUI.  EASY
+
+* Add "units" param to Expand and Shrink in pixelselectionmod.py.
+  EASY
+
+* OOF3D Manual.  TODOs in xmloutputs.py and many other places.  EASY
+  BUT TIME CONSUMING
+
+* Is there a reasonable 3D equivalent to EdgeSwap?  TODO in
+  edgeswap.py.  HARD, LOW PRIORITY
+
+* Allow normal component Neumann BCs for symmetric tensor fluxes on
+  faces.  TODO in fluxnormal.C. EASY?
+
+* Use nbins in contour plotting.  TODO in contourdisplay.py.  HARD,
+  HIGH PRIORITY
+
+* Adaptive mesh refinement.  2D code needs to be refactored before
+  moving to 3D. HARD
+
+* Use Mesh filters instead of Skeleton filters when displaying Meshes.
+  Add filters for Output value thresholds.  EASY? HIGH PRIORITY
+
+* Display node groups, segment groups, and face groups in the skeleton
+  info toolbox.  TODOs in skeletoninfoGUI.py.  EASY, HIGH PRIORITY
+
+* Display average shape energy for skeleton, both unweighted and
+  volume weighted.  TODO in skeletonPage.py.  EASY, HIGH PRIORITY
+
+* Select voxels underlying elements, faces, and segments.  TODOs in
+  pixelselect.py.  HARD, HIGH PRIORITY
+  
+* Add region-based filters for voxel, skeleton, and mesh displays.
+  TODO in skeletonfilter.h.  EASY?
+
+
+End High Priority Missing Features
+--------------------------------------------------------------------------
+Lower priority missing features:
+
+
+* Progress bars for despeckle and elkcepsed.  TODO in despeckle.C.
+
+* Apply clipping to only some of the graphics layers.  TODO in
+  canvaslayers.C.
+
+* Pop-up menu for right-clicks on the layer list.  EASY
+
+* Axes pane in Viewer toolbox.  TODO in viewertoolbox3dGUI.py.  EASY
+
+* Automatic selection of integration order for Outputs and boundary
+  conditions.  TODOs in analysisdomain.py, boundarycond.C.  LOW
+  PRIORITY, HARD
+
+* Compute face homogeneiety & select/refine faces by homogneiety.
+  TODOs in cskeletonface.C and skeletoninfoGUI.py.  HARD
+
+* LimitedAverageEnergy, LimitedUnconditional in cskeletonmodifier.C.  EASY?
+
+* CenterFillDisplay.
+
+* PerimeterDisplay. 
+
+* Menu items to set defaultNoMaterial and defaultNoColor.  TODO in
+  displaymethods.py.
+
+* Automatic creation of face groups.  HARD, LOW PRIORITY.
+
+* Add tests for changing the data cache type.  TODO in
+  meshdatacache.spy.  EASY
+
+* Filter Skeleton and Mesh displays by node, segment, or face group?
+  This might not make sense.  TODO in skeletonfilter.h.  HARD, LOW
+  PRIORITY
+
+* The OOFImage constructor should somehow check that all of the image
+  slices are the same size, or at least prevent vtk from crashing if
+  they're not.  This may not be possible.  TODO in oofimage3d.C.
+
+
+
+End Low Priority Missing Features
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+New features:
+
+
+* Select voxels via user defined threshold function: f(x,y,z) > 0
+  EASY, HIGH PRIORITY
+
+* Interface materials, jump bcs, & split nodes.  HIGH PRIORITY, HARD
+
+* Plasticity.  HIGH PRIORITY, HARD
+
+* Contact elements.  HARD
+
+* Change the physical size of a Microstructure (and its Skeletons,
+  etc) after it's been created.
+
+* Allow graphics windows to synchronize their view parameters.  TODO
+  in ghostgfxwindow.py.   HIGH PRIORITY, EASY
+
+* User controls for shading.  TODO in gridlayers.C.  EASY
+
+* Put progress bars for drawing at the bottom of the graphics windows.
+  Put progress bars for everything else in the Message window, and get
+  rid of the Activity Viewer window.   LOW PRIORITY
+
+* Get rid of the checkbox for AutoWidgets, and use the automatic value
+  if the gtk.Entry is empty.  TODO in parameterwidgets.py.  EASY
+
+* Allow tutorial windows to scroll even when a modal dialog box is
+  open.  TODO in tutorialsGUI.py.  HARD
+
+* Parallel processing.  OpenMP?   HIGH PRIORITY, HARD
+   * Homogeneity
+   * Matrix construction
+   * Matrix & PDE solution
+
+* Add argument to Region selection methods to control how boundary
+  voxels are handled.  TODO in pixelselectioncourier.C.  LOW PRIORITY,
+  EASY
+
+* Implement Undo All for Who objects.  TODO in whoville. py.  LOW
+  PRIORITY, EASY?
+
+* More verbose Undo, Redo.  TODO in whoville.py.  MEDIUM PRIORITY,
+  EASY
+
+* Store sets of clipping planes.  Undo/Redo for clipping plane
+  operations.  TODO in viewertoolbox.py.  LOW PRIORITY
+
+* Interruptible loops in user scripts.  TODO in progressbar.py.  LOW
+  PRIORITY
+
+* Progress bars for outputs.  TODO in analysisdomain.py.  HARD
+
+* Field dependent boundary conditions.  TODOs in bdycondition.py and
+  subproblemcontext.py.  HARD
+
+* Periodic flux boundary conditions.  TODO in boundarycond.C.  LOW
+  PRIORITY
+
+* Change SnapNodes so that it snaps neighbors next. Investigate
+  segment-based snapping. TODOs in csnapnodes.C.  HIGH PRIORITY, NOT
+  TOO HARD
+
+* Change SnapRefine so that it looks at multiple transition points.
+  TODO in csnaprefine.C.
+
+* Gunay's technique for one-button 3D meshing from segmentation.
+  HARD, HIGH PRIORITY, NEED POSTDOC
+
+* Separate files at each time step for direct output. TODO in
+  analyze.py.
+
+* Time-dependent initializers for floating BCs.  TODO in
+  boundaryconditionmenu.py  LOW PRIORITY
+
+* Vector and tensor display methods.  TODO in contourdisplay.py.
+  HARD, HIGH PRIORITY
+
+* Better response to "who changed" in info toolboxes.  TODO in
+  genericinfotoolbox.py.  EASY, LOW PRIORITY
+
+* Have Outputs share their Field Parameter.  TODO in analyzePage.py.
+  EASY?
+
+* New and Copy buttons for planar cross section widget.  TODO in
+  analyzePage.py.  EASY
+
+* Construct better boundary names automatically.  TODO in
+  boundarycondPage.py.  EASY, LOW PRIORITY
+
+* Raise a warning when deleting an OutputStream that's used in a
+  ScheduledOutput.  TODO in outputPage.py.  EASY, LOW PRIORITY
+
+* Add a button to copy Skeleton boundaries.  TODO in
+  skeletonBoundaryPage.py.  EASY, LOW PRIORITY
+
+* Display number of nodes, elements, etc. in the Skeleton info
+  toolbox.  TODO In skeletoninfoGUI.py.  EASY, LOW PRIORITY
+
+* Skeleton groups automatically created from voxel groups should not
+  use the usual group propagation rules.  They should instead recreate
+  themselves from the voxel groups in each new skeleton.  If an
+  automatic group is edited, though, it should become a non-automatic
+  group.  EASY-ISH, HIGH PRIORITY
+
+* Provide better info about why a Mesh is unsolvabe.  TODOs in
+  solverPage.py.  EASY?  HIGH PRIORITY
+
+* Reorder subproblems with drag and drop.  TODO in solverPage.py.
+  EASY, LOW PRIORITY
+
+* Progress bar for saving Skeletons and Meshes.  TODOs in
+  skeletonIO.py and meshIO.py.  EASY? LOW PRIORITY
+  
+* Reselect the moving node after the skeleton changes.  TODO in
+  movenode.py.  EASY, LOW PRIORITY
+
+* Progress bars for more outputs.  TODOs in outputClones.py.  HARD? LOW
+  PRIORITY
+
+* DifferenceWithOtherMesh Output. TODO in outputClones.py.  EASY, HIGH
+  PRIORITY
+
+* SurfaceNormalComponentOutput.  TODO in outputClones.py.  HARD, LOW
+  PRIORITY
+
+* Electric Field output.  TODO in outputDefs.py.  HARD? HIGH PRIORITY?
+
+* Detect insufficiently connected Mesh regions.  TODO in
+  mesh.py. HARD?  LOW PRIORITY?
+
+* Allow multicomponent profiles?  TODO in profile.py.  LOW PRIORITY
+
+* Asymmetric damping?  TODO in damping.h.  EASY, LOW PRIORITY
+
+* Make large strain an option, applicable to all kinds of elasticity.
+  TODO in largestrain.C.  HARD, maybe impossible.
+
+* Add asymmetries to thermoelasticity and viscoelasticity?  TODOs in
+  thermo.h and visco.h.  EASY? LOW PRIORITY
+  
+* Gfx toolbox for editing Skeleton boundaries.  TODO in
+  skeletonboundary.py.
+
+* Allow non-sequencable edge boundaries and non-orientable face
+  boundaries.  HARD, LOW PRIORITY
+
+* More face selection methods and modifiers.  TODOs in
+  skeletonselectionmod.py.  EASY
+
+* Make skeleton group selection methods work like voxel group
+  selection methods do.  TODO in skeletonselectionmod.py.  EASY
+
+* Skeleton selection by region.  TODO in skeletonselectionmod.py.
+  EASY
+
+* Deselect segments with fewer than n selected nodes.  TODO in
+  skeletonselectionod.py.   EASY, LOW PRIORITY
+
+* Add RKF45 stepper.  TODO in timestepper.py.  EASY? HIGH PRIORITY
+
+* Recombine single and double step results.  TODO in twostep.py.
+  EASY?  HIGH PRIORITY
+
+* Add more options parameters for ThresholdImage.  TODO in
+  imagemodifier.py.  EASY
+
+* Allow jpg quality and other image parameters to be set when saving
+  images.  TODO in imagemenu.py.  EASY, HIGH PRIORITY
+
+* When specifying a file name pattern for loading images, allow user
+  to choose ls patterns or regex patterns.  TODO in oofimage3d.spy.
+  EASY, LOW PRIORITY
+  
+
+End New Features
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+Optimizations:
+
+
+* General: Find slow operations, profile them, and fix them.  HIGH
+  PRIORITY, HARD
+
+* Move Skeleton sanity checks to C++.  TODOs in cskeleton2.spy.  HIGH
+  PRIORITY **DONE**
+
+* Skeleton group operations need to use couriers to avoid lists of
+  objects in Python.  Same for node pinning.  HIGH PRIORITY
+
+* Deprecate SkeletonContext.nodes_from_node_aggregate, etc, in favor
+  of couriers.  TODO in skeletoncontext.py.  HIGH PRIORITY
+
+* Don't swig CPixelSelecdtion::mmebers() or PixelSet::members().
+  TODOs in cpixelselection.swg, pixelgroup.swg, analysisdomain.py.
+  HIGH PRIORITY
+
+* When reading and writing microstructure data, don't manipulate
+  category map in Python. (TODOs in microstructureIO.py)  HIGH PRIORITY
+
+* Check that things aren't being redrawn too often.  Render() is
+  called too often, but maybe it's not actually redrawing.  There are
+  TODOs in gridlayers.C about edge extraction.  HIGH PRIORITY
+
+* Compute contour data only on the visible surface.  TODO in
+  gridlayers.C.  HARD?
+
+* Don't construct list of cells in oofExcludeVoxels::RequestData.
+  TODO in oofExcludeVoxels.C.  HIGH PRIORITY
+
+* Avoid locking in Progress::setMessage, if possible.  TODO in
+  progress.C.  EASY, HIGH PRIORTIY
+
+* Reduce copying in IntersectSelection.  TODO in
+  pixelselectioncourier.C.
+
+* DiscreteSampleSet.evaluateWithExponents and
+  ContinuumSampleSet.integrate should treat x=1 as a special case.
+  EASY, LOW PRIORITY
+
+* Move Output processing to C++.  HARD, LOW PRIORITY?
+
+* Don't create python lists of segments and faces in boundary
+  modifiers.  TODOs in boundarymodifer.py.  LOW PRIORITY
+
+* Avoid linear search in CSkeletonBase::findElement().
+
+* Better pre-allocation of memory in CSkeleton::getVtkCells().
+
+* Smarter selectable_vector_intersection() in cskeleton2.C.  HIGH
+  PRIORITY
+
+* TODO re looping over the whole skeleton in
+  CSkeleton::nodesAddGroupsDown(), et al.  EASY?
+
+* Move much of _CSkeletonBase_femesh to C++.  HIGH PRIORITY
+
+* Don't compute intersection volume of last category.  TODO in
+  CSkeletonElement::categoryVolumes().   HIGH PRIORITY, EASY
+
+* Remove CSkeletonNode::points to save memory.  TODO in
+  cskeletonnode2.h.  HIGH PRIORITY, EASY
+
+* CSkeletonSelectables should share GroupNameSet objects.  TODOs in
+  cskeletonselectable.[Ch].  HIGH PRIORITY, HARD?
+
+* Various TODOs in dofmap.C. LOW PRIORITY, except maybe the one in
+  extract(), which might be HIGH PRIORITY.
+
+* Don't recompute K_MCKa in nonlinear computations.  TODO in
+  euler.py.  HARD, LOW PRIORITY
+
+* Reduce Linearized system clone size using a new SparseSubMat class.
+  TODOs in evolve.py, linearizedsystem.C, linearizedsystem.h.  HARD?
+  HIGH PRIORITY?
+
+* Compute element shape counts as mesh is built.  TODO in
+  FEMesh::getElementShapeCounts.  EASY, LOW PRIORITY
+
+* Improve FEMesh::closestNode().  TODO in femesh.C.  HIGH PRIORITY
+
+* Fix FEMesh::get_dofvalues() and set_dofvalues().  TODO in femesh.C.
+  HIGH PRIORITY
+
+* Check whether try/except or setdefault is faster.  TODO in
+  femesh.spy.  EASY, LOW PRIORITY
+
+* Move field initialization from another mesh to C++.  TODO in
+  femesh.spy.  EASY, LOW PRIORITY
+
+* Don't always call setData() in setParams(), or have setData()
+  determine if it has anything to recompute.  TODOs in
+  contourdisplay.py.  HARD, HIGH PRIORITY
+
+* Move the whole Output mechanism to C++.  TODO in contourdisplay.py.
+  HARD, HIGH PRIORITY
+
+* Don't call cellData() too often.  TODO in displaymethods.py.  HIGH
+  PRIORITY
+  
+* Check that MeshGridSource::GetGrid() isn't called too often.  TODO
+  in gridsource.C.  This may be the same as the cellData TODO.  HIGH
+  PRIORITY
+
+* Cache the sequence computed by DirectorWidget.loop_check.  TODO in
+  boundarybuilderGUI.py.  LOW PRIORITY
+
+* Cache the view when moving the mouse in the pin nodes toolbox.  TODO
+  in pinnodesGUI.py.  EASY?  LOW PRIORITY
+
+* Check that SkeletonPage.update() isn't being called too often.  TODO
+  in skeletonPage.py.  LOW PRIORITY
+
+* Use couriers when assigning materials to voxels.  TODO in
+  materialmenu.py.  EASY?  HIGH PRIORITY
+
+* Various optimizations in abaqus output.  TODOs in meshIO.py.  EASY,
+  LOW PRIORITY
+
+* Check that iterables are used instead of lists in all Outputs.  Also
+  check to see if doing so makes the code run faster.  Need way to get
+  the length of an iterable to enable progress bars. TODO in
+  output.py, outputClones.py.  HARD? HIGH PRIORITY
+
+* Move _auto_group to C++.  TODO in skeletongroupmenu.py.  EASY?  LOW
+  PRIORITY
+
+* Move body of _query_element_group to C++.  TODO in
+  skeletongroupmenu.py.  EASY?  LOW PRIORITY
+
+* Write data directly from C++ in skeletonIO.py?  HARD, LOW PRIORITY
+
+* Use timestamps to avoid recomputing rhs and matrices when possible.
+  TODOs in linearizedsystem.C. EASY?  HIGH PRIORITY?
+
+* Copy-on-write semantics for SparseMats when cloning
+  LinearizedSystems.  TODO in linearizedsystem.C.  HARD, HIGH PRIORITY
+
+* Change dof order for ForwardEuler and RK to reduce copies.  TODO in
+  linearizedsystem.C.  HARD, LOW PRIORITY
+
+* Change dof order in StaticDriver and _StaticStepper to eliminate
+  data copies.  TODO in staticstep.py.  EASY?  HIGH PRIORITY
+
+* Reduce copying in LinearizedSystem::C_MCKa() by passing map args to
+  SparseMat::tile().  EASY?
+
+* Reduce calls to LinearizedSystem::profile_rhs.  TODO in
+  linearizedsystem.C.  EASY?  LOW PRIORITY
+
+* Eliminate return value for set_unknowns_MCK*?  TODO in
+  linearizedsystem.h.
+
+* Cache and re-use preconditioners.  TODO in matrixmethod.py.  EASY?
+  LOW PRIORITY
+
+* Move switchboard calls out of mesh.py.  TODO in mesh.py.  EASY, LOW
+  PRIORITY
+
+* Don't reallocate vectors and matrices for residual, jacobian, etc.
+  TODOs in nonlinearsolvercore.py.  EASY, LOW PRIORITY
+
+* Unroll the loop in Elasticity::static_flux_value.  TODO in
+  elasticity.C.  EASY
+
+* Cache the values of Property::is_computable() in subproblems.  TODO
+  in csubproblem.C.  EASY, LOW PRIORITY
+
+* Use partial sums for Rank3Tensor::transform.
+
+* Don't convert set to list in SkeletonContext.createPointBoundary.
+  EASY, LOW PRIORITY
+
+* Move GenericGroupSet to C++.  TODO in skeletongroups.py.  HARD? HIGH
+  PRIORITY
+
+* Move SelectionBase, Selection, PinnedNodeSet and PinnedNodeSelection
+  to C++.  Eliminate the retrieve(), select(), deselect(), toggle(),
+  and invert() functions in Python.  TODOs in skeletonnode.py,
+  skeletonselectable.py.  HARD, HIGH PRIORITY
+  
+* Don't send "redraw" from Selection.signal().  TODO in
+  skeletonselectable.py.   EASY, HIGH PRIORITY
+
+* Use a courier in PixelElementSelect.  TODO in
+  skeletonselectionmethod.py.  HIGH PRIORITY?
+
+* Move much of skeletonselectionmod.py to C++ and use couriers.  HARD,
+  HIGH PRIORITY
+
+* Improve NodeFromSelectedElements.getExteriorNodes, maybe.  TODO in
+  skeletonselectionmod.py.  EASY, LOW PRIORITY
+
+* Cache the result of SmallSystem::_set_index()?  Probably not worth
+  the effort, but it could be tested.  TODO in smallsystem.h.  EASY,
+  LOW PRIORITY
+
+* Don't call consolidate() inside SparseMatCore::add().  EASY
+
+* Check only BCs for the relevant subproblem in
+  SubproblemContext.timeDependentBCs.  EASY?  LOW PRIORITY
+
+* Only recompute changed matrices in make_linear_system.  TODOs in
+  subproblemcontext.py.  HARD, HIGH PRIORITY
+
+* Don't call float_contrib_rhs unnecessarily.   TODO in
+  subproblemcontext.py.  HARD, HIGH PRIORITY?
+
+* Re-use the endValues array in endStep.  TODO in
+  subproblemcontext.py.  EASY, LOW PRIORITY
+  
+* Get rid of factor of 0.9 in nextStepEstimate?  TODO in
+  timestepper.py.  EASY?
+
+* Save and load image data without converting to a python list of
+  ints.  TODOs in imageIO.py.  HARD, HIGH PRIORITY
+
+* Store image data in a compressed format.  TODO in imageIO.py.  HARD,
+  HIGH PRIORITY
+
+* In data files, store only gray values for gray images.  TODO in
+  imageIO.py. EASY?  HIGH PRIORITY
+
+* In memory, store only gray values for gray images.  TODO in
+  oofimage3d.C.  HARD
+
+* Use more bounding box info in CSkeletonElement::categoryVolumes().
+  TODO in categoryVolumes().  EASY, HIGH PRIORITY
+
+* Rewrite convexPolyIntersection.  There's a simpler way.  TODO in
+  cskeletoneleement.C.  EASY?  HIGH PRIORITY
+  
+
+End Optimizations
+--------------------------------------------------------------------------
+--------------------------------------------------------------------------
+Other Infrastructure Improvements:
+
+
+(These are mostly invisible to the user but might make our lives
+easier.)
+
+* Upgrade to vtk6.  HARD?
+
+* Don't #include activearea.h in cmicrostructure.h.  Reduce
+  dependencies on pixelsetboundary.h.    EASY  **DONE**
+
+* Use Coord typemap in ghostoofcanvas.swg.  EASY
+
+* Use only the RegisteredClass version of Units in common/units.py.  EASY
+
+* Change the xxxxVec "in" typemaps so that they work on all types of
+  python iterables, not just lists and tuples.  HARD?
+
+* Remove redundant ICoordVector typedef.  TODO in coord.h.  EASY
+
+* Get rid of the Point and iPoint classes, and just use swigged Coord
+  and ICoord in python.  Are there really cases where we need Point
+  and iPoint, where the swig overhead will be too high?  TODOs in
+  common/typemap.swg.   EASY?
+
+* Create a C++ implementation of ConvertibleRegisteredClasses.  TODO
+  in direction.spy.  HARD?
+
+* A bunch of TODOs in display.py.
+
+* DisplayMethods that need to lock their sources need some major
+  reworking.  TODOs in display.py and skeletonselectdisplay.py.
+  HARD!, LOW PRIORITY (because it doesn't seem to be a problem somehow)
+
+* Add an intermediate base class for SolidFilledGridCanvasLayer and
+  ContourGridCanvasLayer.  LOW PRIORITY
+
+* Fix a potentially confusing WidgetScope issue.  TODO in
+  widgetscope.py.  LOW PRIORITY
+
+* Derive OOFcerr from CoutType.  TODO in oofcerr.h.
+
+* Better LAPACK-compatible dense symmetric matrix class.  TODO in
+  smallmatrix.C.  LOW PRIORITY
+
+* Make oofcerr, derefprint, and derefkeyprint compatible with
+  std::setprecision.  TODOs in printvec.h and oofcerr.h.  LOW PRIORITY
+
+* Add Point2D class (unless we get rid of Point altogether).  TODO in
+  primitives.py.  LOW PRIORITY
+
+* Update comments in pixelattribute.h.
+
+* Lock on WhoClass LabelTree.  TODO in whoville.py.  HIGH PRIORITY,
+  EASY
+
+* Simplify _findLineNo in scriptloader.py.  LOW PRIORITY
+
+* Use a python property for AutomaticNameParameter.  TODO in
+  parameter.py.  LOW PRIORITY, EASY
+
+* Refactor Rationalize classes to eliminate callback functions, and
+  other minor rationalize fixes.  TODO in crationalizers.C.  EASY, LOW
+  PRIORITY
+
+* Don't use hard-coded divisions in CSkeleton::get_point_locator().
+
+* Change name of CSkeletonBase::getConstSegmentElements().  EASY
+
+* Swigged enum classes so that C++ and Python automatically agree.
+  TODO in cskeleton2.h, cskeleton2.spy, and probably elsewhere.  HARD,
+  LOW PRIORITY
+
+* Fix name of CSkeletonEdgeBoundary::getSegments(), getFaces().  TODOs
+  in cskeletonboundary.h. EASY, LOW PRIORITY
+
+* IntersectionPoint subclasses.  TODOs in cskeletonelement.C.  EASY,
+  LOW PRIORITY
+
+* Use CRectangularPrism::swallow in
+  CSkeletonElement::categoryVolumes.  EASY, LOW PRIORITY
+
+* Add a Skeleton filter that uses E(alpha), not just homogeneity.
+  EASY, HIGH PRIORITY
+
+* TODO in cskeletonnode2.h re HomogeneityFilter.  EASY, LOW PRIORITY
+
+* TODOs in cskeletonnode2.h and cskeletonnode2.swg re pinning: move to
+  CSkeleton, provide arg for operation, etc.  EASY, LOW PRIORITY
+
+* Remove OrientedCSkeletonSegment::segSequence(). TODO in
+  cskeletonsegment.h.   EASY?
+
+* Use std::set instead of std::list for CSkeletonSelectable::parents?
+  TODO in add_parent() cskeletonselectable.C.
+
+* Change type of CSkeletonSelectableList to std::set or std::map?
+  TODO in cskeletonselectable.h.  Need to profile.  EASY? 
+
+* Change names of MAP_DOWN, MAP_UP.  TODO in cskeletonselectable.h.
+  EASY, LOW PRIORITY
+
+* Get rid of redundancy in BoundaryEdge and MasterElement1D.  TODO in
+  edge.C.  LOW PRIORITY
+
+* Have two kinds of sets of edges, sequencable and not.  When applying
+  BCs to a non-sequencable set, don't use cumulative length.  TODO in
+  edgeset.C.  HARD, LOW PRIORITY
+
+* Use a different kind of Location object for Faces.  TODO in
+  edgeset.spy.  EASY
+
+* Move getSegmentNode out of the Element class.  TODO in element.h.
+  EASY?, LOW PRIORITY
+
+* Make sure that FEMesh::getGrid and FEMesh:getMaterialCellData loop
+  over elements in the same order.  TODO in femesh.py.  LOW PRIORITY
+
+* Add MeshIterator.getValue().  TODO in FEMeshContainerIterator in
+  femesh.spy.  EASY?, LOW PRIORITY
+
+* Get rid of Field::setvalue().  TODO in field.swg.  EASY?, LOW
+  PRIORITY
+
+* Make the swigged IteratorP a real python iterator.  Or swig
+  FieldIndex and FieldIterator instead.  TODOs in fieldindex.swg and
+  pyelasticity.py.  HIGH PRIORITY, HARD?
+
+* Remove planarity arg for VectorFlux::iterator.  TODO in flux.C.
+  EASY, LOW PRIORITY
+
+* Make Flux::contract() return an OutputValue.  TODO in flux.C. EASY,
+  LOW PRIORITY
+
+* Handle "Skeleton changed" and "mesh data changed" signals in correct
+  scope.  TODOs in displaymethods.py.  EASY, LOW PRIORITY
+
+* Remove meshctxt arg from DisplayMethod.getTime(). TODO in
+  displaymethods.py.  EASY, LOW PRIORITY
+
+* Change return type of DirectorWidget.loop_check.  TODO in
+  boundarybuilderGUI.py.  EASY, LOW PRIORITY
+
+* Simplify the Cijkl widget classes.  EASY? LOW PRIORITY
+
+* Derive MeshInfoModeGUI subclasses from the corresponding
+  MeshInfoMode subclasses.  TODO in meshinfoGUI.py.  LOW PRIORITY
+  
+* Common base class for MeshInfoDisplay and SkeletonInfoDisplay.
+  EASY, LOW PRIORITY
+
+* TODO re type checking hack in output.py.  LOW PRIORITY
+
+* Make the swigged IteratorP a real python iterator.  TODOs in
+  fieldindex.swg and outputClones.py.  HARD-ish, HIGH PRIORITY
+
+* PropertyOutputs should be computed by plug-ins.  TODO in
+  propertyoutput.C.  HARD, LOW PRIORITY
+
+* Invariants for ThreeVectorPropertyOutputs.  TODO in
+  propertyoutput.spy.  EASY, LOW PRIORITY
+
+* In SkeletonBdyDisplayBase, move canvaslayer calls to C++.  TODO in
+  skeletonbdydisplay.py.  EASY
+
+* Use BoolParameter instead of IntParameter for the exterior arg to
+  boundary construction commands in skeletonIO.py.  EASY, LOW PRIORITY
+
+* Eliminate the alpha channel from all color classes, since we don't
+  use translucent images.  Have opacity always be a separate parameter
+  when setting colors of other objects (it may already be separate).
+  Combine color.py and ccolor.C to reduce redundancy.  TODO in
+  skeletonselectdisplay.py and elsewhere?  LOW PRIORITY
+
+* Share code between _copy_subproblem and _edit_subproblem.  TODO in
+  subproblemmenu.py  EASY, LOW PRIORITY
+
+* Eliminate MasterEndPoint and CCurve, and maybe other classes that
+  only existed to support the obsolete contouring machinery.  TODO in
+  mastercoord.h.   EASY
+
+* Construct MasterFaces in MasterElement3D constructor?  TODO in
+  masterelement.C.   EASY?  LOW PRIORITY
+
+* Remove "fields" arg to Material.nonlinear().  TODO in material.spy.
+  EASY
+
+* Simplify classes in meshiterator.h using templates and/or mix-ins.
+  HARD?  LOW PRIORITY
+
+* Fix ugly FuncNode::fieldNames.  TODO in node.C.  LOW PRIORITY
+
+* Change Node::index_ to Node::uid.  TODO in node.h.  EASY, LOW
+  PRIORITY
+
+* Reduce redundancy between Coord, DoubleVec, and VectorOutputVal.
+  TODO in outputval.h.   HARD, LOW PRIORITY
+
+* Move energy calculations from Property classes to Flux classes.
+  TODO in outputval.h.  HARD, LOW PRIORITY
+
+* Merge OOF2 and OOF3D.  HARD
+
+* Get rid of the PointData class.  TODO in pointdata.C.  EASY, LOW
+  PRIORITY
+
+* Use Coord args for nonlin_stress and nonlin_heat_source.  TODOs in
+  general_nonlinear_elasticity.C and nonlinear_heat_source.C. EASY,
+  LOW PRIORITY
+
+* Resolve the indexing mess in Python Properties.  TODOs in
+  pyelasticity.py and other python property files.  HARD
+
+* We need a better way to get the values of fields when they're used
+  in nonlinear and field-dependent properties.  TODOs in thermo.C,
+  thermalexpansion.C, and nonlinear_force_density.C.  HIGH PRIORITY
+
+* Get rid of the Cijkl typemaps in thermo.swg and visco.swg.  EASY
+
+* Fix strange PropertyRegistration class hierarchy.  TODO in
+  propertyregistration.py.  EASY, LOW PRIORITY
+
+* Rank3Tensor*vector is defined twice.  Re-use code.  TODO in
+  rank3tensor.C.  EASY
+
+* Don't treat nrows like a variable in Rank3Tensor.  TODO in
+  rank3tensor.h.  EASY, LOW PRIORITY
+
+* Generic versions of try_appendETC for all boundary types.  TODO in
+  skeletonboundary.py.  LOW PRIORITY
+
+* Remove timestamp from SkelContextBoundary if it's not used.  TODO in
+  skeletonboundary.py.  EASY
+
+* Remove kludge from SkelContextBoundary.boundary().  TODO in
+  skeletonboundary.py.  EASY
+
+* Add an OrientableBoundary class.  TODO in skeletonboundary.py.  EASY
+
+* Remove bdyselected timestamp from SkeletonContext if not used.  EASY
+
+* Call implied_select directly from SkeletonContext.pushModification.
+  TODO in skeletoncontext.py.  EASY
+
+* Call unSyncMeshes from undoHookFn, maybe.  TODO in
+  skeletoncontext.py.  EASY, LOW PRIORITY
+
+* Remove extra args from SkeletonContext.createEdgeBoundary[3D]?
+  EASY, LOW PRIORITY
+
+* Store all boundaries in a single dict in SkeletonContext, and use
+  virtual methods to clean up SkeletonContext.removeBoundary,
+  renameBoundary, getBoundary.  EASY, LOW PRIORITY
+
+* Use virtual function calls in GenericGroupSet.new_skeleton.  TODO in
+  skeletongroups.py.  EASY
+
+* Use common base classes for Skeleton selection operations.  TODO in
+  skeletonselectionmod.py.  EASY?  LOW PRIORITY
+
+* Split SmallSystem into two classes.  Make data private.  TODOs in
+  smallsystem.h.  LOW PRIORITY
+
+* Different varieties of SparseMat, with different row
+  representations.  TODO in sparsemat.C.  EASY
+
+* Use SparseMatCore copy constructor in SparseMat::clone().  EASY, LOW
+  PRIORITY
+  
+* Common base classes for SparseMat iterator types.  TODO in
+  sparsemat.h.  EASY, LOW PRIORITY
+
+* Equations need to generate their own error messages.  TODO in
+  subproblemcontext.py.  EASY, LOW PRIORITY (until plasticity).
+
+* Derive StaticNLFuncs from NLData?  TODO in subproblemcontext.py.
+  EASY, LOW PRIORITY
+
+* Better SubProblemParameter.  TODO in subproblemcontext.py.  HARD,
+  LOW PRIORITY
+
+* Allow steppers that evaluate matrices only in the middle of a time
+  step.  TODO in timestepper.py.  HARD, LOW PRIORITY (until we need
+  such a stepper).
+
+* Create classes for different types of storage for unknowns. Clean up
+  dispatch routines for LinearizedSystem methods.  TODOs in
+  timestepper.py.  EASY?  LOW PRIORITY
+
+* Break up engine/typemaps.swg so that there aren't so many #includes
+  in the generated C++ files.  EASY, HIGH PRIORITY
+  
+* Change CSkeletonElementSet typemap so that it creates a Python set,
+  not a list.  TODO in engine/typemaps.swg.  EASY, HIGH PRIORITY
+
+* Check that the importer in the second OOFImage3D constructor is
+  being destroyed.  Same for exporter in getPixels.  TODOs in
+  oofimage3d.C.  EASY?  LOW PRIORITY
+
+* Create separate subclasses of TetIntersectionPoint for node
+  intersections and edge intersections.  TODO in
+  findTetPlaneIntersectionPoints in cskeletonelement.C.  LOW PRIORITY
+
+End Infrastructure Improvements
+--------------------------------------------------------------------------

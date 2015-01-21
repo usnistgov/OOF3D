@@ -1,0 +1,40 @@
+# -*- python -*-
+# $RCSfile: massdensity.spy,v $
+# $Revision: 1.7.8.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:45:59 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.engine import propertyregistration
+PropertyRegistration = propertyregistration.PropertyRegistration
+
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.engine import problem
+
+import types
+from ooflib.SWIG.common import config
+
+
+reg = PropertyRegistration(
+    name='Mechanical:MassDensity:ConstantMassDensity',
+    subclass=MassDensityProp,
+    modulename="ooflib.SWIG.engine.property.massdensity.massdensity",
+    ordering=100,
+    params=[parameter.FloatParameter('rho', 1.0, tip="Mass density")],
+    propertyType="MassDensity",
+    tip="Uniform mass density.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/massdensity.xml'))
+
+
+reg.eqnInfo(equations=[problem.ForceBalanceEquation],
+            fields=[problem.Displacement],
+            time_derivs=[2])

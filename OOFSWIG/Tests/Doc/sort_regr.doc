@@ -1,0 +1,84 @@
+Sorted Documentation
+
+This file tests SWIG's documentation sorting 
+
+1.  C Section
+=============
+
+$A
+        [ Global : int A ]
+
+$B
+        [ Global : int B ]
+
+$before
+        [ Global : int before ]
+
+1.1.  D subsection
+------------------
+
+1.1.1.  G subsubsection
+
+
+1.1.2.  M subsubsection
+
+
+1.2.  K subsection
+------------------
+
+$LATER
+        [ Global : int LATER ]
+
+1.3.  Y subsection
+------------------
+
+$d
+        [ Global : int d ]
+
+$f
+        [ Global : int f ]
+
+2.  F Section
+=============
+Comment for F section 
+
+3.  Not sorted
+==============
+This section isn't sorted 
+
+$nd
+        [ Global : double nd ]
+        Comment for nd 
+
+$nc
+        [ Global : double nc ]
+        Comment for nc 
+
+$nb
+        [ Global : double nb ]
+
+$na
+        [ Global : double na ]
+
+4.  Q Section
+=============
+This section is should be sorted even though last one wasn't 
+
+$qa
+        [ Global : double qa ]
+
+$qb
+        [ Global : double qb ]
+
+$qc
+        [ Global : double qc ]
+
+$qd
+        [ Global : double qd ]
+
+5.  X Section
+=============
+
+zip 
+        [ returns double  ]
+

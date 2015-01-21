@@ -1,0 +1,5 @@
+# OOF version 2.0
+FileVersion(number=1.0, format='ascii')
+Microstructure.New(name='save_test', size=Point(2.5,3.5), isize=iPoint(10,10))
+Microstructure.Categories(microstructure='save_test', categories=[[0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+Microstructure.EndCategories(microstructure='save_test')

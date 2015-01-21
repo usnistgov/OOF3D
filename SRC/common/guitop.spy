@@ -1,0 +1,31 @@
+# -*- python -*-
+# $RCSfile: guitop.spy,v $
+# $Revision: 1.2.20.2 $
+# $Author: langer $
+# $Date: 2011/10/19 19:29:41 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+# Lots of other graphics components need to be able to find the
+# component at the top of the widget heirarchy.  This is it.  Checking
+# to see if 'top' is non-None is a good way to see if the graphics
+# system is up and running.  That's why this file is here, in common,
+# instead of in common/IO/GUI.
+
+_top = None
+
+def setTop(topp):
+    global _top
+    _top = topp
+
+def top():
+    return _top
+
+## setMainLoop() and getMainLoop say whether or not the mainloop is
+## installed and running.  They're now swigged C++ functions.

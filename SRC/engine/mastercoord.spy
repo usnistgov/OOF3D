@@ -1,0 +1,52 @@
+# -*- python -*-
+# $RCSfile: mastercoord.spy,v $
+# $Revision: 1.3.10.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:44:28 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.SWIG.common import config
+
+if config.dimension() == 2:
+    MasterCoordPtr.__repr__ = lambda self: "MasterCoord(%s,%s)" % (
+        self[0], self[1])
+
+    def _MasterCoord___cmp__(self, other):
+        if not isinstance(other, MasterCoordPtr): return -1
+        if self[0] < other[0]: return -1
+        if self[0] > other[0]: return 1
+        if self[1] < other[1]: return -1
+        if self[1] > other[1]: return 1
+        return 0
+
+    def _MasterCoord___hash__(self):
+        return hash(self[0]) & hash(self[1])
+
+else:                           # 3D
+    MasterCoordPtr.__repr__ = lambda self: "MasterCoord(%s,%s,%s)" % (
+        self[0], self[1], self[2])
+
+    def _MasterCoord___cmp__(self, other):
+        if not isinstance(other, MasterCoordPtr): return -1
+        if self[0] < other[0]: return -1
+        if self[0] > other[0]: return 1
+        if self[1] < other[1]: return -1
+        if self[1] > other[1]: return 1
+        if self[2] < other[2]: return -1
+        if self[2] > other[2]: return 1
+        return 0
+
+    def _MasterCoord___hash__(self):
+        return hash(self[0]) & hash(self[1]) & hash(self[2])
+
+MasterCoordPtr.__cmp__ = _MasterCoord___cmp__
+
+
+MasterCoordPtr.__hash__ = _MasterCoord___hash__

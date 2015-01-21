@@ -1,0 +1,626 @@
+(* 
+   $RCSfile: bounds_6node.math,v $
+   $Revision: 1.3 $
+   $Author: reida $
+   $Date: 2001/02/02 14:08:30 $
+            *)
+
+(* Modification of the 4-element Mathematica code to do
+   3-element nodes.  This is primarily to facilitate
+   testing by comparisons against the first version of
+   OOF, which can only do 3-node linear elements.  *)
+
+
+(* The basic approach is to set up both bulk-integrating
+   and line-integrating machinery, using the same set of 
+   nodes. *)
+
+(* The physics of the system, at least initially, will be 
+   2D stress and strain. *)
+
+(**********************************************************************)
+(*************************  GEOMETRY **********************************)
+(**********************************************************************)
+
+
+Nodes:=
+{{0, 0}, {1/6, 0}, {1/3, 0}, {1/2, 0}, {2/3, 0}, {5/6, 0}, {1, 0}, {0, 1/6}, 
+ {1/6, 1/6}, {1/3, 1/6}, {1/2, 1/6}, {2/3, 1/6}, {5/6, 1/6}, {1, 1/6}, 
+ {0, 1/3}, {1/6, 1/3}, {1/3, 1/3}, {1/2, 1/3}, {2/3, 1/3}, {5/6, 1/3}, 
+ {1, 1/3}, {0, 1/2}, {1/6, 1/2}, {1/3, 1/2}, {1/2, 1/2}, {2/3, 1/2}, 
+ {5/6, 1/2}, {1, 1/2}, {0, 2/3}, {1/6, 2/3}, {1/3, 2/3}, {1/2, 2/3}, 
+ {2/3, 2/3}, {5/6, 2/3}, {1, 2/3}, {0, 5/6}, {1/6, 5/6}, {1/3, 5/6}, 
+ {1/2, 5/6}, {2/3, 5/6}, {5/6, 5/6}, {1, 5/6}, {0, 1}, {1/6, 1}, {1/3, 1}, 
+ {1/2, 1}, {2/3, 1}, {5/6, 1}, {1, 1}};
+
+
+(* 1 x 1 comparison with OOF *)
+
+(* Nodes:={{ 0, 0}, { 1, 0}, { 0, 1}, {1, 1}} *)
+
+
+(* Elements:={{1,2,3},{2,4,3}} *)
+
+(* Elements are defined by indexes into the node array *)
+
+Elements:={{1,2,3,9,15,8},{3,10,17,16,15,9},
+           {3,4,5,11,17,10},{5,12,19,18,17,11},
+           {5,6,7,13,19,12},{7,14,21,20,19,13},
+           {15,16,17,23,29,22},{17,24,31,30,29,23},
+           {17,18,19,25,31,24},{19,26,33,32,31,25},
+           {19,20,21,27,33,26},{21,28,35,34,33,27},
+           {29,30,31,37,43,36},{31,38,45,44,43,37},
+           {31,32,33,39,45,38},{33,40,47,46,45,39},
+           {33,34,35,41,47,40},{35,42,49,48,47,41}};
+
+
+(***********************************************************************)
+
+
+(* Boundary elements add another level of indirection.
+   This "Bdy" list either contains zero, if the corresponding
+   element does not have a nontrivial boundary condition, or
+   else it contains a list of node indices which define the
+   boundary to which the condition is applied.  These are
+   the *local* node indices, between 1 and 3, not the global
+   node indices.  Comparison to zero should be done using
+   "SameQ" so that if the comparison fails, you just get
+   "False" instead of some unwieldy expression from hell.
+
+     The reason for doing the extra indirection is that
+   you need information from the element to evaluate the
+   boundary condition.
+     In paritcular, the element machinery already knows how
+   to compute the strain, which is needed to figure out the
+   line-integral contribution to the stiffness matrix for
+   that particular boundary condition, which is the one 
+   under study at the moment.  
+     In this instance, the boundary in question is the 
+   line y=0, that is to say, the lower boundary of the
+   system, consisting of local nodes 1 and 2 of each of
+   elements 1 through 3. *)
+
+(* Boundary conditions need to be specified slightly more
+   elaborately -- 0 means stress-free, a simple list 
+   {1,2} means local nodes 1 and 2 are fixed (in both
+   dimensions, for now), and more complicated objects
+   specify more complicated boundaries.  For specified
+   flux, the BC should be {1,2,{{1,0},{0,1}}}, which means,
+   on the boundary linking node 1 and node 2, apply the
+   stress tensor.  
+   Boundary conditions are distinguished, logically,
+   by the length of their lists.  *)
+
+(* New type of boundary condition is the "generalized natural"
+   boundary condition, which for prototyping purposes, consists
+   of a spring constant and a "desired displacement" -- the 
+   BC is that the traction applied is the spring constant 
+   times the deviation of the system displacement from the
+   desired displacement.  BC is speficified by four 
+   criteria:  (1,2) the local node indices which specify 
+   the edge, (3) the scalar spring constant, and (4) 
+   a doublet indicating the zero-force displacement.
+     In principle, k need not be scalar, and everything
+   could vary with space. *)
+   
+strn:={{-1/5,0},{0,-1/5}};
+opdisp={0,1/5};
+kval=-1/5;
+
+
+(* Bdy:={0,0,{1,2,strn},0,0,0,
+      0,0,0,0,0,0,
+      0,{2,3,kval,opdisp},{1,2,-strn},{2,3,kval,opdisp},0,{2,3,kval,opdisp}} *)
+
+
+Bdy:={0,0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,0}  
+          (*  Rafferty's boundary condition *)
+
+
+(* Shape functions in the master space, assuming origin
+   at (-1,-1) and upper right hand corner at (1,1), which is
+   the usual way, shape functions are tabulated in books. *)
+
+(* xi and zeta are default coordinates in the master space.  
+   Apparently-unmotivated derivatives with respect to xi and zeta
+   may appear elsewhere because of this. *)
+
+MasterFns:={ (1-xi-zeta)*(1-2*xi-2*zeta), 4*xi*(1-xi-zeta),
+                xi*(2*xi-1), 4*xi*zeta, zeta*(2*zeta-1),
+                4*zeta*(1-xi-zeta) };
+              
+
+BdyMaster:={ (1/2)*(1-rr)*(-rr) , (1-rr^2), (1/2)*(1+rr)*rr }
+
+
+(* Elasticity:  Avoid potential errors from Voigt 
+   notation by just building the four-component matrix
+   of elastic constants.  It's supposed to have eigenstrains
+   of uxx+uyy, with coefficient cfa, and uxx-uyy and uxy with
+   coefficient cfb. *)
+
+(* There used to be a problem with factors of two in the
+   stresses, but it's fixed now.  The main thing is to 
+   arrange the coefficients so that, with two coefs only,
+   you still get isotropy.  A good exercise for the near
+   future would be to express the Poisson's ratio in 
+   terms of cfa and cfb. *)
+
+(************************************************************)
+(*********************    PHYSICS   *************************)
+(************************************************************)
+
+
+(* The idea is to have a global energy given by 
+   (1/2)*cfa* e1^2 + (1/2)*cfb * (e2^2 + e3^2), 
+   where e1=uxx+uyy, e2=uxx-uyy, e3=uxy.  This
+   combination does the job. *)
+
+cfa:=(3/2)    (* Bulk, was 3/2 *)
+
+cfb:=(1/2)    (* Shear, was 1/2 *)
+
+Cmtx:={ { {{(1/2)*(cfa+cfb), 0}, {0, (1/2)*(cfa-cfb)}}, 
+                   {{0, cfb/2},{cfb/2, 0}} },
+        {          {{0, cfb/2},{cfb/2, 0}}, 
+          {{(1/2)*(cfa-cfb), 0}, {0, (1/2)*(cfa+cfb)}} } }
+
+(* External force should be a function of x and y, not 
+   xi and zeta -- forces exist in real space. *)
+
+Forcefn[x_,y_]:={0,0}
+
+(*************************************************************)
+(*************************************************************)
+
+(* The required technique seems to be to assign values
+   to the various functions mtx[i,j], then actually build
+   the matrix from the table with Array[mtx, {N, N}]. *)
+
+(* Need a convention for mapping from nodes to DOF/RHS 
+   indices -- one-based index makes this stupid, but we can
+   survive.  2*i-1 is x-component, 2*i is corresponding
+   y component. *)
+
+(* Generate a real-space position from node indices. Result is
+   the vector {x(xi,zeta),y(xi,zeta)} *)
+
+FromMaster[el_]:={Simplify[ 
+                     Sum[Nodes[[el[[i]]]][[1]]*MasterFns[[i]], {i,1,6}]],
+                    Simplify[ 
+                     Sum[Nodes[[el[[i]]]][[2]]*MasterFns[[i]], {i,1,6}]] }
+
+
+BdyFrmMstr[bel_]:={Simplify[
+                     Sum[Nodes[[bel[[i]]]][[1]]*BdyMaster[[i]],{i,1,3}]], 
+                   Simplify[
+                     Sum[Nodes[[bel[[i]]]][[2]]*BdyMaster[[i]],{i,1,3}]] }
+
+(* Jacobian of the coordinate transformation -- unfortunately
+   "Jacobian" is a Mathematica reserved word.  Just for 
+   clarity, what this means in the coords here is:
+   
+    (df/dxi, df/dzeta) = J.(df/dx, df/dy)     
+
+   If we stick to linear elements, this should always
+   be a matrix of constants, but the general case may be of some
+   interest later.   *)
+
+Jacobn[el_]:=Module[{evec},
+  evec=FromMaster[el];
+  {{D[evec[[1]],xi], D[evec[[2]],xi]},
+   {D[evec[[1]],zeta], D[evec[[2]],zeta]}} ]
+
+
+(* For boundary case, there's only one dimension in the
+   master space, so the Jacobian is a vector.  
+   It's still true that (df/drr) = J.(df/dx, df/dy). *)
+(* The "bel" here is a (two-element) list of global node numbers. *)
+
+BJacbn[bel_]:=Module[{evec},
+  evec=BdyFrmMstr[bel];
+  {D[evec[[1]],rr], D[evec[[2]],rr]} ]
+
+
+(* A handy component-selection tool for Fklm. *)
+
+
+Slct[k_,m_]:=If[ ((k==1)&&(OddQ[m]))||((k==2)&&(EvenQ[m])), 1, 0]
+
+
+
+
+
+(* The object Fklm is the strain tensor as it appears
+   in the integrand, for both the bulk and boundary
+   terms.  k and l are ordinary spatial indices, and m
+   index the degree of freedom, i.e. the column of the
+   stiffness matrix.  Odd m's correspond to the x component
+   of the displacement field, and even m's to the y component,
+   in node order starting from 1. *)
+
+(* Fklm will only be called for those m's which are relevant in
+   a given element.  "el" is the element, "m" is the global
+   degree of freedom index, and "idx" is the index, for *this*
+   element, of the shapefunction corresponding to the node 
+   idicated by m.
+
+   Nonsensical calls are not checked for.   *)
+
+Fkl[el_,m_,idx_]:=Module[{tbl},
+  tbl:=Table[ Slct[k,m]*Inverse[Jacobn[el]].
+              {D[MasterFns[[idx]],xi],D[MasterFns[[idx]],zeta]}, {k,1,2}];
+  (1/2)*(tbl+Transpose[tbl]) ]
+
+
+(* Variant Bfkl is for boundaries.  It's similar to Fkl, but
+   it should return a function of xi only, with xi running 
+   from -1 to 1 along the appropriate boundary.  We can do this
+   because we know (a) the sequence of local indices in 
+   master space, and (b) the starting local index for the
+   edge, because that's what gets passed in.  *)
+
+(* The notation of the "switch" statement is confusing.
+   The idea is that you should transform coordinates so that
+   as the new xi goes from -1 to 1, you traverse the boundary
+   from start to finish.  The new xi has no relationship to 
+   the old xi, it's just the canonical variable name in 
+   the master space of the boundary element.  If it helps,
+   think of it as a different variable entirely. *)
+
+Bfkl[el_,m_,bel_,cmp_]:=Module[{tbl,idx,strain},
+  idx=bel[[cmp]];
+  tbl:=Table[ Slct[k,m]*Inverse[Jacobn[el]].
+              {D[MasterFns[[idx]],xi],D[MasterFns[[idx]],zeta]},{k,1,2}];
+  strain=(1/2)*(tbl+Transpose[tbl]);
+  
+  Switch[ bel, 
+      {1, 2},  strain /. {zeta->0, xi->(rr+1)/2},
+      {2, 3},  strain /. {xi->(1-rr)/2, zeta->(1+rr)/2},
+      {3, 1},  strain /. {xi->0, zeta->(1-rr)/2}  ]
+]  
+
+
+(* Test-function differentiator, takes derivative with respect to 
+   real-space components of the shape function idx for element el.
+   Returns a vector, with the order (d/dx, d/dy).  *)
+
+Tset[el_,idx_]:=Module[{},
+   Inverse[Jacobn[el]].{D[MasterFns[[idx]],xi],D[MasterFns[[idx]],zeta]} ]
+
+
+
+
+(* Integrator.  If we're sticking to quadrilateral elements,
+   master space is always from -1 to 1 in both dimensions. *)
+
+(* For 3-node elements, master space is the triangle whose
+   sides are the unit interval on the x axis, the unit interval
+   on the y axis, and the line x=1-y. *)
+
+Igt[arg_,el_]:=Integrate[ Integrate[ 
+                 arg*Det[Jacobn[el]],{xi,0,1-zeta}],{zeta,0,1}]
+
+
+(* Boundary integrator.  More complicated -- the magnitude of
+   the "Jacobian vector" normalizes lengths.  This is something
+   of a trap, but should be OK for linear 1D shape functions, 
+   where everything is really a constant. *)
+
+(* Again, bel should be a two-element list of global node numbers. *)
+Bigt[arg_,bel_]:=Module[{bvc},
+  bvc=BJacbn[bel];
+  Integrate[ arg*Sqrt[bvc.bvc], {rr,-1,1}]
+]
+
+
+(* Index-contraction routine, because Mathematica insists on contracting
+   adjacent indices only. *)
+  
+Ctrct[stf_,strn_]:=Module[{i,j,k,l},
+  Table[ Sum[Sum[ stf[[i]][[j]][[k]][[l]]*strn[[k]][[l]], {l,1,2}],{k,1,2}],
+          {i,1,2},{j,1,2}] ]
+
+
+
+
+(* Element-handling routine.  For a given element, for each 
+   degree of freedom, this routine first builds the strain
+   tensor contribution, multiplies it by the elastic
+   stiffness (to get what OOF calls the "flux matrix"),
+   then figures out the rows and contracts all indices 
+   except those which index the global stiffness matrix.
+   Then, it performs the integration. *)
+
+(* Variables a bit weird -- "ukl" is strain tensor, "flux" is 
+   Cijkl*ukl, a 2x2 tensor.  "tvec" is the vector of real-space
+   derivatives of the current shape function, and igand is the
+   vector of integrands, one for each compoenent of the 
+   corresponding force. *)
+
+Elcontrib[el_]:=Module[{i,j,m,p,ukl,flux,tvec,igand,fvec,xy},
+  xy=FromMaster[el];
+  For[i=1,i<=6,i++,
+    m=2*el[[i]]-1;  (* X-component *)
+
+(* Forces are already on the right-hand side, no sign change. *)
+    fvec=Forcefn[xy[[1]],xy[[2]]]; 
+    rhs[m]-=Igt[fvec[[1]],el];
+    rhs[m+1]-=Igt[fvec[[2]],el];
+
+    ukl=Fkl[el,m,i];
+    flux=Ctrct[Cmtx,ukl];
+    For[j=1,j<=6,j++,
+      tvec=Tset[el,j];
+      igand=tvec.flux;  (* Left-multiply -- shouldn't matter. *)
+      p=2*el[[j]]-1;                       (* For x-component *)
+      stiffness[p,m]-=Igt[igand[[1]],el];
+      stiffness[p+1,m]-=Igt[igand[[2]],el]; (* y-component *)    
+    ];
+    m=m+1; (* y-component *)
+    ukl=Fkl[el,m,i];
+    flux=Ctrct[Cmtx,ukl];
+    For[j=1,j<=6,j++,
+      tvec=Tset[el,j];
+      igand=tvec.flux;
+      p=2*el[[j]]-1;
+      stiffness[p,m]-=Igt[igand[[1]],el];
+      stiffness[p+1,m]-=Igt[igand[[2]],el];
+    ];
+  ];
+]
+
+(* Boundary contribution.  "gbel" is where all the indirection
+   is resolved, and is itself a list global nodelist numbers.
+   In some cases (i.e. the call to Fkl) you need the local
+   (to the element) nodelist number -- this is blist[[i]] *)
+ 
+(* "cvec" is the normalized vector (in xy-space) which points
+   along the length of the boundary, and "nrm" is the right-side
+   normal. *)
+
+(* In fact, the actual vector cvec is never needed for the
+   force integration, because the integrator Bigt takes care
+   of the lengths, and the normal takes care of the 
+   orientation.  
+     The minus sign is so that you are in fact getting the
+   applied force. *)
+
+ 
+Bdycontrib[el_,blist_]:=Module[{gbel,i,j,m,p,flux,colfn,cvec,cmag,nrm,igand},
+
+  If[(Length[blist]==4),
+ 
+    gbel={el[[blist[[1]]]],el[[blist[[2]]]],el[[blist[[3]]]]};
+
+    cvec=Nodes[[gbel[[3]]]]-Nodes[[gbel[[1]]]];
+    cmag=Sqrt[cvec.cvec];
+    cvec=cvec/cmag;
+    nrm={cvec[[2]], -cvec[[1]]};
+
+    flux=blist[[4]];
+    For[j=1,j<=3,j++,
+      p=2*gbel[[j]]-1;
+      igand=BdyMaster[[j]]*(nrm.flux);
+      rhs[p]-=Bigt[igand[[1]],gbel];
+      rhs[p+1]-=Bigt[igand[[2]],gbel];
+    ];
+  ];
+
+
+  If[(Length[blist]==5),
+    gbel={el[[blist[[1]]]],el[[blist[[2]]]],el[[blist[[3]]]]};
+    cvec=Nodes[[gbel[[3]]]]-Nodes[[gbel[[1]]]];
+    cmag=Sqrt[cvec.cvec];
+    cvec=cvec/cmag;
+    nrm={cvec[[2]],-cvec[[1]]};
+    For[i=1,i<=3,i++,
+      rowfn=BdyMaster[[i]]; 
+      m=2*gbel[[i]]-1;
+      rhs[m]+=Bigt[rowfn*blist[[3]]*blist[[4]][[1]],gbel];
+      rhs[m+1]+=Bigt[rowfn*blist[[3]]*blist[[4]][[2]],gbel];
+      For[j=1,j<=3,j++,
+        p=2*gbel[[j]]-1;
+        colfn=BdyMaster[[j]];
+        (* Matrix contrib is only nonzero if components match! *)
+        stiffness[p,m]+=Bigt[rowfn*colfn*blist[[3]],gbel];
+        stiffness[p+1,m+1]+=Bigt[rowfn*colfn*blist[[3]],gbel];
+      ];
+    ];
+  ];      
+]
+
+
+(* Iterate over elements, plus actually
+   building up the stiffness matrix from the functional
+   components.  *)
+
+MakeMatrix:=Module[{},
+  GStiffness:=Array[stiffness,{2*Length[Nodes], 2*Length[Nodes]} ]]
+
+MakeRHS:=Module[{},
+  GRHS:=Array[rhs,{2*Length[Nodes]}] ]          
+
+(*******************************************************************)
+(******************************** MAIN *****************************)
+(*******************************************************************)
+      
+Main:=Module[{i,j,el},
+  For[i=1,i<=2*Length[Nodes],i++,
+    rhs[i]=0;
+    For[j=1,j<=2*Length[Nodes],j++,
+      stiffness[i,j]=0;
+    ];
+  ];
+
+  For[i=1,i<=Length[Elements],i++,
+    el=Elements[[i]];
+    Elcontrib[el]; 
+    Bdycontrib[el,Bdy[[i]]]; 
+  ];
+
+(* Write the functions into actual matrices. *)
+  MakeMatrix[];
+  MakeRHS[];
+]
+
+(* For the fixed boundary-condition case:
+
+  Before solving, it is necessary to partition the matrix into
+known and unknown submatrices, and then solve the part you 
+actually can do, substituting the known degrees of freedom
+as required.  In the real OOF software, this will be taken
+care of by the initial user interface (to partition) and 
+the solver (to substitute correctly), but here it has to be
+done manually, so to speak.  *)
+
+(******************************************************************)
+(* Utility stuff *)
+
+(* Draw a picture of a solution.  Useful for looking at 
+   results, and also for eigenvectors of the stiffness matrix. *)
+(* sol is the input solution vector, mag is a magnification factor for
+   the displacements. *)
+(* First version just draws each element, which means all 
+   internal lines are drawn twice.   
+   Next level of sophistication is to add the undistorted
+   system, in gray. *)
+
+(* Parametrizing utility for Drawsoln.  Takes three points, 
+   and outputs a list of functions, x(t) and y(t), which 
+   connect the points as t goes from 0 to 1, suitable for
+   input to ParametricPlot.  *)
+
+(* And now, in fact, since ParametricPlot won't cooperate in 
+   changing line colors, it also manually chops up the line
+   into twenty segments, and returns a big zarkin' list 
+   of them.  This is lame, but works. *)
+
+Prmtize[x1_,x2_,x3_]:=Module[{h,ell,xvec,yvec,x2vec,x2len,x3len,acof,bcof},
+  xvec=x3-x1;
+  x2vec=x2-x1;
+  x3len=Sqrt[xvec.xvec];
+  x2len=Sqrt[x2vec.x2vec];
+  ell=(xvec.x2vec)/(x3len*x3len);
+  yvec=x2vec-((x2vec.xvec)/(xvec.xvec))*xvec;
+  h=Sqrt[yvec.yvec];
+
+  acof=-1/(ell*(1-ell));
+  bcof=-acof;
+
+  Table[ x1+xvec*t+yvec*(acof*t^2+bcof*t), {t,0,1,1/20}]
+]
+ 
+
+Drawsoln[sol_,mag_]:=Module[{i,n,el,ellist,framelist,idi,idj,idk},
+  ellist={};          (* Distorted *)  
+  framelist={};       (* Undistorted *)
+  For[i=1,i<=Length[Elements],i++,
+    el=Elements[[i]];
+    For[n=1,n<=3,n++,
+      idi=2*n-1;
+      idj=2*n;
+      idk=2*n+1;  
+      idk=If[idk>6, idk-6, idk];  (* Handles wrap-around *)
+      ellist=Append[ellist,
+          Prmtize[ Nodes[[el[[idi]]]]
+                      +mag*{sol[[2*el[[idi]]-1]],sol[[2*el[[idi]]]]},
+                    Nodes[[el[[idj]]]]
+                      +mag*{sol[[2*el[[idj]]-1]],sol[[2*el[[idj]]]]},
+                    Nodes[[el[[idk]]]]
+                      +mag*{sol[[2*el[[idk]]-1]],sol[[2*el[[idk]]]]} ]];
+
+      framelist=Append[framelist,
+          Prmtize[ Nodes[[el[[idi]]]], Nodes[[el[[idj]]]], 
+                   Nodes[[el[[idk]]]] ]] ;
+          
+      ];
+    
+  ];
+  Graphics[  {{GrayLevel[0.5], Map[ Line, framelist ] },
+              {Map[ Line, ellist ]} },   
+                   Frame->True, AspectRatio->Automatic ]
+]
+
+(* There is a problem with the scaling -- you want to draw the 
+   system with the x and y axes to the same scale.  The options
+   above do not do this, instead they force the plot to be
+   square on the page, and will scale the axes differently  in
+   order to achieve this.
+
+   Except that this is no longer the case -- the option
+   "Automatic" for the aspect ratio seems to force the
+   plot to take its cue from the underlying coordinate 
+   system.  *)
+
+
+(* Symmetry checker for a matrix.  Returns 0 if matrix is
+   symmetric. *)
+
+Symchk[mtx_]:=Sum[Sum[ (mtx[[i]][[j]]-mtx[[j]][[i]])^2, {i, 1, j}],
+                            {j,1,Length[mtx]}];
+
+
+(* For fixed boundary conditions, it's helpful to automatically
+   partition the matrix -- in OOF this will be done by the 
+   solver and/or UI.  In this case, the partitioning software
+   assumes that, on a fixed boundary, both components of 
+   displacement are fixed. *)
+
+(* Inputs are the global stiffness matrix and right-hand side, 
+   and a vector of the fixed degrees of freedom.
+   Routine generates the AMatrix and BMatrix as side effects, 
+   and returns a global solution vector suitable for use 
+   in Drawsoln. *)
+
+Ptnsolver[gmtx_,grhs_,fxdgs_]:=Module[{i,gnode,
+                                      effrhs,fullsoln},
+  (* Figure out which DOF's are fixed, not counting duplicates. *)
+  (* Note that the Union operation also sorts the entries. *)
+  fixedlist={};
+  For[i=1,i<=Length[Elements],i++,
+    If[ Length[Bdy[[i]]]==3 ,
+      gnode=Elements[[i]][[Bdy[[i]][[1]]]];
+      fixedlist=Union[fixedlist,{2*gnode-1}];
+      fixedlist=Union[fixedlist,{2*gnode}];
+      gnode=Elements[[i]][[Bdy[[i]][[2]]]];
+      fixedlist=Union[fixedlist,{2*gnode-1}];
+      fixedlist=Union[fixedlist,{2*gnode}];
+      gnode=Elements[[i]][[Bdy[[i]][[3]]]];
+      fixedlist=Union[fixedlist,{2*gnode-1}];
+      fixedlist=Union[fixedlist,{2*gnode-1}];
+    ];
+  ];
+  freelist=Table[ i, {i, 1, 2*Length[Nodes]}];
+  freelist=Complement[freelist,fixedlist];
+
+  AMatrix:=gmtx[[ freelist, freelist ]];
+  BMatrix:=gmtx[[ fixedlist, fixedlist ]];
+  CMatrix:=gmtx[[ freelist, fixedlist ]];
+  CPMatrix:=gmtx[[ fixedlist, freelist ]];
+
+  effrhs=grhs[[ freelist ]] - CMatrix.fxdgs;
+  
+  soln=LinearSolve[AMatrix, effrhs];
+
+  (* Now rebuild the full solution vector *)
+  For[i=1,i<=Length[soln],i++,
+    fullsoln[freelist[[i]]]=soln[[i]]
+  ];
+  For[i=1,i<=Length[fxdgs],i++,
+    fullsoln[fixedlist[[i]]]=fxdgs[[i]]
+  ];
+
+  Table[ fullsoln[i], {i,1,2*Length[Nodes]}]
+]
+
+
+Writeout[file_]:=Module[{strm},
+  strm=OpenWrite[file, FormatType->OutputForm];
+  For[i=1,i<=2*Length[Nodes],i++,
+    For[j=1,j<=2*Length[Nodes],j++,
+      Write[strm,i-1,"   ",j-1,"   ",N[GStiffness[[i,j]]]];
+    ];
+  ];
+  Close[strm];
+];

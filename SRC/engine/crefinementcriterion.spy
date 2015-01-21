@@ -1,0 +1,290 @@
+# -*- python -*-
+# $RCSfile: crefinementcriterion.spy,v $
+# $Revision: 1.1.2.3 $
+# $Author: langer $
+# $Date: 2014/09/16 00:42:27 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+from ooflib.common import cregisteredclass
+from ooflib.common import registeredclass
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.common import debug
+from ooflib.common import utils
+from ooflib.common import enum
+from ooflib.common import units
+from ooflib.SWIG.engine import cskeletonmodifier
+from ooflib.engine.IO import skeletongroupparams
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+cregisteredclass.registerCClass(SegmentChooserPtr)
+SegmentChooserPtr.registry = []    
+SegmentChooserPtr.tip = "Choose sets of segments be refined."
+SegmentChooserPtr.discussion = xmlmenudump.loadFile(
+    'DISCUSSIONS/engine/reg/segment_chooser.xml')
+
+cregisteredclass.Registration(
+    'All Segments',
+    SegmentChooserPtr,
+    FromAllSegments,
+    0,
+    tip="Examine all segments.",
+    discussion= """<para>
+    When choosing <link
+    linkend='RegisteredClass:CheckHeterogeneousEdges'>heterogeneous</link>
+    &sgmts; to <link linkend='RegisteredClass:Refine'>refine</link>,
+    consider all &sgmts; of the &skel;.
+    </para>""")
+
+cregisteredclass.Registration(
+    'Selected Segments',
+    SegmentChooserPtr,
+    FromSelectedSegments,
+    ordering=1,
+    tip="Examine selected segments.",
+    discussion= """<para>
+    When choosing <link
+    linkend='RegisteredClass:CheckHeterogeneousEdges'>heterogeneous</link>
+    &sgmts; to <link linkend='RegisteredClass:Refine'>refine</link>,
+    consider only the currently selected &sgmts;.
+    </para>""")
+
+cregisteredclass.Registration(
+    'Selected Elements',
+    SegmentChooserPtr,
+    FromSelectedElements,
+    ordering=1,
+    tip="Examine segments from segments of currently selected elements.",
+    discussion= """<para>
+    When choosing <link
+    linkend='RegisteredClass:CheckHeterogeneousEdges'>heterogeneous</link>
+    &sgmts; to <link linkend='RegisteredClass:Refine'>refine</link>,
+    consider only the edges of the currently selected &elems;.
+    </para>""")
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+cregisteredclass.registerCClass(RefinementTargetsPtr)
+RefinementTargetsPtr.registry = []    
+RefinementTargetsPtr.tip = "Determine which Skeleton segments will be refined."
+RefinementTargetsPtr.discussion = xmlmenudump.loadFile(
+    'DISCUSSIONS/engine/reg/refinementtarget.xml')
+
+cregisteredclass.Registration(
+    'All Elements',
+    RefinementTargetsPtr,
+    CheckAllElements,
+    ordering=2,
+    tip="Refine all elements.",
+    components=('Element',),
+    discussion= "<para>Refine all segments of all elements.</para>")
+
+cregisteredclass.Registration(
+    'Selected Elements',
+    RefinementTargetsPtr,
+    CheckSelectedElements,
+    ordering=1,
+    tip="Refine selected elements.",
+    components=('Element',),
+    discussion="""
+<para>Refine all segments of the currently selected elements.</para>
+"""
+    )
+
+cregisteredclass.Registration(
+    'Elements In Group',
+    RefinementTargetsPtr,
+    CheckElementsInGroup,
+    ordering=1.5,
+    params=[
+        skeletongroupparams.ElementGroupParameter(
+            'group',
+            tip='Refine the elements in this group.')],
+    tip="Refine elements in an element group.",
+    components=('Element',),
+    discussion= """<para>
+    Refine all segments of the elements in the given element group.
+    </para>""")
+
+cregisteredclass.Registration(
+    'Heterogenous Elements',
+    RefinementTargetsPtr,
+    CheckHomogeneity,
+    ordering=0,
+    params=[
+        parameter.FloatRangeParameter(
+            'threshold', (0.0, 1.0, 0.05),
+            value=0.9,
+            tip='Refine elements whose homogeneity is less than this.')
+            ],
+    tip="Refine heterogenous elements.",
+    components=('Element',),
+    discussion=
+    """<para>
+    Any elements whose <link
+    linkend='Section:Concepts:Skeleton:Homogeneity'>homogeneity</link>
+    is less than the given <varname>threshold</varname> will be
+    refined.  <xref linkend='Figure:refine'/> illustrates the
+    refinement of all elements with homogeneity less than 1.0.
+    </para>""")
+
+cregisteredclass.Registration(
+    'Heterogeneous Segments',
+    RefinementTargetsPtr,
+    CheckHeterogeneousEdges,
+    ordering=3,
+    params=[
+        parameter.FloatRangeParameter(
+            'threshold', (0.0, 1.0, 0.05),
+            value=0.9,
+            tip="Refine segments whose homogeneity is less than this."),
+            parameter.RegisteredParameter('choose_from', SegmentChooser,
+                                          tip='Segments to consider.')],
+    tip="Divide heterogeneous segments.",
+    components=('Segment',),
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/reg/check_hetero_segs.xml'))
+
+cregisteredclass.Registration(
+    'Selected Segments',
+    RefinementTargetsPtr,
+    CheckSelectedEdges,
+    ordering=3,
+    tip="Divide selected segments.",
+    components=('Segment',),
+    discussion="""<para>
+    <xref linkend='RegisteredClass:Refine'/> all currently selected &sgmts;.
+    </para>""")
+
+
+cregisteredclass.Registration(
+    'Segments in Group',
+    RefinementTargetsPtr,
+    CheckSegmentsInGroup,
+    ordering=3.5,
+    params=[
+        skeletongroupparams.SegmentGroupParameter(
+            'group', tip='Examine segments in this group')],
+    tip="Refine segments in a segment group",
+    components=('Segment',),
+    discussion="""<para>
+    Refine a Skeleton by divided the segments in the given segment group.
+    </para>"""
+    )
+
+cregisteredclass.Registration(
+    'Selected Faces',
+    RefinementTargetsPtr,
+    CheckSelectedFaces,
+    ordering=4,
+    tip="Divide selected faces.",
+    components=('Face',))
+
+cregisteredclass.Registration(
+    'Faces in Group',
+    RefinementTargetsPtr,
+    CheckFacesInGroup,
+    ordering=4.5,
+    params=[
+        skeletongroupparams.FaceGroupParameter(
+            'group', tip='Examine faces in this group')],
+    tip='Refine faces in a face group',
+    components=('Face',))
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+cregisteredclass.registerCClass(RefinementCriterionPtr)
+RefinementCriterionPtr.tip = \
+    "Restrict the set of Components considered for refinement."
+RefinementCriterionPtr.discussion = """<para>
+
+    Objects in the <classname>RefinementCriterion</classname> class
+    are used as values of the <varname>criterion</varname> parameter
+    when <link linkend='RegisteredClass:Refine'>refining</link>
+    &skels;.  Only &elems; that satisfy the criterion are considered
+    for refinement.
+
+    </para>"""
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# I need to remove this whole RefinementCriterionParameter and its dependencies
+# to a separate file and share it between crefine and csnaprefine
+# instead of importing the whole crefine in csnaprefine which may result into some conflicts
+# I might have to create a .h .C .spy and .swg
+
+class RefinementCriterionParameter(parameter.RegisteredParameter):
+    def __init__(self, name, value=None, default=None, tip=None, auxData={}):
+        parameter.RegisteredParameter.__init__(
+            self, name, RefinementCriterionPtr, value, default, tip, auxData)
+
+cregisteredclass.Registration(
+    'Unconditional',
+    RefinementCriterionPtr,
+    Unconditionally,
+    ordering=0,
+    tip='Consider all Elements for possible refinement.',
+    targets=('Element','Segment','Face'),
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/reg/unconditionally.xml')
+    )
+
+cregisteredclass.Registration(
+    'Minimum Volume',
+    RefinementCriterionPtr,
+    MinimumVolume,
+    ordering=1,
+    params=[
+        parameter.FloatParameter(
+            'threshold', 10,
+            tip="Minimum acceptable element volume.") ,
+        enum.EnumParameter('units', units.Units, value='Voxel',
+                           tip='Units for the minimum volume')
+            ],
+    targets=('Element',),
+    tip='Only refine elements with volume greater than the given threshold.',
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/minimumarea.xml')
+    )
+
+cregisteredclass.Registration(
+    'Minimum Area',
+    RefinementCriterionPtr,
+    MinimumArea,
+    ordering=2,
+    params=[
+        parameter.FloatParameter(
+            'threshold', 10,
+            tip="Minimum acceptable surface area.") ,
+        enum.EnumParameter('units', units.Units, value='Voxel',
+                           tip='Units for the minimum surface')
+            ],
+    targets=('Face',),
+    tip='Only refine surfaces with area greater than the given threshold.',
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/minimumarea.xml')
+    )
+
+cregisteredclass.Registration(
+    'Minimum Length',
+    RefinementCriterionPtr,
+    MinimumLength,
+    ordering=3,
+    params=[
+        parameter.FloatParameter(
+            'threshold', 10,
+            tip="Minimum acceptable segment length.") ,
+        enum.EnumParameter('units', units.Units, value='Voxel',
+                           tip='Units for the minimum length')
+            ],
+    targets=('Segment',),
+    tip='Only refine segments with length greater than the given threshold.',
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/minimumlength.xml')
+    )

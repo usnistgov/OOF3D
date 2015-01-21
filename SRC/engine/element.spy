@@ -1,0 +1,244 @@
+# -*- python -*-
+# $RCSfile: element.spy,v $
+# $Revision: 1.6.2.11 $
+# $Author: fyc $
+# $Date: 2014/07/24 21:36:02 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+from ooflib.SWIG.engine import elementshape
+from ooflib.SWIG.engine import masterelement
+from ooflib.SWIG.engine import ooferror2
+from ooflib.common import debug
+
+from ooflib.SWIG.engine.masterelement import MasterElementPtr
+from ooflib.SWIG.common.coord import CoordPtr
+from ooflib.SWIG.engine.mastercoord import MasterCoordPtr
+
+
+
+def _Element__position(self, coords):
+    return map(self.from_master, coords)
+
+ElementPtr.position = _Element__position
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Return a SpaceCurve that represents the intersection of an Element
+# with a Plane.
+
+def _Element_intersectPlane(self, femesh, plane):
+    # Find out which side of the plane the Element corners are on.
+    positions = [node.position() for node in self.cornernodes()]
+    offsets = [plane.normalDirection.dot(position) - plane.offset
+               for position in positions]
+    nPos = nNeg = nZero = 0
+    nPoints = self.ncorners()
+    for offset in offsets:
+        if offset > 0:
+            nPos += 1
+        elif offset < 0:
+            nNeg += 1
+        else:
+            nZero += 1
+    if ((nPos == 0 or nNeg == 0) and nZero < 3):
+        # There's no intersection.  All of the points are on one side,
+        # or they're all either on one side or in the plane, and there
+        # aren't enough in the plane to construct a polygon.
+        return
+
+    if (nZero >= 3 and (nPos == 0 or nNeg == 0)):
+        # Some points are in the plane and the rest are all on one
+        # side.  The points in the plane form the polygon.  But check
+        # that the element is on the right side of the plane!  If not,
+        # this same polygon will be included by another element.
+        if ((plane.side == 'FRONT' and nPos == 0) or
+            (plane.side == 'BACK' and nNeg == 0)):
+            return
+        intersectPts = [p for p,o in zip(positions, offsets) if o==0]
+        return plane.polygonize(intersectPts)
+
+    # At most two points are in the plane, and at least one of the
+    # remainder is on either side, so some segments intersect the
+    # plane.  Find the intersection points.
+
+    # Store the intersections in a set because if a node is exactly on
+    # the plane, the intersection point will be found by multiple
+    # segments.  Using a set will suppress duplications.
+    points = set()
+    # Find the points where the element segments intersect the plane.
+    for i in range(self.nedges()):
+        nodeA = self.getSegmentNode(femesh, i, 0)
+        nodeB = self.getSegmentNode(femesh, i, 1)
+        # segmentIntersect() repeats the offset calculations done above,
+        # but the bookkeeping required to re-use the calculations
+        # would probably be more expensive than the calculations
+        # themselves.
+        intersect = plane.segmentIntersect(nodeA.position(), nodeB.position())
+        if intersect:
+            # intersect is a tuple of one or two Points
+            points.update(intersect)
+    return plane.polygonize(list(points))
+        
+ElementPtr.intersectPlane = _Element_intersectPlane
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+def createTwoDElementLite(curve, funorder=1, maporder=1):
+    n = len(curve)
+    if n == 3:
+        shape = elementshape.getShape("Triangle")
+    elif n == 4:
+        shape = elementshape.getShape("Quadrilateral")
+    master = masterelement.getMasterElementByShape(shape, funorder, maporder)
+    ## TODO 3.1: curve.points is a list of Coord objects, not CoordPtrs.
+    return master.buildLite(curve.points())
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# OrientedElement is a wrapper around a mesh Element, created when
+# returning a member of a SubDimensonalSet (EdgeSet or FaceSet) from
+# C++ to Python via a SubDimensionalIterator.  It's used to pass
+# boundary orientation information to Outputs.  See
+# SubDimensionalIteratorPtr.next (edgeset.spy) and SurfaceNormalOutput
+# (outputClones.py).
+
+class OrientedElement(object):
+    def __init__(self, element, revrse):
+        self.element = element
+        self.revrse = revrse
+    def reversed(self):
+        return self.revrse
+    def __getattr__(self, name):
+        return getattr(self.element, name)
+    
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Iterable objects for easy access to Nodes.  These allow constructs
+# like "for node in element.nodes()".  See comments about similar
+# machinery in femesh.spy.
+
+class _ElementNodeProxyBase(object):
+    def __init__(self, element):
+        self.element = element
+
+class _ElementNodeIteratorBase(object):
+    def __init__(self, element):
+        self.iterator = self.makeIterator(element) # the C++ iterator
+    def __iter__(self):
+        return self
+    def next(self):
+        if self.iterator.end():
+            raise StopIteration
+        obj = self.getValueFromIterator(self.iterator)
+        self.iterator.increment()
+        return obj
+
+#=--=##=--=##=--=#
+
+class _ElementNodeProxy(_ElementNodeProxyBase):
+    def __iter__(self):
+        return _ElementNodeIterator(self.element)
+
+class _ElementNodeIterator(_ElementNodeIteratorBase):
+    def makeIterator(self, element):
+        return element.node_iterator()
+    def getValueFromIterator(self, iterator):
+        return iterator.node()
+
+def _Element_nodes(self):
+    return _ElementNodeProxy(self)
+
+ElementPtr.nodes = _Element_nodes
+
+#=--=#
+
+class _ElementNodePositionProxy(_ElementNodeProxyBase):
+    def __iter__(self):
+        return _ElementNodePositionIterator(self.element)
+
+class _ElementNodePostionIterator(_ElementNodeIteratorBase):
+    def makeIterator(self, element):
+        return element.node_positerator()
+    def getValueFromIterator(self, iterator):
+        return iterator.position()
+
+def _Element_nodePositions(self):
+    return _ElementNodePositionProxy(self)
+
+ElementBasePtr.nodePositions = _Element_nodePositions
+
+#=--=##=--=##=--=#
+
+class _ElementFuncNodeProxy(_ElementNodeProxyBase):
+    def __iter__(self):
+        return _ElementFuncNodeIterator(self.element)
+
+class _ElementFuncNodeIterator(_ElementNodeIteratorBase):
+    def makeIterator(self, element):
+        return element.funcnode_iterator()
+    def getValueFromIterator(self, iterator):
+        return iterator.funcnode()
+
+def _Element_funcnodes(self):
+    return _ElementFuncNodeProxy(self)
+
+ElementPtr.funcnodes = _Element_funcnodes
+
+#=--=#
+
+class _ElementFuncNodePositionProxy(_ElementNodeProxyBase):
+    def __iter__(self):
+        return _ElementFuncNodePositionIterator(self.element)
+
+class _ElementFuncNodePostionIterator(_ElementNodeIteratorBase):
+    def makeIterator(self, element):
+        return element.funcnode_positerator()
+    def getValueFromIterator(self, iterator):
+        return iterator.position()
+
+def _Element_funcnodePositions(self):
+    return _ElementFuncNodePositionProxy(self)
+
+ElementBasePtr.funcnodePositions = _Element_funcnodePositions
+
+#=--=##=--=##=--=#
+
+class _ElementCornerNodeProxy(_ElementNodeProxyBase):
+    def __iter__(self):
+        return _ElementCornerNodeIterator(self.element)
+
+class _ElementCornerNodeIterator(_ElementNodeIteratorBase):
+    def makeIterator(self, element):
+        return element.cornernode_iterator()
+    def getValueFromIterator(self, iterator):
+        return iterator.node()
+
+def _Element_cornernodes(self):
+    return _ElementCornerNodeProxy(self)
+
+ElementPtr.cornernodes = _Element_cornernodes
+
+#=--=#
+
+class _ElementCornerNodePositionProxy(_ElementNodeProxyBase):
+    def __iter__(self):
+        return _ElementCornerNodePositionIterator(self.element)
+
+class _ElementCornerNodePositionIterator(_ElementNodeIteratorBase):
+    def makeIterator(self, element):
+        return element.cornernode_positerator()
+    def getValueFromIterator(self, iterator):
+        return iterator.position()
+
+def _Element_cornernodePositions(self):
+    return _ElementCornerNodePositionProxy(self)
+
+ElementBasePtr.cornernodePositions = _Element_cornernodePositions

@@ -1,0 +1,24 @@
+# -*- python -*-
+# $RCSfile: timestamp.spy,v $
+# $Revision: 1.4.10.1 $
+# $Author: langer $
+# $Date: 2014/09/27 22:33:57 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+TimeStampPtr.__repr__ = lambda self: 'TimeStamp(%d/%d)' % (self.epoch(),
+                                                           self.time())
+
+# Super-cautious destructor, to avoid complaints at shut-down time.
+
+def timestamp_ptr_del(self, destruct=timestampc.delete_TimeStamp):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+
+TimeStampPtr.__del__ = timestamp_ptr_del

@@ -1,0 +1,170 @@
+#######################################################################
+# $Header: /users/langer/FE/CVSoof/OOF2/OOFSWIG/Win/makefile.vc,v 1.1.2.2 2014/06/27 20:30:13 langer Exp $
+# Simplified Wrapper and Interface Generator (SWIG)
+# 
+# Makefile for version 1.1
+# Dave Beazley
+# March 12, 1997
+#
+# Modified for Visual C++
+# Kevin Butler
+# 1/10/97
+#
+# $Log: makefile.vc,v $
+# Revision 1.1.2.2  2014/06/27 20:30:13  langer
+# Copied Lulu's modified swig into OOFSWIG, and changed setup.py so that
+# it automatically builds and uses it.  The --with-swig option to setup.py
+# is still respected, if it's given, but it shouldn't be necessary any more.
+#
+# Changed make_dist so that the swig output files aren't included in
+# the distribution, and removed the --skip-swig option from setup.py.
+# Since everybody has swig now, it's no longer necessary.  This will
+# make the build take a little bit longer, but users won't have to
+# combine the build and install steps anymore.
+#
+# Removed the bit in pyexp.swg that suppressed the warnings that the old
+# swig code generated.  This means that if you use --with-swig, you'll
+# probably get lots of warnings.
+#
+# Added some explicit (char*) casts in PyObject_CallMethod calls in
+# swig typemaps, to get rid of warnings in swig generated code.
+# For unknown reasons, PyObject_CallMethod has char * arguments instead
+# of const char* arguments.   Other similar Python API calls use const.
+#
+# Revision 1.1  2014/06/25 18:45:15  lck
+# *** empty log message ***
+#
+# Revision 1.3  1999/11/01 15:24:53  beazley
+# Removed perl4
+#
+# Revision 1.2  1999/08/10 16:50:30  beazley
+# Windows Runtime
+#
+# Revision 1.1.1.1  1999/02/28 02:00:53  beazley
+# Swig1.1
+#
+# Revision 1.1  1996/08/12 01:55:02  dmb
+# Initial revision
+#
+#######################################################################
+
+
+!include <make_win.in>
+
+srcdir = .
+
+all:		swig doc
+
+swig: swig.exe
+
+swig.exe:
+		@echo "Making the SWIG Parser..."
+		@cd ..\SWIG
+		@$(MAKE)
+		@echo "Make Modules..."
+		@cd ..\Modules
+		@$(MAKE)
+		@cd ..\Win
+
+clean:
+	@cd ..
+	del *.lib
+	del *.obj
+	del swig.exe 
+	@cd SWIG
+	@$(MAKE) clean
+	@cd ..\Modules
+	@$(MAKE) clean
+
+doc:	swig
+	@echo "Building Documentation for SWIG library..."
+	..\swig -Iswig_lib -d ../Doc/swiglib -I../swig_lib ../swig_lib/autodoc.i
+	@rem ??? KB ??? rm -f swig_lib\autodoc_wrap*
+	@echo "Compilation complete. Type 'nmake install' to install."	
+
+runtime: swig
+	@cd ..\Runtime
+	$(MAKE)
+
+# Install the SWIG program
+
+INSTALL        = copy
+
+install: install-main install-lib install-runtime
+	@echo "Installation complete"
+
+install-runtime:
+	@cd ..\..\Runtime
+	$(MAKE) install
+
+install95: install-main95 install-lib95 install-runtime95
+	@echo "Installation complete"
+
+install-runtime95:
+	@ ..\..\Runtime
+	$(MAKE) install95
+
+smallinstall: install-main
+
+install-main: swig
+	@if not exist $(dprefix) mkdir $(dprefix)
+	@echo "Installing $(dSWIG_EXE)"
+	@copy  ..\swig.exe $(dSWIG_EXE) 
+install-lib:
+	@if not exist $(dSWIG_LIB) mkdir $(dSWIG_LIB)
+	@echo "$(dSWIG_LIB)"
+	@echo "Installing the SWIG library"
+	@cd ..\swig_lib
+	@xcopy *.i $(dSWIG_LIB) 
+	@xcopy *.swg $(dSWIG_LIB) 
+	@if not exist $(dSWIG_LIB)\tcl mkdir $(dSWIG_LIB)\tcl
+	@cd tcl
+	@xcopy *.i $(dSWIG_LIB)\tcl 
+	@xcopy *.swg $(dSWIG_LIB)\tcl 
+	@if not exist $(dSWIG_LIB)\perl5 mkdir $(dSWIG_LIB)\perl5
+	@cd ..\perl5
+	@xcopy *.i $(dSWIG_LIB)\perl5 
+	@xcopy *.swg $(dSWIG_LIB)\perl5 
+	@if not exist $(dSWIG_LIB)\python mkdir $(dSWIG_LIB)\python
+	@cd ..\python
+	@xcopy *.i $(dSWIG_LIB)\python 
+	@xcopy *.swg $(dSWIG_LIB)\python 
+	@if not exist $(dSWIG_LIB)\guile mkdir $(dSWIG_LIB)\guile
+	@cd ..\guile
+	@xcopy *.i $(dSWIG_LIB)\guile 
+	@xcopy *.swg $(dSWIG_LIB)\guile 
+
+install-main95: swig
+	@if not exist $(dprefix) mkdir $(dprefix)
+	@echo "Installing $(dSWIG_EXE)"
+	@copy  ..\swig.exe $(dSWIG_EXE) /Y
+install-lib95:
+	@if not exist $(dSWIG_LIB) mkdir $(dSWIG_LIB)
+	@echo "$(dSWIG_LIB)"
+	@echo "Installing the SWIG library"
+	@cd ..\swig_lib
+	@xcopy *.i $(dSWIG_LIB) /Y
+	@xcopy *.swg $(dSWIG_LIB) /Y
+	@mkdir $(dSWIG_LIB)\tcl
+	@cd tcl
+	@xcopy *.i $(dSWIG_LIB)\tcl /Y
+	@xcopy *.swg $(dSWIG_LIB)\tcl /Y
+	@mkdir $(dSWIG_LIB)\perl5
+	@cd ..\perl5
+	@xcopy *.i $(dSWIG_LIB)\perl5 /Y
+	@xcopy *.swg $(dSWIG_LIB)\perl5 /Y
+	@mkdir $(dSWIG_LIB)\python
+	@cd ..\python
+	@xcopy *.i $(dSWIG_LIB)\python /Y
+	@xcopy *.swg $(dSWIG_LIB)\python /Y
+	@mkdir $(dSWIG_LIB)\guile
+	@cd ..\guile
+	@xcopy *.i $(dSWIG_LIB)\guile /Y
+	@xcopy *.swg $(dSWIG_LIB)\guile /Y
+
+#Makefile.template has not been ported to NT
+#	@echo "Installing Makefile"
+#	$(INSTALL_DATA) Makefile.template $(dSWIG_LIB)/Makefile
+
+
+

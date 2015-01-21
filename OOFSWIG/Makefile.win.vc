@@ -1,0 +1,104 @@
+# ---------------------------------------------------------------------------
+# Makefile.win
+#
+# Dave Beazley
+# June 24, 1997
+#
+# This file is used to build all of the examples in the 'Examples' directory
+# under Windows 95/NT.    This assumes that you are using NMAKE and
+# Visual C++ 4.x/5.x.   However it may work with other compilers as well.
+#
+# This file assumes that the vcvars32 script has been run first!
+#
+# By default this only builds DLLs.
+# ---------------------------------------------------------------------------
+
+# Location of the Visual C++ tools
+TOOLS         = $(MSVCDIR)
+
+# The C/C++ compiler
+CC            = cl.exe
+
+# The linker
+LINK          = link.exe
+
+# Include directories for your compiler
+INCLUDE32     = -I"$(TOOLS)\include"
+
+# Target machine
+MACHINE       = IX86
+
+# C Libraries needed to build a DLL
+DLLIBC        = msvcrt.lib oldnames.lib  
+
+# Other windows libraries that are apparently needed
+WINLIB        = kernel32.lib advapi32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib
+#WINLIB        = kernel32.lib 
+
+# Libraries common to all DLLs
+DLLLIBS       = $(DLLIBC) $(WINLIB) 
+
+# Linker options
+LOPT      = -debug:full -debugtype:cv /NODEFAULTLIB /RELEASE /NOLOGO /MACHINE:$(MACHINE) -entry:_DllMainCRTStartup@12 -dll
+
+# C compiler flags
+CFLAGS    =  /Od /WX /c  /nologo /DEBUG $(OPTS)
+
+# SWIG Installation
+SWIG      = d:\swig1.1\swig
+
+# Now munge the files provided
+# SRCS     = list of source files
+# WRAPFILE = Outfile file for SWIG
+
+SRCS         = $(SRCS) $(WRAPFILE)
+OBJS         = $(SRCS:.cxx=.obj) 
+OBJS         = $(OBJS:.c=.obj)
+OBJS         = $(OBJS:/Tp=)
+
+
+
+# ------------------------------------------------------------------
+# Python settings
+# 
+# PY_INCLUDES  = Include files for your Python installation.  Typically
+#                you need the python-1.5\Include python-1.5\ and python-1.5\PC
+#                directories here.
+# PYLIB        = The location of the Python library
+# ------------------------------------------------------------------
+
+
+PY_INCLUDES  = -Id:\python-1.5\Include -Id:\python-1.5 -Id:\python-1.5\PC
+PYLIB        = d:\python-1.5\PCbuild\Debug\python15.lib
+PYFLAGS      = /D __WIN32__
+
+python::
+	$(SWIG) -python -o $(WRAPFILE) $(SWIGOPT) $(INTERFACE)
+	$(CC) $(CFLAGS) $(PYFLAGS) $(PY_INCLUDES) $(SRCS) 
+	set LIB=$(TOOLS)\lib
+	$(LINK) $(LOPT) -out:$(TARGET) $(DLLLIBS) $(PYLIB) $(OBJS) 
+
+
+clean::
+	del *.obj
+	del *.dll
+	del *.exp
+	del *.lib
+	del *.pdb
+	del *_wrap*
+	del *~
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,58 @@
+(*
+  $RCSfile: superquad.math,v $
+  $Revision: 1.1 $
+  $Author: reida $
+  $Date: 2001/01/09 21:17:17 $
+         *)
+
+(* A Mathematica model of the superparametric element,
+   for the purpose of testing the integration routines. *)
+
+(* Quadrilateral version assumes a basic square from (0,0)
+   to (1,1), with the top center node, usually at (0.5,1), moved
+   off to (0.5,1.1), so that the actual upper surface of the 
+   node is parabolic. Note that, unlike in the triangular case,
+   this element does not "almost" live in the master space,
+   but instead spans (0,0) to (1,1).  This way, odd-order
+   polynomials don't automatically give zero.
+
+
+sfuns[x_,y_]:={ (-1/4)*(1-x)*(1-y)*(x+y+1), (1/2)*(1-x^2)*(1-y), 
+                (1/4)*(1+x)*(1-y)*(x-y-1),  (1/2)*(1+x)*(1-y^2),
+                (1/4)*(1+x)*(1+y)*(x+y-1),  (1/2)*(1-x^2)*(1+y),
+                (1/4)*(1-x)*(1+y)*(y-x-1),  (1/2)*(1-x)*(1-y^2)   }
+
+(* Change the coordinates to reflect what's really happening. *)
+
+coords:={ { 0, 0}, { 1/2, 0}, {1 , 0}, {1, 1/2}, {1, 1}, {1/2, 9/10},
+           {0, 1}, {0, 1/2}  }
+
+fromMaster[x_,y_]:={ Sum[ coords[[i]][[1]]*sfuns[x,y][[i]], {i,1,8} ],
+                       Sum[ coords[[i]][[2]]*sfuns[x,y][[i]], {i,1,8}] }
+
+
+
+(* For this special case, the area integral within the parametric
+   boundary has a special, tractable form, I think. *)
+
+bdx[t_]:=Simplify[fromMaster[2*t-1,1]][[1]]
+
+bdy[t_]:=Simplify[fromMaster[2*t-1,1]][[2]]
+
+krnl[x_,y_]:=1;  (* for area, function is 1 *)
+
+(* Ifun as defined here embodies many special cases, the parameter
+   t must go from 0 to 1, there can only be one parametrized
+   boundary, and it must be described by the global functions
+   bdx[] and bdy[]. *)
+
+Ifun[k_]:= Integrate[ Integrate[ k[bdx[t],y],{y,0,bdy[t]}]*bdx'[t],{t,0,1}]
+
+
+
+
+
+
+
+
+

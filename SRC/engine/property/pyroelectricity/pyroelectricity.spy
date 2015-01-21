@@ -1,0 +1,69 @@
+# -*- python -*-
+# $RCSfile: pyroelectricity.spy,v $
+# $Revision: 1.8.8.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:46:02 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+from ooflib.common import utils
+from ooflib.common.IO import parameter
+from ooflib.engine import problem
+from ooflib.engine import propertyregistration
+
+PropertyRegistration = propertyregistration.PropertyRegistration
+
+# Only one kind of pyroelectricity.
+
+from ooflib.common import enum
+from ooflib.common.IO import xmlmenudump
+
+# If you change the string literals for these enums, you must also
+# change the conditional in pyroelectricity.C, in the
+# effective-modulus computation.
+
+class ConstancyEnum (enum.EnumClass('Constant stress','Constant strain')):
+    discussion = """<para>
+    Interpretation for the coefficients of the Pyroelectricity
+    property. Constant-stress coefficients can be modified by secondary
+    pyroelectricity in the presence of thermal expansion,
+    piezoelectricity, and elasticity. Constant-strain coefficients cannot.
+    </para>"""
+
+
+######################################################
+
+reg = PropertyRegistration(
+    'Couplings:PyroElectricity',
+    PyroElectricity,
+    "ooflib.SWIG.engine.property.pyroelectricity.pyroelectricity",500,
+    [parameter.FloatParameter(
+            'px', 0.0,
+            tip="Crystal X component of polarization contribution due to temperature change."),
+     parameter.FloatParameter(
+            'py', 0.0,
+            tip="Crystal Y component of polarization contribution due to temperature change."),
+     parameter.FloatParameter(
+            'pz', 0.0,
+            tip="Crystal Z component of polarization contribution due to temperature change."),
+     parameter.FloatParameter('T0', 0.0, tip="Reference temperature."),
+     enum.EnumParameter(
+            'coefficient_type', ConstancyEnum,
+            value='Constant stress',
+            tip="Interpretation of the p coefficients, constant strain or constant stress.")],
+    outputs=["Energy"],
+    propertyType="PyroElectricity",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/property/pyroelectricity.xml'),
+    tip='Pyroelectricity')
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization], fields=[problem.Temperature],
+             time_derivs=[0])
+
+######################################################

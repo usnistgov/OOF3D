@@ -1,0 +1,8 @@
+// -*- mode: text-*-
+// $RCSfile: NOTES_SCRIPT,v $
+// $Revision: 1.5 $
+// $Author: langer $
+// $Date: 2002/01/29 20:24:43 $
+
+See the extensive comments in SRC/IO/oofmenu.py for remarks on menu
+construction and scripting of commands.

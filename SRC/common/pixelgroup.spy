@@ -1,0 +1,38 @@
+# -*- python -*-
+# $RCSfile: pixelgroup.spy,v $
+# $Revision: 1.2.18.2 $
+# $Author: langer $
+# $Date: 2014/09/27 22:33:54 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+def _PixelGroup___eq__(self, other):
+    try:
+        return self.id() == other.id()
+    except AttributeError:
+        return 0
+PixelGroupPtr.__eq__ = _PixelGroup___eq__
+
+def _PixelGroup___hash__(self):
+    return hash(self.id())
+PixelGroupPtr.__hash__ = _PixelGroup___hash__
+
+#######################
+
+attributeReg = PixelGroupAttributeRegistration()
+
+#####################
+
+# Super-cautious destructor.
+
+def pixgrpattregdel(self, destruct=pixelgroupc.delete_PixelGroupAttributeRegistration):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+
+PixelGroupAttributeRegistrationPtr.__del__ = pixgrpattregdel

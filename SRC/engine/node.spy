@@ -1,0 +1,44 @@
+# -*- python -*-
+# $RCSfile: node.spy,v $
+# $Revision: 1.4.10.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:44:36 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.SWIG.common import config
+
+if config.dimension() == 2:
+    NodePtr.__repr__ = lambda self: "Node(%d,%s,%s)" % (
+        self.index(), self[0], self[1])
+    FuncNodePtr.__repr__ = lambda self: "FuncNode(%d,%s,%s)" % (
+        self.index(), self[0],self[1])
+elif config.dimension() == 3:
+    NodePtr.__repr__ = lambda self: "Node(%d,%s,%s,%s)" % (
+        self.index(), self[0], self[1], self[2])
+    FuncNodePtr.__repr__ = lambda self: "FuncNode(%d,%s,%s,%s)" % (
+        self.index(), self[0],self[1], self[2])
+
+# cmp and hash operators are required so that nodes can be looked up
+# in dictionaries, and so that the same C++ node shows up as the same
+# Python node in comparisons. 
+def _NodePtr___cmp__(self, other):
+    if other is None:
+        return -1
+    return cmp(self.index(), other.index())
+
+NodePtr.__cmp__ = _NodePtr___cmp__
+
+
+def _NodePtr___hash__(self):
+    return self.index()
+
+NodePtr.__hash__ = _NodePtr___hash__
+
+from ooflib.SWIG.common.coord import CoordPtr

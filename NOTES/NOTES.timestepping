@@ -1,0 +1,57 @@
+-*- mode: text -*-
+// $RCSfile: NOTES.timestepping,v $
+// $Revision: 1.2 $
+// $Author: redwing $
+// $Date: 2005/03/24 21:42:22 $
+
+
+Time stepping notes sketched roughly, with no reference to
+existing code, so referenced class names may be wrong.
+
+
+The idea is to create a uniform API to iterate in time 
+those materials and partial differential equations that 
+have an explicit or implicit time dependency.
+
+Equations should have an initialization argument that makes them
+aware of having (one or more) time derivative contributions. The default is 
+'Steady State', which means the equation has NO explicit time derivatives,
+even though the properties may be time dependent (implicit time dependence). 
+'Kinetic' means that has a \frac{\partial \phi}{\partial t} term. 'Dynamic' means 
+that possesses a \frac{\partial^2 \phi}{\partial t^^2} term, which is
+completely separate from having a kinetic term.
+\phi is a field of dimension N (scalar, vector, tensor, etc.).
+The declaration of these additional terms at equation declaration time 
+automatically adds a 'kinetic' or 'dynamic' button to the EquationPage.
+
+To solve for time-dependent equations, a TimeStepper object must be selected. 
+The TimeStepper has a TimeSteppingScheme which is abstract and general
+method to assemble the adequate terms in the FE system and returns the adequate
+effective stiffness matrix and effective right hand side. The TimeSteppingScheme
+object interacts with a TimeSolverCore object, which saves a copy of the 
+solutions of the previous time-steps. The TimeSteppingScheme must ultimately have 
+the capability of storing multiple meshes, interact with output objects, 
+save the state of the mesh (check points), and scoot over different stored 
+states. 
+
+The active equations must interact with the FEMesh, in order to optimally 
+construct the different terms that will appear in the effective Kx = b system. 
+Those equations with no time derivatives to their fields should do the classic
+stuff without creating a non-zero mass matrix (C matrix for kinetic problems,
+and M matrix for dynamic systems).
+
+The menu item might look like this:
+OOF.Solver.Solve(mesh='microstrutcure:skeleton:mesh',
+		 solver=TimeStepper(
+				    method=GMRESSolver(
+							max_iterations=1000,
+							krylov_dimension=100,
+							tolerance=1e-08,
+							preconditioner=BlockPreconditioner(inplane=ILUPreconditioner())
+							), 
+				    stepping_scheme=ConstantTimeStepping(
+							dt=0.1, 
+							tf=100, 
+							theta=0.878)
+				   )
+		)

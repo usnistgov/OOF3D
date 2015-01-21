@@ -1,0 +1,15 @@
+Chop
+
+This file tests chopping of comment blocks 
+
+foobar { int  } 
+        [ returns int  ]
+        *********************************************************** * This
+        is a block comment. * * * * It should get chopped so that only
+        text remains. * ***********************************************************
+        
+
+grok { double  } 
+        [ returns int  ]
+        This comment should not be chopped because it's too short 
+

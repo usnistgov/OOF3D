@@ -1,0 +1,63 @@
+# -*- python -*-
+# $RCSfile: flux.spy,v $
+# $Revision: 1.2.18.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:44:24 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+import types
+from ooflib.common import debug
+from ooflib.common import utils
+
+FluxPtr.__repr__ = FluxPtr.name
+SymmetricTensorFluxPtr.__repr__ = SymmetricTensorFluxPtr.name
+VectorFluxPtr.__repr__ = VectorFluxPtr.name
+
+def _Flux___hash__(self):
+    return self.objectid()
+
+FluxPtr.__hash__ = _Flux___hash__
+
+def _Flux___cmp__(self, other):
+    if not isinstance(other, FluxPtr): return -1
+    if self.objectid() < other.objectid(): return -1
+    if self.objectid() > other.objectid(): return 1
+    return 0
+
+FluxPtr.__cmp__ = _Flux___cmp__
+
+class _AllFluxes:
+    def __getitem__(self, indx):
+        if type(indx) == types.IntType:
+            if indx >= countFluxes():
+                raise IndexError("Bad flux index: " + str(indx))
+            return getFluxByIndex(indx)
+        elif type(indx) == types.StringType:
+            try:
+                flx = utils.OOFeval(indx)
+            except NameError:
+                raise IndexError("Bad flux name: " + indx)
+            if not isinstance(flx, FluxPtr):
+                raise IndexError("Bad flux name: " + indx)
+            return flx
+##            for i in range(countFluxes()):
+##                f = getFluxByIndex(i)
+##                if f.name() == indx:
+##                    return f
+##            raise IndexError("Bad flux name: " + indx)
+    def __len__(self):
+        return countFluxes()
+
+allFluxes = _AllFluxes()
+
+def getFlux(which):
+    return allFluxes[which]
+
+utils.OOFdefine('getFlux', getFlux)

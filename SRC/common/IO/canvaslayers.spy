@@ -1,0 +1,70 @@
+# -*- python -*-
+# $RCSfile: canvaslayers.spy,v $
+# $Revision: 1.1.2.12 $
+# $Author: langer $
+# $Date: 2014/12/05 21:29:10 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.common import debug
+from ooflib.common import utils
+
+class ComboCanvasLayer(object):
+    def __init__(self):
+        self.sublayers = utils.OrderedDict()
+    def addSublayer(self, tag, layer):
+        self.sublayers[tag] = layer
+        return layer
+    def getSublayer(self, tag):
+        try:
+            return self.sublayers[tag]
+        except KeyError:
+            debug.fmsg("keys are", self.sublayers.keys())
+            raise
+    def getSublayers(self):
+        return self.sublayers.values()
+
+    # Redirection of methods defined in OOFCanvasLayerBase.
+    def setModified(self):
+        for sublayer in self.sublayers.values():
+            sublayer.setModified()
+    def destroy(self):
+        for sublayer in self.sublayers.values():
+            sublayer.destroy()
+
+    # Redirection of methods defined in OOFCanvasLayer.
+    def show(self, forced):
+        for sublayer in self.sublayers.values():
+            sublayer.show(forced)
+    def hide(self, forced):
+        for sublayer in self.sublayers.values():
+            sublayer.hide(forced)
+
+    # def recompute(self):
+    #     for sublayer in self.sublayers.values():
+    #         sublayer.recompute()
+    def clear(self):
+        for sublayer in self.sublayers.values():
+            sublayer.clear()
+
+    def pickable(self):
+        return False
+    
+    
+    def writeVTK(self, filename):
+        for sublayer in self.sublayers.values():
+            sublayer.writeVTK(filename)
+
+    # For everything else, use this:
+    def apply(self, func, args=(), kwargs={}):
+        for sublayer in self.sublayers.values():
+            func(sublayer, *args, **kwargs)
+    # or this:
+    def getSublayers(self):
+        return self.sublayers.values()

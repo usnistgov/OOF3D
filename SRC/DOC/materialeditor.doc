@@ -1,0 +1,357 @@
+-*- text -*-
+$RCSfile: materialeditor.doc,v $
+$Revision: 1.11 $
+$Author: reida $
+$Date: 2002/08/02 18:32:32 $
+
+
+  The OOF2 Material Editor
+  ------------------------
+
+OOF2 provides a facility for naming and parametrizing properties, and
+aggregating properties into named materials.  The resulting materials
+are then intended to be associated with particular regions of a model
+system, providing the finite-element computation with its physics.  This
+document is a description of this facility.
+
+
+  User's Guide
+  ------------
+
+There are two menus which are used in the construction of materials,
+both descended directly from the application's main OOF menu.  These
+are the Property menu, and the Material menu.  Properties and
+materials can be constructed, loaded from files, modified, saved, and
+deleted.  The menu commands are not sensitive to any notion of
+selection state, but instead take arguments indicating their operands.
+In the GUI version of the material editor, the GUI itself maintains a
+"current property" and a "current material", and the various GUI
+buttons operate on the current selection.  This is actually
+accomplished by the GUI issuing ordinary menu commands, filling in
+their arguments from the selection state.  Consequently, a sequence of
+operations which take place on the GUI can be scripted, saved, and
+re-run with the same results.
+
+
+  Command reference
+  -----------------
+
+  Menu: OOF.File.Load_data(filename='foo')    
+  GUI:  File -> Load data
+
+  Parses a file in the OOF restricted environment, a special evaluation
+namespace which forbids a number of potentially-harmful operations
+such as access to the file system.  Properties and materials are in
+fact saved as ordinary Python scripts, and can be read via "File ->
+Load -> Script", but the "Load data" function provides extra protection
+for data-like objects, which we hope will be widely traded even
+between untrusted (in the security sense) systems.
+
+  Objects read in from a file are automatically added to the
+PropertyManager and the MaterialManager, as appropriate, and can
+subsequently be manipulated via the menus.  Properties present as
+arguments to a material constructor appear both in the property tree,
+and in the material's property list.
+
+
+  The property manager has two types of entries in a hierarchical
+property list, those which are parametrizable and those which are not.
+Non-parametrizable properties are entries in list which cannot be
+inserted into materials.  They function as named place-holders in the
+property tree, and typically occur at the heads of subtrees,
+indicating the category of the subtree.  For example, "Elasticity" is
+not meaningful as an actual property, but it is the head of a subtree
+which contains a parametrizable property, "IsoElasticity", as well as
+another nonparametrizable property, "Anisotropic".  "Anisotropic", in
+turn, has parametrizable sub-objects corresponding to the various
+crystallographic symmetries of elasticity.
+
+
+The main list of properties is constructed at the time that the code
+for the properties themselves is imported, and so will automatically
+be extended as new properties are coded.  This list is available to
+the user is three basic forms, one in the graphical user interface,
+and the other two through the menu hierarchy.
+ 
+(1): It appears as a "tree" in the Property frame, on the left hand
+side of the Materials page of the main OOF notebook.  Properties can
+be selected and deselected by clicking on them, and right-clicking on
+this tree brings up a parametrization dialog for the current property.
+This is how the actual values for the various physical features of an
+OOF material are set.
+
+(2): When selecting properties via a script or the command-line, the
+property names provided are colon-separated lists of node names in the
+tree, so that, for instance, to select a property "Child" which is
+below "intermediate", which in turn is below "Parent" in the tree, the
+command would be:
+OOF.Property.Select(propname="Parent:Intermediate:Child").
+
+(3): When providing parameter values from the command line, the
+property tree appers as a hierarchical set of menu entries below the
+"OOF.Property.Parametrize" item.  So, for instance, if "Child" in the
+foregoing example had a single parameter "size", you could provide a
+value of 100.0 for this parameter by means of the command:
+OOF.Property.Parametrize.Parent.Intermediate.Child(size=100.0)
+
+
+
+  Menu:  OOF.File.Save_property(propname='Parent:Child', filename='foo') 
+  GUI:   File -> Save property
+
+  Saves the named property to the file.  Properties are written in such
+a way that they can be read back in via Load_data, or embedded in a
+script.
+
+
+  Menu:  OOF.File.Save_material(matname='material', filename='foo') 
+  GUI:   File -> Save material
+    
+  Writes out a "newMaterial" call which constructs the current material
+to the indicated file.
+
+
+  Menu:  OOF.Property.Copy(oldpropname='Parent:Child', newpropname='leaf')     
+  GUI:   "Copy" button at top of Property frame
+
+  If Parent:Child is a parametrizable property, a new child property
+will be created and added to the tree.  The new property will be of
+the same type as the old, but can be parametrized separately.
+
+
+  Menu:  OOF.Property.Delete(propname='Parent:Child')                
+  GUI:   "Delete" button at bottom of Property frame.
+ 
+  Removes the named property from the property list, and from all
+materials in which it appears.
+
+
+  Menu:  OOF.Property.Parametrize(params...)
+  GUI:   Right-click on property tree.
+
+  See "Property Tree" section below.  Allows parameters to be set in
+properties.
+
+  Menu: OOF.Material.New(matname='mat') 
+  GUI: "New" button at bottom of Material frame.
+
+  Creates a new material with the given name, and selects it.
+
+ 
+  Menu:  OOF.Material.Copy(matname='mat',newname='mat2')
+  GUI:   "Copy" button at bottom of the Material frame.
+
+  Makes a copy of the current material using the new name.  The new material has all of the same properties as the old one.
+
+
+  Menu:  OOF.Material.Add_property(matname='mat', propname='Parent:Child') 
+  GUI:   "Load Property" button at bottom of *Property* frame.
+
+  Loads the named property into the named material.
+  
+
+  Menu:  OOF.Material.Remove_property(matname='mat', propname='Parent:Child'))
+  GUI:   "Remove Property" button at bottom of Material frame
+
+  Removes the named property from the named material.
+
+  
+  Menu:  OOF.Material.Delete(matname='mat')
+  GUI:   "Delete" button at bottom of Material frame.
+
+  Removes the current material from the application.  Does not remove
+the material's properties from the main property list.
+
+
+  
+
+  Anatomy:
+  -------  
+
+  The two main componenets of the materials editor are the
+PropertyManager and the MaterialManager.  These objects are singletons
+(although this is not enforced), and contain all of the property and
+material data known to the OOF system.  User operations originating in
+the GUI are typically serviced by calls to menu objects, so that the
+commands get logged, and so that graphical and command-line
+functionality are guaranteed to be consistent.
+
+  In addition to these two main objects, there are a number of
+additional support objects.  The PropertyManager's principal data
+object is a LabelTree, which contains either PropertyRegistration
+objects, or NamedPropertyRegistration objects hierarchically within
+it.  The GUI representation of the property tree is handled within the
+LabelTree class system, which has a GUI component.  The two
+Registration-type classes supplant the functionality of the
+"Registration" class for properties, because properties have special
+requirements at instantiation time.  On the Material side, data
+entries in the MaterialManager are MaterialProps objects, which
+themselves contain a Python dictionary of PropertyRegistration or
+NamedPropertyRegistration references indexed by name.
+
+  The GUI representation of Materials is slightly more complex.  The two
+principal widgets are the GtkOption menu indicating which material
+name is current, and a GtkList showing the current material's
+properties.  The GUI GtkList is a singleton, and contains all the
+properties for all the materials, but selectively hides and shows
+different sets depending on the selection state of the GtkOption menu.
+In order to do the bookkeeping, the GtkListItem objects in the list
+are wrapped in MaterialPropGUI objects, and these objects are in turn
+aggregated into several MaterialListGUI objects, on for each material.
+The MaterialListGUI object hides or shows its MaterialPropGUI objects
+in response to changes in the GtkOption menu's selection state.
+  
+
+
+  Signalling Summary
+  ------------------
+
+  The only nontrivial task for signalling in the materialeditor in the
+synchronization of the selection state between the property and
+material components of the GUI.  Other functions are implemented by
+button callbacks which query the GUI selection state in order to
+provide arguments to menu commands, which they then run to implement
+the appropriate function.
+
+  GUI selection events originate with mouse clicks in either the
+property or materials portions of the editor, and selection of a given
+property in one pane implies its selection in the other.  Also, when a
+new material is selected, if it contains a property corresponding to
+the current selection of the Property pane, that property should also
+become selected in the Materials pane.
+
+  In the PropertyPane, the selection and deselection process is divided
+into two parts.  The first part, the direct callback for the GUI
+selection event, makes two calls, one to local selection routine, and
+the other to the MaterialPane object's selection routine, each call
+being made with the name of the selected property.  The called
+routines are the "real" selection routines, and manipulate the GUI
+directly, blocking the selection or deselection callback and calling
+the appropriate GUI object's "select" (or "deselect") method.
+
+  The MaterialsPane has a similar structure, but with an extra level.
+Corresponding to each material, there is a MaterialListGUI object,
+which contains the GUI counterparts of the properties, and it is
+within this object that the gtk signals are caught.  From the gtk
+callback in the MateralListGUI called "GUI_select_prop", control flows
+up to the MaterialsPane object's prop_select routine, which then calls
+both the materialsPane and propertyPane's "select_property" routines.
+Within the materialsPane's "select_property", control is passed to the
+current MaterialListGUI object's "select_prop" routine, which then
+blocks the callback and manipulates the GUI.
+  
+  The actual selection state is stored as an instance attribute in the
+object iself.  In the PropertyPane, this is "self.current_property",
+and it's either None or a (name, registration) tuple.  In the
+MaterialPane, the corresopnding object is "self.current_material",
+which is either None or a MaterialListGUI object.  MaterialListGUI
+objects in turn have a "self.current_element" attribute, which is
+either None or the *name* of the selected property.  Names, in this
+context, are fully qualified names which refer to the PropertyTree,
+that is, a colon-separated set of property identifiers.
+
+  In the PropertyPane, the direct callbacks are "on_tree_select" and
+"on_tree_deslect", and the indirect routines are "select_property" and
+"deselect_property".  In the MaterialsPane, the "prop_select" and
+"prop_deselect" routines are called via the GUI, but not directly --
+the call is mediated by the MaterialListGUI object, which contains the
+gtk objects corresponding to property entries in materials.  These
+"prop_select" and "prop_deselect" routines call both the MaterialPane
+and PropertyPane "select_property" and "deselect_property" routines,
+respectively.
+
+  Within the MaterialsPane, there is additional code for the selection
+and deselection of materials, the core of which is the
+"selection_sync" routine of the MaterialListGUI object.  This routine
+extracts the current property from the PropertyPane, searches itself
+for the corresponding entry, and, if found, selects the corresponding
+GTK object by calling its own "select_prop" routine, which operates on
+the actual GTK objects.
+
+     
+  The Property Tree
+  -----------------
+
+  The registrations for the property objects in the PropertyManager
+resemble those of a conventional registered class, but with several
+modifications because of the unique behavior of the Property class.
+
+  At material importation time, property registration objects are made
+available in the user namespace under the a special name, which is the
+name that appears in the PropertyTree.  This name is meant to be
+descriptive and understandable to users, and is not in general the
+same as the class name represented by the registration object.
+Because the registration's __call__ method creates an instance of the
+represented property, this name functions like the class name of the
+property from the user's point of view.  The actual class name of the
+property is usually closely related -- the current fashion is to have
+the actual property class name be the registration object's name,
+appended with "Prop".
+
+Unlike conventional registered classes, PropertyRegistration objects
+push instances of the objects they represent through to the host
+materials, if any, whenever their parameters change, either through
+the GUI, through the menus, or during initialization.  All property
+instances in OOF2 know their corresponding PropertyRegistration
+objects as data, and do not have to look it up in the registry.  The
+principal purpose of the PropertyRegistration is to host the Parameter
+objects, and to allow parameters to be adjusted in a flexible way
+through either the GUI or menu commands.
+
+  There are two types of PropertyRegistration objects, the parent
+PropertyRegistration class, and the child NamedPropertyRegistration
+class.  Instancing a property via the PropertyRegistration's __call__
+method causes it to create a NamedPropertyRegistration, which it then
+associates with the new instance.  NamedPropertyRegistration objects
+appear in the tree as sub-entries under the PropertyRegistration
+objects, labelled by their names.  NamedPropertyRegistration objects
+are *not* exported into the scripting namespace.
+
+  The tree contained within the PropertyManager can be manipulated in
+essentially three ways -- through the GUI, via the menus, or directly
+via command-line operations.  GUI manipulations are straightforward.
+Properties can be deleted or added by means of the various buttons,
+and the current property can be parametrized by right-clicking on the
+tree, which brings up a parametrization dialog within which all the
+values for any parameters can be set.  Menu operations are similar,
+although parametrization is more subtle.  The PropertyManager's tree
+object has a corresponding menu object, which is available to the OOF2
+user under the "OOF.Property.Parametrize" heirarchy.  The menu item in
+question takes as keyword arguments all of the parameters of the
+Property, except the "name" parameter.  This also means that, in
+interactive use, the user can use the OOF2 default menu functionality
+with no arguments to find out what parameters the object expects.  
+
+  The third interaction path, direct command-line operations, is unique
+to the Property classes.  Invoking a PropertyRegistration's "call"
+method, by using the name as though it were a function, causes a
+property instance to be created, possibly including (in the case of
+named properties) a new corresponding NamedPropertyRegistration
+instance.  In the named case, a new entry is automatically added to
+the tree, and is subsequently available for parametrization, insertion
+into materials, deletion, and so forth, the same as any other
+property.
+
+  Unnamed properties are placed in the tree at import time.  They can be
+deleted from the tree, but there is no GUI or command-based way of
+directly creating new ones -- these entries can only be created by the
+importation of a Python module containing the code for the property in
+question.
+
+
+  The Material List
+  -----------------
+
+  Operation of the material list is straightforward, although there are
+a few opportunities for indirect surprises.  The material list
+maintains consistency with the property tree, both in terms of
+selection state and available properties.  This means that deleting a
+property from the property tree also removes it from all materials in
+which it occurs.  Material objects in the materialmanager have copies
+of actual instances of all of their properties.  When the property
+parameters change, they implement the updating process by removing the
+old property from their material, and adding the new one.  By this
+means, fully-realized materials are always available for insertion
+into meshes and so forth, although of course consistency or sanity of
+the materials so constructed cannot be guaranteed.
+

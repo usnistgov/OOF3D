@@ -1,0 +1,138 @@
+-*- text -*-
+$RCSfile: historyediting.doc,v $
+$Revision: 1.4 $
+$Author: langer $
+$Date: 2002/08/02 19:11:39 $
+
+How to create editable histories, as in the Image Modification pane of
+the ImagePage or the PixelSelection toolbox
+
+
+History editing allows the user to flip through the recently performed
+operations, possibly modifying and repeating them.  History editing is
+only available in GUI mode, because Python command line editing is
+available in CLI mode.
+
+The operations being stored in the history have to belong to a
+RegisteredClass, and have to be set from a RegisteredClassFactory.
+The GUI should construct "Prev", "OK", and "Next" buttons below the
+factory.  (The names can be changed, obviously, if there's a really
+good reason.)  The GUI also needs to construct a Historian, which is
+documented in common/IO/GUI/historian.py.  The RegisteredClassFactory
+and the Historian need to know about each other, so the initialization
+sequence should look like this:
+
+        self.imageModFactory = parameterwidgets.RegisteredClassFactory(
+            imagemodifier.ImageModifier.registry, title="Method:")
+
+        self.historian = historian.Historian(self.imageModFactory.set,
+                                             self.sensitizeHistory)
+
+        self.imageModFactory.set_callback(self.historian.stateChangeCB)
+
+The factory's callback is called whenever its GktOptionMenu is
+changed, and the Historian needs to know about this, so the factory's
+callback must be set to the Historian's stateChangeCB function.  If
+the factory needs to do other things in its callback, its callback
+can call historian.stateChangeCB() directly.  stateChangeCB() takes
+generic *args arguments and ignores them.
+
+The second argument to the Historian constructor is a callback telling
+the GUI that the sensitivity of the Prev and Next buttons has
+changed.  The GUI can use Historian.nextSensitive() and
+Historian.prevSensitive() to see if the buttons should be sensitive or
+not.
+
+The RegisteredClassFactory has to be updated whenever a new
+Registration is created, with a switchboard request connected to an
+update function:
+
+    def updateImageModifiers(self):
+        self.imageModFactory.update(ImageModifier.registry)
+
+    switchboard.requestCallback(ImageModifier, self.updateImageModifiers)
+
+The CLI menu for the operations should be constructed from the
+Registrations, and should be reconstructed whenever a new Registration
+is created, to guarantee consistency when new modules are loaded.  As
+an example, the Image.Modify menu construction is reasonably generic:
+
+    imagemodmenu = mainmenu.OOF.Image.addItem(oofmenu.OOFMenuItem('Modify'))
+
+    def buildImageModMenu():
+	imagemodmenu.clearMenu()
+	for registration in imagemodifier.ImageModifier.registry:
+	    params = [ <additional arguments> ] + registration.params
+	    menuitem = imagemodmenu.addItem(
+		oofmenu.OOFMenuItem(registration.name(),
+				    callback=imagemodifier.doImageMod,
+				    params=params))
+	    menuitem.data = registration
+
+    switchboard.requestCallback(imagemodifier.ImageModifier,
+				buildImageModMenu)
+
+The switchboard callback will be called automatically whenever a new
+subclass of ImageModifier is registered.  Note that the Registration
+is stored in the OOFMenuItem's data field, and that additional
+arguments, not present in the Registration, can be added to the
+parameter list of the menu item.  For image modification, the
+extra argument is the image name.
+
+The OK button's GUI callback must get the Registration from the
+RegisteredClassFactory, copy the values from the GUI widgets into the
+Registration's params, and call the corresponding CLI menu item.  In
+the ImagePage, the ImageModification menu is constructed from the
+Registrations, so the OK button callback looks like this:
+ 
+    def okbuttonCB(self, button):
+        modmeth = self.imageModFactory.currentOption # Registration
+        if modmeth is not None:
+            self.imageModFactory.set_defaults() # copy params from widgets
+            menuitem = getattr(mainmenu.OOF.Image.Modify, modmeth.name())
+            menuitem.callWithDefaults( <additional arguments> )
+
+callWithDefaults() works because the Registration and the OOFMenuItem
+*share* their params! 
+
+The CLI menu item performs the operation by instancing the
+RegisteredClass and doing whatever is required to do something with
+it.  (In the case of image modifications, this means calling the
+ImageModifier's __call__ method.)  For history editing, the important
+point is that the CLI callback must also issue a switchboard call
+telling the GUI which operation has been performed.  Here's the
+relevant part of the image modification OOFMenuItem callback:
+
+    def doImageMod(menuitem, image, **params):
+        # Extract the registration from the menuitem
+	registration = menuitem.data
+
+	# Instantiate the RegisteredClass object.  The menu was
+	# constructed so that its params are exactly those needed for
+	# the RegisteredClass.
+	imageModifier = apply(registration, (), params)
+
+	< Here's where the actual operation is performed. >
+
+	switchboard.notify('modified image', imageModifier)
+
+But first, the GUI has to request that it be informed about the
+operation.  For example, the ImagePage requests that it be told about
+the 'modified image' notification in its __init__:
+    
+    switchboard.requestCallback('modified image', self.modifiedImageCB)
+
+Notice that the corresponding switchboard.notify call in the CLI
+callback has passed the RegisteredClass instance as an argument.  The
+GUI's switchboard callback then has to tell the Historian about it:
+
+    def modifiedImageCB(self, imageModifier):
+        self.historian.record(imageModifier)
+
+
+Finally, the GUI has to sensitize and desensitize the Next and Prev
+buttons in the callback that it passed to the Historian constructor:
+
+    def sensitizeHistory(self):
+        self.nextmethodbutton.set_sensitive(self.historian.nextSensitive())
+        self.prevmethodbutton.set_sensitive(self.historian.prevSensitive())

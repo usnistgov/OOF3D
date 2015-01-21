@@ -1,0 +1,73 @@
+********* OOF 2.0 ***********
+
+Better arrangement of tasks on GUI pages.
+
+Improved active area interface.
+
+STOP button.						CURRENT
+     
+Useful and comprehensible error messages.
+
+Microstructure display in graphics windows.
+
+Create simple skeleton/mesh directly from pixels.	DONE
+
+Copy bc's, fields, etc. from one mesh to another.	DONE
+
+Field & flux output to files.				CURRENT
+
+Statistical & cross section output.
+
+More GUI outputs: tensor invariants, energy, etc.
+
+Save mesh, boundary conditions, fields.			DONE
+
+OOF1->OOF2 datafile translation program.
+
+Documentation for user-defined material properties.
+
+General basic documentation.
+
+Color bar in graphics window.
+
+Mesh/Field/Flux info toolbox. 
+
+Installation script.
+
+New layer editor.					CURRENT
+
+Fix plane stress.					CURRENT
+
+Find and fix TODO items in code.			PERPETUAL
+
+************ OOF 2.1 or later *************
+
+Separation into front- & back-end processes.
+
+Cache intermediate results in output calculations.
+
+One-dimensional elements & properties (surface tension).
+
+Parallel mesh construction and modification operations.
+
+Effective property scripts.
+
+A posteriori error estimators for adaptive meshing during solution.
+
+Time dependence.
+
+Non-linear solvers, plasticity.
+
+Automatic grain boundary detection in images.
+
+Graphical boundary editing.
+
+Output editor.
+
+p-refinement.
+
+Topological (eg, periodic) boundary conditions.
+
+Windows port (Cygwin?)
+
+Upgrade graphics toolkit to gtk2.x from gtk1.2.

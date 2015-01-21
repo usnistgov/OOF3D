@@ -1,0 +1,165 @@
+# -*- python -*-
+# $RCSfile: heatconductivity.spy,v $
+# $Revision: 1.11.6.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:45:47 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.engine import problem
+from ooflib.engine import propertyregistration
+from ooflib.SWIG.engine import symmmatrix
+
+PropertyRegistration = propertyregistration.PropertyRegistration
+
+## ISOTROPIC
+
+reg = PropertyRegistration(
+    'Thermal:Conductivity:Isotropic',
+    IsoHeatConductivity,
+    "ooflib.SWIG.engine.property.heatconductivity.heatconductivity",
+    ordering=97,
+    params=[parameter.FloatParameter('kappa',
+                                     1.0, tip=parameter.emptyTipString)],
+    propertyType="ThermalConductivity",
+    tip="Isotropic thermal conductivity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/isoheatcond.xml')
+    )
+
+reg.fluxInfo(fluxes=[problem.Heat_Flux], fields=[problem.Temperature],
+             time_derivs=[0])
+
+## TRICLINIC
+
+reg = PropertyRegistration(
+    'Thermal:Conductivity:Anisotropic:Triclinic',
+    AnisoHeatConductivity,
+    "ooflib.SWIG.engine.property.heatconductivity.heatconductivity",105,
+    [symmmatrix.TriclinicRank2TensorParameter(
+    'kappa',
+    symmmatrix.TriclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+    tip=parameter.emptyTipString)],
+    propertyType="ThermalConductivity",
+    tip="Triclinic thermal conductivity",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisoheatcond.xml'))
+
+reg.fluxInfo(fluxes=[problem.Heat_Flux], fields=[problem.Temperature],
+             time_derivs=[0])
+
+## MONOCLINIC
+
+reg = PropertyRegistration(
+    'Thermal:Conductivity:Anisotropic:Monoclinic',
+    AnisoHeatConductivity,
+    "ooflib.SWIG.engine.property.heatconductivity.heatconductivity",104,
+    [symmmatrix.MonoclinicRank2TensorParameter(
+    'kappa',
+    symmmatrix.MonoclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+    tip=parameter.emptyTipString)],
+    propertyType="ThermalConductivity",
+    tip="Monoclinic thermal conductivity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisoheatcond.xml'))
+
+reg.fluxInfo(fluxes=[problem.Heat_Flux], fields=[problem.Temperature],
+             time_derivs=[0])
+
+## ORTHORHOMBIC
+
+reg = PropertyRegistration(
+    'Thermal:Conductivity:Anisotropic:Orthorhombic',
+    AnisoHeatConductivity,
+    "ooflib.SWIG.engine.property.heatconductivity.heatconductivity",103,
+    [symmmatrix.OrthorhombicRank2TensorParameter(
+    'kappa',
+    symmmatrix.OrthorhombicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+    tip=parameter.emptyTipString)],
+    propertyType="ThermalConductivity",
+    tip="Orthorhombic thermal conductivity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisoheatcond.xml'))
+
+reg.fluxInfo(fluxes=[problem.Heat_Flux], fields=[problem.Temperature],
+             time_derivs=[0])
+
+## TETRAGONAL
+
+reg = PropertyRegistration(
+    'Thermal:Conductivity:Anisotropic:Tetragonal',
+    AnisoHeatConductivity,
+    "ooflib.SWIG.engine.property.heatconductivity.heatconductivity",101,
+    [symmmatrix.TetragonalRank2TensorParameter(
+    'kappa',
+    symmmatrix.TetragonalRank2Tensor(xx=1.0, zz=0.5),
+    tip=parameter.emptyTipString)],
+    propertyType="ThermalConductivity",
+    tip="Tetragonal thermal conductivity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisoheatcond.xml'))
+
+reg.fluxInfo(fluxes=[problem.Heat_Flux], fields=[problem.Temperature],
+             time_derivs=[0])
+
+## TRIGONAL
+
+reg = PropertyRegistration(
+    'Thermal:Conductivity:Anisotropic:Trigonal',
+    AnisoHeatConductivity,
+    "ooflib.SWIG.engine.property.heatconductivity.heatconductivity",102,
+    [symmmatrix.TrigonalRank2TensorParameter(
+    'kappa',
+    symmmatrix.TrigonalRank2Tensor(xx=1.0, zz=0.5),
+    tip=parameter.emptyTipString)],
+    propertyType="ThermalConductivity",
+    tip="Trigonal thermal conductivity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisoheatcond.xml'))
+
+reg.fluxInfo(fluxes=[problem.Heat_Flux], fields=[problem.Temperature],
+time_derivs=[0])
+
+## HEXAGONAL
+
+reg = PropertyRegistration(
+    'Thermal:Conductivity:Anisotropic:Hexagonal',
+    AnisoHeatConductivity,
+    "ooflib.SWIG.engine.property.heatconductivity.heatconductivity",100,
+    [symmmatrix.HexagonalRank2TensorParameter(
+    'kappa',
+    symmmatrix.HexagonalRank2Tensor(xx=1.0, zz=0.5),
+    tip=parameter.emptyTipString)],
+    propertyType="ThermalConductivity",
+    tip="Hexagonal thermal conductivity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisoheatcond.xml'))
+
+reg.fluxInfo(fluxes=[problem.Heat_Flux], fields=[problem.Temperature],
+time_derivs=[0])
+
+## CUBIC
+
+reg = PropertyRegistration(
+    'Thermal:Conductivity:Anisotropic:Cubic',
+    AnisoHeatConductivity,
+    "ooflib.SWIG.engine.property.heatconductivity.heatconductivity",99,
+    [symmmatrix.CubicRank2TensorParameter(
+            'kappa',
+            symmmatrix.CubicRank2Tensor(xx=1.0),
+            tip=parameter.emptyTipString)],
+    propertyType="ThermalConductivity",
+    tip="Cubic thermal conductivity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisoheatcond.xml'))
+
+reg.fluxInfo(fluxes=[problem.Heat_Flux], fields=[problem.Temperature],
+             time_derivs=[0])

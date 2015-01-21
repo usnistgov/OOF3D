@@ -1,0 +1,16 @@
+OOF.Microstructure.Create_From_ImageFile(filename='/Users/vrc/Desktop/bone/subsection/Bn_326_ROI_*.tiff', microstructure_name='ms', height=automatic, width=automatic, depth=automatic)
+OOF.Image.AutoGroup(image='ms:Bn_326_ROI_*.tiff', name_template='%c')
+OOF.Material.New(name='bone', material_type='bulk')
+OOF.Material.Assign(material='bone', microstructure='ms', pixels='#000000')
+OOF.Material.New(name='marrow', material_type='bulk')
+OOF.Material.Assign(material='marrow', microstructure='ms', pixels='#ffffff')
+OOF.Property.Copy(property='Color', new_name='instance')
+OOF.Property.Parametrize.Color.instance(color=RGBColor(red=1.00000,green=0.68254,blue=0.61905))
+OOF.Material.Add_property(name='marrow', property='Color:instance')
+OOF.Property.Copy(property='Color', new_name='instance_2')
+OOF.Property.Parametrize.Color.instance_2(color=Gray(value=1.0))
+OOF.Material.Add_property(name='bone', property='Color:instance_2')
+OOF.Settings.UndoBuffer_Size.Skeleton(size=2)
+
+
+

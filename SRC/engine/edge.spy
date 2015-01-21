@@ -1,0 +1,40 @@
+# -*- python -*-
+# $RCSfile: edge.spy,v $
+# $Revision: 1.4.16.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:43:42 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+# These Coord objects are created in C++ and passed out to Python,
+# so Python has to be the owner.  This is similar to the way the
+# edges are handled in element.spy, where there is also another
+# example of a Coord wrapper.
+def _EdgePtr__position(self, locations):
+    val = map(CoordPtr, self.position_(locations))
+    for v in val:
+        v.thisown = 1
+    return val
+
+EdgePtr.position = _EdgePtr__position
+
+#Interface branch
+#This equality function patterned after one in property.spy.
+#This function was used in an earlier implementation of Interfaces.
+#Leave it here just in case.
+def _BoundaryEdge___eq__(self, other):
+    if isinstance(other, BoundaryEdgePtr) and other.this == self.this:
+        return 1
+    return 0
+BoundaryEdgePtr.__eq__ = _BoundaryEdge___eq__
+
+from ooflib.SWIG.common.coord import CoordPtr
+from ooflib.SWIG.engine.element import ElementPtr
+from ooflib.SWIG.engine.node import NodePtr
+from ooflib.SWIG.engine.mastercoord import MasterCoordPtr

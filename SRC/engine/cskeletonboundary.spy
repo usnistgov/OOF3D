@@ -1,0 +1,108 @@
+# -*- python -*-
+# $RCSfile: cskeletonboundary.spy,v $
+# $Revision: 1.1.2.6 $
+# $Author: langer $
+# $Date: 2013/04/29 18:37:56 $
+
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.engine import skeletonboundary
+
+
+def _CSkeletonPointBoundary_makeContextBoundary(self, context, name, skeleton):
+    return skeletonboundary.SkelContextPointBoundary(context, name, skeleton,
+                                                     self)
+
+CSkeletonPointBoundaryPtr.makeContextBoundary = \
+                                 _CSkeletonPointBoundary_makeContextBoundary
+
+def _CSkeletonPointBoundary___repr__(self):
+    return "CSkeletonPointBoundary("+self.get_name()+")"
+
+CSkeletonPointBoundaryPtr.__repr__ = _CSkeletonPointBoundary___repr__
+
+
+def _ExteriorCSkeletonPointBoundary_makeContextBoundary(self, context, name,
+                                                        skeleton):
+    return skeletonboundary.ExteriorSkelContextPointBoundary(context, name,
+                                                             skeleton, self)
+
+ExteriorCSkeletonPointBoundaryPtr.makeContextBoundary = \
+                         _ExteriorCSkeletonPointBoundary_makeContextBoundary
+
+def _ExteriorCSkeletonPointBoundary___repr__(self):
+    return "ExteriorCSkeletonPointBoundary("+self.get_name()+")"
+
+ExteriorCSkeletonPointBoundaryPtr.__repr__ = \
+                                      _ExteriorCSkeletonPointBoundary___repr__
+
+
+def _CSkeletonEdgeBoundary_makeContextBoundary(self, context, name, skeleton):
+    return skeletonboundary.SkelContextEdgeBoundary(context, name, skeleton, 
+                                                    self)
+
+CSkeletonEdgeBoundaryPtr.makeContextBoundary = \
+                                 _CSkeletonEdgeBoundary_makeContextBoundary
+
+def _CSkeletonEdgeBoundary___repr__(self):
+    return "CSkeletonEdgeBoundary("+self.get_name()+")"
+
+CSkeletonEdgeBoundaryPtr.__repr__ = _CSkeletonEdgeBoundary___repr__
+
+
+def _ExteriorCSkeletonEdgeBoundary_makeContextBoundary(self, context, name,
+                                                       skeleton):
+    return skeletonboundary.ExteriorSkelContextEdgeBoundary(context, name, 
+                                                            skeleton, self)
+
+ExteriorCSkeletonEdgeBoundaryPtr.makeContextBoundary = \
+                          _ExteriorCSkeletonEdgeBoundary_makeContextBoundary
+
+def _ExteriorCSkeletonEdgeBoundary___repr__(self):
+    return "ExteriorCSkeletonEdgeBoundary("+self.get_name()+")"
+
+ExteriorCSkeletonEdgeBoundaryPtr.__repr__ = \
+                                  _ExteriorCSkeletonEdgeBoundary___repr__
+
+
+
+def _CSkeletonFaceBoundary_makeContextBoundary(self, context, name, skeleton):
+    return skeletonboundary.SkelContextFaceBoundary(context, name, skeleton,
+                                                    self)
+
+CSkeletonFaceBoundaryPtr.makeContextBoundary = \
+                                  _CSkeletonFaceBoundary_makeContextBoundary
+
+def _CSkeletonFaceBoundary___repr__(self):
+    return "CSkeletonFaceBoundary(%s, size=%d)" % (self.get_name(), self.size())
+
+CSkeletonFaceBoundaryPtr.__repr__ = _CSkeletonFaceBoundary___repr__
+
+
+
+def _ExteriorCSkeletonFaceBoundary_makeContextBoundary(self, context, name,
+                                                       skeleton):
+    return skeletonboundary.ExteriorSkelContextFaceBoundary(context, name,
+                                                            skeleton, self)
+
+ExteriorCSkeletonFaceBoundaryPtr.makeContextBoundary = \
+                             _ExteriorCSkeletonFaceBoundary_makeContextBoundary
+
+def _ExteriorCSkeletonFaceBoundary___repr__(self):
+    return "ExteriorCSkeletonFaceBoundary(%s, size=%d)" % (self.get_name(),
+                                                           self.size())
+
+ExteriorCSkeletonFaceBoundaryPtr.__repr__ = \
+                                     _ExteriorCSkeletonFaceBoundary___repr__
+
+
+
+
+

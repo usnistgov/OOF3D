@@ -1,0 +1,11 @@
+# Operation: Direct Output
+# Output: Temperature
+# Domain: SkeletonPointBoundaryDomain(boundary='XmaxYmaxZmax')
+# Sampling: DiscretePointSampleSet(show_x=True,show_y=True,show_z=True)
+# Columns:
+# 1. X
+# 2. Y
+# 3. Z
+# 4. Temperature
+# time: 0.0
+10.0, 10.0, 10.0, 10.0

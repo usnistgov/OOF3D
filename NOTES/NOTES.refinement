@@ -1,0 +1,64 @@
+-*- mode: text -*-
+// $RCSfile: NOTES.refinement,v $
+// $Revision: 1.1 $
+// $Author: reida $
+// $Date: 2001/12/03 22:15:29 $
+
+
+Element refinement notes, sketched roughly, with no reference to
+existing code, so class names may be wrong.
+
+Refine elements in two passes. The first pass checks to see if an
+element needs to be refined (without considering neighboring
+elements).  If it does need to be refined, new nodes are created and
+stored in the newnodes dictionary.  The dictionary keys are derived
+from the nodes on the ends of the original edge, by edgedict_key(),
+below.  The new nodes aren't created if the edge is already in the
+dictionary.  If it's already in the dictionary, the nodes were created
+while examining a previous element.
+
+The second pass over the elements sees how many edges have been marked
+for refinement (ie, are keys in the newnodes dictionary) and refines
+the element.
+
+The actual checking and subdivision is done by an instance of a
+derived Subdivider class.  The refinement_rules argument passed in to
+ghost_mesh.refine() is an instance of a RefinementRules class, which
+has a function that returns a Subdivider.  Different RefinementRules
+objects return different Subdivider subclasses, which is how the
+different rules are implemented.  The Subdivider classes have to have
+two functions:
+
+Subdivider.check_element(element, newnodes) adds entries to the
+newnodes dictionary for each edge of the element that has to be
+subdivided, if those nodes don't exist already.  If along the way it
+has computed information that will be used in the actual subdivision
+process, that information should be stored in local variables.
+
+Subdivider.subdivide(element, newnodes) returns a list of elements
+that replace the current element, using the newnodes dictionary to
+decide how many edges are actually to be subdivided, and any
+information stored by check_element.  If the element is not to be
+subdivided, subdivide() should return a list containing just the
+element itself.
+
+
+def edgedict_key(node0, node1):
+   utils.canonicalorder(id(node0), id(node1))
+
+
+ghost_mesh.refine(refinement_rules):
+   newmesh = ghost_mesh()
+   copy nodes from current mesh to newmesh, but NOT elements
+   newnodes = {}   # dictionary of new nodes on an edge
+   for element in self.elements:
+       element.check_refinement(newnodes, refinement_rules)
+   for element in self.elements:
+      newmesh.add_elements(element.subdivider.subdivide(element, newnodes))
+
+
+GhostElement.check_refinement(self, newnodes, refinement_rules):
+   self.subdivider = refinement_rules(self.ncorners)
+   self.subdivider.check_element(self, newnodes)
+
+

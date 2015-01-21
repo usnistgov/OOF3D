@@ -1,0 +1,85 @@
+-*- text -*-
+$RCSfile: nodeiterator.doc,v $
+$Revision: 1.1 $
+$Author: reida $
+$Date: 2001/12/03 21:59:50 $
+
+The ElementNodeIterator classes are used for looping over all of the
+Nodes belonging to an element.  Each Element class has functions that
+return the four kinds of ElementNodeIterators:
+
+	Element::node_iterator() const
+
+loops over all nodes of the element
+
+	ElementMapNodeIterator Element::mapnode_iterator() const
+
+loops over those nodes used for "mapping" -- they determine the
+geometry of the element, and
+
+	Element::funcnode_iterator() const
+
+loops over nodes at which degrees of freedom and nodal equations are
+stored.  These are the nodes that determine the functions being solved
+for.
+
+	Element::cornernode_iterator() const
+
+loops over the nodes at the corners of the elements.
+
+Because the different types of Elements need to have different
+iterator classes with different behaviors, the iterators need to use
+virtual functions.  That means that the Element functions that return
+the iterators really need to return *pointers* to iterators.  That
+means that there's a question about whose job it is to delete the the
+iterators.  To avoid this problem, the ElementNodeIterator classes are
+actually wrapper classes -- they contain a pointer to the actual
+iterator, which is derived from ElementNodeIteratorBase, and the
+wrapper class handles the deletion.
+
+Because there are four types of ElementNodeIterator, there are four
+types of ElementNodeIteratorBase, and each Element has to derive a
+class from each of the base classes (but see below).  For a class
+MyElement derived from Element, the functions listed above should look
+like this:
+
+   class MyIterator : public ElementNodeIteratorBase { etc; };
+   class MyMapIterator : public ElementMapNodeIteratorBase { etc; };
+   class MyFuncIterator : public ElementFuncNodeIteratorBase { etc; };
+   class MyCornerIterator : public ElementCornerNodeIteratorBase { etc; }
+
+   ElementNodeIterator MyElement::node_iterator() const {
+     return ElementNodeIterator(new MyIterator(...));
+   }
+
+   ElementMapNodeIterator MyElement::mapnode_iterator() const {
+     return ElementMapNodeIterator(new MyMapIterator(...));
+   }
+
+   ElementFuncNodeIterator MyElement::funcnode_iterator() const {
+     return ElementFuncNodeIterator(new MyFuncIterator(...));
+   }
+
+   ElementCornerNodeIterator MyElement::cornernode_iterator() const {
+     return ElementCornerNodeIterator(new MyCornerIterator(...));
+   }
+
+The ElementNodeIteratorBase classes form their own inheritance
+heirarchy:
+  class ElementNodeIteratorBase;
+  class ElementMapNodeIteratorBase : public ElementNodeIteratorBase;
+  class ElementFuncNodeIteratorBase : public ElementMapNodeIteratorBase;
+  class ElementCornerNodeIteratorBase : public ElementFuncNodeIteratorBase;
+
+If, as often happens, one of the iterators returns the same set of
+nodes as another, it's not necessary to define both subclasses.  Just
+use the *most* derived type of NodeIteratorBase class, derive your own
+iterator from it, and use that iterator to define
+ElementFuncNodeIterator, etc.  For example, see isoparametric.C in
+which IsoParElementNodeIterator is derived from
+ElementFuncNodeIteratorBase and used to define
+IsoElement::node_iterator(), IsoElement::funcnode_iterator(), and
+IsoElement::mapnode_iterator();
+
+For details on what the ElementNodeIteratorBase classes must provide,
+see the comments in elementnodeiterator.h.

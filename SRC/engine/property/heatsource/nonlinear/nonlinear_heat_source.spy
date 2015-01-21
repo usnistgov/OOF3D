@@ -1,0 +1,52 @@
+# -*- python -*-
+# $RCSfile: nonlinear_heat_source.spy,v $
+# $Revision: 1.8.8.2 $
+# $Author: langer $
+# $Date: 2013/11/08 20:45:55 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+
+from ooflib.common.IO import parameter
+from ooflib.engine import problem
+from ooflib.engine import propertyregistration
+
+
+PropertyRegistration = propertyregistration.PropertyRegistration
+
+
+## Nonlinear heat source test property without the analytical derivative
+
+reg = PropertyRegistration(
+    'Thermal:HeatSource:TestNonlinearHeatSourceNoDeriv',
+    TestNonlinearHeatSourceNoDeriv,
+    "ooflib.SWIG.engine.property.heatsource.nonlinear.nonlinear_heat_source",151,
+    [parameter.IntParameter('testno', 1, tip="Test number for the nonlinear heat source property.")],
+    propertyType="HeatSource",
+    secret=True,
+    tip="Nonlinear heat source property with no derivative used for testing.")
+
+reg.eqnInfo( equations=[problem.HeatBalanceEquation],
+             fields=[problem.Temperature],
+             nonlinear=True, time_dependent=True )
+
+## Nonlinear heat source test property
+
+reg = PropertyRegistration(
+    'Thermal:HeatSource:TestNonlinearHeatSource',
+    TestNonlinearHeatSource,
+    "ooflib.SWIG.engine.property.heatsource.nonlinear.nonlinear_heat_source",152,
+    [parameter.IntParameter('testno', 1, tip="Test number for the nonlinear heat source property.")],
+    propertyType="HeatSource",
+    secret=True,
+    tip="Nonlinear heat source property used for testing.")
+
+reg.eqnInfo( equations=[problem.HeatBalanceEquation],
+             fields=[problem.Temperature],
+             nonlinear=True, time_dependent=True)

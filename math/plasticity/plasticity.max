@@ -1,0 +1,273 @@
+/*  -*- lisp -*- 
+  This is a "maxima" (FOSS implementation of macsyma) file which
+   explores finite element implementations of plasticity. 
+
+  For starters, only has quad elements.
+*/
+
+/* Remove annoying feedback from elasticity routine. */
+RATPRINT : FALSE;
+
+/* Utility function to numerically solve a linear system Ax=b, due
+   to the baffling omission of this from the maxima suite.
+   This routine actually assumes rhs is a list. */
+
+mtxsolve(mtx,rhs) := block([size,augment,idx,res:[]],
+                       size : length(mtx),
+                       augment : addcol(mtx,rhs),
+                       augment : echelon(augment),
+                       for idx : 1 thru size do 
+                       block([val,jdx],
+                         val : part(augment,size-idx+1,size+1),
+                         for jdx : 1 thru length(res) do
+                         block(
+                           val : val - part(res,jdx)*part(augment,
+                                                          size-idx+1,
+                                                          size+1-jdx)
+                         ),
+                         res : append(res,[val])
+                       ),
+                       return(reverse(res))
+                     );
+
+/* Each node is an x,y pair of (undisplaced) coordinates. */
+nodes : [[0.0,0.0], [0.2,0.0], [0.4,0.0], [0.6,0.0], [0.8,0.0], [1.0,0.0],
+         [0.0,0.2], [0.2,0.2], [0.4,0.2], [0.6,0.2], [0.8,0.2], [1.0,0.2],
+         [0.0,0.4], [0.2,0.4], [0.4,0.4], [0.6,0.4], [0.8,0.4], [1.0,0.4],
+         [0.0,0.6], [0.2,0.6], [0.4,0.6], [0.6,0.6], [0.8,0.6], [1.0,0.6],
+         [0.0,0.8], [0.2,0.8], [0.4,0.8], [0.6,0.8], [0.8,0.8], [1.0,0.8],
+         [0.0,1.0], [0.2,1.0], [0.4,1.0], [0.6,1.0], [0.8,1.0], [1.0,1.0]];
+         
+
+/* Elements are quads, list of indices into the node list. */
+elements : [[1,2,8,7],[2,3,9,8],[3,4,10,9],[4,5,11,10],[5,6,12,11],
+     [7,8,14,13],[8,9,15,14],[9,10,16,15],[10,11,17,16],[11,12,18,17],
+     [13,14,20,19],[14,15,21,20],[15,16,22,21],[16,17,23,22],[17,18,24,23],
+     [19,20,26,25],[20,21,27,26],[21,22,28,27],[22,23,29,28],[23,24,30,29],
+     [25,26,32,31],[26,27,33,32],[27,28,34,33],[28,29,35,34],[29,30,36,35]];
+
+/* Master-space shape functions, expressions involving xi and zeta. 
+   The master-space domain is (-1,-1) to (1,1).  */
+sfns : [ (1/4)*(xi-1)*(zeta-1), -(1/4)*(xi+1)*(zeta-1), 
+         (1/4)*(xi+1)*(zeta+1), -(1/4)*(xi-1)*(zeta+1)];
+  
+/* Coordinate transformation -- given an element, return a list of
+   expressions corresponding to x(xi,zeta) and y(xi,zeta). The 
+   argument is the index of the desired element in the element list. */
+
+frommaster(lmnt) := block( [nds:part(elements,lmnt) , ell, idx],
+                      ell : length(nds),
+                      [sum(part(nodes,part(nds,idx),1)*
+                                part(sfns,idx),
+                         idx,1,ell),
+                       sum(part(nodes,part(nds,idx),2)*
+                                part(sfns,idx),
+                         idx,1,ell) 
+                      ] 
+                    );
+
+
+/* Jacobian of the coordinate transformation -- used for integrating,
+   an arbitrary function of x and y is integrated on an element as 
+   f(x(xi,zeta),y(xi,zeta))*jacobian. */
+
+jacobian(lmnt) := block( [mtx,fncs:frommaster(lmnt)],
+                    matrix( [ diff(part(fncs,1),xi),
+                              diff(part(fncs,2),xi)],
+                            [ diff(part(fncs,1),zeta),
+                              diff(part(fncs,2),zeta)] )
+                  );
+
+detjacobian(lmnt) := determinant(jacobian(lmnt));
+
+/* Returns a list, ds/dx and ds/dy, of derivatives with respect
+   to real coordinates.  Each result is a function of master-space 
+   coordinates. */
+
+dshapefn(lmnt, sidx) := block([mderivs,res,i],
+                          mderivs : [diff(part(sfns,sidx),xi),
+                                     diff(part(sfns,sidx),zeta)],
+                          res : invert(jacobian(lmnt)).mderivs,
+                          makelist(part(res,i,1),i,1,2)
+                        );
+
+/* Utility function for integrating a function of xi and 
+   zeta over an element. */
+elint(lmnt,igand) := defint(
+                       defint( igand*detjacobian(lmnt), xi, -1, 1),
+                     zeta, -1, 1);
+
+
+                                
+
+/* Elasticity is isotropic.  Construct the full cijkl matrix from 
+   the voigt-indexed one, to simplify computation later on.*/
+
+voigtmtx : [[1,6,5],
+            [6,2,4],
+            [5,4,3]];
+
+cmtx : [[1.0, 0.5, 0.5, 0.0,  0.0,  0.0 ], 
+        [0.5, 1.0, 0.5, 0.0,  0.0,  0.0 ],
+        [0.5, 0.5, 1.0, 0.0,  0.0,  0.0 ],
+        [0.0, 0.0, 0.0, 0.25, 0.0,  0.0 ],
+        [0.0, 0.0, 0.0, 0.0,  0.25, 0.0 ],
+        [0.0, 0.0, 0.0, 0.0,  0.0,  0.25]];
+
+cijkl : makelist(
+          makelist(
+            makelist(
+              makelist( 
+                part(cmtx, part(voigtmtx, i, j), part(voigtmtx, k, l)),
+                l, 1, 3
+              ), k, 1, 3
+            ), j, 1, 3
+          ), i, 1, 3
+        );
+
+
+/* Matrix construction for the special case of plane strain. */
+
+/* The in-plane elastic part of the master stiffness matrix is the 
+   upper-left corner. */
+
+/* Make the elastic contribution.  Requires global "mastermtx" of 
+   sufficient size to pre-exist, and for that size to be passed in. */
+elasticity() := block([eldx],
+                  for eldx : 1 thru length(elements) do
+                  block([nodeset,mucount,nucount,idx,ldx],
+                    print("Starting element ",eldx),
+                    nodeset : part(elements, eldx),
+		    for mucount : 1 thru length(nodeset) do
+		    for nucount : 1 thru length(nodeset) do 
+		    for idx : 1 thru 2 do 
+		    for kdx : 1 thru 2 do 
+		    block([mudx,nudx,row,col],
+	              mudx : part(nodeset,mucount),
+		      nudx : part(nodeset,nucount),
+		      row : 2*(mudx-1)+idx,
+		      col : 2*(nudx-1)+kdx,
+		      val : ( part(dshapefn(eldx,mucount),1)*
+				    part(dshapefn(eldx,nucount),1)*
+				    part(cijkl,idx,1,kdx,1) + 
+				  part(dshapefn(eldx,mucount),1)*
+				    part(dshapefn(eldx,nucount),2)*
+				    part(cijkl,idx,1,kdx,2) + 
+				  part(dshapefn(eldx,mucount),2)*
+				    part(dshapefn(eldx,nucount),1)*
+				    part(cijkl,idx,2,kdx,1) + 
+				  part(dshapefn(eldx,mucount),2)*
+				    part(dshapefn(eldx,nucount),2)*
+				    part(cijkl,idx,2,kdx,2) ),
+                      igt : elint(eldx,val),
+                      setelmx(igt+part(mastermtx,row,col),
+				      row,col,mastermtx)
+                    )
+                  )
+                );
+
+
+/* Boundary conditions -- 24 DOFs, twelve for each of the top and 
+   bottom boundaries.  Bottom is first, order is (x,y). */
+
+bcvals : [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+          0.0, 0.1, 0.0, 0.1, 0.0, 0.1, 0.0, 0.1, 0.0, 0.1, 0.0, 0.1];
+
+
+bcindices : [1,2,3,4,5,6,7,8,9,10,11,12,
+             61,62,63,64,65,66,67,68,69,70,71,72];
+
+amatrix() := block([i, rowsremoved:0, res:mastermtx],
+               for i : 1 thru length(bcindices) do 
+               block([rc],
+                 rc : part(bcindices,i)-rowsremoved,
+                 res : minor(res,rc,rc),
+                 rowsremoved : rowsremoved+1
+               ),
+               return(res)
+             );
+
+/* The C matrix is the matrix whose columns correspond to fixed degrees
+   of freedom, and whose rows correspond to independent equations. */
+cmatrix() := block([i,res:mastermtx, rowsremoved:0,colsremoved:0,cols],
+
+               /* First remove rows corresponding to dependent eqns. */
+               for i : 1 thru length(bcindices) do 
+               block([rc],
+                 rc : part(bcindices,i)-rowsremoved,
+                 res : submatrix(rc,res),
+                 rowsremoved : rowsremoved+1
+               ),
+
+               /* Then remove free dof columns. */
+               cols : length(part(res,1)),
+               for i : 1 thru cols do 
+               block(
+                 if not member(i,bcindices) 
+                 then 
+                 block([ci],
+                   ci : i-colsremoved,
+                   res : submatrix(res,ci),
+                   colsremoved : colsremoved+1
+                 )
+               ),
+               return(res)
+             );
+
+
+/* We actually want to solve A.x+C.x'=r, where x is the vector 
+   of free DOFs, x' is the vector of fixed DOFs, and r is the 
+   a priori right-hand side corresponding to independent equations.
+   A and C are the output of amatrix and cmatrix. */
+
+/* Initially, there are 36 nodes with 2 degrees of freedom each. */
+mastermtx : zeromatrix(72,72);
+
+solve_elastic() := block([a,c,cb,rhs,i,res],
+                     elasticity(),
+                     a : amatrix(),
+                     c : cmatrix(),
+                     cb : c.bcvals,
+                     rhs : makelist(-part(cb,i,1),i,1,length(c)),
+                     res : mtxsolve(a,rhs),
+                     maplist(lambda([x],float(x)),res)
+                   );
+
+
+/* Next up:
+     - Perfect plasticity with von Mises yield and associated flow.
+     - See if plane stress is really that hard.
+     - Figure out how to display results.
+     
+     Related problems:
+     - How to figure out if an element has gone/should go plastic?
+*/
+
+deviator(mtx) := block([i,j,k],
+                   sqrt(sum(sum(part(mtx,i,j)**2,i,1,3),j,1,3) -
+                          (1/3)*(sum(part(mtx,k,k),k,1,3)**2) 
+                       ) 
+                 );
+
+/* Derivative of deviator with respect to components gives:
+  
+        (mtx-(1/3)*tr(mtx)*I)/deviator(mtx),
+     ... which is "associated flow" if sigma is on the surface.
+*/
+
+/* What is computed are the six components of the 
+   plastic strain, and the consistency parameter.  Requirements
+   are that cijkl.(eT-eP) lie on the yield surface, and 
+   that delta-eP be normal to the yield surface at that point. DOFs 
+   are plastic strain *increment* and, um, consistency parameter,
+   I guess. */
+
+
+/* Build the stiffness matrix in the plastic case.  Presupposes the existence of a map which translates node indices to "plastic sequence" indices, and that the mastermtx is already large enough, and filled with zeros.  Also takes as an argument the current values of all the degrees of freedom, since it's a nonlinear problem. */
+
+/* Maxima effort halted, because it's not a good tool for all the 
+   indirection needed. */
+
+plasticity(lmnt,alldofs) := block();
+
+

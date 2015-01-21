@@ -1,0 +1,255 @@
+-*- text -*-
+$RCSfile: elementreg.doc,v $
+$Revision: 1.1 $
+$Author: reida $
+$Date: 2001/12/03 21:59:49 $
+
+
+  Element Registration:
+
+  This process has become  sufficiently complex that the info
+should be localized somewhere.  This is the place.
+
+  Why:
+  
+  In order to build a real mesh from a ghost mesh, you need
+to put together the basic geometrical information (i.e. locations
+of corners) that you've gotten from the mesh refinement process,
+together with the details of element construction, which you
+can deduce from knowing which type of element you want to actually
+build (i.e. isoparametric, superparametric, subparametric, or 
+user-defined custom specialization.)  The Element Registry mechanism
+makes the second part available to a Python ghost mesh.
+  Another objective of the design is to avoid duplication of 
+information -- users may want to add new kinds of elements, and it's
+easier, and less bug-prone, if all of the information can be provided
+in at one level (the new element's .h and .C files).  If a few 
+conventions are adhered to, the information will then be automatically
+propagated up to the Python/ghostmesh level, without any artificial
+duplication of data.
+
+  The down-side of this is that the resulting automatic process is 
+fairly complicated.  However, the complexity is "overhead complexity",
+that is, although it's hard to get right, you only have to get it right
+once, and then it works for everybody.  Users only need to understand
+the interface in order to use it, and are not required to know the
+mechanism (unless they want to, of course.)
+
+  What: 
+
+  The Element Registry is a global list of entries, one corresponding
+to each available most-derived element class.  At present, there are
+six.  An element registry entry has the name of the element type,
+the number of nodes, and a list of prototype nodes.  Each prototype
+node has information about whether the node is a parametric node or
+a mapping node, where it is located in the element master space,
+what its local index is relative to the current element, and 
+which edges, if any, it belongs to.  All of this is to help the
+ghost-mesh match up shared nodes of adjacent elements correctly.
+
+  How:
+  How to use:
+
+  At the global level, you have, as a result of all the load-time
+activity, access to a list of element registration entries from
+Python, through the GetElementRegs() function call.  Each 
+element of this list has a .name() method, which returns a string
+which can be used to pick out the appropriate element type.
+
+  At the python level, the element registry appears as a 
+dictionary whose keys are the names of the registry entries,
+as returned by the .name() call, and whose values are the
+element registration entries themselves.  This is helpful
+in coping with the fact that the order in which the registration
+entires are built can vary depending on the compiler, build
+parameters, and so forth, and is generally not guaranteed.
+
+  To construct a real mesh from a ghost mesh, you must
+provide a value for at least one of the keyword arguments,
+"triangle" or "quad", to the mesh() method of the ghostmesh.
+These values should of course be an element registration 
+entry with the appropriate number of sides -- for instance,
+you might do the following:
+
+  e = GetElementRegs()
+  etri = e['Isoparametric 3-node triangle']
+  ghostmeshinstance.mesh(triangle=etri)
+
+  ... in order to get a real mesh made up of three-noded
+isoparametric triangular elements.
+
+  Within ghostmesh.mesh, the first step is to construct all
+of the known nodes -- these correspond to the corners of all the
+ghost elements.   These are constructed using the appropriate 
+mesh method (in this case, makeFuncNode).  Then, instantiate
+an empty dictionary to hold the edge information, and iterate
+over the ghost elements, calling each one's .realelement method
+with the mesh, current master node count, edge dictionary, 
+and the keyword argument set passed in to the ghostmesh's
+mesh() method.  
+
+  The realelement method will notice when it has to allocate new
+nodes for an edge, and will add the edges to the edge dictionary as they
+are created, and by this means, create all the necessary new
+nodes for the shared edges of higher-order elements.
+
+  How:
+  How it works:
+
+  There are two principal tasks that are complex enough that they
+merit discussion.  They are the construction of the element registration
+list, and the actual construction of an element.
+
+  Construction of the list happens automatically at load-time through
+various static functions belonging to the most-derived element class.
+New elements must provide these functions and objects.
+
+  How It Looks To An Element:
+
+  The element should have a static private member of class ElementReg,
+and static public functions to build the element, and return node
+prototypes:
+ 
+  static Element* builder(Material *, Node **);
+  static ProtoNode* noder(int);
+
+  The builder function is very simple, it just wraps the constructor.
+A pointer to this function gets passed in to the element registration
+entry, and the reason for the wrapping is that it's not possible to 
+pass a pointer to the actual constructor.  
+  The noder function is conceptually straightforward, but might
+be fairly large for a many-noded element.  It takes an integer
+argument that is a node index, and creates and populates a ProtoNode
+structure corresponding to that index for the particular element
+type, returning a pointer.  A pointer to this function also gets 
+passed in to the element registry, and it gets called with each
+possible index, up to the number of nodes, during the load-time
+construction process.  The current noder functions are all switch
+statements, with each block providing the unique information for
+each node type, but any scheme that provides the correct information
+would be fine, i.e. if an advanced user has a zillion-node element
+where some devious scheme can be used to compute the node properties,
+they could do that instead.
+
+  From the point of view of the element code, the main event is 
+the initialization of the static object of class ElementReg.  
+The constructor takes four arguments:  A string which is the
+name of this element class and which will be available from the
+user interface, an integer equal to the number of nodes, 
+a pointer to the builder function, and a pointer to the protonode
+description function ("noder").  Because the ElementReg object is
+static, the initialization occurs at load-time.
+
+  How It Looks To The Registration Object:
+
+  The ElementReg class itself of course has the constructor which 
+is invoked at load-time for each of the static initializations which
+occur.  The constructor fills in the appropriate data members 
+from the arguments, and there are a few wrinkles here -- the "name"
+goes into a private data member "name_" which is then made available
+by function call.  This is an OOF coding convention adopted to avoid
+confusion in other circumstances.  The number of nodes is a 
+straightforwad assignment.  
+  The "nodedescrip" function pointer is assigned to a private
+member of the ElementReg class, because it only needs to be called
+by the constructor -- any other call would result in the spurious
+creation of ProtoNode instances, and a probable memory leak.  
+The "builder" function pointer is public so that it can be called
+from Python to actually build elements.  Although function pointers
+cannot be called directly from Python, this particular function
+is wrapped inside a SWIG "addmethod", where the function pointer
+actually is available.
+  Finally, at the end of the constructor, each element registration
+entry adds itself to a global static list of them.  This list isn't
+a "bare global", but rather is a static entity owned by a global
+function which returns a reference to it.  This is a C++ trick to 
+ensure that the required static member exists when it's needed, 
+since the order of creation of static objects is not guaranteed,
+but static members of functions are instantiated the first time
+the flow of control passes through their declarations.
+
+  How It Looks From Python:
+
+  Half of the complexity here is in the .swg file,
+with some wrapping happening in the _.py file, and most of it
+revolves around Python/SWIG's inability to handle C++ templated
+classes in general, and std::vector<Foo> in particular.
+  The ProtoNode class object has "addmethod" wrappers for the
+edge retrieval functions for this reason, but these are 
+straightforward.
+
+  There are two nodeworthy typemaps, one used to get the list
+of element registrations out, and another used to get Python
+lists of nodes in, where "out" and "in" are relative to the C++
+code.  
+
+  The "Eregvector" typemap is the one that gets the element
+registration list out of C++ and into a proper Python list so 
+it can be iterated over.  It's pattered after the node list 
+typemap from the Boundary class, and has important semantic 
+implications -- this typemap makes a local Python *copy* of 
+the element registrations list, and does not use the SWIG 
+shadow scheme.  This means that changes made to the local list
+will not propagate anywhere.  This is a "read-only" object, except
+that Python will not actually *prevent* you from writing to it,
+so it ends up being "semantically read-only", so to speak.
+
+  The "Node**" typemap is used to get a Python list of pointers
+to c++ nodes into a C++ array.  Originally this was to be a 
+std::vector<Node*>, but that proved to require too many layers
+of indirection and copying, with potential performance implications
+since every single element of an entire mesh is expected to be
+built by this mechanism.  The typemap checks the size of the list,
+and builds a null-terminated Node** into which to put the data.
+The data appear in the form of SWIG pointers, which area strings
+containing type information and a hexadecimal description of the
+pointed-to address.  This string is extracted by the PyString_AsString
+call, and then passed into SWIG_GetPtr to get back the actual 
+corresponding C++ pointer-to-node, which can then be assigned
+to the array, which in turn is then assigned to $target, which 
+means that it shows up as the parameter "v" in the ElementReg's
+"build" addmethod.  Note that the entire node list is copied in 
+this process -- this is a potential performance concern, but
+the objects being copied are pointers, so they're small, and the
+copying overhead is thought to be small with respect to the 
+weight of the PyString and GetPtr function calls, both of which
+are mandatory parts of the conversion.  If a performance problem
+arises, this issue will have to be revisted.
+
+  As far *actual* *Python*, that's all in elementreg_.py, where
+there are a couple of wrappers that preprocess the data.  These
+are the functions that are actually called by the ghostmesh's
+mesh construction routine, or will be when the time comes.
+The Python functions are GetElementRegs(), which gets the element
+registration list and maps the result through the ElementRegPtr
+instantiation to convert the SWIG-Python strings-are-pointers to
+proper objects with methods and so forth.  
+  In fact, in order to increase the efficiency of the element 
+construction process, the ElementRegPtr __init__ routine is not
+trivial.  It has code which bridges the ease-of-coding requirement
+for the ProtoNode class, which describes the element node-by-node,
+with the ease-of-use requirement, which really wants to know which
+nodes are relevant to a given edge.  The ElementRegPtr.__init__ 
+routine defined in elementreg_.py overrides the SWIG default, and
+builds a dictionary of lists of nodes.  The keys are the edge
+numbers, with an additional special key, 'interior', for nodes
+which are not on any edge.  Only nodes which are on exactly one or
+zero edges are interesting, because the corner nodes are already
+known to the ghost-mesh.  The value corresponding to each dictionary
+key is just a list of node prototypes.  For the edges, these are in
+counterclockwise order, and for the interior, they are in numerical
+order according to their prototype local indices.  (UNTESTED)
+
+  The other routine is the "build" routine, which 
+does more or less the reverse wrapping -- it converts each of the
+Node objects in the passed-in list into a C++-accessible
+Node*, and assembles the entire list into a null-terminated
+Node**, which is then passed on in to the C++ "build"
+routine.  This level of indirection is required because 
+SWIG is uncomfortable with pointers to functions.  The
+"build" function itself is a generic-interface wrapper for
+the constructor-wrapper.  This is really only a single
+(extra) level of indirection, because the pointed-to 
+function is not local to the ElementReg class, but rather
+is the *element* class's constructor-wrapper.  It's just
+that it's mentioned in several places.

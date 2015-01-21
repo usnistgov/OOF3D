@@ -1,0 +1,20 @@
+// -*- text -*-
+// $RCSfile: README,v $
+// $Revision: 1.2.42.1 $
+// $Author: langer $
+// $Date: 2014/09/27 22:35:13 $
+
+/* This software was produced by NIST, an agency of the U.S. government,
+ * and by statute is not subject to copyright in the United States.
+ * Recipients of this software assume all responsibilities associated
+ * with its operation, modification and maintenance. However, to
+ * facilitate maintenance we ask that before distributing modified
+ * versions of this software, you first contact the authors at
+ * oof_manager@nist.gov. 
+ */
+
+This directory contains an example showing how to build an OOF2
+extension without modifying the OOF2 source code.  The example is not
+meant to have any physical significance.
+
+THE FILES IN THIS DIRECTORY HAVE NOT BEEN UPDATED FOR OOF3D.

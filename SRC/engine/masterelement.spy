@@ -1,0 +1,84 @@
+# -*- python -*-
+# $RCSfile: masterelement.spy,v $
+# $Revision: 1.4.10.3 $
+# $Author: langer $
+# $Date: 2014/01/18 04:41:56 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.common import debug
+from ooflib.common import enum
+from ooflib.SWIG.engine import elementshape
+
+def makeMasterElementEnums():
+    # Create and update Enum classes for MasterElement types.  There
+    # is a separate enum class for each ElementShape.  This function
+    # returns a dictionary containing the classes, keyed by the
+    # shape's name.
+    
+    # This should only be called once, by engine.elements.initialize.
+    names = getMasterElementNames()
+    for name in names:
+        el = getMasterElementByName(name)
+        shape = el.shape()
+        enumclass = elementshape.enumClasses[shape.name()]
+        if name not in enumclass.names:
+            enum.addEnumName(enumclass, name, el.description())
+            enumclass._sorted = False
+    for enumclass in elementshape.enumClasses.values():
+        if not enumclass._sorted:
+            enumclass.names.sort(melcompare)
+            enumclass._sorted = True
+
+
+def getMasterElementFromEnum(elementenum):
+    return getMasterElementByName(elementenum.name)
+
+def getMasterElementsFromEnumClass(enumclass):
+    return [getMasterElementByName(name) for name in enumclass.names]
+
+def melcompare(a, b):
+    # MasterElement comparison function for determining the order in
+    # which the elements of a given shape are listed in the UI.
+    ela = getMasterElementByName(a)
+    elb = getMasterElementByName(b)
+    if ela.nnodes() < elb.nnodes(): return -1
+    if ela.nnodes() > elb.nnodes(): return 1
+    if ela.nmapnodes() < elb.nmapnodes(): return -1
+    if ela.nmapnodes() > elb.nmapnodes(): return 1
+    if ela.nfuncnodes() > elb.nfuncnodes(): return -1
+    if ela.nfuncnodes() < elb.nfuncnodes(): return 1
+    return 0
+
+########################
+
+# Make lists of nodes that have to be created -- these are in a
+# dictionary indexed by the edge number, plus a special entry indexed
+# by the string 'interior'.  Corner nodes are entirely omitted from
+# the indexing scheme because they're created automatically.
+
+# def _MasterElementPtr___init__(self,this):
+#     self.this = this
+#     self.thisown = 0
+#     self.protodic = {'interior':[]}
+#     for i in range(self.nsides()):
+#         self.protodic[i] = []
+#     for i in range(self.nnodes()):
+#         proto = self.get_protonode(i)
+#         n = proto.nedges()              # number of edges this node is on
+#         if n == 0:
+#             self.protodic['interior'].append(proto)
+#         elif n == 1:
+#             edgeno = proto.getedge(0)
+#             self.protodic[edgeno].append(proto)
+                
+# MasterElementPtr.__init__ = _MasterElementPtr___init__
+
+from ooflib.SWIG.engine.element import ElementPtr
+from ooflib.SWIG.engine.mastercoord import MasterCoordPtr

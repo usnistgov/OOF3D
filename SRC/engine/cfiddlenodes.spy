@@ -1,0 +1,298 @@
+# -*- python -*-
+# $RCSfile: cfiddlenodes.spy,v $
+# $Revision: 1.1.4.22 $
+# $Author: langer $
+# $Date: 2014/11/24 21:44:52 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.common import cregisteredclass
+from ooflib.common import debug
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.common.IO import reporter
+from ooflib.engine import iterationmanager
+from ooflib.SWIG.engine import cskeletonmodifier
+from ooflib.SWIG.common import switchboard
+from ooflib.SWIG.common import progress
+from ooflib.engine.IO import skeletongroupparams
+
+cregisteredclass.registerCClass(FiddleNodesTargetsPtr)    
+FiddleNodesTargetsPtr.tip = "Set target Nodes for Skeleton modifiers."
+FiddleNodesTargetsPtr.discussion = """<para>
+<classname>FiddleNodesTargets</classname> objects are used as the
+<varname>targets</varname> parameter in <link
+linkend='RegisteredClass:SkeletonModifier'><classname>SkeletonModifiers</classname></link>
+that move &nodes; around.
+</para> """
+
+def _FiddleNodes_makeProgress(self):
+    return progress.getProgress(self.__class__.__name__,
+                                self.iteration.get_progressbar_type())
+
+FiddleNodesPtr.makeProgress = _FiddleNodes_makeProgress
+
+def _FiddleNodes_postProcess(self, context):
+    skeleton = context.getObject()
+    prog = self.makeProgress()
+    try:
+        self.count = 0
+        prog.setMessage(self.header)
+        before = skeleton.energyTotal(self.getCriterion().getAlpha())
+
+        while self.iteration.goodToGo():
+            self.count += 1
+            context.begin_writing()
+            self.coreProcess(skeleton)
+            context.end_writing()
+            skeleton.incrementTimestamp()
+            switchboard.notify("Skeleton changed", context.path())
+            switchboard.notify("redraw")
+            self.updateIteration(prog)
+
+            if prog.stopped():
+                break
+
+        if prog.stopped():
+            return
+
+        after = skeleton.energyTotal(self.getCriterion().getAlpha())
+        if before:
+            rate = 100.0*(before-after)/before
+        else:
+            rate = 0.0
+        diffE = after - before
+        reporter.report("%s deltaE = %10.4e (%6.3f%%)"
+                        % (self.outro, diffE, rate))
+    finally:
+        self.getTargets().cleanUp()
+        prog.finish()
+
+FiddleNodesPtr.postProcess = _FiddleNodes_postProcess
+
+def _FiddleNodes_updateIteration(self, prog):
+    if self.getNok()+self.getNbad() > 0:
+        self.iteration.update(
+            self.getDeltaE(), self.getTotalE(),
+            (1.0*self.getNok())/(self.getNok()+self.getNbad()),
+            self.count, prog)
+    else:
+        self.iteration.update(None, None, None, self.count, prog)
+
+FiddleNodesPtr.updateIteration = _FiddleNodes_updateIteration
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+allNodesReg = cregisteredclass.Registration(
+    'All Nodes',
+    FiddleNodesTargetsPtr,
+    AllNodes, 0,
+    tip="Try moving all nodes.",
+    discussion="""<para>
+
+    Apply a &node; motion <xref
+    linkend='RegisteredClass:SkeletonModifier'/> (such as <xref
+    linkend='RegisteredClass:Anneal'/>) to all &nodes; in the &skel;.
+
+    </para>""")
+
+selectedNodesReg = cregisteredclass.Registration(
+    'Selected Nodes',
+    FiddleNodesTargetsPtr,
+    SelectedNodes, 1,
+    tip="Try moving only the selected nodes.",
+    discussion="""<para>
+    Apply a &node; motion <xref
+    linkend='RegisteredClass:SkeletonModifier'/> (such as <xref
+    linkend='RegisteredClass:Anneal'/>) to only the currently selected
+    &nodes; in the &skel;.
+    </para> """)
+
+nodesInGroupReg = cregisteredclass.Registration(
+    'Nodes in Group',
+    FiddleNodesTargetsPtr,
+    NodesInGroup,
+    ordering=1.5,
+    params=[skeletongroupparams.NodeGroupParameter('group',
+                                                    tip='Try moving nodes in this group')],
+    tip="Try moving only the nodes in a given group",
+    discussion="""<para>
+     Apply a &node; motion <xref
+     linkend='RegisteredClass:SkeletonModifier'/> (such as <xref
+     linkend='RegisteredClass:Anneal'/>) to only the 
+     &nodes; in a given node group.
+     </para> """)
+
+selectedElemReg = cregisteredclass.Registration(
+    'Selected Elements',
+    FiddleNodesTargetsPtr,
+    FiddleSelectedElements, 1.5,
+    tip="Try moving nodes of selected elements.",
+    discussion="""<para>
+    Apply a &node; motion <xref
+    linkend='RegisteredClass:SkeletonModifier'/> (such as <xref
+    linkend='RegisteredClass:Anneal'/>) to the &nodes; of the
+    currently selected &elems; in the &skel;.
+    </para>""")
+
+heteroElemeReg = cregisteredclass.Registration(
+    'Heterogeneous Elements',
+    FiddleNodesTargetsPtr,
+    FiddleHeterogeneousElements,
+    ordering=2,
+    params = [
+        parameter.FloatRangeParameter('threshold', (0.0, 1.0, 0.01), value=0.9,
+                                      tip='Anneal elements with homogeneity below the specified threshold.')
+        ],
+    tip="Try moving nodes of heterogeneous elements.",
+    discussion="""<para>
+    Apply a &node; motion <xref
+    linkend='RegisteredClass:SkeletonModifier'/> (such as <xref
+    linkend='RegisteredClass:Anneal'/>) to the &nodes; of the <link
+    linkend='Section:Concepts:Skeleton:Homogeneity'>heterogeneous</link>
+    &elems; in the &skel;.
+    </para>""")
+
+fiddleElInGroupReg = cregisteredclass.Registration(
+    'Elements in Group',
+    FiddleNodesTargetsPtr,
+    FiddleElementsInGroup,
+    ordering=2.5,
+    params=[skeletongroupparams.ElementGroupParameter('group',
+                                                      tip='Move the nodes belonging to elements in this group')],
+    tip="Move nodes of elements in a given element group",
+    discussion="""<para>
+    Apply a &node; motion <xref
+    linkend='RegisteredClass:SkeletonModifier'/> (such as <xref
+    linkend='RegisteredClass:Anneal'/>) to the &nodes; of the &elems;
+    in a given &elem; group.
+    </para>""")
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+annealReg = cregisteredclass.Registration(
+    'Anneal',
+    CSkeletonModifierBasePtr,
+    Anneal,
+    ordering=3,
+    params=[
+        parameter.RegisteredParameter(
+            'targets', FiddleNodesTargets,
+            tip='Which nodes to move.'),
+        parameter.RegisteredParameter(
+            'criterion',
+            cskeletonmodifier.CSkelModCriterion,
+            tip = 'Acceptance criterion'),
+        parameter.FloatParameter(
+            'T', value = 0.0,
+            tip="Failed moves will be accepted if T>0 and exp(-diffE/T) > r,"
+            " where diffE is the energy gained and r is a random number between"
+            " 0 and 1."),
+        parameter.FloatParameter(
+            'delta', value=1.0,
+            tip="Width of the distribution of attempted node motions,"
+            " in units of the pixel size."),
+        parameter.RegisteredParameter(
+            'iteration',
+            iterationmanager.IterationManager,
+            tip='Iteration method.')
+        ],
+    tip='Move nodes randomly and accept the moves that meet'
+    ' the acceptance criterion.',
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/anneal.xml')
+    )
+
+def _Anneal___init__(self, targets, criterion, T, delta, iteration,
+                     oldinit=Anneal.__init__):
+    oldinit(self, targets, criterion, T, delta)
+    self._keepargs = self._keepargs + [iteration]
+    self.iteration = iteration
+    self.intro = "Preparing to anneal skeleton...      "
+    self.header = "Annealing skeleton: "
+    self.outro = "Annealing done: "
+Anneal.__init__ = _Anneal___init__
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+smoothReg = cregisteredclass.Registration(
+    'Smooth',
+    CSkeletonModifierBasePtr,
+    Smooth,
+    ordering=4,
+    params=[
+        parameter.RegisteredParameter(
+            'targets', FiddleNodesTargets, tip='Which nodes to move.'),
+        parameter.RegisteredParameter(
+            'criterion', cskeletonmodifier.CSkelModCriterion,
+            tip = 'Acceptance criterion'),
+        parameter.FloatParameter(
+            'T', value=0.0,
+            tip='Failed moves will be accepted if T>0 and exp(-diffE/T) > r,'
+            ' where diffE is the energy gained and r is a random number'
+            ' between 0 and 1.'),
+        parameter.RegisteredParameter(
+            'iteration', iterationmanager.IterationManager,
+            tip='Iteration method.')
+            ],
+    tip='Move nodes to the average position of their neighbors and accept'
+    ' moves that meet the acceptance criterion.',
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/smooth.xml'))
+
+def _Smooth___init__(self, targets, criterion, T, iteration,
+                     oldinit = Smooth.__init__):
+    oldinit(self, targets, criterion, T)
+    self._keepargs = self._keepargs + [iteration]
+    self.iteration = iteration
+    self.intro = "Preparing to smooth skeleton...      "
+    self.header = "Smoothing skeleton: "
+    self.outro = "Smoothing done: "
+Smooth.__init__ = _Smooth___init__
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+surfaceSmoothReg = cregisteredclass.Registration(
+    'Surface Smooth',
+    CSkeletonModifierBasePtr,
+    SurfaceSmooth,
+    ordering=4,
+    params=[
+        parameter.RegisteredParameter(
+            'criterion',
+            cskeletonmodifier.CSkelModCriterion,
+            tip = 'Acceptance criterion'),
+        parameter.FloatParameter(
+            'T', value=0.0,
+            tip='Failed moves will be accepted if T>0 and exp(-diffE/T) > r,'
+            ' where diffE is the energy gained and r is a random number'
+            ' between 0 and 1.'),
+        parameter.FloatParameter(
+            'gamma', value=0.1,
+            tip='Damping factor.'),
+        parameter.RegisteredParameter(
+            'iteration', iterationmanager.IterationManager,
+            tip='Iteration method.')
+        ],
+    tip='Move nodes to the average position of their neighbors and accept'
+    ' moves that meet the acceptance criterion.',
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/smooth.xml'))
+
+def _SurfaceSmooth___init__(self, criterion, T, gamma, iteration,
+                            oldinit=SurfaceSmooth.__init__):
+    oldinit(self, criterion, T, gamma)
+    self._keepargs = self._keepargs + [iteration]
+    self.iteration = iteration
+    self.intro = "Preparing to smooth skeleton...      "
+    self.header = "SurfaceSmoothing skeleton: "
+    self.outro = "SurfaceSmoothing done: "
+SurfaceSmooth.__init__ = _SurfaceSmooth___init__
+
+
+
+

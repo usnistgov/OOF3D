@@ -1,0 +1,315 @@
+# -*- python -*-
+# $RCSfile: timestepping.txt,v $
+# $Revision: 1.9 $
+# $Author: langer $
+# $Date: 2008/06/17 15:26:24 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@ctcms.nist.gov. 
+
+## Sketch of timestepping classes.  This is just a way of organizing
+## my thoughts.  It might evolve towards or away from Edwin's
+## timestepping classes.
+
+class OutputSchedule:
+    # container class for ScheduledOutput objects
+    def nextOutput()
+        # Returns a ScheduledOutput object
+    # Should be written as an iterator/generator
+    def times():
+        # generator function that yields the next output time
+
+class ScheduledOutput:
+    def time()
+        # returns time of next desired output
+    def output()
+        # Returns an Output object which can be evaluated at the current time
+    def destination()
+        # Returns an outputdevice?  GfxWindow, message window, file...
+
+class PeriodicScheduledOutput(ScheduledOutput):
+    def __init__(self, time0, delta, output, destination)
+
+class ExponentialScheduledOutput(ScheduledOutput):
+    def __init__(self, time0, delta0, factor, output, destination)
+
+class ConditionalOutput:
+    # Produces output if some condition is met.  Must contain a
+    # deterministic output that tells it when to check.
+
+# ---------------------------------- #
+
+class TimeStepper:
+    # Base class, possibly abstract
+    def __init__(self)
+    def precompute(self, subproblem, t0, x, xp):
+        # Compute and cache quantities that can be reused if the step
+        # has to be repeated with a different delta.
+    def step(self, subproblem, linearizedsystem, t0, x0, t1, x1):
+        # Given initial values x0 at t0, computes new values x1 at t1.
+        # Time derivatives are included in x if needed.  Gets M, C, K,
+        # & f from subproblem, which knows the equation & field state.
+        # Uses cached M, C, etc, if possible -- asks subproblem if
+        # coefficients are field or time dependent.
+    def order(self):
+        # Returns nominal error exponent
+    
+
+# Classes that use auxilliary variables, y=dx/dt, and only solve 1st
+# order ODEs.
+class RK2(TimeStepper)
+class RK4(TimeStepper)
+class ForwardEuler(TimeStepper):
+    # ForwardEuler isn't a subclass of GeneralizedEuler, because it
+    # doesn't have to do a matrix solution.
+class GeneralizedEuler(TimeStepper)
+    def __init__(self, theta, matrixmethod)
+class BackwardEuler(GeneralizedEuler):
+    theta = 1
+class CrankNicolson(GeneralizedEuler):
+    theta = 0.5
+class Liniger(GeneralizedEuler):
+    theta = 0.878
+class Galerkin(GeneralizedEuler):
+    theta = 2./3.
+
+# Classes that solve 2nd order ODEs directly
+class SS22(TimeStepper):
+    def __init__(theta1, theta2)
+class Newmark(TimeStepper):
+    def __init__(theta1, theta2)
+
+class StaticStepper(TimeStepper):
+    def __init__(self, matrixmethod)
+    def solve()
+
+# When solving the non-linear equations that arise in the implicit
+# methods (GeneralizedEuler with theta > 0 and SS22), it's not
+# necessary recompute the Jacobian at every step.  The method will
+# still converge if the Jacobian is not too wrong.  I don't know how
+# to tell when it needs to be recomputed, though.
+
+# Should nonlinear Properties have a way of providing analytic
+# Jacobian terms?  They register the Fields that they depend on, and
+# can be asked for derivatives wrt those Fields.
+
+# ---------------------------------- #
+
+# Classes that take a "quality-controlled" step (to use the NR term).
+# They return new values for x *and* error estimates for each
+# component of x.
+
+class QCTimeStepper:
+    def __init__(tolerance):
+        # tolerance is an __init__ param so that different subproblems
+        # can have different tolerances.
+    def qcStep(driver, subproblem, linearizedsystem, enddata, t0, t1,
+               tolerance):
+        # Takes a qc step to t1, storing new values in
+        # enddata. Repeats the step until the error is less than the
+        # given tolerance, and returns the actual final time and a
+        # recommended size for the next time step.  The odedriver
+        # passed in so that it can be passed through to the actual
+        # evaluation routines, which may need its help in getting
+        # time-dependent quantities.
+        
+
+class TwoStep(QCTimeStepper):
+    # Takes a step, and does it again with two half steps.
+    # Can use any of the TimeStepper classes for the individual steps.
+    def __init__(TimeStepper)
+
+class RKF45(QCTimeStepper):
+    # Runge-Kutta-Fehlberg method -- takes both 4th and 5th order
+    # steps with the same function evaluations, and compares them to
+    # determine the error.  This will only work with first order ODEs.
+
+class PredictorCorrector(QCTimeStepper):
+    # Take an explicit step.  Use result of the explicit step as the
+    # initial iterate when solving the implicit step.  If the explicit
+    # step is pretty good, the iteration will converge very quickly.
+    # The difference between the implicit and explicit steps is a
+    # measure of the error. ????
+
+class StaticStepper(QCTimeStepper, TimeStepper):
+    # Just solves the static problem, and pretends to have gone on to
+    # the next time.
+    def __init__(matrixmethod)
+
+#
+
+# Need a class for error measurement -- simple float tolerance is too
+# primitive.  Should distinguish absolute, relative, etc.
+
+# ---------------------------------- #
+
+class ODEDriver:
+    def run():
+        # Loop over steps
+        #   do
+        #     do
+        #         (re)take step
+        #         evaluate error
+        #         adjust step size
+        #     while error > tolerance
+        #     check constraints (look for ConstraintProperties)
+        #     add or remove constraint equations, or assign aux field values
+        #   while constraint equations haven't changed
+
+        # Must notice if subproblem is dynamic, kinetic, or static.
+        # If dynamic and QC/TimeStepper is not TwoStep/SS22, then will
+        # have to create aux eqns for first derivatives.  
+
+        # What if subp is *not* dynamic and TimeStepper is SS22?  Z&T
+        # describe how to do this, but it's better to use
+        # GeneralizedEuler or RK4 directly, so just prohibit
+        # kinetic/SS22.
+ 
+class AdaptiveDriver(ODEDriver):
+    def __init__(QCTimeStepper)
+    def evaluate_error()
+
+class UniformDriver(ODEDriver):
+    def __init__(TimeStepper)
+    def evaluate_error():
+        return 0.0
+
+class StaticDriver(ODEDriver):
+    # Doesn't take any steps, just satisfies consistency and
+    # constraints.
+
+
+
+# ---------------------------------- #
+
+# Subproblems: Solve all subproblems together, with same dt, but use
+# different methods for each, if requested.
+
+# For each time step:
+
+# A. Take a QC step for each subproblem, using extrapolated or
+#    interpolated data from other subproblems, if necessary.
+#    (Subproblems using the same solver that really really want to be
+#    solved together should be combined into a single
+#    UnionSubproblem.)
+
+# B. Repeat all subproblems until answers are consistent, since the
+#    extrapolated data might not have been good enough.  This step can
+#    be optional, under user control.  Be sure to test for the trivial
+#    case, and don't iterate if there's only one subproblem.
+
+# C. Check error for all subproblems, and either reduce time step and
+#    repeat the step, or increase it and go on.  Use the most
+#    restrictive subproblem.
+
+# Should B and C be reversed?  Reduce the step size for each
+# subproblem before going on to the next?  Then only require
+# consistency at the shortest time?
+
+# ----------------------------- #
+
+# Issues:
+
+# Need a way of turning internal bcs on and off so that one subproblem
+# can provide a bc for another.  When assigning bcs, assign them to a
+# specific subproblem, or to all subproblems?
+
+# Subproblems need to be able to provide interpolated/extrapolated
+# data.  (Need to know their TimeSteppers, which know how to do the
+# interpolation to the correct order?)  Need equivalents for
+# Element::outputField() (& variations), Field::value() and
+# Field::output().
+
+## No. ODEDriver should know t_{n+1} data for those dofs that have
+## computed it.  Just use linear interpolation/extrapolation if
+## t_{n+1} data is known, and previous value (at t_n) otherwise.
+## ODEDriver can be asked for value of dof at any time (but will be
+## more accurate if time is within the current step).  If a Mesh can
+## only have one ODEDriver at a time, then the data can be stored in
+## the driver and accessible from the Nodes.
+
+
+# TimeSteppers (QCTimeSteppers?) should cache computations that only
+# use data from the beginning of a step, so that it can be reused if
+# the step is repeated.
+
+# For dynamics, need to store dField/dt as an additional Field at each
+# Node.  Will need to be initialized.  It should be created when its
+# "dynamic" flag is turned on in the *Fields* GUI page.
+
+# Nodes currently only store info at current time...  Mesh
+# (ODEDriver?) can store previous/next time step data and use dofindex
+# to access it.
+
+#--------------
+
+# SubProblem matrix computation:
+# *  Subproblems keep previous matrices in a cache.
+# * Are told when Fields have changed, so non-linear subproblems know
+#   when matrices have to be regenerated:
+#     SubProblem.fieldChanged(field, time)
+# * SubProblem.discard_matrices_predating(time) cleans the matrix cache.
+# * Matrices retrieved by SubProblem.getM(dofs, time), etc.  Allows for lazy
+#   computation and trade-off between speed & memory (by not using
+#   cache).
+
+# --------------
+
+# Evaluation of DoFs at different times at Nodes (and GaussPoints?)
+
+# 1. Before starting timestepping, subproblems make their own copies
+# of their *active* Fields DoFs.
+
+# 2. The Mesh knows in which subproblems each Field is active.  It's
+# an error for a Field to be active in more than one subproblem at any
+# given Node, but this might be hard or impractical to check for.
+
+# 3. While timestepping, subproblems keep copies of the DoF value
+# vectors at various times.  The times may differ from subproblem to
+# subproblem.
+
+# 4. Before evaluating matrices at a given time, a subproblem
+# announces its intentions to the mesh.  The mesh asks the *other*
+# subproblems to interpolate their active field values to the given
+# time, and to copy them back into the DoFs themselves (or the mesh's
+# vector of DoF values). The subproblem being solved will have to copy
+# its DoF values to the DoFs too, but the time will be determined by
+# the solver (ie, don't interpolate!).  Fields that aren't active but
+# which have time-dependent initializers have to be reinitialized.
+# Optimization: do this only for fields which are used by the current
+# subproblem's properties.  Unused fields can be safely out-of-date.
+
+# 5. After all subproblems have converged on a solution and the target
+# time is reached, all values of active fields are copied back from
+# the subproblems into the DoFs.  At this point the mesh is again
+# self-consistent at the new time, and outputs can be computed.
+
+# Optimization: store DoF values in a vector in the Mesh, and arrange
+# for each subproblem to have its Field values stored contiguously in
+# the vector.  Then copying will be faster.  It may be worthwhile to
+# rearrange the DoF indexing before solving, once it's known which
+# Fields are active in which subproblems.
+
+
+# Each subproblem keeps two lists of DoF values, one for the start and
+# one for the end of the current timestep.  It also knows the times of
+# the start and end, so that it can compute interpolated values, if
+# necessary.  If the end hasn't been computed yet, it just uses the
+# starting values.  DoF values are stored in a DOFLIST object, which
+# is swigged.  Python never explicitly loops over the components of a
+# DOFLIST.  All operations on it should be done with memcpy or blas.
+
+
+# -----------------
+
+# Time Dependence Page
+#  Whowidget for *Mesh*, not SubProblem
+#  Initialize Fields (mesh-wide)
+#  Set Output schedule (mesh-wide)
+#  Choose SubProblems to solve
+#  Set solver for each subproblem

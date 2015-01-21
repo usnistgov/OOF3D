@@ -1,0 +1,26 @@
+<HTML>
+<HEAD>
+<TITLE>
+Chop</TITLE>
+<BODY BGCOLOR="#ffffff">
+<H1>Chop</H1>
+[ Module  : swig, Package : swig ]<BR>
+   This file tests chopping of comment blocks   
+
+<P><TT><B>foobar(int );</B></TT>
+<BLOCKQUOTE>[ returns int  ]
+<BR>  ***********************************************************
+ * This is a block comment.                                 *
+ *                                                          *
+ * It should get chopped so that only text remains.         *
+ ***********************************************************  
+</BLOCKQUOTE>
+
+<P><TT><B>grok(double );</B></TT>
+<BLOCKQUOTE>[ returns int  ]
+<BR>   This comment should not be chopped because it's too short   
+</BLOCKQUOTE>
+
+
+</BODY>
+</HTML>

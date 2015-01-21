@@ -1,0 +1,59 @@
+# -*- python -*-
+# $RCSfile: view.spy,v $
+# $Revision: 1.1.2.10 $
+# $Author: langer $
+# $Date: 2014/07/31 18:32:48 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.SWIG.common import clip
+from ooflib.SWIG.common import direction
+from ooflib.common import debug
+from ooflib.common import utils
+from ooflib.common.IO import parameter
+
+utils.OOFdefine('View', View)
+
+def _View_repr_(self):
+    return ("View(cameraPosition=%s, focalPoint=%s, up=%s, angle=%g, "
+            "clipPlanes=%s, invertClip=%s, suppressClip=%s, "
+            "size_x=%d, size_y=%d)"
+            % (self.pos, self.focal, self.up, self.angle, 
+               [self.getClipPlane(i) for i in range(self.nClipPlanes())
+                if self.enabledClipPlane(i)],
+               self.invertedClip(), self.suppressedClip(),
+               self.size_x, self.size_y)
+        )
+ViewPtr.__repr__ = _View_repr_
+
+
+oldInit = View.__init__
+def _View__init__(self, cameraPosition, focalPoint, up, angle,
+                  clipPlanes, invertClip, suppressClip=False, 
+                  size_x=0, size_y=0):
+    oldInit(self, cameraPosition, focalPoint, up, angle, size_x, size_y)
+    self._norms = []
+    for plane in clipPlanes:
+        # The repr for ClippingPlanes is a list of four floats and a bool (nx,
+        # ny, nz, offset, flipped)
+        norm = direction.VectorDirection(plane[0], plane[1], plane[2])
+        self._norms.append(norm)
+        cplane =  clip.ClippingPlane(norm.cdirection, plane[3])
+        # Old code omitted the bool!
+        if len(plane)==5 and plane[4]:
+            cplane.flip()
+        self.addClipPlane(cplane)
+    if invertClip:
+        self.invertClipOn()
+    if suppressClip:
+        self.suppressClipOn()
+View.__init__ = _View__init__
+
+class ViewParameter(parameter.Parameter):
+    types = (ViewPtr,)

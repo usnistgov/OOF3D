@@ -1,0 +1,36 @@
+# -*- python -*-
+# $RCSfile: nonconstant_heat_source.spy,v $
+# $Revision: 1.8.8.2 $
+# $Author: langer $
+# $Date: 2013/11/08 20:45:53 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+
+from ooflib.common.IO import parameter
+from ooflib.engine import problem
+from ooflib.engine import propertyregistration
+from ooflib.SWIG.engine import symmmatrix
+
+
+PropertyRegistration = propertyregistration.PropertyRegistration
+
+
+## Nonconstant heat source test property
+
+reg = PropertyRegistration(
+    'Thermal:HeatSource:TestNonconstantHeatSource',
+    TestNonconstantHeatSource,
+    "ooflib.SWIG.engine.property.heatsource.nonconstant.nonconstant_heat_source",151,
+    [parameter.IntParameter('testno', 1, tip="Test number for the nonconstant heat source property.")],
+    propertyType="HeatSource",
+    secret=True,
+    tip="Nonconstant heat source property used for testing.")
+
+reg.eqnInfo( equations=[problem.HeatBalanceEquation], time_dependent=True )

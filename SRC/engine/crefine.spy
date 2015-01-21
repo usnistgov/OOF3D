@@ -1,0 +1,75 @@
+# -*- python -*-
+# $RCSfile: crefine.spy,v $
+# $Revision: 1.1.4.13 $
+# $Author: fyc $
+# $Date: 2014/02/18 16:38:10 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+from ooflib.common import cregisteredclass
+from ooflib.common import registeredclass
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.common import debug
+from ooflib.common import utils
+from ooflib.common import enum
+from ooflib.common import units
+from ooflib.SWIG.engine import cskeletonmodifier
+from ooflib.engine.IO import skeletongroupparams
+from ooflib.SWIG.engine import crefinementcriterion
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+cregisteredclass.Registration(
+    'Refine',
+    CSkeletonModifierBasePtr,
+    Refine,
+    ordering=0,
+    params=[parameter.RegisteredParameter('targets',
+                                          RefinementTargets,
+                                          tip='Target components to be refined.'),
+            crefinementcriterion.RefinementCriterionParameter('criterion'),
+            #parameter.RegisteredParameter('degree', RefinementDegree,
+            #                       tip='Preferred way of subdividing a side.'),
+            cskeletonmodifier.alphaParameter
+            ],
+    tip="Subdivide components.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/refine.xml'))
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+from ooflib.common.IO import mainmenu
+from ooflib.common.IO import oofmenu
+
+coveragemenu = mainmenu.debugmenu.addItem(oofmenu.OOFMenuItem(
+        "RefinementRule_Coverage",
+        secret=not debug.debug()))
+
+def _avoidDeadLocks(menuitem, avoid):
+    avoidDeadLocks(avoid)
+
+coveragemenu.addItem(oofmenu.CheckOOFMenuItem(
+        "Avoid_Deadlocks",
+        callback=_avoidDeadLocks,
+        value=True))
+
+def _printCoverage(menuitem):
+    printRuleUsage()
+
+coveragemenu.addItem(oofmenu.OOFMenuItem(
+        "Print",
+        callback=_printCoverage))
+
+def _clearCoverage(menuitem):
+    clearRuleUsage()
+
+coveragemenu.addItem(oofmenu.OOFMenuItem(
+        "Clear",
+        callback=_clearCoverage))

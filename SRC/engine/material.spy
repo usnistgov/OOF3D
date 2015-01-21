@@ -1,0 +1,263 @@
+# -*- python -*-
+# $RCSfile: material.spy,v $
+# $Revision: 1.10.2.5 $
+# $Author: langer $
+# $Date: 2014/10/09 18:06:37 $
+
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+from ooflib.SWIG.common import switchboard
+from ooflib.SWIG.engine import ooferror2
+from ooflib.SWIG.engine import properties
+from ooflib.common import debug
+from ooflib.common import enum
+from ooflib.common import runtimeflags
+from ooflib.common import utils
+from ooflib.common.IO import oofmenu
+import string, copy
+
+class MaterialType(enum.EnumClass(
+    ('bulk',
+     'A bulk material. Normal bulk properties can be added only to this type of material.'))):
+    tip = "Types of &oof2; materials."
+    discussion = """<para>
+
+    Types of &oof2; materials.
+    Certain properties can only be assigned to certain types of materials.
+    Bulk materials can be assigned to bulk elements.
+
+    </para>"""
+
+utils.OOFdefine('MaterialType', MaterialType)
+
+MATERIALTYPE_BULK = MaterialType("bulk")
+
+if runtimeflags.surface_mode:
+    enum.addEnumName(
+        MaterialType, 'interface',
+        'An interface material. Interface properties can be added only to this type of material.')
+    MATERIALTYPE_INTERFACE = MaterialType("interface")
+
+
+def _Material___init__(self, name, materialtype=MATERIALTYPE_BULK):
+    self.this = materialc.new_Material(name, materialtype.string())
+    self.thisown = 1
+    self.consistency_state = [] # empty if material is consistent
+
+    # addProperty and removeProperty maintain a Python list of
+    # property instances, which ensures that there exists a Python
+    # reference to each property in a material.  Reference-count
+    # manipulations are not required in the C++ code.
+    self.proplist = []
+
+Material.__init__ = _Material___init__
+
+##_old__del__ = Material.__del__
+##def _Material___del__(self):
+##    switchboard.removeCallback(self.sbcallback)
+##    _old__del__(self)
+
+##Material.__del__ = _Material___del__
+
+def _Material_addProperty(self, prop):
+    self.add1Property(prop)
+    self.proplist.append(prop)
+    self.cross_reference()
+
+Material.addProperty = _Material_addProperty
+    
+def _Material_removeProperty_(self, *properties):
+    for prop in properties:
+        # Exception thrown by C++ code if the property is not present.
+        self.remove1Property(prop)  # remove from C++ list
+        self.proplist.remove(prop)
+    self.cross_reference()
+
+Material.removeProperty = _Material_removeProperty_
+
+def _Material_properties(self):
+    return [self.getProperty(i) for i in range(self.nProperties())]
+
+MaterialPtr.properties = _Material_properties
+
+###########
+
+# Call cross_reference() whenever properties have been added to or
+# removed from the material, so the "consistency_state" flag/object is
+# always correct.
+
+# Cross-referencing relies on properties not being shared between
+# materials -- otherwise, the material is ambiguous in precompute(),
+# and in one of the contexts, the property can retrieve the wrong
+# companion property.  Each material should have a unique copy of each
+# of its properties.
+
+def _Material_cross_reference(self):
+    self.clear_xref()
+    self.consistency_state = []
+    for prop in self.properties():
+        try:
+            prop.bookkeeping(self)
+        except ooferror2.ErrRedundantProperty, exc:
+            self.consistency_state.append(
+                "Property '%s' is a redundant property of type '%s'."
+                % (prop.name(), exc.get_tag()))
+    for prop in self.properties():
+        try:
+            prop.c_cross_reference(self)
+        except ooferror2.ErrNoSuchProperty, exc:
+            self.consistency_state.append(exc.summary())
+    self.set_consistency(self.self_consistent()) # sets C++ flag
+            
+Material.cross_reference = _Material_cross_reference
+
+def _Material_selfconsistent(self):
+    return self.consistency_state == []
+MaterialPtr.self_consistent = _Material_selfconsistent
+
+def _Material_consistency_messages(self):
+    return self.consistency_state
+MaterialPtr.consistency_messages = _Material_consistency_messages
+
+###########
+
+def _Material_precompute(self, subproblem, fields):
+    # subproblem is a CSubProblem subclass instance, not a SubProblemContext.
+    for prop in self.properties():
+        subproblem.cache_active_prop(prop, prop.is_active(subproblem))
+        if subproblem.currently_active_prop(prop):
+            prop.c_precompute(subproblem.mesh)
+            subproblem.cache_nonlinearity_prop(prop, prop.is_nonlinear(fields))
+    self.cprecompute(subproblem)
+
+Material.precompute = _Material_precompute
+
+# def _Material_precompute_all_properties(self, mesh):
+#     for prop in self.properties():
+#         try:
+#             prop.precompute(mesh)
+#         except ooferror2.ErrNoSuchField:
+#             pass
+#
+# Material.precompute_all_properties = _Material_precompute_all_properties
+
+###########
+
+# Return true if we have any active nonlinear property.
+
+def _Material_nonlinear(self, subproblem, fields):
+    ## TODO 3.1: Remove the 'fields' arg.  This is called in
+    ## SubProblemContext.nonlinear(), and possibly elsewhere.
+    for p in self.properties():
+        if subproblem.currently_active_prop(p):
+            if subproblem.currently_nonlinear_prop(p):
+                return True
+    return False
+
+MaterialPtr.nonlinear = _Material_nonlinear
+
+def _Material_second_order_field(self, subproblem, field, eqns):
+    for p in self.properties():
+        if subproblem.currently_active_prop(p):
+            r = p.registration()
+            if field in r.second_order_fields(*eqns):
+                return True
+    return False
+
+MaterialPtr.is_second_order_field = _Material_second_order_field
+
+
+def _Material_timeDependent(self, subproblem, fields):
+    for p in self.properties():
+        if subproblem.currently_active_prop(p):
+            r = p.registration()
+            if r.timeDependent(fields):
+                return True
+    return False
+
+MaterialPtr.timeDependent = _Material_timeDependent
+
+
+def _Material__symmetric(self, subprobctxt, fn):
+    subprobctxt.solver_precompute()
+    subproblem = subprobctxt.getObject()
+    for p in self.properties():
+        if subproblem.currently_active_prop(p):
+            if not fn(p, subproblem):
+                return False
+    return True
+Material._is_symmetric = _Material__symmetric
+
+def _Material_symmetric_K(self, subproblem):
+    return self._is_symmetric(subproblem,
+                              properties.PropertyPtr.c_is_symmetric_K)
+Material.is_symmetric_K = _Material_symmetric_K
+
+def _Material_symmetric_C(self, subproblem):
+    return self._is_symmetric(subproblem, 
+                              properties.PropertyPtr.c_is_symmetric_C)
+Material.is_symmetric_C = _Material_symmetric_C
+
+def _Material_symmetric_M(self, subproblem):
+    return self._is_symmetric(subproblem,
+                              properties.PropertyPtr.c_is_symmetric_M)
+Material.is_symmetric_M = _Material_symmetric_M
+
+
+######
+
+# A Material's identity is tied to its name.  Python object identity
+# doesn't work, because the same Material returned to Python via SWIG
+# gets wrapped in different objects each time it's returned.
+
+def _Material__eq__(self, other):
+    return isinstance(other, MaterialPtr) and other.name() == self.name()
+MaterialPtr.__eq__ = _Material__eq__
+
+def _Material__ne__(self, other):
+    return not self.__eq__(other)
+MaterialPtr.__ne__ = _Material__ne__
+
+def _Material__hash__(self):
+    return hash(self.name())
+MaterialPtr.__hash__ = _Material__hash__
+
+######
+
+def _Material___repr_(self):
+    out = ["Material('" + self.name() + "'"]
+    for prop in self.properties():
+        out.append(`prop`)
+    out = string.join(out, ",\n\t")
+    return out + ")"
+
+MaterialPtr.__repr__ = _Material___repr_
+
+def _Material_copy_(self, newname):
+    m = Material(newname)
+    for p in [copy.deepcopy(p) for p in self.properties()]:
+        m.addProperty(p)
+        
+    return m
+        
+MaterialPtr.copy = _Material_copy_
+
+##############################
+
+# Create the singleton material attribute registration object.
+# The (swig'd) constructor adds it to the global list of attributes.
+attributeReg = MaterialAttributeRegistration()
+
+###################
+
+# _old_getMaterials = getMaterials
+# def getMaterials(microstructure):
+#     return map(MaterialPtr, _old_getMaterials(microstructure))
+

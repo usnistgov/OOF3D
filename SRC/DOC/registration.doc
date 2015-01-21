@@ -1,0 +1,101 @@
+-*- text -*-
+$RCSfile: registration.doc,v $
+$Revision: 1.3 $
+$Author: reida $
+$Date: 2002/06/03 21:29:23 $
+
+
+  Registered Classes in OOF2
+  --------------------------
+
+From time to time in the OOF code, it is desirable to aggregate
+parameter values for a class prior to, or in general independently of,
+the creation of an instance of that class.  This separation of
+functionality allows the registration object to maintain some state
+information, remembering the most-recently applied parameters, as well
+as presenting a uniform interface to other objects within OOF2 which
+communicate with the user, such as menus and GUI dialog boxes.  The
+parameter aggregation mechanism which accomplishes this is the
+"Registration" class.
+
+  Python classes which wish to use this interface should inherit from
+RegisteredClass.  Currently, the only registered C class is Property.
+This class is specialized in a variety of ways, and inherits from
+"RegisteredCClass", which itself does not reproduce the
+RegisteredClass interface.  The property classes are the subject of a
+another documentation file, where all of this is explained.
+
+
+  How To
+  ------
+
+  Registration objects (or subclasses) aggregate data in a list of
+instances of the "Parameter" class.  This class is a "smart" data
+container.  Every Parameter has a name, a set of allowed types, and
+possibly a default value for the data it contains.  The principal
+function of the Registration object is to manage its parameter set,
+setting and retrieving values.  In some cases, the Registration object
+will share references to its list of Parameters, allowing other
+objects to set values within them -- this is the mechanism by which it
+communicates with the GUI, for example.
+
+  Each set of registered classes lives within a class hierarchy headed
+by a descendant of "RegistredClass" which has as class data (*not*
+instance data) a list, called "registry".  This will contain the list
+of all registration objects for that class.  Because this list is
+class data, it exists prior to any instance of the class.
+
+  Registration objects for subclasses in the set of registered classes
+should be created at import-time, in the same file in which the class
+is defined.  In the most basic case, this is a simple matter of a
+direct call to the "Registration" class object.  The required
+arguments are: The name of the class, the class containing the
+registry list, the class actually being registered, and the ordering.
+The parameter list is an optional keyword argument which will almost
+certainly be present.
+
+  Once constructed, these objects can then easily by parametrized
+through the GUI.  For a stand-alone dialog box, the registration's
+parameter list can simply be passed to parameterwidgets.getParameters,
+and it will return from the dialog box with new parameters.  A call to
+the registration's __call__ method will instance the object.
+Alternatively, the registration's parameter list can be passed to, or
+shared with, an OOF menu item.  Invoking the menu item in non-GUI mode
+will then set the parameters, prompting as required for those which
+are not specified on the command-line, and supplying the last-set
+value as the default. 
+
+  In either case, once the parameters are set, the registration's
+__call__ method can be invoked to instantiate the registered class.
+
+  In the generic case, an instance constructed from a registration no
+longer shares its parameters with the registration.  The
+RegisteredClass base class provides functionality for extracting the
+values from an instance in the form of a parameter list, provided the
+instance has data members corresponding to each of the parameter
+names.  Some care must be taken, depending on the context, to ensure
+that values presented to users or set as defaults in menu items are
+appropriate.
+
+
+  The GUI Interface
+  -----------------
+
+  The parameterwidgets module provides several convenience functions for
+bringing up widgets with which to parametrize objects.
+
+  The RegisteredClassFactory object takes a registry and instantiates a
+new GtkFrame, into which a GtkOptionMenu is placed, which has as
+selections each of the classes.  For each class, the lower part of the
+frame contains the appropriate widgets for the parameters of that
+class.  This is the function you should use if you already have a
+graphical background into which you wish to place your widgets.
+
+  Alternatively, one can construct a ParameterDialog, which takes a list
+of parameters and builds a GtkDialog with widgets for each of them.
+This functionality can be generically operated in a modal way by
+simply calling the "getParameters" function with the list of
+parameters for which you require values.  getParameters has a return
+code which indicates whether or not the user exited via the "OK"
+button, which is the only circumstance under which the parameter
+values will have changed.

@@ -1,0 +1,7 @@
+removefile('image.log')
+removefolder('png_image')
+removefolder('bmp_image')
+removefolder('jpg_image')
+removefolder('pnm_image')
+removefolder('ps_image')
+removefolder('tiff_image')

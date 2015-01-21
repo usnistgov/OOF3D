@@ -1,0 +1,133 @@
+// -*- text -*-
+// $RCSfile: field.doc,v $
+// $Revision: 1.1 $
+// $Author: langer $
+// $Date: 2002/01/09 18:35:39 $
+
+/* This software was produced by NIST, an agency of the U.S. government,
+ * and by statute is not subject to copyright in the United States.
+ * Recipients of this software assume all responsibilities associated
+ * with its operation, modification and maintenance. However, to
+ * facilitate maintenance we ask that before distributing modifed
+ * versions of this software, you first contact the authors at
+ * oof_manager@ctcms.nist.gov. 
+ */
+
+Here's a summary of the way the field classes work, and how
+they interact with the DegreeOfFreedom and Node classes.
+
+Basics
+
+The value of a field (eg temperature or displacement) at a
+point is stored as a DegreeOfFreedom at a Node.  Each Node has a list
+(vector<DegreeOfFreedom*> Node::doflist) of field values.  The Field
+classes are used to extract the value of the field from the list of
+degrees of freedom at a Node, using Field::operator()(const Node*)
+or Field::operator()(const ElementNodeIterator&). [ElementNodeIterator
+is a class that's used to loop over all the Nodes belonging to an
+Element.]
+
+There are different kinds of fields (ScalarField, TwoVectorField,
+etc), and the type returned by Field::operator() depends on the
+derived type of the Field.  But since sometimes we need to use a Field
+through a pointer to the Field base class, we need to also have a
+virtual function that returns a double.  I assume that all Field
+components can be indexed by an integer, and so there's an operator
+virtual DegreeOfFreedom *operator()(const Node*, int component).  For
+ScalarField the component is meaningless. (If we ever have a
+TensorField we'll need either to use a FieldIndex class heirarchy
+instead of an int for the component number, or we'll need a scheme for
+indexing a tensor by a single int.)
+
+Helper classes
+
+For nonscalar fields, it's nice to be able to treat their values at
+Nodes as compound objects, even though they are actually stored as
+individual DegreeOfFreedom objects. So Fields like TwoVectorField have
+associated Helper classes that return an intermediate object which
+handles the conversion to the appropriate type. The Helper class
+should never have to be explicitly used.
+
+Examples:
+  Node *node = ...;
+  extern ScalarField temperature;    // defined in problems.h
+  temperature(node)->value() = 273;  // assign value to T at this node
+     // temperature(node) is a DegreeOfFreedom*
+  Field *T = &temperature;           // pointer to base class
+  (*T)(node, 0)->value() = 273;      // have to use fake component index
+
+  int globalindex = temperature(node)->dofindex();  // position in matrix
+     // temperature(node) is a DegreeOfFreedom*
+
+  extern TwoVectorField displacement;  // defined in problems.h
+  Coord disp;  // a two component vector
+  displacement(node) = disp; // uses TwoVectorHelper class
+        // displacement(node) is a TwoVectorHelper
+  displacement(node, 0)->value() = disp[0]; // an equivalent way of doing it
+  displacement(node, 1)->value() = disp[1]; //    using the DoF explicitly.
+
+Defined and Active Fields
+
+The Field objects themselves are global static objects, constructed
+when the program is initialized. (Actually they're in the OOFproblem
+namespace.)  Since they don't take up much memory, there's no problem
+with having them always there.  If the nodes are storing values for
+the Fields, the fields are said to be "defined", and the fields have
+virtual functions Field::define() and Field::undefine().  These
+functions allocate space for the DegreeOfFreedoms in the Nodes.
+Fields that are being solved for are said to be "active", and the
+Fields have virtual functions Field::activate() and
+Field::deactivate().  All four of these virtual functions operate on
+the bookkeeping information stored in the Field class that lets it
+extract the right DegreeOfFreedoms from the Nodes.  An active field
+must be defined, but a defined field need not be active.
+
+
+Out-of-plane components
+
+Each in plane Field has out-of-plane components that we have to solve
+for in order to satisfy the plane stress (or equivalent) constraints.
+For example, in elastic plane stress, we solve for displacement (x and
+y) but the constraint sigma_iz = 0, i=1,2,3 introduces three new
+variables for the out-of-plane components of the strain.  When solving
+for temperature with no out-of-plane heat flux, the out-of-plane
+temperature gradient dT/dz is a new variable.
+
+To unify the handling of these auxilliary fields, there's a
+CompoundField class derived from the Field base class. The
+CompoundField can return a reference to the out-of-plane part of the
+field via Field &CompoundField::out_of_plane().
+CompoundField::set_in_plane(bool) is used to turn the out-of-plane
+part on and off.
+
+Because of this, the Field class heirarchy gets somewhat messy. There
+are plain (not compound) fields derived from Field: ScalarFieldBase,
+TwoVectorFieldBase, and VectorFieldBase.  The Fields that are actually
+used are derived from these and also from CompoundField:  ScalarField,
+TwoVectorField, and VectorField.  The out-of-plane parts pointed to by
+CompoundField are of the xxxFieldBase variety.
+
+I used virtual inheritance so that CompoundField and xxxFieldBase
+could both be derived from Field, and xxxField could be derived from
+xxxFieldBase and CompoundField without including the Field base class
+twice. CompoundField needs to be derived from Field, since it needs to
+override the virtual functions for activating and defining the field.
+xxxFieldBase needs to be derived from Field because it is a Field.
+Virtual inheritance is messy but I don't see a way around it here.
+One way would be to simply derive xxxField from xxxFieldBase by
+including the CompoundField parts in xxxField, but then we'd have to
+repeat the definition of those parts separately for *each* type of
+xxxField.
+
+Initialization
+
+The values in the field could be set by the Mesh class (whose name
+should be changed to Mesh).  The Mesh/Mesh has ways of looping over
+Nodes, and it could use field(node, component)->value() = xxx.
+More likely, the Fields could have various initialize functions, which
+would ask the Mesh/Mesh for a NodeIterator object. So we'd have, for example,
+  ScalarFieldBase::initialize(double (*f)(const Coord &position))
+  TwoVectorFieldBase::initialize(Coord (*f)(const Coord &position))
+to initialize from a function. These non-virtual functions could then
+use the Helper classes as appropriate.
+

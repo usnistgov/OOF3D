@@ -1,0 +1,146 @@
+# -*- text -*-
+# $RCSfile: NOTES,v $
+# $Revision: 1.2 $
+# $Author: langer $
+# $Date: 2006/07/20 14:28:50 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@ctcms.nist.gov. 
+
+------------------------------------------------------------------------------
+
+This file contains notes for developers.  The README file contains
+notes for users who would like to test their OOF2 installation.
+
+
+
+  Some notes on the regression testing suite for OOF2
+  ----------------------------------------------------
+
+
+The files in this directory make up the regression testing suite for
+the OOF2 software.  They form a two-level hierarchy, with the "root"
+being the "regression.py" file, and the "leaves" being the various
+other "*.py" files.
+
+
+To run the full regression suite, first ensure that OOF is built on
+the system.  The full suite will only run for the "dist" build.  Then,
+while in this directory, type "python regression.py".  This will run
+all of the tests in the appropriate order, with dependent tests
+running after their dependencies.
+
+
+To run one of the "test modules" contained in one of the leaf *.py
+files, the procedure is the same -- type "python <test_module>.py" at
+the command prompt in this directory.  All the tests in that module
+will then be run.  Of course when run this way, there is no way to
+ensure that dependencies of tests in the module have been run, as they
+may reside in other modules.
+
+
+Dependencies
+------------
+
+There are two kinds of dependencies that can exist between tests.  The
+first of these may be called "weak" dependency, and occurs when the
+result of a later, dependent test is only meaningful if the prior
+dependency test has succeeded.  For example, an operation on an object
+cannot be meaningfully tested if the object cannot be created.  In the
+absence of the creation test, the failure of the operation test may
+mean that the operation doesn't work, or it may mean that the object
+can't be created.  In the presence of the creation test, the meaning
+of the failure of the operation test is clearer.
+
+The second kind of dependency may be called "strong" dependency, and
+occurs when the dependent test relies on side-effects of the
+dependency test.  In several cases in this testing suite, there are,
+for example, object deletion test items, which will not run correctly
+unless the expected object they want to delete is present in the OOF
+system.  In this typical case, the test is strongly dependent on a
+corresponding object creation test, which creates the object with the
+expected name and attributes.  In the strong-dependency case, the
+second test will fail in the absence of the first test, even if there
+are no bugs in the OOF code at all.
+
+The testing modules in this directory only have weak dependencies
+between them.  Within many of the modules, tests are grouped into test
+suite objects, and there are also only weak dependencies between
+groups.  There may be strong dependencies within groups.  Anyone
+interested in rearranging the tests must of course take this into
+account.
+
+
+Structure of Modules
+--------------------
+
+From the general to the specific, modules must have code that runs
+OOF, code that runs all the tests, and finally the actual tests
+themselves.
+
+In order to run independently, each module should have a block of
+code, run if the module is imported as "__main__", which starts OOF
+with appropriate arguments, calls the module's run_tests() function,
+then quits OOF, reporting whether or not the run_tests function
+succeeded or failed.  There is no reason why this code block should
+not be identical in every module.
+
+The run_tests function is almost identical between modules.  It should
+always be called "run_tests" so that the regression test script can
+run it.  Run_tests should create an instance of a TextTestRunner
+object, from the class in Python's distribution-provided "unittest"
+module, and then use it to run every test in the test-set.
+
+The tests themselves are created from subclasses of the TestCase class
+from the Python distribution-provided unittest module.  Each TestCase
+class declaration defines several functions within a given subclass,
+each function corresponding to an individual tests.  Tests are created
+by giving the function name as an argument to the constructor for the
+class, so that each function corresponds to an instance of the
+TestCase subclass object.  Besides the individual tests, TestCase
+subclass objects also have a setUp and tearDown function, the former
+being run before each test, and the latter after.  Tests are thus
+naturally grouped roughly according to their preparatory and clean-up
+requirements.  In the OOF2 test suite, tests are also grouped
+logically according to which sub-hierarchy of the OOF menu tree they
+inhabit.
+
+Actual tests are written such that, having done whatever set-up is
+required in their class's setUp routine, they run the OOF menu command
+being tested, and the examine the results using the TestCase's
+"assert" functions.  These functions inspect various conditions, and
+if the conditions are not satisfied, will report a test failure.
+
+The run_test function is written in such a way that any test failure
+terminates the testing process.
+
+
+Notes
+-----
+
+Most of the tests which actually exist are rather superficial.  The
+most basic thing that is consistently tested is whether or not the
+tested menu item runs at all.  Most tests also make a cursory check
+that various internal book-keeping devices give answers consistent
+with the correct function of the menu item, but beyond this, little is
+done to ensure that the menu item really worked as intended.  This is
+primarily due to a shortage of time for writing tests.
+
+The most in-depth and sophisticated tests achieve their results by
+running menu items on known inputs, saving the result to a file, and
+then checking the generated file against a known-good reference file
+or known-good result.  This tends to be a feature of later, "all-up"
+tests of, for instance, saving a rich mesh or skeleton to a file, or
+running the solver on a problem.  These tests suffer from the opposite
+problem, in that they are rigorously precise in their requirements,
+but their scope is limited to the provided inputs.  While most tests
+are shallow, these tests are deep but narrow, so to speak.
+
+Subdirectories of this directory include subsidiary data used by the
+tests, either as inputs or for comparison.  This data may need to be
+updated from time to time if the OOF behavior changes.

@@ -1,0 +1,251 @@
+% $RCSfile: timestepping.tex,v $
+% $Revision: 1.5 $
+% $Author: langer $
+% $Date: 2008/06/17 15:26:24 $
+
+\documentclass[onecolumn,prl,floatfix,12pt]{revtex4}
+
+\newcommand{\M}{\textbf{M}}
+\newcommand{\C}{\textbf{C}}
+\newcommand{\K}{\textbf{K}}
+\newcommand{\D}{\textbf{D}}
+\newcommand{\f}{\textbf{f}}
+\newcommand{\fbarstar}{\textbf{$\bar{\textbf{f}}$*}}
+\newcommand{\half}{{1\over2}}
+
+\begin{document}
+
+\title{Notes on Time Stepping for OOF2}
+
+\author{OOF Team}
+
+\maketitle
+
+\section{Zienkiewicz \& Taylor's SS22 Algorithm}
+
+The equation to be solved is
+\begin{equation}
+  \label{eq:ode}
+  \M \ddot a + \C \dot a + \K a + \f = 0
+\end{equation}
+where $a$ is a vector of values and \M, \C, and \K\ are constants.
+
+Assume we know $a$ and $\dot a$ at $t=t_n$ and we want to find them at
+$t=t_{n+1} = t_n + \Delta t$.  Expand in a Taylor series in $\tau =
+t-t_n$:
+\begin{equation}
+  \label{eq:taylor}
+  a = a_n + \tau\dot a_n + \half\tau^2\alpha_n
+\end{equation}
+$\alpha_n$ is a vector of unknown values.
+Multiply (\ref{eq:ode}) by a weighting function $W(\tau)$ and integrate
+over the interval:
+\begin{equation}
+  \label{eq:weighted}
+  0=\int_0^{\Delta t}d\tau\, \left[\M \ddot a + \C \dot a + \K a + \f\right]
+\end{equation}
+Insert (\ref{eq:taylor})
+\begin{equation}
+  \label{eq:w1}
+0 = \left[\int W(\tau)d\tau\right]^{-1}\int W(\tau)\left(\M \alpha_n + \C
+  (\dot a_n + \tau \alpha_n) + \K(a_n + \tau\dot a_n + \half
+  \tau^2\alpha_n)+ \f
+ \right) d\tau
+\end{equation}
+
+Since the matrices are constant, we can pull them out of the
+integral, so if we define
+\begin{equation}
+  \label{eq:theta}
+  \Delta t^k \theta_k = {\int_0^{\Delta t}W(\tau)\tau^k\,d\tau\over
+    \int_0^{\Delta t}W(\tau)\,d\tau}
+\end{equation}
+then (\ref{eq:w1}) becomes
+\begin{eqnarray}
+  0 &=& \M\alpha_n + \C(\dot a_n + \theta_1\Delta t\alpha_n) + \K (a_n +
+  \theta_1 \Delta t\dot a_n + \half\Delta t^2 \theta_2\alpha_n) +
+  \bar \f \label{eq:w2} \\
+&=& \left(\M + \theta_1\Delta t\C + \half\theta_2\Delta t^2\K\right) \alpha_n
+ + \left(\C + \theta_1\Delta t\K\right)\dot a_n + \K a_n  + \bar \f \label{eq:w3}
+\end{eqnarray}
+where
+\begin{equation}
+  \label{eq:fbar}
+  \bar \f = {\int_0^{\Delta t} W(\tau)f(t_n+\tau)\,d\tau \over
+    \int_0^{\Delta t}W(\tau)\,d\tau}
+\end{equation}
+(\ref{eq:w3}) is a matrix equation which can be solved for $\alpha_n$.
+Then
+\begin{eqnarray}
+  \label{eq:anp1}
+  a_{n+1} &=& a_n + \Delta t\dot a_n + \half\Delta t^2\alpha_n \\
+  \label{eq:adnp1}
+  \dot a_{n+1} &=& \dot a_n + \Delta t\alpha_n
+\end{eqnarray}
+
+Z\&T give no guidance on how to compute $\bar\f$ in (\ref{eq:w3})
+except to mention that if we assume $\f(t)$ to be linear in $t$ over
+the (short) interval $\Delta t$ (see below) then
+\begin{equation}
+  \label{eq:fbar2}
+  \bar \f = (1-\theta_1)\f(t_n) + \theta_1\f(t_{n+1})
+\end{equation}
+which is probably a reasonable approximation.
+
+If $\M=0$, the equation is a first order ODE in disguise.  The method
+still works as long as we choose the right initial value for $\dot
+a_0$.  Just set $\Delta t=0$ and $\M=0$ in (\ref{eq:w3}) to get
+\begin{equation}
+  \label{eq:a0}
+  \dot a_0 = -\C^{-1}(\K a_0 + \bar\f).
+\end{equation}
+
+\section{Nonlinear generalization of SS22}
+
+If \M, \C, or \K\ are functions of the variables $a$ or $t$, we can
+make progress by assuming that they vary linearly over the interval
+$\Delta t$, like this:
+\begin{equation}
+  \label{eq:Mexp}
+  \M(\tau) = \M_n + {\tau\over\Delta t}(\M_{n+1} - \M_n)
+\end{equation}
+where $\M_n$ means $\M(t_n, a_n)$.  The \M\ terms in (\ref{eq:w1})
+become
+\begin{equation}
+  \label{eq:m1}
+  \left[\int W(\tau)d\tau\right]^{-1}\int W(\tau)\M\alpha_n\,d\tau =
+  (1-\theta_1)\M_n\alpha_n + \theta_1\M_{n+1}\alpha_n
+\end{equation}
+In the linear system, where $\M_n = \M_{n+1} = \M$, this reduces to
+$\M\alpha_n$, in agreement with (\ref{eq:w3}).
+
+The numerator of the \C\ terms in (\ref{eq:w1}) becomes
+\begin{eqnarray}
+  \lefteqn{\int W(\tau)\C(\dot a_n + \tau\alpha_n)\,d\tau}\nonumber \\
+  &&= \int W(\tau)\left(\C_n + {\tau\over\Delta t}(\C_{n+1} - \C_n)\right)
+  (\dot a_n + \tau\alpha_n)\,dt \\
+&&= \int W(\tau)\left[\C_n\dot a_n + 
+  {\tau\over\Delta t}(\C_{n+1}-\C_n)\dot a_n
+  + \C_n\tau\alpha_n + {\tau^2\over\Delta t}(\C_{n+1}-\C_n)\alpha_n\right]\, dt
+\end{eqnarray}
+Use (\ref{eq:theta}) and restore the denominator to get
+\begin{eqnarray}
+  &=& \C_n\dot a_n + \theta_1(\C_{n+1}-\C_n)\dot a_n +
+  \Delta t\theta_1\C_n\alpha_n + \Delta t\theta_2(\C_{n+1}-\C_n)\alpha_n \\
+  &=& 
+  \label{eq:Cexp}
+  \Delta t\left[(\theta_1-\theta_2)\C_n + \theta_2\C_{n+1}\right]\alpha_n
+  + \left[(1-\theta_1)\C_n+ \theta_1\C_{n+1}\right]\dot a_n
+\end{eqnarray}
+In the linear case where $\C_{n+1} = \C_n = \C$, this reduces to
+$\Delta t\theta_1\C\alpha_n + \C\dot a_n$, also in agreement with
+(\ref{eq:w3}).
+
+The numerator of the \K\ terms in (\ref{eq:w1}) becomes
+\begin{eqnarray}
+  \lefteqn{\int W(\tau)\K(a_n + \tau\dot a_n + \half\tau^2\alpha_n)}\nonumber \\
+  &&= \int W(\tau)
+  \left[\K_n + {\tau\over\Delta t} (\K_{n+1} - \K_n)\right]
+    (a_n + \tau\dot a_n + \half\tau^2\alpha_n)
+\end{eqnarray}
+Including the denominator gives
+\begin{eqnarray}
+  \label{eq:Kexp}
+  &=& \left[(1-\theta_1)\K_n + \theta_1\K_{n+1}\right]a_n
+  + \left[(\theta_1-\theta_2)\K_n + \theta_2\K_{n+1}\right]\Delta t\dot a_n\\
+  &&\qquad +\half \left[(\theta_2-\theta_3)\K_n + \theta_3\K_{n+1}\right]
+  \Delta t^2\alpha_n \nonumber
+\end{eqnarray}
+When $\K_n = \K_{n+1}=\K$, this reduces to $\K a_n + \theta_1\Delta
+t\K\dot a_n + \half\theta_2\Delta t^2\K\alpha_n$, in agreement with
+(\ref{eq:w3}).
+
+Combining (\ref{eq:Kexp}), (\ref{eq:Cexp}), and (\ref{eq:Mexp}), we
+get
+\begin{equation}
+  \label{eq:nlsummary}
+  0 = \textbf{M*}\alpha_n + \textbf{C*}\dot a_n + \textbf{K*}a_n + \fbarstar
+\end{equation}
+where
+\begin{eqnarray}
+  \textbf{M*} &=& 
+    (1-\theta_1)\M_n + \theta_1\M_{n+1} 
+    + \Delta t\left[(\theta_1-\theta_2)\C_n + \theta_2\C_{n+1}\right]
+    \label{eq:Mstar} \\
+    && \nonumber\qquad + \half\Delta t^2 \left[
+      (\theta_2-\theta_3)\K_n + \theta_3\K_{n+1} \right]\\
+    \textbf{C*} &=& (1-\theta_1)\C_n + \theta_1\C_{n+1}
+    + \Delta t\left[(\theta_1-\theta_2)\K_n + \theta_2\K_{n+1}\right] 
+    \label{eq:Cstar}\\
+    \textbf{K*} &=& (1-\theta_1)\K_n + \theta_1\K_{n+1}
+    \label{eq:Kstar} \\
+    \fbarstar &=& (1-\theta_1)\f_n + \theta_1\f_{n+1} \label{eq:fstar}
+\end{eqnarray}
+(\ref{eq:nlsummary}) is a matrix equation which may be solved for
+$\alpha_n$, which then determines $a_{n+1}$ and $\dot a_{n+1}$ via
+(\ref{eq:anp1}) and (\ref{eq:adnp1}).  Since $\M_{n+1}$, $\C_{n+1}$,
+$\K_{n+1}$, and $\f_{n+1}$ may depend on $a_{n+1}$,
+(\ref{eq:nlsummary}) is non-linear and must be solved iteratively,
+probably with Picard iteration.
+
+It's likely that stability requires that $\theta_i\ge\half$ for
+$i=1,2,3$.
+
+\section{The Numerical Recipes Method}
+
+I'm calling this the Numerical Recipes Method because it's basically
+the only way that NR suggests handling second order time derivatives.
+It's not meant to imply that NR invented it.  Surprisingly, Z\&T
+\textit{don't} mention this method.
+
+In (\ref{eq:ode}), let
+\begin{equation}
+  \label{eq:y}
+  y \equiv \D^{-1} \dot a
+\end{equation}
+where $\D$ is an arbitrary nonsingular matrix.  Then we have two
+\textit{first} order ODEs:
+\begin{eqnarray}
+  \label{eq:ode2a}
+  \M\D\dot y + \C\D y + \K a + \f &=& 0 \\
+  \label{eq:ode2b}
+  \dot a - \D y &=& 0 
+\end{eqnarray}
+If we define a new vector that includes the degrees of freedom ($a$)
+and their derivatives ($y$)
+\begin{equation}
+  \label{eq:u}
+  u = \left[\begin{array}{c} a\\y \end{array} \right]
+\end{equation}
+then the equations can be written as
+\begin{equation}
+  \label{eq:ode3}
+  \tilde\M \dot u + \tilde\K u + \tilde f = 0
+\end{equation}
+where
+\begin{equation}
+  \label{eq:tildeM}
+  \tilde\M = \left[\begin{array}{cc}
+      0 & \M\D \\
+      \mathcal{I} & 0
+ \end{array}\right],
+\end{equation}
+\begin{equation}
+  \label{eq:tildeK}
+  \tilde\K = \left[\begin{array}{cc}
+      \K & \C\D \\
+      0 & -\D 
+    \end{array}\right],
+\end{equation}
+and
+\begin{equation}
+  \label{eq:tildef}
+  \tilde f =  \left[\begin{array}{c} \f \\ 0 \end{array}\right]
+\end{equation}
+If we choose $\D\approx\M^{-1}$, then $\tilde\M$ should be well
+behaved. (\ref{eq:ode3}) can be solved with a number of different
+methods, such as forward and backward Euler, Runge-Kutta,
+\textit{etc.}
+
+
+\end{document}

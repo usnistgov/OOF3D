@@ -1,0 +1,149 @@
+4/6/7
+
+Mapper Issues
+-------------
+Recently figured out that the FixedPointVolumeRayCastMapper provides
+several advantages over other mappers.  For one, it is one of only two
+mappers that can handle multiple components, meaning it is needed for
+color images.  The other mapper that can handle multiple components is
+the VolumeTextureMapper3D, but this seems to have hardware
+requirements, which makes it a bad choice.  For the
+FixedPointVolumeRayCastMapper, the default "sample distance" is 1, for
+small images, or when zoomed into any image, this makes for a bad
+rendering.  The sample distance ideally should be set based on the
+zoom distance.  Too small of a sample distance slows things down.
+
+Another advantage of the FixedPointVolumeRayCastMapper is that it
+handles the off by 1 annoyance in the bounds of ImageData objects in a
+somewhat less annoying way than other mappers -- instead of cutting
+off a fraction of a pixel all around, it cuts off one whole pixel on
+the upper bound in each direction.  Voxels are not centered around
+their point but have the point as a corner.  That is, the voxel with
+indices (1,1,1) extends from (1,1,1) to (2,2,2) in world coordinates
+instead of (0.5,0.5,0.5) to (1.5,1.5,1.5).  This is assuming a spacing
+of (1,1,1).
+
+A discussion of mappers is in the Vtk Users Guide starting on page 133.
+
+
+Picker Issues
+-------------
+
+Vtk contains classes called "pickers" which given a point in display
+coordinates (from clicking on a point, for example) return either the
+actor or point closest to that display point.  This could be useful
+for selecting voxels, but the existing classes don't do exactly what
+we want.  The closest candidates are PointPicker and WorldPointPicker.
+PointPicker shoots a ray into the volume and chooses the point that is
+closest to the ray.  Since the point that corresponds to a voxel is at
+one of the corners of the voxel, sometimes clicking in the middle of a
+voxel returns one of the voxels that lies behind the one we are
+clicking in or a neighboring voxel.  The world point clicker returns
+the world coordinate (from which we can retrieve a voxel) of the point
+we click on but seems to always set the depth to be the same depth as
+the focal point -- that is, it generally isn't choosing the pixel
+closest to the camera.
+
+In short, we're going to need to write our own picker class.
+
+There is a discussion of picking on page 55 of the Vtk Users Guide.
+
+
+Mouse Interaction Issues
+------------------------
+
+We have to decide how the mouse interactions will work.  In most
+scientific applications that visualize 3D data, the left mouse button
+tumbles.  However, we also need to select things (voxels, skeleton
+parts).  It will be a pain for users to always have to switch back to
+the viewer toolbox to rotate around and otherwise change the view.
+One idea is to have compact view manipulating buttons all around the
+viewport area instead of scroll bars.  These buttons could contain a
+control for whether the mouse is a selection tool or a rotating tool.
+Another idea, and what I've done for simplicity in the prototype code
+is for the user to hold down the shift key in order to select.  Right
+now, the left mouse button tumbles, middle mouse button tracks, right
+mouse button dollies, and shift-left-click does the voxel info pick.
+
+4/7/7
+
+Multiple Actors Error on Mac
+----------------------------
+
+http://wxvtk.sourceforge.net/ is the
+site for the wxVTKRenderWindowInteractor, which appears to be a newer
+version of the GTKGLExtVTKRenderWindow, which is what the canvas3d is
+based on.  This site claims that the BadWindow error, which (as of
+now) sometimes appears when trying to render multiple actors on a
+mac, is fixed in this new version but also doesn't appear in versions
+of XFree86 newer than 4.3.  Osx 10.4.8 appears to ship with
+xfree86 4.4.0.  The ctcms machines with the newer debian install have
+xorg 1.7.  We may not be experiencing the exact same error but this
+gives us a clue that it is due to a problem with xfree86 that is
+apparantly fixed in xorg.  
+
+The problem seems to be specific to volumetric image actors -- the
+error isn't encountered when trying to display 2 cone objects, for
+instance.
+
+4/9/7
+
+Rendering Voxel Cursor Issues
+-----------------------------
+
+There are limitations on how multiple actors can be rendered in vtk.
+From the vtk mailing list,
+http://public.kitware.com/pipermail/vtkusers/2000-April/050061.html
+
+"Some things to watch out for: you cannot intermix translucent geometry with 
+volumes, you cannot have two volumes that overlap, you have to turn 
+back-to-front sorting on in the culler if you want more than one texture 
+mapped volume."
+
+So our options are: 
+1. a wireframe cube using polydata
+2. an opaque surface cube using polydata
+3. copying the image and changing the value of one voxel to simulate a
+translucent volume (slow! memory hit!)
+4. a truncated wireframe cube
+5. a truncated surface rendered cube
+6. derive something from the appropriate class (either a mapper,
+actor, or property) that will tint pixels.
+
+BadWindow Error
+---------------
+
+The BadWindow error is due to calling canvas.Render() before the gtk
+window is created.  This happens on both linux and mac, xfree86 and
+xorg.
+
+
+Topics for 4/10/7 Code Review
+-----------------------------
+
+1. How things work so far
+2. Anything else to do before we start to incorporate into oof?
+3. How to begin incorporating into oof (branch and attempt to use
+compiler flag?)
+4. Mouse interaction issues (selecting vs. tumbling)
+5. Rendering selected voxels / voxel info voxels
+
+
+4/10/7
+
+Code Review
+-----------
+
+- Fat wireframe? - frame on each face - how do you cut a hole out of faces of a cube...
+- Talk to Steve Satterfield, visualization group...
+- how to represent skeleton segments, cylinders? represent depth somehow
+- write mapper which can handle 5 components, RGBA+selection - might
+be risky because we could be held hostage to vtk updates,
+etc. possibly other channels such as active area.
+- mouse mode button toolbar for most common interaction (tumble,
+select, drag).  might still be useful to keep dragging and dollying as
+middle and left interactions, or to create standards for combination
+like shift-left, etc.  also something to talk to the visualization
+group about.
+- branch, try compiler flag strategy and re-evaluate. 
+- Betti numbers - gives topological information about a volume.

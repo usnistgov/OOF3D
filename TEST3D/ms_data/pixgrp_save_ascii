@@ -1,0 +1,7 @@
+# OOF version 2.0
+FileVersion(number=1.0, format='ascii')
+Microstructure.New(name='microstructure', size=Point(1,1,1), isize=iPoint(3,3,3))
+Microstructure.PixelGroup(microstructure='microstructure', group='pixelgroup', meshable=1)
+Microstructure.Categories(microstructure='microstructure', categories=[[[1, 0, 1], [0, 0, 0], [1, 0, 1]], [[0, 0, 0], [0, 0, 0], [0, 0, 0]], [[1, 0, 1], [0, 0, 0], [1, 0, 1]]])
+Microstructure.DefineCategory.PixelGroups(microstructure='microstructure', category=1, groups=['pixelgroup'])
+Microstructure.EndCategories(microstructure='microstructure')

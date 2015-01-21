@@ -1,0 +1,9 @@
+# Operation: Range
+# Output: Temperature
+# Domain: ElementGroup(elements='smallx')
+# Sampling: StatGridSampleSet(x_points=10,y_points=10,z_points=10)
+# Columns:
+# 1. time
+# 2. min Temperature
+# 3. max Temperature
+0.0, 0.0, 5.33333333333

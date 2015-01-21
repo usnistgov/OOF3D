@@ -1,0 +1,134 @@
+# Modified from automatic creation by Kevin Butler (butler@byu.edu)
+# for Microsoft Visual C++ (11/22/96)
+#
+#######################################################################
+# $Header: /users/langer/FE/CVSoof/OOF2/OOFSWIG/SWIG/makefile.msc,v 1.2.2.2 2014/06/27 20:28:29 langer Exp $
+# Simplified Wrapper and Interface Generator (SWIG)
+# 
+# Makefile for version 1.1
+# Dave Beazley
+# March 12, 1997
+#
+# This makefile is now mostly constructed by ./configure.
+#
+# $Log: makefile.msc,v $
+# Revision 1.2.2.2  2014/06/27 20:28:29  langer
+# Copied Lulu's modified swig into OOFSWIG, and changed setup.py so that
+# it automatically builds and uses it.  The --with-swig option to setup.py
+# is still respected, if it's given, but it shouldn't be necessary any more.
+#
+# Changed make_dist so that the swig output files aren't included in
+# the distribution, and removed the --skip-swig option from setup.py.
+# Since everybody has swig now, it's no longer necessary.  This will
+# make the build take a little bit longer, but users won't have to
+# combine the build and install steps anymore.
+#
+# Removed the bit in pyexp.swg that suppressed the warnings that the old
+# swig code generated.  This means that if you use --with-swig, you'll
+# probably get lots of warnings.
+#
+# Added some explicit (char*) casts in PyObject_CallMethod calls in
+# swig typemaps, to get rid of warnings in swig generated code.
+# For unknown reasons, PyObject_CallMethod has char * arguments instead
+# of const char* arguments.   Other similar Python API calls use const.
+#
+# Revision 1.2  2014/06/26 16:05:06  lck
+# *** empty log message ***
+#
+# Revision 1.1.1.1  1999/02/28 02:00:52  beazley
+# Swig1.1
+#
+# Revision 1.1  1996/08/12 01:55:02  dmb
+# Initial revision
+#
+#######################################################################
+
+#.KEEP_STATE:
+
+
+!include <..\Win\make_win.in>
+
+
+srcdir = .
+
+
+
+#SWIG_LIB = $(prefix)/swig_lib
+
+########################################################################
+# Normally, you shouldn't have to change anything below this point     #
+########################################################################
+
+LIBOBJS = main.obj scanner.obj symbol.obj include.obj types.obj parms.obj emit.obj newdoc.obj ascii.obj \
+          html.obj latex.obj cplus.obj lang.obj hash.obj sstring.obj wrapfunc.obj getopt.obj comment.obj typemap.obj naming.obj
+
+LIBSRCS = main.cxx scanner.cxx symbol.cxx include.cxx types.cxx parms.cxx emit.cxx \
+	  newdoc.cxx ascii.cxx html.cxx latex.cxx cplus.cxx lang.cxx hash.cxx \
+          sstring.cxx wrapfunc.cxx getopt.cxx comment.cxx typemap.cxx naming.cxx
+
+LIBHEADERS = internal.h ../Include/swig.h latex.h ascii.h html.h nodoc.h
+LIBNAME      = ..\libswig.lib
+INCLUDE  = -I../Include -I$(STD_INC)
+CFLAGS   = -Zi -nologo -DSWIG_LIB="\"$(SWIG_LIB)\"" -DSWIG_CC="\"$(CC)\""  -DMSDOS -DSTDC_HEADERS=1 -DHAVE_LIBDL=1 $(SWIG_OPTS)
+LD_FLAGS    =  -VERBOSE
+
+
+#
+# Rules for creation of a .obj file from .cxx
+.SUFFIXES: .cxx
+.cxx.obj:
+	$(CC) $(INCLUDE) $(CFLAGS) -c -o $*.obj $<
+
+all:    $(LIBNAME) 
+
+$(LIBNAME): parser.obj $(LIBOBJS) 
+	@echo "Building library"
+	@$(LD) $(LD_FLAGS) -out:$(LIBNAME) $(LIBOBJS) parser.obj 
+
+parser.obj: parser.cxx $(LIBHEADERS)
+	$(CC) $(INCLUDE) $(CFLAGS) parser.cxx -c -o parser.obj
+
+parser.cxx: $(PARSER)
+	@echo "Must rebuild the parser with yacc"
+
+parser::  
+	@cp y.tab.c.bison parser.cxx
+	@cp y.tab.h.bison parser.h
+	@cp y.tab.h.bison y.tab.h
+	$(CC) $(CFLAGS) parser.cxx -c -o parser.obj
+
+main.obj: main.cxx 
+scanner.obj: scanner.cxx 
+wrapper.obj: wrapper.cxx 
+include.obj: include.cxx 
+types.obj: types.cxx 
+emit.obj: emit.cxx 
+cplus.obj: cplus.cxx 
+misc.obj: misc.cxx 
+hash.obj: hash.cxx 
+sstring.obj: sstring.cxx 
+getopt.obj: getopt.cxx 
+wrapfunc.obj: wrapfunc.cxx 
+swigmain.obj: swigmain.cxx 
+symbol.obj: symbol.cxx 
+parms.obj: parms.cxx 
+newdoc.obj: newdoc.cxx 
+lang.obj: lang.cxx 
+comment.obj: comment.cxx 
+latex.obj: latex.cxx 
+ascii.obj: ascii.cxx 
+html.obj: html.cxx 
+typemap.obj: typemap.cxx
+naming.obj: naming.cxx
+
+Makefile:	$(srcdir)/Makefile.in ../config.status
+		(cd ..; CONFIG_FILES=SWIG/Makefile $(SHELL) config.status)
+
+.PRECIOUS:	Makefile
+
+clean::
+	@del *.obj 
+	@del $(LIBNAME)
+
+
+

@@ -1,0 +1,93 @@
+-*- text -*-
+$RCSfile: elements.doc,v $
+$Revision: 1.1 $
+$Author: reida $
+$Date: 2001/12/03 21:59:49 $
+
+Notes on the Element and MasterElement classes, and how Elements are
+constructed by the GhostMesh, with a discussion of Nodes, ProtoNodes,
+and divers Iterators.
+
+Dedicated to all those Programmers who have revisited code months
+after writing it, and have no clue.
+
+
+
+The MasterElement class in OOF contains all the detail about the
+element geometry, as defined in master coordinate space.  There is a
+derived MasterElement class for each type of element, and a single
+static instance of each class.
+
+The Element class represents the actual elements in the mesh.  Each
+Element contains a reference to a MasterElement, which determines what
+kind of element it is.  There are no classes derived from Element --
+all operations specific to the type of element are done by the
+MasterElement.  The Element simply provides a mapping from master
+space to real physical space.
+
+The constructor for a concrete MasterElement class must create
+"ProtoNodes" for each node in the element.  ProtoNodes are just like
+Nodes, but they're defined in master space, and have no Field values
+associated with them.  Each ProtoNode must be added to the Element
+with MasterElement::addProtoNode, and its properties set by
+ProtoNode::set_mapping, etc.  ProtoNodes *must* be created in the
+correct order: start at a corner and go counterclockwise around the
+element.  Do the interior nodes (if any) last.
+
+An Element contains a list of Nodes, which correspond to the
+ProtoNodes in the associated MasterElement.  Access to most of the
+functions of an Element is done via the ElementNodeIterator classes.
+There are four kinds of ElementNodeIterators:
+  ElementNodeIterator  -- loops over all nodes
+  ElementMapNodeIterator -- loops over mapping nodes (which determine
+                            real space geometry)
+  ElementFuncNodeIterator -- loops over function nodes (where fields
+                             are evaluated)
+  ElementCornerNodeIterator -- loops over corners nodes
+The ElementNodeIterators give access to the ShapeFunctions, the Nodes,
+and the ProtoNodes, and thus are ultimately responsible for the
+association between ShapeFunctions, Nodes, and ProtoNodes.
+
+Elements are created when a real Mesh is constructed from a
+GhostMesh.  A GhostMesh determines the geometry of the Mesh, but
+only specifies the corners of the elements, not their order or
+intermediate Nodes.  The process of creating a real Element goes like
+this:
+
+The single instances of all the MasterElements are stored in a Python
+dictionary, which is returned by getMasterElementList.[1]  The
+dictionary keys are the names of the types of MasterElements.  These
+names were assigned by the constructor of the derived MasterElement
+class.  Example: "Isoparametric 3-node triangle" from tri3.C.
+
+A call to ghost_mesh.mesh() is made using keyword arguments for the
+element types.  The keywords are "triangle" and "quad".  The values
+assigned to the arguments should be entries from the master element
+dictionary, specifying which type of master element should be used to
+construct triangular and quadrilateral elements. The kewyord arguments
+are passed as a Python dictionary to ghost_element.realelement(),
+which retrieves the master element type from the dictionary, using its
+own 'typestring' parameter as the lookup key.
+
+Once the ghost_element knows the master element corresponding to the
+real element being created, it creates real nodes by looping over the
+protonodes, determining their positions via the ghost element's shape
+functions. (For this purpose, ghost elements are linear.)  The list of
+real nodes is passed to the masterelement's build() function, which
+constructs the actual Element.  build() is defined in
+masterelement.swg, and is just a wrapper for the Element constructor,
+passing in a pointer to the appropriate MasterElement and a list of
+Nodes[2].
+
+
+Notes:
+
+[1]  Actually, the MasterElements are stored in a C++ vector, which is
+accessed by the function masterElementList().  The vector is converted
+to a dictionary by getMasterElementList().
+
+[2] The order in which ProtoNodes are defined in the derived
+MasterElement class constructor is important because it determines the
+order in which Nodes are passed to the Element constructor.  The
+association between Nodes and ShapeFunctions will be incorrect if the
+nodes aren't presented in the right order.

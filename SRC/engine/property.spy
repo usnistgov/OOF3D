@@ -1,0 +1,94 @@
+# -*- python -*-
+# $RCSfile: property.spy,v $
+# $Revision: 1.4.8.2 $
+# $Author: langer $
+# $Date: 2014/10/09 18:06:38 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##
+###=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--##
+##                                                                      ##
+##   NOTE: Because this file is imported by properties.swg, not         ##
+##   property.swg (due to an unfortunate historical accident) the       ##
+##   setup.py script doesn't notice if it's been edited.  If you edit   ##
+##   this file, you will have to force setup.py to run swig on          ##
+##   properties.swg.  You can easily do that by removing                ## 
+##   SRC/SWIG2D/engine/properties*.                                     ## 
+##                                                                      ##
+###=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--##
+##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##
+
+from ooflib.common import debug
+
+# Add class data to the PropertyPtr class.  The "registry" data member
+# is used by the Registration class to muck about with parameters and
+# so forth.
+
+PropertyPtr.registry = []
+
+def _Property___eq__(self, other):
+    if isinstance(other, PropertyPtr) and other.this == self.this:
+        return 1
+    return 0
+
+PropertyPtr.__eq__ = _Property___eq__
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Property.bookkeeping is called by Material.cross_reference
+
+def _Property_bookkeeping(self, material):
+    material.registerPropertyType(self, self.registration().propertyType())
+    for field in self.registration().fields():
+        field.registerProperty(self)
+    for flux in self.registration().fluxes():
+        material.registerFlux(self, flux)
+    for eqn in self.registration().equations():
+        material.registerEqn(self, eqn)
+    for propertyoutput in self.registration().outputs():
+        material.registerOutput(self, propertyoutput)
+    
+PropertyPtr.bookkeeping = _Property_bookkeeping
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+def _Property_is_active(self, subproblem):
+    # If this property has time_deriv_fields, and the stepper is
+    # static, then the property isn't active.
+    eqns = subproblem.all_equations()
+    if (eqns and subproblem.staticStepper()
+        and self.registration().time_deriv_fields(*eqns)):
+        return False
+
+    if self.is_computable(subproblem):
+        pfluxes = self.registration().fluxes()
+        peqns = self.registration().equations()
+        # If the Property has no fluxes or equations, it must be used
+        # by other Properties, so call it active.
+        if not pfluxes and not peqns:
+            return True
+        for flux in pfluxes:
+            if subproblem.is_active_flux(flux):
+                return True
+        for eqn in peqns:
+            if subproblem.is_active_equation(eqn):
+                return True
+    return False
+
+PropertyPtr.is_active = _Property_is_active
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Is the Property nonlinear in the given fields? 
+
+def _Property_is_nonlinear(self, fields):
+    return self.registration().nonlinear(fields)
+
+PropertyPtr.is_nonlinear = _Property_is_nonlinear

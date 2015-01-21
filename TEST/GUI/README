@@ -1,0 +1,100 @@
+# -*- text -*-
+# $RCSfile: README,v $
+# $Revision: 1.3 $
+# $Author: langer $
+# $Date: 2006/09/01 13:52:30 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@ctcms.nist.gov. 
+
+------------------------------------------------------------------------------
+
+This directory contains the GUI tests for oof2.  They tests ensure
+that the user interface is working correctly: that the buttons,
+sliders and other widgets are connected up properly, and that the
+widgets are displayed and sensitized when they're supposed to be.
+These tests generally do *not* do a thorough job of testing that the
+underlying computations are correct.  Those tests are in the parent
+directory, OOF2/TEST.
+
+The individual tests are contained in the subdirectories whose names
+begin with five integers (00000_tutorial_basics, etc.)  The names
+indicate which features the test tests.  XXXXX_tutorial_YYYYY runs
+through the YYYYYY tutorial; XXXXX_page_ZZZZZ tests features of the
+ZZZZZ page in the main OOF2 window.
+
+RUNNING THE GUI TESTS
+
+To run all the tests, open a terminal window, "cd" to this directory
+(OOF2/TEST/GUI) and type
+
+   python guitests.py
+
+To run a single test, append the name of the test directory to the
+command line.  For example, typing
+
+   python guitests.py 00000_tutorial_basics
+
+will run only the test in the 00000_tutorial_basics directory.  More
+than one test can be specified at once, like this:
+
+   python guitests.py 00000_tutorial_basics 00100_page_micro
+
+You can also run a range of tests by using --from and --to, like this:
+
+   python guitests.py --from 02000_tensor4 --to 02020_tensor2
+
+If you only provide --from, the script will start at the given test and
+run all successive tests.  If you only provide --to, the script will
+start at the beginning (00000_tutorial_basics) and run all tests up to
+and including the given test.  The order of the tests is determining
+by the alphabetical ordering of the test names (including the
+numerical prefix).
+
+WHAT TO DO WITH THE RESULTS
+
+If the tests succeed, the line "All tests ran successfully!" will be
+printed at the end of a long string of messages.
+
+If a test fails, the program will either hang (output to the terminal
+window will cease) or will bring up an OOF2 error window.  If the
+program hangs, you should try to quit it with the File/Quit menu item.
+If that doesn't work, you will have use the Unix 'kill' or 'killall'
+command from a terminal window.  On some systems you may have to use
+'kill -9' to kill all the oof2 threads.
+
+If a test brings up the OOF2 error window, you can quit by pressing
+the "Abort" button.  If you press the "OK" button, you may still be
+told "All tests ran successfully!", but don't be misled by that.
+
+If a test fails, please run it again.  We believe that there are still
+some timing problems in the testing code, and some test failures do
+not indicate actual errors in the oof2 code.  To see which test
+failed, scroll back in the terminal window until you see a line that
+looks something like
+
+--- Running oof2 --pathdir . --pathdir 12345_test_name/ --replay 12345_test_name/log.py
+
+In this example, the test that failed is "12345_test_name".  You can
+resume the full set of tests at 12345_test_name by running
+
+  python guitests.py --from 12345_test_name
+
+If a test fails repeatedly, please report it to
+oof_bugs@ctcms.nist.gov!  Please tell us which test failed and include
+the last few lines of the screen output (at least the last line
+beginning with "////// <number>" and anything after that).  Also,
+please tell us what kind of computer you're using and the version
+numbers of your operating system, compiler, and python interpreter.
+
+CAUTION: The tests work by simulating user interaction from the
+keyboard and the mouse.  It is very easy to confuse the testing
+mechanism by typing or using the mouse while the tests are in
+progress, since the program can't distinguish real keypresses and
+clicks from simulated ones.  If a test fails, start it again, go get a
+cup of coffee, and don't touch the computer until the test is done.

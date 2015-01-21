@@ -1,0 +1,41 @@
+# -*- python -*-
+# $RCSfile: thermo.spy,v $
+# $Revision: 1.7.8.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:45:37 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+from ooflib.engine import propertyregistration
+PropertyRegistration = propertyregistration.PropertyRegistration
+
+from ooflib.common.IO import parameter
+FloatParameter = parameter.FloatParameter
+
+from ooflib.engine.IO import isocijkl 
+from ooflib.engine import problem
+from ooflib.SWIG.common import config
+import types
+
+if config.devel()>=1:
+    reg = PropertyRegistration(
+        'Mechanical:Elasticity:ThermoElasticity', ThermoElasticityProp,
+        "ooflib.SWIG.engine.property.elasticity.thermo.thermo",100,
+        [isocijkl.IsotropicCijklParameter('cijkl',
+                        isocijkl.IsotropicRank4TensorLame(lmbda=1.0, mu=0.5),
+                                                tip=parameter.emptyTipString),
+         FloatParameter('t0', 0.0, tip=parameter.emptyTipString),
+         FloatParameter('alpha', 0.0, tip=parameter.emptyTipString)],
+        outputs=["Energy"],
+        propertyType="Elasticity")
+    
+    reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement], 
+                 time_derivs=[0])
+    reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Temperature],
+                 time_derivs=[], nonlinear=True)

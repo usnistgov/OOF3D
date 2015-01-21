@@ -1,0 +1,180 @@
+# -*- python -*-
+# $RCSfile: cskeletonmodifier.spy,v $
+# $Revision: 1.1.4.10 $
+# $Author: langer $
+# $Date: 2014/09/17 17:47:55 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+from ooflib.common import cregisteredclass
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.common import utils
+
+########################
+
+# The alpha parameter for computing an element's effective energy is
+# defined here so that different commands can share the same Parameter
+# object.  Then GUI users won't have to be changing the parameter
+# separately in all the different commands that use it.
+
+alphaParameter = parameter.FloatRangeParameter(
+    'alpha',
+    range=(0., 1.0, 0.01),
+    value=0.3,
+    tip='alpha controls the relative importance of element shape and homogeneity.  alpha=0 emphasizes shape and ignores homogeneity.  alpha=1 emphasizes homogeneity and ignores shape.'
+    )
+
+#########################
+
+cregisteredclass.registerCClass(CSkelModTargetsPtr)
+CSkelModTargetsPtr.registry = []
+CSkelModTargetsPtr.tip = "Which elements to modify?"
+CSkelModTargetsPtr.discussion = """<para>
+<classname>SkelModTargets</classname> objects are used as the
+<varname>targets</varname> parameter in <link
+linkend='RegisteredClass:SkeletonModifier'><classname>SkeletonModifiers</classname></link>.
+They determine which &elems; will be modified when a <xref
+linkend='RegisteredClass:SkeletonModifier'/> is applied to a
+&skel;.
+</para>"""
+
+allReg = cregisteredclass.Registration(
+    'All Elements',
+    CSkelModTargetsPtr,
+    AllElements, 0,
+    tip="Modify all elements.",
+    discussion = """<para>
+    <classname>AllElements</classname> is a <xref
+    linkend='RegisteredClass:SkelModTargets'/> subclass, used as the
+    <varname>targets</varname> parameter in <link
+    linkend='RegisteredClass:SkeletonModifier'><classname>SkeletonModifiers</classname></link>.
+    It specifies that all &elems; of a &skel; are to be modified.
+    </para>""")
+
+selectedReg = cregisteredclass.Registration(
+    'Selected Elements',
+    CSkelModTargetsPtr,
+    SelectedElements, 1,
+    tip="Modify selected elements.",
+    discussion = """<para>
+    <classname>SelectedElements</classname> is a <xref
+    linkend='RegisteredClass:SkelModTargets'/> subclass, used as the
+    <varname>targets</varname> parameter in <link
+    linkend='RegisteredClass:SkeletonModifier'><classname>SkeletonModifiers</classname></link>.
+    It specifies that only the currently selected &elems; of a &skel;
+    are to be modified.
+    </para>""")
+
+badReg = cregisteredclass.Registration(
+    'Badly Shaped Elements',
+    CSkelModTargetsPtr,
+    BadlyShapedElements, 3,
+    params=[
+        parameter.FloatRangeParameter('threshold', (0.0, 1.0, 0.01), value=0.4,
+                                      tip="The threshold shape energy -- 0.0 for the perfect shape and 1.0 for the worst shape.")],
+    tip='Modify badly shaped elements.',
+    discussion = """<para>
+     <classname>BadlyShapedElements</classname> is a <xref
+     linkend='RegisteredClass:SkelModTargets'/> subclass, used as the
+     <varname>targets</varname> parameter in <link
+     linkend='RegisteredClass:SkeletonModifier'><classname>SkeletonModifiers</classname></link>. It
+     specifies that only the &elems; whose <link
+     linkend='Section:Concepts:Skeleton:Shape_Energy'>shape
+     energy</link> is greater than the given
+     <varname>threshold</varname> will be modified.
+     </para>""")
+
+susReg = cregisteredclass.Registration(
+    'Suspect Elements',
+    CSkelModTargetsPtr,
+    SuspectElements, 4,
+    params=[],
+    tip='Modify suspect elements.',
+    discussion = """<para>
+     <classname>SuspectElements</classname> is a <xref
+     linkend='RegisteredClass:SkelModTargets'/> subclass, used as the
+     <varname>targets</varname> parameter in <link
+     linkend='RegisteredClass:SkeletonModifier'><classname>SkeletonModifiers</classname></link>. It
+     specifies that only the &elems; that are nearly illegal will be modified.
+     </para>""")
+
+#########################
+
+cregisteredclass.registerCClass(CSkelModCriterionPtr)
+CSkelModCriterionPtr.registry = []
+CSkelModCriterionPtr.tip = "Acceptance criteria for skeleton modifications."
+CSkelModCriterionPtr.discussion = xmlmenudump.loadFile(
+    'DISCUSSIONS/engine/reg/skelmodcriterion.xml')
+
+avgEReg = cregisteredclass.Registration(
+    'Average Energy',
+    CSkelModCriterionPtr,
+    AverageEnergy,
+    ordering=0,
+    params=[alphaParameter],
+    tip = 'Accept the change, if any, that improves the average energy the most.',
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/average_energy.xml'))
+
+uncondReg = cregisteredclass.Registration(
+    'Unconditional', 
+    CSkelModCriterionPtr,
+    Unconditional,
+    ordering=1,
+    params=[alphaParameter],
+    tip = 'Unconditionally accept the best change even if it increases the energy.',
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/unconditional.xml'))
+
+
+## TODO 3.1: Uncomment these after finishing
+## LimitedSkelModCriterion::withinTheLimit in cskeletonmodifier.C.
+
+# limitedAvgEReg = cregisteredclass.Registration(
+#     'Limited Average Energy',
+#     CSkelModCriterionPtr,
+#     LimitedAverageEnergy,
+#     ordering=2,
+#     params=[alphaParameter,
+#             parameter.FloatRangeParameter('homogeneity', (0.0, 1.0, 0.01),
+#                                           value=0.9,
+#                                         tip='Minimum acceptable homogeneity.'),
+#             parameter.FloatRangeParameter('shape_energy', (0.0, 1.0, 0.01),
+#                                           value=0.4,
+#                                         tip='Maximum acceptable shape energy.')
+#             ],
+#     tip = 'Accepts the change that lowers the average energy AND meets specified conditions on homogeneity and shape energy.',
+#     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/limited_average.xml'))
+
+# LimitedUncondReg = cregisteredclass.Registration(
+#     'Limited Unconditional', 
+#     CSkelModCriterionPtr,
+#     LimitedUnconditional,
+#     ordering=3,
+#     params=[alphaParameter,
+#             parameter.FloatRangeParameter('homogeneity', (0.0, 1.0, 0.01),
+#                                           value=0.9,
+#                                          tip='Minimum acceptable homogeneity.'),
+#             parameter.FloatRangeParameter('shape_energy', (0.0, 1.0, 0.01),
+#                                           value=0.4,
+#                                         tip='Maxiumum acceptable shape energy.')
+#             ],
+#     tip = 'Accepts any change that meets specified conditions on homogeneity and shape energy.',
+#     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/limited_unconditional.xml'))
+
+
+#########################
+
+cregisteredclass.registerCClass(CSkeletonModifierBasePtr)
+CSkeletonModifierBasePtr.tip = "Tools to modify Skeletons."
+CSkeletonModifierBasePtr.discussion = """<para>
+<classname>SkeletonModifiers</classname> are applied to &skels; by
+the <xref linkend='MenuItem:OOF.Skeleton.Modify'/> command.
+</para>"""
+

@@ -1,0 +1,8 @@
+# OOF version (unreleased)
+OOF.File.Load.Data(filename='TEST_DATA/two_walls.mesh')
+OOF.Subproblem.Set_Solver(subproblem='two_walls:skeleton:mesh:default', solver_mode=BasicSolverMode(time_stepper=BasicStaticDriver(),matrix_method=BasicIterative(tolerance=1e-13,max_iterations=1000)))
+OOF.Subproblem.Set_Solver(subproblem='two_walls:skeleton:mesh:default', solver_mode=BasicSolverMode(time_stepper=BasicStaticDriver(),matrix_method=BasicDirect()))
+OOF.Subproblem.Set_Solver(subproblem='two_walls:skeleton:mesh:default', solver_mode=BasicSolverMode(time_stepper=BasicAdaptiveDriver(tolerance=0.0001,minstep=1e-05),matrix_method=BasicIterative(tolerance=1e-13,max_iterations=1000)))
+OOF.Subproblem.Set_Solver(subproblem='two_walls:skeleton:mesh:default', solver_mode=BasicSolverMode(time_stepper=BasicAdaptiveDriver(tolerance=0.0001,minstep=1e-05),matrix_method=BasicDirect()))
+OOF.Subproblem.Set_Solver(subproblem='two_walls:skeleton:mesh:default', solver_mode=BasicSolverMode(time_stepper=BasicUniformDriver(stepsize=1.0),matrix_method=BasicIterative(tolerance=1e-13,max_iterations=1000)))
+OOF.Subproblem.Set_Solver(subproblem='two_walls:skeleton:mesh:default', solver_mode=BasicSolverMode(time_stepper=BasicUniformDriver(stepsize=1.0),matrix_method=BasicDirect()))

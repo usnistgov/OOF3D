@@ -1,0 +1,8 @@
+# OOF version (unreleased)
+OOF.Microstructure.New(name='test', width=1.0, height=1.0, depth=1.0, width_in_pixels=10, height_in_pixels=10, depth_in_pixels=10)
+OOF.PixelGroup.New(name='a', microstructure='test')
+OOF.PixelGroup.New(name='pixelgroup', microstructure='test')
+OOF.PixelGroup.New(name='pixelgroup<2>', microstructure='test')
+OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImageDirectory(directory='TEST_DATA/5color',sort=NumericalOrder()), microstructure_name='5color', height=automatic, width=automatic, depth=automatic)
+OOF.Microstructure.Delete(microstructure='test')
+OOF.Microstructure.Delete(microstructure='5color')

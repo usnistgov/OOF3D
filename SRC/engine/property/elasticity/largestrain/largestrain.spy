@@ -1,0 +1,262 @@
+# -*- python -*-
+# $RCSfile: largestrain.spy,v $
+# $Revision: 1.8.4.2 $
+# $Author: langer $
+# $Date: 2013/11/08 20:45:33 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.SWIG.common import config
+from ooflib.engine import problem
+from ooflib.engine import propertyregistration
+from ooflib.engine.IO import isocijkl
+from ooflib.engine.IO import anisocijkl
+
+PropertyRegistration = propertyregistration.PropertyRegistration
+FloatParameter = parameter.FloatParameter
+
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+class IsoLargeStrainElasticity(CIsoLargeStrainElasticity):
+    def __init__(self, registration, name, cijkl):
+        CIsoLargeStrainElasticity.__init__(self, registration, self, name,
+                                           cijkl.tensorForm())
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:LargeStrain:Isotropic',
+    IsoLargeStrainElasticity, 
+    "ooflib.SWIG.engine.property.elasticity.largestrain.largestrain",
+    200,
+    [
+        isocijkl.IsotropicCijklParameter(
+            'cijkl',
+            isocijkl.IsotropicRank4TensorEnu(young=1.0, poisson=0.2),
+            tip=parameter.emptyTipString)
+     ],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Isotropic large-strain elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/isolargestrain.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
+             time_derivs=[0], nonlinear=True)
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+class AnisoLargeStrainElasticity(CAnisoLargeStrainElasticity):
+    def __init__(self, registration, name, cijkl):
+        CAnisoLargeStrainElasticity.__init__(self, registration, self, name,
+                                             cijkl.tensorForm())
+
+
+# CUBIC
+
+class CubicLargeStrainElasticity(AnisoLargeStrainElasticity):
+    pass
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:LargeStrain:Anisotropic:Cubic',
+    CubicLargeStrainElasticity,
+    "ooflib.SWIG.engine.property.elasticity.largestrain.aniso",
+    211,
+    [anisocijkl.CubicCijklParameter('cijkl',
+                                    anisocijkl.CubicRank4TensorCij(c11=1.0,
+                                                                   c12=0.5,
+                                                                   c44=0.25),
+                                    tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Cubic large-strain elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisolargestrain.xml')
+    )
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
+             time_derivs=[0], nonlinear=True)
+
+# HEXAGONAL 
+
+class HexagonalLargeStrainElasticityProp(AnisoLargeStrainElasticity):
+    pass
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:LargeStrain:Anisotropic:Hexagonal',
+    HexagonalLargeStrainElasticityProp,
+    "ooflib.SWIG.engine.property.elasticity.largestrain.aniso",
+    212,
+    [anisocijkl.HexagonalCijklParameter(
+    'cijkl', anisocijkl.HexagonalRank4TensorCij(c11=1.0,
+                                                c12=0.5, c13=0.5,
+                                                c33=1.0, c44=0.25),
+    tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Hexagonal large-strain elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisolargestrain.xml')
+    )
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement], 
+             time_derivs=[0], nonlinear=True)
+
+# TETRAGONAL
+
+class TetragonalLargeStrainElasticity(AnisoLargeStrainElasticity):
+    pass
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:LargeStrain:Anisotropic:Tetragonal',
+    TetragonalLargeStrainElasticity,
+    "ooflib.SWIG.engine.property.elasticity.largestrain.aniso",
+    213,
+    [anisocijkl.TetragonalCijklParameter(
+    'cijkl', anisocijkl.TetragonalRank4TensorCij(
+    c11=1.0, c12=0.5, c13=0.5, c33=1.0, c44=0.25, c66=0.25, c16=0.0),
+    tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Tetragonal large-strain elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisolargestrain.xml')
+    )
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
+             time_derivs=[0], nonlinear=True)
+
+# TRIGONAL-A
+
+class TrigonalALargeStrainElasticity(AnisoLargeStrainElasticity):
+    pass
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:LargeStrain:Anisotropic:TrigonalA',
+    TrigonalALargeStrainElasticity,
+    "ooflib.SWIG.engine.property.elasticity.largestrain.aniso",
+    214,
+    [anisocijkl.TrigonalACijklParameter('cijkl',
+                                        anisocijkl.TrigonalARank4TensorCij(
+    c11=1.0, c12=0.5, c13=0.5, c33=1.0, c44=0.25, c14=0.0, c15=0.0),
+                                        tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Trigonal-A large-strain elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisolargestrain.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
+             time_derivs=[0], nonlinear=True)
+
+# TRIGONAL-B
+
+class TrigonalBLargeStrainElasticity(AnisoLargeStrainElasticity):
+    pass
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:LargeStrain:Anisotropic:TrigonalB',
+    TrigonalBLargeStrainElasticity,
+    "ooflib.SWIG.engine.property.elasticity.largestrain.aniso",
+    215,
+    [anisocijkl.TrigonalBCijklParameter(
+            'cijkl',
+            anisocijkl.TrigonalBRank4TensorCij(
+                c11=1.0, c12=0.5,c13=0.5,c33=1.0,c44=0.25,c14=0.0),
+            tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Trigonal-B large-strain elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisolargestrain.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
+             time_derivs=[0], nonlinear=True)
+
+# ORTHORHOMBIC
+
+class OrthorhombicLargeStrainElasticity(AnisoLargeStrainElasticity):
+    pass
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:LargeStrain:Anisotropic:Orthorhombic',
+    OrthorhombicLargeStrainElasticity,
+    "ooflib.SWIG.engine.property.elasticity.largestrain.aniso",
+    216,
+    [anisocijkl.OrthorhombicCijklParameter(
+            'cijkl',
+            anisocijkl.OrthorhombicRank4TensorCij(c11=1.0, c12=0.5, c13=0.5,
+                                                  c22=1.0, c23=0.5, c33=1.0,
+                                                  c44=0.25, c55=0.25, c66=0.25),
+            tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Orthorhombic large-strain elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisolargestrain.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
+             time_derivs=[0], nonlinear=True)
+
+# MONOCLINIC
+
+class MonoclinicLargeStrainElasticity(AnisoLargeStrainElasticity):
+    pass
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:LargeStrain:Anisotropic:Monoclinic',
+    MonoclinicLargeStrainElasticity,
+    "ooflib.SWIG.engine.property.elasticity.largestrain.aniso",
+    217,
+    [anisocijkl.MonoclinicCijklParameter(
+            'cijkl',
+            anisocijkl.MonoclinicRank4TensorCij(
+                c11=1.0, c12=0.5, c13=0.5, c15=0.0,
+                c22=1.0, c23=0.5, c25=0.0,
+                c33=0.25, c35=0.0, c44=0.25,
+                c46=0.0, c55=0.25, c66=0.25),
+            tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Monoclinic large-strain elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisolargestrain.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement], 
+             time_derivs=[0], nonlinear=True)
+
+# TRICLINIC
+
+class TriclinicLargeStrainElasticity(AnisoLargeStrainElasticity):
+    pass
+    
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:LargeStrain:Anisotropic:Triclinic',
+    TriclinicLargeStrainElasticity,
+    "ooflib.SWIG.engine.property.elasticity.largestrain.aniso",
+    218,
+    [anisocijkl.TriclinicCijklParameter(
+            'cijkl',
+            anisocijkl.TriclinicRank4TensorCij(
+                c11=1.0, c12=0.5, c13=0.5, c14=0.0,
+                c15=0.0, c16=0.0, c22=1.0, c23=0.5,
+                c24=0.0, c25=0.0, c26=0.0, c33=1.0,
+                c34=0.0, c35=0.0, c36=0.0, c44=0.25,
+                c45=0.0, c46=0.0, c55=0.25, c56=0.0,
+                c66=0.25),
+            tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Triclinic large-strain elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisolargestrain.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
+             time_derivs=[0], nonlinear=True)

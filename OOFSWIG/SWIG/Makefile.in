@@ -1,0 +1,145 @@
+#######################################################################
+# $Header: /users/langer/FE/CVSoof/OOF2/OOFSWIG/SWIG/Makefile.in,v 1.2.2.2 2014/06/27 20:28:14 langer Exp $
+# Simplified Wrapper and Interface Generator (SWIG)
+# 
+# Makefile for version 1.0 Final
+# Dave Beazley
+# August 1, 1996
+#
+# This makefile is now mostly constructed by ./configure.
+#
+# $Log: Makefile.in,v $
+# Revision 1.2.2.2  2014/06/27 20:28:14  langer
+# Copied Lulu's modified swig into OOFSWIG, and changed setup.py so that
+# it automatically builds and uses it.  The --with-swig option to setup.py
+# is still respected, if it's given, but it shouldn't be necessary any more.
+#
+# Changed make_dist so that the swig output files aren't included in
+# the distribution, and removed the --skip-swig option from setup.py.
+# Since everybody has swig now, it's no longer necessary.  This will
+# make the build take a little bit longer, but users won't have to
+# combine the build and install steps anymore.
+#
+# Removed the bit in pyexp.swg that suppressed the warnings that the old
+# swig code generated.  This means that if you use --with-swig, you'll
+# probably get lots of warnings.
+#
+# Added some explicit (char*) casts in PyObject_CallMethod calls in
+# swig typemaps, to get rid of warnings in swig generated code.
+# For unknown reasons, PyObject_CallMethod has char * arguments instead
+# of const char* arguments.   Other similar Python API calls use const.
+#
+# Revision 1.2  2014/06/26 16:05:05  lck
+# *** empty log message ***
+#
+# Revision 1.1.1.1  1999/02/28 02:00:51  beazley
+# Swig1.1
+#
+# Revision 1.1  1996/08/12 01:55:02  dmb
+# Initial revision
+#
+#######################################################################
+
+#.KEEP_STATE:
+
+
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+# Set your C++ compiler here.   g++ works on most machines,
+# but you might have to change it depending on your installation.
+#
+CC      = @CXX@
+
+#
+# Set the prefix below to indicate where you want SWIG to install its
+# files.   Normally this is /usr/local
+# 
+
+prefix     = @prefix@
+
+# Location of the SWIG library.  Is normally put in /usr/local/lib/swig_lib
+# The SWIG library contains configuration files and library modules
+# so you should install it someplace where it can be easily accessed.
+
+SWIG_LIB = $(prefix)/lib/swig_lib
+
+# YACC parser.  Use bison by default.  if this doesn't work, switch
+# it over to yacc.   If that still doesn't work, let me know...
+
+YACC    = @YACC@ 
+
+# Comment out the following line if you're on an SGI or don't have ranlib!
+RANLIB  = @RANLIB@
+AR      = @AR@
+
+########################################################################
+# Normally, you shouldn't have to change anything below this point     #
+########################################################################
+
+LIBOBJS = main.o scanner.o symbol.o include.o types.o parms.o emit.o newdoc.o ascii.o \
+          html.o latex.o cplus.o lang.o hash.o sstring.o wrapfunc.o getopt.o comment.o \
+          typemap.o naming.o
+
+LIBSRCS = main.cxx scanner.cxx symbol.cxx include.cxx types.cxx parms.cxx emit.cxx \
+	  newdoc.cxx ascii.cxx html.cxx latex.cxx cplus.cxx lang.cxx hash.cxx \
+          sstring.cxx wrapfunc.cxx getopt.cxx comment.cxx typemap.cxx naming.cxx
+
+LIBHEADERS = internal.h ../Include/swig.h latex.h ascii.h html.h nodoc.h
+LIB      = ../libswig.a
+PARSER   = parser.y
+INCLUDE  = -I../Include
+CFLAGS   = @CFLAGS@ -DSWIG_LIB='"$(SWIG_LIB)"' -DSWIG_CC='"$(CC)"' @DEFS@
+SHELL  = /bin/sh
+
+#
+#
+#
+# Rules for creation of a .o file from .cxx
+.SUFFIXES: .cxx
+.cxx.o: 
+	$(CC) $(INCLUDE) $(CFLAGS) -c -o $*.o $<
+
+all:    $(LIB) 
+
+$(LIB): parser.o $(LIBOBJS) 
+	@echo "Building library"
+	$(AR) cr $(LIB) $(LIBOBJS) parser.o
+	$(RANLIB) $(LIB)
+
+parser.o: parser.cxx $(LIBHEADERS)
+	$(CC) $(INCLUDE) $(CFLAGS) parser.cxx -c -o parser.o
+
+parser.cxx: $(PARSER)
+	$(YACC) @YACCFLAGS@
+	@cp y.tab.h parser.h
+	@cp y.tab.c parser.cxx
+
+parser::  
+	@cp y.tab.c.bison parser.cxx
+	@cp y.tab.h.bison parser.h
+	@cp y.tab.h.bison y.tab.h
+	$(CC) $(CFLAGS) parser.cxx -c -o parser.o
+
+Makefile:	$(srcdir)/Makefile.in ../config.status
+		(cd ..; CONFIG_FILES=SWIG/Makefile $(SHELL) config.status)
+
+.PRECIOUS:	Makefile
+
+clean::
+	rm -f *.o libswig.a y.tab.c y.tab.h
+
+nuke::
+	rm -f Makefile *~ #* core a.out
+
+wc::	
+	wc $(LIBSRCS) *.h parser.y
+
+# I use this to build final releases from the RCS directory.   Probably
+# not very useful to anyone else...
+
+co::
+	co $(LIBSRCS) $(LIBHEADERS) $(PARSER)
+
+
+

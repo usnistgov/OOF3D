@@ -1,0 +1,192 @@
+(* 
+   $RCSfile: matrix_check_therm.math,v $
+   $Revision: 1.1 $
+   $Author: reida $
+   $Date: 2003/08/26 13:21:51 $
+            *)
+
+(* Modified from the boundary-condition prototyper, this 
+   file contains an OOF2 work-alike which generates a master
+   stiffness matrix for elasticity in the out-of-plane case,
+   with extra plane-stress equations applied.  No boundary 
+   conditions, this just builds the matrix. *)
+
+(* Get matrix operations. *)
+
+<< LinearAlgebra`MatrixManipulation`
+
+Nodes:={{ 0, 0}, { 150, 0}, { 75, 75 }, { 0, 150 }, { 150, 150 }} 
+
+
+(* Elements are defined by indexes into the node array, in 
+   counterclockwise order. *)
+
+Elements:={{1,2,3}, {1,3,4}, {2,5,3}, {3,5,4}} 
+
+
+(* xi and zeta are default coordinates in the master space.  
+   Apparently-unmotivated derivatives with respect to xi and zeta
+   may appear elsewhere because of this. *)
+
+MasterFns:={ (1-xi-zeta), xi, zeta }
+
+
+(* Elasticity:  Avoid potential errors from Voigt 
+   notation by just building the four-component matrix
+   of elastic constants.  It's pretty much arbitrary. *)
+
+(************************************************************)
+(*********************    PHYSICS   *************************)
+(************************************************************)
+
+(* Elastic stiffness, in Cijkl form. *)
+
+Kmtx := {{ 1.0, 0.0, 0.0},
+         { 0.0, 1.0, 0.0},
+         { 0.0, 0.0, 1.0} }
+
+(*************************************************************)
+(*************************************************************)
+
+(* The required technique seems to be to assign values
+   to the various functions mtx[i,j], then actually build
+   the matrix from the table with Array[mtx, {N, N}]. *)
+
+(* Need a convention for mapping from nodes to DOF/RHS 
+   indices -- one-based index makes this stupid, but we can
+   survive.  5*i-4 is x-component, 5*i-3 is corresponding
+   y component of in-plane parts, 5*i-2 is x component of 
+   out-of-plane part, 5*i-1 is y, and 5*i is z. *)
+
+(* Generate a real-space position from node indices. Result is
+   the vector {x(xi,zeta),y(xi,zeta)} *)
+
+FromMaster[el_]:={Simplify[ 
+                     Sum[Nodes[[el[[i]]]][[1]]*MasterFns[[i]], {i,1,3}]],
+                    Simplify[ 
+                     Sum[Nodes[[el[[i]]]][[2]]*MasterFns[[i]], {i,1,3}]] }
+
+
+(* Jacobian of the coordinate transformation -- unfortunately
+   "Jacobian" is a Mathematica reserved word.  Just for 
+   clarity, what this means in the coords here is:
+   
+    (df/dxi, df/dzeta) = J.(df/dx, df/dy)     
+
+   If we stick to linear three-noded elements, this should always
+   be a matrix of constants, but the general case may be of some
+   interest later.   *)
+
+Jacobn[el_]:=Module[{evec},
+  evec=FromMaster[el];
+  {{D[evec[[1]],xi], D[evec[[2]],xi]},
+   {D[evec[[1]],zeta], D[evec[[2]],zeta]}} ]
+
+
+(* Real-space derivatives of the idx-th shape function 
+   of element el.  Returns a vector, (d/dx, d/dy), of derivs. *)
+
+DShapeFun[idx_, el_]:= Module[{},
+  Inverse[Jacobn[el]].{D[MasterFns[[idx]],xi], D[MasterFns[[idx]],zeta]} ]
+
+
+(* The object Fkm is gradient vector of the temperature field
+   as it appears in the integrad, for the bulk.  k is the spatial
+   compoonent, m indexes the degree of freedom. *)
+
+(* Fkm will only be called for those m's which are relevant in
+   a given element.  "el" is the element, "m" is the global
+   degree of freedom index, and "idx" is the index, for *this*
+   element, of the shapefunction corresponding to the node 
+   indicated by m.
+
+   Nonsensical calls are not checked for.   *)
+
+
+Fk[el_,m_,idx_]:=Module[{sf, dsf},
+  sf = MasterFns[[idx]];
+  dsf = DShapeFun[idx,el];
+  Switch[ Mod[m,2],  
+    1, (* Temperature part *)
+     { dsf[[1]], dsf[[2]], 0.0 },
+    0, (* dT/dz part *)
+     { 0.0, 0.0, sf }
+  ] 
+]
+
+
+
+(* For 3-node elements, master space is the triangle whose
+   sides are the unit interval on the x axis, the unit interval
+   on the y axis, and the line x=1-y. *)
+
+Igt[arg_,el_]:=Integrate[ Integrate[ 
+                 arg*Det[Jacobn[el]],{xi,0,1-zeta}],{zeta,0,1}] 
+
+
+(* Element-handling routine.  For a given element, for each 
+   degree of freedom, this routine first builds the strain
+   tensor contribution, multiplies it by the elastic
+   stiffness (to get what OOF calls the "flux matrix"),
+   then figures out the rows and contracts all indices 
+   except those which index the global stiffness matrix.
+   Then, it performs the integration. *)
+
+(* Variables a bit weird -- "ukl" is strain tensor, "flux" is 
+   Cijkl*ukl, a 3x3 tensor.  "tvec" is the vector of real-space
+   derivatives of the current shape function, and igand is the
+   vector of integrands, one for each compoenent of the 
+   corresponding force. *)
+
+
+Elcontrib[el_]:=Module[{i,j,m,p,uk,flux,twoflux,tvec,igand},
+  For[i=1,i<=3,i++, (* Nodes *)
+
+
+    For[m=2*el[[i]]-1, m<=2*el[[i]], m++,  (* Columns of the matrix *)
+      uk=Fk[el,m,i];
+      flux = Kmtx.uk;
+      twoflux = {flux[[1]], flux[[2]]};
+
+      For[j=1,j<=3,j++,
+        tvec=DShapeFun[j,el];
+        igand=tvec.twoflux;  (* Left-multiply -- shouldn't matter. *)
+        p=2*el[[j]]-1;                       (* For x-component *)
+        stiffness[p,m]-=Igt[igand,el];
+
+     	igand = MasterFns[[j]]*flux[[3]]; 	
+        p=2*el[[j]];
+        stiffness[p,m]+=Igt[igand[[1]],el];
+      ];
+    ];
+  ];
+]
+
+
+(* Iterate over elements, plus actually
+   building up the stiffness matrix from the functional
+   components.  *)
+
+MakeMatrix:=Module[{},
+  GStiffness:=Array[stiffness,{2*Length[Nodes], 2*Length[Nodes]} ] ]
+ 
+Main:=Module[{i,j,el},
+  For[i=1,i<=2*Length[Nodes],i++,
+    For[j=1,j<=2*Length[Nodes],j++,
+      stiffness[i,j]=0;
+    ];
+  ];
+
+
+  For[i=1,i<=Length[Elements],i++,
+    el=Elements[[i]];
+      Elcontrib[el]; 
+  ];
+
+
+(* Write the functions into actual matrices. *)
+  MakeMatrix[];
+]
+
+
+

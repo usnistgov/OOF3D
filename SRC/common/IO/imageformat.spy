@@ -1,0 +1,74 @@
+# -*- python -*-
+# $RCSfile: imageformat.spy,v $
+# $Revision: 1.1.2.3 $
+# $Author: langer $
+# $Date: 2014/05/12 20:30:45 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.common import cregisteredclass
+from ooflib.common.IO import parameter
+
+cregisteredclass.registerCClass(ImageFormatPtr)
+
+## PDF output is commented out because it doesn't work very well.
+# cregisteredclass.Registration(
+#     "PDF",
+#     ImageFormatPtr,
+#     PDFImageFormat,
+#     ordering=0,
+#     tip="Save the canvas as a PDF file.")
+
+cregisteredclass.Registration(
+    "PNG",
+    ImageFormatPtr,
+    PNGImageFormat,
+    ordering=1,
+    tip="Save the canvas in PNG format.")
+
+cregisteredclass.Registration(
+    "JPEG",
+    ImageFormatPtr,
+    JPEGImageFormat,
+    ordering=2,
+    params=[
+        parameter.IntRangeParameter(
+            'quality', (0, 100), 100,
+            tip="0 is low quality, 100 is high quality.")],
+    tip="Save the canvas in JPEG format.")
+
+
+cregisteredclass.Registration(
+    "TIFF",
+    ImageFormatPtr,
+    TIFFImageFormat,
+    ordering=3,
+    tip="Save the canvas in TIFF format.")
+    
+cregisteredclass.Registration(
+    "EPS",
+    ImageFormatPtr,
+    EPSImageFormat,
+    ordering=4,
+    tip="Save the canvas as an encapsulated PostScript file.")
+    
+cregisteredclass.Registration(
+    "PNM",
+    ImageFormatPtr,
+    PNMImageFormat,
+    ordering=5,
+    tip="Save the canvas in PNM format.")
+    
+cregisteredclass.Registration(
+    "BMP",
+    ImageFormatPtr,
+    BMPImageFormat,
+    ordering=6,
+    tip="Save the canvas in BMP format.")
+    

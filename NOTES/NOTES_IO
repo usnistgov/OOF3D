@@ -1,0 +1,124 @@
+-*- mode: text -*-
+// $RCSfile: NOTES_IO,v $
+// $Revision: 1.1 $
+// $Author: reida $
+// $Date: 2001/12/03 22:15:30 $
+
+
+Output chains:
+  * Determine what is plotted.
+  * Don't determine how it's plotted, or where.
+  * May produce scalar, vector, or tensor quantities. (?)
+  * May produce quantities that are meaningful at arbitrary points (eg
+    stress), on Elements (eg, ColorProperty or other Material
+    parameters), or on Nodes (eg, nodal forces).
+
+Device:
+  * Postscript or screen.
+  * Perhaps a toolkit canvas is the only device we need, if it can
+    produce postscript output. 
+  * Has to understand some simple language of primitive graphics
+    operations:
+       boundingbox(Coord, Coord) determines coordinate system & clipping  NO
+       segment(Coord, Coord)
+       segments([Coord, Coord])     ([] ==> List)
+       curve([Coord])                connected segments
+       polygon([Coord])              closed curve    
+       linewidth(double)             in same units as coordinates!
+       linecolor(Color)
+       fillcolor(Color)
+       circle(Coord, double)
+       label(string, Coord, direction)
+       font(Font, size)
+       colormap(ColorMap)            maps [0,1] to RGB
+       clear()  indicates beginning of new data set
+       show()   indicates end of data set
+  * Determines range of data, bounding box, by examining data itself.
+
+DisplayMethod:
+  * Edges only, edges+fill, contours, filled contours, vectors, etc.
+  * Intermediates between output chains and device.
+  * Has two output chains as its input: one for positions of nodes and one
+    for displayed values.  The second one is optional.
+  * Output type for displayed values must be compatible with Display
+    method.  Eg, Contour Display can only be used with scalar Output.
+  * Determines at which coordinates the output chains need to be
+    evaluated.
+  * Tells device the coordinate system and bounding box, but device
+    determines the visible region.  Display can ask device for visible
+    region.  NO -- just sends data, and lets device worry about what's
+    visible.
+  * Can ask device about resolution, so as to avoid placing output
+    points too close together.  NO
+  
+Display:
+ * A list of DisplayMethods, all being overlaid on the same
+   Device.
+ * The list is ordered, so that later objects appear on top of earlier
+   ones.
+
+Procedure:
+  * Device defaults to canvas, when using GUI, or PostScript, when not.
+  * User specifies Output chains.
+  * User selects Display method from set compatible with Output chain.
+  * Display method chooses evaluation points.
+  * Display asks Elements for appropriate evaluation points, if
+    necessary.
+  * Display passes evaluation points through Output chain to get
+    positions and values.
+  * Display asks Elements to post-process values, if necessary.  For
+    example, a Contour display has to pass nodal values and contour
+    levels back to Elements to get contours.
+  * Display sends plotting commands to Device.
+
+
+  * GUI creates Device
+  * GUI creates Output chains and calls Display(outputs, device)
+  * Display is listed in list of all Displays (list is in Mesh?
+      Someone else has a list of (Mesh, [Display]) assignments?)
+  * When mesh is updated, all Displays redraw.
+
+    Display.draw()
+    Display.draw(other_device)
+    Display.close()   removes self from list of all Displays
+
+
+Random Thoughts & Concerns
+
+ * One Output may be shared by many DisplayMethods belonging to one or
+   more Displays.  How can we avoid recomputing the Output?  Can we?
+   The DisplayMethods may require values of the Output at different
+   points.  Should there be an OutputLocation class that determines
+   where outputs will be evaluated?  (ElementCenter, ElementNodes,
+   ElementGaussPoints, ElementAnyWhere, etc.)  Each DisplayMethod
+   would have an associated OutputLocation.  The Display could see if
+   any of its DisplayMethods shared the same Output and
+   OutputLocation, and arrange to cache the data.
+
+   Some DisplayMethods, such as Contour, will have to evaluate the
+   Output at additional points, not determined ahead of time.  The
+   values at these points probably can't be cached.
+
+   This may fall into the category of Optimizations to be Put Off
+   until Later.
+
+ * Types:  It's insufficient to use type() to see if a parameter or
+   Output result is the right type, since type(Color) = type(Mesh) =
+   InstanceType.  But it would be unfortunate to use object.__class__
+   (for InstanceTypes), since we could have more than one class that
+   can serve in any given role.  (For example, there's the Coord class
+   defined in C++ and swigged, and the Point class defined in Python
+   in IO/primitives.py for cases where the C++ calling overhead isn't
+   necessary.  The output routines don't care if they're getting a
+   Coord or a Point.)   We could just say that we will require certain
+   types, and make sure that all parameters and outputs are at least
+   derived from the expected type.  We could offer more than one
+   choice, so that we can allow either Point and Coord, for example.
+
+ * Parameters:  DisplayMethods will require parameters of specific
+   types, much as the Outputs do.  They should share the same
+   mechanism.  Perhaps there should be a ParametrizedObject class,
+   from which Output and DisplayMethod can both be derived.  (It's
+   tempting to think that DisplayMethod is just another Output, but
+   it's not.  DisplayMethods talk to Devices, and Outputs don't.
+   Outputs can be chained, and DisplayMethods can't.)

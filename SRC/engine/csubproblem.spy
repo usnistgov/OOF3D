@@ -1,0 +1,331 @@
+# -*- python -*-
+# $RCSfile: csubproblem.spy,v $
+# $Revision: 1.27.2.7 $
+# $Author: fyc $
+# $Date: 2015/01/07 15:53:11 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.SWIG.common import config
+from ooflib.SWIG.engine import femesh
+from ooflib.common import debug
+from ooflib.engine import scpatch
+
+# Not used anymore because of CSubProblem.set_mesh. No need to keep
+# meshcontext because we are using it only to get the mesh object when
+# calling set_mesh.
+# def _set_mesh(self, meshctxt):
+    # TODO OPT: get rid of self.get_mesh(), which is redundant with
+    # CSubProblem.get_mesh(), which is the better thing to
+    # use. (Different CSubProblemPtrs can refer to the same C++
+    # CSubProblem, but mesh and meshctxt will be set in only one of
+    # the CSubProblemPtrs.  This is a issue inside pypropertywrapper
+    # functions.)  The property code below may be useful.  We probably
+    # need to get rid of meshcontext as well, which may mean
+    # storing it in C++ as a PyObject*.
+    # self.meshcontext = meshctxt
+#    if  meshctxt is not None:
+#        self.set_femesh(meshctxt.getObject())
+#    else:
+#        self.set_femesh(None)
+# CSubProblemPtr.set_mesh = _set_mesh
+
+## Code that may be useful when getting rid of self.get_mesh().
+## Not necessary for now. It means certainly on the property requirements
+## that the CSubProblemPtr should derives from object to have it working 
+## properly. Which means modify Swig to derive *Prs from object which may
+## result into some other troubles that we don't know of yet.
+# def _mesh_setter(self, meshobj):
+#      # raise ooferror2.ErrPyProgrammingError("Don't set CSubProblem.mesh!")
+#      print "Accessing the mesh setter...\n"
+#      self.set_mesh(meshobj)
+# def _mesh_getter(self):
+#     print "Accessing the mesh getter...\n"
+#     return self.get_mesh()
+# CSubProblemPtr.mesh = property(_mesh_getter, _mesh_setter)
+
+# Return the paths to the other subproblems on which this subproblem
+# depends.  This function must be overridden in derived classes.
+def _get_dependencies(self):
+    return []
+CSubProblemPtr.get_dependencies = _get_dependencies
+
+
+# For every defined flux, check that it is consistently defined.
+# Returns a list of badly defined materials.
+def _check_materials(self):
+    badmatls = set()
+    for f in self.all_fluxes():
+        if self.is_active_flux(f):
+            # check_flux returns a list of bad materials
+            badmatls.update(self.check_flux(f))
+    return list(badmatls)
+CSubProblemPtr.check_materials = _check_materials
+
+
+# Check if the passed-in flux is computable on this mesh.  Return a
+# list of materials that make the flux incomputable, if any.
+def _check_flux(self, flux):
+    matlist = []
+    for mat in self.getMaterials():
+        # mat can be None if there are elements with no assigned material
+        if mat and mat.contributes_to_flux(flux):
+            if not mat.self_consistent():
+                matlist.append(mat)
+    return matlist
+CSubProblemPtr.check_flux = _check_flux
+
+# Run through the list of active equations, and make sure that there
+# is a material which contributes to them.  Returns a list of bad
+# equations.  This doesn't have to check equations that may have been
+# implicitly defined at a Node, since they've been put there by a
+# Material Property.
+def _check_equations(self):
+    bad_eqns = []
+    for e in self.all_equations():
+        if self.is_active_equation(e):
+            ## TODO PLASTICITY: This only applies to FluxEquations
+            flx = e.flux()
+            for mat in self.getMaterials():
+                if mat and mat.contributes_to_flux(flx):
+                    break
+            else:
+                bad_eqns.append(e)
+    return bad_eqns
+CSubProblemPtr.check_equations = _check_equations
+
+def _nEquations(self):
+    n = 0
+    for e in self.all_equations():
+        if self.is_active_equation(e):
+            n += e.ndof()
+    return n
+CSubProblemPtr.nEquations = _nEquations
+
+# The difference between nDoFs(), defined here, and
+# CSubProblem::ndof(), defined in csubproblem.C, is that this function
+# returns the number active dofs per node.  ndof() returns the total
+# number of dofs in the subproblem.
+
+def _nDoFs(self):
+    n = 0
+    d3 = config.dimension == 3
+    for f in self.all_compound_fields():
+        if self.is_active_field(f):
+            n += f.ndof()
+        if d3 and self.is_active_field(f.out_of_plane()):
+            n += f.out_of_plane().ndof()
+    return n
+CSubProblemPtr.nDoFs = _nDoFs
+
+###############################################################
+#AMR subproblem
+
+#Add attributes that used to be in femesh
+CSubProblemPtr.bdy_node_map = {}  # node_index: 0 or 1(on boundary)
+# SCPatch flags
+
+#Interface branch
+#Retrieve realmesh nodes between the two realmesh corner nodes
+#with indices into internal list irealn0 and irealn1 of the realmesh element realel.
+#Note the difference with getEdgeNodes, which uses a dictionary and does not
+#work when interfaces are defined.
+def _CSubProblemPtr_getRealEdgeNodes(self,realel,
+                                     irealn0,realn0,
+                                     irealn1,realn1):
+    ncorners = realel.ncorners()
+    found=False
+    realedgenodes=[]
+    if (irealn0+1)%ncorners==irealn1:
+        for rn in realel.node_iterator():
+            if found:
+                if rn==realn1:
+                    break
+                realedgenodes.append(rn)
+            if rn==realn0:
+                found=True
+    else:
+        for rn in realel.node_iterator():
+            if found:
+                if rn==realn0:
+                    break
+                realedgenodes.append(rn)
+            if rn==realn1:
+                found=True
+    return realedgenodes
+
+CSubProblemPtr.getRealEdgeNodes = _CSubProblemPtr_getRealEdgeNodes
+
+# Create a boundary node map, which indicates if a node is on a
+# boundary (either external or material) or not.  The map is a dict
+# whose keys are the indices of the nodes in the FEMesh, and whose
+# values are 0 (for non-boundary nodes) and 1 (for boundary nodes).
+# The map is a dict and not a list because mesh node indices aren't
+# guaranteed to be a set of contiguous integers.
+
+def _CSubProblemPtr_create_elem_bdynodemap(self, e, fe, n0, n1):
+    irealn0 = e.getNodeIndexIntoList(n0)
+    realn0 = fe.getCornerNode( irealn0 )
+    irealn1 = e.getNodeIndexIntoList(n1)
+    realn1 = fe.getCornerNode( irealn1 )
+    self.bdy_node_map[realn0.index()] = 1
+    self.bdy_node_map[realn1.index()] = 1
+    if self.get_mesh().order() > 1:
+        #Interface branch
+        for nd in self.getRealEdgeNodes(fe,
+                                        irealn0,realn0,
+                                        irealn1,realn1):
+            self.bdy_node_map[nd.index()] = 1
+CSubProblemPtr.create_elem_bdynodemap=_CSubProblemPtr_create_elem_bdynodemap
+
+#Interface branch
+def _CSubProblemPtr_create_bdy_node_map(self, skel):
+    # Initializing
+    for node in self.nodes():
+        self.bdy_node_map[node.index()] = 0
+        
+    for seg in skel.segment_iterator():
+        n0, n1 = seg.nodes()
+        if seg.nElements() == 1:  # geometric (external) boundary
+            #Interface branch
+            e0 = seg.getElements()[0]
+            fe0 = self.get_mesh().getElement(e0.meshindex)
+            #AMR subproblem
+            if self.contains(fe0):
+                #realmesh element is in this subproblem
+                self.create_elem_bdynodemap(e0,fe0,n0,n1)
+##            irealn0 = e0.getNodeIndexIntoList(n0)
+##            realn0 = fe0.getCornerNode( irealn0 )
+##            irealn1 = e0.getNodeIndexIntoList(n1)
+##            realn1 = fe0.getCornerNode( irealn1 )
+##            #Get the index from realmesh nodes
+##            #self.bdy_node_map[n0.meshindex] = 1
+##            #self.bdy_node_map[n1.meshindex] = 1
+##            self.bdy_node_map[realn0.index()] = 1
+##            self.bdy_node_map[realn1.index()] = 1
+##            if self.order() > 1:
+##                #Interface branch
+##                #for nd in self.getEdgeNodes((n0,n1)):
+##                for nd in self.getRealEdgeNodes(fe0,
+##                                                irealn0,realn0,
+##                                                irealn1,realn1):
+##                    self.bdy_node_map[nd.index()] = 1
+        else:
+            e0, e1 = seg.getElements()
+            fe0 = self.get_mesh().getElement(e0.meshindex)
+            fe1 = self.get_mesh().getElement(e1.meshindex)
+            if self.contains(fe0)and self.contains(fe1):
+                #AMR subproblem, do this if fe0 and fe1 are both in the subproblem
+                #Interface branch
+                #Check if seg is an interface
+                #For fe0.
+                irealn0 = e0.getNodeIndexIntoList(n0)
+                realn0 = fe0.getCornerNode( irealn0 )
+                irealn1 = e0.getNodeIndexIntoList(n1)
+                realn1 = fe0.getCornerNode( irealn1 )
+                #For fe1.
+                irealn0_2 = e1.getNodeIndexIntoList(n0)
+                realn0_2 = fe1.getCornerNode( irealn0_2 )
+                irealn1_2 = e1.getNodeIndexIntoList(n1)
+                realn1_2 = fe1.getCornerNode( irealn1_2 )
+                if realn0==realn0_2 and realn1==realn1_2:
+                    #seg is not an interface
+                    if fe0.material() != fe1.material():
+                        # material(internal) boundary
+                        #self.bdy_node_map[n0.meshindex] = 1
+                        #self.bdy_node_map[n1.meshindex] = 1
+                        self.bdy_node_map[realn0.index()] = 1
+                        self.bdy_node_map[realn1.index()] = 1
+                        if self.get_mesh().order() > 1:
+                            #Interface branch
+                            #for nd in self.getEdgeNodes((n0,n1)):
+                            for nd in self.getRealEdgeNodes(fe0,
+                                                            irealn0,realn0,
+                                                            irealn1,realn1):
+                                self.bdy_node_map[nd.index()] = 1
+                else:
+                    #seg is an interface; at least one realmesh node on seg
+                    #does not match between the two realmesh elements
+                    self.bdy_node_map[realn0.index()] = 1
+                    self.bdy_node_map[realn1.index()] = 1
+                    if self.get_mesh().order() > 1:
+                        for nd in self.getRealEdgeNodes(fe0,
+                                                        irealn0,realn0,
+                                                        irealn1,realn1):
+                            self.bdy_node_map[nd.index()] = 1
+                    self.bdy_node_map[realn0_2.index()] = 1
+                    self.bdy_node_map[realn1_2.index()] = 1
+                    if self.get_mesh().order() > 1:
+                        for nd in self.getRealEdgeNodes(fe1,
+                                                        irealn0_2,realn0_2,
+                                                        irealn1_2,realn1_2):
+                            self.bdy_node_map[nd.index()] = 1
+            elif self.contains(fe0):
+                self.create_elem_bdynodemap(e0,fe0,n0,n1)
+            elif self.contains(fe1):
+                self.create_elem_bdynodemap(e1,fe1,n0,n1)
+
+CSubProblemPtr.create_bdy_node_map = _CSubProblemPtr_create_bdy_node_map
+
+# Create SC Patch.
+def _CSubProblemPtr_create_scpatch(self, skel):
+    ## TODO OPT: only call create_scpatch if necessary.  There used to be
+    ## a _have_scpatches flag that was checked here and set to True if
+    ## the patches were built, but it was neer set to False anywhere,
+    ## and was a *class* variable, not an instance variable, so it's
+    ## been removed.
+    #Interface branch
+    #Obtain the meshindex directly from realmesh nodes.
+    #When interfaces are present, a single skeleton node may correspond
+    #to more than one real mesh node.
+    #Old way:
+    #self.init_scpatches([node.meshindex for node in skel.node_iterator()])
+    #New way:
+    indices = set()
+    for skelel in skel.element_iterator():
+        realel=self.get_mesh().getElement(skelel.meshindex)
+        if self.contains(realel):
+            for skelnode in skelel.nodes:
+                realnode=realel.getCornerNode(
+                    skelel.getNodeIndexIntoList(skelnode))
+                indices.add(realnode.index())
+    self.init_scpatches(list(indices))
+    patches = scpatch.SCPatchCollection(self)  # helper object
+    # buildPatches calls CSubProblem::add_scpatch for each patch.
+    patches.buildPatches(skel)
+
+CSubProblemPtr.create_scpatch = _CSubProblemPtr_create_scpatch
+
+# Superconvergent patch flux recovery.
+
+# TODO MER: The recover_fluxes operation appears to be broken in the case
+# where there are enclosed or partially-enclosed empty elements.  It
+# works for the refinement tutorial, but not for simple test domains
+# of the same shape, and seems to be independent of whether the
+# elements are triangular or quad.  (SL: I could not reproduce this
+# before the 2.1 release.)
+def _CSubProblemPtr_flux_recovery(self):
+    ## TODO OPT: only call recover_fluxes if the solution or mesh has
+    ## changed.  There used to be a self._did_recover_fluxes flag that
+    ## was checked here, and set to True after recovering the fluxes.
+    ## However, it was never reset to False anywhere, and was a
+    ## *class* variable, not an instance variable, so it's been
+    ## deleted.
+    self.init_nodalfluxes()
+    self.recover_fluxes()           # C++ CSubProblem will do it.
+
+CSubProblemPtr.flux_recovery = _CSubProblemPtr_flux_recovery
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Node iterators.  See comments in femesh.spy
+
+CSubProblemPtr.elements = femesh.FEMesh_elements
+CSubProblemPtr.nodes = femesh.FEMesh_nodes
+CSubProblemPtr.funcnodes = femesh.FEMesh_funcnodes

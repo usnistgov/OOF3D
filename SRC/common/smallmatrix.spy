@@ -1,0 +1,78 @@
+# -*- python -*-
+# $RCSfile: smallmatrix.spy,v $
+# $Revision: 1.1.4.2 $
+# $Author: langer $
+# $Date: 2013/11/08 20:43:00 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+import types
+
+
+# Another opportunity for bounds checking.
+def _SmallMatrixPtr___getitem__(self, idx):
+    if len(idx)==2:
+        return self.getitem(idx[0],idx[1])
+    else:
+        raise KeyError
+SmallMatrixPtr.__getitem__ = _SmallMatrixPtr___getitem__
+
+
+def _SmallMatrixPtr___setitem__(self, idx, val):
+    if len(idx)==2:
+        self.setitem(idx[0],idx[1],val)
+    else:
+        raise KeyError
+SmallMatrixPtr.__setitem__ = _SmallMatrixPtr___setitem__
+
+
+def _SmallMatrix___mul__(self, other):
+    if type(other)==types.FloatType:
+        cpy = self.copy()
+        cpy.scale(other)
+        return cpy
+    elif isinstance(other, SmallMatrixPtr):
+        cpy = self.copy()
+        cpy.mmult(other)        # matrix multiplication
+        return cpy
+    else:
+        raise TypeError
+SmallMatrixPtr.__mul__ = _SmallMatrix___mul__
+
+def _SmallMatrix___imul__(self, x):
+    self.scale(x)
+    return self
+SmallMatrixPtr.__imul__ = _SmallMatrix___imul__
+
+
+
+def _SmallMatrix___add__(self, other):
+    cpy = self.copy()
+    cpy.madd(other)
+    return cpy
+SmallMatrixPtr.__add__ = _SmallMatrix___add__
+
+def _SmallMatrix___iadd__(self, a):
+    self.madd(a);
+    return self
+SmallMatrixPtr.__iadd__ = _SmallMatrix___iadd__
+
+
+
+def _SmallMatrix___sub__(self, other):
+    cpy = self.copy()
+    cpy.msub(other)
+    return cpy
+SmallMatrixPtr.__sub__ = _SmallMatrix___sub__
+
+
+def _SmallMatrix___isub(self, a):
+    self.msub(a)
+    return self
+SmallMatrixPtr.__isub__ = _SmallMatrix___isub

@@ -1,0 +1,53 @@
+# -*- python -*-
+# $RCSfile: forcedensity.spy,v $
+# $Revision: 1.8.8.2 $
+# $Author: langer $
+# $Date: 2013/11/26 15:55:43 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+from ooflib.SWIG.common import config
+
+
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.engine import problem
+from ooflib.engine import propertyregistration
+
+import types
+
+
+## Constant force density
+
+params = [
+    parameter.FloatParameter('gx', 0.0, 
+                             tip="Body force density in the x direction."),
+    parameter.FloatParameter('gy', -9.8,
+                             tip="Body force density in the y direction.")
+]
+
+if config.dimension() == 3:
+    params.append(
+        parameter.FloatParameter('gz', 0.0,
+                                 tip="Body force density in the z direction."))
+
+reg = propertyregistration.PropertyRegistration(
+    'Mechanical:ForceDensity:ConstantForceDensity',
+    ForceDensity,
+    "ooflib.SWIG.engine.property.forcedensity.forcedensity",
+    100,
+    params,
+    propertyType="ForceDensity",
+    tip="A constant force, such as gravity, applied throughout the material.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/forcedensity.xml')
+)
+
+
+reg.eqnInfo( equations=[problem.ForceBalanceEquation] )

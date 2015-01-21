@@ -1,0 +1,138 @@
+
+
+Sequence of Events:
+(Ignores verbosity and progress-bar stuff)
+
+ (1) (GUI) RCF constructs two arguments:
+       matrixdriver, subclass of solverdriver.Driver
+       timedriver, subclass of timedrivers.TimeDriver
+
+     At construction time, the TimeDriver builds a subclass of 
+     SteppingScheme, called "self.steppermethod"
+
+     At construction time, the Driver subclass gets a "method"
+     attribute, which is a subclass of LinearSolvePtr, which is 
+     the SWIG'd LinearSolve object, which solves the Ax=b problem.
+
+     If the LinearSolve subclass has a preconditioner, the wrapper
+     for the preconditioner (subclass of Preconditioner) gets 
+     built by the RCF at this time, as part of the registered-class 
+     mechanism.
+
+ (2) OOF.Solver.Solve menuitem runs with these arguments and the 
+     mesh context "mc".
+       -> timedriver.apply(matrixdriver, mc)
+
+ (3) The TimeDriver's "apply" function calls the matrixdriver's "apply"
+       with the stepper method and the mesh context.
+
+       -> matrixdriver.apply(self.steppermethod, mc)
+
+ (4) The Driver parent class handles the "apply" call -- computes
+       the target time of this step, then calls the subclass's
+       driver_apply, passing through the stepper method.
+
+       -> matrixdriver.driver_apply(stepper, mc)
+
+ (5) The Driver subclass builds a SolverDriverCore object,
+       passing in the stepper, the "method" (LinearSolverPtr subclass) 
+       set at construction time, and the FEMesh object deduced from the 
+       mesh context.   This is assigned to self.core.  Inside the 
+       SolverDriverCore, the method is called the "solver", the 
+       stepping scheme is the "sscheme", and the femesh is "femesh".
+
+       The SolverDriverCore also owns "K", a CSRMatrix, and b and x,
+       VECTOR_D objects.  These form the LA problem Kx=b.
+
+       Then, for the linear driver, the following calls are made:
+
+       -> matrixdriver.precompute()
+   (5a) Driver.precompute:
+         - Checks materials
+         - calls "femesh.precompute()" 
+	   - calls precompute on all the materials
+	     - materials call precompute on all their active properties
+         - calls find_local_mapping with the femesh
+	   - establishes dof/eqn conjugacy correspondence within nodes
+	   - calls femesh.set_equation_mapping with local maps
+	     - cleans the dof/eqn lists	
+	     - constructs the global_equation_map list in the FEMEsh
+         - calls "make_linear_system" on the Mesh context
+	   - Checks for timestamps or nonlinear materials
+	   - calls FEMesh::make_linear_system
+             - cleans dof and eqn lists (redundant but cheap)
+             - allocates c_matrix if any equation has kinetics activated
+	     - allocates m_matrix if any equation has dynamics activated
+	     - calls element->make_linear_system for each element
+	       - calls mat->begin_element() for its material
+	         - calls prop->begin_element(el) for each active property
+	       - calls mat->make_linear_system() for its material
+	         - for each flux (determined from looping over the fluxprop)
+		 -  gets the list of properties which contribute to the flux
+		 -  if the flux is active:
+		 -  finds the highest integration order of all the props
+		 -  for each gausspoint of this order for this element
+		 -   initializes the fluxdata object 
+		 -   for each property, if it's active
+		 -    for each FuncNode of this element
+		 -     calls prop->fluxmatrix with fluxdata
+		 -    calls prop->fluxrhs with fluxdata
+		 -   calls flux->make_stiffness with the flux data
+		   -   calls eqn->make_stiffness for each eqn using this flux
+		     -   for each funcnode in the element
+		     -    for each equation component
+		     -     computes the matrix row using global_equation_map
+		     -     for each field contributing to the flux
+		     -      for each funcnode in the element
+		     -       for each DOF in the func-node
+                     -        contributes to the master stiffness mtx
+		 -   calls flux->make_rhs with the flux data
+		   -   calls eqn->make_rhs for each equation using this flux
+                     -   for each funcnode in the element
+                     -    for each equation component
+		     -     computes the row using global_equation_map
+		     -     contributes to the master rhs object  
+		 -   deallocate the fluxdata object
+		 - if dynamics or kinetics active, runs set_time_derivatives
+	       - calls mat->end_element() for its material
+	         - calls prop->end_element(el) for each active property
+	     
+         - retrieves master stiffness matrix from femesh, assignes to "mtx"
+         - calls boundary_rhs_init on FEMesh with mtx.nrows()
+         - calls resetdofeqs() on FEMesh
+         - Checks BC consistency, applies BCs, maps DOFs/eqs
+         - calls self.core.precompute()
+	   - extracts A from femesh->Amatrix()
+	   - Checks squareness
+	   - extracts C from femesh->Cmatrix()
+	   - builds new x, if needed, otherwise clears
+	   - gets unknowns into x by femesh->get_unknowns(*x, freedofmap)
+	   - builds new rhs, if needed, otherwise clears
+	   - fills rhs from femesh->get_rhs(*rhs, indepeqnmap)
+	   - builds new xp, if needed, otherwise clears
+	   - fills xp from femesh->get_unknowns(*xp, femesh->fixedofmap)
+	   - Computes *rhs -= (*C) * (*xp)
+           - calls sscheme->precompute(femesh, A, rhs, x)
+	   - sets K from sscheme->get_K(femesh, A)
+	   - sets b from sscheme->get_b(femesh, A, rhs)
+
+       -> matrixdriver.apply_solver()
+   (5b) Driver.apply_solver()
+         - sets self.status = self.core.solve()
+	 self.core.solve():
+           - calls set_blocking() on the LinearSolver "solver" object.
+	   - calls solver->precompute(*K) with the K matrix
+	   - sets status=solver->solve(*K, *b, *x)
+	     - Builds the real preconditioner, pc->create_preconditioner.
+	     - Creats matrix for span of krylov space
+------->     - Calls actual SparseLib++ solver.
+	   - calls solver->postcompute()
+	   returns status
+
+
+       -> matrixdriver.postcompute()
+   (5c) Driver.postcompute()
+         - calls reset_bcs() in the FEMesh 
+	 - calls post_process() in the FEMesh
+ 
+

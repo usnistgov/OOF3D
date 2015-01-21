@@ -1,0 +1,240 @@
+-*- text -*-
+$RCSfile: NOTES_2.1.txt,v $
+$Revision: 1.4 $
+$Author: reida $
+$Date: 2006/09/27 14:13:50 $
+
+
+  Thoughts on the 2.1 version of OOF.  This file is an update of the
+  subproblem_design.txt NOTES file, which itself is a successor of the
+  NOTES.timestepping file.
+
+
+
+  Functionality to be integrated:
+  - Linear elements
+  - Large deformations
+  - Lagrange multiplier constraints
+  - Periodic boundary conditions 
+    - Via Lagrange multipliers?
+    - Via clever skeleton construction?
+  - Inequality constraints
+    - Node-wise conditional Lagrange-multiplier constraints, right?
+    - Plasticity, with rules for updating auxiliary fields
+    - Surface contact works this way.
+  - Subproblems
+  - Time-dependence
+  - Nonlinearities
+    - Solver detection of nonlinear properties (already present in 2.0)
+    - History-dependence through auxiliary fields.
+  - Auxiliary fields, present and able to be updated by e.g. plasticity.
+
+
+  Candidate definitions:
+  
+  - An "auxiliary field" is a field which does not correspond to a
+  degree of freedom, but which may be updated according to some rule.
+
+  - An "implied field" is a field which can be derived from another
+  field, given the nature of the problem.  For example, the time rate
+  of change of the displacement is an implied field in a
+  time-dependent mechanical problem.  Implied fields are probably not
+  very important.
+
+  
+
+  In approximate order of independence:
+
+  1D elements -- 
+    
+    These can probably be implemented independently of the other
+    desired functionality.  1D elements have their own constitutive
+    rules, and can have "split" nodes, which is to say, they are like
+    2D elements in the limit of extreme narrowness.  This allows
+    fields to be discontinuous across these elements.
+
+    Logistical issues surrounding these objects are mostly
+    user-interface problems -- how to identify collections of them in
+    the user interface so that appropriate properties can be assigned,
+    how to automatically detect boundaries so that properties can be
+    parametrized according to some kind of rule (relative orientation,
+    etc.).
+
+    Non-user-interface issues include providing "semi-1D" elements
+    which allow discontinuities at one end but not at other, so that a
+    line of 1D elements can terminate somewhere other than the
+    boundary of the system.  It may also be desirable to specify some
+    kind of directionality to these.
+
+    1D elements should probably be inserted into the mesh at
+    construction time, so that it can be known in advance which nodes
+    are split and which are not -- this helps in making them
+    independent of things like subproblems.
+
+    Otherwise, they contribute to the linear system in the same way as
+    regular elements, by integrating along them.
+
+
+  Large-strain deformations --
+
+    Also independent of the other functionality desired, but strongly
+    coupled to the way the system works in general.  In particular, it
+    probably can/should affect the way that Neumann boundary
+    conditions work, forces being evaluated on the *displaced*
+    boundary rather than the undisplaced one.  
+
+    Ed has provided several good references on large-strain systems:
+      - Wallace, D., "Thermoelasticity of Stressed Materials and 
+          Comparison of Various Elastic Constants", Phys. Rev. 162, #3,
+          p. 776, 15 October, 1967.
+      - Murnaghan, "Finite Deformation of an Elastic Solid", John 
+          Wiley and Sons, New York, 1951
+      - Malkus and Fuller, "An Isoparametric Finite Element Model 
+          for Large-Strain Elastostatics", J. Res. NBS 86, #1, 
+          p. 79, January-February 1981
+      
+      There is also some stuff in Vol. 2 of Zienkiewicz & Taylor,
+        and in Malvern.  
+
+      Vol. 2, section 10.3.2 of Zienkiewicz & Taylor provides a
+      prescription for the development of displacement-based
+      finite element models. These may be performed by adding a few
+      modifications to a standard linear form. The steps include:
+      1. Use current (i.e. deformed) configuration coordinates (x_i) to compute
+        shape functions and their derivatives. These are computed at
+        nodes by adding current values of displacements (u_i) to reference
+        configuration nodal coordinates (X_i).
+      2. Add a geometric stiffness matrix to the usual stiffness matrix as
+        indicated in the book's Eq. (10.85).
+      3. Use the appropriate material constitution for a finite deformation
+        solid.
+      4. Solve the problem by means of an appropriate strategy for non-linear
+        problems.
+
+      Some simple constitutive relations are:
+      1. Neo-Hookean solid - The stored energy density (W) is
+         parametrized by two constants (may be temperature dependent);
+         one if the material is incompressible. (W depends on the
+         first invariant of the Finger tensor, which is F.F(T),
+         where F is the deformation gradient tensor, and (T) denotes
+         the transpose.  It is distinguished from the "Right Cauchy
+         Green deformation tensor", which is F(T).F .
+
+      2. Mooney-Rivlin solid - a generalization of the Neo-Hookean
+         solid model.  (Here the strain energy W is a linear
+         combination of two invariants of the Finger tensor.) 
+         (Reference:Wikipedia).
+
+  Lagrange Multiplier Constraints (includes Plasticity) --
+
+    For equality constraints, these add new equations and degrees of
+    freedom to the system.  The new degrees of freedom are the
+    components of the Lagrange multiplier field, of course, and the
+    equations are the constraint equations.  The resulting stiffness
+    matrix is larger, and probably not symmetric.  Constraints are
+    property-like, in that they are aspects of a material which
+    generate equations, contributing to a flux of some kind.  The flux
+    is the constraint, the equation type is a direct equation
+    (i.e. not a divergence equation), and as already mentioned, the
+    field is the Lagrange multiplier field.
+  
+    Interestingly, there is already a facility in OOF that works this
+    way, it's the plane-stress constraint.  In that case, the
+    "Lagrange multipliers" are just the plain strain components
+    themselves.
+
+    More interesting/complicated is the inequality constraint case.
+    This actually *does* connect with time-dependence, and may
+    influence intermediate states.  The way to do inequality
+    constraints is, for each candidate linear system, see if the
+    constraint is violated, and when/where it is, impose the
+    constraint as an equality constraint.  This must be re-done for
+    every iteration or time-step or whatever.
+
+    An interesting question is how to do this in the case where the
+    constrainted area may be a function of time.
+
+    In the special case of isotropic plasticity, in addition to
+    satisfying the inequality constraint, it may be necessary to
+    update auxiliary fields (using the definition above) in response
+    to the increment of plastic strain.  For isotropic plasticity, the
+    yield surface may move in response to the hardening rule(s).
+    
+    Isotropic plasticity is intrinsically time-dependent, of course,
+    even if it's not rate-dependent.
+
+    Inequality constraints can be tricky -- a worked example of a
+    dynamical system (i.e. 2nd order in time) with an inequality space
+    constraint revealed that it may not always be possible for the
+    time-stepper to ensure that the constraint is satisfied at the end
+    of an iteration.  In the studied case, a particle approached a
+    barrier, and the naive constraint was just that the particle could
+    not pass through the barrier.  Imposing the constraint gave rise
+    to an uncontrolled and unphysical result for the velocity, but
+    adding a velocity constraint simply gave rise to an inconsistent
+    set of equations.  This is because the time-stepping scheme works
+    by computing a self-consistent, semi-implicit effective
+    acceleration for the interval, and then applying it uniformly.
+    For a fixed time-step dt, there is in general no acceleration
+    which will cause a particle to have zero position *and* velocity
+    at the end of the time-step -- the acceleration is one paramter,
+    and you're trying to set two varaibles.
+
+    It's not clear if this is a real practical problem, although it
+    would arise in the case of a dynamical solid-mechanics system with
+    plasticity.  The physical content of the problem is, where should
+    the kinetic energy go?
+
+  
+  Time-dependence -- stop stalling, address the hard problem:
+
+    For a single sub-problem, in the absence of constraints,
+    time-dependence is straightforward.  Our equations will be of the
+    form Mx''+Cx'+Sx=r, where primes denote time derivatives.  Then
+    iterating an x from t to t+dt is a matter of building the
+    matrices, choosing the degree of implicitness (separately for
+    first and second derivatives), and solving the resulting linear
+    system, possibly more than once.
+
+    In the second-order-in-time case, it is necessary to store a
+    velocity field, for which initial conditions also need to be
+    provided.
+
+    Complications arise, as already mentioned, in the constrained
+    case.  Do constraints on the fields automatically imply
+    constraints on the velocities?  The answer would seem to be
+    "obviously yes", but how does this work mechanically?
+
+    Additional complications arise in the subproblem case.  A
+    subproblem in contact with another subproblem will not be
+    synchronized with it, and so in evaluating its implicit terms at
+    t+dt or intermediate steps, it may need to refer to values which
+    do not yet exist.  The other subproblem may provide some estimate
+    of these values (which may be the trivial estimate, "use the value
+    at time t").  Subproblems may wish to iterate together multiple
+    times until they converge.
+
+  Subproblems --
+
+    A subproblem is the set of objects necessary to construct a
+    well-posed linear(ized) system, which can then be iterated from t
+    to t+dt.  Subproblems need not be "geographic" in nature, they
+    could consist of a subset of fields and equations, which might,
+    for example, evolve more (or less) rapidly than other components
+    of the physical system being modeled.  In the geographic case,
+    they may have 1D elements on the boundary, where "exterior"
+    degrees of freedom are converted to "interior" ones by some
+    constitutive process, e.g. a chemical reaction converting one
+    species to another at a surface.  (Prototypical problem: LiIon
+    batteries.)
+
+
+  Other issues:
+
+    Nonlinearities -- may interact with Lagrangian constraints, since
+    they may affect when/whether to apply the constraint.  As a
+    nonlinear iteration proceeds, the constraint, initially thought to
+    have been required, may turn out not to have been.  (Can this
+    really happen?)
+
+

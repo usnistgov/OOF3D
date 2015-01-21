@@ -1,0 +1,82 @@
+# -*- python -*-
+# Demonstrator for a client of the socket thing.
+
+import errno, getopt, os, socket, sys, time
+
+sock_buf_size = 80
+connect_attempt_limit = 1000000 # Some implausibly large number.
+
+try:
+    (opts, extra) = getopt.getopt(sys.argv[1:],"h:p:")
+except getopt.error:
+    print >> sys.stderr, "Usage: %s -h <remote host name> -p <remote port>"
+
+for o in opts:
+    if o[0]=="-p":
+        farport = int(o[1])
+    if o[0]=="-h":
+        farhost = o[1]
+
+
+# Return a socket connected to the server at farhost:farport via an ssh tunnel.
+def getsocket(host, port):
+    # Prototype socket, gets automatic name.
+    proto = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Set "REUSEADDR" so ssh can do it too.
+    proto.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    proto.bind( ("127.0.0.1", socket.INADDR_ANY) )
+    (host, nearport) = proto.getsockname()
+
+    # Build and run the ssh command.
+    ssh_arg = "%d:127.0.0.1:%d" % (nearport, farport)
+    ssh_cmd = "ssh -L %s %s -N" % (ssh_arg, farhost)
+    os.popen2(ssh_cmd) # Discard standard in and out.
+    # pid = os.spawnlp(os.P_NOWAIT, "ssh", "ssh", "-L", ssh_arg, farhost, "-N")
+    # This process dies automatically when its parent is killed.
+
+    # Kill the prototype socket, and connect up a new one.
+    proto.close() # Discard old socket.
+    #  actual = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    # Counter, in case of persistent connection refusals for some
+    # other reason.
+    connects = 0
+    while connects < connect_attempt_limit:
+        try:
+            connects += 1
+            actual = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            actual.connect( ("127.0.0.1", nearport) )
+        except socket.error, e:
+            if e[0]==errno.ECONNREFUSED: # "Connection refused"
+                actual.close()
+                time.sleep(0.1)
+            else:
+                actual.close()
+                raise
+        else:
+            break
+    else:
+        raise "Connection failure after %d attempts." % connects
+
+    return actual
+
+print "before getting socket"
+sock = getsocket(farhost, farport)
+print "after getting sockets"
+sock.send("A.bc.d.efg.h\n")
+print "after sock.send"
+done = None 
+while not done:
+    try:
+        print "before sock.recv"
+        r = sock.recv(sock_buf_size)
+        print "after sock.recv"
+    except KeyboardInterrupt:
+        print "Got keyboard interrupt."
+        sock.close()
+        break
+        
+    if not r:
+        break
+    sys.stdout.write(r)
+

@@ -1,0 +1,176 @@
+# -*- python -*-
+# $RCSfile: compoundsubproblem.spy,v $
+# $Revision: 1.10.10.3 $
+# $Author: fyc $
+# $Date: 2014/04/18 19:59:59 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.common import registeredclass
+from ooflib.common import debug
+from ooflib.engine import subproblemcontext
+from ooflib.engine import subproblemtype
+
+class BinaryCompoundSubProblem(subproblemtype.SubProblemType):
+    def __init__(self, one, another):
+        self.one = one
+        self.another = another
+	self.dependents = []
+
+    def get_dependencies(self):
+        if self.one == self.another:
+           return [self.one]
+	else:
+	   return [self.one, self.another]
+
+    def sync_dependency(self, old_path, new_path):
+        if self.one == old_path:
+           self.one = new_path
+        if self.another == old_path:
+           self.another = new_path
+
+    def update_dependency(self, instance, path, newobject):
+        if instance is not None:
+           if self.one == path:
+              instance.updateDependencyA(newobject)
+           if self.another == path:
+              instance.updateDependencyB(newobject)
+
+    def add_dependent(self, dependent):
+        if dependent not in self.dependents:
+           self.dependents.append(dependent)
+
+    def remove_dependent(self, dependent):
+        if dependent in self.dependents:
+           self.dependents.remove(dependent)
+
+    def get_dependents(self):
+	return self.dependents
+	    
+    def create(self):
+        return self.cclass(
+            subproblemcontext.subproblems[self.one].getObject(),
+            subproblemcontext.subproblems[self.another].getObject())
+
+binarycompoundparams = [
+    subproblemcontext.SubProblemParameter(
+        'one', tip='The name of a subproblem.'),
+    subproblemcontext.SubProblemParameter(
+        'another', tip='The name of another subproblem.')]
+
+class UnionSubProblem(BinaryCompoundSubProblem):
+    cclass = CUnionSubProblem
+
+registeredclass.Registration(
+    "Union",
+    subproblemtype.SubProblemType,
+    UnionSubProblem,
+    ordering=4,
+    params=binarycompoundparams,
+    tip='Construct a Subproblem from the union of two previously defined Subproblems',
+    discussion="""<para>
+
+    Create a new &subproblem; from two existing &subproblems; in the
+    same &mesh;.  Any &elem; included in either of the two existing
+    &subproblems; will be included in the new one.
+    
+    </para>""")
+
+class IntersectionSubProblem(BinaryCompoundSubProblem):
+    cclass = CIntersectionSubProblem
+
+registeredclass.Registration(
+    "Intersection",
+    subproblemtype.SubProblemType,
+    IntersectionSubProblem,
+    ordering=4.1,
+    params=binarycompoundparams,
+    tip='Construct a Subproblem from the intersection of two previously defined Subproblems',
+    discussion="""<para>
+
+    Create a new &subproblem; from two existing &subproblems; in the
+    same &mesh;.  Any &elem; included in both of the two existing
+    &subproblems; will be included in the new one.
+    
+    </para>""")
+
+class XorSubProblem(BinaryCompoundSubProblem):
+    cclass = CXorSubProblem
+
+registeredclass.Registration(
+    "Xor",
+    subproblemtype.SubProblemType,
+    XorSubProblem,
+    ordering=4.2,
+    params=binarycompoundparams,
+    tip='Construct a Subproblem from the exclusive or of two previously defined Subproblems.',
+    discussion="""<para>
+
+    Create a new &subproblem; from two existing &subproblems; in the
+    same &mesh;.  Any &elem; included in just one of the two
+    existing &subproblems; will be included in the new one.
+    
+    </para>""")
+
+#######################################
+
+_old_init_ = CComplementSubProblem.__init__
+def _CComplementSubProblem___init__(self, subprob_obj):
+    # Convert paths into subproblem objects
+    _old_init_(self, subprob_obj)
+CComplementSubProblem.__init__ = _CComplementSubProblem___init__
+
+class ComplementSubProblem(subproblemtype.SubProblemType):
+    def __init__(self, complement_of):
+        self.complement_of = complement_of
+        self.dependents = []
+
+    def create(self):
+        subprob_obj = subproblemcontext.subproblems[self.complement_of].getObject()
+        return CComplementSubProblem(subprob_obj)
+
+    def get_dependencies(self):
+        return [self.complement_of]
+
+    def sync_dependency(self, old_path, new_path):
+        if self.complement_of == old_path:
+           self.complement_of = new_path
+
+    def update_dependency(self, instance, path, newobject):
+        if instance is not None:
+	   instance.updateDependency(newobject)
+
+    def add_dependent(self, dependent):
+	if dependent not in self.dependents:
+           self.dependents.append(dependent)
+
+    def remove_dependent(self, dependent):
+         if dependent in self.dependents:
+            self.dependents.remove(dependent)
+
+    def get_dependents(self):
+	return self.dependents
+
+registeredclass.Registration(
+    "Complement",
+    subproblemtype.SubProblemType,
+    ComplementSubProblem,
+    ordering=5,
+    params=[subproblemcontext.SubProblemParameter('complement_of',
+                                             tip="The name of a subproblem")],
+    tip="Construct a Subproblem from the elements that aren't in another subproblem.",
+    discussion="""<para>
+
+    Create a new &subproblem; from the complement of an existing
+    &subproblem;.  All &mesh; &elems; that aren't in the given
+    &subproblem; will be in the new one.
+
+    </para>""")
+    
+            

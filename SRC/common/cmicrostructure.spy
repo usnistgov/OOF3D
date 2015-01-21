@@ -1,0 +1,266 @@
+# -*- python -*-
+# $RCSfile: cmicrostructure.spy,v $
+# $Revision: 1.2.18.14 $
+# $Author: langer $
+# $Date: 2014/09/15 15:08:53 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.SWIG.common import config
+from ooflib.SWIG.common import activearea
+from ooflib.SWIG.common import cpixelselection
+from ooflib.SWIG.common import switchboard
+from ooflib.common import debug
+from ooflib.common import pixelselection
+from ooflib.common import primitives
+from ooflib.common import utils
+from ooflib.common.IO import whoville
+import ooflib.common.microstructure
+
+
+# TODO OPT: There should be a way to change the physical size of a
+# microstructure and all of its contained components.
+
+def _CMicrostructure___init__(self, name, isize, size): 
+    self.this = cmicrostructurec.new_CMicrostructure(name, isize, size)
+    self.thisown = 1
+
+    # The 'parent' arg to pixelselectionWhoClass.add and
+    # activeareaWhoClass.add should be set to the Who object for
+    # this MS, which hasn't been created yet. So it's set to None
+    # here, and fixed later.
+    pixsel = cpixelselection.CPixelSelection(isize, size, self)
+    self.setPixelSelection(pixsel); # sets C++ pointer
+    pixelselection.pixelselectionWhoClass.add(name, pixsel, parent=None)
+    self.pixelselection = pixelselection.pixelselectionWhoClass[name]
+
+    self.activearea = activearea.activeareaWhoClass.add(
+        name, activearea.ActiveArea(isize, size, self), parent=None)
+    self.namedActiveAreas = []
+    self.setCurrentActiveArea(self.activearea.getObject())
+
+    # Plug-ins have to be created before the Microstructure
+    # context Who object is created, because Who object creation
+    # might trigger switchboard calls that use the plug-ins.
+    self.plugins = {}
+    for pluginname, pluginclass in ooflib.common.microstructure.plugInClasses.items():
+        self.plugins[pluginname] = pluginclass(self)
+
+    # Create the Who object for this Microstructure, and add it to
+    # list of all Microstructures.  Do this last, because it calls
+    # switchboard callbacks that may assume that the MS is fully
+    # constructed.
+    mswho = ooflib.common.microstructure.microStructures.add(name, self, parent=None)
+    # Fix the 'parent' for the pixelselection and activearea. See
+    # comment above.
+    self.pixelselection.setParent(mswho)
+    self.activearea.setParent(mswho)
+
+    self.sbcallbacks = [
+        switchboard.requestCallback(('who changed', 'Active Area'),
+                                    self.aaChangedCB),
+        switchboard.requestCallback('pixel selection changed',
+                                    self.pixelSelectionChangedCB)
+        ]
+
+CMicrostructure.__init__ = _CMicrostructure___init__
+
+def _CMicrostructure_destroy(self):
+    for plugin in self.plugins.values():
+        plugin.destroy()
+    map(switchboard.removeCallback, self.sbcallbacks)
+    # sbcallbacks must be explicitly cleared because
+    # CMicrostructure has a swigged destructor.  That is,
+    # sbcallbacks contains a SwitchboardCallback object which
+    # contains a reference to the Microstructure (because the
+    # callback function is SELF.aaChangedCB). That means that
+    # there are circular references between Microstructure,
+    # Microstructure.sbcallbacks, and the callback.  Circular
+    # references aren't garbage collected if one of them has a
+    # __del__ method, and Microstructure has a __del__ method
+    # because it's derived from CMicrostructure, which has a
+    # swigged destructor.
+    self.sbcallbacks = []
+    
+    self.pixelselection = None
+    self.activearea = None
+
+CMicrostructure.destroy = _CMicrostructure_destroy
+
+def _CMicrostructure_getPlugIn(self, name):
+    return self.plugins[name]
+
+CMicrostructure.getPlugIn = _CMicrostructure_getPlugIn
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# For looping over all of the pixels in a Microstructure without
+# actually creating a list of them.
+
+class _MicrostructurePixelIterator(object):
+    def __init__(self, size):
+        self.size = size
+        self.coord = primitives.iOrigin()
+        self.done = False
+    def __iter__(self):
+        return self
+    def next(self):
+        if self.done:
+            raise StopIteration
+        crd = self.coord.clone()
+        self.increment()
+        return crd
+    if config.dimension() == 2:
+        def increment(self):
+            self.coord[0] += 1
+            if self.coord[0] >= self.size[0]:
+                self.coord[0] = 0
+                self.coord[1] += 1
+                if self.coord[1] >= self.size[1]:
+                    self.done = True
+    else:
+        def increment(self):
+            self.coord[0] += 1
+            if self.coord[0] >= self.size[0]:
+                self.coord[0] = 0
+                self.coord[1] += 1
+                if self.coord[1] >= self.size[1]:
+                    self.coord[1] = 0
+                    self.coord[2] += 1
+                    if self.coord[2] >= self.size[2]:
+                        self.done = True
+    def __repr__(self):
+        return "MicrostructurePixelIterator"
+
+class _MicrostructurePixelIterable(object):
+    def __init__(self, microstructure):
+        self.size = microstructure.sizeInPixels()
+    def __iter__(self):
+        return _MicrostructurePixelIterator(self.size)
+
+def _CMicrostructure_coords(self):
+    return _MicrostructurePixelIterable(self)
+
+CMicrostructure.coords = _CMicrostructure_coords
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+def _CMicrostructure_addImage(self, image):
+    switchboard.notify('images changed in microstructure')
+
+CMicrostructure.addImage = _CMicrostructure_addImage
+
+def _CMicrostructure_removeImage(self, image):
+    image.removeMicrostructure(self)
+    whoville.getClass('Image').remove([self.name(), image.name()])
+    switchboard.notify('images changed in microstructure')
+
+CMicrostructure.removeImage = _CMicrostructure_removeImage
+
+def _CMicrostructure_imageNames(self):
+    imageclass = whoville.getClass('Image')
+    return [path[0] for path in imageclass.keys(base=self.name())]
+
+CMicrostructure.imageNames = _CMicrostructure_imageNames
+
+def _CMicrostructure_getImageContexts(self):
+    imageclass = whoville.getClass('Image')
+    return [imageclass[self.name()+':'+name[0]]
+            for name in imageclass.keys(base=self.name())]
+
+CMicrostructure.getImageContexts = _CMicrostructure_getImageContexts
+
+## TODO 3.1: Save, Rename, and Delete operations on named ActiveAreas
+## need to use buildAttributeChangeMap, updateAttributeVector, etc. so
+## that the pixels have lists of ActiveAreas and are saved properly.
+## Until this is is fixed, active areas can't be saved or recovered
+## from data files.  Restore the tests in microstructure_extra_test.py
+## when this is fixed.  Also, see TODO in pixelgroupmenu.py about
+## saving unmeshable pixel groups.
+
+def _CMicrostructure_saveActiveArea(self, name):
+    naa = self.activearea.getObject().named_clone(name)
+    self.namedActiveAreas.append(naa)
+
+CMicrostructure.saveActiveArea = _CMicrostructure_saveActiveArea
+
+def _CMicrostructure_renameActiveArea(self, oldname, newname):
+    for naa in self.namedActiveAreas:
+        if naa.name() == oldname:
+            real_new_name = utils.uniqueName(newname, 
+                                             self.activeAreaNames(), 
+                                             exclude=oldname)
+            naa.rename(real_new_name)
+
+CMicrostructure.renameActiveArea = _CMicrostructure_renameActiveArea
+
+#TODO 3.1  (todo what??)
+def _CMicrostructure_deleteActiveArea(self, name):
+    for i in range(len(self.namedActiveAreas)):
+        if self.namedActiveAreas[i].name() == name:
+            aa = self.namedActiveAreas[i]
+            aa.clear()
+            del self.namedActiveAreas[i]
+            return
+
+CMicrostructure.deleteActiveArea = _CMicrostructure_deleteActiveArea
+
+def _CMicrostructure_getNamedActiveArea(self, name):
+    for naa in self.namedActiveAreas:
+        if naa.name() == name:
+            return naa
+
+CMicrostructure.getNamedActiveArea = _CMicrostructure_getNamedActiveArea
+
+def _CMicrostructure_aaChangedCB(self, activearea):
+    if activearea.name() == self.name():
+        self.setCurrentActiveArea(activearea.getObject())
+
+CMicrostructure.aaChangedCB = _CMicrostructure_aaChangedCB
+
+def _CMicrostructure_nominalCopy(self, name):
+    return CMicrostructure(name, self.sizeInPixels(), self.size())
+
+CMicrostructure.nominalCopy = _CMicrostructure_nominalCopy
+
+def _CMicrostructure_activeAreaNames(self):
+    return [aa.name() for aa in self.namedActiveAreas]
+
+CMicrostructure.activeAreaNames = _CMicrostructure_activeAreaNames
+
+def _CMicrostructure_renameGroup(self, oldname, newname):
+    grp = self.findGroup(oldname)
+    grp.rename(self.uniqueGroupName(newname, oldname))
+
+CMicrostructure.renameGroup = _CMicrostructure_renameGroup
+
+def _CMicrostructure_uniqueGroupName(self, name, oldname=None):
+    return utils.uniqueName(name, self.groupNames(), exclude=oldname)
+
+CMicrostructure.uniqueGroupName = _CMicrostructure_uniqueGroupName
+
+def CMicrostructurePtr_pxlSelChangedCB(self, selection):
+    if selection.name() == self.name():
+        self.setPixelSelection(selection.getObject())
+
+CMicrostructurePtr.pixelSelectionChangedCB = CMicrostructurePtr_pxlSelChangedCB
+
+# Need to over-ride the getGroup function's return, so that it wraps
+# the returned value properly.  This is because the argout typemap for
+# the newness arg prevents the return value from being converted
+# properly.
+
+def CMicrostructurePtr_getGroup(self, *_args, **_kwargs):
+    val = apply( cmicrostructurec.CMicrostructure_getGroup,
+                 (self,) + _args, _kwargs )
+    if val:
+        return [PixelGroupPtr(val[0]), val[1]]
+
+CMicrostructurePtr.getGroup = CMicrostructurePtr_getGroup
+

@@ -1,0 +1,150 @@
+// -*- text -*-
+// $RCSfile: skeletonselection.txt,v $
+// $Revision: 1.1.2.3 $
+// $Author: langer $
+// $Date: 2013/11/08 19:36:51 $
+
+/* This software was produced by NIST, an agency of the U.S. government,
+ * and by statute is not subject to copyright in the United States.
+ * Recipients of this software assume all responsibilities associated
+ * with its operation, modification and maintenance. However, to
+ * facilitate maintenance we ask that before distributing modified
+ * versions of this software, you first contact the authors at
+ * oof_manager@nist.gov. 
+ */
+
+
+Overview:
+
+The SkeletonContext is a WhoDoUndo object and contains an undo buffer,
+a RingBuffer instance called "undobuffer", which contains CSkeleton
+and CDeputySkeleton objects.
+
+For each type of selectable Skeleton component (elements, faces,
+segments, and nodes) the SkeletonContext contains an instance of a
+skeletonselectable.Selection subclass (ElementSelection,
+NodeSelection, etc).  The Selection contains a stack (implemented as a
+RingBuffer) which contains SelectionSet instances.  This stack is the
+undo buffer for selection operations.  Each SelectionSet represents
+the selection state for every Skeleton in the SkeletonContext's undo
+buffer.
+
+A SelectionSet contains a WeakKeyDictionary, keyed by CSkeletons and
+CDeputySkeletons, of CSelectionTrackers and CDeputySelectionTrackers.
+The CSelectionTrackers are the things that actually know what objects are
+selected, storing that information in a CSkeletonSelectableSet called
+"data".  CDeputySelectionTrackers don't store any selection data,
+because deputy skeletons contain the same CSkeletonSelectables as the
+"sheriff" skeletons that they're the deputies for.  The deputy
+trackers just relay all requests to their sheriffs.
+
+Thus there is a 2 dimensional (skeleton state X selection state) space
+occupied by Trackers.  One dimension is the skeleton modification
+undo/redo axis, represented by the SelectionSet, and the other is the
+selection undo/redo axis, represented by the Selection's stack, which
+contains the SelectionSets.
+
+
+Adding a new Skeleton:
+
+When a new CSkeleton or CDeputySkeleton is pushed onto the
+SkeletonContext's undobuffer, the "whodoundo push" signal is emitted
+and is caught by SelectionBase.whoChanged0.  (There's a TODO about
+just calling whoChanged0 or the equivalent directly.)  whoChanged0
+calls SelectionSet.implied_select for each SelectionSet in the
+Selection's stack.  implied_select creates a new Tracker for each
+selection state and the new skeleton.
+
+SelectionBase.whoChanged0()
+  for each SelectionSet:
+     SelectionSet.implied_select()
+       make new CSelectionTracker or CDeputySelectionTracker
+       newtracker.implied_select(oldtracker)
+          for CDeputySelectionTrackers this is a no-op
+          for CSelectionTrackers:
+              for each object in the old trackers data
+                 CSkeletonSelectable::implied_select(oldtracker, newtracker)
+		    add the object to the new tracker's data if any of
+		    the objects parents in the old skeleton are in the
+		    old tracker's data.
+
+
+Modifying a Selection:
+
+The menus (OOF.NodeSelection et al) are built from the
+SkeletonModifier Registrations by skeletonselectmenu.makeMenu.  The
+different types of modifier (NodeSelectionModifier,
+FaceSelectionModifier, etal) each have their own RegisteredClass.  The
+menu item callback is skeletonselectionmod.modify().  It creates an
+instance of the RegisteredClass and calls its __call__() method.
+After SelectionModifer.__call__() returns, modify() issues switchboard
+signals that tell the graphics windows and gui to update themselves.
+
+The __call__() method for each SelectionModifier first calls
+Selection.start(), which pushes a clone() of the current SelectionSet
+onto the Selection's stack.  It then should call some combination of
+the Selection methods clear(), select(), deselect(), toggle(),
+invert(), and selectSelected(), passing a list CSkeletonSelectable
+objects as the argument.
+
+These Selection methods all first get two lists of CSelectionTrackers,
+clist and plist, by calling Selection.trackerlist().  clist contains
+all of the trackers corresponding to the children of the sheriff of
+the current CSkeleton (ie, Skeletons that are modifications of the
+current sheriff, more recent in the WhoDoUndo undo buffer).  plist
+contains the trackers for the parent CSkeletons.  The Selection method
+loops over the CSkeletonSelectable objects in the current CSkeleton
+whose selection state is being modified, and calls their select() or
+deselect() method as appropriate, passing clist and plist as
+arguments.
+
+CSkeletonSelectable::select() and deselect() use selecthelper() (a
+static function) and various virtual functions to move along the lists
+of trackers and change the selection.  selecthelper is given one of
+the tracker lists (either clist or plist), a list of the
+CSkeletonSelectable's relatives (children or parents) and a virtual
+CSelectionTracker method (either selectDown (for children) or selectUp
+(for parents).  It moves to the next item in the tracker list and
+calls the given method for each of the relatives.  The method is
+virtual: for non-deputy Trackers it calls the corresponding
+CSkeletonSelectable method (selectUp(), selectDown(), deselectUp(),
+etc); for deputy trackers, it calls the same method for the next
+tracker in the list, because deputy trackers don't store any
+information about the selection state, all of which is stored in the
+sheriff.
+
+CSkeletonSelectable::selectUp(), deselectDown(), etc, select or
+deselect the object (by setting the "select" flag and adding or
+removing from the tracker) after checking the selection state of the
+object's parents and children.  This is the point at which the rules
+about how selections are propagated to and from multiple parents and
+children are applied. (For example, a child is deselected only if none
+of its parents are selected.)  selecthelper() is then called to
+continue the process on the next CSkeleton.
+
+
+Making a Selection with the Mouse:
+
+SkeletonSelectionMode (in skeletonselmodebase.py) and its subclasses
+(NodeSelectionMode, etc, in skeletonselectionmodes.py) contain
+information that tells the generic selection code where to find menus,
+retrieve selected objects, etc.
+
+SkeletonSelectionToolbox is a subclass of GenericSelectionToolbox (in
+common/IO/genericselecttoolbox.py).  The toolbox's menu items are
+automatically generated from the registries of the SelectMethod
+registered classes defined in skeletonselectionmethod.py
+(NodeSelectMethod, et al).  Each menu command knows which Registration
+it was created from.  The callback for the menu items is
+GenericSelectionToolbox.selectCB().  This callback first uses the
+Registration to create an instance of its SelectionMethod.  It then
+calls Selection.start() and the SelectionMethod's select() method,
+passing along a "selector", which is a Selection function
+(Select.select(), Select.toggle(), etc from skeletonselectable.py).
+The choice of selector is determined by whether the shift and control
+keys were pressed when the mouse button was released.
+
+The select() method of the SelectMethod subclass must create a list of
+CSkeletonSelectable objects and pass them to the given selector
+function.  From this point the process is the same as it is for
+selection modification.

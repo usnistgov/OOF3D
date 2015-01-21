@@ -1,0 +1,52 @@
+\documentstyle[11pt]{article}
+\setlength{\parindent}{0.0in}
+\setlength{\textwidth}{6.5in}
+\setlength{\oddsidemargin}{0.0in}
+\pagestyle{headings}
+\begin{document}
+{\Large \bf  multiline\_wrap.c }\\
+{\tt [ Python Module : swig ]  }\\
+\\\section{Section 1}{\tt \bf foo() }
+\\
+\makebox[0.5in]{}\begin{minipage}[t]{6in}
+{\tt [ returns int  ]  }\\
+   This is a 
+   Multiline comment
+\\
+
+\end{minipage}\\
+
+{\tt \bf bar() }
+\\
+\makebox[0.5in]{}\begin{minipage}[t]{6in}
+{\tt [ returns double  ]  }\\
+   This is a multiline
+   block comment   
+\\
+
+\end{minipage}\\
+
+\section{Section 2}{\tt \bf grok() }
+\\
+\makebox[0.5in]{}\begin{minipage}[t]{6in}
+{\tt [ returns int  ]  }\\
+   This is a
+   multiline comment
+   before a declaration
+\\
+
+\end{minipage}\\
+
+{\tt \bf frob(double ) }
+\\
+\makebox[0.5in]{}\begin{minipage}[t]{6in}
+{\tt [ returns int  ]  }\\
+   This is another multiline
+   block comment before
+   a declaration   
+\\
+
+\end{minipage}\\
+
+
+\end{document}

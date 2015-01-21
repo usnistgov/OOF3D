@@ -1,0 +1,4 @@
+Check that the New Boundary Condition dialog works correctly when a
+Mesh has a Field but no Equations defined, and the FieldIndex
+parameter has already been used.  This situation raised an exception
+at one time.

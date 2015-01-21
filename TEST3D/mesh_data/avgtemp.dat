@@ -1,0 +1,18 @@
+# Operation: Average
+# Output: Temperature
+# Domain: FaceBoundaryDomain(boundary='Ymax',side='FRONT')
+# Sampling: ContinuumSampleSet(order=automatic)
+# Columns:
+# 1. time
+# 2. average of Temperature
+0.0, 3.375
+0.05, 2.56425705796
+0.1, 2.12656445127
+0.15, 1.86888127025
+0.2, 1.71717378004
+0.25, 1.62785805034
+0.3, 1.5752746298
+0.35, 1.54431685972
+0.4, 1.52609089968
+0.45, 1.51536061984
+0.5, 1.50904331951

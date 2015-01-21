@@ -1,0 +1,985 @@
+# -*- python -*-
+# $RCSfile: rank3tensor.spy,v $
+# $Revision: 1.10.18.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:44:44 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+#
+# __setitem__/__getitem__ overrides allow this to work like a
+# dictionary.  See also cijkl.spy in the elasticity property files.
+#
+
+from ooflib.common import debug
+from ooflib.common import utils
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+import struct, sys
+
+def _Rank3Tensor___setitem__(self,idx,val):
+    size = self.size()
+    if len(idx)==3 and 0<=idx[0]<size and 0<=idx[1]<size:
+        self.set(idx[0],idx[1], idx[2], val)
+    else:
+        raise KeyError("Index out of bounds in Rank3Tensor")
+
+Rank3TensorPtr.__setitem__ = _Rank3Tensor___setitem__
+
+def _Rank3Tensor___getitem__(self,idx):
+    size = self.size()
+    if len(idx)==3 and 0<=idx[0]<size and 0<=idx[1]<size:
+        return self.get(idx[0], idx[1], idx[2])
+    else:
+        raise KeyError("Index out of bounds in Rank3Tensor")
+
+Rank3TensorPtr.__getitem__ = _Rank3Tensor___getitem__
+
+
+def _Rank3Tensor___eq__(self,other):
+    if other is None:
+        return False
+    return self.equalp(other)
+
+Rank3TensorPtr.__eq__ = _Rank3Tensor___eq__
+
+
+
+def _Rank3Tensor___ne__(self,other):
+    if other is None:
+        return True # None *is* unequal.
+    return not self.equalp(other)
+
+Rank3TensorPtr.__ne__ = _Rank3Tensor___ne__
+
+##############################################
+
+class C1Rank3Tensor(Rank3Tensor):
+    def __init__(self, d11 = 1, d12 = 1, d13 = 1, d14 = 1, d15 = 1, d16 = 1,
+                 d21 = 1, d22 = 1, d23 = 1, d24 = 1, d25 = 1, d26 = 1,
+                 d31 = 1, d32 = 1, d33 = 1, d34 = 1, d35 = 1, d36 = 1):
+        Rank3Tensor.__init__(self)
+
+        self.set(0,0,0, d11) ## xxx
+        self.set(0,1,1, d12) ## xyy
+        self.set(0,2,2, d13) ## xzz
+        self.set(0,2,1, d14) ## xzy
+        self.set(0,0,2, d15) ## xzx
+        self.set(0,0,1, d16) ## zxy
+        ##
+        self.set(1,0,0, d21) ## yxx
+        self.set(1,1,1, d22) ## yyy
+        self.set(1,2,2, d23) ## yzz
+        self.set(1,2,1, d24) ## yzy
+        self.set(1,0,2, d25) ## yzx
+        self.set(1,0,1, d26) ## yxy
+        ##
+        self.set(2,0,0, d31) ## zxx
+        self.set(2,1,1, d32) ## zyy
+        self.set(2,2,2, d33) ## zzz
+        self.set(2,2,1, d34) ## zzy
+        self.set(2,0,2, d35) ## zzx
+        self.set(2,0,1, d36) ## zxy
+    def __repr__(self):
+        d11 = self.get(0,0,0) ## xxx
+        d12 = self.get(0,1,1) ## xyy
+        d13 = self.get(0,2,2) ## xzz
+        d14 = self.get(0,2,1) ## xzy
+        d15 = self.get(0,0,2) ## xzx
+        d16 = self.get(0,0,1) ## zxy
+        ##
+        d21 = self.get(1,0,0) ## yxx
+        d22 = self.get(1,1,1) ## yyy
+        d23 = self.get(1,2,2) ## yzz
+        d24 = self.get(1,2,1) ## yzy
+        d25 = self.get(1,0,2) ## yzx
+        d26 = self.get(1,0,1) ## yxy
+        ##
+        d31 = self.get(2,0,0) ## zxx
+        d32 = self.get(2,1,1) ## zyy
+        d33 = self.get(2,2,2) ## zzz
+        d34 = self.get(2,2,1) ## zzy
+        d35 = self.get(2,0,2) ## zzx
+        d36 = self.get(2,0,1) ## zxy
+
+        return "C1Rank3Tensor(d11=%s, d12=%s, d13=%s, d14=%s, d15=%s, d16=%s, d21=%s, d22=%s, d23=%s, d24=%s, d25=%s, d26=%s, d31=%s, d32=%s, d33=%s, d34=%s, d35=%s, d36=%s)" \
+               % (d11, d12, d13, d14, d15, d16,
+                  d21, d22, d23, d24, d25, d26,
+                  d31, d32, d33, d34, d35, d36)
+
+utils.OOFdefine('C1Rank3Tensor', C1Rank3Tensor)
+
+class C1Rank3TensorParameter(parameter.Parameter):
+    types = (C1Rank3Tensor,)
+    structfmt =">18d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d11 = value.get(0,0,0) ## xxx
+        d12 = value.get(0,1,1) ## xyy
+        d13 = value.get(0,2,2) ## xzz
+        d14 = value.get(0,2,1) ## xzy
+        d15 = value.get(0,0,2) ## xzx
+        d16 = value.get(0,0,1) ## zxy
+        ##
+        d21 = value.get(1,0,0) ## yxx
+        d22 = value.get(1,1,1) ## yyy
+        d23 = value.get(1,2,2) ## yzz
+        d24 = value.get(1,2,1) ## yzy
+        d25 = value.get(1,0,2) ## yzx
+        d26 = value.get(1,0,1) ## yxy
+        ##
+        d31 = value.get(2,0,0) ## zxx
+        d32 = value.get(2,1,1) ## zyy
+        d33 = value.get(2,2,2) ## zzz
+        d34 = value.get(2,2,1) ## zzy
+        d35 = value.get(2,0,2) ## zzx
+        d36 = value.get(2,0,1) ## zxy
+
+        return struct.pack(C1Rank3TensorParameter.structfmt,
+                           d11, d12, d13, d14, d15, d16,
+                           d21, d22, d23, d24, d25, d26,
+                           d31, d32, d33, d34, d35, d36)
+    def binaryRead(self, parser):
+        b = parser.getBytes(C1Rank3TensorParameter.structsize)
+        vv = struct.unpack(C1Rank3TensorParameter.structfmt, b)
+        return C1Rank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-C1Rank3Tensor'><classname>C1Rank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:C1Rank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/c1rank3.xml'),
+    ordering=301)
+
+##############################################
+
+class C2Rank3Tensor(Rank3Tensor):
+    def __init__(self, d14 = 1, d16 = 1,
+                 d21 = 1, d22 = 1, d23 = 1, d25 = 1,
+                 d34 = 1, d36 = 1):
+        Rank3Tensor.__init__(self)
+        
+        self.set(0,2,1, d14) ## xzy
+        self.set(0,0,1, d16) ## zxy
+        ##
+        self.set(1,0,0, d21) ## yxx
+        self.set(1,1,1, d22) ## yyy
+        self.set(1,2,2, d23) ## yzz
+        self.set(1,0,2, d25) ## yzx
+        
+        ##
+        self.set(2,2,1, d34) ## zzy
+        self.set(2,0,1, d36) ## zxy
+    def __repr__(self):
+        d14 = self.get(0,2,1) ## xzy
+        d16 = self.get(0,0,1) ## zxy
+        ##
+        d21 = self.get(1,0,0) ## yxx
+        d22 = self.get(1,1,1) ## yyy
+        d23 = self.get(1,2,2) ## yzz
+        d25 = self.get(1,0,2) ## yzx
+        ##
+        d34 = self.get(2,2,1) ## zzy
+        d36 = self.get(2,0,1) ## zxy
+
+        return "C2Rank3Tensor(d14=%s, d16=%s, d21=%s, d22=%s, d23=%s, d25=%s, d34=%s, d36=%s)" \
+               % (d14, d16,
+                  d21, d22, d23, d25,
+                  d34, d36)
+
+utils.OOFdefine('C2Rank3Tensor', C2Rank3Tensor)
+
+class C2Rank3TensorParameter(parameter.Parameter):
+    types = (C2Rank3Tensor,)
+    structfmt =">8d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d14 = value.get(0,2,1) ## xzy
+        d16 = value.get(0,0,1) ## zxy
+        ##
+        d21 = value.get(1,0,0) ## yxx
+        d22 = value.get(1,1,1) ## yyy
+        d23 = value.get(1,2,2) ## yzz
+        d25 = value.get(1,0,2) ## yzx
+        ##
+        d34 = value.get(2,2,1) ## zzy
+        d36 = value.get(2,0,1) ## zxy
+        return struct.pack(C2Rank3TensorParameter.structfmt,
+                           d14, d16,
+                           d21, d22, d23, d25,
+                           d34, d36)
+    def binaryRead(self, parser):
+        b = parser.getBytes(C2Rank3TensorParameter.structsize)
+        vv = struct.unpack(C2Rank3TensorParameter.structfmt, b)
+        return C2Rank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-C2Rank3Tensor'><classname>C2Rank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:C2Rank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/c2rank3.xml'),
+    ordering=302)
+
+##############################################
+
+class CsRank3Tensor(Rank3Tensor):
+    def __init__(self, d11 = 1, d12 = 1, d13 = 1, d15 = 1,
+                 d24 = 1, d26 = 1,
+                 d31 = 1, d32 = 1, d33 = 1, d35 = 1):
+        Rank3Tensor.__init__(self)
+        self.set(0,0,0, d11) ## xxx
+        self.set(0,1,1, d12) ## xyy
+        self.set(0,2,2, d13) ## xzz
+        self.set(0,0,2, d15) ## xzx
+        ##
+        self.set(1,2,1, d24) ## yzy
+        self.set(1,0,1, d26) ## yxy
+        ##
+        self.set(2,0,0, d31) ## zxx
+        self.set(2,1,1, d32) ## zyy
+        self.set(2,2,2, d33) ## zzz
+        self.set(2,0,2, d35) ## zzx
+        
+    def __repr__(self):
+        d11 = self.get(0,0,0) ## xxx
+        d12 = self.get(0,1,1) ## xyy
+        d13 = self.get(0,2,2) ## xzz
+        d15 = self.get(0,0,2) ## xzx
+        ##
+        d24 = self.get(1,2,1) ## yzy
+        d26 = self.get(1,0,1) ## yxy
+        ##
+        d31 = self.get(2,0,0) ## zxx
+        d32 = self.get(2,1,1) ## zyy
+        d33 = self.get(2,2,2) ## zzz
+        d35 = self.get(2,0,2) ## zzx
+
+        return "CsRank3Tensor(d11=%s, d12=%s, d13=%s, d15=%s, d24=%s, d26=%s, d31=%s, d32=%s, d33=%s, d35=%s)" \
+               % (d11, d12, d13, d15,
+                  d24, d26,
+                  d31, d32, d33, d35)
+
+utils.OOFdefine('CsRank3Tensor', CsRank3Tensor)
+
+class CsRank3TensorParameter(parameter.Parameter):
+    types = (CsRank3Tensor,)
+    structfmt =">10d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d11 = value.get(0,0,0) ## xxx
+        d12 = value.get(0,1,1) ## xyy
+        d13 = value.get(0,2,2) ## xzz
+        d15 = value.get(0,0,2) ## xzx
+        ##
+        d24 = value.get(1,2,1) ## yzy
+        d26 = value.get(1,0,1) ## yxy
+        ##
+        d31 = value.get(2,0,0) ## zxx
+        d32 = value.get(2,1,1) ## zyy
+        d33 = value.get(2,2,2) ## zzz
+        d35 = value.get(2,0,2) ## zzx
+        return struct.pack(CsRank3TensorParameter.structfmt,
+                           d11, d12, d13, d15,
+                           d24, d26,
+                           d31, d32, d33, d35)
+    def binaryRead(self, parser):
+        b = parser.getBytes(CsRank3TensorParameter.structsize)
+        vv = struct.unpack(CsRank3TensorParameter.structfmt, b)
+        return CsRank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-CsRank3Tensor'><classname>CsRank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:CsRank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/csrank3.xml'),
+    ordering=303)
+    
+
+##############################################
+
+class D2Rank3Tensor(Rank3Tensor):
+    def __init__(self, d14 = 1, d25 = 1, d36 = 1):
+        Rank3Tensor.__init__(self)
+        self.set(0,2,1, d14) ## xzy
+        self.set(1,0,2, d25) ## yzx
+        self.set(2,0,1, d36) ## zxy
+    def __repr__(self):
+        d14 = self.get(0,2,1) ## xzy
+        d25 = self.get(1,0,2) ## yzx
+        d36 = self.get(2,0,1) ## zxy
+        return "D2Rank3Tensor(d14=%s, d25=%s, d36=%s)" \
+               % (d14, d25, d36)
+
+utils.OOFdefine('D2Rank3Tensor', D2Rank3Tensor)
+
+class D2Rank3TensorParameter(parameter.Parameter):
+    types = (D2Rank3Tensor,)
+    structfmt =">3d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d14 = value.get(0,2,1) ## xzy
+        d25 = value.get(1,0,2) ## yzx
+        d36 = value.get(2,0,1) ## zxy
+        return struct.pack(D2Rank3TensorParameter.structfmt,
+                           d14, d25, d36)
+    def binaryRead(self, parser):
+        b = parser.getBytes(D2Rank3TensorParameter.structsize)
+        vv = struct.unpack(D2Rank3TensorParameter.structfmt, b)
+        return D2Rank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-D2Rank3Tensor'><classname>D2Rank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:D2Rank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/d2rank3.xml'),
+    ordering=304)
+
+##############################################
+
+class C2vRank3Tensor(Rank3Tensor):
+    def __init__(self, d15 = 1, d24 = 1, d31 = 1, d32 = 1, d33 = 1):
+        Rank3Tensor.__init__(self)
+
+        self.set(0,0,2, d15) ## xzx
+        self.set(1,2,1, d24) ## yzy
+        self.set(2,0,0, d31) ## zxx
+        self.set(2,1,1, d32) ## zyy
+        self.set(2,2,2, d33) ## zzz
+    def __repr__(self):
+        d15 = self.get(0,0,2) ## xzx
+        d24 = self.get(1,2,1) ## yzy
+        d31 = self.get(2,0,0) ## zxx
+        d32 = self.get(2,1,1) ## zyy
+        d33 = self.get(2,2,2) ## zzz
+        return "C2vRank3Tensor(d15=%s, d24=%s, d31=%s, d32=%s, d33=%s)" \
+               % (d15, d24, d31, d32, d33)
+
+utils.OOFdefine('C2vRank3Tensor', C2vRank3Tensor)
+
+class C2vRank3TensorParameter(parameter.Parameter):
+    types = (C2vRank3Tensor,)
+    structfmt =">5d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d15 = value.get(0,0,2) ## xzx
+        d24 = value.get(1,2,1) ## yzy
+        d31 = value.get(2,0,0) ## zxx
+        d32 = value.get(2,1,1) ## zyy
+        d33 = value.get(2,2,2) ## zzz
+        return struct.pack(C2vRank3TensorParameter.structfmt,
+                           d15, d24, d31, d32, d33)
+    def binaryRead(self, parser):
+        b = parser.getBytes(C2vRank3TensorParameter.structsize)
+        vv = struct.unpack(C2vRank3TensorParameter.structfmt, b)
+        return C2vRank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-C2vRank3Tensor'><classname>C2vRank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:C2vRank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/c2vrank3.xml'),
+    ordering=305)
+
+##############################################
+
+class C4Rank3Tensor(Rank3Tensor):
+    def __init__(self, d14 = 1, d15 = 1, d31 = 1, d33 = 1):
+        Rank3Tensor.__init__(self)
+
+        self.set(0,2,1, d14) ## xzy
+        self.set(1,0,2, -d14) ## yzx (d25 = -d14)
+        self.set(0,0,2, d15) ## xzx
+        self.set(1,2,1, d15) ## yzy (d24 = d15)
+        self.set(2,0,0, d31) ## zxx
+        self.set(2,1,1, d31) ## zyy (d32 = d31)
+        self.set(2,2,2, d33) ## zzz
+        
+    def __repr__(self):
+        d14 = self.get(0,2,1) ## xzy
+        d15 = self.get(0,0,2) ## xzx
+        d31 = self.get(2,0,0) ## zxx
+        d33 = self.get(2,2,2) ## zzz
+        return "C4Rank3Tensor(d14=%s, d15=%s, d31=%s, d33=%s)" \
+               % (d14, d15, d31, d33)
+
+utils.OOFdefine('C4Rank3Tensor', C4Rank3Tensor)
+
+class C4Rank3TensorParameter(parameter.Parameter):
+    types = (C4Rank3Tensor,)
+    structfmt =">4d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d14 = value.get(0,2,1) ## xzy
+        d15 = value.get(0,0,2) ## xzx
+        d31 = value.get(2,0,0) ## zxx
+        d33 = value.get(2,2,2) ## zzz
+        return struct.pack(C4Rank3TensorParameter.structfmt,
+                           d14, d15, d31, d33)
+    def binaryRead(self, parser):
+        b = parser.getBytes(C4Rank3TensorParameter.structsize)
+        vv = struct.unpack(C4Rank3TensorParameter.structfmt, b)
+        return C4Rank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-C4Rank3Tensor'><classname>C4Rank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:C4Rank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/c4rank3.xml'),
+    ordering=306)
+
+##############################################
+
+class C4iRank3Tensor(Rank3Tensor):
+    def __init__(self, d14 = 1, d15 = 1, d31 = 1, d36 = 1):
+        Rank3Tensor.__init__(self)
+
+        self.set(0,2,1, d14) ## xzy
+        self.set(1,0,2, d14) ## yzx (d25 = d14)
+        self.set(0,0,2, d15) ## xzx
+        self.set(1,2,1, -d15) ## yzy (d24 = -d15)
+        self.set(2,0,0, d31) ## zxx
+        self.set(2,1,1, -d31) ## zyy (d32 = -d31)
+        self.set(2,0,1, d36) ## zxy
+        
+    def __repr__(self):
+        d14 = self.get(0,2,1) ## xzy
+        d15 = self.get(0,0,2) ## xzx
+        d31 = self.get(2,0,0) ## zxx
+        d36 = self.get(2,0,1) ## zzz
+        return "C4iRank3Tensor(d14=%s, d15=%s, d31=%s, d36=%s)" \
+               % (d14, d15, d31, d36)
+
+utils.OOFdefine('C4iRank3Tensor', C4iRank3Tensor)
+
+class C4iRank3TensorParameter(parameter.Parameter):
+    types = (C4iRank3Tensor,)
+    structfmt =">4d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d14 = value.get(0,2,1) ## xzy
+        d15 = value.get(0,0,2) ## xzx
+        d31 = value.get(2,0,0) ## zxx
+        d36 = value.get(2,0,1) ## zzz
+        return struct.pack(C4iRank3TensorParameter.structfmt,
+                           d14, d15, d31, d36)
+    def binaryRead(self, parser):
+        b = parser.getBytes(C4iRank3TensorParameter.structsize)
+        vv = struct.unpack(C4iRank3TensorParameter.structfmt, b)
+        return C4iRank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-C4iRank3Tensor'><classname>C4iRank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:C4iRank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/c4irank3.xml'),
+    ordering=307)
+
+##############################################
+
+class D4Rank3Tensor(Rank3Tensor):
+    def __init__(self, d14 = 1):
+        Rank3Tensor.__init__(self)
+
+        self.set(0,2,1, d14) ## xzy
+        self.set(1,0,2, -d14) ## yzx (d25 = -d14)
+        
+        
+    def __repr__(self):
+        d14 = self.get(0,2,1) ## xzy
+        return "D4Rank3Tensor(d14=%s)" % d14
+
+utils.OOFdefine('D4Rank3Tensor', D4Rank3Tensor)
+
+class D4Rank3TensorParameter(parameter.Parameter):
+    types = (D4Rank3Tensor,)
+    structfmt =">1d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d14 = value.get(0,2,1) ## xzy
+        return struct.pack(D4Rank3TensorParameter.structfmt, d14)
+    def binaryRead(self, parser):
+        b = parser.getBytes(D4Rank3TensorParameter.structsize)
+        vv = struct.unpack(D4Rank3TensorParameter.structfmt, b)
+        return D4Rank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-D4Rank3Tensor'><classname>D4Rank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:D4Rank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/d4rank3.xml'),
+    ordering=308)
+
+##############################################
+
+class C4vRank3Tensor(Rank3Tensor):
+    def __init__(self, d15 = 1, d31 = 1, d33 = 1):
+        Rank3Tensor.__init__(self)
+        
+        self.set(2,0,0, d31) ## xx
+        self.set(2,1,1, d31) ## yy
+        self.set(2,2,2, d33) ## zz
+        self.set(0,0,2, d15) ## 
+        self.set(1,1,2, d15) ## 
+    def __repr__(self):
+        d31 = self.get(2,0,0)
+        d33 = self.get(2,2,2)
+        d15 = self.get(0,0,2) ## 
+
+        return "C4vRank3Tensor(d15=%s, d31=%s, d33=%s)" % (d15, d31, d33)
+
+utils.OOFdefine('C4vRank3Tensor', C4vRank3Tensor)
+
+class C4vRank3TensorParameter(parameter.Parameter):
+    types = (C4vRank3Tensor,)
+    structfmt =">3d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d31 = value.get(2,0,0)
+        d33 = value.get(2,2,2)
+        d15 = value.get(0,0,2) ## 
+        return struct.pack(C4vRank3TensorParameter.structfmt,
+                           d15, d31, d33)
+    def binaryRead(self, parser):
+        b = parser.getBytes(C4vRank3TensorParameter.structsize)
+        vv = struct.unpack(C4vRank3TensorParameter.structfmt, b)
+        return C4vRank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-C4vRank3Tensor'><classname>C4vRank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:C4vRank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/c4vrank3.xml'),
+    ordering=309)
+
+##############################################
+
+class D2dRank3Tensor(Rank3Tensor):
+    def __init__(self, d14 = 1, d36 = 1):
+        Rank3Tensor.__init__(self)
+
+        self.set(0,2,1, d14) ## xzy
+        self.set(1,0,2, d14) ## yzx (d25 = d14)
+        self.set(2,0,1, d36) ## zxy
+        
+    def __repr__(self):
+        d14 = self.get(0,2,1) ## xzy
+        d36 = self.get(2,0,1) ## zzz
+        return "D2dRank3Tensor(d14=%s, d36=%s)" % (d14, d36)
+
+utils.OOFdefine('D2dRank3Tensor', D2dRank3Tensor)
+
+class D2dRank3TensorParameter(parameter.Parameter):
+    types = (D2dRank3Tensor,)
+    structfmt =">2d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d14 = value.get(0,2,1) ## xzy
+        d36 = value.get(2,0,1) ## zzz
+        return struct.pack(D2dRank3TensorParameter.structfmt,
+                           d14, d36)
+    def binaryRead(self, parser):
+        b = parser.getBytes(D2dRank3TensorParameter.structsize)
+        vv = struct.unpack(D2dRank3TensorParameter.structfmt, b)
+        return D2dRank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-D2dRank3Tensor'><classname>D2dRank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:D2dRank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/d2drank3.xml'),
+    ordering=310)
+
+##############################################
+
+class C3Rank3Tensor(Rank3Tensor):
+    def __init__(self, d11 = 1, d14 = 1, d15 = 1, d22 = 1, d31 = 1, d33 = 1):
+        Rank3Tensor.__init__(self)
+
+        self.set(0,0,0, d11)
+        self.set(0,1,1, -d11)
+        self.set(1,0,1, -d11) ## technically, -2*d11/2, but math cancels out the factors of two
+        ##
+        self.set(0,2,1, d14) ## xzy
+        self.set(1,0,2, -d14) ## yzx (d25 = -d14)
+        ##
+        self.set(0,0,2, d15) ## xzx
+        self.set(1,2,1, d15) ## yzy (d24 = d15)
+        ##
+        self.set(1,1,1, d22) ## yyy
+        self.set(1,0,0, -d22) ## yxx (d22 = d21)
+        self.set(0,1,0, -d22) ## xyx ## technically -2*d22/2, but math takes care of factors of two. 
+        ##
+        
+        ##
+        self.set(2,0,0, d31) ## zxx
+        self.set(2,1,1, d31) ## zyy (d32 = d31)
+        ##
+        self.set(2,2,2, d33) ## zxy
+        
+    def __repr__(self):
+        d11 = self.get(0,0,0)
+        d14 = self.get(0,2,1) ## xzy
+        d15 = self.get(0,0,2) ## xzx
+        d22 = self.get(1,1,1)
+        d31 = self.get(2,0,0) ## zxx
+        d33 = self.get(2,2,2) ## zzz
+        return "C3Rank3Tensor(d11=%s, d14=%s, d15=%s, d22=%s, d31=%s, d33=%s)" \
+               % (d11, d14, d15, d22, d31, d33)
+
+utils.OOFdefine('C3Rank3Tensor', C3Rank3Tensor)
+
+class C3Rank3TensorParameter(parameter.Parameter):
+    types = (C3Rank3Tensor,)
+    structfmt =">6d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d11 = value.get(0,0,0)
+        d14 = value.get(0,2,1) ## xzy
+        d15 = value.get(0,0,2) ## xzx
+        d22 = value.get(1,1,1)
+        d31 = value.get(2,0,0) ## zxx
+        d33 = value.get(2,2,2) ## zzz
+        return struct.pack(C3Rank3TensorParameter.structfmt,
+                           d11, d14, d15, d22, d31, d33)
+    def binaryRead(self, parser):
+        b = parser.getBytes(C3Rank3TensorParameter.structsize)
+        vv = struct.unpack(C3Rank3TensorParameter.structfmt, b)
+        return C3Rank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-C3Rank3Tensor'><classname>C3Rank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:C3Rank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/c3rank3.xml'),
+    ordering=311)
+
+##############################################
+
+class D3Rank3Tensor(Rank3Tensor):
+    def __init__(self, d11 = 1, d14 = 1):
+        Rank3Tensor.__init__(self)
+
+        self.set(0,0,0, d11)
+        self.set(0,1,1, -d11)
+        self.set(1,0,1, -d11) ## technically, -2*d11/2, but math cancels out the factors of two
+        ##
+        self.set(0,2,1, d14) ## xzy
+        self.set(1,0,2, -d14) ## yzx (d25 = -d14)
+        
+        
+    def __repr__(self):
+        d11 = self.get(0,0,0)
+        d14 = self.get(0,2,1) ## xzy
+        return "D3Rank3Tensor(d11=%s, d14=%s)" % (d11, d14)
+
+utils.OOFdefine('D3Rank3Tensor', D3Rank3Tensor)
+
+class D3Rank3TensorParameter(parameter.Parameter):
+    types = (D3Rank3Tensor,)
+    structfmt =">2d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d11 = value.get(0,0,0)
+        d14 = value.get(0,2,1) ## xzy
+        return struct.pack(D3Rank3TensorParameter.structfmt,
+                           d11, d14)
+    def binaryRead(self, parser):
+        b = parser.getBytes(D3Rank3TensorParameter.structsize)
+        vv = struct.unpack(D3Rank3TensorParameter.structfmt, b)
+        return D3Rank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-D3Rank3Tensor'><classname>D3Rank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:D3Rank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/d3rank3.xml'),
+    ordering=311)
+
+##############################################
+
+class C3vRank3Tensor(Rank3Tensor):
+    def __init__(self, d15 = 1, d22 = 1, d31 = 1, d33 = 1):
+        Rank3Tensor.__init__(self)
+        
+        self.set(0,0,2, d15) ## xzx
+        self.set(1,2,1, d15) ## yzy (d24 = d15)
+        ##
+        self.set(1,1,1, d22) ## yyy
+        self.set(1,0,0, -d22) ## yxx (d22 = d21)
+        self.set(0,1,0, -d22) ## xyx ## technically -2*d22/2, but math takes care of factors of two. 
+        ##
+        self.set(2,0,0, d31) ## zxx
+        self.set(2,1,1, d31) ## zyy (d32 = d31)
+        ##
+        self.set(2,2,2, d33) ## zxy
+        
+    def __repr__(self):
+        d15 = self.get(0,0,2) ## xzx
+        d22 = self.get(1,1,1) ## yyy
+        d31 = self.get(2,0,0) ## zxx
+        d33 = self.get(2,2,2) ## zzz
+        return "C3vRank3Tensor(d15=%s, d22=%s, d31=%s, d33=%s)" \
+               % (d15, d22, d31, d33)
+
+utils.OOFdefine('C3vRank3Tensor', C3vRank3Tensor)
+
+class C3vRank3TensorParameter(parameter.Parameter):
+    types = (C3vRank3Tensor,)
+    structfmt =">4d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d15 = value.get(0,0,2) ## xzx
+        d22 = value.get(1,1,1)
+        d31 = value.get(2,0,0) ## zxx
+        d33 = value.get(2,2,2) ## zzz
+        return struct.pack(C3vRank3TensorParameter.structfmt,
+                           d15, d22, d31, d33)
+    def binaryRead(self, parser):
+        b = parser.getBytes(C3vRank3TensorParameter.structsize)
+        vv = struct.unpack(C3vRank3TensorParameter.structfmt, b)
+        return C3vRank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-C3vRank3Tensor'><classname>C3vRank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:C3vRank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/c3vrank3.xml'),
+    ordering=312)
+
+##############################################
+
+class C6Rank3Tensor(Rank3Tensor):
+    def __init__(self, d14 = 1, d15 = 1, d31 = 1, d33 = 1):
+        Rank3Tensor.__init__(self)
+        self.set(2,0,0, d31) ## xx
+        self.set(2,1,1, d31) ## yy
+        self.set(2,2,2, d33) ## zz
+        self.set(0,0,2, d15) ## 
+        self.set(1,1,2, d15) ## 
+        self.set(0,2,1, d14) ## 
+        self.set(1,0,2, -d14) ## 
+    def __repr__(self):
+        d14 = self.get(0,2,1) ## 
+        d31 = self.get(2,0,0)
+        d33 = self.get(2,2,2)
+        d15 = self.get(0,0,2) ## 
+
+        return "C6Rank3Tensor(d14=%s, d15=%s, d31=%s, d33=%s)" \
+               % (d14, d15, d31, d33)
+
+utils.OOFdefine('C6Rank3Tensor', C6Rank3Tensor)
+
+class C6Rank3TensorParameter(parameter.Parameter):
+    types = (C6Rank3Tensor,)
+    structfmt =">4d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d14 = value.get(0,2,1) ## 
+        d31 = value.get(2,0,0)
+        d33 = value.get(2,2,2)
+        d15 = value.get(0,0,2) ## 
+        return struct.pack(C6Rank3TensorParameter.structfmt,
+                           d14, d15, d31, d33)
+    def binaryRead(self, parser):
+        b = parser.getBytes(C6Rank3TensorParameter.structsize)
+        vv = struct.unpack(C6Rank3TensorParameter.structfmt, b)
+        return C6Rank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-C6Rank3Tensor'><classname>C6Rank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:C6Rank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/c6rank3.xml'),
+    ordering=313)
+
+##############################################
+
+class D6iRank3Tensor(Rank3Tensor):
+    def __init__(self, d11 = 1, d22 = 1):
+        Rank3Tensor.__init__(self)
+
+        self.set(0,0,0, d11)
+        self.set(0,1,1, -d11)
+        self.set(1,0,1, -d11) ## technically, -2*d11/2, but math cancels out the factors of two
+       
+        self.set(1,1,1, d22) ## yyy
+        self.set(1,0,0, -d22) ## yxx (d22 = d21)
+        self.set(0,1,0, -d22) ## xyx ## technically -2*d22/2, but math takes care of factors of two. 
+        
+        
+    def __repr__(self):
+        d11 = self.get(0,0,0)
+        d22 = self.get(1,1,1)
+        return "D6iRank3Tensor(d11=%s, d22=%s)" % (d11, d22)
+
+utils.OOFdefine('D6iRank3Tensor', D6iRank3Tensor)
+
+class D6iRank3TensorParameter(parameter.Parameter):
+    types = (D6iRank3Tensor,)
+    structfmt =">2d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d11 = value.get(0,0,0)
+        d22 = value.get(1,1,1)
+        return struct.pack(D6iRank3TensorParameter.structfmt,
+                           d11, d22)
+    def binaryRead(self, parser):
+        b = parser.getBytes(D6iRank3TensorParameter.structsize)
+        vv = struct.unpack(D6iRank3TensorParameter.structfmt, b)
+        return D6iRank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-D6iRank3Tensor'><classname>D6iRank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:D6iRank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/d6irank3.xml'),
+    ordering=314)
+
+##############################################
+
+class D6Rank3Tensor(Rank3Tensor):
+    def __init__(self, d14 = 1):
+        Rank3Tensor.__init__(self)
+
+        self.set(0,2,1, d14) ## 
+        self.set(1,0,2, -d14) ## 
+        
+    def __repr__(self):
+        d14 = self.get(0,2,1) ## 
+        return "D6Rank3Tensor(d14=%s)" % d14
+
+utils.OOFdefine('D6Rank3Tensor', D6Rank3Tensor)
+
+class D6Rank3TensorParameter(parameter.Parameter):
+    types = (D6Rank3Tensor,)
+    structfmt =">1d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d14 = value.get(0,2,1) ## 
+        return struct.pack(D6Rank3TensorParameter.structfmt, d14)
+    def binaryRead(self, parser):
+        b = parser.getBytes(D6Rank3TensorParameter.structsize)
+        vv = struct.unpack(D6Rank3TensorParameter.structfmt, b)
+        return D6Rank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-D6Rank3Tensor'><classname>D6Rank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:D6Rank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/d6rank3.xml'),
+    ordering=315)
+
+##############################################
+
+class C6vRank3Tensor(Rank3Tensor):
+    def __init__(self, d15 = 1, d31 = 1, d33 = 1):
+        Rank3Tensor.__init__(self)
+        self.set(2,0,0, d31) ## xx
+        self.set(2,1,1, d31) ## yy
+        self.set(2,2,2, d33) ## zz
+        self.set(0,0,2, d15) ## 
+        self.set(1,1,2, d15) ## 
+    def __repr__(self):
+        d31 = self.get(2,0,0)
+        d33 = self.get(2,2,2)
+        d15 = self.get(0,0,2) ## 
+        return "C6vRank3Tensor(d15=%s, d31=%s, d33=%s)" % (d15, d31, d33)
+
+utils.OOFdefine('C6vRank3Tensor', C6vRank3Tensor)
+
+class C6vRank3TensorParameter(parameter.Parameter):
+    types = (C6vRank3Tensor,)
+    structfmt =">3d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d31 = value.get(2,0,0)
+        d33 = value.get(2,2,2)
+        d15 = value.get(0,0,2) ## 
+        return struct.pack(C6vRank3TensorParameter.structfmt,
+                           d15, d31, d33)
+    def binaryRead(self, parser):
+        b = parser.getBytes(C6vRank3TensorParameter.structsize)
+        vv = struct.unpack(C6vRank3TensorParameter.structfmt, b)
+        return C6vRank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-C6vRank3Tensor'><classname>C6vRank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:C6vRank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/c6vrank3.xml'),
+    ordering=316)
+
+##############################################
+
+class D3hRank3Tensor(Rank3Tensor):
+    def __init__(self, d22 = 1):
+        Rank3Tensor.__init__(self)
+
+        self.set(1,1,1, d22) ## yyy
+        self.set(1,0,0, -d22) ## yxx (d22 = d21)
+        self.set(0,1,0, -d22) ## xyx ## technically -2*d22/2, but math takes care of factors of two. 
+    def __repr__(self):
+        d22 = self.get(1,1,1)
+        return "D3hRank3Tensor(d22=%s)" % d22
+
+utils.OOFdefine('D3hRank3Tensor', D3hRank3Tensor)
+
+class D3hRank3TensorParameter(parameter.Parameter):
+    types = (D3hRank3Tensor,)
+    structfmt =">1d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d22 = value.get(1,1,1)
+        return struct.pack(D3hRank3TensorParameter.structfmt, d22)
+    def binaryRead(self, parser):
+        b = parser.getBytes(D3hRank3TensorParameter.structsize)
+        vv = struct.unpack(D3hRank3TensorParameter.structfmt, b)
+        return D3hRank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-D3hRank3Tensor'><classname>D3hRank3Tensor</classname></link> object."
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:D3hRank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/d3hrank3.xml'),
+    ordering=317)
+
+##############################################
+
+class TdRank3Tensor(Rank3Tensor):
+    def __init__(self, d14 = 1):
+        Rank3Tensor.__init__(self)
+        # Assignments are direct, no factors of two.
+        self.set(0,2,1, d14) ## 
+        self.set(1,0,2, d14) ## 
+        self.set(2,0,1, d14) ## 
+    def __repr__(self):
+        d14 = self.get(0,2,1) ## 
+        return "TdRank3Tensor(d14=%s)" % d14
+
+utils.OOFdefine('TdRank3Tensor', TdRank3Tensor)
+
+class TdRank3TensorParameter(parameter.Parameter):
+    types = (TdRank3Tensor,)
+    structfmt =">1d"
+    structsize = struct.calcsize(structfmt)
+    def binaryRepr(self, datafile, value):
+        d14 = value.get(0,2,1) ## 
+        return struct.pack(TdRank3TensorParameter.structfmt, d14)
+    def binaryRead(self, parser):
+        b = parser.getBytes(TdRank3TensorParameter.structsize)
+        vv = struct.unpack(TdRank3TensorParameter.structfmt, b)
+        return TdRank3Tensor(*vv)
+    def valueDesc(self):
+        return "A <link linkend='Object-TdRank3Tensor'><classname>TdRank3Tensor</classname></link> object."
+
+
+xmlmenudump.XMLObjectDoc(
+    'Rank 3 Tensors:TdRank3Tensor',
+    xmlmenudump.loadFile('DISCUSSIONS/engine/object/tdrank3.xml'),
+    ordering=318)

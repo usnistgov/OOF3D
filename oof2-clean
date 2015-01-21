@@ -1,0 +1,63 @@
+#!/usr/bin/env python
+import sys, string, os
+
+build_types = ('dist', 'devel', 'debug', 'dist3d', 'debug3d', 'profile3d')
+
+if len(sys.argv) < 2:
+    print "No build version specified"
+    sys.exit()
+if sys.argv[1] not in build_types:
+    print "Unrecognized build version", sys.argv[1]
+
+build_type = sys.argv[1]
+pyversion = string.join(map(str, sys.version_info[:2]),".")
+cvstag = "$Name: threePoint0-7-13-08 $"[7:-2].strip()
+localdir = os.path.split(os.getcwd())[1]
+if localdir.startswith('OOF2'):
+    localdir = localdir[4:]
+
+installdir = os.getenv("OOFINSTALL")
+if not installdir:
+    installdir = os.getenv("HOME")
+
+stowdir = os.path.join(installdir, 'stow')
+builddir =  "-".join(["builddir", cvstag, build_type])
+if localdir:
+    stowsubdir = "-".join(["oof2", cvstag, localdir, build_type, pyversion])
+else:
+    stowsubdir = "-".join(["oof2", cvstag, build_type, pyversion])
+if build_type in ('dist3d', 'debug3d', 'profile3d'):
+    laststowfile = os.path.join(stowdir, '.last_oof3d_install')
+else:
+    laststowfile = os.path.join(stowdir, '.last_oof_install')
+startdir = os.getcwd()
+
+try:
+    lsf = file(laststowfile, "r")
+    laststow = lsf.readline().rstrip()
+    lsf.close()
+except IOError:
+    laststow = None
+
+
+# Clean out the stow directory
+os.chdir(stowdir)
+try:
+    if laststow == stowsubdir:
+        print "Unstowing", stowsubdir, "from", stowdir
+        os.system('stow -D %s' % stowsubdir)
+        os.remove(laststowfile)
+    print "Emptying", os.path.join(stowdir, stowsubdir)
+    os.system('rm -rf %s' % stowsubdir) # os.removedirs is clunky.
+finally:
+    os.chdir(startdir)
+
+os.rename(builddir, 'build')
+if build_type in ('dist3d', 'debug3d', 'profile3d'):
+	  os.system('python setup.py clean --most --swig --3D')
+else:
+	  os.system('python setup.py clean --most --swig')
+if os.path.exists('build'):
+    os.rename('build', builddir)
+else:
+    os.mkdir(builddir)

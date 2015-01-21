@@ -1,0 +1,34 @@
+# -*- python -*-
+# $RCSfile: elementshape.spy,v $
+# $Revision: 1.1.2.1 $
+# $Author: langer $
+# $Date: 2014/01/18 04:41:55 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+# Make Enum classes in the main OOF2 namespace for each element shape.
+
+from ooflib.common import utils
+
+initializeShapes()
+
+# Create the Enum classes that will hold the identifiers for the
+# different types of master elements.  This is here rather than in
+# masterelement.spy to avoid import loops.
+
+enumClasses = utils.OrderedDict()
+utils.OOFexec("from ooflib.common import enum")
+for name in shapeNames():
+    classname = "%sElement" % name
+    utils.OOFexec('class %s(enum.EnumClass()): pass' % classname)
+    enumclass = utils.OOFeval(classname)
+    enumclass._sorted = True
+    utils.OOFexec('%s.tip = "%s-shaped finite elements"'
+                  % (classname, name))
+    enumClasses[name] = enumclass

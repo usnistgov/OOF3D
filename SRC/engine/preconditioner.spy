@@ -1,0 +1,67 @@
+# -*- python -*-
+# $RCSfile: preconditioner.spy,v $
+# $Revision: 1.4.10.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:44:41 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.common import cregisteredclass
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from types import *
+
+cregisteredclass.registerCClass(PreconditionerPtr)
+
+PreconditionerPtr.tip = \
+                "Preconditioners for efficient solution of matrix equations."
+PreconditionerPtr.discussion = xmlmenudump.loadFile(
+    'DISCUSSIONS/engine/reg/preconditioner.xml')
+
+iluPreconditioner = cregisteredclass.Registration(
+    "ILU",
+    PreconditionerPtr,
+    ILUPreconditioner,
+    ordering=100,
+    params=[],
+    tip="Incomplete LU-factorization",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/reg/ilu_preconditioner.xml')
+    )
+
+cregisteredclass.Registration(
+    "IC",
+    PreconditionerPtr,
+    ICPreconditioner,
+    ordering=200,
+    params=[],
+    tip="Incomplete Cholesky preconditioner. Appropriate only for meshes with symmetric, positive definite stiffness matrices.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/reg/ic_preconditioner.xml'))
+
+cregisteredclass.Registration(
+    "Null",
+    PreconditionerPtr,
+    UnPreconditioner,
+    ordering=2000,
+    params=[],
+    tip="Be bold (or foolhardy) and attempt to solve the mesh without a preconditioner",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/reg/null_preconditioner.xml'))
+
+cregisteredclass.Registration(
+    "Jacobi",
+    PreconditionerPtr,
+    JacobiPreconditioner,
+    ordering=500,
+    params=[],
+    tip="A light-weight preconditioner, that simply inverts the diagonal part of the matrix.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/reg/jacobi_preconditioner.xml'))
+

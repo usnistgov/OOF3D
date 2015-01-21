@@ -1,0 +1,62 @@
+SWIG Documentation   8/27/97	
+----------------------------
+
+(8/27/97) Update
+----------------
+An online version of the User's manual is now available at
+
+     http://www.cs.utah.edu/~beazley/SWIG/Doc1.1/Contents.html
+
+SWIG Users Manual
+-----------------
+The directory 'UserManual' contains the entire SWIG Users Manual
+in Adobe PDF format. To view it, you will need Adobe Acrobat 
+reader which is freely available from Adobe at :
+
+       http://www.adobe.com/prodindex/acrobat/readstep.html
+
+Many machines already have Acrobat installed (try typing 'acroread' if
+using Unix). If you are unable to use Acrobat, a postscript version of
+the manual is available from the SWIG FTP site.
+
+The User Manual is 318 pages and broken up into individual chapters
+covering various aspects of SWIG.  There is probably little need to
+print the entire manual--just look at the introductory sections and
+the chapter for the scripting language that you're using.
+
+The file 'Contents.pdf' brings up a table of contents and is linked
+to all of the other files.
+
+SWIG Reference Manual
+---------------------
+The directory 'Reference' contains a short SWIG Reference manual that
+describes all of SWIG's command line options, directives, and other
+options.   Experienced SWIG users may find this to be more useful
+than the full Users Manual.  
+
+Note : The reference manual is new and should be consider to be a draft
+version.
+
+Other Useful Information
+-------------------------
+
+Porting      - A file describing some of the issues related to moving
+               to SWIG 1.1 from version 1.0.
+
+c++-dynamic  - A Usenet article by Frank Pilhofer about the issues 
+               related to building dynamic C++ extensions to Tcl.
+               C++ users may find this to be helpful in fixing 
+               SWIG/C++ compilation problems.
+
+
+Known Bugs
+-----------
+Acrobat may complain about the PDF files being 'damaged' but repairs
+them.   This is usually due to CR/LF translation that is sometimes
+performed by uncompression tools.  As far as I know, this error is
+harmless and the PDF files can be viewed normally.
+
+Ghostscript does not view the resulting .ps files correctly.  This
+seems to be due to a font-problem.
+
+

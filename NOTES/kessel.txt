@@ -1,0 +1,118 @@
+
+  Notes on a conversation with Ruediger Kessel from the Automated
+Combinatorial Testing for Software group meeting, January 16, 2008.
+--------------------------------------------------------------------
+
+DRAFT by Andrew Reid, Jan. 18, 2008.
+
+
+Intro: How OOF works
+--------------------
+
+  The OOF software team has come up with an approach GUI testing which
+involves recording and playing back sequences of widget events, and
+using tools developed for this, has put together a suite of GUI tests
+on an ad-hoc basis.
+
+  The team has come to the professional testing community with a view to
+generating higher quality tests, presumably through some systematic
+approach, and quantifying the quality of the test cases.
+
+  
+  The OOF testing approach involves the ad-hoc, manual construction of
+GUI tests. The first step is to run the OOF software in "record" mode,
+and operate the software through the desired sequence of tasks in
+order to generate a log file of the widget events. This log file
+automatically includes timing information about the relative order of
+some events, but is not yet a test case. A test case is created from a
+log file by the annotation process -- the genrated log file is edited
+to include assertion statements involving aspects of the program's
+internal state, including the states of various widgets in the GUI. A
+typical test checks that the consequences of the just-completed
+operation are correctly reflected in the internal state of various
+objects in the program, and in the state of appropriate widgets in the
+GUI.
+
+
+  Our initial impression from our brief contact with the testing
+literature is that numerous very sophisticated techniques have been
+developed for managing the size of the input space primarily for the
+case where the program in question can be regarded as a function of
+independent paramters.  The input to the function is then a point in a
+(potentially high-dimensional) direct-product space of the input
+parameters, and the output of the function is a point in some (usually
+low-dimensional) output space.
+
+
+Why Testing OOF Is Hard:
+------------------------
+  
+  We initially believed that this model was not applicable to the OOF
+application, and perhaps not to GUI applications in general.  The
+difficulty lies with the way the software is operated. OOF users use
+the GUI interface to create objects within the program and then
+manipulate these objects, add subobjects, change the state of the
+objects, and so forth, in an interactive and dynamic way. The
+application itself is highly stateful, and many operations don't have
+direct outputs, but operate primarily or exclusively through their
+effects on the application state. Correct display in the GUI means,
+among other things, correctly reflecting an internal application
+state.  Correct functioning of the GUI means not only that the
+appropriate operations for the applications internal state are
+permitted, but that, when executed, they change the internal program
+state and the GUI state in a correct way.
+
+
+  Our initial approach to test-case development, beyond ad-hoc, involved
+generating sequences of widget events which could be annotated to
+create test cases. This effort is doubly difficult, it has not only
+the combinatorial difficulties which arise from the size of the input
+space, but also a topological complexity, in that permissible
+operations late in an event string depend on what events occur
+earlier.  Furthermore, automatic generation of event sequences is
+vulnerable to the possible generation of uninteresting sequences which
+don't test anything useful, such as repeatedly renaming an object, or
+alternately activating and deactivating some capability.
+
+
+The Big Idea:
+-------------
+
+  Ruediger Kessel's idea is that rather than trying to navigate this
+input space, we should instead find a different way of thinking about
+the software that allows the function approach to be applied directly.
+Rather than thinking in terms of GUI events as inputs, we should be
+thinking about particular GUI-triggered operations, and ask, for a
+given operation, what its inputs and outputs are, and then decide
+whether we can do function-like testing on the particular operation.
+
+  The paramters of the operation may not literally be input paramters to
+the coded function which executes the operation, but if the operation
+is well defined, the domain and range may be simple, in the sense of
+being a direct product of several independent paramters.  
+
+  In this case, the parameters are likely to be aspects of the internal
+state of the program, and the contents of widgets in the GUI, but as
+long as they are independent of each other (they need not be
+independent of other widgets or other internal state variables) for
+this operation, the combinatorial scheme for generating input sets,
+with guarantees of all-pair, all-triple, or other, coverage, should be
+straightforward to apply.
+
+
+  The generation of test cases from this scheme would require some new
+capabilities in the OOF software.  The ability to set arbitrary
+internal states for the software in an "out-of-band" manner (i.e. not
+through the GUI or menus) would be required, but isn't totally
+unprecedented. The existing GUI tests already use a similarly direct
+approach to the OOF and GUI internal state in order to construct their
+assertion arguments. It may be possible to use the menu system to set
+the internal state, but proceed in a regression fashion, so that later
+tests only use already-tested operations from prior tests to
+manipulate the system state.  A regression scheme has the advantage of
+not requiring significant new coding, but may not be flexible enough
+to set up arbitrary internal states rapidly enough for combinatorial
+testing.  A direct state-manipulation API could do this, but would
+represent new code, potentially introducing bugs and requiring testing
+of its own.
+

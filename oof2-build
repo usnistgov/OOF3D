@@ -1,0 +1,178 @@
+#!/usr/bin/env python
+# $RCSfile: oof2-build,v $
+# $Revision: 1.35.2.2 $
+# $Author: fyc $
+# $Date: 2013/05/29 15:48:29 $
+
+# This script builds the various oof2 versions used by the developers.
+# It shouldn't be necessary for anyone else to use it.
+
+# Run "oof2-build <version> to build the version named <version>.
+# Valid values for version are listed in the build_types tuple below.
+# If version is "devel", it must be followed by an integer devel
+# level.
+
+# Optional arguments can appear after the version name.  Any arguments
+# beginning with '--' will be inserted into the setup.py 'build'
+# argument list.  The following shorthand arguments are also accepted,
+# for backwards compatibility with the old bash version of this
+# script:
+#  'mpi'   is the same as '--enable-mpi'
+#  'petsc' is the same as '--enable-petsc'
+#  'oim'   is the same as '--enable-orientationmap'
+
+# The stow directory name is constructed from the build version, the
+# cvs branch name (if any) and the local directory name.  This allows
+# multiple built versions to coexist, even if they're on the same cvs
+# branch.  If the local directory names begins with 'OOF2', only the
+# part after 'OOF2' is used.
+
+# In addition, the 'pg' argument turns on profiling in the C++ code.
+# It won't work unless you're using a python that was built with -pg.
+
+# Set the following environment variables:
+
+#  OOFINSTALL determines where the installation goes.  If it's not
+#  defined, your home directory will be used.
+
+#  Set your PATH to include $OOFINSTALL/bin.
+
+#  Set your PYTHONPATH to include
+#  $OOFINSTALL/lib/python2.3/site-packages
+#  Change 2.3 to 2.4 (or whatever) as appropriate.  You can do that like this:
+#  setenv PYTHONPATH {$OOFINSTALL}/lib/python`python -c 'import sys; print "%d.%d"%sys.version_info[:2]'`/site-packages
+
+#  Set your LD_LIBRARY_PATH to include $OOFINSTALL/lib.  This isn't
+#  necessary on OS X.
+
+import sys, string, os
+
+pyversion = string.join(map(str, sys.version_info[:2]),".")
+
+# First argument must be a build type:
+#   dist
+#   devel  (must be followed by an integer devel level)
+#   debug
+
+# To make it possible to build OOF2 on different cvs branches, the
+# output for the branches needs to go into distinct directories.  We
+# derive the directory names from the cvs tag.  The following line
+# looks like a constant string, but it's actually created by cvs, so
+# don't edit it!
+cvstag = "$Name: threePoint0-7-13-08 $"[7:-2].strip()
+
+# To make it possible to build different versions of the *same* branch
+# of OOF2 (for example, one that is up-to-date with cvs and one that
+# is locally modified), the stow directory name also includes the name
+# of the local directory, after 'OOF2'. 
+localdir = os.path.split(os.getcwd())[1]
+if localdir.startswith('OOF2'):
+    localdir = localdir[4:]
+
+build_types = ('dist', 'devel', 'debug', 'profile', 'dist3d', 'debug3d', 'profile3d')
+
+if len(sys.argv) < 2:
+    print "You must provide a build type"
+    sys.exit()
+if sys.argv[1] not in build_types:
+    print "Unrecognized build type:", sys.argv[1]
+    sys.exit()
+
+sys.argv.pop(0)
+
+build_type = sys.argv.pop(0)
+build_args = []
+
+if build_type == 'devel':
+    build_args.append("--enable-devel="+sys.argv.pop(0))
+elif build_type == 'debug':
+    build_args.append("--debug")
+elif build_type == 'dist3d':
+    build_args.append("--3D")
+elif build_type == 'profile':
+    build_args.append("--debug")
+    os.putenv('CFLAGS', '-g -fno-inline')
+elif build_type == 'debug3d':
+    build_args.append("--3D")
+    build_args.append("--debug")
+elif build_type == 'profile3d':
+    build_args.append("--3D")
+    build_args.append("--debug")
+    os.putenv('CFLAGS', '-g -fno-inline')
+
+while sys.argv:
+    arg = sys.argv.pop(0)
+    if arg.startswith("--"):
+        build_args.append(arg)
+    elif arg == 'seg':
+        build_args.append('--enable-segmentation')
+    elif arg == 'mpi':
+        build_args.append('--enable-mpi')
+    elif arg == 'petsc':
+        build_args.append('--enable-petsc')
+    elif arg == 'pg':
+        os.putenv('CFLAGS', '-pg')
+
+# Where to put everything?
+installdir = os.getenv("OOFINSTALL")
+if not installdir:
+    installdir = os.getenv("HOME")
+
+stowdir = os.path.join(installdir, 'stow')
+builddir =  "-".join(["builddir", cvstag, build_type])
+if localdir:
+    stowsubdir = "-".join(["oof2", cvstag, localdir, build_type, pyversion])
+else:
+    stowsubdir = "-".join(["oof2", cvstag, build_type, pyversion])
+if build_type in ['dist3d', 'debug3d', 'profile3d']:
+    laststowfile = os.path.join(stowdir, '.last_oof3d_install')
+else:
+    laststowfile = os.path.join(stowdir, '.last_oof_install')
+startdir = os.getcwd()
+
+# Move builddir to build
+try:
+    os.rename(builddir, 'build')
+except OSError:
+    print "Directory %s not found, creating new build directory." % builddir
+    os.mkdir('build')
+
+try:
+    build_cmd = "python setup.py build %s install --prefix=%s" \
+                % (string.join(build_args),
+                   os.path.join(stowdir, stowsubdir))
+    print build_cmd
+    result = os.system(build_cmd)
+    if not result:                      # successful
+        try:
+            lsf = file(laststowfile, "r")
+            laststow = lsf.readline().rstrip()
+            lsf.close()
+        except IOError:
+            laststow = None
+        os.chdir(stowdir)
+        if laststow is None:
+            print "Stowing", stowsubdir
+            stowcmd = "stow " + stowsubdir
+            os.system(stowcmd)
+            lsf = file(laststowfile, "w")
+            print >> lsf, stowsubdir
+            lsf.close()
+        elif laststow != stowsubdir:
+            print "Unstowing", laststow, "and stowing", stowsubdir
+            unstowcmd = "stow -D " + laststow
+            os.system(unstowcmd)
+            stowcmd = "stow " + stowsubdir
+            os.system(stowcmd)
+            lsf = file(laststowfile, "w")
+            print >> lsf, stowsubdir
+            lsf.close()
+        else:
+            print "Restowing", stowsubdir
+            stowcmd = "stow -R " + stowsubdir
+            os.system(stowcmd)
+            
+        
+finally:
+    os.chdir(startdir)
+    os.rename('build', builddir)

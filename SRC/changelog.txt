@@ -1,0 +1,818 @@
+OOF2 2.1.0
+
+* Time dependence!
+
+* On OS X, OOF2 now links to the Accelerate framework instead of the
+  deprecated vecLib framework.
+
+* Fixed a long standing bug that caused an error when invoking a
+  togglable menu (eg, ActivityViewer/Settings/AutoDismiss) item in a
+  re-opened window.
+
+* The Mesh Info toolbox will now give info for empty elements
+  (elements with no material) if "Hide Empty Mesh Elements" is
+  unchecked in the gfx window's Settings menu.
+
+* If a Mesh is created from a Skeleton, and then that Skeleton is
+  changed, the Mesh will be "out of sync" until it has been explicitly
+  rebuilt using the "Rebuild" Mesh modifier on the Mesh Page.  An out
+  of sync Mesh cannot be solved, saved, or otherwise operated on in
+  any way.  This restriction "fixes" some bugs in earlier versions.
+  For similar reasons, Adaptive mesh refinement is now only available
+  as a Skeleton refinement target, and not as a Mesh modification
+  method.
+
+* Materials can now be assigned to Skeleton element groups and segment
+  groups.  They can no longer be assigned directly to Mesh elements.
+
+OOF2 2.0.5a7, 2.0.5a8 or 2.0.5a9:
+
+* The directory containing the log file left behind when OOF2 quits
+  unexpectedly can now be set by setting the OOFTMP environment
+  variable.  If the variable is unset, the log file will appear
+  whereever it did before this change (determined by the behavior of
+  python's tempfile.mkstemp function).
+
+* The abaqus file for meshes no longer contains split nodes at
+  interfaces.
+
+* Changed setup.py so that oofconfig.h is installed in
+  include/OOFNAME/, where OOFNAME is either 'oof2' or 'oof3d'.  This
+  will enable users (and developers) to have both versions installed.
+
+* Fixed the image save functionality in displaying orientation map
+  images.
+
+* Property API now includes begin_point and end_point hooks, called at
+  the start and end of operations at a particular evaluation
+  point. Properties with expensive point-specific operations can
+  perform them and cache the result with this hook.
+
+OOF2 2.0.5a6:
+
+* Fixed an AutoSkeleton bug.  It was specifying min_distance for
+  SnapRefine in the wrong units.
+
+* Modified (and hopefully improved) the SnapNodes algorithm.
+
+* New file selector widgetry.  Dialog boxes that ask for file names
+  now look and behave just like other dialog boxes.
+
+* Quitting, saying you want to save the log file, and then cancelling
+  now cancels both the Quit and the Save.  It used to cancel the Save,
+  but would still Quit.
+
+OOF2 2.0.5a5:
+
+* Fixed more memory leaks.
+
+OOF2 2.0.5a4
+
+* Optimization: Homogeneity energy isn't computed if alpha==0.
+
+* Fixed many memory leaks.
+
+* Constructing edge boundaries from node groups now works.
+
+* Added '--nanoHUB' as a build option.  If it's present, using the
+  console and loading scripts are disabled for security.
+
+* Optimization: Homogeneity energy isn't computed if alpha==0.
+
+* The min_distance parameter for Snap Refine now has a minimum allowed
+  value which is 1/100 of the pixel size.  This prevent Snap Refine
+  from creating illegal elements.
+
+* Rationalize can now remove high aspect ratio quads.
+
+* Fixed bugs in the Skeleton Info toolbox that made it impossible to
+  select illegal elements by double clicking in the list of a
+  Segment's or Node's elements.
+
+OOF2 2.0.5a3
+
+* Fixed the HeatSource property -- it had no integration_order method.
+
+OOF2 2.0.5a2
+
+* Fixed a possible divide-by-zero in Skeleton rationalization.
+
+* Modified the AutoSkeleton script so that it uses a non-zero
+  min_distance in SnapRefine.
+
+* Fixed a problem with loading data files for meshes with initialized
+  out-of-plane fields.
+
+* Fixed a round-off error problem that could cause crashes when the
+  physical pixel size wasn't 1x1.
+
+* Removed some of the adaptive mesh refinement tests from the test
+  suite.  The algorithm appears to be unstable, and gives different
+  answers on different machines.  This doesn't necessarily mean that
+  it's useless, but it makes it hard to test.
+
+OOF2 2.0.5a1
+
+* Fixed bugs that were preventing MaterialImages from being drawn in
+  pdf output files.
+
+* New 'Interfaces' Task Page. Whenever an interface is created or deleted,
+  the mesh is rebuilt.
+
+* Materials have either a 'bulk' or 'interface' attribute.
+
+* Interface materials can be assigned to interfaces and skeleton boundaries.
+  (via buttons on the Materials page).
+
+* Properties can be compatible with (or assignable to) a bulk material, or 
+  an interface material, or to both.
+
+* Added an Edgement display.
+
+* When a field gets defined on a subproblem, the field values can get set
+  by an initializer only if that field is not defined on any other subproblem.
+
+* Fixed the following: An error message shows up after performing the following
+  sequence of operations:
+  (1) Create a skeleton and refine it a few times.
+  (2) Create a mesh.
+  (3) Click Undo on the Skeleton page.
+  (4) Go to the Skeleton page and perform a Modify operation on any of the
+      edge boundaries.
+
+* Added a subproblem parameter to the Adaptive Mesh Refinement operation.
+
+* Re-enabled Perimeter display.
+
+* Added a right-click popup menu to the graphics window layer list.
+
+OOF2 2.0.4
+
+* Fixed a bug in scriptloader.py for python versions >= 2.4.  It
+  wasn't correctly parsing code blocks in which the first left
+  parenthesis ended a line, because of changes in the python compiler
+  module in version 2.4.  The new version works for 2.3, 2.4, and
+  2.5. 
+
+* Fixed a bug that could cause a division by zero error if the
+  physical dimensions of a Microstructure are integers.
+
+* In versions 2.0.2 and 2.0.3, OOF lets you use the CG solver even for
+  non-symmetric problems. 
+
+OOF2 2.0.4b2
+
+* Fixed a crash on quitting on NetBSD systems (and possibly others).
+
+OOF2 2.0.4 (beta 1 and earlier)
+* Element, Node, and Segment groups can now be created automatically
+  from Pixel Groups, using the "Auto" button on the Skeleton Selection
+  page.  If a pixel group subsequently changes, the Skeleton groups do
+  *not* automatically update themselves.  New "Clear All" and "Delete
+  All" buttons operate on all Skeleton groups.
+
+* Added a "name_template" argument to OOF.Image.AutoGroup, so that
+  the format of group names can be set by the user.
+
+* Added a "Deviator" invariant for symmetric 3x3 tensors, which 
+  measures the amount of shear represented by a tensor.
+
+* Fixed some bugs in the Rationalize Skeleton modifier that could create
+  inconsistent periodic Skeletons.
+
+* When a node gets pinned (unpinned), its periodic partner(s) also get
+  pinned (unpinned).
+
+* Updated "Copy All..." in the boundary conditions page to be able to copy
+  periodic boundary conditions.
+
+* Added Active Area display parameters and initial graphics window size to the
+  OOF.Settings.Graphics_Defaults menu.
+
+* Added a --with-swig argument to setup.py's build command, for
+  specifying the name of a non-standard swig program.
+
+* API CHANGE: Property::precompute() takes an FEMesh* argument.  The
+  Property class has new functions set_mesh_data and get_mesh_data
+  that can be used to store and retrieve mesh-specific property data.
+  The optional function clear_mesh_data() is called when it's time for
+  the Property to delete its mesh-specific data.
+
+* API CHANGE: The Orientation Property now uses an abstract
+  COrientation class, that's not restricted to being an Euler angle.
+  Tensor transform() methods take a COrientation* instead of a
+  MATRIX_D.
+
+* Added the ability to read orientation map data files, and an
+  OrientationMap material property that uses the orientation map data
+  instead of an explicit Orientation.  Only one orientation map file
+  may be associated with any one Microstructure.
+
+* Added a Microstructure display method for showing the Orientation of
+  pixels, whether from an Orientation or an OrientationMap Property.
+  Also added a method for displaying a Microstructure's orientation
+  map, whether or not it's being used in a Property.
+
+* In labelled sliders in the GUI (slider widgets with a text entry
+  box), the relative size of the slider and the text can be adjusted.
+  When more than one such slider is in the same GUI box, they all
+  adjust together.
+  
+
+OOF2 2.0.3
+
+* Fixed a bug that reported a spurious material property collision
+  error when a property with a symmetric tensor parameter was reloaded
+  from a data file or script.
+
+* Periodic boundary conditions.
+
+* Added an OOF.Settings.Graphics_Defaults menu which lets default
+  display parameters (such as skeleton edge color and linewidth) be
+  set *before* a graphics window is opened.  These commands can be put
+  in the .oof2rc file.
+
+* Fixed a bug that would crash the program if the Activity Viewer
+  window was closed while progress bars were still active.  Thanks to
+  Yu Dong for the bug report.
+
+* Colons are now prohibited in the names of Microstructures, Images,
+  Skeletons, Meshes, SubProblems, and Properties.  They caused
+  problems before.
+
+* Python 2.5 compatibility.
+
+* Enhanced SnapRefine to use up to two transition points along an edge.
+
+* Auto Skeleton button for one-click creating and refining of Skeletons. 
+
+* Fixed a bug that made Skeleton modifications fail if the
+  Skeleton or its Microstructure had been renamed.
+
+* Fixed a bug in the Mesh Info toolbox in which triangular mesh
+  elements don't get selected when a user mouse-clicks on such elements.
+
+OOF2 2.0.2
+
+* Subproblems.
+
+* Fixed a bug that could crash the program if a Material was redefined
+  in a data file, and that data file was loaded after a Mesh was
+  created from a Microstructure that used the old definition of the
+  Material.
+
+* Fixed an initialization bug for the cross-section widget on the 
+  analysis page.  It was initialized incorrectly if there were 
+  already cross-sections in the mesh.
+
+* Fixed the energy computation in the stress-free strain.
+ 
+* Fixed the conversion routines for the Goldstein XYZ rotation 
+  convention.
+
+* Fixed a synchronization bug in the Materials page -- properties
+  added via console/menu operations weren't synchronizing the 
+  Materials page correctly.
+
+* Added right-hand-side contribution code to the PlaneFluxEquation,
+  so that plane-stress stress-free-strains are computed correctly.
+  
+* The Mesh Info toolbox now lists the Fields that are defined on
+  Nodes.
+
+* Fixed a bug in the menus for the Analysis page, which could cause
+  nonsense output to be generated because Material precomputation
+  wasn't being done.
+
+* Added OOF.PixelSelection.Select_Material, which selects all pixels
+  with a given Material assigned to them.  The specified Material may be
+  "<Any>", "<None>", or any defined Material.
+
+* Progress bars are no longer drawn when using the --batch flag.
+
+* The "File/Save/Python Log" dialog box's OK button is now sensitized
+  more or less correctly.  It used to be insensitive if
+  "File/Load/Script" had been used and the directory hadn't been
+  changed.  It's still not properly desensitized when the new file
+  name is blank, but that's less bad than having it always be
+  insensitive.
+
+* Fixed a bug that was causing RWLock errors when changing Skeleton
+  modifiers.
+
+* Changes to the API for extensions are documented in Appendix B in
+  the manual.
+
+* Fixed a bug in the layer editor that caused the gui tests to
+  fail intermittently, and may have caused the wrong layers to be sent
+  to the graphics windows in real life, occasionally.
+
+OOF2 2.0.1
+
+* "setup.py install" now copies the examples/extension directory.
+
+* It should no longer be necessary to set DYLD_LIBRARY_PATH to run
+  oof2 on Macs.
+
+* Sensitized the Load button on the Image page correctly.  It was only
+  sensitive if there was another Image already in the current
+  Microstructure.
+
+* Added a "Save Text" item to the Tutorial window's File menu.  It
+  saves the current tutorial to a file.
+
+OOF2 2.0.0
+
+* Added a GUI test suite.
+
+* Revised the Boundary Analysis page.  There is now a pull-down menu
+  for selecting the operation, and the boundaries appear in a separate
+  list.  The available operations are "Integrate Flux" (which was
+  there before) and "Average Field" (which is new).  Scripts that used
+  the old Integrate Flux will need to be updated.
+
+* Fixed a bug that was causing incorrect output for quantities that
+  depended on properly initialized properties.  In particular, the
+  elastic energy density for anisotropic materials was computed
+  incorrectly. 
+
+* Fixed the tetragonal Cijkl widget.  It was displaying the wrong
+  value for c26.  The correct value was being used internally when the
+  full Cijkl was constructed.  Similarly, the C4i widget was
+  displaying the wrong value for d32.
+
+* Fixed a bug in the orthorhombic Cijkl widget.  It was discarding c66
+  and using c55 instead.
+
+* Fixed a bug in which skeleton nodes dragged outside the bounds of
+  the microstructure couldn't be dragged back inside.
+
+* Rewrote the script loader code so that it works.  The old version
+  couldn't handle "else", "elif", or "except" blocks.  The new version
+  can still be confused, but you'd have to go out of your way to do so.
+
+* Changed the behavior of control-D in the console window, because I
+  kept closing the window by mistake when I meant to delete a
+  character.
+
+* Fixed a crashing bug when selecting pixels with the brush tool.
+
+* Modified the pixel information toolbox so that pixel colors can be
+  shown in either RGB or HSV formats.
+
+* Fixed a bug in the constructor for the Quad skeleton geometry which 
+  misplaced the topleft and topright boundaries if the skeleton is 
+  not square.
+
+* Fixed the C3v tensor widget and parameter, which were just wrong.
+  Fixed the diagram for the D3 tensor in the manual.
+
+* Added some clarifying output to the regression test suite -- 
+  tests now print out their identity when they run.
+
+* Fixed a typo that was truncating the physical dimensions of images
+  to integers.  This was especially bad for images with sizes less
+  than one.
+
+OOF2 2.0.beta 8
+
+* Improved the mesh data viewer window.  It now updates its options
+  as Fields and Equations are modified, and always displays data for
+  the topmost Mesh in its associated graphics window.  The position of
+  the queried point can be changed by entering x and y values
+  explicitly, as well as by clicking on the graphics window.
+
+* Fixed long standing zooming bugs.  Toggling the antialiased canvas
+  no longer slides the image off the screen, and focussed zooming
+  (shift-click and control-click in the Viewer Toolbox) works
+  properly.
+
+* The arrows on the scroll bars for the canvas in the graphics window
+  now work properly.
+
+* Added a command for selecting all Skeleton Elements with a given
+  Material, or with no Material at all.
+
+* Added an "UndoBuffer Size" menu to the Settings menu, to choose how
+  many previous versions of various objects should be kept lying
+  around.
+
+* Filled and plain contour displays respect the "Hide Empty Mesh
+  Elements" setting.
+
+* Fixed a bug in the filled-contour display that would incorrectly use
+  the element-selection fill color for some elements for which all the 
+  values are above the highest selected contour.
+
+* 'True' and 'False' are allowed as variable values in ascii data
+  files.
+
+* Fixed a bug that could cause crashes or convergence failures when
+  elements had no assigned material.
+
+* Skeleton element homogeneity calculations are faster by a factor of
+  two or so.  Many Skeleton modifications are faster as a result.
+
+* Stiffness matrix calculation is faster by a factor of two or three.
+
+* Changed the behavior of "python setup.py clean".  It no longer
+  removes the swig output files unless --swig is specified.
+
+* Fixed scriptloader.py so that it doesn't raise a SyntaxError on
+  unindented lines immediately after indented blocks in scripts.
+
+* Added "Hide Empty Mesh Elements" to the graphics window's Settings
+  menu.
+
+OOF2 2.0.b7
+
+* Made it impossible to try to use plane flux equations to satisfy
+  boundary conditions.
+
+* Added an 'alpha' parameter to the Skeleton refinement command.  It's
+  used to evaluate the effective element energies and to make the best
+  choice when there's more than one way of subdividing an element.
+
+* Changed the name of the 'selectable' parameter in the pixel
+  selection toolbox commands to 'source'.  Changed 'selectable' in all
+  other pixel selection commands to 'microstructure'.  (The toolbox
+  commands work on both Images and Microstructures.)
+
+* Fixed a bug in which loading a named Property from a data file
+  overwrote the parameters for the corresponding unnamed Property.
+
+* Fixed several sensitization errors in the Analyze page.
+
+* Fixed output.getOutput so that a partial path in one OutputTree (eg,
+  'Strain' in scalarOutputs) doesn't hide a full path in another (eg,
+  'Strain' in aggregateOutputs).
+
+* Commented out the constructors for the superparametric element 
+  classes.  These are useless, since there's no sensible way of 
+  placing intermediate mapping nodes, or of drawing the result.
+
+* It's now impossible to try to copy or delete a deleted layer in the
+  LayerEditor.  Edited layers are now selected automatically in the
+  LayerEditor's list.
+
+* Made the CG solver the default for symmetric stiffness matrices.
+  Changed the order of the preconditioners so the deprecated block
+  preconditioner is no longer the default.
+
+* Fixed a memory leak in some Field output routines.
+
+* Fixed an indexing error that caused errors in the ILU or IC 
+  preconditioners for plane-stress isotropic elasticity problems. 
+  The previous workaround was to use the block preconditioner, but 
+  the ILU or IC preconditioners should now be usable directly.
+
+* Changed the circumstances under which the pixel selection layer will be
+  displayed automatically in a graphics window -- previously it would
+  display when the layer list included any object from which a microstructure
+  could be deduced.  Now, it will only show up if there is a microstructure
+  or an image in the graphics window.  This gives it the same behavior
+  as the pixel selection toolbox.  
+
+* Changed the "save image" function of the graphics window "File" menu
+  to generate PDFs instead of PostScript, because PDF has better support
+  for transparency.
+
+* Fixed a bug that confused the microstructure material display if a
+  postscript or pdf file was saved.
+
+* Fixed a bug when saving rank 2 and rank 3 tensors in binary data files.
+
+* Removed the z-component of the ForceDensity Property.
+
+* Fixed a bug in the matrix widgets used for parametrizing properties
+  with symmetry-constrainted matrix parameters.  Invalid inputs in these
+  widgets could throw an exception inside a GTK event callback, which 
+  would crash the application. 
+
+* Split the monolithic oofcppcmodule.so library into four separate
+  shared libraries and a whole bunch of python extension modules.
+  This allows oof2 to be loaded in a modular fashion (omitting the
+  GUI, for example), and will allow extensions to be added without
+  rebuilding the main program.  The new library configuation is only
+  available in the distutils version. The "configure and make" version
+  doesn't work anymore.
+
+* Changed the PinNodes toolbox to provide a "skeleton" argument to its
+  menu items, so that these will make sense in scripts.  This is an API
+  change that will break older scripts which used submenu items below
+  OOF.Graphics_n.Toolbox.Pin_Nodes.
+
+* Improved the performance of SnapNodes by at least 25%
+  by keeping track of moved nodes and use them to accelerate associated
+  movers -- there are other minor contributing factors.
+
+* Fixed a problem which caused skeletons loaded from data files to 
+  show incorrect homogeneity indices on the skeleton page.  Also 
+  made the Skeleton Selection page's groups widget update correctly.
+
+* Fixed a deadlock.  Showing and hiding a contour map too rapidly
+  could make the program hang.
+
+OOF2 2.0.b6
+
+* Moved the image-save menu item from OOF.Image.Save to OOF.File.Save.Image,
+  for consistency with the other who objects.  
+
+* Changed the way the matrix symmetrization is done, making it independent
+  of the order in which equations are defined.  This makes the 
+  preconditioners work more reliably.
+
+* Fixed a bug that made it impossible to copy pixel groups.
+
+* Switched gui libraries from gtk+1.2 to gtk+2.6.
+
+* Added a "Settings" menu to the main window, and put a "Fonts" submenu
+  in it.  Fonts/Widgets command changes the font used in the GUI, and
+  Fonts/Fixed changes the font used in the Message window and other
+  text displays.
+
+* Added a "Theme" command to the Settings menu, allowing Gnome gui
+  skins to be used.
+
+* If the file ".oof2rc" exists in the user's home directory, the OOF2
+  menu commands in it will be processed at the start of every OOF2
+  session. 
+
+* Fixed a sign error in the flux output calculation that was causing
+  incorrect results for fluxes with offset values, such as stress when
+  the thermal expansion property has a non-zero T0.
+
+* Fixed a bug that could cause crashes when switching between contour
+  plots with vastly different ranges of values.
+
+OOF2 2.0.b5.1
+
+* Updated the tutorials to reflect the changes in b5.
+
+OOF2 2.0.b5
+
+* Changed the arguments to the New Mesh command.
+
+* Reorganized and rationalized the Property hierarchy.
+
+* Mesh elements with no assigned Material aren't drawn in the graphics
+  window.  Skeleton elements still are drawn, though, even with if
+  they have no Material.
+
+* Removed the Perimeter display method for Meshes.  It wasn't
+  working.  If anyone needs it, let us know.
+
+* Fixed a sign error that was causing thermal expansion with a
+  non-zero T0 to fail.
+
+* During execution, a Python log is now stored in a temporary file,
+  and is removed if the program exits properly, but is available for
+  examination if the program aborts.
+
+* Added a check to the solver to detect equations for which no
+  material contributes to their flux.  
+ 
+* Fixed a bug in the saving and reading of field initializers in
+  binary data files.
+
+* Fixed a bug in calculating the effective energy of quadrilateral
+  elements.  Quads were much too susceptible to deformation.
+
+* Fixed an iterator bug in the SparseLinkMatrix which caused the
+  finite-element A matrix to be extracted incorrectly when there
+  were empty rows in the master stiffness matrix.
+
+* Fixed a bug in the element-finding code which was causing infinite
+  loops in the element-selection process of the skeleton info toolbox.
+
+* Implemented a new algorithm for computing the area-fractions of 
+  the pixel categories in skeleton elements.  This algorithm tracks
+  the edges of the pixel categories, and is 3-10x faster than the 
+  old algorithm.
+
+* Fixed a bug in copying skeletons, the boundary book-keeping was
+  done incorrectly, causing an error if a later attempt was made to
+  delete a boundary.
+
+* Made copying the field or equation state from a mesh to itself a
+  no-op.  It used to cause a deadlock.
+
+* Fixed a bug that could raise an exception when selecting a node in
+  "keyboard" mode in the Move Node toolbox.
+
+* Changed the arguments of the SelectNode call in the MoveNode
+  toolbox, so that it takes a Point instead of x and y.  Ditto for the
+  Skeleton Info toolbox commands, QueryElement, QueryNode, and
+  QuerySegment, and the Mesh Info toolbox commands, QueryElement and
+  QueryNode.   Ditto for the Pin Nodes toolbox commands, Pin, UnPin,
+  and TogglePin.
+
+* Allowed the FluxProfileSet parameter for Neumann boundary conditions
+  to be abbreviated in scripts.  It's now possible to say
+  profile=[profile1,profile2] instead of
+  profile=FluxProfileSet([profile1,profile2]).
+
+* The "Meshable" button in the Microstructure page is now set properly
+  when the selected group changes.
+
+* Meshes are now automatically displayed, like Skeletons.
+
+* Fixed a bug introduced in 2.0.b4 that prevented Materials from being
+  saved.
+
+* Cancelling the "Save Profile" dialog doesn't cause an error anymore.
+
+* Fixed and simplified the Viewer toolbox.
+
+* Fixed a bug that was making modified Images lose their names.
+
+* Fixed a bug that was preventing the Repeat button in the Selection
+  toolboxes from working properly, sometimes.  The "Repeat" button in
+  the toolboxes now desensitizes properly if the mouse coord fields
+  are incomplete or incorrect.
+
+* Opening a Mesh Data Viewer when no Fields are defined no longer
+  crashes the program.
+
+OOF2 2.0.b4
+
+* Added a display method that colors skeleton elements according to
+  their effective energy.
+
+* Fixed a bug in which the Rationalize skeleton modifier sometimes
+  destroyed skeleton edge boundaries.
+
+* Fixed a bug in the destruction of Skeletons when the undo buffer
+  filled up.
+
+* Fixed a bug in which the selected Skeleton boundary would disappear
+  from the display when its display parameters were edited.
+
+* Added the Coulomb equation, electric fields, and piezoelectric couplings
+  for all the crystallographic point groups.
+
+* Changed the 'skelname' parameter in all PinNodes operations to
+  'skeleton'.
+
+* Improved the 'FixIllegal' Skeleton modifier.
+
+* Fixed menu sensitization errors.  The Layer/Edit menu item was
+  sensitive even when no layer was selected.  The File/Save menu items
+  were sensitive if there was nothing to save.
+
+* Fixed a bug in the node-hashing code which prevented node selections
+  from working on sparse high-aspect-ratio skeletons.
+
+* Added a "Pin Nodes" page to accomodate pinning processes that
+  don't need mouse clicks. Also, changed tutorial to reflect this.
+
+* Made it impossible to delete predefined Properties.
+
+* Added clean-up code to the Mesh Cross-Section widget.  This fixes
+  a bug where GTK errors would arise after this widget had been 
+  deselected on the analysis page.
+
+* Put widgets for the DirectOutput parameters "comment character" and
+  "separator" in the Mesh Cross-Section toolbox.
+
+* Fixed the broken "Prev" and "Next" buttons.  They worked in 2.0.b2
+  but not in 2.0.b3.
+
+* Fixed signalling problems in the skeleton and movenode tutorials.
+  The "Next" button wasn't sensitizing correctly for many tutorial pages.
+
+* Added a skeleton modifier, called Relax, that uses the local measure 
+  of inhomogeneity and shape quality to improve the mesh. The
+  modifier creates a finite element mesh and minimizes an energy functional,
+  analogous to the one of an elastic-plastic solid.
+
+* Added a Newton-Raphson solver.
+
+* Added a mechanism to make the stiffness matrix symmetric, if
+  possible. The mesh status window in the solver page reports the
+  symmetry status of the mesh.
+
+* Fixed a bug in the labelled slider widgets which could cause them to
+  reject typed in values.
+
+* Eliminated the spurious warnings about uncallable objects at shut
+  down time.
+
+OOF2 2.0.b3
+
+* Fixed boundary intersection checking, and the reset function for
+  unpromoting promoted floating boundary conditions.  These were
+  resulting in spurious reports of boundary condition collisions.
+
+* Fixed a bug in the post-script output for saved images -- selections
+  were being drawn incorrectly for non-square images.
+
+* Simplified the names of the Property classes
+  (Elasticity:Anisotropic:CubicElasticity is now
+  Elasticity:Anisotropic:Cubic).  Added symmetries for thermal
+  expansion and thermal conductivity.  Changed the display of
+  Properties in the Materials window so that the full names are shown.
+
+* The OOF.Mesh.Boundary_Conditions.New menu has been replaced with an
+  OOF.Mesh.Boundary_Conditions.New command.  The old submenus
+  (Dirichlet, Neumann, etc) are now arguments to the New
+  command. Similar changes were made to the OOF.Mesh.Profiles.New
+  menu.  This is more in line with the way other commands work.
+
+* Simple representations of functions (eg boundary condition profiles)
+  are now allowed in scripts.  Instead of
+  "function=XYStrFunction('x+y')" it's now possible to use
+  "function='x+y'".  Doing this requires that *all* arguments used in
+  scripts are keyword arguments, so 'Gray(0.8)' is now
+  "Gray(value=0.8)".
+
+* Fixed a sensitization error in dialog boxes with function parameters.
+
+* Two Pixel Groups cannot have the same names in a Microstructure --
+  it was possible before, because we thought it would be fun! Not any
+  more.
+
+* Pixel selection and material assignment operations now all respect
+  the active area, if appropriate.
+
+* The pixel selection modifier 'Intersect Group' now works correctly.
+
+* Upon creating simple skeleton, elements' homogeneity is automatically
+  set to be 1.0.
+
+* When finding transition points for Snap Nodes, homogeneity of the element
+  is always checked beforehand -- Purely homogeneous elements will not be
+  looked at.
+
+* Added an extra margin around postscript output, so rounding
+  errors in the bounding box or clipping path don't cause a loss
+  of data.
+
+* Starting oof2 in the background ("% oof2 &") works in GUI mode.
+
+* Simplified the Mesh Cross Section toolbox and display somewhat, by
+  removing the Autodisplay button and adding a '<None>' entry in the
+  cross section list.
+
+* Attempting to move Skeleton nodes when no Skeleton is displayed
+  doesn't generate errors anymore.
+
+* Boundary creation and removal operations which take place in 
+  skeletons are now propagated to meshes created from that skeleton.
+
+* Boundary modification now actually works for skeletons which 
+  differ from their parents only by node moves, and these boundary
+  modifications are propagated to the meshes.
+
+* Added a "--with-lapack=-l<custom lapack>" argument to the configuration
+  script.
+
+* Moved field and flux display out of the Mesh Info toolbox and into a
+  separate data viewer window.  It can display more values and is a
+  better use of real estate.
+
+* Data files saved in the "script" format load correctly.
+
+* Skeleton groups (of nodes, segments, and elements) are stored in
+  data files.
+
+* Fixed a divide by zero error that could arise when selecting nodes
+  in a Skeleton with an unfortunate choice of dimensions.
+
+* Selecting "actual" for the the "where" parameter in Mesh displays
+  works even if the displacement field isn't defined on the Mesh.
+
+* Require that progress bar delay time be an integer number of
+  milliseconds.
+
+* Made the graphics windows (more) thread safe.
+
+* Boundary construction is now context-sensitive, the GUI does not present
+  disallowed "Directors" (i.e. you can't pick left-to-right if your 
+  segments form a loop).
+
+* Stiffness matrix reconstruction is now skipped if it's not required
+  by changes in the status of the mesh.  Nonlinear materials which require
+  a new stiffness matrix even when nothing else has changed must register
+  themselves with "nonlinear=1" to cause the matrix to be rebuilt.
+
+* Fixed the tutorial bug which would sometimes enable the "Next" button
+  when the last entry was displayed.
+
+* Fixed a bug in the stopping criterion for iterative skeleton modifiers.
+
+* Fixed a bug in which using the window manager's close button
+  (instead of the window's "Cancel" button) to close a file selection
+  window could lead to a crash.
+
+* Completely reworked the Analysis page in the main OOF2 window.
+
+OOF2 2.0.b2
+
+* Used a common scheme for all parameter names.
+
+OOF2 2.0.b1
+
+* "Initial" release, which was put on the web site prematurely for a
+   few hours, so we called the next "initial" release b2 just in case
+   someone had managed to download b1.

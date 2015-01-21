@@ -1,0 +1,709 @@
+# -*- python -*-
+# $RCSfile: cskeleton2.spy,v $
+# $Revision: 1.1.4.74 $
+# $Author: langer $
+# $Date: 2014/12/02 21:52:39 $
+
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.SWIG.common import progress
+from ooflib.SWIG.engine import cskeletonselectable
+from ooflib.SWIG.engine import cskeletonnode2
+from ooflib.SWIG.engine import cskeletongroups
+from ooflib.SWIG.engine import element
+from ooflib.SWIG.engine import femesh
+from ooflib.common import debug
+from ooflib.common import enum
+from ooflib.common import microstructure
+from ooflib.common import utils
+from ooflib.common import registeredclass
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.common.IO import reporter
+from ooflib.engine import skeletoncontext
+import sys
+
+# We needed to do this so that printing a deputy doesn't invoke getting
+# the sheriff (because __getattr__ was redefined). It's useful for
+# debugging.  TODO 3.1: Check if this is still needed.
+CSkeletonPtr.__str__ = CSkeletonPtr.__repr__
+CDeputySkeletonPtr.__str__ = CDeputySkeletonPtr.__repr__
+
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+def _CSkeleton_newSelectionTracker(self, selectionset):
+    tracker = cskeletonselectable.CSelectionTracker()
+    return tracker
+
+CSkeletonPtr.newSelectionTracker = _CSkeleton_newSelectionTracker
+
+def _CSkeleton_newPinnedNodeTracker(self):
+    tracker = cskeletonnode2.CPinnedNodeTracker(self)
+    return tracker
+
+CSkeletonPtr.newPinnedNodeTracker = _CSkeleton_newPinnedNodeTracker
+
+def _CSkeleton_newGroupTracker(self, groupset):
+    # CDeputySkeleton does this differently
+    return cskeletongroups.CGroupTracker()
+
+CSkeletonPtr.newGroupTracker = _CSkeleton_newGroupTracker
+
+# convenience function only used in python. TODO OPT: should this be a
+# swigged function?
+def _CSkeleton_notPinnedNodes(self):
+    return [self.getNode(nidx) for nidx in range(self.nnodes())
+            if not self.getNode(nidx).pinned()]
+
+CSkeletonPtr.notPinnedNodes = _CSkeleton_notPinnedNodes
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# We need to override the hash and comparison members so that the
+# skeletons can be used as keys in a weak key dictionary.
+def _CSkeleton___hash__(self):
+    return self.getUid()
+
+CSkeletonPtr.__hash__ =  _CSkeleton___hash__
+
+def _CSkeleton___eq__(self, other):
+    if isinstance(other, CSkeletonPtr) and other.getUid() == self.getUid():
+        return 1
+    return 0
+
+CSkeletonPtr.__eq__ = _CSkeleton___eq__
+
+def _CSkeleton___ne__(self, other):
+    return not self.__eq__(other)
+
+CSkeletonPtr.__ne__ = _CSkeleton___ne__
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+def _CSkeleton_quick_sanity_check(self):
+    ## TODO OPT: Move this to C++.
+    # Just check for illegal elements and consistent volume.  For
+    # a more thorough check, see sanity_check(), below.
+    sane = True
+    volume = 0.
+    for i in range(self.nelements()): 
+        volume += self.getElement(i).volume()
+        if self.getElement(i).illegal():
+            reporter.report("illegal element", self.getElement(i).getUid())
+            sane = False
+    reporter.report("Total element volume is", volume)
+    reporter.report("Microstructure volume is", self.volume())
+    if sane:
+        reporter.report("*** Skeleton quick sanity check passed. ***")
+    else:
+        reporter.report("*** Skeleton quick sanity check failed. ***")
+    return sane
+
+CSkeletonBasePtr.quick_sanity_check =  _CSkeleton_quick_sanity_check;
+
+
+def _CSkeleton_sanity_check_old(self):
+    ## TODO: Remove this if the C++ version is faster...
+    sane = True
+    prog = progress.getProgress("Full Sanity Check", progress.DEFINITE)
+    try:
+        for i in range(self.nelements()):
+            element = self.getElement(i)
+            if element.illegal():
+                reporter.report("illegal element", element.getUid(),
+                                [n.position() for n in element.getNodes()])
+                sane = False
+            nodes = element.getNodes()
+            for node in nodes:
+                if not self.hasNode(node):
+                    reporter.report("element", element.getUid(),
+                                    "contains a node",
+                                    node.getUid(), "not in the skeleton")
+                    sane = False
+                if element not in node.getElements():
+                    reporter.report("inconsistent neighborNodes for node",
+                                    node.getUid(), " and element",
+                                    element.getUid())
+                    sane = False
+                    return sane
+            for node1, node2 in utils.unique_pairs(nodes):
+                # TODO 3.1: This assumes that all elements are
+                # tetrahedral!  This check really should be done by a
+                # CSkeletonElement virtual function.
+                if not self.doesSegmentExist(node1, node2):
+                    reporter.report("Skeleton segment is missing for nodes",
+                                    node1.getUid(), "and", node2.getUid(),
+                                    "of element", elemetn.getUid())
+                    sane = False
+                    return sane
+            prog.setMessage("Checking %d/%d Elements" % (i, self.nelements()))
+            prog.setFraction(float(i)/self.nelements())
+
+        for i in range(self.nnodes()):
+            node = self.getNode(i)
+            elements = node.getElements()
+            for element in elements:
+                if not self.hasElement(element):
+                    reporter.report("node", node.getUid(), 
+                                    "contains an element",
+                                    element.getUid(), "not in the skeleton")
+                    sane = False
+            if not elements:
+                reporter.report("Node", node.getUid(), "at", node.position(),
+                                "has no elements!")
+                sane = False
+            # Check that nodes on periodic boundaries have partners
+    #         x = node.position().x
+    #         y = node.position().y
+    #         xmax = self.MS.size().x
+    #         ymax = self.MS.size().y
+    #         if self.x_periodicity and (x == 0.0 or x == xmax):
+    #             p = node.getDirectedPartner('x')
+    #             if not p or ((x == 0.0 and p.position().x != xmax) or
+    #                          (x ==  xmax and p.position().x != 0.0)):
+    #                 reporter.report(node.__class__.__name__, node.index(),
+    #                                 "at", node.position(),
+    #                                 "has no periodic partner in x")
+    #                 reporter.report("   partners are at",
+    #                                 [(ptnr.position(), ptnr.index())
+    #                                  for ptnr in node.getPartners()])
+    #                 sane = False
+    #         if self.y_periodicity and (y == 0.0 or y == ymax):
+    #             p = node.getDirectedPartner('y')
+    #             if not p or ((y == 0.0 and p.position().y != ymax) or
+    #                          (y == ymax and p.position().y != 0.0)):
+    #                 reporter.report(node.__class__.__name__, node.index(),
+    #                                 "at", node.position(),
+    #                                 "has no periodic partner in y")
+    #                 reporter.report("   partners are at",
+    #                                 [(ptnr.position(), ptnr.index())
+    #                                  for ptnr in node.getPartners()])
+    #                 reporter.report([ptnr.position()-primitives.Point(x, ymax)
+    #                                  for ptnr in node.getPartners()])
+    #                 sane = False
+    #         # Check self consistency of partner lists
+    #         for partner in node.getPartners():
+    #             if node not in partner.getPartners():
+    #                 reporter.report("Inconsistent partner lists for",
+    #                                 node.__class__.__name__, node.index(),
+    #                                 "at", node.position(), "and",
+    #                                 partner.__class__.__name__, partner.index(),
+    #                                 "at", partner.position())
+
+    #                 sane = False
+            prog.setMessage("Checking %d/%d Nodes" % (i, self.nnodes()))
+            prog.setFraction(float(i)/self.nnodes())
+
+        for i, segment in enumerate(self.getSegments()):
+            for node in segment.getNodes():
+                if not self.hasNode(node):
+                    reporter.report("segment",
+                                    [n.getUid() for n in segment.getNodes()], 
+                                    "contains a node", node.index(),
+                                    "not in the skeleton")
+                    sane = False
+            prog.setMessage("Checking %d/%d Segments" % (i, self.nsegments()))
+            prog.setFraction(float(i)/self.nsegments())
+
+        for i, face in enumerate(self.getFaces()):
+            i += 1
+            nodes = face.getNodes()
+            for node in nodes:
+                if not self.hasNode(node):
+                    reporter.report("face",
+                                    [n.getUid() for n in nodes], 
+                                    "contains a node", node.getUid(),
+                                    "not in the skeleton")
+                    sane = False
+            elements = self.getFaceElements(face)
+            if not (len(elements)==2 or
+                    (len(elements)==1 and self.onOuterFace(nodes))):
+                reporter.report("face uid", face.getUid(),
+                                "has the wrong number of elements")
+                reporter.report("  elements uids:", 
+                                [element.getUid() for element in elements])
+                reporter.report( "  element generators:",
+                                 [element.get_function()
+                                  for element in elements])
+                reporter.report("  parents:",
+                                [element.last_parent().getUid()
+                                 for element in elements 
+                                 if element.last_parent() != None])
+                reporter.report("  nodes", [(node.getUid(), node.position())
+                                for node in nodes])
+                # print "node elements:"
+                # for node in nodes:
+                #     print [element.getUid() for element in node.getElements()]
+                sane = False
+                return sane
+            prog.setMessage("Checking %d/%d Faces" % (i, self.nfaces()))
+            prog.setFraction(float(i)/self.nfaces())
+    
+    finally:
+        prog.finish()
+    return sane
+
+CSkeletonBasePtr.sanity_check_old =  _CSkeleton_sanity_check_old;
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+def _CSkeleton_mapBoundary(self, bdy, skeleton, **kwargs):
+    # double dispatch wrapper for SkelContextBoundary.map().
+    
+    # Copy boundary information from the given skeleton to this
+    # skeleton.  The given skeleton might be a deputy, which
+    # doesn't have any boundary information, so actually copy from
+    # the deputy's sheriff.
+    
+    # mapBoundary is a no-op in the DeputySkeleton class, so we
+    # don't have to worry about copying boundary data *to* a
+    # deputy.  However, if the given source skeleton is a deputy,
+    # there's a chance that this skeleton is its sheriff, in which
+    # case we don't actually have to copy anything.
+    omar = skeleton.sheriffSkeleton()
+    if omar is not self.sheriffSkeleton():
+        bdy.map(omar, self, **kwargs)
+
+CSkeletonPtr.mapBoundary = _CSkeleton_mapBoundary
+
+
+def _CDeputySkeleton_mapBoundary(self, bdy, skeleton, **kwargs):
+    pass
+
+CDeputySkeletonPtr.mapBoundary = _CDeputySkeleton_mapBoundary
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+def orderedNodeIndexPair(a, b):
+    # Used to ensure that linear elements on edge boundaries aren't
+    # duplicated.
+    if a <= b:
+        return (a, b)
+    return (b, a)
+
+# TODO OPT: Move big loops to C++.
+
+def _CSkeletonBase_femesh(self, edict, material=None):
+    # edict is created in newMesh() in IO/meshmenu.py.  It's a
+    # dictionary of MasterElements keyed by ElementShape names.
+    order = edict.values()[0].fun_order()
+    realmesh = femesh.FEMesh(self.getMicrostructure(), order)
+
+    # this adds the nodes and elements
+    self.populate_femesh(realmesh, material)
+
+    # PointBoundaries
+    pointboundaries = self.getPointBoundaries()
+    prog_size = len(pointboundaries)
+    prog_index = 0
+    for bdkey, pointbndy in pointboundaries.items():
+        realbndy = realmesh.newPointBoundary(bdkey)
+        nodes = pointbndy.getNodes()
+        for node in nodes:
+            ## TODO 3.1: SPLIT NODES Skeleton and mesh node indices won't
+            ## match when we have split nodes, and we'll also have to
+            ## worry about which part of a split node is on the
+            ## boundary.
+            realbndy.addNode(realmesh.getNode(node.getIndex()))
+
+#             if pbar.query_stop() !=0 \
+#                    or pbar.get_success() is progressbar.FAILED:
+#                 pbar.set_failure()
+#                 pbar.set_progress(1)
+#                 pbar.set_message("Interrupted")
+#                 return
+#             else:
+#                 pbar.set_progress(1.0*(prog_index+1)/prog_size)
+#                 pbar.set_message("Allocating point boundaries: %d/%d"%(prog_index+1, prog_size))
+        prog_index +=1
+
+    # EdgeBoundaries
+    edgeboundaries = self.getEdgeBoundaries()
+    prog_size = len(edgeboundaries)
+    prog_index = 0
+    edgeelements = {}
+    try:
+        master1D = edict["Line"]
+    except KeyError:
+        pass
+    else:
+        for bdkey, edgebndy in edgeboundaries.items():
+            realedgebndy = realmesh.newEdgeBoundary(bdkey)
+            segs = edgebndy.getOrientedSegments()
+            for seg in segs:
+                ## # Look up the corresponding element from the skeleton.
+                ## skelel = self.getOrientedSegmentElement(seg)
+                ## tempnodes = skelel.getNodes()
+
+                ## TODO 3.1: SPLIT NODES Skeleton and mesh node indices
+                ## won't match when we have split nodes, and we'll
+                ## also have to worry about which part of a split node
+                ## is on the boundary.
+                n0idx = seg.getNode(0).getIndex()
+                n1idx = seg.getNode(1).getIndex()
+                # See if an edge connecting these nodes has already
+                # been created.
+                try:
+                    key = orderedNodeIndexPair(n0idx, n1idx)
+                    edge = edgeelements[key]
+                    reverse = (key != (n0idx, n1idx))
+                except KeyError:
+                    # Create a new 1D Element.  The first None arg is
+                    # the CSkeletonElement, and the second is the
+                    # Material, neither of which exist for elements
+                    # that are created just for imposing boundary
+                    # conditions.
+                    ## TODO 3.1: Allow interface materials to be assigned
+                    ## to boundaries, and pass them in here.
+
+                    # This relies on index agreement between Skeletons
+                    # and Meshes, which is guaranteed by
+                    # CSkeleton::populate_femesh().
+                    realn0 = realmesh.getNode(n0idx)
+                    realn1 = realmesh.getNode(n1idx)
+                    # Find the bulk elements that this edge is part of.
+                    skelels = self.getSegmentElements(seg.get_segment())
+                    meshels = [realmesh.getElement(el.getIndex())
+                               for el in skelels]
+                    
+                    edge = master1D.buildEdgeBoundary([realn0, realn1])
+                    ## TODO 3.1: add meshels?  Do mesh edges need to
+                    ## know their neighboring bulk elements?  It would
+                    ## add a lot of data and is probably unnecessary.
+
+                    edgeelements[key] = edge
+                    reverse = False
+                    realmesh.addInterfaceElement(edge)
+
+                realedgebndy.addEdge(edge, reverse)
+
+
+
+    #             if pbar.query_stop() !=0 \
+    #                    or pbar.get_success() is progressbar.FAILED:
+    #                 pbar.set_failure()
+    #                 pbar.set_progress(1)
+    #                 pbar.set_message("Interrupted")
+    #                 return
+    #             else:
+    #                 pbar.set_progress(1.0*(prog_index+1)/prog_size)
+    #                 pbar.set_message("Allocating edge boundaries: %d/%d"%(prog_index+1, prog_size))
+            prog_index +=1
+        # end loop over edgeboundaries
+    # end try/except/else for master1D
+
+    # Face Boundaries
+    faceboundaries = self.getFaceBoundaries()
+    prog_size = len(faceboundaries)
+    prog_index = 0
+    masters = {}
+    faceelements = {}
+    try:
+        masters[3] = edict["Triangle"]
+    except KeyError:
+        pass
+    try:
+        masters[4] = edict["Quadrilateral"]
+    except:
+        pass
+    for bdykey, facebndy in faceboundaries.items():
+        realfacebndy = realmesh.newFaceBoundary(bdykey)
+        faces = facebndy.getFaces() # OrientedCSkeletonFaceSet
+        for face in faces:
+            nnodes = face.nnodes()
+            nodeIndices = [face.getNode(i).getIndex() for i in range(nnodes)]
+            
+            # Look for a face that has already been created using
+            # these nodes, or a cyclic permutation of them, or a
+            # reversed cyclic permutation.  Start by creating the
+            # permutation that has the lowest index first.  It is the
+            # key in the faceelements dict, which contains the
+            # existing elements.
+            lowest = min(nodeIndices)
+            which = nodeIndices.index(lowest)
+            key = tuple(nodeIndices[which:] + nodeIndices[:which]) # cyclic
+            try:
+                elem = faceelements[key]
+                reverse = False
+            except KeyError:
+                # Look for an element with the reversed sequence of
+                # nodes.
+                rkey = list(key)
+                rkey.reverse()
+                # The lowest node index is now last.  Fix that with a
+                # cyclic permutation.
+                rkey = tuple(rkey[-1:] + rkey[:-1])
+                try:
+                    elem = faceelements[rkey]
+                    reverse = True
+                except KeyError:
+                    # No element was found.  Create one.
+                    master = masters[nnodes]
+                    # This relies on index agreement between Skeletons
+                    # and Meshes, which is guaranteed by
+                    # CSkeleton::populate_femesh().
+                    ## TODO 3.1: SPLIT NODES Skeleton and mesh node indices
+                    ## won't match when we have split nodes, and we'll
+                    ## also have to worry about which part of a split node
+                    ## is on the boundary.
+                    realnodes = [realmesh.getNode(idx) for idx in nodeIndices]
+                    elem = master.buildFaceBoundary(realnodes)
+                                
+                    # Find the bulk elements that the face is part of.
+                    skelels = self.getFaceElements(face.get_face())
+                    meshels = [realmesh.getElement(el.getIndex())
+                               for el in skelels]
+                    assert len(meshels) <= 2
+                    # Figure out which of the bulk elements is in the
+                    # front and which is in the back.  "Front" means
+                    # that the bulk element is on the side of the face
+                    # element in the direction of the normal to the
+                    # face.
+                    mastercenter = elem.center()
+                    facecenter = elem.from_master(mastercenter)
+                    normal = element.findNormal(elem, mastercenter)
+                    for bulkel in meshels:
+                        bulkcenter = bulkel.from_master(bulkel.center())
+                        if normal.dot(bulkcenter-facecenter) > 0:
+                            elem.setFrontBulk(bulkel)
+                        else:
+                            elem.setBackBulk(bulkel)
+                    reverse = False
+                    faceelements[key] = elem
+                    realmesh.addInterfaceElement(elem)
+
+            realfacebndy.addFace(elem, reverse)
+        prog_index += 1
+        # end loop over faces
+    # end loop over faceboundaries
+        
+
+    realmesh.skeleton = self
+    return realmesh
+
+CSkeletonBasePtr.femesh = _CSkeletonBase_femesh
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# def _CSkeletonBase_pushBoundaryToMesh(self, meshctxt, bdyname):
+#     pointboundaries = self.getPointBoundaries()
+#     if bdyname in pointboundaries:
+#         meshctxt.replacePointBoundary(bdyname, pointboundaries[bdyname])
+#         return
+#     edgeboundaries = self.getEdgeBoundaries()
+#     if bdyname in edgeboundaries:
+#         meshctxt.replaceEdgeBoundary(bdyname, edgeboundaries[bdyname])
+#         return
+#     faceboundaries = self.getFaceBoundaries()
+#     if bdyname in faceboundaries:
+#         meshctxt.replaceFaceBoundary(bdyname, faceboundaries[bdyname])
+
+# CSkeletonBasePtr.pushBoundaryToMesh = _CSkeletonBase_pushBoundaryToMesh
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Deputies 
+
+def _CDeputySkeleton_newSelectionTracker(self, selectionset):
+    return cskeletonselectable.DeputySelectionTracker(
+        selectionset.getTracker(self.sheriffSkeleton()))
+
+CDeputySkeletonPtr.newSelectionTracker = _CDeputySkeleton_newSelectionTracker
+
+def _CDeputySkeleton_newGroupTracker(self,groupset):
+    return cskeletongroups.DeputyGroupTracker(
+        groupset.getTracker(self.sheriffSkeleton()))
+
+CDeputySkeletonPtr.newGroupTracker = _CDeputySkeleton_newGroupTracker
+
+def _CDeputySkeleton_newPinnedNodeTracker(self):
+    tracker = cskeletonnode2.CDeputyPinnedNodeTracker(self)
+    # tracker.thisown = 1
+    return tracker
+
+CDeputySkeletonPtr.newPinnedNodeTracker = _CDeputySkeleton_newPinnedNodeTracker
+
+
+CDeputySkeletonPtr.__hash__ =  _CSkeleton___hash__
+
+def _CDeputySkeleton___eq__(self, other):
+    if isinstance(other, CDeputySkeletonPtr) and other.this == self.this:
+        return 1
+    return 0
+
+CDeputySkeletonPtr.__eq__ = _CDeputySkeleton___eq__
+
+def _CDeputySkeleton___ne__(self, other):
+    return not self.__eq__(other)
+
+CDeputySkeletonPtr.__ne__ = _CDeputySkeleton___ne__
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Skeleton creation routines
+
+def newEmptySkeleton(name, msname, x_periodicity=False,
+             y_periodicity=False, z_periodicity=False):
+    mscontext = microstructure.microStructures[msname]
+    ms = mscontext.getObject()
+    skel = newCSkeleton(ms, (x_periodicity, y_periodicity, z_periodicity))
+    skeletoncontext.skeletonContexts.add([msname, name], skel, parent=mscontext)
+    return skel
+
+# skeleton_geometry is an object of type SkeletonGeometry, defined below.
+def initialSkeleton(name, ms, nx, ny, nz, skeleton_geometry):
+    skel = skeleton_geometry(nx, ny, nz, ms)
+    if skel is not None:
+        mscontext = microstructure.microStructures[ms.name()]
+        skeletoncontext.skeletonContexts.add([ms.name(), name],
+                                             skel, parent=mscontext)
+    return skel
+
+# Create pixel-to-element skeleton. Thus, homogeneity of all elements will
+# be set to "1".
+def simpleSkeleton(name, ms, nx, ny, nz, skeleton_geometry):
+    skel = skeleton_geometry(nx, ny, nz, ms, preset_homog=True)
+    mscontext = microstructure.microStructures[ms.name()]
+    skeletoncontext.skeletonContexts.add([ms.name(), name], skel,
+                                         parent=mscontext)
+    return skel
+
+# Tetrahedron arrangements for the initial Skeleton.  The members of
+# this class must correspond to members of the C++ TetArrangement
+# enum, which is defined in cskeleton2.h.  The correspondence is
+# defined in the TetArrangement* typemap in cskeleton2.swg.
+## TODO 3.1: This is ugly. Somehow make the Python and C++ enums agree
+## automatically.
+
+class Arrangement(
+    enum.EnumClass(('moderate', 'going both ways'),
+                   ('middling', 'going both ways, the other way'))):
+    tip = "Arrangement for tetrahedral initial Skeleton."
+    discussion = xmlmenudump.loadFile('DISCUSSIONS/engine/enum/arrangement.xml')
+    
+utils.OOFdefine('Arrangement', Arrangement)
+
+# Known arrangements.
+moderate = Arrangement('moderate')
+middling = Arrangement('middling')
+
+class SkeletonGeometry(registeredclass.RegisteredClass):
+    registry = []
+    def __init__(self, type):
+        self.type = type
+    tip = "Element shape for the initial Skeleton."
+    discussion = """<para>
+    <classname>SkeletonGeometry</classname> objects are used to
+    specify the shape of the &elems; in the uniform &skel; created by
+    <xref linkend='MenuItem:OOF.Skeleton.New'/>.
+    </para>"""
+
+class TetraSkeleton(SkeletonGeometry):
+    def __init__(self, arrangement=moderate, x_periodicity=False,
+                 y_periodicity=False, z_periodicity=False):
+        SkeletonGeometry.__init__(self, 'tetra')
+        self.arrangement = arrangement
+        self.x_periodicity = x_periodicity
+        self.y_periodicity = y_periodicity
+        self.z_periodicity = z_periodicity
+        self.periodicity = (x_periodicity, y_periodicity, z_periodicity)
+
+    def __call__(self, m, n, l, microStructure, preset_homog=0):
+        # Create a skeleton of tetrahedral elements, n rows by m
+        # columns by l layers.  The physical size is obtained from the
+        # microstructure.
+        prog = progress.getProgress("Skeleton", progress.DEFINITE)
+        skel = newCSkeleton(microStructure, self.periodicity)
+ 
+        ## create nodes and selected point boundaries.
+        skel.createPointGrid(m,n,l)
+
+        skel.createTetra(self.arrangement, m,n,l)
+
+        return skel
+
+
+registeredclass.Registration(
+    'TetraSkeleton',
+    SkeletonGeometry,
+    TetraSkeleton,
+    0,
+    params=[
+        enum.EnumParameter('arrangement', Arrangement, moderate,
+                       tip="How to arrange tetrahedral elements in a Skeleton"),
+        # parameter.BooleanParameter(
+        #     'x_periodicity',value=False, default=False,
+        #     tip="Whether or not the skeleton is periodic in the x direction"),
+        # parameter.BooleanParameter(
+        #     'y_periodicity',value=False, default=False,
+        #     tip="Whether or not the skeleton is periodic in the y direction"),
+        # parameter.BooleanParameter(
+        #     'z_periodicity',value=False, default=False,
+        #     tip="Whether or not the skeleton is periodic in the z direction")
+            ],
+    tip="A Skeleton of tetrahedral elements.",
+    discussion="""<para>
+    <classname>TetraSkeleton</classname> is used as the
+    <varname>skeleton_geometry</varname> argument of <xref
+    linkend='MenuItem:OOF.Skeleton.New'/>, specifying that it is to
+    create a &skel; with tetrahedral &elems;.
+    </para>""")
+
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# These classes create Python iterators that can be used to loop over
+# all of the Segments and Faces in a Skeleton using, for example,
+#  for face in skeleton.getFaces(): ...
+
+class PySkeletonIteratorBase(object):
+    def __iter__(self):
+        while self.iter.notEqual(self.end):
+            yield self.iter.dereference()
+            self.iter.increment()
+
+class PySkeletonSegmentIterator(PySkeletonIteratorBase):
+    def __init__(self, skel):
+        self.iter = skel.beginSegments()
+        self.end = skel.endSegments()
+
+def _getSegments(self):
+    return PySkeletonSegmentIterator(self)
+CSkeletonBasePtr.getSegments = _getSegments
+
+
+class PySkeletonFaceIterator(PySkeletonIteratorBase):
+    def __init__(self, skel):
+        self.iter = skel.beginFaces()
+        self.end = skel.endFaces()
+
+def _getFaces(self):
+    return PySkeletonFaceIterator(self)
+CSkeletonBasePtr.getFaces = _getFaces
+
+class PySkeletonNodeIterator(PySkeletonIteratorBase):
+    def __init__(self, skel):
+        self.iter = skel.beginNodes()
+        self.end = skel.endNodes()
+
+def _getNodes(self):
+    return PySkeletonNodeIterator(self)
+CSkeletonBasePtr.getNodes = _getNodes
+
+class PySkeletonElementIterator(PySkeletonIteratorBase):
+    def __init__(self, skel):
+        self.iter = skel.beginElements()
+        self.end = skel.endElements()
+
+def _getElements(self):
+    return PySkeletonElementIterator(self)
+CSkeletonBasePtr.getElements = _getElements
+

@@ -1,0 +1,331 @@
+-*- text -*-
+$Revision: 1.11 $
+$Author: reida $
+$Date: 2002/06/26 18:35:10 $
+
+
+  OOF2 Property Constructor's Guide
+  =================================
+
+  One of the major goals of the OOF2 project is to provide a
+finite-element framework with "pluggable physics" -- constitutive
+rules which govern the behavior of materials are modular, and
+reasonably self-contained, so that users with sufficient coding
+ability can write their own new properties, either in C++ or 
+in Python.
+
+  This document describes how to write a new property class for OOF2.
+
+  
+  What Properties Must Do
+  -----------------------
+
+  From a computational point of view, the fundamental role of an OOF2
+property is to provide a mechanism for relating fields -- the degrees
+of freedom of the model system -- to fluxes, quantities whose
+divergences correspond to generalized forces.  In OOF2, several
+properties which contribute to the same flux are grouped into equation
+objects, which manage the contributions from each of the properties,
+and the set of equations is then used to construct the master
+stiffness matrix.  The system is designed to be modular in such a way
+that properties only need to know how to make their own contribution
+to the appropriate flux.  Provided properties do this correctly, and
+adhere to the API, the OOF2 system can handle all of the other levels
+of abstraction, including the construction of equations, the
+application of boundary conditions and so forth.
+
+
+  Property Registration Requirements
+  ----------------------------------
+
+  In OOF2, a property object is an instance of a class which is a
+subclass, either directly or through an inheritance chain, of the C++
+"Property" class.  Properties written in Python must descend from the
+PyPropertyWrapper class, which exposes the Property interface to
+Python through SWIG, and is itself a subclass of Property.
+
+  There are a number of bookkeeping capabilities that property objects
+must have, in order to behave correctly as members of a Material
+object.  Each time a property is added to, or removed from, a
+material, that material then iterates through all of its member
+properties, calling all of their "registr" routines (so named because
+the more obvious "register" is a reserved word in C++), and on
+completion, looping through them all again calling their
+"cross_reference" routines.
+ 
+  Properties must provide a "registr" function, and if they require the
+cooperation of other properties, should extract pointers to those
+properties in the "cross_reference" function.
+
+  The property "registr" function achieves its goal principally by
+calling other, more "atomic" registration functions in other objects.
+It takes as an argument the material undertaking the registration.
+Properties indicate their type and the flux to which they contribute
+by calling the argument's "registr" function with themselves and
+either a string indicating their type, or a flux object to which they
+contribute, as arguments.  The function indicates which fields are
+required to compute the property in question require by calling that
+field's "registr" function with a pointer to themselves as an object.
+
+  The property cross_reference function is called after all of a
+material's property's registr functions have completed.  At this
+point, the property can retrieve pointers to other properties by
+calling the host material's fetchProperty routine with the appropriate
+string argument.  If the corresponding material has registered itself
+correctly, it will be retrieved by this means.  This mechanism should
+be used, for instance, by non-elastic properties to get access to the
+elastic constants.
+
+  These routines have to be supplied somewhere in the set of classes
+above the actual property instance, somewhere below the Property base
+class itself.  It is sensible to group properites with similar
+registration requirements into class hierarchies headed by a class
+which hosts a common "registr" function, providing the functionality
+exactly once at the appropriate level.  For example, all elasticity
+properties in the base version of OOF2 descend from an "Elasticity"
+class, which has a registr routine which notes that elasticity
+requires a displacement field, contributes to the stress flux, and
+should be referred to by other properties as "Elasticity".
+
+**EXAMPLE
+
+  For Python properties, the coding logistics are slightly different --
+these properties must provide a list of fields and fluxes and a string
+to the PyPropertyWrapper's Python init.  The PyPropertyWrapper stores
+this data, and hosts a "registr" function which then uses the data to
+inform the host material about required fields, contributed fluxes,
+and the property type.
+
+**EXAMPLE
+
+  Sequence of Events
+  ------------------
+
+  Once a property is registered and cross-referenced, it is ready to be
+called by the solver to provide numerical values for its contributions
+to the fluxes.  The solver will call each of several entry points a
+number of times as it iterates through the equations and elements
+which make up the mesh.  All of these calls are present as virtual
+functions in the base Property class, and so need not be provided by
+every property unless it makes sense to do so.
+
+  The first property entry point called in the process of constructing
+the master stiffness matrix is the precompute routine.  It gets called
+from Material::precompute_all, which in turn is called from
+Mesh::make_stiffness.  There are no arguments.  This call provides the
+property with the opportunity to complete any high-overhead
+computations which could not be completed earlier, but which are too
+expensive to repeat element-by-element or node-by-node.  The canonical
+example is for anisotropic properties to use this call to multiply
+their coefficient matrices by their material's orientation matrix.
+The material editor ensures that property instances are not shared
+between materials, so you can be assured that this routine will only
+be called once for a given equilibration.
+
+  Once the precomputations are complete, the main stiffness-matrix
+construction loop begins iterating over elements in the mesh.  There
+is at most one material per element.  For each element, the
+corresponding material notifies each of its properties that an element
+computation has begin by calling the property's begin_element()
+routine with a pointer to the current element as an argument.  There
+is a corresponding end_element() call, also with the element as an
+argument, which is called when the element computation has been
+completed.
+
+  The solver's next task is to decide how many integration points to use
+in the element, for which it needs to know the polynomial order of the
+expression being integrated.  This is handled in the material's
+make_stiffness routine, which is called by Element::make_stiffness.
+For each flux which is contributed to by properties in this material
+(which is known from the registration data provided by the
+properties), there is a list of properties which contribute.  For each
+such property, a call is made to that property's K_integration_order
+routine, with the polynomial order of the shape functions passed in as
+an argument.  This function should return an integer equal to the sum
+of the argument and the polynomial order of the computation being
+made.  If the property's contribution to the flux is quadratic in the
+fields, for example, and the element has shape functions of degree
+two, the polynomial order of the resulting computation is four, and
+this is what the K_integration_order routine should return.  The
+material will provide enough integration points for the largest
+polynomial order it encounters among the fluxes and properties.
+
+  At this point, the main property computation can begin.
+
+  Each flux in the material will, for each integration point in an
+element, construct for itself a local matrix and a local vector to
+which the property should make its contributions.  They are called the
+"flux matrix" and the "flux offset".  The rows of the matrix are
+indexed by the components of the equations which contain the flux, and
+are eventually mapped to rows of the master stiffness matrix.  The
+columns of the matrix are indexed by all the degrees of freedom in the
+current element, which is to say, there is one column per component of
+an active field per function-interpolation node.
+
+  The property makes its contribution to this flux matrix in its
+fluxmatrix routine.  This routine takes as arguments a mesh, an
+element, an ElementFuncNodeIterator object which indicates which node
+in the element is current, a pointer to the flux, and an integration
+point.  The property can use the ElementFuncNodeIterator to evaluate
+the shape functions within the element at the indicated point by
+calling the .shapefunction method with the current point as an
+argument.  Derivatives of the shape functions are also available.  The
+property should then iterate over the components of the flux to which
+it contributes, and make contributions to the appropriate matrix
+element, which can be retrieved (in reference form) by calling the
+flux's matrix_element method with, in order, the mesh, the index of
+the flux component, the field, the field component, and the
+ElementFuncNodeIterator reference.  The flux will use the flux
+component to find the row, and the field, field component, and
+ElementFuncNodeIterator to determine the column.
+
+  A similar scheme is used if the property needs to make contributions
+to the right-hand-side of the master stiffness matrix system.  The
+property must provide a "fluxrhs" routine, which takes as arguments
+the mesh, the element, the flux, and the integration point.  This is
+useful for properties which make non-field-dependent contributions
+directly to the values of the flux.  An example of this is thermal
+expansion, where a temperature-dependent offset must be added to the
+stress in order to provide for the correct stress-free strain.  Such
+properties should make their contributions to the appropriate
+"offset_element", retrieved from the flux by specifying the mesh and
+the flux index to the offset_element method.
+
+  It may also happen that a property makes direct contributions not to
+the flux, but to its divergence.  Such "body force" contributions also
+occur in the fluxrhs routine, but in this case, rather than retrieving
+the offset_element, the property should retrieve and write to the
+"rhs_element" method, again specifying the index, and keeping in mind
+that the dimensionality of this vector is that of the *divergence* of
+the flux, not the flux itself.
+ 
+  After each element has been completed, and all the gauss points have
+been passed in to fluxmatrix and fluxrhs, the property's "element_end"
+entry point is called, with the element as an argument.  Properties
+can clean up storage space used or intermediate results computed in
+the process of making the field-to-flux mapping.
+
+  Note that the property itself does not do any of the integration.  It
+need not (must not!) apply any weighting coefficients or do any other
+processing other than computing the local contribution to the flux at
+a given point.  Integration, along with matrix construction,
+constraint resolution and the application of boundary conditions, is
+the responsibility of the solver.  If you find you want to make
+changes to these portions of the code, the right way to do that would
+be to examine the solver code itself, rather than trying to sneak the
+desired effects in via the property API.
+
+  Currently, the solution calls do not make any particular effort to
+identify the location in space of a given integration point.  The
+position passed to the fluxmatrix and fluxrhs routines is in the
+element's master space.  Inhomogeneous properties which want to know
+their location in the system should not use the element's shape
+functions, because their host element may not be isoparametric, but
+should instead call the element's from_master method, with the
+integration point in master space as an argument, to find their
+location in the system.
+
+  Properties written in Python have the same behavior and obey the same
+API as described above.  The Python class representing a property
+should descend from the PyPropertyWrapper class.  It must provide the
+same functions, with the same arguments, as the C properties.
+
+
+  SWIG Shadow Objects for Properties
+  -----------------------------------
+
+  C++ properties have to be visible to Python, and so should be SWIG'd.
+The constructor should be accessible, and the shadow class should have
+a __repr__ function which returns a string which, when executed, calls
+the registraiton object's __call__ method.  The __repr__ will, of
+course, require access to the property's internal parameter values.
+It is most sensible forproperties to also provide access to the
+parameters separately, and to have the __repr__ function use these
+parameter-extraction functions to build its return string.  There is
+no formal requirement in the API for extraction of individual
+parameters, but such a thing is not out of the question in future
+versions.
+
+
+  PropertyRegistration Objects
+  ----------------------------
+
+  In order to be operated correctly by the user interface, every
+property imported into OOF2 must create a PropertyRegistration object
+at import time.  The PropertyRegistration object will create actual
+instances of the property at run-time by calling the constructor.  The
+PropertyRegistration is a vital component of a Property object.  It
+allows your property to accept parameter values either from the GUI or
+from script or menu commands, and by inserting itself into the OOF
+namespace under a name which you provide, controls the "public face"
+of your property.  For C++ properties, this command must be in the
+"_.py" file corresponding to the property module.
+
+  The PropertyRegistration object created at import-time should also be
+assigned to a key in the property manager, which is available under
+the name "AllPropreties".  By making this assignment, you place your
+property in the property tree, making it visible to the GUI.  The key
+is a string consisting of colon-separated names, the last of which
+should be the same as the public name of your property.
+
+  The general format of this assignment is:
+
+AllProperties['Head:Middle:Public_name'] =
+    PropertyRegistration('Public_name', ActualClassName,
+                         'fully.qualified.module.name',
+			 <ordering>, params=[...])
+
+  ... where Public_name is the string presented in the tree, and the
+name representing your property in the scripting namespace,
+ActualClassName is the name of the class defined in the file,
+fully.qualified.module.name is the dot-separated path to the file's
+location in the source tree, starting from the first directory below
+OOF2/SRC (this should be "engine"), <ordering> is some integer, and
+the right side of the params assignment is a list of parameters your
+property expects in its constructor, in the correct order.
+
+  OOF2 includes code templates for properties, both for Python and C++.
+Users are encouraged to consult these templates.  Users may also find
+it helpful to read the following section, which documents the
+structure of the PropertyRegistration class.
+
+
+
+ 
+  Property Management and the PropertyRegistration Class
+  ======================================================
+
+  Because of the special behavior of properties in OOF, their
+registration objects are highly customized.  The departures from
+default behavior revolve around the specialness of names in the
+property class.  PropertyRegistration objects do not generally present
+their "name" field as a parameter to the GUI, nor do they expect to
+receive a name with parameter values passed in to the
+"OOF.Property.Parametrize..." menu tree.  The name of a property
+object is implicit in its location in the tree.  However, it is still
+possible to create a named property (as from a script, for instance)
+by calling an unnamed property's PropertyRegistration's __call__
+method, which *can* take a name as a parameter.  If such an object
+receives a name, it will not set its own name parameter, but will
+instead create a NamedPropertyRegistration object from itself, and set
+the new object's name parameter, and at the same time, automatically
+add the object to the menu tree and the GUI, if present.
+
+  So, for example, given a starting point for which there is no instance
+of the property "Verisimilitude" named "truth", both of the following
+sets of operations will create one with the parameter "veracity" set
+to 1.  The first would be what would appear in a log file as a result
+of typical GUI operations to set up such a property.  The second would
+be the result of saving the property to a file.
+
+# Create via menu ops.
+OOF.Property.Select(propname="Unphysical:Versimilitude")
+OOF.Property.New(propname="truth") # Operates on current selection.
+OOF.Property.Parametrize.Unphysical.Versimilitude.truth(veracity=1)
+
+# Create by calling the PropertyRegistrations' __call__.
+Verisimilitude(name="truth", veracity=1)
+
+
+  Additional discussion of the PropertyRegistration object and its
+mechanics is contained in the materialeditor documentation.

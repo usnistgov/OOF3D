@@ -1,0 +1,4 @@
+# OOF version (unreleased)
+FileVersion(number=1.0, format='ascii')
+NamedAnalysis(name='output1', operation=DirectOutput(), data=getOutput('Field:Value',field=Temperature), domain=EntireMesh(), sampling=GridSampleSet(x_points=3,y_points=3,z_points=3,show_x=True,show_y=True,show_z=True))
+NamedAnalysis(name='output2', operation=AverageOutput(), data=getOutput('Field:Value',field=Temperature), domain=EntireMesh(), sampling=ContinuumSampleSet(order=automatic))

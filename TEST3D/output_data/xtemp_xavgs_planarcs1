@@ -1,0 +1,10 @@
+# Operation: Average
+# Output: (1.0,x,x**2)
+# Domain: PlanarCrossSectionDomain(normal=VectorDirection(x=1,y=0,z=0),offset=4.5,side='FRONT')
+# Sampling: ContinuumSampleSet(order=2)
+# Columns:
+# 1. time
+# 2. average of fx
+# 3. average of fy
+# 4. average of fz
+0.0, 1.0, 4.5, 20.25

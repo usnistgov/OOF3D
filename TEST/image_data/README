@@ -1,0 +1,8 @@
+  This directory contains data files for the image tests in the parent
+directory (as stored in the CVS repository).
+
+  The file "saved_rectangle" is the correct result for the 
+image save command.  The file "image_test.ppm" is the original image
+on which the test operations are performed.  All other files here
+(except this README) are nominal results for the image modifications for
+which they are named.

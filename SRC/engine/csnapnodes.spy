@@ -1,0 +1,95 @@
+# -*- python -*-
+# $RCSfile: csnapnodes.spy,v $
+# $Revision: 1.1.4.6 $
+# $Author: langer $
+# $Date: 2014/11/05 16:54:23 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+from ooflib.common import cregisteredclass
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.common.IO import reporter
+from ooflib.common import utils
+from ooflib.SWIG.engine import cskeletonmodifier
+
+
+################################################
+
+cregisteredclass.registerCClass(SnapNodeTargetsPtr)
+SnapNodeTargetsPtr.registry = []	
+SnapNodeTargetsPtr.tip = "Which nodes to snap?"
+SnapNodeTargetsPtr.discussion = """<para>
+    Values for the <varname>targets</varname> parameter of the <xref
+    linkend='RegisteredClass:SnapNodes'/> &skel; <link
+    linkend='RegisteredClass:SkeletonModifier'>modifier</link>.
+    <varname>targets</varname> determines which &node; moves should be
+    attempted.
+    </para>"""
+
+snapAllReg = cregisteredclass.Registration(
+    'All Nodes',
+    SnapNodeTargetsPtr,
+    SnapAll,
+    0,
+    tip="Snap all nodes.",
+    discussion="""<para>
+    All &nodes; of the &skel; are <varname>targets</varname> of <xref
+    linkend='RegisteredClass:SnapNodes'/>.
+    </para>""")
+
+snapSelectedReg = cregisteredclass.Registration(
+    'Selected Elements',
+    SnapNodeTargetsPtr,
+    SnapSelected,
+    1,
+    tip="Snap selected elements.",
+    discussion="""<para>
+    All &nodes; of the currently selected &elems; are
+    <varname>targets</varname> for <xref
+    linkend='RegisteredClass:SnapNodes'/>.
+    </para>""")
+
+snapHeteroReg = cregisteredclass.Registration(
+    'Heterogeneous Elements',
+    SnapNodeTargetsPtr,
+    SnapHeterogenous, 2,
+    params=[
+    parameter.FloatRangeParameter('threshold', (0.0, 1.0, 0.01), value=0.9,
+          tip='Snap elements with homogeneity below the specified threshold.')],
+    tip="Snap heterogeneous elements.",
+    discussion="""<para>
+    All &nodes; of the <link
+    linkend='Section:Concepts:Skeleton:Homogeneity'>inhomogeneous</link>
+    &elems; are <varname>targets</varname> for <xref
+    linkend='RegisteredClass:SnapNodes'/>.  All &elems; whose
+    homogeneity is less than the given <varname>threshold</varname>
+    will be addressed.
+    </para>""")
+
+snapReg = cregisteredclass.Registration(
+    'Snap Nodes',
+    CSkeletonModifierBasePtr,
+    SnapNodes,
+    ordering = 1,
+    params=[parameter.RegisteredParameter('targets', SnapNodeTargets,
+                                          tip='Which elements to snap.'),
+            parameter.RegisteredParameter('criterion',
+                                          cskeletonmodifier.CSkelModCriterion,
+                                          tip='Acceptance criterion.')
+    ],
+    tip="Move nodes directly to pixel boundaries.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/snapnodes.xml'))
+
+def _CSnapNodes_postProcess(self, context):
+    reporter.report("Snapped %d node%s." % (self.getNumSnapped(),
+                                            "s"*(self.getNumSnapped() != 1)))
+
+SnapNodes.postProcess = _CSnapNodes_postProcess

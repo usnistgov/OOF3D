@@ -1,0 +1,48 @@
+skip_wrap.c
+
+
+
+1.  Comments following a declaration
+====================================
+
+$a
+        [ Global : int a ]
+
+$b
+        [ Global : int b ]
+
+$c
+        [ Global : int c ]
+        Comment for 'c' 
+
+2.  Comments before a declaration
+=================================
+
+$d
+        [ Global : int d ]
+
+$e
+        [ Global : int e ]
+
+$f
+        [ Global : int f ]
+        This comment is for 'f' 
+
+3.  Larger skip value
+=====================
+
+$g
+        [ Global : int g ]
+        Comment for 'g' 
+
+$h
+        [ Global : int h ]
+        Comment for 'h' 
+
+$i
+        [ Global : int i ]
+
+$j
+        [ Global : int j ]
+        This comment is for 'j' 
+

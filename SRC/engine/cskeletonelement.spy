@@ -1,0 +1,44 @@
+# -*- python -*-
+# $RCSfile: cskeletonelement.spy,v $
+# $Revision: 1.1.2.5 $
+# $Author: langer $
+# $Date: 2014/06/24 20:17:28 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+from ooflib.common import debug
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Python object identity doesn't work, because the same CObject
+# returned to Python via SWIG gets wrapped in different objects each
+# time it's returned.
+
+def _CSkeletonElement___eq__(self, other):
+    if isinstance(other, CSkeletonElementPtr) and other.getUid() == self.getUid():
+        return 1
+    return 0
+
+CSkeletonElementPtr.__eq__ = _CSkeletonElement___eq__
+
+def _CSkeletonElement___ne__(self, other):
+    return not self.__eq__(other)
+
+CSkeletonElementPtr.__ne__ = _CSkeletonElement___ne__
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# For debugging
+
+def _CSkeletonElementPtr_repr(self):
+    return "CSkeletonElement(%s)" % self.getIndex()
+
+CSkeletonElementPtr.__repr__ = _CSkeletonElementPtr_repr
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#

@@ -1,0 +1,113 @@
+<HTML>
+<HEAD>
+<TITLE>
+Sorted Documentation</TITLE>
+<BODY BGCOLOR="#ffffff">
+<H1>Sorted Documentation</H1>
+[ Module  : swig, Package : swig ]<BR>
+   This file tests SWIG's documentation sorting   
+
+<HR><H1> Contents </H1>
+<UL><LI> <A HREF="#s1_">1. C Section</A>
+<UL><LI> <A HREF="#s1_1_">1.1. D subsection</A>
+<UL><LI> <A HREF="#s1_1_1_">1.1.1. G subsubsection</A>
+<LI> <A HREF="#s1_1_2_">1.1.2. M subsubsection</A>
+</UL><LI> <A HREF="#s1_2_">1.2. K subsection</A>
+<LI> <A HREF="#s1_3_">1.3. Y subsection</A>
+</UL><LI> <A HREF="#s2_">2. F Section</A>
+<LI> <A HREF="#s3_">3. Not sorted</A>
+<LI> <A HREF="#s4_">4. Q Section</A>
+<LI> <A HREF="#s5_">5. X Section</A>
+</UL>
+
+<A name="s1_">
+<HR><H2>1. C Section</H2></A>
+<P><TT><B>$A</B></TT>
+<BLOCKQUOTE>[ Global : int  A ]
+<BR></BLOCKQUOTE>
+
+<P><TT><B>$B</B></TT>
+<BLOCKQUOTE>[ Global : int  B ]
+<BR></BLOCKQUOTE>
+
+<P><TT><B>$before</B></TT>
+<BLOCKQUOTE>[ Global : int  before ]
+<BR></BLOCKQUOTE>
+
+<A name="s1_1_">
+<H3>1.1. D subsection</H3></A>
+<A name="s1_1_1_">
+<H4>1.1.1. G subsubsection</H4></A>
+<A name="s1_1_2_">
+<H4>1.1.2. M subsubsection</H4></A>
+<A name="s1_2_">
+<H3>1.2. K subsection</H3></A>
+<P><TT><B>$LATER</B></TT>
+<BLOCKQUOTE>[ Global : int  LATER ]
+<BR></BLOCKQUOTE>
+
+<A name="s1_3_">
+<H3>1.3. Y subsection</H3></A>
+<P><TT><B>$d</B></TT>
+<BLOCKQUOTE>[ Global : int  d ]
+<BR></BLOCKQUOTE>
+
+<P><TT><B>$f</B></TT>
+<BLOCKQUOTE>[ Global : int  f ]
+<BR></BLOCKQUOTE>
+
+<A name="s2_">
+<HR><H2>2. F Section</H2></A>
+   Comment for F section   
+
+<A name="s3_">
+<HR><H2>3. Not sorted</H2></A>
+   This section isn't sorted   
+
+<P><TT><B>$nd</B></TT>
+<BLOCKQUOTE>[ Global : double  nd ]
+<BR>   Comment for nd   
+</BLOCKQUOTE>
+
+<P><TT><B>$nc</B></TT>
+<BLOCKQUOTE>[ Global : double  nc ]
+<BR>   Comment for nc   
+</BLOCKQUOTE>
+
+<P><TT><B>$nb</B></TT>
+<BLOCKQUOTE>[ Global : double  nb ]
+<BR></BLOCKQUOTE>
+
+<P><TT><B>$na</B></TT>
+<BLOCKQUOTE>[ Global : double  na ]
+<BR></BLOCKQUOTE>
+
+<A name="s4_">
+<HR><H2>4. Q Section</H2></A>
+   This section is should be sorted even though last one wasn't   
+
+<P><TT><B>$qa</B></TT>
+<BLOCKQUOTE>[ Global : double  qa ]
+<BR></BLOCKQUOTE>
+
+<P><TT><B>$qb</B></TT>
+<BLOCKQUOTE>[ Global : double  qb ]
+<BR></BLOCKQUOTE>
+
+<P><TT><B>$qc</B></TT>
+<BLOCKQUOTE>[ Global : double  qc ]
+<BR></BLOCKQUOTE>
+
+<P><TT><B>$qd</B></TT>
+<BLOCKQUOTE>[ Global : double  qd ]
+<BR></BLOCKQUOTE>
+
+<A name="s5_">
+<HR><H2>5. X Section</H2></A>
+<P><TT><B>zip();</B></TT>
+<BLOCKQUOTE>[ returns double  ]
+<BR></BLOCKQUOTE>
+
+
+</BODY>
+</HTML>

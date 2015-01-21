@@ -1,0 +1,182 @@
+# -*- python -*-
+# $RCSfile: permittivity.spy,v $
+# $Revision: 1.5.8.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:46:00 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+from ooflib.common import utils
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.engine import problem
+from ooflib.engine import propertyregistration
+from ooflib.SWIG.engine import symmmatrix
+
+PropertyRegistration = propertyregistration.PropertyRegistration
+
+reg = PropertyRegistration(
+    'Electric:DielectricPermittivity:Isotropic',
+    IsoDielectricPermittivity,
+    "ooflib.SWIG.engine.property.permittivity.permittivity",
+    ordering=98,
+    params=[parameter.FloatParameter('epsilon',
+                                     1.0, tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="DielectricPermittivity",
+    tip="Isotropic dielectric permittivity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/isopermittivity.xml')
+    )
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization], fields=[problem.Voltage],
+             time_derivs=[0])
+
+## TRICLINIC
+
+reg = PropertyRegistration(
+    'Electric:DielectricPermittivity:Anisotropic:Triclinic',
+    AnisoDielectricPermittivity,
+    "ooflib.SWIG.engine.property.permittivity.permittivity",105,
+    [symmmatrix.TriclinicRank2TensorParameter(
+    'epsilon',
+    symmmatrix.TriclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+    tip=parameter.emptyTipString)],
+    propertyType="DielectricPermittivity",
+    tip="Triclinic dielectric permittivity",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisopermittivity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization], fields=[problem.Voltage],
+             time_derivs=[0])
+
+## MONOCLINIC
+
+reg = PropertyRegistration(
+    'Electric:DielectricPermittivity:Anisotropic:Monoclinic',
+    AnisoDielectricPermittivity,
+    "ooflib.SWIG.engine.property.permittivity.permittivity",104,
+    [symmmatrix.MonoclinicRank2TensorParameter(
+    'epsilon',
+    symmmatrix.MonoclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+    tip=parameter.emptyTipString)],
+    propertyType="DielectricPermittivity",
+    tip="Monoclinic dielectric permittivity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisopermittivity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization], fields=[problem.Voltage],
+             time_derivs=[0])
+
+## ORTHORHOMBIC
+
+reg = PropertyRegistration(
+    'Electric:DielectricPermittivity:Anisotropic:Orthorhombic',
+    AnisoDielectricPermittivity,
+    "ooflib.SWIG.engine.property.permittivity.permittivity",103,
+    [symmmatrix.OrthorhombicRank2TensorParameter(
+    'epsilon',
+    symmmatrix.OrthorhombicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+    tip=parameter.emptyTipString)],
+    propertyType="DielectricPermittivity",
+    tip="Orthorhombic dielectric permittivity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisopermittivity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization], fields=[problem.Voltage],
+             time_derivs=[0])
+
+## TETRAGONAL
+
+reg = PropertyRegistration(
+    'Electric:DielectricPermittivity:Anisotropic:Tetragonal',
+    AnisoDielectricPermittivity,
+    "ooflib.SWIG.engine.property.permittivity.permittivity",101,
+    [symmmatrix.TetragonalRank2TensorParameter(
+    'epsilon',
+    symmmatrix.TetragonalRank2Tensor(xx=1.0, zz=1.0),
+    tip=parameter.emptyTipString)],
+    propertyType="DielectricPermittivity",
+    tip="Tetragonal dielectric permittivity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisopermittivity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization], fields=[problem.Voltage],
+             time_derivs=[0])
+
+## TRIGONAL
+
+reg = PropertyRegistration(
+    'Electric:DielectricPermittivity:Anisotropic:Trigonal',
+    AnisoDielectricPermittivity,
+    "ooflib.SWIG.engine.property.permittivity.permittivity",102,
+    [symmmatrix.TrigonalRank2TensorParameter(
+    'epsilon',
+    symmmatrix.TrigonalRank2Tensor(xx=1.0, zz=0.5),
+    tip=parameter.emptyTipString)],
+    propertyType="DielectricPermittivity",
+    tip="Trigonal dielectric permittivity",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisopermittivity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization], fields=[problem.Voltage],
+             time_derivs=[0])
+
+## HEXAGONAL
+
+reg = PropertyRegistration(
+    'Electric:DielectricPermittivity:Anisotropic:Hexagonal',
+    AnisoDielectricPermittivity,
+    "ooflib.SWIG.engine.property.permittivity.permittivity",100,
+    [symmmatrix.HexagonalRank2TensorParameter(
+    'epsilon',
+    symmmatrix.HexagonalRank2Tensor(xx=1.0, zz=0.5),
+    tip=parameter.emptyTipString)],
+    propertyType="DielectricPermittivity",
+    tip="Hexagonal dielectric permittivity",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisopermittivity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization], fields=[problem.Voltage],
+             time_derivs=[0])
+
+## CUBIC
+
+reg = PropertyRegistration(
+    'Electric:DielectricPermittivity:Anisotropic:Cubic',
+    AnisoDielectricPermittivity,
+    "ooflib.SWIG.engine.property.permittivity.permittivity",99,
+    [symmmatrix.CubicRank2TensorParameter(
+    'epsilon',
+    symmmatrix.CubicRank2Tensor(xx=1.0),
+    tip=parameter.emptyTipString)],
+    propertyType="DielectricPermittivity",
+    tip="Cubic dielectric permittivity",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisopermittivity.xml'))
+
+reg.fluxInfo(fluxes=[problem.Total_Polarization], fields=[problem.Voltage],
+             time_derivs=[0])
+
+## *Electric* BODY forces (sorry Andrew... --REG)
+
+reg = PropertyRegistration(
+    'Electric:SpaceCharge', ChargeDensity,
+    "ooflib.SWIG.engine.property.permittivity.permittivity",150,
+    [
+        parameter.FloatParameter('charge', 0.0, 
+                                 tip="electrostatic charge density")],
+    propertyType="ChargeDensity",
+    tip="Spatial charge density",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/spacecharge.xml'))
+
+
+reg.eqnInfo(equations=[problem.CoulombEquation])

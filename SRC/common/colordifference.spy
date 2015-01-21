@@ -1,0 +1,64 @@
+# -*- python -*-
+# $RCSfile: colordifference.spy,v $
+# $Revision: 1.2.18.1 $
+# $Author: langer $
+# $Date: 2014/09/27 22:33:49 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+from ooflib.common import cregisteredclass
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+
+cregisteredclass.registerCClass(ColorDifferencePtr)
+ColorDifferencePtr.tip = "Methods for describing color differences."
+ColorDifferencePtr.discussion = """<para>
+The <classname>ColorDifference</classname> contains ways of describing
+a range or colors, or the difference between two colors.  It's used
+when selecting pixels in &images;.
+</para>"""
+
+FloatRangeParameter = parameter.FloatRangeParameter
+
+deltargb = cregisteredclass.Registration(
+    "DeltaRGB", ColorDifferencePtr, DeltaRGB, ordering=1,
+    params=[
+    FloatRangeParameter('delta_red', (0.0, 1.0, 0.01), 0.0,
+                        tip="Difference in Red."),
+    FloatRangeParameter('delta_green', (0.0, 1.0, 0.01), 0.0,
+                        tip="Difference in Green."),
+    FloatRangeParameter('delta_blue', (0.0, 1.0, 0.01), 0.0,
+                        tip="Difference in Blue.")],
+    tip="Range of colors in red, green, and blue space.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/common/reg/deltargb.xml')
+    )
+
+cregisteredclass.Registration(
+    'DeltaGray', ColorDifferencePtr, DeltaGray, ordering=2,
+    params=[FloatRangeParameter('delta_gray', (0.0, 1.0, 0.01), 0.0,
+                                tip="Difference in Gray value.")],
+    tip="Range of gray values.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/common/reg/deltagray.xml')
+    )
+
+cregisteredclass.Registration(
+    'DeltaHSV', ColorDifferencePtr, DeltaHSV, ordering=3,
+    params=[
+    FloatRangeParameter('delta_hue', (0.0, 360.0, 1.0), 0.0,
+                        tip="Difference in Hue."),
+    FloatRangeParameter('delta_saturation',
+                       (0.0, 1.0, 0.01), 0.0,
+                        tip="Difference in Saturation."),
+    FloatRangeParameter('delta_value',
+                       (0.0, 1.0, 0.01), 0.0,
+                        tip="Difference in Value.")],
+    tip="Range of colors in hue, saturation, and value space.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/common/reg/deltahsv.xml')
+    )

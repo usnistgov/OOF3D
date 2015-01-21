@@ -1,0 +1,109 @@
+-*- text -*-
+$RCSfile: exceptions.doc,v $
+$Revision: 1.2 $
+$Author: langer $
+$Date: 2002/06/17 15:51:27 $
+
+  Python/C++ Exception Handling in OOF2
+
+  We have achieved the basic goal of being able to generate 
+arbitrary Python exceptions from either Python or underlying 
+C++ code.  The scheme involves some "glue" made up of auxiliary 
+functions in the interface layer, including a Python function 
+that is called back from C++.  This scheme is, overall, not
+more complex than other aspects of the OOF software.
+
+  Description: 
+
+  At the basic, topmost level of the OOF code, all exceptions must be
+Python exceptions, in order to be caught and handled by the highest
+level exception machinery.  Because exceptions do not always arise in
+the Python layer, it is necessary to be able to map C++ exceptions to
+Python exceptions using the SWIG machinery.  It is reasonably
+straightforward to map arbitrary C++ exceptions into instances of the
+Python "RuntimeError" exception class, with informative arguments, but
+in order to utilize the full generality of Python's exception
+handling, in which arbitrary Python objects can be thrown and caught,
+it is preferable to map arbitrary C++ exceptions into a larger space
+of Python exception objects.
+
+  The core of the scheme which does this is made up of two components,
+one of which is a modified version of the SWIG/Python "except"
+typemap, and the second of which is a Python callback function. These
+two aspects take care of the two tasks -- the "except" callback is
+responsible for catching the C++ exception, and the Python callback is
+responsible for raising a Python exception corresponding to the C++
+exception which has been caught.
+
+  The actual code (as present in the SWIG file) looks like this:
+
+%except(python) {
+  try {
+    $function
+  }
+  catch (ErrError &e) {
+    PyObject *args = Py_BuildValue("(s)", e.pythonequiv().c_str() );
+    PyEval_CallObject((PyObject *)e.pyconverter, args);
+    Py_DECREF(args);
+    return 0;
+  }
+}
+
+  Note that, unlike the usual %except wrappers as presented in the
+SWIG documentation, the code in this wrapper does not explicity
+raise the exception itself, i.e. it does not call PyErr_SetString or
+PyErr_SetObject.  Instead, the exception is actually raised by the
+callback, which is the PyEval_CallObject line.
+
+  The class ErrError is an abstract class which is the parent class of
+all catchable C++ exceptions in the application.  Every actual derived
+class is required to have a member function pythonequiv(), which
+returns a string which, when evaluated by Python, constructs an
+instance of the Python exception corresponding to this C++ exception.
+(The c_str() method belongs to the C++ std::string class, and extracts
+a null-terminated char* array suitable for passing on to interface
+code that doesn't understand STL containers.)  This is then passed as
+an argument to the callback, which is a simple Python function which
+looks like this:
+
+
+def PyErrorCallback(str):
+    exec("raise " + str)
+
+
+  The beauty of this technique is that, as a callback from C++, this
+Python function doesn't actually suspend execution and abort to the
+handler, although this behavior would not be unreasonable.  Instead,
+it apparently just sets the Python exception state, and then returns
+to the calling statement in the SWIG'd exception wrapper.  This
+wrapper does not modify the exception state, but by returning NULL (0)
+to the Python environment, causes the Python exception specified in
+the callback to actually be raised.  After the "catch" statement
+exits, execution resumes in the appropriate enclosing Python "except"
+block.
+
+  This is all that is really required for this technique to work, but
+there are a few other things that can be done to enhance the coherency
+and maintainability.  Firstly, the Python callback function needs to
+be accessible from C++, so we have made it a static member (of type
+void*) of the abstract ErrError class, with the name "pyconverter".
+In order to maintain the correspondence between the Python and C++
+exception classes, it is useful to simply make the Python exceptions
+SWIG'd versions of the C++ exceptions.  By this means, the same
+exception structure is uniformly available to all layers of the entire
+application.
+ 
+  For all of this to work, it's necessary that the callback pointer be
+assigned at start-up.  This can't be part of the static initialization
+process at load-time, because that process doesn't involve Python, so
+there needs to be Python code in the SWIG'd module, run at module
+load-time, which assigns the pointer, presumably through a separate,
+SWIG'd interface.  This would be cleaner if it could be made to happen
+automatically, but the overhead tasks are quite lightweight, and they
+buy you the advantage of uniformity of exception classes
+application-wide.
+
+  All of this code is in the ooferror.C, ooferror.h, ooferror.swg,
+and ooferror_.py files. 
+
+

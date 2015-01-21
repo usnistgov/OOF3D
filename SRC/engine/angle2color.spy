@@ -1,0 +1,53 @@
+# -*- python -*-
+# $RCSfile: angle2color.spy,v $
+# $Revision: 1.7.18.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:43:05 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.common import cregisteredclass
+from ooflib.common.IO import xmlmenudump
+
+cregisteredclass.registerCClass(Angle2ColorPtr)
+Angle2ColorPtr.tip = "Ways of converting orientations to colors."
+Angle2ColorPtr.discussion = xmlmenudump.loadFile(
+    'DISCUSSIONS/engine/reg/angle2color.xml')
+
+cregisteredclass.Registration(
+    "Euler2RGB",
+    Angle2ColorPtr,
+    Euler2RGB,
+    ordering=0,
+    tip="Map ABG Euler angles to RGB values.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/euler2rgb.xml'))
+
+cregisteredclass.Registration(
+    "Euler2HSV",
+    Angle2ColorPtr,
+    Euler2HSV,
+    ordering=1,
+    tip="Map ABG Euler angles to HSV values.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/euler2hsv.xml'))
+
+cregisteredclass.Registration(
+    "Bunge2RGB",
+    Angle2ColorPtr,
+    Bunge2RGB,
+    ordering=2,
+    tip="Map Bunge angles to RGB values.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/bunge2rgb.xml'))
+
+cregisteredclass.Registration(
+    "Axis2HSV",
+    Angle2ColorPtr,
+    Axis2HSV,
+    ordering=4,
+    tip="Map Axis orientations to HSV values.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/axis2hsv.xml'))

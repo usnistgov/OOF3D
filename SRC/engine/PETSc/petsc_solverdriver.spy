@@ -1,0 +1,57 @@
+# -*- python -*-
+# $RCSfile: petsc_solverdriver.spy,v $
+# $Revision: 1.9.2.2 $
+# $Author: langer $
+# $Date: 2014/09/27 22:34:24 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+## TODO MER: This file has not been updated to use new (April 2009)
+## Progress objects.
+
+from ooflib.common import debug
+from ooflib.common import registeredclass
+from ooflib.common.IO import parameter
+from ooflib.common.IO import reporter
+from ooflib.common.IO import xmlmenudump
+#from ooflib.engine import conjugate
+from ooflib.SWIG.common import switchboard
+import ooflib.engine.mesh
+
+from ooflib.SWIG.engine.solverdriver import Driver
+from ooflib.SWIG.engine.solverdriver import SolverDriverCore
+class PETScLinearDriver(Driver):
+    def __init__(self, method):
+        self.method = method
+        self.core = None
+
+    def driver_apply(self, stepper, verbosity):
+        self.core = PETScSolverDriverCore(stepper, self.method, self.subproblem)
+        #self.core = SolverDriverCore(stepper, self.method, self.mesh.getObject())
+        self.precompute(verbosity)
+        ## precompute assigns properties, creates the mapping to
+        ## symmetrizes the linear system of equations,
+        ## builds the master stiffness, conductivity, and mass
+        ## matrices, sets BCs
+        self.apply_solver(verbosity) ## applies the linear solver. Solution is accepted HERE
+        self.postcompute (verbosity)
+        ## postcompute resets BCs and fixates histo
+
+from ooflib.SWIG.engine.PETSc import petsc_solver
+registeredclass.Registration(
+    'LinearDriver(PETSc)',
+    Driver, ## superclass
+    PETScLinearDriver, ## subclass
+    ordering = 10,
+    params = [
+    petsc_solver.PETScLinearSolverParameter('method', 
+                                            tip=parameter.emptyTipString)],
+    tip="PETSc KSP linear system solver ",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/linear_driver.xml')
+    )

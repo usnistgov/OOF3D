@@ -1,0 +1,334 @@
+-*- text -*-
+$RCSfile: linear_system.txt,v $
+$Revision: 1.9 $
+$Author: langer $
+$Date: 2008/06/17 15:26:24 $
+
+
+Notes on low-level construction of the linear system, for up to
+second-order (and extensible to more, I suppose) time-dependence.
+
+
+The linear system consists, in principle, of three matrices and two
+vectors.  The three matrices we have been calling M, C, and K.  They
+are the contributions to the equations proportional to the second time
+dervivative, first time derivative, and zeroth time derivative of the
+degrees of freedom.  The two vectors are the constant part of the
+equations, f, and the values of the equations, v.  The latter vector
+is only required for nonlinear systems, and may not be relevant to
+dynamics.
+
+The equations we are solving, by the time we're down at this low
+level, are the linearized version of the equations in the problem, and
+have this general form:
+
+          2
+         d u         du
+    M    ---j  + C   --j  + K  u  + f  = 0 
+     ij    2      ij dt      ij j    i
+         dt 
+
+
+What we want is a systematic and extensible way of constructing all of
+these objects.
+
+In OOF terms, we imagine three types of equations.
+
+Force Equations: These are "ordinary" equations, like the existing
+force balance equation.  In zeroth-order in time, they are divergence
+equations, and their components correspond to forces.  There is one
+row of the matrices for each component of these equations at each
+node.
+
+Flux Equations: These equations have components corresponding to flux
+components, and are primarily (exclusively?) used to constrain the
+out-of-plane components of a flux.  Might go away in 3D, and might be
+obsoleted by the next type.  There is one row of the matrices for each
+component of these equations at each node.
+
+Pointwise Constraint Equations: These equations are not integrated in
+weak form, they typically apply at a particular point in space.  There
+is one row of the matrices for each component of these at each point.
+They come in two basic flavors, a GaussPoint version and a Node
+version.  Both may be contributed to by either GaussPoint or Nodal
+DOFs, but the component they constrain is either a Nodal or GaussPoint
+object, they can't in general be mixed. Plasticity could be done as a
+GaussPoint Constraint Equation, but in fact it will probably be done
+independently of the global matrix.
+
+
+Equations need to be computed if they are contributed to, and they are
+contributed to if, for a given material in an element, any of the
+active properties in the material contributes to this equation.
+Properties are active if *all* of the dependent fields of the property
+are *defined*.
+
+
+This may require changes to the cross-checking, and will certainly
+involve changes (but possibly rationalizations, also) to the property
+API.
+
+
+So the algorithm becomes:
+
+(During the problem setup, and every time properties are added to or
+removed from materials in the mesh, in a function in the mesh class:)
+
+- Determine the integration order, and from this, the number of
+gausspoints on each element.  Re-interpolate gauss-point data, if
+required, to populate gausspoint DOFs, and make sure the DOF and
+equation lists remain consistent.
+
+  This involves extra storage at each element, but this will
+also be true of the GaussPoint data itself, which implicitly
+scales with the number of elements, even if it's not actually
+stored within them.
+
+  Materials must be able to answer per-subproblem questions about
+consistency of their state -- property activation depends on 
+field definition, and field definition happens in subproblem 
+scope.
+
+For the subproblem under study, begin with the subproblem's
+make_linear_system routine.
+
+- Identify all the elements of the subproblem, and all the defined and
+active fields.  Determine, from the materials and properties, which
+fluxes and equations we need to compute contributions for.  These
+fluxes and equations are "active".  A flux is active if there is a
+property which contributes to it for which all of that property's
+dependent fields are defined on this subproblem.  An equation is
+active if it has a contribution from an active flux, or if there is a
+property which contributes directly to it for which all of that
+property's dependent fields are defined on the subproblem.
+
+- Initialize the linear system object for this time for this
+subproblem with the appropriate matrix sizes, deduced from the number
+of DOFs and equations.
+
+- For each element in a subproblem: 
+
+  (Now we are in the element's make_linear_system routine)
+  Identify the material, and determine from the properties and defined
+  fields which equations will have contributions, either directly,
+  or indirectly through fluxes.
+  
+
+  
+  For each gausspoint:
+  
+    (Now we are in the Material's make_linear_system)
+
+    Construct a flux matrix for each active flux for each time-order,
+      and a vector for the offset (all stored in a SmallSystem
+      object).
+
+    Evaluate these flux matrices by calling all the contributing
+      properties, looping over the "nu" nodes.  The nu-nodal loop is
+      outside of the properties, so props need to know the absolute
+      minimum about the elements.
+
+      
+    For each node:
+
+      (Inside the equations?  Fluxes?  Still in the Material?)
+      For each force equation:
+   
+        For each time-order:
+
+          Identify the properties which contribute directly at this 
+            time-order, and have them compute their force-matrix.
+          Distribute this force-matrix into the appropriate global 
+            matrix, M, C, or K, depending on the time-order, and 
+            multiply by the jacobian and the gaussian weight.
+          For the same properties, compute their contribution to 
+            the constant part of the linear system, f.
+	  
+          Identify the fluxes which contribute to this equation
+
+          For each flux:
+            Distribute the flux matrix into the global matrix, M, C, or K,
+              multiplying by the shape function derviative (for the 
+              divergence), the jacobian, and the gaussian weight.         
+	    Compute the properties' contributions to f.       
+
+      For each flux equation:
+
+        For each time-order:
+
+          For the flux:
+
+            Distribute the flux matrix values and accumulate the
+               global matrix M, C, or K, multiplying by the jacobian,
+               and the gaussian weight.
+            Compute the properties' contributions to f.
+
+    For each constraint equation: (outside node loop here, inside gpt loop)
+
+       For each time-order:
+
+         Identify contributing properties, and make the entries 
+            directly into the global matrix M, C, or K, and f.  No
+            integration, so no jacobians or gaussian weights.
+
+  The change from the current system begins after the material's
+make_linear_system has been called.  In the old version, the
+Material::make_linear_system looped over fluxes, and the fluxes called
+the equations to make their contributions.  In the new version,
+Material::make_linear_system will first see which equations are
+required, and call their make_linear_system routine, and the equations
+will do the flux computations.
+
+There is no danger of inefficiency due to recomputation of redundant
+data, because flux contribution data is precomputed.
+
+
+  For nonlinear static problems for which we want to use an NR-type
+algorithm, equations must also be able to evaluate themselves.  For
+linear constitutive contributions, the value of the equation is just
+the contraction of the matrix with the DOFs, so no new API components
+are required.  For nonlinear constitutive contributions, the
+properties must be able to make their contribution to the value of the
+equation or flux, for a given set of values for the dependent DOFs.
+
+  In the time-dependent case, this evaluation is not necessary, because
+the linear system you end up solving does not contain the direct
+values of the equations as important quantitites.
+
+
+  The Property API will have to include the capability to make all of
+these contributions.  At least two functions are required, one that's
+called for each node, and another that's only called once per element.
+Properties will be responsible for making the appropriate
+time-derivative contributions in each function, which shouldn't be too
+complicated, as individual properties probably won't actually make
+more than one contribution.
+
+
+  For equation evaluation (required for nonlinear properties):
+    
+    evaluate_force(..)
+    evaluate_flux(..)    
+
+  For flux contributions, the two required routines strongly resemble
+the previous scheme.  The iterated routine called for each node is the
+"flux_matrix" routine, which will pass in the flux matrix object
+containing all the time derviative contirbutions.  It will be the
+responsibility of this routine to make contributions to the
+appropriate submatrix.  The flux matrix object should provide
+access functions that make this straightforward.
+
+    flux_matrix
+    flux_offset
+
+  For force contributions:
+
+    force_matrix
+    force_offset
+
+  Same basic idea -- properties will make the appropriate 
+contributions to the internal subobjects of the equation matrix,
+and the equations themselves will then move this data to the
+appropriate part of the subproblem-scope linear_system object.
+
+
+  These functions will be called within the element/gausspoint loop, and
+will provide the contributed-to flux or force as an argument.  The
+"force" argument might just be the equation itself.
+
+  For now, we assume that flux contributions will depend on nodal
+degrees of freedom, and that force contributions will depend on
+gausspoint degrees of freedom.  The contrary scheme is a logical
+possibility, and might be added later.
+
+  Regular book-keeping functions will mostly be the same, with possibly
+a few additions for "Force" contribution management.  Properties may
+require additional registration entries, e.g. saying what time-orders
+they contribute to, and which forces or equations, if required, in
+addition to fluxes.
+
+
+Property, Equation, and Problem bookkeeping:
+
+
+  Properties must tell the system:
+  - Their name
+  - Their type ("Elasticity", etc.)
+  - What other properties they need access to ("Orientation", "Elasticity"...)
+  - What fields need to be defined for them to operate.
+  - What fluxes they contribute to (and for what time derivatives?)
+  - What equations they contribute to (and for what time derivatives?)
+  - Whether they are nonlinear.
+
+  Nonlinear properties in static problems will be asked to evaluate
+their flux or force contributions directly.  Linear properties in
+static problems can have their contributions deduced by the caller, by
+contracting their matrix contribution with the actual DOFs.
+
+
+  Force Equations should have names, and know which flux divergences
+contribute to them.  The names properties use for force contributions
+should be the same as the corresponding Force Equation name.  Forces
+do not need to be separate objects, because a Force Equation *is* a
+Force.
+
+  
+  Flux equations won't change -- they need to know the flux they
+constrain, of course.
+
+  Pointwise Constraint Equations will be similar to Force equations,
+they'll have names, and can identify contributing properties from
+their declared Pointwise Constraint contributions. These equation
+objects will be specified by users, but unlike the other forms, may be
+automatically added to the mesh during the solution step in response
+to violations of the constraint.
+
+  Pointwise Constraint Equations are going to be fairly closely related
+to their contributing properties, which may pose architectural
+challenges.
+
+  As before, Materials will be restricted to one property of each
+type.
+
+
+How to Proceed:
+---------------
+
+  Start with the current divergence equation, and rewrite it to use the
+new scheme, making appropriate calls to the properties to build all of
+the matrices.  Remove the specialized time-dependent term from the
+initializer.
+ 
+
+  Equation classes/attributes:
+
+  Equation
+    int components;
+    std::string name;
+    (pythonexportable/identifiedobject stuff)
+    const unsigned int index_;
+  Functions for iterating over components, and so forth.
+
+
+The gauss point issue
+---------------------
+
+  Storage:
+
+  We don't want to add gausspoints to elements, that's wasteful.  Since
+gausspoints live in master space anyways, all we really need to know
+is the order of integration, and the mesh can know that.  As long as
+elemental gausspoints for a given order of integration always occur in
+the same order, we can just use an integer index as a proxy for the
+GaussPoint object, and not have to store anything.
+
+  Change-over:
+  
+  The current time-dependent scheme provides for a "mesh state" which
+has both time and DOF variables, but doesn't couple them, except when
+the mesh is evolving.  During evolution, the number of gausspoints
+can't change.  At other times (adding/removing properties, manually
+changing the integration order), gausspoint DOFs can be interpolated
+on elements, either on the fly, or prior to the solution.  If
+multistep methods require intermediate data, this data can also be
+generated by interpolation.

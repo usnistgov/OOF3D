@@ -1,0 +1,8 @@
+# Operation: Integral
+# Output: 1.0
+# Domain: LinearCrossSectionDomain(cross_section='yz')
+# Sampling: ContinuumSampleSet(order=automatic)
+# Columns:
+# 1. time
+# 2. integral of 1.0
+0.0, 14.1350663246

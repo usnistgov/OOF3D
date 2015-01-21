@@ -1,0 +1,96 @@
+# -*- python -*-
+# $RCSfile: doublevec.spy,v $
+# $Revision: 1.1.4.3 $
+# $Author: langer $
+# $Date: 2014/10/15 20:53:44 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+import types
+
+def _doublevec___len__(self):
+    return self.size()
+DoubleVecPtr.__len__ = _doublevec___len__
+
+def _doublevec___add__(self, other):
+    result = self.clone()
+    result += other
+    return result
+DoubleVecPtr.__add__ = _doublevec___add__
+
+def _doublevec___sub__(self, other):
+    result = self.clone()
+    result -= other
+    return result
+DoubleVecPtr.__sub__ = _doublevec___sub__
+
+def _doublevec___iadd__(self, other):
+    if isinstance(other, DoubleVecPtr):
+        self.axpy(1.0, other)
+        return self
+    return NotImplemented
+DoubleVecPtr.__iadd__ = _doublevec___iadd__
+
+def _doublevec___isub__(self, other):
+    if isinstance(other, DoubleVecPtr):
+        self.axpy(-1.0, other)
+        return self
+    return NotImplemented
+DoubleVecPtr.__isub__ = _doublevec___isub__
+
+def _doublevec___mul__(self, factor):
+    if isinstance(factor, DoubleVecPtr):
+        return self.dot(factor)
+    # The test for float and int has to be done here, or else
+    # vector*matrix leads to an infinite loop, trying to find a
+    # suitable __mul__ variant.  Without the test, the __imul__ (*=)
+    # invocation below will fail when the rhs is a matrix.  When that
+    # happens, python falls back to __mul__, which is this function,
+    # which will call __imul__ and so on ad infinitum.
+    if type(factor) is types.FloatType or type(factor) is types.IntType:
+        result = self.clone()
+        result *= factor
+        return result
+    return NotImplemented
+DoubleVecPtr.__mul__ = _doublevec___mul__
+
+def _doublevec___rmul__(self, factor):
+    if type(factor) is types.FloatType or type(factor) is types.IntType:
+        result = self.clone()
+        result *= factor
+        return result
+    return NotImplemented
+DoubleVecPtr.__rmul__ = _doublevec___rmul__
+
+def _doublevec___div__(self, factor):
+    result = self.clone()
+    result /= factor
+    return result
+DoubleVecPtr.__div__ = _doublevec___div__
+
+def _doublevec___imul__(self, factor):
+    if type(factor) is types.FloatType or type(factor) is types.IntType:
+        self.scale(factor)
+        return self
+    return NotImplemented
+DoubleVecPtr.__imul__ = _doublevec___imul__
+
+def _doublevec___idiv__(self, factor):
+    if type(factor) is types.FloatType or type(factor) is types.IntType:
+        self.scale(1./factor)
+        return self
+    return NotImplemented
+DoubleVecPtr.__idiv__ = _doublevec___idiv__
+
+def _doublevec__neg__(self):
+    result = self.clone()
+    result *= -1.0
+    return result
+DoubleVecPtr.__neg__ = _doublevec__neg__
+

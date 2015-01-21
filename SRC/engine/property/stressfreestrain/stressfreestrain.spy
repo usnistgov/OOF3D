@@ -1,0 +1,173 @@
+# -*- python -*-
+# $RCSfile: stressfreestrain.spy,v $
+# $Revision: 1.4.8.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:46:04 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+
+from ooflib.SWIG.engine import symmmatrix
+from ooflib.common import utils
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.engine import problem
+from ooflib.engine import propertyregistration
+
+PropertyRegistration = propertyregistration.PropertyRegistration
+
+#########
+
+reg = PropertyRegistration(
+    'Mechanical:StressFreeStrain:Isotropic',
+    IsotropicStressFreeStrain,
+    "ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain",
+    22,
+    [parameter.FloatParameter('epsilon0', 0.0, tip="StressFreeStrain")],
+    outputs=["Strain", "Energy"],
+    propertyType="StressFreeStrain",
+    tip="Isotropic stress-free strain",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/isostressfreestrain.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress])
+
+#########
+
+reg = PropertyRegistration(
+    'Mechanical:StressFreeStrain:Anisotropic:Cubic',
+    AnisotropicStressFreeStrain,
+    "ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain",
+    23,
+    [symmmatrix.CubicRank2TensorParameter(
+            'epsilon0',
+            symmmatrix.CubicRank2Tensor(xx=1.0),
+            tip='Stress-free strain tensor')],
+    outputs=["Strain", "Energy"],
+    propertyType="StressFreeStrain",
+    tip="Cubic stress-free strain",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisostressfreestrain.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress])
+    
+#########
+
+reg = PropertyRegistration(
+    'Mechanical:StressFreeStrain:Anisotropic:Hexagonal',
+    AnisotropicStressFreeStrain,
+    "ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain",
+    24,
+    [symmmatrix.HexagonalRank2TensorParameter(
+            'epsilon0',
+            symmmatrix.HexagonalRank2Tensor(xx=1.0, zz=0.5),
+            tip='Stress-free strain tensor')],
+    outputs=["Strain", "Energy"],
+    propertyType="StressFreeStrain",
+    tip="Hexagonal stress-free strain",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisostressfreestrain.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress])
+    
+#########
+
+reg = PropertyRegistration(
+    'Mechanical:StressFreeStrain:Anisotropic:Trigonal',
+    AnisotropicStressFreeStrain,
+    "ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain",
+    25,
+    [symmmatrix.TrigonalRank2TensorParameter(
+            'epsilon0',
+            symmmatrix.TrigonalRank2Tensor(xx=1.0, zz=0.5),
+            tip='Stress-free strain tensor')],
+    outputs=["Strain", "Energy"],
+    propertyType="StressFreeStrain",
+    tip="Trigonal stress-free strain",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisostressfreestrain.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress])
+    
+#########
+
+reg = PropertyRegistration(
+    'Mechanical:StressFreeStrain:Anisotropic:Tetragonal',
+    AnisotropicStressFreeStrain,
+    "ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain",
+    26,
+    [symmmatrix.TetragonalRank2TensorParameter(
+            'epsilon0',
+            symmmatrix.TetragonalRank2Tensor(xx=1.0, zz=0.5),
+            tip='Stress-free strain tensor')],
+    outputs=["Strain", "Energy"],
+    propertyType="StressFreeStrain",
+    tip="Tetragonal stress-free strain",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisostressfreestrain.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress])
+    
+#########
+
+reg = PropertyRegistration(
+    'Mechanical:StressFreeStrain:Anisotropic:Orthorhombic',
+    AnisotropicStressFreeStrain,
+    "ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain",
+    27,
+    [symmmatrix.OrthorhombicRank2TensorParameter(
+            'epsilon0',
+            symmmatrix.OrthorhombicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+            tip='Stress-free strain tensor')],
+    outputs=["Strain", "Energy"],
+    propertyType="StressFreeStrain",
+    tip="Orthorhombic stress-free strain",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisostressfreestrain.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress])
+    
+#########
+
+reg = PropertyRegistration(
+    'Mechanical:StressFreeStrain:Anisotropic:Monoclinic',
+    AnisotropicStressFreeStrain,
+    "ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain",
+    26,
+    [symmmatrix.MonoclinicRank2TensorParameter(
+            'epsilon0',
+            symmmatrix.MonoclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+            tip='Stress-free strain tensor')],
+    outputs=["Strain", "Energy"],
+    propertyType="StressFreeStrain",
+    tip="Monoclinic stress-free strain",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisostressfreestrain.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress])
+    
+#########
+
+reg = PropertyRegistration(
+    'Mechanical:StressFreeStrain:Anisotropic:Triclinic',
+    AnisotropicStressFreeStrain,
+    "ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain",
+    26,
+    [symmmatrix.TriclinicRank2TensorParameter(
+            'epsilon0',
+            symmmatrix.TriclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+            tip='Stress-free strain tensor')],
+    outputs=["Strain", "Energy"],
+    propertyType="StressFreeStrain",
+    tip="Triclinic stress-free strain",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisostressfreestrain.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress])
+    

@@ -1,0 +1,572 @@
+-*- text -*-
+$RCSfile: graphics.doc,v $
+$Revision: 1.11 $
+$Author: reida $
+$Date: 2002/09/10 15:45:46 $
+
+------------------
+OOF2 GRAPHICS CODE
+------------------
+
+----------------------
+=== BRIEF OVERVIEW ===
+----------------------
+
+OOF2 graphics output is defined in very general terms, in an attempt
+to be device and physics independent.  Here are the basic classes:
+
+
+OutputDevice:
+  
+  An OutputDevice is an object that actually creates output.  It
+  supports a generic set of primitive output operations, which
+  provides device independence.  Examples of OutputDevices are the
+  CanvasOutput for screen output to a GtkCanvas, and PSoutput for
+  creating postscript files.
+
+OOFCanvas:
+
+  OOFCanvas is the C++ class that wraps the GtkCanvas, which is the
+  widget that actually draws things on the screen.  OOFCanvas is not
+  quite an OutputDevice, mainly because it's a C++ class and so can't
+  be derived from the Python OutputDevice class.  (That's not a real
+  objection, since it doesn't have to be derived from it; it just has
+  to behave like it.)  Instead, the CanvasOutput class is derived from
+  OutputDevice and wraps an OOFCanvas.
+
+GfxWindow:
+
+  The GfxWindow is the logical wrapper for the GtkWindow that contains
+  a CanvasOutput device.  It has a bunch of other things too that will
+  be described below.  The GfxWindow class is derived from GhostGfxWindow.
+
+GhostGfxWindow:
+
+  Because OOF2 doesn't assume that the graphics module is loaded, the
+  GfxWindow API is implemented in a base class that has *no*
+  OutputDevice.  The GhostGfxWindow takes care of logging commands and
+  maintaining state information, but doesn't actually do any output.
+
+
+Display:
+
+  A Display is a collection of DisplayLayers.  The layers are drawn in
+  order, so that later (higher) layers hide earlier (lower) layers.
+
+DisplayLayer:
+
+  A DisplayLayer is the highest level graphics object.  Layers can be
+  raised and lowered, hidden and shown.  They are created by the
+  LayerEditor.  DisplayLayers are defined by four components, Who,
+  What, Where, and How, which determine what the layer represents and
+  how it's portrayed.  There are two kinds of DisplayLayers: regular
+  layers, which are created by the LayerEditor, and overlayers, which
+  are created automatically.  Overlayers always appear on top of
+  regular layers.  There are also DefaultLayers, which are regular
+  layers displayed on new graphics windows when no other layers are
+  defined.
+
+DisplayLayer Components:
+
+  Who:
+
+     The object being displayed.  Whos are instances of WhoClasses.
+     The WhoClasses are Image, Microstructure, GhostMesh, and Mesh.
+     See the section on WhoClasses below.
+
+  What: 
+
+    The specific part of Who that's being displayed.  What is
+    irrelevant for some WhoClasses.  For Meshes, What is typically a
+    component of a Field or Flux, or a function of Fields and Fluxes.
+
+  Where:
+
+     Where the data is being displayed.  Like What, Where is only
+     relevant for some WhoClasses (just Mesh, at the moment).  Where
+     is usually a function of position on the mesh.  Typical values
+     are 'original' (position on the undistorted mesh), 'actual'
+     (position on the distorted mesh), or 'enhanced' (drawn on a mesh
+     with arbitrarily enhanced displacements).
+
+  How:
+
+     How the data is being displayed.  Different types of How are
+     appropriate for different Whos and Whats.  Hows include:
+    
+     Bitmap:  for displaying Images and Microstructures
+     ElementEdge: for displaying Meshes and GhostMeshes
+     Material Color: for Meshes and GhostMeshes
+     Perimeter: for Meshes and GhostMeshes
+     SolidFill: for scalar functions on Meshes
+     ContourLine and FilledContour: for scalar functions on Meshes
+
+  The canonical order for DisplayLayer components, used in all cases
+  in which the four components are listed together, is who, what,
+  where, how.  For more about DisplayLayers, see the section on the
+  LayerEditor.
+
+Output:
+
+  The Where and What DisplayLayer Components are instances of Outputs.
+  Outputs are objects that take a set of Inputs, a set of Parameters,
+  and produce a set of output values when they are applied to a Mesh.
+  For example, there are Outputs that give the values of Field
+  components on the Mesh.  They have two Parameters (the Field in
+  question and the desired component) and no Inputs.  Outputs can be
+  chained together, so that the output of one Output can be used as
+  the Input for another.  Eventually, OOF2 will have an OutputEditor
+  to allow users to create Output chains themselves.  For now, chains
+  are predefined in engine/IO/outputClones.py (abstract outputs with
+  unset Inputs and/or Parameters) and engine/IO/outputDefs.py
+  (concrete Outputs with all Inputs set, so that they can actually be
+  used).
+
+DisplayMethod:
+
+  The How part of a DisplayLayer is an instance of a DisplayMethod
+  subclass.
+
+Toolbox and ToolboxGUI:
+
+  Toolboxes are the GUI for various kinds of operations that the user
+  performs on the graphics window.  They correspond to notebook pages
+  on the left side of the window.  Of course, like everything else,
+  they need GUI and non-GUI pieces, so that they can work in both GUI
+  and text modes.  Different parts of OOF can define their own
+  toolboxes by defining Toolbox and ToolboxGUI subclasses.
+
+GfxExtension:
+
+  Different parts of OOF can add functions to the GhostGfxWindows and
+  GfxWindows by defining subclasses of GfxExtension.  Currently this
+  is used only for things that can't be done in Toolboxes.
+
+MouseHandler:
+
+  A MouseHandler is an object that tells the graphics window what to
+  do with mouse clicks and mouse motion.  When toolboxes are activated
+  they install their own MouseHandler in the graphics window.
+
+
+
+
+---------------------------
+=== IN DEPTH DISCUSSION ===
+---------------------------
+
+The graphics code is somewhat complicated because OOF scripts that
+include graphics commands must do something sensible when the graphics
+module is not loaded, and the graphics module can make no assumptions
+about what other modules are loaded.  This means that there must be
+mechanisms for other modules to add functionality (eg. settings or
+toolboxes) to the graphics windows at load time.
+
+A graphics window is opened by the gfxManager, whose job it is to keep
+track of the open graphics windows.  There is only one gfxManager,
+defined in common/IO/gfxmanager.py.  When asked to open a window, the
+gfxManager opens either a GhostGfxWindow (in text mode) or a GfxWindow
+(in GUI mode).  It also assigns a name to the window.
+
+The GfxWindow class is derived from the GhostGfxWindow class, but when
+opening a GfxWindow, the GhostGfxWindow constructor isn't called
+immediately.  This is because many of the virtual functions redefined
+in GfxWindow are called by the GhostGfxWindow constructor and rely on
+data structures that must be initialized before the functions are
+called.
+
+Graphics State Variables:
+
+The state of the graphics window is maintained by the GhostGfxWindow
+part of the object.  It includes:
+
+  The name of the window (self.name).
+
+  A single Display object (self.display).
+
+  A single OutputDevice object (self.device).  This is the default
+  device.  It's set by the GfxWindow to be a CanvasOutput, and by the
+  GhostGfxWindow to be a NullDevice.  When a window prints its
+  contents, it creates a temporary PostScript device (class PSoutput).
+
+  Settings.  Settings are variables that hold user preferences.
+  Settings that are made in one window become the default value for
+  all future windows.  To enforce this, each GhostGfxWindow has a
+  GfxSettings object, which stores all the settings.  The GfxSettings
+  class keeps track of the last value assigned to each setting, and
+  uses it to initialize the next GfxSettings object.  The settings
+  are:
+    bgcolor: background color
+    zoomfactor: magnification change when zooming in and out
+    margin: amount of margin to leave when zooming to full size,
+            expressed as a fraction of the full size
+    antialias: boolean controlling antialiasing on the canvas
+  Modules can add their own settings to the graphics windows by
+  calling ghostgfxwindow.defineGfxSetting(name, defaultvalue) at load time.
+  For example, the Image module adds 'showSelectedPixels'.
+ 
+  A boolean value, 'hold', which inhibits redrawing the window when true.
+ 
+  A reference to the currently selected DisplayLayer.
+
+  The currently active ToolBox.
+
+  The menus which control the graphics window.
+
+
+Graphics Window Initialization
+------------------------------
+
+The graphics window initialization process is as follows:
+
+- The gfxManager calls GfxWindow.__init__()  (in GUI mode).
+- The GfxWindow gets its settings by creating a GfxSettings object.
+- The window creates all of its GTK+ infrastructure and assigns callbacks.
+- The window creates a dictionary of toolboxes and stores a dummy 
+  toolbox called None.
+- The window creates a canvas by calling newCanvas().  This uses some of
+  the settings, which is why the settings had to be constructed first.
+  It creates a OOFCanvas (self.oofcanvas) and a CanvasOutput (self.device).
+- The GhostGfxWindow constructor is called, which...
++ Constructs a Display object.
++ Initializes its device to NullDevice, unless the GfxWindow has
+  already initialized it.
++ Initializes its toolbox and mouseHandler to dummy objects.
++ Creates menus, including some (like 'Settings/Show_Selected') that
+  are empty and will be filled in by toolboxes and extensions.
++ Instantiates all GfxExtensionClasses and stores a list of them.  See
+  'Extensions' below.
++ Creates Toolboxes.  See 'Toolboxes' below.
++ Creates default DisplayLayers.  See 'Default Layers' below.
++ Creates overlayers.  See 'Overlayers' below.
++ Sensitizes the menus (layer operations are active iff a layer is
+  selected, etc.)
+- Then the GfxWindow constructor resumes, and assigns gui callbacks to
+  menu items, creates the gui menus, and finally draws the default
+  DisplayLayers.
+
+GfxExtension
+------------
+
+Features can be added to the graphics windows by subclassing
+GfxExtension and registering the subclass by calling
+ghostgfxwindow.registerGfxExtensionClass(name, subclass).  A
+GfxExtension provides a number of functions (hooks) which are called
+by the GhostGfxWindow at appropriate times.  The hooks all have
+trivial implementations in the bas GfxExtension class, so subclasses
+can ignore ones that they don't need.  The hooks are:
+
+__init__(self, gfxwindow)
+
+  The GhostGfxWindow constructor will create instances of the
+  subclass, calling the subclass constructor with the graphics window
+  as an argument.  The derived class's __init__() must call the base
+  class __init__().
+
+close(self):
+
+  Called when the graphics window is closed.  Must call the base class
+  close() method.
+
+createOverLayers(self):
+
+  Called during construction.  Must return a list of OverLayer
+  objects (see below).  Does not have to call the base class method.
+
+Because GfxExtension objects are not created until the graphics window
+is created, an extension that needs to behave differently in GUI mode
+can be redefined when the GUI code is loaded.  For example, the Image
+extension, ImageExtension, is defined in image/IO/gfxextension.py.
+One of the things it does is to add a few items to the graphics window
+menu in its makeMenus() routine. The GUI part of the extension is
+defined in image/IO/GUI/gfxextensionGUI.py, and it redefines
+ImageExtension.makeMenus(), adding GUI callbacks to the menu items.
+
+
+Toolbox and GfxToolbox
+----------------------
+
+Like GfxExtensions, Toolboxes are a way of extending the graphics
+window.   Each toolbox contains a set of related operations that act
+on the display.  For example, the PixelSelectToolbox interprets mouse
+clicks on an image and generates sets of pixels.  Only one toolbox is
+active at a time.  In GUI mode, the toolboxes correspond to
+GtkNotebook pages on the left side of the graphics window.
+
+Unlike GfxExtensions, Toolboxes are expected to have a concrete
+presence in the GUI as well as a non-gui API that can be used in text
+mode.  Therefore they are based on two classes, Toolbox (in
+common/toolbox.py) and GfxToolbox (in common/IO/GUI/toolboxGUI.py).
+Each new Toolbox subclass must be registered by calling
+   toolbox.registerToolboxClass(subclass, ordering).
+The subclass must override the function Toolbox.makeGUI(), which
+must return an object derived from GfxToolbox.
+
+The derived GfxToolbox can also be derived from MouseHandler, via
+multiple inheritance, or it can contain a MouseHandler object.  It
+should not actually do much itself, other than to make non-GUI menu
+calls through its non-GUI counterpart.  The arguments to those calls
+can include coordinates returned by the MouseHandler functions.
+
+Toolbox Details:
+
+registerToolboxClass(subclass, ordering)
+
+  subclass is a subclass of Toolbox.  ordering is a number used to
+  sort the toolboxes in the GUI and other listings (if any).
+
+The following functions in the Toolbox base class can be redefined in
+the derived classes.  All redefinitions are optional, except for
+__init__.
+
+DerivedToolbox.__init__(self, gfxwindow)
+Toolbox.__init__(self, name, gfxwindow)
+
+  This function *must* be redefined in the derived class.  The derived
+  class function must call the base class function.  The derived class
+  function is called during GhostGfxWindow construction, passing in a
+  reference to the window.  The derived class must pass a name along
+  to the base class constructor.
+
+Toolbox.makeGUI(self)
+
+  This function is called only in graphics mode, and must return an
+  instance of the corresponding GfxToolbox subclass.  See below for
+  more on GfxToolbox.  The makeGUI definition should be added to the
+  Toolbox subclass in graphics mode only.
+
+Toolbox.makeMenu(self, menu)
+
+  Called during graphics window construction after the base menus have
+  been built.  The OOFMenuItem passed in as an argument is where all
+  of the toolbox's commands should be placed.  The menu name is the
+  name of the toolbox, as passed to Toolbox.__init__.  All toolbox
+  actions should have corresponding menu items.  The gui part of the
+  toolbox should invoke the menu items, whose non-gui callbacks
+  actually perform the actions.
+
+Toolbox.activate(self)
+Toolbox.deactivate(self)
+
+  Called when this toolbox becomes active or inactive.
+
+Toolbox.close(self)
+
+  Called when the graphics window is closing.
+
+The following functions in GfxToolbox may be overridden in the derived
+class:
+
+GfxToolbox.__init__(self, toolbox)
+
+  The derived class __init__ must call the base class __init__.  Both
+  take the same argument, which is a reference to the corresponding
+  non-GUI toolbox.  This is stored in the GUI base class as
+  self.toolbox.  Thus, GfxToolbox instances refer to their enclosing
+  GfxWindows via self.toolbox.gfxwindow.  The base class also creates
+  a GtkFrame, self.gtk, into which all of the derived class's gui
+  objects must be placed.
+
+GfxToolbox.activate(self)
+GfxToolbox.deactivate(self)
+
+  Called when the toolbox is activated or deactivated.  When switching
+  toolboxes, the old gui toolbox is deactivated, then the old non-gui
+  toolbox is deactivated, then the new non-gui toolbox is activated,
+  and finally the new gui toolbox is activated.  The gui activation
+  and deactivation functions are good places in which to set the
+  graphics window's mouseHandler.
+
+GfxToolbox.close(self)
+
+  Called when the graphics window is closed.
+
+
+MouseHandler
+------------
+
+The behavior of the mouse in a graphics window is determined by the
+window's current MouseHandler, stored in GfxWindow.mouseHandler.  When
+a GfxToolbox is activated (ie, when GfxToolbox.activate() is called),
+it should install its own MouseHandler in the graphics window by
+calling self.toolbox.gfxwindow.setMouseHandler(handler).  Here handler
+is an instance of a MouseHandler subclass (which may be self, if the
+GfxToolbox instance is also a MouseHandler instance).  When the
+toolbox is deactivated, its handler is automatically uninstalled,
+although the handler can be removed earlier by calling
+GfxWindow.removeMouseHandler().
+
+MouseHandler derived classes may override the following four functions.
+All of the functions have trivial no-op base class definitions, so
+derived classes can ignore irrelevant functions.
+
+MouseHandler.acceptEvent(self, eventtype)
+
+  Returns 1 if the handler is interested in receiving an event of type
+  eventtype, and 0 otherwise.  The possible event types are the
+  strings 'up', 'down', and 'move'.  When the GfxWindow receives a
+  mouse event, it calls acceptEvent, and if acceptEvent returns 1 the
+  window calls one of the following three functions:
+
+MouseHandler.up(self, x, y)
+MouseHandler.down(self, x, y)
+MouseHandler.move(self, x, y)
+
+  The coordinates passed to up, down, and move are in the physical
+  coordinate system, so they're floats and independent of the screen
+  resolution.  Note that 'move' events are sent whenever the mouse is
+  over the window, even if the button is not pressed.  They are also
+  sent when the mouse is *not* over the window if the button was first
+  pressed in the window and has not yet been released.
+
+
+Default Layers
+--------------
+
+When a graphics window is opened with the OOF.Graphics.New_Window
+command, it opens with a set of default DisplayLayers.  What exactly
+is shown, of course, depends on which oof modules are loaded and what
+data is present.  The DefaultLayer class in
+common/IO/ghostgfxwindow.py allows modules to define the layers that
+will appear in new windows.
+
+To define a default layer, a module creates a DefaultLayer object.
+All DefaultLayer instances are automatically stored in a list in the
+DefaultLayer class, so the instantiating module doesn't need to keep a
+reference to the layer.  The arguments to the constructor are a
+function and an ordering.  The function will be called when the layer
+is actually constructed, and must return a tuple (who, what, where,
+how) of the layer components.  If they layer cannot be defined the
+function must return None.  The list of DefaultLayers are sorted by
+the layers' ordering parameter, and drawn in sequence.  Layers with
+high orderings appear above layers with low ones.
+
+
+OverLayer
+_________
+
+Overlayers are layers that aren't editable by the LayerEditor, but are
+always present.  They also are always on top of the user defined and
+default layers, which is why they're called OverLayers.  OverLayers
+are created by GfxExtensions when their createOverLayers function is
+called.  createOverLayers() returns a list of OverLayer objects.  The
+OverLayer constructor takes five arguments: the four layer components,
+who, what, where, and how, and an ordering.  The ordering is used just
+like the ordering for Default Layers.
+
+
+Who and WhoClass
+----------------
+
+The WhoClass class defines types of objects that can be displayed.
+Each WhoClass instance contains a list of Whos, which wrap the actual
+displayable objects.  (The reason for this extra wrapper is that it
+puts C++ and Python objects on the same footing.)  Each WhoClass
+instance has a name and an ordering, which determines where it appears
+in the LayerEditor's Who selection widget.
+
+The WhoClass constructor takes the following arguments:
+    name
+    ordering
+    instanceClass (optional, defaults to Who)
+    secret        (optional, defaults to 0)
+
+The instanceClass, if provided, must be a subclass of Who.  New
+members of the WhoClass (new Whos) should never be created directly;
+instead they're created by calling WhoClass.add(self, name, object)
+which wraps the object in the instanceClass and adds it to the list in
+the WhoClass.
+
+The 'secret' argument to the WhoClass constructor should be 1 if the
+class is not to be made visible in the LayerEditor.  This allows
+classes meant to be used only for OverLayers to use the same display
+machinery.
+
+The class Who wraps the actual displayable objects.  It gives them a
+name, by which they are referred to in the UI, and handles some
+internal bookkeeping.   For example, Who.getClass() allows the GUI to
+determine the WhoClass of a given Who. 
+
+If necessary, subclasses can be derived from Who.  In this case, the
+subclass must be passed to the WhoClass constructor.  The subclass
+constructor *must* take exactly the same arguments as the Who
+constructor, namely:
+  name		a string
+  classname	another string, for identification in the GUI. 
+  obj		the object being wrapped
+  index		an integer
+All of the arguments are created by WhoClass.add(), and must be passed
+through to Who.__init__ from the subclass's __init__.
+
+Useful functions:
+
+WhoClass.add(self, name, object)
+
+  Creates and stores a Who object.
+
+WhoClass.remove(self, name)
+
+  Removes the Who object of the given name.
+
+WhoClass.__len__(self)
+
+  Returns the number of Who objects in the WhoClass.
+
+WhoClass.__getitem__(self, index)
+
+Who.requestCallback(self, *args)
+
+  args are passed through to switchboard.requestCallback().  The only
+  point of this function is that the switchboard callback is removed
+  when the Who object is removed from the WhoClass.
+
+
+The function GhostGfxWindow.topmost(self, whoclass) returns the Who
+object in the topmost DisplayLayer with a Who of the given class.
+
+
+Output
+------
+
+The Output class provides a way of defining arbitrary functions that
+can be evaluated on the Mesh and plotted.  Outputs receive input,
+apply a function to it, and produce output.  The input can come from
+another Output instance, so Outputs can be chained together.  Outputs
+can have any number of inputs, so the plumbing can get complicated,
+but this allows for quite general functions to be defined in terms of
+simple operations.
+
+Every Output has an oType attribute, which specifies the type of
+values it produces.  oType can be a Python type or an instance of a
+class or a list or tuple thereof.  It's stored internally as a
+TypeChecker instance (from common/IO/parameter.py).  For example, the
+FieldOutput's oType is types.ListType, because it produces a list
+corresponding to the components of a Field.
+
+Outputs also have parameters, which are stored as named Parameter
+instances (also from common/IO/parameter.py).  For example, the
+generic FieldOutput has a single parameter, called "field", which
+indicates which Field is to be put out.
+
+An Output's inputs are also named.  In fact, the Input class is
+derived from Parameter.  When one Output is used as another Output's
+input, the oType of the first Output must satisfy the TypeChecker of
+the second Output's Input.  For example, the Component Output expects
+a FieldOutput as its input, so 
+
+Output is not meant to be used as a base class.  Instead, it supports
+a kind of dynamic pseudo-subclassing.  Outputs can be defined in terms
+of other Outputs, and defined Outputs can be registered by name,
+making them available for future use. ....
+
+Outputs have the following attributes:
+
+  name:  by which they're known in the UI
+  help:  a descriptive string
+  oType:  the type of value they produce
+
+
+
+The LayerEditor
+---------------
+

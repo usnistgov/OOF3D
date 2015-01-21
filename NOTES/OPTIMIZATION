@@ -1,0 +1,41 @@
+// -*- text -*-
+// $RCSfile: OPTIMIZATION,v $
+// $Revision: 1.2.96.1 $
+// $Author: langer $
+// $Date: 2014/07/03 19:49:34 $
+
+Optimization opportunities:
+
+Rewrite all code in assembler.
+
+
+Lots of calls to MV_Vector_double::operator=(const double &), when
+the flux matrix is being initialized for each Gausspoint.  This
+is an artifact of the former-template-ness of the MV routines,
+and can probably be sped up with a BLAS call.  Alternatively,
+it might be worthwhile to re-use, rather than re-allocate, the
+flux matrix.  
+
+The Boundary classes (PointBoundary and EdgeBoundary)  have
+methods, getFixedNodes and getFloatNodes, which return lists of
+BCInstance objects containing the boundary condition and unevaluated
+profiles.  These are all references to pre-existing objects, but 
+the boundary condition data in these lists is always 
+redundant, and the profile data is often redundant, although
+in the general case you might have different functions 
+associated with each key of a DiscreteProfile.
+  The routines are called to *check* for intersections, so even
+if boundaries don't intersect, you have to pay the storage-overhead
+cost.  If memory gets tight, this is a place to save some.
+
+
+
+Elements currently compute their areas by integration.  Simple elements
+should override the "area" function and just return the answer.
+
+
+Outputs that have to use a particular derived Property class have to
+call Material.fetchProperty.  fetchProperty goes through some swig
+tricks to get a Python object of the derived Property class.  The
+results of fetchProperty could be cached with the Material.  Perhaps
+each Output could have a separate data cache in each Material.

@@ -1,0 +1,1104 @@
+# -*- python -*-
+# $RCSfile: femesh.spy,v $
+# $Revision: 1.50.2.18 $
+# $Author: langer $
+# $Date: 2014/11/05 16:54:24 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.SWIG.engine import boundarycond
+from ooflib.SWIG.engine import material
+from ooflib.SWIG.engine import ooferror2
+from ooflib.SWIG.engine.node import FuncNodePtr
+from ooflib.common import debug
+from ooflib.common import utils
+from ooflib.common.IO import reporter
+from ooflib.engine import boundary
+from ooflib.engine import materialmanager
+from ooflib.engine import scpatch
+import string
+#Interface branch
+from ooflib.engine import bdycondition
+from ooflib.engine import profile
+from ooflib.engine import conjugate
+
+def _FEMeshPtr_getNodes(self):
+    nodes = range(self.nnodes()); # This should pre-allocate the space
+    for index in nodes:
+        nodes[index] = self.getNode(index)
+    return nodes
+
+FEMeshPtr.getNodes = _FEMeshPtr_getNodes
+
+# Over-ride for the FEMesh initializer.  FEMesh objects are only
+# created in Python, and never returned from C++ to Python.  That
+# means that the extra data can be in the FEMesh object, and *not*
+# in the FEMeshPtr object. 
+
+def _FEMesh___init__(self, microstructure, order):
+    self.this = femeshc.new_FEMesh(microstructure)
+    FEMeshPtr.__init__(self, self.this)
+    self.thisown = 1
+
+    # order of femesh
+    self._order = order
+    
+    # mid-edge node dictionary -- keyed by segment node pair.
+    # For instance:
+    #
+    #    n6_______n5______n4
+    #    |                 |
+    #    |                 |
+    #    |                 |
+    #    n7                n3
+    #    |                 |
+    #    |                 |
+    #    |                 |
+    #    n0_______n1_______n2
+    #
+    #   self.edge_nodes = {(n0,n2):n1, (n2,n4):n3, ...} 
+    self.edge_nodes = {}  # stores node pointer
+    self.internal_nodes = {}  # stores node pointer
+
+    # self.boundaries is an OrderedDict so that BCs can be applied in
+    # a predictable order, which is required for FloatBCs.
+    self.boundaries = utils.OrderedDict() # All boundaries, keyed by name.
+    self.facebdynames = []      # List of names of face boundaries.
+    self.edgebdynames = []      # List of names of edge boundaries.
+    self.pointbdynames = []     # Likewise for point boundaries.
+
+    self._interfacePointBdysCreated=False
+    self._interfaceFloatBCs=[] #Float BC objects
+    self._interfaceVisibleBCs=[] #BC names
+
+FEMesh.__init__ = _FEMesh___init__
+
+#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#
+
+# Some book-keeping functions which allow the FEMesh to know its
+# Mesh, but only at the python level.
+def _FEMeshPtr_set_parent_mesh(self, m):
+    self.parent_mesh = m
+
+FEMeshPtr.set_parent_mesh = _FEMeshPtr_set_parent_mesh
+
+def _FEMeshPtr_clear_parent_mesh(self):
+    del self.parent_mesh
+
+FEMeshPtr.clear_parent_mesh = _FEMeshPtr_clear_parent_mesh
+
+#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#
+
+# Field initialization from another Mesh
+def _FEMeshPtr_init_field(self, old_skel, old_femesh, field):
+    ## TODO OPT: This could be moved to C++.
+    for node in self.funcnodes():
+        if node.hasField(field):
+            position = node.position()
+            el = old_skel.enclosingElement(position)
+            fe_el = old_femesh.getElement(el.getMeshIndex())
+            masterpos = fe_el.to_master(position)
+            fieldvals = fe_el.outputField(old_femesh, field, masterpos)
+            field.setValueFromOutputValue(self, node, fieldvals)
+
+FEMeshPtr.init_field = _FEMeshPtr_init_field
+
+#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#
+
+# Destroy
+def _FEMeshPtr_destroy(self):
+    self.clear_parent_mesh()
+    del self.boundaries
+
+FEMeshPtr.destroy = _FEMeshPtr_destroy
+
+#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#=#*#=#-#
+
+def _FEMeshPtr_precompute_all_subproblems(self):
+    self.parent_mesh.precompute_all_subproblems()
+FEMeshPtr.precompute_all_subproblems = _FEMeshPtr_precompute_all_subproblems
+
+def _FEMeshPtr_begin_all_subproblems(self, element):
+    mat = element.material()
+    if mat:
+        for subproblem in self.parent_mesh.subproblems():
+            mat.begin_element(subproblem.getObject(), element)
+FEMeshPtr.begin_all_subproblems = _FEMeshPtr_begin_all_subproblems
+
+def _FEMeshPtr_end_all_subproblems(self, element):
+    mat = element.material()
+    if mat:
+        for subproblem in self.parent_mesh.subproblems():
+            mat.end_element(subproblem.getObject(), element)
+FEMeshPtr.end_all_subproblems = _FEMeshPtr_end_all_subproblems
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Adding edge node
+def _FEMeshPtr_addEdgeNodes(self, cset, nodes):
+    self.edge_nodes[cset] = nodes
+
+FEMeshPtr.addEdgeNodes = _FEMeshPtr_addEdgeNodes
+
+# Adding internal node
+def _FEMeshPtr_addInternalNodes(self, element, node):
+    self.internal_nodes.setdefault(element, []).append(node)
+
+FEMeshPtr.addInternalNodes = _FEMeshPtr_addInternalNodes
+
+# Returning corresponding edge node(s)
+def _FEMeshPtr_getEdgeNodes(self, cset):
+    return self.edge_nodes[cset]
+
+FEMeshPtr.getEdgeNodes = _FEMeshPtr_getEdgeNodes
+
+# Returning corresponding internal node(s)
+def _FEMeshPtr_getInternalNodes(self, element):
+    return self.internal_nodes[element]  # element: skeleton element
+    
+FEMeshPtr.getInternalNodes = _FEMeshPtr_getInternalNodes
+
+# Order of femesh
+def _FEMeshPtr_order(self):
+    return self._order
+
+FEMeshPtr.order = _FEMeshPtr_order
+
+#=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=#
+
+# Functions for constructing boundaries and boundary conditions.
+# The reason for writing these as methods in the mesh class is
+# that both the boundary condition and the boundaries take
+# a mesh pointer as an argument, and there is an opportunity for
+# confusion and/or error if, for instance, you apply a condition
+# from one mesh to a boundary from another mesh.  If you always
+# use the mesh-based methods, consistency is implicit.
+#
+
+def _FEMeshPtr_newFaceBoundary(self, name, faceset = None):
+    if name in self.boundaries:
+        raise ooferror2.ErrSetupError("Boundary %s already exists." % name)
+    b = boundary.FaceBoundary(name, self, faceset)
+    self.boundaries[name] = b
+    self.facebdynames.append(name)
+    return b
+
+FEMeshPtr.newFaceBoundary = _FEMeshPtr_newFaceBoundary
+
+# def _FEMeshPtr_removeFaceBoundary(self, name):
+#     try:
+#         del self.boundaries[name]
+#         self.facebdynames.remove(name)
+#     except KeyError:
+#         raise ooferror2.ErrSetupError("Boundary %s does not exist." % name)
+
+# FEMeshPtr.removeFaceBoundary = _FEMeshPtr_removeFaceBoundary
+
+def _FEMeshPtr_newEdgeBoundary(self, name, edgeset = None):
+    if name in self.boundaries:
+        raise ooferror2.ErrSetupError("Boundary %s already exists." % name)
+    b = boundary.EdgeBoundary(name, self, edgeset)
+    self.boundaries[name] = b
+    self.edgebdynames.append(name)
+    return b
+
+FEMeshPtr.newEdgeBoundary = _FEMeshPtr_newEdgeBoundary
+
+# def _FEMeshPtr_removeEdgeBoundary(self, name):
+#     try:
+#         del self.boundaries[name]
+#         self.edgebdynames.remove(name)
+#     except KeyError:
+#         raise ooferror2.ErrSetupError("Boundary %s does not exist." % name)
+
+# FEMeshPtr.removeEdgeBoundary = _FEMeshPtr_removeEdgeBoundary
+
+def _FEMeshPtr_newPointBoundary(self, name, pointset = None, visible=True):
+    if name in self.boundaries:
+        raise ooferror2.ErrSetupError("Boundary %s already exists." % name)
+    b = boundary.PointBoundary(name, self, pointset, visible)
+    self.boundaries[name] = b
+    self.pointbdynames.append(name)
+    return b
+
+FEMeshPtr.newPointBoundary = _FEMeshPtr_newPointBoundary
+
+# def _FEMeshPtr_removePointBoundary(self, name):
+#     try:
+#         del self.boundaries[name]
+#         self.pointbdynames.remove(name)
+#     except KeyError:
+#         raise ooferror2.ErrSetupError("Boundary %s does not exist." % name)
+
+# FEMeshPtr.removePointBoundary = _FEMeshPtr_removePointBoundary
+
+# Get a boundary with the given name, or create it, whichever.
+def _FEMeshPtr_getBoundary(self, name):
+    try:
+        return self.boundaries[name]
+    except KeyError:
+        #self.boundary is undefined!
+        #Never gets called though, unless the mesh boundary "name"
+        #did not come from a skeleton boundary, and was created
+        #after the mesh was created.
+        return self.newBoundary(name)
+
+FEMeshPtr.getBoundary = _FEMeshPtr_getBoundary
+
+# Return the nonzero-sized boundaries of this mesh.
+def _FEMeshPtr_getFiniteBoundaryNames(self):
+    # reslist = []
+    # for (name, bdy) in self.boundaries.items():
+    #     if not bdy.empty():
+    #         reslist.append(name)
+    # return reslist
+    return [name for (name, bdy) in self.boundaries.items() if not bdy.empty()]
+
+FEMeshPtr.getFiniteBoundaryNames = _FEMeshPtr_getFiniteBoundaryNames
+
+def _FEMeshPtr_getFiniteFaceBdyNames(self):
+    # reslist = []
+    # for name in self.facebdynames:
+    #     if not self.boundaries[name].empty():
+    #         reslist.append(name)
+    # return reslist
+    return [name for name in self.facebdynames 
+            if not self.boundaries[name].empty()]
+
+FEMeshPtr.getFiniteFaceBdyNames = _FEMeshPtr_getFiniteFaceBdyNames
+
+def _FEMeshPtr_getFiniteEdgeBdyNames(self):
+    # reslist = []
+    # for name in self.edgebdynames:
+    #     if not self.boundaries[name].empty():
+    #         reslist.append(name)
+    # return reslist
+    return [name for name in self.edgebdynames
+            if not self.boundaries[name].empty()]
+
+FEMeshPtr.getFiniteEdgeBdyNames = _FEMeshPtr_getFiniteEdgeBdyNames
+
+
+def _FEMeshPtr_getFinitePointBdyNames(self):
+    # reslist = []
+    # for name in self.pointbdynames:
+    #     if not self.boundaries[name].empty():
+    #         reslist.append(name)
+    # return reslist
+    return [name for name in self.pointbdynames
+            if not self.boundaries[name].empty()]
+
+FEMeshPtr.getFinitePointBdyNames = _FEMeshPtr_getFinitePointBdyNames
+
+# Mesh context has taken care of boundary conditions, all we have
+# to do is make sure the local data reflects this boundary's removal.
+
+# def _FEMeshPtr_removeBoundary(self, name):
+#     # removeBoundary does the same thing as removeEdgeBoundary and
+#     # removePointBoundary, but doesn't require the caller to know
+#     # which kind of boundary is being removed.
+#     try:
+#         del self.boundaries[name]
+#     except KeyError:
+#         raise ooferror2.ErrSetupError("Boundary %s does not exist." % name)
+#     try:
+#         self.facebdynames.remove(name)
+#         return
+#     except ValueError:
+#         pass
+#     try:
+#         self.edgebdynames.remove(name)
+#         return
+#     except ValueError:
+#         pass
+#     try:
+#         self.pointbdynames.remove(name)
+#         return
+#     except ValueError:
+#         pass
+        
+# FEMeshPtr.removeBoundary = _FEMeshPtr_removeBoundary
+
+
+# The Mesh object (our context) has taken care of the boundary
+# conditions, all we need to do is take care of our local data.
+def _FEMeshPtr_renameBoundary(self, oldname, newname):
+    bdy_obj = self.boundaries[oldname]
+    self.boundaries[newname] = bdy_obj
+    bdy_obj.rename(newname)
+    del self.boundaries[oldname]
+
+    try:
+        self.facebdynames.remove(oldname)
+        self.facebdynames.append(newname)
+        return
+    except ValueError:
+        pass
+    try:
+        self.edgebdynames.remove(oldname)
+        self.edgebdynames.append(newname)
+        return
+    except ValueError:
+        pass
+    try:
+        self.pointbdynames.remove(oldname)
+        self.pointbdynames.append(newname)
+        return
+    except ValueError:
+        pass
+
+FEMeshPtr.renameBoundary = _FEMeshPtr_renameBoundary
+    
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+def _FEMeshPtr_createAuxiliaryBCs(self):
+    for bdy in self.boundaries.values():
+        bdy.createAuxiliaryBCs()
+
+FEMeshPtr.createAuxiliaryBCs = _FEMeshPtr_createAuxiliaryBCs
+
+def _FEMeshPtr_removeAuxiliaryBCs(self):
+    for bdy in self.boundaries.values():
+        bdy.removeAuxiliaryBCs()
+
+FEMeshPtr.removeAuxiliaryBCs = _FEMeshPtr_removeAuxiliaryBCs
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# FloatBC intersection-checking takes place in three steps.
+# First is to make a map, or graph, or something, of the
+# all the intersections.  Every condition gets a dictionary
+# of conditions with which it has first-order intersections,
+# with the values of these being the relative offsets required
+# for the profile functions.
+#
+# Then in the second pass, you convert the bidirectional graph into a
+# tree from the first-encountered member, computing complete offsets
+# as you go.  At this point, you can also check for global
+# consistency, because the final profileOffset of any given FloatBC
+# has to be unique.  Also at this time, you should eliminate
+# intersections from the dictionary if they create loops, which you
+# can detect by marking already-traversed conditions.  This organizes
+# the FloatBCs into a tree.  Each FloatBC in the tree knows its
+# parent, children, and the root of the tree.
+
+def _FEMeshPtr_floatBCResolve(self, subproblem, time):
+    # Construct nodefloatdict. nodefloatdict[node] is a list of all
+    # LocatedCondition objects in any boundary condition at that node.
+    nodefloatdict={}
+    for bdy in self.boundaries.values():
+        # xfloat is a dictionary of lists of LocatedCondition objects,
+        # keyed by node.
+        xfloat = bdy.getFloatGeometry(subproblem, time)
+        for node in xfloat:
+            for loccond in xfloat[node]:
+                nodefloatdict.setdefault(node, []).append(loccond)
+                ## TODO OPT: We used to use try/except instead of
+                ## setdefault for lines like this.  Check to see which
+                ## one is faster.  Using setdefault means that an
+                ## empty list is created and destroyed almost always,
+                ## but avoids the try/except opverhead.
+                # try:
+                #     nodefloatdict[node].append(loccond)
+                # except KeyError:
+                #     nodefloatdict[node]=[loccond]
+
+    # Construct symmetric graphs of intersecting boundary conditions.
+    # Each FloatBC that shares a (node, field component, eqn
+    # component) with another FloatBC is linked to that other FloatBC
+    # in the graph.
+    for node, floatlist in nodefloatdict.items():
+        for (h, t) in utils.pairs(floatlist):
+            # h and t are LocatedCondition objects
+            if h.condition.boundary == t.condition.boundary:
+                # Conflicts between BCs on the same boundary are
+                # caught by Boundary.checkCondition, and don't have to
+                # be checked here.
+                continue
+            if h.condition.intersect(t.condition):
+                # h and t refer to the same Field component and
+                # Equation component.
+                offset = h() - t() # floating point number
+                hci = h.condition.intersectors
+                if t.condition in hci:
+                    if hci[t.condition] != offset:
+                        reporter.warn(
+                   "Intersecting FloatBCs %s and %s are inconsistent: delta=%s"
+                   % (h.condition.name(), t.condition.name(),
+                      hci[t.condition]-offset))
+                else:
+                    hci[t.condition] = offset # ie, h.condition.intersectors
+            elif h.condition.conflictsWithFloat(t.condition):
+                # conflictsWith ==> the bcs have the same field
+                # component *xor* the same equation component, because
+                # we know that they don't "intersect" (having the same
+                # field *and* the same equation components).
+                raise ooferror2.ErrSetupError(
+                    "Intersecting FloatBCs %s and %s are incompatible."
+                    % (h.condition.name(), t.condition.name()))
+
+    # Arrange the boundary conditions into well structured trees,
+    # including FloatBCs that don't intersect other FloatBCs.
+    roots = set()
+    for bdy, bc in self.orderedFloatBCs(subproblem):
+        if bc.root is None:
+            roots.add(bc)
+            bc.root = bc
+            bc.parent = None
+            bc.profileOffset = 0.0
+            _floatBCTreeify(bc)
+
+    # if debug.debug():
+    #     # Check tree consistency
+    #     bcs = set()
+    #     for bc in roots:
+    #         _checkBCTree(bc, bcs)
+    
+    # Make sure that each node only appears in one BC in each tree.
+    for bc in roots:
+        usednodes = set()
+        _findOwnNodes(bc, usednodes)
+
+    for bdy, bc in self.orderedFloatBCs(subproblem):
+        bc.setRootDoFIndex(bdy, subproblem)
+
+FEMeshPtr.floatBCResolve = _FEMeshPtr_floatBCResolve
+        
+def _floatBCTreeify(bc):
+    # Utility function used by floatBCResolve_ to recursively arrange
+    # the BCs into a tree and set the cumulative offset.
+    for otherbc, offset in bc.intersectors.items():
+        try:
+            del otherbc.intersectors[bc]
+        except KeyError:
+            pass
+        if otherbc.root is None: # Don't use any BC more than once!
+            otherbc.parent = bc
+            otherbc.root = bc.root
+            otherbc.profileOffset = bc.profileOffset + offset
+            _floatBCTreeify(otherbc)
+        else:
+            # otherbc is already in a tree. Make sure that it's *this*
+            # tree, and that the offset is compatible.
+            assert otherbc.root is bc.root
+            if otherbc.profileOffset != bc.profileOffset + offset:
+                raise ooferror2.ErrSetupError(
+                    "Global consistency failure in FloatBCs.")
+
+# def _checkBCTree(bc, bcs):
+#     assert bc not in bcs
+#     bcs.add(bc)
+#     for otherbc in bc.intersectors:
+#         _checkBCTree(otherbc, bcs)
+
+
+def _findOwnNodes(bc, usednodes):
+    # getNodes() returns an OrderedSet, but we don't care about the
+    # ordering here.  To use the built-in set's __sub__, we have to
+    # convert the OrderedSet to a set.
+    bc.ownNodes = set(bc.boundary_obj.getNodes()) - usednodes
+
+    usednodes.update(bc.ownNodes)
+    for otherbc in bc.intersectors:
+        _findOwnNodes(otherbc, usednodes)
+
+def _expand_float_bcs(self, subproblem, time):
+    # Called by SubProblemContext.set_mesh_dofs() when values are
+    # copied out of the subproblem's dof lists and into the FEMesh.
+    for bdy in self.boundaries.values():
+        bdy.expandFloat(subproblem, time) # see boundary.py
+
+FEMeshPtr.expand_float_bcs = _expand_float_bcs
+
+# intersectingFloatBCs is used when initializing FloatBCs (ie,
+# assigning initial values to their DoFs in time-dependent problems).
+# It has a similar role but much less error checking than
+# floatBCResolve.
+
+def _intersectingFloatBCs(self, time):
+    nodefloatdict = {}
+    intersectiondict = {}       # key=bc, val=[(bc, offset), ...]
+    for bdy in self.boundaries.values():
+        xfloat = bdy.getUnconditionalFloatGeometry(time)
+        # xfloat is a dictionary of lists of LocatedCondition objects,
+        # keyed by node.
+        for node, loclist in xfloat.items():
+            for loccond in loclist:
+                nodefloatdict.setdefault(node, []).append(loccond)
+    # For each node, examine the bcs on that node.
+    for node, floatlist in nodefloatdict.items():
+        for (h,t) in utils.pairs(floatlist):
+            if h.condition.intersect(t.condition):
+                offset = h() - t()
+                intersectiondict.setdefault(h.condition, []).append(
+                    (t.condition, offset))
+    return intersectiondict
+
+FEMeshPtr.intersectingFloatBCs = _intersectingFloatBCs
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+## BC invocation routines.  These are almost all the same, they just
+## scoot through the list of all boundaries and call the appropriate
+## application routine.  The exception is "float" bc's, for which
+## the mesh's "cleanmaps" routine must be called to fix the
+## target space of the eqn/dof maps, and for which there is an
+## additional "expansion" requirement.
+
+def _invoke_fixed_bcs(self, subproblem, linearsystem, time):
+    for bdy in self.boundaries.values():
+        # b is an EdgeBoundary or a PointBoundary, defined in
+        # engine/boundary.py
+        bdy.invokeFixed(subproblem, linearsystem, time)
+
+FEMeshPtr.invoke_fixed_bcs = _invoke_fixed_bcs
+
+def _reinvoke_fixed_bcs(self, subproblem, time):
+    for bdy in self.boundaries.values():
+        bdy.reinvokeFixed(subproblem, time)
+
+FEMeshPtr.reinvoke_fixed_bcs = _reinvoke_fixed_bcs
+
+def _invoke_flux_bcs(self, subproblem, linearsystem, time):
+    for bdy in self.boundaries.values():
+        bdy.invokeFlux(subproblem, linearsystem, time)
+
+FEMeshPtr.invoke_flux_bcs = _invoke_flux_bcs
+
+def _invoke_force_bcs(self, subproblem, linearsystem, time):
+    for bdy in self.boundaries.values():
+        # b is an EdgeBoundary or PointBoundary
+        bdy.invokeForce(subproblem, linearsystem, time)
+
+FEMeshPtr.invoke_force_bcs = _invoke_force_bcs
+
+def _invoke_float_bcs(self, subproblem, linearsystem, time):
+    subproblem.clear_slaveDoFs()
+    for bdy, bc in self.orderedFloatBCs(subproblem):
+        bc.preApply()
+    for bdy, bc in self.orderedFloatBCs(subproblem):
+        bdy.invokeFloat(subproblem, linearsystem, time, bc)
+    linearsystem.cleanmaps()
+
+FEMeshPtr.invoke_float_bcs = _invoke_float_bcs
+
+def _fix_float_bcs(self, subproblem, linearsystem, time):
+    # Set the values of floating boundary conditions that intersect
+    # fixed BCs.  These values are set in the FEMeshs' dofvalues
+    # array, which does *not* combine multiple float DoF's into one,
+    # so we just have to set the value here, and don't have to worry
+    # about how they'll be added together.
+
+    nodefixedfloatdict = {}
+    blist = self.boundaries.values() # list of Boundary objects
+    for y in blist:                  # y is a Boundary object
+        yfloat = y.getFloatGeometry(subproblem, time)
+        # yfloat is a dictionary keyed by nodes.  The values are lists
+        # of LocatedCondition objects for each float bc at the node.
+        # Only float bcs that are computable on the given subproblem
+        # are included (the 'subproblem' arg isn't used otherwise).
+        for node, locationlist in yfloat.items():
+            try:
+                ff = nodefixedfloatdict[node]
+            except KeyError:
+                ff = nodefixedfloatdict[node] = _FixedFloat()
+            for flowt in locationlist:
+                ff.addFloat(flowt)
+    if len(nodefixedfloatdict)==0:
+        return            # No FloatBCs ==> nothing to do here.
+    for x in blist:
+        xfix = x.getFixedGeometry(subproblem, time)
+        # xfix is just like yfloat, but for fixed bcs.
+        for node, locationlist in xfix.items():
+            try:
+                ff = nodefixedfloatdict[node]
+            except KeyError:
+                pass # No need to add, no Float to compare with anyway
+            else:
+                for fixed in locationlist:
+                    ff.addFixed(fixed)
+
+    # Now check for intersections at each node in the dict.
+    for node in nodefixedfloatdict:
+        ff = nodefixedfloatdict[node]
+        for fixed in ff.fixedarray:
+            for flowt in ff.floatarray:
+                # fixed and flowt are LocatedCondition objects 
+                if fixed.condition.intersect(flowt.condition):
+                    # Dirichlet and Float conditions intersect
+                    offset = fixed() - flowt() - flowt.condition.profileOffset
+                    locs = flowt.condition.root.boundary_obj.locations()
+                    if not flowt.condition.isFixed():
+                        # Float condition needs to become fixed.
+                        flowt.condition.root.fixFloatTree(
+                            linearsystem, offset, locs, time)
+                    else:
+                        # Float condition is already fixed. Check that
+                        # its value agrees with the one that we would
+                        # have given it here.
+                        flowt.condition.root.checkConsistency(
+                            linearsystem, offset, locs, time)
+
+FEMeshPtr.fix_float_bcs = _fix_float_bcs
+    
+
+# Utility class used by fix_float_bcs
+class _FixedFloat:
+    def __init__(self):
+        self.floatarray=[]
+        self.fixedarray=[]
+    def addFixed(self,fixed):
+        self.fixedarray.append(fixed)
+    def addFloat(self,flowt):
+        self.floatarray.append(flowt)
+
+# setFloatValues and floatBCResolve (and invoke_float_bcs) have to
+# loop over the FloatBCs in the same order, so they both use
+# orderedFloatBCs to control their loops.
+
+def _orderedFloatBCs(self, subproblem):
+    for bdy in self.boundaries.values(): # self.boundaries is an OrderedDict.
+        for bc in bdy.floatConditions:   # floatConditions is just a list.
+            if not bc.is_disabled(subproblem):
+                yield bdy, bc
+
+FEMeshPtr.orderedFloatBCs = _orderedFloatBCs
+
+# def _setFloatValues(self, subproblem, linearsystem, time):
+#     # Set the Mesh values of all DoFs that are used in non-fixed
+#     # FloatBCs.  This has to be done before any nonlinear properties
+#     # make their stiffness matrix contributions, and before any
+#     # residuals are calculated.
+#     for bdy, bc in self.orderedFloatBCs(subproblem):
+#         bdy.setFloatValues(subproblem, linearsystem, time, bc)
+
+# FEMeshPtr.setFloatValues = _setFloatValues
+
+def _float_contrib_rhs(self, subproblem, linearsystem):
+    # Tell FloatBCs to make their contribution to the rhs.
+    for bdy in self.boundaries.values():
+        bdy.contribRHS(subproblem, linearsystem)
+
+FEMeshPtr.float_contrib_rhs = _float_contrib_rhs
+
+def _reset_bcs(self):
+    for bdy in self.boundaries.values():
+        bdy.reset()
+
+FEMeshPtr.reset_bcs = _reset_bcs
+
+def _setDirichletDerivatives(self, subproblem, linearsystem, time):
+    for bdy in self.boundaries.values():
+        bdy.setDirichletDerivatives(subproblem, linearsystem, time)
+
+FEMeshPtr.setDirichletDerivatives = _setDirichletDerivatives
+
+#############################################################
+#Interface branch
+
+#Get the list [(field,fieldcomp,equation,equationcomp),...]
+#for conjugate pairs of fields and equations that are defined
+#on a mesh.
+#I think this is different from that returned by conjugate.find_relevant_pairs
+def _getConjugatePairs(meshctxt):
+
+    # TODO OPT: Unclear if this is right -- if you include *all* fields,
+    # including out-of-plane fields, you run into problems creating
+    # the FloatBCs.  If continuity of out-of-plane field components
+    # really matters, then the FloatBCs will have to be modified to
+    # accept them.
+    
+    fields=meshctxt.all_compound_subproblem_fields()
+    # fields=meshctxt.all_subproblem_fields() #includes so called out-of-plane fields
+    equations=meshctxt.all_subproblem_equations_bc()
+    # equations=meshctxt.all_subproblem_equations() #includes plane stress equations
+    conjugatepairs=[]
+    for fld in fields:
+        flditer=fld.iterator_all()
+        while not flditer.end():
+            for eqn in equations:
+                eqniter=eqn.iterator_all()
+                while not eqniter.end():
+                    for pair in conjugate.listofconjugatepairs.pairs:
+                        if pair.get_field()==fld and \
+                           pair.get_field_component().integer()==flditer.integer() and \
+                           pair.get_equation()==eqn and \
+                           pair.get_equation_component().integer()==eqniter.integer():
+                            conjugatepairs.append((fld,flditer.shortrepr(),
+                                                   eqn,eqniter.shortrepr()))
+                    eqniter.next()
+            flditer.next()
+    return conjugatepairs
+
+def _addInterfaceBC(self,bcname):
+    if bcname not in self._interfaceVisibleBCs:
+        self._interfaceVisibleBCs.append(bcname)
+
+FEMeshPtr.addInterfaceBC=_addInterfaceBC
+
+def _removeInterfaceBC(self,bcname):
+    if bcname in self._interfaceVisibleBCs:
+        self._interfaceVisibleBCs.remove(bcname)
+
+FEMeshPtr.removeInterfaceBC=_removeInterfaceBC
+
+def _renameInterfaceBC(self,oldbcname,newbcname):
+    if oldbcname in self._interfaceVisibleBCs:
+        self._interfaceVisibleBCs.remove(oldbcname)
+        self._interfaceVisibleBCs.append(newbcname)
+
+FEMeshPtr.renameInterfaceBC=_renameInterfaceBC
+
+def _listInterfaceBC(self):
+    return self._interfaceVisibleBCs[:]
+
+FEMeshPtr.listInterfaceBC=_listInterfaceBC
+
+#The JumpBC is applied to each pair of "partner" nodes
+#in the edgement. The constraint goes like
+#node2.val-node.val=jumpval
+#Which node is "node" and which node is "node2" depends
+#on the last interface in the list stored by an edgement.
+def _createInterfaceFloatBCs(self,subpctxt):
+    # Plan: Fetch edgements, fetch nodes from edgements. Create point
+    # boundaries from edgements, create FloatBCs from point
+    # boundaries...
+    meshctxt=subpctxt.getParent()
+    conjugatepairs=_getConjugatePairs(meshctxt)
+    nodepairdict={} # Used for ensuring that floating boundary
+                    # conditions are not applied twice to a nodepair
+    defaultprofile=profile.ConstantProfile(0)
+    ipb=0
+    # Clear the previous Float BCs. Is this time-consuming?
+    for fbc in self._interfaceFloatBCs:
+        fbc.remove_from_mesh()
+    self._interfaceFloatBCs=[]
+    for edgement in self.edgement_iterator():
+        # For every field in the interface for which no boundary
+        # condition has been specified, re-connect the fields by
+        # providing node-wise FloatBCs with constant profiles equal to
+        # zero.  TODO OPT: We require a mechansim to suppress automatic
+        # FloatBCs for some fields in the absence of competing
+        # boundary conditions, but when the surface properties require
+        # them.  The InterfaceMaterial should know which fields
+        # require this suppression.
+        edgementbcs=[]
+        interfacenames=edgement.namelist()
+        for interfacebcname in self._interfaceVisibleBCs:
+            interfacebc=meshctxt.getBdyCondition(interfacebcname)
+            if (not interfacebc.is_explicitly_disabled()) and \
+                   interfacebc.boundary in interfacenames:
+                edgementbcs.append(interfacebc)
+
+        # For the discontinuous fields, do not construct a default
+        # floatBC if no BC has been specified.
+        discfields = set()
+        m = edgement.material()
+        if (m):
+            for p in m.properties():
+                for f in p.registration().discontinuousFields():
+                    discfields.add(f)
+
+        # print discfields
+                
+        ei=edgement.node_iterator() # Iterates over both sets of nodes
+
+        suppressed_fields = edgement.material()
+        while not ei.end():
+            realnode1=ei.leftnode()
+            realnode2=ei.rightnode() 
+            # "canonical" order the real mesh nodes for easy comparison.
+            # See node.spy
+            if realnode1<realnode2:
+                nodepair=(realnode1,realnode2)
+            else:
+                if realnode1==realnode2:
+                    ei.increment()
+                    continue # Exits the while loop.
+                nodepair=(realnode2,realnode1)
+            try:
+                nodepairdict[nodepair]
+            except KeyError:
+                # We have not seen this node pair before. 
+                nodepairdict[nodepair]=1
+                pbdyname="_cntnty_%d_" % ipb
+                ipb+=1
+                if not self._interfacePointBdysCreated:
+                    pbdy=self.newPointBoundary(pbdyname,visible=False)
+                    #Order of adding nodes should determine the 'sense' of the jump BC
+                    pbdy.addNode(realnode1)
+                    pbdy.addNode(realnode2)
+                #Set FloatBCs
+                for data in conjugatepairs:
+                    pairbc=None
+
+                    # Suppress BC's if the field is in the set of
+                    # discontinuous fields.  TODO OPT: This might not be
+                    # the right place for this, if it suppresses *all*
+                    # boundary conditions with this field.  It's
+                    # possible it should be more narrowly targetted to
+                    # the default construction in the else clause
+                    # below.
+                    if data[0] in discfields:
+                        continue
+                    
+                    for ebc in edgementbcs:
+                        if ebc.field==data[0] and \
+                           ebc.field_component==data[1]:
+                            pairbc=ebc #Get the first match
+                            break
+                    if pairbc:
+                        if pairbc.independent: #Don't create a FloatBC
+                            continue
+                        fbc=bdycondition.FloatBC(data[0],data[1],
+                                                 data[2],data[3],
+                                                 pairbc.profile_obj,
+                                                 pbdyname,visible=False)
+                    else:
+                        # If pairbc is none, then the default behavior
+                        # is to match up the fields across the
+                        # interface.
+                        fbc=bdycondition.FloatBC(data[0],data[1],
+                                                 data[2],data[3],
+                                                 defaultprofile,
+                                                 pbdyname,visible=False)
+                    self._interfaceFloatBCs.append(fbc)
+                    fbcname = meshctxt.uniqueBCName(pbdyname+"bc")
+                    fbc.add_to_mesh(fbcname, meshctxt.path())
+            ei.increment()
+    #Create the point boundaries once. Any changes to the edgements, or the
+    #node pairings, will cause the mesh to be rebuilt.
+    self._interfacePointBdysCreated=True
+    ## TODO 3.1: There needs to be a way to remove the interface point
+    ## bdys and reset _interfacePointBdysCreated.  The bdys should be
+    ## reset by the reset_bcs method in this file.
+
+##    print self._interfaceFloatBCs
+##    print self._interfaceVisibleBCs
+
+FEMeshPtr.createInterfaceFloatBCs = _createInterfaceFloatBCs
+
+#bdkey is the name of the skeleton boundary.
+#edgebndy is the skeletonboundary, where edgebndy.edges is the list of skeleton edges.
+#realmesh is an femesh object.
+#Update: Go back to making a skeleton boundary and a mesh boundary 1-1,
+#that is, don't create multiple mesh boundaries from a skeleton boundary
+#as a result of intersections with interfaces.
+#Keep this function around anyway. It might be useful for reference.
+def _constructRealMeshEdgeBoundaries(self,bdkey,edgebndy):
+    #Group skeleton edges that have connected mesh nodes (realnodes)
+    #Do this separately using elements to the left and right of the edge.
+    numedges=len(edgebndy.edges)
+    #Old: Each element will be an array of mesh nodes corresponding to
+    #connected edges.
+    #New: ...array of BoundaryEdge (obtained from
+    # Element::getBndyEdge(const FuncNode *n0, const FuncNode *n1))
+    leftboundaries=[None]*numedges
+    rightboundaries=[None]*numedges
+    #It seems I can't compare the BoundaryEdge's to find out
+    #if the edges are distinct. Have to compare the real nodes...
+    #Update: Just written a BoundaryEdgePtr.__eq__ in edge.spy
+##    leftnodes=[None]*numedges
+##    rightnodes=[None]*numedges
+    numleftsections=1
+    numrightsections=1
+    prevrealnode=None
+    sectionindex=-1
+    for skeletonedge in edgebndy.edges:
+        skelel = skeletonedge.getLeftElement()
+        realel = self.getElement(skelel.getMeshIndex())
+        edge_nodes = skeletonedge.get_nodes()
+        realn0 = realel.getCornerNode( skelel.getNodeIndexIntoList(edge_nodes[0]) )
+        realn1 = realel.getCornerNode( skelel.getNodeIndexIntoList(edge_nodes[1]) )
+        #Check if the current edge is connected (in real mesh space) to
+        #the previous edge.
+        if prevrealnode==realn0:
+##            leftnodes[sectionindex].append(realn1)
+            leftboundaries[sectionindex].append(realel.getBndyEdge(realn0,realn1))
+        else:
+            sectionindex+=1
+##            leftnodes[sectionindex]=[]
+##            leftnodes[sectionindex].append(realn0)
+##            leftnodes[sectionindex].append(realn1)
+            leftboundaries[sectionindex]=[]
+            leftboundaries[sectionindex].append(realel.getBndyEdge(realn0,realn1))
+        prevrealnode=realn1
+    numleftsections=sectionindex+1
+    prevrealnode=None
+    sectionindex=-1
+    for skeletonedge in edgebndy.edges:
+        #We want to get the element to the right of the edge this time.
+        skelel = skeletonedge.getLeftElement()
+        els=skeletonedge.segment.getElements()
+        if len(els)>1:
+            if els[0]==skelel:
+                skelel=els[1]
+            else:
+                skelel=els[0]
+        realel = self.getElement(skelel.getMeshIndex())
+        edge_nodes = skeletonedge.get_nodes()
+        realn0 = realel.getCornerNode( skelel.getNodeIndexIntoList(edge_nodes[0]) )
+        realn1 = realel.getCornerNode( skelel.getNodeIndexIntoList(edge_nodes[1]) )
+        #Check if the current edge is connected (in real mesh space) to
+        #the previous edge.
+        if prevrealnode==realn0:
+##            rightnodes[sectionindex].append(realn1)
+            rightboundaries[sectionindex].append(realel.getBndyEdge(realn0,realn1))
+        else:
+            sectionindex+=1
+##            rightnodes[sectionindex]=[]
+##            rightnodes[sectionindex].append(realn0)
+##            rightnodes[sectionindex].append(realn1)
+            rightboundaries[sectionindex]=[]
+            rightboundaries[sectionindex].append(realel.getBndyEdge(realn0,realn1))
+        prevrealnode=realn1
+    numrightsections=sectionindex+1
+    #Check if there is a left-right distinction in the mesh edge boundaries
+    leftdistinct=[True]*numleftsections
+    rightdistinct=[True]*numrightsections
+    for i in range(numleftsections):
+        for j in range(numrightsections):
+            #Compare the list of real nodes on the left section and on the right
+            #This statement should do an element-by-element comparison of the lists.
+##            if leftnodes[i]==rightnodes[j]:
+            if leftboundaries[i]==rightboundaries[j]:
+                leftdistinct[i]=False
+                rightdistinct[j]=False
+    #Now create the actual boundaries for the realmesh.
+    #First check the degenerate case where the skeleton boundary is not
+    #intersected by an interface
+    if numleftsections==1 and numrightsections==1:
+        if leftdistinct[0]==False:
+            #Normal, no-interface case
+            realbndy = self.newEdgeBoundary(bdkey)
+            for bedge in leftboundaries[0]:
+                realbndy.addEdge(bedge)
+        else:
+            #Skeleton boundary is also an interface
+            realbndy = self.newEdgeBoundary(bdkey+"_left")
+            for bedge in leftboundaries[0]:
+                realbndy.addEdge(bedge)
+            realbndy = self.newEdgeBoundary(bdkey+"_right")
+            for bedge in rightboundaries[0]:
+                realbndy.addEdge(bedge)
+    else:
+        for i in range(numleftsections):
+            if leftdistinct[i]:
+                bdyname=bdkey+"_left_"+`i+1`
+            else:
+                bdyname=bdkey+"_"+`i+1`
+            realbndy = self.newEdgeBoundary(bdyname)
+            for bedge in leftboundaries[i]:
+                realbndy.addEdge(bedge)
+        for i in range(numrightsections):
+            if rightdistinct[i]:
+                #The other case is already included by leftboundaries
+                bdyname=bdkey+"_right_"+`i+1`
+                realbndy = self.newEdgeBoundary(bdyname)
+                for bedge in rightboundaries[i]:
+                    realbndy.addEdge(bedge)
+
+#FEMeshPtr.constructRealMeshEdgeBoundaries = _constructRealMeshEdgeBoundaries
+
+##########
+
+def _enclosingElement(self, skeleton, point):
+    skelel = skeleton.enclosingElement(point)
+    meshel = self.getElement(skelel.getMeshIndex())
+    return meshel
+
+FEMeshPtr.enclosingElement = _enclosingElement
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Python iteration over FEMesh components
+
+# We don't want to simply swig the C++ iterator classes
+# (ElementIterator, NodeIterator, etc) and give them __iter__() and
+# next() methods.  In Python we need to be able to pass them around to
+# functions that will assume that they act like lists.  The trouble
+# with using the iterators is that they can only iterate over the
+# "list" once, but an actual list can be iterated over many times.  So
+# what we need is an intermediate object (eg, _FEMeshElementProxy,
+# below) which returns a new iterator each time it's looped over.
+
+# These wrappers are also used for CSubProblem iterators.
+
+class FEMeshContainerProxy(object):
+    def __init__(self, femesh):
+        self.femesh = femesh
+
+class FEMeshContainerIterator(object):
+    def __init__(self, femesh):
+        self.iterator = self.makeIterator(femesh) # the C++ iterator
+    def __iter__(self):
+        return self
+    def next(self):
+        if self.iterator.end():
+            raise StopIteration
+        ## TODO OPT: if all MeshIterators had a generic getValue() method
+        ## that returned the appropriate object, we could call it here
+        ## and not require FEMeshContainerIterator to be subclassed to
+        ## define getValueFromIterator().
+        obj = self.getValueFromIterator(self.iterator)
+        self.iterator.next()
+        return obj
+
+#=--=##=--=##=--=#
+
+class _FEMeshElementProxy(FEMeshContainerProxy):
+    def __iter__(self):
+        return _FEMeshElementIterator(self.femesh)
+
+class _FEMeshElementIterator(FEMeshContainerIterator):
+    def makeIterator(self, femesh):
+        return femesh.element_iterator()
+    def getValueFromIterator(self, iterator):
+        return iterator.element()
+
+def FEMesh_elements(self):
+    return _FEMeshElementProxy(self)
+
+FEMeshPtr.elements = FEMesh_elements
+
+#=--=##=--=##=--=#
+
+class _FEMeshNodeProxy(FEMeshContainerProxy):
+    def __iter__(self):
+        return _FEMeshNodeIterator(self.femesh)
+
+class _FEMeshNodeIterator(FEMeshContainerIterator):
+    def makeIterator(self, femesh):
+        return femesh.node_iterator()
+    def getValueFromIterator(self, iterator):
+        return iterator.node()
+
+def FEMesh_nodes(self):
+    return _FEMeshNodeProxy(self)
+
+FEMeshPtr.nodes = FEMesh_nodes
+
+#=--=##=--=##=--=#
+
+class _FEMeshFuncNodeProxy(FEMeshContainerProxy):
+    def __iter__(self):
+        return _FEMeshFuncNodeIterator(self.femesh)
+
+class _FEMeshFuncNodeIterator(FEMeshContainerIterator):
+    def makeIterator(self, femesh):
+        return femesh.funcnode_iterator()
+    def getValueFromIterator(self, iterator):
+        return iterator.node()
+
+def FEMesh_funcnodes(self):
+    return _FEMeshFuncNodeProxy(self)
+
+FEMeshPtr.funcnodes = FEMesh_funcnodes
+

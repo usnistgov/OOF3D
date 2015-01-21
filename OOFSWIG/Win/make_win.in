@@ -1,0 +1,60 @@
+#######################################################################
+# $Header: /users/langer/FE/CVSoof/OOF2/OOFSWIG/Win/make_win.in,v 1.1.2.2 2014/06/27 20:30:12 langer Exp $
+# Simplified Wrapper and Interface Generator (SWIG)
+# 
+# Windows NT/95 Makefile for version 1.1
+# Kevin Butler & Dave Beazley
+# March 12, 1997
+#
+# This file contains default values and various parameters for
+# building SWIG with MS Visual C++.
+#
+#######################################################################
+
+
+# ---------------------------------------------------------------------
+# Set your compiler location here
+# MS Visual C++ defaults to the listed locations
+# (Set compiler, linker/lib manager, and location of standard includes
+# ---------------------------------------------------------------------
+
+CC			= cl.exe
+LD			= lib.exe
+CCHOME = $(MSVCDIR)
+STD_INC	= "$(CCHOME)/include"
+
+#
+# Set the prefix below to indicate where you want SWIG to install its
+# files.   Normally this is c:\swig
+#
+# 'prefix' is used as a symbol for SWIG itself.
+# 'dprefix' is the DOS prefix with the backwards slash.
+
+prefix     = c:/swig1.1        
+dprefix    = c:\swig1.1
+
+# Location and filename of the SWIG executable.  Feel free to put this
+# wherever you'd like in your PATH, or leave it in c:\swig\swig.exe
+
+dSWIG_EXE   = $(dprefix)\swig.exe
+
+
+# Location of the SWIG library.  Is normally placed in c:\swig\swig_lib
+# on NT/Win95. The SWIG library contains configuration files and library modules
+# so you should install it someplace where it can be easily accessed.
+
+SWIG_LIB = $(prefix)/swig_lib
+dSWIG_LIB = $(dprefix)\swig_lib
+
+#
+# SWIG_OPTS controls swig defaults.
+# You may want to change SWIG_LANG or SWIG_DOC.
+#
+# SWIG_LANG may be one of : TCL,TCL8,PERL5,PERL4,PYTHON, or GUILE
+# SWIG_DOC  may be one of : ASCII, LATEX, HTML, NONE
+#      
+
+SWIG_OPTS = -DSWIG_LANG=PYTHON -DSWIG_DOC=ASCII
+
+MAKE				= nmake /f makefile.msc
+

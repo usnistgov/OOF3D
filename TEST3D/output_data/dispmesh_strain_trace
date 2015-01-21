@@ -1,0 +1,9 @@
+# Operation: Range
+# Output: Trace(Geometric Strain)
+# Domain: EntireMesh
+# Sampling: GridSampleSet(x_points=4,y_points=4,z_points=4,show_x=True,show_y=True,show_z=True)
+# Columns:
+# 1. time
+# 2. min Trace(Geometric Strain)
+# 3. max Trace(Geometric Strain)
+0.0, 0.6, 0.6

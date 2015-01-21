@@ -1,0 +1,22 @@
+text_wrap.c
+
+
+
+1.  Test section
+================
+
+bar { double  } 
+        [ returns int  ]
+
+The bar function does something even cooler.
+
+foo { double  } 
+        [ returns int  ]
+
+The foo function does something cool.
+
+grok { int  } 
+        [ returns int  ]
+
+Who knows what this function does.
+

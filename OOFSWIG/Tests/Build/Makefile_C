@@ -1,0 +1,47 @@
+# Build testing makefile for C programs
+
+TOP        = ../..
+SWIG       = $(TOP)/swig
+SRCS       = example.c
+TARGET     = example
+INTERFACE  = example.i
+
+tcl_static::
+	$(MAKE) -f $(TOP)/Makefile.template SRCS='$(SRCS)' SWIG='$(SWIG)' \
+	SWIGOPT='-DSTATIC -DTCL -I../../swig_lib' \
+	TARGET='$(TARGET)' INTERFACE='$(INTERFACE)' tclsh
+
+wish_static::
+	$(MAKE) -f $(TOP)/Makefile.template SRCS='$(SRCS)' SWIG='$(SWIG)' \
+	SWIGOPT='-DSTATIC -DWISH -I../../swig_lib' \
+	TARGET='$(TARGET)' INTERFACE='$(INTERFACE)' wish
+
+perl5_static::
+	$(MAKE) -f $(TOP)/Makefile.template SRCS='$(SRCS)' SWIG='$(SWIG)' \
+	SWIGOPT='-DSTATIC -DPERL5 -I../../swig_lib' \
+	TARGET='$(TARGET)' INTERFACE='$(INTERFACE)' perl5_static
+
+python_static::
+	$(MAKE) -f $(TOP)/Makefile.template SRCS='$(SRCS)' SWIG='$(SWIG)' \
+	SWIGOPT='-DSTATIC -DPYTHON -I../../swig_lib' \
+	TARGET='$(TARGET)' INTERFACE='$(INTERFACE)' python_static
+
+tcl_dynamic::
+	$(MAKE) -f $(TOP)/Makefile.template SRCS='$(SRCS)' SWIG='$(SWIG)' \
+	SWIGOPT='-I../../swig_lib' \
+	TARGET='$(TARGET)' INTERFACE='$(INTERFACE)' tcldl
+
+perl5_dynamic::
+	$(MAKE) -f $(TOP)/Makefile.template SRCS='$(SRCS)' SWIG='$(SWIG)' \
+	SWIGOPT='-I../../swig_lib' \
+	TARGET='$(TARGET)' INTERFACE='$(INTERFACE)' perl5
+
+python_dynamic::
+	$(MAKE) -f $(TOP)/Makefile.template SRCS='$(SRCS)' SWIG='$(SWIG)' \
+	SWIGOPT='-I../../swig_lib' \
+	TARGET='$(TARGET)' INTERFACE='$(INTERFACE)' python
+
+clean::
+	rm -f *_wrap* *.o *.so *.pm *.py $(TARGET) *~ core
+
+

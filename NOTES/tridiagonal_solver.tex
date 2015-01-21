@@ -1,0 +1,149 @@
+\documentclass[10pt,a4paper]{article}
+
+\bibliographystyle{plain}
+\usepackage{latexsym}
+\usepackage{algorithm,algorithmic}
+\usepackage{amssymb,amsthm}
+\usepackage{amsmath,amsfonts}
+\usepackage{mathrsfs}
+\usepackage{enumerate}
+\usepackage{graphicx,psfrag}
+\usepackage{comment}
+%\usepackage[notcite,notref]{showkeys}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{remark}{Remark}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{corollary}{Corollary}[section]
+\newtheorem{assumption}{Assumption}[section]
+\newtheorem{definition}{{Definition}}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{question}{Question}
+
+
+\author{G\"unay Do\u gan}
+\title{Solving tridiagonal linear systems}
+
+\begin{document}
+
+\maketitle
+
+The Thomas algorithm solves the following tridiagonal system in $O(n)$ time, 
+where $n$ is the number of unknowns $\{x_i\}_{i=0}^{n-1}$.
+%
+\begin{equation}\label{E:tridiag-system}
+{\scriptscriptstyle
+  \left(\begin{array}{ccccc}
+     b_0 & c_0 &        &         &         \\
+     a_1 & b_1 &  c_1   &         &         \\
+         & a_2 &  b_2   & \ddots  &         \\
+         &     & \ddots & \ddots  & c_{n-2} \\
+         &     &        & a_{n-1} & b_{n-1}
+  \end{array}\right)
+  \left(\begin{array}{c}
+     x_0 \\ x_1 \\ \vdots \\ \vdots \\ x_{n-1}
+  \end{array}\right)
+  =
+  \left(\begin{array}{c}
+     d_0 \\ d_1 \\ \vdots \\ \vdots \\ d_{n-1}
+  \end{array}\right).
+}
+\end{equation}
+%
+Equation~\eqref{E:tridiag-system} can solved using a simple
+procedure that consists of three for-loops executed in linear
+time. The three stages of the procedure are: LU-decomposition,
+forward substitution and backward substitution. The details
+are given in Algorithm~\ref{A:tridiag-solver}. \\
+\emph{Note that LAPACK includes an implementation of
+a tridiagonal solver, which should be used in practice}.
+
+%
+\begin{algorithm}
+\caption{The Thomas algorithm}
+\label{A:tridiag-solver}
+\begin{algorithmic}
+\STATE $m_0 = b_0$
+\FOR {$i=0,1,\ldots,n-2$}
+	\STATE $l_i = a_i / m_i$
+	\STATE $m_{i+1} = b_{i+1} - l_i c_i$
+\ENDFOR
+\STATE $y_0 = d_0$
+\FOR {$i=1,2,\ldots,n-1$}
+	\STATE $y_i = d_i - l_{i-1} y_{i-1}$
+\ENDFOR
+\STATE $x_{n-1} = y_{n-1} / m_{n-1}$
+\FOR {$i=n-2,n-3,\ldots,0$}
+	\STATE $x_i = (y_i - c_i x_{i+1}) / m_i$
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+%
+
+Unfortunately the Thomas algorithm is not directly applicable 
+to coefficient matrices of the form
+%
+\begin{equation}\label{E:def-periodic-tridiag-A}
+A = 
+{\scriptscriptstyle
+  \left(\begin{array}{ccccc}
+     b_0   & c_0 &        &         & a_0     \\
+     a_1   & b_1 &  c_1   &         &         \\
+           & a_2 &  b_2   & \ddots  &         \\
+           &     & \ddots & \ddots  & c_{n-2} \\
+    c_{n-1}&     &        & a_{n-1} & b_{n-1}
+  \end{array}\right).
+}
+\end{equation}
+%
+Nonetheless the Thomas algorithm can still be used as 
+a building block for an algorithm to invert $A$.
+For this, we define
+%
+\[
+\tilde{A} = 
+{\scriptscriptstyle
+  \left(\begin{array}{ccccc}
+  b_0-a_0& c_0 &        &         &   0     \\
+     a_1 & b_1 &  c_1   &         &         \\
+         & a_2 &  b_2   & \ddots  &         \\
+         &     & \ddots & \ddots  & c_{n-2} \\
+      0  &     &        & a_{n-1} & b_{n-1}-c_{n-1}
+  \end{array}\right),
+}
+\quad
+u = 
+{\scriptscriptstyle
+  \left(\begin{array}{c}
+     a_0 \\ 0 \\ \vdots \\ \vdots \\ c_{n-1}
+  \end{array}\right),
+}
+\quad
+v = 
+{\scriptscriptstyle
+  \left(\begin{array}{c}
+     1 \\ 0 \\ \vdots \\ 0 \\ 1
+  \end{array}\right),
+}
+\]
+%
+and note 
+\[
+A = \Tilde{A} + u v^T.
+\]
+Then the Sherman-Morrison formula enables us to write $A^{-1}$
+using $\tilde{A}^{-1}$, which is easier to compute
+\[
+A^{-1} = \Tilde{A}^{-1} - \frac{\Tilde{A}^{-1} u v^T \Tilde{A}^{-1}}{1 + v^T \Tilde{A}^{-1} u}.
+\]
+Taking advantage of this, we can write a simple three-step algorithm 
+to solve $A x = d$
+%
+\begin{itemize}
+\item Solve $\Tilde{A} z = u$ for $z$.
+\item Solve $\Tilde{A} y = d$ for $y$.
+\item Compute $x = y - \frac{v^T y}{1 + v^T z} z$.
+\end{itemize}
+%
+
+\end{document}

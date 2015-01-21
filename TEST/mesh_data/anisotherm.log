@@ -1,0 +1,24 @@
+generate = False
+if generate:
+    msname='saved'
+else:
+    msname='damned'
+OOF.Microstructure.New(name=msname, width=1.0, height=1.0, width_in_pixels=10, height_in_pixels=10)
+OOF.Material.New(name='materialx')
+OOF.Property.Copy(property='Orientation', new_name='unsure')
+OOF.Property.Parametrize.Orientation.unsure(angles=Abg(alpha=0.0,beta=30.0,gamma=0.0))
+OOF.Material.Add_property(name='materialx', property='Orientation:unsure')
+OOF.Property.Copy(property='Thermal:Conductivity:Anisotropic:Monoclinic', new_name='mono')
+OOF.Property.Parametrize.Thermal.Conductivity.Anisotropic.Monoclinic.mono(kappa=MonoclinicRank2Tensor(xx=10.000000, yy=1.000000, zz=1.000000, xz=0.500000))
+OOF.Material.Add_property(name='materialx', property='Thermal:Conductivity:Anisotropic:Monoclinic:mono')
+OOF.Material.Assign(material='materialx', microstructure=msname, pixels=all)
+OOF.Skeleton.New(name='skeleton', microstructure=msname, x_elements=10, y_elements=10, skeleton_geometry=QuadSkeleton())
+OOF.Mesh.New(name='mesh', skeleton=msname+':skeleton', element_types=['T3_3', 'Q4_4'])
+OOF.Subproblem.Field.Define(subproblem=msname+':skeleton:mesh:default', field=Temperature)
+OOF.Subproblem.Field.Activate(subproblem=msname+':skeleton:mesh:default', field=Temperature)
+OOF.Mesh.Field.In_Plane(mesh=msname+':skeleton:mesh', field=Temperature)
+OOF.Subproblem.Equation.Activate(subproblem=msname+':skeleton:mesh:default', equation=Heat_Eqn)
+OOF.Mesh.Boundary_Conditions.New(name='bc', mesh=msname+':skeleton:mesh', condition=DirichletBC(field=Temperature,field_component='',equation=Heat_Eqn,eqn_component='',profile=ContinuumProfile(function='1.0'),boundary='top'))
+OOF.Mesh.Boundary_Conditions.New(name='bc<2>', mesh=msname+':skeleton:mesh', condition=DirichletBC(field=Temperature,field_component='',equation=Heat_Eqn,eqn_component='',profile=ContinuumProfile(function='0'),boundary='bottomleft'))
+OOF.Subproblem.Set_Solver(subproblem=msname+':skeleton:mesh:default', linearity=Linear(), solver=StaticDriver(matrixmethod=ConjugateGradient(preconditioner=ILUPreconditioner(),tolerance=1e-13,max_iterations=1000)))
+OOF.Mesh.Solve(mesh=msname+':skeleton:mesh', endtime=0.0, stepsize=0)

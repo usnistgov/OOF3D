@@ -1,0 +1,8 @@
+OOF.File.LoadStartUp.Data(filename="ms.oofdata")
+OOF.Settings.UndoBuffer_Size.Skeleton(size=2)
+
+from time import *
+print "INITIAL", time()
+OOF.Skeleton.New(name='skeleton', microstructure='ms', x_elements=5, y_elements=5, z_elements=4, skeleton_geometry=TetraSkeleton(arrangement='moderate',left_right_periodicity=False,top_bottom_periodicity=False,front_back_periodicity=False))
+print "AFTER CREATION", time()
+OOF.Help.Debug.Sanity_Check(skeleton="ms:skeleton",quick=0)

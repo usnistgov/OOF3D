@@ -1,0 +1,548 @@
+-*- text -*-
+$RCSfile: boundary.doc,v $
+$Revision: 1.1 $
+$Author: reida $
+$Date: 2001/12/03 21:59:49 $
+
+The Care and Feeding of Boundary Conditions
+-------------------------------------------
+
+Boundary conditions data are separated into three pieces in OOF.  The
+geometric information, about where in space the boundary lies, is in
+the Boundary class, of which there are two types, an EdgeBoundary and
+a PointBoundary.  The EdgeBoundary supports integration, but can be
+represented as a set of nodes, and supports fixed, floating, and flux
+boundary conditions.  The PointBoundary is a set of nodes, and cannot
+in general be converted to an EdgeBoundary, and supports fixed, float,
+and force boundary conditions.  The boundary conditions themselves
+contain information about which global fields they apply to, and in
+the case of fixed and float conditions, which equations they make
+dependent, that is to say, which components of which forces should be
+used to enforce the boundary condition.  Flux and force boundary
+conditions apply forces either indirectly (by specifying the flux on
+an edge) or directly, respectively.  The third piece is the "profile
+function", which specifies the values associated with the boundary
+condition, i.e. for a fixed displacment along some edge, the profile
+function tells you what the displacments actually are.  Profiles can
+be discrete or continuous, with the former intended to be used by
+PointBoundary objects, and the latter by EdgeBoundary objects.
+
+
+The logical structure of all of this is that the boundary owns an
+object which contains both a boundary condition and a profile.  From
+the point of view of the user (or author of the UI), it is possible to
+specify and re-use profiles and boundary conditions, although at the
+implementation level, the actual references used by the boundaries are
+to local copies.
+
+
+Applying Boundary Conditions:  A Fixed Boundary Example
+
+Before you can make and apply a boundary condition, there are some
+prerequisites.  OOF physics is made of fields (like displacement) and
+equations (like forcebalance) which have to be paired up.  It's fairly
+obvious that you have to pick. e.g. a field to fix, but it's perhaps
+less obvious that you also have to pick an equation to make dependent
+-- fixing a field implies allowing some boundary reaction-force to
+take on whatever value is necessary in order to push the fixed field
+to the selected value.  Besides the field to fix and the force to fix
+it with, you also have to pick the values to which the field should be
+fixed, and the geometrical object (that is, the boundary) on which the
+fixing should take place.  Everything except the actual condition
+presupposes the existence of an OOF2 mesh to which these things can be
+applied.
+
+The sequence of commands, for the simple case of a fixed boundary
+condition fixing both components of a displacment field, is given
+below.
+
+( 1) Construct a mesh, presumed here to have the name "mesh", with
+     defined field "displacement" and equation "forcebalance_eqn".
+
+( 2) Define a profile function.  We want to fix the displacments 
+     to all be zero, so we do:
+
+     profile_zero = ContinuumProfile('0.0')
+
+( 3) Define the actual boundary condition for each compnent:
+
+     fixeddisp_x = mesh.newFixedBC(displacement, 0, forcebalance_eqn, 0)
+     fixeddisp_y = mesh.newFixedBC(displacement, 1, forcebalance_eqn, 1)
+
+( 4) Make the boundary.  The mesh maintains a dictionary of all
+     boundaries.  By calling newEdgeBoundary with a key, you create
+     an empty boundary, which you can then populate with edges.
+     If you already have an EdgeSet object for this boundary, you can
+     pass it in as the second argument, but this is not required.
+       Edges are added by calling the new boundary's addEdge method.
+     bottom_bdy = mesh.newEdgeBoundary('bottom_bdy')
+     bottom_bdy.addEdge(edge0)
+     bottom_bdy.addEdge(edge1)
+     ... etc
+
+( 5) Add your boundary conditions, with profiles, to the boundary:
+
+     bottom_bdy.addFixedCondition( fixeddisp_x, profile_zero)
+     bottom_bdy.addFixedCondition( fixeddisp_y, profile_zero)
+
+( 6) Run the equilibration.
+
+The mesh's equilibration routine will poll the boundaries prior to
+solving the matrix, and will ask each boundary to apply its conditions
+in the appropriate order, after checking to make sure they are all
+consistent.  You can get errors from this process if, for instance,
+you have accidentally specified that the same point be fixed in two
+places, due to intersecting fixed boundary conditions with different
+profile function.  If you make a floating boundary condition intersect
+with a fixed boundary condition, applied to the same component of the
+same field, the solver will automatically promote the floating
+boundary condition to a fixed one, adding an offset to the flaoting
+boundary condition's profile function as required to ensure
+consistency.
+
+The foregoing is a simple example, but demonstrates the essential
+features of the process.  A more detailed description of the different
+kinds of boundaries, boundary conditions, and profile objects, is below.
+
+
+The Sequence of Events:
+
+After building the global stiffness matrix for the whole,
+unconstrained problem, the mesh's equilibration routine first calls
+mesh.bcPromote() several times, until it reports that no floating
+boundary conditions have been promoted to fixed boundary conditions.
+This is necessary because the promotion of one floating boundary
+condition to fixed may create a new float/fixed intersection,
+requiring additional promotions.  After that, the mesh then calls
+mesh.fixedBCConsistency(), which runs through all the fixed boundary
+conditions and compares their profile functions at intersections.  If
+any inconsistencies are found, an excpetion is thrown.  If not, the
+boundary condition set is consistent.
+
+Actual invocation of the boundary conditions takes place prior to
+equilibration.  The equilibrate() routine iterates through all of the
+boundaries several times, first asking each one to apply all of its
+flux boundary conditions, then fixed, then force.  Fixed boundary
+conditions simply mark the appropriate nodal degrees of freedom as
+fixed, and apply a particular value to the appropriate degree of
+freedom, stored in the Node structure.  Flux and force boundary
+conditions make contributions to the mesh's boundary_rhs vector, which
+is used to separate boundary-condition contributions to the rhs from
+other cnotributions.  Then, the matrix extraction maps are built --
+these are the mapping vectors which indicate which rows of the matrix
+correspond to dependent or independent force equations, and which
+columns of the matrix correspond to fixed and free degrees of freedom.
+At this point in the process, these maps take each row/column of the
+main stiffness matrix to exactly one row/column of the target.  The
+boundaries are iterated through one final time to invoke their
+floating boundary conditions, which operate on the maps to merge the
+floated degrees of freedom together.  At the same time, in the case of
+a nontrivial profile function, the floating boundary makes
+compensating force contributions to the boundary_rhs vector.  After
+the float BC invocation, it's necessary for the mesh to call
+"cleanlists", to ensure that the target space of the mapping lists
+(which gets modified by the float BC's) is a contiguous series of
+integers starting from zero.
+
+It is at this point that the matrix is actually solved -- the
+submatrix corresponding to free degrees of freedom and independent
+force equations is extracted and solved, and the dependent forces and
+fixed degrees of freedom are back-substituted.  Finally, it is
+necessary to expand the floating boundary conditions, that is, use the
+floating boundary condition's profile data, along with the offset
+determined from the equilibration process, to make the actual
+degree-of-freedom assignments.
+
+That is the core of the process.  Some of the individual events are
+quite complicated, because of the need to handle different kinds of
+profiles and different kinds of boundaries in a transparent way.  Note
+in particular that the EdgeBoundary class has a no-op stub which gets
+called when force boundary conditions are being implemented, and the
+PointBoundary class has a corresponding no-op stub for the flux
+boundary conditions.
+
+
+Floating Boundary Conditions:
+
+  A "Floating" boundary condition is an edge, or equivalently
+a set of nodes, which are constrained to move together in a 
+particular degree of freedom, but which are not constrainted to
+any particular value.  These used to be called "enslaved" degrees
+of freedom in OOF1.
+ 
+The calling interface is the same as the Fixed boundary condition.
+You need a field, a component, an equation and a component.  As of
+now, only one component of this can be defined at a time.  The profile
+should be appropriate to the type of boundary you're putting it on.
+The principal difference between float boundary conditions and fixed
+boundary conditions is that the profile function for a float boundary
+condition only specifies the degrees of freedom up to an overall
+constant.
+
+
+Flux Boundary Conditions:
+
+Flux boundary conditions differ importantly from both fixed and
+floating boundary conditions.  The profile function must specify the
+normal component of a flux, and will therefore in general be
+multidimensional.  For reasons having to do with controlling the
+logistical complexity of the Python call-back, the profile which
+specifies this flux component should return a tuple of floating-point
+values, rather than returning scalars separately.  This heterogeneity
+of the interface is a bit clunky, but can be shielded from the user by
+means of another interface layer, if required.  Note that the
+requirement to specify all components of a flux's normal component
+does not result in any loss of generality, since applying zero force
+in a particular component is of course equivalent to not applying any
+force.  
+
+Aside from that difference, because the flux boundary condition is
+integrated, it can only be applied to an EdgeBoundary, so the profile
+should of course be a ContinuumProfile or NormalProfile.  The Flux BC
+itself only specifies which flux's normal component is being set.
+Syntactically, the condition specification is the same as that for the
+other boundary conditions.
+
+
+Force Boundary Conditions:
+
+In a sense, this is the point-wise version of the flux boundary
+condition.  The reason it has a separate name is not only because of
+the differences in the interface, but also to emphasize the important
+conceptual difference between the two -- they are dimensionally
+distinct, a force boundary condition specifies forces corresponding to
+particular equations in the system applied at particular nodes,
+whereas a flux boundary condition specifies an object that must be
+integrated to determine the forces.  
+
+Force boundary conditions can only be applied to PointBoundaries, and
+therefore must be described by DiscreteProfile objects.  They are
+otherwise syntactically similar to the other kinds of boundary
+conditions.  You may specify only one component of a force.
+
+
+Implementation Details:
+-----------------------
+
+
+EdgeBoundary:
+
+The EdgeBoundary is the "usual" boundary -- it specifies a geometry
+that is made up of several edges of elements.  It's a Python object
+that has a C++ "EdgeSet" as a data member.  EdgeSet objects can
+iterate over their edges, for integration, or can present all of their
+FuncNodes, including intermediate FuncNodes that appear in the middle
+of the edges.  The EdgeSet's node-presentation method guarantees that
+each node will occur exactly once in the list, irrespective of the
+actual EdgeSet geometry, and promises that the order in which the
+nodes occur will be consistent from one call to the next, but doesn't
+have any obvious relationship to any kind of traversal order.  Like
+the PointBoundary, it has methods to assign conditions to itself,
+which it does by instanting a new BCInstance object, which couples a
+condition and a profile together.  The BCInstance initializer is the
+object which makes the local copies of the profile and boundary
+conditions.  It is an error to try to add a ForceCondition to an
+EdgeBoundary, but all other conditions are permitted.
+
+Float and Fixed boundary conditions are invoked by individual calls
+for each node in the EdgeSet, accompanied by the profile function
+evaluated at the coordinates of the node.  Only ContinuumProfiles and
+NormalProfiles such an evaluation entry point, which is why they have
+to be used with EdgeSets.  Flux conditions are evaluated by passing
+the profile itself to the FluxBC's "invoke" routine, along with the
+EdgeSet object.  The FluxBC itself then iterates over the EdgeSet,
+integrating over Gausspoints as described in more detail below.
+Relevant here is the fact that this interface requires that the
+profile be Python-callable, and that it return a tuple with the
+correct number of elements for the normal component of the specified
+flux.
+
+
+PointBoundary:
+
+A PointBoundary is made up of a number of FuncNodes with no mandatory
+geometrical relationship to each other -- they could be corners, they
+could lie on an edge, they could be special interior points, and there
+may be any number of them, including zero, although it's a lot of
+effort for nothing if you do that.  The nodes themselves are stored in
+the local nodeset data member, which is expected to be a dictionary,
+or at least to act like a dictionary.  (In practice, actual testing
+examples used a NodeSet object, which in addition to normal dictionary
+functions, also has an addNode method that provides uniformity of
+interface at the mesh level.)
+
+PointBoundary objects have mostly the same entry points as
+EdgeBoundary objects.  It is an error to try to add a FluxCondition to
+a PointBoundary, but all others are allowed.  All conditions are
+evaluated on a node-by-node basis, with the value being retrieved by
+key (corresponding to the current node's key) from the
+DiscreteProfile.
+
+
+PointBoundary and EdgeBoundary methods:
+getFloatGeometry and getFixedGeometry:
+
+These special routines exist to support intersection detection and
+consistency checking.  In order to facilitate the search for matching
+nodes, these routines return a dictionary of all the nodes in the
+boundary, indexed by the nodes themselves.  The values corresponding
+to the keys in this dictionary are lists of LocatedCondition objects.
+
+The "LocatedCondition" contains the boundary condition, and enough
+information to evaluate the condition's profile object at the current
+location, whether specified by key or coordinate, on demand.  The
+reason for this is that it defers the profile evaluation until and
+unless an actual intersection is found -- there is no point in
+evaluating the profile functions of a large boundary many times just
+in case an intersection arises, and we want to leave open the
+possibility that, in complicated cases, boundary profile functions may
+be very expensive.  LocatedCondition objects also present a uniform
+interface for evaluating the profile -- they have a __call__ method
+which detects which kind of evaluation is appropriate and performs it
+correctly, so the caller (i.e. the intersection checker) doesn't need
+to know whether the intersection is between PointBoundaries,
+EdgeBoundaries, or both.  The LocatedCondition evauator also applies
+offsets to the profile, which may be required, for instance, in the
+case of a fixed boundary condition which has an offset because it's
+derived from a previously-intersecting floating boundary condition,
+and now intersects with another floating boundary condition.
+
+Each of the getXGeometry entry points returns a nontrivial result only
+if the specified boundary conditions (i.e. fixed or float) are present
+on the boundary.
+
+
+BCInstance:
+
+This object is pretty simple, the primary noteworthy feature is that
+it takes a condition and a profile, and makes a local copy to assign
+to its data members.  This is so that at the higher level, you can
+define a profile or a boundary condition once, and then assign it
+multiple times to various boundaries in whatever combinations work.
+Then, if the profile later gets specialized somehow, it will only be
+specialized locally.
+
+
+DiscreteProfile, ContinuumProfile, and NormalProfile:
+
+These are the objects that tell the boundary how to get a value to
+pass to the boundary condition's invocation routine.  The two kinds of
+profiles differ in their approach to function evaluation, but work in
+basically the same way -- the thing you input is generally a string
+describing a function of x and y.  At evaluation time, x and y are
+substituted with the actual coordinates at which the evaluation is
+taking place, and the function is evaluated in the restricted name
+space.  The reason for making it a string is twofold, firstly because
+it simplifies the restricted evaluation, and secondly because it gives
+you access to any other functions or constants you may have predefined
+elsewhere in the restricted name space by some other mechanism.  For
+instance, if you're doing a parametric study on some small
+displacement "delta", you can set "delta" in the restricted name
+space, and then refer to it in your boundary condition profiles.
+
+Note that the existence of a __call__ method means that the profile
+object iself is Python-callable.  This handy feature is used by the
+Flux boundary condition to do integration.  As previously remarked,
+profiles used by Flux boundary conditions should return tuples of
+values whose length is the dimensionality of the flux normal.
+
+ContinuumProfiles are characterized by a single string, which is the
+only argument to the initializer.  DiscreteProfiles are more
+complicated -- their internal structure is that of a dictionary, with
+keys corresponding to the node keys in a PointBoundary, and values
+that are either strings or functions.  The DiscreteProfile does the
+same thing for either __call__ or __getitem__ evaluation, so you can
+use it like a dictionary of keys, or a function of the keys, and it
+will work the same way.  
+
+The NormalProfile object behaves like a ContinuumProfile object, with
+a few additional constraints -- besides the x and y location, it also
+expects the direction of the local normal to the boundary in question,
+in the variables nx and ny.  If the value returned by the function
+associated with the NormalProfile is a two-element tuple, it is
+rotated so that its y component points along ny, and its x component
+points along nx before being returned to the caller.  This has the
+effect of evaluating the vector-valued function in "normal
+coordinates."  The orientation convention is that the positive y axis
+is the outward normal from the bounded region (presumed to be on the
+right as the boundary is traversed), and the positive x direction is
+tangent to the boundary and points in the direction of traversal.
+
+The DiscreteProfile dictionary can either be passed in, in which case
+it's up to the caller to ensure that the functions are
+evaluation-safe, or the DiscreteProfile object can be created empty,
+and have elements added to the dictionary via a series of either
+addValue (takes a key and a string, adds a function) or addLiteral
+(takes a key and a constant) calls.
+
+
+FixedBC:
+
+The basic task of the FixedBC object is to make an assignment of a
+particular value to a nodal degree of freedom, and mark the
+corresponding equation component as dependent.  The fields and
+equations provide interfaces that do this, so it's just a matter of
+calling them.  There is no C++ code in this one, and it gets called
+node-by-node with the appropriate values.  After the degrees of
+freedom and equations are marked, the resulting flags are used to
+construct the mapping lists.  Therefore, fixed degrees of freedom must
+be applied before this mapping is done.
+
+FloatBC:
+
+The floating boundary conditions are of intermediate complexity, more
+than fixed but less than flux.  The Python FluxBC object, when
+invoked, creates a C++ applicator for itself, which then gets called
+with the sets of nodes and values.  The applicator is stateful, and
+will recognize it's first call, which it will use to determine the
+target value from the equation and degree of freedom maps to which all
+subsequent calls will be mapped.  Later calls then make these changes
+to the list, as well as modfying the right hand side (boundary
+contribution) to allow for nontrivial profile functions.  Obviously,
+the DOF and equation maps must exist prior to the invocation of
+floating boundary conditions.
+
+After solution, the floating boundary conditions must be expanded.
+Because the solver has no access to the profile functions, it can't
+put different values in the different, summed degrees of freedom.
+Instead, the solver puts the same value in all of them, and the
+FloatBC's "expand" routine corrects them as required.  The value
+returned by the solver is such that the sum of all of the degrees of
+freedom is correct.  Since the sum of the profile function is also
+known to the FloatBC, the actual values for the degrees of freedom
+must be values wich differ from each other according to the profile
+function, and sum to the total retrieved from the solver.  This is
+achieved by placing in each DOF a value equal to the difference
+between the profile function at that point and the difference between
+the sums.
+
+
+ForceBC:
+
+The ForceBC is an elaborate way of making a single assignment to a
+particular element of the boundary's contribution to the
+right-hand-side.  Logistically it resembles a FixedBC, and does more
+or less the same thing, i.e. making an assignment, but it turns out to
+be more convenient in this case to make the assignment in C++.  Data
+members are just the equation and equation component, and the __call__
+routine creates a simple C++ applicator object and calls its set_rhs
+method.  Like the comment says, most of the class is a life-support
+system for a single line of C++ code. 
+
+This might be worth moving up to Python.
+
+
+FluxBC:
+
+The Flux boundary condition is the most C-intensive of the boundary
+conditions, as it has to do actual integration over gausspoints.  The
+starting point for all of this is the FluxBC::integrate routine,
+located in boundarycond.swg.  This routine invokes the Python-callable
+object typemap from oof.swg, and then calls the internal integrate_()
+routine.  The execution pathway mimics that of the stiffness-matrix
+construction process.  For each edge in the EdgeSet, the routine
+iterates over GaussPoints, bumping the integration order up to an
+arbitrary 3 more than that deduced from the order of the shape
+functions.  It then calls the boundary_integral method of the
+specified flux, which loops over applicable equations, calling *their*
+boundary_integral routines, which in turn call back to the flux's
+local_boundary routine to populate an appropriate right-hand-side
+object, which is the analogue of the local stiffness matrix, and then
+assign it to the boundary's contribution to the right-hand-side.
+
+The flux's local_boundary routine executes the Python callback by
+calling the particular flux's BCCallback method.  This method is
+actually defined in boundarycond.swg, because this allows for all the
+Python interface code and accompanying helper functions and utility
+declarations to appear in SWIG files.  This is where/why the
+Python-callable profile object has to return a tuple, for those of you
+who were wondering.
+
+
+Mesh methods:
+
+A number of features of the Mesh class support the operation of the
+boundary conditions.  First and foremost among these is the existence
+of the vector boundary_right_side, which stores the boundary
+contributions to the right-hand side separately from the nodal
+equation values, which are used in the computation of body forces or
+other "intrinsic" RHS contributions.  The boundary_right_side vector
+is added to the other right-hand-side contributions during the
+equilibration process in the get_rhs routine.  Within the mesh class,
+the boundary_right_side vector can be accessed and manipulated through
+the boundary_rhs_init, dump_boundary_rhs, and bounadry_rhs methods,
+which initialize, write, and retrieve it, respectively.  The
+cleanlists() routine, mentioned above in the context of the floating
+boundary condition, is a C++ method of the Mesh class.
+
+On the Python side, probably the most important and useful mesh-based
+boundary routine is the BCStatus method.  Called with no arguments, it
+dumps the current boundary set, with conditions.  
+
+The fixed-boundary condition consistency checker and the
+floating-boundary condition intersection and promotion routine are
+also present at this level.  These routines are a little on the
+complicated side, primarily because of the way the boundary conditions
+are organized -- a fairly large number of checks have to take place
+before you know for sure that you actually do have an intersection.
+The geometry must match, and at each geometric intersection, the
+general case is that you have several conditions associated with the
+node for each boundary of which it (the node) is a member, so you have
+to check all of the conditions from one against all of the conditions
+from the other, while at the same time making sure you are working
+with the correct profile function.  A lot of the complexity is rolled
+in to the LocatedCondition object, which can simply be evaluated to
+get the appropriate profile value.  The fixedBCConsistency and
+bcPromote routines themselves consist primarily of several nested
+loops and conditionals.  They differ in two principal ways, the first
+being that fixedBCConsistency, comparing fixed conditions against
+other fixed conditions, only needs to look at each pair of boundaries
+once.  bcPromote, on the other hand, is looking at the fixed condition
+from the "first" boundary and the float condition from the "second",
+and so needs to look at each pair of boundaries from both points of
+view.  The second principal difference is in the innermost loop -- the
+consistency routine simply throws an exception the first time it
+encounters any inequality in the profile functions, whereas the
+bcPromote routine promotes a floating boundary condition at the first
+possible opportunity.
+
+Note that, because boundaries can intersect multiple times, it's
+possible that a promoted floating boundary condition, made consistent
+at the first point of intersection by the choice of a suitable offset
+for the profile function, might become inconsistent at a second
+intersection point.  In this case, the promotion process will result
+in an inconsistent set of *fixed* boundary conditions.  This is why
+bcPromote should be run to completion *before* fixedBCConsistency is
+run, otherwise inconsistencies might sneak through the promotion
+mechanism.
+
+
+Output:
+
+In addition to the routines supporting construction and invocation of
+boundary conditions on boundaries, there are also routines for writing
+out the boundaries and boundary conditions into a log or status file,
+such that reading that file back in will recreate the same boundaries
+and conditions.  No consistency checking is done in this case, so that
+intermediate, unsolvable constructions which might nevertheless be
+useful starting points can be saved.
+
+Writing out the complete set of boundaries begins with calling the
+mesh's boundary condition reset function, to reset the variable-name
+counter, as well as to remove any fixed boundary conditions which
+resulted from the promotion of floating boundaries, and remove offsets
+in fixed boundary conditions which intersect with other fixed boundary
+condtions.  After that, each boundary should write its creation
+command by calling write_create with a file name, indentation string,
+dictionary key from the mesh's boundary dictionary, and a meshname.
+This funciton will return an automatically-generated variable name
+which can be used to refer to the boundary elsewhere in the file.
+
+After the creation command has been written, and after all elements
+and nodes have been created, it is safe to call each boundary's
+write_geometry method, which writes out the commands necessary to
+rebuild the boundary geometry, using integer indices to refer to the
+nodes and elements.  Finally, after the appropriate fields and
+equations are known to be defined, you can call each boundary's
+write_conditions method.  This sequence -- creation, geometry, and
+conditions -- results in a complete description of the boundaries.

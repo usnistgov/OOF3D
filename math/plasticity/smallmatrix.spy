@@ -1,0 +1,50 @@
+# -*- python -*-
+# $RCSfile: smallmatrix.spy,v $
+# $Revision: 1.1 $
+# $Author: reida $
+# $Date: 2006/12/07 14:02:35 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@ctcms.nist.gov. 
+import types
+
+
+# Another opportunity for bounds checking.
+def _SmallMatrixPtr___getitem__(self, idx):
+    if len(idx)==2:
+        return self.getitem(idx[0],idx[1])
+    else:
+        raise KeyError
+
+SmallMatrixPtr.__getitem__ = _SmallMatrixPtr___getitem__
+
+
+
+def _SmallMatrixPtr___setitem__(self, idx, val):
+    if len(idx)==2:
+        self.setitem(idx[0],idx[1],val)
+    else:
+        raise KeyError
+
+SmallMatrixPtr.__setitem__ = _SmallMatrixPtr___setitem__
+
+
+
+def _SmallMatrix___mul__(self, other):
+    if type(other)==types.FloatType:
+        return self.multbyscalar(other)
+    else:
+        if type(other)==types.InstanceType and \
+           issubclass(other.__class__, SmallMatrixPtr):
+            return self.multbymatrix(other)
+        else:
+            raise TypeError
+
+SmallMatrixPtr.__mul__ = _SmallMatrix___mul__
+
+    

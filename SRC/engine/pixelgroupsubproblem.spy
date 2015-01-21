@@ -1,0 +1,76 @@
+# -*- python -*-
+# $RCSfile: pixelgroupsubproblem.spy,v $
+# $Revision: 1.10.10.4 $
+# $Author: langer $
+# $Date: 2014/09/17 21:26:54 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.SWIG.common import config
+from ooflib.SWIG.common import switchboard
+from ooflib.common import debug
+from ooflib.common import registeredclass
+from ooflib.common.IO import pixelgroupparam
+from ooflib.engine import subproblemtype
+
+# PixelGroupSubProblems need to know if their pixelgroup has changed,
+# so that they can reset their cached lists of nodes, etc.  To do
+# this, a PixGrpSubProbNotifier object is installed as a switchboard
+# callback.  The callback is installed by the startup functions of the
+# Registration.  startup is called by the SubProblemContext when it's
+# created.
+
+class PixGrpSubProbNotifier:
+    def __init__(self, subpctxt):
+        self.subpctxt = subpctxt
+        param = subpctxt.subptype.getRegistration().getParameter('group')
+        self.groupname = param.value
+    def __call__(self, group, microstructurename):
+        if (group.name() == self.groupname and
+            self.subpctxt.getMicrostructure().name() == microstructurename):
+            self.subpctxt.redefined()
+
+def _startup(subpctxt):
+    subpctxt.requestCallback("changed pixel group",
+                             PixGrpSubProbNotifier(subpctxt))
+
+##############
+
+class PixelGroupSubProblem(subproblemtype.SubProblemType):
+    def __init__(self, group):
+        self.group = group
+    def create(self):
+        return CPixelGroupSubProblem(self.group)
+
+if config.dimension() == 2:
+    _name = "PixelGroup"
+    _tip = "The name of a pixel group."
+else:
+    _name = "VoxelGroup"
+    _tip = "The name of a voxel group."
+
+registeredclass.Registration(
+    _name,
+    subproblemtype.SubProblemType,
+    PixelGroupSubProblem,
+    ordering=3,
+    startup=_startup,
+    params=[pixelgroupparam.PixelGroupParameter("group", tip=_tip)],
+    
+    tip="A subproblem containing all elements whose dominant pixel is in a given pixel group.",
+    discussion="""<para>
+
+    A <classname>PixelGroupSubProblem</classname> is a &subproblem;
+    defined to include all &elems; whose
+    <link linkend="Section-Concepts-Skeleton-Homogeneity">dominant pixel</link>
+    is a member of the given &pixelgroup;.
+
+    </para>""" 
+    )
+

@@ -1,0 +1,883 @@
+// -*- mode: text -*-
+// $RCSfile: NOTES_OOF,v $
+// $Revision: 1.1 $
+// $Author: reida $
+// $Date: 2001/12/03 22:15:30 $
+
+
+Things that have to be done during or before equilibration:
+
+* Read input file with material and property definitions (Python)
+
+* Construct materials and properties. (Python driven C++)  After
+  adding all properties to a material, properties use the material's
+  property registry to cross reference each other. (C++)
+
+* Read node positions and elements (Python).  Construct nodes and
+  elements (C++).
+
+* Find out what Fields are in use, by asking each Material. (Python?)
+  No -- user determines what Fields are in use.
+
+* Initialize fields (C++?)
+
+* Initialize Fluxes and Equations.  Equations tell the Fluxes that
+  they're interested in them.
+
+* Reset equation numbers in all the nodes.
+
+* Set boundary condition flags in all the nodes -- ie, apply FieldBC's. (C++)
+
+* Assign global indices to degrees of freedom.  (C++)
+  "Interior" degrees of freedom come first, followed by "boundary", so
+  that global stiffness matrix partitions properly.
+    interior == field is active and dof isn't fixed (contributes to matrix)
+    boundary == field is active and dof is fixed (contributes to rhs)
+    unused == field is inactive
+
+* Have each Material ask its Properties to precompute things that can
+  be precomputed by calling Property::precompute(). (C++)
+
+* Have each Element add its contribution to the stiffness matrices &
+  rhs.  It does that by asking its Material to ask its Properties to
+  make their contributions.  Each Property knows what fields it
+  affects.  During this process, equation numbers are assigned at
+  nodes, so that data goes into the correct columns of K. (C++)
+  (See below for more up-to-date details.)
+
+* Solve for active fields. (C++)
+
+--
+
+Mesh Iterators:
+
+for(NodeIterator i(mesh); !i.end(); i++)
+  Node *node = mesh[i];
+
+for(ElementIterator i(mesh); !i.end(); i++)
+  Element *element = mesh[i];
+
+Different kinds of ElementIterators: ElementIterator(mesh, EI_SELECTED)
+
+--
+
+Don't need interiorE and boundaryE in Mesh. Only need one list of elements.
+
+---
+
+Two classes of Master Elements: TriangularMaster and QuadrilateralMaster.
+   Each keeps tables of Gauss Points.
+Different kinds of MasterElements with different numbers of nodes are
+   derived from them.
+Shapefunctions are precomputed at ALL gauss points, for all orders of
+   integration.
+
+---
+
+Each element type may have TWO sets of shapefunctions, one used to
+compute mapping and one used for function interpolation. Map shape
+functions are only used internally (in the
+Element/MasterElement/ShapeFunction classes) but the interpolation
+functions are used externally in the Property classes.
+
+ShapeFunctionCache should be associated with ShapeFunction, not with
+Element. It can be static in each derived ShapeFunction class, so it
+won't ever have to be reallocated.  So the ShapeFunction will contain
+*two* distinct lookup tables -- ShapeFunctionCache for quantities that
+depend on the Element, and ShapeFunctionTable for quantities that
+don't. 
+
+How to refer to shapefunctions? Can't simply use NodeIndex, because a
+set of shape functions may not have a function for each node in the
+element. Perhaps MasterElement needs
+  virtual ShapeFunctionIndex shapefunction(NodeIndex) const = 0;  No.....
+
+* Property has to loop over nodes, use shapefunction appropriate for a
+  node.
+
+* jacobian, Jdmasterdx have to loop over map shapefunctions, use node
+  appropriate for a shapefunction.  Or loop over map nodes, use
+  appropriate map shapefunctions.
+
+ElementNodeIterator can return a NodeIndex used to get a node,
+and a ShapeFunctionIndex used to get a shapefunction.  Each derived
+element class has its own type of ElementNodeIterator, and therefore
+its own relationship between nodes and shapefunctions.
+
+Element::shapefun can take a ElementNodeIterator instead of a
+NodeIndex arg.
+
+det_jacobian, etc should be computed and cached in the ShapeFunction base
+class. 
+
+*** The connection between Nodes and their corresponding shape
+    functions is made by the ElementNodeIterator class: 
+      Node *ElementNodeIterator::node()
+      ShapeFunctionIndex ElementNodeIterator::sf_index()
+    This connection is used, for example, in Element::Jdmasterdx().
+
+---
+
+To make contributions to Kij and rhs from boundaries, need to be able
+to loop over element edges that are on boundaries.
+
+What kinds of boundary conditions can be specified?
+* Fixed positions of nodes
+* Fixed positions of edges (effectively the same as fixed nodes)
+* Flux through edges
+
+Generally, when fields aren't specified on the bdy, the fluxes must
+be. The flux is of the form $\sigma=K\cdot\grad u$, where u is the
+field. This quantity may be a vector (eg heat current) or a tensor (eg
+elastic stress).  Only the normal component is actually used -- the
+contribution to the rhs is $\oint dl \phi_j \hat n\cdot\sigma$.
+
+Should Property be a templated class, derived from a common base?  NO
+The template arguments are the types of the field and the flux:
+Property<double, Vector<double> > : temperature
+Property<Vector<double>, StrainStress> : elasticity
+Then what about couplings?
+
+It's better to leave the Property class alone, but have a
+BoundaryCondition object which can be passed to
+Property::boundary_flux, and which can be queried for the flux of a
+given Field at an edge.
+
+---
+
+FLUX
+
+There should be a Flux class, somewhat analogous to the Field class.
+
+Field values are stored in Nodes, as lists of DoF's.
+Where are flux values stored?
+They're not; they're just computed as needed.  Maybe they're stored
+in an output object of some sort.
+
+How does Property::integrate_flux know which flux to integrate?
+How does Property::find_flux know which flux to find?  What does it do
+with the result?  (Couplings can contribute to more than one Flux.)
+(See below.)
+
+Will need operator==(const Flux&, const Flux&).  find_flux will check
+its Flux* argument to see which flux it should compute, do a
+dynamic_cast to the appropriate derived Flux class, and call the
+non-virtual DerivedFlux::add_flux(FluxType&).
+(No. See below.)
+
+---
+
+Have to convert from vector<> to TNT::Vector<>, but only for linear
+algebra vectors.  Use std::vector<> for lists, etc.
+Use TNT::Matrix<> too.
+
+Rewrite TNT operator+, etc to use BLAS!
+
+--- 
+
+Have to do integrals with only ONE shape function -- so scheme for
+choosing Gaussian order needs to be modified!  Such integrals appear
+when integrating body forces on rhs.  DONE
+
+---
+
+What about mutable properties?  Information will have to be stored
+element by element.
+  Material can keep a list of mutable properties.
+  Mutable Properties are all derived from MutableProperty, which gives
+      each mutable property a mutableindex, by registering itself with
+      the material.
+  Each Element has a list of Mutations --
+      element.mutation[mutableindex] is a pointer to a Mutation
+      corresponding to the appropriate MutableProperty.
+  MutableProperty can have a function
+      Mutation *MutableProperty::mutation() const
+  that returns the Mutation corresponding to the Property. This
+  Mutation can be cast to a derived type specific to the Property and
+  used to store element specific data.
+
+---
+
+Null virtual functions in Properties
+
+Most properties will not define all of the virtual functions in the
+Property base class, so these functions are defined as {} in the base
+class.  The corresponding Material functions loop over all of the
+Properties, calling the virtual functions.  It may be time consuming
+to call all of the null functions.  But if the base class function
+throws an exception, then the Material can catch it, and keep a list
+of the Properties which don't have their own implementations of a
+virtual function, and avoid calling them in the future.
+
+---
+
+Should ElementNodeIterator have an operator()(Field) so that it acts
+like a Node?
+  ElementNodeIterator node;
+  node(temperature) gives value
+  node(temperature).index() gives dof index
+  node(displacement)[i] value of component
+and similarly:
+  node(heateqn).index()  index into global matrix
+
+THIS IS OBSOLETE--- use field(node) or field(elementnodeiterator)
+instead of node(field).
+***Should treat Equations the same way as Fields.***
+
+---
+
+Since indexing into rows of K is done by DoF indices, and indexing
+into columns is done by Node::eqno(), how is the symmetry of K
+preserved?  If a property produces a symmetric K, the symmetry can be
+used to solve the matrix equation faster, so Node::eqno somehow has to
+know about DegreeOfFreedom::dofindex().  Maybe equation numbers and
+dof indices can be assigned together in some precompute stage.  This
+would fit into the existing framework.
+
+---
+
+Each Flux should have a bool inplane.  Each Field should have
+a bool inplane, inplanegradient.  NO. See below.
+
+---
+
+CONSTRAINTS
+
+The constraints that reduce the problem to 2D are all linear relations
+on the out-of-plane derivatives and the degrees of freedom.  For example,
+   strain_{iz} = 0  (plane strain)
+   stress_{iz} = 0 = C_{izkl}*strain_{kl} + ...  (plane stress)
+So the out-of-plane derivatives of a field are either set to zero (or
+another constant?) in plane strain, or treated as degrees of freedom
+and solved for in plane stress.
+
+This also works for thermal expansion in plane stress:
+ stress_{iz} = 0 = C_{izkl}*(strain_{kl} - alpha_{kl}*deltaT)
+is a linear relation among strain_{iz} and the in-plane
+derivatives AND a field, deltaT.
+
+
+The classes now look like this:
+
+class Field: Used to retrieve value of a DegreeOfFreedom at a Node.
+Can have one of three states: undefined, defined, active.  Active
+Fields are being solved for; defined Fields have values, but aren't
+being solved for.  Fields have dimensions, which include the
+out-of-plane components and derivatives needed to satisfy the
+constraints. For example, Displacement has 5 dimensions: u_x, u_y, and
+the three out-of-plane strains.  Fields also have a list of Outputs,
+for example: dx, dy, and all 6 components of strain.
+
+Actually, the out-of-plane parts are stored in their own separate
+fields.  The CompoundField class associates a Field with its
+out-of-plane parts.  So Displacement is a TwoVectorField (dx, dy)
+associated with a VectorField (eps_xz, eps_yz, eps_zz).
+
+class Equation: div(flux)=force, or flux=value.  Has a dimension and a
+name, and nodes can use it to find a row index into the global
+stiffness matrix and rhs.  In principle, an equation may involve more
+than one flux.  Equations know which fluxes they involve.  An Equation
+and a Node together determine a row index in the stiffness matrix.
+
+class Constraint: Constraints are either statements that an
+out-of-plane component of the flux is zero, or that out-of-plane
+derivatives are zero. Applying a Constraint either activates the
+Equation flux=0, or marks a field as fixed and zero.
+
+class BoundaryCondition: Similar to a Constraint, but acts only on
+DegreesOfFreedom associated with a Field at a NodeGroup, not at all
+Nodes.
+
+class Flux: Fluxes are linear combinations of fields, in-plane field
+derivatives, and out-of-plane field derivatives.  Fluxes know which
+Equations they contribute to. (Do they really need to know that?)
+
+class Property: Properties know which Fluxes they contribute to, and
+which Fields they require.  Has to be able to make its contribution to
+the matrix for the Flux.
+
+class StiffnessMatrix: Stores the FE stiffness matrix for both active
+and inactive degrees of freedom.
+
+The Procedure is now:
+
+1. User specifies which Equations are active globally, eg: Heat, ForceBalance.
+
+2. User specifies which Constraints are active.  Activating some
+   Constraints implies activating more Equations.  Eg, activating
+   plane-flux constraints activates the sigma_z=0 equation.
+
+3. Ditto for BoundaryConditions.
+
+4. Active Equations determine the active Fluxes.  Fluxes are defined
+   globally (not Node-specific, like equations)(?)
+
+5. User specifies which Fields are defined.  The Fields corresponding
+   to the out-of-plane derivatives are defined implicitly for each
+   defined Field.  Fields are defined globally like Fluxes.
+
+6. Properties are active if they contribute to an active Flux, and if
+   all of the Fields they require are defined.  Properties don't need
+   to store whether they're active or not, it's sufficient for them to
+   compute it when asked to contribute to the stiffness matrix.  When
+   they are constructed, Properties will have to tell someone (who?)
+   which Fluxes and Fields they use.
+
+7. Active properties make their contributions to the stiffness matrix
+   and rhs. They don't have to know whether a DegreeOfFreedom is
+   active or not, just that it belongs to a defined Field. Uses
+   StiffnessMatrix(Equation, DegreeOfFreedom).
+
+7a. No. Equation and constraint do the integration over an
+   Element. They ask the Flux for the fluxmatrix -- the matrix that
+   multiplies the dofs to give the flux.  Then the Equation multiplies
+   the fluxmatrix by the appropriate derivative matrix, does the
+   integral over the area of the Element, and makes the contribution
+   to the matrix.
+
+7b. Not quite. See below.
+
+(Un)resolved Questions:
+
+Q: How does the Equation numbering deal with Constraints/BC's that are
+   applied at some nodes but not others? Does there have to be an
+   Equation object for each row of the matrix? Ie, does an Equation
+   represent the concept div sigma=f for all nodes, or does it
+   represent div.sigma=f at a particular node?
+
+A: Each node keeps a list of Equations.  The list of Equations is
+   updated each time a new equation is used at a Node, by
+   Node::eqno(Equation, component).  This function returns the
+   equation number at the node.
+
+[ OLD
+ The list is created
+   by Node::add_eqn(const Equation&) and Node::add_field(const
+   Field&).  The list in the node can be an STL::map, associating
+   Fields with column numbers and Equations with row numbers.  The
+   column and row numbers are obtained by asking the Mesh.  Thus the
+   Equation class represents the *concept*, and is not specific to a
+   Node.
+]
+
+Q: Actually, equations and constraints are applied to Elements and
+   Boundaries, not to Nodes. How does that affect the equation/dof
+   counting?  Fields are fixed/active at Nodes, and not on Elements...
+
+A: No, that's not quite right. The force balance takes place at Nodes,
+   so it's proper to think of equations being applied at Nodes, not
+   Elements. Integrating over an element makes contributions to the
+   Equations at Nodes.
+
+Q: How do Properties know how to make their contributions to the
+   matrix and rhs?  One property can contribute to more than one
+   Equation. For instance, Elasticity contributes to Equation
+   ForceBalance and to Constraint OutOfPlaneStress.
+
+A: Fluxes make contributions to the matrix and rhs, Properties make
+   contributions to the fluxes.  Ie:
+
+OLD
+   Loop over Elements
+      Material initializes all active Fluxes
+      Material loops over Properties
+         Property makes contributions to all active Fluxes at all GaussPts
+      Material loops over active Fluxes
+        Equation/Flux makes contributions to matrix and rhs
+
+NEW
+   Grid determines what Fluxes are active
+   Grid determines what Properties contribute to each active Flux
+   Grid loops over Elements {
+      Element->Material loops over active Fluxes {
+	 Loop over GaussPts {
+            Initialize fluxmatrix
+	    Loop over Properties contributing to flux {
+	      Property::flux(Flux, Element, GaussPt, &fluxmatrix)
+	    }
+	    Loop over Equations that use flux {
+	      Convert fluxmatrix to equationmatrix
+	    }
+	    multiply equationmatrix by gauss point weight
+	    add equation matrix to global stiffness matrix
+	 }
+      } 
+   }
+
+Q: How do in-plane Fluxes activate the out-of-plane components and
+   derivatives of the Fields?
+
+A: They don't.  Whether or not a field is in-plane is independent of
+   whether or not a flux is in-plane.
+
+Q: If the Equation loads the stiffness matrix into the global one, how
+   does it relate the localindex (column number) to the global index?
+
+A: It loops over the Element's DoF's in the same way that the
+   Properties do.  It can then use the Flux's indexing (which can be
+   made to work for Equation) to extract a value from the local
+   stiffness matrix.
+
+---
+
+Out-of-plane components of Fields
+
+Displacement is a two-vector (u_x, u_y), and in plane strain that's
+sufficient.  In plane stress, we need to also solve for three
+out-of-plane components (du_x/dz, du_y/dz, du_z/dz).  How should these
+extra degrees of freedom be stored and referred to?
+
+*** Use Fields and CompoundFields...
+
+Will Node::operator()(const ScalarField&) etc work when passed
+a reference to a Field, as in node(temperature.out_of_plane()) ???
+NO.
+It's simpler anyway to just use functions defined in the derived Field
+classes, and access dof's with field(node) or field(node, component).
+These functions don't have to be defined in the Field base class,
+since we'll always be referring to a concrete instance of a Field.
+
+---
+
+SYMMETRY:
+
+If the problem is symmetric, there is a relationship between an
+Equation number and a DegreeOfFreedom number.
+
+---
+
+A Flux can appear in more than one equation.  We don't want the
+fluxmatrix to be computed more than once for each Property and
+Element. So when computing the stiffness matrix and rhs, we have to
+loop over Fluxes primarily.  After finding the fluxmatrix, the Flux
+has to loop over all Equations that it appears in.
+
+Q: How do we know which Fluxes have to be computed for an Element?
+   Loop over the Material's Properties, and see which ones they
+   contribute to.  But do Properties know their Fluxes, or do Fluxes
+   know their Properties, or what?
+
+A: Properties know their Fluxes. We want to be able to add a new
+   Property without Property without modifying the Flux class in any
+   way. But when the Property registers itself with its Material, it
+   can tell the Material which Flux(es) it contributes to.
+
+
+---
+
+Elasticity:
+
+flux
+\sigma_{ij} =  C_{ijkl} \nabla_k u_l
+            = (C_{ijkl} \nabla_k N_\mu) u_{\mu l}
+
+u_{\mu l} = displacement component l and node \mu
+
+fluxmatrix
+ M_{(ij) (\mu l)} = (C_{ijkl} \nabla_k N_\mu)
+
+f_i = \nabla_j \sigma_{ij}
+    = \nabla_j M_{(ij)(\mu l)} u_{(\mu l)}
+
+N_\nu f_i = N_\nu \nabla_j \sigma_{ij}   (integrated over the element)
+          = (bdy term) - (\nabla_j N_\nu) M_{(ij)(\mu l)} u_{(\mu l)} u_{\mu l}
+          = (bdy term) - D_{\nu j} M_{(ij)(\mu l)} u_{(\mu l)} u_{\mu l}
+
+divergence operator:
+D_{\nu j} = \nabla_j N_\nu     space index j contracted w/ M ==> stiffness
+Multiplication D*M should be done by Flux, since it knows which index
+of M to contract with D. ?
+
+
+Thermal Conductivity:
+
+flux
+J_i =  \kappa_{ij} \nabla_j T
+    = (\kappa_{ij} \nabla_j N_\mu) T_\mu
+
+fluxmatrix
+M_{i\mu} = (\kappa_{ij} \nabla_j N_\mu)
+
+qdot = -\nabla_i J_i
+     = -\nabla_i M_{i\mu} T_\mu
+
+N_\nu qdot = -N_\nu \nabla_i M_{i\mu} T_\mu   (integrated over the element)
+           = (bdy term) + (\nabla_i N_\nu) M_{i\mu} T_\mu
+
+ (actually, \mu should be (\mu l), since T may be a compound field
+ with out-of-plane components)
+
+divergence operator:
+D_{\nu i} = \nabla_i N_\nu   as before!
+
+Although the Flux is the thing that knows how to multiply the
+fluxmatrix by D_{\nu j}, and it would be easy for the Flux to do the
+multiplication and then add the result to the global stiffness matrix,
+the Flux should NOT do this.  That's because it's conceivable that the
+actual Equation might be more complicated:  div(flux) might be
+multiplied by a matrix, for example.
+
+Can the FieldIndex (or a relative) be used somehow so that the
+Equation can tell the Flux what multiplication to do?
+
+OR
+
+If the Flux does the multiplication, but returns a matrix instead of
+adding to the global stiffness matrix, then how does it index the rows
+of the matrix?  The rows are indexed by a component of the divergence
+and a node: (\nu i) for stress, (\nu) for thermal conductivity.  Use a
+generalization of ElementNodeIterator::localindex() ?
+
+OR
+
+The Equation constructs the matrix that the fluxmatrix is multiplied
+by, and asks the Flux to do the multiplication.  The flux doesn't have
+to know how the rows of the matrix are indexed.  The resulting product
+will have columns indexed by Field component and node number, and rows
+indexed by whatever's appropriate for that Equation (probably Equation
+component and node number).
+The function doing the multiplying *doesn't* have to be a virtual
+function in the Flux class, since the Equation will know the derived
+type of the Flux.
+
+---
+
+Generalized tensor index classes...
+
+Iterator i, j, k;  // one dimensional iterators
+TensorIterator a(i, j, k);  // a three dimensional iterator
+TensorIterator b(i, k);     // a two dimensional iterator
+ThreeTensor A;    // can be indexed by a
+TwoTensor B;      // can be indexed by b
+
+Loop over j
+Loop over i and k
+  C(j) += A(a)*B(b);    ???????????????
+
+Hard to do, and probably would be too much overhead.
+
+---
+
+Flux matrices, etc are evaluated at Positions, not at GaussPoints, so
+that the same code can be used at GaussPoints and at general Coords
+(which are also derived from Position).  The trouble is that the
+shapefunctions now have to be evaluated at Positions, and have to be
+able to use the cached values at GaussPoints.  So a virtual function
+in the Position class has to be used to distinguish between the two...
+
+DONE, partly by adding the aforementioned virtual function, and partly
+by evaluating shapefunctions only via ElementNodeIterators.
+
+--
+
+Cross-referencing of Properties in a Material shouldn't bail out when
+one Property fails-- it should try all the Properties so that it can
+return a list of all the failures.
+
+Materials can be created with missing Properties.  They should have a
+"consistent" flag that is only set when the cross referencing
+succeeds, though.  Should equilibration be able to proceed
+if there are inconsistent materials assigned to the mesh?  Those
+properties may not be used...
+
+Materials can't be created with redundant properties, though, so it's
+ok to throw an exception in Material::addProperty()
+
+The interface calls the Material constructor only when it has all of
+the properties in hand.  There's no need to be able to remove
+Properties from a Material.  To remove Properties, the GUI will read
+the Properties out of a Material, delete Properties from the list, and
+create a *new* Material with the remaining Properties.
+
+---
+
+Thoughts on the separation of the front and back ends
+
+Front and back ends should communicate with shared memory when it's
+available, and with sockets otherwise.  It would be nice not to have
+to write two completely different versions of everything.
+
+Shared memory is most easily and efficiently implemented with threads.
+(Is this true?)  Python threads work on any system implementing
+pthreads, as well as Windows, so using them shouldn't affect
+portability.
+
+Here's a proposal for thread organization.
+
+Single processor mode has three threads:  a GUI thread, a back-end
+thread, and a communication thread.
+
+Dual processor mode has two processes and four threads:
+processor 1 has the GUI thread and a communication thread, and
+processor 2 has the back-end thread and a communication thread.
+
+The GUI and back-end threads are the same in both cases.  They ask the
+communication threads for things (mostly the location of data) and the
+communication thread tells them where the data is.  The single
+processor communication thread doesn't have to do much -- just tell
+one thread where the data lives in the other thread, and lock and
+unlock the data as appropriate.  The double processor communication
+threads will have to arrange for the transfer of data between
+processors.
+
+Does this make any sense?  Should it be implemented with MPI?  Do
+threads automatically run on separate processors on a multiprocessor
+machine, or do we have to do something special to take advantage of
+shared memory with multiple cpus?
+
+If we do this, the first thing to work out will have to be the language
+(messages? objects?) that the threads will use to talk to one another.
+
+
+FRONT END -- touchy feely stuff
+
+* Sends python commands to back end 
+     Eg, Create mesh, read mesh, define material, define/activate field,
+       equilibrate, etc.
+     Has to assign python variable names to use in back end.
+* Asks back end for values (where is output chain evaluated?)
+* Knows current state of Fields, Equations, and Fluxes, Boundary conditions
+
+THINGS FRONT END SHOULD BE ABLE TO DO WHILE BACK END IS BUSY
+
+* Provide information about which problem is being solved
+* Switch between displays
+* Scroll graphics window
+* Set up another problem
+      Does front end know all about Properties? Can it tell if a
+      Material definition is consistent?
+* Interrupt the back end
+* Launch another back end?
+
+BACK END -- memory and cpu intensive stuff
+
+* Knows what Materials are defined.
+* Knows current state of Fields, Equations, and Fluxes
+* Can change current state of Fluxes, in response to changes in
+  Fields, Equations, and Materials.
+* Equilibrates mesh, does all the hard work.
+* Returns requested data to front end
+
+Actually, there should be two back end threads, at times.  After dof
+and nodaleqn values are copied into vector of unknowns and rhs, and
+before they're copied back into the nodes, a separate thread should
+construct the stiffness matrix and do the equilibration.  This leaves
+the main thread free to respond to front end requests for data,
+compute outputs, etc.
+
+----
+
+Contour plotting:
+
+1. Output object evaluates functions at FuncNodes.
+2. Display object gets the positions and values from the Output
+   object.
+3. Display object sets contour levels.
+4. Display object asks each Element to provide a polygon for each
+   interval between contour levels.  It will have to pass the contour
+   levels and the Output values to the Element.
+
+
+-----
+  Body forces:
+
+The property/field/equation set has been modified to incorporate
+a new, and rather unusual, sort of body force, which merits
+some discussion.
+
+  The need arose from the desire to put an offset temperature T0 into
+the thermal-expansion property -- a finite temperature at which a
+particular stress-free strain is specified.  By virtue of the elastic
+linearity, it is possible to express this in terms of a "body stress"
+which is imposed over all of the elements having a material with the
+given property.
+
+The existing body-force mechanism, designed around the early
+mass-density example, is designed to write to the right-hand side of
+the equation directly, in terms of the divergence of the flux to which
+the equation applies.  Stresses do not do this -- in fact, in the
+usual formulation of the problem, a constant offset stress does not
+enter in at all, but only shows up by virtue of its divergences, in
+the right-hand side.
+
+What has been put in is a mechanism which accomplishes this,
+automatically, and allows the property to express things in terms of a
+"background" (or "external") stress field directly.  In the
+integrated-by-parts formulation of the problem, it's possible to
+meaningfully integrate an arbitrary stress field, without worrying too
+much about its properties.  If constant, the stress field will not
+contribute, because the integral of the gradients of the shape
+functions, over the lattice, will be zero.  Doing the volume
+integration will generate right-hand side contributions which are
+equal to what you would have gotten if you had imposed a force
+boundary condition on the boundary of the region with the stress.
+However, for complex boundaries, this may be hard to compute, and the
+body integral method has the advantage of being automatically correct
+for arbitrarily complex shapes, applicable for the more general case
+of a spatially varying stress, and expressed naturally in terms of the
+physical ingredients of the problem.
+
+The down-side of this approach is that, for what may be presumed to be
+the usual uniform case, the computation is quite inefficient -- you go
+to a lot of effort to compute zero at all the interior nodes.  Also,
+there is an inherent risk of computing zero in a complicated way,
+namely that the fractional error you make due to roundoff will always
+be very large, though the absolute error may be small.  "Noise" forces
+in the right-hand side may also complicate the solver's job, by giving
+the appearnce of fully populating the right-hand side.
+
+
+-------
+Errors in Python Callbacks:
+ 
+  An unfortunate typo lead to a hard-to-diagnose problem in a Python
+callback routine, specifically the TestProperty's fluxmatrix routine.
+It was getting a simple NameError, but the actual behavior was that
+the routine was bailing out at a hard-to-determine point in the
+routine, and returning NULL to the enclosing C++ PyEval_CallObject.
+
+  It is possible for C++ to notice the exception condition by detecting
+the NULLness of the return value, and to retrieve a PyObject*
+corresponding to the exception by calling PyErr_Occurred(), but it's
+not (yet) obvious how to parse the Python error in C++ in order to
+generate a coherent message for the user.  Since fluxmatrix runs code
+which is very close to the user, coherence of error messages is quite
+important.
+
+  Solution: C++ does not need to parse the Python error at all.  Since
+the Python error indicator has already been set, all that has to
+happen is that NULL be returned to the Python caller.  The new trivial
+exception class "PythonError" does this, when caught in the global
+exception typemap it simply returns NULL.  Python handles the rest.
+
+
+------------
+GUI issues:
+
+  A logical "shadow" structure has been constructed, starting in the
+file GUI/oofGUI.py, which contains all the callback routines.  The
+Glade connect/listener scheme is not used.  
+
+  A handy thing in a lot of GUIs is the ability to right-click 
+on things and have useful stuff happen.  It would be nice if the 
+OOF2 GUI did this also.  This is a secondary consideration beyond
+basic correct functionality, of course, which is why it's here in
+the NOTES file.  So I won't forget. 
+
+  Also:
+
+  There is an ambiguity in the assignment of properties to mateials
+regarding ownership -- users will want to be able to edit the
+parameters of properties loaded in from libraries, as well as those
+which are present in the property tree.  But materials may also want
+to reference external properties, if for instance if a user wishes to
+conveniently change the orientation of a lot of otherwise diverse
+properties.  This suggests that besides owning properties, materials
+may sometimes want to reference properties.
+
+  The solution to this is to explicitly add "linking" as an operation
+which can relate a material and a property, resolving the ambiguities.
+If a property is linked to a material, then that property remains
+owned by the property tree.  If the material is saved, it only saves
+the link, and cannot be actually used outside of a context in which
+the linked-to property is known.  If, on the other hand, a property is
+loaded into a material, the material acquires ownership, and changes
+to the parameters made when the property is selected via the material
+list have no effect on properties in the property tree.
+
+  At solution-time, the GUI will know which properties are referenced,
+and will be able to instantiate them, with automatically-generated
+variable names, outside of any material so that references to them
+from inside many materials will all work.  The GUI will, furthermore,
+allow users to build incomplete materials if they want to, for
+debugging purposes or whatever.  Such materials will generate errors
+at solution-time, but these errors should be comprehensible.
+Continuously enforcing a completeness requirement for materials is a
+practical impossibility, since any material must necessarily pass
+through incomplete states somewhere between initial definition and
+complete construction.
+
+  It would be helpful if linked vs. copied materials were visually
+distinguished in the GUI, by italics or boldface or whatever.
+Likewise, uninstantiated properties and named properties in the
+property tree ought to be distinguishable in this way.
+
+  Within this scheme, there remain some ambiguities.  If a user imports
+a material which defines a named property, and it is distinct from a
+property of the same name in the property tree, then any future
+reference to the name is ambiguous.  This situation can be detected at
+load-time, and the user can be queried as to his or her intentions.
+Alternatively, users may wish to eliminate the query by selecting
+default behavior in a hypothetical OOF user-configuration file.
+
+  At the level of the GUI code, there is a useful distinction to be made
+between "Property" in the sense of a C++/Python class, and "Property"
+in the sense of a bunch of parameters which map fields to fluxes.  The
+former I have been calling "Constituve rules", and the latter are what
+is physically meant by a "Property", although to avoid ambiguity I
+prefer to call them "parametrizations" or "instantiations".
+
+  The shadow objects associated with properties need to know a number of
+things: They need to know their names, they need to have a list of
+parameter input widgets which can be put up in the GUI window, they
+need to know whether or not they have been instantiated, and they
+might want to know who their owner is.  They also need to know what
+sort of property they are, to prevent, for instance, a material from
+having more than one sort of elasticity.  They should be able to
+generate an instance of the corresponding property, probably by
+emitting the text of the appropriate constructor.  Constructors should
+have keyword arguments, and when there is a choice, the emitted
+constructor should use the same parametrization as was selected in the
+GUI, i.e., if one user enters isotropic elasticity in terms of lambda
+and mu, the emitted constructor should use lambda and mu, but if
+another user enters the parameters in terms of Young modulus and
+Poisson ratio, then the emitted constructor should use those.
+This makes the resulting text file more readable for a user who
+wishes to modify it.
+
+
+======
+  Right-clicks:  There are a couple of different "levels" of signals
+in the GTK+ world.  To find out about right-clicks and double-clicks,
+you should create a callback handler for "button_press_event", which 
+takes as arguments the GTK+ object generating the event, the event
+itself (as a GdkEvent), and whatever extra data you pass through,
+same as other signal-handler callbacks.  The event has a "state"
+attribute which can be queried to find out what, if any, modifiers
+were present when the button was pressed, and furthermore has a 
+"button" attribute, which is an integer corresponding to the number
+of the button.  A button-number of three indicates a right-click,
+and an event.type of "_2BUTTON_PRESS" indicates a double-click.
+There is also a triple-click, but I can't imagine that being useful.
+
+
+==========
+
+Parametrization class
+
+For specifying values for parameters that can be parametrized in
+various ways.  Eg, RBG, HSV, grayvalue for Color, or Cijkl or
+lambda,mu for isotropic elasticity.
+
+A Parametrization contains
+  a name
+  a list of strings identifying each possible parametrization
+  lists of variable names for each parametrization
+  an int or string indicating which parametrization was used to initialize it
+  routines that return the current value in a given parametrization
+  routine that returns a widget for the gui
+
+The Parametrization is the basic stateful object for properties 
+in the GUI.  Input widgets ask the parametrization for data,
+and give user-supplied data back to the parametrization.
+When it comes time to build the property, the arguments to the 
+constructor are actually provided by the parametrization.
+  This way, it becomes possible to parametrize properties using
+the same scheme in the absence of the GUI.
+
+  Unsolved question:  How to achieve the required context-sensitivity,
+so that a fourth-rank symmetric tensor parametrizer knows whether or
+not to provide conventional names for elasticity (lambda, mu, E, nu, etc.),
+and when not to, e.g. when parametrizing the fourth-rank tensor which
+maps from strawberry fields to capacitor flux.
+

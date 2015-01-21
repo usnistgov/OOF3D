@@ -1,0 +1,34 @@
+This directory contains several subdirectories containing input files and scripts
+for testing different aspects of SWIG.   Some of these tests consume *alot* of
+disk space so be forewarned.  You can run different tests by simply using the
+makefile in this top level directory :
+
+make parser
+
+	This tests the SWIG parser and performs regression testing.
+	If regression files are available, the test script will report
+	differences.  If the files are not available, it will create them
+	automatically for use the next time the script is run.   This
+	test consumes alot of disk space.
+
+make doc
+
+        Tests the SWIG documentation system.
+
+make build
+
+	This attempts to build various C extensions for different target
+	languages.  It will use the file 'Makefile.template' in the top
+	level directory.   Use this to make sure the Makefile works before
+	installing it
+
+make errors
+
+	This runs the parser through some checks to make sure it's
+	error reporting is working.   Normally this isn't done since
+	it looks rather scary.
+
+make all
+	
+	Tests everything.
+

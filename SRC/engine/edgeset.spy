@@ -1,0 +1,135 @@
+# -*- python -*-
+# $RCSfile: edgeset.spy,v $
+# $Revision: 1.5.2.6 $
+# $Author: langer $
+# $Date: 2014/04/04 19:53:29 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+from ooflib.SWIG.engine import element
+from ooflib.common import debug
+from ooflib.engine import profile
+
+from ooflib.SWIG.engine.node import FuncNodePtr
+
+def _EdgeSet___repr__(self):
+    outstr = "EdgeSet( "
+    for n in self.nodes():
+        outstr = outstr + " %s " % n
+    outstr = outstr + ")\n"
+    return outstr
+
+EdgeSet.__repr__ = _EdgeSet___repr__
+
+## TODO: Do we really need to cache the EdgeSet Location objects?
+## This machinery is awfully baroque for boundary objects, of which
+## there are never very many.
+
+# Utility function for building the cached distance data -- makes the
+# expensive call into the C++ code to traverse the boundary, measuring
+# distance along an EdgeSet in terms of nodes, node indices, distance
+# traversed, and fractional distance traversed.  Caches the results,
+# because it will be needed by each boundary condition.
+def _EdgeSet_build_caches_(self):
+    raw = self.ndlist()
+    elist = map(EdgeNodeDistancePtr, raw)
+    self.node_cache = [e.node for e in elist]
+    self.location_cache = []
+    for e in elist:
+        e.thisown = 1
+        self.location_cache.append(
+            profile.Location(e.node.position(), index=e.index,
+                             s=e.distance, alpha=e.fraction))
+    
+EdgeSet.build_caches_ = _EdgeSet_build_caches_
+
+# This is the function you should call to get a Python list of
+# objects measuring progress along the boundary.  It calls the
+# swigged-and-typemapped C++ "ndlist" function to get a list of
+# EdgeNodeDistance pointers, and extracts the node information from it.
+def _EdgeSet_nodes(self):
+    try:
+        return self.node_cache
+    except AttributeError:
+        self.build_caches_()
+        return self.node_cache
+
+EdgeSet.nodes = _EdgeSet_nodes
+
+# Function to retrieve the list of locations from the edgeset.
+# Locations are basically nodes, enhanced with extra information about
+# how far along in the boundary you are.
+
+## TODO: In many (all?) places where EdgeSet.locations() is used, it's
+## immediately followed by location.set_time(t) for all locations in
+## the set.  Perhaps EdgeSet.locations() should take a time arg and
+## set the time itself.
+def _EdgeSet_locations(self):
+    try:
+        self.location_cache
+        self.node_cache
+    except AttributeError:
+        self.build_caches_()
+
+    return map( None, self.node_cache, self.location_cache)
+
+EdgeSet.locations = _EdgeSet_locations
+
+
+# Wrapper to make sure that addEdge calls make both caches stale.
+# Note that the caches are built by, among others, the __repr__, which
+# is a little unintuitive.
+def _EdgeSet_addEdge(self, boundaryedge, reverse):
+    try:
+        del self.node_cache
+    except AttributeError:
+        pass
+    try:
+        del self.location_cache
+    except AttributeError:
+        pass
+    self.add(boundaryedge, reverse)
+
+
+EdgeSetPtr.addEdge = _EdgeSet_addEdge
+
+# # Patterned after the FuncNodeIteratorPtr getitem routine in mesh.spy.
+# def _EdgeSetIterator___getitem__(self, idx):
+#     if self.end():
+#         raise IndexError
+#     ret = self.edge()
+#     self.increment()
+#     return ret
+
+# EdgeSetIteratorPtr.__getitem__ = _EdgeSetIterator___getitem__
+
+
+def _FaceSet_locations(self):
+    nodes = self.getNodes()
+    # Location objects hold a lot more data than just a position, but
+    # only the position is relevant for nodes on face boundaries,
+    # since the boundaries aren't sequencable.
+    ## TODO: Perhaps we should use a different kind of Location object
+    ## for faces.
+    return [(node, profile.Location(node.position())) for node in nodes]
+
+FaceSet.locations = _FaceSet_locations
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+def _SubDimensionalIterator_next(self):
+    if not self.end():
+        p = self.part()
+        rev = self.reversed()
+        self.increment()
+        return element.OrientedElement(p, rev)
+    raise StopIteration
+    
+SubDimensionalIteratorPtr.next = _SubDimensionalIterator_next
+

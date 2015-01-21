@@ -1,0 +1,65 @@
+# -*- python -*-
+# $RCSfile: cskeletonselectable.spy,v $
+# $Revision: 1.1.4.10 $
+# $Author: langer $
+# $Date: 2014/06/24 20:17:46 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+from ooflib.common import debug
+
+
+# Python object identity doesn't work, because the same CObject
+# returned to Python via SWIG gets wrapped in different objects each
+# time it's returned.
+
+def _CSelectionTracker___eq__(self, other):
+    if isinstance(other, CSelectionTrackerPtr) and other.this == self.this:
+        return 1
+    return 0
+
+CSelectionTrackerPtr.__eq__ = _CSelectionTracker___eq__
+
+def _CSelectionTracker___ne__(self, other):
+    return not self.__eq__(other)
+
+CSelectionTrackerPtr.__ne__ = _CSelectionTracker___ne__
+
+def _CSelectionTracker___repr__(self):
+    return "CSelectionTracker(%s)" % self.uid()
+
+CSelectionTrackerPtr.__repr__ = _CSelectionTracker___repr__
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# SelectionTracker object that corresponds to a DeputySkeleton in
+# the SkeletonContext's skeleton stack.  DeputySkeletons don't
+# contain any data except for the positions of moved nodes, so the
+# selection state in a deputy must be exactly the same as in the
+# associated (sheriff) Skeleton. 
+    
+class DeputySelectionTracker(CDeputySelectionTracker):
+    def __init__(self, tracker):
+        self.tracker = tracker
+        CDeputySelectionTracker.__init__(self, tracker)
+
+    def clone(self):
+        # This is a no-op.  The null return value is used by
+        # SelectionSet.clone() to flag the deputy trackers.
+        return None
+
+    def implied_select(self, othertracker):
+        pass
+
+    def __repr__(self):
+        return ("DeputySelectionTracker(self=%d, tracker=%d)" % 
+                (self.uid(), self.tracker.uid()))
+
+
+

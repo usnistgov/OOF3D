@@ -1,0 +1,220 @@
+# -*- python -*-
+# $RCSfile: aniso.spy,v $
+# $Revision: 1.6.8.1 $
+# $Author: langer $
+# $Date: 2013/11/08 20:45:29 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+# Definitions of anisotropic linear elastic properties
+
+from ooflib.SWIG.engine.property.elasticity import cijkl
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+from ooflib.engine import problem
+from ooflib.engine import propertyregistration 
+from ooflib.engine.IO import anisocijkl
+
+PropertyRegistration = propertyregistration.PropertyRegistration
+
+class AnisoElasticity(CAnisoElasticity):
+    def __init__(self, registration, name, cijkl):
+        CAnisoElasticity.__init__(self, registration, self, name,
+                                  cijkl.tensorForm())
+
+
+# CUBIC
+
+class CubicElasticityProp(AnisoElasticity):
+    pass
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:Anisotropic:Cubic', CubicElasticityProp,
+    "ooflib.SWIG.engine.property.elasticity.aniso.aniso",11,
+    [anisocijkl.CubicCijklParameter('cijkl',
+                                    anisocijkl.CubicRank4TensorCij(c11=1.0,
+                                                                   c12=0.5,
+                                                                   c44=0.25),
+                                    tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Cubic linear elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisoelastic.xml')
+    )
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
+             time_derivs=[0])
+
+# HEXAGONAL 
+
+class HexagonalElasticityProp(AnisoElasticity):
+    pass
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:Anisotropic:Hexagonal',
+    HexagonalElasticityProp,
+    "ooflib.SWIG.engine.property.elasticity.aniso.aniso",12,
+    [anisocijkl.HexagonalCijklParameter(
+    'cijkl', anisocijkl.HexagonalRank4TensorCij(c11=1.0,
+                                                c12=0.5, c13=0.5,
+                                                c33=1.0, c44=0.25),
+    tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Hexagonal linear elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisoelastic.xml')
+    )
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement], 
+             time_derivs=[0])
+
+# TETRAGONAL
+
+class TetragonalElasticityProp(AnisoElasticity):
+    pass
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:Anisotropic:Tetragonal',
+    TetragonalElasticityProp,
+    "ooflib.SWIG.engine.property.elasticity.aniso.aniso",
+    13,
+    [anisocijkl.TetragonalCijklParameter(
+            'cijkl', anisocijkl.TetragonalRank4TensorCij(
+                c11=1.0, c12=0.5, c13=0.5,
+                c33=1.0, c44=0.25, c66=0.25, c16=0.0),
+            tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Tetragonal linear elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisoelastic.xml')
+    )
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
+             time_derivs=[0])
+
+# TRIGONAL-A
+
+class TrigonalAElasticityProp(AnisoElasticity):
+    pass
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:Anisotropic:TrigonalA',
+    TrigonalAElasticityProp,
+    "ooflib.SWIG.engine.property.elasticity.aniso.aniso",14,
+    [anisocijkl.TrigonalACijklParameter('cijkl',
+                                        anisocijkl.TrigonalARank4TensorCij(
+    c11=1.0, c12=0.5, c13=0.5, c33=1.0, c44=0.25, c14=0.0, c15=0.0),
+                                        tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Trigonal-A linear elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisoelastic.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
+             time_derivs=[0])
+
+# TRIGONAL-B
+
+class TrigonalBElasticityProp(AnisoElasticity):
+    pass
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:Anisotropic:TrigonalB',
+    TrigonalBElasticityProp,
+    "ooflib.SWIG.engine.property.elasticity.aniso.aniso",15,
+    [anisocijkl.TrigonalBCijklParameter(
+            'cijkl', anisocijkl.TrigonalBRank4TensorCij(
+                c11=1.0, c12=0.5,c13=0.5,c33=1.0,c44=0.25,c14=0.0),
+            tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Trigonal-B linear elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisoelastic.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
+             time_derivs=[0])
+
+# ORTHORHOMBIC
+
+class OrthorhombicElasticityProp(AnisoElasticity):
+    pass
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:Anisotropic:Orthorhombic',
+    OrthorhombicElasticityProp,
+    "ooflib.SWIG.engine.property.elasticity.aniso.aniso",16,
+    [anisocijkl.OrthorhombicCijklParameter(
+    'cijkl',
+    anisocijkl.OrthorhombicRank4TensorCij(c11=1.0, c12=0.5, c13=0.5,
+                                      c22=1.0, c23=0.5, c33=1.0,
+                                      c44=0.25, c55=0.25, c66=0.25),
+    tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Orthorhombic linear elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisoelastic.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
+             time_derivs=[0])
+
+# MONOCLINIC
+
+class MonoclinicElasticityProp(AnisoElasticity):
+    pass
+
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:Anisotropic:Monoclinic',
+    MonoclinicElasticityProp,
+    "ooflib.SWIG.engine.property.elasticity.aniso.aniso",17,
+    [anisocijkl.MonoclinicCijklParameter(
+    'cijkl',
+    anisocijkl.MonoclinicRank4TensorCij(c11=1.0, c12=0.5, c13=0.5, c15=0.0,
+                                        c22=1.0, c23=0.5, c25=0.0,
+                                        c33=0.25, c35=0.0, c44=0.25,
+                                        c46=0.0, c55=0.25, c66=0.25),
+    tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Monoclinic linear elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisoelastic.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement], 
+             time_derivs=[0])
+
+# TRICLINIC
+
+class TriclinicElasticityProp(AnisoElasticity):
+    pass
+    
+reg = PropertyRegistration(
+    'Mechanical:Elasticity:Anisotropic:Triclinic',
+    TriclinicElasticityProp,
+    "ooflib.SWIG.engine.property.elasticity.aniso.aniso",18,
+    [anisocijkl.TriclinicCijklParameter(
+    'cijkl',
+    anisocijkl.TriclinicRank4TensorCij(c11=1.0, c12=0.5, c13=0.5, c14=0.0,
+                                   c15=0.0, c16=0.0, c22=1.0, c23=0.5,
+                                   c24=0.0, c25=0.0, c26=0.0, c33=1.0,
+                                   c34=0.0, c35=0.0, c36=0.0, c44=0.25,
+                                   c45=0.0, c46=0.0, c55=0.25, c56=0.0,
+                                   c66=0.25),
+    tip=parameter.emptyTipString)],
+    outputs=["Energy"],
+    propertyType="Elasticity",
+    tip="Triclinic linear elasticity.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/anisoelastic.xml'))
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
+             time_derivs=[0])
