@@ -485,9 +485,9 @@ def _loadElementSelection(menuitem, skeleton, elements):
     tracker = trackerlist.selected[skel]
     for elementSource in elements:
       for elementReference in skelcontext.elementselection.get_objects():
-	if elementSource == elementReference.getIndex():
-	  tracker.add(elementReference)
-	  break
+        if elementSource == elementReference.getIndex():
+          tracker.add(elementReference)
+          break
     tracker.write()
     switchboard.notify(
         skelcontext.elementselection.mode().changedselectionsignal,
@@ -560,9 +560,9 @@ def _loadNodeSelection(menuitem, skeleton, nodes):
     tracker = trackerlist.selected[skel]
     for nodeSource in nodes:
       for nodeReference in skelcontext.nodeselection.get_objects():
-	if nodeSource == nodeReference.getIndex():
-	  tracker.add(nodeReference)
-	  break
+        if nodeSource == nodeReference.getIndex():
+          tracker.add(nodeReference)
+          break
     tracker.write()
     switchboard.notify(
         skelcontext.nodeselection.mode().changedselectionsignal,
@@ -833,40 +833,40 @@ def writeSkeleton(datafile, skelcontext):
             datafile.argument('exterior', exterior)
             datafile.endCmd()
 
-	# debug.fmsg("selections")
-	# Element selection
-	datafile.startCmd(skelmenu.ElementSelection)
+        # debug.fmsg("selections")
+        # Element selection
+        datafile.startCmd(skelmenu.ElementSelection)
         datafile.argument('skeleton', skelpath)
         datafile.argument(
-	    'elements',
-	    [el.getIndex()
-	      for el in skelcontext.elementselection.retrieve()])
-	datafile.endCmd()
-	
-	# Face selection
-	datafile.startCmd(skelmenu.FaceSelection)
+          'elements',
+          [el.getIndex()
+            for el in skelcontext.elementselection.retrieve()])
+        datafile.endCmd()
+    
+        # Face selection
+        datafile.startCmd(skelmenu.FaceSelection)
         datafile.argument('skeleton', skelpath)
-	fas =  [tuple(n.getIndex() for n in fa.getNodes())
-	      for fa in skelcontext.faceselection.retrieve()]
+        fas =  [tuple(n.getIndex() for n in fa.getNodes())
+          for fa in skelcontext.faceselection.retrieve()]
         datafile.argument('faces', fas)
-	datafile.endCmd()
-	
-	# Segment selection
-	datafile.startCmd(skelmenu.SegmentSelection)
+        datafile.endCmd()
+    
+        # Segment selection
+        datafile.startCmd(skelmenu.SegmentSelection)
         datafile.argument('skeleton', skelpath)
-	segs =  [tuple(n.getIndex() for n in se.getNodes())
-	      for se in skelcontext.segmentselection.retrieve()]
+        segs =  [tuple(n.getIndex() for n in se.getNodes())
+          for se in skelcontext.segmentselection.retrieve()]
         datafile.argument('segments', segs)
-	datafile.endCmd()
-	
-	# Node selection
-	datafile.startCmd(skelmenu.NodeSelection)
+        datafile.endCmd()
+    
+        # Node selection
+        datafile.startCmd(skelmenu.NodeSelection)
         datafile.argument('skeleton', skelpath)
         datafile.argument(
-	    'nodes',
-	    [no.getIndex()
-	      for no in skelcontext.nodeselection.retrieve()])
-	datafile.endCmd()
+          'nodes',
+          [no.getIndex()
+             for no in skelcontext.nodeselection.retrieve()])
+        datafile.endCmd()
 
     finally:
         # debug.fmsg("done")
@@ -934,23 +934,26 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
     try:
         skeleton = skelcontext.getObject()
 
-        buffer="*HEADING\nABAQUS-style file created by OOF2 on %s from a skeleton " % (datetime.datetime.today())
+        buffer="*HEADING\nABAQUS-style file created by OOF3D on %s from a skeleton " % (datetime.datetime.today())
         buffer+="of the microstructure %s.\n" % skeleton.getMicrostructure().name()
 
         # Build dictionary (instead of using index()) for elements and nodes
         #  as was done in previous writeXXX() methods
+        #print buffer
+
         nodedict = {}
         i = 1
-        for node in skeleton.nodes:
+        for node in skeleton.getNodes():
             nodedict[node] = i
             i += 1
+        #print "Nodes..."
         # same for elements
         elementdict = {}
         i = 1
-        for el in skeleton.elements:
+        for el in skeleton.getElements():
             elementdict[el] = i
             i += 1
-
+        #print "Elements..."
         # Collect elements with the same dominant material together in a
         #  dictionary, with a key given by the material name.
         #  Some elements may not have a material assigned and
@@ -958,8 +961,9 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
         #  something like this has been done in the OOF universe.
         materiallist={}
         elementlist={}
-        for el in skeleton.elements:
+        for el in skeleton.getElements():
             matl = el.material(skeleton)
+            #print "Material..."
             if matl:
                 matname = matl.name()
                 elindex = elementdict[el]
@@ -969,7 +973,8 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                     elementlist[matname] = [elindex]
                     materiallist[matname] = matl
 
-        buffer+="** Materials defined by OOF2:\n"
+        buffer+="** Materials defined by OOF3D:\n"
+        #print buffer
         for matname, details in materiallist.items():
             buffer+="**   %s:\n" % (matname)
             for prop in details.properties():
@@ -978,24 +983,25 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
 
         buffer+="** Notes:\n**   The nodes for a skeleton are always located at vertices or corners.\n"
         buffer+="**   More information may be obtained by saving ABAQUS from a mesh.\n"
-
+        #print buffer
         listbuf=["*NODE\n"]
-        for node in skeleton.nodes:
-            listbuf.append("%d, %s, %s\n" % (nodedict[node],node.position().x,node.position().y))
+        for node in skeleton.getNodes():
+            listbuf.append("%d, %s, %s, %s\n" % (nodedict[node],node.position().x,node.position().y,node.position().z))
         buffer+=string.join(listbuf,"")
-
-        # Only expecting 3 or 4 noded skeleton elements
-        for numnodes in [3,4]:
+        #print buffer
+        # Only expecting 4 noded skeleton elements
+        for numnodes in [4,5,6,7,8,9,10]:
             listbuf=["** The element type provided for ABAQUS is only a guess " \
-                     "and may have to be modified by the user to be meaningful.\n*ELEMENT, TYPE=CPS%d\n" % numnodes]
-            for el in skeleton.elements:
+                     "and may have to be modified by the user to be meaningful.\n*ELEMENT, TYPE=C3D%d\n" % numnodes]
+            for el in skeleton.getElements():
                 if el.nnodes()==numnodes:
                     listbuf2=["%d" % (elementdict[el])]
-                    for node in el.nodes:
+                    for node in el.getNodes():
                         listbuf2.append("%d" % (nodedict[node]))
                     listbuf.append(string.join(listbuf2,", ")+"\n")
             if len(listbuf)>1:
                 buffer+=string.join(listbuf,"")
+        #print buffer
 
         for group in skelcontext.nodegroups.groups:
             buffer+="*NSET, NSET=%s\n" % (group)
@@ -1008,6 +1014,7 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                     listbuf.append("%d" % (nodedict[node]))
                 i+=1
             buffer+=string.join(listbuf,", ")+"\n"
+        #print buffer
 
         for elgroup in skelcontext.elementgroups.groups:
             buffer+="*ELSET, ELSET=%s\n" % (elgroup)
@@ -1020,28 +1027,41 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                     listbuf.append("%d" % (elementdict[el]))
                 i+=1
             buffer+=string.join(listbuf,", ")+"\n"
+        #print buffer
 
-        buffer+="** Include point and edge boundaries from OOF2.\n"
-        for pbname, pbdy in skeleton.pointboundaries.items():
+        buffer+="** Point boundaries from OOF3D.\n"
+        #print buffer
+
+        pointboundaries = skeleton.getPointBoundaries()
+        sortedKeys = pointboundaries.keys()
+        sortedKeys.sort()
+        for pbname in sortedKeys:
+            pbdy = pointboundaries[pbname]
             buffer+="*NSET, NSET=%s\n" % (pbname)
             listbuf=[]
             i=0
-            for node in pbdy.nodes:
+            for node in pbdy.getNodes():
                 if i>0 and i%16==0:
                     listbuf.append("\n%d" % (nodedict[node]))
                 else:
                     listbuf.append("%d" % (nodedict[node]))
                 i+=1
             buffer+=string.join(listbuf,", ")+"\n"
+            
+        #print buffer
 
-        # Use rearrangeEdges() to chain the edges together, then pick the
-        #  unique nodes. It seems the edges can't be selected if they
-        #  are empty, so edgeset=[(a,b),(b,c),...] is not checked
-        #  for null content
-        for ebname, ebdy in skeleton.edgeboundaries.items():
+        buffer+="** Edge boundaries from OOF3D.\n"
+
+        edgeboundaries = skeleton.getEdgeBoundaries()
+        sortedKeys = edgeboundaries.keys()
+        sortedKeys.sort()
+        for ebname in sortedKeys:
+            ebdy = edgeboundaries[ebname]
+            #print ebdy
             edgeset = rearrangeEdges([
-                tuple(nodedict[node] for node in edge.get_nodes())
-                for edge in ebdy.edges
+
+                tuple(nodedict[node] for node in tuple(edge.getNode(i) for i in (0,1)))
+                for edge in ebdy.getSegments()
                 ])
             buffer+="*NSET, NSET=%s\n" % (ebname)
             listbuf=["%d" % edgeset[0][0]]
@@ -1053,7 +1073,31 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                     listbuf.append("%d" % (edge[1]))
                 i+=1
             buffer+=string.join(listbuf,", ")+"\n"
+        #print buffer
 
+        buffer+="** Face boundaries from OOF3D.\n"
+
+        faceboundaries = skeleton.getFaceBoundaries()
+        sortedKeys = faceboundaries.keys()
+        sortedKeys.sort()
+        for fbname in sortedKeys:
+            fbdy = faceboundaries[fbname]
+            faceset = [
+                tuple(nodedict[face.getNode(i)] for i in range(3))
+                for face in fbdy.getFaces()
+                    ]
+            buffer+="*NSET, NSET=%s\n" % (fbname)
+            listbuf=["%d" % faceset[0][0]]
+            i=1
+            for face in faceset:
+                if i%16==0:
+                    listbuf.append("\n%d" % (face[1]))
+                else:
+                    listbuf.append("%d" % (face[1]))
+                i+=1
+            buffer+=string.join(listbuf,", ")+"\n"
+
+        buffer+="** Material targeted elements from OOF3D.\n"
         for matname in materiallist:
             buffer+="*ELSET, ELSET=%s\n" % matname
             listbuf=[]
@@ -1067,9 +1111,12 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
             buffer += (string.join(listbuf,", ") + 
                        "\n*SOLID SECTION, ELSET=%s, MATERIAL=%s\n"
                        % (matname,matname))
+        #print buffer
 
         for matname in materiallist:
             buffer+="*MATERIAL, NAME=%s\n** Use the information in the header to complete these fields under MATERIAL\n" % matname
+
+        #print buffer
 
         # Save/Commit to file. Perhaps should be done outside the
         # current method.
