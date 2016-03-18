@@ -1,7 +1,8 @@
 *.pyc
 *.o
+*.pyo
 SRC/SWIG3D/*
-builddir-threePoint0-7-13-08-debug3d/*
+builddir-*
 OOFSWIG/Makefile
 OOFSWIG/Makefile.template
 OOFSWIG/Modules/Makefile
