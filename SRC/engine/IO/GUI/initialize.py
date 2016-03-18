@@ -2,7 +2,7 @@
 # $RCSfile: initialize.py,v $
 # $Revision: 1.91.2.10 $
 # $Author: langer $
-# $Date: 2014/04/11 18:52:06 $
+# $Date: 2014-04-11 18:52:06 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

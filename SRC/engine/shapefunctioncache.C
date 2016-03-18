@@ -2,7 +2,7 @@
 // $RCSfile: shapefunctioncache.C,v $
 // $Revision: 1.10.10.2 $
 // $Author: langer $
-// $Date: 2014/01/05 03:20:04 $
+// $Date: 2014-01-05 03:20:04 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

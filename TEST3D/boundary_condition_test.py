@@ -2,7 +2,7 @@
 # $RCSfile: boundary_condition_test.py,v $
 # $Revision: 1.1.2.3 $
 # $Author: langer $
-# $Date: 2014/05/09 20:51:36 $
+# $Date: 2014-05-09 20:51:36 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

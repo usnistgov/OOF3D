@@ -2,7 +2,7 @@
 # $RCSfile: skeleton_periodic_test.py,v $
 # $Revision: 1.14 $
 # $Author: langer $
-# $Date: 2008/09/08 18:30:07 $
+# $Date: 2008-09-08 18:30:07 $
 
 # Test suite for the menu commands under OOF.Skeleton.*
 # Namely, New, Simple, Delete, Copy, Rename, Modify, Undo,

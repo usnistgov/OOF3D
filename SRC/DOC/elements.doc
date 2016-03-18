@@ -2,7 +2,7 @@
 $RCSfile: elements.doc,v $
 $Revision: 1.1 $
 $Author: reida $
-$Date: 2001/12/03 21:59:49 $
+$Date: 2001-12-03 21:59:49 $
 
 Notes on the Element and MasterElement classes, and how Elements are
 constructed by the GhostMesh, with a discussion of Nodes, ProtoNodes,

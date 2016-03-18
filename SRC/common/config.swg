@@ -2,7 +2,7 @@
 // $RCSfile: config.swg,v $
 // $Revision: 1.9.12.2 $
 // $Author: langer $
-// $Date: 2013/02/01 20:31:05 $
+// $Date: 2013-02-01 20:31:05 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,

@@ -2,7 +2,7 @@
 $RCSfile: subproblem_design.txt,v $
 $Revision: 1.3 $
 $Author: reida $
-$Date: 2006/03/28 16:15:32 $
+$Date: 2006-03-28 16:15:32 $
 
 
   This file is the conceptual successor of NOTES.timestepping.

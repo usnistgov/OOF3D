@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: view.C,v $
-// $Revision: 1.1.2.19 $
-// $Author: langer $
-// $Date: 2014/07/31 18:32:47 $
+// $Revision: 1.1.2.20 $
+// $Author: rdw1 $
+// $Date: 2015/07/09 16:26:34 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -53,7 +53,8 @@ View::View(const View &other)
   rebuildVtkPlanes();
 }
 
-View::~View() {}
+View::~View() {
+}
 
 bool View::equiv(const View &other) const {
   return (pos == other.pos &&

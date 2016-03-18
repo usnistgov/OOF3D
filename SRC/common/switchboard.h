@@ -2,7 +2,7 @@
 // $RCSfile: switchboard.h,v $
 // $Revision: 1.11.2.1 $
 // $Author: langer $
-// $Date: 2012/12/05 20:31:55 $
+// $Date: 2012-12-05 20:31:55 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

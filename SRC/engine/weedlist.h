@@ -2,7 +2,7 @@
 // $RCSfile: weedlist.h,v $
 // $Revision: 1.7.2.3 $
 // $Author: langer $
-// $Date: 2013/11/08 20:44:55 $
+// $Date: 2013-11-08 20:44:55 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

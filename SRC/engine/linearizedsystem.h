@@ -2,7 +2,7 @@
 // $RCSfile: linearizedsystem.h,v $
 // $Revision: 1.16.2.2 $
 // $Author: langer $
-// $Date: 2014/03/21 00:01:34 $
+// $Date: 2014-03-21 00:01:34 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

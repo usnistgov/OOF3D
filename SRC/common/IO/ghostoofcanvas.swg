@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: ghostoofcanvas.swg,v $
-// $Revision: 1.1.2.76 $
-// $Author: fyc $
-// $Date: 2014/07/22 17:55:52 $
+// $Revision: 1.1.2.77 $
+// $Author: rdw1 $
+// $Date: 2015/07/09 16:26:33 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,
@@ -24,7 +24,11 @@
 %extern "common/IO/view.swg"
 %pragma(python) code="from ooflib.SWIG.common.IO.view import ViewPtr"
 %pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkCellPtrPtr"
+%pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkActorPtrPtr"
+%pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkActorCollectionPtrPtr"
 
+class vtkActorCollectionPtr;
+class vtkActorPtr;
 class vtkCellPtr;
 class ImageFormat;
 
@@ -81,7 +85,16 @@ public:
   // camera info
   %addmethods{    
 
-    // TODO MER: Use the Coord typemap for all of these!
+    // TODO MER: Use the Coord typemap for all of these!  
+    // If this is ever fixed, then get_camera_position and
+    // get_camera_position_v2 (below) will do practically the same
+    // thing, so all calls to get_camera_position_v2 should be changed
+    // to calls to get_camera_position.  Get_camera_position_v2 is
+    // only used in a few places, which can be found using the
+    // terminal command 'sf get_camera_position_v2', so this shouldn't
+    // be hard to do. Likewise, all calls to
+    // get_camera_direction_of_projection_v2 will have to be changed
+    // to calls to get_camera_direction_of_projection.
 
     PyObject *get_camera_position() {
       Coord x;
@@ -128,11 +141,21 @@ public:
     }
   }
 
+  // These do the same as get_camera_position and
+  // get_camera_direction_of_projection, but they each return a Coord*
+  // instead of Python list.
+  %new Coord *get_camera_position_v2();
+  Coord get_camera_direction_of_projection_v2();
+
   double get_camera_distance();
   double get_camera_view_angle();
   void set_camera_position(double, double, double);
   void set_camera_focal_point(double, double, double);
 
+  Coord findRayThroughPoint(const Coord *Point);
+  %new Coord *findClickedPositionOnActor(Coord *Point, View*, OOFCanvasLayer*);
+  vtkActorPtr findClickedActor(Coord *Point, View*, OOFCanvasLayer*);
+  vtkActorCollectionPtr findClickedActors(Coord *Point, View*, OOFCanvasLayer*);
   vtkCellPtr findClickedCell(Coord *Point, View*, OOFCanvasLayer*);
   int findClickedCellID(Coord *Point, View*, OOFCanvasLayer*, Coord *outCoord);
   %new Coord *findClickedCellCenter(Coord *Point, View*, OOFCanvasLayer*);

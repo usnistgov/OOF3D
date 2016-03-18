@@ -1,8 +1,8 @@
 # -*- python -*-
 # $RCSfile: gfxwindow3d.py,v $
-# $Revision: 1.9.2.50 $
-# $Author: langer $
-# $Date: 2014/10/17 21:48:01 $
+# $Revision: 1.9.2.51 $
+# $Author: rdw1 $
+# $Date: 2015/07/09 16:27:45 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,
@@ -362,7 +362,7 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         if self.oofcanvas and not self.empty:
             self.oofcanvas.reset()
             self.updateview()
-            switchboard.notify("view changed", self)
+            # switchboard.notify("view changed", self)
 
 
     def bgColor(self, menuitem, color):

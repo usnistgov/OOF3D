@@ -2,7 +2,7 @@
 # $RCSfile: profiler.py,v $
 # $Revision: 1.5 $
 # $Author: vrc $
-# $Date: 2007/09/26 22:02:18 $
+# $Date: 2007-09-26 22:02:18 $
 
 """
 This software was produced by NIST, an agency of the U.S. government,

@@ -2,7 +2,7 @@
 // $RCSfile: oofCellLocator.C,v $
 // $Revision: 1.1.2.3 $
 // $Author: langer $
-// $Date: 2013/04/26 19:12:21 $
+// $Date: 2013-04-26 19:12:21 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

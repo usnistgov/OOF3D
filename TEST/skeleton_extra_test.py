@@ -2,7 +2,7 @@
 # $RCSfile: skeleton_extra_test.py,v $
 # $Revision: 1.19 $
 # $Author: langer $
-# $Date: 2009/07/10 18:34:12 $
+# $Date: 2009-07-10 18:34:12 $
 
 # Test suite for skeleton menu command combinations which depend on
 # the individual commands working.  These include a test of at least

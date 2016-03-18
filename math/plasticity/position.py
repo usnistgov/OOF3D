@@ -2,7 +2,7 @@
 # $RCSfile: position.py,v $
 # $Revision: 1.2 $
 # $Author: reida $
-# $Date: 2006/12/07 14:09:55 $
+# $Date: 2006-12-07 14:09:55 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

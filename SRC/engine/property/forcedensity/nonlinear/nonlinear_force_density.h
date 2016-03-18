@@ -2,7 +2,7 @@
 // $RCSfile: nonlinear_force_density.h,v $
 // $Revision: 1.9.8.2 $
 // $Author: langer $
-// $Date: 2013/11/08 20:45:44 $
+// $Date: 2013-11-08 20:45:44 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

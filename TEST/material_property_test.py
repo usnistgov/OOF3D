@@ -2,7 +2,7 @@
 # $RCSfile: material_property_test.py,v $
 # $Revision: 1.27 $
 # $Author: langer $
-# $Date: 2008/09/08 18:30:06 $
+# $Date: 2008-09-08 18:30:06 $
 
 # Test suite for materials and properties.
 

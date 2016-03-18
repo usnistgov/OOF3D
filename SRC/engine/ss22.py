@@ -2,7 +2,7 @@
 # $RCSfile: ss22.py,v $
 # $Revision: 1.11.2.1 $
 # $Author: langer $
-# $Date: 2013/11/08 20:44:52 $
+# $Date: 2013-11-08 20:44:52 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

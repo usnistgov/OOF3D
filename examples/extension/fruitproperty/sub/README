@@ -2,7 +2,7 @@
 # $RCSfile: README,v $
 # $Revision: 1.1 $
 # $Author: langer $
-# $Date: 2005/10/25 01:38:49 $
+# $Date: 2005-10-25 01:38:49 $
 
 This whole somewhat meaningless directory just demonstrates how files
 in subdirectories can be used when building OOF2 extensions.

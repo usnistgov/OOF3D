@@ -2,7 +2,7 @@
 // $RCSfile: pixelattribute.swg,v $
 // $Revision: 1.8.10.1 $
 // $Author: langer $
-// $Date: 2012/12/19 21:45:07 $
+// $Date: 2012-12-19 21:45:07 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

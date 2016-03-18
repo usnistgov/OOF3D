@@ -2,7 +2,7 @@
 # $RCSfile: solver_test.py,v $
 # $Revision: 1.23 $
 # $Author: langer $
-# $Date: 2009/05/19 21:34:30 $
+# $Date: 2009-05-19 21:34:30 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

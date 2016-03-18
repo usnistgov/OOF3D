@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: cskeleton2.C,v $
-// $Revision: 1.1.4.187 $
+// $Revision: 1.1.4.188 $
 // $Author: langer $
-// $Date: 2014/12/14 01:07:46 $
+// $Date: 2016/03/18 18:37:35 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -3205,11 +3205,9 @@ void ProvisionalChanges::accept() {
       // 	      << (*it).mobility[0] << " " << (*it).mobility[1] << " "
       // 	      << (*it).mobility[2] << std::endl;
       (*it).node->moveTo((*it).position);
-      if((*it).mobility != NULL) {
-	(*it).node->setMobilityX((*it).mobility[0]);
-	(*it).node->setMobilityY((*it).mobility[1]);
-	(*it).node->setMobilityZ((*it).mobility[2]);
-      }
+      (*it).node->setMobilityX((*it).mobility[0]);
+      (*it).node->setMobilityY((*it).mobility[1]);
+      (*it).node->setMobilityZ((*it).mobility[2]);
     }
 
   // Element insertions.

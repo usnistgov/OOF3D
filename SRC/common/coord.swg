@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: coord.swg,v $
-// $Revision: 1.13.8.5 $
-// $Author: langer $
-// $Date: 2014/06/12 18:48:36 $
+// $Revision: 1.13.8.6 $
+// $Author: rdw1 $
+// $Date: 2015/07/09 14:59:11 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -49,6 +49,12 @@ public:
   int __len__() {
     return DIM;
   }
+  Coord __add__(Coord *Point) {
+    return (*self) + (*Point);
+  }
+  Coord __sub__(Coord *Point) {
+    return (*self) - (*Point);
+  }
   Coord __mul__(double x) {
     return (*self)*x;
   }
@@ -70,7 +76,7 @@ public:
 #ifndef DIM_3
   ICoord(int x, int y);
 #else
-	ICoord(int x, int y, int z);
+  ICoord(int x, int y, int z);
 #endif
 };
 

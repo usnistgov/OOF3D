@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: canvaslayers.h,v $
-// $Revision: 1.1.2.59 $
-// $Author: langer $
-// $Date: 2014/12/14 22:49:10 $
+// $Revision: 1.1.2.61 $
+// $Author: rdw1 $
+// $Date: 2015/08/06 21:52:00 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -19,11 +19,13 @@
 #define CANVASLAYERS_H
 
 // Classes defined in this file:
+class BoxAndArrowLayer;
 class FilledGridCanvasLayer;
 class ImageCanvasLayer;
 class ImageCanvasOverlayer;
 class OOFCanvasLayer;
 class OOFCanvasLayerBase;
+class PlaneAndArrowLayer;
 
 #include "common/clip.h"
 #include "common/coord_i.h"
@@ -40,25 +42,31 @@ class PixelSet;
 class VoxelFilter;
 
 #include <vtkAbstractCellLocator.h>
+#include <vtkActorCollection.h>
+#include <vtkArrowSource.h>
+#include <vtkAssembly.h>
 #include <vtkCellCenters.h>
 #include <vtkCellLocator.h>
 #include <vtkCellType.h>
 #include <vtkConeSource.h>
+#include <vtkCubeSource.h>
 #include <vtkDataSetMapper.h>
 #include <vtkDoubleArray.h>
 #include <vtkExtractEdges.h>
 #include <vtkGlyph3D.h>
 #include <vtkIdList.h>
 #include <vtkPoints.h>
+#include <vtkPolyDataMapper.h>
 #include <vtkProp.h>
 #include <vtkProp3D.h>
 #include <vtkRectilinearGridAlgorithm.h>
 #include <vtkScalarsToColors.h>
 #include <vtkSmartPointer.h>
 #include <vtkSphereSource.h>
+#include <vtkTransformPolyDataFilter.h>
+#include <vtkTransform.h>
 #include <vtkTableBasedClipDataSet.h>
 #include <vtkUnstructuredGrid.h>
-
 
 #include <vector>
 
@@ -133,6 +141,7 @@ public:
   virtual void destroy();
 
   // Machinery to allow mouse selections.
+  virtual vtkSmartPointer<vtkActorCollection> get_pickable_actors();
   virtual vtkSmartPointer<vtkProp3D> get_pickable_prop3d();
   virtual vtkSmartPointer<vtkDataSet> get_pickable_dataset();
   virtual vtkSmartPointer<vtkPoints> get_pickable_points();
@@ -140,6 +149,114 @@ public:
   // TODO: Can pickable() be const?  The generic version uses
   // get_pickable_prop3d, which isn't const.  Can it be?
   virtual bool pickable();
+};
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// PlaneAndArrowLayer is used to display a plane (represented
+// by a vtk plane) and its normal vector (represented by a vtk arrow).
+// This layer is pickable.
+
+// This class is used in clipplaneclickanddragdisplay.py to allow the
+// user to easily edit clipping planes inside the OOF3D canvas.
+
+class PlaneAndArrowLayer : public OOFCanvasLayer {
+protected:
+  vtkSmartPointer<vtkCubeSource> planeSource;
+  vtkSmartPointer<vtkArrowSource> arrowSource;
+  vtkSmartPointer<vtkTransform> scaling;
+  vtkSmartPointer<vtkTransform> arrowScaling;
+  vtkSmartPointer<vtkTransform> rotation;
+  vtkSmartPointer<vtkTransform> translation;
+  vtkSmartPointer<vtkTransform> planeTransform;
+  vtkSmartPointer<vtkTransform> arrowTransform;
+  vtkSmartPointer<vtkTransformPolyDataFilter> planeFilter;
+  vtkSmartPointer<vtkTransformPolyDataFilter> arrowFilter;
+  vtkSmartPointer<vtkPolyDataMapper> planeMapper;
+  vtkSmartPointer<vtkPolyDataMapper> arrowMapper;
+  vtkSmartPointer<vtkActor> planeActor;
+  vtkSmartPointer<vtkActor> arrowActor;
+public:
+  PlaneAndArrowLayer(GhostOOFCanvas*, const std::string&);
+  ~PlaneAndArrowLayer();
+  virtual void start_clipping();
+  virtual void stop_clipping();
+  virtual void set_clip_parity(bool);
+  virtual void setModified();
+  virtual const std::string &classname() const;
+  vtkSmartPointer<vtkActor> get_planeActor();
+  vtkSmartPointer<vtkActor> get_arrowActor();
+  virtual bool pickable() { return true; }
+  virtual vtkSmartPointer<vtkActorCollection> get_pickable_actors();
+  void set_visibility(bool);
+  void set_arrowShaftRadius(double);
+  void set_arrowTipRadius(double);
+  void set_arrowLength(double);
+  void set_arrowColor(const CColor&);
+  void set_planeColor(const CColor&);
+  void set_planeOpacity(double);
+  void rotate(const Coord3D*, double);
+  void translate(const Coord3D*);
+  void offset(double);
+  void scale(double);
+  Coord3D *get_center();
+  Coord3D *get_normal_Coord3D();
+  CUnitVectorDirection *get_normal();
+  double get_offset();
+  void set_scale(double);
+  void set_normal(const CDirection*);
+  void set_center(const Coord3D*);
+};
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+class BoxAndArrowLayer : public OOFCanvasLayer {
+protected:
+  vtkSmartPointer<vtkUnstructuredGrid> grid;
+  vtkSmartPointer<vtkPoints> points;
+  vtkSmartPointer<vtkArrowSource> arrowSource;
+  vtkSmartPointer<vtkTransform> arrowScaling;
+  vtkSmartPointer<vtkTransform> arrowRotation;
+  vtkSmartPointer<vtkTransform> arrowTranslation;
+  vtkSmartPointer<vtkTransform> arrowTransform;
+  vtkSmartPointer<vtkTransformPolyDataFilter> arrowFilter;
+  vtkSmartPointer<vtkDataSetMapper> boxMapper;
+  vtkSmartPointer<vtkPolyDataMapper> arrowMapper;
+  vtkSmartPointer<vtkActor> boxActor;
+  vtkSmartPointer<vtkActor> arrowActor;
+  vtkSmartPointer<oofCellLocator> locator;
+  bool totalVisibility;
+  bool arrowVisibility;
+public:
+  BoxAndArrowLayer(GhostOOFCanvas*, const std::string&);
+  ~BoxAndArrowLayer();
+  virtual void start_clipping();
+  virtual void stop_clipping();
+  virtual void set_clip_parity(bool);
+  virtual void setModified();
+  virtual const std::string &classname() const;
+  virtual bool pickable() { return true; }
+  virtual vtkSmartPointer<vtkDataSet> get_pickable_dataset();
+  virtual vtkSmartPointer<vtkProp3D> get_pickable_prop3d();
+  virtual vtkSmartPointer<vtkPoints> get_pickable_points();
+  virtual vtkSmartPointer<vtkAbstractCellLocator> get_locator();
+  Coord3D *get_cellCenter(vtkIdType);
+  Coord3D *get_cellNormal_Coord3D(vtkIdType);
+  void reset();
+  void set_box(const Coord3D*);
+  void set_totalVisibility(bool);
+  void set_arrowVisibility(bool);
+  void set_arrowShaftRadius(double);
+  void set_arrowTipRadius(double);
+  void set_arrowLength(double);
+  void set_arrowColor(const CColor&);
+  void set_pointSize(float);
+  void set_lineWidth(float);
+  void set_lineColor(const CColor&);
+  void set_faceColor(const CColor&);
+  void set_faceOpacity(double);
+  void set_position(const Coord3D*);
+  void offset_cell(vtkIdType, double);
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -338,6 +455,7 @@ public:
   void connectBottomOverlayer(ImageCanvasOverlayer*);
   void connectTopOverlayer(ImageCanvasOverlayer*);
   void noOverlayers();
+  void set_opacity(double);
 
   virtual vtkSmartPointer<vtkProp3D> get_pickable_prop3d();
   virtual vtkSmartPointer<vtkAbstractCellLocator> get_locator();

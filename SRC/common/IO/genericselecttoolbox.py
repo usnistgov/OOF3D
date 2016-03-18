@@ -2,7 +2,7 @@
 # $RCSfile: genericselecttoolbox.py,v $
 # $Revision: 1.13.18.8 $
 # $Author: langer $
-# $Date: 2013/05/07 21:16:55 $
+# $Date: 2013-05-07 21:16:55 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

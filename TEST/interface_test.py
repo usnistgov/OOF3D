@@ -2,7 +2,7 @@
 # $RCSfile: interface_test.py,v $
 # $Revision: 1.12 $
 # $Author: langer $
-# $Date: 2008/10/20 15:28:59 $
+# $Date: 2008-10-20 15:28:59 $
 
 # Test mesh with interfaces.
 #Assumes the images cyallow.png and serendipity.png in the examples

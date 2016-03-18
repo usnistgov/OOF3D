@@ -2,7 +2,7 @@
 # $RCSfile: exceptions.txt,v $
 # $Revision: 1.7 $
 # $Author: reida $
-# $Date: 2003/11/19 19:16:19 $
+# $Date: 2003-11-19 19:16:19 $
 
 # The Master List of Thrown or Raised Exceptions.  This lists every
 # possible exception that the OOF code actually throws, where it is

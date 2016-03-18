@@ -2,7 +2,7 @@
 # $RCSfile: gtkutils.py,v $
 # $Revision: 1.18.10.2 $
 # $Author: langer $
-# $Date: 2013/11/08 20:43:02 $
+# $Date: 2013-11-08 20:43:02 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

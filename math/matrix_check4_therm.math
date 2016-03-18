@@ -2,7 +2,7 @@
    $RCSfile: matrix_check4_therm.math,v $
    $Revision: 1.1 $
    $Author: reida $
-   $Date: 2003/09/02 17:54:01 $
+   $Date: 2003-09-02 17:54:01 $
             *)
 
 (* Modified from the boundary-condition prototyper, this 

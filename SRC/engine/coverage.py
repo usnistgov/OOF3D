@@ -2,7 +2,7 @@
 # $RCSfile: coverage.py,v $
 # $Revision: 1.1.2.1 $
 # $Author: langer $
-# $Date: 2013/03/25 17:42:42 $
+# $Date: 2013-03-25 17:42:42 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

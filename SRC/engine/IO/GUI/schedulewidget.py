@@ -2,7 +2,7 @@
 # $RCSfile: schedulewidget.py,v $
 # $Revision: 1.2.6.2 $
 # $Author: langer $
-# $Date: 2014/05/08 14:39:07 $
+# $Date: 2014-05-08 14:39:07 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

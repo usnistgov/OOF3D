@@ -2,7 +2,7 @@
 // $RCSfile: compoundsubproblem.swg,v $
 // $Revision: 1.5.10.3 $
 // $Author: fyc $
-// $Date: 2014/04/18 20:00:00 $
+// $Date: 2014-04-18 20:00:00 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

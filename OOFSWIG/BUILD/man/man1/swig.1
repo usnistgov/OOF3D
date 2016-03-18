@@ -1,0 +1,156 @@
+.TH swig 1 "June 23\, 1997" "SWIG 1.1" "Simplified Wrapper and Interface Generator"
+.SH NAME
+swig - produce scripting language wrapper code from an interface specification file
+.SH SYNOPSIS
+.B swig [
+.I options
+] file.i
+.SH DESCRIPTION
+.I swig
+generates wrapper code needed to integrate C,C++, and Objective-C functions
+and variables with Tcl, Perl, Python, and Guile and produces
+documentation.  Consult the 
+.I SWIG
+user manual for more details.
+.PP
+.SH OPTIONS
+The following major options are available. More options are available by 
+typing 'swig -help'.
+.PP
+.TP 18
+.B \-tcl
+Generate Tcl wrappers
+.TP
+.B \-tcl8
+Generate Tcl8.0 wrappers
+.TP
+.B \-perl5
+Generate Perl5 wrappers
+.TP
+.B \-python
+Generate Python wrappers
+.TP
+.B \-perl4
+Generate Perl4 wrappers
+.TP
+.B \-guile 
+Generate Guile-iii wrappers
+.TP
+.B \-dascii
+Generate ASCII format documentation
+.TP
+.B \-dlatex
+Generate LaTeX format documentation
+.TP
+.B \-dhtml
+Generate HTML format documentation
+.TP
+.B \-dnone
+Generate no documentation
+.TP
+.BI \-I " incdir"
+Look in 
+.I incdir
+for SWIG related include files
+.TP
+.BI \-l "libfile"
+Append a SWIG library file to the input.
+.TP
+.BI \-D " symbol"
+Define a symbol
+.I symbol
+for conditional compilation.
+.TP
+.B \-v
+verbose mode (perhaps overly verbose)
+.TP
+.B \-version
+Print SWIG version information
+.TP
+.B \-nocoment
+Ignore all comments in interface file
+.TP
+.BI \-strict " n"
+Set pointer type-checking strictness to 
+.I n
+\.  
+.I n
+may be 0, 1 or 2.
+.TP
+.BI \-o " outfile "
+Change the name of the output file.
+.TP
+.BI \-c
+Do not include SWIG runtime functions (used for creating multi-module packages).
+.TP
+.BI \-c++ 
+Enable special processing for C++.
+.TP
+.BI \-objc
+Enable Objective-C parsing.
+.TP
+.BI \-make_default
+Generate default constructors and destructors.
+.TP
+.BI \-co
+Check a file out of the SWIG library.
+.TP
+.BI \-ci
+Check a file into the SWIG library (must have write permission)
+.TP
+.BI \-stat
+Display statistics.
+.TP
+.BI \-help
+Print all of the available command line options.
+.SH INTERFACE FILES 
+The interface file is specified on the 
+.I swig
+command line as the file to operate on.  You may specify only
+one file on the command line.  (See the 
+.I include 
+directive in the user\'s manual for ways around this.)
+.PP
+As input, an interface file (typically with a .i suffix) must
+be given.  A minimal specification of this file is as follows:
+.PP
+ %module mymodule
+ %{
+ /* Include your headers here */
+ %}
+
+ /* List variables and function prototypes in ANSI C syntax */
+.PP
+ For example :
+.PP
+ %module example
+ %{
+ #include "my_header.h"
+ %}
+.PP
+ extern int My_variable;
+ extern double foo(double a, double b);
+ extern void bar(char *);
+.PP
+.SH OUTPUT
+Given the input "file.i".  swig produces an output file
+called "file_wrap.c" (You can override this using the -o
+option). This file should be compiled with
+the C/C++ compiler and linked with the rest of your code.
+.PP
+.SH RESOURCES
+SWIG documentation and updates are available at
+http://www.cs.utah.edu/~beazley/SWIG
+.PP        
+.SH AUTHOR
+Man page written by Patrick Tullmann.  SWIG is all 
+Dave\'s.  (Dave Beazley, that is.)
+.SH LIMITATIONS
+Hah!  Bring it all on.
+.SH BUGS
+None reported at this time.
+.SH VERSION
+SWIG 1.1
+.SH SEE ALSO
+Tcl(n), python(1), perl(1)
+

@@ -2,7 +2,7 @@
 // $RCSfile: piezoelectricity.C,v $
 // $Revision: 1.45.10.3 $
 // $Author: langer $
-// $Date: 2013/11/08 20:46:00 $
+// $Date: 2013-11-08 20:46:00 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

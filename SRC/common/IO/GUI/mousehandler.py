@@ -1,8 +1,8 @@
 # -*- python -*-
 # $RCSfile: mousehandler.py,v $
-# $Revision: 1.6.10.2 $
-# $Author: fyc $
-# $Date: 2013/06/17 18:01:50 $
+# $Revision: 1.6.10.3 $
+# $Author: rdw1 $
+# $Date: 2015/08/06 22:03:07 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -19,7 +19,7 @@
 # nothing.
 
 
-class MouseHandler:
+class MouseHandler(object):
     def acceptEvent(self, eventtype):
         # eventtype is either 'up', 'down', or 'move'.  Return True if it
         # can be handled.

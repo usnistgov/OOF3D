@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: canvaslayers.swg,v $
-// $Revision: 1.1.2.31 $
-// $Author: langer $
-// $Date: 2014/12/05 21:29:11 $
+// $Revision: 1.1.2.33 $
+// $Author: rdw1 $
+// $Date: 2015/08/06 21:52:00 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -18,6 +18,8 @@
 
 %module canvaslayers
 %include "common/typemaps.swg"
+%extern "common/coord.swg"
+%extern "common/direction.swg"
 
 %{
 #include "common/ccolor.h"
@@ -27,6 +29,8 @@
 %}
 
 %pragma(python) include="canvaslayers.spy"
+%pragma(python) code="from ooflib.SWIG.common.coord import CoordPtr"
+%pragma(python) code="from ooflib.SWIG.common.direction import CUnitVectorDirectionPtr"
 
 %typemap(python, out) OOFCanvasLayerBase* {
   $target = $source->pythonObject();
@@ -52,6 +56,56 @@ public:
   // void remove_from_renderer();
   void setModified();
   void installContourMap();
+};
+
+class PlaneAndArrowLayer: public OOFCanvasLayer {
+public:
+  PlaneAndArrowLayer(GhostOOFCanvas*, const char*);
+  vtkActorPtr get_planeActor();
+  vtkActorPtr get_arrowActor();
+  void set_visibility(bool);
+  void set_arrowShaftRadius(double);
+  void set_arrowTipRadius(double);
+  void set_arrowLength(double);
+  void set_arrowColor(const CColor&);
+  void set_planeColor(const CColor&);
+  void set_planeOpacity(double);
+
+  void rotate(Coord* Point, double);
+  void translate(Coord *Point);
+  void offset(double);
+  void scale(double);
+  
+  %new Coord *get_center();
+  %new Coord *get_normal_Coord3D();
+  %new CUnitVectorDirection *get_normal();
+  double get_offset();
+
+  void set_scale(double);
+  void set_normal(const CDirection*);
+  void set_center(Coord* Point);
+};
+
+class BoxAndArrowLayer : public OOFCanvasLayer {
+public:
+  BoxAndArrowLayer(GhostOOFCanvas*, const char*);
+  %new Coord *get_cellCenter(int);
+  %new Coord *get_cellNormal_Coord3D(int);
+  void reset();
+  void set_box(Coord *Point);
+  void set_totalVisibility(bool);
+  void set_arrowVisibility(bool);
+  void set_arrowShaftRadius(double);
+  void set_arrowTipRadius(double);
+  void set_arrowLength(double);
+  void set_arrowColor(const CColor&);
+  void set_pointSize(float);
+  void set_lineWidth(float);
+  void set_lineColor(const CColor&);
+  void set_faceColor(const CColor&);
+  void set_faceOpacity(double);
+  void set_position(Coord *Point);
+  void offset_cell(int, double); 
 };
 
 class SimpleCellLayer : public OOFCanvasLayer {
@@ -97,6 +151,7 @@ public:
   void connectBottomOverlayer(ImageCanvasOverlayer*);
   void connectTopOverlayer(ImageCanvasOverlayer*);
   void noOverlayers();
+  void set_opacity(double);
 };
 
 class ImageCanvasOverlayer : public OOFCanvasLayerBase {

@@ -2,7 +2,7 @@
 // $RCSfile: oofomp.h,v $
 // $Revision: 1.2.8.2 $
 // $Author: vrc $
-// $Date: 2010/03/29 21:08:58 $
+// $Date: 2010-03-29 21:08:58 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

@@ -1,8 +1,8 @@
 // -*- text -*-
 // $RCSfile: changelog3.txt,v $
-// $Revision: 1.1.2.4 $
+// $Revision: 1.1.2.5 $
 // $Author: langer $
-// $Date: 2014/12/08 19:41:50 $
+// $Date: 2015/07/24 18:05:33 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -15,7 +15,11 @@
 
 3.0.2
 
-Fixed a bug involving cloning graphics windows with hidden display layers.
+Fixed a bug involving cloning graphics windows with hidden display
+layers.
+
+Fixed a bug that prevented the analysis page from retrieving stored
+analyses. 
 
 3.0.1
 

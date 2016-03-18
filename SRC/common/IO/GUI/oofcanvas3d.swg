@@ -2,7 +2,7 @@
 // $RCSfile: oofcanvas3d.swg,v $
 // $Revision: 1.1.2.7 $
 // $Author: langer $
-// $Date: 2011/09/14 18:49:44 $
+// $Date: 2011-09-14 18:49:44 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,

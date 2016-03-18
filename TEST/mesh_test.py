@@ -2,7 +2,7 @@
 # $RCSfile: mesh_test.py,v $
 # $Revision: 1.34 $
 # $Author: langer $
-# $Date: 2009/07/07 18:42:44 $
+# $Date: 2009-07-07 18:42:44 $
 
 # Test suite for the menu commands under OOF.Mesh.*
 

@@ -2,7 +2,7 @@
 # $RCSfile: pixelinfoplugin.py,v $
 # $Revision: 1.2.18.6 $
 # $Author: fyc $
-# $Date: 2013/08/26 15:41:59 $
+# $Date: 2013-08-26 15:41:59 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

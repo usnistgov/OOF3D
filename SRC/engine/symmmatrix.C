@@ -2,7 +2,7 @@
 // $RCSfile: symmmatrix.C,v $
 // $Revision: 1.37.10.3 $
 // $Author: langer $
-// $Date: 2014/04/15 19:35:02 $
+// $Date: 2014-04-15 19:35:02 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

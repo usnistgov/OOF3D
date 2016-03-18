@@ -2,7 +2,7 @@
 # $RCSfile: animationstyle.py,v $
 # $Revision: 1.3.2.1 $
 # $Author: langer $
-# $Date: 2014/03/21 20:32:48 $
+# $Date: 2014-03-21 20:32:48 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

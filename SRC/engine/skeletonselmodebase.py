@@ -2,7 +2,7 @@
 # $RCSfile: skeletonselmodebase.py,v $
 # $Revision: 1.8.2.1 $
 # $Author: langer $
-# $Date: 2012/09/10 17:38:45 $
+# $Date: 2012-09-10 17:38:45 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

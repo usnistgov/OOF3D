@@ -1,8 +1,8 @@
 # -*- python -*-
 # $RCSfile: regclassfactory.py,v $
-# $Revision: 1.54.4.6 $
-# $Author: fyc $
-# $Date: 2014/07/22 17:57:03 $
+# $Revision: 1.54.4.7 $
+# $Author: rdw1 $
+# $Date: 2015/08/06 22:03:08 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -76,9 +76,16 @@ class RCFBase(parameterwidgets.ParameterWidget,
         return not registration.secret
 
     def set_callback(self, callback, *args, **kwargs):
-        self.callback = callback
-        self.callbackargs = args
-        self.callbackkwargs = kwargs
+        self.callbacks = [callback]
+        self.callbackargs = [args]
+        self.callbackkwargs = [kwargs]
+
+    # Appends a callback to the list of callbacks that are called by
+    # self.option_finish (which is defined for subclasses).
+    def add_callback(self, callback, *args, **kwargs):
+        self.callbacks.append(callback)
+        self.callbackargs.append(args)
+        self.callbackkwargs.append(kwargs)
     
     def cleanUp(self):
         del self.registry               # break possible circular references?
@@ -97,13 +104,19 @@ class RegisteredClassFactory(RCFBase):
         # if verbose:
         #     debug.fmsg("RCF ctor: title=", title)
         self.registry = registry
-        # The optionally supplied callback is called when a new
-        # subclass is selected.  The args are the subclass's
+
+        # The optionally supplied callbacks are called when a new
+        # subclass is selected.  The args to each callback are the subclass's
         # registration, plus the extra args and kwargs given to
         # __init__.
-        self.callback = callback
-        self.callbackargs = args
-        self.callbackkwargs = kwargs
+        if callback is not None:
+            self.callbacks = [callback]
+            self.callbackargs = [args]
+            self.callbackkwargs = [kwargs]
+        else:
+            self.callbacks = []
+            self.callbackargs = []
+            self.callbackkwargs = []
 
         # fill & expand options are passed to the gtk pack command in
         # setByRegistration().
@@ -280,6 +293,7 @@ class RegisteredClassFactory(RCFBase):
             self.show()
             if hasattr(registration, 'tip'):
                 tooltips.set_tooltip_text(self.options.gtk,registration.tip)
+
         # else:
         #     if self.verbose:
         #         debug.fmsg("not included!")
@@ -307,7 +321,7 @@ class RegisteredClassFactory(RCFBase):
         pass
     
     # Actually instantiate a widget.  Convertible does this differently.
-    def makeWidget(self, registration):
+    def makeWidget(self, registration, optargs=None):
         debug.mainthreadTest()
         try:
             widgetclass = self.widgetdict[registration.subclass]
@@ -315,6 +329,7 @@ class RegisteredClassFactory(RCFBase):
             widgetclass = parameterwidgets.ParameterTable
         # if self.verbose:
         #     debug.fmsg("Calling widgetclass ctor", widgetclass)
+        
         widget = widgetclass(registration.params, scope=self,
                              name=registration.name(),
                              verbose=self.verbose)
@@ -417,9 +432,9 @@ class RegisteredClassFactory(RCFBase):
             tooltips.set_tooltip_text(self.options.gtk,registration.tip)
 
         self.useDefault = False
-        if self.callback:
-            self.callback(registration, *self.callbackargs,
-                          **self.callbackkwargs)
+        for i in range(len(self.callbacks)):
+            self.callbacks[i](registration, *self.callbackargs[i],
+                          **self.callbackkwargs[i])
 
     def get_reg(self, regname):
         for reg in self.registry:
@@ -640,9 +655,14 @@ class RegisteredClassListFactory(RCFBase):
         debug.mainthreadTest()
 
         self.registry = registry
-        self.callback = callback
-        self.callbackargs = args
-        self.callbackkwargs = kwargs
+        if callback is not None:
+            self.callbacks = [callback]
+            self.callbackargs = [args]
+            self.callbackkwargs = [kwargs]
+        else:
+            self.callbacks = []
+            self.callbackargs = []
+            self.callbackkwargs = []
         self.title = title
         self.fill = fill
         self.expand = expand

@@ -2,7 +2,7 @@
 // $RCSfile: edgeset.swg,v $
 // $Revision: 1.20.10.5 $
 // $Author: langer $
-// $Date: 2014/04/01 18:41:33 $
+// $Date: 2014-04-01 18:41:33 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

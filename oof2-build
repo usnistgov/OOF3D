@@ -2,7 +2,7 @@
 # $RCSfile: oof2-build,v $
 # $Revision: 1.35.2.2 $
 # $Author: fyc $
-# $Date: 2013/05/29 15:48:29 $
+# $Date: 2013-05-29 15:48:29 $
 
 # This script builds the various oof2 versions used by the developers.
 # It shouldn't be necessary for anyone else to use it.

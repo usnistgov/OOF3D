@@ -2,7 +2,7 @@
 // $RCSfile: cijkl.C,v $
 // $Revision: 1.13.10.1 $
 // $Author: langer $
-// $Date: 2013/11/08 20:45:27 $
+// $Date: 2013-11-08 20:45:27 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

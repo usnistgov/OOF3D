@@ -2,7 +2,7 @@
 # $RCSfile: meshinfo.py,v $
 # $Revision: 1.69.2.19 $
 # $Author: langer $
-# $Date: 2012/10/24 15:18:18 $
+# $Date: 2012-10-24 15:18:18 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

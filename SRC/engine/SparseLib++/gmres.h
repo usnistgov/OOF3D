@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: gmres.h,v $
-// $Revision: 1.24.2.3 $
+// $Revision: 1.24.2.4 $
 // $Author: langer $
-// $Date: 2014/07/22 21:02:48 $
+// $Date: 2016/03/18 18:37:36 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -44,6 +44,14 @@
 //*****************************************************************
 
 #include <math.h> 
+
+
+template < class Real >
+Real 
+abs(Real x)
+{
+  return (x > 0 ? x : -x);
+}
 
 
 template<class Real> 
@@ -89,14 +97,6 @@ Update(Vector &x, int k, Matrix &h, Vector &s, Vector v[])
 
   for (int j = 0; j <= k; j++)
     x += v[j] * y[j];
-}
-
-
-template < class Real >
-Real 
-abs(Real x)
-{
-  return (x > 0 ? x : -x);
 }
 
 

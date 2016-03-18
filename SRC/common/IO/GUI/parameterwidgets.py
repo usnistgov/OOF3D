@@ -1,8 +1,8 @@
 # -*- python -*-
 # $RCSfile: parameterwidgets.py,v $
-# $Revision: 1.153.2.20 $
-# $Author: langer $
-# $Date: 2014/10/03 14:29:56 $
+# $Revision: 1.153.2.21 $
+# $Author: rdw1 $
+# $Date: 2015/08/06 22:03:07 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,
@@ -38,7 +38,7 @@ class ParameterWidget:
     def __init__(self, gtk, scope=None, name=None, expandable=False,
                  verbose=False, faceless=False):
         debug.mainthreadTest()
-        self.gtk = gtk                  # base of gtk widget heirarchy
+        self.gtk = gtk                  # base of gtk widget hierarchy
         self.scope = scope              # WidgetScope containing this widget
         self.faceless = faceless
         self._valid = 0
