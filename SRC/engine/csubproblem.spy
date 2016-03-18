@@ -1,8 +1,8 @@
 # -*- python -*-
 # $RCSfile: csubproblem.spy,v $
-# $Revision: 1.27.2.7 $
-# $Author: fyc $
-# $Date: 2015/01/07 15:53:11 $
+# $Revision: 1.27.2.6 $
+# $Author: langer $
+# $Date: 2014/11/05 16:54:23 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -17,37 +17,28 @@ from ooflib.SWIG.engine import femesh
 from ooflib.common import debug
 from ooflib.engine import scpatch
 
-# Not used anymore because of CSubProblem.set_mesh. No need to keep
-# meshcontext because we are using it only to get the mesh object when
-# calling set_mesh.
-# def _set_mesh(self, meshctxt):
-    # TODO OPT: get rid of self.get_mesh(), which is redundant with
+def _set_mesh(self, meshctxt):
+    # TODO OPT: get rid of self.mesh, which is redundant with
     # CSubProblem.get_mesh(), which is the better thing to
     # use. (Different CSubProblemPtrs can refer to the same C++
     # CSubProblem, but mesh and meshctxt will be set in only one of
     # the CSubProblemPtrs.  This is a issue inside pypropertywrapper
     # functions.)  The property code below may be useful.  We probably
-    # need to get rid of meshcontext as well, which may mean
+    # need to get rid of self.meshcontext as well, which may mean
     # storing it in C++ as a PyObject*.
-    # self.meshcontext = meshctxt
-#    if  meshctxt is not None:
-#        self.set_femesh(meshctxt.getObject())
-#    else:
-#        self.set_femesh(None)
-# CSubProblemPtr.set_mesh = _set_mesh
+    self.meshcontext = meshctxt
+    if  meshctxt is not None:
+        self.mesh = meshctxt.getObject()
+        self.set_femesh(self.mesh)
+    else:
+        self.mesh = None
+CSubProblemPtr.set_mesh = _set_mesh
 
-## Code that may be useful when getting rid of self.get_mesh().
-## Not necessary for now. It means certainly on the property requirements
-## that the CSubProblemPtr should derives from object to have it working 
-## properly. Which means modify Swig to derive *Prs from object which may
-## result into some other troubles that we don't know of yet.
+## Code that may be useful when getting rid of self.mesh.
 # def _mesh_setter(self, meshobj):
-#      # raise ooferror2.ErrPyProgrammingError("Don't set CSubProblem.mesh!")
-#      print "Accessing the mesh setter...\n"
-#      self.set_mesh(meshobj)
+#     raise ooferror2.ErrPyProgrammingError("Don't set CSubProblem.mesh!")
 # def _mesh_getter(self):
-#     print "Accessing the mesh getter...\n"
-#     return self.get_mesh()
+#     return self.get_femesh()
 # CSubProblemPtr.mesh = property(_mesh_getter, _mesh_setter)
 
 # Return the paths to the other subproblems on which this subproblem
@@ -176,7 +167,7 @@ def _CSubProblemPtr_create_elem_bdynodemap(self, e, fe, n0, n1):
     realn1 = fe.getCornerNode( irealn1 )
     self.bdy_node_map[realn0.index()] = 1
     self.bdy_node_map[realn1.index()] = 1
-    if self.get_mesh().order() > 1:
+    if self.mesh.order() > 1:
         #Interface branch
         for nd in self.getRealEdgeNodes(fe,
                                         irealn0,realn0,
@@ -195,7 +186,7 @@ def _CSubProblemPtr_create_bdy_node_map(self, skel):
         if seg.nElements() == 1:  # geometric (external) boundary
             #Interface branch
             e0 = seg.getElements()[0]
-            fe0 = self.get_mesh().getElement(e0.meshindex)
+            fe0 = self.mesh.getElement(e0.meshindex)
             #AMR subproblem
             if self.contains(fe0):
                 #realmesh element is in this subproblem
@@ -218,8 +209,8 @@ def _CSubProblemPtr_create_bdy_node_map(self, skel):
 ##                    self.bdy_node_map[nd.index()] = 1
         else:
             e0, e1 = seg.getElements()
-            fe0 = self.get_mesh().getElement(e0.meshindex)
-            fe1 = self.get_mesh().getElement(e1.meshindex)
+            fe0 = self.mesh.getElement(e0.meshindex)
+            fe1 = self.mesh.getElement(e1.meshindex)
             if self.contains(fe0)and self.contains(fe1):
                 #AMR subproblem, do this if fe0 and fe1 are both in the subproblem
                 #Interface branch
@@ -242,7 +233,7 @@ def _CSubProblemPtr_create_bdy_node_map(self, skel):
                         #self.bdy_node_map[n1.meshindex] = 1
                         self.bdy_node_map[realn0.index()] = 1
                         self.bdy_node_map[realn1.index()] = 1
-                        if self.get_mesh().order() > 1:
+                        if self.mesh.order() > 1:
                             #Interface branch
                             #for nd in self.getEdgeNodes((n0,n1)):
                             for nd in self.getRealEdgeNodes(fe0,
@@ -254,14 +245,14 @@ def _CSubProblemPtr_create_bdy_node_map(self, skel):
                     #does not match between the two realmesh elements
                     self.bdy_node_map[realn0.index()] = 1
                     self.bdy_node_map[realn1.index()] = 1
-                    if self.get_mesh().order() > 1:
+                    if self.mesh.order() > 1:
                         for nd in self.getRealEdgeNodes(fe0,
                                                         irealn0,realn0,
                                                         irealn1,realn1):
                             self.bdy_node_map[nd.index()] = 1
                     self.bdy_node_map[realn0_2.index()] = 1
                     self.bdy_node_map[realn1_2.index()] = 1
-                    if self.get_mesh().order() > 1:
+                    if self.mesh.order() > 1:
                         for nd in self.getRealEdgeNodes(fe1,
                                                         irealn0_2,realn0_2,
                                                         irealn1_2,realn1_2):
@@ -289,7 +280,7 @@ def _CSubProblemPtr_create_scpatch(self, skel):
     #New way:
     indices = set()
     for skelel in skel.element_iterator():
-        realel=self.get_mesh().getElement(skelel.meshindex)
+        realel=self.mesh.getElement(skelel.meshindex)
         if self.contains(realel):
             for skelnode in skelel.nodes:
                 realnode=realel.getCornerNode(

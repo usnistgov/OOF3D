@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: geometry.h,v $
-// $Revision: 1.23.18.6 $
-// $Author: fyc $
-// $Date: 2014/07/21 18:08:28 $
+// $Revision: 1.23.18.6.2.3 $
+// $Author: langer $
+// $Date: 2015/09/12 19:35:22 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,
@@ -31,14 +31,8 @@
 #include <vector>
 #include <math.h>
 
-class CSegment {
-public:
-  Coord p0, p1;
-  CSegment(const Coord &a, const Coord &b) : p0(a), p1(b) {}
-};
-
-#define min(a,b) ((a) < (b)? (a) : (b))
-#define max(a,b) ((a) > (b)? (a) : (b))
+#define min_(a,b) ((a) < (b)? (a) : (b))
+#define max_(a,b) ((a) > (b)? (a) : (b))
 
 // CTYPE is the type of the corner (Coord, ICoord, etc)
 // VTYPE is the type of a coordinate component (double, int, etc)
@@ -69,7 +63,6 @@ std::ostream &operator<<(std::ostream &os, const CPolygon<VTYPE, CTYPE> &poly) {
 // one class with "#if DIM"s in it and eliminate some "#if DIM"s
 // elsewhere.
 
-#if DIM == 2
 template <class VTYPE, class CTYPE>
 class CRectangle_ : public CPolygon<VTYPE, CTYPE> {
 protected:
@@ -87,6 +80,11 @@ public:
     if(upright[1] < pt[1]) upright[1] = pt[1];
     if(lowleft[0] > pt[0]) lowleft[0] = pt[0];
     if(lowleft[1] > pt[1]) lowleft[1] = pt[1];
+    size_ = upright - lowleft;
+  }
+  void swallow(const CRectangle_<VTYPE, CTYPE> &r) {
+    swallow(r.upright);
+    swallow(r.lowleft);
   }
   inline VTYPE xmin() const { return lowleft[0]; }
   inline VTYPE xmax() const { return upright[0]; }
@@ -101,7 +99,13 @@ public:
     if(point[1] < ymin() || point[1] >= ymax()) return false;
     return true;
   }
-  bool intersects(const CRectangle_<VTYPE, CTYPE> &other) const {
+  bool containsInclusive(const CTYPE &point) const {
+    if(point[0] < xmin() || point[0] > xmax()) return false;
+    if(point[1] < ymin() || point[1] > ymax()) return false;
+    return true;
+  }
+  template <class VTYPE2, class CTYPE2>
+  bool intersects(const CRectangle_<VTYPE2, CTYPE2> &other) const {
     if(upright[0] < other.lowleft[0]) return false;
     if(upright[1] < other.lowleft[1]) return false;
     if(lowleft[0] > other.upright[0]) return false;
@@ -125,19 +129,22 @@ public:
   // 
   void restrict(const CRectangle_<VTYPE, CTYPE> &limits) {
     if(limits.xmin() > lowleft[0])
-      lowleft[0] = min(upright[0], limits.xmin());
+      lowleft[0] = min_(upright[0], limits.xmin());
     if(limits.xmax() < upright[0])
-      upright[0] = max(lowleft[0], limits.xmax());
+      upright[0] = max_(lowleft[0], limits.xmax());
     if(limits.ymin() > lowleft[1])
-      lowleft[1] = min(upright[1], limits.ymin());
+      lowleft[1] = min_(upright[1], limits.ymin());
     if(limits.ymax() < upright[1])
-      upright[1] = max(lowleft[1], limits.ymax());
+      upright[1] = max_(lowleft[1], limits.ymax());
     size_ = upright - lowleft;
   }
 
   virtual std::ostream &print(std::ostream&) const = 0;
 
-};
+  // To allow intersections to be computed with other types of
+  // rectangles, make all rectangles friends.
+  template <class VTYPE2, class CTYPE2> friend class CRectangle_;
+};				// end CRectangle_
 
 template <class VTYPE, class CTYPE>
 CRectangle_<VTYPE, CTYPE>::CRectangle_(const CTYPE &a, const CTYPE &b) {
@@ -160,10 +167,10 @@ CRectangle_<VTYPE, CTYPE>::CRectangle_(const CTYPE &a, const CTYPE &b) {
   size_ = upright - lowleft;
 }
 
-class CRectangle: public CRectangle_<double, Coord> {
+class CRectangle: public CRectangle_<double, Coord2D> {
 public:
-  CRectangle(const Coord &a, const Coord &b)
-    : CRectangle_<double, Coord>(a,b)
+  CRectangle(const Coord2D &a, const Coord2D &b)
+    : CRectangle_<double, Coord2D>(a,b)
   {}
   friend std::ostream& operator<<(std::ostream&, const CRectangle&);
   virtual std::ostream &print(std::ostream &os) const {
@@ -174,11 +181,11 @@ public:
 
 std::ostream& operator<<(std::ostream&, const CRectangle&);
 
-class ICRectangle : public CRectangle_<int, ICoord> {
+class ICRectangle : public CRectangle_<int, ICoord2D> {
 public:
   ICRectangle() {}
-  ICRectangle(const ICoord &a, const ICoord &b)
-    : CRectangle_<int, ICoord>(a,b)
+  ICRectangle(const ICoord2D &a, const ICoord2D &b)
+    : CRectangle_<int, ICoord2D>(a,b)
   {}
   friend std::ostream& operator<<(std::ostream&, const ICRectangle&);
   virtual std::ostream &print(std::ostream &os) const {
@@ -190,8 +197,6 @@ std::ostream& operator<<(std::ostream&, const ICRectangle&);
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-#elif DIM == 3
-
 template <class VTYPE, class CTYPE>
 class CRectangularPrism_  {
 protected:
@@ -201,31 +206,42 @@ protected:
 public:
   CRectangularPrism_() {}
   CRectangularPrism_(const CTYPE &a, const CTYPE &b) {
-    if(a[0] < b[0]) {
-      uprightfront[0] = b[0];
-      lowleftback[0] = a[0];
-    }
-    else {
-      uprightfront[0] = a[0];
-      lowleftback[0] = b[0];
-    }
-    if(a[1] < b[1]) {
-      uprightfront[1] = b[1];
-      lowleftback[1] = a[1];
-    }
-    else {
-      uprightfront[1] = a[1];
-      lowleftback[1] = b[1];
-    }
-    if(a[2] < b[2]) {
-      uprightfront[2] = b[2];
-      lowleftback[2] = a[2];
-    }
-    else {
-      uprightfront[2] = a[2];
-      lowleftback[2] = b[2];
-    }
+    uprightfront = a;
+    lowleftback = a;
+    swallow(b);
+    // if(a[0] < b[0]) {
+    //   uprightfront[0] = b[0];
+    //   lowleftback[0] = a[0];
+    // }
+    // else {
+    //   uprightfront[0] = a[0];
+    //   lowleftback[0] = b[0];
+    // }
+    // if(a[1] < b[1]) {
+    //   uprightfront[1] = b[1];
+    //   lowleftback[1] = a[1];
+    // }
+    // else {
+    //   uprightfront[1] = a[1];
+    //   lowleftback[1] = b[1];
+    // }
+    // if(a[2] < b[2]) {
+    //   uprightfront[2] = b[2];
+    //   lowleftback[2] = a[2];
+    // }
+    // else {
+    //   uprightfront[2] = a[2];
+    //   lowleftback[2] = b[2];
+    // }
     size_ = uprightfront - lowleftback;
+  }
+  CRectangularPrism_(const std::vector<CTYPE> &vec) {
+    // construct the bounding box of the points in vec
+    assert(vec.size() > 0);
+    uprightfront = vec[0];
+    lowleftback = vec[0];
+    for(unsigned int i=1; i<vec.size(); i++)
+      swallow(vec[i]);
   }
 
   virtual ~CRectangularPrism_() {}
@@ -236,13 +252,25 @@ public:
   inline const CTYPE &upperright() const { return uprightfront; }
   inline const CTYPE &lowerleftback() const { return lowleftback; }
   inline const CTYPE &upperrightfront() const { return uprightfront; }
-  void swallow(const CTYPE &pt) {
+  template <class CTYPE2>
+  void swallow(const CTYPE2 &pt) {
     if(uprightfront[0] < pt[0]) uprightfront[0] = pt[0];
     if(uprightfront[1] < pt[1]) uprightfront[1] = pt[1];
     if(uprightfront[2] < pt[2]) uprightfront[2] = pt[2];
     if(lowleftback[0] > pt[0]) lowleftback[0] = pt[0];
     if(lowleftback[1] > pt[1]) lowleftback[1] = pt[1];
     if(lowleftback[2] > pt[2]) lowleftback[2] = pt[2];
+    size_ = uprightfront - lowleftback;
+  }
+  template <class VTYPE2, class CTYPE2>
+  void swallow(const CRectangularPrism_<VTYPE2, CTYPE2> &other) {
+    swallow(other.upperrightfront());
+    swallow(other.lowerleftback());
+  }
+  template <class VTYPE2, class CTYPE2>
+  void swallow(const CRectangle_<VTYPE2, CTYPE2> &rect) {
+    swallow(rect.lowerleft());
+    swallow(rect.upperright());
   }
   inline VTYPE xmin() const { return lowleftback[0]; }
   inline VTYPE xmax() const { return uprightfront[0]; }
@@ -250,6 +278,8 @@ public:
   inline VTYPE ymax() const { return uprightfront[1]; }
   inline VTYPE zmin() const { return lowleftback[2]; }
   inline VTYPE zmax() const { return uprightfront[2]; }
+  double min(int dir) const { return lowleftback[dir]; }
+  double max(int dir) const { return uprightfront[dir]; }
   inline VTYPE height() const { return uprightfront[1] - lowleftback[1]; }
   inline VTYPE width() const { return uprightfront[0] - lowleftback[0]; }
   inline VTYPE depth() const { return uprightfront[2] - lowleftback[2]; }
@@ -261,7 +291,8 @@ public:
     if(point[2] < zmin() || point[2] >= zmax()) return false;
     return true;
   }
-  bool intersects(const CRectangularPrism_<VTYPE, CTYPE> &other) const {
+  template <class VTYPE2, class CTYPE2>
+  bool intersects(const CRectangularPrism_<VTYPE2, CTYPE2> &other) const {
     if(uprightfront[0] < other.lowleftback[0]) return false;
     if(uprightfront[1] < other.lowleftback[1]) return false;
     if(uprightfront[2] < other.lowleftback[2]) return false;
@@ -295,23 +326,24 @@ public:
   // 
   void restrict(const CRectangularPrism_<VTYPE, CTYPE> &limits) {
     if(limits.xmin() > lowleftback[0])
-      lowleftback[0] = min(uprightfront[0], limits.xmin());
+      lowleftback[0] = min_(uprightfront[0], limits.xmin());
     if(limits.xmax() < uprightfront[0])
-      uprightfront[0] = max(lowleftback[0], limits.xmax());
+      uprightfront[0] = max_(lowleftback[0], limits.xmax());
     if(limits.ymin() > lowleftback[1])
-      lowleftback[1] = min(uprightfront[1], limits.ymin());
+      lowleftback[1] = min_(uprightfront[1], limits.ymin());
     if(limits.ymax() < uprightfront[1])
-      uprightfront[1] = max(lowleftback[1], limits.ymax());
+      uprightfront[1] = max_(lowleftback[1], limits.ymax());
     if(limits.zmin() > lowleftback[2])
-      lowleftback[2] = min(uprightfront[2], limits.zmin());
+      lowleftback[2] = min_(uprightfront[2], limits.zmin());
     if(limits.zmax() < uprightfront[2])
-      uprightfront[2] = max(lowleftback[2], limits.zmax());
+      uprightfront[2] = max_(lowleftback[2], limits.zmax());
     size_ = uprightfront - lowleftback;
   }
 
   virtual std::ostream &print(std::ostream&) const = 0;
 
-};
+  template <class VTYPE2, class CTYPE2> friend class CRectangularPrism_;
+};				// end CRectangularPrism_
 
 // double and int subclasses
 
@@ -319,6 +351,9 @@ class CRectangularPrism: public CRectangularPrism_<double, Coord> {
 public:
   CRectangularPrism(const Coord &a, const Coord &b)
     : CRectangularPrism_<double, Coord>(a,b)
+  {}
+  CRectangularPrism(const std::vector<Coord> &v)
+    : CRectangularPrism_<double, Coord>(v)
   {}
   friend std::ostream& operator<<(std::ostream&, const CRectangularPrism&);
   virtual std::ostream &print(std::ostream &os) const {
@@ -343,13 +378,11 @@ public:
 
 std::ostream& operator<<(std::ostream&, const ICRectangularPrism&);
 
-#endif //DIM == 3
-
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 double triangleArea(const Coord&, const Coord&, const Coord&);
 
-#undef min
-#undef max
+#undef min_
+#undef max_
 
 #endif

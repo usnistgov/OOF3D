@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: pixelsetboundary.C,v $
-// $Revision: 1.34.10.20 $
+// $Revision: 1.34.10.20.2.37 $
 // $Author: langer $
-// $Date: 2014/12/12 19:38:52 $
+// $Date: 2016/03/15 15:59:34 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,
@@ -16,684 +16,903 @@
 
 #include <oofconfig.h>
 
-#include "common/pixelsetboundary.h"
 #include "common/cmicrostructure.h"
 #include "common/geometry.h"
+#include "common/pixelsetboundary.h"
 #include "common/printvec.h"
+#include "common/smallmatrix.h"
+#include <assert.h>
+#include <algorithm>
+#include <limits>
 #include <map>
 #include <math.h>
-
-#include <assert.h>
-
-#if DIM==2
-
-bool PixelBdySegment::operator<(const PixelBdySegment &other) const {
-  if (other.horizontal == horizontal)
-    return (other.pixel < pixel);
-  return (other.horizontal < horizontal);
-// That is,
-//   if (!other.horizontal && horizontal) return true;
-//   if (!horizontal && other.horizontal) return false;
-}
+#include <stdlib.h>
 
 
-// This both assigns coordinates and directs the segment, but it still
-// lives in integer-land.  It sets the mutable data members "start",
-// "end" and "coordinated".
-ICoord PixelBdySegment::coordinate() const {
-  ICoord lowerleft = pixel;
-
-  if (horizontal) {
-    ICoord lowerright = lowerleft + ICoord(1, 0);
-    if (local) {
-      start = lowerleft;
-      end = lowerright;
-    }
-    else { 
-      end = lowerleft; 
-      start = lowerright;
-    }
-  }
-  else {
-    ICoord upperleft = lowerleft + ICoord( 0, 1 );
-    if (local) {
-      start = upperleft;
-      end = lowerleft;
-    }
-    else {
-      start = lowerleft;
-      end = upperleft;
-    }
-  }
-  coordinated = true;
-  return start;
-}
-
-void PixelBdySegment::extend() {
-  if (horizontal) {
-    if (local) 
-      end += ICoord(1,0);
-    else
-      end -= ICoord(1,0);
-  }
-  else {
-    if (local) 
-      end -= ICoord(0,1);
-    else
-      end += ICoord(0,1);
-  }
-}
-
-
-// Set the boundary points in physical space.
-void PixelBdySegment::set_floats(const Coord &delta) const {
-  if (horizontal) {
-    fp_level = start[1]*delta[1];  // Segment has constant y
-    fp_start = start[0]*delta[0];
-    fp_end = end[0]*delta[0];
-  }
-  else {
-    fp_level = start[0]*delta[0];  // Segment has constant x.
-    fp_start = start[1]*delta[1];
-    fp_end = end[1]*delta[1];
-  }
-
-  if (fp_start < fp_end) {
-    fp_first = fp_start;
-    fp_last = fp_end;
-  }
-  else {
-    fp_first = fp_end;
-    fp_last = fp_start;
-  }
-
-  floated = true;
-}
-
-// Not as stupid as it looks -- this routine helps resolve the "zero
-// or two intersections" case by giving a definitive yes-or-no to the
-// question of whether or not there are zero intersections between
-// this pixel boundary segment and the element defined by the
-// passed-in point list (pts).  The strategy is: if both endpoints of
-// this pixel boundary segment are exterior to the same element
-// segment, then no intersection is possible; failing that, the
-// endpoints of the pixel boundary segment must terminate in different
-// sectors, so if all of the element-corner coordinates are on the
-// same side of the pixel boundary segment, then an intersection is
-// impossible; failing *that*, an intersection (actually, two) is
-// required.  The caller promises that both end-points of the pixel
-// boundary segment are exterior to the passed-in element (using an
-// interiority test which takes the same cross-products as this
-// routine), and we assume convexity of the element.
-
-// pts is passed as an array and a size, instead of a std::vector, for
-// efficiency.
-
-bool PixelBdySegment::find_no_intersection(const Coord* const pts,
-					   int npts,
-					   const Coord &perturb) const
-{
-  
-  const Coord start = start_pt();
-  const Coord end = end_pt();
-    
-  // loop over sides of the element 
-  for(int i1=0; i1<npts; ++i1) {
-    int i2 = (i1+1)%npts;
-    // This is the same arithmetic as the CSkeletonElement::interior
-    // function -- this is important for avoiding roundoff-related
-    // screwups.
-    const Coord eside = pts[i2] - pts[i1];
-    double start_cross = eside % (start-pts[i1]);
-    double end_cross = eside % (end-pts[i1]);
-
-    // Easy case -- if they're both negative for this segment, then
-    // there are no intersections, we're done.
-    if ( (start_cross < 0) && (end_cross < 0) ) 
-      return true;
-
-    // In the boundary case, check against perturbations.
-    double delta = perturb % eside;
-    bool start_ok = (start_cross < 0) || ( (start_cross==0) && (delta < 0) );
-    bool end_ok = (end_cross < 0) || ( (end_cross==0) && (delta < 0) );
-    if (start_ok && end_ok) return true;
-  } // end loop over sides of the element
-
-  // If we made it this far, then the endpoints must be exterior in
-  // different "sectors".  In this case, we can still rule out
-  // intersections if all of the element nodes are on the same side of
-  // the pixel boundary segment.  Find out which side the first one is
-  // on.  If any of the others are on a different side, return false,
-  // indicating that intersections are required.
-
-  double initial_res = (pts[0]-start)%(end-start);
-  double delta = perturb%(end-start);
-  if (initial_res==0)
-    initial_res = delta;
-
-  for(int i1=1; i1<npts; ++i1) {
-    double new_res = (pts[i1]-start)%(end-start);
-    if ( initial_res*new_res < 0) return false; // Intersection required.
-    if ( (new_res==0) && (initial_res*delta < 0) ) return false;
-  }
-  // If we didn't succeed in the first block, or fail in the second
-  // block, then there are no intersections.
-
-  return true;
-}
-				      
-
-
-
-
-// Quick intersection-finding routine, used when you have topological
-// information about what's going on.  Specifically, you know that
-// it's geometrically required that the pixel boundary segment must
-// intersect the passed-in set of coordinates exactly once, you know
-// whether it enters or exits, and the only real question is where
-// this occurs.  First argument is a vector of points, making up a
-// closed convex polygon (convexity is assumed, the caller should
-// ensure this), and the second argument is a PixelBdyIntersection
-// structure which will be filled in by this routine.  The third
-// argument is the classification (entry or exit) of the searched-for
-// intersection.  Currently this is just put in the pbi, but it could
-// be checked for consistency.  The return value is an integer
-// indicating on which element segment the intersection occurred.
-int 
-PixelBdySegment::find_one_intersection(const Coord * const pts, int npts,
-				       PixelBdyIntersection &pbi,
-				       bool entry) const {
-  // Alpha is the fractional distance along an element segment, and
-  // beta is the fractional distance along this segment from fp_first
-  // to fp_last.  The "t_" prefix counterparts are intermediate trial
-  // versions of these quantities.  "Error" is a postive-definite
-  // measure of how far out of bounds the trial quantities are.
-  int segment = -1;
-  double alpha, beta, t_beta=0.0, error=0.0;
-
-  // Transfer the passed-in classification info.
-  pbi.entry = entry;
-
-  if (horizontal) {
-    for(int i1=0;i1<npts;++i1) {
-      int i2 = (i1+1)%npts;
-      // Ignore the parallel case.
-      if (pts[i1][1]==pts[i2][1]) continue;
-      // Also skip segments which are oriented incorrectly for the
-      // type of intersection we want.
-      bool seg_entry = !( (local && (pts[i2][1]>pts[i1][1])) || 
-			  (!local && (pts[i2][1]<pts[i1][1])) );
-      if (seg_entry != entry) continue;
-      
-      alpha=(fp_level-pts[i1][1]) / (pts[i2][1]-pts[i1][1]);
-      beta =((fp_first-pts[i1][0])-(pts[i2][0]-pts[i1][0])*alpha)/
-	(fp_first-fp_last);
-      // If the trial alpha/beta is in-bounds, we're done.
-      if (( alpha > 0) && (alpha <1) && (beta > 0) && (beta <1)) {
-	pbi.location = Coord(fp_first+beta*(fp_last-fp_first),fp_level);
-	return i1;
-      }
-      // Compute how far out of bounds we ended up.
-      double new_error=0.0;
-      
-      if (alpha>1) new_error = (alpha-1.0)*(alpha-1.0);
-      if (alpha<0) new_error = alpha*alpha;
-      if (beta>1) new_error += (beta-1.0)*(beta-1.0);
-      if (beta<0) new_error += beta*beta;
-      
-      // If this is the first iteration, or if the new error is
-      // smaller than the already-stored error, save the results.
-      if ((segment==-1) || ( new_error < error)) {
-	segment = i1;
-	t_beta = beta;
-	error = new_error;
-      }
-
-    } // End of the for-loop.
-    // If we made it out of the loop, that means none of the element
-    // segments were in-bounds.  But the caller insists there must be
-    // an intersection, so we'll return our best guess.
-    pbi.location = Coord(fp_first+t_beta*(fp_last-fp_first), fp_level);
-    assert(segment!=-1);
-    return segment;
-  }
-  else { // Vertical
-    for(int i1=0;i1<npts;++i1) {
-      int i2 = (i1+1)%npts;
-      // Again, ignore the parallel case.
-      if (pts[i1][0]==pts[i2][0]) continue;
-      // And again, ignore wrongly oriented segments.
-      bool seg_entry = !( ( local && (pts[i2][0]>pts[i1][0]) ) ||
-			  ( !local && (pts[i2][0]<pts[i1][0])) );
-      if (seg_entry != entry) continue;
-
-      alpha = (fp_level-pts[i1][0])/(pts[i2][0]-pts[i1][0]);
-      beta = ((fp_first-pts[i1][1])-(pts[i2][1]-pts[i1][1])*alpha)/
-	(fp_first-fp_last);
-      
-      // If we're in-bounds, we're done.
-      if (( alpha>0) && (alpha<1) && (beta>0) && (beta<1)) {
-	pbi.location = Coord(fp_level, fp_first+beta*(fp_last-fp_first));
-	return i1;
-      }
-      double new_error=0.0;
-      
-      if (alpha>1) new_error = (alpha-1.0)*(alpha-1.0);
-      if (alpha<0) new_error = alpha*alpha;
-      if (beta>1) new_error += (beta-1.0)*(beta-1.0);
-      if (beta<0) new_error += beta*beta;
-      
-      if ((segment==-1) || (new_error < error)) {
-	segment = i1;
-	t_beta = beta;
-	error = new_error;
-      }
-    }
-    // If we made it this far, we were never in-bounds.  Return best-guess.
-    pbi.location = Coord(fp_level, fp_first+t_beta*(fp_last-fp_first));
-    assert(segment!=-1);
-    return segment;
-  }
-}
-    
-					    
-
-std::ostream& operator<<(std::ostream &o, const PixelBdySegment &pbs) {
-  if (pbs.floated) {
-    if (pbs.horizontal) {
-      o << "(" << pbs.fp_start << ", " << pbs.fp_level << 
-	") -> (" << pbs.fp_end << ", " << pbs.fp_level << ")";
-    }
-    else {
-      o << "( " << pbs.fp_level << ", " << pbs.fp_start << 
-	") -> (" << pbs.fp_level << ", " << pbs.fp_end << ")";
-    }
-  }
-  else if (pbs.coordinated) {
-    o << "[" << pbs.start << ", " << pbs.end << "]";
-  }
-  else {
-    o << (pbs.horizontal ? " Horizontal " : " Vertical ") << 
-      (pbs.local ? " Local " : " Nonlocal ") << pbs.pixel;
-  }
-  return o;
-}
+static const ICoord2D iRight(1, 0);
+static const ICoord2D iUp(0, 1);
+static const ICoord2D iLeft(-1, 0);
+static const ICoord2D iDown(0, -1);
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-PixelSetBoundary::PixelSetBoundary(const CMicrostructure* ms)
-  : segments(), microstructure(ms), loopset(0)
-{
-  ms_delta = microstructure->sizeOfPixels();
-}
+PixelSetBoundaryBase::PixelSetBoundaryBase(const CMicrostructure* ms)
+  : microstructure(ms), bounds(0)
+{}
 
-PixelSetBoundary::~PixelSetBoundary() {
+PixelSetBoundaryBase::~PixelSetBoundaryBase() {
   for(std::vector<PixelBdyLoop*>::iterator i=loopset.begin(); i<loopset.end();
       ++i)
     delete *i;
+  delete bounds;
 }
 
-// Create the boundary segments for this pixel, and add them to the
-// map of all pixel segments.  PixelBdySegment constructor args are
-// pixel ICoord, horizontality, and locality.
-void PixelSetBoundary::add_pixel(const ICoord &px) {
-  segments[PixelBdySegment(px, true, true)] += 1;
-  segments[PixelBdySegment(px, false, true)] += 1;
+// Add the boundary segments for this pixel to the map of all pixel
+// segments.
+void PixelSetBoundary::add_pixel(const ICoord2D &px) {
+// #ifdef DEBUG
+//   if(npixels == 0)
+//     oofcerr << "PixelSetBoundary::add_pixel: first pixel! " << px << " this="
+// 	    << this << std::endl;
+//   else
+//     oofcerr << "PixelSetBoundary::add_pixel: px=" << px << " this=" << this
+// 	    << std::endl;
+//   npixels++;
+// #endif // DEBUG
+  // Pixel boundary segments are actually just stored as ICoords,
+  // which are the left or bottom endpoint of the segment.  The
+  // direction of the segment is implied by which SegSet2D it's in.
 
-  ICoord neighbor = px + ICoord(0,1);
-  segments[PixelBdySegment(neighbor, true, false)] += 1;
-  
-  neighbor = px + ICoord(1,0);
-  segments[PixelBdySegment(neighbor, false, false)] += 1;
+  // Insert the L->R segment along the bottom of the pixel unless the
+  // R->L one is already present.
+  SegSet2D::iterator old = segmentsRL.find(px);
+  if(old == segmentsRL.end())
+    segmentsLR.insert(px);
+  else
+    segmentsRL.erase(old);
+
+  // Insert the R->L segment along the top of the pixel unless the
+  // L->R is already present.
+  ICoord2D rl = px + iUp;
+  old = segmentsLR.find(rl);
+  if(old == segmentsLR.end())
+    segmentsRL.insert(rl);
+  else
+    segmentsLR.erase(old);
+
+  // Insert the U->D segment along the left edge unless the D->U is
+  // already present.
+  old = segmentsDU.find(px);
+  if(old == segmentsDU.end())
+    segmentsUD.insert(px);
+  else
+    segmentsDU.erase(old);
+
+  // Insert the D->U segment along the right edge ...
+  ICoord2D ud = px + iRight;
+  old = segmentsUD.find(ud);
+  if(old == segmentsUD.end())
+    segmentsDU.insert(ud);
+  else
+    segmentsUD.erase(old);
 }
 
-
-typedef std::pair<ICoord, PixelBdySegment> SegByCoord;
+typedef std::pair<ICoord2D, ICoord2D> DirectedSeg; // start point, direction
 
 void PixelSetBoundary::find_boundary() {
-  CoordMap coordmap;		// Coord-keyed map of segments.
+  DirectedSegMap cm;
+  delete bounds;
+  // The remaining segments are all boundary segments.  Put them in a
+  // more convenient map for making connections.  The map key is the
+  // starting point of the segment, and the stored value is a pair
+  // (DirectedSeg) containing the segment's direction and the pointer
+  // to the segment itself.
+  for(SegSet2D::iterator i=segmentsLR.begin(); i!=segmentsLR.end(); ++i)
+    cm.insert(DirectedSeg(*i, iRight));
+  for(SegSet2D::iterator i=segmentsDU.begin(); i!=segmentsDU.end(); ++i)
+    cm.insert(DirectedSeg(*i, iUp));
+  for(SegSet2D::iterator i=segmentsRL.begin(); i!=segmentsRL.end(); ++i)
+    cm.insert(DirectedSeg(*i+iRight, iLeft));
+  for(SegSet2D::iterator i=segmentsUD.begin(); i!=segmentsUD.end(); ++i)
+    cm.insert(DirectedSeg(*i+iUp, iDown));
 
-  // Remove the segments which occur twice -- they are interior.
-  SegMap::iterator i = segments.begin();
-  while(i!=segments.end()) {
-    if ((*i).second == 2) {
-      SegMap::iterator j = i;
-      ++i;
-      segments.erase(j);
-    }
-    else {
-      ++i;
-    }
+  // oofcerr << "PixelSetBoundary::find_boundary: cm=";
+  // std::cerr << cm;
+  // oofcerr << std::endl;
+
+  // There must be at least one segment in each direction.  Find
+  // loops, removing segments from the sets, until the sets are empty.
+  while(!cm.empty()) {
+    loopset.push_back(find_loop(cm));
   }
+  assert(cm.empty());
 
-  // At this point, the keys in the "segments" map all have value "1",
-  // and are grouped, but not in a useful way.  The geometry of the
-  // pixel array guarantees that we have at least four segments.
-  // Put them in a new multimap, indexed by their start coords.
-  // Avoid making a copy of the PixelBdySegment.
-  for(SegMap::iterator s=segments.begin(); s!=segments.end(); ++s) {
-    const PixelBdySegment &pbs = (*s).first;
-    ICoord segment_start = pbs.coordinate();
-    coordmap.insert( SegByCoord(segment_start, pbs ) );
-  } 
-  segments.clear();
-
-  // Now we have a Coord-indexed multimap of segment objects, and
-  // furthermore, all of the indices are the start of a coordinated
-  // segment.  Now, construct the loops, merrily erasing as we go.
-  
-  while (!coordmap.empty()) {
-    loopset.push_back(find_loop(coordmap));
-  }
-
-  for(std::vector<PixelBdyLoop*>::iterator ell = loopset.begin();
-      ell!=loopset.end(); ++ell)
+  // Clean up.  Combine colinear contiguous segments and compute
+  // bounding boxes. 
+  for(std::vector<PixelBdyLoop*>::iterator loop=loopset.begin();
+      loop!=loopset.end(); ++loop)
     {
-      // Optimization: Clean up redundant segments from the loops.
-      (*ell)->clean();
-      // set_floats in all the segments (which also computes bbox).
-      (*ell)->set_floats(ms_delta);
-   }
+      (*loop)->clean();		// removes extra points and computes bbox
+      if(bounds == 0)
+	bounds = new ICRectangle((*loop)->bbox());
+      else
+	bounds->swallow((*loop)->bbox());
+    }
+  segmentsLR.clear();
+  segmentsRL.clear();
+  segmentsUD.clear();
+  segmentsDU.clear();
 }
 
 
-typedef std::pair<CoordMap::iterator, CoordMap::iterator> CoordMapRange;
- 
+typedef std::pair<DirectedSegMap::iterator, DirectedSegMap::iterator> DirectedSegMapRange;
+
 // Finds a loop in the passed-in coordinate map, and returns it.
-// Removes the relevant segments from the cm, also, which is why it's
+// Removes the relevant segments from the cm, also, which is why cm is
 // a reference and not const.
-PixelBdyLoop *PixelSetBoundary::find_loop(CoordMap &cm) {
-  PixelBdyLoop *result = new PixelBdyLoop;
+
+PixelBdyLoop *PixelSetBoundary::find_loop(DirectedSegMap &cm) {
+  PixelBdyLoop *loop = new PixelBdyLoop();
   assert(!cm.empty());
-  CoordMap::iterator current = cm.begin();
-  
+  DirectedSegMap::iterator current = cm.begin();
+  // oofcerr << "PixelSetBoundary::find_loop:" << std::endl;
+  // OOFcerrIndent indent(2);
+
   bool done = false;
-  while (!done) {
-    PixelBdySegment current_seg = (*current).second;
-    result->add_segment(current_seg);
-    ICoord next = current_seg.end;
+  while(!done) {
+    ICoord2D here = (*current).first;
+    ICoord2D direction = (*current).second;
+    loop->add_point(here);
+    ICoord2D next = here + direction; // endpoint of the current segment
+    // oofcerr << "PixelSetBoundary::find_loop: here=" << here
+    // 	    << " direction=" << direction << " next=" << next
+    // 	    << std::endl;
+
     cm.erase(current);
 
+    // Look for a segment starting at the end point of this one.
     int n = cm.count(next);
-    
-    if (n==0)
-      done=true;
-    else if (n==1) {
+    if(n == 0)
+      done = true;
+    else if(n == 1) {
       current = cm.lower_bound(next);
     }
     else {
       // There is more than one choice of outgoing segment from the
-      // current point.  This can only happen if two pixels in the set
+      // current point.  This can happen only if two pixels in the set
       // touch at a corner, and the other two pixels at the corner are
       // not in the set, checkerboard style. Because the pixels in the
       // set are always on the left of the boundary, we know that
       // there are only two possible situations:  
       // A: The pixels are in the NE and SW corners. The incoming
       //    segments are vertical, and the outgoing segments are
-      //    horizontal.  If we come in from the S we go out to the W
-      //    and both segments are local.  If we come in from the N
-      //    we go out to the E and both segments are nonlocal.
+      //    horizontal.  If we come in from the S we go out to the W.
+      //    If we come in from the N we go out to the E.
       // B: The pixels are in the NW and SE corners.  The incoming
       //    segments are horizontal and the outgoing segments are
-      //    vertical.  If we come in from the E we go out to the S,
-      //    and the incoming segment is nonlocal while the outgoing
-      //    segment is local.  If we come in from the W we go out to
-      //    the N, and the incoming segment is local while the
-      //    outgoing segment is nonlocal.
+      //    vertical.  If we come in from the E we go out to the S.
+      //    If we come in from the W we go out to the N.
 
-      // Examine the outgoing segments and set "current" to the
-      // correct one, using the "local" information.
-      CoordMapRange range = cm.equal_range(next); // possible outgoing segments
-      for (CoordMap::iterator i = range.first; i!=range.second; ++i) {
-	if((current_seg.horizontal && (current_seg.local!=(*i).second.local))
-	   ||
-	   (!current_seg.horizontal && (current_seg.local==(*i).second.local)))
-	  {
-	    current = i;
-	    break; 
-	  }
+      DirectedSegMapRange range = cm.equal_range(next); // poss. outgoing segs
+      ICoord2D outgoing = (direction == iUp ? iLeft : // desired outgoing dir
+			   (direction == iDown ? iRight :
+			    (direction == iRight ? iUp :
+			     iDown)));
+      for(DirectedSegMap::iterator i=range.first; i!=range.second; ++i) {
+	if((*i).second == outgoing) {
+	  current = i;
+	  break;
+	}
       }	// loop over outgoing segments
     } // more than one outgoing segment
-  } // while(!done)
-  return result;
+  } // while !done
+#ifdef DEBUG
+  if(loop->size() < 4 || !loop->closed()) {
+    oofcerr << "PixelSetBoundary::find_loop: diff = "
+	    << loop->loop.front() - loop->loop.back() << std::endl;
+    throw ErrProgrammingError("Bad loop! size=" + to_string(loop->size()) +
+			      " closed=" + to_string(loop->closed()),
+			      __FILE__, __LINE__);
+  }
+#endif // DEBUG
+  return loop;
 }
 
-//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+PixelBdyLoop::PixelBdyLoop(const PixelBdyLoop &other)
+  : loop(other.loop),		// vector copy
+    bounds(0)
+{
+  if(other.bounds)
+    bounds = new ICRectangle(*other.bounds);
+}
 							 
-void PixelBdyLoop::add_segment(const PixelBdySegment &pbs) {
+PixelBdyLoop::~PixelBdyLoop() {
+  delete bounds; 
+}
+
+void PixelBdyLoop::add_point(const ICoord2D &pbs) {
   loop.push_back(pbs);
 }
 
-// Cleans up the loop in-place, by extending segments for which the
+ICoord2D PixelBdyLoop::icoord(unsigned  int k) const {
+  assert(k < loop.size());
+  return loop[k];
+}
+
+ICoord2D PixelBdyLoop::next_icoord(unsigned int k) const {
+  assert(k < loop.size());
+  unsigned int kk = k + 1;
+  if(kk == loop.size())
+    return loop[0];
+  return loop[kk];
+}
+
+bool PixelBdyLoop::left_turn(unsigned int k) const {
+  unsigned int kprev = (k == 0 ? loop.size()-1 : k-1);
+  unsigned int knext = (k == loop.size()-1 ? 0 : k+1);
+  ICoord2D segA = loop[k] - loop[kprev];
+  ICoord2D segB = loop[knext] - loop[k];
+  return cross(segA, segB) > 0;
+}
+
+bool PixelBdyLoop::right_turn(unsigned int k) const {
+  unsigned int kprev = (k == 0 ? loop.size()-1 : k-1);
+  unsigned int knext = (k == loop.size()-1 ? 0 : k+1);
+  ICoord2D segA = loop[k] - loop[kprev];
+  ICoord2D segB = loop[knext] - loop[k];
+  return cross(segA, segB) < 0;
+}
+
+ICoord2D PixelBdyLoop::next2_icoord(unsigned int k) const {
+  assert(k < loop.size());
+  unsigned int kk = k + 2;
+  if(kk >= loop.size())
+    return loop[kk - loop.size()];
+  return loop[kk];
+}
+
+ICoord2D PixelBdyLoop::prev_icoord(unsigned int k) const {
+  assert(k < loop.size());
+  int kk = k - 1;
+  if(kk < 0)
+    return loop.back();
+  return loop[kk];
+}
+
+bool PixelBdyLoop::horizontal(unsigned int k) const {
+  assert(k >= 0 && k < loop.size());
+  return icoord(k)[1] == next_icoord(k)[1];
+}
+
+bool PixelBdyLoop::decreasing(unsigned int k) const {
+  // A decreasing segment is a horizontal segment that goes right to
+  // left or a vertical segment that goes top to bottom.
+  assert(k >= 0 && k < loop.size());
+  ICoord2D here(icoord(k));
+  ICoord2D next(next_icoord(k));
+  return (here[0] == next[0] && here[1] > next[1]) || (here[0] > next[0]);
+}
+
+int PixelBdyLoop::windingNumber(const Coord2D &pt) const {
+  // How many times does the loop wrap around the given point?  I.e,
+  // how many times does a line drawn from the point to an arbitrary
+  // exterior point cross the loop, counting counterclockwise
+  // crossings as +1 and clockwise crossings as -1.
+
+  // Requiring the point not to have integer coordinates eliminates
+  // the need to worry about if it's on the boundary.  The outside
+  // point doesn't actually have to be constructed.
+  assert(floor(pt[0]) != pt[0] && floor(pt[1]) != pt[1]); 
+  const double x = pt[0];
+  const double y = pt[1];
+  int ncross = 0;
+  for(unsigned int k=0; k<loop.size(); k++) {
+    // Only check vertical segments
+    if(!horizontal(k)) {
+      // Only check segments to the right of pt
+      if(icoord(k)[0] > x) {
+	int y0 = icoord(k)[1];
+	int y1 = next_icoord(k)[1];
+	if(y0 < y && y1 > y)
+	  ncross += 1;
+	else if(y1 < y && y0 > y)
+	  ncross -= 1;
+      }
+    }
+  }
+  return ncross;
+}
+
+// Clean up the loop in-place, by extending segments for which the
 // adjacent segment is just a continuation of the current segment.
+// Also compute the bounding box.
 void PixelBdyLoop::clean() {
-  std::vector<PixelBdySegment>::iterator current = loop.begin();
-  std::vector<PixelBdySegment>::iterator i = current;
-  i++;
-  // STL semantics are such that iterators preceding the erasure point
-  // remain valid after an erasure, but those afterwards do not, so
-  // current < i is important.
-  while(i!=loop.end()) {
-    if ((*i).horizontal == (*current).horizontal) {
-      (*current).extend();
-      loop.erase(i);
-      i = current;
-      i++;
+  std::vector<ICoord2D>::iterator segend = loop.begin(); // end of current seg
+  ++segend;
+  ICoord2D segdir = *segend - loop.front(); // direction of current seg
+  if(!bounds)
+    delete bounds;
+  bounds = new ICRectangle(*loop.begin(), *segend);
+  std::vector<ICoord2D>::iterator next = segend; // next point to examine
+  ++next;
+  while(next != loop.end()) {
+    // segend points to the end point of the current segment.  If the
+    // next point extends the segment, just update *segend to be the
+    // next point.  If the next point is in a different direction, the
+    // old segend is the beginning of a new segment, and segend is
+    // incremented to point to the new end point.
+    ICoord2D nextdir = *next - *segend;
+    if(nextdir != segdir) {	// Heading off in a new direction
+      bounds->swallow(*next);
+      ++segend;
+      segdir = nextdir;
     }
-    else {
-      current = i;
-      i++;
-    }
+    *segend = *next;
+    ++next;
+  }
+  // The last retained entry in loop might be redundant if the
+  // starting point is in line with it.  If it is redundant, delete it
+  // and everything after it.  If it's not redundant, just delete
+  // everything after it.
+  if(*segend + segdir != loop.front())
+    ++segend;
+  loop.erase(segend, loop.end());
+}
+
+void PixelBdyLoop::find_bounds() {
+  assert(!loop.empty());
+  if(!bounds)
+    delete bounds;
+  std::vector<ICoord2D>::const_iterator pt = loop.begin();
+  bounds = new ICRectangle(*pt, *pt);
+  ++pt;
+  for(; pt!=loop.end(); ++pt) {
+    bounds->swallow(*pt);
   }
 }
 
-void PixelBdyLoop::set_floats(const Coord &delta) {
-  assert(!loop.empty());
-  bool first = true;
-  for(std::vector<PixelBdySegment>::iterator x=loop.begin(); x!=loop.end(); ++x)
-    {
-      (*x).set_floats(delta);
-      if(first) {
-	bounds = new CRectangle((*(loop.begin())).start_pt(),
-				(*(loop.begin())).end_pt());
-	first = false;
-      }
-      else {
-	bounds->swallow((*x).start_pt());
-	bounds->swallow((*x).end_pt());
-      }
-    }
+bool PixelBdyLoop::closed() const {
+  // This is used to check consistency *before* clean() is called.  It
+  // won't work afterwards.
+  ICoord2D diff = loop.front() - loop.back();
+  return (diff == iUp || diff == iDown || diff == iLeft || diff == iRight);
 }
 
-PixelBdyLoop::~PixelBdyLoop() {
-  delete bounds; 
+int PixelBdyLoop::area() const {
+  int a = 0;
+  for(unsigned int k=0; k<size(); k++) {
+    ICoord2D x0 = icoord(k);
+    ICoord2D x1 = next_icoord(k);
+    a += cross(x0, x1);
+  }
+  return a/2;
+}
+
+bool PixelBdyLoop::contains(const ICoord2D &pt, unsigned int &k) const {
+  for(unsigned int j=0; j<loop.size(); ++j) {
+    if(loop[j] == pt) {
+      k = j;
+      return true;
+    }
+  }
+  return false;
 }
 
 std::ostream &operator<<(std::ostream &os, const PixelBdyLoop &pbl) {
   return os << "PixelBdyLoop(" << pbl.loop << ")";
 }
 
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+bool PixelBdyLoopSegment::operator<(const PixelBdyLoopSegment &other) const {
+  if(firstPt() < other.firstPt())
+    return true;
+  else if(other.firstPt() < firstPt())
+    return false;
+  return secondPt() < other.secondPt();
+}
 
-#elif DIM==3
+bool PixelBdyLoopSegment::operator==(const PixelBdyLoopSegment &other) const {
+  return (loop_ == other.loop_ && loopseg_ == other.loopseg_);
+}
 
-// proj_dirs[i] contains the in-plane indices of coords in a plane
-// whose normal is in the i direction.  TODO: Check that it's faster
-// to look up values in proj_dirs than it is to calculate (i+j+1)%3.
-const short VoxelSetBoundary::proj_dirs[3][2] = 
-  {{1,2},
-   {2,0},
-   {0,1}};
-
-const ICoord VoxelSetBoundary::dirs[6] =
-  {ICoord(-1,0,0),
-   ICoord(0,-1,0),
-   ICoord(0,0,-1),
-   ICoord(1,0,0),
-   ICoord(0,1,0),
-   ICoord(0,0,1)};
-
-// faces[i][j] is the position of the jth corner of the ith face of a
-// unit voxel.  Only the faces containing (0,0,0) are included.  The
-// corners are numbered counterclockwise around the *inward* normal.
-const ICoord VoxelSetBoundary::faces[3][4] = {
-  {ICoord(0,0,0),ICoord(0,1,0),ICoord(0,1,1),ICoord(0,0,1)}, // left, x=0
-  {ICoord(0,0,0),ICoord(0,0,1),ICoord(1,0,1),ICoord(1,0,0)}, // bottom, y=0
-  {ICoord(0,0,0),ICoord(1,0,0),ICoord(1,1,0),ICoord(0,1,0)}}; // back, z=0
-
-VoxelSetBoundary::~VoxelSetBoundary() 
+PixelBdyLoopSegment &PixelBdyLoopSegment::operator=(
+					    const PixelBdyLoopSegment &other)
 {
-  for(int i=0; i<3; ++i) {
-    for(PlanesOfQuads::iterator pq=quads[i].begin(); pq!=quads[i].end(); ++pq) {
-      for(QuadVector::iterator q=(*pq).second->begin(); q!=(*pq).second->end();
-	  ++q)
-	{
-	  delete *q;
-	}
-      delete (*pq).second;
-    }
-  }
+  loop_ = other.loop_;
+  loopseg_ = other.loopseg_;
+  return *this;
 }
 
-
-void VoxelSetBoundary::add_face(const ICoord &where, int c, int norm) {
-  Quad *q = new Quad;
-  for(int k=0; k<4; ++k) {
-    ICoord facepoint = where + faces[c][k];
-    // When calculating the homogeneity, we always want the coords in
-    // a counterclockwise order.  The direction of the normal is
-    // stored explicitly.
-    q->coords[k][0] = facepoint[proj_dirs[c][0]];
-    q->coords[k][1] = facepoint[proj_dirs[c][1]];
-  }
-  q->norm = norm;
-  q->area = 1;
-  q->height = where[c];
-  q->norm_dir = c;
-  PlanesOfQuads::iterator pq = quads[c].find(q->height);
-  if(pq == quads[c].end()) {
-    // This is the first Quad found in direction c at height where[c].
-    quads[c][q->height] = new QuadVector;
-    quads[c][q->height]->push_back(q);
-  }
-  else {
-    // We already have a list of Quads at this height.  Can the new
-    // one be merged with an old one?
-    bool joinedcell = false;
-    QuadVector *qv = (*pq).second; // Previous Quads found at this height
-    // Loop over the quads in reverse.  We can take
-    // advantage of our convention for ordering the points
-    // in the quad to check whether two quads should be
-    // joined.  
-    for(QuadVector::reverse_iterator rqi=qv->rbegin(); rqi<qv->rend(); ++rqi) {
-      Quad *oq = *rqi;
-      // TODO OPT: some of these probably aren't necessary
-      if(oq->norm == q->norm) {
-	if(oq->coords[1][0] == q->coords[0][0] &&
-	   oq->coords[1][1] == q->coords[0][1] &&
-	   oq->coords[2][0] == q->coords[3][0] &&
-	   oq->coords[2][1] == q->coords[3][1])
-	  {
-	    // oofcerr << "VoxelSetBoundary::add_face: merging " << *oq
-	    // 	    << std::endl
-	    // 	    << "                                and " << *q
-	    // 	    << std::endl;
-	    oq->coords[1][0] = q->coords[1][0];
-	    //oq->coords[1][1] = q->coords[1][1];
-	    oq->coords[2][0] = q->coords[2][0];
-	    //oq->coords[2][1] = q->coords[2][1];
-	    oq->area += 1;
-	    // oofcerr << "                            to form " << *oq
-	    // 	    << std::endl;
-	    joinedcell = true;
-	    break;
-	  }
-	else if(oq->coords[0][0] == q->coords[1][0] &&
-		oq->coords[0][1] == q->coords[1][1] &&
-		oq->coords[3][0] == q->coords[2][0] &&
-		oq->coords[3][1] == q->coords[2][1])
-	  {
-	    oq->coords[0][0] = q->coords[0][0];
-	    //oq->coords[0][1] = q->coords[0][1];
-	    oq->coords[3][0] = q->coords[3][0];
-	    //oq->coords[3][1] = q->coords[3][1];
-	    oq->area += 1;
-	    joinedcell = true;
-	    break;
-	  }
-	else if(oq->coords[0][0] == q->coords[3][0] &&
-		oq->coords[0][1] == q->coords[3][1] &&
-		oq->coords[1][0] == q->coords[2][0] &&
-		oq->coords[1][1] == q->coords[2][1])
-	  {
-	    //oq->coords[0][0] = q->coords[0][0];
-	    oq->coords[0][1] = q->coords[0][1];
-	    //oq->coords[1][0] = q->coords[1][0];
-	    oq->coords[1][1] = q->coords[1][1];
-	    oq->area += 1;
-	    joinedcell = true;
-	    break;
-	  }
-	else if(oq->coords[3][0] == q->coords[0][0] &&
-		oq->coords[3][1] == q->coords[0][1] &&
-		oq->coords[2][0] == q->coords[1][0] &&
-		oq->coords[2][1] == q->coords[1][1])
-	  {
-	    //oq->coords[3][0] = q->coords[3][0];
-	    oq->coords[3][1] = q->coords[3][1];
-	    //oq->coords[2][0] = q->coords[2][0];
-	    oq->coords[2][1] = q->coords[2][1];
-	    oq->area += 1;
-	    joinedcell = true;
-	    break;
-	  }
-      }	// end if normal directions are equal
-    } // end loop over previously found Quads
-    if(!joinedcell)
-      quads[c][q->height]->push_back(q);
-    else
-      delete q;
-  } // end if not empty quads
-}   // end VoxelSetBoundary::add_face
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-Quad::Quad() {
-// #ifdef DEBUG
-//   allQuads.insert(this);
-// #endif // DEBUG
+int PixelBdyLoopSegment::length() const {
+  ICoord2D delta = secondPt() - firstPt();
+  if(delta[0] == 0)
+    return abs(delta[1]);
+  return abs(delta[0]);
 }
 
-Quad::~Quad() {
-// #ifdef DEBUG
-//   allQuads.erase(this);
-// #endif
+bool PixelBdyLoopSegment::onRight(const Coord2D &pt) const {
+  ICoord2D a = firstPt();
+  ICoord2D b = secondPt();
+  return cross(pt - a, b - a) > 0.0;
 }
 
-std::ostream &operator<<(std::ostream &os, const Quad &q) {
-  os << "Quad([";
-  for(int i=0; i<4; i++) {
-    os << "(" << q.coords[i][0] << "," << q.coords[i][1] << ")";
-    if(i<3)
-      os << ",";
-    else
-      os << "],";
-  }
-  os << " h=" << q.height << ", norm_dir=" << q.norm_dir << ")";
+std::ostream &operator<<(std::ostream &os, const PixelBdyLoopSegment &pbls) {
+  os << "PixelBdyLoopSegment(" << pbls.firstPt() << ", " << pbls.secondPt()
+     << ")";
   return os;
 }
 
-// #ifdef DEBUG
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// std::set<const Quad*> Quad::allQuads;
+void PixelSetCrossSection::add_loop(PixelBdyLoop *loop) {
+  loopset.push_back(loop);
+  if(bounds == 0)
+    bounds = new ICRectangle(loop->bbox());
+  else
+    bounds->swallow(loop->bbox());
+}
 
-// bool Quad::validQuad(const Quad *q) {
-//   return allQuads.find(q) != allQuads.end();
+// // PixelSetCrossSection::find_boundary assembles the segments located
+// // by getPlaneCS into loops.  It's slightly different from
+// // PixelSetBoundary::find_boundary because the segments aren't unit
+// // segments and consecutive segments are guaranteed not to be
+// // colinear.
+
+// void PixelSetCrossSection::find_boundary(bool verbose) {
+//   if(verbose) {
+//     oofcerr << "PixelSetCrossSection::find_boundary: segmap=";
+//     std::cerr << segmap;
+//     oofcerr << std::endl;
+//   }
+//   while(!segmap.empty()) {
+//     PixelBdyLoop *loop = new PixelBdyLoop();
+//     SegMap::iterator current = segmap.begin();
+//     ICoord2D start = (*current).first;
+//     ICoord2D here = start;
+//     ICoord2D prev = start;
+//     loop->add_point(here);
+//     ICoord2D next = (*current).second;
+//     loop->add_point(next);
+//     segmap.erase(current);
+//     bool done = false;
+//     while(!done) {
+//       prev = here;
+//       here = next;
+//       // See how many end points are accessible from the previous end point
+//       int n = segmap.count(here);
+//       if(n == 1) {
+// 	current = segmap.find(here);
+// 	next = (*current).second;
+// 	segmap.erase(current);
+// 	if(next == start) {
+// 	  done = true;
+// 	}
+// 	else {
+// 	  loop->add_point(next);
+// 	}
+//       }	// end if n == 1
+//       else if(n == 2) {
+// 	// There are two segments going out from 'here'.  One must go
+// 	// left and one right, since consecutive colinear segments are
+// 	// impossible.  Choose the one that makes a left turn.
+// 	SegMapRange range = segmap.equal_range(here);
+// 	bool ok = false;
+// 	SegMap::iterator deleteMe;
+// 	for(SegMap::iterator smi=range.first; smi!=range.second && !ok; ++smi) {
+// 	  next = (*smi).second;
+// 	  if(cross(here-prev, next-here) > 0) { // found the left turn
+// 	    ok = true;
+// 	    deleteMe = smi;
+// 	    if(next == start) {
+// 	      done = true;
+// 	    }
+// 	    else {
+// 	      loop->add_point(next);
+// 	    }
+// 	  } // end if found the left turn
+// 	}   // end loop over possible outgoing segments smi
+// 	assert(ok);
+// 	// Deletion is done outside the loop, because range.second is
+// 	// an invalid iterator after the point is deleted.
+// 	segmap.erase(deleteMe);
+//       }	    // end if n == 2
+//       else {
+// 	oofcerr << "PixelSetCrossSection::find_boundary: n=" << n << std::endl;
+// 	oofcerr << "PixelSetCrossSection::find_boundary: segmap=" << std::endl;
+// 	OOFcerrIndent indent(2);
+// 	SegMapRange range = segmap.equal_range(here);
+// 	for(SegMap::iterator i=range.first; i!=range.second; ++i)
+// 	  oofcerr << "  " << (*i).first << " " << (*i).second << std::endl;
+// 	throw ErrProgrammingError("PixelSetCrossSection::find_boundary failed!",
+// 				  __FILE__, __LINE__);
+//       }
+//     } // end while not done (with the current loop)
+//     assert(loop->size() >= 4);
+//     loop->find_bounds();
+//     loopset.push_back(loop);
+//   } // end while segmap not empty
+//   for(std::vector<PixelBdyLoop*>::iterator loop=loopset.begin();
+//       loop!=loopset.end(); ++loop)
+//     {
+//       if(bounds == 0)
+// 	bounds = new ICRectangle((*loop)->bbox());
+//       else
+// 	bounds->swallow((*loop)->bbox());
+//     }
+// }   // PixelSetCrossSection::find_boundary
+
+std::ostream &operator<<(std::ostream &os, const VoxelSetBoundary &vsb) {
+  os << "VoxelSetBoundary:  bounds=" << vsb.bbox() << std::endl;
+  const PixelSetBoundaryMap &psbm(vsb.getPixelSetBdys());
+  for(PixelSetBoundaryMap::const_iterator p=psbm.begin(); p!=psbm.end(); ++p) {
+    os << "   PixelSetBoundary: " << (*p).second
+       << " plane=" << (*p).first << std::endl;
+    os << "       loops=";
+    const std::vector<PixelBdyLoop*> &loops = (*p).second->get_loops();
+    for(std::vector<PixelBdyLoop*>::const_iterator l=loops.begin();
+	l!=loops.end(); ++l)
+      os << "  " << **l;
+    os << std::endl;
+  }
+  return os;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+Plane::Plane(const Coord3D &normal, double offset, bool normalize)
+  : unitNormal_(normal), offset_(offset)
+{
+  if(normalize)
+    unitNormal_ /= sqrt(norm2(unitNormal_));
+}
+
+bool Plane::outside(const Coord3D &pt) const {
+  return dot(unitNormal_, pt) > offset_;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// When we're doing 2D calculations on a plane of pixels, the plane is
+// described by a PixelPlane object.  The PixelPlane takes care of
+// converting from 3D coordinates to 2D coordinates.  PixelPlanes know
+// what their positive normal direction is.
+
+// PixelPlane::proj_dirs is a table that maps the 2D coordinates to
+// the 3D coordinates, given the normal information.  The mapping is
+// different for positive and negative normals so that a
+// counterclockwise loop on a 2D plane will be mapped to a
+// counterclockwise loop on the 3D plane that it's mapped to, whether
+// or not the 3D plane's normal is positive or negative.
+
+// proj_dirs[c] contains the indices of coords in a plane whose normal
+// is in the c direction.  That is, proj_dirs[c][0] and
+// proj_dirs[c][1] are the 3D axes that are mapped to the x and y axes
+// in the plane.  proj_dirs[c+3] contains the of coords in a plane
+// whose normal is in the -c direction.
+
+const unsigned int PixelPlane::proj_dirs[6][2] =
+  {{1,2},	    // c=0, normal=1
+   {2,0},	    // c=1, normal=1
+   {0,1},	    // c=2, norma1=1
+   {2,1},	    // c=0, normal=-1
+   {0,2},	    // c=1, normal=-1
+   {1,0}};	    // c=2, normal=-1
+
+PixelPlane::PixelPlane(unsigned int dir, int offst, int nrml)
+  : Plane(axisVector(dir)*nrml, offst*nrml, false),
+    proj_index(nrml==1 ? dir : dir+3),
+    direction_(dir)
+{
+  assert(nrml == 1 || nrml == -1);
+  assert(direction_ < 3);
+}
+
+// PixelPlane PixelPlane::inverted() const {
+//   return PixelPlane(direction_, normalOffset(), offset_ > 0? -1 : 1);
 // }
 
+bool PixelPlane::contains(const Coord3D &pt) const {
+  return pt[direction_] == unitNormal_[direction_]*offset_;
+}
+
+Coord2D PixelPlane::convert2Coord2D(const Coord3D &x) const {
+  return Coord2D(x[proj_dirs[proj_index][0]], x[proj_dirs[proj_index][1]]);
+}
+
+ICoord2D PixelPlane::convert2Coord2D(const ICoord3D &x) const {
+  return ICoord2D(x[proj_dirs[proj_index][0]], x[proj_dirs[proj_index][1]]);
+}
+
+Coord3D PixelPlane::convert2Coord3D(const Coord2D &x) const {
+  Coord3D xxx;
+  xxx[direction_] = unitNormal_[direction_]*offset_;
+  xxx[proj_dirs[proj_index][0]] = x[0];
+  xxx[proj_dirs[proj_index][1]] = x[1];
+  return xxx;
+}
+
+ICoord3D PixelPlane::convert2Coord3D(const ICoord2D &x) const {
+  ICoord3D xxx;
+  xxx[direction_] = unitNormal_[direction_]*offset_;
+  xxx[proj_dirs[proj_index][0]] = x[0];
+  xxx[proj_dirs[proj_index][1]] = x[1];
+  return xxx;
+}
+
+ICoord3D PixelPlane::convert2Voxel3D(const ICoord2D &x) const {
+  ICoord3D xxx;
+  if(unitNormal_[direction_] == 1.0)
+    xxx[direction_] = offset_-1;
+  else
+    xxx[direction_] = offset_;
+  xxx[proj_dirs[proj_index][0]] = x[0];
+  xxx[proj_dirs[proj_index][1]] = x[1];
+  return xxx;
+}
+
+int PixelPlane::getCategoryFromPoint(const CMicrostructure *ms,
+				     const Coord2D &pt)
+  const
+{
+  // pt is a Coord2D in *pixel* units.  Convert it to an ICoord2D by
+  // truncation.
+  ICoord2D ipt2(pt[0], pt[1]);
+  // Convert the ICoord2D to an ICoord3D.
+  ICoord3D x(convert2Voxel3D(ipt2));
+  // oofcerr << "PixelPlane::getCategoryFromPoint: pt=" << pt
+  // 	  << " ipt2=" << ipt2 << " x=" << x << std::endl;
+  ICoord3D mssize = ms->sizeInPixels();
+  for(unsigned int i=0; i<3; i++)
+    if(x[i] == mssize[i])
+      x[i] -= 1;
+  // Get the voxel category.
+  // oofcerr << "PixelPlane::getCategoryFromPoint: x=" << x << std::endl;
+  return ms->category(x);
+}
+
+ICoord3D PixelPlane::normalVector() const {
+  return ICoord3D(unitNormal_[0], unitNormal_[1], unitNormal_[2]);
+  // ICoord3D nrml(0, 0, 0);
+  // nrml[direction_] = normal_;	// +1 or -1
+  // return nrml;
+}
+
+std::ostream &operator<<(std::ostream &os, const Plane &plane) {
+  plane.print(os);
+  return os;
+}
+
+void Plane::print(std::ostream &os) const {
+  os << "Plane(" << this << ", offset=" << offset_
+     << ", normal=" << unitNormal_ << ")";
+}
+
+void PixelPlane::print(std::ostream &os) const {
+  os << "XYZ"[direction_] << "=" << normalOffset()
+     << (normalSign() == 1 ? "+" : "-")
+     // << " (" << this << ")"
+    ;
+}
+
+// Find the plane perpendicular to this plane that contains the
+// segment (pt0, pt1) in this plane.  The new plane's normal points to
+// the right when traversing the segment in this plane.
+
+PixelPlane PixelPlane::orthogonalPlane(const ICoord2D &pt0, const ICoord2D &pt1)
+  const
+{
+  // t is the direction along the segment, in this plane's coordinates.
+  unsigned int t = (pt0[0] == pt1[0] ? 1 : 0);
+  unsigned int n = (t == 0 ? 1 : 0);
+  assert(pt0[t] != pt1[t] && pt0[n] == pt1[n]);
+  int offst = pt0[n];
+  unsigned int dir = proj_dirs[proj_index][n];
+  int norm = (pt0[t] < pt1[t] ? -1 : 1);
+  if(t == 1) norm *= -1;
+  return PixelPlane(dir, offst, norm);
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+VoxelSetBoundary::~VoxelSetBoundary() {
+  for(PixelSetBoundaryMap::iterator psb=pxlSetBdys.begin();
+      psb!=pxlSetBdys.end(); ++psb)
+    delete (*psb).second;
+  for(PixelSetBoundaryMap::iterator psb=pxlSetCSs.begin();
+      psb!=pxlSetCSs.end(); ++psb)
+    delete (*psb).second;
+  delete bounds;
+}
+
+void VoxelSetBoundary::addFace(const ICoord3D &where, unsigned int c, int norm)
+{
+  PixelPlane pp(c, where[c], norm);
+  // TODO: Have PixelSetBoundaryMap store PixelSetBoundary objects,
+  // not pointers, and use emplace here?
+  PixelSetBoundaryMap::iterator psb = pxlSetBdys.find(pp);
+  if(psb == pxlSetBdys.end()) {
+// #ifdef DEBUG
+//     oofcerr << "VoxelSetBoundary::addFace: new PixelPlane " << pp << std::endl;
+// #endif // DEBUG
+    PixelSetBoundary *b = new PixelSetBoundary(microstructure);
+    pxlSetBdys[pp] = b;
+    b->add_pixel(pp.convert2Coord2D(where));
+  }
+  else {
+    (*psb).second->add_pixel(pp.convert2Coord2D(where));
+  }
+// #ifdef DEBUG
+//   oofcerr << "VoxelSetBoundary::addFace: added " << where
+// 	  << " " << pp.convert2Coord2D(where)
+// 	  << " to " << pp
+// 	  << std::endl;
+// #endif // DEBUG
+}   // end VoxelSetBoundary::addFace
+
+void VoxelSetBoundary::find_boundaries() {
+  delete bounds;
+  bounds = 0;
+  for(PixelSetBoundaryMap::iterator i=pxlSetBdys.begin(); i!=pxlSetBdys.end();
+      ++i)
+    {
+      PixelSetBoundary *psb = (*i).second;
+      const PixelPlane &pixelplane = (*i).first;
+// #ifdef DEBUG
+//       oofcerr << "VoxelSetBoundary::find_boundaries: calling find_boundary for pixelplane="
+// 	      << pixelplane << std::endl;
+//       OOFcerrIndent indent(2);
+// #endif // DEBUG
+      psb->find_boundary();
+      ICoord3D c0 = pixelplane.convert2Coord3D(psb->bbox().upperright());
+      ICoord3D c1 = pixelplane.convert2Coord3D(psb->bbox().lowerleft());
+      if(!bounds)
+	bounds = new ICRectangularPrism(c0, c1);
+      else {
+	bounds->swallow(c0);
+	bounds->swallow(c1);
+      }
+    }
+}
+
+
+
+// getPlaneCS finds the perimeter of the intersection of a PixelPlane,
+// pixplane, and the VoxelSetBoundary.  It does this by examining the
+// PixelSetBoundary planes of the VoxelSetBoundary that intersect the
+// given PixelPlane.  Those planes must be orthogonal to pixplane.
+
+// getPlaneCS is called by findPixelPlaneFacets (in tetintersection.C)
+// when looking for facets on a pixel plane that coincides with a tet
+// face.
+
+//#define DEBUG_PLANECS
+
+const std::vector<PixelBdyLoop*> &VoxelSetBoundary::getPlaneCS(
+					       const PixelPlane &pixplane,
+					       unsigned int category
+#ifdef DEBUG
+					       , bool verbose
+#endif // DEBUG
+							       )
+  const
+{
+#ifdef DEBUG_PLANECS
+  if(verbose)
+    oofcerr << "VoxelSetBoundary::getPlaneCS: pixplane=" << pixplane
+  	    << std::endl;
+  OOFcerrIndent indent(2);
+#endif // DEBUG_PLANECS
+  // See if the cross section has already been computed.
+  PixelSetBoundaryMap::const_iterator psbmi = pxlSetCSs.find(pixplane);
+  if(psbmi != pxlSetCSs.end())
+    return (*psbmi).second->get_loops();
+
+  // Create new cross section.
+  PixelSetBoundary *pscs = new PixelSetBoundary(microstructure);
+  pxlSetCSs[pixplane] = pscs;
+
+  // TODO: See if the cross section on the inverted pixel plane has
+  // already been computed.  Copy it, reverse the direction of its
+  // segments, and flip the coordinates.
+
+  ICoord2D planesize = pixplane.convert2Coord2D(microstructure->sizeInPixels());
+  int offset = pixplane.normalOffset();
+  if(offset != 0 &&
+     offset != microstructure->sizeInPixels()[pixplane.direction()])
+    {
+      for(unsigned int i=0; i<planesize[0]; i++) {
+	for(unsigned int j=0; j<planesize[1]; j++) {
+	  ICoord2D pxl(i, j);
+	  ICoord3D vxl0 = pixplane.convert2Coord3D(pxl);
+	  ICoord3D vxl1 = vxl0;
+	  vxl1[pixplane.direction()] -= 1;
+	  if(microstructure->category(vxl0) == category &&
+	     microstructure->category(vxl1) == category)
+	    {
+	      pscs->add_pixel(pxl);
+	    }
+	} // end loop over j
+      } // end loop over i
+    }
+  pscs->find_boundary();
+  return pscs->get_loops();
+} // VoxelSetBoundary::getPlaneCS
+
+// #ifdef DEBUG
+// void VoxelSetBoundary::dumpPSBs() const {
+//   for(PixelSetBoundaryMap::const_iterator psb=pxlSetBdys.begin();
+//       psb!=pxlSetBdys.end(); ++psb)
+//     {
+//       oofcerr << "VoxelSetBoundary::dumpPSBs: pixel plane="
+// 	      << (*psb).first << std::endl;
+//       OOFcerrIndent indent(2);
+//       (*psb).second->dump();
+//     }
+// }
+
+// void PixelSetBoundary::dump() const {
+//   oofcerr << "PixelSetBoundary::dump: LR=";
+//   std::cerr << segmentsLR;
+//   oofcerr << std::endl;
+//   oofcerr << "PixelSetBoundary::dump: RL=";
+//   std::cerr << segmentsRL;
+//   oofcerr << std::endl;
+//   oofcerr << "PixelSetBoundary::dump: UD=";
+//   std::cerr << segmentsUD;
+//   oofcerr << std::endl;
+//   oofcerr << "PixelSetBoundary::dump: DU=";
+//   std::cerr << segmentsDU;
+//   oofcerr << std::endl;
+// }
 // #endif // DEBUG
 
-#endif	// DIM==3
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+Coord3D triplePlaneIntersection(const Plane *plane0, const Plane *plane1,
+				const Plane *plane2)
+{
+  // Compute the intersection point of the planes.
+  SmallMatrix normals(3, 3);
+  SmallMatrix offsets(3, 1);
+  for(unsigned int i=0; i<3; i++) {
+    normals(0, i) = plane0->normal()[i];
+    normals(1, i) = plane1->normal()[i];
+    normals(2, i) = plane2->normal()[i];
+  }
+  offsets(0, 0) = plane0->offset();
+  offsets(1, 0) = plane1->offset();
+  offsets(2, 0) = plane2->offset();
+  if(normals.solve(offsets) != 0) {
+    oofcerr << "triplePlaneIntersection::point: plane0=" << *plane0 <<std::endl;
+    oofcerr << "triplePlaneIntersection::point: plane1=" << *plane1 <<std::endl;
+    oofcerr << "triplePlaneIntersection::point: plane2=" << *plane2 <<std::endl;
+    throw ErrProgrammingError("triplePlaneIntersection could not be found",
+			      __FILE__, __LINE__);
+  }
+  Coord3D isec(offsets(0, 0), offsets(1, 0), offsets(2, 0));
+  // oofcerr << "triplePlaneIntersection: " << *plane0 << " " << *plane1 << " "
+  // 	  << *plane2 << " --> " << isec << std::endl;
+  return isec;
+}
+
+Coord3D triplePlaneIntersection(const PixelPlane *p0, const PixelPlane *p1,
+				const PixelPlane *p2)
+{
+  assert(p0->direction() != p1->direction() &&
+	 p1->direction() != p2->direction() &&
+	 p2->direction() != p0->direction());
+  Coord3D pt;
+  pt[p0->direction()] = p0->normalOffset();
+  pt[p1->direction()] = p1->normalOffset();
+  pt[p2->direction()] = p2->normalOffset();
+  return pt;
+}
+
+
+bool Plane::nonDegenerate(const Plane *planeA, const Plane *planeB) const {
+  // TODO: Do we need a tolerance here?  Hopefully not.
+  return dot(normal(), cross(planeA->normal(), planeB->normal())) != 0;
+}

@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: cmicrostructure.h,v $
-// $Revision: 1.51.8.36 $
+// $Revision: 1.51.8.36.2.7 $
 // $Author: langer $
-// $Date: 2014/12/12 19:38:50 $
+// $Date: 2016/03/15 15:59:28 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -20,6 +20,7 @@
 
 class CMicrostructure;
 
+#include "common/IO/canvaslayers.h"
 #include "common/array.h"
 #include "common/boolarray.h"
 #include "common/coord.h"
@@ -32,7 +33,6 @@ class CMicrostructure;
 
 class ActiveArea;
 class CPixelSelection;
-class CSegment;
 class CRectangle;
 class PixelGroup;
 
@@ -40,7 +40,13 @@ class PixelGroup;
 class PixelSetBoundary;
 #else
 class VoxelSetBoundary;
-#endif
+class PixelBdyLoop;
+class PixelPlane;
+#endif	// DIM==2
+
+// TODO: Use unsigned ints for voxel categories.  It's inconsistent
+// now.  MicrostructureAttributes::getCategory returns an unsigned
+// int, but everything else seems to use int.
 
 // Some operations, such as finding the pixels under an element,
 // require marking pixels in the microstructure.  Neither the
@@ -167,7 +173,7 @@ private:
 #if DIM==2
   mutable std::vector<PixelSetBoundary> categoryBdys;
 #elif DIM==3
-  mutable std::vector<VoxelSetBoundary> categoryBdys;
+  mutable std::vector<VoxelSetBoundary*> categoryBdys;
 #endif
 
   mutable bool categorized;
@@ -260,6 +266,7 @@ public:
 
   int nCategories() const;
   // Three different versions of this for convenience in calling it...
+  // TODO: Are categories signed or unsigned?  We aren't consistent.
   int category(const ICoord *where) const;
   int category(const ICoord &where) const;
   int category(const Coord *where) const; // Arbitrary physical-coord point.
@@ -267,16 +274,26 @@ public:
   void recategorize();
   
   bool is_categorized() const { return categorized; }
+  void categorizeIfNecessary() const;
 
 #if DIM==2
   const std::vector<PixelSetBoundary> &getCategoryBdys() const {
     return categoryBdys;
   }
 #elif DIM==3
-  const std::vector<VoxelSetBoundary> &getCategoryBdys() const {
+  const std::vector<VoxelSetBoundary*> &getCategoryBdys() const {
     return categoryBdys;
   }
-#endif
+#endif // DIM==3
+
+#if defined(DEBUG) && DIM==3
+  void drawVoxelSetBoundaryLoops(LineSegmentLayer*, int cat, int dir,
+				 int offset, int normal) const;
+  void drawVoxelSetCrossSection(LineSegmentLayer*, int cat, int dir,
+				int offset, int normal) const;
+  void drawLoops(const std::vector<PixelBdyLoop*>&, const PixelPlane&,
+		 LineSegmentLayer*) const;
+#endif // DEBUG
 
   std::vector<ICoord> *segmentPixels(const Coord&, const Coord&, bool&, bool&,
 				     bool verbose)
@@ -298,7 +315,7 @@ public:
   double edgeHomogeneityCat(const Coord&, const Coord&, int* cat) const;
 
   friend long get_globalMicrostructureCount();
-};
+};				// end class CMicrostructure
 
 long get_globalMicrostructureCount();
 

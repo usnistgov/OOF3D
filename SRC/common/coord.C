@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: coord.C,v $
-// $Revision: 1.12.18.12 $
+// $Revision: 1.12.18.12.2.1 $
 // $Author: langer $
-// $Date: 2014/12/14 22:49:06 $
+// $Date: 2015/12/04 19:06:26 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -191,3 +191,29 @@ const Coord2D Coord2D::origin(0., 0.);
 const ICoord3D ICoord3D::origin(0, 0, 0);
 const Coord3D Coord3D::origin(0., 0., 0.);
 
+const Coord3D &axisVector(unsigned int dir) {
+  static Coord3D basis[] = {Coord3D(1., 0., 0.),
+			    Coord3D(0., 1., 0.),
+			    Coord3D(0., 0., 1.)};
+  return basis[dir];
+  // Coord3D pt(0., 0., 0.);
+  // pt[dir] = 1.0;
+  // return pt;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+TurnDirection turnDirection(const ICoord2D &pt0, const ICoord2D &pt1,
+			    const ICoord2D &pt2)
+{
+  ICoord2D a = pt1 - pt0;
+  ICoord2D b = pt2 - pt1;
+  int crossprod = cross(a, b);
+  if(crossprod > 0)
+    return LEFT;
+  if(crossprod < 0)
+    return RIGHT;
+  if(dot(a, b) < 0)
+    return UTURN;
+  return STRAIGHT;
+}

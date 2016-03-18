@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: sparsemat.C,v $
-// $Revision: 1.9.2.9 $
+// $Revision: 1.9.2.9.2.1 $
 // $Author: langer $
-// $Date: 2014/12/03 19:20:23 $
+// $Date: 2015/12/04 19:06:33 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -174,10 +174,9 @@ void mmadump(const std::string &filename, const std::string &mtxname,
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 void SparseMatCore::insert(unsigned int i, unsigned int j, double val) {
-  Entry e(j,val);
   resize(i+1, j+1);
   assert(j < nonempty_col.size());
-  data[i]->push_back(e);
+  data[i]->emplace_back(j, val);
   nonempty_col[j] = true;
   consolidated_ = false;
   ++nnz_;

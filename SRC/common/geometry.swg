@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: geometry.swg,v $
-// $Revision: 1.12.18.3 $
+// $Revision: 1.12.18.3.2.1 $
 // $Author: langer $
-// $Date: 2014/09/27 22:33:50 $
+// $Date: 2015/01/23 02:16:42 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -26,11 +26,6 @@ typedef class CPolygon<double, Coord> CPolygonCoord;
 %pragma(python) include="geometry.spy"
 %include "common/typemaps.swg"
 
-
-class CSegment {
-public:
-  CSegment(const Coord&, const Coord&);
-};
 
 class CPolygonCoord {};
 

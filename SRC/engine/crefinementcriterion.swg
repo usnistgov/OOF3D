@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: crefinementcriterion.swg,v $
-// $Revision: 1.1.2.3 $
+// $Revision: 1.1.2.3.2.1 $
 // $Author: langer $
-// $Date: 2014/12/14 01:07:46 $
+// $Date: 2015/04/02 21:31:02 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -67,6 +67,11 @@ public:
 class CheckElementsInGroup : public RefinementTargets {
 public:
   CheckElementsInGroup(char*);
+};
+
+class CheckSingleElement : public RefinementTargets {
+public:
+  CheckSingleElement(int);
 };
 
 class CheckHomogeneity : public RefinementTargets {

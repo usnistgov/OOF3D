@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: crefinementcriterion.C,v $
-// $Revision: 1.1.2.3 $
+// $Revision: 1.1.2.3.2.2 $
 // $Author: langer $
-// $Date: 2014/12/14 01:07:45 $
+// $Date: 2015/12/04 19:06:29 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -36,6 +36,11 @@ std::ostream& operator<<(std::ostream &o, const RefinementSignature &s) {
   o << "]";
   return o;
 }
+
+// Some oddity about exception specifications causes compilation
+// errors on clang++ --std=c++11 when this constructor is defined
+// in-line in crefinementcriterion.h.
+RefinementTargets::RefinementTargets() {}
 
 void RefinementTargets::mark(CSkeletonNode *n1, CSkeletonNode *n2, short d) {
   // Mark the segment from n1 to n2 for refinement d times.
@@ -123,6 +128,14 @@ void CheckElementsInGroup::createSegmentMarks(CSkeletonBase *skeleton,
 	  markElement(*it, d);
 	}
     }
+}
+
+void CheckSingleElement::createSegmentMarks(CSkeletonBase *skeleton,
+					    RefinementCriterion *criterion,
+					    short d)
+{
+  CSkeletonElement *el = skeleton->getElement(index);
+  markElement(el, d);
 }
 
 void CheckHomogeneity::createSegmentMarks(CSkeletonBase *skeleton,

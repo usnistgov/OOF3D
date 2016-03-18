@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: csubproblem.h,v $
-// $Revision: 1.32.2.10 $
-// $Author: fyc $
-// $Date: 2015/01/07 15:53:11 $
+// $Revision: 1.32.2.9 $
+// $Author: langer $
+// $Date: 2014/12/14 22:49:18 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -84,7 +84,7 @@ public:
   // set_femesh must be called right after initialization.  It's not
   // called by the constructor because the constructor is called by a
   // RegisteredClass registration, before the mesh is known.
-  void set_mesh(FEMesh *msh);
+  void set_femesh(FEMesh *msh);
   void set_nnodes(int);
   FEMesh *mesh;
   FEMesh *get_mesh() const { return mesh; }

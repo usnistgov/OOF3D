@@ -1,8 +1,8 @@
 # -*- python -*-
 # $RCSfile: ghostgfxwindow.py,v $
-# $Revision: 1.176.2.119 $
+# $Revision: 1.176.2.119.2.1 $
 # $Author: langer $
-# $Date: 2014/12/05 21:29:12 $
+# $Date: 2015/02/26 22:35:10 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,
@@ -1617,7 +1617,8 @@ class GhostGfxWindow:
     def findClickedCellID(self, who, point, view):
         self.acquireGfxLock()
         try:
-            layerlist = self.allwholayers(who, limit=1)
+            ## TODO: Why did this have limit=1?
+            layerlist = self.allwholayers(who)#, limit=1)
             for layer in layerlist:
                 if layer.pickable():
                     rval = mainthread.runBlock(

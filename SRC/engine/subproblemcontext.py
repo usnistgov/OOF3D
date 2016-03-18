@@ -1,8 +1,8 @@
 # -*- python -*-
 # $RCSfile: subproblemcontext.py,v $
-# $Revision: 1.78.2.19 $
-# $Author: fyc $
-# $Date: 2015/01/07 15:53:12 $
+# $Revision: 1.78.2.18 $
+# $Author: langer $
+# $Date: 2014/11/05 16:54:34 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -51,7 +51,7 @@ class SubProblemContext(whoville.Who):
 
 	obj.consistency = consistencyFlag
 
-        obj.set_mesh(parent.getObject())
+        obj.set_mesh(parent)
         obj.set_nnodes(self.nfuncnodes())
 
         # These shouldn't be accessed directly.  They store the values
@@ -307,7 +307,7 @@ class SubProblemContext(whoville.Who):
             self.getObject().undefine_field(fld)
         for eqn in self.all_equations():
             self.getObject().deactivate_equation(eqn)
-        self.getObject().mesh = None
+        self.getObject().set_mesh(None)
         subproblems.remove(self.path())
         from ooflib.engine import evolve
         evolve.removeSubProblem(self)
@@ -357,7 +357,7 @@ class SubProblemContext(whoville.Who):
             self.getObject().undefine_field(fld)
         for eqn in self.all_equations():
             self.getObject().deactivate_equation(eqn)
-        self.getObject().mesh = None
+        self.getObject().set_mesh(None)
         subproblems.clean(self.path())
         from ooflib.engine import evolve
         evolve.removeSubProblem(self)

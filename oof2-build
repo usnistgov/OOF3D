@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # $RCSfile: oof2-build,v $
-# $Revision: 1.35.2.2 $
-# $Author: fyc $
-# $Date: 2013/05/29 15:48:29 $
+# $Revision: 1.35.2.2.6.2 $
+# $Author: langer $
+# $Date: 2016/03/16 03:08:01 $
 
 # This script builds the various oof2 versions used by the developers.
 # It shouldn't be necessary for anyone else to use it.
@@ -59,7 +59,7 @@ pyversion = string.join(map(str, sys.version_info[:2]),".")
 # derive the directory names from the cvs tag.  The following line
 # looks like a constant string, but it's actually created by cvs, so
 # don't edit it!
-cvstag = "$Name: threePoint0-7-13-08 $"[7:-2].strip()
+cvstag = "$Name: rewriting-categoryVolumes-2015-01-22 $"[7:-2].strip()
 
 # To make it possible to build different versions of the *same* branch
 # of OOF2 (for example, one that is up-to-date with cvs and one that

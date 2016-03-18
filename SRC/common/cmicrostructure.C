@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: cmicrostructure.C,v $
-// $Revision: 1.83.2.54 $
+// $Revision: 1.83.2.54.2.12 $
 // $Author: langer $
-// $Date: 2014/12/12 19:38:50 $
+// $Date: 2016/01/15 16:42:00 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -293,6 +293,13 @@ CMicrostructure::~CMicrostructure() {
   globalMicrostructureCountLock.acquire();
   --globalMicrostructureCount;
   globalMicrostructureCountLock.release();
+#if DIM==3
+  for(std::vector<VoxelSetBoundary*>::iterator i=categoryBdys.begin();
+      i!=categoryBdys.end(); ++i)
+    {
+      delete *i;
+    }
+#endif	// DIM==3
 }
 
 
@@ -490,31 +497,16 @@ bool CMicrostructure::isActive(const ICoord &pxl) const {
 // It is the caller's responsibility to do this -- all callers are
 // within the CMicrostructure class, because this function (and the
 // lock) is private.
-void CMicrostructure::categorize() const {
 
-  // groups_attributes_lock.read_acquire();
+#if DIM==2
+void CMicrostructure::categorize() const {
   attributes.categorize();
   categoryBdys.clear();  // PixelSetBoundary has no default constructor.
 
-#if DIM==3
-  // the polydata we return is done in the pixel coordinate system so
-  // that we can use some integer math in calculating the homogeneity
-  ICoord dirs[3];
-  dirs[0]=ICoord(-1,0,0);
-  dirs[1]=ICoord(0,-1,0);
-  dirs[2]=ICoord(0,0,-1);
-#endif	// DIM==3
   ncategories = attributes.ncategories();
   for(int i=0; i < ncategories; ++i) {
-#if DIM==2
     PixelSetBoundary psb(this);
     categoryBdys.push_back(psb);
-#elif DIM==3
-    VoxelSetBoundary vsb;
-    // TODO OPT: VoxelSetBoundary objects are fairly large. Do we
-    // really want to be copying them into categoryBdys?
-    categoryBdys.push_back(vsb);
-#endif	// DIM==3
   }
 
   // loop over pixels in the microstructure
@@ -522,39 +514,91 @@ void CMicrostructure::categorize() const {
     const ICoord &where = i.coord();
     // attributeVectors is an Array<PixelAttributeVector*>
     categorymap[i] = attributes.getCategory(attributeVectors[where]);
-
-#if DIM==2
     categoryBdys[ (*cat).second ].add_pixel(where);
-#elif DIM==3
-    // Insert bottom, left, and back faces into polydata.
-    for(int j=0; j<3; j++) {
-      if(categorymap.contains(where+dirs[j])) {
-	unsigned int vxlcat0 = categorymap[where];
-	unsigned int vxlcat1 = categorymap[where+dirs[j]];
-	if(vxlcat0 != vxlcat1) {
-#ifdef DEBUG
-	  assert(vxlcat0 < categoryBdys.size());
-	  assert(vxlcat1 < categoryBdys.size());
-#endif	// DEBUG
-	  categoryBdys[ vxlcat0 ].add_face(where, j, -1);
-	  categoryBdys[ vxlcat1 ].add_face(where, j, 1);
-	} // end if vxlcat0 != vxlcat1
-      } // end if(categorymap.contains....
-    } // end loop over directions
-#endif	// DIM==3
   }  // end loop over category map
 
   // Find the boundaries.
-#if DIM==2
   for(std::vector<PixelSetBoundary>::iterator i = categoryBdys.begin();
       i!=categoryBdys.end(); ++i ) {
     (*i).find_boundary();
   }
-#endif	// DIM==2
-
  categorized = true;
- // groups_attributes_lock.read_release();
 } // end CMicrostructure::categorize
+
+#elif DIM==3
+
+static const ICoord unitvector[] = {
+  ICoord(1, 0, 0), ICoord(0, 1, 0), ICoord(0, 0, 1)
+};
+
+void CMicrostructure::categorize() const {
+  attributes.categorize();
+  for(std::vector<VoxelSetBoundary*>::iterator vsb=categoryBdys.begin();
+      vsb!=categoryBdys.end(); ++vsb)
+    {
+      delete *vsb;
+    }
+  categoryBdys.clear();
+
+  ncategories = attributes.ncategories();
+  for(int i=0; i<ncategories; ++i)
+    categoryBdys.push_back(new VoxelSetBoundary(this));
+
+  // Loop over pixels in the microstructure, and get their categories.
+  for(Array<int>::iterator i=categorymap.begin(); i!=categorymap.end(); ++i) {
+    const ICoord3D &where = i.coord();
+    // attributeVectors is an Array<PixelAttributeVector*>
+    int cat = attributes.getCategory(attributeVectors[where]);
+    categorymap[i] = cat;
+  }
+  // Loop over the voxels again, looking for category boundaries. 
+  for(Array<int>::iterator i=categorymap.begin(); i!=categorymap.end(); ++i) {
+    const ICoord3D &where = i.coord();
+    int cat = categorymap[i];
+    for(unsigned int c=0; c<3; c++) {    // loop over directions
+      ICoord3D nbr = where + unitvector[c];
+      if(!categorymap.contains(nbr) || categorymap[nbr] != cat) {
+	categoryBdys[cat]->addFace(nbr, c, +1);
+      }
+      nbr = where - unitvector[c];
+      if(!categorymap.contains(nbr) || categorymap[nbr] != cat) {
+	categoryBdys[cat]->addFace(where, c, -1);
+      }
+    } // end loop over directions c
+  }   // end loop over voxels *i
+
+// #ifdef DEBUG
+//   oofcerr << "CMicrostructure::categorize: before calling find_boundaries"
+// 	  << std::endl;
+//   OOFcerrIndent indent(2);
+//   for(VoxelSetBoundary *vsb : categoryBdys) {
+//     oofcerr << "CMicrostructure::categorize: vsb=" << vsb << std::endl;
+//     OOFcerrIndent indent(2);
+//     vsb->dumpPSBs();
+//   }
+// #endif // DEBUG
+
+  for(std::vector<VoxelSetBoundary*>::iterator vsb=categoryBdys.begin();
+      vsb!=categoryBdys.end(); ++vsb)
+    {
+      (*vsb)->find_boundaries();
+    }
+  categorized = true;
+  
+// #ifdef DEBUG
+//   oofcerr << "CMicrostructure::catgorize: bdys=" << std::endl;
+//   for(std::vector<VoxelSetBoundary*>::const_iterator vsb=categoryBdys.begin();
+//       vsb!=categoryBdys.end(); ++vsb)
+//     oofcerr << "   " << **vsb << std::endl;
+// #endif // DEBUG
+  
+} // end CMicrostructure::categorize
+#endif // DIM==3
+
+void CMicrostructure::categorizeIfNecessary() const {
+  if(!categorized)
+    categorize();
+}
 
 int CMicrostructure::nCategories() const {
   // oofcerr << "Acquire, nCategories." << std::endl;
@@ -1609,6 +1653,8 @@ double CMicrostructure::edgeHomogeneityCat(const Coord &c0, const Coord &c1,
 //   }
 // }
 
+// TODO: Remove verbose arg, or put it within #ifdef DEBUG/#endif
+
 TransitionPointIterator::TransitionPointIterator(
 			const CMicrostructure *microstructure,
 			const Coord &c0, const Coord &c1, bool verbose) 
@@ -1814,4 +1860,105 @@ Coord TransitionPointIterator::last() {
   return p1;
 }  
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+#if defined(DEBUG) && DIM==3
+
+void CMicrostructure::drawLoops(const std::vector<PixelBdyLoop*> &loops,
+				const PixelPlane &pixplane,
+				LineSegmentLayer *layer)
+  const
+{
+  for(unsigned int i=0; i<loops.size(); i++) {
+    for(unsigned int k=0; k<loops[i]->size(); k++) {
+      ICoord ipt0 = pixplane.convert2Coord3D(loops[i]->icoord(k));
+      ICoord ipt1 = pixplane.convert2Coord3D(loops[i]->next_icoord(k));
+      Coord pt0 = pixel2Physical(ipt0);
+      Coord pt1 = pixel2Physical(ipt1);
+      // oofcerr << "CMicrostructure::drawLoops: " << pt0 << " " << pt1
+      // 	      << std::endl;
+      layer->addSegment(&pt0, &pt1);
+    }
+  }
+}
+
+void CMicrostructure::drawVoxelSetBoundaryLoops(
+		LineSegmentLayer *layer, int category, int direction,
+		int offset, int normal)
+  const
+
+{
+  categorizeIfNecessary();
+  const VoxelSetBoundary *vsb = categoryBdys[category];
+  const PixelSetBoundaryMap &psbm = vsb->getPixelSetBdys();
+  if(offset >= 0 && direction >= 0 && normal != 0) {
+    const PixelPlane pixplane(direction, offset, normal);
+    PixelSetBoundaryMap::const_iterator psbi = psbm.find(pixplane);
+    if(psbi != psbm.end()) {
+      const std::vector<PixelBdyLoop*> &loops = (*psbi).second->get_loops();
+      int nseg = 0;
+      for(unsigned int i=0; i<loops.size(); i++)
+	nseg += loops[i]->size();
+      layer->set_nSegs(nseg);
+      drawLoops(loops, pixplane, layer);
+    }
+    else {
+      layer->clear();
+    }
+  }
+  else {
+    // offset < 0 ==> draw all offsets
+    // direction < 0 ==> draw all directions
+    // normal == 0 ==> draw both normals
+    int nseg = 0;
+    for(PixelSetBoundaryMap::const_iterator psbi=psbm.begin(); psbi!=psbm.end();
+	++psbi)
+      {
+	const PixelPlane &pixplane = (*psbi).first;
+	if((direction < 0 || pixplane.direction() == direction)
+	   && (offset < 0 || pixplane.normalOffset() == offset)
+	   && (normal == 0 || pixplane.normalSign() == normal))
+	  {
+	    const std::vector<PixelBdyLoop*> &loops =
+	      (*psbi).second->get_loops();
+	    for(unsigned int i=0; i<loops.size(); i++)
+	      nseg += loops[i]->size();
+	  }
+      }
+    layer->set_nSegs(nseg);
+    for(PixelSetBoundaryMap::const_iterator psbi=psbm.begin(); psbi!=psbm.end();
+	++psbi)
+      {
+	const PixelPlane &pixplane = (*psbi).first;
+	if((direction < 0 || pixplane.direction() == direction)
+	   && (offset < 0 || pixplane.normalOffset() == offset)
+	   && (normal == 0 || pixplane.normalSign() == normal))
+	  {
+	    drawLoops((*psbi).second->get_loops(), pixplane, layer);
+	  }
+      }
+  }
+}
+
+void CMicrostructure::drawVoxelSetCrossSection(
+       		LineSegmentLayer *layer, int category, int direction,
+		int offset, int normal)
+  const
+
+{
+  if(normal == 0 || direction < 0 || offset < 0) {
+    throw ErrUserError("The plane must be fully specified");
+  }
+  categorizeIfNecessary();
+  const VoxelSetBoundary *vsb = categoryBdys[category];
+  const PixelPlane pixplane(direction, offset, normal);
+  const std::vector<PixelBdyLoop*> &loops = vsb->getPlaneCS(pixplane, category,
+							    /*DEBUG*/ true);
+  int nseg = 0;
+  for(unsigned int i=0; i<loops.size(); i++)
+    nseg += loops[i]->size();
+  layer->set_nSegs(nseg);
+  drawLoops(loops, pixplane, layer);
+}
+
+#endif // DEBUG && DIM==3

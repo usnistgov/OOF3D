@@ -1,8 +1,8 @@
 # -*- python -*-
 # $RCSfile: setup.py,v $
-# $Revision: 1.100.2.26 $
+# $Revision: 1.100.2.26.2.5 $
 # $Author: langer $
-# $Date: 2014/11/07 22:31:18 $
+# $Date: 2015/12/23 15:39:40 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -21,6 +21,11 @@
 #    python setup.py [build [--debug]] install --prefix ...
 #  The flags --3D, --enable-mpi, --enable-petsc, and --enable-devel
 #  can occur anywhere after 'setup.py' in the command line.
+
+## TODO: When not building in debug mode, append "-O" to the first
+## line of the top oof2 and oof3d scripts.
+
+## TODO: The --record option for install is broken.
 
 
 # Required version numbers of required external libraries.  These
@@ -562,7 +567,7 @@ typedef int Py_ssize_t;
             ## tells gcc to add missing headers to the dependency
             ## list, and then we weed them out later.  At least this
             ## way, the "missing" headers don't cause errors.
-            cmd = 'gcc -MM -MG -MT %(target)s -ISRC -I%(builddir)s -I%(buildsrc)s %(file)s' \
+            cmd = '/usr/bin/gcc -MM -MG -MT %(target)s -ISRC -I%(builddir)s -I%(buildsrc)s %(file)s' \
               % {'file' : phile,
                  'target': os.path.splitext(phile)[0] + ".o",
                  'builddir' : self.build_temp,
@@ -600,7 +605,7 @@ typedef int Py_ssize_t;
         # SRC directory.  Run gcc -MM on the swig source files.
         print "Finding dependencies for .swg files."
         for phile in allFiles('swigfiles'):
-            cmd = 'gcc -MM -MG -MT %(target)s -x c++ -I. -ISRC -I%(builddir)s %(file)s'\
+            cmd = '/usr/bin/gcc -MM -MG -MT %(target)s -x c++ -I. -ISRC -I%(builddir)s %(file)s'\
               % {'file' : phile,
                  'target': os.path.splitext(phile)[0] + '.o',
                  'builddir' : self.build_temp
@@ -1159,10 +1164,15 @@ def set_platform_values():
             pkgpath = "/opt/local/Library/Frameworks/Python.framework/Versions/%d.%d/lib/pkgconfig/" % (sys.version_info[0], sys.version_info[1])
             print >> sys.stdout, "Adding", pkgpath
             extend_path("PKG_CONFIG_PATH", pkgpath)
-        # If we're using clang, we want to suppress some warnings
-        # about oddities in swig-generated code:
+        # Enable C++11
+        platform['extra_compile_args'].append('-Wno-c++11-extensions')
+        platform['extra_compile_args'].append('-std=c++11')
         if 'clang' in get_config_var('CC'):
+            # If we're using clang, we want to suppress some warnings
+            # about oddities in swig-generated code:
             platform['extra_compile_args'].append('-Wno-self-assign')
+            platform['extra_compile_args'].append(
+                '-Wno-tautological-constant-out-of-range-compare')
             
     elif sys.platform.startswith('linux'):
         # g2c isn't included here, because it's not always required.
@@ -1171,6 +1181,7 @@ def set_platform_values():
         # library on the command line.  The check is done later,just
         # before platform['blas_libs'] is used.
         platform['blas_libs'].extend(['lapack', 'blas', 'm'])
+        platform['extra_compile_args'].append('-std=c++11')
         if DIM_3:
             vtkinc, vtklib = findvtk('/usr')
             if vtkinc is not None:

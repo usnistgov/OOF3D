@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: cskeleton2.C,v $
-// $Revision: 1.1.4.187 $
+// $Revision: 1.1.4.187.2.2 $
 // $Author: langer $
-// $Date: 2014/12/14 01:07:46 $
+// $Date: 2015/12/22 21:33:09 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -182,75 +182,81 @@ void CSkeleton::createPointGrid(int m, int n, int l) {
   DefiniteProgress *progress = 
     dynamic_cast<DefiniteProgress*>(getProgress("Allocating nodes", DEFINITE));
 
-  points->Allocate(total, total);
-  nodes.reserve(total);
+  try {
+    points->Allocate(total, total);
+    nodes.reserve(total);
 
-  CSkeletonPointBoundary *blf = getPointBoundary("XminYminZmax", true);
-  CSkeletonPointBoundary *brf = getPointBoundary("XmaxYminZmax", true);
-  CSkeletonPointBoundary *tlf = getPointBoundary("XminYmaxZmax", true);
-  CSkeletonPointBoundary *trf = getPointBoundary("XmaxYmaxZmax", true);
-  CSkeletonPointBoundary *blb = getPointBoundary("XminYminZmin", true);
-  CSkeletonPointBoundary *brb = getPointBoundary("XmaxYminZmin", true);
-  CSkeletonPointBoundary *tlb = getPointBoundary("XminYmaxZmin", true);
-  CSkeletonPointBoundary *trb = getPointBoundary("XmaxYmaxZmin", true);
+    CSkeletonPointBoundary *blf = getPointBoundary("XminYminZmax", true);
+    CSkeletonPointBoundary *brf = getPointBoundary("XmaxYminZmax", true);
+    CSkeletonPointBoundary *tlf = getPointBoundary("XminYmaxZmax", true);
+    CSkeletonPointBoundary *trf = getPointBoundary("XmaxYmaxZmax", true);
+    CSkeletonPointBoundary *blb = getPointBoundary("XminYminZmin", true);
+    CSkeletonPointBoundary *brb = getPointBoundary("XmaxYminZmin", true);
+    CSkeletonPointBoundary *tlb = getPointBoundary("XminYmaxZmin", true);
+    CSkeletonPointBoundary *trb = getPointBoundary("XmaxYmaxZmin", true);
   
-  // TODO 3.1: Why are these loops in this order?  It probably doesn't
-  // matter.  Changing it may break many of the tests...
-  for(i=0; i<n+1; ++i) { // y dimension
-    for(j=0; j<m+1; ++j) {  // x dimension
-      for(k=0; k<l+1; ++k) {  // z dimension
-	// TODO OPT: There's no need to treat the i,j,k==0 cases explicitly.
-	if(j==m)
-	  x[0] = size[0];
-	else if(j==0)
-	  x[0] = 0.0;
-	else
-	  x[0] = j*dx;
-	if(i==n)
-	  x[1] = size[1];
-	else if(i==0)
-	  x[1] = 0.0;
-	else
-	  x[1] = i*dy;
-	if(k==l)
-	  x[2] = size[2];
-	else if(k==0)
-	  x[2] = 0.0;
-	else
-	  x[2] = k*dz;
+    // TODO 3.1: Why are these loops in this order?  It probably doesn't
+    // matter.  Changing it may break many of the tests...
+    for(i=0; i<n+1; ++i) { // y dimension
+      for(j=0; j<m+1; ++j) {  // x dimension
+	for(k=0; k<l+1; ++k) {  // z dimension
+	  // TODO OPT: There's no need to treat the i,j,k==0 cases explicitly.
+	  if(j==m)
+	    x[0] = size[0];
+	  else if(j==0)
+	    x[0] = 0.0;
+	  else
+	    x[0] = j*dx;
+	  if(i==n)
+	    x[1] = size[1];
+	  else if(i==0)
+	    x[1] = 0.0;
+	  else
+	    x[1] = i*dy;
+	  if(k==l)
+	    x[2] = size[2];
+	  else if(k==0)
+	    x[2] = 0.0;
+	  else
+	    x[2] = k*dz;
 	
-	CSkeletonNode *node = addNode(x);
+	  CSkeletonNode *node = addNode(x);
 
-	// TODO OPT: need way of storing partnerships
+	  // TODO OPT: need way of storing partnerships
 
-	// Add nodes to default point boundaries
-	if(i==0 and j==0 and k==0)
-	  blb->addNode(node);
-	if(i==0 and j==m and k==0)
-	  brb->addNode(node);
-	if(i==n and j==0 and k==0)
-	  tlb->addNode(node);
-	if(i==n and j==m and k==0)
-	  trb->addNode(node);                   
-	if(i==0 and j==0 and k==l)
-	  blf->addNode(node);
-	if(i==0 and j==m and k==l)
-	  brf->addNode(node);
-	if(i==n and j==0 and k==l)
-	  tlf->addNode(node);
-	if(i==n and j==m and k==l)
-	  trf->addNode(node);
+	  // Add nodes to default point boundaries
+	  if(i==0 and j==0 and k==0)
+	    blb->addNode(node);
+	  if(i==0 and j==m and k==0)
+	    brb->addNode(node);
+	  if(i==n and j==0 and k==0)
+	    tlb->addNode(node);
+	  if(i==n and j==m and k==0)
+	    trb->addNode(node);                   
+	  if(i==0 and j==0 and k==l)
+	    blf->addNode(node);
+	  if(i==0 and j==m and k==l)
+	    brf->addNode(node);
+	  if(i==n and j==0 and k==l)
+	    tlf->addNode(node);
+	  if(i==n and j==m and k==l)
+	    trf->addNode(node);
 
-	if(progress->stopped()) {
-	  progress->finish();
-	  return;
+	  if(progress->stopped()) {
+	    progress->finish();
+	    return;
+	  }
+	  int ndone = (i*(m+1) + j)*(l+1) + k+1;
+	  progress->setFraction(ndone/float(total));
+	  progress->setMessage(to_string(ndone) + "/" + to_string(total)
+			       + " nodes");
 	}
-	int ndone = (i*(m+1) + j)*(l+1) + k+1;
-	progress->setFraction(ndone/float(total));
-	progress->setMessage(to_string(ndone) + "/" + to_string(total)
-			     + " nodes");
-       }
+      }
     }
+  }
+  catch (...) {
+    progress->finish();
+    throw;
   }
   progress->finish();
 }
@@ -277,75 +283,80 @@ void CSkeleton::createTetra(const TetArrangement *arrangement,
   DefiniteProgress *progress = 
     dynamic_cast<DefiniteProgress*>(getProgress("Creating elements from nodes",
 						DEFINITE));
+  try {
+    // arrangement is a pointer so that it can be swigged.
+    bool flip = (*arrangement == MIDDLING_ARRANGEMENT);
+    // if(*arrangement == MODERATE_ARRANGEMENT) 
+    //   flip = 0;
+    // else if(*arrangement == MIDDLING_ARRANGEMENT)
+    //   flip = 1;
 
-  // arrangement is a pointer so that it can be swigged.
-  bool flip = (*arrangement == MIDDLING_ARRANGEMENT);
-  // if(*arrangement == MODERATE_ARRANGEMENT) 
-  //   flip = 0;
-  // else if(*arrangement == MIDDLING_ARRANGEMENT)
-  //   flip = 1;
+    ICoord lim = ICoord(n,m,l);
 
-  ICoord lim = ICoord(n,m,l);
+    for(int i=0; i<n; ++i) { // y dimension
+      for(int j=0; j<m; ++j) {  // x dimension
+	for(int k=0; k<l; ++k) {  // z dimension
 
-  for(int i=0; i<n; ++i) { // y dimension
-    for(int j=0; j<m; ++j) {  // x dimension
-      for(int k=0; k<l; ++k) {  // z dimension
+	  int element_count = 5*(i*m*l+j*l+k);
 
-	int element_count = 5*(i*m*l+j*l+k);
+	  int ulf = (i+1)*(m+1)*(l+1)+j*(l+1)+k+1;      // upper left front
+	  int urf = (i+1)*(m+1)*(l+1)+(j+1)*(l+1)+k+1;  // upper right front
+	  int lrf = i*(m+1)*(l+1)+(j+1)*(l+1)+k+1;      // lower right front
+	  int llf = i*(m+1)*(l+1)+j*(l+1)+k+1;          // lower left front 
+	  int ulb = (i+1)*(m+1)*(l+1)+j*(l+1)+k;        // upper left back
+	  int urb = (i+1)*(m+1)*(l+1)+(j+1)*(l+1)+k;    // upper right back 
+	  int lrb = i*(m+1)*(l+1)+(j+1)*(l+1)+k;        // lower right back
+	  int llb = i*(m+1)*(l+1)+j*(l+1)+k;            // lower left back
 
-	int ulf = (i+1)*(m+1)*(l+1)+j*(l+1)+k+1;      // upper left front
-	int urf = (i+1)*(m+1)*(l+1)+(j+1)*(l+1)+k+1;  // upper right front
-	int lrf = i*(m+1)*(l+1)+(j+1)*(l+1)+k+1;      // lower right front
-	int llf = i*(m+1)*(l+1)+j*(l+1)+k+1;          // lower left front 
-	int ulb = (i+1)*(m+1)*(l+1)+j*(l+1)+k;        // upper left back
-	int urb = (i+1)*(m+1)*(l+1)+(j+1)*(l+1)+k;    // upper right back 
-	int lrb = i*(m+1)*(l+1)+(j+1)*(l+1)+k;        // lower right back
-	int llb = i*(m+1)*(l+1)+j*(l+1)+k;            // lower left back
+	  if(!flip) {
+	    vtkIdType ids1[4] = {llf, urf, lrf, lrb};
+	    createElement(VTK_TETRA, 4, ids1);
+	    vtkIdType ids2[4] = {llf, ulf, urf, ulb};
+	    createElement(VTK_TETRA, 4, ids2);
+	    vtkIdType ids3[4] = {lrb, urf, urb, ulb};
+	    createElement(VTK_TETRA, 4, ids3);
+	    vtkIdType ids4[4] = {llf, lrb, llb, ulb};
+	    createElement(VTK_TETRA, 4, ids4);
+	    vtkIdType ids5[4] = {llf, ulb, urf, lrb};
+	    createElement(VTK_TETRA, 4, ids5);
+	  }
+	  else {
+	    vtkIdType ids1[4] = {llf, ulf, lrf, llb};
+	    createElement(VTK_TETRA, 4, ids1);
+	    vtkIdType ids2[4] = {ulf, urf, lrf, urb};
+	    createElement(VTK_TETRA, 4, ids2);
+	    vtkIdType ids3[4] = {ulf, ulb, urb, llb};
+	    createElement(VTK_TETRA, 4, ids3);
+	    vtkIdType ids4[4] = {lrf, urb, lrb, llb};
+	    createElement(VTK_TETRA, 4, ids4);
+	    vtkIdType ids5[4] = {ulf, urb, lrf, llb};
+	    createElement(VTK_TETRA, 4, ids5);
+	  }
 
-	if(!flip) {
-	  vtkIdType ids1[4] = {llf, urf, lrf, lrb};
-	  createElement(VTK_TETRA, 4, ids1);
-	  vtkIdType ids2[4] = {llf, ulf, urf, ulb};
-	  createElement(VTK_TETRA, 4, ids2);
-	  vtkIdType ids3[4] = {lrb, urf, urb, ulb};
-	  createElement(VTK_TETRA, 4, ids3);
-	  vtkIdType ids4[4] = {llf, lrb, llb, ulb};
-	  createElement(VTK_TETRA, 4, ids4);
-	  vtkIdType ids5[4] = {llf, ulb, urf, lrb};
-	  createElement(VTK_TETRA, 4, ids5);
-	}
-	else {
-	  vtkIdType ids1[4] = {llf, ulf, lrf, llb};
-	  createElement(VTK_TETRA, 4, ids1);
-	  vtkIdType ids2[4] = {ulf, urf, lrf, urb};
-	  createElement(VTK_TETRA, 4, ids2);
-	  vtkIdType ids3[4] = {ulf, ulb, urb, llb};
-	  createElement(VTK_TETRA, 4, ids3);
-	  vtkIdType ids4[4] = {lrf, urb, lrb, llb};
-	  createElement(VTK_TETRA, 4, ids4);
-	  vtkIdType ids5[4] = {ulf, urb, lrf, llb};
-	  createElement(VTK_TETRA, 4, ids5);
-	}
+	  // for(int a=0; a<5; ++a)
+	  //   elements[element_count+a]->findHomogeneityAndDominantPixel(MS);
+	  ICoord idx = ICoord(i,j,k);
+	  addGridSegmentsToBoundaries(idx,lim);
+	  addGridFacesToBoundaries(idx,lim,flip);
 
-	// for(int a=0; a<5; ++a)
-	//   elements[element_count+a]->findHomogeneityAndDominantPixel(MS);
-	ICoord idx = ICoord(i,j,k);
-	addGridSegmentsToBoundaries(idx,lim);
-	addGridFacesToBoundaries(idx,lim,flip);
+	  flip = !flip;
 
-	flip = !flip;
+	  if(progress->stopped()) return;
+	  progress->setFraction(float(element_count)/float(total));
+	  progress->setMessage(to_string(element_count) + "/"
+			       + to_string(total) + " elements");
 
-	if(progress->stopped()) return;
-	progress->setFraction(float(element_count)/float(total));
-	progress->setMessage(to_string(element_count) + "/"
-			     + to_string(total) + " elements");
-
-      }	// end loop over z
-      if(l%2==0) flip = !flip;
-    } // end loop over x
-    if(m%2==0) flip = !flip;
-  } // end loop over y
-  incrementTimestamp();
+	}	// end loop over z
+	if(l%2==0) flip = !flip;
+      } // end loop over x
+      if(m%2==0) flip = !flip;
+    } // end loop over y
+    incrementTimestamp();
+  }
+  catch (...) {
+    progress->finish();
+    throw;
+  }
   progress->finish();
 }
 
@@ -860,25 +871,31 @@ void CSkeletonBase::calculateHomogeneityIndex() const {
   DefiniteProgress *progress = 
     dynamic_cast<DefiniteProgress*>(getProgress("Calculating homogeneity index",
 						DEFINITE));
-  for(CSkeletonElementIterator elit = beginElements(); 
-      elit != endElements(); ++elit)
-    {
-      if(!(*elit)->illegal()) {
-	homogeneityIndex +=
-	  (*elit)->volume()*(*elit)->homogeneity(getMicrostructure());
-	if((*elit)->suspect()) 
-	  ++suspectCount;
+  try {
+    for(CSkeletonElementIterator elit = beginElements(); 
+	elit != endElements(); ++elit)
+      {
+	if(!(*elit)->illegal()) {
+	  homogeneityIndex +=
+	    (*elit)->volume()*(*elit)->homogeneity(getMicrostructure());
+	  if((*elit)->suspect()) 
+	    ++suspectCount;
+	}
+	else
+	  ++illegalCount;
+	progress->setFraction(float((*elit)->getIndex())/nelements());
+	progress->setMessage(to_string((*elit)->getIndex()) + "/" +
+			     to_string(nelements()));
       }
-      else
-	++illegalCount;
-      progress->setFraction(float((*elit)->getIndex())/nelements());
-      progress->setMessage(to_string((*elit)->getIndex()) + "/" +
-			   to_string(nelements()));
-    }
-  homogeneityIndex /= volume();
-  ++homogeneity_index_computation_time;
-  ++illegal_count_computation_time;
-  ++suspect_count_computation_time;
+    homogeneityIndex /= volume();
+    ++homogeneity_index_computation_time;
+    ++illegal_count_computation_time;
+    ++suspect_count_computation_time;
+  }
+  catch (...) {
+    progress->finish();
+    throw;
+  }
   progress->finish();
 }
 
@@ -3205,11 +3222,9 @@ void ProvisionalChanges::accept() {
       // 	      << (*it).mobility[0] << " " << (*it).mobility[1] << " "
       // 	      << (*it).mobility[2] << std::endl;
       (*it).node->moveTo((*it).position);
-      if((*it).mobility != NULL) {
-	(*it).node->setMobilityX((*it).mobility[0]);
-	(*it).node->setMobilityY((*it).mobility[1]);
-	(*it).node->setMobilityZ((*it).mobility[2]);
-      }
+      (*it).node->setMobilityX((*it).mobility[0]);
+      (*it).node->setMobilityY((*it).mobility[1]);
+      (*it).node->setMobilityZ((*it).mobility[2]);
     }
 
   // Element insertions.

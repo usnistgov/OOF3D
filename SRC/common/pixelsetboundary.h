@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: pixelsetboundary.h,v $
-// $Revision: 1.20.10.21 $
+// $Revision: 1.20.10.21.2.33 $
 // $Author: langer $
-// $Date: 2014/12/12 18:53:03 $
+// $Date: 2016/03/18 19:24:37 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,
@@ -14,16 +14,21 @@
  * oof_manager@nist.gov. 
  */
 
+// Special classes for keeping track of the boundaries of voxel and
+// pixel sets.  2D pixel set boundaries are stored as a set of loops
+// encircling the pixels.  3D voxel set boundaries are stored by
+// storing their cross sections as 2D pixel set boundaries in each of
+// the three xyz directions.  This allows us to use the 2D
+// pixel/polygon intersection code to compute the intersection of
+// voxel sets with tetrahedra.
+
 #include <oofconfig.h>
 
 #ifndef PIXELSETBOUNDARY_H
 #define PIXELSETBOUNDARY_H
 
-// TODO 3.1: Far too many files are recompiled when this one is
-// edited.  Reduce the number of places in which it and its dependents
-// are included.
-
 #include <map>
+#include <set>
 #include <vector>
 
 #include "common/coord.h"
@@ -32,311 +37,343 @@
 
 class CMicrostructure;
 
-// Special classes for keeping track of the boundaries of pixel sets.
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// PixelBdySegment object is either the bottom or left-side boundary
-// of the pixel located at ICoord in the mesh.  The purpose of
-// identifying things this way is to avoid any possible round-off
-// problems.  Note that, for pixel boundary segments on the right-hand
-// edge or the top of a microstructure, the ICoord passed in will not
-// correspond to an actual pixel in that microstructure -- the segment
-// will be (e.g.) the left-hand boundary of a farther-than-rightmost
-// pixel.
+// TODO: Move Plane class to geometry.[Ch]?
 
-// The boolean flags provide enough data to locate and direct the
-// segment, but this is not done initially due to possible round-off
-// problems.  All these segments are either horizontal or vertical.
-// The "local" flag is true if this segment is the bottom or left
-// segment of the pixel indicated by the ICoord, and false if it is
-// the top segment of the pixel below the ICoord or the right segment
-// of the pixel to the left of the ICoord.
-
-#if DIM == 2
-class PixelSetBoundary;
-
-
-// Special utility class for pixel boundary intersections, so we can
-// keep track of "incoming" versus "outgoing" intersections.  Incoming
-// and outgoing are intended to be used with respect to elements --
-// entry==true means that the pixel boundary enters the element at
-// this intersection, and entry==false means that it exits the element
-// at this intersection.
-class PixelBdyIntersection {
-private:
-  // The node-index and fraction values are specific to a particular
-  // skeleton element, and are filled in by the cskeleton element.
-  // The node index is an integer indicating which node is at the
-  // start of the element boundary on which the intersection occurs,
-  // and the "fraction" number is the square of the distance from the
-  // start of this element boundary to the location of the
-  // intersection.
-  int node_index;
-  double fraction; 
+class Plane {
+protected:
+  Coord3D unitNormal_;
+  double offset_;		// distance from origin in direction
+				// of unitNormal_.  May be negative.
 public:
-  Coord location;
-  bool entry;  // 
-
-  PixelBdyIntersection(Coord &loc, bool ntry) 
-    : node_index(0), fraction(0), location(loc), entry(ntry)
-  {} 
-  PixelBdyIntersection() 
-    : node_index(0), fraction(0), entry(false) 
-  {}
-  void set_element_data(int ni, double f) {
-    node_index = ni;
-    fraction = f;
+  Plane(const Coord3D &normal, double offset, bool normalize=false);
+  Plane() {}
+  virtual ~Plane() {}
+  const Coord3D &normal() const { return unitNormal_; }
+  double offset() const { return offset_; }
+  virtual void print(std::ostream &) const;
+  bool operator<(const Plane &other) const {
+    // Compare normals before offsets, and use > for normals, so that
+    // pixel planes are sorted in XYZ order.
+    return (unitNormal_ > other.unitNormal_ ||
+	    (unitNormal_ == other.unitNormal_ && offset_ < other.offset_));
+    // return (offset_ < other.offset_ ||
+    // 	    (offset_ == other.offset_ && unitNormal_ < other.unitNormal_));
   }
-  int get_element_node_index() const { return node_index; }
-  double get_element_fraction() const { return fraction; }
+  bool operator==(const Plane &other) const {
+    return offset_ == other.offset_ && unitNormal_ == other.unitNormal_;
+  }
+  // Planes are "opposed" if they occupy the same points in space but
+  // have opposing normals.
+  bool opposed(const Plane &other) const {
+    return unitNormal_ == -1*other.normal() && offset_ == -other.offset();
+  }
+  // Planes are "coincident" if they occupy the same points in space.
+  bool coincident(const Plane &other) const {
+    return *this == other || opposed(other);
+  }
+  // Is the given point on the same side as the normal?
+  bool outside(const Coord3D &pt) const;
+
+  // Do this plane and the two given planes define a point?
+  bool nonDegenerate(const Plane*, const Plane*) const;
 };
 
-typedef std::pair<Coord, Coord> CoordPair;
+// The PixelPlane class provides the link between the 2D pixel
+// calculations and the 3D voxel calculations.
 
-class PixelBdySegment {
-  // Represents a collinear and contiguous set of pixel edges.
-private:
-  ICoord pixel;
-  bool horizontal;
-  bool local;
-  mutable bool coordinated; // Indicates if start, end have been set.
-  mutable ICoord start, end;
-
-  // For speed, geometric data is represented several ways.  fp_level
-  // is the "level" (x-value of vertical, y-value of horizontal) of
-  // this segment.  fp_start and fp_end are the start and end points
-  // on the x-axis for horizontal, and y-axis for vertical, segments.
-  // fp_first and fp_last are a second representation of the start and
-  // end coordinates, used in intersection checking, and guaranteed to
-  // have the property that fp_first < fp_last.  This saves continual
-  // checking of the "local" flag.
-  mutable double fp_level, fp_start, fp_end, fp_first, fp_last;
-  mutable bool floated; // Indicates if the above have been set.
+class PixelPlane : public virtual Plane {
+protected:
+  static const unsigned int proj_dirs[6][2];
+  unsigned int proj_index; // index into proj_dirs
+  unsigned int direction_;
 public:
-  PixelBdySegment(const ICoord &pxl, bool horiz, bool lcl) :
-    pixel(pxl), horizontal(horiz), local(lcl), 
-    coordinated(false), floated(false) {}
-  bool operator<(const PixelBdySegment &other) const;
-  ICoord coordinate() const;
-  void extend();
-  void set_floats(const Coord&) const;
+  PixelPlane(unsigned int dir, int offst, int nrml);
+  // The null constructor is provided only so that we can create
+  // vectors of PixelPlanes.  The elements of the vector should
+  // reinitialized with real PixelPlane data.
+  PixelPlane() : proj_index(0), direction_(0) {}
+  unsigned int direction() const { return direction_; }	// x, y, or z (0, 1, 2)
 
-  // Intersection-related support functions for the skeleton elements'
-  // categoryAreas computation.
-  bool find_no_intersection(const Coord* const, int, const Coord&) const;
+  // normalOffset is the distance from the origin to the plane,
+  // independent of the orientation of the plane.
+  int normalOffset() const { return unitNormal_[direction_]*offset_; }
+  int normalSign() const { return unitNormal_[direction_] > 0 ? 1 : -1; }
+  
+  int getCategoryFromPoint(const CMicrostructure*, const Coord2D&) const;
+  bool contains(const Coord3D&) const;
+  
+  // The arguments and return values for these conversion routines are
+  // all in pixel and voxel units, not physical units.
+  Coord2D convert2Coord2D(const Coord3D&) const;
+  Coord3D convert2Coord3D(const Coord2D&) const;
+  ICoord2D convert2Coord2D(const ICoord3D&) const;
+  ICoord3D convert2Coord3D(const ICoord2D&) const;
+  // When converting to a voxel, not just a 3D position, the voxel on
+  // the correct side of the plane must be returned.  This subtracts 1
+  // if the normal is positive.
+  ICoord3D convert2Voxel3D(const ICoord2D&) const;
+  ICoord3D normalVector() const;
 
-  int find_one_intersection(const Coord* const, int,
-			    PixelBdyIntersection&, bool) const;
-
-//   bool find_intersection(const Coord &p1, const Coord &p2, 
-// 			 const Coord &dp,
-// 			 PixelBdyIntersection &) const;
-
-  inline Coord start_pt() const {
-    if (horizontal)
-      return Coord(fp_start, fp_level);
-    return Coord(fp_level, fp_start);
-  };
-
-  inline Coord end_pt() const {
-    if (horizontal) 
-      return Coord(fp_end, fp_level);
-    return Coord(fp_level, fp_end);
-  };
-
-  friend class PixelSetBoundary;
-  friend class PixelBdyLoop;
-  friend std::ostream& operator<<(std::ostream &, const PixelBdySegment&);
+  // Return the orthogonal pixel plane that passes through the given points.
+  PixelPlane orthogonalPlane(const ICoord2D&, const ICoord2D&) const;
+  virtual void print(std::ostream&) const;
 };
 
-std::ostream& operator<<(std::ostream &, const PixelBdySegment&);
+Coord3D triplePlaneIntersection(const Plane*, const Plane*, const Plane*);
+Coord3D triplePlaneIntersection(const PixelPlane*, const PixelPlane*,
+				const PixelPlane*);
+
+// #ifdef OLDPIXELPLANE
+// class PixelPlane {
+// private:
+//   static const unsigned int proj_dirs[6][2];
+//   unsigned int proj_index; // index into proj_dirs
+//   unsigned int direction_;
+//   int offset_;
+//   int normal_;
+// public:
+//   PixelPlane(unsigned int dir, int offset, int normal);
+//   // The null constructor is provided only so that we can create
+//   // vectors of PixelPlanes.  The elements of the vector should
+//   // reinitialized with real PixelPlane data.
+//   PixelPlane() : proj_index(0), direction_(0), offset_(-1), normal_(0) {}
+//   unsigned int direction() const { return direction_; }	// x, y, or z (0, 1, 2)
+//   int offset() const { return offset_; } // distance from plane to the origin
+//   int normal() const { return normal_; } // +1 or -1
+//   bool operator<(const PixelPlane &other) const {
+//     return (direction_ < other.direction_ ||
+// 	    (direction_ == other.direction_ &&
+// 	     (offset_ < other.offset_ ||
+// 	      (offset_ == other.offset_ && normal_ < other.normal_))));
+//   }
+//   int getCategoryFromPoint(const CMicrostructure*, const Coord2D&) const;
+//   bool contains(const Coord3D&) const;
+//   PixelPlane inverted() const {
+//     return PixelPlane(direction_, offset_, -normal_);
+//   }
+
+//   // The arguments and return values for these conversion routines are
+//   // all in pixel and voxel units, not physical units.
+//   Coord2D convert2Coord2D(const Coord3D&) const;
+//   Coord3D convert2Coord3D(const Coord2D&) const;
+//   ICoord2D convert2Coord2D(const ICoord3D&) const;
+//   ICoord3D convert2Coord3D(const ICoord2D&) const;
+//   // When converting to a voxel, not just a 3D position, the voxel on
+//   // the correct side of the plane must be returned.  This subtracts 1
+//   // if the normal is positive.
+//   ICoord3D convert2Voxel3D(const ICoord2D&) const;
+
+//   ICoord3D normalVector() const;
+// };
+// #endif // OLDPIXELPLANE
+
+std::ostream &operator<<(std::ostream&, const Plane&);
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+typedef std::multimap<ICoord2D, ICoord2D> DirectedSegMap; // start pt, direction
+
+// TODO: Should PixelBdyLoops be stored in terms of
+// PixelPlaneIntersections instead of ICoord2Ds?  That would use more
+// memory, but it's the PixelPlaneIntersections that are used in
+// HomogeneityTet::doFindPixelPlaneFacets.
 
 class PixelBdyLoop {
 private:
-  std::vector<PixelBdySegment> loop;
-  CRectangle *bounds;		// computed by set_floats
+  std::vector<ICoord2D> loop;
+  ICRectangle *bounds;		// computed by clean
 public:
-  PixelBdyLoop() : bounds(0) {}
+  PixelBdyLoop()
+    : bounds(0)
+  {}
+  PixelBdyLoop(const PixelBdyLoop&);
   ~PixelBdyLoop();
-  void add_segment(const PixelBdySegment&);
+  void add_point(const ICoord2D&);
+  // clean is called after all points are added.  It combines colinear
+  // consecutive segments and computes the bounding box while doing so.
   void clean();
-  void set_floats(const Coord&);
-  const CRectangle &bbox() const { return *bounds; }
-  const std::vector<PixelBdySegment> &segments() const { return loop; }
+  // find_bounds just computes the bounding box, for loops constructed
+  // in a way that doesn't require them to be cleaned.
+  void find_bounds();
+  bool closed() const;
+  unsigned int size() const { return loop.size(); }
+  const ICRectangle &bbox() const { return *bounds; } // in physical coords
+  const std::vector<ICoord2D> &segments() const { return loop; }
+
+  // The following methods return information about a given segment in
+  // the loop.  Their values could be cached when the loop is cleaned,
+  // if recomputing them is too slow.  They're used a lot in the
+  // homogeneity calculation.
+  ICoord2D icoord(unsigned int) const;
+  ICoord2D prev_icoord(unsigned int) const;
+  ICoord2D next_icoord(unsigned int) const;
+  ICoord2D next2_icoord(unsigned int) const;
+  bool left_turn(unsigned int) const;
+  bool right_turn(unsigned int) const;
+  bool horizontal(unsigned int) const;
+  bool decreasing(unsigned int) const;
+  int windingNumber(const Coord2D&) const;
+  int area() const;		// for debugging
+
+  bool contains(const ICoord2D&, unsigned int&) const;
+  
   friend std::ostream& operator<<(std::ostream&, const PixelBdyLoop&);
   friend class PixelSetBoundary; // for debugging
 };
 
-std::ostream& operator<<(std::ostream&, const PixelBdyLoop&);
-
-typedef std::map<PixelBdySegment, int> SegMap;
-typedef std::multimap<ICoord, PixelBdySegment> CoordMap;
-
-// Pixel set boundary knows its microstructure.  The way this works
-// is, you create it with a microstructure, then put in all the pixels
-// in the pixel set for which you want this to be the boundary, then
-// call the "find_boundary" method, which finds all the loops and
-// assigns them to the "loopset" member.
-class PixelSetBoundary {
+class PixelBdyLoopSegment {
 private:
-  SegMap segments;
-  const CMicrostructure* microstructure;
-  Coord ms_delta;
-  std::vector<PixelBdyLoop*> loopset;
-  PixelBdyLoop *find_loop(CoordMap&);
+  const PixelBdyLoop *loop_;
+  unsigned int loopseg_;
 public:
-  PixelSetBoundary(const CMicrostructure*);
-  ~PixelSetBoundary();
-  void add_pixel(const ICoord&);
-  void find_boundary();
-  const std::vector<PixelBdyLoop*> &get_loops() const { return loopset; }
-  friend std::ostream& operator<<(std::ostream &, const PixelSetBoundary&);
+  PixelBdyLoopSegment(const PixelBdyLoop *l, unsigned int s)
+    : loop_(l), loopseg_(s)
+  {}
+  PixelBdyLoopSegment() : loop_(NULL), loopseg_(0) {}
+  const PixelBdyLoop *loop() const { return loop_; }
+  unsigned int loopseg() const { return loopseg_; }
+  // TODO: Should firstPt and secondPt return references?
+  ICoord2D firstPt() const { return loop_->icoord(loopseg_); }
+  ICoord2D secondPt() const { return loop_->next_icoord(loopseg_); }
+  bool follows(const PixelBdyLoopSegment &other) const {
+    return other.secondPt() == firstPt();
+  }
+  int length() const;
+  bool operator<(const PixelBdyLoopSegment&) const; // for std::set
+  bool operator==(const PixelBdyLoopSegment&) const;
+  PixelBdyLoopSegment &operator=(const PixelBdyLoopSegment &other);
+
+  // Is a point to the right of the segment?
+  bool onRight(const Coord2D&) const;
 };
 
+std::ostream& operator<<(std::ostream&, const PixelBdyLoop&);
+std::ostream& operator<<(std::ostream&, const PixelBdyLoopSegment&);
 
-// For debugging....
-std::ostream& operator<<(std::ostream &, const PixelSetBoundary &);
+typedef std::set<ICoord2D> SegSet2D;
 
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-#else //  DIM==3
+// Base class for PixelSetBoundary and PixelSetCrossSection.
 
-// Quad is a quadrilateral piece of a VoxelSet boundary.  It must lie
-// in a coordinate plane, so we keep track of which plane (norm_dir),
-// the offset of that plane (height) and the 2d coordinates of the
-// corners in that plane (coords). Everything is described in voxel
-// units, so the components are all integers.
+// TODO: Remove PixelSetCrossSection class and merge
+// PixelSetBoundaryBase with PixelSetBoundary.
 
-// TODO 3.1: Quad is a bad name.  Call it VoxelBdyQuad, or something.
+class PixelSetBoundaryBase {
+protected:
+  const CMicrostructure *microstructure;
+  ICRectangle *bounds;		// in 2D pixel coords
+  std::vector<PixelBdyLoop*> loopset;
+public:
+  PixelSetBoundaryBase(const CMicrostructure*);
+  virtual ~PixelSetBoundaryBase();
+  const std::vector<PixelBdyLoop*> &get_loops() const { return loopset; }
+  const ICRectangle &bbox() const { return *bounds; } // in pixel coords
+};
 
-class Quad {
+// PixelSetBoundary stores the 2D loops that define the exterior
+// facets of a voxel set.  The way this works is, you create it with a
+// microstructure, then put in all the pixels in the pixel set for
+// which you want this to be the boundary, then call the
+// "find_boundary" method, which finds all the loops and assigns them
+// to the "loopset" member.
+
+class PixelSetBoundary : public PixelSetBoundaryBase {
 private:
+  SegSet2D segmentsLR;		// segments going from left to right
+  SegSet2D segmentsRL;		// ... right to left
+  SegSet2D segmentsUD;		// ... up to down
+  SegSet2D segmentsDU;		// ... down to up
+
+  PixelBdyLoop *find_loop(DirectedSegMap&);
 // #ifdef DEBUG
-//   static std::set<const Quad*> allQuads;
-// public:
-//   static bool validQuad(const Quad*);
+//   int npixels;
 // #endif // DEBUG
 public:
-  Quad();
-  ~Quad();
-  int coords[4][2];
-  // norm_dir is the index of the coordinate of the direction of the
-  // normal.  Ie, norm_dir=2 means this Quad lies in an xy plane.
-  int norm_dir;
-  int norm;	// just gives the sign of the normal
-  int area;
-  int height; // gives the value of norm_dir coordinate;
+  PixelSetBoundary(const CMicrostructure *ms)
+    : PixelSetBoundaryBase(ms)
+// #ifdef DEBUG
+//     , npixels(0)
+// #endif // DEBUG
+  {}
+  void add_pixel(const ICoord2D&);
+  void find_boundary();
+  // friend std::ostream& operator<<(std::ostream &, const PixelSetBoundary&);
+  friend class PixelBdyLoop;
+
+// #ifdef DEBUG
+//   void dump() const;
+// #endif
 };
 
-std::ostream &operator<<(std::ostream&, const Quad&);
+// // For debugging....
+// std::ostream& operator<<(std::ostream &, const PixelSetBoundary &);
 
-typedef std::vector<Quad*> QuadVector;
+// PixelSetCrossSection stores the loops that define the cross section
+// of a pixel plane and a voxel set.  Geometrically it's more like the
+// 2D PixelSetBoundary than the 3D PixelSetBoundary is, but it's
+// constructed differently than 2D PixelSetBoundary.
+// PixelSetCrossSection is constructed from existing 3D
+// PixelSetBoundarys.
 
-// PlanesOfQuads maps an offset (height) to a list of Quads at that
-// height.  A VoxelSetBoundary has a PlanesOfQuads for each direction.
-// The Quads in each PlanesOfQuads have normals in that direction.
-typedef std::map<int, QuadVector*> PlanesOfQuads;
+class PixelSetCrossSection : public PixelSetBoundaryBase {
+public:
+  PixelSetCrossSection(const CMicrostructure *ms)
+    : PixelSetBoundaryBase(ms)
+  {}
+  void add_loop(PixelBdyLoop*);
+};
+
+typedef std::map<PixelPlane, PixelSetBoundary*> PixelSetBoundaryMap;
+typedef std::map<PixelPlane, PixelSetCrossSection*> PixelSetCrossSectionMap;
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+
+// TODO: When categories change in the MS, keep track of which ones
+// have changed and recompute VoxelSetBoundarys only for them.
 
 class VoxelSetBoundary {
 private:
-  PlanesOfQuads quads[3];	// one for each direction
-  // for convenience in finding the faces of voxels
-  static const ICoord dirs[6];
-  static const ICoord faces[3][4];
-
+  // For each c-coordinate (x, y, or z) store a PixelSetBoundaryMap
+  // for the voxel faces (ie, pixels) on the +c side of the voxel set
+  // and on the -c side.  Storing the +c and -c sets separately means
+  // that we don't have to store normal information with the pixels.
+  PixelSetBoundaryMap pxlSetBdys;
+  // The difference between pxlSetBdys and pxlSetCSs is that
+  // pxlSetBdys[p] contains the boundaries on PixelPlane p of the
+  // exterior facets of the voxel set, while pxlSetCSs[p] contains the
+  // boundaries of the cross section of the voxel set with the
+  // PixelPlane.  Cross sections are computed and cached on demand.
+  mutable PixelSetBoundaryMap pxlSetCSs;
+  ICRectangularPrism *bounds;
 public:
-  VoxelSetBoundary() {}
+  const CMicrostructure *microstructure;
+
+  VoxelSetBoundary(const CMicrostructure *ms)
+    : bounds(0),
+      microstructure(ms)
+  {}
   ~VoxelSetBoundary();
-  const PlanesOfQuads& getQuads(int i) const { return quads[i]; }
-  void add_face(const ICoord&, int, int);
+  void addFace(const ICoord&, unsigned int, int);
+  void find_boundaries();
+  const ICRectangularPrism &bbox() const { return *bounds; }
 
-  // this gives the indices for quads stored in 2D
-  static const short proj_dirs[3][2];
+  const PixelSetBoundaryMap &getPixelSetBdys() const { return pxlSetBdys; }
+  const std::vector<PixelBdyLoop*> &getPlaneCS(const PixelPlane&,
+					       unsigned int
+#ifdef DEBUG
+					       , bool
+#endif // DEBUG
+					       ) const;
+
+// #ifdef DEBUG
+//   void dumpPSBs() const;
+// #endif // DEBUG
 };
 
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-enum IntersectionCategory {
-  UNCATEGORIZED_INTERSECTION=0,
-  // mnemonic: one enters before one exits
-  ENTRANCE_INTERSECTION=1,
-  EXIT_INTERSECTION=2,
-  GRAZE_INTERSECTION=3 // graze = exit + entrance
-};
-
-class IntersectionType {
-public:
-  IntersectionType() : entrances(0), exits(0) {}
-  unsigned short entrances;
-  unsigned short exits;
-};
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// just a container class so we can put the location and the type in a map
-class VoxelBdyIntersection {
-private:
-  //std::map<unsigned short, IntersectionType> types;
-  IntersectionType types[4];
-
-public:
-  Coord location;
-
-  // TODO: Why not use Coord instead of double x, y, z?
-
-  VoxelBdyIntersection(double x, double y, double z, unsigned short f0, 
-		       unsigned short f1) 
-  {
-    location = Coord(x,y,z);
-    IntersectionType temp;
-    assert(0 <= f0 && f0 < 4);
-    assert(0 <= f1 && f1 < 4);
-    types[f0] = types[f1] = temp;
-  }  
-  VoxelBdyIntersection(double x, double y, double z, unsigned short f0,
-		       unsigned short f1, unsigned short f2) 
-  {
-    assert(0 <= f0 && f0 < 4);
-    assert(0 <= f1 && f1 < 4);
-    assert(0 <= f2 && f2 < 4);
-    location = Coord(x,y,z);
-    IntersectionType temp;
-    types[f0] = types[f1] = types[f2] = temp;
-  }
-  IntersectionCategory getType(unsigned short face) { 
-    unsigned short x = (types[face].entrances*ENTRANCE_INTERSECTION +
-	    types[face].exits*EXIT_INTERSECTION) % GRAZE_INTERSECTION;
-    return (IntersectionCategory) x;
-  }  
-  void addEntrance(unsigned short face) {
-    ++types[face].entrances;
-  }
-  void addExit(unsigned short face) {
-    ++types[face].exits;
-  }
-  void addType(unsigned short face, IntersectionCategory type) {
-    if(type == ENTRANCE_INTERSECTION)
-      addEntrance(face);
-    if(type == EXIT_INTERSECTION)
-      addExit(face);
-  }
-  // void setType(unsigned short face, IntersectionCategory type) { 
-  //   IntersectionType temp;
-  //   types[face] = temp;
-  //   addType(face, type);
-  // }
-  void combine(unsigned short face, VoxelBdyIntersection &other) {
-    types[face].entrances += other.types[face].entrances;
-    types[face].exits += other.types[face].exits;
-    other.types[face].entrances = 0;
-    other.types[face].exits = 0;
-  }
-};				// end VoxelBdyIntersection
-
-
-
-#endif	// DIM==3
+std::ostream &operator<<(std::ostream&, const VoxelSetBoundary&);
 
 
 #endif // PIXELSETBOUNDARY_H

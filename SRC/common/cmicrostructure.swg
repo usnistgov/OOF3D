@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: cmicrostructure.swg,v $
-// $Revision: 1.35.8.14 $
+// $Revision: 1.35.8.14.2.3 $
 // $Author: langer $
-// $Date: 2014/09/27 22:33:48 $
+// $Date: 2015/04/22 13:40:42 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -150,7 +150,10 @@ public:
 			    int* cskel_edgecat);
 //   bool transitionPointWithPoints_unbiased(Coord *Point, Coord *Point,
 // 				 Coord *cskel_OutPoint);
-
+#ifdef DEBUG
+  void drawVoxelSetBoundaryLoops(LineSegmentLayer*, int, int, int, int);
+  void drawVoxelSetCrossSection(LineSegmentLayer*, int, int, int, int);
+#endif // DEBUG
 };
 
 long get_globalMicrostructureCount();

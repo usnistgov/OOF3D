@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: cfiddlenodes.C,v $
-// $Revision: 1.1.4.35 $
+// $Revision: 1.1.4.35.2.2 $
 // $Author: langer $
-// $Date: 2014/12/14 22:49:12 $
+// $Date: 2015/04/20 21:53:57 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -18,6 +18,7 @@
 #include "common/random.h"
 #include "common/progress.h"
 #include "common/tostring.h"
+#include "common/IO/oofcerr.h"
 #include "engine/cfiddlenodes.h"
 #include "engine/cskeleton2.h"
 #include "engine/cskeletonelement.h"
@@ -183,35 +184,43 @@ CSkeletonBase* FiddleNodes::apply(CSkeletonBase *skeleton) {
 void FiddleNodes::coreProcess(CDeputySkeleton *skeleton) {
   DefiniteProgress *progress = 
     dynamic_cast<DefiniteProgress*>(getProgress("Moving nodes", DEFINITE));
-  totalE = skeleton->energyTotal(criterion->getAlpha());
-  nok = 0;
-  nbad = 0;
-  deltaE = 0.0;
-  CSkeletonNodeVector *activenodes = targets->getNodes(skeleton);
-  OOFRandomNumberGenerator r;
-  oofshuffle(activenodes->begin(), activenodes->end(), r);
-
-  for(unsigned int i = 0; i<activenodes->size() && !progress->stopped(); ++i) {
-    DeputyProvisionalChanges change(skeleton, "fiddlenodes");
-    Coord x = getPosition(skeleton, (*activenodes)[i]);
-    change.moveNode((*activenodes)[i], x);
-    if(criterion->isChangeGood(&change, skeleton)) {
-      ++nok;
-      deltaE += change.deltaE(criterion->getAlpha());
-      change.accept();
-    }
-    else if(T>0.0 && !change.illegal() && !criterion->hopeless()) {
-      double diffE = change.deltaE(criterion->getAlpha());
-      if(exp(-diffE/T) > rndm()) {
-	++nok;
-	deltaE += diffE;
-	change.accept();
+  try {
+    totalE = skeleton->energyTotal(criterion->getAlpha());
+    nok = 0;
+    nbad = 0;
+    deltaE = 0.0;
+    CSkeletonNodeVector *activenodes = targets->getNodes(skeleton);
+    OOFRandomNumberGenerator r;
+    oofshuffle(activenodes->begin(), activenodes->end(), r);
+    
+    for(unsigned int i = 0; i<activenodes->size() && !progress->stopped(); ++i)
+      {
+	DeputyProvisionalChanges change(skeleton, "fiddlenodes");
+	Coord x = getPosition(skeleton, (*activenodes)[i]);
+	change.moveNode((*activenodes)[i], x);
+	if(criterion->isChangeGood(&change, skeleton)) {
+	  ++nok;
+	  deltaE += change.deltaE(criterion->getAlpha());
+	  change.accept();
+	}
+	else if(T>0.0 && !change.illegal() && !criterion->hopeless()) {
+	  double diffE = change.deltaE(criterion->getAlpha());
+	  if(exp(-diffE/T) > rndm()) {
+	    ++nok;
+	    deltaE += diffE;
+	    change.accept();
+	  }
+	  else ++nbad;
+	}
+	else ++nbad;   
+	progress->setFraction(float(i)/activenodes->size());
+	progress->setMessage(to_string(i) + "/" +
+			     to_string(activenodes->size()));
       }
-      else ++nbad;
-    }
-    else ++nbad;   
-    progress->setFraction(float(i)/activenodes->size());
-    progress->setMessage(to_string(i) + "/" + to_string(activenodes->size()));
+  }
+  catch (...) {
+    progress->finish();
+    throw;
   }
   progress->finish();
 }

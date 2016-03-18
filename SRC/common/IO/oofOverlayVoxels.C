@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: oofOverlayVoxels.C,v $
-// $Revision: 1.1.2.7 $
+// $Revision: 1.1.2.7.2.1 $
 // $Author: langer $
-// $Date: 2014/08/23 15:53:27 $
+// $Date: 2015/12/04 19:06:27 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -35,7 +35,7 @@
 
 #include <limits>
 
-vtkCxxRevisionMacro(oofOverlayVoxels, "$Revision: 1.1.2.7 $")
+vtkCxxRevisionMacro(oofOverlayVoxels, "$Revision: 1.1.2.7.2.1 $")
 vtkStandardNewMacro(oofOverlayVoxels);
 
 oofOverlayVoxels::oofOverlayVoxels()
@@ -100,7 +100,9 @@ void oofOverlayVoxels::_doOverlayVoxels(vtkRectilinearGrid *input,
   const TYPE maxval = ((dataType == VTK_DOUBLE || dataType == VTK_FLOAT) ? 
 		       1.0 : std::numeric_limits<TYPE>::max());
 
-  TYPE tint[] = {maxval*color[0], maxval*color[1], maxval*color[2]};
+  TYPE tint[] = {TYPE(maxval*color[0]),
+		 TYPE(maxval*color[1]),
+		 TYPE(maxval*color[2])};
 
   for(std::vector<ICoord>::const_iterator ijk=voxels->begin();
       ijk!=voxels->end(); ++ijk)

@@ -1,8 +1,8 @@
 # -*- python -*-
 # $RCSfile: displaymethods.py,v $
-# $Revision: 1.147.2.81 $
+# $Revision: 1.147.2.81.2.6 $
 # $Author: langer $
-# $Date: 2014/11/25 22:08:32 $
+# $Date: 2015/06/23 20:12:49 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -33,6 +33,7 @@ from ooflib.SWIG.common import smallmatrix
 from ooflib.SWIG.engine.IO import gridsource
 from ooflib.common import color
 from ooflib.common import debug
+from ooflib.common import enum
 from ooflib.common import mainthread
 from ooflib.common import parallel_enable
 from ooflib.common import primitives
@@ -42,6 +43,7 @@ from ooflib.common import utils
 from ooflib.common.IO import automatic
 from ooflib.common.IO import colormap
 from ooflib.common.IO import display
+from ooflib.common.IO import filenameparam
 from ooflib.common.IO import ghostgfxwindow
 from ooflib.common.IO import mainmenu
 from ooflib.common.IO import oofmenu
@@ -1036,3 +1038,227 @@ def defaultMeshEdgeDisplay():
     return meshedges()
 
 ghostgfxwindow.DefaultLayer(mesh.meshes, defaultMeshEdgeDisplay)
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+## Methods for displaying parts of the voxel set boundary intersection
+## with a single skeleton element.
+
+from ooflib.common.IO import microstructuredisplay
+
+class ElementPixelPlaneIntersection(display.DisplayMethod):
+    def __init__(self, element, direction, offset, color, line_width):
+        self.element = element
+        self.direction = direction
+        self.offset = offset
+        self.color = color
+        self.line_width = line_width
+        display.DisplayMethod.__init__(self)
+
+    def newLayer(self):
+        return canvaslayers.LineSegmentLayer(self.gfxwindow.oofcanvas,
+                                             "ElementPixelPlaneIntersection")
+
+    def setParams(self):
+        self.canvaslayer.set_color(self.color)
+        self.canvaslayer.set_lineWidth(self.line_width)
+        skel = self.who().getObject(self.gfxwindow)
+        if skel:
+            direction = microstructuredisplay.dirDict[self.direction]
+            el = skel.getElement(self.element)
+            el.drawPlaneIntersection(self.canvaslayer, skel, direction,
+                                     self.offset)
+
+## Intersect an element with a VSB boundary in a single pixel plane
+
+class ElementPixelPlaneVSBIntersection(display.DisplayMethod):
+    def __init__(self, element, category, direction, offset, normal,
+                 color, line_width):
+        self.element = element  # element uid (or index?)
+        self.category = category # voxel category
+        self.direction = direction # PixelPlane direction
+        self.offset = offset       # PixelPlane offset
+        self.normal = normal
+        self.color = color
+        self.line_width = line_width
+        display.DisplayMethod.__init__(self)
+
+    def newLayer(self):
+        return canvaslayers.LineSegmentLayer(self.gfxwindow.oofcanvas,
+                                             "ElementPixelPlaneVSBIntersection")
+
+    def setParams(self):
+        self.canvaslayer.set_color(self.color)
+        self.canvaslayer.set_lineWidth(self.line_width)
+        skel = self.who().getObject(self.gfxwindow)
+        if skel:
+            direction = microstructuredisplay.dirDict[self.direction]
+            normal = microstructuredisplay.nrmlDict[self.normal]
+            el = skel.getElement(self.element)
+            el.drawPlaneVSBIntersection(self.canvaslayer, skel,
+                                        self.category,
+                                        direction, self.offset, normal)
+
+    def whoChanged(self):
+        return True             # call setParams
+
+## Intersect an element with a voxel group
+
+class ElementVoxelCategoryIntersectionEdges(display.DisplayMethod):
+    def __init__(self, element, category, planeFacets, color, line_width):
+        self.element = element
+        self.category = category
+        self.planeFacets = planeFacets
+        self.color = color
+        self.line_width = line_width
+        display.DisplayMethod.__init__(self)
+
+    def newLayer(self):
+        return canvaslayers.LineSegmentLayer(
+            self.gfxwindow.oofcanvas,
+            "ElementVoxelCategoryIntersectionEdges")
+
+    def setParams(self):
+        self.canvaslayer.set_color(self.color)
+        self.canvaslayer.set_lineWidth(self.line_width)
+        skel = self.who().getObject(self.gfxwindow)
+        if skel:
+            el = skel.getElement(self.element)
+            el.drawVoxelCategoryIntersection(self.canvaslayer, skel,
+                                             self.category, self.planeFacets)
+    def whoChanged(self):
+        return True
+
+class DrawLinesFromFile(display.DisplayMethod):
+    ## TODO: The data may have been written by a routine that used
+    ## voxel coordinates.  This should have a parameter that says
+    ## whether the data is in voxel coordinates, and use self.who
+    ## to convert back to physical coordinates if necessary.
+    def __init__(self, filename, color, line_width):
+        self.filename = filename
+        self.color = color
+        self.line_width = line_width
+        display.DisplayMethod.__init__(self)
+    def newLayer(self):
+        return canvaslayers.LineSegmentLayer(
+            self.gfxwindow.oofcanvas,
+            "DrawLinesFromFile")
+    def setParams(self):
+        self.canvaslayer.set_color(self.color)
+        self.canvaslayer.set_lineWidth(self.line_width)
+        f = file(self.filename, "r")
+        # lines are of the form (x0, y0, z0), (x1, y1, z1)
+        coords = [eval(line) for line in f if line[0] != '#']
+        f.close()
+        self.canvaslayer.set_nSegs(len(coords))
+        for cset in coords:
+            p0 = primitives.Point(*cset[0])
+            p1 = primitives.Point(*cset[1])
+            self.canvaslayer.addSegment(p0, p1)
+    def whoChanged(self):
+        return True
+
+# class ElementVoxelCategoryIntersectionFaces(display.DisplayMethod):
+#     def __init__(self, element, category, color, opacity):
+#         self.element = element
+#         self.category = category
+#         self.color = color
+#         self.opacity = opacity
+#         display.DisplayMethod.__init__(self)
+#     def newLayer(self):
+#         return canvaslayers.SimpleFilledCellLayer(
+#             self.gfxwindow.oofcanvas,
+#             "ElementVoxelCategoryIntersectionFaces")
+#     def setParams(self):
+#         self.canvaslayer.set_color(self.color)
+#         self.canvaslayer.set_opacity(self.opacity)
+#         skel = self.who().getObject(self.gfxwindow)
+#         if skel:
+#             el = skel.getElement(self.element)
+#             el.drawVoxelCategoryIntersectionFaces(self.canvaslayer, skel,
+#                                                   self.category)
+
+if debug.debug:
+    registeredclass.Registration(
+        "ElementPixelPlaneIntersection",
+        display.DisplayMethod,
+        ElementPixelPlaneIntersection,
+        ordering=1000,
+        layerordering=display.Linear,
+        params=[
+            parameter.IntParameter('element', tip="Element ID"),
+            enum.EnumParameter('direction', microstructuredisplay.Direction,
+                               'All'),
+            parameter.IntParameter('offset'),
+            color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
+            parameter.IntRangeParameter('line_width', (1, 10), 2)
+        ],
+        whoclasses=("Skeleton",),
+        tip="Display the polygon formed by the intersection of an element with a pixel plane."
+    )
+    
+    registeredclass.Registration(
+        "ElementVSBPlaneIntersection",
+        display.DisplayMethod,
+        ElementPixelPlaneVSBIntersection,
+        ordering=1005,
+        layerordering=display.Linear,
+        params=[
+            parameter.IntParameter('element', tip="Element ID"),
+            parameter.IntParameter('category'),
+            enum.EnumParameter('direction', microstructuredisplay.Direction,
+                               'All'),
+            parameter.IntParameter('offset'),
+            enum.EnumParameter('normal', microstructuredisplay.Normal,
+                               'Positive'),
+            color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
+            parameter.IntRangeParameter('line_width', (1, 10), 2)
+            ],
+        whoclasses=("Skeleton",),
+        tip="Display the in-plane facets of the intersection of voxel boundary loops and an element."
+        
+        )
+
+    registeredclass.Registration(
+        "ElementVoxelCategoryIntersectionEdges",
+        display.DisplayMethod,
+        ElementVoxelCategoryIntersectionEdges,
+        ordering=1010,
+        layerordering=display.Linear,
+        params=[
+            parameter.IntParameter('element', tip='Element ID'),
+            parameter.IntParameter('category'),
+            parameter.BooleanParameter('planeFacets', True),
+            color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
+            parameter.IntRangeParameter('line_width', (1, 10), 2)
+            ],
+        whoclasses=("Skeleton",),
+        tip="Display the edges of the facets of the intersection of a voxel category with an element.")
+
+    registeredclass.Registration(
+        "DrawLinesFromFile",
+        display.DisplayMethod,
+        DrawLinesFromFile,
+        ordering=1020,
+        layerordering=display.Linear,
+        params=[
+            filenameparam.ReadFileNameParameter('filename'),
+            color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
+            parameter.IntRangeParameter('line_width', (1, 10), 2)
+            ],
+        whoclasses=("Skeleton",),
+        )
+
+    # registeredclass.Registration(
+    #     "ElementVoxelCategoryIntersectionFaces",
+    #     display.DisplayMethod,
+    #     ElementVoxelCategoryIntersectionFaces,
+    #     ordering=1002,
+    #     layerordering=display.SemiPlanar,
+    #     params=[
+    #         parameter.IntParameter('element', tip='Element ID'),
+    #         parameter.IntParameter('category'),
+    #         color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
+    #         parameter.FloatRangeParameter('opacity', (0., 1., 0.01), 1.0)],
+    #     whoclasses = ("Skeleton",),
+    #     tip="Display the facets of the intersection of a voxel category iwth an element.")

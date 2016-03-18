@@ -1,8 +1,8 @@
 // -*- text -*-
 // $RCSfile: todo-post3.0.0.txt,v $
-// $Revision: 1.1.2.9 $
+// $Revision: 1.1.2.9.2.1 $
 // $Author: langer $
-// $Date: 2015/01/05 19:00:13 $
+// $Date: 2015/12/16 16:27:41 $
 
 
 This list is a summary of TODOs in the OOF3D code as of the release of
@@ -344,7 +344,7 @@ New features:
   automatic group is edited, though, it should become a non-automatic
   group.  EASY-ISH, HIGH PRIORITY
 
-* Provide better info about why a Mesh is unsolvabe.  TODOs in
+* Provide better info about why a Mesh is unsolvable.  TODOs in
   solverPage.py.  EASY?  HIGH PRIORITY
 
 * Reorder subproblems with drag and drop.  TODO in solverPage.py.
@@ -432,7 +432,7 @@ Optimizations:
 * Deprecate SkeletonContext.nodes_from_node_aggregate, etc, in favor
   of couriers.  TODO in skeletoncontext.py.  HIGH PRIORITY
 
-* Don't swig CPixelSelecdtion::mmebers() or PixelSet::members().
+* Don't swig CPixelSelecdtion::members() or PixelSet::members().
   TODOs in cpixelselection.swg, pixelgroup.swg, analysisdomain.py.
   HIGH PRIORITY
 
@@ -475,9 +475,6 @@ Optimizations:
   CSkeleton::nodesAddGroupsDown(), et al.  EASY?
 
 * Move much of _CSkeletonBase_femesh to C++.  HIGH PRIORITY
-
-* Don't compute intersection volume of last category.  TODO in
-  CSkeletonElement::categoryVolumes().   HIGH PRIORITY, EASY
 
 * Remove CSkeletonNode::points to save memory.  TODO in
   cskeletonnode2.h.  HIGH PRIORITY, EASY

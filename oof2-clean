@@ -11,7 +11,7 @@ if sys.argv[1] not in build_types:
 
 build_type = sys.argv[1]
 pyversion = string.join(map(str, sys.version_info[:2]),".")
-cvstag = "$Name: threePoint0-7-13-08 $"[7:-2].strip()
+cvstag = "$Name: rewriting-categoryVolumes-2015-01-22 $"[7:-2].strip()
 localdir = os.path.split(os.getcwd())[1]
 if localdir.startswith('OOF2'):
     localdir = localdir[4:]

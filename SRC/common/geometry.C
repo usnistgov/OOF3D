@@ -1,8 +1,8 @@
 // -*- C++ -*-
 // $RCSfile: geometry.C,v $
-// $Revision: 1.7.2.4 $
+// $Revision: 1.7.2.4.2.1 $
 // $Author: langer $
-// $Date: 2014/12/14 22:49:07 $
+// $Date: 2015/01/23 02:16:41 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -16,7 +16,6 @@
 #include <oofconfig.h>
 #include "common/geometry.h"
 
-#if DIM==2
 void CRectangle::expand(double howmuch) {
   double mid = 0.5*(lowleft[0] + upright[0]);
   double size = 0.5*(upright[0] - lowleft[0])*(1 + howmuch);
@@ -39,8 +38,6 @@ std::ostream& operator<<(std::ostream &os, const ICRectangle &rect) {
   return os;
 }
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-#elif DIM==3
 
 void CRectangularPrism::expand(double howmuch) {
   double mid = 0.5*(lowleftback[0] + uprightfront[0]);
@@ -69,8 +66,6 @@ std::ostream& operator<<(std::ostream &os, const ICRectangularPrism &rect) {
      << rect.uprightfront << ")";
   return os;
 }
-
-#endif // DIM==3
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 

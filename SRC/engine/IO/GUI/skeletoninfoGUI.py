@@ -1,8 +1,8 @@
 # -*- python -*-
 # $RCSfile: skeletoninfoGUI.py,v $
-# $Revision: 1.84.2.37 $
+# $Revision: 1.84.2.37.2.1 $
 # $Author: langer $
-# $Date: 2014/09/17 17:48:02 $
+# $Date: 2015/02/26 22:35:13 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -155,9 +155,12 @@ class ElementModeGUI(SkeletonInfoModeGUI):
     def findObjectIndex(self, position, view):
         skelctxt = self.getContext()
         if skelctxt is not None:
-            cellID, clickpos = self.gfxtoolbox.gfxwindow().findClickedCellID(
+            clickdata = self.gfxtoolbox.gfxwindow().findClickedCellID(
                 skelctxt, position, view)
-            return cellID
+            if clickdata is not None:
+                cellID, clickpos = clickdata
+                return cellID
+            debug.fmsg("findClickedCellID returned None")
 
     def activateOutputs(self, ok):
         self.type.set_sensitive(ok)
@@ -204,18 +207,24 @@ class ElementModeGUI(SkeletonInfoModeGUI):
                 elif config.dimension() == 2:
                     earea = "%g" % element.area()
                 if not element.illegal():
-                    domCat = element.dominantPixel(microstructure)
-                    pixGrp = pixelgroup.pixelGroupNames(microstructure,
-                                                        domCat)
-                    pixgrps = ", ".join(pixGrp)
-                    hom = "%f" % element.homogeneity(microstructure)
+                    #domCat = element.dominantPixel(microstructure)
+                    domCat = -1
+                    debug.fmsg("NOT COMPUTING DOMINANT CATEGORY")
+                    # pixGrp = pixelgroup.pixelGroupNames(microstructure,
+                    #                                     domCat)
+                    # pixgrps = ", ".join(pixGrp)
+                    pixgrps = "not computed"
+                    #hom = "%f" % element.homogeneity(microstructure)
+                    hom = 'not computed'
+                    debug.fmsg("NOT COMPUTING HOMOGENEITY")
                     eshape = "%f" % element.energyShape()
-                    mat = element.material(skeleton)
+                    #mat = element.material(skeleton)
                     egrps = ','.join(element.groupNames())
-                    if mat:
-                        matname = mat.name()
-                    else:
-                        matname = "<No material>"
+                    matname = "not computed"
+                    # if mat:
+                    #     matname = mat.name()
+                    # else:
+                    #     matname = "<No material>"
                 else:           # illegal element
                     pixgrps = "???"
                     egrps = "???"

@@ -1,8 +1,8 @@
 # -*- python -*- 
 # $RCSfile: DIR.py,v $
-# $Revision: 1.25.2.26 $
+# $Revision: 1.25.2.26.2.2 $
 # $Author: langer $
-# $Date: 2014/12/14 22:49:05 $
+# $Date: 2016/03/18 19:24:37 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,
@@ -137,7 +137,8 @@ else:                           # DIM == 3
         'swiglib.h', 'switchboard.h', 'threadstate.h', 'timestamp.h',
         'pythonlock.h', 'progress.h', 'sincos.h', 'vtkColorLUT.h', 
         'direction.h', 'clip.h', 'differ.h', 'voxelfilter.h', 'cleverptr.h',
-        'smallmatrix.h', 'corientation.h', "pixelattribute_i.h", 'coord_i.h'
+        'smallmatrix.h', 'corientation.h', "pixelattribute_i.h", 'coord_i.h',
+        'setutils.h', 'derefcompare.h'
         ]
 
 
