@@ -1,8 +1,4 @@
 #!/usr/bin/env python
-# $RCSfile: oof2-build,v $
-# $Revision: 1.35.2.2.6.2 $
-# $Author: langer $
-# $Date: 2016/03/16 03:08:01 $
 
 # This script builds the various oof2 versions used by the developers.
 # It shouldn't be necessary for anyone else to use it.

@@ -1,0 +1,6 @@
+OOF.Microstructure.New(name='skeltest', width=10.0, height=10.0, depth=10.0, width_in_pixels=10, height_in_pixels=10, depth_in_pixels=10)
+OOF.Skeleton.New(name='skeleton', microstructure='skeltest', x_elements=2, y_elements=2, z_elements=2, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
+OOF.Windows.Graphics.New()
+OOF.Skeleton.Modify(skeleton='skeltest:skeleton', modifier=Refine(targets=CheckAllElements(),criterion=Unconditionally(),alpha=0.3))
+OOF.Graphics_1.Toolbox.Pin_Nodes.Pin(skeleton='skeltest:skeleton', point=Point(6.39664,2.31997,21.2376), view=View(cameraPosition=Coord(5,5,34.2583), focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30, clipPlanes=[], invertClip=0, size_x=691, size_y=647))
+OOF.Skeleton.Undo(skeleton='skeltest:skeleton')

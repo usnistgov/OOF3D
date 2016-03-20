@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: ghostoofcanvas.swg,v $
-// $Revision: 1.1.2.76 $
-// $Author: fyc $
-// $Date: 2014/07/22 17:55:52 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,

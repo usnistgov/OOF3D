@@ -1,0 +1,7 @@
+# OOF version (unreleased)
+OOF.Microstructure.New(name='microstructure', width=2, height=1.0, depth=1.0, width_in_pixels=10, height_in_pixels=10, depth_in_pixels=10)
+OOF.Skeleton.New(name='skeleton', microstructure='microstructure', x_elements=2, y_elements=1, z_elements=1, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
+OOF.Windows.Graphics.New()
+OOF.Graphics_1.Layer.New(category='Skeleton', what='microstructure:skeleton', how=SkeletonQualityDisplay(alpha=0.0,colormap=ThermalMap(),min=automatic,max=automatic,filter=NullFilter()))
+OOF.Graphics_1.Settings.Camera.View(view=View(cameraPosition=Coord(-1.2165,2.99329,4.68461), focalPoint=Coord(1,0.5,0.5), up=Coord(0.182532,0.884134,-0.430104), angle=30, clipPlanes=[], invertClip=0, suppressClip=0, size_x=595, size_y=615))
+OOF.Skeleton.Modify(skeleton='microstructure:skeleton', modifier=Anneal(targets=AllNodes(),criterion=AverageEnergy(alpha=1),T=0.0,delta=5.0,iteration=FixedIteration(iterations=1)))

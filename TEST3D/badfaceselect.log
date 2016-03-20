@@ -1,0 +1,4 @@
+OOF.Windows.Graphics.New()
+OOF.Microstructure.New(name='skeltest', width=10, height=10, depth=10, width_in_pixels=10, height_in_pixels=10, depth_in_pixels=10)
+OOF.Skeleton.New(name='skeleton', microstructure='skeltest', x_elements=2, y_elements=2, z_elements=2, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
+OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='skeltest:skeleton', points=[Point(-0.901602,7.6682,21.0656)], view=View(cameraPosition=Coord(-7.32641,7.86392,31.3801), focalPoint=Coord(5,5,5), up=Coord(0.000351236,0.994176,-0.107767), angle=30, clipPlanes=[], invertClip=0, size_x=691, size_y=652), shift=1, ctrl=0)

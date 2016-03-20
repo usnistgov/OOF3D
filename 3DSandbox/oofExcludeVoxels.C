@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: oofExcludeVoxels.C,v $
-// $Revision: 1.1.2.2 $
-// $Author: langer $
-// $Date: 2013/11/08 19:36:50 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -21,7 +17,6 @@
 #include <vtkObjectFactory.h>
 #include <vtkRectilinearGrid.h>
 
-vtkCxxRevisionMacro(oofExcludeVoxels, "$Revision: 1.1.2.2 $");
 vtkStandardNewMacro(oofExcludeVoxels);
 
 

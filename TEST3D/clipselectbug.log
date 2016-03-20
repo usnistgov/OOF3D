@@ -1,0 +1,5 @@
+OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImagePattern(directory='/Users/langer/FE/OOF3D/TEST3D/ms_data/5color/',pattern='slice(0|([1-9][0-9]*))\\.png',sort=NumericalOrder()), microstructure_name='5color', height=automatic, width=automatic, depth=automatic)
+OOF.Windows.Graphics.New()
+OOF.Graphics_1.Toolbox.Viewer.Clip.New(normal=VectorDirection(x=1.0,y=0.0,z=0.0), offset=10.5)
+OOF.Graphics_1.Toolbox.Pixel_Select.Point(source='5color:5color', points=[Point(-41.0493,11.8455,38.2788)], view=View(cameraPosition=Coord(-41.1612,11.8497,38.3428), focalPoint=Coord(10,10,10), up=Coord(0.0205011,0.999392,-0.028217), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 10.5]], invertClip=0), shift=0, ctrl=0)
+#OOF.Graphics_1.Settings.Camera.View(view=View(cameraPosition=Coord(-18.8044,58.7711,-4.69306), focalPoint=Coord(10,10,10), up=Coord(0.155727,0.368125,0.916642), angle=30, clipPlanes=[], invertClip=0))

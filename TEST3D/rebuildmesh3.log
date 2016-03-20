@@ -1,0 +1,7 @@
+OOF.Microstructure.New(name='microstructure', width=1.0, height=1.0, depth=1.0, width_in_pixels=10, height_in_pixels=10, depth_in_pixels=10)
+OOF.Skeleton.New(name='skeleton', microstructure='microstructure', x_elements=4, y_elements=4, z_elements=4, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
+OOF.Mesh.New(name='mesh', skeleton='microstructure:skeleton', element_types=['TET4_4', 'Q4_4', 'T3_3', 'D2_2'])
+OOF.Windows.Graphics.New()
+OOF.Graphics_1.Toolbox.Select_Element.Single_Element(skeleton='microstructure:skeleton', points=[Point(0.297474,0.728622,2.12376)], view=View(cameraPosition=Coord(0.5,0.5,3.42583), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[], invertClip=0, size_x=621, size_y=615), shift=0, ctrl=0)
+OOF.Skeleton.Modify(skeleton='microstructure:skeleton', modifier=Refine(targets=CheckSelectedElements(),criterion=Unconditionally(),alpha=0.3))
+OOF.Mesh.Modify(mesh='microstructure:skeleton:mesh', modifier=RebuildMesh())

@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: meshPage.py,v $
-# $Revision: 1.105.2.14 $
-# $Author: langer $
-# $Date: 2014/11/05 16:54:53 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

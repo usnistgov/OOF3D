@@ -1,0 +1,6 @@
+# OOF version (unreleased)
+OOF.Microstructure.New(name='microstructure', width=1.0, height=1.0, depth=1.0, width_in_pixels=10, height_in_pixels=10, depth_in_pixels=10)
+OOF.PixelSelection.Region(microstructure='microstructure', shape=BoxSelectionShape(point0=Point(0,0,0),point1=Point(0.5,1,1)), operator=Select())
+OOF.PixelGroup.New(name='pixelgroup', microstructure='microstructure')
+OOF.PixelGroup.AddSelection(microstructure='microstructure', group='pixelgroup')
+OOF.File.Save.Microstructure(filename='/Users/langer/FE/OOF3D/TEST3D/junk.mic', mode='w', format='ascii', microstructure='microstructure')

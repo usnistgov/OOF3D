@@ -1,0 +1,7 @@
+OOF.Microstructure.New(name='skeltest', width=10.0, height=10.0, depth=10.0, width_in_pixels=10, height_in_pixels=10, depth_in_pixels=10)
+OOF.Skeleton.New(name='skeleton', microstructure='skeltest', x_elements=2, y_elements=2, z_elements=2, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
+OOF.Windows.Graphics.New()
+OOF.Graphics_1.Settings.Camera.View(view=View(cameraPosition=Coord(9.04749,9.06502,33.6905), focalPoint=Coord(5,5,5), up=Coord(-0.0151545,0.990292,-0.138172), angle=30, clipPlanes=[], invertClip=0, size_x=691, size_y=652))
+OOF.Graphics_1.Toolbox.Move_Nodes.SelectNode(position=Point(7.82591,7.82718,24.9527), view=View(cameraPosition=Coord(9.04749,9.06502,33.6905), focalPoint=Coord(5,5,5), up=Coord(-0.0151545,0.990292,-0.138172), angle=30, clipPlanes=[], invertClip=0, size_x=691, size_y=652))
+OOF.Graphics_1.Toolbox.Move_Nodes.MoveNode(node=13, destination=Point(2.5,2.5,9.5))
+OOF.Skeleton.Modify(skeleton='skeltest:skeleton', modifier=Rationalize(targets=AllElements(),criterion=AverageEnergy(alpha=0.3),method=SpecificRationalization(rationalizers=[RemoveBadTetrahedra(acute_angle=15,obtuse_angle=150)])))

@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: r3tensorrotationbug.py,v $
-# $Revision: 1.8 $
-# $Author: langer $
-# $Date: 2008/10/20 15:28:59 $
 
 # Test for a particular, pernicious bug.
 

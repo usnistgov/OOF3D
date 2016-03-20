@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: meshdatacache.h,v $
-// $Revision: 1.6.4.5 $
-// $Author: langer $
-// $Date: 2014/10/01 16:01:27 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

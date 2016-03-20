@@ -1,0 +1,5 @@
+OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImageDirectory(directory='/Users/langer/FE/OOF3D/TEST3D/image_data/gray',sort=NumericalOrder()), microstructure_name='gray', height=automatic, width=automatic, depth=automatic)
+OOF.Windows.Graphics.New()
+OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImagePattern(directory='/Users/langer/FE/OOF3D/TEST3D/ms_data/5color/',pattern='slice(0|([1-9][0-9]*))\\.tif',sort=NumericalOrder()), microstructure_name='5color', height=automatic, width=automatic, depth=automatic)
+OOF.Windows.Graphics.New()
+#OOF.Graphics_2.Layer.New(category='Image', what='5color:5color', how=BitmapDisplayMethod(filter=AllVoxels()))

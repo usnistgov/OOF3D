@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: tri6_3.C,v $
-// $Revision: 1.2.18.1.4.1 $
-// $Author: langer $
-// $Date: 2015/12/23 15:39:44 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

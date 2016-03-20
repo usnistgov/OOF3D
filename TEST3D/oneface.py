@@ -1,0 +1,4 @@
+#OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='skeltest:skeleton', points=[Point(8.83347,8.54451,42.4752)], view=View(cameraPosition=Coord(10,10,68.5167), focalPoint=Coord(10,10,10), up=Coord(0,1,0), angle=30, clipPlanes=[], invertClip=0), shift=0, ctrl=0)
+#OOF.Graphics_1.Toolbox.Select_Face.Single_Face( skeleton='skeltest:skeleton', points=[Point(4.28867,5.75674,21.9826)], view=View(cameraPosition=Coord(5,5,34.2583), focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30, clipPlanes=[], invertClip=0), shift=0, ctrl=0)
+OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='skeltest:skeleton', points=[Point(5.67654,15.7085,24.6481)], view=View(cameraPosition=Coord(5.5354,19.6928,30.296), focalPoint=Coord(5,5,5), up=Coord(-0.167783,0.853998,-0.49248), angle=30, clipPlanes=[], invertClip=0, size_x=691, size_y=652), shift=0, ctrl=1)
+

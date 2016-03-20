@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: matrix_test.py,v $
-# $Revision: 1.4 $
-# $Author: langer $
-# $Date: 2008/09/08 18:30:06 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

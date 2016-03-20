@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: view.swg,v $
-// $Revision: 1.1.2.12 $
-// $Author: langer $
-// $Date: 2014/07/31 18:32:48 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

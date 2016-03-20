@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: xmlmenudump.py,v $
-# $Revision: 1.59.4.1 $
-# $Author: langer $
-# $Date: 2014/09/27 22:34:07 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

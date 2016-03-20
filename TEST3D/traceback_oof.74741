@@ -1,0 +1,15 @@
+2016 Feb 19 15:16:07 EST
+
+ErrProgrammingError: Loose end matching failed!  Found two consecutive ends.
+(./SRC/engine/homogeneitytet.C:1802)
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/subthread.py", line 57, in run
+    self.function(*self.args, **self.kwargs)
+  File "/Users/langer/lib/homepython/oof3d/ooflib/engine/IO/GUI/skeletonPage.py", line 246, in installed_subth
+    self.update(self.skelwidget.get_value(), locked=False)
+  File "/Users/langer/lib/homepython/oof3d/ooflib/engine/IO/GUI/skeletonPage.py", line 376, in update
+    homogIndex = skel.getHomogeneityIndex()
+  File "/Users/langer/lib/homepython/oof3d/ooflib/SWIG/engine/cskeleton2.py", line 208, in getHomogeneityIndex
+    val = apply(cskeleton2c.CSkeletonBase_getHomogeneityIndex,(self,) + _args, _kwargs)
+  File "/Users/langer/lib/homepython/oof3d/ooflib/SWIG/common/ooferror.py", line 229, in pyErrorCallback
+    exec errorstring
+  File "<string>", line 1, in <module>

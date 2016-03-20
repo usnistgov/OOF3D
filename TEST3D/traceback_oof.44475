@@ -1,0 +1,29 @@
+2014 Oct 01 16:35:02 EDT
+
+TypeError: Type error in argument 3 of rebuildLayerCells. Expected _CSelectionTrackerBase_p.
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/worker.py", line 187, in run
+    self.menuitem.callback(self, *self.args, **self.kwargs)
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/IO/mainmenu.py", line 497, in openGfx
+    window = gfxManager.openWindow()
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/IO/gfxmanager.py", line 43, in openWindow
+    w = self._newWindow(name, **kwargs) # opens real or ghost gfx window
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/IO/GUI/gfxwindow3d.py", line 525, in _newWindow
+    return GfxWindow3D(name, self, **kwargs)
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/IO/GUI/gfxwindowbase.py", line 61, in __init__
+    clone=clone)
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/IO/ghostgfxwindow.py", line 953, in __init__
+    self.createPredefinedLayers()
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/IO/ghostgfxwindow.py", line 988, in createPredefinedLayers
+    self.createDefaultLayers(lock=False)
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/IO/ghostgfxwindow.py", line 1039, in createDefaultLayers
+    autoselect=False, lock=False)
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/IO/ghostgfxwindow.py", line 1833, in incorporateLayer
+    self.newLayerMembers()
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/IO/GUI/gfxwindowbase.py", line 98, in newLayerMembers
+    ghostgfxwindow.GhostGfxWindow.newLayerMembers(self)
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/IO/ghostgfxwindow.py", line 1720, in newLayerMembers
+    layer.whoChanged()
+  File "/Users/langer/lib/homepython/oof3d/ooflib/engine/IO/pinnodesdisplay.py", line 65, in whoChanged
+    self.updatePinned(skelctxt)
+  File "/Users/langer/lib/homepython/oof3d/ooflib/engine/IO/pinnodesdisplay.py", line 76, in updatePinned
+    skelctxt.pinnednodes.currentSelectionTracker())

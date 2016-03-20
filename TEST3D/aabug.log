@@ -1,0 +1,5 @@
+# OOF version (unreleased)
+OOF.File.LoadStartUp.Data(filename='junk.mic')
+OOF.PixelSelection.Region(microstructure='microstructure', shape=BoxSelectionShape(point0=Point(0,0,0.5),point1=Point(1,1,1)), operator=Select())
+OOF.ActiveArea.Activate_Selection_Only(microstructure='microstructure')
+OOF.ActiveArea.Store(microstructure='microstructure', name='half')

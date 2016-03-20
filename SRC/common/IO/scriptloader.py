@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: scriptloader.py,v $
-# $Revision: 1.18.2.2 $
-# $Author: fyc $
-# $Date: 2014/07/17 15:38:04 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

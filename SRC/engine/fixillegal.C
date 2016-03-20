@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: fixillegal.C,v $
-// $Revision: 1.1.2.10 $
-// $Author: langer $
-// $Date: 2014/12/14 01:07:52 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: sparsemat.C,v $
-// $Revision: 1.9.2.9.2.1 $
-// $Author: langer $
-// $Date: 2015/12/04 19:06:33 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

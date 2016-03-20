@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: printvec.h,v $
-// $Revision: 1.10.10.10.2.4 $
-// $Author: langer $
-// $Date: 2015/03/11 20:59:21 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: skeleton_basic_test.py,v $
-# $Revision: 1.31.10.1 $
-# $Author: vrc $
-# $Date: 2010/12/03 22:18:27 $
 
 # Test suite for the menu commands under OOF.Skeleton.*
 # Namely, New, Simple, Delete, Copy, Rename, Modify, Undo,

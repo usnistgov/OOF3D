@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: skeleton_generate.py,v $
-# $Revision: 1.8 $
-# $Author: langer $
-# $Date: 2008/06/23 21:24:07 $
 
 # Special file for regenerating reference files for skeleton
 # comparisons, after changes are made to the skeleton code.

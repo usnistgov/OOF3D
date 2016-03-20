@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: memorycheck.py,v $
-# $Revision: 1.6 $
-# $Author: langer $
-# $Date: 2009/07/10 18:34:11 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: skeleton_bdy_test.py,v $
-# $Revision: 1.12 $
-# $Author: langer $
-# $Date: 2008/09/08 18:30:07 $
 
 # Test suite for skeleton boundary construction, modification, and
 # deletion.  Currently only creates boundaries from selections, not

@@ -1,0 +1,6 @@
+OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImageDirectory(directory='ms_data/bluegreen',sort=NumericalOrder()), microstructure_name='bluegreen', height=automatic, width=automatic, depth=automatic)
+OOF.Windows.Graphics.New()
+OOF.Image.AutoGroup(image='bluegreen:bluegreen', name_template='%c')
+OOF.Skeleton.New(name='skeleton', microstructure='bluegreen', x_elements=1, y_elements=1, z_elements=1, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
+OOF.Skeleton.Modify(skeleton='bluegreen:skeleton', modifier=Refine(targets=CheckHomogeneity(threshold=0.9),criterion=Unconditionally(),alpha=1))
+OOF.Graphics_1.Settings.Camera.View(view=View(cameraPosition=Coord(-18.5971,-11.1181,-1.27945), focalPoint=Coord(5,5,5), up=Coord(0.133997,0.183245,-0.973892), angle=30, clipPlanes=[], invertClip=0))

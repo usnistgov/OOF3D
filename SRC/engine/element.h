@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: element.h,v $
-// $Revision: 1.64.2.22.2.1 $
-// $Author: langer $
-// $Date: 2016/03/02 15:47:40 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

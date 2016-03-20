@@ -1,0 +1,7 @@
+OOF.Microstructure.New(name='microstructure', width=1.0, height=1.0, width_in_pixels=10, height_in_pixels=10)
+OOF.Material.New(name='material', material_type='bulk')
+OOF.Material.Assign(material='material', microstructure='microstructure', pixels=every)
+OOF.Skeleton.New(name='skeleton', microstructure='microstructure', x_elements=4, y_elements=4, skeleton_geometry=QuadSkeleton(left_right_periodicity=False,top_bottom_periodicity=False))
+OOF.Mesh.New(name='mesh', skeleton='microstructure:skeleton', element_types=['D2_2', 'T3_3', 'Q4_4'])
+OOF.Subproblem.New(name='subproblem', mesh='microstructure:skeleton:mesh', subproblem=MaterialSubProblem(material='material'))
+OOF.Material.Delete(name='material')

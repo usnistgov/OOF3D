@@ -1,0 +1,13 @@
+OOF.Microstructure.New(name='subptest', width=1.0, height=1.0, depth=1.0, width_in_pixels=10, height_in_pixels=10, depth_in_pixels=10)
+OOF.Windows.Graphics.New()
+OOF.Graphics_1.Layer.New(category='Microstructure', what='subptest', how=MicrostructureMaterialDisplay(no_material=Gray(value=0.4),no_color=RGBColor(red=0.00000,green=0.00000,blue=1.00000),filter=AllVoxels()))
+OOF.Graphics_1.Settings.Hide_Empty_Mesh_Elements(0)
+OOF.PixelSelection.Region(microstructure='subptest', shape=BoxSelectionShape(point0=Point(0,0,0),point1=Point(0.4,0.4,1)), operator=Select())
+OOF.PixelGroup.New(name='corner', microstructure='subptest')
+OOF.PixelGroup.AddSelection(microstructure='subptest', group='corner')
+OOF.Material.New(name='salami', material_type='bulk')
+OOF.Material.Assign(material='salami', microstructure='subptest', pixels='corner')
+OOF.Skeleton.New(name='skeleton', microstructure='subptest', x_elements=4, y_elements=4, z_elements=4, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
+OOF.Mesh.New(name='mesh', skeleton='subptest:skeleton', element_types=['T4_4'])
+OOF.Subproblem.New(name='sub', mesh='subptest:skeleton:mesh', subproblem=MaterialSubProblem(material='salami'))
+

@@ -1,0 +1,8 @@
+# OOF version (unreleased)
+OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImagePattern(directory='ms_data/5color/',pattern='slice(0|([1-9][0-9]*))\\.png',sort=NumericalOrder()), microstructure_name='5color', height=automatic, width=automatic, depth=automatic)
+OOF.Image.AutoGroup(image='5color:5color', name_template='%c')
+OOF.Windows.Graphics.New()
+OOF.Graphics_1.Settings.Camera.View(view=View(cameraPosition=Coord(-31.2166,45.1435,32.1433), focalPoint=Coord(10,10,10), up=Coord(0.261814,0.7153,-0.647919), angle=30, clipPlanes=[], invertClip=0, suppressClip=0, size_x=621, size_y=615))
+OOF.Skeleton.New(name='skeleton', microstructure='5color', x_elements=4, y_elements=4, z_elements=4, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
+OOF.Skeleton.Modify(skeleton='5color:skeleton', modifier=Refine(targets=CheckHomogeneity(threshold=0.9),criterion=Unconditionally(),alpha=0.3))
+#OOF.Skeleton.Modify(skeleton='5color:skeleton', modifier=Refine(targets=CheckHomogeneity(threshold=0.9),criterion=Unconditionally(),alpha=0.3))

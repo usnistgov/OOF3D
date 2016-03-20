@@ -1,0 +1,4 @@
+OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImagePattern(directory='/Users/langer/FE/OOF3D/TEST3D/ms_data/5color/',pattern='slice(0|([1-9][0-9]*))\\.png',sort=NumericalOrder()), microstructure_name='5color', height=automatic, width=automatic, depth=automatic)
+OOF.File.Save.Microstructure(filename='/Users/langer/FE/OOF3D/TEST3D/testms.dat', mode='w', format='ascii', microstructure='5color')
+OOF.Microstructure.Rename(microstructure='5color', name='original')
+OOF.File.Load.Data(filename='/Users/langer/FE/OOF3D/TEST3D/testms.dat')

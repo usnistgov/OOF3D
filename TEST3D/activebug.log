@@ -1,0 +1,8 @@
+# OOF version (unreleased)
+OOF.Microstructure.New(name='microstructure', width=1.0, height=1.0, depth=1.0, width_in_pixels=3, height_in_pixels=3, depth_in_pixels=3)
+OOF.PixelSelection.Region(microstructure='microstructure', shape=CircleSelectionShape(center=Point(0.5,0.5,0.5),radius=0.5), operator=Select())
+OOF.ActiveArea.Activate_Selection_Only(microstructure='microstructure')
+OOF.ActiveArea.Store(microstructure='microstructure', name='sphere')
+OOF.PixelSelection.Region(microstructure='microstructure', shape=BoxSelectionShape(point0=Point(0.5,0.5,0.5),point1=Point(0,0,0)), operator=SelectOnly())
+OOF.Windows.Graphics.New()
+OOF.Graphics_1.Layer.New(category='Microstructure', what='microstructure', how=MicrostructureMaterialDisplay(no_material=Gray(value=0.47619047619047616),no_color=RGBColor(red=0.00000,green=0.00000,blue=1.00000),filter=AllVoxels()))

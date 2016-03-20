@@ -1,0 +1,8 @@
+# OOF version 2.0
+FileVersion(number=1.0, format='ascii')
+Property.Color(name='bloo', color=RGBColor(red=0.00000,green=0.00000,blue=0.75000))
+Property.Color(name='wred', color=RGBColor(red=0.75000,green=0.00000,blue=0.00000))
+Property.Mechanical.Elasticity.Isotropic(name='soft', cijkl=IsotropicRank4TensorCij(c11=0.8,c12=0.5))
+Property.Mechanical.Elasticity.Isotropic(name='stiff', cijkl=IsotropicRank4TensorCij(c11=1.2,c12=0.5))
+MaterialandType(name='bricks', properties=['Mechanical:Elasticity:Isotropic:stiff', 'Color:wred'], materialtype='bulk')
+MaterialandType(name='mortar', properties=['Color:bloo', 'Mechanical:Elasticity:Isotropic:soft'], materialtype='bulk')

@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: gfxwindowbase.py,v $
-# $Revision: 1.13.2.25 $
-# $Author: langer $
-# $Date: 2014/09/10 21:28:41 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

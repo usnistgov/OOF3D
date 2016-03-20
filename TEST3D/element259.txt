@@ -1,0 +1,872 @@
+--*40*-- CSkeletonElement::categoryVolumes: Element(uid=1453, index=259, [79 (0, 15, 20), 103 (0, 20, 15), 109 (5.12775, 20, 20), 83 (5, 15, 15)])----------------------------------
+--*40*-- CSkeletonElement::categoryVolumes: epts=(0, 15, 20) (0, 20, 15) (5.1277523040771484375, 20, 20) (5, 15, 15)
+--*40*-- CSkeletonElement::categoryVolumes: calling findPixelPlaneFacets for cat=0
+--*40*-- openDumpFile: opening epts
+--*40*-- CSkeletonElement::categoryVolumes: calling tetIntersectionVolume
+--*40*--   openDumpFile: opening finalfacets_cat0_face0
+--*40*--   openDumpFile: opening finalfacets_cat0_face1
+--*40*--   find_edge: point is not not on an edge!  b={0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441} f=2
+--*40*--   FaceEdgeIntersection::findEdge: successfully used baryEquiv: {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441} --> {0.20000000000000006661, 0, 0, 0.80000000000000004441} fEdge=1
+--*40*--   openDumpFile: opening finalfacets_cat0_face2
+--*40*--   openDumpFile: opening finalfacets_cat0_face3
+--*40*-- CSkeletonElement::categoryVolumes: v=41.5238 for category 0
+--*40*-- CSkeletonElement::categoryVolumes: calling findPixelPlaneFacets for cat=4
+--*40*-- openDumpFile: opening epts
+--*40*-- doFindPixelPlaneFacets: pixplane=X=0- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=2
+--*40*-- doFindPixelPlaneFacets: pixplane=X=1- category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=7.92495
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((15.975086100790091947, 20), t=0.80498277984198152168, e=2) TetPlaneIntersectionPoint((20, 15.975086100790091947), t=0.19501722015801853383, e=1) TetPlaneIntersectionPoint((19, 15), t=0.2000000000000000111, e=4) TetPlaneIntersectionPoint((15, 19), t=0.2000000000000000111, e=3)
+--*40*--                           Coords=(20, 15.975086100790091947) (15.975086100790091947, 20) (15, 19) (19, 15)
+--*40*--                                (1, 15.9751, 20) (1, 20, 15.9751) (1, 19, 15) (1, 15, 19)
+--*40*--                                {0.80498277984198152168, 0, 0.19501722015801853383, 0} {0, 0.80498277984198152168, 0.19501722015801853383, 0} {0, 0.80000000000000004441, 0, 0.2000000000000000111} {0.80000000000000004441, 0, 0, 0.2000000000000000111}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=1+ category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=7.92495
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((15.975086100790091947, 20), t=0.80498277984198152168, e=2) TetPlaneIntersectionPoint((15, 19), t=0.2000000000000000111, e=3) TetPlaneIntersectionPoint((19, 15), t=0.2000000000000000111, e=4) TetPlaneIntersectionPoint((20, 15.975086100790091947), t=0.19501722015801853383, e=1)
+--*40*--                           Coords=(15.975086100790091947, 20) (15, 19) (19, 15) (20, 15.975086100790091947)
+--*40*--                                (1, 15.9751, 20) (1, 15, 19) (1, 19, 15) (1, 20, 15.9751)
+--*40*--                                {0.80498277984198152168, 0, 0.19501722015801853383, 0} {0.80000000000000004441, 0, 0, 0.2000000000000000111} {0, 0.80000000000000004441, 0, 0.2000000000000000111} {0, 0.80498277984198152168, 0.19501722015801853383, 0}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=2- category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=11.9489
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((16.950172201580183895, 20), t=0.60996555968396293235, e=2) TetPlaneIntersectionPoint((20, 16.950172201580183895), t=0.39003444031603706765, e=1) TetPlaneIntersectionPoint((18, 15), t=0.4000000000000000222, e=4) TetPlaneIntersectionPoint((15, 18), t=0.4000000000000000222, e=3)
+--*40*--                           Coords=(20, 16.950172201580183895) (16.950172201580183895, 20) (15, 18) (18, 15)
+--*40*--                                (2, 16.9502, 20) (2, 20, 16.9502) (2, 18, 15) (2, 15, 18)
+--*40*--                                {0.60996555968396293235, 0, 0.39003444031603706765, 0} {0, 0.60996555968396293235, 0.39003444031603706765, 0} {0, 0.5999999999999999778, 0, 0.4000000000000000222} {0.5999999999999999778, 0, 0, 0.4000000000000000222}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=2+ category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=11.9489
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((16.950172201580183895, 20), t=0.60996555968396293235, e=2) TetPlaneIntersectionPoint((15, 18), t=0.4000000000000000222, e=3) TetPlaneIntersectionPoint((18, 15), t=0.4000000000000000222, e=4) TetPlaneIntersectionPoint((20, 16.950172201580183895), t=0.39003444031603706765, e=1)
+--*40*--                           Coords=(16.950172201580183895, 20) (15, 18) (18, 15) (20, 16.950172201580183895)
+--*40*--                                (2, 16.9502, 20) (2, 15, 18) (2, 18, 15) (2, 20, 16.9502)
+--*40*--                                {0.60996555968396293235, 0, 0.39003444031603706765, 0} {0.5999999999999999778, 0, 0, 0.4000000000000000222} {0, 0.5999999999999999778, 0, 0.4000000000000000222} {0, 0.60996555968396293235, 0.39003444031603706765, 0}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=3- category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=12.0719
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((17.925258302370277619, 20), t=0.41494833952594434301, e=2) TetPlaneIntersectionPoint((20, 17.925258302370277619), t=0.58505166047405565699, e=1) TetPlaneIntersectionPoint((17, 15), t=0.60000000000000008882, e=4) TetPlaneIntersectionPoint((15, 17), t=0.60000000000000008882, e=3)
+--*40*--                           Coords=(20, 17.925258302370277619) (17.925258302370277619, 20) (15, 17) (17, 15)
+--*40*--                                (3, 17.9253, 20) (3, 20, 17.9253) (3, 17, 15) (3, 15, 17)
+--*40*--                                {0.41494833952594434301, 0, 0.58505166047405565699, 0} {0, 0.41494833952594434301, 0.58505166047405565699, 0} {0, 0.39999999999999991118, 0, 0.60000000000000008882} {0.39999999999999991118, 0, 0, 0.60000000000000008882}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--     doFindPixelPlaneFacets: examining loop PixelBdyLoop((14, 16) (15, 16) (15, 17) (14, 17))
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 0 (14, 16) (3, 16, 14) {-0.0025228165192334728317, 0.39747718348076671591, -0.19747718348076653827, 0.8025228165192332952} (exterior) --> (15, 16) (3, 16, 15) {0.098738591740383352402, 0.29873859174038325248, -0.09873859174038336628, 0.70126140825961669201} (exterior)
+--*40*--         find_two_intersections: pt0=(14, 16) pt1=(15, 16) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x7fa0297a5f00 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 1 (15, 16) (3, 16, 15) {0.098738591740383352402, 0.29873859174038325248, -0.09873859174038336628, 0.70126140825961669201} (exterior) --> (15, 17) (3, 17, 15) {0, 0.4000000000000000222, 0, 0.5999999999999999778} (exterior)
+--*40*--         find_two_intersections: pt0=(15, 16) pt1=(15, 17) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! doFindPixelPlaneFacets: examining bdy loop segment 2 (15, 17) (3, 17, 15) {0, 0.4000000000000000222, 0, 0.5999999999999999778} (exterior) --> (14, 17) (3, 17, 14) {-0.10126140825961660319, 0.49873859174038326358, -0.09873859174038336628, 0.70126140825961669201} (exterior)
+--*40*--         find_two_intersections: pt0=(15, 17) pt1=(14, 17) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x7fa02979a090
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 3 (14, 17) (3, 17, 14) {-0.10126140825961660319, 0.49873859174038326358, -0.09873859174038336628, 0.70126140825961669201} (exterior) --> (14, 16) (3, 16, 14) {-0.0025228165192334728317, 0.39747718348076671591, -0.19747718348076653827, 0.8025228165192332952} (exterior)
+--*40*--         find_two_intersections: pt0=(14, 17) pt1=(14, 16) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--     doFindPixelPlaneFacets: examining loop PixelBdyLoop((15, 15) (16, 15) (16, 16) (15, 16))
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 0 (15, 15) (3, 15, 15) {0.19747718348076648276, 0.1974771834807667048, -0.19747718348076653827, 0.8025228165192332952} (exterior) --> (16, 15) (3, 15, 16) {0.29873859174038353004, 0.098738591740383269135, -0.09873859174038336628, 0.70126140825961669201} (exterior)
+--*40*--         find_two_intersections: pt0=(15, 15) pt1=(16, 15) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 1 (16, 15) (3, 15, 16) {0.29873859174038353004, 0.098738591740383269135, -0.09873859174038336628, 0.70126140825961669201} (exterior) --> (16, 16) (3, 16, 16) {0.20000000000000006661, 0.2000000000000000111, 0, 0.5999999999999999778} (exterior)
+--*40*--         find_two_intersections: pt0=(16, 15) pt1=(16, 16) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x7fa02979a090 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 2 (16, 16) (3, 16, 16) {0.20000000000000006661, 0.2000000000000000111, 0, 0.5999999999999999778} (exterior) --> (15, 16) (3, 16, 15) {0.098738591740383352402, 0.29873859174038325248, -0.09873859174038336628, 0.70126140825961669201} (exterior)
+--*40*--         find_two_intersections: pt0=(16, 16) pt1=(15, 16) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x7fa02979a090
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 3 (15, 16) (3, 16, 15) {0.098738591740383352402, 0.29873859174038325248, -0.09873859174038336628, 0.70126140825961669201} (exterior) --> (15, 15) (3, 15, 15) {0.19747718348076648276, 0.1974771834807667048, -0.19747718348076653827, 0.8025228165192332952} (exterior)
+--*40*--         find_two_intersections: pt0=(15, 16) pt1=(15, 15) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=3+ category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=12.0719
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((17.925258302370277619, 20), t=0.41494833952594434301, e=2) TetPlaneIntersectionPoint((15, 17), t=0.60000000000000008882, e=3) TetPlaneIntersectionPoint((17, 15), t=0.60000000000000008882, e=4) TetPlaneIntersectionPoint((20, 17.925258302370277619), t=0.58505166047405565699, e=1)
+--*40*--                           Coords=(17.925258302370277619, 20) (15, 17) (17, 15) (20, 17.925258302370277619)
+--*40*--                                (3, 17.9253, 20) (3, 15, 17) (3, 17, 15) (3, 20, 17.9253)
+--*40*--                                {0.41494833952594434301, 0, 0.58505166047405565699, 0} {0.39999999999999991118, 0, 0, 0.60000000000000008882} {0, 0.39999999999999991118, 0, 0.60000000000000008882} {0, 0.41494833952594434301, 0.58505166047405565699, 0}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=4- category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=8.294
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((18.900344403160371343, 20), t=0.21993111936792586469, e=2) TetPlaneIntersectionPoint((20, 18.900344403160371343), t=0.78006888063207413531, e=1) TetPlaneIntersectionPoint((16, 15), t=0.80000000000000004441, e=4) TetPlaneIntersectionPoint((15, 16), t=0.80000000000000004441, e=3)
+--*40*--                           Coords=(20, 18.900344403160371343) (18.900344403160371343, 20) (15, 16) (16, 15)
+--*40*--                                (4, 18.9003, 20) (4, 20, 18.9003) (4, 16, 15) (4, 15, 16)
+--*40*--                                {0.21993111936792586469, 0, 0.78006888063207413531, 0} {0, 0.21993111936792586469, 0.78006888063207413531, 0} {0, 0.19999999999999995559, 0, 0.80000000000000004441} {0.19999999999999995559, 0, 0, 0.80000000000000004441}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--     doFindPixelPlaneFacets: examining loop PixelBdyLoop((16, 14) (17, 14) (17, 15) (16, 15))
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 0 (16, 14) (4, 14, 16) {0.29873859174038341902, -0.10126140825961674197, -0.09873859174038336628, 0.90126140825961675862} (exterior) --> (17, 14) (4, 14, 17) {0.4000000000000000222, -0.19999999999999990008, 8.660504320713015406e-17, 0.79999999999999993339} (exterior)
+--*40*--         find_two_intersections: pt0=(16, 14) pt1=(17, 14) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x7fa02979cdd0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 1 (17, 14) (4, 14, 17) {0.4000000000000000222, -0.19999999999999990008, 8.660504320713015406e-17, 0.79999999999999993339} (exterior) --> (17, 15) (4, 15, 17) {0.3012614082596166698, -0.098738591740383352402, 0.098738591740383269135, 0.6987385917403833302} (exterior)
+--*40*--         find_two_intersections: pt0=(17, 14) pt1=(17, 15) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 2 (17, 15) (4, 15, 17) {0.3012614082596166698, -0.098738591740383352402, 0.098738591740383269135, 0.6987385917403833302} (exterior) --> (16, 15) (4, 15, 16) {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339} (interior)
+--*40*--         doFindPixelPlaneFacets: found one intersection
+--*40*--              PixelBdyIntersection((16, 15), (4, 15, 16), {0.20000000000000006661, 0, 0, 0.80000000000000004441}, segment=3, fraction=-0, loopseg=2 ((17, 15), (16, 15)), entry)
+--*40*--         PixelPlaneFacet::addEdge: FaceFacetCorner((4, 15, 16)) PixelFacetCorner((4, 15, 16)) {0.20000000000000006661, 0, 0, 0.80000000000000004441} {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339} 'entrance, seg=[(4, 15, 17),(4, 15, 16)] X=4-'
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 3 (16, 15) (4, 15, 16) {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339} (interior) --> (16, 14) (4, 14, 16) {0.29873859174038341902, -0.10126140825961674197, -0.09873859174038336628, 0.90126140825961675862} (exterior)
+--*40*--         doFindPixelPlaneFacets: found one intersection
+--*40*--              PixelBdyIntersection((16, 14.999999999999998224), (4, 14.999999999999998224, 16), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, segment=3, fraction=-0, loopseg=3 ((16, 15), (16, 14)), exit)
+--*40*--         PixelPlaneFacet::addEdge: PixelFacetCorner((4, 15, 16)) FaceFacetCorner((4, 15, 16)) {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339} {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441} 'exit, seg=[(4, 15, 16),(4, 14, 16)] X=4-'
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--     [PixelFacetCorner((4, 15, 16)), FaceFacetCorner((4, 15, 16)), {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339}, {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, 'exit, seg=[(4, 15, 16),(4, 14, 16)] X=4-', length=1.77636e-15]
+--*40*--     [FaceFacetCorner((4, 15, 16)), PixelFacetCorner((4, 15, 16)), {0.20000000000000006661, 0, 0, 0.80000000000000004441}, {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339}, 'entrance, seg=[(4, 15, 17),(4, 15, 16)] X=4-', length=0]
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--     doFindPixelPlaneFacets: edge=(4, 15, 16) (4, 18.9003, 20) eledgedata[3]=
+--*40*--       -0: PixelBdyIntersection((16, 15), (4, 15, 16), {0.20000000000000006661, 0, 0, 0.80000000000000004441}, segment=3, fraction=-0, loopseg=2 ((17, 15), (16, 15)), entry)
+--*40*--       -0: PixelBdyIntersection((16, 14.999999999999998224), (4, 14.999999999999998224, 16), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, segment=3, fraction=-0, loopseg=3 ((16, 15), (16, 14)), exit)
+--*40*--   doFindPixelPlaneFacets: coordisecs key=(16, 15) ct=1
+--*40*--   doFindPixelPlaneFacets: coordisecs key=(16, 15) ct=1
+--*40*--   doFindPixelPlaneFacets: found coincidence.  entries=
+--*40*--      PixelBdyIntersection((16, 15), (4, 15, 16), {0.20000000000000006661, 0, 0, 0.80000000000000004441}, segment=3, fraction=-0, loopseg=2 ((17, 15), (16, 15)), entry)
+--*40*--   doFindPixelPlaneFacets:                       exits=
+--*40*--      PixelBdyIntersection((16, 14.999999999999998224), (4, 14.999999999999998224, 16), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, segment=3, fraction=-0, loopseg=3 ((16, 15), (16, 14)), exit)
+--*40*--   doFindPixelPlaneFacets: firstPt=PixelBdyIntersection((16, 15), (4, 15, 16), {0.20000000000000006661, 0, 0, 0.80000000000000004441}, segment=3, fraction=-0, loopseg=2 ((17, 15), (16, 15)), entry) turn=LEFT delta=0
+--*40*--   doFindPixelPlaneFacets: deleting coincidence (4) {0.20000000000000006661, 0, 0, 0.80000000000000004441} {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}
+--*40*--   PixelPlaneFacet::removeEdgesAtPoint: removing [PixelFacetCorner((4, 15, 16)), FaceFacetCorner((4, 15, 16)), {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339}, {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, 'exit, seg=[(4, 15, 16),(4, 14, 16)] X=4-', length=1.77636e-15] pt=(4, 15, 16)
+--*40*--   PixelPlaneFacet::removeEdgesAtPoint: removing [FaceFacetCorner((4, 15, 16)), PixelFacetCorner((4, 15, 16)), {0.20000000000000006661, 0, 0, 0.80000000000000004441}, {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339}, 'entrance, seg=[(4, 15, 17),(4, 15, 16)] X=4-', length=0] pt=(4, 15, 16)
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=4+ category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=8.294
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((18.900344403160371343, 20), t=0.21993111936792586469, e=2) TetPlaneIntersectionPoint((15, 16), t=0.80000000000000004441, e=3) TetPlaneIntersectionPoint((16, 15), t=0.80000000000000004441, e=4) TetPlaneIntersectionPoint((20, 18.900344403160371343), t=0.78006888063207413531, e=1)
+--*40*--                           Coords=(18.900344403160371343, 20) (15, 16) (16, 15) (20, 18.900344403160371343)
+--*40*--                                (4, 18.9003, 20) (4, 15, 16) (4, 16, 15) (4, 20, 18.9003)
+--*40*--                                {0.21993111936792586469, 0, 0.78006888063207413531, 0} {0.19999999999999995559, 0, 0, 0.80000000000000004441} {0, 0.19999999999999995559, 0, 0.80000000000000004441} {0, 0.21993111936792586469, 0.78006888063207413531, 0}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=5- category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=0.615089
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((15, 15), t=1, e=5) TetPlaneIntersectionPoint((19.875430503950461514, 20), t=0.024913899209907386378, e=2) TetPlaneIntersectionPoint((20, 19.875430503950461514), t=0.97508610079009261362, e=1)
+--*40*--                           Coords=(15, 15) (20, 19.875430503950461514) (19.875430503950461514, 20)
+--*40*--                                (5, 15, 15) (5, 19.8754, 20) (5, 20, 19.8754)
+--*40*--                                {0, 0, 0, 1} {0.024913899209907386378, 0, 0.97508610079009261362, 0} {0, 0.024913899209907386378, 0.97508610079009261362, 0}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=5+ category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=0.615089
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((15, 15), t=1, e=3) TetPlaneIntersectionPoint((20, 19.875430503950461514), t=0.97508610079009261362, e=1) TetPlaneIntersectionPoint((19.875430503950461514, 20), t=0.024913899209907386378, e=2)
+--*40*--                           Coords=(15, 15) (20, 19.875430503950461514) (19.875430503950461514, 20)
+--*40*--                                (5, 15, 15) (5, 20, 19.8754) (5, 19.8754, 20)
+--*40*--                                {0, 0, 0, 1} {0, 0.024913899209907386378, 0.97508610079009261362, 0} {0.024913899209907386378, 0, 0.97508610079009261362, 0}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=6- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=6+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=7- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=7+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=8- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=8+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=9- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=9+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=10- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=10+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=11- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=11+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=12- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=12+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=13- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=13+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=14- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=14+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=15- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=15+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=16- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=16+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=17- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=17+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=18- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=18+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=19- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=19+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=X=20+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=0- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=1- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=2- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=3- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=3+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=4- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=4+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=5- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=5+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=6- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=6+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=7- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=7+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=8- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=8+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=9- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=9+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=10- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=10+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=11- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=11+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=12- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=12+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=13- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=13+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=14- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=14+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=15- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=2
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=15+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=16- category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=8.1022
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((19, 0), t=0.2000000000000000111, e=0) TetPlaneIntersectionPoint((15, 4), t=0.80000000000000004441, e=4) TetPlaneIntersectionPoint((16, 5.0255504608154293322), t=0.80000000000000004441, e=5) TetPlaneIntersectionPoint((20, 1.0255504608154295543), t=0.80000000000000004441, e=2)
+--*40*--                           Coords=(0, 19) (4, 15) (5.0255504608154293322, 16) (1.0255504608154295543, 20)
+--*40*--                                (0, 16, 19) (4, 16, 15) (5.02555, 16, 16) (1.02555, 16, 20)
+--*40*--                                {0.80000000000000004441, 0.2000000000000000111, 0, 0} {0, 0.2000000000000000111, 0, 0.80000000000000004441} {0, 0, 0.2000000000000000111, 0.80000000000000004441} {0.80000000000000004441, 0, 0.2000000000000000111, 0}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=16+ category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=8.1022
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((19, 0), t=0.2000000000000000111, e=0) TetPlaneIntersectionPoint((20, 1.0255504608154295543), t=0.80000000000000004441, e=2) TetPlaneIntersectionPoint((16, 5.0255504608154293322), t=0.80000000000000004441, e=5) TetPlaneIntersectionPoint((15, 4), t=0.80000000000000004441, e=4)
+--*40*--                           Coords=(19, 0) (20, 1.0255504608154295543) (16, 5.0255504608154293322) (15, 4)
+--*40*--                                (0, 16, 19) (1.02555, 16, 20) (5.02555, 16, 16) (4, 16, 15)
+--*40*--                                {0.80000000000000004441, 0.2000000000000000111, 0, 0} {0.80000000000000004441, 0, 0.2000000000000000111, 0} {0, 0, 0.2000000000000000111, 0.80000000000000004441} {0, 0.2000000000000000111, 0, 0.80000000000000004441}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--     doFindPixelPlaneFacets: examining loop PixelBdyLoop((12, 0) (15, 0) (15, 3) (14, 3) (14, 2) (13, 2) (13, 1) (12, 1))
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 0 (12, 0) (0, 16, 12) {0.091170142182683155951, 0.89117014218268320036, -0.69117014218268313375, 0.70882985781731677744} (exterior) --> (15, 0) (0, 16, 15) {0.39495436696153329859, 0.59495436696153325418, -0.39495436696153329859, 0.40504563303846674582} (exterior)
+--*40*--         find_two_intersections: pt0=(12, 0) pt1=(15, 0) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 1 (15, 0) (0, 16, 15) {0.39495436696153329859, 0.59495436696153325418, -0.39495436696153329859, 0.40504563303846674582} (exterior) --> (15, 3) (3, 16, 15) {0.098738591740383352402, 0.29873859174038325248, -0.09873859174038336628, 0.70126140825961669201} (exterior)
+--*40*--         find_two_intersections: pt0=(15, 0) pt1=(15, 3) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 2 (15, 3) (3, 16, 15) {0.098738591740383352402, 0.29873859174038325248, -0.09873859174038336628, 0.70126140825961669201} (exterior) --> (14, 3) (3, 16, 14) {-0.0025228165192334728317, 0.39747718348076671591, -0.19747718348076653827, 0.8025228165192332952} (exterior)
+--*40*--         find_two_intersections: pt0=(15, 3) pt1=(14, 3) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x7fa0297b4e80
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 3 (14, 3) (3, 16, 14) {-0.0025228165192334728317, 0.39747718348076671591, -0.19747718348076653827, 0.8025228165192332952} (exterior) --> (14, 2) (2, 16, 14) {0.096215775221149768548, 0.49621577522114995729, -0.29621577522114989067, 0.70378422477885005382} (exterior)
+--*40*--         find_two_intersections: pt0=(14, 3) pt1=(14, 2) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x7fa0297b4e80 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 4 (14, 2) (2, 16, 14) {0.096215775221149768548, 0.49621577522114995729, -0.29621577522114989067, 0.70378422477885005382} (exterior) --> (13, 2) (2, 16, 13) {-0.0050456330384667236189, 0.59495436696153325418, -0.39495436696153329859, 0.80504563303846676803} (exterior)
+--*40*--         find_two_intersections: pt0=(14, 2) pt1=(13, 2) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x7fa0297b4e80
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 5 (13, 2) (2, 16, 13) {-0.0050456330384667236189, 0.59495436696153325418, -0.39495436696153329859, 0.80504563303846676803} (exterior) --> (13, 1) (1, 16, 13) {0.093692958701916517761, 0.69369295870191660658, -0.49369295870191653997, 0.70630704129808341563} (exterior)
+--*40*--         find_two_intersections: pt0=(13, 2) pt1=(13, 1) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x7fa0297b4e80 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 6 (13, 1) (1, 16, 13) {0.093692958701916517761, 0.69369295870191660658, -0.49369295870191653997, 0.70630704129808341563} (exterior) --> (12, 1) (1, 16, 12) {-0.0075684495577003074729, 0.79243155044229995898, -0.59243155044229978134, 0.80756844955770012984} (exterior)
+--*40*--         find_two_intersections: pt0=(13, 1) pt1=(12, 1) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x7fa0297b4e80
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 7 (12, 1) (1, 16, 12) {-0.0075684495577003074729, 0.79243155044229995898, -0.59243155044229978134, 0.80756844955770012984} (exterior) --> (12, 0) (0, 16, 12) {0.091170142182683155951, 0.89117014218268320036, -0.69117014218268313375, 0.70882985781731677744} (exterior)
+--*40*--         find_two_intersections: pt0=(12, 1) pt1=(12, 0) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x7fa0297b4e80 exitPt=0x0
+--*40*--     doFindPixelPlaneFacets: examining loop PixelBdyLoop((15, 3) (16, 3) (16, 13) (15, 13))
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 0 (15, 3) (3, 16, 15) {0.098738591740383352402, 0.29873859174038325248, -0.09873859174038336628, 0.70126140825961669201} (exterior) --> (16, 3) (3, 16, 16) {0.20000000000000006661, 0.2000000000000000111, 0, 0.5999999999999999778} (exterior)
+--*40*--         find_two_intersections: pt0=(15, 3) pt1=(16, 3) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x7fa0297b4e80 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 1 (16, 3) (3, 16, 16) {0.20000000000000006661, 0.2000000000000000111, 0, 0.5999999999999999778} (exterior) --> (16, 13) (13, 16, 16) {-0.78738591740383312434, -0.78738591740383312434, 0.98738591740383307993, 1.5873859174038331687} (exterior)
+--*40*--         find_two_intersections: pt0=(16, 3) pt1=(16, 13) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: entryPt=FaceIntersection((3, 16, 16), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, oppNode=2 alpha=0, error=0, entry)
+--*40*--         find_two_intersections:  exitPt=FaceIntersection((5.02555, 16, 16), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, oppNode=1 alpha=0.202555, error=0, exit)
+--*40*--         doFindPixelPlaneFacets: found two intersections
+--*40*--              PixelBdyIntersection((16, 3), (3, 16, 16), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, segment=3, fraction=0.24999999999999994449, loopseg=1 ((16, 3), (16, 13)), entry)
+--*40*--              PixelBdyIntersection((16, 5.0255504608154293322), (5.0255504608154293322, 16, 16), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, segment=1, fraction=1, loopseg=1 ((16, 3), (16, 13)), exit)
+--*40*--         PixelPlaneFacet::addEdge: FaceFacetCorner((3, 16, 16)) FaceFacetCorner((5.02555, 16, 16)) {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778} {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339} 'double intersection, seg=(3, 16, 16),(13, 16, 16) Y=16+'
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 2 (16, 13) (13, 16, 16) {-0.78738591740383312434, -0.78738591740383312434, 0.98738591740383307993, 1.5873859174038331687} (exterior) --> (15, 13) (13, 16, 15) {-0.88864732566344950548, -0.68864732566344988296, 0.88864732566344972753, 1.6886473256634497719} (exterior)
+--*40*--         find_two_intersections: pt0=(16, 13) pt1=(15, 13) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 3 (15, 13) (13, 16, 15) {-0.88864732566344950548, -0.68864732566344988296, 0.88864732566344972753, 1.6886473256634497719} (exterior) --> (15, 3) (3, 16, 15) {0.098738591740383352402, 0.29873859174038325248, -0.09873859174038336628, 0.70126140825961669201} (exterior)
+--*40*--         find_two_intersections: pt0=(15, 13) pt1=(15, 3) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--     [FaceFacetCorner((3, 16, 16)), FaceFacetCorner((5.02555, 16, 16)), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, 'double intersection, seg=(3, 16, 16),(13, 16, 16) Y=16+', length=2.02555]
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--     doFindPixelPlaneFacets: edge=(1.02555, 16, 20) (5.02555, 16, 16) eledgedata[1]=
+--*40*--       1: PixelBdyIntersection((16, 5.0255504608154293322), (5.0255504608154293322, 16, 16), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, segment=1, fraction=1, loopseg=1 ((16, 3), (16, 13)), exit)
+--*40*--     doFindPixelPlaneFacets: edge=(4, 16, 15) (0, 16, 19) eledgedata[3]=
+--*40*--       0.25: PixelBdyIntersection((16, 3), (3, 16, 16), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, segment=3, fraction=0.24999999999999994449, loopseg=1 ((16, 3), (16, 13)), entry)
+--*40*--   doFindPixelPlaneFacets: coordisecs key=(16, 3) ct=1
+--*40*--   doFindPixelPlaneFacets: coordisecs key=(16, 5.02555) ct=1
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--     doFindPixelPlaneFacets: eledgedata[1]=
+--*40*--       1: PixelBdyIntersection((16, 5.0255504608154293322), (5.0255504608154293322, 16, 16), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, segment=1, fraction=1, loopseg=1 ((16, 3), (16, 13)), exit)
+--*40*--     doFindPixelPlaneFacets: eledgedata[3]=
+--*40*--       0.25: PixelBdyIntersection((16, 3), (3, 16, 16), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, segment=3, fraction=0.24999999999999994449, loopseg=1 ((16, 3), (16, 13)), entry)
+--*40*--   doFindPixelPlaneFacets: finding missing polygon segments in Y=16+
+--*40*--     doFindPixelPlaneFacets: initial corner= FaceFacetCorner((5.02555, 16, 16))
+--*40*--     PixelPlaneFacet::addEdge: FaceFacetCorner((5.02555, 16, 16)) EdgeFacetCorner((5.02555, 16, 16)) {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339} {0, 0, 0.2000000000000000111, 0.80000000000000004441} 'polygon edge to corner Y=16+'
+--*40*--     PixelPlaneFacet::addEdge: EdgeFacetCorner((5.02555, 16, 16)) EdgeFacetCorner((4, 16, 15)) {0, 0, 0.2000000000000000111, 0.80000000000000004441} {0, 0.2000000000000000111, 0, 0.80000000000000004441} 'polygon edge to corner Y=16+'
+--*40*--     PixelPlaneFacet::addEdge: EdgeFacetCorner((4, 16, 15)) FaceFacetCorner((3, 16, 16)) {0, 0.2000000000000000111, 0, 0.80000000000000004441} {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778} 'polygon edge to entry Y=16+'
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=17- category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=12.1533
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((18, 0), t=0.4000000000000000222, e=0) TetPlaneIntersectionPoint((15, 3), t=0.5999999999999999778, e=4) TetPlaneIntersectionPoint((17, 5.0511009216308595526), t=0.5999999999999999778, e=5) TetPlaneIntersectionPoint((20, 2.0511009216308595526), t=0.5999999999999999778, e=2)
+--*40*--                           Coords=(0, 18) (3, 15) (5.0511009216308595526, 17) (2.0511009216308595526, 20)
+--*40*--                                (0, 17, 18) (3, 17, 15) (5.0511, 17, 17) (2.0511, 17, 20)
+--*40*--                                {0.5999999999999999778, 0.4000000000000000222, 0, 0} {0, 0.4000000000000000222, 0, 0.5999999999999999778} {0, 0, 0.4000000000000000222, 0.5999999999999999778} {0.5999999999999999778, 0, 0.4000000000000000222, 0}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=17+ category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=12.1533
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((18, 0), t=0.4000000000000000222, e=0) TetPlaneIntersectionPoint((20, 2.0511009216308595526), t=0.5999999999999999778, e=2) TetPlaneIntersectionPoint((17, 5.0511009216308595526), t=0.5999999999999999778, e=5) TetPlaneIntersectionPoint((15, 3), t=0.5999999999999999778, e=4)
+--*40*--                           Coords=(18, 0) (20, 2.0511009216308595526) (17, 5.0511009216308595526) (15, 3)
+--*40*--                                (0, 17, 18) (2.0511, 17, 20) (5.0511, 17, 17) (3, 17, 15)
+--*40*--                                {0.5999999999999999778, 0.4000000000000000222, 0, 0} {0.5999999999999999778, 0, 0.4000000000000000222, 0} {0, 0, 0.4000000000000000222, 0.5999999999999999778} {0, 0.4000000000000000222, 0, 0.5999999999999999778}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--     doFindPixelPlaneFacets: examining loop PixelBdyLoop((10, 0) (12, 0) (12, 1) (13, 1) (13, 2) (14, 2) (14, 3) (15, 3) (15, 13) (14, 13) (14, 12) (13, 12) (13, 11) (12, 11) (12, 10) (11, 10) (11, 9) (10, 9))
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 0 (10, 0) (0, 17, 10) {-0.21009126607693340283, 1.1899087339230665084, -0.78990873392306659717, 0.81009126607693349165} (exterior) --> (12, 0) (0, 17, 12) {-0.0075684495577001964506, 0.99243155044229991457, -0.59243155044229978134, 0.60756844955770006322} (exterior)
+--*40*--         find_two_intersections: pt0=(10, 0) pt1=(12, 0) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 1 (12, 0) (0, 17, 12) {-0.0075684495577001964506, 0.99243155044229991457, -0.59243155044229978134, 0.60756844955770006322} (exterior) --> (12, 1) (1, 17, 12) {-0.10630704129808332681, 0.89369295870191645115, -0.49369295870191653997, 0.70630704129808341563} (exterior)
+--*40*--         find_two_intersections: pt0=(12, 0) pt1=(12, 1) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 2 (12, 1) (1, 17, 12) {-0.10630704129808332681, 0.89369295870191645115, -0.49369295870191653997, 0.70630704129808341563} (exterior) --> (13, 1) (1, 17, 13) {-0.0050456330384668346412, 0.79495436696153332079, -0.39495436696153318756, 0.60504563303846670141} (exterior)
+--*40*--         find_two_intersections: pt0=(12, 1) pt1=(13, 1) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 3 (13, 1) (1, 17, 13) {-0.0050456330384668346412, 0.79495436696153332079, -0.39495436696153318756, 0.60504563303846670141} (exterior) --> (13, 2) (2, 17, 13) {-0.10378422477885018704, 0.69621577522114996839, -0.29621577522114989067, 0.70378422477885005382} (exterior)
+--*40*--         find_two_intersections: pt0=(13, 1) pt1=(13, 2) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 4 (13, 2) (2, 17, 13) {-0.10378422477885018704, 0.69621577522114996839, -0.29621577522114989067, 0.70378422477885005382} (exterior) --> (14, 2) (2, 17, 14) {-0.0025228165192332507871, 0.59747718348076650496, -0.19747718348076673256, 0.60252281651923345063} (exterior)
+--*40*--         find_two_intersections: pt0=(13, 2) pt1=(14, 2) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 5 (14, 2) (2, 17, 14) {-0.0025228165192332507871, 0.59747718348076650496, -0.19747718348076673256, 0.60252281651923345063} (exterior) --> (14, 3) (3, 17, 14) {-0.10126140825961660319, 0.49873859174038326358, -0.09873859174038336628, 0.70126140825961669201} (exterior)
+--*40*--         find_two_intersections: pt0=(14, 2) pt1=(14, 3) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 6 (14, 3) (3, 17, 14) {-0.10126140825961660319, 0.49873859174038326358, -0.09873859174038336628, 0.70126140825961669201} (exterior) --> (15, 3) (3, 17, 15) {0, 0.4000000000000000222, 0, 0.5999999999999999778} (exterior)
+--*40*--         find_two_intersections: pt0=(14, 3) pt1=(15, 3) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x7fa029622fa0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 7 (15, 3) (3, 17, 15) {0, 0.4000000000000000222, 0, 0.5999999999999999778} (exterior) --> (15, 13) (13, 17, 15) {-0.98738591740383307993, -0.58738591740383316875, 0.98738591740383307993, 1.5873859174038331687} (exterior)
+--*40*--         find_two_intersections: pt0=(15, 3) pt1=(15, 13) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! doFindPixelPlaneFacets: examining bdy loop segment 8 (15, 13) (13, 17, 15) {-0.98738591740383307993, -0.58738591740383316875, 0.98738591740383307993, 1.5873859174038331687} (exterior) --> (14, 13) (13, 17, 14) {-1.0886473256634496831, -0.48864732566344992737, 0.88864732566344972753, 1.6886473256634497719} (exterior)
+--*40*--         find_two_intersections: pt0=(15, 13) pt1=(14, 13) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 9 (14, 13) (13, 17, 14) {-1.0886473256634496831, -0.48864732566344992737, 0.88864732566344972753, 1.6886473256634497719} (exterior) --> (14, 12) (12, 17, 14) {-0.98990873392306655276, -0.38990873392306646394, 0.78990873392306659717, 1.5899087339230664195} (exterior)
+--*40*--         find_two_intersections: pt0=(14, 13) pt1=(14, 12) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 10 (14, 12) (12, 17, 14) {-0.98990873392306655276, -0.38990873392306646394, 0.78990873392306659717, 1.5899087339230664195} (exterior) --> (13, 12) (12, 17, 13) {-1.091170142182683378, -0.29117014218268300052, 0.69117014218268335579, 1.6911701421826830227} (exterior)
+--*40*--         find_two_intersections: pt0=(14, 12) pt1=(13, 12) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 11 (13, 12) (12, 17, 13) {-1.091170142182683378, -0.29117014218268300052, 0.69117014218268335579, 1.6911701421826830227} (exterior) --> (13, 11) (11, 17, 13) {-0.99243155044229969253, -0.19243155044229992567, 0.59243155044229978134, 1.5924315504422998924} (exterior)
+--*40*--         find_two_intersections: pt0=(13, 12) pt1=(13, 11) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 12 (13, 11) (11, 17, 13) {-0.99243155044229969253, -0.19243155044229992567, 0.59243155044229978134, 1.5924315504422998924} (exterior) --> (12, 11) (11, 17, 12) {-1.0936929587019170729, -0.093692958701916143061, 0.49369295870191698405, 1.6936929587019162735} (exterior)
+--*40*--         find_two_intersections: pt0=(13, 11) pt1=(12, 11) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 13 (12, 11) (11, 17, 12) {-1.0936929587019170729, -0.093692958701916143061, 0.49369295870191698405, 1.6936929587019162735} (exterior) --> (12, 10) (10, 17, 12) {-0.99495436696153305434, 0.0050456330384665900451, 0.39495436696153307654, 1.5949543669615333652} (exterior)
+--*40*--         find_two_intersections: pt0=(12, 11) pt1=(12, 10) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x7fa0297ae1e0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 14 (12, 10) (10, 17, 12) {-0.99495436696153305434, 0.0050456330384665900451, 0.39495436696153307654, 1.5949543669615333652} (exterior) --> (11, 10) (10, 17, 11) {-1.0962157752211498796, 0.10378422477885003439, 0.29621577522114989067, 1.6962157752211499684} (exterior)
+--*40*--         find_two_intersections: pt0=(12, 10) pt1=(11, 10) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 15 (11, 10) (10, 17, 11) {-1.0962157752211498796, 0.10378422477885003439, 0.29621577522114989067, 1.6962157752211499684} (exterior) --> (11, 9) (9, 17, 11) {-0.99747718348076674921, 0.20252281651923348393, 0.19747718348076673256, 1.597477183480766616} (exterior)
+--*40*--         find_two_intersections: pt0=(11, 10) pt1=(11, 9) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 16 (11, 9) (9, 17, 11) {-0.99747718348076674921, 0.20252281651923348393, 0.19747718348076673256, 1.597477183480766616} (exterior) --> (10, 9) (9, 17, 10) {-1.0987385917403837965, 0.30126140825961689185, 0.098738591740383532813, 1.6987385917403832192} (exterior)
+--*40*--         find_two_intersections: pt0=(11, 9) pt1=(10, 9) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 17 (10, 9) (9, 17, 10) {-1.0987385917403837965, 0.30126140825961689185, 0.098738591740383532813, 1.6987385917403832192} (exterior) --> (10, 0) (0, 17, 10) {-0.21009126607693340283, 1.1899087339230665084, -0.78990873392306659717, 0.81009126607693349165} (exterior)
+--*40*--         find_two_intersections: pt0=(10, 9) pt1=(10, 0) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x7fa0297ae1e0
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=18- category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=12.1533
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((17, 0), t=0.60000000000000008882, e=0) TetPlaneIntersectionPoint((15, 2), t=0.39999999999999991118, e=4) TetPlaneIntersectionPoint((18, 5.0766513824462888849), t=0.39999999999999991118, e=5) TetPlaneIntersectionPoint((20, 3.0766513824462888849), t=0.39999999999999991118, e=2)
+--*40*--                           Coords=(0, 17) (2, 15) (5.0766513824462888849, 18) (3.0766513824462888849, 20)
+--*40*--                                (0, 18, 17) (2, 18, 15) (5.07665, 18, 18) (3.07665, 18, 20)
+--*40*--                                {0.39999999999999991118, 0.60000000000000008882, 0, 0} {0, 0.60000000000000008882, 0, 0.39999999999999991118} {0, 0, 0.60000000000000008882, 0.39999999999999991118} {0.39999999999999991118, 0, 0.60000000000000008882, 0}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=18+ category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=12.1533
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((17, 0), t=0.60000000000000008882, e=0) TetPlaneIntersectionPoint((20, 3.0766513824462888849), t=0.39999999999999991118, e=2) TetPlaneIntersectionPoint((18, 5.0766513824462888849), t=0.39999999999999991118, e=5) TetPlaneIntersectionPoint((15, 2), t=0.39999999999999991118, e=4)
+--*40*--                           Coords=(17, 0) (20, 3.0766513824462888849) (18, 5.0766513824462888849) (15, 2)
+--*40*--                                (0, 18, 17) (3.07665, 18, 20) (5.07665, 18, 18) (2, 18, 15)
+--*40*--                                {0.39999999999999991118, 0.60000000000000008882, 0, 0} {0.39999999999999991118, 0, 0.60000000000000008882, 0} {0, 0, 0.60000000000000008882, 0.39999999999999991118} {0, 0.60000000000000008882, 0, 0.39999999999999991118}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=19- category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=8.1022
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((16, 0), t=0.80000000000000004441, e=0) TetPlaneIntersectionPoint((15, 1), t=0.19999999999999995559, e=4) TetPlaneIntersectionPoint((19, 5.1022018432617191053), t=0.19999999999999995559, e=5) TetPlaneIntersectionPoint((20, 4.1022018432617191053), t=0.19999999999999995559, e=2)
+--*40*--                           Coords=(0, 16) (1, 15) (5.1022018432617191053, 19) (4.1022018432617191053, 20)
+--*40*--                                (0, 19, 16) (1, 19, 15) (5.1022, 19, 19) (4.1022, 19, 20)
+--*40*--                                {0.19999999999999995559, 0.80000000000000004441, 0, 0} {0, 0.80000000000000004441, 0, 0.19999999999999995559} {0, 0, 0.80000000000000004441, 0.19999999999999995559} {0.19999999999999995559, 0, 0.80000000000000004441, 0}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=19+ category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=8.1022
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((16, 0), t=0.80000000000000004441, e=0) TetPlaneIntersectionPoint((20, 4.1022018432617191053), t=0.19999999999999995559, e=2) TetPlaneIntersectionPoint((19, 5.1022018432617191053), t=0.19999999999999995559, e=5) TetPlaneIntersectionPoint((15, 1), t=0.19999999999999995559, e=4)
+--*40*--                           Coords=(16, 0) (20, 4.1022018432617191053) (19, 5.1022018432617191053) (15, 1)
+--*40*--                                (0, 19, 16) (4.1022, 19, 20) (5.1022, 19, 19) (1, 19, 15)
+--*40*--                                {0.19999999999999995559, 0.80000000000000004441, 0, 0} {0.19999999999999995559, 0, 0.80000000000000004441, 0} {0, 0, 0.80000000000000004441, 0.19999999999999995559} {0, 0.80000000000000004441, 0, 0.19999999999999995559}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Y=20+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=2
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=0- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=1- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=1+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=2- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=2+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=3- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=3+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=4- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=4+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=5- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=5+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=6- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=6+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=7- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=7+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=8- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=8+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=9- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=9+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=10- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=10+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=11- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=11+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=12- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=12+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=13- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=13+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=14- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=14+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=15- category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=2
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=15+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=16- category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=8.1022
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((0, 19), t=0.80000000000000004441, e=0) TetPlaneIntersectionPoint((1.0255504608154295543, 20), t=0.2000000000000000111, e=1) TetPlaneIntersectionPoint((5.0255504608154293322, 16), t=0.80000000000000004441, e=5) TetPlaneIntersectionPoint((4, 15), t=0.80000000000000004441, e=3)
+--*40*--                           Coords=(19, 0) (20, 1.0255504608154295543) (16, 5.0255504608154293322) (15, 4)
+--*40*--                                (0, 19, 16) (1.02555, 20, 16) (5.02555, 16, 16) (4, 15, 16)
+--*40*--                                {0.2000000000000000111, 0.80000000000000004441, 0, 0} {0, 0.80000000000000004441, 0.2000000000000000111, 0} {0, 0, 0.2000000000000000111, 0.80000000000000004441} {0.2000000000000000111, 0, 0, 0.80000000000000004441}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=16+ category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=8.1022
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((0, 19), t=0.80000000000000004441, e=0) TetPlaneIntersectionPoint((4, 15), t=0.80000000000000004441, e=3) TetPlaneIntersectionPoint((5.0255504608154293322, 16), t=0.80000000000000004441, e=5) TetPlaneIntersectionPoint((1.0255504608154295543, 20), t=0.2000000000000000111, e=1)
+--*40*--                           Coords=(0, 19) (4, 15) (5.0255504608154293322, 16) (1.0255504608154295543, 20)
+--*40*--                                (0, 19, 16) (4, 15, 16) (5.02555, 16, 16) (1.02555, 20, 16)
+--*40*--                                {0.2000000000000000111, 0.80000000000000004441, 0, 0} {0.2000000000000000111, 0, 0, 0.80000000000000004441} {0, 0, 0.2000000000000000111, 0.80000000000000004441} {0, 0.80000000000000004441, 0.2000000000000000111, 0}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--     doFindPixelPlaneFacets: examining loop PixelBdyLoop((0, 14) (4, 14) (4, 15) (14, 15) (14, 20) (13, 20) (13, 16) (3, 16) (3, 15) (0, 15))
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 0 (0, 14) (0, 14, 16) {0.6936929587019167176, 0.29369295870191647335, -0.49369295870191665099, 0.50630704129808346003} (exterior) --> (4, 14) (4, 14, 16) {0.29873859174038341902, -0.10126140825961674197, -0.09873859174038336628, 0.90126140825961675862} (exterior)
+--*40*--         find_two_intersections: pt0=(0, 14) pt1=(4, 14) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x7fa0297b4110
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 1 (4, 14) (4, 14, 16) {0.29873859174038341902, -0.10126140825961674197, -0.09873859174038336628, 0.90126140825961675862} (exterior) --> (4, 15) (4, 15, 16) {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339} (interior)
+--*40*--         doFindPixelPlaneFacets: found one intersection
+--*40*--              PixelBdyIntersection((4, 14.999999999999998224), (4, 14.999999999999998224, 16), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, segment=1, fraction=2.7755575615628913511e-16, loopseg=1 ((4, 14), (4, 15)), entry)
+--*40*--         PixelPlaneFacet::addEdge: FaceFacetCorner((4, 15, 16)) PixelFacetCorner((4, 15, 16)) {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441} {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339} 'entrance, seg=[(4, 14, 16),(4, 15, 16)] Z=16+'
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 2 (4, 15) (4, 15, 16) {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339} (interior) --> (14, 15) (14, 15, 16) {-0.78738591740383334638, -0.98738591740383296891, 0.98738591740383330198, 1.7873859174038331243} (exterior)
+--*40*--         doFindPixelPlaneFacets: found one intersection
+--*40*--              PixelBdyIntersection((3.9999999999999995559, 15), (3.9999999999999995559, 15, 16), {0.19999999999999987232, 0, 0, 0.79999999999999993339}, segment=1, fraction=6.9388939039072283776e-16, loopseg=2 ((4, 15), (14, 15)), exit)
+--*40*--         PixelPlaneFacet::addEdge: PixelFacetCorner((4, 15, 16)) FaceFacetCorner((4, 15, 16)) {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339} {0.19999999999999987232, 0, 0, 0.79999999999999993339} 'exit, seg=[(4, 15, 16),(14, 15, 16)] Z=16+'
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 3 (14, 15) (14, 15, 16) {-0.78738591740383334638, -0.98738591740383296891, 0.98738591740383330198, 1.7873859174038331243} (exterior) --> (14, 20) (14, 20, 16) {-1.2810788761057498863, -0.48107887610574967541, 1.4810788761057498419, 1.2810788761057496643} (exterior)
+--*40*--         find_two_intersections: pt0=(14, 15) pt1=(14, 20) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 4 (14, 20) (14, 20, 16) {-1.2810788761057498863, -0.48107887610574967541, 1.4810788761057498419, 1.2810788761057496643} (exterior) --> (13, 20) (13, 20, 16) {-1.1823402843653660899, -0.38234028436536637852, 1.3823402843653662675, 1.1823402843653663119} (exterior)
+--*40*--         find_two_intersections: pt0=(14, 20) pt1=(13, 20) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 5 (13, 20) (13, 20, 16) {-1.1823402843653660899, -0.38234028436536637852, 1.3823402843653662675, 1.1823402843653663119} (exterior) --> (13, 16) (13, 16, 16) {-0.78738591740383312434, -0.78738591740383312434, 0.98738591740383307993, 1.5873859174038331687} (exterior)
+--*40*--         find_two_intersections: pt0=(13, 20) pt1=(13, 16) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 6 (13, 16) (13, 16, 16) {-0.78738591740383312434, -0.78738591740383312434, 0.98738591740383307993, 1.5873859174038331687} (exterior) --> (3, 16) (3, 16, 16) {0.20000000000000006661, 0.2000000000000000111, 0, 0.5999999999999999778} (exterior)
+--*40*--         find_two_intersections: pt0=(13, 16) pt1=(3, 16) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: entryPt=FaceIntersection((5.02555, 16, 16), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, oppNode=1 alpha=0.797445, error=0, entry)
+--*40*--         find_two_intersections:  exitPt=FaceIntersection((3, 16, 16), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, oppNode=2 alpha=1, error=0, exit)
+--*40*--         doFindPixelPlaneFacets: found two intersections
+--*40*--              PixelBdyIntersection((5.0255504608154293322, 16), (5.0255504608154293322, 16, 16), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, segment=1, fraction=0.99999999999999977796, loopseg=6 ((13, 16), (3, 16)), entry)
+--*40*--              PixelBdyIntersection((3, 16), (3, 16, 16), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, segment=0, fraction=0.75000000000000011102, loopseg=6 ((13, 16), (3, 16)), exit)
+--*40*--         PixelPlaneFacet::addEdge: FaceFacetCorner((5.02555, 16, 16)) FaceFacetCorner((3, 16, 16)) {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339} {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778} 'double intersection, seg=(13, 16, 16),(3, 16, 16) Z=16+'
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 7 (3, 16) (3, 16, 16) {0.20000000000000006661, 0.2000000000000000111, 0, 0.5999999999999999778} (exterior) --> (3, 15) (3, 15, 16) {0.29873859174038353004, 0.098738591740383269135, -0.09873859174038336628, 0.70126140825961669201} (exterior)
+--*40*--         find_two_intersections: pt0=(3, 16) pt1=(3, 15) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x7fa0297b0470
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 8 (3, 15) (3, 15, 16) {0.29873859174038353004, 0.098738591740383269135, -0.09873859174038336628, 0.70126140825961669201} (exterior) --> (0, 15) (0, 15, 16) {0.59495436696153325418, 0.39495436696153324307, -0.39495436696153329859, 0.40504563303846674582} (exterior)
+--*40*--         find_two_intersections: pt0=(3, 15) pt1=(0, 15) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 9 (0, 15) (0, 15, 16) {0.59495436696153325418, 0.39495436696153324307, -0.39495436696153329859, 0.40504563303846674582} (exterior) --> (0, 14) (0, 14, 16) {0.6936929587019167176, 0.29369295870191647335, -0.49369295870191665099, 0.50630704129808346003} (exterior)
+--*40*--         find_two_intersections: pt0=(0, 15) pt1=(0, 14) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--     [FaceFacetCorner((5.02555, 16, 16)), FaceFacetCorner((3, 16, 16)), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, 'double intersection, seg=(13, 16, 16),(3, 16, 16) Z=16+', length=2.02555]
+--*40*--     [PixelFacetCorner((4, 15, 16)), FaceFacetCorner((4, 15, 16)), {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339}, {0.19999999999999987232, 0, 0, 0.79999999999999993339}, 'exit, seg=[(4, 15, 16),(14, 15, 16)] Z=16+', length=4.44089e-16]
+--*40*--     [FaceFacetCorner((4, 15, 16)), PixelFacetCorner((4, 15, 16)), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339}, 'entrance, seg=[(4, 14, 16),(4, 15, 16)] Z=16+', length=1.77636e-15]
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--     doFindPixelPlaneFacets: edge=(0, 19, 16) (4, 15, 16) eledgedata[0]=
+--*40*--       0.75: PixelBdyIntersection((3, 16), (3, 16, 16), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, segment=0, fraction=0.75000000000000011102, loopseg=6 ((13, 16), (3, 16)), exit)
+--*40*--     doFindPixelPlaneFacets: edge=(4, 15, 16) (5.02555, 16, 16) eledgedata[1]=
+--*40*--       2.77556e-16: PixelBdyIntersection((4, 14.999999999999998224), (4, 14.999999999999998224, 16), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, segment=1, fraction=2.7755575615628913511e-16, loopseg=1 ((4, 14), (4, 15)), entry)
+--*40*--       6.93889e-16: PixelBdyIntersection((3.9999999999999995559, 15), (3.9999999999999995559, 15, 16), {0.19999999999999987232, 0, 0, 0.79999999999999993339}, segment=1, fraction=6.9388939039072283776e-16, loopseg=2 ((4, 15), (14, 15)), exit)
+--*40*--       1: PixelBdyIntersection((5.0255504608154293322, 16), (5.0255504608154293322, 16, 16), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, segment=1, fraction=0.99999999999999977796, loopseg=6 ((13, 16), (3, 16)), entry)
+--*40*--   doFindPixelPlaneFacets: coordisecs key=(3, 16) ct=1
+--*40*--   doFindPixelPlaneFacets: coordisecs key=(4, 15) ct=1
+--*40*--   doFindPixelPlaneFacets: coordisecs key=(4, 15) ct=1
+--*40*--   doFindPixelPlaneFacets: coordisecs key=(5.02555, 16) ct=1
+--*40*--   doFindPixelPlaneFacets: found coincidence.  entries=
+--*40*--      PixelBdyIntersection((4, 14.999999999999998224), (4, 14.999999999999998224, 16), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, segment=1, fraction=2.7755575615628913511e-16, loopseg=1 ((4, 14), (4, 15)), entry)
+--*40*--   doFindPixelPlaneFacets:                       exits=
+--*40*--      PixelBdyIntersection((3.9999999999999995559, 15), (3.9999999999999995559, 15, 16), {0.19999999999999987232, 0, 0, 0.79999999999999993339}, segment=1, fraction=6.9388939039072283776e-16, loopseg=2 ((4, 15), (14, 15)), exit)
+--*40*--   doFindPixelPlaneFacets: firstPt=PixelBdyIntersection((4, 14.999999999999998224), (4, 14.999999999999998224, 16), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, segment=1, fraction=2.7755575615628913511e-16, loopseg=1 ((4, 14), (4, 15)), entry) turn=RIGHT delta=-4.16334e-16
+--*40*--   doFindPixelPlaneFacets: not removing coincidence
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--     doFindPixelPlaneFacets: eledgedata[0]=
+--*40*--       0.75: PixelBdyIntersection((3, 16), (3, 16, 16), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, segment=0, fraction=0.75000000000000011102, loopseg=6 ((13, 16), (3, 16)), exit)
+--*40*--     doFindPixelPlaneFacets: eledgedata[1]=
+--*40*--       2.77556e-16: PixelBdyIntersection((4, 14.999999999999998224), (4, 14.999999999999998224, 16), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, segment=1, fraction=2.7755575615628913511e-16, loopseg=1 ((4, 14), (4, 15)), entry)
+--*40*--       6.93889e-16: PixelBdyIntersection((3.9999999999999995559, 15), (3.9999999999999995559, 15, 16), {0.19999999999999987232, 0, 0, 0.79999999999999993339}, segment=1, fraction=6.9388939039072283776e-16, loopseg=2 ((4, 15), (14, 15)), exit)
+--*40*--       1: PixelBdyIntersection((5.0255504608154293322, 16), (5.0255504608154293322, 16, 16), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, segment=1, fraction=0.99999999999999977796, loopseg=6 ((13, 16), (3, 16)), entry)
+--*40*--   doFindPixelPlaneFacets: finding missing polygon segments in Z=16+
+--*40*--     doFindPixelPlaneFacets: initial corner= FaceFacetCorner((3, 16, 16))
+--*40*--     PixelPlaneFacet::addEdge: FaceFacetCorner((3, 16, 16)) EdgeFacetCorner((4, 15, 16)) {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778} {0.2000000000000000111, 0, 0, 0.80000000000000004441} 'polygon edge to corner Z=16+'
+--*40*--     PixelPlaneFacet::addEdge: EdgeFacetCorner((4, 15, 16)) FaceFacetCorner((4, 15, 16)) {0.2000000000000000111, 0, 0, 0.80000000000000004441} {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441} 'polygon edge to entry Z=16+'
+--*40*--     PixelPlaneFacet::addEdge: FaceFacetCorner((4, 15, 16)) FaceFacetCorner((5.02555, 16, 16)) {0.19999999999999987232, 0, 0, 0.79999999999999993339} {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339} 'polygon edge to entry Z=16+'
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=17- category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=12.1533
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((0, 18), t=0.5999999999999999778, e=0) TetPlaneIntersectionPoint((2.0511009216308595526, 20), t=0.4000000000000000222, e=1) TetPlaneIntersectionPoint((5.0511009216308595526, 17), t=0.5999999999999999778, e=5) TetPlaneIntersectionPoint((3, 15), t=0.5999999999999999778, e=3)
+--*40*--                           Coords=(18, 0) (20, 2.0511009216308595526) (17, 5.0511009216308595526) (15, 3)
+--*40*--                                (0, 18, 17) (2.0511, 20, 17) (5.0511, 17, 17) (3, 15, 17)
+--*40*--                                {0.4000000000000000222, 0.5999999999999999778, 0, 0} {0, 0.5999999999999999778, 0.4000000000000000222, 0} {0, 0, 0.4000000000000000222, 0.5999999999999999778} {0.4000000000000000222, 0, 0, 0.5999999999999999778}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=17+ category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=12.1533
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((0, 18), t=0.5999999999999999778, e=0) TetPlaneIntersectionPoint((3, 15), t=0.5999999999999999778, e=3) TetPlaneIntersectionPoint((5.0511009216308595526, 17), t=0.5999999999999999778, e=5) TetPlaneIntersectionPoint((2.0511009216308595526, 20), t=0.4000000000000000222, e=1)
+--*40*--                           Coords=(0, 18) (3, 15) (5.0511009216308595526, 17) (2.0511009216308595526, 20)
+--*40*--                                (0, 18, 17) (3, 15, 17) (5.0511, 17, 17) (2.0511, 20, 17)
+--*40*--                                {0.4000000000000000222, 0.5999999999999999778, 0, 0} {0.4000000000000000222, 0, 0, 0.5999999999999999778} {0, 0, 0.4000000000000000222, 0.5999999999999999778} {0, 0.5999999999999999778, 0.4000000000000000222, 0}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--     doFindPixelPlaneFacets: examining loop PixelBdyLoop((4, 14) (14, 14) (14, 15) (4, 15))
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 0 (4, 14) (4, 14, 17) {0.4000000000000000222, -0.19999999999999990008, 8.660504320713015406e-17, 0.79999999999999993339} (exterior) --> (14, 14) (14, 14, 17) {-0.58738591740383361284, -1.1873859174038330355, 0.98738591740383330198, 1.7873859174038331243} (exterior)
+--*40*--         find_two_intersections: pt0=(4, 14) pt1=(14, 14) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x7fa0297b1970
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 1 (14, 14) (14, 14, 17) {-0.58738591740383361284, -1.1873859174038330355, 0.98738591740383330198, 1.7873859174038331243} (exterior) --> (14, 15) (14, 15, 17) {-0.68612450914421652115, -1.0861245091442164323, 1.0861245091442164323, 1.6861245091442165212} (exterior)
+--*40*--         find_two_intersections: pt0=(14, 14) pt1=(14, 15) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 2 (14, 15) (14, 15, 17) {-0.68612450914421652115, -1.0861245091442164323, 1.0861245091442164323, 1.6861245091442165212} (exterior) --> (4, 15) (4, 15, 17) {0.3012614082596166698, -0.098738591740383352402, 0.098738591740383269135, 0.6987385917403833302} (exterior)
+--*40*--         find_two_intersections: pt0=(14, 15) pt1=(4, 15) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x7fa0297b1970 exitPt=0x0
+--*40*--       doFindPixelPlaneFacets: examining bdy loop segment 3 (4, 15) (4, 15, 17) {0.3012614082596166698, -0.098738591740383352402, 0.098738591740383269135, 0.6987385917403833302} (exterior) --> (4, 14) (4, 14, 17) {0.4000000000000000222, -0.19999999999999990008, 8.660504320713015406e-17, 0.79999999999999993339} (exterior)
+--*40*--         find_two_intersections: pt0=(4, 15) pt1=(4, 14) onFace=12345 excludeFace=12345
+--*40*--         find_two_intersections: no intersection! entryPt=0x0 exitPt=0x0
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=18- category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=12.1533
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((0, 17), t=0.39999999999999991118, e=0) TetPlaneIntersectionPoint((3.0766513824462888849, 20), t=0.60000000000000008882, e=1) TetPlaneIntersectionPoint((5.0766513824462888849, 18), t=0.39999999999999991118, e=5) TetPlaneIntersectionPoint((2, 15), t=0.39999999999999991118, e=3)
+--*40*--                           Coords=(17, 0) (20, 3.0766513824462888849) (18, 5.0766513824462888849) (15, 2)
+--*40*--                                (0, 17, 18) (3.07665, 20, 18) (5.07665, 18, 18) (2, 15, 18)
+--*40*--                                {0.60000000000000008882, 0.39999999999999991118, 0, 0} {0, 0.39999999999999991118, 0.60000000000000008882, 0} {0, 0, 0.60000000000000008882, 0.39999999999999991118} {0.60000000000000008882, 0, 0, 0.39999999999999991118}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=18+ category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=12.1533
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((0, 17), t=0.39999999999999991118, e=0) TetPlaneIntersectionPoint((2, 15), t=0.39999999999999991118, e=3) TetPlaneIntersectionPoint((5.0766513824462888849, 18), t=0.39999999999999991118, e=5) TetPlaneIntersectionPoint((3.0766513824462888849, 20), t=0.60000000000000008882, e=1)
+--*40*--                           Coords=(0, 17) (2, 15) (5.0766513824462888849, 18) (3.0766513824462888849, 20)
+--*40*--                                (0, 17, 18) (2, 15, 18) (5.07665, 18, 18) (3.07665, 20, 18)
+--*40*--                                {0.60000000000000008882, 0.39999999999999991118, 0, 0} {0.60000000000000008882, 0, 0, 0.39999999999999991118} {0, 0, 0.60000000000000008882, 0.39999999999999991118} {0, 0.39999999999999991118, 0.60000000000000008882, 0}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=19- category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=8.1022
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((0, 16), t=0.19999999999999995559, e=0) TetPlaneIntersectionPoint((4.1022018432617191053, 20), t=0.80000000000000004441, e=1) TetPlaneIntersectionPoint((5.1022018432617191053, 19), t=0.19999999999999995559, e=5) TetPlaneIntersectionPoint((1, 15), t=0.19999999999999995559, e=3)
+--*40*--                           Coords=(16, 0) (20, 4.1022018432617191053) (19, 5.1022018432617191053) (15, 1)
+--*40*--                                (0, 16, 19) (4.1022, 20, 19) (5.1022, 19, 19) (1, 15, 19)
+--*40*--                                {0.80000000000000004441, 0.19999999999999995559, 0, 0} {0, 0.19999999999999995559, 0.80000000000000004441, 0} {0, 0, 0.80000000000000004441, 0.19999999999999995559} {0.80000000000000004441, 0, 0, 0.19999999999999995559}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=19+ category=4
+--*40*--   doFindPixelPlaneFacets: polyarea=8.1022
+--*40*--   doFindPixelPlaneFacets: tetPts=TetPlaneIntersectionPoint((0, 16), t=0.19999999999999995559, e=0) TetPlaneIntersectionPoint((1, 15), t=0.19999999999999995559, e=3) TetPlaneIntersectionPoint((5.1022018432617191053, 19), t=0.19999999999999995559, e=5) TetPlaneIntersectionPoint((4.1022018432617191053, 20), t=0.80000000000000004441, e=1)
+--*40*--                           Coords=(0, 16) (1, 15) (5.1022018432617191053, 19) (4.1022018432617191053, 20)
+--*40*--                                (0, 16, 19) (1, 15, 19) (5.1022, 19, 19) (4.1022, 20, 19)
+--*40*--                                {0.80000000000000004441, 0.19999999999999995559, 0, 0} {0.80000000000000004441, 0, 0, 0.19999999999999995559} {0, 0, 0.80000000000000004441, 0.19999999999999995559} {0, 0.19999999999999995559, 0.80000000000000004441, 0}
+--*40*--   doFindPixelPlaneFacets: getting loops for category 4
+--*40*--   doFindPixelPlaneFacets: done looping over bdy loops
+--*40*--   doFindPixelPlaneFacets: facet= 
+--*40*--   doFindPixelPlaneFacets: before coincidence check:
+--*40*--   doFindPixelPlaneFacets: after coincidence check
+--*40*--   doFindPixelPlaneFacets: homogeneous=0 area=0
+--*40*-- doFindPixelPlaneFacets: pixplane=Z=20+ category=4
+--*40*--   doFindPixelPlaneFacets: no intersection! nn=2
+--*40*-- openDumpFile: opening pixelplanefacets4
+--*40*-- findPixelPlaneFacets: final pixel plane facets for category 4
+--*40*--   Y=16+
+--*40*--     [EdgeFacetCorner((5.02555, 16, 16)), EdgeFacetCorner((4, 16, 15)), {0, 0, 0.2000000000000000111, 0.80000000000000004441}, {0, 0.2000000000000000111, 0, 0.80000000000000004441}, 'polygon edge to corner Y=16+', length=1.43239]
+--*40*--     [EdgeFacetCorner((4, 16, 15)), FaceFacetCorner((3, 16, 16)), {0, 0.2000000000000000111, 0, 0.80000000000000004441}, {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, 'polygon edge to entry Y=16+', length=1.41421]
+--*40*--     [FaceFacetCorner((5.02555, 16, 16)), EdgeFacetCorner((5.02555, 16, 16)), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, {0, 0, 0.2000000000000000111, 0.80000000000000004441}, 'polygon edge to corner Y=16+', length=0]
+--*40*--     [FaceFacetCorner((3, 16, 16)), FaceFacetCorner((5.02555, 16, 16)), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, 'double intersection, seg=(3, 16, 16),(13, 16, 16) Y=16+', length=2.02555]
+--*40*--   Z=16+
+--*40*--     [FaceFacetCorner((5.02555, 16, 16)), FaceFacetCorner((3, 16, 16)), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, 'double intersection, seg=(13, 16, 16),(3, 16, 16) Z=16+', length=2.02555]
+--*40*--     [PixelFacetCorner((4, 15, 16)), FaceFacetCorner((4, 15, 16)), {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339}, {0.19999999999999987232, 0, 0, 0.79999999999999993339}, 'exit, seg=[(4, 15, 16),(14, 15, 16)] Z=16+', length=4.44089e-16]
+--*40*--     [FaceFacetCorner((4, 15, 16)), FaceFacetCorner((5.02555, 16, 16)), {0.19999999999999987232, 0, 0, 0.79999999999999993339}, {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, 'polygon edge to entry Z=16+', length=1.43239]
+--*40*--     [FaceFacetCorner((4, 15, 16)), PixelFacetCorner((4, 15, 16)), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339}, 'entrance, seg=[(4, 14, 16),(4, 15, 16)] Z=16+', length=1.77636e-15]
+--*40*--     [FaceFacetCorner((3, 16, 16)), EdgeFacetCorner((4, 15, 16)), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, {0.2000000000000000111, 0, 0, 0.80000000000000004441}, 'polygon edge to corner Z=16+', length=1.41421]
+--*40*--     [EdgeFacetCorner((4, 15, 16)), FaceFacetCorner((4, 15, 16)), {0.2000000000000000111, 0, 0, 0.80000000000000004441}, {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, 'polygon edge to entry Z=16+', length=1.77636e-15]
+--*40*-- CSkeletonElement::categoryVolumes: calling tetIntersectionVolume
+--*40*-- tetIntersectionFaceFacets: category=4
+--*40*-- tetIntersectionFaceFacets: baryEquiv={0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}:{0.20000000000000006661, 0, 0, 0.80000000000000004441}
+--*40*--   tetIntersectionFaceFacets: adding [EdgeFacetCorner((4, 16, 15)), EdgeFacetCorner((5.02555, 16, 16)), {0, 0.2000000000000000111, 0, 0.80000000000000004441}, {0, 0, 0.2000000000000000111, 0.80000000000000004441}, 'reversed: polygon edge to corner Y=16+', length=1.43239] to face 1
+--*40*--   tetIntersectionFaceFacets: adding [FaceFacetCorner((3, 16, 16)), EdgeFacetCorner((4, 16, 15)), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, {0, 0.2000000000000000111, 0, 0.80000000000000004441}, 'reversed: polygon edge to entry Y=16+', length=1.41421] to face 0
+--*40*--   tetIntersectionFaceFacets: adding [EdgeFacetCorner((5.02555, 16, 16)), FaceFacetCorner((5.02555, 16, 16)), {0, 0, 0.2000000000000000111, 0.80000000000000004441}, {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, 'reversed: polygon edge to corner Y=16+', length=0] to face 2
+--*40*--   tetIntersectionFaceFacets: edge [FaceFacetCorner((3, 16, 16)), FaceFacetCorner((5.02555, 16, 16)), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, 'double intersection, seg=(3, 16, 16),(13, 16, 16) Y=16+', length=2.02555] is not on a face
+--*40*--   tetIntersectionFaceFacets: edge [FaceFacetCorner((5.02555, 16, 16)), FaceFacetCorner((3, 16, 16)), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, 'double intersection, seg=(13, 16, 16),(3, 16, 16) Z=16+', length=2.02555] is not on a face
+--*40*--   tetIntersectionFaceFacets: edge [PixelFacetCorner((4, 15, 16)), FaceFacetCorner((4, 15, 16)), {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339}, {0.19999999999999987232, 0, 0, 0.79999999999999993339}, 'exit, seg=[(4, 15, 16),(14, 15, 16)] Z=16+', length=4.44089e-16] is not on a face
+--*40*--   tetIntersectionFaceFacets: adding [FaceFacetCorner((5.02555, 16, 16)), FaceFacetCorner((4, 15, 16)), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, {0.19999999999999987232, 0, 0, 0.79999999999999993339}, 'reversed: polygon edge to entry Z=16+', length=1.43239] to face 2
+--*40*--   tetIntersectionFaceFacets: edge [FaceFacetCorner((4, 15, 16)), PixelFacetCorner((4, 15, 16)), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, {0.19999999999999984457, 8.8817841970012528164e-17, 8.660504320713015406e-17, 0.79999999999999993339}, 'entrance, seg=[(4, 14, 16),(4, 15, 16)] Z=16+', length=1.77636e-15] is not on a face
+--*40*--   tetIntersectionFaceFacets: adding [EdgeFacetCorner((4, 15, 16)), FaceFacetCorner((3, 16, 16)), {0.2000000000000000111, 0, 0, 0.80000000000000004441}, {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, 'reversed: polygon edge to corner Z=16+', length=1.41421] to face 0
+--*40*--   tetIntersectionFaceFacets: adding [FaceFacetCorner((4, 15, 16)), EdgeFacetCorner((4, 15, 16)), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, {0.2000000000000000111, 0, 0, 0.80000000000000004441}, 'reversed: polygon edge to entry Z=16+', length=1.77636e-15] to face 2
+--*40*-- tetIntersectionFaceFacets: didFace=0 0 0 0
+--*40*-- tetIntersectionFaceFacets: sorted faceFacetEdges before looking for missing segments: 
+--*40*--      face 0: 
+--*40*--           [FaceFacetCorner((3, 16, 16)), EdgeFacetCorner((4, 16, 15)), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, {0, 0.2000000000000000111, 0, 0.80000000000000004441}, 'reversed: polygon edge to entry Y=16+', length=1.41421]
+--*40*--           [EdgeFacetCorner((4, 15, 16)), FaceFacetCorner((3, 16, 16)), {0.2000000000000000111, 0, 0, 0.80000000000000004441}, {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, 'reversed: polygon edge to corner Z=16+', length=1.41421]
+--*40*--      face 1: 
+--*40*--           [EdgeFacetCorner((4, 16, 15)), EdgeFacetCorner((5.02555, 16, 16)), {0, 0.2000000000000000111, 0, 0.80000000000000004441}, {0, 0, 0.2000000000000000111, 0.80000000000000004441}, 'reversed: polygon edge to corner Y=16+', length=1.43239]
+--*40*--      face 2: 
+--*40*--           [EdgeFacetCorner((5.02555, 16, 16)), FaceFacetCorner((5.02555, 16, 16)), {0, 0, 0.2000000000000000111, 0.80000000000000004441}, {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, 'reversed: polygon edge to corner Y=16+', length=0]
+--*40*--           [FaceFacetCorner((5.02555, 16, 16)), FaceFacetCorner((4, 15, 16)), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, {0.19999999999999987232, 0, 0, 0.79999999999999993339}, 'reversed: polygon edge to entry Z=16+', length=1.43239]
+--*40*--           [FaceFacetCorner((4, 15, 16)), EdgeFacetCorner((4, 15, 16)), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, {0.2000000000000000111, 0, 0, 0.80000000000000004441}, 'reversed: polygon edge to entry Z=16+', length=1.77636e-15]
+--*40*-- tetIntersectionFaceFacets: finding face facets, face=0 category=4
+--*40*--   tetIntersectionFaceFacets: faceNodes=(0, 15, 20) (0, 20, 15) (5, 15, 15)
+--*40*--   tetIntersectionFaceFacets: found matches
+--*40*--   tetIntersectionFaceFacets: sorted loose ends
+--*40*--   tetIntersectionFaceFacets: edge=0
+--*40*--   tetIntersectionFaceFacets: edge=1
+--*40*--        0.8: FaceEdgeIntersection(EdgeFacetCorner((4, 16, 15)), t=0.8, edge=[FaceFacetCorner((3, 16, 16)), EdgeFacetCorner((4, 16, 15)), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, {0, 0.2000000000000000111, 0, 0.80000000000000004441}, 'reversed: polygon edge to entry Y=16+', length=1.41421], start=0)
+--*40*--   tetIntersectionFaceFacets: edge=2
+--*40*--        0.2: FaceEdgeIntersection(EdgeFacetCorner((4, 15, 16)), t=0.2, edge=[EdgeFacetCorner((4, 15, 16)), FaceFacetCorner((3, 16, 16)), {0.2000000000000000111, 0, 0, 0.80000000000000004441}, {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, 'reversed: polygon edge to corner Z=16+', length=1.41421], start=1)
+--*40*--   tetIntersectionFaceFacets: after removing coincidences
+--*40*--   tetIntersectionFaceFacets: edge=0
+--*40*--   tetIntersectionFaceFacets: edge=1
+--*40*--        0.8: FaceEdgeIntersection(EdgeFacetCorner((4, 16, 15)), t=0.8, edge=[FaceFacetCorner((3, 16, 16)), EdgeFacetCorner((4, 16, 15)), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, {0, 0.2000000000000000111, 0, 0.80000000000000004441}, 'reversed: polygon edge to entry Y=16+', length=1.41421], start=0)
+--*40*--   tetIntersectionFaceFacets: edge=2
+--*40*--        0.2: FaceEdgeIntersection(EdgeFacetCorner((4, 15, 16)), t=0.2, edge=[EdgeFacetCorner((4, 15, 16)), FaceFacetCorner((3, 16, 16)), {0.2000000000000000111, 0, 0, 0.80000000000000004441}, {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, 'reversed: polygon edge to corner Z=16+', length=1.41421], start=1)
+--*40*--   tetIntersectionFaceFacets: done with loose ends
+--*40*--   tetIntersectionFaceFacets: raw_area for face 0 is 75
+--*40*--   tetIntersectionFaceFacets: final facetEdges for face 0 category 4
+--*40*--       [SimpleFacetCorner((5, 15, 15)), SimpleFacetCorner((4, 15, 16)), {0, 0, 0, 1}, {0.2000000000000000111, 0, 0, 0.80000000000000004441}, 'missing 2', length=1.41421]
+--*40*--       [SimpleFacetCorner((4, 16, 15)), SimpleFacetCorner((5, 15, 15)), {0, 0.2000000000000000111, 0, 0.80000000000000004441}, {0, 0, 0, 1}, 'missing 1', length=1.41421]
+--*40*--       [FaceFacetCorner((3, 16, 16)), EdgeFacetCorner((4, 16, 15)), {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, {0, 0.2000000000000000111, 0, 0.80000000000000004441}, 'reversed: polygon edge to entry Y=16+', length=1.41421]
+--*40*--       [EdgeFacetCorner((4, 15, 16)), FaceFacetCorner((3, 16, 16)), {0.2000000000000000111, 0, 0, 0.80000000000000004441}, {0.19999999999999995559, 0.2000000000000000111, 0, 0.5999999999999999778}, 'reversed: polygon edge to corner Z=16+', length=1.41421]
+--*40*--   openDumpFile: opening finalfacets_cat4_face0
+--*40*-- tetIntersectionFaceFacets: finding face facets, face=1 category=4
+--*40*--   tetIntersectionFaceFacets: faceNodes=(0, 20, 15) (5.1277523040771484375, 20, 20) (5, 15, 15)
+--*40*--   tetIntersectionFaceFacets: found matches
+--*40*--   tetIntersectionFaceFacets: sorted loose ends
+--*40*--   tetIntersectionFaceFacets: edge=0
+--*40*--   tetIntersectionFaceFacets: edge=1
+--*40*--        0.8: FaceEdgeIntersection(EdgeFacetCorner((5.02555, 16, 16)), t=0.8, edge=[EdgeFacetCorner((4, 16, 15)), EdgeFacetCorner((5.02555, 16, 16)), {0, 0.2000000000000000111, 0, 0.80000000000000004441}, {0, 0, 0.2000000000000000111, 0.80000000000000004441}, 'reversed: polygon edge to corner Y=16+', length=1.43239], start=0)
+--*40*--   tetIntersectionFaceFacets: edge=2
+--*40*--        0.2: FaceEdgeIntersection(EdgeFacetCorner((4, 16, 15)), t=0.2, edge=[EdgeFacetCorner((4, 16, 15)), EdgeFacetCorner((5.02555, 16, 16)), {0, 0.2000000000000000111, 0, 0.80000000000000004441}, {0, 0, 0.2000000000000000111, 0.80000000000000004441}, 'reversed: polygon edge to corner Y=16+', length=1.43239], start=1)
+--*40*--   tetIntersectionFaceFacets: after removing coincidences
+--*40*--   tetIntersectionFaceFacets: edge=0
+--*40*--   tetIntersectionFaceFacets: edge=1
+--*40*--        0.8: FaceEdgeIntersection(EdgeFacetCorner((5.02555, 16, 16)), t=0.8, edge=[EdgeFacetCorner((4, 16, 15)), EdgeFacetCorner((5.02555, 16, 16)), {0, 0.2000000000000000111, 0, 0.80000000000000004441}, {0, 0, 0.2000000000000000111, 0.80000000000000004441}, 'reversed: polygon edge to corner Y=16+', length=1.43239], start=0)
+--*40*--   tetIntersectionFaceFacets: edge=2
+--*40*--        0.2: FaceEdgeIntersection(EdgeFacetCorner((4, 16, 15)), t=0.2, edge=[EdgeFacetCorner((4, 16, 15)), EdgeFacetCorner((5.02555, 16, 16)), {0, 0.2000000000000000111, 0, 0.80000000000000004441}, {0, 0, 0.2000000000000000111, 0.80000000000000004441}, 'reversed: polygon edge to corner Y=16+', length=1.43239], start=1)
+--*40*--   tetIntersectionFaceFacets: done with loose ends
+--*40*--   tetIntersectionFaceFacets: raw_area for face 1 is 38.1469
+--*40*--   tetIntersectionFaceFacets: final facetEdges for face 1 category 4
+--*40*--       [SimpleFacetCorner((5, 15, 15)), SimpleFacetCorner((4, 16, 15)), {0, 0, 0, 1}, {0, 0.2000000000000000111, 0, 0.80000000000000004441}, 'missing 2', length=1.41421]
+--*40*--       [SimpleFacetCorner((5.02555, 16, 16)), SimpleFacetCorner((5, 15, 15)), {0, 0, 0.2000000000000000111, 0.80000000000000004441}, {0, 0, 0, 1}, 'missing 1', length=1.41444]
+--*40*--       [EdgeFacetCorner((4, 16, 15)), EdgeFacetCorner((5.02555, 16, 16)), {0, 0.2000000000000000111, 0, 0.80000000000000004441}, {0, 0, 0.2000000000000000111, 0.80000000000000004441}, 'reversed: polygon edge to corner Y=16+', length=1.43239]
+--*40*--   openDumpFile: opening finalfacets_cat4_face1
+--*40*-- tetIntersectionFaceFacets: finding face facets, face=2 category=4
+--*40*--   tetIntersectionFaceFacets: faceNodes=(5.1277523040771484375, 20, 20) (0, 15, 20) (5, 15, 15)
+--*40*--   tetIntersectionFaceFacets: found matches
+--*40*--   find_edge: point is not not on an edge!  b={0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441} f=2
+--*40*--   FaceEdgeIntersection::findEdge: successfully used baryEquiv: {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441} --> {0.20000000000000006661, 0, 0, 0.80000000000000004441} fEdge=1
+--*40*--   tetIntersectionFaceFacets: sorted loose ends
+--*40*--   tetIntersectionFaceFacets: edge=0
+--*40*--   tetIntersectionFaceFacets: edge=1
+--*40*--        0.8: FaceEdgeIntersection(FaceFacetCorner((4, 15, 16)), t=0.8, edge=[FaceFacetCorner((4, 15, 16)), EdgeFacetCorner((4, 15, 16)), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, {0.2000000000000000111, 0, 0, 0.80000000000000004441}, 'reversed: polygon edge to entry Z=16+', length=1.77636e-15], start=1)
+--*40*--        0.8: FaceEdgeIntersection(EdgeFacetCorner((4, 15, 16)), t=0.8, edge=[FaceFacetCorner((4, 15, 16)), EdgeFacetCorner((4, 15, 16)), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, {0.2000000000000000111, 0, 0, 0.80000000000000004441}, 'reversed: polygon edge to entry Z=16+', length=1.77636e-15], start=0)
+--*40*--        0.8: FaceEdgeIntersection(FaceFacetCorner((4, 15, 16)), t=0.8, edge=[FaceFacetCorner((5.02555, 16, 16)), FaceFacetCorner((4, 15, 16)), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, {0.19999999999999987232, 0, 0, 0.79999999999999993339}, 'reversed: polygon edge to entry Z=16+', length=1.43239], start=0)
+--*40*--   tetIntersectionFaceFacets: edge=2
+--*40*--        0.2: FaceEdgeIntersection(EdgeFacetCorner((5.02555, 16, 16)), t=0.2, edge=[EdgeFacetCorner((5.02555, 16, 16)), FaceFacetCorner((5.02555, 16, 16)), {0, 0, 0.2000000000000000111, 0.80000000000000004441}, {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, 'reversed: polygon edge to corner Y=16+', length=0], start=1)
+--*40*--   tetIntersectionFaceFacets: checking coincidence at 
+--*40*--   tetIntersectionFaceFacets:   0.8:FaceEdgeIntersection(FaceFacetCorner((4, 15, 16)), t=0.8, edge=[FaceFacetCorner((4, 15, 16)), EdgeFacetCorner((4, 15, 16)), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, {0.2000000000000000111, 0, 0, 0.80000000000000004441}, 'reversed: polygon edge to entry Z=16+', length=1.77636e-15], start=1)
+--*40*--   tetIntersectionFaceFacets:   0.8:FaceEdgeIntersection(EdgeFacetCorner((4, 15, 16)), t=0.8, edge=[FaceFacetCorner((4, 15, 16)), EdgeFacetCorner((4, 15, 16)), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, {0.2000000000000000111, 0, 0, 0.80000000000000004441}, 'reversed: polygon edge to entry Z=16+', length=1.77636e-15], start=0)
+--*40*--   tetIntersectionFaceFacets: delta=0
+--*40*--   tetIntersectionFaceFacets: checking coincidence at 
+--*40*--   tetIntersectionFaceFacets:   0.8:FaceEdgeIntersection(EdgeFacetCorner((4, 15, 16)), t=0.8, edge=[FaceFacetCorner((4, 15, 16)), EdgeFacetCorner((4, 15, 16)), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, {0.2000000000000000111, 0, 0, 0.80000000000000004441}, 'reversed: polygon edge to entry Z=16+', length=1.77636e-15], start=0)
+--*40*--   tetIntersectionFaceFacets:   0.8:FaceEdgeIntersection(FaceFacetCorner((4, 15, 16)), t=0.8, edge=[FaceFacetCorner((5.02555, 16, 16)), FaceFacetCorner((4, 15, 16)), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, {0.19999999999999987232, 0, 0, 0.79999999999999993339}, 'reversed: polygon edge to entry Z=16+', length=1.43239], start=0)
+--*40*--   tetIntersectionFaceFacets: delta=1.11022e-16
+--*40*--   tetIntersectionFaceFacets: after removing coincidences
+--*40*--   tetIntersectionFaceFacets: edge=0
+--*40*--   tetIntersectionFaceFacets: edge=1
+--*40*--        0.8: FaceEdgeIntersection(FaceFacetCorner((4, 15, 16)), t=0.8, edge=[FaceFacetCorner((4, 15, 16)), EdgeFacetCorner((4, 15, 16)), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, {0.2000000000000000111, 0, 0, 0.80000000000000004441}, 'reversed: polygon edge to entry Z=16+', length=1.77636e-15], start=1)
+--*40*--        0.8: FaceEdgeIntersection(EdgeFacetCorner((4, 15, 16)), t=0.8, edge=[FaceFacetCorner((4, 15, 16)), EdgeFacetCorner((4, 15, 16)), {0.19999999999999995559, 0, -2.3016814762106676826e-17, 0.80000000000000004441}, {0.2000000000000000111, 0, 0, 0.80000000000000004441}, 'reversed: polygon edge to entry Z=16+', length=1.77636e-15], start=0)
+--*40*--        0.8: FaceEdgeIntersection(FaceFacetCorner((4, 15, 16)), t=0.8, edge=[FaceFacetCorner((5.02555, 16, 16)), FaceFacetCorner((4, 15, 16)), {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, {0.19999999999999987232, 0, 0, 0.79999999999999993339}, 'reversed: polygon edge to entry Z=16+', length=1.43239], start=0)
+--*40*--   tetIntersectionFaceFacets: edge=2
+--*40*--        0.2: FaceEdgeIntersection(EdgeFacetCorner((5.02555, 16, 16)), t=0.2, edge=[EdgeFacetCorner((5.02555, 16, 16)), FaceFacetCorner((5.02555, 16, 16)), {0, 0, 0.2000000000000000111, 0.80000000000000004441}, {4.1633363423443370266e-17, 0, 0.19999999999999995559, 0.79999999999999993339}, 'reversed: polygon edge to corner Y=16+', length=0], start=1)
+--*40*-- Error in tetIntersectionFaceFacets: category=4
+--*40*-- CSkeletonElement::categoryVolumes: failed for Element(uid=1453, index=259, [79 (0, 15, 20), 103 (0, 20, 15), 109 (5.12775, 20, 20), 83 (5, 15, 15)])
+ErrProgrammingError: Misordered segments on face 2 category 4! (1)
+

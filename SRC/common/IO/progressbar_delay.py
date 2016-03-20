@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: progressbar_delay.py,v $
-# $Revision: 1.14.2.1 $
-# $Author: langer $
-# $Date: 2013/01/28 16:58:09 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

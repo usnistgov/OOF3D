@@ -1,0 +1,7 @@
+2014 Sep 15 11:17:58 EDT
+
+RuntimeError: Oops!
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/worker.py", line 187, in run
+    self.menuitem.callback(self, *self.args, **self.kwargs)
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/IO/mainmenu.py", line 759, in _pyerror
+    raise RuntimeError("Oops!")

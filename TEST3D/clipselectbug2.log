@@ -1,0 +1,21 @@
+## This should select the voxel (10, 8, 10).
+## It works in graphics mode.
+## It doesn't work in text mode unless the Clip.New line is removed.
+OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImagePattern(directory='/Users/langer/FE/OOF3D/TEST3D/ms_data/5color/',pattern='slice(0|([1-9][0-9]*))\\.png',sort=NumericalOrder()), microstructure_name='5color', height=automatic, width=automatic, depth=automatic)
+OOF.Windows.Graphics.New()
+
+## Text mode is ok if this line is removed:
+OOF.Graphics_1.Toolbox.Viewer.Clip.New(normal=VectorDirection(x=1.0,y=0.0,z=0.0), offset=10.5)
+## When the previous line is retained, it doesn't matter if this line is
+## present or not:
+OOF.Graphics_1.Toolbox.Viewer.Clip.Delete(plane=0)
+
+OOF.Graphics_1.Toolbox.Pixel_Select.Point(
+    source='5color:5color',
+    points=[Point(-39.5607,22.8204,38.0586)],
+    view=View(cameraPosition=Coord(-39.6793,22.8537,38.1238), 
+              focalPoint=Coord(10,10,10),
+              up=Coord(0.094381,0.957917,-0.271087), angle=30,
+              clipPlanes=[[1.0, 0.0, 0.0, 10.5]], invertClip=0),
+    shift=0, ctrl=0)
+

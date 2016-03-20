@@ -1,0 +1,15 @@
+OOF.Microstructure.New(name='skeltest', width=10.0, height=10.0, depth=10.0, width_in_pixels=10, height_in_pixels=10, depth_in_pixels=10)
+OOF.Skeleton.New(name='skeleton', microstructure='skeltest', x_elements=2, y_elements=2, z_elements=2, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
+OOF.Windows.Graphics.New()
+# OOF.Skeleton.Modify(skeleton='skeltest:skeleton', modifier=Anneal(targets=AllNodes(),criterion=AverageEnergy(alpha=1),T=0.0,delta=0.1,iteration=FixedIteration(iterations=1)))
+# OOF.Skeleton.Modify(skeleton='skeltest:skeleton', modifier=Anneal(targets=AllNodes(),criterion=AverageEnergy(alpha=1),T=0.0,delta=0.1,iteration=FixedIteration(iterations=1)))
+# OOF.Skeleton.Modify(skeleton='skeltest:skeleton', modifier=Anneal(targets=AllNodes(),criterion=AverageEnergy(alpha=1),T=0.0,delta=0.1,iteration=FixedIteration(iterations=1)))
+# OOF.Skeleton.Modify(skeleton='skeltest:skeleton', modifier=Anneal(targets=AllNodes(),criterion=AverageEnergy(alpha=1),T=0.0,delta=0.1,iteration=FixedIteration(iterations=1)))
+print "Select 1"
+OOF.Graphics_1.Toolbox.Select_Element.Single_Element(skeleton='skeltest:skeleton', points=[Point(3.18599,6.15583,21.2376)], view=View(cameraPosition=Coord(5,5,34.2583), focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30, clipPlanes=[], invertClip=0, size_x=691, size_y=652), shift=0, ctrl=0)
+OOF.ElementGroup.New_Group(skeleton='skeltest:skeleton', name='elementgroup')
+OOF.ElementGroup.Add_to_Group(skeleton='skeltest:skeleton', group='elementgroup')
+OOF.Skeleton.Modify(skeleton='skeltest:skeleton', modifier=Refine(targets=CheckAllElements(),criterion=Unconditionally(),alpha=1))
+#print "Select 2"
+#OOF.Graphics_1.Toolbox.Select_Element.Single_Element(skeleton='skeltest:skeleton', points=[Point(3.93514,6.94779,21.2376)], view=View(cameraPosition=Coord(5,5,34.2583), focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30, clipPlanes=[], invertClip=0, size_x=691, size_y=652), shift=0, ctrl=1)
+OOF.Skeleton.Modify(skeleton='skeltest:skeleton', modifier=Anneal(targets=AllNodes(),criterion=AverageEnergy(alpha=1),T=0.0,delta=0.1,iteration=FixedIteration(iterations=1)))

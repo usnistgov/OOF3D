@@ -1,0 +1,2 @@
+OOF.Microstructure.New(name='skeltest', width=10., height=10., depth=10., width_in_pixels=10, height_in_pixels=10, depth_in_pixels=10)
+OOF.Skeleton.New(name='skeleton', microstructure='skeltest', x_elements=2, y_elements=2, z_elements=2, skeleton_geometry=TetraSkeleton(arrangement='moderate'))

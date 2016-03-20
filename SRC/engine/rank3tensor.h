@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: rank3tensor.h,v $
-// $Revision: 1.10.10.3 $
-// $Author: fyc $
-// $Date: 2014/07/28 22:15:27 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,

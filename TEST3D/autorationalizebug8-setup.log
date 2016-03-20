@@ -1,0 +1,5 @@
+# OOF version (unreleased)
+OOF.File.LoadStartUp.Data(filename='removeFlatBug.skel')
+OOF.Windows.Graphics.New()
+#OOF.Skeleton.Modify(skeleton='microstructure:skeleton', modifier=Rationalize(targets=AllElements(),criterion=AverageEnergy(alpha=1),method=AutomaticRationalization()))
+OOF.Help.Debug.Sanity_Check(skeleton='microstructure:skeleton', quick=False)

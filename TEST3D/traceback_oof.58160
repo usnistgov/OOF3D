@@ -1,0 +1,18 @@
+2014 Sep 17 17:35:07 EDT
+
+RuntimeError: Oops!
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/worker.py", line 187, in run
+    self.menuitem.callback(self, *self.args, **self.kwargs)
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/IO/mainmenu.py", line 759, in _pyerror
+    raise RuntimeError("Oops!")
+2014 Sep 17 17:38:42 EDT
+
+ErrProgrammingError: Somebody made a mistake!
+(./SRC/common/cdebug.C:118)
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/worker.py", line 187, in run
+    self.menuitem.callback(self, *self.args, **self.kwargs)
+  File "/Users/langer/lib/homepython/oof3d/ooflib/common/IO/mainmenu.py", line 767, in _cerror
+    cdebug.throwException()
+  File "/Users/langer/lib/homepython/oof3d/ooflib/SWIG/common/ooferror.py", line 229, in pyErrorCallback
+    exec errorstring
+  File "<string>", line 1, in <module>

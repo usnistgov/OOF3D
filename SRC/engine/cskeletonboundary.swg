@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cskeletonboundary.swg,v $
-// $Revision: 1.1.2.22 $
-// $Author: langer $
-// $Date: 2014/01/18 04:41:54 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

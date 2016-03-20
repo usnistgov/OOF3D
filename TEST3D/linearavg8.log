@@ -1,0 +1,5 @@
+# OOF version (unreleased)
+OOF.File.LoadStartUp.Data(filename='output_data/xtemp.dat')
+OOF.ElementSelection.Clear(skeleton='microstructure:skeleton')
+OOF.Mesh.Cross_Section.Edit(mesh='microstructure:skeleton:xtemp', name='yz', cross_section=StraightCrossSection(start=Point(10,10,0),end=Point(0,0,10)))
+OOF.Mesh.Analyze.Integral(mesh='microstructure:skeleton:xtemp', time=latest, data=getOutput('XYZFunction:Scalar',f='1.0'), domain=LinearCrossSectionDomain(cross_section='yz'), sampling=ContinuumSampleSet(order=automatic), destination=MessageWindowStream())

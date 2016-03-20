@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cskeletonmodifier.h,v $
-// $Revision: 1.1.4.14 $
-// $Author: langer $
-// $Date: 2014/12/14 01:07:50 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

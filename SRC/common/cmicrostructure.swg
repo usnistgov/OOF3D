@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cmicrostructure.swg,v $
-// $Revision: 1.35.8.14.2.3 $
-// $Author: langer $
-// $Date: 2015/04/22 13:40:42 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

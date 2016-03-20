@@ -1,0 +1,7 @@
+# OOF version (unreleased)
+OOF.Microstructure.New(name='microstructure', width=1.0, height=1.0, depth=1.0, width_in_pixels=10, height_in_pixels=10, depth_in_pixels=10)
+OOF.Skeleton.New(name='skeleton', microstructure='microstructure', x_elements=1, y_elements=1, z_elements=1, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
+OOF.Windows.Graphics.New()
+OOF.FaceSelection.Select_Named_Boundary(skeleton='microstructure:skeleton', boundary='Xmax')
+OOF.Skeleton.Modify(skeleton='microstructure:skeleton', modifier=Refine(targets=CheckSelectedFaces(),criterion=Unconditionally(),alpha=0.3))
+OOF.Skeleton.Modify(skeleton='microstructure:skeleton', modifier=Anneal(targets=AllNodes(),criterion=AverageEnergy(alpha=1),T=0.0,delta=1.0,iteration=FixedIteration(iterations=5)))

@@ -1,0 +1,6 @@
+OOF.Microstructure.New(name='microstructure', width=1.0, height=1.0, depth=1.0, width_in_pixels=2, height_in_pixels=2, depth_in_pixels=2)
+OOF.PixelSelection.Region(microstructure='microstructure', shape=BoxSelectionShape(point0=Point(0,0,0),point1=Point(0.5,1,0.5)), operator=Select())
+OOF.Material.New(name='material', material_type='bulk')
+OOF.Material.Assign(material='material', microstructure='microstructure', pixels=selection)
+OOF.File.Save.Microstructure(filename='/Users/langer/FE/OOF3D/TEST3D/half222micro.ascii', mode='w', format='ascii', microstructure='microstructure')
+OOF.File.Save.Microstructure(filename='/Users/langer/FE/OOF3D/TEST3D/half222micro.binary', mode='w', format='binary', microstructure='microstructure')

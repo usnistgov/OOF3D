@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: skeleton_select_test.py,v $
-# $Revision: 1.17 $
-# $Author: langer $
-# $Date: 2009/07/10 20:42:12 $
 
 
 # Test suite for skeleton selection and group commands, not including

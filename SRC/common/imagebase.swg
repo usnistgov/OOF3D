@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: imagebase.swg,v $
-// $Revision: 1.1.2.4 $
-// $Author: langer $
-// $Date: 2014/09/27 22:33:51 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,

@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: displaymethods.py,v $
-# $Revision: 1.147.2.81.2.6 $
-# $Author: langer $
-# $Date: 2015/06/23 20:12:49 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

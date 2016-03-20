@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: setup.py,v $
-# $Revision: 1.100.2.26.2.5 $
-# $Author: langer $
-# $Date: 2015/12/23 15:39:40 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

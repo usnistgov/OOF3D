@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cmicrostructure.h,v $
-// $Revision: 1.51.8.36.2.7 $
-// $Author: langer $
-// $Date: 2016/03/15 15:59:28 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

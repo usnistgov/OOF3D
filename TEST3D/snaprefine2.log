@@ -1,0 +1,8 @@
+# OOF version (unreleased)
+OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImageDirectory(directory='ms_data/bluegreen',sort=NumericalOrder()), microstructure_name='bluegreen', height=automatic, width=automatic, depth=automatic)
+OOF.Windows.Graphics.New()
+OOF.Graphics_1.Settings.Camera.View(view=View(cameraPosition=Coord(-23.8981,5,0.422989), focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30, clipPlanes=[], invertClip=0, suppressClip=0, size_x=592, size_y=617))
+OOF.Image.Modify.Permute_Axes(image='bluegreen:bluegreen', axes='xzy')
+OOF.Image.AutoGroup(image='bluegreen:bluegreen', name_template='%c')
+OOF.Skeleton.New(name='skeleton', microstructure='bluegreen', x_elements=4, y_elements=4, z_elements=4, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
+OOF.Skeleton.Modify(skeleton='bluegreen:skeleton', modifier=SnapRefine(targets=CheckHomogeneity(threshold=0.9),criterion=Unconditionally(),min_distance=1,alpha=0.3))

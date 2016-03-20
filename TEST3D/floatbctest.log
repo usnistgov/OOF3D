@@ -1,0 +1,7 @@
+OOF.File.LoadStartUp.Data(filename='mesh_data/simple_mesh')
+OOF.Mesh.Boundary_Conditions.Edit(name='bc<14>', mesh='microstructure:skeleton:mesh', condition=FloatBC(field=Displacement,field_component='x',equation=Force_Balance,eqn_component='x',profile=ContinuumProfile(function='0.3*(y+z)'),boundary='right'))
+OOF.Mesh.Solve(mesh='microstructure:skeleton:mesh', endtime=0.0)
+OOF.Windows.Graphics.New()
+OOF.Graphics_1.Layer.Select(n=3)
+OOF.Graphics_1.Layer.Edit(n=3, category='Skeleton', what='microstructure:skeleton', how=SkeletonEdgeDisplay(color=Gray(value=0.773015873015873),width=1,filter=NullFilter()))
+OOF.Graphics_1.Settings.Camera.View(view=View(cameraPosition=Coord(1.52068,-2.94853,2.93073), focalPoint=Coord(0.8,0.5,0.5), up=Coord(0.933486,-0.0547297,-0.354412), angle=30, clipPlanes=[], invertClip=0, size_x=622, size_y=647))

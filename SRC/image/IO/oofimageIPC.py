@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: oofimageIPC.py,v $
-# $Revision: 1.16.12.2 $
-# $Author: langer $
-# $Date: 2014/09/27 22:34:39 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: geometry.h,v $
-// $Revision: 1.23.18.6.2.3 $
-// $Author: langer $
-// $Date: 2015/09/12 19:35:22 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,

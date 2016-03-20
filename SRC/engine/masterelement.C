@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: masterelement.C,v $
-// $Revision: 1.41.6.14 $
-// $Author: langer $
-// $Date: 2014/11/05 16:54:25 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

@@ -1,0 +1,3 @@
+OOF.File.LoadStartUp.Data(filename='simple_mesh1x1x1')
+OOF.Windows.Graphics.New()
+OOF.Mesh.Solve(mesh='microstructure:1x1x1:mesh', endtime=0.0)

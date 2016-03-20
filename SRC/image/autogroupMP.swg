@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: autogroupMP.swg,v $
-// $Revision: 1.1.8.3 $
-// $Author: langer $
-// $Date: 2012/03/13 15:01:16 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

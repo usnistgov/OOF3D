@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: movenodeGUI.py,v $
-# $Revision: 1.82.8.11 $
-# $Author: langer $
-# $Date: 2014/10/31 17:58:49 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

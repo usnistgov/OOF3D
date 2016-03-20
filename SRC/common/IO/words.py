@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: words.py,v $
-# $Revision: 1.17.2.3 $
-# $Author: langer $
-# $Date: 2014/09/19 20:36:29 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

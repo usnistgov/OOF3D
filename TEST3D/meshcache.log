@@ -1,0 +1,4 @@
+OOF.Microstructure.New(name='microstructure', width=1.0, height=1.0, depth=1.0, width_in_pixels=10, height_in_pixels=10, depth_in_pixels=10)
+OOF.Skeleton.New(name='skeleton', microstructure='microstructure', x_elements=4, y_elements=4, z_elements=4, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
+OOF.Mesh.New(name='mesh', skeleton='microstructure:skeleton', element_types=['TET4_4', 'Q4_4', 'T3_3', 'D2_2'])
+OOF.Mesh.Modify(mesh='microstructure:skeleton:mesh', modifier=SetMeshDataCacheType(cachetype='Disk'))
