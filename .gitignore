@@ -6,9 +6,6 @@ builddir-*
 OOFSWIG/Makefile
 OOFSWIG/*/Makefile
 OOFSWIG/Makefile.template
-##OOFSWIG/Modules/Makefile
-##OOFSWIG/Runtime/Makefile
-##OOFSWIG/SWIG/Makefile
 OOFSWIG/config.log
 OOFSWIG/config.status
 OOFSWIG/swig_lib/python/Makefile
