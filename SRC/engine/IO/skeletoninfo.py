@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: skeletoninfo.py,v $
-# $Revision: 1.40.10.19 $
-# $Author: langer $
-# $Date: 2014/11/05 16:54:41 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

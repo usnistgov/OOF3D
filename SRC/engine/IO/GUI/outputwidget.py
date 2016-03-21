@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: outputwidget.py,v $
-# $Revision: 1.2.4.6 $
-# $Author: langer $
-# $Date: 2014/05/14 18:48:28 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: oofcanvas3d.C,v $
-// $Revision: 1.1.2.32.2.1 $
-// $Author: langer $
-// $Date: 2015/05/13 20:54:15 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,

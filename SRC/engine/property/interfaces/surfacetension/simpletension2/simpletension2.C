@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: simpletension2.C,v $
-// $Revision: 1.3.10.2 $
-// $Author: fyc $
-// $Date: 2014/07/29 21:22:32 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

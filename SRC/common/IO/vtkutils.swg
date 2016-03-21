@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: vtkutils.swg,v $
-// $Revision: 1.1.2.12 $
-// $Author: langer $
-// $Date: 2014/11/25 19:20:09 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

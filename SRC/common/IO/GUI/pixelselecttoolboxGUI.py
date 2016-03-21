@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: pixelselecttoolboxGUI.py,v $
-# $Revision: 1.23.10.9 $
-# $Author: langer $
-# $Date: 2014/08/01 15:25:28 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

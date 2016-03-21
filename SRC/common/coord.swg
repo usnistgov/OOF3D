@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: coord.swg,v $
-// $Revision: 1.13.8.5 $
-// $Author: langer $
-// $Date: 2014/06/12 18:48:36 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

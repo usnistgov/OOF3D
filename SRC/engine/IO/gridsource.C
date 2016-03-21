@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: gridsource.C,v $
-// $Revision: 1.1.2.15 $
-// $Author: langer $
-// $Date: 2014/12/14 01:07:54 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -26,8 +22,8 @@
 #include <vtkObjectFactory.h>
 #include <vtkPointData.h>
 
-vtkCxxRevisionMacro(SkeletonGridSource, "$Revision: 1.1.2.15 $");
-vtkCxxRevisionMacro(MeshGridSource, "$Revision: 1.1.2.15 $");
+vtkCxxRevisionMacro(SkeletonGridSource, "oofvtkmods 3.0.0");
+vtkCxxRevisionMacro(MeshGridSource, "oofvtkmods 3.0.0");
 
 vtkStandardNewMacro(SkeletonGridSource);
 vtkStandardNewMacro(MeshGridSource);

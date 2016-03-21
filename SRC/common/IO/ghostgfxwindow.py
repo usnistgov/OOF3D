@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: ghostgfxwindow.py,v $
-# $Revision: 1.176.2.119.2.1 $
-# $Author: langer $
-# $Date: 2015/02/26 22:35:10 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

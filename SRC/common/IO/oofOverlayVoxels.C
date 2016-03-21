@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: oofOverlayVoxels.C,v $
-// $Revision: 1.1.2.7.2.1 $
-// $Author: langer $
-// $Date: 2015/12/04 19:06:27 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -35,7 +31,7 @@
 
 #include <limits>
 
-vtkCxxRevisionMacro(oofOverlayVoxels, "$Revision: 1.1.2.7.2.1 $")
+vtkCxxRevisionMacro(oofOverlayVoxels, "oofvtkmods 3.0.0");
 vtkStandardNewMacro(oofOverlayVoxels);
 
 oofOverlayVoxels::oofOverlayVoxels()

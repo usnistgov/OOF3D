@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: crefine.C,v $
-// $Revision: 1.1.4.72.2.3 $
-// $Author: langer $
-// $Date: 2015/04/16 21:19:35 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

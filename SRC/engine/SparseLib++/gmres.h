@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: gmres.h,v $
-// $Revision: 1.24.2.3.2.1 $
-// $Author: langer $
-// $Date: 2015/12/22 21:33:11 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

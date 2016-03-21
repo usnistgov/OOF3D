@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: microstructure_extra_test.py,v $
-# $Revision: 1.10 $
-# $Author: langer $
-# $Date: 2008/09/07 02:19:48 $
 
 # Test suite for the menu commands under OOF.Microstructure.*
 

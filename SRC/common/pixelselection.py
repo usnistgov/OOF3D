@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: pixelselection.py,v $
-# $Revision: 1.26.18.11 $
-# $Author: fyc $
-# $Date: 2014/07/21 18:08:41 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: tetintersection.h,v $
-// $Revision: 1.1.2.1.2.24 $
-// $Author: langer $
-// $Date: 2015/12/04 19:06:34 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

@@ -1,0 +1,2498 @@
+# -*- python -*-
+# $RCSfile: log.py,v $
+# $Revision: 1.1.2.3 $
+# $Author: langer $
+# $Date: 2014-04-15 20:54:37 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+import tests
+
+#Testing Advanced Solver Mode with an Adaptive time stepper
+
+findWidget('OOF3D').resize(550, 350)
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Microstructure')
+checkpoint page installed Microstructure
+findWidget('OOF3D:Microstructure Page:Pane').set_position(225)
+findWidget('OOF3D:Microstructure Page:Pane').set_position(156)
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+findMenu(findWidget('OOF3D:MenuBar'), 'File:Load:Data').activate()
+checkpoint toplevel widget mapped Dialog-Data
+findWidget('Dialog-Data').resize(190, 67)
+findWidget('Dialog-Data:filename').set_text('TEST_DATA/two_walls.mesh')
+findWidget('Dialog-Data:gtk-ok').clicked()
+findWidget('OOF3D:Microstructure Page:Pane').set_position(159)
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint pixel page updated
+checkpoint active area status updated
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint Field page sensitized
+checkpoint Materials page updated
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint pinnodes page sensitized
+checkpoint boundary page updated
+checkpoint skeleton selection page selection sensitized
+checkpoint skeleton selection page updated
+checkpoint skeleton selection page groups sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint Solver page sensitized
+checkpoint microstructure page sensitized
+findWidget('OOF3D:Microstructure Page:Pane').set_position(225)
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint skeleton selection page selection sensitized
+checkpoint skeleton selection page updated
+checkpoint skeleton selection page groups sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Field page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint pinnodes page sensitized
+checkpoint boundary page updated
+checkpoint skeleton selection page selection sensitized
+checkpoint Solver page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint skeleton selection page updated
+checkpoint pinnodes page sensitized
+checkpoint pinnodes page sensitized
+checkpoint pinnodes page sensitized
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint toplevel widget mapped OOF3D Activity Viewer
+checkpoint boundary page updated
+findWidget('OOF3D Activity Viewer').resize(400, 300)
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint OOF.File.Load.Data
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Boundary Conditions')
+checkpoint page installed Boundary Conditions
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Solver')
+checkpoint Solver page sensitized
+checkpoint page installed Solver
+findWidget('OOF3D').resize(552, 427)
+findWidget('OOF3D:Solver Page:VPane').set_position(130)
+findCellRenderer(findWidget('OOF3D:Solver Page:VPane:Subproblems:SubproblemScroll:SubproblemList'), col=1, rend=0).emit('toggled', '0')
+findWidget('OOF3D:Solver Page:VPane:Subproblems:SubproblemScroll:SubproblemList').get_selection().select_path((0,))
+checkpoint Solver page sensitized
+findWidget('OOF3D:Solver Page:VPane:Subproblems:SubproblemScroll').get_vadjustment().set_value( 3.0000000000000e+00)
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Disable_Solution
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(475, 179)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Chooser'), 'Advanced')
+findWidget('Dialog-Specify Solver').resize(500, 343)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Chooser'), 'Adaptive')
+findWidget('Dialog-Specify Solver').resize(703, 499)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+findWidget('OOF3D Messages 1').resize(1163, 200)
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:errorscaling:Chooser'), 'Relative')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:errorscaling:Chooser'), 'XOver')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:errorscaling:Chooser'), 'Global')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:errorscaling:Chooser'), 'Absolute')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Backward Euler')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Crank-Nicolson')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Liniger')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Galerkin')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '2nd order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '4th order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'SS22')
+findWidget('Dialog-Specify Solver').resize(734, 543)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(734, 543)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:errorscaling:Chooser'), 'Relative')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Forward Euler')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Backward Euler')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Crank-Nicolson')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Liniger')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Galerkin')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '2nd order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '4th order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'SS22')
+findWidget('Dialog-Specify Solver').resize(734, 543)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(734, 543)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Forward Euler')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:errorscaling:Chooser'), 'XOver')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Backward Euler')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Liniger')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Crank-Nicolson')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Liniger')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Galerkin')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '2nd order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '4th order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'SS22')
+findWidget('Dialog-Specify Solver').resize(734, 543)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(734, 543)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Forward Euler')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:errorscaling:Chooser'), 'Global')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Backward Euler')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Crank-Nicolson')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Liniger')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Galerkin')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '2nd order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '4th order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'SS22')
+findWidget('Dialog-Specify Solver').resize(734, 543)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(734, 543)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Forward Euler')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:errorscaling:Chooser'), 'Absolute')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:nonlinear_solver:Chooser'), 'Newton')
+findWidget('Dialog-Specify Solver').resize(734, 565)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:nonlinear_solver:Chooser'), 'Picard')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:nonlinear_solver:Chooser'), 'Newton')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Backward Euler')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Crank-Nicolson')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Liniger')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Copy').clicked()
+checkpoint toplevel widget mapped Dialog-Copy a Solver to a Subproblem
+findWidget('Dialog-Copy a Solver to a Subproblem').resize(190, 159)
+findWidget('Dialog-Copy a Solver to a Subproblem:gtk-cancel').clicked()
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Galerkin')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '2nd order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '4th order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'SS22')
+findWidget('Dialog-Specify Solver').resize(734, 609)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(734, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Forward Euler')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:errorscaling:Chooser'), 'Relative')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Backward Euler')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Crank-Nicolson')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Liniger')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Galerkin')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '2nd order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '4th order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'SS22')
+findWidget('Dialog-Specify Solver').resize(734, 609)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(734, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Forward Euler')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:errorscaling:Chooser'), 'XOver')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Backward Euler')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Crank-Nicolson')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Liniger')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Galerkin')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '2nd order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '4th order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'SS22')
+findWidget('Dialog-Specify Solver').resize(734, 609)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(734, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Forward Euler')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:errorscaling:Chooser'), 'Global')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Backward Euler')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Crank-Nicolson')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Liniger')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Galerkin')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '2nd order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '4th order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'SS22')
+findWidget('Dialog-Specify Solver').resize(734, 609)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(734, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Forward Euler')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:errorscaling:Chooser'), 'Absolute')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:nonlinear_solver:Chooser'), 'Picard')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Backward Euler')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Crank-Nicolson')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Liniger')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Galerkin')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '2nd order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '4th order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'SS22')
+findWidget('Dialog-Specify Solver').resize(734, 609)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(734, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Forward Euler')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:errorscaling:Chooser'), 'Relative')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Backward Euler')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Crank-Nicolson')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Liniger')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Galerkin')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '2nd order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '4th order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'SS22')
+findWidget('Dialog-Specify Solver').resize(734, 609)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(734, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Forward Euler')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:errorscaling:Chooser'), 'XOver')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Backward Euler')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Crank-Nicolson')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Liniger')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Galerkin')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '2nd order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '4th order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'SS22')
+findWidget('Dialog-Specify Solver').resize(734, 609)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(734, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Forward Euler')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:errorscaling:Chooser'), 'Global')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Backward Euler')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Crank-Nicolson')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Liniger')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '2nd order Runge-Kutta')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Galerkin')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '2nd order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), '4th order Runge-Kutta')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'SS22')
+findWidget('Dialog-Specify Solver').resize(734, 609)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(734, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:stepper:Two Step:singlestep:Chooser'), 'Forward Euler')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:time_stepper:Adaptive:errorscaling:Chooser'), 'Absolute')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:nonlinear_solver:Chooser'), 'None')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'ILU')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:CG:preconditioner:Chooser'), 'IC')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:CG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:CG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:CG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:CG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:CG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 499)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:CG:preconditioner:Chooser'), 'ILU')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:nonlinear_solver:Chooser'), 'Newton')
+findWidget('Dialog-Specify Solver').resize(703, 565)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:CG:preconditioner:Chooser'), 'IC')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:CG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:CG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:CG:preconditioner:Chooser'), 'ILU')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'BiCGStab')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'BiCG')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'BiCG')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCG:preconditioner:Chooser'), 'ILU')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'BiCGStab')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+findWidget('OOF3D Messages 1').resize(1233, 200)
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCGStab:preconditioner:Chooser'), 'IC')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCGStab:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCGStab:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCGStab:preconditioner:Chooser'), 'ILU')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'GMRES')
+findWidget('Dialog-Specify Solver').resize(703, 587)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:GMRES:preconditioner:Chooser'), 'IC')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:GMRES:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:GMRES:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:GMRES:preconditioner:Chooser'), 'ILU')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'Direct')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 491)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver').resize(703, 491)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 491)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 491)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'BiCG')
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'BiCGStab')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCG:preconditioner:Chooser'), 'ILU')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'IC')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'GMRES')
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'IC')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCG:preconditioner:Chooser'), 'ILU')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'Direct')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'BiCGStab')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'GMRES')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'BiCGStab')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'GMRES')
+findWidget('Dialog-Specify Solver').resize(703, 587)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'Direct')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 491)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 491)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 491)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'GMRES')
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'GMRES')
+findWidget('Dialog-Specify Solver').resize(703, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'ILU')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'IC')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'Direct')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'BiCGStab')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'BiCGStab')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCGStab:preconditioner:Chooser'), 'ILU')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'IC')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCGStab:preconditioner:Chooser'), 'IC')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCGStab:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCGStab:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCGStab:preconditioner:Chooser'), 'ILU')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCGStab:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'GMRES')
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'GMRES')
+findWidget('Dialog-Specify Solver').resize(703, 609)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:GMRES:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'Direct')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 513)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 513)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 513)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'Direct')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 417)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:nonlinear_solver:Chooser'), 'Picard')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'CG')
+findWidget('Dialog-Specify Solver').resize(703, 491)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'BiCG')
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'BiCGStab')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'GMRES')
+findWidget('Dialog-Specify Solver').resize(703, 587)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'Direct')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 491)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'BiCG')
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'BiCG')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'BiCGStab')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'GMRES')
+findWidget('Dialog-Specify Solver').resize(703, 587)
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'Direct')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 491)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'CG')
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'BiCG')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'BiCGStab')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCGStab:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCGStab:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 565)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:BiCGStab:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'GMRES')
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:GMRES:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:GMRES:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:GMRES:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'Direct')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 491)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 491)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 491)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:BiCG:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:Chooser'), 'GMRES')
+findWidget('Dialog-Specify Solver').resize(703, 587)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'BiCGStab')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:Chooser'), 'GMRES')
+findWidget('Dialog-Specify Solver').resize(703, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:asymmetric_solver:GMRES:preconditioner:Chooser'), 'IC')
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:GMRES:preconditioner:Chooser'), 'Jacobi')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+findWidget('OOF3D:Solver Page:VPane:Subproblems:Set').clicked()
+checkpoint toplevel widget mapped Dialog-Specify Solver
+findWidget('Dialog-Specify Solver').resize(703, 609)
+setComboBox(findWidget('Dialog-Specify Solver:solver_mode:Advanced:symmetric_solver:GMRES:preconditioner:Chooser'), 'Null')
+findWidget('Dialog-Specify Solver:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Set_Solver
+widget_0=findWidget('OOF3D')
+handled_0=widget_0.event(event(gtk.gdk.DELETE,window=widget_0.window))
+postpone if not handled_0: widget_0.destroy()
+checkpoint toplevel widget mapped Questioner
+findWidget('Questioner').resize(359, 91)
+findWidget('Questioner:gtk-save').clicked()
+checkpoint toplevel widget mapped Dialog-Save Log File
+findWidget('Dialog-Save Log File').resize(190, 95)
+findWidget('Dialog-Save Log File:filename').set_text('s')
+findWidget('Dialog-Save Log File:filename').set_text('so')
+findWidget('Dialog-Save Log File:filename').set_text('sol')
+findWidget('Dialog-Save Log File:filename').set_text('solv')
+findWidget('Dialog-Save Log File:filename').set_text('solve')
+findWidget('Dialog-Save Log File:filename').set_text('solver')
+findWidget('Dialog-Save Log File:filename').set_text('solverp')
+findWidget('Dialog-Save Log File:filename').set_text('solverpa')
+findWidget('Dialog-Save Log File:filename').set_text('solverpag')
+findWidget('Dialog-Save Log File:filename').set_text('solverpage')
+findWidget('Dialog-Save Log File:filename').set_text('solverpage.')
+findWidget('Dialog-Save Log File:filename').set_text('solverpage.l')
+findWidget('Dialog-Save Log File:filename').set_text('solverpage.lo')
+findWidget('Dialog-Save Log File:filename').set_text('solverpage.log')
+findWidget('Dialog-Save Log File:gtk-ok').clicked()
+checkpoint OOF.File.Save.Python_Log

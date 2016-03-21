@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: pixelsetboundary.C,v $
-// $Revision: 1.34.10.20.2.37 $
-// $Author: langer $
-// $Date: 2016/03/15 15:59:34 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,

@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: activearea_test.py,v $
-# $Revision: 1.9 $
-# $Author: langer $
-# $Date: 2008/09/07 02:19:48 $
 
 # Test suite for active area commands.
 # OOF.ActiveArea:

@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cdebug.swg,v $
-// $Revision: 1.9.18.3 $
-// $Author: langer $
-// $Date: 2013/02/12 19:02:39 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: staticstep.py,v $
-# $Revision: 1.24.2.2 $
-# $Author: fyc $
-# $Date: 2014/07/28 22:16:03 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

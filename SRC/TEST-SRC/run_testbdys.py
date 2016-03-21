@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: run_testbdys.py,v $
-# $Revision: 1.2 $
-# $Author: reida $
-# $Date: 2001/12/07 20:55:26 $
  
 
 import os, sys, getopt, re, string

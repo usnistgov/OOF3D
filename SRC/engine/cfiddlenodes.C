@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cfiddlenodes.C,v $
-// $Revision: 1.1.4.35.2.2 $
-// $Author: langer $
-// $Date: 2015/04/20 21:53:57 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

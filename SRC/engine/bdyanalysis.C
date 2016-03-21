@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: bdyanalysis.C,v $
-// $Revision: 1.5.4.4 $
-// $Author: langer $
-// $Date: 2014/03/24 21:09:22 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

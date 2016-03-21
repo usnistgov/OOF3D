@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: layereditortests.py,v $
-# $Revision: 1.3 $
-# $Author: langer $
-# $Date: 2008/10/03 21:02:17 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

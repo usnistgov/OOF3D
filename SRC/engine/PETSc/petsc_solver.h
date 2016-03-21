@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: petsc_solver.h,v $
-// $Revision: 1.26.18.1 $
-// $Author: langer $
-// $Date: 2014/09/27 22:34:23 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

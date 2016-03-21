@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: homogeneitytet.C,v $
-// $Revision: 1.1.2.13 $
-// $Author: langer $
-// $Date: 2016/03/18 19:24:38 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

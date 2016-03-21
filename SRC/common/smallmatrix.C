@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: smallmatrix.C,v $
-// $Revision: 1.9.4.4 $
-// $Author: langer $
-// $Date: 2014/10/15 20:53:44 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

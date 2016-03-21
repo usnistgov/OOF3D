@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: labeltree.py,v $
-# $Revision: 1.61.2.4 $
-# $Author: langer $
-# $Date: 2014/12/08 19:41:51 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

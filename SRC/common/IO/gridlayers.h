@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: gridlayers.h,v $
-// $Revision: 1.1.2.4 $
-// $Author: langer $
-// $Date: 2014/11/25 19:20:08 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: bitmask.C,v $
-// $Revision: 1.4.18.5 $
-// $Author: langer $
-// $Date: 2014/12/14 22:49:05 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

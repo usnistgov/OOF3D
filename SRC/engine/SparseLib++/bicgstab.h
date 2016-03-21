@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: bicgstab.h,v $
-// $Revision: 1.18.2.2 $
-// $Author: langer $
-// $Date: 2014/07/22 21:02:47 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

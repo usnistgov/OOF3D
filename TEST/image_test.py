@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: image_test.py,v $
-# $Revision: 1.18 $
-# $Author: langer $
-# $Date: 2008/09/07 02:19:48 $
 
 # Test suite for the menu commands under OOF.Image.*
 

@@ -1,0 +1,165 @@
+findWidget('OOF3D:Navigation:Next').clicked()
+checkpoint page installed Microstructure
+findWidget('OOF3D:Microstructure Page:Pane').set_position(204)
+findWidget('OOF3D:Microstructure Page:Pane').set_position(150)
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+findWidget('OOF3D:Microstructure Page:New').clicked()
+checkpoint toplevel widget mapped Dialog-Create Microstructure
+findWidget('Dialog-Create Microstructure').resize(319, 207)
+findWidget('Dialog-Create Microstructure:gtk-ok').clicked()
+findWidget('OOF3D:Microstructure Page:Pane').set_position(154)
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint pixel page updated
+checkpoint active area status updated
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint microstructure page sensitized
+checkpoint named boundary analysis chooser set
+checkpoint named boundary analysis chooser set
+checkpoint mesh bdy page updated
+checkpoint meshable button set
+checkpoint Field page sensitized
+checkpoint Materials page updated
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint pinnodes page sensitized
+checkpoint boundary page updated
+checkpoint skeleton selection page updated
+checkpoint skeleton selection page selection sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Microstructure.New
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Skeleton')
+checkpoint page installed Skeleton
+checkpoint skeleton page sensitized
+findWidget('OOF3D:Skeleton Page:Pane').set_position(190)
+findWidget('OOF3D').resize(617, 366)
+findWidget('OOF3D:Skeleton Page:Pane').set_position(257)
+checkpoint skeleton page sensitized
+findWidget('OOF3D:Skeleton Page:New').clicked()
+checkpoint toplevel widget mapped Dialog-New skeleton
+findWidget('Dialog-New skeleton').resize(379, 196)
+findWidget('Dialog-New skeleton:gtk-ok').clicked()
+findWidget('OOF3D Messages 1').resize(554, 200)
+findWidget('OOF3D Messages 1').resize(566, 200)
+checkpoint skeleton selection page groups sensitized
+findWidget('OOF3D Messages 1').resize(577, 200)
+checkpoint skeleton selection page updated
+checkpoint skeleton selection page selection sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint skeleton page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named boundary analysis chooser set
+checkpoint named boundary analysis chooser set
+checkpoint mesh bdy page updated
+checkpoint Field page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint pinnodes page sensitized
+checkpoint boundary page updated
+checkpoint skeleton page info updated
+checkpoint skeleton page info updated
+checkpoint skeleton page info updated
+checkpoint skeleton page info updated
+checkpoint skeleton page sensitized
+checkpoint skeleton page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Skeleton.New
+checkpoint skeleton selection page selection sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint skeleton selection page updated
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'FE Mesh')
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint page installed FE Mesh
+findWidget('OOF3D').resize(617, 373)
+findWidget('OOF3D:FE Mesh Page:Pane').set_position(362)
+findWidget('OOF3D:FE Mesh Page:New').clicked()
+checkpoint toplevel widget mapped Dialog-Create a new mesh
+findWidget('Dialog-Create a new mesh').resize(342, 154)
+findWidget('Dialog-Create a new mesh:gtk-ok').clicked()
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named boundary analysis chooser set
+checkpoint named boundary analysis chooser set
+checkpoint mesh bdy page updated
+checkpoint named boundary analysis chooser set
+checkpoint mesh bdy page updated
+checkpoint Field page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Mesh.New
+findWidget('OOF3D:FE Mesh Page:Save').clicked()
+checkpoint toplevel widget mapped Dialog-Save Mesh "microstructure;skeleton;mesh"
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(190, 123)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh":filename').set_text('a')
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh":filename').set_text('ab')
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh":filename').set_text('abd')
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh":filename').set_text('abde')
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh":filename').set_text('abde.')
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh":filename').set_text('abde')
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(195, 123)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(201, 123)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(212, 123)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(227, 123)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(247, 123)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(272, 123)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(385, 123)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(489, 130)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(570, 136)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(604, 142)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(633, 146)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(692, 156)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(715, 157)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(731, 159)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(758, 162)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(766, 162)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(770, 162)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(771, 162)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh"').resize(773, 162)
+findWidget('Dialog-Save Mesh "microstructure;skeleton;mesh":gtk-ok').clicked()
+checkpoint OOF.File.Save.Mesh
+findMenu(findWidget('OOF3D:MenuBar'), 'File:Quit').activate()
+checkpoint toplevel widget mapped Questioner
+findWidget('Questioner').resize(362, 91)
+findWidget('Questioner:gtk-delete').clicked()

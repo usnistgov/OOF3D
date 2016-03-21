@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: coord.h,v $
-// $Revision: 1.25.10.28.2.8 $
-// $Author: langer $
-// $Date: 2016/01/15 16:42:00 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

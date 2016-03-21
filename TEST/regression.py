@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: regression.py,v $
-# $Revision: 1.34 $
-# $Author: langer $
-# $Date: 2009/07/07 18:42:44 $
 
 # Top-level regression test file for the OOF application.  Knows about
 # all the test suites in this directory, and what order to run them in

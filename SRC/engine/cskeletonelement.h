@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cskeletonelement.h,v $
-// $Revision: 1.1.2.59.2.11 $
-// $Author: langer $
-// $Date: 2016/02/19 22:03:46 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
