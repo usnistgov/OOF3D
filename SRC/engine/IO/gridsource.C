@@ -22,6 +22,8 @@
 #include <vtkObjectFactory.h>
 #include <vtkPointData.h>
 
+vtkCxxRevisionMacro(SkeletonGridSource, "oofvtkmods 3.0.0");
+vtkCxxRevisionMacro(MeshGridSource, "oofvtkmods 3.0.0");
 
 vtkStandardNewMacro(SkeletonGridSource);
 vtkStandardNewMacro(MeshGridSource);
