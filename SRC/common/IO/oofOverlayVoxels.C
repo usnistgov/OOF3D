@@ -31,6 +31,7 @@
 
 #include <limits>
 
+vtkCxxRevisionMacro(oofOverlayVoxels, "oofvtkmods 3.0.0");
 vtkStandardNewMacro(oofOverlayVoxels);
 
 oofOverlayVoxels::oofOverlayVoxels()

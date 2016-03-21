@@ -14,6 +14,8 @@
 #include "common/IO/gridsourcebase.h"
 #include "common/IO/oofcerr.h"
 
+vtkCxxRevisionMacro(GridSource, "oofvtkmods 3.0.0");
+
 
 GridSource::GridSource() 
   : PointData(0),

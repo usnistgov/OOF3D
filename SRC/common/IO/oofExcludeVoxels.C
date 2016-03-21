@@ -19,6 +19,7 @@
 #include <vtkObjectFactory.h>
 #include <vtkRectilinearGrid.h>
 
+vtkCxxRevisionMacro(oofExcludeVoxels, "oofvtkmods 3.0.0");
 vtkStandardNewMacro(oofExcludeVoxels);
 
 oofExcludeVoxels::oofExcludeVoxels() {
