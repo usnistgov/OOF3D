@@ -1,6 +1,0 @@
-s/Left to right/-X to +X/g
-s/Right to left/+X to -X/g
-s/Top to bottom/+Y to -Y/g
-s/Bottom to top/-Y to +Y/g
-s/Front to back/+Z to -Z/g
-s/Back to front/-Z to +Z/g

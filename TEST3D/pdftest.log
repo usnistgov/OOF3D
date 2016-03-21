@@ -1,8 +1,0 @@
-# OOF version (unreleased)
-OOF.File.LoadStartUp.Data(filename='bc_data/floatfixed')
-OOF.Windows.Graphics.New()
-OOF.Graphics_1.File.Save_Canvas(filename='/Users/langer/FE/OOF3D/TEST3D/junk', imagetype=PDFImageFormat(), overwrite=True)
-OOF.Graphics_1.Settings.Camera.View(view=View(cameraPosition=Coord(-1.40564,2.36112,1.71048), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0.311986,0.721496,-0.618148), angle=30, clipPlanes=[], invertClip=0, size_x=592, size_y=617))
-OOF.Graphics_1.File.Save_Canvas(filename='/Users/langer/FE/OOF3D/TEST3D/junk2.pdf', imagetype=PDFImageFormat(), overwrite=True)
-OOF.Graphics_1.Layer.New(category='Mesh', what='microstructure:skeleton:mesh', how=FilledContourDisplay(when=latest,what=getOutput('Field:Component',component='',field=Temperature),where=Actual(),min_contour=automatic,max_contour=automatic,filter=NullFilter(),levels=11,nbins=5,colormap=ThermalMap()))
-OOF.Graphics_1.File.Save_Canvas(filename='/Users/langer/FE/OOF3D/TEST3D/junk3.pdf', imagetype=PDFImageFormat(), overwrite=True)

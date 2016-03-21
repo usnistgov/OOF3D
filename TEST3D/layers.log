@@ -1,4 +1,0 @@
-# OOF version (unreleased)
-OOF.File.LoadStartUp.Data(filename='output_data/xtemp.dat')
-OOF.Windows.Graphics.New()
-OOF.Graphics_1.Layer.New(category='Mesh', what='microstructure:skeleton:xtemp', how=FilledContourDisplay(when=latest,what=getOutput('Field:Component',component='',field=Temperature),where=Actual(),min_contour=automatic,max_contour=automatic,filter=NullFilter(),levels=11,nbins=5,colormap=ThermalMap()))

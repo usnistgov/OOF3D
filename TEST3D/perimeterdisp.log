@@ -1,5 +1,0 @@
-# OOF version (unreleased)
-OOF.Microstructure.New(name='microstructure', width=1.0, height=1.0, depth=1.0, width_in_pixels=4, height_in_pixels=4, depth_in_pixels=4)
-OOF.Skeleton.New(name='skeleton', microstructure='microstructure', x_elements=1, y_elements=1, z_elements=1, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
-OOF.Windows.Graphics.New()
-OOF.Graphics_1.Layer.New(category='Microstructure', what='microstructure', how=VoxelSetBdyDisplay(category=0,direction='X',offset=4,normal='Positive',cross_section=True,color=RGBColor(red=0.00000,green=0.70000,blue=0.30000),line_width=4))

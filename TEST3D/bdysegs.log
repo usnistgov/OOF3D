@@ -1,5 +1,0 @@
-OOF.File.LoadStartUp.Data(filename='skeleton_data/modgroups_bg')
-OOF.Windows.Graphics.New()
-OOF.Graphics_1.Layer.Hide(n=0)
-OOF.Graphics_1.Layer.Select(n=0)
-OOF.SegmentSelection.Select_Internal_Boundaries(skeleton='bluegreen:skeleton')

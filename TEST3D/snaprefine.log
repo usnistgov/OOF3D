@@ -1,4 +1,0 @@
-OOF.File.LoadStartUp.Data(filename='skeleton_data/bluegreen111')
-OOF.Settings.Random_Seed(seed=17)
-OOF.Skeleton.Modify(skeleton='5color:skeleton', modifier=SnapRefine(targets=CheckHomogeneity(threshold=1),criterion=Unconditionally(),min_distance=0.01,alpha=0.3))
-OOF.File.Save.Skeleton(filename='/Users/langer/FE/OOF3D/TEST3D/skeleton_data/snaprefine_bg1', mode='w', format='ascii', skeleton='5color:skeleton')

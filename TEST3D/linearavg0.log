@@ -1,3 +1,0 @@
-# OOF version (unreleased)
-OOF.File.LoadStartUp.Data(filename='output_data/xtemp.dat')
-OOF.ElementSelection.Clear(skeleton='microstructure:skeleton')

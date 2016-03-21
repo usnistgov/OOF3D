@@ -1,2 +1,0 @@
-OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImageDirectory(directory='/Users/langer/FE/OOF3D/TEST3D/ms_data/jpeg/',sort=NumericalOrder()), microstructure_name='jpeg', height=automatic, width=automatic, depth=automatic)
-OOF.Image.AutoGroup(image='jpeg:jpeg', name_template='%c')

@@ -1,7 +1,0 @@
-# OOF version (unreleased)
-OOF.File.LoadStartUp.Data(filename='bad.skel')
-OOF.Windows.Graphics.New()
-OOF.Graphics_1.Settings.Camera.View(view=View(cameraPosition=Coord(-10.7298,36.1623,58.0625), focalPoint=Coord(10,10,10), up=Coord(0.111709,0.89225,-0.437506), angle=30, clipPlanes=[], invertClip=0, suppressClip=0, size_x=621, size_y=615))
-OOF.Skeleton.Modify(skeleton='5color:skeleton', modifier=Rationalize(targets=AllElements(),criterion=AverageEnergy(alpha=0.3),method=AutomaticRationalization()))
-#OOF.Graphics_1.Settings.Camera.View(view=View(cameraPosition=Coord(-33.8739,48.2351,16.1118), focalPoint=Coord(10,10,10), up=Coord(0.402866,0.575979,-0.7113), angle=30, clipPlanes=[], invertClip=0, suppressClip=0, size_x=621, size_y=615))
-OOF.Help.Debug.Sanity_Check(skeleton='5color:skeleton', quick=False)

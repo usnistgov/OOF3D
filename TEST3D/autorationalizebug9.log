@@ -1,5 +1,0 @@
-# OOF version (unreleased)
-OOF.File.LoadStartUp.Data(filename='autorationalizebug9.skel')
-OOF.Windows.Graphics.New()
-OOF.Skeleton.Modify(skeleton='microstructure:skeleton', modifier=Rationalize(targets=AllElements(),criterion=AverageEnergy(alpha=0.365),method=AutomaticRationalization()))
-OOF.Help.Debug.Sanity_Check(skeleton='microstructure:skeleton', quick=False)

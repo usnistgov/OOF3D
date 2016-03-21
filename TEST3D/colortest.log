@@ -1,9 +1,0 @@
-OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImagePattern(directory='/Users/langer/FE/OOF3D/TEST3D/ms_data/5color',pattern='slice(0|([1-9][0-9]*))\\.tif',sort=NumericalOrder()), microstructure_name='imagemod_test', height=automatic, width=automatic, depth=automatic)
-from ooflib.SWIG.common import crandom
-import random
-random.seed(17)
-crandom.rndmseed(17)
-OOF.Image.Modify.Gray(image='imagemod_test:5color')
-#OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImageDirectory(directory='/Users/langer/FE/OOF3D/TEST3D/image_data/gray',sort=NumericalOrder()), microstructure_name='comparison', height=automatic, width=automatic, depth=automatic)
-
-

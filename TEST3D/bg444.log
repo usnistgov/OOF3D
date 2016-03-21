@@ -1,9 +1,0 @@
-# The correct homogeneity index of this skeleton is 0.94733333333...
-# The homogeneity of the non-homogeneous right tetrahedra is 0.936
-# if the category boundary cuts the tet 3/5 of the way from a face
-# to the opposite vertex, and 0.784 if the boundary is at 2/5.
-# The homogeneity of all inhomogeneous regular tetrahedra is 0.648.
-
-OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImageDirectory(directory='ms_data/bluegreen',sort=NumericalOrder()), microstructure_name='bluegreen', height=automatic, width=automatic, depth=automatic)
-OOF.Skeleton.New(name='skeleton', microstructure='bluegreen', x_elements=4, y_elements=4, z_elements=4, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
-OOF.Image.AutoGroup(image='bluegreen:bluegreen', name_template='%c')

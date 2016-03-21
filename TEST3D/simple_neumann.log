@@ -1,4 +1,0 @@
-OOF.File.LoadStartUp.Data(filename='mesh_data/simple_mesh')
-OOF.Windows.Graphics.New()
-OOF.Mesh.Boundary_Conditions.Edit(name='bc', mesh='microstructure:skeleton:mesh', condition=NeumannBC(flux=Stress,profile=[ConstantProfile(value=0.1), ConstantProfile(value=0.0), ConstantProfile(value=0.0)],boundary='Xmax'))
-OOF.Mesh.Solve(mesh='microstructure:skeleton:mesh', endtime=0.0)

@@ -1,4 +1,0 @@
-OOF.Microstructure.New(name='microstructure', width=1.0, height=1.0, depth=1.0, width_in_pixels=10, height_in_pixels=10, depth_in_pixels=10)
-OOF.Skeleton.New(name='skeleton', microstructure='microstructure', x_elements=2, y_elements=2, z_elements=2, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
-OOF.Skeleton.Modify(skeleton='microstructure:skeleton', modifier=Refine(targets=CheckAllElements(),criterion=Unconditionally(),alpha=0.3))
-OOF.File.Save.Skeleton(filename='/Users/langer/FE/OOF3D/TEST3D/simplerefine.skel', mode='w', format='ascii', skeleton='microstructure:skeleton')

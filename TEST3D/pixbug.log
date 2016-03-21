@@ -1,8 +1,0 @@
-OOF.Windows.Graphics.New()
-OOF.Microstructure.New(name='microstructure', width=1.0, height=1.0, depth=1.0, width_in_pixels=10, height_in_pixels=10, depth_in_pixels=10)
-OOF.Graphics_1.Layer.New(category='Microstructure', what='microstructure', how=MicrostructureMaterialDisplay(no_material=Gray(value=0.4657534246575342),no_color=RGBColor(red=0.00000,green=0.00000,blue=1.00000),filter=AllVoxels()))
-OOF.Skeleton.New(name='skeleton', microstructure='microstructure', x_elements=4, y_elements=4, z_elements=4, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
-#OOF.PixelSelection.Region(microstructure='microstructure', shape=BoxSelectionShape(point0=Point(0,0,0),point1=Point(0.5,0.5,0.5)), operator=Select())
-#OOF.Graphics_1.Settings.Camera.View(view=View(cameraPosition=Coord(-1.72091,-0.607817,-1.04945), focalPoint=Coord(0.5,0.5,0.5), up=Coord(-0.479526,0.875373,0.0614611), angle=30, clipPlanes=[], invertClip=0, size_x=620, size_y=618))
-#OOF.Mesh.New(name='mesh', skeleton='microstructure:skeleton', element_types=['T4_4'])
-OOF.Microstructure.Delete(microstructure='microstructure')

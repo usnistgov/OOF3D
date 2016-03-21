@@ -1,4 +1,0 @@
-OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImagePattern(directory='/Users/langer/FE/OOF3D/TEST3D/ms_data/5color',pattern='slice(0|([1-9][0-9]*))\\.tif',sort=NumericalOrder()), microstructure_name='active', height=20.0, width=20.0, depth=20.0)
-OOF.Image.AutoGroup(image='active:5color')
-OOF.Windows.Graphics.New()                  
-

@@ -1,4 +1,0 @@
-# OOF version (unreleased)
-OOF.File.LoadStartUp.Data(filename='output_data/xtemp.dat')
-OOF.ElementSelection.Clear(skeleton='microstructure:skeleton')
-OOF.Mesh.Analyze.Average_and_Deviation(mesh='microstructure:skeleton:xtemp', time=latest, data=getOutput('Field:Value',field=Temperature), domain=LinearCrossSectionDomain(cross_section='yz'), sampling=ContinuumSampleSet(order=automatic), destination=MessageWindowStream())

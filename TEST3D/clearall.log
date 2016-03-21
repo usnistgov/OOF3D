@@ -1,7 +1,0 @@
-OOF.Windows.Graphics.New()
-OOF.Graphics_1.Layer.Select(n=4)
-OOF.Graphics_1.Layer.Hide(n=0)
-OOF.Graphics_1.Layer.Select(n=0)
-OOF.ElementSelection.Clear(skeleton='5color:skeleton')
-OOF.FaceSelection.Clear(skeleton='5color:skeleton')
-OOF.SegmentSelection.Clear(skeleton='5color:skeleton')

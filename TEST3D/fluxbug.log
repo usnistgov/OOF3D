@@ -1,6 +1,0 @@
-# OOF version (unreleased)
-OOF.File.LoadStartUp.Data(filename='output_data/dispmesh5.dat')
-OOF.Mesh.Set_Field_Initializer(mesh='microstructure:skeleton:dispmesh4', field=Temperature, initializer=ConstScalarFieldInit(value=0.0))
-OOF.Mesh.Set_Field_Initializer(mesh='microstructure:skeleton:dispmesh4', field=Displacement, initializer=FuncThreeVectorFieldInit(fx='0.1*x',fy='0.1*y',fz='0.1*z'))
-OOF.Mesh.Apply_Field_Initializers(mesh='microstructure:skeleton:dispmesh4')
-OOF.Mesh.Analyze.Direct_Output(mesh='microstructure:skeleton:dispmesh4', time=latest, data=getOutput('Flux:Value',flux=Stress), domain=EntireMesh(), sampling=GridSampleSet(x_points=3,y_points=3,z_points=3,show_x=True,show_y=True,show_z=True), destination=MessageWindowStream())

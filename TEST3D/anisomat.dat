@@ -1,6 +1,0 @@
-# OOF version 2.0
-FileVersion(number=1.0, format='ascii')
-Property.Color(name='dark', color=Gray(value=0.25396825396825395))
-Property.Color(name='light', color=Gray(value=0.8412698412698413))
-MaterialandType(name='edges', properties=['Color:dark'], materialtype='bulk')
-MaterialandType(name='middle', properties=['Color:light'], materialtype='bulk')

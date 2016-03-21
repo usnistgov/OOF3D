@@ -1,5 +1,0 @@
-OOF.Microstructure.New(name='microstructure', width=1.0, height=1.0, depth=1.0, width_in_pixels=10, height_in_pixels=10, depth_in_pixels=10)
-OOF.Skeleton.New(name='skeleton', microstructure='microstructure', x_elements=4, y_elements=4, z_elements=4, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
-OOF.FaceSelection.Select_Named_Boundary(skeleton='microstructure:skeleton', boundary='Xmax')
-OOF.Skeleton.Boundary.Construct(skeleton='microstructure:skeleton', name='boundary', constructor=FaceFromFaces(group=selection,direction='-X to +X'))
-OOF.FaceSelection.Select_Named_Boundary(skeleton='microstructure:skeleton', boundary='boundary')

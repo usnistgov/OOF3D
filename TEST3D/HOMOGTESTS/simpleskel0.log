@@ -1,3 +1,0 @@
-OOF.Microstructure.New(name='microstructure', width=1.0, height=1.0, depth=1.0, width_in_pixels=2, height_in_pixels=2, depth_in_pixels=2)
-OOF.Skeleton.New(name='skeleton', microstructure='microstructure', x_elements=1, y_elements=1, z_elements=1, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
-#OOF.File.Save.Skeleton(filename='/Users/langer/FE/OOF3D/TEST3D/simpleskel.dat', mode='w', format='ascii', skeleton='microstructure:skeleton')

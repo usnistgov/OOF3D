@@ -1,9 +1,0 @@
-OOF.File.LoadStartUp.Data(filename='skeleton_data/bad.skel')
-OOF.Windows.Graphics.New()
-OOF.Graphics_1.Layer.Hide(n=0)
-OOF.Graphics_1.Layer.Select(n=0)
-OOF.Graphics_1.Toolbox.Viewer.Restore_Named_View(view='Right')
-OOF.FaceSelection.Select_Named_Boundary(skeleton='5color:skeleton', boundary='right')
-OOF.Skeleton.Modify(skeleton='5color:skeleton', modifier=Rationalize(targets=AllElements(),criterion=AverageEnergy(alpha=0.3),method=SpecificRationalization(rationalizers=[RemoveBadTetrahedra(acute_angle=15,obtuse_angle=150)])))
-#OOF.Help.Debug.Sanity_Check(skeleton='5color:skeleton', quick=False)
-

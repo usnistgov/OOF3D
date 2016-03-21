@@ -1,4 +1,0 @@
-OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImageDirectory(directory='ms_data/bluegreen',sort=NumericalOrder()), microstructure_name='bluegreen', height=automatic, width=automatic, depth=automatic)
-OOF.Windows.Graphics.New()
-OOF.Image.AutoGroup(image='bluegreen:bluegreen', name_template='%c')
-OOF.Skeleton.New(name='skeleton', microstructure='bluegreen', x_elements=4, y_elements=4, z_elements=4, skeleton_geometry=TetraSkeleton(arrangement='moderate'))

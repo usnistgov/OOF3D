@@ -1,9 +1,0 @@
-#!/bin/bash --norc
-sort $1 > junk1
-sort $2 > junk2
-python UTILS/file_utils.py -t 1.e-10 junk1 junk2
-if [ $? -eq 0 ]; then
-  echo "OK"
-  mv -f $1 $2
-  rm junk1 junk2
-fi

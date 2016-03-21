@@ -1,5 +1,0 @@
-# OOF version (unreleased)
-OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImageDirectory(directory='../examples/cyallow',sort=NumericalOrder()), microstructure_name='cyallow', height=automatic, width=automatic, depth=automatic)
-OOF.Windows.Graphics.New()
-OOF.Graphics_1.Layer.Select(n=0)
-OOF.Graphics_1.Layer.Delete(n=0)

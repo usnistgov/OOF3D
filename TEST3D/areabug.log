@@ -1,3 +1,0 @@
-OOF.File.Load.Data(filename='/Users/langer/FE/OOF3D/TEST3D/output_data/xtemp.dat')
-OOF.Mesh.Analyze.Integral(mesh='microstructure:skeleton:xtemp', time=0.0, data=getOutput('XYZFunction:Scalar',f='1.0'), domain=PlanarCrossSectionDomain(normal=VectorDirection(x=1,y=0,z=0),offset=6,side='FRONT'), sampling=ContinuumSampleSet(order=automatic), destination=MessageWindowStream())
-

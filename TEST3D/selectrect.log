@@ -1,2 +1,0 @@
-OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImagePattern(directory='/Users/langer/FE/OOF3D/TEST3D/ms_data/5color/',pattern='slice(0|([1-9][0-9]*))\\.png',sort=NumericalOrder()), microstructure_name='5color', height=automatic, width=automatic, depth=automatic)
-OOF.PixelSelection.Shape(microstructure='5color', shape=BoxSelectionShape(point0=Point(0,0,0),point1=Point(2,3,4)), operator=Select())

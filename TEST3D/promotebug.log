@@ -1,7 +1,0 @@
-OOF.Microstructure.New(name='skeltest', width=10.0, height=10.0, depth=10.0, width_in_pixels=10, height_in_pixels=10, depth_in_pixels=10)
-OOF.Skeleton.New(name='skeleton', microstructure='skeltest', x_elements=2, y_elements=2, z_elements=2, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
-OOF.Settings.UndoBuffer_Size.Skeleton(size=2)
-OOF.Skeleton.Modify(skeleton='skeltest:skeleton', modifier=Anneal(targets=AllNodes(),criterion=AverageEnergy(alpha=0.3),T=0.0,delta=1.0,iteration=FixedIteration(iterations=1)))
-OOF.Skeleton.Modify(skeleton='skeltest:skeleton', modifier=Anneal(targets=AllNodes(),criterion=AverageEnergy(alpha=0.3),T=0.0,delta=1.0,iteration=FixedIteration(iterations=1)))
-OOF.Skeleton.Modify(skeleton='skeltest:skeleton', modifier=Anneal(targets=AllNodes(),criterion=AverageEnergy(alpha=0.3),T=0.0,delta=1.0,iteration=FixedIteration(iterations=1)))
-OOF.Skeleton.Modify(skeleton='skeltest:skeleton', modifier=Refine(targets=CheckHomogeneity(threshold=0.9),criterion=Unconditionally(),alpha=0.3))

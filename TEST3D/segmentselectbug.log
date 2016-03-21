@@ -1,7 +1,0 @@
-# This doesn't select the segment when run in text mode.
-OOF.Windows.Graphics.New()
-OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImageDirectory(directory='/Users/langer/FE/OOF3D/TEST3D/ms_data/bluegreen50',sort=NumericalOrder()), microstructure_name='skeltest', height=automatic, width=automatic, depth=automatic)
-OOF.Image.AutoGroup(image='skeltest:bluegreen50', name_template='%c')
-OOF.Skeleton.New(name='skeleton', microstructure='skeltest', x_elements=2, y_elements=2, z_elements=2, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
-OOF.SegmentGroup.Auto_Group(skeleton='skeltest:skeleton')
-OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(skeleton='skeltest:skeleton', points=[Point(2.46241,6.36212,21.9826)], view=View(cameraPosition=Coord(5,5,34.2583), focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30, clipPlanes=[], invertClip=0), shift=0, ctrl=0)

@@ -1,3 +1,0 @@
-s/top_bottom_periodicity/y_periodicity/g
-s/left_right_periodicity/x_periodicity/g
-s/front_back_periodicity/z_periodicity/g

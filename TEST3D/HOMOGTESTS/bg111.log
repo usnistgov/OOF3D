@@ -1,5 +1,0 @@
-# The correct homogeneity index of this skeleton is 0.78933333333...
-
-OOF.Microstructure.Create_From_ImageFile(filenames=ThreeDImageDirectory(directory='ms_data/bluegreen',sort=NumericalOrder()), microstructure_name='bluegreen', height=automatic, width=automatic, depth=automatic)
-OOF.Image.AutoGroup(image='bluegreen:bluegreen', name_template='%c')
-OOF.Skeleton.New(name='skeleton', microstructure='bluegreen', x_elements=1, y_elements=1, z_elements=1, skeleton_geometry=TetraSkeleton(arrangement='moderate'))
