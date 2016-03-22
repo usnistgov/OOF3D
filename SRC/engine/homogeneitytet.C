@@ -2356,12 +2356,12 @@ Coord3D FaceFacet::getArea(const HomogeneityTet *htet) const {
       a += (edge->startPos3D() - fcenter) % (edge->endPos3D() - fcenter);
       // center_ += edge->startPos3D() + edge->endPos3D();
     }
-#ifdef DEBUG
-    else {
-      oofcerr << "FaceFacet::getArea: this=" << *this << std::endl;
-      oofcerr << "FaceFacet::getArea: ignoring edge: " << *edge << std::endl;
-    }
-#endif // DEBUG
+// #ifdef DEBUG
+//     else {
+//       oofcerr << "FaceFacet::getArea: this=" << *this << std::endl;
+//       oofcerr << "FaceFacet::getArea: ignoring edge: " << *edge << std::endl;
+//     }
+// #endif // DEBUG
   }
   // center_ /= 2*edges.size();
   return 0.5*a;

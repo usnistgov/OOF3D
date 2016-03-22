@@ -783,8 +783,8 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
 {
 #ifdef DEBUG
   // bool verbose = true;
-  // bool verbose = false;
-  bool verbose = index==41;
+  bool verbose = false;
+  // bool verbose = index==41;
   // bool verbose = uid==26747;
   if(verbose)
     oofcerr << "CSkeletonElement::categoryVolumes: " << *this
@@ -803,11 +803,11 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
   DoubleVec *result = new DoubleVec(ncat, 0.0);
   // Get all the category boundaries.
   const std::vector<VoxelSetBoundary*> &bdys = ms->getCategoryBdys();
-#ifdef DEBUG
-  if(verbose) {
-    openDebugFile("facetdump");
-  }
-#endif	// DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     openDebugFile("facetdump");
+//   }
+// #endif	// DEBUG
 
   double totalVol = 0.0;
   try {
@@ -817,7 +817,7 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
       if(verbose) {
 	oofcerr << "CSkeletonElement::categoryVolumes: category=" << cat
 		<< std::endl;
-	writeDebugFile("*** category " + to_string(cat) + " ***\n");
+	// writeDebugFile("*** category " + to_string(cat) + " ***\n");
       }
 #endif	// DEBUG
       if(vsb->bbox().intersects(homtet.bounds())) {
@@ -849,10 +849,10 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
   catch (...) {
     oofcerr << "CSkeletonElement::categoryVolumes: failed for "
 	    << *this << std::endl;
-#ifdef DEBUG
-    if(verbose)
-      closeDebugFile();
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verbose)
+//       closeDebugFile();
+// #endif // DEBUG
     throw;
   }
 

@@ -972,6 +972,12 @@ double MultiVSBmixIn<BASE>::getLoopFrac(const PixelBdyLoopSegment &seg) const {
   return (*it).second;
 }
 
+// template <class BASE>
+// const PBLSegmentMap &MultiVSBmixIn<BASE>::getLoopSegs() const {
+//   // Moved from .h file to see if we can even define template bodies here.
+//   return vsbSegments;
+// }
+
 template <class BASE>
 bool MultiVSBmixIn<BASE>::onSameLoopSegment(const PixelPlaneIntersectionNR *fib)
   const
