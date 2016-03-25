@@ -203,12 +203,12 @@ private:
 			      const std::vector<PixelBdyLoop*>&,
 			      unsigned int face,
 			      FacetMap2D&);
-  SimpleIntersection *find_one_intersection(
+  PixelPlaneIntersectionNR *find_one_intersection(
 				  const HPixelPlane*, const HPixelPlane*,
 				  const HPixelPlane*,
 				  const PixelBdyLoopSegment&,
 				  unsigned int, unsigned int, bool) const;
-  std::vector<SimpleIntersection*> find_two_intersections(
+  std::vector<PixelPlaneIntersectionNR*> find_two_intersections(
 				  const HPixelPlane*, const HPixelPlane*,
 				  const HPixelPlane*,
 				  const PixelBdyLoopSegment&,
@@ -252,8 +252,14 @@ public:
   FaceFacets findFaceFacets(unsigned int cat, const FacetMap2D&) const;
   double intersectionVolume(const FacetMap2D&, const FaceFacets&) const;
 
-  void setIntersectionPolyFrac(SimpleIntersection*, unsigned int,
-			       const PixelPlaneFacet*) const;
+  // void setIntersectionPolyFrac(SingleFaceBase*, unsigned int,
+  // 			       const PixelPlaneFacet*) const;
+
+  // Return the fractional position of the given point given in
+  // barycentric coords) along the polygon edge where the given tet
+  // face intersects the given pixel plane.
+  double edgeCoord(const BarycentricCoord&, const FacePlane*,
+		   const PixelPlaneFacet*) const;
 
   Coord3D nodePosition(unsigned int n) const { return epts[n]; }
   Coord3D faceCenter(unsigned int f) const { return faceCenters[f]; }

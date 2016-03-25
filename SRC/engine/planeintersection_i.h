@@ -26,6 +26,7 @@ class PixelPlaneIntersectionNR;
 class PlaneIntersection;
 class RedundantIntersection;
 class SimpleIntersection;
+class SingleFaceBase;
 class TetEdgeIntersection;
 class TetIntersection;
 class TetNodeIntersection;

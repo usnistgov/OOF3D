@@ -25,7 +25,7 @@
 #include <vector>
 #include <map>
 
-typedef std::multimap<const Coord2D, SimpleIntersection*> IsecsNearCoord;
+typedef std::multimap<const Coord2D, PixelPlaneIntersectionNR*> IsecsNearCoord;
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -195,7 +195,6 @@ public:
 
 class PixelPlaneFacet {
 private:
-  const HomogeneityTet *htet;
   std::vector<FacetEdge*> edges;
   double getArea() const;
   const std::vector<const TetIntersection*> &tetPts;
@@ -206,6 +205,7 @@ private:
   std::set<RedundantIntersection*> redundantIntersections;
 
 public:
+  const HomogeneityTet * const htet;
   const HPixelPlane * const pixplane;
 
 private:

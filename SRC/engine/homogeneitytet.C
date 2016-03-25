@@ -38,7 +38,7 @@ bool HomogeneityTet::verboseCategory_(bool verbose, unsigned int category) const
   // verbose.
   // TODO: Set this at run time via menu commands?
   static std::set<unsigned int> categories({
-      // 3,4
+       1
 	});
   return verbose && (categories.empty() || categories.count(category) == 1);
 };
@@ -51,9 +51,7 @@ bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
   // arguments for each plane are {direction), offset, normal}.
   // TODO: Set this at run time via menu commands?
   static std::set<HPixelPlane> planes({
-      // {0, 10, 1},
-      // 	{1, 5, 1},
-      // 	  {2, 5, 1}
+      {2, 2, -1},
     });
   return verbose && (planes.empty() || planes.count(*pixplane) == 1);
 }
@@ -400,23 +398,65 @@ const
 // the polygon, compute the parametric position of the intersection
 // along the polygon edge.
 
-void HomogeneityTet::setIntersectionPolyFrac(SimpleIntersection *isec,
-					     unsigned int edgeno,
-					     const PixelPlaneFacet *facet)
+// void HomogeneityTet::setIntersectionPolyFrac(SingleFaceBase *isec,
+// 					     unsigned int edgeno,
+// 					     const PixelPlaneFacet *facet)
+//   const
+// {
+// // #ifdef DEBUG
+// //   if(verboseplane) {
+// //     oofcerr << "HomogeneityTet::setIntersectionPolyFrac: isec=" << *isec
+// // 	    << std::endl;
+// //   }
+// // #endif // DEBUG  
+//   unsigned int nextno = edgeno + 1;
+//   if(nextno == facet->polygonSize())
+//     nextno = 0;
+//   BarycentricCoord b0 = facet->polygonCornerBary(edgeno);
+//   BarycentricCoord b1 = facet->polygonCornerBary(nextno);
+//   BarycentricCoord bint =
+//     dynamic_cast<PixelPlaneIntersectionNR*>(isec)->baryCoord(this);
+//   // alpha is the position of the intersection as a fractional
+//   // distance from corner edgeno to edgeno+1.  It can be computed
+//   // from bint = (1-alpha)*b0 + alpha*b1 where bint is the
+//   // barycentric coord of the intersection and b0 and b1 are the
+//   // barycentric coords of the corner points.  This holds for all
+//   // components of b, but we have to use the ones in which b0 and
+//   // b1 differ.
+
+//   // Since roundoff error can make components of b0 and b1 differ when
+//   // they should be the same, look at all the components and use the
+//   // one with the biggest absolute difference.
+
+//   unsigned int best = NONE;
+//   double bigdiff = 0;
+//   for(unsigned int i=0; i<4; i++) {
+//     double bd = fabs(b0[i] - b1[i]);
+//     if(bd > bigdiff) {
+//       bigdiff = bd;
+//       best = i;
+//     }
+//   }
+// #ifdef DEBUG
+//   if(best == NONE)
+//     throw ErrProgrammingError("HomogeneityTet::setIntersectionPolyFrac failed!",
+// 			      __FILE__, __LINE__);
+// #endif // DEBUG
+//   double alpha = (bint[best] - b0[best])/(b1[best] - b0[best]);
+//   isec->setPolyFrac(alpha);
+// }
+
+double HomogeneityTet::edgeCoord(const BarycentricCoord &bint,
+				 const FacePlane *face,
+				 const PixelPlaneFacet *facet)
   const
 {
-// #ifdef DEBUG
-//   if(verboseplane) {
-//     oofcerr << "HomogeneityTet::setIntersectionPolyFrac: isec=" << *isec
-// 	    << std::endl;
-//   }
-// #endif // DEBUG  
+  unsigned int edgeno = facet->getPolyEdge(face);
   unsigned int nextno = edgeno + 1;
   if(nextno == facet->polygonSize())
     nextno = 0;
   BarycentricCoord b0 = facet->polygonCornerBary(edgeno);
   BarycentricCoord b1 = facet->polygonCornerBary(nextno);
-  BarycentricCoord bint = isec->baryCoord(this);
   // alpha is the position of the intersection as a fractional
   // distance from corner edgeno to edgeno+1.  It can be computed
   // from bint = (1-alpha)*b0 + alpha*b1 where bint is the
@@ -440,31 +480,11 @@ void HomogeneityTet::setIntersectionPolyFrac(SimpleIntersection *isec,
   }
 #ifdef DEBUG
   if(best == NONE)
-    throw ErrProgrammingError("HomogeneityTet::setIntersectionPolyFrac failed!",
+    throw ErrProgrammingError("HomogeneityTet::edgeCoord failed!",
 			      __FILE__, __LINE__);
 #endif // DEBUG
   double alpha = (bint[best] - b0[best])/(b1[best] - b0[best]);
-  isec->setPolyFrac(alpha);
-
-//   double alpha = -1.0;		// impossible value
-//   for(unsigned int i=0; i<4; i++) {
-//     if(b0[i] != b1[i]) {
-//       alpha = (bint[i] - b0[i])/(b1[i] - b0[i]);
-// #ifdef DEBUG
-//       OOFcerrIndent indent(2);
-//       oofcerr << "HomogeneityTet::setIntersectionPolyFrac: edgeno=" << edgeno
-// 	      << std::endl;
-//       oofcerr << "HomogeneityTet::setIntersectionPolyFrac: b0=" << b0 << " b1="
-// 	      << b1 << " bint=" << bint << std::endl;
-//       oofcerr << "HomogeneityTet::setIntersectionPolyFrac: i=" << i
-// 	      << " alpha=" << alpha << std::endl;
-// #endif // DEBUG
-//       isec->setPolyFrac(alpha);
-//       return;
-//     }
-//   }
-//   throw ErrProgrammingError("HomogeneityTet::setIntersectionPolyFrac failed!",
-// 			    __FILE__, __LINE__);
+  return alpha;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -924,7 +944,7 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	  const HPixelPlane *orthoPlanePtr =
 	    getUnorientedPixelPlane(&orthoPlane);
 	  unsigned int orthoFace = getCoincidentFaceIndex(orthoPlanePtr);
-	  SimpleIntersection *pi = find_one_intersection(
+	  PixelPlaneIntersectionNR *pi = find_one_intersection(
 						 pixplane,
 						 upixplane,
 						 orthoPlanePtr,
@@ -962,7 +982,7 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	      const HPixelPlane *orthoPlanePtr =
 		getUnorientedPixelPlane(&orthoPlane);
 	      unsigned int orthoFace = getCoincidentFaceIndex(orthoPlanePtr);
-	    std::vector<SimpleIntersection*> isecs =
+	    std::vector<PixelPlaneIntersectionNR*> isecs =
 	      find_two_intersections(pixplane, upixplane,
 				     orthoPlanePtr,
 				     PixelBdyLoopSegment(loop, k),
@@ -1103,7 +1123,7 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 // crossed by the segment.  The segment is on the intersection of
 // pixplane and orthoPlane.
 
-SimpleIntersection *HomogeneityTet::find_one_intersection(
+PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
 					const HPixelPlane *pixplane,
 					const HPixelPlane *upixplane,
 					const HPixelPlane *orthoPlane,
@@ -1160,23 +1180,23 @@ SimpleIntersection *HomogeneityTet::find_one_intersection(
 // 	    << std::endl;
 //   }
 // #endif // DEBUG
-  SimpleIntersection *si =
-    new SimpleIntersection(this, upixplane, orthoPlane, pbls,
-			   entry ? 1-bestAlpha : bestAlpha,
-			   bestFace,
-			   entry ? ENTRY : EXIT);
+  PixelPlaneIntersectionNR *ppi =
+    newIntersection(this, upixplane, orthoPlane, pbls,
+		    entry ? 1-bestAlpha : bestAlpha,
+		    bestFace,
+		    entry ? ENTRY : EXIT);
 #ifdef DEBUG
   // if(verboseplane) {
   //   oofcerr << "HomogeneityTet::find_one_intersection: pixplane=" << *pixplane
   // 	    << " orthoPlane=" << *orthoPlane << " face=" << bestFace
   // 	    << std::endl;
   // }
-  si->verbose = verboseplane;
+  ppi->verbose = verboseplane;
 #endif // DEBUG
-  return si;
+  return ppi;
 } // end HomogeneityTet::find_one_intersection
 
-std::vector<SimpleIntersection*> HomogeneityTet::find_two_intersections(
+std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
 					const HPixelPlane *pixplane,
 					const HPixelPlane *upixplane,
 					const HPixelPlane *orthoPlane,
@@ -1275,7 +1295,7 @@ std::vector<SimpleIntersection*> HomogeneityTet::find_two_intersections(
 // 	    << std::endl;
 //   }
 // #endif // DEBUG
-  std::vector<SimpleIntersection*> isecs;
+  std::vector<PixelPlaneIntersectionNR*> isecs;
   
   if(entryFace != NONE && exitFace != NONE &&
      entryAlpha <= exitAlpha &&
@@ -1295,10 +1315,10 @@ std::vector<SimpleIntersection*> HomogeneityTet::find_two_intersections(
 //       }
 // #endif // DEBUG
       isecs.resize(2);
-      isecs[0] = new SimpleIntersection(this, upixplane, orthoPlane, pblseg,
-					entryAlpha, entryFace, ENTRY);
-      isecs[1] = new SimpleIntersection(this, upixplane, orthoPlane, pblseg,
-					exitAlpha, exitFace, EXIT);
+      isecs[0] = newIntersection(this, upixplane, orthoPlane, pblseg,
+				 entryAlpha, entryFace, ENTRY);
+      isecs[1] = newIntersection(this, upixplane, orthoPlane, pblseg,
+				 exitAlpha, exitFace, EXIT);
 // #ifdef DEBUG
 //       isecs[0]->verbose = verboseplane;
 //       isecs[1]->verbose = verboseplane;
@@ -1999,7 +2019,7 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
       if(coincidentPixelPlanes[face] == nullptr) {
 	FaceFacet &facet = faceFacets[face];
 	oofcerr << "HomogeneityTet::findFaceFacets: " << facet << std::endl;
-	facet.dump();
+	// facet.dump();
       }
     }
   }

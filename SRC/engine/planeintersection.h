@@ -235,7 +235,7 @@ public:
 				   const PixelPlaneFacet*) const = 0;
   virtual unsigned int minPolyEdge(const PixelPlaneFacet*) const = 0;
   virtual unsigned int maxPolyEdge(const PixelPlaneFacet*) const = 0;
-  bool onSamePolySegment(const PixelPlaneIntersection*, const PixelPlaneFacet*)
+  bool onOnePolySegment(const PixelPlaneIntersection*, const PixelPlaneFacet*)
     const;
   unsigned int sharedPolySegment(const PixelPlaneIntersection*,
 				 const PixelPlaneFacet*) const;
@@ -469,7 +469,7 @@ public:
 template <class BASE>
 class SingleFaceMixIn : public BASE, public SingleFaceBase {
 protected:
-  double polyFrac;	    // relative position along polygon segment
+  mutable double polyFrac;  // relative position along polygon segment
 
   // In an intersection with one face plane, that plane plays a
   // special topological role, since it is used to identify a polygon
@@ -484,13 +484,10 @@ public:
 
   void setPolyFrac(double a) { polyFrac = a; }
   void setFacePlane(const FacePlane *fp) { facePlane_ = fp; }
-  virtual double getPolyFrac(unsigned int, const PixelPlaneFacet*) const {
-    return polyFrac;
-  }
+  virtual double getPolyFrac(unsigned int, const PixelPlaneFacet*) const;
   virtual unsigned int getPolyEdge(const PixelPlaneFacet *facet) const;
   virtual unsigned int maxPolyEdge(const PixelPlaneFacet *facet) const;
   virtual unsigned int minPolyEdge(const PixelPlaneFacet *facet) const;
-  double getPolyFrac() const { return polyFrac; }
 };
 
 // MultiFaceMixin is for a intersections that occur on multiple tet
@@ -589,14 +586,19 @@ public:
   virtual ISEC_ORDER ordering(const MultiVSBbase*,
 			      PixelBdyLoopSegment&,
 			      PixelBdyLoopSegment&) const = 0;
+  // MultiVSBmixIn<BASE>::categorizeCorner isn't instantiated unless
+  // it's declared virtual here.  I don't understand this.  It
+  // shouldn't need to be virtual or declared in MultiVSBbase.
+  virtual TurnDirection categorizeCorner(PixelBdyLoopSegment&,
+					 PixelBdyLoopSegment&) const = 0;
 };
 
 template <class BASE> class MultiVSBmixIn : public BASE, public MultiVSBbase {
 protected:
   PBLSegmentMap vsbSegments;
 public:
-  TurnDirection categorizeCorner(PixelBdyLoopSegment&, PixelBdyLoopSegment&)
-    const;
+  virtual TurnDirection categorizeCorner(PixelBdyLoopSegment&,
+					 PixelBdyLoopSegment&) const;
   virtual const PBLSegmentMap &getLoopSegs() const { return vsbSegments; }
   virtual double getLoopFrac(const PixelBdyLoopSegment &seg) const;
   virtual bool onSameLoopSegment(const PixelPlaneIntersectionNR*) const;
@@ -672,6 +674,10 @@ class MultiFaceIntersection :
   public SingleVSBmixIn<MultiFaceMixin<PixelPlaneIntersectionNR>>
 {
 public:
+  MultiFaceIntersection(const HomogeneityTet*,
+			const HPixelPlane*, const HPixelPlane*,
+			const PixelBdyLoopSegment&, double,
+			unsigned int, CrossingType);
   MultiFaceIntersection(const HomogeneityTet*, const SimpleIntersection*,
 			const SimpleIntersection*);
   MultiFaceIntersection(const HomogeneityTet*, const SimpleIntersection*,
@@ -792,6 +798,19 @@ public:
 				      const PixelPlaneFacet*) const;
   virtual void print(std::ostream&) const;
 };
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// newIntersection returns either a new SimpleIntersection or a new
+// MultiFaceIntersection.
+
+PixelPlaneIntersectionNR *newIntersection(const HomogeneityTet *htet,
+					  const HPixelPlane *basePlane,
+					  const HPixelPlane *orthoPlane,
+					  const PixelBdyLoopSegment &pblSeg,
+					  double alpha,
+					  unsigned int faceIndex,
+					  CrossingType ct);
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -943,9 +962,6 @@ public:
   {
     return referent_->getPolyFrac(edge, facet);
   }
-  // virtual bool onSamePolySegment(const PixelPlaneIntersection *fi) const {
-  //   return referent_->onSamePolySegment(fi);
-  // }
   virtual unsigned int findFaceEdge(unsigned int f, const HomogeneityTet *htet)
     const
   {
