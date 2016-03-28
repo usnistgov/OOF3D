@@ -784,7 +784,7 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
 #ifdef DEBUG
   // bool verbose = true;
   // bool verbose = false;
-  bool verbose = index==42;
+  bool verbose = index==29;
   // bool verbose = uid==26747;
   if(verbose)
     oofcerr << "CSkeletonElement::categoryVolumes: " << *this

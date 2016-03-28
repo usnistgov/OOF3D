@@ -452,9 +452,6 @@ static int storeCoincidenceData(PixelPlaneIntersectionNR *isec,
 				IsecsNearCoord &coincidences)
 {
   Coord2D loc = pixplane->convert2Coord2D(isec->location3D());
-  oofcerr << "storeCoincidenceData: loc=" << loc
-	  << " " << pixplane->convert2Coord3D(loc)
-	  << std::endl;
   for(Coord2D p : coincidentLocs) {
     if(norm2(loc-p) < CLOSEBY2) {
       coincidences.insert(IsecsNearCoord::value_type(p, isec));

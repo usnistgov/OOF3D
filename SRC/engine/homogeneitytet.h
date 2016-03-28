@@ -271,13 +271,16 @@ private:
   mutable bool verbose;
   mutable bool verbosecategory;
   mutable bool verboseplane;
+  mutable bool verboseface;
 public:
   // Redefine these methods to change which categories and planes are verbose.
   bool verboseCategory_(bool, unsigned int) const;
   bool verbosePlane_(bool, const HPixelPlane*) const;
+  bool verboseFace_(bool, unsigned int) const;
 
   bool verboseCategory() const { return verbosecategory; }
   bool verbosePlane() const { return verboseplane; }
+  bool verboseFace() const { return verboseface; }
 #endif
 };
 
