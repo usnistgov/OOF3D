@@ -51,15 +51,15 @@ bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
   // arguments for each plane are {direction), offset, normal}.
   // TODO: Set this at run time via menu commands?
   static std::set<HPixelPlane> planes({
-      // {2, 2, -1},
-      {0, NONE, 1}
+      // {0, 10, -1},
+      // {0, NONE, 1}
     });
   return verbose && (planes.empty() || planes.count(*pixplane) == 1);
 }
 
 bool HomogeneityTet::verboseFace_(bool verbose, unsigned int face) const {
   static std::set<unsigned int> faces({
-      1
+
 	});
   return verbose && (faces.empty() || faces.count(face) == 1);
 }
@@ -544,15 +544,15 @@ HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane,
 
   // If undernodes.size() is 0 or 4 then there is no significant
   // intersection.
-#ifdef DEBUG
-  if(verboseplane) {
-    oofcerr << "HomogeneityTet::getTetPlaneIntersectionPoints: pixplane="
-	    << *pixplane;
-    std::cerr << " overnodes=[" << overnodes << "] inplanenodes=["
-	      << inplanenodes << "] undernodes=[" << undernodes << "]";
-    oofcerr << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verboseplane) {
+//     oofcerr << "HomogeneityTet::getTetPlaneIntersectionPoints: pixplane="
+// 	    << *pixplane;
+//     std::cerr << " overnodes=[" << overnodes << "] inplanenodes=["
+// 	      << inplanenodes << "] undernodes=[" << undernodes << "]";
+//     oofcerr << std::endl;
+//   }
+// #endif // DEBUG
 
   if(undernodes.size() == 1) {
     // One tet node is under the plane and the other three are on or
@@ -867,11 +867,11 @@ void HomogeneityTet::doFindPixelPlaneFacets(
       if(!tetBounds.intersects(loop->bbox())) {
 	continue;
       }
-#ifdef DEBUG
-      if(verboseplane)
-        oofcerr << "doFindPixelPlaneFacets: examining loop " << *loop
-		<< std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(verboseplane)
+//         oofcerr << "doFindPixelPlaneFacets: examining loop " << *loop
+// 		<< std::endl;
+// #endif // DEBUG
 
       // Find the interiority of the start of the first pixel boundary
       // segment.  End-point interiorities are done on the fly in the
@@ -891,28 +891,28 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	BarycentricCoord pbs_end_bary = getBarycentricCoord(pbs_end, pixplane);
 	bool pbs_end_inside = pbs_end_bary.interior(onFace);
 
-#ifdef DEBUG
-	if(verboseplane) {
-	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: examining bdy loop segment "
-		  << k << " " << std::endl;
-	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: start= "
-		  << pbs_start << " "
-		  << pixplane->convert2Coord3D(pbs_start) << " "
-		  << pbs_start_bary
-		  << " ("
-		  << (pbs_start_inside ? "interior" : "exterior") << ")"
-		  << std::endl;
-	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets:   end=" 
-		  << pbs_end << " "
-		  << pixplane->convert2Coord3D(pbs_end) << " "
-		  << pbs_end_bary
-		  << " ("
-		  << (pbs_end_inside ? "interior" : "exterior") << ")"
-		  << std::endl;
+// #ifdef DEBUG
+// 	if(verboseplane) {
+// 	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: examining bdy loop segment "
+// 		  << k << " " << std::endl;
+// 	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: start= "
+// 		  << pbs_start << " "
+// 		  << pixplane->convert2Coord3D(pbs_start) << " "
+// 		  << pbs_start_bary
+// 		  << " ("
+// 		  << (pbs_start_inside ? "interior" : "exterior") << ")"
+// 		  << std::endl;
+// 	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets:   end=" 
+// 		  << pbs_end << " "
+// 		  << pixplane->convert2Coord3D(pbs_end) << " "
+// 		  << pbs_end_bary
+// 		  << " ("
+// 		  << (pbs_end_inside ? "interior" : "exterior") << ")"
+// 		  << std::endl;
 
-	}
-	OOFcerrIndent indnt(2);
-#endif // DEBUG
+// 	}
+// 	OOFcerrIndent indnt(2);
+// #endif // DEBUG
 
 	// Does the loop segment cross the polygon?
 	if(pbs_start_inside && pbs_end_inside) {
@@ -1011,12 +1011,12 @@ void HomogeneityTet::doFindPixelPlaneFacets(
   // The facet contains a bunch of edges which may not yet form loops.
   // The loops need to be closed along the exterior of the polygon.
   if(!facet->completeLoops()) {
-#ifdef DEBUG
-    if(verboseplane) {
-      oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: completeLoops failed, ignoring facet."
-	      << std::endl;
-    }
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verboseplane) {
+//       oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: completeLoops failed, ignoring facet."
+// 	      << std::endl;
+//     }
+// #endif // DEBUG
     // The intersection points aren't sensible.  The facet must
     // be small and dominated by round-off error.  Ignore it.
     facet->clear();
@@ -1737,12 +1737,19 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 		<< "loose ends, face=" << face << ":" << std::endl;
 	for(unsigned int i=0; i<NUM_TET_FACE_EDGES; i++) {
 	  OOFcerrIndent indent(2);
-	  if(!looseEnds[i].empty())
-	    for(auto l=looseEnds[i].begin(); l!=looseEnds[i].end(); ++l) {
+	  if(!looseEnds[i].empty()) {
+	    LooseEndMap::iterator x = looseEnds[i].begin();
+	    while(x != looseEnds[i].end()) {
+	      auto range = looseEnds[i].equal_range((*x).first);
 	      oofcerr << "HomogeneityTet::findFaceFacets: edge=" << i
-		      << " pos=" << (*l).first
-		      << ": " << (*l).second << std::endl;
+		      << " t=" << (*x).first << std::endl;
+	      OOFcerrIndent indnt(2);
+	      for(LooseEndMap::iterator y=range.first; y!=range.second; ++y)
+		oofcerr << "HomogeneityTet::findFaceFacets: " << (*y).second
+			<< std::endl;
+	      x = range.second;
 	    }
+	  }
 	  else
 	    oofcerr << "HomogeneityTet::findFaceFacets: edge=" << i
 		    << " (none)" << std::endl;
@@ -1754,6 +1761,8 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
       // error has perturbed the edge positions, and a loose end
       // that's supposed to coincide with a loose start has an
       // edgePosition that's slightly after the start.
+
+      
       for(unsigned int e=0; e<NUM_TET_FACE_EDGES; e++) {
 #ifdef DEBUG
 	if(verboseface)
@@ -1762,6 +1771,69 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	    << cat << " face " << face << " edge " << e << std::endl;
 	OOFcerrIndent indent(2);
 #endif // DEBUG
+	if(looseEnds[e].size() > 1) {
+	  // Coincidence check part 1.  If more than one segment
+	  // intersects at *exactly* the same point on the edge of a
+	  // face, throw out as many stop/start pairs as possible.
+	  LooseEndMap &lem = looseEnds[e];
+	  LooseEndMap::iterator x = lem.begin();
+	  while(x != lem.end()) {
+	    double t = (*x).first;	   // parametric coord of intersection
+	    unsigned int n = lem.count(t); // no. of intersections at t
+	    if(n > 1) {
+	      auto range = lem.equal_range(t);
+	      int nstartdiff = 0; // # of starts minus # of stops at this t
+	      for(LooseEndMap::iterator y=range.first; y!=range.second; ++y) {
+		if((*y).second.start())
+		  nstartdiff++;
+		else
+		  nstartdiff--;
+	      }
+	      if(nstartdiff == 0) {
+		// There are as many starts as stops.  They're all irrelevant.
+		lem.erase(range.first, range.second);
+	      }
+	      else {
+		// nstartdiff != 0
+		std::vector<LooseEndMap::iterator> deleteThese;
+		if(nstartdiff > 0) {
+		  // Delete all but nstartdiff starts.
+		  unsigned int kept = 0;
+		  for(LooseEndMap::iterator y=range.first; y!=range.second; ++y)
+		    {
+		      if(kept >= nstartdiff || !(*y).second.start())
+			deleteThese.push_back(y);
+		      else
+			kept++;
+		    }
+		}
+		else if(nstartdiff < 0) {
+		  // Delete all but -nstartdiff stops.
+		  unsigned int kept = 0;
+		  for(LooseEndMap::iterator y=range.first; y!=range.second; ++y)
+		    {
+		      if(kept >= -nstartdiff || (*y).second.start())
+			deleteThese.push_back(y);
+		      else
+			kept++;
+		    }
+		}
+		for(auto y=deleteThese.rbegin(); y!=deleteThese.rend(); ++y)
+		  lem.erase(*y);
+	      }	// end if nstartdiff != 0
+	      x = range.second;
+	    } // end if there is more than one intersection at point t
+	    else {
+	      ++x;
+	    }
+	  }
+	}
+	// Coincidence check part 2.  Look for intersection points on
+	// the face edges that are close to each other but not exactly
+	// equivalent, and make sure that the facet segments that meet
+	// the face edges there don't cross.  If they do, the
+	// intersection points must be misordered by roundoff, and
+	// should actually be identical.
 	if(looseEnds[e].size() > 1) {
 	  // Loop over loose ends on the edge.  The loop isn't simple
 	  // because loose ends are removed by pairs, so the iterator
@@ -1788,15 +1860,7 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	    }
 #endif // DEBUG
 	    bool equiv =
-	      ((*x).second.corner()->isEquivalent((*xnext).second.corner()) ||
-
-	       // TODO: Checking for identical edge positions here
-	       // helps, but it's not the correct solution.  *Before*
-	       // getting to this point, we should look for sets of
-	       // intersectionts at identical edge positions and
-	       // eliminate pairs of them from the loose end maps.
-	       ((*x).second.edgePosition() == (*xnext).second.edgePosition()
-		&& (*x).second.start() != (*xnext).second.start()));
+	      (*x).second.corner()->isEquivalent((*xnext).second.corner());
 	    if(!equiv && dt < 0.5) {
 	      // The two points are within a half a pixel of each
 	      // other and can potentially coincide.

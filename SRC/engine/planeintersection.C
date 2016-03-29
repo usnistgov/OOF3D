@@ -121,31 +121,31 @@ bool PixelPlaneIntersection::onOnePolySegment(const PixelPlaneIntersection *fi,
 					       const PixelPlaneFacet *facet)
   const
 {
-#ifdef DEBUG
-  if(facet->verbose) {
-    oofcerr << "PixelPlaneIntersection::onOnePolySegment: this=" << *this
-	    << std::endl;
-    oofcerr << "PixelPlaneIntersection::onOnePolySegment:   fi=" << *fi
-	    << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(facet->verbose) {
+//     oofcerr << "PixelPlaneIntersection::onOnePolySegment: this=" << *this
+// 	    << std::endl;
+//     oofcerr << "PixelPlaneIntersection::onOnePolySegment:   fi=" << *fi
+// 	    << std::endl;
+//   }
+// #endif // DEBUG
   const std::vector<const FacePlane*> shared =
     referent()->sharedFaces(fi->referent());
-#ifdef DEBUG
-  if(facet->verbose) {
-    oofcerr << "PixelPlaneIntersection::onOnePolySegment: base plane="
-	    << facet->getBaseFacePlane();
-    if(facet->getBaseFacePlane())
-      oofcerr << " " << *facet->getBaseFacePlane();
-    oofcerr << std::endl;
-    oofcerr << "PixelPlaneIntersection::onOnePolySegment: shared.size="
-	    << shared.size() << std::endl;
-    for(const FacePlane *fp : shared) {
-      oofcerr << "PixelPlaneIntersection::onOnePolySegment:  shared plane="
-	      << fp << " " << *fp << std::endl;
-    }
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(facet->verbose) {
+//     oofcerr << "PixelPlaneIntersection::onOnePolySegment: base plane="
+// 	    << facet->getBaseFacePlane();
+//     if(facet->getBaseFacePlane())
+//       oofcerr << " " << *facet->getBaseFacePlane();
+//     oofcerr << std::endl;
+//     oofcerr << "PixelPlaneIntersection::onOnePolySegment: shared.size="
+// 	    << shared.size() << std::endl;
+//     for(const FacePlane *fp : shared) {
+//       oofcerr << "PixelPlaneIntersection::onOnePolySegment:  shared plane="
+// 	      << fp << " " << *fp << std::endl;
+//     }
+//   }
+// #endif // DEBUG
   if(shared.size() == 1 && facet->getBaseFacePlane() != shared[0])
     return true;
   if(shared.size() == 2) {
@@ -1221,11 +1221,11 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
 						const PixelPlaneFacet *facet)
   const
 {
-#ifdef DEBUG
-  if(htet->verbosePlane())
-    oofcerr << "SimpleIntersection::mergeWith: this="
-	    << *this << " fi=" << *fi << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verbosePlane())
+//     oofcerr << "SimpleIntersection::mergeWith: this="
+// 	    << *this << " fi=" << *fi << std::endl;
+// #endif // DEBUG
   // Two antiparallel but otherwise equivalent VSB segments that
   // intersect a face should form a new SimpleIntersection there.
   if(isEquivalent(fi)) {
@@ -1241,10 +1241,10 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
   if(onOnePolySegment(fi, facet)) {
     PixelPlaneIntersectionNR *res =
       new MultiVSBIntersection(htet, facet, this, fi);
-#ifdef DEBUG
-    if(htet->verbosePlane())
-      oofcerr << "SimpleIntersection::mergeWith: result=" << *res << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(htet->verbosePlane())
+//       oofcerr << "SimpleIntersection::mergeWith: result=" << *res << std::endl;
+// #endif // DEBUG
     return res;
   }
   return new MultiCornerIntersection(htet, this, fi);

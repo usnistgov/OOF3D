@@ -83,30 +83,30 @@ public:
 		  const PixelPlaneIntersection *fi1)
     const
   {
-#ifdef DEBUG
-    if(facet->verbose) {
-      // oofcerr << "LtPolyFrac::operator(): fi0=" << fi0 << " fi1=" << fi1
-      // 	      << std::endl;
-      oofcerr << "LtPolyFrac::operator(): fi0= " << *fi0 << std::endl;
-      oofcerr << "LtPolyFrac::operator(): fi1= " << *fi1 << std::endl;      
-    }
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(facet->verbose) {
+//       // oofcerr << "LtPolyFrac::operator(): fi0=" << fi0 << " fi1=" << fi1
+//       // 	      << std::endl;
+//       oofcerr << "LtPolyFrac::operator(): fi0= " << *fi0 << std::endl;
+//       oofcerr << "LtPolyFrac::operator(): fi1= " << *fi1 << std::endl;      
+//     }
+// #endif // DEBUG
 
     // TODO: sharedPolySegment might be too slow in this context.
     unsigned int sharedSeg = fi0->sharedPolySegment(fi1, facet);
-#ifdef DEBUG
-    if(facet->verbose)
-      oofcerr << "LtPolyFrac::operator(): sharedSeg=" << sharedSeg << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(facet->verbose)
+//       oofcerr << "LtPolyFrac::operator(): sharedSeg=" << sharedSeg << std::endl;
+// #endif // DEBUG
     if(sharedSeg != NONE) {
-#ifdef DEBUG
-      if(facet->verbose) {
-	oofcerr << "LtPolyFrac:operator(): polyFrac0="
-		<< fi0->getPolyFrac(sharedSeg, facet) << std::endl;
-	oofcerr << "LtPolyFrac:operator(): polyFrac1="
-		<< fi1->getPolyFrac(sharedSeg, facet) << std::endl;
-      }
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(facet->verbose) {
+// 	oofcerr << "LtPolyFrac:operator(): polyFrac0="
+// 		<< fi0->getPolyFrac(sharedSeg, facet) << std::endl;
+// 	oofcerr << "LtPolyFrac:operator(): polyFrac1="
+// 		<< fi1->getPolyFrac(sharedSeg, facet) << std::endl;
+//       }
+// #endif // DEBUG
       return (fi0->getPolyFrac(sharedSeg, facet) <
 	      fi1->getPolyFrac(sharedSeg, facet));
     }
@@ -316,11 +316,11 @@ void PixelPlaneFacet::clear() {
 }
 
 void PixelPlaneFacet::addEdge(FacetEdge *edge) {
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PixelPlaneFacet::addEdge: " << *edge << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneFacet::addEdge: " << *edge << std::endl;
+//   }
+// #endif // DEBUG
   edges.push_back(edge);
   areaComputed_ = false;
 }
@@ -331,20 +331,20 @@ void PixelPlaneFacet::addEdge(FacetEdge *edge) {
 void PixelPlaneFacet::addEdges(const PixelPlaneIntersection *fi0,
 			       const PixelPlaneIntersection *fi1)
 {
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PixelPlaneFacet::addEdges: fi0=" << *fi0 << std::endl;
-    oofcerr << "PixelPlaneFacet::addEdges: fi1=" << *fi1 << std::endl;
-  }
-  OOFcerrIndent indent(2);
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneFacet::addEdges: fi0=" << *fi0 << std::endl;
+//     oofcerr << "PixelPlaneFacet::addEdges: fi1=" << *fi1 << std::endl;
+//   }
+//   OOFcerrIndent indent(2);
+// #endif // DEBUG
   unsigned int startSeg = fi0->maxPolyEdge(this);
   unsigned int endSeg = fi1->minPolyEdge(this);
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "PixelPlaneFacet::addEdges: startSeg=" << startSeg
-	    << " endSeg=" << endSeg << std::endl;
-#endif	// DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "PixelPlaneFacet::addEdges: startSeg=" << startSeg
+// 	    << " endSeg=" << endSeg << std::endl;
+// #endif	// DEBUG
   assert(startSeg != NONE && endSeg != NONE);
   if(startSeg == endSeg &&
      fi0->getPolyFrac(startSeg, this) < fi1->getPolyFrac(startSeg, this))
@@ -357,11 +357,11 @@ void PixelPlaneFacet::addEdges(const PixelPlaneIntersection *fi0,
     // the start on the same edge.  Add the segment between the exit
     // and the first corner.
     unsigned int nn = polygonSize();
-#ifdef DEBUG
-    if(verbose)
-      oofcerr << "PixelPlaneFacet::addEdges: adding initial " << *fi0
-	      << " to tetPts[" << (startSeg+1)%nn << "]" << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verbose)
+//       oofcerr << "PixelPlaneFacet::addEdges: adding initial " << *fi0
+// 	      << " to tetPts[" << (startSeg+1)%nn << "]" << std::endl;
+// #endif // DEBUG
     addEdge(new PolygonEdge(fi0->clone(), tetPts[(startSeg+1)%nn]->clone()));
     // If there is more than one intermediate corner, then there are
     // one or more intermediate segments that span an entire polygon
@@ -374,12 +374,12 @@ void PixelPlaneFacet::addEdges(const PixelPlaneIntersection *fi0,
       nextseg = 0;
      
     while(seg != endSeg) {
-#ifdef DEBUG
-      if(verbose)
-	oofcerr << "PixelPlaneFacet::addEdges: adding intermediate: "
-		<< "tetPts[" << seg << "] to tetPts[" << nextseg << "]"
-		<< std::endl;
-#endif	// DEBUG
+// #ifdef DEBUG
+//       if(verbose)
+// 	oofcerr << "PixelPlaneFacet::addEdges: adding intermediate: "
+// 		<< "tetPts[" << seg << "] to tetPts[" << nextseg << "]"
+// 		<< std::endl;
+// #endif	// DEBUG
       addEdge(new PolygonEdge(tetPts[seg]->clone(), tetPts[nextseg]->clone()));
       seg = nextseg;
       nextseg++;
@@ -388,17 +388,17 @@ void PixelPlaneFacet::addEdges(const PixelPlaneIntersection *fi0,
     }
     
     // Add the segment between the last corner and the entry.
-#ifdef DEBUG
-    if(verbose)
-      oofcerr << "PixelPlaneFacet::addEdges: adding final "
-	      << "tetPts[" << endSeg << "] to " << *fi1 << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verbose)
+//       oofcerr << "PixelPlaneFacet::addEdges: adding final "
+// 	      << "tetPts[" << endSeg << "] to " << *fi1 << std::endl;
+// #endif // DEBUG
     addEdge(new PolygonEdge(tetPts[endSeg]->clone(), fi1->clone()));
   }
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "PixelPlaneFacet::addEdges: done" << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "PixelPlaneFacet::addEdges: done" << std::endl;
+// #endif // DEBUG
 }
 
 double PixelPlaneFacet::area() const {
@@ -414,6 +414,9 @@ double PixelPlaneFacet::area() const {
 }
 
 double PixelPlaneFacet::getArea() const {
+  if(edges.size() <= 2)
+    return 0.0;
+
   // TODO: If this is too slow, try not computing the center and
   // subtracting it from the positions before taking the cross
   // product.  Subtracting the center is meant to increase accuracy by
@@ -424,9 +427,30 @@ double PixelPlaneFacet::getArea() const {
   }
   center /= 2.0*edges.size();
 
-  double a = 0;
-  for(const FacetEdge *edge : edges) {
-    a += (edge->startPos(pixplane) - center)%(edge->endPos(pixplane) - center);
+  double a = 0.0;
+  
+  // Don't include pairs of oppositely directed edges with equivalent
+  // endpoints.  If these are the only edges in a facet, round-off
+  // error can make the area appear to be non-zero when it should be
+  // zero.
+  std::vector<bool> includeEdge(edges.size(), true);
+  for(unsigned int i=0; i<edges.size(); i++) {
+    if(includeEdge[i]) {
+      for(unsigned int j=i+1; j<edges.size() && includeEdge[i]; j++) {
+	if(includeEdge[j]) {
+	  if(edges[i]->startPt()->isEquivalent(edges[j]->endPt()) &&
+	     edges[j]->startPt()->isEquivalent(edges[i]->endPt()))
+	    {
+	      includeEdge[i] = false;
+	      includeEdge[j] = false;
+	    }
+	}
+      }
+    }
+    if(includeEdge[i]) {
+      a += ((edges[i]->startPos(pixplane) - center) %
+	    (edges[i]->endPos(pixplane) - center));
+    }
   }
   return 0.5*a;
 }
@@ -509,23 +533,23 @@ bool PixelPlaneFacet::completeLoops() {
   //
   // (3) Add missing segments between the PixelPlaneIntersections.
   
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PixelPlaneFacet::completeLoops: initial facet=" << *this
-	    << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneFacet::completeLoops: initial facet=" << *this
+// 	    << std::endl;
+//   }
+// #endif // DEBUG
 
   std::set<Coord2D> coincidentLocs; // locations where coincidences occur
   IsecsNearCoord coincidences; // All intersections at a point
   unsigned int totalIntersections = 0;
 
   for(FacetEdge *edge : edges) {
-#ifdef DEBUG
-    if(verbose)
-      oofcerr << "PixelPlaneFacet::completeLoops: edge=" << edge
-	      << " " << *edge << std::endl;
-#endif	// DEBUG
+// #ifdef DEBUG
+//     if(verbose)
+//       oofcerr << "PixelPlaneFacet::completeLoops: edge=" << edge
+// 	      << " " << *edge << std::endl;
+// #endif	// DEBUG
 
     // Calling referent() is sort of silly here, but it's cheaper than
     // using a dynamic_cast to convert the PixelPlaneIntersection in
@@ -542,51 +566,7 @@ bool PixelPlaneFacet::completeLoops() {
 						 coincidentLocs,
 						 coincidences);
     
-//     SingleFaceBase *isec = dynamic_cast<SingleFaceBase*>(edge->startFace());
-//     if(isec != nullptr) {
-// // #ifdef DEBUG
-// //       if(verbose) {
-// // 	oofcerr << "PixelPlaneFacet::completeLoops: start isec=" << isec
-// // 		<< " " << *isec << std::endl;
-// // 	oofcerr << "PixelPlaneFacet::completeLoops: faceplane="
-// // 		<< isec->getFacePlane() << " " << *isec->getFacePlane()
-// // 		<< std::endl;
-// //       }
-// // #endif // DEBUG
-//       unsigned int edgeno = faceEdgeMap[isec->getFacePlane()]; // polygon edge
-// // #ifdef DEBUG
-// //       if(verbose) {
-// // 	oofcerr << "PixelPlaneFacet::completeLoops: edgeno=" << edgeno
-// // 		<< std::endl;
-// //       }
-// // #endif // DEBUG
-//       htet->setIntersectionPolyFrac(isec, edgeno, this);
-// // #ifdef DEBUG
-// //       if(verbose)
-// // 	oofcerr << "PixelPlaneFacet::completeLoops: back from setIntersectionPolyFrac" << std::endl;
-// // #endif // DEBUG
-//       storeCoincidenceData(isec, pixplane, coincidentLocs, coincidences);
-// // #ifdef DEBUG
-// //       if(verbose)
-// // 	oofcerr << "PixelPlaneFacet::completeLoops: back from storeCoincidenceData" << std::endl;
-// // #endif // DEBUG
-//       totalIntersections++;
-//     } // end if isec != nullptr
-
-//     isec = dynamic_cast<SingleFaceBase*>(edge->stopFace());
-//     if(isec != nullptr) {
-// // #ifdef DEBUG
-// //       if(verbose)
-// // 	oofcerr << "PixelPlaneFacet::completeLoops: stop isec=" << isec
-// // 		<< " " << *isec << std::endl;
-// // #endif // DEBUG
-//       unsigned int edgeno = faceEdgeMap[isec->getFacePlane()]; // polygon edge
-//       htet->setIntersectionPolyFrac(isec, edgeno, this);
-//       // rawPolyEdgeIntersections[edgeno].push_back(isec);
-//       storeCoincidenceData(isec, pixplane, coincidentLocs, coincidences);
-//       totalIntersections++;
-//     } // end if isec != nullptr
-  }   // end loop over edges
+  } // end loop over edges
 
 // #ifdef DEBUG
 //   if(verbose)
@@ -599,28 +579,28 @@ bool PixelPlaneFacet::completeLoops() {
   // wrong order on an edge.
 
   for(Coord2D loc : coincidentLocs) {
-#ifdef DEBUG
-    if(verbose)
-      oofcerr << "PixelPlaneFacet::completeLoops: looking for coincidence at "
-	      << loc << " " << pixplane->convert2Coord3D(loc) << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verbose)
+//       oofcerr << "PixelPlaneFacet::completeLoops: looking for coincidence at "
+// 	      << loc << " " << pixplane->convert2Coord3D(loc) << std::endl;
+// #endif // DEBUG
     if(coincidences.count(loc) > 1) {
       auto range = coincidences.equal_range(loc);
-#ifdef DEBUG
-      if(verbose) {
-	oofcerr << "PixelPlaneFacet::completeLoops: resolving coincidence at "
-		<< loc << " " << pixplane->convert2Coord3D(loc) << std::endl;
-	oofcerr << "PixelPlaneFacet::completeLoops: coincident points are:"
-		<< std::endl;
-	for(auto r=range.first; r!=range.second; ++r) {
-	  OOFcerrIndent indent(4);
-	  oofcerr << "PixelPlaneFacet::completeLoops: "
-		  << *dynamic_cast<PixelPlaneIntersectionNR*>((*r).second)
-		  << std::endl;
-	}
-      }
-      OOFcerrIndent indent(2);
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(verbose) {
+// 	oofcerr << "PixelPlaneFacet::completeLoops: resolving coincidence at "
+// 		<< loc << " " << pixplane->convert2Coord3D(loc) << std::endl;
+// 	oofcerr << "PixelPlaneFacet::completeLoops: coincident points are:"
+// 		<< std::endl;
+// 	for(auto r=range.first; r!=range.second; ++r) {
+// 	  OOFcerrIndent indent(4);
+// 	  oofcerr << "PixelPlaneFacet::completeLoops: "
+// 		  << *dynamic_cast<PixelPlaneIntersectionNR*>((*r).second)
+// 		  << std::endl;
+// 	}
+//       }
+//       OOFcerrIndent indent(2);
+// #endif // DEBUG
       // First, copy the intersections at this location into a set,
       // and merge ones that are at *identical* positions.
       std::set<PixelPlaneIntersectionNR*> uniqueIsecs;
@@ -629,12 +609,12 @@ bool PixelPlaneFacet::completeLoops() {
 	bool replaced = false;
 	for(PixelPlaneIntersectionNR *q : uniqueIsecs) {
 	  if(q->isEquivalent(p)) {
-#ifdef DEBUG
-	    if(verbose) {
-	      oofcerr << "PixelPlaneFacet::completeLoops: merging identical pts"
-		      << std::endl;
-	    }
-#endif // DEBUG
+// #ifdef DEBUG
+// 	    if(verbose) {
+// 	      oofcerr << "PixelPlaneFacet::completeLoops: merging identical pts"
+// 		      << std::endl;
+// 	    }
+// #endif // DEBUG
 	    PixelPlaneIntersectionNR *merged = q->mergeWith(htet, p, this);
 	    if(merged) {
 	      replaceIntersection(q, merged);
@@ -653,12 +633,12 @@ bool PixelPlaneFacet::completeLoops() {
       
       // int nIntersections = std::distance(range.first, range.second);
       int nIntersections = uniqueIsecs.size();
-#ifdef DEBUG
-      if(verbose)
-	oofcerr << "PixelPlaneFacet::completeLoops: resolving "
-		<< nIntersections << "-fold coincidence at " << loc
-		<< std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(verbose)
+// 	oofcerr << "PixelPlaneFacet::completeLoops: resolving "
+// 		<< nIntersections << "-fold coincidence at " << loc
+// 		<< std::endl;
+// #endif // DEBUG
       if(nIntersections == 2) {
 	if(!resolveTwoFoldCoincidence(uniqueIsecs)) {
 // #ifdef DEBUG
@@ -692,31 +672,31 @@ bool PixelPlaneFacet::completeLoops() {
 	  return false;
 	}
       }
-#ifdef DEBUG
-      if(verbose) {
-	oofcerr << "PixelPlaneFacet::completeLoops: resolved coincidence at "
-		<< loc << std::endl;
-      }
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(verbose) {
+// 	oofcerr << "PixelPlaneFacet::completeLoops: resolved coincidence at "
+// 		<< loc << std::endl;
+//       }
+// #endif // DEBUG
     } // end if there is more than one intersection near loc
   }   // end loop over locations loc of intersection positions
 
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PixelPlaneFacet::completeLoops: after resolving coincidences,"
-	    << " facet=" << *this << std::endl;
-  }
-#endif	// DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneFacet::completeLoops: after resolving coincidences,"
+// 	    << " facet=" << *this << std::endl;
+//   }
+// #endif	// DEBUG
 
   // Remove edges that join equivalent intersection points.
   removeNullEdges();
 
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PixelPlaneFacet::completeLoops: after removing null edges,"
-	    << " facet=" << *this << std::endl;
-  }
-#endif	// DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneFacet::completeLoops: after removing null edges,"
+// 	    << " facet=" << *this << std::endl;
+//   }
+// #endif	// DEBUG
 
   // Construct the lists of intersections on each edge, now including
   // only the topologically distinct intersections
@@ -730,23 +710,23 @@ bool PixelPlaneFacet::completeLoops() {
     edge->endPt()->locateOnPolygonEdge(polyEdgeIntersections, this);
   }
 
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PixelPlaneFacet::completeLoops: done with locateOnPolygonEdge"
-	    << std::endl;
-    OOFcerrIndent indent(2);
-    for(unsigned int e=0; e<polyEdgeIntersections.size(); e++) {
-      if(!polyEdgeIntersections[e].empty()) {
-	oofcerr << "PixelPlaneFacet::completeLoops: polyEdgeIntersections[" << e
-		<< "]=" << std::endl;
-	OOFcerrIndent indnt(2);
-	for(const PixelPlaneIntersection *fib : polyEdgeIntersections[e]) {
-	  oofcerr << "PixelPlaneFacet::completeLoops:   " << *fib << std::endl;
-	}
-      }
-    }
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneFacet::completeLoops: done with locateOnPolygonEdge"
+// 	    << std::endl;
+//     OOFcerrIndent indent(2);
+//     for(unsigned int e=0; e<polyEdgeIntersections.size(); e++) {
+//       if(!polyEdgeIntersections[e].empty()) {
+// 	oofcerr << "PixelPlaneFacet::completeLoops: polyEdgeIntersections[" << e
+// 		<< "]=" << std::endl;
+// 	OOFcerrIndent indnt(2);
+// 	for(const PixelPlaneIntersection *fib : polyEdgeIntersections[e]) {
+// 	  oofcerr << "PixelPlaneFacet::completeLoops:   " << *fib << std::endl;
+// 	}
+//       }
+//     }
+//   }
+// #endif // DEBUG
 
   // Sort the polyEdgeIntersections by polyFrac (position along the
   // edge).  TODO: This is inefficient, since LtPolyFrac computes the
@@ -758,18 +738,18 @@ bool PixelPlaneFacet::completeLoops() {
 // #endif  // DEBUG
   for(PolyEdgeIntersections &polyedge : polyEdgeIntersections) {
     std::sort(polyedge.begin(), polyedge.end(), LtPolyFrac(this));
-#ifdef DEBUG
-    if(verbose) {
-      if(!polyedge.empty()) {
-	oofcerr << "PixelPlaneFacet::completeLoops: sorted polyedge="
-		<< std::endl;
-	for(auto fib : polyedge) {
-	  OOFcerrIndent indent(2);
-	  oofcerr << "PixelPlaneFacet::completeLoops:  " << *fib << std::endl;
-	}
-      }
-    }
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verbose) {
+//       if(!polyedge.empty()) {
+// 	oofcerr << "PixelPlaneFacet::completeLoops: sorted polyedge="
+// 		<< std::endl;
+// 	for(auto fib : polyedge) {
+// 	  OOFcerrIndent indent(2);
+// 	  oofcerr << "PixelPlaneFacet::completeLoops:  " << *fib << std::endl;
+// 	}
+//       }
+//     }
+// #endif // DEBUG
   }
 
   // At this point, polyEdgeIntersections contains edge intersections
@@ -800,26 +780,26 @@ bool PixelPlaneFacet::completeLoops() {
   const PixelPlaneIntersection *currentExit = nullptr;
   bool started = false;
 
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PixelPlaneFacet::completeLoops: filling gaps"
-	    << std::endl;
-    unsigned int n=0;
-    for(auto const &edge : polyEdgeIntersections)
-	n += edge.size();
-    if(n > 0) {
-      oofcerr << "PixelPlaneFacet::completeLoops: intersections are:"
-	      << std::endl;
-      OOFcerrIndent indent(4);
-      for(unsigned int e=0; e<tetPts.size(); e++) {
-	for(const PixelPlaneIntersection *fi : polyEdgeIntersections[e]) {
-	  oofcerr << "PixelPlaneIntersection::completeLoops: " << *fi
-		  << std::endl;
-	}
-      }
-    }
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneFacet::completeLoops: filling gaps"
+// 	    << std::endl;
+//     unsigned int n=0;
+//     for(auto const &edge : polyEdgeIntersections)
+// 	n += edge.size();
+//     if(n > 0) {
+//       oofcerr << "PixelPlaneFacet::completeLoops: intersections are:"
+// 	      << std::endl;
+//       OOFcerrIndent indent(4);
+//       for(unsigned int e=0; e<tetPts.size(); e++) {
+// 	for(const PixelPlaneIntersection *fi : polyEdgeIntersections[e]) {
+// 	  oofcerr << "PixelPlaneIntersection::completeLoops: " << *fi
+// 		  << std::endl;
+// 	}
+//       }
+//     }
+//   }
+// #endif // DEBUG
   for(unsigned int e=0; e<tetPts.size(); e++) { // Loop over polygon edges
     OOFcerrIndent indent(2);
     for(const PixelPlaneIntersection *fi : polyEdgeIntersections[e]) {
@@ -850,11 +830,11 @@ bool PixelPlaneFacet::completeLoops() {
 	}
 	started = true;
 	currentExit = fi;
-#ifdef DEBUG
-	if(verbose)
-	  oofcerr << "PixelPlaneFacet::completeLoops: found an exit: "
-		  << *currentExit << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+// 	if(verbose)
+// 	  oofcerr << "PixelPlaneFacet::completeLoops: found an exit: "
+// 		  << *currentExit << std::endl;
+// #endif // DEBUG
       } // end if intersection is an exit
 	
       else if(crossing == ENTRY) {
@@ -863,18 +843,18 @@ bool PixelPlaneFacet::completeLoops() {
 	    // We've only just begun, and the first intersection
 	    // found was an entry.  Save it for later.
 	    firstEntry = fi;
-#ifdef DEBUG
-	    if(verbose)
-	      oofcerr << "PixelPlaneFacet::completeLoops: saving an entry: "
-		      << *firstEntry << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+// 	    if(verbose)
+// 	      oofcerr << "PixelPlaneFacet::completeLoops: saving an entry: "
+// 		      << *firstEntry << std::endl;
+// #endif // DEBUG
 	  }
 	  else {
-#ifdef DEBUG
-	    if(verbose)
-	      oofcerr << "PixelPlaneFacet::completeLoops: extra entry: "
-		      << *fi << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+// 	    if(verbose)
+// 	      oofcerr << "PixelPlaneFacet::completeLoops: extra entry: "
+// 		      << *fi << std::endl;
+// #endif // DEBUG
 	    throw ErrProgrammingError(
 	      "Intersection matching failed! Found two consecutive entries.",
 	      __FILE__, __LINE__);
@@ -885,11 +865,11 @@ bool PixelPlaneFacet::completeLoops() {
 	  // current entry.
 	  addEdges(currentExit, fi);
 	  currentExit = nullptr;
-#ifdef DEBUG
-	  if(verbose)
-	    oofcerr << "PixelPlaneFacet::completeLoops: joined exit to entry: "
-		    << *fi << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+// 	  if(verbose)
+// 	    oofcerr << "PixelPlaneFacet::completeLoops: joined exit to entry: "
+// 		    << *fi << std::endl;
+// #endif // DEBUG
 	} // end if currentExit is not null
       } // end if intersection is an entry
 
@@ -904,11 +884,11 @@ bool PixelPlaneFacet::completeLoops() {
 	  // exit, then this non-crossing intersection lies outside of
 	  // an exit->entry pair and can be ignored.
 	  if(!firstEntry) {
-#ifdef DEBUG
-	    if(verbose)
-	      oofcerr << "PixelPlaneFacet::completeLoops: saving noncrossing: "
-		      << *fi << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+// 	    if(verbose)
+// 	      oofcerr << "PixelPlaneFacet::completeLoops: saving noncrossing: "
+// 		      << *fi << std::endl;
+// #endif // DEBUG
 	    firstNoncrossing.push_back(fi);
 	  }
 	} // end if !started
@@ -926,17 +906,17 @@ bool PixelPlaneFacet::completeLoops() {
   // in the middle of a segment, and firstEntry must also be non-null.
   // Add the segment(s) connecting currentExit and firstEntry.
   if(currentExit != nullptr) {
-#ifdef DEBUG
-    if(verbose) {
-      oofcerr << "PixelPlaneFacet::completeLoops: not done after main loop finished" << std::endl;
-      oofcerr << "PixelPlaneFacet::completeLoops: firstEntry=" << *firstEntry
-	      << std::endl;
-      oofcerr << "PixelPlaneFacet::completeLoops: currentExit=" << *currentExit
-	      << std::endl;
-      oofcerr << "PixelPlaneFacet::completeLoops: firstNoncrossing.size="
-	      << firstNoncrossing.size() << std::endl;
-    }
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verbose) {
+//       oofcerr << "PixelPlaneFacet::completeLoops: not done after main loop finished" << std::endl;
+//       oofcerr << "PixelPlaneFacet::completeLoops: firstEntry=" << *firstEntry
+// 	      << std::endl;
+//       oofcerr << "PixelPlaneFacet::completeLoops: currentExit=" << *currentExit
+// 	      << std::endl;
+//       oofcerr << "PixelPlaneFacet::completeLoops: firstNoncrossing.size="
+// 	      << firstNoncrossing.size() << std::endl;
+//     }
+// #endif // DEBUG
     assert(firstEntry != nullptr);
     if(firstNoncrossing.empty())
       addEdges(currentExit, firstEntry);
@@ -1429,50 +1409,46 @@ bool PixelPlaneFacet::resolveThreeFoldCoincidence(
     } // end if both exits are on the same VSB segment
     else {
       // Two exits, but on different VSB segments
-#ifdef DEBUG
-      if(verbose) {
-	oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: 2 exits on different VSB segs" << std::endl;
-      }
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(verbose) {
+// 	oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: 2 exits on different VSB segs" << std::endl;
+//       }
+// #endif // DEBUG
       std::vector<PixelPlaneIntersectionNR*> mergers =
 	tripleCoincidence(exits[0], exits[1], entries[0]);
-#ifdef DEBUG
-      if(verbose) {
-	oofcerr << "PixelPlaneFacet:resolveThreeFoldCoincidence: mergers.size="
-		<< mergers.size() << std::endl;
-	OOFcerrIndent indent(2);
-	for(PixelPlaneIntersectionNR *ppi : mergers) {
-	  oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: " << *ppi
-		  << std::endl;
-	}
-      }
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(verbose) {
+// 	oofcerr << "PixelPlaneFacet:resolveThreeFoldCoincidence: mergers.size="
+// 		<< mergers.size() << std::endl;
+// 	OOFcerrIndent indent(2);
+// 	for(PixelPlaneIntersectionNR *ppi : mergers) {
+// 	  oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: " << *ppi
+// 		  << std::endl;
+// 	}
+//       }
+// #endif // DEBUG
       if(mergers.size() == 3) {
 	PixelPlaneIntersectionNR *mfi0 = mergers[1]->mergeWith(
 						       htet, mergers[2], this);
-#ifdef DEBUG
-	if(verbose) {
-	  if(!mfi0)
-	    oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: failed to merge 1 & 2!" << std::endl;
-	else
-	  oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: merged 1 & 2 "
-		  << *mfi0 << std::endl;
-	}
-#endif // DEBUG
+// #ifdef DEBUG
+// 	if(verbose) {
+// 	  if(!mfi0)
+// 	    oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: failed to merge 1 & 2!" << std::endl;
+// 	else
+// 	  oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: merged 1 & 2 "
+// 		  << *mfi0 << std::endl;
+// 	}
+// #endif // DEBUG
 	PixelPlaneIntersectionNR *mfi = mergers[0]->mergeWith(htet, mfi0, this);
-#ifdef DEBUG
-	if(verbose) {
-	  if(!mfi)
-	    oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: failed to merge 0 & (1&2)!" << std::endl;
-	  else
-	    oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: merged 0 &(1&2) "
-		    << *mfi << std::endl;
-	}
-#endif // DEBUG
-	// PixelPlaneIntersectionNR *mfi = mergers[0]->mergeWith(
-	// 		      htet,
-	// 		      mergers[1]->mergeWith(htet, mergers[2], this),
-	// 		      this);
+// #ifdef DEBUG
+// 	if(verbose) {
+// 	  if(!mfi)
+// 	    oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: failed to merge 0 & (1&2)!" << std::endl;
+// 	  else
+// 	    oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: merged 0 &(1&2) "
+// 		    << *mfi << std::endl;
+// 	}
+// #endif // DEBUG
 	if(mfi) {
 	  mfi->setCrossingType(EXIT);
 	  replaceIntersection(mergers[0], mfi);
@@ -1494,29 +1470,12 @@ bool PixelPlaneFacet::resolveThreeFoldCoincidence(
 	}
 	else
 	  return false;
-	// if(mergers[0]->facePlane() == mergers[1]->facePlane()) {
-	//   if(vsbCornerCoincidence(mergers[0], mergers[1])) {
-	//     swapIntersections(mergers[0], mergers[1]);
-	//   }
-	// }
-	// else if(mergers[0]->onSameLoopSegment(mergers[1])) {
-	//   if(polyCornerCoincidence(mergers[0], mergers[1])) {
-	//     MultiFaceIntersection *mfi = mergers[0]->mergeWith(mergers[1]);
-	//     replaceIntersection(mergers[0], mfi);
-	//     replaceIntersection(mergers[1], new RedundantIntersection(mfi));
-	//   }
-	// }
-	// else {
-	//   throw ErrProgrammingError("Unresolvable triple coincidence!",
-	// 			    __FILE__, __LINE__);
-	// }
       }	// end if two points are merging
       else if(mergers.size() != 0) {
 	throw ErrProgrammingError(
 	  "Wrong number of intersections in resolveThreeFoldCoincidence!",
 	  __FILE__, __LINE__);
       }
-
     } // end if two exits are on different VSB segments
   } // end if there are two exits
 
@@ -1660,11 +1619,6 @@ bool PixelPlaneFacet::resolveMultipleCoincidence(
 	break;
     }
     if((*k)->crossingType() == (*knext)->crossingType()) {
-      // const SimpleIntersection *si =
-      // 	dynamic_cast<const SimpleIntersection*>(*k);
-      // const SimpleIntersection *siNext =
-      // 	dynamic_cast<const SimpleIntersection*>(*knext);
-      // assert(si != nullptr && siNext != nullptr);
       if(((*k)->getPolyEdge(this)+1)%tetPts.size()==(*knext)->getPolyEdge(this)
 	 && (*k)->onSameLoopSegment(*knext))
 	{
