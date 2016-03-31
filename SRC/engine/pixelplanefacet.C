@@ -284,11 +284,29 @@ const FacePlane *PixelPlaneFacet::getFacePlane(unsigned int f) const {
   if(g == tetPts.size())
     g = 0;
   std::vector<const FacePlane*> faces = tetPts[f]->sharedFaces(tetPts[g]);
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneFacet::getFacePlane: tetPts[f=" << f << "]="
+// 	    << *tetPts[f] << std::endl;
+//     oofcerr << "PixelPlaneFacet::getFacePlane: tetPts[g=" << g << "]="
+// 	    << *tetPts[g] << std::endl;
+//     oofcerr << "PixelPlaneFacet::getFacePlane: faces=";
+//     std::cerr << derefprint(faces);
+//     oofcerr << std::endl;	
+//   }
+// #endif // DEBUG
   for(const FacePlane *face : faces) {
-    // TODO: Use static_cast here?
-    if(dynamic_cast<const HPlane*>(face) !=
-       dynamic_cast<const HPlane*>(pixplane))
+    // Use Plane::coincident instead of operator== here because the
+    // planes stored in the tetPts have arbitrary orientations.
+    if(!face->coincident(*pixplane)) {
+// #ifdef DEBUG
+//       if(verbose) {
+// 	oofcerr << "PixelPlaneFacet::getFacePlane: face=" << *face
+// 		<< std::endl;
+//       }
+// #endif	// DEBUG
       return face;
+    }
   }
   throw ErrProgrammingError("getFacePlane failed!", __FILE__, __LINE__);
 }
@@ -300,6 +318,10 @@ const FacePixelPlane *PixelPlaneFacet::getBaseFacePlane() const {
 }
 
 unsigned int PixelPlaneFacet::getPolyEdge(const Plane *fp) const {
+#ifdef DEBUG
+  if(verbose)
+    oofcerr << "PixelPlaneFacet::getPolyEdge: fp=" << *fp << std::endl;
+#endif // DEBUG
   FaceEdgeMap::const_iterator e = faceEdgeMap.find(fp);
   if(e != faceEdgeMap.end())
     return (*e).second;
@@ -316,11 +338,11 @@ void PixelPlaneFacet::clear() {
 }
 
 void PixelPlaneFacet::addEdge(FacetEdge *edge) {
-// #ifdef DEBUG
-//   if(verbose) {
-//     oofcerr << "PixelPlaneFacet::addEdge: " << *edge << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::addEdge: " << *edge << std::endl;
+  }
+#endif // DEBUG
   edges.push_back(edge);
   areaComputed_ = false;
 }
@@ -533,12 +555,12 @@ bool PixelPlaneFacet::completeLoops() {
   //
   // (3) Add missing segments between the PixelPlaneIntersections.
   
-// #ifdef DEBUG
-//   if(verbose) {
-//     oofcerr << "PixelPlaneFacet::completeLoops: initial facet=" << *this
-// 	    << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::completeLoops: initial facet=" << *this
+	    << std::endl;
+  }
+#endif // DEBUG
 
   std::set<Coord2D> coincidentLocs; // locations where coincidences occur
   IsecsNearCoord coincidences; // All intersections at a point
@@ -681,22 +703,22 @@ bool PixelPlaneFacet::completeLoops() {
     } // end if there is more than one intersection near loc
   }   // end loop over locations loc of intersection positions
 
-// #ifdef DEBUG
-//   if(verbose) {
-//     oofcerr << "PixelPlaneFacet::completeLoops: after resolving coincidences,"
-// 	    << " facet=" << *this << std::endl;
-//   }
-// #endif	// DEBUG
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::completeLoops: after resolving coincidences,"
+	    << " facet=" << *this << std::endl;
+  }
+#endif	// DEBUG
 
   // Remove edges that join equivalent intersection points.
   removeNullEdges();
 
-// #ifdef DEBUG
-//   if(verbose) {
-//     oofcerr << "PixelPlaneFacet::completeLoops: after removing null edges,"
-// 	    << " facet=" << *this << std::endl;
-//   }
-// #endif	// DEBUG
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::completeLoops: after removing null edges,"
+	    << " facet=" << *this << std::endl;
+  }
+#endif	// DEBUG
 
   // Construct the lists of intersections on each edge, now including
   // only the topologically distinct intersections

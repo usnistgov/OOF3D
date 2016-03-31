@@ -515,14 +515,16 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
     for(const FacePixelPlane *fpp : pixelFaces_) {
       if(fpp != facet->pixplane) {
 	unsigned int edge = facet->getPolyEdge(fpp);
-// #ifdef DEBUG
-// 	if(verbose) {
-// 	  oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: polyEdge="
-// 		  << edge << " using pixelFaces_ "
-// 		  << *fpp << std::endl;
-//     }
-// #endif // DEBUG
-	assert(edge != NONE);
+#ifdef DEBUG
+	if(verbose) {
+	  oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: polyEdge="
+		  << edge << " using pixelFaces_ "
+		  << *fpp << std::endl;
+	  if(edge == NONE)
+	    throw ErrProgrammingError("locateOnPolygonEdge failed!",
+				      __FILE__, __LINE__);
+    }
+#endif // DEBUG
 	polyedges[edge].push_back(this);
 	return;
       }

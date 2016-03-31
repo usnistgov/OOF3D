@@ -38,7 +38,7 @@ bool HomogeneityTet::verboseCategory_(bool verbose, unsigned int category) const
   // verbose.
   // TODO: Set this at run time via menu commands?
   static std::set<unsigned int> categories({
-      3
+      4
 	});
   return verbose && (categories.empty() || categories.count(category) == 1);
 };
@@ -51,7 +51,9 @@ bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
   // arguments for each plane are {direction), offset, normal}.
   // TODO: Set this at run time via menu commands?
   static std::set<HPixelPlane> planes({
-      // {0, 10, -1},
+      {1, 5, -1},
+      // 	{0, 10, 1},
+      // 	  {0, 10, -1}
       // {0, NONE, 1}
     });
   return verbose && (planes.empty() || planes.count(*pixplane) == 1);
@@ -59,7 +61,7 @@ bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
 
 bool HomogeneityTet::verboseFace_(bool verbose, unsigned int face) const {
   static std::set<unsigned int> faces({
-
+      0
 	});
   return verbose && (faces.empty() || faces.count(face) == 1);
 }
@@ -459,12 +461,29 @@ double HomogeneityTet::edgeCoord(const BarycentricCoord &bint,
 				 const PixelPlaneFacet *facet)
   const
 {
+#ifdef DEBUG
+  if(verboseplane) {
+    oofcerr << "HomogeneityTet::edgeCoord: bint=" << bint << " face=" << *face
+	    << " facet=" << *facet << std::endl;
+  }
+#endif
   unsigned int edgeno = facet->getPolyEdge(face);
   unsigned int nextno = edgeno + 1;
   if(nextno == facet->polygonSize())
     nextno = 0;
+#ifdef DEBUG
+  if(verboseplane)
+    oofcerr << "HomogeneityTet::edgeCoord: edgeno=" << edgeno
+	    << " nextno=" << nextno << std::endl;
+#endif // DEBUG
   BarycentricCoord b0 = facet->polygonCornerBary(edgeno);
   BarycentricCoord b1 = facet->polygonCornerBary(nextno);
+#ifdef DEBUG
+  if(verboseplane)
+    oofcerr << "HomogeneityTet::edgeCoord: b0=" << b0 << " b1=" << b1
+	    << std::endl;
+#endif // DEBUG
+  
   // alpha is the position of the intersection as a fractional
   // distance from corner edgeno to edgeno+1.  It can be computed
   // from bint = (1-alpha)*b0 + alpha*b1 where bint is the
@@ -490,8 +509,15 @@ double HomogeneityTet::edgeCoord(const BarycentricCoord &bint,
   if(best == NONE)
     throw ErrProgrammingError("HomogeneityTet::edgeCoord failed!",
 			      __FILE__, __LINE__);
+  if(verboseplane)
+    oofcerr << "HomogeneityTet::edgeCoord: best=" << best << std::endl;
 #endif // DEBUG
+
   double alpha = (bint[best] - b0[best])/(b1[best] - b0[best]);
+#ifdef DEBUG
+  if(verboseplane)
+    oofcerr << "HomogeneityTet::edgeCoord: alpha=" << alpha << std::endl;
+#endif // DEBUG
   return alpha;
 }
 
@@ -513,8 +539,14 @@ HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane,
   {
     // Return cached points if possible.
     TetPlaneIsecMap::iterator i = tetPlaneIntersections.find(pixplane);
-    if(i != tetPlaneIntersections.end())
+    if(i != tetPlaneIntersections.end()) {
+#ifdef DEBUG
+      if(verboseplane)
+	oofcerr << "HomogeneityTet::getTetPlaneIntersectionPoints: "
+		<< "returning cached values for " << *pixplane << std::endl;
+#endif // DEBUG
       return (*i).second;
+    }
   }
   
   // overnodes holds the indices of the tet nodes that are above the
@@ -544,15 +576,27 @@ HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane,
 
   // If undernodes.size() is 0 or 4 then there is no significant
   // intersection.
-// #ifdef DEBUG
-//   if(verboseplane) {
-//     oofcerr << "HomogeneityTet::getTetPlaneIntersectionPoints: pixplane="
-// 	    << *pixplane;
-//     std::cerr << " overnodes=[" << overnodes << "] inplanenodes=["
-// 	      << inplanenodes << "] undernodes=[" << undernodes << "]";
-//     oofcerr << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verboseplane) {
+    oofcerr << "HomogeneityTet::getTetPlaneIntersectionPoints: pixplane="
+	    << *pixplane;
+    std::cerr << " overnodes=[" << overnodes << "] inplanenodes=["
+	      << inplanenodes << "] undernodes=[" << undernodes << "]";
+    oofcerr << std::endl;
+  }
+#endif // DEBUG
+
+  // Experimental code that forces some zero-area intersections to be
+  // included.  Without this code, sometimes a plane is thought not to
+  // intersect the tet, while the intersection of that plane and
+  // another plane *does* seem to intersect.  Then a segment on one
+  // edge of a face won't have a connecting segment crossing the face,
+  // and the whole face will be included when it shouldn't be.
+  if(undernodes.empty() && !inplanenodes.empty()) {
+    undernodes.insert(undernodes.begin(), inplanenodes.begin(),
+		      inplanenodes.end());
+    inplanenodes.clear();
+  }
 
   if(undernodes.size() == 1) {
     // One tet node is under the plane and the other three are on or
@@ -784,6 +828,7 @@ FacetMap2D HomogeneityTet::findPixelPlaneFacets(unsigned int cat,
 } // end HomogeneityTet::findPixelPlaneFacets
 
 
+#define MIN_POLYGON_AREA 1.e-10
 
 void HomogeneityTet::doFindPixelPlaneFacets(
 				    unsigned int cat,
@@ -798,11 +843,11 @@ void HomogeneityTet::doFindPixelPlaneFacets(
   unsigned int nn = tetPts.size();
 
   if(nn < 3) {
-// #ifdef DEBUG
-//     if(verboseplane) 
-//       oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: no intersection! nn="
-// 	      << nn << "pixplane=" << *pixplane << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+    if(verboseplane) 
+      oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: no intersection! nn="
+	      << nn << " pixplane=" << *pixplane << std::endl;
+#endif // DEBUG
     return;
   }
   assert(nn == 3 || nn == 4);
@@ -845,8 +890,24 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 					       );
   facets[pixplane] = facet;
 
-  // TODO: We used to check that the area was greater than a certain
-  // minimum here.
+//   // Check that the area is greater than a certain minimum.
+//   Coord2D polyCenter;
+//   for(unsigned int i=0; i<nn; i++) {
+//     polyCenter += tetPts[i]->location2D(pixplane);
+//   }
+//   polyCenter /= tetPts.size();
+//   double polyArea = 0;		// really twice the area
+//   for(unsigned int i=0; i<nn; i++) {
+//     polyArea += ((tetPts[i]->location2D(pixplane) - polyCenter) %
+// 		 (tetPts[(i+1)%nn]->location2D(pixplane) - polyCenter));
+//   }
+// #ifdef DEBUG
+//   if(verboseplane)
+//     oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: polyArea=" << polyArea
+// 	    << std::endl;
+// #endif	// DEBUG
+//   if(polyArea < MIN_POLYGON_AREA)
+//     return;
 
   // Find the bounding box of the tet intersection points.
   CRectangle tetBounds(tetPts[0]->location2D(pixplane),
@@ -891,28 +952,28 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	BarycentricCoord pbs_end_bary = getBarycentricCoord(pbs_end, pixplane);
 	bool pbs_end_inside = pbs_end_bary.interior(onFace);
 
-// #ifdef DEBUG
-// 	if(verboseplane) {
-// 	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: examining bdy loop segment "
-// 		  << k << " " << std::endl;
-// 	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: start= "
-// 		  << pbs_start << " "
-// 		  << pixplane->convert2Coord3D(pbs_start) << " "
-// 		  << pbs_start_bary
-// 		  << " ("
-// 		  << (pbs_start_inside ? "interior" : "exterior") << ")"
-// 		  << std::endl;
-// 	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets:   end=" 
-// 		  << pbs_end << " "
-// 		  << pixplane->convert2Coord3D(pbs_end) << " "
-// 		  << pbs_end_bary
-// 		  << " ("
-// 		  << (pbs_end_inside ? "interior" : "exterior") << ")"
-// 		  << std::endl;
+#ifdef DEBUG
+	if(verboseplane) {
+	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: examining bdy loop segment "
+		  << k << " " << std::endl;
+	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: start= "
+		  << pbs_start << " "
+		  << pixplane->convert2Coord3D(pbs_start) << " "
+		  << pbs_start_bary
+		  << " ("
+		  << (pbs_start_inside ? "interior" : "exterior") << ")"
+		  << std::endl;
+	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets:   end=" 
+		  << pbs_end << " "
+		  << pixplane->convert2Coord3D(pbs_end) << " "
+		  << pbs_end_bary
+		  << " ("
+		  << (pbs_end_inside ? "interior" : "exterior") << ")"
+		  << std::endl;
 
-// 	}
-// 	OOFcerrIndent indnt(2);
-// #endif // DEBUG
+	}
+	OOFcerrIndent indnt(2);
+#endif // DEBUG
 
 	// Does the loop segment cross the polygon?
 	if(pbs_start_inside && pbs_end_inside) {

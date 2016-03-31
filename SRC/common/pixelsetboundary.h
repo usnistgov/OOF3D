@@ -54,11 +54,12 @@ public:
     // pixel planes are sorted in XYZ order.
     return (unitNormal_ > other.unitNormal_ ||
 	    (unitNormal_ == other.unitNormal_ && offset_ < other.offset_));
-    // return (offset_ < other.offset_ ||
-    // 	    (offset_ == other.offset_ && unitNormal_ < other.unitNormal_));
   }
   bool operator==(const Plane &other) const {
     return offset_ == other.offset_ && unitNormal_ == other.unitNormal_;
+  }
+  bool operator!=(const Plane &other) const {
+    return offset_ != other.offset_ || unitNormal_ != other.unitNormal_;
   }
   // Planes are "opposed" if they occupy the same points in space but
   // have opposing normals.
