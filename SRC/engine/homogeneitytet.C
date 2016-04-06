@@ -38,7 +38,7 @@ bool HomogeneityTet::verboseCategory_(bool verbose, unsigned int category) const
   // verbose.
   // TODO: Set this at run time via menu commands?
   static std::set<unsigned int> categories({
-      4
+      3
 	});
   return verbose && (categories.empty() || categories.count(category) == 1);
 };
@@ -51,8 +51,8 @@ bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
   // arguments for each plane are {direction), offset, normal}.
   // TODO: Set this at run time via menu commands?
   static std::set<HPixelPlane> planes({
-      {1, 5, -1},
-      // 	{0, 10, 1},
+      // {1, 5, -1},
+      // {0, 10, 1}
       // 	  {0, 10, -1}
       // {0, NONE, 1}
     });
@@ -61,7 +61,7 @@ bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
 
 bool HomogeneityTet::verboseFace_(bool verbose, unsigned int face) const {
   static std::set<unsigned int> faces({
-      0
+      1
 	});
   return verbose && (faces.empty() || faces.count(face) == 1);
 }
@@ -536,15 +536,19 @@ TetIntersectionPolygon&
 HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane,
 					      const HPixelPlane *upixplane)
 {
+// #ifdef DEBUG
+//   oofcerr << "HomogeneityTet::getTetPlaneIntersectionPoints: pixplane="
+// 	  << pixplane << " " << *pixplane << std::endl;
+// #endif // DEBUG
   {
     // Return cached points if possible.
     TetPlaneIsecMap::iterator i = tetPlaneIntersections.find(pixplane);
     if(i != tetPlaneIntersections.end()) {
-#ifdef DEBUG
-      if(verboseplane)
-	oofcerr << "HomogeneityTet::getTetPlaneIntersectionPoints: "
-		<< "returning cached values for " << *pixplane << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(verboseplane)
+// 	oofcerr << "HomogeneityTet::getTetPlaneIntersectionPoints: "
+// 		<< "returning cached values for " << *pixplane << std::endl;
+// #endif // DEBUG
       return (*i).second;
     }
   }
@@ -576,27 +580,15 @@ HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane,
 
   // If undernodes.size() is 0 or 4 then there is no significant
   // intersection.
-#ifdef DEBUG
-  if(verboseplane) {
-    oofcerr << "HomogeneityTet::getTetPlaneIntersectionPoints: pixplane="
-	    << *pixplane;
-    std::cerr << " overnodes=[" << overnodes << "] inplanenodes=["
-	      << inplanenodes << "] undernodes=[" << undernodes << "]";
-    oofcerr << std::endl;
-  }
-#endif // DEBUG
-
-  // Experimental code that forces some zero-area intersections to be
-  // included.  Without this code, sometimes a plane is thought not to
-  // intersect the tet, while the intersection of that plane and
-  // another plane *does* seem to intersect.  Then a segment on one
-  // edge of a face won't have a connecting segment crossing the face,
-  // and the whole face will be included when it shouldn't be.
-  if(undernodes.empty() && !inplanenodes.empty()) {
-    undernodes.insert(undernodes.begin(), inplanenodes.begin(),
-		      inplanenodes.end());
-    inplanenodes.clear();
-  }
+// #ifdef DEBUG
+//   if(verboseplane) {
+//     oofcerr << "HomogeneityTet::getTetPlaneIntersectionPoints: pixplane="
+// 	    << *pixplane;
+//     std::cerr << " overnodes=[" << overnodes << "] inplanenodes=["
+// 	      << inplanenodes << "] undernodes=[" << undernodes << "]";
+//     oofcerr << std::endl;
+//   }
+// #endif // DEBUG
 
   if(undernodes.size() == 1) {
     // One tet node is under the plane and the other three are on or
@@ -1046,19 +1038,49 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	  // polygon.  It must intersect zero or two times.
 	  ICRectangle segbb(pbs_start, pbs_end);
 	  if(segbb.intersects(tetBounds)) {
-	      HPixelPlane orthoPlane =
-		pixplane->orthogonalPlane(pbs_start, pbs_end);
-	      const HPixelPlane *orthoPlanePtr =
-		getUnorientedPixelPlane(&orthoPlane);
+	    HPixelPlane orthoPlane =
+	      pixplane->orthogonalPlane(pbs_start, pbs_end);
+	    // Since getTetPlaneIntersectionPoints looks up caches
+	    // previous computations by PixelPlane pointer, get the
+	    // HomogeneityTet's official version of the orthogonal
+	    // plane.
+	    // TODO: Instead of calling PixelPlane::orthogonalPlane
+	    // and HomogeneityTet::getPixelPlane, combine them into
+	    // HomogeneityTet::getOrthogonalPlane.
+	    const HPixelPlane *orthoPlanePtr = getPixelPlane(
+						    orthoPlane.direction(),
+						    orthoPlane.normalOffset(),
+						    orthoPlane.normalSign());
+	    const HPixelPlane *uOrthoPlanePtr =
+	      getUnorientedPixelPlane(&orthoPlane);
+	    // There's no intersection unless the orthoPlane actually
+	    // intersects the tetrahedron.  This check is important
+	    // for consistency.  When a pixel plane coincides with a
+	    // face, sometimes find_two_intersections will find
+	    // intersections when getTetPlaneIntersectionPoints
+	    // doesn't, and this can lead to unmatched facet edge
+	    // endpoints.
+	    TetIntersectionPolygon orthoPts =
+	      getTetPlaneIntersectionPoints(orthoPlanePtr, uOrthoPlanePtr);
+	    if(!orthoPts.empty()) {
 	      unsigned int orthoFace = getCoincidentFaceIndex(orthoPlanePtr);
-	    std::vector<PixelPlaneIntersectionNR*> isecs =
-	      find_two_intersections(pixplane, upixplane,
-				     orthoPlanePtr,
-				     PixelBdyLoopSegment(loop, k),
-				     onFace, orthoFace);
-	    if(isecs.size() == 2) {
-	      facet->addEdge(new TwoFaceIntersectionEdge(isecs[0], isecs[1]));
+	      std::vector<PixelPlaneIntersectionNR*> isecs =
+		find_two_intersections(pixplane, upixplane,
+				       uOrthoPlanePtr,
+				       PixelBdyLoopSegment(loop, k),
+				       onFace, orthoFace);
+	      if(isecs.size() == 2) {
+		facet->addEdge(new TwoFaceIntersectionEdge(isecs[0], isecs[1]));
+	      }
+	    } // end if the orthogonal plane intersects the tet
+#ifdef DEBUG
+	    else {
+	      if(verboseplane) {
+		oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
+			<< "skipping find_two_intersections" << std::endl;
+	      }
 	    }
+#endif // DEBUG
 
 	  } // end if segment bbox intersects polygon bbox
 	} // end if both segment endpoints are outside the polygon
@@ -2159,8 +2181,8 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	    // segment.
 	    if(currentEnd != nullptr) {
 	      oofcerr << "HomogeneityTet::findFaceFacets: "
-		      << "two consecutive ends on face " << face << "!"
-		      << std::endl;
+		      << "two consecutive ends on face " << face 
+		      << " category=" << cat << std::endl;
 	      oofcerr << "HomogeneityTet::findFaceFacets: currentEnd="
 		      << *currentEnd << std::endl;
 	      oofcerr << "HomogeneityTet::findFaceFacets: new point="
@@ -2487,12 +2509,12 @@ FaceFacet::~FaceFacet() {
 void FaceFacet::addEdge(FaceFacetEdge *edge) {
   if(edge->isNull())
     return;
-#ifdef DEBUG
-  if(htet->verboseFace()) {
-    oofcerr << "FaceFacet::addEdge: face=" << face << " adding " << *edge
-	    << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verboseFace()) {
+//     oofcerr << "FaceFacet::addEdge: face=" << face << " adding " << *edge
+// 	    << std::endl;
+//   }
+// #endif // DEBUG
   areaComputed = false;
   edges.insert(edge);
 }

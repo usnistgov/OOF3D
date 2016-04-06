@@ -259,11 +259,9 @@ PixelPlaneFacet::PixelPlaneFacet(const HomogeneityTet *htet,
   , verbose(verbose)
 #endif // DEBUG
 {
-  int nn = tetPts.size();
-  
   // Map FacePlanes and FacePixelPlanes to polygon edge numbers.  Edge
   // e goes from tetPts[e] to tetPts[e+1].
-  for(unsigned int i=0; i<nn; i++) {
+  for(unsigned int i=0; i<tetPts.size(); i++) {
     const FacePlane *face = getFacePlane(i);
     assert(face != nullptr);
     faceEdgeMap[face] = i;
@@ -573,10 +571,11 @@ bool PixelPlaneFacet::completeLoops() {
 // 	      << " " << *edge << std::endl;
 // #endif	// DEBUG
 
-    // Calling referent() is sort of silly here, but it's cheaper than
-    // using a dynamic_cast to convert the PixelPlaneIntersection in
-    // the FacetEdge to a PixelPlaneIntersectionNR.  At this point the
-    // intersection can't be a RedundantIntersection.
+    // Calling referent() is sort of silly here, but it's possibly
+    // cheaper than using a dynamic_cast to convert the
+    // PixelPlaneIntersection in the FacetEdge to a
+    // PixelPlaneIntersectionNR.  At this point the intersection can't
+    // be a RedundantIntersection.
     if(edge->startFace())
       totalIntersections += storeCoincidenceData(edge->startFace()->referent(),
 						 pixplane,
