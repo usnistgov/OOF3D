@@ -94,10 +94,13 @@ class SingleVSBbase;
 // Base class for the points defined by the intersection of planes.
 
 class PlaneIntersection {
+protected:
+  mutable int equivalence_;    // -1 means it hasn't been assigned yet
 public:
   PlaneIntersection()
+    : equivalence_(-1)
 #ifdef DEBUG
-    : verbose(false)
+    , verbose(false)
 #endif // DEBUG
   {}
   virtual ~PlaneIntersection() {}
@@ -119,6 +122,9 @@ public:
   virtual bool samePixelPlanes(const TripleFaceIntersection*) const = 0;
   virtual bool samePixelPlanes(const PixelPlaneIntersectionNR*) const = 0;
   virtual bool samePixelPlanes(const RedundantIntersection*) const = 0;
+
+  int equivalence() const { return equivalence_; }
+  void setEquivalence(int i) const { equivalence_ = i; }
 
   // Which edge of the given tet face is this intersection on?  May
   // return NONE.

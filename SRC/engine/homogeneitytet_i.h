@@ -29,13 +29,10 @@ class Coord3D;
 class PixelPlane;
 class TetIntersection;
 
-
 typedef std::vector<FaceFacet> FaceFacets;
-
 typedef std::map<const Coord3D, BarycentricCoord> BaryCoordCache;
 typedef std::vector<const TetIntersection*> TetIntersectionPolygon;
 typedef std::map<const PixelPlane*, TetIntersectionPolygon> TetPlaneIsecMap;
-
-
+typedef std::multimap<double, FaceEdgeIntersection> LooseEndMap;
 
 #endif // HOMOGENEITYTET_I_H

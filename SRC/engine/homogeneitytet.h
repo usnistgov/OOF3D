@@ -196,6 +196,9 @@ private:
   // allPlanes_, and those are deleted.
   mutable std::set<HPlane*> allPlanes_;
 
+  mutable int nextEquivalenceLabel;
+  mutable std::map<int, std::set<const PlaneIntersection*>> equivalentPoints;
+
   
   TetPlaneIsecMap tetPlaneIntersections;
 
@@ -235,6 +238,14 @@ public:
 
   TetIntersectionPolygon &getTetPlaneIntersectionPoints(const HPixelPlane*,
 							const HPixelPlane*);
+
+  // Check if two points are equivalent, and update the equivalence
+  // class data if they are.
+  void checkEquiv(const PlaneIntersection*, const PlaneIntersection*) const;
+  // Two points are merging form a third.  Combine the equivalence
+  // classes of the first two, and add the third.
+  void mergeEquiv(const PlaneIntersection*, const PlaneIntersection*,
+		  const PlaneIntersection*) const;
 
   double edgeLength(unsigned int e) const;
   double edgeLength(unsigned int f, unsigned int e) const;
@@ -281,6 +292,7 @@ public:
   bool verboseCategory() const { return verbosecategory; }
   bool verbosePlane() const { return verboseplane; }
   bool verboseFace() const { return verboseface; }
+  void printLooseEnds(unsigned int, const LooseEndMap&) const;
 #endif
 };
 

@@ -316,10 +316,10 @@ const FacePixelPlane *PixelPlaneFacet::getBaseFacePlane() const {
 }
 
 unsigned int PixelPlaneFacet::getPolyEdge(const Plane *fp) const {
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "PixelPlaneFacet::getPolyEdge: fp=" << *fp << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "PixelPlaneFacet::getPolyEdge: fp=" << *fp << std::endl;
+// #endif // DEBUG
   FaceEdgeMap::const_iterator e = faceEdgeMap.find(fp);
   if(e != faceEdgeMap.end())
     return (*e).second;

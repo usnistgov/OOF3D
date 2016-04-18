@@ -51,7 +51,8 @@ BarycentricCoord TripleFaceIntersection::baryCoord(const HomogeneityTet *htet)
 }
 
 void TripleFaceIntersection::print(std::ostream &os) const {
-  os << "TripleFaceIntersection(node=" << node_ << ", " << location3D() << ")";
+  os << "TripleFaceIntersection(node=" << node_ << ", " << location3D()
+     << ", eq=" << equivalence_ << ")";
 }
 
 unsigned int TripleFaceIntersection::findFaceEdge(unsigned int face,
@@ -76,6 +77,8 @@ unsigned int TripleFaceIntersection::findFaceEdge(unsigned int face,
 
 bool TripleFaceIntersection::isEquivalent(const PlaneIntersection *pi) const
 {
+  if(equivalence() != -1 && equivalence() == pi->equivalence())
+    return true;
   return pi->isEquivalent(this); // double dispatch
 }
 
@@ -539,6 +542,8 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
 
 bool PixelPlaneIntersectionNR::isEquivalent(const PlaneIntersection *pi) const
 {
+  if(equivalence() != -1 && equivalence() == pi->equivalence())
+    return true;
   return pi->isEquivalent(this); // double dispatch
 }
 
@@ -1228,28 +1233,32 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
 //     oofcerr << "SimpleIntersection::mergeWith: this="
 // 	    << *this << " fi=" << *fi << std::endl;
 // #endif // DEBUG
+  PixelPlaneIntersectionNR *merged = nullptr;
   // Two antiparallel but otherwise equivalent VSB segments that
   // intersect a face should form a new SimpleIntersection there.
   if(isEquivalent(fi)) {
-    SimpleIntersection *result = clone();
-    result->setCrossingType(combinedCrossing(this, fi));
-    return result;
+    merged = clone();
+    merged->setCrossingType(combinedCrossing(this, fi));
   }
-  if(facet->onOppositeEdges(this, fi))
-    return nullptr;
-  if(onSameLoopSegment(fi))
-    return new MultiFaceIntersection(htet, this, fi);
-
-  if(onOnePolySegment(fi, facet)) {
-    PixelPlaneIntersectionNR *res =
-      new MultiVSBIntersection(htet, facet, this, fi);
+  else if(facet->onOppositeEdges(this, fi)) {
+    ;
+  }
+  else if(onSameLoopSegment(fi)) {
+    merged = new MultiFaceIntersection(htet, this, fi);
+  }
+  else if(onOnePolySegment(fi, facet)) {
+    merged = new MultiVSBIntersection(htet, facet, this, fi);
 // #ifdef DEBUG
 //     if(htet->verbosePlane())
 //       oofcerr << "SimpleIntersection::mergeWith: result=" << *res << std::endl;
 // #endif // DEBUG
-    return res;
   }
-  return new MultiCornerIntersection(htet, this, fi);
+  else {
+    merged = new MultiCornerIntersection(htet, this, fi);
+  }
+  if(merged != nullptr)
+    htet->mergeEquiv(this, fi, merged);
+  return merged;
 }
 
 PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
@@ -1260,9 +1269,13 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
 {
   if(fi->sharedPolySegment(this, facet) == NONE)
     return nullptr;
+  PixelPlaneIntersectionNR *merged;
   if(onSameLoopSegment(fi))
-    return new MultiFaceIntersection(htet, this, fi);
-  return new MultiCornerIntersection(htet, this, fi);
+    merged = new MultiFaceIntersection(htet, this, fi);
+  else
+    merged = new MultiCornerIntersection(htet, this, fi);
+  htet->mergeEquiv(this, fi, merged);
+  return merged;
 }
 
 PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
@@ -1271,9 +1284,13 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
 						const PixelPlaneFacet *facet)
   const
 {
+  PixelPlaneIntersectionNR *merged;
   if(onOnePolySegment(fi, facet))
-    return new MultiVSBIntersection(htet, facet, this, fi);
-  return new MultiCornerIntersection(htet, this, fi);
+    merged = new MultiVSBIntersection(htet, facet, this, fi);
+  else
+    merged = new MultiCornerIntersection(htet, this, fi);
+  htet->mergeEquiv(this, fi, merged);
+  return merged;
 }
 
 PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
@@ -1284,7 +1301,10 @@ const
 {
   if(fi->sharedPolySegment(this, facet) == NONE)
     return nullptr;
-  return new MultiCornerIntersection(htet, this, fi);
+  PixelPlaneIntersectionNR *merged =
+    new MultiCornerIntersection(htet, this, fi);
+  htet->mergeEquiv(this, fi, merged);
+  return merged;
 }
 
 bool SimpleIntersection::isMisordered(const PixelPlaneIntersection *fi,
@@ -1370,7 +1390,8 @@ bool SimpleIntersection::isMisordered(const MultiCornerIntersection *fi,
 
 void SimpleIntersection::print(std::ostream &os) const {
   os << "SimpleIntersection(" << printPlanes() << ", " << location3D()
-     << ", " << crossingType() << ", faceplane=" << *getFacePlane() << ")";
+     << ", " << crossingType() << ", faceplane=" << *getFacePlane()
+     << ", eq=" << equivalence_ << ")";
 }
 
 PixelPlaneIntersectionNR *newIntersection(const HomogeneityTet *htet,
@@ -1535,7 +1556,10 @@ PixelPlaneIntersectionNR *MultiFaceIntersection::mergeWith(
 {
   if(fi->sharedPolySegment(this, facet) == NONE)
     return nullptr;
-  return new MultiCornerIntersection(htet, this, fi);
+  PixelPlaneIntersectionNR *merged =
+    new MultiCornerIntersection(htet, this, fi);
+  htet->mergeEquiv(this, fi, merged);
+  return merged;
 }
 
 PixelPlaneIntersectionNR *MultiFaceIntersection::mergeWith(
@@ -1546,7 +1570,10 @@ PixelPlaneIntersectionNR *MultiFaceIntersection::mergeWith(
 {
   if(fi->sharedPolySegment(this, facet) == NONE)
     return nullptr;
-  return new MultiCornerIntersection(htet, fi, this);
+  PixelPlaneIntersectionNR *merged =
+    new MultiCornerIntersection(htet, fi, this);
+  htet->mergeEquiv(this, fi, merged);
+  return merged;
 }
 
 PixelPlaneIntersectionNR *MultiFaceIntersection::mergeWith(
@@ -1557,7 +1584,9 @@ PixelPlaneIntersectionNR *MultiFaceIntersection::mergeWith(
 {
   if(fi->sharedPolySegment(this, facet) == NONE)
     return nullptr;
-  return new MultiCornerIntersection(htet, fi, this);
+  PixelPlaneIntersectionNR *merged= new MultiCornerIntersection(htet, fi, this);
+  htet->mergeEquiv(this, fi, merged);
+  return merged;
 }
 
 bool MultiFaceIntersection::isMisordered(const PixelPlaneIntersection *fi,
@@ -1597,7 +1626,7 @@ bool MultiFaceIntersection::isMisordered(const MultiCornerIntersection *fi,
 
 void MultiFaceIntersection::print(std::ostream &os) const {
   os << "MultiFaceIntersection(" << printPlanes() << ", " << location3D()
-     << ", " << crossingType() << ")";
+     << ", " << crossingType() << ", eq=" << equivalence_ << ")";
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1697,11 +1726,17 @@ PixelPlaneIntersectionNR *MultiVSBIntersection::mergeWith(
   // on the same corner. 
   if(!samePixelPlanes(fi))
     return nullptr;
-  // If they share the same face, too, then they're really the same
-  // corner, and the mergee is the same as the two mergers.
-  if(getFacePlane() == fi->getFacePlane())
-    return clone();
-  return new MultiCornerIntersection(htet, this, fi);
+  PixelPlaneIntersectionNR *merged;
+  if(getFacePlane() == fi->getFacePlane()) {
+    // If they share the same face, too, then they're really the same
+    // corner, and the mergee is the same as the two mergers.
+    merged = clone();
+  }
+  else {
+    merged = new MultiCornerIntersection(htet, this, fi);
+  }
+  htet->mergeEquiv(this, fi, merged);
+  return merged;
 }
 
 PixelPlaneIntersectionNR *MultiVSBIntersection::mergeWith(
@@ -1714,7 +1749,10 @@ PixelPlaneIntersectionNR *MultiVSBIntersection::mergeWith(
   // on the same corner.  They had also better share a tet face.
   if(!samePixelPlanes(fi) || !onSameFacePlane(fi, facet->getBaseFacePlane()))
     return nullptr;
-  return new MultiCornerIntersection(htet, this, fi);
+  PixelPlaneIntersectionNR *merged =
+    new MultiCornerIntersection(htet, this, fi);
+  htet->mergeEquiv(this, fi, merged);
+  return merged;
 }
 
 bool MultiVSBIntersection::isMisordered(const PixelPlaneIntersection *fi,
@@ -1773,7 +1811,7 @@ bool MultiVSBIntersection::isMisordered(const MultiCornerIntersection *fi,
 
 void MultiVSBIntersection::print(std::ostream &os) const {
   os << "MultiVSBIntersection(" << printPlanes() << ", " << location3D()
-     << ", " << crossingType() << ")";
+     << ", " << crossingType() << ", eq=" << equivalence_ << ")";
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1853,7 +1891,10 @@ PixelPlaneIntersectionNR *MultiCornerIntersection::mergeWith(
   // there's no round-off error to worry about.
   if(location3D() != fi->location3D())
     return nullptr;
-  return new MultiCornerIntersection(htet, this, fi);
+  PixelPlaneIntersectionNR *merged =
+    new MultiCornerIntersection(htet, this, fi);
+  htet->mergeEquiv(this, fi, merged);
+  return merged;
 }
 
 bool MultiCornerIntersection::isMisordered(const PixelPlaneIntersection *fi,
@@ -1895,7 +1936,7 @@ bool MultiCornerIntersection::isMisordered(const MultiCornerIntersection*,
 
 void MultiCornerIntersection::print(std::ostream &os) const {
   os << "MultiCornerIntersection(" << printPlanes() << ", " << location3D()
-     << ", " << crossingType() << ")";
+     << ", " << crossingType() << ", eq=" << equivalence_ << ")";
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1941,7 +1982,7 @@ TetEdgeIntersection *TetEdgeIntersection::clone() const {
 
 void TetEdgeIntersection::print(std::ostream &os) const {
   os << "TetEdgeIntersection(" << printPlanes() << ", " << location3D()
-     << ", " << crossingType() <<  ")";
+     << ", " << crossingType() << ", eq=" << equivalence_ << ")";
 }
 
 
@@ -1984,7 +2025,7 @@ TetNodeIntersection *TetNodeIntersection::clone() const {
 
 void TetNodeIntersection::print(std::ostream &os) const {
   os << "TetNodeIntersection(" << printPlanes() << ", " << location3D()
-     << ", " << crossingType() << ")";
+     << ", " << crossingType() << ", eq=" << equivalence_ << ")";
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -2013,7 +2054,8 @@ TriplePixelPlaneIntersection *TriplePixelPlaneIntersection::clone() const {
 
 void TriplePixelPlaneIntersection::print(std::ostream &os) const {
   os << "TriplePixelPlaneIntersection(" << printPlanes() << ", "
-     << location3D() << ", " << crossingType() << ")";
+     << location3D() << ", " << crossingType()
+     << ", eq=" << equivalence_ << ")";
 }
 
 unsigned int TriplePixelPlaneIntersection::findFaceEdge(unsigned int,
