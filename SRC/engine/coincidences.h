@@ -9,6 +9,8 @@
  * oof_manager@nist.gov. 
  */
 
+OBSOLETE
+
 #ifndef COINCIDENCES_H
 #define COINCIDENCES_H
 

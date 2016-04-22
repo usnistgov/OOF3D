@@ -36,7 +36,7 @@ bool HomogeneityTet::verboseCategory_(bool verbose, unsigned int category) const
   // verbose.
   // TODO: Set this at run time via menu commands?
   static std::set<unsigned int> categories({
-      4
+      3
 	});
   return verbose && (categories.empty() || categories.count(category) == 1);
 };
@@ -49,8 +49,8 @@ bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
   // arguments for each plane are {direction), offset, normal}.
   // TODO: Set this at run time via menu commands?
   static std::set<HPixelPlane> planes({
-      // {1, 5, -1},
-      // {0, 10, 1}
+      // {2, 18, 1},
+       {0, 5, 1}
       // 	  {0, 10, -1}
       // {0, NONE, 1}
     });
@@ -59,7 +59,7 @@ bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
 
 bool HomogeneityTet::verboseFace_(bool verbose, unsigned int face) const {
   static std::set<unsigned int> faces({
-      2
+      // 0
 	});
   return verbose && (faces.empty() || faces.count(face) == 1);
 }
@@ -485,6 +485,21 @@ void HomogeneityTet::checkEquiv(const PlaneIntersection *point0,
       equivalentPoints.erase(eq1);
     }
   }
+}
+
+void HomogeneityTet::removeEquivalence(PlaneIntersection *pt) const {
+  int eqclass = pt->equivalence();
+  if(eqclass != -1) {
+    equivalentPoints[eqclass].erase(pt);
+  }
+}
+
+// TODO: resetEquivalences() is sort of a hack.  It cleans up things
+// before going on to the next voxel category.  It shouldn't be
+// necessary.
+void HomogeneityTet::resetEquivalences() {
+  nextEquivalenceLabel = 0;
+  equivalentPoints.clear();
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -2015,7 +2030,7 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 		std::vector<LooseEndMap::iterator> deleteThese;
 		if(nstartdiff > 0) {
 		  // Delete all but nstartdiff starts.
-		  unsigned int kept = 0;
+		  int kept = 0;
 		  for(LooseEndMap::iterator y=range.first; y!=range.second; ++y)
 		    {
 		      if(kept >= nstartdiff || !(*y).second.start())

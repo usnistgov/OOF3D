@@ -24,6 +24,9 @@
 
 #include <vector>
 
+// TODO: There are too many mutable data members here.  Maybe there
+// are too many const methods.
+
 class CMicrostructure;
 class CSkeletonElement;
 class VoxelSetBoundary;
@@ -276,6 +279,9 @@ public:
   Coord3D faceCenter(unsigned int f) const { return faceCenters[f]; }
   Coord3D faceAreaVector(unsigned int f) const { return faceAreaVectors[f]; }
   ICoord3D testVoxel(unsigned int f) const;
+
+  void resetEquivalences();
+  void removeEquivalence(PlaneIntersection*) const;
   
 #ifdef DEBUG
 private:
