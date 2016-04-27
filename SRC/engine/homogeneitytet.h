@@ -245,7 +245,7 @@ public:
   // Check if two points are equivalent, and update the equivalence
   // class data if they are.
   void checkEquiv(const PlaneIntersection*, const PlaneIntersection*) const;
-  // Two points are merging form a third.  Combine the equivalence
+  // Two points are merging to form a third.  Combine the equivalence
   // classes of the first two, and add the third.
   void mergeEquiv(const PlaneIntersection*, const PlaneIntersection*,
 		  const PlaneIntersection*) const;

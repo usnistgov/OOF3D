@@ -36,7 +36,7 @@ bool HomogeneityTet::verboseCategory_(bool verbose, unsigned int category) const
   // verbose.
   // TODO: Set this at run time via menu commands?
   static std::set<unsigned int> categories({
-      3
+      0
 	});
   return verbose && (categories.empty() || categories.count(category) == 1);
 };
@@ -46,20 +46,19 @@ bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
 {
   // Edit the next line to print debugging info for some pixel planes
   // only.  If the set is empty, all planes are verbose.  The
-  // arguments for each plane are {direction), offset, normal}.
+  // arguments for each plane are {direction, offset, normal}.
   // TODO: Set this at run time via menu commands?
   static std::set<HPixelPlane> planes({
-      // {2, 18, 1},
-       {0, 5, 1}
-      // 	  {0, 10, -1}
-      // {0, NONE, 1}
+      {1, 13, -1},
+	{2, 18, -1}
+      // {0, NONE, 1} // use this to show no planes
     });
   return verbose && (planes.empty() || planes.count(*pixplane) == 1);
 }
 
 bool HomogeneityTet::verboseFace_(bool verbose, unsigned int face) const {
   static std::set<unsigned int> faces({
-      // 0
+      0
 	});
   return verbose && (faces.empty() || faces.count(face) == 1);
 }
@@ -383,6 +382,12 @@ void HomogeneityTet::mergeEquiv(const PlaneIntersection *point0,
 {
   int eq0 = point0->equivalence();
   int eq1 = point1->equivalence();
+#ifdef DEBUG
+  if(verboseplane) {
+    oofcerr << "HomogeneityTet::mergeEquiv: merging "
+	    << *point0 << " and " << *point1 << std::endl;
+  }
+#endif // DEBUG
 
   if(eq0 == -1) {	    // Point 0 is not in an equivalence class.
     if(eq1 == -1) {
@@ -434,16 +439,23 @@ void HomogeneityTet::mergeEquiv(const PlaneIntersection *point0,
       }
     } // end if point 0 is already in an equivalence class
   } // end if point0 is already in an equivalence class
-}
+#ifdef DEBUG
+  if(verboseplane) {
+    oofcerr << "HomogeneityTet::mergeEquiv: merged points "
+	    << *point0 << " and " << *point1 << std::endl;
+    oofcerr << "HomogeneityTet::mergeEquiv: merged=" << *merged << std::endl;
+  }
+#endif // DEBUG
+} // end HomogeneityTet::mergeEquiv
 
 void HomogeneityTet::checkEquiv(const PlaneIntersection *point0,
 				const PlaneIntersection *point1)
   const
 {
-  int eq0 = point0->equivalence();
-  int eq1 = point1->equivalence();
+  int equivClass0 = point0->equivalence();
+  int equivClass1 = point1->equivalence();
   
-  if(eq0 != -1 && eq0 == eq1) {
+  if(equivClass0 != -1 && equivClass0 == equivClass1) {
     // Already in the same equivalence class.
     return;
   }
@@ -453,8 +465,8 @@ void HomogeneityTet::checkEquiv(const PlaneIntersection *point0,
     return;
   }
 
-  if(eq0 == -1) {
-    if(eq1 == -1) {
+  if(equivClass0 == -1) {
+    if(equivClass1 == -1) {
       // Equivalent, but no class exists yet for either point
       int label = nextEquivalenceLabel++;
       equivalentPoints.emplace(
@@ -466,26 +478,28 @@ void HomogeneityTet::checkEquiv(const PlaneIntersection *point0,
     }
     else {
       // point 1 is in an equivalence class but point 0 is not
-      point0->setEquivalence(eq1);
-      equivalentPoints[eq1].insert(point0);
+      point0->setEquivalence(equivClass1);
+      equivalentPoints[equivClass1].insert(point0);
     }
-  }	 // end if eq0 == -1
-  else {		 // point 0 is already in an equivalence class
-    if(eq1 == -1) {
-      point1->setEquivalence(eq0);
-      equivalentPoints[eq0].insert(point1);
+  }	 // end if equivClass0 == -1
+  else {
+    // point 0 is already in an equivalence class
+    if(equivClass1 == -1) {
+      point1->setEquivalence(equivClass0);
+      equivalentPoints[equivClass0].insert(point1);
     }
     else {
       // Both points are already in equivalence classes.  Merge the classes.
-      for(const PlaneIntersection *pp : equivalentPoints[eq1]) {
-	pp->setEquivalence(eq0);
+      for(const PlaneIntersection *pp : equivalentPoints[equivClass1]) {
+	pp->setEquivalence(equivClass0);
       }
-      equivalentPoints[eq0].insert(equivalentPoints[eq1].begin(),
-				   equivalentPoints[eq1].end());
-      equivalentPoints.erase(eq1);
+      equivalentPoints[equivClass0].insert(
+				   equivalentPoints[equivClass1].begin(),
+				   equivalentPoints[equivClass1].end());
+      equivalentPoints.erase(equivClass1);
     }
   }
-}
+} // end HomogeneityTet::checkEquiv
 
 void HomogeneityTet::removeEquivalence(PlaneIntersection *pt) const {
   int eqclass = pt->equivalence();
@@ -1247,12 +1261,12 @@ void HomogeneityTet::doFindPixelPlaneFacets(
   // The facet contains a bunch of edges which may not yet form loops.
   // The loops need to be closed along the exterior of the polygon.
   if(!facet->completeLoops()) {
-// #ifdef DEBUG
-//     if(verboseplane) {
-//       oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: completeLoops failed, ignoring facet."
-// 	      << std::endl;
-//     }
-// #endif // DEBUG
+#ifdef DEBUG
+    if(verboseplane) {
+      oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: completeLoops failed, ignoring facet."
+	      << std::endl;
+    }
+#endif // DEBUG
     // The intersection points aren't sensible.  The facet must
     // be small and dominated by round-off error.  Ignore it.
     facet->clear();

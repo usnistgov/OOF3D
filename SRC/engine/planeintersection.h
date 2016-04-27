@@ -372,17 +372,19 @@ public:
   // getOrdering computes whether two intersection points (this and
   // the given arg) are on consecutive VSB segments, and which comes
   // first when traversing the VSB.  It also returns the VSB segments,
-  // in order.
+  // in order. 
   virtual ISEC_ORDER getOrdering(const PixelPlaneIntersectionNR*,
 				 PixelBdyLoopSegment&,
-				 PixelBdyLoopSegment&) const = 0;
+				 PixelBdyLoopSegment&,
+				 ICoord2D&) const = 0;
   virtual ISEC_ORDER ordering(const SingleVSBbase*,
 			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&) const = 0;
+			      PixelBdyLoopSegment&,
+			      ICoord2D&) const = 0;
   virtual ISEC_ORDER ordering(const MultiVSBbase*,
 			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&) const = 0;
-  
+			      PixelBdyLoopSegment&,
+			      ICoord2D&) const = 0;
 
   // TODO: Fix the function names.  Polygon edges are sometimes called
   // edges and sometimes called segments.
@@ -530,10 +532,12 @@ public:
     const = 0;
   virtual ISEC_ORDER ordering(const SingleVSBbase*,
 			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&) const = 0;
+			      PixelBdyLoopSegment&,
+			      ICoord2D&) const = 0;
   virtual ISEC_ORDER ordering(const MultiVSBbase*,
 			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&) const = 0;
+			      PixelBdyLoopSegment&,
+			      ICoord2D&) const = 0;
 };
 
 template <class BASE> class SingleVSBmixIn : public BASE, public SingleVSBbase {
@@ -562,13 +566,16 @@ public:
 
   virtual ISEC_ORDER getOrdering(const PixelPlaneIntersectionNR*,
 				 PixelBdyLoopSegment&,
-				 PixelBdyLoopSegment&) const;
+				 PixelBdyLoopSegment&,
+				 ICoord2D&) const;
   virtual ISEC_ORDER ordering(const SingleVSBbase*,
 			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&) const;
+			      PixelBdyLoopSegment&,
+			      ICoord2D&) const;
   virtual ISEC_ORDER ordering(const MultiVSBbase*,
 			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&) const;
+			      PixelBdyLoopSegment&,
+			      ICoord2D&) const;
 
   virtual unsigned int nVSBSegments() const { return 1; }
 };
@@ -588,10 +595,12 @@ public:
     const = 0;
   virtual ISEC_ORDER ordering(const SingleVSBbase*,
 			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&) const = 0;
+			      PixelBdyLoopSegment&,
+			      ICoord2D&) const = 0;
   virtual ISEC_ORDER ordering(const MultiVSBbase*,
 			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&) const = 0;
+			      PixelBdyLoopSegment&,
+			      ICoord2D&) const = 0;
   // MultiVSBmixIn<BASE>::categorizeCorner isn't instantiated unless
   // it's declared virtual here.  I don't understand this.  It
   // shouldn't need to be virtual or declared in MultiVSBbase.
@@ -617,13 +626,13 @@ public:
 
   virtual ISEC_ORDER getOrdering(const PixelPlaneIntersectionNR*,
 				 PixelBdyLoopSegment&,
-				 PixelBdyLoopSegment&) const;
+				 PixelBdyLoopSegment&, ICoord2D&) const;
   virtual ISEC_ORDER ordering(const SingleVSBbase*,
 			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&) const;
+			      PixelBdyLoopSegment&, ICoord2D&) const;
   virtual ISEC_ORDER ordering(const MultiVSBbase*,
 			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&) const;
+			      PixelBdyLoopSegment&, ICoord2D&) const;
 
   virtual unsigned int nVSBSegments() const { return vsbSegments.size(); }
 };

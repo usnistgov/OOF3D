@@ -600,11 +600,11 @@ bool PixelPlaneFacet::completeLoops() {
   // wrong order on an edge.
 
   for(Coord2D loc : coincidentLocs) {
-// #ifdef DEBUG
-//     if(verbose)
-//       oofcerr << "PixelPlaneFacet::completeLoops: looking for coincidence at "
-// 	      << loc << " " << pixplane->convert2Coord3D(loc) << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+    if(verbose)
+      oofcerr << "PixelPlaneFacet::completeLoops: looking for coincidence at "
+	      << loc << " " << pixplane->convert2Coord3D(loc) << std::endl;
+#endif // DEBUG
     if(coincidences.count(loc) > 1) {
       auto range = coincidences.equal_range(loc);
 #ifdef DEBUG
@@ -630,12 +630,12 @@ bool PixelPlaneFacet::completeLoops() {
 	bool replaced = false;
 	for(PixelPlaneIntersectionNR *q : uniqueIsecs) {
 	  if(q->isEquivalent(p)) {
-// #ifdef DEBUG
-// 	    if(verbose) {
-// 	      oofcerr << "PixelPlaneFacet::completeLoops: merging identical pts"
-// 		      << std::endl;
-// 	    }
-// #endif // DEBUG
+#ifdef DEBUG
+	    if(verbose) {
+	      oofcerr << "PixelPlaneFacet::completeLoops: merging identical pts"
+		      << std::endl;
+	    }
+#endif // DEBUG
 	    PixelPlaneIntersectionNR *merged = q->mergeWith(htet, p, this);
 	    if(merged) {
 #ifdef DEBUG
@@ -662,51 +662,51 @@ bool PixelPlaneFacet::completeLoops() {
       }	// end loop over intersections at this coincidence location
       
       int nIntersections = uniqueIsecs.size();
-// #ifdef DEBUG
-//       if(verbose)
-// 	oofcerr << "PixelPlaneFacet::completeLoops: resolving "
-// 		<< nIntersections << "-fold coincidence at " << loc
-// 		<< std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+      if(verbose)
+	oofcerr << "PixelPlaneFacet::completeLoops: resolving "
+		<< nIntersections << "-fold coincidence at " << loc
+		<< std::endl;
+#endif // DEBUG
       if(nIntersections == 2) {
 	if(!resolveTwoFoldCoincidence(uniqueIsecs)) {
-// #ifdef DEBUG
-// 	  if(verbose) {
-// 	    oofcerr << "PixelPlaneFacet::completeLoops: failed at "
-// 		    << loc << std::endl;
-// 	  }
-// #endif // DEBUG
+#ifdef DEBUG
+	  if(verbose) {
+	    oofcerr << "PixelPlaneFacet::completeLoops: failed at "
+		    << loc << std::endl;
+	  }
+#endif // DEBUG
 	  return false;
 	}
       }
       else if(nIntersections == 3) {
 	if(!resolveThreeFoldCoincidence(uniqueIsecs)) {
-// #ifdef DEBUG
-// 	  if(verbose) {
-// 	    oofcerr << "PixelPlaneFacet::completeLoops: failed at "
-// 		    << loc << std::endl;
-// 	  }
-// #endif // DEBUG
+#ifdef DEBUG
+	  if(verbose) {
+	    oofcerr << "PixelPlaneFacet::completeLoops: failed at "
+		    << loc << std::endl;
+	  }
+#endif // DEBUG
 	  return false;
 	}
       }
       else if(nIntersections > 3) {
 	if(!resolveMultipleCoincidence(uniqueIsecs, totalIntersections)) {
-// #ifdef DEBUG
-// 	  if(verbose) {
-// 	    oofcerr << "PixelPlaneFacet::completeLoops: failed at "
-// 		    << loc << std::endl;
-// 	  }
-// #endif // DEBUG
+#ifdef DEBUG
+	  if(verbose) {
+	    oofcerr << "PixelPlaneFacet::completeLoops: failed at "
+		    << loc << std::endl;
+	  }
+#endif // DEBUG
 	  return false;
 	}
       }
-// #ifdef DEBUG
-//       if(verbose) {
-// 	oofcerr << "PixelPlaneFacet::completeLoops: resolved coincidence at "
-// 		<< loc << std::endl;
-//       }
-// #endif // DEBUG
+#ifdef DEBUG
+      if(verbose) {
+	oofcerr << "PixelPlaneFacet::completeLoops: resolved coincidence at "
+		<< loc << std::endl;
+      }
+#endif // DEBUG
     } // end if there is more than one intersection near loc
   }   // end loop over locations loc of intersection positions
 
@@ -821,12 +821,15 @@ bool PixelPlaneFacet::completeLoops() {
 	      << std::endl;
       OOFcerrIndent indent(2);
       for(unsigned int e=0; e<tetPts.size(); e++) {
-	oofcerr << " PixelPlaneFacet::completeLoops: e=" << e << std::endl;
+	oofcerr << "PixelPlaneFacet::completeLoops: e=" << e << std::endl;
 	OOFcerrIndent ind(2);
-	for(const PixelPlaneIntersection *fi : polyEdgeIntersections[e]) {
-	  oofcerr << "PixelPlaneIntersection::completeLoops: " << *fi
-		  << std::endl;
-	}
+	if(!polyEdgeIntersections[e].empty())
+	  for(const PixelPlaneIntersection *fi : polyEdgeIntersections[e]) {
+	    oofcerr << "PixelPlaneFacet::completeLoops: " << *fi
+		    << std::endl;
+	  }
+	else
+	  oofcerr << "PixelPlaneFacet::completeLoops: (empty)" << std::endl;
       }
     }
   }
@@ -836,11 +839,11 @@ bool PixelPlaneFacet::completeLoops() {
     for(const PixelPlaneIntersection *fi : polyEdgeIntersections[e]) {
       // Loop over isecs on edge
       CrossingType crossing = fi->referent()->crossingType();
-// #ifdef DEBUG
-//       if(verbose)
-// 	oofcerr << "PixelPlaneFacet::completeLoops: current point="
-// 		<< *fi->referent() << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+      if(verbose)
+	oofcerr << "PixelPlaneFacet::completeLoops: current point="
+		<< *fi->referent() << std::endl;
+#endif // DEBUG
 	
       if(crossing == EXIT) {
 #ifdef DEBUG
@@ -866,11 +869,11 @@ bool PixelPlaneFacet::completeLoops() {
 	}
 	started = true;
 	currentExit = fi;
-// #ifdef DEBUG
-// 	if(verbose)
-// 	  oofcerr << "PixelPlaneFacet::completeLoops: found an exit: "
-// 		  << *currentExit << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+	if(verbose)
+	  oofcerr << "PixelPlaneFacet::completeLoops: found an exit: "
+		  << *currentExit << std::endl;
+#endif // DEBUG
       } // end if intersection is an exit
 	
       else if(crossing == ENTRY) {
@@ -879,18 +882,18 @@ bool PixelPlaneFacet::completeLoops() {
 	    // We've only just begun, and the first intersection
 	    // found was an entry.  Save it for later.
 	    firstEntry = fi;
-// #ifdef DEBUG
-// 	    if(verbose)
-// 	      oofcerr << "PixelPlaneFacet::completeLoops: saving an entry: "
-// 		      << *firstEntry << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+	    if(verbose)
+	      oofcerr << "PixelPlaneFacet::completeLoops: saving an entry: "
+		      << *firstEntry << std::endl;
+#endif // DEBUG
 	  }
 	  else {
-// #ifdef DEBUG
-// 	    if(verbose)
-// 	      oofcerr << "PixelPlaneFacet::completeLoops: extra entry: "
-// 		      << *fi << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+	    if(verbose)
+	      oofcerr << "PixelPlaneFacet::completeLoops: extra entry: "
+		      << *fi << std::endl;
+#endif // DEBUG
 	    throw ErrProgrammingError(
 	      "Intersection matching failed! Found two consecutive entries.",
 	      __FILE__, __LINE__);
@@ -899,12 +902,12 @@ bool PixelPlaneFacet::completeLoops() {
 	else {
 	  // currentExit is not null.  Join currentExit to the
 	  // current entry.
-// #ifdef DEBUG
-// 	  if(verbose)
-// 	    oofcerr << "PixelPlaneFacet::completeLoops: joining exit to entry"
-// 		    << std::endl;
-// 	  OOFcerrIndent indent(2);
-// #endif // DEBUG
+#ifdef DEBUG
+	  if(verbose)
+	    oofcerr << "PixelPlaneFacet::completeLoops: joining exit to entry"
+		    << std::endl;
+	  OOFcerrIndent indent(2);
+#endif // DEBUG
 	  addEdges(currentExit, fi);
 	  currentExit = nullptr;
 	} // end if currentExit is not null
@@ -921,21 +924,21 @@ bool PixelPlaneFacet::completeLoops() {
 	  // exit, then this non-crossing intersection lies outside of
 	  // an exit->entry pair and can be ignored.
 	  if(!firstEntry) {
-// #ifdef DEBUG
-// 	    if(verbose)
-// 	      oofcerr << "PixelPlaneFacet::completeLoops: saving noncrossing: "
-// 		      << *fi << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+	    if(verbose)
+	      oofcerr << "PixelPlaneFacet::completeLoops: saving noncrossing: "
+		      << *fi << std::endl;
+#endif // DEBUG
 	    firstNoncrossing.push_back(fi);
 	  }
 	} // end if !started
 	else if(currentExit != nullptr) {
-// #ifdef DEBUG
-// 	  if(verbose)
-// 	    oofcerr << "PixelPlaneFacet::completeLoops: joining to noncrossing:"
-// 		    << std::endl;
-// 	    OOFcerrIndent indent(2);
-// #endif // DEBUG
+#ifdef DEBUG
+	  if(verbose)
+	    oofcerr << "PixelPlaneFacet::completeLoops: joining to noncrossing:"
+		    << std::endl;
+	    OOFcerrIndent indent(2);
+#endif // DEBUG
 	  addEdges(currentExit, fi);
 	  currentExit = fi;
 	}
@@ -949,17 +952,17 @@ bool PixelPlaneFacet::completeLoops() {
   // in the middle of a segment, and firstEntry must also be non-null.
   // Add the segment(s) connecting currentExit and firstEntry.
   if(currentExit != nullptr) {
-// #ifdef DEBUG
-//     if(verbose) {
-//       oofcerr << "PixelPlaneFacet::completeLoops: not done after main loop finished" << std::endl;
-//       oofcerr << "PixelPlaneFacet::completeLoops: firstEntry=" << *firstEntry
-// 	      << std::endl;
-//       oofcerr << "PixelPlaneFacet::completeLoops: currentExit=" << *currentExit
-// 	      << std::endl;
-//       oofcerr << "PixelPlaneFacet::completeLoops: firstNoncrossing.size="
-// 	      << firstNoncrossing.size() << std::endl;
-//     }
-// #endif // DEBUG
+#ifdef DEBUG
+    if(verbose) {
+      oofcerr << "PixelPlaneFacet::completeLoops: not done after main loop finished" << std::endl;
+      oofcerr << "PixelPlaneFacet::completeLoops: firstEntry=" << *firstEntry
+	      << std::endl;
+      oofcerr << "PixelPlaneFacet::completeLoops: currentExit=" << *currentExit
+	      << std::endl;
+      oofcerr << "PixelPlaneFacet::completeLoops: firstNoncrossing.size="
+	      << firstNoncrossing.size() << std::endl;
+    }
+#endif // DEBUG
     assert(firstEntry != nullptr);
     if(firstNoncrossing.empty())
       addEdges(currentExit, firstEntry);
@@ -1113,8 +1116,9 @@ void PixelPlaneFacet::getEdgesOnFaces(FaceFacets &faceFacets) const {
 // }
 
 
-// Given two SimpleIntersections that are on contiguous VSB segments,
-// return information about the corner formed by those segments.
+// Given two intersections that might be on contiguous VSB segments,
+// return information about the corner formed by those segments.  If
+// the returned TurnDirection is UNDEFINED, the corner doesn't exist.
 
 static void classifyVSBcorner(const PixelPlaneIntersectionNR * const fi0,
 			      const PixelPlaneIntersectionNR * const fi1,
@@ -1123,7 +1127,11 @@ static void classifyVSBcorner(const PixelPlaneIntersectionNR * const fi0,
 			      const PixelPlaneIntersectionNR *&firstPt,
 			      const PixelPlaneIntersectionNR *&secondPt,
 			      ICoord2D &corner,
-			      TurnDirection &turn)
+			      TurnDirection &turn
+#ifdef DEBUG
+			      , bool verbose
+#endif // DEBUG
+			      )
 {
   assert(fi0 != fi1);
   assert(fi0->crossingType() != fi1->crossingType());
@@ -1136,8 +1144,10 @@ static void classifyVSBcorner(const PixelPlaneIntersectionNR * const fi0,
     exitPt = fi0;
   }
   PixelBdyLoopSegment seg0, seg1;
-  ISEC_ORDER order = fi0->getOrdering(fi1, seg0, seg1); // sets seg0 and seg1
+  // getOrdering sets seg0, seg1, and corner if it's successful.
+  ISEC_ORDER order = fi0->getOrdering(fi1, seg0, seg1, corner);
   if(order == NONCONTIGUOUS) {
+    // The points are on nonadjacent segments.
     firstPt = nullptr;
     secondPt = nullptr;
     turn = UNDEFINED;
@@ -1151,59 +1161,10 @@ static void classifyVSBcorner(const PixelPlaneIntersectionNR * const fi0,
       firstPt = fi1;
       secondPt = fi0;
     }
-    turn = turnDirection(seg0.firstPt(), seg0.secondPt(), seg1.secondPt());
+    turn = turnDirection(seg0.firstPt(), corner, seg1.secondPt());
     assert(turn != STRAIGHT);
   }
-  
-  // firstPt =
-  //   dynamic_cast<const SimpleIntersection*>(firstIntersection(entryPt, exitPt));
-  // if(firstPt == nullptr) {
-  //   secondPt = nullptr;
-  //   turn = UNDEFINED;
-  // }
-  // else {
-  //   corner = firstPt->segEnd(1);
-  //   secondPt = (firstPt == entryPt ? exitPt : entryPt);
-  //   turn = turnDirection(firstPt->segEnd(0), corner, secondPt->segEnd(1));
-  //   assert(turn != STRAIGHT);
-  // }
-}
-
-// static void classifyVSBcorner(const SimpleIntersection * const si,
-// 			      const MultiFaceIntersection * const mfi,
-// 			      const FaceIntersection *&entryPt,
-// 			      const FaceIntersection *&exitPt,
-// 			      const FaceIntersection *&firstPt,
-// 			      const FaceIntersection *&secondPt,
-// 			      ICoord2D &corner,
-// 			      TurnDirection &turn)
-// {
-//   // entryPt and exitPt are slightly misnamed.  The
-//   // MultiFaceIntersection is never an entry or an exit.  If it's
-//   // identified as the entryPt, it means that the SimpleIntersection
-//   // is an exit, and the polygon segment that passes through the
-//   // SimpleIntersection would enter at the MultiFaceIntersection if
-//   // the MultiFaceIntersection were a SimpleIntersection.
-//   if(si->crossingType() == ENTRY) {
-//     entryPt = si;
-//     exitPt = mfi;
-//   }
-//   else {
-//     exitPt = si;
-//     entryPt = mfi;
-//   }
-//   firstPt = firstIntersection(entryPt, exitPt);
-//   if(firstPt == nullptr) {
-//     secondPt = nullptr;
-//     turn = UNDEFINED;
-//   }
-//   else {
-//     corner = firstPt->segEnd(1);
-//     secondPt = (firstPt == entryPt ? exitPt : entryPt);
-//     turn = turnDirection(firstPt->segEnd(0), corner, secondPt->segEnd(1));
-//     assert(turn != STRAIGHT);
-//   }
-// }
+} // end classifyVSBcorner
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -1212,6 +1173,15 @@ bool PixelPlaneFacet::resolveTwoFoldCoincidence(
 {
   PixelPlaneIntersectionNR *fi0 = *isecs.begin();
   PixelPlaneIntersectionNR *fi1 = *isecs.rbegin();
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: fi0=" << *fi0
+// 	    << std::endl;
+//     oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: fi1=" << *fi1
+// 	    << std::endl;
+//   }
+//   OOFcerrIndent indent(2);
+// #endif // DEBUG
 
   if(fi0->crossingType() == fi1->crossingType()) {
     // Both VSB segments enter the polygon or both leave it.  The
@@ -1235,51 +1205,29 @@ bool PixelPlaneFacet::resolveTwoFoldCoincidence(
   else {
     // There's one entry and one exit.
     if(fi0->isEquivalent(fi1) || fi0->isMisordered(fi1, this)) {
+// #ifdef DEBUG
+//       if(verbose) {
+// 	oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: "
+// 		<< "trying to merge equivalent entry and exit" << std::endl;
+//       }
+// #endif // DEBUG
       PixelPlaneIntersectionNR *merged = fi0->mergeWith(htet, fi1, this);
       if(merged) {
 	replaceIntersection(fi0, merged);
 	replaceIntersection(fi1, new RedundantIntersection(merged, this));
       }
-      else
+      else {
+// #ifdef DEBUG
+// 	if(verbose) {
+// 	  oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: "
+// 		  << "failed to merge entry and exit" << std::endl;
+// 	}
+// #endif // DEBUG
 	return false;
+      }
     }
-    
-    // if(fi0->facePlane() == fi1->facePlane()) {
-    //   // Both intersections are on the same polygon segment.  Check
-    //   // that they occur in the correct order.
-    //   if(vsbCornerCoincidence(fi0, fi1)) {
-    // 	// They're in the wrong order.  Switch them in polyEdgeIntersections.
-    // 	swapIntersections(fi0, fi1);
-    //   }	// end if there's a coincidence at a VSB corner
-    // } // end if both intersections are on the same polygon segment
-    // else if(fi0->samePixelPlanes(fi1)) {
-    //   // Both intersections are on the same VSB loop segment but
-    //   // different polygon edges.
-    //   if(polyCornerCoincidence(fi0, fi1)) {
-    // 	// The points are in the wrong order on the VSB segment.
-    // 	// They must be identical, and lie on a VSB edge *and* a tet
-    // 	// edge.  Replace them both with a TwoEdgeIntersection.
-    // 	MultiFaceIntersection *mfi = fi0->mergeWith(fi1); 
-    // 	replaceIntersection(fi0, mfi);
-    // 	replaceIntersection(fi1, new RedundantIntersection(mfi));
-    //   }
-    // } // end of both intersections are on the same VSB loop segment
-    // else {
-    //   // Intersections are on different polygon/VSB segment pairs.
-    //   if(polyVSBCornerCoincidence(fi0, fi1)) {
-    // 	// The points are in the wrong order and must really
-    // 	// coincide. There must be *five* planes intersecting here:
-    // 	// The pixel plane of this face, the face planes of the two
-    // 	// polygon segments, and the orthogonal pixel planes of the
-    // 	// two VSB segments.
-    // 	MultiFaceIntersection *mfi = fi0->mergeWith(fi1);
-    // 	replaceIntersection(fi0, mfi);
-    // 	replaceIntersection(fi1, new RedundantIntersection(mfi));
-    //   }
-    // }
-    
-  } // end if nEntries == 1 && nExits == 1
-  return true;
+  }
+  return true;	     // coincidence handled
 } // end PixelPlaneFacet::resolveTwoFoldCoincidence
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1786,7 +1734,11 @@ bool PixelPlaneFacet::vsbCornerCoincidence(const PixelPlaneIntersectionNR *fi0,
   const PixelPlaneIntersectionNR *entryPt, *exitPt, *firstPt, *secondPt;
   ICoord2D corner;
   TurnDirection turn;
-  classifyVSBcorner(fi0, fi1, entryPt, exitPt, firstPt, secondPt, corner, turn);
+  classifyVSBcorner(fi0, fi1, entryPt, exitPt, firstPt, secondPt, corner, turn
+#ifdef DEBUG
+		    , verbose
+#endif // DEBUG
+		    );
   // If the two voxel set boundary segments make a right turn, we
   // expect the entry point to be before the exit when traversing the
   // polygon boundary (no matter which way the polygon boundary goes).
@@ -1794,6 +1746,18 @@ bool PixelPlaneFacet::vsbCornerCoincidence(const PixelPlaneIntersectionNR *fi0,
   unsigned int polyseg = fi0->sharedPolySegment(fi1, this);
   double entryPolyFrac = entryPt->getPolyFrac(polyseg, this);
   double exitPolyFrac = exitPt->getPolyFrac(polyseg, this);
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::vsbCornerCoincidence: entryPt=" << *entryPt
+	    << " exitPt=" << *exitPt <<  std::endl
+	    << "                                     : turn=" << turn
+	    << std::endl
+	    << "                                     : entryPolyFrac="
+	    << entryPolyFrac << " exitPolyFrac=" << exitPolyFrac
+	    << " diff=" << (exitPolyFrac - entryPolyFrac)
+	    << std::endl;
+  }
+#endif // DEBUG
   return ((turn == LEFT && entryPolyFrac <= exitPolyFrac)
 	  ||
 	  (turn == RIGHT && entryPolyFrac >= exitPolyFrac)
@@ -1806,9 +1770,6 @@ bool PixelPlaneFacet::vsbCornerCoincidence(const PixelPlaneIntersectionNR *fi0,
 
 // polyCornerCoincidence checks two intersections on the same VSB loop
 // segment but different polygon segments.
-
-// It's only called by SimpleIntersection::isMisordered(SimpleIntersection*),
-// so it doesn't need generic PixelPlaneIntersectionNR arguments.
 
 /*               
 //            /\
@@ -1827,8 +1788,8 @@ bool PixelPlaneFacet::vsbCornerCoincidence(const PixelPlaneIntersectionNR *fi0,
 //      /             \
 */
 
-bool PixelPlaneFacet::polyCornerCoincidence(const SimpleIntersection *fi0,
-					    const SimpleIntersection *fi1)
+bool PixelPlaneFacet::polyCornerCoincidence(const PixelPlaneIntersectionNR *fi0,
+					    const PixelPlaneIntersectionNR *fi1)
   const
 {
 // #ifdef DEBUG
@@ -1841,13 +1802,14 @@ bool PixelPlaneFacet::polyCornerCoincidence(const SimpleIntersection *fi0,
 // #endif // DEBUG
   assert(fi0 != fi1);
   assert(!fi0->onSameFacePlane(fi1, getBaseFacePlane())); // diff. polygon segs
-  assert(fi0->sameLoopSegment(fi1)); // same VSB segment
+  assert(fi0->onSameLoopSegment(fi1)); // same VSB segment
   assert(fi0->crossingType() != fi1->crossingType());
+  const PixelBdyLoopSegment *seg = fi0->sharedLoopSegment(fi1);
   return ((fi0->crossingType() == ENTRY &&
-	   fi0->getLoopFrac() >= fi1->getLoopFrac())
+	   fi0->getLoopFrac(*seg) >= fi1->getLoopFrac(*seg))
 	  ||
 	  (fi1->crossingType() == ENTRY &&
-	   fi1->getLoopFrac() >= fi0->getLoopFrac()));
+	   fi1->getLoopFrac(*seg) >= fi0->getLoopFrac(*seg)));
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1889,12 +1851,13 @@ bool PixelPlaneFacet::polyCornerCoincidence(const SimpleIntersection *fi0,
 //          |
 */
 
-bool PixelPlaneFacet::polyVSBCornerCoincidence(const SimpleIntersection *fi0,
-					       const SimpleIntersection *fi1)
+bool PixelPlaneFacet::polyVSBCornerCoincidence(
+				       const PixelPlaneIntersectionNR *fi0,
+				       const PixelPlaneIntersectionNR *fi1)
   const
 {
   assert(fi0 != fi1);
-  assert(fi0->getFacePlane() != fi1->getFacePlane());
+  assert(!fi0->onSameFacePlane(fi1, getBaseFacePlane()));
 // #ifdef DEBUG
 //   if(verbose) {
 //     if(fi0->samePixelPlanes(fi1)) {
@@ -1912,7 +1875,11 @@ bool PixelPlaneFacet::polyVSBCornerCoincidence(const SimpleIntersection *fi0,
   const PixelPlaneIntersectionNR *entryPt, *exitPt, *firstPt, *secondPt;
   ICoord2D corner;
   TurnDirection turn;
-  classifyVSBcorner(fi0, fi1, entryPt, exitPt, firstPt, secondPt, corner, turn);
+  classifyVSBcorner(fi0, fi1, entryPt, exitPt, firstPt, secondPt, corner, turn
+#ifdef DEBUG
+		    , verbose
+#endif // DEBUG
+		    );
   BarycentricCoord bcorner = htet->getBarycentricCoord(corner, pixplane);
   // If the VSB corner is interior to the polygon, the entry point
   // must precede the exit point on the VSB. If the VSB corner is
@@ -1985,7 +1952,11 @@ PixelPlaneFacet::tripleCoincidence(PixelPlaneIntersectionNR *fi0,
   const PixelPlaneIntersectionNR *entryPt, *exitPt, *firstPt, *secondPt;
   ICoord2D corner;
   TurnDirection turn;
-  classifyVSBcorner(fiB, fiC, entryPt, exitPt, firstPt, secondPt, corner, turn);
+  classifyVSBcorner(fiB, fiC, entryPt, exitPt, firstPt, secondPt, corner, turn
+#ifdef DEBUG
+		    , verbose
+#endif // DEBUG
+);
 
   bool badAB = false;
   bool badBC = false;

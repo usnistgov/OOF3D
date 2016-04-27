@@ -237,6 +237,7 @@ public:
   bool follows(const PixelBdyLoopSegment &other) const {
     return other.secondPt() == firstPt();
   }
+  bool horizontal() const { return loop_->horizontal(loopseg_); }
   int length() const;
   bool operator<(const PixelBdyLoopSegment&) const; // for std::set
   bool operator==(const PixelBdyLoopSegment&) const;

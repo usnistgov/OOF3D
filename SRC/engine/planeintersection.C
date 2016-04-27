@@ -943,50 +943,197 @@ const PixelBdyLoopSegment *SingleVSBmixIn<BASE>::sharedLoopSeg(
 template <class BASE>
 ISEC_ORDER SingleVSBmixIn<BASE>::getOrdering(const PixelPlaneIntersectionNR *fi,
 					     PixelBdyLoopSegment &seg0,
-					     PixelBdyLoopSegment &seg1)
+					     PixelBdyLoopSegment &seg1,
+					     ICoord2D &corner)
   const
 {
-  return fi->ordering(static_cast<const SingleVSBbase*>(this), seg0, seg1);
+  return fi->ordering(static_cast<const SingleVSBbase*>(this),
+		      seg0, seg1, corner);
+}
+
+// Utility used by SingleVSBmixIn::ordering.  Given a horizontal and a
+// vertical PixelBdyLoopSegment, see if they meet in a T intersection
+// (which might actually be an L).  The return value is either FIRST
+// (meaning that the horizontal segment leads to the vertical one at
+// the intersection), SECOND (meaning that the vertical one leads to
+// the horizontal one), or NONCONTIGUOUS (meaning that there's no
+// intersection, or that there's no path through it along the directed
+// segments).
+
+static ISEC_ORDER checkT(const PixelBdyLoopSegment &horizSeg,
+			 const PixelBdyLoopSegment &vertSeg,
+			 PixelBdyLoopSegment &seg0,
+			 PixelBdyLoopSegment &seg1,
+			 ICoord2D &corner
+#ifdef DEBUG
+			 , bool verbose
+#endif // DEBUG
+			 )
+{
+  ICoord2D horiz0 = horizSeg.firstPt();
+  ICoord2D horiz1 = horizSeg.secondPt();
+  ICoord2D vert0 = vertSeg.firstPt();
+  ICoord2D vert1 = vertSeg.secondPt();
+
+  // First check that the two segments don't start or end at the same
+  // point.  If they do, then they don't form a corner even if they
+  // seem to intersect.  Checking this here means that we don't have
+  // to consider corner cases (ha) below.
+  if(horiz0 == vert0 || horiz1 == vert1)
+    return NONCONTIGUOUS;
+
+  // If there is an intersection, it's here:
+  corner[0] = vert0[0];	      // x component of the vertical segment
+  corner[1] = horiz0[1];      // y component of the horizontal segment
+  int x = corner[0];
+  int y = corner[1];
+
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "checkT: horiz0="<< horiz0 << " horiz1=" << horiz1
+// 	    << " vert0=" << vert0 << " vert1=" << vert1
+// 	    << " corner=" << corner
+// 	    << std::endl;
+// #endif // DEBUG
+  
+  bool up = vert1[1] > vert0[1]; // Does the vertical segment go up?
+
+  if(horiz0[0] == x) {	// horizSeg starts at x position of vertSeg
+    // All comparisons here can use >= or <= only because we've
+    // checked for the corner case above.  Otherwise these comparisons
+    // are uglier.
+    if((up && y >= vert0[1] && y <= vert1[1]) ||
+       (!up && y <= vert0[1] && y >= vert1[1]))
+      {
+	seg0 = vertSeg;
+	seg1 = horizSeg;
+	return SECOND; 
+      }
+    return NONCONTIGUOUS;
+  } // end if horizSeg starts at x position of vertSeg
+
+  if(horiz1[0] == x) {	// horizSeg ends at x position of vertSeg
+    if((up && y >= vert0[1] && y <= vert1[1]) ||
+       (!up && y <= vert0[1] && y >= vert1[1]))
+      {
+	// Horizontal segment ends on the vertical one.
+	seg0 = horizSeg;
+	seg1 = vertSeg;
+	return FIRST;
+      }
+    return NONCONTIGUOUS;
+  }
+
+  bool right = horiz1[0] > horiz0[0]; // Does the horizontal segment go right?
+  
+  if(vert0[1] == y) {		// vertSeg starts at y position of horizSeg
+    if((right && x >= horiz0[0] && x <= horiz1[0]) ||
+       (!right && x <= horiz0[0] && x >= horiz1[0]))
+      {
+	seg0 = horizSeg;
+	seg1 = vertSeg;
+	return FIRST;
+      }
+    return NONCONTIGUOUS;
+  }
+
+  if(vert1[1] == y) {		// vertSeg ends at y position of horizSeg;
+    if((right && x >= horiz0[0] && x <= horiz1[0]) ||
+       (!right && x <= horiz0[0] && x >= horiz1[0]))
+      {
+	seg0 = vertSeg;
+	seg1 = horizSeg;
+	return SECOND;
+      }
+  }
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "checkT: No intersection!" << std::endl;
+// #endif // DEBUG
+  return NONCONTIGUOUS;
 }
 
 template <class BASE>
 ISEC_ORDER SingleVSBmixIn<BASE>::ordering(const SingleVSBbase *other,
 					  PixelBdyLoopSegment &seg0,
-					  PixelBdyLoopSegment &seg1)
+					  PixelBdyLoopSegment &seg1,
+					  ICoord2D &corner)
   const
 {
-  if(other->getLoopSeg().firstPt() == vsbSegment.secondPt()) {
-    seg0 = vsbSegment;
-    seg1 = other->getLoopSeg();
-    return FIRST;
+  if(vsbSegment.loop() == other->getLoopSeg().loop()) {
+    if(other->getLoopSeg().firstPt() == vsbSegment.secondPt()) {
+      seg0 = vsbSegment;
+      seg1 = other->getLoopSeg();
+      corner = vsbSegment.secondPt();
+      return FIRST;
+    }
+    if(other->getLoopSeg().secondPt() == vsbSegment.firstPt()) {
+      seg1 = vsbSegment;
+      seg0 = other->getLoopSeg();
+      corner = vsbSegment.firstPt();
+      return SECOND;
+    }
+    return NONCONTIGUOUS;
   }
-  if(other->getLoopSeg().secondPt() == vsbSegment.firstPt()) {
-    seg1 = vsbSegment;
-    seg0 = other->getLoopSeg();
-    return SECOND;
+  // The intersections are on segments that are on different VSB
+  // loops.  This can only happen if one of them is a VSB facet loop
+  // and the other is a cross section.  In either case, it's possible
+  // that the segments either join end to end or form a T, both of
+  // which define corners.
+  const PixelBdyLoopSegment &segA = vsbSegment;
+  const PixelBdyLoopSegment &segB = other->getLoopSeg();
+  bool segAhoriz = segA.horizontal();
+  bool segBhoriz = segB.horizontal();
+  if(segAhoriz && !segBhoriz)
+    return checkT(segA, segB, seg0, seg1, corner
+#ifdef DEBUG
+		  , BASE::verbose
+#endif // DEBUG
+		  );
+  if(segBhoriz && !segAhoriz) {
+    ISEC_ORDER order = checkT(segB, segA, seg0, seg1, corner
+#ifdef DEBUG
+			      , BASE::verbose
+#endif // DEBUG
+			      );
+    // segments were passed in reverse order to checkT.
+    if(order == FIRST) return SECOND;
+    if(order == SECOND) return FIRST;
+    return order;
   }
-  return NONCONTIGUOUS;
+
+  // The segments are either both horizontal or both vertical.  The
+  // position of the intersection is ambiguous.  If this situation
+  // occurs, it needs to be handled in some other fashion entirely.
+  
+  // ----->----------
+  //      -----<-------------------------
+  // Here ^ or here ^ ?
+  throw ErrProgrammingError("Ambiguous intersection!", __FILE__, __LINE__);
 }
 
 template <class BASE>
 ISEC_ORDER SingleVSBmixIn<BASE>::ordering(const MultiVSBbase *other,
 					  PixelBdyLoopSegment &seg0,
-					  PixelBdyLoopSegment &seg1)
+					  PixelBdyLoopSegment &seg1,
+					  ICoord2D &corner)
   const
 {
   const PBLSegmentMap &osegs = other->getLoopSegs();
   for(PBLSegmentMap::const_iterator oi=osegs.begin(); oi!=osegs.end(); ++oi) {
     const PixelBdyLoopSegment &oseg = (*oi).first;
-    if(oseg.firstPt() == vsbSegment.secondPt()) {
-      seg0 = vsbSegment;
-      seg1 = oseg;
-      return FIRST;
-    }
-    if(oseg.secondPt() == vsbSegment.firstPt()) {
-      seg1 = vsbSegment;
-      seg0 = oseg;
-      return SECOND;
-    }
+      if(oseg.firstPt() == vsbSegment.secondPt()) {
+	seg0 = vsbSegment;
+	seg1 = oseg;
+	corner = vsbSegment.secondPt();
+	return FIRST;
+      }
+      if(oseg.secondPt() == vsbSegment.firstPt()) {
+	seg1 = vsbSegment;
+	seg0 = oseg;
+	corner = vsbSegment.firstPt();
+	return SECOND;
+      }
   }
   return NONCONTIGUOUS;
 }
@@ -1087,31 +1234,35 @@ const PixelBdyLoopSegment *MultiVSBmixIn<BASE>::sharedLoopSeg(
 template <class BASE>
 ISEC_ORDER MultiVSBmixIn<BASE>::getOrdering(const PixelPlaneIntersectionNR *fi,
 					    PixelBdyLoopSegment &seg0,
-					    PixelBdyLoopSegment &seg1)
+					    PixelBdyLoopSegment &seg1,
+					    ICoord2D &corner)
   const
 {
-  return fi->ordering(static_cast<const MultiVSBbase*>(this), seg0, seg1);
+  return fi->ordering(static_cast<const MultiVSBbase*>(this),
+		      seg0, seg1, corner);
 }
 
 template <class BASE>
 ISEC_ORDER MultiVSBmixIn<BASE>::ordering(const SingleVSBbase *other,
 					 PixelBdyLoopSegment &seg0,
-					 PixelBdyLoopSegment &seg1)
+					 PixelBdyLoopSegment &seg1,
+					 ICoord2D &corner)
   const
 {
-  ISEC_ORDER reverse = other->ordering(this, seg0, seg1);
+  ISEC_ORDER reverse = other->ordering(this, seg0, seg1, corner);
   if(reverse == FIRST) {
     return SECOND;
   }
   if(reverse == SECOND)
     return FIRST;
-  return NONCONTIGUOUS;
+  return reverse;
 }
 
 template <class BASE>
 ISEC_ORDER MultiVSBmixIn<BASE>::ordering(const MultiVSBbase *other,
 					 PixelBdyLoopSegment &seg0,
-					 PixelBdyLoopSegment &seg1)
+					 PixelBdyLoopSegment &seg1,
+					 ICoord2D &corner)
   const
 {
   const PBLSegmentMap &osegs = other->getLoopSegs();
@@ -1126,11 +1277,13 @@ ISEC_ORDER MultiVSBmixIn<BASE>::ordering(const MultiVSBbase *other,
 	  if(oseg.firstPt() == seg.secondPt()) {
 	    seg0 = seg;
 	    seg1 = oseg;
+	    corner = seg.secondPt();
 	    return FIRST;
 	  }
 	  if(oseg.secondPt() == seg.firstPt()) {
 	    seg1 = seg;
 	    seg0 = oseg;
+	    corner = seg.firstPt();
 	    return SECOND;
 	  }
 	}
@@ -1217,7 +1370,7 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
 					const PixelPlaneFacet *facet)
   const
 {
-  if(fi)
+  if(fi)	    // TODO: Why check for null fi?  Is that possible?
     return fi->referent()->mergeWith(htet, this, facet); // double dispatch
   return nullptr;
 }
@@ -1228,11 +1381,11 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
 						const PixelPlaneFacet *facet)
   const
 {
-// #ifdef DEBUG
-//   if(htet->verbosePlane())
-//     oofcerr << "SimpleIntersection::mergeWith: this="
-// 	    << *this << " fi=" << *fi << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+  if(htet->verbosePlane())
+    oofcerr << "SimpleIntersection::mergeWith: this="
+	    << *this << " fi=" << *fi << std::endl;
+#endif // DEBUG
   PixelPlaneIntersectionNR *merged = nullptr;
   // Two antiparallel but otherwise equivalent VSB segments that
   // intersect a face should form a new SimpleIntersection there.
@@ -1241,6 +1394,10 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
     merged->setCrossingType(combinedCrossing(this, fi));
   }
   else if(facet->onOppositeEdges(this, fi)) {
+#ifdef DEBUG
+  if(htet->verbosePlane())
+    oofcerr << "SimpleIntersection::mergeWith: on opposite edges!" << std::endl;
+#endif // DEBUG
     ;
   }
   else if(onSameLoopSegment(fi)) {
