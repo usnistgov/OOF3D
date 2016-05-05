@@ -38,6 +38,7 @@ class HPlane : public virtual Plane {
 public:
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const = 0;
   virtual void addToIntersection(PixelPlaneIntersectionNR*) const = 0;
+  virtual void addToEquivalence(IsecEquivalenceClass*) const = 0;
 };
 
 class HPixelPlane : public virtual HPlane, public virtual PixelPlane {
@@ -52,7 +53,8 @@ public:
   {}
   HPixelPlane() {}
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
-  virtual void addToIntersection(PixelPlaneIntersectionNR*) const;  
+  virtual void addToIntersection(PixelPlaneIntersectionNR*) const;
+  virtual void addToEquivalence(IsecEquivalenceClass*) const;
 };
 
 class FacePlane : public virtual HPlane {
@@ -72,6 +74,7 @@ public:
   {}
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
   virtual void addToIntersection(PixelPlaneIntersectionNR*) const;  
+  virtual void addToEquivalence(IsecEquivalenceClass*) const;
   virtual void print(std::ostream&) const;
   unsigned int face() const { return face_; }
 };
@@ -92,7 +95,8 @@ public:
       FacePlane(face)
   {}
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
-  virtual void addToIntersection(PixelPlaneIntersectionNR*) const;  
+  virtual void addToIntersection(PixelPlaneIntersectionNR*) const;
+  virtual void addToEquivalence(IsecEquivalenceClass*) const;
   virtual void print(std::ostream&) const;
 };
 
@@ -125,7 +129,7 @@ public:
   Coord2D endPos(const PixelPlane *p) const;
   Coord3D startPos3D() const;
   Coord3D endPos3D() const;
-  virtual void getEdgesOnFaces(const HomogeneityTet*, const HPixelPlane*,
+  virtual void getEdgesOnFaces(HomogeneityTet*, const HPixelPlane*,
 			       FaceFacets&) const
   {}
 
@@ -173,7 +177,7 @@ public:
 class PolygonEdge : public FacetEdge {
 public:
   PolygonEdge(PixelPlaneIntersection *f0, PixelPlaneIntersection *f1);
-  virtual void getEdgesOnFaces(const HomogeneityTet*, const HPixelPlane*,
+  virtual void getEdgesOnFaces(HomogeneityTet*, const HPixelPlane*,
 			       FaceFacets&) const;
   // virtual FacetEdge *reversed() const;
 };
@@ -205,7 +209,7 @@ private:
   std::set<RedundantIntersection*> redundantIntersections;
 
 public:
-  const HomogeneityTet * const htet;
+  HomogeneityTet * const htet;
   const HPixelPlane * const pixplane;
 
 private:
@@ -231,7 +235,7 @@ private:
   void removeNullEdges();
 
 public:
-  PixelPlaneFacet(const HomogeneityTet*, const HPixelPlane*,
+  PixelPlaneFacet(HomogeneityTet*, const HPixelPlane*,
 		  const TetIntersectionPolygon&, bool
 #ifdef DEBUG
 		  , bool verbose

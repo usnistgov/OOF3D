@@ -52,6 +52,10 @@ void HPixelPlane::addToIntersection(PixelPlaneIntersectionNR *fi) const {
   fi->pixelPlanes().insert(this);
 }
 
+void HPixelPlane::addToEquivalence(IsecEquivalenceClass *eqclass) const {
+  eqclass->addPixelPlane(this);
+}
+
 bool FacePlane::isPartOf(const PixelPlaneIntersectionNR *fi) const {
   return fi->faces().count(this) > 0;
 }
@@ -60,12 +64,20 @@ void FacePlane::addToIntersection(PixelPlaneIntersectionNR *fi) const {
   fi->faces().insert(this);
 }
 
+void FacePlane::addToEquivalence(IsecEquivalenceClass *eqclass) const {
+  eqclass->addFacePlane(this);
+}
+
 bool FacePixelPlane::isPartOf(const PixelPlaneIntersectionNR *fi) const {
   return fi->pixelFaces().count(this) > 0;
 }
 
 void FacePixelPlane::addToIntersection(PixelPlaneIntersectionNR *fi) const {
   fi->pixelFaces().insert(this);
+}
+
+void FacePixelPlane::addToEquivalence(IsecEquivalenceClass *eqclass) const {
+  eqclass->addFacePixelPlane(this);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -191,7 +203,7 @@ void FacetEdge::swapStop() {
 // getEdgesOnFaces.  PolygonEdges are the only edges created by
 // HomogeneityTet::doFindPixelPlaneFacets that are on tet faces.
 
-void PolygonEdge::getEdgesOnFaces(const HomogeneityTet *htet,
+void PolygonEdge::getEdgesOnFaces(HomogeneityTet *htet,
 				  const HPixelPlane *pixplane,
 				  FaceFacets &faceFacets)
   const
@@ -241,7 +253,7 @@ PolygonEdge::PolygonEdge(PixelPlaneIntersection *f0, PixelPlaneIntersection *f1)
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-PixelPlaneFacet::PixelPlaneFacet(const HomogeneityTet *htet,
+PixelPlaneFacet::PixelPlaneFacet(HomogeneityTet *htet,
 				 const HPixelPlane *pixplane,
 				 const TetIntersectionPolygon &tetPts,
 				 bool onFace

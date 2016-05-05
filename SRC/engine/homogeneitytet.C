@@ -36,7 +36,7 @@ bool HomogeneityTet::verboseCategory_(bool verbose, unsigned int category) const
   // verbose.
   // TODO: Set this at run time via menu commands?
   static std::set<unsigned int> categories({
-      0
+      4
 	});
   return verbose && (categories.empty() || categories.count(category) == 1);
 };
@@ -49,16 +49,16 @@ bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
   // arguments for each plane are {direction, offset, normal}.
   // TODO: Set this at run time via menu commands?
   static std::set<HPixelPlane> planes({
-      {1, 13, -1},
-	{2, 18, -1}
-      // {0, NONE, 1} // use this to show no planes
+      // {1, 13, -1},
+      // 	{2, 18, -1}
+      {0, NONE, 1} // use this to show no planes
     });
   return verbose && (planes.empty() || planes.count(*pixplane) == 1);
 }
 
 bool HomogeneityTet::verboseFace_(bool verbose, unsigned int face) const {
   static std::set<unsigned int> faces({
-      0
+      2
 	});
   return verbose && (faces.empty() || faces.count(face) == 1);
 }
@@ -129,7 +129,6 @@ HomogeneityTet::HomogeneityTet(const CSkeletonElement *element,
     testVoxelsFound(4, false),
     faceFacetEdgeCount(0),
     coincidentPixelPlanes(4, nullptr),
-    nextEquivalenceLabel(0),
     microstructure(ms)
 #ifdef DEBUG
   , verbose(verbose),
@@ -219,6 +218,9 @@ HomogeneityTet::~HomogeneityTet() {
     delete plane;
   for(PixelPlaneIntersectionNR *pt : extraPoints)
     delete pt;
+
+  for(IsecEquivalenceClass *eqclass : equivalences)
+    delete eqclass;
   
   delete bbox_;
 // #ifdef DEBUG
@@ -236,7 +238,6 @@ HomogeneityTet::~HomogeneityTet() {
 
 const HPixelPlane *HomogeneityTet::getPixelPlane(unsigned int dir, int offset,
 						int normal)
-  const
 {
   HPixelPlane *pixplane = new HPixelPlane(dir, offset, normal);
   auto result = pixelPlanes_.emplace(pixplane);
@@ -280,7 +281,6 @@ const HPixelPlane *HomogeneityTet::getPixelPlane(unsigned int dir, int offset,
 
 const HPixelPlane *HomogeneityTet::getUnorientedPixelPlane(
 						   const HPixelPlane *pp)
-  const
 {
   // If either the given plane or its inverse are already in use as a
   // face plane, return that plane.
@@ -348,7 +348,7 @@ unsigned int HomogeneityTet::getCoincidentFaceIndex(const HPixelPlane *pp)
   return fpp->face();
 }
 
-ICoord3D HomogeneityTet::testVoxel(unsigned int f) const {
+ICoord3D HomogeneityTet::testVoxel(unsigned int f) {
   if(testVoxelsFound[f])
     return testVoxels[f];
   Coord3D ctr = faceCenters[f];
@@ -375,150 +375,117 @@ ICoord3D HomogeneityTet::testVoxel(unsigned int f) const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-void HomogeneityTet::mergeEquiv(const PlaneIntersection *point0,
-				const PlaneIntersection *point1,
-				const PlaneIntersection *merged)
-  const
+void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
+				PlaneIntersection *point1,
+				PlaneIntersection *merged)
 {
-  int eq0 = point0->equivalence();
-  int eq1 = point1->equivalence();
-#ifdef DEBUG
-  if(verboseplane) {
-    oofcerr << "HomogeneityTet::mergeEquiv: merging "
-	    << *point0 << " and " << *point1 << std::endl;
-  }
-#endif // DEBUG
+  IsecEquivalenceClass *equivClass0 = point0->equivalence();
+  IsecEquivalenceClass *equivClass1 = point1->equivalence();
 
-  if(eq0 == -1) {	    // Point 0 is not in an equivalence class.
-    if(eq1 == -1) {
-    // Neither point is in an equivalence class.  Construct one.
-      int label = nextEquivalenceLabel++;
-      equivalentPoints.emplace(
-	       std::make_pair(label, std::set<const PlaneIntersection*>()));
-      equivalentPoints[label].insert(point0);
-      equivalentPoints[label].insert(point1);
-      equivalentPoints[label].insert(merged);
-      point0->setEquivalence(label);
-      point1->setEquivalence(label);
-      merged->setEquivalence(label);
+  if(equivClass0 == nullptr) {
+    if(equivClass1 == nullptr) {
+      // Neither point is in an equivalence class.  Construct one.
+      IsecEquivalenceClass *eqclass = new IsecEquivalenceClass(merged);
+      equivalences.insert(eqclass);
+      eqclass->addIntersection(point0); // TODO: Is this necessary?
+      eqclass->addIntersection(point1); // TODO: Is this necessary?
     }
     else {
-      // Point 1 is already in an equivalence class, but point 0 is not.
-      point0->setEquivalence(eq1);
-      merged->setEquivalence(eq1);
-      equivalentPoints[eq1].insert(point0);
-      equivalentPoints[eq1].insert(merged);
+      // Point 1 is already in an equivalence class but point 0 is not.
+      equivClass1->addIntersection(merged);
+      equivClass1->addIntersection(point0); // TODO: Is this necessary?
     }
-  } // end if point0 is not in an equivalence class
+  }
   else {
     // Point 0 is already in an equivalence class
-    if(eq1 == -1) {
-      // Point 0 is already in an equivalence class, but point 1 is not.
-      point1->setEquivalence(eq0);
-      merged->setEquivalence(eq0);
-      equivalentPoints[eq0].insert(point1);
-      equivalentPoints[eq0].insert(merged);
+    if(equivClass1 == nullptr) {
+      equivClass0->addIntersection(merged);
+      equivClass0->addIntersection(point1); // TODO: Is this necessary?
     }
     else {
-      if(eq0 == eq1) {
-	// Both points are already in the same equivalence class.
-	equivalentPoints[eq0].insert(merged);
-	merged->setEquivalence(eq0);
+      // Both points are in equivalence classes
+      if(equivClass0 == equivClass1) {
+	equivClass0->addIntersection(merged);
       }
       else {
-	// Both points are already in different equivalence classes. Merge
-	// the classes.
-	for(const PlaneIntersection *pp : equivalentPoints[eq1]) {
-	  pp->setEquivalence(eq0);
-	}
-	merged->setEquivalence(eq0);
-	equivalentPoints[eq0].insert(merged);
-	equivalentPoints[eq0].insert(equivalentPoints[eq1].begin(),
-				     equivalentPoints[eq1].end());
-	equivalentPoints.erase(eq1);
+	// The points are in different equivalence classes.  Merge them.
+	equivClass0->merge(equivClass1); // Resets all pointers to equivClass1.
+	equivClass0->addIntersection(merged);
+	equivalences.erase(equivClass1);
+	delete equivClass1;
       }
-    } // end if point 0 is already in an equivalence class
-  } // end if point0 is already in an equivalence class
+    }
+  }
+}
+
+void HomogeneityTet::checkEquiv(PlaneIntersection *point0,
+				PlaneIntersection *point1)
+{
 #ifdef DEBUG
   if(verboseplane) {
-    oofcerr << "HomogeneityTet::mergeEquiv: merged points "
-	    << *point0 << " and " << *point1 << std::endl;
-    oofcerr << "HomogeneityTet::mergeEquiv: merged=" << *merged << std::endl;
+    oofcerr << "HomogeneityTet::checkEquiv: point0=" << point0 << std::endl;
+    oofcerr << "HomogeneityTet::checkEquiv: point1=" << point1 << std::endl;
   }
 #endif // DEBUG
-} // end HomogeneityTet::mergeEquiv
-
-void HomogeneityTet::checkEquiv(const PlaneIntersection *point0,
-				const PlaneIntersection *point1)
-  const
-{
-  int equivClass0 = point0->equivalence();
-  int equivClass1 = point1->equivalence();
+  IsecEquivalenceClass *equivClass0 = point0->equivalence();
+  IsecEquivalenceClass *equivClass1 = point1->equivalence();
   
-  if(equivClass0 != -1 && equivClass0 == equivClass1) {
+  if(equivClass0 != nullptr && equivClass0 == equivClass1) {
     // Already in the same equivalence class.
     return;
   }
 
   if(!point0->isEquivalent(point1)) {
-    // Not equivalent
+    // Points aren't equivalent.
     return;
   }
 
-  if(equivClass0 == -1) {
-    if(equivClass1 == -1) {
+  if(equivClass0 == nullptr) {
+    if(equivClass1 == nullptr) {
       // Equivalent, but no class exists yet for either point
-      int label = nextEquivalenceLabel++;
-      equivalentPoints.emplace(
-	       std::make_pair(label, std::set<const PlaneIntersection*>()));
-      equivalentPoints[label].insert(point0);
-      equivalentPoints[label].insert(point1);
-      point0->setEquivalence(label);
-      point1->setEquivalence(label);
+#ifdef DEBUG
+      if(verboseplane) {
+	oofcerr << "HomogeneityTet::checkEquiv: no classes" << std::endl;
+      }
+#endif // DEBUG
+      IsecEquivalenceClass *eqclass = new IsecEquivalenceClass(point0);
+      equivalences.insert(eqclass);
+      eqclass->addIntersection(point0);
+      eqclass->addIntersection(point1);
+#ifdef DEBUG
+      if(verboseplane)
+	oofcerr << "HomogeneityTet::checkEquiv: created new class" << std::endl;
+#endif // DEBUG
     }
     else {
       // point 1 is in an equivalence class but point 0 is not
-      point0->setEquivalence(equivClass1);
-      equivalentPoints[equivClass1].insert(point0);
+      equivClass1->addIntersection(point0);
     }
-  }	 // end if equivClass0 == -1
+  }	 // end if equivClass0 == nullptr
   else {
     // point 0 is already in an equivalence class
-    if(equivClass1 == -1) {
-      point1->setEquivalence(equivClass0);
-      equivalentPoints[equivClass0].insert(point1);
+    if(equivClass1 == nullptr) {
+      equivClass0->addIntersection(point1);
     }
     else {
       // Both points are already in equivalence classes.  Merge the classes.
-      for(const PlaneIntersection *pp : equivalentPoints[equivClass1]) {
-	pp->setEquivalence(equivClass0);
-      }
-      equivalentPoints[equivClass0].insert(
-				   equivalentPoints[equivClass1].begin(),
-				   equivalentPoints[equivClass1].end());
-      equivalentPoints.erase(equivClass1);
+      equivClass0->merge(equivClass1);
+      equivalences.erase(equivClass1);
+      delete equivClass1;
     }
   }
 } // end HomogeneityTet::checkEquiv
 
 void HomogeneityTet::removeEquivalence(PlaneIntersection *pt) const {
-  int eqclass = pt->equivalence();
-  if(eqclass != -1) {
-    equivalentPoints[eqclass].erase(pt);
+  IsecEquivalenceClass *eqclass = pt->equivalence();
+  if(eqclass != nullptr) {
+    eqclass->removeIntersection(pt);
   }
-}
-
-// TODO: resetEquivalences() is sort of a hack.  It cleans up things
-// before going on to the next voxel category.  It shouldn't be
-// necessary.
-void HomogeneityTet::resetEquivalences() {
-  nextEquivalenceLabel = 0;
-  equivalentPoints.clear();
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-BarycentricCoord &HomogeneityTet::getBarycentricCoord(const Coord3D &pt) const {
+BarycentricCoord &HomogeneityTet::getBarycentricCoord(const Coord3D &pt) {
   {
     // See if this coordinate has already been computed.
     BaryCoordCache::iterator it = baryCache.find(pt);
@@ -555,15 +522,12 @@ BarycentricCoord &HomogeneityTet::getBarycentricCoord(const Coord3D &pt) const {
   return (*insert.first).second;
 }
 
-BarycentricCoord &HomogeneityTet::getBarycentricCoord(const ICoord3D &ipt)
-  const
-{
+BarycentricCoord &HomogeneityTet::getBarycentricCoord(const ICoord3D &ipt) {
   return getBarycentricCoord(ipt.coord());
 }
 
 BarycentricCoord &HomogeneityTet::getBarycentricCoord(
 			      const ICoord2D &ipt, const HPixelPlane *pixplane)
-const
 {
   return getBarycentricCoord(pixplane->convert2Coord3D(ipt).coord());
 }
@@ -1389,7 +1353,6 @@ PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
 					unsigned int onFace,
 					unsigned int orthoFace,
 					bool entry)
-  const
 {
   // Calculate the position of the intersection in a way that's
   // independent of the direction of the segment.
@@ -1461,7 +1424,6 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
 					const PixelBdyLoopSegment &pblseg,
 					unsigned int onFace,
 					unsigned int orthoFace)
-  const
 {
 // #ifdef DEBUG
 //   if(verboseplane)
@@ -1647,7 +1609,6 @@ public:
 
 FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 					  const FacetMap2D &planeFacets)
-  const
 {
 #ifdef DEBUG
   verbosecategory = verboseCategory_(verbose, cat);
@@ -1740,22 +1701,53 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
       endPoints.reserve(nsegs);
       // Loop over segments in the face facet, storing their start and
       // end points.  *seg is a FaceFacetEdge*.
+#ifdef DEBUG
+      if(verboseface) {
+	oofcerr << "HomogeneityTet::findFaceFacets: starting checkEquiv loop"
+		<< std::endl;
+      }
+#endif // DEBUG
       for(auto seg=facet.begin(); seg!=facet.end(); ++seg) {
 	// Make sure equivalence classes are up to date by comparing
 	// to previously found points.
-	for(FaceEdgeIntersection &fei : startPoints) {
-	  checkEquiv(fei.corner(), (*seg)->startPt());
+#ifdef DEBUG
+	if(verboseface) {
+	  oofcerr << "HomogeneityTet::findFaceFacets: seg=" << *(*seg)
+		  << std::endl;
 	}
-	for(FaceEdgeIntersection &fei : endPoints) {
-	  checkEquiv(fei.corner(), (*seg)->startPt());
-	}
+	OOFcerrIndent indent(2);
+#endif // DEBUG
 	for(FaceEdgeIntersection &fei : startPoints) {
+#ifdef DEBUG
+	  if(verboseface) {
+	    oofcerr << "HomogeneityTet::findFaceFacets: 1 fei= " << fei
+		    << std::endl;
+	    oofcerr << "HomogeneityTet::findFaceFacets:  startpt="
+		    << (*seg)->startPt() << std::endl;
+	  }
+#endif // DEBUG
+	  checkEquiv(fei.corner(), (*seg)->startPt());
+#ifdef DEBUG
+	  if(verboseface)
+	    oofcerr << "HomogeneityTet::findFaceFacets:  endpt="
+		    << (*seg)->endPt() << std::endl;
+#endif // DEBUG
 	  checkEquiv(fei.corner(), (*seg)->endPt());
 	}
 	for(FaceEdgeIntersection &fei : endPoints) {
+#ifdef DEBUG
+	  if(verboseface)
+	    oofcerr << "HomogeneityTet::findFaceFacets: 2 fei= " << fei
+		    << std::endl;
+#endif // DEBUG
+	  checkEquiv(fei.corner(), (*seg)->startPt());
 	  checkEquiv(fei.corner(), (*seg)->endPt());
 	}
-	
+#ifdef DEBUG
+	if(verboseface)
+	  oofcerr << "HomogeneityTet::findFaceFacets: "
+		  << "constructing FaceEdgeIntersections" << std::endl;
+#endif // DEBUG
 	// Construct FaceEdgeIntersection objects in-place.
 	startPoints.emplace_back((*seg)->startPt(), *seg, true);
 	endPoints.emplace_back((*seg)->endPt(), *seg, false);
@@ -1924,16 +1916,16 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	// The pixel plane intersections are stored in
 	// FaceEdgeIntersection as generic PlaneIntersections, but in
 	// this case we know that they're PixelPlaneIntersections.
-	const PixelPlaneIntersection *ppi0 =
-	  dynamic_cast<const PixelPlaneIntersection*>(pt0.feInt.corner());
-	const PixelPlaneIntersection *ppi1 =
-	  dynamic_cast<const PixelPlaneIntersection*>(pt1.feInt.corner());
+	PixelPlaneIntersection *ppi0 =
+	  dynamic_cast<PixelPlaneIntersection*>(pt0.feInt.corner());
+	PixelPlaneIntersection *ppi1 =
+	  dynamic_cast<PixelPlaneIntersection*>(pt1.feInt.corner());
 	assert(ppi0 != nullptr && ppi1 != nullptr);
 	PixelPlaneIntersectionNR *merged =
 	  new MultiCornerIntersection(this, ppi0->referent(), ppi1->referent());
-	const PlaneIntersection *newpt0 =
+	PlaneIntersection *newpt0 =
 	  pt0.feInt.edge()->replacePoint(merged, pt0.feInt.start());
-	const PlaneIntersection *newpt1 =
+	PlaneIntersection *newpt1 =
 	  pt1.feInt.edge()->replacePoint(merged, pt1.feInt.start());
 	FaceEdgeIntersection fei0(newpt0, pt0.feInt.edge(), pt0.feInt.start());
 	FaceEdgeIntersection fei1(newpt1, pt1.feInt.edge(), pt1.feInt.start());
@@ -2444,7 +2436,6 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 
 double HomogeneityTet::intersectionVolume(const FacetMap2D &planeFacets,
 					  const FaceFacets &faceFacets)
-  const
 {
 #ifdef DEBUG
   if(verbose)
@@ -2524,7 +2515,7 @@ static void getEdgeNodes(unsigned int faceIndex, unsigned int edgeIndex,
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 FaceEdgeIntersection::FaceEdgeIntersection(
-		   const PlaneIntersection *crnr,
+		   PlaneIntersection *crnr,
 		   FaceFacetEdge *edge,
 		   // const std::set<FaceFacetEdge*>::const_iterator &edge,
 		   bool start)
@@ -2535,8 +2526,7 @@ FaceEdgeIntersection::FaceEdgeIntersection(
     edge_(edge)
 {}
 
-void FaceEdgeIntersection::findFaceEdge(unsigned int face,
-					const HomogeneityTet *htet)
+void FaceEdgeIntersection::findFaceEdge(unsigned int face, HomogeneityTet *htet)
 {
   // Which edge of the face are we on?
   fEdge = crnr->findFaceEdge(face, htet);
@@ -2569,7 +2559,7 @@ std::ostream &operator<<(std::ostream &os, const FaceEdgeIntersection &fei) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-FaceFacetEdge::FaceFacetEdge(const HomogeneityTet *htet,
+FaceFacetEdge::FaceFacetEdge(HomogeneityTet *htet,
 			     const PlaneIntersection *s,
 			     const PlaneIntersection *e,
 			     const HPixelPlane *pp)
@@ -2583,7 +2573,7 @@ FaceFacetEdge::FaceFacetEdge(const HomogeneityTet *htet,
 // #endif // DEBUG
 }
 
-FaceFacetEdge::FaceFacetEdge(const HomogeneityTet *htet,
+FaceFacetEdge::FaceFacetEdge(HomogeneityTet *htet,
 			     const PlaneIntersection *s,
 			     const PlaneIntersection *e)
   : start_(s->clone()),
@@ -2614,7 +2604,7 @@ FaceFacetEdge::~FaceFacetEdge() {
 // }
 
 FaceFacetEdge::FaceFacetEdge(FaceFacetEdge &&ffe) {
-  const PlaneIntersection *temp = start_;
+  PlaneIntersection *temp = start_;
   start_ = ffe.start_;
   ffe.start_ = temp;
   temp = stop_;
@@ -2631,10 +2621,10 @@ Coord3D FaceFacetEdge::endPos3D() const {
   return stop_->location3D();
 }
 
-const PlaneIntersection *FaceFacetEdge::replacePoint(
-				     const PlaneIntersection *pt, bool start)
+PlaneIntersection *FaceFacetEdge::replacePoint(PlaneIntersection *pt,
+					       bool start)
 {
-  const PlaneIntersection *bozo = pt->clone();
+  PlaneIntersection *bozo = pt->clone();
   if(start) {
 // #ifdef DEBUG
 //     oofcerr << "FacetEdge::replacePoint: replacing " << *start_ << " with "
@@ -2695,7 +2685,7 @@ void FaceFacet::addEdge(FaceFacetEdge *edge) {
 
 void FaceFacet::addFaceEdges(const FaceEdgeIntersection *fei0,
 			     const FaceEdgeIntersection *fei1,
-			     const HomogeneityTet *htet)
+			     HomogeneityTet *htet)
 {
   unsigned int startEdge = fei0->faceEdge();
   unsigned int endEdge = fei1->faceEdge();
@@ -2767,7 +2757,7 @@ void FaceFacet::addFaceEdges(const FaceEdgeIntersection *fei0,
   }
 } // end FaceFacet::addFaceEdges
 
-Coord3D FaceFacet::area(const HomogeneityTet *htet) const {
+Coord3D FaceFacet::area(HomogeneityTet *htet) const {
   if(!areaComputed) {
     areaVec_ = getArea(htet);
     areaComputed = true;
@@ -2775,7 +2765,7 @@ Coord3D FaceFacet::area(const HomogeneityTet *htet) const {
   return areaVec_;
 }
 
-Coord3D FaceFacet::getArea(const HomogeneityTet *htet) const {
+Coord3D FaceFacet::getArea(HomogeneityTet *htet) const {
   Coord3D a;
   Coord3D fcenter = htet->faceCenter(face); // face center != facet center
   // center_ = Coord3D::origin;	// this is the facet center
@@ -2817,7 +2807,7 @@ Coord3D FaceFacet::getArea(const HomogeneityTet *htet) const {
 // perimeter of the face is in the target category, but there are
 // islands of another category inside the face.
 
-void FaceFacet::fixNonPositiveArea(const HomogeneityTet *htet, unsigned int cat)
+void FaceFacet::fixNonPositiveArea(HomogeneityTet *htet, unsigned int cat)
 {
   Coord3D facetArea = area(htet); // vector!
   Coord3D faceArea = htet->faceAreaVector(face);

@@ -21,7 +21,7 @@
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-BarycentricCoord PlaneIntersection::baryCoord(const HomogeneityTet *htet) const
+BarycentricCoord PlaneIntersection::baryCoord(HomogeneityTet *htet) const
 {
   return htet->getBarycentricCoord(location3D());
 }
@@ -32,7 +32,7 @@ BarycentricCoord PlaneIntersection::baryCoord(const HomogeneityTet *htet) const
 // faces.
 
 TripleFaceIntersection::TripleFaceIntersection(unsigned int node,
-					       const HomogeneityTet *htet)
+					       HomogeneityTet *htet)
   : node_(node)
 {
   for(unsigned int i=0; i<3; i++)
@@ -44,7 +44,7 @@ TripleFaceIntersection *TripleFaceIntersection::clone() const {
   return new TripleFaceIntersection(*this);
 }
 
-BarycentricCoord TripleFaceIntersection::baryCoord(const HomogeneityTet *htet)
+BarycentricCoord TripleFaceIntersection::baryCoord(HomogeneityTet *htet)
   const
 {
   return nodeBCoord(node_);
@@ -56,7 +56,7 @@ void TripleFaceIntersection::print(std::ostream &os) const {
 }
 
 unsigned int TripleFaceIntersection::findFaceEdge(unsigned int face,
-						  const HomogeneityTet *htet)
+						  HomogeneityTet *htet)
   const
 {
   // Which edge of the given face is this point on?  The answer is
@@ -77,7 +77,7 @@ unsigned int TripleFaceIntersection::findFaceEdge(unsigned int face,
 
 bool TripleFaceIntersection::isEquivalent(const PlaneIntersection *pi) const
 {
-  if(equivalence() != -1 && equivalence() == pi->equivalence())
+  if(equivalence() != nullptr && equivalence() == pi->equivalence())
     return true;
   return pi->isEquivalent(this); // double dispatch
 }
@@ -98,6 +98,31 @@ bool TripleFaceIntersection::isEquivalent(const RedundantIntersection *ri) const
 {
   return ri->referent()->isEquivalent(this);
 }
+
+void TripleFaceIntersection::addPlanesToEquivalence(
+					    IsecEquivalenceClass *eqclass)
+{
+  for(const FacePlane *face : faces_) {
+    // face might be either a FacePlane or a FacePixelPlane and needs
+    // to be put in the correct set in eqclass via this virtual
+    // function call.
+    face->addToEquivalence(eqclass);
+  }
+}
+
+// bool TripleFaceIntersection::isInEquivalenceClass(
+// 				  const IsecEquivalenceClass *eqclass)
+//   const
+// {
+//   unsigned int nfaces = 0;
+//   for(const FacePlane *face : faces_) {
+//     if(eqclass->facePlanes.count(face) > 0)
+//       nfaces++;
+//     else if(eqclass->pixelFaces.count(face) > 0)
+//       nfaces++;
+//   }
+//   return nfaces == 3;
+// }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -387,7 +412,7 @@ unsigned int PixelPlaneIntersectionNR::minPolyEdge(const PixelPlaneFacet *facet)
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 struct GEOFdata {		// Get Edges On Faces data
-  const HomogeneityTet *htet;
+  HomogeneityTet *htet;
   FaceFacets &faceFacets;
   const PixelPlaneIntersectionNR *thisIntersection;
   const PixelPlaneIntersectionNR *otherIntersection;
@@ -418,7 +443,7 @@ bool GEOFcallback(const TYPE &faceplane, void *data) {
 }
 
 void PixelPlaneIntersectionNR::getEdgesOnFaces(
-				       const HomogeneityTet *htet,
+				       HomogeneityTet *htet,
 				       const PixelPlaneIntersectionNR *other,
 				       const HPixelPlane *pixplane,
 				       FaceFacets &faceFacets)
@@ -456,7 +481,7 @@ void PixelPlaneIntersectionNR::getEdgesOnFaces(
 // Which edge of the given face is this intersection on?
 
 unsigned int PixelPlaneIntersectionNR::findFaceEdge(unsigned int f,
-						    const HomogeneityTet *htet)
+						    HomogeneityTet *htet)
   const
 {
   // faceIDs contains the face indices of the tet faces that this
@@ -542,7 +567,7 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
 
 bool PixelPlaneIntersectionNR::isEquivalent(const PlaneIntersection *pi) const
 {
-  if(equivalence() != -1 && equivalence() == pi->equivalence())
+  if(equivalence() != nullptr && equivalence() == pi->equivalence())
     return true;
   return pi->isEquivalent(this); // double dispatch
 }
@@ -564,8 +589,20 @@ bool PixelPlaneIntersectionNR::isEquivalent(const TripleFaceIntersection *tfi)
   return nmatch == 3;
 }
 
-bool PixelPlaneIntersectionNR::isEquivalent(const PixelPlaneIntersectionNR *ppi)
-  const
+// isEquiv_ is the guts of PixelPlaneIntersectionNR::isEquivalent()
+// and PixelPlaneIntersectionNR::isInEquivalenceClass().  It
+// determines whether two sets of planes (each made of pixel planes,
+// face planes, and face pixel planes) have three nondegenerate planes
+// in common.
+
+// TODO: isInEquivalenceClass may not be needed.  Put isEquiv_ back
+// inside of
+// PixelPlaneIntersectionNR::isEquivalent(PixelPlaneIntersectionNR).
+
+static bool isEquiv_(const PixelPlaneSet &pp0, const FacePlaneSet &fp0,
+		     const FacePixelPlaneSet &fpp0,
+		     const PixelPlaneSet &pp1, const FacePlaneSet &fp1,
+		     const FacePixelPlaneSet &fpp1)
 {
   // TODO: Is it worth being cleverer about these searches?  All of
   // the sets are sorted, and that information isn't being used.  The
@@ -573,8 +610,8 @@ bool PixelPlaneIntersectionNR::isEquivalent(const PixelPlaneIntersectionNR *ppi)
   unsigned int npixplanes = 0;
   std::vector<const Plane*> planes;
   planes.reserve(10);	   // more than we'll need in almost all cases
-  for(const HPixelPlane *thisplane : pixelPlanes_) {
-    for(const HPixelPlane *otherplane : ppi->pixelPlanes()) {
+  for(const HPixelPlane *thisplane : pp0) {
+    for(const HPixelPlane *otherplane : pp1) {
       if(thisplane == otherplane) {
 	++npixplanes;
 	planes.push_back(thisplane);
@@ -586,8 +623,8 @@ bool PixelPlaneIntersectionNR::isEquivalent(const PixelPlaneIntersectionNR *ppi)
     return true;
 
   unsigned int nfaces = 0;
-  for(const FacePlane *thisplane : faces_) {
-    for(const FacePlane *otherplane : ppi->faces()) {
+  for(const FacePlane *thisplane : fp0) {
+    for(const FacePlane *otherplane : fp1) {
       if(thisplane == otherplane) {
 	++nfaces;
 	planes.push_back(thisplane);
@@ -599,8 +636,8 @@ bool PixelPlaneIntersectionNR::isEquivalent(const PixelPlaneIntersectionNR *ppi)
     return true;
 
   unsigned int npixfaces = 0;
-  for(const FacePixelPlane *thisplane : pixelFaces_) {
-    for(const FacePixelPlane *otherplane : ppi->pixelFaces()) {
+  for(const FacePixelPlane *thisplane : fpp0) {
+    for(const FacePixelPlane *otherplane : fpp1) {
       if(thisplane == otherplane) {
 	++npixfaces;
 	planes.push_back(thisplane);
@@ -625,12 +662,12 @@ bool PixelPlaneIntersectionNR::isEquivalent(const PixelPlaneIntersectionNR *ppi)
 
   // Look at all sets of 3 shared planes and check to see if they're
   // degenerate.  If there is a nondegenerate set, then the points
-  // coincide at that point.  If there is no nondegenerate point, then
-  // there must be other, non-shared planes that distinguish the
-  // points, and the points do not coincide.
+  // coincide at the intersection point of the planes.  If there is no
+  // nondegenerate set, then there must be other, non-shared planes
+  // that distinguish the points, and the points do not coincide.
   unsigned int nPlanes = planes.size();
-  for(unsigned int i=0; i<nPlanes; i++) {
-    for(unsigned int j=i+1; j<nPlanes; j++) {
+  for(unsigned int i=0; i<nPlanes-2; i++) {
+    for(unsigned int j=i+1; j<nPlanes-1; j++) {
       for(unsigned int k=j+1; k<nPlanes; k++) {
 	if(planes[i]->nonDegenerate(planes[j], planes[k]))
 	  return true;
@@ -638,33 +675,14 @@ bool PixelPlaneIntersectionNR::isEquivalent(const PixelPlaneIntersectionNR *ppi)
     }
   }
   return false;
-  
-  // for(const HPixelPlane *thisplane : pixelPlanes_)
-  //   for(const HPixelPlane *otherplane : ppi->pixelPlanes()) {
-  //     if(thisplane == otherplane) {
-  // 	++nmatch;
-  // 	break;
-  //     }
-  //   }
-  // if(nmatch >= 3)
-  //   return true;
-  // for(const FacePlane *thisplane : faces_)
-  //   for(const FacePlane *otherplane : ppi->faces()) {
-  //     if(thisplane == otherplane) {
-  // 	++nmatch;
-  // 	break;
-  //     }
-  //   }
-  // if(nmatch >= 3)
-  //   return true;
-  // for(const FacePixelPlane *thisplane : pixelFaces_)
-  //   for(const FacePixelPlane *otherplane : ppi->pixelFaces()) {
-  //     if(thisplane == otherplane) {
-  // 	++nmatch;
-  // 	break;
-  //     }
-  //   }
-  // return nmatch >= 3;
+} // end static isEquiv_
+
+bool PixelPlaneIntersectionNR::isEquivalent(const PixelPlaneIntersectionNR *ppi)
+  const
+
+{
+  return isEquiv_(pixelPlanes_, faces_, pixelFaces_,
+		  ppi->pixelPlanes(), ppi->faces(), ppi->pixelFaces());
 }
 
 bool PixelPlaneIntersectionNR::isEquivalent(const RedundantIntersection *ri)
@@ -673,6 +691,25 @@ bool PixelPlaneIntersectionNR::isEquivalent(const RedundantIntersection *ri)
   return ri->referent()->isEquivalent(this);
 }
 
+void PixelPlaneIntersectionNR::addPlanesToEquivalence(
+					      IsecEquivalenceClass *eqclass)
+{
+  for(const HPixelPlane *plane : pixelPlanes_)
+    eqclass->addPixelPlane(plane);
+  for(const FacePlane *face : faces_)
+    eqclass->addFacePlane(face);
+  for(const FacePixelPlane *fpp : pixelFaces_)
+    eqclass->addFacePixelPlane(fpp);
+}
+
+// bool PixelPlaneIntersectionNR::isInEquivalenceClass(
+// 				    const IsecEquivalenceClass *eqclass)
+//   const
+// {
+//   return isEquiv_(pixelPlanes_, faces_, pixelFaces_,
+// 		  eqclass->pixelPlanes, eqclass->facePlanes,
+// 		  eqclass->pixelFaces);
+// }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -1310,7 +1347,7 @@ static CrossingType combinedCrossing(const PixelPlaneIntersectionNR *fi0,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-SimpleIntersection::SimpleIntersection(const HomogeneityTet *htet,
+SimpleIntersection::SimpleIntersection(HomogeneityTet *htet,
 				       const HPixelPlane *pp0,
 				       const HPixelPlane *pp1,
 				       const PixelBdyLoopSegment &pblseg,
@@ -1365,10 +1402,9 @@ SimpleIntersection *SimpleIntersection::clone() const {
 }
 
 PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
-					const HomogeneityTet *htet,
-					const PixelPlaneIntersection *fi,
+					HomogeneityTet *htet,
+					PixelPlaneIntersection *fi,
 					const PixelPlaneFacet *facet)
-  const
 {
   if(fi)	    // TODO: Why check for null fi?  Is that possible?
     return fi->referent()->mergeWith(htet, this, facet); // double dispatch
@@ -1376,10 +1412,9 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
 }
 
 PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
-						const HomogeneityTet *htet,
-						const SimpleIntersection *fi,
+						HomogeneityTet *htet,
+						SimpleIntersection *fi,
 						const PixelPlaneFacet *facet)
-  const
 {
 #ifdef DEBUG
   if(htet->verbosePlane())
@@ -1419,10 +1454,9 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
 }
 
 PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
-						const HomogeneityTet *htet,
-						const MultiFaceIntersection *fi,
+						HomogeneityTet *htet,
+						MultiFaceIntersection *fi,
 						const PixelPlaneFacet *facet)
-  const
 {
   if(fi->sharedPolySegment(this, facet) == NONE)
     return nullptr;
@@ -1436,10 +1470,9 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
 }
 
 PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
-						const HomogeneityTet *htet,
-						const MultiVSBIntersection *fi,
+						HomogeneityTet *htet,
+						MultiVSBIntersection *fi,
 						const PixelPlaneFacet *facet)
-  const
 {
   PixelPlaneIntersectionNR *merged;
   if(onOnePolySegment(fi, facet))
@@ -1451,10 +1484,9 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
 }
 
 PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
-					const HomogeneityTet *htet,
-					const MultiCornerIntersection *fi,
+					HomogeneityTet *htet,
+					MultiCornerIntersection *fi,
 					const PixelPlaneFacet *facet)
-const
 {
   if(fi->sharedPolySegment(this, facet) == NONE)
     return nullptr;
@@ -1551,7 +1583,7 @@ void SimpleIntersection::print(std::ostream &os) const {
      << ", eq=" << equivalence_ << ")";
 }
 
-PixelPlaneIntersectionNR *newIntersection(const HomogeneityTet *htet,
+PixelPlaneIntersectionNR *newIntersection(HomogeneityTet *htet,
 					  const HPixelPlane *basePlane,
 					  const HPixelPlane *orthoPlane,
 					  const PixelBdyLoopSegment &pblSeg,
@@ -1570,7 +1602,7 @@ PixelPlaneIntersectionNR *newIntersection(const HomogeneityTet *htet,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-MultiFaceIntersection::MultiFaceIntersection(const HomogeneityTet *htet,
+MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
 					     const HPixelPlane *pp0,
 					     const HPixelPlane *pp1,
 					     const PixelBdyLoopSegment &pblseg,
@@ -1588,7 +1620,7 @@ MultiFaceIntersection::MultiFaceIntersection(const HomogeneityTet *htet,
   computeLocation();
 }
 
-MultiFaceIntersection::MultiFaceIntersection(const HomogeneityTet *htet,
+MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
 					     const SimpleIntersection *fi0,
 					     const SimpleIntersection *fi1)
 {
@@ -1606,7 +1638,7 @@ MultiFaceIntersection::MultiFaceIntersection(const HomogeneityTet *htet,
   setLocation(0.5*(fi0->location3D() + fi1->location3D()));
 }
 
-MultiFaceIntersection::MultiFaceIntersection(const HomogeneityTet *htet,
+MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
 					     const SimpleIntersection *si,
 					     const MultiFaceIntersection *mfi)
 {
@@ -1685,10 +1717,9 @@ void MultiFaceIntersection::getPolyEdges(const PixelPlaneFacet *facet,
 }
 
 PixelPlaneIntersectionNR *MultiFaceIntersection::mergeWith(
-					   const HomogeneityTet *htet,
-					   const PixelPlaneIntersection *fi,
+					   HomogeneityTet *htet,
+					   PixelPlaneIntersection *fi,
 					   const PixelPlaneFacet *facet)
-  const
 {
   if(fi)
     return fi->referent()->mergeWith(htet, this, facet); // double dispatch
@@ -1696,20 +1727,18 @@ PixelPlaneIntersectionNR *MultiFaceIntersection::mergeWith(
 }
 
 PixelPlaneIntersectionNR *MultiFaceIntersection::mergeWith(
-						   const HomogeneityTet *htet,
-						   const SimpleIntersection *fi,
+						   HomogeneityTet *htet,
+						   SimpleIntersection *fi,
 						   const PixelPlaneFacet *facet)
-  const
 {
   // SimpleIntersection::mergeWith(MultiFaceIntersection) is equivalent
   return fi->mergeWith(htet, this, facet); 
 }
 
 PixelPlaneIntersectionNR *MultiFaceIntersection::mergeWith(
-					   const HomogeneityTet *htet,
-					   const MultiFaceIntersection *fi,
+					   HomogeneityTet *htet,
+					   MultiFaceIntersection *fi,
 					   const PixelPlaneFacet *facet)
-  const
 {
   if(fi->sharedPolySegment(this, facet) == NONE)
     return nullptr;
@@ -1720,10 +1749,9 @@ PixelPlaneIntersectionNR *MultiFaceIntersection::mergeWith(
 }
 
 PixelPlaneIntersectionNR *MultiFaceIntersection::mergeWith(
-					   const HomogeneityTet *htet,
-					   const MultiVSBIntersection *fi,
+					   HomogeneityTet *htet,
+					   MultiVSBIntersection *fi,
 					   const PixelPlaneFacet *facet)
-  const
 {
   if(fi->sharedPolySegment(this, facet) == NONE)
     return nullptr;
@@ -1734,10 +1762,9 @@ PixelPlaneIntersectionNR *MultiFaceIntersection::mergeWith(
 }
 
 PixelPlaneIntersectionNR *MultiFaceIntersection::mergeWith(
-					   const HomogeneityTet *htet,
-					   const MultiCornerIntersection *fi,
+					   HomogeneityTet *htet,
+					   MultiCornerIntersection *fi,
 					   const PixelPlaneFacet *facet)
-  const
 {
   if(fi->sharedPolySegment(this, facet) == NONE)
     return nullptr;
@@ -1788,7 +1815,7 @@ void MultiFaceIntersection::print(std::ostream &os) const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-MultiVSBIntersection::MultiVSBIntersection(const HomogeneityTet *htet,
+MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
 					   const PixelPlaneFacet *facet,
 					   const SimpleIntersection *fi0,
 					   const SimpleIntersection *fi1)
@@ -1819,7 +1846,7 @@ MultiVSBIntersection::MultiVSBIntersection(const HomogeneityTet *htet,
   computeLocation();
 }
 
-MultiVSBIntersection::MultiVSBIntersection(const HomogeneityTet *htet,
+MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
 #ifdef DEBUG
 					   const PixelPlaneFacet *facet,
 #endif // DEBUG
@@ -1844,10 +1871,9 @@ MultiVSBIntersection *MultiVSBIntersection::clone() const {
 }
 
 PixelPlaneIntersectionNR *MultiVSBIntersection::mergeWith(
-					  const HomogeneityTet *htet,
-					  const PixelPlaneIntersection *fi,
+					  HomogeneityTet *htet,
+					  PixelPlaneIntersection *fi,
 					  const PixelPlaneFacet *facet)
-  const
 {
   if(fi)
     return fi->referent()->mergeWith(htet, this, facet); // double dispatch
@@ -1855,29 +1881,26 @@ PixelPlaneIntersectionNR *MultiVSBIntersection::mergeWith(
 }
 
 PixelPlaneIntersectionNR *MultiVSBIntersection::mergeWith(
-						  const HomogeneityTet *htet,
-						  const SimpleIntersection *fi,
+						  HomogeneityTet *htet,
+						  SimpleIntersection *fi,
 						  const PixelPlaneFacet *facet)
-  const
 {
   // SimpleIntersection::mergeWith(MultiVSBIntersection) is equivalent
   return fi->mergeWith(htet, this, facet);
 }
 
 PixelPlaneIntersectionNR *MultiVSBIntersection::mergeWith(
-					  const HomogeneityTet *htet,
-					  const MultiFaceIntersection *fi,
+					  HomogeneityTet *htet,
+					  MultiFaceIntersection *fi,
 					  const PixelPlaneFacet *facet)
-  const
 {
   return fi->mergeWith(htet, this, facet);
 }
 
 PixelPlaneIntersectionNR *MultiVSBIntersection::mergeWith(
-					  const HomogeneityTet *htet,
-					  const MultiVSBIntersection *fi,
+					  HomogeneityTet *htet,
+					  MultiVSBIntersection *fi,
 					  const PixelPlaneFacet *facet)
-  const
 {
   // Both intersections are on a voxel corner, so they had better be
   // on the same corner. 
@@ -1897,10 +1920,9 @@ PixelPlaneIntersectionNR *MultiVSBIntersection::mergeWith(
 }
 
 PixelPlaneIntersectionNR *MultiVSBIntersection::mergeWith(
-					  const HomogeneityTet *htet,
-					  const MultiCornerIntersection *fi,
+					  HomogeneityTet *htet,
+					  MultiCornerIntersection *fi,
 					  const PixelPlaneFacet *facet)
-  const
 {
   // Both intersections are on a voxel corner, so they had better be
   // on the same corner.  They had also better share a tet face.
@@ -1974,7 +1996,7 @@ void MultiVSBIntersection::print(std::ostream &os) const {
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 MultiCornerIntersection::MultiCornerIntersection(
-					 const HomogeneityTet *htet,
+					 HomogeneityTet *htet,
 					 const PixelPlaneIntersectionNR *fi0,
 					 const PixelPlaneIntersectionNR *fi1)
 {
@@ -1999,10 +2021,9 @@ MultiCornerIntersection *MultiCornerIntersection::clone() const {
 }
 
 PixelPlaneIntersectionNR *MultiCornerIntersection::mergeWith(
-					     const HomogeneityTet *htet,
-					     const PixelPlaneIntersection *fi,
+					     HomogeneityTet *htet,
+					     PixelPlaneIntersection *fi,
 					     const PixelPlaneFacet *facet)
-  const
 {
   if(fi)
     return fi->referent()->mergeWith(htet, this, facet); // double dispatch
@@ -2011,37 +2032,33 @@ PixelPlaneIntersectionNR *MultiCornerIntersection::mergeWith(
 
 
 PixelPlaneIntersectionNR *MultiCornerIntersection::mergeWith(
-					     const HomogeneityTet *htet,
-					     const SimpleIntersection *fi,
+					     HomogeneityTet *htet,
+					     SimpleIntersection *fi,
 					     const PixelPlaneFacet *facet)
-  const
 {
   return fi->mergeWith(htet, this, facet);
 }
 
 PixelPlaneIntersectionNR *MultiCornerIntersection::mergeWith(
-					     const HomogeneityTet *htet,
-					     const MultiFaceIntersection *fi,
+					     HomogeneityTet *htet,
+					     MultiFaceIntersection *fi,
 					     const PixelPlaneFacet *facet)
-const
 {
   return fi->mergeWith(htet, this, facet);
 }
 
 PixelPlaneIntersectionNR *MultiCornerIntersection::mergeWith(
-					     const HomogeneityTet *htet,
-					     const MultiVSBIntersection *fi,
+					     HomogeneityTet *htet,
+					     MultiVSBIntersection *fi,
 					     const PixelPlaneFacet *facet)
-const
 {
   return fi->mergeWith(htet, this, facet);
 }
 
 PixelPlaneIntersectionNR *MultiCornerIntersection::mergeWith(
-					     const HomogeneityTet *htet,
-					     const MultiCornerIntersection *fi,
+					     HomogeneityTet *htet,
+					     MultiCornerIntersection *fi,
 					     const PixelPlaneFacet *facet)
-  const
 {
   // This really can't happen unless the intersections are already at
   // the same point.  The point is determined by the voxel corner, so
@@ -2143,7 +2160,7 @@ void TetEdgeIntersection::print(std::ostream &os) const {
 }
 
 
-TetNodeIntersection::TetNodeIntersection(const HomogeneityTet *htet,
+TetNodeIntersection::TetNodeIntersection(HomogeneityTet *htet,
 					 const HPixelPlane *pp,
 					 unsigned int node)
 {
@@ -2216,7 +2233,7 @@ void TriplePixelPlaneIntersection::print(std::ostream &os) const {
 }
 
 unsigned int TriplePixelPlaneIntersection::findFaceEdge(unsigned int,
-							const HomogeneityTet*)
+							HomogeneityTet*)
   const
 {
   return NONE;
@@ -2245,6 +2262,55 @@ double TriplePixelPlaneIntersection::getPolyFrac(unsigned int,
   const
 {
   throw ErrProgrammingError("This should not be called.", __FILE__, __LINE__);
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+IsecEquivalenceClass::IsecEquivalenceClass(PlaneIntersection *pi)
+{
+  addIntersection(pi);
+}
+
+void IsecEquivalenceClass::addIntersection(PlaneIntersection *pi) {
+  pi->setEquivalence(this);
+  intersections.insert(pi);
+  pi->addPlanesToEquivalence(this);
+}
+
+void IsecEquivalenceClass::removeIntersection(PlaneIntersection *pi) {
+  // This does *not* remove the planes in *pi from the sets of planes
+  // that define this equivalence class.  The point being deleted, but
+  // that doesn't change the fact that its planes meet at the common
+  // point for the class.
+  pi->setEquivalence(nullptr);
+  intersections.erase(pi);
+}
+
+// bool IsecEquivalenceClass::contains(const PlaneIntersection *pi) const {
+//   return pi->isInEquivalenceClass(this);
+// }
+
+void IsecEquivalenceClass::addPixelPlane(const HPixelPlane *pp) {
+  pixelPlanes.insert(pp);
+}
+
+void IsecEquivalenceClass::addFacePlane(const FacePlane *fp) {
+  facePlanes.insert(fp);
+}
+
+void IsecEquivalenceClass::addFacePixelPlane(const FacePixelPlane *fpp) {
+  pixelFaces.insert(fpp);
+}
+ 
+void IsecEquivalenceClass::merge(IsecEquivalenceClass *other) {
+  pixelPlanes.insert(other->pixelPlanes.begin(), other->pixelPlanes.end());
+  facePlanes.insert(other->facePlanes.begin(), other->facePlanes.end());
+  pixelFaces.insert(other->pixelFaces.begin(), other->pixelFaces.end());
+  intersections.insert(other->intersections.begin(),
+		       other->intersections.end());
+  for(PlaneIntersection *pi : other->intersections) {
+    pi->setEquivalence(this);
+  }
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
