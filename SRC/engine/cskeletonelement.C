@@ -784,7 +784,7 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
 #ifdef DEBUG
   // bool verbose = true;
   // bool verbose = false;
-  bool verbose = index==21;
+  bool verbose = index==51;
   // bool verbose = uid==26747;
   if(verbose)
     oofcerr << "CSkeletonElement::categoryVolumes: " << *this
@@ -1597,7 +1597,11 @@ void CSkeletonElement::drawVoxelCategoryIntersection(LineSegmentLayer *layer,
   const CMicrostructure *ms = skel->getMicrostructure();
   ms->categorizeIfNecessary();
   const VoxelSetBoundary *vsb = ms->getCategoryBdys()[category];
-  HomogeneityTet htet(this, ms, true);
+  HomogeneityTet htet(this, ms
+#ifdef DEBUG
+		      , false // verbose?
+#endif // DEBUG
+		      );
   FacetMap2D pixelplanefacets = htet.findPixelPlaneFacets(category, *vsb);
   FaceFacets facefacets = htet.findFaceFacets(category, pixelplanefacets);
   std::vector<Coord3D> startPts;
