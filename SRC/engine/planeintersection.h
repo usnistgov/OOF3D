@@ -95,7 +95,7 @@ class SingleVSBbase;
 
 class PlaneIntersection {
 protected:
-  mutable IsecEquivalenceClass *equivalence_;
+  IsecEquivalenceClass *equivalence_;
 public:
   PlaneIntersection()
     : equivalence_(nullptr)
@@ -125,8 +125,8 @@ public:
   virtual bool samePixelPlanes(const PixelPlaneIntersectionNR*) const = 0;
   virtual bool samePixelPlanes(const RedundantIntersection*) const = 0;
 
-  IsecEquivalenceClass *equivalence() const { return equivalence_; }
-  void setEquivalence(IsecEquivalenceClass *e) const { equivalence_ = e; }
+  virtual IsecEquivalenceClass *equivalence() const { return equivalence_; }
+  virtual void setEquivalence(IsecEquivalenceClass *e);
 
   // Which edge of the given tet face is this intersection on?  May
   // return NONE.
@@ -960,6 +960,12 @@ public:
   void update(PixelPlaneIntersection *ppi) {
     referent_ = ppi->referent();
   }
+  virtual IsecEquivalenceClass *equivalence() const {
+    return referent_->equivalence();
+  }
+  virtual void setEquivalence(IsecEquivalenceClass *e) {
+    referent_->setEquivalence(e);
+  }
   virtual void locateOnPolygonEdge(std::vector<PolyEdgeIntersections>&,
 				   const PixelPlaneFacet*) const {}
   // virtual bool onSameLoopSegment(const PixelPlaneIntersection *ppi) const {
@@ -1058,8 +1064,16 @@ private:
   FacePlaneSet facePlanes;
   FacePixelPlaneSet pixelFaces;
   std::set<PlaneIntersection*> intersections;
+#ifdef DEBUG
+  bool verbose;
+#endif	// DEBUG
 public:
-  IsecEquivalenceClass(PlaneIntersection*);
+  IsecEquivalenceClass(PlaneIntersection*
+#ifdef DEBUG
+		       , bool
+#endif // DEBUG
+		       );
+  ~IsecEquivalenceClass();
   void addIntersection(PlaneIntersection*);
   void removeIntersection(PlaneIntersection*);
   // bool contains(PlaneIntersection*) const;
@@ -1070,12 +1084,15 @@ public:
   void addPixelPlane(const HPixelPlane*);
   void addFacePlane(const FacePlane*);
   void addFacePixelPlane(const FacePixelPlane*);
-    friend class TripleFaceIntersection;
+  friend class TripleFaceIntersection;
   friend class PixelPlaneIntersectionNR;
+  friend std::ostream &operator<<(std::ostream&, const IsecEquivalenceClass&);
 };
+
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 std::ostream &operator<<(std::ostream&, const CrossingType);
+std::ostream &operator<<(std::ostream&, const IsecEquivalenceClass&);
 
 #endif // PLANEINTERSECTION_H

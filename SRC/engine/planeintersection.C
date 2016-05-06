@@ -26,6 +26,12 @@ BarycentricCoord PlaneIntersection::baryCoord(HomogeneityTet *htet) const
   return htet->getBarycentricCoord(location3D());
 }
 
+void PlaneIntersection::setEquivalence(IsecEquivalenceClass *e) {
+  equivalence_ = e;
+  if(e != nullptr)
+    e->addIntersection(this);
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // TripleFaceIntersection is the intersection of three tetrahedron
@@ -2266,22 +2272,40 @@ double TriplePixelPlaneIntersection::getPolyFrac(unsigned int,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-IsecEquivalenceClass::IsecEquivalenceClass(PlaneIntersection *pi)
+IsecEquivalenceClass::IsecEquivalenceClass(PlaneIntersection *pi
+#ifdef DEBUG
+					   , bool verbose
+#endif // DEBUG
+					   )
+#ifdef DEBUG
+  : verbose(verbose)
+#endif // DEBUG
 {
   addIntersection(pi);
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "IsecEquivalenceClass::ctor: " << this << " " << *this
+// 	    << std::endl;
+// #endif	// DEBUG
+}
+
+IsecEquivalenceClass::~IsecEquivalenceClass() {
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "IsecEquivalenceClass::dtor: " << this << std::endl;
+// #endif // DEBUG
 }
 
 void IsecEquivalenceClass::addIntersection(PlaneIntersection *pi) {
-  pi->setEquivalence(this);
   intersections.insert(pi);
   pi->addPlanesToEquivalence(this);
 }
 
 void IsecEquivalenceClass::removeIntersection(PlaneIntersection *pi) {
   // This does *not* remove the planes in *pi from the sets of planes
-  // that define this equivalence class.  The point being deleted, but
-  // that doesn't change the fact that its planes meet at the common
-  // point for the class.
+  // that define this equivalence class.  The point is being deleted,
+  // but that doesn't change the fact that its planes meet at the
+  // common point for the class.
   pi->setEquivalence(nullptr);
   intersections.erase(pi);
 }
@@ -2303,14 +2327,39 @@ void IsecEquivalenceClass::addFacePixelPlane(const FacePixelPlane *fpp) {
 }
  
 void IsecEquivalenceClass::merge(IsecEquivalenceClass *other) {
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "IsecEquivalenceClass::merge: this=" << this << " " << *this
+// 	    << " other=" << other << " " << *other << std::endl;
+// #endif // DEBUG
   pixelPlanes.insert(other->pixelPlanes.begin(), other->pixelPlanes.end());
   facePlanes.insert(other->facePlanes.begin(), other->facePlanes.end());
   pixelFaces.insert(other->pixelFaces.begin(), other->pixelFaces.end());
-  intersections.insert(other->intersections.begin(),
-		       other->intersections.end());
   for(PlaneIntersection *pi : other->intersections) {
+// #ifdef DEBUG
+//     oofcerr << "IsecEquivalenceClass::merge: changing equivalence_ in "
+// 	    << pi << " " << *pi << std::endl;
+// #endif // DEBUG
     pi->setEquivalence(this);
   }
+  intersections.insert(other->intersections.begin(),
+		       other->intersections.end());
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "IsecEquivalenceClass::merge: after merge, this=" << *this
+// 	    << std::endl;
+// #endif // DEBUG
+}
+
+std::ostream &operator<<(std::ostream &os, const IsecEquivalenceClass &eqclass)
+{
+  for(const HPixelPlane *pp : eqclass.pixelPlanes)
+    os << pp->shortName();
+  for(const FacePlane *fp : eqclass.facePlanes)
+    os << fp->shortName();
+  for(const FacePixelPlane *fpp : eqclass.pixelFaces)
+    os << fpp->shortName();
+  return os;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

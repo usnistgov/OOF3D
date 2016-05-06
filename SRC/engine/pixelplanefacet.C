@@ -16,6 +16,7 @@
 
 #include "common/printvec.h"
 #include "common/setutils.h"
+#include "common/tostring.h"
 #include "engine/cskeletonelement.h"
 #include "engine/homogeneitytet.h"
 #include "engine/pixelplanefacet.h"
@@ -40,6 +41,19 @@ void FacePlane::print(std::ostream &os) const {
 void FacePixelPlane::print(std::ostream &os) const {
   PixelPlane::print(os);
   os << " (face=" << face() << ")";
+}
+
+std::string HPixelPlane::shortName() const {
+  return ("XYZ"[direction()] + to_string(normalOffset()) +
+	  (normalSign() == 1 ? "+" : "-"));
+}
+
+std::string FacePlane::shortName() const {
+  return "F" + to_string(face_);
+}
+
+std::string FacePixelPlane::shortName() const {
+  return "FP" + to_string(face());
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1008,9 +1022,8 @@ void PixelPlaneFacet::replaceIntersection(PixelPlaneIntersection *oldPt,
 {
   // When an intersection is replaced, any RedundantIntersections that
   // refer to the old intersection have to be updated to refer to the
-  // new one.  There aren't going to be a lot of
-  // RedundantIntersections, so there's no need for a sophisticated
-  // search here, probably.
+  // new one.  There aren't going to be a lot of such intersections,
+  // so there's no need for a sophisticated search here, probably.
   for(RedundantIntersection *ri : redundantIntersections) {
     if(ri->referent() == oldPt)
       ri->update(newPt);

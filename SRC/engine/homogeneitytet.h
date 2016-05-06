@@ -163,6 +163,10 @@ private:
   std::set<PixelPlaneIntersectionNR*> extraPoints;
 
   // Keep track of which PlaneIntersections are equivalent to others.
+  // This is a set of pointers to IsecEquivalenceClasses instead of a
+  // set of IsecEquivalenceClasses because intersections store
+  // pointers to their equivalence classes.  The addresses of objects
+  // in a set might change.
   std::set<IsecEquivalenceClass*> equivalences;
 
   // If face f lies in a pixel plane, then coincidentPixelPlanes[f] is

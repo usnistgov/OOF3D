@@ -49,9 +49,10 @@ bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
   // arguments for each plane are {direction, offset, normal}.
   // TODO: Set this at run time via menu commands?
   static std::set<HPixelPlane> planes({
-      // {1, 13, -1},
-      // 	{2, 18, -1}
-      {0, NONE, 1} // use this to show no planes
+      {0, 11, -1},
+	{1, 5, 1},
+	  {2, 11, 1}
+      // {0, NONE, 1} // use this to show no planes
     });
   return verbose && (planes.empty() || planes.count(*pixplane) == 1);
 }
@@ -385,32 +386,36 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
   if(equivClass0 == nullptr) {
     if(equivClass1 == nullptr) {
       // Neither point is in an equivalence class.  Construct one.
-      IsecEquivalenceClass *eqclass = new IsecEquivalenceClass(merged);
+      IsecEquivalenceClass *eqclass = new IsecEquivalenceClass(merged
+#ifdef DEBUG
+							       , verbose
+#endif // DEBUG
+							       );
       equivalences.insert(eqclass);
-      eqclass->addIntersection(point0); // TODO: Is this necessary?
-      eqclass->addIntersection(point1); // TODO: Is this necessary?
+      point0->setEquivalence(eqclass);
+      point1->setEquivalence(eqclass);
     }
     else {
       // Point 1 is already in an equivalence class but point 0 is not.
-      equivClass1->addIntersection(merged);
-      equivClass1->addIntersection(point0); // TODO: Is this necessary?
+      point0->setEquivalence(equivClass1);
+      merged->setEquivalence(equivClass1);
     }
   }
   else {
     // Point 0 is already in an equivalence class
     if(equivClass1 == nullptr) {
-      equivClass0->addIntersection(merged);
-      equivClass0->addIntersection(point1); // TODO: Is this necessary?
+      point1->setEquivalence(equivClass0);
+      merged->setEquivalence(equivClass0);
     }
     else {
       // Both points are in equivalence classes
       if(equivClass0 == equivClass1) {
-	equivClass0->addIntersection(merged);
+	merged->setEquivalence(equivClass0);
       }
       else {
-	// The points are in different equivalence classes.  Merge them.
+	// The points are in different equivalence classes.  Merge the classes.
 	equivClass0->merge(equivClass1); // Resets all pointers to equivClass1.
-	equivClass0->addIntersection(merged);
+	merged->setEquivalence(equivClass0);
 	equivalences.erase(equivClass1);
 	delete equivClass1;
       }
@@ -421,57 +426,85 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
 void HomogeneityTet::checkEquiv(PlaneIntersection *point0,
 				PlaneIntersection *point1)
 {
-#ifdef DEBUG
-  if(verboseplane) {
-    oofcerr << "HomogeneityTet::checkEquiv: point0=" << point0 << std::endl;
-    oofcerr << "HomogeneityTet::checkEquiv: point1=" << point1 << std::endl;
-  }
-#endif // DEBUG
   IsecEquivalenceClass *equivClass0 = point0->equivalence();
   IsecEquivalenceClass *equivClass1 = point1->equivalence();
   
   if(equivClass0 != nullptr && equivClass0 == equivClass1) {
-    // Already in the same equivalence class.
+// #ifdef DEBUG
+//     if(verboseface)
+//       oofcerr << "HomogeneityTet::checkEquiv: already in same class"
+// 	      << std::endl;
+// #endif // DEBUG
     return;
   }
 
   if(!point0->isEquivalent(point1)) {
     // Points aren't equivalent.
+// #ifdef DEBUG
+//     if(verboseface)
+//       oofcerr << "HomogeneityTet::checkEquiv: not equivalent"
+// 	      << std::endl;
+// #endif // DEBUG
     return;
   }
+
+#ifdef DEBUG
+  if(verboseface) {
+    oofcerr << "HomogeneityTet::checkEquiv: point0=" << point0 << " "
+	    << *point0 << std::endl;
+    oofcerr << "HomogeneityTet::checkEquiv: point1=" << point1 << " "
+	    << *point1 << std::endl;
+  }
+  OOFcerrIndent indent(3);
+#endif // DEBUG
 
   if(equivClass0 == nullptr) {
     if(equivClass1 == nullptr) {
       // Equivalent, but no class exists yet for either point
+      IsecEquivalenceClass *eqclass = new IsecEquivalenceClass(point0
 #ifdef DEBUG
-      if(verboseplane) {
-	oofcerr << "HomogeneityTet::checkEquiv: no classes" << std::endl;
-      }
+							       , verbose
 #endif // DEBUG
-      IsecEquivalenceClass *eqclass = new IsecEquivalenceClass(point0);
+							       );
       equivalences.insert(eqclass);
-      eqclass->addIntersection(point0);
-      eqclass->addIntersection(point1);
+      point0->setEquivalence(eqclass);
+      point1->setEquivalence(eqclass);
 #ifdef DEBUG
-      if(verboseplane)
-	oofcerr << "HomogeneityTet::checkEquiv: created new class" << std::endl;
+      if(verboseface)
+	oofcerr << "HomogeneityTet::checkEquiv: created new class:"
+		<< *eqclass << std::endl;
 #endif // DEBUG
     }
     else {
       // point 1 is in an equivalence class but point 0 is not
-      equivClass1->addIntersection(point0);
+      point0->setEquivalence(equivClass1);
+#ifdef DEBUG
+      if(verboseface)
+	oofcerr << "HomogeneityTet::checkEquiv: added pt0 to equivClass1 "
+		<< *equivClass1 << std::endl;
+#endif // DEBUG
     }
   }	 // end if equivClass0 == nullptr
   else {
     // point 0 is already in an equivalence class
     if(equivClass1 == nullptr) {
-      equivClass0->addIntersection(point1);
+      point1->setEquivalence(equivClass0);
+#ifdef DEBUG
+      if(verboseface)
+	oofcerr << "HomogeneityTet::checkEquiv: added pt1 to equivClass0 "
+		<< *equivClass0 << std::endl;
+#endif // DEBUG
     }
     else {
       // Both points are already in equivalence classes.  Merge the classes.
       equivClass0->merge(equivClass1);
       equivalences.erase(equivClass1);
       delete equivClass1;
+#ifdef DEBUG
+      if(verboseface)
+	oofcerr << "HomogeneityTet::checkEquiv: merged classes "
+		<< *equivClass0 << std::endl;
+#endif // DEBUG
     }
   }
 } // end HomogeneityTet::checkEquiv
@@ -1304,7 +1337,7 @@ void HomogeneityTet::doFindPixelPlaneFacets(
     }
     if(homogeneous || facetarea < 0.0) {
 #ifdef DEBUG
-      if(verbose)
+      if(verboseplane)
 	oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
 		<< "adding entire perimeter, pixplane=" << *pixplane
 		<< std::endl;
@@ -1680,10 +1713,15 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 		    std::vector<LooseEndMap>(NUM_TET_FACE_EDGES));
 
   std::vector<StrandedPoint> strandedPoints;
-  
+
+  // Loop over all faces that aren't also pixel planes.
   for(unsigned int face=0; face<NUM_TET_FACES; face++) {
-    verboseface = verboseFace_(verbosecategory, face);
     if(coincidentPixelPlanes[face] == nullptr) {
+
+#ifdef DEBUG
+    verboseface = verboseFace_(verbosecategory, face);
+#endif // DEBUG
+    
       FaceFacet &facet = faceFacets[face];
       std::vector<LooseEndMap> &looseEnds = looseEndCatalog[face];
 	    
@@ -1710,44 +1748,14 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
       for(auto seg=facet.begin(); seg!=facet.end(); ++seg) {
 	// Make sure equivalence classes are up to date by comparing
 	// to previously found points.
-#ifdef DEBUG
-	if(verboseface) {
-	  oofcerr << "HomogeneityTet::findFaceFacets: seg=" << *(*seg)
-		  << std::endl;
-	}
-	OOFcerrIndent indent(2);
-#endif // DEBUG
 	for(FaceEdgeIntersection &fei : startPoints) {
-#ifdef DEBUG
-	  if(verboseface) {
-	    oofcerr << "HomogeneityTet::findFaceFacets: 1 fei= " << fei
-		    << std::endl;
-	    oofcerr << "HomogeneityTet::findFaceFacets:  startpt="
-		    << (*seg)->startPt() << std::endl;
-	  }
-#endif // DEBUG
 	  checkEquiv(fei.corner(), (*seg)->startPt());
-#ifdef DEBUG
-	  if(verboseface)
-	    oofcerr << "HomogeneityTet::findFaceFacets:  endpt="
-		    << (*seg)->endPt() << std::endl;
-#endif // DEBUG
 	  checkEquiv(fei.corner(), (*seg)->endPt());
 	}
 	for(FaceEdgeIntersection &fei : endPoints) {
-#ifdef DEBUG
-	  if(verboseface)
-	    oofcerr << "HomogeneityTet::findFaceFacets: 2 fei= " << fei
-		    << std::endl;
-#endif // DEBUG
 	  checkEquiv(fei.corner(), (*seg)->startPt());
 	  checkEquiv(fei.corner(), (*seg)->endPt());
 	}
-#ifdef DEBUG
-	if(verboseface)
-	  oofcerr << "HomogeneityTet::findFaceFacets: "
-		  << "constructing FaceEdgeIntersections" << std::endl;
-#endif // DEBUG
 	// Construct FaceEdgeIntersection objects in-place.
 	startPoints.emplace_back((*seg)->startPt(), *seg, true);
 	endPoints.emplace_back((*seg)->endPt(), *seg, false);
