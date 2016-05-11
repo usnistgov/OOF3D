@@ -276,7 +276,7 @@ public:
   Coord3D faceAreaVector(unsigned int f) const { return faceAreaVectors[f]; }
   ICoord3D testVoxel(unsigned int f);
 
-  void removeEquivalence(PlaneIntersection*) const;
+  // void removeEquivalence(PlaneIntersection*) const;
   
 #ifdef DEBUG
 private:
@@ -294,6 +294,10 @@ public:
   bool verbosePlane() const { return verboseplane; }
   bool verboseFace() const { return verboseface; }
   void printLooseEnds(unsigned int, const LooseEndMap&) const;
+
+  static std::set<PlaneIntersection*> allIntersections;
+  bool verify();
+  void dumpEquivalences();
 #endif
 };
 

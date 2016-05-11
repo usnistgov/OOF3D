@@ -1,6 +1,7 @@
 *.pyc
 *.o
 *.pyo
+\#*\#
 SRC/SWIG3D/*
 build/
 builddir-*

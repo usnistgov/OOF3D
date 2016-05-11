@@ -63,7 +63,7 @@ class FacePlane : public virtual HPlane {
 private:
   // Planes are compared by pointer, so we don't want them to be copied.
   FacePlane(const FacePlane&) = delete;
-  FacePlane(const FacePlane&&) = delete;
+  FacePlane(FacePlane&&) = delete;
 protected:
   const unsigned int face_;
 public:
@@ -85,7 +85,7 @@ public:
 class FacePixelPlane : public virtual HPixelPlane, public virtual FacePlane {
 private:
   FacePixelPlane(const FacePixelPlane&) = delete;
-  FacePixelPlane(const FacePixelPlane&&) = delete;
+  FacePixelPlane(FacePixelPlane&&) = delete;
 public:
   FacePixelPlane(unsigned int dir, int offst, int nrml, unsigned int face)
     : Plane(axisVector(dir)*nrml, offst*nrml, false),

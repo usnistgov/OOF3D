@@ -97,13 +97,8 @@ class PlaneIntersection {
 protected:
   IsecEquivalenceClass *equivalence_;
 public:
-  PlaneIntersection()
-    : equivalence_(nullptr)
-#ifdef DEBUG
-    , verbose(false)
-#endif // DEBUG
-  {}
-  virtual ~PlaneIntersection() {}
+  PlaneIntersection();
+  virtual ~PlaneIntersection();
   virtual PlaneIntersection *clone() const = 0;
 
   virtual Coord3D location3D() const = 0;
@@ -127,6 +122,7 @@ public:
 
   virtual IsecEquivalenceClass *equivalence() const { return equivalence_; }
   virtual void setEquivalence(IsecEquivalenceClass *e);
+  void removeEquivalence();
 
   // Which edge of the given tet face is this intersection on?  May
   // return NONE.
@@ -134,9 +130,11 @@ public:
 
   virtual BarycentricCoord baryCoord(HomogeneityTet*) const;
   virtual void print(std::ostream&) const = 0;
+  virtual std::string shortName() const = 0;
 
 #ifdef DEBUG
   mutable bool verbose;
+  bool verify();
 #endif // DEBUG
 };
 
@@ -181,6 +179,7 @@ public:
   virtual bool samePixelPlanes(const RedundantIntersection*) const {
     return false;
   }
+  virtual std::string shortName() const;
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -446,6 +445,8 @@ public:
   virtual bool samePixelPlanes(const TripleFaceIntersection*) const;
   virtual bool samePixelPlanes(const PixelPlaneIntersectionNR*) const;
   virtual bool samePixelPlanes(const RedundantIntersection*) const;
+
+  std::string shortName() const;
 
 }; // end class PixelPlaneIntersectionNR
 
@@ -854,7 +855,8 @@ class TetEdgeIntersection : public TetIntersection {
 public:
   TetEdgeIntersection(const FacePlane*, const FacePlane*, const HPixelPlane*);
   virtual TetEdgeIntersection *clone() const;
-  virtual void print(std::ostream&) const;  
+  virtual void print(std::ostream&) const;
+  virtual std::string shortName() const;
 };
 
 // NodeIntersection is the intersection of a tet node, defined by
@@ -868,7 +870,8 @@ public:
   TetNodeIntersection(HomogeneityTet*, const HPixelPlane*,
 		      unsigned int node);
   virtual TetNodeIntersection *clone() const;
-  virtual void print(std::ostream&) const;  
+  virtual void print(std::ostream&) const;
+  virtual std::string shortName() const;
 };
 
 
@@ -939,6 +942,7 @@ public:
 
 
   virtual void print(std::ostream&) const;
+  virtual std::string shortName() const ;
 }; // end class TriplePixelPlaneIntersection
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1047,6 +1051,7 @@ public:
   }
 
   virtual void print(std::ostream&) const;
+  virtual std::string shortName() const;
 }; // end class RedundantIntersection
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1076,8 +1081,9 @@ public:
   ~IsecEquivalenceClass();
   void addIntersection(PlaneIntersection*);
   void removeIntersection(PlaneIntersection*);
-  // bool contains(PlaneIntersection*) const;
+  bool contains(PlaneIntersection*) const;
   void merge(IsecEquivalenceClass*);
+  int size() const { return intersections.size(); }
 
   // The add*Plane methods are used by the
   // PlaneIntersection::addPlanesToEquivalence methods.
@@ -1087,6 +1093,11 @@ public:
   friend class TripleFaceIntersection;
   friend class PixelPlaneIntersectionNR;
   friend std::ostream &operator<<(std::ostream&, const IsecEquivalenceClass&);
+
+#ifdef DEBUG
+  bool verify();
+  void dump();
+#endif // DEBUG
 };
 
 

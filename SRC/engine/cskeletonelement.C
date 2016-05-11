@@ -784,7 +784,7 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
 #ifdef DEBUG
   // bool verbose = true;
   // bool verbose = false;
-  bool verbose = index==51;
+  bool verbose = index==195;
   // bool verbose = uid==26747;
   if(verbose)
     oofcerr << "CSkeletonElement::categoryVolumes: " << *this
@@ -823,7 +823,24 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
       if(vsb->bbox().intersects(homtet.bounds())) {
 	FacetMap2D pixelplanefacets =
 	  homtet.findPixelPlaneFacets(cat, *vsb);
+#ifdef DEBUG
+	oofcerr << "CSkeletonElement::categoryVolumes: "
+		<< "after findPixelPlaneFacets cat=" << cat << std::endl;
+	homtet.dumpEquivalences();
+	oofcerr << "CSkeletonElement::categoryVolumes: "
+		<< "done with dumpEquivalences" << std::endl;
+	if(!homtet.verify()) {
+	  throw ErrProgrammingError("Verification failed", __FILE__, __LINE__);
+	}
+	oofcerr << "CSkeletonElement::categoryVolumes: calling findFaceFacets"
+		<< std::endl;
+#endif // DEBUG
 	FaceFacets facefacets = homtet.findFaceFacets(cat, pixelplanefacets);
+#ifdef DEBUG
+	if(verbose)
+	  oofcerr << "CSkeletonElement::categoryVolumes: "
+		  << "calling intersectionVolume" << std::endl;
+#endif // DEBUG
 	double v = homtet.intersectionVolume(pixelplanefacets, facefacets);
 	(*result)[cat] = v;
 	totalVol += v;

@@ -1030,7 +1030,7 @@ void PixelPlaneFacet::replaceIntersection(PixelPlaneIntersection *oldPt,
   }
   
   oldPt->getEdge()->replacePoint(oldPt, newPt);
-  htet->removeEquivalence(oldPt);
+  // htet->removeEquivalence(oldPt);
   delete oldPt;
 }
 
