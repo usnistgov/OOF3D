@@ -1,8 +1,4 @@
 #!/usr/bin/env python
-# $RCSfile: oof2-build,v $
-# $Revision: 1.35.2.2 $
-# $Author: fyc $
-# $Date: 2013/05/29 15:48:29 $
 
 # This script builds the various oof2 versions used by the developers.
 # It shouldn't be necessary for anyone else to use it.
@@ -45,7 +41,7 @@
 #  Set your LD_LIBRARY_PATH to include $OOFINSTALL/lib.  This isn't
 #  necessary on OS X.
 
-import sys, string, os
+import sys, string, os, subprocess
 
 pyversion = string.join(map(str, sys.version_info[:2]),".")
 
@@ -54,12 +50,18 @@ pyversion = string.join(map(str, sys.version_info[:2]),".")
 #   devel  (must be followed by an integer devel level)
 #   debug
 
-# To make it possible to build OOF2 on different cvs branches, the
+# To make it possible to build OOF2 on different git branches, the
 # output for the branches needs to go into distinct directories.  We
-# derive the directory names from the cvs tag.  The following line
-# looks like a constant string, but it's actually created by cvs, so
-# don't edit it!
-cvstag = "$Name: threePoint0-7-13-08 $"[7:-2].strip()
+# derive the directory names from the git branch name. 
+proc = subprocess.Popen(['git', 'symbolic-ref', '--short', 'HEAD'],
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+stdoutdata, stderrdata = proc.communicate()
+if stderrdata:
+    print "*** Failed to get git branch name!", stderrdata.strip()
+    branchtag = ""
+else:
+    branchtag = stdoutdata.strip()
+
 
 # To make it possible to build different versions of the *same* branch
 # of OOF2 (for example, one that is up-to-date with cvs and one that
@@ -119,11 +121,11 @@ if not installdir:
     installdir = os.getenv("HOME")
 
 stowdir = os.path.join(installdir, 'stow')
-builddir =  "-".join(["builddir", cvstag, build_type])
+builddir =  "-".join(["builddir", branchtag, build_type])
 if localdir:
-    stowsubdir = "-".join(["oof2", cvstag, localdir, build_type, pyversion])
+    stowsubdir = "-".join(["oof2", branchtag, localdir, build_type, pyversion])
 else:
-    stowsubdir = "-".join(["oof2", cvstag, build_type, pyversion])
+    stowsubdir = "-".join(["oof2", branchtag, build_type, pyversion])
 if build_type in ['dist3d', 'debug3d', 'profile3d']:
     laststowfile = os.path.join(stowdir, '.last_oof3d_install')
 else:
