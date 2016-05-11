@@ -243,6 +243,9 @@ public:
   // Check if two points are equivalent, and update the equivalence
   // class data if they are.
   void checkEquiv(PlaneIntersection*, PlaneIntersection*);
+  // Check to see if a point should be in an existing equivalence
+  // class, and put it in if it's necessary.
+  void checkEquiv(PlaneIntersection*);
   // Two points are merging to form a third.  Combine the equivalence
   // classes of the first two, and add the third.
   void mergeEquiv(PlaneIntersection*, PlaneIntersection*, PlaneIntersection*);

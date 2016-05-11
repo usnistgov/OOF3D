@@ -184,19 +184,16 @@ void TripleFaceIntersection::addPlanesToEquivalence(
   }
 }
 
-// bool TripleFaceIntersection::isInEquivalenceClass(
-// 				  const IsecEquivalenceClass *eqclass)
-//   const
-// {
-//   unsigned int nfaces = 0;
-//   for(const FacePlane *face : faces_) {
-//     if(eqclass->facePlanes.count(face) > 0)
-//       nfaces++;
-//     else if(eqclass->pixelFaces.count(face) > 0)
-//       nfaces++;
-//   }
-//   return nfaces == 3;
-// }
+bool TripleFaceIntersection::isEquivalent(const IsecEquivalenceClass *eqclass)
+  const
+{
+  unsigned int nfaces = 0;
+  for(const FacePlane *face : faces_) {
+    if(face->isInEquivalence(eqclass))
+      nfaces++;
+  }
+  return nfaces == 3;
+}
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -663,15 +660,10 @@ bool PixelPlaneIntersectionNR::isEquivalent(const TripleFaceIntersection *tfi)
   return nmatch == 3;
 }
 
-// isEquiv_ is the guts of PixelPlaneIntersectionNR::isEquivalent()
-// and PixelPlaneIntersectionNR::isInEquivalenceClass().  It
-// determines whether two sets of planes (each made of pixel planes,
-// face planes, and face pixel planes) have three nondegenerate planes
-// in common.
-
-// TODO: isInEquivalenceClass may not be needed.  Put isEquiv_ back
-// inside of
-// PixelPlaneIntersectionNR::isEquivalent(PixelPlaneIntersectionNR).
+// isEquiv_ is the guts of the two versions of
+// PixelPlaneIntersectionNR::isEquivalent().  It determines whether
+// two sets of planes (each made of pixel planes, face planes, and
+// face pixel planes) have three nondegenerate planes in common.
 
 static bool isEquiv_(const PixelPlaneSet &pp0, const FacePlaneSet &fp0,
 		     const FacePixelPlaneSet &fpp0,
@@ -786,14 +778,13 @@ void PixelPlaneIntersectionNR::addPlanesToEquivalence(
 #endif // DEBUG
 }
 
-// bool PixelPlaneIntersectionNR::isInEquivalenceClass(
-// 				    const IsecEquivalenceClass *eqclass)
-//   const
-// {
-//   return isEquiv_(pixelPlanes_, faces_, pixelFaces_,
-// 		  eqclass->pixelPlanes, eqclass->facePlanes,
-// 		  eqclass->pixelFaces);
-// }
+bool PixelPlaneIntersectionNR::isEquivalent(const IsecEquivalenceClass *eqclass)
+  const
+{
+  return isEquiv_(pixelPlanes_, faces_, pixelFaces_,
+		  eqclass->pixelPlanes, eqclass->facePlanes,
+		  eqclass->pixelFaces);
+}
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 

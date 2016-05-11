@@ -66,6 +66,10 @@ void HPixelPlane::addToIntersection(PixelPlaneIntersectionNR *fi) const {
   fi->pixelPlanes().insert(this);
 }
 
+bool HPixelPlane::isInEquivalence(const IsecEquivalenceClass *eqclass) const {
+  return eqclass->pixelPlanes.count(this) > 0;
+}
+
 void HPixelPlane::addToEquivalence(IsecEquivalenceClass *eqclass) const {
   eqclass->addPixelPlane(this);
 }
@@ -76,6 +80,10 @@ bool FacePlane::isPartOf(const PixelPlaneIntersectionNR *fi) const {
 
 void FacePlane::addToIntersection(PixelPlaneIntersectionNR *fi) const {
   fi->faces().insert(this);
+}
+
+bool FacePlane::isInEquivalence(const IsecEquivalenceClass *eqclass) const {
+  return eqclass->facePlanes.count(this) > 0;
 }
 
 void FacePlane::addToEquivalence(IsecEquivalenceClass *eqclass) const {
@@ -92,6 +100,11 @@ void FacePixelPlane::addToIntersection(PixelPlaneIntersectionNR *fi) const {
 
 void FacePixelPlane::addToEquivalence(IsecEquivalenceClass *eqclass) const {
   eqclass->addFacePixelPlane(this);
+}
+
+bool FacePixelPlane::isInEquivalence(const IsecEquivalenceClass *eqclass) const
+{
+  return eqclass->pixelFaces.count(this) > 0;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

@@ -824,16 +824,18 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
 	FacetMap2D pixelplanefacets =
 	  homtet.findPixelPlaneFacets(cat, *vsb);
 #ifdef DEBUG
-	oofcerr << "CSkeletonElement::categoryVolumes: "
-		<< "after findPixelPlaneFacets cat=" << cat << std::endl;
-	homtet.dumpEquivalences();
-	oofcerr << "CSkeletonElement::categoryVolumes: "
-		<< "done with dumpEquivalences" << std::endl;
+	if(verbose) {
+	  oofcerr << "CSkeletonElement::categoryVolumes: "
+		  << "after findPixelPlaneFacets cat=" << cat << std::endl;
+	  homtet.dumpEquivalences();
+	}
 	if(!homtet.verify()) {
 	  throw ErrProgrammingError("Verification failed", __FILE__, __LINE__);
 	}
+	if(verbose) {
 	oofcerr << "CSkeletonElement::categoryVolumes: calling findFaceFacets"
 		<< std::endl;
+	}
 #endif // DEBUG
 	FaceFacets facefacets = homtet.findFaceFacets(cat, pixelplanefacets);
 #ifdef DEBUG

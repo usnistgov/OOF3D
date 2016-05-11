@@ -113,7 +113,7 @@ public:
   virtual bool isEquivalent(const PixelPlaneIntersectionNR*) const = 0;
   virtual bool isEquivalent(const RedundantIntersection*) const = 0;
   virtual void addPlanesToEquivalence(IsecEquivalenceClass*) = 0;
-  // virtual bool isInEquivalenceClass(const IsecEquivalenceClass*) const = 0;
+  virtual bool isEquivalent(const IsecEquivalenceClass*) const = 0;
 
   virtual bool samePixelPlanes(const PlaneIntersection*) const = 0;
   virtual bool samePixelPlanes(const TripleFaceIntersection*) const = 0;
@@ -165,7 +165,7 @@ public:
   virtual bool isEquivalent(const PixelPlaneIntersectionNR*) const;
   virtual bool isEquivalent(const RedundantIntersection*) const;
   virtual void addPlanesToEquivalence(IsecEquivalenceClass*);
-  // virtual bool isInEquivalenceClass(const IsecEquivalenceClass*) const;
+  virtual bool isEquivalent(const IsecEquivalenceClass*) const;
   
   virtual bool samePixelPlanes(const PlaneIntersection*) const {
     return false;
@@ -439,7 +439,7 @@ public:
   virtual bool isEquivalent(const PixelPlaneIntersectionNR*) const;
   virtual bool isEquivalent(const RedundantIntersection*) const;
   void addPlanesToEquivalence(IsecEquivalenceClass*);
-  // virtual bool isInEquivalenceClass(const IsecEquivalenceClass*) const;
+  virtual bool isEquivalent(const IsecEquivalenceClass*) const;
   
   virtual bool samePixelPlanes(const PlaneIntersection*) const;
   virtual bool samePixelPlanes(const TripleFaceIntersection*) const;
@@ -1034,9 +1034,9 @@ public:
   virtual void addPlanesToEquivalence(IsecEquivalenceClass *eqclass) {
     referent_->addPlanesToEquivalence(eqclass);
   }
-  // virtual bool isInEquivalenceClass(const IsecEquivalenceClass *eqclass) const {
-  //   return referent_->isInEquivalenceClass(eqclass);
-  // }
+  virtual bool isEquivalent(const IsecEquivalenceClass *eqclass) const {
+    return referent_->isEquivalent(eqclass);
+  }
   virtual bool samePixelPlanes(const PlaneIntersection *pi) const {
     return referent_->samePixelPlanes(pi);
   }
@@ -1081,7 +1081,7 @@ public:
   ~IsecEquivalenceClass();
   void addIntersection(PlaneIntersection*);
   void removeIntersection(PlaneIntersection*);
-  bool contains(PlaneIntersection*) const;
+  bool contains(PlaneIntersection*) const; // is arg already in class?
   void merge(IsecEquivalenceClass*);
   int size() const { return intersections.size(); }
 
@@ -1090,8 +1090,11 @@ public:
   void addPixelPlane(const HPixelPlane*);
   void addFacePlane(const FacePlane*);
   void addFacePixelPlane(const FacePixelPlane*);
-  friend class TripleFaceIntersection;
+  friend class FacePixelPlane;
+  friend class FacePlane;
+  friend class HPixelPlane;
   friend class PixelPlaneIntersectionNR;
+  friend class TripleFaceIntersection;
   friend std::ostream &operator<<(std::ostream&, const IsecEquivalenceClass&);
 
 #ifdef DEBUG

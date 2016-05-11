@@ -39,6 +39,7 @@ public:
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const = 0;
   virtual void addToIntersection(PixelPlaneIntersectionNR*) const = 0;
   virtual void addToEquivalence(IsecEquivalenceClass*) const = 0;
+  virtual bool isInEquivalence(const IsecEquivalenceClass*) const = 0;
   virtual std::string shortName() const = 0;
 };
 
@@ -56,6 +57,7 @@ public:
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
   virtual void addToIntersection(PixelPlaneIntersectionNR*) const;
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
+  virtual bool isInEquivalence(const IsecEquivalenceClass*) const;
   virtual std::string shortName() const;
 };
 
@@ -77,6 +79,7 @@ public:
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
   virtual void addToIntersection(PixelPlaneIntersectionNR*) const;  
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
+  virtual bool isInEquivalence(const IsecEquivalenceClass*) const;
   virtual void print(std::ostream&) const;
   unsigned int face() const { return face_; }
   virtual std::string shortName() const;
@@ -100,6 +103,7 @@ public:
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
   virtual void addToIntersection(PixelPlaneIntersectionNR*) const;
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
+  virtual bool isInEquivalence(const IsecEquivalenceClass*) const;
   virtual void print(std::ostream&) const;
   virtual std::string shortName() const;  
 };

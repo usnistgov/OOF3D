@@ -441,6 +441,29 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
   }
 }
 
+// The single-argument version of checkEquiv checks to see if the
+// given intersection point belongs in any existing equivalence class,
+// and puts it in it.  If the point already belongs to a class and is
+// found to also belong to another, the classes are merged.
+void HomogeneityTet::checkEquiv(PlaneIntersection *point) {
+  for(IsecEquivalenceClass *eqclass : equivalences) {
+    if(point->equivalence() != eqclass) {
+      if(point->isEquivalent(eqclass)) {
+	IsecEquivalenceClass *oldclass = point->equivalence();
+	if(oldclass != nullptr) {
+	  eqclass->merge(oldclass);
+	  equivalences.erase(oldclass);
+	  delete oldclass;
+	}
+	else {
+	  point->setEquivalence(eqclass);
+	}
+	return;
+      }	// end if point belongs in another class
+    }
+  }
+}
+
 void HomogeneityTet::checkEquiv(PlaneIntersection *point0,
 				PlaneIntersection *point1)
 {
@@ -1772,17 +1795,31 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	//   throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
       }
 #endif // DEBUG
+      // Make sure equivalence classes are up to date by comparing to
+      // previously found points.
+
+      // TODO: This is hacky and probably incorrect.  Adding a point
+      // to an equivalence class can change the planes of the class,
+      // which might mean that the class should be merged with a class
+      // that's already been inspected.  There needs to be a class
+      // consolidation step, which should probably be done after *all*
+      // pixel plane facets have been found for all categories, but
+      // before *any* face facets are begun for any categories.  Also,
+      // we probably shouldn't check FaceEdgeIntersections vs segment
+      // ends.  Just check all points.
       for(auto seg=facet.begin(); seg!=facet.end(); ++seg) {
-	// Make sure equivalence classes are up to date by comparing
-	// to previously found points.
-	for(FaceEdgeIntersection &fei : startPoints) {
-	  checkEquiv(fei.corner(), (*seg)->startPt());
-	  checkEquiv(fei.corner(), (*seg)->endPt());
-	}
-	for(FaceEdgeIntersection &fei : endPoints) {
-	  checkEquiv(fei.corner(), (*seg)->startPt());
-	  checkEquiv(fei.corner(), (*seg)->endPt());
-	}
+	checkEquiv((*seg)->startPt());
+	checkEquiv((*seg)->endPt());
+	// for(FaceEdgeIntersection &fei : startPoints) {
+	//   checkEquiv(fei.corner(), (*seg)->startPt());
+	//   checkEquiv(fei.corner(), (*seg)->endPt());
+	// }
+	// for(FaceEdgeIntersection &fei : endPoints) {
+	//   checkEquiv(fei.corner(), (*seg)->startPt());
+	//   checkEquiv(fei.corner(), (*seg)->endPt());
+	// }
+      }
+      for(auto seg=facet.begin(); seg!=facet.end(); ++seg) {
 	// Construct FaceEdgeIntersection objects in-place.
 	startPoints.emplace_back((*seg)->startPt(), *seg, true);
 	endPoints.emplace_back((*seg)->endPt(), *seg, false);
