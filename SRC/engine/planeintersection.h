@@ -270,6 +270,7 @@ public:
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 enum ISEC_ORDER {FIRST, SECOND, NONCONTIGUOUS};
+std::ostream &operator<<(std::ostream &, ISEC_ORDER);
 
 class PixelPlaneIntersectionNR : public PixelPlaneIntersection {
 protected:
@@ -376,14 +377,17 @@ public:
 				 PixelBdyLoopSegment&,
 				 PixelBdyLoopSegment&,
 				 ICoord2D&) const = 0;
-  virtual ISEC_ORDER ordering(const SingleVSBbase*,
-			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&,
-			      ICoord2D&) const = 0;
-  virtual ISEC_ORDER ordering(const MultiVSBbase*,
-			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&,
-			      ICoord2D&) const = 0;
+  // Because getOrdering is a double dispatch method,
+  // this->getOrdering(other) calls and returns
+  // other->reverseOrdering(this)
+  virtual ISEC_ORDER reverseOrdering(const SingleVSBbase*,
+				     PixelBdyLoopSegment&,
+				     PixelBdyLoopSegment&,
+				     ICoord2D&) const = 0;
+  virtual ISEC_ORDER reverseOrdering(const MultiVSBbase*,
+				     PixelBdyLoopSegment&,
+				     PixelBdyLoopSegment&,
+				     ICoord2D&) const = 0;
 
   // TODO: Fix the function names.  Polygon edges are sometimes called
   // edges and sometimes called segments.
@@ -533,14 +537,14 @@ public:
     const = 0;
   virtual const PixelBdyLoopSegment *sharedLoopSeg(const MultiVSBbase*)
     const = 0;
-  virtual ISEC_ORDER ordering(const SingleVSBbase*,
-			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&,
-			      ICoord2D&) const = 0;
-  virtual ISEC_ORDER ordering(const MultiVSBbase*,
-			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&,
-			      ICoord2D&) const = 0;
+  virtual ISEC_ORDER reverseOrdering(const SingleVSBbase*,
+				     PixelBdyLoopSegment&,
+				     PixelBdyLoopSegment&,
+				     ICoord2D&) const = 0;
+  virtual ISEC_ORDER reverseOrdering(const MultiVSBbase*,
+				     PixelBdyLoopSegment&,
+				     PixelBdyLoopSegment&,
+				     ICoord2D&) const = 0;
 };
 
 template <class BASE> class SingleVSBmixIn : public BASE, public SingleVSBbase {
@@ -571,14 +575,14 @@ public:
 				 PixelBdyLoopSegment&,
 				 PixelBdyLoopSegment&,
 				 ICoord2D&) const;
-  virtual ISEC_ORDER ordering(const SingleVSBbase*,
-			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&,
-			      ICoord2D&) const;
-  virtual ISEC_ORDER ordering(const MultiVSBbase*,
-			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&,
-			      ICoord2D&) const;
+  virtual ISEC_ORDER reverseOrdering(const SingleVSBbase*,
+				     PixelBdyLoopSegment&,
+				     PixelBdyLoopSegment&,
+				     ICoord2D&) const;
+  virtual ISEC_ORDER reverseOrdering(const MultiVSBbase*,
+				     PixelBdyLoopSegment&,
+				     PixelBdyLoopSegment&,
+				     ICoord2D&) const;
 
   virtual unsigned int nVSBSegments() const { return 1; }
 };
@@ -596,14 +600,14 @@ public:
     const = 0;
   virtual const PixelBdyLoopSegment *sharedLoopSeg(const MultiVSBbase*)
     const = 0;
-  virtual ISEC_ORDER ordering(const SingleVSBbase*,
-			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&,
-			      ICoord2D&) const = 0;
-  virtual ISEC_ORDER ordering(const MultiVSBbase*,
-			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&,
-			      ICoord2D&) const = 0;
+  virtual ISEC_ORDER reverseOrdering(const SingleVSBbase*,
+				     PixelBdyLoopSegment&,
+				     PixelBdyLoopSegment&,
+				     ICoord2D&) const = 0;
+  virtual ISEC_ORDER reverseOrdering(const MultiVSBbase*,
+				     PixelBdyLoopSegment&,
+				     PixelBdyLoopSegment&,
+				     ICoord2D&) const = 0;
   // MultiVSBmixIn<BASE>::categorizeCorner isn't instantiated unless
   // it's declared virtual here.  I don't understand this.  It
   // shouldn't need to be virtual or declared in MultiVSBbase.
@@ -630,12 +634,12 @@ public:
   virtual ISEC_ORDER getOrdering(const PixelPlaneIntersectionNR*,
 				 PixelBdyLoopSegment&,
 				 PixelBdyLoopSegment&, ICoord2D&) const;
-  virtual ISEC_ORDER ordering(const SingleVSBbase*,
-			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&, ICoord2D&) const;
-  virtual ISEC_ORDER ordering(const MultiVSBbase*,
-			      PixelBdyLoopSegment&,
-			      PixelBdyLoopSegment&, ICoord2D&) const;
+  virtual ISEC_ORDER reverseOrdering(const SingleVSBbase*,
+				     PixelBdyLoopSegment&,
+				     PixelBdyLoopSegment&, ICoord2D&) const;
+  virtual ISEC_ORDER reverseOrdering(const MultiVSBbase*,
+				     PixelBdyLoopSegment&,
+				     PixelBdyLoopSegment&, ICoord2D&) const;
 
   virtual unsigned int nVSBSegments() const { return vsbSegments.size(); }
 };

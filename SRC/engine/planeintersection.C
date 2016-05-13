@@ -1070,18 +1070,18 @@ ISEC_ORDER SingleVSBmixIn<BASE>::getOrdering(const PixelPlaneIntersectionNR *fi,
 					     ICoord2D &corner)
   const
 {
-  return fi->ordering(static_cast<const SingleVSBbase*>(this),
-		      seg0, seg1, corner);
+  return fi->reverseOrdering(static_cast<const SingleVSBbase*>(this),
+			     seg0, seg1, corner);
 }
 
-// Utility used by SingleVSBmixIn::ordering.  Given a horizontal and a
-// vertical PixelBdyLoopSegment, see if they meet in a T intersection
-// (which might actually be an L).  The return value is either FIRST
-// (meaning that the horizontal segment leads to the vertical one at
-// the intersection), SECOND (meaning that the vertical one leads to
-// the horizontal one), or NONCONTIGUOUS (meaning that there's no
-// intersection, or that there's no path through it along the directed
-// segments).
+// Utility used by SingleVSBmixIn::reverseOrdering.  Given a
+// horizontal and a vertical PixelBdyLoopSegment, see if they meet in
+// a T intersection (which might actually be an L).  The return value
+// is either FIRST (meaning that the horizontal segment leads to the
+// vertical one at the intersection), SECOND (meaning that the
+// vertical one leads to the horizontal one), or NONCONTIGUOUS
+// (meaning that there's no intersection, or that there's no path
+// through it along the directed segments).
 
 static ISEC_ORDER checkT(const PixelBdyLoopSegment &horizSeg,
 			 const PixelBdyLoopSegment &vertSeg,
@@ -1177,27 +1177,49 @@ static ISEC_ORDER checkT(const PixelBdyLoopSegment &horizSeg,
 }
 
 template <class BASE>
-ISEC_ORDER SingleVSBmixIn<BASE>::ordering(const SingleVSBbase *other,
-					  PixelBdyLoopSegment &seg0,
-					  PixelBdyLoopSegment &seg1,
-					  ICoord2D &corner)
+ISEC_ORDER SingleVSBmixIn<BASE>::reverseOrdering(const SingleVSBbase *other,
+						 PixelBdyLoopSegment &seg0,
+						 PixelBdyLoopSegment &seg1,
+						 ICoord2D &corner)
   const
 {
+// #ifdef DEBUG
+//   if(BASE::verbose) {
+//       oofcerr << "SingleVSBmixIn::reverseOrdering:  this=" << *this
+// 	      << std::endl;
+//       oofcerr << "SingleVSBmixIn::reverseOrdering: other="
+// 	      << *dynamic_cast<const PlaneIntersection*>(other) << std::endl;
+//     }
+// #endif // DEBUG
   if(vsbSegment.loop() == other->getLoopSeg().loop()) {
+// #ifdef DEBUG
+//     if(BASE::verbose) {
+//       oofcerr << "SingleVSBmixIn::reverseOrdering: on same loop" << std::endl;
+//       oofcerr << "SingleVSBmixIn::reverseOrdering: vsbSegment=" << vsbSegment
+// 	      << std::endl;
+//       oofcerr << "SingleVSBmixIn::reverseOrdering: other->getLoopSeg="
+// 	      << other->getLoopSeg() << std::endl;
+//       }
+// #endif // DEBUG
     if(other->getLoopSeg().firstPt() == vsbSegment.secondPt()) {
       seg0 = vsbSegment;
       seg1 = other->getLoopSeg();
       corner = vsbSegment.secondPt();
-      return FIRST;
+      return SECOND;
     }
     if(other->getLoopSeg().secondPt() == vsbSegment.firstPt()) {
       seg1 = vsbSegment;
       seg0 = other->getLoopSeg();
       corner = vsbSegment.firstPt();
-      return SECOND;
+      return FIRST;
     }
     return NONCONTIGUOUS;
   }
+// #ifdef DEBUG
+//   if(BASE::verbose)
+//       oofcerr << "SingleVSBmixIn::reverseOrdering: on different loops"
+// 	      << std::endl;
+// #endif // DEBUG
   // The intersections are on segments that are on different VSB
   // loops.  This can only happen if one of them is a VSB facet loop
   // and the other is a cross section.  In either case, it's possible
@@ -1207,21 +1229,25 @@ ISEC_ORDER SingleVSBmixIn<BASE>::ordering(const SingleVSBbase *other,
   const PixelBdyLoopSegment &segB = other->getLoopSeg();
   bool segAhoriz = segA.horizontal();
   bool segBhoriz = segB.horizontal();
-  if(segAhoriz && !segBhoriz)
-    return checkT(segA, segB, seg0, seg1, corner
+  if(segAhoriz && !segBhoriz) {
+    ISEC_ORDER order = checkT(segA, segB, seg0, seg1, corner
 #ifdef DEBUG
 		  , BASE::verbose
 #endif // DEBUG
 		  );
+    // Return the reverse order.
+    if(order == FIRST) return SECOND;
+    if(order == SECOND) return FIRST;
+    return order;
+  }
   if(segBhoriz && !segAhoriz) {
     ISEC_ORDER order = checkT(segB, segA, seg0, seg1, corner
 #ifdef DEBUG
 			      , BASE::verbose
 #endif // DEBUG
 			      );
-    // segments were passed in reverse order to checkT.
-    if(order == FIRST) return SECOND;
-    if(order == SECOND) return FIRST;
+    // segments were passed in reverse order to checkT, but we want to
+    // return the reverse.
     return order;
   }
 
@@ -1236,10 +1262,10 @@ ISEC_ORDER SingleVSBmixIn<BASE>::ordering(const SingleVSBbase *other,
 }
 
 template <class BASE>
-ISEC_ORDER SingleVSBmixIn<BASE>::ordering(const MultiVSBbase *other,
-					  PixelBdyLoopSegment &seg0,
-					  PixelBdyLoopSegment &seg1,
-					  ICoord2D &corner)
+ISEC_ORDER SingleVSBmixIn<BASE>::reverseOrdering(const MultiVSBbase *other,
+						 PixelBdyLoopSegment &seg0,
+						 PixelBdyLoopSegment &seg1,
+						 ICoord2D &corner)
   const
 {
   const PBLSegmentMap &osegs = other->getLoopSegs();
@@ -1249,13 +1275,13 @@ ISEC_ORDER SingleVSBmixIn<BASE>::ordering(const MultiVSBbase *other,
 	seg0 = vsbSegment;
 	seg1 = oseg;
 	corner = vsbSegment.secondPt();
-	return FIRST;
+	return SECOND;
       }
       if(oseg.secondPt() == vsbSegment.firstPt()) {
 	seg1 = vsbSegment;
 	seg0 = oseg;
 	corner = vsbSegment.firstPt();
-	return SECOND;
+	return FIRST;
       }
   }
   return NONCONTIGUOUS;
@@ -1361,18 +1387,18 @@ ISEC_ORDER MultiVSBmixIn<BASE>::getOrdering(const PixelPlaneIntersectionNR *fi,
 					    ICoord2D &corner)
   const
 {
-  return fi->ordering(static_cast<const MultiVSBbase*>(this),
-		      seg0, seg1, corner);
+  return fi->reverseOrdering(static_cast<const MultiVSBbase*>(this),
+			     seg0, seg1, corner);
 }
 
 template <class BASE>
-ISEC_ORDER MultiVSBmixIn<BASE>::ordering(const SingleVSBbase *other,
-					 PixelBdyLoopSegment &seg0,
-					 PixelBdyLoopSegment &seg1,
-					 ICoord2D &corner)
+ISEC_ORDER MultiVSBmixIn<BASE>::reverseOrdering(const SingleVSBbase *other,
+						PixelBdyLoopSegment &seg0,
+						PixelBdyLoopSegment &seg1,
+						ICoord2D &corner)
   const
 {
-  ISEC_ORDER reverse = other->ordering(this, seg0, seg1, corner);
+  ISEC_ORDER reverse = other->reverseOrdering(this, seg0, seg1, corner);
   if(reverse == FIRST) {
     return SECOND;
   }
@@ -1382,10 +1408,10 @@ ISEC_ORDER MultiVSBmixIn<BASE>::ordering(const SingleVSBbase *other,
 }
 
 template <class BASE>
-ISEC_ORDER MultiVSBmixIn<BASE>::ordering(const MultiVSBbase *other,
-					 PixelBdyLoopSegment &seg0,
-					 PixelBdyLoopSegment &seg1,
-					 ICoord2D &corner)
+ISEC_ORDER MultiVSBmixIn<BASE>::reverseOrdering(const MultiVSBbase *other,
+						PixelBdyLoopSegment &seg0,
+						PixelBdyLoopSegment &seg1,
+						ICoord2D &corner)
   const
 {
   const PBLSegmentMap &osegs = other->getLoopSegs();
@@ -1401,13 +1427,13 @@ ISEC_ORDER MultiVSBmixIn<BASE>::ordering(const MultiVSBbase *other,
 	    seg0 = seg;
 	    seg1 = oseg;
 	    corner = seg.secondPt();
-	    return FIRST;
+	    return SECOND;
 	  }
 	  if(oseg.secondPt() == seg.firstPt()) {
 	    seg1 = seg;
 	    seg0 = oseg;
 	    corner = seg.firstPt();
-	    return SECOND;
+	    return FIRST;
 	  }
 	}
     }
@@ -2534,5 +2560,15 @@ std::ostream &operator<<(std::ostream &os, const CrossingType ct) {
     os << "EXIT";
   else
     os << "NONCROSSING";
+  return os;
+}
+
+std::ostream &operator<<(std::ostream &os, ISEC_ORDER order) {
+  if(order == FIRST)
+    os << "FIRST";
+  else if(order == SECOND)
+    os << "SECOND";
+  else
+    os << "NONCONTIGUOUS";
   return os;
 }
