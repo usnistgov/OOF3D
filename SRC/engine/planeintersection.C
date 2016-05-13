@@ -330,6 +330,42 @@ void PixelPlaneIntersectionNR::setLocation(const Coord3D &pos) {
     loc_[pixplane->direction()] = pixplane->normalOffset();
 }
 
+template <class PlaneSet0, class PlaneSet1>
+bool PixelPlaneIntersectionNR::includeCollinearPlanes_(
+				       const CollinearPlaneMap &coplanes,
+				       const PlaneSet0 &planes0,
+				       const PlaneSet1 &planes1)
+{
+  bool changed = false;
+  for(const HPlane *p0 : planes0) {
+    for(const HPlane *p1 : planes1) {
+      if(p0 != p1) {
+	auto matches =
+	  coplanes.equal_range(CollinearPlaneMap::key_type(p0, p1));
+	for(auto i=matches.first; i!=matches.second; i++) {
+	  (*i).second->addToIntersection(this);
+	  changed = true;
+	}
+      }
+    }
+  }
+  return changed;
+}
+
+void PixelPlaneIntersectionNR::includeCollinearPlanes(
+				      const CollinearPlaneMap &coplanes)
+{
+  bool mod = includeCollinearPlanes_(coplanes, pixelPlanes_, pixelPlanes_);
+  mod = includeCollinearPlanes_(coplanes, faces_, faces_) || mod;
+  mod = includeCollinearPlanes_(coplanes, pixelFaces_, pixelFaces_) || mod;
+  mod = includeCollinearPlanes_(coplanes, pixelPlanes_, faces_) || mod;
+  mod = includeCollinearPlanes_(coplanes, pixelPlanes_, pixelFaces_) || mod;
+  mod = includeCollinearPlanes_(coplanes, pixelFaces_, faces_) || mod;
+  if(mod && equivalence_ != nullptr) {
+    addPlanesToEquivalence(equivalence());
+  }
+}
+
 bool PixelPlaneIntersectionNR::samePixelPlanes(const PlaneIntersection *pi)
   const
 {
@@ -735,6 +771,11 @@ static bool isEquiv_(const PixelPlaneSet &pp0, const FacePlaneSet &fp0,
   for(unsigned int i=0; i<nPlanes-2; i++) {
     for(unsigned int j=i+1; j<nPlanes-1; j++) {
       for(unsigned int k=j+1; k<nPlanes; k++) {
+	// TODO: Instead of calling Plane::nonDegenerate here, which
+	// might be susceptible to round off error, use the
+	// HomogeneityTet::collinearPlanes structure.  However,
+	// collinearPlanes only includes situations with two faces, so
+	// it might not be sufficient.
 	if(planes[i]->nonDegenerate(planes[j], planes[k]))
 	  return true;
       }

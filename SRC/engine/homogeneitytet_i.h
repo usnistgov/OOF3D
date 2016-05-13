@@ -26,6 +26,7 @@ class HomogeneityTet;
 // Other classes used in tyepdefs defined here.
 class BarycentricCoord;
 class Coord3D;
+class HPlane;
 class PixelPlane;
 class TetIntersection;
 
@@ -34,5 +35,7 @@ typedef std::map<const Coord3D, BarycentricCoord> BaryCoordCache;
 typedef std::vector<const TetIntersection*> TetIntersectionPolygon;
 typedef std::map<const PixelPlane*, TetIntersectionPolygon> TetPlaneIsecMap;
 typedef std::multimap<double, FaceEdgeIntersection> LooseEndMap;
+typedef std::multimap<std::pair<const HPlane*, const HPlane*>, const HPlane*> CollinearPlaneMap;
+
 
 #endif // HOMOGENEITYTET_I_H

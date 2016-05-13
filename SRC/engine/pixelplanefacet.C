@@ -1184,6 +1184,10 @@ static void classifyVSBcorner(const PixelPlaneIntersectionNR * const fi0,
   PixelBdyLoopSegment seg0, seg1;
   // getOrdering sets seg0, seg1, and corner if it's successful.
   ISEC_ORDER order = fi0->getOrdering(fi1, seg0, seg1, corner);
+#ifdef DEBUG
+  if(verbose)
+    oofcerr << "classifyVSBcorner: order=" << order << std::endl;
+#endif // DEBUG
   if(order == NONCONTIGUOUS) {
     // The points are on nonadjacent segments.
     firstPt = nullptr;
@@ -1211,15 +1215,15 @@ bool PixelPlaneFacet::resolveTwoFoldCoincidence(
 {
   PixelPlaneIntersectionNR *fi0 = *isecs.begin();
   PixelPlaneIntersectionNR *fi1 = *isecs.rbegin();
-// #ifdef DEBUG
-//   if(verbose) {
-//     oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: fi0=" << *fi0
-// 	    << std::endl;
-//     oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: fi1=" << *fi1
-// 	    << std::endl;
-//   }
-//   OOFcerrIndent indent(2);
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: fi0=" << *fi0
+	    << std::endl;
+    oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: fi1=" << *fi1
+	    << std::endl;
+  }
+  OOFcerrIndent indent(2);
+#endif // DEBUG
 
   if(fi0->crossingType() == fi1->crossingType()) {
     // Both VSB segments enter the polygon or both leave it.  The
@@ -1243,12 +1247,16 @@ bool PixelPlaneFacet::resolveTwoFoldCoincidence(
   else {
     // There's one entry and one exit.
     if(fi0->isEquivalent(fi1) || fi0->isMisordered(fi1, this)) {
-// #ifdef DEBUG
-//       if(verbose) {
-// 	oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: "
-// 		<< "trying to merge equivalent entry and exit" << std::endl;
-//       }
-// #endif // DEBUG
+#ifdef DEBUG
+      if(verbose) {
+	// oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence:"
+	// 	<< " isEquivalent=" << fi0->isEquivalent(fi1)
+	// 	<< " isMisordered=" << fi0->isMisordered(fi1, this)
+	// 	<< std::endl;
+	oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: "
+		<< "trying to merge equivalent entry and exit" << std::endl;
+      }
+#endif // DEBUG
       PixelPlaneIntersectionNR *merged = fi0->mergeWith(htet, fi1, this);
       if(merged) {
 	replaceIntersection(fi0, merged);
@@ -1856,10 +1864,6 @@ bool PixelPlaneFacet::polyCornerCoincidence(const PixelPlaneIntersectionNR *fi0,
 //  possibilities for the polygon edge geometry, each of which can
 //  exist with either direction of the VSB boundary.
 
-// Like polyCornerCoincidence, this is only called by
-// SimpleIntersection::isMisordered(SimpleIntersection*), so there's
-// no need for a generic version.
-
 /*                   _/                  |
 //    polygon      _/polygon       poly  |  polygon
 //    exterior   _/  interior      int.  |  exterior
@@ -1925,6 +1929,21 @@ bool PixelPlaneFacet::polyVSBCornerCoincidence(
   // the order is wrong, the points must coincide, and this function
   // returns true.
   bool inside = bcorner.interior(onFace);
+
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneIntersectionNR::polyVSBCornerCoincidence: "
+// 	    << "fi0=" << *fi0 << std::endl;
+//     oofcerr << "PixelPlaneIntersectionNR::polyVSBCornerCoincidence: "
+// 	    << "fi1=" << *fi1 << std::endl;
+//     oofcerr << "PixelPlaneIntersectionNR::polyVSBCornerCoincidence: "
+// 	    << "  firstPt=" << *firstPt << std::endl;
+//     oofcerr << "PixelPlaneIntersectionNR::polyVSBCornerCoincidence: "
+// 	    << " secondPt=" << *secondPt << std::endl;
+//     oofcerr << "PixelPlaneIntersectionNR::polyVSBCornerCoincidence: inside="
+// 	    << inside << std::endl;
+//   }
+// #endif // DEBUG
   bool invalid = ((inside && exitPt == firstPt) ||
 		  (!inside && entryPt == secondPt));
   return invalid;

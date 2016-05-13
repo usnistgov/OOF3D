@@ -23,6 +23,7 @@
 #include "engine/planeintersection_i.h"
 
 #include <vector>
+#include <map>
 
 // TODO: There are too many mutable data members here.  Maybe there
 // are too many const methods.
@@ -162,6 +163,10 @@ private:
   // aren't part of FacetEdges and will need to be deleted explicitly.
   std::set<PixelPlaneIntersectionNR*> extraPoints;
 
+  // Keep track of which planes are collinear: three or more planes
+  // that intersect on a line.
+  CollinearPlaneMap collinearPlanes;
+
   // Keep track of which PlaneIntersections are equivalent to others.
   // This is a set of pointers to IsecEquivalenceClasses instead of a
   // set of IsecEquivalenceClasses because intersections store
@@ -240,9 +245,6 @@ public:
   TetIntersectionPolygon &getTetPlaneIntersectionPoints(const HPixelPlane*,
 							const HPixelPlane*);
 
-  // Check if two points are equivalent, and update the equivalence
-  // class data if they are.
-  void checkEquiv(PlaneIntersection*, PlaneIntersection*);
   // Check to see if a point should be in an existing equivalence
   // class, and put it in if it's necessary.
   void checkEquiv(PlaneIntersection*);

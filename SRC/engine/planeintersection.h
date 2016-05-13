@@ -106,6 +106,8 @@ public:
     return pp->convert2Coord2D(location3D());
   }
 
+  virtual void includeCollinearPlanes(const CollinearPlaneMap &) = 0;
+
   // Intersections are equivalent if they have any three distinct
   // planes in common.
   virtual bool isEquivalent(const PlaneIntersection*) const = 0;
@@ -159,6 +161,8 @@ public:
   virtual unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const;
   virtual BarycentricCoord baryCoord(HomogeneityTet*) const;
   virtual void print(std::ostream&) const;
+
+  virtual void includeCollinearPlanes(const CollinearPlaneMap &) {}
   
   virtual bool isEquivalent(const PlaneIntersection*) const;
   virtual bool isEquivalent(const TripleFaceIntersection*) const;
@@ -294,6 +298,10 @@ protected:
   void copyPlanes(const PixelPlaneIntersectionNR*,
 		  const PixelPlaneIntersectionNR*);
 
+  template <class PlaneSet0, class PlaneSet1>
+  bool includeCollinearPlanes_(const CollinearPlaneMap&,
+			       const PlaneSet0 &, const PlaneSet1 &);
+
 #ifdef DEBUG
   std::string printPlanes() const;
 #endif // DEBUG
@@ -324,6 +332,8 @@ public:
   // TODO: Come up with a better name than pixelFaces.
   const FacePixelPlaneSet &pixelFaces() const { return pixelFaces_; }
   FacePixelPlaneSet &pixelFaces() { return pixelFaces_; }
+
+  virtual void includeCollinearPlanes(const CollinearPlaneMap &);
 
   virtual bool onSameLoopSegment(const PixelPlaneIntersectionNR*) const = 0;
   virtual bool sameLoopSegment(const SingleVSBbase*) const = 0;
@@ -973,6 +983,9 @@ public:
   }
   virtual void setEquivalence(IsecEquivalenceClass *e) {
     referent_->setEquivalence(e);
+  }
+  virtual void includeCollinearPlanes(const CollinearPlaneMap &coplanes) {
+    referent_->includeCollinearPlanes(coplanes);
   }
   virtual void locateOnPolygonEdge(std::vector<PolyEdgeIntersections>&,
 				   const PixelPlaneFacet*) const {}
