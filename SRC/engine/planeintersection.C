@@ -628,46 +628,84 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
   const
 {
   // If there are multiple faces, this makes an arbitrary choice.  Any
-  // of them will do, except for the plane of the facet.
+  // of them will do, as long as they form an edge of the polygon,
+  // except for the plane of the facet.  There might be an edge that
+  // doesn't form a polygon edge if it's collinear with another edge.
+  
 // #ifdef DEBUG
 //   if(verbose)
 //     oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: " << *this
 // 	    << std::endl;
 // #endif // DEBUG
-  if(!faces_.empty()) {
-    unsigned int edge = facet->getPolyEdge(*faces_.begin());
-// #ifdef DEBUG
-//     if(verbose)
-//       oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: polyEdge="
-// 	      << edge << " using faces_" << std::endl;
-// #endif // DEBUG
-    assert(edge != NONE);
-    polyedges[edge].push_back(this);
-    return;
-  }
-  else {
-    assert(!pixelFaces_.empty());
-    for(const FacePixelPlane *fpp : pixelFaces_) {
-      if(fpp != facet->pixplane) {
-	unsigned int edge = facet->getPolyEdge(fpp);
-#ifdef DEBUG
-	if(verbose) {
-	  oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: polyEdge="
-		  << edge << " using pixelFaces_ "
-		  << *fpp << std::endl;
-	  if(edge == NONE)
-	    throw ErrProgrammingError("locateOnPolygonEdge failed!",
-				      __FILE__, __LINE__);
+
+  for(const FacePlane *face : faces_) {
+    unsigned int edge = facet->getPolyEdge(face);
+    if(edge != NONE) {
+      polyedges[edge].push_back(this);
+      return;
     }
-#endif // DEBUG
+  }
+  for(const FacePixelPlane *fpp : pixelFaces_) {
+    if(fpp != facet->pixplane) {
+      unsigned int edge = facet->getPolyEdge(fpp);
+      if(edge != NONE) {
 	polyedges[edge].push_back(this);
 	return;
       }
     }
   }
+#ifdef DEBUG
+  oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: failed!"
+	  << std::endl;
+  oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: this=" << *this
+	  << std::endl;
+  oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: facet=" << *facet
+	  << std::endl;
+#endif // DEBUG
   throw ErrProgrammingError(
 		    "PixelPlaneIntersectionNR::locateOnPolygonEdge failed!",
 		    __FILE__, __LINE__);
+  
+//   if(!faces_.empty()) {
+//     unsigned int edge = facet->getPolyEdge(*faces_.begin());
+// // #ifdef DEBUG
+// //     if(verbose)
+// //       oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: polyEdge="
+// // 	      << edge << " using faces_" << std::endl;
+// // #endif // DEBUG
+// #ifdef DEBUG
+//     if(edge == NONE) {
+//       throw ErrProgrammingError(
+// 		"PixelPlaneIntersectionNR::locateOnPolygonEdge failed!",
+// 		__FILE__, __LINE__);
+//     }
+// #endif // DEBUG
+//     polyedges[edge].push_back(this);
+//     return;
+//   }
+//   else {
+//     assert(!pixelFaces_.empty());
+//     for(const FacePixelPlane *fpp : pixelFaces_) {
+//       if(fpp != facet->pixplane) {
+// 	unsigned int edge = facet->getPolyEdge(fpp);
+// #ifdef DEBUG
+// 	if(verbose) {
+// 	  oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: polyEdge="
+// 		  << edge << " using pixelFaces_ "
+// 		  << *fpp << std::endl;
+// 	  if(edge == NONE)
+// 	    throw ErrProgrammingError("locateOnPolygonEdge failed!",
+// 				      __FILE__, __LINE__);
+//     }
+// #endif // DEBUG
+// 	polyedges[edge].push_back(this);
+// 	return;
+//       }
+//     }
+//   }
+  // throw ErrProgrammingError(
+  // 		    "PixelPlaneIntersectionNR::locateOnPolygonEdge failed!",
+  // 		    __FILE__, __LINE__);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

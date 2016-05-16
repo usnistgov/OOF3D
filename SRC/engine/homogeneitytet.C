@@ -36,7 +36,7 @@ bool HomogeneityTet::verboseCategory_(bool verbose, unsigned int category) const
   // verbose.
   // TODO: Set this at run time via menu commands?
   static std::set<unsigned int> categories({
-      0
+      4
 	});
   return verbose && (categories.empty() || categories.count(category) == 1);
 };
@@ -213,7 +213,9 @@ HomogeneityTet::HomogeneityTet(const CSkeletonElement *element,
 
   // Find the edges that coincide with pixel planes and construct the
   // multimap "collinearPlanes", which maps a pair of planes into the
-  // other planes that meet on the same line.
+  // other planes that meet on the same line.  This is only done for
+  // combinations of two faces and one or more pixel planes, because
+  // those are the cases that are necessary for findFaceFacets to work.
   for(unsigned int e=0; e<NUM_TET_EDGES; e++) {
     unsigned int n0 = CSkeletonElement::getEdgeArray(e)[0];
     unsigned int n1 = CSkeletonElement::getEdgeArray(e)[1];
