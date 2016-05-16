@@ -562,7 +562,7 @@ typedef int Py_ssize_t;
             ## tells gcc to add missing headers to the dependency
             ## list, and then we weed them out later.  At least this
             ## way, the "missing" headers don't cause errors.
-            cmd = 'gcc -MM -MG -MT %(target)s -ISRC -I%(builddir)s -I%(buildsrc)s %(file)s' \
+            cmd = 'gcc  -std=c++11 -MM -MG -MT %(target)s -ISRC -I%(builddir)s -I%(buildsrc)s %(file)s' \
               % {'file' : phile,
                  'target': os.path.splitext(phile)[0] + ".o",
                  'builddir' : self.build_temp,
@@ -654,7 +654,8 @@ typedef int Py_ssize_t;
             pyfile = os.path.normpath(os.path.join(swigroot, base+'.py'))
             depdict.setdefault(cfile, []).append(phile)
             depdict.setdefault(pyfile, []).append(phile)
-        # Add in the implicit dependencies on the .spy files.
+        # Add in the implicit dependencies on
+# This does the swigging. the .spy files.
         for underpyfile in allFiles('swigpyfiles'):
             base = os.path.splitext(underpyfile)[0] # drop .spy
             pyfile = os.path.normpath(os.path.join(swigroot,base[6:]+'.py'))
@@ -664,7 +665,7 @@ typedef int Py_ssize_t;
 
     # Remove out-of-date target files.  We have to do this because
     # distutils for Python 2.5 and earlier checks the dates of the .C
-    # and .o files, but doesn't check for any included .h files, so it
+    # and .o files, but doesn't check for any included .h: files, so it
     # doesn't rebuild enough.  For 2.6 and later, it doesn't check
     # anything, and it rebuilds far too much. To fix that, we
     # monkeypatch _setup_compile from Python 2.5 as well as remove the
@@ -1159,6 +1160,9 @@ def set_platform_values():
             pkgpath = "/opt/local/Library/Frameworks/Python.framework/Versions/%d.%d/lib/pkgconfig/" % (sys.version_info[0], sys.version_info[1])
             print >> sys.stdout, "Adding", pkgpath
             extend_path("PKG_CONFIG_PATH", pkgpath)
+        # Enable C++11
+        platform['extra_compile_args'].append('-Wno-c++11-extensions')
+        platform['extra_compile_args'].append('-std=c++11')
         # If we're using clang, we want to suppress some warnings
         # about oddities in swig-generated code:
         if 'clang' in get_config_var('CC'):
@@ -1171,6 +1175,8 @@ def set_platform_values():
         # library on the command line.  The check is done later,just
         # before platform['blas_libs'] is used.
         platform['blas_libs'].extend(['lapack', 'blas', 'm'])
+        # add -std=c++11 option to use c++11 standard
+        platform['extra_compile_args'].append('-std=c++11')
         if DIM_3:
             vtkinc, vtklib = findvtk('/usr')
             if vtkinc is not None:

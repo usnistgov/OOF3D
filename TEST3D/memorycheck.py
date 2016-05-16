@@ -70,7 +70,6 @@ def check(*_microstructures):
             self.assertEqual(femesh.get_globalFEMeshCount(), 0)
             self.assertEqual(csubproblem.get_globalCSubProblemCount(), 0)
             self.assertEqual(getTrackerCount(), 0)
-            self.assertEqual(sparsemat.nSparseMatCores(), 0)
             self.assertEqual(len(allWorkers), 0)
             ## TODO 3.1: For some reason, on some systems there is
             ## occasionally a leftover WorkerCore when this check is
