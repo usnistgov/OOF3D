@@ -42,9 +42,24 @@ PlaneIntersection::~PlaneIntersection() {
 #endif // DEBUG
 }
 
-BarycentricCoord PlaneIntersection::baryCoord(HomogeneityTet *htet) const
+const BarycentricCoord &PlaneIntersection::baryCoord(HomogeneityTet *htet) const
 {
-  return htet->getBarycentricCoord(location3D());
+#ifdef DEBUG
+  if(htet->verbosePlane()) {
+    oofcerr << "PlaneIntersection::baryCoord: this=" << *this << std::endl;
+    oofcerr << "PlaneIntersection::baryCoord: loc=" << location3D()
+	    << std::endl;
+  }
+#endif // DEBUG
+  const BarycentricCoord &b = htet->getBarycentricCoord(location3D());
+#ifdef DEBUG
+  if(htet->verbosePlane()) {
+    oofcerr << "PlaneIntersection::baryCoord: back from getBarycentricCoord"
+	    << std::endl;
+    oofcerr << "PlaneIntersection::baryCoord: b=" << b << std::endl;
+  }
+#endif	// DEBUG
+  return b;
 }
 
 void PlaneIntersection::setEquivalence(IsecEquivalenceClass *e) {
@@ -111,7 +126,7 @@ TripleFaceIntersection *TripleFaceIntersection::clone() const {
   return tfi;
 }
 
-BarycentricCoord TripleFaceIntersection::baryCoord(HomogeneityTet *htet)
+const BarycentricCoord &TripleFaceIntersection::baryCoord(HomogeneityTet *htet)
   const
 {
   return nodeBCoord(node_);
@@ -958,7 +973,7 @@ double SingleFaceMixIn<BASE>::getPolyFrac(unsigned int,
 {
   //  assert(edgeno == facet->getPolyEdge(facePlane_));
   if(polyFrac >= 0) return polyFrac; // cached value
-  BarycentricCoord bary = BASE::baryCoord(facet->htet);
+  const BarycentricCoord &bary = BASE::baryCoord(facet->htet);
   polyFrac = facet->htet->edgeCoord(bary, facePlane_, facet);
   return polyFrac;
 }

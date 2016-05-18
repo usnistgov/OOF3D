@@ -25,6 +25,9 @@ public:
   BarycentricCoord() : bcoord(4, 0.0) {}
   BarycentricCoord(const Coord3D&, const std::vector<Coord3D>&);
   BarycentricCoord(double b0, double b1, double b2, double b3);
+  BarycentricCoord(const BarycentricCoord&);
+  BarycentricCoord(BarycentricCoord&&);
+  BarycentricCoord &operator=(const BarycentricCoord&);
   bool interior(unsigned int) const;
   bool interior() const;
   double operator[](unsigned int i) const { return bcoord[i]; }
@@ -47,7 +50,7 @@ public:
 // 	      const ICoord2D&, const PixelPlane&, const std::vector<Coord3D>&,
 // 	      const std::vector<const PixelPlane*>&, BaryCoordCache&);
 
-BarycentricCoord nodeBCoord(unsigned int);
+const BarycentricCoord &nodeBCoord(unsigned int);
 
 
 // BarycentricCoord averageBary(const BarycentricCoord&, const BarycentricCoord&,

@@ -131,7 +131,7 @@ public:
   // return NONE.
   virtual unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const = 0;
 
-  virtual BarycentricCoord baryCoord(HomogeneityTet*) const;
+  virtual const BarycentricCoord &baryCoord(HomogeneityTet*) const;
   virtual void print(std::ostream&) const = 0;
   virtual std::string shortName() const = 0;
 
@@ -160,7 +160,7 @@ public:
   virtual Coord3D location3D() const { return loc_; }
   unsigned int getNode() const { return node_; }
   virtual unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const;
-  virtual BarycentricCoord baryCoord(HomogeneityTet*) const;
+  virtual const BarycentricCoord &baryCoord(HomogeneityTet*) const;
   virtual void print(std::ostream&) const;
 
   virtual void includeCollinearPlanes(const CollinearPlaneMap &) {}

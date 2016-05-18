@@ -53,6 +53,21 @@ BarycentricCoord::BarycentricCoord(double b0, double b1, double b2, double b3)
   bcoord[3] = b3;
 }
 
+BarycentricCoord::BarycentricCoord(const BarycentricCoord &other)
+  : bcoord(other.bcoord)
+{}
+
+BarycentricCoord::BarycentricCoord(BarycentricCoord &&other) {
+  std::vector<double> temp = std::move(bcoord);
+  bcoord = std::move(other.bcoord);
+  other.bcoord = std::move(temp);
+}
+
+BarycentricCoord &BarycentricCoord::operator=(const BarycentricCoord &other) {
+  bcoord = other.bcoord;
+  return *this;
+}
+
 bool BarycentricCoord::interior(unsigned int onFace) const {
   // Interiority can be determined in two contexts: face interiority
   // and tet interiority.  If onFace is not NONE, we know that a point
@@ -224,10 +239,18 @@ std::ostream &operator<<(std::ostream &os, const BarycentricCoord &bc) {
 // }
 
 // nodeBCoord returns the barycentric coordinates of a node of a tet.
-BarycentricCoord nodeBCoord(unsigned int n) {
+const BarycentricCoord &nodeBCoord(unsigned int n) {
+  static std::vector<BarycentricCoord> nodes({
+      BarycentricCoord(1.,0.,0.,0.),
+      BarycentricCoord(0.,1.,0.,0.),
+      BarycentricCoord(0.,0.,1.,0.),
+      BarycentricCoord(0.,0.,0.,1.)
+	});
   assert(n < 4);
-  BarycentricCoord b;		// all zeros
-  b[n] = 1.0;
-  return b;
+  return nodes[n];
+	
+  // BarycentricCoord b;		// all zeros
+  // b[n] = 1.0;
+  // return b;
 }
 

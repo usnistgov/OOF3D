@@ -49,8 +49,7 @@ bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
   // arguments for each plane are {direction, offset, normal}.
   // TODO: Set this at run time via menu commands?
   static std::set<HPixelPlane> planes({
-      {0, 5, 1},
-      {1, 15, 1}
+      {2, 10, -1}
       // {0, NONE, 1} // use this to show no planes
     });
   return verbose && (planes.empty() || planes.count(*pixplane) == 1);
@@ -541,11 +540,11 @@ BarycentricCoord &HomogeneityTet::getBarycentricCoord(const Coord3D &pt) {
     // See if this coordinate has already been computed.
     BaryCoordCache::iterator it = baryCache.find(pt);
     if(it != baryCache.end()) {
-// #ifdef DEBUG
-//       if(verboseplane)
-// 	oofcerr << "HomogeneityTet::getBarycentricCoord: " << pt << " "
-// 		<< (*it).second << " cached" << std::endl;
-// #endif  // DEBUG
+#ifdef DEBUG
+      if(verboseplane)
+	oofcerr << "HomogeneityTet::getBarycentricCoord: " << pt << " "
+		<< (*it).second << " cached" << std::endl;
+#endif  // DEBUG
       return (*it).second;
     }
   }
@@ -560,16 +559,21 @@ BarycentricCoord &HomogeneityTet::getBarycentricCoord(const Coord3D &pt) {
       b[CSkeletonElement::oppNode[f]] = 0.0;
     }
   }
+#ifdef DEBUG
+  if(verboseplane)
+    oofcerr << "HomogeneityTet::getBarycentricCoord: " << pt << " " << b
+	    << " computed" << std::endl;
+#endif // DEBUG
 
   // Insert the new barycentric coord into the cache, and return a
   // reference to it.
   std::pair<BaryCoordCache::iterator, bool> insert =
     baryCache.insert(std::pair<Coord3D, BarycentricCoord>(pt, b));
-// #ifdef DEBUG
-//   if(verboseplane)
-//     oofcerr << "HomogeneityTet::getBarycentricCoord: " << pt << " "
-// 	    << (*insert.first).second << " new" << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verboseplane)
+    oofcerr << "HomogeneityTet::getBarycentricCoord: " << pt << " "
+	    << (*insert.first).second << " new" << std::endl;
+#endif // DEBUG
   return (*insert.first).second;
 }
 

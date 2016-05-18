@@ -122,32 +122,35 @@ public:
 		  const PixelPlaneIntersection *fi1)
     const
   {
-// #ifdef DEBUG
-//     if(facet->verbose) {
-//       // oofcerr << "LtPolyFrac::operator(): fi0=" << fi0 << " fi1=" << fi1
-//       // 	      << std::endl;
-//       oofcerr << "LtPolyFrac::operator(): fi0= " << *fi0 << std::endl;
-//       oofcerr << "LtPolyFrac::operator(): fi1= " << *fi1 << std::endl;      
-//     }
-// #endif // DEBUG
+#ifdef DEBUG
+    if(facet->verbose) {
+      // oofcerr << "LtPolyFrac::operator(): fi0=" << fi0 << " fi1=" << fi1
+      // 	      << std::endl;
+      oofcerr << "LtPolyFrac::operator(): fi0= " << fi0 << " " << *fi0
+	      << std::endl;
+      oofcerr << "LtPolyFrac::operator(): fi1= " << fi1 << " " << *fi1
+	      << std::endl;      
+    }
+#endif // DEBUG
 
     // TODO: sharedPolySegment might be too slow in this context.
     unsigned int sharedSeg = fi0->sharedPolySegment(fi1, facet);
-// #ifdef DEBUG
-//     if(facet->verbose)
-//       oofcerr << "LtPolyFrac::operator(): sharedSeg=" << sharedSeg << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+    if(facet->verbose)
+      oofcerr << "LtPolyFrac::operator(): sharedSeg=" << sharedSeg << std::endl;
+#endif // DEBUG
     if(sharedSeg != NONE) {
-// #ifdef DEBUG
-//       if(facet->verbose) {
-// 	oofcerr << "LtPolyFrac:operator(): polyFrac0="
-// 		<< fi0->getPolyFrac(sharedSeg, facet) << std::endl;
-// 	oofcerr << "LtPolyFrac:operator(): polyFrac1="
-// 		<< fi1->getPolyFrac(sharedSeg, facet) << std::endl;
-//       }
-// #endif // DEBUG
-      return (fi0->getPolyFrac(sharedSeg, facet) <
-	      fi1->getPolyFrac(sharedSeg, facet));
+      double t0 = fi0->getPolyFrac(sharedSeg, facet);
+      double t1 = fi1->getPolyFrac(sharedSeg, facet);
+#ifdef DEBUG
+      if(facet->verbose) {
+	oofcerr << "LtPolyFrac:operator(): polyFrac0=" << t0 << std::endl;
+	oofcerr << "LtPolyFrac:operator(): polyFrac1=" << t1 << std::endl;
+      }
+#endif // DEBUG
+      return t0 < t1;
+      // return (fi0->getPolyFrac(sharedSeg, facet) <
+      // 	      fi1->getPolyFrac(sharedSeg, facet));
     }
     return false;
   }
@@ -837,32 +840,32 @@ bool PixelPlaneFacet::completeLoops() {
 #endif // DEBUG
   }
 
-// #ifdef DEBUG
-//   if(verbose) {
-//     oofcerr << "PixelPlaneFacet::completeLoops: done with locateOnPolygonEdge"
-// 	    << std::endl;
-//     OOFcerrIndent indent(2);
-//     for(unsigned int e=0; e<polyEdgeIntersections.size(); e++) {
-//       if(!polyEdgeIntersections[e].empty()) {
-// 	oofcerr << "PixelPlaneFacet::completeLoops: polyEdgeIntersections[" << e
-// 		<< "]=" << std::endl;
-// 	OOFcerrIndent indnt(2);
-// 	for(const PixelPlaneIntersection *fib : polyEdgeIntersections[e]) {
-// 	  oofcerr << "PixelPlaneFacet::completeLoops:   " << *fib << std::endl;
-// 	}
-//       }
-//     }
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::completeLoops: done with locateOnPolygonEdge"
+	    << std::endl;
+    OOFcerrIndent indent(2);
+    for(unsigned int e=0; e<polyEdgeIntersections.size(); e++) {
+      if(!polyEdgeIntersections[e].empty()) {
+	oofcerr << "PixelPlaneFacet::completeLoops: polyEdgeIntersections[" << e
+		<< "]=" << std::endl;
+	OOFcerrIndent indnt(2);
+	for(const PixelPlaneIntersection *fib : polyEdgeIntersections[e]) {
+	  oofcerr << "PixelPlaneFacet::completeLoops:   " << *fib << std::endl;
+	}
+      }
+    }
+  }
+#endif // DEBUG
 
   // Sort the polyEdgeIntersections by polyFrac (position along the
   // edge).  TODO: This is inefficient, since LtPolyFrac computes the
   // shared polygon edge for each pair of points that it compares.  In
   // this case we already know the polygon edge.
-// #ifdef DEBUG
-//   if(verbose)
-//     oofcerr << "PixelPlaneFacet::completeLoops: sorting" << std::endl;
-// #endif  // DEBUG
+#ifdef DEBUG
+  if(verbose)
+    oofcerr << "PixelPlaneFacet::completeLoops: sorting" << std::endl;
+#endif  // DEBUG
   for(PolyEdgeIntersections &polyedge : polyEdgeIntersections) {
     std::sort(polyedge.begin(), polyedge.end(), LtPolyFrac(this));
 // #ifdef DEBUG
