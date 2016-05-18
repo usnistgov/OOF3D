@@ -107,6 +107,7 @@ public:
   }
 
   virtual void includeCollinearPlanes(const CollinearPlaneMap &) = 0;
+  // void addCollinearPlanes(HomogeneityTet*);
 
   // Intersections are equivalent if they have any three distinct
   // planes in common.
@@ -356,8 +357,8 @@ public:
   // This version excludes a face, as in onSameFacePlane, above.
   const FacePlane *sharedFace(const PixelPlaneIntersectionNR*,
 			      const FacePixelPlane*) const;
-  const std::vector<const FacePlane*> sharedFaces(
-				  const PixelPlaneIntersectionNR*) const;
+  const std::set<const FacePlane*> sharedFaces(const PixelPlaneIntersectionNR*)
+    const;
 
   // bool samePixelPlanes(const PixelPlaneIntersectionNR*) const;
 

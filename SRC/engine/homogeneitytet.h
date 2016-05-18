@@ -236,11 +236,16 @@ public:
 
   const HPixelPlane *getPixelPlane(unsigned int dir, int offset, int normal);
   const HPixelPlane *getUnorientedPixelPlane(const HPixelPlane*);
-  const FacePlane *getFacePlane(unsigned int i) const { return faces[i]; }
+  const FacePlane *getTetFacePlane(unsigned int i) const { return faces[i]; }
   const FacePixelPlane *getCoincidentPixelPlane(const FacePlane*) const;
   const FacePixelPlane *getCoincidentPixelPlane(unsigned int) const;
   const FacePixelPlane *getCoincidentFacePlane(const HPixelPlane*) const;
   unsigned int getCoincidentFaceIndex(const HPixelPlane*) const;
+
+  std::set<const HPlane*> getCollinearPlanes(const HPlane*, const HPlane*)
+    const;
+  std::set<const FacePlane*> getCollinearFaces(const HPlane*, const HPlane*)
+    const;
 
   TetIntersectionPolygon &getTetPlaneIntersectionPoints(const HPixelPlane*,
 							const HPixelPlane*);

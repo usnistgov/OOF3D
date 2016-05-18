@@ -301,13 +301,22 @@ PixelPlaneFacet::PixelPlaneFacet(HomogeneityTet *htet,
   // Map FacePlanes and FacePixelPlanes to polygon edge numbers.  Edge
   // e goes from tetPts[e] to tetPts[e+1].
   for(unsigned int i=0; i<tetPts.size(); i++) {
-    const FacePlane *face = getFacePlane(i);
-    assert(face != nullptr);
-    faceEdgeMap[face] = i;
-    const FacePixelPlane *fpp = htet->getCoincidentPixelPlane(face);
-    if(fpp != nullptr)
-      faceEdgeMap[fpp] = i;
+    std::set<const FacePlane*> faces = getFacePlanes(i);
+    for(const FacePlane *face : faces) {
+      assert(face != nullptr);
+      faceEdgeMap[face] = i;
+      const FacePixelPlane *fpp = htet->getCoincidentPixelPlane(face);
+      if(fpp != nullptr)
+	faceEdgeMap[fpp] = i;
+    }
   }
+#ifdef DEBUG
+  if(verbose) {
+    for(auto i=faceEdgeMap.begin(); i!=faceEdgeMap.end(); ++i)
+      oofcerr << "PixelPlaneFacet::ctor: faceEdgeMap[" << *i->first << "] = "
+	      << i->second << std::endl;
+  }
+#endif // DEBUG
 }
 
 PixelPlaneFacet::~PixelPlaneFacet() {
@@ -315,37 +324,73 @@ PixelPlaneFacet::~PixelPlaneFacet() {
     delete edge;
 }
 
-const FacePlane *PixelPlaneFacet::getFacePlane(unsigned int f) const {
+// Find the tet faces that this edge lies on, excluding the face that
+// lies in the pixel plane (if any).  These are the faces that define
+// the edges of the tet-pixel plane intersection polygon.
+std::set<const FacePlane*> PixelPlaneFacet::getFacePlanes(unsigned int f)
+  const
+{
   assert(f != NONE);
   unsigned int g = f + 1;
   if(g == tetPts.size())
     g = 0;
-  std::vector<const FacePlane*> faces = tetPts[f]->sharedFaces(tetPts[g]);
-// #ifdef DEBUG
-//   if(verbose) {
-//     oofcerr << "PixelPlaneFacet::getFacePlane: tetPts[f=" << f << "]="
-// 	    << *tetPts[f] << std::endl;
-//     oofcerr << "PixelPlaneFacet::getFacePlane: tetPts[g=" << g << "]="
-// 	    << *tetPts[g] << std::endl;
-//     oofcerr << "PixelPlaneFacet::getFacePlane: faces=";
-//     std::cerr << derefprint(faces);
-//     oofcerr << std::endl;	
-//   }
-// #endif // DEBUG
+  std::set<const FacePlane*> faces = tetPts[f]->sharedFaces(tetPts[g]);
+
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::getFacePlane: tetPts[f=" << f << "]="
+	    << *tetPts[f] << std::endl;
+    oofcerr << "PixelPlaneFacet::getFacePlane: tetPts[g=" << g << "]="
+	    << *tetPts[g] << std::endl;
+    oofcerr << "PixelPlaneFacet::getFacePlane: faces=";
+    std::cerr << derefprint(faces);
+    oofcerr << std::endl;	
+  }
+#endif // DEBUG
+  // For each face in faces, include the faces collinear with it and
+  // the pixelplane.
+  std::set<const FacePlane*> morefaces;
   for(const FacePlane *face : faces) {
+    std::set<const FacePlane*> cofaces =
+      htet->getCollinearFaces(face, pixplane);
+    morefaces.insert(cofaces.begin(), cofaces.end());
+  }
+  faces.insert(morefaces.begin(), morefaces.end());
+
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::getFacePlane: after adding collinear, faces=";
+    std::cerr << derefprint(faces);
+    oofcerr << std::endl;	
+  }
+#endif // DEBUG
+
+  for(auto i=faces.begin(); i!=faces.end(); ++i) {
     // Use Plane::coincident instead of operator== here because the
     // planes stored in the tetPts have arbitrary orientations.
-    if(!face->coincident(*pixplane)) {
-// #ifdef DEBUG
-//       if(verbose) {
-// 	oofcerr << "PixelPlaneFacet::getFacePlane: face=" << *face
-// 		<< std::endl;
-//       }
-// #endif	// DEBUG
-      return face;
+    if((*i)->coincident(*pixplane)) {
+      faces.erase(i);
+      break;			// there can be only one coincident face
     }
   }
-  throw ErrProgrammingError("getFacePlane failed!", __FILE__, __LINE__);
+#ifdef DEBUG
+  if(faces.empty())
+    throw ErrProgrammingError("getFacePlanes failed!", __FILE__, __LINE__);
+#endif // DEBUG
+  return faces;
+  
+//   for(const FacePlane *face : faces) {
+//     if(!face->coincident(*pixplane)) {
+// // #ifdef DEBUG
+// //       if(verbose) {
+// // 	oofcerr << "PixelPlaneFacet::getFacePlane: face=" << *face
+// // 		<< std::endl;
+// //       }
+// // #endif	// DEBUG
+//       return face;
+//     }
+//   }
+  // throw ErrProgrammingError("getFacePlane failed!", __FILE__, __LINE__);
 }
 
 const FacePixelPlane *PixelPlaneFacet::getBaseFacePlane() const {
@@ -610,21 +655,23 @@ bool PixelPlaneFacet::completeLoops() {
 // 	      << " " << *edge << std::endl;
 // #endif	// DEBUG
 
-    // Calling referent() is sort of silly here, but it's possibly
-    // cheaper than using a dynamic_cast to convert the
-    // PixelPlaneIntersection in the FacetEdge to a
-    // PixelPlaneIntersectionNR.  At this point the intersection can't
-    // be a RedundantIntersection.
-    if(edge->startFace())
-      totalIntersections += storeCoincidenceData(edge->startFace()->referent(),
-						 pixplane,
-						 coincidentLocs,
+    if(edge->startFace()) {
+      // Calling referent() is sort of silly here, but it's possibly
+      // cheaper than using a dynamic_cast to convert the
+      // PixelPlaneIntersection in the FacetEdge to a
+      // PixelPlaneIntersectionNR.  At this point the intersection
+      // can't be a RedundantIntersection.
+      PixelPlaneIntersectionNR *ppi = edge->startFace()->referent();
+      htet->checkEquiv(ppi);
+      totalIntersections += storeCoincidenceData(ppi, pixplane, coincidentLocs,
 						 coincidences);
-    if(edge->stopFace())
-      totalIntersections += storeCoincidenceData(edge->stopFace()->referent(),
-						 pixplane,
-						 coincidentLocs,
+    }
+    if(edge->stopFace()) {
+      PixelPlaneIntersectionNR *ppi = edge->stopFace()->referent();
+      htet->checkEquiv(ppi);
+      totalIntersections += storeCoincidenceData(ppi, pixplane, coincidentLocs,
 						 coincidences);
+    }
     
   } // end loop over edges
 
@@ -774,8 +821,20 @@ bool PixelPlaneFacet::completeLoops() {
   std::vector<PolyEdgeIntersections> polyEdgeIntersections(tetPts.size());
 
   for(FacetEdge *edge : edges) {
+#ifdef DEBUG
+    try {
+#endif // DEBUG
     edge->startPt()->locateOnPolygonEdge(polyEdgeIntersections, this);
     edge->endPt()->locateOnPolygonEdge(polyEdgeIntersections, this);
+#ifdef DEBUG
+    }
+    catch (...) {
+      oofcerr << "PixelPlaneFacet::completeLoops: edge=" << *edge << std::endl;
+      oofcerr << "PixelPlaneFacet::completeLoops: pixplane=" << *pixplane
+	      << std::endl;
+      throw;
+    }
+#endif // DEBUG
   }
 
 // #ifdef DEBUG

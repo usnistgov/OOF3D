@@ -213,7 +213,7 @@ private:
   mutable double area_;
   mutable bool areaComputed_;
   const bool onFace;
-  FaceEdgeMap faceEdgeMap;  // maps Planes to polygon edge numbers
+  FaceEdgeMap faceEdgeMap;  // maps Plane*s to polygon edge numbers
   std::set<RedundantIntersection*> redundantIntersections;
 
 public:
@@ -262,7 +262,7 @@ public:
   BarycentricCoord polygonCornerBary(unsigned int) const;
   Coord2D polygonCorner(unsigned int i) const;
   unsigned int getPolyEdge(const Plane *fp) const;
-  const FacePlane *getFacePlane(unsigned int) const;
+  std::set<const FacePlane*> getFacePlanes(unsigned int) const;
   const FacePixelPlane *getBaseFacePlane() const;
 
   bool onOppositeEdges(const SimpleIntersection*, const SimpleIntersection*)

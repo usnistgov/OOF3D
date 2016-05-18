@@ -97,7 +97,7 @@ TripleFaceIntersection::TripleFaceIntersection(unsigned int node,
   : node_(node)
 {
   for(unsigned int i=0; i<3; i++)
-    faces_.insert(htet->getFacePlane(CSkeletonElement::nodeFaces[node][i]));
+    faces_.insert(htet->getTetFacePlane(CSkeletonElement::nodeFaces[node][i]));
   loc_ = htet->nodePosition(node);
 }
 
@@ -228,7 +228,7 @@ bool PixelPlaneIntersection::onOnePolySegment(const PixelPlaneIntersection *fi,
 // 	    << std::endl;
 //   }
 // #endif // DEBUG
-  const std::vector<const FacePlane*> shared =
+  const std::set<const FacePlane*> shared =
     referent()->sharedFaces(fi->referent());
 // #ifdef DEBUG
 //   if(facet->verbose) {
@@ -245,11 +245,11 @@ bool PixelPlaneIntersection::onOnePolySegment(const PixelPlaneIntersection *fi,
 //     }
 //   }
 // #endif // DEBUG
-  if(shared.size() == 1 && facet->getBaseFacePlane() != shared[0])
+  if(shared.size() == 1 && facet->getBaseFacePlane() != *shared.begin())
     return true;
   if(shared.size() == 2) {
     const FacePlane *base = facet->getBaseFacePlane();
-    if(base == shared[0] || base == shared[1])
+    if(base == *shared.begin() || base == *shared.rbegin())
       return true;
   }
   return false;
@@ -355,6 +355,8 @@ bool PixelPlaneIntersectionNR::includeCollinearPlanes_(
 void PixelPlaneIntersectionNR::includeCollinearPlanes(
 				      const CollinearPlaneMap &coplanes)
 {
+  // TODO: Keep track of whether collinear planes are up to date and
+  // don't recompute unless necessary.
   bool mod = includeCollinearPlanes_(coplanes, pixelPlanes_, pixelPlanes_);
   mod = includeCollinearPlanes_(coplanes, faces_, faces_) || mod;
   mod = includeCollinearPlanes_(coplanes, pixelFaces_, pixelFaces_) || mod;
@@ -423,11 +425,11 @@ const FacePlane *PixelPlaneIntersectionNR::sharedFace(
   return nullptr;
 }
 
-const std::vector<const FacePlane*> PixelPlaneIntersectionNR::sharedFaces(
+const std::set<const FacePlane*> PixelPlaneIntersectionNR::sharedFaces(
 				       const PixelPlaneIntersectionNR *fi)
   const
 {
-  std::vector<const FacePlane*> shared;
+  std::set<const FacePlane*> shared;
   std::set_intersection(faces_.begin(), faces_.end(),
 			fi->faces().begin(),
 			fi->faces().end(),
@@ -627,6 +629,10 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
 				const PixelPlaneFacet *facet)
   const
 {
+  // Loop over the faces and face pixel planes that intersect at this
+  // point and find one that is associated with a polygon edge.  Make
+  // an entry for this point and the edge in polyedges.
+  
   // If there are multiple faces, this makes an arbitrary choice.  Any
   // of them will do, as long as they form an edge of the polygon,
   // except for the plane of the facet.  There might be an edge that
@@ -639,6 +645,8 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
 // #endif // DEBUG
 
   for(const FacePlane *face : faces_) {
+    // getPolyEdge looks for a polygon edge that is associated with
+    // the given face.
     unsigned int edge = facet->getPolyEdge(face);
     if(edge != NONE) {
       polyedges[edge].push_back(this);
@@ -1014,26 +1022,36 @@ double MultiFaceMixin<BASE>::getPolyFrac(unsigned int edge,
   // An intersection that's on more than one face must be at a corner
   // of the polygon, so its fractional position along a polygon edge
   // is either 0 or 1.
+
+
+  // TODO: This might be wrong if getFacePlane returns a collinear
+  // face that's not in this PlaneIntersection.
+  
 // #ifdef DEBUG
 //   if(facet->verbose)
 //     oofcerr << "MultiFaceMixin::getPolyFrac: " << this << " " << *this
 // 	    << std::endl;
 // #endif // DEBUG
   unsigned int nn = facet->polygonSize();
-  const FacePlane *nextface = facet->getFacePlane((edge+1)%nn);
+  std::set<const FacePlane*> nextfaces = facet->getFacePlanes((edge+1)%nn);
 // #ifdef DEBUG
 //   if(facet->verbose)
 //     oofcerr << "MultiFaceMixin::getPolyFrac: nn=" << nn << " nextface="
 // 	    << nextface << " " << *nextface << std::endl;
 // #endif	// DEBUG
-  if(nextface->isPartOf(this))
-    return 1.0;
+  for(const FacePlane *nextface : nextfaces)
+    if(nextface->isPartOf(this))
+      return 1.0;
 #ifdef DEBUG
-  const FacePlane *prevface = facet->getFacePlane((edge+nn-1)%nn);
+  std::set<const FacePlane*> prevfaces =
+    facet->getFacePlanes((edge+nn-1)%nn);
+  for(const FacePlane *prevface : prevfaces)
+    if(prevface->isPartOf(this))
+      return 0.0;
   // if(facet->verbose)
   //   oofcerr << "MultiFaceMixin::getPolyFrac: prevface="
   // 	    << prevface << " " << *prevface << std::endl;
-  assert(prevface->isPartOf(this));
+  // assert(prevface->isPartOf(this));
 #endif // DEBUG
   return 0.0;
 }
@@ -1567,7 +1585,7 @@ SimpleIntersection::SimpleIntersection(HomogeneityTet *htet,
   // The given faceindex is the face that intersects the
   // PixelBdyLoopSegment.  It's not the face, if any, that contains the
   // pixel plane of the facet.
-  const FacePlane *fp = htet->getFacePlane(faceIndex);
+  const FacePlane *fp = htet->getTetFacePlane(faceIndex);
   fp->addToIntersection(this);
   setFacePlane(fp);
   setLoopSeg(pblseg);
@@ -1805,7 +1823,7 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
 {
   pp0->addToIntersection(this);
   pp1->addToIntersection(this);
-  const FacePlane *fp = htet->getFacePlane(faceIndex);
+  const FacePlane *fp = htet->getTetFacePlane(faceIndex);
   fp->addToIntersection(this);
   setLoopSeg(pblseg);
   setLoopFrac(alpha);
@@ -2380,7 +2398,7 @@ TetNodeIntersection::TetNodeIntersection(HomogeneityTet *htet,
   // Do we have to worry about faces that don't create polygon edges?
   for(unsigned int i=0; i<3; i++) {
     unsigned int f = CSkeletonElement::nodeFaces[node][i];
-    const FacePlane *fp = htet->getFacePlane(f);
+    const FacePlane *fp = htet->getTetFacePlane(f);
     fp->addToIntersection(this);
   }
   pp->addToIntersection(this);

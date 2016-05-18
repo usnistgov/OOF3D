@@ -39,7 +39,7 @@ bool HomogeneityTet::verboseCategory_(bool verbose, unsigned int category) const
       4
 	});
   return verbose && (categories.empty() || categories.count(category) == 1);
-};
+}
 
 bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
   const
@@ -50,8 +50,7 @@ bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
   // TODO: Set this at run time via menu commands?
   static std::set<HPixelPlane> planes({
       {0, 5, 1},
-	{1, 15, -1},
-	  {2, 8, 1}
+      {1, 15, 1}
       // {0, NONE, 1} // use this to show no planes
     });
   return verbose && (planes.empty() || planes.count(*pixplane) == 1);
@@ -233,8 +232,8 @@ HomogeneityTet::HomogeneityTet(const CSkeletonElement *element,
     if(!dirs.empty()) {		// if the edge is on any pixel planes
       std::vector<const HPlane*> planes;
       planes.reserve(2 + dirs.size());
-      planes.push_back(getFacePlane(CSkeletonElement::edgeFaces[e][0]));
-      planes.push_back(getFacePlane(CSkeletonElement::edgeFaces[e][1]));
+      planes.push_back(getTetFacePlane(CSkeletonElement::edgeFaces[e][0]));
+      planes.push_back(getTetFacePlane(CSkeletonElement::edgeFaces[e][1]));
       for(unsigned int c : dirs) {
 	double x = epts[n0][c];
 	const HPixelPlane *pp = getUnorientedPixelPlane(getPixelPlane(c, x, 1));
@@ -409,6 +408,34 @@ ICoord3D HomogeneityTet::testVoxel(unsigned int f) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+std::set<const HPlane*> HomogeneityTet::getCollinearPlanes(const HPlane *p0,
+							   const HPlane *p1)
+  const
+{
+  auto range = collinearPlanes.equal_range(std::make_pair(p0, p1));
+  std::set<const HPlane*> planes;
+  for(auto iter=range.first; iter!=range.second; ++iter)
+    planes.insert(iter->second);
+  return planes;
+}
+
+std::set<const FacePlane*> HomogeneityTet::getCollinearFaces(const HPlane *p0,
+							     const HPlane *p1)
+  const
+{
+  auto range = collinearPlanes.equal_range(std::make_pair(p0, p1));
+  std::set<const FacePlane*> faces;
+  for(auto iter=range.first; iter!=range.second; ++iter) {
+    // TODO: This cast is dumb and may be slow.  Find a better way.
+    const FacePlane *face = dynamic_cast<const FacePlane*>(iter->second);
+    if(face != nullptr)
+      faces.insert(face);
+  }
+  return faces;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
 				PlaneIntersection *point1,
 				PlaneIntersection *merged)
@@ -477,6 +504,7 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
 // and puts it in it.  If the point already belongs to a class and is
 // found to also belong to another, the classes are merged.
 void HomogeneityTet::checkEquiv(PlaneIntersection *point) {
+  point->includeCollinearPlanes(collinearPlanes);
   for(IsecEquivalenceClass *eqclass : equivalences) {
     if(point->equivalence() != eqclass) {
       if(point->isEquivalent(eqclass)) {
@@ -505,106 +533,6 @@ void HomogeneityTet::checkEquiv(PlaneIntersection *point) {
     point->setEquivalence(eqclass);
   }
 }
-
-// void HomogeneityTet::checkEquiv(PlaneIntersection *point0,
-// 				PlaneIntersection *point1)
-// {
-// #ifdef DEBUG
-//   if(verboseface) {
-//     oofcerr << "HomogeneityTet::checkEquiv: point0=" << point0 << " "
-// 	    << *point0 << std::endl;
-//     oofcerr << "HomogeneityTet::checkEquiv: point1=" << point1 << " "
-// 	    << *point1 << std::endl;
-//   }
-//   OOFcerrIndent indent(3);
-// #endif // DEBUG
-//   IsecEquivalenceClass *equivClass0 = point0->equivalence();
-//   IsecEquivalenceClass *equivClass1 = point1->equivalence();
-  
-//   if(equivClass0 != nullptr && equivClass0 == equivClass1) {
-// // #ifdef DEBUG
-// //     if(verboseface)
-// //       oofcerr << "HomogeneityTet::checkEquiv: already in same class"
-// // 	      << std::endl;
-// // #endif // DEBUG
-//     return;
-//   }
-
-//   if(!point0->isEquivalent(point1)) {
-//     // Points aren't equivalent.
-// // #ifdef DEBUG
-// //     if(verboseface)
-// //       oofcerr << "HomogeneityTet::checkEquiv: not equivalent"
-// // 	      << std::endl;
-// // #endif // DEBUG
-//     return;
-//   }
-
-
-//   if(equivClass0 == nullptr) {
-//     if(equivClass1 == nullptr) {
-//       // Equivalent, but no class exists yet for either point
-//       IsecEquivalenceClass *eqclass = new IsecEquivalenceClass(point0
-// #ifdef DEBUG
-// 							       , verbose
-// #endif // DEBUG
-// 							       );
-//       equivalences.insert(eqclass);
-//       point0->setEquivalence(eqclass);
-//       point1->setEquivalence(eqclass);
-// #ifdef DEBUG
-//       if(verboseface)
-// 	oofcerr << "HomogeneityTet::checkEquiv: created new class: "
-// 		<< eqclass << " " << *eqclass << std::endl;
-// #endif // DEBUG
-//     }
-//     else {    // equivClass1 != nullptr
-//       // point 1 is in an equivalence class but point 0 is not
-// #ifdef DEBUG
-//       if(verboseface) {
-// 	oofcerr << "HomogeneityTet::checkEquiv: adding pt 0 to equivClass1"
-// 		<< std::endl;
-// 	point0->verbose = true;
-//       }
-// #endif // DEBUG
-//       point0->setEquivalence(equivClass1);
-// #ifdef DEBUG
-//       if(verboseface)
-// 	oofcerr << "HomogeneityTet::checkEquiv: added pt0 to equivClass1 "
-// 		<< *equivClass1 << std::endl;
-// #endif // DEBUG
-//     }
-//   }	 // end if equivClass0 == nullptr
-//   else {
-//     // point 0 is already in an equivalence class
-//     if(equivClass1 == nullptr) {
-//       point1->setEquivalence(equivClass0);
-// #ifdef DEBUG
-//       if(verboseface)
-// 	oofcerr << "HomogeneityTet::checkEquiv: added pt1 to equivClass0 "
-// 		<< *equivClass0 << std::endl;
-// #endif // DEBUG
-//     }
-//     else {
-//       // Both points are already in equivalence classes.  Merge the classes.
-//       equivClass0->merge(equivClass1);
-//       equivalences.erase(equivClass1);
-//       delete equivClass1;
-// #ifdef DEBUG
-//       if(verboseface)
-// 	oofcerr << "HomogeneityTet::checkEquiv: merged classes "
-// 		<< *equivClass0 << std::endl;
-// #endif // DEBUG
-//     }
-//   }
-// } // end HomogeneityTet::checkEquiv
-
-// void HomogeneityTet::removeEquivalence(PlaneIntersection *pt) const {
-//   IsecEquivalenceClass *eqclass = pt->equivalence();
-//   if(eqclass != nullptr) {
-//     eqclass->removeIntersection(pt);
-//   }
-// }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -1449,13 +1377,14 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 				     tetPts[0]->clone()));
     }
   } // end if facetarea <= 0
+
 #ifdef DEBUG
   if(verboseplane) {
     if(!facet->empty()) {
       oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: cat=" << cat
 	      << " pixel plane=" << *pixplane
 	      << " final facet= " << *facet << std::endl;
-      // facet->dump();
+      facet->dump();
     }
     else
       oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: cat=" << cat
@@ -1835,24 +1764,24 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
       endPoints.reserve(nsegs);
       // Loop over segments in the face facet, storing their start and
       // end points.  *seg is a FaceFacetEdge*.
-#ifdef DEBUG
-      if(verboseface) {
-	oofcerr << "HomogeneityTet::findFaceFacets: starting checkEquiv loop"
-		<< std::endl;
-	// if(!verify())
-	//   throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
-      }
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(verboseface) {
+// 	oofcerr << "HomogeneityTet::findFaceFacets: starting checkEquiv loop"
+// 		<< std::endl;
+// 	// if(!verify())
+// 	//   throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
+//       }
+// #endif // DEBUG
 
       
       // Make sure equivalence classes are up to date.
+      // for(auto seg=facet.begin(); seg!=facet.end(); ++seg) {
+      // 	(*seg)->startPt()->includeCollinearPlanes(collinearPlanes);
+      // 	(*seg)->endPt()->includeCollinearPlanes(collinearPlanes);
+      // }
       for(auto seg=facet.begin(); seg!=facet.end(); ++seg) {
-      	(*seg)->startPt()->includeCollinearPlanes(collinearPlanes);
-      	(*seg)->endPt()->includeCollinearPlanes(collinearPlanes);
-      }
-      for(auto seg=facet.begin(); seg!=facet.end(); ++seg) {
-	checkEquiv((*seg)->startPt());
-	checkEquiv((*seg)->endPt());
+      	checkEquiv((*seg)->startPt());
+      	checkEquiv((*seg)->endPt());
       }
 
       for(auto seg=facet.begin(); seg!=facet.end(); ++seg) {
@@ -2418,11 +2347,6 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	    }
 	  } // end while nEnds > nStarts
 	} // end if nStarts < nEnds
-	
-	  // // TODO: Can this still happen?  Get code from
-	  // // tetintersection.C if necessary.
-	  // throw ErrProgrammingError("This situation not handled yet.",
-	  // 			  __FILE__, __LINE__);
       }	// end if nStarts != nEnds
 
 	// Create the missing segments. Missing segments start at a
