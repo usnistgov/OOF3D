@@ -2266,6 +2266,6 @@ dynamic_elastic_set = [
 
 test_set = static_set + dynamic_thermal_set + dynamic_elastic_set
 #test_set = dynamic_elastic_set
-# test_set = [
-#     OOF_NonrectMixedBCStaticElastic("Solve2")
-# ]
+#test_set = [
+    #OOF_StaticIsoElastic("SolveFloatFlatX")
+#]
