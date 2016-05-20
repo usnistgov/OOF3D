@@ -122,33 +122,35 @@ public:
 		  const PixelPlaneIntersection *fi1)
     const
   {
-#ifdef DEBUG
-    if(facet->verbose) {
-      // oofcerr << "LtPolyFrac::operator(): fi0=" << fi0 << " fi1=" << fi1
-      // 	      << std::endl;
-      oofcerr << "LtPolyFrac::operator(): fi0= " << fi0 << " " << *fi0
-	      << std::endl;
-      oofcerr << "LtPolyFrac::operator(): fi1= " << fi1 << " " << *fi1
-	      << std::endl;      
-    }
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(facet->verbose) {
+//       // oofcerr << "LtPolyFrac::operator(): fi0=" << fi0 << " fi1=" << fi1
+//       // 	      << std::endl;
+//       oofcerr << "LtPolyFrac::operator(): fi0= " << fi0 << " " << *fi0
+// 	      << std::endl;
+//       oofcerr << "LtPolyFrac::operator(): fi1= " << fi1 << " " << *fi1
+// 	      << std::endl;      
+//     }
+// #endif // DEBUG
 
     // TODO: sharedPolySegment might be too slow in this context.
     unsigned int sharedSeg = fi0->sharedPolySegment(fi1, facet);
-#ifdef DEBUG
-    if(facet->verbose)
-      oofcerr << "LtPolyFrac::operator(): sharedSeg=" << sharedSeg << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(facet->verbose)
+//       oofcerr << "LtPolyFrac::operator(): sharedSeg=" << sharedSeg << std::endl;
+// #endif // DEBUG
     if(sharedSeg != NONE) {
       double t0 = fi0->getPolyFrac(sharedSeg, facet);
       double t1 = fi1->getPolyFrac(sharedSeg, facet);
-#ifdef DEBUG
-      if(facet->verbose) {
-	oofcerr << "LtPolyFrac:operator(): polyFrac0=" << t0 << std::endl;
-	oofcerr << "LtPolyFrac:operator(): polyFrac1=" << t1 << std::endl;
-      }
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(facet->verbose) {
+// 	oofcerr << "LtPolyFrac:operator(): polyFrac0=" << t0 << std::endl;
+// 	oofcerr << "LtPolyFrac:operator(): polyFrac1=" << t1 << std::endl;
+//       }
+// #endif // DEBUG
+
       return t0 < t1;
+
       // return (fi0->getPolyFrac(sharedSeg, facet) <
       // 	      fi1->getPolyFrac(sharedSeg, facet));
     }
@@ -313,13 +315,13 @@ PixelPlaneFacet::PixelPlaneFacet(HomogeneityTet *htet,
 	faceEdgeMap[fpp] = i;
     }
   }
-#ifdef DEBUG
-  if(verbose) {
-    for(auto i=faceEdgeMap.begin(); i!=faceEdgeMap.end(); ++i)
-      oofcerr << "PixelPlaneFacet::ctor: faceEdgeMap[" << *i->first << "] = "
-	      << i->second << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     for(auto i=faceEdgeMap.begin(); i!=faceEdgeMap.end(); ++i)
+//       oofcerr << "PixelPlaneFacet::ctor: faceEdgeMap[" << *i->first << "] = "
+// 	      << i->second << std::endl;
+//   }
+// #endif // DEBUG
 }
 
 PixelPlaneFacet::~PixelPlaneFacet() {
@@ -339,34 +341,46 @@ std::set<const FacePlane*> PixelPlaneFacet::getFacePlanes(unsigned int f)
     g = 0;
   std::set<const FacePlane*> faces = tetPts[f]->sharedFaces(tetPts[g]);
 
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PixelPlaneFacet::getFacePlane: tetPts[f=" << f << "]="
-	    << *tetPts[f] << std::endl;
-    oofcerr << "PixelPlaneFacet::getFacePlane: tetPts[g=" << g << "]="
-	    << *tetPts[g] << std::endl;
-    oofcerr << "PixelPlaneFacet::getFacePlane: faces=";
-    std::cerr << derefprint(faces);
-    oofcerr << std::endl;	
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "PixelPlaneFacet::getFacePlanes: f=" << f << std::endl;
+//   OOFcerrIndent indent(2);
+//   if(verbose) {
+//     oofcerr << "PixelPlaneFacet::getFacePlanes: tetPts[f=" << f << "]="
+// 	    << *tetPts[f] << std::endl;
+//     oofcerr << "PixelPlaneFacet::getFacePlanes: tetPts[g=" << g << "]="
+// 	    << *tetPts[g] << std::endl;
+//     oofcerr << "PixelPlaneFacet::getFacePlanes: faces=";
+//     std::cerr << derefprint(faces);
+//     oofcerr << std::endl;	
+//   }
+// #endif // DEBUG
+
   // For each face in faces, include the faces collinear with it and
   // the pixelplane.
+  const HPixelPlane *upixplane = htet->getUnorientedPixelPlane(pixplane);
   std::set<const FacePlane*> morefaces;
   for(const FacePlane *face : faces) {
     std::set<const FacePlane*> cofaces =
-      htet->getCollinearFaces(face, pixplane);
+      htet->getCollinearFaces(face, upixplane);
+// #ifdef DEBUG
+//     if(verbose) {
+//       oofcerr << "PixelPlaneFacet::getFacePlanes: cofaces(" << *face << ")=";
+//       std::cerr << derefprint(cofaces);
+//       oofcerr << std::endl;
+//     }
+// #endif // DEBUG
     morefaces.insert(cofaces.begin(), cofaces.end());
   }
   faces.insert(morefaces.begin(), morefaces.end());
 
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PixelPlaneFacet::getFacePlane: after adding collinear, faces=";
-    std::cerr << derefprint(faces);
-    oofcerr << std::endl;	
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneFacet::getFacePlane: after adding collinear, faces=";
+//     std::cerr << derefprint(faces);
+//     oofcerr << std::endl;	
+//   }
+// #endif // DEBUG
 
   for(auto i=faces.begin(); i!=faces.end(); ++i) {
     // Use Plane::coincident instead of operator== here because the
@@ -563,6 +577,12 @@ double PixelPlaneFacet::getArea() const {
 }
 
 BarycentricCoord PixelPlaneFacet::polygonCornerBary(unsigned int i) const {
+#ifdef DEBUG
+  if(i >= tetPts.size()) {
+    oofcerr << "PixelPlaneFacet::polygonCornerBary: i=" << i << std::endl;
+    throw ErrProgrammingError("Error in polygonCornerBary", __FILE__, __LINE__);
+  }
+#endif // DEBUG
   return tetPts[i]->baryCoord(htet);
 }
 
@@ -2904,6 +2924,10 @@ std::ostream &operator<<(std::ostream &os, const PixelPlaneFacet &facet) {
        << "                edges=" << std::endl;
     for(const FacetEdge *edge : facet.edges)
       os << "                   " << *edge << std::endl;
+    os << "                faceEdgeMap= {";
+    for(auto i=facet.faceEdgeMap.begin(); i!=facet.faceEdgeMap.end(); ++i)
+      os << *(*i).first << ":" << (*i).second << ", ";
+    os << "}" << std::endl;
   }
   os << ")";
   return os;

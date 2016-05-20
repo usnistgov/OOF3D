@@ -44,21 +44,21 @@ PlaneIntersection::~PlaneIntersection() {
 
 const BarycentricCoord &PlaneIntersection::baryCoord(HomogeneityTet *htet) const
 {
-#ifdef DEBUG
-  if(htet->verbosePlane()) {
-    oofcerr << "PlaneIntersection::baryCoord: this=" << *this << std::endl;
-    oofcerr << "PlaneIntersection::baryCoord: loc=" << location3D()
-	    << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verbosePlane()) {
+//     oofcerr << "PlaneIntersection::baryCoord: this=" << *this << std::endl;
+//     oofcerr << "PlaneIntersection::baryCoord: loc=" << location3D()
+// 	    << std::endl;
+//   }
+// #endif // DEBUG
   const BarycentricCoord &b = htet->getBarycentricCoord(location3D());
-#ifdef DEBUG
-  if(htet->verbosePlane()) {
-    oofcerr << "PlaneIntersection::baryCoord: back from getBarycentricCoord"
-	    << std::endl;
-    oofcerr << "PlaneIntersection::baryCoord: b=" << b << std::endl;
-  }
-#endif	// DEBUG
+// #ifdef DEBUG
+//   if(htet->verbosePlane()) {
+//     oofcerr << "PlaneIntersection::baryCoord: back from getBarycentricCoord"
+// 	    << std::endl;
+//     oofcerr << "PlaneIntersection::baryCoord: b=" << b << std::endl;
+//   }
+// #endif	// DEBUG
   return b;
 }
 

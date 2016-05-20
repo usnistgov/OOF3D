@@ -263,7 +263,11 @@ HomogeneityTet::HomogeneityTet(const CSkeletonElement *element,
       oofcerr << "HomogeneityTet::ctor: collinear planes: "
 	      << planes.first.first->shortName() << ", "
 	      << planes.first.second->shortName() << ", "
-	      << planes.second->shortName() << std::endl;
+	      << planes.second->shortName()
+	      // << "     "
+	      // << planes.first.first << " " << planes.first.second
+	      // << " -> " << planes.second
+	      << std::endl;
       }
   }
 #endif // DEBUG
@@ -422,9 +426,21 @@ std::set<const FacePlane*> HomogeneityTet::getCollinearFaces(const HPlane *p0,
 							     const HPlane *p1)
   const
 {
+#ifdef DEBUG
+  if(verboseplane) {
+    oofcerr << "HomogeneityTet::getCollinearFaces: " << p0 << " " << p1
+	    << std::endl;
+  }
+  OOFcerrIndent indent(2);
+#endif // DEBUG
   auto range = collinearPlanes.equal_range(std::make_pair(p0, p1));
   std::set<const FacePlane*> faces;
   for(auto iter=range.first; iter!=range.second; ++iter) {
+#ifdef DEBUG
+    if(verboseplane)
+      oofcerr << "HomogeneityTet::getCollinearFaces: found " << *iter->second
+	      << std::endl;
+#endif // DEBUG
     // TODO: This cast is dumb and may be slow.  Find a better way.
     const FacePlane *face = dynamic_cast<const FacePlane*>(iter->second);
     if(face != nullptr)
@@ -540,11 +556,11 @@ BarycentricCoord &HomogeneityTet::getBarycentricCoord(const Coord3D &pt) {
     // See if this coordinate has already been computed.
     BaryCoordCache::iterator it = baryCache.find(pt);
     if(it != baryCache.end()) {
-#ifdef DEBUG
-      if(verboseplane)
-	oofcerr << "HomogeneityTet::getBarycentricCoord: " << pt << " "
-		<< (*it).second << " cached" << std::endl;
-#endif  // DEBUG
+// #ifdef DEBUG
+//       if(verboseplane)
+// 	oofcerr << "HomogeneityTet::getBarycentricCoord: " << pt << " "
+// 		<< (*it).second << " cached" << std::endl;
+// #endif  // DEBUG
       return (*it).second;
     }
   }
@@ -559,21 +575,21 @@ BarycentricCoord &HomogeneityTet::getBarycentricCoord(const Coord3D &pt) {
       b[CSkeletonElement::oppNode[f]] = 0.0;
     }
   }
-#ifdef DEBUG
-  if(verboseplane)
-    oofcerr << "HomogeneityTet::getBarycentricCoord: " << pt << " " << b
-	    << " computed" << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verboseplane)
+//     oofcerr << "HomogeneityTet::getBarycentricCoord: " << pt << " " << b
+// 	    << " computed" << std::endl;
+// #endif // DEBUG
 
   // Insert the new barycentric coord into the cache, and return a
   // reference to it.
   std::pair<BaryCoordCache::iterator, bool> insert =
     baryCache.insert(std::pair<Coord3D, BarycentricCoord>(pt, b));
-#ifdef DEBUG
-  if(verboseplane)
-    oofcerr << "HomogeneityTet::getBarycentricCoord: " << pt << " "
-	    << (*insert.first).second << " new" << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verboseplane)
+//     oofcerr << "HomogeneityTet::getBarycentricCoord: " << pt << " "
+// 	    << (*insert.first).second << " new" << std::endl;
+// #endif // DEBUG
   return (*insert.first).second;
 }
 
@@ -639,6 +655,12 @@ BarycentricCoord &HomogeneityTet::getBarycentricCoord(
 //   isec->setPolyFrac(alpha);
 // }
 
+// Given the barycentric coordinates of a point that is on the given
+// face of the tet, find its fractional position along the polygon
+// edge formed by the intersection of the face with the plane of the
+// given facet.  The point is assumed to lie in both the face and the
+// plane.
+
 double HomogeneityTet::edgeCoord(const BarycentricCoord &bint,
 				 const FacePlane *face,
 				 const PixelPlaneFacet *facet)
@@ -651,6 +673,16 @@ double HomogeneityTet::edgeCoord(const BarycentricCoord &bint,
 //   }
 // #endif	// DEBUG
   unsigned int edgeno = facet->getPolyEdge(face);
+#ifdef DEBUG
+  if(edgeno == NONE) {
+    oofcerr << "HomogeneityTet::edgeCoord: edgeno==NONE! face=" << *face
+	    << std::endl;
+    oofcerr << "HomogeneityTet::edgeCoord: facet=" << *facet << std::endl;
+    throw ErrProgrammingError("HomogeneityTet::edgeCoord: bad edgeno!",
+			      __FILE__, __LINE__);
+  }
+#endif // DEBUG
+  
   unsigned int nextno = edgeno + 1;
   if(nextno == facet->polygonSize())
     nextno = 0;
@@ -2031,7 +2063,9 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
   //   throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
 
   for(unsigned int face=0; face<NUM_TET_FACES; face++) {
+#ifdef DEBUG
     verboseface = verboseFace_(verbosecategory, face);
+#endif // DEBUG
     FaceFacet &facet = faceFacets[face];
     if(coincidentPixelPlanes[face] == nullptr) { // face is not a pixel plane
       std::vector<LooseEndMap> &looseEnds = looseEndCatalog[face];
