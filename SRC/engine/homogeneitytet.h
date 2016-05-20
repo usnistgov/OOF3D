@@ -25,9 +25,6 @@
 #include <vector>
 #include <map>
 
-// TODO: There are too many mutable data members here.  Maybe there
-// are too many const methods.
-
 class CMicrostructure;
 class CSkeletonElement;
 class VoxelSetBoundary;
@@ -52,8 +49,10 @@ public:
   double edgePosition() const { return t; }
   PlaneIntersection *corner() const { return crnr; }
 
-  // findFaceEdge sets fEdge and t.
-  void findFaceEdge(unsigned int face, HomogeneityTet *htet);
+  // findFaceEdge sets fEdge and t.  It uses topology to find fEdge.
+  void findFaceEdge(unsigned int face, HomogeneityTet*);
+  // forceOntoEdge also sets fEdge and t.  It uses arithmetic to find fEdge.
+  void forceOntoEdge(unsigned int face, HomogeneityTet*);
 };
 
 std::ostream &operator<<(std::ostream&, const FaceEdgeIntersection&);
@@ -246,6 +245,7 @@ public:
     const;
   std::set<const FacePlane*> getCollinearFaces(const HPlane*, const HPlane*)
     const;
+  bool areCollinear(const HPlane*, const HPlane*, const HPlane*) const;
 
   TetIntersectionPolygon &getTetPlaneIntersectionPoints(const HPixelPlane*,
 							const HPixelPlane*);

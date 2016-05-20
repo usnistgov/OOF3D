@@ -34,6 +34,10 @@ typedef std::multimap<const Coord2D, PixelPlaneIntersectionNR*> IsecsNearCoord;
 // are classes in the engine module, and which aren't allowed in the
 // base Plane class in the common module.
 
+// TODO: Instead of using complicated double-diamond virtual
+// inheritance structur for the Plane subclasses, use an interface
+// scheme.
+
 class HPlane : public virtual Plane {
 public:
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const = 0;

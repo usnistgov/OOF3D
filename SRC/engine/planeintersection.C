@@ -311,13 +311,15 @@ void PixelPlaneIntersectionNR::computeLocation() {
     planes.insert(planes.end(), pixelPlanes_.begin(), pixelPlanes_.end());
     planes.insert(planes.end(), pixelFaces_.begin(), pixelFaces_.end());
     int nToAdd = 3 - npixplanes;
-    for(const Plane *face : faces_) {
-      // TODO: If npixplanes==2, check that the plane being added
-      // doesn't contain the intersection line of the pixplanes.
-      if(npixplanes != 2 ||face->nonDegenerate(planes[0], planes[1])) {
-	planes.push_back(face);
-	if(--nToAdd == 0)
-	  break;
+    if(nToAdd > 0) {
+      for(const Plane *face : faces_) {
+	// If npixplanes==2, check that the plane being added doesn't
+	// contain the intersection line of the pixplanes.
+	if(npixplanes != 2 || face->nonDegenerate(planes[0], planes[1])) {
+	  planes.push_back(face);
+	  if(--nToAdd == 0)
+	    break;
+	}
       }
     }
 #ifdef DEBUG
@@ -326,6 +328,9 @@ void PixelPlaneIntersectionNR::computeLocation() {
       // don't bother checking for it.
       oofcerr << "PixelPlaneIntersectionNR::computeLocation: wrong number of planes!: "
 	      << *this << std::endl;
+      oofcerr << "PixelPlaneIntersectionNR::computeLocation: planes=";
+      std::cerr << derefprint(planes);
+      oofcerr << std::endl;
       throw ErrProgrammingError(
 			"PixelPlaneIntersectionNR::computeLocation failed!",
 			__FILE__, __LINE__);
