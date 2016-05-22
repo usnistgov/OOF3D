@@ -106,8 +106,7 @@ public:
     return pp->convert2Coord2D(location3D());
   }
 
-  virtual void includeCollinearPlanes(const CollinearPlaneMap &) = 0;
-  // void addCollinearPlanes(HomogeneityTet*);
+  // virtual void includeCollinearPlanes(const CollinearPlaneMap &) = 0;
 
   // Intersections are equivalent if they have any three distinct
   // planes in common.
@@ -163,7 +162,7 @@ public:
   virtual const BarycentricCoord &baryCoord(HomogeneityTet*) const;
   virtual void print(std::ostream&) const;
 
-  virtual void includeCollinearPlanes(const CollinearPlaneMap &) {}
+  // virtual void includeCollinearPlanes(const CollinearPlaneMap &) {}
   
   virtual bool isEquivalent(const PlaneIntersection*) const;
   virtual bool isEquivalent(const TripleFaceIntersection*) const;
@@ -302,6 +301,7 @@ protected:
   template <class PlaneSet0, class PlaneSet1>
   bool includeCollinearPlanes_(const CollinearPlaneMap&,
 			       const PlaneSet0 &, const PlaneSet1 &);
+  void includeCollinearPlanes(HomogeneityTet*);
 
 #ifdef DEBUG
   std::string printPlanes() const;
@@ -334,7 +334,7 @@ public:
   const FacePixelPlaneSet &pixelFaces() const { return pixelFaces_; }
   FacePixelPlaneSet &pixelFaces() { return pixelFaces_; }
 
-  virtual void includeCollinearPlanes(const CollinearPlaneMap &);
+  // virtual void includeCollinearPlanes(const CollinearPlaneMap &);
 
   virtual bool onSameLoopSegment(const PixelPlaneIntersectionNR*) const = 0;
   virtual bool sameLoopSegment(const SingleVSBbase*) const = 0;
@@ -868,7 +868,8 @@ public:
 
 class TetEdgeIntersection : public TetIntersection {
 public:
-  TetEdgeIntersection(const FacePlane*, const FacePlane*, const HPixelPlane*);
+  TetEdgeIntersection(HomogeneityTet*, const FacePlane*, const FacePlane*,
+		      const HPixelPlane*);
   virtual TetEdgeIntersection *clone() const;
   virtual void print(std::ostream&) const;
   virtual std::string shortName() const;
@@ -899,8 +900,8 @@ class TriplePixelPlaneIntersection
   : public MultiVSBmixIn<PixelPlaneIntersectionNR>
 {
 public:
-  TriplePixelPlaneIntersection(const HPixelPlane*, const HPixelPlane*,
-			       const HPixelPlane*);
+  TriplePixelPlaneIntersection(HomogeneityTet *htet, const HPixelPlane*,
+			       const HPixelPlane*, const HPixelPlane*);
   virtual TriplePixelPlaneIntersection *clone() const;
   virtual CrossingType crossingType() const { return NONCROSSING; }
   virtual unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const;
@@ -985,9 +986,9 @@ public:
   virtual void setEquivalence(IsecEquivalenceClass *e) {
     referent_->setEquivalence(e);
   }
-  virtual void includeCollinearPlanes(const CollinearPlaneMap &coplanes) {
-    referent_->includeCollinearPlanes(coplanes);
-  }
+  // virtual void includeCollinearPlanes(const CollinearPlaneMap &coplanes) {
+  //   referent_->includeCollinearPlanes(coplanes);
+  // }
   virtual void locateOnPolygonEdge(std::vector<PolyEdgeIntersections>&,
 				   const PixelPlaneFacet*) const {}
   // virtual bool onSameLoopSegment(const PixelPlaneIntersection *ppi) const {

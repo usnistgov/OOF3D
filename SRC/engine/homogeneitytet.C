@@ -50,15 +50,16 @@ bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
   // TODO: Set this at run time via menu commands?
   static std::set<HPixelPlane> planes({
       {0, 15, -1},
-      {1, 13, -1}
-      // {0, NONE, 1} // use this to show no planes
+	// {1, 17, -1},
+	  {2, 10, 1},
+	    {0, NONE, 1} // use this to show no planes
     });
   return verbose && (planes.empty() || planes.count(*pixplane) == 1);
 }
 
 bool HomogeneityTet::verboseFace_(bool verbose, unsigned int face) const {
   static std::set<unsigned int> faces({
-      2
+      3
 	});
   return verbose && (faces.empty() || faces.count(face) == 1);
 }
@@ -534,7 +535,6 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
 // and puts it in it.  If the point already belongs to a class and is
 // found to also belong to another, the classes are merged.
 void HomogeneityTet::checkEquiv(PlaneIntersection *point) {
-  point->includeCollinearPlanes(collinearPlanes);
   for(IsecEquivalenceClass *eqclass : equivalences) {
     if(point->equivalence() != eqclass) {
       if(point->isEquivalent(eqclass)) {
@@ -830,7 +830,7 @@ HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane,
       unsigned int edge = CSkeletonElement::cwNodeEdges[n][i];
       FacePlane *face0 = faces[CSkeletonElement::edgeFaces[edge][0]];
       FacePlane *face1 = faces[CSkeletonElement::edgeFaces[edge][1]];
-      result.push_back(new TetEdgeIntersection(face0, face1, upixplane));
+      result.push_back(new TetEdgeIntersection(this, face0, face1, upixplane));
 #ifdef DEBUG
       result.back()->verbose = verboseplane;
 #endif // DEBUG
@@ -857,7 +857,8 @@ HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane,
 	  CSkeletonElement::cwNeighborEdgeOrder[underedge][i];
 	FacePlane *face0 = faces[CSkeletonElement::edgeFaces[edge][0]];
 	FacePlane *face1 = faces[CSkeletonElement::edgeFaces[edge][1]];	
-	result.push_back(new TetEdgeIntersection(face0, face1, upixplane));
+	result.push_back(new TetEdgeIntersection(this, face0, face1,
+						 upixplane));
 #ifdef DEBUG
 	result.back()->verbose = verboseplane;
 #endif // DEBUG
@@ -884,7 +885,8 @@ HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane,
 	else {
 	  FacePlane *face0 = faces[CSkeletonElement::edgeFaces[edge][0]];
 	  FacePlane *face1 = faces[CSkeletonElement::edgeFaces[edge][1]];
-	  result.push_back(new TetEdgeIntersection(face0, face1, upixplane));
+	  result.push_back(new TetEdgeIntersection(this, face0, face1,
+						   upixplane));
 #ifdef DEBUG
 	  result.back()->verbose = verboseplane;
 #endif // DEBUG
@@ -904,7 +906,8 @@ HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane,
 	unsigned int edge = CSkeletonElement::ccwNodeEdges[n][i];
 	FacePlane *face0 = faces[CSkeletonElement::edgeFaces[edge][0]];
 	FacePlane *face1 = faces[CSkeletonElement::edgeFaces[edge][1]];
-	result.push_back(new TetEdgeIntersection(face0, face1, upixplane));
+	result.push_back(new TetEdgeIntersection(this, face0, face1,
+						 upixplane));
 #ifdef DEBUG
 	result.back()->verbose = verboseplane;
 #endif // DEBUG
@@ -1229,9 +1232,9 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	  const HPixelPlane *nextPlanePtr =
 	    getUnorientedPixelPlane(&orthoPlaneNext);
 	  facet->addEdge(new PixelFacetEdge(
-			    new TriplePixelPlaneIntersection(
+			    new TriplePixelPlaneIntersection(this,
 				 upixplane, prevPlanePtr, orthoPlanePtr),
-			    new TriplePixelPlaneIntersection(
+			    new TriplePixelPlaneIntersection(this,
 				 upixplane, orthoPlanePtr, nextPlanePtr)));
 
 	} // end if the segment is entirely inside the polygon
@@ -1257,7 +1260,7 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	    const HPixelPlane *prevPlanePtr =
 	      getUnorientedPixelPlane(&orthoPlanePrev);
 	    facet->addEdge(new StopFaceIntersectionEdge(
-				new TriplePixelPlaneIntersection(
+				new TriplePixelPlaneIntersection(this,
 				       upixplane, prevPlanePtr, orthoPlanePtr),
 			    pi));
 	  }
@@ -1268,7 +1271,7 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	      getUnorientedPixelPlane(&orthoPlaneNext);
 	    facet->addEdge(new StartFaceIntersectionEdge(
 			     pi,
-			     new TriplePixelPlaneIntersection(
+			     new TriplePixelPlaneIntersection(this,
 				      upixplane, orthoPlanePtr, nextPlanePtr)));
 	  }
 	} // end if start and end are hetero-interior

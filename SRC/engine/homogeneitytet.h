@@ -286,7 +286,7 @@ public:
   Coord3D faceAreaVector(unsigned int f) const { return faceAreaVectors[f]; }
   ICoord3D testVoxel(unsigned int f);
 
-  // void removeEquivalence(PlaneIntersection*) const;
+  friend class PixelPlaneIntersectionNR;
   
 #ifdef DEBUG
 private:
@@ -309,6 +309,6 @@ public:
   bool verify();
   void dumpEquivalences();
 #endif
-};
+};				// end class HomogeneityTet
 
 #endif // HOMOGENEITYTET_H

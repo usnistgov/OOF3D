@@ -372,9 +372,9 @@ bool PixelPlaneIntersectionNR::includeCollinearPlanes_(
   return changed;
 }
 
-void PixelPlaneIntersectionNR::includeCollinearPlanes(
-				      const CollinearPlaneMap &coplanes)
-{
+void PixelPlaneIntersectionNR::includeCollinearPlanes(HomogeneityTet *htet) {
+  const CollinearPlaneMap &coplanes = htet->collinearPlanes;
+
   // TODO: Keep track of whether collinear planes are up to date and
   // don't recompute unless necessary.
   bool mod = includeCollinearPlanes_(coplanes, pixelPlanes_, pixelPlanes_);
@@ -1611,6 +1611,7 @@ SimpleIntersection::SimpleIntersection(HomogeneityTet *htet,
   setLoopSeg(pblseg);
   setLoopFrac(alpha);
   setCrossingType(ct);
+  includeCollinearPlanes(htet);
   // try {
     computeLocation();
   // }
@@ -1621,6 +1622,7 @@ SimpleIntersection::SimpleIntersection(HomogeneityTet *htet,
   //   throw;
   // }
 
+    
     // #ifdef DEBUG
 //   oofcerr << "SimpleIntersection::ctor: done" << std::endl;
 // #endif // DEBUG
@@ -1848,6 +1850,7 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
   setLoopSeg(pblseg);
   setLoopFrac(alpha);
   setCrossingType(ct);
+  includeCollinearPlanes(htet);
   computeLocation();
 }
 
@@ -1867,6 +1870,7 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
   // This may not be the best way to calculate the position, but the
   // position shouldn't be used for topological calculations anyway.
   setLocation(0.5*(fi0->location3D() + fi1->location3D()));
+  includeCollinearPlanes(htet);	// TODO: Is this necessary?
 }
 
 MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
@@ -1884,6 +1888,7 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
   // This may not be the best way to calculate the position, but the
   // position shouldn't be used for topological calculations anyway.
   setLocation(0.5*(si->location3D() + mfi->location3D()));
+  includeCollinearPlanes(htet);	// TODO: Is this necessary?
 }
 
 MultiFaceIntersection *MultiFaceIntersection::clone() const {
@@ -2077,6 +2082,7 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
   vsbSegments[fi0->getLoopSeg()] = fi0->getLoopFrac();
   vsbSegments[fi1->getLoopSeg()] = fi1->getLoopFrac();
   computeLocation();
+  includeCollinearPlanes(htet);
 }
 
 MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
@@ -2097,6 +2103,7 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
   vsbSegments[si->getLoopSeg()] = si->getLoopFrac();
   vsbSegments.insert(mvi->getLoopSegs().begin(), mvi->getLoopSegs().end());
   computeLocation();
+  includeCollinearPlanes(htet);
 }
 
 MultiVSBIntersection *MultiVSBIntersection::clone() const {
@@ -2249,6 +2256,7 @@ MultiCornerIntersection::MultiCornerIntersection(
 //   oofcerr << "MultiCornerIntersection::ctor: from fi0=" << *fi0 << std::endl;
 //   oofcerr << "MultiCornerIntersection::ctor:  and fi1=" << *fi1 << std::endl;
 // #endif // DEBUG
+  includeCollinearPlanes(htet);
 }
 
 MultiCornerIntersection *MultiCornerIntersection::clone() const {
@@ -2379,7 +2387,8 @@ std::string RedundantIntersection::shortName() const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-TetEdgeIntersection::TetEdgeIntersection(const FacePlane *f0,
+TetEdgeIntersection::TetEdgeIntersection(HomogeneityTet *htet,
+					 const FacePlane *f0,
 					 const FacePlane *f1,
 					 const HPixelPlane *pp)
 {
@@ -2391,6 +2400,7 @@ TetEdgeIntersection::TetEdgeIntersection(const FacePlane *f0,
   // pixelPlanes_.insert(pp);
   loc_ = triplePlaneIntersection(f0, f1, pp);
   setCrossingType(NONCROSSING);
+  includeCollinearPlanes(htet);
 }
 
 TetEdgeIntersection *TetEdgeIntersection::clone() const {
@@ -2439,6 +2449,7 @@ TetNodeIntersection::TetNodeIntersection(HomogeneityTet *htet,
   // else
   //     pixelPlanes_.insert(pp);
   loc_ = htet->nodePosition(node);
+  includeCollinearPlanes(htet);
 }
 
 TetNodeIntersection *TetNodeIntersection::clone() const {
@@ -2459,6 +2470,7 @@ std::string TetNodeIntersection::shortName() const {
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 TriplePixelPlaneIntersection::TriplePixelPlaneIntersection(
+						   HomogeneityTet *htet,
 						   const HPixelPlane *pp0,
 						   const HPixelPlane *pp1,
 						   const HPixelPlane *pp2)
@@ -2474,6 +2486,7 @@ TriplePixelPlaneIntersection::TriplePixelPlaneIntersection(
   // addPixelPlane(htet, pp2);
   setCrossingType(NONCROSSING);
   computeLocation();
+  includeCollinearPlanes(htet);
 }
 
 TriplePixelPlaneIntersection *TriplePixelPlaneIntersection::clone() const {
