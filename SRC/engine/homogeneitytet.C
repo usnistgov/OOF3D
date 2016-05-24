@@ -36,7 +36,7 @@ bool HomogeneityTet::verboseCategory_(bool verbose, unsigned int category) const
   // verbose.
   // TODO: Set this at run time via menu commands?
   static std::set<unsigned int> categories({
-      4
+      // 4
 	});
   return verbose && (categories.empty() || categories.count(category) == 1);
 }
@@ -49,7 +49,7 @@ bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
   // arguments for each plane are {direction, offset, normal}.
   // TODO: Set this at run time via menu commands?
   static std::set<HPixelPlane> planes({
-       {2, 1, 1}
+      // {0, 10, 1}
       // {1, 9, 1}
       // 	  {2, 10, 1},
       //	    {0, NONE, 1} // use this to show no planes
@@ -1440,7 +1440,7 @@ void HomogeneityTet::doFindPixelPlaneFacets(
       oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: cat=" << cat
 	      << " pixel plane=" << *pixplane
 	      << " final facet= " << *facet << std::endl;
-      facet->dump();
+      facet->dump(cat);
     }
     else
       oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: cat=" << cat
@@ -1768,10 +1768,11 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
     for(unsigned int f=0; f<NUM_TET_FACES; f++) {
       verboseface = verboseFace_(verbosecategory, f);
       if(verboseface) {
-	if(coincidentPixelPlanes[f] == nullptr)
+	if(coincidentPixelPlanes[f] == nullptr) {
 	  oofcerr << "HomogeneityTet::findFaceFacets: facet=" << faceFacets[f]
 		  << std::endl;
-	faceFacets[f].dump();
+	  faceFacets[f].dump("facefacet_orig", cat);
+	}
       }
     }
   }
@@ -2531,7 +2532,7 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	if(coincidentPixelPlanes[face] == nullptr) {
 	  FaceFacet &facet = faceFacets[face];
 	  oofcerr << "HomogeneityTet::findFaceFacets: " << facet << std::endl;
-	  facet.dump();
+	  facet.dump("facefacet", cat);
 	}
       }
     }
@@ -3041,10 +3042,15 @@ std::ostream &operator<<(std::ostream &os, const FaceFacet &facet) {
 }
 
 #ifdef DEBUG
-void FaceFacet::dump() const {
-  oofcerr << "FaceFacet::dump: " << std::endl;
+void FaceFacet::dump(std::string basename, unsigned int cat) const {
+  std::string filename = (basename + to_string(face) +
+			  "cat" + to_string(cat) + ".lines");
+ 
+  oofcerr << "FaceFacet::dump: writing " << filename << std::endl;
+  std::ofstream file(filename);
   for(const FaceFacetEdge *edge : edges) {
-    std::cerr << edge->startPos3D() << ", " << edge->endPos3D() << std::endl;
+    file << edge->startPos3D() << ", " << edge->endPos3D() << std::endl;
   }
+  file.close();
 }
 #endif // DEBUG

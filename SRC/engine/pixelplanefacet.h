@@ -300,7 +300,7 @@ public:
 
 #ifdef DEBUG
   bool verbose;
-  void dump() const;
+  void dump(unsigned) const;
   void getEndPoints(unsigned int i, Coord3D &startPt, Coord3D &endPt) const {
     startPt = edges[i]->startPos3D();
     endPt = edges[i]->endPos3D();

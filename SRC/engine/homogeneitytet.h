@@ -136,7 +136,7 @@ public:
 
   void removeNullEdges();
   void fixNonPositiveArea(HomogeneityTet*, unsigned int cat);
-  void dump() const;
+  void dump(std::string, unsigned int) const;
   friend std::ostream &operator<<(std::ostream&, const FaceFacet&);
 };
 

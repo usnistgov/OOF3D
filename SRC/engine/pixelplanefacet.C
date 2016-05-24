@@ -342,20 +342,20 @@ std::set<const FacePlane*> PixelPlaneFacet::getFacePlanes(unsigned int f)
     g = 0;
   std::set<const FacePlane*> faces = tetPts[f]->sharedFaces(tetPts[g]);
 
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "PixelPlaneFacet::getFacePlanes: f=" << f << std::endl;
-  OOFcerrIndent indent(2);
-  if(verbose) {
-    oofcerr << "PixelPlaneFacet::getFacePlanes: tetPts[f=" << f << "]="
-	    << *tetPts[f] << std::endl;
-    oofcerr << "PixelPlaneFacet::getFacePlanes: tetPts[g=" << g << "]="
-	    << *tetPts[g] << std::endl;
-    oofcerr << "PixelPlaneFacet::getFacePlanes: faces=";
-    std::cerr << derefprint(faces);
-    oofcerr << std::endl;	
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "PixelPlaneFacet::getFacePlanes: f=" << f << std::endl;
+//   OOFcerrIndent indent(2);
+//   if(verbose) {
+//     oofcerr << "PixelPlaneFacet::getFacePlanes: tetPts[f=" << f << "]="
+// 	    << *tetPts[f] << std::endl;
+//     oofcerr << "PixelPlaneFacet::getFacePlanes: tetPts[g=" << g << "]="
+// 	    << *tetPts[g] << std::endl;
+//     oofcerr << "PixelPlaneFacet::getFacePlanes: faces=";
+//     std::cerr << derefprint(faces);
+//     oofcerr << std::endl;	
+//   }
+// #endif // DEBUG
 
   // For each face in faces, include the faces collinear with it and
   // the pixelplane.
@@ -364,24 +364,24 @@ std::set<const FacePlane*> PixelPlaneFacet::getFacePlanes(unsigned int f)
   for(const FacePlane *face : faces) {
     std::set<const FacePlane*> cofaces =
       htet->getCollinearFaces(face, upixplane);
-#ifdef DEBUG
-    if(verbose) {
-      oofcerr << "PixelPlaneFacet::getFacePlanes: cofaces(" << *face << ")=";
-      std::cerr << derefprint(cofaces);
-      oofcerr << std::endl;
-    }
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verbose) {
+//       oofcerr << "PixelPlaneFacet::getFacePlanes: cofaces(" << *face << ")=";
+//       std::cerr << derefprint(cofaces);
+//       oofcerr << std::endl;
+//     }
+// #endif // DEBUG
     morefaces.insert(cofaces.begin(), cofaces.end());
   }
   faces.insert(morefaces.begin(), morefaces.end());
 
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PixelPlaneFacet::getFacePlane: after adding collinear, faces=";
-    std::cerr << derefprint(faces);
-    oofcerr << std::endl;	
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneFacet::getFacePlane: after adding collinear, faces=";
+//     std::cerr << derefprint(faces);
+//     oofcerr << std::endl;	
+//   }
+// #endif // DEBUG
 
   for(auto i=faces.begin(); i!=faces.end(); ++i) {
     // Use Plane::coincident instead of operator== here because the
@@ -781,6 +781,17 @@ bool PixelPlaneFacet::completeLoops() {
 	      break;
 	    }
 	  }
+#ifdef DEBUG
+	  else {
+	    if(verbose) {
+	      oofcerr << "PixelPlaneFacet::completeLoops: points not identical!"
+		      << std::endl;
+	      OOFcerrIndent indent(2);
+	      oofcerr << "PixelPlaneFacet::completeLoops: " << *p << std::endl;
+	      oofcerr << "PixelPlaneFacet::completeLoops: " << *q << std::endl;
+	    }
+	  }
+#endif // DEBUG
 	}
 	if(!replaced) {
 	  uniqueIsecs.insert(p);
@@ -2979,8 +2990,15 @@ std::ostream &operator<<(std::ostream &os, const FacetEdge &edge) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-void PixelPlaneFacet::dump() const {
+void PixelPlaneFacet::dump(unsigned int cat) const {
+  std::string filename = ("pixelplane" + pixplane->shortName()
+			  + "cat" + to_string(cat)
+			  + ".lines");
+  std::cerr << "PixelPlaneFacet::dump: writing " << filename << std::endl;
+  std::ofstream file(filename);
   for(const FacetEdge *edge : edges) {
-    std::cerr << edge->startPos3D() << ", " << edge->endPos3D() << std::endl;
+    // std::cerr << edge->startPos3D() << ", " << edge->endPos3D() << std::endl;
+    file << edge->startPos3D() << ", " << edge->endPos3D() << std::endl;
   }
+  file.close();
 }
