@@ -166,7 +166,6 @@ class PixelFacetEdge : public FacetEdge {
 public:
   PixelFacetEdge(TriplePixelPlaneIntersection *s,
 		 TriplePixelPlaneIntersection *e);
-  // virtual FacetEdge *reversed() const;
 };
 
 // A StartFaceIntersectionEdge is one that follows a pixel boundary but
@@ -191,7 +190,6 @@ public:
   PolygonEdge(PixelPlaneIntersection *f0, PixelPlaneIntersection *f1);
   virtual void getEdgesOnFaces(HomogeneityTet*, const HPixelPlane*,
 			       FaceFacets&) const;
-  // virtual FacetEdge *reversed() const;
 };
 
 // A TwoFaceIntersectionEdge is one that crosses from one tet face to
@@ -219,7 +217,7 @@ private:
   const bool onFace;
   FaceEdgeMap faceEdgeMap;  // maps Plane*s to polygon edge numbers
   std::set<RedundantIntersection*> redundantIntersections;
-
+  bool closedOnPerimeter;
 public:
   HomogeneityTet * const htet;
   const HPixelPlane * const pixplane;

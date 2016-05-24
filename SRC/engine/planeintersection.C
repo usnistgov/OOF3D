@@ -63,22 +63,25 @@ const BarycentricCoord &PlaneIntersection::baryCoord(HomogeneityTet *htet) const
 }
 
 void PlaneIntersection::setEquivalence(IsecEquivalenceClass *e) {
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PlaneIntersection::setEquivalence: " << *this << " e=" << e;
-    if(e)
-      oofcerr << " " << *e;
-    oofcerr << std::endl;
-  }
-  OOFcerrIndent indent(2);
-#endif // DEBUG
+  // TODO: Do this differently when called from
+  // PlaneIntersection::clone.  In that case there's no need to call
+  // addPlanesToEquivalence, which is called by addIntersection.
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PlaneIntersection::setEquivalence: " << *this << " e=" << e;
+//     if(e)
+//       oofcerr << " " << *e;
+//     oofcerr << std::endl;
+//   }
+//   OOFcerrIndent indent(2);
+// #endif // DEBUG
   equivalence_ = e;
   if(e != nullptr)
     e->addIntersection(this);
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "PlaneIntersection::setEquivalence: done" << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "PlaneIntersection::setEquivalence: done" << std::endl;
+// #endif // DEBUG
 }
 
 
@@ -235,36 +238,38 @@ bool PixelPlaneIntersection::onOnePolySegment(const PixelPlaneIntersection *fi,
 					       const PixelPlaneFacet *facet)
   const
 {
-// #ifdef DEBUG
-//   if(facet->verbose) {
-//     oofcerr << "PixelPlaneIntersection::onOnePolySegment: this=" << *this
-// 	    << std::endl;
-//     oofcerr << "PixelPlaneIntersection::onOnePolySegment:   fi=" << *fi
-// 	    << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(facet->verbose) {
+    oofcerr << "PixelPlaneIntersection::onOnePolySegment: this=" << *this
+	    << std::endl;
+    oofcerr << "PixelPlaneIntersection::onOnePolySegment:   fi=" << *fi
+	    << std::endl;
+  }
+#endif // DEBUG
   const std::set<const FacePlane*> shared =
     referent()->sharedFaces(fi->referent());
-// #ifdef DEBUG
-//   if(facet->verbose) {
-//     oofcerr << "PixelPlaneIntersection::onOnePolySegment: base plane="
-// 	    << facet->getBaseFacePlane();
-//     if(facet->getBaseFacePlane())
-//       oofcerr << " " << *facet->getBaseFacePlane();
-//     oofcerr << std::endl;
-//     oofcerr << "PixelPlaneIntersection::onOnePolySegment: shared.size="
-// 	    << shared.size() << std::endl;
-//     for(const FacePlane *fp : shared) {
-//       oofcerr << "PixelPlaneIntersection::onOnePolySegment:  shared plane="
-// 	      << fp << " " << *fp << std::endl;
-//     }
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(facet->verbose) {
+    oofcerr << "PixelPlaneIntersection::onOnePolySegment: base plane="
+	    << facet->getBaseFacePlane();
+    if(facet->getBaseFacePlane())
+      oofcerr << " " << *facet->getBaseFacePlane();
+    oofcerr << std::endl;
+    oofcerr << "PixelPlaneIntersection::onOnePolySegment: shared.size="
+	    << shared.size() << std::endl;
+    for(const FacePlane *fp : shared) {
+      oofcerr << "PixelPlaneIntersection::onOnePolySegment:  shared plane="
+	      << fp << " " << *fp << std::endl;
+    }
+  }
+#endif // DEBUG
   if(shared.size() == 1 && facet->getBaseFacePlane() != *shared.begin())
     return true;
   if(shared.size() == 2) {
     const FacePlane *base = facet->getBaseFacePlane();
-    if(base == *shared.begin() || base == *shared.rbegin())
+    if(base == *shared.begin() || base == *shared.rbegin() ||
+       facet->htet->areCollinear(facet->pixplane, *shared.begin(),
+				 *shared.rbegin()))
       return true;
   }
   return false;
@@ -963,8 +968,7 @@ SingleVSBbase::SingleVSBbase() {
 
 template <class BASE>
 SingleFaceMixIn<BASE>::SingleFaceMixIn()
-  : polyFrac(-12345.),		// will be reset
-    facePlane_(nullptr)
+  : facePlane_(nullptr)
 {
 // #ifdef DEBUG
 //   oofcerr << "SingleFaceMixIn::ctor: " << this << std::endl;
@@ -972,15 +976,20 @@ SingleFaceMixIn<BASE>::SingleFaceMixIn()
 }
 
 template <class BASE>
-double SingleFaceMixIn<BASE>::getPolyFrac(unsigned int,
+double SingleFaceMixIn<BASE>::getPolyFrac(unsigned int edgeno,
 					  const PixelPlaneFacet *facet)
   const
 {
-  //  assert(edgeno == facet->getPolyEdge(facePlane_));
-  if(polyFrac >= 0) return polyFrac; // cached value
   const BarycentricCoord &bary = BASE::baryCoord(facet->htet);
-  polyFrac = facet->htet->edgeCoord(bary, facePlane_, facet);
-  return polyFrac;
+  return facet->htet->edgeCoord(bary, edgeno, facet);
+
+  // This used to cache the return value and ignore the edgeno argument.
+  
+  // //  assert(edgeno == facet->getPolyEdge(facePlane_));
+  // if(polyFrac >= 0) return polyFrac; // cached value
+  // const BarycentricCoord &bary = BASE::baryCoord(facet->htet);
+  // polyFrac = facet->htet->edgeCoord(bary, facePlane_, facet);
+  // return polyFrac;
 }
 
 template <class BASE>
@@ -1740,21 +1749,19 @@ bool SimpleIntersection::isMisordered(const SimpleIntersection *fi,
 				      const PixelPlaneFacet *facet)
   const
 {
-// #ifdef DEBUG
-//   if(verbose) {
-//     oofcerr << "SimpleIntersection::isMisordered: this=" << *this
-// 	    << " crossing=" << crossingType() << std::endl
-// 	    << "                                :   fi=" << *fi
-// 	    << " crossing=" << fi->crossingType() << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "SimpleIntersection::isMisordered: this=" << *this <<  std::endl
+	    << "                                :   fi=" << *fi << std::endl;
+  }
+#endif // DEBUG
   bool sameLoopSeg = onSameLoopSegment(fi);
   bool samePolySeg = onOnePolySegment(fi, facet);
-// #ifdef DEBUG
-//   if(verbose)
-//     oofcerr << "SimpleIntersection::isMisordered: sameLoopSeg=" << sameLoopSeg
-// 	    << " samePolySeg=" << samePolySeg << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verbose)
+    oofcerr << "SimpleIntersection::isMisordered: sameLoopSeg=" << sameLoopSeg
+	    << " samePolySeg=" << samePolySeg << std::endl;
+#endif // DEBUG
   assert(!(sameLoopSeg && samePolySeg));
   if(!sameLoopSeg && samePolySeg) {
     return facet->vsbCornerCoincidence(this, fi);
@@ -2076,7 +2083,7 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
 #endif // DEBUG
   copyPlanes(fi0, fi1);
   setCrossingType(combinedCrossing(fi0, fi1));
-  setPolyFrac(fi0->getPolyFrac(NONE, facet));
+  // setPolyFrac(fi0->getPolyFrac(NONE, facet));
   setFacePlane(fi0->getFacePlane());
   // TODO: Enforce that each vsb segment fraction is either 0 or 1
   vsbSegments[fi0->getLoopSeg()] = fi0->getLoopFrac();
@@ -2098,7 +2105,7 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
 #endif // DEBUG
   copyPlanes(si, mvi);
   setCrossingType(combinedCrossing(si, mvi));
-  setPolyFrac(si->getPolyFrac(NONE, facet));
+  // setPolyFrac(si->getPolyFrac(NONE, facet));
   setFacePlane(si->getFacePlane());
   vsbSegments[si->getLoopSeg()] = si->getLoopFrac();
   vsbSegments.insert(mvi->getLoopSegs().begin(), mvi->getLoopSegs().end());

@@ -276,9 +276,8 @@ public:
   // 			       const PixelPlaneFacet*) const;
 
   // Return the fractional position of the given point given in
-  // barycentric coords) along the polygon edge where the given tet
-  // face intersects the given pixel plane.
-  double edgeCoord(const BarycentricCoord&, const FacePlane*,
+  // barycentric coords) along the polygon edge of the given facet.
+  double edgeCoord(const BarycentricCoord&, unsigned int,
 		   const PixelPlaneFacet*) const;
 
   Coord3D nodePosition(unsigned int n) const { return epts[n]; }

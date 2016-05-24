@@ -495,7 +495,7 @@ public:
 template <class BASE>
 class SingleFaceMixIn : public BASE, public SingleFaceBase {
 protected:
-  mutable double polyFrac;  // relative position along polygon segment
+  // mutable double polyFrac;  // relative position along polygon segment
 
   // In an intersection with one face plane, that plane plays a
   // special topological role, since it is used to identify a polygon
@@ -508,7 +508,7 @@ public:
   SingleFaceMixIn();
   virtual const FacePlane *getFacePlane() const { return facePlane_; }
 
-  void setPolyFrac(double a) { polyFrac = a; }
+  // void setPolyFrac(double a) { polyFrac = a; }
   void setFacePlane(const FacePlane *fp) { facePlane_ = fp; }
   virtual double getPolyFrac(unsigned int, const PixelPlaneFacet*) const;
   virtual unsigned int getPolyEdge(const PixelPlaneFacet *facet) const;
@@ -1077,7 +1077,7 @@ public:
 
 // IsecEquivalenceClasses are used by HomogeneityTet to keep track of
 // which PlaneIntersections are equivalent to others.  Intersections
-// are equivalent if they share three non-colinear planes.  The class
+// are equivalent if they share three non-collinear planes.  The class
 // stores the planes, not the intersections, because the intersections
 // contain other information (eg, entry/exit info) that would be lost
 // if equivalent intersections were actually made equal.
