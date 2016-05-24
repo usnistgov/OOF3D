@@ -171,24 +171,24 @@ bool TripleFaceIntersection::isEquivalent(const PlaneIntersection *pi) const
 {
   if(equivalence() != nullptr && equivalence() == pi->equivalence())
     return true;
-  return pi->isEquivalent(this); // double dispatch
+  return pi->isEquiv(this); // double dispatch
 }
 
-bool TripleFaceIntersection::isEquivalent(const TripleFaceIntersection *tfi)
+bool TripleFaceIntersection::isEquiv(const TripleFaceIntersection *tfi)
   const
 {
   return node_ == tfi->getNode();
 }
 
-bool TripleFaceIntersection::isEquivalent(const PixelPlaneIntersectionNR *ppi)
+bool TripleFaceIntersection::isEquiv(const PixelPlaneIntersectionNR *ppi)
   const
 {
-  return ppi->isEquivalent(this);
+  return ppi->isEquiv(this);
 }
 
-bool TripleFaceIntersection::isEquivalent(const RedundantIntersection *ri) const
+bool TripleFaceIntersection::isEquiv(const RedundantIntersection *ri) const
 {
-  return ri->referent()->isEquivalent(this);
+  return ri->referent()->isEquiv(this);
 }
 
 void TripleFaceIntersection::addPlanesToEquivalence(
@@ -747,16 +747,16 @@ bool PixelPlaneIntersectionNR::isEquivalent(const PlaneIntersection *pi) const
 {
   if(equivalence() != nullptr && equivalence() == pi->equivalence())
     return true;
-  return pi->isEquivalent(this); // double dispatch
+  return pi->isEquiv(this); // double dispatch
 }
 
-bool PixelPlaneIntersectionNR::isEquivalent(const TripleFaceIntersection *tfi)
+bool PixelPlaneIntersectionNR::isEquiv(const TripleFaceIntersection *tfi)
   const
 {
   // Each face in the TripleFaceIntersection must be in the
   // PixelPlaneIntersectionNR.
 
-  // TODO: Is it worth being cleverer about this search?  Both
+  // TODO: Is it worth being cleverer about this search?
   // tfiFaces is sorted, and facePlaneSets is too, sort of.
   unsigned int nmatch = 0;
   const FacePlaneSet &tfiFaces = tfi->faces();
@@ -770,7 +770,7 @@ bool PixelPlaneIntersectionNR::isEquivalent(const TripleFaceIntersection *tfi)
 // isEquiv_ is the guts of the two versions of
 // PixelPlaneIntersectionNR::isEquivalent().  It determines whether
 // two sets of planes (each made of pixel planes, face planes, and
-// face pixel planes) have three nondegenerate planes in common.
+// face pixel planes) have three non-collinear planes in common.
 
 static bool isEquiv_(const PixelPlaneSet &pp0, const FacePlaneSet &fp0,
 		     const FacePixelPlaneSet &fpp0,
@@ -855,7 +855,7 @@ static bool isEquiv_(const PixelPlaneSet &pp0, const FacePlaneSet &fp0,
   return false;
 } // end static isEquiv_
 
-bool PixelPlaneIntersectionNR::isEquivalent(const PixelPlaneIntersectionNR *ppi)
+bool PixelPlaneIntersectionNR::isEquiv(const PixelPlaneIntersectionNR *ppi)
   const
 
 {
@@ -863,31 +863,31 @@ bool PixelPlaneIntersectionNR::isEquivalent(const PixelPlaneIntersectionNR *ppi)
 		  ppi->pixelPlanes(), ppi->faces(), ppi->pixelFaces());
 }
 
-bool PixelPlaneIntersectionNR::isEquivalent(const RedundantIntersection *ri)
+bool PixelPlaneIntersectionNR::isEquiv(const RedundantIntersection *ri)
   const
 {
-  return ri->referent()->isEquivalent(this);
+  return ri->referent()->isEquiv(this);
 }
 
 void PixelPlaneIntersectionNR::addPlanesToEquivalence(
 					      IsecEquivalenceClass *eqclass)
 {
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "PixelPlaneIntersectionNR::addPlanesToEquivalence: eq="
-	    << *eqclass << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "PixelPlaneIntersectionNR::addPlanesToEquivalence: eq="
+// 	    << *eqclass << std::endl;
+// #endif // DEBUG
   for(const HPixelPlane *plane : pixelPlanes_)
     eqclass->addPixelPlane(plane);
   for(const FacePlane *face : faces_)
     eqclass->addFacePlane(face);
   for(const FacePixelPlane *fpp : pixelFaces_)
     eqclass->addFacePixelPlane(fpp);
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "PixelPlaneIntersectionNR::addPlanesToEquivalence: done"
-	    << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "PixelPlaneIntersectionNR::addPlanesToEquivalence: done"
+// 	    << std::endl;
+// #endif // DEBUG
 }
 
 bool PixelPlaneIntersectionNR::isEquivalent(const IsecEquivalenceClass *eqclass)
