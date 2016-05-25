@@ -133,7 +133,7 @@ def _Material_precompute(self, subproblem, fields):
     for prop in self.properties():
         subproblem.cache_active_prop(prop, prop.is_active(subproblem))
         if subproblem.currently_active_prop(prop):
-            prop.c_precompute(subproblem.mesh)
+            prop.c_precompute(subproblem.get_mesh())
             subproblem.cache_nonlinearity_prop(prop, prop.is_nonlinear(fields))
     self.cprecompute(subproblem)
 
