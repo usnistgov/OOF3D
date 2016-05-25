@@ -17,7 +17,7 @@
 # These routines are also used by oof2extutils.py, which is used by
 # the authors of external OOF2 extensions.
 
-import os, sys, string, stat, time
+import os, sys, string, stat, time, subprocess
 
 # Utilities for running xxxxx-config programs that get the flags and
 # libs required to link with external libraries.  "clib" is a CLibInfo
@@ -25,24 +25,31 @@ import os, sys, string, stat, time
 # such as "Magick++-config --cflags".
 
 def add_third_party_includes(cmd, clib):
-    f = os.popen(cmd, 'r')
-    for line in f.readlines():
-        for flag in line.split():
-            if flag[:2] == '-I':
-                clib.includeDirs.append(flag[2:])
-            else:
-                clib.extra_compile_args.append(flag)
-
+    proc = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    stdoutdata, stderrdata = proc.communicate()
+    if stderrdata:
+        print "stderrdata=", stderrdata
+        print "Failed!"
+        sys.exit()
+        
+    for flag in stdoutdata.split():
+        if flag[:2] == '-I':
+            clib.includeDirs.append(flag[2:])
+        else:
+            clib.extra_compile_args.append(flag)
+    
 def add_third_party_libs(cmd, clib):
-    f = os.popen(cmd, 'r')
-    for line in f.readlines():
-        for flag in line.split():
-            if flag[:2] == '-l':
-                clib.externalLibs.append(flag[2:])
-            elif flag[:2] == '-L':
-                clib.externalLibDirs.append(flag[2:])
-            else:
-                clib.extra_link_args.append(flag)
+    proc = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    stdoutdata, stderrdata = proc.communicate()
+    for flag in stdoutdata.split():
+        if flag[:2] == '-l':
+            clib.externalLibs.append(flag[2:])
+        elif flag[:2] == '-L':
+            clib.externalLibDirs.append(flag[2:])
+        else:
+            clib.extra_link_args.append(flag)
 
 # Check for packages that use pkg-config for their options.  Include
 # their compiler and linker flags if they're found, and complain if
@@ -50,13 +57,21 @@ def add_third_party_libs(cmd, clib):
 
 def pkg_check(package, version, clib=None):
     if check_exec('pkg-config'):
-        if os.system("pkg-config --atleast-version=%s %s" % (version, package)):
-            print "Can't find %s! Version %s or later required" % (package,
-                                                                   version)
+        proc = subprocess.Popen(['pkg-config',
+                                 '--atleast-version=', version, package],
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        stdoutdata, stderrdata = proc.communicate()
+        if stderrdata:
+            print stderrdata
+            print "Can't find %! Version %s or later required" % (package,
+                                                                  version)
             sys.exit()
         if clib:
             add_third_party_libs("pkg-config --libs %s" % package, clib)
-            add_third_party_includes("pkg-config --cflags %s" % package, clib)
+            add_third_party_includes("pkg-config --cflags %s" % package,
+                                     clib)
+        
     else:
         print "Can't find pkg-config!"
         sys.exit()
@@ -174,7 +189,7 @@ def run_swig(srcdir, swigfile, destdir, cext="_.C", include_dirs=[],
         # 'pragma(python) include' lines don't seem to respect the -I
         # flags.
         
-        cmd = 'cd %(indir)s; %(swig)s %(swigargs)s %(includes)s -module %(module)s -o %(cfile)s %(infile)s' \
+        cmd = 'cd %(indir)s;  %(swig)s %(swigargs)s %(includes)s -module %(module)s -o %(cfile)s %(infile)s' \
               %  {'indir' : indir,
                   'swig': swig,
                   'swigargs' : string.join(SWIGARGS+extra_args, " "),
@@ -186,7 +201,16 @@ def run_swig(srcdir, swigfile, destdir, cext="_.C", include_dirs=[],
         if not dry_run:
             ## TODO: Check the return status of cmd and raise an
             ## exception (abort?) if it failed.
-            os.system(cmd)
+            proc = subprocess.Popen(cmd, shell=True,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+            stdoutdata, stderrdata = proc.communicate()
+            print stdoutdata
+            if stderrdata:
+                print stderrdata
+                print "swig failed!"
+                sys.exit()
+            # os.system(cmd)
 
     return dict(basename=basename,
                 indir=indir,
