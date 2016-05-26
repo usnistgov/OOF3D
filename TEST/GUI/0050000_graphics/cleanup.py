@@ -1,1 +1,0 @@
-removefile('gfxtest.log')
