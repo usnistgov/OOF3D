@@ -310,4 +310,10 @@ public:
 #endif
 };				// end class HomogeneityTet
 
+#ifdef DEBUG
+void setVerboseFace(unsigned int);
+void setVerbosePlane(unsigned int, int, int);
+void setVerboseCategory(unsigned int);
+#endif // DEBUG
+
 #endif // HOMOGENEITYTET_H

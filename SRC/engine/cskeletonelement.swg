@@ -107,7 +107,7 @@ public:
   }
 };
 
-void dumpElements();
+// void dumpElements();
 
 #endif	// CSKELETONELEMENT_SWG
 

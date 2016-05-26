@@ -76,7 +76,8 @@ swigfiles = [
     'pointdata.swg',
     'properties.swg', 'pypropertywrapper.swg', 'rank3tensor.swg',
     'smallsystem.swg', 'sparsemat.swg',
-    'steperrorscaling.swg', 'symmmatrix.swg', 'materialvoxelfilter.swg'
+    'steperrorscaling.swg', 'symmmatrix.swg', 'materialvoxelfilter.swg',
+    'htetdebug.swg'
     ]
 
 pyfiles = [
@@ -121,7 +122,7 @@ swigpyfiles = [
     'pixelgroupsubproblem.spy', 'preconditioner.spy', 'property.spy',
     'pypropertywrapper.spy', 'rank3tensor.spy', 
     'steperrorscaling.spy', 'symmmatrix.spy', 'entiremeshsubproblem.spy',
-    'materialvoxelfilter.spy'
+    'materialvoxelfilter.spy', 'htetdebug.spy'
     ]
 
 hfiles = [

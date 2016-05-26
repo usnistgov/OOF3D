@@ -259,7 +259,11 @@ public:
 };				// CSkeletonElement
 
 long get_globalElementCount();
-void dumpElements();
+
+#ifdef DEBUG
+void setVerboseElement(unsigned int);
+// void dumpElements();
+#endif // DEBUG
 
 #endif	// CSKELETONELEMENT_H
 

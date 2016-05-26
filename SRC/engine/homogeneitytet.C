@@ -29,39 +29,42 @@
 
 #ifdef DEBUG
 
+static std::set<unsigned int> vcategories;
+
+void setVerboseCategory(unsigned int cat) {
+  oofcerr << "setVerboseCategory: " << cat << std::endl;
+  vcategories.insert(cat);
+}
+
 bool HomogeneityTet::verboseCategory_(bool verbose, unsigned int category) const
 {
-  // Edit the next line to print debugging info for some voxel
-  // categories only.  If the set is empty, all categories are
-  // verbose.
-  // TODO: Set this at run time via menu commands?
-  static std::set<unsigned int> categories({
-      // 4
-	});
-  return verbose && (categories.empty() || categories.count(category) == 1);
+  return verbose && (vcategories.empty() || vcategories.count(category) == 1);
+}
+
+static std::set<HPixelPlane> vplanes;
+
+void setVerbosePlane(unsigned int direction, int offset, int normal) {
+  oofcerr << "setVerbosePlane: " << direction << " " << offset << " "
+	  <<  normal;
+  auto p = vplanes.emplace(direction, offset, normal);
+  oofcerr << " " << *p.first << std::endl;
 }
 
 bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
   const
 {
-  // Edit the next line to print debugging info for some pixel planes
-  // only.  If the set is empty, all planes are verbose.  The
-  // arguments for each plane are {direction, offset, normal}.
-  // TODO: Set this at run time via menu commands?
-  static std::set<HPixelPlane> planes({
-      // {0, 10, 1}
-      // {1, 9, 1}
-      // 	  {2, 10, 1},
-      //	    {0, NONE, 1} // use this to show no planes
-    });
-  return verbose && (planes.empty() || planes.count(*pixplane) == 1);
+  return verbose && (vplanes.empty() || vplanes.count(*pixplane) == 1);
+}
+
+static std::set<unsigned int> vfaces;
+
+void setVerboseFace(unsigned int face) {
+  oofcerr << "setVerboseFace: " << face << std::endl;
+  vfaces.insert(face);
 }
 
 bool HomogeneityTet::verboseFace_(bool verbose, unsigned int face) const {
-  static std::set<unsigned int> faces({
-      // 0
-	});
-  return verbose && (faces.empty() || faces.count(face) == 1);
+  return verbose && (vfaces.empty() || vfaces.count(face) == 1);
 }
 
 void HomogeneityTet::printLooseEnds(unsigned int e, const LooseEndMap &lem)

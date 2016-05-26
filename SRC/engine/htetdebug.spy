@@ -1,0 +1,35 @@
+# -*- python -*-
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+dirs = {'X':0, 'Y':1, 'Z':2, 'x':0, 'y':1, 'z':2}
+sides = {'+':1, '-':-1}
+
+def addVerbosePlane(planespec):
+    if planespec == 'None':
+        setVerbosePlane(NONE, 0, 1)
+    else:
+        # planespec is something like X=5- or Y=10-
+        direction = dirs[planespec[0]]
+        side = sides[planespec[-1]]
+        offset = int(planespec[2:-1])
+        setVerbosePlane(direction, offset, side);
+
+# The next three functions are sort of stupid, but we might want to do
+# some processing here some day...  At least they make the names
+# consistent with addVerbosePlane/setVerbosePlane.
+
+def addVerboseCategory(cat):
+    setVerboseCategory(cat)
+
+def addVerboseFace(face):
+    setVerboseFace(face)
+
+def addVerboseElement(e):
+    setVerboseElement(e)

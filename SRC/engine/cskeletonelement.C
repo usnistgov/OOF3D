@@ -778,14 +778,25 @@ unsigned int CSkeletonElement::getOtherFaceIndex(unsigned int f,
 // the voxel categories relative to the total volume of the element.
 #define VOLTOL 5.e-4
 
+#ifdef DEBUG
+static std::set<unsigned int> verboseElements_;
+
+void setVerboseElement(unsigned int e) {
+  oofcerr << "setVerboseElement: " << e << std::endl;
+  verboseElements_.insert(e);
+}
+
+#endif // DEBUG
+
 const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
   const
 {
 #ifdef DEBUG
   // bool verbose = true;
   // bool verbose = false;
-  bool verbose = index==245;
+  // bool verbose = index==22;
   // bool verbose = uid==26747;
+  bool verbose = verboseElements_.count(index) > 0;
   if(verbose)
     oofcerr << "CSkeletonElement::categoryVolumes: " << *this
   	    << "----------------------------------" << std::endl;
