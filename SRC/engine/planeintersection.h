@@ -111,9 +111,9 @@ public:
   // Intersections are equivalent if they have any three distinct
   // planes in common.
   virtual bool isEquivalent(const PlaneIntersection*) const = 0;
-  virtual bool isEquivalent(const TripleFaceIntersection*) const = 0;
-  virtual bool isEquivalent(const PixelPlaneIntersectionNR*) const = 0;
-  virtual bool isEquivalent(const RedundantIntersection*) const = 0;
+  virtual bool isEquiv(const TripleFaceIntersection*) const = 0;
+  virtual bool isEquiv(const PixelPlaneIntersectionNR*) const = 0;
+  virtual bool isEquiv(const RedundantIntersection*) const = 0;
   virtual void addPlanesToEquivalence(IsecEquivalenceClass*) = 0;
   virtual bool isEquivalent(const IsecEquivalenceClass*) const = 0;
 
@@ -165,9 +165,9 @@ public:
   // virtual void includeCollinearPlanes(const CollinearPlaneMap &) {}
   
   virtual bool isEquivalent(const PlaneIntersection*) const;
-  virtual bool isEquivalent(const TripleFaceIntersection*) const;
-  virtual bool isEquivalent(const PixelPlaneIntersectionNR*) const;
-  virtual bool isEquivalent(const RedundantIntersection*) const;
+  virtual bool isEquiv(const TripleFaceIntersection*) const;
+  virtual bool isEquiv(const PixelPlaneIntersectionNR*) const;
+  virtual bool isEquiv(const RedundantIntersection*) const;
   virtual void addPlanesToEquivalence(IsecEquivalenceClass*);
   virtual bool isEquivalent(const IsecEquivalenceClass*) const;
   
@@ -450,9 +450,9 @@ public:
 			    const PixelPlaneFacet*) const = 0;
 
   virtual bool isEquivalent(const PlaneIntersection*) const;
-  virtual bool isEquivalent(const TripleFaceIntersection*) const;
-  virtual bool isEquivalent(const PixelPlaneIntersectionNR*) const;
-  virtual bool isEquivalent(const RedundantIntersection*) const;
+  virtual bool isEquiv(const TripleFaceIntersection*) const;
+  virtual bool isEquiv(const PixelPlaneIntersectionNR*) const;
+  virtual bool isEquiv(const RedundantIntersection*) const;
   void addPlanesToEquivalence(IsecEquivalenceClass*);
   virtual bool isEquivalent(const IsecEquivalenceClass*) const;
   
@@ -1041,14 +1041,14 @@ public:
   virtual bool isEquivalent(const PlaneIntersection *pi) const {
     return referent_->isEquivalent(pi);
   }
-  virtual bool isEquivalent(const TripleFaceIntersection *pi) const {
-    return referent_->isEquivalent(pi);
+  virtual bool isEquiv(const TripleFaceIntersection *pi) const {
+    return referent_->isEquiv(pi);
   }
-  virtual bool isEquivalent(const PixelPlaneIntersectionNR *pi) const {
-    return referent_->isEquivalent(pi);
+  virtual bool isEquiv(const PixelPlaneIntersectionNR *pi) const {
+    return referent_->isEquiv(pi);
   }
-  virtual bool isEquivalent(const RedundantIntersection *pi) const {
-    return referent_->isEquivalent(pi);
+  virtual bool isEquiv(const RedundantIntersection *pi) const {
+    return referent_->isEquiv(pi);
   }
   virtual void addPlanesToEquivalence(IsecEquivalenceClass *eqclass) {
     referent_->addPlanesToEquivalence(eqclass);

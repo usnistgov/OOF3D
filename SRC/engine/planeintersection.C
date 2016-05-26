@@ -171,24 +171,24 @@ bool TripleFaceIntersection::isEquivalent(const PlaneIntersection *pi) const
 {
   if(equivalence() != nullptr && equivalence() == pi->equivalence())
     return true;
-  return pi->isEquivalent(this); // double dispatch
+  return pi->isEquiv(this); // double dispatch
 }
 
-bool TripleFaceIntersection::isEquivalent(const TripleFaceIntersection *tfi)
+bool TripleFaceIntersection::isEquiv(const TripleFaceIntersection *tfi)
   const
 {
   return node_ == tfi->getNode();
 }
 
-bool TripleFaceIntersection::isEquivalent(const PixelPlaneIntersectionNR *ppi)
+bool TripleFaceIntersection::isEquiv(const PixelPlaneIntersectionNR *ppi)
   const
 {
-  return ppi->isEquivalent(this);
+  return ppi->isEquiv(this);
 }
 
-bool TripleFaceIntersection::isEquivalent(const RedundantIntersection *ri) const
+bool TripleFaceIntersection::isEquiv(const RedundantIntersection *ri) const
 {
-  return ri->referent()->isEquivalent(this);
+  return ri->referent()->isEquiv(this);
 }
 
 void TripleFaceIntersection::addPlanesToEquivalence(
@@ -747,10 +747,10 @@ bool PixelPlaneIntersectionNR::isEquivalent(const PlaneIntersection *pi) const
 {
   if(equivalence() != nullptr && equivalence() == pi->equivalence())
     return true;
-  return pi->isEquivalent(this); // double dispatch
+  return pi->isEquiv(this); // double dispatch
 }
 
-bool PixelPlaneIntersectionNR::isEquivalent(const TripleFaceIntersection *tfi)
+bool PixelPlaneIntersectionNR::isEquiv(const TripleFaceIntersection *tfi)
   const
 {
   // Each face in the TripleFaceIntersection must be in the
@@ -855,7 +855,7 @@ static bool isEquiv_(const PixelPlaneSet &pp0, const FacePlaneSet &fp0,
   return false;
 } // end static isEquiv_
 
-bool PixelPlaneIntersectionNR::isEquivalent(const PixelPlaneIntersectionNR *ppi)
+bool PixelPlaneIntersectionNR::isEquiv(const PixelPlaneIntersectionNR *ppi)
   const
 
 {
@@ -863,10 +863,10 @@ bool PixelPlaneIntersectionNR::isEquivalent(const PixelPlaneIntersectionNR *ppi)
 		  ppi->pixelPlanes(), ppi->faces(), ppi->pixelFaces());
 }
 
-bool PixelPlaneIntersectionNR::isEquivalent(const RedundantIntersection *ri)
+bool PixelPlaneIntersectionNR::isEquiv(const RedundantIntersection *ri)
   const
 {
-  return ri->referent()->isEquivalent(this);
+  return ri->referent()->isEquiv(this);
 }
 
 void PixelPlaneIntersectionNR::addPlanesToEquivalence(
