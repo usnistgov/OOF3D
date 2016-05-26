@@ -1,1 +1,0 @@
-removefile('movenode.log')

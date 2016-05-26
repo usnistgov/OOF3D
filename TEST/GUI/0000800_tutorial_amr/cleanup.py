@@ -1,1 +1,0 @@
-removefile('amr.log')
