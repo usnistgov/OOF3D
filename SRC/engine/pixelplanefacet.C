@@ -2980,6 +2980,17 @@ std::ostream &operator<<(std::ostream &os, const PixelPlaneFacet &facet) {
   return os;
 }
 
+std::string PixelPlaneFacet::shortDescription() const {
+  std::string spaces = "    ";
+  std::string result;
+  for(const FacetEdge *edge : edges) {
+    result += (spaces + to_string(edge->startPos3D()) + ", " +
+	       to_string(edge->endPos3D())) + '\n';
+      
+  }
+  return result;
+}
+
 std::ostream &operator<<(std::ostream &os, const FacetEdge &edge) {
   os << "FacetEdge(" << *edge.startPt() << ", " << *edge.endPt();
   if(edge.nullified())

@@ -136,7 +136,10 @@ public:
 
   void removeNullEdges();
   void fixNonPositiveArea(HomogeneityTet*, unsigned int cat);
+#ifdef DEBUG
   void dump(std::string, unsigned int) const;
+  std::string shortDescription() const;
+#endif // DEBUG
   friend std::ostream &operator<<(std::ostream&, const FaceFacet&);
 };
 
@@ -270,7 +273,12 @@ public:
 				  const VoxelSetBoundary &vsb);
 
   FaceFacets findFaceFacets(unsigned int cat, const FacetMap2D&);
-  double intersectionVolume(const FacetMap2D&, const FaceFacets&);
+  double intersectionVolume(const FacetMap2D&, const FaceFacets&
+#ifdef DEBUG
+			    , unsigned int, std::ostream&
+#endif // DEBUG
+			    );
+
 
   // void setIntersectionPolyFrac(SingleFaceBase*, unsigned int,
   // 			       const PixelPlaneFacet*) const;

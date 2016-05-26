@@ -148,10 +148,12 @@ HomogeneityTet::HomogeneityTet(const CSkeletonElement *element,
   bbox_ = new CRectangularPrism(epts);
 #ifdef DEBUG
   if(verbose) {
-    oofcerr << "HomogeneityTet::ctor: element dump" << std::endl;
+    oofcerr << "HomogeneityTet::ctor: writing element.lines" << std::endl;
+    std::ofstream file("element.lines");
     for(unsigned int i=0; i<3; i++)
       for(unsigned int j=i+1; j<4; j++)
-	std::cerr << epts[i] << ", " << epts[j] << std::endl;
+	file << epts[i] << ", " << epts[j] << std::endl;
+    file.close();
   }
 #endif // DEBUG
 
@@ -2553,13 +2555,18 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 #include <fstream>
 
 double HomogeneityTet::intersectionVolume(const FacetMap2D &planeFacets,
-					  const FaceFacets &faceFacets)
-{
+					  const FaceFacets &faceFacets
 #ifdef DEBUG
-  if(verbosecategory)
-    oofcerr << "HomogeneityTet::intersectionVolume: tetcenter=" << tetCenter
-	    << std::endl;
+					  , unsigned int cat,
+					  std::ostream &output
 #endif // DEBUG
+					  )
+{
+// #ifdef DEBUG
+//   if(verbosecategory)
+//     output << "HomogeneityTet::intersectionVolume: tetcenter=" << tetCenter
+// 	   << std::endl;
+// #endif // DEBUG
   double vol = 0.0;
   // Get volume contribution from pixel plane facets.
   for(FacetMap2D::const_iterator fm=planeFacets.begin(); fm!=planeFacets.end();
@@ -2573,11 +2580,14 @@ double HomogeneityTet::intersectionVolume(const FacetMap2D &planeFacets,
 		      tetCenter[pixplane->direction()]));
 #ifdef DEBUG
 	if(verbose) {
-	  oofcerr << "HomogeneityTet::intersectionVolume: pixel plane facet:"
-		  << " pixel plane=" << *facet->pixplane
-		  << " area=" << facet->area()
-		  << " dv=" << dv << std::endl;
-	  writeDebugFile(to_string(*facet) + "\n");
+	  output << "HomogeneityTet::intersectionVolume: pixel plane facet:"
+		 << " category=" << cat
+		 << " pixel plane=" << *facet->pixplane
+		 << " area=" << facet->area()
+		 << " dv=" << dv << std::endl;
+	  output << facet->shortDescription()
+		 << std::endl;
+	  // writeDebugFile(to_string(*facet) + "\n");
 	}
 #endif	// DEBUG
 	vol += dv;
@@ -2592,13 +2602,15 @@ double HomogeneityTet::intersectionVolume(const FacetMap2D &planeFacets,
 #ifdef DEBUG
       if(verbose) {
 	Coord3D facenorm = faceAreaVectors[f]/sqrt(norm2(faceAreaVectors[f]));
-	oofcerr << "HomogeneityTet::intersectionVolume: face facet:"
-		<< " face=" << f
-		// << " face center=" << faceFacets[f].center(this)
-		<< " area=" << area
-		<< " " << dot(area, facenorm)
-		<< " dv=" << dv << std::endl;
-	writeDebugFile(to_string(faceFacets[f]) + "\n");
+	output << "HomogeneityTet::intersectionVolume: face facet:"
+	       << "category=" << cat
+	       << " face=" << f
+	       << " area=" << area
+	       << " " << dot(area, facenorm)
+	       << " dv=" << dv << std::endl;
+	output << faceFacets[f].shortDescription()
+	       << std::endl;
+	// writeDebugFile(to_string(faceFacets[f]) + "\n");
       }
 #endif	// DEBUG
       vol += dv;
@@ -3045,6 +3057,7 @@ std::ostream &operator<<(std::ostream &os, const FaceFacet &facet) {
 }
 
 #ifdef DEBUG
+
 void FaceFacet::dump(std::string basename, unsigned int cat) const {
   std::string filename = (basename + to_string(face) +
 			  "cat" + to_string(cat) + ".lines");
@@ -3056,4 +3069,14 @@ void FaceFacet::dump(std::string basename, unsigned int cat) const {
   }
   file.close();
 }
+
+std::string FaceFacet::shortDescription() const {
+  std::string result;
+  std::string spaces = "   ";
+  for(const FaceFacetEdge *edge : edges)
+    result += (spaces + to_string(edge->startPos3D()) + ", " +
+	       to_string(edge->endPos3D()) + '\n');
+  return result;
+}
+
 #endif // DEBUG

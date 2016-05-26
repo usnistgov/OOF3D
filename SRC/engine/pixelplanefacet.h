@@ -305,6 +305,7 @@ public:
     startPt = edges[i]->startPos3D();
     endPt = edges[i]->endPos3D();
   }
+  std::string shortDescription() const;
 #endif // DEBUG
 
   friend std::ostream &operator<<(std::ostream&, const PixelPlaneFacet&);
