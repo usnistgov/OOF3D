@@ -94,17 +94,17 @@ void PiezoElectricity::flux_matrix(const FEMesh *mesh,
     for(SymTensorIterator ij; !ij.end(); ++ij) { // stress component ij
 #if DIM==2
       fluxdata->stiffness_matrix_element(ij, voltage, nu)
-	+= eijk(0,ij)*dsf0 + eijk(1,ij)*dsf1;
+	-= eijk(0,ij)*dsf0 + eijk(1,ij)*dsf1;
 #elif DIM==3
       fluxdata->stiffness_matrix_element(ij, voltage, nu)
-	+= eijk(0,ij)*dsf0 + eijk(1,ij)*dsf1 + eijk(2,ij)*dsf2;
+	-= eijk(0,ij)*dsf0 + eijk(1,ij)*dsf1 + eijk(2,ij)*dsf2;
 #endif // DIM==3
     }
 #if DIM==2
     if(!voltage->in_plane(mesh)) {
       Field *voop = voltage->out_of_plane();
       for(SymTensorIterator ij; !ij.end(); ++ij) {
-	fluxdata->stiffness_matrix_element(ij, voop, nu) += eijk(2,ij)*sf;
+	fluxdata->stiffness_matrix_element(ij, voop, nu) -= eijk(2,ij)*sf;
       }
     }
 #endif // DIM==2

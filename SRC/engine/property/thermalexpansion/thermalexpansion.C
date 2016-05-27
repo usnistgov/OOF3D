@@ -83,10 +83,10 @@ void ThermalExpansion::flux_matrix(const FEMesh *mesh,
     for( ; !kl.end(); ++kl) {
       double ca = modulus(ij, kl)*expten(kl.row(), kl.col())*sfval;
       if(kl.diagonal()) {
-	mtx_el -= ca;
+	mtx_el += ca;
       }
       else {
-	mtx_el -= 2.0*ca;
+	mtx_el += 2.0*ca;
       }
     }
     kl.reset();
@@ -109,10 +109,10 @@ void ThermalExpansion::flux_offset(const FEMesh *mesh,
     double &offset_el = fluxdata->offset_vector_element(ij); // reference!
     for(SymTensorIterator kl; !kl.end(); ++kl) {
       if(kl.diagonal()) {
-	offset_el += modulus(ij,kl)*expten[kl]*tzero_;
+	offset_el -= modulus(ij,kl)*expten[kl]*tzero_;
       }
       else {
-	offset_el += 2.0*modulus(ij,kl)*expten[kl]*tzero_;
+	offset_el -= 2.0*modulus(ij,kl)*expten[kl]*tzero_;
       }
     }
   }

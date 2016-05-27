@@ -95,11 +95,11 @@ void NonlinearForceDensityNoDeriv::force_value(
 //   nonlin_force_density( coord.x, coord.y, coord.z, time, fieldVal, force );
 // #endif
 
-  eqndata->forceVector() += force;
-//   eqndata->force_vector_element(0) += force[0];
-//   eqndata->force_vector_element(1) += force[1];
+  eqndata->forceVector() -= force;
+//   eqndata->force_vector_element(0) -= force[0];
+//   eqndata->force_vector_element(1) -= force[1];
 // #if DIM==3
-//   eqndata->force_vector_element(2) += force[2];
+//   eqndata->force_vector_element(2) -= force[2];
 // #endif
 
 } // end of 'NonlinearForceDensityNoDeriv::force_value'
@@ -163,7 +163,7 @@ void NonlinearForceDensity::force_deriv_matrix(const FEMesh   *mesh,
 	int fieldno = fieldcomp.integer();
 
 	eqndata->force_deriv_matrix_element(eqncomp, displacement, fieldcomp, j)
-	  += forceDeriv( eqno, fieldno ) * shapeFuncVal;
+	  -= forceDeriv( eqno, fieldno ) * shapeFuncVal;
       }
   }
 

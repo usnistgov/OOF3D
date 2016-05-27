@@ -39,11 +39,11 @@ class PyStressFreeStrain(pypropertywrapper.PyFluxProperty):
                 if kl.diagonal(): 
                     fluxdata.add_offset_vector_element(
                         ij,
-                        -cijkl[ij.integer(), kl.integer()]*strain_kl)
+                        cijkl[ij.integer(), kl.integer()]*strain_kl)
                 else:
                     fluxdata.add_offset_vector_element(
                         ij,
-                        -2.0*cijkl[ij.integer(), kl.integer()]*strain_kl)
+                        2.0*cijkl[ij.integer(), kl.integer()]*strain_kl)
                 kl.next()
             ij.next()
         

@@ -75,7 +75,7 @@ void Elasticity::static_flux_value(const FEMesh *mesh, const Element *element,
     // Unroll the ij loop too.
     int i = ij.row();
     int j = ij.col();
-    fluxdata->flux_vector_element( ij ) +=
+    fluxdata->flux_vector_element( ij ) -=
       (modulus( i,j,0,0 ) * strain( 0,0 ) +
        modulus( i,j,1,1 ) * strain( 1,1 ) +
        modulus( i,j,2,2 ) * strain( 2,2 ) +
@@ -123,12 +123,12 @@ void Elasticity::flux_matrix(const FEMesh *mesh, const Element *element,
       SymTensorIndex ell1( 1, ell.integer() );
 
 #if DIM==2
-      fluxmtx->stiffness_matrix_element( ij, displacement, ell, node ) +=
+      fluxmtx->stiffness_matrix_element( ij, displacement, ell, node ) -=
                                    modulus( ij, ell0 ) * shapeFuncGrad0 +
                                    modulus( ij, ell1 ) * shapeFuncGrad1;
 #elif DIM==3
       SymTensorIndex ell2( 2, ell.integer() );
-      fluxmtx->stiffness_matrix_element( ij, displacement, ell, node ) +=
+      fluxmtx->stiffness_matrix_element( ij, displacement, ell, node ) -=
 	                           modulus( ij, ell0 ) * shapeFuncGrad0 +
                                    modulus( ij, ell1 ) * shapeFuncGrad1 +
                                    modulus( ij, ell2 ) * shapeFuncGrad2;
@@ -148,7 +148,7 @@ void Elasticity::flux_matrix(const FEMesh *mesh, const Element *element,
 	// There are no net factors of 1/2 or 2 here for the
 	// off-diagonal terms, dammit.
 	fluxmtx->stiffness_matrix_element( ij, oop, kay, node )
-	  += shapeFuncVal * modulus( ij, SymTensorIndex( 2, kay.integer()) );
+	  -= shapeFuncVal * modulus( ij, SymTensorIndex( 2, kay.integer()) );
       }
     } // end if
 #endif
