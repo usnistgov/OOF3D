@@ -504,21 +504,21 @@ class NeumannElastic(OOF_NeumannBase):
     @memorycheck.check("microstructure")
     def Xmax01(self):
         self.makeDirichletBCs(exclude=['Xmax'])
-        self.normalForce('Xmax', 0.1)
+        self.normalForce('Xmax', -0.1)
         self.solve()
         self.compare('neumann-elasticity-xmax-0.1')
 
     @memorycheck.check("microstructure")
     def Ymax01(self):
         self.makeDirichletBCs(exclude=['Ymax'])
-        self.normalForce('Ymax', 0.1)
+        self.normalForce('Ymax', -0.1)
         self.solve()
         self.compare('neumann-elasticity-ymax-0.1')
 
     @memorycheck.check("microstructure")
     def Zmin01(self):
         self.makeDirichletBCs(exclude=["Zmin"])
-        self.normalForce('Zmin', 0.1)
+        self.normalForce('Zmin', -0.1)
         self.solve()
         self.compare('neumann-elasticity-zmin-0.1')
 
@@ -677,7 +677,7 @@ class OOF_NonrectMixedBCStaticElastic(SaveableMeshTest):
             mesh='microstructure:skeleton:mesh',
             condition=NeumannBC(
                 flux=Stress,profile=[ConstantProfile(value=0.0),
-                                     ConstantProfile(value=-0.02),
+                                     ConstantProfile(value=0.02),
                                      ConstantProfile(value=0.0)],
                 boundary='rightface'))
         # Change the profile of the Floating condition
@@ -699,7 +699,7 @@ class OOF_NonrectMixedBCStaticElastic(SaveableMeshTest):
             condition=NeumannBC(
                 flux=Stress,
                 profile=[ConstantProfile(value=0.0),
-                         ConstantProfile(value=0.02), 
+                         ConstantProfile(value=-0.02), 
                          ConstantProfile(value=0.0)],
                 boundary='rightface'))
         # Solve again
@@ -1461,7 +1461,7 @@ class OOF_ElasticExact(SaveableMeshTest):
             sampling=ContinuumSampleSet(order=automatic),
             destination=OutputStream(filename='test.dat', mode='w'))
         self.assert_(file_utils.compare_last('test.dat',
-                                             (0.0, 0.0740740741, 0.0, 0.0)))
+                                             (0.0, -0.0740740741, 0.0, 0.0)))
         OOF.Mesh.Analyze.Integral(
             mesh='microstructure:skeleton:mesh',
             time=latest,
@@ -1470,7 +1470,7 @@ class OOF_ElasticExact(SaveableMeshTest):
             sampling=ContinuumSampleSet(order=automatic),
             destination=OutputStream(filename='test.dat', mode='w'))
         self.assert_(file_utils.compare_last('test.dat',
-                                             (0.0, -0.0740740741, 0.0, 0.0)))
+                                             (0.0, 0.0740740741, 0.0, 0.0)))
         OOF.Mesh.Analyze.Average(
             mesh='microstructure:skeleton:mesh',
             time=latest, 
@@ -1480,8 +1480,8 @@ class OOF_ElasticExact(SaveableMeshTest):
             destination=OutputStream(filename='test.dat', mode='w'))
         self.assert_(file_utils.compare_last(
             'test.dat',
-            (0.0, 0.0740740740741, 0.0185185185185, 0.0185185185185, 0.0, 0.0,
-             0.0)))
+            (0.0, -0.0740740740741, -0.0185185185185, -0.0185185185185,
+             0.0, 0.0, 0.0)))
         file_utils.remove('test.dat')
 
     def tearDown(self):
@@ -1556,7 +1556,7 @@ class OOF_ElasticTimeSteppers(OOF_ElasticExact):
             mesh='microstructure:skeleton:mesh',
             condition=NeumannBC(
                 flux=Stress,
-                profile=[ConstantProfile(value=0.1),
+                profile=[ConstantProfile(value=-0.1),
                          ConstantProfile(value=0.0), 
                          ConstantProfile(value=0.0)],
                 boundary='Xmax'))
@@ -1960,7 +1960,7 @@ class OOF_AnisoElasticDynamic(unittest.TestCase):
             condition=NeumannBC(
                 flux=Stress,
                 profile=[
-                    ConstantProfile(value=0.1), 
+                    ConstantProfile(value=-0.1), 
                     ConstantProfile(value=0.0),
                     ConstantProfile(value=0.0)],
                 boundary='Xmax'))
@@ -2215,6 +2215,7 @@ static_set = [
     OOF_ElasticExact("Solve")
     ]
 
+
 # Do a bunch of Neumann tests in a bunch of geometries.
 neumanngeometries = (OOF_ElasticNeumann1,
                      OOF_ElasticNeumann2,
@@ -2225,7 +2226,7 @@ neumanngeometries = (OOF_ElasticNeumann1,
                      OOF_ThermalNeumann3,
                      OOF_ThermalNeumann4
                  )
-neumanntestnames = ("NullXmin", "NullZmax", "Xmax01", "Ymax01", "Zmin01")
+neumanntestnames = ("NullXmin", "NullZmax", "Xmax01", "Ymax01", "Zmin01",)
 static_set.extend([geometry(testname)
                  for geometry in neumanngeometries
                  for testname in neumanntestnames])
@@ -2253,6 +2254,7 @@ dynamic_elastic_set = [
     # In "generate" mode, SS22 provides the reference data for the
     # rest of OOF_ElasticTimeSteppers, so it must precede the rest of
     # OOF_ElasticTimeSteppers in this list.
+
     OOF_ElasticTimeSteppers("SS22"),
     OOF_ElasticTimeSteppers("CNSaveRestore"),
     OOF_ElasticTimeSteppers("RK4"),
@@ -2265,7 +2267,7 @@ dynamic_elastic_set = [
 ]
 
 test_set = static_set + dynamic_thermal_set + dynamic_elastic_set
-#test_set = dynamic_elastic_set
+# test_set = dynamic_elastic_set
 # test_set = [
-#     OOF_NonrectMixedBCStaticElastic("Solve2")
+#     OOF_StaticAndDynamic("SS22")
 # ]

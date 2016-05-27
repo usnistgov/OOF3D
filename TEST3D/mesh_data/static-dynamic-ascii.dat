@@ -54,7 +54,7 @@ Subproblem.Solver(subproblem='microstructure:skeleton:mesh:temp', solver_mode=Ba
 Mesh.Initialize_Field(mesh='microstructure:skeleton:mesh', field=Displacement, initializer=ConstThreeVectorFieldInit(cx=0.0,cy=0.0,cz=0.0))
 Mesh.Initialize_Field(mesh='microstructure:skeleton:mesh', field=Temperature, initializer=ConstScalarFieldInit(value=0.0))
 Mesh.Boundary_Condition(mesh='microstructure:skeleton:mesh', bcname='bc', bc=DirichletBC(field=Displacement,field_component='x',equation=Force_Balance,eqn_component='x',profile=ConstantProfile(value=0.0),boundary='Xmin'))
-Mesh.Boundary_Condition(mesh='microstructure:skeleton:mesh', bcname='bc<2>', bc=NeumannBC(flux=Stress,profile=[ConstantProfile(value=0.1), ConstantProfile(value=0.0), ConstantProfile(value=0.0)],boundary='Xmax'))
+Mesh.Boundary_Condition(mesh='microstructure:skeleton:mesh', bcname='bc<2>', bc=NeumannBC(flux=Stress,profile=[ConstantProfile(value=-0.1), ConstantProfile(value=0.0), ConstantProfile(value=0.0)],boundary='Xmax'))
 Mesh.Boundary_Condition(mesh='microstructure:skeleton:mesh', bcname='bc<3>', bc=DirichletBC(field=Displacement,field_component='y',equation=Force_Balance,eqn_component='y',profile=ConstantProfile(value=0.0),boundary='Ymin'))
 Mesh.Boundary_Condition(mesh='microstructure:skeleton:mesh', bcname='bc<4>', bc=DirichletBC(field=Displacement,field_component='y',equation=Force_Balance,eqn_component='y',profile=ConstantProfile(value=0.0),boundary='Ymax'))
 Mesh.Boundary_Condition(mesh='microstructure:skeleton:mesh', bcname='bc<5>', bc=DirichletBC(field=Displacement,field_component='z',equation=Force_Balance,eqn_component='z',profile=ConstantProfile(value=0.0),boundary='Zmin'))
