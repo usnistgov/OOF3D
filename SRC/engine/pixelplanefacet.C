@@ -775,7 +775,7 @@ bool PixelPlaneFacet::completeLoops() {
 	      replaceIntersection(q, merged);
 	      replaceIntersection(p, new RedundantIntersection(merged, this));
 	      uniqueIsecs.erase(q);
-	      if(merged->crossingType() != NONCROSSING)
+	      // if(merged->crossingType() != NONCROSSING)
 		uniqueIsecs.insert(merged);
 	      replaced = true;
 	      break;
@@ -2387,7 +2387,15 @@ bool PixelPlaneFacet::badTopology(const SimpleIntersection *si,
 
 
   bool mfiIsEntry = mfi->crossingType() == ENTRY;
-  assert(mfiIsEntry ^ siIsEntry);
+#ifdef DEBUG
+  if(!(mfiIsEntry ^ siIsEntry)) {
+    oofcerr << "PixelPlaneFacet::badTopology: incompatible intersections!"
+	    << std::endl;
+    oofcerr << "PixelPlaneFacet::badTopology:  si=" << *si << std::endl;
+    oofcerr << "PixelPlaneFacet::badTopology: mfi=" << *mfi << std::endl;
+    throw ErrProgrammingError("badTopology failed!", __FILE__, __LINE__);
+  }
+#endif // DEBUG
   // VSB turn direction == R
   bool conditionA = turn == RIGHT;
   // Entry before exit when traversing the VSB

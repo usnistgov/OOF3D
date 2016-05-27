@@ -229,7 +229,8 @@ public:
   virtual PixelPlaneIntersectionNR *referent() = 0;
   virtual const PixelPlaneIntersectionNR *referent() const = 0;
 
-  virtual CrossingType crossingType() const = 0;
+  virtual int crossingCount() const = 0;
+  CrossingType crossingType() const;
   
   // This intersection point is an end point of the given facet edge.
   // The edge owns the intersection point and will delete it when the
@@ -287,7 +288,7 @@ protected:
 
   Coord3D loc_;
 
-  CrossingType crossing_;	// may be ENTRY, EXIT, or NONCROSSING
+  int crossing_; // 0 -> noncrossing, positive -> exit, negative -> entry
 
   // Either computeLocation or setLocation should be called by the
   // subclass's constructor.
@@ -377,8 +378,9 @@ public:
   }
 
   // Does the VBS segment enter or leave the tet polygon at this point?
-  virtual CrossingType crossingType() const { return crossing_; }
-  void setCrossingType(CrossingType t) { crossing_ = t; }
+  virtual int crossingCount() const { return crossing_; }
+  void setCrossingCount(int t) { crossing_ = t; }
+  void setCrossingType(CrossingType);
 
   // getOrdering computes whether two intersection points (this and
   // the given arg) are on consecutive VSB segments, and which comes
@@ -903,7 +905,7 @@ public:
   TriplePixelPlaneIntersection(HomogeneityTet *htet, const HPixelPlane*,
 			       const HPixelPlane*, const HPixelPlane*);
   virtual TriplePixelPlaneIntersection *clone() const;
-  virtual CrossingType crossingType() const { return NONCROSSING; }
+  virtual int crossingCount() const { return 0; }
   virtual unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const;
   virtual void locateOnPolygonEdge(std::vector<PolyEdgeIntersections>&,
 				   const PixelPlaneFacet*) const
@@ -1034,8 +1036,8 @@ public:
   virtual Coord3D location3D() const {
     return referent_->location3D();
   }
-  virtual CrossingType crossingType() const {
-    return referent_->crossingType();
+  virtual int crossingCount() const {
+    return referent_->crossingCount();
   }
 
   virtual bool isEquivalent(const PlaneIntersection *pi) const {
@@ -1125,7 +1127,6 @@ public:
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-std::ostream &operator<<(std::ostream&, const CrossingType);
 std::ostream &operator<<(std::ostream&, const IsecEquivalenceClass&);
 
 #endif // PLANEINTERSECTION_H

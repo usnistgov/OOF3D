@@ -543,6 +543,22 @@ unsigned int PixelPlaneIntersectionNR::minPolyEdge(const PixelPlaneFacet *facet)
   return 0;
 }
 
+void PixelPlaneIntersectionNR::setCrossingType(CrossingType ct) {
+  if(ct == ENTRY)
+    setCrossingCount(-1);
+  else if(ct == EXIT)
+    setCrossingCount(1);
+}
+
+CrossingType PixelPlaneIntersection::crossingType() const {
+  int ct = crossingCount();
+  if(ct < 0)
+    return ENTRY;
+  if(ct > 0)
+    return EXIT;
+  return NONCROSSING;
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 struct GEOFdata {		// Get Edges On Faces data
@@ -1571,16 +1587,17 @@ ISEC_ORDER MultiVSBmixIn<BASE>::reverseOrdering(const MultiVSBbase *other,
 // Utility function used when merging intersections.  If the two given
 // intersections are merged, what is the crossing type of the result?
 
-static CrossingType combinedCrossing(const PixelPlaneIntersectionNR *fi0,
-				     const PixelPlaneIntersectionNR *fi1)
+static int combinedCrossing(const PixelPlaneIntersectionNR *fi0,
+			    const PixelPlaneIntersectionNR *fi1)
 {
-  if(fi0->crossingType() == fi1->crossingType())
-    return fi0->crossingType();
-  if(fi0->crossingType() == NONCROSSING)
-    return fi1->crossingType();
-  if(fi1->crossingType() == NONCROSSING)
-    return fi0->crossingType();
-  return NONCROSSING;
+  return fi0->crossingCount() + fi1->crossingCount();
+  // if(fi0->crossingType() == fi1->crossingType())
+  //   return fi0->crossingType();
+  // if(fi0->crossingType() == NONCROSSING)
+  //   return fi1->crossingType();
+  // if(fi1->crossingType() == NONCROSSING)
+  //   return fi0->crossingType();
+  // return NONCROSSING;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1619,6 +1636,7 @@ SimpleIntersection::SimpleIntersection(HomogeneityTet *htet,
   setFacePlane(fp);
   setLoopSeg(pblseg);
   setLoopFrac(alpha);
+  assert(ct == ENTRY || ct == EXIT);
   setCrossingType(ct);
   includeCollinearPlanes(htet);
   // try {
@@ -1668,7 +1686,7 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
   // intersect a face should form a new SimpleIntersection there.
   if(isEquivalent(fi)) {
     merged = clone();
-    merged->setCrossingType(combinedCrossing(this, fi));
+    merged->setCrossingCount(combinedCrossing(this, fi));
   }
   else if(facet->onOppositeEdges(this, fi)) {
 #ifdef DEBUG
@@ -1819,7 +1837,7 @@ bool SimpleIntersection::isMisordered(const MultiCornerIntersection *fi,
 
 void SimpleIntersection::print(std::ostream &os) const {
   os << "SimpleIntersection(" << printPlanes() << ", " << location3D()
-     << ", " << crossingType() << ", faceplane=" << *getFacePlane()
+     << ", crossing=" << crossingCount() << ", faceplane=" << *getFacePlane()
      << ", eq=" << equivalence_ << ")";
 }
 
@@ -1870,7 +1888,7 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
 #ifdef DEBUG
   verbose = fi0->verbose || fi1->verbose;
 #endif // DEBUG
-  setCrossingType(combinedCrossing(fi0, fi1));
+  setCrossingCount(combinedCrossing(fi0, fi1));
   setLoopSeg(fi0->getLoopSeg());
   setLoopFrac(fi0->getLoopFrac());
   copyPlanes(fi0, fi1);
@@ -1888,7 +1906,7 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
 #ifdef DEBUG
   verbose = si->verbose || mfi->verbose;
 #endif // DEBUG
-  setCrossingType(combinedCrossing(si, mfi));
+  setCrossingCount(combinedCrossing(si, mfi));
   setLoopSeg(si->getLoopSeg());
   setLoopFrac(si->getLoopFrac());
   copyPlanes(si, mfi);
@@ -2055,7 +2073,7 @@ bool MultiFaceIntersection::isMisordered(const MultiCornerIntersection *fi,
 
 void MultiFaceIntersection::print(std::ostream &os) const {
   os << "MultiFaceIntersection(" << printPlanes() << ", " << location3D()
-     << ", " << crossingType() << ", eq=" << equivalence_ << ")";
+     << ", crossing=" << crossingCount() << ", eq=" << equivalence_ << ")";
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -2082,7 +2100,7 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
   verbose = fi0->verbose || fi1->verbose;
 #endif // DEBUG
   copyPlanes(fi0, fi1);
-  setCrossingType(combinedCrossing(fi0, fi1));
+  setCrossingCount(combinedCrossing(fi0, fi1));
   // setPolyFrac(fi0->getPolyFrac(NONE, facet));
   setFacePlane(fi0->getFacePlane());
   // TODO: Enforce that each vsb segment fraction is either 0 or 1
@@ -2104,7 +2122,7 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
   verbose = si->verbose || mvi->verbose;
 #endif // DEBUG
   copyPlanes(si, mvi);
-  setCrossingType(combinedCrossing(si, mvi));
+  setCrossingCount(combinedCrossing(si, mvi));
   // setPolyFrac(si->getPolyFrac(NONE, facet));
   setFacePlane(si->getFacePlane());
   vsbSegments[si->getLoopSeg()] = si->getLoopFrac();
@@ -2239,7 +2257,7 @@ bool MultiVSBIntersection::isMisordered(const MultiCornerIntersection *fi,
 
 void MultiVSBIntersection::print(std::ostream &os) const {
   os << "MultiVSBIntersection(" << printPlanes() << ", " << location3D()
-     << ", " << crossingType() << ", eq=" << equivalence_ << ")";
+     << ", crossing=" << crossingCount() << ", eq=" << equivalence_ << ")";
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -2249,7 +2267,7 @@ MultiCornerIntersection::MultiCornerIntersection(
 					 const PixelPlaneIntersectionNR *fi0,
 					 const PixelPlaneIntersectionNR *fi1)
 {
-  setCrossingType(combinedCrossing(fi0, fi1));
+  setCrossingCount(combinedCrossing(fi0, fi1));
 #ifdef DEBUG
   verbose = fi0->verbose || fi1->verbose;
 #endif // DEBUG
@@ -2362,7 +2380,7 @@ bool MultiCornerIntersection::isMisordered(const MultiCornerIntersection*,
 
 void MultiCornerIntersection::print(std::ostream &os) const {
   os << "MultiCornerIntersection(" << printPlanes() << ", " << location3D()
-     << ", " << crossingType() << ", eq=" << equivalence_ << ")";
+     << ", crossing=" << crossingCount() << ", eq=" << equivalence_ << ")";
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -2406,7 +2424,7 @@ TetEdgeIntersection::TetEdgeIntersection(HomogeneityTet *htet,
   // faces_.insert(f1);
   // pixelPlanes_.insert(pp);
   loc_ = triplePlaneIntersection(f0, f1, pp);
-  setCrossingType(NONCROSSING);
+  setCrossingCount(0);
   includeCollinearPlanes(htet);
 }
 
@@ -2418,7 +2436,7 @@ TetEdgeIntersection *TetEdgeIntersection::clone() const {
 
 void TetEdgeIntersection::print(std::ostream &os) const {
   os << "TetEdgeIntersection(" << printPlanes() << ", " << location3D()
-     << ", " << crossingType() << ", eq=" << equivalence_ << ")";
+     << ", crossing=" << crossingCount() << ", eq=" << equivalence_ << ")";
 }
 
 std::string TetEdgeIntersection::shortName() const {
@@ -2467,7 +2485,7 @@ TetNodeIntersection *TetNodeIntersection::clone() const {
 
 void TetNodeIntersection::print(std::ostream &os) const {
   os << "TetNodeIntersection(" << printPlanes() << ", " << location3D()
-     << ", " << crossingType() << ", eq=" << equivalence_ << ")";
+     << ", crossing=" << crossingCount() << ", eq=" << equivalence_ << ")";
 }
 
 std::string TetNodeIntersection::shortName() const {
@@ -2491,7 +2509,7 @@ TriplePixelPlaneIntersection::TriplePixelPlaneIntersection(
   // addPixelPlane(htet, pp0);
   // addPixelPlane(htet, pp1);
   // addPixelPlane(htet, pp2);
-  setCrossingType(NONCROSSING);
+  setCrossingCount(0);
   computeLocation();
   includeCollinearPlanes(htet);
 }
@@ -2504,7 +2522,7 @@ TriplePixelPlaneIntersection *TriplePixelPlaneIntersection::clone() const {
 
 void TriplePixelPlaneIntersection::print(std::ostream &os) const {
   os << "TriplePixelPlaneIntersection(" << printPlanes() << ", "
-     << location3D() << ", " << crossingType()
+     << location3D() << ", crossing=" << crossingCount()
      << ", eq=" << equivalence_ << ")";
 }
 
