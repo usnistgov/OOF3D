@@ -772,26 +772,16 @@ bool PixelPlaneFacet::completeLoops() {
 			<< *merged << std::endl;
 	      }
 #endif // DEBUG
+	      uniqueIsecs.erase(q);
+	      // replaceIntersection deletes p and q.
 	      replaceIntersection(q, merged);
 	      replaceIntersection(p, new RedundantIntersection(merged, this));
-	      uniqueIsecs.erase(q);
 	      // if(merged->crossingType() != NONCROSSING)
 		uniqueIsecs.insert(merged);
 	      replaced = true;
 	      break;
 	    }
 	  }
-#ifdef DEBUG
-	  else {
-	    if(verbose) {
-	      oofcerr << "PixelPlaneFacet::completeLoops: points not identical!"
-		      << std::endl;
-	      OOFcerrIndent indent(2);
-	      oofcerr << "PixelPlaneFacet::completeLoops: " << *p << std::endl;
-	      oofcerr << "PixelPlaneFacet::completeLoops: " << *q << std::endl;
-	    }
-	  }
-#endif // DEBUG
 	}
 	if(!replaced) {
 	  uniqueIsecs.insert(p);
