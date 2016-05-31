@@ -80,7 +80,7 @@ class PyElasticity(pypropertywrapper.PyFluxProperty):
                        cijkl[(ij.integer(), ell1.integer())]*dsf1)
                 if not twoD:
                     ell2 = fieldindex.SymTensorIndex(2, ell.integer())
-                    val += cijkl[(ij.integer(), ell2.integer())]*dsf2
+                    val -= cijkl[(ij.integer(), ell2.integer())]*dsf2
                 fluxdata.add_stiffness_matrix_element(
                     ij,
                     problem.Displacement,
