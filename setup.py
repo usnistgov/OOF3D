@@ -414,25 +414,27 @@ def modification_time(phile):
 # us where to find the directories, and their names change from
 # version to version.
 
-def findvtk(basename):
+def findvtk(*basenames):
     global vtkdir
-    
-    base = vtkdir or basename
-        
-    # First look for basename/include/vtk*
-    incdir = os.path.join(base, 'include')
-    files = os.listdir(incdir)
-    vtkname = None
-    for f in files:
-        ## This may fail if there is more than one version of vtk
-        ## installed.  listdir returns files in arbitrary order, and
-        ## the first one found will be used.
-        if f.startswith('vtk'):
-            vtkname = f
-            incvtk = os.path.join(base, 'include', vtkname)
-            libvtk = os.path.join(base, 'lib', vtkname)
-            if os.path.isdir(incvtk) and os.path.isdir(libvtk):
-                return (incvtk, libvtk)
+
+    if vtkdir:
+        basenames = (vtkdir,)
+
+    for base in basenames:
+        # First look for basename/include/vtk*
+        incdir = os.path.join(base, 'include')
+        files = os.listdir(incdir)
+        vtkname = None
+        for f in files:
+            ## This may fail if there is more than one version of vtk
+            ## installed.  listdir returns files in arbitrary order, and
+            ## the first one found will be used.
+            if f.startswith('vtk'):
+                vtkname = f
+                incvtk = os.path.join(base, 'include', vtkname)
+                libvtk = os.path.join(base, 'lib', vtkname)
+                if os.path.isdir(incvtk) and os.path.isdir(libvtk):
+                    return (incvtk, libvtk)
     return (None, None)
 
 #########
@@ -1099,6 +1101,8 @@ def _get_oof_arg(arg):
         
 platform = {}
 
+home = os.path.expanduser('~')
+
 def set_platform_values():
     ## Set platform-specific flags that don't specifically depend on
     ## OOF2 stuff.  They're stored in a dictionary just to keep things
@@ -1135,7 +1139,7 @@ def set_platform_values():
         platform['extra_link_args'].append('-headerpad_max_install_names')
         if os.path.exists('/sw') and DIM_3: # fink
             platform['incdirs'].append('/sw/include')
-            vtkinc, vtklib = findvtk('/sw')
+            vtkinc, vtklib = findvtk(home, '/sw', '/usr/local')
             if vtkinc is not None:
                 platform['libdirs'].append(vtklib)
                 platform['incdirs'].append(vtkinc)
@@ -1145,7 +1149,7 @@ def set_platform_values():
             platform['incdirs'].append('/usr/X11R6/include/')
         if os.path.exists('/opt') and DIM_3: # macports
             platform['incdirs'].append('/opt/local/include')
-            vtkinc, vtklib = findvtk('/opt/local')
+            vtkinc, vtklib = findvtk(home, '/opt/local', '/usr/local')
             if vtkinc is not None:
                 platform['libdirs'].append(vtklib)
                 platform['incdirs'].append(vtkinc)
@@ -1179,7 +1183,7 @@ def set_platform_values():
         platform['blas_libs'].extend(['lapack', 'blas', 'm'])
         platform['extra_compile_args'].append('-std=c++11')
         if DIM_3:
-            vtkinc, vtklib = findvtk('/usr')
+            vtkinc, vtklib = findvtk(home, '/usr', '/usr/local')
             if vtkinc is not None:
                 platform['incdirs'].append(vtkinc)
                 platform['libdirs'].append(vtklib)
