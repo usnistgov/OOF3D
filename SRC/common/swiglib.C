@@ -355,7 +355,7 @@ SWIG_GetPtr(const char *c, void **ptr, const char *t)
   int  i, len, start, end;
   SwigPtrType *sp,*tp;
   SwigCacheType *cache;
-  register int d;
+  int d;
 
   p = 0;
   /* Pointer values must start with leading underscore */
