@@ -168,13 +168,13 @@ FacetEdge::FacetEdge(PixelPlaneIntersection *s, PixelPlaneIntersection *e)
   stop_->setEdge(this);
 }
 
-FacetEdge::FacetEdge(const FacetEdge &fe)
-  : start_(fe.start_->clone()),
-    stop_(fe.stop_->clone())
-{
-  start_->setEdge(this);
-  stop_->setEdge(this);
-}
+// FacetEdge::FacetEdge(const FacetEdge &fe)
+//   : start_(fe.start_->clone()),
+//     stop_(fe.stop_->clone())
+// {
+//   start_->setEdge(this);
+//   stop_->setEdge(this);
+// }
 
 FacetEdge::FacetEdge(FacetEdge &&fe) {
   PixelPlaneIntersection *temp = start_;
@@ -307,7 +307,7 @@ PixelPlaneFacet::PixelPlaneFacet(HomogeneityTet *htet,
   // Map FacePlanes and FacePixelPlanes to polygon edge numbers.  Edge
   // e goes from tetPts[e] to tetPts[e+1].
   for(unsigned int i=0; i<tetPts.size(); i++) {
-    std::set<const FacePlane*> faces = getFacePlanes(i);
+    FacePlaneSet faces = getFacePlanes(i);
     for(const FacePlane *face : faces) {
       assert(face != nullptr);
       faceEdgeMap[face] = i;
@@ -333,14 +333,12 @@ PixelPlaneFacet::~PixelPlaneFacet() {
 // Find the tet faces that this edge lies on, excluding the face that
 // lies in the pixel plane (if any).  These are the faces that define
 // the edges of the tet-pixel plane intersection polygon.
-std::set<const FacePlane*> PixelPlaneFacet::getFacePlanes(unsigned int f)
-  const
-{
+FacePlaneSet PixelPlaneFacet::getFacePlanes(unsigned int f) const {
   assert(f != NONE);
   unsigned int g = f + 1;
   if(g == tetPts.size())
     g = 0;
-  std::set<const FacePlane*> faces = tetPts[f]->sharedFaces(tetPts[g]);
+  auto faces = tetPts[f]->sharedFaces(tetPts[g]);
 
 // #ifdef DEBUG
 //   if(verbose)
@@ -360,10 +358,9 @@ std::set<const FacePlane*> PixelPlaneFacet::getFacePlanes(unsigned int f)
   // For each face in faces, include the faces collinear with it and
   // the pixelplane.
   const HPixelPlane *upixplane = htet->getUnorientedPixelPlane(pixplane);
-  std::set<const FacePlane*> morefaces;
+  FacePlaneSet morefaces;
   for(const FacePlane *face : faces) {
-    std::set<const FacePlane*> cofaces =
-      htet->getCollinearFaces(face, upixplane);
+    FacePlaneSet cofaces = htet->getCollinearFaces(face, upixplane);
 // #ifdef DEBUG
 //     if(verbose) {
 //       oofcerr << "PixelPlaneFacet::getFacePlanes: cofaces(" << *face << ")=";
@@ -472,7 +469,7 @@ void PixelPlaneFacet::addEdges(const PixelPlaneIntersection *fi0,
      fi0->getPolyFrac(startSeg, this) <= fi1->getPolyFrac(startSeg, this))
     {
       // The points are on the same polygon edge.
-      addEdge(new PolygonEdge(fi0->clone(), fi1->clone()));
+      addEdge(new PolygonEdge(fi0->clone(htet), fi1->clone(htet)));
     }
   else {
     // The points are on different polygon edges, or the end is before
@@ -484,7 +481,8 @@ void PixelPlaneFacet::addEdges(const PixelPlaneIntersection *fi0,
       oofcerr << "PixelPlaneFacet::addEdges: adding initial " << *fi0
 	      << " to tetPts[" << (startSeg+1)%nn << "]" << std::endl;
 #endif // DEBUG
-    addEdge(new PolygonEdge(fi0->clone(), tetPts[(startSeg+1)%nn]->clone()));
+    addEdge(new PolygonEdge(fi0->clone(htet),
+			    tetPts[(startSeg+1)%nn]->clone(htet)));
     // If there is more than one intermediate corner, then there are
     // one or more intermediate segments that span an entire polygon
     // edge.
@@ -502,7 +500,8 @@ void PixelPlaneFacet::addEdges(const PixelPlaneIntersection *fi0,
 		<< "tetPts[" << seg << "] to tetPts[" << nextseg << "]"
 		<< std::endl;
 #endif	// DEBUG
-      addEdge(new PolygonEdge(tetPts[seg]->clone(), tetPts[nextseg]->clone()));
+      addEdge(new PolygonEdge(tetPts[seg]->clone(htet),
+			      tetPts[nextseg]->clone(htet)));
       seg = nextseg;
       nextseg++;
       if(nextseg == nn)
@@ -515,7 +514,7 @@ void PixelPlaneFacet::addEdges(const PixelPlaneIntersection *fi0,
       oofcerr << "PixelPlaneFacet::addEdges: adding final "
 	      << "tetPts[" << endSeg << "] to " << *fi1 << std::endl;
 #endif // DEBUG
-    addEdge(new PolygonEdge(tetPts[endSeg]->clone(), fi1->clone()));
+    addEdge(new PolygonEdge(tetPts[endSeg]->clone(htet), fi1->clone(htet)));
   }
   closedOnPerimeter = true;
 #ifdef DEBUG
@@ -750,7 +749,7 @@ bool PixelPlaneFacet::completeLoops() {
 #endif // DEBUG
       // First, copy the intersections at this location into a set,
       // and merge ones that are at *identical* positions.
-      std::set<PixelPlaneIntersectionNR*> uniqueIsecs;
+      PPIntersectionNRSet uniqueIsecs;
       for(auto pp=range.first; pp!=range.second; ++pp) {
 	PixelPlaneIntersectionNR *p = (*pp).second;
 	bool replaced = false;
@@ -768,7 +767,7 @@ bool PixelPlaneFacet::completeLoops() {
 	      if(verbose) {
 		oofcerr << "PixelPlaneFacet::completeLoops: merged "
 			<< *q << " and " << *p << std::endl;
-		oofcerr << "PixelPlaneFacet::completeLoops:  result="
+		oofcerr << "PixelPlaneFacet::completeLoops: result="
 			<< *merged << std::endl;
 	      }
 #endif // DEBUG
@@ -777,12 +776,12 @@ bool PixelPlaneFacet::completeLoops() {
 	      replaceIntersection(q, merged);
 	      replaceIntersection(p, new RedundantIntersection(merged, this));
 	      // if(merged->crossingType() != NONCROSSING)
-		uniqueIsecs.insert(merged);
+	      uniqueIsecs.insert(merged);
 	      replaced = true;
-	      break;
+	      break;		// break from loop over uniqueIsecs
 	    }
 	  }
-	}
+	} // end loop over uniqueIsecs
 	if(!replaced) {
 	  uniqueIsecs.insert(p);
 	}
@@ -1310,8 +1309,7 @@ static void classifyVSBcorner(const PixelPlaneIntersectionNR * const fi0,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-bool PixelPlaneFacet::resolveTwoFoldCoincidence(
-			const std::set<PixelPlaneIntersectionNR*> &isecs)
+bool PixelPlaneFacet::resolveTwoFoldCoincidence(const PPIntersectionNRSet &isecs)
 {
   PixelPlaneIntersectionNR *fi0 = *isecs.begin();
   PixelPlaneIntersectionNR *fi1 = *isecs.rbegin();
@@ -1385,7 +1383,7 @@ bool PixelPlaneFacet::resolveTwoFoldCoincidence(
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 bool PixelPlaneFacet::resolveThreeFoldCoincidence(
-			  const std::set<PixelPlaneIntersectionNR*> &isecs)
+			  const PPIntersectionNRSet &isecs)
 {
 #ifdef DEBUG
   if(verbose) {
@@ -1686,7 +1684,7 @@ bool PixelPlaneFacet::resolveThreeFoldCoincidence(
 // than the functions above.
 
 bool PixelPlaneFacet::resolveMultipleCoincidence(
-			 const std::set<PixelPlaneIntersectionNR*> &isecs,
+			 const PPIntersectionNRSet &isecs,
 			 unsigned int totalInts)
 {
   // Find which VSB loop segments and polygon segments are involved in
@@ -1773,7 +1771,8 @@ bool PixelPlaneFacet::resolveMultipleCoincidence(
   // the VSB passes through a vertex of the polygon.  Both of the
   // polygon edges at the vertex will have recorded an entry or an
   // exit.
-  std::set<std::vector<PixelPlaneIntersectionNR*>::iterator> deleteMe;
+  std::vector<std::vector<PixelPlaneIntersectionNR*>::iterator> deleteMe;
+  deleteMe.reserve(orderedFIs.size());
   for(auto k=orderedFIs.begin(); k!=orderedFIs.end(); ++k) {
     auto knext = k+1;
     if(knext == orderedFIs.end()) {
@@ -1787,7 +1786,7 @@ bool PixelPlaneFacet::resolveMultipleCoincidence(
 	 && (*k)->onSameLoopSegment(*knext))
 	{
 	  replaceIntersection(*k, new RedundantIntersection(*knext, this));
-	  deleteMe.insert(k);	// for deletion from orderedFIs
+	  deleteMe.push_back(k);	// for deletion from orderedFIs
 	}
     }
   } // end loop over orderedFIs k
@@ -1804,7 +1803,6 @@ bool PixelPlaneFacet::resolveMultipleCoincidence(
   do {
     nfixed = 0;
     std::vector<PixelPlaneIntersectionNR*> newOrder;
-    std::set<std::vector<PixelPlaneIntersectionNR*>::iterator> deleteMe;
     // Loop over pairs of adjacent intersections
     for(auto k=orderedFIs.begin(); k!=orderedFIs.end(); ++k) {
       auto knext = k+1;

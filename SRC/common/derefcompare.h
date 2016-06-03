@@ -27,7 +27,22 @@
 template <class TYPE>
 struct DerefCompare {
   bool operator()(const TYPE *a, const TYPE *b) const {
+    assert(a != nullptr && b != nullptr);
     return *a < *b;
+  }
+};
+
+template <class TYPE>
+struct DerefPairCompare {
+  typedef std::pair<const TYPE*, const TYPE*> PTRPAIR;
+  bool operator()(const PTRPAIR &a, const PTRPAIR &b) const {
+    if(*a.first < *b.first)
+      return true;
+    if(*b.first < *a.first)
+      return false;
+    if(*a.second < *b.second)
+      return true;
+    return false;
   }
 };
 

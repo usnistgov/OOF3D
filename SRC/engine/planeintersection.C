@@ -21,8 +21,17 @@
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-PlaneIntersection::PlaneIntersection()
-  : equivalence_(nullptr)
+static std::string eqPrint(IsecEquivalenceClass *eqptr) {
+  if(eqptr == nullptr)
+    return "None";
+  return to_string(eqptr->id);
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+PlaneIntersection::PlaneIntersection(HomogeneityTet *htet)
+  : equivalence_(nullptr),
+    id(htet->nextIntersectionID())
 #ifdef DEBUG
   , verbose(false)
 #endif // DEBUG
@@ -36,10 +45,10 @@ PlaneIntersection::PlaneIntersection()
 PlaneIntersection::~PlaneIntersection() {
 #ifdef DEBUG
   HomogeneityTet::allIntersections.erase(this);
-  if(equivalence_ != nullptr)
-    equivalence_->removeIntersection(this);
   // oofcerr << "PlaneIntersection::dtor: " << this << std::endl;
 #endif // DEBUG
+  if(equivalence_ != nullptr)
+    equivalence_->removeIntersection(this);
 }
 
 const BarycentricCoord &PlaneIntersection::baryCoord(HomogeneityTet *htet) const
@@ -84,13 +93,16 @@ void PlaneIntersection::setEquivalence(IsecEquivalenceClass *e) {
 // #endif // DEBUG
 }
 
-
 void PlaneIntersection::removeEquivalence() {
   // removeEquivalence is called from
   // IsecEquivalenceClass::removeIntersection, which is called from
   // the PlaneIntersection destructor, so it can't invoke any
   // PlaneIntersection virtual methods.
   equivalence_ = nullptr;
+}
+
+void PlaneIntersection::setID(HomogeneityTet *htet) {
+  id = htet->nextIntersectionID();
 }
 
 #ifdef DEBUG
@@ -112,15 +124,19 @@ bool PlaneIntersection::verify() {
 
 TripleFaceIntersection::TripleFaceIntersection(unsigned int node,
 					       HomogeneityTet *htet)
-  : node_(node)
+  : PlaneIntersection(htet),
+    node_(node)
 {
   for(unsigned int i=0; i<3; i++)
     faces_.insert(htet->getTetFacePlane(CSkeletonElement::nodeFaces[node][i]));
   loc_ = htet->nodePosition(node);
 }
 
-TripleFaceIntersection *TripleFaceIntersection::clone() const {
+TripleFaceIntersection *TripleFaceIntersection::clone(HomogeneityTet *htet)
+  const
+{
   TripleFaceIntersection *tfi = new TripleFaceIntersection(*this);
+  tfi->setID(htet);
   // Although equivalence_ is defined in PlaneIntersection,
   // setEquivalence() can't be called in the PlaneIntersection copy
   // constructor because it invokes methods that are only defined in
@@ -137,7 +153,7 @@ const BarycentricCoord &TripleFaceIntersection::baryCoord(HomogeneityTet *htet)
 
 void TripleFaceIntersection::print(std::ostream &os) const {
   os << "TripleFaceIntersection(node=" << node_ << ", " << location3D()
-     << ", eq=" << equivalence_ << ")";
+     << ", eq=" << eqPrint(equivalence_) << ")";
 }
 
 std::string TripleFaceIntersection::shortName() const {
@@ -246,8 +262,7 @@ bool PixelPlaneIntersection::onOnePolySegment(const PixelPlaneIntersection *fi,
 	    << std::endl;
   }
 #endif // DEBUG
-  const std::set<const FacePlane*> shared =
-    referent()->sharedFaces(fi->referent());
+  FacePlaneSet shared = referent()->sharedFaces(fi->referent());
 #ifdef DEBUG
   if(facet->verbose) {
     oofcerr << "PixelPlaneIntersection::onOnePolySegment: base plane="
@@ -450,11 +465,11 @@ const FacePlane *PixelPlaneIntersectionNR::sharedFace(
   return nullptr;
 }
 
-const std::set<const FacePlane*> PixelPlaneIntersectionNR::sharedFaces(
+FacePlaneSet PixelPlaneIntersectionNR::sharedFaces(
 				       const PixelPlaneIntersectionNR *fi)
   const
 {
-  std::set<const FacePlane*> shared;
+  FacePlaneSet shared;
   std::set_intersection(faces_.begin(), faces_.end(),
 			fi->faces().begin(),
 			fi->faces().end(),
@@ -983,8 +998,9 @@ SingleVSBbase::SingleVSBbase() {
 #endif // DEBUG
 
 template <class BASE>
-SingleFaceMixIn<BASE>::SingleFaceMixIn()
-  : facePlane_(nullptr)
+SingleFaceMixIn<BASE>::SingleFaceMixIn(HomogeneityTet *htet)
+  : BASE(htet),
+    facePlane_(nullptr)
 {
 // #ifdef DEBUG
 //   oofcerr << "SingleFaceMixIn::ctor: " << this << std::endl;
@@ -1040,6 +1056,11 @@ unsigned int SingleFaceMixIn<BASE>::minPolyEdge(const PixelPlaneFacet *facet)
 //-------
 
 template <class BASE>
+MultiFaceMixin<BASE>::MultiFaceMixin(HomogeneityTet *htet)
+  : BASE(htet)
+{}
+
+template <class BASE>
 unsigned int MultiFaceMixin<BASE>::getPolyEdge(const PixelPlaneFacet*) const {
   return NONE;
 }
@@ -1078,7 +1099,7 @@ double MultiFaceMixin<BASE>::getPolyFrac(unsigned int edge,
 // 	    << std::endl;
 // #endif // DEBUG
   unsigned int nn = facet->polygonSize();
-  std::set<const FacePlane*> nextfaces = facet->getFacePlanes((edge+1)%nn);
+  FacePlaneSet nextfaces = facet->getFacePlanes((edge+1)%nn);
 // #ifdef DEBUG
 //   if(facet->verbose)
 //     oofcerr << "MultiFaceMixin::getPolyFrac: nn=" << nn << " nextface="
@@ -1088,8 +1109,7 @@ double MultiFaceMixin<BASE>::getPolyFrac(unsigned int edge,
     if(nextface->isPartOf(this))
       return 1.0;
 #ifdef DEBUG
-  std::set<const FacePlane*> prevfaces =
-    facet->getFacePlanes((edge+nn-1)%nn);
+  FacePlaneSet prevfaces = facet->getFacePlanes((edge+nn-1)%nn);
   for(const FacePlane *prevface : prevfaces)
     if(prevface->isPartOf(this))
       return 0.0;
@@ -1125,12 +1145,12 @@ unsigned int MultiFaceMixin<BASE>::getOtherFaceIndex(
 
 //-------
 
-#ifdef DEBUG
 template <class BASE>
-SingleVSBmixIn<BASE>::SingleVSBmixIn() {
+SingleVSBmixIn<BASE>::SingleVSBmixIn(HomogeneityTet *htet)
+  : BASE(htet)
+{
   // oofcerr << "SingleVSBmixIn::ctor: " << this << std::endl;
 }
-#endif // DEBUG
 
 template <class BASE>
 double SingleVSBmixIn<BASE>::getLoopFrac(const PixelBdyLoopSegment &seg) const
@@ -1436,6 +1456,11 @@ ISEC_ORDER SingleVSBmixIn<BASE>::reverseOrdering(const MultiVSBbase *other,
 // categorizes the corner *between* two intersections.
 
 template <class BASE>
+MultiVSBmixIn<BASE>::MultiVSBmixIn(HomogeneityTet *htet)
+  : BASE(htet)
+{}
+
+template <class BASE>
 TurnDirection MultiVSBmixIn<BASE>::categorizeCorner(
 						PixelBdyLoopSegment &loopSeg0,
 						PixelBdyLoopSegment &loopSeg1)
@@ -1591,6 +1616,18 @@ static int combinedCrossing(const PixelPlaneIntersectionNR *fi0,
 			    const PixelPlaneIntersectionNR *fi1)
 {
   return fi0->crossingCount() + fi1->crossingCount();
+
+  // // Hack to mimic old (incorrect!) behavior
+  // if(fi0->crossingCount() > 0 && fi1->crossingCount() > 0)
+  //   return 1;
+  // if(fi0->crossingCount() < 0 && fi1->crossingCount() < 0)
+  //   return -1;
+  // if(fi0->crossingCount() == 0)
+  //   return fi1->crossingCount();
+  // if(fi1->crossingCount() == 0)
+  //   return fi0->crossingCount();
+  // return 0;
+
   // if(fi0->crossingType() == fi1->crossingType())
   //   return fi0->crossingType();
   // if(fi0->crossingType() == NONCROSSING)
@@ -1609,6 +1646,7 @@ SimpleIntersection::SimpleIntersection(HomogeneityTet *htet,
 				       double alpha,
 				       unsigned int faceIndex,
 				       CrossingType ct)
+  : SingleVSBmixIn<SingleFaceMixIn<PixelPlaneIntersectionNR>>(htet)
 {
 #ifdef DEBUG
   if(pp0 != htet->getUnorientedPixelPlane(pp0)) {
@@ -1655,9 +1693,10 @@ SimpleIntersection::SimpleIntersection(HomogeneityTet *htet,
 // #endif // DEBUG
 }
 
-SimpleIntersection *SimpleIntersection::clone() const {
+SimpleIntersection *SimpleIntersection::clone(HomogeneityTet *htet) const {
   SimpleIntersection *si = new SimpleIntersection(*this);
   si->setEquivalence(equivalence_);
+  si->setID(htet);
   return si;
 }
 
@@ -1685,7 +1724,7 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
   // Two antiparallel but otherwise equivalent VSB segments that
   // intersect a face should form a new SimpleIntersection there.
   if(isEquivalent(fi)) {
-    merged = clone();
+    merged = clone(htet);
     merged->setCrossingCount(combinedCrossing(this, fi));
   }
   else if(facet->onOppositeEdges(this, fi)) {
@@ -1838,7 +1877,7 @@ bool SimpleIntersection::isMisordered(const MultiCornerIntersection *fi,
 void SimpleIntersection::print(std::ostream &os) const {
   os << "SimpleIntersection(" << printPlanes() << ", " << location3D()
      << ", crossing=" << crossingCount() << ", faceplane=" << *getFacePlane()
-     << ", eq=" << equivalence_ << ")";
+     << ", eq=" << eqPrint(equivalence_) << ")";
 }
 
 PixelPlaneIntersectionNR *newIntersection(HomogeneityTet *htet,
@@ -1867,6 +1906,7 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
 					     double alpha,
 					     unsigned int faceIndex,
 					     CrossingType ct)
+  : SingleVSBmixIn<MultiFaceMixin<PixelPlaneIntersectionNR>>(htet)
 {
   pp0->addToIntersection(this);
   pp1->addToIntersection(this);
@@ -1882,6 +1922,7 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
 MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
 					     const SimpleIntersection *fi0,
 					     const SimpleIntersection *fi1)
+  : SingleVSBmixIn<MultiFaceMixin<PixelPlaneIntersectionNR>>(htet)
 {
   assert(fi0->onSameLoopSegment(fi1));
   assert(fi0->getFacePlane() != fi1->getFacePlane());
@@ -1901,6 +1942,7 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
 MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
 					     const SimpleIntersection *si,
 					     const MultiFaceIntersection *mfi)
+  : SingleVSBmixIn<MultiFaceMixin<PixelPlaneIntersectionNR>>(htet)
 {
   assert(si->onSameLoopSegment(mfi));
 #ifdef DEBUG
@@ -1916,9 +1958,15 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
   includeCollinearPlanes(htet);	// TODO: Is this necessary?
 }
 
-MultiFaceIntersection *MultiFaceIntersection::clone() const {
+MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet)
+  : SingleVSBmixIn<MultiFaceMixin<PixelPlaneIntersectionNR>>(htet)
+{}
+
+MultiFaceIntersection *MultiFaceIntersection::clone(HomogeneityTet *htet) const
+{
   MultiFaceIntersection *mfi = new MultiFaceIntersection(*this);
   mfi->setEquivalence(equivalence_);
+  mfi->setID(htet);
   return mfi;
 }
 
@@ -2073,7 +2121,8 @@ bool MultiFaceIntersection::isMisordered(const MultiCornerIntersection *fi,
 
 void MultiFaceIntersection::print(std::ostream &os) const {
   os << "MultiFaceIntersection(" << printPlanes() << ", " << location3D()
-     << ", crossing=" << crossingCount() << ", eq=" << equivalence_ << ")";
+     << ", crossing=" << crossingCount()
+     << ", eq=" << eqPrint(equivalence_) << ")";
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -2082,6 +2131,7 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
 					   const PixelPlaneFacet *facet,
 					   const SimpleIntersection *fi0,
 					   const SimpleIntersection *fi1)
+  : SingleFaceMixIn<MultiVSBmixIn<PixelPlaneIntersectionNR>>(htet)
 {
 // #ifdef DEBUG
 //   if(fi0->getFacePlane() != fi1->getFacePlane()) {
@@ -2116,6 +2166,7 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
 #endif // DEBUG
 					   const SimpleIntersection *si,
 					   const MultiVSBIntersection *mvi)
+  : SingleFaceMixIn<MultiVSBmixIn<PixelPlaneIntersectionNR>>(htet)
 {
   assert(si->onOnePolySegment(mvi, facet));
 #ifdef DEBUG
@@ -2131,9 +2182,10 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
   includeCollinearPlanes(htet);
 }
 
-MultiVSBIntersection *MultiVSBIntersection::clone() const {
+MultiVSBIntersection *MultiVSBIntersection::clone(HomogeneityTet *htet) const {
   MultiVSBIntersection *mvi = new MultiVSBIntersection(*this);
   mvi->setEquivalence(equivalence_);
+  mvi->setID(htet);
   return mvi;
 }
 
@@ -2177,7 +2229,7 @@ PixelPlaneIntersectionNR *MultiVSBIntersection::mergeWith(
   if(getFacePlane() == fi->getFacePlane()) {
     // If they share the same face, too, then they're really the same
     // corner, and the mergee is the same as the two mergers.
-    merged = clone();
+    merged = clone(htet);
   }
   else {
     merged = new MultiCornerIntersection(htet, this, fi);
@@ -2257,7 +2309,8 @@ bool MultiVSBIntersection::isMisordered(const MultiCornerIntersection *fi,
 
 void MultiVSBIntersection::print(std::ostream &os) const {
   os << "MultiVSBIntersection(" << printPlanes() << ", " << location3D()
-     << ", crossing=" << crossingCount() << ", eq=" << equivalence_ << ")";
+     << ", crossing=" << crossingCount()
+     << ", eq=" << eqPrint(equivalence_) << ")";
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -2266,6 +2319,7 @@ MultiCornerIntersection::MultiCornerIntersection(
 					 HomogeneityTet *htet,
 					 const PixelPlaneIntersectionNR *fi0,
 					 const PixelPlaneIntersectionNR *fi1)
+  : MultiFaceMixin<MultiVSBmixIn<PixelPlaneIntersectionNR>>(htet)
 {
   setCrossingCount(combinedCrossing(fi0, fi1));
 #ifdef DEBUG
@@ -2284,9 +2338,12 @@ MultiCornerIntersection::MultiCornerIntersection(
   includeCollinearPlanes(htet);
 }
 
-MultiCornerIntersection *MultiCornerIntersection::clone() const {
+MultiCornerIntersection *MultiCornerIntersection::clone(HomogeneityTet *htet)
+  const
+{
   MultiCornerIntersection *mci = new MultiCornerIntersection(*this);
   mci->setEquivalence(equivalence_);
+  mci->setID(htet);
   return mci;
 }
 
@@ -2380,14 +2437,17 @@ bool MultiCornerIntersection::isMisordered(const MultiCornerIntersection*,
 
 void MultiCornerIntersection::print(std::ostream &os) const {
   os << "MultiCornerIntersection(" << printPlanes() << ", " << location3D()
-     << ", crossing=" << crossingCount() << ", eq=" << equivalence_ << ")";
+     << ", crossing=" << crossingCount()
+     << ", eq=" << eqPrint(equivalence_) << ")";
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 RedundantIntersection::RedundantIntersection(PixelPlaneIntersection *ppi,
 					     PixelPlaneFacet *facet)
-  : referent_(ppi->referent()), facet_(facet)
+  : PixelPlaneIntersection(facet->htet),
+    referent_(ppi->referent()),
+    facet_(facet)
 {
   facet_->newRedundantIntersection(this);
 }
@@ -2396,8 +2456,11 @@ RedundantIntersection::~RedundantIntersection() {
   facet_->removeRedundantIntersection(this);
 }
 
-RedundantIntersection *RedundantIntersection::clone() const {
+RedundantIntersection *RedundantIntersection::clone(HomogeneityTet *htet) const
+{
   RedundantIntersection *ri = new RedundantIntersection(referent_, facet_);
+  // The RedundantIntersection constructor sets the id -- no need to
+  // call setID here.
   ri->setEquivalence(equivalence_);
   return ri;
 }
@@ -2416,6 +2479,7 @@ TetEdgeIntersection::TetEdgeIntersection(HomogeneityTet *htet,
 					 const FacePlane *f0,
 					 const FacePlane *f1,
 					 const HPixelPlane *pp)
+  : TetIntersection(htet)
 {
   f0->addToIntersection(this);
   f1->addToIntersection(this);
@@ -2428,15 +2492,17 @@ TetEdgeIntersection::TetEdgeIntersection(HomogeneityTet *htet,
   includeCollinearPlanes(htet);
 }
 
-TetEdgeIntersection *TetEdgeIntersection::clone() const {
+TetEdgeIntersection *TetEdgeIntersection::clone(HomogeneityTet *htet) const {
   TetEdgeIntersection *tei = new TetEdgeIntersection(*this);
   tei->setEquivalence(equivalence_);
+  tei->setID(htet);
   return tei;
 }
 
 void TetEdgeIntersection::print(std::ostream &os) const {
   os << "TetEdgeIntersection(" << printPlanes() << ", " << location3D()
-     << ", crossing=" << crossingCount() << ", eq=" << equivalence_ << ")";
+     << ", crossing=" << crossingCount()
+     << ", eq=" << eqPrint(equivalence_) << ")";
 }
 
 std::string TetEdgeIntersection::shortName() const {
@@ -2446,6 +2512,7 @@ std::string TetEdgeIntersection::shortName() const {
 TetNodeIntersection::TetNodeIntersection(HomogeneityTet *htet,
 					 const HPixelPlane *pp,
 					 unsigned int node)
+  : TetIntersection(htet)
 {
   // TODO: One of the faces will either not create a polygon edge or
   // will be redundant with another plane.  If it's redundant, that's
@@ -2477,15 +2544,17 @@ TetNodeIntersection::TetNodeIntersection(HomogeneityTet *htet,
   includeCollinearPlanes(htet);
 }
 
-TetNodeIntersection *TetNodeIntersection::clone() const {
+TetNodeIntersection *TetNodeIntersection::clone(HomogeneityTet *htet) const {
   TetNodeIntersection *tni = new TetNodeIntersection(*this);
   tni->setEquivalence(equivalence_);
+  tni->setID(htet);
   return tni;
 }
 
 void TetNodeIntersection::print(std::ostream &os) const {
   os << "TetNodeIntersection(" << printPlanes() << ", " << location3D()
-     << ", crossing=" << crossingCount() << ", eq=" << equivalence_ << ")";
+     << ", crossing=" << crossingCount()
+     << ", eq=" << eqPrint(equivalence_) << ")";
 }
 
 std::string TetNodeIntersection::shortName() const {
@@ -2499,6 +2568,7 @@ TriplePixelPlaneIntersection::TriplePixelPlaneIntersection(
 						   const HPixelPlane *pp0,
 						   const HPixelPlane *pp1,
 						   const HPixelPlane *pp2)
+  : MultiVSBmixIn<PixelPlaneIntersectionNR>(htet)
 {
   // assert(pp0 == htet->getUnorientedPixelPlane(pp0));
   // assert(pp1 == htet->getUnorientedPixelPlane(pp1));
@@ -2514,16 +2584,20 @@ TriplePixelPlaneIntersection::TriplePixelPlaneIntersection(
   includeCollinearPlanes(htet);
 }
 
-TriplePixelPlaneIntersection *TriplePixelPlaneIntersection::clone() const {
+TriplePixelPlaneIntersection *TriplePixelPlaneIntersection::clone(
+						  HomogeneityTet *htet)
+  const
+{
   TriplePixelPlaneIntersection *tpi = new TriplePixelPlaneIntersection(*this);
   tpi->setEquivalence(equivalence_);
+  tpi->setID(htet);
   return tpi;
 }
 
 void TriplePixelPlaneIntersection::print(std::ostream &os) const {
   os << "TriplePixelPlaneIntersection(" << printPlanes() << ", "
      << location3D() << ", crossing=" << crossingCount()
-     << ", eq=" << equivalence_ << ")";
+     << ", eq=" << eqPrint(equivalence_) << ")";
 }
 
 std::string TriplePixelPlaneIntersection::shortName() const {
@@ -2564,13 +2638,15 @@ double TriplePixelPlaneIntersection::getPolyFrac(unsigned int,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-IsecEquivalenceClass::IsecEquivalenceClass(PlaneIntersection *pi
+IsecEquivalenceClass::IsecEquivalenceClass(PlaneIntersection *pi,
+					   unsigned int id
 #ifdef DEBUG
 					   , bool verbose
 #endif // DEBUG
 					   )
+  : id(id)
 #ifdef DEBUG
-  : verbose(verbose)
+  , verbose(verbose)
 #endif // DEBUG
 {
 // #ifdef DEBUG
@@ -2593,13 +2669,18 @@ IsecEquivalenceClass::~IsecEquivalenceClass() {
 }
 
 void IsecEquivalenceClass::addIntersection(PlaneIntersection *pi) {
-// #ifdef DEBUG
-//   if(verbose)
-//     oofcerr << "IsecEquivalenceClass::addIntersection: this=" << this
-// 	    << " intersection=" << pi << " " << pi->shortName() << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verbose)
+    oofcerr << "IsecEquivalenceClass::addIntersection: this=" << *this
+	    << " intersection=" << pi << " " << pi->shortName() << std::endl;
+#endif // DEBUG
   intersections.insert(pi);
   pi->addPlanesToEquivalence(this);
+#ifdef DEBUG
+  if(verbose)
+    oofcerr << "IsecEquivalenceClass: addIntersection: after adding, this="
+	    << *this << std::endl;
+#endif // DEBUG
 }
 
 void IsecEquivalenceClass::removeIntersection(PlaneIntersection *pi) {

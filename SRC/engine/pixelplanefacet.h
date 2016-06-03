@@ -125,7 +125,7 @@ protected:
 public:
   FacetEdge(PixelPlaneIntersection *s, PixelPlaneIntersection *e);
   virtual ~FacetEdge();
-  FacetEdge(const FacetEdge&);
+  FacetEdge(const FacetEdge&) = delete;
   FacetEdge(FacetEdge&&);
   double length2() const; 	// length squared
 
@@ -225,10 +225,9 @@ public:
 private:
   // The resolveXXXCoincidence methods return true if they were
   // successful.  If they
-  bool resolveTwoFoldCoincidence(const std::set<PixelPlaneIntersectionNR*>&);
-  bool resolveThreeFoldCoincidence(const std::set<PixelPlaneIntersectionNR*>&);
-  bool resolveMultipleCoincidence(const std::set<PixelPlaneIntersectionNR*>&,
-				  unsigned int);
+  bool resolveTwoFoldCoincidence(const PPIntersectionNRSet&);
+  bool resolveThreeFoldCoincidence(const PPIntersectionNRSet&);
+  bool resolveMultipleCoincidence(const PPIntersectionNRSet&, unsigned int);
   void replaceIntersection(PixelPlaneIntersection*, PixelPlaneIntersection*)
     const;
 
@@ -264,7 +263,7 @@ public:
   BarycentricCoord polygonCornerBary(unsigned int) const;
   Coord2D polygonCorner(unsigned int i) const;
   unsigned int getPolyEdge(const Plane *fp) const;
-  std::set<const FacePlane*> getFacePlanes(unsigned int) const;
+  FacePlaneSet getFacePlanes(unsigned int) const;
   const FacePixelPlane *getBaseFacePlane() const;
 
   bool onOppositeEdges(const SimpleIntersection*, const SimpleIntersection*)

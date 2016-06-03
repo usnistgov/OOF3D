@@ -35,7 +35,7 @@ class Plane;
 class PixelPlaneIntersection;
 
 
-typedef std::map<const Plane*, unsigned int> FaceEdgeMap;
+typedef std::map<const Plane*, unsigned int, DerefCompare<Plane>> FaceEdgeMap;
 typedef std::vector<const PixelPlaneIntersection*> PolyEdgeIntersections;
 typedef std::map<const HPixelPlane*, PixelPlaneFacet*,
 		 DerefCompare<HPixelPlane>> FacetMap2D;

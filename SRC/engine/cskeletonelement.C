@@ -814,16 +814,17 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
   DoubleVec *result = new DoubleVec(ncat, 0.0);
   // Get all the category boundaries.
   const std::vector<VoxelSetBoundary*> &bdys = ms->getCategoryBdys();
-#ifdef DEBUG
-  ofstream *dumpfile = nullptr;
-  if(verbose) {
-    // openDebugFile("facetdump");
-    std::string filename = "fullelement" + to_string(index) + ".lines";
-    oofcerr << "CSkeletonElement::categoryVolumes: writing " << filename
-	    << std::endl;
-    dumpfile = new ofstream(filename);
-  }
-#endif	// DEBUG
+// #ifdef DEBUG
+//   ofstream *dumpfile = nullptr;
+//   if(verbose) {
+//     // openDebugFile("facetdump");
+//     // std::string filename = "fullelement" + to_string(index) + ".lines";
+//     std::string filename = "fullelement.lines";
+//     oofcerr << "CSkeletonElement::categoryVolumes: writing " << filename
+// 	    << std::endl;
+//     dumpfile = new ofstream(filename);
+//   }
+// #endif	// DEBUG
 
   double totalVol = 0.0;
   try {
@@ -860,9 +861,9 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
 		  << "calling intersectionVolume for cat " << cat << std::endl;
 #endif // DEBUG
 	double v = homtet.intersectionVolume(pixelplanefacets, facefacets
-#ifdef DEBUG
-					     , cat, *dumpfile
-#endif // DEBUG
+// #ifdef DEBUG
+// 					     , cat, *dumpfile
+// #endif // DEBUG
 					     );
 	(*result)[cat] = v;
 	totalVol += v;
@@ -888,20 +889,20 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
   catch (...) {
     oofcerr << "CSkeletonElement::categoryVolumes: failed for "
 	    << *this << std::endl;
-#ifdef DEBUG
-    if(verbose) {
-      dumpfile->close();
-      // closeDebugFile();
-    }
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verbose) {
+//       dumpfile->close();
+//       // closeDebugFile();
+//     }
+// #endif // DEBUG
     throw;
   }
-#ifdef DEBUG
-  if(verbose) {
-    // closeDebugFile();
-    dumpfile->close();
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     // closeDebugFile();
+//     dumpfile->close();
+//   }
+// #endif // DEBUG
   return result;
 } // end CSkeletonElement::categoryVolumes
 

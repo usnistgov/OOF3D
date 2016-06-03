@@ -96,10 +96,13 @@ class SingleVSBbase;
 class PlaneIntersection {
 protected:
   IsecEquivalenceClass *equivalence_;
+  unsigned int id;
 public:
-  PlaneIntersection();
+  PlaneIntersection(HomogeneityTet*);
   virtual ~PlaneIntersection();
-  virtual PlaneIntersection *clone() const = 0;
+  // clone takes a HomogeneityTet arg so that the clone can have a unique id.
+  virtual PlaneIntersection *clone(HomogeneityTet*) const = 0;
+  void setID(HomogeneityTet*);
 
   virtual Coord3D location3D() const = 0;
   virtual Coord2D location2D(const PixelPlane *pp) const {
@@ -134,6 +137,13 @@ public:
   virtual void print(std::ostream&) const = 0;
   virtual std::string shortName() const = 0;
 
+  // operator< is provided so that we can use DerefCompare with
+  // std::sets of PlaneIntersection*s and get repeatable ordering (for
+  // debugging, but maybe also always).
+  bool operator<(const PlaneIntersection &that) const {
+    return id < that.id;
+  }
+
 #ifdef DEBUG
   mutable bool verbose;
   bool verify();
@@ -154,7 +164,7 @@ private:
   Coord3D loc_;
 public:
   TripleFaceIntersection(unsigned int node, HomogeneityTet*);
-  virtual TripleFaceIntersection *clone() const;
+  virtual TripleFaceIntersection *clone(HomogeneityTet*) const;
   const FacePlaneSet &faces() const { return faces_; }
   virtual Coord3D location3D() const { return loc_; }
   unsigned int getNode() const { return node_; }
@@ -215,8 +225,9 @@ private:
   // just one.
   FacetEdge *edge_;
 public:
-  PixelPlaneIntersection()
-    : edge_(nullptr)
+  PixelPlaneIntersection(HomogeneityTet *htet)
+    : PlaneIntersection(htet),
+      edge_(nullptr)
   {}
   
   // Despite the fact that clone() has already been declared in the
@@ -224,7 +235,7 @@ public:
   // PixelPlaneIntersection, it's necessary to declare it here so that
   // cloned PixelPlaneIntersections aren't returned as
   // PlaneIntersections.
-  virtual PixelPlaneIntersection *clone() const = 0;
+  virtual PixelPlaneIntersection *clone(HomogeneityTet*) const = 0;
   
   virtual PixelPlaneIntersectionNR *referent() = 0;
   virtual const PixelPlaneIntersectionNR *referent() const = 0;
@@ -310,16 +321,19 @@ protected:
   
 public:
   // PixelPlaneIntersectionNR and the mix-in classes below must only
-  // have constructors that take no arguments.  This is because we've
-  // been lazy and haven't bothered to implement the mix-in classes in
-  // a way that makes it possible to pass constructor arguments to
-  // them.  Parameters that would be set with constructor arguments
-  // are instead set with setXXXX methods called by the derived class
-  // constructors.  This is ok because we're not expecting these
-  // classes to be extended or used elsewhere.  (We're using mix-in
-  // classes instead of regular multiple inheritance because some of
-  // the mix-in methods need access to data in the
-  // PixelPlaneIntersectionNR base class.)
+  // have constructors that take no arguments (other than
+  // HomogeneityTet).  This is because we've been lazy and haven't
+  // bothered to implement the mix-in classes in a way that makes it
+  // possible to pass constructor arguments to them.  Parameters that
+  // would be set with constructor arguments are instead set with
+  // setXXXX methods called by the derived class constructors.  This
+  // is ok because we're not expecting these classes to be extended or
+  // used elsewhere.  (We're using mix-in classes instead of regular
+  // multiple inheritance because some of the mix-in methods need
+  // access to data in the PixelPlaneIntersectionNR base class.)
+  PixelPlaneIntersectionNR(HomogeneityTet *htet)
+    : PixelPlaneIntersection(htet)
+  {}
   
   // RedundantIntersections refer to the PixelPlaneIntersection with
   // which they're redundant through these methods.  Non-redundant
@@ -358,8 +372,7 @@ public:
   // This version excludes a face, as in onSameFacePlane, above.
   const FacePlane *sharedFace(const PixelPlaneIntersectionNR*,
 			      const FacePixelPlane*) const;
-  const std::set<const FacePlane*> sharedFaces(const PixelPlaneIntersectionNR*)
-    const;
+  FacePlaneSet sharedFaces(const PixelPlaneIntersectionNR*) const;
 
   // bool samePixelPlanes(const PixelPlaneIntersectionNR*) const;
 
@@ -464,7 +477,6 @@ public:
   virtual bool samePixelPlanes(const RedundantIntersection*) const;
 
   std::string shortName() const;
-
 }; // end class PixelPlaneIntersectionNR
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -507,7 +519,7 @@ protected:
   // info, we have to store it again, here:
   const FacePlane *facePlane_;
 public:
-  SingleFaceMixIn();
+  SingleFaceMixIn(HomogeneityTet*);
   virtual const FacePlane *getFacePlane() const { return facePlane_; }
 
   // void setPolyFrac(double a) { polyFrac = a; }
@@ -525,6 +537,7 @@ template <class BASE>
 class MultiFaceMixin : public BASE
 {
 public:
+  MultiFaceMixin(HomogeneityTet*);
   bool inside(const Coord3D &pt) const;
   virtual double getPolyFrac(unsigned int, const PixelPlaneFacet*) const;
   virtual unsigned int getPolyEdge(const PixelPlaneFacet*) const;
@@ -565,9 +578,7 @@ protected:
   PixelBdyLoopSegment vsbSegment;
   double loopFrac;
 public:
-#ifdef DEBUG
-  SingleVSBmixIn();
-#endif // DEBUG
+  SingleVSBmixIn(HomogeneityTet*);
   void setLoopSeg(const PixelBdyLoopSegment &seg) { vsbSegment = seg; }
   void setLoopFrac(double f) { loopFrac = f; }
   virtual const PixelBdyLoopSegment &getLoopSeg() const { return vsbSegment; }
@@ -632,6 +643,7 @@ template <class BASE> class MultiVSBmixIn : public BASE, public MultiVSBbase {
 protected:
   PBLSegmentMap vsbSegments;
 public:
+  MultiVSBmixIn(HomogeneityTet*);
   virtual TurnDirection categorizeCorner(PixelBdyLoopSegment&,
 					 PixelBdyLoopSegment&) const;
   virtual const PBLSegmentMap &getLoopSegs() const { return vsbSegments; }
@@ -671,7 +683,7 @@ public:
 		     const HPixelPlane*, const HPixelPlane*,
 		     const PixelBdyLoopSegment&, double,
 		     unsigned int, CrossingType);
-  virtual SimpleIntersection *clone() const;
+  virtual SimpleIntersection *clone(HomogeneityTet*) const;
   virtual PixelPlaneIntersectionNR *mergeWith(HomogeneityTet*,
 				      PixelPlaneIntersection*,
 				      const PixelPlaneFacet*);
@@ -717,8 +729,8 @@ public:
 			const SimpleIntersection*);
   MultiFaceIntersection(HomogeneityTet*, const SimpleIntersection*,
 			const MultiFaceIntersection*);
-  MultiFaceIntersection() {}
-  virtual MultiFaceIntersection *clone() const;
+  MultiFaceIntersection(HomogeneityTet*);
+  virtual MultiFaceIntersection *clone(HomogeneityTet*) const;
   // Are both polygon segments interior to the voxel?
   Interiority interiority(const PixelPlaneFacet*) const;
   const FacePlane *firstFacePlane(const PixelPlaneFacet*) const;
@@ -765,7 +777,7 @@ public:
 		       const SimpleIntersection*, const SimpleIntersection*);
   MultiVSBIntersection(HomogeneityTet*, const PixelPlaneFacet*,
 		       const SimpleIntersection*, const MultiVSBIntersection*);
-  virtual MultiVSBIntersection *clone() const;
+  virtual MultiVSBIntersection *clone(HomogeneityTet*) const;
   virtual PixelPlaneIntersectionNR *mergeWith(HomogeneityTet*,
 				      PixelPlaneIntersection*,
 				      const PixelPlaneFacet*);
@@ -805,7 +817,7 @@ public:
   MultiCornerIntersection(HomogeneityTet*,
 			  const PixelPlaneIntersectionNR*,
 			  const PixelPlaneIntersectionNR*);
-  virtual MultiCornerIntersection *clone() const;
+  virtual MultiCornerIntersection *clone(HomogeneityTet*) const;
   virtual bool isMisordered(const PixelPlaneIntersection*, 
 			    const PixelPlaneFacet*) const;
   virtual bool isMisordered(const SimpleIntersection*, 
@@ -860,7 +872,9 @@ PixelPlaneIntersectionNR *newIntersection(HomogeneityTet *htet,
 
 class TetIntersection : public MultiFaceIntersection {
 public:
-  TetIntersection() {}
+  TetIntersection(HomogeneityTet *htet)
+    : MultiFaceIntersection(htet)
+  {}
 };
 
 // TetEdgeIntersection is the intersection of a tet edge, defined by two
@@ -872,7 +886,7 @@ class TetEdgeIntersection : public TetIntersection {
 public:
   TetEdgeIntersection(HomogeneityTet*, const FacePlane*, const FacePlane*,
 		      const HPixelPlane*);
-  virtual TetEdgeIntersection *clone() const;
+  virtual TetEdgeIntersection *clone(HomogeneityTet*) const;
   virtual void print(std::ostream&) const;
   virtual std::string shortName() const;
 };
@@ -887,7 +901,7 @@ class TetNodeIntersection : public TetIntersection {
 public:
   TetNodeIntersection(HomogeneityTet*, const HPixelPlane*,
 		      unsigned int node);
-  virtual TetNodeIntersection *clone() const;
+  virtual TetNodeIntersection *clone(HomogeneityTet*) const;
   virtual void print(std::ostream&) const;
   virtual std::string shortName() const;
 };
@@ -904,7 +918,7 @@ class TriplePixelPlaneIntersection
 public:
   TriplePixelPlaneIntersection(HomogeneityTet *htet, const HPixelPlane*,
 			       const HPixelPlane*, const HPixelPlane*);
-  virtual TriplePixelPlaneIntersection *clone() const;
+  virtual TriplePixelPlaneIntersection *clone(HomogeneityTet*) const;
   virtual int crossingCount() const { return 0; }
   virtual unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const;
   virtual void locateOnPolygonEdge(std::vector<PolyEdgeIntersections>&,
@@ -972,7 +986,7 @@ private:
 public:
   RedundantIntersection(PixelPlaneIntersection *ppi, PixelPlaneFacet*);
   ~RedundantIntersection();
-  virtual RedundantIntersection *clone() const;
+  virtual RedundantIntersection *clone(HomogeneityTet*) const;
   virtual const PixelPlaneIntersectionNR *referent() const {
     return referent_; 
   }
@@ -1089,17 +1103,21 @@ private:
   PixelPlaneSet pixelPlanes;
   FacePlaneSet facePlanes;
   FacePixelPlaneSet pixelFaces;
-  std::set<PlaneIntersection*> intersections;
+  std::set<PlaneIntersection*, DerefCompare<PlaneIntersection>> intersections;
+public:
+  const unsigned int id;
 #ifdef DEBUG
   bool verbose;
 #endif	// DEBUG
-public:
-  IsecEquivalenceClass(PlaneIntersection*
+
+  IsecEquivalenceClass(PlaneIntersection*, unsigned int
 #ifdef DEBUG
 		       , bool
 #endif // DEBUG
 		       );
   ~IsecEquivalenceClass();
+  IsecEquivalenceClass(const IsecEquivalenceClass&) = delete;
+  IsecEquivalenceClass(IsecEquivalenceClass&&) = delete;
   void addIntersection(PlaneIntersection*);
   void removeIntersection(PlaneIntersection*);
   bool contains(PlaneIntersection*) const; // is arg already in class?

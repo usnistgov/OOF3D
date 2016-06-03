@@ -53,9 +53,11 @@ enum CrossingType {NONCROSSING, ENTRY, EXIT};
 // is therefore not 100% repeatable and is hard to debug.  After
 // debugging, see if std::less is faster.
 
+typedef std::set<const HPlane*, DerefCompare<HPlane>> HPlaneSet;
 typedef std::set<const FacePlane*, DerefCompare<FacePlane>> FacePlaneSet;
 typedef std::set<const HPixelPlane*, DerefCompare<HPixelPlane>> PixelPlaneSet;
 typedef std::set<const FacePixelPlane*, DerefCompare<FacePixelPlane>> FacePixelPlaneSet;
 
+typedef std::set<PixelPlaneIntersectionNR*, DerefCompare<PixelPlaneIntersectionNR>> PPIntersectionNRSet;
 
 #endif // PLANEINTERSECTION_I_H

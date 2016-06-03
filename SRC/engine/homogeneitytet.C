@@ -132,6 +132,8 @@ HomogeneityTet::HomogeneityTet(const CSkeletonElement *element,
     testVoxels(4),
     testVoxelsFound(4, false),
     faceFacetEdgeCount(0),
+    intersectionID_(0),
+    equivalenceID_(0),
     coincidentPixelPlanes(4, nullptr),
     microstructure(ms)
 #ifdef DEBUG
@@ -418,19 +420,18 @@ ICoord3D HomogeneityTet::testVoxel(unsigned int f) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-std::set<const HPlane*> HomogeneityTet::getCollinearPlanes(const HPlane *p0,
-							   const HPlane *p1)
+HPlaneSet HomogeneityTet::getCollinearPlanes(const HPlane *p0, const HPlane *p1)
   const
 {
   auto range = collinearPlanes.equal_range(std::make_pair(p0, p1));
-  std::set<const HPlane*> planes;
+  HPlaneSet planes;
   for(auto iter=range.first; iter!=range.second; ++iter)
     planes.insert(iter->second);
   return planes;
 }
 
-std::set<const FacePlane*> HomogeneityTet::getCollinearFaces(const HPlane *p0,
-							     const HPlane *p1)
+FacePlaneSet HomogeneityTet::getCollinearFaces(const HPlane *p0,
+					       const HPlane *p1)
   const
 {
 // #ifdef DEBUG
@@ -441,7 +442,7 @@ std::set<const FacePlane*> HomogeneityTet::getCollinearFaces(const HPlane *p0,
 //   OOFcerrIndent indent(2);
 // #endif // DEBUG
   auto range = collinearPlanes.equal_range(std::make_pair(p0, p1));
-  std::set<const FacePlane*> faces;
+  FacePlaneSet faces;
   for(auto iter=range.first; iter!=range.second; ++iter) {
 // #ifdef DEBUG
 //     if(verboseplane)
@@ -482,9 +483,10 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
   if(equivClass0 == nullptr) {
     if(equivClass1 == nullptr) {
       // Neither point is in an equivalence class.  Construct one.
-      IsecEquivalenceClass *eqclass = new IsecEquivalenceClass(merged
+      IsecEquivalenceClass *eqclass = new IsecEquivalenceClass(
+					       merged, nextEquivalenceID()
 #ifdef DEBUG
-							       , verbose
+					       , verbose
 #endif // DEBUG
 							       );
 #ifdef DEBUG
@@ -559,9 +561,10 @@ void HomogeneityTet::checkEquiv(PlaneIntersection *point) {
   if(point->equivalence() == nullptr) {
     // The point doesn't belong to any existing equivalence class.
     // Create one, so that other points can be made equivalent to it.
-    IsecEquivalenceClass *eqclass = new IsecEquivalenceClass(point
+    IsecEquivalenceClass *eqclass = new IsecEquivalenceClass(
+					     point, nextEquivalenceID()
 #ifdef DEBUG
-							     , verbose
+					     , verbose
 #endif // DEBUG
 							     );
     equivalences.insert(eqclass);
@@ -1431,11 +1434,11 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	// TetIntersection *t0 = tetPts[i]->clone();
 	// TetIntersection *t1 = tetPts[i+1]->clone();
 	// facet->addEdge(new PolygonEdge(t0, t1));
-	facet->addEdge(new PolygonEdge(tetPts[i]->clone(),
-	 			       tetPts[i+1]->clone()));
+	facet->addEdge(new PolygonEdge(tetPts[i]->clone(this),
+	 			       tetPts[i+1]->clone(this)));
       }
-      facet->addEdge(new PolygonEdge(tetPts.back()->clone(),
-				     tetPts[0]->clone()));
+      facet->addEdge(new PolygonEdge(tetPts.back()->clone(this),
+				     tetPts[0]->clone(this)));
     }
   } // end if facetarea <= 0
 
@@ -2041,9 +2044,9 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	PixelPlaneIntersectionNR *merged =
 	  new MultiCornerIntersection(this, ppi0->referent(), ppi1->referent());
 	PlaneIntersection *newpt0 =
-	  pt0.feInt.edge()->replacePoint(merged, pt0.feInt.start());
+	  pt0.feInt.edge()->replacePoint(merged, this, pt0.feInt.start());
 	PlaneIntersection *newpt1 =
-	  pt1.feInt.edge()->replacePoint(merged, pt1.feInt.start());
+	  pt1.feInt.edge()->replacePoint(merged, this, pt1.feInt.start());
 	FaceEdgeIntersection fei0(newpt0, pt0.feInt.edge(), pt0.feInt.start());
 	FaceEdgeIntersection fei1(newpt1, pt1.feInt.edge(), pt1.feInt.start());
 	fei0.findFaceEdge(pt0.face, this);
@@ -2556,10 +2559,10 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 
 double HomogeneityTet::intersectionVolume(const FacetMap2D &planeFacets,
 					  const FaceFacets &faceFacets
-#ifdef DEBUG
-					  , unsigned int cat,
-					  std::ostream &output
-#endif // DEBUG
+// #ifdef DEBUG
+// 					  , unsigned int cat,
+// 					  std::ostream &output
+// #endif // DEBUG
 					  )
 {
 // #ifdef DEBUG
@@ -2578,18 +2581,18 @@ double HomogeneityTet::intersectionVolume(const FacetMap2D &planeFacets,
 	double dv = (1./3.)*(facet->area() * pixplane->normalSign() *
 		     (pixplane->normalOffset() -
 		      tetCenter[pixplane->direction()]));
-#ifdef DEBUG
-	if(verbose) {
-	  output << "HomogeneityTet::intersectionVolume: pixel plane facet:"
-		 << " category=" << cat
-		 << " pixel plane=" << *facet->pixplane
-		 << " area=" << facet->area()
-		 << " dv=" << dv << std::endl;
-	  output << facet->shortDescription()
-		 << std::endl;
-	  // writeDebugFile(to_string(*facet) + "\n");
-	}
-#endif	// DEBUG
+// #ifdef DEBUG
+// 	if(verbose) {
+// 	  output << "HomogeneityTet::intersectionVolume: pixel plane facet:"
+// 		 << " category=" << cat
+// 		 << " pixel plane=" << *facet->pixplane
+// 		 << " area=" << facet->area()
+// 		 << " dv=" << dv << std::endl;
+// 	  output << facet->shortDescription()
+// 		 << std::endl;
+// 	  // writeDebugFile(to_string(*facet) + "\n");
+// 	}
+// #endif	// DEBUG
 	vol += dv;
       }
     }
@@ -2599,20 +2602,20 @@ double HomogeneityTet::intersectionVolume(const FacetMap2D &planeFacets,
     if(coincidentPixelPlanes[f] == nullptr && !faceFacets[f].empty()) {
       Coord3D area = faceFacets[f].area(this);
       double dv = dot(area, faceCenters[f]-tetCenter)/3.0;
-#ifdef DEBUG
-      if(verbose) {
-	Coord3D facenorm = faceAreaVectors[f]/sqrt(norm2(faceAreaVectors[f]));
-	output << "HomogeneityTet::intersectionVolume: face facet:"
-	       << "category=" << cat
-	       << " face=" << f
-	       << " area=" << area
-	       << " " << dot(area, facenorm)
-	       << " dv=" << dv << std::endl;
-	output << faceFacets[f].shortDescription()
-	       << std::endl;
-	// writeDebugFile(to_string(faceFacets[f]) + "\n");
-      }
-#endif	// DEBUG
+// #ifdef DEBUG
+//       if(verbose) {
+// 	Coord3D facenorm = faceAreaVectors[f]/sqrt(norm2(faceAreaVectors[f]));
+// 	output << "HomogeneityTet::intersectionVolume: face facet:"
+// 	       << "category=" << cat
+// 	       << " face=" << f
+// 	       << " area=" << area
+// 	       << " " << dot(area, facenorm)
+// 	       << " dv=" << dv << std::endl;
+// 	output << faceFacets[f].shortDescription()
+// 	       << std::endl;
+// 	// writeDebugFile(to_string(faceFacets[f]) + "\n");
+//       }
+// #endif	// DEBUG
       vol += dv;
     }
   }
@@ -2760,8 +2763,8 @@ FaceFacetEdge::FaceFacetEdge(HomogeneityTet *htet,
 			     const PlaneIntersection *s,
 			     const PlaneIntersection *e,
 			     const HPixelPlane *pp)
-  : start_(s->clone()),
-    stop_(e->clone()),
+  : start_(s->clone(htet)),
+    stop_(e->clone(htet)),
     pixplane_(pp),
     id(htet->nextFaceFacetEdgeID())
 {
@@ -2773,8 +2776,8 @@ FaceFacetEdge::FaceFacetEdge(HomogeneityTet *htet,
 FaceFacetEdge::FaceFacetEdge(HomogeneityTet *htet,
 			     const PlaneIntersection *s,
 			     const PlaneIntersection *e)
-  : start_(s->clone()),
-    stop_(e->clone()),
+  : start_(s->clone(htet)),
+    stop_(e->clone(htet)),
     pixplane_(nullptr),
     id(htet->nextFaceFacetEdgeID())
 {
@@ -2819,9 +2822,10 @@ Coord3D FaceFacetEdge::endPos3D() const {
 }
 
 PlaneIntersection *FaceFacetEdge::replacePoint(PlaneIntersection *pt,
+					       HomogeneityTet *htet,
 					       bool start)
 {
-  PlaneIntersection *bozo = pt->clone();
+  PlaneIntersection *bozo = pt->clone(htet);
   if(start) {
 // #ifdef DEBUG
 //     oofcerr << "FacetEdge::replacePoint: replacing " << *start_ << " with "
@@ -2890,8 +2894,8 @@ void FaceFacet::addFaceEdges(const FaceEdgeIntersection *fei0,
   if(startEdge == endEdge && fei0->edgePosition() < fei1->edgePosition()) {
     // The intersection points are on the same tet edge and in the
     // right order to be joined by a single segment.
-    addEdge(new FaceFacetEdge(htet, fei0->corner()->clone(),
-			      fei1->corner()->clone()));
+    addEdge(new FaceFacetEdge(htet, fei0->corner()->clone(htet),
+			      fei1->corner()->clone(htet)));
   }
   else {
     // The intersection points are on different tet edges, or
@@ -2905,10 +2909,10 @@ void FaceFacet::addFaceEdges(const FaceEdgeIntersection *fei0,
       unsigned int e1 = CSkeletonElement::faceEdges[face][endEdge];
       // node is the index of the node at the junction of e0 and e1
       unsigned int node = CSkeletonElement::edgeEdgeNode[e0][e1];
-      addEdge(new FaceFacetEdge(htet, fei0->corner()->clone(),
+      addEdge(new FaceFacetEdge(htet, fei0->corner()->clone(htet),
 				new TripleFaceIntersection(node, htet)));
       addEdge(new FaceFacetEdge(htet, new TripleFaceIntersection(node, htet),
-				fei1->corner()->clone()));
+				fei1->corner()->clone(htet)));
     }
     else if(nwrap == 2) {	// There are two corners to go around.
       unsigned int e0 = CSkeletonElement::faceEdges[face][startEdge];
@@ -2916,12 +2920,12 @@ void FaceFacet::addFaceEdges(const FaceEdgeIntersection *fei0,
       unsigned int e2 = CSkeletonElement::faceEdges[face][endEdge];
       unsigned int node01 = CSkeletonElement::edgeEdgeNode[e0][e1];
       unsigned int node12 = CSkeletonElement::edgeEdgeNode[e1][e2];
-      addEdge(new FaceFacetEdge(htet, fei0->corner()->clone(),
+      addEdge(new FaceFacetEdge(htet, fei0->corner()->clone(htet),
 				new TripleFaceIntersection(node01, htet)));
       addEdge(new FaceFacetEdge(htet, new TripleFaceIntersection(node01, htet),
 				new TripleFaceIntersection(node12, htet)));
       addEdge(new FaceFacetEdge(htet, new TripleFaceIntersection(node12, htet),
-				fei1->corner()->clone()));
+				fei1->corner()->clone(htet)));
 	      
     }
     else if(nwrap == 0) {
@@ -2942,14 +2946,14 @@ void FaceFacet::addFaceEdges(const FaceEdgeIntersection *fei0,
       unsigned int node01 = CSkeletonElement::edgeEdgeNode[e0][e1];
       unsigned int node12 = CSkeletonElement::edgeEdgeNode[e1][e2];
       unsigned int node20 = CSkeletonElement::edgeEdgeNode[e2][e0];
-      addEdge(new FaceFacetEdge(htet, fei0->corner()->clone(),
+      addEdge(new FaceFacetEdge(htet, fei0->corner()->clone(htet),
 				new TripleFaceIntersection(node01, htet)));
       addEdge(new FaceFacetEdge(htet, new TripleFaceIntersection(node01, htet),
 				new TripleFaceIntersection(node12, htet)));
       addEdge(new FaceFacetEdge(htet, new TripleFaceIntersection(node12, htet),
 				new TripleFaceIntersection(node20, htet)));
       addEdge(new FaceFacetEdge(htet, new TripleFaceIntersection(node20, htet),
-				fei1->corner()->clone()));
+				fei1->corner()->clone(htet)));
     }
   }
 } // end FaceFacet::addFaceEdges
