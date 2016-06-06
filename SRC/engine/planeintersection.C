@@ -2674,7 +2674,7 @@ void IsecEquivalenceClass::addIntersection(PlaneIntersection *pi) {
     oofcerr << "IsecEquivalenceClass::addIntersection: this=" << *this
 	    << " intersection=" << pi << " " << pi->shortName() << std::endl;
 #endif // DEBUG
-  intersections.insert(pi);
+  intersections.push_back(pi);
   pi->addPlanesToEquivalence(this);
 #ifdef DEBUG
   if(verbose)
@@ -2694,11 +2694,14 @@ void IsecEquivalenceClass::removeIntersection(PlaneIntersection *pi) {
   // than the pointer.
 #endif // DEBUG
   pi->removeEquivalence();
-  intersections.erase(pi);
+  auto iter = std::find(intersections.begin(), intersections.end(), pi);
+  if(iter != intersections.end())
+    intersections.erase(iter);
 }
 
 bool IsecEquivalenceClass::contains(PlaneIntersection *pi) const {
-  return intersections.find(pi) != intersections.end();
+  return (std::find(intersections.begin(), intersections.end(), pi)
+	  != intersections.end());
 }
 
 void IsecEquivalenceClass::addPixelPlane(const HPixelPlane *pp) {
@@ -2732,7 +2735,8 @@ void IsecEquivalenceClass::merge(IsecEquivalenceClass *other) {
 // #endif // DEBUG
     pi->setEquivalence(this);
   }
-  intersections.insert(other->intersections.begin(),
+  intersections.insert(intersections.end(),
+		       other->intersections.begin(),
 		       other->intersections.end());
   other->intersections.clear();
 // #ifdef DEBUG

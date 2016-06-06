@@ -1103,7 +1103,11 @@ private:
   PixelPlaneSet pixelPlanes;
   FacePlaneSet facePlanes;
   FacePixelPlaneSet pixelFaces;
-  std::set<PlaneIntersection*, DerefCompare<PlaneIntersection>> intersections;
+  // "intersections" must store pointers and not use DerefCompare,
+  // since it may contain multiple PlaneIntersection objects that are
+  // equal.
+  // std::set<PlaneIntersection*> intersections;
+  std::vector<PlaneIntersection*> intersections;
 public:
   const unsigned int id;
 #ifdef DEBUG
