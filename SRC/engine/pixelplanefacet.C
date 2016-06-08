@@ -49,11 +49,11 @@ std::string HPixelPlane::shortName() const {
 }
 
 std::string FacePlane::shortName() const {
-  return "F" + to_string(face_);
+  return "f" + to_string(face_);
 }
 
 std::string FacePixelPlane::shortName() const {
-  return "FP" + to_string(face());
+  return "F" + to_string(face());
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -122,32 +122,32 @@ public:
 		  const PixelPlaneIntersection *fi1)
     const
   {
-#ifdef DEBUG
-    if(facet->verbose) {
-      // oofcerr << "LtPolyFrac::operator(): fi0=" << fi0 << " fi1=" << fi1
-      // 	      << std::endl;
-      oofcerr << "LtPolyFrac::operator(): fi0= " << fi0 << " " << *fi0
-	      << std::endl;
-      oofcerr << "LtPolyFrac::operator(): fi1= " << fi1 << " " << *fi1
-	      << std::endl;      
-    }
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(facet->verbose) {
+//       // oofcerr << "LtPolyFrac::operator(): fi0=" << fi0 << " fi1=" << fi1
+//       // 	      << std::endl;
+//       oofcerr << "LtPolyFrac::operator(): fi0= " << fi0 << " " << *fi0
+// 	      << std::endl;
+//       oofcerr << "LtPolyFrac::operator(): fi1= " << fi1 << " " << *fi1
+// 	      << std::endl;      
+//     }
+// #endif // DEBUG
 
     // TODO: sharedPolySegment might be too slow in this context.
     unsigned int sharedSeg = fi0->sharedPolySegment(fi1, facet);
-#ifdef DEBUG
-    if(facet->verbose)
-      oofcerr << "LtPolyFrac::operator(): sharedSeg=" << sharedSeg << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(facet->verbose)
+//       oofcerr << "LtPolyFrac::operator(): sharedSeg=" << sharedSeg << std::endl;
+// #endif // DEBUG
     if(sharedSeg != NONE) {
       double t0 = fi0->getPolyFrac(sharedSeg, facet);
       double t1 = fi1->getPolyFrac(sharedSeg, facet);
-#ifdef DEBUG
-      if(facet->verbose) {
-	oofcerr << "LtPolyFrac:operator(): polyFrac0=" << t0 << std::endl;
-	oofcerr << "LtPolyFrac:operator(): polyFrac1=" << t1 << std::endl;
-      }
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(facet->verbose) {
+// 	oofcerr << "LtPolyFrac:operator(): polyFrac0=" << t0 << std::endl;
+// 	oofcerr << "LtPolyFrac:operator(): polyFrac1=" << t1 << std::endl;
+//       }
+// #endif // DEBUG
 
       return t0 < t1;
 
@@ -326,8 +326,16 @@ PixelPlaneFacet::PixelPlaneFacet(HomogeneityTet *htet,
 }
 
 PixelPlaneFacet::~PixelPlaneFacet() {
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "PixelPlaneFacet::dtor" << std::endl;
+// #endif // DEBUG
   for(FacetEdge *edge : edges)
     delete edge;
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "PixelPlaneFacet::dtor" << std::endl;
+// #endif // DEBUG
 }
 
 // Find the tet faces that this edge lies on, excluding the face that
@@ -714,11 +722,14 @@ bool PixelPlaneFacet::completeLoops() {
     
   } // end loop over edges
 
-// #ifdef DEBUG
-//   if(verbose)
-//     oofcerr << "PixelPlaneFacet::completeLoops: done with edge loop"
-// 	    << std::endl;
-// #endif	// DEBUG
+#ifdef DEBUG
+  if(!htet->verify()) {
+    oofcerr << "PixelPlaneFacet::completeLoops: verify failed after edge loop"
+	    << std::endl;
+    throw ErrProgrammingError("Verification failed after edge loop",
+			      __FILE__, __LINE__);
+    }
+#endif	// DEBUG
 
   // Resolve coincidences that occur when a voxel corner is on or near
   // a tet face.  In that case roundoff error can put points in the
@@ -841,6 +852,9 @@ bool PixelPlaneFacet::completeLoops() {
     oofcerr << "PixelPlaneFacet::completeLoops: after resolving coincidences,"
 	    << " facet=" << *this << std::endl;
   }
+  if(!htet->verify()) {
+    throw ErrProgrammingError("Verification failed", __FILE__, __LINE__);
+  }
 #endif	// DEBUG
 
   // Remove edges that join equivalent intersection points.
@@ -850,6 +864,9 @@ bool PixelPlaneFacet::completeLoops() {
   if(verbose) {
     oofcerr << "PixelPlaneFacet::completeLoops: after removing null edges,"
 	    << " facet=" << *this << std::endl;
+  }
+  if(!htet->verify()) {
+    throw ErrProgrammingError("Verification failed", __FILE__, __LINE__);
   }
 #endif	// DEBUG
 
@@ -1142,7 +1159,6 @@ void PixelPlaneFacet::replaceIntersection(PixelPlaneIntersection *oldPt,
   }
   
   oldPt->getEdge()->replacePoint(oldPt, newPt);
-  // htet->removeEquivalence(oldPt);
   delete oldPt;
 }
 
@@ -1320,6 +1336,7 @@ bool PixelPlaneFacet::resolveTwoFoldCoincidence(const PPIntersectionNRSet &isecs
     oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: fi1=" << *fi1
 	    << std::endl;
   }
+  assert(htet->verify());
   OOFcerrIndent indent(2);
 #endif // DEBUG
 
@@ -1362,9 +1379,17 @@ bool PixelPlaneFacet::resolveTwoFoldCoincidence(const PPIntersectionNRSet &isecs
 	  oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: merged="
 		  << *merged << std::endl;
 	}
+	if(!htet->verify()) {
+	  throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
+	}
 #endif // DEBUG
 	replaceIntersection(fi0, merged);
 	replaceIntersection(fi1, new RedundantIntersection(merged, this));
+#ifdef DEBUG
+	if(!htet->verify()) {
+	  throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
+	}
+#endif // DEBUG
       }
       else {
 // #ifdef DEBUG
@@ -1791,7 +1816,8 @@ bool PixelPlaneFacet::resolveMultipleCoincidence(
     }
   } // end loop over orderedFIs k
   
-  // Delete in reverse order so as not to invalidate iterators.
+  // Delete in reverse order so as not to invalidate iterators before
+  // they're deleted.
   for(auto d=deleteMe.rbegin(); d!=deleteMe.rend(); ++d) {
     orderedFIs.erase(*d);
   }
@@ -1830,7 +1856,7 @@ bool PixelPlaneFacet::resolveMultipleCoincidence(
 	    newOrder.push_back(newfi);
 	  }
 	  else
-	    return false;
+	    return false;    // merge failed, resolution is impossible
 	  orderedFIs.erase(knext);
 	  ++nfixed;
 	}

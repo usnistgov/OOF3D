@@ -30,7 +30,8 @@ static std::string eqPrint(IsecEquivalenceClass *eqptr) {
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 PlaneIntersection::PlaneIntersection(HomogeneityTet *htet)
-  : equivalence_(nullptr),
+  : htet(htet),
+    equivalence_(nullptr),
     id(htet->nextIntersectionID())
 #ifdef DEBUG
   , verbose(false)
@@ -47,8 +48,17 @@ PlaneIntersection::~PlaneIntersection() {
   HomogeneityTet::allIntersections.erase(this);
   // oofcerr << "PlaneIntersection::dtor: " << this << std::endl;
 #endif // DEBUG
-  if(equivalence_ != nullptr)
-    equivalence_->removeIntersection(this);
+  removeEquivalence();
+}
+
+PlaneIntersection::PlaneIntersection(const PlaneIntersection &other)
+  : htet(other.htet),
+    id(other.htet->nextIntersectionID())
+#ifdef DEBUG
+  , verbose(other.verbose)
+#endif // DEBUG
+{
+  setCloneEquivalence(other.equivalence());
 }
 
 const BarycentricCoord &PlaneIntersection::baryCoord(HomogeneityTet *htet) const
@@ -72,32 +82,73 @@ const BarycentricCoord &PlaneIntersection::baryCoord(HomogeneityTet *htet) const
 }
 
 void PlaneIntersection::setEquivalence(IsecEquivalenceClass *e) {
-  // TODO: Do this differently when called from
-  // PlaneIntersection::clone.  In that case there's no need to call
-  // addPlanesToEquivalence, which is called by addIntersection.
+  // e can be nullptr when cloning a point with no equivalence class.
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PlaneIntersection::setEquivalence: " << this << "  "
+	    << *this << " e=" << e;
+    if(e)
+      oofcerr << " " << *e;
+    oofcerr << std::endl;
+  }
+  OOFcerrIndent indent(2);
+#endif // DEBUG
+
+  if(equivalence_ == e)
+    return;
+  removeEquivalence();
+  equivalence_ = e;
+  if(e != nullptr) {
+    e->addIntersection(this);
+    addPlanesToEquivalence(e);
+  }
+  
+#ifdef DEBUG
+  if(verbose) {
+    if(e != nullptr)
+      oofcerr << "PlaneIntersection::setEquivalence: done, eqclass="
+	      << *e
+	      << " this=" << *this
+	      << std::endl;
+    else
+      oofcerr << "PlaneIntersection::setEquivalence: done, e=0x0, this="
+	      << *this << std::endl;
+  }
+#endif // DEBUG
+}
+
+// setCloneEquivalence is just like setEquivalence, but it's called
+// when cloning a PlaneIntersection.  Because the intersection that
+// was cloned is already in the equivalence class, the clone doesn't
+// add any planes to the class.  Also, the clone is known not to
+// already be in an equivalence class, so it doesn't have to be
+// removed from an old class, although it may already have
+// equivalence_ set.
+void PlaneIntersection::setCloneEquivalence(IsecEquivalenceClass *e) {
+  equivalence_ = e;
 // #ifdef DEBUG
 //   if(verbose) {
-//     oofcerr << "PlaneIntersection::setEquivalence: " << *this << " e=" << e;
+//     oofcerr << "PlaneIntersection::setCloneEquivalence: e=" << e;
 //     if(e)
 //       oofcerr << " " << *e;
 //     oofcerr << std::endl;
-//   }
-//   OOFcerrIndent indent(2);
+//   }  
 // #endif // DEBUG
-  equivalence_ = e;
   if(e != nullptr)
     e->addIntersection(this);
 // #ifdef DEBUG
 //   if(verbose)
-//     oofcerr << "PlaneIntersection::setEquivalence: done" << std::endl;
+//     oofcerr << "PlaneIntersection::setCloneEquivalence: done" << std::endl;
 // #endif // DEBUG
 }
 
 void PlaneIntersection::removeEquivalence() {
-  // removeEquivalence is called from
-  // IsecEquivalenceClass::removeIntersection, which is called from
-  // the PlaneIntersection destructor, so it can't invoke any
-  // PlaneIntersection virtual methods.
+  // removeEquivalence is called from the PlaneIntersection
+  // destructor, so it can't invoke any PlaneIntersection virtual
+  // methods.
+  if(equivalence_ != nullptr) {
+    equivalence_->removeIntersection(this);
+  }
   equivalence_ = nullptr;
 }
 
@@ -137,11 +188,7 @@ TripleFaceIntersection *TripleFaceIntersection::clone(HomogeneityTet *htet)
 {
   TripleFaceIntersection *tfi = new TripleFaceIntersection(*this);
   tfi->setID(htet);
-  // Although equivalence_ is defined in PlaneIntersection,
-  // setEquivalence() can't be called in the PlaneIntersection copy
-  // constructor because it invokes methods that are only defined in
-  // the derived classes.
-  tfi->setEquivalence(equivalence_);
+  // tfi->setCloneEquivalence(equivalence_);
   return tfi;
 }
 
@@ -510,12 +557,12 @@ unsigned int PixelPlaneIntersectionNR::maxPolyEdge(const PixelPlaneFacet *facet)
   // Find which polygon edges are used in the PixelPlaneIntersectionNR. 
   for(const FacePlane *fp : facePlaneSets()) {
     unsigned int edge = facet->getPolyEdge(fp);
-#ifdef DEBUG
-    if(verbose) {
-      oofcerr << "PixelPlaneIntersectionNR::maxPolyEdge: fp=" << *fp
-	      << " edge=" << edge << std::endl;
-    }
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verbose) {
+//       oofcerr << "PixelPlaneIntersectionNR::maxPolyEdge: fp=" << *fp
+// 	      << " edge=" << edge << std::endl;
+//     }
+// #endif // DEBUG
     if(edge != NONE)
       e[edge] = true;
   }
@@ -523,16 +570,16 @@ unsigned int PixelPlaneIntersectionNR::maxPolyEdge(const PixelPlaneFacet *facet)
   for(unsigned int i=1; i<nn; i++)
     if(e[i-1] && !e[i])
       return i-1;
-#ifdef DEBUG
-  if(!(e[nn-1] && !e[0])) {
-    oofcerr << "PixelPlaneIntersectionNR::maxPolyEdge: this=" << *this
-	    << std::endl;
-    oofcerr << "PixelPlaneIntersectionNR::maxPolyEdge: e=";
-    std::cerr << e;
-    oofcerr << std::endl;
-    throw ErrProgrammingError("maxPolyEdge failed!", __FILE__, __LINE__);
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(!(e[nn-1] && !e[0])) {
+//     oofcerr << "PixelPlaneIntersectionNR::maxPolyEdge: this=" << *this
+// 	    << std::endl;
+//     oofcerr << "PixelPlaneIntersectionNR::maxPolyEdge: e=";
+//     std::cerr << e;
+//     oofcerr << std::endl;
+//     throw ErrProgrammingError("maxPolyEdge failed!", __FILE__, __LINE__);
+//   }
+// #endif // DEBUG
   return nn-1;
 }
 
@@ -1695,7 +1742,7 @@ SimpleIntersection::SimpleIntersection(HomogeneityTet *htet,
 
 SimpleIntersection *SimpleIntersection::clone(HomogeneityTet *htet) const {
   SimpleIntersection *si = new SimpleIntersection(*this);
-  si->setEquivalence(equivalence_);
+  // si->setEquivalence(equivalence_);
   si->setID(htet);
   return si;
 }
@@ -1965,7 +2012,7 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet)
 MultiFaceIntersection *MultiFaceIntersection::clone(HomogeneityTet *htet) const
 {
   MultiFaceIntersection *mfi = new MultiFaceIntersection(*this);
-  mfi->setEquivalence(equivalence_);
+  // mfi->setEquivalence(equivalence_);
   mfi->setID(htet);
   return mfi;
 }
@@ -2184,7 +2231,7 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
 
 MultiVSBIntersection *MultiVSBIntersection::clone(HomogeneityTet *htet) const {
   MultiVSBIntersection *mvi = new MultiVSBIntersection(*this);
-  mvi->setEquivalence(equivalence_);
+  // mvi->setEquivalence(equivalence_);
   mvi->setID(htet);
   return mvi;
 }
@@ -2342,7 +2389,7 @@ MultiCornerIntersection *MultiCornerIntersection::clone(HomogeneityTet *htet)
   const
 {
   MultiCornerIntersection *mci = new MultiCornerIntersection(*this);
-  mci->setEquivalence(equivalence_);
+  // mci->setEquivalence(equivalence_);
   mci->setID(htet);
   return mci;
 }
@@ -2461,7 +2508,7 @@ RedundantIntersection *RedundantIntersection::clone(HomogeneityTet *htet) const
   RedundantIntersection *ri = new RedundantIntersection(referent_, facet_);
   // The RedundantIntersection constructor sets the id -- no need to
   // call setID here.
-  ri->setEquivalence(equivalence_);
+  // ri->setEquivalence(equivalence_);
   return ri;
 }
 
@@ -2494,7 +2541,7 @@ TetEdgeIntersection::TetEdgeIntersection(HomogeneityTet *htet,
 
 TetEdgeIntersection *TetEdgeIntersection::clone(HomogeneityTet *htet) const {
   TetEdgeIntersection *tei = new TetEdgeIntersection(*this);
-  tei->setEquivalence(equivalence_);
+  // tei->setEquivalence(equivalence_);
   tei->setID(htet);
   return tei;
 }
@@ -2546,7 +2593,7 @@ TetNodeIntersection::TetNodeIntersection(HomogeneityTet *htet,
 
 TetNodeIntersection *TetNodeIntersection::clone(HomogeneityTet *htet) const {
   TetNodeIntersection *tni = new TetNodeIntersection(*this);
-  tni->setEquivalence(equivalence_);
+  // tni->setEquivalence(equivalence_);
   tni->setID(htet);
   return tni;
 }
@@ -2589,7 +2636,7 @@ TriplePixelPlaneIntersection *TriplePixelPlaneIntersection::clone(
   const
 {
   TriplePixelPlaneIntersection *tpi = new TriplePixelPlaneIntersection(*this);
-  tpi->setEquivalence(equivalence_);
+  // tpi->setEquivalence(equivalence_);
   tpi->setID(htet);
   return tpi;
 }
@@ -2649,10 +2696,11 @@ IsecEquivalenceClass::IsecEquivalenceClass(PlaneIntersection *pi,
   , verbose(verbose)
 #endif // DEBUG
 {
-// #ifdef DEBUG
-//   if(verbose)
-//     oofcerr << "IsecEquivalenceClass::ctor: " << this << std::endl;
-// #endif	// DEBUG
+#ifdef DEBUG
+  if(verbose)
+    oofcerr << "IsecEquivalenceClass::ctor: id=" << id << " " << this
+	    << std::endl;
+#endif	// DEBUG
   pi->setEquivalence(this);
 // #ifdef DEBUG
 //   if(verbose)
@@ -2662,25 +2710,23 @@ IsecEquivalenceClass::IsecEquivalenceClass(PlaneIntersection *pi,
 }
 
 IsecEquivalenceClass::~IsecEquivalenceClass() {
-// #ifdef DEBUG
-//   if(verbose)
-//     oofcerr << "IsecEquivalenceClass::dtor: " << this << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verbose)
+    oofcerr << "IsecEquivalenceClass::dtor: id=" << id << " " << this
+	    << std::endl;
+#endif // DEBUG
 }
 
 void IsecEquivalenceClass::addIntersection(PlaneIntersection *pi) {
 #ifdef DEBUG
   if(verbose)
     oofcerr << "IsecEquivalenceClass::addIntersection: this=" << *this
-	    << " intersection=" << pi << " " << pi->shortName() << std::endl;
+	    << " intersection=" << pi
+	    // << " " << pi->shortName()
+	    << std::endl;
 #endif // DEBUG
   intersections.push_back(pi);
-  pi->addPlanesToEquivalence(this);
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "IsecEquivalenceClass: addIntersection: after adding, this="
-	    << *this << std::endl;
-#endif // DEBUG
+  //  pi->addPlanesToEquivalence(this);
 }
 
 void IsecEquivalenceClass::removeIntersection(PlaneIntersection *pi) {
@@ -2688,15 +2734,27 @@ void IsecEquivalenceClass::removeIntersection(PlaneIntersection *pi) {
   // that define this equivalence class.  The point is being deleted,
   // but that doesn't change the fact that its planes meet at the
   // common point for the class.
-#ifdef DEBUG
-  // This is called from the PlaneIntersection destructor, so derived
-  // class methods aren't accessible.  Don't try to print any more
-  // than the pointer.
-#endif // DEBUG
-  pi->removeEquivalence();
+
+  // This is called from the PlaneIntersection destructor, so
+  // PlaneIntersection derived class methods aren't accessible.  Don't
+  // try to print any more than the pointer.
+
   auto iter = std::find(intersections.begin(), intersections.end(), pi);
   if(iter != intersections.end())
     intersections.erase(iter);
+  else {
+    oofcerr << "IsecEquivalenceClass::removeIntersection:"
+	    << " failed to remove intersection"<< std::endl;
+    oofcerr << "IsecEquivalenceClass::removeIntersection: intersection="
+	    << pi << std::endl;
+    oofcerr << "IsecEquivalenceClass::removeIntersection: this=" << *this
+	    << std::endl;
+    oofcerr << "IsecEquivalenceClass::removeIntersection: insersections=";
+    std::cerr << intersections;
+    oofcerr << std::endl;
+    throw ErrProgrammingError("removeIntersection failed!", __FILE__, __LINE__);
+  }
+  // pi->removeEquivalence();
 }
 
 bool IsecEquivalenceClass::contains(PlaneIntersection *pi) const {
@@ -2717,6 +2775,8 @@ void IsecEquivalenceClass::addFacePixelPlane(const FacePixelPlane *fpp) {
 }
  
 void IsecEquivalenceClass::merge(IsecEquivalenceClass *other) {
+  assert(other != this);
+  assert(other != nullptr);
 // #ifdef DEBUG
 //   if(verbose)
 //     oofcerr << "IsecEquivalenceClass::merge: this=" << this << " " << *this
@@ -2748,12 +2808,20 @@ void IsecEquivalenceClass::merge(IsecEquivalenceClass *other) {
 
 std::ostream &operator<<(std::ostream &os, const IsecEquivalenceClass &eqclass)
 {
-  for(const HPixelPlane *pp : eqclass.pixelPlanes)
-    os << pp->shortName();
-  for(const FacePlane *fp : eqclass.facePlanes)
-    os << fp->shortName();
-  for(const FacePixelPlane *fpp : eqclass.pixelFaces)
-    os << fpp->shortName();
+  if(eqclass.pixelPlanes.empty() && eqclass.facePlanes.empty() &&
+     eqclass.pixelFaces.empty())
+    {
+      os << "uninitialized";
+    }
+  else {
+    for(const HPixelPlane *pp : eqclass.pixelPlanes)
+      os << pp->shortName();
+    for(const FacePlane *fp : eqclass.facePlanes)
+      os << fp->shortName();
+    for(const FacePixelPlane *fpp : eqclass.pixelFaces)
+      os << fpp->shortName();
+  }
+  os << "(" << eqclass.id << ")";
   return os;
 }
 
@@ -2766,8 +2834,8 @@ bool IsecEquivalenceClass::verify() {
 	      << std::endl;
       oofcerr << "IsecEquivalenceClass::verify: this=" << this << " " << *this
 	      << std::endl;
-      oofcerr << "IsecEquivalenceClass::verify: intersection=" << *pi
-	      << std::endl;
+      oofcerr << "IsecEquivalenceClass::verify: intersection=" << pi << " "
+	      << *pi << std::endl;
       return false;
     }
   return true;
@@ -2775,7 +2843,7 @@ bool IsecEquivalenceClass::verify() {
 
 void IsecEquivalenceClass::dump() {
   oofcerr << "IsecEquivalenceClass::dump: this=" << this << " " << *this
-	  << std::endl;
+    	  << std::endl;
   OOFcerrIndent indent(2);
   for(PlaneIntersection *pi : intersections) {
     oofcerr << "IsecEquivalenceClass::dump: intersection= " << pi;

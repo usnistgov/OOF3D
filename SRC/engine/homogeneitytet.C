@@ -284,11 +284,11 @@ HomogeneityTet::HomogeneityTet(const CSkeletonElement *element,
 } // end HomogeneityTet ctor
 
 HomogeneityTet::~HomogeneityTet() {
-// #ifdef DEBUG
-//   if(verbose) {
-//     oofcerr << "HomogeneityTet::dtor" << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "HomogeneityTet::dtor" << std::endl;
+  }
+#endif // DEBUG
   for(TetPlaneIsecMap::iterator tpi=tetPlaneIntersections.begin();
       tpi!=tetPlaneIntersections.end(); ++tpi)
     {
@@ -305,11 +305,11 @@ HomogeneityTet::~HomogeneityTet() {
     delete eqclass;
   
   delete bbox_;
-// #ifdef DEBUG
-//   if(verbose) {
-//     oofcerr << "HomogeneityTet::dtor: done" << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "HomogeneityTet::dtor: done" << std::endl;
+  }
+#endif // DEBUG
 }
 
 // getPixelPlane returns an existing pixel plane or makes a new one,
@@ -473,6 +473,10 @@ bool HomogeneityTet::areCollinear(const HPlane *p0, const HPlane *p1,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// mergeEquiv is called by the various PlaneIntersection::mergeWith
+// virtual methods after they merge "point0" and "point1" to form
+// "merged".
+
 void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
 				PlaneIntersection *point1,
 				PlaneIntersection *merged)
@@ -528,25 +532,75 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
       }
       else {
 	// The points are in different equivalence classes.  Merge the classes.
+#ifdef DEBUG
+	if(verboseplane) {
+	  oofcerr << "HomogeneityTet::mergeEquiv: point0=" << *point0
+		  << std::endl;
+	  oofcerr << "HomogeneityTet::mergeEquiv: point1=" << *point1
+		  << std::endl;
+	  oofcerr << "HomogeneityTet::mergeEquiv: merged=" << *merged
+		  << std::endl;
+	}
+	OOFcerrIndent indent(2);
+	if(!verify())
+	  throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
+#endif // DEBUG
 	equivClass0->merge(equivClass1); // Resets all pointers to equivClass1.
 	merged->setEquivalence(equivClass0);
+#ifdef DEBUG
+	if(verboseplane) {
+	  oofcerr << "HomogeneityTet::mergeEquiv: before erasing "
+		  << *equivClass1 << ", equivalences=";
+	  std::cerr << derefprint(equivalences);
+	  oofcerr << std::endl;
+	}
+#endif // DEBUG
 	equivalences.erase(equivClass1);
+#ifdef DEBUG
+	if(verboseplane) {
+	  oofcerr << "HomogeneityTet::mergeEquiv: after erasing "
+		  << *equivClass1 << ", equivalences=";
+	  std::cerr << derefprint(equivalences);
+	  oofcerr << std::endl;
+	}
+#endif // DEBUG
 	delete equivClass1;
+#ifdef DEBUG
+	if(!verify())
+	  throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
+#endif // DEBUG
       }
     }
   }
 }
 
-// The single-argument version of checkEquiv checks to see if the
-// given intersection point belongs in any existing equivalence class,
-// and puts it in it.  If the point already belongs to a class and is
-// found to also belong to another, the classes are merged.
+// checkEquiv checks to see if the given intersection point belongs in
+// any existing equivalence class, and puts it in it.  If the point
+// already belongs to a class and is found to also belong to another,
+// the classes are merged.
 void HomogeneityTet::checkEquiv(PlaneIntersection *point) {
+#ifdef DEBUG
+  if(verbose) 
+    oofcerr << "HomogeneityTet::checkEquiv: point=" << *point << std::endl;
+  OOFcerrIndent indent(2);
+#endif // DEBUG
   for(IsecEquivalenceClass *eqclass : equivalences) {
     if(point->equivalence() != eqclass) {
       if(point->isEquivalent(eqclass)) {
 	IsecEquivalenceClass *oldclass = point->equivalence();
+#ifdef DEBUG
+	if(verbose)
+	  oofcerr << "HomogeneityTet::checkEquiv: found eqclass "
+		  << *eqclass << std::endl;
+#endif // DEBUG
 	if(oldclass != nullptr) {
+	  // Since point is in oldclass, calling merge will call
+	  // point->setEquivalence(eqclass).
+#ifdef DEBUG
+	  if(verbose)
+	    oofcerr << "HomogeneityTet::checkEquiv: merging oldclass="
+		    << *oldclass << std::endl;
+#endif // DEBUG
 	  eqclass->merge(oldclass);
 	  equivalences.erase(oldclass);
 	  delete oldclass;
@@ -561,6 +615,10 @@ void HomogeneityTet::checkEquiv(PlaneIntersection *point) {
   if(point->equivalence() == nullptr) {
     // The point doesn't belong to any existing equivalence class.
     // Create one, so that other points can be made equivalent to it.
+#ifdef DEBUG
+    if(verbose)
+      oofcerr << "HomogeneityTet::checkEquiv: creating new class." << std::endl;
+#endif // DEBUG
     IsecEquivalenceClass *eqclass = new IsecEquivalenceClass(
 					     point, nextEquivalenceID()
 #ifdef DEBUG
@@ -569,6 +627,11 @@ void HomogeneityTet::checkEquiv(PlaneIntersection *point) {
 							     );
     equivalences.insert(eqclass);
     point->setEquivalence(eqclass);
+#ifdef DEBUG
+    if(verbose)
+      oofcerr << "HomogeneityTet::checkEquiv: new class=" << *eqclass
+	      << std::endl;
+#endif // DEBUG
   }
 }
 
@@ -1036,7 +1099,6 @@ FacetMap2D HomogeneityTet::findPixelPlaneFacets(unsigned int cat,
   // to use the unoriented planes.  For deciding if a plane has
   // already been computed or if it's coincident with a face, use the
   // oriented planes.
-  
 
   for(PixelSetBoundaryMap::const_iterator psbm=pxlSetBdys.begin();
       psbm!=pxlSetBdys.end(); ++psbm)
@@ -1339,6 +1401,16 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 
 	pbs_start_inside = pbs_end_inside;
 	pbs_start_bary = pbs_end_bary;
+
+#ifdef DEBUG
+	if(!verify()) {
+	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
+		  << "verification failed!" << std::endl;
+	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
+		  << "facet=" << *facet << std::endl;
+	  throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
+	}
+#endif // DEBUG
       }	// end loop over boundary loop segments k
 
     } // end loop over PixelBdyLoops pbl
@@ -1357,6 +1429,17 @@ void HomogeneityTet::doFindPixelPlaneFacets(
     facet->clear();
     return;
   }
+
+#ifdef DEBUG
+  if(!verify()) {
+    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
+	    << "verification failed after completeLoops!" << std::endl;
+    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
+	    << "facet=" << *facet << std::endl;
+    throw ErrProgrammingError("Verification failed after completeLoops!",
+			      __FILE__, __LINE__);
+  }
+#endif // DEBUG
 
 // #ifdef DEBUG
 //   if(verboseplane)
@@ -1455,6 +1538,12 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	      << " pixel plane=" << *pixplane
 	      << " final facet is empty"
 	      << std::endl;
+  }
+  if(!verify()) {
+    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: cat=" << cat
+	    << " pixel plane=" << *pixplane
+	    << " verification failed!" << std::endl;
+    throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
   }
 #endif	// DEBUG
 } // end HomogeneityTet::doFindPixelPlaneFacets
@@ -1760,12 +1849,12 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
       // copy of itself in faceFacets.  A new FaceFacetEdge is created
       // in faceFacets for each edge of the PixelPlaneFacet that lies
       // in a tet face.
-// #ifdef DEBUG
-//       if(verbosecategory)
-// 	oofcerr << "HomogeneityTet::findFaceFacets: calling getEdgesOnFaces for"
-// 		<< " " << *planeFacet->pixplane << std::endl;
-//       OOFcerrIndent indent(2);
-// #endif	// DEBUG
+#ifdef DEBUG
+      if(verbosecategory)
+	oofcerr << "HomogeneityTet::findFaceFacets: calling getEdgesOnFaces for"
+		<< " " << *planeFacet->pixplane << std::endl;
+      OOFcerrIndent indent(2);
+#endif	// DEBUG
       planeFacet->getEdgesOnFaces(faceFacets);
     }
 #ifdef DEBUG
@@ -1835,14 +1924,14 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
       endPoints.reserve(nsegs);
       // Loop over segments in the face facet, storing their start and
       // end points.  *seg is a FaceFacetEdge*.
-// #ifdef DEBUG
-//       if(verboseface) {
-// 	oofcerr << "HomogeneityTet::findFaceFacets: starting checkEquiv loop"
-// 		<< std::endl;
-// 	// if(!verify())
-// 	//   throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
-//       }
-// #endif // DEBUG
+#ifdef DEBUG
+      if(verboseface) {
+	oofcerr << "HomogeneityTet::findFaceFacets: starting checkEquiv loop"
+		<< std::endl;
+	if(!verify())
+	  throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
+      }
+#endif // DEBUG
 
       
       // Make sure equivalence classes are up to date.
@@ -1878,8 +1967,8 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	  oofcerr << "HomogeneityTet::findFaceFacets: " << p << std::endl;
 	}
       }
-      // if(!verify())
-      // 	throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
+      if(!verify())
+      	throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
 #endif // DEBUG
       // matchedStarts and matchedEnds indicate which segment start
       // and end points have been paired up.  The loose ones that

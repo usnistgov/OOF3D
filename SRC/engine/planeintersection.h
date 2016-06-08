@@ -93,13 +93,19 @@ class SingleVSBbase;
 
 // Base class for the points defined by the intersection of planes.
 
+// TODO: Now that there's an htet data member of PlaneIntersection,
+// remove the htet arg to all methods.
+
 class PlaneIntersection {
+public:
+  HomogeneityTet * const htet;
 protected:
   IsecEquivalenceClass *equivalence_;
   unsigned int id;
 public:
   PlaneIntersection(HomogeneityTet*);
   virtual ~PlaneIntersection();
+  PlaneIntersection(const PlaneIntersection&);
   // clone takes a HomogeneityTet arg so that the clone can have a unique id.
   virtual PlaneIntersection *clone(HomogeneityTet*) const = 0;
   void setID(HomogeneityTet*);
@@ -127,6 +133,7 @@ public:
 
   virtual IsecEquivalenceClass *equivalence() const { return equivalence_; }
   virtual void setEquivalence(IsecEquivalenceClass *e);
+  virtual void setCloneEquivalence(IsecEquivalenceClass *e);
   void removeEquivalence();
 
   // Which edge of the given tet face is this intersection on?  May
@@ -1133,13 +1140,18 @@ public:
   void addPixelPlane(const HPixelPlane*);
   void addFacePlane(const FacePlane*);
   void addFacePixelPlane(const FacePixelPlane*);
+
+  bool operator<(const IsecEquivalenceClass &other) const {
+    return id < other.id;
+  }
+
   friend class FacePixelPlane;
   friend class FacePlane;
   friend class HPixelPlane;
   friend class PixelPlaneIntersectionNR;
   friend class TripleFaceIntersection;
   friend std::ostream &operator<<(std::ostream&, const IsecEquivalenceClass&);
-
+  
 #ifdef DEBUG
   bool verify();
   void dump();
