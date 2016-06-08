@@ -133,8 +133,8 @@ public:
 
   virtual IsecEquivalenceClass *equivalence() const { return equivalence_; }
   virtual void setEquivalence(IsecEquivalenceClass *e);
-  virtual void setCloneEquivalence(IsecEquivalenceClass *e);
-  void removeEquivalence();
+  virtual void setEquivalenceOnly(IsecEquivalenceClass *e);
+  virtual void removeEquivalence();
 
   // Which edge of the given tet face is this intersection on?  May
   // return NONE.
@@ -1009,6 +1009,14 @@ public:
   virtual void setEquivalence(IsecEquivalenceClass *e) {
     referent_->setEquivalence(e);
   }
+  // setEquivalenceOnly is called when merging equivalence classes,
+  // and just sets equivalence_.  equivalence_ isn't used in
+  // RedundantIntersections, and the referent must be in the
+  // equivalence class, so RedundantIntersection::setEquivalenceOnly
+  // should be a no-op.
+  virtual void setEquivalenceOnly(IsecEquivalenceClass *) {}
+  virtual void removeEquivalence() {}
+  
   // virtual void includeCollinearPlanes(const CollinearPlaneMap &coplanes) {
   //   referent_->includeCollinearPlanes(coplanes);
   // }

@@ -460,8 +460,10 @@ void PixelPlaneFacet::addEdges(const PixelPlaneIntersection *fi0,
 {
 #ifdef DEBUG
   if(verbose) {
-    oofcerr << "PixelPlaneFacet::addEdges: fi0=" << *fi0 << std::endl;
-    oofcerr << "PixelPlaneFacet::addEdges: fi1=" << *fi1 << std::endl;
+    oofcerr << "PixelPlaneFacet::addEdges: fi0=" << fi0 << " " << *fi0
+	    << std::endl;
+    oofcerr << "PixelPlaneFacet::addEdges: fi1=" << fi1 << " " << *fi1
+	    << std::endl;
   }
   OOFcerrIndent indent(2);
 #endif // DEBUG
@@ -1336,7 +1338,6 @@ bool PixelPlaneFacet::resolveTwoFoldCoincidence(const PPIntersectionNRSet &isecs
     oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: fi1=" << *fi1
 	    << std::endl;
   }
-  assert(htet->verify());
   OOFcerrIndent indent(2);
 #endif // DEBUG
 
@@ -1379,9 +1380,9 @@ bool PixelPlaneFacet::resolveTwoFoldCoincidence(const PPIntersectionNRSet &isecs
 	  oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: merged="
 		  << *merged << std::endl;
 	}
-	if(!htet->verify()) {
-	  throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
-	}
+	// if(!htet->verify()) {
+	//   throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
+	// }
 #endif // DEBUG
 	replaceIntersection(fi0, merged);
 	replaceIntersection(fi1, new RedundantIntersection(merged, this));

@@ -179,7 +179,8 @@ private:
   // set of IsecEquivalenceClasses because intersections store
   // pointers to their equivalence classes.  The addresses of objects
   // in a set might change.
-  std::set<IsecEquivalenceClass*> equivalences;
+  // std::set<IsecEquivalenceClass*> equivalences;
+  std::vector<IsecEquivalenceClass*> equivalences;
 
   // If face f lies in a pixel plane, then coincidentPixelPlanes[f] is
   // that plane.  Otherwise it's a null pointer.
@@ -236,6 +237,8 @@ public:
 #endif	 // DEBUG
 		 );
   ~HomogeneityTet();
+  HomogeneityTet(const HomogeneityTet&) = delete;
+  HomogeneityTet(HomogeneityTet&&) = delete;
 
   const CMicrostructure * const microstructure;
 
