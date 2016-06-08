@@ -150,7 +150,7 @@ The following options are for debugging:
 --no-bars                Don't display progress bars
 --no-rc                  Don't load .%src
 --unthreaded             Don't use multiple execution threads
---verboseElement = integer
+--verboseElement = integer or 'all'
 --verbosePlane = [XYZ],offset,[+-]
 --verboseFace = integer
 --verboseCategory = integer
@@ -294,7 +294,7 @@ def process_inline_options():
             remove_option(opt[0],opt[1])
         elif opt[0] in ('--verboseElement', '--vE'):
             from ooflib.SWIG.engine import htetdebug
-            htetdebug.addVerboseElement(int(opt[1]))
+            htetdebug.addVerboseElement(opt[1])
         elif opt[0] in ('--verbosePlane', '--vP'):
             from ooflib.SWIG.engine import htetdebug
             htetdebug.addVerbosePlane(opt[1])

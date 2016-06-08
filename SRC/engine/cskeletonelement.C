@@ -26,6 +26,7 @@
 #include "engine/masterelement.h"
 #include "engine/material.h"
 #include "engine/ooferror.h"
+#include "engine/pixelplanefacet.h"
 #include "engine/planeintersection.h"
 
 #include <vtkMath.h>
@@ -780,10 +781,16 @@ unsigned int CSkeletonElement::getOtherFaceIndex(unsigned int f,
 
 #ifdef DEBUG
 static std::set<unsigned int> verboseElements_;
+static bool allVerboseElements_ = false;
 
 void setVerboseElement(unsigned int e) {
   oofcerr << "setVerboseElement: " << e << std::endl;
   verboseElements_.insert(e);
+}
+
+void setVerboseAllElements() {
+  verboseElements_.clear();
+  allVerboseElements_ = true;
 }
 
 #endif // DEBUG
@@ -796,7 +803,7 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
   // bool verbose = false;
   // bool verbose = index==22;
   // bool verbose = uid==26747;
-  bool verbose = verboseElements_.count(index) > 0;
+  bool verbose = allVerboseElements_ || verboseElements_.count(index) > 0;
   if(verbose)
     oofcerr << "CSkeletonElement::categoryVolumes: " << *this
   	    << "----------------------------------" << std::endl;
@@ -840,20 +847,20 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
       if(vsb->bbox().intersects(homtet.bounds())) {
 	FacetMap2D pixelplanefacets =
 	  homtet.findPixelPlaneFacets(cat, *vsb);
-// #ifdef DEBUG
-// 	if(verbose) {
-// 	  oofcerr << "CSkeletonElement::categoryVolumes: "
-// 		  << "after findPixelPlaneFacets cat=" << cat << std::endl;
-// 	  homtet.dumpEquivalences();
-// 	}
-// 	if(!homtet.verify()) {
-// 	  throw ErrProgrammingError("Verification failed", __FILE__, __LINE__);
-// 	}
-// 	if(verbose) {
-// 	oofcerr << "CSkeletonElement::categoryVolumes: calling findFaceFacets"
-// 		<< std::endl;
-// 	}
-// #endif // DEBUG
+#ifdef DEBUG
+	if(verbose) {
+	  oofcerr << "CSkeletonElement::categoryVolumes: "
+		  << "after findPixelPlaneFacets cat=" << cat << std::endl;
+	  homtet.dumpEquivalences();
+	}
+	if(!homtet.verify()) {
+	  throw ErrProgrammingError("Verification failed", __FILE__, __LINE__);
+	}
+	if(verbose) {
+	oofcerr << "CSkeletonElement::categoryVolumes: calling findFaceFacets"
+		<< std::endl;
+	}
+#endif // DEBUG
 	FaceFacets facefacets = homtet.findFaceFacets(cat, pixelplanefacets);
 #ifdef DEBUG
 	if(verbose)
@@ -865,8 +872,21 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
 // 					     , cat, *dumpfile
 // #endif // DEBUG
 					     );
+#ifdef DEBUG
+	if(verbose)
+	  oofcerr << "CSkeletonElement::categoryVolumes: "
+		  << "back from intersectionVolume." << std::endl;
+#endif // DEBUG
 	(*result)[cat] = v;
 	totalVol += v;
+
+	// Delete PixelPlaneFacets.  FaceFacets aren't stored by
+	// pointer so they don't have to be deleted manually.
+	for(auto iter=pixelplanefacets.begin(); iter!=pixelplanefacets.end();
+	    ++iter)
+	  {
+	    delete (*iter).second;
+	  }
       }	// end if VSB bbox intersects the element bbox
     } // end loop over categories cat
 
