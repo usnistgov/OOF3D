@@ -733,10 +733,7 @@ bool PixelPlaneFacet::completeLoops() {
     // OOFcerrIndent indent(2);
     // htet->dumpEquivalences();
   }
-  
-#endif // DEBUG
 
-#ifdef DEBUG
   if(!htet->verify()) {
     oofcerr << "PixelPlaneFacet::completeLoops: verify failed after edge loop"
 	    << std::endl;

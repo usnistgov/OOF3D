@@ -84,16 +84,16 @@ const BarycentricCoord &PlaneIntersection::baryCoord(HomogeneityTet *htet) const
 }
 
 void PlaneIntersection::setEquivalence(IsecEquivalenceClass *e) {
-#ifdef DEBUG
-  if(htet->verbosePlane()) {
-    oofcerr << "PlaneIntersection::setEquivalence: " << this << "  "
-	    << *this << " e=" << e;
-    if(e)
-      oofcerr << " " << *e;
-    oofcerr << std::endl;
-  }
-  OOFcerrIndent indent(2);
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verbosePlane()) {
+//     oofcerr << "PlaneIntersection::setEquivalence: " << this << "  "
+// 	    << *this << " e=" << e;
+//     if(e)
+//       oofcerr << " " << *e;
+//     oofcerr << std::endl;
+//   }
+//   OOFcerrIndent indent(2);
+// #endif // DEBUG
 
   // This may have been called via a RedundantIntersection's
   // setEquivalence method, in which case there's nothing to do.
@@ -109,18 +109,18 @@ void PlaneIntersection::setEquivalence(IsecEquivalenceClass *e) {
     addPlanesToEquivalence(e);
   }
   
-#ifdef DEBUG
-  if(htet->verbosePlane()) {
-    if(e != nullptr)
-      oofcerr << "PlaneIntersection::setEquivalence: done, eqclass="
-	      << *e
-	      << " this=" << *this
-	      << std::endl;
-    else
-      oofcerr << "PlaneIntersection::setEquivalence: done, e=0x0, this="
-	      << *this << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verbosePlane()) {
+//     if(e != nullptr)
+//       oofcerr << "PlaneIntersection::setEquivalence: done, eqclass="
+// 	      << *e
+// 	      << " this=" << *this
+// 	      << std::endl;
+//     else
+//       oofcerr << "PlaneIntersection::setEquivalence: done, e=0x0, this="
+// 	      << *this << std::endl;
+//   }
+// #endif // DEBUG
 }
 
 void PlaneIntersection::setEquivalenceOnly(IsecEquivalenceClass *e) {
@@ -2682,11 +2682,11 @@ IsecEquivalenceClass::IsecEquivalenceClass(PlaneIntersection *pi,
   , verbose(verbose)
 #endif // DEBUG
 {
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "IsecEquivalenceClass::ctor: id=" << id << " " << this
-	    << std::endl;
-#endif	// DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "IsecEquivalenceClass::ctor: id=" << id << " " << this
+// 	    << std::endl;
+// #endif	// DEBUG
   pi->setEquivalence(this);
 // #ifdef DEBUG
 //   if(verbose)
@@ -2696,21 +2696,21 @@ IsecEquivalenceClass::IsecEquivalenceClass(PlaneIntersection *pi,
 }
 
 IsecEquivalenceClass::~IsecEquivalenceClass() {
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "IsecEquivalenceClass::dtor: id=" << id << " " << this
-	    << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "IsecEquivalenceClass::dtor: id=" << id << " " << this
+//   	    << std::endl;
+// #endif // DEBUG
 }
 
 void IsecEquivalenceClass::addIntersection(PlaneIntersection *pi) {
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "IsecEquivalenceClass::addIntersection: this=" << *this
-	    << " intersection=" << pi
-	    // << " " << pi->shortName()
-	    << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "IsecEquivalenceClass::addIntersection: this=" << *this
+// 	    << " intersection=" << pi
+// 	    // << " " << pi->shortName()
+// 	    << std::endl;
+// #endif // DEBUG
   intersections.push_back(pi);
   //  pi->addPlanesToEquivalence(this);
 }
@@ -2763,21 +2763,21 @@ void IsecEquivalenceClass::addFacePixelPlane(const FacePixelPlane *fpp) {
 void IsecEquivalenceClass::merge(IsecEquivalenceClass *other) {
   assert(other != this);
   assert(other != nullptr);
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "IsecEquivalenceClass::merge: this=" << this << " " << *this
-	    << " (size=" << size() << ")"
-	    << " other=" << other << " " << *other
-	    << " (size=" << other->size() << ")" << std::endl;
-    oofcerr << "IsecEquivalenceClass::merge:       intersections = {";
-    std::cerr << intersections;
-    oofcerr << "}" << std::endl;
-    oofcerr << "IsecEquivalenceClass::merge: other intersections = {";
-    std::cerr << other->intersections;
-    oofcerr << "}" << std::endl;
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "IsecEquivalenceClass::merge: this=" << this << " " << *this
+// 	    << " (size=" << size() << ")"
+// 	    << " other=" << other << " " << *other
+// 	    << " (size=" << other->size() << ")" << std::endl;
+//     oofcerr << "IsecEquivalenceClass::merge:       intersections = {";
+//     std::cerr << intersections;
+//     oofcerr << "}" << std::endl;
+//     oofcerr << "IsecEquivalenceClass::merge: other intersections = {";
+//     std::cerr << other->intersections;
+//     oofcerr << "}" << std::endl;
     
-  }
-#endif // DEBUG
+//   }
+// #endif // DEBUG
   pixelPlanes.insert(other->pixelPlanes.begin(), other->pixelPlanes.end());
   facePlanes.insert(other->facePlanes.begin(), other->facePlanes.end());
   pixelFaces.insert(other->pixelFaces.begin(), other->pixelFaces.end());
@@ -2793,20 +2793,20 @@ void IsecEquivalenceClass::merge(IsecEquivalenceClass *other) {
 		       other->intersections.begin(),
 		       other->intersections.end());
   other->intersections.clear();
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "IsecEquivalenceClass::merge: after merge, this=" << *this
-	    << std::endl;
-    oofcerr << "IsecEquivalenceClass::merge: intersections = {";
-    std::cerr << intersections;
-    oofcerr << "}" << std::endl;
-    OOFcerrIndent indent(2);
-    for(PlaneIntersection *pi : intersections) {
-      oofcerr << "IsecEquivalenceClass::merge: " << pi << " " << *pi
-	      << std::endl;
-    }
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "IsecEquivalenceClass::merge: after merge, this=" << *this
+// 	    << std::endl;
+//     oofcerr << "IsecEquivalenceClass::merge: intersections = {";
+//     std::cerr << intersections;
+//     oofcerr << "}" << std::endl;
+//     OOFcerrIndent indent(2);
+//     for(PlaneIntersection *pi : intersections) {
+//       oofcerr << "IsecEquivalenceClass::merge: " << pi << " " << *pi
+// 	      << std::endl;
+//     }
+//   }
+// #endif // DEBUG
 }
 
 std::ostream &operator<<(std::ostream &os, const IsecEquivalenceClass &eqclass)

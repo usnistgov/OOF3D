@@ -851,7 +851,7 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
 	if(verbose) {
 	  oofcerr << "CSkeletonElement::categoryVolumes: "
 		  << "after findPixelPlaneFacets cat=" << cat << std::endl;
-	  homtet.dumpEquivalences();
+	  // homtet.dumpEquivalences();
 	}
 	if(!homtet.verify()) {
 	  throw ErrProgrammingError("Verification failed", __FILE__, __LINE__);
