@@ -316,13 +316,13 @@ PixelPlaneFacet::PixelPlaneFacet(HomogeneityTet *htet,
 	faceEdgeMap[fpp] = i;
     }
   }
-#ifdef DEBUG
-  if(verbose) {
-    for(auto i=faceEdgeMap.begin(); i!=faceEdgeMap.end(); ++i)
-      oofcerr << "PixelPlaneFacet::ctor: faceEdgeMap[" << *i->first << "] = "
-	      << i->second << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     for(auto i=faceEdgeMap.begin(); i!=faceEdgeMap.end(); ++i)
+//       oofcerr << "PixelPlaneFacet::ctor: faceEdgeMap[" << *i->first << "] = "
+// 	      << i->second << std::endl;
+//   }
+// #endif // DEBUG
 }
 
 PixelPlaneFacet::~PixelPlaneFacet() {
@@ -725,6 +725,18 @@ bool PixelPlaneFacet::completeLoops() {
   } // end loop over edges
 
 #ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::completeLoops: after checkEquiv, facet="
+	    << *this << std::endl;
+    // oofcerr << "PixelPlaneFacet::completeLoops: after checkEquiv, eq classes="
+    // 	    << std::endl;
+    // OOFcerrIndent indent(2);
+    // htet->dumpEquivalences();
+  }
+  
+#endif // DEBUG
+
+#ifdef DEBUG
   if(!htet->verify()) {
     oofcerr << "PixelPlaneFacet::completeLoops: verify failed after edge loop"
 	    << std::endl;
@@ -763,7 +775,7 @@ bool PixelPlaneFacet::completeLoops() {
       // First, copy the intersections at this location into a set,
       // and merge ones that are at *identical* positions.
       PPIntersectionNRSet uniqueIsecs;
-      for(auto pp=range.first; pp!=range.second; ++pp) {
+      for(auto pp =range.first; pp!=range.second; ++pp) {
 	PixelPlaneIntersectionNR *p = (*pp).second;
 	bool replaced = false;
 	for(PixelPlaneIntersectionNR *q : uniqueIsecs) {
@@ -788,19 +800,38 @@ bool PixelPlaneFacet::completeLoops() {
 	      // replaceIntersection deletes p and q.
 	      replaceIntersection(q, merged);
 	      replaceIntersection(p, new RedundantIntersection(merged, this));
-	      // if(merged->crossingType() != NONCROSSING)
 	      uniqueIsecs.insert(merged);
 	      replaced = true;
 	      break;		// break from loop over uniqueIsecs
 	    }
 	  }
-	} // end loop over uniqueIsecs
+	} // end loop over uniqueIsecs q
 	if(!replaced) {
 	  uniqueIsecs.insert(p);
 	}
-      }	// end loop over intersections at this coincidence location
-      
-      int nIntersections = uniqueIsecs.size();
+      }	// end loop over intersections p at this coincidence location
+
+#ifdef DEBUG
+      if(verbose) {
+	oofcerr << "PixelPlaneFacet::completeLoops: uniqueIsecs=" << std::endl;
+	OOFcerrIndent indent(2);
+	for(PixelPlaneIntersectionNR *isec : uniqueIsecs)
+	  oofcerr << "PixelPlaneFacet::completeLoops: " << *isec << std::endl;
+      }
+#endif // DEBUG
+
+      // From the set of intersections, choose the ones that are
+      // actually crossings.  These are the points where segments
+      // along the polygon perimeter can start or end.  NOTE: It's not
+      // possible to combine this loop with the previous step, since
+      // when three or more points are merged, the apparent crossing
+      // type can change from crossing to non-crossing and back again.
+      PPIntersectionNRSet uniqueCrossings;
+      for(PixelPlaneIntersectionNR *p : uniqueIsecs)
+	if(p->crossingType() != NONCROSSING)
+	  uniqueCrossings.insert(p);
+     
+      int nIntersections = uniqueCrossings.size();
 #ifdef DEBUG
       if(verbose)
 	oofcerr << "PixelPlaneFacet::completeLoops: resolving "
@@ -808,7 +839,7 @@ bool PixelPlaneFacet::completeLoops() {
 		<< std::endl;
 #endif // DEBUG
       if(nIntersections == 2) {
-	if(!resolveTwoFoldCoincidence(uniqueIsecs)) {
+	if(!resolveTwoFoldCoincidence(uniqueCrossings)) {
 #ifdef DEBUG
 	  if(verbose) {
 	    oofcerr << "PixelPlaneFacet::completeLoops: failed at "
@@ -819,7 +850,7 @@ bool PixelPlaneFacet::completeLoops() {
 	}
       }
       else if(nIntersections == 3) {
-	if(!resolveThreeFoldCoincidence(uniqueIsecs)) {
+	if(!resolveThreeFoldCoincidence(uniqueCrossings)) {
 #ifdef DEBUG
 	  if(verbose) {
 	    oofcerr << "PixelPlaneFacet::completeLoops: failed at "
@@ -830,7 +861,7 @@ bool PixelPlaneFacet::completeLoops() {
 	}
       }
       else if(nIntersections > 3) {
-	if(!resolveMultipleCoincidence(uniqueIsecs, totalIntersections)) {
+	if(!resolveMultipleCoincidence(uniqueCrossings, totalIntersections)) {
 #ifdef DEBUG
 	  if(verbose) {
 	    oofcerr << "PixelPlaneFacet::completeLoops: failed at "
