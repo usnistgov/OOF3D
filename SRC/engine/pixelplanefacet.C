@@ -568,7 +568,7 @@ double PixelPlaneFacet::getArea() const {
   std::vector<bool> includeEdge(edges.size(), true);
   for(unsigned int i=0; i<edges.size(); i++) {
     if(includeEdge[i]) {
-      for(unsigned int j=i+1; j<edges.size() && includeEdge[i]; j++) {
+      for(unsigned int j=i+1; j<edges.size(); j++) {
 	if(includeEdge[j]) {
 	  if(edges[i]->startPt()->isEquivalent(edges[j]->endPt()) &&
 	     edges[j]->startPt()->isEquivalent(edges[i]->endPt()))
