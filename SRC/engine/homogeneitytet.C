@@ -580,7 +580,7 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
 // any existing equivalence class, and puts it in it.  If the point
 // already belongs to a class and is found to also belong to another,
 // the classes are merged.
-void HomogeneityTet::checkEquiv(PlaneIntersection *point) {
+PlaneIntersection *HomogeneityTet::checkEquiv(PlaneIntersection *point) {
 // #ifdef DEBUG
 //   if(verbose) 
 //     oofcerr << "HomogeneityTet::checkEquiv: point=" << point << " " << *point
@@ -647,6 +647,7 @@ void HomogeneityTet::checkEquiv(PlaneIntersection *point) {
 // 	      << std::endl;
 // #endif // DEBUG
   }
+  return point;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -2609,6 +2610,15 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	facet.addFaceEdges(currentEnd, firstStart, this);
       }
 
+      // Remove pairs of equal and opposite segments.
+      facet.removeOpposingEdges();
+
+#ifdef DEBUG
+      if(verboseface)
+	oofcerr << "HomogeneityTet::findFaceFacets: face=" << face
+		<< " before fixNonPositiveArea, facet=" << facet << std::endl;
+#endif // DEBUG
+      
       // Fix situations that can cause the area to be zero or negative.
       facet.fixNonPositiveArea(this, cat);
       
@@ -3006,13 +3016,19 @@ void FaceFacet::addFaceEdges(const FaceEdgeIntersection *fei0,
   if(startEdge == endEdge && fei0->edgePosition() < fei1->edgePosition()) {
     // The intersection points are on the same tet edge and in the
     // right order to be joined by a single segment.
-    addEdge(new FaceFacetEdge(htet, fei0->corner()->clone(htet),
-			      fei1->corner()->clone(htet)));
+    addEdge(new FaceFacetEdge(
+	      htet,
+	      fei0->corner()->clone(htet),
+	      fei1->corner()->clone(htet)));
   }
   else {
     // The intersection points are on different tet edges, or
     // backwards on the same edge.  nwrap is the number of corners we
-    // go around to get from fei0 to fei1. 
+    // go around to get from fei0 to fei1.
+
+    // TODO: There are duplicate calls to checkEquiv here.  Call it
+    // once, and then clone the intersection.
+    
     int nwrap = (NUM_TET_FACE_EDGES + endEdge - startEdge) % NUM_TET_FACE_EDGES;
     if(nwrap == 1) {
       // e0 is the tet-scope index of this edge
@@ -3021,10 +3037,14 @@ void FaceFacet::addFaceEdges(const FaceEdgeIntersection *fei0,
       unsigned int e1 = CSkeletonElement::faceEdges[face][endEdge];
       // node is the index of the node at the junction of e0 and e1
       unsigned int node = CSkeletonElement::edgeEdgeNode[e0][e1];
-      addEdge(new FaceFacetEdge(htet, fei0->corner()->clone(htet),
-				new TripleFaceIntersection(node, htet)));
-      addEdge(new FaceFacetEdge(htet, new TripleFaceIntersection(node, htet),
-				fei1->corner()->clone(htet)));
+      addEdge(new FaceFacetEdge(
+		htet,
+		fei0->corner()->clone(htet),
+		htet->checkEquiv(new TripleFaceIntersection(node, htet))));
+      addEdge(new FaceFacetEdge(
+		htet,
+		htet->checkEquiv(new TripleFaceIntersection(node, htet)),
+		fei1->corner()->clone(htet)));
     }
     else if(nwrap == 2) {	// There are two corners to go around.
       unsigned int e0 = CSkeletonElement::faceEdges[face][startEdge];
@@ -3032,12 +3052,18 @@ void FaceFacet::addFaceEdges(const FaceEdgeIntersection *fei0,
       unsigned int e2 = CSkeletonElement::faceEdges[face][endEdge];
       unsigned int node01 = CSkeletonElement::edgeEdgeNode[e0][e1];
       unsigned int node12 = CSkeletonElement::edgeEdgeNode[e1][e2];
-      addEdge(new FaceFacetEdge(htet, fei0->corner()->clone(htet),
-				new TripleFaceIntersection(node01, htet)));
-      addEdge(new FaceFacetEdge(htet, new TripleFaceIntersection(node01, htet),
-				new TripleFaceIntersection(node12, htet)));
-      addEdge(new FaceFacetEdge(htet, new TripleFaceIntersection(node12, htet),
-				fei1->corner()->clone(htet)));
+      addEdge(new FaceFacetEdge(
+		htet,
+		fei0->corner()->clone(htet),
+		htet->checkEquiv(new TripleFaceIntersection(node01, htet))));
+      addEdge(new FaceFacetEdge(
+		htet,
+		htet->checkEquiv(new TripleFaceIntersection(node01, htet)),
+		htet->checkEquiv(new TripleFaceIntersection(node12, htet))));
+      addEdge(new FaceFacetEdge(
+		htet,
+		htet->checkEquiv(new TripleFaceIntersection(node12, htet)),
+		fei1->corner()->clone(htet)));
 	      
     }
     else if(nwrap == 0) {
@@ -3058,14 +3084,22 @@ void FaceFacet::addFaceEdges(const FaceEdgeIntersection *fei0,
       unsigned int node01 = CSkeletonElement::edgeEdgeNode[e0][e1];
       unsigned int node12 = CSkeletonElement::edgeEdgeNode[e1][e2];
       unsigned int node20 = CSkeletonElement::edgeEdgeNode[e2][e0];
-      addEdge(new FaceFacetEdge(htet, fei0->corner()->clone(htet),
-				new TripleFaceIntersection(node01, htet)));
-      addEdge(new FaceFacetEdge(htet, new TripleFaceIntersection(node01, htet),
-				new TripleFaceIntersection(node12, htet)));
-      addEdge(new FaceFacetEdge(htet, new TripleFaceIntersection(node12, htet),
-				new TripleFaceIntersection(node20, htet)));
-      addEdge(new FaceFacetEdge(htet, new TripleFaceIntersection(node20, htet),
-				fei1->corner()->clone(htet)));
+      addEdge(new FaceFacetEdge(
+		htet,
+		fei0->corner()->clone(htet),
+		htet->checkEquiv(new TripleFaceIntersection(node01, htet))));
+      addEdge(new FaceFacetEdge(
+		htet,
+		htet->checkEquiv(new TripleFaceIntersection(node01, htet)),
+		htet->checkEquiv(new TripleFaceIntersection(node12, htet))));
+      addEdge(new FaceFacetEdge(
+		htet,
+		htet->checkEquiv(new TripleFaceIntersection(node12, htet)),
+		htet->checkEquiv(new TripleFaceIntersection(node20, htet))));
+      addEdge(new FaceFacetEdge(
+		htet,
+		htet->checkEquiv(new TripleFaceIntersection(node20, htet)),
+		fei1->corner()->clone(htet)));
     }
   }
 } // end FaceFacet::addFaceEdges
@@ -3078,15 +3112,49 @@ Coord3D FaceFacet::area(HomogeneityTet *htet) const {
   return areaVec_;
 }
 
+void FaceFacet::removeOpposingEdges() {
+  // Equal but opposite segments, have a net zero contribution to the
+  // area, but if they're the only segments and they're included in
+  // the area calculation, roundoff error might make the area
+  // negative, which will cause the entire perimeter to be included
+  // erroneously.
+  auto edge0 = edges.begin();
+  while(edge0 != edges.end()) {
+    auto edge1 = edge0;
+    ++edge1;
+    bool matched = false;
+    for( ; edge1 != edges.end(); ++edge1) {
+      if((*edge0)->startPt()->isEquivalent((*edge1)->endPt()) &&
+	 (*edge1)->startPt()->isEquivalent((*edge0)->endPt()))
+	{
+	  // Save an iterator to the next edge before erasing edge0
+	  // and edge1.
+	  auto nextedge = edge0;
+	  ++nextedge;
+	  if(nextedge == edge1)
+	    ++nextedge;
+	  delete *edge0;
+	  delete *edge1;
+	  edges.erase(edge0);
+	  edges.erase(edge1);
+	  edge0 = nextedge;
+	  matched = true;
+	  break;
+	}
+    }
+    if(!matched)
+      ++edge0;
+  }
+}
+
 Coord3D FaceFacet::getArea(HomogeneityTet *htet) const {
   Coord3D a;
-  Coord3D fcenter = htet->faceCenter(face); // face center != facet center
-  // center_ = Coord3D::origin;	// this is the facet center
+  Coord3D fcenter = htet->faceCenter(face);
   for(const FaceFacetEdge *edge : edges) {
     if(!edge->isNull()) {
       a += (edge->startPos3D() - fcenter) % (edge->endPos3D() - fcenter);
-      // center_ += edge->startPos3D() + edge->endPos3D();
     }
+
 // #ifdef DEBUG
 //     else {
 //       oofcerr << "FaceFacet::getArea: this=" << *this << std::endl;
@@ -3094,16 +3162,8 @@ Coord3D FaceFacet::getArea(HomogeneityTet *htet) const {
 //     }
 // #endif // DEBUG
   }
-  // center_ /= 2*edges.size();
   return 0.5*a;
 }
-
-// Coord3D FaceFacet::center(const HomogeneityTet *htet) const {
-//   // TODO: IS this used?
-//   if(!areaComputed)
-//     (void) area(htet);
-//   return center_;
-// }
 
 // FaceFacet::fixNonPositiveArea is called after all the pixel facet
 // edges on the face have been located and joined.  If the facet area

@@ -104,7 +104,6 @@ private:
   std::set<FaceFacetEdge*, DerefCompare<FaceFacetEdge>> edges;
   HomogeneityTet *htet;
   mutable Coord3D areaVec_;
-  // mutable Coord3D center_;
   mutable bool areaComputed;
   Coord3D getArea(HomogeneityTet*) const;
 public:
@@ -119,8 +118,8 @@ public:
   // constructor is an error.
   FaceFacet(FaceFacet&&) = default;
   ~FaceFacet();
+
   Coord3D area(HomogeneityTet*) const;
-  // Coord3D center(const HomogeneityTet*) const;
   unsigned int size() const { return edges.size(); }
   bool empty() const { return edges.empty(); }
 
@@ -134,6 +133,7 @@ public:
     return edges.end();
   }
 
+  void removeOpposingEdges();
   void removeNullEdges();
   void fixNonPositiveArea(HomogeneityTet*, unsigned int cat);
 #ifdef DEBUG
@@ -260,8 +260,8 @@ public:
 							const HPixelPlane*);
 
   // Check to see if a point should be in an existing equivalence
-  // class, and put it in if it's necessary.
-  void checkEquiv(PlaneIntersection*);
+  // class, and put it in if it's necessary.  Return the argument.
+  PlaneIntersection *checkEquiv(PlaneIntersection*);
   // Two points are merging to form a third.  Combine the equivalence
   // classes of the first two, and add the third.
   void mergeEquiv(PlaneIntersection*, PlaneIntersection*, PlaneIntersection*);
