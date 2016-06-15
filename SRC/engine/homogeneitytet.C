@@ -44,10 +44,8 @@ bool HomogeneityTet::verboseCategory_(bool verbose, unsigned int category) const
 static std::set<HPixelPlane> vplanes;
 
 void setVerbosePlane(unsigned int direction, int offset, int normal) {
-  oofcerr << "setVerbosePlane: " << direction << " " << offset << " "
-	  <<  normal;
   auto p = vplanes.emplace(direction, offset, normal);
-  oofcerr << " " << *p.first << std::endl;
+  oofcerr << "setVerbosePlane: " << *p.first << std::endl;
 }
 
 bool HomogeneityTet::verbosePlane_(bool verbose, const HPixelPlane *pixplane)
@@ -1173,16 +1171,20 @@ void HomogeneityTet::doFindPixelPlaneFacets(
   	    << " category=" << cat << std::endl;
     if(!tetPts.empty()) {
       oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: tetPts="
-	      << std::endl;;
+	      << std::endl;
       for(const TetIntersection *pt : tetPts)
 	oofcerr << "HomogeneityTet::doFindPixelPlaneFacets:    " << *pt
 		<< std::endl;
+      std::string filename = "tetpts-" + pixplane->shortName() + ".lines";
+      oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
+	      << " writing " << filename << std::endl;
+      std::ofstream tetpts(filename);
       for(unsigned int i=0; i<tetPts.size(); i++) {
-	unsigned int j = (i == 0 ? tetPts.size()-1 : i-1);
-	std::cerr << tetPts[j]->location3D() << ", " << tetPts[i]->location3D()
-		  << std::endl;
+	unsigned int j = (i == tetPts.size()-1 ? 0 : i+1);
+	tetpts << tetPts[i]->location3D() << ", " << tetPts[j]->location3D()
+	       << std::endl;
       }
-
+      tetpts.close();
     }
   }
   OOFcerrIndent indent(2);
@@ -1464,9 +1466,12 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 
   double facetarea = facet->area();
 #ifdef DEBUG
-  if(verboseplane)
+  if(verboseplane) {
     oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: completed loops, area="
 	    << facetarea << std::endl;
+    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: facet=" << *facet
+	    << std::endl;
+  }
 #endif // DEBUG
   if(facetarea <= 0.0) {
     // There are no intersections.  We either need to include all of
@@ -1606,32 +1611,65 @@ PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
   unsigned int bestFace = NONE;
   for(unsigned int n=0; n<NUM_TET_NODES; n++) {
     unsigned int face = CSkeletonElement::oppFace[n];
-    // skip this face if it lies in the pixel plane or the orthogonal plane
-    if(onFace != face && orthoFace != face) {
-      if(interiorB[n] > 0.0 && exteriorB[n] <= 0.0) {
-	// alpha is the fractional distance from interiorPt to exteriorPt.
-	double alpha = interiorB[n]/(interiorB[n] - exteriorB[n]);
-	if(alpha < bestAlpha) {
-	  bestAlpha = alpha;
-	  bestFace = face;
-	}
+    // skip this face if it lies in the pixel plane or the orthogonal
+    // plane or is collinear with them.
+    if(onFace != face && orthoFace != face &&
+       !areCollinear(upixplane, orthoPlane, getTetFacePlane(face)))
+      {
+	if(interiorB[n] > 0.0 && exteriorB[n] <= 0.0) {
+	  // alpha is the fractional distance from interiorPt to exteriorPt.
+	  double alpha = interiorB[n]/(interiorB[n] - exteriorB[n]);
+	  if(alpha < bestAlpha) {
+	    bestAlpha = alpha;
+	    bestFace = face;
+	  }
       }
     }
   } // end loop over nodes/faces
-  assert(bestFace != NONE);
 
-// #ifdef DEBUG
-//   if(verboseplane) {
-//     oofcerr << "HomogeneityTet::find_one_intersection: pixplane=" << *pixplane
-// 	    << " orthoPlane=" << *orthoPlane << " face=" << bestFace
-// 	    << std::endl;
-//   }
-// #endif // DEBUG
+  if(bestFace == NONE) {
+    // No face crosses the segment.  The segment must lie along a face
+    // (ie, pixplane and orthoPlane are collinear with at least one
+    // tet face), and roundoff error has put one end of the segment
+    // inside and one outside.  The intersection point can be chosen
+    // to lie at any point on the segment, unless the segment extends
+    // past the rim of the tet face.  Choose interiorPt because it
+    // can't be past the rim.
+    bestAlpha = 0;
+  }
+#ifdef DEBUG
+  if(verboseplane) {
+    oofcerr << "HomogeneityTet::find_one_intersection: pixplane=" << *pixplane
+	    << " orthoPlane=" << *orthoPlane << " face=" << bestFace
+	    << std::endl;
+  }
+#endif // DEBUG
+
+  // newIntersection returns either a SimpleIntersection or a
+  // MultiFaceIntersection, depending on whether or not orthoPlane is
+  // also a tet face.
   PixelPlaneIntersectionNR *ppi =
     newIntersection(this, upixplane, orthoPlane, pbls,
 		    entry ? 1-bestAlpha : bestAlpha,
 		    bestFace,
 		    entry ? ENTRY : EXIT);
+
+  if(bestFace == NONE) {
+    // Do the things that the SimpleIntersection or
+    // MultiFaceIntersection constructor couldn't do because it was
+    // called with faceIndex==NONE.
+    ICoord3D loc = pixplane->convert2Coord3D(interiorPt);
+    ppi->setLocation(pixplane->convert2Coord3D(interiorPt).coord());
+    // The third plane for the intersection is the pixel plane at
+    // interiorPt that isn't either pixplane or orthoPlane.
+    unsigned int dir = 3 - pixplane->direction() - orthoPlane->direction();
+    int offset = loc[dir];
+    const HPixelPlane *pp = getPixelPlane(dir, offset, 1);
+    const HPixelPlane *upp = getUnorientedPixelPlane(pp);
+    upp->addToIntersection(ppi);
+    ppi->includeCollinearPlanes(this);
+  }
+  
 #ifdef DEBUG
   // if(verboseplane) {
   //   oofcerr << "HomogeneityTet::find_one_intersection: pixplane=" << *pixplane
@@ -1642,6 +1680,10 @@ PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
 #endif // DEBUG
   return ppi;
 } // end HomogeneityTet::find_one_intersection
+
+
+
+
 
 std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
 					const HPixelPlane *pixplane,

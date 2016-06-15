@@ -134,7 +134,7 @@ public:
   }
 
   void removeOpposingEdges();
-  void removeNullEdges();
+  // void removeNullEdges();
   void fixNonPositiveArea(HomogeneityTet*, unsigned int cat);
 #ifdef DEBUG
   void dump(std::string, unsigned int) const;

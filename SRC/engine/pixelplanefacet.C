@@ -823,6 +823,10 @@ bool PixelPlaneFacet::completeLoops() {
       // possible to combine this loop with the previous step, since
       // when three or more points are merged, the apparent crossing
       // type can change from crossing to non-crossing and back again.
+
+      // The previous merge can create intersections with
+      // crossingCount > 1 or < -1, which indicates that some further
+      // merging is required.
       PPIntersectionNRSet uniqueCrossings;
       for(PixelPlaneIntersectionNR *p : uniqueIsecs)
 	if(p->crossingType() != NONCROSSING)
@@ -887,18 +891,18 @@ bool PixelPlaneFacet::completeLoops() {
   }
 #endif	// DEBUG
 
-  // Remove edges that join equivalent intersection points.
-  removeNullEdges();
+//   // Remove edges that join equivalent intersection points.
+//   removeNullEdges();
 
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PixelPlaneFacet::completeLoops: after removing null edges,"
-	    << " facet=" << *this << std::endl;
-  }
-  if(!htet->verify()) {
-    throw ErrProgrammingError("Verification failed", __FILE__, __LINE__);
-  }
-#endif	// DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneFacet::completeLoops: after removing null edges,"
+// 	    << " facet=" << *this << std::endl;
+//   }
+//   if(!htet->verify()) {
+//     throw ErrProgrammingError("Verification failed", __FILE__, __LINE__);
+//   }
+// #endif	// DEBUG
 
   // Construct the lists of intersections on each edge, now including
   // only the topologically distinct intersections
@@ -1232,7 +1236,7 @@ void PixelPlaneFacet::removeNullEdges() {
   if(nNullEdges == 0)
     return;
   std::vector<FacetEdge*> newedges;
-  newedges.reserve(edges.size()-nNullEdges);
+  newedges.reserve(edges.size() - nNullEdges);
   for(FacetEdge *edge : edges) {
     if(!edge->nullified()) {
       PixelPlaneIntersection *startPt = edge->startPt();
@@ -1329,10 +1333,6 @@ static void classifyVSBcorner(const PixelPlaneIntersectionNR * const fi0,
   PixelBdyLoopSegment seg0, seg1;
   // getOrdering sets seg0, seg1, and corner if it's successful.
   ISEC_ORDER order = fi0->getOrdering(fi1, seg0, seg1, corner);
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "classifyVSBcorner: order=" << order << std::endl;
-#endif // DEBUG
   if(order == NONCONTIGUOUS) {
     // The points are on nonadjacent segments.
     firstPt = nullptr;
@@ -1385,51 +1385,60 @@ bool PixelPlaneFacet::resolveTwoFoldCoincidence(const PPIntersectionNRSet &isecs
     */
     
     if(fi0->onOnePolySegment(fi1, this) || fi0->onSameLoopSegment(fi1)) {
+#ifdef DEBUG
+      if(verbose)
+	oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: trivial merge"
+		<< std::endl;
+#endif // DEBUG
       replaceIntersection(fi1, new RedundantIntersection(fi0, this));
     }
   } // end if crossing types are the same
   else {
     // There's one entry and one exit.
-    if(fi0->isEquivalent(fi1) || fi0->isMisordered(fi1, this)) {
-#ifdef DEBUG
-      if(verbose) {
-	// oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence:"
-	// 	<< " isEquivalent=" << fi0->isEquivalent(fi1)
-	// 	<< " isMisordered=" << fi0->isMisordered(fi1, this)
-	// 	<< std::endl;
-	oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: "
-		<< "trying to merge equivalent entry and exit" << std::endl;
-      }
-#endif // DEBUG
-      PixelPlaneIntersectionNR *merged = fi0->mergeWith(htet, fi1, this);
-      if(merged) {
+    bool multiCrossing = fi0->multipleCrossing() || fi1->multipleCrossing();
+    if(multiCrossing || fi0->isEquivalent(fi1) || fi0->isMisordered(fi1, this))
+      {
 #ifdef DEBUG
 	if(verbose) {
-	  oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: merged="
-		  << *merged << std::endl;
+	  // oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence:"
+	  // 	<< " isEquivalent=" << fi0->isEquivalent(fi1)
+	  // 	<< " isMisordered=" << fi0->isMisordered(fi1, this)
+	  // 	<< std::endl;
+	  oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: "
+		  << "trying to merge equivalent entry and exit" << std::endl;
 	}
-	// if(!htet->verify()) {
-	//   throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
-	// }
 #endif // DEBUG
-	replaceIntersection(fi0, merged);
-	replaceIntersection(fi1, new RedundantIntersection(merged, this));
+	PixelPlaneIntersectionNR *merged = fi0->mergeWith(htet, fi1, this);
+	if(merged) {
 #ifdef DEBUG
-	if(!htet->verify()) {
-	  throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
-	}
+	  if(verbose) {
+	    oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: merged="
+		    << *merged << std::endl;
+	  }
+	  // if(!htet->verify()) {
+	  //   throw ErrProgrammingError("Verification failed!",
+	  //           __FILE__, __LINE__);
+	  // }
 #endif // DEBUG
-      }
-      else {
+	  replaceIntersection(fi0, merged);
+	  replaceIntersection(fi1, new RedundantIntersection(merged, this));
+#ifdef DEBUG
+	  if(!htet->verify()) {
+	    throw ErrProgrammingError("Verification failed!",
+				      __FILE__, __LINE__);
+	  }
+#endif // DEBUG
+	}
+	else {
 // #ifdef DEBUG
 // 	if(verbose) {
 // 	  oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: "
 // 		  << "failed to merge entry and exit" << std::endl;
 // 	}
 // #endif // DEBUG
-	return false;
-      }
-    }
+	  return false;
+	}
+      }	// end if repairs were needed
   }
   return true;	     // coincidence handled
 } // end PixelPlaneFacet::resolveTwoFoldCoincidence
@@ -1951,18 +1960,18 @@ bool PixelPlaneFacet::vsbCornerCoincidence(const PixelPlaneIntersectionNR *fi0,
   unsigned int polyseg = fi0->sharedPolySegment(fi1, this);
   double entryPolyFrac = entryPt->getPolyFrac(polyseg, this);
   double exitPolyFrac = exitPt->getPolyFrac(polyseg, this);
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PixelPlaneFacet::vsbCornerCoincidence: entryPt=" << *entryPt
-	    << " exitPt=" << *exitPt <<  std::endl
-	    << "                                     : turn=" << turn
-	    << std::endl
-	    << "                                     : entryPolyFrac="
-	    << entryPolyFrac << " exitPolyFrac=" << exitPolyFrac
-	    << " diff=" << (exitPolyFrac - entryPolyFrac)
-	    << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneFacet::vsbCornerCoincidence: entryPt=" << *entryPt
+// 	    << " exitPt=" << *exitPt <<  std::endl
+// 	    << "                                     : turn=" << turn
+// 	    << std::endl
+// 	    << "                                     : entryPolyFrac="
+// 	    << entryPolyFrac << " exitPolyFrac=" << exitPolyFrac
+// 	    << " diff=" << (exitPolyFrac - entryPolyFrac)
+// 	    << std::endl;
+//   }
+// #endif // DEBUG
   return ((turn == LEFT && entryPolyFrac <= exitPolyFrac)
 	  ||
 	  (turn == RIGHT && entryPolyFrac >= exitPolyFrac)

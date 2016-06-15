@@ -285,37 +285,43 @@ bool PixelPlaneIntersection::onOnePolySegment(const PixelPlaneIntersection *fi,
 					       const PixelPlaneFacet *facet)
   const
 {
-#ifdef DEBUG
-  if(facet->verbose) {
-    oofcerr << "PixelPlaneIntersection::onOnePolySegment: this=" << *this
-	    << std::endl;
-    oofcerr << "PixelPlaneIntersection::onOnePolySegment:   fi=" << *fi
-	    << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(facet->verbose) {
+//     oofcerr << "PixelPlaneIntersection::onOnePolySegment: this=" << *this
+// 	    << std::endl;
+//     oofcerr << "PixelPlaneIntersection::onOnePolySegment:   fi=" << *fi
+// 	    << std::endl;
+//   }
+// #endif // DEBUG
   FacePlaneSet shared = referent()->sharedFaces(fi->referent());
-#ifdef DEBUG
-  if(facet->verbose) {
-    oofcerr << "PixelPlaneIntersection::onOnePolySegment: base plane="
-	    << facet->getBaseFacePlane();
-    if(facet->getBaseFacePlane())
-      oofcerr << " " << *facet->getBaseFacePlane();
-    oofcerr << std::endl;
-    oofcerr << "PixelPlaneIntersection::onOnePolySegment: shared.size="
-	    << shared.size() << std::endl;
-    for(const FacePlane *fp : shared) {
-      oofcerr << "PixelPlaneIntersection::onOnePolySegment:  shared plane="
-	      << fp << " " << *fp << std::endl;
-    }
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(facet->verbose) {
+//     oofcerr << "PixelPlaneIntersection::onOnePolySegment: base plane="
+// 	    << facet->getBaseFacePlane();
+//     if(facet->getBaseFacePlane())
+//       oofcerr << " " << *facet->getBaseFacePlane();
+//     oofcerr << std::endl;
+//     oofcerr << "PixelPlaneIntersection::onOnePolySegment: facet plane="
+// 	    << *facet->pixplane << std::endl;
+//     oofcerr << "PixelPlaneIntersection::onOnePolySegment: shared.size="
+// 	    << shared.size() << std::endl;
+//     for(const FacePlane *fp : shared) {
+//       oofcerr << "PixelPlaneIntersection::onOnePolySegment:  shared plane="
+// 	      << fp << " " << *fp << std::endl;
+//     }
+//   }
+// #endif // DEBUG
   if(shared.size() == 1 && facet->getBaseFacePlane() != *shared.begin())
     return true;
   if(shared.size() == 2) {
     const FacePlane *base = facet->getBaseFacePlane();
     if(base == *shared.begin() || base == *shared.rbegin() ||
-       facet->htet->areCollinear(facet->pixplane, *shared.begin(),
-				 *shared.rbegin()))
+       // TODO: Calling getUnorientedPixelPlane here may be slow. The
+       // facet can store the unoriented plane.
+       facet->htet->areCollinear(
+			 htet->getUnorientedPixelPlane(facet->pixplane),
+			 *shared.begin(),
+			 *shared.rbegin()))
       return true;
   }
   return false;
@@ -1697,29 +1703,23 @@ SimpleIntersection::SimpleIntersection(HomogeneityTet *htet,
   pp0->addToIntersection(this);
   pp1->addToIntersection(this);
 
-  // The given faceindex is the face that intersects the
-  // PixelBdyLoopSegment.  It's not the face, if any, that contains the
-  // pixel plane of the facet.
-  const FacePlane *fp = htet->getTetFacePlane(faceIndex);
-  fp->addToIntersection(this);
-  setFacePlane(fp);
+  // The given faceIndex is the face that intersects the
+  // PixelBdyLoopSegment.  It's not the face, if any, that contains
+  // the pixel plane of the facet.  faceIndex can be NONE if the
+  // segment lies in the plane of a face, in which case the calling
+  // routine will set the location and add a transverse face.
+  if(faceIndex != NONE) {
+    const FacePlane *fp = htet->getTetFacePlane(faceIndex);
+    fp->addToIntersection(this);
+    setFacePlane(fp);
+    computeLocation();
+    includeCollinearPlanes(htet);
+  }
   setLoopSeg(pblseg);
   setLoopFrac(alpha);
   assert(ct == ENTRY || ct == EXIT);
   setCrossingType(ct);
-  includeCollinearPlanes(htet);
-  // try {
-    computeLocation();
-  // }
-  // catch (...) {
-  //   oofcerr << "SimpleIntersection::ctor: pp0=" << *pp0 << " pp1=" << *pp1
-  // 	    << " pblseg=" << pblseg << " faceIndex=" << faceIndex
-  // 	    << std::endl;
-  //   throw;
-  // }
-
-    
-    // #ifdef DEBUG
+// #ifdef DEBUG
 //   oofcerr << "SimpleIntersection::ctor: done" << std::endl;
 // #endif // DEBUG
 }
@@ -1765,16 +1765,16 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
     // Don't call mergeEquiv -- clones don't need it
     return merged;
   }
-  if(facet->onOppositeEdges(this, fi)) {
 #ifdef DEBUG
-  if(htet->verbosePlane())
-    oofcerr << "SimpleIntersection::mergeWith: on opposite edges!" << std::endl;
-#endif // DEBUG
-  throw ErrProgrammingError("SimpleIntersection::mergeWith failed!",
-			    __FILE__, __LINE__)
-    ;
+  if(facet->onOppositeEdges(this, fi)) {
+    if(htet->verbosePlane())
+      oofcerr << "SimpleIntersection::mergeWith: on opposite edges!"
+	      << std::endl;
+    throw ErrProgrammingError("SimpleIntersection::mergeWith failed!",
+			      __FILE__, __LINE__);
   }
-  else if(onSameLoopSegment(fi)) {
+#endif // DEBUG
+  if(onSameLoopSegment(fi)) {
     merged = new MultiFaceIntersection(htet, this, fi);
   }
   else if(onOnePolySegment(fi, facet)) {
@@ -1846,19 +1846,19 @@ bool SimpleIntersection::isMisordered(const SimpleIntersection *fi,
 				      const PixelPlaneFacet *facet)
   const
 {
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "SimpleIntersection::isMisordered: this=" << *this <<  std::endl
-	    << "                                :   fi=" << *fi << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "SimpleIntersection::isMisordered: this=" << *this <<  std::endl
+// 	    << "                                :   fi=" << *fi << std::endl;
+//   }
+// #endif // DEBUG
   bool sameLoopSeg = onSameLoopSegment(fi);
   bool samePolySeg = onOnePolySegment(fi, facet);
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "SimpleIntersection::isMisordered: sameLoopSeg=" << sameLoopSeg
-	    << " samePolySeg=" << samePolySeg << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "SimpleIntersection::isMisordered: sameLoopSeg=" << sameLoopSeg
+// 	    << " samePolySeg=" << samePolySeg << std::endl;
+// #endif // DEBUG
   assert(!(sameLoopSeg && samePolySeg));
   if(!sameLoopSeg && samePolySeg) {
     return facet->vsbCornerCoincidence(this, fi);
@@ -1950,13 +1950,15 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
 {
   pp0->addToIntersection(this);
   pp1->addToIntersection(this);
-  const FacePlane *fp = htet->getTetFacePlane(faceIndex);
-  fp->addToIntersection(this);
+  if(faceIndex != NONE) {
+    const FacePlane *fp = htet->getTetFacePlane(faceIndex);
+    fp->addToIntersection(this);
+    computeLocation();
+    includeCollinearPlanes(htet);
+  }
   setLoopSeg(pblseg);
   setLoopFrac(alpha);
   setCrossingType(ct);
-  includeCollinearPlanes(htet);
-  computeLocation();
 }
 
 MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,

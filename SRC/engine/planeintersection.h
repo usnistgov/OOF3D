@@ -308,11 +308,6 @@ protected:
 
   int crossing_; // 0 -> noncrossing, positive -> exit, negative -> entry
 
-  // Either computeLocation or setLocation should be called by the
-  // subclass's constructor.
-  void computeLocation();	// use planes to compute loc_
-  void setLocation(const Coord3D&); // set loc_ directly
-
   // Copy the planes from two other PixelPlaneIntersections.
   void copyPlanes(const PixelPlaneIntersectionNR*,
 		  const PixelPlaneIntersectionNR*);
@@ -320,7 +315,6 @@ protected:
   template <class PlaneSet0, class PlaneSet1>
   bool includeCollinearPlanes_(const CollinearPlaneMap&,
 			       const PlaneSet0 &, const PlaneSet1 &);
-  void includeCollinearPlanes(HomogeneityTet*);
 
 #ifdef DEBUG
   std::string printPlanes() const;
@@ -356,7 +350,12 @@ public:
   const FacePixelPlaneSet &pixelFaces() const { return pixelFaces_; }
   FacePixelPlaneSet &pixelFaces() { return pixelFaces_; }
 
-  // virtual void includeCollinearPlanes(const CollinearPlaneMap &);
+  void includeCollinearPlanes(HomogeneityTet*);
+
+  // Either computeLocation or setLocation should be called when a
+  // intersection is constructed.
+  void computeLocation();	// use planes to compute loc_
+  void setLocation(const Coord3D&); // set loc_ directly
 
   virtual bool onSameLoopSegment(const PixelPlaneIntersectionNR*) const = 0;
   virtual bool sameLoopSegment(const SingleVSBbase*) const = 0;
@@ -401,6 +400,7 @@ public:
   virtual int crossingCount() const { return crossing_; }
   void setCrossingCount(int t) { crossing_ = t; }
   void setCrossingType(CrossingType);
+  bool multipleCrossing() const { return crossing_ > 1 || crossing_ < -1; }
 
   // getOrdering computes whether two intersection points (this and
   // the given arg) are on consecutive VSB segments, and which comes
