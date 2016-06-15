@@ -1715,6 +1715,9 @@ SimpleIntersection::SimpleIntersection(HomogeneityTet *htet,
     computeLocation();
     includeCollinearPlanes(htet);
   }
+  else {
+    setFacePlane(nullptr);
+  }
   setLoopSeg(pblseg);
   setLoopFrac(alpha);
   assert(ct == ENTRY || ct == EXIT);
@@ -1916,8 +1919,13 @@ bool SimpleIntersection::isMisordered(const MultiCornerIntersection *fi,
 
 void SimpleIntersection::print(std::ostream &os) const {
   os << "SimpleIntersection(" << printPlanes() << ", " << location3D()
-     << ", crossing=" << crossingCount() << ", faceplane=" << *getFacePlane()
-     << ", eq=" << eqPrint(equivalence_) << ")";
+     << ", crossing=" << crossingCount();
+  const FacePlane *fp = getFacePlane();
+  if(fp)
+    os << ", faceplane=" << *getFacePlane();
+  else
+    os << ", faceplane=0x0";
+  os << ", eq=" << eqPrint(equivalence_) << ")";
 }
 
 PixelPlaneIntersectionNR *newIntersection(HomogeneityTet *htet,
@@ -2193,7 +2201,8 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
   copyPlanes(fi0, fi1);
   setCrossingCount(combinedCrossing(fi0, fi1));
   // setPolyFrac(fi0->getPolyFrac(NONE, facet));
-  setFacePlane(fi0->getFacePlane());
+  setFacePlane(fi0->getFacePlane() != nullptr ?
+	       fi0->getFacePlane() : fi1->getFacePlane());
   // TODO: Enforce that each vsb segment fraction is either 0 or 1
   vsbSegments[fi0->getLoopSeg()] = fi0->getLoopFrac();
   vsbSegments[fi1->getLoopSeg()] = fi1->getLoopFrac();
@@ -2216,7 +2225,8 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
   copyPlanes(si, mvi);
   setCrossingCount(combinedCrossing(si, mvi));
   // setPolyFrac(si->getPolyFrac(NONE, facet));
-  setFacePlane(si->getFacePlane());
+  setFacePlane(si->getFacePlane() != nullptr ?
+	       si->getFacePlane() : mvi->getFacePlane());
   vsbSegments[si->getLoopSeg()] = si->getLoopFrac();
   vsbSegments.insert(mvi->getLoopSegs().begin(), mvi->getLoopSegs().end());
   computeLocation();

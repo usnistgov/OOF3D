@@ -14,6 +14,8 @@
 #ifndef DEREFCOMPARE_H
 #define DEREFCOMPARE_H
 
+#include "common/ooferror.h"
+
 // Comparator object for sorting sets and maps of pointers by the
 // value pointed to, not by the pointers themselves.  This is useful
 // to ensure that the values aren't duplicated in a set, or (for
@@ -27,7 +29,12 @@
 template <class TYPE>
 struct DerefCompare {
   bool operator()(const TYPE *a, const TYPE *b) const {
-    assert(a != nullptr && b != nullptr);
+#ifdef DEBUG
+    if(a == nullptr || b == nullptr) {
+      throw ErrProgrammingError("Null argument(s) to DerefCompare!",
+				__FILE__, __LINE__);
+    }
+#endif // DEBUG
     return *a < *b;
   }
 };

@@ -1609,13 +1609,13 @@ PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
   // point of the PixelBdyLoopSegment is the real intersection.
   double bestAlpha = std::numeric_limits<double>::max();
   unsigned int bestFace = NONE;
+  const FacePlane *collinearFace = nullptr;
   for(unsigned int n=0; n<NUM_TET_NODES; n++) {
     unsigned int face = CSkeletonElement::oppFace[n];
     // skip this face if it lies in the pixel plane or the orthogonal
     // plane or is collinear with them.
-    if(onFace != face && orthoFace != face &&
-       !areCollinear(upixplane, orthoPlane, getTetFacePlane(face)))
-      {
+    if(onFace != face && orthoFace != face) {
+      if(!areCollinear(upixplane, orthoPlane, getTetFacePlane(face))) {
 	if(interiorB[n] > 0.0 && exteriorB[n] <= 0.0) {
 	  // alpha is the fractional distance from interiorPt to exteriorPt.
 	  double alpha = interiorB[n]/(interiorB[n] - exteriorB[n]);
@@ -1623,7 +1623,10 @@ PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
 	    bestAlpha = alpha;
 	    bestFace = face;
 	  }
+	}
       }
+      else
+	collinearFace = getTetFacePlane(face);
     }
   } // end loop over nodes/faces
 
@@ -1668,6 +1671,7 @@ PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
     const HPixelPlane *upp = getUnorientedPixelPlane(pp);
     upp->addToIntersection(ppi);
     ppi->includeCollinearPlanes(this);
+    ppi->setFacePlane(collinearFace); // no-op for MultiFaceIntersection
   }
   
 #ifdef DEBUG

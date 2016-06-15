@@ -352,6 +352,8 @@ public:
 
   void includeCollinearPlanes(HomogeneityTet*);
 
+  virtual void setFacePlane(const FacePlane*) {}
+
   // Either computeLocation or setLocation should be called when a
   // intersection is constructed.
   void computeLocation();	// use planes to compute loc_
@@ -530,7 +532,7 @@ public:
   virtual const FacePlane *getFacePlane() const { return facePlane_; }
 
   // void setPolyFrac(double a) { polyFrac = a; }
-  void setFacePlane(const FacePlane *fp) { facePlane_ = fp; }
+  virtual void setFacePlane(const FacePlane *fp) { facePlane_ = fp; }
   virtual double getPolyFrac(unsigned int, const PixelPlaneFacet*) const;
   virtual unsigned int getPolyEdge(const PixelPlaneFacet *facet) const;
   virtual unsigned int maxPolyEdge(const PixelPlaneFacet *facet) const;
