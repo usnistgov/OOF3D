@@ -840,7 +840,8 @@ bool PixelPlaneIntersectionNR::isEquiv(const TripleFaceIntersection *tfi)
 // two sets of planes (each made of pixel planes, face planes, and
 // face pixel planes) have three nondegenerate planes in common.
 
-static bool isEquiv_(const PixelPlaneSet &pp0, const FacePlaneSet &fp0,
+static bool isEquiv_(HomogeneityTet *htet,
+		     const PixelPlaneSet &pp0, const FacePlaneSet &fp0,
 		     const FacePixelPlaneSet &fpp0,
 		     const PixelPlaneSet &pp1, const FacePlaneSet &fp1,
 		     const FacePixelPlaneSet &fpp1)
@@ -849,8 +850,8 @@ static bool isEquiv_(const PixelPlaneSet &pp0, const FacePlaneSet &fp0,
   // the sets are sorted, and that information isn't being used.  The
   // sets are also small.
   unsigned int npixplanes = 0;
-  std::vector<const Plane*> planes;
-  planes.reserve(10);	   // more than we'll need in almost all cases
+  std::vector<const HPlane*> planes;
+  planes.reserve(10);		// more than we'll need in all cases
   for(const HPixelPlane *thisplane : pp0) {
     for(const HPixelPlane *otherplane : pp1) {
       if(thisplane == otherplane) {
@@ -908,15 +909,37 @@ static bool isEquiv_(const PixelPlaneSet &pp0, const FacePlaneSet &fp0,
   // that distinguish the points, and the points do not coincide.
   unsigned int nPlanes = planes.size();
   for(unsigned int i=0; i<nPlanes-2; i++) {
+    // This is a horrible hack but it's the quickest way to see if the
+    // code will work...  TODO: Find a way not to use casts here.
+    // Maybe a triple-dispatch method that uses htet->areCollinear if
+    // it gets two faces and a pixel plane, and Plane::nonDegenerate
+    // otherwise.
+    bool iIsPixelPlane = dynamic_cast<const HPixelPlane*>(planes[i]) != nullptr;
     for(unsigned int j=i+1; j<nPlanes-1; j++) {
+      bool jIsPixelPlane =
+	dynamic_cast<const HPixelPlane*>(planes[j]) != nullptr;
       for(unsigned int k=j+1; k<nPlanes; k++) {
-	// TODO: Instead of calling Plane::nonDegenerate here, which
-	// might be susceptible to round off error, use the
-	// HomogeneityTet::collinearPlanes structure.  However,
-	// collinearPlanes only includes situations with two faces, so
-	// it might not be sufficient.
-	if(planes[i]->nonDegenerate(planes[j], planes[k]))
-	  return true;
+	bool kIsPixelPlane =
+	  dynamic_cast<const HPixelPlane*>(planes[k]) != nullptr;
+
+	int npixelplanes = 0;
+	if(iIsPixelPlane) ++npixelplanes;
+	if(jIsPixelPlane) ++npixelplanes;
+	if(kIsPixelPlane) ++npixelplanes;
+	assert(npixelplanes == 1 || npixelplanes == 2);
+	if(npixelplanes == 2) {
+	  if(planes[i]->nonDegenerate(planes[j], planes[k]))
+	    return true;
+	}
+	else {			// npixelplanes == 1
+	  // Instead of calling Plane::nonDegenerate here, which might
+	  // be susceptible to round off error, use the
+	  // HomogeneityTet::collinearPlanes structure.
+	  // collinearPlanes only includes situations with two faces,
+	  // so it's not always usable.
+	  if(!htet->areCollinear(planes[i], planes[j], planes[k]))
+	    return true;
+	}
       }
     }
   }
@@ -927,7 +950,7 @@ bool PixelPlaneIntersectionNR::isEquiv(const PixelPlaneIntersectionNR *ppi)
   const
 
 {
-  return isEquiv_(pixelPlanes_, faces_, pixelFaces_,
+  return isEquiv_(htet, pixelPlanes_, faces_, pixelFaces_,
 		  ppi->pixelPlanes(), ppi->faces(), ppi->pixelFaces());
 }
 
@@ -961,7 +984,7 @@ void PixelPlaneIntersectionNR::addPlanesToEquivalence(
 bool PixelPlaneIntersectionNR::isEquivalent(const IsecEquivalenceClass *eqclass)
   const
 {
-  return isEquiv_(pixelPlanes_, faces_, pixelFaces_,
+  return isEquiv_(htet, pixelPlanes_, faces_, pixelFaces_,
 		  eqclass->pixelPlanes, eqclass->facePlanes,
 		  eqclass->pixelFaces);
 }
@@ -2857,7 +2880,7 @@ bool IsecEquivalenceClass::verify() {
 }
 
 void IsecEquivalenceClass::dump() {
-  oofcerr << "IsecEquivalenceClass::dump: this=" << this << " " << *this
+  oofcerr << "IsecEquivalenceClass::dump: this= " << *this
     	  << std::endl;
   OOFcerrIndent indent(2);
   for(PlaneIntersection *pi : intersections) {
