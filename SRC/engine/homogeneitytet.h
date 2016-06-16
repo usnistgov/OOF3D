@@ -332,6 +332,7 @@ public:
 #ifdef DEBUG
 void setVerboseFace(unsigned int);
 void setVerbosePlane(unsigned int, int, int);
+void setNoVerbosePlanes();
 void setVerboseCategory(unsigned int);
 #endif // DEBUG
 

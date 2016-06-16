@@ -13,7 +13,7 @@ sides = {'+':1, '-':-1}
 
 def addVerbosePlane(planespec):
     if planespec == 'None':
-        setVerbosePlane(NONE, 0, 1)
+        setNoVerbosePlanes()
     else:
         # planespec is something like X=5- or Y=10-
         direction = dirs[planespec[0]]

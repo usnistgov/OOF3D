@@ -27,6 +27,7 @@ void setVerboseElement(unsigned int);
 void setVerboseAllElements();
 void setVerboseFace(unsigned int);
 void setVerbosePlane(unsigned int dir, int offset, int side);
+void setNoVerbosePlanes();
 void setVerboseCategory(unsigned int);
 
 #endif // HTETDEBUG_SWG
