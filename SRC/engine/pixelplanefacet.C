@@ -2127,21 +2127,9 @@ bool PixelPlaneFacet::polyVSBCornerCoincidence(
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// Triple coincidence.  When traversing either the polygon segments or
-// the VSB segments, entries and exits must alternate in the
-// intersection sequence.  This routine can assume that there are two
-// entries and one exit or two exits and one entry, and that the two
-// entries or exits are on different VSB segments.
-
-/*   A /\ B                B /\ A
-//  --o--o----          ----o--o---  VSB bdy
-//   /    \  |          |  /    \
-//  /      \ |          | /      \ polygon bdy
-//          \|          |/            
-//           o C        o C         Polygon bdy is always counterclockwise.
-//           |\        /|           VSB bdy can go either direction, so
-//           | \      / |           these pictures apply to both R and L turns.
-*/
+// tripleCoincidence is called by resolveThreeFoldCoincidence to find
+// intersections (if any) need to be merged.  There are two classes of
+// triple coincidence, involving either two or three VSB segments.
 
 // fi0 and fi1 are both entries or both exits, and are on different segments.
 // The one that's different from the other two, entry-wise, is fiB.
@@ -2163,135 +2151,275 @@ PixelPlaneFacet::tripleCoincidence(PixelPlaneIntersectionNR *fi0,
   }
   else {
     sharedSeg = fi1->sharedLoopSegment(fiB);
-    assert(sharedSeg != nullptr);
-    fiA = fi1;
-    fiC = fi0;
-  }
-  assert(fiA->crossingType() == fiC->crossingType() &&
-	 fiA->crossingType() != fiB->crossingType());
-
-  // If A and C are on the same polygon segment all three points must
-  // coincide.
-  const FacePlane *faceAC = fiA->sharedFace(fiC, getBaseFacePlane());
-  if(faceAC != nullptr) {
-    coincidentPoints.push_back(fiA);
-    coincidentPoints.push_back(fiB);
-    coincidentPoints.push_back(fiC);
-    return coincidentPoints;
-  }
-
-  // Only "turn" is used here, but classifyVSBcorner expects the rest
-  // of the args.
-  const PixelPlaneIntersectionNR *entryPt, *exitPt, *firstPt, *secondPt;
-  ICoord2D corner;
-  TurnDirection turn;
-  classifyVSBcorner(fiB, fiC, entryPt, exitPt, firstPt, secondPt, corner, turn
-#ifdef DEBUG
-		    , verbose
-#endif // DEBUG
-);
-
-  bool badAB = false;
-  bool badBC = false;
-
-  // TODO: Calling sharedFace and getPolyEdge and passing the result
-  // to getPolyFrac may be inefficient.  getPolyFrac converts from
-  // edge numbers back to face pointers.
-  const FacePlane *faceBC = fiB->sharedFace(fiC, getBaseFacePlane());
-  unsigned int edgeBC = getPolyEdge(faceBC);
-  double polyFracB = fiB->getPolyFrac(edgeBC, this);
-  double polyFracC = fiC->getPolyFrac(edgeBC, this);
-  
-  if(turn == LEFT) {
-    if(fiC->crossingType() == ENTRY) {
-      /*  Left turn && C is an entry ==>
-      //     A precedes B on the VSB, B precedes C on the polygon.
-      //       B /\ A
-      //    ----o--o--<  
-      //    |../....\.
-      //    |./......\
-      //    |/........    
-      //    o C.......
-      //   /|......... 
-      //  / V
-      */
-      badAB = fiA->getLoopFrac(*sharedSeg) >= fiB->getLoopFrac(*sharedSeg);
-      badBC = polyFracB >= polyFracC;
-    } // end if C is an entry
-    else {
-      /*  Left turn && C is an exit ==>
-      //     B precedes A on the VSB, C precedes B on the polygon
-      //   A /\ B     
-      //  --o--o-<--  
-      //  ./... \..|  
-      //  /......\.|  
-      //  ........\|  
-      //  ........ o C
-      //  ........ |\
-      //           ^ \
-      */
-      badAB = fiB->getLoopFrac(*sharedSeg) >= fiA->getLoopFrac(*sharedSeg);
-      badBC = polyFracC >= polyFracB;
-    } // end if C is an exit
-  } // end if turn is LEFT
-  else {
-    // turn is RIGHT
-    assert(turn == RIGHT);
-    if(fiC->crossingType() == ENTRY) {
-      /*  Right turn and C is an entry ==>
-      //     A precedes B on the VSB, C precedes B on the polygon
-      //  .A./\.B .......
-      //  --o--o->--.....
-      //   /    \  |.....
-      //  /      \ |.....
-      //          \|.....
-      //           o C...
-      //           |\....
-      //           V.\...
-      */
-      badAB = fiA->getLoopFrac(*sharedSeg) >= fiB->getLoopFrac(*sharedSeg);
-      badBC = polyFracC >= polyFracB;
-    } // end if C is an entry
-    else {
-      /*  Right turn and C is an exit.
-      //     B precedes A on the VSB, B precedes C on the polygon
-      //  ...............
-      //  .......B./\.A..
-      //  ....----o--o-->  
-      //  ....|  /    \
-      //  ....| /      \
-      //  ....|/            
-      //  ....o C        
-      //  .../|          
-      //  ../.^
-      */
-      badAB = fiB->getLoopFrac(*sharedSeg) >= fiA->getLoopFrac(*sharedSeg);
-      badBC = polyFracB >= polyFracC;
+    if(sharedSeg != nullptr) {
+      fiA = fi1;
+      fiC = fi0;
     }
-  } // end if turn is RIGHT
+  }
+  if(sharedSeg != nullptr) {
+    // There are two VSB segments.
 
-  if(badAB && badBC) {
-    coincidentPoints.reserve(3);
-    coincidentPoints.push_back(fiA);
-    coincidentPoints.push_back(fiB);
-    coincidentPoints.push_back(fiC);
-  }
-  else if(badAB) {
-    coincidentPoints.reserve(2);
-    coincidentPoints.push_back(fiA);
-    coincidentPoints.push_back(fiB);
-  }
-  else if(badBC) {
-    coincidentPoints.reserve(2);
-    coincidentPoints.push_back(fiB);
-    coincidentPoints.push_back(fiC);
+    // When traversing either the polygon segments or the VSB
+    // segments, entries and exits must alternate in the intersection
+    // sequence.  This routine can assume that there are two entries
+    // and one exit or two exits and one entry, and that the two
+    // entries or exits are on different VSB segments.
+
+    /*   A /\ B                B /\ A
+    //  --o--o----          ----o--o---  VSB bdy
+    //   /    \  |          |  /    \
+    //  /      \ |          | /      \ polygon bdy
+    //          \|          |/            
+    //           o C        o C      The polygon bdy is always counterclockwise.
+    //           |\        /|        The VSB bdy can go either direction, so
+    //           | \      / |        these pictures apply to both R and L turns.
+    */
+    
+    assert(fiA->crossingType() == fiC->crossingType() &&
+	   fiA->crossingType() != fiB->crossingType());
+
+    // If A and C are on the same polygon segment all three points must
+    // coincide.
+    const FacePlane *faceAC = fiA->sharedFace(fiC, getBaseFacePlane());
+    if(faceAC != nullptr) {
+      coincidentPoints.push_back(fiA);
+      coincidentPoints.push_back(fiB);
+      coincidentPoints.push_back(fiC);
+      return coincidentPoints;
+    }
+
+    // Only "turn" is used here, but classifyVSBcorner expects the rest
+    // of the args.
+    const PixelPlaneIntersectionNR *entryPt, *exitPt, *firstPt, *secondPt;
+    ICoord2D corner;
+    TurnDirection turn;
+    classifyVSBcorner(fiB, fiC, entryPt, exitPt, firstPt, secondPt, corner, turn
+#ifdef DEBUG
+		      , verbose
+#endif // DEBUG
+		      );
+
+    bool badAB = false;
+    bool badBC = false;
+
+    // TODO: Calling sharedFace and getPolyEdge and passing the result
+    // to getPolyFrac may be inefficient.  getPolyFrac converts from
+    // edge numbers back to face pointers.
+    const FacePlane *faceBC = fiB->sharedFace(fiC, getBaseFacePlane());
+    unsigned int edgeBC = getPolyEdge(faceBC);
+    double polyFracB = fiB->getPolyFrac(edgeBC, this);
+    double polyFracC = fiC->getPolyFrac(edgeBC, this);
+  
+    if(turn == LEFT) {
+      if(fiC->crossingType() == ENTRY) {
+	/*  Left turn && C is an entry ==>
+	//     A precedes B on the VSB, B precedes C on the polygon.
+	//       B /\ A
+	//    ----o--o--<  
+	//    |../....\.
+	//    |./......\
+	//    |/........    
+	//    o C.......
+	//   /|......... 
+	//  / V
+	*/
+	badAB = fiA->getLoopFrac(*sharedSeg) >= fiB->getLoopFrac(*sharedSeg);
+	badBC = polyFracB >= polyFracC;
+      } // end if C is an entry
+      else {
+	/*  Left turn && C is an exit ==>
+	//     B precedes A on the VSB, C precedes B on the polygon
+	//   A /\ B     
+	//  --o--o-<--  
+	//  ./... \..|  
+	//  /......\.|  
+	//  ........\|  
+	//  ........ o C
+	//  ........ |\
+	//           ^ \
+	*/
+	badAB = fiB->getLoopFrac(*sharedSeg) >= fiA->getLoopFrac(*sharedSeg);
+	badBC = polyFracC >= polyFracB;
+      } // end if C is an exit
+    } // end if turn is LEFT
+    else {
+      // turn is RIGHT
+      assert(turn == RIGHT);
+      if(fiC->crossingType() == ENTRY) {
+	/*  Right turn and C is an entry ==>
+	//     A precedes B on the VSB, C precedes B on the polygon
+	//  .A./\.B .......
+	//  --o--o->--.....
+	//   /    \  |.....
+	//  /      \ |.....
+	//          \|.....
+	//           o C...
+	//           |\....
+	//           V.\...
+	*/
+	badAB = fiA->getLoopFrac(*sharedSeg) >= fiB->getLoopFrac(*sharedSeg);
+	badBC = polyFracC >= polyFracB;
+      } // end if C is an entry
+      else {
+	/*  Right turn and C is an exit.
+	//     B precedes A on the VSB, B precedes C on the polygon
+	//  ...............
+	//  .......B./\.A..
+	//  ....----o--o-->  
+	//  ....|  /    \
+	//  ....| /      \
+	//  ....|/            
+	//  ....o C        
+	//  .../|          
+	//  ../.^
+	*/
+	badAB = fiB->getLoopFrac(*sharedSeg) >= fiA->getLoopFrac(*sharedSeg);
+	badBC = polyFracB >= polyFracC;
+      }
+    } // end if turn is RIGHT
+
+    if(badAB && badBC) {
+      coincidentPoints.reserve(3);
+      coincidentPoints.push_back(fiA);
+      coincidentPoints.push_back(fiB);
+      coincidentPoints.push_back(fiC);
+    }
+    else if(badAB) {
+      coincidentPoints.reserve(2);
+      coincidentPoints.push_back(fiA);
+      coincidentPoints.push_back(fiB);
+    }
+    else if(badBC) {
+      coincidentPoints.reserve(2);
+      coincidentPoints.push_back(fiB);
+      coincidentPoints.push_back(fiC);
+    }
+  } // end if sharedseg != nullptr
+
+  else {
+    // All three intersections are on different VSB segments.  We
+    // already know that fi0 and fi1 are both entries or both exits,
+    // so they must be the right and left points in the diagrams
+    // below.
+    /*
+    // ....... /\.|        ......| /\          
+    // ......./..\|        ......|/  \         
+    // ....../....o        ......o    \        The polygon segments go
+    // ...../.....|\       ...../|     \       counterclockwise, but don't
+    // ..../......| \      ..../.|      \      actually have to meet; there
+    // ---o--->---+--o---  ---o--+----<--o---  could be intermediate segments.
+    //   /        |...\..    /   |........\..  
+    //  /         |....\.   /    |.........\.  
+
+    //         /\ |......      (B)./\........  
+    //        /  \|......        |/..\.......  
+    //       /    o......        o....\......  
+    //      /     |\.....       /|.....\.....  
+    //     /      |.\....  (C) / |......\ ...  
+    // ---o---<---+--o---  -<-o--+--->---o---(A)
+    // ../........|   \    ../...|        \    
+    // ./.........|    \   ./....|         \   
+    */
+
+    // First, find the three VSB segments.  They must meet at a point.
+    // Label them A, B, C going counter-clockwise around that point,
+    // with the non-intersected VSB segment coming between C and A.
+    const SingleVSBbase *si0 = dynamic_cast<const SingleVSBbase*>(fi0);
+    const SingleVSBbase *si1 = dynamic_cast<const SingleVSBbase*>(fi1);
+    const SingleVSBbase *siB = dynamic_cast<const SingleVSBbase*>(fiB);
+    assert(si0 != nullptr && si1 != nullptr && siB != nullptr);
+    const PixelBdyLoopSegment &seg0 = si0->getLoopSeg();
+    const PixelBdyLoopSegment &seg1 = si1->getLoopSeg();
+    const PixelBdyLoopSegment &segB = siB->getLoopSeg();
+    PixelBdyLoopSegment segA, segC;
+    // seg0 and seg1 must start or end on a common point
+    ICoord2D centerPt, farPt0, farPtB, farPt1;
+    if(seg0.firstPt() == seg1.firstPt()) {
+      centerPt = seg0.firstPt();
+      farPt0 = seg0.secondPt();
+      farPt1 = seg1.secondPt();
+      farPtB = segB.firstPt();
+      assert(segB.secondPt() == centerPt);
+    }
+    else if(seg0.secondPt() == seg1.secondPt()) {
+      centerPt = seg0.secondPt();
+      farPt0 = seg0.firstPt();
+      farPt1 = seg1.firstPt();
+      farPtB = segB.secondPt();
+      assert(segB.firstPt() == centerPt);
+    }
+    else {
+      throw ErrProgrammingError("Incompatible segments in tripleCoincidence()",
+				__FILE__, __LINE__);
+    }
+    ICoord2D r0 = farPt0 - centerPt;
+    ICoord2D r1 = farPt1 - centerPt;
+    ICoord2D rB = farPtB - centerPt;
+    if(r0 % rB > 0 && rB % r1 > 0) {
+      segA = seg0;
+      segC = seg1;
+      fiA = fi0;
+      fiC = fi1;
+    }
+    else if(r1 % rB > 0 && rB % r0 > 0) {
+      segA = seg1;
+      segC = seg0;
+      fiA = fi1;
+      fiC = fi0;
+    }
+    else {
+      // Unexpected ordering.  B is either first or last.  Merge it
+      // with the one in the middle.
+      coincidentPoints.push_back(fiB);
+      if((rB % r0 > 0 && r0 % r1 > 0) || (r1 % r0 > 0 && r0 % rB > 0)) {
+	coincidentPoints.push_back(fi0);
+      }
+      else {
+	assert((rB % r1 > 0 && r1 % r0 > 0) || (r0 % r1 > 0 && r1 % rB > 0));
+	coincidentPoints.push_back(fi1);
+      }
+      return coincidentPoints;
+    }
+    // If A and C are on the same polygon segment all three points
+    // must coincide (again).
+    const FacePlane *faceAC = fiA->sharedFace(fiC, getBaseFacePlane());
+    if(faceAC != nullptr) {
+      coincidentPoints.push_back(fi0);
+      coincidentPoints.push_back(fi1);
+      coincidentPoints.push_back(fiB);
+      return coincidentPoints;
+    }
+    // If two intersections are on the same polygon segment, check
+    // that they're in the right order.
+    const FacePlane *faceAB = fiA->sharedFace(fiB, getBaseFacePlane());
+    if(faceAB != nullptr) {
+      unsigned int edgeAB = getPolyEdge(faceAB);
+      double polyFracA = fiA->getPolyFrac(edgeAB, this);
+      double polyFracB = fiB->getPolyFrac(edgeAB, this);
+      if(polyFracA >= polyFracB) {
+	coincidentPoints.push_back(fiA);
+	coincidentPoints.push_back(fiB);
+	return coincidentPoints;
+      }
+    }
+    const FacePlane *faceBC = fiB->sharedFace(fiC, getBaseFacePlane());
+    if(faceBC != nullptr) {
+      unsigned int edgeBC = getPolyEdge(faceBC);
+      double polyFracB = fiB->getPolyFrac(edgeBC, this);
+      double polyFracC = fiC->getPolyFrac(edgeBC, this);
+      if(polyFracB >= polyFracC) {
+	coincidentPoints.push_back(fiB);
+	coincidentPoints.push_back(fiC);
+	return coincidentPoints;
+      }
+    }
   }
   return coincidentPoints;
 } // end PixelPlaneFacet::tripleCoincidence
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// PixelPlaneFacet::badTopology for a SimpleIntersection and and
+// PixelPlaneFacet::badTopology for a SimpleIntersection and a
 // MultiFaceIntersection.
 
 bool PixelPlaneFacet::badTopology(const SimpleIntersection *si,
