@@ -848,35 +848,35 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
 	FacetMap2D pixelplanefacets =
 	  homtet.findPixelPlaneFacets(cat, *vsb);
 #ifdef DEBUG
-	if(verbose) {
-	  oofcerr << "CSkeletonElement::categoryVolumes: "
-		  << "after findPixelPlaneFacets cat=" << cat << std::endl;
-	  // homtet.dumpEquivalences();
-	}
+	// if(verbose) {
+	//   oofcerr << "CSkeletonElement::categoryVolumes: "
+	// 	  << "after findPixelPlaneFacets cat=" << cat << std::endl;
+	//   homtet.dumpEquivalences();
+	// }
 	if(!homtet.verify()) {
 	  throw ErrProgrammingError("Verification failed", __FILE__, __LINE__);
 	}
-	if(verbose) {
-	oofcerr << "CSkeletonElement::categoryVolumes: calling findFaceFacets"
-		<< std::endl;
-	}
+	// if(verbose) {
+	//   oofcerr << "CSkeletonElement::categoryVolumes: calling findFaceFacets"
+	// 	  << std::endl;
+	// }
 #endif // DEBUG
 	FaceFacets facefacets = homtet.findFaceFacets(cat, pixelplanefacets);
-#ifdef DEBUG
-	if(verbose)
-	  oofcerr << "CSkeletonElement::categoryVolumes: "
-		  << "calling intersectionVolume for cat " << cat << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+// 	if(verbose)
+// 	  oofcerr << "CSkeletonElement::categoryVolumes: "
+// 		  << "calling intersectionVolume for cat " << cat << std::endl;
+// #endif // DEBUG
 	double v = homtet.intersectionVolume(pixelplanefacets, facefacets
 // #ifdef DEBUG
 // 					     , cat, *dumpfile
 // #endif // DEBUG
 					     );
-#ifdef DEBUG
-	if(verbose)
-	  oofcerr << "CSkeletonElement::categoryVolumes: "
-		  << "back from intersectionVolume." << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+// 	if(verbose)
+// 	  oofcerr << "CSkeletonElement::categoryVolumes: "
+// 		  << "back from intersectionVolume." << std::endl;
+// #endif // DEBUG
 	(*result)[cat] = v;
 	totalVol += v;
 
