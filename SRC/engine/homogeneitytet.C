@@ -11,6 +11,7 @@
 
 #include <oofconfig.h>
 #include <math.h>
+#include <algorithm>
 
 #include "common/cdebug.h"
 #include "common/cmicrostructure.h"
@@ -143,7 +144,8 @@ HomogeneityTet::HomogeneityTet(const CSkeletonElement *element,
 #ifdef DEBUG
   , verbose(verbose),
     verbosecategory(false),
-    verboseplane(false)
+    verboseplane(false),
+    verboseface(false)
 #endif  // DEBUG
 {
 #ifdef DEBUG
@@ -2334,7 +2336,7 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 		}
 		else if(nstartdiff < 0) {
 		  // Delete all but -nstartdiff stops.
-		  unsigned int kept = 0;
+		  int kept = 0;
 		  for(LooseEndMap::iterator y=range.first; y!=range.second; ++y)
 		    {
 		      if(kept >= -nstartdiff || (*y).second.start())
@@ -2919,7 +2921,7 @@ void FaceEdgeIntersection::forceOntoEdge(unsigned int face,
   // coordinate component other than the component for the node
   // opposite this face, which should already be zero.
   BarycentricCoord b = htet->getBarycentricCoord(crnr->location3D());
-  int oppNode = CSkeletonElement::oppNode[face];
+  unsigned int oppNode = CSkeletonElement::oppNode[face];
   double minB = std::numeric_limits<double>::max();
   unsigned int minN = NONE;
   for(unsigned int i=0; i<NUM_TET_NODES; i++) {
@@ -3277,6 +3279,9 @@ void FaceFacet::fixNonPositiveArea(HomogeneityTet *htet, unsigned int cat)
     // Look at the voxel in the center to see if the whole face is in
     // our category and therefore needs to be included.
     ICoord3D testVxl = htet->testVoxel(face);
+    // TODO: Some compilers complain about comparison between signed
+    // and unsigned ints here.  See the TODO in cmicrostructure.h
+    // about using unsigned ints for voxel categories.
     homog_face = htet->microstructure->category(testVxl) == cat;
   }
 #ifdef DEBUG
