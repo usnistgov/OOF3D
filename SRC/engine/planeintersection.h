@@ -131,6 +131,15 @@ public:
   virtual bool samePixelPlanes(const PixelPlaneIntersectionNR*) const = 0;
   virtual bool samePixelPlanes(const RedundantIntersection*) const = 0;
 
+  virtual const FacePlane *sharedFace(const PlaneIntersection*,
+				      const FacePlane*) const = 0;
+  virtual const FacePlane *sharedFace(const TripleFaceIntersection*,
+				      const FacePlane*) const = 0;
+  virtual const FacePlane *sharedFace(const PixelPlaneIntersectionNR*,
+				      const FacePlane*) const = 0;
+  virtual const FacePlane *sharedFace(const RedundantIntersection*,
+				      const FacePlane*) const = 0;
+
   virtual IsecEquivalenceClass *equivalence() const { return equivalence_; }
   virtual void setEquivalence(IsecEquivalenceClass *e);
   virtual void setEquivalenceOnly(IsecEquivalenceClass *e);
@@ -200,6 +209,16 @@ public:
   virtual bool samePixelPlanes(const RedundantIntersection*) const {
     return false;
   }
+
+  virtual const FacePlane *sharedFace(const PlaneIntersection*,
+				      const FacePlane*) const;
+  virtual const FacePlane *sharedFace(const TripleFaceIntersection*,
+				      const FacePlane*) const;
+  virtual const FacePlane *sharedFace(const PixelPlaneIntersectionNR*,
+				      const FacePlane*) const;
+  virtual const FacePlane *sharedFace(const RedundantIntersection*,
+				      const FacePlane*) const;
+
   virtual std::string shortName() const;
 };
 
@@ -376,10 +395,17 @@ public:
   // corners.
   bool onSameFacePlane(const PixelPlaneIntersectionNR*,
 		       const FacePixelPlane*) const;
+
   const FacePlane *sharedFace(const PixelPlaneIntersectionNR*) const;
   // This version excludes a face, as in onSameFacePlane, above.
-  const FacePlane *sharedFace(const PixelPlaneIntersectionNR*,
-			      const FacePixelPlane*) const;
+  virtual const FacePlane *sharedFace(const PlaneIntersection*,
+				      const FacePlane*) const;
+  virtual const FacePlane *sharedFace(const TripleFaceIntersection*,
+				      const FacePlane*) const;
+  virtual const FacePlane *sharedFace(const PixelPlaneIntersectionNR*,
+				      const FacePlane*) const;
+  virtual const FacePlane *sharedFace(const RedundantIntersection*,
+				      const FacePlane*) const;
   FacePlaneSet sharedFaces(const PixelPlaneIntersectionNR*) const;
 
   // bool samePixelPlanes(const PixelPlaneIntersectionNR*) const;
@@ -1100,6 +1126,26 @@ public:
   }
   virtual bool samePixelPlanes(const RedundantIntersection *pi) const {
     return referent_->samePixelPlanes(pi);
+  }
+  virtual const FacePlane *sharedFace(const PlaneIntersection *pi,
+				      const FacePlane *fp) const
+  {
+    return pi->sharedFace(referent_, fp);
+  }
+  virtual const FacePlane *sharedFace(const TripleFaceIntersection *pi,
+				      const FacePlane *fp) const
+  {
+    return pi->sharedFace(referent_, fp);
+  }
+  virtual const FacePlane *sharedFace(const PixelPlaneIntersectionNR *pi,
+				      const FacePlane *fp) const
+  {
+    return pi->sharedFace(referent_, fp);
+  }
+  virtual const FacePlane *sharedFace(const RedundantIntersection *pi,
+				      const FacePlane *fp) const
+  {
+    return pi->sharedFace(referent_, fp);
   }
 
   virtual void print(std::ostream&) const;

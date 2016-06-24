@@ -76,8 +76,8 @@ bool BarycentricCoord::interior(unsigned int onFace) const {
   // hand, if onFace is NONE, we just want to know if the point is
   // inside the tet.  This distinction is only important because we
   // take points *on* the boundary to be outside, which would mean
-  // that all points on faces would be outside if we didn't treat
-  // faces differently.
+  // that all points on face facets would be outside if we didn't
+  // treat faces differently.
   if(onFace == NONE) {
     for(unsigned int i=0; i<4; i++)
       if(bcoord[i] <= 0)

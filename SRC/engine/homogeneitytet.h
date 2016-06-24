@@ -91,6 +91,7 @@ public:
   const HPixelPlane *pixelPlane() const { return pixplane_; }
   PlaneIntersection *replacePoint(PlaneIntersection *pt, HomogeneityTet*, bool);
   bool isNull() const;
+  unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const;
   bool operator<(const FaceFacetEdge&) const; // object identity, not value
 };
 
@@ -101,7 +102,7 @@ std::ostream &operator<<(std::ostream&, const FaceFacetEdge&);
 class FaceFacet {
 private:
   const unsigned int face;
-  std::set<FaceFacetEdge*, DerefCompare<FaceFacetEdge>> edges;
+  FaceFacetEdgeSet edges_;
   HomogeneityTet *htet;
   mutable Coord3D areaVec_;
   mutable bool areaComputed;
@@ -120,25 +121,23 @@ public:
   ~FaceFacet();
 
   Coord3D area(HomogeneityTet*) const;
-  unsigned int size() const { return edges.size(); }
-  bool empty() const { return edges.empty(); }
+  unsigned int size() const { return edges_.size(); }
+  bool empty() const { return edges_.empty(); }
 
   void addEdge(FaceFacetEdge*); // takes ownership of argument
   void addFaceEdges(const FaceEdgeIntersection*, const FaceEdgeIntersection*,
 		    HomogeneityTet*);
-  std::set<FaceFacetEdge*>::const_iterator begin() const {
-    return edges.begin();
-  }
-  std::set<FaceFacetEdge*>::const_iterator end() const {
-    return edges.end();
+
+  const std::set<FaceFacetEdge*, DerefCompare<FaceFacetEdge>> &edges() const {
+    return edges_;
   }
 
   void removeOpposingEdges();
-  // void removeNullEdges();
   void fixNonPositiveArea(HomogeneityTet*, unsigned int cat);
 #ifdef DEBUG
   void dump(std::string, unsigned int) const;
   std::string shortDescription() const;
+  friend class CSkeletonElement;
 #endif // DEBUG
   friend std::ostream &operator<<(std::ostream&, const FaceFacet&);
 };
@@ -247,6 +246,7 @@ public:
   const HPixelPlane *getPixelPlane(unsigned int dir, int offset, int normal);
   const HPixelPlane *getUnorientedPixelPlane(const HPixelPlane*);
   const FacePlane *getTetFacePlane(unsigned int i) const { return faces[i]; }
+  unsigned int getTetFaceIndex(const FacePlane*) const;
   const FacePixelPlane *getCoincidentPixelPlane(const FacePlane*) const;
   const FacePixelPlane *getCoincidentPixelPlane(unsigned int) const;
   const FacePixelPlane *getCoincidentFacePlane(const HPixelPlane*) const;
@@ -289,10 +289,15 @@ public:
   // void setIntersectionPolyFrac(SingleFaceBase*, unsigned int,
   // 			       const PixelPlaneFacet*) const;
 
-  // Return the fractional position of the given point given in
+  // Return the fractional position of the given point (given in
   // barycentric coords) along the polygon edge of the given facet.
   double edgeCoord(const BarycentricCoord&, unsigned int,
 		   const PixelPlaneFacet*) const;
+
+  // Return the fractional position of the given point along the given
+  // edge of the given face.
+  double faceEdgeCoord(const BarycentricCoord&, unsigned int f, unsigned int e)
+    const;
 
   Coord3D nodePosition(unsigned int n) const { return epts[n]; }
   Coord3D faceCenter(unsigned int f) const { return faceCenters[f]; }

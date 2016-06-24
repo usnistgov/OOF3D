@@ -1674,13 +1674,15 @@ void CSkeletonElement::drawVoxelCategoryIntersection(LineSegmentLayer *layer,
     if(!facefacet.empty()) {
       // oofcerr << "drawVoxelCategoryIntersection: facefacet[" << f << "]="
       // 	      << facefacet << std::endl;
-      for(auto edgeptr=facefacet.begin(); edgeptr!=facefacet.end(); ++edgeptr) {
-	startPts.push_back((*edgeptr)->startPos3D());
-	endPts.push_back((*edgeptr)->endPos3D());
-	// oofcerr << "drawVoxelCategoryIntersection: face=" << f << " edge= "
-	// 	<< (*edgeptr)->startPos3D() << " " << (*edgeptr)->endPos3D()
-	// 	<< std::endl;
-      }
+      for(auto edgeptr=facefacet.edges().begin();
+	  edgeptr!=facefacet.edges().end(); ++edgeptr)
+	{
+	  startPts.push_back((*edgeptr)->startPos3D());
+	  endPts.push_back((*edgeptr)->endPos3D());
+	  // oofcerr << "drawVoxelCategoryIntersection: face=" << f << " edge= "
+	  // 	<< (*edgeptr)->startPos3D() << " " << (*edgeptr)->endPos3D()
+	  // 	<< std::endl;
+	}
     }
   }
   if(drawPlaneFacets) {

@@ -260,6 +260,41 @@ bool TripleFaceIntersection::isEquivalent(const IsecEquivalenceClass *eqclass)
   return nfaces == 3;
 }
 
+const FacePlane *TripleFaceIntersection::sharedFace(const PlaneIntersection *pi,
+						    const FacePlane *exclude)
+  const
+{
+  return pi->sharedFace(this, exclude); // double dispatch
+}
+
+const FacePlane *TripleFaceIntersection::sharedFace(
+					    const TripleFaceIntersection *tpi,
+					    const FacePlane *exclude)
+  const
+{
+  FacePlaneSet::const_iterator i = sharedEntry(faces_, tpi->faces(), exclude);
+  assert(i != faces_.end());
+  return *i;
+}
+
+const FacePlane *TripleFaceIntersection::sharedFace(
+					    const PixelPlaneIntersectionNR *ppi,
+					    const FacePlane *exclude)
+  const
+{
+  // Let PixelPlaneIntersectionNR do the work, since it's the more
+  // complicated object.
+  return ppi->sharedFace(this, exclude); 
+}
+
+const FacePlane *TripleFaceIntersection::sharedFace(
+					    const RedundantIntersection *ri,
+					    const FacePlane *exclude)
+  const
+{
+  return ri->referent()->sharedFace(this, exclude);
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // TODO: sharedPolySegment and onOnePolySegment can be written more
@@ -487,19 +522,62 @@ const FacePlane *PixelPlaneIntersectionNR::sharedFace(
 }
 
 const FacePlane *PixelPlaneIntersectionNR::sharedFace(
-				      const PixelPlaneIntersectionNR *fi,
-				      const FacePixelPlane *exclude)
+					      const PlaneIntersection *pi,
+					      const FacePlane *exclude)
   const
 {
-  const FacePlaneSet::const_iterator fp =
-    sharedEntry(faces_, fi->referent()->faces());
+  return pi->sharedFace(this, exclude); // double dispatch
+}
+
+const FacePlane *PixelPlaneIntersectionNR::sharedFace(
+					      const TripleFaceIntersection *tfi,
+					      const FacePlane *exclude)
+  const
+{
+  for(const FacePlane *fp0 : facePlaneSets()) {
+    if(fp0 != exclude) {
+      for(const FacePlane *fp1 : tfi->faces()) {
+	if(fp1 == fp0)
+	  return fp0;
+      }
+    }
+  }
+  return nullptr;
+}
+
+const FacePlane *PixelPlaneIntersectionNR::sharedFace(
+				      const PixelPlaneIntersectionNR *fi,
+				      const FacePlane *exclude)
+  const
+{
+  const FacePlaneSet::const_iterator fp = sharedEntry(faces_, fi->faces(),
+						      exclude);
   if(fp != faces_.end())
     return *fp;
-  const FacePixelPlaneSet::const_iterator fpp =
-    sharedEntry(pixelFaces_, fi->referent()->pixelFaces(), exclude);
-  if(fpp != pixelFaces_.end())
-    return *fpp;
+  // We could have *another* double dispatch layer to see if "exclude"
+  // is a FacePixelPlane, or we could just do this:
+  const FacePixelPlane *fppNot = dynamic_cast<const FacePixelPlane*>(exclude);
+  if(fppNot != nullptr) {
+    const FacePixelPlaneSet::const_iterator fpp =
+      sharedEntry(pixelFaces_, fi->pixelFaces(), fppNot);
+    if(fpp != pixelFaces_.end())
+      return *fpp;
+  }
+  else {
+    const FacePixelPlaneSet::const_iterator fpp =
+      sharedEntry(pixelFaces_, fi->pixelFaces());
+    if(fpp != pixelFaces_.end())
+      return *fpp;
+  }
   return nullptr;
+}
+
+const FacePlane *PixelPlaneIntersectionNR::sharedFace(
+					      const RedundantIntersection *ri,
+					      const FacePlane *exclude)
+  const
+{
+  return ri->referent()->sharedFace(this, exclude);
 }
 
 FacePlaneSet PixelPlaneIntersectionNR::sharedFaces(

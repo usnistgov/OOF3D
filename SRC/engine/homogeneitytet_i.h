@@ -38,5 +38,7 @@ typedef std::map<const PixelPlane*, TetIntersectionPolygon> TetPlaneIsecMap;
 typedef std::multimap<double, FaceEdgeIntersection> LooseEndMap;
 typedef std::multimap<std::pair<const HPlane*, const HPlane*>, const HPlane*, DerefPairCompare<HPlane>> CollinearPlaneMap;
 
+typedef std::set<FaceFacetEdge*, DerefCompare<FaceFacetEdge>> FaceFacetEdgeSet;
+
 
 #endif // HOMOGENEITYTET_I_H
