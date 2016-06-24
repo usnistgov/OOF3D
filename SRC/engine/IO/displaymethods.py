@@ -11,6 +11,8 @@
 # Simple display methods for Skeletons and Meshes.  Simpler than
 # contour plots, in any case.
 
+import fnmatch
+import os
 import sys
 
 from ooflib.SWIG.common import config
@@ -1154,6 +1156,38 @@ class DrawLinesFromFile(display.DisplayMethod):
     def whoChanged(self):
         return True
 
+class DrawLinesFromFiles(display.DisplayMethod):
+    ## TODO: See comment in DrawLinesFromFile re coordinate systems
+    ## TODO: Combine this with DrawLinesFromFile somehow, and re-use code.
+    def __init__(self, directory, pattern, color, line_width):
+        self.directory = directory
+        self.pattern = pattern
+        self.color = color
+        self.line_width = line_width
+        display.DisplayMethod.__init__(self)
+    def newLayer(self):
+        return canvaslayers.LineSegmentLayer(
+            self.gfxwindow.oofcanvas,
+            "DrawLinesFromFiles")
+    def setParams(self):
+        self.canvaslayer.set_color(self.color)
+        self.canvaslayer.set_lineWidth(self.line_width)
+        files = fnmatch.filter(os.listdir(self.directory), self.pattern)
+        coords = []
+        for filename in files:
+            f = file(filename, "r")
+            coords.extend([eval(line) for line in f if line[0] != '#'])
+            f.close()
+        self.canvaslayer.set_nSegs(len(coords))
+        for cset in coords:
+            p0 = primitives.Point(*cset[0])
+            p1 = primitives.Point(*cset[1])
+            self.canvaslayer.addSegment(p0, p1)
+    def whoChanged(self):
+        return True
+        
+    
+
 # class ElementVoxelCategoryIntersectionFaces(display.DisplayMethod):
 #     def __init__(self, element, category, color, opacity):
 #         self.element = element
@@ -1239,6 +1273,21 @@ if debug.debug:
         layerordering=display.Linear,
         params=[
             filenameparam.ReadFileNameParameter('filename'),
+            color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
+            parameter.IntRangeParameter('line_width', (1, 10), 2)
+            ],
+        whoclasses=("Skeleton",),
+        )
+
+    registeredclass.Registration(
+        "DrawLinesFromFiles",
+        display.DisplayMethod,
+        DrawLinesFromFiles,
+        ordering=1021,
+        layerordering=display.Linear,
+        params=[
+            filenameparam.DirectoryNameParameter('directory'),
+            parameter.StringParameter('pattern', value='*.lines'),
             color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
             parameter.IntRangeParameter('line_width', (1, 10), 2)
             ],
