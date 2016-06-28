@@ -415,8 +415,10 @@ def modification_time(phile):
 
 def findvtk(basename):
     global vtkdir
-    
-    base = vtkdir or basename
+    if vtkdir:
+        base = os.path.expanduser(vtkdir)
+    else:
+        base = basename
         
     # First look for basename/include/vtk*
     incdir = os.path.join(base, 'include')
@@ -1065,7 +1067,7 @@ def get_global_args():
     DIM_3 = _get_oof_arg('--3D')
     NANOHUB = _get_oof_arg('--nanoHUB')
     HAVE_OPENMP = _get_oof_arg('--enable-openmp')
-    vtkdir = os.path.expanduser(_get_oof_arg('--vtkdir'))
+    vtkdir = _get_oof_arg('--vtkdir')
 
     # The following determine some secondary installation directories.
     # They will be created within the main installation directory
