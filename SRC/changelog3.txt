@@ -17,6 +17,8 @@
 
 Fixed a bug involving cloning graphics windows with hidden display layers.
 
+The setup.py script now understands '~' in vtkdir arguments.
+
 3.0.1
 
 The interval parameter for output schedules now can't be set to zero,
