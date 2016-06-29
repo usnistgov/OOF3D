@@ -615,6 +615,46 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
 #endif // DEBUG
 }
 
+// This version of mergeEquiv is used when the classes are merged, but
+// not the points.  In findFaceFacets, it's not necessary to create
+// new merged points when coincidences are detected, but the
+// equivalence classes have to be updated.
+
+void HomogeneityTet::mergeEquiv(PlaneIntersection *pt0, PlaneIntersection *pt1)
+{
+  IsecEquivalenceClass *equivClass0 = pt0->equivalence();
+  IsecEquivalenceClass *equivClass1 = pt1->equivalence();
+  if(equivClass0 == nullptr) {
+    if(equivClass1 == nullptr) {
+      IsecEquivalenceClass *eqclass = new IsecEquivalenceClass(
+					       pt0, nextEquivalenceID()
+#ifdef DEBUG
+					       , verbose
+#endif // DEBUG
+							       );
+      equivalences.push_back(eqclass);
+      pt0->setEquivalence(eqclass);
+      pt1->setEquivalence(eqclass);
+    }
+    else {
+      pt0->setEquivalence(equivClass1);
+    }
+  }
+  else {
+    if(equivClass1 == nullptr) {
+      pt1->setEquivalence(equivClass0);
+    }
+    else if(equivClass0 != equivClass1) {
+      equivClass0->merge(equivClass1);
+      auto eptr = std::find(equivalences.begin(), equivalences.end(),
+			    equivClass1);
+      assert(eptr != equivalences.end());
+      equivalences.erase(eptr);
+      delete equivClass1;
+    }
+  }
+}
+
 // checkEquiv checks to see if the given intersection point belongs in
 // any existing equivalence class, and puts it in it.  If the point
 // already belongs to a class and is found to also belong to another,
@@ -1891,6 +1931,7 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+#ifdef CLEAN_UP_LOOSE_ENDS
 // cleanUpLooseEnds removes a loose start or end from the given sets
 // of FaceEdgeIntersections, when it's known that there's at least one
 // extra one.  It looks at all pairs of adjacent points on each edge,
@@ -1927,6 +1968,7 @@ static bool cleanUpLooseEnds(std::vector<LooseEndMap> &looseEnds, bool start) {
   }
   return false;
 }
+#endif // CLEAN_UP_LOOSE_ENDS
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -1943,6 +1985,54 @@ public:
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// findFaceFacets outline:
+
+// 0. Create FaceFacet objects in faceFacets
+
+// 1. Get segments that cross faces from PixelPlaneFacets.
+
+// 2. For each face that's not also a pixel plane:
+//   2a. Call checkEquiv for start and end points of each segment.
+//   2b. Create lists of FaceEdgeIntersection objects for start and end points.
+//   2c. Find matches between start and end points.
+//   2d. Store unmatched points in the LooseEnd catalog for each edge,
+//       if they're on edges, and in the stranded list if they're not.
+
+// 3. Pair up and merge stranded points that are on different faces
+//    but share the same pixel planes.  Merging will put them on
+//    edges, so put them in the LooseEnd catalog.
+
+// 4. Put stranded points that can't be merged into the marooned list
+//    for their face.
+
+// 5. For each face that's not also a pixel plane:
+//   5a. Put marooned points onto the closest edge and in the LooseEnds catalog.
+
+//   5b. Look for facet edges that lie along a face edge and store
+//       them in the edgeEdges list.
+
+//   5c. For each edge of the face:
+//     5c1. Coincidence check part 1: merge pts at the same parametric position
+//      5c1a. Merge equivalence classes
+//      5c1b. Remove equal numbers of start & stop points from LooseEnd catalog
+//     5c2. Coincidence check part 2: remove crossing segments
+//       For pairs of consecutive entries in the LooseEnd map for the edge
+//        If the pixel plane edges cross
+//          Delete the points from the loose end catalog
+//     5c3. Occupied segment check
+//        Look for nearby pairs of start-stop points that lie on face
+//        edges that already contain an edge (from edgeEdges, 5b).
+//           Remove the points from the LooseEnd map and merge their
+//           equivalence classes.
+
+//   5d. Check that the number of starts and stops agree and throw an
+//       exception if they don't.  OR, if CLEAN_UP_LOOSE_ENDS is
+//       defined, remove extra stops or starts, choosing the ones that
+//       are closest to their neighbors.
+
+//   5e. Create missing segments by joining stops to starts, going
+//       clockwise around the perimeter of the face.
 
 FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 					  const FacetMap2D &planeFacets)
@@ -2407,7 +2497,7 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 			    << std::endl;
 		  }
 #endif // DEBUG
-		  eq0->merge(eq1);
+		  mergeEquiv((*x0).second.corner(), (*xx).second.corner());
 		}
 	      }
 	      
@@ -2607,6 +2697,7 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 #endif // DEBUG
 	      LooseEndMap::iterator xtemp = xnext;
 	      ++xtemp;
+	      mergeEquiv((*x).second.corner(), (*xnext).second.corner());
 	      looseEnds[e].erase(x);
 	      looseEnds[e].erase(xnext);
 	      x = xtemp;
@@ -2641,7 +2732,7 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	  ......\      /.....    Points marked by capital letters are
           .......\    /......    starts and lower case are stops.
           ........\  /........
-	  A----------Cb----------a 
+	  A--------Cb----------a 
 	*/
 	// C and b should be identical and should be on the edge A-a,
 	// but roundoff error may make C come before b.  In that case,

@@ -265,6 +265,7 @@ public:
   // Two points are merging to form a third.  Combine the equivalence
   // classes of the first two, and add the third.
   void mergeEquiv(PlaneIntersection*, PlaneIntersection*, PlaneIntersection*);
+  void mergeEquiv(PlaneIntersection*, PlaneIntersection*);
 
   double edgeLength(unsigned int e) const;
   double edgeLength(unsigned int f, unsigned int e) const;
