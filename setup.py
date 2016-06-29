@@ -418,7 +418,7 @@ def findvtk(*basenames):
     global vtkdir
 
     if vtkdir:
-        basenames = (vtkdir,)
+        basenames = (os.path.expanduser(vtkdir),)
 
     for base in basenames:
         # First look for basename/include/vtk*
@@ -1068,7 +1068,7 @@ def get_global_args():
     DIM_3 = _get_oof_arg('--3D')
     NANOHUB = _get_oof_arg('--nanoHUB')
     HAVE_OPENMP = _get_oof_arg('--enable-openmp')
-    vtkdir = os.path.expanduser(_get_oof_arg('--vtkdir'))
+    vtkdir = _get_oof_arg('--vtkdir')
 
     # The following determine some secondary installation directories.
     # They will be created within the main installation directory
