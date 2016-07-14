@@ -33,6 +33,9 @@ import math
 
 ndigits = 10
 
+## TODO: Continuous rotation mode.  Set angular velocity and axis
+## direction.
+
 ## TODO 3.1: Move axis parameters from the Settings menu to a new
 ## expander in the toolbox.  It should contains check buttons for
 ## showing the axes and their labels and a button that brings up a
