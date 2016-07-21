@@ -41,7 +41,7 @@ typedef std::multimap<const Coord2D, PixelPlaneIntersectionNR*> IsecsNearCoord;
 class HPlane : public virtual Plane {
 public:
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const = 0;
-  virtual void addToIntersection(PixelPlaneIntersectionNR*) const = 0;
+  virtual void addToIntersection(IntersectionPlanesBase*) const = 0;
   virtual void addToEquivalence(IsecEquivalenceClass*) const = 0;
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const = 0;
   virtual std::string shortName() const = 0;
@@ -59,7 +59,7 @@ public:
   {}
   HPixelPlane() {}
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
-  virtual void addToIntersection(PixelPlaneIntersectionNR*) const;
+  virtual void addToIntersection(IntersectionPlanesBase*) const;
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const;
   virtual std::string shortName() const;
@@ -81,7 +81,7 @@ public:
     : face_(face)
   {}
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
-  virtual void addToIntersection(PixelPlaneIntersectionNR*) const;  
+  virtual void addToIntersection(IntersectionPlanesBase*) const;  
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const;
   virtual void print(std::ostream&) const;
@@ -105,7 +105,7 @@ public:
       FacePlane(face)
   {}
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
-  virtual void addToIntersection(PixelPlaneIntersectionNR*) const;
+  virtual void addToIntersection(IntersectionPlanesBase*) const;
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const;
   virtual void print(std::ostream&) const;

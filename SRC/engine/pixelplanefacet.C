@@ -62,7 +62,7 @@ bool HPixelPlane::isPartOf(const PixelPlaneIntersectionNR *fi) const {
   return fi->pixelPlanes().count(this) > 0;
 }
 
-void HPixelPlane::addToIntersection(PixelPlaneIntersectionNR *fi) const {
+void HPixelPlane::addToIntersection(IntersectionPlanesBase *fi) const {
   fi->pixelPlanes().insert(this);
 }
 
@@ -78,7 +78,7 @@ bool FacePlane::isPartOf(const PixelPlaneIntersectionNR *fi) const {
   return fi->faces().count(this) > 0;
 }
 
-void FacePlane::addToIntersection(PixelPlaneIntersectionNR *fi) const {
+void FacePlane::addToIntersection(IntersectionPlanesBase *fi) const {
   fi->faces().insert(this);
 }
 
@@ -94,7 +94,7 @@ bool FacePixelPlane::isPartOf(const PixelPlaneIntersectionNR *fi) const {
   return fi->pixelFaces().count(this) > 0;
 }
 
-void FacePixelPlane::addToIntersection(PixelPlaneIntersectionNR *fi) const {
+void FacePixelPlane::addToIntersection(IntersectionPlanesBase *fi) const {
   fi->pixelFaces().insert(this);
 }
 
@@ -639,6 +639,9 @@ static int storeCoincidenceData(PixelPlaneIntersectionNR *isec,
   coincidentLocs.insert(loc);
   return 0;			// no coincidence detected
 }
+
+#undef CLOSEBY2
+#undef CLOSEBY
 
 // class NullEdgePredicate {
 // private:

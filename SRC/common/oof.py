@@ -152,7 +152,7 @@ The following options are for debugging:
 --unthreaded             Don't use multiple execution threads
 --verboseElement = integer or 'all'
 --verbosePlane = [XYZ],offset,[+-]
---verboseFace = integer
+--verboseFace = integer or 'all'
 --verboseCategory = integer
 """ % program_name
     print main_options_string,
@@ -300,7 +300,7 @@ def process_inline_options():
             htetdebug.addVerbosePlane(opt[1])
         elif opt[0] in ('--verboseFace', '--vF'):
             from ooflib.SWIG.engine import htetdebug
-            htetdebug.addVerboseFace(int(opt[1]))
+            htetdebug.addVerboseFace(opt[1])
         elif opt[0] in ('--verboseCategory', '--vC'):
             from ooflib.SWIG.engine import htetdebug
             htetdebug.addVerboseCategory(int(opt[1]))

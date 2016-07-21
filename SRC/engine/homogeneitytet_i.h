@@ -35,6 +35,8 @@ typedef std::vector<FaceFacet> FaceFacets;
 typedef std::map<const Coord3D, BarycentricCoord> BaryCoordCache;
 typedef std::vector<const TetIntersection*> TetIntersectionPolygon;
 typedef std::map<const PixelPlane*, TetIntersectionPolygon> TetPlaneIsecMap;
+typedef std::set<FaceEdgeIntersection*> LooseEndSet;
+
 typedef std::multimap<double, FaceEdgeIntersection> LooseEndMap;
 typedef std::multimap<std::pair<const HPlane*, const HPlane*>, const HPlane*, DerefPairCompare<HPlane>> CollinearPlaneMap;
 

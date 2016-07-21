@@ -18,6 +18,8 @@
 
 // Classes defined in planeintersection.h
 
+class GenericIntersection;
+class IntersectionPlanesBase;
 class IsecEquivalenceClass;
 class MultiCornerIntersection;
 class MultiFaceIntersection;

@@ -24,11 +24,15 @@
 // element's homogeneity.
 
 // PlaneIntersection
-// | |  abstract base class
-// | |  knows location in 3D and 2D (given a PixelPlane)
-// | |  computes equivalence to any other PlaneIntersection by
-// | |     counting shared planes
-// | |
+// | | |   abstract base class
+// | | |   knows location in 3D and 2D (given a PixelPlane)
+// | | |   computes equivalence to any other PlaneIntersection by
+// | | |      counting shared planes
+// | | |
+// | | GenericIntersection
+// | |    stores sets of planes but has no information about any
+// | |     special geometry.
+// | | 
 // | TripleFaceIntersection
 // |     intersection of 3 tet faces (at a tet node)
 // |     no pixel plane given
@@ -93,8 +97,9 @@ class SingleVSBbase;
 
 // Base class for the points defined by the intersection of planes.
 
-// TODO: Now that there's an htet data member of PlaneIntersection,
-// remove the htet arg to all methods.
+// TODO: Now that there's an HomogeneityTet data member in
+// PlaneIntersection, remove the htet arg to all methods except the
+// constructors.
 
 class PlaneIntersection {
 public:
@@ -110,34 +115,36 @@ public:
   virtual PlaneIntersection *clone(HomogeneityTet*) const = 0;
   void setID(HomogeneityTet*);
 
-  virtual Coord3D location3D() const = 0;
+  // location3D gets loc from equivalence class, or calls getLocation3D/
+  Coord3D location3D() const;
+  virtual Coord3D getLocation3D() const = 0;
   virtual Coord2D location2D(const PixelPlane *pp) const {
     return pp->convert2Coord2D(location3D());
   }
 
-  // virtual void includeCollinearPlanes(const CollinearPlaneMap &) = 0;
-
+  virtual void copyPlanesToIntersection(IntersectionPlanesBase*) const = 0;
+  
   // Intersections are equivalent if they have any three distinct
   // planes in common.
   virtual bool isEquivalent(const PlaneIntersection*) const = 0;
   virtual bool isEquiv(const TripleFaceIntersection*) const = 0;
-  virtual bool isEquiv(const PixelPlaneIntersectionNR*) const = 0;
+  virtual bool isEquiv(const IntersectionPlanesBase*) const = 0;
   virtual bool isEquiv(const RedundantIntersection*) const = 0;
   virtual void addPlanesToEquivalence(IsecEquivalenceClass*) = 0;
   virtual bool isEquivalent(const IsecEquivalenceClass*) const = 0;
 
   virtual bool samePixelPlanes(const PlaneIntersection*) const = 0;
-  virtual bool samePixelPlanes(const TripleFaceIntersection*) const = 0;
-  virtual bool samePixelPlanes(const PixelPlaneIntersectionNR*) const = 0;
-  virtual bool samePixelPlanes(const RedundantIntersection*) const = 0;
+  virtual bool samePixPlanes(const TripleFaceIntersection*) const = 0;
+  virtual bool samePixPlanes(const IntersectionPlanesBase*) const = 0;
+  virtual bool samePixPlanes(const RedundantIntersection*) const = 0;
 
   virtual const FacePlane *sharedFace(const PlaneIntersection*,
 				      const FacePlane*) const = 0;
-  virtual const FacePlane *sharedFace(const TripleFaceIntersection*,
+  virtual const FacePlane *getSharedFace(const TripleFaceIntersection*,
 				      const FacePlane*) const = 0;
-  virtual const FacePlane *sharedFace(const PixelPlaneIntersectionNR*,
+  virtual const FacePlane *getSharedFace(const IntersectionPlanesBase*,
 				      const FacePlane*) const = 0;
-  virtual const FacePlane *sharedFace(const RedundantIntersection*,
+  virtual const FacePlane *getSharedFace(const RedundantIntersection*,
 				      const FacePlane*) const = 0;
 
   virtual IsecEquivalenceClass *equivalence() const { return equivalence_; }
@@ -164,7 +171,7 @@ public:
   mutable bool verbose;
   bool verify();
 #endif // DEBUG
-};
+};  // end class PlaneIntersection
 
 std::ostream &operator<<(std::ostream&, const PlaneIntersection&);
 
@@ -182,17 +189,17 @@ public:
   TripleFaceIntersection(unsigned int node, HomogeneityTet*);
   virtual TripleFaceIntersection *clone(HomogeneityTet*) const;
   const FacePlaneSet &faces() const { return faces_; }
-  virtual Coord3D location3D() const { return loc_; }
+  virtual Coord3D getLocation3D() const { return loc_; }
   unsigned int getNode() const { return node_; }
   virtual unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const;
   virtual const BarycentricCoord &baryCoord(HomogeneityTet*) const;
   virtual void print(std::ostream&) const;
 
-  // virtual void includeCollinearPlanes(const CollinearPlaneMap &) {}
-  
+  virtual void copyPlanesToIntersection(IntersectionPlanesBase*) const;
+
   virtual bool isEquivalent(const PlaneIntersection*) const;
   virtual bool isEquiv(const TripleFaceIntersection*) const;
-  virtual bool isEquiv(const PixelPlaneIntersectionNR*) const;
+  virtual bool isEquiv(const IntersectionPlanesBase*) const;
   virtual bool isEquiv(const RedundantIntersection*) const;
   virtual void addPlanesToEquivalence(IsecEquivalenceClass*);
   virtual bool isEquivalent(const IsecEquivalenceClass*) const;
@@ -200,25 +207,136 @@ public:
   virtual bool samePixelPlanes(const PlaneIntersection*) const {
     return false;
   }
-  virtual bool samePixelPlanes(const TripleFaceIntersection*) const {
+  virtual bool samePixPlanes(const TripleFaceIntersection*) const {
     return false;
       };
-  virtual bool samePixelPlanes(const PixelPlaneIntersectionNR*) const {
+  virtual bool samePixPlanes(const IntersectionPlanesBase*) const {
     return false;
   }
-  virtual bool samePixelPlanes(const RedundantIntersection*) const {
+  virtual bool samePixPlanes(const RedundantIntersection*) const {
     return false;
   }
 
   virtual const FacePlane *sharedFace(const PlaneIntersection*,
 				      const FacePlane*) const;
-  virtual const FacePlane *sharedFace(const TripleFaceIntersection*,
+  virtual const FacePlane *getSharedFace(const TripleFaceIntersection*,
 				      const FacePlane*) const;
-  virtual const FacePlane *sharedFace(const PixelPlaneIntersectionNR*,
+  virtual const FacePlane *getSharedFace(const IntersectionPlanesBase*,
 				      const FacePlane*) const;
-  virtual const FacePlane *sharedFace(const RedundantIntersection*,
+  virtual const FacePlane *getSharedFace(const RedundantIntersection*,
 				      const FacePlane*) const;
 
+  virtual std::string shortName() const;
+};
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Mix-in class for classes that need to store all three kinds of
+// Planes.
+
+class IntersectionPlanesBase {
+protected:
+  // These are the planes that define the intersection point.  There
+  // may be more than three of them, but the extras must all be
+  // FacePlanes, not HPixelPlanes or FacePixelPlanes.
+  PixelPlaneSet pixelPlanes_;
+  FacePlaneSet faces_;
+  FacePixelPlaneSet pixelFaces_;
+
+public:
+  virtual const PixelPlaneSet &pixelPlanes() const { return pixelPlanes_; }
+  virtual PixelPlaneSet &pixelPlanes() { return pixelPlanes_; }
+  virtual const FacePlaneSet &faces() const { return faces_; }
+  virtual FacePlaneSet &faces() { return faces_; }
+  // TODO: Come up with a better name than pixelFaces.
+  virtual const FacePixelPlaneSet &pixelFaces() const { return pixelFaces_; }
+  virtual FacePixelPlaneSet &pixelFaces() { return pixelFaces_; }
+
+  virtual bool isEquiv(const TripleFaceIntersection*) const = 0;
+  virtual bool isEquiv(const IntersectionPlanesBase*) const = 0;
+  virtual bool isEquiv(const RedundantIntersection*) const = 0;
+
+  virtual const FacePlane *getSharedFace(const TripleFaceIntersection*,
+				      const FacePlane*) const = 0;
+  virtual const FacePlane *getSharedFace(const IntersectionPlanesBase*,
+				      const FacePlane*) const = 0;
+  virtual const FacePlane *getSharedFace(const RedundantIntersection*,
+				      const FacePlane*) const = 0;
+
+  // Either computeLocation or setLocation should be called when a
+  // intersection is constructed.
+  void computeLocation();	// use planes to compute loc_
+  virtual void setLocation(const Coord3D&) = 0;
+};
+
+template <class BASE>
+class IntersectionPlanes : public BASE, public IntersectionPlanesBase {
+public:
+  IntersectionPlanes(HomogeneityTet *htet) : BASE(htet) {}
+
+  virtual void copyPlanesToIntersection(IntersectionPlanesBase*) const;
+  virtual unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const;
+  
+  virtual bool isEquivalent(const PlaneIntersection*) const;
+  virtual bool isEquiv(const TripleFaceIntersection*) const;
+  virtual bool isEquiv(const IntersectionPlanesBase*) const;
+  virtual bool isEquiv(const RedundantIntersection*) const;
+  virtual void addPlanesToEquivalence(IsecEquivalenceClass*);
+  virtual bool isEquivalent(const IsecEquivalenceClass*) const;
+
+  virtual bool samePixelPlanes(const PlaneIntersection*) const;
+  virtual bool samePixPlanes(const TripleFaceIntersection*) const;
+  virtual bool samePixPlanes(const IntersectionPlanesBase*) const;
+  virtual bool samePixPlanes(const RedundantIntersection*) const;
+
+  virtual const FacePlane *sharedFace(const PlaneIntersection*,
+				      const FacePlane*) const;
+  virtual const FacePlane *getSharedFace(const TripleFaceIntersection*,
+				      const FacePlane*) const;
+  virtual const FacePlane *getSharedFace(const IntersectionPlanesBase*,
+				      const FacePlane*) const;
+  virtual const FacePlane *getSharedFace(const RedundantIntersection*,
+				      const FacePlane*) const;
+
+  virtual const PixelPlaneSet &pixelPlanes() const { return pixelPlanes_; }
+  virtual PixelPlaneSet &pixelPlanes() { return pixelPlanes_; }
+  virtual const FacePlaneSet &faces() const { return faces_; }
+  virtual FacePlaneSet &faces() { return faces_; }
+  // TODO: Come up with a better name than pixelFaces.
+  virtual const FacePixelPlaneSet &pixelFaces() const { return pixelFaces_; }
+  virtual FacePixelPlaneSet &pixelFaces() { return pixelFaces_; }
+
+  // pixelPlaneSets() and facePlaneSets() return iterators that can be
+  // used in a range-based for loop to iterate over all PixelPlanes or
+  // all FacePlanes (including those in pixelFaces_).
+  typedef TwoSetIterator<const HPixelPlane, PixelPlaneSet, FacePixelPlaneSet> PixelPlaneSets;
+  PixelPlaneSets pixelPlaneSets() const {
+    return PixelPlaneSets(pixelPlanes_, pixelFaces_);
+  }
+  typedef TwoSetIterator<const FacePlane, FacePlaneSet, FacePixelPlaneSet> FacePlaneSets;
+  FacePlaneSets facePlaneSets() const {
+    return FacePlaneSets(faces_, pixelFaces_);
+  }
+
+  std::string shortName() const;
+#ifdef DEBUG
+  std::string printPlanes() const;
+#endif // DEBUG
+};
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+class GenericIntersection : public IntersectionPlanes<PlaneIntersection> {
+protected:
+  Coord3D loc_;
+public:
+  GenericIntersection(HomogeneityTet *htet)
+    : IntersectionPlanes<PlaneIntersection>(htet)
+  {}
+  virtual GenericIntersection *clone(HomogeneityTet*) const;
+  virtual void setLocation(const Coord3D &x) { loc_ = x; }
+  virtual Coord3D getLocation3D() const { return loc_; }
+  virtual void print(std::ostream&) const;
   virtual std::string shortName() const;
 };
 
@@ -314,15 +432,10 @@ public:
 enum ISEC_ORDER {FIRST, SECOND, NONCONTIGUOUS};
 std::ostream &operator<<(std::ostream &, ISEC_ORDER);
 
-class PixelPlaneIntersectionNR : public PixelPlaneIntersection {
+class PixelPlaneIntersectionNR
+  : public IntersectionPlanes<PixelPlaneIntersection>
+{
 protected:
-  // These are the planes that define the intersection point.  There
-  // may be more than three of them, but the extras must all be
-  // FacePlanes, not HPixelPlanes or FacePixelPlanes.
-  PixelPlaneSet pixelPlanes_;	// pixel planes that don't coincide with faces
-  FacePlaneSet faces_;		// faces that don't coincide with pixel planes
-  FacePixelPlaneSet pixelFaces_; // faces that do coincide with pixel planes
-
   Coord3D loc_;
 
   int crossing_; // 0 -> noncrossing, positive -> exit, negative -> entry
@@ -335,10 +448,6 @@ protected:
   bool includeCollinearPlanes_(const CollinearPlaneMap&,
 			       const PlaneSet0 &, const PlaneSet1 &);
 
-#ifdef DEBUG
-  std::string printPlanes() const;
-#endif // DEBUG
-  
 public:
   // PixelPlaneIntersectionNR and the mix-in classes below must only
   // have constructors that take no arguments (other than
@@ -352,7 +461,7 @@ public:
   // multiple inheritance because some of the mix-in methods need
   // access to data in the PixelPlaneIntersectionNR base class.)
   PixelPlaneIntersectionNR(HomogeneityTet *htet)
-    : PixelPlaneIntersection(htet)
+    : IntersectionPlanes<PixelPlaneIntersection>(htet)
   {}
   
   // RedundantIntersections refer to the PixelPlaneIntersection with
@@ -361,22 +470,11 @@ public:
   virtual PixelPlaneIntersectionNR *referent() { return this; }
   virtual const PixelPlaneIntersectionNR *referent() const { return this; }
 
-  const PixelPlaneSet &pixelPlanes() const { return pixelPlanes_; }
-  PixelPlaneSet &pixelPlanes() { return pixelPlanes_; }
-  const FacePlaneSet &faces() const { return faces_; }
-  FacePlaneSet &faces() { return faces_; }
-  // TODO: Come up with a better name than pixelFaces.
-  const FacePixelPlaneSet &pixelFaces() const { return pixelFaces_; }
-  FacePixelPlaneSet &pixelFaces() { return pixelFaces_; }
-
+  virtual void setLocation(const Coord3D&);
+  
   void includeCollinearPlanes(HomogeneityTet*);
 
   virtual void setFacePlane(const FacePlane*) {}
-
-  // Either computeLocation or setLocation should be called when a
-  // intersection is constructed.
-  void computeLocation();	// use planes to compute loc_
-  void setLocation(const Coord3D&); // set loc_ directly
 
   virtual bool onSameLoopSegment(const PixelPlaneIntersectionNR*) const = 0;
   virtual bool sameLoopSegment(const SingleVSBbase*) const = 0;
@@ -396,33 +494,21 @@ public:
   bool onSameFacePlane(const PixelPlaneIntersectionNR*,
 		       const FacePixelPlane*) const;
 
-  const FacePlane *sharedFace(const PixelPlaneIntersectionNR*) const;
-  // This version excludes a face, as in onSameFacePlane, above.
-  virtual const FacePlane *sharedFace(const PlaneIntersection*,
-				      const FacePlane*) const;
-  virtual const FacePlane *sharedFace(const TripleFaceIntersection*,
-				      const FacePlane*) const;
-  virtual const FacePlane *sharedFace(const PixelPlaneIntersectionNR*,
-				      const FacePlane*) const;
-  virtual const FacePlane *sharedFace(const RedundantIntersection*,
-				      const FacePlane*) const;
+  // const FacePlane *sharedFace(const PixelPlaneIntersectionNR*) const;
+  // // This version excludes a face, as in onSameFacePlane, above.
+  // virtual const FacePlane *sharedFace(const PlaneIntersection*,
+  // 				      const FacePlane*) const;
+  // virtual const FacePlane *getSharedFace(const TripleFaceIntersection*,
+  // 				      const FacePlane*) const;
+  // virtual const FacePlane *getSharedFace(const PixelPlaneIntersectionNR*,
+  // 				      const FacePlane*) const;
+  // virtual const FacePlane *getSharedFace(const RedundantIntersection*,
+  // 				      const FacePlane*) const;
   FacePlaneSet sharedFaces(const PixelPlaneIntersectionNR*) const;
 
   // bool samePixelPlanes(const PixelPlaneIntersectionNR*) const;
 
-  virtual Coord3D location3D() const { return loc_; }
-
-  // pixelPlaneSets() and facePlaneSets() return iterators that can be
-  // used in a range-based for loop to iterate over all PixelPlanes or
-  // all FacePlanes (including those in pixelFaces_).
-  typedef TwoSetIterator<const HPixelPlane, PixelPlaneSet, FacePixelPlaneSet> PixelPlaneSets;
-  PixelPlaneSets pixelPlaneSets() const {
-    return PixelPlaneSets(pixelPlanes_, pixelFaces_);
-  }
-  typedef TwoSetIterator<const FacePlane, FacePlaneSet, FacePixelPlaneSet> FacePlaneSets;
-  FacePlaneSets facePlaneSets() const {
-    return FacePlaneSets(faces_, pixelFaces_);
-  }
+  virtual Coord3D getLocation3D() const { return loc_; }
 
   // Does the VBS segment enter or leave the tet polygon at this point?
   virtual int crossingCount() const { return crossing_; }
@@ -467,7 +553,6 @@ public:
   void getEdgesOnFaces(HomogeneityTet*,
 		       const PixelPlaneIntersectionNR*, const HPixelPlane*,
 		       FaceFacets&) const;
-  virtual unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const;
 
   virtual void locateOnPolygonEdge(std::vector<PolyEdgeIntersections>&,
 				   const PixelPlaneFacet*) const;
@@ -499,19 +584,18 @@ public:
   virtual bool isMisordered(const MultiCornerIntersection*,
 			    const PixelPlaneFacet*) const = 0;
 
-  virtual bool isEquivalent(const PlaneIntersection*) const;
-  virtual bool isEquiv(const TripleFaceIntersection*) const;
-  virtual bool isEquiv(const PixelPlaneIntersectionNR*) const;
-  virtual bool isEquiv(const RedundantIntersection*) const;
-  void addPlanesToEquivalence(IsecEquivalenceClass*);
-  virtual bool isEquivalent(const IsecEquivalenceClass*) const;
+  // virtual bool isEquivalent(const PlaneIntersection*) const;
+  // virtual bool isEquiv(const TripleFaceIntersection*) const;
+  // virtual bool isEquiv(const IntersectionPlanesBase*) const;
+  // virtual bool isEquiv(const RedundantIntersection*) const;
+  // // void addPlanesToEquivalence(IsecEquivalenceClass*);
+  // virtual bool isEquivalent(const IsecEquivalenceClass*) const;
   
-  virtual bool samePixelPlanes(const PlaneIntersection*) const;
-  virtual bool samePixelPlanes(const TripleFaceIntersection*) const;
-  virtual bool samePixelPlanes(const PixelPlaneIntersectionNR*) const;
-  virtual bool samePixelPlanes(const RedundantIntersection*) const;
+  // virtual bool samePixelPlanes(const PlaneIntersection*) const;
+  // virtual bool samePixPlanes(const TripleFaceIntersection*) const;
+  // virtual bool samePixPlanes(const PixelPlaneIntersectionNR*) const;
+  // virtual bool samePixPlanes(const RedundantIntersection*) const;
 
-  std::string shortName() const;
 }; // end class PixelPlaneIntersectionNR
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1045,9 +1129,6 @@ public:
   virtual void setEquivalenceOnly(IsecEquivalenceClass *) {}
   virtual void removeEquivalence() {}
   
-  // virtual void includeCollinearPlanes(const CollinearPlaneMap &coplanes) {
-  //   referent_->includeCollinearPlanes(coplanes);
-  // }
   virtual void locateOnPolygonEdge(std::vector<PolyEdgeIntersections>&,
 				   const PixelPlaneFacet*) const {}
   // virtual bool onSameLoopSegment(const PixelPlaneIntersection *ppi) const {
@@ -1090,20 +1171,24 @@ public:
     return referent_->isMisordered(ppi, facet);
   }
 
-  virtual Coord3D location3D() const {
-    return referent_->location3D();
+  virtual Coord3D getLocation3D() const {
+    return referent_->getLocation3D();
   }
   virtual int crossingCount() const {
     return referent_->crossingCount();
   }
 
+  virtual void copyPlanesToIntersection(IntersectionPlanesBase *gi) const {
+    referent_->copyPlanesToIntersection(gi);
+  }
+  
   virtual bool isEquivalent(const PlaneIntersection *pi) const {
     return referent_->isEquivalent(pi);
   }
   virtual bool isEquiv(const TripleFaceIntersection *pi) const {
     return referent_->isEquiv(pi);
   }
-  virtual bool isEquiv(const PixelPlaneIntersectionNR *pi) const {
+  virtual bool isEquiv(const IntersectionPlanesBase *pi) const {
     return referent_->isEquiv(pi);
   }
   virtual bool isEquiv(const RedundantIntersection *pi) const {
@@ -1118,34 +1203,34 @@ public:
   virtual bool samePixelPlanes(const PlaneIntersection *pi) const {
     return referent_->samePixelPlanes(pi);
   }
-  virtual bool samePixelPlanes(const TripleFaceIntersection *pi) const {
-    return referent_->samePixelPlanes(pi);
+  virtual bool samePixPlanes(const TripleFaceIntersection *pi) const {
+    return referent_->samePixPlanes(pi);
   }
-  virtual bool samePixelPlanes(const PixelPlaneIntersectionNR *pi) const {
-    return referent_->samePixelPlanes(pi);
+  virtual bool samePixPlanes(const IntersectionPlanesBase *pi) const {
+    return referent_->samePixPlanes(pi);
   }
-  virtual bool samePixelPlanes(const RedundantIntersection *pi) const {
-    return referent_->samePixelPlanes(pi);
+  virtual bool samePixPlanes(const RedundantIntersection *pi) const {
+    return referent_->samePixPlanes(pi);
   }
   virtual const FacePlane *sharedFace(const PlaneIntersection *pi,
 				      const FacePlane *fp) const
   {
     return pi->sharedFace(referent_, fp);
   }
-  virtual const FacePlane *sharedFace(const TripleFaceIntersection *pi,
+  virtual const FacePlane *getSharedFace(const TripleFaceIntersection *pi,
 				      const FacePlane *fp) const
   {
-    return pi->sharedFace(referent_, fp);
+    return pi->getSharedFace(referent_, fp);
   }
-  virtual const FacePlane *sharedFace(const PixelPlaneIntersectionNR *pi,
+  virtual const FacePlane *getSharedFace(const IntersectionPlanesBase *pi,
 				      const FacePlane *fp) const
   {
-    return pi->sharedFace(referent_, fp);
+    return pi->getSharedFace(referent_, fp);
   }
-  virtual const FacePlane *sharedFace(const RedundantIntersection *pi,
+  virtual const FacePlane *getSharedFace(const RedundantIntersection *pi,
 				      const FacePlane *fp) const
   {
-    return pi->sharedFace(referent_, fp);
+    return pi->getSharedFace(referent_, fp);
   }
 
   virtual void print(std::ostream&) const;
@@ -1166,11 +1251,11 @@ private:
   PixelPlaneSet pixelPlanes;
   FacePlaneSet facePlanes;
   FacePixelPlaneSet pixelFaces;
-  // "intersections" must store pointers and not use DerefCompare,
-  // since it may contain multiple PlaneIntersection objects that are
-  // equal.
-  // std::set<PlaneIntersection*> intersections;
+  // "intersections" must store pointers and (if it's ever changed
+  // back to a std::set) not use DerefCompare, since it may contain
+  // multiple PlaneIntersection objects that are equal.
   std::vector<PlaneIntersection*> intersections;
+  Coord3D loc_;	// so that all equivalent points are at the same spot.
 public:
   const unsigned int id;
 #ifdef DEBUG
@@ -1197,6 +1282,8 @@ public:
   void addFacePlane(const FacePlane*);
   void addFacePixelPlane(const FacePixelPlane*);
 
+  const Coord3D &location3D() const { return loc_; }
+
   bool operator<(const IsecEquivalenceClass &other) const {
     return id < other.id;
   }
@@ -1204,7 +1291,7 @@ public:
   friend class FacePixelPlane;
   friend class FacePlane;
   friend class HPixelPlane;
-  friend class PixelPlaneIntersectionNR;
+  template <class B> friend class IntersectionPlanes;
   friend class TripleFaceIntersection;
   friend std::ostream &operator<<(std::ostream&, const IsecEquivalenceClass&);
   
@@ -1212,7 +1299,7 @@ public:
   bool verify();
   void dump();
 #endif // DEBUG
-};
+}; // end IsecEquivalenceClass
 
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
