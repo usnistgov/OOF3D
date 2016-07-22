@@ -2581,22 +2581,19 @@ void IntersectionGroup::removeEquivPts(HomogeneityTet *htet,
 				       unsigned int face,
 				       LooseEndSet &looseEnds)
 {
-  unsigned int npts = looseEnds.size();
-  if(size() <= 1)
+  unsigned int npts = size();
+  if(size <= 1)
     return;
-  std::vector<FaceEdgeIntersection*> lev(looseEnds.begin(), looseEnds.end());
   unsigned int nMatched = 0;
   std::vector<bool> matched(npts, false);
   for(unsigned int i=0; i<npts-1; i++) {
     if(!matched[i]) {
       for(unsigned int j=i+1; j<npts; j++) {
 	if(!matched[j]) {
-	  if(lev[i]->start() != lev[j]->start() &&
-	     // points are equivalent topologically
-	     (lev[i]->corner()->isEquivalent(lev[j]->corner()) ||
-	      // or are at the same physical position
-	      (lev[i]->faceEdge() == lev[j]->faceEdge() &&
-	       lev[i]->edgePosition() == lev[j]->edgePosition())))
+	  if(isecs[i]->start() != isecs[j]->start() && // one start & one end
+	     (isecs[i]->corner()->isEquivalent(isecs[j]->corner()) ||
+	      (isecs[i]->faceEdge() == isecs[j]->faceEdge() &&
+	       isecs[i]->edgePosition() == isecs[j]->edgePosition())))
 	    {
 	      matched[i] = true;
 	      matched[j] = true;
@@ -2606,14 +2603,53 @@ void IntersectionGroup::removeEquivPts(HomogeneityTet *htet,
       }
     }
   }
-  if(nMatched != 0) {
-    looseEnds.clear();
-    if(nMatched < npts) {
-      for(unsigned int i=0; i<npts; i++)
-	if(!matched[i])
-	  looseEnds.insert(lev[i]);
+  if(nMatched > 0) {
+    unsigned int newSize = 0;
+    for(unsigned int i=0; i<npts; i++) {
+      if(!matched[i]) {
+	isecs[newSize] = isecs[i];
+	newSize++;
+      }
+      else {
+	looseEnds.erase(isecs[i]);
+      }
     }
+    isecs.resize(newSize);
   }
+  
+  // unsigned int npts = looseEnds.size();
+  // if(size() <= 1)
+  //   return;
+  // std::vector<FaceEdgeIntersection*> lev(looseEnds.begin(), looseEnds.end());
+  // unsigned int nMatched = 0;
+  // std::vector<bool> matched(npts, false);
+  // for(unsigned int i=0; i<npts-1; i++) {
+  //   if(!matched[i]) {
+  //     for(unsigned int j=i+1; j<npts; j++) {
+  // 	if(!matched[j]) {
+  // 	  if(lev[i]->start() != lev[j]->start() &&
+  // 	     // points are equivalent topologically
+  // 	     (lev[i]->corner()->isEquivalent(lev[j]->corner()) ||
+  // 	      // or are at the same physical position
+  // 	      (lev[i]->faceEdge() == lev[j]->faceEdge() &&
+  // 	       lev[i]->edgePosition() == lev[j]->edgePosition())))
+  // 	    {
+  // 	      matched[i] = true;
+  // 	      matched[j] = true;
+  // 	      nMatched += 2;
+  // 	    }
+  // 	} // end if j is not matched
+  //     }	// end loop over loose ends j
+  //   } // end if i is not matched
+  // } // end loop over loose ends i
+  // if(nMatched != 0) {
+  //   looseEnds.clear();
+  //   if(nMatched < npts) {
+  //     for(unsigned int i=0; i<npts; i++)
+  // 	if(!matched[i])
+  // 	  looseEnds.insert(lev[i]);
+  //   }
+  // }
 }
 
 void IntersectionGroup::fixOccupiedEdges(
