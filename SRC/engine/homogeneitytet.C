@@ -2176,9 +2176,18 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	    break;
 	  }
 	}
-	if(!found)
-	  throw ErrProgrammingError("findFaceFacets failed to find an end!",
+	if(!found) {
+	  oofcerr << "HomogeneityTet::findFaceFacets: failed! cat="
+		  << cat << " face=" << face << std::endl;
+	  oofcerr << "HomogeneityTet::findFaceFacets: sortedLooseEnds="
+		  << std::endl;
+	  OOFcerrIndent indent(2);
+	  for(unsigned int i=0; i<sortedLooseEnds.size(); i++)
+	    oofcerr << "HomogeneityTet::findFaceFacets: " << *sortedLooseEnds[i]
+		    << std::endl;
+	  throw ErrProgrammingError("findFaceFacets failed to find first end!",
 				    __FILE__, __LINE__);
+	}
 	for(unsigned int ii=0; ii<npts; ii += 2) {
 	  unsigned int i = ii+i0;
 	  if(i >= npts)
@@ -2582,7 +2591,7 @@ void IntersectionGroup::removeEquivPts(HomogeneityTet *htet,
 				       LooseEndSet &looseEnds)
 {
   unsigned int npts = size();
-  if(size <= 1)
+  if(npts <= 1)
     return;
   unsigned int nMatched = 0;
   std::vector<bool> matched(npts, false);
@@ -2598,6 +2607,7 @@ void IntersectionGroup::removeEquivPts(HomogeneityTet *htet,
 	      matched[i] = true;
 	      matched[j] = true;
 	      nMatched += 2;
+	      break;		// go to next i
 	    }
 	}
       }
@@ -2616,40 +2626,6 @@ void IntersectionGroup::removeEquivPts(HomogeneityTet *htet,
     }
     isecs.resize(newSize);
   }
-  
-  // unsigned int npts = looseEnds.size();
-  // if(size() <= 1)
-  //   return;
-  // std::vector<FaceEdgeIntersection*> lev(looseEnds.begin(), looseEnds.end());
-  // unsigned int nMatched = 0;
-  // std::vector<bool> matched(npts, false);
-  // for(unsigned int i=0; i<npts-1; i++) {
-  //   if(!matched[i]) {
-  //     for(unsigned int j=i+1; j<npts; j++) {
-  // 	if(!matched[j]) {
-  // 	  if(lev[i]->start() != lev[j]->start() &&
-  // 	     // points are equivalent topologically
-  // 	     (lev[i]->corner()->isEquivalent(lev[j]->corner()) ||
-  // 	      // or are at the same physical position
-  // 	      (lev[i]->faceEdge() == lev[j]->faceEdge() &&
-  // 	       lev[i]->edgePosition() == lev[j]->edgePosition())))
-  // 	    {
-  // 	      matched[i] = true;
-  // 	      matched[j] = true;
-  // 	      nMatched += 2;
-  // 	    }
-  // 	} // end if j is not matched
-  //     }	// end loop over loose ends j
-  //   } // end if i is not matched
-  // } // end loop over loose ends i
-  // if(nMatched != 0) {
-  //   looseEnds.clear();
-  //   if(nMatched < npts) {
-  //     for(unsigned int i=0; i<npts; i++)
-  // 	if(!matched[i])
-  // 	  looseEnds.insert(lev[i]);
-  //   }
-  // }
 }
 
 void IntersectionGroup::fixOccupiedEdges(
@@ -2997,7 +2973,7 @@ void HomogeneityTet::resolveCoincidences(
     if(verboseface) {
       oofcerr << "HomogeneityTet::resolveCoincidences: ig=" << std::endl;
       OOFcerrIndent indent(2);
-      oofcerr << ig << std::endl;
+      std::cerr << ig << std::endl;
     }
 #endif // DEBUG
     if(ig.size() > 1) {
@@ -3007,7 +2983,7 @@ void HomogeneityTet::resolveCoincidences(
 	oofcerr << "HomogeneityTet::resolveCoincidences: "
 		<< "after sorting, ig=" << std::endl;
 	OOFcerrIndent indent(2);
-	oofcerr << ig << std::endl;
+	std::cerr << ig << std::endl;
       }
 #endif // DEBUG
       ig.removeEquivPts(this, face, looseEnds);
@@ -3016,7 +2992,7 @@ void HomogeneityTet::resolveCoincidences(
 	oofcerr << "HomogeneityTet::resolveCoincidences: "
 		<< "after removeEquivPts, ig=" << std::endl;
 	OOFcerrIndent indent(2);
-	oofcerr << ig << std::endl;
+	std::cerr << ig << std::endl;
       }
 #endif // DEBUG
       ig.fixCrossings(this, face, looseEnds);
@@ -3025,7 +3001,7 @@ void HomogeneityTet::resolveCoincidences(
 	oofcerr << "HomogeneityTet::resolveCoincidences: "
 		<< "after fixCrossings, ig=" << std::endl;
 	OOFcerrIndent indent(2);
-	oofcerr << ig << std::endl;
+	std::cerr << ig << std::endl;
       }
 #endif // DEBUG
       // fixCrossings can merge points, thereby changing equivalence
@@ -3039,7 +3015,7 @@ void HomogeneityTet::resolveCoincidences(
 	oofcerr << "HomogeneityTet::resolveCoincidences: "
 		<< "after fixOccupiedEdges, ig=" << std::endl;
 	OOFcerrIndent indent(2);
-	oofcerr << ig << std::endl;
+	std::cerr << ig << std::endl;
       }
 #endif // DEBUG
 
