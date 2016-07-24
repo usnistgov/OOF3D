@@ -55,8 +55,15 @@ public:
   void setFaceEdge(unsigned int fe, double pos) { fEdge = fe; t = pos; }
   // forceOntoEdge also sets fEdge and t.  It uses arithmetic to find fEdge.
   void forceOntoEdge(unsigned int face, HomogeneityTet*);
-  bool crosses(const FaceEdgeIntersection*) const;
+  bool crosses(const FaceEdgeIntersection*
+#ifdef DEBUG
+	       , bool
+#endif // DEBUG
+	       ) const;
 
+  // Are two points on the same edge and same edge coordinate?
+  bool samePosition(const FaceEdgeIntersection*) const;
+  
   // PlaneIntersection *replacePoint(PlaneIntersection *pi,
   // 				  HomogeneityTet*);
   // PlaneIntersection *replacePoint(PlaneIntersection *pi,
