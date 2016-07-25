@@ -115,7 +115,7 @@ public:
   virtual PlaneIntersection *clone(HomogeneityTet*) const = 0;
   void setID(HomogeneityTet*);
 
-  // location3D gets loc from equivalence class, or calls getLocation3D/
+  // location3D gets loc from equivalence class, or calls getLocation3D.
   Coord3D location3D() const;
   virtual Coord3D getLocation3D() const = 0;
   virtual Coord2D location2D(const PixelPlane *pp) const {

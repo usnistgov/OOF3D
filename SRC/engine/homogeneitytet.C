@@ -2838,7 +2838,7 @@ void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
   // Find the first segment that crosses any other
   for(unsigned int i=0; i<isecs.size()-1 && firstXing==NONE; i++) {
     for(unsigned int j=i+1; j<isecs.size(); j++) {
-      if(isecs[i]->crosses(isecs[j]
+      if(isecs[i]->crosses(isecs[j], face, htet
 #ifdef DEBUG
 			   , htet->verboseFace()
 #endif // DEBUG
@@ -2865,7 +2865,7 @@ void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
   unsigned int lastXing = NONE;
   for(unsigned int i=isecs.size()-1; i>tempXing && lastXing==NONE; i--) {
     for(unsigned int j=0; j<i; j++) {
-      if(isecs[i]->crosses(isecs[j]
+      if(isecs[i]->crosses(isecs[j], face, htet
 #ifdef DEBUG
 			   , htet->verboseFace()
 #endif // DEBUG
@@ -2946,13 +2946,18 @@ void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
 	  newfei->setFaceEdge(newEdge, newT);
 	  newIsecs.push_back(newfei);
 	  looseEnds.insert(newfei);
-	  looseEnds.erase(oldfei);
 	  if(isStart)
 	    startCount++;
 	  else
 	    endCount++;
 	}
+      looseEnds.erase(oldfei);
     }
+  }
+  else {
+    // Don't keep any of the endpoints of crossing segments.
+    for(unsigned int i=firstXing; i<=lastXing; i++)
+      looseEnds.erase(isecs[i]);
   }
   newIsecs.insert(newIsecs.end(), isecs.begin()+lastXing+1, isecs.end());
   isecs = newIsecs;
@@ -2984,12 +2989,18 @@ void HomogeneityTet::resolveCoincidences(
   // a voxel side length.  We don't expect coincidences to affect
   // points more than a fraction of a pixel apart.
 
-  unsigned int nLooseEnds = looseEnds.size();
+#ifdef DEBUG
+  if(verboseface) {
+    oofcerr << "HomogeneityTet::resolveCoincidences: nLooseEnds="
+	    << looseEnds.size() << std::endl;
+  }
+  OOFcerrIndent indent(2);
+#endif // DEBUG
 
   // IntersectionGroups are created in order moving around the face.
   // Store them in a vector to preserve that order.
   std::vector<IntersectionGroup> intersectionGroups;
-  intersectionGroups.reserve(nLooseEnds);
+  intersectionGroups.reserve(looseEnds.size());
   for(FaceEdgeIntersection *fei : looseEnds) {
     const Coord3D loc = fei->corner()->location3D();
     bool found = false;
@@ -4337,7 +4348,9 @@ void FaceEdgeIntersection::forceOntoEdge(unsigned int face,
 #endif // DEBUG
 }
 
-bool FaceEdgeIntersection::crosses(const FaceEdgeIntersection *other
+bool FaceEdgeIntersection::crosses(const FaceEdgeIntersection *other,
+				   unsigned int face,
+				   HomogeneityTet *htet
 #ifdef DEBUG
 				   , bool verbose
 #endif // DEBUG
@@ -4346,10 +4359,17 @@ bool FaceEdgeIntersection::crosses(const FaceEdgeIntersection *other
   // Does the facet edge that meets the face edge here cross the facet
   // edge that meets the face edge at "other"?
 
-  // The edges don't cross if their endpoints meet.  Using
-  // isEquivalent is important, because if the two segments actually
-  // join, the segIntersection test would be susceptible to round off
-  // error.
+  assert(start() != other->start());
+  // Either this point precedes the other on the same face edge, or
+  // this point is on the edge preceding the other point's edge.
+  // TODO: In a very small face, is it possible that the edge order is
+  // reversed?
+  assert((faceEdge()==other->faceEdge() &&
+	  edgePosition()<=other->edgePosition() )
+	 ||
+	 ((faceEdge()+1) % NUM_TET_FACE_EDGES == other->faceEdge()));
+  
+  // The edges don't cross if their endpoints meet.
 #ifdef DEBUG
   if(verbose) {
     oofcerr << "FaceEdgeIntersection::crosses:  this=" << *this << std::endl;
@@ -4382,13 +4402,25 @@ bool FaceEdgeIntersection::crosses(const FaceEdgeIntersection *other
   }
 
   // See if the segments actually intersect.
-  return segIntersection(nearEnd->location3D(), farEnd->location3D(),
-			 otherNearEnd->location3D(), otherFarEnd->location3D()
-#ifdef DEBUG
+  Coord3D a0 = nearEnd->location3D();
+  Coord3D a1 = farEnd->location3D();
+  Coord3D b0 = otherNearEnd->location3D();
+  Coord3D b1 = otherFarEnd->location3D();
+  Coord3D faceNormal = htet->faceAreaVector(face);
+  // We know that b0 lies to the right of (a0,a1) and that a0 lies to
+  // the left of (b0,b1).  If the segments cross, then b1 must lie to
+  // the left of (a0,a1) and a1 to the right of (b0,b1), which is what
+  // these cross products check:
+  return (dot(cross(a1-a0, b1-a0), faceNormal) >= 0.0 ||
+	  dot(cross(b1-b0, a1-b0), faceNormal) <= 0.0);
+  
+//   return segIntersection(nearEnd->location3D(), farEnd->location3D(),
+// 			 otherNearEnd->location3D(), otherFarEnd->location3D()
+// #ifdef DEBUG
 
-			 , verbose
-#endif // DEBUG
-			 );
+// 			 , verbose
+// #endif // DEBUG
+// 			 );
 }
 
 bool FaceEdgeIntersection::samePosition(const FaceEdgeIntersection *other) const
