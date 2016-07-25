@@ -266,7 +266,7 @@ Procedure:
 
     b) Tell distutils to install oof3D in a different place, like this:
 
-          % python setup.py install --prefix=<prefix>
+          % python setup.py install --3D --prefix=<prefix>
 
     where <prefix> is a directory that you can write to.  The default
     value of <prefix> is usually /usr/local.  On OS X it may be
