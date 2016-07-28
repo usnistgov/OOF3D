@@ -138,6 +138,19 @@ public:
   virtual bool samePixPlanes(const IntersectionPlanesBase*) const = 0;
   virtual bool samePixPlanes(const RedundantIntersection*) const = 0;
 
+  // sharedPixelPlane returns a PixelPlane that's used in both this
+  // intersection and the other one.  If there's more than one, it
+  // makes an arbitrary choice.  It never returns a plane that's
+  // coincident with the given face.
+  virtual const HPixelPlane *sharedPixelPlane(const PlaneIntersection*,
+					      unsigned int) const = 0;
+  virtual const HPixelPlane *getSharedPixelPlane(const TripleFaceIntersection*,
+						 unsigned int) const = 0;
+  virtual const HPixelPlane *getSharedPixelPlane(const IntersectionPlanesBase*,
+						 unsigned int) const = 0;
+  virtual const HPixelPlane *getSharedPixelPlane(const RedundantIntersection*,
+						 unsigned int) const = 0;
+
   virtual const FacePlane *sharedFace(const PlaneIntersection*,
 				      const FacePlane*) const = 0;
   virtual const FacePlane *getSharedFace(const TripleFaceIntersection*,
@@ -217,6 +230,15 @@ public:
     return false;
   }
 
+  virtual const HPixelPlane *sharedPixelPlane(const PlaneIntersection*,
+					      unsigned int) const;
+  virtual const HPixelPlane *getSharedPixelPlane(const TripleFaceIntersection*,
+						 unsigned int) const;
+  virtual const HPixelPlane *getSharedPixelPlane(const IntersectionPlanesBase*,
+						 unsigned int) const;
+  virtual const HPixelPlane *getSharedPixelPlane(const RedundantIntersection*,
+						 unsigned int) const;
+  
   virtual const FacePlane *sharedFace(const PlaneIntersection*,
 				      const FacePlane*) const;
   virtual const FacePlane *getSharedFace(const TripleFaceIntersection*,
@@ -256,6 +278,13 @@ public:
   virtual bool isEquiv(const IntersectionPlanesBase*) const = 0;
   virtual bool isEquiv(const RedundantIntersection*) const = 0;
 
+  virtual const HPixelPlane *getSharedPixelPlane(const TripleFaceIntersection*,
+						 unsigned int) const = 0;
+  virtual const HPixelPlane *getSharedPixelPlane(const IntersectionPlanesBase*,
+						 unsigned int) const = 0;
+  virtual const HPixelPlane *getSharedPixelPlane(const RedundantIntersection*,
+						 unsigned int) const= 0;
+  
   virtual const FacePlane *getSharedFace(const TripleFaceIntersection*,
 				      const FacePlane*) const = 0;
   virtual const FacePlane *getSharedFace(const IntersectionPlanesBase*,
@@ -289,6 +318,15 @@ public:
   virtual bool samePixPlanes(const IntersectionPlanesBase*) const;
   virtual bool samePixPlanes(const RedundantIntersection*) const;
 
+  virtual const HPixelPlane *sharedPixelPlane(const PlaneIntersection*,
+					      unsigned int) const;
+  virtual const HPixelPlane *getSharedPixelPlane(const TripleFaceIntersection*,
+						 unsigned int) const;
+  virtual const HPixelPlane *getSharedPixelPlane(const IntersectionPlanesBase*,
+						 unsigned int) const;
+  virtual const HPixelPlane *getSharedPixelPlane(const RedundantIntersection*,
+						 unsigned int) const;
+  
   virtual const FacePlane *sharedFace(const PlaneIntersection*,
 				      const FacePlane*) const;
   virtual const FacePlane *getSharedFace(const TripleFaceIntersection*,
@@ -479,6 +517,7 @@ public:
   virtual bool onSameLoopSegment(const PixelPlaneIntersectionNR*) const = 0;
   virtual bool sameLoopSegment(const SingleVSBbase*) const = 0;
   virtual bool sameLoopSegment(const MultiVSBbase*) const = 0;
+  // TODO: can sharedLoopSegment be merged with sharedPixelPlane somehow?
   virtual const PixelBdyLoopSegment *sharedLoopSegment(
 					 const PixelPlaneIntersectionNR*)
     const = 0;
@@ -1212,6 +1251,31 @@ public:
   virtual bool samePixPlanes(const RedundantIntersection *pi) const {
     return referent_->samePixPlanes(pi);
   }
+
+  virtual const HPixelPlane *sharedPixelPlane(const PlaneIntersection *pi,
+					      unsigned int face) const
+  {
+    return pi->sharedPixelPlane(referent_, face);
+  }
+  virtual const HPixelPlane *getSharedPixelPlane(
+					const TripleFaceIntersection *pi,
+					unsigned int face) const
+  {
+    return pi->getSharedPixelPlane(referent_, face);
+  }
+  virtual const HPixelPlane *getSharedPixelPlane(
+					const IntersectionPlanesBase *pi,
+					unsigned int face) const
+  {
+    return pi->getSharedPixelPlane(referent_, face);
+  }
+  virtual const HPixelPlane *getSharedPixelPlane(
+					 const RedundantIntersection *pi,
+					 unsigned int face) const
+  {
+    return pi->getSharedPixelPlane(referent_, face);
+  }
+  
   virtual const FacePlane *sharedFace(const PlaneIntersection *pi,
 				      const FacePlane *fp) const
   {

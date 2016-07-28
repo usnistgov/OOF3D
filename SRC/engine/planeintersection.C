@@ -293,6 +293,38 @@ bool TripleFaceIntersection::isEquivalent(const IsecEquivalenceClass *eqclass)
   return nfaces == 3;
 }
 
+const HPixelPlane *TripleFaceIntersection::sharedPixelPlane(
+						   const PlaneIntersection*,
+						   unsigned int)
+  const
+{
+  return nullptr;
+}
+
+const HPixelPlane *TripleFaceIntersection::getSharedPixelPlane(
+					    const TripleFaceIntersection*,
+					    unsigned int)
+const
+{
+  return nullptr;
+}
+
+const HPixelPlane *TripleFaceIntersection::getSharedPixelPlane(
+					    const IntersectionPlanesBase*,
+					    unsigned int)
+const
+{
+  return nullptr;
+}
+
+const HPixelPlane *TripleFaceIntersection::getSharedPixelPlane(
+					    const RedundantIntersection*,
+					    unsigned int)
+const
+{
+  return nullptr;
+}
+
 const FacePlane *TripleFaceIntersection::sharedFace(const PlaneIntersection *pi,
 						    const FacePlane *exclude)
   const
@@ -556,6 +588,57 @@ bool IntersectionPlanes<BASE>::samePixPlanes(const RedundantIntersection *ri)
   const
 {
   return ri->referent()->samePixPlanes(this);
+}
+
+template <class BASE>
+const HPixelPlane *IntersectionPlanes<BASE>::sharedPixelPlane(
+					      const PlaneIntersection *pi,
+					      unsigned int face)
+  const
+{
+  return pi->getSharedPixelPlane(this, face); // double dispatch
+}
+
+template <class BASE>
+const HPixelPlane *IntersectionPlanes<BASE>::getSharedPixelPlane(
+						 const TripleFaceIntersection*,
+						 unsigned int)
+  const
+{
+  return nullptr;
+}
+
+template <class BASE>
+const HPixelPlane *IntersectionPlanes<BASE>::getSharedPixelPlane(
+					   const IntersectionPlanesBase *ipb,
+					   unsigned int face)
+  const
+{
+  auto iter = sharedEntry(pixelPlanes_, ipb->pixelPlanes());
+  if(iter != pixelPlanes_.end())
+    return *iter;
+
+  const FacePixelPlane *fpp = BASE::htet->getCoincidentPixelPlane(face);
+  if(fpp == nullptr) {
+    auto iter = sharedEntry(pixelFaces_, ipb->pixelFaces());
+    if(iter != pixelFaces_.end())
+      return *iter;
+  }
+  else {
+    auto iter = sharedEntry(pixelFaces_, ipb->pixelFaces(), fpp);
+    if(iter != pixelFaces_.end())
+      return *iter;
+  }
+  return nullptr;
+}
+
+template <class BASE>
+const HPixelPlane *IntersectionPlanes<BASE>::getSharedPixelPlane(
+					     const RedundantIntersection *ri,
+					     unsigned int face)
+  const
+{
+  return ri->referent()->getSharedPixelPlane(this, face);
 }
 
 // const FacePlane *PixelPlaneIntersectionNR::sharedFace(

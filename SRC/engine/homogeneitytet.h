@@ -47,6 +47,7 @@ public:
   bool start() const { return segstart; }
   double edgePosition() const { return t; }
   PlaneIntersection *corner() const { return crnr; }
+  PlaneIntersection *remoteCorner() const;
 
   // findFaceEdge sets fEdge and t.  It uses topology to find fEdge.
   void findFaceEdge(unsigned int face, HomogeneityTet*);
@@ -83,8 +84,8 @@ std::ostream &operator<<(std::ostream&, const FaceEdgeIntersection&);
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // A FaceFacetEdge is an edge added to a facet on a tet face.  It's
-// just like FacetEdge, except that the endpoints of the edge are
-// general PlaneIntersections, not PixelPlaneIntersections.
+// like FacetEdge, except that the endpoints of the edge are general
+// PlaneIntersections, not PixelPlaneIntersections.
 
 class FaceFacetEdge {
 private:
@@ -106,7 +107,7 @@ public:
   FaceFacetEdge(FaceFacetEdge&&);
   PlaneIntersection *startPt() const { return start_; }
   PlaneIntersection *endPt() const { return stop_; }
-  const PlaneIntersection *point(bool start) const {
+  PlaneIntersection *point(bool start) const {
     return start ? start_ : stop_;
   }
   Coord3D startPos3D() const;
@@ -114,6 +115,8 @@ public:
   const HPixelPlane *pixelPlane() const { return pixplane_; }
   PlaneIntersection *replacePoint(PlaneIntersection *pt, HomogeneityTet*, bool);
   bool isNull() const;
+  // Does this edge lie along an edge of the given tet face?  Returns
+  // the edge number or NONE.
   unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const;
   bool operator<(const FaceFacetEdge&) const; // object identity, not value
 };
@@ -387,7 +390,7 @@ public:
   bool verify();
   void dumpEquivalences();
 #endif	// DEBUG
-};				// end class HomogeneityTet
+};  // end class HomogeneityTet
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
