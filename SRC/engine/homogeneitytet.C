@@ -2113,6 +2113,10 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
     if(coincidentPixelPlanes[face] == nullptr) { // face is not a pixel plane
 #ifdef DEBUG
       verboseface = verboseFace_(verbosecategory, face);
+      if(verboseface)
+	oofcerr << "HomogeneityTet::findFaceFacets: second loop over face "
+		<< face << " category " << cat << std::endl;
+      OOFcerrIndent indent(2);
 #endif // DEBUG
       FaceFacet &facet = faceFacets[face];
       LooseEndSet &looseEnds = looseEndCatalog[face];
@@ -2759,15 +2763,22 @@ bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
   Coord3D faceNormal = htet->faceAreaVector(face); // not unit vec
   const PlaneIntersection *pt0 = fei0->corner();
   const PlaneIntersection *pt1 = fei1->corner();
+#ifdef DEBUG
+  if(htet->verboseFace()) {
+    oofcerr << "IntersectionGroup::tentCheck: pt0=" << *pt0 << std::endl;
+    oofcerr << "IntersectionGroup::tentCheck: pt1=" << *pt1 << std::endl;
+  }
+#endif // DEBUG
   const FacePlane *thisFacePtr = htet->getTetFacePlane(face);
   // pt0 and pt1 are on the same tet edge, so they share
   // two faces.  otherFace is the other face.
   const FacePlane *otherFacePtr = pt0->sharedFace(pt1, thisFacePtr);
-// #ifdef DEBUG
-//   if(htet->verboseFace())
-//     oofcerr << "IntersectionGroup::tentCheck: otherFacePtr=" << *otherFacePtr
-// 	    << std::endl;
-// #endif // DEBUG
+  assert(otherFacePtr != nullptr);
+#ifdef DEBUG
+  if(htet->verboseFace())
+    oofcerr << "IntersectionGroup::tentCheck: otherFacePtr=" << *otherFacePtr
+	    << std::endl;
+#endif // DEBUG
   unsigned int otherFace = htet->getTetFaceIndex(otherFacePtr);
   // tetEdge is the index of the common edge at tet scope.
   unsigned int tetEdge =
@@ -2778,13 +2789,13 @@ bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
   // At face scope, edge n goes from node n to node (n+1)%3.
   unsigned int n0 = vtkTetra::GetFaceArray(face)[faceEdge];
   unsigned int n1 = vtkTetra::GetFaceArray(face)[(faceEdge+1)%3];
-// #ifdef DEBUG
-//   if(htet->verboseFace())
-//     oofcerr << "IntersectionGroup::tentCheck: face=" << face
-// 	    << " otherFace=" << otherFace << " tetEdge=" << tetEdge
-// 	    << " faceEdge=" << faceEdge
-// 	    << " n0=" << n0 << " n1=" << n1 << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+  if(htet->verboseFace())
+    oofcerr << "IntersectionGroup::tentCheck: face=" << face
+	    << " otherFace=" << otherFace << " tetEdge=" << tetEdge
+	    << " faceEdge=" << faceEdge
+	    << " n0=" << n0 << " n1=" << n1 << std::endl;
+#endif // DEBUG
   // TODO: Is there a simpler way to do all that bookkeeping?
   // The common edge goes from coord e0 to e1.
   Coord3D e0 = htet->nodePosition(n0);
@@ -3737,7 +3748,7 @@ FaceFacets HomogeneityTet::findFaceFacetsOLD(unsigned int cat,
 #ifdef DEBUG
 	if(verbosecategory)
 	  oofcerr << "HomogeneityTet::findFaceFacets: marooned point! "
-		  << pt0.feInt << std::endl;
+		  << *pt0.feInt << std::endl;
 #endif // DEBUG
       }
     }	// end if point i hasn't been matched
@@ -4587,6 +4598,9 @@ void FaceEdgeIntersection::forceOntoEdge(unsigned int face,
   unsigned int face2 = CSkeletonElement::oppFace[minN];
   unsigned int e = CSkeletonElement::faceFaceEdge[face][face2]; // tet scope
   fEdge = CSkeletonElement::tetEdge2FaceEdge[face][e]; // face scope
+
+  htet->getTetFacePlane(face2)->addToEquivalence(crnr->equivalence());
+  htet->checkEquiv(crnr);
 
   unsigned int node0, node1;
   getEdgeNodes(face, fEdge, node0, node1);

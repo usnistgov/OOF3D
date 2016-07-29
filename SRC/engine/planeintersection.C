@@ -19,6 +19,11 @@
 
 #include <algorithm>
 
+// TODO: sharedFaces uses the faces in the equivalence class instead
+// of the faces in the PlaneIntersection.  Planes and faces should be
+// stored only in equivalence classes and not in any of the
+// PlaneIntersection objects themselves.
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 static std::string eqPrint(IsecEquivalenceClass *eqptr) {
@@ -671,7 +676,7 @@ const FacePlane *IntersectionPlanes<BASE>::getSharedFace(
 					      const FacePlane *exclude)
   const
 {
-  for(const FacePlane *fp0 : facePlaneSets()) {
+  for(const FacePlane *fp0 : BASE::equivalence_->facePlaneSets()) {
     if(fp0 != exclude) {
       for(const FacePlane *fp1 : tfi->faces()) {
 	if(fp1 == fp0)
@@ -688,23 +693,27 @@ const FacePlane *IntersectionPlanes<BASE>::getSharedFace(
 				      const FacePlane *exclude)
   const
 {
-  const FacePlaneSet::const_iterator fp = sharedEntry(faces_, fi->faces(),
-						      exclude);
-  if(fp != faces_.end())
+  const FacePlaneSet::const_iterator fp = sharedEntry(
+					      BASE::equivalence()->facePlanes,
+					      fi->getEquivalence()->facePlanes,
+					      exclude);
+  if(fp != BASE::equivalence()->facePlanes.end())
     return *fp;
   // We could have *another* double dispatch layer to see if "exclude"
   // is a FacePixelPlane, or we could just do this:
   const FacePixelPlane *fppNot = dynamic_cast<const FacePixelPlane*>(exclude);
   if(fppNot != nullptr) {
     const FacePixelPlaneSet::const_iterator fpp =
-      sharedEntry(pixelFaces_, fi->pixelFaces(), fppNot);
+      sharedEntry(BASE::equivalence()->pixelFaces,
+		  fi->getEquivalence()->pixelFaces, fppNot);
     if(fpp != pixelFaces_.end())
       return *fpp;
   }
   else {
     const FacePixelPlaneSet::const_iterator fpp =
-      sharedEntry(pixelFaces_, fi->pixelFaces());
-    if(fpp != pixelFaces_.end())
+      sharedEntry(BASE::equivalence()->pixelFaces,
+		  fi->getEquivalence()->pixelFaces);
+    if(fpp != BASE::equivalence()->pixelFaces.end())
       return *fpp;
   }
   return nullptr;
@@ -724,6 +733,7 @@ FacePlaneSet PixelPlaneIntersectionNR::sharedFaces(
   const
 {
   FacePlaneSet shared;
+  // TODO: get faces from equivalence class.
   std::set_intersection(faces_.begin(), faces_.end(),
 			fi->faces().begin(),
 			fi->faces().end(),

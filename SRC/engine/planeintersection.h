@@ -95,6 +95,9 @@
 class MultiVSBbase;
 class SingleVSBbase;
 
+typedef TwoSetIterator<const HPixelPlane, PixelPlaneSet, FacePixelPlaneSet> PixelPlaneSets;
+typedef TwoSetIterator<const FacePlane, FacePlaneSet, FacePixelPlaneSet> FacePlaneSets;
+
 // Base class for the points defined by the intersection of planes.
 
 // TODO: Now that there's an HomogeneityTet data member in
@@ -277,6 +280,7 @@ public:
   virtual bool isEquiv(const TripleFaceIntersection*) const = 0;
   virtual bool isEquiv(const IntersectionPlanesBase*) const = 0;
   virtual bool isEquiv(const RedundantIntersection*) const = 0;
+  virtual IsecEquivalenceClass *getEquivalence() const = 0;
 
   virtual const HPixelPlane *getSharedPixelPlane(const TripleFaceIntersection*,
 						 unsigned int) const = 0;
@@ -312,6 +316,9 @@ public:
   virtual bool isEquiv(const RedundantIntersection*) const;
   virtual void addPlanesToEquivalence(IsecEquivalenceClass*);
   virtual bool isEquivalent(const IsecEquivalenceClass*) const;
+  virtual IsecEquivalenceClass *getEquivalence() const {
+    return BASE::equivalence();
+  }
 
   virtual bool samePixelPlanes(const PlaneIntersection*) const;
   virtual bool samePixPlanes(const TripleFaceIntersection*) const;
@@ -347,11 +354,9 @@ public:
   // pixelPlaneSets() and facePlaneSets() return iterators that can be
   // used in a range-based for loop to iterate over all PixelPlanes or
   // all FacePlanes (including those in pixelFaces_).
-  typedef TwoSetIterator<const HPixelPlane, PixelPlaneSet, FacePixelPlaneSet> PixelPlaneSets;
   PixelPlaneSets pixelPlaneSets() const {
     return PixelPlaneSets(pixelPlanes_, pixelFaces_);
   }
-  typedef TwoSetIterator<const FacePlane, FacePlaneSet, FacePixelPlaneSet> FacePlaneSets;
   FacePlaneSets facePlaneSets() const {
     return FacePlaneSets(faces_, pixelFaces_);
   }
@@ -1312,6 +1317,8 @@ public:
 
 class IsecEquivalenceClass {
 private:
+  // TODO: make the names of these sets consistent with those in the
+  // IntersectionPlanes class.
   PixelPlaneSet pixelPlanes;
   FacePlaneSet facePlanes;
   FacePixelPlaneSet pixelFaces;
@@ -1346,6 +1353,13 @@ public:
   void addFacePlane(const FacePlane*);
   void addFacePixelPlane(const FacePixelPlane*);
 
+  PixelPlaneSets pixelPlaneSets() const {
+    return PixelPlaneSets(pixelPlanes, pixelFaces);
+  }
+  FacePlaneSets facePlaneSets() const {
+    return FacePlaneSets(facePlanes, pixelFaces);
+  }
+
   const Coord3D &location3D() const { return loc_; }
 
   bool operator<(const IsecEquivalenceClass &other) const {
@@ -1357,6 +1371,7 @@ public:
   friend class HPixelPlane;
   template <class B> friend class IntersectionPlanes;
   friend class TripleFaceIntersection;
+  friend class PixelPlaneIntersectionNR;
   friend std::ostream &operator<<(std::ostream&, const IsecEquivalenceClass&);
   
 #ifdef DEBUG

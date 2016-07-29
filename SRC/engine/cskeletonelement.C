@@ -793,17 +793,28 @@ void setVerboseAllElements() {
   allVerboseElements_ = true;
 }
 
+// Skip the first verboseWait_ opportunities to be verbose.
+
+static unsigned int verboseWait_ = 0;
+void setVerboseWait(int w) {
+  oofcerr << "setVerboseWait: " << w << std::endl;
+  verboseWait_ = w;
+}
+
 #endif // DEBUG
 
 const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
   const
 {
 #ifdef DEBUG
-  // bool verbose = true;
-  // bool verbose = false;
-  // bool verbose = index==22;
-  // bool verbose = uid==26747;
   bool verbose = allVerboseElements_ || verboseElements_.count(index) > 0;
+  static int verboseWaited = 0;
+  if(verbose) {
+    if(verboseWaited < verboseWait_) {
+      verbose = false;
+      verboseWaited++;
+    }
+  }
   if(verbose)
     oofcerr << "CSkeletonElement::categoryVolumes: " << *this
   	    << "----------------------------------" << std::endl;

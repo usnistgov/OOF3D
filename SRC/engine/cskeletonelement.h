@@ -263,6 +263,7 @@ long get_globalElementCount();
 #ifdef DEBUG
 void setVerboseElement(unsigned int);
 void setVerboseAllElements();
+void setVerboseWait(int);
 // void dumpElements();
 #endif // DEBUG
 

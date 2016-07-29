@@ -200,7 +200,8 @@ def process_inline_options():
                    'pathdir=', 'no-checkpoints', 'autoload', 'geometry=',
                    'surface', 'no-bars',
                    'verboseElement', 'verbosePlane', 'verboseFace',
-                   'verboseCategory', 'vE', 'vC', 'vP', 'vF']
+                   'verboseCategory', 'verboseWait', 'vE', 'vC', 'vP', 'vF',
+                   'vW']
     if config.enablempi():
         option_list += ['parallel']
     try:
@@ -304,6 +305,9 @@ def process_inline_options():
         elif opt[0] in ('--verboseCategory', '--vC'):
             from ooflib.SWIG.engine import htetdebug
             htetdebug.addVerboseCategory(int(opt[1]))
+        elif opt[0] in ('--verboseWait', '--vW'):
+            from ooflib.SWIG.engine import htetdebug
+            htetdebug.setVerboseWait(int(opt[1]))
     if help_mode:
         state_options_and_quit()
     if version_mode:
