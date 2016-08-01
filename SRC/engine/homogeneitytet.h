@@ -221,9 +221,11 @@ private:
   // This is a set of pointers to IsecEquivalenceClasses instead of a
   // set of IsecEquivalenceClasses because intersections store
   // pointers to their equivalence classes.  The addresses of objects
-  // in a set might change.
-  // std::set<IsecEquivalenceClass*> equivalences;
+  // in a set might change.  TODO: This was changed to a vector to
+  // make the access order predictable when debugging.  Check to see
+  // if there's a significant performance difference.
   std::vector<IsecEquivalenceClass*> equivalences;
+  // std::set<IsecEquivalenceClass*> equivalences;
 
   // If face f lies in a pixel plane, then coincidentPixelPlanes[f] is
   // that plane.  Otherwise it's a null pointer.
@@ -293,6 +295,7 @@ public:
   const CRectangularPrism &bounds() const { return *bbox_; }
 
   const HPixelPlane *getPixelPlane(unsigned int dir, int offset, int normal);
+  const HPixelPlane *getPixelPlane(const HPixelPlane*);
   const HPixelPlane *getUnorientedPixelPlane(const HPixelPlane*);
   const FacePlane *getTetFacePlane(unsigned int i) const { return faces[i]; }
   unsigned int getTetFaceIndex(const FacePlane*) const;
@@ -305,8 +308,7 @@ public:
   FacePlaneSet getCollinearFaces(const HPlane*, const HPlane*) const;
   bool areCollinear(const HPlane*, const HPlane*, const HPlane*) const;
 
-  TetIntersectionPolygon &getTetPlaneIntersectionPoints(const HPixelPlane*,
-							const HPixelPlane*);
+  TetIntersectionPolygon &getTetPlaneIntersectionPoints(const HPixelPlane*);
 
   // Check to see if a point should be in an existing equivalence
   // class, and put it in if it's necessary.  Return the argument.

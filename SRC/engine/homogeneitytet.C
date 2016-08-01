@@ -372,12 +372,16 @@ HomogeneityTet::~HomogeneityTet() {
 const HPixelPlane *HomogeneityTet::getPixelPlane(unsigned int dir, int offset,
 						int normal)
 {
-  HPixelPlane *pixplane = new HPixelPlane(dir, offset, normal);
+  return getPixelPlane(new HPixelPlane(dir, offset, normal));
+}
+
+const HPixelPlane *HomogeneityTet::getPixelPlane(const HPixelPlane *pixplane) {
   auto result = pixelPlanes_.emplace(pixplane);
   if(!result.second)
     delete pixplane;
   else
     allPlanes_.insert(*result.first);
+  *result.first->setUnorientedPlane(getUnorientedPixelPlane(*result.first));
   return *result.first;
 }
 
@@ -720,7 +724,6 @@ PlaneIntersection *HomogeneityTet::checkEquiv(PlaneIntersection *point) {
 		      << *oldclass << std::endl;
 #endif // DEBUG
 	    eqclass->merge(oldclass);
-	    // equivalences.erase(oldclass);
 	    auto eptr = std::find(equivalences.begin(), equivalences.end(),
 				  oldclass);
 	    assert(eptr != equivalences.end());
@@ -747,8 +750,6 @@ PlaneIntersection *HomogeneityTet::checkEquiv(PlaneIntersection *point) {
 #ifdef DEBUG
 					     , verboseplane || verboseface
 #endif // DEBUG
-							     );
-    // equivalences.insert(eqclass);
     equivalences.push_back(eqclass);
     point->setEquivalence(eqclass);
 // #ifdef DEBUG
@@ -978,9 +979,7 @@ double HomogeneityTet::faceEdgeCoord(const BarycentricCoord &bary,
 // different.
 
 TetIntersectionPolygon&
-HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane,
-					      const HPixelPlane *upixplane)
-{
+HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane) {
 // #ifdef DEBUG
 //   oofcerr << "HomogeneityTet::getTetPlaneIntersectionPoints: pixplane="
 // 	  << pixplane << " " << *pixplane << std::endl;
@@ -1045,7 +1044,7 @@ HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane,
       unsigned int edge = CSkeletonElement::cwNodeEdges[n][i];
       FacePlane *face0 = faces[CSkeletonElement::edgeFaces[edge][0]];
       FacePlane *face1 = faces[CSkeletonElement::edgeFaces[edge][1]];
-      result.push_back(new TetEdgeIntersection(this, face0, face1, upixplane));
+      result.push_back(new TetEdgeIntersection(this, face0, face1, pixplane));
 #ifdef DEBUG
       result.back()->verbose = verboseplane;
 #endif // DEBUG
@@ -1072,8 +1071,7 @@ HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane,
 	  CSkeletonElement::cwNeighborEdgeOrder[underedge][i];
 	FacePlane *face0 = faces[CSkeletonElement::edgeFaces[edge][0]];
 	FacePlane *face1 = faces[CSkeletonElement::edgeFaces[edge][1]];	
-	result.push_back(new TetEdgeIntersection(this, face0, face1,
-						 upixplane));
+	result.push_back(new TetEdgeIntersection(this, face0, face1, pixplane));
 #ifdef DEBUG
 	result.back()->verbose = verboseplane;
 #endif // DEBUG
@@ -1101,7 +1099,7 @@ HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane,
 	  FacePlane *face0 = faces[CSkeletonElement::edgeFaces[edge][0]];
 	  FacePlane *face1 = faces[CSkeletonElement::edgeFaces[edge][1]];
 	  result.push_back(new TetEdgeIntersection(this, face0, face1,
-						   upixplane));
+						   pixplane));
 #ifdef DEBUG
 	  result.back()->verbose = verboseplane;
 #endif // DEBUG
@@ -1121,8 +1119,7 @@ HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane,
 	unsigned int edge = CSkeletonElement::ccwNodeEdges[n][i];
 	FacePlane *face0 = faces[CSkeletonElement::edgeFaces[edge][0]];
 	FacePlane *face1 = faces[CSkeletonElement::edgeFaces[edge][1]];
-	result.push_back(new TetEdgeIntersection(this, face0, face1,
-						 upixplane));
+	result.push_back(new TetEdgeIntersection(this, face0, face1, pixplane));
 #ifdef DEBUG
 	result.back()->verbose = verboseplane;
 #endif // DEBUG
@@ -1280,8 +1277,7 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 				    FacetMap2D &facets)
 {
   const HPixelPlane *upixplane = getUnorientedPixelPlane(pixplane);
-  TetIntersectionPolygon &tetPts = getTetPlaneIntersectionPoints(pixplane,
-								 upixplane);
+  TetIntersectionPolygon &tetPts = getTetPlaneIntersectionPoints(pixplane);
   unsigned int nn = tetPts.size();
 
   if(nn < 3) {
@@ -1443,17 +1439,14 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	    pixplane->orthogonalPlane(pbs_end, pbs_next);
 	  // Get the pointers to the reference versions of the planes,
 	  // so that pointer comparisons can be used later.
-	  const HPixelPlane *prevPlanePtr =
-	    getUnorientedPixelPlane(&orthoPlanePrev);
-	  const HPixelPlane *orthoPlanePtr =
-	    getUnorientedPixelPlane(&orthoPlane);
-	  const HPixelPlane *nextPlanePtr =
-	    getUnorientedPixelPlane(&orthoPlaneNext);
+	  const HPixelPlane *prevPlanePtr = getPixelPlane(orthoPlanePrev);
+	  const HPixelPlane *orthoPlanePtr = getPixelPlane(orthoPlane);
+	  const HPixelPlane *nextPlanePtr = getPixelPlane(orthoPlaneNext);
 	  facet->addEdge(new PixelFacetEdge(
-			    new TriplePixelPlaneIntersection(this,
-				 upixplane, prevPlanePtr, orthoPlanePtr),
-			    new TriplePixelPlaneIntersection(this,
-				 upixplane, orthoPlanePtr, nextPlanePtr)));
+	    checkEquiv(new TriplePixelPlaneIntersection(
+				this, pixplane, prevPlanePtr, orthoPlanePtr)),
+	    checkEquiv(new TriplePixelPlaneIntersection(
+				this, pixplane, orthoPlanePtr, nextPlanePtr))));
 
 	} // end if the segment is entirely inside the polygon
 
@@ -1521,7 +1514,7 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	    // doesn't, and this can lead to unmatched facet edge
 	    // endpoints.
 	    TetIntersectionPolygon orthoPts =
-	      getTetPlaneIntersectionPoints(orthoPlanePtr, uOrthoPlanePtr);
+	      getTetPlaneIntersectionPoints(orthoPlanePtr);
 	    if(!orthoPts.empty()) {
 	      unsigned int orthoFace = getCoincidentFaceIndex(orthoPlanePtr);
 	      std::vector<PixelPlaneIntersectionNR*> isecs =
@@ -2074,6 +2067,8 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
       FaceFacet &facet = faceFacets[face];
 
       // Make sure equivalence classes are up to date.
+      // TODO: If checkEquiv is run for each new PlaneIntersection, is
+      // this loop necessary?
       for(auto seg=facet.edges().begin(); seg!=facet.edges().end(); ++seg) {
 	checkEquiv((*seg)->startPt());
 	checkEquiv((*seg)->endPt());

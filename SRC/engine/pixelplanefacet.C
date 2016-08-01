@@ -700,6 +700,8 @@ bool PixelPlaneFacet::completeLoops() {
   IsecsNearCoord coincidences; // All intersections at a point
   unsigned int totalIntersections = 0;
 
+  // TODO: If checkEquiv is run for each new Planeintersection, is
+  // this loop necessary?
   for(FacetEdge *edge : edges) {
 // #ifdef DEBUG
 //     if(verbose)
