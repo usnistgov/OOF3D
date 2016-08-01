@@ -801,6 +801,10 @@ void setVerboseWait(int w) {
   verboseWait_ = w;
 }
 
+// Track the number of times verbose output has been turned on.  This
+// is useful for setting verboseWait on subsequent runs.
+static unsigned int nVerbose = 0;
+
 #endif // DEBUG
 
 const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
@@ -815,9 +819,11 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
       verboseWaited++;
     }
   }
-  if(verbose)
+  if(verbose) {
     oofcerr << "CSkeletonElement::categoryVolumes: " << *this
   	    << "----------------------------------" << std::endl;
+    nVerbose++;
+  }
   OOFcerrIndent indent(2);
 #endif // DEBUG
 
@@ -920,6 +926,8 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
   catch (...) {
     oofcerr << "CSkeletonElement::categoryVolumes: failed for "
 	    << *this << std::endl;
+    oofcerr << "CSkeletonElement::categoryVolumes: nVerbose=" << nVerbose
+	    << std::endl;
 // #ifdef DEBUG
 //     if(verbose) {
 //       dumpfile->close();
