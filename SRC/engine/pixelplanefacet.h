@@ -35,7 +35,7 @@ typedef std::multimap<const Coord2D, PixelPlaneIntersectionNR*> IsecsNearCoord;
 // base Plane class in the common module.
 
 // TODO: Instead of using complicated double-diamond virtual
-// inheritance structur for the Plane subclasses, use an interface
+// inheritance structure for the Plane subclasses, use an interface
 // scheme.
 
 class HPlane : public virtual Plane {
@@ -68,6 +68,8 @@ public:
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const;
   virtual std::string shortName() const;
+  // Return the orthogonal pixel plane that passes through the given points.
+  HPixelPlane *orthogonalPlane(const ICoord2D&, const ICoord2D&) const;
 };
 
 class FacePlane : public virtual HPlane {

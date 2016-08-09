@@ -58,6 +58,27 @@ std::string FacePixelPlane::shortName() const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// Find the plane perpendicular to this plane that contains the
+// segment (pt0, pt1) in this plane.  The new plane's normal points to
+// the right when traversing the segment in this plane.
+
+HPixelPlane *HPixelPlane::orthogonalPlane(const ICoord2D &pt0,
+					  const ICoord2D &pt1)
+  const
+{
+  // t is the direction along the segment, in this plane's coordinates.
+  unsigned int t = (pt0[0] == pt1[0] ? 1 : 0);
+  unsigned int n = (t == 0 ? 1 : 0);
+  assert(pt0[t] != pt1[t] && pt0[n] == pt1[n]);
+  int offst = pt0[n];
+  unsigned int dir = proj_dirs[proj_index][n];
+  int norm = (pt0[t] < pt1[t] ? -1 : 1);
+  if(t == 1) norm *= -1;
+  return new HPixelPlane(dir, offst, norm);
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 bool HPixelPlane::isPartOf(const PixelPlaneIntersectionNR *fi) const {
   return fi->pixelPlanes().count(this) > 0;
 }

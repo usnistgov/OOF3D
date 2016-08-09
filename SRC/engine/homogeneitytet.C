@@ -1418,17 +1418,20 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	  // intersections of the current pixel plane, the orthogonal
 	  // pixel plane that contains the segment, and the orthogonal
 	  // plane that contains the previous segment or the next one.
-	  HPixelPlane orthoPlanePrev =
+	  HPixelPlane *orthoPlanePrev =
 	    pixplane->orthogonalPlane(pbs_prev, pbs_start);
-	  HPixelPlane orthoPlane =
+	  HPixelPlane *orthoPlane =
 	    pixplane->orthogonalPlane(pbs_start, pbs_end);
-	  HPixelPlane orthoPlaneNext =
+	  HPixelPlane *orthoPlaneNext =
 	    pixplane->orthogonalPlane(pbs_end, pbs_next);
 	  // Get the pointers to the reference versions of the planes,
 	  // so that pointer comparisons can be used later.
-	  const HPixelPlane *prevPlanePtr = getPixelPlane(&orthoPlanePrev);
-	  const HPixelPlane *orthoPlanePtr = getPixelPlane(&orthoPlane);
-	  const HPixelPlane *nextPlanePtr = getPixelPlane(&orthoPlaneNext);
+	  // TODO: Instead of calling PixelPlane::orthogonalPlane
+	  // and HomogeneityTet::getPixelPlane, combine them into
+	  // HomogeneityTet::getOrthogonalPlane.
+	  const HPixelPlane *prevPlanePtr = getPixelPlane(orthoPlanePrev);
+	  const HPixelPlane *orthoPlanePtr = getPixelPlane(orthoPlane);
+	  const HPixelPlane *nextPlanePtr = getPixelPlane(orthoPlaneNext);
 	  facet->addEdge(new PixelFacetEdge(
 	    checkEquiv(new TriplePixelPlaneIntersection(
 				this, pixplane, prevPlanePtr, orthoPlanePtr)),
@@ -1440,9 +1443,9 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	else if(pbs_start_inside != pbs_end_inside) {
 	  // If start and end are hetero-interior, so to speak, then
 	  // there's one intersection. Find it.
-	  HPixelPlane orthoPlane =
+	  HPixelPlane *orthoPlane =
 	    pixplane->orthogonalPlane(pbs_start, pbs_end);
-	  const HPixelPlane *orthoPlanePtr = getPixelPlane(&orthoPlane);
+	  const HPixelPlane *orthoPlanePtr = getPixelPlane(orthoPlane);
 	  unsigned int orthoFace = getCoincidentFaceIndex(orthoPlanePtr);
 	  PixelPlaneIntersectionNR *pi = find_one_intersection(
 						 pixplane,
@@ -1451,18 +1454,18 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 						 onFace, orthoFace,
 						 pbs_end_inside);
 	  if(pbs_start_inside) {
-	    HPixelPlane orthoPlanePrev =
+	    HPixelPlane *orthoPlanePrev =
 	      pixplane->orthogonalPlane(pbs_prev, pbs_start);
-	    const HPixelPlane *prevPlanePtr = getPixelPlane(&orthoPlanePrev);
+	    const HPixelPlane *prevPlanePtr = getPixelPlane(orthoPlanePrev);
 	    facet->addEdge(new StopFaceIntersectionEdge(
 		checkEquiv(new TriplePixelPlaneIntersection(
 			    this, pixplane, prevPlanePtr, orthoPlanePtr)),
 		checkEquiv(pi)));
 	  }
 	  else {
-	    HPixelPlane orthoPlaneNext = 
+	    HPixelPlane *orthoPlaneNext = 
 	      pixplane->orthogonalPlane(pbs_end, pbs_next);
-	    const HPixelPlane *nextPlanePtr = getPixelPlane(&orthoPlaneNext);
+	    const HPixelPlane *nextPlanePtr = getPixelPlane(orthoPlaneNext);
 	    facet->addEdge(new StartFaceIntersectionEdge(
 		 checkEquiv(pi),
 		 checkEquiv(new TriplePixelPlaneIntersection(
@@ -1474,19 +1477,13 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	  // polygon.  It must intersect zero or two times.
 	  ICRectangle segbb(pbs_start, pbs_end);
 	  if(segbb.intersects(tetBounds)) {
-	    HPixelPlane orthoPlane =
+	    HPixelPlane *orthoPlane =
 	      pixplane->orthogonalPlane(pbs_start, pbs_end);
 	    // Since getTetPlaneIntersectionPoints looks up caches
 	    // previous computations by PixelPlane pointer, get the
 	    // HomogeneityTet's official version of the orthogonal
 	    // plane.
-	    // TODO: Instead of calling PixelPlane::orthogonalPlane
-	    // and HomogeneityTet::getPixelPlane, combine them into
-	    // HomogeneityTet::getOrthogonalPlane.
-	    const HPixelPlane *orthoPlanePtr = getPixelPlane(
-						    orthoPlane.direction(),
-						    orthoPlane.normalOffset(),
-						    orthoPlane.normalSign());
+	    const HPixelPlane *orthoPlanePtr = getPixelPlane(orthoPlane);
 	    // There's no intersection unless the orthoPlane actually
 	    // intersects the tetrahedron.  This check is important
 	    // for consistency.  When a pixel plane coincides with a

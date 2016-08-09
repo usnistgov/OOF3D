@@ -113,8 +113,6 @@ public:
   ICoord3D convert2Voxel3D(const ICoord2D&) const;
   ICoord3D normalVector() const;
 
-  // Return the orthogonal pixel plane that passes through the given points.
-  PixelPlane orthogonalPlane(const ICoord2D&, const ICoord2D&) const;
   virtual void print(std::ostream&) const;
 };
 
