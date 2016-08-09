@@ -40,15 +40,16 @@ typedef std::multimap<const Coord2D, PixelPlaneIntersectionNR*> IsecsNearCoord;
 
 class HPlane : public virtual Plane {
 private:
-  HPixelPlane *unoriented_;
+  // unoriented_ is set by HomogeneityTet::getPixelPlane
+  const HPixelPlane *unoriented_;
 public:
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const = 0;
   virtual void addToIntersection(IntersectionPlanesBase*) const = 0;
   virtual void addToEquivalence(IsecEquivalenceClass*) const = 0;
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const = 0;
   virtual std::string shortName() const = 0;
-  void setUnorientedPlane(HPixelPlane *u) { unoriented_ = u; }
   const HPixelPlane *unoriented() const { return unoriented_; }
+  friend class HomogeneityTet;
 };
 
 class HPixelPlane : public virtual HPlane, public virtual PixelPlane {

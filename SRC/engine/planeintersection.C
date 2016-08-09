@@ -421,22 +421,12 @@ bool PixelPlaneIntersection::onOnePolySegment(const PixelPlaneIntersection *fi,
   if(shared.size() == 2) {
     const FacePlane *base = facet->getBaseFacePlane();
     if(base == *shared.begin() || base == *shared.rbegin() ||
-       // TODO: Calling getUnorientedPixelPlane here may be slow. The
-       // facet can store the unoriented plane.
-       facet->htet->areCollinear(
-			 htet->getUnorientedPixelPlane(facet->pixplane),
-			 *shared.begin(),
-			 *shared.rbegin()))
+       facet->htet->areCollinear(facet->pixplane,
+				 *shared.begin(), *shared.rbegin()))
       return true;
   }
   return false;
-
-  // // Old version that checks if there is at least one shared segment,
-  // // not exactly one.
-  // const FacePlane *fp = referent()->sharedFace(fi->referent(),
-  // 					       facet->getBaseFacePlane());
-  // return fp != nullptr;
-}
+} // end PixelPlaneIntersection::onOnePolySegment
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -1944,21 +1934,7 @@ SimpleIntersection::SimpleIntersection(HomogeneityTet *htet,
 				       CrossingType ct)
   : SingleVSBmixIn<SingleFaceMixIn<PixelPlaneIntersectionNR>>(htet)
 {
-#ifdef DEBUG
-  if(pp0 != htet->getUnorientedPixelPlane(pp0)) {
-    oofcerr << "SimpleIntersection::ctor: pp0=" << pp0 << " " << *pp0
-	    << " unoriented=" << htet->getUnorientedPixelPlane(pp0)
-	    << " " << dynamic_cast<const HPixelPlane*>(htet->getUnorientedPixelPlane(pp0))
-	    << " " << *htet->getUnorientedPixelPlane(pp0)
-	    << std::endl;
-    throw ErrProgrammingError(
-      "SimpleIntersection constructor: received misoriented pixel plane!",
-      __FILE__, __LINE__);
-  }
-#endif // DEBUG
   assert(ct != NONCROSSING);
-  assert(pp0 == htet->getUnorientedPixelPlane(pp0));
-  assert(pp1 == htet->getUnorientedPixelPlane(pp1));
   pp0->addToIntersection(this);
   pp1->addToIntersection(this);
 
@@ -2875,15 +2851,9 @@ TriplePixelPlaneIntersection::TriplePixelPlaneIntersection(
 						   const HPixelPlane *pp2)
   : MultiVSBmixIn<PixelPlaneIntersectionNR>(htet)
 {
-  // assert(pp0 == htet->getUnorientedPixelPlane(pp0));
-  // assert(pp1 == htet->getUnorientedPixelPlane(pp1));
-  // assert(pp2 == htet->getUnorientedPixelPlane(pp2));
   pp0->addToIntersection(this);
   pp1->addToIntersection(this);
   pp2->addToIntersection(this);
-  // addPixelPlane(htet, pp0);
-  // addPixelPlane(htet, pp1);
-  // addPixelPlane(htet, pp2);
   setCrossingCount(0);
   computeLocation();
   includeCollinearPlanes(htet);

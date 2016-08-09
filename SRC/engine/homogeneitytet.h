@@ -237,20 +237,14 @@ private:
   CRectangularPrism *bbox_;
   BaryCoordCache baryCache;
 
-  // // pixelPlanes_ is a map used by getPixelPlane and
-  // // getUnorientedPixelPlane that ensures that PixelPlanes with
-  // // different addresses have different values.  The map key is a
-  // // PixelPlane (compared by value) and the map value is a PixelPlane
-  // // pointer that points to the one official PixelPlane that is equal
-  // // to the key.
-  // mutable std::map<const HPixelPlane, const HPixelPlane*> pixelPlanes_;
-
   // pixelPlanes_ contains pointers to the unique HPixelPlanes used by
   // the HomogeneityTet.  Since the planes are unique, pointer
   // comparison is sufficient to distinguish the planes *elsewhere*.
   // This does *not* use PixelPlaneSet, defined in
   // planeintersection_i.h, because that typedef might be redefined in
   // non-debug mode so that it doesn't use DerefCompare.
+  // The stored planes are not const, because it makes it hard to
+  // compute the unoriented plans in getPixelPlane().
   std::set<HPixelPlane*, DerefCompare<HPixelPlane>> pixelPlanes_;
 
   // Because pointers to some planes are in both pixelPlanes_ and
@@ -266,12 +260,12 @@ private:
 			      unsigned int face,
 			      FacetMap2D&);
   PixelPlaneIntersectionNR *find_one_intersection(
-				  const HPixelPlane*, const HPixelPlane*,
+				  const HPixelPlane*,
 				  const HPixelPlane*,
 				  const PixelBdyLoopSegment&,
 				  unsigned int, unsigned int, bool);
   std::vector<PixelPlaneIntersectionNR*> find_two_intersections(
-				  const HPixelPlane*, const HPixelPlane*,
+				  const HPixelPlane*,
 				  const HPixelPlane*,
 				  const PixelBdyLoopSegment&,
 				  unsigned int, unsigned int);
@@ -295,7 +289,7 @@ public:
   const CRectangularPrism &bounds() const { return *bbox_; }
 
   const HPixelPlane *getPixelPlane(unsigned int dir, int offset, int normal);
-  const HPixelPlane *getPixelPlane(const HPixelPlane*);
+  const HPixelPlane *getPixelPlane(HPixelPlane*);
   const HPixelPlane *getUnorientedPixelPlane(const HPixelPlane*);
   const FacePlane *getTetFacePlane(unsigned int i) const { return faces[i]; }
   unsigned int getTetFaceIndex(const FacePlane*) const;
@@ -312,7 +306,8 @@ public:
 
   // Check to see if a point should be in an existing equivalence
   // class, and put it in if it's necessary.  Return the argument.
-  PlaneIntersection *checkEquiv(PlaneIntersection*);
+  template <class PLANEINTERSECTION>
+  PLANEINTERSECTION *checkEquiv(PLANEINTERSECTION*);
   // Two points are merging to form a third.  Combine the equivalence
   // classes of the first two, and add the third.
   void mergeEquiv(PlaneIntersection*, PlaneIntersection*, PlaneIntersection*);

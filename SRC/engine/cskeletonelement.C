@@ -1601,9 +1601,8 @@ void CSkeletonElement::drawPlaneIntersection(LineSegmentLayer *layer,
   const CMicrostructure *ms = skel->getMicrostructure();
   HomogeneityTet htet(this, ms, false);
   const HPixelPlane *pixplane = htet.getPixelPlane(direction, offset, 1);
-  const HPixelPlane *upixplane = htet.getUnorientedPixelPlane(pixplane);
   TetIntersectionPolygon &tetPts = htet.getTetPlaneIntersectionPoints(
-							pixplane, upixplane);
+							pixplane);
   layer->set_nSegs(tetPts.size());
   unsigned int n = tetPts.size();
   for(unsigned int i=0; i<n; i++) {
