@@ -271,6 +271,11 @@ HomogeneityTet::HomogeneityTet(const CSkeletonElement *element,
   // other planes that meet on the same line.  This is only done for
   // combinations of two faces and one or more pixel planes, because
   // those are the cases that are necessary for findFaceFacets to work.
+#ifdef DEBUG
+  if(verbose)
+    oofcerr << "HomogeneityTet::ctor: looking for collinear planes"
+	    << std::endl;
+#endif // DEBUG
   for(unsigned int e=0; e<NUM_TET_EDGES; e++) {
     unsigned int n0 = CSkeletonElement::getEdgeArray(e)[0];
     unsigned int n1 = CSkeletonElement::getEdgeArray(e)[1];
@@ -703,8 +708,8 @@ PLANEINTERSECTION *HomogeneityTet::checkEquiv(PLANEINTERSECTION *point) {
 #ifdef DEBUG
   if(verboseplane || verboseface) 
     oofcerr << "HomogeneityTet::checkEquiv: point=" << point << " " << *point
-	    << " verboseplane=" << verboseplane << " verboseface=" << verboseface
-	    << std::endl;
+	    << " verboseplane=" << verboseplane
+	    << " verboseface=" << verboseface << std::endl;
   OOFcerrIndent indent(2);
 #endif // DEBUG
 
@@ -713,7 +718,7 @@ PLANEINTERSECTION *HomogeneityTet::checkEquiv(PLANEINTERSECTION *point) {
     foundEquiv = false;
     for(IsecEquivalenceClass *eqclass : equivalences) {
       if(point->equivalence() != eqclass) {
-	if(point->isEquivalent(eqclass)) {
+	if(point->belongsInEqClass(eqclass)) {
 	  foundEquiv = true;
 	  IsecEquivalenceClass *oldclass = point->equivalence();
 #ifdef DEBUG
@@ -1223,12 +1228,12 @@ FacetMap2D HomogeneityTet::findPixelPlaneFacets(unsigned int cat,
 #endif  // DEBUG
     }
   }
-// #ifdef DEBUG
-//   if(verbosecategory) {
-//     oofcerr << "HomogeneityTet::findPixelPlaneFacets: done with face planes"
-// 	    << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verbosecategory) {
+    oofcerr << "HomogeneityTet::findPixelPlaneFacets: done with face planes"
+	    << std::endl;
+  }
+#endif // DEBUG
 
   // TODO: coincidentPixelPlanes and coincidentFacePlanes store the
   // unoriented pixel planes, which means that if a VSB uses both

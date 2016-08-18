@@ -129,12 +129,15 @@ public:
   
   // Intersections are equivalent if they have any three distinct
   // planes in common.
-  virtual bool isEquivalent(const PlaneIntersection*) const = 0;
-  virtual bool isEquiv(const TripleFaceIntersection*) const = 0;
-  virtual bool isEquiv(const IntersectionPlanesBase*) const = 0;
-  virtual bool isEquiv(const RedundantIntersection*) const = 0;
+  bool isEquivalent(const PlaneIntersection*) const;
+  
+  // virtual bool isEquivalent(const PlaneIntersection*) const = 0;
+  // virtual bool isEquiv(const TripleFaceIntersection*) const = 0;
+  // virtual bool isEquiv(const IntersectionPlanesBase*) const = 0;
+  // virtual bool isEquiv(const RedundantIntersection*) const = 0;
+
   virtual void addPlanesToEquivalence(IsecEquivalenceClass*) = 0;
-  virtual bool isEquivalent(const IsecEquivalenceClass*) const = 0;
+  virtual bool belongsInEqClass(const IsecEquivalenceClass*) const = 0;
 
   virtual bool samePixelPlanes(const PlaneIntersection*) const = 0;
   virtual bool samePixPlanes(const TripleFaceIntersection*) const = 0;
@@ -213,12 +216,12 @@ public:
 
   virtual void copyPlanesToIntersection(IntersectionPlanesBase*) const;
 
-  virtual bool isEquivalent(const PlaneIntersection*) const;
-  virtual bool isEquiv(const TripleFaceIntersection*) const;
-  virtual bool isEquiv(const IntersectionPlanesBase*) const;
-  virtual bool isEquiv(const RedundantIntersection*) const;
+  // virtual bool isEquivalent(const PlaneIntersection*) const;
+  // virtual bool isEquiv(const TripleFaceIntersection*) const;
+  // virtual bool isEquiv(const IntersectionPlanesBase*) const;
+  // virtual bool isEquiv(const RedundantIntersection*) const;
   virtual void addPlanesToEquivalence(IsecEquivalenceClass*);
-  virtual bool isEquivalent(const IsecEquivalenceClass*) const;
+  virtual bool belongsInEqClass(const IsecEquivalenceClass*) const;
   
   virtual bool samePixelPlanes(const PlaneIntersection*) const {
     return false;
@@ -277,9 +280,9 @@ public:
   virtual const FacePixelPlaneSet &pixelFaces() const { return pixelFaces_; }
   virtual FacePixelPlaneSet &pixelFaces() { return pixelFaces_; }
 
-  virtual bool isEquiv(const TripleFaceIntersection*) const = 0;
-  virtual bool isEquiv(const IntersectionPlanesBase*) const = 0;
-  virtual bool isEquiv(const RedundantIntersection*) const = 0;
+  // virtual bool isEquiv(const TripleFaceIntersection*) const = 0;
+  // virtual bool isEquiv(const IntersectionPlanesBase*) const = 0;
+  // virtual bool isEquiv(const RedundantIntersection*) const = 0;
   virtual IsecEquivalenceClass *getEquivalence() const = 0;
 
   virtual const HPixelPlane *getSharedPixelPlane(const TripleFaceIntersection*,
@@ -310,12 +313,12 @@ public:
   virtual void copyPlanesToIntersection(IntersectionPlanesBase*) const;
   virtual unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const;
   
-  virtual bool isEquivalent(const PlaneIntersection*) const;
-  virtual bool isEquiv(const TripleFaceIntersection*) const;
-  virtual bool isEquiv(const IntersectionPlanesBase*) const;
-  virtual bool isEquiv(const RedundantIntersection*) const;
+  // virtual bool isEquivalent(const PlaneIntersection*) const;
+  // virtual bool isEquiv(const TripleFaceIntersection*) const;
+  // virtual bool isEquiv(const IntersectionPlanesBase*) const;
+  // virtual bool isEquiv(const RedundantIntersection*) const;
   virtual void addPlanesToEquivalence(IsecEquivalenceClass*);
-  virtual bool isEquivalent(const IsecEquivalenceClass*) const;
+  virtual bool belongsInEqClass(const IsecEquivalenceClass*) const;
   virtual IsecEquivalenceClass *getEquivalence() const {
     return BASE::equivalence();
   }
@@ -628,13 +631,6 @@ public:
   virtual bool isMisordered(const MultiCornerIntersection*,
 			    const PixelPlaneFacet*) const = 0;
 
-  // virtual bool isEquivalent(const PlaneIntersection*) const;
-  // virtual bool isEquiv(const TripleFaceIntersection*) const;
-  // virtual bool isEquiv(const IntersectionPlanesBase*) const;
-  // virtual bool isEquiv(const RedundantIntersection*) const;
-  // // void addPlanesToEquivalence(IsecEquivalenceClass*);
-  // virtual bool isEquivalent(const IsecEquivalenceClass*) const;
-  
   // virtual bool samePixelPlanes(const PlaneIntersection*) const;
   // virtual bool samePixPlanes(const TripleFaceIntersection*) const;
   // virtual bool samePixPlanes(const PixelPlaneIntersectionNR*) const;
@@ -1226,23 +1222,23 @@ public:
     referent_->copyPlanesToIntersection(gi);
   }
   
-  virtual bool isEquivalent(const PlaneIntersection *pi) const {
-    return referent_->isEquivalent(pi);
-  }
-  virtual bool isEquiv(const TripleFaceIntersection *pi) const {
-    return referent_->isEquiv(pi);
-  }
-  virtual bool isEquiv(const IntersectionPlanesBase *pi) const {
-    return referent_->isEquiv(pi);
-  }
-  virtual bool isEquiv(const RedundantIntersection *pi) const {
-    return referent_->isEquiv(pi);
-  }
+  // virtual bool isEquivalent(const PlaneIntersection *pi) const {
+  //   return referent_->isEquivalent(pi);
+  // }
+  // virtual bool isEquiv(const TripleFaceIntersection *pi) const {
+  //   return referent_->isEquiv(pi);
+  // }
+  // virtual bool isEquiv(const IntersectionPlanesBase *pi) const {
+  //   return referent_->isEquiv(pi);
+  // }
+  // virtual bool isEquiv(const RedundantIntersection *pi) const {
+  //   return referent_->isEquiv(pi);
+  // }
   virtual void addPlanesToEquivalence(IsecEquivalenceClass *eqclass) {
     referent_->addPlanesToEquivalence(eqclass);
   }
-  virtual bool isEquivalent(const IsecEquivalenceClass *eqclass) const {
-    return referent_->isEquivalent(eqclass);
+  virtual bool belongsInEqClass(const IsecEquivalenceClass *eqclass) const {
+    return referent_->belongsInEqClass(eqclass);
   }
   virtual bool samePixelPlanes(const PlaneIntersection *pi) const {
     return referent_->samePixelPlanes(pi);
@@ -1352,6 +1348,7 @@ public:
   void addPixelPlane(const HPixelPlane*);
   void addFacePlane(const FacePlane*);
   void addFacePixelPlane(const FacePixelPlane*);
+  bool containsPixelPlane(const HPixelPlane*) const;
 
   PixelPlaneSets pixelPlaneSets() const {
     return PixelPlaneSets(pixelPlanes, pixelFaces);

@@ -60,7 +60,7 @@ std::string FacePixelPlane::shortName() const {
 
 // Find the plane perpendicular to this plane that contains the
 // segment (pt0, pt1) in this plane.  The new plane's normal points to
-// the right when traversing the segment in this plane.
+// the right when traversing the segment from pt0 to pt1 in this plane.
 
 HPixelPlane *HPixelPlane::orthogonalPlane(const ICoord2D &pt0,
 					  const ICoord2D &pt1)
@@ -88,7 +88,8 @@ void HPixelPlane::addToIntersection(IntersectionPlanesBase *fi) const {
 }
 
 bool HPixelPlane::isInEquivalence(const IsecEquivalenceClass *eqclass) const {
-  return eqclass->pixelPlanes.count(this) > 0;
+  return eqclass->containsPixelPlane(this);
+  // return eqclass->pixelPlanes.count(unoriented_) > 0;
 }
 
 void HPixelPlane::addToEquivalence(IsecEquivalenceClass *eqclass) const {

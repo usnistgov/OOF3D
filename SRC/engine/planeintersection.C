@@ -128,6 +128,10 @@ void PlaneIntersection::setEquivalence(IsecEquivalenceClass *e) {
 // #endif // DEBUG
 }
 
+bool PlaneIntersection::isEquivalent(const PlaneIntersection *other) const {
+  return other->equivalence() == equivalence_;
+}
+
 Coord3D PlaneIntersection::location3D() const {
   if(equivalence_ != nullptr)
     return equivalence_->location3D();
@@ -252,29 +256,29 @@ void TripleFaceIntersection::copyPlanesToIntersection(
     face->addToIntersection(gi);
 }
 
-bool TripleFaceIntersection::isEquivalent(const PlaneIntersection *pi) const
-{
-  if(equivalence() != nullptr && equivalence() == pi->equivalence())
-    return true;
-  return pi->isEquiv(this); // double dispatch
-}
+// bool TripleFaceIntersection::isEquivalent(const PlaneIntersection *pi) const
+// {
+//   if(equivalence() != nullptr && equivalence() == pi->equivalence())
+//     return true;
+//   return pi->isEquiv(this); // double dispatch
+// }
 
-bool TripleFaceIntersection::isEquiv(const TripleFaceIntersection *tfi)
-  const
-{
-  return node_ == tfi->getNode();
-}
+// bool TripleFaceIntersection::isEquiv(const TripleFaceIntersection *tfi)
+//   const
+// {
+//   return node_ == tfi->getNode();
+// }
 
-bool TripleFaceIntersection::isEquiv(const IntersectionPlanesBase *ppi)
-  const
-{
-  return ppi->isEquiv(this);
-}
+// bool TripleFaceIntersection::isEquiv(const IntersectionPlanesBase *ppi)
+//   const
+// {
+//   return ppi->isEquiv(this);
+// }
 
-bool TripleFaceIntersection::isEquiv(const RedundantIntersection *ri) const
-{
-  return ri->referent()->isEquiv(this);
-}
+// bool TripleFaceIntersection::isEquiv(const RedundantIntersection *ri) const
+// {
+//   return ri->referent()->isEquiv(this);
+// }
 
 void TripleFaceIntersection::addPlanesToEquivalence(
 					    IsecEquivalenceClass *eqclass)
@@ -287,7 +291,8 @@ void TripleFaceIntersection::addPlanesToEquivalence(
   }
 }
 
-bool TripleFaceIntersection::isEquivalent(const IsecEquivalenceClass *eqclass)
+bool TripleFaceIntersection::belongsInEqClass(
+				      const IsecEquivalenceClass *eqclass)
   const
 {
   unsigned int nfaces = 0;
@@ -433,6 +438,10 @@ bool PixelPlaneIntersection::onOnePolySegment(const PixelPlaneIntersection *fi,
 void PixelPlaneIntersectionNR::copyPlanes(const PixelPlaneIntersectionNR *fi0,
 					  const PixelPlaneIntersectionNR *fi1)
 {
+#ifdef DEBUG
+  if(verbose)
+    oofcerr << "PixelPlaneIntersectionNR::copyPlanes" << std::endl;
+#endif // DEBUG
   pixelPlanes_.insert(fi0->pixelPlanes_.begin(), fi0->pixelPlanes_.end());
   pixelPlanes_.insert(fi1->pixelPlanes_.begin(), fi1->pixelPlanes_.end());
   faces_.insert(fi0->faces_.begin(), fi0->faces_.end());
@@ -440,19 +449,19 @@ void PixelPlaneIntersectionNR::copyPlanes(const PixelPlaneIntersectionNR *fi0,
   pixelFaces_.insert(fi0->pixelFaces_.begin(), fi0->pixelFaces_.end());
   pixelFaces_.insert(fi1->pixelFaces_.begin(), fi1->pixelFaces_.end());
   
-#ifdef DEBUG
-  if(pixelPlanes_.size() + pixelFaces_.size() > 3) {
-    if(verbose) {
-      oofcerr << "PixelPlaneIntersectionNR::copyPlanes: Too many pixel planes!"
-	      << std::endl;
-      oofcerr << "PixelPlaneIntersectionNR::copyPlanes: fi0=" << *fi0
-	      << std::endl;
-      oofcerr << "PixelPlaneIntersectionNR::copyPlanes: fi1=" << *fi1
-	      << std::endl;
-    }
-    throw ErrProgrammingError("Too many pixel planes!", __FILE__, __LINE__);
-  }
-#endif // DEBUG
+  //  TODO: This check needs to allow more than 3 planes if the
+  //  intersection includes both the + and - versions of a plane.
+// #ifdef DEBUG
+//   if(pixelPlanes_.size() + pixelFaces_.size() > 3) {
+//     oofcerr << "PixelPlaneIntersectionNR::copyPlanes: Too many pixel planes!"
+// 	    << std::endl;
+//     oofcerr << "PixelPlaneIntersectionNR::copyPlanes: fi0=" << *fi0
+// 	    << std::endl;
+//     oofcerr << "PixelPlaneIntersectionNR::copyPlanes: fi1=" << *fi1
+// 	    << std::endl;
+//     throw ErrProgrammingError("Too many pixel planes!", __FILE__, __LINE__);
+//   }
+// #endif // DEBUG
 }
 
 void IntersectionPlanesBase::computeLocation() {
@@ -1029,31 +1038,31 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-template <class BASE>
-bool IntersectionPlanes<BASE>::isEquivalent(const PlaneIntersection *pi) const
-{
-  if(BASE::equivalence() != nullptr && BASE::equivalence() == pi->equivalence())
-    return true;
-  return pi->isEquiv(this); // double dispatch
-}
+// template <class BASE>
+// bool IntersectionPlanes<BASE>::isEquivalent(const PlaneIntersection *pi) const
+// {
+//   if(BASE::equivalence() != nullptr && BASE::equivalence() == pi->equivalence())
+//     return true;
+//   return pi->isEquiv(this); // double dispatch
+// }
 
-template <class BASE>
-bool IntersectionPlanes<BASE>::isEquiv(const TripleFaceIntersection *tfi)
-  const
-{
-  // Each face in the TripleFaceIntersection must be in the
-  // PixelPlaneIntersectionNR.
+// template <class BASE>
+// bool IntersectionPlanes<BASE>::isEquiv(const TripleFaceIntersection *tfi)
+//   const
+// {
+//   // Each face in the TripleFaceIntersection must be in the
+//   // PixelPlaneIntersectionNR.
 
-  // TODO: Is it worth being cleverer about this search?  Both
-  // tfiFaces is sorted, and facePlaneSets is too, sort of.
-  unsigned int nmatch = 0;
-  const FacePlaneSet &tfiFaces = tfi->faces();
-  for(const FacePlane *face : facePlaneSets()) {
-    if(tfiFaces.find(face) != tfiFaces.end())
-      ++nmatch;
-  }
-  return nmatch == 3;
-}
+//   // TODO: Is it worth being cleverer about this search?  Both
+//   // tfiFaces is sorted, and facePlaneSets is too, sort of.
+//   unsigned int nmatch = 0;
+//   const FacePlaneSet &tfiFaces = tfi->faces();
+//   for(const FacePlane *face : facePlaneSets()) {
+//     if(tfiFaces.find(face) != tfiFaces.end())
+//       ++nmatch;
+//   }
+//   return nmatch == 3;
+// }
 
 // isEquiv_ is the guts of the two versions of
 // PixelPlaneIntersectionNR::isEquivalent().  It determines whether
@@ -1166,21 +1175,21 @@ static bool isEquiv_(HomogeneityTet *htet,
   return false;
 } // end static isEquiv_
 
-template <class BASE>
-bool IntersectionPlanes<BASE>::isEquiv(const IntersectionPlanesBase *ppi)
-  const
+// template <class BASE>
+// bool IntersectionPlanes<BASE>::isEquiv(const IntersectionPlanesBase *ppi)
+//   const
 
-{
-  return isEquiv_(BASE::htet, pixelPlanes_, faces_, pixelFaces_,
-		  ppi->pixelPlanes(), ppi->faces(), ppi->pixelFaces());
-}
+// {
+//   return isEquiv_(BASE::htet, pixelPlanes_, faces_, pixelFaces_,
+// 		  ppi->pixelPlanes(), ppi->faces(), ppi->pixelFaces());
+// }
 
-template <class BASE>
-bool IntersectionPlanes<BASE>::isEquiv(const RedundantIntersection *ri)
-  const
-{
-  return ri->referent()->isEquiv(this);
-}
+// template <class BASE>
+// bool IntersectionPlanes<BASE>::isEquiv(const RedundantIntersection *ri)
+//   const
+// {
+//   return ri->referent()->isEquiv(this);
+// }
 
 template <class BASE>
 void IntersectionPlanes<BASE>::addPlanesToEquivalence(
@@ -1205,7 +1214,8 @@ void IntersectionPlanes<BASE>::addPlanesToEquivalence(
 }
 
 template <class BASE>
-bool IntersectionPlanes<BASE>::isEquivalent(const IsecEquivalenceClass *eqclass)
+bool IntersectionPlanes<BASE>::belongsInEqClass(
+					const IsecEquivalenceClass *eqclass)
   const
 {
   return isEquiv_(BASE::htet, pixelPlanes_, faces_, pixelFaces_,
@@ -2991,8 +3001,12 @@ bool IsecEquivalenceClass::contains(PlaneIntersection *pi) const {
 }
 
 void IsecEquivalenceClass::addPixelPlane(const HPixelPlane *pp) {
-  pixelPlanes.insert(pp);
+  pixelPlanes.insert(pp->unoriented());
   loc_[pp->direction()] = pp->normalOffset();
+}
+
+bool IsecEquivalenceClass::containsPixelPlane(const HPixelPlane *pp) const {
+  return pixelPlanes.count(pp->unoriented()) > 0;
 }
 
 void IsecEquivalenceClass::addFacePlane(const FacePlane *fp) {
