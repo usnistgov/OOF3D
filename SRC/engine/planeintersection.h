@@ -589,7 +589,9 @@ public:
   //   return pixelPlanes_.size() + pixelFaces_.size()- 1;
   // }
   virtual unsigned int nVSBSegments() const = 0;
-  unsigned int nPolySegments() const { return faces_.size(); }
+  unsigned int nPolySegments() const {
+    return faces_.size() + pixelFaces_.size();
+  }
 
   // Find the beginning or end of the set of contiguous polygon edges
   // at the intersection.

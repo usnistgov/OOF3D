@@ -36,12 +36,12 @@ static std::string eqPrint(IsecEquivalenceClass *eqptr) {
 
 PlaneIntersection::PlaneIntersection(HomogeneityTet *htet)
   : htet(htet),
-    equivalence_(nullptr),
-    id(htet->nextIntersectionID())
+    equivalence_(nullptr)
 #ifdef DEBUG
   , verbose(false)
 #endif // DEBUG
 {
+  setID(htet);
 #ifdef DEBUG
   HomogeneityTet::allIntersections.insert(this);
   // oofcerr << "PlaneIntersection::ctor: " << this << std::endl;
@@ -58,12 +58,12 @@ PlaneIntersection::~PlaneIntersection() {
 
 PlaneIntersection::PlaneIntersection(const PlaneIntersection &other)
   : htet(other.htet),
-    equivalence_(other.equivalence_),
-    id(other.htet->nextIntersectionID())
+    equivalence_(other.equivalence_)
 #ifdef DEBUG
   , verbose(other.verbose)
 #endif // DEBUG
 {
+  setID(htet);
   if(equivalence_ != nullptr)
     equivalence_->addIntersection(this);
 }
@@ -175,7 +175,9 @@ bool PlaneIntersection::verify() {
 
 GenericIntersection *GenericIntersection::clone(HomogeneityTet *htet) const {
   GenericIntersection *bozo = new GenericIntersection(htet);
+  assert(bozo->equivalence() == equivalence());
   copyPlanesToIntersection(bozo);
+  bozo->setID(htet);
   return bozo;
 }
 
@@ -206,6 +208,7 @@ TripleFaceIntersection *TripleFaceIntersection::clone(HomogeneityTet *htet)
   const
 {
   TripleFaceIntersection *tfi = new TripleFaceIntersection(*this);
+  assert(tfi->equivalence() == equivalence());
   tfi->setID(htet);
   return tfi;
 }
@@ -2270,7 +2273,7 @@ MultiFaceIntersection *MultiFaceIntersection::clone(HomogeneityTet *htet) const
 Interiority MultiFaceIntersection::interiority(const PixelPlaneFacet *facet)
   const
 {
-  assert(faces_.size() == 2);
+  assert(nPolySegments() == 2);
   ICoord2D vsb0 = segEnd(0);
   ICoord2D vsb1 = segEnd(1);
   std::vector<bool> interior;
@@ -2774,6 +2777,12 @@ TetEdgeIntersection::TetEdgeIntersection(HomogeneityTet *htet,
 					 const HPixelPlane *pp)
   : TetIntersection(htet)
 {
+#ifdef DEBUG
+  if(htet->verboseCategory()) {
+    oofcerr << "TetEdgeIntersection::ctor: f0=" << *f0 << " f1=" << *f1
+	    << " pp=" << *pp << std::endl;
+  }
+#endif // DEBUG
   f0->addToIntersection(this);
   f1->addToIntersection(this);
   pp->addToIntersection(this);
@@ -2782,7 +2791,17 @@ TetEdgeIntersection::TetEdgeIntersection(HomogeneityTet *htet,
   // pixelPlanes_.insert(pp);
   loc_ = triplePlaneIntersection(f0, f1, pp);
   setCrossingCount(0);
+#ifdef DEBUG
+  if(htet->verboseCategory())
+    oofcerr << "TetEdgeIntersection::ctor: before includeCollinearPlanes, this="
+	    << *this << std::endl;
+#endif // DEBUG
   includeCollinearPlanes(htet);
+#ifdef DEBUG
+  if(htet->verboseCategory())
+    oofcerr << "TetEdgeIntersection::ctor: after includeCollinearPlanes, this="
+	    << *this << std::endl;
+#endif // DEBUG
 }
 
 TetEdgeIntersection *TetEdgeIntersection::clone(HomogeneityTet *htet) const {

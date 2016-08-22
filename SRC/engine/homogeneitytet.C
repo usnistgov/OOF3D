@@ -298,25 +298,29 @@ HomogeneityTet::HomogeneityTet(const CSkeletonElement *element,
       for(unsigned int c : dirs) {
 	double x = epts[n0][c];
 	const HPixelPlane *pp = getPixelPlane(c, x, 1);
-	if(getCoincidentFacePlane(pp) == nullptr) {
-	  planes.push_back(pp);
-	  planes.push_back(getPixelPlane(c, x, -1));
-	}
+	const HPixelPlane *opp = getPixelPlane(c, x, -1);
+	if(getCoincidentFacePlane(pp) == nullptr &&
+	   getCoincidentFacePlane(opp) == nullptr)
+	  {
+	    planes.push_back(pp);
+	    planes.push_back(opp);
+	  }
       }
       // Put all combinations of the planes into collinearPlanes so
       // that any plane can be located from a pair of the others.
       for(unsigned int i=0; i<planes.size(); i++) {
 	for(unsigned int j=0; j<planes.size(); j++) {
-	  if(i != j &&
-	     planes[i]->unoriented() != planes[j] &&
-	     planes[j]->unoriented() != planes[i])
+	  if(i != j && planes[i]->unoriented() != planes[j]->unoriented())
 	    {
 	      for(unsigned int k=0; k<planes.size(); k++) {
-		if(k != i && k != j) {
-		  collinearPlanes.insert(
+		if(k != i && k != j &&
+		   planes[k]->unoriented() != planes[i]->unoriented() &&
+		   planes[k]->unoriented() != planes[j]->unoriented())
+		  {
+		    collinearPlanes.insert(
 			 std::make_pair(std::make_pair(planes[i], planes[j]),
 					planes[k]));
-		}
+		  }
 	      }
 	    }
 	}
@@ -391,7 +395,7 @@ const HPixelPlane *HomogeneityTet::getPixelPlane(HPixelPlane *pixplane) {
     delete pixplane;
   else
     allPlanes_.insert(*result.first);
-  (*result.first)->unoriented_ = getUnorientedPixelPlane(*result.first);
+  (*result.first)->setUnoriented(getUnorientedPixelPlane(*result.first));
   return *result.first;
 }
 
@@ -986,10 +990,11 @@ double HomogeneityTet::faceEdgeCoord(const BarycentricCoord &bary,
 
 TetIntersectionPolygon&
 HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane) {
-// #ifdef DEBUG
-//   oofcerr << "HomogeneityTet::getTetPlaneIntersectionPoints: pixplane="
-// 	  << pixplane << " " << *pixplane << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verboseCategory())
+    oofcerr << "HomogeneityTet::getTetPlaneIntersectionPoints: pixplane="
+	    << pixplane << " " << *pixplane << std::endl;
+#endif // DEBUG
   {
     // Return cached points if possible.
     TetPlaneIsecMap::iterator i = tetPlaneIntersections.find(pixplane);
@@ -1050,7 +1055,8 @@ HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane) {
       unsigned int edge = CSkeletonElement::cwNodeEdges[n][i];
       FacePlane *face0 = faces[CSkeletonElement::edgeFaces[edge][0]];
       FacePlane *face1 = faces[CSkeletonElement::edgeFaces[edge][1]];
-      result.push_back(new TetEdgeIntersection(this, face0, face1, pixplane));
+      result.push_back(checkEquiv(new TetEdgeIntersection(
+					  this, face0, face1, pixplane)));
 #ifdef DEBUG
       result.back()->verbose = verboseplane;
 #endif // DEBUG
@@ -1077,7 +1083,8 @@ HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane) {
 	  CSkeletonElement::cwNeighborEdgeOrder[underedge][i];
 	FacePlane *face0 = faces[CSkeletonElement::edgeFaces[edge][0]];
 	FacePlane *face1 = faces[CSkeletonElement::edgeFaces[edge][1]];	
-	result.push_back(new TetEdgeIntersection(this, face0, face1, pixplane));
+	result.push_back(checkEquiv(new TetEdgeIntersection(
+					    this, face0, face1, pixplane)));
 #ifdef DEBUG
 	result.back()->verbose = verboseplane;
 #endif // DEBUG
@@ -1096,16 +1103,16 @@ HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane) {
 	   edgenodes[1] == (int) inplanenode)
 	  {
 	    if(!didinplane) {
-	      result.push_back(
-		       new TetNodeIntersection(this, pixplane, inplanenode));
+	      result.push_back(checkEquiv(new TetNodeIntersection(
+					  this, pixplane, inplanenode)));
 	      didinplane = true;
 	    }
 	  }
 	else {
 	  FacePlane *face0 = faces[CSkeletonElement::edgeFaces[edge][0]];
 	  FacePlane *face1 = faces[CSkeletonElement::edgeFaces[edge][1]];
-	  result.push_back(new TetEdgeIntersection(this, face0, face1,
-						   pixplane));
+	  result.push_back(checkEquiv(new TetEdgeIntersection(
+					      this, face0, face1, pixplane)));
 #ifdef DEBUG
 	  result.back()->verbose = verboseplane;
 #endif // DEBUG
@@ -1125,7 +1132,8 @@ HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane) {
 	unsigned int edge = CSkeletonElement::ccwNodeEdges[n][i];
 	FacePlane *face0 = faces[CSkeletonElement::edgeFaces[edge][0]];
 	FacePlane *face1 = faces[CSkeletonElement::edgeFaces[edge][1]];
-	result.push_back(new TetEdgeIntersection(this, face0, face1, pixplane));
+	result.push_back(checkEquiv(new TetEdgeIntersection(
+					    this, face0, face1, pixplane)));
 #ifdef DEBUG
 	result.back()->verbose = verboseplane;
 #endif // DEBUG
@@ -3826,14 +3834,16 @@ FaceFacet::~FaceFacet() {
 }
 
 void FaceFacet::addEdge(FaceFacetEdge *edge) {
+#ifdef DEBUG
+  if(htet->verboseFace()) {
+    oofcerr << "FaceFacet::addEdge: face=" << face << " adding " << *edge;
+    if(edge->isNull())
+      oofcerr << " ** null edge! **";
+    oofcerr << std::endl;
+  }
+#endif // DEBUG
   if(edge->isNull())
     return;
-// #ifdef DEBUG
-//   if(htet->verboseFace()) {
-//     oofcerr << "FaceFacet::addEdge: face=" << face << " adding " << *edge
-// 	    << std::endl;
-//   }
-// #endif // DEBUG
   areaComputed = false;
   edges_.insert(edge);
 }
@@ -4046,6 +4056,13 @@ void FaceFacet::fixNonPositiveArea(HomogeneityTet *htet, unsigned int cat)
     // and unsigned ints here.  See the TODO in cmicrostructure.h
     // about using unsigned ints for voxel categories.
     homog_face = htet->microstructure->category(testVxl) == cat;
+#ifdef DEBUG
+    if(htet->verboseFace()) {
+      oofcerr << "FaceFacet::fixNonPositiveArea: testVxl=" << testVxl
+	      << " cat=" << htet->microstructure->category(testVxl)
+	      << " homog_face=" << homog_face << std::endl;
+    }
+#endif	// DEBUG
   }
 #ifdef DEBUG
   if(htet->verboseFace()) {
@@ -4059,12 +4076,18 @@ void FaceFacet::fixNonPositiveArea(HomogeneityTet *htet, unsigned int cat)
     unsigned int n0 = CSkeletonElement::getFaceArray(face)[0];
     unsigned int n1 = CSkeletonElement::getFaceArray(face)[1];
     unsigned int n2 = CSkeletonElement::getFaceArray(face)[2];
-    addEdge(new FaceFacetEdge(htet, new TripleFaceIntersection(n0, htet),
-			      new TripleFaceIntersection(n1, htet)));
-    addEdge(new FaceFacetEdge(htet, new TripleFaceIntersection(n1, htet),
-			      new TripleFaceIntersection(n2, htet)));
-    addEdge(new FaceFacetEdge(htet, new TripleFaceIntersection(n2, htet),
-			      new TripleFaceIntersection(n0, htet)));
+    addEdge(new FaceFacetEdge(
+		      htet,
+		      htet->checkEquiv(new TripleFaceIntersection(n0, htet)),
+		      htet->checkEquiv(new TripleFaceIntersection(n1, htet))));
+    addEdge(new FaceFacetEdge(
+		      htet,
+		      htet->checkEquiv(new TripleFaceIntersection(n1, htet)),
+		      htet->checkEquiv(new TripleFaceIntersection(n2, htet))));
+    addEdge(new FaceFacetEdge(
+		      htet,
+		      htet->checkEquiv(new TripleFaceIntersection(n2, htet)),
+		      htet->checkEquiv(new TripleFaceIntersection(n0, htet))));
   }
 #ifdef DEBUG
   if(htet->verboseFace()) {

@@ -40,27 +40,38 @@ typedef std::multimap<const Coord2D, PixelPlaneIntersectionNR*> IsecsNearCoord;
 
 class HPlane : public virtual Plane {
 private:
-  // unoriented_ is set by HomogeneityTet::getPixelPlane
-  const HPixelPlane *unoriented_;
+  // Planes are compared by pointer, so we don't want them to be copied.
+  HPlane(const HPlane&) = delete;
+  HPlane(HPlane&&) = delete;
 public:
+  HPlane() {}
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const = 0;
   virtual void addToIntersection(IntersectionPlanesBase*) const = 0;
   virtual void addToEquivalence(IsecEquivalenceClass*) const = 0;
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const = 0;
   virtual std::string shortName() const = 0;
-  const HPixelPlane *unoriented() const { return unoriented_; }
+  virtual const HPlane *unoriented() const = 0;
   friend class HomogeneityTet;
 };
 
 class HPixelPlane : public virtual HPlane, public virtual PixelPlane {
+private:
+  // Planes are compared by pointer, so we don't want them to be copied.
+  HPixelPlane(const HPixelPlane&) = delete;
+  HPixelPlane(HPixelPlane&&) = delete;
+protected:
+  // unoriented_ is set by HomogeneityTet::getPixelPlane
+  const HPixelPlane *unoriented_;
 public:
   HPixelPlane(unsigned int dir, int offst, int nrml)
     : Plane(axisVector(dir)*nrml, offst*nrml, false),
-      PixelPlane(dir, offst, nrml)
+      PixelPlane(dir, offst, nrml),
+      unoriented_(nullptr)
   {}
   HPixelPlane(const PixelPlane &pp)
     : Plane(pp),
-      PixelPlane(pp)
+      PixelPlane(pp),
+      unoriented_(nullptr)
   {}
   HPixelPlane() {}
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
@@ -70,6 +81,8 @@ public:
   virtual std::string shortName() const;
   // Return the orthogonal pixel plane that passes through the given points.
   HPixelPlane *orthogonalPlane(const ICoord2D&, const ICoord2D&) const;
+  virtual const HPixelPlane *unoriented() const { return unoriented_; }
+  void setUnoriented(const HPixelPlane *u) { unoriented_ = u; }
 };
 
 class FacePlane : public virtual HPlane {
@@ -84,6 +97,9 @@ public:
     : Plane(normal, offset),
       face_(face)
   {}
+  // This constructor doesn't set the Plane data.  It is only used by
+  // the FacePixelPlane constructor, which calls the Plane
+  // constructor.
   FacePlane(unsigned int face)
     : face_(face)
   {}
@@ -93,11 +109,13 @@ public:
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const;
   virtual void print(std::ostream&) const;
   unsigned int face() const { return face_; }
+  virtual const FacePlane *unoriented() const { return this; }
   virtual std::string shortName() const;
 };
 
 class FacePixelPlane : public virtual HPixelPlane, public virtual FacePlane {
 private:
+  // Planes are compared by pointer, so we don't want them to be copied.
   FacePixelPlane(const FacePixelPlane&) = delete;
   FacePixelPlane(FacePixelPlane&&) = delete;
 public:
@@ -115,6 +133,7 @@ public:
   virtual void addToIntersection(IntersectionPlanesBase*) const;
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const;
+  virtual const FacePixelPlane *unoriented() const { return this; }
   virtual void print(std::ostream&) const;
   virtual std::string shortName() const;  
 };

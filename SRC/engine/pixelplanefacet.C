@@ -2943,8 +2943,14 @@ bool PixelPlaneFacet::badTopology(const MultiFaceIntersection *mfi0,
 				  const MultiFaceIntersection *mfi1)
   const
 {
-  assert(mfi0->nPolySegments() == 2);
-  assert(mfi1->nPolySegments() == 2);
+#ifdef DEBUG
+  if(mfi0->nPolySegments() != 2 || mfi1->nPolySegments() != 2) {
+    oofcerr << "PixelPlaneFacet::badTopology: mfi0=" << *mfi0 << std::endl;
+    oofcerr << "PixelPlaneFacet::badTopology: mfi1=" << *mfi1 << std::endl;
+    throw ErrProgrammingError("Wrong number of polygon segments!",
+			      __FILE__, __LINE__);
+      }
+#endif // DEBUG
   const PixelBdyLoopSegment &loopSeg0 = mfi0->getLoopSeg();
   const PixelBdyLoopSegment &loopSeg1 = mfi1->getLoopSeg();
   if(loopSeg0 == loopSeg1)
