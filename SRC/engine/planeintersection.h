@@ -1315,6 +1315,7 @@ public:
 
 class IsecEquivalenceClass {
 private:
+  HomogeneityTet *htet;
   // TODO: make the names of these sets consistent with those in the
   // IntersectionPlanes class.
   PixelPlaneSet pixelPlanes;
@@ -1325,13 +1326,16 @@ private:
   // multiple PlaneIntersection objects that are equal.
   std::vector<PlaneIntersection*> intersections;
   Coord3D loc_;	// so that all equivalent points are at the same spot.
+  void includeCollinearPlanes(const HPlane*);
+  template <class SET>
+  void includeCollinearPlaneSet(const HPlane*, SET&);
 public:
   const unsigned int id;
 #ifdef DEBUG
   bool verbose;
 #endif	// DEBUG
 
-  IsecEquivalenceClass(PlaneIntersection*, unsigned int
+  IsecEquivalenceClass(HomogeneityTet*, PlaneIntersection*, unsigned int
 #ifdef DEBUG
 		       , bool
 #endif // DEBUG
@@ -1346,10 +1350,11 @@ public:
   int size() const { return intersections.size(); }
 
   // The add*Plane methods are used by the
-  // PlaneIntersection::addPlanesToEquivalence methods.
-  void addPixelPlane(const HPixelPlane*);
-  void addFacePlane(const FacePlane*);
-  void addFacePixelPlane(const FacePixelPlane*);
+  // PlaneIntersection::addPlanesToEquivalence methods.  The bool arg
+  // is true if collinear planes should be added as well.
+  void addPixelPlane(const HPixelPlane*, bool);
+  void addFacePlane(const FacePlane*, bool);
+  void addFacePixelPlane(const FacePixelPlane*, bool);
   bool containsPixelPlane(const HPixelPlane*) const;
 
   PixelPlaneSets pixelPlaneSets() const {

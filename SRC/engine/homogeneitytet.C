@@ -310,12 +310,12 @@ HomogeneityTet::HomogeneityTet(const CSkeletonElement *element,
       // that any plane can be located from a pair of the others.
       for(unsigned int i=0; i<planes.size(); i++) {
 	for(unsigned int j=0; j<planes.size(); j++) {
-	  if(i != j && planes[i]->unoriented() != planes[j]->unoriented())
+	  if(i != j && !planes[i]->coincident(*planes[j]))
 	    {
 	      for(unsigned int k=0; k<planes.size(); k++) {
 		if(k != i && k != j &&
-		   planes[k]->unoriented() != planes[i]->unoriented() &&
-		   planes[k]->unoriented() != planes[j]->unoriented())
+		   !planes[k]->coincident(*planes[i]) &&
+		   !planes[k]->coincident(*planes[j]))
 		  {
 		    collinearPlanes.insert(
 			 std::make_pair(std::make_pair(planes[i], planes[j]),
@@ -596,7 +596,7 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
     if(equivClass1 == nullptr) {
       // Neither point is in an equivalence class.  Construct one.
       IsecEquivalenceClass *eqclass = new IsecEquivalenceClass(
-					       merged, nextEquivalenceID()
+					       this, merged, nextEquivalenceID()
 #ifdef DEBUG
 					       , verbose
 #endif // DEBUG
@@ -675,7 +675,7 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *pt0, PlaneIntersection *pt1)
   if(equivClass0 == nullptr) {
     if(equivClass1 == nullptr) {
       IsecEquivalenceClass *eqclass = new IsecEquivalenceClass(
-					       pt0, nextEquivalenceID()
+					       this, pt0, nextEquivalenceID()
 #ifdef DEBUG
 					       , verbose
 #endif // DEBUG
@@ -709,35 +709,38 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *pt0, PlaneIntersection *pt1)
 // the classes are merged.
 template <class PLANEINTERSECTION>
 PLANEINTERSECTION *HomogeneityTet::checkEquiv(PLANEINTERSECTION *point) {
-#ifdef DEBUG
-  if(verboseplane || verboseface) 
-    oofcerr << "HomogeneityTet::checkEquiv: point=" << point << " " << *point
-	    << " verboseplane=" << verboseplane
-	    << " verboseface=" << verboseface << std::endl;
-  OOFcerrIndent indent(2);
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verboseplane || verboseface) 
+//     oofcerr << "HomogeneityTet::checkEquiv: point=" << *point << std::endl;
+//   OOFcerrIndent indent(2);
+// #endif // DEBUG
 
   bool foundEquiv = true;
   while(foundEquiv == true) {
     foundEquiv = false;
     for(IsecEquivalenceClass *eqclass : equivalences) {
       if(point->equivalence() != eqclass) {
+// #ifdef DEBUG
+// 	if(verboseplane || verboseface)
+// 	  oofcerr << "HomogeneityTet::checkEquiv: checking class " << *eqclass
+// 		  << std::endl;
+// #endif // DEBUG
 	if(point->belongsInEqClass(eqclass)) {
 	  foundEquiv = true;
 	  IsecEquivalenceClass *oldclass = point->equivalence();
-#ifdef DEBUG
-	  if(verboseplane || verboseplane)
-	    oofcerr << "HomogeneityTet::checkEquiv: found eqclass "
-		    << *eqclass << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+// 	  if(verboseplane || verboseface)
+// 	    oofcerr << "HomogeneityTet::checkEquiv: found eqclass "
+// 		    << *eqclass << std::endl;
+// #endif // DEBUG
 	  if(oldclass != nullptr) {
 	    // Since point is in oldclass, calling merge will call
 	    // point->setEquivalence(eqclass).
-#ifdef DEBUG
-	    if(verboseplane || verboseface)
-	      oofcerr << "HomogeneityTet::checkEquiv: merging oldclass="
-		      << *oldclass << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+// 	    if(verboseplane || verboseface)
+// 	      oofcerr << "HomogeneityTet::checkEquiv: merging oldclass="
+// 		      << *oldclass << std::endl;
+// #endif // DEBUG
 	    eqclass->merge(oldclass);
 	    auto eptr = std::find(equivalences.begin(), equivalences.end(),
 				  oldclass);
@@ -750,30 +753,41 @@ PLANEINTERSECTION *HomogeneityTet::checkEquiv(PLANEINTERSECTION *point) {
 	  }
 	  break;
 	} // end if point belongs in another class
+// #ifdef DEBUG
+// 	else
+// 	  if(verboseplane || verboseface)
+// 	    oofcerr << "HomogeneityTet::checkEquiv: wrong class" << std::endl;
+// #endif // DEBUG
       }
     } // end loop over equivalence classes eqclass
   }
   if(point->equivalence() == nullptr) {
     // The point doesn't belong to any existing equivalence class.
     // Create one, so that other points can be made equivalent to it.
-#ifdef DEBUG
-    if(verboseplane || verboseface)
-      oofcerr << "HomogeneityTet::checkEquiv: creating new class." << std::endl;
-#endif // DEBUG
     IsecEquivalenceClass *eqclass = new IsecEquivalenceClass(
-					     point, nextEquivalenceID()
+					     this, point, nextEquivalenceID()
 #ifdef DEBUG
 					     , verboseplane || verboseface
 #endif // DEBUG
 							     );
+// #ifdef DEBUG
+//     if(verboseplane || verboseface)
+//       oofcerr << "HomogeneityTet::checkEquiv: creating new class "
+// 	      << eqclass->id << std::endl;
+// #endif // DEBUG
     equivalences.push_back(eqclass);
     point->setEquivalence(eqclass);
 // #ifdef DEBUG
-//     if(verbose)
-//       oofcerr << "HomogeneityTet::checkEquiv: new class=" << *eqclass
+//     if(verboseplane || verboseface)
+//       oofcerr << "HomogeneityTet::checkEquiv: created new class=" << *eqclass
 // 	      << std::endl;
 // #endif // DEBUG
   }
+// #ifdef DEBUG
+//   if(verboseplane || verboseface)
+//     oofcerr << "HomogeneityTet::checkEquiv: final point=" << *point
+// 	    << std::endl;
+// #endif // DEBUG
   return point;
 } // end HomogeneityTet::checkEquiv
 
@@ -990,11 +1004,11 @@ double HomogeneityTet::faceEdgeCoord(const BarycentricCoord &bary,
 
 TetIntersectionPolygon&
 HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane) {
-#ifdef DEBUG
-  if(verboseCategory())
-    oofcerr << "HomogeneityTet::getTetPlaneIntersectionPoints: pixplane="
-	    << pixplane << " " << *pixplane << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verboseCategory())
+//     oofcerr << "HomogeneityTet::getTetPlaneIntersectionPoints: pixplane="
+// 	    << pixplane << " " << *pixplane << std::endl;
+// #endif // DEBUG
   {
     // Return cached points if possible.
     TetPlaneIsecMap::iterator i = tetPlaneIntersections.find(pixplane);
@@ -1492,7 +1506,7 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	  if(segbb.intersects(tetBounds)) {
 	    HPixelPlane *orthoPlane =
 	      pixplane->orthogonalPlane(pbs_start, pbs_end);
-	    // Since getTetPlaneIntersectionPoints looks up caches
+	    // Since getTetPlaneIntersectionPoints looks up cached
 	    // previous computations by PixelPlane pointer, get the
 	    // HomogeneityTet's official version of the orthogonal
 	    // plane.
@@ -1782,7 +1796,7 @@ PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
     int offset = loc[dir];
     const HPixelPlane *pp = getPixelPlane(dir, offset, 1);
     pp->addToIntersection(ppi);
-    ppi->includeCollinearPlanes(this);
+    // ppi->includeCollinearPlanes(this);
     ppi->setFacePlane(collinearFace); // no-op for MultiFaceIntersection
   }
   
@@ -2454,15 +2468,17 @@ StrandedPointLists HomogeneityTet::matchStrandedPoints(
 	matched[best] = true;
 	matched[i] = true;
 	const StrandedPoint &pt1 = strandedPoints[best];
-// #ifdef DEBUG
-// 	if(verbosecategory) {
-// 	  OOFcerrIndent indent(2);
-// 	  oofcerr << "HomogeneityTet::matchStrandedPoints:  pt0=" << *pt0.feInt
-// 		  << std::endl;
-// 	  oofcerr << "HomogeneityTet::matchStrandedPoints: best=" << *pt1.feInt
-// 		  << std::endl;
-// 	}
-// #endif // DEBUG
+#ifdef DEBUG
+	if(verbosecategory) {
+	  oofcerr << "HomogeneityTet::matchStrandedPoints: merging:"
+		  << std::endl;
+	  OOFcerrIndent indent(2);
+	  oofcerr << "HomogeneityTet::matchStrandedPoints: pt0=" << *pt0.feInt
+		  << std::endl;
+	  oofcerr << "HomogeneityTet::matchStrandedPoints: pt1=" << *pt1.feInt
+		  << std::endl;
+	}
+#endif // DEBUG
 	// The PixelPlaneIntersections are stored in
 	// FaceEdgeIntersection as generic PlaneIntersections, but in
 	// this case we know that they're PixelPlaneIntersections.
@@ -2499,7 +2515,7 @@ StrandedPointLists HomogeneityTet::matchStrandedPoints(
 #ifdef DEBUG
 	if(verbosecategory)
 	  oofcerr << "HomogeneityTet::matchStrandedPoints: marooned point! "
-		  << pt0.feInt << std::endl;
+		  << *pt0.feInt << std::endl;
 #endif // DEBUG
       }
     } // end if point i hasn't been matched
@@ -2659,12 +2675,12 @@ void IntersectionGroup::fixTents(HomogeneityTet *htet,
 				 unsigned int face,
 				 LooseEndSet &looseEnds)
 {
-// #ifdef DEBUG
-//   if(htet->verboseFace()) {
-//     oofcerr << "IntersectionGroup::fixTents: this=" << std::endl;
-//     std::cerr << *this << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(htet->verboseFace()) {
+    oofcerr << "IntersectionGroup::fixTents: this=" << std::endl;
+    std::cerr << *this << std::endl;
+  }
+#endif // DEBUG
   unsigned int npts = size();
   if(npts <= 1)
     return;
@@ -2674,52 +2690,52 @@ void IntersectionGroup::fixTents(HomogeneityTet *htet,
     if(!matched[i]) {
       FaceEdgeIntersection *feii = isecs[i];
       PlaneIntersection *ptX = feii->remoteCorner();
-// #ifdef DEBUG
-//       if(htet->verboseFace()) {
-// 	oofcerr << "IntersectionGroup::fixTents: feii=" << *feii << std::endl;
-// 	oofcerr << "IntersectionGroup::fixTents: ptX=" << *ptX << std::endl;
-//       }
-//       OOFcerrIndent indent(2);
-// #endif // DEBUG
+#ifdef DEBUG
+      if(htet->verboseFace()) {
+	oofcerr << "IntersectionGroup::fixTents: feii=" << *feii << std::endl;
+	oofcerr << "IntersectionGroup::fixTents: ptX=" << *ptX << std::endl;
+      }
+      OOFcerrIndent indent(2);
+#endif // DEBUG
       for(unsigned int j=i+1; j<npts; j++) {
 	if(!matched[j]) {
 	  FaceEdgeIntersection *feij = isecs[j];
-// #ifdef DEBUG
-// 	  if(htet->verboseFace()) {
-// 	    oofcerr << "IntersectionGroup::fixTents: feij=" << *feij
-// 		    << std::endl;
-// 	  }
-// #endif // DEBUG
+#ifdef DEBUG
+	  if(htet->verboseFace()) {
+	    oofcerr << "IntersectionGroup::fixTents: feij=" << *feij
+		    << std::endl;
+	  }
+#endif // DEBUG
 	  if(feii->start() != feij->start() &&
 	     feii->faceEdge() == feij->faceEdge() &&
 	     feii->remoteCorner()->isEquivalent(ptX))
 	    {
-// #ifdef DEBUG
-// 	      if(htet->verboseFace()) {
-// 		oofcerr << "IntersectionGroup::fixTents: calling tentCheck"
-// 			<< std::endl;
-// 	      }
-// #endif // DEBUG
+#ifdef DEBUG
+	      if(htet->verboseFace()) {
+		oofcerr << "IntersectionGroup::fixTents: calling tentCheck"
+			<< std::endl;
+	      }
+#endif // DEBUG
 	      if(!tentCheck(htet, face, ptX, feii, feij)) {
-// #ifdef DEBUG
-// 		if(htet->verboseFace()) {
-// 		  oofcerr << "IntersectionGroup::fixTents: tentCheck returned T"
-// 			  << std::endl;
-// 	      }
-// #endif // DEBUG
+#ifdef DEBUG
+		if(htet->verboseFace()) {
+		  oofcerr << "IntersectionGroup::fixTents: tentCheck returned F"
+			  << std::endl;
+	      }
+#endif // DEBUG
 		matched[j] = true;
 		matched[i] = true;
 		htet->mergeEquiv(feii->corner(), feij->corner());
 		nMatched += 2;
 		break;
 	      }
-// #ifdef DEBUG
-// 	      else
-// 		if(htet->verboseFace()) {
-// 		  oofcerr << "IntersectionGroup::fixTents: tentCheck returned F"
-// 			  << std::endl;
-// 	      }
-// #endif // DEBUG
+#ifdef DEBUG
+	      else
+		if(htet->verboseFace()) {
+		  oofcerr << "IntersectionGroup::fixTents: tentCheck returned T"
+			  << std::endl;
+	      }
+#endif // DEBUG
 	    }
 	} // end if j wasn't already matched
       }	  // end loop over intersections j
@@ -2809,19 +2825,27 @@ bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
   // nullptr, it means that the points are connected along a tet face
   // and not a pixel plane, and this check is irrelevant.
   const PixelPlane *pp0 = pt0->sharedPixelPlane(ptX, face);
-  if(pp0 == nullptr)
+  if(pp0 == nullptr) {
+#ifdef DEBUG
+    if(htet->verboseFace())
+      oofcerr << "IntersectionGroup::tentCheck: pp0 = nullptr!" << std::endl;
+#endif // DEBUG
     return true;
+  }
   const PixelPlane *pp1 = pt1->sharedPixelPlane(ptX, face);
-  if(pp1 == nullptr)
+  if(pp1 == nullptr) {
+#ifdef DEBUG
+    if(htet->verboseFace()) 
+      oofcerr << "IntersectionGroup::tentCheck: pp1 = nullptr!" << std::endl;
+#endif // DEBUG
     return true;
+  }
 #ifdef DEBUG
   if(htet->verboseFace())
     oofcerr << "IntersectionGroup::tentCheck: pp0=" << *pp0 << " pp1=" << *pp1
 	    << std::endl;
 #endif // DEBUG
 
-  // TODO: These vectors may have the wrong sign because the
-  // PixelPlanes stored in PlaneIntersections are unoriented.
   Coord3D edgeVec0 = cross(pp0->normal(), faceNormal);
   Coord3D edgeVec1 = cross(pp1->normal(), faceNormal);
 
@@ -3257,7 +3281,7 @@ void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
 // end points around the perimeter of a tet face.  These points have
 // to be connected to complete the FaceFacets.  The points come in two
 // flavors: starts, where an existing segment starts, and stops, where
-// an existing segmentsstops.  Stops need to be connected to starts by
+// an existing segments stops.  Stops need to be connected to starts by
 // adding new segments going counterclockwise around the perimeter of
 // the face.  If stops and starts are in the wrong order, incorrect
 // segments will be added.  Round-off error can make two points that

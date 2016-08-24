@@ -1080,46 +1080,70 @@ static bool isEquiv_(HomogeneityTet *htet,
 {
   // TODO: Is it worth being cleverer about these searches?  All of
   // the sets are sorted, and that information isn't being used.  The
-  // sets are also small.
+  // sets are small, but this is called often.
+// #ifdef DEBUG
+//   bool verbose = htet->verbosePlane() || htet->verboseFace();
+// #endif	// DEBUG
   unsigned int npixplanes = 0;
   std::vector<const HPlane*> planes;
   planes.reserve(10);		// more than we'll need in all cases
   for(const HPixelPlane *thisplane : pp0) {
     for(const HPixelPlane *otherplane : pp1) {
-      if(thisplane == otherplane) {
+      if(thisplane->coincident(*otherplane)) {
 	++npixplanes;
-	planes.push_back(thisplane);
+	planes.push_back(thisplane->unoriented());
 	break;
       }
     }
   }
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "isEquiv_: common planes=";
+//     std::cerr << derefprint(planes);
+//     oofcerr << std::endl;
+//   }
+// #endif // DEBUG
   if(npixplanes >= 3)
     return true;
 
   unsigned int nfaces = 0;
   for(const FacePlane *thisplane : fp0) {
     for(const FacePlane *otherplane : fp1) {
-      if(thisplane == otherplane) {
+      if(thisplane->coincident(*otherplane)) {
 	++nfaces;
-	planes.push_back(thisplane);
+	planes.push_back(thisplane->unoriented());
 	break;
       }
     }
   }
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "isEquiv_: common planes+faces=";
+//     std::cerr << derefprint(planes);
+//     oofcerr << std::endl;
+//   }
+// #endif // DEBUG
   if(nfaces >= 3)
     return true;
 
   unsigned int npixfaces = 0;
   for(const FacePixelPlane *thisplane : fpp0) {
     for(const FacePixelPlane *otherplane : fpp1) {
-      if(thisplane == otherplane) {
+      if(thisplane->coincident(*otherplane)) {
 	++npixfaces;
-	planes.push_back(thisplane);
+	planes.push_back(thisplane->unoriented());
 	break;
       }
     }
   }
 
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "isEquiv_: common planes+faces+pixelfaces=";
+//     std::cerr << derefprint(planes);
+//     oofcerr << std::endl;
+//   }
+// #endif // DEBUG
   if(planes.size() < 3)
     return false;
 
@@ -1158,6 +1182,7 @@ static bool isEquiv_(HomogeneityTet *htet,
 	if(iIsPixelPlane) ++npixelplanes;
 	if(jIsPixelPlane) ++npixelplanes;
 	if(kIsPixelPlane) ++npixelplanes;
+	// Cases with 0 or 3 pixelplanes have been dealt with already.
 	assert(npixelplanes == 1 || npixelplanes == 2);
 	if(npixelplanes == 2) {
 	  if(planes[i]->nonDegenerate(planes[j], planes[k]))
@@ -1204,11 +1229,11 @@ void IntersectionPlanes<BASE>::addPlanesToEquivalence(
 // 	    << *eqclass << std::endl;
 // #endif // DEBUG
   for(const HPixelPlane *plane : pixelPlanes_)
-    eqclass->addPixelPlane(plane);
+    eqclass->addPixelPlane(plane, true);
   for(const FacePlane *face : faces_)
-    eqclass->addFacePlane(face);
+    eqclass->addFacePlane(face, true);
   for(const FacePixelPlane *fpp : pixelFaces_)
-    eqclass->addFacePixelPlane(fpp);
+    eqclass->addFacePixelPlane(fpp, true);
 // #ifdef DEBUG
 //   if(verbose)
 //     oofcerr << "PixelPlaneIntersectionNR::addPlanesToEquivalence: done"
@@ -1961,7 +1986,7 @@ SimpleIntersection::SimpleIntersection(HomogeneityTet *htet,
     fp->addToIntersection(this);
     setFacePlane(fp);
     computeLocation();
-    includeCollinearPlanes(htet);
+    // includeCollinearPlanes(htet);
   }
   else {
     setFacePlane(nullptr);
@@ -2210,7 +2235,7 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
     const FacePlane *fp = htet->getTetFacePlane(faceIndex);
     fp->addToIntersection(this);
     computeLocation();
-    includeCollinearPlanes(htet);
+    // includeCollinearPlanes(htet);
   }
   setLoopSeg(pblseg);
   setLoopFrac(alpha);
@@ -2234,7 +2259,7 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
   // This may not be the best way to calculate the position, but the
   // position shouldn't be used for topological calculations anyway.
   setLocation(0.5*(fi0->location3D() + fi1->location3D()));
-  includeCollinearPlanes(htet);	// TODO: Is this necessary?
+  // includeCollinearPlanes(htet);	// TODO: Is this necessary?
 }
 
 MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
@@ -2253,7 +2278,7 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
   // This may not be the best way to calculate the position, but the
   // position shouldn't be used for topological calculations anyway.
   setLocation(0.5*(si->location3D() + mfi->location3D()));
-  includeCollinearPlanes(htet);	// TODO: Is this necessary?
+  // includeCollinearPlanes(htet);	// TODO: Is this necessary?
 }
 
 MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet)
@@ -2455,7 +2480,7 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
   vsbSegments[fi0->getLoopSeg()] = fi0->getLoopFrac();
   vsbSegments[fi1->getLoopSeg()] = fi1->getLoopFrac();
   computeLocation();
-  includeCollinearPlanes(htet);
+  // includeCollinearPlanes(htet);
 }
 
 MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
@@ -2478,7 +2503,7 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
   vsbSegments[si->getLoopSeg()] = si->getLoopFrac();
   vsbSegments.insert(mvi->getLoopSegs().begin(), mvi->getLoopSegs().end());
   computeLocation();
-  includeCollinearPlanes(htet);
+  // includeCollinearPlanes(htet);
 }
 
 MultiVSBIntersection *MultiVSBIntersection::clone(HomogeneityTet *htet) const {
@@ -2633,7 +2658,7 @@ MultiCornerIntersection::MultiCornerIntersection(
 //   oofcerr << "MultiCornerIntersection::ctor: from fi0=" << *fi0 << std::endl;
 //   oofcerr << "MultiCornerIntersection::ctor:  and fi1=" << *fi1 << std::endl;
 // #endif // DEBUG
-  includeCollinearPlanes(htet);
+  // includeCollinearPlanes(htet);
 }
 
 MultiCornerIntersection *MultiCornerIntersection::clone(HomogeneityTet *htet)
@@ -2791,17 +2816,19 @@ TetEdgeIntersection::TetEdgeIntersection(HomogeneityTet *htet,
   // pixelPlanes_.insert(pp);
   loc_ = triplePlaneIntersection(f0, f1, pp);
   setCrossingCount(0);
-#ifdef DEBUG
-  if(htet->verboseCategory())
-    oofcerr << "TetEdgeIntersection::ctor: before includeCollinearPlanes, this="
-	    << *this << std::endl;
-#endif // DEBUG
-  includeCollinearPlanes(htet);
-#ifdef DEBUG
-  if(htet->verboseCategory())
-    oofcerr << "TetEdgeIntersection::ctor: after includeCollinearPlanes, this="
-	    << *this << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verboseCategory())
+//     oofcerr << "TetEdgeIntersection::ctor: before includeCollinearPlanes, this="
+// 	    << *this << std::endl;
+// #endif // DEBUG
+
+  // includeCollinearPlanes(htet);
+
+  // #ifdef DEBUG
+//   if(htet->verboseCategory())
+//     oofcerr << "TetEdgeIntersection::ctor: after includeCollinearPlanes, this="
+// 	    << *this << std::endl;
+// #endif // DEBUG
 }
 
 TetEdgeIntersection *TetEdgeIntersection::clone(HomogeneityTet *htet) const {
@@ -2852,7 +2879,7 @@ TetNodeIntersection::TetNodeIntersection(HomogeneityTet *htet,
   // else
   //     pixelPlanes_.insert(pp);
   loc_ = htet->nodePosition(node);
-  includeCollinearPlanes(htet);
+  // includeCollinearPlanes(htet);
 }
 
 TetNodeIntersection *TetNodeIntersection::clone(HomogeneityTet *htet) const {
@@ -2885,7 +2912,7 @@ TriplePixelPlaneIntersection::TriplePixelPlaneIntersection(
   pp2->addToIntersection(this);
   setCrossingCount(0);
   computeLocation();
-  includeCollinearPlanes(htet);
+  // includeCollinearPlanes(htet);
 }
 
 TriplePixelPlaneIntersection *TriplePixelPlaneIntersection::clone(
@@ -2941,13 +2968,15 @@ double TriplePixelPlaneIntersection::getPolyFrac(unsigned int,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-IsecEquivalenceClass::IsecEquivalenceClass(PlaneIntersection *pi,
+IsecEquivalenceClass::IsecEquivalenceClass(HomogeneityTet *htet,
+					   PlaneIntersection *pi,
 					   unsigned int id
 #ifdef DEBUG
 					   , bool verbose
 #endif // DEBUG
 					   )
-  : loc_(pi->location3D()),
+  : htet(htet),
+    loc_(pi->location3D()),
     id(id)
 #ifdef DEBUG
   , verbose(verbose)
@@ -3019,22 +3048,52 @@ bool IsecEquivalenceClass::contains(PlaneIntersection *pi) const {
 	  != intersections.end());
 }
 
-void IsecEquivalenceClass::addPixelPlane(const HPixelPlane *pp) {
+void IsecEquivalenceClass::addPixelPlane(const HPixelPlane *pp, bool collinear)
+{
   pixelPlanes.insert(pp->unoriented());
   loc_[pp->direction()] = pp->normalOffset();
+  if(collinear)
+    includeCollinearPlanes(pp);
 }
 
 bool IsecEquivalenceClass::containsPixelPlane(const HPixelPlane *pp) const {
   return pixelPlanes.count(pp->unoriented()) > 0;
 }
 
-void IsecEquivalenceClass::addFacePlane(const FacePlane *fp) {
+void IsecEquivalenceClass::addFacePlane(const FacePlane *fp, bool collinear) {
   facePlanes.insert(fp);
+  if(collinear)
+    includeCollinearPlanes(fp);
 }
 
-void IsecEquivalenceClass::addFacePixelPlane(const FacePixelPlane *fpp) {
+void IsecEquivalenceClass::addFacePixelPlane(const FacePixelPlane *fpp,
+					     bool collinear)
+{
   pixelFaces.insert(fpp);
   loc_[fpp->direction()] = fpp->normalOffset();
+  if(collinear)
+    includeCollinearPlanes(fpp);
+}
+
+void IsecEquivalenceClass::includeCollinearPlanes(const HPlane *plane) {
+  includeCollinearPlaneSet(plane, pixelPlanes);
+  includeCollinearPlaneSet(plane, facePlanes);
+  includeCollinearPlaneSet(plane, pixelFaces);
+}
+
+template <class SET>
+void IsecEquivalenceClass::includeCollinearPlaneSet(const HPlane *plane,
+						    SET &planeset)
+{
+  for(auto *pp : planeset) {
+    if(!pp->coincident(*plane)) {
+      HPlaneSet coplanes = htet->getCollinearPlanes(plane, pp);
+      for(const HPlane *ppp : coplanes) {
+	if(ppp == ppp->unoriented())
+	  ppp->addCollinearToEquivalence(this);
+      }
+    }
+  }
 }
  
 void IsecEquivalenceClass::merge(IsecEquivalenceClass *other) {

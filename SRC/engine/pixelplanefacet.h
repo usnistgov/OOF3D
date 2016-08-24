@@ -48,6 +48,7 @@ public:
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const = 0;
   virtual void addToIntersection(IntersectionPlanesBase*) const = 0;
   virtual void addToEquivalence(IsecEquivalenceClass*) const = 0;
+  virtual void addCollinearToEquivalence(IsecEquivalenceClass*) const = 0;
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const = 0;
   virtual std::string shortName() const = 0;
   virtual const HPlane *unoriented() const = 0;
@@ -77,6 +78,7 @@ public:
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
   virtual void addToIntersection(IntersectionPlanesBase*) const;
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
+  virtual void addCollinearToEquivalence(IsecEquivalenceClass*) const;
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const;
   virtual std::string shortName() const;
   // Return the orthogonal pixel plane that passes through the given points.
@@ -106,6 +108,7 @@ public:
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
   virtual void addToIntersection(IntersectionPlanesBase*) const;  
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
+  virtual void addCollinearToEquivalence(IsecEquivalenceClass*) const;
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const;
   virtual void print(std::ostream&) const;
   unsigned int face() const { return face_; }
@@ -132,6 +135,7 @@ public:
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
   virtual void addToIntersection(IntersectionPlanesBase*) const;
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
+  virtual void addCollinearToEquivalence(IsecEquivalenceClass*) const;
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const;
   virtual const FacePixelPlane *unoriented() const { return this; }
   virtual void print(std::ostream&) const;

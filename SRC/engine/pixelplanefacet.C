@@ -93,7 +93,13 @@ bool HPixelPlane::isInEquivalence(const IsecEquivalenceClass *eqclass) const {
 }
 
 void HPixelPlane::addToEquivalence(IsecEquivalenceClass *eqclass) const {
-  eqclass->addPixelPlane(this);
+  eqclass->addPixelPlane(this, true);
+}
+
+void HPixelPlane::addCollinearToEquivalence(IsecEquivalenceClass *eqclass)
+  const
+{
+  eqclass->addPixelPlane(this, false);
 }
 
 bool FacePlane::isPartOf(const PixelPlaneIntersectionNR *fi) const {
@@ -109,7 +115,11 @@ bool FacePlane::isInEquivalence(const IsecEquivalenceClass *eqclass) const {
 }
 
 void FacePlane::addToEquivalence(IsecEquivalenceClass *eqclass) const {
-  eqclass->addFacePlane(this);
+  eqclass->addFacePlane(this, true);
+}
+
+void FacePlane::addCollinearToEquivalence(IsecEquivalenceClass *eqclass) const {
+  eqclass->addFacePlane(this, false);
 }
 
 bool FacePixelPlane::isPartOf(const PixelPlaneIntersectionNR *fi) const {
@@ -121,7 +131,13 @@ void FacePixelPlane::addToIntersection(IntersectionPlanesBase *fi) const {
 }
 
 void FacePixelPlane::addToEquivalence(IsecEquivalenceClass *eqclass) const {
-  eqclass->addFacePixelPlane(this);
+  eqclass->addFacePixelPlane(this, true);
+}
+
+void FacePixelPlane::addCollinearToEquivalence(IsecEquivalenceClass *eqclass)
+  const
+{
+  eqclass->addFacePixelPlane(this, false);
 }
 
 bool FacePixelPlane::isInEquivalence(const IsecEquivalenceClass *eqclass) const
