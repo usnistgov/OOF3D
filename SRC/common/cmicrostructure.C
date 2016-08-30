@@ -405,12 +405,26 @@ ICoord CMicrostructure::pixelFromPoint(const Coord &pt) const {
 #endif
 }
 
+// Is the given point inside the microstructure?
 bool CMicrostructure::contains(const ICoord &ip) const {
 #if DIM==2
   return ((ip[0]>=0 && ip[0]<pxlsize_[0]) && (ip[1]>=0 && ip[1]<pxlsize_[1]));
 #elif DIM==3
   return ((ip[0]>=0 && ip[0]<pxlsize_[0]) && (ip[1]>=0 && ip[1]<pxlsize_[1])
 	  && (ip[2]>=0 && ip[2]<pxlsize_[2]));
+#endif	// DIM==3
+}
+
+// Is the given point (given as a Coord but in pixel coordinates)
+// inside the microstructure?  containsPixelCoord(x) is *not* the same
+// as contains(pixelFromPoint(x)), since pixelFromPoint rounds off
+// input values that are out of bounds.
+bool CMicrostructure::containsPixelCoord(const Coord &pt) const {
+#if DIM==2
+  return ((pt[0]>=0 && pt[0]<=pxlsize_[0]) && (pt[1]>=0 && pt[1]<=pxlsize_[1]));
+#elif DIM==3
+  return ((pt[0]>=0 && pt[0]<=pxlsize_[0]) && (pt[1]>=0 && pt[1]<=pxlsize_[1])
+	  && (pt[2]>=0 && pt[2]<=pxlsize_[2]));
 #endif	// DIM==3
 }
 

@@ -410,6 +410,7 @@ public:
   ICoord2D flip() const { return ICoord2D(x[1], x[0]); }
   
   friend Coord2D operator*(const ICoord2D &a, double x);
+  friend Coord2D operator*(double x, const ICoord2D &a);
   friend bool operator==(const ICoord2D&, const ICoord2D&);
   friend bool operator!=(const ICoord2D&, const ICoord2D&);
   friend bool operator!=(const ICoord2D &a, const Coord2D &b);
@@ -479,6 +480,7 @@ public:
   Coord3D coord() const { return Coord3D(x[0], x[1], x[2]); }
   
   friend Coord3D operator*(const ICoord3D &a, double x);
+  friend Coord3D operator*(double x, const ICoord3D &a);  
   friend bool operator==(const ICoord3D&, const ICoord3D&);
   friend bool operator!=(const ICoord3D&, const ICoord3D&);
   friend bool operator!=(const ICoord3D &a, const Coord3D &b);
@@ -545,6 +547,12 @@ inline ICoord2D operator*(int x, const ICoord2D &a) {
 }
 
 inline Coord2D operator*(const ICoord2D &a, double x) {
+  Coord2D b(a[0], a[1]);
+  b *= x;
+  return b;
+}
+
+inline Coord2D operator*(double x, const ICoord2D &a) {
   Coord2D b(a[0], a[1]);
   b *= x;
   return b;
@@ -675,6 +683,12 @@ inline ICoord3D operator*(int x, const ICoord3D &a) {
 }
 
 inline Coord3D operator*(const ICoord3D &a, double x) {
+  Coord3D b(a[0], a[1], a[2]);
+  b *= x;
+  return b;
+}
+
+inline Coord3D operator*(double x, const ICoord3D &a) {
   Coord3D b(a[0], a[1], a[2]);
   b *= x;
   return b;

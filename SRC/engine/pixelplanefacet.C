@@ -77,6 +77,10 @@ HPixelPlane *HPixelPlane::orthogonalPlane(const ICoord2D &pt0,
   return new HPixelPlane(dir, offst, norm);
 }
 
+HPixelPlane *HPixelPlane::flipped() const {
+  return new HPixelPlane(direction(), normalOffset(), -normalSign());
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 bool HPixelPlane::isPartOf(const PixelPlaneIntersectionNR *fi) const {

@@ -83,6 +83,8 @@ public:
   virtual std::string shortName() const;
   // Return the orthogonal pixel plane that passes through the given points.
   HPixelPlane *orthogonalPlane(const ICoord2D&, const ICoord2D&) const;
+  // Return the oppositely directed pixel plane
+  HPixelPlane *flipped() const;
   virtual const HPixelPlane *unoriented() const { return unoriented_; }
   void setUnoriented(const HPixelPlane *u) { unoriented_ = u; }
 };

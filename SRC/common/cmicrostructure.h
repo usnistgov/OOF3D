@@ -217,6 +217,7 @@ public:
   Coord pixel2Physical(const Coord&) const;
   ICoord pixelFromPoint(const Coord&) const; // pixel containing the given point
   bool contains(const ICoord&) const;
+  bool containsPixelCoord(const Coord&) const;
   TimeStamp &getTimeStamp();
   const TimeStamp &getTimeStamp() const;
 

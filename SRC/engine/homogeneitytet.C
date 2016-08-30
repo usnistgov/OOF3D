@@ -230,6 +230,11 @@ HomogeneityTet::HomogeneityTet(const CSkeletonElement *element,
 	faces[f] = fpp;
 	coincidentPixelPlanes[f] = fpp; // vector
 	coincidentFacePlanes[fpp] = fpp; // map, keyed by deref'd HPixelPlane*
+	// The oppositely directed pixel plane is also coincident.
+	HPixelPlane *opp = fpp->flipped();
+	allPlanes_.insert(opp);
+	pixelPlanes_.insert(opp);
+	coincidentFacePlanes[opp] = fpp;
 	break;
       }
     } // end loop over directions
@@ -1439,64 +1444,78 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 
 	// Does the loop segment cross the polygon?
 	if(pbs_start_inside && pbs_end_inside) {
+
+	  /// TODO: All orthogonal plane computations need to take
+	  /// ridge/valley into consideration
+
+	  
 	  // The pixel boundary segment is completely interior.  (We
 	  // know this because the endpoints are inside and the
 	  // polygon is convex.)  The endpoints are at the
 	  // intersections of the current pixel plane, the orthogonal
-	  // pixel plane that contains the segment, and the orthogonal
+	  // pixel plane(s) that contains the segment, and the orthogonal
 	  // plane that contains the previous segment or the next one.
-	  HPixelPlane *orthoPlanePrev =
-	    pixplane->orthogonalPlane(pbs_prev, pbs_start);
-	  HPixelPlane *orthoPlane =
-	    pixplane->orthogonalPlane(pbs_start, pbs_end);
-	  HPixelPlane *orthoPlaneNext =
-	    pixplane->orthogonalPlane(pbs_end, pbs_next);
-	  // Get the pointers to the reference versions of the planes,
-	  // so that pointer comparisons can be used later.
-	  // TODO: Instead of calling PixelPlane::orthogonalPlane
-	  // and HomogeneityTet::getPixelPlane, combine them into
-	  // HomogeneityTet::getOrthogonalPlane.
-	  const HPixelPlane *prevPlanePtr = getPixelPlane(orthoPlanePrev);
-	  const HPixelPlane *orthoPlanePtr = getPixelPlane(orthoPlane);
-	  const HPixelPlane *nextPlanePtr = getPixelPlane(orthoPlaneNext);
+
+	  // Orthogonal plane at the start of the segment, containing
+	  // the seg (or at least its start).
+	  const HPixelPlane *orthoPlane0 =
+	    orientedOrthogonalPlane(cat, pixplane, loop->segment(k), true);
+	  // Orthogonal plane at the end of the segment, containing the seg.
+	  const HPixelPlane *orthoPlane1 =
+	    orientedOrthogonalPlane(cat, pixplane, loop->segment(k), false);
+	  // Orthogonal plane perpendicular to the start of the segment.
+	  const HPixelPlane *prevPlane =
+	    orientedOrthogonalPlane(cat, pixplane, loop->segment(k).prev(),
+				    false);
+	  // Orthogonal plane perpendicular to the end of the segment.
+	  const HPixelPlane *nextPlane =
+	    orientedOrthogonalPlane(cat, pixplane, loop->segment(k).next(),
+				    true);
 	  facet->addEdge(new PixelFacetEdge(
 	    checkEquiv(new TriplePixelPlaneIntersection(
-				this, pixplane, prevPlanePtr, orthoPlanePtr)),
+				this, pixplane, orthoPlane0, prevPlane)),
 	    checkEquiv(new TriplePixelPlaneIntersection(
-				this, pixplane, orthoPlanePtr, nextPlanePtr))));
-
+				this, pixplane, orthoPlane1, nextPlane))));
 	} // end if the segment is entirely inside the polygon
 
 	else if(pbs_start_inside != pbs_end_inside) {
 	  // If start and end are hetero-interior, so to speak, then
 	  // there's one intersection. Find it.
-	  HPixelPlane *orthoPlane =
-	    pixplane->orthogonalPlane(pbs_start, pbs_end);
-	  const HPixelPlane *orthoPlanePtr = getPixelPlane(orthoPlane);
-	  unsigned int orthoFace = getCoincidentFaceIndex(orthoPlanePtr);
 	  PixelPlaneIntersectionNR *pi = find_one_intersection(
-						 pixplane,
-						 orthoPlanePtr,
-						 PixelBdyLoopSegment(loop, k),
-						 onFace, orthoFace,
-						 pbs_end_inside);
+					       cat, pixplane, loop->segment(k),
+					       onFace, pbs_end_inside);
+	  // Find the intersection at the other end of the segment.
+	  // It must be a TriplePixelPlaneIntersection.
 	  if(pbs_start_inside) {
-	    HPixelPlane *orthoPlanePrev =
-	      pixplane->orthogonalPlane(pbs_prev, pbs_start);
-	    const HPixelPlane *prevPlanePtr = getPixelPlane(orthoPlanePrev);
+	    // The segment starts inside the tet.  The planes are
+	    // pixplane, the orthogonal plane containing the given
+	    // segment (at the start of the segment), and the plane
+	    // containing the previous segment in the loop (at the end
+	    // of the segment).  Start and end are important to get
+	    // the correct orientation of the planes.
+	    const HPixelPlane *orthoPlane =
+	      orientedOrthogonalPlane(cat, pixplane, loop->segment(k), true);
+	    const HPixelPlane *thirdPlane =
+	      orientedOrthogonalPlane(cat, pixplane, loop->segment(k).prev(),
+				      false);
+	    //   pixplane->orthogonalPlane(pbs_prev, pbs_start);
+	    // const HPixelPlane *prevPlanePtr = getPixelPlane(orthoPlanePrev);
 	    facet->addEdge(new StopFaceIntersectionEdge(
 		checkEquiv(new TriplePixelPlaneIntersection(
-			    this, pixplane, prevPlanePtr, orthoPlanePtr)),
+			    this, pixplane, orthoPlane, thirdPlane)),
 		checkEquiv(pi)));
 	  }
 	  else {
-	    HPixelPlane *orthoPlaneNext = 
-	      pixplane->orthogonalPlane(pbs_end, pbs_next);
-	    const HPixelPlane *nextPlanePtr = getPixelPlane(orthoPlaneNext);
+	    // The segment ends inside the tet.
+	    const HPixelPlane *orthoPlane =
+	      orientedOrthogonalPlane(cat, pixplane, loop->segment(k), false);
+	    const HPixelPlane *thirdPlane =
+	      orientedOrthogonalPlane(cat, pixplane, loop->segment(k).next(),
+				      true);
 	    facet->addEdge(new StartFaceIntersectionEdge(
 		 checkEquiv(pi),
 		 checkEquiv(new TriplePixelPlaneIntersection(
-			 this, pixplane, orthoPlanePtr, nextPlanePtr))));
+			 this, pixplane, orthoPlane, thirdPlane))));
 	  }
 	} // end if start and end are hetero-interior
 	else {
@@ -1504,13 +1523,8 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	  // polygon.  It must intersect zero or two times.
 	  ICRectangle segbb(pbs_start, pbs_end);
 	  if(segbb.intersects(tetBounds)) {
-	    HPixelPlane *orthoPlane =
-	      pixplane->orthogonalPlane(pbs_start, pbs_end);
-	    // Since getTetPlaneIntersectionPoints looks up cached
-	    // previous computations by PixelPlane pointer, get the
-	    // HomogeneityTet's official version of the orthogonal
-	    // plane.
-	    const HPixelPlane *orthoPlanePtr = getPixelPlane(orthoPlane);
+	    const HPixelPlane *orthoPlane =
+	      getPixelPlane(pixplane->orthogonalPlane(pbs_start, pbs_end));
 	    // There's no intersection unless the orthoPlane actually
 	    // intersects the tetrahedron.  This check is important
 	    // for consistency.  When a pixel plane coincides with a
@@ -1519,14 +1533,12 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	    // doesn't, and this can lead to unmatched facet edge
 	    // endpoints.
 	    TetIntersectionPolygon orthoPts =
-	      getTetPlaneIntersectionPoints(orthoPlanePtr);
+	      getTetPlaneIntersectionPoints(orthoPlane);
 	    if(!orthoPts.empty()) {
-	      unsigned int orthoFace = getCoincidentFaceIndex(orthoPlanePtr);
+	      unsigned int orthoFace = getCoincidentFaceIndex(orthoPlane);
 	      std::vector<PixelPlaneIntersectionNR*> isecs =
-		find_two_intersections(pixplane,
-				       orthoPlanePtr,
-				       PixelBdyLoopSegment(loop, k),
-				       onFace, orthoFace);
+		find_two_intersections(cat, pixplane, orthoPlane,
+				       loop->segment(k), onFace, orthoFace);
 	      if(isecs.size() == 2) {
 		facet->addEdge(new TwoFaceIntersectionEdge(
 				   checkEquiv(isecs[0]), checkEquiv(isecs[1])));
@@ -1706,11 +1718,10 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 // pixplane and orthoPlane.
 
 PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
+					unsigned int cat,
 					const HPixelPlane *pixplane,
-					const HPixelPlane *orthoPlane,
 					const PixelBdyLoopSegment &pbls,
 					unsigned int onFace,
-					unsigned int orthoFace,
 					bool entry)
 {
   // Calculate the position of the intersection in a way that's
@@ -1723,6 +1734,7 @@ PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
   BarycentricCoord b1 = getBarycentricCoord(exteriorPt, pixplane);
 
   BarycentricCoord interiorB, exteriorB;
+  // TODO: Is this check necessary? b0 should always be the interior point.
   if(b0.interior(onFace)) {
     interiorB = b0;
     exteriorB = b1;
@@ -1737,12 +1749,18 @@ PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
   double bestAlpha = std::numeric_limits<double>::max();
   unsigned int bestFace = NONE;
   const FacePlane *collinearFace = nullptr;
+  // tempOrthoPlane is perpendicular to pixplane and contains the segment.
+  // At this point it doesn't necessarily have the correct
+  // orientation.
+  const HPixelPlane *tempOrthoPlane = getPixelPlane(
+			     pixplane->orthogonalPlane(interiorPt, exteriorPt));
+  unsigned int orthoFace = getCoincidentFaceIndex(tempOrthoPlane);
   for(unsigned int n=0; n<NUM_TET_NODES; n++) {
     unsigned int face = CSkeletonElement::oppFace[n];
     // skip this face if it lies in the pixel plane or the orthogonal
     // plane or is collinear with them.
     if(onFace != face && orthoFace != face) {
-      if(!areCollinear(pixplane, orthoPlane, getTetFacePlane(face))) {
+      if(!areCollinear(pixplane, tempOrthoPlane, getTetFacePlane(face))) {
 	if(interiorB[n] > 0.0 && exteriorB[n] <= 0.0) {
 	  // alpha is the fractional distance from interiorPt to exteriorPt.
 	  double alpha = interiorB[n]/(interiorB[n] - exteriorB[n]);
@@ -1759,7 +1777,7 @@ PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
 
   if(bestFace == NONE) {
     // No face crosses the segment.  The segment must lie along a face
-    // (ie, pixplane and orthoPlane are collinear with at least one
+    // (ie, pixplane and tempOrthoPlane are collinear with at least one
     // tet face), and roundoff error has put one end of the segment
     // inside and one outside.  The intersection point can be chosen
     // to lie at any point on the segment, unless the segment extends
@@ -1770,18 +1788,25 @@ PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
 #ifdef DEBUG
   if(verboseplane) {
     oofcerr << "HomogeneityTet::find_one_intersection: pixplane=" << *pixplane
-	    << " orthoPlane=" << *orthoPlane << " face=" << bestFace
+	    << " tempOrthoPlane=" << *tempOrthoPlane << " face=" << bestFace
 	    << std::endl;
   }
 #endif // DEBUG
 
+  // Now that we know the intersection point, we can find the actual
+  // orientation of the orthogonal plane.  It depends on whether the
+  // segment is along a ridge or valley of the surface of the category
+  // volume.
+  double realAlpha = entry ? 1-bestAlpha : bestAlpha;
+ const HPixelPlane *orthoPlane = orientedOrthogonalPlane(cat, pixplane, pbls,
+							 realAlpha);
+						    
   // newIntersection returns either a SimpleIntersection or a
   // MultiFaceIntersection, depending on whether or not orthoPlane is
   // also a tet face.
   PixelPlaneIntersectionNR *ppi =
     newIntersection(this, pixplane, orthoPlane, pbls,
-		    entry ? 1-bestAlpha : bestAlpha,
-		    bestFace,
+		    realAlpha, bestFace,
 		    entry ? ENTRY : EXIT);
 
   if(bestFace == NONE) {
@@ -1789,12 +1814,21 @@ PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
     // MultiFaceIntersection constructor couldn't do because it was
     // called with faceIndex==NONE.
     ICoord3D loc = pixplane->convert2Coord3D(interiorPt);
-    ppi->setLocation(pixplane->convert2Coord3D(interiorPt).coord());
+    ppi->setLocation(loc.coord());
     // The third plane for the intersection is the pixel plane at
-    // interiorPt that isn't either pixplane or orthoPlane.
-    unsigned int dir = 3 - pixplane->direction() - orthoPlane->direction();
-    int offset = loc[dir];
-    const HPixelPlane *pp = getPixelPlane(dir, offset, 1);
+    // interiorPt that isn't either pixplane or orthoPlane.  If this
+    // segment is an entry, then interiorPt is the junction between
+    // this segment and the next, and the third plane is found at the
+    // beginning of the next segment.
+    const HPixelPlane *pp = (entry ?
+			     orientedOrthogonalPlane(cat, pixplane,
+						     pbls.next(), true)
+			     :
+			     orientedOrthogonalPlane(cat, pixplane,
+						     pbls.prev(), false));
+    // unsigned int dir = 3 - pixplane->direction() - orthoPlane->direction();
+    // int offset = loc[dir];
+    // const HPixelPlane *pp = getPixelPlane(dir, offset, 1);
     pp->addToIntersection(ppi);
     // ppi->includeCollinearPlanes(this);
     ppi->setFacePlane(collinearFace); // no-op for MultiFaceIntersection
@@ -1816,19 +1850,22 @@ PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
 
 
 std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
-					const HPixelPlane *pixplane,
-					const HPixelPlane *orthoPlane,
-					const PixelBdyLoopSegment &pblseg,
-					unsigned int onFace,
-					unsigned int orthoFace)
+				      unsigned int cat,
+				      const HPixelPlane *pixplane,
+				      const HPixelPlane *tempOrthoPlane,
+				      const PixelBdyLoopSegment &pblseg,
+				      unsigned int onFace,
+				      unsigned int orthoFace)
 {
-// #ifdef DEBUG
-//   if(verboseplane)
-//     oofcerr << "HomogeneityTet::find_two_intersections: pblseg=" << pblseg
-// 	    << " onFace=" << onFace << " orthoFace=" << orthoFace
-// 	    << " pixplane=" << *pixplane << " ortho=" << *orthoPlane
-// 	    << std::endl;
-// #endif	// DEBUG
+#ifdef DEBUG
+  if(verboseplane)
+    oofcerr << "HomogeneityTet::find_two_intersections: cat=" << cat
+	    << " pblseg=" << pblseg
+	    << " pixplane=" << *pixplane
+	    << " tempOrthoPlane=" << *tempOrthoPlane
+	    << " onFace=" << onFace << " orthoFace=" << orthoFace
+	    << std::endl;
+#endif	// DEBUG
   // The pixplane passed to find_two_intersections is the unoriented
   // one, so it can't be used to convert the 2D coords in pblseg to 3D.
   BarycentricCoord b0 = getBarycentricCoord(pblseg.firstPt(), pixplane);
@@ -1864,7 +1901,7 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
     // skip this face if it lies in the pixel plane or the orthoFace
     // or is collinear with them.
     if(face != onFace && face != orthoFace &&
-       !areCollinear(pixplane, orthoPlane, getTetFacePlane(face)))
+       !areCollinear(pixplane, tempOrthoPlane, getTetFacePlane(face)))
       {
 	double b0n = b0[n];
 	double b1n = b1[n];
@@ -1926,18 +1963,24 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
       // intersections.
       (exitAlpha >= 0.0 && exitAlpha <= 1.0)))
     {
-// #ifdef DEBUG
-//       if(verboseplane) {
-// 	oofcerr << "HomogeneityTet::find_two_intersections: pixplane="
-// 		<< *pixplane << " orthoPlane=" << *orthoPlane
-// 		<< " entryFace=" << entryFace << " exitFace=" << exitFace
-// 		<< std::endl;
-//       }
-// #endif // DEBUG
       isecs.resize(2);
-      isecs[0] = newIntersection(this, pixplane, orthoPlane, pblseg,
+      const HPixelPlane *orthoPlane0 = orientedOrthogonalPlane(
+				       cat, pixplane, pblseg, entryAlpha);
+      const HPixelPlane *orthoPlane1 = orientedOrthogonalPlane(
+				       cat, pixplane, pblseg, exitAlpha);
+#ifdef DEBUG
+      if(verboseplane) {
+	oofcerr << "HomogeneityTet::find_two_intersections:"
+		<< " entryFace=" << entryFace << " entryAlpha=" << entryAlpha
+		<< " exitFace=" << exitFace << " exitAlpha=" << exitAlpha
+		<< " orthoPlane0=" << *orthoPlane0
+		<< " orthoPlane1=" << *orthoPlane1
+		<< std::endl;
+      }
+#endif // DEBUG
+      isecs[0] = newIntersection(this, pixplane, orthoPlane0, pblseg,
 				 entryAlpha, entryFace, ENTRY);
-      isecs[1] = newIntersection(this, pixplane, orthoPlane, pblseg,
+      isecs[1] = newIntersection(this, pixplane, orthoPlane1, pblseg,
 				 exitAlpha, exitFace, EXIT);
 #ifdef DEBUG
       isecs[0]->verbose = verboseplane;
@@ -1953,6 +1996,262 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
 // #endif // DEBUG
   return isecs;
 } // end HomogeneityTet::find_two_intersections
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// // isRidgeFold returns true if the crease in the VSB of the given
+// // category at the given position formed by the given planes is a
+// // ridge (as opposed to a valley).  The first pixel plane is the
+// // base plane of a VSB loop, and the second intersects it to form a
+// // VSB segment, on which the given point sits.  The second plane is
+// // oriented so that its normal is outward to the loop.  
+
+// bool HomogeneityTet::isRidgeFold(unsigned int category,
+// 				 const PixelBdyLoopSegment &pbls,
+// 				 double alpha,
+// 				 const HPixelPlane *pixplane)
+//   const
+// {
+//   if(pixplane->normalOffset() == 0 ||
+//      (pixplane->normalOffset() ==
+//       microstructure->sizeInPixels()[pixplane->direction()]))
+//     {
+//       return true;
+//     }
+  
+//   // Put the end points in a canonical order so that roundoff error is
+//   // independent of the direction of the segment.
+//   ICoord2D pt0 = pbls.firstPt();
+//   ICoord2D pt1 = pbls.secondPt();
+//   bool reversed = pt1 < pt0;
+//   ICoord2D ptA = reversed ? pt1 : pt0;
+//   ICoord2D ptB = reversed ? pt0 : pt1;
+//   HPixelPlane *basePlane = reversed ? pixplane->flipped() : pixplane;
+//   HPixelPlane *orthoPlane = basePlane->orthogonalPlane(ptA, ptB);
+//   ICoord3D baseNormal = basePlane->normalVector();
+//   ICoord3D loopNormal = orthoPlane->normalVector(); // lies in basePlane
+//   delete orthoPlane;
+//   // X is the real space position of the point.  Computing the
+//   // position this way (ie, in real space, not just topologically) is
+//   // necessary in order to examine the category of the neighboring
+//   // voxel.
+//   double beta = reversed ? 1-alpha : alpha;
+//   Coord3D X = basePlane->convert2Coord3D((1-beta)*ptA + beta*ptB);
+//   if(reversed)
+//     delete basePlane;
+//   // If the voxel just outside the loop and just below the plane is in
+//   // the voxel set, then the boundary must fold upwards, forming a
+//   // valley.  If the voxel is not in the category, the boundary is a
+//   // ridge.
+//   Coord3D testPt = X + 0.5*(loopNormal - baseNormal);
+//   // If the test point is not inside the microstructure, then the
+//   // voxel at that point can't be in the voxel set.
+//   if(!microstructure->containsPixelCoord(testPt))
+//     return true;
+//   int testCat = microstructure->category(
+// 				 microstructure->pixel2Physical(testPt));
+//   return reversed ? testCat == category : testCat != category;
+// }
+
+// // This version answers the same question about the beginning or end
+// // of the segment, instead of at a position somewhere in the middle.
+
+// bool HomogeneityTet::isRidgeFold(unsigned int category,
+// 				 const PixelBdyLoopSegment &pbls,
+// 				 bool start, const HPixelPlane *pixplane)
+//   const
+// {
+//   ICoord2D pt0 = pbls.firstPt();
+//   ICoord2D pt1 = pbls.secondPt();
+//   HPixelPlane *orthoPlane = pixplane->orthogonalPlane(pt0, pt1);
+//   ICoord3D baseNormal = pixplane->normalVector();
+//   ICoord3D loopNormal = orthoPlane->normalVector();
+//   delete orthoPlane;
+//   // Don't actually compute at the end of the segment.  Avoid
+//   // ambiguity by moving a half voxel in.
+//   ICoord2D segDir = (pbls.horizontal() ?
+// 		     (pt0[0] < pt1[0] ? ICoord2D(1, 0) : ICoord2D(-1, 0)) :
+// 		     (pt0[1] < pt1[1] ? ICoord2D(0, 1) : ICoord2D(0, -1)));
+//   Coord3D X = basePlane->convert2Coord3D(
+// 			 start ? pt0 + 0.5*segDir : pt1 - 0.5*segDir);
+//   Coord3D testPt = X + 0.5*(loopNormal - baseNormal);
+//   if(!microstructure->containsPixelCoord(testPt))
+//     return true;
+//   int testCat =
+//     microstructure->category(microstructure->pixel2Physical(testPt));
+//   return testCat != category;
+// }
+
+// Given a voxel category, a pixel plane that contains a boundary
+// facet for the category, pixel boundary loop segment that is part of
+// the boundary, and a position along the segment, return the pixel
+// plane that also bounds the category but is perpendicular to the
+// given pixel plane at the given point on the segment.
+const HPixelPlane *HomogeneityTet::orientedOrthogonalPlane(
+					     unsigned int cat,
+					     const HPixelPlane *pixplane,
+					     const PixelBdyLoopSegment &pbls,
+					     double alpha)
+{
+  // orthoPlane (set below) goes through the segment and has a
+  // normal that points toward the outside of the boundary loop.  This
+  // may not be the correct normal.
+  
+  // If the voxel just outside orthoPlane and just below pixplane is
+  // outside the voxel category, then the outward normal is correct.
+  // This condition needs to be evaluated at the given point on the
+  // segment, because the result can be different at different points.
+  // The condition is the same as asking if the VSB forms a ridge or
+  // valley fold (as in origami).  A ridge fold means that normal of
+  // the perpendicular plane points away from the loop.  A valley fold
+  // means that it points into the loop.
+
+
+  // This is a cross section through four voxels at the point in
+  // question:
+  //           |?????????   
+  //           |?????????   
+  //           |?????????
+  //           |?????????
+  // ----------O----------  <-- pixplane
+  // ..........|\????????
+  // ..........|?\???????
+  // ..........|??X??????
+  // ..........|?????????
+
+  // The horizontal dashed line is the pixplane, and the vertical one
+  // is the orthogonal plane that we wish to find.  The point O is
+  // where the pixel boundary loop segment enters the screen.  The
+  // voxel marked with dots is in the voxel category, and unmarked
+  // voxel is not.
+  
+  // If the test point X is also in the voxel category, then the
+  // correct normal for the orthogonal plane is inward:
+  //           |.........   
+  //           |.........                                   |
+  //     <=====|.........        This configuration -->     |
+  //           |.........        is impossible              |
+  // ----------O----------       because it doesn't --------O-------- 
+  // ..........|\........        have a facet edge  ........|........
+  // ..........|.\.......        at point O.        ........|........
+  // ..........|..X......                           ........|........
+  // ..........|.........
+
+
+  // If the test point is outside the category, the normal is outward:
+  //           |?????????   
+  //           |????????? <-- It doesn't matter what's going on here.
+  //           |?????????
+  //           |?????????
+  // ----------O---------- 
+  // ..........|        
+  // ..........|=====>        
+  // ..........|        
+  // ..........|         
+
+
+  ICoord2D pt0 = pbls.firstPt();
+  ICoord2D pt1 = pbls.secondPt();
+  HPixelPlane *orthoPlane = pixplane->orthogonalPlane(pt0, pt1);
+  const FacePixelPlane *fpp = getCoincidentFacePlane(orthoPlane);
+  if(fpp)
+    return fpp;
+  ICoord3D baseNormal = pixplane->normalVector();
+  ICoord3D loopNormal = orthoPlane->normalVector(); // lies in pixplane
+
+#ifdef DEBUG
+  if(verboseplane) {
+    oofcerr << "HomogeneityTet::orientedOrthogonalPlane: cat=" << cat
+	    << " pixplane=" << *pixplane
+	    << " pt0=" << pt0 << " pt1=" << pt1 << " alpha=" << alpha
+	    << std::endl;
+  }
+  OOFcerrIndent indent(2);
+#endif // DEBUG
+  
+  // X is the real space position of the point.  Computing the
+  // position this way (ie, in real space, not just topologically) is
+  // necessary in order to examine the category of the neighboring
+  // voxel.
+  Coord3D X = pixplane->convert2Coord3D((1-alpha)*pt0 + alpha*pt1);
+  Coord3D testPt = X + 0.5*(loopNormal - baseNormal); // in pixel units
+
+  return orientedOrthogonalPlane_(cat, pixplane, orthoPlane, testPt);
+}
+
+// This version of orientedOrthogonalPlane returns the orthogonal
+// plane at the start or end of the given boundary loop segment.
+
+const HPixelPlane *HomogeneityTet::orientedOrthogonalPlane(
+					     unsigned int cat,
+					     const HPixelPlane *pixplane,
+					     const PixelBdyLoopSegment &pbls,
+					     bool start)
+{
+  ICoord2D pt0 = pbls.firstPt();
+  ICoord2D pt1 = pbls.secondPt();
+  HPixelPlane *orthoPlane = pixplane->orthogonalPlane(pt0, pt1);
+  const FacePixelPlane *fpp = getCoincidentFacePlane(orthoPlane);
+  if(fpp)
+    return fpp;
+  ICoord3D baseNormal = pixplane->normalVector();
+  ICoord3D loopNormal = orthoPlane->normalVector();
+  // Don't actually compute at the end of the segment.  Avoid
+  // ambiguity by moving half a voxel in.
+  Coord2D fudge = (pbls.horizontal() ?
+		    (pt0[0] < pt1[0] ? Coord2D(0.5, 0) : Coord2D(-0.5, 0)) :
+		    (pt0[1] < pt1[1] ? Coord2D(0, 0.5) : Coord2D(0, -0.5)));
+  Coord3D X = pixplane->convert2Coord3D(start? pt0 + fudge : pt1 - fudge);
+  Coord3D testPt = X + 0.5*(loopNormal - baseNormal);
+  return orientedOrthogonalPlane_(cat, pixplane, orthoPlane, testPt);
+}
+
+// Utility function used by the two versions of orientedOrthogonalPlane.
+const HPixelPlane *HomogeneityTet::orientedOrthogonalPlane_(
+					    unsigned int cat,
+					    const HPixelPlane *pixplane,
+					    HPixelPlane *orthoPlane,
+					    const Coord3D &testPt)
+{
+#ifdef DEBUG
+  if(verboseplane) {
+    oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: testPt=" << testPt
+	    << std::endl;
+  }
+#endif // DEBUG
+  if(!microstructure->containsPixelCoord(testPt)) {
+    // At the edge of the microstructure there are no valleys.
+#ifdef DEBUG
+    if(verboseplane)
+      oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: not in MS"
+	      << std::endl;
+#endif // DEBUG
+    return getPixelPlane(orthoPlane);
+  }
+  unsigned int testCat = microstructure->category(
+				    microstructure->pixel2Physical(testPt));
+#ifdef DEBUG
+  if(verboseplane)
+    oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: testCat=" << testCat
+	    << std::endl;
+#endif // DEBUG
+  if(testCat == cat) {
+    HPixelPlane *flipped = orthoPlane->flipped();
+#ifdef DEBUG
+    if(verboseplane)
+      oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: flipped="
+	      << *flipped << std::endl;
+#endif // DEBUG
+    delete orthoPlane;
+    return getPixelPlane(flipped);
+  }
+#ifdef DEBUG
+    if(verboseplane)
+      oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: unflipped="
+	      << *orthoPlane << std::endl;
+#endif // DEBUG
+  return getPixelPlane(orthoPlane);
+} // end HomogeneityTet::orientedOrthogonalPlane
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 

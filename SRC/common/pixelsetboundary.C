@@ -277,6 +277,24 @@ ICoord2D PixelBdyLoop::prev_icoord(unsigned int k) const {
   return loop[kk];
 }
 
+PixelBdyLoopSegment PixelBdyLoop::segment(unsigned int k) const {
+  return PixelBdyLoopSegment(this, k);
+}
+
+PixelBdyLoopSegment PixelBdyLoop::next_segment(unsigned int k) const {
+  unsigned int kk = k + 1;
+  if(kk == loop.size())
+    return PixelBdyLoopSegment(this, 0);
+  return PixelBdyLoopSegment(this, kk);
+}
+
+PixelBdyLoopSegment PixelBdyLoop::prev_segment(unsigned int k) const {
+  int kk = k - 1;
+  if(kk < 0)
+    return PixelBdyLoopSegment(this, loop.size()-1);
+  return PixelBdyLoopSegment(this, kk);
+}
+
 bool PixelBdyLoop::horizontal(unsigned int k) const {
   assert(k >= 0 && k < loop.size());
   return icoord(k)[1] == next_icoord(k)[1];
@@ -433,6 +451,18 @@ bool PixelBdyLoopSegment::onRight(const Coord2D &pt) const {
   ICoord2D a = firstPt();
   ICoord2D b = secondPt();
   return cross(pt - a, b - a) > 0.0;
+}
+
+PixelBdyLoopSegment PixelBdyLoopSegment::next() const {
+  if(loopseg_ == loop_->size()-1)
+    return PixelBdyLoopSegment(loop_, 0);
+  return PixelBdyLoopSegment(loop_, loopseg_+1);
+}
+
+PixelBdyLoopSegment PixelBdyLoopSegment::prev() const {
+  if(loopseg_ == 0)
+    return PixelBdyLoopSegment(loop_, loop_->size()-1);
+  return PixelBdyLoopSegment(loop_, loopseg_-1);
 }
 
 std::ostream &operator<<(std::ostream &os, const PixelBdyLoopSegment &pbls) {

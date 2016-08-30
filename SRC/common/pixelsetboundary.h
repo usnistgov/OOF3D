@@ -27,6 +27,15 @@
 #include <set>
 #include <vector>
 
+class Plane;
+class PixelPlane;
+class PixelBdyLoop;
+class PixelBdyLoopSegment;
+class PixelSetBoundaryBase;
+class PixelSetBoundary;
+class PixelSetCrossSection;
+class VoxelSetBoundary;
+
 #include "common/coord.h"
 #include "common/geometry.h"
 #include "common/IO/oofcerr.h"
@@ -205,6 +214,11 @@ public:
   ICoord2D prev_icoord(unsigned int) const;
   ICoord2D next_icoord(unsigned int) const;
   ICoord2D next2_icoord(unsigned int) const;
+
+  PixelBdyLoopSegment segment(unsigned int) const;
+  PixelBdyLoopSegment prev_segment(unsigned int) const;
+  PixelBdyLoopSegment next_segment(unsigned int) const;
+  
   bool left_turn(unsigned int) const;
   bool right_turn(unsigned int) const;
   bool horizontal(unsigned int) const;
@@ -243,6 +257,9 @@ public:
 
   // Is a point to the right of the segment?
   bool onRight(const Coord2D&) const;
+
+  PixelBdyLoopSegment next() const;
+  PixelBdyLoopSegment prev() const;
 };
 
 std::ostream& operator<<(std::ostream&, const PixelBdyLoop&);
@@ -342,6 +359,8 @@ private:
   // exterior facets of the voxel set, while pxlSetCSs[p] contains the
   // boundaries of the cross section of the voxel set with the
   // PixelPlane.  Cross sections are computed and cached on demand.
+  // They're needed in categoryVolumes only when a tet face coincides
+  // with a pixel plane.
   mutable PixelSetBoundaryMap pxlSetCSs;
   ICRectangularPrism *bounds;
 public:

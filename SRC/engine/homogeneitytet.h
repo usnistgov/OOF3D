@@ -260,15 +260,37 @@ private:
 			      unsigned int face,
 			      FacetMap2D&);
   PixelPlaneIntersectionNR *find_one_intersection(
-				  const HPixelPlane*,
+				  unsigned int,
 				  const HPixelPlane*,
 				  const PixelBdyLoopSegment&,
-				  unsigned int, unsigned int, bool);
+				  unsigned int, bool);
   std::vector<PixelPlaneIntersectionNR*> find_two_intersections(
-				  const HPixelPlane*,
-				  const HPixelPlane*,
-				  const PixelBdyLoopSegment&,
-				  unsigned int, unsigned int);
+				unsigned int,
+				const HPixelPlane*,
+				const HPixelPlane*,
+				const PixelBdyLoopSegment&,
+				unsigned int, unsigned int);
+
+  // // isRidgeFold returns true if the crease in the VSB of the given
+  // // category at the given position along the given VSB segment on the
+  // // given plane is a ridge (as opposed to a valley).
+  // bool isRidgeFold(unsigned int, const PixelBdyLoopSegment&, double,
+  // 		   const HPixelPlane*) const;
+  // bool isRidgeFold(unsigned int, const PixelBdyLoopSegment&, bool,
+  // 		   const HPixelPlane*) const;
+
+  const HPixelPlane *orientedOrthogonalPlane(unsigned int,
+					     const HPixelPlane*,
+					     const PixelBdyLoopSegment&,
+					     double);
+  const HPixelPlane *orientedOrthogonalPlane(unsigned int,
+					     const HPixelPlane*,
+					     const PixelBdyLoopSegment&,
+					     bool);
+  const HPixelPlane *orientedOrthogonalPlane_(unsigned int,
+					      const HPixelPlane*,
+					      HPixelPlane*,
+					      const Coord3D&);
 
   StrandedPointLists matchStrandedPoints(std::vector<StrandedPoint>&,
 					 LooseEndCatalog&);
