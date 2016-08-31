@@ -64,6 +64,7 @@ bool HomogeneityTet::verbosePlane_(bool vrbse, const HPixelPlane *pixplane)
 }
 
 static std::set<unsigned int> vfaces;
+static bool noFaces = false;
 
 void setVerboseFace(unsigned int face) {
   oofcerr << "setVerboseFace: " << face << std::endl;
@@ -75,8 +76,12 @@ void setVerboseAllFaces() {
     vfaces.insert(f);
 }
 
+void setNoVerboseFaces() {
+  noFaces = true;
+}
+
 bool HomogeneityTet::verboseFace_(bool vrbse, unsigned int face) const {
-  return vrbse && (vfaces.empty() || vfaces.count(face) == 1);
+  return (vrbse && !noFaces && (vfaces.empty() || vfaces.count(face) == 1));
 }
 
 #ifdef FINDFACEFACETS_OLD
@@ -1249,6 +1254,11 @@ FacetMap2D HomogeneityTet::findPixelPlaneFacets(unsigned int cat,
 	const std::vector<PixelBdyLoop*> &floops = (*psbmi).second->get_loops();
 	loops.insert(loops.end(), floops.begin(), floops.end());
       }
+#ifdef DEBUG
+      if(verboseplane)
+	oofcerr << "HomogeneityTet::findPixelPlaneFacets: "
+		<< "calling doFindPixelPlaneFacets with CS data" << std::endl;
+#endif // DEBUG
       doFindPixelPlaneFacets(cat, pixplane, loops, f, facets);
 #ifdef DEBUG
       verboseplane = false;
@@ -1279,6 +1289,12 @@ FacetMap2D HomogeneityTet::findPixelPlaneFacets(unsigned int cat,
       if(didPlane.count(pixplane) == 0) {
 	const PixelSetBoundary *psb = (*psbm).second;
 	const std::vector<PixelBdyLoop*> loops = psb->get_loops();
+#ifdef DEBUG
+	if(verboseplane)
+	  oofcerr << "HomogeneityTet::findPixelPlaneFacets: "
+		  << "calling doFindPixelPlaneFacets with facet data"
+		  << std::endl;
+#endif // DEBUG
 	doFindPixelPlaneFacets(cat, pixplane, loops, /*face=*/NONE, facets);
       }
 #ifdef DEBUG

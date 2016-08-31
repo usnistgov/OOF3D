@@ -408,6 +408,7 @@ public:
 #ifdef DEBUG
 void setVerboseFace(unsigned int);
 void setVerboseAllFaces();
+void setNoVerboseFaces();
 void setVerbosePlane(unsigned int, int, int);
 void setNoVerbosePlanes();
 void setVerboseCategory(unsigned int);
