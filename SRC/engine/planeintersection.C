@@ -129,7 +129,7 @@ void PlaneIntersection::setEquivalence(IsecEquivalenceClass *e) {
 }
 
 bool PlaneIntersection::isEquivalent(const PlaneIntersection *other) const {
-  return other->equivalence() == equivalence_;
+  return other->equivalence() == equivalence();
 }
 
 Coord3D PlaneIntersection::location3D() const {
@@ -2825,12 +2825,12 @@ TetEdgeIntersection::TetEdgeIntersection(HomogeneityTet *htet,
 					 const HPixelPlane *pp)
   : TetIntersection(htet)
 {
-#ifdef DEBUG
-  if(htet->verboseCategory()) {
-    oofcerr << "TetEdgeIntersection::ctor: f0=" << *f0 << " f1=" << *f1
-	    << " pp=" << *pp << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verbosePlane()) {
+//     oofcerr << "TetEdgeIntersection::ctor: f0=" << *f0 << " f1=" << *f1
+// 	    << " pp=" << *pp << std::endl;
+//   }
+// #endif // DEBUG
   f0->addToIntersection(this);
   f1->addToIntersection(this);
   pp->addToIntersection(this);
@@ -2840,7 +2840,7 @@ TetEdgeIntersection::TetEdgeIntersection(HomogeneityTet *htet,
   loc_ = triplePlaneIntersection(f0, f1, pp);
   setCrossingCount(0);
 // #ifdef DEBUG
-//   if(htet->verboseCategory())
+//   if(htet->verbosePlane())
 //     oofcerr << "TetEdgeIntersection::ctor: before includeCollinearPlanes, this="
 // 	    << *this << std::endl;
 // #endif // DEBUG
@@ -2848,7 +2848,7 @@ TetEdgeIntersection::TetEdgeIntersection(HomogeneityTet *htet,
   // includeCollinearPlanes(htet);
 
   // #ifdef DEBUG
-//   if(htet->verboseCategory())
+//   if(htet->verbosePlane())
 //     oofcerr << "TetEdgeIntersection::ctor: after includeCollinearPlanes, this="
 // 	    << *this << std::endl;
 // #endif // DEBUG
