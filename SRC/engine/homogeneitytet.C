@@ -2058,15 +2058,15 @@ const HPixelPlane *HomogeneityTet::orientedOrthogonalPlane(
   ICoord3D baseNormal = pixplane->normalVector();
   ICoord3D loopNormal = orthoPlane->normalVector(); // lies in pixplane
 
-#ifdef DEBUG
-  if(verboseplane) {
-    oofcerr << "HomogeneityTet::orientedOrthogonalPlane: cat=" << cat
-	    << " pixplane=" << *pixplane
-	    << " pt0=" << pt0 << " pt1=" << pt1 << " alpha=" << alpha
-	    << std::endl;
-  }
-  OOFcerrIndent indent(2);
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verboseplane) {
+//     oofcerr << "HomogeneityTet::orientedOrthogonalPlane: cat=" << cat
+// 	    << " pixplane=" << *pixplane
+// 	    << " pt0=" << pt0 << " pt1=" << pt1 << " alpha=" << alpha
+// 	    << std::endl;
+//   }
+//   OOFcerrIndent indent(2);
+// #endif // DEBUG
   
   // X is the real space position of the point.  Computing the
   // position this way (ie, in real space, not just topologically) is
@@ -2112,43 +2112,43 @@ const HPixelPlane *HomogeneityTet::orientedOrthogonalPlane_(
 					    HPixelPlane *orthoPlane,
 					    const Coord3D &testPt)
 {
-#ifdef DEBUG
-  if(verboseplane) {
-    oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: testPt=" << testPt
-	    << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verboseplane) {
+//     oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: testPt=" << testPt
+// 	    << std::endl;
+//   }
+// #endif // DEBUG
   if(!microstructure->containsPixelCoord(testPt)) {
     // At the edge of the microstructure there are no valleys.
-#ifdef DEBUG
-    if(verboseplane)
-      oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: not in MS"
-	      << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verboseplane)
+//       oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: not in MS"
+// 	      << std::endl;
+// #endif // DEBUG
     return getPixelPlane(orthoPlane);
   }
   unsigned int testCat = microstructure->category(
 				    microstructure->pixel2Physical(testPt));
-#ifdef DEBUG
-  if(verboseplane)
-    oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: testCat=" << testCat
-	    << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verboseplane)
+//     oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: testCat=" << testCat
+// 	    << std::endl;
+// #endif // DEBUG
   if(testCat == cat) {
     HPixelPlane *flipped = orthoPlane->flipped();
-#ifdef DEBUG
-    if(verboseplane)
-      oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: flipped="
-	      << *flipped << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verboseplane)
+//       oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: flipped="
+// 	      << *flipped << std::endl;
+// #endif // DEBUG
     delete orthoPlane;
     return getPixelPlane(flipped);
   }
-#ifdef DEBUG
-    if(verboseplane)
-      oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: unflipped="
-	      << *orthoPlane << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verboseplane)
+//       oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: unflipped="
+// 	      << *orthoPlane << std::endl;
+// #endif // DEBUG
   return getPixelPlane(orthoPlane);
 } // end HomogeneityTet::orientedOrthogonalPlane
 

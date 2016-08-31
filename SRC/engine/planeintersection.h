@@ -490,9 +490,9 @@ protected:
   void copyPlanes(const PixelPlaneIntersectionNR*,
 		  const PixelPlaneIntersectionNR*);
 
-  template <class PlaneSet0, class PlaneSet1>
-  bool includeCollinearPlanes_(const CollinearPlaneMap&,
-			       const PlaneSet0 &, const PlaneSet1 &);
+  // template <class PlaneSet0, class PlaneSet1>
+  // bool includeCollinearPlanes_(const CollinearPlaneMap&,
+  // 			       const PlaneSet0 &, const PlaneSet1 &);
 
 public:
   // PixelPlaneIntersectionNR and the mix-in classes below must only
@@ -518,7 +518,7 @@ public:
 
   virtual void setLocation(const Coord3D&);
   
-  void includeCollinearPlanes(HomogeneityTet*);
+  // void includeCollinearPlanes(HomogeneityTet*);
 
   virtual void setFacePlane(const FacePlane*) {}
 
@@ -632,6 +632,10 @@ public:
 			    const PixelPlaneFacet*) const = 0;
   virtual bool isMisordered(const MultiCornerIntersection*,
 			    const PixelPlaneFacet*) const = 0;
+
+  // allFaces returns all known face planes that pass through the
+  // intersection, including collinear planes.  
+  FacePlaneSet allFaces(HomogeneityTet*) const;
 
   // virtual bool samePixelPlanes(const PlaneIntersection*) const;
   // virtual bool samePixPlanes(const TripleFaceIntersection*) const;

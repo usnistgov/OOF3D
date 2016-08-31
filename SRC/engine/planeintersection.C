@@ -514,43 +514,43 @@ void PixelPlaneIntersectionNR::setLocation(const Coord3D &pos) {
     loc_[pixplane->direction()] = pixplane->normalOffset();
 }
 
-template <class PlaneSet0, class PlaneSet1>
-bool PixelPlaneIntersectionNR::includeCollinearPlanes_(
-				       const CollinearPlaneMap &coplanes,
-				       const PlaneSet0 &planes0,
-				       const PlaneSet1 &planes1)
-{
-  bool changed = false;
-  for(const HPlane *p0 : planes0) {
-    for(const HPlane *p1 : planes1) {
-      if(p0 != p1) {
-	auto matches =
-	  coplanes.equal_range(CollinearPlaneMap::key_type(p0, p1));
-	for(auto i=matches.first; i!=matches.second; i++) {
-	  (*i).second->addToIntersection(this);
-	  changed = true;
-	}
-      }
-    }
-  }
-  return changed;
-}
+// template <class PlaneSet0, class PlaneSet1>
+// bool PixelPlaneIntersectionNR::includeCollinearPlanes_(
+// 				       const CollinearPlaneMap &coplanes,
+// 				       const PlaneSet0 &planes0,
+// 				       const PlaneSet1 &planes1)
+// {
+//   bool changed = false;
+//   for(const HPlane *p0 : planes0) {
+//     for(const HPlane *p1 : planes1) {
+//       if(p0 != p1) {
+// 	auto matches =
+// 	  coplanes.equal_range(CollinearPlaneMap::key_type(p0, p1));
+// 	for(auto i=matches.first; i!=matches.second; i++) {
+// 	  (*i).second->addToIntersection(this);
+// 	  changed = true;
+// 	}
+//       }
+//     }
+//   }
+//   return changed;
+// }
 
-void PixelPlaneIntersectionNR::includeCollinearPlanes(HomogeneityTet *htet) {
-  const CollinearPlaneMap &coplanes = htet->collinearPlanes;
+// void PixelPlaneIntersectionNR::includeCollinearPlanes(HomogeneityTet *htet) {
+//   const CollinearPlaneMap &coplanes = htet->collinearPlanes;
 
-  // TODO: Keep track of whether collinear planes are up to date and
-  // don't recompute unless necessary.
-  bool mod = includeCollinearPlanes_(coplanes, pixelPlanes_, pixelPlanes_);
-  mod = includeCollinearPlanes_(coplanes, faces_, faces_) || mod;
-  mod = includeCollinearPlanes_(coplanes, pixelFaces_, pixelFaces_) || mod;
-  mod = includeCollinearPlanes_(coplanes, pixelPlanes_, faces_) || mod;
-  mod = includeCollinearPlanes_(coplanes, pixelPlanes_, pixelFaces_) || mod;
-  mod = includeCollinearPlanes_(coplanes, pixelFaces_, faces_) || mod;
-  if(mod && equivalence_ != nullptr) {
-    addPlanesToEquivalence(equivalence());
-  }
-}
+//   // TODO: Keep track of whether collinear planes are up to date and
+//   // don't recompute unless necessary.
+//   bool mod = includeCollinearPlanes_(coplanes, pixelPlanes_, pixelPlanes_);
+//   mod = includeCollinearPlanes_(coplanes, faces_, faces_) || mod;
+//   mod = includeCollinearPlanes_(coplanes, pixelFaces_, pixelFaces_) || mod;
+//   mod = includeCollinearPlanes_(coplanes, pixelPlanes_, faces_) || mod;
+//   mod = includeCollinearPlanes_(coplanes, pixelPlanes_, pixelFaces_) || mod;
+//   mod = includeCollinearPlanes_(coplanes, pixelFaces_, faces_) || mod;
+//   if(mod && equivalence_ != nullptr) {
+//     addPlanesToEquivalence(equivalence());
+//   }
+// }
 
 template <class BASE>
 void IntersectionPlanes<BASE>::copyPlanesToIntersection(
@@ -853,6 +853,9 @@ struct GEOFdata {		// Get Edges On Faces data
 #endif // DEBUG
 };
 
+// Callback function for foreachShared in
+// PixelPlaneIntersectionNR::getEdgesOnFaces.
+
 template <class TYPE>
 bool GEOFcallback(const TYPE &faceplane, void *data) {
   GEOFdata *gdata = (GEOFdata*) data;
@@ -870,7 +873,7 @@ bool GEOFcallback(const TYPE &faceplane, void *data) {
 		       new FaceFacetEdge(gdata->htet, gdata->otherIntersection,
 					 gdata->thisIntersection,
 					 gdata->pixplane));
-  return false;
+  return false;		      // don't stop iterating in foreachShared
 }
 
 void PixelPlaneIntersectionNR::getEdgesOnFaces(
@@ -899,12 +902,32 @@ void PixelPlaneIntersectionNR::getEdgesOnFaces(
 //   }
 //   OOFcerrIndent indent(2);
 // #endif // DEBUG
+  
   // foreachShared calls GEOFcallback for each face that's in both of
-  // the given sets (faces_ and other->faces()).  If a face is on a
-  // pixel plane, it's not used.
-  foreachShared(faces_, other->faces(), GEOFcallback<const FacePlane*>, &data);
-  foreachShared(pixelFaces_, other->pixelFaces(),
-		GEOFcallback<const FacePixelPlane*>, &data);
+  // the given sets.  There used to be two calls to foreachShared,
+  // with different set types, which is why GEOFcallback is a
+  // template. 
+  FacePlaneSet theseFaces = allFaces(htet);
+  FacePlaneSet otherFaces = other->allFaces(htet);
+  foreachShared(theseFaces, otherFaces, GEOFcallback<const FacePlane*>, &data);
+}
+
+FacePlaneSet PixelPlaneIntersectionNR::allFaces(HomogeneityTet *htet) const
+{
+  FacePlaneSet allfaces(faces_.begin(), faces_.end());
+  allfaces.insert(pixelFaces_.begin(), pixelFaces_.end());
+  FacePlaneSet cofaces;
+  for(auto f0 : allfaces) {
+    for(auto p : pixelPlanes_) {
+      // TODO: The next two lines could be simpler if
+      // getCollinearFaces took an arg that told it where to insert
+      // the faces, instead of returning a set of them.
+      FacePlaneSet fps = htet->getCollinearFaces(f0, p);
+      cofaces.insert(fps.begin(), fps.end());
+    }
+  }
+  allfaces.insert(cofaces.begin(), cofaces.end());
+  return allfaces;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
