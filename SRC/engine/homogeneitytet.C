@@ -1262,16 +1262,6 @@ FacetMap2D HomogeneityTet::findPixelPlaneFacets(unsigned int cat,
   }
 #endif // DEBUG
 
-  // TODO: coincidentPixelPlanes and coincidentFacePlanes store the
-  // unoriented pixel planes, which means that if a VSB uses both
-  // orientations of a plane, and one of them is coincident with a
-  // face, the other one won't be used.
-  //
-  // For purposes of comparing intersection positions, it makes sense
-  // to use the unoriented planes.  For deciding if a plane has
-  // already been computed or if it's coincident with a face, use the
-  // oriented planes.
-
   for(PixelSetBoundaryMap::const_iterator psbm=pxlSetBdys.begin();
       psbm!=pxlSetBdys.end(); ++psbm)
     {
@@ -1445,10 +1435,6 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	// Does the loop segment cross the polygon?
 	if(pbs_start_inside && pbs_end_inside) {
 
-	  /// TODO: All orthogonal plane computations need to take
-	  /// ridge/valley into consideration
-
-	  
 	  // The pixel boundary segment is completely interior.  (We
 	  // know this because the endpoints are inside and the
 	  // polygon is convex.)  The endpoints are at the
@@ -1826,11 +1812,7 @@ PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
 			     :
 			     orientedOrthogonalPlane(cat, pixplane,
 						     pbls.prev(), false));
-    // unsigned int dir = 3 - pixplane->direction() - orthoPlane->direction();
-    // int offset = loc[dir];
-    // const HPixelPlane *pp = getPixelPlane(dir, offset, 1);
     pp->addToIntersection(ppi);
-    // ppi->includeCollinearPlanes(this);
     ppi->setFacePlane(collinearFace); // no-op for MultiFaceIntersection
   }
   
@@ -1998,89 +1980,6 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
 } // end HomogeneityTet::find_two_intersections
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// // isRidgeFold returns true if the crease in the VSB of the given
-// // category at the given position formed by the given planes is a
-// // ridge (as opposed to a valley).  The first pixel plane is the
-// // base plane of a VSB loop, and the second intersects it to form a
-// // VSB segment, on which the given point sits.  The second plane is
-// // oriented so that its normal is outward to the loop.  
-
-// bool HomogeneityTet::isRidgeFold(unsigned int category,
-// 				 const PixelBdyLoopSegment &pbls,
-// 				 double alpha,
-// 				 const HPixelPlane *pixplane)
-//   const
-// {
-//   if(pixplane->normalOffset() == 0 ||
-//      (pixplane->normalOffset() ==
-//       microstructure->sizeInPixels()[pixplane->direction()]))
-//     {
-//       return true;
-//     }
-  
-//   // Put the end points in a canonical order so that roundoff error is
-//   // independent of the direction of the segment.
-//   ICoord2D pt0 = pbls.firstPt();
-//   ICoord2D pt1 = pbls.secondPt();
-//   bool reversed = pt1 < pt0;
-//   ICoord2D ptA = reversed ? pt1 : pt0;
-//   ICoord2D ptB = reversed ? pt0 : pt1;
-//   HPixelPlane *basePlane = reversed ? pixplane->flipped() : pixplane;
-//   HPixelPlane *orthoPlane = basePlane->orthogonalPlane(ptA, ptB);
-//   ICoord3D baseNormal = basePlane->normalVector();
-//   ICoord3D loopNormal = orthoPlane->normalVector(); // lies in basePlane
-//   delete orthoPlane;
-//   // X is the real space position of the point.  Computing the
-//   // position this way (ie, in real space, not just topologically) is
-//   // necessary in order to examine the category of the neighboring
-//   // voxel.
-//   double beta = reversed ? 1-alpha : alpha;
-//   Coord3D X = basePlane->convert2Coord3D((1-beta)*ptA + beta*ptB);
-//   if(reversed)
-//     delete basePlane;
-//   // If the voxel just outside the loop and just below the plane is in
-//   // the voxel set, then the boundary must fold upwards, forming a
-//   // valley.  If the voxel is not in the category, the boundary is a
-//   // ridge.
-//   Coord3D testPt = X + 0.5*(loopNormal - baseNormal);
-//   // If the test point is not inside the microstructure, then the
-//   // voxel at that point can't be in the voxel set.
-//   if(!microstructure->containsPixelCoord(testPt))
-//     return true;
-//   int testCat = microstructure->category(
-// 				 microstructure->pixel2Physical(testPt));
-//   return reversed ? testCat == category : testCat != category;
-// }
-
-// // This version answers the same question about the beginning or end
-// // of the segment, instead of at a position somewhere in the middle.
-
-// bool HomogeneityTet::isRidgeFold(unsigned int category,
-// 				 const PixelBdyLoopSegment &pbls,
-// 				 bool start, const HPixelPlane *pixplane)
-//   const
-// {
-//   ICoord2D pt0 = pbls.firstPt();
-//   ICoord2D pt1 = pbls.secondPt();
-//   HPixelPlane *orthoPlane = pixplane->orthogonalPlane(pt0, pt1);
-//   ICoord3D baseNormal = pixplane->normalVector();
-//   ICoord3D loopNormal = orthoPlane->normalVector();
-//   delete orthoPlane;
-//   // Don't actually compute at the end of the segment.  Avoid
-//   // ambiguity by moving a half voxel in.
-//   ICoord2D segDir = (pbls.horizontal() ?
-// 		     (pt0[0] < pt1[0] ? ICoord2D(1, 0) : ICoord2D(-1, 0)) :
-// 		     (pt0[1] < pt1[1] ? ICoord2D(0, 1) : ICoord2D(0, -1)));
-//   Coord3D X = basePlane->convert2Coord3D(
-// 			 start ? pt0 + 0.5*segDir : pt1 - 0.5*segDir);
-//   Coord3D testPt = X + 0.5*(loopNormal - baseNormal);
-//   if(!microstructure->containsPixelCoord(testPt))
-//     return true;
-//   int testCat =
-//     microstructure->category(microstructure->pixel2Physical(testPt));
-//   return testCat != category;
-// }
 
 // Given a voxel category, a pixel plane that contains a boundary
 // facet for the category, pixel boundary loop segment that is part of

@@ -154,6 +154,7 @@ The following options are for debugging:
 --verbosePlane = [XYZ],offset,[+-]
 --verboseFace = integer or 'all'
 --verboseCategory = integer
+--verboseWait = integer
 """ % program_name
     print main_options_string,
     if config.devel()>=1:

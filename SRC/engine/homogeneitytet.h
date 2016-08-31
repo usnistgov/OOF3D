@@ -271,14 +271,6 @@ private:
 				const PixelBdyLoopSegment&,
 				unsigned int, unsigned int);
 
-  // // isRidgeFold returns true if the crease in the VSB of the given
-  // // category at the given position along the given VSB segment on the
-  // // given plane is a ridge (as opposed to a valley).
-  // bool isRidgeFold(unsigned int, const PixelBdyLoopSegment&, double,
-  // 		   const HPixelPlane*) const;
-  // bool isRidgeFold(unsigned int, const PixelBdyLoopSegment&, bool,
-  // 		   const HPixelPlane*) const;
-
   const HPixelPlane *orientedOrthogonalPlane(unsigned int,
 					     const HPixelPlane*,
 					     const PixelBdyLoopSegment&,
