@@ -388,7 +388,7 @@ FacePlaneSet PixelPlaneFacet::getFacePlanes(unsigned int f) const {
   unsigned int g = f + 1;
   if(g == tetPts.size())
     g = 0;
-  auto faces = tetPts[f]->sharedFaces(tetPts[g]);
+  auto faces = tetPts[f]->sharedFaces(tetPts[g], getBaseFacePlane());
 
 // #ifdef DEBUG
 //   if(verbose)
@@ -1443,14 +1443,19 @@ bool PixelPlaneFacet::resolveTwoFoldCoincidence(const PPIntersectionNRSet &isecs
   else {
     // There's one entry and one exit.
     bool multiCrossing = fi0->multipleCrossing() || fi1->multipleCrossing();
+#ifdef DEBUG
+    if(verbose)
+      oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: multiCrossing="
+	      << multiCrossing << std::endl;
+#endif // DEBUG
     if(multiCrossing || fi0->isEquivalent(fi1) || fi0->isMisordered(fi1, this))
       {
 #ifdef DEBUG
 	if(verbose) {
-	  // oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence:"
-	  // 	<< " isEquivalent=" << fi0->isEquivalent(fi1)
-	  // 	<< " isMisordered=" << fi0->isMisordered(fi1, this)
-	  // 	<< std::endl;
+	  oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence:"
+		  << " isEquivalent=" << fi0->isEquivalent(fi1)
+		  << " isMisordered=" << fi0->isMisordered(fi1, this)
+		  << std::endl;
 	  oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: "
 		  << "trying to merge equivalent entry and exit" << std::endl;
 	}
@@ -1486,6 +1491,13 @@ bool PixelPlaneFacet::resolveTwoFoldCoincidence(const PPIntersectionNRSet &isecs
 	  return false;
 	}
       }	// end if repairs were needed
+#ifdef DEBUG
+    else {
+      if(verbose)
+	oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: "
+		<< "no repairs needed" << std::endl;
+    }
+#endif // DEBUG
   }
   return true;	     // coincidence handled
 } // end PixelPlaneFacet::resolveTwoFoldCoincidence
@@ -2115,14 +2127,14 @@ bool PixelPlaneFacet::polyVSBCornerCoincidence(
 {
   assert(fi0 != fi1);
 #ifdef DEBUG
-  if(fi0->onSameFacePlane(fi1, getBaseFacePlane())) {
+  if(!fi0->onTwoPolySegments(fi1, this)) {
     oofcerr << "PixelPlaneFacet::polyVSBCornerCoincidence: "
 	    << "same face planes!" << std::endl;
     oofcerr << "PixelPlaneFacet::polyVSBCornerCoincidence: fi0=" << *fi0
 	    << std::endl;
     oofcerr << "PixelPlaneFacet::polyVSBCornerCoincidence: fi1=" << *fi1
 	    << std::endl;
-    throw ErrProgrammingError("Points are on the same tet face",
+    throw ErrProgrammingError("Points aren't on a polygon corner",
 			      __FILE__, __LINE__);
   }
   // if(fi0->samePixelPlanes(fi1)) {

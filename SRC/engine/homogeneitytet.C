@@ -560,6 +560,15 @@ bool HomogeneityTet::areCollinear(const HPlane *p0, const HPlane *p1,
   return false;
 }
 
+bool HomogeneityTet::areCollinear(const FacePlaneSet &faceSet) const {
+  assert(faceSet.size() == 3);
+  auto iter = faceSet.begin();
+  const FacePlane *f0 = *iter;
+  const FacePlane *f1 = *++iter;
+  const FacePlane *f2 = *++iter;
+  return areCollinear(f0, f1, f2);
+}
+
 unsigned int HomogeneityTet::getTetFaceIndex(const FacePlane *fp) const {
   for(unsigned int i=0; i<NUM_TET_FACES; i++) {
     if(faces[i] == fp)

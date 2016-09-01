@@ -315,6 +315,7 @@ public:
   HPlaneSet getCollinearPlanes(const HPlane*, const HPlane*) const;
   FacePlaneSet getCollinearFaces(const HPlane*, const HPlane*) const;
   bool areCollinear(const HPlane*, const HPlane*, const HPlane*) const;
+  bool areCollinear(const FacePlaneSet&) const;
 
   TetIntersectionPolygon &getTetPlaneIntersectionPoints(const HPixelPlane*);
 

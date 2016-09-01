@@ -406,7 +406,8 @@ bool PixelPlaneIntersection::onOnePolySegment(const PixelPlaneIntersection *fi,
 // 	    << std::endl;
 //   }
 // #endif // DEBUG
-  FacePlaneSet shared = referent()->sharedFaces(fi->referent());
+  FacePlaneSet shared = referent()->sharedFaces(fi->referent(),
+						facet->getBaseFacePlane());
 // #ifdef DEBUG
 //   if(facet->verbose) {
 //     oofcerr << "PixelPlaneIntersection::onOnePolySegment: base plane="
@@ -435,6 +436,32 @@ bool PixelPlaneIntersection::onOnePolySegment(const PixelPlaneIntersection *fi,
   }
   return false;
 } // end PixelPlaneIntersection::onOnePolySegment
+
+// Do this intersection and the argument share two polygon segments?
+// Ie, are they on a corner?
+bool PixelPlaneIntersection::onTwoPolySegments(const PixelPlaneIntersection *fi,
+					       const PixelPlaneFacet *facet)
+  const
+{
+  FacePlaneSet shared = referent()->sharedFaces(fi->referent(),
+						 facet->getBaseFacePlane());
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneIntersection::onTwoPolySegments: shared="
+	    << std::endl;
+    OOFcerrIndent indent(2);
+    for(auto fp : shared)
+      oofcerr << "PixelPlaneIntersection::onTwoPolySegments: " << *fp
+	      << std::endl;
+  }
+#endif // DEBUG
+  // If there are three shared faces, the points must be at the corner
+  // of the tet, which must lie in the pixel plane.  There must be two
+  // polygon edges at the corner.  If there are two shared faces
+  // (excluding the pixel plane, if it's a face), then there are also
+  // two shared segments.
+  return shared.size() == 2 || shared.size() == 3;
+}
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -731,7 +758,8 @@ const FacePlane *IntersectionPlanes<BASE>::getSharedFace(
 }
 
 FacePlaneSet PixelPlaneIntersectionNR::sharedFaces(
-				       const PixelPlaneIntersectionNR *fi)
+					   const PixelPlaneIntersectionNR *fi,
+					   const FacePlane *exclude)
   const
 {
   FacePlaneSet shared;
@@ -746,6 +774,8 @@ FacePlaneSet PixelPlaneIntersectionNR::sharedFaces(
 			fi->pixelFaces().end(),
 			std::inserter(shared, shared.end()),
 			FacePixelPlaneSet::key_compare());
+  if(exclude)
+    shared.erase(exclude);
   return shared;
 }
 
@@ -2152,20 +2182,20 @@ bool SimpleIntersection::isMisordered(const SimpleIntersection *fi,
 //   }
 // #endif // DEBUG
   bool sameLoopSeg = onSameLoopSegment(fi);
-  bool samePolySeg = onOnePolySegment(fi, facet);
+  unsigned int nSharedFaces = sharedFaces(fi, facet->getBaseFacePlane()).size();
 // #ifdef DEBUG
 //   if(verbose)
-//     oofcerr << "SimpleIntersection::isMisordered: sameLoopSeg=" << sameLoopSeg
-// 	    << " samePolySeg=" << samePolySeg << std::endl;
+//    oofcerr << "SimpleIntersection::isMisordered: sameLoopSeg=" << sameLoopSeg
+// 	    << " nSharedFaces=" << nSharedFaces << std::endl;
 // #endif // DEBUG
-  assert(!(sameLoopSeg && samePolySeg));
-  if(!sameLoopSeg && samePolySeg) {
+  assert(!(sameLoopSeg && nSharedFaces==0));
+  if(!sameLoopSeg && nSharedFaces == 1) {
     return facet->vsbCornerCoincidence(this, fi);
   }
-  if(sameLoopSeg && !samePolySeg) {
+  if(sameLoopSeg && nSharedFaces == 0) {
     return facet->polyCornerCoincidence(this, fi);
   }
-  if(!sameLoopSeg && !samePolySeg) {
+  if(!sameLoopSeg && nSharedFaces==2) {
     return facet->polyVSBCornerCoincidence(this, fi);
   }
   return false;

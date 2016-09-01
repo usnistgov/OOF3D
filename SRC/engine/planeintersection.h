@@ -139,6 +139,10 @@ public:
   virtual void addPlanesToEquivalence(IsecEquivalenceClass*) = 0;
   virtual bool belongsInEqClass(const IsecEquivalenceClass*) const = 0;
 
+  // TODO: All of the sharedXXX and sameXXX methods should use the
+  // equivalence class data.  Also, there are too many of these
+  // methods and some are probably redundant.
+
   virtual bool samePixelPlanes(const PlaneIntersection*) const = 0;
   virtual bool samePixPlanes(const TripleFaceIntersection*) const = 0;
   virtual bool samePixPlanes(const IntersectionPlanesBase*) const = 0;
@@ -157,6 +161,10 @@ public:
   virtual const HPixelPlane *getSharedPixelPlane(const RedundantIntersection*,
 						 unsigned int) const = 0;
 
+  // sharedFace returns a FacePlane that's used in both this
+  // intersection and the other one.  If there's more than one, it
+  // makes an arbitrary choice.  It never returns a face that's
+  // coincident with the second argument.
   virtual const FacePlane *sharedFace(const PlaneIntersection*,
 				      const FacePlane*) const = 0;
   virtual const FacePlane *getSharedFace(const TripleFaceIntersection*,
@@ -451,6 +459,8 @@ public:
   virtual unsigned int maxPolyEdge(const PixelPlaneFacet*) const = 0;
   bool onOnePolySegment(const PixelPlaneIntersection*, const PixelPlaneFacet*)
     const;
+  bool onTwoPolySegments(const PixelPlaneIntersection*, const PixelPlaneFacet*)
+    const;
   unsigned int sharedPolySegment(const PixelPlaneIntersection*,
 				 const PixelPlaneFacet*) const;
 
@@ -541,17 +551,8 @@ public:
   bool onSameFacePlane(const PixelPlaneIntersectionNR*,
 		       const FacePixelPlane*) const;
 
-  // const FacePlane *sharedFace(const PixelPlaneIntersectionNR*) const;
-  // // This version excludes a face, as in onSameFacePlane, above.
-  // virtual const FacePlane *sharedFace(const PlaneIntersection*,
-  // 				      const FacePlane*) const;
-  // virtual const FacePlane *getSharedFace(const TripleFaceIntersection*,
-  // 				      const FacePlane*) const;
-  // virtual const FacePlane *getSharedFace(const PixelPlaneIntersectionNR*,
-  // 				      const FacePlane*) const;
-  // virtual const FacePlane *getSharedFace(const RedundantIntersection*,
-  // 				      const FacePlane*) const;
-  FacePlaneSet sharedFaces(const PixelPlaneIntersectionNR*) const;
+  FacePlaneSet sharedFaces(const PixelPlaneIntersectionNR*,
+			   const FacePlane*) const;
 
   // bool samePixelPlanes(const PixelPlaneIntersectionNR*) const;
 
@@ -738,7 +739,9 @@ public:
 				     ICoord2D&) const = 0;
 };
 
-template <class BASE> class SingleVSBmixIn : public BASE, public SingleVSBbase {
+template <class BASE> class SingleVSBmixIn
+  : public BASE, public SingleVSBbase
+{
 protected:
   PixelBdyLoopSegment vsbSegment;
   double loopFrac;
