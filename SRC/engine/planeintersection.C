@@ -2188,7 +2188,7 @@ bool SimpleIntersection::isMisordered(const SimpleIntersection *fi,
 //    oofcerr << "SimpleIntersection::isMisordered: sameLoopSeg=" << sameLoopSeg
 // 	    << " nSharedFaces=" << nSharedFaces << std::endl;
 // #endif // DEBUG
-  assert(!(sameLoopSeg && nSharedFaces==0));
+  assert(!(sameLoopSeg && nSharedFaces==1));
   if(!sameLoopSeg && nSharedFaces == 1) {
     return facet->vsbCornerCoincidence(this, fi);
   }
