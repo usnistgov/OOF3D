@@ -1019,7 +1019,7 @@ double HomogeneityTet::faceEdgeCoord(const BarycentricCoord &bary,
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // Find the points at which the edges of the tetrahedron intersect the
-// given pixel plane. 
+// given pixel plane.
 
 TetIntersectionPolygon&
 HomogeneityTet::getTetPlaneIntersectionPoints(const HPixelPlane *pixplane) {
@@ -2037,10 +2037,10 @@ const HPixelPlane *HomogeneityTet::orientedOrthogonalPlane(
   //           |?????????   
   //           |?????????
   //           |?????????
-  // ----------O----------  <-- pixplane
+  // ----------O----------  <-- pixplane, seen edge on
   // ..........|\????????
   // ..........|?\???????
-  // ..........|??X??????
+  // ..........|??X<----------- test point
   // ..........|?????????
 
   // The horizontal dashed line is the pixplane, and the vertical one
@@ -2057,15 +2057,15 @@ const HPixelPlane *HomogeneityTet::orientedOrthogonalPlane(
   //           |.........        is impossible              |
   // ----------O----------       because it doesn't --------O-------- 
   // ..........|\........        have a facet edge  ........|........
-  // ..........|.\.......        at point O.        ........|........
-  // ..........|..X......                           ........|........
+  // ..........|.\.......        in pixplane at     ........|........
+  // ..........|..X......        point O.           ........|........
   // ..........|.........
 
 
   // If the test point is outside the category, the normal is outward:
   //           |?????????   
-  //           |????????? <-- It doesn't matter what's going on here.
-  //           |?????????
+  //           |????????? <-- It doesn't matter if this voxel is inside
+  //           |?????????     or outside the category.
   //           |?????????
   // ----------O---------- 
   // ..........|        
