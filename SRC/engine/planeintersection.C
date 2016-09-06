@@ -1013,6 +1013,12 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
   // of them will do, as long as they form an edge of the polygon,
   // except for the plane of the facet.  There might be an edge that
   // doesn't form a polygon edge if it's collinear with another edge.
+
+  // TODO: Should this use the faces in the equivalence class instead
+  // of the faces in the intersection?  If it did, it wouldn't have to
+  // check the collinear faces, since they're already in the
+  // equivalence class.  Is the equivalence class always up-to-date
+  // when this is called?
   
 // #ifdef DEBUG
 //   if(verbose)
@@ -1024,6 +1030,11 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
     // getPolyEdge looks for a polygon edge that is associated with
     // the given face.
     unsigned int edge = facet->getPolyEdge(face);
+#ifdef DEBUG
+    if(verbose)
+      oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: getPolyEdge("
+	      << *face << ") =" << edge << std::endl;
+#endif // DEBUG
     if(edge != NONE) {
       polyedges[edge].push_back(this);
       return;
@@ -1032,12 +1043,31 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
   for(const FacePixelPlane *fpp : pixelFaces_) {
     if(fpp != facet->pixplane) {
       unsigned int edge = facet->getPolyEdge(fpp);
+#ifdef DEBUG
+    if(verbose)
+      oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: getPolyEdge("
+	      << *fpp << ") =" << edge << std::endl;
+#endif // DEBUG
       if(edge != NONE) {
 	polyedges[edge].push_back(this);
 	return;
       }
     }
   }
+  // Although none of the face planes stored in the intersection form
+  // facet edges, it's possible that a pixel plane is collinear with a
+  // face plane that's not stored.
+  for(const HPixelPlane *pp : pixelPlanes_) {
+    FacePlaneSet fps = facet->htet->getCollinearFaces(pp, facet->pixplane);
+    if(!fps.empty()) {
+      unsigned int edge = facet->getPolyEdge(*fps.begin());
+      if(edge != NONE) {
+	polyedges[edge].push_back(this);
+	return;
+      }
+    }
+  }
+  
 #ifdef DEBUG
   oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: failed!"
 	  << std::endl;
