@@ -3839,14 +3839,27 @@ bool FaceEdgeIntersection::crosses(const FaceEdgeIntersection *other,
   // edge that meets the face edge at "other"?
 
   assert(start() != other->start());
+
+  // Near the corner of a tet face, both ends of a single segment can
+  // be in the same intersection group.  A segment doesn't cross itself.
+  if(corner() == other->remoteCorner() || remoteCorner() == other->corner())
+    return false;
+  
   // Either this point precedes the other on the same face edge, or
   // this point is on the edge preceding the other point's edge.
   // TODO: In a very small face, is it possible that the edge order is
   // reversed?
-  assert((faceEdge()==other->faceEdge() &&
-	  edgePosition()<=other->edgePosition() )
-	 ||
-	 ((faceEdge()+1) % NUM_TET_FACE_EDGES == other->faceEdge()));
+  if(!((faceEdge()==other->faceEdge() && edgePosition()<=other->edgePosition() )
+       ||
+       ((faceEdge()+1) % NUM_TET_FACE_EDGES == other->faceEdge())))
+    {
+      oofcerr << "FaceEdgeIntersection::crosses: Bad input!" << std::endl;
+      oofcerr << "FaceEdgeIntersection::crosses:  this=" << *this << std::endl;
+      oofcerr << "FaceEdgeIntersection::crosses: other=" << *other << std::endl;
+      throw ErrProgrammingError(
+			"Bad arguments to FaceEdgeIntersection::crosses!",
+			__FILE__, __LINE__);
+    }
   
   // The edges don't cross if their endpoints meet.
 #ifdef DEBUG
@@ -3925,6 +3938,7 @@ bool FaceEdgeIntersectionLT::operator()(const FaceEdgeIntersection *a,
 
 std::ostream &operator<<(std::ostream &os, const FaceEdgeIntersection &fei) {
   os << "FaceEdgeIntersection(" << *fei.corner()
+     << ", " << *fei.remoteCorner()
      << ", fedge=" << fei.faceEdge()
      << ", t=" << fei.edgePosition()
      << ", start=" << fei.start() << ")";
