@@ -445,16 +445,16 @@ bool PixelPlaneIntersection::onTwoPolySegments(const PixelPlaneIntersection *fi,
 {
   FacePlaneSet shared = referent()->sharedFaces(fi->referent(),
 						 facet->getBaseFacePlane());
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PixelPlaneIntersection::onTwoPolySegments: shared="
-	    << std::endl;
-    OOFcerrIndent indent(2);
-    for(auto fp : shared)
-      oofcerr << "PixelPlaneIntersection::onTwoPolySegments: " << *fp
-	      << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneIntersection::onTwoPolySegments: shared="
+// 	    << std::endl;
+//     OOFcerrIndent indent(2);
+//     for(auto fp : shared)
+//       oofcerr << "PixelPlaneIntersection::onTwoPolySegments: " << *fp
+// 	      << std::endl;
+//   }
+// #endif // DEBUG
   // If there are three shared faces, the points must be at the corner
   // of the tet, which must lie in the pixel plane.  There must be two
   // polygon edges at the corner.  If there are two shared faces
@@ -468,10 +468,10 @@ bool PixelPlaneIntersection::onTwoPolySegments(const PixelPlaneIntersection *fi,
 void PixelPlaneIntersectionNR::copyPlanes(const PixelPlaneIntersectionNR *fi0,
 					  const PixelPlaneIntersectionNR *fi1)
 {
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "PixelPlaneIntersectionNR::copyPlanes" << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "PixelPlaneIntersectionNR::copyPlanes" << std::endl;
+// #endif // DEBUG
   pixelPlanes_.insert(fi0->pixelPlanes_.begin(), fi0->pixelPlanes_.end());
   pixelPlanes_.insert(fi1->pixelPlanes_.begin(), fi1->pixelPlanes_.end());
   faces_.insert(fi0->faces_.begin(), fi0->faces_.end());
@@ -726,8 +726,9 @@ const FacePlane *IntersectionPlanes<BASE>::getSharedFace(
 					      BASE::equivalence()->facePlanes,
 					      fi->getEquivalence()->facePlanes,
 					      exclude);
-  if(fp != BASE::equivalence()->facePlanes.end())
+  if(fp != BASE::equivalence()->facePlanes.end()) {
     return *fp;
+  }
   // We could have *another* double dispatch layer to see if "exclude"
   // is a FacePixelPlane, or we could just do this:
   const FacePixelPlane *fppNot = dynamic_cast<const FacePixelPlane*>(exclude);
@@ -735,15 +736,19 @@ const FacePlane *IntersectionPlanes<BASE>::getSharedFace(
     const FacePixelPlaneSet::const_iterator fpp =
       sharedEntry(BASE::equivalence()->pixelFaces,
 		  fi->getEquivalence()->pixelFaces, fppNot);
-    if(fpp != pixelFaces_.end())
+    if(fpp != BASE::equivalence()->pixelFaces.end()) {
       return *fpp;
+      // return dynamic_cast<const FacePlane*>(*fpp);// TODO: Is cast needed?
+    }
   }
-  else {
+  else {			// no excluded face plane
     const FacePixelPlaneSet::const_iterator fpp =
       sharedEntry(BASE::equivalence()->pixelFaces,
 		  fi->getEquivalence()->pixelFaces);
-    if(fpp != BASE::equivalence()->pixelFaces.end())
+    if(fpp != BASE::equivalence()->pixelFaces.end()) {
       return *fpp;
+      // return dynamic_cast<const FacePlane*>(*fpp);  // TODO: Is cast needed?
+    }
   }
   return nullptr;
 }
@@ -784,10 +789,8 @@ bool PixelPlaneIntersectionNR::onSameFacePlane(
 				       const FacePixelPlane *exclude)
   const
 {
-  // if(exclude != nullptr)
-    return sharedFace(fib, exclude) != nullptr;
-  // else
-  //   return sharedFace(fib) != nullptr;
+  const FacePlane *shared = sharedFace(fib, exclude);
+  return shared != nullptr;
 }
 
 
@@ -1030,11 +1033,11 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
     // getPolyEdge looks for a polygon edge that is associated with
     // the given face.
     unsigned int edge = facet->getPolyEdge(face);
-#ifdef DEBUG
-    if(verbose)
-      oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: getPolyEdge("
-	      << *face << ") =" << edge << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verbose)
+//       oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: getPolyEdge("
+// 	      << *face << ") =" << edge << std::endl;
+// #endif // DEBUG
     if(edge != NONE) {
       polyedges[edge].push_back(this);
       return;
@@ -1043,11 +1046,11 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
   for(const FacePixelPlane *fpp : pixelFaces_) {
     if(fpp != facet->pixplane) {
       unsigned int edge = facet->getPolyEdge(fpp);
-#ifdef DEBUG
-    if(verbose)
-      oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: getPolyEdge("
-	      << *fpp << ") =" << edge << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verbose)
+//       oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: getPolyEdge("
+// 	      << *fpp << ") =" << edge << std::endl;
+// #endif // DEBUG
       if(edge != NONE) {
 	polyedges[edge].push_back(this);
 	return;
@@ -1516,10 +1519,14 @@ double MultiFaceMixin<BASE>::getPolyFrac(unsigned int edge,
     if(nextface->isPartOf(this))
       return 1.0;
 #ifdef DEBUG
+  // In debug mode, don't just assume that one of the faces of the
+  // previous edge is part of this intersection.
   FacePlaneSet prevfaces = facet->getFacePlanes((edge+nn-1)%nn);
   for(const FacePlane *prevface : prevfaces)
     if(prevface->isPartOf(this))
       return 0.0;
+  throw ErrProgrammingError("MultiFaceMixin::getPolyFrac failed!",
+			    __FILE__, __LINE__);
   // if(facet->verbose)
   //   oofcerr << "MultiFaceMixin::getPolyFrac: prevface="
   // 	    << prevface << " " << *prevface << std::endl;
@@ -2104,23 +2111,23 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
 						SimpleIntersection *fi,
 						const PixelPlaneFacet *facet)
 {
-#ifdef DEBUG
-  if(htet->verbosePlane())
-    oofcerr << "SimpleIntersection::mergeWith: this="
-	    << *this << " fi=" << *fi << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verbosePlane())
+//     oofcerr << "SimpleIntersection::mergeWith: this="
+// 	    << *this << " fi=" << *fi << std::endl;
+// #endif // DEBUG
   PixelPlaneIntersectionNR *merged = nullptr;
   // Two antiparallel but otherwise equivalent VSB segments that
   // intersect a face should form a new SimpleIntersection there.
   if(isEquivalent(fi)) {
     merged = clone(htet);
     merged->setCrossingCount(combinedCrossing(this, fi));
-#ifdef DEBUG
-    if(htet->verbosePlane()) {
-      oofcerr << "SimpleIntersection::mergeWith: antiparallel, merged="
-	      << merged << " " << *merged << std::endl;
-      }
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(htet->verbosePlane()) {
+//       oofcerr << "SimpleIntersection::mergeWith: antiparallel, merged="
+// 	      << merged << " " << *merged << std::endl;
+//       }
+// #endif // DEBUG
     // Don't call mergeEquiv -- clones don't need it
     return merged;
   }
@@ -2213,11 +2220,11 @@ bool SimpleIntersection::isMisordered(const SimpleIntersection *fi,
 // #endif // DEBUG
   bool sameLoopSeg = onSameLoopSegment(fi);
   unsigned int nSharedFaces = sharedFaces(fi, facet->getBaseFacePlane()).size();
-// #ifdef DEBUG
-//   if(verbose)
-//    oofcerr << "SimpleIntersection::isMisordered: sameLoopSeg=" << sameLoopSeg
-// 	    << " nSharedFaces=" << nSharedFaces << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verbose)
+   oofcerr << "SimpleIntersection::isMisordered: sameLoopSeg=" << sameLoopSeg
+	    << " nSharedFaces=" << nSharedFaces << std::endl;
+#endif // DEBUG
   assert(!(sameLoopSeg && nSharedFaces==1));
   if(!sameLoopSeg && nSharedFaces == 1) {
     return facet->vsbCornerCoincidence(this, fi);
