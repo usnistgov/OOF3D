@@ -213,3 +213,24 @@ TurnDirection turnDirection(const ICoord2D &pt0, const ICoord2D &pt1,
     return UTURN;
   return STRAIGHT;
 }
+
+std::ostream &operator<<(std::ostream &os, const TurnDirection &td) {
+  switch(td) {
+  case LEFT:
+    os << "LEFT";
+    break;
+  case RIGHT:
+    os << "RIGHT";
+    break;
+  case STRAIGHT:
+    os << "STRAIGHT";
+    break;
+  case UTURN:
+    os << "UTURN";
+    break;
+  case UNDEFINED:
+    os << "UNDEFINED";
+    break;
+  }
+  return os;
+}

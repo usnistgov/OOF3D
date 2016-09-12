@@ -627,6 +627,8 @@ enum TurnDirection {LEFT, RIGHT, STRAIGHT, UTURN, UNDEFINED};
 TurnDirection turnDirection(const ICoord2D &pt0, const ICoord2D &pt1,
 			    const ICoord2D &pt2);
 
+std::ostream &operator<<(std::ostream&, const TurnDirection&);
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // ICoord3D operators
