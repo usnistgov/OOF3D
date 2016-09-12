@@ -1223,6 +1223,9 @@ static Coord2D nonIntegerInteriorPt(const TetIntersectionPolygon &poly,
   }
   // This really can't happen unless the polygon is degenerate, in
   // which case we should never have reached this point.
+  oofcerr << "nonIntegerInteriorPt: failed! pixplane=" << *pixplane << " poly=";
+  std::cerr << derefprint(poly);
+  oofcerr << std::endl;
   throw ErrProgrammingError("nonIntegerInteriorPt failed!", __FILE__, __LINE__);
 }
 
@@ -1310,7 +1313,7 @@ FacetMap2D HomogeneityTet::findPixelPlaneFacets(unsigned int cat,
       verboseplane = false;
 #endif // DEBUG
     } // end loop over PixelSetBoundaryMap
-  
+
   return facets;
 } // end HomogeneityTet::findPixelPlaneFacets
 
@@ -3714,9 +3717,12 @@ bool HomogeneityTet::verify() {
 }
 
 void HomogeneityTet::dumpEquivalences() {
-  for(IsecEquivalenceClass *eqclass : equivalences) {
-    eqclass->dump();
-  }
+  if(equivalences.empty())
+    oofcerr << "HomogeneityTet::dumpEquivalences: (none)" << std::endl;
+  else
+    for(IsecEquivalenceClass *eqclass : equivalences) {
+      eqclass->dump();
+    }
 }
 
 #endif // DEBUG

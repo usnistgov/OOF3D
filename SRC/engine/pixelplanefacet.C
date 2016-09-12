@@ -747,8 +747,6 @@ bool PixelPlaneFacet::completeLoops() {
   IsecsNearCoord coincidences; // All intersections at a point
   unsigned int totalIntersections = 0;
 
-  // TODO: If checkEquiv is run for each new Planeintersection, is
-  // this loop necessary?
   for(FacetEdge *edge : edges) {
 // #ifdef DEBUG
 //     if(verbose)
@@ -763,13 +761,13 @@ bool PixelPlaneFacet::completeLoops() {
       // PixelPlaneIntersectionNR.  At this point the intersection
       // can't be a RedundantIntersection.
       PixelPlaneIntersectionNR *ppi = edge->startFace()->referent();
-      htet->checkEquiv(ppi);
+      // htet->checkEquiv(ppi);
       totalIntersections += storeCoincidenceData(ppi, pixplane, coincidentLocs,
 						 coincidences);
     }
     if(edge->stopFace()) {
       PixelPlaneIntersectionNR *ppi = edge->stopFace()->referent();
-      htet->checkEquiv(ppi);
+      // htet->checkEquiv(ppi);
       totalIntersections += storeCoincidenceData(ppi, pixplane, coincidentLocs,
 						 coincidences);
     }
@@ -777,6 +775,17 @@ bool PixelPlaneFacet::completeLoops() {
   } // end loop over edges
 
 #ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::completeLoops: coincidences=" << std::endl;
+    OOFcerrIndent indent(2);
+    for(Coord2D pt : coincidentLocs) {
+      auto range = coincidences.equal_range(pt);
+      for(auto c=range.first; c!=range.second; ++c) {
+	oofcerr << "PixelPlaneFacet::completeLoops: " << c->first << ": "
+		<< *c->second << std::endl;
+      }
+    }
+  }
   // if(verbose) {
   //   oofcerr << "PixelPlaneFacet::completeLoops: after checkEquiv, facet="
   // 	    << *this << std::endl;
@@ -1457,9 +1466,10 @@ bool PixelPlaneFacet::resolveTwoFoldCoincidence(const PPIntersectionNRSet &isecs
       {
 #ifdef DEBUG
 	if(verbose) {
+	  bool misordered = fi0->isMisordered(fi1, this);
 	  oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence:"
 		  << " isEquivalent=" << fi0->isEquivalent(fi1)
-		  << " isMisordered=" << fi0->isMisordered(fi1, this)
+		  << " isMisordered=" << misordered
 		  << std::endl;
 	  oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence: "
 		  << "trying to merge equivalent entry and exit" << std::endl;
@@ -2998,10 +3008,20 @@ bool PixelPlaneFacet::badTopology(const MultiFaceIntersection *mfi0,
     oofcerr << "PixelPlaneFacet::badTopology: mfi1=" << *mfi1 << std::endl;
     throw ErrProgrammingError("Wrong number of polygon segments!",
 			      __FILE__, __LINE__);
-      }
+  }
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::badTopology: mfi0=" << *mfi0 << std::endl;
+    oofcerr << "PixelPlaneFacet::badTopology: mfi1=" << *mfi1 << std::endl;
+  }
+  OOFcerrIndent indent(2);
 #endif // DEBUG
   const PixelBdyLoopSegment &loopSeg0 = mfi0->getLoopSeg();
   const PixelBdyLoopSegment &loopSeg1 = mfi1->getLoopSeg();
+#ifdef DEBUG
+  if(verbose)
+    oofcerr << "PixelPlaneFacet::badTopology: loopSeg0=" << loopSeg0
+	    << " loopSeg1=" << loopSeg1 << std::endl;
+#endif // DEBUG
   if(loopSeg0 == loopSeg1)
     return true;
   bool mfi0FirstOnVSB = loopSeg1.follows(loopSeg0);
@@ -3011,6 +3031,12 @@ bool PixelPlaneFacet::badTopology(const MultiFaceIntersection *mfi0,
 #endif	// DEBUG
 
   unsigned int sharedPolySeg = mfi0->sharedPolySegment(mfi1, this);
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::badTopology: mfi0FirstOnVSB=" << mfi0FirstOnVSB
+	    << " sharedPolySeg=" << sharedPolySeg << std::endl;
+  }
+#endif // DEBUG
   if(sharedPolySeg == NONE) {
     // If the MultiFaceIntersections don't share a polygon segment,
     // they are at opposite corners of a quadrilateral.  In the
@@ -3076,10 +3102,19 @@ bool PixelPlaneFacet::badTopology_(const MultiFaceIntersection *mfi0,
   const PixelBdyLoopSegment &loopSeg1 = mfi1->getLoopSeg();
   TurnDirection turn = turnDirection(loopSeg0.firstPt(), loopSeg0.secondPt(),
 				     loopSeg1.secondPt());
+#ifdef DEBUG
+  if(verbose)
+    oofcerr << "PixelPlaneFacet::badTopology_: turn=" << turn << std::endl;
+#endif // DEBUG
   if(turn != LEFT && turn != RIGHT)
     return true;
   Interiority interiority0 = mfi0->interiority(this);
   Interiority interiority1 = mfi1->interiority(this);
+#ifdef DEBUG
+  if(verbose)
+    oofcerr << "PixelPlaneFacet::badTopology_: interiority0=" << interiority0
+	    << " interiority1=" << interiority1 << std::endl;
+#endif // DEBUG
   if(interiority0 != interiority1)
     return true;
   
@@ -3091,6 +3126,11 @@ bool PixelPlaneFacet::badTopology_(const MultiFaceIntersection *mfi0,
   // before mfi1.  That means that the order on the polygon is the
   // same as the order on the VSB.
   bool sameDirection = (otherPolySeg0 + 1)%polygonSize() == polySeg;
+#ifdef DEBUG
+  if(verbose)
+    oofcerr << "PixelPlaneFacet::badTopology_: sameDirection=" << sameDirection
+	    << std::endl;
+#endif // DEBUG
 
   // Looking at the diagrams above...
   return !((turn == RIGHT && ((interiority0 == INTERIOR && !sameDirection) ||
