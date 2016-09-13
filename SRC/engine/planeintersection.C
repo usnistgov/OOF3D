@@ -648,9 +648,28 @@ const HPixelPlane *IntersectionPlanes<BASE>::getSharedPixelPlane(
 					   unsigned int face)
   const
 {
-  auto iter = sharedEntry(pixelPlanes_, ipb->pixelPlanes());
-  if(iter != pixelPlanes_.end())
-    return *iter;
+  // auto iter = sharedEntry(pixelPlanes_, ipb->pixelPlanes());
+  // if(iter != pixelPlanes_.end())
+  //   return *iter;
+
+  // When comparing pixel planes, consider oppositely directed planes
+  // to be equivalent.  This means that we can't use the sharedEntry
+  // template, because the comparison operator we're using is not the
+  // one used to construct the sets of planes.
+
+  // TODO: This loop is o(N^2), but N is small so it may not
+  // matter. An o(N) algorithm can be made by using sharedEntry on a
+  // set containing both the planes in ipb and their mirrors.
+  for(const HPixelPlane *pp0 : pixelPlanes_) {
+    for(const HPixelPlane *pp1 : ipb->pixelPlanes()) {
+      if(pp0->coincident(*pp1)) {
+	// Return pp1, not pp0, so that this->sharedPixelPlane(other)
+	// returns the plane in this, not the plane in other.
+	return pp1;
+      }
+    }
+  }
+  
 
   const FacePixelPlane *fpp = BASE::htet->getCoincidentPixelPlane(face);
   if(fpp == nullptr) {
