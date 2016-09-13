@@ -3102,19 +3102,19 @@ bool PixelPlaneFacet::badTopology_(const MultiFaceIntersection *mfi0,
   const PixelBdyLoopSegment &loopSeg1 = mfi1->getLoopSeg();
   TurnDirection turn = turnDirection(loopSeg0.firstPt(), loopSeg0.secondPt(),
 				     loopSeg1.secondPt());
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "PixelPlaneFacet::badTopology_: turn=" << turn << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "PixelPlaneFacet::badTopology_: turn=" << turn << std::endl;
+// #endif // DEBUG
   if(turn != LEFT && turn != RIGHT)
     return true;
   Interiority interiority0 = mfi0->interiority(this);
   Interiority interiority1 = mfi1->interiority(this);
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "PixelPlaneFacet::badTopology_: interiority0=" << interiority0
-	    << " interiority1=" << interiority1 << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "PixelPlaneFacet::badTopology_: interiority0=" << interiority0
+// 	    << " interiority1=" << interiority1 << std::endl;
+// #endif // DEBUG
   if(interiority0 != interiority1)
     return true;
   
@@ -3126,11 +3126,11 @@ bool PixelPlaneFacet::badTopology_(const MultiFaceIntersection *mfi0,
   // before mfi1.  That means that the order on the polygon is the
   // same as the order on the VSB.
   bool sameDirection = (otherPolySeg0 + 1)%polygonSize() == polySeg;
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "PixelPlaneFacet::badTopology_: sameDirection=" << sameDirection
-	    << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "PixelPlaneFacet::badTopology_: sameDirection=" << sameDirection
+// 	    << std::endl;
+// #endif // DEBUG
 
   // Looking at the diagrams above...
   return !((turn == RIGHT && ((interiority0 == INTERIOR && !sameDirection) ||

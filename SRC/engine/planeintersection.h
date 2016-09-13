@@ -707,7 +707,10 @@ public:
   bool inside(const Coord3D &pt) const;
   virtual double getPolyFrac(unsigned int, const PixelPlaneFacet*) const;
   virtual unsigned int getPolyEdge(const PixelPlaneFacet*) const;
-  unsigned int getOtherFaceIndex(unsigned int, const PixelPlaneFacet*) const;
+  // I'm not sure why getOtherFaceIndex has to be virtual, but it
+  // generates a runtime "symbol not found" error if it's not virtual.
+  virtual unsigned int getOtherFaceIndex(unsigned int, const PixelPlaneFacet*)
+    const;
 };
 
 // SingleVSBmixIn is a templated base class for an intersection that

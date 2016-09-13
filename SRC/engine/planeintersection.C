@@ -2407,13 +2407,13 @@ MultiFaceIntersection *MultiFaceIntersection::clone(HomogeneityTet *htet) const
 Interiority MultiFaceIntersection::interiority(const PixelPlaneFacet *facet)
   const
 {
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "MultiFaceIntersection::interiority: this=" << *this
-	    << std::endl;
-  }
-  OOFcerrIndent indent(2);
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "MultiFaceIntersection::interiority: this=" << *this
+// 	    << std::endl;
+//   }
+//   OOFcerrIndent indent(2);
+// #endif // DEBUG
   assert(nPolySegments() == 2);
   ICoord2D vsb0 = segEnd(0);
   ICoord2D vsb1 = segEnd(1);
@@ -2424,61 +2424,22 @@ Interiority MultiFaceIntersection::interiority(const PixelPlaneFacet *facet)
   Coord2D pnext = facet->polygonCorner((pseg1+1) % facet->polygonSize());
   double cross0 = (pprev - phere) % (vsb1 - vsb0);
   double cross1 = (pnext - phere) % (vsb1 - vsb0);
-#ifdef DEBUG
-    if(verbose) {
-      OOFcerrIndent indent(2);
-      oofcerr << "MultiFaceIntersection::interiority: vsb0=" << vsb0
-	      << " vsb1=" << vsb1 << std::endl;
-      oofcerr << "MultiFaceIntersection::interiority: pprev=" << pprev
-	      << " phere=" << phere << " pnext=" << pnext << std::endl;
-      oofcerr << "MultiFaceIntersection::interiority: cross0=" << cross0
-	      << " cross1=" << cross1 << std::endl;
-    }
-#endif // DEBUG
-  if(cross0 <= 0 && cross1 <= 0)
-    return INTERIOR;
-  if(cross0 >= 0 && cross1 >= 0)
-    return EXTERIOR;
-  return MIXED;
-  
-//   // std::vector<bool> interior;
-//   // interior.reserve(2);
-//   std::vector<double> crosses;
-//   crosses.reserve(2);
-//   for(const FacePlane *face : facePlaneSets()) {
-//     unsigned int polyseg = facet->getPolyEdge(face);
-//     Coord2D p0 = facet->polygonCorner(polyseg);
-//     Coord2D p1 = facet->polygonCorner((polyseg+1) % facet->polygonSize());
-//     // TODO: Worry about round-off error here, or explain why it's not
-//     // important.
 // #ifdef DEBUG
 //     if(verbose) {
 //       OOFcerrIndent indent(2);
-//       oofcerr << "MultiFaceIntersection::interiority: polyseg=" << polyseg
-// 	      << std::endl;
 //       oofcerr << "MultiFaceIntersection::interiority: vsb0=" << vsb0
 // 	      << " vsb1=" << vsb1 << std::endl;
-//       oofcerr << "MultiFaceIntersection::interiority: p0=" << p0
-// 	      << " p1=" << p1 << std::endl;
-//       oofcerr << "MultiFaceIntersection::interiority: cross="
-// 	      << cross(vsb1-vsb0, p1-p0) << std::endl;
+//       oofcerr << "MultiFaceIntersection::interiority: pprev=" << pprev
+// 	      << " phere=" << phere << " pnext=" << pnext << std::endl;
+//       oofcerr << "MultiFaceIntersection::interiority: cross0=" << cross0
+// 	      << " cross1=" << cross1 << std::endl;
 //     }
 // #endif // DEBUG
-//     // interior.push_back(cross(vsb1-vsb0, p1-p0) > 0.0);
-//     crosses.push_back(cross(vsb1-vsb0, p1-p0));
-//   }
-//   // assert(interior.size() == 2);
-//   assert(crosses.size() == 2);
-//   if(crosses[0] >= 0 && crosses[1] >= 0)
-//     return INTERIOR;
-//   if(crosses[0] <= 0 && crosses[1] <= 0)
-//     return EXTERIOR;
-//   return MIXED;
-//   // if(interior[0] && interior[1])
-//   //   return INTERIOR;
-//   // if(!interior[0] && !interior[1])
-//   //   return EXTERIOR;
-//   // return MIXED;
+  if(cross0 < 0 && cross1 < 0)
+    return INTERIOR;
+  if(cross0 > 0 && cross1 > 0)
+    return EXTERIOR;
+  return MIXED;
 }
 
 const FacePlane *MultiFaceIntersection::firstFacePlane(
