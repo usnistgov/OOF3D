@@ -282,6 +282,10 @@ void PolygonEdge::getEdgesOnFaces(HomogeneityTet *htet,
 				  FaceFacets &faceFacets)
   const
 {
+#ifdef DEBUG
+  if(htet->verboseCategory())
+    oofcerr << "PolygonEdge::getEdgesOnFaces" << std::endl;
+#endif // DEBUG
   start_->referent()->getEdgesOnFaces(htet, stop_->referent(), pixplane,
 				      faceFacets);
 }
@@ -1332,12 +1336,12 @@ void PixelPlaneFacet::removeNullEdges() {
 
 void PixelPlaneFacet::getEdgesOnFaces(FaceFacets &faceFacets) const {
   for(FacetEdge *edge : edges) {
-// #ifdef DEBUG
-//     if(verbose)
-//       oofcerr << "PixelPlaneFacet::getEdgesOnFaces: edge=" << *edge
-// 	      << std::endl;
-//     OOFcerrIndent indent(2);
-// #endif // DEBUG
+#ifdef DEBUG
+    if(verbose)
+      oofcerr << "PixelPlaneFacet::getEdgesOnFaces: facet="
+	      << *pixplane << " edge=" << *edge << std::endl;
+    OOFcerrIndent indent(2);
+#endif // DEBUG
     edge->getEdgesOnFaces(htet, pixplane, faceFacets);
   }
 }
@@ -3301,13 +3305,15 @@ std::string PixelPlaneFacet::shortDescription() const {
   return result;
 }
 
+#ifdef DEBUG
 std::ostream &operator<<(std::ostream &os, const FacetEdge &edge) {
-  os << "FacetEdge(" << *edge.startPt() << ", " << *edge.endPt();
+  os << edge.edgeType() << "(" << *edge.startPt() << ", " << *edge.endPt();
   if(edge.nullified())
     os << ", nullified";
   os << ", length=" << sqrt(edge.length2()) << ")";
   return os;
 }
+#endif // DEBUG
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 

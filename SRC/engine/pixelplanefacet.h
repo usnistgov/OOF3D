@@ -185,9 +185,15 @@ public:
   // Switch the start or stop points with their referents.
   void swapStart();
   void swapStop();
+
+#ifdef DEBUG
+  virtual std::string edgeType() const { return "FacetEdge"; }
+#endif // DEBUG
 };
 
+#ifdef DEBUG
 std::ostream &operator<<(std::ostream&, const FacetEdge&);
+#endif // DEBUG
 
 // TODO: Do we really need subclasses of FacetEdge?
 
@@ -198,6 +204,9 @@ class PixelFacetEdge : public FacetEdge {
 public:
   PixelFacetEdge(TriplePixelPlaneIntersection *s,
 		 TriplePixelPlaneIntersection *e);
+#ifdef DEBUG
+  virtual std::string edgeType() const { return "PixelFacetEdge"; }
+#endif // DEBUG
 };
 
 // A StartFaceIntersectionEdge is one that follows a pixel boundary but
@@ -208,6 +217,9 @@ public:
   StartFaceIntersectionEdge(PixelPlaneIntersection *s,
 			    TriplePixelPlaneIntersection *e);
   virtual PixelPlaneIntersection *startFace() { return start_; }
+#ifdef DEBUG
+  virtual std::string edgeType() const { return "StartFaceIntersectionEdge"; }
+#endif // DEBUG
 };
 
 class StopFaceIntersectionEdge : public FacetEdge {
@@ -215,6 +227,9 @@ public:
   StopFaceIntersectionEdge(TriplePixelPlaneIntersection *s,
 			   PixelPlaneIntersection *e);
   virtual PixelPlaneIntersection *stopFace() { return stop_; }
+#ifdef DEBUG
+  virtual std::string edgeType() const { return "StopFaceIntersectionEdge"; }
+#endif // DEBUG
 };
 
 class PolygonEdge : public FacetEdge {
@@ -222,6 +237,9 @@ public:
   PolygonEdge(PixelPlaneIntersection *f0, PixelPlaneIntersection *f1);
   virtual void getEdgesOnFaces(HomogeneityTet*, const HPixelPlane*,
 			       FaceFacets&) const;
+#ifdef DEBUG
+  virtual std::string edgeType() const { return "PolygonEdge"; }
+#endif // DEBUG
 };
 
 // A TwoFaceIntersectionEdge is one that crosses from one tet face to
@@ -234,6 +252,9 @@ public:
   {}
   virtual PixelPlaneIntersection *startFace() { return start_; }
   virtual PixelPlaneIntersection *stopFace() { return stop_; }
+#ifdef DEBUG
+  virtual std::string edgeType() const { return "TwoFaceIntersectionEdge"; }
+#endif // DEBUG
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

@@ -911,12 +911,12 @@ struct GEOFdata {		// Get Edges On Faces data
 template <class TYPE>
 bool GEOFcallback(const TYPE &faceplane, void *data) {
   GEOFdata *gdata = (GEOFdata*) data;
-// #ifdef DEBUG
-//   if(gdata->verbose)
-//     oofcerr << "GEOFcallback: face=" << *faceplane << " isecs= "
-// 	    << *gdata->otherIntersection << " "
-// 	    << *gdata->thisIntersection << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+  if(gdata->verbose)
+    oofcerr << "GEOFcallback: face=" << *faceplane << " isecs= "
+	    << *gdata->otherIntersection << " "
+	    << *gdata->thisIntersection << std::endl;
+#endif // DEBUG
   // This PixelPlaneIntersectionNR is the start of an existing facet
   // edge on a pixel plane, so the face facet edges that are created
   // here begin at "other" and go to "this".
@@ -961,6 +961,19 @@ void PixelPlaneIntersectionNR::getEdgesOnFaces(
   // template. 
   FacePlaneSet theseFaces = allFaces(htet);
   FacePlaneSet otherFaces = other->allFaces(htet);
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneIntersectionNR::getEdgesOnFaces: theseFaces=";
+    for(const FacePlane *fp : theseFaces)
+      oofcerr << " " << *fp;
+    oofcerr << std::endl;
+    oofcerr << "PixelPlaneIntersectionNR::getEdgesOnFaces: otherFaces=";
+    for(const FacePlane *fp : otherFaces)
+      oofcerr << " " << *fp;
+    oofcerr << std::endl;
+  }
+  OOFcerrIndent indent(2);
+#endif // DEBUG
   foreachShared(theseFaces, otherFaces, GEOFcallback<const FacePlane*>, &data);
 }
 
