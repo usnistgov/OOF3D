@@ -246,7 +246,13 @@ int ElementFuncNodePositionIterator::mlistindex() const {
 ElementFuncNodePositionIterator &ElementFuncNodePositionIterator::operator+=(
 								     int n)
 {
-  ElementFuncNodePositionIterator::operator+=(n);
+  // TODO: This line used to be
+  // ElementFuncNodePositionIterator::operator+=(n), which is clearly
+  // wrong, since it's infinitely recursive.  I've changed it here,
+  // but this may be wrong too.  However, the current (9/15/16) tests
+  // all pass, but since we only have linear tets and all nodes are
+  // func nodes, the tests aren't conclusive.
+  ElementNodePositionIterator::operator+=(n);
   return *this;
 }
 

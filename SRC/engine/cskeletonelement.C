@@ -5605,7 +5605,9 @@ void CSkeletonElement::realElement(FEMesh *femesh, int idx,
 				   const CSkeleton *skel, Material *mat) 
 {
   // TODO 3.1: for now we're assuming linear tetrahedra only, matching
-  // indices, and simplifying material thing
+  // indices, and simplifying material thing.  See TODO in
+  // elementnodeiterator.C,
+  // ElementFuncNodePositionIterator::operator+=.
 
   std::vector<Node*> real_el_nodes;
   for(CSkeletonNodeIterator n = nodes->begin(); n != nodes->end(); ++n)
