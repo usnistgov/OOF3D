@@ -242,7 +242,7 @@ int ElementFuncNodePositionIterator::mlistindex() const {
 ElementFuncNodePositionIterator &ElementFuncNodePositionIterator::operator+=(
 								     int n)
 {
-  ElementFuncNodePositionIterator::operator+=(n);
+  ElementNodePositionIterator::operator+=(n);
   return *this;
 }
 
