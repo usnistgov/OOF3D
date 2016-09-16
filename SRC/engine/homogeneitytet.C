@@ -1237,7 +1237,7 @@ FacetMap2D HomogeneityTet::findPixelPlaneFacets(unsigned int cat,
 #ifdef DEBUG
   verbosecategory = verboseCategory_(verbose, cat);
 #endif // DEBUG
-  FacetMap2D facets;		// typedef in pixelplanefacet.h
+  FacetMap2D facets;		// typedef in pixelplanefacet_i.h
 
   const PixelSetBoundaryMap &pxlSetBdys = vsb.getPixelSetBdys();
 
