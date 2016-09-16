@@ -173,9 +173,6 @@ public:
   Coord2D endPos(const PixelPlane *p) const;
   Coord3D startPos3D() const;
   Coord3D endPos3D() const;
-  // virtual void getEdgesOnFaces(HomogeneityTet*, const HPixelPlane*,
-  // 			       FaceFacets&) const
-  // {}
 
   PixelPlaneIntersection *startPt() { return start_; }
   PixelPlaneIntersection *endPt() { return stop_; }
@@ -195,7 +192,9 @@ public:
 std::ostream &operator<<(std::ostream&, const FacetEdge&);
 #endif // DEBUG
 
-// TODO: Do we really need subclasses of FacetEdge?
+// TODO: Do we really need subclasses of FacetEdge?  Some virtual
+// functions have been deleted so that hierarchy is less useful than
+// it used to be.
 
 // A PixelFacetEdge is one that follows a pixel boundary and doesn't
 // intersect any face of the tetrahedron.
@@ -235,8 +234,6 @@ public:
 class PolygonEdge : public FacetEdge {
 public:
   PolygonEdge(PixelPlaneIntersection *f0, PixelPlaneIntersection *f1);
-  // virtual void getEdgesOnFaces(HomogeneityTet*, const HPixelPlane*,
-  // 			       FaceFacets&) const;
 #ifdef DEBUG
   virtual std::string edgeType() const { return "PolygonEdge"; }
 #endif // DEBUG

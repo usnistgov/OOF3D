@@ -391,11 +391,37 @@ unsigned int PixelPlaneIntersection::sharedPolySegment(
   return facet->getPolyEdge(fp);
 }
 
+unsigned int PixelPlaneIntersection::nSharedPolySegments(
+					const PixelPlaneIntersection *fi,
+					const PixelPlaneFacet *facet)
+  const
+{
+  const FacePixelPlane *base = facet->getBaseFacePlane();
+  FacePlaneSet shared = referent()->sharedFaces(fi->referent(), base);
+  // If there are 0 or 1 shared faces (excluding the base plane), then
+  // there are 0 or 1 shared polygon edges.
+  if(shared.size() < 2)
+    return shared.size();
+  // If there are 2 shared faces, there may be only one shared polygon
+  // edge if the shared faces are collinear with the base plane.
+  if(shared.size() == 2) {
+    if(facet->htet->areCollinear(facet->pixplane, *shared.begin(),
+				 *shared.rbegin()))
+      {
+	return 1;
+      }
+    return 2;
+  }
+  // There are three shared faces.  The points are at a tet vertex
+  // that lies in the pixel plane.
+  return 2;
+}
+
 // onOnePolySegment returns true if two intersections share exactly
 // one polygon segment.
 
 bool PixelPlaneIntersection::onOnePolySegment(const PixelPlaneIntersection *fi,
-					       const PixelPlaneFacet *facet)
+					      const PixelPlaneFacet *facet)
   const
 {
 // #ifdef DEBUG
@@ -425,43 +451,15 @@ bool PixelPlaneIntersection::onOnePolySegment(const PixelPlaneIntersection *fi,
 //     }
 //   }
 // #endif // DEBUG
-  if(shared.size() == 1 && facet->getBaseFacePlane() != *shared.begin())
+  if(shared.size() == 1)
     return true;
   if(shared.size() == 2) {
-    const FacePlane *base = facet->getBaseFacePlane();
-    if(base == *shared.begin() || base == *shared.rbegin() ||
-       facet->htet->areCollinear(facet->pixplane,
+    if(facet->htet->areCollinear(facet->pixplane,
 				 *shared.begin(), *shared.rbegin()))
       return true;
   }
   return false;
 } // end PixelPlaneIntersection::onOnePolySegment
-
-// Do this intersection and the argument share two polygon segments?
-// Ie, are they on a corner?
-bool PixelPlaneIntersection::onTwoPolySegments(const PixelPlaneIntersection *fi,
-					       const PixelPlaneFacet *facet)
-  const
-{
-  FacePlaneSet shared = referent()->sharedFaces(fi->referent(),
-						 facet->getBaseFacePlane());
-// #ifdef DEBUG
-//   if(verbose) {
-//     oofcerr << "PixelPlaneIntersection::onTwoPolySegments: shared="
-// 	    << std::endl;
-//     OOFcerrIndent indent(2);
-//     for(auto fp : shared)
-//       oofcerr << "PixelPlaneIntersection::onTwoPolySegments: " << *fp
-// 	      << std::endl;
-//   }
-// #endif // DEBUG
-  // If there are three shared faces, the points must be at the corner
-  // of the tet, which must lie in the pixel plane.  There must be two
-  // polygon edges at the corner.  If there are two shared faces
-  // (excluding the pixel plane, if it's a face), then there are also
-  // two shared segments.
-  return shared.size() == 2 || shared.size() == 3;
-}
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -892,109 +890,6 @@ CrossingType PixelPlaneIntersection::crossingType() const {
     return EXIT;
   return NONCROSSING;
 }
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// struct GEOFdata {		// Get Edges On Faces data
-//   HomogeneityTet *htet;
-//   FaceFacets &faceFacets;
-//   const PixelPlaneIntersectionNR *thisIntersection;
-//   const PixelPlaneIntersectionNR *otherIntersection;
-//   const HPixelPlane *pixplane;
-// #ifdef DEBUG
-//   bool verbose;
-// #endif // DEBUG
-// };
-
-// // Callback function for foreachShared in
-// // PixelPlaneIntersectionNR::getEdgesOnFaces.
-
-// template <class TYPE>
-// bool GEOFcallback(const TYPE &faceplane, void *data) {
-//   GEOFdata *gdata = (GEOFdata*) data;
-// #ifdef DEBUG
-//   if(gdata->verbose)
-//     oofcerr << "GEOFcallback: face=" << *faceplane << " isecs= "
-// 	    << *gdata->otherIntersection << " "
-// 	    << *gdata->thisIntersection << std::endl;
-// #endif // DEBUG
-//   // This PixelPlaneIntersectionNR is the start of an existing facet
-//   // edge on a pixel plane, so the face facet edges that are created
-//   // here begin at "other" and go to "this".
-//   // The FaceFacetEdge constructor clones its intersection args.
-//   gdata->faceFacets[faceplane->face()].addEdge(
-// 		       new FaceFacetEdge(gdata->htet, gdata->otherIntersection,
-// 					 gdata->thisIntersection,
-// 					 gdata->pixplane));
-//   return false;		      // don't stop iterating in foreachShared
-// }
-
-// void PixelPlaneIntersectionNR::getEdgesOnFaces(
-// 				       HomogeneityTet *htet,
-// 				       const PixelPlaneIntersectionNR *other,
-// 				       const HPixelPlane *pixplane,
-// 				       FaceFacets &faceFacets)
-//   const
-// {
-//   // For each face that this PixelPlaneIntersectionNR shares with the
-//   // other PixelPlaneIntersectionNR, add an edge joining this to the
-//   // other in FaceFacets.  FaceFacets is a std::vector of FaceFacet
-//   // objects, which contain sets of FacetEdges.
-
-//   GEOFdata data({htet, faceFacets, this, other, pixplane
-// #ifdef DEBUG
-// 	, verbose
-// #endif // DEBUG
-// 	});
-// // #ifdef DEBUG
-// //   if(verbose) {
-// //     oofcerr << "PixelPlaneIntersectionNR::getEdgesOnFaces:  this=" << *this
-// // 	    << std::endl;
-// //     oofcerr << "PixelPlaneIntersectionNR::getEdgesOnFaces: other=" << *other
-// // 	    << std::endl;
-// //   }
-// //   OOFcerrIndent indent(2);
-// // #endif // DEBUG
-  
-//   // foreachShared calls GEOFcallback for each face that's in both of
-//   // the given sets.  There used to be two calls to foreachShared,
-//   // with different set types, which is why GEOFcallback is a
-//   // template. 
-//   FacePlaneSet theseFaces = allFaces(htet);
-//   FacePlaneSet otherFaces = other->allFaces(htet);
-// #ifdef DEBUG
-//   if(verbose) {
-//     oofcerr << "PixelPlaneIntersectionNR::getEdgesOnFaces: theseFaces=";
-//     for(const FacePlane *fp : theseFaces)
-//       oofcerr << " " << *fp;
-//     oofcerr << std::endl;
-//     oofcerr << "PixelPlaneIntersectionNR::getEdgesOnFaces: otherFaces=";
-//     for(const FacePlane *fp : otherFaces)
-//       oofcerr << " " << *fp;
-//     oofcerr << std::endl;
-//   }
-//   OOFcerrIndent indent(2);
-// #endif // DEBUG
-//   foreachShared(theseFaces, otherFaces, GEOFcallback<const FacePlane*>, &data);
-// }
-
-// FacePlaneSet PixelPlaneIntersectionNR::allFaces(HomogeneityTet *htet) const
-// {
-//   FacePlaneSet allfaces(faces_.begin(), faces_.end());
-//   allfaces.insert(pixelFaces_.begin(), pixelFaces_.end());
-//   FacePlaneSet cofaces;
-//   for(auto f0 : allfaces) {
-//     for(auto p : pixelPlanes_) {
-//       // TODO: The next two lines could be simpler if
-//       // getCollinearFaces took an arg that told it where to insert
-//       // the faces, instead of returning a set of them.
-//       FacePlaneSet fps = htet->getCollinearFaces(f0, p);
-//       cofaces.insert(fps.begin(), fps.end());
-//     }
-//   }
-//   allfaces.insert(cofaces.begin(), cofaces.end());
-//   return allfaces;
-// }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -2252,22 +2147,25 @@ bool SimpleIntersection::isMisordered(const SimpleIntersection *fi,
 //   }
 // #endif // DEBUG
   bool sameLoopSeg = onSameLoopSegment(fi);
-  unsigned int nSharedFaces = sharedFaces(fi, facet->getBaseFacePlane()).size();
+  unsigned int nSharedPolySegs = nSharedPolySegments(fi, facet);
 #ifdef DEBUG
-  if(verbose)
-   oofcerr << "SimpleIntersection::isMisordered: sameLoopSeg=" << sameLoopSeg
-	    << " nSharedFaces=" << nSharedFaces << std::endl;
+  if(verbose) {
+    oofcerr << "SimpleIntersection::isMisordered: sameLoopSeg=" << sameLoopSeg
+	    << " nSharedPolySegs=" << nSharedPolySegs << std::endl;
+  }
 #endif // DEBUG
-  assert(!(sameLoopSeg && nSharedFaces==1));
-  if(!sameLoopSeg && nSharedFaces == 1) {
+  assert(!(sameLoopSeg && nSharedPolySegs==1));
+  if(!sameLoopSeg && nSharedPolySegs == 1) {
     return facet->vsbCornerCoincidence(this, fi);
   }
-  if(sameLoopSeg && nSharedFaces == 0) {
+  if(sameLoopSeg && nSharedPolySegs == 0) {
     return facet->polyCornerCoincidence(this, fi);
   }
-  if(!sameLoopSeg && nSharedFaces==2) {
+  if(!sameLoopSeg && nSharedPolySegs == 0) {
     return facet->polyVSBCornerCoincidence(this, fi);
   }
+  if(nSharedPolySegs == 2)
+    return true;		// points must be coincident
   return false;
 }
 

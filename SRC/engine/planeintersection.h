@@ -457,9 +457,10 @@ public:
 				   const PixelPlaneFacet*) const = 0;
   virtual unsigned int minPolyEdge(const PixelPlaneFacet*) const = 0;
   virtual unsigned int maxPolyEdge(const PixelPlaneFacet*) const = 0;
+
+  unsigned int nSharedPolySegments(const PixelPlaneIntersection*,
+				   const PixelPlaneFacet*) const;
   bool onOnePolySegment(const PixelPlaneIntersection*, const PixelPlaneFacet*)
-    const;
-  bool onTwoPolySegments(const PixelPlaneIntersection*, const PixelPlaneFacet*)
     const;
   unsigned int sharedPolySegment(const PixelPlaneIntersection*,
 				 const PixelPlaneFacet*) const;
@@ -604,10 +605,6 @@ public:
   virtual unsigned int minPolyEdge(const PixelPlaneFacet*) const;
   virtual unsigned int maxPolyEdge(const PixelPlaneFacet*) const;
 
-
-  // void getEdgesOnFaces(HomogeneityTet*,
-  // 		       const PixelPlaneIntersectionNR*, const HPixelPlane*,
-  // 		       FaceFacets&) const;
 
   virtual void locateOnPolygonEdge(std::vector<PolyEdgeIntersections>&,
 				   const PixelPlaneFacet*) const;

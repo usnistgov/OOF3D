@@ -273,23 +273,6 @@ void FacetEdge::swapStop() {
   stop_->setEdge(this);
 }
 
-// // The FacetEdge base class defines a no-op version of
-// // getEdgesOnFaces.  PolygonEdges are the only edges created by
-// // HomogeneityTet::doFindPixelPlaneFacets that are on tet faces.
-
-// void PolygonEdge::getEdgesOnFaces(HomogeneityTet *htet,
-// 				  const HPixelPlane *pixplane,
-// 				  FaceFacets &faceFacets)
-//   const
-// {
-// #ifdef DEBUG
-//   if(htet->verboseCategory())
-//     oofcerr << "PolygonEdge::getEdgesOnFaces" << std::endl;
-// #endif // DEBUG
-//   start_->referent()->getEdgesOnFaces(htet, stop_->referent(), pixplane,
-// 				      faceFacets);
-// }
-
 Coord2D FacetEdge::startPos(const PixelPlane *p) const {
   return start_->location2D(p);
 }
@@ -1335,12 +1318,31 @@ void PixelPlaneFacet::removeNullEdges() {
 // given FaceFacets object.
 
 void PixelPlaneFacet::getEdgesOnFaces(FaceFacets &faceFacets) const {
+#ifdef DEBUG
+  if(verbose)
+    oofcerr << "PixelPlaneFacet::getEdgesOnFaces: pixplane=" << *pixplane
+	    << std::endl;
+  OOFcerrIndent indent(2);
+#endif // DEBUG
   const FacePixelPlane *baseFace = htet->getCoincidentFacePlane(pixplane);
   for(const FacetEdge *edge : edges) {
     FacePlaneSet faces = edge->startPt()->sharedFaces(edge->endPt(), baseFace);
+#ifdef DEBUG
+    if(verbose) {
+      oofcerr << "PixelPlaneFacet::getEdgesOnFaces: edge=" << *edge
+	      << std::endl;
+      oofcerr << "PixelPlaneFacet::getEdgesOnFaces: faces=";
+      for(const FacePlane *fp : faces)
+	oofcerr << " " << *fp << std::endl;
+      }
+#endif // DEBUG
     for(const FacePlane *fp : faces) {
+      // Construct an edge in the reverse order on the face facet.
       faceFacets[fp->face()].addEdge(
-	     new FaceFacetEdge(htet, edge->endPt(), edge->startPt(), pixplane));
+			     new FaceFacetEdge(htet,
+					       edge->endPt()->referent(),
+					       edge->startPt()->referent(),
+					       pixplane));
     }
   }
 //   for(FacetEdge *edge : edges) {
@@ -2165,17 +2167,8 @@ bool PixelPlaneFacet::polyVSBCornerCoincidence(
   const
 {
   assert(fi0 != fi1);
+  assert(fi0->nSharedPolySegments(fi1, this) == 0);
 #ifdef DEBUG
-  if(!fi0->onTwoPolySegments(fi1, this)) {
-    oofcerr << "PixelPlaneFacet::polyVSBCornerCoincidence: "
-	    << "same face planes!" << std::endl;
-    oofcerr << "PixelPlaneFacet::polyVSBCornerCoincidence: fi0=" << *fi0
-	    << std::endl;
-    oofcerr << "PixelPlaneFacet::polyVSBCornerCoincidence: fi1=" << *fi1
-	    << std::endl;
-    throw ErrProgrammingError("Points aren't on a polygon corner",
-			      __FILE__, __LINE__);
-  }
   // if(fi0->samePixelPlanes(fi1)) {
   //   oofcerr << "PixelPlaneFacet::polyVSBCornerCoincidence: same pixel planes!"
   // 	      << std::endl;
@@ -2184,8 +2177,18 @@ bool PixelPlaneFacet::polyVSBCornerCoincidence(
   //   oofcerr << "PixelPlaneFacet::polyVSBCornerCoincidence: fi1=" << *fi1
   // 	      << std::endl;
   // }
+  if(fi0->onSameFacePlane(fi1, getBaseFacePlane())) {
+    oofcerr << "PixelPlaneFacet::polyVSBCornerCoincidence:"
+	    << " points are on same tet face!"
+	    << std::endl;
+    oofcerr << "PixelPlaneFacet::polyVSBCornerCoincidence: fi0=" << *fi0
+	    << std::endl;
+    oofcerr << "PixelPlaneFacet::polyVSBCornerCoincidence: fi1=" << *fi1
+	    << std::endl;
+    throw ErrProgrammingError("Points are on same face!", __FILE__, __LINE__);
+  }
 #endif // DEBUG
-  assert(!fi0->onSameFacePlane(fi1, getBaseFacePlane()));
+  // assert(!fi0->onSameFacePlane(fi1, getBaseFacePlane()));
   assert(!fi0->samePixelPlanes(fi1));
   assert(fi0->crossingType() != fi1->crossingType());
   const PixelPlaneIntersectionNR *entryPt, *exitPt, *firstPt, *secondPt;
