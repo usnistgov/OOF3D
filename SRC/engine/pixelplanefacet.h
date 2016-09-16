@@ -173,9 +173,9 @@ public:
   Coord2D endPos(const PixelPlane *p) const;
   Coord3D startPos3D() const;
   Coord3D endPos3D() const;
-  virtual void getEdgesOnFaces(HomogeneityTet*, const HPixelPlane*,
-			       FaceFacets&) const
-  {}
+  // virtual void getEdgesOnFaces(HomogeneityTet*, const HPixelPlane*,
+  // 			       FaceFacets&) const
+  // {}
 
   PixelPlaneIntersection *startPt() { return start_; }
   PixelPlaneIntersection *endPt() { return stop_; }
@@ -235,8 +235,8 @@ public:
 class PolygonEdge : public FacetEdge {
 public:
   PolygonEdge(PixelPlaneIntersection *f0, PixelPlaneIntersection *f1);
-  virtual void getEdgesOnFaces(HomogeneityTet*, const HPixelPlane*,
-			       FaceFacets&) const;
+  // virtual void getEdgesOnFaces(HomogeneityTet*, const HPixelPlane*,
+  // 			       FaceFacets&) const;
 #ifdef DEBUG
   virtual std::string edgeType() const { return "PolygonEdge"; }
 #endif // DEBUG

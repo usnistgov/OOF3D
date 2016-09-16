@@ -464,6 +464,11 @@ public:
   unsigned int sharedPolySegment(const PixelPlaneIntersection*,
 				 const PixelPlaneFacet*) const;
 
+  // TODO: Eliminate redundancy between sharedFaces and
+  // sharedPolySegment, etc.
+  virtual FacePlaneSet sharedFaces(const PixelPlaneIntersection*,
+				   const FacePlane*) const = 0;
+
   // getPolyEdge returns the index of the intersection's polygon edge,
   // if there's only one. Otherwise, it returns NONE.
   virtual unsigned int getPolyEdge(const PixelPlaneFacet*) const = 0;
@@ -551,8 +556,8 @@ public:
   bool onSameFacePlane(const PixelPlaneIntersectionNR*,
 		       const FacePixelPlane*) const;
 
-  FacePlaneSet sharedFaces(const PixelPlaneIntersectionNR*,
-			   const FacePlane*) const;
+  virtual FacePlaneSet sharedFaces(const PixelPlaneIntersection*,
+				   const FacePlane*) const;
 
   // bool samePixelPlanes(const PixelPlaneIntersectionNR*) const;
 
@@ -600,9 +605,9 @@ public:
   virtual unsigned int maxPolyEdge(const PixelPlaneFacet*) const;
 
 
-  void getEdgesOnFaces(HomogeneityTet*,
-		       const PixelPlaneIntersectionNR*, const HPixelPlane*,
-		       FaceFacets&) const;
+  // void getEdgesOnFaces(HomogeneityTet*,
+  // 		       const PixelPlaneIntersectionNR*, const HPixelPlane*,
+  // 		       FaceFacets&) const;
 
   virtual void locateOnPolygonEdge(std::vector<PolyEdgeIntersections>&,
 				   const PixelPlaneFacet*) const;
@@ -634,9 +639,9 @@ public:
   virtual bool isMisordered(const MultiCornerIntersection*,
 			    const PixelPlaneFacet*) const = 0;
 
-  // allFaces returns all known face planes that pass through the
-  // intersection, including collinear planes.  
-  FacePlaneSet allFaces(HomogeneityTet*) const;
+  // // allFaces returns all known face planes that pass through the
+  // // intersection, including collinear planes.  
+  // FacePlaneSet allFaces(HomogeneityTet*) const;
 
   // virtual bool samePixelPlanes(const PlaneIntersection*) const;
   // virtual bool samePixPlanes(const TripleFaceIntersection*) const;
@@ -1310,6 +1315,12 @@ public:
     return pi->getSharedFace(referent_, fp);
   }
 
+  virtual FacePlaneSet sharedFaces(const PixelPlaneIntersection *fi,
+				   const FacePlane *exclude) const
+  {
+    return referent_->sharedFaces(fi, exclude);
+  }
+
   virtual void print(std::ostream&) const;
   virtual std::string shortName() const;
 }; // end class RedundantIntersection
@@ -1373,6 +1384,8 @@ public:
   FacePlaneSets facePlaneSets() const {
     return FacePlaneSets(facePlanes, pixelFaces);
   }
+
+  FacePlaneSet sharedFaces(const IsecEquivalenceClass*, const FacePlane*) const;
 
   const Coord3D &location3D() const { return loc_; }
 

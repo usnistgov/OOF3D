@@ -782,25 +782,26 @@ const FacePlane *IntersectionPlanes<BASE>::getSharedFace(
 }
 
 FacePlaneSet PixelPlaneIntersectionNR::sharedFaces(
-					   const PixelPlaneIntersectionNR *fi,
+					   const PixelPlaneIntersection *fi,
 					   const FacePlane *exclude)
   const
 {
-  FacePlaneSet shared;
-  // TODO: get faces from equivalence class.
-  std::set_intersection(faces_.begin(), faces_.end(),
-			fi->faces().begin(),
-			fi->faces().end(),
-			std::inserter(shared, shared.end()),
-			FacePlaneSet::key_compare());
-  std::set_intersection(pixelFaces_.begin(), pixelFaces_.end(),
-			fi->pixelFaces().begin(),
-			fi->pixelFaces().end(),
-			std::inserter(shared, shared.end()),
-			FacePixelPlaneSet::key_compare());
-  if(exclude)
-    shared.erase(exclude);
-  return shared;
+  return equivalence()->sharedFaces(fi->equivalence(), exclude);
+  // FacePlaneSet shared;
+  // // TODO: get faces from equivalence class.
+  // std::set_intersection(faces_.begin(), faces_.end(),
+  // 			fi->faces().begin(),
+  // 			fi->faces().end(),
+  // 			std::inserter(shared, shared.end()),
+  // 			FacePlaneSet::key_compare());
+  // std::set_intersection(pixelFaces_.begin(), pixelFaces_.end(),
+  // 			fi->pixelFaces().begin(),
+  // 			fi->pixelFaces().end(),
+  // 			std::inserter(shared, shared.end()),
+  // 			FacePixelPlaneSet::key_compare());
+  // if(exclude)
+  //   shared.erase(exclude);
+  // return shared;
 }
 
 bool PixelPlaneIntersectionNR::onSameFacePlane(
@@ -894,106 +895,106 @@ CrossingType PixelPlaneIntersection::crossingType() const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-struct GEOFdata {		// Get Edges On Faces data
-  HomogeneityTet *htet;
-  FaceFacets &faceFacets;
-  const PixelPlaneIntersectionNR *thisIntersection;
-  const PixelPlaneIntersectionNR *otherIntersection;
-  const HPixelPlane *pixplane;
-#ifdef DEBUG
-  bool verbose;
-#endif // DEBUG
-};
+// struct GEOFdata {		// Get Edges On Faces data
+//   HomogeneityTet *htet;
+//   FaceFacets &faceFacets;
+//   const PixelPlaneIntersectionNR *thisIntersection;
+//   const PixelPlaneIntersectionNR *otherIntersection;
+//   const HPixelPlane *pixplane;
+// #ifdef DEBUG
+//   bool verbose;
+// #endif // DEBUG
+// };
 
-// Callback function for foreachShared in
-// PixelPlaneIntersectionNR::getEdgesOnFaces.
+// // Callback function for foreachShared in
+// // PixelPlaneIntersectionNR::getEdgesOnFaces.
 
-template <class TYPE>
-bool GEOFcallback(const TYPE &faceplane, void *data) {
-  GEOFdata *gdata = (GEOFdata*) data;
-#ifdef DEBUG
-  if(gdata->verbose)
-    oofcerr << "GEOFcallback: face=" << *faceplane << " isecs= "
-	    << *gdata->otherIntersection << " "
-	    << *gdata->thisIntersection << std::endl;
-#endif // DEBUG
-  // This PixelPlaneIntersectionNR is the start of an existing facet
-  // edge on a pixel plane, so the face facet edges that are created
-  // here begin at "other" and go to "this".
-  // The FaceFacetEdge constructor clones its intersection args.
-  gdata->faceFacets[faceplane->face()].addEdge(
-		       new FaceFacetEdge(gdata->htet, gdata->otherIntersection,
-					 gdata->thisIntersection,
-					 gdata->pixplane));
-  return false;		      // don't stop iterating in foreachShared
-}
+// template <class TYPE>
+// bool GEOFcallback(const TYPE &faceplane, void *data) {
+//   GEOFdata *gdata = (GEOFdata*) data;
+// #ifdef DEBUG
+//   if(gdata->verbose)
+//     oofcerr << "GEOFcallback: face=" << *faceplane << " isecs= "
+// 	    << *gdata->otherIntersection << " "
+// 	    << *gdata->thisIntersection << std::endl;
+// #endif // DEBUG
+//   // This PixelPlaneIntersectionNR is the start of an existing facet
+//   // edge on a pixel plane, so the face facet edges that are created
+//   // here begin at "other" and go to "this".
+//   // The FaceFacetEdge constructor clones its intersection args.
+//   gdata->faceFacets[faceplane->face()].addEdge(
+// 		       new FaceFacetEdge(gdata->htet, gdata->otherIntersection,
+// 					 gdata->thisIntersection,
+// 					 gdata->pixplane));
+//   return false;		      // don't stop iterating in foreachShared
+// }
 
-void PixelPlaneIntersectionNR::getEdgesOnFaces(
-				       HomogeneityTet *htet,
-				       const PixelPlaneIntersectionNR *other,
-				       const HPixelPlane *pixplane,
-				       FaceFacets &faceFacets)
-  const
-{
-  // For each face that this PixelPlaneIntersectionNR shares with the
-  // other PixelPlaneIntersectionNR, add an edge joining this to the
-  // other in FaceFacets.  FaceFacets is a std::vector of FaceFacet
-  // objects, which contain sets of FacetEdges.
+// void PixelPlaneIntersectionNR::getEdgesOnFaces(
+// 				       HomogeneityTet *htet,
+// 				       const PixelPlaneIntersectionNR *other,
+// 				       const HPixelPlane *pixplane,
+// 				       FaceFacets &faceFacets)
+//   const
+// {
+//   // For each face that this PixelPlaneIntersectionNR shares with the
+//   // other PixelPlaneIntersectionNR, add an edge joining this to the
+//   // other in FaceFacets.  FaceFacets is a std::vector of FaceFacet
+//   // objects, which contain sets of FacetEdges.
 
-  GEOFdata data({htet, faceFacets, this, other, pixplane
-#ifdef DEBUG
-	, verbose
-#endif // DEBUG
-	});
+//   GEOFdata data({htet, faceFacets, this, other, pixplane
+// #ifdef DEBUG
+// 	, verbose
+// #endif // DEBUG
+// 	});
+// // #ifdef DEBUG
+// //   if(verbose) {
+// //     oofcerr << "PixelPlaneIntersectionNR::getEdgesOnFaces:  this=" << *this
+// // 	    << std::endl;
+// //     oofcerr << "PixelPlaneIntersectionNR::getEdgesOnFaces: other=" << *other
+// // 	    << std::endl;
+// //   }
+// //   OOFcerrIndent indent(2);
+// // #endif // DEBUG
+  
+//   // foreachShared calls GEOFcallback for each face that's in both of
+//   // the given sets.  There used to be two calls to foreachShared,
+//   // with different set types, which is why GEOFcallback is a
+//   // template. 
+//   FacePlaneSet theseFaces = allFaces(htet);
+//   FacePlaneSet otherFaces = other->allFaces(htet);
 // #ifdef DEBUG
 //   if(verbose) {
-//     oofcerr << "PixelPlaneIntersectionNR::getEdgesOnFaces:  this=" << *this
-// 	    << std::endl;
-//     oofcerr << "PixelPlaneIntersectionNR::getEdgesOnFaces: other=" << *other
-// 	    << std::endl;
+//     oofcerr << "PixelPlaneIntersectionNR::getEdgesOnFaces: theseFaces=";
+//     for(const FacePlane *fp : theseFaces)
+//       oofcerr << " " << *fp;
+//     oofcerr << std::endl;
+//     oofcerr << "PixelPlaneIntersectionNR::getEdgesOnFaces: otherFaces=";
+//     for(const FacePlane *fp : otherFaces)
+//       oofcerr << " " << *fp;
+//     oofcerr << std::endl;
 //   }
 //   OOFcerrIndent indent(2);
 // #endif // DEBUG
-  
-  // foreachShared calls GEOFcallback for each face that's in both of
-  // the given sets.  There used to be two calls to foreachShared,
-  // with different set types, which is why GEOFcallback is a
-  // template. 
-  FacePlaneSet theseFaces = allFaces(htet);
-  FacePlaneSet otherFaces = other->allFaces(htet);
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PixelPlaneIntersectionNR::getEdgesOnFaces: theseFaces=";
-    for(const FacePlane *fp : theseFaces)
-      oofcerr << " " << *fp;
-    oofcerr << std::endl;
-    oofcerr << "PixelPlaneIntersectionNR::getEdgesOnFaces: otherFaces=";
-    for(const FacePlane *fp : otherFaces)
-      oofcerr << " " << *fp;
-    oofcerr << std::endl;
-  }
-  OOFcerrIndent indent(2);
-#endif // DEBUG
-  foreachShared(theseFaces, otherFaces, GEOFcallback<const FacePlane*>, &data);
-}
+//   foreachShared(theseFaces, otherFaces, GEOFcallback<const FacePlane*>, &data);
+// }
 
-FacePlaneSet PixelPlaneIntersectionNR::allFaces(HomogeneityTet *htet) const
-{
-  FacePlaneSet allfaces(faces_.begin(), faces_.end());
-  allfaces.insert(pixelFaces_.begin(), pixelFaces_.end());
-  FacePlaneSet cofaces;
-  for(auto f0 : allfaces) {
-    for(auto p : pixelPlanes_) {
-      // TODO: The next two lines could be simpler if
-      // getCollinearFaces took an arg that told it where to insert
-      // the faces, instead of returning a set of them.
-      FacePlaneSet fps = htet->getCollinearFaces(f0, p);
-      cofaces.insert(fps.begin(), fps.end());
-    }
-  }
-  allfaces.insert(cofaces.begin(), cofaces.end());
-  return allfaces;
-}
+// FacePlaneSet PixelPlaneIntersectionNR::allFaces(HomogeneityTet *htet) const
+// {
+//   FacePlaneSet allfaces(faces_.begin(), faces_.end());
+//   allfaces.insert(pixelFaces_.begin(), pixelFaces_.end());
+//   FacePlaneSet cofaces;
+//   for(auto f0 : allfaces) {
+//     for(auto p : pixelPlanes_) {
+//       // TODO: The next two lines could be simpler if
+//       // getCollinearFaces took an arg that told it where to insert
+//       // the faces, instead of returning a set of them.
+//       FacePlaneSet fps = htet->getCollinearFaces(f0, p);
+//       cofaces.insert(fps.begin(), fps.end());
+//     }
+//   }
+//   allfaces.insert(cofaces.begin(), cofaces.end());
+//   return allfaces;
+// }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -3231,6 +3232,25 @@ void IsecEquivalenceClass::includeCollinearPlaneSet(const HPlane *plane,
       }
     }
   }
+}
+
+FacePlaneSet IsecEquivalenceClass::sharedFaces(
+				       const IsecEquivalenceClass *other,
+				       const FacePlane *exclude)
+  const
+{
+  FacePlaneSet shared;
+  std::set_intersection(facePlanes.begin(), facePlanes.end(),
+			other->facePlanes.begin(), other->facePlanes.end(),
+			std::inserter(shared, shared.end()),
+			FacePlaneSet::key_compare());
+  std::set_intersection(pixelFaces.begin(), pixelFaces.end(),
+			other->pixelFaces.begin(), other->pixelFaces.end(),
+			std::inserter(shared, shared.end()),
+			FacePixelPlaneSet::key_compare());
+  if(exclude)
+    shared.erase(exclude);
+  return shared;
 }
  
 void IsecEquivalenceClass::merge(IsecEquivalenceClass *other) {

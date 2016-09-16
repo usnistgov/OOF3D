@@ -273,22 +273,22 @@ void FacetEdge::swapStop() {
   stop_->setEdge(this);
 }
 
-// The FacetEdge base class defines a no-op version of
-// getEdgesOnFaces.  PolygonEdges are the only edges created by
-// HomogeneityTet::doFindPixelPlaneFacets that are on tet faces.
+// // The FacetEdge base class defines a no-op version of
+// // getEdgesOnFaces.  PolygonEdges are the only edges created by
+// // HomogeneityTet::doFindPixelPlaneFacets that are on tet faces.
 
-void PolygonEdge::getEdgesOnFaces(HomogeneityTet *htet,
-				  const HPixelPlane *pixplane,
-				  FaceFacets &faceFacets)
-  const
-{
-#ifdef DEBUG
-  if(htet->verboseCategory())
-    oofcerr << "PolygonEdge::getEdgesOnFaces" << std::endl;
-#endif // DEBUG
-  start_->referent()->getEdgesOnFaces(htet, stop_->referent(), pixplane,
-				      faceFacets);
-}
+// void PolygonEdge::getEdgesOnFaces(HomogeneityTet *htet,
+// 				  const HPixelPlane *pixplane,
+// 				  FaceFacets &faceFacets)
+//   const
+// {
+// #ifdef DEBUG
+//   if(htet->verboseCategory())
+//     oofcerr << "PolygonEdge::getEdgesOnFaces" << std::endl;
+// #endif // DEBUG
+//   start_->referent()->getEdgesOnFaces(htet, stop_->referent(), pixplane,
+// 				      faceFacets);
+// }
 
 Coord2D FacetEdge::startPos(const PixelPlane *p) const {
   return start_->location2D(p);
@@ -1335,15 +1335,23 @@ void PixelPlaneFacet::removeNullEdges() {
 // given FaceFacets object.
 
 void PixelPlaneFacet::getEdgesOnFaces(FaceFacets &faceFacets) const {
-  for(FacetEdge *edge : edges) {
-#ifdef DEBUG
-    if(verbose)
-      oofcerr << "PixelPlaneFacet::getEdgesOnFaces: facet="
-	      << *pixplane << " edge=" << *edge << std::endl;
-    OOFcerrIndent indent(2);
-#endif // DEBUG
-    edge->getEdgesOnFaces(htet, pixplane, faceFacets);
+  const FacePixelPlane *baseFace = htet->getCoincidentFacePlane(pixplane);
+  for(const FacetEdge *edge : edges) {
+    FacePlaneSet faces = edge->startPt()->sharedFaces(edge->endPt(), baseFace);
+    for(const FacePlane *fp : faces) {
+      faceFacets[fp->face()].addEdge(
+	     new FaceFacetEdge(htet, edge->endPt(), edge->startPt(), pixplane));
+    }
   }
+//   for(FacetEdge *edge : edges) {
+// #ifdef DEBUG
+//     if(verbose)
+//       oofcerr << "PixelPlaneFacet::getEdgesOnFaces: facet="
+// 	      << *pixplane << " edge=" << *edge << std::endl;
+//     OOFcerrIndent indent(2);
+// #endif // DEBUG
+//     edge->getEdgesOnFaces(htet, pixplane, faceFacets);
+//   }
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
