@@ -551,7 +551,6 @@ void IntersectionPlanesBase::computeLocation() {
   }
   // If there are three pixel planes, then pos is uninitialized, but
   // the value passed to setLocation is irrelevant.
-  // TODO: It's relevant for GenericIntersections!?
   setLocation(pos);
 }
 
@@ -2881,11 +2880,11 @@ TetEdgeIntersection::TetEdgeIntersection(HomogeneityTet *htet,
   // faces_.insert(f1);
   // pixelPlanes_.insert(pp);
   loc_ = triplePlaneIntersection(f0, f1, pp);
-#ifdef DEBUG
-  if(htet->verbosePlane()) {
-    oofcerr << "TetEdgeIntersection::ctor: " << *this << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verbosePlane()) {
+//     oofcerr << "TetEdgeIntersection::ctor: " << *this << std::endl;
+//   }
+// #endif // DEBUG
   setCrossingCount(0);
 // #ifdef DEBUG
 //   if(htet->verbosePlane())
@@ -2910,7 +2909,6 @@ TetEdgeIntersection *TetEdgeIntersection::clone(HomogeneityTet *htet) const {
 
 void TetEdgeIntersection::print(std::ostream &os) const {
   os << "TetEdgeIntersection(" << printPlanes() << ", " << location3D()
-     << " [" << getLocation3D() << "]"
      << ", crossing=" << crossingCount()
      << ", eq=" << eqPrint(equivalence_) << ")";
 }

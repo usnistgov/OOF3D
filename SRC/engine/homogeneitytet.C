@@ -1367,8 +1367,8 @@ void HomogeneityTet::doFindPixelPlaneFacets(
     if(!tetPts.empty()) {
       oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: pixplane="
 	      << *pixplane << " category=" << cat << std::endl;
-      oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
-	      << "initial equivalence classes:" << std::endl;
+      // oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
+      // 	      << "initial equivalence classes:" << std::endl;
       // dumpEquivalences();
       // oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: tetPts="
       // 	      << std::endl;
@@ -3303,11 +3303,11 @@ void IntersectionGroup::fixOccupiedEdges(
 	      // Remove x and xprev (ie C and b) from the loose end
 	      // set, merge their equivalence classes, and set up the
 	      // next iteration.
-#ifdef DEBUG
-	      if(htet->verboseFace())
-		oofcerr << "IntersectionGroup::fixOccupiedEdges: "
-			<< "merging classes" << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+// 	      if(htet->verboseFace())
+// 		oofcerr << "IntersectionGroup::fixOccupiedEdges: "
+// 			<< "merging classes" << std::endl;
+// #endif // DEBUG
 	      x->corner()->equivalence()->merge(xprev->corner()->equivalence());
 	      looseEnds.erase(x);
 	      looseEnds.erase(xprev);
