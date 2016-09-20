@@ -1318,24 +1318,24 @@ void PixelPlaneFacet::removeNullEdges() {
 // given FaceFacets object.
 
 void PixelPlaneFacet::getEdgesOnFaces(FaceFacets &faceFacets) const {
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "PixelPlaneFacet::getEdgesOnFaces: pixplane=" << *pixplane
-	    << std::endl;
-  OOFcerrIndent indent(2);
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "PixelPlaneFacet::getEdgesOnFaces: pixplane=" << *pixplane
+// 	    << std::endl;
+//   OOFcerrIndent indent(2);
+// #endif // DEBUG
   const FacePixelPlane *baseFace = htet->getCoincidentFacePlane(pixplane);
   for(const FacetEdge *edge : edges) {
     FacePlaneSet faces = edge->startPt()->sharedFaces(edge->endPt(), baseFace);
-#ifdef DEBUG
-    if(verbose) {
-      oofcerr << "PixelPlaneFacet::getEdgesOnFaces: edge=" << *edge
-	      << std::endl;
-      oofcerr << "PixelPlaneFacet::getEdgesOnFaces: faces=";
-      for(const FacePlane *fp : faces)
-	oofcerr << " " << *fp << std::endl;
-      }
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verbose) {
+//       oofcerr << "PixelPlaneFacet::getEdgesOnFaces: edge=" << *edge
+// 	      << std::endl;
+//       oofcerr << "PixelPlaneFacet::getEdgesOnFaces: faces=";
+//       for(const FacePlane *fp : faces)
+// 	oofcerr << " " << *fp << std::endl;
+//       }
+// #endif // DEBUG
     for(const FacePlane *fp : faces) {
       // Construct an edge in the reverse order on the face facet.
       faceFacets[fp->face()].addEdge(

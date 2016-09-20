@@ -64,14 +64,7 @@ public:
 
   // Are two points on the same edge and same edge coordinate?
   bool samePosition(const FaceEdgeIntersection*) const;
-  
-  // PlaneIntersection *replacePoint(PlaneIntersection *pi,
-  // 				  HomogeneityTet*);
-  // PlaneIntersection *replacePoint(PlaneIntersection *pi,
-  // 				  unsigned int, double,
-  // 				  std::vector<LooseEndMap>&,
-  // 				  HomogeneityTet*);
-};
+};				// end class FaceEdgeIntersection
 
 struct FaceEdgeIntersectionLT {
 public:
@@ -119,7 +112,7 @@ public:
   // the edge number or NONE.
   unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const;
   bool operator<(const FaceFacetEdge&) const; // object identity, not value
-};
+}; // end class FaceFacetEdge
 
 std::ostream &operator<<(std::ostream&, const FaceFacetEdge&);
 
@@ -182,7 +175,7 @@ public:
   friend class CSkeletonElement;
 #endif // DEBUG
   friend std::ostream &operator<<(std::ostream&, const FaceFacet&);
-};
+};				// end class FaceFacet
 
 std::ostream &operator<<(std::ostream&, const FaceFacet&);
 

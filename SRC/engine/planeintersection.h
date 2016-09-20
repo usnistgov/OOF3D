@@ -278,7 +278,7 @@ protected:
   PixelPlaneSet pixelPlanes_;
   FacePlaneSet faces_;
   FacePixelPlaneSet pixelFaces_;
-
+  Coord3D fixedLocation(const Coord3D&) const;
 public:
   virtual const PixelPlaneSet &pixelPlanes() const { return pixelPlanes_; }
   virtual PixelPlaneSet &pixelPlanes() { return pixelPlanes_; }
@@ -388,7 +388,7 @@ public:
     : IntersectionPlanes<PlaneIntersection>(htet)
   {}
   virtual GenericIntersection *clone(HomogeneityTet*) const;
-  virtual void setLocation(const Coord3D &x) { loc_ = x; }
+  virtual void setLocation(const Coord3D&);
   virtual Coord3D getLocation3D() const { return loc_; }
   virtual void print(std::ostream&) const;
   virtual std::string shortName() const;

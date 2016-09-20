@@ -100,6 +100,23 @@ void PlaneIntersection::setEquivalence(IsecEquivalenceClass *e) {
 //   OOFcerrIndent indent(2);
 // #endif // DEBUG
 
+#ifdef DEBUG
+  double dist2 = norm2(getLocation3D() - e->location3D());
+  if(dist2 > 1.e-10) {
+    oofcerr << "PlaneIntersection::setEquivalence: incompatible positions!"
+	    << std::endl;
+    OOFcerrIndent indent(2);
+    oofcerr << "PlaneIntersection::setEquivalence: this=" << *this
+	    << std::endl;
+    oofcerr << "PlaneIntersection::setEquivalence: here=" << getLocation3D()
+	    << " eqpos=" << e->location3D() << " dist=" << sqrt(dist2)
+	    << std::endl;
+    e->dump();
+    throw ErrProgrammingError("Incompatible equivalence class!",
+			      __FILE__, __LINE__);
+  }
+#endif // DEBUG
+
   // This may have been called via a RedundantIntersection's
   // setEquivalence method, in which case there's nothing to do.
   if(equivalence() == e)
@@ -109,8 +126,9 @@ void PlaneIntersection::setEquivalence(IsecEquivalenceClass *e) {
   equivalence_ = e;
   if(e != nullptr) {		// TODO: is this check necessary?
     e->addIntersection(this);
-    // TODO:  When this is called from IsecEquivalenceClass::merge,
-    // it's not necessary to call addPlanesToEquivalence().
+    // TODO: When setEquivalence is called from
+    // IsecEquivalenceClass::merge, it's not necessary to call
+    // addPlanesToEquivalence().
     addPlanesToEquivalence(e);
   }
   
@@ -181,8 +199,12 @@ GenericIntersection *GenericIntersection::clone(HomogeneityTet *htet) const {
   return bozo;
 }
 
+void GenericIntersection::setLocation(const Coord3D &pos) {
+  loc_ = fixedLocation(pos);
+}
+
 void GenericIntersection::print(std::ostream &os) const {
-  os << "GenericIntersection(" << printPlanes() << ")";
+  os << "GenericIntersection(" << printPlanes() << ", " << loc_ << ")";
 }
 
 std::string GenericIntersection::shortName() const {
@@ -529,14 +551,22 @@ void IntersectionPlanesBase::computeLocation() {
   }
   // If there are three pixel planes, then pos is uninitialized, but
   // the value passed to setLocation is irrelevant.
+  // TODO: It's relevant for GenericIntersections!?
   setLocation(pos);
 }
 
 void PixelPlaneIntersectionNR::setLocation(const Coord3D &pos) {
-  loc_ = pos;
+  loc_ = fixedLocation(pos);
+}
+
+Coord3D IntersectionPlanesBase::fixedLocation(const Coord3D &pt) const {
   // Make sure that the point is exactly on all of the pixel planes.
-  for(const HPixelPlane *pixplane : pixelPlaneSets())
-    loc_[pixplane->direction()] = pixplane->normalOffset();
+  Coord3D fixed = pt;
+  for(const HPixelPlane *pixplane : pixelPlanes_)
+    fixed[pixplane->direction()] = pixplane->normalOffset();
+  for(const FacePixelPlane *fpp : pixelFaces_)
+    fixed[fpp->direction()] = fpp->normalOffset();
+  return fixed;
 }
 
 // template <class PlaneSet0, class PlaneSet1>
@@ -2851,6 +2881,11 @@ TetEdgeIntersection::TetEdgeIntersection(HomogeneityTet *htet,
   // faces_.insert(f1);
   // pixelPlanes_.insert(pp);
   loc_ = triplePlaneIntersection(f0, f1, pp);
+#ifdef DEBUG
+  if(htet->verbosePlane()) {
+    oofcerr << "TetEdgeIntersection::ctor: " << *this << std::endl;
+  }
+#endif // DEBUG
   setCrossingCount(0);
 // #ifdef DEBUG
 //   if(htet->verbosePlane())
@@ -2875,6 +2910,7 @@ TetEdgeIntersection *TetEdgeIntersection::clone(HomogeneityTet *htet) const {
 
 void TetEdgeIntersection::print(std::ostream &os) const {
   os << "TetEdgeIntersection(" << printPlanes() << ", " << location3D()
+     << " [" << getLocation3D() << "]"
      << ", crossing=" << crossingCount()
      << ", eq=" << eqPrint(equivalence_) << ")";
 }
@@ -3040,6 +3076,10 @@ IsecEquivalenceClass::~IsecEquivalenceClass() {
 }
 
 void IsecEquivalenceClass::addIntersection(PlaneIntersection *pi) {
+  // This is called by the PlaneIntersection copy constructor and
+  // PlaneIntersection::setEquivalence.  The copy constructor is
+  // adding an incompletely built object, so don't call any virtual
+  // PlaneIntersection methods here.
 // #ifdef DEBUG
 //   if(verbose)
 //     oofcerr << "IsecEquivalenceClass::addIntersection: this=" << *this
@@ -3062,8 +3102,9 @@ void IsecEquivalenceClass::removeIntersection(PlaneIntersection *pi) {
   // try to print any more than the pointer.
 
   auto iter = std::find(intersections.begin(), intersections.end(), pi);
-  if(iter != intersections.end())
+  if(iter != intersections.end()) {
     intersections.erase(iter);
+  }
   else {
     oofcerr << "IsecEquivalenceClass::removeIntersection:"
 	    << " failed to remove intersection"<< std::endl;
@@ -3169,6 +3210,19 @@ void IsecEquivalenceClass::merge(IsecEquivalenceClass *other) {
     
 //   }
 // #endif // DEBUG
+#ifdef DEBUG
+  double dist2 = norm2(location3D() - other->location3D());
+  if(dist2 > 1.e-10) {
+    oofcerr << "IsecEquivalenceClass::merge: incompatible classes!  dist="
+	    << sqrt(dist2) << std::endl;
+    oofcerr << "IsecEquivalenceClass::merge this="  << *this << " "
+	    << location3D() << std::endl;
+    oofcerr << "IsecEquivalenceClass::merge other=" << *other << " "
+	    << other->location3D() << std::endl;
+    throw ErrProgrammingError("Failed to merge equivalence classes!",
+			      __FILE__, __LINE__);
+  }
+#endif // DEBUG
   pixelPlanes.insert(other->pixelPlanes.begin(), other->pixelPlanes.end());
   facePlanes.insert(other->facePlanes.begin(), other->facePlanes.end());
   pixelFaces.insert(other->pixelFaces.begin(), other->pixelFaces.end());
@@ -3198,7 +3252,7 @@ void IsecEquivalenceClass::merge(IsecEquivalenceClass *other) {
 //     }
 //   }
 // #endif // DEBUG
-}
+} // end IsecEquivalenceClass::merge
 
 std::ostream &operator<<(std::ostream &os, const IsecEquivalenceClass &eqclass)
 {

@@ -861,9 +861,10 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
     for(unsigned int cat=0; cat<ncat; cat++) {
       const VoxelSetBoundary *vsb = bdys[cat];
 #ifdef DEBUG
-      if(verbose) {
+      if(homtet.verboseCategory()) {
 	oofcerr << "CSkeletonElement::categoryVolumes: category=" << cat
 		<< std::endl;
+	// homtet.dumpEquivalences();
 	// writeDebugFile("*** category " + to_string(cat) + " ***\n");
       }
 #endif	// DEBUG
@@ -871,10 +872,10 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
 	FacetMap2D pixelplanefacets =
 	  homtet.findPixelPlaneFacets(cat, *vsb);
 #ifdef DEBUG
-	// if(verbose) {
+	// if(homtet.verboseCategory()) {
 	//   oofcerr << "CSkeletonElement::categoryVolumes: "
 	// 	  << "after findPixelPlaneFacets cat=" << cat << std::endl;
-	//   homtet.dumpEquivalences();
+	//   // homtet.dumpEquivalences();
 	// }
 	if(!homtet.verify()) {
 	  throw ErrProgrammingError("Verification failed", __FILE__, __LINE__);

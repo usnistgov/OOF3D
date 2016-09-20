@@ -661,7 +661,8 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
 	// The points are in different equivalence classes.  Merge the classes.
 // #ifdef DEBUG
 // 	if(verboseplane) {
-// 	  oofcerr << "HomogeneityTet::mergeEquiv: merging classes" << std::endl;
+// 	  oofcerr << "HomogeneityTet::mergeEquiv(3): merging classes"
+// 		  << std::endl;
 // 	}
 // #endif // DEBUG
 	equivClass0->merge(equivClass1); // Resets all pointers to equivClass1.
@@ -712,6 +713,11 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *pt0, PlaneIntersection *pt1)
       pt1->setEquivalence(equivClass0);
     }
     else if(equivClass0 != equivClass1) {
+// #ifdef DEBUG
+//       if(verboseplane)
+// 	oofcerr << "HomogeneityTet::mergeEquiv(2): merging classes"
+// 		<< std::endl;
+// #endif // DEBUG
       equivClass0->merge(equivClass1);
       auto eptr = std::find(equivalences.begin(), equivalences.end(),
 			    equivClass1);
@@ -1266,12 +1272,16 @@ FacetMap2D HomogeneityTet::findPixelPlaneFacets(unsigned int cat,
 	const std::vector<PixelBdyLoop*> &floops = (*psbmi).second->get_loops();
 	loops.insert(loops.end(), floops.begin(), floops.end());
       }
-// #ifdef DEBUG
-//       if(verboseplane)
-// 	oofcerr << "HomogeneityTet::findPixelPlaneFacets: "
-// 		<< "calling doFindPixelPlaneFacets with CS data" << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+      if(verboseplane)
+	oofcerr << "HomogeneityTet::findPixelPlaneFacets: "
+		<< "calling doFindPixelPlaneFacets with CS data" << std::endl;
+#endif // DEBUG
       doFindPixelPlaneFacets(cat, pixplane, loops, f, facets);
+#ifdef DEBUG
+	if(verboseplane)
+	  oofcerr << "HomogeneityTet::findPixelPlaneFacets: back from doFindPixelPlaneFacets" << std::endl;
+#endif // DEBUG
 #ifdef DEBUG
       verboseplane = false;
 #endif  // DEBUG
@@ -1301,19 +1311,22 @@ FacetMap2D HomogeneityTet::findPixelPlaneFacets(unsigned int cat,
       if(didPlane.count(pixplane) == 0) {
 	const PixelSetBoundary *psb = (*psbm).second;
 	const std::vector<PixelBdyLoop*> loops = psb->get_loops();
-// #ifdef DEBUG
-// 	if(verboseplane)
-// 	  oofcerr << "HomogeneityTet::findPixelPlaneFacets: "
-// 		  << "calling doFindPixelPlaneFacets with facet data"
-// 		  << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+	if(verboseplane)
+	  oofcerr << "HomogeneityTet::findPixelPlaneFacets: "
+		  << "calling doFindPixelPlaneFacets with facet data"
+		  << std::endl;
+#endif // DEBUG
 	doFindPixelPlaneFacets(cat, pixplane, loops, /*face=*/NONE, facets);
+#ifdef DEBUG
+	if(verboseplane)
+	  oofcerr << "HomogeneityTet::findPixelPlaneFacets: back from doFindPixelPlaneFacets" << std::endl;
+#endif // DEBUG
       }
 #ifdef DEBUG
       verboseplane = false;
 #endif // DEBUG
     } // end loop over PixelSetBoundaryMap
-
   return facets;
 } // end HomogeneityTet::findPixelPlaneFacets
 
@@ -1329,6 +1342,13 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 {
   // TODO: Check bounding box for intersection before doing anything
   // else.
+#ifdef DEBUG
+  if(verboseplane) {
+    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: cat=" << cat
+	    << " pixplane=" << *pixplane << std::endl;
+  }
+#endif // DEBUG
+  
   TetIntersectionPolygon &tetPts = getTetPlaneIntersectionPoints(pixplane);
   unsigned int nn = tetPts.size();
 
@@ -1347,6 +1367,9 @@ void HomogeneityTet::doFindPixelPlaneFacets(
     if(!tetPts.empty()) {
       oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: pixplane="
 	      << *pixplane << " category=" << cat << std::endl;
+      oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
+	      << "initial equivalence classes:" << std::endl;
+      // dumpEquivalences();
       // oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: tetPts="
       // 	      << std::endl;
       // for(const TetIntersection *pt : tetPts)
@@ -2365,16 +2388,18 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	  edgeEdges[faceEdge].insert(edge);
 	}
       }
-// #ifdef DEBUG
-//       if(verboseface) {
-// 	oofcerr << "HomogeneityTet::findFaceFacets:"
-// 		<< " before resolveCoincidences, looseEnds="
-// 		<< std::endl;
-// 	OOFcerrIndent indent(2);
-// 	printLooseEnds(looseEnds);
-//       }
-// #endif // DEBUG
-      resolveCoincidences(face, looseEnds, edgeEdges);
+#ifdef DEBUG
+      if(verboseface) {
+	oofcerr << "HomogeneityTet::findFaceFacets:"
+		<< " before resolveCoincidences, looseEnds="
+		<< std::endl;
+	printLooseEnds(looseEnds);
+      }
+#endif // DEBUG
+      {
+	OOFcerrIndent indent(2);
+	resolveCoincidences(face, looseEnds, edgeEdges);
+      }
 #ifdef DEBUG
       if(verboseface) {
 	oofcerr << "HomogeneityTet::findFaceFacets:"
@@ -2919,22 +2944,22 @@ void IntersectionGroup::fixTents(HomogeneityTet *htet,
     if(!matched[i]) {
       FaceEdgeIntersection *feii = isecs[i];
       PlaneIntersection *ptX = feii->remoteCorner();
-// #ifdef DEBUG
-//       if(htet->verboseFace()) {
-// 	oofcerr << "IntersectionGroup::fixTents: feii=" << *feii << std::endl;
-// 	oofcerr << "IntersectionGroup::fixTents: ptX=" << *ptX << std::endl;
-//       }
-//       OOFcerrIndent indent(2);
-// #endif // DEBUG
+#ifdef DEBUG
+      if(htet->verboseFace()) {
+	oofcerr << "IntersectionGroup::fixTents: feii=" << *feii << std::endl;
+	oofcerr << "IntersectionGroup::fixTents: ptX=" << *ptX << std::endl;
+      }
+      OOFcerrIndent indent(2);
+#endif // DEBUG
       for(unsigned int j=i+1; j<npts; j++) {
 	if(!matched[j]) {
 	  FaceEdgeIntersection *feij = isecs[j];
-// #ifdef DEBUG
-// 	  if(htet->verboseFace()) {
-// 	    oofcerr << "IntersectionGroup::fixTents: feij=" << *feij
-// 		    << std::endl;
-// 	  }
-// #endif // DEBUG
+#ifdef DEBUG
+	  if(htet->verboseFace()) {
+	    oofcerr << "IntersectionGroup::fixTents: feij=" << *feij
+		    << std::endl;
+	  }
+#endif // DEBUG
 	  if(feii->start() != feij->start() &&
 	     feii->faceEdge() == feij->faceEdge() &&
 	     feii->remoteCorner()->isEquivalent(ptX))
@@ -2946,25 +2971,25 @@ void IntersectionGroup::fixTents(HomogeneityTet *htet,
 	      }
 #endif // DEBUG
 	      if(!tentCheck(htet, face, ptX, feii, feij)) {
-// #ifdef DEBUG
-// 		if(htet->verboseFace()) {
-// 		  oofcerr << "IntersectionGroup::fixTents: tentCheck returned F"
-// 			  << std::endl;
-// 	      }
-// #endif // DEBUG
+#ifdef DEBUG
+		if(htet->verboseFace()) {
+		  oofcerr << "IntersectionGroup::fixTents: tentCheck returned F"
+			  << std::endl;
+	      }
+#endif // DEBUG
 		matched[j] = true;
 		matched[i] = true;
 		htet->mergeEquiv(feii->corner(), feij->corner());
 		nMatched += 2;
 		break;
 	      }
-// #ifdef DEBUG
-// 	      else
-// 		if(htet->verboseFace()) {
-// 		  oofcerr << "IntersectionGroup::fixTents: tentCheck returned T"
-// 			  << std::endl;
-// 	      }
-// #endif // DEBUG
+#ifdef DEBUG
+	      else
+		if(htet->verboseFace()) {
+		  oofcerr << "IntersectionGroup::fixTents: tentCheck returned T"
+			  << std::endl;
+	      }
+#endif // DEBUG
 	    }
 	} // end if j wasn't already matched
       }	  // end loop over intersections j
@@ -2980,11 +3005,11 @@ bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
 				  FaceEdgeIntersection *fei1)
   const
 {
-#ifdef DEBUG
-  if(htet->verboseFace())
-    oofcerr << "IntersectionGroup::tentCheck" << std::endl;
-  OOFcerrIndent indent(2);
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verboseFace())
+//     oofcerr << "IntersectionGroup::tentCheck" << std::endl;
+//   OOFcerrIndent indent(2);
+// #endif // DEBUG
   
   // The two intersection points comprise a start and an end, are on
   // the same edge of the face, and the FaceFacetEdges that they're on
@@ -2997,23 +3022,26 @@ bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
   Coord3D faceNormal = htet->faceAreaVector(face); // not unit vec
   const PlaneIntersection *pt0 = fei0->corner();
   const PlaneIntersection *pt1 = fei1->corner();
-#ifdef DEBUG
-  if(htet->verboseFace()) {
-    oofcerr << "IntersectionGroup::tentCheck: pt0=" << *pt0 << std::endl;
-    oofcerr << "IntersectionGroup::tentCheck: pt1=" << *pt1 << std::endl;
-    oofcerr << "IntersectionGroup::tentCheck: ptX=" << *ptX << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verboseFace()) {
+//     oofcerr << "IntersectionGroup::tentCheck: pt0=" << *pt0
+// 	    << " start=" << fei0->start() << std::endl;
+//     oofcerr << "IntersectionGroup::tentCheck: pt1=" << *pt1
+// 	    << " start=" << fei1->start() << std::endl;
+//     oofcerr << "IntersectionGroup::tentCheck: ptX=" << *ptX << std::endl;
+//   }
+// #endif // DEBUG
   const FacePlane *thisFacePtr = htet->getTetFacePlane(face);
-  // pt0 and pt1 are on the same tet edge, so they share
-  // two faces.  otherFace is the other face.
+  // pt0 and pt1 are on the same tet edge, so they share two faces.
+  // The calculation is being done on thisFacePtr.  otherFacePtr is
+  // the other face.
   const FacePlane *otherFacePtr = pt0->sharedFace(pt1, thisFacePtr);
   assert(otherFacePtr != nullptr);
-#ifdef DEBUG
-  if(htet->verboseFace())
-    oofcerr << "IntersectionGroup::tentCheck: otherFacePtr=" << *otherFacePtr
-	    << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verboseFace())
+//     oofcerr << "IntersectionGroup::tentCheck: otherFacePtr=" << *otherFacePtr
+// 	    << std::endl;
+// #endif // DEBUG
   unsigned int otherFace = htet->getTetFaceIndex(otherFacePtr);
   // tetEdge is the index of the common edge at tet scope.
   unsigned int tetEdge =
@@ -3039,15 +3067,15 @@ bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
   Coord3D Eperp = cross(faceNormal, E);
   Eperp /= sqrt(norm2(Eperp));
 
-#ifdef DEBUG
-  if(htet->verboseFace())
-    oofcerr << "IntersectionGroup::tentCheck: face=" << face
-	    << " otherFace=" << otherFace << " tetEdge=" << tetEdge
-	    << " faceEdge=" << faceEdge
-	    << " n0=" << n0 << " n1=" << n1
-	    << " e0=" << e0 << " e1=" << e1
-	    << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verboseFace())
+//     oofcerr << "IntersectionGroup::tentCheck: face=" << face
+// 	    << " otherFace=" << otherFace << " tetEdge=" << tetEdge
+// 	    << " faceEdge=" << faceEdge
+// 	    << " n0=" << n0 << " n1=" << n1
+// 	    << " e0=" << e0 << " e1=" << e1
+// 	    << std::endl;
+// #endif // DEBUG
   
   // Find the vectors in the directions of the edges from pt0 and pt1
   // to ptX.  *Don't* just use the positions of those points, since
@@ -3057,50 +3085,50 @@ bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
   // nullptr, it means that the points are connected along a tet face
   // and not a pixel plane, and this check is irrelevant.
 
-  // TODO: What if pt[01] and ptX contain oppositely directed pixel
-  // planes?  Should sharedPixelPlane return the plane at pt[01], or
-  // nullptr?
-  
   const PixelPlane *pp0 = pt0->sharedPixelPlane(ptX, face);
   if(pp0 == nullptr) {
-#ifdef DEBUG
-    if(htet->verboseFace())
-      oofcerr << "IntersectionGroup::tentCheck: pp0 = nullptr!" << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(htet->verboseFace())
+//       oofcerr << "IntersectionGroup::tentCheck: pp0 = nullptr!" << std::endl;
+// #endif // DEBUG
     return true;
   }
   const PixelPlane *pp1 = pt1->sharedPixelPlane(ptX, face);
   if(pp1 == nullptr) {
-#ifdef DEBUG
-    if(htet->verboseFace()) {
-      oofcerr << "IntersectionGroup::tentCheck: pp1 = nullptr!" << std::endl;
-      OOFcerrIndent indnt(2);
-      oofcerr << "IntersectionGroup::tentCheck: pt1=" << *pt1 << std::endl;
-      oofcerr << "IntersectionGroup::tentCheck: ptX=" << *ptX << std::endl;
-    }
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(htet->verboseFace()) {
+//       oofcerr << "IntersectionGroup::tentCheck: pp1 = nullptr!" << std::endl;
+//       OOFcerrIndent indnt(2);
+//       oofcerr << "IntersectionGroup::tentCheck: pt1=" << *pt1 << std::endl;
+//       oofcerr << "IntersectionGroup::tentCheck: ptX=" << *ptX << std::endl;
+//     }
+// #endif // DEBUG
     return true;
   }
-#ifdef DEBUG
-  if(htet->verboseFace())
-    oofcerr << "IntersectionGroup::tentCheck: pp0=" << *pp0 << " pp1=" << *pp1
-	    << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verboseFace()) {
+//     oofcerr << "IntersectionGroup::tentCheck: pp0=" << *pp0 << " pp1=" << *pp1
+// 	    << std::endl;
+//     oofcerr << "IntersectionGroup::tentCheck: pp0->normal=" << pp0->normal()
+// 	    << " pp1->normal=" << pp1->normal() << " faceNormal=" << faceNormal
+// 	    << std::endl;
+//   }
+// #endif // DEBUG
 
-  Coord3D edgeVec0 = cross(pp0->normal(), faceNormal);
-  Coord3D edgeVec1 = cross(pp1->normal(), faceNormal);
+  Coord3D edgeVec0 = cross(faceNormal, pp0->normal());
+  Coord3D edgeVec1 = cross(faceNormal, pp1->normal());
 
   double dot0 = dot(edgeVec0, Eperp);
   double dot1 = dot(edgeVec1, Eperp);
-#ifdef DEBUG
-  if(htet->verboseFace()) {
-    oofcerr << "IntersectionGroup::tentCheck: edgeVec0=" << edgeVec0
-	    << " edgeVec1=" << edgeVec1 << " Eperp=" << Eperp
-	    << std::endl;
-    oofcerr << "IntersectionGroup::tentCheck: dot0=" << dot0 << " dot1="
-	    << dot1 << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verboseFace()) {
+//     oofcerr << "IntersectionGroup::tentCheck: edgeVec0=" << edgeVec0
+// 	    << " edgeVec1=" << edgeVec1 << " Eperp=" << Eperp
+// 	    << std::endl;
+//     oofcerr << "IntersectionGroup::tentCheck: dot0=" << dot0 << " dot1="
+// 	    << dot1 << std::endl;
+//   }
+// #endif // DEBUG
   // If feiN is a start point, then the vector along the edge feiN,ptX
   // must go towards the interior of the face, and must have a
   // positive dot product with Eperp.  If it's an end point, the dot
@@ -3109,14 +3137,13 @@ bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
   if((dot0 > 0 && !fei0->start()) || (dot0 < 0 && fei0->start()) ||
      (dot1 > 0 && !fei1->start()) || (dot1 < 0 && fei1->start()))
     {
-#ifdef DEBUG
-      if(htet->verboseFace())
-	oofcerr << "IntersectionGroup::tentCheck: dot check failed"
-		<< std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(htet->verboseFace())
+// 	oofcerr << "IntersectionGroup::tentCheck: dot check failed"
+// 		<< std::endl;
+// #endif // DEBUG
       return false;
     }
-  
 
   // Normalize the edgeVecs.
   edgeVec0 /= sqrt(norm2(edgeVec0));
@@ -3124,10 +3151,10 @@ bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
 
   double dotSum = dot(edgeVec0 + edgeVec1, E);
 
-#ifdef DEBUG
-  if(htet->verboseFace())
-    oofcerr << "IntersectionGroup::tentCheck: dotSum=" << dotSum << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verboseFace())
+//     oofcerr << "IntersectionGroup::tentCheck: dotSum=" << dotSum << std::endl;
+// #endif // DEBUG
   if(dotSum > 0) {
     // The segment that goes from ptX to the tet edge must intersect
     // the edge after the other edge.  Return true if it does, false
@@ -3135,20 +3162,20 @@ bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
     if(fei0->start()) {
       // The segment at fei0 starts on the edge and ends at ptX.  fei1
       // must be after fei0.
-#ifdef DEBUG
-      if(htet->verboseFace())
-	oofcerr << "IntersectionGroup::tentCheck: case A: "
-		<< fei0->edgePosition() << " " <<  fei1->edgePosition()
-		<< std::endl;
-#endif // DEBUG      
+// #ifdef DEBUG
+//       if(htet->verboseFace())
+// 	oofcerr << "IntersectionGroup::tentCheck: case A: "
+// 		<< fei0->edgePosition() << " " <<  fei1->edgePosition()
+// 		<< std::endl;
+// #endif // DEBUG      
       return fei1->edgePosition() > fei0->edgePosition();
     }
-#ifdef DEBUG
-    if(htet->verboseFace())
-      oofcerr << "IntersectionGroup::tentCheck: case B: "
-	      << fei0->edgePosition() << " " <<  fei1->edgePosition()
-	      << std::endl;
-#endif // DEBUG      
+// #ifdef DEBUG
+//     if(htet->verboseFace())
+//       oofcerr << "IntersectionGroup::tentCheck: case B: "
+// 	      << fei0->edgePosition() << " " <<  fei1->edgePosition()
+// 	      << std::endl;
+// #endif // DEBUG      
     return fei1->edgePosition() < fei0->edgePosition();
   }
   else if(dotSum < 0) {
@@ -3157,20 +3184,20 @@ bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
     // otherwise.
     if(fei0->start()) {
       // fei0 must be after fei1.
-#ifdef DEBUG
-      if(htet->verboseFace())
-	oofcerr << "IntersectionGroup::tentCheck: case C: "
-		<< fei0->edgePosition() << " " <<  fei1->edgePosition()
-		<< std::endl;
-#endif // DEBUG      
+// #ifdef DEBUG
+//       if(htet->verboseFace())
+// 	oofcerr << "IntersectionGroup::tentCheck: case C: "
+// 		<< fei0->edgePosition() << " " <<  fei1->edgePosition()
+// 		<< std::endl;
+// #endif // DEBUG      
       return fei0->edgePosition() > fei1->edgePosition();
     }
-#ifdef DEBUG
-    if(htet->verboseFace())
-      oofcerr << "IntersectionGroup::tentCheck: case D: "
-	      << fei0->edgePosition() << " " <<  fei1->edgePosition()
-	      << std::endl;
-#endif // DEBUG      
+// #ifdef DEBUG
+//     if(htet->verboseFace())
+//       oofcerr << "IntersectionGroup::tentCheck: case D: "
+// 	      << fei0->edgePosition() << " " <<  fei1->edgePosition()
+// 	      << std::endl;
+// #endif // DEBUG      
     return fei0->edgePosition() < fei1->edgePosition();
   }
   // dotSum == 0.  The two segments from ptX are antiparallel, or both
@@ -3276,6 +3303,11 @@ void IntersectionGroup::fixOccupiedEdges(
 	      // Remove x and xprev (ie C and b) from the loose end
 	      // set, merge their equivalence classes, and set up the
 	      // next iteration.
+#ifdef DEBUG
+	      if(htet->verboseFace())
+		oofcerr << "IntersectionGroup::fixOccupiedEdges: "
+			<< "merging classes" << std::endl;
+#endif // DEBUG
 	      x->corner()->equivalence()->merge(xprev->corner()->equivalence());
 	      looseEnds.erase(x);
 	      looseEnds.erase(xprev);
@@ -3316,7 +3348,7 @@ void IntersectionGroup::fixOccupiedEdges(
 //     }
 // #endif // DEBUG
   }
-}
+} // end IntersectionGroup::fixOccupiedEdges
 
 // void IntersectionGroup::fixOrdering(HomogeneityTet *htet,
 // 				    unsigned int face,
@@ -3446,8 +3478,27 @@ void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
   for(unsigned int i=firstXing; i<lastXing+1; i++) {
     isecs[i]->corner()->copyPlanesToIntersection(newPt);
   }
-  htet->checkEquiv(newPt);	// merges equivalence classees
+#ifdef DEBUG
+  if(htet->verboseFace()) {
+    oofcerr << "IntersectionGroup::fixCrossings: new GenericIntersection! "
+	    << *newPt << std::endl;
+  }
+#endif // DEBUG
   newPt->computeLocation();
+#ifdef DEBUG
+  if(htet->verboseFace()) {
+    oofcerr << "IntersectionGroup::fixCrossings:                         "
+	    << " location3D=" << newPt->location3D()
+	    << " getLocation3D=" << newPt->getLocation3D() << std::endl;
+  }
+#endif // DEBUG
+  htet->checkEquiv(newPt);	// merges equivalence classees
+#ifdef DEBUG
+  if(htet->verboseFace()) {
+    oofcerr << "IntersectionGroup::fixCrossings:                         "
+	    << " back from checkEquiv" << std::endl;
+  }
+#endif // DEBUG
   // Find out where newPt is on the face.
   double newT = -1;
   unsigned int newEdge = NONE;
@@ -3541,8 +3592,8 @@ void HomogeneityTet::resolveCoincidences(
 
 #ifdef DEBUG
   if(verboseface) {
-    oofcerr << "HomogeneityTet::resolveCoincidences: nLooseEnds="
-	    << looseEnds.size() << std::endl;
+    oofcerr << "HomogeneityTet::resolveCoincidences: face=" << face
+	    << " nLooseEnds=" << looseEnds.size() << std::endl;
   }
   OOFcerrIndent indent(2);
 #endif // DEBUG
@@ -3577,14 +3628,12 @@ void HomogeneityTet::resolveCoincidences(
 #endif // DEBUG
     if(ig.size() > 1) {
       ig.sortByPositionAndEdge();
-// #ifdef DEBUG
-//       if(verboseface) {
-// 	oofcerr << "HomogeneityTet::resolveCoincidences: "
-// 		<< "after sorting, ig=" << std::endl;
-// 	OOFcerrIndent indent(2);
-// 	std::cerr << ig << std::endl;
-//       }
-// #endif // DEBUG
+#ifdef DEBUG
+      if(verboseface) {
+	oofcerr << "HomogeneityTet::resolveCoincidences: calling removeEquivPts"
+		<< std::endl;
+      }
+#endif // DEBUG
       ig.removeEquivPts(this, face, looseEnds);
 // #ifdef DEBUG
 //       if(verboseface) {
@@ -3601,30 +3650,45 @@ void HomogeneityTet::resolveCoincidences(
       // TODO: keep track of whether anything changed, and only re-sort
       // if necessary, for all calls to sortByPositionAndEdge in this loop.
       ig.sortByPositionAndEdge();
+#ifdef DEBUG
+      if(verboseface)
+	oofcerr << "HomogeneityTet::resolveCoincidences: calling fixTents"
+		<< std::endl;
+#endif // DEBUG
       ig.fixTents(this, face, looseEnds);
-#ifdef DEBUG
-      if(verboseface) {
-	oofcerr << "HomogeneityTet::resolveCoincidences: "
-		<< "after fixTents, ig=" << std::endl;
-	OOFcerrIndent indent(2);
-	std::cerr << ig << std::endl;
-      }
-      if(ig.size() <= 1)
-	continue;
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(verboseface) {
+// 	oofcerr << "HomogeneityTet::resolveCoincidences: "
+// 		<< "after fixTents, ig=" << std::endl;
+// 	OOFcerrIndent indent(2);
+// 	std::cerr << ig << std::endl;
+//       }
+//       if(ig.size() <= 1)
+// 	continue;
+// #endif // DEBUG
       ig.sortByPositionAndEdge();
+#ifdef DEBUG
+      if(verboseface)
+	oofcerr << "HomogeneityTet::resolveCoincidences: calling fixCrossings"
+		<< std::endl;
+#endif // DEBUG
       ig.fixCrossings(this, face, looseEnds);
-#ifdef DEBUG
-      if(verboseface) {
-	oofcerr << "HomogeneityTet::resolveCoincidences: "
-		<< "after fixCrossings, ig=" << std::endl;
-	OOFcerrIndent indent(2);
-	std::cerr << ig << std::endl;
-      }
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(verboseface) {
+// 	oofcerr << "HomogeneityTet::resolveCoincidences: "
+// 		<< "after fixCrossings, ig=" << std::endl;
+// 	OOFcerrIndent indent(2);
+// 	std::cerr << ig << std::endl;
+//       }
+// #endif // DEBUG
       if(ig.size() <= 1)
 	continue;
       ig.sortByPositionAndEdge();
+#ifdef DEBUG
+      if(verboseface)
+	oofcerr << "HomogeneityTet::resolveCoincidences: "
+		<< "calling fixOccupiedEdges" << std::endl;
+#endif // DEBUG
       ig.fixOccupiedEdges(this, face, looseEnds, edgeEdges);
 // #ifdef DEBUG
 //       if(verboseface) {
@@ -3638,12 +3702,16 @@ void HomogeneityTet::resolveCoincidences(
       // ig.sortByPositionAndEdge();
       // ig.checkOrdering(this, face, looseEnds);
     } // end if ig.size() > 1
-#ifdef DEBUG
-    if(verboseface)
-      oofcerr << "HomogeneityTet::resolveCoincidences: done with ig"
-	      << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(verboseface)
+//       oofcerr << "HomogeneityTet::resolveCoincidences: done with ig"
+// 	      << std::endl;
+// #endif // DEBUG
   }
+#ifdef DEBUG
+  if(verboseface)
+    oofcerr << "HomogeneityTet::resolveCoincidences: done" << std::endl;
+#endif // DEBUG
 } // end HomogeneityTet::resolveCoincidences
 
 
@@ -3657,11 +3725,11 @@ double HomogeneityTet::intersectionVolume(const FacetMap2D &planeFacets,
 // #endif // DEBUG
 					  )
 {
-#ifdef DEBUG
-  if(verbosecategory)
-    oofcerr << "HomogeneityTet::intersectionVolume: tetcenter=" << tetCenter
-	    << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbosecategory)
+//     oofcerr << "HomogeneityTet::intersectionVolume: tetcenter=" << tetCenter
+// 	    << std::endl;
+// #endif // DEBUG
   double vol = 0.0;
   // Get volume contribution from pixel plane facets.
   for(FacetMap2D::const_iterator fm=planeFacets.begin(); fm!=planeFacets.end();
@@ -3673,16 +3741,16 @@ double HomogeneityTet::intersectionVolume(const FacetMap2D &planeFacets,
 	double dv = (1./3.)*(facet->area() * pixplane->normalSign() *
 		     (pixplane->normalOffset() -
 		      tetCenter[pixplane->direction()]));
-#ifdef DEBUG
-	if(verbose) {
-	  oofcerr << "HomogeneityTet::intersectionVolume: pixel plane facet:"
-		  // << " category=" << cat
-		  << " pixel plane=" << *facet->pixplane
-		  << " area=" << facet->area()
-		  << " dv=" << dv << std::endl;
-	  // writeDebugFile(to_string(*facet) + "\n");
-	}
-#endif	// DEBUG
+// #ifdef DEBUG
+// 	if(verbose) {
+// 	  oofcerr << "HomogeneityTet::intersectionVolume: pixel plane facet:"
+// 		  // << " category=" << cat
+// 		  << " pixel plane=" << *facet->pixplane
+// 		  << " area=" << facet->area()
+// 		  << " dv=" << dv << std::endl;
+// 	  // writeDebugFile(to_string(*facet) + "\n");
+// 	}
+// #endif	// DEBUG
 	vol += dv;
       }
     }
@@ -3692,18 +3760,18 @@ double HomogeneityTet::intersectionVolume(const FacetMap2D &planeFacets,
     if(coincidentPixelPlanes[f] == nullptr && !faceFacets[f].empty()) {
       Coord3D area = faceFacets[f].area(this);
       double dv = dot(area, faceCenters[f]-tetCenter)/3.0;
-#ifdef DEBUG
-      if(verbose) {
-	Coord3D facenorm = faceAreaVectors[f]/sqrt(norm2(faceAreaVectors[f]));
-	oofcerr << "HomogeneityTet::intersectionVolume: face facet:"
-		// << "category=" << cat
-		<< " face=" << f
-		<< " area=" << area
-		<< " " << dot(area, facenorm)
-		<< " dv=" << dv << std::endl;
-	// writeDebugFile(to_string(faceFacets[f]) + "\n");
-      }
-#endif	// DEBUG
+// #ifdef DEBUG
+//       if(verbose) {
+// 	Coord3D facenorm = faceAreaVectors[f]/sqrt(norm2(faceAreaVectors[f]));
+// 	oofcerr << "HomogeneityTet::intersectionVolume: face facet:"
+// 		// << "category=" << cat
+// 		<< " face=" << f
+// 		<< " area=" << area
+// 		<< " " << dot(area, facenorm)
+// 		<< " dv=" << dv << std::endl;
+// 	// writeDebugFile(to_string(faceFacets[f]) + "\n");
+//       }
+// #endif	// DEBUG
       vol += dv;
     }
   }
@@ -3793,15 +3861,6 @@ void FaceEdgeIntersection::findFaceEdge(unsigned int face, HomogeneityTet *htet)
 // #endif // DEBUG
 }
 
-// void FaceEdgeIntersection::replacePoint(PlaneIntersection *pi,
-// 					HomogeneityTet *htet)
-// {
-//   unsigned int oldEdge = fEdge;
-//   double oldT = t;
-//   crnr = pi;
-//   edge_->replacePoint(pi, htet, segstart);
-// }
-
 // A marooned StrandedPoint is one that can't be matched to a
 // StrandedPoint on a different face.  It must really belong on an
 // edge of the face that it's on.  This routine finds the closest edge
@@ -3865,9 +3924,18 @@ bool FaceEdgeIntersection::crosses(const FaceEdgeIntersection *other,
 
   assert(start() != other->start());
 
+  // Get the endpoints that are on the face edge.
+  const PlaneIntersection *nearEnd = corner();
+  const PlaneIntersection *otherNearEnd = other->corner();
+  // Get the endpoints that aren't on the face edge.
+  const PlaneIntersection *farEnd = edge_->point(!start());
+  const PlaneIntersection *otherFarEnd = other->edge()->point(!other->start());
+
   // Near the corner of a tet face, both ends of a single segment can
   // be in the same intersection group.  A segment doesn't cross itself.
-  if(corner() == other->remoteCorner() || remoteCorner() == other->corner())
+  if(nearEnd == otherFarEnd || farEnd == otherNearEnd)
+    return false;
+  if(nearEnd->isEquivalent(otherNearEnd) || farEnd->isEquivalent(otherFarEnd))
     return false;
   
   // Either this point precedes the other on the same face edge, or
@@ -3895,28 +3963,6 @@ bool FaceEdgeIntersection::crosses(const FaceEdgeIntersection *other,
 //   OOFcerrIndent indent(2);
 // #endif // DEBUG
 
-  // Check endpoints that are on the face edge.
-  const PlaneIntersection *nearEnd = corner();
-  const PlaneIntersection *otherNearEnd = other->corner();
-  if(nearEnd->isEquivalent(otherNearEnd)) {
-// #ifdef DEBUG
-//     if(verbose)
-//       oofcerr << "FaceEdgeIntersection::crosses: near ends equivalent"
-// 	      << std::endl;
-// #endif // DEBUG
-    return false;
-  }
-  // Get the endpoints that aren't on the face edge.
-  const PlaneIntersection *farEnd = edge_->point(!start());
-  const PlaneIntersection *otherFarEnd = other->edge()->point(!other->start());
-  if(farEnd->isEquivalent(otherFarEnd)) {
-// #ifdef DEBUG
-//     if(verbose)
-//       oofcerr << "FaceEdgeIntersection::crosses: far ends equivalent"
-// 	      << std::endl;
-// #endif // DEBUG
-    return false;
-  }
 
   // See if the segments actually intersect.
   Coord3D a0 = nearEnd->location3D();
