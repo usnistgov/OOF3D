@@ -3005,43 +3005,50 @@ bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
 				  FaceEdgeIntersection *fei1)
   const
 {
-// #ifdef DEBUG
-//   if(htet->verboseFace())
-//     oofcerr << "IntersectionGroup::tentCheck" << std::endl;
-//   OOFcerrIndent indent(2);
-// #endif // DEBUG
+#ifdef DEBUG
+  if(htet->verboseFace())
+    oofcerr << "IntersectionGroup::tentCheck" << std::endl;
+  OOFcerrIndent indent(2);
+#endif // DEBUG
   
   // The two intersection points comprise a start and an end, are on
   // the same edge of the face, and the FaceFacetEdges that they're on
   // meet at their far ends.  This means that we know the order in
   // which the intersection points should appear on the tet face
   // perimeter.  Return true if the order is correct.
-	      
+
   // TODO: Do this calculation for points on different tet
   // face edges too.
+
+  // Let feiA be the FaceEdgeIntersection for the facet segment that
+  // starts on the tet edge and feiB be the one that ends on the tet
+  // edge.
+  FaceEdgeIntersection *feiA = fei0->start() ? fei0 : fei1;
+  FaceEdgeIntersection *feiB = fei0->start() ? fei1 : fei0;
+	      
   Coord3D faceNormal = htet->faceAreaVector(face); // not unit vec
-  const PlaneIntersection *pt0 = fei0->corner();
-  const PlaneIntersection *pt1 = fei1->corner();
-// #ifdef DEBUG
-//   if(htet->verboseFace()) {
-//     oofcerr << "IntersectionGroup::tentCheck: pt0=" << *pt0
-// 	    << " start=" << fei0->start() << std::endl;
-//     oofcerr << "IntersectionGroup::tentCheck: pt1=" << *pt1
-// 	    << " start=" << fei1->start() << std::endl;
-//     oofcerr << "IntersectionGroup::tentCheck: ptX=" << *ptX << std::endl;
-//   }
-// #endif // DEBUG
+  const PlaneIntersection *ptA = feiA->corner();
+  const PlaneIntersection *ptB = feiB->corner();
+#ifdef DEBUG
+  if(htet->verboseFace()) {
+    oofcerr << "IntersectionGroup::tentCheck: ptA=" << *ptA
+	    << " start=" << feiA->start() << std::endl;
+    oofcerr << "IntersectionGroup::tentCheck: ptB=" << *ptB
+	    << " start=" << feiB->start() << std::endl;
+    oofcerr << "IntersectionGroup::tentCheck: ptX=" << *ptX << std::endl;
+  }
+#endif // DEBUG
   const FacePlane *thisFacePtr = htet->getTetFacePlane(face);
   // pt0 and pt1 are on the same tet edge, so they share two faces.
   // The calculation is being done on thisFacePtr.  otherFacePtr is
   // the other face.
-  const FacePlane *otherFacePtr = pt0->sharedFace(pt1, thisFacePtr);
+  const FacePlane *otherFacePtr = ptA->sharedFace(ptB, thisFacePtr);
   assert(otherFacePtr != nullptr);
-// #ifdef DEBUG
-//   if(htet->verboseFace())
-//     oofcerr << "IntersectionGroup::tentCheck: otherFacePtr=" << *otherFacePtr
-// 	    << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+  if(htet->verboseFace())
+    oofcerr << "IntersectionGroup::tentCheck: otherFacePtr=" << *otherFacePtr
+	    << std::endl;
+#endif // DEBUG
   unsigned int otherFace = htet->getTetFaceIndex(otherFacePtr);
   // tetEdge is the index of the common edge at tet scope.
   unsigned int tetEdge =
@@ -3067,17 +3074,17 @@ bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
   Coord3D Eperp = cross(faceNormal, E);
   Eperp /= sqrt(norm2(Eperp));
 
-// #ifdef DEBUG
-//   if(htet->verboseFace())
-//     oofcerr << "IntersectionGroup::tentCheck: face=" << face
-// 	    << " otherFace=" << otherFace << " tetEdge=" << tetEdge
-// 	    << " faceEdge=" << faceEdge
-// 	    << " n0=" << n0 << " n1=" << n1
-// 	    << " e0=" << e0 << " e1=" << e1
-// 	    << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+  if(htet->verboseFace())
+    oofcerr << "IntersectionGroup::tentCheck: face=" << face
+	    << " otherFace=" << otherFace << " tetEdge=" << tetEdge
+	    << " faceEdge=" << faceEdge
+	    << " n0=" << n0 << " n1=" << n1
+	    << " e0=" << e0 << " e1=" << e1
+	    << std::endl;
+#endif // DEBUG
   
-  // Find the vectors in the directions of the edges from pt0 and pt1
+  // Find the vectors in the directions of the edges from ptA and ptB
   // to ptX.  *Don't* just use the positions of those points, since
   // that'll be susceptible to round off error in exactly the
   // situations in which this calculation is important.  Use the
@@ -3085,129 +3092,139 @@ bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
   // nullptr, it means that the points are connected along a tet face
   // and not a pixel plane, and this check is irrelevant.
 
-  const PixelPlane *pp0 = pt0->sharedPixelPlane(ptX, face);
-  if(pp0 == nullptr) {
-// #ifdef DEBUG
-//     if(htet->verboseFace())
-//       oofcerr << "IntersectionGroup::tentCheck: pp0 = nullptr!" << std::endl;
-// #endif // DEBUG
+  const PixelPlane *ppA = ptA->sharedPixelPlane(ptX, face);
+  if(ppA == nullptr) {
+#ifdef DEBUG
+    if(htet->verboseFace())
+      oofcerr << "IntersectionGroup::tentCheck: ppA = nullptr!" << std::endl;
+#endif // DEBUG
     return true;
   }
-  const PixelPlane *pp1 = pt1->sharedPixelPlane(ptX, face);
-  if(pp1 == nullptr) {
-// #ifdef DEBUG
-//     if(htet->verboseFace()) {
-//       oofcerr << "IntersectionGroup::tentCheck: pp1 = nullptr!" << std::endl;
-//       OOFcerrIndent indnt(2);
-//       oofcerr << "IntersectionGroup::tentCheck: pt1=" << *pt1 << std::endl;
-//       oofcerr << "IntersectionGroup::tentCheck: ptX=" << *ptX << std::endl;
-//     }
-// #endif // DEBUG
+  const PixelPlane *ppB = ptB->sharedPixelPlane(ptX, face);
+  if(ppB == nullptr) {
+#ifdef DEBUG
+    if(htet->verboseFace())
+      oofcerr << "IntersectionGroup::tentCheck: ppB = nullptr!" << std::endl;
+#endif // DEBUG
     return true;
   }
-// #ifdef DEBUG
-//   if(htet->verboseFace()) {
-//     oofcerr << "IntersectionGroup::tentCheck: pp0=" << *pp0 << " pp1=" << *pp1
-// 	    << std::endl;
-//     oofcerr << "IntersectionGroup::tentCheck: pp0->normal=" << pp0->normal()
-// 	    << " pp1->normal=" << pp1->normal() << " faceNormal=" << faceNormal
-// 	    << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(htet->verboseFace()) {
+    oofcerr << "IntersectionGroup::tentCheck: ppA=" << *ppA << " ppB=" << *ppB
+	    << std::endl;
+    oofcerr << "IntersectionGroup::tentCheck: ppB->normal=" << ppA->normal()
+	    << " ppB->normal=" << ppB->normal() << " faceNormal=" << faceNormal
+	    << std::endl;
+  }
+#endif // DEBUG
 
-  Coord3D edgeVec0 = cross(faceNormal, pp0->normal());
-  Coord3D edgeVec1 = cross(faceNormal, pp1->normal());
+  // edgeVecA goes in the direction of ptA to ptX, and edgeVecB goes
+  // in the direction of ptX to ptB.  They are *not* the vectors from
+  // ptA to ptX or ptX to ptB.  Their lengths depend on the dihedral
+  // angle between the pixel planes and the face, and aren't important
+  // here.
+  Coord3D edgeVecA = cross(faceNormal, ppA->normal());
+  Coord3D edgeVecB = cross(faceNormal, ppB->normal());
 
-  double dot0 = dot(edgeVec0, Eperp);
-  double dot1 = dot(edgeVec1, Eperp);
-// #ifdef DEBUG
-//   if(htet->verboseFace()) {
-//     oofcerr << "IntersectionGroup::tentCheck: edgeVec0=" << edgeVec0
-// 	    << " edgeVec1=" << edgeVec1 << " Eperp=" << Eperp
-// 	    << std::endl;
-//     oofcerr << "IntersectionGroup::tentCheck: dot0=" << dot0 << " dot1="
-// 	    << dot1 << std::endl;
-//   }
-// #endif // DEBUG
-  // If feiN is a start point, then the vector along the edge feiN,ptX
-  // must go towards the interior of the face, and must have a
-  // positive dot product with Eperp.  If it's an end point, the dot
-  // product must be negative.  But if the dot product is zero,
-  // postpone the decision.
-  if((dot0 > 0 && !fei0->start()) || (dot0 < 0 && fei0->start()) ||
-     (dot1 > 0 && !fei1->start()) || (dot1 < 0 && fei1->start()))
+  // dotA and dotB are proportional to the components of edgeVecA and
+  // edgeVecB that are perpendicular to the tet edge.  We only care
+  // about their signs.
+  double dotA = dot(edgeVecA, Eperp);
+  double dotB = dot(edgeVecB, Eperp);
+#ifdef DEBUG
+  if(htet->verboseFace()) {
+    oofcerr << "IntersectionGroup::tentCheck: edgeVecA=" << edgeVecA
+	    << " edgeVecB=" << edgeVecB << " Eperp=" << Eperp
+	    << std::endl;
+    oofcerr << "IntersectionGroup::tentCheck: dotA=" << dotB << " dotB="
+	    << dotB << std::endl;
+  }
+#endif // DEBUG
+  // Check that edgeVecA points towards the interior and edgeVecB
+  // points towards the exterior.
+  if(dotA < 0 || dotB > 0) {
+#ifdef DEBUG
+    if(htet->verboseFace())
+      oofcerr << "IntersectionGroup::tentCheck: dot check failed"
+	      << std::endl;
+#endif // DEBUG
+    return false;
+  }
+
+  // The perpendicular components of the edgeVecs have the correct
+  // signs.  Check the transverse components.
+
+  // Normalize the edgeVecs.
+  edgeVecA /= sqrt(norm2(edgeVecA));
+  edgeVecB /= sqrt(norm2(edgeVecB));
+
+  // The normalized vectors edgeVecB and -edgeVecA point from ptX
+  // torwards the intersection points on the tet edge.  ptB is past
+  // ptA if dot(edgeVecB, E) > dot(-edgeVecA, E), so the order just
+  // depends on the sign of the dot product of the sum of the
+  // edgeVecs.
+
+  double dotSum = dot(edgeVecA + edgeVecB, E);
+#ifdef DEBUG
+  if(htet->verboseFace()) {
+    oofcerr << "IntersectionGroup::tentCheck: normalized edgeVecA=" << edgeVecA
+	    << " edgeVecA dot E= " << dot(edgeVecA, E) << std::endl;
+    oofcerr << "IntersectionGroup::tentCheck: normalized edgeVecB=" << edgeVecB
+	    << " edgeVecB dot E= " << dot(edgeVecB, E) << std::endl;
+    oofcerr << "IntersectionGroup::tentCheck: dotSum=" << dotSum << std::endl;
+    oofcerr << "IntersectionGroup::tentCheck: tA=" << feiA->edgePosition()
+	    << " tB=" << feiB->edgePosition()
+	    << " tA-tB=" << (feiA->edgePosition() - feiB->edgePosition())
+	    << std::endl;
+  }
+#endif // DEBUG
+  if((dotSum > 0 && feiA->edgePosition() > feiB->edgePosition()) ||
+     (dotSum < 0 && feiA->edgePosition() < feiB->edgePosition()))
     {
-// #ifdef DEBUG
-//       if(htet->verboseFace())
-// 	oofcerr << "IntersectionGroup::tentCheck: dot check failed"
-// 		<< std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+      if(htet->verboseFace())
+	oofcerr << "IntersectionGroup::tentCheck: dotSum check failed"
+		<< std::endl;
+#endif // DEBUG
       return false;
     }
 
-  // Normalize the edgeVecs.
-  edgeVec0 /= sqrt(norm2(edgeVec0));
-  edgeVec1 /= sqrt(norm2(edgeVec1));
 
-  double dotSum = dot(edgeVec0 + edgeVec1, E);
-
-// #ifdef DEBUG
-//   if(htet->verboseFace())
-//     oofcerr << "IntersectionGroup::tentCheck: dotSum=" << dotSum << std::endl;
-// #endif // DEBUG
-  if(dotSum > 0) {
-    // The segment that goes from ptX to the tet edge must intersect
-    // the edge after the other edge.  Return true if it does, false
-    // otherwise.
-    if(fei0->start()) {
-      // The segment at fei0 starts on the edge and ends at ptX.  fei1
-      // must be after fei0.
-// #ifdef DEBUG
-//       if(htet->verboseFace())
-// 	oofcerr << "IntersectionGroup::tentCheck: case A: "
-// 		<< fei0->edgePosition() << " " <<  fei1->edgePosition()
-// 		<< std::endl;
-// #endif // DEBUG      
-      return fei1->edgePosition() > fei0->edgePosition();
+  // Check that the area of the triangle (ptA,ptX,ptB) has the
+  // expected sign. TODO: Perhaps this is the only check required.  Do
+  // it first?
+  Coord3D fcenter = htet->faceCenter(face);
+  // Calculate the area in the same way as it's done in
+  // FaceFacet::fixNonPositiveArea (which uses FaceFacet::getArea) so
+  // the round-off error should be the same.  It's hard to use exactly
+  // the same code because that calculation uses very different data
+  // structures.
+  Coord3D avec = ((ptA->location3D()-fcenter) % (ptX->location3D()-fcenter) +
+		  (ptX->location3D()-fcenter) % (ptB->location3D()-fcenter) +
+		  (ptB->location3D()-fcenter) % (ptA->location3D()-fcenter));
+  double area = dot(htet->faceAreaVector(face), avec);
+  if((area > 0 && feiB->edgePosition() > feiA->edgePosition()) ||
+     (area < 0 && feiA->edgePosition() > feiB->edgePosition()))
+    {
+#ifdef DEBUG
+      if(htet->verboseFace()) {
+	oofcerr << "IntersectionGroup::tentCheck: area test failed: area="
+		<< area << std::endl;
+      }
+#endif // DEBUG
+      return false;
     }
-// #ifdef DEBUG
-//     if(htet->verboseFace())
-//       oofcerr << "IntersectionGroup::tentCheck: case B: "
-// 	      << fei0->edgePosition() << " " <<  fei1->edgePosition()
-// 	      << std::endl;
-// #endif // DEBUG      
-    return fei1->edgePosition() < fei0->edgePosition();
-  }
-  else if(dotSum < 0) {
-    // The segment that goes from the tet edge to ptX must intersect
-    // the edge after he other edge.  Return true if it does, false
-    // otherwise.
-    if(fei0->start()) {
-      // fei0 must be after fei1.
-// #ifdef DEBUG
-//       if(htet->verboseFace())
-// 	oofcerr << "IntersectionGroup::tentCheck: case C: "
-// 		<< fei0->edgePosition() << " " <<  fei1->edgePosition()
-// 		<< std::endl;
-// #endif // DEBUG      
-      return fei0->edgePosition() > fei1->edgePosition();
-    }
-// #ifdef DEBUG
-//     if(htet->verboseFace())
-//       oofcerr << "IntersectionGroup::tentCheck: case D: "
-// 	      << fei0->edgePosition() << " " <<  fei1->edgePosition()
-// 	      << std::endl;
-// #endif // DEBUG      
-    return fei0->edgePosition() < fei1->edgePosition();
-  }
-  // dotSum == 0.  The two segments from ptX are antiparallel, or both
+  // If dotSum == 0, the two segments from ptX are antiparallel, or both
   // are parallel to the tet edge.  If they're antiparallel, their
   // other ends must be coincident, and we should return false so that
   // they'll be merged.  If the segments are parallel to the tet edge,
-  // but one end is on the edge (fei0 or fei1) and the other is
+  // but one end is on the edge (ptA or ptB) and the other is
   // interior (ptX), everything is inconsistent and must be due to
   // round-off error.  Again, return false.
-  return false;
+  if(dotSum == 0)
+    return false;
+
+  return true;			//  all is ok
 } // end IntersectionGroup::tentCheck
 
 void IntersectionGroup::fixOccupiedEdges(
@@ -4403,14 +4420,14 @@ void FaceFacet::fixNonPositiveArea(HomogeneityTet *htet, unsigned int cat)
 //     }
 // #endif	// DEBUG
   }
-// #ifdef DEBUG
-//   if(htet->verboseFace()) {
-//     oofcerr << "FaceFacet::fixNonPositiveArea: input facet=" << *this
-//      	    << std::endl;
-//     oofcerr << "FaceFacet::fixNonPositiveArea: raw_area=" << raw_area
-// 	    << " homog_face=" << homog_face << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(htet->verboseFace()) {
+    oofcerr << "FaceFacet::fixNonPositiveArea: input facet=" << *this
+     	    << std::endl;
+    oofcerr << "FaceFacet::fixNonPositiveArea: raw_area=" << raw_area
+	    << " homog_face=" << homog_face << std::endl;
+  }
+#endif // DEBUG
   if(raw_area < 0.0 || homog_face) {
     unsigned int n0 = CSkeletonElement::getFaceArray(face)[0];
     unsigned int n1 = CSkeletonElement::getFaceArray(face)[1];
