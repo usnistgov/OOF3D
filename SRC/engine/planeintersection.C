@@ -2383,6 +2383,32 @@ Interiority MultiFaceIntersection::interiority(const PixelPlaneFacet *facet)
   return MIXED;
 }
 
+// Same thing, but just for a single segment.
+Interiority MultiFaceIntersection::interiority(unsigned int which,
+					       const PixelPlaneFacet *facet)
+  const
+{
+  assert(nPolySegments() == 2);
+  assert(which == 0 || which == 1);
+  ICoord2D vsb0 = segEnd(0);
+  ICoord2D vsb1 = segEnd(1);
+  unsigned int pseg0, pseg1;
+  getPolyEdges(facet, pseg0, pseg1);
+  Coord2D phere = facet->polygonCorner(pseg1);
+  double cross;
+  if(which == 0) {
+    Coord2D pprev = facet->polygonCorner(pseg0);
+    cross = (pprev - phere) % (vsb1 - vsb0);
+  }
+  else {
+    Coord2D pnext = facet->polygonCorner((pseg1+1) % facet->polygonSize());
+    cross = (pnext - phere) % (vsb1 - vsb0);
+  }
+  if(cross < 0) return INTERIOR;
+  if(cross > 0) return EXTERIOR;
+  return MIXED;
+}
+
 const FacePlane *MultiFaceIntersection::firstFacePlane(
 					       const PixelPlaneFacet *facet)
   const

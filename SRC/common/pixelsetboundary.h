@@ -253,6 +253,7 @@ public:
   int length() const;
   bool operator<(const PixelBdyLoopSegment&) const; // for std::set
   bool operator==(const PixelBdyLoopSegment&) const;
+  bool operator!=(const PixelBdyLoopSegment&) const;
   PixelBdyLoopSegment &operator=(const PixelBdyLoopSegment &other);
 
   // Is a point to the right of the segment?

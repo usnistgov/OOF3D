@@ -432,6 +432,10 @@ bool PixelBdyLoopSegment::operator==(const PixelBdyLoopSegment &other) const {
   return (loop_ == other.loop_ && loopseg_ == other.loopseg_);
 }
 
+bool PixelBdyLoopSegment::operator!=(const PixelBdyLoopSegment &other) const {
+  return (loop_ != other.loop_ || loopseg_ != other.loopseg_);
+}
+
 PixelBdyLoopSegment &PixelBdyLoopSegment::operator=(
 					    const PixelBdyLoopSegment &other)
 {

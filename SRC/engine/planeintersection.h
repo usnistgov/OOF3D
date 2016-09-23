@@ -904,8 +904,10 @@ public:
 			const MultiFaceIntersection*);
   MultiFaceIntersection(HomogeneityTet*);
   virtual MultiFaceIntersection *clone(HomogeneityTet*) const;
-  // Are both polygon segments interior to the voxel?
+  // Are both polygon segments interior to the voxel set?
   Interiority interiority(const PixelPlaneFacet*) const;
+  // Is one of the polygon segments interior to the voxel set?
+  Interiority interiority(unsigned int, const PixelPlaneFacet*) const;
   const FacePlane *firstFacePlane(const PixelPlaneFacet*) const;
   void getPolyEdges(const PixelPlaneFacet*, unsigned int&, unsigned int&) const;
 

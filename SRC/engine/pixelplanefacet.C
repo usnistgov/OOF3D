@@ -1480,6 +1480,12 @@ bool PixelPlaneFacet::resolveTwoFoldCoincidence(const PPIntersectionNRSet &isecs
       {
 #ifdef DEBUG
 	if(verbose) {
+	  // isMisordered is called twice in debug mode, but we don't
+	  // want to call it if isEquivalent returns true, so we don't
+	  // want to store its result before the above if statement.
+	  // We also don't want to call it within the following print
+	  // statement (since it also prints) so we precompute it
+	  // here.
 	  bool misordered = fi0->isMisordered(fi1, this);
 	  oofcerr << "PixelPlaneFacet::resolveTwoFoldCoincidence:"
 		  << " isEquivalent=" << fi0->isEquivalent(fi1)
@@ -3037,69 +3043,126 @@ bool PixelPlaneFacet::badTopology(const MultiFaceIntersection *mfi0,
     oofcerr << "PixelPlaneFacet::badTopology: loopSeg0=" << loopSeg0
 	    << " loopSeg1=" << loopSeg1 << std::endl;
 #endif // DEBUG
-  if(loopSeg0 == loopSeg1)
-    return true;
-  bool mfi0FirstOnVSB = loopSeg1.follows(loopSeg0);
+  
+  if(loopSeg0 != loopSeg1) {
+    bool mfi0FirstOnVSB = loopSeg1.follows(loopSeg0);
 #ifdef DEBUG
-  bool mfi1FirstOnVSB = loopSeg0.follows(loopSeg1);
-  assert(mfi0FirstOnVSB ^ mfi1FirstOnVSB);
+    bool mfi1FirstOnVSB = loopSeg0.follows(loopSeg1);
+    assert(mfi0FirstOnVSB ^ mfi1FirstOnVSB);
 #endif	// DEBUG
 
-  unsigned int sharedPolySeg = mfi0->sharedPolySegment(mfi1, this);
+    unsigned int sharedPolySeg = mfi0->sharedPolySegment(mfi1, this);
 #ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PixelPlaneFacet::badTopology: mfi0FirstOnVSB=" << mfi0FirstOnVSB
-	    << " sharedPolySeg=" << sharedPolySeg << std::endl;
-  }
+    if(verbose) {
+      oofcerr << "PixelPlaneFacet::badTopology: mfi0FirstOnVSB="
+	      << mfi0FirstOnVSB << " sharedPolySeg=" << sharedPolySeg
+	      << std::endl;
+    }
 #endif // DEBUG
-  if(sharedPolySeg == NONE) {
-    // If the MultiFaceIntersections don't share a polygon segment,
-    // they are at opposite corners of a quadrilateral.  In the
-    // diagrams above, A is the first intersection on the VSB, and B
-    // is the second.  C is the polygon vertex to the left of the VSB
-    // and D is to the right.  If the triangles CAB and BAD have
-    // negative area, then the points A and B are misordered.
-    // Get the tet points that aren't the MultiFaceIntersections.
+    if(sharedPolySeg == NONE) {
+      // If the MultiFaceIntersections don't share a polygon segment,
+      // they are at opposite corners of a quadrilateral.  In the
+      // diagrams above, A is the first intersection on the VSB, and B
+      // is the second.  C is the polygon vertex to the left of the VSB
+      // and D is to the right.  If the triangles CAB and BAD have
+      // negative area, then the points A and B are misordered.
+      // Get the tet points that aren't the MultiFaceIntersections.
 
-    // eindex0 and eindex1 are the indices of the polygon edges for
-    // these planes.  We don't know which order they're in yet.
-    unsigned int eindex0 = NONE;
-    unsigned int eindex1 = NONE;
-    for(const FacePlane *face :
-	  (mfi0FirstOnVSB ? mfi0->facePlaneSets() : mfi1->facePlaneSets()))
-      {
-	if(eindex0 == NONE)
-	  eindex0 = getPolyEdge(face);
-	else
-	  eindex1 = getPolyEdge(face);
-      }
+      // eindex0 and eindex1 are the indices of the polygon edges for
+      // these planes.  We don't know which order they're in yet.
+      unsigned int eindex0 = NONE;
+      unsigned int eindex1 = NONE;
+      for(const FacePlane *face :
+	    (mfi0FirstOnVSB ? mfi0->facePlaneSets() : mfi1->facePlaneSets()))
+	{
+	  if(eindex0 == NONE)
+	    eindex0 = getPolyEdge(face);
+	  else
+	    eindex1 = getPolyEdge(face);
+	}
     
-    // Figure out which edge comes first.  Remember that the index of
-    // an edge is the index of the corner at the beginning of the
-    // edge.
-    unsigned int indexC = (eindex1==eindex0+1 || (eindex0==3 && eindex1==0) ?
-			   eindex0 : eindex1);
-    unsigned int indexA = (indexC + 1) % 4;
-    unsigned int indexD = (indexA + 1) % 4;
-    unsigned int indexB = (indexD + 1) % 4;
+      // Figure out which edge comes first.  Remember that the index of
+      // an edge is the index of the corner at the beginning of the
+      // edge.
+      unsigned int indexC = (eindex1==eindex0+1 || (eindex0==3 && eindex1==0) ?
+			     eindex0 : eindex1);
+      unsigned int indexA = (indexC + 1) % 4;
+      unsigned int indexD = (indexA + 1) % 4;
+      unsigned int indexB = (indexD + 1) % 4;
     
-    Coord2D posA = pixplane->convert2Coord2D(tetPts[indexA]->location3D());
-    Coord2D posB = pixplane->convert2Coord2D(tetPts[indexB]->location3D());
-    Coord2D posC = pixplane->convert2Coord2D(tetPts[indexC]->location3D());
-    Coord2D posD = pixplane->convert2Coord2D(tetPts[indexD]->location3D());
-    // Don't use the triangleArea() function in geometry.C.  That
-    // always returns a positive number.
-    bool posCAB = ((posA-posC) % (posB-posC)) > 0;
-    bool posBAD = ((posB-posD) % (posA-posD)) > 0;
-    // symmetric form is posA%posC + posC%posB + posB%posA > 0 which
-    // will be slower to compute but might be more robust.
-    return !posCAB || !posBAD;
-  } // end if the two MultiFaceIntersections don't share a polygon edge
+      Coord2D posA = pixplane->convert2Coord2D(tetPts[indexA]->location3D());
+      Coord2D posB = pixplane->convert2Coord2D(tetPts[indexB]->location3D());
+      Coord2D posC = pixplane->convert2Coord2D(tetPts[indexC]->location3D());
+      Coord2D posD = pixplane->convert2Coord2D(tetPts[indexD]->location3D());
+      // Don't use the triangleArea() function in geometry.C.  That
+      // always returns a positive number.
+      bool posCAB = ((posA-posC) % (posB-posC)) > 0;
+      bool posBAD = ((posB-posD) % (posA-posD)) > 0;
+      // symmetric form is posA%posC + posC%posB + posB%posA > 0 which
+      // will be slower to compute but might be more robust.
+      return !posCAB || !posBAD;
+    } // end if the two MultiFaceIntersections don't share a polygon edge
 
-  // The intersections are on the same polygon edge.
-  if(mfi0FirstOnVSB)
-    return badTopology_(mfi0, mfi1, sharedPolySeg);
-  return badTopology_(mfi1, mfi0, sharedPolySeg);
+    // The intersections are on the same polygon edge.
+    if(mfi0FirstOnVSB)
+      return badTopology_(mfi0, mfi1, sharedPolySeg);
+    return badTopology_(mfi1, mfi0, sharedPolySeg);
+  } // end if loopSeg0 != loopSeg1
+
+  /* If both MultiFaceIntersections are on the same VSB loop segment,
+  // there are two additional configurations:
+  //                             /       / 
+  //      B        A            /       /   
+  //  --<-o========o---     -<-o=======o----
+  //    ...\........\..     ...B.......A....
+  //    ....\........\.     ................
+  //       case 1             case 2
+  //
+  //  The === lines show where the VSB (---) and the polygon edges
+  //  coincide.  We can check that the ordering of the points on the
+  //  VSB is consistent with the ordering on the polygon.
+  */
+
+  unsigned int sharedPolySeg = mfi0->sharedPolySegment(mfi1, this);
+  if(sharedPolySeg == NONE)
+    return true;
+  const MultiFaceIntersection *mfiA = nullptr;
+  const MultiFaceIntersection *mfiB = nullptr;
+  if(mfi0->crossingType() == ENTRY ||
+     (mfi0->crossingType() != ENTRY && mfi1->crossingType() == EXIT)) {
+    mfiA= mfi0;
+    mfiB = mfi1;
+  }
+  else {
+    mfiA = mfi1;
+    mfiB = mfi0;
+  }
+
+  // Compare positions along the VSB.
+  double loopFracA = mfiA->getLoopFrac();
+  double loopFracB = mfiB->getLoopFrac();
+  if(loopFracB <= loopFracA)
+    return true;
+  // Compare positions along the polygon and the implied interiority
+  // of the polygon segments.
+  double polyFracA = mfiA->getPolyFrac(sharedPolySeg, this);
+  double polyFracB = mfiB->getPolyFrac(sharedPolySeg, this);
+  Interiority intA0 = mfiA->interiority(0, this);
+  Interiority intA1 = mfiA->interiority(1, this);
+  Interiority intB0 = mfiB->interiority(0, this);
+  Interiority intB1 = mfiB->interiority(1, this);
+  if(polyFracB < polyFracA) {	// case 1
+    return (mfiA->interiority(0, this) == EXTERIOR ||
+	    mfiB->interiority(1, this) == EXTERIOR);
+  }
+  else if(polyFracB > polyFracA) { // case 2
+    return (mfiA->interiority(1, this) == INTERIOR ||
+	    mfiB->interiority(0, this) == INTERIOR);
+  }
+  // If the points are at the same position on the polygon segment
+  // (which is impossible, because they must be at opposite ends of a
+  // segment, they're also misordered.
+  return true;
 }
 
 // This version knows that the MultiFaceIntersections are given in the
