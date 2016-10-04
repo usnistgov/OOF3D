@@ -54,9 +54,12 @@ bool segIntersection(const COORD &a0, const COORD &a1,
   if(verbose)
     oofcerr << "segIntersection: denom=" << denom << std::endl;
 #endif // DEBUG
-  
-  if(denom == 0)
-    return false;		// segments are parallel
+
+  // denom==0 means that the segments are parallel.  denom<0 means
+  // that there's roundoff error, since denom can't be negative.  Call
+  // it 0.
+  if(denom <= 0)
+    return false;
 #ifdef DEBUG
   if(verbose) {
     oofcerr << "segIntersection: B2*A=" << B2*A << " AB*B=" << AB*B
