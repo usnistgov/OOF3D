@@ -936,23 +936,33 @@ unsigned int IntersectionPlanes<BASE>::findFaceEdge(unsigned int f,
   // pixelFaces_.  No need to use facePlaneSets.
   for(const FacePlane *face : facePlaneSets())
     faceIDs.insert(face->face());
-// #ifdef DEBUG
-//   if(verbose) {
-//     oofcerr << "PixelPlaneIntersectionNR::findFaceEdge: f=" << f << " " << *this
-// 	    << std::endl;
-//     oofcerr << "PixelPlaneIntersectionNR::findFaceEdge: faceIDs=";
-//     std::cerr << faceIDs;
-//     oofcerr << std::endl;
-//   }
-// #endif	// DEBUG
+#ifdef DEBUG
+  if(BASE::verbose || htet->verboseFace()) {
+    oofcerr << "IntersectionPlanes::findFaceEdge: this=" << *this << std::endl;
+    oofcerr << "IntersectionPlanes::findFaceEdge: f=" << f << " " << *this
+	    << std::endl;
+    oofcerr << "IntersectionPlanes::findFaceEdge: faceIDs=";
+    std::cerr << faceIDs;
+    oofcerr << std::endl;
+  }
+#endif	// DEBUG
   for(unsigned int e=0; e<NUM_TET_FACE_EDGES; e++) { 
     unsigned int edge = CSkeletonElement::faceEdges[f][e]; // face -> tet scope
     unsigned int otherface = CSkeletonElement::getOtherFaceIndex(f, edge);
-    if(faceIDs.find(otherface) != faceIDs.end())
+    if(faceIDs.find(otherface) != faceIDs.end()) {
+#ifdef DEBUG
+      if(BASE::verbose || htet->verboseFace()) {
+	oofcerr << "IntersectionPlanes::findFaceEdge: face edge=" << e
+		<< " tet edge=" << edge << " otherface=" << otherface
+		<< std::endl;
+	oofcerr << "IntersectionPlanes::findFaceEdge: returning " << e
+		<< std::endl;
+      }
+#endif // DEBUG
       return e;
+    }
   }
   return NONE;
-  
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
