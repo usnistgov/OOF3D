@@ -3147,10 +3147,6 @@ bool PixelPlaneFacet::badTopology(const MultiFaceIntersection *mfi0,
   // of the polygon segments.
   double polyFracA = mfiA->getPolyFrac(sharedPolySeg, this);
   double polyFracB = mfiB->getPolyFrac(sharedPolySeg, this);
-  Interiority intA0 = mfiA->interiority(0, this);
-  Interiority intA1 = mfiA->interiority(1, this);
-  Interiority intB0 = mfiB->interiority(0, this);
-  Interiority intB1 = mfiB->interiority(1, this);
   if(polyFracB < polyFracA) {	// case 1
     return (mfiA->interiority(0, this) == EXTERIOR ||
 	    mfiB->interiority(1, this) == EXTERIOR);
@@ -3163,7 +3159,7 @@ bool PixelPlaneFacet::badTopology(const MultiFaceIntersection *mfi0,
   // (which is impossible, because they must be at opposite ends of a
   // segment, they're also misordered.
   return true;
-}
+} //PixelPlaneFacet::badTopology(MultiFaceIntersection*, MultiFaceIntersection*)
 
 // This version knows that the MultiFaceIntersections are given in the
 // order in which they appear on the VSB, that they are on different
