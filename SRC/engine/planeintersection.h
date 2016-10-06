@@ -115,6 +115,7 @@ public:
   virtual ~PlaneIntersection();
   PlaneIntersection(const PlaneIntersection&);
   // clone takes a HomogeneityTet arg so that the clone can have a unique id.
+  // TODO: It doesn't need the arg anymore since it can use htet.
   virtual PlaneIntersection *clone(HomogeneityTet*) const = 0;
   void setID(HomogeneityTet*);
 
@@ -173,6 +174,16 @@ public:
 				      const FacePlane*) const = 0;
   virtual const FacePlane *getSharedFace(const RedundantIntersection*,
 				      const FacePlane*) const = 0;
+
+  // sharedPlane returns any kind of plane (pixel plane or face plane)
+  // that's shared between this PlaneIntersection and the other one,
+  // excluding the face who's tet index is 'exlcude'.
+  const HPlane *sharedPlane(const PlaneIntersection*, unsigned int) const;
+
+  // Given an unoriented plane, return the oriented plane that's part
+  // of this intersection.  It's assumed that the oriented plane
+  // exists in the intersection.
+  virtual const HPlane *orientedPlane(const HPlane*) const = 0;
 
   virtual IsecEquivalenceClass *equivalence() const { return equivalence_; }
   virtual void setEquivalence(IsecEquivalenceClass *e);
@@ -262,8 +273,10 @@ public:
   virtual const FacePlane *getSharedFace(const RedundantIntersection*,
 				      const FacePlane*) const;
 
+  virtual const HPlane *orientedPlane(const HPlane *p) const { return p; }
+
   virtual std::string shortName() const;
-};
+};				// end class TripleFaceIntersection
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -311,7 +324,7 @@ public:
   // intersection is constructed.
   void computeLocation();	// use planes to compute loc_
   virtual void setLocation(const Coord3D&) = 0;
-};
+};				// end class IntersectionPlanesBase
 
 template <class BASE>
 class IntersectionPlanes : public BASE, public IntersectionPlanesBase {
@@ -354,6 +367,8 @@ public:
   virtual const FacePlane *getSharedFace(const RedundantIntersection*,
 				      const FacePlane*) const;
 
+  virtual const HPlane *orientedPlane(const HPlane*) const;
+
   virtual const PixelPlaneSet &pixelPlanes() const { return pixelPlanes_; }
   virtual PixelPlaneSet &pixelPlanes() { return pixelPlanes_; }
   virtual const FacePlaneSet &faces() const { return faces_; }
@@ -376,7 +391,7 @@ public:
 #ifdef DEBUG
   std::string printPlanes() const;
 #endif // DEBUG
-};
+};     // end template class IntersectionPlanes
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -1320,6 +1335,10 @@ public:
     return referent_->sharedFaces(fi, exclude);
   }
 
+  virtual const HPlane *orientedPlane(const HPlane *p) const {
+    return referent_->orientedPlane(p);
+  }
+  
   virtual void print(std::ostream&) const;
   virtual std::string shortName() const;
 }; // end class RedundantIntersection
@@ -1385,6 +1404,9 @@ public:
   }
 
   FacePlaneSet sharedFaces(const IsecEquivalenceClass*, const FacePlane*) const;
+
+  const HPlane *sharedPlane(const IsecEquivalenceClass*, const FacePlane*)
+    const;
 
   const Coord3D &location3D() const { return loc_; }
 

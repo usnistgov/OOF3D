@@ -19,10 +19,7 @@
 
 #include <algorithm>
 
-// TODO: sharedFaces uses the faces in the equivalence class instead
-// of the faces in the PlaneIntersection.  Planes and faces should be
-// stored only in equivalence classes and not in any of the
-// PlaneIntersection objects themselves.
+// TODO: Split up this file.
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -174,6 +171,28 @@ void PlaneIntersection::setID(HomogeneityTet *htet) {
   id = htet->nextIntersectionID();
 }
 
+// sharedPlane returns any kind of plane (pixel plane or face plane)
+// that's shared between this PlaneIntersection and the other one,
+// excluding the face who's tet index is 'exlcude'.
+
+const HPlane *PlaneIntersection::sharedPlane(const PlaneIntersection *other,
+					     unsigned int exclude)
+  const
+{
+  const FacePlane *excludeface = (exclude == NONE ?
+				  nullptr :
+				  htet->getTetFacePlane(exclude));
+  const HPlane *ushared = equivalence()->sharedPlane(other->equivalence(),
+						     excludeface);
+  // The plane returned by IsecEquivalenceClass::sharedPlane is
+  // unoriented.  Return the correct orientation as used by this
+  // intersection.
+  if(ushared == nullptr)
+    return ushared;
+  return orientedPlane(ushared);
+}
+
+  
 #ifdef DEBUG
 
 bool PlaneIntersection::verify() {
@@ -808,6 +827,24 @@ const FacePlane *IntersectionPlanes<BASE>::getSharedFace(
   return ri->referent()->getSharedFace(this, exclude);
 }
 
+template <class BASE>
+const HPlane *IntersectionPlanes<BASE>::orientedPlane(const HPlane *plane)
+  const
+{
+  // TODO: Use a virtual method in HPlane to get loop over the correct
+  // set of planes.
+  for(const HPixelPlane *pp : pixelPlanes_)
+    if(pp->coincident(*plane))
+      return pp;
+  for(const FacePlane *fp : faces_)
+    if(fp->coincident(*plane))
+      return fp;
+  for(const FacePixelPlane *fpp : pixelFaces_)
+    if(fpp->coincident(*plane))
+      return fpp;
+  return nullptr;
+}
+
 FacePlaneSet PixelPlaneIntersectionNR::sharedFaces(
 					   const PixelPlaneIntersection *fi,
 					   const FacePlane *exclude)
@@ -839,7 +876,6 @@ bool PixelPlaneIntersectionNR::onSameFacePlane(
   const FacePlane *shared = sharedFace(fib, exclude);
   return shared != nullptr;
 }
-
 
 // The PixelPlaneIntersectionNR includes a necessarily contiguous set of
 // polygon edges.  Find the one that's at the upper end (ie most
@@ -3225,7 +3261,35 @@ FacePlaneSet IsecEquivalenceClass::sharedFaces(
     shared.erase(exclude);
   return shared;
 }
- 
+
+// sharedPlane returns any kind of plane (pixel plane or face plane)
+// that's shared between this IsecEquivalenceClass and the other one,
+// excluding the given FacePlane.
+
+const HPlane *IsecEquivalenceClass::sharedPlane(
+					const IsecEquivalenceClass *other,
+					const FacePlane *exclude)
+  const
+{
+  // TODO: Is it worth doing these loops more intelligently, or using
+  // std::set_intersection?  The sets are small.
+  for(const HPixelPlane *p0 : pixelPlanes)
+    for(const HPixelPlane *p1 : other->pixelPlanes)
+      if(p0 == p1)
+	return p0;
+  for(const FacePlane *fp0 : facePlanes)
+    if(fp0 != exclude)
+      for(const FacePlane *fp1 : other->facePlanes)
+	if(fp0 == fp1)
+	  return fp0;
+  for(const FacePixelPlane *fpp0 : pixelFaces)
+    if(dynamic_cast<const FacePlane*>(fpp0) != exclude)
+      for(const FacePixelPlane *fpp1 : other->pixelFaces)
+	if(fpp0 == fpp1)
+	  return fpp0;
+  return nullptr;
+}
+
 void IsecEquivalenceClass::merge(IsecEquivalenceClass *other) {
   assert(other != this);
   assert(other != nullptr);

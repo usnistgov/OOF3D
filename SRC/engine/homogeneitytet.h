@@ -35,11 +35,11 @@ class PixelBdyLoopSegment;
 
 class FaceEdgeIntersection {
 private:
-  PlaneIntersection *crnr;    // This object does not own this pointer
-  FaceFacetEdge *edge_;	      // the edge that ends at crnr.
-  double t;		 // Parametric position of crnr along tet edge
-  unsigned int fEdge;	 // Index on tet face of intersected tet edge
-  bool segstart;	 // Is this the start of a segment?
+  PlaneIntersection *crnr;   // This object does not own this pointer.
+  FaceFacetEdge *edge_;	     // The edge that ends at crnr.
+  double t;		// Parametric position of crnr along tet edge.
+  unsigned int fEdge;	// Index on tet face of intersected tet edge.
+  bool segstart;	// Is this the start of a segment?
 public:
   FaceEdgeIntersection(PlaneIntersection*, FaceFacetEdge*, bool);
   FaceFacetEdge *edge() const { return edge_; }
@@ -64,9 +64,18 @@ public:
 
   // Are two points on the same edge and same edge coordinate?
   bool samePosition(const FaceEdgeIntersection*) const;
+  // declination is the cosine of the angle between the edge on the
+  // face and the edge of the face.
+  double declination(unsigned int f, unsigned int e, HomogeneityTet*) const;
 };				// end class FaceEdgeIntersection
 
 struct FaceEdgeIntersectionLT {
+public:
+  bool operator()(const FaceEdgeIntersection*, const FaceEdgeIntersection*)
+    const;
+};
+
+struct FaceEdgeIntersectionLTwrap {
 public:
   bool operator()(const FaceEdgeIntersection*, const FaceEdgeIntersection*)
     const;
