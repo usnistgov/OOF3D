@@ -3720,16 +3720,19 @@ void HomogeneityTet::resolveCoincidences(
       if(verboseface)
 	oofcerr << "HomogeneityTet::resolveCoincidences: calling fixCrossings"
 		<< std::endl;
+      { // begin indent block
+	OOFcerrIndent indent(2);
 #endif // DEBUG
       ig.fixCrossings(this, face, looseEnds);
-// #ifdef DEBUG
+#ifdef DEBUG
+      }	// end indent block
 //       if(verboseface) {
 // 	oofcerr << "HomogeneityTet::resolveCoincidences: "
 // 		<< "after fixCrossings, ig=" << std::endl;
 // 	OOFcerrIndent indent(2);
 // 	std::cerr << ig << std::endl;
 //       }
-// #endif // DEBUG
+#endif // DEBUG
       if(ig.size() <= 1)
 	continue;
       ig.sortByPositionAndEdge();
@@ -3961,7 +3964,9 @@ void FaceEdgeIntersection::forceOntoEdge(unsigned int face,
 }
 
 // Return the cosine of the angle between the edge and the given edge
-// of the face that it's on.
+// of the face that it's on.  Use the geometry of the planes, rather
+// than the endpoints of the edge.
+
 double FaceEdgeIntersection::declination(unsigned int face,
 					 unsigned int edge,
 					 HomogeneityTet *htet)
@@ -3979,24 +3984,24 @@ double FaceEdgeIntersection::declination(unsigned int face,
   // edgeDir is in the direction of the tet edge at this FaceEdgeIntersection
   Coord3D edgeDir = htet->nodePosition(n1) - htet->nodePosition(n0);
   double decl = dot(edgeDir, thisDir)/sqrt(norm2(edgeDir)*norm2(thisDir));
-#ifdef DEBUG
-  if(htet->verboseFace()) {
-    oofcerr << "FaceEdgeIntersection::declination: " << *this << std::endl;
-    OOFcerrIndent indent(2);
-    oofcerr << "FaceEdgeIntersection::declination: pplane=" << *pplane
-	    << " normal=" << pplane->normal() << std::endl;
-    oofcerr << "FaceEdgeIntersection::declination: faceplane="
-	    << *htet->getTetFacePlane(face) << " normal="
-	    << htet->getTetFacePlane(face)->normal() << std::endl;
-    oofcerr << "FaceEdgeIntersection::declination: thisDir=" << thisDir
-	    << " norm2=" << norm2(thisDir) << std::endl;
-    oofcerr << "FaceEdgeIntersection::declination: edgeDir=" << edgeDir
-	    << " norm2=" << norm2(edgeDir) << std::endl;
-    oofcerr << "FaceEdgeIntersection::declination: dot="
-	    << dot(edgeDir, thisDir) << std::endl;
-    oofcerr << "FaceEdgeIntersection::declination: decl=" << decl << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verboseFace()) {
+//     oofcerr << "FaceEdgeIntersection::declination: " << *this << std::endl;
+//     OOFcerrIndent indent(2);
+//     oofcerr << "FaceEdgeIntersection::declination: pplane=" << *pplane
+// 	    << " normal=" << pplane->normal() << std::endl;
+//     oofcerr << "FaceEdgeIntersection::declination: faceplane="
+// 	    << *htet->getTetFacePlane(face) << " normal="
+// 	    << htet->getTetFacePlane(face)->normal() << std::endl;
+//     oofcerr << "FaceEdgeIntersection::declination: thisDir=" << thisDir
+// 	    << " norm2=" << norm2(thisDir) << std::endl;
+//     oofcerr << "FaceEdgeIntersection::declination: edgeDir=" << edgeDir
+// 	    << " norm2=" << norm2(edgeDir) << std::endl;
+//     oofcerr << "FaceEdgeIntersection::declination: dot="
+// 	    << dot(edgeDir, thisDir) << std::endl;
+//     oofcerr << "FaceEdgeIntersection::declination: decl=" << decl << std::endl;
+//   }
+// #endif // DEBUG
   return decl;
 }
 
@@ -4022,10 +4027,7 @@ bool FaceEdgeIntersection::crosses(const FaceEdgeIntersection *other,
     oofcerr << "FaceEdgeIntersection::crosses:  this=" << *this << std::endl;
     oofcerr << "FaceEdgeIntersection::crosses: other=" << *other << std::endl;
   }
-  OOFcerrIndent indent(2);
 #endif // DEBUG
-
-  assert(start() != other->start());
 
   // Get the endpoints that are on the face edge.
   const PlaneIntersection *nearEnd = corner();
@@ -4036,11 +4038,23 @@ bool FaceEdgeIntersection::crosses(const FaceEdgeIntersection *other,
 
   // Near the corner of a tet face, both ends of a single segment can
   // be in the same intersection group.  A segment doesn't cross itself.
-  if(nearEnd == otherFarEnd || farEnd == otherNearEnd)
+  if(nearEnd == otherFarEnd || farEnd == otherNearEnd) {
+#ifdef DEBUG
+    if(verbose)
+      oofcerr << "FaceEdgeIntersection::crosses: identical endpoints, no cross"
+	      << std::endl;
+#endif // DEBUG
     return false;
+  }
   // The edges don't cross if their endpoints meet.
-  if(nearEnd->isEquivalent(otherNearEnd) || farEnd->isEquivalent(otherFarEnd))
+  if(nearEnd->isEquivalent(otherNearEnd) || farEnd->isEquivalent(otherFarEnd)) {
+#ifdef DEBUG
+    if(verbose)
+      oofcerr << "FaceEdgeIntersection::crosses: endpoints meet, no cross."
+	      << std::endl;
+#endif // DEBUG
     return false;
+  }
   
   // Either this point precedes the other on the same face edge, or
   // this point is on the edge preceding the other point's edge.
@@ -4063,12 +4077,19 @@ bool FaceEdgeIntersection::crosses(const FaceEdgeIntersection *other,
       oofcerr << "FaceEdgeIntersection::crosses: using segIntersection"
 	      << std::endl;
 #endif// DEBUG
-    return segIntersection(nearEnd->location3D(), farEnd->location3D(),
-			   otherNearEnd->location3D(), otherFarEnd->location3D()
+    bool crs = segIntersection(
+		       nearEnd->location3D(), farEnd->location3D(),
+		       otherNearEnd->location3D(), otherFarEnd->location3D()
 #ifdef DEBUG
-			   , verbose
+		       , verbose
 #endif // DEBUG
 			   );
+#ifdef DEBUG
+    if(verbose)
+      oofcerr << "FaceEdgeIntersection::crosses: returning " << crs
+	      << std::endl;
+#endif // DEBUG
+    return crs;
   }
   
   if(!((faceEdge()==other->faceEdge() && edgePosition()<=other->edgePosition() )
@@ -4106,33 +4127,44 @@ bool FaceEdgeIntersection::crosses(const FaceEdgeIntersection *other,
 #ifdef DEBUG
   if(verbose)
     oofcerr << "FaceEdgeIntersection::crosses: thisDecl=" << thisDecl
-	    << " otherDecl=" << otherDecl << std::endl;
+	    << " otherDecl=" << otherDecl
+	    << " diff=" << thisDecl-otherDecl << " "
+	    << (thisDecl > otherDecl ? "convergent" : "divergent")
+	    << std::endl;
 #endif // DEBUG
   if(thisDecl > otherDecl) {
     // The segments might cross because they converge inside the tet
     // face.
     double alpha = 0.0;		// position of crossing point on this edge
     double beta = 0.0;		// position of crossing point on other edge
+    bool parallel = false;
     (void) segIntersection(nearEnd->location3D(), farEnd->location3D(),
 			   otherNearEnd->location3D(),
 			   otherFarEnd->location3D(),
-			   alpha, beta
+			   alpha, beta, parallel
 #ifdef DEBUG
-			   , verbose
+			       , verbose
 #endif // DEBUG
-			   );
+			       );
     // Since we know that the segments both start on the tet edge and
     // head into the face, if alpha<0 or beta<0 it's just due to round
-    // off error.  Actually one of them is slightly positive, and the
-    // edges cross.  (They can't really both be 0, because the near
-    // end points aren't equivalent.)
+    // off error, and one of them must actually be slightly positive.
+    // This is why we discard the return value of segIntersection,
+    // which doesn't know that negative alphas and betas are
+    // topologically impossible here.
 #ifdef DEBUG
     if(verbose)
       oofcerr << "FaceEdgeIntersection::crosses: alpha=" << alpha
-	      << " beta=" << beta << std::endl;
+	      << " beta=" << beta << " parallel=" << parallel
+	      << ", returning " << (!parallel && alpha <= 1.0 && beta <= 1.0) << std::endl;
 #endif // DEBUG
-    return alpha <= 1.0 && beta <= 1.0;
+    return !parallel && alpha <= 1.0 && beta <= 1.0;
   }
+#ifdef DEBUG
+  if(verbose)
+    oofcerr << "FaceEdgeIntersection::crosses: divergent, not crossing"
+	    << std::endl;
+#endif // DEBUG
   return false;
 } // end FaceEdgeIntersection::crosses
 

@@ -106,7 +106,9 @@ void PlaneIntersection::setEquivalence(IsecEquivalenceClass *e) {
     oofcerr << "PlaneIntersection::setEquivalence: this=" << *this
 	    << std::endl;
     oofcerr << "PlaneIntersection::setEquivalence: here=" << getLocation3D()
-	    << " eqpos=" << e->location3D() << " dist=" << sqrt(dist2)
+	    << " eqpos=" << e->location3D()
+	    << " diff=" << getLocation3D()-e->location3D()
+	    << " dist=" << sqrt(dist2)
 	    << std::endl;
     e->dump();
     throw ErrProgrammingError("Incompatible equivalence class!",

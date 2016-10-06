@@ -32,7 +32,7 @@
 template <class COORD>
 bool segIntersection(const COORD &a0, const COORD &a1,
 		     const COORD &b0, const COORD &b1,
-		     double &alpha, double &beta
+		     double &alpha, double &beta, bool &parallel
 #ifdef DEBUG
 		     , bool verbose
 #endif // DEBUG
@@ -58,8 +58,11 @@ bool segIntersection(const COORD &a0, const COORD &a1,
   // denom==0 means that the segments are parallel.  denom<0 means
   // that there's roundoff error, since denom can't be negative.  Call
   // it 0.
-  if(denom <= 0)
+  if(denom <= 0) {
+    parallel = true;
     return false;
+  }
+  parallel = false;
 #ifdef DEBUG
   if(verbose) {
     oofcerr << "segIntersection: B2*A=" << B2*A << " AB*B=" << AB*B
@@ -89,7 +92,8 @@ bool segIntersection(const COORD &a0, const COORD &a1,
 {
   double alpha = 0.0;
   double beta = 0.0;
-  return segIntersection(a0, a1, b0, b1, alpha, beta
+  bool parallel = false;
+  return segIntersection(a0, a1, b0, b1, alpha, beta, parallel
 #ifdef DEBUG
 			 , verbose
 #endif // DEBUG
