@@ -108,6 +108,14 @@ public:
     if(lowleft[1] > other.upright[1]) return false;
     return true;
   }
+  template <class VTYPE2, class CTYPE2>
+  bool intersects_open(const CRectangle_<VTYPE2, CTYPE2> &other) const {
+    if(upright[0] <= other.lowleft[0]) return false;
+    if(upright[1] <= other.lowleft[1]) return false;
+    if(lowleft[0] >= other.upright[0]) return false;
+    if(lowleft[1] >= other.upright[1]) return false;
+    return true;
+  }
   virtual int ncorners() const { return 4; }
   virtual CTYPE operator[](int i) const {
     switch(i) {
