@@ -2100,14 +2100,14 @@ bool PixelPlaneFacet::polyCornerCoincidence(const PixelPlaneIntersectionNR *fi0,
 					    const PixelPlaneIntersectionNR *fi1)
   const
 {
-// #ifdef DEBUG
-//   if(verbose) {
-//     oofcerr << "PixelPlaneFacet::polyCornerCoincidence: fi0=" << *fi0
-// 	    << std::endl;
-//     oofcerr << "PixelPlaneFacet::polyCornerCoincidence: fi1=" << *fi1
-// 	    << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::polyCornerCoincidence: fi0=" << *fi0
+	    << std::endl;
+    oofcerr << "PixelPlaneFacet::polyCornerCoincidence: fi1=" << *fi1
+	    << std::endl;
+  }
+#endif // DEBUG
   assert(fi0 != fi1);
 #ifdef DEBUG
   if(fi0->onSameFacePlane(fi1, getBaseFacePlane())) {
@@ -2120,11 +2120,28 @@ bool PixelPlaneFacet::polyCornerCoincidence(const PixelPlaneIntersectionNR *fi0,
     oofcerr << " " << *getBaseFacePlane() << std::endl;
     throw ErrProgrammingError("Points are on the same polygon segment!",
 			      __FILE__, __LINE__);
+   
   }
 #endif // DEBUG
   assert(fi0->onSameLoopSegment(fi1)); // same VSB segment
   assert(fi0->crossingType() != fi1->crossingType());
   const PixelBdyLoopSegment *seg = fi0->sharedLoopSegment(fi1);
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::polyCornerCoincidence: seg=" << *seg
+	    << std::endl;
+    oofcerr << "PixelPlaneFacet::polyCornerCoincidence: crossingType0="
+	    << fi0->crossingType() << " crossingType1="
+	    << fi1->crossingType() << std::endl;
+    oofcerr << "PixelPlaneFacet::polyCornerCoincidence: loopfrac0="
+	    << fi0->getLoopFrac(*seg) << " loopfrac1="
+	    << fi1->getLoopFrac(*seg) << std::endl;
+    oofcerr << "PixelPlaneFacet::polyCornerCoincidence: polyedge0="
+	    << fi0->getPolyEdge(this) << " polyedge1="
+	    << fi1->getPolyEdge(this) << std::endl;
+  }
+#endif // DEBUG
+  // Return true if points are out of order.
   return ((fi0->crossingType() == ENTRY &&
 	   fi0->getLoopFrac(*seg) >= fi1->getLoopFrac(*seg))
 	  ||
