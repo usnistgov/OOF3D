@@ -590,12 +590,14 @@ double PixelPlaneFacet::getArea() const {
 
   double a = 0.0;
   
-  // Don't include pairs of oppositely directed edges with equivalent
-  // endpoints.  If these are the only edges in a facet, round-off
-  // error can make the area appear to be non-zero when it should be
-  // zero.
+  // Don't include edges that join equivalent points, or pairs of
+  // oppositely directed edges with equivalent endpoints.  If these
+  // are the only edges in a facet, round-off error can make the area
+  // appear to be non-zero when it should be zero.
   std::vector<bool> includeEdge(edges.size(), true);
   for(unsigned int i=0; i<edges.size(); i++) {
+    if(edges[i]->startPt()->isEquivalent(edges[i]->endPt()))
+      includeEdge[i] = false;
     if(includeEdge[i]) {
       for(unsigned int j=i+1; j<edges.size(); j++) {
 	if(includeEdge[j]) {

@@ -1560,8 +1560,14 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	else {
 	  // The current segment has both endpoints outside the
 	  // polygon.  It must intersect zero or two times.
+
+	  // First check the bounding box in the plane.  Use
+	  // intersects_open, which does not count intersections that
+	  // include only boundary points, to be consistent with
+	  // getTetPlaneIntersectionPoints and
+	  // BarycentricCoord::interior.
 	  ICRectangle segbb(pbs_start, pbs_end);
-	  if(segbb.intersects(tetBounds)) {
+	  if(segbb.intersects_open(tetBounds)) {
 	    const HPixelPlane *orthoPlane =
 	      getPixelPlane(pixplane->orthogonalPlane(pbs_start, pbs_end));
 	    // There's no intersection unless the orthoPlane actually
@@ -1573,6 +1579,14 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	    // endpoints.
 	    TetIntersectionPolygon orthoPts =
 	      getTetPlaneIntersectionPoints(orthoPlane);
+#ifdef DEBUG
+	    if(verboseplane) {
+	      oofcerr << "HomogeneityTet:doFindPixelPlaneFacets: orthoPlane="
+		      << *orthoPlane << " orthoPts=";
+	      std::cerr << derefprint(orthoPts);
+	      oofcerr << std::endl;
+	    }
+#endif // DEBUG
 	    if(!orthoPts.empty()) {
 	      unsigned int orthoFace = getCoincidentFaceIndex(orthoPlane);
 	      std::vector<PixelPlaneIntersectionNR*> isecs =
@@ -1644,15 +1658,15 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 // #endif // DEBUG
 
   double facetarea = facet->area();
-// #ifdef DEBUG
-//   if(verboseplane) {
-//     oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: completed loops, area="
-// 	    << facetarea << std::endl;
-//     if(facetarea <= 0)
-//       oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: non-positive area!"
-// 	      << " facet=" << *facet << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verboseplane) {
+    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: completed loops, area="
+	    << facetarea << std::endl;
+    if(facetarea <= 0)
+      oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: non-positive area!"
+	      << " facet=" << *facet << std::endl;
+  }
+#endif // DEBUG
   if(facetarea <= 0.0) {
     // There are no intersections.  We either need to include all of
     // the tetPts polygon, or none if it.
@@ -1707,12 +1721,12 @@ void HomogeneityTet::doFindPixelPlaneFacets(
       homogeneous = windingNumber == 1;
     }
     if(homogeneous || facetarea < 0.0) {
-// #ifdef DEBUG
-//       if(verboseplane)
-// 	oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
-// 		<< "adding entire perimeter, pixplane=" << *pixplane
-// 		<< std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+      if(verboseplane)
+	oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
+		<< "adding entire perimeter, pixplane=" << *pixplane
+		<< std::endl;
+#endif // DEBUG
       for(unsigned int i=0; i<nn-1; i++) {
 	// TetIntersection *t0 = tetPts[i]->clone();
 	// TetIntersection *t1 = tetPts[i+1]->clone();
@@ -1892,24 +1906,24 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
 				      unsigned int onFace,
 				      unsigned int orthoFace)
 {
-// #ifdef DEBUG
-//   if(verboseplane)
-//     oofcerr << "HomogeneityTet::find_two_intersections: cat=" << cat
-// 	    << " pblseg=" << pblseg
-// 	    << " pixplane=" << *pixplane
-// 	    << " tempOrthoPlane=" << *tempOrthoPlane
-// 	    << " onFace=" << onFace << " orthoFace=" << orthoFace
-// 	    << std::endl;
-// #endif	// DEBUG
+#ifdef DEBUG
+  if(verboseplane)
+    oofcerr << "HomogeneityTet::find_two_intersections: cat=" << cat
+	    << " pblseg=" << pblseg
+	    << " pixplane=" << *pixplane
+	    << " tempOrthoPlane=" << *tempOrthoPlane
+	    << " onFace=" << onFace << " orthoFace=" << orthoFace
+	    << std::endl;
+#endif	// DEBUG
   // The pixplane passed to find_two_intersections is the unoriented
   // one, so it can't be used to convert the 2D coords in pblseg to 3D.
   BarycentricCoord b0 = getBarycentricCoord(pblseg.firstPt(), pixplane);
   BarycentricCoord b1 = getBarycentricCoord(pblseg.secondPt(), pixplane);
-// #ifdef DEBUG
-//   if(verboseplane)
-//     oofcerr << "HomogeneityTet::find_two_intersections: b0=" << b0
-// 	    << " b1=" << b1 << std::endl;
-// #endif	// DEBUG
+#ifdef DEBUG
+  if(verboseplane)
+    oofcerr << "HomogeneityTet::find_two_intersections: b0=" << b0
+	    << " b1=" << b1 << std::endl;
+#endif	// DEBUG
   // If the segment enters or exits through a polygon corner, there
   // can appear to be multiple entries or exits at that point, since
   // the segment will intersect two polygon edges.  Keep track of
@@ -1926,13 +1940,13 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
   unsigned int exitFace = NONE;
   for(unsigned int n=0; n<NUM_TET_NODES; n++) {
     unsigned int face = CSkeletonElement::oppFace[n];
-// #ifdef DEBUG
-//     if(verboseplane) {
-//       oofcerr << "HomogeneityTet::find_two_intersections: n=" << n
-// 	      << " face=" << face << std::endl;
-//     }
-//     OOFcerrIndent indent(2);
-// #endif // DEBUG
+#ifdef DEBUG
+    if(verboseplane) {
+      oofcerr << "HomogeneityTet::find_two_intersections: n=" << n
+	      << " face=" << face << std::endl;
+    }
+    OOFcerrIndent indent(2);
+#endif // DEBUG
     // skip this face if it lies in the pixel plane or the orthoFace
     // or is collinear with them.
     if(face != onFace && face != orthoFace &&
@@ -1940,13 +1954,13 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
       {
 	double b0n = b0[n];
 	double b1n = b1[n];
-// #ifdef DEBUG
-//       if(verboseplane) {
-// 	oofcerr << "HomogeneityTet::find_two_intersections: b0n=" << b0n
-// 		<< " b1n=" << b1n << " b1n-b0n=" << b1n-b0n
-// 		<< std::endl;
-//       }
-// #endif // DEBUG
+#ifdef DEBUG
+      if(verboseplane) {
+	oofcerr << "HomogeneityTet::find_two_intersections: b0n=" << b0n
+		<< " b1n=" << b1n << " b1n-b0n=" << b1n-b0n
+		<< std::endl;
+      }
+#endif // DEBUG
 	// Skip this face if the segment is parallel to it (b0n == b1n)
 	// or if it doesn't cross it (b0n and b1n have the same sign).
 	if(b0n != b1n && b0n*b1n <= 0) {
@@ -1956,11 +1970,11 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
 	    if(alpha > entryAlpha) {
 	      entryAlpha = alpha;
 	      entryFace = face;
-// #ifdef DEBUG
-// 	    if(verboseplane)
-// 	      oofcerr << "HomogeneityTet::find_two_intersections: alpha="
-// 		      << alpha << " entryAlpha=" << entryAlpha << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+	    if(verboseplane)
+	      oofcerr << "HomogeneityTet::find_two_intersections: alpha="
+		      << alpha << " entryAlpha=" << entryAlpha << std::endl;
+#endif // DEBUG
 	    }
 	  }
 	  else {
@@ -1968,25 +1982,25 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
 	    if(alpha < exitAlpha) {
 	      exitAlpha = alpha;
 	      exitFace = face;
-// #ifdef DEBUG
-// 	    if(verboseplane)
-// 	      oofcerr << "HomogeneityTet::find_two_intersections: alpha="
-// 		      << alpha << " exitAlpha=" << exitAlpha << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+	    if(verboseplane)
+	      oofcerr << "HomogeneityTet::find_two_intersections: alpha="
+		      << alpha << " exitAlpha=" << exitAlpha << std::endl;
+#endif // DEBUG
 	    }
 	  }
 	}
       } // end if f != onFace, etc
   }   // end loop over nodes f
 
-// #ifdef DEBUG
-//   if(verboseplane) {
-//     oofcerr << "HomogeneityTet::find_two_intersections: entry face="
-// 	    << entryFace << " alpha=" << entryAlpha
-// 	    << "  exit face=" << exitFace << " alpha=" << exitAlpha
-// 	    << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verboseplane) {
+    oofcerr << "HomogeneityTet::find_two_intersections: entry face="
+	    << entryFace << " alpha=" << entryAlpha
+	    << "  exit face=" << exitFace << " alpha=" << exitAlpha
+	    << std::endl;
+  }
+#endif // DEBUG
   std::vector<PixelPlaneIntersectionNR*> isecs;
   
   if(entryFace != NONE && exitFace != NONE &&
@@ -2022,13 +2036,13 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
       isecs[1]->verbose = verboseplane;
 #endif // DEBUG
     }
-// #ifdef DEBUG
-//   if(verboseplane) {
-//     oofcerr << "HomogeneityTet::find_two_intersections: isecs=";
-//     std::cerr << derefprint(isecs);
-//     oofcerr << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verboseplane) {
+    oofcerr << "HomogeneityTet::find_two_intersections: isecs=";
+    std::cerr << derefprint(isecs);
+    oofcerr << std::endl;
+  }
+#endif // DEBUG
   return isecs;
 } // end HomogeneityTet::find_two_intersections
 
