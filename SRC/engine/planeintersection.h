@@ -1395,6 +1395,7 @@ public:
   void addFacePlane(const FacePlane*, bool);
   void addFacePixelPlane(const FacePixelPlane*, bool);
   bool containsPixelPlane(const HPixelPlane*) const;
+  bool containsFacePlane(const FacePlane*) const;
 
   PixelPlaneSets pixelPlaneSets() const {
     return PixelPlaneSets(pixelPlanes, pixelFaces);

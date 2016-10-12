@@ -45,6 +45,8 @@ private:
   HPlane(HPlane&&) = delete;
 public:
   HPlane() {}
+  // TODO: Get rid of isPartOf.  It's not used.  Anything that uses it
+  // should probably be using intersection equivalence classes.
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const = 0;
   virtual void addToIntersection(IntersectionPlanesBase*) const = 0;
   virtual void addToEquivalence(IsecEquivalenceClass*) const = 0;

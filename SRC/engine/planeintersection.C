@@ -535,44 +535,92 @@ void PixelPlaneIntersectionNR::copyPlanes(const PixelPlaneIntersectionNR *fi0,
 // #endif // DEBUG
 }
 
+static void includeNonRedundantPlane(const HPlane *plane,
+				     std::vector<const HPlane*> &planes)
+{
+  if(planes.empty())
+    planes.push_back(plane);
+  else {
+    for(const HPlane *p : planes)
+      if(p->coincident(*plane))
+	return;
+    planes.push_back(plane);
+  }
+}
+
 void IntersectionPlanesBase::computeLocation() {
+  // If an intersection was constructed by merging intersections that
+  // contained oppositely oriented but coincident pixel planes, we
+  // have to be sure to include three independent planes in the set
+  // being used to compute the location.
   Coord3D pos;
-  int npixplanes = pixelPlanes_.size() + pixelFaces_.size();
-  if(npixplanes < 3) {
-    std::vector<const Plane*> planes;
-    planes.insert(planes.end(), pixelPlanes_.begin(), pixelPlanes_.end());
-    planes.insert(planes.end(), pixelFaces_.begin(), pixelFaces_.end());
-    int nToAdd = 3 - npixplanes;
-    if(nToAdd > 0) {
-      for(const Plane *face : faces_) {
-	// If npixplanes==2, check that the plane being added doesn't
-	// contain the intersection line of the pixplanes.
-	if(npixplanes != 2 || face->nonDegenerate(planes[0], planes[1])) {
-	  planes.push_back(face);
-	  if(--nToAdd == 0)
-	    break;
-	}
-      }
+  std::vector<const HPlane*> planes;
+  for(const HPlane *pp : pixelPlanes_) {
+    includeNonRedundantPlane(pp, planes);
+    if(planes.size() == 3)
+      break;
+  }
+  if(planes.size() < 3) {
+    for(const HPlane *fpp : pixelFaces_) {
+      includeNonRedundantPlane(fpp, planes);
+      if(planes.size() == 3)
+      break;
     }
-#ifdef DEBUG
-    if(planes.size() != 3) {
-      // This is called from constructors before "verbose" is set, so
-      // don't bother checking for it.
-      oofcerr << "IntersectionPlanesBase::computeLocation:"
-	      << " wrong number of planes!" << std::endl;
-      oofcerr << "IntersectionPlanesBase::computeLocation: planes=";
-      std::cerr << derefprint(planes);
-      oofcerr << std::endl;
-      throw ErrProgrammingError(
-			"IntersectionPlanesBase::computeLocation failed!",
-			__FILE__, __LINE__);
+  }
+  if(planes.size() < 3) {
+    // There aren't enough pixel planes to determine the location, so
+    // use some faces too.  They can't be coincident with the pixel
+    // planes, so don't bother calling includeNonRedundantPlane.
+    int nToAdd = 3 - planes.size();
+    for(const HPlane *face : faces_) {
+      planes.push_back(face);
+      if(--nToAdd == 0)
+	break;
     }
-#endif // DEBUG
+    // If there are three non-collinear pixel planes, then
+    // triplePlaneIntersection doesn't need to be called, because
+    // setLocation will set all the components of pos to the pixel
+    // plane offsets.
     pos = triplePlaneIntersection(planes[0], planes[1], planes[2]);
   }
-  // If there are three pixel planes, then pos is uninitialized, but
-  // the value passed to setLocation is irrelevant.
   setLocation(pos);
+  
+//   int npixplanes = pixelPlanes_.size() + pixelFaces_.size();
+//   if(npixplanes < 3) {
+//     std::vector<const Plane*> planes;
+//     planes.insert(planes.end(), pixelPlanes_.begin(), pixelPlanes_.end());
+//     planes.insert(planes.end(), pixelFaces_.begin(), pixelFaces_.end());
+//     int nToAdd = 3 - npixplanes;
+//     if(nToAdd > 0) {
+//       for(const Plane *face : faces_) {
+// 	// If npixplanes==2, check that the plane being added doesn't
+// 	// contain the intersection line of the pixplanes.
+// 	if(npixplanes != 2 || face->nonDegenerate(planes[0], planes[1])) {
+// 	  planes.push_back(face);
+// 	  if(--nToAdd == 0)
+// 	    break;
+// 	}
+//       }
+//     }
+// #ifdef DEBUG
+//     if(planes.size() != 3) {
+//       // This is called from constructors before "verbose" is set, so
+//       // don't bother checking for it.
+//       oofcerr << "IntersectionPlanesBase::computeLocation:"
+// 	      << " wrong number of planes!" << std::endl;
+//       oofcerr << "IntersectionPlanesBase::computeLocation: planes=";
+//       std::cerr << derefprint(planes);
+//       oofcerr << std::endl;
+//       throw ErrProgrammingError(
+// 			"IntersectionPlanesBase::computeLocation failed!",
+// 			__FILE__, __LINE__);
+//     }
+// #endif // DEBUG
+//     pos = triplePlaneIntersection(planes[0], planes[1], planes[2]);
+//   }
+//   // If there are three pixel planes, then pos is uninitialized, but
+//   // the value passed to setLocation is irrelevant.
+//   setLocation(pos);
 }
 
 void PixelPlaneIntersectionNR::setLocation(const Coord3D &pos) {
@@ -1161,7 +1209,9 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
 // isEquiv_ is the guts of the two versions of
 // PixelPlaneIntersectionNR::isEquivalent().  It determines whether
 // two sets of planes (each made of pixel planes, face planes, and
-// face pixel planes) have three nondegenerate planes in common.
+// face pixel planes) have three nondegenerate planes in common.  It
+// assumes that the given PixelPlaneSets only contain independent
+// planes.
 
 static bool isEquiv_(HomogeneityTet *htet,
 		     const PixelPlaneSet &pp0, const FacePlaneSet &fp0,
@@ -1337,7 +1387,19 @@ bool IntersectionPlanes<BASE>::belongsInEqClass(
 					const IsecEquivalenceClass *eqclass)
   const
 {
-  return isEquiv_(BASE::htet, pixelPlanes_, faces_, pixelFaces_,
+  PixelPlaneSet indepPlanes;
+  for(const HPixelPlane *pp : pixelPlanes_) {
+    bool independent = true;
+    for(const HPixelPlane *ip : indepPlanes) {
+      if(pp->coincident(*ip)) {
+	independent = false;
+	break;
+      }
+    }
+    if(independent)
+      indepPlanes.insert(pp);
+  }
+  return isEquiv_(BASE::htet, indepPlanes, faces_, pixelFaces_,
 		  eqclass->pixelPlanes, eqclass->facePlanes,
 		  eqclass->pixelFaces);
 }
@@ -1508,11 +1570,6 @@ double MultiFaceMixin<BASE>::getPolyFrac(unsigned int edge,
   // TODO: This might be wrong if getFacePlane returns a collinear
   // face that's not in this PlaneIntersection.
   
-// #ifdef DEBUG
-//   if(facet->verbose)
-//     oofcerr << "MultiFaceMixin::getPolyFrac: " << this << " " << *this
-// 	    << std::endl;
-// #endif // DEBUG
   unsigned int nn = facet->polygonSize();
   FacePlaneSet nextfaces = facet->getFacePlanes((edge+1)%nn);
 // #ifdef DEBUG
@@ -1521,21 +1578,29 @@ double MultiFaceMixin<BASE>::getPolyFrac(unsigned int edge,
 // 	    << nextface << " " << *nextface << std::endl;
 // #endif	// DEBUG
   for(const FacePlane *nextface : nextfaces)
-    if(nextface->isPartOf(this))
+    if(BASE::equivalence()->containsFacePlane(nextface))
       return 1.0;
 #ifdef DEBUG
   // In debug mode, don't just assume that one of the faces of the
   // previous edge is part of this intersection.
   FacePlaneSet prevfaces = facet->getFacePlanes((edge+nn-1)%nn);
   for(const FacePlane *prevface : prevfaces)
-    if(prevface->isPartOf(this))
+    if(BASE::equivalence()->containsFacePlane(prevface))
       return 0.0;
+  if(facet->verbose) {
+    oofcerr << "MultiFaceMixin::getPolyFrac: " << this << " " << *this
+	    << std::endl;
+    oofcerr << "MultiFaceMixin::getPolyFrac: nextfaces=";
+    for(const FacePlane *nextface : nextfaces)
+      oofcerr << " " << *nextface;
+    oofcerr << std::endl;
+    oofcerr << "MultiFaceMixin::getPolyFrac: prevfaces=";
+    for(const FacePlane *prevface : prevfaces)
+      oofcerr << " " << *prevface;
+    oofcerr << std::endl;
+  }
   throw ErrProgrammingError("MultiFaceMixin::getPolyFrac failed!",
 			    __FILE__, __LINE__);
-  // if(facet->verbose)
-  //   oofcerr << "MultiFaceMixin::getPolyFrac: prevface="
-  // 	    << prevface << " " << *prevface << std::endl;
-  // assert(prevface->isPartOf(this));
 #endif // DEBUG
   return 0.0;
 }
@@ -2116,26 +2181,30 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
 						SimpleIntersection *fi,
 						const PixelPlaneFacet *facet)
 {
-// #ifdef DEBUG
-//   if(htet->verbosePlane())
-//     oofcerr << "SimpleIntersection::mergeWith: this="
-// 	    << *this << " fi=" << *fi << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+  if(htet->verbosePlane())
+    oofcerr << "SimpleIntersection::mergeWith: this="
+	    << *this << " fi=" << *fi << std::endl;
+#endif // DEBUG
   PixelPlaneIntersectionNR *merged = nullptr;
   // Two antiparallel but otherwise equivalent VSB segments that
-  // intersect a face should form a new SimpleIntersection there.
+  // intersect a face should form a new SimpleIntersection there.  But
+  // if the points originate on different faces or segments, they
+  // should merge to form a multi-something intersection, below.
   if(isEquivalent(fi)) {
-    merged = clone(htet);
-    merged->setCrossingCount(combinedCrossing(this, fi));
-// #ifdef DEBUG
-//     if(htet->verbosePlane()) {
-//       oofcerr << "SimpleIntersection::mergeWith: antiparallel, merged="
-// 	      << merged << " " << *merged << std::endl;
-//       }
-// #endif // DEBUG
+    if(onOnePolySegment(fi, facet) && onSameLoopSegment(fi)) {
+      merged = clone(htet);
+      merged->setCrossingCount(combinedCrossing(this, fi));
+#ifdef DEBUG
+    if(htet->verbosePlane()) {
+      oofcerr << "SimpleIntersection::mergeWith: antiparallel, merged="
+	      << merged << " " << *merged << std::endl;
+      }
+#endif // DEBUG
     // Don't call mergeEquiv -- clones don't need it
-    return merged;
-  }
+      return merged;
+    }
+  } // end if points are equivalent
 #ifdef DEBUG
   if(facet->onOppositeEdges(this, fi)) {
     if(htet->verbosePlane())
@@ -2158,8 +2227,12 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
   else {
     merged = new MultiCornerIntersection(htet, this, fi);
   }
-  if(merged != nullptr)
+  if(merged != nullptr) {
+#ifdef DEBUG
+
+#endif // DEBUG
     htet->mergeEquiv(this, fi, merged);
+  }
   return merged;
 }
 
@@ -3222,6 +3295,16 @@ void IsecEquivalenceClass::addFacePixelPlane(const FacePixelPlane *fpp,
   loc_[fpp->direction()] = fpp->normalOffset();
   if(collinear)
     includeCollinearPlanes(fpp);
+}
+
+bool IsecEquivalenceClass::containsFacePlane(const FacePlane *fp) const {
+  if(facePlanes.count(fp) > 0)
+    return true;
+  // TODO: This could be done without the dynamic cast if we added
+  // virtual functions isInEquivalenceClass to FacePlane and
+  // FacePixelPlane.
+  const FacePixelPlane *fpp = dynamic_cast<const FacePixelPlane*>(fp);
+  return (fpp != nullptr && pixelFaces.count(fpp) > 0);
 }
 
 void IsecEquivalenceClass::includeCollinearPlanes(const HPlane *plane) {
