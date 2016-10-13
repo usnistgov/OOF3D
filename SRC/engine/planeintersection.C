@@ -990,6 +990,9 @@ unsigned int PixelPlaneIntersectionNR::minPolyEdge(const PixelPlaneFacet *facet)
   return 0;
 }
 
+// TODO: Get rid of CrossingType and setCrossingType.  Just use
+// integer crossing counts.  Add bool isExit and isEntry if necessary.
+
 void PixelPlaneIntersectionNR::setCrossingType(CrossingType ct) {
   if(ct == ENTRY)
     setCrossingCount(-1);
@@ -2227,12 +2230,8 @@ PixelPlaneIntersectionNR *SimpleIntersection::mergeWith(
   else {
     merged = new MultiCornerIntersection(htet, this, fi);
   }
-  if(merged != nullptr) {
-#ifdef DEBUG
-
-#endif // DEBUG
+  if(merged != nullptr)
     htet->mergeEquiv(this, fi, merged);
-  }
   return merged;
 }
 
@@ -2864,12 +2863,16 @@ MultiCornerIntersection::MultiCornerIntersection(
   computeLocation();
   // TODO: In debug mode, check that the faces actually pass through
   // the intersection point as determined by the pixel planes?
-// #ifdef DEBUG
-//   oofcerr << "MultiCornerIntersection::ctor: built " << *this << std::endl;
-//   OOFcerrIndent indent(2);
-//   oofcerr << "MultiCornerIntersection::ctor: from fi0=" << *fi0 << std::endl;
-//   oofcerr << "MultiCornerIntersection::ctor:  and fi1=" << *fi1 << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+  if(htet->verbosePlane()) {
+    oofcerr << "MultiCornerIntersection::ctor: built " << *this << std::endl;
+    OOFcerrIndent indent(2);
+    oofcerr << "MultiCornerIntersection::ctor: from fi0=" << *fi0 << std::endl;
+    oofcerr << "MultiCornerIntersection::ctor:  and fi1=" << *fi1 << std::endl;
+    oofcerr << "MultiCornerIntersection::ctor: crossing_=" << crossing_
+	    << std::endl;
+  }
+#endif // DEBUG
   // includeCollinearPlanes(htet);
 }
 

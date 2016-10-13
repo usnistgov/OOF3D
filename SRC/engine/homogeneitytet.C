@@ -2335,23 +2335,23 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
       // Make sure equivalence classes are up to date.
       // TODO: If checkEquiv is run for each new PlaneIntersection, is
       // this loop necessary?
-#ifdef DEBUG
-      if(verbosecategory) {
-	oofcerr << "HomogeneityTet::findFaceFacets: starting checkEquiv loop"
-		<< std::endl;
-      }
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(verbosecategory) {
+// 	oofcerr << "HomogeneityTet::findFaceFacets: starting checkEquiv loop"
+// 		<< std::endl;
+//       }
+// #endif // DEBUG
       for(auto seg=facet.edges().begin(); seg!=facet.edges().end(); ++seg) {
 	checkEquiv((*seg)->startPt());
 	checkEquiv((*seg)->endPt());
       }
 
-#ifdef DEBUG
-      if(verbosecategory) {
-	oofcerr << "HomogeneityTet::findFaceFacets: finished checkEquiv loop"
-		<< std::endl;
-      }
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(verbosecategory) {
+// 	oofcerr << "HomogeneityTet::findFaceFacets: finished checkEquiv loop"
+// 		<< std::endl;
+//       }
+// #endif // DEBUG
       facet.findLooseEnds(looseEndCatalog[face], strandedPoints);
 
 #ifdef DEBUG
