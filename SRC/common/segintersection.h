@@ -64,9 +64,15 @@ bool segIntersection(const COORD &a0, const COORD &a1,
   }
   COORD bba = B2*A - AB*B;
   COORD aab = A2*B - AB*A;
-  // If either bba or aab is zero, then the segments are also
-  // parallel.  This can happen even if denom>0, because of roundoff
-  // error.
+  // bba is B2 times the component of A in the direction of B.  If
+  // either bba or aab is zero, then the segments are also parallel.
+  // This can happen even if denom>0, because of roundoff error.
+
+  // If bba and aab are nonzero because of roundoff error, then we
+  // will mistakenly think that parallel segments are not parallel.
+  // This will be a problem if the errors conspire to put both alpha
+  // and beta between 0 and 1.  TODO: Is there anything to do about this?
+  
   if(norm2(bba) == 0 || norm2(aab) == 0) {
     parallel = true;
     return false;
