@@ -43,8 +43,8 @@ bool segIntersection(const COORD &a0, const COORD &a1,
     oofcerr << "segIntersection: a0=" << a0 << " a1=" << a1
 	    << " b0=" << b0 << " b1=" << b1 << std::endl;
 #endif // DEBUG
-  Coord A = a1 - a0;
-  Coord B = b1 - b0;
+  COORD A = a1 - a0;
+  COORD B = b1 - b0;
   double A2 = norm2(A);
   double B2 = norm2(B);
   double AB = dot(A, B);
@@ -62,17 +62,19 @@ bool segIntersection(const COORD &a0, const COORD &a1,
     parallel = true;
     return false;
   }
-  parallel = false;
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "segIntersection: B2*A=" << B2*A << " AB*B=" << AB*B
-	    << " diff=" << B2*A-AB*B << std::endl;
-    oofcerr << "segIntersection: b0-a0=" << b0-a0 << std::endl;
+  COORD bba = B2*A - AB*B;
+  COORD aab = A2*B - AB*A;
+  // If either bba or aab is zero, then the segments are also
+  // parallel.  This can happen even if denom>0, because of roundoff
+  // error.
+  if(norm2(bba) == 0 || norm2(aab) == 0) {
+    parallel = true;
+    return false;
   }
-#endif // DEBUG
+  parallel = false;
   double invdenom = 1./denom;
-  alpha = dot(B2*A - AB*B, b0 - a0)*invdenom;
-  beta =  dot(A2*B - AB*A, a0 - b0)*invdenom;
+  alpha = dot(bba, b0 - a0)*invdenom;
+  beta =  dot(aab, a0 - b0)*invdenom;
 #ifdef DEBUG
   if(verbose)
     oofcerr << "segIntersection: alpha=" << alpha << " beta=" << beta
