@@ -164,32 +164,30 @@ public:
 		  const PixelPlaneIntersection *fi1)
     const
   {
-#ifdef DEBUG
-    if(facet->verbose) {
-      // oofcerr << "LtPolyFrac::operator(): fi0=" << fi0 << " fi1=" << fi1
-      // 	      << std::endl;
-      oofcerr << "LtPolyFrac::operator(): fi0= " << fi0 << " " << *fi0
-	      << std::endl;
-      oofcerr << "LtPolyFrac::operator(): fi1= " << fi1 << " " << *fi1
-	      << std::endl;      
-    }
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(facet->verbose) {
+//       oofcerr << "LtPolyFrac::operator(): fi0= " << fi0 << " " << *fi0
+// 	      << std::endl;
+//       oofcerr << "LtPolyFrac::operator(): fi1= " << fi1 << " " << *fi1
+// 	      << std::endl;      
+//     }
+// #endif // DEBUG
 
     // TODO: sharedPolySegment might be too slow in this context.
     unsigned int sharedSeg = fi0->sharedPolySegment(fi1, facet);
-#ifdef DEBUG
-    if(facet->verbose)
-      oofcerr << "LtPolyFrac::operator(): sharedSeg=" << sharedSeg << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     if(facet->verbose)
+//       oofcerr << "LtPolyFrac::operator(): sharedSeg=" << sharedSeg << std::endl;
+// #endif // DEBUG
     if(sharedSeg != NONE) {
       double t0 = fi0->getPolyFrac(sharedSeg, facet);
       double t1 = fi1->getPolyFrac(sharedSeg, facet);
-#ifdef DEBUG
-      if(facet->verbose) {
-	oofcerr << "LtPolyFrac:operator(): polyFrac0=" << t0 << std::endl;
-	oofcerr << "LtPolyFrac:operator(): polyFrac1=" << t1 << std::endl;
-      }
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(facet->verbose) {
+// 	oofcerr << "LtPolyFrac:operator(): polyFrac0=" << t0 << std::endl;
+// 	oofcerr << "LtPolyFrac:operator(): polyFrac1=" << t1 << std::endl;
+//       }
+// #endif // DEBUG
 
       return t0 < t1;
 
@@ -765,6 +763,12 @@ bool PixelPlaneFacet::completeLoops() {
 
 #ifdef DEBUG
   if(verbose) {
+    oofcerr << "PixelPlaneFacet::completeLoops: after checkEquiv, facet="
+  	    << *this << std::endl;
+    // oofcerr << "PixelPlaneFacet::completeLoops: after checkEquiv, eq classes="
+    // 	    << std::endl;
+    // OOFcerrIndent indent(2);
+    // htet->dumpEquivalences();
     oofcerr << "PixelPlaneFacet::completeLoops: coincidences=" << std::endl;
     OOFcerrIndent indent(2);
     for(Coord2D pt : coincidentLocs) {
@@ -775,14 +779,6 @@ bool PixelPlaneFacet::completeLoops() {
       }
     }
   }
-  // if(verbose) {
-  //   oofcerr << "PixelPlaneFacet::completeLoops: after checkEquiv, facet="
-  // 	    << *this << std::endl;
-  //   // oofcerr << "PixelPlaneFacet::completeLoops: after checkEquiv, eq classes="
-  //   // 	    << std::endl;
-  //   // OOFcerrIndent indent(2);
-  //   // htet->dumpEquivalences();
-  // }
 
   if(!htet->verify()) {
     oofcerr << "PixelPlaneFacet::completeLoops: verify failed after edge loop"
@@ -858,14 +854,14 @@ bool PixelPlaneFacet::completeLoops() {
 	}
       }	// end loop over intersections p at this coincidence location
 
-// #ifdef DEBUG
-//       if(verbose) {
-// 	oofcerr << "PixelPlaneFacet::completeLoops: uniqueIsecs=" << std::endl;
-// 	OOFcerrIndent indent(2);
-// 	for(PixelPlaneIntersectionNR *isec : uniqueIsecs)
-// 	  oofcerr << "PixelPlaneFacet::completeLoops: " << *isec << std::endl;
-//       }
-// #endif // DEBUG
+#ifdef DEBUG
+      if(verbose) {
+	oofcerr << "PixelPlaneFacet::completeLoops: uniqueIsecs=" << std::endl;
+	OOFcerrIndent indent(2);
+	for(PixelPlaneIntersectionNR *isec : uniqueIsecs)
+	  oofcerr << "PixelPlaneFacet::completeLoops: " << *isec << std::endl;
+      }
+#endif // DEBUG
 
       // From the set of intersections, choose the ones that are
       // actually crossings.  These are the points where segments
@@ -1586,6 +1582,7 @@ bool PixelPlaneFacet::resolveThreeFoldCoincidence(
 			      __FILE__, __LINE__);
   }
 #endif // DEBUG
+
   if(entries.size() == 2) {
     if(entries[0]->onSameLoopSegment(entries[1])) {
       /* Two entries on the same VSB segment.
@@ -1650,7 +1647,6 @@ bool PixelPlaneFacet::resolveThreeFoldCoincidence(
 				mergers[1]->mergeWith(htet, mergers[2], this),
 				this);
 	if(newfi) {
-	  newfi->setCrossingType(ENTRY);
 	  replaceIntersection(mergers[0], newfi);
 	  replaceIntersection(mergers[1], new RedundantIntersection(newfi,
 								    this));
@@ -1749,45 +1745,16 @@ bool PixelPlaneFacet::resolveThreeFoldCoincidence(
 // #endif // DEBUG
       std::vector<PixelPlaneIntersectionNR*> mergers =
 	tripleCoincidence(exits[0], exits[1], entries[0]);
-// #ifdef DEBUG
-//       if(verbose) {
-// 	oofcerr << "PixelPlaneFacet:resolveThreeFoldCoincidence: mergers.size="
-// 		<< mergers.size() << std::endl;
-// 	OOFcerrIndent indent(2);
-// 	for(PixelPlaneIntersectionNR *ppi : mergers) {
-// 	  oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: " << *ppi
-// 		  << std::endl;
-// 	}
-//       }
-// #endif // DEBUG
       if(mergers.size() == 3) {
-	PixelPlaneIntersectionNR *mfi0 = mergers[1]->mergeWith(
-						       htet, mergers[2], this);
-// #ifdef DEBUG
-// 	if(verbose) {
-// 	  if(!mfi0)
-// 	    oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: failed to merge 1 & 2!" << std::endl;
-// 	else
-// 	  oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: merged 1 & 2 "
-// 		  << *mfi0 << std::endl;
-// 	}
-// #endif // DEBUG
-	PixelPlaneIntersectionNR *mfi = mergers[0]->mergeWith(htet, mfi0, this);
-// #ifdef DEBUG
-// 	if(verbose) {
-// 	  if(!mfi)
-// 	    oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: failed to merge 0 & (1&2)!" << std::endl;
-// 	  else
-// 	    oofcerr << "PixelPlaneFacet::resolveThreeFoldCoincidence: merged 0 &(1&2) "
-// 		    << *mfi << std::endl;
-// 	}
-// #endif // DEBUG
-	if(mfi) {
-	  mfi->setCrossingType(EXIT);
-	  replaceIntersection(mergers[0], mfi);
-	  replaceIntersection(mergers[1], new RedundantIntersection(mfi,
+	PixelPlaneIntersectionNR *newfi = mergers[0]->mergeWith(
+				htet,
+				mergers[1]->mergeWith(htet, mergers[2], this),
+				this);
+	if(newfi) {
+	  replaceIntersection(mergers[0], newfi);
+	  replaceIntersection(mergers[1], new RedundantIntersection(newfi,
 								    this));
-	  replaceIntersection(mergers[2], new RedundantIntersection(mfi,
+	  replaceIntersection(mergers[2], new RedundantIntersection(newfi,
 								    this));
 	}
 	else
@@ -2282,6 +2249,9 @@ PixelPlaneFacet::tripleCoincidence(PixelPlaneIntersectionNR *fi0,
   
   assert(!fi0->onSameLoopSegment(fi1));
   PixelPlaneIntersectionNR *fiA, *fiC;
+  // sharedSeg is a loop segment that's shared by the nodes.  It's not
+  // guaranteed to be the only shared segment (if the intersections
+  // are at a corner).
   const PixelBdyLoopSegment *sharedSeg = fi0->sharedLoopSegment(fiB);
   if(sharedSeg != nullptr) {
     fiA = fi0;
@@ -2464,8 +2434,33 @@ PixelPlaneFacet::tripleCoincidence(PixelPlaneIntersectionNR *fi0,
     // with the non-intersected VSB segment coming between C and A.
     const SingleVSBbase *si0 = dynamic_cast<const SingleVSBbase*>(fi0);
     const SingleVSBbase *si1 = dynamic_cast<const SingleVSBbase*>(fi1);
+#ifdef DEBUG
+    if(si0 == nullptr || si1 == nullptr) {
+      oofcerr << "PixelPlaneFacet::tripleCoincidence:"
+	      << " cast to SingleVSBbase failed!"
+	      << std::endl;
+      oofcerr << "PixelPlaneFacet::tripleCoincidence: si0=" << si0
+	      << " si1=" << si1 << std::endl;
+      throw ErrProgrammingError("Error in PixelPlaneFacet::tripleCoincidence",
+				__FILE__, __LINE__);
+    }
+#endif // DEBUG
+
+    // If fiB is *not* a SingleVSBbase, then B must be right at the
+    // point between the pixels.  All of the points must coincide,
+    // because the polygon must be convex.
     const SingleVSBbase *siB = dynamic_cast<const SingleVSBbase*>(fiB);
-    assert(si0 != nullptr && si1 != nullptr && siB != nullptr);
+    if(siB == nullptr) {
+#ifdef DEBUG
+      if(verbose)
+	oofcerr << "PixelPlaneFacet::tripleCoincidence: all points coincide"
+		<< std::endl;
+#endif // DEBUG
+      coincidentPoints.push_back(fi0);
+      coincidentPoints.push_back(fi1);
+      coincidentPoints.push_back(fiB);
+      return coincidentPoints;
+    }
     const PixelBdyLoopSegment &seg0 = si0->getLoopSeg();
     const PixelBdyLoopSegment &seg1 = si1->getLoopSeg();
     const PixelBdyLoopSegment &segB = siB->getLoopSeg();
