@@ -599,12 +599,12 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
   // 	    << std::endl;
   // }
 
-  if(!verify()) {
-    oofcerr << "HomogeneityTet::mergeEquiv:"
-	    << " verification failed at beginning of mergeEquiv" << std::endl;
-    throw ErrProgrammingError("Verification failed before mergeEquiv!",
-			      __FILE__, __LINE__);
-  }
+  // if(!verify()) {
+  //   oofcerr << "HomogeneityTet::mergeEquiv:"
+  // 	    << " verification failed at beginning of mergeEquiv" << std::endl;
+  //   throw ErrProgrammingError("Verification failed before mergeEquiv!",
+  // 			      __FILE__, __LINE__);
+  // }
   OOFcerrIndent indent(2);
 #endif // DEBUG
   
@@ -676,11 +676,11 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
       }
     }
   }
-#ifdef DEBUG
-  if(!verify())
-    throw ErrProgrammingError("Verification failed after mergeEquiv!",
-			      __FILE__, __LINE__);
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(!verify())
+//     throw ErrProgrammingError("Verification failed after mergeEquiv!",
+// 			      __FILE__, __LINE__);
+// #endif // DEBUG
 }  // end HomogeneityTet::mergeEquiv (three arg version)
 
 // This version of mergeEquiv is used when the classes are merged, but
@@ -1612,15 +1612,15 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	pbs_start_inside = pbs_end_inside;
 	pbs_start_bary = pbs_end_bary;
 
-#ifdef DEBUG
-	if(!verify()) {
-	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
-		  << "verification failed!" << std::endl;
-	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
-		  << "facet=" << *facet << std::endl;
-	  throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
-	}
-#endif // DEBUG
+// #ifdef DEBUG
+// 	if(!verify()) {
+// 	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
+// 		  << "verification failed!" << std::endl;
+// 	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
+// 		  << "facet=" << *facet << std::endl;
+// 	  throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
+// 	}
+// #endif // DEBUG
       }	// end loop over boundary loop segments k
 
     } // end loop over PixelBdyLoops pbl
@@ -1640,16 +1640,16 @@ void HomogeneityTet::doFindPixelPlaneFacets(
     return;
   }
 
-#ifdef DEBUG
-  if(!verify()) {
-    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
-	    << "verification failed after completeLoops!" << std::endl;
-    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
-	    << "facet=" << *facet << std::endl;
-    throw ErrProgrammingError("Verification failed after completeLoops!",
-			      __FILE__, __LINE__);
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(!verify()) {
+//     oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
+// 	    << "verification failed after completeLoops!" << std::endl;
+//     oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
+// 	    << "facet=" << *facet << std::endl;
+//     throw ErrProgrammingError("Verification failed after completeLoops!",
+// 			      __FILE__, __LINE__);
+//   }
+// #endif // DEBUG
 
 // #ifdef DEBUG
 //   if(verboseplane)
@@ -1753,12 +1753,12 @@ void HomogeneityTet::doFindPixelPlaneFacets(
     // 	      << " final facet is empty"
     // 	      << std::endl;
   }
-  if(!verify()) {
-    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: cat=" << cat
-	    << " pixel plane=" << *pixplane
-	    << " verification failed!" << std::endl;
-    throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
-  }
+  // if(!verify()) {
+  //   oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: cat=" << cat
+  // 	    << " pixel plane=" << *pixplane
+  // 	    << " verification failed!" << std::endl;
+  //   throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
+  // }
 #endif	// DEBUG
 } // end HomogeneityTet::doFindPixelPlaneFacets
 

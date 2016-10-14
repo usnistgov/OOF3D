@@ -780,12 +780,12 @@ bool PixelPlaneFacet::completeLoops() {
     }
   }
 
-  if(!htet->verify()) {
-    oofcerr << "PixelPlaneFacet::completeLoops: verify failed after edge loop"
-	    << std::endl;
-    throw ErrProgrammingError("Verification failed after edge loop",
-			      __FILE__, __LINE__);
-    }
+  // if(!htet->verify()) {
+  //   oofcerr << "PixelPlaneFacet::completeLoops: verify failed after edge loop"
+  // 	    << std::endl;
+  //   throw ErrProgrammingError("Verification failed after edge loop",
+  // 			      __FILE__, __LINE__);
+  //   }
 #endif	// DEBUG
 
   // Resolve coincidences that occur when a voxel corner is on or near
@@ -933,9 +933,9 @@ bool PixelPlaneFacet::completeLoops() {
     oofcerr << "PixelPlaneFacet::completeLoops: after resolving coincidences,"
   	    << " facet=" << *this << std::endl;
   }
-  if(!htet->verify()) {
-    throw ErrProgrammingError("Verification failed", __FILE__, __LINE__);
-  }
+  // if(!htet->verify()) {
+  //   throw ErrProgrammingError("Verification failed", __FILE__, __LINE__);
+  // }
 #endif	// DEBUG
 
   // TODO: Should removeNullEdges be used?
@@ -1519,12 +1519,12 @@ bool PixelPlaneFacet::resolveTwoFoldCoincidence(const PPIntersectionNRSet &isecs
 #endif // DEBUG
 	  replaceIntersection(fi0, merged);
 	  replaceIntersection(fi1, new RedundantIntersection(merged, this));
-#ifdef DEBUG
-	  if(!htet->verify()) {
-	    throw ErrProgrammingError("Verification failed!",
-				      __FILE__, __LINE__);
-	  }
-#endif // DEBUG
+// #ifdef DEBUG
+// 	  if(!htet->verify()) {
+// 	    throw ErrProgrammingError("Verification failed!",
+// 				      __FILE__, __LINE__);
+// 	  }
+// #endif // DEBUG
 	}
 	else {
 // #ifdef DEBUG
