@@ -1949,7 +1949,7 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
     }
     OOFcerrIndent indent(2);
 #endif // DEBUG
-    // skip this face if it lies in the pixel plane or the orthoFace
+    // Skip this face if it lies in the pixel plane or the orthoFace
     // or is collinear with them.
     if(face != onFace && face != orthoFace &&
        !areCollinear(pixplane, tempOrthoPlane, getTetFacePlane(face)))
@@ -1957,52 +1957,44 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
 	double b0n = b0[n];
 	double b1n = b1[n];
 #ifdef DEBUG
-      if(verboseplane) {
-	oofcerr << "HomogeneityTet::find_two_intersections: b0n=" << b0n
-		<< " b1n=" << b1n << " b1n-b0n=" << b1n-b0n
-		<< std::endl;
-      }
+	if(verboseplane) {
+	  oofcerr << "HomogeneityTet::find_two_intersections: b0n=" << b0n
+		  << " b1n=" << b1n << " b1n-b0n=" << b1n-b0n
+		  << std::endl;
+	}
 #endif // DEBUG
-	// Skip this face if the segment is parallel to it (b0n == b1n)
-	// or if it doesn't cross it (b0n and b1n have the same sign).
-	if(b0n != b1n && b0n*b1n <= 0) {
+	// Skip this face if the segment is parallel to it (b0n ==
+	// b1n) (We used to check that the segment crossed the face
+	// here with b0n*b1n<0, but that's susceptible to round off
+	// error.
+	if(b0n != b1n) {
 	  double alpha = b0n/(b0n - b1n);
 	  // facedot is used to check that the face is oriented
 	  // correctly to be an entry or exit.
 	  double facedot = dot(faceAreaVector(face), segvec);
-#ifdef DEBUG
-	  if(verboseplane)
-	    oofcerr << "HomogeneityTet::find_two_intersections: areavec="
-		    << faceAreaVector(face) << " segvec=" << segvec
-		    << " facedot=" << facedot << std::endl;
-#endif	// DEBUG
-	  if(b0n < b1n && facedot < 0) {
-	    // This is an entry point
-	    if(alpha > entryAlpha) {
-	      entryAlpha = alpha;
-	      entryFace = face;
+	  if(b0n < b1n && facedot < 0 && alpha > entryAlpha) {
+	    // This is the best entry point so far.
+	    entryAlpha = alpha;
+	    entryFace = face;
 #ifdef DEBUG
 	    if(verboseplane)
 	      oofcerr << "HomogeneityTet::find_two_intersections: alpha="
 		      << alpha << " entryAlpha=" << entryAlpha << std::endl;
 #endif // DEBUG
-	    }
 	  }
-	  else if(b0n > b1n && facedot > 0) {
-	    // This is an exit point.
-	    if(alpha < exitAlpha) {
-	      exitAlpha = alpha;
-	      exitFace = face;
+	  else if(b0n > b1n && facedot > 0 && alpha < exitAlpha) {
+	    // This is the best exit point so far.
+	    exitAlpha = alpha;
+	    exitFace = face;
 #ifdef DEBUG
 	    if(verboseplane)
 	      oofcerr << "HomogeneityTet::find_two_intersections: alpha="
 		      << alpha << " exitAlpha=" << exitAlpha << std::endl;
 #endif // DEBUG
-	    }
 	  }
 	}
       } // end if f != onFace, etc
-  }   // end loop over nodes f
+  }   // end loop over nodes n, faces f
 
 #ifdef DEBUG
   if(verboseplane) {
@@ -2012,83 +2004,66 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
 	    << std::endl;
   }
 #endif // DEBUG
-   std::vector<PixelPlaneIntersectionNR*> isecs;
-  
-  if(entryFace != NONE && exitFace != NONE &&
-     entryAlpha <= exitAlpha &&
-     ((entryAlpha >= 0.0 && entryAlpha <= 1.0) ||
-      // TODO: old version had || instead of && ^ here, because
-      // sometimes one of the alphas was just epsilon out of bounds
-      // and the other was in bounds and we knew that there were two
-      // intersections.
-      (exitAlpha >= 0.0 && exitAlpha <= 1.0)))
+  std::vector<PixelPlaneIntersectionNR*> isecs;
+
+  // If we didn't find an entry or exit, or if the entry comes after
+  // the exit on the VSB segment, then the segment doesn't intersect
+  // the polygon.
+  if(entryFace == NONE || exitFace == NONE || entryFace == exitFace ||
+     entryAlpha > exitAlpha)
     {
+      return isecs;		// empty vec, no intersections
+    }
+
+  // Check that the intersection point is actually on the VSB segment.
+  // This can happen if the continuation of the segment would
+  // intersect the polygon, but the segment itself doesn't.
+  if((entryAlpha < 0.0 || entryAlpha > 1.0) ||
+     (exitAlpha < 0.0 || exitAlpha > 1.0))
+    {
+      return isecs;
+    }
+
+  BarycentricCoord bentry = averageBary(b0, b1, entryAlpha);
+  BarycentricCoord bexit = averageBary(b0, b1, exitAlpha);
+
+  // // Check that the intersection points are actually on the faces of
+  // // the tetrahedron.  This is easily done with the barycentric
+  // // coordinates of the intersection points, except when the
+  // // intersection is right on a tet edge.
+
+  // if(!insideFace(bentry, entryFace, pixplane) ||
+  //    !insideFace(bexit, exitFace, pixplane))
+  //   {
+  //     return isecs;
+  //   }
+
+  const HPixelPlane *orthoPlane0 = orientedOrthogonalPlane(
+					   cat, pixplane, pblseg, entryAlpha);
+  const HPixelPlane *orthoPlane1 = orientedOrthogonalPlane(
+					   cat, pixplane, pblseg, exitAlpha);
 #ifdef DEBUG
-      BarycentricCoord bentry = averageBary(b0, b1, entryAlpha);
-      BarycentricCoord bexit = averageBary(b0, b1, exitAlpha);
+  if(verboseplane) {
+    oofcerr << "HomogeneityTet::find_two_intersections:"
+	    << " entryFace=" << entryFace << " entryAlpha=" << entryAlpha
+	    << " " << bentry << " " << bentry.position3D(epts)
+	    << " orthoplane=" << *orthoPlane0 << std::endl;
+    oofcerr << "HomogeneityTet::find_two_intersections:"
+	    << " exitFace=" << exitFace << " exitAlpha=" << exitAlpha
+	    << " " << bexit << " " << bexit.position3D(epts)
+	    << " orthoplane=" << *orthoPlane1 << std::endl;
+  }
+#endif // DEBUG
+  isecs.resize(2);
+  isecs[0] = newIntersection(this, pixplane, orthoPlane0, pblseg,
+			     entryAlpha, entryFace, ENTRY);
+  isecs[1] = newIntersection(this, pixplane, orthoPlane1, pblseg,
+			     exitAlpha, exitFace, EXIT);
+#ifdef DEBUG
+  isecs[0]->verbose = verboseplane;
+  isecs[1]->verbose = verboseplane;
 #endif // DEBUG
 
-#define FACECHECK
-#ifdef FACECHECK      
-      // Check that the intersection points are actually within the
-      // faces of the tet.  If the VSB segment passes through a tet
-      // corner, it's possible that the alpha for one of the faces is
-      // small and has the wrong sign, so an intersection on that face
-      // isn't detected.  Then the wrong face will be used for the
-      // entry or exit, and the supposed intersection point will be
-      // outside of the tet.
-      for(unsigned int i=0; i<NUM_TET_NODES; i++) {
-	if((i!=CSkeletonElement::oppNode[entryFace] && bentry[i] < 0) ||
-	   (i!=CSkeletonElement::oppNode[exitFace] && bexit[i] < 0))
-	  {
-#ifdef DEBUG
-	    if(verboseplane) {
-	      oofcerr << "HomogeneityTet::find_two_intersections: "
-		      << " rejecting computed intersections!" << std::endl;
-	      OOFcerrIndent indent(2);
-	oofcerr << "HomogeneityTet::find_two_intersections:"
-		<< " entryFace=" << entryFace << " oppNode="
-		<< CSkeletonElement::oppNode[entryFace]
-		<< " entryAlpha=" << entryAlpha
-		<< " " << bentry << " " << bentry.position3D(epts) << std::endl;
-	oofcerr << "HomogeneityTet::find_two_intersections:"
-		<< " exitFace=" << exitFace << " oppNode="
-		<< CSkeletonElement::oppNode[exitFace]
-		<< " exitAlpha=" << exitAlpha
-		<< " " << bexit << " " << bexit.position3D(epts) << std::endl;
-	    }
-#endif // DEBUG
-	    return isecs;	// empty vec, no intersections
-	  }
-      }
-#endif // FACECHECK
-      
-      const HPixelPlane *orthoPlane0 = orientedOrthogonalPlane(
-				       cat, pixplane, pblseg, entryAlpha);
-      const HPixelPlane *orthoPlane1 = orientedOrthogonalPlane(
-				       cat, pixplane, pblseg, exitAlpha);
-#ifdef DEBUG
-      if(verboseplane) {
-	oofcerr << "HomogeneityTet::find_two_intersections:"
-		<< " entryFace=" << entryFace << " entryAlpha=" << entryAlpha
-		<< " " << bentry << " " << bentry.position3D(epts)
-		<< " orthoplane=" << *orthoPlane0 << std::endl;
-	oofcerr << "HomogeneityTet::find_two_intersections:"
-		<< " exitFace=" << exitFace << " exitAlpha=" << exitAlpha
-		<< " " << bexit << " " << bexit.position3D(epts)
-		<< " orthoplane=" << *orthoPlane1 << std::endl;
-      }
-#endif // DEBUG
-      isecs.resize(2);
-      isecs[0] = newIntersection(this, pixplane, orthoPlane0, pblseg,
-				 entryAlpha, entryFace, ENTRY);
-      isecs[1] = newIntersection(this, pixplane, orthoPlane1, pblseg,
-				 exitAlpha, exitFace, EXIT);
-#ifdef DEBUG
-      isecs[0]->verbose = verboseplane;
-      isecs[1]->verbose = verboseplane;
-#endif // DEBUG
-    }
 // #ifdef DEBUG
 //   if(verboseplane) {
 //     oofcerr << "HomogeneityTet::find_two_intersections: isecs=";
