@@ -53,8 +53,8 @@ public:
 const BarycentricCoord &nodeBCoord(unsigned int);
 
 
-// BarycentricCoord averageBary(const BarycentricCoord&, const BarycentricCoord&,
-// 			     double weight=0.5);
+BarycentricCoord averageBary(const BarycentricCoord&, const BarycentricCoord&,
+			     double weight=0.5);
 
 // BarycentricCoord mergeBary(const BarycentricCoord&, const BarycentricCoord&);
 

@@ -123,19 +123,19 @@ void BarycentricCoord::repair() {
   }
 }
 
-// // Barycentric coordinates can't be simply added component-wise or
-// // scaled, because the result wouldn't be normalized correctly.
-// // However, the weighted average of two points is simple.
+// Barycentric coordinates can't be simply added component-wise or
+// scaled, because the result wouldn't be normalized correctly.
+// However, the weighted average of two points is simple.
 
-// BarycentricCoord averageBary(const BarycentricCoord &b0,
-// 			     const BarycentricCoord &b1,
-// 			     double weight)
-// {
-//   BarycentricCoord avg;
-//   for(unsigned int i=0; i<4; i++)
-//     avg[i] = (1-weight)*b0[i] + weight*b1[i];
-//   return avg;
-// }
+BarycentricCoord averageBary(const BarycentricCoord &b0,
+			     const BarycentricCoord &b1,
+			     double weight)
+{
+  BarycentricCoord avg;
+  for(unsigned int i=0; i<4; i++)
+    avg[i] = (1-weight)*b0[i] + weight*b1[i];
+  return avg;
+}
 
 // // When two nearly equal points are merged into one, preserve
 // // topological information by ensuring that components that are zero
