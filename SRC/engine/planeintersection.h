@@ -177,7 +177,7 @@ public:
 
   // sharedPlane returns any kind of plane (pixel plane or face plane)
   // that's shared between this PlaneIntersection and the other one,
-  // excluding the face who's tet index is 'exlcude'.
+  // excluding the face whose tet index is given.
   const HPlane *sharedPlane(const PlaneIntersection*, unsigned int) const;
 
   // Given an unoriented plane, return the oriented plane that's part
