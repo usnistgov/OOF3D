@@ -217,10 +217,26 @@ HomogeneityTet::HomogeneityTet(const CSkeletonElement *element,
     Coord3D pt1 = epts[CSkeletonElement::getFaceArray(f)[1]];
     Coord3D pt2 = epts[CSkeletonElement::getFaceArray(f)[2]];
 
+    faceCenters[f] = (pt0 + pt1 + pt2)/3.0;
+
     // A more symmetric but more expensive expression for the area is
     // 0.5*(pt0%pt1 + pt1%pt2 + pt2%pt0).
     faceAreaVectors[f] = 0.5*((pt1 - pt0) % (pt2 - pt0));
-    faceCenters[f] = (pt0 + pt1 + pt2)/3.0;
+    // If we know that components of the normal have to be zero, make
+    // them really zero.  If the coordinates of any two nodes on the
+    // face have the same i and j comoponents, then the k component of
+    // the normal is zero (k != i, k != j).  This is important in
+    // FaceEdgeIntersection::crosses.
+    for(unsigned int k=0; k<3; k++) {
+      unsigned int i=(k+1)%3;
+      unsigned int j=(k+2)%3;
+      if((pt0[i] == pt1[i] && pt0[j] == pt1[j]) ||
+	 (pt1[i] == pt2[i] && pt1[j] == pt2[j]) ||
+	 (pt2[i] == pt0[i] && pt2[j] == pt0[j]))
+	{
+	  faceAreaVectors[f][k] = 0;
+	}
+    }
 
     // Is this face on a pixel plane?
     bool fplane = false;
@@ -4108,6 +4124,34 @@ bool FaceEdgeIntersection::crosses(const FaceEdgeIntersection *other,
 #endif // DEBUG
     return false;
   }
+
+  // Check for parallel edges.  If both edges are formed by pixel
+  // planes intersecting the face, then the edges are parallel if the
+  // cross product of the normals to the pixel planes is perpendicular
+  // to the face normal.  This check probably catches very few cases,
+  // but they're cases in which round off error can confuse the
+  // declination check, below.  This case could be common when an
+  // element has been constructed with faces aligned with the x, y,
+  // and z axes, and then one node has been moved, pivoting a face
+  // around an axis-aligned edge.  The pivoted face may clip a VSB
+  // corner, creating parallel intersection lines.
+  const HPixelPlane *pp0 = nearEnd->sharedPixelPlane(farEnd, face);
+  const HPixelPlane *pp1 = otherNearEnd->sharedPixelPlane(otherFarEnd, face);
+  if(pp0 != nullptr && pp1 != nullptr) {
+    Coord3D crossprod = cross(pp0->normal(), pp1->normal());
+    // Getting this dot product to be exactly zero is the reason for
+    // setting components of the area vectors to zero in the
+    // HomogeneityTet constructor.
+    if(dot(crossprod, htet->faceAreaVector(face)) == 0) {
+#ifdef DEBUG
+      if(verbose)
+	oofcerr << "FaceEdgeIntersection::crosses: edges are parallel!"
+		<< std::endl;
+#endif // DEBUG
+      return false;
+    }
+  }
+    
   
   // Either this point precedes the other on the same face edge, or
   // this point is on the edge preceding the other point's edge.
