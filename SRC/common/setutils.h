@@ -197,6 +197,8 @@ void foreachShared(const SET &a, const SET &b,
 //           i!=TwoSetIterator<BASE, std::set<A*>, std::set<B*>>(a,b).end(); ++i)
 //     etc.
 
+// TODO: Can this be done without copying the sets?  Copying seems dumb.
+
 template <class BASE, class SETA, class SETB>
 class TwoSetIterator {
 private:
@@ -204,10 +206,6 @@ private:
 public:
   TwoSetIterator(const SETA &a, const SETB &b) {
     combo.reserve(a.size() + b.size());
-    // for(auto x : a)
-    //   combo.push_back((BASE*) x);
-    // for(auto x: b)
-    //   combo.push_back((BASE*) x);
     combo.insert(combo.end(), a.begin(), a.end());
     combo.insert(combo.end(), b.begin(), b.end());
   }
