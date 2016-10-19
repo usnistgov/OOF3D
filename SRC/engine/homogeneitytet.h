@@ -263,6 +263,7 @@ private:
 			      FacetMap2D&);
   PixelPlaneIntersectionNR *find_one_intersection(
 				  unsigned int,
+				  const PixelPlaneFacet*,
 				  const HPixelPlane*,
 				  const PixelBdyLoopSegment&,
 				  unsigned int, bool);

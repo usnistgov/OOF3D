@@ -338,6 +338,7 @@ PixelPlaneFacet::PixelPlaneFacet(HomogeneityTet *htet,
     for(const FacePlane *face : faces) {
       assert(face != nullptr);
       faceEdgeMap[face] = i;
+      boundingFaces.insert(face);
       const FacePixelPlane *fpp = htet->getCoincidentPixelPlane(face);
       if(fpp != nullptr)
 	faceEdgeMap[fpp] = i;
@@ -368,6 +369,11 @@ PixelPlaneFacet::~PixelPlaneFacet() {
 // Find the tet faces that this edge lies on, excluding the face that
 // lies in the pixel plane (if any).  These are the faces that define
 // the edges of the tet-pixel plane intersection polygon.
+
+// TODO: getFacePlanes is expensive. It's called from the
+// PixelPlaneFacet constructor and also in
+// MultiFaceMixin::getPolyFrac.  Its return values should be cached.
+
 FacePlaneSet PixelPlaneFacet::getFacePlanes(unsigned int f) const {
   assert(f != NONE);
   unsigned int g = f + 1;

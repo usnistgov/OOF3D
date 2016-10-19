@@ -268,6 +268,7 @@ private:
   mutable bool areaComputed_;
   const bool onFace;
   FaceEdgeMap faceEdgeMap;  // maps Plane*s to polygon edge numbers
+  FacePlaneSet boundingFaces;
   std::set<RedundantIntersection*> redundantIntersections;
   bool closedOnPerimeter;
 public:
@@ -317,6 +318,7 @@ public:
   unsigned int getPolyEdge(const Plane *fp) const;
   FacePlaneSet getFacePlanes(unsigned int) const;
   const FacePixelPlane *getBaseFacePlane() const;
+  const FacePlaneSet &getBoundingFaces() const { return boundingFaces; }
 
   bool onOppositeEdges(const SimpleIntersection*, const SimpleIntersection*)
     const;
