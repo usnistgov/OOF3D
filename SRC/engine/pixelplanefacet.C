@@ -695,6 +695,21 @@ static int storeCoincidenceData(PixelPlaneIntersectionNR *isec,
 //   }
 // };
 
+static void incrementIsec(
+		  unsigned int &edgeNo, unsigned int &isecNo,
+		  std::vector<PolyEdgeIntersections> &polyEdgeIntersections)
+{
+  isecNo++;
+  if(isecNo >= polyEdgeIntersections[edgeNo].size()) {
+    isecNo = 0;
+    do {
+      edgeNo++;
+      if(edgeNo == polyEdgeIntersections.size())
+	edgeNo = 0;
+    } while(polyEdgeIntersections[edgeNo].empty());
+  }
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 
@@ -1040,186 +1055,144 @@ bool PixelPlaneFacet::completeLoops() {
   //  /  |
   */
 
-  // Look for an exit.  If the first intersection found is an entry,
-  // it's stored in firstEntry.
-  const PixelPlaneIntersection *firstEntry = nullptr;
-  // Similarly for non-crossing intersections, but there may be more
-  // than one.  "First" means "before an exit was found".
-  std::vector<const PixelPlaneIntersection*> firstNoncrossing;
-  // currentExit is non-null if we've found an exit and are looking
-  // for a matching entry.
-  const PixelPlaneIntersection *currentExit = nullptr;
-  bool started = false;
-
-// #ifdef DEBUG
-//   if(verbose) {
-//     oofcerr << "PixelPlaneFacet::completeLoops: filling gaps"
-// 	    << std::endl;
-//     unsigned int n=0;
-//     for(auto const &edge : polyEdgeIntersections)
-// 	n += edge.size();
-//     if(n > 0) {
-//       oofcerr << "PixelPlaneFacet::completeLoops: intersections are:"
-// 	      << std::endl;
-//       OOFcerrIndent indent(2);
-//       for(unsigned int e=0; e<tetPts.size(); e++) {
-// 	oofcerr << "PixelPlaneFacet::completeLoops: e=" << e << std::endl;
-// 	OOFcerrIndent ind(2);
-// 	if(!polyEdgeIntersections[e].empty())
-// 	  for(const PixelPlaneIntersection *fi : polyEdgeIntersections[e]) {
-// 	    oofcerr << "PixelPlaneFacet::completeLoops: " << *fi
-// 		    << std::endl;
-// 	  }
-// 	else
-// 	  oofcerr << "PixelPlaneFacet::completeLoops: (empty)" << std::endl;
-//       }
-//     }
-//   }
-// #endif // DEBUG
-  for(unsigned int e=0; e<tetPts.size(); e++) { // Loop over polygon edges
-    OOFcerrIndent indent(2);
-    for(const PixelPlaneIntersection *fi : polyEdgeIntersections[e]) {
-      // Loop over isecs on edge
-      CrossingType crossing = fi->referent()->crossingType();
+  // This routine does *not* assume that the entries and exits
+  // alternate along the polygon boundary.  It's possible to have, for
+  // example, a VSB cross section that grazes the polygon exterior
+  // (inserting a clockwise facet segment) and a non-cross section
+  // facet that grazes the interior (inserting nothing on the boundary
+  // except for exit and entry points).  The entry and exit points may
+  // lie within the clockwise segment.
+  unsigned int nEntries = 0;
+  unsigned int nExits = 0;
+  for(unsigned int e=0; e<tetPts.size(); e++)
+    for(const PixelPlaneIntersection *fi : polyEdgeIntersections[e])
+      if(fi->crossingType() == ENTRY)
+	++nEntries;
+      else if(fi->crossingType() == EXIT)
+	++nExits;
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::completeLoops: nEntries=" << nEntries
+	    << " nExits=" << nExits << std::endl;
+  }
+  if(nEntries != nExits) {
+    throw ErrProgrammingError("Mismatched entries and exits!",
+			      __FILE__, __LINE__);
+  }
+#endif // DEBUG
+  if(nEntries > 0) {
+    // Keep track of which intersections have been used already.  This
+    // is ugly and may be slow, but that can be fixed later.  TODO:
+    // Fix that.
+    std::set<const PixelPlaneIntersection*> used;
+    
+    unsigned int nEntriesUsed = 0;
+    unsigned int curEdge = 0;	// It doesn't really matter where we start
+    unsigned int curIsec = 0;
+    // exitEdge and exitIsec identify the current unpaired exit
+    // intersection, if there is one.
+    unsigned int exitEdge = NONE;
+    unsigned int exitIsec = NONE;
+    // Initialize the loop.
+    if(polyEdgeIntersections[curEdge].size() > curIsec &&
+       polyEdgeIntersections[curEdge][curIsec]->crossingType() == EXIT)
+      {
+	exitEdge = curEdge;
+	exitIsec = curIsec;
+      }
+    // Loop over the intersections, looking for an exit if there is no
+    // current exit, or for a non-exit to pair with the current exit.
+    while(nEntriesUsed < nEntries) {
 // #ifdef DEBUG
 //       if(verbose)
-// 	oofcerr << "PixelPlaneFacet::completeLoops: current point="
-// 		<< *fi->referent() << std::endl;
+// 	oofcerr << "PixelPlaneFacet::completeLoops: top of loop, curEdge="
+// 		<< curEdge << " curIsec=" << curIsec << std::endl;
 // #endif // DEBUG
-	
-      if(crossing == EXIT) {
-#ifdef DEBUG
-	if(currentExit != nullptr) {
-	  oofcerr << "PixelPlaneFacet::completeLoops: ------- aborting -------"
-		  << std::endl;
-	  oofcerr << "PixelPlaneFacet::completeLoops: facet=" << *this
-		  << std::endl;
-	  oofcerr << "PixelPlaneFacet::completeLoops: currentExit="
-		  << *currentExit << std::endl;
-	  oofcerr << "PixelPlaneFacet::completeLoops: fi=" << *fi
-		  << std::endl;
-	  throw ErrProgrammingError(
-	    "Intersection matching failed!  Found two consecutive exits.",
-	    __FILE__, __LINE__);
-	}
-#endif // DEBUG
-	if(!started && firstEntry==nullptr) {
-	  // If the first crossing found is an exit, then any
-	  // non-crossings already found must be outside of an
-	  // exit->entry pair, and should be discarded.
-	  firstNoncrossing.clear();
-	}
-	started = true;
-	currentExit = fi;
+      if(exitEdge == NONE) {
+	// Find an exit.
 // #ifdef DEBUG
 // 	if(verbose)
-// 	  oofcerr << "PixelPlaneFacet::completeLoops: found an exit: "
-// 		  << *currentExit << std::endl;
+// 	  oofcerr << "PixelPlaneFacet::completeLoops: looking for exit"
+// 		  << std::endl;
 // #endif // DEBUG
-      } // end if intersection is an exit
-	
-      else if(crossing == ENTRY) {
-	if(currentExit == nullptr) {
-	  if(firstEntry == nullptr) {
-	    // We've only just begun, and the first intersection
-	    // found was an entry.  Save it for later.
-	    firstEntry = fi;
+	unsigned int lastEdge = curEdge; // prevent infinite loop in case
+	unsigned int lastIsec = curIsec; // of error
 // #ifdef DEBUG
-// 	    if(verbose)
-// 	      oofcerr << "PixelPlaneFacet::completeLoops: saving an entry: "
-// 		      << *firstEntry << std::endl;
+// 	if(verbose)
+// 	  oofcerr << "PixelPlaneFacet::completeLoops: lastEdge=" << lastEdge
+// 		  << " lastIsec=" << lastIsec << std::endl;
 // #endif // DEBUG
+	do {
+	  incrementIsec(curEdge, curIsec, polyEdgeIntersections);
+// #ifdef DEBUG
+// 	  oofcerr << "PixelPlaneFacet::completeLoops: curEdge=" << curEdge
+// 		  << " curIsec=" << curIsec << " crossing="
+// 		  << polyEdgeIntersections[curEdge][curIsec]->crossingType()
+// 		  << " used=" << used.count(polyEdgeIntersections[curEdge][curIsec])
+// 		  << std::endl;
+// #endif // DEBUG
+	  if(curEdge == lastEdge && curIsec == lastIsec) {
+	    throw ErrProgrammingError("Wraparound while looking for exit!",
+				      __FILE__, __LINE__);
 	  }
-	  else {
-// #ifdef DEBUG
-// 	    if(verbose)
-// 	      oofcerr << "PixelPlaneFacet::completeLoops: extra entry: "
-// 		      << *fi << std::endl;
-// #endif // DEBUG
-	    throw ErrProgrammingError(
-	      "Intersection matching failed! Found two consecutive entries.",
-	      __FILE__, __LINE__);
-	  }
-	} // end if currentExit is null
-	else {
-	  // currentExit is not null.  Join currentExit to the
-	  // current entry.
-// #ifdef DEBUG
-// 	  if(verbose)
-// 	    oofcerr << "PixelPlaneFacet::completeLoops: joining exit to entry"
-// 		    << std::endl;
-// 	  OOFcerrIndent indent(2);
-// #endif // DEBUG
-	  addEdges(currentExit, fi);
-	  currentExit = nullptr;
-	} // end if currentExit is not null
-      } // end if intersection is an entry
+	} while(polyEdgeIntersections[curEdge][curIsec]->crossingType() != EXIT
+		|| used.count(polyEdgeIntersections[curEdge][curIsec])>0);
 
+	exitEdge = curEdge;
+	exitIsec = curIsec;
+// #ifdef DEBUG
+// 	if(verbose)
+// 	  oofcerr << "PixelPlaneFacet::completeLoops: exitEdge=" << exitEdge
+// 		  << " exitIsec=" << exitIsec << std::endl;
+// #endif // DEBUG
+      }
       else {
-	// crossing == NONCROSSING.  Noncrossing intersections
-	// insert breaks into existing perimeter segments but don't
-	// do anything if they don't occur between an exit and an
-	// entry.  There can be multiple noncrossing intersections
-	// within a single exit/entry pair.
-	if(!started) {
-	  // If we've already found an entry but haven't found an
-	  // exit, then this non-crossing intersection lies outside of
-	  // an exit->entry pair and can be ignored.
-	  if(!firstEntry) {
+	// exitEdge is not NONE.  Find the next entry or non-crossing
+	// point to join to it.
 // #ifdef DEBUG
-// 	    if(verbose)
-// 	      oofcerr << "PixelPlaneFacet::completeLoops: saving noncrossing: "
-// 		      << *fi << std::endl;
+// 	if(verbose)
+// 	  oofcerr << "PixelPlaneFacet::completeLoops: looking for non-exit"
+// 		  << std::endl;
 // #endif // DEBUG
-	    firstNoncrossing.push_back(fi);
+	unsigned int lastEdge = curEdge;
+	unsigned int lastIsec = curIsec;
+	do {
+	  incrementIsec(curEdge, curIsec, polyEdgeIntersections);
+	  if(curEdge == lastEdge && curIsec == lastIsec) {
+	    throw ErrProgrammingError("Wraparound while looking for non-exit!",
+				      __FILE__, __LINE__);
 	  }
-	} // end if !started
-	else if(currentExit != nullptr) {
+	} while(polyEdgeIntersections[curEdge][curIsec]->crossingType() == EXIT
+		|| used.count(polyEdgeIntersections[curEdge][curIsec])>0);
 // #ifdef DEBUG
-// 	  if(verbose)
-// 	    oofcerr << "PixelPlaneFacet::completeLoops: joining to noncrossing:"
-// 		    << std::endl;
-// 	    OOFcerrIndent indent(2);
+// 	if(verbose)
+// 	  oofcerr << "PixelPlaneFacet::completeLoops: non-exitEdge=" << curEdge
+// 		  << " non-exitIsec=" << curIsec << std::endl;
 // #endif // DEBUG
-	  addEdges(currentExit, fi);
-	  currentExit = fi;
+	// Connect the exit and entry (or non-crossing intersection)
+	addEdges(polyEdgeIntersections[exitEdge][exitIsec],
+		 polyEdgeIntersections[curEdge][curIsec]);
+	used.insert(polyEdgeIntersections[exitEdge][exitIsec]);
+	used.insert(polyEdgeIntersections[curEdge][curIsec]);
+
+	// Set up for next iteration.  If the current point is an
+	// non-crossing point, we need to continue adding segments
+	// from it, so pretend that it was actually an exit and
+	// continue.  If it was an entry, start a new search for an
+	// exit.
+	if(polyEdgeIntersections[curEdge][curIsec]->crossingType() == ENTRY) {
+	  ++nEntriesUsed;
+	  exitEdge = NONE;
+	  exitIsec = NONE;
 	}
-      }	// end if crossing==NONCROSSING
-	
-    }	// end loop over PixelPlaneIntersections fi on edge e
-  } // end loop over tet edges e
-
-
-  // If we get here with a non-null currentExit, we must have started
-  // in the middle of a segment, and firstEntry must also be non-null.
-  // Add the segment(s) connecting currentExit and firstEntry.
-  if(currentExit != nullptr) {
-// #ifdef DEBUG
-//     if(verbose) {
-//       oofcerr << "PixelPlaneFacet::completeLoops: not done after main loop finished" << std::endl;
-//       oofcerr << "PixelPlaneFacet::completeLoops: firstEntry=" << *firstEntry
-// 	      << std::endl;
-//       oofcerr << "PixelPlaneFacet::completeLoops: currentExit=" << *currentExit
-// 	      << std::endl;
-//       oofcerr << "PixelPlaneFacet::completeLoops: firstNoncrossing.size="
-// 	      << firstNoncrossing.size() << std::endl;
-//     }
-// #endif // DEBUG
-#ifdef DEBUG
-    if(firstEntry == nullptr) {
-      throw ErrProgrammingError("completeLoops failed: firstEntry is null",
-				__FILE__, __LINE__);
-    }
-#endif // DEBUG
-    if(firstNoncrossing.empty())
-      addEdges(currentExit, firstEntry);
-    else {
-      addEdges(currentExit, firstNoncrossing[0]);
-      for(unsigned int i=0; i<firstNoncrossing.size()-1; i++)
-	addEdges(firstNoncrossing[i], firstNoncrossing[i+1]);
-      addEdges(firstNoncrossing.back(), firstEntry);
-    }
-  }
+	else {
+	  exitEdge = curEdge;
+	  exitIsec = curIsec;
+	}
+      }	// end if exitEdge != NONE
+    } // end while there are entries left 
+  } // end if there are exits and entries
+  
 #ifdef DEBUG
   if(verbose) {
     oofcerr << "PixelPlaneFacet::completeLoops: done, facet=" << *this
