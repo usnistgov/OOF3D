@@ -269,6 +269,7 @@ private:
 				  unsigned int, bool);
   std::vector<PixelPlaneIntersectionNR*> find_two_intersections(
 				unsigned int,
+				const PixelPlaneFacet*,
 				const HPixelPlane*,
 				const HPixelPlane*,
 				const PixelBdyLoopSegment&,

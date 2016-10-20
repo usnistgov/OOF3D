@@ -1605,7 +1605,7 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	    if(!orthoPts.empty()) {
 	      unsigned int orthoFace = getCoincidentFaceIndex(orthoPlane);
 	      std::vector<PixelPlaneIntersectionNR*> isecs =
-		find_two_intersections(cat, pixplane, orthoPlane,
+		find_two_intersections(cat, facet, pixplane, orthoPlane,
 				       loop->segment(k), onFace, orthoFace);
 	      if(isecs.size() == 2) {
 		facet->addEdge(new TwoFaceIntersectionEdge(
@@ -1825,7 +1825,6 @@ PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
 			     pixplane->orthogonalPlane(interiorPt, exteriorPt));
   unsigned int orthoFace = getCoincidentFaceIndex(tempOrthoPlane);
 
-  // NEW VERSION THAT USES BOUNDINGFACES
   for(const FacePlane *face : facet->getBoundingFaces()) {
     // Skip this face if it lies in the orthogonal plane of the segment or is
     // collinear with it.
@@ -1922,6 +1921,7 @@ PixelPlaneIntersectionNR *HomogeneityTet::find_one_intersection(
 
 std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
 				      unsigned int cat,
+				      const PixelPlaneFacet *facet,
 				      const HPixelPlane *pixplane,
 				      const HPixelPlane *tempOrthoPlane,
 				      const PixelBdyLoopSegment &pblseg,
@@ -1962,19 +1962,22 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
   double exitAlpha = std::numeric_limits<double>::max();
   unsigned int entryFace = NONE;
   unsigned int exitFace = NONE;
-  for(unsigned int n=0; n<NUM_TET_NODES; n++) {
-    unsigned int face = CSkeletonElement::oppFace[n];
-// #ifdef DEBUG
+  for(const FacePlane *face : facet->getBoundingFaces()) {
+    unsigned int n = CSkeletonElement::oppNode[face->face()];
+  // for(unsigned int n=0; n<NUM_TET_NODES; n++) {
+  //   unsigned int face = CSkeletonElement::oppFace[n];
+
+    // #ifdef DEBUG
 //     if(verboseplane) {
 //       oofcerr << "HomogeneityTet::find_two_intersections: n=" << n
-// 	      << " face=" << face << std::endl;
+// 	      << " face=" << *face << std::endl;
 //     }
 //     OOFcerrIndent indent(2);
 // #endif // DEBUG
     // Skip this face if it lies in the pixel plane or the orthoFace
     // or is collinear with them.
-    if(face != onFace && face != orthoFace &&
-       !areCollinear(pixplane, tempOrthoPlane, getTetFacePlane(face)))
+    if(face->face() != onFace && face->face() != orthoFace &&
+       !areCollinear(pixplane, tempOrthoPlane, face))
       {
 	double b0n = b0[n];
 	double b1n = b1[n];
@@ -1993,11 +1996,11 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
 	  double alpha = b0n/(b0n - b1n);
 	  // facedot is used to check that the face is oriented
 	  // correctly to be an entry or exit.
-	  double facedot = dot(faceAreaVector(face), segvec);
+	  double facedot = dot(faceAreaVector(face->face()), segvec);
 	  if(b0n < b1n && facedot < 0 && alpha > entryAlpha) {
 	    // This is the best entry point so far.
 	    entryAlpha = alpha;
-	    entryFace = face;
+	    entryFace = face->face();
 // #ifdef DEBUG
 // 	    if(verboseplane)
 // 	      oofcerr << "HomogeneityTet::find_two_intersections: alpha="
@@ -2007,7 +2010,7 @@ std::vector<PixelPlaneIntersectionNR*> HomogeneityTet::find_two_intersections(
 	  else if(b0n > b1n && facedot > 0 && alpha < exitAlpha) {
 	    // This is the best exit point so far.
 	    exitAlpha = alpha;
-	    exitFace = face;
+	    exitFace = face->face();
 // #ifdef DEBUG
 // 	    if(verboseplane)
 // 	      oofcerr << "HomogeneityTet::find_two_intersections: alpha="
