@@ -1288,11 +1288,12 @@ FacetMap2D HomogeneityTet::findPixelPlaneFacets(unsigned int cat,
 	const std::vector<PixelBdyLoop*> &floops = (*psbmi).second->get_loops();
 	loops.insert(loops.end(), floops.begin(), floops.end());
       }
-// #ifdef DEBUG
-//       if(verboseplane)
-// 	oofcerr << "HomogeneityTet::findPixelPlaneFacets: "
-// 		<< "calling doFindPixelPlaneFacets with CS data" << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+      if(verboseplane)
+	oofcerr << "HomogeneityTet::findPixelPlaneFacets: "
+		<< "calling doFindPixelPlaneFacets with CS data, f=" << f
+		<< std::endl;
+#endif // DEBUG
       doFindPixelPlaneFacets(cat, pixplane, loops, f, facets);
 // #ifdef DEBUG
 // 	if(verboseplane)
@@ -1327,12 +1328,12 @@ FacetMap2D HomogeneityTet::findPixelPlaneFacets(unsigned int cat,
       if(didPlane.count(pixplane) == 0) {
 	const PixelSetBoundary *psb = (*psbm).second;
 	const std::vector<PixelBdyLoop*> loops = psb->get_loops();
-// #ifdef DEBUG
-// 	if(verboseplane)
-// 	  oofcerr << "HomogeneityTet::findPixelPlaneFacets: "
-// 		  << "calling doFindPixelPlaneFacets with facet data"
-// 		  << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+	if(verboseplane)
+	  oofcerr << "HomogeneityTet::findPixelPlaneFacets: "
+		  << "calling doFindPixelPlaneFacets with facet data"
+		  << std::endl;
+#endif // DEBUG
 	doFindPixelPlaneFacets(cat, pixplane, loops, /*face=*/NONE, facets);
 // #ifdef DEBUG
 // 	if(verboseplane)
@@ -1361,7 +1362,7 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 #ifdef DEBUG
   if(verboseplane) {
     oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: cat=" << cat
-	    << " pixplane=" << *pixplane << std::endl;
+	    << " pixplane=" << *pixplane << " onFace=" << onFace << std::endl;
   }
 #endif // DEBUG
   

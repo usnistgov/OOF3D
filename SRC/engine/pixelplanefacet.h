@@ -266,7 +266,7 @@ private:
   const std::vector<const TetIntersection*> &tetPts;
   mutable double area_;
   mutable bool areaComputed_;
-  const bool onFace;
+  const unsigned int onFace;
   FaceEdgeMap faceEdgeMap;  // maps Plane*s to polygon edge numbers
   FacePlaneSet boundingFaces;
   std::set<RedundantIntersection*> redundantIntersections;
@@ -298,7 +298,7 @@ private:
 
 public:
   PixelPlaneFacet(HomogeneityTet*, const HPixelPlane*,
-		  const TetIntersectionPolygon&, bool
+		  const TetIntersectionPolygon&, unsigned int
 #ifdef DEBUG
 		  , bool verbose
 #endif // DEBUG
