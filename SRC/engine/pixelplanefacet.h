@@ -319,6 +319,7 @@ public:
   FacePlaneSet getFacePlanes(unsigned int) const;
   const FacePixelPlane *getBaseFacePlane() const;
   const FacePlaneSet &getBoundingFaces() const { return boundingFaces; }
+  const TetIntersection *getTetPoint(unsigned int i) const { return tetPts[i]; }
 
   bool onOppositeEdges(const SimpleIntersection*, const SimpleIntersection*)
     const;

@@ -33,6 +33,15 @@ class PixelBdyLoopSegment;
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// Intersection points within CLOSEBY of each other (measured in units
+// of the voxel size) are considered to be close enough to merit
+// special treatment as a group.
+
+#define CLOSEBY 0.3
+#define CLOSEBY2 (CLOSEBY*CLOSEBY)
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 class FaceEdgeIntersection {
 private:
   PlaneIntersection *crnr;   // This object does not own this pointer.

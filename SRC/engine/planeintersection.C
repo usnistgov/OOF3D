@@ -934,13 +934,14 @@ bool PixelPlaneIntersectionNR::onSameFacePlane(
 unsigned int PixelPlaneIntersectionNR::maxPolyEdge(const PixelPlaneFacet *facet)
   const
 {
-  // TODO: The result of this calculation could be computed just once
-  // and stored in the PixelPlaneIntersectionNR.  Probably maxPolyEdge
-  // and minPolyEdge should be cached together.
+  // TODO: The result of this calculation could be computed and cached
+  // in the equivalence class, although it might have to be updated
+  // when the class changed.  Probably maxPolyEdge and minPolyEdge
+  // should be cached together.
   unsigned int nn = facet->polygonSize();
   std::vector<bool> e(nn, false);
   // Find which polygon edges are used in the PixelPlaneIntersectionNR. 
-  for(const FacePlane *fp : facePlaneSets()) {
+  for(const FacePlane *fp : equivalence_->facePlaneSets()) {
     unsigned int edge = facet->getPolyEdge(fp);
 // #ifdef DEBUG
 //     if(verbose) {
@@ -978,7 +979,7 @@ unsigned int PixelPlaneIntersectionNR::minPolyEdge(const PixelPlaneFacet *facet)
   // TODO: The vector e could be computed just once and stored in the
   // PixelPlaneIntersectionNR.
   std::vector<bool> e(nn, false);
-  for(const FacePlane *fp : facePlaneSets()) {
+  for(const FacePlane *fp : equivalence_->facePlaneSets()) {
     unsigned int edge = facet->getPolyEdge(fp);
     if(edge != NONE)
       e[edge] = true;
@@ -1064,15 +1065,6 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
 				const PixelPlaneFacet *facet)
   const
 {
-  // Loop over the faces and face pixel planes that intersect at this
-  // point and find one that is associated with a polygon edge.  Make
-  // an entry for this point and the edge in polyedges.
-  
-  // If there are multiple faces, this makes an arbitrary choice.  Any
-  // of them will do, as long as it forms an edge of the polygon,
-  // except for the plane of the facet.  There might be an edge that
-  // doesn't form a polygon edge if it's collinear with another edge.
-
 #ifdef DEBUG
   if(verbose) {
     oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: " << *this
@@ -1082,143 +1074,16 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
   }
 #endif // DEBUG
 
-  for(const FacePlane *face : equivalence_->facePlaneSets()) {
-    unsigned int edge = facet->getPolyEdge(face);
-    if(edge != NONE) {
-      polyedges[edge].push_back(this);
-      return;
-    }
-  }
-  
-  // TODO: Should this use the faces in the equivalence class instead
-  // of the faces in the intersection?  If it did, it wouldn't have to
-  // check the collinear faces, since they're already in the
-  // equivalence class.  Is the equivalence class always up-to-date
-  // when this is called?
-  
-//   for(const FacePlane *face : faces_) {
-//     // getPolyEdge looks for a polygon edge that is associated with
-//     // the given face.
-//     unsigned int edge = facet->getPolyEdge(face);
-// #ifdef DEBUG
-//     if(verbose)
-//       oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: getPolyEdge("
-// 	      << *face << ") =" << edge << std::endl;
-// #endif // DEBUG
-//     if(edge != NONE) {
-//       polyedges[edge].push_back(this);
-//       return;
-//     }
-//   }
-//   for(const FacePixelPlane *fpp : pixelFaces_) {
-//     if(fpp != facet->pixplane) {
-//       unsigned int edge = facet->getPolyEdge(fpp);
-// #ifdef DEBUG
-//     if(verbose)
-//       oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: getPolyEdge("
-// 	      << *fpp << ") =" << edge << std::endl;
-// #endif // DEBUG
-//       if(edge != NONE) {
-// 	polyedges[edge].push_back(this);
-// 	return;
-//       }
-//     }
-//   }
-//   // Although none of the face planes stored in the intersection form
-//   // facet edges, it's possible that a pixel plane is collinear with a
-//   // face plane that's not stored.
-//   for(const HPixelPlane *pp : pixelPlanes_) {
-//     FacePlaneSet fps = facet->htet->getCollinearFaces(pp, facet->pixplane);
-//     if(!fps.empty()) {
-//       unsigned int edge = facet->getPolyEdge(*fps.begin());
-//       if(edge != NONE) {
-// 	polyedges[edge].push_back(this);
-// 	return;
-//       }
-//     }
-//   }
-  
-#ifdef DEBUG
-  oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: failed!"
-	  << std::endl;
-  oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: this=" << *this
-	  << std::endl;
-  oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: facet=" << *facet
-	  << std::endl;
-#endif // DEBUG
-  throw ErrProgrammingError(
-		    "PixelPlaneIntersectionNR::locateOnPolygonEdge failed!",
-		    __FILE__, __LINE__);
-  
-//   if(!faces_.empty()) {
-//     unsigned int edge = facet->getPolyEdge(*faces_.begin());
-// // #ifdef DEBUG
-// //     if(verbose)
-// //       oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: polyEdge="
-// // 	      << edge << " using faces_" << std::endl;
-// // #endif // DEBUG
-// #ifdef DEBUG
-//     if(edge == NONE) {
-//       throw ErrProgrammingError(
-// 		"PixelPlaneIntersectionNR::locateOnPolygonEdge failed!",
-// 		__FILE__, __LINE__);
-//     }
-// #endif // DEBUG
-//     polyedges[edge].push_back(this);
-//     return;
-//   }
-//   else {
-//     assert(!pixelFaces_.empty());
-//     for(const FacePixelPlane *fpp : pixelFaces_) {
-//       if(fpp != facet->pixplane) {
-// 	unsigned int edge = facet->getPolyEdge(fpp);
-// #ifdef DEBUG
-// 	if(verbose) {
-// 	  oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: polyEdge="
-// 		  << edge << " using pixelFaces_ "
-// 		  << *fpp << std::endl;
-// 	  if(edge == NONE)
-// 	    throw ErrProgrammingError("locateOnPolygonEdge failed!",
-// 				      __FILE__, __LINE__);
-//     }
-// #endif // DEBUG
-// 	polyedges[edge].push_back(this);
-// 	return;
-//       }
-//     }
-//   }
-  // throw ErrProgrammingError(
-  // 		    "PixelPlaneIntersectionNR::locateOnPolygonEdge failed!",
-  // 		    __FILE__, __LINE__);
+  // This uses minPolyEdge instead of simply getPolyEdge, because it's
+  // important that the edge used here is the same as the edge that
+  // PixelPlaneFacet::addEdges uses when deciding whether it has to
+  // add wrap-around edges.
+  unsigned int edge = minPolyEdge(facet);
+  assert(edge != NONE);
+  polyedges[edge].push_back(this);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// template <class BASE>
-// bool IntersectionPlanes<BASE>::isEquivalent(const PlaneIntersection *pi) const
-// {
-//   if(BASE::equivalence() != nullptr && BASE::equivalence() == pi->equivalence())
-//     return true;
-//   return pi->isEquiv(this); // double dispatch
-// }
-
-// template <class BASE>
-// bool IntersectionPlanes<BASE>::isEquiv(const TripleFaceIntersection *tfi)
-//   const
-// {
-//   // Each face in the TripleFaceIntersection must be in the
-//   // PixelPlaneIntersectionNR.
-
-//   // TODO: Is it worth being cleverer about this search?  Both
-//   // tfiFaces is sorted, and facePlaneSets is too, sort of.
-//   unsigned int nmatch = 0;
-//   const FacePlaneSet &tfiFaces = tfi->faces();
-//   for(const FacePlane *face : facePlaneSets()) {
-//     if(tfiFaces.find(face) != tfiFaces.end())
-//       ++nmatch;
-//   }
-//   return nmatch == 3;
-// }
 
 // isEquiv_ is the guts of the two versions of
 // PixelPlaneIntersectionNR::isEquivalent().  It determines whether
@@ -1504,6 +1369,13 @@ double SingleFaceMixIn<BASE>::getPolyFrac(unsigned int edgeno,
   const
 {
   const BarycentricCoord &bary = BASE::baryCoord(facet->htet);
+#ifdef DEBUG
+  if(BASE::verbose) {
+    oofcerr << "SingleFaceMixIn::getPolyFrac: this=" << *this
+	    << " edgeno=" << edgeno << std::endl;
+    oofcerr << "SingleFaceMixIn::getPolyFrac: bary=" << bary << std::endl;
+  }
+#endif // DEBUG
   return facet->htet->edgeCoord(bary, edgeno, facet);
 
   // This used to cache the return value and ignore the edgeno argument.
