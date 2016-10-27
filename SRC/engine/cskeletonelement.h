@@ -264,6 +264,7 @@ long get_globalElementCount();
 void setVerboseElement(unsigned int);
 void setVerboseAllElements();
 void setVerboseWait(int);
+void setVerboseLimit(int);
 // void dumpElements();
 #endif // DEBUG
 

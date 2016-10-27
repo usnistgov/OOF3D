@@ -155,6 +155,7 @@ The following options are for debugging:
 --verboseFace = integer or 'all'
 --verboseCategory = integer
 --verboseWait = integer
+--verboseLimit = integer
 """ % program_name
     print main_options_string,
     if config.devel()>=1:
@@ -201,8 +202,8 @@ def process_inline_options():
                    'pathdir=', 'no-checkpoints', 'autoload', 'geometry=',
                    'surface', 'no-bars',
                    'verboseElement', 'verbosePlane', 'verboseFace',
-                   'verboseCategory', 'verboseWait', 'vE', 'vC', 'vP', 'vF',
-                   'vW']
+                   'verboseCategory', 'verboseWait', 'verboseLimit',
+                   'vE', 'vC', 'vP', 'vF', 'vW', 'vL']
     if config.enablempi():
         option_list += ['parallel']
     try:
@@ -309,6 +310,9 @@ def process_inline_options():
         elif opt[0] in ('--verboseWait', '--vW'):
             from ooflib.SWIG.engine import htetdebug
             htetdebug.setVerboseWait(int(opt[1]))
+        elif opt[0] in ('--verboseLimit', '--vL'):
+            from ooflib.SWIG.engine import htetdebug
+            htetdebug.setVerboseLimit(int(opt[1]))
     if help_mode:
         state_options_and_quit()
     if version_mode:

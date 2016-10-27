@@ -807,6 +807,12 @@ void setVerboseWait(int w) {
   verboseWait_ = w;
 }
 
+static unsigned int verboseLimit_ = NONE;
+void setVerboseLimit(int l) {
+  oofcerr << "setVerboseLimit: " << l << std::endl;
+  verboseLimit_ = l;
+}
+
 // Track the number of times verbose output has been turned on.  This
 // is useful for setting verboseWait on subsequent runs.
 static unsigned int nVerbose = 0;
@@ -823,6 +829,9 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
     if(verboseWaited < verboseWait_) {
       verbose = false;
       verboseWaited++;
+    }
+    if(nVerbose >= verboseLimit_) {
+      verbose = false;
     }
   }
   if(verbose) {

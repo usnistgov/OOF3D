@@ -32,5 +32,6 @@ void setVerbosePlane(unsigned int dir, int offset, int side);
 void setNoVerbosePlanes();
 void setVerboseCategory(unsigned int);
 void setVerboseWait(int);
+void setVerboseLimit(int);
 
 #endif // HTETDEBUG_SWG
