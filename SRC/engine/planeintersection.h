@@ -692,8 +692,6 @@ public:
 template <class BASE>
 class SingleFaceMixIn : public BASE, public SingleFaceBase {
 protected:
-  // mutable double polyFrac;  // relative position along polygon segment
-
   // In an intersection with one face plane, that plane plays a
   // special topological role, since it is used to identify a polygon
   // edge.  We can't just store it in the base class's faces set,
@@ -701,6 +699,12 @@ protected:
   // be stored in the pixelplane set.  So to preserve the toplogical
   // info, we have to store it again, here:
   const FacePlane *facePlane_;
+  // Actually, the intersection can be on more than one polygon edge,
+  // if the second edge is collinear with two other edges in the
+  // intersection.  We need to cache the position along the edge for
+  // all possible edges.
+  mutable std::vector<double> polyFracCache; 
+
 public:
   SingleFaceMixIn(HomogeneityTet*);
   virtual const FacePlane *getFacePlane() const { return facePlane_; }

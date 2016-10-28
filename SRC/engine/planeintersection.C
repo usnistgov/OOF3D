@@ -441,6 +441,14 @@ unsigned int PixelPlaneIntersection::nSharedPolySegments(
 {
   const FacePixelPlane *base = facet->getBaseFacePlane();
   FacePlaneSet shared = referent()->sharedFaces(fi->referent(), base);
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneIntersection::nSharedPolySegments: shared faces=";
+//     for(auto f : shared)
+//       oofcerr << " " << *f;
+//     oofcerr << std::endl;
+//   }
+// #endif // DEBUG
   // If there are 0 or 1 shared faces (excluding the base plane), then
   // there are 0 or 1 shared polygon edges.
   if(shared.size() < 2)
@@ -1353,10 +1361,13 @@ SingleVSBbase::SingleVSBbase() {
 }
 #endif // DEBUG
 
+#define IMPOSSIBLE_ALPHA -1.234e5
+
 template <class BASE>
 SingleFaceMixIn<BASE>::SingleFaceMixIn(HomogeneityTet *htet)
   : BASE(htet),
-    facePlane_(nullptr)
+    facePlane_(nullptr),
+    polyFracCache(4, IMPOSSIBLE_ALPHA)
 {
 // #ifdef DEBUG
 //   oofcerr << "SingleFaceMixIn::ctor: " << this << std::endl;
@@ -1368,6 +1379,15 @@ double SingleFaceMixIn<BASE>::getPolyFrac(unsigned int edgeno,
 					  const PixelPlaneFacet *facet)
   const
 {
+  // Although a SingleFaceMixin knows which face plane it was created
+  // on (after setFacePlane has been called) it's possible that
+  // getPolyFrac will be called with an edgeno that corresponds to a
+  // different face, because two of its planes may be collinear with
+  // another face.
+
+  if(polyFracCache[edgeno] != IMPOSSIBLE_ALPHA)
+    return polyFracCache[edgeno];
+ 
   const BarycentricCoord &bary = BASE::baryCoord(facet->htet);
 #ifdef DEBUG
   if(BASE::verbose) {
@@ -1376,15 +1396,10 @@ double SingleFaceMixIn<BASE>::getPolyFrac(unsigned int edgeno,
     oofcerr << "SingleFaceMixIn::getPolyFrac: bary=" << bary << std::endl;
   }
 #endif // DEBUG
-  return facet->htet->edgeCoord(bary, edgeno, facet);
-
-  // This used to cache the return value and ignore the edgeno argument.
-  
-  // //  assert(edgeno == facet->getPolyEdge(facePlane_));
-  // if(polyFrac >= 0) return polyFrac; // cached value
-  // const BarycentricCoord &bary = BASE::baryCoord(facet->htet);
-  // polyFrac = facet->htet->edgeCoord(bary, facePlane_, facet);
-  // return polyFrac;
+  double pos = facet->htet->edgeCoord(bary, edgeno, facet);
+  assert(pos != IMPOSSIBLE_ALPHA);
+  polyFracCache[edgeno] = pos;
+  return pos;
 }
 
 template <class BASE>
