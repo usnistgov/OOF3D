@@ -213,9 +213,7 @@ bool PlaneIntersection::verify() {
 // special information about them.
 
 GenericIntersection *GenericIntersection::clone(HomogeneityTet *htet) const {
-  GenericIntersection *bozo = new GenericIntersection(htet);
-  assert(bozo->equivalence() == equivalence());
-  copyPlanesToIntersection(bozo);
+  GenericIntersection *bozo = new GenericIntersection(*this);
   bozo->setID(htet);
   return bozo;
 }
@@ -251,7 +249,6 @@ TripleFaceIntersection *TripleFaceIntersection::clone(HomogeneityTet *htet)
   const
 {
   TripleFaceIntersection *tfi = new TripleFaceIntersection(*this);
-  assert(tfi->equivalence() == equivalence());
   tfi->setID(htet);
   return tfi;
 }

@@ -1754,9 +1754,6 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 		<< std::endl;
 #endif // DEBUG
       for(unsigned int i=0; i<nn-1; i++) {
-	// TetIntersection *t0 = tetPts[i]->clone();
-	// TetIntersection *t1 = tetPts[i+1]->clone();
-	// facet->addEdge(new PolygonEdge(t0, t1));
 	facet->addEdge(new PolygonEdge(tetPts[i]->clone(this),
 	 			       tetPts[i+1]->clone(this)));
       }
@@ -4357,15 +4354,6 @@ FaceFacetEdge::~FaceFacetEdge() {
   delete start_;
   delete stop_;
 }
-
-// FaceFacetEdge::FaceFacetEdge(const FaceFacetEdge &ffe)
-//   :start_(ffe.start_->clone()),
-//    stop_(ffe.stop_->clone())
-// {
-// #ifdef DEBUG
-//   oofcerr << "FaceFacetEdge::copy ctor: " << this << std::endl;
-// #endif // DEBUG
-// }
 
 FaceFacetEdge::FaceFacetEdge(FaceFacetEdge &&ffe) {
   PlaneIntersection *temp = start_;
