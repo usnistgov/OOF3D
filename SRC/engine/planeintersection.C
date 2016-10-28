@@ -1369,6 +1369,12 @@ SingleFaceMixIn<BASE>::SingleFaceMixIn(HomogeneityTet *htet)
     facePlane_(nullptr),
     polyFracCache(4, IMPOSSIBLE_ALPHA)
 {
+  // polyFracCache stores the values computed by getPolyFrac.  It's
+  // initialized with IMPOSSIBLE_ALPHA so that we can tell which
+  // values have been already computed.  polyFracCache has size 4
+  // although we could get by with size 3 in some cases, but then we'd
+  // have to know the polygon size at this point.
+  
 // #ifdef DEBUG
 //   oofcerr << "SingleFaceMixIn::ctor: " << this << std::endl;
 // #endif // DEBUG
@@ -1379,11 +1385,19 @@ double SingleFaceMixIn<BASE>::getPolyFrac(unsigned int edgeno,
 					  const PixelPlaneFacet *facet)
   const
 {
+  // The return value of getPolyFrac has to be cached so that once the
+  // relative positions of intersections on an edge has been found, it
+  // won't change.  If the endpoint of an edge is merged with another
+  // intersection, then the value returned by
+  // HomogeneityTet::edgeCoord can change by a small amount, which
+  // could be enough to re-order coincident intersections on the edge.
+  
   // Although a SingleFaceMixin knows which face plane it was created
   // on (after setFacePlane has been called) it's possible that
   // getPolyFrac will be called with an edgeno that corresponds to a
   // different face, because two of its planes may be collinear with
-  // another face.
+  // another face.  Therefore we have to (a) not use facePlane_ here,
+  // and (b) cache results for more than one edgeno.
 
   if(polyFracCache[edgeno] != IMPOSSIBLE_ALPHA)
     return polyFracCache[edgeno];
