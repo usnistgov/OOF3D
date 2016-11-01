@@ -569,7 +569,7 @@ void PixelPlaneFacet::addEdges(const PixelPlaneIntersection *fi0,
 //   if(verbose)
 //     oofcerr << "PixelPlaneFacet::addEdges: done" << std::endl;
 // #endif // DEBUG
-}
+} // PixelPlaneFacet::addEdges
 
 double PixelPlaneFacet::area() const {
   if(areaComputed_) {
@@ -645,7 +645,7 @@ double PixelPlaneFacet::getArea() const {
 //   }
 // #endif // DEBUG
   return 0.5*a;
-}
+} // PixelPlaneFacet::getArea
 
 BarycentricCoord PixelPlaneFacet::polygonCornerBary(unsigned int i) const {
 #ifdef DEBUG

@@ -42,6 +42,9 @@ class PixelBdyLoopSegment;
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// TODO: Move FaceEdgeIntersection, FaceFacetEdge, and FaceFacet to a
+// separate file.
+
 class FaceEdgeIntersection {
 private:
   PlaneIntersection *crnr;   // This object does not own this pointer.
@@ -151,16 +154,19 @@ public:
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 class FaceFacet {
-private:
+public:
   const unsigned int face;
+private:
   FaceFacetEdgeSet edges_;
   HomogeneityTet *htet;
   mutable Coord3D areaVec_;
   mutable bool areaComputed;
+  bool closedOnPerimeter;
   Coord3D getArea(HomogeneityTet*) const;
+  Coord3D getAreaCarefully(HomogeneityTet*) const;
 public:
   FaceFacet(unsigned int f, HomogeneityTet *h)
-    : face(f), htet(h), areaComputed(false)
+    : face(f), htet(h), areaComputed(false), closedOnPerimeter(false)
   {}
   // Don't allow FaceFacets to be copied. The FaceFacet owns the
   // FaceFacetEdges that it points to.  A correct copy constructor
