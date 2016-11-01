@@ -151,6 +151,7 @@ The following options are for debugging:
 --no-rc                  Don't load .%src
 --unthreaded             Don't use multiple execution threads
 --verboseElement = integer or 'all'
+--verboseUID = integer
 --verbosePlane = [XYZ],offset,[+-]
 --verboseFace = integer or 'all'
 --verboseCategory = integer
@@ -201,9 +202,10 @@ def process_inline_options():
                    'record=', 'rerecord=', 'replay=', 'replaydelay=',
                    'pathdir=', 'no-checkpoints', 'autoload', 'geometry=',
                    'surface', 'no-bars',
-                   'verboseElement', 'verbosePlane', 'verboseFace',
-                   'verboseCategory', 'verboseWait', 'verboseLimit',
-                   'vE', 'vC', 'vP', 'vF', 'vW', 'vL']
+                   'verboseElement', 'verboseUID', 'verbosePlane',
+                   'verboseFace', 'verboseCategory', 'verboseWait',
+                   'verboseLimit',
+                   'vE', 'vU', 'vC', 'vP', 'vF', 'vW', 'vL']
     if config.enablempi():
         option_list += ['parallel']
     try:
@@ -298,6 +300,9 @@ def process_inline_options():
         elif opt[0] in ('--verboseElement', '--vE'):
             from ooflib.SWIG.engine import htetdebug
             htetdebug.addVerboseElement(opt[1])
+        elif opt[0] in ('--verboseUID', '--vU'):
+            from ooflib.SWIG.engine import htetdebug
+            htetdebug.setVerboseUID(int(opt[1]))
         elif opt[0] in ('--verbosePlane', '--vP'):
             from ooflib.SWIG.engine import htetdebug
             htetdebug.addVerbosePlane(opt[1])

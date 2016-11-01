@@ -24,6 +24,7 @@
 %}
 
 void setVerboseElement(unsigned int);
+void setVerboseUID(unsigned long);
 void setVerboseAllElements();
 void setVerboseFace(unsigned int);
 void setVerboseAllFaces();

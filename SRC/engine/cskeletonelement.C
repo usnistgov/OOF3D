@@ -787,11 +787,17 @@ unsigned int CSkeletonElement::getOtherFaceIndex(unsigned int f,
 
 #ifdef DEBUG
 static std::set<unsigned int> verboseElements_;
+static std::set<uidtype> verboseUIDs_;
 static bool allVerboseElements_ = false;
 
 void setVerboseElement(unsigned int e) {
   oofcerr << "setVerboseElement: " << e << std::endl;
   verboseElements_.insert(e);
+}
+
+void setVerboseUID(uidtype uid) {
+  oofcerr << "setVerboseUID: " << uid << std::endl;
+  verboseUIDs_.insert(uid);
 }
 
 void setVerboseAllElements() {
@@ -823,7 +829,9 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
   const
 {
 #ifdef DEBUG
-  bool verbose = allVerboseElements_ || verboseElements_.count(index) > 0;
+  bool verbose = (allVerboseElements_ ||
+		  verboseElements_.count(index) > 0 ||
+		  verboseUIDs_.count(uid) > 0);
   static int verboseWaited = 0;
   if(verbose) {
     if(verboseWaited < verboseWait_) {
