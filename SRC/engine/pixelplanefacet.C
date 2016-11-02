@@ -1414,8 +1414,8 @@ static void classifyVSBcorner(const PixelPlaneIntersectionNR * const fi0,
   }
   else {
     if(order == FIRST) {
-      firstPt = fi0;
-      secondPt = fi1;
+      firstPt = fi0;		// fi0 is first along the VSB
+      secondPt = fi1;		// fi1 is second along the VSB
     }
     else if(order == SECOND) {
       firstPt = fi1;
@@ -2388,7 +2388,9 @@ bool PixelPlaneFacet::polyVSBCornerCoincidence(
   // assert(!fi0->onSameFacePlane(fi1, getBaseFacePlane()));
   assert(!fi0->samePixelPlanes(fi1));
   assert(fi0->crossingType() != fi1->crossingType());
-  const PixelPlaneIntersectionNR *entryPt, *exitPt, *firstPt, *secondPt;
+  const PixelPlaneIntersectionNR *entryPt, *exitPt;
+  // firstPt and secondPt refer to positions along the VSB segments
+  const PixelPlaneIntersectionNR *firstPt, *secondPt;
   ICoord2D corner;
   TurnDirection turn;
   classifyVSBcorner(fi0, fi1, entryPt, exitPt, firstPt, secondPt, corner, turn
@@ -2397,12 +2399,28 @@ bool PixelPlaneFacet::polyVSBCornerCoincidence(
 #endif // DEBUG
 		    );
   BarycentricCoord bcorner = htet->getBarycentricCoord(corner, pixplane);
+
+  // Is the VSB corner on hte interior side of the tet faces that form
+  // the polygon sides occupied by fi0 and fi1? 
+  bool inside = true;
+  for(const FacePlane *face : fi0->facePlaneSets()) {
+    if(!inside) break;
+    unsigned int f = face->face();
+    if(f != onFace)
+      inside &= bcorner.interiorToFace(f);
+  }
+  for(const FacePlane *face : fi1->facePlaneSets()) {
+    if(!inside) break;
+    unsigned int f = face->face();
+    if(f != onFace)
+      inside &= bcorner.interiorToFace(f);
+  }
+  
   // If the VSB corner is interior to the polygon, the entry point
   // must precede the exit point on the VSB. If the VSB corner is
   // outside, the entry and exit must be in the opposite order.  If
   // the order is wrong, the points must coincide, and this function
-  // returns true.
-  bool inside = bcorner.interior(onFace);
+  // returns true. 
   bool valid = ((inside && entryPt == firstPt) ||
 		(!inside && exitPt == firstPt));
 
@@ -2433,8 +2451,9 @@ bool PixelPlaneFacet::polyVSBCornerCoincidence(
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // tripleCoincidence is called by resolveThreeFoldCoincidence to find
-// intersections (if any) need to be merged.  There are two classes of
-// triple coincidence, involving either two or three VSB segments.
+// which intersections (if any) need to be merged.  There are two
+// classes of triple coincidence, involving either two or three VSB
+// segments.
 
 // fi0 and fi1 are both entries or both exits, and are on different segments.
 // The one that's different from the other two, entry-wise, is fiB.

@@ -30,6 +30,7 @@ public:
   BarycentricCoord &operator=(const BarycentricCoord&);
   bool interior(unsigned int) const;
   bool interior() const;
+  bool interiorToFace(unsigned int) const;
   double operator[](unsigned int i) const { return bcoord[i]; }
   double &operator[](unsigned int i) { return bcoord[i]; }
   Coord3D position3D(const std::vector<Coord3D> &epts) const;

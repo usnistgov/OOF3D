@@ -16,10 +16,8 @@
 
 // TODO: vtkTetra::BarycentricCoords() doesn't take advantage of the
 // fact that the same matrix is used to find all coords for an
-// element.  We need to save the LU decomposition and reuse it.  We
-// should have a HomogeneityTet class that stores the LU
-// decomposition, the TetPlaneIntersectionCache, the BaryCoordCache,
-// and the FacetCornerList.
+// element.  We need to save the LU decomposition in HomogeneityTet
+// and reuse it.
 
 // NOTE on arithmetic with barycentric coordinates: barycentric
 // coordinates aren't vectors.  They can't be simply added component
@@ -92,6 +90,13 @@ bool BarycentricCoord::interior(unsigned int onFace) const {
     }
   }
   return true;
+}
+
+bool BarycentricCoord::interiorToFace(unsigned int face) const {
+  // interiorToFace just asks if the point is on the interior side of
+  // the given face.
+  unsigned int oppNode = CSkeletonElement::oppNode[face];
+  return bcoord[oppNode] > 0;
 }
 
 bool BarycentricCoord::interior() const {
