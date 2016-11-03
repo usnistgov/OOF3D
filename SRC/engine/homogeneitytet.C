@@ -383,19 +383,22 @@ HomogeneityTet::~HomogeneityTet() {
 // refer to different pixel planes, and we can cheaply compare
 // PixelPlane*s instead of calling PixelPlane::operator==.
 
-const HPixelPlane *HomogeneityTet::getPixelPlane(unsigned int dir, int offset,
+HPixelPlane *HomogeneityTet::getPixelPlane(unsigned int dir, int offset,
 						int normal)
 {
   return getPixelPlane(new HPixelPlane(dir, offset, normal));
 }
 
-const HPixelPlane *HomogeneityTet::getPixelPlane(HPixelPlane *pixplane) {
+HPixelPlane *HomogeneityTet::getPixelPlane(HPixelPlane *pixplane) {
   auto result = pixelPlanes_.emplace(pixplane);
   if(!result.second)
     delete pixplane;
   else
     allPlanes_.insert(*result.first);
   (*result.first)->setUnoriented(getUnorientedPixelPlane(*result.first));
+  assert((*result.first)->unoriented() != nullptr);
+  assert((*result.first)->unoriented()->unoriented() ==
+	 (*result.first)->unoriented());
   return *result.first;
 }
 
@@ -424,9 +427,12 @@ const HPixelPlane *HomogeneityTet::getUnorientedPixelPlane(
   HPixelPlane *oplane = new HPixelPlane(pp->direction(), pp->normalOffset(), 1);
   auto p = pixelPlanes_.emplace(oplane);
   if(!p.second)
-    delete oplane;
-  else
-    allPlanes_.insert(*p.first);
+    delete oplane;		// plane was already in pixelPlanes_
+  else {
+    allPlanes_.insert(*p.first); // plane is new
+    oplane->setUnoriented(oplane);
+  }
+  assert(*p.first != nullptr);
   return *p.first;
 }
 
@@ -600,6 +606,7 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
   
   IsecEquivalenceClass *equivClass0 = point0->equivalence();
   IsecEquivalenceClass *equivClass1 = point1->equivalence();
+  IsecEquivalenceClass *modifiedClass = nullptr;
 
   if(equivClass0 == nullptr) {
     if(equivClass1 == nullptr) {
@@ -621,6 +628,7 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
       equivalences.push_back(eqclass);
       point0->setEquivalence(eqclass);
       point1->setEquivalence(eqclass);
+      modifiedClass = eqclass;
 // #ifdef DEBUG
 //       if(verboseplane) {
 // 	oofcerr << "HomogeneityTet::mergeEquiv: after merge, point0=" << *point0
@@ -634,6 +642,7 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
       // Point 1 is already in an equivalence class but point 0 is not.
       point0->setEquivalence(equivClass1);
       merged->setEquivalence(equivClass1);
+      modifiedClass = equivClass1;
     }
   }
   else {
@@ -646,6 +655,7 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
       // Both points are in equivalence classes
       if(equivClass0 == equivClass1) {
 	merged->setEquivalence(equivClass0);
+	modifiedClass = equivClass0;
       }
       else {
 	// The points are in different equivalence classes.  Merge the classes.
@@ -663,9 +673,32 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
 	assert(eptr != equivalences.end());
 	equivalences.erase(eptr);
 	delete equivClass1;
+	modifiedClass = equivClass0;
       }
     }
   }
+  // Since modifiedClass is new or newly changed, it now may be
+  // equivalent to some other class(es).  Find the other classes,
+  // merge them, and delete them.
+  // TODO: This may be slow.  Does it have to be done every time?
+  bool foundEquiv = true;
+  while(foundEquiv) {
+    foundEquiv = false;
+    std::set<IsecEquivalenceClass*> deleteThese;
+    for(IsecEquivalenceClass *eqclass : equivalences) {
+      if(eqclass != modifiedClass && modifiedClass->isEquivalent(eqclass)) {
+	modifiedClass->merge(eqclass);
+	deleteThese.insert(eqclass);
+	foundEquiv = true;
+      }
+    }
+    for(IsecEquivalenceClass *eqclass : deleteThese) {
+      auto eptr = std::find(equivalences.begin(), equivalences.end(), eqclass);
+      equivalences.erase(eptr);
+      delete eqclass;
+    }
+  }
+  
 // #ifdef DEBUG
 //   if(!verify())
 //     throw ErrProgrammingError("Verification failed after mergeEquiv!",
@@ -724,11 +757,11 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *pt0, PlaneIntersection *pt1)
 // the classes are merged.
 template <class PLANEINTERSECTION>
 PLANEINTERSECTION *HomogeneityTet::checkEquiv(PLANEINTERSECTION *point) {
-// #ifdef DEBUG
-//   if(verboseplane || verboseface) 
-//     oofcerr << "HomogeneityTet::checkEquiv: point=" << *point << std::endl;
-//   OOFcerrIndent indent(2);
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verboseplane || verboseface) 
+    oofcerr << "HomogeneityTet::checkEquiv: point=" << *point << std::endl;
+  OOFcerrIndent indent(2);
+#endif // DEBUG
 
   bool foundEquiv = true;
   while(foundEquiv == true) {
@@ -798,11 +831,11 @@ PLANEINTERSECTION *HomogeneityTet::checkEquiv(PLANEINTERSECTION *point) {
 // 	      << std::endl;
 // #endif // DEBUG
   }
-// #ifdef DEBUG
-//   if(verboseplane || verboseface)
-//     oofcerr << "HomogeneityTet::checkEquiv: final point=" << *point
-// 	    << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verboseplane || verboseface)
+    oofcerr << "HomogeneityTet::checkEquiv: final point=" << *point
+	    << std::endl;
+#endif // DEBUG
   return point;
 } // end HomogeneityTet::checkEquiv
 
@@ -2222,12 +2255,14 @@ const HPixelPlane *HomogeneityTet::orientedOrthogonalPlane_(
 					    HPixelPlane *orthoPlane,
 					    const Coord3D &testPt)
 {
-// #ifdef DEBUG
-//   if(verboseplane) {
-//     oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: testPt=" << testPt
-// 	    << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verboseplane) {
+    oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: testPt=" << testPt
+	    << " pixplane=" << pixplane << " " << *pixplane
+	    << " orthoPlane=" << orthoPlane << " " << *orthoPlane
+	    << std::endl;
+  }
+#endif // DEBUG
   if(!microstructure->containsPixelCoord(testPt)) {
     // At the edge of the microstructure there are no valleys.
 // #ifdef DEBUG
@@ -2368,6 +2403,12 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
   std::vector<StrandedPoint> strandedPoints;
 
   // Loop over all faces that aren't also pixel planes.
+#ifdef DEBUG
+      if(verbosecategory) {
+	oofcerr << "HomogeneityTet::findFaceFacets: starting checkEquiv loop"
+		<< std::endl;
+      }
+#endif // DEBUG
   for(unsigned int face=0; face<NUM_TET_FACES; face++) {
     if(coincidentPixelPlanes[face] == nullptr) {
 #ifdef DEBUG
@@ -2378,23 +2419,11 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
       // Make sure equivalence classes are up to date.
       // TODO: If checkEquiv is run for each new PlaneIntersection, is
       // this loop necessary?
-// #ifdef DEBUG
-//       if(verbosecategory) {
-// 	oofcerr << "HomogeneityTet::findFaceFacets: starting checkEquiv loop"
-// 		<< std::endl;
-//       }
-// #endif // DEBUG
       for(auto seg=facet.edges().begin(); seg!=facet.edges().end(); ++seg) {
 	checkEquiv((*seg)->startPt());
 	checkEquiv((*seg)->endPt());
       }
 
-// #ifdef DEBUG
-//       if(verbosecategory) {
-// 	oofcerr << "HomogeneityTet::findFaceFacets: finished checkEquiv loop"
-// 		<< std::endl;
-//       }
-// #endif // DEBUG
       facet.findLooseEnds(looseEndCatalog[face], strandedPoints);
 
 #ifdef DEBUG
@@ -2402,7 +2431,13 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 #endif // DEBUG
     } // end if face is not on a pixel plane
   } // end loop over faces, face
-
+#ifdef DEBUG
+      if(verbosecategory) {
+	oofcerr << "HomogeneityTet::findFaceFacets: finished checkEquiv loop"
+		<< std::endl;
+      }
+#endif // DEBUG
+ 
 // #ifdef DEBUG
 //   if(verbosecategory) {
 //     if(strandedPoints.empty())
@@ -2438,11 +2473,27 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
       LooseEndSet &looseEnds = looseEndCatalog[face];
       Coord3D faceNormal = faceAreaVectors[face]; // not a unit vector
 
+#ifdef DEBUG
+      if(verboseface) {
+	oofcerr << "HomogeneityTet::findFaceFacets:"
+		<< " before handling marooned points, cat=" << cat
+		<< " face=" << face << " looseEnds=" << std::endl;
+	printLooseEnds(looseEnds);
+      }
+#endif // DEBUG
       // Put any marooned points onto the closest edge.
       for(StrandedPoint &sp : marooned[face]) {
 	sp.feInt->forceOntoEdge(sp.face, this);
 	looseEnds.insert(sp.feInt);
       }
+#ifdef DEBUG
+      if(verboseface) {
+	oofcerr << "HomogeneityTet::findFaceFacets:"
+		<< " after handling marooned points, cat=" << cat
+		<< " face=" << face << " looseEnds=" << std::endl;
+	printLooseEnds(looseEnds);
+      }
+#endif // DEBUG
 
       // Find the existing facet edges that lie on the tet edges.
       // (TODO: Can this be done more efficiently earlier, perhaps
@@ -2714,11 +2765,11 @@ StrandedPointLists HomogeneityTet::matchStrandedPoints(
 			       std::vector<StrandedPoint> &strandedPoints,
 			       LooseEndCatalog &looseEndCatalog)
 {
-// #ifdef DEBUG
-//   if(verbosecategory)
-//     oofcerr << "HomogeneityTet::matchStrandedPoints: size="
-// 	    << strandedPoints.size() << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+  if(verbosecategory)
+    oofcerr << "HomogeneityTet::matchStrandedPoints: size="
+	    << strandedPoints.size() << std::endl;
+#endif // DEBUG
   
   // Stranded intersection points that can't be matched are marooned.
   // The list of marooned points is returned.  StrandedPointsLists is
@@ -2790,17 +2841,17 @@ StrandedPointLists HomogeneityTet::matchStrandedPoints(
 	matched[best] = true;
 	matched[i] = true;
 	const StrandedPoint &pt1 = strandedPoints[best];
-// #ifdef DEBUG
-// 	if(verbosecategory) {
-// 	  oofcerr << "HomogeneityTet::matchStrandedPoints: merging:"
-// 		  << std::endl;
-// 	  OOFcerrIndent indent(2);
-// 	  oofcerr << "HomogeneityTet::matchStrandedPoints: pt0=" << *pt0.feInt
-// 		  << std::endl;
-// 	  oofcerr << "HomogeneityTet::matchStrandedPoints: pt1=" << *pt1.feInt
-// 		  << std::endl;
-// 	}
-// #endif // DEBUG
+#ifdef DEBUG
+	if(verbosecategory) {
+	  oofcerr << "HomogeneityTet::matchStrandedPoints: merging:"
+		  << std::endl;
+	  OOFcerrIndent indent(2);
+	  oofcerr << "HomogeneityTet::matchStrandedPoints: pt0=" << *pt0.feInt
+		  << std::endl;
+	  oofcerr << "HomogeneityTet::matchStrandedPoints: pt1=" << *pt1.feInt
+		  << std::endl;
+	}
+#endif // DEBUG
 	// The PixelPlaneIntersections are stored in
 	// FaceEdgeIntersection as generic PlaneIntersections, but in
 	// this case we know that they're PixelPlaneIntersections.
@@ -4198,6 +4249,10 @@ bool FaceEdgeIntersection::crosses(const FaceEdgeIntersection *other,
 	      << CSkeletonElement::faceEdges[face][faceEdge()] << ")"
 	      << " other edge=" << other->faceEdge() << " ("
 	      << CSkeletonElement::faceEdges[face][other->faceEdge()] << ")"
+	      << std::endl;
+      oofcerr << "FaceEdgeIntersection::crosses: this edge pos="
+	      << edgePosition() << " other=" << other->edgePosition()
+	      << " other-this=" << other->edgePosition() - edgePosition()
 	      << std::endl;
       throw ErrProgrammingError(
 			"Bad arguments to FaceEdgeIntersection::crosses!",

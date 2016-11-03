@@ -321,8 +321,8 @@ public:
 
   const CRectangularPrism &bounds() const { return *bbox_; }
 
-  const HPixelPlane *getPixelPlane(unsigned int dir, int offset, int normal);
-  const HPixelPlane *getPixelPlane(HPixelPlane*);
+  HPixelPlane *getPixelPlane(unsigned int dir, int offset, int normal);
+  HPixelPlane *getPixelPlane(HPixelPlane*);
   const HPixelPlane *getUnorientedPixelPlane(const HPixelPlane*);
   const FacePlane *getTetFacePlane(unsigned int i) const { return faces[i]; }
   unsigned int getTetFaceIndex(const FacePlane*) const;

@@ -1090,12 +1090,12 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// isEquiv_ is the guts of the two versions of
-// PixelPlaneIntersectionNR::isEquivalent().  It determines whether
-// two sets of planes (each made of pixel planes, face planes, and
-// face pixel planes) have three nondegenerate planes in common.  It
-// assumes that the given PixelPlaneSets only contain independent
-// planes.
+// isEquiv_ determines whether two sets of planes (each made of pixel
+// planes, face planes, and face pixel planes) have three
+// nondegenerate planes in common.  It assumes that the given
+// PixelPlaneSets only contain independent planes.  It's used in
+// PlaneIntersection::belongsInEqClass and
+// IsecEquivalenceClass::isEquivalent.
 
 static bool isEquiv_(HomogeneityTet *htet,
 		     const PixelPlaneSet &pp0, const FacePlaneSet &fp0,
@@ -1108,14 +1108,28 @@ static bool isEquiv_(HomogeneityTet *htet,
   // sets are small, but this is called often.
 // #ifdef DEBUG
 //   bool verbose = htet->verbosePlane() || htet->verboseFace();
+//   if(verbose) {
+//     oofcerr << "isEquiv_: pp0=";
+//     std::cerr << derefprint(pp0) << " fp0=" << derefprint(fp0) << " fpp0="
+// 	      << derefprint(fpp0);
+//     oofcerr << std::endl;
+//     oofcerr << "isEquiv_: pp1=";
+//     std::cerr << derefprint(pp1) << " fp1=" << derefprint(fp1) << " fpp1="
+// 	      << derefprint(fpp1);
+//     oofcerr << std::endl;
+//   }
 // #endif	// DEBUG
   unsigned int npixplanes = 0;
   std::vector<const HPlane*> planes;
   planes.reserve(10);		// more than we'll need in all cases
   for(const HPixelPlane *thisplane : pp0) {
     for(const HPixelPlane *otherplane : pp1) {
+      // TODO: Here and elsewhere, is it better to call coincident or
+      // use pointer comparison?  Will have to check pointers to the
+      // unoriented planes.
       if(thisplane->coincident(*otherplane)) {
 	++npixplanes;
+	assert(thisplane->unoriented() != nullptr);
 	planes.push_back(thisplane->unoriented());
 	break;
       }
@@ -1169,6 +1183,7 @@ static bool isEquiv_(HomogeneityTet *htet,
 //     oofcerr << std::endl;
 //   }
 // #endif // DEBUG
+
   if(planes.size() < 3)
     return false;
 
@@ -1228,6 +1243,28 @@ static bool isEquiv_(HomogeneityTet *htet,
   return false;
 } // end static isEquiv_
 
+// independentPlanes_ returns a set containing just the independent
+// pixel planes in a PixelPlaneSet.  It's used to clean the arguments
+// to isEquiv_.
+
+static PixelPlaneSet independentPlanes_(const PixelPlaneSet &pixplanes) {
+  PixelPlaneSet indepPlanes;
+  for(const HPixelPlane *pp : pixplanes) {
+    bool independent = true;
+    for(const HPixelPlane *ip : indepPlanes) {
+      if(pp->coincident(*ip)) {
+	independent = false;
+	break;
+      }
+    }
+    if(independent)
+      indepPlanes.insert(pp);
+  }
+  return indepPlanes;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 // template <class BASE>
 // bool IntersectionPlanes<BASE>::isEquiv(const IntersectionPlanesBase *ppi)
 //   const
@@ -1271,18 +1308,18 @@ bool IntersectionPlanes<BASE>::belongsInEqClass(
 					const IsecEquivalenceClass *eqclass)
   const
 {
-  PixelPlaneSet indepPlanes;
-  for(const HPixelPlane *pp : pixelPlanes_) {
-    bool independent = true;
-    for(const HPixelPlane *ip : indepPlanes) {
-      if(pp->coincident(*ip)) {
-	independent = false;
-	break;
-      }
-    }
-    if(independent)
-      indepPlanes.insert(pp);
-  }
+  PixelPlaneSet indepPlanes = independentPlanes_(pixelPlanes_);
+  // for(const HPixelPlane *pp : pixelPlanes_) {
+  //   bool independent = true;
+  //   for(const HPixelPlane *ip : indepPlanes) {
+  //     if(pp->coincident(*ip)) {
+  // 	independent = false;
+  // 	break;
+  //     }
+  //   }
+  //   if(independent)
+  //     indepPlanes.insert(pp);
+  // }
   return isEquiv_(BASE::htet, indepPlanes, faces_, pixelFaces_,
 		  eqclass->pixelPlanes, eqclass->facePlanes,
 		  eqclass->pixelFaces);
@@ -3348,6 +3385,14 @@ void IsecEquivalenceClass::merge(IsecEquivalenceClass *other) {
 //   }
 // #endif // DEBUG
 } // end IsecEquivalenceClass::merge
+
+bool IsecEquivalenceClass::isEquivalent(const IsecEquivalenceClass *other) const
+{
+  PixelPlaneSet pixplanes0 = independentPlanes_(pixelPlanes);
+  PixelPlaneSet pixplanes1 = independentPlanes_(other->pixelPlanes);
+  return isEquiv_(htet, pixplanes0, facePlanes, pixelFaces,
+		  pixplanes1, other->facePlanes, other->pixelFaces);
+}
 
 std::ostream &operator<<(std::ostream &os, const IsecEquivalenceClass &eqclass)
 {

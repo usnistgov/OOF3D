@@ -1401,6 +1401,8 @@ public:
   bool containsPixelPlane(const HPixelPlane*) const;
   bool containsFacePlane(const FacePlane*) const;
 
+  bool isEquivalent(const IsecEquivalenceClass*) const;
+
   PixelPlaneSets pixelPlaneSets() const {
     return PixelPlaneSets(pixelPlanes, pixelFaces);
   }
