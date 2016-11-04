@@ -897,10 +897,18 @@ Coord3D triplePlaneIntersection(const Plane *plane0, const Plane *plane1,
   offsets(0, 0) = plane0->offset();
   offsets(1, 0) = plane1->offset();
   offsets(2, 0) = plane2->offset();
-  if(normals.solve(offsets) != 0) {
-    oofcerr << "triplePlaneIntersection::point: plane0=" << *plane0 <<std::endl;
-    oofcerr << "triplePlaneIntersection::point: plane1=" << *plane1 <<std::endl;
-    oofcerr << "triplePlaneIntersection::point: plane2=" << *plane2 <<std::endl;
+  int status = normals.solve(offsets);
+  if(status != 0) {
+    oofcerr << "triplePlaneIntersection: plane0=" << *plane0 << " normal="
+	    << plane0->normal() << std::endl;
+    oofcerr << "triplePlaneIntersection: plane1=" << *plane1 << " normal="
+	    << plane1->normal() << std::endl;
+    oofcerr << "triplePlaneIntersection: plane2=" << *plane2 << " normal="
+	    << plane2->normal() << std::endl;
+    oofcerr << "triplePlaneIntersection: normals=" << normals << std::endl;
+    oofcerr << "triplePlaneIntersection: offsets=" << offsets << std::endl;
+    oofcerr << "triplePlaneIntersection: status=" << status << std::endl;
+      
     throw ErrProgrammingError("triplePlaneIntersection could not be found",
 			      __FILE__, __LINE__);
   }
