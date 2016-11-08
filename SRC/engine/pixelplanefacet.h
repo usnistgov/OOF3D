@@ -323,7 +323,8 @@ public:
 
   bool onOppositeEdges(const SimpleIntersection*, const SimpleIntersection*)
     const;
-  
+  double polygonPerimeterDistance(const PixelPlaneIntersectionNR*,
+				  const PixelPlaneIntersectionNR*) const;
   
   bool vsbCornerCoincidence(const PixelPlaneIntersectionNR*,
 			    const PixelPlaneIntersectionNR*) const;
