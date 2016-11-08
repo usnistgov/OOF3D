@@ -757,11 +757,11 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *pt0, PlaneIntersection *pt1)
 // the classes are merged.
 template <class PLANEINTERSECTION>
 PLANEINTERSECTION *HomogeneityTet::checkEquiv(PLANEINTERSECTION *point) {
-#ifdef DEBUG
-  if(verboseplane || verboseface) 
-    oofcerr << "HomogeneityTet::checkEquiv: point=" << *point << std::endl;
-  OOFcerrIndent indent(2);
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verboseplane || verboseface) 
+//     oofcerr << "HomogeneityTet::checkEquiv: point=" << *point << std::endl;
+//   OOFcerrIndent indent(2);
+// #endif // DEBUG
 
   bool foundEquiv = true;
   while(foundEquiv == true) {
@@ -831,11 +831,11 @@ PLANEINTERSECTION *HomogeneityTet::checkEquiv(PLANEINTERSECTION *point) {
 // 	      << std::endl;
 // #endif // DEBUG
   }
-#ifdef DEBUG
-  if(verboseplane || verboseface)
-    oofcerr << "HomogeneityTet::checkEquiv: final point=" << *point
-	    << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verboseplane || verboseface)
+//     oofcerr << "HomogeneityTet::checkEquiv: final point=" << *point
+// 	    << std::endl;
+// #endif // DEBUG
   return point;
 } // end HomogeneityTet::checkEquiv
 
@@ -1390,8 +1390,6 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 #ifdef DEBUG
   if(verboseplane) {
     if(!tetPts.empty()) {
-      oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: pixplane="
-	      << *pixplane << " category=" << cat << std::endl;
       // oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
       // 	      << "initial equivalence classes:" << std::endl;
       // dumpEquivalences();
@@ -1623,6 +1621,21 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	  
 	  ICRectangle segbb(pbs_start, pbs_end);
 	  if(segbb.intersects_open(tetBounds)) {
+// #ifdef DEBUG
+// 	    if(verboseplane) {
+// 	      oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: "
+// 		      << " segbb=" << segbb << " tetBounds=" << tetBounds
+// 		      << std::endl;
+// 	      double dx0 = segbb.xmax() - tetBounds.xmin();
+// 	      double dx1 = tetBounds.xmax() - segbb.xmin();
+// 	      double dx = (dx0 > dx1 ? dx1 : dx0);
+// 	      double dy0 = segbb.ymax() - tetBounds.ymin();
+// 	      double dy1 = tetBounds.ymax() - segbb.ymin();
+// 	      double dy = (dy0 > dy1 ? dy1 : dy0);
+// 	      oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: overlap="
+// 		      << "(" << dx << ", " << dy << ")" << std::endl;
+// 	    }
+// #endif // DEBUG
 	    const HPixelPlane *orthoPlane =
 	      getPixelPlane(pixplane->orthogonalPlane(pbs_start, pbs_end));
 	    // There's no intersection unless the orthoPlane actually
@@ -1634,14 +1647,14 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 	    // endpoints.
 	    TetIntersectionPolygon orthoPts =
 	      getTetPlaneIntersectionPoints(orthoPlane);
-#ifdef DEBUG
-	    if(verboseplane) {
-	      oofcerr << "HomogeneityTet:doFindPixelPlaneFacets: orthoPlane="
-		      << *orthoPlane << " orthoPts=";
-	      std::cerr << derefprint(orthoPts);
-	      oofcerr << std::endl;
-	    }
-#endif // DEBUG
+// #ifdef DEBUG
+// 	    if(verboseplane) {
+// 	      oofcerr << "HomogeneityTet:doFindPixelPlaneFacets: orthoPlane="
+// 		      << *orthoPlane << " orthoPts=";
+// 	      std::cerr << derefprint(orthoPts);
+// 	      oofcerr << std::endl;
+// 	    }
+// #endif // DEBUG
 	    if(!orthoPts.empty()) {
 	      unsigned int orthoFace = getCoincidentFaceIndex(orthoPlane);
 	      std::vector<PixelPlaneIntersectionNR*> isecs =
@@ -2255,14 +2268,14 @@ const HPixelPlane *HomogeneityTet::orientedOrthogonalPlane_(
 					    HPixelPlane *orthoPlane,
 					    const Coord3D &testPt)
 {
-#ifdef DEBUG
-  if(verboseplane) {
-    oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: testPt=" << testPt
-	    << " pixplane=" << pixplane << " " << *pixplane
-	    << " orthoPlane=" << orthoPlane << " " << *orthoPlane
-	    << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verboseplane) {
+//     oofcerr << "HomogeneityTet::orientedOrthogonalPlane_: testPt=" << testPt
+// 	    << " pixplane=" << pixplane << " " << *pixplane
+// 	    << " orthoPlane=" << orthoPlane << " " << *orthoPlane
+// 	    << std::endl;
+//   }
+// #endif // DEBUG
   if(!microstructure->containsPixelCoord(testPt)) {
     // At the edge of the microstructure there are no valleys.
 // #ifdef DEBUG
