@@ -1437,13 +1437,13 @@ double SingleFaceMixIn<BASE>::getPolyFrac(unsigned int edgeno,
     return polyFracCache[edgeno];
  
   const BarycentricCoord &bary = BASE::baryCoord(facet->htet);
-#ifdef DEBUG
-  if(BASE::verbose) {
-    oofcerr << "SingleFaceMixIn::getPolyFrac: this=" << *this
-	    << " edgeno=" << edgeno << std::endl;
-    oofcerr << "SingleFaceMixIn::getPolyFrac: bary=" << bary << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(BASE::verbose) {
+//     oofcerr << "SingleFaceMixIn::getPolyFrac: this=" << *this
+// 	    << " edgeno=" << edgeno << std::endl;
+//     oofcerr << "SingleFaceMixIn::getPolyFrac: bary=" << bary << std::endl;
+//   }
+// #endif // DEBUG
   double pos = facet->htet->edgeCoord(bary, edgeno, facet);
   assert(pos != IMPOSSIBLE_ALPHA);
   polyFracCache[edgeno] = pos;

@@ -957,12 +957,12 @@ double HomogeneityTet::edgeCoord(const BarycentricCoord &bint,
 				 const PixelPlaneFacet *facet)
   const
 {
-#ifdef DEBUG
-  if(verboseplane) {
-    oofcerr << "HomogeneityTet::edgeCoord: bint=" << bint
-	    << " edgeno=" << edgeno << std::endl;
-  }
-#endif	// DEBUG
+// #ifdef DEBUG
+//   if(verboseplane) {
+//     oofcerr << "HomogeneityTet::edgeCoord: bint=" << bint
+// 	    << " edgeno=" << edgeno << std::endl;
+//   }
+// #endif	// DEBUG
 
   // unsigned int edgeno = facet->getPolyEdge(face);
 
@@ -986,13 +986,13 @@ double HomogeneityTet::edgeCoord(const BarycentricCoord &bint,
 // #endif // DEBUG
   BarycentricCoord b0 = facet->polygonCornerBary(edgeno);
   BarycentricCoord b1 = facet->polygonCornerBary(nextno);
-#ifdef DEBUG
-  if(verboseplane)
-    oofcerr << "HomogeneityTet::edgeCoord:"
-	    << " b0=" << b0 << " " << *facet->getTetPoint(edgeno)->equivalence()
-	    << " b1=" << b1 << " " << *facet->getTetPoint(nextno)->equivalence()
-	    << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verboseplane)
+//     oofcerr << "HomogeneityTet::edgeCoord:"
+// 	    << " b0=" << b0 << " " << *facet->getTetPoint(edgeno)->equivalence()
+// 	    << " b1=" << b1 << " " << *facet->getTetPoint(nextno)->equivalence()
+// 	    << std::endl;
+// #endif // DEBUG
   
   // alpha is the position of the intersection as a fractional
   // distance from corner edgeno to edgeno+1.  It can be computed
@@ -1022,11 +1022,11 @@ double HomogeneityTet::edgeCoord(const BarycentricCoord &bint,
 #endif // DEBUG
 
   double alpha = (bint[best] - b0[best])/(b1[best] - b0[best]);
-#ifdef DEBUG
-  if(verboseplane)
-    oofcerr << "HomogeneityTet::edgeCoord: best=" << best
-	    << " alpha=" << alpha << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verboseplane)
+//     oofcerr << "HomogeneityTet::edgeCoord: best=" << best
+// 	    << " alpha=" << alpha << std::endl;
+// #endif // DEBUG
   return alpha;
 }
 
