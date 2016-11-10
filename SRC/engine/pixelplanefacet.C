@@ -1980,6 +1980,24 @@ static void updatePairList(IsecPairList &pairs,
 // contain the newly formed merged intersection.  Re-sort the list of
 // pairs, and repeat until there's nothing left to fix.
 
+// Fixing the shortest pair first resolves situations like this, where
+// if we examined the pairs in order on the perimeter the first pair
+// examined would be illegal and unfixable:
+
+//       -------------B-C--------------
+//      /              X              /
+//     /              / \            /
+//    /              /   \          /
+//   /______________/_____\________/  polygon  
+//                 A       D
+
+// AC and BD are the voxel set boundary edges.  Points B and C are
+// supposed to coincide on the polygon boundary, but they don't and
+// are misordered.  If the pairs are ordered along the perimeter, DC
+// may be evaluated first.  The segments cross but D and C are both
+// entries and can't be merged.  If BC is merged first then there is
+// no conflict.
+
 bool PixelPlaneFacet::resolveMultipleCoincidence(
 			 const PPIntersectionNRSet &isecs,
 			 unsigned int totalIsecs)
