@@ -838,7 +838,7 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
       verbose = false;
       verboseWaited++;
     }
-    if(nVerbose >= verboseLimit_) {
+    if(verboseLimit_ != NONE && nVerbose >= verboseLimit_) {
       verbose = false;
     }
   }
