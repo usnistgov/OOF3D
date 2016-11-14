@@ -2158,6 +2158,12 @@ bool PixelPlaneFacet::resolveMultipleCoincidence(
 	// needs to be merged.
 	bool misordered = !equiv && !wrongParity && i0->isMisordered(i1, this);
 	if(equiv || wrongParity || misordered) {
+#ifdef DEBUG
+	  if(verbose)
+	    oofcerr << "PixelPlaneFacet::resolveMultipleCoincidence: "
+		    << "equiv=" << equiv << " wrongParity=" << wrongParity
+		    << " misordered=" << misordered << std::endl;
+#endif // DEBUG
 	  PixelPlaneIntersectionNR *inew = i0->mergeWith(htet, i1, this);
 	  if(inew) {
 	    updatePairList(pairs, i, inew, pixplane
@@ -2995,6 +3001,16 @@ bool PixelPlaneFacet::badTopology(const SimpleIntersection *si,
   // each other:
   bool extraPolySegment = !(mviFirstOnPoly || siFirstOnPoly);
 
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "PixelPlaneFacet::badTopology: si=" << *si << std::endl;
+    oofcerr << "PixelPlaneFacet::badTopology: mvi=" << *mvi << std::endl;
+    oofcerr << "PixelPlaneFacet::badTopology: siFirstOnPoly=" << siFirstOnPoly
+	    << " mviFirstOnPoly=" << mviFirstOnPoly
+	    << " extraPolySegment=" << extraPolySegment << std::endl;
+  }
+#endif // DEBUG
+	     
 
   if(mvi->nVSBSegments() == 2) {
     PixelBdyLoopSegment loopSeg0, loopSeg1;
@@ -3043,21 +3059,26 @@ bool PixelPlaneFacet::badTopology(const SimpleIntersection *si,
       //    MultiVSBIntersection.    m----s--->---
       // C. The MultiVSBIntersection is first when traversing the polygon
       // D. VSB turns right.
-      // E. The polygon corner is on the right side of the VSB segments.
+      // E0. The polygon corner is on the right side of the first VSB segment
+      // E1. The polygon corner is on the right side of the second VSB segment
 
       // (Different edge configurations can have the same sets of values
       // for A-D.  That's ok.)
 
       static std::set<std::vector<bool>> legalCombos = {
-	// A      B      C      D     E
-	{false, true,  true,  false, true},  // L0 & L2
-	{true,  false, false, false, true},  // L1 & L3
-	{true,  false, true,  true,  false}, // R0 & R2
-	{false, true,  false, true,  false}, // R1 & R3
-	{false, true,  false, false, false}, // L4
-	{true,  false, false, true,  true},  // R4
-	{true,  false, true,  false, false}, // L5
-	{false, true,  true,  true,  true}   // R5
+	// A      B      C      D     E0     E1
+	{false, true,  true,  false, false, true},  // L0
+	{true,  false, false, false, true,  false}, // L1
+	{false, true,  true,  false, true,  true},  // L2	
+	{true,  false, false, false, true,  true},  // L3
+	{false, true,  false, false, false, false}, // L4
+	{true,  false, true,  false, false, false}, // L5
+	{true,  false, true,  true,  false, true},  // R0	
+	{false, true,  false, true,  true,  false}, // R1
+	{true,  false, true,  true,  false, false}, // R2
+	{false, true,  false, true,  false, false}, // R3
+	{true,  false, false, true,  true,  true},  // R4
+	{false, true,  true,  true,  true,  true}   // R5
       };
   
       bool conditionA = si->crossingType() == ENTRY;
@@ -3069,11 +3090,29 @@ bool PixelPlaneFacet::badTopology(const SimpleIntersection *si,
       unsigned int polyVertexIndex = mviFirstOnPoly ? siPolySeg : mviPolySeg;
       // position of the polygon corner
       Coord2D polyVertex = polygonCorner(polyVertexIndex);
-      bool conditionE = (loopSeg0.onRight(polyVertex) &&
-			 loopSeg1.onRight(polyVertex));
+      bool conditionE0 = loopSeg0.onRight(polyVertex);
+      bool conditionE1 = loopSeg1.onRight(polyVertex);
     
+#ifdef DEBUG
+      if(verbose) {
+	oofcerr << "PixelPlaneFacet::badTopology: loopSeg0=" << loopSeg0
+		<< " loopSeg1=" << loopSeg1 << " polyVertex=" << polyVertex
+		<< std::endl;
+	oofcerr << "PixelPlaneFacet::badTopology: loopSeg0.onRight="
+		<< loopSeg0.onRight(polyVertex)
+		<< " loopSeg1.onRight=" << loopSeg1.onRight(polyVertex)
+		<< std::endl;
+	oofcerr << "PixelPlaneFacet::badTopology: conditionA=" << conditionA
+		<< " conditionB=" << conditionB
+		<< " conditionC=" << conditionC
+		<< " conditionD=" << conditionD
+		<< " conditionE0=" << conditionE0
+		<< " conditionE1=" << conditionE1 << std::endl;
+      }
+#endif // DEBUG
+
       std::vector<bool> combo = {conditionA, conditionB, conditionC, conditionD,
-				 conditionE};
+				 conditionE0, conditionE1};
       return legalCombos.find(combo) == legalCombos.end();
     } // end if !extraPolySegment
 

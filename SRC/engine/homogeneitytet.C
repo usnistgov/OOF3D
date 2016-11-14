@@ -2532,15 +2532,15 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	OOFcerrIndent indent(2);
 	resolveCoincidences(face, looseEnds, edgeEdges);
       }
-#ifdef DEBUG
-      if(verboseface) {
-	oofcerr << "HomogeneityTet::findFaceFacets:"
-		<< " after resolveCoincidences, looseEnds (unsorted)="
-		<< std::endl;
-	OOFcerrIndent indent(2);
-	printLooseEnds(looseEnds);
-      }
-#endif // DEBUG
+// #ifdef DEBUG
+//       if(verboseface) {
+// 	oofcerr << "HomogeneityTet::findFaceFacets:"
+// 		<< " after resolveCoincidences, looseEnds (unsorted)="
+// 		<< std::endl;
+// 	OOFcerrIndent indent(2);
+// 	printLooseEnds(looseEnds);
+//       }
+// #endif // DEBUG
 
       if(!looseEnds.empty()) {
 	// Put all the LooseEnds in a single vector, ordered by face
@@ -2551,6 +2551,15 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	std::sort(sortedLooseEnds.begin(), sortedLooseEnds.end(),
 		  FaceEdgeIntersectionLT());
 	unsigned int npts = sortedLooseEnds.size();
+
+#ifdef DEBUG
+	if(verboseface) {
+	  oofcerr << "HomogeneityTet::findFaceFacets:"
+		  << " after sorting, looseEnds =" << std::endl;
+	  OOFcerrIndent indent(2);
+	  printLooseEnds(looseEnds);
+	}
+#endif // DEBUG
 	
 	// The missing segments that close the loops start at a loose
 	// end and end at a loose start. Find the first loose end.
@@ -2574,6 +2583,8 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	  throw ErrProgrammingError("findFaceFacets failed to find first end!",
 				    __FILE__, __LINE__);
 	}
+	// Loop over pairs (i, j) of adjacent loose ends, starting at
+	// i0.  i is an end, and j is a start.
 	for(unsigned int ii=0; ii<npts; ii += 2) {
 	  unsigned int i = ii+i0;
 	  if(i >= npts)
@@ -4532,6 +4543,13 @@ void FaceFacet::addFaceEdges(const FaceEdgeIntersection *fei0,
 			     const FaceEdgeIntersection *fei1,
 			     HomogeneityTet *htet)
 {
+#ifdef DEBUG
+  if(htet->verboseFace()) {
+    oofcerr << "FaceFacet::addFaceEdges: fei0=" << *fei0 << std::endl;
+    oofcerr << "FaceFacet::addFaceEdges: fei1=" << *fei1 << std::endl;
+  }
+#endif // DEBUG
+  
   unsigned int startEdge = fei0->faceEdge();
   unsigned int endEdge = fei1->faceEdge();
   
