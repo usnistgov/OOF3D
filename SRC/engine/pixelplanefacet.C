@@ -180,8 +180,8 @@ public:
 //       oofcerr << "LtPolyFrac::operator(): sharedSeg=" << sharedSeg << std::endl;
 // #endif // DEBUG
     if(sharedSeg != NONE) {
-      double t0 = fi0->getPolyFrac(sharedSeg, facet);
-      double t1 = fi1->getPolyFrac(sharedSeg, facet);
+      EdgePosition t0 = fi0->getPolyFrac(sharedSeg, facet);
+      EdgePosition t1 = fi1->getPolyFrac(sharedSeg, facet);
 // #ifdef DEBUG
 //       if(facet->verbose) {
 // 	oofcerr << "LtPolyFrac::operator(): polyFrac0=" << t0 << std::endl;
@@ -324,8 +324,9 @@ PixelPlaneFacet::PixelPlaneFacet(HomogeneityTet *htet,
 				 )
   : tetPts(tetPts),
     areaComputed_(false),
-    onFace(onFace),
+    edgeFaceMap(tetPts.size(), NONE),
     closedOnPerimeter(false),
+    onFace(onFace),
     htet(htet),
     pixplane(pixplane)
 #ifdef DEBUG
@@ -333,12 +334,29 @@ PixelPlaneFacet::PixelPlaneFacet(HomogeneityTet *htet,
 #endif // DEBUG
 {
   // Map FacePlanes and FacePixelPlanes to polygon edge numbers.  Edge
-  // e goes from tetPts[e] to tetPts[e+1].
+  // i goes from tetPts[i] to tetPts[i+1].
   for(unsigned int i=0; i<tetPts.size(); i++) {
     FacePlaneSet faces = getFacePlanes(i);
     for(const FacePlane *face : faces) {
       assert(face != nullptr);
       faceEdgeMap[face] = i;
+      // If this facet is on a tet face, then when
+      // HomogeneityTet::edgeCoord is used to compute relative
+      // positions along polygon edges, it's really doing it along tet
+      // edges, and needs to know the relationship between polygon
+      // edge indices and tet face edge indices.
+      // TODO: edgeFaceMap is only used here and in edgeCoord().
+      // Should there be a subclass of PixelPlaneFacet for facets on
+      // tet faces?
+      if(onFace != NONE) {
+	unsigned int faceno = htet->getTetFaceIndex(face);
+	if(faceno != onFace) {
+	  // edgeFaceMap[i] is the index of the edge at face scope,
+	  // for the face that coincides with this facet.
+	  unsigned int tetedge = CSkeletonElement::faceFaceEdge[faceno][onFace];
+	  edgeFaceMap[i] = CSkeletonElement::tetEdge2FaceEdge[onFace][tetedge];
+	}
+      }
       boundingFaces.insert(face);
       const FacePixelPlane *fpp = htet->getCoincidentPixelPlane(face);
       if(fpp != nullptr)
@@ -672,8 +690,8 @@ double PixelPlaneFacet::polygonPerimeterDistance(
 {
   unsigned int edge0 = pt0->getPolyEdge(this);
   unsigned int edge1 = pt1->getPolyEdge(this);
-  double frac0 = pt0->getPolyFrac(edge0, this);
-  double frac1 = pt1->getPolyFrac(edge1, this);
+  EdgePosition frac0 = pt0->getPolyFrac(edge0, this);
+  EdgePosition frac1 = pt1->getPolyFrac(edge1, this);
   if(edge0 == edge1) {
     double d = sqrt(norm2(pt1->location2D(pixplane) -
 			  pt0->location2D(pixplane)));
@@ -1033,10 +1051,10 @@ bool PixelPlaneFacet::completeLoops() {
   // PolyEdgeIntersections is vector of PixelPlaneIntersection*s.
   std::vector<PolyEdgeIntersections> polyEdgeIntersections(tetPts.size());
 
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "PixelPlaneFacet::completeLoops: beginning locateOnPolygonEdge loop" << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "PixelPlaneFacet::completeLoops: beginning locateOnPolygonEdge loop" << std::endl;
+// #endif // DEBUG
 
   for(FacetEdge *edge : edges) {
 // #ifdef DEBUG
@@ -1066,7 +1084,9 @@ bool PixelPlaneFacet::completeLoops() {
 		<< "]=" << std::endl;
 	OOFcerrIndent indnt(2);
 	for(const PixelPlaneIntersection *fib : polyEdgeIntersections[e]) {
-	  oofcerr << "PixelPlaneFacet::completeLoops:   " << *fib << std::endl;
+	  EdgePosition t = fib->getPolyFrac(e, this);
+	  oofcerr << "PixelPlaneFacet::completeLoops:   " << *fib
+		  << " t=" << t << std::endl;
 	}
       }
     }
@@ -1090,7 +1110,8 @@ bool PixelPlaneFacet::completeLoops() {
 		<< std::endl;
 	for(auto fib : polyedge) {
 	  OOFcerrIndent indent(2);
-	  oofcerr << "PixelPlaneFacet::completeLoops:  " << *fib << std::endl;
+	  oofcerr << "PixelPlaneFacet::completeLoops:  " << *fib
+		  << std::endl;
 	}
       }
     }
@@ -2253,8 +2274,8 @@ bool PixelPlaneFacet::vsbCornerCoincidence(const PixelPlaneIntersectionNR *fi0,
   // polygon boundary (no matter which way the polygon boundary goes).
   // If they make a left turn, the exit must be before the entry.
   unsigned int polyseg = fi0->sharedPolySegment(fi1, this);
-  double entryPolyFrac = entryPt->getPolyFrac(polyseg, this);
-  double exitPolyFrac = exitPt->getPolyFrac(polyseg, this);
+  EdgePosition entryPolyFrac = entryPt->getPolyFrac(polyseg, this);
+  EdgePosition exitPolyFrac = exitPt->getPolyFrac(polyseg, this);
 #ifdef DEBUG
   if(verbose) {
     oofcerr << "PixelPlaneFacet::vsbCornerCoincidence: entryPt=" << *entryPt
@@ -2564,8 +2585,8 @@ PixelPlaneFacet::tripleCoincidence(PixelPlaneIntersectionNR *fi0,
     // edge numbers back to face pointers.
     const FacePlane *faceBC = fiB->sharedFace(fiC, getBaseFacePlane());
     unsigned int edgeBC = getPolyEdge(faceBC);
-    double polyFracB = fiB->getPolyFrac(edgeBC, this);
-    double polyFracC = fiC->getPolyFrac(edgeBC, this);
+    EdgePosition polyFracB = fiB->getPolyFrac(edgeBC, this);
+    EdgePosition polyFracC = fiC->getPolyFrac(edgeBC, this);
   
     if(turn == LEFT) {
       if(fiC->crossingType() == ENTRY) {
@@ -2776,8 +2797,8 @@ PixelPlaneFacet::tripleCoincidence(PixelPlaneIntersectionNR *fi0,
     const FacePlane *faceAB = fiA->sharedFace(fiB, getBaseFacePlane());
     if(faceAB != nullptr) {
       unsigned int edgeAB = getPolyEdge(faceAB);
-      double polyFracA = fiA->getPolyFrac(edgeAB, this);
-      double polyFracB = fiB->getPolyFrac(edgeAB, this);
+      EdgePosition polyFracA = fiA->getPolyFrac(edgeAB, this);
+      EdgePosition polyFracB = fiB->getPolyFrac(edgeAB, this);
       if(polyFracA >= polyFracB) {
 	coincidentPoints.push_back(fiA);
 	coincidentPoints.push_back(fiB);
@@ -2787,8 +2808,8 @@ PixelPlaneFacet::tripleCoincidence(PixelPlaneIntersectionNR *fi0,
     const FacePlane *faceBC = fiB->sharedFace(fiC, getBaseFacePlane());
     if(faceBC != nullptr) {
       unsigned int edgeBC = getPolyEdge(faceBC);
-      double polyFracB = fiB->getPolyFrac(edgeBC, this);
-      double polyFracC = fiC->getPolyFrac(edgeBC, this);
+      EdgePosition polyFracB = fiB->getPolyFrac(edgeBC, this);
+      EdgePosition polyFracC = fiC->getPolyFrac(edgeBC, this);
       if(polyFracB >= polyFracC) {
 	coincidentPoints.push_back(fiB);
 	coincidentPoints.push_back(fiC);
@@ -3453,8 +3474,8 @@ bool PixelPlaneFacet::badTopology(const MultiFaceIntersection *mfi0,
     return true;
   // Compare positions along the polygon and the implied interiority
   // of the polygon segments.
-  double polyFracA = mfiA->getPolyFrac(sharedPolySeg, this);
-  double polyFracB = mfiB->getPolyFrac(sharedPolySeg, this);
+  EdgePosition polyFracA = mfiA->getPolyFrac(sharedPolySeg, this);
+  EdgePosition polyFracB = mfiB->getPolyFrac(sharedPolySeg, this);
   if(polyFracB < polyFracA) {	// case 1
     return (mfiA->interiority(0, this) == EXTERIOR ||
 	    mfiB->interiority(1, this) == EXTERIOR);

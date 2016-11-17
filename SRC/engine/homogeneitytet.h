@@ -45,11 +45,52 @@ class PixelBdyLoopSegment;
 // TODO: Move FaceEdgeIntersection, FaceFacetEdge, and FaceFacet to a
 // separate file.
 
+// EdgePosition is the relative position of a point along a directed
+// edge.  "reversed" is true if the position was calculated for an
+// edge with the opposite orientation.  "position" is a number between
+// 0 and 1 inclusive.
+
+// To guarantee consistency when the relative position of a point on
+// an edge is computed both for the edge and its mirror image, the
+// position is always calculated for some canonical orientation of the
+// edge (for example, if the edge is a tet edge, the canonical
+// orientation is the one that goes from the lower node number to the
+// higher number).  The intention is to guarantee that the computed
+// order of two points on a edge is the reverse of their computed
+// order on the reversed edge, even if the points differ only by round
+// off error.  It's not possible to compute the position on the
+// reversed edge by subracting from 1, since this can lose precision.
+
+class EdgePosition {
+private:
+  double position;
+  bool reversed;
+  bool unset_;
+public:
+  EdgePosition(double t, bool rev)
+    : position(t), reversed(rev), unset_(false)
+  {}
+  EdgePosition()
+    : position(-12345), reversed(false), unset_(true)
+  {}
+  bool operator<(const EdgePosition&) const;
+  bool operator>(const EdgePosition&) const;
+  bool operator<=(const EdgePosition&) const;
+  bool operator>=(const EdgePosition&) const;
+  bool operator==(const EdgePosition&) const;
+  double operator-(const EdgePosition&) const;
+  void normalize();
+  bool unset() const { return unset_; }
+  friend std::ostream &operator<<(std::ostream&, const EdgePosition&);
+};
+
+std::ostream &operator<<(std::ostream&, const EdgePosition&);
+
 class FaceEdgeIntersection {
 private:
   PlaneIntersection *crnr;   // This object does not own this pointer.
   FaceFacetEdge *edge_;	     // The edge that ends at crnr.
-  double t;		// Parametric position of crnr along tet edge.
+  EdgePosition t;	// Parametric position of crnr along tet edge.
   unsigned int fEdge;	// Index on tet face of intersected tet edge.
   bool segstart;	// Is this the start of a segment?
 public:
@@ -57,7 +98,7 @@ public:
   FaceFacetEdge *edge() const { return edge_; }
   unsigned int faceEdge() const { return fEdge; }
   bool start() const { return segstart; }
-  double edgePosition() const { return t; }
+  EdgePosition edgePosition() const { return t; }
   PlaneIntersection *corner() const { return crnr; }
   PlaneIntersection *remoteCorner() const;
 
@@ -65,7 +106,7 @@ public:
   void findFaceEdge(unsigned int face, HomogeneityTet*);
 
   // Sometimes we know fEdge and t already and don't have to compute it.
-  void setFaceEdge(unsigned int fe, double pos) { fEdge = fe; t = pos; }
+  void setFaceEdge(unsigned int fe, EdgePosition pos) { fEdge = fe; t = pos; }
   // forceOntoEdge also sets fEdge and t.  It uses arithmetic to find fEdge.
   void forceOntoEdge(unsigned int face, HomogeneityTet*);
   bool crosses(const FaceEdgeIntersection*, unsigned int, HomogeneityTet*
@@ -372,16 +413,16 @@ public:
 
   // Return the fractional position of the given point (given in
   // barycentric coords) along the polygon edge of the given facet.
-  double edgeCoord(const BarycentricCoord&, unsigned int,
-		   const PixelPlaneFacet*) const;
+  EdgePosition edgeCoord(const BarycentricCoord&, unsigned int,
+			 const PixelPlaneFacet*) const;
 
   // Return the fractional position of the given point along the given
   // edge of the given face.
-  double faceEdgeCoord(const BarycentricCoord&, unsigned int f, unsigned int e)
-    const;
+  EdgePosition faceEdgeCoord(const BarycentricCoord&, unsigned int f,
+			     unsigned int e) const;
   // findFaceEdge is similar, but also computes the edge.
   void findFaceEdge(PlaneIntersection*, unsigned int f, unsigned int &e,
-		    double &t);
+		    EdgePosition &t);
 
   Coord3D nodePosition(unsigned int n) const { return epts[n]; }
   Coord3D faceCenter(unsigned int f) const { return faceCenters[f]; }

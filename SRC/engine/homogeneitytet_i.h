@@ -19,6 +19,7 @@
 #include "common/derefcompare.h"
 
 // Classes defined in homogeneitytet.h
+class EdgePosition;
 class FaceEdgeIntersection;
 class FaceFacet;
 class FaceFacetEdge;

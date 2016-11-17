@@ -1070,14 +1070,14 @@ void PixelPlaneIntersectionNR::locateOnPolygonEdge(
 				const PixelPlaneFacet *facet)
   const
 {
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: " << *this
-	    << std::endl;
-    oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: eq class="
-	    << *equivalence_ << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: " << *this
+// 	    << std::endl;
+//     oofcerr << "PixelPlaneIntersectionNR::locateOnPolygonEdge: eq class="
+// 	    << *equivalence_ << std::endl;
+//   }
+// #endif // DEBUG
 
   // This uses minPolyEdge instead of simply getPolyEdge, because it's
   // important that the edge used here is the same as the edge that
@@ -1401,13 +1401,11 @@ template <class BASE>
 SingleFaceMixIn<BASE>::SingleFaceMixIn(HomogeneityTet *htet)
   : BASE(htet),
     facePlane_(nullptr),
-    polyFracCache(4, IMPOSSIBLE_ALPHA)
+    polyFracCache(4)
 {
-  // polyFracCache stores the values computed by getPolyFrac.  It's
-  // initialized with IMPOSSIBLE_ALPHA so that we can tell which
-  // values have been already computed.  polyFracCache has size 4
-  // although we could get by with size 3 in some cases, but then we'd
-  // have to know the polygon size at this point.
+  // polyFracCache stores the values computed by getPolyFrac.  It has
+  // size 4 although we could get by with size 3 in some cases, but
+  // then we'd have to know the polygon size at this point.
   
 // #ifdef DEBUG
 //   oofcerr << "SingleFaceMixIn::ctor: " << this << std::endl;
@@ -1415,8 +1413,8 @@ SingleFaceMixIn<BASE>::SingleFaceMixIn(HomogeneityTet *htet)
 }
 
 template <class BASE>
-double SingleFaceMixIn<BASE>::getPolyFrac(unsigned int edgeno,
-					  const PixelPlaneFacet *facet)
+EdgePosition SingleFaceMixIn<BASE>::getPolyFrac(unsigned int edgeno,
+						const PixelPlaneFacet *facet)
   const
 {
   // The return value of getPolyFrac has to be cached so that once the
@@ -1433,7 +1431,7 @@ double SingleFaceMixIn<BASE>::getPolyFrac(unsigned int edgeno,
   // another face.  Therefore we have to (a) not use facePlane_ here,
   // and (b) cache results for more than one edgeno.
 
-  if(polyFracCache[edgeno] != IMPOSSIBLE_ALPHA)
+  if(!polyFracCache[edgeno].unset())
     return polyFracCache[edgeno];
  
   const BarycentricCoord &bary = BASE::baryCoord(facet->htet);
@@ -1444,8 +1442,7 @@ double SingleFaceMixIn<BASE>::getPolyFrac(unsigned int edgeno,
 //     oofcerr << "SingleFaceMixIn::getPolyFrac: bary=" << bary << std::endl;
 //   }
 // #endif // DEBUG
-  double pos = facet->htet->edgeCoord(bary, edgeno, facet);
-  assert(pos != IMPOSSIBLE_ALPHA);
+  EdgePosition pos = facet->htet->edgeCoord(bary, edgeno, facet);
   polyFracCache[edgeno] = pos;
   return pos;
 }
@@ -1507,14 +1504,13 @@ bool MultiFaceMixin<BASE>::inside(const Coord3D &pt) const {
 // intersection on the edge.
 
 template <class BASE>
-double MultiFaceMixin<BASE>::getPolyFrac(unsigned int edge,
-					 const PixelPlaneFacet *facet)
+EdgePosition MultiFaceMixin<BASE>::getPolyFrac(unsigned int edge,
+					       const PixelPlaneFacet *facet)
   const
 {
   // An intersection that's on more than one face must be at a corner
   // of the polygon, so its fractional position along a polygon edge
   // is either 0 or 1.
-
 
   // TODO: This might be wrong if getFacePlane returns a collinear
   // face that's not in this PlaneIntersection.
@@ -1528,14 +1524,14 @@ double MultiFaceMixin<BASE>::getPolyFrac(unsigned int edge,
 // #endif	// DEBUG
   for(const FacePlane *nextface : nextfaces)
     if(BASE::equivalence()->containsFacePlane(nextface))
-      return 1.0;
+      return EdgePosition(1.0, false);
 #ifdef DEBUG
   // In debug mode, don't just assume that one of the faces of the
   // previous edge is part of this intersection.
   FacePlaneSet prevfaces = facet->getFacePlanes((edge+nn-1)%nn);
   for(const FacePlane *prevface : prevfaces)
     if(BASE::equivalence()->containsFacePlane(prevface))
-      return 0.0;
+      return EdgePosition(0.0, false);
   if(facet->verbose) {
     oofcerr << "MultiFaceMixin::getPolyFrac: " << this << " " << *this
 	    << std::endl;
@@ -1551,7 +1547,7 @@ double MultiFaceMixin<BASE>::getPolyFrac(unsigned int edge,
   throw ErrProgrammingError("MultiFaceMixin::getPolyFrac failed!",
 			    __FILE__, __LINE__);
 #endif // DEBUG
-  return 0.0;
+  return EdgePosition(0.0, false);
 }
 
 template <class BASE>
@@ -3125,8 +3121,8 @@ unsigned int TriplePixelPlaneIntersection::maxPolyEdge(const PixelPlaneFacet*)
   return NONE;
 }
 
-double TriplePixelPlaneIntersection::getPolyFrac(unsigned int,
-						 const PixelPlaneFacet*)
+EdgePosition TriplePixelPlaneIntersection::getPolyFrac(unsigned int,
+						       const PixelPlaneFacet*)
   const
 {
   throw ErrProgrammingError("This should not be called.", __FILE__, __LINE__);

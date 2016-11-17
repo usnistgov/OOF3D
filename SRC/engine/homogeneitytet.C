@@ -84,7 +84,8 @@ bool HomogeneityTet::verboseFace_(bool vrbse, unsigned int face) const {
   return (vrbse && !noFaces && (vfaces.empty() || vfaces.count(face) == 1));
 }
 
-void printLooseEnds(const LooseEndSet &le) {
+template <class LOOSEENDCONTAINER>
+void printLooseEnds(const LOOSEENDCONTAINER &le) {
   if(!le.empty()) {
     for(FaceEdgeIntersection *fei : le)
       oofcerr << "printLooseEnds: " << *fei << std::endl;
@@ -128,8 +129,14 @@ void closeDumpFile() {
 static void getEdgeNodes(unsigned int faceIndex, unsigned int edgeIndex,
 			 unsigned int &inode0, unsigned int &inode1)
 {
-  assert(edgeIndex < NUM_TET_FACE_EDGES);
-  assert(faceIndex < NUM_TET_FACES);
+#ifdef DEBUG
+  if(edgeIndex >= NUM_TET_FACE_EDGES || faceIndex >= NUM_TET_FACES) {
+    oofcerr << "getEdgeNodes: faceIndex=" << faceIndex << " edgeIndex="
+	    << edgeIndex << std::endl;
+    throw ErrProgrammingError("Bad arguments to getEdgeNodes!",
+			      __FILE__, __LINE__);
+  }
+#endif // DEBUG
   unsigned int edgeid = CSkeletonElement::faceEdges[faceIndex][edgeIndex];
   if(CSkeletonElement::faceEdgeDirs[faceIndex][edgeIndex] == 1) {
     inode0 = vtkTetra::GetEdgeArray(edgeid)[0];
@@ -952,29 +959,34 @@ BarycentricCoord &HomogeneityTet::getBarycentricCoord(
 // given facet.  The point is assumed to lie in both the face and the
 // plane.
 
-double HomogeneityTet::edgeCoord(const BarycentricCoord &bint,
-				 unsigned int edgeno,
-				 const PixelPlaneFacet *facet)
+EdgePosition HomogeneityTet::edgeCoord(const BarycentricCoord &bint,
+				       unsigned int edgeno,
+				       const PixelPlaneFacet *facet)
   const
 {
 // #ifdef DEBUG
 //   if(verboseplane) {
 //     oofcerr << "HomogeneityTet::edgeCoord: bint=" << bint
-// 	    << " edgeno=" << edgeno << std::endl;
+// 	    << " edgeno=" << edgeno << " onFace=" << facet->onFace
+// 	    << std::endl;
 //   }
 // #endif	// DEBUG
 
-  // unsigned int edgeno = facet->getPolyEdge(face);
+#ifdef DEBUG
+  if(edgeno == NONE) {
+    oofcerr << "HomogeneityTet::edgeCoord: edgeno==NONE! facet=" << *facet
+	    << std::endl;
+    throw ErrProgrammingError("HomogeneityTet::edgeCoord: bad edgeno!",
+			      __FILE__, __LINE__);
+  }
+#endif // DEBUG
 
-// #ifdef DEBUG
-//   if(edgeno == NONE) {
-//     oofcerr << "HomogeneityTet::edgeCoord: edgeno==NONE! face=" << *face
-// 	    << std::endl;
-//     oofcerr << "HomogeneityTet::edgeCoord: facet=" << *facet << std::endl;
-//     throw ErrProgrammingError("HomogeneityTet::edgeCoord: bad edgeno!",
-// 			      __FILE__, __LINE__);
-//   }
-// #endif // DEBUG
+  // If the pixelplane facet is on a tet face, then the polygon is the
+  // whole tet face.  Use faceEdgeCoord to get the position, to be
+  // compatible with the position computed on the adjacent face.
+  if(facet->onFace != NONE) {
+    return faceEdgeCoord(bint, facet->onFace, facet->getFaceEdgeIndex(edgeno));
+  }
   
   unsigned int nextno = edgeno + 1;
   if(nextno == facet->polygonSize())
@@ -1027,23 +1039,53 @@ double HomogeneityTet::edgeCoord(const BarycentricCoord &bint,
 //     oofcerr << "HomogeneityTet::edgeCoord: best=" << best
 // 	    << " alpha=" << alpha << std::endl;
 // #endif // DEBUG
-  return alpha;
+  return EdgePosition(alpha, false);
 }
 
 // Return the fractional position of the given point along the given
 // edge of the given tet face.
-double HomogeneityTet::faceEdgeCoord(const BarycentricCoord &bary,
-				     unsigned int face, unsigned int edge)
+EdgePosition HomogeneityTet::faceEdgeCoord(const BarycentricCoord &bary,
+					   unsigned int face, unsigned int edge)
   const
 {
   // Get the nodes at the ends of the tet edge.
   unsigned int n0, n1;
+#ifdef DEBUG
+  if(verboseface || verboseplane)
+    oofcerr << "HomogeneityTet::faceEdgeCoord: calling getEdgeNodes, face="
+	    << face << " edge=" << edge << std::endl;
+#endif // DEBUG
   getEdgeNodes(face, edge, n0, n1);
   // If bary is really on the edge between nodes n0 and n1, then
   // bary[n0] = 1-alpha and bary[n1] = alpha, where alpha is the
   // fractional position, so we could get alpha in two ways.  Average
   // them.
-  return 0.5*(1. - bary[n0] + bary[n1]);
+
+// #ifdef DEBUG
+//   if(verboseplane || verboseface) {
+//     double t0 = 0.5*(1 - bary[n0] + bary[n1]);
+//     double t1 = 0.5*(1 - bary[n1] + bary[n0]);
+//     if(t0 != 1-t1 || t1 != 1-t0) {
+//       oofcerr << "HomogeneityTet::faceEdgeCoord: bary=" << bary
+// 	      << " n0=" << n0 << " n1=" << n1 << std::endl;
+//       oofcerr << "HomogeneityTet::faceEdgeCoord: t0=" << t0 << " t1=" << t1
+// 	      << " 1-t0=" << (1-t0) << " 1-t1=" << (1-t1) << std::endl;
+//       oofcerr << "HomogeneityTet::faceEdgeCoord: diff=" << ((1-t0) - t1)
+// 	      << " " << ((1-t1) - t0) << std::endl;
+//       throw ErrProgrammingError("Inconsistent HomogeneityTet::faceEdgeCoord",
+// 				__FILE__, __LINE__);
+//     }
+//   }
+// #endif // DEBUG
+
+  // The canonical EdgePosition is calculated with n0 < n1.  If n0 >
+  // n1, then compute the position for n0 < n1 and mark it as
+  // reversed.  This avoids situations in which round off error can
+  // reverse the apparent order of points when viewed from a different
+  // face.
+  if(n0 <  n1)
+    return EdgePosition(0.5*(1. - bary[n0] + bary[n1]), false);
+  return EdgePosition(0.5*(1. - bary[n1] + bary[n0]), true);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1462,30 +1504,30 @@ void HomogeneityTet::doFindPixelPlaneFacets(
       // Skip this bdy loop if its bounding box doesn't intersect the
       // polygon's bounding box.  
       if(!tetBounds.intersects(loop->bbox())) {
-// #ifdef DEBUG
-// 	if(verboseplane) {
-// 	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets:"
-// 		  << " bounding boxes don't intersect, skipping loop"
-// 		  << std::endl;
-// 	  OOFcerrIndent indent(2);
-// 	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: loop bbox="
-// 		  << loop->bbox() << std::endl;
-// 	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: tet bbox="
-// 		  << tetBounds << std::endl;
-// 	  if(tetBounds.xmin() > loop->bbox().xmax())
-// 	    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: deltaX="
-// 		    << tetBounds.xmin() - loop->bbox().xmax() << std::endl;
-// 	  if(loop->bbox().xmin() > tetBounds.xmax())
-// 	    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: deltaX="
-// 		    << loop->bbox().xmin() - tetBounds.xmax() << std::endl;
-// 	  if(tetBounds.ymin() > loop->bbox().ymax())
-// 	    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: deltaY="
-// 		    << tetBounds.ymin() - loop->bbox().ymax() << std::endl;
-// 	  if(loop->bbox().ymin() > tetBounds.ymax())
-// 	    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: deltaY="
-// 		    << loop->bbox().ymin() - tetBounds.ymax() << std::endl;
-// 	}
-// #endif // DEBUG
+#ifdef DEBUG
+	if(verboseplane) {
+	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets:"
+		  << " bounding boxes don't intersect, skipping loop"
+		  << std::endl;
+	  OOFcerrIndent indent(2);
+	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: loop bbox="
+		  << loop->bbox() << std::endl;
+	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: tet bbox="
+		  << tetBounds << std::endl;
+	  if(tetBounds.xmin() > loop->bbox().xmax())
+	    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: deltaX="
+		    << tetBounds.xmin() - loop->bbox().xmax() << std::endl;
+	  if(loop->bbox().xmin() > tetBounds.xmax())
+	    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: deltaX="
+		    << loop->bbox().xmin() - tetBounds.xmax() << std::endl;
+	  if(tetBounds.ymin() > loop->bbox().ymax())
+	    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: deltaY="
+		    << tetBounds.ymin() - loop->bbox().ymax() << std::endl;
+	  if(loop->bbox().ymin() > tetBounds.ymax())
+	    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: deltaY="
+		    << loop->bbox().ymin() - tetBounds.ymax() << std::endl;
+	}
+#endif // DEBUG
 	continue;
       }
 #ifdef DEBUG
@@ -2557,7 +2599,7 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	  oofcerr << "HomogeneityTet::findFaceFacets:"
 		  << " after sorting, looseEnds =" << std::endl;
 	  OOFcerrIndent indent(2);
-	  printLooseEnds(looseEnds);
+	  printLooseEnds(sortedLooseEnds);
 	}
 #endif // DEBUG
 	
@@ -2599,11 +2641,11 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 		    << " face=" << face << " cat=" << cat
 		    << std::endl;
 	    OOFcerrIndent indent(2);
-	    double lastT = 0;
+	    EdgePosition lastT;
 	    unsigned int lastEdge = NONE;
 	    for(auto *le : sortedLooseEnds) {
 	      oofcerr << "HomogeneityTet::findFaceFacets: " << *le;
-	      if(le->faceEdge() == lastEdge)
+	      if(le->faceEdge() == lastEdge && !lastT.unset())
 		oofcerr << " dt=" << le->edgePosition() - lastT;
 	      lastT = le->edgePosition();
 	      lastEdge = le->faceEdge();
@@ -2976,7 +3018,7 @@ public:
 #undef CLOSEBY
 
 std::ostream &operator<<(std::ostream &os, const IntersectionGroup &ig) {
-  double lastT = 0;
+  EdgePosition lastT;
   unsigned int lastEdge = NONE;
   for(unsigned int i=0; i<ig.size(); i++) {
     os << "     " << *ig.isecs[i];
@@ -3434,8 +3476,8 @@ void IntersectionGroup::fixOccupiedEdges(
 // 		<< std::endl;
 //       }
 // #endif // DEBUG
-      double tC = xprev->edgePosition();
-      double tb = x->edgePosition();
+      EdgePosition tC = xprev->edgePosition();
+      EdgePosition tb = x->edgePosition();
       // Look for an existing facet edge on the same face edge.
       unsigned int e = x->faceEdge();
       bool foundEdge = false;
@@ -3451,9 +3493,9 @@ void IntersectionGroup::fixOccupiedEdges(
 // 	    }
 // #endif // DEBUG
 	    // TODO: Should tA and ta be cached?
-	    double tA =
+	    EdgePosition tA =
 	      htet->faceEdgeCoord(edge->startPt()->baryCoord(htet), face, e);
-	    double ta =
+	    EdgePosition ta =
 	      htet->faceEdgeCoord(edge->endPt()->baryCoord(htet), face, e);
 	    if(tA < tC && tC < ta && tA < tb && tb < ta) {
 	      // Cb lies inside Aa on the edge of the tet face.
@@ -3671,7 +3713,7 @@ void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
       }
 #endif // DEBUG
   // Find out where newPt is on the face.
-      double newT = -1;
+      EdgePosition newT;
       unsigned int newEdge = NONE;
       htet->findFaceEdge(newPt, face, newEdge, newT); // computes newEdge, newT
       
@@ -4015,7 +4057,6 @@ FaceEdgeIntersection::FaceEdgeIntersection(PlaneIntersection *crnr,
 					   bool start)
   : crnr(crnr),
     edge_(edge),
-    t(-1.0),
     fEdge(NONE),
     segstart(start)
 {}
@@ -4023,7 +4064,7 @@ FaceEdgeIntersection::FaceEdgeIntersection(PlaneIntersection *crnr,
 // Given a PlaneIntersection and a tet face, compute which edge of the
 // face it's on and how far along the edge.
 void HomogeneityTet::findFaceEdge(PlaneIntersection *pt, unsigned int face,
-				  unsigned int &faceEdge, double &t)
+				  unsigned int &faceEdge, EdgePosition &t)
 {
   // findFaceEdge uses topological information about intersections and
   // faces, not numerical information about positions.
@@ -4031,16 +4072,13 @@ void HomogeneityTet::findFaceEdge(PlaneIntersection *pt, unsigned int face,
   if(faceEdge != NONE) {
     BarycentricCoord b = getBarycentricCoord(pt->location3D());
     t = faceEdgeCoord(b, face, faceEdge);
-    if(t < 0)
-      t = 0.0;
-    else if(t > 1.0)
-      t = 1.0;
+    t.normalize();
   }
 }
 
 void FaceEdgeIntersection::findFaceEdge(unsigned int face, HomogeneityTet *htet)
 {
-  double tt = 0;
+  EdgePosition tt;
   unsigned int ee = NONE;
   htet->findFaceEdge(crnr, face, ee, tt);
   setFaceEdge(ee, tt);
@@ -4084,13 +4122,15 @@ void FaceEdgeIntersection::forceOntoEdge(unsigned int face,
   htet->getTetFacePlane(face2)->addToEquivalence(crnr->equivalence());
   htet->checkEquiv(crnr);
 
-  unsigned int node0, node1;
-  getEdgeNodes(face, fEdge, node0, node1);
-  t = b[node1]/(b[node0] + b[node1]);
-  if(t < 0)
-    t = 0.0;
-  else if(t > 1.0)
-    t = 1.0;
+  t = htet->faceEdgeCoord(b, face, fEdge);
+  t.normalize();
+  // unsigned int node0, node1;
+  // getEdgeNodes(face, fEdge, node0, node1);
+  // t = b[node1]/(b[node0] + b[node1]);
+  // if(t < 0)
+  //   t = 0.0;
+  // else if(t > 1.0)
+  //   t = 1.0;
 
 // #ifdef DEBUG
 //   if(htet->verboseFace()) {
@@ -4119,6 +4159,11 @@ double FaceEdgeIntersection::declination(unsigned int face,
   // end of the segment is at the intersection, reverse it.
   if(!segstart) thisDir *= -1;
   unsigned int n0, n1;
+#ifdef DEBUG
+  if(htet->verboseFace())
+    oofcerr << "FaceEdgeIntersection::declination: calling getEdgeNodes,"
+	    << " face=" << face << " edge=" << edge << std::endl;
+#endif // DEBUG
   getEdgeNodes(face, edge, n0, n1);
   // edgeDir is in the direction of the tet edge at this FaceEdgeIntersection
   Coord3D edgeDir = htet->nodePosition(n1) - htet->nodePosition(n0);
@@ -4378,6 +4423,152 @@ std::ostream &operator<<(std::ostream &os, const FaceEdgeIntersection &fei) {
      << ", fedge=" << fei.faceEdge()
      << ", t=" << fei.edgePosition()
      << ", start=" << fei.start() << ")";
+  return os;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// The naive way to compare two EdgePositions would be to compare
+// EdgePosition::position for the non-reversed EdgePositions to
+// 1-EdgePosition::position for the reversed EdgePositions.  This is a
+// bad idea because if the two points are actually very close (eg,
+// computed from two different intersection plane representations of a
+// single point and only differing by round-off error) subtracting
+// from 1 can change the round-off, and the order of the points might
+// change.  It's important to avoid the subtraction when possible.
+
+// The two EdgePositions being compared will usually be on the same
+// edge and computed by SingleFaceMixIn::getPolyFrac, so their
+// "reversed" flags will be the same.  The only situations in which
+// the "reversed" flags will differ is when one of the EdgePositions
+// was computed by MultiFaceMixin::getPolyFrac, in which case its
+// position is either 0 or 1, which we can safely subtract from 1
+// without roundoff error.
+
+bool EdgePosition::operator<(const EdgePosition &other) const {
+  if(reversed == other.reversed) {
+    if(reversed)
+      return position > other.position;
+    return position < other.position;
+  }
+  // reversed != other.reversed
+  if(position == 0.0 || position == 1.0) {
+    if(reversed)
+      return 1-position < other.position;
+    return 1-position > other.position;
+  }
+  else if(other.position == 0.0 || other.position == 1.0) {
+    if(reversed)
+      return position > 1-other.position;
+    return position < 1-other.position;
+  }
+  // reversed != other.reversed and neither position is 0 or 1
+  if(reversed)
+    return position > (other.reversed ? other.position : (1-other.position));
+  return position < (other.reversed ? (1-other.position) : other.position);
+}
+
+bool EdgePosition::operator<=(const EdgePosition &other) const {
+  if(reversed == other.reversed) {
+    if(reversed)
+      return position >= other.position;
+    return position <= other.position;
+  }
+  // reversed != other.reversed
+  if(position == 0.0 || position == 1.0) {
+    if(reversed)
+      return 1-position <= other.position;
+    return 1-position >= other.position;
+  }
+  else if(other.position == 0.0 || other.position == 1.0) {
+    if(reversed)
+      return position >= 1-other.position;
+    return position <= 1-other.position;
+  }
+  // reversed != other.reversed and neither position is 0 or 1
+  if(reversed)
+    return position >= (other.reversed ? other.position : (1-other.position));
+  return position <= (other.reversed ? (1-other.position) : other.position);
+}
+
+bool EdgePosition::operator>(const EdgePosition &other) const {
+  if(reversed == other.reversed) {
+    if(reversed)
+      return position < other.position;
+    return position > other.position;
+  }
+  // reversed != other.reversed
+  if(position == 0.0 || position == 1.0) {
+    if(reversed)
+      return 1-position > other.position;
+    return 1-position < other.position;
+  }
+  else if(other.position == 0.0 || other.position == 1.0) {
+    if(reversed)
+      return position < 1-other.position;
+    return position > 1-other.position;
+  }
+  // reversed != other.reversed and neither position is 0 or 1
+  if(reversed)
+    return position < (other.reversed ? other.position : (1-other.position));
+  return position > (other.reversed ? (1-other.position) : other.position);
+}
+
+bool EdgePosition::operator>=(const EdgePosition &other) const {
+  if(reversed == other.reversed) {
+    if(reversed)
+      return position <= other.position;
+    return position >= other.position;
+  }
+  // reversed != other.reversed
+  if(position == 0.0 || position == 1.0) {
+    if(reversed)
+      return 1-position >= other.position;
+    return 1-position <= other.position;
+  }
+  else if(other.position == 0.0 || other.position == 1.0) {
+    if(reversed)
+      return position <= 1-other.position;
+    return position >= 1-other.position;
+  }
+  // reversed != other.reversed and neither position is 0 or 1
+  if(reversed)
+    return position <= (other.reversed ? other.position : (1-other.position));
+  return position >= (other.reversed ? (1-other.position) : other.position);
+}
+
+bool EdgePosition::operator==(const EdgePosition &other) const {
+  if(reversed == other.reversed)
+    return position == other.position;
+  if(position == 0.0 || position == 1.0)
+    return 1-position == other.position;
+  return position == 1-other.position;
+}
+
+double EdgePosition::operator-(const EdgePosition &other) const {
+  if(reversed == other.reversed) {
+    double diff = position - other.position;
+    if(reversed)
+      return -diff;
+    return diff;
+  }
+  if(reversed)
+    return (1-position) - other.position;
+  return position - (1-other.position);
+}
+
+void EdgePosition::normalize() {
+  if(position < 0.0)
+    position = 0.0;
+  else if(position > 1.0)
+    position = 1.0;
+}
+
+std::ostream &operator<<(std::ostream &os, const EdgePosition &ep) {
+  if(ep.reversed)
+    os << "1-" << ep.position;
+  else
+    os << ep.position;
   return os;
 }
 

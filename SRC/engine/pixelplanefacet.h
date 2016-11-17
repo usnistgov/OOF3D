@@ -266,12 +266,19 @@ private:
   const std::vector<const TetIntersection*> &tetPts;
   mutable double area_;
   mutable bool areaComputed_;
-  const unsigned int onFace;
   FaceEdgeMap faceEdgeMap;  // maps Plane*s to polygon edge numbers
+
+  // For PixelPlaneFacets that lie on a tet face, edgeFaceMap maps a
+  // polygon edge number to the corresponding edge index of the tet
+  // face.  TODO: Should be in a derived class of PixelPlaneFacet,
+  // since this isn't meaningful unless the facet is on a tet face.
+  std::vector<unsigned int> edgeFaceMap; 
+
   FacePlaneSet boundingFaces;
   std::set<RedundantIntersection*> redundantIntersections;
   bool closedOnPerimeter;
 public:
+  const unsigned int onFace;
   HomogeneityTet * const htet;
   const HPixelPlane * const pixplane;
 
@@ -318,6 +325,7 @@ public:
   unsigned int getPolyEdge(const Plane *fp) const;
   FacePlaneSet getFacePlanes(unsigned int) const;
   const FacePixelPlane *getBaseFacePlane() const;
+  unsigned int getFaceEdgeIndex(unsigned int i) const { return edgeFaceMap[i]; }
   const FacePlaneSet &getBoundingFaces() const { return boundingFaces; }
   const TetIntersection *getTetPoint(unsigned int i) const { return tetPts[i]; }
 

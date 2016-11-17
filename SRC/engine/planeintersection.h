@@ -490,7 +490,8 @@ public:
   virtual unsigned int getPolyEdge(const PixelPlaneFacet*) const = 0;
   // getPolyFrac returns the intersection's parametric position along
   // the given polygon edge.
-  virtual double getPolyFrac(unsigned int, const PixelPlaneFacet*) const = 0;
+  virtual EdgePosition getPolyFrac(unsigned int, const PixelPlaneFacet*)
+    const = 0;
 
   virtual double getLoopFrac(const PixelBdyLoopSegment &seg) const = 0;
   
@@ -703,7 +704,7 @@ protected:
   // if the second edge is collinear with two other edges in the
   // intersection.  We need to cache the position along the edge for
   // all possible edges.
-  mutable std::vector<double> polyFracCache; 
+  mutable std::vector<EdgePosition> polyFracCache; 
 
 public:
   SingleFaceMixIn(HomogeneityTet*);
@@ -711,7 +712,7 @@ public:
 
   // void setPolyFrac(double a) { polyFrac = a; }
   virtual void setFacePlane(const FacePlane *fp) { facePlane_ = fp; }
-  virtual double getPolyFrac(unsigned int, const PixelPlaneFacet*) const;
+  virtual EdgePosition getPolyFrac(unsigned int, const PixelPlaneFacet*) const;
   virtual unsigned int getPolyEdge(const PixelPlaneFacet *facet) const;
   virtual unsigned int maxPolyEdge(const PixelPlaneFacet *facet) const;
   virtual unsigned int minPolyEdge(const PixelPlaneFacet *facet) const;
@@ -726,7 +727,7 @@ class MultiFaceMixin : public BASE
 public:
   MultiFaceMixin(HomogeneityTet*);
   bool inside(const Coord3D &pt) const;
-  virtual double getPolyFrac(unsigned int, const PixelPlaneFacet*) const;
+  virtual EdgePosition getPolyFrac(unsigned int, const PixelPlaneFacet*) const;
   virtual unsigned int getPolyEdge(const PixelPlaneFacet*) const;
   // I'm not sure why getOtherFaceIndex has to be virtual, but it
   // generates a runtime "symbol not found" error if it's not virtual.
@@ -1128,7 +1129,7 @@ public:
   virtual unsigned int getPolyEdge(const PixelPlaneFacet*) const;
   virtual unsigned int minPolyEdge(const PixelPlaneFacet*) const;
   virtual unsigned int maxPolyEdge(const PixelPlaneFacet*) const;
-  virtual double getPolyFrac(unsigned int, const PixelPlaneFacet*) const;
+  virtual EdgePosition getPolyFrac(unsigned int, const PixelPlaneFacet*) const;
 
   // Since TriplePixelPlaneIntersections aren't on polygon edges, they
   // can't be misordered with respect to intersections on the edges,
@@ -1218,7 +1219,8 @@ public:
   virtual unsigned int getPolyEdge(const PixelPlaneFacet *facet) const {
     return referent_->getPolyEdge(facet);
   }
-  virtual double getPolyFrac(unsigned int edge, const PixelPlaneFacet *facet)
+  virtual EdgePosition getPolyFrac(unsigned int edge,
+				   const PixelPlaneFacet *facet)
     const
   {
     return referent_->getPolyFrac(edge, facet);
