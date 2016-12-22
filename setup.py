@@ -41,6 +41,11 @@ try:
         PYGOBJECT_VERSION = "2.6"
 except ImportError:
     PYGOBJECT_VERSION = "2.6"
+
+# The make_dist script edits the following line when a distribution is
+# built.  Don't change it by hand.  On the git master branch,
+# "(unreleased)" is replaced by the version number.
+version_from_make_dist = "2.1.13-test"
     
 # will need to add vtk
 
@@ -1430,7 +1435,7 @@ if __name__ == '__main__':
     
     setupargs = dict(
         name = OOFNAME,
-        version = "unreleased",
+        version = version_from_make_dist,
         description = "Analysis of material microstructures, from NIST.",
         author = 'The NIST OOF Team',
         author_email = 'oof_manager@nist.gov',

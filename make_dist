@@ -48,14 +48,15 @@ options = ['version=', 'comment=', 'dryrun', 'help', 'noclean', 'branch=']
 def state_options_and_quit():
     print >> sys.stderr,  \
 """Options are:
-version=<version number>  version number can contain numbers, letters, and dots
-comment=<comment>         optional comment, cannot contain dots or spaces 
+--version=<version number> Version number.
+--comment=<comment>        Optional comment, cannot contain dots or spaces 
 
 Debugging options are:
-noclean              Don't remove temp directory
-dryrun               Don't actually commit, tag, or push in git
-branch=<branchname>  Use branch, not master.  Implies --dryrun and --noclean
-help                 Print this
+--noclean              Don't remove temp directory
+--dryrun               Don't actually commit, tag, or push in git
+--branch=<branchname>  Use branch, not master.  Implies --dryrun and --noclean
+                       Real distributions are always made without --branch.
+--help                 Print this
 """
     sys.exit()
 
@@ -133,7 +134,10 @@ try:
     import localexclusions
     
     # Set the version number in setup.py and SRC/common/oofversion.py.
-    sedcmd = 's/version_from_make_dist = \\\"(unreleased)\\\"/version_from_make_dist = \\\"%s\\\"/' % version
+    # The sed command finds a line beginning with
+    # "version_from_make_dist" and replaces everything after the
+    # equals sign with a string containing the version number.
+    sedcmd = '/^version_from_make_dist/s/=.*/= \\\"%s\\\"/' % version
     tmpfile, tmpfilename = tempfile.mkstemp(dir=tempdir)
     if subprocess.call(["sed", sedcmd, "setup.py"], stdout=tmpfile) != 0:
         sys.exit(proc.returncode)
@@ -252,7 +256,7 @@ try:
         osCall('git', 'push', 'origin', tag)
     else:
         print >> sys.stderr, "Dry run! Not running:"
-        print >> sys.stderr, '*** git commit -m "%s"' % commit_msg
+        print >> sys.stderr, '*** git commit -m %s' % commit_msg
         print >> sys.stderr, '*** git tag', tag
         print >> sys.stderr, '*** git push origin'
         print >> sys.stderr, '*** git push origin %s' % tag
@@ -285,4 +289,4 @@ print >> sys.stderr, "Done.", distfilename, "is ready."
 print >> sys.stderr, \
 """To publish it, copy it to WEBPAGES/%(dist)s/source and edit
 WEBPAGES/%(dist)s/index.html.  Remember to check that the README file in
-WEBPAGES/%(dist)s/source is up to date.""" % distname.distname
+WEBPAGES/%(dist)s/source is up to date.""" % {'dist':distname.distname}
