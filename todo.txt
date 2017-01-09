@@ -12,6 +12,9 @@ Merge branches
   Yannick's mouse buttons for rotate, zoom, etc.  (Needs to be finished?)
   Lizhong's solvers.
 
+Use tcmalloc (already in Lizhong's branch?)
+
+
 
 At Some Later Time
 ------------------
