@@ -783,7 +783,7 @@ unsigned int CSkeletonElement::getOtherFaceIndex(unsigned int f,
 // bypass some difficult to find errors, in the hope that fixing some
 // easier to find errors will fix the difficult ones.  Run all tests
 // in DEBUG mode with a small VOLTOL before release.
-#define VOLTOL 0.1
+#define VOLTOL 0.02
 
 #ifdef DEBUG
 static std::set<unsigned int> verboseElements_;
