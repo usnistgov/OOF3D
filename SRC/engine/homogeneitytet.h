@@ -120,6 +120,8 @@ public:
   // declination is the cosine of the angle between the edge on the
   // face and the edge of the face.
   double declination(unsigned int f, unsigned int e, HomogeneityTet*) const;
+
+  bool operator<(const FaceEdgeIntersection &) const;
 };				// end class FaceEdgeIntersection
 
 struct FaceEdgeIntersectionLT {

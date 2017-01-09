@@ -1050,11 +1050,11 @@ EdgePosition HomogeneityTet::faceEdgeCoord(const BarycentricCoord &bary,
 {
   // Get the nodes at the ends of the tet edge.
   unsigned int n0, n1;
-#ifdef DEBUG
-  if(verboseface || verboseplane)
-    oofcerr << "HomogeneityTet::faceEdgeCoord: calling getEdgeNodes, face="
-	    << face << " edge=" << edge << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verboseface || verboseplane)
+//     oofcerr << "HomogeneityTet::faceEdgeCoord: calling getEdgeNodes, face="
+// 	    << face << " edge=" << edge << std::endl;
+// #endif // DEBUG
   getEdgeNodes(face, edge, n0, n1);
   // If bary is really on the edge between nodes n0 and n1, then
   // bary[n0] = 1-alpha and bary[n1] = alpha, where alpha is the
@@ -1504,30 +1504,30 @@ void HomogeneityTet::doFindPixelPlaneFacets(
       // Skip this bdy loop if its bounding box doesn't intersect the
       // polygon's bounding box.  
       if(!tetBounds.intersects(loop->bbox())) {
-#ifdef DEBUG
-	if(verboseplane) {
-	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets:"
-		  << " bounding boxes don't intersect, skipping loop"
-		  << std::endl;
-	  OOFcerrIndent indent(2);
-	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: loop bbox="
-		  << loop->bbox() << std::endl;
-	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: tet bbox="
-		  << tetBounds << std::endl;
-	  if(tetBounds.xmin() > loop->bbox().xmax())
-	    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: deltaX="
-		    << tetBounds.xmin() - loop->bbox().xmax() << std::endl;
-	  if(loop->bbox().xmin() > tetBounds.xmax())
-	    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: deltaX="
-		    << loop->bbox().xmin() - tetBounds.xmax() << std::endl;
-	  if(tetBounds.ymin() > loop->bbox().ymax())
-	    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: deltaY="
-		    << tetBounds.ymin() - loop->bbox().ymax() << std::endl;
-	  if(loop->bbox().ymin() > tetBounds.ymax())
-	    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: deltaY="
-		    << loop->bbox().ymin() - tetBounds.ymax() << std::endl;
-	}
-#endif // DEBUG
+// #ifdef DEBUG
+// 	if(verboseplane) {
+// 	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets:"
+// 		  << " bounding boxes don't intersect, skipping loop"
+// 		  << std::endl;
+// 	  OOFcerrIndent indent(2);
+// 	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: loop bbox="
+// 		  << loop->bbox() << std::endl;
+// 	  oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: tet bbox="
+// 		  << tetBounds << std::endl;
+// 	  if(tetBounds.xmin() > loop->bbox().xmax())
+// 	    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: deltaX="
+// 		    << tetBounds.xmin() - loop->bbox().xmax() << std::endl;
+// 	  if(loop->bbox().xmin() > tetBounds.xmax())
+// 	    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: deltaX="
+// 		    << loop->bbox().xmin() - tetBounds.xmax() << std::endl;
+// 	  if(tetBounds.ymin() > loop->bbox().ymax())
+// 	    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: deltaY="
+// 		    << tetBounds.ymin() - loop->bbox().ymax() << std::endl;
+// 	  if(loop->bbox().ymin() > tetBounds.ymax())
+// 	    oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: deltaY="
+// 		    << loop->bbox().ymin() - tetBounds.ymax() << std::endl;
+// 	}
+// #endif // DEBUG
 	continue;
       }
 #ifdef DEBUG
@@ -3591,6 +3591,12 @@ void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
   while(beginIsec < size()) {
     unsigned int edgeno = isecs[beginIsec]->faceEdge();
     unsigned int endIsec = beginIsec;
+#ifdef DEBUG
+    if(htet->verboseFace())
+      oofcerr << "IntersectionGroup::fixCrossings: beginIsec=" << beginIsec
+	      << " edgeno=" << edgeno << std::endl;
+    OOFcerrIndent indnt(2);
+#endif // DEBUG
     do {
       endIsec++;
       // TODO: Don't compare faceEdge().  Use
@@ -3646,7 +3652,11 @@ void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
 #endif // DEBUG
       
       if(firstXing == NONE) {
-	// There are no crossing segments in this segment range.
+	// There are no crossing segments in this segment range.  Copy
+	// the range into newIsecs (which will replace isecs after
+	// we're done here).
+	for(unsigned int i=beginIsec; i<endIsec; i++)
+	  newIsecs.push_back(isecs[i]);
 	beginIsec = endIsec;
 	continue;	// next iteration of while(beginIsec < size())
       }
@@ -3790,7 +3800,7 @@ void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
     
     beginIsec = endIsec;
   } // end while beginIsec < isecs.size()
-  isecs = newIsecs;
+  isecs = std::move(newIsecs);
 
 #ifdef DEBUG
   if(htet->verboseFace())
@@ -3884,22 +3894,22 @@ void HomogeneityTet::resolveCoincidences(
       // TODO: keep track of whether anything changed, and only re-sort
       // if necessary, for all calls to sortByPositionAndEdge in this loop.
       ig.sortByPositionAndEdge();
-#ifdef DEBUG
-      if(verboseface)
-	oofcerr << "HomogeneityTet::resolveCoincidences: calling fixTents"
-		<< std::endl;
-#endif // DEBUG
-      ig.fixTents(this, face, looseEnds);
 // #ifdef DEBUG
-//       if(verboseface) {
-// 	oofcerr << "HomogeneityTet::resolveCoincidences: "
-// 		<< "after fixTents, ig=" << std::endl;
-// 	OOFcerrIndent indent(2);
-// 	std::cerr << ig << std::endl;
-//       }
-//       if(ig.size() <= 1)
-// 	continue;
+//       if(verboseface)
+// 	oofcerr << "HomogeneityTet::resolveCoincidences: calling fixTents"
+// 		<< std::endl;
 // #endif // DEBUG
+      ig.fixTents(this, face, looseEnds);
+#ifdef DEBUG
+      if(verboseface) {
+	oofcerr << "HomogeneityTet::resolveCoincidences: "
+		<< "after fixTents, ig=" << std::endl;
+	OOFcerrIndent indent(2);
+	std::cerr << ig << std::endl;
+      }
+#endif // DEBUG
+      if(ig.size() <= 1)
+	continue;
       ig.sortByPositionAndEdge();
 #ifdef DEBUG
       if(verboseface)
@@ -3908,12 +3918,12 @@ void HomogeneityTet::resolveCoincidences(
 #endif // DEBUG
       ig.fixCrossings(this, face, looseEnds);
 #ifdef DEBUG
-//       if(verboseface) {
-// 	oofcerr << "HomogeneityTet::resolveCoincidences: "
-// 		<< "after fixCrossings, ig=" << std::endl;
-// 	OOFcerrIndent indent(2);
-// 	std::cerr << ig << std::endl;
-//       }
+      if(verboseface) {
+	oofcerr << "HomogeneityTet::resolveCoincidences: "
+		<< "after fixCrossings, ig=" << std::endl;
+	OOFcerrIndent indent(2);
+	std::cerr << ig << std::endl;
+      }
 #endif // DEBUG
       if(ig.size() <= 1)
 	continue;
@@ -3938,7 +3948,9 @@ void HomogeneityTet::resolveCoincidences(
 
       // ig.sortByPositionAndEdge();
       // ig.checkOrdering(this, face, looseEnds);
+
     } // end if ig.size() > 1
+    
 // #ifdef DEBUG
 //     if(verboseface)
 //       oofcerr << "HomogeneityTet::resolveCoincidences: done with ig"
@@ -4078,6 +4090,13 @@ void HomogeneityTet::findFaceEdge(PlaneIntersection *pt, unsigned int face,
     t = faceEdgeCoord(b, face, faceEdge);
     t.normalize();
   }
+}
+
+bool FaceEdgeIntersection::operator<(const FaceEdgeIntersection &other) const {
+  if(*corner() < *other.corner()) return true;
+  if(*other.corner() < *corner()) return false;
+  if(*edge() < *other.edge()) return true;
+  return false;
 }
 
 void FaceEdgeIntersection::findFaceEdge(unsigned int face, HomogeneityTet *htet)
