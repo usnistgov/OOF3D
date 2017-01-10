@@ -20,6 +20,8 @@
 #include "engine/pixelplanefacet.h"
 #include "engine/planeintersection.h"
 
+#include <math.h>
+
 FaceEdgeIntersection::FaceEdgeIntersection(PlaneIntersection *crnr,
 					   FaceFacetEdge *edge,
 					   bool start)
