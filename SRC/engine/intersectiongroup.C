@@ -10,6 +10,9 @@
  */
 
 #include <oofconfig.h>
+#include <algorithm>
+#include <math.h>
+
 #include "engine/cskeletonelement.h"
 #include "engine/facefacet.h"
 #include "engine/homogeneitytet.h"
