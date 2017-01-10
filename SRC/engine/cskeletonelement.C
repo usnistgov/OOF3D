@@ -1616,6 +1616,7 @@ void CSkeletonElement::print(std::ostream &os) const {
 
 #ifdef DEBUG
 #include "engine/pixelplanefacet.h"
+#include "engine/facefacet.h"
 
 void CSkeletonElement::drawPlaneIntersection(LineSegmentLayer *layer,
 					     const CSkeletonBase *skel,

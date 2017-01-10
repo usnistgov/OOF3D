@@ -13,6 +13,7 @@
 
 #include "common/tostring.h"
 #include "engine/cskeletonelement.h"
+#include "engine/facefacet.h"
 #include "engine/homogeneitytet.h"
 #include "engine/pixelplanefacet.h"
 #include "engine/planeintersection.h"
@@ -153,6 +154,10 @@ Coord3D PlaneIntersection::location3D() const {
   if(equivalence_ != nullptr)
     return equivalence_->location3D();
   return getLocation3D();
+}
+
+Coord2D PlaneIntersection::location2D(const PixelPlane *pp) const {
+  return pp->convert2Coord2D(location3D());
 }
 
 void PlaneIntersection::setEquivalenceOnly(IsecEquivalenceClass *e) {
@@ -2949,6 +2954,13 @@ void RedundantIntersection::print(std::ostream &os) const {
 
 std::string RedundantIntersection::shortName() const {
   return "R" + referent_->shortName();
+}
+
+EdgePosition RedundantIntersection::getPolyFrac(unsigned int edge,
+						const PixelPlaneFacet *facet)
+  const
+{
+  return referent_->getPolyFrac(edge, facet);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

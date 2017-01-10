@@ -11,6 +11,7 @@
 
 #include <oofconfig.h>
 #include "engine/cskeletonelement.h"
+#include "engine/facefacet.h"
 #include "engine/homogeneitytet.h"
 #include "engine/intersectiongroup.h"
 #include "engine/pixelplanefacet.h"
@@ -814,6 +815,7 @@ void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
 } // end IntersectionGroup::fixCrossings
 #endif // OLDFIXXING
 
+//#define NEWFIXXING
 #ifdef NEWFIXXING
 void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
 				     LooseEndSet &looseEnds)
@@ -843,6 +845,25 @@ void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
   // This process rewrites the isecs vector.  The new vector is built
   // in newIsecs, which replaces isecs at the end.
   std::vector<FaceEdgeIntersection*> newIsecs;
+
+  // Look for an incoming segment that crosses an outgoing segment,
+  // and the incoming intersection point on the face perimeter is
+  // *after* the the outgoing segment.
+  
+  unsigned int i = 0;	// loop over segments in the IntersectionGroup
+  while(i+1 < isecs.size()) {
+    if(!isecs[i]->start()) {
+      // Look for a segment that crosses isecs[i]
+      bool found = false;
+      for(unsigned int j=i+1; j<isecs.size() && !found; j++) {
+	if(isecs[j]->start()) {
+	  if(isecs[i]->crosses(isecs[j], face, htet)) {
+	    
+	  } // end if isecs cross
+	} // end if j is a start
+      } // end loop over segments j
+    } // end if i is not a start
+  } // end loop over segments i
   
 }
 #endif // NEWFIXXING

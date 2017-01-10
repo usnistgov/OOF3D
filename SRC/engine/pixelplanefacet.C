@@ -18,6 +18,7 @@
 #include "common/setutils.h"
 #include "common/tostring.h"
 #include "engine/cskeletonelement.h"
+#include "engine/facefacet.h"
 #include "engine/homogeneitytet.h"
 #include "engine/pixelplanefacet.h"
 #include "engine/planeintersection.h"

@@ -84,6 +84,7 @@
 //        three tet faces and one pixel plane
 
 
+#include "common/pixelsetboundary.h"
 #include "common/setutils.h"
 #include "engine/barycentric.h"
 #include "engine/homogeneitytet_i.h"
@@ -122,9 +123,7 @@ public:
   // location3D gets loc from equivalence class, or calls getLocation3D.
   Coord3D location3D() const;
   virtual Coord3D getLocation3D() const = 0;
-  virtual Coord2D location2D(const PixelPlane *pp) const {
-    return pp->convert2Coord2D(location3D());
-  }
+  virtual Coord2D location2D(const PixelPlane *pp) const;
 
   virtual void copyPlanesToIntersection(IntersectionPlanesBase*) const = 0;
   
@@ -1219,12 +1218,9 @@ public:
   virtual unsigned int getPolyEdge(const PixelPlaneFacet *facet) const {
     return referent_->getPolyEdge(facet);
   }
-  virtual EdgePosition getPolyFrac(unsigned int edge,
-				   const PixelPlaneFacet *facet)
-    const
-  {
-    return referent_->getPolyFrac(edge, facet);
-  }
+
+  virtual EdgePosition getPolyFrac(unsigned int, const PixelPlaneFacet*) const;
+  
   virtual unsigned int findFaceEdge(unsigned int f, HomogeneityTet *htet)
     const
   {

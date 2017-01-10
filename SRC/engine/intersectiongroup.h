@@ -23,7 +23,6 @@
 class IntersectionGroup {
 private:
   Coord3D location;
-  // GroupClassification isectype;
   std::vector<FaceEdgeIntersection*> isecs;
   unsigned int face;
   bool tentCheck(HomogeneityTet*, unsigned int, PlaneIntersection*,
