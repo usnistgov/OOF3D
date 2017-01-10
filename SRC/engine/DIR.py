@@ -49,7 +49,8 @@ cfiles = [
     'property.C', 'pypropertywrapper.C', 'rank3tensor.C',
     'recoveredflux.C', 'shapefunction.C', 'shapefunctioncache.C',
     'smallsystem.C', 'sparsemat.C', 'steperrorscaling.C',
-    'symeig3.C', 'symmmatrix.C', 'materialvoxelfilter.C', 'barycentric.C'
+    'symeig3.C', 'symmmatrix.C', 'materialvoxelfilter.C', 'barycentric.C',
+    'intersectiongroup.C'
 ]
 
 swigfiles = [
@@ -156,7 +157,7 @@ hfiles = [
     'symmmatrix.h', 'materialvoxelfilter.h', 'cskeletonselectable_i.h',
     'cskeleton2_i.h', 'homogeneitytet.h', 'barycentric.h', 'pixelplanefacet.h',
     'pixelplanefacet_i.h', 'homogeneitytet_i.h', 'planeintersection.h',
-    'planeintersection_i.h'
+    'planeintersection_i.h', 'intersectiongroup.h'
 ]
 
 

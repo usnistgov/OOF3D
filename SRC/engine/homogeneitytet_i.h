@@ -16,6 +16,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include "common/derefcompare.h"
 
 // Classes defined in homogeneitytet.h
