@@ -53,6 +53,8 @@ public:
   bool operator>=(const EdgePosition&) const;
   bool operator==(const EdgePosition&) const;
   double operator-(const EdgePosition&) const;
+  bool atStart() const;
+  bool atEnd() const;
   void normalize();
   bool unset() const { return unset_; }
   friend std::ostream &operator<<(std::ostream&, const EdgePosition&);
@@ -83,7 +85,13 @@ public:
   void setFaceEdge(unsigned int fe, EdgePosition pos) { fEdge = fe; t = pos; }
   // forceOntoEdge also sets fEdge and t.  It uses arithmetic to find fEdge.
   void forceOntoEdge(unsigned int face, HomogeneityTet*);
-  bool crosses(const FaceEdgeIntersection*, unsigned int, HomogeneityTet*
+  bool crossesSameEdge(const FaceEdgeIntersection*, unsigned int,
+		       const FacePlane*, HomogeneityTet*
+#ifdef DEBUG
+	       , bool
+#endif // DEBUG
+	       ) const;
+  bool crossesDiffEdge(const FaceEdgeIntersection*
 #ifdef DEBUG
 	       , bool
 #endif // DEBUG

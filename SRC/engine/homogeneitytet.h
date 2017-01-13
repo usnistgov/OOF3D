@@ -148,8 +148,8 @@ private:
 
   StrandedPointLists matchStrandedPoints(std::vector<StrandedPoint>&,
 					 LooseEndCatalog&);
-  void resolveCoincidences(unsigned int, LooseEndSet&,
-			   const std::vector<FaceFacetEdgeSet>&);
+  void resolveFaceFacetCoincidences(unsigned int, LooseEndSet&,
+				    const std::vector<FaceFacetEdgeSet>&);
 public:
   HomogeneityTet(const CSkeletonElement*, const CMicrostructure*
 #ifdef DEBUG
