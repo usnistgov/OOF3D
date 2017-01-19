@@ -145,6 +145,11 @@ try:
 except OSError:
     print "Directory %s not found, creating new build directory." % builddir
     os.mkdir('build')
+    # On OS X, prevent the build directory from being backed up.  This
+    # attribute is attached to the directory, not its path, and sticks
+    # to it when the directory is moved.
+    if sys.platform == 'darwin':
+        subprocess.check_call(['tmutil', 'addexclusion', 'build'])
 
 try:
     build_cmd = "python setup.py build %s install --prefix=%s" \

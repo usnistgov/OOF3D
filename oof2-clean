@@ -78,3 +78,5 @@ if os.path.exists('build'):
     os.rename('build', builddir)
 else:
     os.mkdir(builddir)
+    if sys.platform == 'darwin':
+        subprocess.check_call(['tmutil', 'addexclusion', builddir])
