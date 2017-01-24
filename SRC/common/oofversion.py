@@ -11,7 +11,7 @@
 # The make_dist script edits the following line when a distribution is
 # built. Don't change it by hand.  On the git master branch, the right
 # hand side is replaced by the version number.
-version_from_make_dist = "2.1.13-test"
+version_from_make_dist = "(unreleased)"
 
 version = version_from_make_dist
 
