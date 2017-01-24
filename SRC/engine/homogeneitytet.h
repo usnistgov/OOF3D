@@ -258,7 +258,6 @@ public:
   bool verboseCategory() const { return verbosecategory; }
   bool verbosePlane() const { return verboseplane; }
   bool verboseFace() const { return verboseface; }
-  // void printLooseEnds(unsigned int, const LooseEndMap&) const;
 
   static std::set<PlaneIntersection*> allIntersections;
   bool verify();

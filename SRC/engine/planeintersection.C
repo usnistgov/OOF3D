@@ -228,7 +228,8 @@ void GenericIntersection::setLocation(const Coord3D &pos) {
 }
 
 void GenericIntersection::print(std::ostream &os) const {
-  os << "GenericIntersection(" << printPlanes() << ", " << loc_ << ")";
+  os << "GenericIntersection(" << printPlanes() << ", " << loc_
+     << ", eq=" << eqPrint(equivalence_) << ")";
 }
 
 std::string GenericIntersection::shortName() const {

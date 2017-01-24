@@ -94,14 +94,14 @@ void FaceEdgeIntersection::forceOntoEdge(unsigned int face,
   // else if(t > 1.0)
   //   t = 1.0;
 
-// #ifdef DEBUG
-//   if(htet->verboseFace()) {
-//     oofcerr << "FaceEdgeIntersection::forceOntoEdge: this=" << *this
-// 	    << std::endl;
-//     oofcerr << "FaceEdgeIntersection::forceOntoEdge: forced onto edge "
-// 	    << fEdge << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(htet->verboseFace()) {
+    oofcerr << "FaceEdgeIntersection::forceOntoEdge: this=" << *this
+	    << std::endl;
+    oofcerr << "FaceEdgeIntersection::forceOntoEdge: forced onto edge "
+	    << fEdge << std::endl;
+  }
+#endif // DEBUG
 }
 
 // Return the cosine of the angle between the edge and the given edge
@@ -744,27 +744,27 @@ void FaceFacet::findLooseEnds(LooseEndSet &looseEnds,
     endPoints.push_back(
 		htet->newFaceEdgeIntersection((*seg)->endPt(), *seg, false));
   }
-// #ifdef DEBUG
-//   if(htet->verboseFace()) {
-//     // At this point, fEdge hasn't been set in the
-//     // FaceEdgeIntersection objects, so don't be surprised by the
-//     // printed value.
-//     oofcerr << "FaceFacet::findLooseEnds: startPoints="
-// 	    << std::endl;
-//     for(const auto p: startPoints) {
-//       OOFcerrIndent indent(2);
-//       oofcerr << "FaceFacet::findLooseEnds: " << *p << std::endl;
-//     }
-//     oofcerr << "FaceFacet::findLooseEnds: endPoints="
-// 	    << std::endl;
-//     for(const auto p: endPoints) {
-//       OOFcerrIndent indent(2);
-//       oofcerr << "FaceFacet::findLooseEnds: " << *p << std::endl;
-//     }
-//   }
-//   if(!htet->verify())
-//     throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
-// #endif // DEBUG
+#ifdef DEBUG
+  if(htet->verboseFace()) {
+    // At this point, fEdge hasn't been set in the
+    // FaceEdgeIntersection objects, so don't be surprised by the
+    // printed value.
+    oofcerr << "FaceFacet::findLooseEnds: startPoints="
+	    << std::endl;
+    for(const auto p: startPoints) {
+      OOFcerrIndent indent(2);
+      oofcerr << "FaceFacet::findLooseEnds: " << *p << std::endl;
+    }
+    oofcerr << "FaceFacet::findLooseEnds: endPoints="
+	    << std::endl;
+    for(const auto p: endPoints) {
+      OOFcerrIndent indent(2);
+      oofcerr << "FaceFacet::findLooseEnds: " << *p << std::endl;
+    }
+  }
+  if(!htet->verify())
+    throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
+#endif // DEBUG
 
   // Match up existing start and end points.
   std::vector<bool> matchedStarts(nsegs, false);
@@ -781,16 +781,16 @@ void FaceFacet::findLooseEnds(LooseEndSet &looseEnds,
     } // end loop over end points e
   } // end loop over start points s
 
-// #ifdef DEBUG
-//   if(htet->verboseFace()) {
-//     oofcerr << "FaceFacet::findLooseEnds: matchedStarts=";
-//     std::cerr << matchedStarts;
-//     oofcerr << std::endl;
-//     oofcerr << "FaceFacet::findLooseEnds:   matchedEnds=";
-//     std::cerr << matchedEnds;
-//     oofcerr << std::endl;
-//   }
-// #endif // DEBUG
+#ifdef DEBUG
+  if(htet->verboseFace()) {
+    oofcerr << "FaceFacet::findLooseEnds: matchedStarts=";
+    std::cerr << matchedStarts;
+    oofcerr << std::endl;
+    oofcerr << "FaceFacet::findLooseEnds:   matchedEnds=";
+    std::cerr << matchedEnds;
+    oofcerr << std::endl;
+  }
+#endif // DEBUG
 
   // All of the truly unmatched points must be on tet edges.  Sort
   // them by edge and intersection position along the edge by
@@ -822,8 +822,8 @@ void FaceFacet::findLooseEnds(LooseEndSet &looseEnds,
 //     oofcerr << "FaceFacet::findLooseEnds: loose ends, face=" << face
 // 	    << std::endl;
 //     OOFcerrIndent indent(2);
-//     for(unsigned int i=0; i<NUM_TET_FACE_EDGES; i++)
-//       htet->printLooseEnds(i, looseEnds[i]);
+//     for(auto leptr : looseEnds)
+//       oofcerr << "FaceFacet::findLooseEnds: " << *leptr << std::endl;
 //   }
 // #endif // DEBUG
 
@@ -1179,7 +1179,9 @@ void FaceFacet::dump(std::string basename, unsigned int cat) const {
   oofcerr << "FaceFacet::dump: writing " << filename << std::endl;
   std::ofstream file(filename);
   for(const FaceFacetEdge *edge : edges_) {
-    file << edge->startPos3D() << ", " << edge->endPos3D() << std::endl;
+    file << edge->startPos3D() << ", " << edge->endPos3D()
+	 << " # " << edge->startPt()->shortName() << " --> "
+	 << edge->endPt()->shortName() << std::endl;
   }
   file.close();
 }

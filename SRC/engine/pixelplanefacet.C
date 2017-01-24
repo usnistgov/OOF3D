@@ -3724,8 +3724,9 @@ void PixelPlaneFacet::dump(unsigned int cat) const {
   std::cerr << "PixelPlaneFacet::dump: writing " << filename << std::endl;
   std::ofstream file(filename);
   for(const FacetEdge *edge : edges) {
-    // std::cerr << edge->startPos3D() << ", " << edge->endPos3D() << std::endl;
-    file << edge->startPos3D() << ", " << edge->endPos3D() << std::endl;
+    file << edge->startPos3D() << ", " << edge->endPos3D()
+	 << " # " << edge->startPt()->shortName() << " --> "
+	 << edge->endPt()->shortName() << std::endl;
   }
   file.close();
 }
