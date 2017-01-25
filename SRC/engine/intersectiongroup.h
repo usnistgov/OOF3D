@@ -47,11 +47,15 @@ public:
 
   void sortByPositionAndEdge();
 
-  void removeEquivPts(HomogeneityTet*, unsigned int, LooseEndSet&);
-  void fixCrossings(HomogeneityTet*, unsigned int, LooseEndSet&);
-  void fixOccupiedEdges(HomogeneityTet*, unsigned int, LooseEndSet&,
+  // These four methods are the operations that detect and fix
+  // topologically impossible configurations.  They return true if
+  // they're successful.
+  bool removeEquivPts(HomogeneityTet*, unsigned int, LooseEndSet&);
+  bool fixCrossings(HomogeneityTet*, unsigned int, LooseEndSet&);
+  bool fixOccupiedEdges(HomogeneityTet*, unsigned int, LooseEndSet&,
 			const std::vector<FaceFacetEdgeSet>&);
-  void fixTents(HomogeneityTet*, unsigned int, LooseEndSet&);
+  bool fixTents(HomogeneityTet*, unsigned int, LooseEndSet&);
+  
   void checkOrdering(HomogeneityTet*, unsigned int, std::vector<LooseEndMap>&);
   bool empty() const { return isecs.empty(); }
   unsigned int size() const { return isecs.size(); }

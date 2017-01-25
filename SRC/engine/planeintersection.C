@@ -1035,7 +1035,7 @@ unsigned int IntersectionPlanes<BASE>::findFaceEdge(unsigned int f,
   std::set<unsigned int> faceIDs;
   // TODO: See if f is a FacePixelPlane and loop over either faces_ or
   // pixelFaces_.  No need to use facePlaneSets.
-  for(const FacePlane *face : facePlaneSets())
+  for(const FacePlane *face : getEquivalence()->facePlaneSets())
     faceIDs.insert(face->face());
 // #ifdef DEBUG
 //   if(BASE::verbose || htet->verboseFace()) {

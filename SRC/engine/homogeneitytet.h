@@ -146,9 +146,9 @@ private:
 					      HPixelPlane*,
 					      const Coord3D&);
 
-  StrandedPointLists matchStrandedPoints(std::vector<StrandedPoint>&,
-					 LooseEndCatalog&);
-  void resolveFaceFacetCoincidences(unsigned int, LooseEndSet&,
+  std::vector<StrandedPoint> matchStrandedPoints(std::vector<StrandedPoint>&,
+						 LooseEndCatalog&, bool&);
+  bool resolveFaceFacetCoincidences(unsigned int, LooseEndSet&,
 				    const std::vector<FaceFacetEdgeSet>&);
 public:
   HomogeneityTet(const CSkeletonElement*, const CMicrostructure*

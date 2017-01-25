@@ -514,10 +514,17 @@ unsigned int FaceFacetEdge::findFaceEdge(unsigned int face,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-
 FaceFacet::~FaceFacet() {
   for(FaceFacetEdge *edge : edges_)
     delete edge;
+}
+
+void FaceFacet::clear() {
+  for(FaceFacetEdge *edge : edges_)
+    delete edge;
+  edges_.clear();
+  areaComputed = false;
+  closedOnPerimeter = false;
 }
 
 void FaceFacet::addEdge(FaceFacetEdge *edge) {
@@ -738,7 +745,6 @@ void FaceFacet::findLooseEnds(LooseEndSet &looseEnds,
   startPoints.reserve(nsegs);
   endPoints.reserve(nsegs);
   for(auto seg=edges_.begin(); seg!=edges_.end(); ++seg) {
-    // Construct FaceEdgeIntersection objects in-place.
     startPoints.push_back(
 		htet->newFaceEdgeIntersection((*seg)->startPt(), *seg, true));
     endPoints.push_back(

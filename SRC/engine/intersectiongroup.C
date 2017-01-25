@@ -40,13 +40,13 @@ void IntersectionGroup::sortByPositionAndEdge() {
   std::sort(isecs.begin(), isecs.end(), FaceEdgeIntersectionLTwrap());
 }
 
-void IntersectionGroup::removeEquivPts(HomogeneityTet *htet,
+bool IntersectionGroup::removeEquivPts(HomogeneityTet *htet,
 				       unsigned int face,
 				       LooseEndSet &looseEnds)
 {
   unsigned int npts = size();
-  if(npts <= 1)
-    return;
+  if(npts < 2)
+    return false;
   unsigned int nMatched = 0;
   std::vector<bool> matched(npts, false);
   for(unsigned int i=0; i<npts-1; i++) {
@@ -72,8 +72,11 @@ void IntersectionGroup::removeEquivPts(HomogeneityTet *htet,
       }
     }
   }
-  if(nMatched > 0)
+  if(nMatched > 0) {
     eraseMatched(matched, looseEnds);
+    return true;
+  }
+  return false;
 }
 
 void IntersectionGroup::eraseMatched(const std::vector<bool> &matched,
@@ -114,7 +117,7 @@ void IntersectionGroup::eraseMatched(const std::vector<bool> &matched,
 //    /       \
 // --A---------B--->-- directed tet face edge
 */
-void IntersectionGroup::fixTents(HomogeneityTet *htet,
+bool IntersectionGroup::fixTents(HomogeneityTet *htet,
 				 unsigned int face,
 				 LooseEndSet &looseEnds)
 {
@@ -125,8 +128,8 @@ void IntersectionGroup::fixTents(HomogeneityTet *htet,
 //   }
 // #endif // DEBUG
   unsigned int npts = size();
-  if(npts <= 1)
-    return;
+  if(npts < 2)
+    return false;
   std::vector<bool> matched(npts, false);
   unsigned int nMatched = 0;
   for(unsigned int i=0; i<npts-1; i++) {
@@ -184,8 +187,11 @@ void IntersectionGroup::fixTents(HomogeneityTet *htet,
       }	  // end loop over intersections j
     } // end if i wasn't already matched
   }   // end loop over intersections i
-  if(nMatched > 0)
+  if(nMatched > 0) {
     eraseMatched(matched, looseEnds);
+    return true;
+  }
+  return false;
 }
 
 bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
@@ -416,7 +422,7 @@ bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
   return true;			//  all is ok
 } // end IntersectionGroup::tentCheck
 
-void IntersectionGroup::fixOccupiedEdges(
+bool IntersectionGroup::fixOccupiedEdges(
 			 HomogeneityTet *htet,
 			 unsigned int face,
 			 LooseEndSet &looseEnds,
@@ -453,7 +459,7 @@ void IntersectionGroup::fixOccupiedEdges(
 //       oofcerr << "IntersectionGroup::fixOccupiedEdges: nothing to do"
 // 	      << std::endl;
 // #endif // DEBUG
-    return;
+    return false;
   }
 
   // Rather than do complicated bookkeeping during the loop, keep
@@ -553,7 +559,9 @@ void IntersectionGroup::fixOccupiedEdges(
 // 	      << std::endl;
 //     }
 // #endif // DEBUG
+    return true;
   }
+  return false;
 } // end IntersectionGroup::fixOccupiedEdges
 
 //#define OLDFIXXING
@@ -820,7 +828,7 @@ void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
 
 #define NEWFIXXING
 #ifdef NEWFIXXING
-void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
+bool IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
 				     LooseEndSet &looseEnds)
 {
   // Merge points at the endpoints of crossing segments.
@@ -877,7 +885,7 @@ void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
 #endif // DEBUG
 
   if(segments.size() < 2)
-    return;
+    return false;
 
   std::vector<FaceEdgeIntersection*> mergers;
   mergers.reserve(isecs.size());
@@ -1109,6 +1117,8 @@ void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
       }
     }
     isecs = std::move(newIsecs);
+    return true;
   }   // end if there are FaceEdgeIntersections to be merged
+  return false;
 }  // end IntersectionGroup::fixCrossings
 #endif // NEWFIXXING

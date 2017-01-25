@@ -842,7 +842,7 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
       verbose = false;
     }
   }
-  if(verbose) {
+  if(1 || verbose) {
     oofcerr << "CSkeletonElement::categoryVolumes: " << *this
   	    << "----------------------------------" << std::endl;
     nVerbose++;

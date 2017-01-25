@@ -206,6 +206,8 @@ public:
   unsigned int size() const { return edges_.size(); }
   bool empty() const { return edges_.empty(); }
 
+  void clear();
+
   void addEdge(FaceFacetEdge*); // takes ownership of argument
   void addFaceEdges(const FaceEdgeIntersection*, const FaceEdgeIntersection*,
 		    HomogeneityTet*);

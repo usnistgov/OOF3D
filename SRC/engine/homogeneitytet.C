@@ -2406,8 +2406,288 @@ const HPixelPlane *HomogeneityTet::orientedOrthogonalPlane_(
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-
 FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
+					  const FacetMap2D &planeFacets)
+{
+#ifdef DEBUG
+  verbosecategory = verboseCategory_(verbose, cat);
+  if(verbosecategory)
+    oofcerr << "HomogeneityTet::findFaceFacets: cat=" << cat << std::endl;
+  OOFcerrIndent indent(2);
+  int loopcount = 0;
+#endif // DEBUG
+  FaceFacets faceFacets;
+  faceFacets.reserve(NUM_TET_FACES);
+  for(unsigned int f=0; f<NUM_TET_FACES; f++)
+    faceFacets.emplace_back(f, this);
+
+  // looseEndCatalog[f] is a LooseEndSet for face f.  A LooseEndSet is
+  // a set of FaceEdgeIntersection*s. 
+  LooseEndCatalog looseEndCatalog(NUM_TET_FACES);
+  std::vector<StrandedPoint> strandedPoints;
+
+  // Some operations merge points, which means that a point that
+  // wasn't known to be on a tet edge may become known to be on a tet
+  // edge.  This change in topology means that the calculation of
+  // which pixel plane facet edges are on which faces may have to be
+  // repeated.
+  bool pointsHaveChanged = false;
+  
+  // Loop until no points have changed.
+  do {
+#ifdef DEBUG
+    if(verbosecategory) {
+      oofcerr << "HomogeneityTet::findFaceFacets: loopcount=" << ++loopcount
+	      << std::endl;
+    }
+    if(loopcount > 10) {
+      throw ErrProgrammingError("Loopcount too big!", __FILE__, __LINE__);
+    }
+#endif // DEBUG
+    // Get a clean start.
+    pointsHaveChanged = false;
+    for(FaceFacet &ff : faceFacets)
+      ff.clear();
+    for(LooseEndSet &looseEnds : looseEndCatalog)
+      looseEnds.clear();
+    strandedPoints.clear();
+
+    // Loop over pixel plane facets, copying the edges that lie in tet
+    // faces into the empty face facet strutures.
+    for(FacetMap2D::const_iterator fm=planeFacets.begin();
+	fm!=planeFacets.end(); ++fm)
+      {
+	PixelPlaneFacet *planeFacet = (*fm).second;
+	planeFacet->getEdgesOnFaces(faceFacets);
+      }
+#ifdef DEBUG
+    if(verbosecategory) {
+      oofcerr << "HomogeneityTet::findFaceFacets:"
+	      << " edges from pixel plane facets:" << std::endl;
+      OOFcerrIndent indent(2);
+      for(unsigned int f=0; f<NUM_TET_FACES; f++) {
+	verboseface = verboseFace_(verbosecategory, f);
+	if(verboseface) {
+	  if(coincidentPixelPlanes[f] == nullptr) {
+	    oofcerr << "HomogeneityTet::findFaceFacets: facet=" << faceFacets[f]
+		    << std::endl;
+	    faceFacets[f].dump("facefacet_orig", cat);
+	  }
+	}
+      }
+      verboseface = false;
+    }
+#endif	// DEBUG
+
+    // Loop over all faces that aren't also pixel planes, finding the
+    // loose ends of the edges of the incomplete face facets.
+#ifdef DEBUG
+    if(verbosecategory) {
+      oofcerr << "HomogeneityTet::findFaceFacets: starting findLooseEnds loop"
+	      << std::endl;
+      }
+#endif // DEBUG
+    for(unsigned int face=0; face<NUM_TET_FACES; face++) {
+      if(coincidentPixelPlanes[face] == nullptr) {
+#ifdef DEBUG
+	verboseface = verboseFace_(verbosecategory, face);
+#endif // DEBUG
+	FaceFacet &facet = faceFacets[face];
+	// Make sure equivalence classes are up to date.
+	// TODO: If checkEquiv is run for each new PlaneIntersection, is
+	// this loop necessary?
+	for(auto seg=facet.edges().begin(); seg!=facet.edges().end(); ++seg) {
+	  checkEquiv((*seg)->startPt());
+	  checkEquiv((*seg)->endPt());
+	}
+	
+	facet.findLooseEnds(looseEndCatalog[face], strandedPoints);
+#ifdef DEBUG
+	verboseface = false;
+#endif // DEBUG
+      }	// end if face isn't coincident with a pixel plane
+    } // end loop over faces, face
+#ifdef DEBUG
+    if(verbosecategory) {
+      oofcerr << "HomogeneityTet::findFaceFacets: finished findLooseEnds loop"
+	      << std::endl;
+    }
+#endif // DEBUG
+#ifdef DEBUG
+  if(verbosecategory) {
+    if(strandedPoints.empty())
+      oofcerr << "HomogeneityTet::findFaceFacets: no strandedPoints"
+	      << std::endl;
+    else {
+      oofcerr << "HomogeneityTet::findFaceFacets: strandedPoints=" << std::endl;
+      OOFcerrIndent indent(2);
+      for(const StrandedPoint &pt : strandedPoints)
+	oofcerr << "HomogeneityTet::findFaceFacets: face=" << pt.face
+		<<  " " << *pt.feInt << std::endl;
+    }
+  }
+#endif // DEBUG
+
+    // Try to pair up the stranded points (loose ends that aren't on a
+    // tet edge).  This is outside the loop over faces, because it may
+    // merge points on different faces.
+    std::vector<StrandedPoint> marooned = matchStrandedPoints(
+		      strandedPoints, looseEndCatalog, pointsHaveChanged);
+
+#ifdef DEBUG
+    if(verbosecategory) {
+      oofcerr << "HomogeneityTet::findFaceFacets: back from matchStrandedPoints"
+	      << std::endl;
+      oofcerr << "HomogeneityTet::findFaceFacets: marooned points="
+	      << std::endl;
+      OOFcerrIndent indent(4);
+      for(const StrandedPoint &pt : marooned)
+	oofcerr << "HomogeneityTet::findFaceFacets: face=" << pt.face
+		<< " " << *pt.feInt << std::endl;
+    }
+#endif	// DEBUG
+    
+    // Force the unmatched stranded points onto the nearest tet edge.
+    pointsHaveChanged = pointsHaveChanged || !marooned.empty();
+    for(StrandedPoint &sp : marooned) {
+      sp.feInt->forceOntoEdge(sp.face, this);
+      looseEndCatalog[sp.face].insert(sp.feInt);
+    }
+
+    // If points have been merged, start over, rebuilding the face
+    // facet edges from the modified pixel plane facets.
+    if(pointsHaveChanged) {
+#ifdef DEBUG
+      if(verbosecategory) {
+	oofcerr << "HomogeneityTet::findFaceFacets: restarting"
+		<< std::endl;
+      }
+#endif // DEBUG
+      continue;
+    }
+
+    // Loop over tet faces, again, looking for topological
+    // inconsistencies that indicate that distinct points must
+    // actually coincide.
+    for(unsigned int face=0; face<NUM_TET_FACES; face++) {
+      if(coincidentPixelPlanes[face] == nullptr) {
+#ifdef DEBUG
+	verboseface = verboseFace_(verbosecategory, face);
+#endif // DEBUG
+	FaceFacet &facet = faceFacets[face];
+
+	// First find the existing face facet edges that lie on tet edges.
+	// (TODO: Can this be done more efficiently earlier, perhaps
+	// during the getEdgesOnFaces stage? Possibly not, because the
+	// resolution of stranded and marooned points moves some points
+	// onto edges.)
+	std::vector<FaceFacetEdgeSet> edgeEdges(NUM_TET_FACE_EDGES);
+	for(FaceFacetEdge *edge : facet.edges()) {
+	  unsigned int faceEdge = edge->findFaceEdge(face, this);
+	  if(faceEdge != NONE) {
+	    edgeEdges[faceEdge].insert(edge);
+	  }
+	}
+
+	// Detect and merge coincident intersection points on the tet
+	// edges.
+	bool merged = resolveFaceFacetCoincidences(face, looseEndCatalog[face],
+						    edgeEdges);
+	pointsHaveChanged = pointsHaveChanged || merged;
+	
+#ifdef DEBUG
+	verboseface = false;
+#endif // DEBUG
+      }	// end if face isn't coincident with a pixel plane (2)
+    } // end loop over tet faces (2)
+#ifdef DEBUG
+    if(verbosecategory)
+      oofcerr << "HomogeneityTet::findFaceFacets: end of while loop,"
+	      << " pointsHaveChanged=" << pointsHaveChanged << std::endl;
+#endif // DEBUG
+  } while(pointsHaveChanged);
+
+#ifdef DEBUG
+    if(verbosecategory)
+      oofcerr << "HomogeneityTet::findFaceFacets: exited while loop"
+	      << std::endl;
+#endif // DEBUG
+    
+  // At this stage all operations that can merge points have
+  // completed.  The loose ends on each face facet can be linked by
+  // new face facet edges.
+
+  for(unsigned int face=0; face<NUM_TET_FACES; face++) {
+    if(coincidentPixelPlanes[face] == nullptr) {
+#ifdef DEBUG
+      verboseface = verboseFace_(verbosecategory, face);
+#endif // DEBUG
+      FaceFacet &facet = faceFacets[face];
+      LooseEndSet &looseEnds = looseEndCatalog[face];
+      if(!looseEnds.empty()) {
+	// Put all the LooseEnds in a single vector, ordered by face
+	// edge and position along the edge.
+	std::vector<FaceEdgeIntersection*> sortedLooseEnds(looseEnds.begin(),
+							   looseEnds.end());
+	std::sort(sortedLooseEnds.begin(), sortedLooseEnds.end(),
+		  FaceEdgeIntersectionLT());
+	unsigned int npts = sortedLooseEnds.size();
+
+	// The missing segments that close the loops start at a loose
+	// end and end at a loose start.  Find the first loose end.
+	unsigned int i0 = 0;
+	bool found = false;
+	for(; i0<npts; i0++) {
+	  if(!sortedLooseEnds[i0]->start()) {
+	    found = true;
+	    break;
+	  }
+	}
+	if(!found) {
+	  oofcerr << "HomogeneityTet::findFaceFacets: failed! cat="
+		  << cat << " face=" << face << std::endl;
+	  oofcerr << "HomogeneityTet::findFaceFacets: sortedLooseEnds="
+		  << std::endl;
+	  OOFcerrIndent indent(2);
+	  for(unsigned int i=0; i<sortedLooseEnds.size(); i++)
+	    oofcerr << "HomogeneityTet::findFaceFacets: " << *sortedLooseEnds[i]
+		    << std::endl;
+	  throw ErrProgrammingError("findFaceFacets failed to find first end!",
+				    __FILE__, __LINE__);
+	}
+	// Loop over pairs (i, j) of adjacent loose ends, starting at
+	// i0.  i is an end, and j is a start.
+	for(unsigned int ii=0; ii<npts; ii+=2) {
+	  unsigned int i= ii + i0;
+	  if(i >= npts)
+	    i -= npts;
+	  unsigned int j = i + 1;
+	  if(j >= npts)
+	    j -= npts;
+	  facet.addFaceEdges(sortedLooseEnds[i], sortedLooseEnds[j], this);
+	} // end loop over ii
+	
+      }	// end if there are loose ends on the face
+
+      // Remove pairs of equal and opposite segments
+      facet.removeOpposingEdges();
+      // Fix situations that can cause the area to be zero or negative.
+      facet.fixNonPositiveArea(this, cat);
+
+#ifdef DEBUG
+      verboseface = false;
+#endif // DEBUG
+    } // end if face isn't coincident with a pixel plane (3)
+  } // end loop over tet faces (3)
+#ifdef DEBUG
+  verbosecategory = false;
+#endif // DEBUG
+  return faceFacets;
+} // end HomogeneityTet::findFaceFacets
+
+
+#ifdef OLDFINDFACEFACETS
+FaceFacets HomogeneityTet::findFaceFacetsOLD(unsigned int cat,
 					  const FacetMap2D &planeFacets)
 {
 #ifdef DEBUG
@@ -2467,10 +2747,10 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 
   // Loop over all faces that aren't also pixel planes.
 #ifdef DEBUG
-      if(verbosecategory) {
-	oofcerr << "HomogeneityTet::findFaceFacets: starting findLooseEnds loop"
-		<< std::endl;
-      }
+  if(verbosecategory) {
+    oofcerr << "HomogeneityTet::findFaceFacets: starting findLooseEnds loop"
+	    << std::endl;
+  }
 #endif // DEBUG
   for(unsigned int face=0; face<NUM_TET_FACES; face++) {
     if(coincidentPixelPlanes[face] == nullptr) {
@@ -2495,10 +2775,10 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
     } // end if face is not on a pixel plane
   } // end loop over faces, face
 #ifdef DEBUG
-      if(verbosecategory) {
-	oofcerr << "HomogeneityTet::findFaceFacets: finished findLooseEnds loop"
-		<< std::endl;
-      }
+  if(verbosecategory) {
+    oofcerr << "HomogeneityTet::findFaceFacets: finished findLooseEnds loop"
+	    << std::endl;
+  }
 #endif // DEBUG
  
 #ifdef DEBUG
@@ -2543,7 +2823,7 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 #endif // DEBUG
       FaceFacet &facet = faceFacets[face];
       LooseEndSet &looseEnds = looseEndCatalog[face];
-      Coord3D faceNormal = faceAreaVectors[face]; // not a unit vector
+      // Coord3D faceNormal = faceAreaVectors[face]; // not a unit vector
 
 #ifdef DEBUG
       if(verboseface) {
@@ -2719,7 +2999,8 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
   verbosecategory = false;
 #endif // DEBUG
   return faceFacets;
-} // end HomogeneityTet::findFaceFacets
+} // end HomogeneityTet::findFaceFacetsOLD
+#endif // OLDFINDFACEFACETS
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -2740,9 +3021,10 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 // by the two faces).  The new merged point can be inserted into the
 // looseEndCatalog.
 
-StrandedPointLists HomogeneityTet::matchStrandedPoints(
+std::vector<StrandedPoint> HomogeneityTet::matchStrandedPoints(
 			       std::vector<StrandedPoint> &strandedPoints,
-			       LooseEndCatalog &looseEndCatalog)
+			       LooseEndCatalog &looseEndCatalog,
+			       bool &pointsHaveChanged)
 {
 #ifdef DEBUG
   if(verbosecategory)
@@ -2751,9 +3033,8 @@ StrandedPointLists HomogeneityTet::matchStrandedPoints(
 #endif // DEBUG
   
   // Stranded intersection points that can't be matched are marooned.
-  // The list of marooned points is returned.  StrandedPointsLists is
-  // a vector of vectors of StrandedPoints, one for each tet face.
-  StrandedPointLists marooned(NUM_TET_FACES);
+  // The list of marooned points is returned.  
+  std::vector<StrandedPoint> marooned;
 
   if(strandedPoints.empty())
     return marooned;
@@ -2765,7 +3046,7 @@ StrandedPointLists HomogeneityTet::matchStrandedPoints(
   // TODO: If this hack works, then change findFaceFacets so that
   // matchStrandedPoints isn't even called.
   for(StrandedPoint &pt0 : strandedPoints)
-    marooned[pt0.face].push_back(pt0);
+    marooned.push_back(pt0);
   return marooned;
 
 #else // EXPERIMENTAL
@@ -2871,13 +3152,24 @@ StrandedPointLists HomogeneityTet::matchStrandedPoints(
 	fei1->findFaceEdge(pt1.face, this);
 	looseEndCatalog[pt0.face].insert(fei0);
 	looseEndCatalog[pt1.face].insert(fei1);
+#ifdef DEBUG
+	if(verbosecategory) {
+	  oofcerr << "HomogeneityTet::matchStrandedPoints: after merging,"
+		  << std::endl;
+	  oofcerr << "HomogeneityTet::matchStrandedPoints: fei0=" << *fei0
+		  << std::endl;
+	  oofcerr << "HomogeneityTet::matchStrandedPoints: fei1=" << *fei1
+		  << std::endl;
+	}
+#endif // DEBUG
 	// The merged point isn't in a FacetEdge, so it won't be
 	// automatically deleted.  Store it for later deletion.
 	extraPoints.insert(merged);
+	pointsHaveChanged = true;
       }	// end if best is not NONE
       else {
 	// No match found for point i
-	marooned[pt0.face].push_back(pt0);
+	marooned.push_back(pt0);
 // #ifdef DEBUG
 // 	if(verbosecategory)
 // 	  oofcerr << "HomogeneityTet::matchStrandedPoints: marooned point! "
@@ -2907,7 +3199,7 @@ StrandedPointLists HomogeneityTet::matchStrandedPoints(
 // Round-off error can make two points that are supposed to be
 // coincident or nearly coincident to appear to be in the wrong order.
 
-void HomogeneityTet::resolveFaceFacetCoincidences(
+bool HomogeneityTet::resolveFaceFacetCoincidences(
 				 unsigned int face,
 				 LooseEndSet &looseEnds,
 				 const std::vector<FaceFacetEdgeSet> &edgeEdges)
@@ -2945,6 +3237,8 @@ void HomogeneityTet::resolveFaceFacetCoincidences(
     }
   } // end loop over loose ends
 
+  bool didSomething = false;
+  
   for(IntersectionGroup &ig : intersectionGroups) {
 #ifdef DEBUG
     if(verboseface) {
@@ -2962,7 +3256,12 @@ void HomogeneityTet::resolveFaceFacetCoincidences(
 		<< " calling removeEquivPts" << std::endl;
       }
 #endif // DEBUG
-      ig.removeEquivPts(this, face, looseEnds);
+      if(ig.removeEquivPts(this, face, looseEnds)) {
+	// The modifiers can merge points, thereby changing equivalence
+	// classes, so it's possible that positions have changed. Re-sort.
+	ig.sortByPositionAndEdge();
+	didSomething = true;
+      }
 #ifdef DEBUG
       if(verboseface) {
 	oofcerr << "HomogeneityTet::resolveFaceFacetCoincidences: "
@@ -2973,17 +3272,17 @@ void HomogeneityTet::resolveFaceFacetCoincidences(
 #endif // DEBUG
       if(ig.size() <= 1)
 	continue;
-      // The modifiers can merge points, thereby changing equivalence
-      // classes, so it's possible that positions have changed. Re-sort.
-      // TODO: keep track of whether anything changed, and only re-sort
-      // if necessary, for all calls to sortByPositionAndEdge in this loop.
-      ig.sortByPositionAndEdge();
 // #ifdef DEBUG
 //       if(verboseface)
 // 	oofcerr << "HomogeneityTet::resolveFaceFacetCoincidences: calling fixTents"
 // 		<< std::endl;
 // #endif // DEBUG
-      ig.fixTents(this, face, looseEnds);
+      if(ig.fixTents(this, face, looseEnds)) {
+	ig.sortByPositionAndEdge();
+	if(ig.removeEquivPts(this, face, looseEnds))
+	  ig.sortByPositionAndEdge();
+	didSomething = true;
+      }
 #ifdef DEBUG
       if(verboseface) {
 	oofcerr << "HomogeneityTet::resolveFaceFacetCoincidences: "
@@ -2994,17 +3293,17 @@ void HomogeneityTet::resolveFaceFacetCoincidences(
 #endif // DEBUG
       if(ig.size() <= 1)
 	continue;
-      // TODO: call sortByPositionAndEdge and removeEquivPts only if
-      // fixTents has done something.
-      ig.sortByPositionAndEdge();
-      ig.removeEquivPts(this, face, looseEnds);
-      ig.sortByPositionAndEdge();
 #ifdef DEBUG
       if(verboseface)
 	oofcerr << "HomogeneityTet::resolveFaceFacetCoincidences: "
 		<< "calling fixCrossings" << std::endl;
 #endif // DEBUG
-      ig.fixCrossings(this, face, looseEnds);
+      if(ig.fixCrossings(this, face, looseEnds)) {
+	ig.sortByPositionAndEdge();
+	if(ig.removeEquivPts(this, face, looseEnds))
+	  ig.sortByPositionAndEdge();
+	didSomething = true;
+      }
 #ifdef DEBUG
       if(verboseface) {
 	oofcerr << "HomogeneityTet::resolveFaceFacetCoincidences: "
@@ -3015,20 +3314,17 @@ void HomogeneityTet::resolveFaceFacetCoincidences(
 #endif // DEBUG
       if(ig.size() <= 1)
 	continue;
-      // TODO: Call removeEquivPts and sortByPositionAndEdge only if
-      // fixCrossings has done something.
-      ig.sortByPositionAndEdge();
-      ig.removeEquivPts(this, face, looseEnds);
-      ig.sortByPositionAndEdge();
-      if(ig.size() <= 1)
-	continue;
 
 #ifdef DEBUG
       if(verboseface)
 	oofcerr << "HomogeneityTet::resolveFaceFacetCoincidences: "
 		<< "calling fixOccupiedEdges" << std::endl;
 #endif // DEBUG
-      ig.fixOccupiedEdges(this, face, looseEnds, edgeEdges);
+      if(ig.fixOccupiedEdges(this, face, looseEnds, edgeEdges)) {
+	didSomething = true;
+      }
+
+								 
 // #ifdef DEBUG
 //       if(verboseface) {
 // 	oofcerr << "HomogeneityTet::resolveFaceFacetCoincidences: "
@@ -3051,9 +3347,11 @@ void HomogeneityTet::resolveFaceFacetCoincidences(
   }
 #ifdef DEBUG
   if(verboseface)
-    oofcerr << "HomogeneityTet::resolveFaceFacetCoincidences: done"
-	    << std::endl;
+    oofcerr << "HomogeneityTet::resolveFaceFacetCoincidences: "
+	    << "done, didSomething =" << didSomething << std::endl;
 #endif // DEBUG
+
+  return didSomething;
 } // end HomogeneityTet::resolveFaceFacetCoincidences
 
 
