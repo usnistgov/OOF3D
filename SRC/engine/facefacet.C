@@ -55,12 +55,19 @@ void FaceEdgeIntersection::findFaceEdge(unsigned int face, HomogeneityTet *htet)
 // A marooned StrandedPoint is one that can't be matched to a
 // StrandedPoint on a different face.  It must really belong on an
 // edge of the face that it's on.  This routine finds the closest edge
-// and puts the point there, by inserting it into the LooseEndMap for
-// that edge.
+// and puts the point there, by modifying the point's equivalence class.
 
 void FaceEdgeIntersection::forceOntoEdge(unsigned int face,
 					 HomogeneityTet *htet)
 {
+// #ifdef DEBUG
+//   if(htet->verboseCategory()) {
+//     oofcerr << "FaceEdgeIntersection::forceOntoEdge: this=" << *this
+// 	    << std::endl;
+//     oofcerr << "FaceEdgeIntersection::forceOntoEdge: eq class="
+// 	    << *crnr->equivalence() << std::endl;
+//   }
+// #endif // DEBUG
   // The closest edge corresponds to the smallest barycentric
   // coordinate component other than the component for the node
   // opposite this face, which should already be zero.
@@ -94,14 +101,12 @@ void FaceEdgeIntersection::forceOntoEdge(unsigned int face,
   // else if(t > 1.0)
   //   t = 1.0;
 
-#ifdef DEBUG
-  if(htet->verboseFace()) {
-    oofcerr << "FaceEdgeIntersection::forceOntoEdge: this=" << *this
-	    << std::endl;
-    oofcerr << "FaceEdgeIntersection::forceOntoEdge: forced onto edge "
-	    << fEdge << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verboseCategory()) {
+//     oofcerr << "FaceEdgeIntersection::forceOntoEdge: forced onto edge "
+// 	    << fEdge << std::endl;
+//   }
+// #endif // DEBUG
 }
 
 // Return the cosine of the angle between the edge and the given edge
@@ -755,6 +760,7 @@ void FaceFacet::findLooseEnds(LooseEndSet &looseEnds,
     // At this point, fEdge hasn't been set in the
     // FaceEdgeIntersection objects, so don't be surprised by the
     // printed value.
+    oofcerr << "FaceFacet::findLooseEnds: face=" << face << std::endl;
     oofcerr << "FaceFacet::findLooseEnds: startPoints="
 	    << std::endl;
     for(const auto p: startPoints) {

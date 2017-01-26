@@ -2500,7 +2500,10 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	  checkEquiv((*seg)->startPt());
 	  checkEquiv((*seg)->endPt());
 	}
-	
+	// findLooseEnds creates FaceEdgeIntersection objects for each
+	// endpoint of each segment on the facet and stores the
+	// unpaired ones either in looseEndCatalog (if they're on an
+	// edge of a face) or in strandedPoints (if they're not).
 	facet.findLooseEnds(looseEndCatalog[face], strandedPoints);
 #ifdef DEBUG
 	verboseface = false;
@@ -2551,7 +2554,10 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
     pointsHaveChanged = pointsHaveChanged || !marooned.empty();
     for(StrandedPoint &sp : marooned) {
       sp.feInt->forceOntoEdge(sp.face, this);
-      looseEndCatalog[sp.face].insert(sp.feInt);
+      // There's no point in adding the intersection to the
+      // looseEndCatalog, because the catalog will be rebuilt before
+      // it's used, since pointsHaveChanged==true.
+      // looseEndCatalog[sp.face].insert(sp.feInt);
     }
 
     // If points have been merged, start over, rebuilding the face

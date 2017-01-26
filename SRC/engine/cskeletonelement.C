@@ -842,11 +842,15 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
       verbose = false;
     }
   }
-  if(1 || verbose) {
+  if(verbose)
     oofcerr << "CSkeletonElement::categoryVolumes: " << *this
   	    << "----------------------------------" << std::endl;
+  // Don't combine the following "if" with the previous one.  The
+  // previous one is often commented out, but the following one
+  // shouldn't be.
+  if(verbose)
     nVerbose++;
-  }
+
   OOFcerrIndent indent(2);
 #endif // DEBUG
 

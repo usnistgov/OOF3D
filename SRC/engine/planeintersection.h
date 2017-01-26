@@ -1104,7 +1104,8 @@ public:
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // TriplePixelPlaneIntersection is the intersection of three pixel
-// planes.  No tet faces are involved.
+// planes.  No tet faces are involved, unless the point has been
+// determined to be coincident with another.
 
 class TriplePixelPlaneIntersection
   : public MultiVSBmixIn<PixelPlaneIntersectionNR>
@@ -1114,7 +1115,10 @@ public:
 			       const HPixelPlane*, const HPixelPlane*);
   virtual TriplePixelPlaneIntersection *clone(HomogeneityTet*) const;
   virtual int crossingCount() const { return 0; }
-  virtual unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const;
+  // You might think that findFaceEdge should always return NONE, but
+  // if the point is coincident with another, that's not true.  Just
+  // use the base class's method.
+  // virtual unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const;
   virtual void locateOnPolygonEdge(std::vector<PolyEdgeIntersections>&,
 				   const PixelPlaneFacet*) const
   {}

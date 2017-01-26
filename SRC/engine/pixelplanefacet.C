@@ -1403,8 +1403,11 @@ void PixelPlaneFacet::getEdgesOnFaces(FaceFacets &faceFacets) const {
 //       oofcerr << "PixelPlaneFacet::getEdgesOnFaces: edge=" << *edge
 // 	      << std::endl;
 //       oofcerr << "PixelPlaneFacet::getEdgesOnFaces: faces=";
-//       for(const FacePlane *fp : faces)
-// 	oofcerr << " " << *fp << std::endl;
+//       if(faces.empty())
+// 	oofcerr << "(none)" << std::endl;
+//       else
+// 	for(const FacePlane *fp : faces)
+// 	  oofcerr << " " << *fp << std::endl;
 //       }
 // #endif // DEBUG
     for(const FacePlane *fp : faces) {

@@ -27,7 +27,7 @@
 static std::string eqPrint(IsecEquivalenceClass *eqptr) {
   if(eqptr == nullptr)
     return "None";
-  return to_string(eqptr->id);
+  return to_string(*eqptr);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -3107,13 +3107,6 @@ void TriplePixelPlaneIntersection::print(std::ostream &os) const {
 
 std::string TriplePixelPlaneIntersection::shortName() const {
   return "TP" + PixelPlaneIntersectionNR::shortName();
-}
-
-unsigned int TriplePixelPlaneIntersection::findFaceEdge(unsigned int,
-							HomogeneityTet*)
-  const
-{
-  return NONE;
 }
 
 unsigned int TriplePixelPlaneIntersection::getPolyEdge(const PixelPlaneFacet*)
