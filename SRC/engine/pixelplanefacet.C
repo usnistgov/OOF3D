@@ -870,12 +870,12 @@ bool PixelPlaneFacet::completeLoops() {
     // }
   }
 
-  // if(!htet->verify()) {
-  //   oofcerr << "PixelPlaneFacet::completeLoops: verify failed after edge loop"
-  // 	    << std::endl;
-  //   throw ErrProgrammingError("Verification failed after edge loop",
-  // 			      __FILE__, __LINE__);
-  //   }
+//   if(!htet->verify()) {
+//     oofcerr << "PixelPlaneFacet::completeLoops: verify failed after edge loop"
+//   	    << std::endl;
+//     throw ErrProgrammingError("Verification failed after edge loop",
+//   			      __FILE__, __LINE__);
+//     }
 #endif	// DEBUG
 
   // Resolve coincidences that occur when a voxel corner is on or near

@@ -88,6 +88,12 @@ void FaceEdgeIntersection::forceOntoEdge(unsigned int face,
   unsigned int e = CSkeletonElement::faceFaceEdge[face][face2]; // tet scope
   fEdge = CSkeletonElement::tetEdge2FaceEdge[face][e]; // face scope
 
+#ifdef DEBUG
+  if(htet->verboseCategory())
+    oofcerr << "FaceEdgeIntersection::forceOntoEdge: adding "
+	    << *htet->getTetFacePlane(face2) << " to "
+	    << *crnr->equivalence() << std::endl;
+#endif	// DEBUG
   htet->getTetFacePlane(face2)->addToEquivalence(crnr->equivalence());
   htet->checkEquiv(crnr);
 
@@ -133,6 +139,14 @@ double FaceEdgeIntersection::declination(unsigned int face,
 #endif // DEBUG
   getEdgeNodes(face, edge, n0, n1);
   // edgeDir is in the direction of the tet edge at this FaceEdgeIntersection
+
+#ifdef DEBUG
+  if(htet->verboseFace())
+    oofcerr << "FaceEdgeIntersection::declination: n0=" << n0 << " "
+	    << htet->nodePosition(n0) << " n1=" << n1 << " "
+	    << htet->nodePosition(n1) << std::endl;
+#endif // DEBUG
+  
   Coord3D edgeDir = htet->nodePosition(n1) - htet->nodePosition(n0);
   // TODO: Use HomogeneityTet::edgeLengths instead of norm2(edgeDir)
   double decl = dot(edgeDir, thisDir)/sqrt(norm2(edgeDir)*norm2(thisDir));
@@ -184,21 +198,25 @@ bool FaceEdgeIntersection::crossesSameEdge(const FaceEdgeIntersection *other,
   // can give us the wrong result.  We know more topological
   // information, and have to use it.
 
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "FaceEdgeIntersection::crossesSameEdge:  this=" << *this
-	    << std::endl;
-    oofcerr << "FaceEdgeIntersection::crossesSameEdge: other=" << *other
-	    << std::endl;
-  }
-#endif // DEBUG
-
   // Get the endpoints that are on the face edge.
   const PlaneIntersection *nearEnd = corner();
   const PlaneIntersection *otherNearEnd = other->corner();
   // Get the endpoints that aren't on the face edge.
   const PlaneIntersection *farEnd = edge_->point(!start());
   const PlaneIntersection *otherFarEnd = other->edge()->point(!other->start());
+
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "FaceEdgeIntersection::crossesSameEdge:  this=" << *this
+	    << std::endl;
+    oofcerr << "FaceEdgeIntersection::crossesSameEdge: other=" << *other
+	    << std::endl;
+    oofcerr << "FaceEdgeIntersection::crossesSameEdge: nearEnd=" << *nearEnd
+	    <<  " farEnd=" << *farEnd << std::endl;
+    oofcerr << "FaceEdgeIntersection::crossesSameEdge: otherNearEnd="
+	    << *otherNearEnd << " otherFarEnd=" << *otherFarEnd << std::endl;
+  }
+#endif // DEBUG
 
   // Check for parallel edges.  If both edges are formed by pixel
   // planes intersecting the face, then the edges are parallel if the
@@ -269,6 +287,17 @@ bool FaceEdgeIntersection::crossesSameEdge(const FaceEdgeIntersection *other,
   unsigned int sharedEtet = CSkeletonElement::faceFaceEdge[face][sharedF];
   unsigned int sharedE = CSkeletonElement::tetEdge2FaceEdge[face][sharedEtet];
 
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "FaceEdgeIntersection::crossesSameEdge:"
+	    << " this->edgePosition=" << edgePosition()
+	    << " other->edgePosition=" << other->edgePosition() << std::endl;
+    oofcerr << "FaceEdgeIntersection::crossesSameEdge: sharedF=" << sharedF
+	    << " sharedEtet=" << sharedEtet << " sharedE=" << sharedE
+	    << std::endl;
+  }
+#endif // DEBUG
+
   // Use FaceEdgeIntersection::declination() to check for
   // diverging segments, and only call segIntersection for converging
   // ones.
@@ -276,9 +305,10 @@ bool FaceEdgeIntersection::crossesSameEdge(const FaceEdgeIntersection *other,
   double otherDecl = other->declination(face, sharedE, htet);
 #ifdef DEBUG
   if(verbose)
-    oofcerr << "FaceEdgeIntersection::crosses: thisDecl=" << thisDecl
+    oofcerr << "FaceEdgeIntersection::crossesSameEdge: thisDecl=" << thisDecl
 	    << " otherDecl=" << otherDecl
-	    << " diff=" << thisDecl-otherDecl << " "
+	    << " diff=" << thisDecl-otherDecl
+	    << " firstPt=" << firstPt << " "
 	    << (thisDecl > otherDecl ? "convergent" : "divergent")
 	    << std::endl;
 #endif // DEBUG
@@ -305,7 +335,7 @@ bool FaceEdgeIntersection::crossesSameEdge(const FaceEdgeIntersection *other,
       // betas are topologically impossible here.
 #ifdef DEBUG
       if(verbose)
-	oofcerr << "FaceEdgeIntersection::crosses: alpha=" << alpha
+	oofcerr << "FaceEdgeIntersection::crossesSameEdge: alpha=" << alpha
 		<< " beta=" << beta << " parallel=" << parallel
 		<< ", returning " << (!parallel && alpha <= 1.0 && beta <= 1.0)
 		<< std::endl;
@@ -314,8 +344,8 @@ bool FaceEdgeIntersection::crossesSameEdge(const FaceEdgeIntersection *other,
     }
 #ifdef DEBUG
     if(verbose)
-      oofcerr << "FaceEdgeIntersection::crosses: divergent, not crossing"
-	      << std::endl;
+      oofcerr << "FaceEdgeIntersection::crossesSameEdge:"
+	      << " divergent, not crossing" << std::endl;
 #endif // DEBUG
     return false;
 } // end FaceEdgeIntersection::crossesSameEdge
@@ -468,8 +498,12 @@ bool FaceFacetEdge::operator<(const FaceFacetEdge &other) const {
 }
 
 std::ostream &operator<<(std::ostream &os, const FaceFacetEdge &edge) {
-  os << "[" << *edge.startPt() << ", " << *edge.endPt()
-     << ", length=" << sqrt(norm2(edge.startPt()->location3D() -
+  os << "[" << *edge.startPt() << ", " << *edge.endPt() << " pixplane=";
+  if(edge.pixelPlane() != nullptr)
+    os << *edge.pixelPlane();
+  else
+    os << "null";
+  os << ", length=" << sqrt(norm2(edge.startPt()->location3D() -
 				  edge.endPt()->location3D()))
      << "]";
   return os;
@@ -898,6 +932,15 @@ Coord3D FaceFacetLoop::area(const FaceFacet *ffacet, HomogeneityTet *htet)
     return a;
   }
 
+#ifdef DEBUG
+  if(htet->verboseFace()) {
+    oofcerr << "FaceFacetLoop::area: edges=" << std::endl;
+    OOFcerrIndent indent(2);
+    for(const FaceFacetEdge *edge : edges)
+      oofcerr << "FaceFacetLoop::area: " << *edge << std::endl;
+  }
+#endif // DEBUG
+
   // There are exactly three edges.  The loop may be due to a VSB
   // corner formed by three pixel planes protruding infinitesimally
   // through the face, and round off error may lead to an area with
@@ -932,7 +975,25 @@ Coord3D FaceFacetLoop::area(const FaceFacet *ffacet, HomogeneityTet *htet)
     }
     pplanes.push_back(edge->pixelPlane());
   }
+  // The three planes can fail to be in different directions if the
+  // VSB just grazes a corner of the tet.
+  if(pplanes[0]->direction() == pplanes[1]->direction() ||
+     pplanes[1]->direction() == pplanes[2]->direction() ||
+     pplanes[2]->direction() == pplanes[0]->direction())
+    {
+      return Coord3D(0.0, 0.0, 0.0);
+    }
+#ifdef DEBUG
+  if(htet->verboseFace())
+    oofcerr << "FaceFacetLoop::area: calling triplePlaneIntersection"
+	    << std::endl;
+#endif // DEBUG
   Coord3D vertex = triplePlaneIntersection(pplanes[0], pplanes[1], pplanes[2]);
+#ifdef DEBUG
+  if(htet->verboseFace())
+    oofcerr << "FaceFacetLoop::area: back from triplePlaneIntersection, vertex="
+	    << vertex << std::endl;
+#endif // DEBUG
   BarycentricCoord bvertex = htet->getBarycentricCoord(vertex);
   // Is the intersection point of the pixel planes inside the tet?
   bool interior = bvertex.interior();
@@ -1094,6 +1155,8 @@ void FaceFacet::fixNonPositiveArea(HomogeneityTet *htet, unsigned int cat)
 
 #ifdef DEBUG
   if(htet->verboseFace()) {
+    oofcerr << "FaceFacet::fixNonPositiveArea: face=" << face << " cat="
+	    << cat << std::endl;
     oofcerr << "FaceFacet::fixNonPositiveArea: input facet=" << *this
      	    << std::endl;
     oofcerr << "FaceFacet::fixNonPositiveArea: raw_area=" << raw_area
@@ -1355,11 +1418,25 @@ void EdgePosition::normalize() {
     position = 1.0;
 }
 
+void EdgePosition::forceToEnd() {
+  // This should never be called unless position is already close to 0
+  // or 1.
+  assert(position < 0.1 || position > 0.9);
+  if(position < 0.5)
+    position = 0.0;
+  else
+    position = 1.0;
+}
+
 std::ostream &operator<<(std::ostream &os, const EdgePosition &ep) {
   if(ep.reversed)
     os << "1-" << ep.position;
   else
     os << ep.position;
+  if(ep.atStart())
+    os << "(start)";
+  if(ep.atEnd())
+    os << "(end)";
   return os;
 }
 

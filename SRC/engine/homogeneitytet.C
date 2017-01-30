@@ -851,7 +851,8 @@ PLANEINTERSECTION *HomogeneityTet::checkEquiv(PLANEINTERSECTION *point) {
 // automatically, but these are apparently only used elsewhere
 // (facefacet.C and intersectiongroup.C) and not created unless we ask
 // nicely here.
-
+template PlaneIntersection*
+HomogeneityTet::checkEquiv<PlaneIntersection>(PlaneIntersection*);
 template TripleFaceIntersection*
 HomogeneityTet::checkEquiv<TripleFaceIntersection>(TripleFaceIntersection*);
 template GenericIntersection*
@@ -2487,28 +2488,31 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	      << std::endl;
       }
 #endif // DEBUG
+    // Find loose ends on *all* faces, even those that are coincident
+    // with pixel planes.  We don't need to find facets on those
+    // faces, but we do need to resolve topological problems on them,
+    // because they can affect other faces.
     for(unsigned int face=0; face<NUM_TET_FACES; face++) {
-      if(coincidentPixelPlanes[face] == nullptr) {
 #ifdef DEBUG
-	verboseface = verboseFace_(verbosecategory, face);
+      verboseface = verboseFace_(verbosecategory, face);
 #endif // DEBUG
-	FaceFacet &facet = faceFacets[face];
-	// Make sure equivalence classes are up to date.
-	// TODO: If checkEquiv is run for each new PlaneIntersection, is
-	// this loop necessary?
-	for(auto seg=facet.edges().begin(); seg!=facet.edges().end(); ++seg) {
-	  checkEquiv((*seg)->startPt());
-	  checkEquiv((*seg)->endPt());
-	}
-	// findLooseEnds creates FaceEdgeIntersection objects for each
-	// endpoint of each segment on the facet and stores the
-	// unpaired ones either in looseEndCatalog (if they're on an
-	// edge of a face) or in strandedPoints (if they're not).
-	facet.findLooseEnds(looseEndCatalog[face], strandedPoints);
+      FaceFacet &facet = faceFacets[face];
+      // // Make sure equivalence classes are up to date.
+      // // TODO: If checkEquiv is run for each new PlaneIntersection, is
+      // // this loop necessary?
+      // for(auto seg=facet.edges().begin(); seg!=facet.edges().end(); ++seg) {
+      //   checkEquiv((*seg)->startPt());
+      //   checkEquiv((*seg)->endPt());
+      // }
+      
+      // findLooseEnds creates FaceEdgeIntersection objects for each
+      // endpoint of each segment on the facet and stores the
+      // unpaired ones either in looseEndCatalog (if they're on an
+      // edge of a face) or in strandedPoints (if they're not).
+      facet.findLooseEnds(looseEndCatalog[face], strandedPoints);
 #ifdef DEBUG
-	verboseface = false;
+      verboseface = false;
 #endif // DEBUG
-      }	// end if face isn't coincident with a pixel plane
     } // end loop over faces, face
 #ifdef DEBUG
     if(verbosecategory) {
@@ -2574,37 +2578,36 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 
     // Loop over tet faces, again, looking for topological
     // inconsistencies that indicate that distinct points must
-    // actually coincide.
+    // actually coincide.  Again, this is done for all faces, even the
+    // ones that are coincident with pixel planes.
     for(unsigned int face=0; face<NUM_TET_FACES; face++) {
-      if(coincidentPixelPlanes[face] == nullptr) {
 #ifdef DEBUG
-	verboseface = verboseFace_(verbosecategory, face);
+      verboseface = verboseFace_(verbosecategory, face);
 #endif // DEBUG
-	FaceFacet &facet = faceFacets[face];
-
-	// First find the existing face facet edges that lie on tet edges.
-	// (TODO: Can this be done more efficiently earlier, perhaps
-	// during the getEdgesOnFaces stage? Possibly not, because the
-	// resolution of stranded and marooned points moves some points
-	// onto edges.)
-	std::vector<FaceFacetEdgeSet> edgeEdges(NUM_TET_FACE_EDGES);
-	for(FaceFacetEdge *edge : facet.edges()) {
-	  unsigned int faceEdge = edge->findFaceEdge(face, this);
-	  if(faceEdge != NONE) {
-	    edgeEdges[faceEdge].insert(edge);
-	  }
+      FaceFacet &facet = faceFacets[face];
+      
+      // First find the existing face facet edges that lie on tet edges.
+      // (TODO: Can this be done more efficiently earlier, perhaps
+      // during the getEdgesOnFaces stage? Possibly not, because the
+      // resolution of stranded and marooned points moves some points
+      // onto edges.)
+      std::vector<FaceFacetEdgeSet> edgeEdges(NUM_TET_FACE_EDGES);
+      for(FaceFacetEdge *edge : facet.edges()) {
+	unsigned int faceEdge = edge->findFaceEdge(face, this);
+	if(faceEdge != NONE) {
+	  edgeEdges[faceEdge].insert(edge);
 	}
-
-	// Detect and merge coincident intersection points on the tet
-	// edges.
-	bool merged = resolveFaceFacetCoincidences(face, looseEndCatalog[face],
-						    edgeEdges);
-	pointsHaveChanged = pointsHaveChanged || merged;
-	
+      }
+      
+      // Detect and merge coincident intersection points on the tet
+      // edges.
+      bool merged = resolveFaceFacetCoincidences(face, looseEndCatalog[face],
+						 edgeEdges);
+      pointsHaveChanged = pointsHaveChanged || merged;
+      
 #ifdef DEBUG
-	verboseface = false;
+      verboseface = false;
 #endif // DEBUG
-      }	// end if face isn't coincident with a pixel plane (2)
     } // end loop over tet faces (2)
 #ifdef DEBUG
     if(verbosecategory)
@@ -2621,7 +2624,9 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
     
   // At this stage all operations that can merge points have
   // completed.  The loose ends on each face facet can be linked by
-  // new face facet edges.
+  // new face facet edges.  This is done only for faces that aren't
+  // coincident with pixel planes, because facets on pixel planes have
+  // already been computed.
 
   for(unsigned int face=0; face<NUM_TET_FACES; face++) {
     if(coincidentPixelPlanes[face] == nullptr) {
@@ -3045,7 +3050,7 @@ std::vector<StrandedPoint> HomogeneityTet::matchStrandedPoints(
   if(strandedPoints.empty())
     return marooned;
 
-  //#define EXPERIMENTAL
+#define EXPERIMENTAL
 #ifdef EXPERIMENTAL
   // Trying to just force stranded points onto edges, without matching
   // them with other stranded points first.
@@ -3475,7 +3480,19 @@ void HomogeneityTet::findFaceEdge(PlaneIntersection *pt, unsigned int face,
   if(faceEdge != NONE) {
     BarycentricCoord b = getBarycentricCoord(pt->location3D());
     t = faceEdgeCoord(b, face, faceEdge);
-    t.normalize();
+    if(pt->equivalence()->nFaces() < 3) {
+      t.normalize();
+    }
+    else {
+      // The point is at a corner of the tet. Avoid round off error. t
+      // must be either 0 or 1.
+      // TODO: If nFaces==3, then it's not necessary to use the
+      // barycentric coord, but since getBarycentricCoord is using
+      // cached data, it's probably not terribly inefficient to do it
+      // this way.  It would be more elegant to just use face and edge
+      // indices, though.
+      t.forceToEnd();
+    }
   }
 }
 

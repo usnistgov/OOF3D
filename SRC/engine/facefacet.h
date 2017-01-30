@@ -56,6 +56,7 @@ public:
   bool atStart() const;
   bool atEnd() const;
   void normalize();
+  void forceToEnd();
   bool unset() const { return unset_; }
   friend std::ostream &operator<<(std::ostream&, const EdgePosition&);
 };
