@@ -585,9 +585,9 @@ unsigned int HomogeneityTet::getTetFaceIndex(const FacePlane *fp) const {
 
 // mergeEquiv is called by the various PlaneIntersection::mergeWith
 // virtual methods after they merge "point0" and "point1" to form
-// "merged".  It updates the equivalence classes.  The two points must
-// be in the same equivalence class, and that class's plane list must
-// include all of the planes in both points.
+// "merged".  It updates the equivalence classes.  Afterwards, the two
+// points will be in the same equivalence class, and that class's
+// plane list will include all of the planes in both points.
 
 void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
 				PlaneIntersection *point1,
@@ -689,23 +689,7 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *point0,
   // equivalent to some other class(es).  Find the other classes,
   // merge them, and delete them.
   // TODO: This may be slow.  Does it have to be done every time?
-  bool foundEquiv = true;
-  while(foundEquiv) {
-    foundEquiv = false;
-    std::set<IsecEquivalenceClass*> deleteThese;
-    for(IsecEquivalenceClass *eqclass : equivalences) {
-      if(eqclass != modifiedClass && modifiedClass->isEquivalent(eqclass)) {
-	modifiedClass->merge(eqclass);
-	deleteThese.insert(eqclass);
-	foundEquiv = true;
-      }
-    }
-    for(IsecEquivalenceClass *eqclass : deleteThese) {
-      auto eptr = std::find(equivalences.begin(), equivalences.end(), eqclass);
-      equivalences.erase(eptr);
-      delete eqclass;
-    }
-  }
+  cleanEquivalenceClasses(modifiedClass);
   
 // #ifdef DEBUG
 //   if(!verify())
@@ -734,30 +718,67 @@ void HomogeneityTet::mergeEquiv(PlaneIntersection *pt0, PlaneIntersection *pt1)
       equivalences.push_back(eqclass);
       pt0->setEquivalence(eqclass);
       pt1->setEquivalence(eqclass);
-    }
+    } // end if equivClass1 is null
     else {
       pt0->setEquivalence(equivClass1);
     }
-  }
+  } // end if equivClass0 is null
   else {
     if(equivClass1 == nullptr) {
       pt1->setEquivalence(equivClass0);
     }
     else if(equivClass0 != equivClass1) {
-// #ifdef DEBUG
-//       if(verboseplane)
-// 	oofcerr << "HomogeneityTet::mergeEquiv(2): merging classes"
-// 		<< std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+      if(verbose)
+	oofcerr << "HomogeneityTet::mergeEquiv(2): merging classes "
+		<< *equivClass0 << " and " << *equivClass1 << std::endl;
+#endif // DEBUG
       equivClass0->merge(equivClass1);
+#ifdef DEBUG
+      if(verbose)
+	oofcerr << "HomogeneityTet::mergeEquiv(2): merged class="
+		<< *equivClass0 << std::endl;
+#endif // DEBUG
       auto eptr = std::find(equivalences.begin(), equivalences.end(),
 			    equivClass1);
       assert(eptr != equivalences.end());
       equivalences.erase(eptr);
       delete equivClass1;
+      cleanEquivalenceClasses(equivClass0);
     }
   }
 } // end HomogeneityTet::mergeEquiv (two arg version)
+
+
+// cleanEquivalenceClasses takes a recently modified equivalence
+// class, checks to see if it's now equivalent to any other
+// equivalence classes, and merges the classes if it is.  It repeats
+// until no equivalences are found, because a merged classes can be
+// equivalent to another class that wasn't equivalent to either of the
+// mergees.
+
+void HomogeneityTet::cleanEquivalenceClasses(
+				     IsecEquivalenceClass *modifiedClass)
+{
+  bool foundEquiv = true;
+  while(foundEquiv) {
+    foundEquiv = false;
+    std::set<IsecEquivalenceClass*> deleteThese;
+    for(IsecEquivalenceClass *eqclass : equivalences) {
+      if(eqclass != modifiedClass && modifiedClass->isEquivalent(eqclass)) {
+	modifiedClass->merge(eqclass);
+	deleteThese.insert(eqclass);
+	foundEquiv = true;
+      }
+    }
+    for(IsecEquivalenceClass *eqclass : deleteThese) {
+      auto eptr = std::find(equivalences.begin(), equivalences.end(), eqclass);
+      equivalences.erase(eptr);
+      delete eqclass;
+    }
+  }
+}
+
 
 // checkEquiv checks to see if the given intersection point belongs in
 // any existing equivalence class, and puts it in it.  If the point
@@ -2431,7 +2452,7 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 	  if(coincidentPixelPlanes[f] == nullptr) {
 	    oofcerr << "HomogeneityTet::findFaceFacets: facet=" << faceFacets[f]
 		    << std::endl;
-	    faceFacets[f].dump("facefacet_orig", cat);
+	    faceFacets[f].dump("facefacet_orig", cat, loopcount);
 	  }
 	}
       }
@@ -2499,7 +2520,6 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
     // merge points on different faces.
     std::vector<StrandedPoint> marooned = matchStrandedPoints(
 		      strandedPoints, looseEndCatalog, pointsHaveChanged);
-
 #ifdef DEBUG
     if(verbosecategory) {
       oofcerr << "HomogeneityTet::findFaceFacets: back from matchStrandedPoints"
@@ -2545,11 +2565,10 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 #endif // DEBUG
       FaceFacet &facet = faceFacets[face];
       
-      // First find the existing face facet edges that lie on tet edges.
-      // (TODO: Can this be done more efficiently earlier, perhaps
-      // during the getEdgesOnFaces stage? Possibly not, because the
-      // resolution of stranded and marooned points moves some points
-      // onto edges.)
+      // First find the existing face facet edges that lie on tet
+      // edges.  This can't be done more efficiently earlier, perhaps
+      // during the getEdgesOnFaces stage, because the resolution of
+      // stranded and marooned points moves some points onto edges.)
       std::vector<FaceFacetEdgeSet> edgeEdges(NUM_TET_FACE_EDGES);
       for(FaceFacetEdge *edge : facet.edges()) {
 	unsigned int faceEdge = edge->findFaceEdge(face, this);

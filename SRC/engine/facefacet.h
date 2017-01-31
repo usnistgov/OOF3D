@@ -222,7 +222,7 @@ public:
   void removeOpposingEdges();
   void fixNonPositiveArea(HomogeneityTet*, unsigned int cat);
 #ifdef DEBUG
-  void dump(std::string, unsigned int) const;
+  void dump(std::string, unsigned int, unsigned int=NONE) const;
   std::string shortDescription() const;
   friend class CSkeletonElement;
 #endif // DEBUG

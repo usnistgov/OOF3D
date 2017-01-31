@@ -150,6 +150,9 @@ private:
 						 LooseEndCatalog&, bool&);
   bool resolveFaceFacetCoincidences(unsigned int, LooseEndSet&,
 				    const std::vector<FaceFacetEdgeSet>&);
+
+  void cleanEquivalenceClasses(IsecEquivalenceClass*);
+  
 public:
   HomogeneityTet(const CSkeletonElement*, const CMicrostructure*
 #ifdef DEBUG

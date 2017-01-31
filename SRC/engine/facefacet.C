@@ -1247,9 +1247,13 @@ std::ostream &operator<<(std::ostream &os, const FaceFacet &facet) {
 
 #ifdef DEBUG
 
-void FaceFacet::dump(std::string basename, unsigned int cat) const {
+void FaceFacet::dump(std::string basename, unsigned int cat, unsigned int iter)
+  const
+{
   std::string filename = (basename + to_string(face) +
-			  "cat" + to_string(cat) + ".lines");
+			  "cat" + to_string(cat) +
+			  (iter != NONE ? "_" + to_string(iter) : "")
+			  + ".lines");
  
   oofcerr << "FaceFacet::dump: writing " << filename << std::endl;
   std::ofstream file(filename);
