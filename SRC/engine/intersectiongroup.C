@@ -96,6 +96,8 @@ void IntersectionGroup::eraseMatched(const std::vector<bool> &matched,
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 
 // Methods used by HomogeneityTet::resolveFaceFacetCoincidences
 
@@ -422,6 +424,10 @@ bool IntersectionGroup::tentCheck(HomogeneityTet *htet, unsigned int face,
   return true;			//  all is ok
 } // end IntersectionGroup::tentCheck
 
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+
 bool IntersectionGroup::fixOccupiedEdges(
 			 HomogeneityTet *htet,
 			 unsigned int face,
@@ -564,270 +570,10 @@ bool IntersectionGroup::fixOccupiedEdges(
   return false;
 } // end IntersectionGroup::fixOccupiedEdges
 
-//#define OLDFIXXING
-#ifdef OLDFIXXING
-void IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
-				     LooseEndSet &looseEnds)
-{
-  // Merge points at the endpoints of crossing segments.
-  
-  // isecs is a list of FaceEdgeIntersections, each of which contains
-  // pointers to an intersection point (PlaneIntersection) on the edge
-  // of a face and the segment (FaceFacetEdge) that leads to it.  When
-  // we talk about points or segments in the intersection group, those
-  // are what we're talking about.
 
-  // If one segment in the intersection group crosses another, the two
-  // must actually meet, and their intersection points should be
-  // merged.  There can be more than one crossing, but there can't be
-  // more than one independent crossing -- if multiple segments cross,
-  // they must all merge into the same point.
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-  // TODO: If the face is small there's a chance that all
-  // intersections on all three edges of the face are in a single
-  // IntersectionGroup.  In that case the method used here won't work.
 
-  // This fix only handles crossing segments that have endpoints on
-  // the same tet edge. 
-
-#ifdef DEBUG
-  if(htet->verboseFace()) {
-    oofcerr << "IntersectionGroup::fixCrossings: this=" << std::endl;
-    std::cerr << *this << std::endl;
-  }
-  OOFcerrIndent indent(2);
-#endif // DEBUG
-
-  // This process rewrites the isecs vector.  The new vector is built
-  // in newIsecs, which replaces isecs at the end.
-  std::vector<FaceEdgeIntersection*> newIsecs;
-
-  // beginIsec and endIsec delimit a range of FaceEdgeIntersections in
-  // isecs that are on the same tet edge.
-  unsigned int beginIsec = 0;
-  while(beginIsec < size()) {
-    unsigned int edgeno = isecs[beginIsec]->faceEdge();
-    unsigned int endIsec = beginIsec;
-#ifdef DEBUG
-    if(htet->verboseFace())
-      oofcerr << "IntersectionGroup::fixCrossings: beginIsec=" << beginIsec
-	      << " edgeno=" << edgeno << std::endl;
-    OOFcerrIndent indnt(2);
-#endif // DEBUG
-    do {
-      endIsec++;
-      // TODO: Don't compare faceEdge().  Use
-      // PlaneIntersection::sharedFace(), as in
-      // FaceEdgeIntersection::crosses().
-    } while(endIsec < size() && isecs[endIsec]->faceEdge() == edgeno);
-
-#ifdef DEBUG
-    if(htet->verboseFace()) {
-      oofcerr << "IntersectionGroup::fixCrossings: beginIsec=" << beginIsec
-	      << " endIsec=" << endIsec << std::endl;
-    }
-#endif // DEBUG
-
-    if(endIsec > beginIsec+1) {
-      // There are two or more FaceEdgeIntersections on the same tet edge.
-      
-      // firstXing is the first segment in the group that crosses
-      // another segment in the group.
-      unsigned int firstXing = NONE;
-      // tempXing is the segment that crosses firstXing.
-      unsigned int tempXing = NONE;
-      // Find the first segment that crosses any other
-      for(unsigned int i=beginIsec; i<endIsec-1 && firstXing==NONE; i++) {
-	for(unsigned int j=i+1; j<endIsec; j++) {
-	  if(isecs[i]->crosses(isecs[j], face, htet
-#ifdef DEBUG
-			       , htet->verboseFace()
-#endif // DEBUG
-			       ))
-	    {
-#ifdef DEBUG
-	      if(htet->verboseFace()) {
-		oofcerr << "IntersectionGroup::fixCrossings:"
- 			<< " found first crossing:" << std::endl;
-		oofcerr << "IntersectionGroup::fixCrossings:   " << *isecs[i]
-			<< std::endl;
-		oofcerr << "IntersectionGroup::fixCrossings:   " << *isecs[j]
-			<< std::endl;
-	      }
-#endif // DEBUG
-	      firstXing = i;
-	      tempXing = j;
-	      break;
-	    }
-	}
-      }
-#ifdef DEBUG
-      if(htet->verboseFace()) {
-	oofcerr << "IntersectionGroup::fixCrossings: firstXing=" << firstXing
-		<< " tempXing=" << tempXing << std::endl;
-      }
-#endif // DEBUG
-      
-      if(firstXing == NONE) {
-	// There are no crossing segments in this segment range.  Copy
-	// the range into newIsecs (which will replace isecs after
-	// we're done here).
-	for(unsigned int i=beginIsec; i<endIsec; i++)
-	  newIsecs.push_back(isecs[i]);
-	beginIsec = endIsec;
-	continue;	// next iteration of while(beginIsec < size())
-      }
-
-      // Find the last segment that crosses any other.  It's either
-      // tempXing or later, because tempXing > firstXing and tempXing
-      // crosses another segment (firstXing).
-      unsigned int lastXing = NONE;
-      for(unsigned int i=endIsec-1; i>tempXing && lastXing==NONE; i--) {
-	for(unsigned int j=beginIsec; j<i; j++) {
-	  if(isecs[i]->crosses(isecs[j], face, htet
-#ifdef DEBUG
-			       , htet->verboseFace()
-#endif // DEBUG
-			       ))
-	    {
-#ifdef DEBUG
-	      if(htet->verboseFace()) {
-		oofcerr << "IntersectionGroup::fixCrossings:"
-			<< " found last crossing:" << std::endl;
-		oofcerr << "IntersectionGroup::fixCrossings:   " << *isecs[i]
-			<< std::endl;
-		oofcerr << "IntersectionGroup::fixCrossings:   " << *isecs[j]
-			<< std::endl;
-	      }
-#endif // DEBUG
-	      lastXing = i;
-	      break;
-	    }
-	}
-      }
-      // The previous loop didn't check tempXing, because it's a known
-      // crossing.  If the loop didn't find another crossing, tempXing is
-      // the last one.
-      if(lastXing == NONE)
-	lastXing = tempXing;
-      
-      // #ifdef DEBUG
-      //   if(htet->verboseFace()) {
-      //     oofcerr << "IntersectionGroup::fixCrossings: lastXing=" << lastXing
-      // 	    << std::endl;
-      //   }
-      // #endif // DEBUG
-
-      // Make a new GenericIntersection merging the planes of all of the
-      // original intersections.
-      GenericIntersection *newPt = new GenericIntersection(htet);
-      htet->extraPoints.insert(newPt);
-      for(unsigned int i=firstXing; i<lastXing+1; i++) {
-	isecs[i]->corner()->copyPlanesToIntersection(newPt);
-      }
-#ifdef DEBUG
-      if(htet->verboseFace()) {
-	oofcerr << "IntersectionGroup::fixCrossings: new GenericIntersection! "
-		<< *newPt << std::endl;
-      }
-#endif // DEBUG
-      newPt->computeLocation();
-#ifdef DEBUG
-      if(htet->verboseFace()) {
-	oofcerr << "IntersectionGroup::fixCrossings:                         "
-		<< " location3D=" << newPt->location3D()
-		<< " getLocation3D=" << newPt->getLocation3D() << std::endl;
-      }
-#endif // DEBUG
-      htet->checkEquiv(newPt);	// merges equivalence classees
-#ifdef DEBUG
-      if(htet->verboseFace()) {
-	oofcerr << "IntersectionGroup::fixCrossings:                         "
-		<< " back from checkEquiv" << std::endl;
-      }
-#endif // DEBUG
-      // Find out where newPt is on the face.
-      EdgePosition newT;
-      unsigned int newEdge = NONE;
-      htet->findFaceEdge(newPt, face, newEdge, newT); // computes newEdge, newT
-      
-// #ifdef DEBUG
-//   if(htet->verboseFace()) {
-//     oofcerr << "IntersectionGroup::fixCrossings: newPt=" << *newPt << std::endl;
-//   }
-// #endif // DEBUG
-
-      unsigned int nStarts = 0;
-      unsigned int nEnds = 0;
-      for(unsigned int i=firstXing; i<=lastXing; i++) {
-	if(isecs[i]->start())
-	  nStarts++;
-	else
-	  nEnds++;
-      }
-
-      // Replace entries in the LooseEndSet with new ones using newPt, or
-      // discard them if they're part of a start/end pair.  keepStarts is
-      // the number of start points to keep.  Since all the points will
-      // end up at the same place, it doesn't matter which ones we keep as
-      // long as we end up with the right number of starts and ends.
-      unsigned int keepStarts = nStarts > nEnds ? nStarts-nEnds : 0;
-      unsigned int keepEnds   = nEnds > nStarts ? nEnds-nStarts : 0;
-// #ifdef DEBUG
-//   if(htet->verboseFace())
-//     oofcerr << "IntersectionGroup::fixCrossings: keepStarts=" << keepStarts
-// 	    << " keepEnds=" << keepEnds << std::endl;
-// #endif // DEBUG
-      unsigned int startCount = 0;	// number of start points already kept
-      unsigned int endCount = 0;
-      newIsecs.insert(newIsecs.end(), isecs.begin(), isecs.begin()+firstXing);
-      if(keepStarts > 0 || keepEnds > 0) {
-	for(unsigned int i=firstXing; i<=lastXing; i++) {
-	  FaceEdgeIntersection *oldfei = isecs[i];
-	  bool isStart = oldfei->start();
-	  if((isStart && startCount < keepStarts) ||
-	     (!isStart && endCount < keepEnds))
-	    {
-	      FaceEdgeIntersection *newfei =
-		htet->newFaceEdgeIntersection(newPt, oldfei->edge(), isStart);
-	      newfei->setFaceEdge(newEdge, newT);
-	      newIsecs.push_back(newfei);
-	      looseEnds.insert(newfei);
-	      if(isStart)
-		startCount++;
-	      else
-		endCount++;
-	    }
-	  looseEnds.erase(oldfei);
-	}
-      }
-      else {
-	// Don't keep any of the endpoints of crossing segments.
-	for(unsigned int i=firstXing; i<=lastXing; i++)
-	  looseEnds.erase(isecs[i]);
-      }
-      newIsecs.insert(newIsecs.end(), isecs.begin()+lastXing+1, isecs.end());
-    } // end if there is more than one intersection on the edge
-
-    else {
-      // There's only one FaceEdgeIntersection on the edge.  Copy it
-      // to newIsecs.
-      newIsecs.push_back(isecs[beginIsec]);
-    }
-    
-    beginIsec = endIsec;
-  } // end while beginIsec < isecs.size()
-  isecs = std::move(newIsecs);
-
-#ifdef DEBUG
-  if(htet->verboseFace())
-    oofcerr << "IntersectionGroup::fixCrossings: done" << std::endl;
-#endif // DEBUG
-} // end IntersectionGroup::fixCrossings
-#endif // OLDFIXXING
-
-#define NEWFIXXING
-#ifdef NEWFIXXING
 bool IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
 				     LooseEndSet &looseEnds)
 {
@@ -916,11 +662,13 @@ bool IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
 		<< std::endl;
       }
 #endif // DEBUG
-      // Find two end points that are in the intersection group and on
-      // different segments.  If there are more than two, pick the
-      // ones that are closest to one another.
+      // Find two end points of seg0 and seg1 that are in the
+      // intersection group and on different segments.  If there are
+      // more than two, pick the ones that are closest to one another.
       std::vector<FaceEdgeIntersection*> fei0vec; // candidate ends of seg0
       std::vector<FaceEdgeIntersection*> fei1vec; // candidate ends of seg1
+      fei0vec.reserve(2);
+      fei1vec.reserve(2);
       for(FaceEdgeIntersection *isec : isecs) {
 	if(isec->edge() == seg0)
 	  fei0vec.push_back(isec);
@@ -971,7 +719,7 @@ bool IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
 	}
       }
       assert(fei0 != nullptr && fei1 != nullptr);
-      
+
 #ifdef DEBUG
       if(fei0 == nullptr || fei1 == nullptr) {
 	throw ErrProgrammingError("Couldn't find fei0 or fei1!",
@@ -986,42 +734,55 @@ bool IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
 #endif // DEBUG
       PlaneIntersection *pt0 = fei0->corner();
       PlaneIntersection *pt1 = fei1->corner();
-      const FacePlane *fp = pt0->sharedFace(pt1, facePlane);
-#ifdef DEBUG
-      if(htet->verboseFace()) {
-	if(fp != nullptr)
-	  oofcerr << "IntersectionGroup::fixCrossings: fp=" << *fp << std::endl;
-	else
-	  oofcerr << "IntersectionGroup::fixCrossings: fp=nullptr" << std::endl;
-      }
-#endif // DEBUG
-      if((fp && fei0->crossesSameEdge(fei1, face, fp, htet
-#ifdef DEBUG
-			     , htet->verboseFace()
-#endif // DEBUG
-			      ))
-       ||
-	 (!fp && fei0->crossesDiffEdge(fei1
-#ifdef DEBUG
-			     , htet->verboseFace()
-#endif // DEBUG
-				       )))
-	{
-#ifdef DEBUG
-	  if(htet->verboseFace())
-	    oofcerr << "IntersectionGroup::fixCrossings: crossing detected!"
-		    << std::endl;
-#endif // DEBUG
-	  mergers.push_back(fei0);
-	  mergers.push_back(fei1);
-	}
-#ifdef DEBUG
-      else {
-	if(htet->verboseFace())
-	  oofcerr << "IntersectionGroup::fixCrossings: no crossing"
-		  << std::endl;
 
-      }
+      // If the far ends of the two chosen segments are closer than
+      // the near ends, then they must be in a different
+      // IntersectionGroup, and that group is the one that needs to be
+      // checked.  If the segments cross, we need to merge the closest
+      // pair of ends.
+      double d2 = norm2(pt0->location3D() - pt1->location3D());
+      double dfar2 = norm2(fei0->remoteCorner()->location3D() -
+			   fei1->remoteCorner()->location3D());
+      if(d2 <= dfar2) {
+	// The near ends of fei0 and fei1 are closer than the far ends.
+	const FacePlane *fp = pt0->sharedFace(pt1, facePlane);
+#ifdef DEBUG
+	if(htet->verboseFace()) {
+	  if(fp != nullptr)
+	    oofcerr << "IntersectionGroup::fixCrossings: fp=" << *fp
+		    << std::endl;
+	  else
+	    oofcerr << "IntersectionGroup::fixCrossings: fp=nullptr"
+		    << std::endl;
+	}
+#endif // DEBUG
+	if((fp && fei0->crossesSameEdge(fei1, face, fp, htet
+#ifdef DEBUG
+					, htet->verboseFace()
+#endif // DEBUG
+					))
+	   ||
+	   (!fp && fei0->crossesDiffEdge(fei1
+#ifdef DEBUG
+					 , htet->verboseFace()
+#endif // DEBUG
+					 )))
+	  {
+#ifdef DEBUG
+	    if(htet->verboseFace())
+	      oofcerr << "IntersectionGroup::fixCrossings: crossing detected!"
+		      << std::endl;
+#endif // DEBUG
+	    mergers.push_back(fei0);
+	    mergers.push_back(fei1);
+	  }
+#ifdef DEBUG
+	else {
+	  if(htet->verboseFace())
+	    oofcerr << "IntersectionGroup::fixCrossings: no crossing"
+		    << std::endl;
+	}
+      }	// end if near ends are closer to each other than the far ends are.=
 #endif // DEBUG
     }  // end loop over segments seg1
   } // end loop over segments seg0
@@ -1121,4 +882,3 @@ bool IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
   }   // end if there are FaceEdgeIntersections to be merged
   return false;
 }  // end IntersectionGroup::fixCrossings
-#endif // NEWFIXXING

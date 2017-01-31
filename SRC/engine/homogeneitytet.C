@@ -2366,47 +2366,6 @@ const HPixelPlane *HomogeneityTet::orientedOrthogonalPlane_(
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// #ifdef CLEAN_UP_LOOSE_ENDS
-// // cleanUpLooseEnds removes a loose start or end from the given sets
-// // of FaceEdgeIntersections, when it's known that there's at least one
-// // extra one.  It looks at all pairs of adjacent points on each edge,
-// // and removes one member of the pair with the smallest separation.
-// // It only looks at points which are either starts or stops, according
-// // to the "start" argument.
-
-// static bool cleanUpLooseEnds(std::vector<LooseEndMap> &looseEnds, bool start) {
-//   double smallestDist = std::numeric_limits<double>::max();
-//   unsigned int edge = NONE;
-//   LooseEndMap::iterator deleteMe;
-
-//   for(unsigned int e=0; e<looseEnds.size(); e++) {
-//     LooseEndMap &lem = looseEnds[e];
-//     LooseEndMap::iterator i = lem.begin();
-//     if(i != lem.end()) {
-//       LooseEndMap::iterator prev = i;
-//       i++;
-//       for( ; i!=lem.end(); ++i) {
-// 	if((*i).second.start() == start && (*prev).second.start() == start &&
-// 	   (*i).first - (*prev).first < smallestDist)
-// 	  {
-// 	    smallestDist = (*i).first - (*prev).first;
-// 	    deleteMe = i;
-// 	    edge = e;
-// 	  }
-// 	prev = i;
-//       }
-//     }
-//   }
-//   if(edge != NONE) {
-//     looseEnds[edge].erase(deleteMe);
-//     return true;
-//   }
-//   return false;
-// }
-// #endif // CLEAN_UP_LOOSE_ENDS
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
 FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
 					  const FacetMap2D &planeFacets)
 {
@@ -2686,6 +2645,9 @@ FaceFacets HomogeneityTet::findFaceFacets(unsigned int cat,
       facet.fixNonPositiveArea(this, cat);
 
 #ifdef DEBUG
+      if(verboseface) {
+	facet.dump("facefacet", cat);
+      }
       verboseface = false;
 #endif // DEBUG
     } // end if face isn't coincident with a pixel plane (3)
@@ -3355,7 +3317,9 @@ bool HomogeneityTet::resolveFaceFacetCoincidences(
 //       oofcerr << "HomogeneityTet::resolveFaceFacetCoincidences: done with ig"
 // 	      << std::endl;
 // #endif // DEBUG
-  }
+
+  } // end loop over intersectionGroups, ig.
+  
 #ifdef DEBUG
   if(verboseface)
     oofcerr << "HomogeneityTet::resolveFaceFacetCoincidences: "
