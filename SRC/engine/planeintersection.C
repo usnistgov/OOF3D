@@ -1494,18 +1494,6 @@ unsigned int MultiFaceMixin<BASE>::getPolyEdge(const PixelPlaneFacet*) const {
   return NONE;
 }
 
-// // Is the given point on the non-positive side of all of the faces?
-// // TODO: Is it better to use barycentric coords for this?
-
-// template <class BASE>
-// bool MultiFaceMixin<BASE>::inside(const Coord3D &pt) const {
-//   for(const FacePlane *face : BASE::faces_) {
-//     if(face->outside(pt))
-//       return false;
-//   }
-//   return true;
-// }
-
 // Given a polygon edge index, return the fractional position of this
 // intersection on the edge.
 

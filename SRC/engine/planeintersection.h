@@ -735,6 +735,12 @@ class MultiFaceMixin : public BASE
 {
 public:
   MultiFaceMixin(HomogeneityTet*);
+
+  // Is the given point on the non-positive side of all of the faces?
+  // TODO: Is it better to use barycentric coords for this?
+  // TODO: Why does this have to be defined in this file?  It used to
+  // be in planeintersection.C, but then the compiler suddenly stopped
+  // instantiating it unless it's here instead.
   bool inside(const Coord3D &pt) const {
     for(const FacePlane *face : BASE::faces_) {
       if(face->outside(pt))
@@ -742,6 +748,7 @@ public:
     }
     return true;
   }
+  
   virtual EdgePosition getPolyFrac(unsigned int, const PixelPlaneFacet*) const;
   virtual unsigned int getPolyEdge(const PixelPlaneFacet*) const;
   // I'm not sure why getOtherFaceIndex has to be virtual, but it
