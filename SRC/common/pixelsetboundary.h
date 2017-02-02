@@ -129,50 +129,6 @@ Coord3D triplePlaneIntersection(const Plane*, const Plane*, const Plane*);
 Coord3D triplePlaneIntersection(const PixelPlane*, const PixelPlane*,
 				const PixelPlane*);
 
-// #ifdef OLDPIXELPLANE
-// class PixelPlane {
-// private:
-//   static const unsigned int proj_dirs[6][2];
-//   unsigned int proj_index; // index into proj_dirs
-//   unsigned int direction_;
-//   int offset_;
-//   int normal_;
-// public:
-//   PixelPlane(unsigned int dir, int offset, int normal);
-//   // The null constructor is provided only so that we can create
-//   // vectors of PixelPlanes.  The elements of the vector should
-//   // reinitialized with real PixelPlane data.
-//   PixelPlane() : proj_index(0), direction_(0), offset_(-1), normal_(0) {}
-//   unsigned int direction() const { return direction_; }	// x, y, or z (0, 1, 2)
-//   int offset() const { return offset_; } // distance from plane to the origin
-//   int normal() const { return normal_; } // +1 or -1
-//   bool operator<(const PixelPlane &other) const {
-//     return (direction_ < other.direction_ ||
-// 	    (direction_ == other.direction_ &&
-// 	     (offset_ < other.offset_ ||
-// 	      (offset_ == other.offset_ && normal_ < other.normal_))));
-//   }
-//   int getCategoryFromPoint(const CMicrostructure*, const Coord2D&) const;
-//   bool contains(const Coord3D&) const;
-//   PixelPlane inverted() const {
-//     return PixelPlane(direction_, offset_, -normal_);
-//   }
-
-//   // The arguments and return values for these conversion routines are
-//   // all in pixel and voxel units, not physical units.
-//   Coord2D convert2Coord2D(const Coord3D&) const;
-//   Coord3D convert2Coord3D(const Coord2D&) const;
-//   ICoord2D convert2Coord2D(const ICoord3D&) const;
-//   ICoord3D convert2Coord3D(const ICoord2D&) const;
-//   // When converting to a voxel, not just a 3D position, the voxel on
-//   // the correct side of the plane must be returned.  This subtracts 1
-//   // if the normal is positive.
-//   ICoord3D convert2Voxel3D(const ICoord2D&) const;
-
-//   ICoord3D normalVector() const;
-// };
-// #endif // OLDPIXELPLANE
-
 std::ostream &operator<<(std::ostream&, const Plane&);
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -250,6 +206,7 @@ public:
     return other.secondPt() == firstPt();
   }
   bool horizontal() const { return loop_->horizontal(loopseg_); }
+  ICoord2D direction() const;
   int length() const;
   bool operator<(const PixelBdyLoopSegment&) const; // for std::set
   bool operator==(const PixelBdyLoopSegment&) const;

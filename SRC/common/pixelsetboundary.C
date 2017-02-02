@@ -451,6 +451,19 @@ int PixelBdyLoopSegment::length() const {
   return abs(delta[0]);
 }
 
+ICoord2D PixelBdyLoopSegment::direction() const {
+  ICoord2D dir = secondPt() - firstPt();
+  if(dir[0] > 0)
+    dir[0] = 1;
+  else if(dir[0] < 0)
+    dir[0] = -1;
+  else if(dir[1] > 0)
+    dir[1] = 1;
+  else
+    dir[1] = -1;
+  return dir;
+}
+
 bool PixelBdyLoopSegment::onRight(const Coord2D &pt) const {
   // TODO: Since a and b are ICoords and are horizontal or vertical,
   // the cross product here is unnecessary.  Just use > or < on the

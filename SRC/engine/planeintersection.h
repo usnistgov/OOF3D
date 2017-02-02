@@ -564,6 +564,16 @@ public:
     const = 0;
   virtual const PixelBdyLoopSegment *sharedLoopSeg(const MultiVSBbase*)
     const = 0;
+  virtual bool findColinearLinkedSegments(const PixelPlaneIntersectionNR*,
+					  PixelBdyLoopSegment&,
+					  PixelBdyLoopSegment&) const = 0;
+  virtual bool findColinearLinkedSegs(const SingleVSBbase*,
+				      PixelBdyLoopSegment&,
+				      PixelBdyLoopSegment&) const = 0;
+  virtual bool findColinearLinkedSegs(const MultiVSBbase*,
+				      PixelBdyLoopSegment&,
+				      PixelBdyLoopSegment&) const = 0;
+
 
   // If the second arg to onSameFacePlane is non-null, that plane will
   // be excluded from the calculation.  This is so that the plane of a
@@ -725,7 +735,13 @@ class MultiFaceMixin : public BASE
 {
 public:
   MultiFaceMixin(HomogeneityTet*);
-  bool inside(const Coord3D &pt) const;
+  bool inside(const Coord3D &pt) const {
+    for(const FacePlane *face : BASE::faces_) {
+      if(face->outside(pt))
+	return false;
+    }
+    return true;
+  }
   virtual EdgePosition getPolyFrac(unsigned int, const PixelPlaneFacet*) const;
   virtual unsigned int getPolyEdge(const PixelPlaneFacet*) const;
   // I'm not sure why getOtherFaceIndex has to be virtual, but it
@@ -753,6 +769,12 @@ public:
     const = 0;
   virtual const PixelBdyLoopSegment *sharedLoopSeg(const MultiVSBbase*)
     const = 0;
+  virtual bool findColinearLinkedSegs(const MultiVSBbase*,
+				      PixelBdyLoopSegment&,
+				      PixelBdyLoopSegment&) const = 0;
+  virtual bool findColinearLinkedSegs(const SingleVSBbase*,
+				      PixelBdyLoopSegment&,
+				      PixelBdyLoopSegment&) const = 0;  
   virtual ISEC_ORDER reverseOrdering(const SingleVSBbase*,
 				     PixelBdyLoopSegment&,
 				     PixelBdyLoopSegment&,
@@ -786,6 +808,15 @@ public:
 					 const PixelPlaneIntersectionNR*) const;
   virtual const PixelBdyLoopSegment *sharedLoopSeg(const SingleVSBbase*) const;
   virtual const PixelBdyLoopSegment *sharedLoopSeg(const MultiVSBbase*) const;
+  virtual bool findColinearLinkedSegments(const PixelPlaneIntersectionNR*,
+					  PixelBdyLoopSegment&,
+					  PixelBdyLoopSegment&) const;
+  virtual bool findColinearLinkedSegs(const SingleVSBbase*,
+				      PixelBdyLoopSegment&,
+				      PixelBdyLoopSegment&) const;
+  virtual bool findColinearLinkedSegs(const MultiVSBbase*,
+				      PixelBdyLoopSegment&,
+				      PixelBdyLoopSegment&) const;
 
   virtual ISEC_ORDER getOrdering(const PixelPlaneIntersectionNR*,
 				 PixelBdyLoopSegment&,
@@ -806,6 +837,8 @@ public:
 // MultiVSBmixIn is for intersections that occur on multiple VSB loop
 // edges.  They are therefore on voxel corners.
 
+// PBLSegmentMap gives the position of a MultiVSBmixIn on each of its
+// VSB loop segments.
 typedef std::map<PixelBdyLoopSegment, double> PBLSegmentMap;
 
 class MultiVSBbase {
@@ -816,6 +849,12 @@ public:
     const = 0;
   virtual const PixelBdyLoopSegment *sharedLoopSeg(const MultiVSBbase*)
     const = 0;
+  virtual bool findColinearLinkedSegs(const MultiVSBbase*,
+				      PixelBdyLoopSegment&,
+				      PixelBdyLoopSegment&) const = 0;
+  virtual bool findColinearLinkedSegs(const SingleVSBbase*,
+				      PixelBdyLoopSegment&,
+				      PixelBdyLoopSegment&) const = 0;  
   virtual ISEC_ORDER reverseOrdering(const SingleVSBbase*,
 				     PixelBdyLoopSegment&,
 				     PixelBdyLoopSegment&,
@@ -847,6 +886,15 @@ public:
 					 const PixelPlaneIntersectionNR*) const;
   virtual const PixelBdyLoopSegment *sharedLoopSeg(const SingleVSBbase*) const;
   virtual const PixelBdyLoopSegment *sharedLoopSeg(const MultiVSBbase*) const;
+  virtual bool findColinearLinkedSegments(const PixelPlaneIntersectionNR*,
+					  PixelBdyLoopSegment&,
+					  PixelBdyLoopSegment&) const;
+  virtual bool findColinearLinkedSegs(const MultiVSBbase*,
+				      PixelBdyLoopSegment&,
+				      PixelBdyLoopSegment&) const;
+  virtual bool findColinearLinkedSegs(const SingleVSBbase*,
+				      PixelBdyLoopSegment&,
+				      PixelBdyLoopSegment&) const;
 
   virtual ISEC_ORDER getOrdering(const PixelPlaneIntersectionNR*,
 				 PixelBdyLoopSegment&,

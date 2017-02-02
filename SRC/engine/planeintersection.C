@@ -1494,17 +1494,17 @@ unsigned int MultiFaceMixin<BASE>::getPolyEdge(const PixelPlaneFacet*) const {
   return NONE;
 }
 
-// Is the given point on the non-positive side of all of the faces?
-// TODO: Is it better to use barycentric coords for this?
+// // Is the given point on the non-positive side of all of the faces?
+// // TODO: Is it better to use barycentric coords for this?
 
-template <class BASE>
-bool MultiFaceMixin<BASE>::inside(const Coord3D &pt) const {
-  for(const FacePlane *face : BASE::faces_) {
-    if(face->outside(pt))
-      return false;
-  }
-  return true;
-}
+// template <class BASE>
+// bool MultiFaceMixin<BASE>::inside(const Coord3D &pt) const {
+//   for(const FacePlane *face : BASE::faces_) {
+//     if(face->outside(pt))
+//       return false;
+//   }
+//   return true;
+// }
 
 // Given a polygon edge index, return the fractional position of this
 // intersection on the edge.
@@ -1659,6 +1659,118 @@ const PixelBdyLoopSegment *SingleVSBmixIn<BASE>::sharedLoopSeg(
     return &vsbSegment;
   return nullptr;
 }
+
+//===========
+
+template <class BASE>
+bool SingleVSBmixIn<BASE>::findColinearLinkedSegments(
+				      const PixelPlaneIntersectionNR *fi,
+				      PixelBdyLoopSegment &seg0,
+				      PixelBdyLoopSegment &seg1)
+  const
+{
+  // Double dispatch call. The segX arguments are reversed.
+  return fi->findColinearLinkedSegs(this, seg1, seg0);
+}
+
+template <class BASE>
+bool SingleVSBmixIn<BASE>::findColinearLinkedSegs(const SingleVSBbase *fi,
+						  PixelBdyLoopSegment &seg0,
+						  PixelBdyLoopSegment &seg1)
+  const
+{
+  const PixelBdyLoopSegment &thisseg = getLoopSeg();
+  const PixelBdyLoopSegment &thatseg = fi->getLoopSeg();
+  if(thisseg.direction() == thatseg.direction()) {
+    if(thisseg.follows(thatseg)) {
+      seg0 = thatseg;
+      seg1 = thisseg;
+      return true;
+    }
+    else if(thatseg.follows(thisseg)) {
+      seg0 = thisseg;
+      seg1 = thatseg;
+      return true;
+    }
+  }
+  return false;
+}
+
+template <class BASE>
+bool SingleVSBmixIn<BASE>::findColinearLinkedSegs(const MultiVSBbase *fi,
+						  PixelBdyLoopSegment &seg0,
+						  PixelBdyLoopSegment &seg1)
+  const
+{
+  const PixelBdyLoopSegment &thisseg = getLoopSeg();
+  for(auto &oseg : fi->getLoopSegs()) {
+    auto thisDir = thisseg.direction();
+    const PixelBdyLoopSegment &thatseg = oseg.first;
+    if(thisDir == thatseg.direction()) {
+      if(thisseg.follows(thatseg)) {
+	seg0 = thatseg;
+	seg1 = thisseg;
+	return true;
+      }
+      else if(thatseg.follows(thisseg)) {
+	seg0 = thisseg;
+	seg1 = thatseg;
+	return true;
+      }
+    }
+  }
+  return false;
+}
+
+template <class BASE>
+bool MultiVSBmixIn<BASE>::findColinearLinkedSegments(
+				      const PixelPlaneIntersectionNR *fi,
+				      PixelBdyLoopSegment &seg0,
+				      PixelBdyLoopSegment &seg1)
+  const
+{
+  // Double dispatch call. The segX arguments are reversed.
+  return fi->findColinearLinkedSegs(this, seg1, seg0);
+}
+
+template <class BASE>
+bool MultiVSBmixIn<BASE>::findColinearLinkedSegs(const SingleVSBbase *fi,
+						  PixelBdyLoopSegment &seg0,
+						  PixelBdyLoopSegment &seg1)
+  const
+{
+  return fi->findColinearLinkedSegs(this, seg1, seg0);
+}
+
+template <class BASE>
+bool MultiVSBmixIn<BASE>::findColinearLinkedSegs(const MultiVSBbase *fi,
+						  PixelBdyLoopSegment &seg0,
+						  PixelBdyLoopSegment &seg1)
+  const
+{
+  for(auto &oseg0 : getLoopSegs()) {
+    const PixelBdyLoopSegment &thisseg = oseg0.first;
+    auto thisDir = thisseg.direction();
+    for(auto &oseg1 : fi->getLoopSegs()) {
+      const PixelBdyLoopSegment &thatseg = oseg1.first;
+      if(thisDir == thatseg.direction()) {
+	if(thisseg.follows(thatseg)) {
+	  seg0 = thatseg;
+	  seg1 = thisseg;
+	  return true;
+	}
+	else if(thatseg.follows(thisseg)) {
+	  seg0 = thisseg;
+	  seg1 = thatseg;
+	  return true;
+	}
+      }
+    }
+  }
+  return false;
+}
+
+//=============
 
 template <class BASE>
 ISEC_ORDER SingleVSBmixIn<BASE>::getOrdering(const PixelPlaneIntersectionNR *fi,
@@ -1856,7 +1968,7 @@ ISEC_ORDER SingleVSBmixIn<BASE>::reverseOrdering(const SingleVSBbase *other,
   //      -----<-------------------------
   // Here ^ or here ^ ?
   throw ErrProgrammingError("Ambiguous intersection!", __FILE__, __LINE__);
-}
+} // end SingleVSBmixIn<>::reverseOrdering
 
 template <class BASE>
 ISEC_ORDER SingleVSBmixIn<BASE>::reverseOrdering(const MultiVSBbase *other,
@@ -2257,6 +2369,13 @@ bool SimpleIntersection::isMisordered(const SimpleIntersection *fi,
   }
   if(sameLoopSeg && nSharedPolySegs == 0) {
     return facet->polyCornerCoincidence(this, fi);
+  }
+  // It's possible for the intersections to have the same pixel
+  // planes, but be on *different* VSB loop segments, if a VSB loop is
+  // adjacent to a VSB cross section.  In that case, the intersections
+  // are on two colinear VSB loop segments.
+  if(nSharedPolySegs == 0 && samePixelPlanes(fi)) {
+    return facet->polyCornerVSBLineCoincidence(this, fi);
   }
   if(!sameLoopSeg && nSharedPolySegs == 0) {
     return facet->polyVSBCornerCoincidence(this, fi);

@@ -340,6 +340,8 @@ public:
 			     const PixelPlaneIntersectionNR*) const;
   bool polyVSBCornerCoincidence(const PixelPlaneIntersectionNR*,
 				const PixelPlaneIntersectionNR*) const;
+  bool polyCornerVSBLineCoincidence(const PixelPlaneIntersectionNR*,
+				    const PixelPlaneIntersectionNR*) const;
 
   bool badTopology(const SimpleIntersection*,
 		   const MultiFaceIntersection*) const;
