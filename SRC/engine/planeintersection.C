@@ -1314,6 +1314,10 @@ bool IntersectionPlanes<BASE>::belongsInEqClass(
 					const IsecEquivalenceClass *eqclass)
   const
 {
+  IsecEquivalenceClass *thisEqClass = getEquivalence();
+  if(thisEqClass != nullptr)
+    return thisEqClass->isEquivalent(eqclass);
+  
   PixelPlaneSet indepPlanes = independentPlanes_(pixelPlanes_);
   // for(const HPixelPlane *pp : pixelPlanes_) {
   //   bool independent = true;
@@ -3448,7 +3452,6 @@ void IsecEquivalenceClass::merge(IsecEquivalenceClass *other) {
 //     oofcerr << "IsecEquivalenceClass::merge: other intersections = {";
 //     std::cerr << other->intersections;
 //     oofcerr << "}" << std::endl;
-    
 //   }
 // #endif // DEBUG
 #ifdef DEBUG

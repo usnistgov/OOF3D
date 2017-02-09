@@ -1504,7 +1504,8 @@ static void classifyVSBcorner(const PixelPlaneIntersectionNR * const fi0,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-bool PixelPlaneFacet::resolveTwoFoldCoincidence(const PPIntersectionNRSet &isecs)
+bool PixelPlaneFacet::resolveTwoFoldCoincidence(
+					const PPIntersectionNRSet &isecs)
 {
   PixelPlaneIntersectionNR *fi0 = *isecs.begin();
   PixelPlaneIntersectionNR *fi1 = *isecs.rbegin();
@@ -2130,13 +2131,20 @@ bool PixelPlaneFacet::resolveMultipleCoincidence(
   double longestPairSize2 = pairs.back().length2;
   if(!(npts==totalIsecs && longestPairSize2 > CLOSEBY2)) {
     // We're not wrapping around.  Remove the longest pair.
+#ifdef DEBUG
+    if(verbose) {
+      oofcerr << "PixelPlaneFacet::resolveMultipleCoincidence: excluding pair "
+	<< *pairs.back().pt0 << " " << *pairs.back().pt1
+	<< std::endl;
+    }
+#endif // DEBUG
     pairs.pop_back();
   }
 
   // Until there's nothing more to fix, search the intersection pairs
   // from shortest to longest and fix them if necessary. 
-  bool fixedSomething = true;
-  while(fixedSomething) {
+  bool fixedSomething = false;
+  do {				// ... while(fixedSomething)
     fixedSomething = false;
     for(unsigned int i=0; i<pairs.size(); i++) {
 #ifdef DEBUG
@@ -2212,7 +2220,7 @@ bool PixelPlaneFacet::resolveMultipleCoincidence(
 	pairs[i].verified = true;
       }	// end if pair hasn't been checked
     } // end loop over intersection pairs i
-  } // end while(fixedSomething)
+  } while(fixedSomething);
 
 #ifdef DEBUG
   if(verbose)
@@ -3095,8 +3103,10 @@ bool PixelPlaneFacet::badTopology(const SimpleIntersection *si,
   if(mvi->nVSBSegments() == 2) {
     PixelBdyLoopSegment loopSeg0, loopSeg1;
     TurnDirection turn = mvi->categorizeCorner(loopSeg0, loopSeg1);
-  
-    if(!extraPolySegment) {
+
+    // TODO: Actually delete this block if it's really useless.  It
+    // causes problems with snaprefinecatbug.log, element 571.
+    if(false /*!extraPolySegment*/) {
       /* There are twelve geometries.  The voxel set boundaries can go
       // in either direction, so only six diagrams are needed.
       //                                 
@@ -3132,12 +3142,13 @@ bool PixelPlaneFacet::badTopology(const SimpleIntersection *si,
       //       L4, R4    |             /_/  |
       */                         
 
-      // We measure five topological booleans:
+      // We measure five (no, four) topological booleans:
       //
       // A. SimpleIntersection (s) is an entry
       // B. The SimpleIntersection is on the VSB segment that leaves the
       //    MultiVSBIntersection.    m----s--->---
       // C. The MultiVSBIntersection is first when traversing the polygon
+      //         Not used!  There could be an intermediate polygon edge.
       // D. VSB turns right.
       // E0. The polygon corner is on the right side of the first VSB segment
       // E1. The polygon corner is on the right side of the second VSB segment
@@ -3146,24 +3157,39 @@ bool PixelPlaneFacet::badTopology(const SimpleIntersection *si,
       // for A-D.  That's ok.)
 
       static std::set<std::vector<bool>> legalCombos = {
-	// A      B      C      D     E0     E1
-	{false, true,  true,  false, false, true},  // L0
-	{true,  false, false, false, true,  false}, // L1
-	{false, true,  true,  false, true,  true},  // L2	
-	{true,  false, false, false, true,  true},  // L3
-	{false, true,  false, false, false, false}, // L4
-	{true,  false, true,  false, false, false}, // L5
-	{true,  false, true,  true,  false, true},  // R0	
-	{false, true,  false, true,  true,  false}, // R1
-	{true,  false, true,  true,  false, false}, // R2
-	{false, true,  false, true,  false, false}, // R3
-	{true,  false, false, true,  true,  true},  // R4
-	{false, true,  true,  true,  true,  true}   // R5
+	// A      B      D     E0     E1
+	{false, true,  false, false, true},  // L0
+	{true,  false, false, true,  false}, // L1
+	{false, true,  false, true,  true},  // L2	
+	{true,  false, false, true,  true},  // L3
+	{false, true,  false, false, false}, // L4
+	{true,  false, false, false, false}, // L5
+	{true,  false, true,  false, true},  // R0	
+	{false, true,  true,  true,  false}, // R1
+	{true,  false, true,  false, false}, // R2
+	{false, true,  true,  false, false}, // R3
+	{true,  false, true,  true,  true},  // R4
+	{false, true,  true,  true,  true}   // R5
       };
+      // static std::set<std::vector<bool>> legalCombos = {
+      // 	// A      B      C      D     E0     E1
+      // 	{false, true,  true,  false, false, true},  // L0
+      // 	{true,  false, false, false, true,  false}, // L1
+      // 	{false, true,  true,  false, true,  true},  // L2	
+      // 	{true,  false, false, false, true,  true},  // L3
+      // 	{false, true,  false, false, false, false}, // L4
+      // 	{true,  false, true,  false, false, false}, // L5
+      // 	{true,  false, true,  true,  false, true},  // R0	
+      // 	{false, true,  false, true,  true,  false}, // R1
+      // 	{true,  false, true,  true,  false, false}, // R2
+      // 	{false, true,  false, true,  false, false}, // R3
+      // 	{true,  false, false, true,  true,  true},  // R4
+      // 	{false, true,  true,  true,  true,  true}   // R5
+      // };
   
       bool conditionA = si->crossingType() == ENTRY;
       bool conditionB = si->getLoopSeg() == loopSeg1;
-      bool conditionC = mviFirstOnPoly;
+      // bool conditionC = mviFirstOnPoly;
       bool conditionD = turn == RIGHT;
 
       // index of the polygon corner
@@ -3184,15 +3210,15 @@ bool PixelPlaneFacet::badTopology(const SimpleIntersection *si,
 		<< std::endl;
 	oofcerr << "PixelPlaneFacet::badTopology: conditionA=" << conditionA
 		<< " conditionB=" << conditionB
-		<< " conditionC=" << conditionC
+		// << " conditionC=" << conditionC
 		<< " conditionD=" << conditionD
 		<< " conditionE0=" << conditionE0
 		<< " conditionE1=" << conditionE1 << std::endl;
       }
 #endif // DEBUG
 
-      std::vector<bool> combo = {conditionA, conditionB, conditionC, conditionD,
-				 conditionE0, conditionE1};
+      std::vector<bool> combo = {conditionA, conditionB, /* conditionC, */
+				 conditionD, conditionE0, conditionE1};
       return legalCombos.find(combo) == legalCombos.end();
     } // end if !extraPolySegment
 
@@ -3201,13 +3227,6 @@ bool PixelPlaneFacet::badTopology(const SimpleIntersection *si,
     // because the SimpleIntersection and MultiVSBIntersection are on
     // opposite edges yet are close to one another.  Conditions A, B,
     // and D still apply.
-#ifdef DEBUG
-    if(polygonSize() != 4) {
-      oofcerr << "PixelPlaneFacet::badTopology:  si=" << *si << std::endl;
-      oofcerr << "PixelPlaneFacet::badTopology: mvi=" << *mvi << std::endl;
-      throw ErrProgrammingError("Unexpected geometry!", __FILE__, __LINE__);
-    }
-#endif // DEBUG
     
     static std::set<std::vector<bool>> legalCombos = {
       // A      B      D   
