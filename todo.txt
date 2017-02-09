@@ -14,6 +14,10 @@ Merge branches
 
 Use tcmalloc (already in Lizhong's branch?)
 
+Fix Basic Tutorial -- don't use "Group" on the jpeg image, it takes
+too long and uses up way too much memory if users don't hit "Stop"
+soon enough.
+
 
 
 At Some Later Time
