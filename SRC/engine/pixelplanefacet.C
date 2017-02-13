@@ -1411,14 +1411,16 @@ void PixelPlaneFacet::getEdgesOnFaces(FaceFacets &faceFacets) const {
 //       }
 // #endif // DEBUG
     for(const FacePlane *fp : faces) {
-      // Construct an edge in the reverse order on the face facet.
+      // Construct an edge in the reverse direction on the face
+      // facet.
       faceFacets[fp->face()].addEdge(
 			     new FaceFacetEdge(htet,
 					       edge->endPt()->referent(),
 					       edge->startPt()->referent(),
 					       pixplane));
-    }
-  }
+    } 
+  } // end loop over edges of the PixelPlaneFacet
+  
 //   for(FacetEdge *edge : edges) {
 // #ifdef DEBUG
 //     if(verbose)

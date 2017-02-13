@@ -214,7 +214,8 @@ public:
 		    HomogeneityTet*);
 
   void findLooseEnds(LooseEndSet&, std::vector<StrandedPoint>&) const;
-  
+  void removePerimeterEdges(LooseEndSet&);
+
   const std::set<FaceFacetEdge*, DerefCompare<FaceFacetEdge>> &edges() const {
     return edges_;
   }

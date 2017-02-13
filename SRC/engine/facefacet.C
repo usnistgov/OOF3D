@@ -21,6 +21,7 @@
 #include "engine/planeintersection.h"
 
 #include <math.h>
+#include <algorithm>
 
 FaceEdgeIntersection::FaceEdgeIntersection(PlaneIntersection *crnr,
 					   FaceFacetEdge *edge,
@@ -745,6 +746,8 @@ void FaceFacet::removeOpposingEdges() {
 // #endif // DEBUG
 }
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 Coord3D FaceFacet::getArea(HomogeneityTet *htet) const {
   Coord3D a;
   Coord3D fcenter = htet->faceCenter(face);
@@ -789,28 +792,28 @@ void FaceFacet::findLooseEnds(LooseEndSet &looseEnds,
     endPoints.push_back(
 		htet->newFaceEdgeIntersection((*seg)->endPt(), *seg, false));
   }
-#ifdef DEBUG
-  if(htet->verboseFace()) {
-    // At this point, fEdge hasn't been set in the
-    // FaceEdgeIntersection objects, so don't be surprised by the
-    // printed value.
-    oofcerr << "FaceFacet::findLooseEnds: face=" << face << std::endl;
-    oofcerr << "FaceFacet::findLooseEnds: startPoints="
-	    << std::endl;
-    for(const auto p: startPoints) {
-      OOFcerrIndent indent(2);
-      oofcerr << "FaceFacet::findLooseEnds: " << *p << std::endl;
-    }
-    oofcerr << "FaceFacet::findLooseEnds: endPoints="
-	    << std::endl;
-    for(const auto p: endPoints) {
-      OOFcerrIndent indent(2);
-      oofcerr << "FaceFacet::findLooseEnds: " << *p << std::endl;
-    }
-  }
-  if(!htet->verify())
-    throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verboseFace()) {
+//     // At this point, fEdge hasn't been set in the
+//     // FaceEdgeIntersection objects, so don't be surprised by the
+//     // printed value.
+//     oofcerr << "FaceFacet::findLooseEnds: face=" << face << std::endl;
+//     oofcerr << "FaceFacet::findLooseEnds: startPoints="
+// 	    << std::endl;
+//     for(const auto p: startPoints) {
+//       OOFcerrIndent indent(2);
+//       oofcerr << "FaceFacet::findLooseEnds: " << *p << std::endl;
+//     }
+//     oofcerr << "FaceFacet::findLooseEnds: endPoints="
+// 	    << std::endl;
+//     for(const auto p: endPoints) {
+//       OOFcerrIndent indent(2);
+//       oofcerr << "FaceFacet::findLooseEnds: " << *p << std::endl;
+//     }
+//   }
+//   if(!htet->verify())
+//     throw ErrProgrammingError("Verification failed!", __FILE__, __LINE__);
+// #endif // DEBUG
 
   // Match up existing start and end points.
   std::vector<bool> matchedStarts(nsegs, false);
@@ -827,16 +830,16 @@ void FaceFacet::findLooseEnds(LooseEndSet &looseEnds,
     } // end loop over end points e
   } // end loop over start points s
 
-#ifdef DEBUG
-  if(htet->verboseFace()) {
-    oofcerr << "FaceFacet::findLooseEnds: matchedStarts=";
-    std::cerr << matchedStarts;
-    oofcerr << std::endl;
-    oofcerr << "FaceFacet::findLooseEnds:   matchedEnds=";
-    std::cerr << matchedEnds;
-    oofcerr << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(htet->verboseFace()) {
+//     oofcerr << "FaceFacet::findLooseEnds: matchedStarts=";
+//     std::cerr << matchedStarts;
+//     oofcerr << std::endl;
+//     oofcerr << "FaceFacet::findLooseEnds:   matchedEnds=";
+//     std::cerr << matchedEnds;
+//     oofcerr << std::endl;
+//   }
+// #endif // DEBUG
 
   // All of the truly unmatched points must be on tet edges.  Sort
   // them by edge and intersection position along the edge by
@@ -875,6 +878,102 @@ void FaceFacet::findLooseEnds(LooseEndSet &looseEnds,
 
 } // end FaceFacet::findLooseEnds
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Find and remove edges that on tet edges.  If these are real edges,
+// they'll be re-added by findFaceFacets.  Spurious edges can arise
+// when a voxel edge brushes a tet edge.
+
+void FaceFacet::removePerimeterEdges(LooseEndSet &looseEnds) {
+  LooseEndSet removeTheseEnds;
+  FaceFacetEdgeSet removeTheseEdges;
+  // TODO: This is terribly inefficient.  Fix it.  It shouldn't need
+  // nested loops.
+  for(FaceEdgeIntersection *fei0 : looseEnds) {
+    for(FaceEdgeIntersection *fei1 : looseEnds) {
+      if(fei0 != fei1 &&
+	 fei0->faceEdge() == fei1->faceEdge() &&
+	 fei0->remoteCorner() == fei1->corner() &&
+	 fei1->remoteCorner() == fei0->corner())
+	{
+	  removeTheseEnds.insert(fei0);
+	  removeTheseEnds.insert(fei1);
+	  removeTheseEdges.insert(fei0->edge());
+	}
+    }
+  }
+  if(removeTheseEdges.empty())
+    return;
+
+  LooseEndSet keepTheseEnds;
+  std::set_difference(looseEnds.begin(), looseEnds.end(),
+		      removeTheseEnds.begin(), removeTheseEnds.end(),
+		      std::inserter(keepTheseEnds, keepTheseEnds.begin()),
+		      LooseEndSet::key_compare());
+  looseEnds = std::move(keepTheseEnds);
+
+  FaceFacetEdgeSet keepTheseEdges;
+  std::set_difference(edges_.begin(), edges_.end(),
+		      removeTheseEdges.begin(), removeTheseEdges.end(),
+		      std::inserter(keepTheseEdges, keepTheseEdges.begin()),
+		      FaceFacetEdgeSet::key_compare());
+  edges_ = std::move(keepTheseEdges);
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// // Find and remove face facet edges that lie on tet edges, and have no
+// // connecting edges on the face facet.  These edges can only arise
+// // from situations where one pixel plane facet intersects the tet only
+// // by roundoff error, and the perpendicular facets (that would have
+// // provided the connecting edges) don't intersect the tet.
+
+// bool FaceFacet::collapseDisconnected(LooseEndSet &looseEnds) {
+// #ifdef DEBUG
+//   if(htet->verboseFace()) {
+//     if(!looseEnds.empty()) {
+//       oofcerr << "FaceFacet::collapseDisconnected: face=" << face
+// 	      << " looseEnds=" << std::endl;
+//       OOFcerrIndent indent(2);
+//       for(FaceEdgeIntersection *fei : looseEnds)
+// 	oofcerr << "FaceFacet::collapseDisconnected: " << *fei << std::endl;
+//     }
+//     else
+//       oofcerr << "FaceFacet::collapseDisconnected: no loose ends" << std::endl;
+//   }
+// #endif // DEBUG
+//   FaceFacetEdgeSet collapseThese;
+//   for(FaceEdgeIntersection *fei0 : looseEnds) {
+//     for(FaceEdgeIntersection *fei1 : looseEnds) {
+//       if(fei0 != fei1 &&
+// 	 fei0->faceEdge() == fei1->faceEdge() &&
+// 	 fei0->remoteCorner() == fei1->corner() &&
+// 	 fei1->remoteCorner() == fei0->corner() &&
+// 	 // Don't collapse a facet edge that spans the whole tet edge.
+// 	 (fei0->corner()->equivalence()->nFaces() != 3 ||
+// 	  fei1->corner()->equivalence()->nFaces() != 3)
+// 	 )
+// 	{
+// 	  collapseThese.insert(fei0->edge());
+// 	}
+//     }
+//   }
+//   bool didSomething = !collapseThese.empty();
+
+//   for(FaceFacetEdge *edge : collapseThese) {
+// #ifdef DEBUG
+//     if(htet->verboseFace()) {
+//       oofcerr << "FaceFacet::collapseDisconnected: face=" << face
+// 	      << " collapsing " << *edge << std::endl;
+//     }
+// #endif // DEBUG
+//     edge->startPt()->equivalence()->merge(edge->endPt()->equivalence());
+//     // No need to remove the FaceEdgeIntersections from looseEnds,
+//     // since looseEnds will be rebuilt as soon as this function
+//     // returns.
+//   }
+//   return didSomething;
+// }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -1038,7 +1137,7 @@ Coord3D FaceFacet::getAreaCarefully(HomogeneityTet *htet) const {
   // First find sets of connected edges and compute their area.  These
   // maps map the equivalence classes of the loose starts and end to
   // the FaceFacetLoops that they belong to.
-
+  //
   // The data structures constructed here are somewhat redundant with
   // those used in HomogeneityTet::findFaceFacets, et al.  They could
   // be constructed earlier, but since they're not necessary in most
