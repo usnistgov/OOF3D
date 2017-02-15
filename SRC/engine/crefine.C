@@ -224,8 +224,8 @@ CSkeletonBase* Refine::refine(CSkeletonBase *skeleton, CSkeleton *newSkeleton)
 
 
     int count = 0;		// for progress bar
-    for(ElementSignatureVector::iterator j=elements.begin(); j!=elements.end();
-	++j) 
+    for(ElementSignatureVector::iterator j=elements.begin();
+	j!=elements.end() && !progress->stopped(); ++j) 
       {
 	CSkeletonElement *el = j->first;
 	// oofcerr << "Refine::refinement: " << *el << std::endl;
