@@ -296,8 +296,9 @@ CSkeletonBase* Refine::refine(CSkeletonBase *skeleton, CSkeleton *newSkeleton)
 	      }
 	    }
 	  }	// end loop over newElements
-	progress->setFraction((count+1.0)/skeleton->nelements());
-	progress->setMessage("refining skeleton: " + to_string(count+1) 
+	count++;
+	progress->setFraction((count*1.0)/skeleton->nelements());
+	progress->setMessage("refining skeleton: " + to_string(count) 
 			     + "/" + to_string(skeleton->nelements()));
 
 	delete refinement;
