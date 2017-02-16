@@ -36,7 +36,9 @@ class PixelBdyLoopSegment;
 
 // Intersection points within CLOSEBY of each other (measured in units
 // of the voxel size) are considered to be close enough to merit
-// special treatment as a group.
+// special treatment as a group.  CLOSEBY must be less than a voxel
+// size (1.0) and greater than any expected roundoff error in a
+// computed position.
 
 #define CLOSEBY 0.3
 #define CLOSEBY2 (CLOSEBY*CLOSEBY)

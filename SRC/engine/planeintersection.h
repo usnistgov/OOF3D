@@ -1499,5 +1499,6 @@ public:
 
 std::ostream &operator<<(std::ostream&, const IsecEquivalenceClass&);
 std::ostream &operator<<(std::ostream&, const Interiority&);
+std::ostream &operator<<(std::ostream&, const CrossingType&);
 
 #endif // PLANEINTERSECTION_H

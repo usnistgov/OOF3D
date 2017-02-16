@@ -312,7 +312,7 @@ public:
 		  );
   ~PixelPlaneFacet();
   void addEdge(FacetEdge*);
-  bool completeLoops();
+  bool completeLoops(unsigned int);
 
   double area() const;
   Coord3D center() const;
@@ -365,7 +365,7 @@ public:
 
 #ifdef DEBUG
   bool verbose;
-  void dump(unsigned) const;
+  void dump(const std::string&, unsigned int) const;
   void getEndPoints(unsigned int i, Coord3D &startPt, Coord3D &endPt) const {
     startPt = edges[i]->startPos3D();
     endPt = edges[i]->endPos3D();

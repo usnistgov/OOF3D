@@ -1521,8 +1521,6 @@ FacetMap2D HomogeneityTet::findPixelPlaneFacets(unsigned int cat,
 } // end HomogeneityTet::findPixelPlaneFacets
 
 
-#define MIN_POLYGON_AREA 1.e-10
-
 void HomogeneityTet::doFindPixelPlaneFacets(
 				    unsigned int cat,
 				    const HPixelPlane *pixplane,
@@ -1591,24 +1589,15 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 					       );
   facets[pixplane] = facet;
 
-//   // Check that the area is greater than a certain minimum.
-//   Coord2D polyCenter;
-//   for(unsigned int i=0; i<nn; i++) {
-//     polyCenter += tetPts[i]->location2D(pixplane);
-//   }
-//   polyCenter /= tetPts.size();
-//   double polyArea = 0;		// really twice the area
-//   for(unsigned int i=0; i<nn; i++) {
-//     polyArea += ((tetPts[i]->location2D(pixplane) - polyCenter) %
-// 		 (tetPts[(i+1)%nn]->location2D(pixplane) - polyCenter));
-//   }
-// #ifdef DEBUG
-//   if(verboseplane)
-//     oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: polyArea=" << polyArea
-// 	    << std::endl;
-// #endif	// DEBUG
-//   if(polyArea < MIN_POLYGON_AREA)
-//     return;
+  // There used to be a check here on the area of the tet-plane
+  // intersection.  The rest of the calculation would be skipped if
+  // the area was less than 1e-10.  That turned out to be a bad idea,
+  // because when a tet corner grazed a VSB corner, the infinitesimal
+  // intersection could be ignored on one pixel plane but not on
+  // another (if, for example, one of the VSB loops had a nontrivial
+  // intersection elsewhere and therefore had positive area).  Then
+  // the non-matching edges on a face could cause the face facet to be
+  // mistakenly completed around the entire face.
 
   // Find the bounding box of the tet intersection points.
   CRectangle tetBounds(tetPts[0]->location2D(pixplane),
@@ -1860,7 +1849,7 @@ void HomogeneityTet::doFindPixelPlaneFacets(
 
   // The facet contains a bunch of edges which may not yet form loops.
   // The loops need to be closed along the exterior of the polygon.
-  if(!facet->completeLoops()) {
+  if(!facet->completeLoops(cat)) {
 #ifdef DEBUG
     if(verboseplane) {
       oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: completeLoops failed, ignoring facet."
@@ -1945,13 +1934,34 @@ void HomogeneityTet::doFindPixelPlaneFacets(
       // The winding number calculation is easier if the interior
       // point is known not to coincide with any loop components.  The
       // loop segments are orthogonal and lined up on integer
-      // coordinates, so pick a non-integer interior point.
-      Coord2D testPt = nonIntegerInteriorPt(tetPts, pixplane);
-      int windingNumber = 0;
-      for(PixelBdyLoop *loop : loops) {
-	windingNumber += loop->windingNumber(testPt);
+      // coordinates, so pick a non-integer interior point.  This
+      // calculation will fail if all of the tetPts are at the same
+      // location, so check for that first.
+      const TetIntersection *pt0 = tetPts[0];
+      bool differentPts = false;
+      for(unsigned int kk=1; kk<tetPts.size(); kk++)
+	if(!tetPts[kk]->isEquivalent(pt0)) {
+	  differentPts = true;
+	  break;
+	}
+      if(differentPts) {
+	Coord2D testPt = nonIntegerInteriorPt(tetPts, pixplane);
+	int windingNumber = 0;
+	for(PixelBdyLoop *loop : loops) {
+	  windingNumber += loop->windingNumber(testPt);
+	}
+	homogeneous = windingNumber == 1;
       }
-      homogeneous = windingNumber == 1;
+      else {
+	// The tetPts are all equivalent and the polygon is
+	// degenerate, so we don't want to include any polygon edges
+	// in the facet.  NOTE: we can't do this check at the
+	// beginning when the tetPts are first computed, because the
+	// equivalence classes aren't complete at that point.  We
+	// *could* do it there, but we'd have to do it again here
+	// anyway.
+	homogeneous = false;
+      }
     }
     if(homogeneous || facetarea < 0.0) {
 #ifdef DEBUG
@@ -1975,7 +1985,7 @@ void HomogeneityTet::doFindPixelPlaneFacets(
       oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: cat=" << cat
       	      << " pixel plane=" << *pixplane
       	      << " final facet= " << *facet << std::endl;
-      facet->dump(cat);
+      facet->dump("pixelplane_final", cat);
     }
     // else
     //   oofcerr << "HomogeneityTet::doFindPixelPlaneFacets: cat=" << cat

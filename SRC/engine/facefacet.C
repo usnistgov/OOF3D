@@ -336,12 +336,27 @@ bool FaceEdgeIntersection::crossesSameEdge(const FaceEdgeIntersection *other,
       // betas are topologically impossible here.
 #ifdef DEBUG
       if(verbose)
-	oofcerr << "FaceEdgeIntersection::crossesSameEdge: alpha=" << alpha
-		<< " beta=" << beta << " parallel=" << parallel
-		<< ", returning " << (!parallel && alpha <= 1.0 && beta <= 1.0)
+	oofcerr << "FaceEdgeIntersection::crossesSameEdge:"
+		<< " alpha=" << alpha << " (1-" << (1-alpha) << ")"
+		<< " beta=" << beta << " (1-" << (1-beta) << ")"
+		<< " parallel=" << parallel
+		<< ", returning " << (!parallel && alpha < 0.5 && beta < 0.5)
 		<< std::endl;
+      // If alpha or beta is very close to 0 or 1, they probably ought
+      // to *be* 0 or 1, but aren't because of roundoff error.  That's
+      // ok.  This code is used to detect the situations in which
+      // alpha and beta are close to 0.  If they're close to 1, then
+      // their intersection will be handled when the other ends of the
+      // segments are examined.  However, if the segments cross, but
+      // alpha and beta aren't near 0 or 1, it's an error.
+      #define CLOSE_TO_END 0.001
+      if(alpha > CLOSE_TO_END && alpha < 1.-CLOSE_TO_END &&
+	 beta > CLOSE_TO_END && beta < 1.-CLOSE_TO_END)
+	throw ErrProgrammingError(
+	  "FaceEdgeIntersection::crossesSameEdge: Unexpected crossing point!",
+	  __FILE__, __LINE__);
 #endif // DEBUG
-      return !parallel && alpha <= 1.0 && beta <= 1.0;
+      return !parallel && alpha < 0.5 && beta < 0.5;
     }
 #ifdef DEBUG
     if(verbose)

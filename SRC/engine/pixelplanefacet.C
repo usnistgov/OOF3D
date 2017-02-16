@@ -735,21 +735,75 @@ double PixelPlaneFacet::polygonPerimeterDistance(
 
 // Utilities used by PixelPlaneFacet::completeLoops
 
+// FUTURE
+static void addPossibleCoincidence(PixelPlaneIntersectionNR *isec,
+				   std::set<PPIntersectionNRSet*> &clusters,
+				   const HPixelPlane *pixplane)
+{
+  Coord2D loc = isec->location2D(pixplane);
+  // See which existing clusters this point fits into.  It fits in if
+  // it's within CLOSEBY of any point in the cluster.
+  std::set<PPIntersectionNRSet*> matches;
+  for(PPIntersectionNRSet *cluster : clusters) {
+    for(PixelPlaneIntersectionNR *pt : *cluster) {
+      if(norm2(loc - pt->location2D(pixplane)) < CLOSEBY2) {
+	matches.insert(cluster);
+	break;			// done with this cluster
+      }
+    } // end loop over points in cluster
+  }   // end loop over clusters
+  if(matches.empty()) {
+    PPIntersectionNRSet *newcluster = new PPIntersectionNRSet();
+    newcluster->insert(isec);
+    clusters.insert(newcluster);
+  }
+  else {
+    // Add point to existing cluster.
+    auto front = matches.begin();
+    (*front)->insert(isec);	// *front is a PPIntersectionNRSet*
+    // Merge other clusters
+    auto merger = front;
+    while(++merger != matches.end()) {
+      (*front)->insert((*merger)->begin(), (*merger)->end());
+      delete *merger;
+      clusters.erase(*merger);
+    }
+  }
+}
+
 static void storeCoincidenceData(PixelPlaneIntersectionNR *isec,
 				 const HPixelPlane *pixplane,
 				 std::set<Coord2D> &coincidentLocs,
 				 IsecsNearCoord &coincidences)
 {
+  // IsecsNearCoord is a std::multimap that maps a Coord2D to all of
+  // the intersections that are near it, where "near" means closer
+  // than CLOSEBY, which is some fraction of a voxel side.  If a point
+  // is not near any previous points, a new map key is created at the
+  // point.  It's unfortunately necessary to loop over all the
+  // existing map keys, and not just stop when a nearby match is
+  // found, because there may be a closer one.
   Coord2D loc = pixplane->convert2Coord2D(isec->location3D());
+  double bestDist2 = std::numeric_limits<double>::max();
+  Coord2D bestPt;
   for(Coord2D p : coincidentLocs) {
-    if(norm2(loc-p) < CLOSEBY2) {
-      coincidences.insert(IsecsNearCoord::value_type(p, isec));
-      return;
+    double d2 = norm2(loc - p);
+    if(d2 < CLOSEBY2 && d2 < bestDist2) {
+      bestDist2 = d2;
+      bestPt = p;
     }
+    // if(norm2(loc-p) < CLOSEBY2) {
+    //   coincidences.insert(IsecsNearCoord::value_type(p, isec));
+    //   return;
+    // }
   }
-  coincidences.insert(IsecsNearCoord::value_type(loc, isec));
-  coincidentLocs.insert(loc);
-  return;
+  if(bestDist2 < std::numeric_limits<double>::max()) {
+    coincidences.insert(IsecsNearCoord::value_type(bestPt, isec));
+  }
+  else {
+    coincidences.insert(IsecsNearCoord::value_type(loc, isec));
+    coincidentLocs.insert(loc);
+  }
 }
 
 // class NullEdgePredicate {
@@ -788,7 +842,7 @@ static void incrementIsec(
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 
-bool PixelPlaneFacet::completeLoops() {
+bool PixelPlaneFacet::completeLoops(unsigned int cat) {
   // When this is called by doFindPixelPlaneFacets, the facet consists
   // of an ordered vector of segments, whose endpoints are all
   // TriplePixelPlaneIntersections or SimpleIntersections.  If the endpoint
@@ -817,6 +871,7 @@ bool PixelPlaneFacet::completeLoops() {
   if(verbose) {
     oofcerr << "PixelPlaneFacet::completeLoops: initial facet=" << *this
 	    << std::endl;
+    dump("pixelplane_orig", cat);
   }
 #endif // DEBUG
 
@@ -853,21 +908,21 @@ bool PixelPlaneFacet::completeLoops() {
 
 #ifdef DEBUG
   if(verbose) {
-    // oofcerr << "PixelPlaneFacet::completeLoops: after checkEquiv, facet="
-    // 	    << *this << std::endl;
-    // // oofcerr << "PixelPlaneFacet::completeLoops: after checkEquiv, eq classes="
-    // // 	    << std::endl;
-    // // OOFcerrIndent indent(2);
-    // // htet->dumpEquivalences();
-    // oofcerr << "PixelPlaneFacet::completeLoops: coincidences=" << std::endl;
+    oofcerr << "PixelPlaneFacet::completeLoops: after storeCoincidenceData:"
+    	    << *this << std::endl;
+    // oofcerr << "PixelPlaneFacet::completeLoops: after checkEquiv, eq classes="
+    // 	    << std::endl;
     // OOFcerrIndent indent(2);
-    // for(Coord2D pt : coincidentLocs) {
-    //   auto range = coincidences.equal_range(pt);
-    //   for(auto c=range.first; c!=range.second; ++c) {
-    // 	oofcerr << "PixelPlaneFacet::completeLoops: " << c->first << ": "
-    // 		<< *c->second << std::endl;
-    //   }
-    // }
+    // htet->dumpEquivalences();
+    oofcerr << "PixelPlaneFacet::completeLoops: coincidences=" << std::endl;
+    OOFcerrIndent indent(2);
+    for(Coord2D pt : coincidentLocs) {
+      auto range = coincidences.equal_range(pt);
+      for(auto c=range.first; c!=range.second; ++c) {
+    	oofcerr << "PixelPlaneFacet::completeLoops: " << c->first << ": "
+    		<< *c->second << std::endl;
+      }
+    }
   }
 
 //   if(!htet->verify()) {
@@ -1104,19 +1159,19 @@ bool PixelPlaneFacet::completeLoops() {
 #endif  // DEBUG
   for(PolyEdgeIntersections &polyedge : polyEdgeIntersections) {
     std::sort(polyedge.begin(), polyedge.end(), LtPolyFrac(this));
-// #ifdef DEBUG
-//     if(verbose) {
-//       if(!polyedge.empty()) {
-// 	oofcerr << "PixelPlaneFacet::completeLoops: sorted polyedge="
-// 		<< std::endl;
-// 	for(auto fib : polyedge) {
-// 	  OOFcerrIndent indent(2);
-// 	  oofcerr << "PixelPlaneFacet::completeLoops:  " << *fib
-// 		  << std::endl;
-// 	}
-//       }
-//     }
-// #endif // DEBUG
+#ifdef DEBUG
+    if(verbose) {
+      if(!polyedge.empty()) {
+	oofcerr << "PixelPlaneFacet::completeLoops: sorted polyedge="
+		<< std::endl;
+	for(auto fib : polyedge) {
+	  OOFcerrIndent indent(2);
+	  oofcerr << "PixelPlaneFacet::completeLoops:  " << *fib
+		  << std::endl;
+	}
+      }
+    }
+#endif // DEBUG
   }
 
   // At this point, polyEdgeIntersections contains edge intersections
@@ -2420,11 +2475,22 @@ bool PixelPlaneFacet::polyCornerVSBLineCoincidence(
     // The intersection on the first segment must be an entry, and the
     // second must be an exit.
     bool seg0first = seg1.follows(seg0);
-    return ((seg0first && fi0->crossingType() == ENTRY &&
-	     fi1->crossingType() == EXIT)
-	    ||
-	    (!seg0first && fi0->crossingType() == EXIT &&
-	     fi1->crossingType() == ENTRY));
+#ifdef DEBUG
+    if(verbose) {
+      oofcerr << "PixelPlaneFacet::polyCornerVSBLineCoincidence: fi0="
+	      << *fi0 << " fi0=" << *fi1 << std::endl;
+      oofcerr << "PixelPlaneFacet::polyCornerVSBLineCoincidence:"
+	      << " seg0=" << seg0 << " [" << fi0->crossingType() << "]"
+	      << " seg1=" << seg1 << " [" << fi1->crossingType() << "]"
+	      << " seg0first=" << seg0first 
+	      << std::endl;
+    }
+#endif // DEBUG
+    return !((seg0first && fi0->crossingType() == ENTRY &&
+	      fi1->crossingType() == EXIT)
+	     ||
+	     (!seg0first && fi0->crossingType() == EXIT &&
+	      fi1->crossingType() == ENTRY));
   }
   throw ErrProgrammingError("polyCornerVSBLineCoincidence failed!",
 			    __FILE__, __LINE__);
@@ -3796,16 +3862,20 @@ std::ostream &operator<<(std::ostream &os, const FacetEdge &edge) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-void PixelPlaneFacet::dump(unsigned int cat) const {
-  std::string filename = ("pixelplane" + pixplane->shortName()
+void PixelPlaneFacet::dump(const std::string &fname, unsigned int cat) const {
+  std::string filename = (fname + pixplane->shortName()
 			  + "cat" + to_string(cat)
 			  + ".lines");
   std::cerr << "PixelPlaneFacet::dump: writing " << filename << std::endl;
   std::ofstream file(filename);
   for(const FacetEdge *edge : edges) {
     file << edge->startPos3D() << ", " << edge->endPos3D()
-	 << " # " << edge->startPt()->shortName() << " --> "
-	 << edge->endPt()->shortName() << std::endl;
+	 << " # " << edge->startPt()->shortName()
+	 << "(" << edge->startPt()->equivalence()->id << ") "
+	 << " --> "
+	 << edge->endPt()->shortName()
+      	 << "(" << edge->endPt()->equivalence()->id << ") "
+	 << std::endl;
   }
   file.close();
 }

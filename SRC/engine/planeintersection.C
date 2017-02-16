@@ -2155,25 +2155,6 @@ static int combinedCrossing(const PixelPlaneIntersectionNR *fi0,
 			    const PixelPlaneIntersectionNR *fi1)
 {
   return fi0->crossingCount() + fi1->crossingCount();
-
-  // // Hack to mimic old (incorrect!) behavior
-  // if(fi0->crossingCount() > 0 && fi1->crossingCount() > 0)
-  //   return 1;
-  // if(fi0->crossingCount() < 0 && fi1->crossingCount() < 0)
-  //   return -1;
-  // if(fi0->crossingCount() == 0)
-  //   return fi1->crossingCount();
-  // if(fi1->crossingCount() == 0)
-  //   return fi0->crossingCount();
-  // return 0;
-
-  // if(fi0->crossingType() == fi1->crossingType())
-  //   return fi0->crossingType();
-  // if(fi0->crossingType() == NONCROSSING)
-  //   return fi1->crossingType();
-  // if(fi1->crossingType() == NONCROSSING)
-  //   return fi0->crossingType();
-  // return NONCROSSING;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -2352,6 +2333,7 @@ bool SimpleIntersection::isMisordered(const SimpleIntersection *fi,
 #ifdef DEBUG
   if(verbose) {
     oofcerr << "SimpleIntersection::isMisordered: sameLoopSeg=" << sameLoopSeg
+	    << " samePixelPlanes=" << samePixelPlanes(fi)
 	    << " nSharedPolySegs=" << nSharedPolySegs << std::endl;
   }
 #endif // DEBUG
@@ -3561,7 +3543,7 @@ std::ostream &operator<<(std::ostream &os, const PlaneIntersection &pi) {
   return os;
 }
 
-std::ostream &operator<<(std::ostream &os, const CrossingType ct) {
+std::ostream &operator<<(std::ostream &os, const CrossingType &ct) {
   if(ct == ENTRY)
     os << "ENTRY";
   else if(ct == EXIT)
