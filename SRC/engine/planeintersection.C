@@ -713,8 +713,22 @@ bool IntersectionPlanes<BASE>::samePixPlanes(
 				       const IntersectionPlanesBase *other)
   const
 {
-  return (pixelPlanes_ == other->pixelPlanes() &&
-	  pixelFaces_ == other->pixelFaces());
+  if(pixelFaces_ != other->pixelFaces())
+    return false;
+  if(pixelPlanes_.size() != other->pixelPlanes().size())
+    return false;
+  // When comparing pixel planes, oppositely directed planes are
+  // equivalent.
+  for(auto p0=pixelPlanes_.begin(), p1=other->pixelPlanes().begin();
+      p0!=pixelPlanes_.end(); ++p0, ++p1)
+    {
+      // This comparison depends on the sorting order of HPixelPlanes
+      // in a PixelPlaneSet, and therefore on the definiton of
+      // Plane::operator<().
+      if(!(*p0)->coincident(*(*p1)))
+	return false;
+    }
+  return true;
 }
 
 template <class BASE>
@@ -1758,6 +1772,42 @@ bool MultiVSBmixIn<BASE>::findColinearLinkedSegs(const MultiVSBbase *fi,
 	}
       }
     }
+  }
+  return false;
+}
+
+// Are the segments through this SimpleIntersection and the given
+// SimpleIntersection colinear and oppositely directed?
+
+bool SimpleIntersection::findOpposingSegments(const SimpleIntersection *fi,
+					      PixelBdyLoopSegment &seg0,
+					      PixelBdyLoopSegment &seg1
+#ifdef DEBUG
+					      , bool verbose
+#endif // DEBUG
+					      )
+  const
+{
+  seg0 = getLoopSeg();
+  seg1 = fi->getLoopSeg();
+  ICoord2D dir0 = seg0.direction();
+  ICoord2D dir1 = seg1.direction();
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "SimpleIntersection::findOpposingSegments: this=" << *this
+	    << std::endl;
+    oofcerr << "SimpleIntersection::findOpposingSegments:   fi=" << *fi
+	    << std::endl;
+    oofcerr << "SimpleIntersection::findOpposingSegments: dir0=" << dir0
+	    << " dir1=" << dir1 << std::endl;
+  }
+#endif // DEBUG
+  if(dir0 == -dir1) {	// segs are opposed
+    if(dir0[0] != 0) {	// segs are in +/- x directions
+      return (seg0.firstPt()[1] == seg1.firstPt()[1]); // y values agree
+    }
+    // segs are in +/- y directions
+    return (seg0.firstPt()[0] == seg1.firstPt()[0]); // x values agree
   }
   return false;
 }

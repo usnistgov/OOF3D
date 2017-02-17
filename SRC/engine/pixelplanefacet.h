@@ -336,12 +336,12 @@ public:
   
   bool vsbCornerCoincidence(const PixelPlaneIntersectionNR*,
 			    const PixelPlaneIntersectionNR*) const;
-  bool polyCornerCoincidence(const PixelPlaneIntersectionNR*,
-			     const PixelPlaneIntersectionNR*) const;
-  bool polyVSBCornerCoincidence(const PixelPlaneIntersectionNR*,
-				const PixelPlaneIntersectionNR*) const;
-  bool polyCornerVSBLineCoincidence(const PixelPlaneIntersectionNR*,
-				    const PixelPlaneIntersectionNR*) const;
+  bool polyCornerCoincidence(const SimpleIntersection*,
+			     const SimpleIntersection*) const;
+  bool polyVSBCornerCoincidence(const SimpleIntersection*,
+				const SimpleIntersection*) const;
+  bool polyCornerVSBLineCoincidence(const SimpleIntersection*,
+				    const SimpleIntersection*) const;
 
   bool badTopology(const SimpleIntersection*,
 		   const MultiFaceIntersection*) const;

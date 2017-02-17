@@ -735,10 +735,19 @@ double PixelPlaneFacet::polygonPerimeterDistance(
 
 // Utilities used by PixelPlaneFacet::completeLoops
 
-// FUTURE
-static void addPossibleCoincidence(PixelPlaneIntersectionNR *isec,
-				   std::set<PPIntersectionNRSet*> &clusters,
-				   const HPixelPlane *pixplane)
+// storeCoincidenceData adds the given PixelPlaneIntersection to a
+// cluster in the given set of clusters.  All intersections within a
+// cluster are within a distance CLOSEBY of another intersection in
+// the cluster, and a cluster can't be decomposed into two clusters
+// where all intersections in one cluster are farther than CLOSEBY
+// from all intersections in the other.  This is used to group
+// intersections before detecting coincident locations.  CLOSEBY (in
+// voxel units) is smaller than a voxel size (1.0) and large compared
+// to the expected roundoff error in computed positions.
+
+static void storeCoincidenceData(PixelPlaneIntersectionNR *isec,
+				 const HPixelPlane *pixplane,
+				 std::set<PPIntersectionNRSet*> &clusters)
 {
   Coord2D loc = isec->location2D(pixplane);
   // See which existing clusters this point fits into.  It fits in if
@@ -746,19 +755,22 @@ static void addPossibleCoincidence(PixelPlaneIntersectionNR *isec,
   std::set<PPIntersectionNRSet*> matches;
   for(PPIntersectionNRSet *cluster : clusters) {
     for(PixelPlaneIntersectionNR *pt : *cluster) {
-      if(norm2(loc - pt->location2D(pixplane)) < CLOSEBY2) {
+      // CLOSEBY2 is CLOSEBY*CLOSEBY
+      if(norm2(loc - pt->location2D(pixplane)) < CLOSEBY2) { 
 	matches.insert(cluster);
 	break;			// done with this cluster
       }
     } // end loop over points in cluster
   }   // end loop over clusters
+  
   if(matches.empty()) {
+    // isec isn't close to any point in any cluster.  Create a new cluster.
     PPIntersectionNRSet *newcluster = new PPIntersectionNRSet();
     newcluster->insert(isec);
     clusters.insert(newcluster);
   }
   else {
-    // Add point to existing cluster.
+    // Add isec to existing cluster.
     auto front = matches.begin();
     (*front)->insert(isec);	// *front is a PPIntersectionNRSet*
     // Merge other clusters
@@ -770,59 +782,6 @@ static void addPossibleCoincidence(PixelPlaneIntersectionNR *isec,
     }
   }
 }
-
-static void storeCoincidenceData(PixelPlaneIntersectionNR *isec,
-				 const HPixelPlane *pixplane,
-				 std::set<Coord2D> &coincidentLocs,
-				 IsecsNearCoord &coincidences)
-{
-  // IsecsNearCoord is a std::multimap that maps a Coord2D to all of
-  // the intersections that are near it, where "near" means closer
-  // than CLOSEBY, which is some fraction of a voxel side.  If a point
-  // is not near any previous points, a new map key is created at the
-  // point.  It's unfortunately necessary to loop over all the
-  // existing map keys, and not just stop when a nearby match is
-  // found, because there may be a closer one.
-  Coord2D loc = pixplane->convert2Coord2D(isec->location3D());
-  double bestDist2 = std::numeric_limits<double>::max();
-  Coord2D bestPt;
-  for(Coord2D p : coincidentLocs) {
-    double d2 = norm2(loc - p);
-    if(d2 < CLOSEBY2 && d2 < bestDist2) {
-      bestDist2 = d2;
-      bestPt = p;
-    }
-    // if(norm2(loc-p) < CLOSEBY2) {
-    //   coincidences.insert(IsecsNearCoord::value_type(p, isec));
-    //   return;
-    // }
-  }
-  if(bestDist2 < std::numeric_limits<double>::max()) {
-    coincidences.insert(IsecsNearCoord::value_type(bestPt, isec));
-  }
-  else {
-    coincidences.insert(IsecsNearCoord::value_type(loc, isec));
-    coincidentLocs.insert(loc);
-  }
-}
-
-// class NullEdgePredicate {
-// private:
-//   const HomogeneityTet *htet;
-// public:
-//   NullEdgePredicate(const HomogeneityTet *htet) : htet(htet) {}
-//   bool operator()(const FacetEdge *edge) const  {
-//     bool result = edge->startPt()->isEquivalent(edge->endPt());
-// #ifdef DEBUG
-//     if(htet->verboseplane) {
-//       oofcerr << "NullEdgePredicate: edge=" << *edge
-// 	      << " null=" << result
-// 	      << std::endl;
-//     }
-// #endif // DEBUG
-//     return result;
-//   }
-// };
 
 static void incrementIsec(
 		  unsigned int &edgeNo, unsigned int &isecNo,
@@ -875,9 +834,8 @@ bool PixelPlaneFacet::completeLoops(unsigned int cat) {
   }
 #endif // DEBUG
 
-  std::set<Coord2D> coincidentLocs; // locations where coincidences occur
-  IsecsNearCoord coincidences; // All intersections at a point
   unsigned int totalIntersections = 0;
+  std::set<PPIntersectionNRSet*> clusters;
 
   for(FacetEdge *edge : edges) {
 // #ifdef DEBUG
@@ -894,13 +852,13 @@ bool PixelPlaneFacet::completeLoops(unsigned int cat) {
       // can't be a RedundantIntersection.
       PixelPlaneIntersectionNR *ppi = edge->startFace()->referent();
       // htet->checkEquiv(ppi);
-      storeCoincidenceData(ppi, pixplane, coincidentLocs, coincidences);
+      storeCoincidenceData(ppi, pixplane, clusters);
       totalIntersections++;
     }
     if(edge->stopFace()) {
       PixelPlaneIntersectionNR *ppi = edge->stopFace()->referent();
       // htet->checkEquiv(ppi);
-      storeCoincidenceData(ppi, pixplane, coincidentLocs, coincidences);
+      storeCoincidenceData(ppi, pixplane, clusters);
       totalIntersections++;
     }
     
@@ -914,14 +872,15 @@ bool PixelPlaneFacet::completeLoops(unsigned int cat) {
     // 	    << std::endl;
     // OOFcerrIndent indent(2);
     // htet->dumpEquivalences();
-    oofcerr << "PixelPlaneFacet::completeLoops: coincidences=" << std::endl;
+    oofcerr << "PixelPlaneFacet::completeLoops: coincidence clusters="
+	    << std::endl;
     OOFcerrIndent indent(2);
-    for(Coord2D pt : coincidentLocs) {
-      auto range = coincidences.equal_range(pt);
-      for(auto c=range.first; c!=range.second; ++c) {
-    	oofcerr << "PixelPlaneFacet::completeLoops: " << c->first << ": "
-    		<< *c->second << std::endl;
-      }
+    for(PPIntersectionNRSet *cluster : clusters) {
+      oofcerr << "PixelPlaneFacet::completeLoops: cluster of size "
+	      << cluster->size() << std::endl;
+      OOFcerrIndent indent(2);
+      for(PixelPlaneIntersectionNR *ppi : *cluster)
+	oofcerr << "PixelPlaneFacet::completeLoops: " << *ppi << std::endl;
     }
   }
 
@@ -937,25 +896,20 @@ bool PixelPlaneFacet::completeLoops(unsigned int cat) {
   // a tet face.  In that case roundoff error can put points in the
   // wrong order on an edge.
 
-  for(Coord2D loc : coincidentLocs) {
+  for(PPIntersectionNRSet *cluster : clusters) {
 // #ifdef DEBUG
 //     if(verbose)
 //       oofcerr << "PixelPlaneFacet::completeLoops: looking for coincidence at "
 // 	      << loc << " " << pixplane->convert2Coord3D(loc) << std::endl;
 // #endif // DEBUG
-    if(coincidences.count(loc) > 1) {
-      auto range = coincidences.equal_range(loc);
+    if(cluster->size() > 1) {
 #ifdef DEBUG
       if(verbose) {
-	oofcerr << "PixelPlaneFacet::completeLoops: resolving coincidence at "
-		<< loc << " " << pixplane->convert2Coord3D(loc) << std::endl;
-	oofcerr << "PixelPlaneFacet::completeLoops: coincident points are:"
-		<< std::endl;
-	for(auto r=range.first; r!=range.second; ++r) {
+	oofcerr << "PixelPlaneFacet::completeLoops: "
+		<< "resolving coincidences in cluster " << std::endl;
+	for(auto r=cluster->begin(); r!=cluster->end(); ++r) {
 	  OOFcerrIndent indent(4);
-	  oofcerr << "PixelPlaneFacet::completeLoops: "
-		  << *dynamic_cast<PixelPlaneIntersectionNR*>((*r).second)
-		  << std::endl;
+	  oofcerr << "PixelPlaneFacet::completeLoops: " << *(*r) << std::endl;
 	}
       }
       OOFcerrIndent indent(2);
@@ -963,8 +917,8 @@ bool PixelPlaneFacet::completeLoops(unsigned int cat) {
       // First, copy the intersections at this location into a set,
       // and merge ones that are at *identical* positions.
       PPIntersectionNRSet uniqueIsecs;
-      for(auto pp =range.first; pp!=range.second; ++pp) {
-	PixelPlaneIntersectionNR *p = (*pp).second;
+      for(auto pp=cluster->begin(); pp!=cluster->end(); ++pp) {
+	PixelPlaneIntersectionNR *p = *pp;
 	bool replaced = false;
 	for(PixelPlaneIntersectionNR *q : uniqueIsecs) {
 	  if(q->isEquivalent(p)) {
@@ -1027,8 +981,7 @@ bool PixelPlaneFacet::completeLoops(unsigned int cat) {
 #ifdef DEBUG
       if(verbose) {
 	oofcerr << "PixelPlaneFacet::completeLoops: resolving "
-		<< nIntersections << "-fold coincidence at " << loc
-		<< std::endl;
+		<< nIntersections << "-fold coincidence" << std::endl;
       }
 #endif // DEBUG
       if(nIntersections == 2) {
@@ -1036,8 +989,7 @@ bool PixelPlaneFacet::completeLoops(unsigned int cat) {
 #ifdef DEBUG
 	  if(verbose) {
 	    oofcerr << "PixelPlaneFacet::completeLoops: "
-		    << "resolveTwoFoldCoincidence failed at " << loc
-		    << std::endl;
+		    << "resolveTwoFoldCoincidence failed" << std::endl;
 	  }
 #endif // DEBUG
 	  return false;
@@ -1048,8 +1000,7 @@ bool PixelPlaneFacet::completeLoops(unsigned int cat) {
 #ifdef DEBUG
 	  if(verbose) {
 	    oofcerr << "PixelPlaneFacet::completeLoops: "
-		    << "resolveThreeFoldCoincidence failed at " << loc
-		    << std::endl;
+		    << "resolveThreeFoldCoincidence failed" << std::endl;
 	  }
 #endif // DEBUG
 	  return false;
@@ -1060,8 +1011,7 @@ bool PixelPlaneFacet::completeLoops(unsigned int cat) {
 #ifdef DEBUG
 	  if(verbose) {
 	    oofcerr << "PixelPlaneFacet::completeLoops: "
-		    << "resolveMultipleCoincidence failed at " << loc
-		    << std::endl;
+		    << "resolveMultipleCoincidence failed" << std::endl;
 	  }
 #endif // DEBUG
 	  return false;
@@ -1069,12 +1019,13 @@ bool PixelPlaneFacet::completeLoops(unsigned int cat) {
       }
 #ifdef DEBUG
       if(verbose) {
-	oofcerr << "PixelPlaneFacet::completeLoops: resolved coincidence at "
-		<< loc << std::endl;
+	oofcerr << "PixelPlaneFacet::completeLoops: resolved coincidence"
+		<< std::endl;
       }
 #endif // DEBUG
-    } // end if there is more than one intersection near loc
-  }   // end loop over locations loc of intersection positions
+    } // end if cluster size is greater than 1
+    delete cluster;
+  }   // end loop over clusters of intersections
 
 #ifdef DEBUG
   // if(verbose) {
@@ -2390,8 +2341,8 @@ bool PixelPlaneFacet::vsbCornerCoincidence(const PixelPlaneIntersectionNR *fi0,
 //
 */
 
-bool PixelPlaneFacet::polyCornerCoincidence(const PixelPlaneIntersectionNR *fi0,
-					    const PixelPlaneIntersectionNR *fi1)
+bool PixelPlaneFacet::polyCornerCoincidence(const SimpleIntersection *fi0,
+					    const SimpleIntersection *fi1)
   const
 {
 // #ifdef DEBUG
@@ -2463,8 +2414,8 @@ bool PixelPlaneFacet::polyCornerCoincidence(const PixelPlaneIntersectionNR *fi0,
 
 
 bool PixelPlaneFacet::polyCornerVSBLineCoincidence(
-					   const PixelPlaneIntersectionNR *fi0,
-					   const PixelPlaneIntersectionNR *fi1)
+					   const SimpleIntersection *fi0,
+					   const SimpleIntersection *fi1)
   const
 {
   // Find a pair of distinct colinear VSB segments, one from fi0 and
@@ -2486,12 +2437,69 @@ bool PixelPlaneFacet::polyCornerVSBLineCoincidence(
 	      << std::endl;
     }
 #endif // DEBUG
+    // Return true if intersections violate topology.
     return !((seg0first && fi0->crossingType() == ENTRY &&
 	      fi1->crossingType() == EXIT)
 	     ||
 	     (!seg0first && fi0->crossingType() == EXIT &&
 	      fi1->crossingType() == ENTRY));
   }
+
+  // Are the segments oppositely directed?
+  if(fi0->findOpposingSegments(fi1, seg0, seg1
+#ifdef DEBUG
+			       , verbose
+#endif // DEBUG
+			       )) {
+#ifdef DEBUG
+    if(verbose) {
+      oofcerr << "PixelPlaneFacet::polyCornerVSBLineCoincidence:"
+	      << " found opposing segments:" << std::endl;
+      OOFcerrIndent indent(2);
+      oofcerr << "PixelPlaneFacet::polyCornerVSBLineCoincidence: seg0="
+	      << seg0 << std::endl;
+      oofcerr << "PixelPlaneFacet::polyCornerVSBLineCoincidence: seg1="
+	      << seg1 << std::endl;
+      }			
+#endif // DEBUG
+    // Do the VSB segments overlap at the intersection points? 
+    /*
+    //           /
+    //          /
+    // ========8============  two opposing VSB segments
+    //          \ 
+    // polygon   \   polygon
+    // exterior   \  interior
+    */
+    Coord2D loc0 = fi0->location2D(pixplane);
+    Coord2D loc1 = fi1->location2D(pixplane);
+    if(seg0.contains(loc0) && seg0.contains(loc1) &&
+       seg1.contains(loc0) && seg1.contains(loc1))
+      {
+	// Since there are only two intersections here, they must
+	// coincide.  Returning true will force them to be merged, whether
+	// or not they need it.
+	return true;
+      }
+    // The segments don't overlap.  They must join head to head or
+    // tail to tail.
+    /*
+    //           *  The actual polygon vertex or vertices are far away
+    //           |  
+    //         / | \
+    // ---<---o--+--o--->---  two opposing but not overlapping segments
+    //       /   |   \
+    //      /    |    \
+    */
+#ifdef DEBUG
+    if(seg0.firstPt()!=seg1.firstPt() && seg0.secondPt()!=seg1.secondPt()) {
+      throw ErrProgrammingError("Unexpected VSB segment configuration!",
+				__FILE__, __LINE__);
+    }
+#endif // DEBUG
+    return fi0->crossingType() != fi1->crossingType();
+  }    // end if segments are oppositely directed
+  
   throw ErrProgrammingError("polyCornerVSBLineCoincidence failed!",
 			    __FILE__, __LINE__);
 }
@@ -2531,9 +2539,8 @@ bool PixelPlaneFacet::polyCornerVSBLineCoincidence(
 //          |
 */
 
-bool PixelPlaneFacet::polyVSBCornerCoincidence(
-				       const PixelPlaneIntersectionNR *fi0,
-				       const PixelPlaneIntersectionNR *fi1)
+bool PixelPlaneFacet::polyVSBCornerCoincidence(const SimpleIntersection *fi0,
+					       const SimpleIntersection *fi1)
   const
 {
   assert(fi0 != fi1);

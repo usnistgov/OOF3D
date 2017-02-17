@@ -564,6 +564,10 @@ public:
     const = 0;
   virtual const PixelBdyLoopSegment *sharedLoopSeg(const MultiVSBbase*)
     const = 0;
+
+  // TODO: Do we need the virtual methods and double dispatch for
+  // findColinearLinkedSegments?  It's only used in
+  // polyCornerVSBLineCoincidence, which has SimpleIntersection args.
   virtual bool findColinearLinkedSegments(const PixelPlaneIntersectionNR*,
 					  PixelBdyLoopSegment&,
 					  PixelBdyLoopSegment&) const = 0;
@@ -573,7 +577,6 @@ public:
   virtual bool findColinearLinkedSegs(const MultiVSBbase*,
 				      PixelBdyLoopSegment&,
 				      PixelBdyLoopSegment&) const = 0;
-
 
   // If the second arg to onSameFacePlane is non-null, that plane will
   // be excluded from the calculation.  This is so that the plane of a
@@ -957,6 +960,13 @@ public:
 			    const PixelPlaneFacet*) const;
   virtual bool isMisordered(const MultiCornerIntersection*, 
 			    const PixelPlaneFacet*) const;
+
+  bool findOpposingSegments(const SimpleIntersection*,
+			    PixelBdyLoopSegment&, PixelBdyLoopSegment&
+#ifdef DEBUG
+			    , bool
+#endif // DEBUG
+			    ) const;
 
   virtual void print(std::ostream&) const;
 };

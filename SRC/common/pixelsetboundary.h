@@ -207,6 +207,7 @@ public:
   }
   bool horizontal() const { return loop_->horizontal(loopseg_); }
   ICoord2D direction() const;
+  bool contains(const Coord2D&) const;
   int length() const;
   bool operator<(const PixelBdyLoopSegment&) const; // for std::set
   bool operator==(const PixelBdyLoopSegment&) const;

@@ -485,6 +485,21 @@ PixelBdyLoopSegment PixelBdyLoopSegment::prev() const {
   return PixelBdyLoopSegment(loop_, loopseg_-1);
 }
 
+bool PixelBdyLoopSegment::contains(const Coord2D &pt) const
+{
+  // Is the given point on the segment?  It's assumed to be in-line
+  // with the segment, but may be off one end or the other.
+  ICoord2D p0 = firstPt();
+  ICoord2D p1 = secondPt();
+  if(p1[0] > p0[0])		// +x direction
+    return p0[0] <= pt[0] <= p1[0];
+  if(p1[0] < p0[0])		// -x direction
+    return p1[0] <= pt[0] <= p0[0];
+  if(p1[1] > p0[1])		// +y direction
+    return p0[1] <= pt[1] <= p1[1];
+  return p1[0] <= pt[1] <= p0[1]; // -y direction
+}
+
 std::ostream &operator<<(std::ostream &os, const PixelBdyLoopSegment &pbls) {
   os << "PixelBdyLoopSegment(" << pbls.firstPt() << ", " << pbls.secondPt()
      << ")";
