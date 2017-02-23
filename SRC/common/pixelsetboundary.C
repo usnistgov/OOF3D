@@ -16,7 +16,6 @@
 #include "common/geometry.h"
 #include "common/pixelsetboundary.h"
 #include "common/printvec.h"
-#include "common/smallmatrix.h"
 #include <assert.h>
 #include <algorithm>
 #include <limits>
@@ -914,61 +913,6 @@ const std::vector<PixelBdyLoop*> &VoxelSetBoundary::getPlaneCS(
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-Coord3D triplePlaneIntersection(const Plane *plane0, const Plane *plane1,
-				const Plane *plane2)
-{
-  // Compute the intersection point of the planes.
-  SmallMatrix normals(3, 3);
-  SmallMatrix offsets(3, 1);
-  for(unsigned int i=0; i<3; i++) {
-    normals(0, i) = plane0->normal()[i];
-    normals(1, i) = plane1->normal()[i];
-    normals(2, i) = plane2->normal()[i];
-  }
-  offsets(0, 0) = plane0->offset();
-  offsets(1, 0) = plane1->offset();
-  offsets(2, 0) = plane2->offset();
-  int status = normals.solve(offsets);
-  if(status != 0) {
-    oofcerr << "triplePlaneIntersection: plane0=" << *plane0 << " normal="
-	    << plane0->normal() << std::endl;
-    oofcerr << "triplePlaneIntersection: plane1=" << *plane1 << " normal="
-	    << plane1->normal() << std::endl;
-    oofcerr << "triplePlaneIntersection: plane2=" << *plane2 << " normal="
-	    << plane2->normal() << std::endl;
-    oofcerr << "triplePlaneIntersection: normals=" << normals << std::endl;
-    oofcerr << "triplePlaneIntersection: offsets=" << offsets << std::endl;
-    oofcerr << "triplePlaneIntersection: status=" << status << std::endl;
-      
-    throw ErrProgrammingError("triplePlaneIntersection could not be found",
-			      __FILE__, __LINE__);
-  }
-  Coord3D isec(offsets(0, 0), offsets(1, 0), offsets(2, 0));
-  // oofcerr << "triplePlaneIntersection: " << *plane0 << " " << *plane1 << " "
-  // 	  << *plane2 << " --> " << isec << std::endl;
-  return isec;
-}
-
-Coord3D triplePlaneIntersection(const PixelPlane *p0, const PixelPlane *p1,
-				const PixelPlane *p2)
-{
-#ifdef DEBUG
-  if(p0->direction() == p1->direction() ||
-     p1->direction() == p2->direction() ||
-     p2->direction() == p0->direction())
-    {
-      oofcerr << "triplePlaneIntersection: p0=" << *p0 << " p1=" << *p1
-	      << " p2=" << *p2 << std::endl;
-      throw ErrProgrammingError("Bad args to triplePlaneIntersection!",
-				__FILE__, __LINE__);
-    }
-#endif // DEBUG
-  Coord3D pt;
-  pt[p0->direction()] = p0->normalOffset();
-  pt[p1->direction()] = p1->normalOffset();
-  pt[p2->direction()] = p2->normalOffset();
-  return pt;
-}
 
 
 bool Plane::nonDegenerate(const Plane *planeA, const Plane *planeB) const {

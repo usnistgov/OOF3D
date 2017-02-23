@@ -92,6 +92,13 @@ void HPixelPlane::addToIntersection(IntersectionPlanesBase *fi) const {
   fi->pixelPlanes().insert(this);
 }
 
+void HPixelPlane::addToSets(PixelPlaneSet &pplanes, FacePlaneSet&,
+			    FacePixelPlaneSet&)
+  const
+{
+  pplanes.insert(this);
+}
+
 bool HPixelPlane::isInEquivalence(const IsecEquivalenceClass *eqclass) const {
   return eqclass->containsPixelPlane(this);
   // return eqclass->pixelPlanes.count(unoriented_) > 0;
@@ -115,6 +122,14 @@ void FacePlane::addToIntersection(IntersectionPlanesBase *fi) const {
   fi->faces().insert(this);
 }
 
+void FacePlane::addToSets(PixelPlaneSet&, FacePlaneSet &fplanes,
+			  FacePixelPlaneSet&)
+  const
+{
+  fplanes.insert(this);
+}
+
+
 bool FacePlane::isInEquivalence(const IsecEquivalenceClass *eqclass) const {
   return eqclass->facePlanes.count(this) > 0;
 }
@@ -134,6 +149,14 @@ bool FacePixelPlane::isPartOf(const PixelPlaneIntersectionNR *fi) const {
 void FacePixelPlane::addToIntersection(IntersectionPlanesBase *fi) const {
   fi->pixelFaces().insert(this);
 }
+
+void FacePixelPlane::addToSets(PixelPlaneSet&, FacePlaneSet&,
+			       FacePixelPlaneSet &fplanes)
+  const
+{
+  fplanes.insert(this);
+}
+
 
 void FacePixelPlane::addToEquivalence(IsecEquivalenceClass *eqclass) const {
   eqclass->addFacePixelPlane(this, true);

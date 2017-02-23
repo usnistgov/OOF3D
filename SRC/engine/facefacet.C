@@ -1099,13 +1099,13 @@ Coord3D FaceFacetLoop::area(const FaceFacet *ffacet, HomogeneityTet *htet)
     }
 #ifdef DEBUG
   if(htet->verboseFace())
-    oofcerr << "FaceFacetLoop::area: calling triplePlaneIntersection"
+    oofcerr << "FaceFacetLoop::area: calling pixplanes2Coord"
 	    << std::endl;
 #endif // DEBUG
-  Coord3D vertex = triplePlaneIntersection(pplanes[0], pplanes[1], pplanes[2]);
+  Coord3D vertex = pixplanes2Coord(pplanes[0], pplanes[1], pplanes[2]);
 #ifdef DEBUG
   if(htet->verboseFace())
-    oofcerr << "FaceFacetLoop::area: back from triplePlaneIntersection, vertex="
+    oofcerr << "FaceFacetLoop::area: back from pixplanes2Coord, vertex="
 	    << vertex << std::endl;
 #endif // DEBUG
   BarycentricCoord bvertex = htet->getBarycentricCoord(vertex);

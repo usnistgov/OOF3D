@@ -111,8 +111,9 @@ public:
 protected:
   IsecEquivalenceClass *equivalence_;
   unsigned int id;
+  Coord3D loc_;
 public:
-  PlaneIntersection(HomogeneityTet*);
+  PlaneIntersection(HomogeneityTet*, const Coord3D&);
   virtual ~PlaneIntersection();
   PlaneIntersection(const PlaneIntersection&);
   // clone takes a HomogeneityTet arg so that the clone can have a unique id.
@@ -120,12 +121,12 @@ public:
   virtual PlaneIntersection *clone(HomogeneityTet*) const = 0;
   void setID(HomogeneityTet*);
 
-  // location3D gets loc from equivalence class, or calls getLocation3D.
   Coord3D location3D() const;
-  virtual Coord3D getLocation3D() const = 0;
+  // virtual Coord3D getLocation3D() const = 0;
   virtual Coord2D location2D(const PixelPlane *pp) const;
 
-  virtual void copyPlanesToIntersection(IntersectionPlanesBase*) const = 0;
+  virtual void copyPlanesToSets(PixelPlaneSet&, FacePlaneSet&,
+				FacePixelPlaneSet&) const = 0;
   
   // Intersections are equivalent if they have any three distinct
   // planes in common.
@@ -226,13 +227,14 @@ public:
   TripleFaceIntersection(unsigned int node, HomogeneityTet*);
   virtual TripleFaceIntersection *clone(HomogeneityTet*) const;
   const FacePlaneSet &faces() const { return faces_; }
-  virtual Coord3D getLocation3D() const { return loc_; }
+  // virtual Coord3D getLocation3D() const { return loc_; }
   unsigned int getNode() const { return node_; }
   virtual unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const;
   virtual const BarycentricCoord &baryCoord(HomogeneityTet*) const;
   virtual void print(std::ostream&) const;
 
-  virtual void copyPlanesToIntersection(IntersectionPlanesBase*) const;
+  virtual void copyPlanesToSets(PixelPlaneSet&, FacePlaneSet&,
+				FacePixelPlaneSet&) const;
 
   // virtual bool isEquivalent(const PlaneIntersection*) const;
   // virtual bool isEquiv(const TripleFaceIntersection*) const;
@@ -319,18 +321,21 @@ public:
   virtual const FacePlane *getSharedFace(const RedundantIntersection*,
 				      const FacePlane*) const = 0;
 
-  // Either computeLocation or setLocation should be called when a
-  // intersection is constructed.
-  void computeLocation();	// use planes to compute loc_
-  virtual void setLocation(const Coord3D&) = 0;
+  // // Either computeLocation or setLocation should be called when a
+  // // intersection is constructed.
+  // void computeLocation();	// use planes to compute loc_
+  // virtual void setLocation(const Coord3D&) = 0;
 };				// end class IntersectionPlanesBase
 
 template <class BASE>
 class IntersectionPlanes : public BASE, public IntersectionPlanesBase {
 public:
-  IntersectionPlanes(HomogeneityTet *htet) : BASE(htet) {}
+  IntersectionPlanes(HomogeneityTet *htet, const Coord3D &loc)
+    : BASE(htet, loc)
+  {}
 
-  virtual void copyPlanesToIntersection(IntersectionPlanesBase*) const;
+  virtual void copyPlanesToSets(PixelPlaneSet&, FacePlaneSet&,
+				FacePixelPlaneSet&) const;
   virtual unsigned int findFaceEdge(unsigned int, HomogeneityTet*) const;
   
   // virtual bool isEquivalent(const PlaneIntersection*) const;
@@ -395,15 +400,13 @@ public:
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 class GenericIntersection : public IntersectionPlanes<PlaneIntersection> {
-protected:
-  Coord3D loc_;
 public:
-  GenericIntersection(HomogeneityTet *htet)
-    : IntersectionPlanes<PlaneIntersection>(htet)
-  {}
+  GenericIntersection(HomogeneityTet *htet, const PixelPlaneSet&,
+		      const FacePlaneSet&, const FacePixelPlaneSet&,
+		      const Coord3D &loc);
   virtual GenericIntersection *clone(HomogeneityTet*) const;
-  virtual void setLocation(const Coord3D&);
-  virtual Coord3D getLocation3D() const { return loc_; }
+  // void computeLocation();
+  // virtual Coord3D getLocation3D() const { return loc_; }
   virtual void print(std::ostream&) const;
   virtual std::string shortName() const;
 };
@@ -437,8 +440,8 @@ private:
   // just one.
   FacetEdge *edge_;
 public:
-  PixelPlaneIntersection(HomogeneityTet *htet)
-    : PlaneIntersection(htet),
+  PixelPlaneIntersection(HomogeneityTet *htet, const Coord3D &loc)
+    : PlaneIntersection(htet, loc),
       edge_(nullptr)
   {}
   
@@ -537,8 +540,8 @@ public:
   // used elsewhere.  (We're using mix-in classes instead of regular
   // multiple inheritance because some of the mix-in methods need
   // access to data in the PixelPlaneIntersectionNR base class.)
-  PixelPlaneIntersectionNR(HomogeneityTet *htet)
-    : IntersectionPlanes<PixelPlaneIntersection>(htet)
+  PixelPlaneIntersectionNR(HomogeneityTet *htet, const Coord3D &loc)
+    : IntersectionPlanes<PixelPlaneIntersection>(htet, loc)
   {}
   
   // RedundantIntersections refer to the PixelPlaneIntersection with
@@ -547,7 +550,7 @@ public:
   virtual PixelPlaneIntersectionNR *referent() { return this; }
   virtual const PixelPlaneIntersectionNR *referent() const { return this; }
 
-  virtual void setLocation(const Coord3D&);
+  // virtual void setLocation(const Coord3D&);
   
   // void includeCollinearPlanes(HomogeneityTet*);
 
@@ -590,7 +593,7 @@ public:
 
   // bool samePixelPlanes(const PixelPlaneIntersectionNR*) const;
 
-  virtual Coord3D getLocation3D() const { return loc_; }
+  // virtual Coord3D getLocation3D() const { return loc_; }
 
   // Does the VBS segment enter or leave the tet polygon at this point?
   virtual int crossingCount() const { return crossing_; }
@@ -719,7 +722,7 @@ protected:
   mutable std::vector<EdgePosition> polyFracCache; 
 
 public:
-  SingleFaceMixIn(HomogeneityTet*);
+  SingleFaceMixIn(HomogeneityTet*, const Coord3D&);
   virtual const FacePlane *getFacePlane() const { return facePlane_; }
 
   // void setPolyFrac(double a) { polyFrac = a; }
@@ -737,7 +740,7 @@ template <class BASE>
 class MultiFaceMixin : public BASE
 {
 public:
-  MultiFaceMixin(HomogeneityTet*);
+  MultiFaceMixin(HomogeneityTet*, const Coord3D&);
 
   // Is the given point on the non-positive side of all of the faces?
   // TODO: Is it better to use barycentric coords for this?
@@ -802,7 +805,7 @@ protected:
   PixelBdyLoopSegment vsbSegment;
   double loopFrac;
 public:
-  SingleVSBmixIn(HomogeneityTet*);
+  SingleVSBmixIn(HomogeneityTet*, const Coord3D&);
   void setLoopSeg(const PixelBdyLoopSegment &seg) { vsbSegment = seg; }
   void setLoopFrac(double f) { loopFrac = f; }
   virtual const PixelBdyLoopSegment &getLoopSeg() const { return vsbSegment; }
@@ -884,7 +887,7 @@ template <class BASE> class MultiVSBmixIn : public BASE, public MultiVSBbase {
 protected:
   PBLSegmentMap vsbSegments;
 public:
-  MultiVSBmixIn(HomogeneityTet*);
+  MultiVSBmixIn(HomogeneityTet*, const Coord3D&);
   virtual TurnDirection categorizeCorner(PixelBdyLoopSegment&,
 					 PixelBdyLoopSegment&) const;
   virtual const PBLSegmentMap &getLoopSegs() const { return vsbSegments; }
@@ -931,6 +934,7 @@ class SimpleIntersection :
 public:
   SimpleIntersection(HomogeneityTet*,
 		     const HPixelPlane*, const HPixelPlane*,
+		     const Coord3D&,
 		     const PixelBdyLoopSegment&, double,
 		     unsigned int, CrossingType);
   virtual SimpleIntersection *clone(HomogeneityTet*) const;
@@ -979,14 +983,14 @@ class MultiFaceIntersection :
 {
 public:
   MultiFaceIntersection(HomogeneityTet*,
-			const HPixelPlane*, const HPixelPlane*,
+			const HPixelPlane*, const HPixelPlane*, const Coord3D&,
 			const PixelBdyLoopSegment&, double,
 			unsigned int, CrossingType);
   MultiFaceIntersection(HomogeneityTet*, const SimpleIntersection*,
 			const SimpleIntersection*);
   MultiFaceIntersection(HomogeneityTet*, const SimpleIntersection*,
 			const MultiFaceIntersection*);
-  MultiFaceIntersection(HomogeneityTet*);
+  MultiFaceIntersection(HomogeneityTet*, const Coord3D&);
   virtual MultiFaceIntersection *clone(HomogeneityTet*) const;
   // Are both polygon segments interior to the voxel set?
   Interiority interiority(const PixelPlaneFacet*) const;
@@ -1113,6 +1117,7 @@ public:
 PixelPlaneIntersectionNR *newIntersection(HomogeneityTet *htet,
 					  const HPixelPlane *basePlane,
 					  const HPixelPlane *orthoPlane,
+					  const Coord3D &loc,
 					  const PixelBdyLoopSegment &pblSeg,
 					  double alpha,
 					  unsigned int faceIndex,
@@ -1131,8 +1136,8 @@ PixelPlaneIntersectionNR *newIntersection(HomogeneityTet *htet,
 
 class TetIntersection : public MultiFaceIntersection {
 public:
-  TetIntersection(HomogeneityTet *htet)
-    : MultiFaceIntersection(htet)
+  TetIntersection(HomogeneityTet *htet, const Coord3D &loc)
+    : MultiFaceIntersection(htet, loc)
   {}
 };
 
@@ -1144,7 +1149,7 @@ public:
 class TetEdgeIntersection : public TetIntersection {
 public:
   TetEdgeIntersection(HomogeneityTet*, const FacePlane*, const FacePlane*,
-		      const HPixelPlane*);
+		      const HPixelPlane*, const Coord3D&);
   virtual TetEdgeIntersection *clone(HomogeneityTet*) const;
   virtual void print(std::ostream&) const;
   virtual std::string shortName() const;
@@ -1313,15 +1318,16 @@ public:
     return referent_->isMisordered(ppi, facet);
   }
 
-  virtual Coord3D getLocation3D() const {
-    return referent_->getLocation3D();
-  }
+  // virtual Coord3D getLocation3D() const {
+  //   return referent_->getLocation3D();
+  // }
   virtual int crossingCount() const {
     return referent_->crossingCount();
   }
 
-  virtual void copyPlanesToIntersection(IntersectionPlanesBase *gi) const {
-    referent_->copyPlanesToIntersection(gi);
+  virtual void copyPlanesToSets(PixelPlaneSet &pp, FacePlaneSet &fp,
+				FacePixelPlaneSet &fpp) const {
+    referent_->copyPlanesToSets(pp, fp, fpp);
   }
   
   // virtual bool isEquivalent(const PlaneIntersection *pi) const {
@@ -1504,6 +1510,21 @@ public:
 #endif // DEBUG
 }; // end IsecEquivalenceClass
 
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// findIntersectionLocation is used to find the location of an
+// intersection before the intersection object is constructed.  It
+// returns false if the given planes don't define an intersection.
+
+bool findIntersectionLocation(HomogeneityTet*,
+			      const PixelPlaneSet&,
+			      const FacePlaneSet&,
+			      const FacePixelPlaneSet&,
+			      Coord3D&);
+
+Coord3D pixplanes2Coord(const PixelPlane*, const PixelPlane*,
+			const PixelPlane*);
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 

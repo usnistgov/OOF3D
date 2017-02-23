@@ -808,22 +808,58 @@ bool IntersectionGroup::fixCrossings(HomogeneityTet *htet, unsigned int face,
 
     // Make a new GenericIntersection merging the planes of all of the
     // original intersections.
-    GenericIntersection *newPt = new GenericIntersection(htet);
-    htet->extraPoints.insert(newPt);
+    PixelPlaneSet pixplanes;
+    FacePlaneSet ffaces;
+    FacePixelPlaneSet pfaces;
+    Coord3D position;
     // To update the loose end set, we need to know how many starts
     // and ends have been merged.
     unsigned int nStarts = 0;
     unsigned nEnds = 0;
-
     for(FaceEdgeIntersection *mergePt : mergers) {
-      mergePt->corner()->copyPlanesToIntersection(newPt);
+      mergePt->corner()->copyPlanesToSets(pixplanes, ffaces, pfaces);
       if(mergePt->start())
 	nStarts++;
       else
 	nEnds++;
     }
-    newPt->computeLocation();
+    if(!findIntersectionLocation(htet, pixplanes, ffaces, pfaces, position)) {
+      throw ErrProgrammingError(
+	"IntersectionGroup::fixCrossings: findIntersectionLocation failed!",
+	__FILE__, __LINE__);
+    }
+    GenericIntersection *newPt = new GenericIntersection(htet, pixplanes,
+							 ffaces, pfaces,
+							 position);
+#ifdef DEBUG
+    if(htet->verboseFace()) {
+      oofcerr << "IntersectionGroup::fixCrossings: newPt=" << *newPt
+	      << std::endl;
+    }
+#endif // DEBUG
+    htet->extraPoints.insert(newPt);
+
+    // for(FaceEdgeIntersection *mergePt : mergers) {
+    //   mergePt->corner()->copyPlanesToIntersection(newPt);
+    //   if(mergePt->start())
+    // 	nStarts++;
+    //   else
+    // 	nEnds++;
+    // }
+    // newPt->computeLocation();
+#ifdef DEBUG
+    if(htet->verboseFace()) {
+      oofcerr << "IntersectionGroup::fixCrossings: before checkEquiv, newPt="
+	      << *newPt << std::endl;
+    }
+#endif // DEBUG
     htet->checkEquiv(newPt);	// merges equivalence classes
+#ifdef DEBUG
+    if(htet->verboseFace()) {
+      oofcerr << "IntersectionGroup::fixCrossings: after checkEquiv, newPt="
+	      << *newPt << std::endl;
+    }
+#endif // DEBUG
     // Find out where newPt is on the face
     EdgePosition newT;
     unsigned int newEdge = NONE;

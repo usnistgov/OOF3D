@@ -45,11 +45,12 @@ private:
   HPlane(HPlane&&) = delete;
 public:
   HPlane() {}
-  // TODO: Get rid of isPartOf.  It's not used.  Anything that uses it
-  // should probably be using intersection equivalence classes.
+  // TODO: Get rid of isPartOf.  It's not used.
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const = 0;
   virtual void addToIntersection(IntersectionPlanesBase*) const = 0;
   virtual void addToEquivalence(IsecEquivalenceClass*) const = 0;
+  virtual void addToSets(PixelPlaneSet&, FacePlaneSet&, FacePixelPlaneSet&)
+    const = 0;
   virtual void addCollinearToEquivalence(IsecEquivalenceClass*) const = 0;
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const = 0;
   virtual std::string shortName() const = 0;
@@ -80,6 +81,8 @@ public:
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
   virtual void addToIntersection(IntersectionPlanesBase*) const;
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
+  virtual void addToSets(PixelPlaneSet&, FacePlaneSet&, FacePixelPlaneSet&)
+    const;
   virtual void addCollinearToEquivalence(IsecEquivalenceClass*) const;
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const;
   virtual std::string shortName() const;
@@ -112,6 +115,8 @@ public:
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
   virtual void addToIntersection(IntersectionPlanesBase*) const;  
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
+  virtual void addToSets(PixelPlaneSet&, FacePlaneSet&, FacePixelPlaneSet&)
+    const;
   virtual void addCollinearToEquivalence(IsecEquivalenceClass*) const;
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const;
   virtual void print(std::ostream&) const;
@@ -139,6 +144,8 @@ public:
   virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
   virtual void addToIntersection(IntersectionPlanesBase*) const;
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
+  virtual void addToSets(PixelPlaneSet&, FacePlaneSet&, FacePixelPlaneSet&)
+    const;
   virtual void addCollinearToEquivalence(IsecEquivalenceClass*) const;
   virtual bool isInEquivalence(const IsecEquivalenceClass*) const;
   virtual const FacePixelPlane *unoriented() const { return this; }

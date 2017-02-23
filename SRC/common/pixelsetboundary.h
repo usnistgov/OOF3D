@@ -125,10 +125,6 @@ public:
   virtual void print(std::ostream&) const;
 };
 
-Coord3D triplePlaneIntersection(const Plane*, const Plane*, const Plane*);
-Coord3D triplePlaneIntersection(const PixelPlane*, const PixelPlane*,
-				const PixelPlane*);
-
 std::ostream &operator<<(std::ostream&, const Plane&);
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

@@ -11,6 +11,7 @@
 
 #include <oofconfig.h>
 
+#include "common/smallmatrix.h"
 #include "common/tostring.h"
 #include "engine/cskeletonelement.h"
 #include "engine/facefacet.h"
@@ -32,9 +33,10 @@ static std::string eqPrint(IsecEquivalenceClass *eqptr) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-PlaneIntersection::PlaneIntersection(HomogeneityTet *htet)
+PlaneIntersection::PlaneIntersection(HomogeneityTet *htet, const Coord3D &loc)
   : htet(htet),
-    equivalence_(nullptr)
+    equivalence_(nullptr),
+    loc_(loc)
 #ifdef DEBUG
   , verbose(false)
 #endif // DEBUG
@@ -56,7 +58,8 @@ PlaneIntersection::~PlaneIntersection() {
 
 PlaneIntersection::PlaneIntersection(const PlaneIntersection &other)
   : htet(other.htet),
-    equivalence_(other.equivalence_)
+    equivalence_(other.equivalence_),
+    loc_(other.loc_)
 #ifdef DEBUG
   , verbose(other.verbose)
 #endif // DEBUG
@@ -99,16 +102,16 @@ void PlaneIntersection::setEquivalence(IsecEquivalenceClass *e) {
 // #endif // DEBUG
 
 #ifdef DEBUG
-  double dist2 = norm2(getLocation3D() - e->location3D());
+  double dist2 = norm2(loc_ - e->location3D());
   if(dist2 > 1.e-10) {
     oofcerr << "PlaneIntersection::setEquivalence: incompatible positions!"
 	    << std::endl;
     OOFcerrIndent indent(2);
     oofcerr << "PlaneIntersection::setEquivalence: this=" << *this
 	    << std::endl;
-    oofcerr << "PlaneIntersection::setEquivalence: here=" << getLocation3D()
-	    << " eqpos=" << e->location3D()
-	    << " diff=" << getLocation3D()-e->location3D()
+    oofcerr << "PlaneIntersection::setEquivalence: here=" << loc_
+	    << " eqpos=" << (e->location3D())
+	    << " diff=" << (loc_-e->location3D())
 	    << " dist=" << sqrt(dist2)
 	    << std::endl;
     e->dump();
@@ -153,7 +156,7 @@ bool PlaneIntersection::isEquivalent(const PlaneIntersection *other) const {
 Coord3D PlaneIntersection::location3D() const {
   if(equivalence_ != nullptr)
     return equivalence_->location3D();
-  return getLocation3D();
+  return loc_;
 }
 
 Coord2D PlaneIntersection::location2D(const PixelPlane *pp) const {
@@ -217,15 +220,36 @@ bool PlaneIntersection::verify() {
 // GenericIntersection is the intersection of some planes, with no
 // special information about them.
 
+GenericIntersection::GenericIntersection(HomogeneityTet *htet,
+					 const PixelPlaneSet &pixplanes,
+					 const FacePlaneSet &ffaces,
+					 const FacePixelPlaneSet &pfaces,
+					 const Coord3D &position)
+  : IntersectionPlanes<PlaneIntersection>(htet, position)
+{
+  pixelPlanes_.insert(pixplanes.begin(), pixplanes.end());
+  faces_.insert(ffaces.begin(), ffaces.end());
+  pixelFaces_.insert(pfaces.begin(), pfaces.end());
+}
+
 GenericIntersection *GenericIntersection::clone(HomogeneityTet *htet) const {
   GenericIntersection *bozo = new GenericIntersection(*this);
   bozo->setID(htet);
   return bozo;
 }
 
-void GenericIntersection::setLocation(const Coord3D &pos) {
-  loc_ = fixedLocation(pos);
-}
+// void GenericIntersection::setLocation(const Coord3D &pos) {
+//   loc_ = fixedLocation(pos);
+// }
+
+// void GenericIntersection::computeLocation() {
+//   // findIntersectionLocation sets loc_.
+//   if(!findIntersectionLocation(htet, pixelPlanes_, faces_, pixelFaces_,
+// 			       loc_))
+//     throw ErrProgrammingError("GenericIntersection::computeLocation failed!",
+// 			      __FILE__, __LINE__);
+			     
+// }
 
 void GenericIntersection::print(std::ostream &os) const {
   os << "GenericIntersection(" << printPlanes() << ", " << loc_
@@ -243,12 +267,12 @@ std::string GenericIntersection::shortName() const {
 
 TripleFaceIntersection::TripleFaceIntersection(unsigned int node,
 					       HomogeneityTet *htet)
-  : PlaneIntersection(htet),
+  : PlaneIntersection(htet, htet->nodePosition(node)),
     node_(node)
 {
   for(unsigned int i=0; i<3; i++)
     faces_.insert(htet->getTetFacePlane(CSkeletonElement::nodeFaces[node][i]));
-  loc_ = htet->nodePosition(node);
+  // loc_ = htet->nodePosition(node);
 }
 
 TripleFaceIntersection *TripleFaceIntersection::clone(HomogeneityTet *htet)
@@ -297,37 +321,14 @@ unsigned int TripleFaceIntersection::findFaceEdge(unsigned int face,
 			    __FILE__, __LINE__);
 }
 
-void TripleFaceIntersection::copyPlanesToIntersection(
-					      IntersectionPlanesBase *gi)
+void TripleFaceIntersection::copyPlanesToSets(PixelPlaneSet &pixplanes,
+					      FacePlaneSet &ffaces,
+					      FacePixelPlaneSet &pfaces)
   const
 {
   for(const FacePlane *face : faces_)
-    face->addToIntersection(gi);
+    face->addToSets(pixplanes, ffaces, pfaces);
 }
-
-// bool TripleFaceIntersection::isEquivalent(const PlaneIntersection *pi) const
-// {
-//   if(equivalence() != nullptr && equivalence() == pi->equivalence())
-//     return true;
-//   return pi->isEquiv(this); // double dispatch
-// }
-
-// bool TripleFaceIntersection::isEquiv(const TripleFaceIntersection *tfi)
-//   const
-// {
-//   return node_ == tfi->getNode();
-// }
-
-// bool TripleFaceIntersection::isEquiv(const IntersectionPlanesBase *ppi)
-//   const
-// {
-//   return ppi->isEquiv(this);
-// }
-
-// bool TripleFaceIntersection::isEquiv(const RedundantIntersection *ri) const
-// {
-//   return ri->referent()->isEquiv(this);
-// }
 
 void TripleFaceIntersection::addPlanesToEquivalence(
 					    IsecEquivalenceClass *eqclass)
@@ -546,97 +547,6 @@ void PixelPlaneIntersectionNR::copyPlanes(const PixelPlaneIntersectionNR *fi0,
 // #endif // DEBUG
 }
 
-static void includeNonRedundantPlane(const HPlane *plane,
-				     std::vector<const HPlane*> &planes)
-{
-  if(planes.empty())
-    planes.push_back(plane);
-  else {
-    for(const HPlane *p : planes)
-      if(p->coincident(*plane))
-	return;
-    planes.push_back(plane);
-  }
-}
-
-void IntersectionPlanesBase::computeLocation() {
-  // If an intersection was constructed by merging intersections that
-  // contained oppositely oriented but coincident pixel planes, we
-  // have to be sure to include three independent planes in the set
-  // being used to compute the location.
-  Coord3D pos;
-  std::vector<const HPlane*> planes;
-  for(const HPlane *pp : pixelPlanes_) {
-    includeNonRedundantPlane(pp, planes);
-    if(planes.size() == 3)
-      break;
-  }
-  if(planes.size() < 3) {
-    for(const HPlane *fpp : pixelFaces_) {
-      includeNonRedundantPlane(fpp, planes);
-      if(planes.size() == 3)
-      break;
-    }
-  }
-  if(planes.size() < 3) {
-    // There aren't enough pixel planes to determine the location, so
-    // use some faces too.  They can't be coincident with the pixel
-    // planes, so don't bother calling includeNonRedundantPlane.
-    int nToAdd = 3 - planes.size();
-    for(const HPlane *face : faces_) {
-      planes.push_back(face);
-      if(--nToAdd == 0)
-	break;
-    }
-    // If there are three non-collinear pixel planes, then
-    // triplePlaneIntersection doesn't need to be called, because
-    // setLocation will set all the components of pos to the pixel
-    // plane offsets.
-    pos = triplePlaneIntersection(planes[0], planes[1], planes[2]);
-  }
-  setLocation(pos);
-  
-//   int npixplanes = pixelPlanes_.size() + pixelFaces_.size();
-//   if(npixplanes < 3) {
-//     std::vector<const Plane*> planes;
-//     planes.insert(planes.end(), pixelPlanes_.begin(), pixelPlanes_.end());
-//     planes.insert(planes.end(), pixelFaces_.begin(), pixelFaces_.end());
-//     int nToAdd = 3 - npixplanes;
-//     if(nToAdd > 0) {
-//       for(const Plane *face : faces_) {
-// 	// If npixplanes==2, check that the plane being added doesn't
-// 	// contain the intersection line of the pixplanes.
-// 	if(npixplanes != 2 || face->nonDegenerate(planes[0], planes[1])) {
-// 	  planes.push_back(face);
-// 	  if(--nToAdd == 0)
-// 	    break;
-// 	}
-//       }
-//     }
-// #ifdef DEBUG
-//     if(planes.size() != 3) {
-//       // This is called from constructors before "verbose" is set, so
-//       // don't bother checking for it.
-//       oofcerr << "IntersectionPlanesBase::computeLocation:"
-// 	      << " wrong number of planes!" << std::endl;
-//       oofcerr << "IntersectionPlanesBase::computeLocation: planes=";
-//       std::cerr << derefprint(planes);
-//       oofcerr << std::endl;
-//       throw ErrProgrammingError(
-// 			"IntersectionPlanesBase::computeLocation failed!",
-// 			__FILE__, __LINE__);
-//     }
-// #endif // DEBUG
-//     pos = triplePlaneIntersection(planes[0], planes[1], planes[2]);
-//   }
-//   // If there are three pixel planes, then pos is uninitialized, but
-//   // the value passed to setLocation is irrelevant.
-//   setLocation(pos);
-}
-
-void PixelPlaneIntersectionNR::setLocation(const Coord3D &pos) {
-  loc_ = fixedLocation(pos);
-}
 
 Coord3D IntersectionPlanesBase::fixedLocation(const Coord3D &pt) const {
   // Make sure that the point is exactly on all of the pixel planes.
@@ -648,57 +558,18 @@ Coord3D IntersectionPlanesBase::fixedLocation(const Coord3D &pt) const {
   return fixed;
 }
 
-// template <class PlaneSet0, class PlaneSet1>
-// bool PixelPlaneIntersectionNR::includeCollinearPlanes_(
-// 				       const CollinearPlaneMap &coplanes,
-// 				       const PlaneSet0 &planes0,
-// 				       const PlaneSet1 &planes1)
-// {
-//   bool changed = false;
-//   for(const HPlane *p0 : planes0) {
-//     for(const HPlane *p1 : planes1) {
-//       if(p0 != p1) {
-// 	auto matches =
-// 	  coplanes.equal_range(CollinearPlaneMap::key_type(p0, p1));
-// 	for(auto i=matches.first; i!=matches.second; i++) {
-// 	  (*i).second->addToIntersection(this);
-// 	  changed = true;
-// 	}
-//       }
-//     }
-//   }
-//   return changed;
-// }
-
-// void PixelPlaneIntersectionNR::includeCollinearPlanes(HomogeneityTet *htet) {
-//   const CollinearPlaneMap &coplanes = htet->collinearPlanes;
-
-//   // TODO: Keep track of whether collinear planes are up to date and
-//   // don't recompute unless necessary.
-//   bool mod = includeCollinearPlanes_(coplanes, pixelPlanes_, pixelPlanes_);
-//   mod = includeCollinearPlanes_(coplanes, faces_, faces_) || mod;
-//   mod = includeCollinearPlanes_(coplanes, pixelFaces_, pixelFaces_) || mod;
-//   mod = includeCollinearPlanes_(coplanes, pixelPlanes_, faces_) || mod;
-//   mod = includeCollinearPlanes_(coplanes, pixelPlanes_, pixelFaces_) || mod;
-//   mod = includeCollinearPlanes_(coplanes, pixelFaces_, faces_) || mod;
-//   if(mod && equivalence_ != nullptr) {
-//     addPlanesToEquivalence(equivalence());
-//   }
-// }
-
 template <class BASE>
-void IntersectionPlanes<BASE>::copyPlanesToIntersection(
-						IntersectionPlanesBase *gi)
+void IntersectionPlanes<BASE>::copyPlanesToSets(PixelPlaneSet &pixplanes,
+						FacePlaneSet &ffaces,
+						FacePixelPlaneSet &pfaces)
   const
 {
-  // All of these could be written as pp->addToIntersection(gi), but
-  // that adds an unnecessary virtual function call.
   for(const HPixelPlane *pp : pixelPlanes_)
-    gi->pixelPlanes().insert(pp);
+    pixplanes.insert(pp);
   for(const FacePlane *fp : faces_)
-    gi->faces().insert(fp);
+    ffaces.insert(fp);
   for(const FacePixelPlane *fpp : pixelFaces_)
-    gi->pixelFaces().insert(fpp);
+    pfaces.insert(fpp);
 }
 							
 template <class BASE>
@@ -1422,8 +1293,8 @@ SingleVSBbase::SingleVSBbase() {
 #define IMPOSSIBLE_ALPHA -1.234e5
 
 template <class BASE>
-SingleFaceMixIn<BASE>::SingleFaceMixIn(HomogeneityTet *htet)
-  : BASE(htet),
+SingleFaceMixIn<BASE>::SingleFaceMixIn(HomogeneityTet *htet, const Coord3D &loc)
+  : BASE(htet, loc),
     facePlane_(nullptr),
     polyFracCache(4)
 {
@@ -1503,8 +1374,8 @@ unsigned int SingleFaceMixIn<BASE>::minPolyEdge(const PixelPlaneFacet *facet)
 //-------
 
 template <class BASE>
-MultiFaceMixin<BASE>::MultiFaceMixin(HomogeneityTet *htet)
-  : BASE(htet)
+MultiFaceMixin<BASE>::MultiFaceMixin(HomogeneityTet *htet, const Coord3D &loc)
+  : BASE(htet, loc)
 {}
 
 template <class BASE>
@@ -1587,8 +1458,8 @@ unsigned int MultiFaceMixin<BASE>::getOtherFaceIndex(
 //-------
 
 template <class BASE>
-SingleVSBmixIn<BASE>::SingleVSBmixIn(HomogeneityTet *htet)
-  : BASE(htet)
+SingleVSBmixIn<BASE>::SingleVSBmixIn(HomogeneityTet *htet, const Coord3D &loc)
+  : BASE(htet, loc)
 {
   // oofcerr << "SingleVSBmixIn::ctor: " << this << std::endl;
 }
@@ -2045,8 +1916,8 @@ ISEC_ORDER SingleVSBmixIn<BASE>::reverseOrdering(const MultiVSBbase *other,
 // categorizes the corner *between* two intersections.
 
 template <class BASE>
-MultiVSBmixIn<BASE>::MultiVSBmixIn(HomogeneityTet *htet)
-  : BASE(htet)
+MultiVSBmixIn<BASE>::MultiVSBmixIn(HomogeneityTet *htet, const Coord3D &loc)
+  : BASE(htet, loc)
 {}
 
 template <class BASE>
@@ -2212,11 +2083,12 @@ static int combinedCrossing(const PixelPlaneIntersectionNR *fi0,
 SimpleIntersection::SimpleIntersection(HomogeneityTet *htet,
 				       const HPixelPlane *pp0,
 				       const HPixelPlane *pp1,
+				       const Coord3D &loc,
 				       const PixelBdyLoopSegment &pblseg,
 				       double alpha,
 				       unsigned int faceIndex,
 				       CrossingType ct)
-  : SingleVSBmixIn<SingleFaceMixIn<PixelPlaneIntersectionNR>>(htet)
+  : SingleVSBmixIn<SingleFaceMixIn<PixelPlaneIntersectionNR>>(htet, loc)
 {
   assert(ct != NONCROSSING);
   pp0->addToIntersection(this);
@@ -2231,7 +2103,7 @@ SimpleIntersection::SimpleIntersection(HomogeneityTet *htet,
     const FacePlane *fp = htet->getTetFacePlane(faceIndex);
     fp->addToIntersection(this);
     setFacePlane(fp);
-    computeLocation();
+    // computeLocation();
     // includeCollinearPlanes(htet);
   }
   else {
@@ -2465,18 +2337,26 @@ void SimpleIntersection::print(std::ostream &os) const {
 PixelPlaneIntersectionNR *newIntersection(HomogeneityTet *htet,
 					  const HPixelPlane *basePlane,
 					  const HPixelPlane *orthoPlane,
+					  const Coord3D &loc,
 					  const PixelBdyLoopSegment &pblSeg,
 					  double alpha,
 					  unsigned int faceIndex,
 					  CrossingType ct)
 {
   const FacePixelPlane *fpp = htet->getCoincidentFacePlane(orthoPlane);
-  if(fpp == nullptr) {
-    return new SimpleIntersection(htet, basePlane, orthoPlane, pblSeg, alpha,
-				  faceIndex, ct);
+#ifdef DEBUG
+  if(htet->verbosePlane()) {
+    oofcerr << "newIntersection: basePlane=" << *basePlane
+	    << " orthoPlane=" << *orthoPlane
+	    << " faceIndex=" << faceIndex << std::endl;
   }
-  return new MultiFaceIntersection(htet, basePlane, orthoPlane, pblSeg, alpha,
-				   faceIndex, ct);
+#endif // DEBUG
+  if(fpp == nullptr) {
+    return new SimpleIntersection(htet, basePlane, orthoPlane, loc, pblSeg,
+				  alpha, faceIndex, ct);
+  }
+  return new MultiFaceIntersection(htet, basePlane, orthoPlane, loc, pblSeg,
+				   alpha, faceIndex, ct);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -2484,18 +2364,19 @@ PixelPlaneIntersectionNR *newIntersection(HomogeneityTet *htet,
 MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
 					     const HPixelPlane *pp0,
 					     const HPixelPlane *pp1,
+					     const Coord3D &loc,
 					     const PixelBdyLoopSegment &pblseg,
 					     double alpha,
 					     unsigned int faceIndex,
 					     CrossingType ct)
-  : SingleVSBmixIn<MultiFaceMixin<PixelPlaneIntersectionNR>>(htet)
+  : SingleVSBmixIn<MultiFaceMixin<PixelPlaneIntersectionNR>>(htet, loc)
 {
   pp0->addToIntersection(this);
   pp1->addToIntersection(this);
   if(faceIndex != NONE) {
     const FacePlane *fp = htet->getTetFacePlane(faceIndex);
     fp->addToIntersection(this);
-    computeLocation();
+    // computeLocation();
     // includeCollinearPlanes(htet);
   }
   setLoopSeg(pblseg);
@@ -2503,10 +2384,18 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
   setCrossingType(ct);
 }
 
+// Constructors used when merging two other intersections.  The
+// position of the result is set from the average position of the
+// sources, which is probably not correct but doesn't matter.  The
+// position isn't used for topological calculations, and a better
+// value will be retrieved from the equivalence class after the
+// original classes have been merged.
+
 MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
 					     const SimpleIntersection *fi0,
 					     const SimpleIntersection *fi1)
-  : SingleVSBmixIn<MultiFaceMixin<PixelPlaneIntersectionNR>>(htet)
+  : SingleVSBmixIn<MultiFaceMixin<PixelPlaneIntersectionNR>>(
+			     htet, 0.5*(fi0->location3D() + fi1->location3D()))
 {
   assert(fi0->onSameLoopSegment(fi1));
   assert(fi0->getFacePlane() != fi1->getFacePlane());
@@ -2517,16 +2406,14 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
   setLoopSeg(fi0->getLoopSeg());
   setLoopFrac(fi0->getLoopFrac());
   copyPlanes(fi0, fi1);
-  // This may not be the best way to calculate the position, but the
-  // position shouldn't be used for topological calculations anyway.
-  setLocation(0.5*(fi0->location3D() + fi1->location3D()));
   // includeCollinearPlanes(htet);	// TODO: Is this necessary?
 }
 
 MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
 					     const SimpleIntersection *si,
 					     const MultiFaceIntersection *mfi)
-  : SingleVSBmixIn<MultiFaceMixin<PixelPlaneIntersectionNR>>(htet)
+  : SingleVSBmixIn<MultiFaceMixin<PixelPlaneIntersectionNR>>(
+			     htet, 0.5*(si->location3D() + mfi->location3D()))
 {
   assert(si->onSameLoopSegment(mfi));
 #ifdef DEBUG
@@ -2536,14 +2423,12 @@ MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
   setLoopSeg(si->getLoopSeg());
   setLoopFrac(si->getLoopFrac());
   copyPlanes(si, mfi);
-  // This may not be the best way to calculate the position, but the
-  // position shouldn't be used for topological calculations anyway.
-  setLocation(0.5*(si->location3D() + mfi->location3D()));
   // includeCollinearPlanes(htet);	// TODO: Is this necessary?
 }
 
-MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet)
-  : SingleVSBmixIn<MultiFaceMixin<PixelPlaneIntersectionNR>>(htet)
+MultiFaceIntersection::MultiFaceIntersection(HomogeneityTet *htet,
+					     const Coord3D &pos)
+    : SingleVSBmixIn<MultiFaceMixin<PixelPlaneIntersectionNR>>(htet, pos)
 {}
 
 MultiFaceIntersection *MultiFaceIntersection::clone(HomogeneityTet *htet) const
@@ -2755,7 +2640,8 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
 					   const PixelPlaneFacet *facet,
 					   const SimpleIntersection *fi0,
 					   const SimpleIntersection *fi1)
-  : SingleFaceMixIn<MultiVSBmixIn<PixelPlaneIntersectionNR>>(htet)
+  : SingleFaceMixIn<MultiVSBmixIn<PixelPlaneIntersectionNR>>(
+			     htet, 0.5*(fi0->location3D() + fi1->location3D()))
 {
 // #ifdef DEBUG
 //   if(fi0->getFacePlane() != fi1->getFacePlane()) {
@@ -2781,7 +2667,7 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
   // TODO: Enforce that each vsb segment fraction is either 0 or 1
   vsbSegments[fi0->getLoopSeg()] = fi0->getLoopFrac();
   vsbSegments[fi1->getLoopSeg()] = fi1->getLoopFrac();
-  computeLocation();
+  // computeLocation();
   // includeCollinearPlanes(htet);
 }
 
@@ -2791,7 +2677,8 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
 #endif // DEBUG
 					   const SimpleIntersection *si,
 					   const MultiVSBIntersection *mvi)
-  : SingleFaceMixIn<MultiVSBmixIn<PixelPlaneIntersectionNR>>(htet)
+  : SingleFaceMixIn<MultiVSBmixIn<PixelPlaneIntersectionNR>>(
+			     htet, 0.5*(si->location3D() + mvi->location3D()))
 {
   assert(si->onOnePolySegment(mvi, facet));
 #ifdef DEBUG
@@ -2804,7 +2691,7 @@ MultiVSBIntersection::MultiVSBIntersection(HomogeneityTet *htet,
 	       si->getFacePlane() : mvi->getFacePlane());
   vsbSegments[si->getLoopSeg()] = si->getLoopFrac();
   vsbSegments.insert(mvi->getLoopSegs().begin(), mvi->getLoopSegs().end());
-  computeLocation();
+  //  computeLocation();
   // includeCollinearPlanes(htet);
 }
 
@@ -2944,14 +2831,15 @@ MultiCornerIntersection::MultiCornerIntersection(
 					 HomogeneityTet *htet,
 					 const PixelPlaneIntersectionNR *fi0,
 					 const PixelPlaneIntersectionNR *fi1)
-  : MultiFaceMixin<MultiVSBmixIn<PixelPlaneIntersectionNR>>(htet)
+  : MultiFaceMixin<MultiVSBmixIn<PixelPlaneIntersectionNR>>(
+			    htet, 0.5*(fi0->location3D() + fi1->location3D()))
 {
   setCrossingCount(combinedCrossing(fi0, fi1));
 #ifdef DEBUG
   verbose = fi0->verbose || fi1->verbose;
 #endif // DEBUG
   copyPlanes(fi0, fi1);
-  computeLocation();
+  //  computeLocation();
   // TODO: In debug mode, check that the faces actually pass through
   // the intersection point as determined by the pixel planes?
 #ifdef DEBUG
@@ -3073,7 +2961,7 @@ void MultiCornerIntersection::print(std::ostream &os) const {
 
 RedundantIntersection::RedundantIntersection(PixelPlaneIntersection *ppi,
 					     PixelPlaneFacet *facet)
-  : PixelPlaneIntersection(facet->htet),
+  : PixelPlaneIntersection(facet->htet, ppi->location3D()),
     referent_(ppi->referent()),
     facet_(facet)
 {
@@ -3112,8 +3000,9 @@ EdgePosition RedundantIntersection::getPolyFrac(unsigned int edge,
 TetEdgeIntersection::TetEdgeIntersection(HomogeneityTet *htet,
 					 const FacePlane *f0,
 					 const FacePlane *f1,
-					 const HPixelPlane *pp)
-  : TetIntersection(htet)
+					 const HPixelPlane *pp,
+					 const Coord3D &loc)
+  : TetIntersection(htet, loc)
 {
 // #ifdef DEBUG
 //   if(htet->verbosePlane()) {
@@ -3127,7 +3016,7 @@ TetEdgeIntersection::TetEdgeIntersection(HomogeneityTet *htet,
   // faces_.insert(f0);
   // faces_.insert(f1);
   // pixelPlanes_.insert(pp);
-  loc_ = triplePlaneIntersection(f0, f1, pp);
+  // loc_ = triplePlaneIntersection(f0, f1, pp);
 // #ifdef DEBUG
 //   if(htet->verbosePlane()) {
 //     oofcerr << "TetEdgeIntersection::ctor: " << *this << std::endl;
@@ -3168,7 +3057,7 @@ std::string TetEdgeIntersection::shortName() const {
 TetNodeIntersection::TetNodeIntersection(HomogeneityTet *htet,
 					 const HPixelPlane *pp,
 					 unsigned int node)
-  : TetIntersection(htet)
+  : TetIntersection(htet, htet->nodePosition(node))
 {
   // TODO: One of the faces will either not create a polygon edge or
   // will be redundant with another plane.  If it's redundant, that's
@@ -3180,24 +3069,6 @@ TetNodeIntersection::TetNodeIntersection(HomogeneityTet *htet,
     fp->addToIntersection(this);
   }
   pp->addToIntersection(this);
-  // // TODO: One of the faces will either not create a polygon edge or
-  // // will be redundant with another plane.  Don't include it in the
-  // // set of faces.
-  // for(unsigned int i=0; i<3; i++) {
-  //   unsigned int f = CSkeletonElement::nodeFaces[node][i];
-  //   const FacePixelPlane *fpp = htet->getCoincidentPixelPlane(f);
-  //   if(fpp != nullptr)
-  //     pixelFaces_.insert(fpp);
-  //   else
-  //     faces_.insert(htet->getFacePlane(f));
-  // }
-  // const FacePixelPlane *fpp = htet->getCoincidentFacePlane(pp);
-  // if(fpp != nullptr)
-  //   pixelFaces_.insert(fpp);
-  // else
-  //     pixelPlanes_.insert(pp);
-  loc_ = htet->nodePosition(node);
-  // includeCollinearPlanes(htet);
 }
 
 TetNodeIntersection *TetNodeIntersection::clone(HomogeneityTet *htet) const {
@@ -3223,13 +3094,14 @@ TriplePixelPlaneIntersection::TriplePixelPlaneIntersection(
 						   const HPixelPlane *pp0,
 						   const HPixelPlane *pp1,
 						   const HPixelPlane *pp2)
-  : MultiVSBmixIn<PixelPlaneIntersectionNR>(htet)
+  : MultiVSBmixIn<PixelPlaneIntersectionNR>(
+			    htet, pixplanes2Coord(pp0, pp1, pp2))
 {
   pp0->addToIntersection(this);
   pp1->addToIntersection(this);
   pp2->addToIntersection(this);
   setCrossingCount(0);
-  computeLocation();
+  // computeLocation();
   // includeCollinearPlanes(htet);
 }
 
@@ -3587,6 +3459,259 @@ void IsecEquivalenceClass::dump() {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// Utility functions used by findIntersectionLocation().
+
+static void includeNonRedundantPlane(const HPlane *plane,
+				     std::vector<const HPlane*> &planes)
+{
+  if(planes.empty())
+    planes.push_back(plane);
+  else {
+    for(const HPlane *p : planes)
+      if(p->coincident(*plane))
+	return;
+    planes.push_back(plane);
+  }
+}
+
+// Find the intersection point of three planes.  Store the result in
+// isec and return true if it works.  "planes" must be a container
+// containing pointers to Plane instances.
+
+template <class PLANES>
+bool triplePlaneIntersection(const PLANES &planes, Coord3D &isec
+#ifdef DEBUG
+			     , bool verbose
+#endif // DEBUG
+			     )
+{
+  // Compute the intersection point of the planes.
+#ifdef DEBUG
+  if(verbose) {
+      oofcerr << "triplePlaneIntersection: planes=";
+      std::cerr << derefprint(planes);
+      oofcerr << std::endl;
+  }
+#endif // DEBUG
+  SmallMatrix normals(3, 3);
+  SmallMatrix offsets(3, 1);
+  assert(planes.size() == 3);
+  unsigned int p = 0;
+  for(auto &plane : planes) {
+    normals(p, 0) = plane->normal()[0];
+    normals(p, 1) = plane->normal()[1];
+    normals(p, 2) = plane->normal()[2];
+    offsets(p, 0) = plane->offset();
+    p++;
+  }
+  int status = normals.solve(offsets);
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "triplePlaneIntersection: normals=" << normals << std::endl;
+    oofcerr << "triplePlaneIntersection: offsets=" << offsets << std::endl;
+    oofcerr << "triplePlaneIntersection: status=" << status << std::endl;
+  }
+#endif // DEBUG
+  if(status != 0) {
+    return false;
+  }
+  isec = Coord3D(offsets(0,0), offsets(1,0), offsets(2,0));
+#ifdef DEBUG
+  if(verbose) {
+    oofcerr << "triplePlaneIntersection: isec=" << isec << std::endl;
+  }
+#endif // DEBUG
+  return true;
+}
+
+// bool triplePlaneIntersection(const Plane *plane0, const Plane *plane1,
+// 			     const Plane *plane2, Coord3D &isec)
+// {
+//   // Compute the intersection point of the planes.
+//   SmallMatrix normals(3, 3);
+//   SmallMatrix offsets(3, 1);
+//   for(unsigned int i=0; i<3; i++) {
+//     normals(0, i) = plane0->normal()[i];
+//     normals(1, i) = plane1->normal()[i];
+//     normals(2, i) = plane2->normal()[i];
+//   }
+//   offsets(0, 0) = plane0->offset();
+//   offsets(1, 0) = plane1->offset();
+//   offsets(2, 0) = plane2->offset();
+//   int status = normals.solve(offsets);
+//   if(status != 0) {
+// #ifdef DEBUG
+//     oofcerr << "triplePlaneIntersection: plane0=" << *plane0 << " normal="
+// 	    << plane0->normal() << std::endl;
+//     oofcerr << "triplePlaneIntersection: plane1=" << *plane1 << " normal="
+// 	    << plane1->normal() << std::endl;
+//     oofcerr << "triplePlaneIntersection: plane2=" << *plane2 << " normal="
+// 	    << plane2->normal() << std::endl;
+//     oofcerr << "triplePlaneIntersection: normals=" << normals << std::endl;
+//     oofcerr << "triplePlaneIntersection: offsets=" << offsets << std::endl;
+//     oofcerr << "triplePlaneIntersection: status=" << status << std::endl;
+// #endif // DEBUG
+//     return false;
+//   }
+//   isec = Coord3D(offsets(0, 0), offsets(1, 0), offsets(2, 0));
+//   // oofcerr << "triplePlaneIntersection: " << *plane0 << " " << *plane1 << " "
+//   // 	  << *plane2 << " --> " << isec << std::endl;
+//   return true;
+// }
+
+static bool triplePixelPlaneIntersection(const PixelPlane *p0,
+					 const PixelPlane *p1,
+					 const PixelPlane *p2,
+					 Coord3D &pt)
+{
+#ifdef DEBUG
+  if(p0->direction() == p1->direction() ||
+     p1->direction() == p2->direction() ||
+     p2->direction() == p0->direction())
+    {
+      // oofcerr << "triplePlaneIntersection: p0=" << *p0 << " p1=" << *p1
+      // 	      << " p2=" << *p2 << std::endl;
+      return false;
+    }
+#endif // DEBUG
+  pt[p0->direction()] = p0->normalOffset();
+  pt[p1->direction()] = p1->normalOffset();
+  pt[p2->direction()] = p2->normalOffset();
+  return true;
+}
+
+Coord3D pixplanes2Coord(const PixelPlane *p0, const PixelPlane *p1,
+			const PixelPlane *p2)
+{
+  Coord3D pt;
+  if(triplePixelPlaneIntersection(p0, p1, p2, pt))
+    return pt;
+  throw ErrProgrammingError("pixplanes2Coord failed!", __FILE__, __LINE__);
+}
+
+// findIntersectionLocation is used to find the position of an
+// intersection before a PlaneIntersection object is constructed.  It
+// returns false if the given planes don't intersect.  It assumes that
+// if the planes intersect, they do so uniquely.  It uses pixel planes
+// when possible, and augments the calculation with face planes if
+// necessary.
+
+bool findIntersectionLocation(HomogeneityTet *htet,
+			      const PixelPlaneSet &pixelPlanes,
+			      const FacePlaneSet &faces,
+			      const FacePixelPlaneSet &pixelFaces,
+			      Coord3D &position)
+{
+#ifdef DEBUG
+  bool verbose = htet->verbosePlane() || htet->verboseFace();
+  if(verbose) {
+    oofcerr << "findIntersectionLocation: pixelPlanes=";
+    std::cerr << derefprint(pixelPlanes);
+    oofcerr << std::endl;
+    oofcerr << "findIntersectionLocation: faces=";
+    std::cerr << derefprint(faces);
+    oofcerr << std::endl;
+    oofcerr << "findIntersectionLocation: pixelFaces=";
+    std::cerr << derefprint(pixelFaces);
+    oofcerr << std::endl;
+  }
+#endif // DEBUG
+  std::vector<const HPlane*> planes;
+  for(const HPlane *pp : pixelPlanes) {
+    includeNonRedundantPlane(pp, planes);
+    if(planes.size() == 3)
+      break;
+  }
+  if(planes.size() < 3) {
+    for(const HPlane *fpp : pixelFaces) {
+      includeNonRedundantPlane(fpp, planes);
+      if(planes.size() == 3)
+	break;
+    }
+  }
+  unsigned int nPixelPlanes = planes.size();
+  
+  // Unless nPixelPlanes==3, there aren't enough pixel planes to
+  // determine the location, so use some faces too.  They can't be
+  // coincident with any pixel planes, so don't bother calling
+  // includeNonRedundantPlane.  However, it's possible for a face to
+  // be collinear with two pixel planes, or two faces to be collinear
+  // with one pixel plane, in which case a different face or faces
+  // must be chosen.
+  planes.resize(3, nullptr);
+
+  if(nPixelPlanes == 0) {
+    return triplePlaneIntersection(faces, position
+#ifdef DEBUG
+				   , verbose
+#endif // DEBUG
+				   );
+  }
+
+  if(nPixelPlanes == 1) {
+    for(auto fp0=faces.begin(); fp0!=faces.end(); ++fp0) {
+      planes[1] = *fp0;
+      auto fp1 = fp0;
+      fp1++;
+      for(; fp1!=faces.end(); ++fp1) {
+	// The HomogeneityTet knows which pixel planes are collinear
+	// with which pairs of faces, so check before calling
+	// triplePlaneIntersection.
+	if(!htet->areCollinear(planes[0], *fp0, *fp1)) {
+	  planes[2] = *fp1;
+	  bool ok = triplePlaneIntersection(planes, position
+#ifdef DEBUG
+					    , verbose
+#endif
+					    );
+	  assert(ok);
+	  return true;
+	}
+      }
+    }
+    throw ErrProgrammingError(
+		      "findIntersectionLocation failed for nPixelPlanes=1",
+		      __FILE__, __LINE__);
+  }
+
+  if(nPixelPlanes == 2) {
+    for(const FacePlane *fp : faces) {
+      // Collinearity of one face and two pixel planes isn't checked
+      // by the HomogeneityTet constructor, so just see if the matrix
+      // solver used in triplePlaneIntersection complains, since it's
+      // the ultimate authority on whether or not the planes are
+      // independent.  Check each of the face planes and return the
+      // first time one of them is found to form an intersection with
+      // the pixel planes.  TODO: Check all face planes and return the
+      // best one, by looking for the smallest residual in the matrix
+      // equation solved by triplePlaneIntersection?
+      planes[2] = fp;
+      if(triplePlaneIntersection(planes, position
+#ifdef DEBUG
+				 , verbose
+#endif // DEBUG
+				 ))
+	{
+	  return true;
+	}
+    }
+    return false;
+  }
+
+  if(nPixelPlanes == 3) {
+    // TODO: Do something about these ugly dynamic_casts?  We can't
+    // just pass "planes", because it's a container of HPlane*s, not
+    // PixelPlane*s.
+    return triplePixelPlaneIntersection(
+				dynamic_cast<const PixelPlane*>(planes[0]),
+				dynamic_cast<const PixelPlane*>(planes[1]),
+				dynamic_cast<const PixelPlane*>(planes[2]),
+				position);
+  }
+  return false;			// not reached
+} // end findIntersectionLocation
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 std::ostream &operator<<(std::ostream &os, const PlaneIntersection &pi) {
   pi.print(os);
