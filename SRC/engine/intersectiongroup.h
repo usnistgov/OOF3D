@@ -32,14 +32,12 @@ public:
   IntersectionGroup(const Coord3D loc, FaceEdgeIntersection *fei,
 		    unsigned int f)
     : location(loc),
-      // isectype(CORRECT),
       face(f)
   {
     isecs.push_back(fei);
   }
   void addIntersection(FaceEdgeIntersection *fei) {
     isecs.push_back(fei);
-    // isectype = UNKNOWN;
   }
   bool nearby(const Coord3D &where) const {
     return (norm2(where-location) < CLOSEBY2);

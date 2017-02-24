@@ -148,8 +148,6 @@ private:
 					      HPixelPlane*,
 					      const Coord3D&);
 
-  std::vector<StrandedPoint> matchStrandedPoints(std::vector<StrandedPoint>&,
-						 LooseEndCatalog&, bool&);
   bool resolveFaceFacetCoincidences(unsigned int, LooseEndSet&,
 				    const std::vector<FaceFacetEdgeSet>&);
 
@@ -214,9 +212,6 @@ public:
 // #endif // DEBUG
 			    );
 
-
-  // void setIntersectionPolyFrac(SingleFaceBase*, unsigned int,
-  // 			       const PixelPlaneFacet*) const;
 
   // Return the fractional position of the given point (given in
   // barycentric coords) along the polygon edge of the given facet.

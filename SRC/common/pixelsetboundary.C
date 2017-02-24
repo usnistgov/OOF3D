@@ -515,95 +515,6 @@ void PixelSetCrossSection::add_loop(PixelBdyLoop *loop) {
     bounds->swallow(loop->bbox());
 }
 
-// // PixelSetCrossSection::find_boundary assembles the segments located
-// // by getPlaneCS into loops.  It's slightly different from
-// // PixelSetBoundary::find_boundary because the segments aren't unit
-// // segments and consecutive segments are guaranteed not to be
-// // colinear.
-
-// void PixelSetCrossSection::find_boundary(bool verbose) {
-//   if(verbose) {
-//     oofcerr << "PixelSetCrossSection::find_boundary: segmap=";
-//     std::cerr << segmap;
-//     oofcerr << std::endl;
-//   }
-//   while(!segmap.empty()) {
-//     PixelBdyLoop *loop = new PixelBdyLoop();
-//     SegMap::iterator current = segmap.begin();
-//     ICoord2D start = (*current).first;
-//     ICoord2D here = start;
-//     ICoord2D prev = start;
-//     loop->add_point(here);
-//     ICoord2D next = (*current).second;
-//     loop->add_point(next);
-//     segmap.erase(current);
-//     bool done = false;
-//     while(!done) {
-//       prev = here;
-//       here = next;
-//       // See how many end points are accessible from the previous end point
-//       int n = segmap.count(here);
-//       if(n == 1) {
-// 	current = segmap.find(here);
-// 	next = (*current).second;
-// 	segmap.erase(current);
-// 	if(next == start) {
-// 	  done = true;
-// 	}
-// 	else {
-// 	  loop->add_point(next);
-// 	}
-//       }	// end if n == 1
-//       else if(n == 2) {
-// 	// There are two segments going out from 'here'.  One must go
-// 	// left and one right, since consecutive colinear segments are
-// 	// impossible.  Choose the one that makes a left turn.
-// 	SegMapRange range = segmap.equal_range(here);
-// 	bool ok = false;
-// 	SegMap::iterator deleteMe;
-// 	for(SegMap::iterator smi=range.first; smi!=range.second && !ok; ++smi) {
-// 	  next = (*smi).second;
-// 	  if(cross(here-prev, next-here) > 0) { // found the left turn
-// 	    ok = true;
-// 	    deleteMe = smi;
-// 	    if(next == start) {
-// 	      done = true;
-// 	    }
-// 	    else {
-// 	      loop->add_point(next);
-// 	    }
-// 	  } // end if found the left turn
-// 	}   // end loop over possible outgoing segments smi
-// 	assert(ok);
-// 	// Deletion is done outside the loop, because range.second is
-// 	// an invalid iterator after the point is deleted.
-// 	segmap.erase(deleteMe);
-//       }	    // end if n == 2
-//       else {
-// 	oofcerr << "PixelSetCrossSection::find_boundary: n=" << n << std::endl;
-// 	oofcerr << "PixelSetCrossSection::find_boundary: segmap=" << std::endl;
-// 	OOFcerrIndent indent(2);
-// 	SegMapRange range = segmap.equal_range(here);
-// 	for(SegMap::iterator i=range.first; i!=range.second; ++i)
-// 	  oofcerr << "  " << (*i).first << " " << (*i).second << std::endl;
-// 	throw ErrProgrammingError("PixelSetCrossSection::find_boundary failed!",
-// 				  __FILE__, __LINE__);
-//       }
-//     } // end while not done (with the current loop)
-//     assert(loop->size() >= 4);
-//     loop->find_bounds();
-//     loopset.push_back(loop);
-//   } // end while segmap not empty
-//   for(std::vector<PixelBdyLoop*>::iterator loop=loopset.begin();
-//       loop!=loopset.end(); ++loop)
-//     {
-//       if(bounds == 0)
-// 	bounds = new ICRectangle((*loop)->bbox());
-//       else
-// 	bounds->swallow((*loop)->bbox());
-//     }
-// }   // PixelSetCrossSection::find_boundary
-
 std::ostream &operator<<(std::ostream &os, const VoxelSetBoundary &vsb) {
   os << "VoxelSetBoundary:  bounds=" << vsb.bbox() << std::endl;
   const PixelSetBoundaryMap &psbm(vsb.getPixelSetBdys());
@@ -670,10 +581,6 @@ PixelPlane::PixelPlane(unsigned int dir, int offst, int nrml)
   assert(direction_ < 3);
 }
 
-// PixelPlane PixelPlane::inverted() const {
-//   return PixelPlane(direction_, normalOffset(), offset_ > 0? -1 : 1);
-// }
-
 bool PixelPlane::contains(const Coord3D &pt) const {
   return pt[direction_] == unitNormal_[direction_]*offset_;
 }
@@ -735,9 +642,6 @@ int PixelPlane::getCategoryFromPoint(const CMicrostructure *ms,
 
 ICoord3D PixelPlane::normalVector() const {
   return ICoord3D(unitNormal_[0], unitNormal_[1], unitNormal_[2]);
-  // ICoord3D nrml(0, 0, 0);
-  // nrml[direction_] = normal_;	// +1 or -1
-  // return nrml;
 }
 
 std::ostream &operator<<(std::ostream &os, const Plane &plane) {

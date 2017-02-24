@@ -100,13 +100,6 @@ void FaceEdgeIntersection::forceOntoEdge(unsigned int face,
 
   t = htet->faceEdgeCoord(b, face, fEdge);
   t.normalize();
-  // unsigned int node0, node1;
-  // getEdgeNodes(face, fEdge, node0, node1);
-  // t = b[node1]/(b[node0] + b[node1]);
-  // if(t < 0)
-  //   t = 0.0;
-  // else if(t > 1.0)
-  //   t = 1.0;
 
 // #ifdef DEBUG
 //   if(htet->verboseCategory()) {
@@ -255,30 +248,6 @@ bool FaceEdgeIntersection::crossesSameEdge(const FaceEdgeIntersection *other,
 		  (faceEdge()+1)%3 == other->faceEdge()
 		  && (edgePosition().atEnd() ||
 		      other->edgePosition().atStart()));
-
-//   if(shared == nullptr) {
-//     // Since the points aren't on a shared edge, we can't use the
-//     // placement of the near end points on the edge to make the
-//     // calculation easier. 
-// #ifdef DEBUG
-//     if(verbose)
-//       oofcerr << "FaceEdgeIntersection::crosses: using segIntersection"
-// 	      << std::endl;
-// #endif// DEBUG
-//     bool crs = segIntersection(
-// 		       nearEnd->location3D(), farEnd->location3D(),
-// 		       otherNearEnd->location3D(), otherFarEnd->location3D()
-// #ifdef DEBUG
-// 		       , verbose
-// #endif // DEBUG
-// 			   );
-// #ifdef DEBUG
-//     if(verbose)
-//       oofcerr << "FaceEdgeIntersection::crosses: returning " << crs
-// 	      << std::endl;
-// #endif // DEBUG
-//     return crs;
-//   }
 
   // sharedE is the face-scope index of the tet edge that's shared by
   // this and the other FaceEdgeIntersection.  It's equal to fEdge if
@@ -934,61 +903,6 @@ void FaceFacet::removePerimeterEdges(LooseEndSet &looseEnds) {
 		      FaceFacetEdgeSet::key_compare());
   edges_ = std::move(keepTheseEdges);
 }
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// // Find and remove face facet edges that lie on tet edges, and have no
-// // connecting edges on the face facet.  These edges can only arise
-// // from situations where one pixel plane facet intersects the tet only
-// // by roundoff error, and the perpendicular facets (that would have
-// // provided the connecting edges) don't intersect the tet.
-
-// bool FaceFacet::collapseDisconnected(LooseEndSet &looseEnds) {
-// #ifdef DEBUG
-//   if(htet->verboseFace()) {
-//     if(!looseEnds.empty()) {
-//       oofcerr << "FaceFacet::collapseDisconnected: face=" << face
-// 	      << " looseEnds=" << std::endl;
-//       OOFcerrIndent indent(2);
-//       for(FaceEdgeIntersection *fei : looseEnds)
-// 	oofcerr << "FaceFacet::collapseDisconnected: " << *fei << std::endl;
-//     }
-//     else
-//       oofcerr << "FaceFacet::collapseDisconnected: no loose ends" << std::endl;
-//   }
-// #endif // DEBUG
-//   FaceFacetEdgeSet collapseThese;
-//   for(FaceEdgeIntersection *fei0 : looseEnds) {
-//     for(FaceEdgeIntersection *fei1 : looseEnds) {
-//       if(fei0 != fei1 &&
-// 	 fei0->faceEdge() == fei1->faceEdge() &&
-// 	 fei0->remoteCorner() == fei1->corner() &&
-// 	 fei1->remoteCorner() == fei0->corner() &&
-// 	 // Don't collapse a facet edge that spans the whole tet edge.
-// 	 (fei0->corner()->equivalence()->nFaces() != 3 ||
-// 	  fei1->corner()->equivalence()->nFaces() != 3)
-// 	 )
-// 	{
-// 	  collapseThese.insert(fei0->edge());
-// 	}
-//     }
-//   }
-//   bool didSomething = !collapseThese.empty();
-
-//   for(FaceFacetEdge *edge : collapseThese) {
-// #ifdef DEBUG
-//     if(htet->verboseFace()) {
-//       oofcerr << "FaceFacet::collapseDisconnected: face=" << face
-// 	      << " collapsing " << *edge << std::endl;
-//     }
-// #endif // DEBUG
-//     edge->startPt()->equivalence()->merge(edge->endPt()->equivalence());
-//     // No need to remove the FaceEdgeIntersections from looseEnds,
-//     // since looseEnds will be rebuilt as soon as this function
-//     // returns.
-//   }
-//   return didSomething;
-// }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 

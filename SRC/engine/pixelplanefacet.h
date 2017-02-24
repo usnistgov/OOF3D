@@ -45,8 +45,6 @@ private:
   HPlane(HPlane&&) = delete;
 public:
   HPlane() {}
-  // TODO: Get rid of isPartOf.  It's not used.
-  virtual bool isPartOf(const PixelPlaneIntersectionNR*) const = 0;
   virtual void addToIntersection(IntersectionPlanesBase*) const = 0;
   virtual void addToEquivalence(IsecEquivalenceClass*) const = 0;
   virtual void addToSets(PixelPlaneSet&, FacePlaneSet&, FacePixelPlaneSet&)
@@ -78,7 +76,6 @@ public:
       unoriented_(nullptr)
   {}
   HPixelPlane() {}
-  virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
   virtual void addToIntersection(IntersectionPlanesBase*) const;
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
   virtual void addToSets(PixelPlaneSet&, FacePlaneSet&, FacePixelPlaneSet&)
@@ -112,7 +109,6 @@ public:
   FacePlane(unsigned int face)
     : face_(face)
   {}
-  virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
   virtual void addToIntersection(IntersectionPlanesBase*) const;  
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
   virtual void addToSets(PixelPlaneSet&, FacePlaneSet&, FacePixelPlaneSet&)
@@ -141,7 +137,6 @@ public:
       PixelPlane(*pixplane),
       FacePlane(face)
   {}
-  virtual bool isPartOf(const PixelPlaneIntersectionNR*) const;
   virtual void addToIntersection(IntersectionPlanesBase*) const;
   virtual void addToEquivalence(IsecEquivalenceClass*) const;
   virtual void addToSets(PixelPlaneSet&, FacePlaneSet&, FacePixelPlaneSet&)

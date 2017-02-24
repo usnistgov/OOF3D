@@ -84,10 +84,6 @@ HPixelPlane *HPixelPlane::flipped() const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-bool HPixelPlane::isPartOf(const PixelPlaneIntersectionNR *fi) const {
-  return fi->pixelPlanes().count(this) > 0;
-}
-
 void HPixelPlane::addToIntersection(IntersectionPlanesBase *fi) const {
   fi->pixelPlanes().insert(this);
 }
@@ -101,7 +97,6 @@ void HPixelPlane::addToSets(PixelPlaneSet &pplanes, FacePlaneSet&,
 
 bool HPixelPlane::isInEquivalence(const IsecEquivalenceClass *eqclass) const {
   return eqclass->containsPixelPlane(this);
-  // return eqclass->pixelPlanes.count(unoriented_) > 0;
 }
 
 void HPixelPlane::addToEquivalence(IsecEquivalenceClass *eqclass) const {
@@ -112,10 +107,6 @@ void HPixelPlane::addCollinearToEquivalence(IsecEquivalenceClass *eqclass)
   const
 {
   eqclass->addPixelPlane(this, false);
-}
-
-bool FacePlane::isPartOf(const PixelPlaneIntersectionNR *fi) const {
-  return fi->faces().count(this) > 0;
 }
 
 void FacePlane::addToIntersection(IntersectionPlanesBase *fi) const {
@@ -140,10 +131,6 @@ void FacePlane::addToEquivalence(IsecEquivalenceClass *eqclass) const {
 
 void FacePlane::addCollinearToEquivalence(IsecEquivalenceClass *eqclass) const {
   eqclass->addFacePlane(this, false);
-}
-
-bool FacePixelPlane::isPartOf(const PixelPlaneIntersectionNR *fi) const {
-  return fi->pixelFaces().count(this) > 0;
 }
 
 void FacePixelPlane::addToIntersection(IntersectionPlanesBase *fi) const {
@@ -215,9 +202,6 @@ public:
 // #endif // DEBUG
 
       return t0 < t1;
-
-      // return (fi0->getPolyFrac(sharedSeg, facet) <
-      // 	      fi1->getPolyFrac(sharedSeg, facet));
     }
     return false;
   }
@@ -233,14 +217,6 @@ FacetEdge::FacetEdge(PixelPlaneIntersection *s, PixelPlaneIntersection *e)
   stop_->setEdge(this);
 }
 
-// FacetEdge::FacetEdge(const FacetEdge &fe)
-//   : start_(fe.start_->clone()),
-//     stop_(fe.stop_->clone())
-// {
-//   start_->setEdge(this);
-//   stop_->setEdge(this);
-// }
-
 FacetEdge::FacetEdge(FacetEdge &&fe) {
   PixelPlaneIntersection *temp = start_;
   start_ = fe.start_;
@@ -254,11 +230,6 @@ FacetEdge::~FacetEdge() {
   delete start_;
   delete stop_;
 }
-
-// bool FacetEdge::operator<(const FacetEdge &other) const {
-//   return (*start_ < *other.start_ ||
-// 	  (*start_ == *other.start_ && *stop_ < *other.stop_));
-// }
 
 double FacetEdge::length2() const {
   return norm2(start_->location3D() - stop_->location3D());
@@ -477,19 +448,6 @@ FacePlaneSet PixelPlaneFacet::getFacePlanes(unsigned int f) const {
     throw ErrProgrammingError("getFacePlanes failed!", __FILE__, __LINE__);
 #endif // DEBUG
   return faces;
-  
-//   for(const FacePlane *face : faces) {
-//     if(!face->coincident(*pixplane)) {
-// // #ifdef DEBUG
-// //       if(verbose) {
-// // 	oofcerr << "PixelPlaneFacet::getFacePlane: face=" << *face
-// // 		<< std::endl;
-// //       }
-// // #endif	// DEBUG
-//       return face;
-//     }
-//   }
-  // throw ErrProgrammingError("getFacePlane failed!", __FILE__, __LINE__);
 }
 
 const FacePixelPlane *PixelPlaneFacet::getBaseFacePlane() const {
@@ -1449,39 +1407,9 @@ void PixelPlaneFacet::getEdgesOnFaces(FaceFacets &faceFacets) const {
 					       pixplane));
     } 
   } // end loop over edges of the PixelPlaneFacet
-  
-//   for(FacetEdge *edge : edges) {
-// #ifdef DEBUG
-//     if(verbose)
-//       oofcerr << "PixelPlaneFacet::getEdgesOnFaces: facet="
-// 	      << *pixplane << " edge=" << *edge << std::endl;
-//     OOFcerrIndent indent(2);
-// #endif // DEBUG
-//     edge->getEdgesOnFaces(htet, pixplane, faceFacets);
-//   }
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// // Given two PixelPlaneIntersections that are on contiguous VSB
-// // segments, return the one that precedes the other when traversing
-// // the VSB in the positive direction.  The arguments should be
-// // pointers to SingleVSBMixIn objects.
-
-// // TODO: Is this only used in classifyVSBcorner? YES  If so, there's no
-// // need for a template.
-
-// template <class TYPE1, class TYPE2>
-// static const PixelPlaneIntersection *firstIntersection(TYPE1 *fi0, TYPE2 *fi1)
-// {
-//   assert(fi0 != fi1);
-//   if(fi0->segEnd(1) == fi1->segEnd(0))
-//     return fi0;
-//   if(fi1->segEnd(1) == fi0->segEnd(0))
-//     return fi1;
-//   return nullptr;
-// }
-
 
 // Given two intersections that might be on contiguous VSB segments,
 // return information about the corner formed by those segments.  If
@@ -1768,27 +1696,8 @@ bool PixelPlaneFacet::resolveThreeFoldCoincidence(
 	}
 	else
 	  return false;
-	
-	// if(mergers[0]->facePlane() == mergers[1]->facePlane()) {
-	//   // Case A
-	//   if(vsbCornerCoincidence(mergers[0], mergers[1])) {
-	//     swapIntersections(mergers[0], mergers[1]);
-	//   }
-	// }
-	// else if(mergers[0]->onSameLoopSegment(mergers[1])) {
-	//   // Case B
-	//   if(polyCornerCoincidence(mergers[0], mergers[1])) {
-	//     MultiFaceIntersection *mfi = mergers[0]->mergeWith(mergers[1]);
-	//     replaceIntersection(mergers[0], mfi);
-	//     replaceIntersection(mergers[1], new RedundantIntersection(mfii));
-	//   }
-	// }
-	// else {
-	//   throw ErrProgrammingError("Unresolvable triple coincidence!",
-	// 			    __FILE__, __LINE__);
-	// }
-
       }	// end if two points are merging
+      
       else if(mergers.size() != 0) {
 	throw ErrProgrammingError(
 	  "Wrong number of intersections in resolveThreeFoldCoincidence!",
@@ -1939,18 +1848,6 @@ public:
     pt1 = pt;
     initialize(pixplane);
   }
-  
-  // IntersectionPair(const IntersectionPair &other)
-  //   : pt0(other.pt0), pt1(other.pt1), length2(other.length2),
-  //     verified(other.verified)
-  // {}
-  // const IntersectionPair &operator=(const IntersectionPair &other) {
-  //   pt0 = other.pt0;
-  //   pt1 = other.pt1;
-  //   length2 = other.length2;
-  //   verified = other.verified;
-  //   return *this;
-  // }
   bool operator<(const IntersectionPair &other) const {
     return length2 < other.length2;
   }
@@ -3183,17 +3080,13 @@ bool PixelPlaneFacet::badTopology(const SimpleIntersection *si,
   unsigned int mviPolySeg = mvi->getPolyEdge(this);
   bool siFirstOnPoly = (siPolySeg + 1) % polygonSize() == mviPolySeg;
   bool mviFirstOnPoly = (mviPolySeg + 1) % polygonSize() == siPolySeg;
-  // It's possible that the two polygon segments don't actually join
-  // each other:
-  bool extraPolySegment = !(mviFirstOnPoly || siFirstOnPoly);
 
 #ifdef DEBUG
   if(verbose) {
     oofcerr << "PixelPlaneFacet::badTopology: si=" << *si << std::endl;
     oofcerr << "PixelPlaneFacet::badTopology: mvi=" << *mvi << std::endl;
     oofcerr << "PixelPlaneFacet::badTopology: siFirstOnPoly=" << siFirstOnPoly
-	    << " mviFirstOnPoly=" << mviFirstOnPoly
-	    << " extraPolySegment=" << extraPolySegment << std::endl;
+	    << " mviFirstOnPoly=" << mviFirstOnPoly << std::endl;
   }
 #endif // DEBUG
 	     
@@ -3201,141 +3094,68 @@ bool PixelPlaneFacet::badTopology(const SimpleIntersection *si,
   if(mvi->nVSBSegments() == 2) {
     PixelBdyLoopSegment loopSeg0, loopSeg1;
     TurnDirection turn = mvi->categorizeCorner(loopSeg0, loopSeg1);
+    /* There are a bunch of geometries.  The voxel set boundaries can
+    // go in either direction.  These are drawn as if the polygon
+    // segments meet, but they might not meet (there could be an
+    // intermediate segment, or they might meet at the other ends.
+    //                                 
+    //                                 \
+    //         /\               VSB     \
+    //        /  \             ----------m    
+    //       /    \                      |\ polygon  
+    //  ----s------m                     | \
+    //     /       |\                    | /    
+    //    /        | \                   |/          
+    //             |  \                  s           
+    //     L0, R0  |   \        L1, R1  /|
+    //                                 / | 
+    //
+    //                  _//                    _//
+    //                _/ /                   _/ /
+    //              _/  /         VSB       /  / polygon
+    //     --------s---m         ----------m  /
+    //          _/    /|                _/ | /
+    //        _/     / |              _/   |/
+    //      _/      /  |            _/     s
+    //             /   |                  /|
+    //    L2, R2  /    |        L3, R3   / |
+    //
+    //
+    //               /     _/               /
+    //              /    _/                /
+    //     --------s---m/       ----------m     _/
+    //            /  _/|                 /|   _/
+    //           / _/  |        L5, R5  / | _/
+    //          /_/    |               /  s/
+    //                 |              / _/|
+    //       L4, R4    |             /_/  |
+    */                         
+
+    // We measure three topological booleans:
+    //
+    // A. SimpleIntersection (s) is an entry
+    // B. The SimpleIntersection is on the VSB segment that leaves the
+    //    MultiVSBIntersection.    m----s--->---
+    // D. VSB turns right.
+
+    // We used to measure these, too, but it turns out that because we
+    // can't rely on the order of the polygon segments (there can be
+    // an intervening segment, and the polygon segments can meet on
+    // either side of the VSB boundary).
+    // C. The MultiVSBIntersection is first when traversing the polygon
+    //         Not used!  There could be an intermediate polygon edge.
+    // E0. The polygon corner is on the right side of the first VSB segment
+    // E1. The polygon corner is on the right side of the second VSB segment
 
     // TODO: Actually delete this block if it's really useless.  It
     // causes problems with snaprefinecatbug.log, element 571.
-    if(false /*!extraPolySegment*/) {
-      /* There are twelve geometries.  The voxel set boundaries can go
-      // in either direction, so only six diagrams are needed.
-      //                                 
-      //                                 \
-      //         /\               VSB     \
-      //        /  \             ----------m    
-      //       /    \                      |\ polygon  
-      //  ----s------m                     | \
-      //     /       |\                    | /    
-      //    /        | \                   |/          
-      //             |  \                  s           
-      //     L0, R0  |   \        L1, R1  /|
-      //                                 / | 
-      //
-      //                  _//                    _//
-      //                _/ /                   _/ /
-      //              _/  /         VSB       /  / polygon
-      //     --------s---m         ----------m  /
-      //          _/    /|                _/ | /
-      //        _/     / |              _/   |/
-      //      _/      /  |            _/     s
-      //             /   |                  /|
-      //    L2, R2  /    |        L3, R3   / |
-      //
-      //
-      //               /     _/               /
-      //              /    _/                /
-      //     --------s---m/       ----------m     _/
-      //            /  _/|                 /|   _/
-      //           / _/  |        L5, R5  / | _/
-      //          /_/    |               /  s/
-      //                 |              / _/|
-      //       L4, R4    |             /_/  |
-      */                         
 
-      // We measure five (no, four) topological booleans:
-      //
-      // A. SimpleIntersection (s) is an entry
-      // B. The SimpleIntersection is on the VSB segment that leaves the
-      //    MultiVSBIntersection.    m----s--->---
-      // C. The MultiVSBIntersection is first when traversing the polygon
-      //         Not used!  There could be an intermediate polygon edge.
-      // D. VSB turns right.
-      // E0. The polygon corner is on the right side of the first VSB segment
-      // E1. The polygon corner is on the right side of the second VSB segment
-
-      // (Different edge configurations can have the same sets of values
-      // for A-D.  That's ok.)
-
-      static std::set<std::vector<bool>> legalCombos = {
-	// A      B      D     E0     E1
-	{false, true,  false, false, true},  // L0
-	{true,  false, false, true,  false}, // L1
-	{false, true,  false, true,  true},  // L2	
-	{true,  false, false, true,  true},  // L3
-	{false, true,  false, false, false}, // L4
-	{true,  false, false, false, false}, // L5
-	{true,  false, true,  false, true},  // R0	
-	{false, true,  true,  true,  false}, // R1
-	{true,  false, true,  false, false}, // R2
-	{false, true,  true,  false, false}, // R3
-	{true,  false, true,  true,  true},  // R4
-	{false, true,  true,  true,  true}   // R5
-      };
-      // static std::set<std::vector<bool>> legalCombos = {
-      // 	// A      B      C      D     E0     E1
-      // 	{false, true,  true,  false, false, true},  // L0
-      // 	{true,  false, false, false, true,  false}, // L1
-      // 	{false, true,  true,  false, true,  true},  // L2	
-      // 	{true,  false, false, false, true,  true},  // L3
-      // 	{false, true,  false, false, false, false}, // L4
-      // 	{true,  false, true,  false, false, false}, // L5
-      // 	{true,  false, true,  true,  false, true},  // R0	
-      // 	{false, true,  false, true,  true,  false}, // R1
-      // 	{true,  false, true,  true,  false, false}, // R2
-      // 	{false, true,  false, true,  false, false}, // R3
-      // 	{true,  false, false, true,  true,  true},  // R4
-      // 	{false, true,  true,  true,  true,  true}   // R5
-      // };
-  
-      bool conditionA = si->crossingType() == ENTRY;
-      bool conditionB = si->getLoopSeg() == loopSeg1;
-      // bool conditionC = mviFirstOnPoly;
-      bool conditionD = turn == RIGHT;
-
-      // index of the polygon corner
-      unsigned int polyVertexIndex = mviFirstOnPoly ? siPolySeg : mviPolySeg;
-      // position of the polygon corner
-      Coord2D polyVertex = polygonCorner(polyVertexIndex);
-      bool conditionE0 = loopSeg0.onRight(polyVertex);
-      bool conditionE1 = loopSeg1.onRight(polyVertex);
-    
-#ifdef DEBUG
-      if(verbose) {
-	oofcerr << "PixelPlaneFacet::badTopology: loopSeg0=" << loopSeg0
-		<< " loopSeg1=" << loopSeg1 << " polyVertex=" << polyVertex
-		<< std::endl;
-	oofcerr << "PixelPlaneFacet::badTopology: loopSeg0.onRight="
-		<< loopSeg0.onRight(polyVertex)
-		<< " loopSeg1.onRight=" << loopSeg1.onRight(polyVertex)
-		<< std::endl;
-	oofcerr << "PixelPlaneFacet::badTopology: conditionA=" << conditionA
-		<< " conditionB=" << conditionB
-		// << " conditionC=" << conditionC
-		<< " conditionD=" << conditionD
-		<< " conditionE0=" << conditionE0
-		<< " conditionE1=" << conditionE1 << std::endl;
-      }
-#endif // DEBUG
-
-      std::vector<bool> combo = {conditionA, conditionB, /* conditionC, */
-				 conditionD, conditionE0, conditionE1};
-      return legalCombos.find(combo) == legalCombos.end();
-    } // end if !extraPolySegment
-
-    // The polygon edges don't share a polygon corner.  The polygon
-    // must be a quadrilateral, and one of its sides must be short,
-    // because the SimpleIntersection and MultiVSBIntersection are on
-    // opposite edges yet are close to one another.  Conditions A, B,
-    // and D still apply.
-    
     static std::set<std::vector<bool>> legalCombos = {
       // A      B      D   
-      {false, true,  false},	// L0 & L2
-      {true,  false, false},	// L1 & L3
-      {true,  false, true },	// R0 & R2
-      {false, true,  true },	// R1 & R3
-      {false, true,  false},	// L4
-      {true,  false, true },	// R4
-      {true,  false, false},	// L5
-      {false, true,  true }	// R5
+      {false, true,  false},	// L0 & L2 & L4
+      {true,  false, false},	// L1 & L3 & L5
+      {true,  false, true },	// R0 & R2 & R4
+      {false, true,  true }	// R1 & R3 & R5
     };
       
     bool conditionA = si->crossingType() == ENTRY;
@@ -3450,12 +3270,6 @@ bool PixelPlaneFacet::badTopology(const SimpleIntersection *si,
     if(getPolyEdge(face) == siPolySeg)
       return true;
   }
-  // for(FacePlaneSet::const_iterator f=mci->beginFaces(); f!=mci->endFaces(); ++f)
-  //   {
-  //     if(getPolyEdge(*f) == siPolySeg)
-  // 	return true;
-  //   }
-
   // The far end of the VSB loop segment that joins m and s must be on
   // the inside side of both of the FacePlanes that define the polygon
   // segments that meet at m.
@@ -3766,9 +3580,6 @@ bool PixelPlaneFacet::badTopology(const MultiFaceIntersection *mfi,
     if(face == mvi->getFacePlane())
       return true;
   }
-  // for(auto fp=mfi->beginFaces(); fp!=mfi->endFaces(); ++fp)
-  //   if(*fp == mvi->getFacePlane())
-  //     return true;
   
   PixelBdyLoopSegment loopSeg0, loopSeg1;
   TurnDirection turn = mvi->categorizeCorner(loopSeg0, loopSeg1);
