@@ -280,19 +280,19 @@ PixelBdyLoopSegment PixelBdyLoop::segment(unsigned int k) const {
   return PixelBdyLoopSegment(this, k);
 }
 
-PixelBdyLoopSegment PixelBdyLoop::next_segment(unsigned int k) const {
-  unsigned int kk = k + 1;
-  if(kk == loop.size())
-    return PixelBdyLoopSegment(this, 0);
-  return PixelBdyLoopSegment(this, kk);
-}
+// PixelBdyLoopSegment PixelBdyLoop::next_segment(unsigned int k) const {
+//   unsigned int kk = k + 1;
+//   if(kk == loop.size())
+//     return PixelBdyLoopSegment(this, 0);
+//   return PixelBdyLoopSegment(this, kk);
+// }
 
-PixelBdyLoopSegment PixelBdyLoop::prev_segment(unsigned int k) const {
-  int kk = k - 1;
-  if(kk < 0)
-    return PixelBdyLoopSegment(this, loop.size()-1);
-  return PixelBdyLoopSegment(this, kk);
-}
+// PixelBdyLoopSegment PixelBdyLoop::prev_segment(unsigned int k) const {
+//   int kk = k - 1;
+//   if(kk < 0)
+//     return PixelBdyLoopSegment(this, loop.size()-1);
+//   return PixelBdyLoopSegment(this, kk);
+// }
 
 bool PixelBdyLoop::horizontal(unsigned int k) const {
   assert(k >= 0 && k < loop.size());

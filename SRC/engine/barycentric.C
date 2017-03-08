@@ -87,6 +87,9 @@ bool BarycentricCoord::interior(unsigned int onFace) const {
       if(i != oppNode)
 	if(bcoord[i] <= 0)
 	  return false;
+      // We know that the point is on the plane of the face, so
+      // there's no need to check bcoord[oppNode].  It could be even
+      // be a mistake to check it, since it might not be exactly zero.
     }
   }
   return true;
@@ -94,7 +97,8 @@ bool BarycentricCoord::interior(unsigned int onFace) const {
 
 bool BarycentricCoord::interiorToFace(unsigned int face) const {
   // interiorToFace just asks if the point is on the interior side of
-  // the given face.
+  // the given face.  This is NOT the same as asking if the point is
+  // on the face.
   unsigned int oppNode = CSkeletonElement::oppNode[face];
   return bcoord[oppNode] > 0;
 }

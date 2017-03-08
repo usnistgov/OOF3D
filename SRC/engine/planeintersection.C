@@ -3362,13 +3362,13 @@ bool triplePlaneIntersection(const PLANES &planes, Coord3D &isec
 			     )
 {
   // Compute the intersection point of the planes.
-#ifdef DEBUG
-  if(verbose) {
-      oofcerr << "triplePlaneIntersection: planes=";
-      std::cerr << derefprint(planes);
-      oofcerr << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//       oofcerr << "triplePlaneIntersection: planes=";
+//       std::cerr << derefprint(planes);
+//       oofcerr << std::endl;
+//   }
+// #endif // DEBUG
   SmallMatrix normals(3, 3);
   SmallMatrix offsets(3, 1);
   assert(planes.size() == 3);
@@ -3381,22 +3381,22 @@ bool triplePlaneIntersection(const PLANES &planes, Coord3D &isec
     p++;
   }
   int status = normals.solve(offsets);
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "triplePlaneIntersection: normals=" << normals << std::endl;
-    oofcerr << "triplePlaneIntersection: offsets=" << offsets << std::endl;
-    oofcerr << "triplePlaneIntersection: status=" << status << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "triplePlaneIntersection: normals=" << normals << std::endl;
+//     oofcerr << "triplePlaneIntersection: offsets=" << offsets << std::endl;
+//     oofcerr << "triplePlaneIntersection: status=" << status << std::endl;
+//   }
+// #endif // DEBUG
   if(status != 0) {
     return false;
   }
   isec = Coord3D(offsets(0,0), offsets(1,0), offsets(2,0));
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "triplePlaneIntersection: isec=" << isec << std::endl;
-  }
-#endif // DEBUG
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "triplePlaneIntersection: isec=" << isec << std::endl;
+//   }
+// #endif // DEBUG
   return true;
 }
 
@@ -3443,17 +3443,17 @@ bool findIntersectionLocation(HomogeneityTet *htet,
 {
 #ifdef DEBUG
   bool verbose = htet->verbosePlane() || htet->verboseFace();
-  if(verbose) {
-    oofcerr << "findIntersectionLocation: pixelPlanes=";
-    std::cerr << derefprint(pixelPlanes);
-    oofcerr << std::endl;
-    oofcerr << "findIntersectionLocation: faces=";
-    std::cerr << derefprint(faces);
-    oofcerr << std::endl;
-    oofcerr << "findIntersectionLocation: pixelFaces=";
-    std::cerr << derefprint(pixelFaces);
-    oofcerr << std::endl;
-  }
+//   if(verbose) {
+//     oofcerr << "findIntersectionLocation: pixelPlanes=";
+//     std::cerr << derefprint(pixelPlanes);
+//     oofcerr << std::endl;
+//     oofcerr << "findIntersectionLocation: faces=";
+//     std::cerr << derefprint(faces);
+//     oofcerr << std::endl;
+//     oofcerr << "findIntersectionLocation: pixelFaces=";
+//     std::cerr << derefprint(pixelFaces);
+//     oofcerr << std::endl;
+//   }
 #endif // DEBUG
   std::vector<const HPlane*> planes;
   for(const HPlane *pp : pixelPlanes) {

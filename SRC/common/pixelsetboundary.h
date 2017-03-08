@@ -168,8 +168,8 @@ public:
   ICoord2D next2_icoord(unsigned int) const;
 
   PixelBdyLoopSegment segment(unsigned int) const;
-  PixelBdyLoopSegment prev_segment(unsigned int) const;
-  PixelBdyLoopSegment next_segment(unsigned int) const;
+  // PixelBdyLoopSegment prev_segment(unsigned int) const;
+  // PixelBdyLoopSegment next_segment(unsigned int) const;
   
   bool left_turn(unsigned int) const;
   bool right_turn(unsigned int) const;

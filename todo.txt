@@ -18,6 +18,12 @@ Fix Basic Tutorial -- don't use "Group" on the jpeg image, it takes
 too long and uses up way too much memory if users don't hit "Stop"
 soon enough.
 
+Soon
+----
+
+Reduce memory use by optionally using chars instead of ints for the
+voxel category: CMicrostructure::categorymap is Array<char>.   Can
+images be stored with fewer bytes?
 
 At Some Later Time
 ------------------
@@ -25,3 +31,5 @@ At Some Later Time
 Upgrade VTK
 
 Parallelize categoryVolumes.
+
+Migrate to Python 3.x
