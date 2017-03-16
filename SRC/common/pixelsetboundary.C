@@ -23,6 +23,7 @@
 #include <math.h>
 #include <stdlib.h>
 
+OBSOLETE
 
 static const ICoord2D iRight(1, 0);
 static const ICoord2D iUp(0, 1);
@@ -128,7 +129,7 @@ void PixelSetBoundary::find_boundary() {
       loop!=loopset.end(); ++loop)
     {
       (*loop)->clean();		// removes extra points and computes bbox
-      if(bounds == 0)
+      if(bounds == nullptr)
 	bounds = new ICRectangle((*loop)->bbox());
       else
 	bounds->swallow((*loop)->bbox());

@@ -561,21 +561,123 @@ void CMicrostructure::categorize() const {
     int cat = attributes.getCategory(attributeVectors[where]);
     categorymap[i] = cat;
   }
-  // Loop over the voxels again, looking for category boundaries. 
+
+  // Examine each voxel edge to see if it's on a category boundary
   for(Array<int>::iterator i=categorymap.begin(); i!=categorymap.end(); ++i) {
-    const ICoord3D &where = i.coord();
-    int cat = categorymap[i];
-    for(unsigned int c=0; c<3; c++) {    // loop over directions
-      ICoord3D nbr = where + unitvector[c];
-      if(!categorymap.contains(nbr) || categorymap[nbr] != cat) {
-	categoryBdys[cat]->addFace(nbr, c, +1);
-      }
-      nbr = where - unitvector[c];
-      if(!categorymap.contains(nbr) || categorymap[nbr] != cat) {
-	categoryBdys[cat]->addFace(where, c, -1);
+    const ICoord3D &p00 = i.coord();
+    int cat00 = categorymap[i];
+    for(unsigned int c=0; c<3; c++) { // loop over directions
+      // c is the direction of the edge.  The perpendicular directions
+      // are c1 and c2:
+      unsigned int c1 = (c+1) % 3;
+      unsigned int c2 = (c+2) % 3;
+      // p00 is the lower-left-back corner of the voxel i.  The edge
+      // we're looking at is in the c direction.  The other three
+      // voxels that share the edge are p01, p01, and p11:
+      ICoord3D p10 = where - unitvector[c1];
+      ICoord3D p01 = where - unitvector[c2];
+      ICoord3D p11 = p10 - unitvector[c2];
+      // Find which categories are used.
+      std::set<int> catsUsed;
+      catsUsed.insert(cat00);
+      if(categorymap.contains(p10))
+	catsUsed.insert(categorymap[p10]);
+      if(categorymap.contains(p01))
+	catsUsed.insert(categorymap[p01]);
+      if(categorymap.contains(p11))
+	catsUsed.insert(categorymap[p11]);
+      // If there's more than one category on the edge, then it's a
+      // boundary edge.  Pit in the VoxelSetBoundary for the
+      // categories.
+      if(catsUsed.size() > 1) {
+	ICoord3D nbr = p00 + unitvector[c];
+	for(int cc : catsUsed) {
+	  categoryBdys[cc]->addEdge(p00, nbr);
+	}
       }
     } // end loop over directions c
-  }   // end loop over voxels *i
+  }   // end loop over categorymap
+
+  // Do the same for edges in the top, right, and front faces of the
+  // microstructure.
+  for(unsigned int f=0; f<3; f++) { // f is the direction of the face normal
+    ICoord3D ff = (pxlsize_[f]-1)*unitvector[f];
+    // c0 and c1 are the directions of the unit vectors in the face
+    unsigned int c0 = (f+1) % 3;
+    unsigned int c1 = (f+2) % 3;
+
+    // j and k index the voxels in the face
+    for(unsigned int j=0; j<pxlsize_[c0]; j++) {
+      for(unsigned int k=0; k<pxlsize_[c1]; k++) {
+	ICoord3D p00 = ff + j*unitvector[c0] + k*unitvector[c1];
+	int cat0 = categorymap[p00];
+	ICoord3D p10 = p00 - unitvector[c1];
+	if(categorymap.contains(p10)) {
+	  int cat1 = categorymap[p10];
+	  if(cat0 != cat1) {
+	    ICoord3D nbr = p00 + unitvector[c0];
+	    categoryBdys[cat0]->addEdge(p00, nbr);
+	    categoryBdys[cat1]->addEdge(p00, nbr);
+	  }
+	}
+	ICoord3D p01 = p00 - unitvector[c0];
+	if(categorymap.contains(p01)) {
+	  int cat1 = categorymap[p01];
+	  if(cat0 != cat1) {
+	    ICoord3D nbr = p00 + unitvector[c1];
+	    categoryBdys[cat0]->addEdge(p00, nbr);
+	    categoryBdys[cat1]->addEdge(p00, nbr);
+	  }
+	}
+      }	// end loop over face coordinate k
+    } // end loop over face coordinate j
+    
+    // Voxel edges on the actual edges of the microstructure haven't
+    // been included yet, because the edges abut only one voxel, which
+    // has only one category.  Nevertheless, they're boundary edges
+    // for that category.
+    ICoord3D p00(0, 0, 0);
+    ICoord3D p10 = (pxlsize_[c0] - 1) * unitvector[c0];
+    ICoord3D p01 = (pxlsize_[c1] - 1) * unitvector[c1];
+    ICoord3D p11 = p01 + p01;
+    for(unsigned int j=0; j<pxlsize_[f]; j++) {
+      // Line of edges in the f direction passing through the origin.
+      ICoord3D vxl = p00 + j*unitvector[f];
+      categoryBdys[categorymap[vxl]]->addEdge(vxl, vxl+unitvector[f]);
+      // Line of edges in the f direction at the far side of the MS in
+      // the c0 direction from the origin.
+      vxl = p10 + j*unitvector[f];
+      ICoord3D edge = vxl + unitvector[c0]; // edge is at far side of voxel
+      categoryBdys[categorymap[vxl]]->addEdge(edge, edge + unitvector[f]);
+      // Same thing on the c1 side.
+      vxl = p01 + j*unitvector[f];
+      edge = vxl + unitvector[c1];
+      categoryBdys[categorymap[vxl]]->addEdge(edge, edge + unitvector[f]);
+      // Same thing diagonally across the MS from the origin.
+      vxl = p11 + j*unitvector[f];
+      edge = vxl + unitvector[c0] + unitvector[c1];
+      categoryBdys[categorymap[vxl]]->addEdge(edge, edge + unitvector[f]);
+    }
+    
+  } // end loop over microstructure faces f
+
+  
+  
+  // // Loop over the voxels again, looking for category boundaries. 
+  // for(Array<int>::iterator i=categorymap.begin(); i!=categorymap.end(); ++i) {
+  //   const ICoord3D &where = i.coord();
+  //   int cat = categorymap[i];
+  //   for(unsigned int c=0; c<3; c++) {    // loop over directions
+  //     ICoord3D nbr = where + unitvector[c];
+  //     if(!categorymap.contains(nbr) || categorymap[nbr] != cat) {
+  // 	categoryBdys[cat]->addFace(nbr, c, +1);
+  //     }
+  //     nbr = where - unitvector[c];
+  //     if(!categorymap.contains(nbr) || categorymap[nbr] != cat) {
+  // 	categoryBdys[cat]->addFace(where, c, -1);
+  //     }
+  //   } // end loop over directions c
+  // }   // end loop over voxels *i
 
 // #ifdef DEBUG
 //   oofcerr << "CMicrostructure::categorize: before calling find_boundaries"
@@ -713,6 +815,41 @@ void CMicrostructure::recategorize() {
   ++timestamp;
   // category_lock.release();
   // oofcerr << "Release." << std::endl;
+}
+
+unsigned char CMicrostructure::voxelSignature(ICoord3D &pos, unsigned int cat)
+  const
+{
+  // The voxelSignature indicates which of the eight voxels
+  // surrounding a voxel corner are in the given category.  pos is the
+  // lower-left-back corner of a voxel, so the components of the
+  // coordinates of the other voxels at pos are one less.
+
+  // A bit of the signature is 1 if the voxel corresponding to the bit
+  // is in the category, cat.  The correspondence is
+  // Bit          Position relative to pos
+  // (0 is LSB)   
+  // 0  0x1       (-1, -1, -1)
+  // 1  0x2       (0, -1, -1)
+  // 2  0x4       (-1, 0, -1)
+  // 3  0x8       (0, 0, -1)
+  // 4  0x10      (-1, -1, 0)
+  // 5  0x20      (0, -1, 0)
+  // 6  0x40      (-1, 0, 0)
+  // 7  0x80      (0, 0, 0)
+  unsigned char sig = 0;
+  unsigned char b = 1;
+  for(int k=0; k<2; k++) {
+    for(int j=0; j<2; j++) {
+      for(int i=0; i<2; i++) {
+	ICoord3D offset = pos + ICoord3D(i-1, j-1, k-1);
+	if(contains(offset) && categorymap[offset] == cat)
+	  sig |= b;
+	b << 1;
+      }
+    }
+  }
+  return sig;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

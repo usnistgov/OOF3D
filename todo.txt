@@ -33,3 +33,7 @@ Upgrade VTK
 Parallelize categoryVolumes.
 
 Migrate to Python 3.x
+
+Convert pixel category array to octree, and construct voxel set
+boundaries from the octree, or compute element homogeneity from octree
+elements instead of voxels.  Maybe.

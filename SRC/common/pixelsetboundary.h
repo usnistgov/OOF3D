@@ -20,6 +20,8 @@
 
 #include <oofconfig.h>
 
+OBSOLETE
+
 #ifndef PIXELSETBOUNDARY_H
 #define PIXELSETBOUNDARY_H
 
