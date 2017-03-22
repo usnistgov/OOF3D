@@ -149,7 +149,8 @@ except OSError:
     # attribute is attached to the directory, not its path, and sticks
     # to it when the directory is moved.
     if sys.platform == 'darwin':
-        subprocess.check_call(['tmutil', 'addexclusion', 'build'])
+        subprocess.check_call(['tmutil', 'addexclusion',
+                               os.path.abspath('build')])
 
 try:
     build_cmd = "python setup.py build %s install --prefix=%s" \
