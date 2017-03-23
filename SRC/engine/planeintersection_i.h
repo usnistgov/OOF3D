@@ -9,6 +9,8 @@
  * oof_manager@nist.gov. 
  */
 
+OBSOLETE
+
 #ifndef PLANEINTERSECTION_I_H
 #define PLANEINTERSECTION_I_H
 

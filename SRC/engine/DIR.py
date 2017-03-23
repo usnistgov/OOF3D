@@ -44,13 +44,11 @@ cfiles = [
     'meshdatacache.C', 'meshiterator.C', 'nodalequation.C',
     'nodalfluxes.C', 'nodalscpatches.C', 'node.C', 'ooferror.C',
     'orientationimage.C', 'outputval.C', 'pixelgroupsubproblem.C',
-    'homogeneitytet.C', 'pixelplanefacet.C', 'planeintersection.C',
     'pixelselectioncouriere.C', 'pointdata.C', 'preconditioner.C',
     'property.C', 'pypropertywrapper.C', 'rank3tensor.C',
     'recoveredflux.C', 'shapefunction.C', 'shapefunctioncache.C',
     'smallsystem.C', 'sparsemat.C', 'steperrorscaling.C',
     'symeig3.C', 'symmmatrix.C', 'materialvoxelfilter.C', 'barycentric.C',
-    'intersectiongroup.C', 'facefacet.C'
 ]
 
 swigfiles = [
@@ -78,7 +76,6 @@ swigfiles = [
     'properties.swg', 'pypropertywrapper.swg', 'rank3tensor.swg',
     'smallsystem.swg', 'sparsemat.swg',
     'steperrorscaling.swg', 'symmmatrix.swg', 'materialvoxelfilter.swg',
-    'htetdebug.swg'
     ]
 
 pyfiles = [
@@ -155,10 +152,8 @@ hfiles = [
     'shapefunction.h', 'shapefunctioncache.h', 'smalltensor.h',
     'smallsystem.h', 'sparsemat.h', 'steperrorscaling.h', 'symeig3.h',
     'symmmatrix.h', 'materialvoxelfilter.h', 'cskeletonselectable_i.h',
-    'cskeleton2_i.h', 'homogeneitytet.h', 'barycentric.h', 'pixelplanefacet.h',
-    'pixelplanefacet_i.h', 'homogeneitytet_i.h', 'planeintersection.h',
-    'planeintersection_i.h', 'intersectiongroup.h', 'facefacet.h',
-    'facefacet_i.h'
+    'cskeleton2_i.h', 
+    'barycentric.h'
 ]
 
 

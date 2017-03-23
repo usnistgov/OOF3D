@@ -9,20 +9,19 @@
  * oof_manager@nist.gov. 
  */
 
-OBSOLETE
+#ifndef VOXELSETBOUNDARY_SWG
+#define VOXELSETBOUNDARY_SWG
 
-#ifndef FACEFACET_I_H
-#define FACEFACET_I_H
+%module voxelsetboundary
 
+%{
 #include <oofconfig.h>
+#include "common/voxelsetboundary.h"
+%}
 
-class EdgePosition;
-class FaceEdgeIntersection;
-class FaceFacetEdge;
-class FaceFacet;
-class StrandedPoint;
+%include "common/typemaps.swg"
+%pragma(python) include="voxelsetboundary.spy"
 
-struct FaceEdgeIntersectionLT;
-struct FaceEdgeIntersectionLTwrap;
+void initializeProtoNodes();
 
-#endif // FACEFACET_I_H
+#endif // VOXELSETBOUNDARY_SWG

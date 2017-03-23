@@ -1,3 +1,4 @@
+
 # -*- python -*- 
 
 
@@ -88,12 +89,12 @@ else:                           # DIM == 3
         'cmicrostructure.C', 'colordifference.C', 'coord.C', 'despeckle.C',
         'cpixelselection.C', 'identification.C', 'imagebase.C', 'lock.C',
         'ooferror.C', 'pixelattribute.C', 'expandgrp.C', 'bitmask.C',
-        'pixelgroup.C', 'pixelselectioncourier.C', 'pixelsetboundary.C',
+        'pixelgroup.C', 'pixelselectioncourier.C',
         'random.C', 'swiglib.C', 'switchboard.C', 'threadstate.C',
         'timestamp.C', 'sincos.C', 'pythonlock.C', 'progress.C',
         'vtkColorLUT.C', 'guitop.C', 'direction.C', 'clip.C', 'voxelfilter.C',
         'geometry.C', 'doublevec.C', 'vectormath.C', 'smallmatrix.C',
-        'corientation.C'
+        'corientation.C', 'voxelsetboundary.C'
         ]
 
     swigfiles = [
@@ -105,7 +106,7 @@ else:                           # DIM == 3
         'switchboard.swg', 'threadstate.swg', 'timestamp.swg', 'progress.swg',
         'vtkColorLUT.swg', 'guitop.swg', 'direction.swg', 'clip.swg',
         'voxelfilter.swg', 'doublevec.swg', 'smallmatrix.swg',
-        'corientation.swg', 'identification.swg'
+        'corientation.swg', 'identification.swg', 'voxelsetboundary.swg'
         ]
 
     pyfiles = [
@@ -120,7 +121,7 @@ else:                           # DIM == 3
         'coord.spy', 'geometry.spy', 'lock.spy', 'ooferror.spy', 'cdebug.spy',
         'pixelattribute.spy', 'pixelgroup.spy', 'switchboard.spy', 'guitop.spy',
         'direction.spy', 'clip.spy', 'voxelfilter.spy', 'doublevec.spy',
-        'smallmatrix.spy', 'corientation.spy'
+        'smallmatrix.spy', 'corientation.spy', 'voxelsetboundary.spy'
         ]
 
     hfiles = [
@@ -129,12 +130,12 @@ else:                           # DIM == 3
         'cpixelselection.h', 'doublearray.h', 'geometry.h', 'identification.h',
         'lock.h', 'guitop.h', 'bitmask.h', 'doublevec.h', 'vectormath.h',
         'ooferror.h', 'pixelattribute.h', 'pixelgroup.h',
-        'pixelselectioncourier.h', 'pixelsetboundary.h', 'random.h',
+        'pixelselectioncourier.h', 'random.h',
         'swiglib.h', 'switchboard.h', 'threadstate.h', 'timestamp.h',
         'pythonlock.h', 'progress.h', 'sincos.h', 'vtkColorLUT.h', 
         'direction.h', 'clip.h', 'differ.h', 'voxelfilter.h', 'cleverptr.h',
         'smallmatrix.h', 'corientation.h', "pixelattribute_i.h", 'coord_i.h',
-        'setutils.h', 'derefcompare.h'
+        'setutils.h', 'derefcompare.h', 'voxelsetboundary.h'
         ]
 
 

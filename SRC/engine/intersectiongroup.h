@@ -9,6 +9,8 @@
  * oof_manager@nist.gov. 
  */
 
+OBSOLETE
+
 #ifndef INTERSECTIONGROUP_H
 #define INTERSECTIONGROUP_H
 

@@ -273,6 +273,8 @@ public:
   bool is_categorized() const { return categorized; }
   void categorizeIfNecessary() const;
 
+  unsigned char voxelSignature(const ICoord&, unsigned int) const;
+
 #if DIM==2
   const std::vector<PixelSetBoundary> &getCategoryBdys() const {
     return categoryBdys;
@@ -282,14 +284,14 @@ public:
     return categoryBdys;
   }
 #endif // DIM==3
-
 #if defined(DEBUG) && DIM==3
-  void drawVoxelSetBoundaryLoops(LineSegmentLayer*, int cat, int dir,
-				 int offset, int normal) const;
-  void drawVoxelSetCrossSection(LineSegmentLayer*, int cat, int dir,
-				int offset, int normal) const;
-  void drawLoops(const std::vector<PixelBdyLoop*>&, const PixelPlane&,
-		 LineSegmentLayer*) const;
+  void drawVoxelSetBoundary(LineSegmentLayer*, int) const;
+//   void drawVoxelSetBoundaryLoops(LineSegmentLayer*, int cat, int dir,
+// 				 int offset, int normal) const;
+//   void drawVoxelSetCrossSection(LineSegmentLayer*, int cat, int dir,
+// 				int offset, int normal) const;
+//   void drawLoops(const std::vector<PixelBdyLoop*>&, const PixelPlane&,
+// 		 LineSegmentLayer*) const;
 #endif // DEBUG
 
   std::vector<ICoord> *segmentPixels(const Coord&, const Coord&, bool&, bool&,

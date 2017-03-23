@@ -9,7 +9,7 @@
  * oof_manager@nist.gov. 
  */
 
-#include "common/pixelsetboundary.h"
+// #include "common/pixelsetboundary.h"
 #include "engine/barycentric.h"
 #include "engine/cskeletonelement.h"
 #include <vtkTetra.h>

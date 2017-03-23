@@ -76,11 +76,11 @@ public:
   }
 #ifdef DEBUG
   void dumpFaceInfo(CSkeletonBase*); // debugging
-  void drawPlaneIntersection(LineSegmentLayer*, CSkeletonBase*, int, int);
-  void drawPlaneVSBIntersection(LineSegmentLayer*, CSkeletonBase*,
-				unsigned int, int , int, int);
+  // void drawPlaneIntersection(LineSegmentLayer*, CSkeletonBase*, int, int);
+  // void drawPlaneVSBIntersection(LineSegmentLayer*, CSkeletonBase*,
+  // 				unsigned int, int , int, int);
   void drawVoxelCategoryIntersection(LineSegmentLayer*, CSkeletonBase*,
-				     unsigned int, bool);
+   				     unsigned int, bool);
 #endif // DEBUG
 };
 

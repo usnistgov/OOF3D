@@ -9,6 +9,8 @@
  * oof_manager@nist.gov. 
  */
 
+OBSOLETE
+
 #ifndef HOMOGENEITYTET_I_H
 #define HOMOGENEITYTET_I_H
 

@@ -1209,61 +1209,61 @@ class DrawLinesFromFiles(display.DisplayMethod):
 #                                                   self.category)
 
 if debug.debug:
-    registeredclass.Registration(
-        "ElementPixelPlaneIntersection",
-        display.DisplayMethod,
-        ElementPixelPlaneIntersection,
-        ordering=1000,
-        layerordering=display.Linear,
-        params=[
-            parameter.IntParameter('element', tip="Element ID"),
-            enum.EnumParameter('direction', microstructuredisplay.Direction,
-                               'All'),
-            parameter.IntParameter('offset'),
-            color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
-            parameter.IntRangeParameter('line_width', (1, 10), 2)
-        ],
-        whoclasses=("Skeleton",),
-        tip="Display the polygon formed by the intersection of an element with a pixel plane."
-    )
+    # registeredclass.Registration(
+    #     "ElementPixelPlaneIntersection",
+    #     display.DisplayMethod,
+    #     ElementPixelPlaneIntersection,
+    #     ordering=1000,
+    #     layerordering=display.Linear,
+    #     params=[
+    #         parameter.IntParameter('element', tip="Element ID"),
+    #         enum.EnumParameter('direction', microstructuredisplay.Direction,
+    #                            'All'),
+    #         parameter.IntParameter('offset'),
+    #         color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
+    #         parameter.IntRangeParameter('line_width', (1, 10), 2)
+    #     ],
+    #     whoclasses=("Skeleton",),
+    #     tip="Display the polygon formed by the intersection of an element with a pixel plane."
+    # )
     
-    registeredclass.Registration(
-        "ElementVSBPlaneIntersection",
-        display.DisplayMethod,
-        ElementPixelPlaneVSBIntersection,
-        ordering=1005,
-        layerordering=display.Linear,
-        params=[
-            parameter.IntParameter('element', tip="Element ID"),
-            parameter.IntParameter('category'),
-            enum.EnumParameter('direction', microstructuredisplay.Direction,
-                               'All'),
-            parameter.IntParameter('offset'),
-            enum.EnumParameter('normal', microstructuredisplay.Normal,
-                               'Positive'),
-            color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
-            parameter.IntRangeParameter('line_width', (1, 10), 2)
-            ],
-        whoclasses=("Skeleton",),
-        tip="Display the in-plane facets of the intersection of voxel boundary loops and an element."
+    # registeredclass.Registration(
+    #     "ElementVSBPlaneIntersection",
+    #     display.DisplayMethod,
+    #     ElementPixelPlaneVSBIntersection,
+    #     ordering=1005,
+    #     layerordering=display.Linear,
+    #     params=[
+    #         parameter.IntParameter('element', tip="Element ID"),
+    #         parameter.IntParameter('category'),
+    #         enum.EnumParameter('direction', microstructuredisplay.Direction,
+    #                            'All'),
+    #         parameter.IntParameter('offset'),
+    #         enum.EnumParameter('normal', microstructuredisplay.Normal,
+    #                            'Positive'),
+    #         color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
+    #         parameter.IntRangeParameter('line_width', (1, 10), 2)
+    #         ],
+    #     whoclasses=("Skeleton",),
+    #     tip="Display the in-plane facets of the intersection of voxel boundary loops and an element."
         
-        )
+    #     )
 
-    registeredclass.Registration(
-        "ElementVoxelCategoryIntersectionEdges",
-        display.DisplayMethod,
-        ElementVoxelCategoryIntersectionEdges,
-        ordering=1010,
-        layerordering=display.Linear,
-        params=[
-            parameter.IntParameter('element', tip='Element ID'),
-            parameter.IntParameter('category'),
-            parameter.BooleanParameter('planeFacets', True),
-            color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
-            parameter.IntRangeParameter('line_width', (1, 10), 2)
-            ],
-        whoclasses=("Skeleton",),
-        tip="Display the edges of the facets of the intersection of a voxel category with an element.")
+    # registeredclass.Registration(
+    #     "ElementVoxelCategoryIntersectionEdges",
+    #     display.DisplayMethod,
+    #     ElementVoxelCategoryIntersectionEdges,
+    #     ordering=1010,
+    #     layerordering=display.Linear,
+    #     params=[
+    #         parameter.IntParameter('element', tip='Element ID'),
+    #         parameter.IntParameter('category'),
+    #         parameter.BooleanParameter('planeFacets', True),
+    #         color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
+    #         parameter.IntRangeParameter('line_width', (1, 10), 2)
+    #         ],
+    #     whoclasses=("Skeleton",),
+    #     tip="Display the edges of the facets of the intersection of a voxel category with an element.")
 
     registeredclass.Registration(
         "DrawLinesFromFile",

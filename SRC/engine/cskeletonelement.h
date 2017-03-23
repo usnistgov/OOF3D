@@ -248,12 +248,12 @@ public:
 
 #ifdef DEBUG
   void dumpFaceInfo(const CSkeletonBase*) const; // debugging
-  void drawPlaneIntersection(LineSegmentLayer*, const CSkeletonBase*,
-			     int, int) const;
-  void drawPlaneVSBIntersection(LineSegmentLayer*, const CSkeletonBase*,
-				unsigned int, int, int, int) const;
+  // void drawPlaneIntersection(LineSegmentLayer*, const CSkeletonBase*,
+  // 			     int, int) const;
+  // void drawPlaneVSBIntersection(LineSegmentLayer*, const CSkeletonBase*,
+  // 				unsigned int, int, int, int) const;
   void drawVoxelCategoryIntersection(LineSegmentLayer*, const CSkeletonBase*,
-				     unsigned int, bool) const;
+  				     unsigned int, bool) const;
 #endif // DEBUG
 
 };				// CSkeletonElement

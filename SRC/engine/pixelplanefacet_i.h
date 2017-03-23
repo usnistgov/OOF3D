@@ -9,6 +9,8 @@
  * oof_manager@nist.gov. 
  */
 
+OBSOLETE
+
 #ifndef PIXELPLANEFACET_I_H
 #define PIXELPLANEFACET_I_H
 

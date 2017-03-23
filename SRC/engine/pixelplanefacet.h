@@ -12,6 +12,8 @@
 #ifndef PIXELPLANEFACET_H
 #define PIXELPLANEFACET_H
 
+OBSOLETE
+
 #include <oofconfig.h>
 
 #include "engine/pixelplanefacet_i.h"

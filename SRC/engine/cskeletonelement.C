@@ -14,20 +14,21 @@
 #include "common/cdebug.h"
 #include "common/cmicrostructure.h"
 #include "common/lock.h"
-#include "common/pixelsetboundary.h"
+// #include "common/pixelsetboundary.h"
 #include "common/printvec.h"
+#include "common/voxelsetboundary.h"
 #include "engine/cskeleton2.h"
 #include "engine/cskeletonelement.h"
 #include "engine/cskeletonnode2.h"
 #include "engine/element.h"
 #include "engine/elementnodeiterator.h"
 #include "engine/femesh.h"
-#include "engine/homogeneitytet.h"
+// #include "engine/homogeneitytet.h"
 #include "engine/masterelement.h"
 #include "engine/material.h"
 #include "engine/ooferror.h"
-#include "engine/pixelplanefacet.h"
-#include "engine/planeintersection.h"
+// #include "engine/pixelplanefacet.h"
+// #include "engine/planeintersection.h"
 
 #include <vtkMath.h>
 #include <vtkTriangle.h>
@@ -854,18 +855,20 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
   OOFcerrIndent indent(2);
 #endif // DEBUG
 
-  HomogeneityTet homtet(this, ms
-#ifdef DEBUG
-			, verbose
-#endif // DEBUG
-			);
+//   HomogeneityTet homtet(this, ms
+// #ifdef DEBUG
+// 			, verbose
+// #endif // DEBUG
+// 			);
+
   // Get the number of voxel categories.  This recomputes categories
   // and boundaries if needed.
   unsigned int ncat = ms->nCategories();
   DoubleVec *result = new DoubleVec(ncat, 0.0);
   // Get all the category boundaries.
   const std::vector<VoxelSetBoundary*> &bdys = ms->getCategoryBdys();
-// #ifdef DEBUG
+
+  // #ifdef DEBUG
 //   ofstream *dumpfile = nullptr;
 //   if(verbose) {
 //     // openDebugFile("facetdump");
@@ -878,92 +881,92 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
 // #endif	// DEBUG
 
   double totalVol = 0.0;
-  try {
-    for(unsigned int cat=0; cat<ncat; cat++) {
-      const VoxelSetBoundary *vsb = bdys[cat];
-#ifdef DEBUG
-      if(homtet.verboseCategory()) {
-	oofcerr << "CSkeletonElement::categoryVolumes: category=" << cat
-		<< std::endl;
-	// homtet.dumpEquivalences();
-	// writeDebugFile("*** category " + to_string(cat) + " ***\n");
-      }
-#endif	// DEBUG
-      if(vsb->bbox().intersects(homtet.bounds())) {
-	FacetMap2D pixelplanefacets =
-	  homtet.findPixelPlaneFacets(cat, *vsb);
-#ifdef DEBUG
-	// if(homtet.verboseCategory()) {
-	//   oofcerr << "CSkeletonElement::categoryVolumes: "
-	// 	  << "after findPixelPlaneFacets cat=" << cat << std::endl;
-	//   // homtet.dumpEquivalences();
-	// }
-	// if(!homtet.verify()) {
-	//   throw ErrProgrammingError("Verification failed", __FILE__, __LINE__);
-	// }
-	// if(verbose) {
-	//   oofcerr << "CSkeletonElement::categoryVolumes: calling findFaceFacets"
-	// 	  << std::endl;
-	// }
-#endif // DEBUG
-	FaceFacets facefacets = homtet.findFaceFacets(cat, pixelplanefacets);
+//   try {
+//     for(unsigned int cat=0; cat<ncat; cat++) {
+//       const VoxelSetBoundary *vsb = bdys[cat];
 // #ifdef DEBUG
-// 	if(verbose)
-// 	  oofcerr << "CSkeletonElement::categoryVolumes: "
-// 		  << "calling intersectionVolume for cat " << cat << std::endl;
-// #endif // DEBUG
-	double v = homtet.intersectionVolume(pixelplanefacets, facefacets
+//       if(homtet.verboseCategory()) {
+// 	oofcerr << "CSkeletonElement::categoryVolumes: category=" << cat
+// 		<< std::endl;
+// 	// homtet.dumpEquivalences();
+// 	// writeDebugFile("*** category " + to_string(cat) + " ***\n");
+//       }
+// #endif	// DEBUG
+//       if(vsb->bbox().intersects(homtet.bounds())) {
+// 	FacetMap2D pixelplanefacets =
+// 	  homtet.findPixelPlaneFacets(cat, *vsb);
 // #ifdef DEBUG
-// 					     , cat, *dumpfile
+// 	// if(homtet.verboseCategory()) {
+// 	//   oofcerr << "CSkeletonElement::categoryVolumes: "
+// 	// 	  << "after findPixelPlaneFacets cat=" << cat << std::endl;
+// 	//   // homtet.dumpEquivalences();
+// 	// }
+// 	// if(!homtet.verify()) {
+// 	//   throw ErrProgrammingError("Verification failed", __FILE__, __LINE__);
+// 	// }
+// 	// if(verbose) {
+// 	//   oofcerr << "CSkeletonElement::categoryVolumes: calling findFaceFacets"
+// 	// 	  << std::endl;
+// 	// }
 // #endif // DEBUG
-					     );
-// #ifdef DEBUG
-// 	if(verbose)
-// 	  oofcerr << "CSkeletonElement::categoryVolumes: "
-// 		  << "back from intersectionVolume." << std::endl;
-// #endif // DEBUG
-	(*result)[cat] = v;
-	totalVol += v;
+// 	FaceFacets facefacets = homtet.findFaceFacets(cat, pixelplanefacets);
+// // #ifdef DEBUG
+// // 	if(verbose)
+// // 	  oofcerr << "CSkeletonElement::categoryVolumes: "
+// // 		  << "calling intersectionVolume for cat " << cat << std::endl;
+// // #endif // DEBUG
+// 	double v = homtet.intersectionVolume(pixelplanefacets, facefacets
+// // #ifdef DEBUG
+// // 					     , cat, *dumpfile
+// // #endif // DEBUG
+// 					     );
+// // #ifdef DEBUG
+// // 	if(verbose)
+// // 	  oofcerr << "CSkeletonElement::categoryVolumes: "
+// // 		  << "back from intersectionVolume." << std::endl;
+// // #endif // DEBUG
+// 	(*result)[cat] = v;
+// 	totalVol += v;
 
-	// Delete PixelPlaneFacets.  FaceFacets aren't stored by
-	// pointer so they don't have to be deleted manually.
-	for(auto iter=pixelplanefacets.begin(); iter!=pixelplanefacets.end();
-	    ++iter)
-	  {
-	    delete (*iter).second;
-	  }
-      }	// end if VSB bbox intersects the element bbox
-    } // end loop over categories cat
+// 	// Delete PixelPlaneFacets.  FaceFacets aren't stored by
+// 	// pointer so they don't have to be deleted manually.
+// 	for(auto iter=pixelplanefacets.begin(); iter!=pixelplanefacets.end();
+// 	    ++iter)
+// 	  {
+// 	    delete (*iter).second;
+// 	  }
+//       }	// end if VSB bbox intersects the element bbox
+//     } // end loop over categories cat
 
-    double actual = volumeInVoxelUnits(ms);
-    double fracvol = (totalVol - actual)/actual;
-    bool badvol = fabs(fracvol) >= VOLTOL;
-    if(true /*badvol || verbose*/) {
-      oofcerr << "CSkeletonElement::categoryVolumes: element index=" << index
-	      << " uid=" << uid
-	      <<" measured volume=" << totalVol
-	      << " [" << *result << "]"
-	      << " actual=" << actual
-	      << " (error=" << fracvol*100 << "%)" << std::endl;
-    }
-    if(badvol) {
-      throw ErrProgrammingError("categoryVolumes: total volume check failed!",
-				  __FILE__, __LINE__);
-    }
-  }
-  catch (...) {
-    oofcerr << "CSkeletonElement::categoryVolumes: failed for "
-	    << *this << std::endl;
-    oofcerr << "CSkeletonElement::categoryVolumes: nVerbose=" << nVerbose
-	    << std::endl;
-// #ifdef DEBUG
-//     if(verbose) {
-//       dumpfile->close();
-//       // closeDebugFile();
+//     double actual = volumeInVoxelUnits(ms);
+//     double fracvol = (totalVol - actual)/actual;
+//     bool badvol = fabs(fracvol) >= VOLTOL;
+//     if(true /*badvol || verbose*/) {
+//       oofcerr << "CSkeletonElement::categoryVolumes: element index=" << index
+// 	      << " uid=" << uid
+// 	      <<" measured volume=" << totalVol
+// 	      << " [" << *result << "]"
+// 	      << " actual=" << actual
+// 	      << " (error=" << fracvol*100 << "%)" << std::endl;
 //     }
-// #endif // DEBUG
-    throw;
-  }
+//     if(badvol) {
+//       throw ErrProgrammingError("categoryVolumes: total volume check failed!",
+// 				  __FILE__, __LINE__);
+//     }
+//   }
+//   catch (...) {
+//     oofcerr << "CSkeletonElement::categoryVolumes: failed for "
+// 	    << *this << std::endl;
+//     oofcerr << "CSkeletonElement::categoryVolumes: nVerbose=" << nVerbose
+// 	    << std::endl;
+// // #ifdef DEBUG
+// //     if(verbose) {
+// //       dumpfile->close();
+// //       // closeDebugFile();
+// //     }
+// // #endif // DEBUG
+//     throw;
+//   }
 // #ifdef DEBUG
 //   if(verbose) {
 //     // closeDebugFile();
@@ -971,6 +974,7 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
 //   }
 // #endif // DEBUG
   return result;
+
 } // end CSkeletonElement::categoryVolumes
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1485,84 +1489,84 @@ void CSkeletonElement::print(std::ostream &os) const {
 // These routines help to debug categoryVolumes. 
 
 #ifdef DEBUG
-#include "engine/pixelplanefacet.h"
-#include "engine/facefacet.h"
+// #include "engine/pixelplanefacet.h"
+// #include "engine/facefacet.h"
 
-void CSkeletonElement::drawPlaneIntersection(LineSegmentLayer *layer,
-					     const CSkeletonBase *skel,
-					     int direction, int offset)
-  const
-{
-  const CMicrostructure *ms = skel->getMicrostructure();
-  HomogeneityTet htet(this, ms, false);
-  const HPixelPlane *pixplane = htet.getPixelPlane(direction, offset, 1);
-  TetIntersectionPolygon &tetPts = htet.getTetPlaneIntersectionPoints(
-							pixplane);
-  layer->set_nSegs(tetPts.size());
-  unsigned int n = tetPts.size();
-  for(unsigned int i=0; i<n; i++) {
-    Coord3D pt0 = tetPts[i]->location3D();
-    Coord3D pt1 = tetPts[(i+1)%n]->location3D();
-    layer->addSegment(&pt0, &pt1);
-  }
-}
+// void CSkeletonElement::drawPlaneIntersection(LineSegmentLayer *layer,
+// 					     const CSkeletonBase *skel,
+// 					     int direction, int offset)
+//   const
+// {
+//   const CMicrostructure *ms = skel->getMicrostructure();
+//   HomogeneityTet htet(this, ms, false);
+//   const HPixelPlane *pixplane = htet.getPixelPlane(direction, offset, 1);
+//   TetIntersectionPolygon &tetPts = htet.getTetPlaneIntersectionPoints(
+// 							pixplane);
+//   layer->set_nSegs(tetPts.size());
+//   unsigned int n = tetPts.size();
+//   for(unsigned int i=0; i<n; i++) {
+//     Coord3D pt0 = tetPts[i]->location3D();
+//     Coord3D pt1 = tetPts[(i+1)%n]->location3D();
+//     layer->addSegment(&pt0, &pt1);
+//   }
+// }
 
-void CSkeletonElement::drawPlaneVSBIntersection(LineSegmentLayer *layer,
-						const CSkeletonBase *skel,
-						unsigned int category,
-						int direction, int offset,
-						int normal)
-  const
-{
+// void CSkeletonElement::drawPlaneVSBIntersection(LineSegmentLayer *layer,
+// 						const CSkeletonBase *skel,
+// 						unsigned int category,
+// 						int direction, int offset,
+// 						int normal)
+//   const
+// {
  
-  const CMicrostructure *ms = skel->getMicrostructure();
-  ms->categorizeIfNecessary();
-  const VoxelSetBoundary *vsb = ms->getCategoryBdys()[category];
-  HomogeneityTet htet(this, ms, false);
-  FacetMap2D facets = htet.findPixelPlaneFacets(category, *vsb);
-  // Using separate vectors for start and end points lets us avoid the
-  // FacetEdge class, which has gotten more complicated than we need
-  // here.  If it ever becomes uncomplicated again, it might be worth
-  // using it instead.
-  std::vector<Coord3D> startPts;
-  std::vector<Coord3D> endPts;
-  if(offset >= 0 && direction > 0 && normal != 0) {
-    // Draw just one plane
-    const HPixelPlane *pixplane = htet.getPixelPlane(direction, offset, normal);
-    FacetMap2D::const_iterator fmi = facets.find(pixplane);
-    if(fmi != facets.end()) {
-      const PixelPlaneFacet *facet = (*fmi).second;
-      startPts.resize(startPts.size() + facet->size());
-      endPts.resize(endPts.size() + facet->size());
-      for(unsigned int i=0; i<facet->size(); i++) {
-	facet->getEndPoints(i, startPts[i], endPts[i]);
-      }
-    }
-  }
-  else  {
-    // Draw multiple planes
-    for(FacetMap2D::const_iterator fmi=facets.begin(); fmi!=facets.end(); ++fmi)
-      {
-	const HPixelPlane *pixplane = (*fmi).first;
-	if((direction < 0 || pixplane->direction() == direction)
-	   && (offset < 0 || pixplane->normalOffset() == offset)
-	   && (normal == 0 || pixplane->normalSign() == normal))
-	  {
-	    const PixelPlaneFacet *facet = (*fmi).second;
-	    unsigned int basesize = startPts.size();
-	    startPts.resize(basesize + facet->size());
-	    endPts.resize(basesize + facet->size());
-	    for(unsigned int i=0; i<facet->size(); i++) {
-	      facet->getEndPoints(i, startPts[basesize+i], endPts[basesize+i]);
-	    }
-	  }
-      }
-  }
-  layer->set_nSegs(startPts.size());
-  for(unsigned int i=0; i<startPts.size(); i++) {
-    layer->addSegment(&startPts[i], &endPts[i]);
-  }
-}
+//   const CMicrostructure *ms = skel->getMicrostructure();
+//   ms->categorizeIfNecessary();
+//   const VoxelSetBoundary *vsb = ms->getCategoryBdys()[category];
+//   HomogeneityTet htet(this, ms, false);
+//   FacetMap2D facets = htet.findPixelPlaneFacets(category, *vsb);
+//   // Using separate vectors for start and end points lets us avoid the
+//   // FacetEdge class, which has gotten more complicated than we need
+//   // here.  If it ever becomes uncomplicated again, it might be worth
+//   // using it instead.
+//   std::vector<Coord3D> startPts;
+//   std::vector<Coord3D> endPts;
+//   if(offset >= 0 && direction > 0 && normal != 0) {
+//     // Draw just one plane
+//     const HPixelPlane *pixplane = htet.getPixelPlane(direction, offset, normal);
+//     FacetMap2D::const_iterator fmi = facets.find(pixplane);
+//     if(fmi != facets.end()) {
+//       const PixelPlaneFacet *facet = (*fmi).second;
+//       startPts.resize(startPts.size() + facet->size());
+//       endPts.resize(endPts.size() + facet->size());
+//       for(unsigned int i=0; i<facet->size(); i++) {
+// 	facet->getEndPoints(i, startPts[i], endPts[i]);
+//       }
+//     }
+//   }
+//   else  {
+//     // Draw multiple planes
+//     for(FacetMap2D::const_iterator fmi=facets.begin(); fmi!=facets.end(); ++fmi)
+//       {
+// 	const HPixelPlane *pixplane = (*fmi).first;
+// 	if((direction < 0 || pixplane->direction() == direction)
+// 	   && (offset < 0 || pixplane->normalOffset() == offset)
+// 	   && (normal == 0 || pixplane->normalSign() == normal))
+// 	  {
+// 	    const PixelPlaneFacet *facet = (*fmi).second;
+// 	    unsigned int basesize = startPts.size();
+// 	    startPts.resize(basesize + facet->size());
+// 	    endPts.resize(basesize + facet->size());
+// 	    for(unsigned int i=0; i<facet->size(); i++) {
+// 	      facet->getEndPoints(i, startPts[basesize+i], endPts[basesize+i]);
+// 	    }
+// 	  }
+//       }
+//   }
+//   layer->set_nSegs(startPts.size());
+//   for(unsigned int i=0; i<startPts.size(); i++) {
+//     layer->addSegment(&startPts[i], &endPts[i]);
+//   }
+// }
 
 void CSkeletonElement::drawVoxelCategoryIntersection(LineSegmentLayer *layer,
 						     const CSkeletonBase *skel,
@@ -1570,56 +1574,56 @@ void CSkeletonElement::drawVoxelCategoryIntersection(LineSegmentLayer *layer,
 						     bool drawPlaneFacets)
   const
 {
-  const CMicrostructure *ms = skel->getMicrostructure();
-  ms->categorizeIfNecessary();
-  const VoxelSetBoundary *vsb = ms->getCategoryBdys()[category];
-  HomogeneityTet htet(this, ms
-#ifdef DEBUG
-		      , false // verbose?
-#endif // DEBUG
-		      );
-  FacetMap2D pixelplanefacets = htet.findPixelPlaneFacets(category, *vsb);
-  FaceFacets facefacets = htet.findFaceFacets(category, pixelplanefacets);
-  std::vector<Coord3D> startPts;
-  std::vector<Coord3D> endPts;
-  for(unsigned int f=0; f<NUM_TET_FACES; f++) {
-    const FaceFacet &facefacet = facefacets[f];
-    if(!facefacet.empty()) {
-      // oofcerr << "drawVoxelCategoryIntersection: facefacet[" << f << "]="
-      // 	      << facefacet << std::endl;
-      for(auto edgeptr=facefacet.edges().begin();
-	  edgeptr!=facefacet.edges().end(); ++edgeptr)
-	{
-	  startPts.push_back((*edgeptr)->startPos3D());
-	  endPts.push_back((*edgeptr)->endPos3D());
-	  // oofcerr << "drawVoxelCategoryIntersection: face=" << f << " edge= "
-	  // 	<< (*edgeptr)->startPos3D() << " " << (*edgeptr)->endPos3D()
-	  // 	<< std::endl;
-	}
-    }
-  }
-  if(drawPlaneFacets) {
-    for(FacetMap2D::const_iterator fmi=pixelplanefacets.begin();
-	fmi!=pixelplanefacets.end(); ++fmi)
-      {
-	const PixelPlaneFacet *facet = (*fmi).second;
-	if(!facet->empty()) {
-	  unsigned int basesize = startPts.size();
-	  startPts.resize(basesize + facet->size());
-	  endPts.resize(basesize + facet->size());
-	  for(unsigned int i=0; i<facet->size(); i++) {
-	    facet->getEndPoints(i, startPts[basesize+i], endPts[basesize+i]);
-	    // oofcerr << "drawVoxelCategoryIntersection: pixelplane edge "
-	    // 	    << startPts[basesize+i] << " " << endPts[basesize+i]
-	    // 	    << std::endl;
-	  }
-	}
-      }
-  }
-  layer->set_nSegs(startPts.size());
-  for(unsigned int i=0; i<startPts.size(); i++) {
-    layer->addSegment(&startPts[i], &endPts[i]);
-  }
+//   const CMicrostructure *ms = skel->getMicrostructure();
+//   ms->categorizeIfNecessary();
+//   const VoxelSetBoundary *vsb = ms->getCategoryBdys()[category];
+//   HomogeneityTet htet(this, ms
+// #ifdef DEBUG
+// 		      , false // verbose?
+// #endif // DEBUG
+// 		      );
+//   FacetMap2D pixelplanefacets = htet.findPixelPlaneFacets(category, *vsb);
+//   FaceFacets facefacets = htet.findFaceFacets(category, pixelplanefacets);
+//   std::vector<Coord3D> startPts;
+//   std::vector<Coord3D> endPts;
+//   for(unsigned int f=0; f<NUM_TET_FACES; f++) {
+//     const FaceFacet &facefacet = facefacets[f];
+//     if(!facefacet.empty()) {
+//       // oofcerr << "drawVoxelCategoryIntersection: facefacet[" << f << "]="
+//       // 	      << facefacet << std::endl;
+//       for(auto edgeptr=facefacet.edges().begin();
+// 	  edgeptr!=facefacet.edges().end(); ++edgeptr)
+// 	{
+// 	  startPts.push_back((*edgeptr)->startPos3D());
+// 	  endPts.push_back((*edgeptr)->endPos3D());
+// 	  // oofcerr << "drawVoxelCategoryIntersection: face=" << f << " edge= "
+// 	  // 	<< (*edgeptr)->startPos3D() << " " << (*edgeptr)->endPos3D()
+// 	  // 	<< std::endl;
+// 	}
+//     }
+//   }
+//   if(drawPlaneFacets) {
+//     for(FacetMap2D::const_iterator fmi=pixelplanefacets.begin();
+// 	fmi!=pixelplanefacets.end(); ++fmi)
+//       {
+// 	const PixelPlaneFacet *facet = (*fmi).second;
+// 	if(!facet->empty()) {
+// 	  unsigned int basesize = startPts.size();
+// 	  startPts.resize(basesize + facet->size());
+// 	  endPts.resize(basesize + facet->size());
+// 	  for(unsigned int i=0; i<facet->size(); i++) {
+// 	    facet->getEndPoints(i, startPts[basesize+i], endPts[basesize+i]);
+// 	    // oofcerr << "drawVoxelCategoryIntersection: pixelplane edge "
+// 	    // 	    << startPts[basesize+i] << " " << endPts[basesize+i]
+// 	    // 	    << std::endl;
+// 	  }
+// 	}
+//       }
+//   }
+//   layer->set_nSegs(startPts.size());
+//   for(unsigned int i=0; i<startPts.size(); i++) {
+//     layer->addSegment(&startPts[i], &endPts[i]);
+//   }
 }
 
 #endif // DEBUG

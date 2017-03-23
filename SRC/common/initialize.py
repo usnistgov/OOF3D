@@ -42,6 +42,7 @@ import ooflib.common.color
 import ooflib.common.microstructure
 import ooflib.common.pixelselectionmethod
 import ooflib.common.pixelselectionmod
+import ooflib.SWIG.common.voxelsetboundary
 
 if config.dimension() == 2:
 

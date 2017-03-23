@@ -9,6 +9,8 @@
  * oof_manager@nist.gov. 
  */
 
+OBSOLETE
+
 #include <oofconfig.h>
 #include <algorithm>
 #include <math.h>
