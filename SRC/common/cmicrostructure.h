@@ -209,7 +209,7 @@ public:
 #if DIM==2
   double areaOfPixels() const { return delta_[0]*delta_[1]; }
 #elif DIM==3
-  double volumeOfPixels() const { return delta_[0]*delta_[1]*delta_[2]; }
+  double volumeOfVoxels() const { return delta_[0]*delta_[1]*delta_[2]; }
   double volume() const { return size_.x[0]*size_.x[1]*size_.x[2]; }
 #endif
   Coord physical2Pixel(const Coord&) const; // real space to pixel coords
@@ -272,8 +272,12 @@ public:
   
   bool is_categorized() const { return categorized; }
   void categorizeIfNecessary() const;
+  double volumeOfCategory(unsigned int) const;
+  void dumpVSB(unsigned int, const std::string&) const;// save VSB graph to file
+  void dumpVSBLines(unsigned int, const std::string&) const; // plot VSB edges
 
   unsigned char voxelSignature(const ICoord&, unsigned int) const;
+  bool checkVSB(unsigned int) const;
 
 #if DIM==2
   const std::vector<PixelSetBoundary> &getCategoryBdys() const {

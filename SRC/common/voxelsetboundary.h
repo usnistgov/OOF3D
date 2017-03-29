@@ -28,6 +28,12 @@ class ICRectangularPrism;
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// Predefined voxel signatures for the 8 individual voxels.
+extern unsigned char vox000, vox100, vox010, vox110,
+  vox001, vox101, vox011, vox111;
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 class VoxelEdgeDirection {
 public:
   VoxelEdgeDirection(unsigned int a, int d);
@@ -38,6 +44,10 @@ public:
   bool operator==(const VoxelEdgeDirection &other) const {
     return axis == other.axis && dir == other.dir;
   }
+  // Compare the positions of two points in this direction.  Return 1
+  // if the first point is past the second point, -1 if it's the other
+  // way around, and 0 if they're at the same position.
+  int compare(const ICoord3D&, const ICoord3D&) const;
 };
 
 std::ostream &operator<<(std::ostream&, const VoxelEdgeDirection&);
@@ -67,11 +77,15 @@ protected:
   // are relative to the center of the current ProtoVSBNode in the
   // node's orientation.
   bool voxelOrder(unsigned char sig0, unsigned char sig1) const;
+#ifdef DEBUG
+  mutable unsigned char signature;
+#endif // DEBUG
 public:
   const VoxRot rotation;
   ProtoVSBNode(const VoxRot &rot);
   virtual ~ProtoVSBNode() {}
-
+  void setSignature(unsigned char sig) const { signature = sig;}
+  
   // Pure virtual methods in this class are defined in subclasses
   // defined in voxelsetboundary.C.
 
@@ -112,7 +126,9 @@ public:
   // reference orientation for this node's signature.
   VoxelEdgeDirection getReferenceDir(const ProtoVSBNode*) const;
 
+#ifdef DEBUG
   virtual void print(std::ostream&) const = 0;
+#endif // DEBUG
 };
 
 std::ostream &operator<<(std::ostream&, const ProtoVSBNode&);
@@ -180,6 +196,7 @@ public:
 class VSBNode {
  private:
   double distance;		// distance to clipping plane
+  unsigned int index;		// set by VSBGraph::addNode
   bool trimmed;
   std::vector<VSBNode*> neighbors;
  public:
@@ -193,8 +210,13 @@ class VSBNode {
   void setNeighbor(unsigned int i, VSBNode *nbr);
   VSBNode *getNeighbor(unsigned int i) const { return neighbors[i]; }
   void replaceNeighbor(VSBNode*, VSBNode*);
-  bool checkNeighborCount() const;
+  
+  const VSBNode *nextCWNeighbor(const VSBNode*) const;
+  unsigned int neighborIndex(const VSBNode*) const;
+  unsigned int getIndex() const { return index; }
+  
   friend class VoxelSetBoundary;
+  friend class VSBGraph;
 };
 
 
@@ -213,13 +235,18 @@ class VSBGraph {
 
   unsigned int size() const { return vertices.size(); }
   
-  void addNode(VSBNode *node) { vertices.push_back(node); }
+  void addNode(VSBNode *node);
   const VSBNode *getNode(unsigned int i) const { return vertices[i]; }
   // VSBGraph *copyAndClip(const Plane*) const;
   // void clipInPlace(const Plane*);
 
   double volume() const;
+  Coord3D center() const;
+  
   bool verify() const;
+  bool checkEdges() const;
+  void dump(std::ostream &) const;
+  void dumpLines(std::ostream &) const;
 };
 
 class VSBEdgeIterator {
@@ -261,10 +288,14 @@ public:
   void fixTwoFoldNodes();
 
   unsigned int size() const { return graph.size(); }
+  double volume() const;
 
   VSBEdgeIterator iterator() const { return VSBEdgeIterator(&graph); }
 
-  bool verify() const { return graph.verify(); }
+  // bool verify() const { return graph.verify(); }
+  bool checkEdges() const;
+  void dump(std::ostream &os) const { graph.dump(os); }
+  void dumpLines(std::ostream &os) const { graph.dumpLines(os); }
   
   // friend class SingleNode;
   // friend class DoubleNode;
@@ -275,5 +306,6 @@ public:
 };
 
 void initializeProtoNodes();
+std::string printSig(unsigned char);
 
 #endif // VOXELSETBOUNDARY_H

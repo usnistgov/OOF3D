@@ -535,6 +535,10 @@ void CMicrostructure::categorize() const {
   }
 
   for(unsigned int cat=0; cat<ncategories; cat++) {
+#ifdef DEBUG
+    oofcerr << "CMicrostructure::categorize: ------ cat=" << cat << " ------"
+	    << std::endl;
+#endif // DEBUG
     // A ProtoVSBNode is the precursor to the actual VSBNodes.
     // There's a ProtoVSBNode at each corner of each voxel, but
     // neighboring voxels share ProtoVSBNodes.  The array of
@@ -570,9 +574,8 @@ void CMicrostructure::categorize() const {
 // 		<< i.coord() << std::endl;
 // #endif // DEBUG
       }
-    // Loop over the protoNodes and look for the next ProtoVSBNode in
-    // each direction.  If there is one, connect them and make an
-    // entry in the graph.
+    // Loop over the protoNodes, connecting each one to the next
+    // protoNode in each x,y,z direction.
     for(auto i=protoNodes.begin(); i!=protoNodes.end(); ++i) {
       ICoord3D here = i.coord();
       ProtoVSBNode *pnode = protoNodes[here];
@@ -584,8 +587,8 @@ void CMicrostructure::categorize() const {
 	  // Convert the reference space directions to actual space.
 	  VoxelEdgeDirection actualDir = pnode->rotation.toActual(dir);
 	  // It's only necessary to look in the positive directions
-	  // because the negative directions have already been checked
-	  // by the other node of the edge.
+	  // because the connections in the negative directions are
+	  // checked when examining the other node of the edge.
 	  if(actualDir.dir == 1) {
 	    unsigned int c = actualDir.axis;
 	    // Look for the next protonode in this direction
@@ -598,12 +601,19 @@ void CMicrostructure::categorize() const {
 	      if(protoNodes[there] != nullptr) { // found the next node
 #ifdef DEBUG
 		found = true;
+		oofcerr << "CMicrostructure::categorize: connecting "
+			<< here << " to " << there << std::endl;
+		OOFcerrIndent indent(2);
+		oofcerr << "CMicrostructure::categorize:  here="
+			<< *protoNodes[here] << std::endl;
+		oofcerr << "CMicrostructure::categorize: there="
+			<< *protoNodes[there] << std::endl;
 #endif // DEBUG
 		protoNodes[here]->connect(protoNodes[there]);	
-#ifdef DEBUG
-		oofcerr << "CMicrostructure::categorize: connected "
-			<< here << " to " << there << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+// 		oofcerr << "CMicrostructure::categorize: connected "
+// 			<< here << " to " << there << std::endl;
+// #endif // DEBUG
 		
 		break;		// done with this direction at this point
 	      }
@@ -633,62 +643,36 @@ void CMicrostructure::categorize() const {
 	delete protoNodes[p];
       }
 
-#ifdef DEBUG
-    if(!categoryBdys[cat]->verify()) {
-      oofcerr << "CMicrostructure::categorize:"
-	      <<" verification failed for category " << cat << std::endl;
-      throw ErrProgrammingError("Bad VSB!", __FILE__, __LINE__);
-    }
-#endif // DEBUG
-  }	// end loop over categories cat
-
-
-
-  
-  
-  // // Loop over the voxels again, looking for category boundaries. 
-  // for(Array<int>::iterator i=categorymap.begin(); i!=categorymap.end(); ++i) {
-  //   const ICoord3D &where = i.coord();
-  //   int cat = categorymap[i];
-  //   for(unsigned int c=0; c<3; c++) {    // loop over directions
-  //     ICoord3D nbr = where + unitvector[c];
-  //     if(!categorymap.contains(nbr) || categorymap[nbr] != cat) {
-  // 	categoryBdys[cat]->addFace(nbr, c, +1);
-  //     }
-  //     nbr = where - unitvector[c];
-  //     if(!categorymap.contains(nbr) || categorymap[nbr] != cat) {
-  // 	categoryBdys[cat]->addFace(where, c, -1);
-  //     }
-  //   } // end loop over directions c
-  // }   // end loop over voxels *i
-
 // #ifdef DEBUG
-//   oofcerr << "CMicrostructure::categorize: before calling find_boundaries"
-// 	  << std::endl;
-//   OOFcerrIndent indent(2);
-//   for(VoxelSetBoundary *vsb : categoryBdys) {
-//     oofcerr << "CMicrostructure::categorize: vsb=" << vsb << std::endl;
-//     OOFcerrIndent indent(2);
-//     vsb->dumpPSBs();
-//   }
+//     if(!categoryBdys[cat]->checkEdges()) {
+//       oofcerr << "CMicrostructure::categorize:"
+// 	      <<" checkEdges failed for category " << cat << std::endl;
+//       throw ErrProgrammingError("Bad VSB!", __FILE__, __LINE__);
+//     }
 // #endif // DEBUG
-
-  // for(std::vector<VoxelSetBoundary*>::iterator vsb=categoryBdys.begin();
-  //     vsb!=categoryBdys.end(); ++vsb)
-  //   {
-  //     (*vsb)->find_boundaries();
-  //   }
+  }	// end loop over categories cat
 
   categorized = true;
   
 // #ifdef DEBUG
-//   oofcerr << "CMicrostructure::catgorize: bdys=" << std::endl;
-//   for(std::vector<VoxelSetBoundary*>::const_iterator vsb=categoryBdys.begin();
-//       vsb!=categoryBdys.end(); ++vsb)
-//     oofcerr << "   " << **vsb << std::endl;
+//   oofcerr << "CMicrostructure::categorize: volumes=" << std::endl;
+//   OOFcerrIndent indent(2);
+//   double vol = 0.0;
+//   for(unsigned int i=0; i<categoryBdys.size(); i++) {
+//     double dv = categoryBdys[i]->volume();
+//     vol += dv;
+//     oofcerr << "CMicrostructure::categorize: cat=" << i << " vol=" << dv
+// 	    << std::endl;
+//   }
+//   oofcerr << "CMicrostructure::categorize: total=" << vol << std::endl;
 // #endif // DEBUG
   
 } // end CMicrostructure::categorize
+
+bool CMicrostructure::checkVSB(unsigned int cat) const {
+  assert(cat < categoryBdys.size());
+  return categoryBdys[cat]->checkEdges();
+}
 
 void CMicrostructure::categorizeIfNecessary() const {
   if(!categorized)
@@ -752,6 +736,27 @@ int CMicrostructure::category(const Coord &where) const {
   // category_lock.release();
   // oofcerr << "Release." << std::endl;
   return res;
+}
+
+double CMicrostructure::volumeOfCategory(unsigned int cat) const {
+  if(cat >= nCategories())
+    throw ErrProgrammingError("Category number too large!", __FILE__, __LINE__);
+  return categoryBdys[cat]->volume();
+}
+
+void CMicrostructure::dumpVSB(unsigned int cat, const std::string &file) const {
+  if(!categorized)
+    categorize();
+  std::ofstream f(file);
+  categoryBdys[cat]->dump(f);
+}
+void CMicrostructure::dumpVSBLines(unsigned int cat, const std::string &file)
+  const
+{
+  if(!categorized)
+    categorize();
+  std::ofstream f(file);
+  categoryBdys[cat]->dumpLines(f);
 }
 
 const Array<int> *CMicrostructure::getCategoryMap() const {
@@ -2000,6 +2005,7 @@ void CMicrostructure::drawVoxelSetBoundary(LineSegmentLayer *layer,
   const
 {
   categorizeIfNecessary();
+  assert(category < nCategories());
   const VoxelSetBoundary *vsb = categoryBdys[category];
   VSBEdgeIterator iter = vsb->iterator();
   layer->set_nSegs(vsb->size()*3/2);
@@ -2011,6 +2017,10 @@ void CMicrostructure::drawVoxelSetBoundary(LineSegmentLayer *layer,
     }
     iter.next();
   }
+  vsb->dump(std::cerr);
+  double vol = vsb->volume();
+  oofcerr << "CMicrostructure::drawVoxelSetBoundary: volume=" << vol
+  	  << std::endl;
 }
 
 // void CMicrostructure::drawLoops(const std::vector<PixelBdyLoop*> &loops,

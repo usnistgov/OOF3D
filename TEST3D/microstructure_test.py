@@ -110,7 +110,7 @@ class OOF_Microstructure(unittest.TestCase):
         ms_0 = getMicrostructure("three")
         ms_1 = getMicrostructure("four")
         self.assertEqual(ms_0.sizeInPixels(), ms_1.sizeInPixels())
-        self.assertEqual(ms_0.volumeOfPixels(), ms_1.volumeOfPixels())
+        self.assertEqual(ms_0.volumeOfVoxels(), ms_1.volumeOfVoxels())
         self.assertEqual(ms_0.size(), ms_1.size())
 
     # Uses New, does not make assumptions about existing microstructures.

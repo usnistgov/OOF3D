@@ -118,7 +118,7 @@ public:
 #ifndef DIM_3
   double areaOfPixels();
 #else
-  double volumeOfPixels();
+  double volumeOfVoxels();
 #endif
   ICoord pixelFromPoint(Coord Point);
   // TimeStamp &getTimeStamp();
@@ -138,6 +138,10 @@ public:
   bool is_categorized();
   ArrayInt *getCategoryMap();
   %new ArrayInt *getCategoryMapRO();
+  double volumeOfCategory(unsigned int);
+  void dumpVSB(unsigned int, char*);
+  void dumpVSBLines(unsigned int, char*);
+  bool checkVSB(unsigned int);
   //ICoord getRepresentativePixel(int category);
 //   bool transitionPointWithPoints(Coord *Point, Coord *Point,
 // 				 Coord *cskel_OutPoint);
