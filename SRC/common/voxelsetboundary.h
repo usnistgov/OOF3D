@@ -201,12 +201,11 @@ class VSBNode {
   std::vector<VSBNode*> neighbors;
  public:
   const Coord3D position;
-  VSBNode(const Coord3D &p)
-    : trimmed(false), neighbors(3, nullptr), position(p)
-  {}
-  VSBNode(const ICoord3D &p)
-    : trimmed(false), neighbors(3, nullptr), position(p.coord())
-  {}
+  VSBNode(const Coord3D &p);
+  VSBNode(const ICoord3D &p);
+  ~VSBNode();
+  VSBNode(const VSBNode&) = delete;
+  VSBNode(const VSBNode&&) = delete;
   void setNeighbor(unsigned int i, VSBNode *nbr);
   VSBNode *getNeighbor(unsigned int i) const { return neighbors[i]; }
   void replaceNeighbor(VSBNode*, VSBNode*);
@@ -296,16 +295,9 @@ public:
   bool checkEdges() const;
   void dump(std::ostream &os) const { graph.dump(os); }
   void dumpLines(std::ostream &os) const { graph.dumpLines(os); }
-  
-  // friend class SingleNode;
-  // friend class DoubleNode;
-  // friend class TripleNode;
-  // friend class MultiNode;
-  // friend class ThreeTwoOne;
-  // friend class FiveTwoOne;
-};
+  };
 
 void initializeProtoNodes();
-std::string printSig(unsigned char);
+std::string &printSig(unsigned char);
 
 #endif // VOXELSETBOUNDARY_H

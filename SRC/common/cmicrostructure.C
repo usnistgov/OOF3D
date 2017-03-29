@@ -535,10 +535,10 @@ void CMicrostructure::categorize() const {
   }
 
   for(unsigned int cat=0; cat<ncategories; cat++) {
-#ifdef DEBUG
-    oofcerr << "CMicrostructure::categorize: ------ cat=" << cat << " ------"
-	    << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     oofcerr << "CMicrostructure::categorize: ------ cat=" << cat << " ------"
+// 	    << std::endl;
+// #endif // DEBUG
     // A ProtoVSBNode is the precursor to the actual VSBNodes.
     // There's a ProtoVSBNode at each corner of each voxel, but
     // neighboring voxels share ProtoVSBNodes.  The array of
@@ -601,14 +601,16 @@ void CMicrostructure::categorize() const {
 	      if(protoNodes[there] != nullptr) { // found the next node
 #ifdef DEBUG
 		found = true;
-		oofcerr << "CMicrostructure::categorize: connecting "
-			<< here << " to " << there << std::endl;
-		OOFcerrIndent indent(2);
-		oofcerr << "CMicrostructure::categorize:  here="
-			<< *protoNodes[here] << std::endl;
-		oofcerr << "CMicrostructure::categorize: there="
-			<< *protoNodes[there] << std::endl;
 #endif // DEBUG
+// #ifdef DEBUG
+// 		oofcerr << "CMicrostructure::categorize: connecting "
+// 			<< here << " to " << there << std::endl;
+// 		OOFcerrIndent indent(2);
+// 		oofcerr << "CMicrostructure::categorize:  here="
+// 			<< *protoNodes[here] << std::endl;
+// 		oofcerr << "CMicrostructure::categorize: there="
+// 			<< *protoNodes[there] << std::endl;
+// #endif // DEBUG
 		protoNodes[here]->connect(protoNodes[there]);	
 // #ifdef DEBUG
 // 		oofcerr << "CMicrostructure::categorize: connected "

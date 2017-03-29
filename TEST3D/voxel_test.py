@@ -75,8 +75,8 @@ class VSB_ConfigTest(unittest.TestCase):
         # The non-trivial combinations of voxels correspond to voxel
         # signatures between 1 and 255.  Signature 0 has no voxels in
         # it, and would be equivalent to the Trivial test, above.
-        sigs = (105,)
-        # sigs = range(1, 256)
+        #sigs = (105,)
+        sigs = range(1, 256)
         for sig in sigs:
             OOF.PixelSelection.Clear(
                 microstructure='microstructure')

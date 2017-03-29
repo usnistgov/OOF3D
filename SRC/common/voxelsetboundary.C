@@ -144,7 +144,14 @@ static ICoord3D singleVoxelOffset(unsigned char voxel) {
 			    __FILE__, __LINE__);
 }
 
-std::string printSig(unsigned char sig) {
+std::string &printSig(unsigned char sig) {
+  // Store a copy of each signature string, and return a reference to
+  // it, because swig does strange things with bare std::string return
+  // types.  We need to return a reference to a permanent object.
+  static std::map<unsigned char, std::string> sigdict;
+  auto s = sigdict.find(sig);
+  if(s != sigdict.end())
+    return s->second;
   std::vector<std::string> voxels;
   if(sig & vox000) voxels.push_back("vox000");
   if(sig & vox100) voxels.push_back("vox100");
@@ -155,14 +162,17 @@ std::string printSig(unsigned char sig) {
   if(sig & vox011) voxels.push_back("vox011");
   if(sig & vox111) voxels.push_back("vox111");
   if(voxels.empty())
-    return "voxelNONE";
-  if(voxels.size() == 8)
-    return "voxelALL";
-  if(voxels.size() == 1)
-    return voxels[0];
-  for(unsigned int i=1; i<voxels.size(); i++)
-    voxels[0] += "|" + voxels[i];
-  return voxels[0];
+    sigdict[sig] = "voxelNONE";
+  else if(voxels.size() == 8)
+    sigdict[sig] = "voxelALL";
+  else if(voxels.size() == 1)
+    sigdict[sig] = voxels[0];
+  else {
+    for(unsigned int i=1; i<voxels.size(); i++)
+      voxels[0] += "|" + voxels[i];
+    sigdict[sig] = voxels[0];
+  }
+  return sigdict[sig];
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1692,15 +1702,15 @@ public:
     // vox001, and 3 for vox111.  The assignment of neighbor indices
     // for the VSBNodes is arbitrary but consistent (and gets them all
     // CW, hopefully!)
-#ifdef DEBUG
-    oofcerr << "CheckerBoard::connect:  this=" << *this << std::endl;
-    oofcerr << "CheckerBoard::connect: other=" << *otherproto << std::endl;
-    OOFcerrIndent indent(2);
-#endif // DEBUG
+// #ifdef DEBUG
+//     oofcerr << "CheckerBoard::connect:  this=" << *this << std::endl;
+//     oofcerr << "CheckerBoard::connect: other=" << *otherproto << std::endl;
+//     OOFcerrIndent indent(2);
+// #endif // DEBUG
     VoxelEdgeDirection dir = getReferenceDir(otherproto);
-#ifdef DEBUG
-    oofcerr << "CheckerBoard::connect: dir=" << dir << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     oofcerr << "CheckerBoard::connect: dir=" << dir << std::endl;
+// #endif // DEBUG
     if(dir == posX) {
       // The posX edge is between voxels 100 and 111, so it connects
       // to vsbNodes 0 and 3.
@@ -1711,10 +1721,10 @@ public:
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
       if(!ordered)
 	swap(othernode0, othernode1);
-#ifdef DEBUG
-      oofcerr << "CheckerBoard::connect: othernode0=" << othernode0->getIndex()
-	      << " othernode1=" << othernode1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "CheckerBoard::connect: othernode0=" << othernode0->getIndex()
+// 	      << " othernode1=" << othernode1->getIndex() << std::endl;
+// #endif // DEBUG
       vsbNodes[0]->setNeighbor(0, othernode0);
       vsbNodes[3]->setNeighbor(2, othernode1);
     }
@@ -1728,10 +1738,10 @@ public:
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
       if(!ordered)
 	swap(othernode0, othernode1);
-#ifdef DEBUG
-      oofcerr << "CheckerBoard::connect: othernode0=" << othernode0->getIndex()
-	      << " othernode1=" << othernode1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "CheckerBoard::connect: othernode0=" << othernode0->getIndex()
+// 	      << " othernode1=" << othernode1->getIndex() << std::endl;
+// #endif // DEBUG
       vsbNodes[2]->setNeighbor(1, othernode0);
       vsbNodes[1]->setNeighbor(0, othernode1);
     }
@@ -1745,10 +1755,10 @@ public:
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
       if(!ordered)
 	swap(othernode0, othernode1);
-#ifdef DEBUG
-      oofcerr << "CheckerBoard::connect: othernode0=" << othernode0->getIndex()
-	      << " othernode1=" << othernode1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "CheckerBoard::connect: othernode0=" << othernode0->getIndex()
+// 	      << " othernode1=" << othernode1->getIndex() << std::endl;
+// #endif // DEBUG
       vsbNodes[1]->setNeighbor(1, othernode0);
       vsbNodes[3]->setNeighbor(0, othernode1);
     }
@@ -1762,10 +1772,10 @@ public:
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
       if(!ordered)
 	swap(othernode0, othernode1);
-#ifdef DEBUG
-      oofcerr << "CheckerBoard::connect: othernode0=" << othernode0->getIndex()
-	      << " othernode1=" << othernode1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "CheckerBoard::connect: othernode0=" << othernode0->getIndex()
+// 	      << " othernode1=" << othernode1->getIndex() << std::endl;
+// #endif // DEBUG
       vsbNodes[2]->setNeighbor(2, othernode0);
       vsbNodes[0]->setNeighbor(1, othernode1);
     }
@@ -1779,10 +1789,10 @@ public:
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
       if(!ordered)
 	swap(othernode0, othernode1);
-#ifdef DEBUG
-      oofcerr << "CheckerBoard::connect: othernode0=" << othernode0->getIndex()
-	      << " othernode1=" << othernode1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "CheckerBoard::connect: othernode0=" << othernode0->getIndex()
+// 	      << " othernode1=" << othernode1->getIndex() << std::endl;
+// #endif // DEBUG
       vsbNodes[2]->setNeighbor(0, othernode0);
       vsbNodes[3]->setNeighbor(1, othernode1);
     }
@@ -1796,10 +1806,11 @@ public:
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
       if(!ordered)
 	swap(othernode0, othernode1);
-#ifdef DEBUG
-      oofcerr << "CheckerBoard::connect: othernode0=" << othernode0->getIndex()
-	      << " othernode1=" << othernode1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "CheckerBoard::connect: ordered=" << ordered
+// 	      << " othernode0=" << othernode0->getIndex()
+// 	      << " othernode1=" << othernode1->getIndex() << std::endl;
+// #endif // DEBUG
       vsbNodes[0]->setNeighbor(2, othernode0);
       vsbNodes[1]->setNeighbor(2, othernode1);
     }
@@ -1815,98 +1826,117 @@ public:
 				 VSBNode *&node0, VSBNode *&node1)
   {
     VoxelEdgeDirection dir = getReferenceDir(otherproto);
-#ifdef DEBUG
-    oofcerr << "CheckerBoard::connectDoubleBack:  this=" << *this << std::endl;
-    oofcerr << "CheckerBoard::connectDoubleBack: other=" << *otherproto
-	    << std::endl;
-    oofcerr << "CheckerBoard::connectDoubleBack: dir=" << dir << std::endl;
-    OOFcerrIndent indent(2);
-#endif // DEBUG
+// #ifdef DEBUG
+//     oofcerr << "CheckerBoard::connectDoubleBack:  this=" << *this << std::endl;
+//     oofcerr << "CheckerBoard::connectDoubleBack: other=" << *otherproto
+// 	    << std::endl;
+//     oofcerr << "CheckerBoard::connectDoubleBack: dir=" << dir << std::endl;
+//     oofcerr << "CheckerBoard::connectDoubleBack: othernode0=" << othernode0
+// 	    << " othernode1=" << othernode1 << std::endl;
+//     OOFcerrIndent indent(2);
+// #endif // DEBUG
     // See comments in CheckerBoard::connect.
     if(dir == posX) {
       bool ordered = voxelOrder(vox100, vox111);
+      node0 = vsbNodes[0];
+      node1 = vsbNodes[3];
       if(!ordered) {
 	swap(othernode0, othernode1);
 	swap(node0, node1);
       }
-#ifdef DEBUG
-      oofcerr << "CheckerBoard::connectDoubleBack: othernode0="
-	      << othernode0->getIndex()
-	      << " othernode1=" << othernode1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "CheckerBoard::connectDoubleBack: othernode0="
+// 	      << othernode0->getIndex()
+// 	      << " othernode1=" << othernode1->getIndex() << std::endl;
+// #endif // DEBUG
       vsbNodes[0]->setNeighbor(0, othernode0);
       vsbNodes[3]->setNeighbor(2, othernode1);
     }
     else if(dir == negX) {
       bool ordered = voxelOrder(vox001, vox010);
+      node0 = vsbNodes[2];
+      node1 = vsbNodes[1];
       if(!ordered) {
 	swap(othernode0, othernode1);
 	swap(node0, node1);
       }
-#ifdef DEBUG
-      oofcerr << "CheckerBoard::connectDoubleBack: othernode0="
-	      << othernode0->getIndex()
-	      << " othernode1=" << othernode1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "CheckerBoard::connectDoubleBack: othernode0="
+// 	      << othernode0->getIndex()
+// 	      << " othernode1=" << othernode1->getIndex() << std::endl;
+// #endif // DEBUG
       vsbNodes[2]->setNeighbor(1, othernode0);
       vsbNodes[1]->setNeighbor(0, othernode1);
     }
     else if(dir == posY) {
       bool ordered = voxelOrder(vox010, vox111);
+      node0 = vsbNodes[1];
+      node1 = vsbNodes[3];
       if(!ordered) {
 	swap(othernode0, othernode1);
 	swap(node0, node1);
       }
-#ifdef DEBUG
-      oofcerr << "CheckerBoard::connectDoubleBack: othernode0="
-	      << othernode0->getIndex()
-	      << " othernode1=" << othernode1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "CheckerBoard::connectDoubleBack: othernode0="
+// 	      << othernode0->getIndex()
+// 	      << " othernode1=" << othernode1->getIndex() << std::endl;
+// #endif // DEBUG
       vsbNodes[1]->setNeighbor(1, othernode0);
       vsbNodes[3]->setNeighbor(0, othernode1);
     }
     else if(dir == negY) {
       bool ordered = voxelOrder(vox001, vox100);
+      node0 = vsbNodes[2];
+      node1 = vsbNodes[0];
       if(!ordered) {
 	swap(othernode0, othernode1);
 	swap(node0, node1);
       }
-#ifdef DEBUG
-      oofcerr << "CheckerBoard::connectDoubleBack: othernode0="
-	      << othernode0->getIndex()
-	      << " othernode1=" << othernode1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "CheckerBoard::connectDoubleBack: othernode0="
+// 	      << othernode0->getIndex()
+// 	      << " othernode1=" << othernode1->getIndex() << std::endl;
+// #endif // DEBUG
       vsbNodes[2]->setNeighbor(2, othernode0);
       vsbNodes[0]->setNeighbor(1, othernode1);
     }
     else if(dir == posZ) {
       bool ordered = voxelOrder(vox001, vox111);
+      node0 = vsbNodes[2];
+      node1 = vsbNodes[3];
       if(!ordered) {
 	swap(othernode0, othernode1);
 	swap(node0, node1);
       }
-#ifdef DEBUG
-      oofcerr << "CheckerBoard::connectDoubleBack: othernode0="
-	      << othernode0->getIndex()
-	      << " othernode1=" << othernode1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "CheckerBoard::connectDoubleBack: othernode0="
+// 	      << othernode0->getIndex()
+// 	      << " othernode1=" << othernode1->getIndex() << std::endl;
+// #endif // DEBUG
       vsbNodes[2]->setNeighbor(0, othernode0);
       vsbNodes[3]->setNeighbor(1, othernode1);
     }
     else if(dir == negZ) {
       bool ordered = voxelOrder(vox100, vox010);
+      node0 = vsbNodes[0];
+      node1 = vsbNodes[1];
       if(!ordered) {
 	swap(othernode0, othernode1);
 	swap(node0, node1);
       }
-#ifdef DEBUG
-      oofcerr << "CheckerBoard::connectDoubleBack: othernode0="
-	      << othernode0->getIndex()
-	      << " othernode1=" << othernode1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "CheckerBoard::connectDoubleBack: othernode0="
+// 	      << othernode0->getIndex()
+// 	      << " othernode1=" << othernode1->getIndex() << std::endl;
+// #endif // DEBUG
       vsbNodes[0]->setNeighbor(2, othernode0);
       vsbNodes[1]->setNeighbor(2, othernode1);
     }
+// #ifdef DEBUG
+//     oofcerr << "CheckerBoard::connectDoubleBack: node0=" << node0
+// 	    << " node1=" << node1 << std::endl;
+//     oofcerr << "CheckerBoard::connectDoubleBack: done" << std::endl;
+// #endif // DEBUG
   }
 #ifdef DEBUG
   virtual void print(std::ostream &os) const {
@@ -2420,12 +2450,55 @@ void initializeProtoNodes() {
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// #ifdef DEBUG
+// static std::set<VSBNode*> allNodes;
+// #endif // DEBUG
+
+VSBNode::VSBNode(const Coord3D &p)
+    : trimmed(false), neighbors(3, nullptr), position(p)
+{
+// #ifdef DEBUG
+//   allNodes.insert(this);
+// #endif // DEBUG
+}
+
+VSBNode::VSBNode(const ICoord3D &p)
+  : trimmed(false), neighbors(3, nullptr), position(p.coord())
+{
+// #ifdef DEBUG
+//   allNodes.insert(this);
+// #endif // DEBUG
+}
+
+VSBNode::~VSBNode() {
+// #ifdef DEBUG
+//   allNodes.erase(this);
+// #endif // DEBUG
+}
+
 void VSBNode::setNeighbor(unsigned int i, VSBNode *nbr) {
   assert(neighbors[i] == nullptr);
   neighbors[i] = nbr;
+// #ifdef DEBUG
+//   if(allNodes.count(nbr) != 1) {
+//     oofcerr << "VSBNode::setNeighbor: bad neighbor! nbr=" << nbr << std::endl;
+//     oofcerr << "VSBNode::setNeighbor: this->index=" << index
+// 	    << " position=" << position << std::endl;
+//     throw ErrProgrammingError("Neighbor is not a node!", __FILE__, __LINE__);
+//   }
+// #endif // DEBUG
 }
 
 void VSBNode::replaceNeighbor(VSBNode *oldnode, VSBNode *newnode) {
+// #ifdef DEBUG
+//   if(allNodes.count(newnode) != 1) {
+//     oofcerr << "VSBNode::replaceNeighbor: bad neighbor! newnode="
+// 	    << newnode << std::endl;
+//     oofcerr << "VSBNode::replaceNeighbor: this->index=" << index
+// 	    << " position=" << position << std::endl;
+//     throw ErrProgrammingError("Neighbor is not a node!", __FILE__, __LINE__);
+//   }
+// #endif // DEBUG
   for(unsigned int i=0; i<3; i++) {
     if(neighbors[i] == oldnode) {
       neighbors[i] = newnode;
@@ -2468,6 +2541,10 @@ VSBGraph::~VSBGraph() {
 void VSBGraph::addNode(VSBNode *node) {
   node->index = vertices.size();
   vertices.push_back(node);
+// #ifdef DEBUG
+//   oofcerr << "VSBGraph::addNode: " << node->index << " " << node->position
+// 	  << std::endl;
+// #endif // DEBUG
 }
 
 // bool VSBGraph::verify() const {
@@ -2591,10 +2668,11 @@ void VSBGraph::dump(std::ostream &os) const {
     os << "Vertex " << vertex->index << " " << vertex->position << std::endl;
     os << "  ";
     for(VSBNode *nbr : vertex->neighbors) {
-      if(nbr)
-	os << nbr->index << " ";
-      else
-	os << "0x0" << " ";
+      os << nbr << " ";
+      // if(nbr)
+      // 	os << "(" << nbr << ", " << nbr->index << ")  ";
+      // else
+      // 	os << "(0x0)  ";
     }
     os << std::endl;
   }
@@ -2665,7 +2743,7 @@ ProtoVSBNode *VoxelSetBoundary::protoVSBNodeFactory(unsigned char signature,
   const ProtoVSBNode *prototype = protoNodeTable[signature];
   if(prototype == nullptr)
     return nullptr;
-  ProtoVSBNode *protoNode = protoNodeTable[signature]->clone();
+  ProtoVSBNode *protoNode = prototype->clone();
 #ifdef DEBUG
   protoNode->setSignature(signature);
 #endif // DEBUG
