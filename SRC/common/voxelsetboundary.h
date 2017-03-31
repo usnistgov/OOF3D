@@ -195,7 +195,6 @@ public:
 
 class VSBNode {
  private:
-  double distance;		// distance to clipping plane
   unsigned int index;		// set by VSBGraph::addNode
   bool trimmed;
   std::vector<VSBNode*> neighbors;
@@ -207,7 +206,8 @@ class VSBNode {
   VSBNode(const VSBNode&) = delete;
   VSBNode(const VSBNode&&) = delete;
   void setNeighbor(unsigned int i, VSBNode *nbr);
-  VSBNode *getNeighbor(unsigned int i) const { return neighbors[i]; }
+  VSBNode *getNeighbor(unsigned int i) { return neighbors[i]; }
+  const VSBNode *getNeighbor(unsigned int i) const { return neighbors[i]; }
   void replaceNeighbor(VSBNode*, VSBNode*);
   
   const VSBNode *nextCWNeighbor(const VSBNode*) const;
@@ -236,14 +236,19 @@ class VSBGraph {
   
   void addNode(VSBNode *node);
   const VSBNode *getNode(unsigned int i) const { return vertices[i]; }
+
+  // TODO: When clipping, pass distances in a separate array or map.
+  // That will make copyAndClip thread safe when other threads are
+  // clipping the same VSB for other elements.
+
   // VSBGraph *copyAndClip(const Plane*) const;
   // void clipInPlace(const Plane*);
 
   double volume() const;
   Coord3D center() const;
   
-  bool verify() const;
   bool checkEdges() const;
+  bool checkConnectivity(int nRegions) const;
   void dump(std::ostream &) const;
   void dumpLines(std::ostream &) const;
 };
@@ -293,6 +298,7 @@ public:
 
   // bool verify() const { return graph.verify(); }
   bool checkEdges() const;
+  bool checkConnectivity(int) const;
   void dump(std::ostream &os) const { graph.dump(os); }
   void dumpLines(std::ostream &os) const { graph.dumpLines(os); }
   };

@@ -75,7 +75,7 @@ class VSB_ConfigTest(unittest.TestCase):
         # The non-trivial combinations of voxels correspond to voxel
         # signatures between 1 and 255.  Signature 0 has no voxels in
         # it, and would be equivalent to the Trivial test, above.
-        #sigs = (105,)
+        #sigs = (25,)
         sigs = range(1, 256)
         for sig in sigs:
             OOF.PixelSelection.Clear(
@@ -104,6 +104,7 @@ class VSB_ConfigTest(unittest.TestCase):
                 print "selectedCat=", selectedCat, "unselectedCat=",\
                     unselectedCat
 
+                sigstr = sigstr.replace('|', '-')
                 ms.dumpVSB(selectedCat, "selected_"+sigstr+".dat")
                 ms.dumpVSB(unselectedCat, "unselected_"+sigstr+".dat")
                 ms.dumpVSBLines(selectedCat, "selected_"+sigstr+".lines")
@@ -113,8 +114,11 @@ class VSB_ConfigTest(unittest.TestCase):
                 unselectedVol = ms.volumeOfCategory(unselectedCat)
                 print "selectedVol=", selectedVol, \
                     "unselectedVol=", unselectedVol
-                sigstr = sigstr.replace('|', '-')
+                print "Checking connectivity for selected voxels, category",\
+                    selectedCat
                 self.assert_(ms.checkVSB(selectedCat))
+                print "Checking connectivity for unselected voxels, category",\
+                    unselectedCat
                 self.assert_(ms.checkVSB(unselectedCat))
                 self.assertAlmostEqual(selectedVol, nvox)
                 self.assertAlmostEqual(unselectedVol, 64-nvox);

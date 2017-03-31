@@ -556,7 +556,7 @@ public:
       VSBNode *node0 = ordered ? vsbNode0 : vsbNode1;
       VSBNode *node1 = ordered ? vsbNode1 : vsbNode0;
 // #ifdef DEBUG
-//       oofcerr << "TwoVoxelsByEdge::connect, calling connectDoubleBack,"
+//       oofcerr << "TwoVoxelsByEdge::connect: calling connectDoubleBack,"
 // 	<< " ordered=" << ordered << std::endl;
 // #endif // DEBUG
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
@@ -712,8 +712,9 @@ public:
   virtual ProtoVSBNode *clone() const { return new SixVoxelsByEdge(rotation); }
 
   virtual const VoxelEdgeList &connectDirs() const {
-    // The reference configuration is vox000 + vox110.  There are
-    // edges in the posX, negX, posY, negY, and negZ directions.
+    // The reference configuration all voxels *except* vox000 and
+    // vox110.  There are edges in the posX, negX, posY, negY, and
+    // negZ directions.
     static const VoxelEdgeList v({posX, negX, posY, negY, negZ});
     return v;
   }
@@ -721,25 +722,45 @@ public:
   virtual void connect(ProtoVSBNode *otherproto) {
     VoxelEdgeDirection dir = getReferenceDir(otherproto);
     checkDir(dir);
-    // See comments in TwoVoxelsByEdge.  This is identical, except
-    // that the order of the neighbors in the VSBNodes is reversed by
-    // using dir.axis instead of 1-dir.axis in the X and Y calls to
-    // setNeighbor.
-    if(dir == negX || dir == negY) {
+    // The edges on vox100 connect to vsbNode0 and the edges on vox010
+    // connect to vsbNode1.  Edges on vox100 are posX, negY, negZ.
+    // Edges on vox010 are negX, posY, negZ.
+    #ifdef DEBUG
+    oofcerr << "SixVoxelsByEdge::connect: position=" << position()
+	    << " dir=" << dir << std::endl;
+    oofcerr << "SixVoxelsByEdge::connect:  this=" << *this
+	    << " node0=" << vsbNode0->getIndex()
+	    << " node1=" << vsbNode1->getIndex()
+	    << std::endl;
+    oofcerr << "SixVoxelsByEdge::connect: other=" << *otherproto << std::endl;
+#endif // DEBUG
+    if(dir == posX || dir == negY) {
       VSBNode *othernode = otherproto->connectBack(this, vsbNode0);
       vsbNode0->setNeighbor(dir.axis, othernode); 
     }
-    else if(dir == posX || dir == posY) {
+    else if(dir == negX || dir == posY) {
       VSBNode *othernode = otherproto->connectBack(this, vsbNode1);
       vsbNode1->setNeighbor(dir.axis, othernode);
     }
     else {
       assert(dir == negZ);
-      bool ordered = voxelOrder(vox000, vox110);
+      bool ordered = voxelOrder(vox100, vox010);
       VSBNode *othernode0, *othernode1;
       VSBNode *node0 = ordered? vsbNode0 : vsbNode1;
       VSBNode *node1 = ordered? vsbNode1 : vsbNode0;
+#ifdef DEBUG
+      oofcerr << "SixVoxelsByEdge::connect: calling connectDoubleBack,"
+	<< " ordered=" << ordered << std::endl;
+#endif // DEBUG
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
+#ifdef DEBUG
+      oofcerr << "SixVoxelsByEdge::connect: connecting node0="
+	      << node0->getIndex() << " and othernode0="
+	      << othernode0->getIndex() << std::endl;
+      oofcerr << "SixVoxelsByEdge::connect: connecting node1="
+	      << node1->getIndex() << " and othernode1="
+	      << othernode1->getIndex() << std::endl;
+#endif // DEBUG
       node0->setNeighbor(2, othernode0);
       node1->setNeighbor(2, othernode1);
     }
@@ -750,11 +771,11 @@ public:
   {
     VoxelEdgeDirection dir = getReferenceDir(otherproto);
     checkDir(dir);
-    if(dir == negX || dir == negY) {
+    if(dir == posX || dir == negY) {
       vsbNode0->setNeighbor(dir.axis, othernode);
       return vsbNode0;
     }
-    else if(dir == posX || dir == posY) {
+    else if(dir == negX || dir == posY) {
       vsbNode1->setNeighbor(dir.axis, othernode);
       return vsbNode1;
     }
@@ -771,9 +792,21 @@ public:
     VoxelEdgeDirection dir = getReferenceDir(otherproto);
     assert(dir == negZ);
 #endif // DEBUG
-    bool ordered = voxelOrder(vox000, vox110);
+    bool ordered = voxelOrder(vox100, vox010);
     node0 = ordered ? vsbNode0 : vsbNode1;
     node1 = ordered ? vsbNode1 : vsbNode0;
+// #ifdef DEBUG
+//     oofcerr << "SixVoxelsByEdge::connectDoubleBack: position=" << position()
+// 	    << std::endl;
+//     oofcerr << "SixVoxelsByEdge::connectDoubleBack:  this=" << *this
+// 	    << std::endl;
+//     oofcerr << "SixVoxelsByEdge::connectDoubleBack: other=" << *otherproto
+// 	    << std::endl;
+//     oofcerr << "SixVoxelsByEdge::connectDoubleBack: node0=" << node0->getIndex()
+// 	    << " othernode0=" << othernode0->getIndex() << std::endl;
+//     oofcerr << "SixVoxelsByEdge::connectDoubleBack: node1=" << node1->getIndex()
+// 	    << " othernode1=" << othernode1->getIndex() << std::endl;
+// #endif // DEBUG
     node0->setNeighbor(2, othernode0);
     node1->setNeighbor(2, othernode1);
   }
@@ -803,9 +836,10 @@ public:
   virtual void connect(ProtoVSBNode *otherproto) {
     // SixVoxelsByCorner is easier than SixVoxelsByEdge, because there
     // aren't two connections going out in the same direction.  We can
-    // simply say that the edges on vox000 connect to vsbNode0, and
-    // the edges on vox111 connect to vsbNode1.  There's no
-    // consistency to maintain at the other end of a doubled edge.
+    // simply say that the edges on vox000 (which is a hole) connect
+    // to vsbNode0, and the edges on vox111 (also a hole) connect to
+    // vsbNode1.  There's no consistency to maintain at the other end
+    // of a doubled edge.
     VoxelEdgeDirection dir = getReferenceDir(otherproto);
     if(dir.dir == -1) {		// negX, negY, or negZ
       VSBNode *othernode = otherproto->connectBack(this, vsbNode0);
@@ -1039,13 +1073,21 @@ public:
 
 //---------
 
-// FiveTwoOne is the inverse of ThreeTwoOne
+// FiveTwoOne is the inverse of ThreeTwoOne.  The reference
+// configuration contains all voxels except vox000, vox111, and
+// vox110.  That means that vox100 and vox010 touch along an edge.
+// The case is treated completely differently from ThreeTwoOne,
+// because it's not possible to resolve the doubled edge in a unique
+// way.  So here we add an extra (third) node and avoid a doubled
+// edge.  It's not possible to resolve ThreeTwoOne in this way because
+// it would lead to an insufficiently connected graph.
 
-class FiveTwoOne : public DoubleNode {
+class FiveTwoOne : public TripleNode {
 public:
   FiveTwoOne(const VoxRot &rot)
-    : DoubleNode(rot)
-  {}
+    : TripleNode(rot)
+  {
+  }
   
   virtual ProtoVSBNode *clone() const { return new FiveTwoOne(rotation); }
 
@@ -1055,44 +1097,44 @@ public:
   }
 
   void makeVSBNodes(VoxelSetBoundary *vsb, const ICoord3D &here) {
-    vsbNode0 = new VSBNode(here);
-    vsbNode1 = new VSBNode(here);
-    vsb->addNode(vsbNode0);
-    // Don't add vsbNode1 to the graph! It's not a real node.
-    vsb->twoFoldNode(vsbNode1);
+    TripleNode::makeVSBNodes(vsb, here);
+    vsbNode0->setNeighbor(2, vsbNode2);
+    vsbNode1->setNeighbor(1, vsbNode2);
+    vsbNode2->setNeighbor(2, vsbNode0);
+    vsbNode2->setNeighbor(1, vsbNode1);
   }
 
   virtual void connect(ProtoVSBNode *otherproto) {
     VoxelEdgeDirection dir = getReferenceDir(otherproto);
     checkDir(dir);
-    // See comments in TwoVoxelsByEdge.  This is similar, but the
-    // edges on vox110 are different, and its VSBNode will only be
-    // connected to two edges, so we have to tell the VSB about it.
-    // We always make VSBNode1 be the 2-fold node, so the logic is a
-    // bit different from TwoVoxelsByEdge.
+    // vsbNode0 connects the negY, negZ edges of vox100 and vsbNode1
+    // connects the negX, negZ edges of vox010.  Both also connect to
+    // vsbNode2, which connects the posZ edge as well.
     
-    if(dir == negX || dir == negY) {
-      // Connecting to the edges on vox000
-      VSBNode *othernode = otherproto->connectBack(this, vsbNode0);
-      vsbNode0->setNeighbor(dir.axis, othernode);
-    }
-    else if(dir==posZ) {
-      // Connecting to the edges on vox110
+    if(dir == negX) {
       VSBNode *othernode = otherproto->connectBack(this, vsbNode1);
       vsbNode1->setNeighbor(0, othernode);
+    }
+    else if(dir == negY) {
+      VSBNode *othernode = otherproto->connectBack(this, vsbNode0);
+      vsbNode0->setNeighbor(0, othernode);
+    }
+    else if(dir==posZ) {
+      VSBNode *othernode = otherproto->connectBack(this, vsbNode2);
+      vsbNode2->setNeighbor(0, othernode);
     }
     else {
       // The double edge coming in on negZ.
       assert(dir == negZ);
-      bool ordered = voxelOrder(vox000, vox110);
+      bool ordered = voxelOrder(vox100, vox010);
       VSBNode *node0 = ordered ? vsbNode0 : vsbNode1;
       VSBNode *node1 = ordered ? vsbNode1 : vsbNode0;
       VSBNode *othernode0, *othernode1;
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
       if(!ordered)
 	swap(othernode0, othernode1);
-      vsbNode0->setNeighbor(2, othernode0);
-      vsbNode1->setNeighbor(1, othernode1);
+      vsbNode0->setNeighbor(1, othernode0);
+      vsbNode1->setNeighbor(2, othernode1);
     }
   }
 
@@ -1101,13 +1143,17 @@ public:
   {
     VoxelEdgeDirection dir = getReferenceDir(otherproto);
     checkDir(dir);
-    if(dir == negX || dir == negY) {
-      vsbNode0->setNeighbor(dir.axis, othernode);
+    if(dir == negX) {
+      vsbNode1->setNeighbor(0, othernode);
+      return vsbNode1;
+    }
+    if(dir == negY) {
+      vsbNode0->setNeighbor(0, othernode);
       return vsbNode0;
     }
     if(dir == posZ) {
-      vsbNode1->setNeighbor(0, othernode);
-      return vsbNode1;
+      vsbNode2->setNeighbor(0, othernode);
+      return vsbNode2;
     }
     throw ErrProgrammingError(
 		      "Unexpected direction in FiveTwoOne::connectBack!",
@@ -1122,18 +1168,18 @@ public:
     VoxelEdgeDirection dir = getReferenceDir(otherproto);
     assert(dir == negZ);
 #endif // DEBUG
-    bool ordered = voxelOrder(vox000, vox110);
+    bool ordered = voxelOrder(vox100, vox010);
     if(ordered) {
       node0 = vsbNode0;
       node1 = vsbNode1;
-      vsbNode0->setNeighbor(2, othernode0);
-      vsbNode1->setNeighbor(1, othernode1);
+      vsbNode0->setNeighbor(1, othernode0);
+      vsbNode1->setNeighbor(2, othernode1);
     }
     else {
       node0 = vsbNode1;
       node1 = vsbNode0;
-      vsbNode0->setNeighbor(2, othernode1);
-      vsbNode1->setNeighbor(1, othernode0);
+      vsbNode0->setNeighbor(1, othernode1);
+      vsbNode1->setNeighbor(2, othernode0);
     }
   }
 
@@ -1988,11 +2034,11 @@ public:
       VSBNode *othernode0, *othernode1;
       VSBNode *node0 = ordered ? vsbNode0 : vsbNode1;
       VSBNode *node1 = ordered ? vsbNode1 : vsbNode0;
-// #ifdef DEBUG
-//       oofcerr << "FourThreeOne::connect: dir=posX, ordered=" << ordered
-// 	      << " node0=" << node0->getIndex()
-// 	      << " node1=" << node1->getIndex() << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+      oofcerr << "FourThreeOne::connect: dir=posX, ordered=" << ordered
+	      << " node0=" << node0->getIndex()
+	      << " node1=" << node1->getIndex() << std::endl;
+#endif // DEBUG
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
       // Conveniently the posX and posY neighbor indexing is the same
       // for both nodes.
@@ -2005,11 +2051,11 @@ public:
       VSBNode *othernode0, *othernode1;
       VSBNode *node0 = ordered ? vsbNode0 : vsbNode1;
       VSBNode *node1 = ordered ? vsbNode1 : vsbNode0;
-// #ifdef DEBUG
-//       oofcerr << "FourThreeOne::connect: dir=posY, ordered=" << ordered
-// 	      << " node0=" << node0->getIndex()
-// 	      << " node1=" << node1->getIndex() << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+      oofcerr << "FourThreeOne::connect: dir=posY, ordered=" << ordered
+	      << " node0=" << node0->getIndex()
+	      << " node1=" << node1->getIndex() << std::endl;
+#endif // DEBUG
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
       node0->setNeighbor(2, othernode0);
       node1->setNeighbor(2, othernode1);
@@ -2037,22 +2083,22 @@ public:
 				 VSBNode *othernode0, VSBNode *othernode1,
 				 VSBNode *&node0, VSBNode *&node1)
   {
-// #ifdef DEBUG
-//     oofcerr << "FourThreeOne::connectDoubleBack: this=" << *this << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+    oofcerr << "FourThreeOne::connectDoubleBack: this=" << *this << std::endl;
+#endif // DEBUG
     VoxelEdgeDirection dir = getReferenceDir(otherproto);
     if(dir == posX) {
       bool ordered = voxelOrder(vox100, vox111);
       node0 = ordered ? vsbNode0 : vsbNode1;
       node1 = ordered ? vsbNode1 : vsbNode0;
-// #ifdef DEBUG
-//       oofcerr << "FourThreeOne::connectDoubleBack: dir=posX, ordered="
-// 	      << ordered
-// 	      << " othernode0=" << othernode0->getIndex()
-// 	      << " othernode1=" << othernode1->getIndex() 
-// 	      << " node0=" << node0->getIndex()
-// 	      << " node1=" << node1->getIndex() << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+      oofcerr << "FourThreeOne::connectDoubleBack: dir=posX, ordered="
+	      << ordered
+	      << " othernode0=" << othernode0->getIndex()
+	      << " othernode1=" << othernode1->getIndex() 
+	      << " node0=" << node0->getIndex()
+	      << " node1=" << node1->getIndex() << std::endl;
+#endif // DEBUG
       node0->setNeighbor(1, othernode0);
       node1->setNeighbor(1, othernode1);
     }
@@ -2060,14 +2106,14 @@ public:
       bool ordered = voxelOrder(vox010, vox111);
       node0 = ordered ? vsbNode0 : vsbNode1;
       node1 = ordered ? vsbNode1 : vsbNode0;
-// #ifdef DEBUG
-//       oofcerr << "FourThreeOne::connectDoubleBack: dir=posY, ordered="
-// 	      << ordered
-// 	      << " othernode0=" << othernode0->getIndex()
-// 	      << " othernode1=" << othernode1->getIndex() 
-// 	      << " node0=" << node0->getIndex()
-// 	      << " node1=" << node1->getIndex() << std::endl;
-// #endif // DEBUG
+#ifdef DEBUG
+      oofcerr << "FourThreeOne::connectDoubleBack: dir=posY, ordered="
+	      << ordered
+	      << " othernode0=" << othernode0->getIndex()
+	      << " othernode1=" << othernode1->getIndex() 
+	      << " node0=" << node0->getIndex()
+	      << " node1=" << node1->getIndex() << std::endl;
+#endif // DEBUG
       node0->setNeighbor(2, othernode0);
       node1->setNeighbor(2, othernode1);
     }
@@ -2547,14 +2593,6 @@ void VSBGraph::addNode(VSBNode *node) {
 // #endif // DEBUG
 }
 
-// bool VSBGraph::verify() const {
-//   bool ok = true;
-//   for(const VSBNode *vertex : vertices) {
-//     ok = ok && vertex->checkNeighborCount();
-//   }
-//   return ok;
-// }
-
 Coord3D VSBGraph::center() const {
   Coord ctr;
   for(VSBNode *vertex : vertices)
@@ -2630,49 +2668,174 @@ bool VSBGraph::checkEdges() const {
   bool result = true;
   for(const VSBNode *vertex : vertices) {
     for(unsigned int n=0; n<3; n++) {
-      VSBNode *nbr = vertex->getNeighbor(n);
+      const VSBNode *nbr = vertex->getNeighbor(n);
       if(nbr == nullptr) {
 	oofcerr << "VSBGraph::checkEdges: missing neighbor " << n
 		<< " for vertex " << vertex->index << " " << vertex->position
 		<< std::endl;
 	result = false;
       }
-      else {
-	bool ok = false;
-	for(unsigned int i=0; i<3; i++) {
-	  if(nbr->getNeighbor(i) == vertex) {
-	    ok = true;
-	    break;
-	  }
+    }
+    for(unsigned int n=0; n<3; n++) {
+      const VSBNode *nbr = vertex->getNeighbor(n);
+      if(nbr == vertex->getNeighbor((n+1)%3)) {
+	result = false;
+	oofcerr << "VSBGraph::checkEdges: node "
+		<< vertex->index << " " << vertex->position
+		<< " has non-unique neighbors " << nbr->index << " "
+		<< nbr->position << std::endl;
+      }
+      bool ok = false;
+      for(unsigned int i=0; i<3; i++) {
+	if(nbr->getNeighbor(i) == vertex) {
+	  ok = true;
+	  break;
 	}
-	if(!ok) {
-	  result = false;
-	  oofcerr << "VSBGraph::checkEdges: node "
-		  << nbr->index << " " << nbr->position
-		  << " is a neighbor of node " << vertex->index
-		  << " " << vertex->position << " but not vice versa."
-		  << std::endl;
-	}
+      }
+      if(!ok) {
+	result = false;
+	oofcerr << "VSBGraph::checkEdges: node "
+		<< nbr->index << " " << nbr->position
+		<< " is a neighbor of node " << vertex->index
+		<< " " << vertex->position << " but not vice versa."
+		<< std::endl;
       }
     }
   }
-  oofcerr << "VSBGraph::checkEdges: ok!" << std::endl;
+  // oofcerr << "VSBGraph::checkEdges: ok!" << std::endl;
   return result;
+}
+
+// checkConnectivity divides the graph into disjoint regions and
+// checks that each region is three-vertex connected.  A "region" is a
+// set of nodes that are connected to each other (maybe indirectly)
+// and not connected to any nodes outside the region.  A three-fold
+// connected region is one that can't be divided into two regions by
+// removing two nodes.  This test is at least o(N^2) and is based on
+// the C routine r3d_is_good() in r3d.c
+
+// Return false if three-node connectivity is not present.  If
+// nRegions is positive and not equal to the number of regions, also
+// return false.
+
+bool VSBGraph::checkConnectivity(int nRegions) const {
+  // First find the regions.  region[i] is -1 if the node hasn't yet
+  // been assigned to a region.
+  int nreg = 0;
+  bool ok = true;
+  typedef std::set<const VSBNode*> Region;
+  std::set<Region*> regions;
+  std::vector<Region*> region(vertices.size(), nullptr);
+  for(const VSBNode *start : vertices) {
+    if(region[start->index] == nullptr) {
+      // This vertex isn't in a region.  Start a new region.
+      Region *reg = new Region();
+      regions.insert(reg);
+      std::vector<const VSBNode*> stack;
+      stack.reserve(vertices.size());
+      stack.push_back(start);
+      while(!stack.empty()) {
+	const VSBNode *v = stack.back();
+	stack.pop_back();
+	if(region[v->index] == nullptr) {
+	  reg->insert(v);
+	  region[v->index] = reg;
+	  stack.push_back(v->getNeighbor(0));
+	  stack.push_back(v->getNeighbor(1));
+	  stack.push_back(v->getNeighbor(2));
+	}
+      }
+      if(reg->size() < 3) {
+	oofcerr << "VSBGraph::checkConnectivity: region is too small! size="
+		<< reg->size() << std::endl;
+	return false;
+      }
+    } // end if vertex "start" isn't in a region.
+  }   // end loop over vertices "start"
+  if(nRegions > 0 && nRegions != regions.size()) {
+    oofcerr << "VSBGraph::checkConnectivity: expected " << nRegions
+	    << " regions but found " << nreg << "!" << std::endl;
+    ok = false;
+  }
+  // Loop over pairs of vertices in the same region, and check that
+  // removing them doesn't divide the region into two.
+  for(Region *reg : regions) {
+    bool okreg = true;		// region is ok
+    for(Region::iterator ia=reg->begin(); ia!=reg->end() && okreg; ++ia) {
+      const VSBNode *nodeA = *ia;
+      Region::iterator ib=ia;
+      ib++;
+      for(; ib!=reg->end() && okreg; ++ib) {
+	const VSBNode *nodeB = *ib;
+	// Find a point nodeC that's not nodeA or nodeB, and check
+	// that all nodes in the region can be reached from it. We
+	// know that the region size is greater than 2, so nodeC must
+	// exist.
+	Region::iterator ic = reg->begin(); // pointer to nodeC
+	while(*ic == nodeA || *ic == nodeB)
+	  ic++;
+	// Put all nodes reachable from nodeC into the visited region.
+	// Put nodeA and nodeB in the region too, so that they won't
+	// be used.
+	Region visited;
+	visited.insert(nodeA);
+	visited.insert(nodeB);
+	// Use "stack" to loop over all neighbors and neighbors of
+	// neighbors, etc.
+	std::vector<const VSBNode*> stack;
+	stack.reserve(vertices.size());
+	stack.push_back(*ic);
+	while(!stack.empty()) {
+	  const VSBNode *v = stack.back();
+	  stack.pop_back();
+	  // Try to put the node in "visited".
+	  auto insrt = visited.insert(v);
+	  if(insrt.second) { // v was not already in "visited"
+	    // Put v's neighbors on the stack, to be examined later.
+	    stack.push_back(v->getNeighbor(0));
+	    stack.push_back(v->getNeighbor(1));
+	    stack.push_back(v->getNeighbor(2));
+	  }
+	} // end while stack is not empty
+	if(visited.size() != reg->size()) {
+	  oofcerr << "VSBGraph::checkConnectivity:"
+		  << " region is insufficiently connected!" << std::endl;
+	  for(const VSBNode *node : *reg) {
+	    oofcerr << "VSBGraph::checkConnectivity: index=" << node->index
+		    << " position=" << node->position
+		    << " nbrs=[" << node->getNeighbor(0)->index << ", "
+		    << node->getNeighbor(1)->index << ", "
+		    << node->getNeighbor(2)->index << "]";
+	    if(node == nodeA)
+	      oofcerr << " A";
+	    else if(node == nodeB)
+	      oofcerr << " B";
+	    oofcerr << std::endl;
+	  }
+	  okreg = false;	// go to next region
+	  ok = false;
+	}
+      }	// end loop over Region, nodeB
+    } // end loop over Region, nodeA
+  }
+  
+  for(Region *reg : regions)
+    delete reg;
+  return ok;
 }
 
 // Write out the graph structure
 void VSBGraph::dump(std::ostream &os) const {
-  for(const VSBNode *vertex: vertices)
-    os << "Vertex " << vertex << " " << vertex->index << std::endl;
+  // for(const VSBNode *vertex: vertices)
+  //   os << "Vertex " << vertex << " " << vertex->index << std::endl;
   for(const VSBNode *vertex : vertices) {
-    os << "Vertex " << vertex->index << " " << vertex->position << std::endl;
-    os << "  ";
+    os << "Vertex " << vertex->index << " " << vertex->position;
+    os << "   nbrs=";
     for(VSBNode *nbr : vertex->neighbors) {
-      os << nbr << " ";
-      // if(nbr)
-      // 	os << "(" << nbr << ", " << nbr->index << ")  ";
-      // else
-      // 	os << "(0x0)  ";
+      if(nbr)
+      	os << nbr->index << " ";
+      else
+      	os << "(0x0)  ";
     }
     os << std::endl;
   }
@@ -2780,4 +2943,8 @@ double VoxelSetBoundary::volume() const {
 
 bool VoxelSetBoundary::checkEdges() const {
   return graph.checkEdges();
+}
+
+bool VoxelSetBoundary::checkConnectivity(int nRegions) const {
+  return graph.checkConnectivity(nRegions);
 }
