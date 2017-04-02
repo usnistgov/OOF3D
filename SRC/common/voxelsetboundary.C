@@ -1343,12 +1343,14 @@ public:
 
 //-----------
 
-// FiveVoxByEdges is the inverse of ThreeVoxByEdges
+// FiveVoxByEdges is the inverse of ThreeVoxByEdges, but has to be
+// treated more like Pyramid with an extra voxel.  The reference
+// configuration is all voxels except vox110, vox011, and vox101.
 
-class FiveVoxByEdges : public TripleNode {
+class FiveVoxByEdges : public MultiNode {
 public:
   FiveVoxByEdges(const VoxRot &rot)
-    : TripleNode(rot)
+    : MultiNode(7, rot)
   {}
 
   virtual ProtoVSBNode *clone() const { return new FiveVoxByEdges(rotation); }
@@ -1357,69 +1359,72 @@ public:
     return allDirs;
   }
 
+  virtual void makeVSBNodes(VoxelSetBoundary *vsb, const ICoord3D &here) {
+    MultiNode::makeVSBNodes(vsb, here);
+    for(unsigned int i=0; i<6; i++) {
+      // Same as Pyramid::makeVSBNodes()
+      vsbNodes[i]->setNeighbor(2, vsbNodes[(i+5)%6]);
+      vsbNodes[i]->setNeighbor(1, vsbNodes[(i+1)%6]);
+    }
+  }
+
   virtual void connect(ProtoVSBNode *otherproto) {
     VoxelEdgeDirection dir = getReferenceDir(otherproto);
     checkDir(dir);
-    // The reference configuration is ~(vox110|vox011|vox101).
-    // There are doubled edges in the +x, +y, and +z directions and
-    // single edges in the -x, -y, and -z directions.  We use vsbNode0
-    // for the edges of vox110, vsbNode1 for 101, and vsbNode2 for
-    // 011.
+    // The reference configuration is ~(vox110|vox011|vox101).  There
+    // are doubled edges in the +x, +y, and +z directions and single
+    // edges in the -x, -y, and -z directions.  Nodes vsbNodes[0]
+    // through vsbNodes[5] form an infinitesimal hexagon at the
+    // junction of voxels 100, 001, and 010.  vsbNodes[6] links the
+    // edges of vox111, which are coincident the the +x, +y, and +z
+    // edges of the other voxels.
     if(dir == negX) {
-      VSBNode *othernode = otherproto->connectBack(this, vsbNode2);
-      vsbNode2->setNeighbor(0, othernode);
+      VSBNode *othernode = otherproto->connectBack(this, vsbNodes[3]);
+      vsbNodes[3]->setNeighbor(0, othernode);
     }
     else if(dir == negY) {
-      VSBNode *othernode = otherproto->connectBack(this, vsbNode1);
-      vsbNode1->setNeighbor(0, othernode);
+      VSBNode *othernode = otherproto->connectBack(this, vsbNodes[1]);
+      vsbNodes[1]->setNeighbor(0, othernode);
     }
     else if(dir == negZ) {
-      VSBNode *othernode = otherproto->connectBack(this, vsbNode0);
-      vsbNode0->setNeighbor(0, othernode);
+      VSBNode *othernode = otherproto->connectBack(this, vsbNodes[5]);
+      vsbNodes[5]->setNeighbor(0, othernode);
     }
     else if(dir == posX) {
-      // Two edges between vox110 (VSBNode0) and vox101 (VSBNode1)
-      bool ordered = voxelOrder(vox110, vox101);
-      VSBNode *node0 = ordered ? vsbNode0 : vsbNode1;
-      VSBNode *node1 = ordered ? vsbNode1 : vsbNode0;
+      // Two edges between vox100 and vox111
+      bool ordered = voxelOrder(vox100, vox111);
+      VSBNode *node0 = ordered ? vsbNodes[0] : vsbNodes[6];
+      VSBNode *node1 = ordered ? vsbNodes[6] : vsbNodes[0];
       VSBNode *othernode0, *othernode1;
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
       if(!ordered)
 	swap(othernode0, othernode1);
-      // The edges on vsbNode0 (vox110) are (negZ, posX, posY),
-      // CW.  This is posX, so it goes in slot 1.
-      vsbNode0->setNeighbor(1, othernode0);
-      // The edges on vsbNode1 (vox101) are (negY, posX, posZ),
-      // CW.  This is posX, so it goes in slot 2.
-      vsbNode1->setNeighbor(2, othernode1);
+      vsbNodes[0]->setNeighbor(0, othernode0);
+      vsbNodes[6]->setNeighbor(0, othernode1);
     }
     else if(dir == posY) {
-      // Two edges between vox110 (VSBNode0) and vox011 (VSBNode2)
-      bool ordered = voxelOrder(vox110, vox011);
-      VSBNode *node0 = ordered ? vsbNode0 : vsbNode2;
-      VSBNode *node1 = ordered ? vsbNode2 : vsbNode0;
+      // Two edges between vox010 and vox111
+      bool ordered = voxelOrder(vox010, vox111);
+      VSBNode *node0 = ordered ? vsbNodes[4] : vsbNodes[6];
+      VSBNode *node1 = ordered ? vsbNodes[6] : vsbNodes[4];
       VSBNode *othernode0, *othernode1;
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
       if(!ordered)
 	swap(othernode0, othernode1);
-      // Edges are (negZ, posX, posY).
-      vsbNode0->setNeighbor(2, othernode0);
-      // Edges are (negX, posY, posZ)
-      vsbNode2->setNeighbor(1, othernode1);
+      vsbNodes[4]->setNeighbor(0, othernode0);
+      vsbNodes[6]->setNeighbor(1, othernode1);
     }
     else if(dir == posZ) {
-      // Two edges between vox101 (VSBNode1) and vox011 (VSBNode2)
-      bool ordered = voxelOrder(vox101, vox011);
-      VSBNode *node0 = ordered ? vsbNode1 : vsbNode2;
-      VSBNode *node1 = ordered ? vsbNode2 : vsbNode1;
+      // Two edges between vox001 and vox111
+      bool ordered = voxelOrder(vox001, vox111);
+      VSBNode *node0 = ordered ? vsbNodes[2] : vsbNodes[6];
+      VSBNode *node1 = ordered ? vsbNodes[6] : vsbNodes[2];
       VSBNode *othernode0, *othernode1;
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
       if(!ordered)
 	swap(othernode0, othernode1);
-      // Edges on VSBNode1 are (negY, posZ, posX)
-      vsbNode1->setNeighbor(1, othernode0);
-      // Edges on VSBNode2 are (negX, posY, posZ)
-      vsbNode2->setNeighbor(2, othernode1);
+      vsbNodes[2]->setNeighbor(0, othernode0);
+      vsbNodes[6]->setNeighbor(2, othernode1);
     }
   } // end connect()
 
@@ -1429,16 +1434,16 @@ public:
     VoxelEdgeDirection dir = getReferenceDir(otherproto);
     checkDir(dir);
     if(dir == negX) {
-      vsbNode2->setNeighbor(0, othernode);
-      return vsbNode2;
+      vsbNodes[3]->setNeighbor(0, othernode);
+      return vsbNodes[3];
     }
     if(dir == negY) {
-      vsbNode1->setNeighbor(0, othernode);
-      return vsbNode1;
+      vsbNodes[1]->setNeighbor(0, othernode);
+      return vsbNodes[1];
     }
     if(dir == negZ) {
-      vsbNode0->setNeighbor(0, othernode);
-      return vsbNode0;
+      vsbNodes[5]->setNeighbor(0, othernode);
+      return vsbNodes[5];
     }
     throw ErrProgrammingError(
 		      "Unexpected direction in FiveVoxByEdges::connectBack!",
@@ -1451,37 +1456,37 @@ public:
   {
     VoxelEdgeDirection dir = getReferenceDir(otherproto);
     if(dir == posX) {
-      bool ordered = voxelOrder(vox110, vox101);
-      node0 = vsbNode0;
-      node1 = vsbNode1;
+      bool ordered = voxelOrder(vox100, vox111);
+      node0 = vsbNodes[0];
+      node1 = vsbNodes[6];
       if(!ordered) {
 	swap(othernode0, othernode1);
 	swap(node0, node1);
       }
-      vsbNode0->setNeighbor(1, othernode0);
-      vsbNode1->setNeighbor(2, othernode1);
+      vsbNodes[0]->setNeighbor(0, othernode0);
+      vsbNodes[6]->setNeighbor(0, othernode1);
     }
     else if(dir == posY) {
-      bool ordered = voxelOrder(vox110, vox011);
-      node0 = vsbNode0;
-      node1 = vsbNode2;
+      bool ordered = voxelOrder(vox010, vox111);
+      node0 = vsbNodes[4];
+      node1 = vsbNodes[6];
       if(!ordered) {
 	swap(othernode0, othernode1);
 	swap(node0, node1);
       }
-      vsbNode0->setNeighbor(2, othernode0);
-      vsbNode2->setNeighbor(1, othernode1);
+      vsbNodes[4]->setNeighbor(0, othernode0);
+      vsbNodes[6]->setNeighbor(1, othernode1);
     }
     else if(dir == posZ) {
-      bool ordered = voxelOrder(vox101, vox011);
-      node0 = vsbNode1;
-      node1 = vsbNode2;
+      bool ordered = voxelOrder(vox001, vox111);
+      node0 = vsbNodes[2];
+      node1 = vsbNodes[6];
       if(!ordered) {
 	swap(othernode0, othernode1);
 	swap(node0, node1);
       }
-      vsbNode1->setNeighbor(1, othernode0);
-      vsbNode2->setNeighbor(2, othernode1);
+      vsbNodes[2]->setNeighbor(0, othernode0);
+      vsbNodes[6]->setNeighbor(2, othernode1);
     }
   }
 
