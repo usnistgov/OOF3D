@@ -142,6 +142,7 @@ public:
   void dumpVSB(unsigned int, char*);
   void dumpVSBLines(unsigned int, char*);
   bool checkVSB(unsigned int);
+  double clipVSBVol(unsigned int, COrientedPlane);
   //ICoord getRepresentativePixel(int category);
 //   bool transitionPointWithPoints(Coord *Point, Coord *Point,
 // 				 Coord *cskel_OutPoint);

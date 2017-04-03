@@ -25,21 +25,6 @@ typedef class CPolygon<double, Coord> CPolygonCoord;
 
 class CPolygonCoord {};
 
-#ifndef DIM_3
-class CRectangle : public CPolygonCoord {
-public:
-  CRectangle(const Coord&, const Coord&);
-  double xmin();
-  double xmax();
-  double ymin();
-  double ymax();
-  double height();
-  double width();
-  void expand(double factor);
-};
-
-#else // DIM==3
-
 class CRectangularPrism : public CPolygonCoord {
 public:
   CRectangularPrism(const Coord&, const Coord&);
@@ -55,7 +40,11 @@ public:
   void expand(double factor);
 };
 
-#endif	// DIM==3
+class COrientedPlane {
+public:
+  COrientedPlane(const Coord, double);
+  COrientedPlane reversed();
+};
 
 // class CQuadrilateral : public CPolygonCoord {
 // public:

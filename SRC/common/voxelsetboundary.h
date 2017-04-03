@@ -25,6 +25,7 @@ class VSBNode;
 #include "common/coord.h"
 class CMicrostructure;
 class ICRectangularPrism;
+class COrientedPlane;
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -210,6 +211,7 @@ class VSBNode {
   const VSBNode *getNeighbor(unsigned int i) const { return neighbors[i]; }
   void replaceNeighbor(VSBNode*, VSBNode*);
   
+  VSBNode *nextCWNeighbor(const VSBNode*);
   const VSBNode *nextCWNeighbor(const VSBNode*) const;
   unsigned int neighborIndex(const VSBNode*) const;
   unsigned int getIndex() const { return index; }
@@ -218,6 +220,8 @@ class VSBNode {
   friend class VSBGraph;
 };
 
+std::ostream &operator<<(std::ostream&, const VSBNode&);
+
 
 class VSBGraph {
  private:
@@ -225,10 +229,7 @@ class VSBGraph {
  public:
   VSBGraph() {}
   ~VSBGraph();
-  // Copying a graph is difficult because the nodes' neighbor pointers
-  // would all need to be rebuilt.  We shouldn't ever need to a copy a
-  // graph, though.  Just forbid it.
-  VSBGraph(const VSBGraph&) = delete;
+  VSBGraph(const VSBGraph&);
   // TODO: Do we need a move constructor?
   VSBGraph(const VSBGraph&&) = delete;
 
@@ -237,12 +238,8 @@ class VSBGraph {
   void addNode(VSBNode *node);
   const VSBNode *getNode(unsigned int i) const { return vertices[i]; }
 
-  // TODO: When clipping, pass distances in a separate array or map.
-  // That will make copyAndClip thread safe when other threads are
-  // clipping the same VSB for other elements.
-
-  // VSBGraph *copyAndClip(const Plane*) const;
-  // void clipInPlace(const Plane*);
+  VSBGraph *copyAndClip(const COrientedPlane&) const;
+  void clipInPlace(const COrientedPlane&);
 
   double volume() const;
   Coord3D center() const;
@@ -293,6 +290,8 @@ public:
 
   unsigned int size() const { return graph.size(); }
   double volume() const;
+
+  double clippedVolume(std::vector<COrientedPlane>&) const;
 
   VSBEdgeIterator iterator() const { return VSBEdgeIterator(&graph); }
 

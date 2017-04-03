@@ -535,10 +535,10 @@ void CMicrostructure::categorize() const {
   }
 
   for(unsigned int cat=0; cat<ncategories; cat++) {
-#ifdef DEBUG
-    oofcerr << "CMicrostructure::categorize: ------ cat=" << cat << " ------"
-	    << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     oofcerr << "CMicrostructure::categorize: ------ cat=" << cat << " ------"
+// 	    << std::endl;
+// #endif // DEBUG
     // A ProtoVSBNode is the precursor to the actual VSBNodes.
     // There's a ProtoVSBNode at each corner of each voxel, but
     // neighboring voxels share ProtoVSBNodes.  The array of
@@ -602,15 +602,15 @@ void CMicrostructure::categorize() const {
 #ifdef DEBUG
 		found = true;
 #endif // DEBUG
-#ifdef DEBUG
-		oofcerr << "CMicrostructure::categorize: connecting "
-			<< here << " to " << there << std::endl;
-		OOFcerrIndent indent(2);
-		oofcerr << "CMicrostructure::categorize:  here="
-			<< *protoNodes[here] << std::endl;
-		oofcerr << "CMicrostructure::categorize: there="
-			<< *protoNodes[there] << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+// 		oofcerr << "CMicrostructure::categorize: connecting "
+// 			<< here << " to " << there << std::endl;
+// 		OOFcerrIndent indent(2);
+// 		oofcerr << "CMicrostructure::categorize:  here="
+// 			<< *protoNodes[here] << std::endl;
+// 		oofcerr << "CMicrostructure::categorize: there="
+// 			<< *protoNodes[there] << std::endl;
+// #endif // DEBUG
 		protoNodes[here]->connect(protoNodes[there]);	
 // #ifdef DEBUG
 // 		oofcerr << "CMicrostructure::categorize: connected "
@@ -672,11 +672,21 @@ void CMicrostructure::categorize() const {
 } // end CMicrostructure::categorize
 
 bool CMicrostructure::checkVSB(unsigned int cat) const {
+  categorizeIfNecessary();
   assert(cat < categoryBdys.size());
   bool ok = categoryBdys[cat]->checkEdges();
   if(ok)
     ok = categoryBdys[cat]->checkConnectivity(-1);
   return ok;
+}
+
+double CMicrostructure::clipVSBVol(unsigned int cat, const COrientedPlane &pl)
+  const
+{
+  categorizeIfNecessary();
+  assert(cat < categoryBdys.size());
+  std::vector<COrientedPlane> planes(1, pl);
+  return categoryBdys[cat]->clippedVolume(planes);
 }
 
 void CMicrostructure::categorizeIfNecessary() const {

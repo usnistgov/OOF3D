@@ -10,6 +10,7 @@
  */
 
 #include <oofconfig.h>
+#include "common/coord.h"
 #include "common/geometry.h"
 
 void CRectangle::expand(double howmuch) {
@@ -76,3 +77,15 @@ double triangleArea(const Coord &p1, const Coord &p2, const Coord &p3) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+COrientedPlane COrientedPlane::reversed() const {
+  return COrientedPlane(-normal, -offset);
+}
+
+double COrientedPlane::distance(const Coord3D &x) const {
+  return dot(x, normal) - offset;
+}
+
+std::ostream &operator<<(std::ostream &os, const COrientedPlane &plane) {
+  return os << "COrientedPlane(" << plane.normal << ", " << plane.offset
+	    << ")";
+}

@@ -396,6 +396,24 @@ std::ostream& operator<<(std::ostream&, const ICRectangularPrism&);
 
 double triangleArea(const Coord&, const Coord&, const Coord&);
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+class COrientedPlane {
+public:
+  const Coord3D normal; // unit normal
+  const double offset;		    // distance from origin to plane
+				    // in normal direction
+  COrientedPlane(const Coord3D &norm, double d)
+    : normal(norm), offset(d)
+  {}
+  // Distance from arg to the plane. It's positive if the point is in
+  // the +normal direction.
+  double distance(const Coord3D&) const;
+  COrientedPlane reversed() const;
+};
+
+std::ostream &operator<<(std::ostream&, const COrientedPlane&);
+
 #undef min_
 #undef max_
 

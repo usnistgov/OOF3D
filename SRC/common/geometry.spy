@@ -10,8 +10,8 @@
 
 from ooflib.SWIG.common import config
 
-CRectanglePtr.__repr__ = lambda self:"CRectangle(Coord(%g, %g), Coord(%g, %g))"\
-                         % (self.xmin(), self.ymin(), self.xmax(), self.ymax())
+# CRectanglePtr.__repr__ = lambda self:"CRectangle(Coord(%g, %g), Coord(%g, %g))"\
+#                          % (self.xmin(), self.ymin(), self.xmax(), self.ymax())
 
 ## if config.dimension() == 3:
 ##     CRectangularPrismPtr.__repr__ = lambda self:"CRectangularPrism(Coord(%g, %g, %g), Coord(%g, %g, %g))"\

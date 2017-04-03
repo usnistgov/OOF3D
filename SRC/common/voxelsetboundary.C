@@ -725,15 +725,15 @@ public:
     // The edges on vox100 connect to vsbNode0 and the edges on vox010
     // connect to vsbNode1.  Edges on vox100 are posX, negY, negZ.
     // Edges on vox010 are negX, posY, negZ.
-    #ifdef DEBUG
-    oofcerr << "SixVoxelsByEdge::connect: position=" << position()
-	    << " dir=" << dir << std::endl;
-    oofcerr << "SixVoxelsByEdge::connect:  this=" << *this
-	    << " node0=" << vsbNode0->getIndex()
-	    << " node1=" << vsbNode1->getIndex()
-	    << std::endl;
-    oofcerr << "SixVoxelsByEdge::connect: other=" << *otherproto << std::endl;
-#endif // DEBUG
+//     #ifdef DEBUG
+//     oofcerr << "SixVoxelsByEdge::connect: position=" << position()
+// 	    << " dir=" << dir << std::endl;
+//     oofcerr << "SixVoxelsByEdge::connect:  this=" << *this
+// 	    << " node0=" << vsbNode0->getIndex()
+// 	    << " node1=" << vsbNode1->getIndex()
+// 	    << std::endl;
+//     oofcerr << "SixVoxelsByEdge::connect: other=" << *otherproto << std::endl;
+// #endif // DEBUG
     if(dir == posX || dir == negY) {
       VSBNode *othernode = otherproto->connectBack(this, vsbNode0);
       vsbNode0->setNeighbor(dir.axis, othernode); 
@@ -748,19 +748,19 @@ public:
       VSBNode *othernode0, *othernode1;
       VSBNode *node0 = ordered? vsbNode0 : vsbNode1;
       VSBNode *node1 = ordered? vsbNode1 : vsbNode0;
-#ifdef DEBUG
-      oofcerr << "SixVoxelsByEdge::connect: calling connectDoubleBack,"
-	<< " ordered=" << ordered << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "SixVoxelsByEdge::connect: calling connectDoubleBack,"
+// 	<< " ordered=" << ordered << std::endl;
+// #endif // DEBUG
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-#ifdef DEBUG
-      oofcerr << "SixVoxelsByEdge::connect: connecting node0="
-	      << node0->getIndex() << " and othernode0="
-	      << othernode0->getIndex() << std::endl;
-      oofcerr << "SixVoxelsByEdge::connect: connecting node1="
-	      << node1->getIndex() << " and othernode1="
-	      << othernode1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "SixVoxelsByEdge::connect: connecting node0="
+// 	      << node0->getIndex() << " and othernode0="
+// 	      << othernode0->getIndex() << std::endl;
+//       oofcerr << "SixVoxelsByEdge::connect: connecting node1="
+// 	      << node1->getIndex() << " and othernode1="
+// 	      << othernode1->getIndex() << std::endl;
+// #endif // DEBUG
       node0->setNeighbor(2, othernode0);
       node1->setNeighbor(2, othernode1);
     }
@@ -2039,11 +2039,11 @@ public:
       VSBNode *othernode0, *othernode1;
       VSBNode *node0 = ordered ? vsbNode0 : vsbNode1;
       VSBNode *node1 = ordered ? vsbNode1 : vsbNode0;
-#ifdef DEBUG
-      oofcerr << "FourThreeOne::connect: dir=posX, ordered=" << ordered
-	      << " node0=" << node0->getIndex()
-	      << " node1=" << node1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "FourThreeOne::connect: dir=posX, ordered=" << ordered
+// 	      << " node0=" << node0->getIndex()
+// 	      << " node1=" << node1->getIndex() << std::endl;
+// #endif // DEBUG
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
       // Conveniently the posX and posY neighbor indexing is the same
       // for both nodes.
@@ -2056,11 +2056,11 @@ public:
       VSBNode *othernode0, *othernode1;
       VSBNode *node0 = ordered ? vsbNode0 : vsbNode1;
       VSBNode *node1 = ordered ? vsbNode1 : vsbNode0;
-#ifdef DEBUG
-      oofcerr << "FourThreeOne::connect: dir=posY, ordered=" << ordered
-	      << " node0=" << node0->getIndex()
-	      << " node1=" << node1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "FourThreeOne::connect: dir=posY, ordered=" << ordered
+// 	      << " node0=" << node0->getIndex()
+// 	      << " node1=" << node1->getIndex() << std::endl;
+// #endif // DEBUG
       otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
       node0->setNeighbor(2, othernode0);
       node1->setNeighbor(2, othernode1);
@@ -2088,22 +2088,22 @@ public:
 				 VSBNode *othernode0, VSBNode *othernode1,
 				 VSBNode *&node0, VSBNode *&node1)
   {
-#ifdef DEBUG
-    oofcerr << "FourThreeOne::connectDoubleBack: this=" << *this << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     oofcerr << "FourThreeOne::connectDoubleBack: this=" << *this << std::endl;
+// #endif // DEBUG
     VoxelEdgeDirection dir = getReferenceDir(otherproto);
     if(dir == posX) {
       bool ordered = voxelOrder(vox100, vox111);
       node0 = ordered ? vsbNode0 : vsbNode1;
       node1 = ordered ? vsbNode1 : vsbNode0;
-#ifdef DEBUG
-      oofcerr << "FourThreeOne::connectDoubleBack: dir=posX, ordered="
-	      << ordered
-	      << " othernode0=" << othernode0->getIndex()
-	      << " othernode1=" << othernode1->getIndex() 
-	      << " node0=" << node0->getIndex()
-	      << " node1=" << node1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "FourThreeOne::connectDoubleBack: dir=posX, ordered="
+// 	      << ordered
+// 	      << " othernode0=" << othernode0->getIndex()
+// 	      << " othernode1=" << othernode1->getIndex() 
+// 	      << " node0=" << node0->getIndex()
+// 	      << " node1=" << node1->getIndex() << std::endl;
+// #endif // DEBUG
       node0->setNeighbor(1, othernode0);
       node1->setNeighbor(1, othernode1);
     }
@@ -2111,14 +2111,14 @@ public:
       bool ordered = voxelOrder(vox010, vox111);
       node0 = ordered ? vsbNode0 : vsbNode1;
       node1 = ordered ? vsbNode1 : vsbNode0;
-#ifdef DEBUG
-      oofcerr << "FourThreeOne::connectDoubleBack: dir=posY, ordered="
-	      << ordered
-	      << " othernode0=" << othernode0->getIndex()
-	      << " othernode1=" << othernode1->getIndex() 
-	      << " node0=" << node0->getIndex()
-	      << " node1=" << node1->getIndex() << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//       oofcerr << "FourThreeOne::connectDoubleBack: dir=posY, ordered="
+// 	      << ordered
+// 	      << " othernode0=" << othernode0->getIndex()
+// 	      << " othernode1=" << othernode1->getIndex() 
+// 	      << " node0=" << node0->getIndex()
+// 	      << " node1=" << node1->getIndex() << std::endl;
+// #endif // DEBUG
       node0->setNeighbor(2, othernode0);
       node1->setNeighbor(2, othernode1);
     }
@@ -2581,6 +2581,30 @@ const VSBNode *VSBNode::nextCWNeighbor(const VSBNode *nbr) const {
   return neighbors[0];
 }
 
+VSBNode *VSBNode::nextCWNeighbor(const VSBNode *nbr) {
+  if(neighbors[0] == nbr)
+    return neighbors[1];
+  if(neighbors[1] == nbr)
+    return neighbors[2];
+  assert(neighbors[2] == nbr);
+  return neighbors[0];
+}
+
+std::ostream &operator<<(std::ostream &os, const VSBNode &node) {
+  os << "VSBNode(" << node.getIndex() << ", pos=" << node.position
+     << ", " << "nbrs=[";
+  for(unsigned int i=0; i<3; i++) {
+    if(node.getNeighbor(i) == nullptr)
+      os << "--";
+    else
+      os << node.getNeighbor(i)->getIndex();
+    if(i < 2)
+      os << ",";
+  }
+  os << "])";
+  return os;
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 VSBGraph::~VSBGraph() {
@@ -2598,12 +2622,194 @@ void VSBGraph::addNode(VSBNode *node) {
 // #endif // DEBUG
 }
 
+VSBGraph::VSBGraph(const VSBGraph &other) {
+  vertices.reserve(other.size());
+  for(const VSBNode *overtex : other.vertices) {
+    addNode(new VSBNode(overtex->position));
+  }
+  for(VSBNode *vertex : vertices) {
+    const VSBNode *oldNode = other.getNode(vertex->getIndex());
+    for(unsigned int i=0; i<3; i++) {
+      vertex->setNeighbor(i, vertices[oldNode->getNeighbor(i)->getIndex()]);
+    }
+  }
+}
+
 Coord3D VSBGraph::center() const {
   Coord ctr;
   for(VSBNode *vertex : vertices)
     ctr += vertex->position;
   return ctr/vertices.size();
 }
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+VSBGraph *VSBGraph::copyAndClip(const COrientedPlane &plane) const {
+  // Based loosely on r3d_clip in r3d.c.
+// #ifdef DEBUG
+//   oofcerr << "VSBGraph::copyAndClip: plane=" << plane << std::endl;
+//   oofcerr << "VSBGraph::copyAndClip: original graph="<< std::endl;
+//   dump(std::cerr);
+// #endif // DEBUG
+  std::vector<double> distance;
+  distance.reserve(size());
+  double dmin = std::numeric_limits<double>::max();
+  double dmax = -std::numeric_limits<double>::max();
+  for(const VSBNode *vertex : vertices) {
+    double d = plane.distance(vertex->position);
+    distance.push_back(d);
+    if(d > dmax)
+      dmax = d;
+    if(d < dmin)
+      dmin = d;
+  }
+  if(dmax < 0) {
+    // entire graph is within the clipping region
+    return new VSBGraph(*this);
+  }
+  if(dmin > 0) {
+    // entire graph is outside the clipping region
+    return new VSBGraph();		// empty graph
+  }
+
+  // Copy the nodes that are to be kept, and create new nodes at the
+  // clipping plane.
+  VSBGraph *newGraph = new VSBGraph();
+  // copies[i] is the node in the new graph that is a copy of the node
+  // with index i in the old graph.
+  std::vector<VSBNode*> copies(vertices.size(), nullptr);
+  unsigned int nCopied = 0;
+  std::vector<VSBNode*> danglingNodes;
+  // v0 loops through the nodes in the old graph, finding ones that
+  // need to be copied.
+  for(unsigned int v0=0; v0<vertices.size(); v0++) {
+    if(copies[v0]==nullptr && distance[v0] < 0) {
+      // Old node v0 needs to be copied to the new graph.  Copy it and
+      // its neighbors.  stack stores all the nodes that need to be
+      // copied.
+      std::vector<const VSBNode*> stack;
+      stack.reserve(vertices.size() - nCopied);
+      stack.push_back(vertices[v0]);
+      while(!stack.empty()) {
+	const VSBNode *oldNode = stack.back();
+	stack.pop_back();
+
+	// Nodes might be put on the stack multiple times.  Just
+	// ignore the repeats.
+	if(copies[oldNode->getIndex()] != nullptr)
+	  continue;
+
+	double d0 = distance[oldNode->getIndex()]; // negative!
+	VSBNode *newNode = new VSBNode(oldNode->position);
+	copies[oldNode->getIndex()] = newNode;
+// #ifdef DEBUG
+// 	oofcerr << "VSBGraph::copyAndClip: copied " << *oldNode << std::endl;
+// 	OOFcerrIndent indent(2);
+// #endif // DEBUG
+	++nCopied;
+	newGraph->addNode(newNode);
+	for(unsigned int n=0; n<3; n++) { // loop over nbrs of old node
+	  // If the neighbor has already been copied, set the neighbor
+	  // pointers in the new node and the copy of its neighbor.
+	  const VSBNode *oldNbr = oldNode->getNeighbor(n);
+// #ifdef DEBUG
+// 	  oofcerr << "VSBGraph::copyAndClip: examining neighbor " << n
+// 		  << " oldNbr=" << *oldNbr << std::endl;
+// 	  OOFcerrIndent indent2(2);
+// #endif // DEBUG
+	  VSBNode *nbrCopy = copies[oldNbr->getIndex()];
+	  if(nbrCopy != nullptr) {
+// #ifdef DEBUG
+// 	    oofcerr << "VSBGraph::copyAndClip: nbr already copied, nbrCopy="
+// 		    << *nbrCopy << std::endl;
+// #endif
+	    newNode->setNeighbor(n, nbrCopy);
+	    unsigned int nidx = oldNbr->neighborIndex(oldNode);
+// #ifdef DEBUG
+// 	    oofcerr << "VSBGraph::copyAndClip: oldNbr=" << *oldNbr
+// 		    << " index of oldNode=" << nidx << std::endl;
+// #endif // DEBUG
+	    nbrCopy->setNeighbor(nidx, newNode);
+	  }
+	  else {
+	    // The neighbor hasn't been copied. It should either be
+	    // copied or clipped.
+	    double nbrDistance = distance[oldNbr->getIndex()];
+	    if(nbrDistance < 0) {
+	      // The neighbor doesn't need to be clipped.  Put it on
+	      // the stack to be copied.
+// #ifdef DEBUG
+// 	      oofcerr << "VSBGraph::copyAndClip: pushing old neighbor"
+// 		      << *oldNbr << std::endl;
+// #endif // DEBUG
+	      stack.push_back(oldNbr);
+	    }
+	    else {
+	      // The neighbor has to be clipped.  Create a new node on
+	      // the edge between here and there.  Remember that d0 is
+	      // negative when interpolating the position.
+	      Coord3D p = ((oldNode->position*nbrDistance - oldNbr->position*d0)
+			   / (nbrDistance - d0));
+	      VSBNode *newNbr = new VSBNode(p);
+	      danglingNodes.push_back(newNbr);
+	      newGraph->addNode(newNbr);
+// #ifdef DEBUG
+// 	      oofcerr << "VSBGraph::copyAndClip: added clipped node "
+// 		      << *newNbr << std::endl;
+// #endif // DEBUG
+	      newNode->setNeighbor(n, newNbr);
+	      newNbr->setNeighbor(0, newNode);
+// #ifdef DEBUG
+// 	      oofcerr << "VSBGraph::copyAndClip:"
+// 		<< " set clipped neighbors, newNode="
+// 		<< *newNode << " newNbr=" << *newNbr
+// 		      << std::endl;
+// #endif // DEBUG
+	    }
+	  } // end if neighbor hasn't been copied
+	} // end loop over neighbors of node being copied
+      }	// end while stack is not empty
+    } // end if node v0 has to be copied
+  } // end loop over node indices v0
+
+// #ifdef DEBUG
+//   oofcerr << "VSBGraph::copyAndClip: finished copying " << nCopied
+// 	  << " nodes" << std::endl;
+// #endif // DEBUG
+
+  // At this point, newGraph contains all of the nodes from the old
+  // graph that are on the correct side of the clipping plane, and a
+  // bunch of dangling nodes that are on the clipping plane. Connect
+  // the dangling nodes to each other.
+  for(VSBNode *newNode : danglingNodes) {
+    // Each new node created above has exactly one neighbor, in slot
+    // 0. Starting from that neighbor, go from node to node
+    // counter-clockwise around the hole in the graph to find the next
+    // dangling node.  We know when we've found the next node because
+    // it won't have a neighbor in slot 1.
+    VSBNode *vcur = newNode;
+    VSBNode *vnext = newNode->getNeighbor(0);
+    do {
+      // To make a counterclockwise turn from one graph edge to
+      // another, pick the outgoing edge that's the *clockwise*
+      // neighbor of the incoming edge.
+      VSBNode *vtemp = vnext->nextCWNeighbor(vcur);
+      vcur = vnext;
+      vnext = vtemp;
+    } while(vcur->getNeighbor(1) != nullptr);
+    vcur->setNeighbor(1, newNode);
+    newNode->setNeighbor(2, vcur);
+  }
+
+  return newGraph;
+} // end VSBGraph::copyAndClip
+
+
+void VSBGraph::clipInPlace(const COrientedPlane &plane) {
+
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 double VSBGraph::volume() const {
   // Based on r3d_reduce.  Compute the volume of the polyhedron by
@@ -2667,7 +2873,9 @@ double VSBGraph::volume() const {
   } // end loop over vstart
 
   return vol/6.;
-}
+} // end VSBGraph::volume
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 bool VSBGraph::checkEdges() const {
   bool result = true;
@@ -2709,7 +2917,9 @@ bool VSBGraph::checkEdges() const {
   }
   // oofcerr << "VSBGraph::checkEdges: ok!" << std::endl;
   return result;
-}
+} // end VSBGraph::checkEdges
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // checkConnectivity divides the graph into disjoint regions and
 // checks that each region is three-vertex connected.  A "region" is a
@@ -2827,7 +3037,9 @@ bool VSBGraph::checkConnectivity(int nRegions) const {
   for(Region *reg : regions)
     delete reg;
   return ok;
-}
+} // end VSBGraph::checkConnectivity
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // Write out the graph structure
 void VSBGraph::dump(std::ostream &os) const {
@@ -2953,3 +3165,28 @@ bool VoxelSetBoundary::checkEdges() const {
 bool VoxelSetBoundary::checkConnectivity(int nRegions) const {
   return graph.checkConnectivity(nRegions);
 }
+
+double VoxelSetBoundary::clippedVolume(std::vector<COrientedPlane> &planes)
+  const
+{
+  assert(!planes.empty());
+  VSBGraph *clippedGraph = graph.copyAndClip(planes[0]);
+#ifdef DEBUG
+  if(!clippedGraph->checkEdges()) {
+    throw ErrProgrammingError("checkEdges failed for initial clipped graph!",
+			      __FILE__, __LINE__);
+  }
+  if(!clippedGraph->checkConnectivity(0)) {
+    throw ErrProgrammingError(
+		      "checkConnectivity failed for initial clipped graph!",
+		      __FILE__, __LINE__);
+  }
+#endif // DEBUG
+  for(unsigned i=1; i<planes.size(); i++) {
+    clippedGraph->clipInPlace(planes[i]);
+  }
+  double vol = clippedGraph->volume();
+  delete clippedGraph;
+  return vol;
+}
+  

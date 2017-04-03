@@ -278,6 +278,7 @@ public:
 
   unsigned char voxelSignature(const ICoord&, unsigned int) const;
   bool checkVSB(unsigned int) const;
+  double clipVSBVol(unsigned int, const COrientedPlane&) const; // for testing
 
 #if DIM==2
   const std::vector<PixelSetBoundary> &getCategoryBdys() const {
