@@ -10,6 +10,9 @@
 
 from ooflib.SWIG.common import config
 
+COrientedPlanePtr.__repr__ = (lambda self:"COrientedPlane(normal=%s, offset=%g)"
+                              % (self.getNormal(), self.getOffset()))
+
 # CRectanglePtr.__repr__ = lambda self:"CRectangle(Coord(%g, %g), Coord(%g, %g))"\
 #                          % (self.xmin(), self.ymin(), self.xmax(), self.ymax())
 

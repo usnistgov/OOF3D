@@ -42,8 +42,12 @@ public:
 
 class COrientedPlane {
 public:
-  COrientedPlane(const Coord, double);
+  COrientedPlane(Coord *Point, double);
   COrientedPlane reversed();
+  %addmethods {
+    double getOffset() { return self->offset; }
+    Coord getNormal() { return self->normal; }
+  }
 };
 
 // class CQuadrilateral : public CPolygonCoord {

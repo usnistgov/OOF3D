@@ -1,0 +1,16 @@
+Vertex 0 (4, 0, 0)   nbrs=6 1 2 
+Vertex 1 (0, 0, 0)   nbrs=0 7 3 
+Vertex 2 (4, 0, 4)   nbrs=3 4 0 
+Vertex 3 (0, 0, 4)   nbrs=2 1 5 
+Vertex 4 (4, 4, 4)   nbrs=2 5 6 
+Vertex 5 (0, 4, 4)   nbrs=4 3 7 
+Vertex 6 (4, 4, 0)   nbrs=7 0 4 
+Vertex 7 (0, 4, 0)   nbrs=6 5 1 
+Vertex 8 (2, 2, 2)   nbrs=15 11 9 
+Vertex 9 (3, 2, 2)   nbrs=14 8 10 
+Vertex 10 (3, 3, 2)   nbrs=13 9 11 
+Vertex 11 (2, 3, 2)   nbrs=12 10 8 
+Vertex 12 (2, 3, 3)   nbrs=11 15 13 
+Vertex 13 (3, 3, 3)   nbrs=10 12 14 
+Vertex 14 (3, 2, 3)   nbrs=9 13 15 
+Vertex 15 (2, 2, 3)   nbrs=8 14 12 

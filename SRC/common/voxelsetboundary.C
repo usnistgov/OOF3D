@@ -3190,3 +3190,21 @@ double VoxelSetBoundary::clippedVolume(std::vector<COrientedPlane> &planes)
   return vol;
 }
   
+void VoxelSetBoundary::saveClippedVSB(std::vector<COrientedPlane> &planes,
+				      const std::string &filenamebase)
+  const
+{
+  oofcerr << "VoxelSetBoundary::saveClippedVSB: filenamebase="
+	  << filenamebase <<std::endl;
+  VSBGraph *clippedGraph = graph.copyAndClip(planes[0]);
+  for(unsigned int i=1; i<planes.size(); i++) {
+    clippedGraph->clipInPlace(planes[i]);
+  }
+  std::ofstream f(filenamebase+".dat");
+  clippedGraph->dump(f);
+  f.close();
+  std::ofstream f2(filenamebase+".lines");
+  clippedGraph->dumpLines(f2);
+  f2.close();
+  oofcerr << "VoxelSetBoundary::saveClippedVSB: done" << std::endl;
+}

@@ -689,6 +689,36 @@ double CMicrostructure::clipVSBVol(unsigned int cat, const COrientedPlane &pl)
   return categoryBdys[cat]->clippedVolume(planes);
 }
 
+void CMicrostructure::saveClippedVSB(unsigned int cat, const COrientedPlane &pl,
+				     const std::string &filename)
+  const
+{
+  categorizeIfNecessary();
+  assert(cat < categoryBdys.size());
+  std::vector<COrientedPlane> planes(1, pl);
+  categoryBdys[cat]->saveClippedVSB(planes, filename);
+}
+
+double CMicrostructure::volumeOfCategory(unsigned int cat) const {
+  categorizeIfNecessary();
+  if(cat >= nCategories())
+    throw ErrProgrammingError("Category number too large!", __FILE__, __LINE__);
+  return categoryBdys[cat]->volume();
+}
+
+void CMicrostructure::dumpVSB(unsigned int cat, const std::string &file) const {
+  categorizeIfNecessary();
+  std::ofstream f(file);
+  categoryBdys[cat]->dump(f);
+}
+void CMicrostructure::dumpVSBLines(unsigned int cat, const std::string &file)
+  const
+{
+  categorizeIfNecessary();
+  std::ofstream f(file);
+  categoryBdys[cat]->dumpLines(f);
+}
+
 void CMicrostructure::categorizeIfNecessary() const {
   if(!categorized)
     categorize();
@@ -751,27 +781,6 @@ int CMicrostructure::category(const Coord &where) const {
   // category_lock.release();
   // oofcerr << "Release." << std::endl;
   return res;
-}
-
-double CMicrostructure::volumeOfCategory(unsigned int cat) const {
-  if(cat >= nCategories())
-    throw ErrProgrammingError("Category number too large!", __FILE__, __LINE__);
-  return categoryBdys[cat]->volume();
-}
-
-void CMicrostructure::dumpVSB(unsigned int cat, const std::string &file) const {
-  if(!categorized)
-    categorize();
-  std::ofstream f(file);
-  categoryBdys[cat]->dump(f);
-}
-void CMicrostructure::dumpVSBLines(unsigned int cat, const std::string &file)
-  const
-{
-  if(!categorized)
-    categorize();
-  std::ofstream f(file);
-  categoryBdys[cat]->dumpLines(f);
 }
 
 const Array<int> *CMicrostructure::getCategoryMap() const {

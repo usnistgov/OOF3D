@@ -300,6 +300,7 @@ public:
   bool checkConnectivity(int) const;
   void dump(std::ostream &os) const { graph.dump(os); }
   void dumpLines(std::ostream &os) const { graph.dumpLines(os); }
+  void saveClippedVSB(std::vector<COrientedPlane>&, const std::string&) const;
   };
 
 void initializeProtoNodes();

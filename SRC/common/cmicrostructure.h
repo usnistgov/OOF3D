@@ -277,8 +277,12 @@ public:
   void dumpVSBLines(unsigned int, const std::string&) const; // plot VSB edges
 
   unsigned char voxelSignature(const ICoord&, unsigned int) const;
+
+  // Routines for testing the VSB construction and clipping
   bool checkVSB(unsigned int) const;
-  double clipVSBVol(unsigned int, const COrientedPlane&) const; // for testing
+  double clipVSBVol(unsigned int, const COrientedPlane&) const;
+  void saveClippedVSB(unsigned int, const COrientedPlane&, const std::string&)
+    const;
 
 #if DIM==2
   const std::vector<PixelSetBoundary> &getCategoryBdys() const {

@@ -406,6 +406,9 @@ public:
   COrientedPlane(const Coord3D &norm, double d)
     : normal(norm), offset(d)
   {}
+  COrientedPlane(const Coord *norm, double d)
+    : normal(*norm), offset(d)
+  {}
   // Distance from arg to the plane. It's positive if the point is in
   // the +normal direction.
   double distance(const Coord3D&) const;

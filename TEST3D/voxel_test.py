@@ -8,14 +8,22 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov. 
 
+# Test routines for constructing and clipping a voxel set boundary.
+
 import unittest, os, sys, math
 import memorycheck
 
 from UTILS import file_utils
-reference_file = file_utils.reference_file
+file_utils.generate = True
+
+
 from ooflib.SWIG.common import voxelsetboundary
+from ooflib.SWIG.common.geometry import COrientedPlane
+from ooflib.common import microstructure
+from ooflib.common import pixelselection
+from ooflib.common import primitives
 
-
+# For selecting voxels and defining a voxel set.
 vox000 = voxelsetboundary.cvar.vox000
 vox100 = voxelsetboundary.cvar.vox100
 vox010 = voxelsetboundary.cvar.vox010
@@ -34,15 +42,29 @@ voxels = {vox000 : (0, 0, 0),
           vox011 : (0, 1, 1),
           vox111 : (1, 1, 1)}
 
+# Define some planes to clip the voxel set boundaries.
+skew = primitives.Point(1.1, 0.9, 1.0)
+skew = skew/math.sqrt(skew*skew)
+xyz = primitives.Point(1, 1, 1)
+xyz = xyz/math.sqrt(xyz*xyz)
+
+planes = [
+    COrientedPlane(primitives.Point(1, 0, 0), 0.0),            # 0 empty
+    COrientedPlane(primitives.Point(1, 0, 0), 4.0).reversed(), # 1 empty
+    COrientedPlane(primitives.Point(1, 0, 0), 0.0).reversed(), # 2 all
+    COrientedPlane(primitives.Point(1, 0, 0), 4.0),            # 3 all
+    COrientedPlane(primitives.Point(1, 0, 0), 2.0),            # 4 through center
+    COrientedPlane(primitives.Point(1, 0, 0), 2.5),            # 5
+    COrientedPlane(primitives.Point(0, 1, 0), 2.5).reversed(), # 6
+    COrientedPlane(primitives.Point(0, 0, 1), 1.5),            # 7
+    COrientedPlane(skew, 2.5),                                 # 8
+    COrientedPlane(skew, 2.5).reversed(),                      # 9
+    COrientedPlane(xyz, 2*math.sqrt(3.)),                      # 10
+]
+
+
 class VSB_ConfigTest(unittest.TestCase):
     def setUp(self):
-        global pixelselection
-        from ooflib.common import pixelselection
-        global microstructure
-        from ooflib.common import microstructure
-        global COrientedPlane, Coord
-        from ooflib.SWIG.common.geometry import COrientedPlane
-        from ooflib.SWIG.common.coord import Coord
         
         OOF.Microstructure.New(
             name='microstructure', width=4.0, height=4.0, depth=4.0,
@@ -142,9 +164,58 @@ class VSB_ConfigTest(unittest.TestCase):
             file_utils.remove("unselected.dat")
 
     @memorycheck.check("microstructure")
+    def ClippedShape(self):
+        # Check that a few carefully selected sets of voxels are
+        # clipped properly by a single plane
+        sigs = (
+            vox000,
+            vox111,
+            vox000|vox100,
+            vox000|vox110,
+            vox010|vox100,
+            vox000|vox100|vox010|vox111,
+            )
+        ms = microstructure.getMicrostructure('microstructure')
+        for sig in sigs:
+            sigstr = voxelsetboundary.printSig(sig)
+            print "Selecting voxels", sigstr
+            sigstr = sigstr.replace('|','-')
+            nvox = self.selectSig(sig)
+            OOF.PixelGroup.AddSelection(
+                microstructure='microstructure', group='pixelgroup')
+            unselectedCat = ms.category(Point(0,0,0))
+            selectedCat = 1-unselectedCat
+            for i, plane in enumerate(planes):
+                # saveClippedVSB writes filename.dat and filename.lines
+                ms.saveClippedVSB(selectedCat, plane, 'selected')
+                ms.saveClippedVSB(unselectedCat, plane, 'unselected')
+
+                fnamebase = "clipped_%s_p%02d" % (sigstr, i)
+                self.assert_(file_utils.fp_file_compare(
+                    'selected.dat',
+                    os.path.join("vsb_data", 's'+fnamebase+'.dat'),
+                    1.e-9))
+                self.assert_(file_utils.fp_file_compare(
+                    'unselected.dat',
+                    os.path.join("vsb_data", 'u'+fnamebase+'.dat'),
+                    1.e-9))
+                self.assert_(file_utils.fp_file_compare(
+                    'selected.lines',
+                    os.path.join("vsb_data", 's'+fnamebase+'.lines'),
+                    1.e-9))
+                self.assert_(file_utils.fp_file_compare(
+                    'unselected.lines',
+                    os.path.join("vsb_data", 'u'+fnamebase+'.lines'),
+                    1.e-9))
+
+                file_utils.remove('selected.dat')
+                file_utils.remove('unselected.dat')
+                file_utils.remove('selected.lines')
+                file_utils.remove('unselected.lines')
+
+    @memorycheck.check("microstructure")
     def TrivialClippedVolume(self):
         ms = microstructure.getMicrostructure('microstructure')
-        planes = [COrientedPlane(Coord(1, 0, 0), 2.5)]
         for plane in planes:
             v0 = ms.clipVSBVol(0, plane)
             v1 = ms.clipVSBVol(0, plane.reversed())
@@ -153,37 +224,36 @@ class VSB_ConfigTest(unittest.TestCase):
     @memorycheck.check("microstructure")
     def ClippedVolume(self):
         ms = microstructure.getMicrostructure('microstructure')
-        root3 = math.sqrt(3.)
-        planes = [COrientedPlane(Coord(1, 0, 0), 2.5),
-                  #COrientedPlane(Coord(0, 1, 0), 3.5),
-                  #COrientedPlane(Coord(0, 0, 1), 1.5),
-                  #COrientedPlane(Coord(root3, root3, root3), 2)
-        ]
         sigs = range(1, 256)
-        sigs = (5,)
+        #sigs = (105,)
         for sig in sigs:
+            print "voxels=%s"%voxelsetboundary.printSig(sig)
+            nvox = self.selectSig(sig)
+            OOF.PixelGroup.AddSelection(
+                microstructure='microstructure', group='pixelgroup')
+            unselectedCat = ms.category(Point(0,0,0))
+            selectedCat = 1 - unselectedCat
             for plane in planes:
-                nvox = self.selectSig(sig)
-                OOF.PixelGroup.AddSelection(
-                    microstructure='microstructure', group='pixelgroup')
-                v00 = ms.clipVSBVol(0, plane)
-                v10 = ms.clipVSBVol(1, plane)
+                print "plane=%s"%plane
+                v00 = ms.clipVSBVol(selectedCat, plane)
+                v10 = ms.clipVSBVol(unselectedCat, plane)
                 opposite = plane.reversed()
-                v01 = ms.clipVSBVol(0, opposite)
-                v11 = ms.clipVSBVol(1, opposite);
-                self.assertAlmostEqual(ms.volumeOfCategory(0), v00+v01)
-                self.assertAlmostEqual(ms.volumeOfCategory(1), v10+v11)
+                v01 = ms.clipVSBVol(selectedCat, opposite)
+                v11 = ms.clipVSBVol(unselectedCat, opposite);
+                self.assertAlmostEqual(nvox, v00+v01)
+                self.assertAlmostEqual(64-nvox, v10+v11)
+                self.assertAlmostEqual(v00+v01+v10+v11, 64)
             
 #=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=#
 
 test_set = [
     VSB_ConfigTest("Trivial"),
     VSB_ConfigTest("All2x2x2"),
+    VSB_ConfigTest("ClippedShape"),
     VSB_ConfigTest("TrivialClippedVolume"),
     VSB_ConfigTest("ClippedVolume")
 ]
 
 test_set = [
-    VSB_ConfigTest("TrivialClippedVolume"),
-    VSB_ConfigTest("ClippedVolume")
+    VSB_ConfigTest("ClippedShape"),
 ]
