@@ -878,6 +878,9 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
     double offset = dot(center, normalVec);
     planes.emplace_back(normalVec, offset);
   }
+  CRectangularPrism bbox(epts[0], epts[1]);
+  bbox.swallow(epts[2]);
+  bbox.swallow(epts[3]);
 
   // Get the number of voxel categories.  This recomputes categories
   // and boundaries if needed.
@@ -894,15 +897,18 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
 		<< std::endl;
 #endif // DEBUG
 
-      // TODO: Use bounding boxes.
-      
-      double vol = ms->clippedCategoryVolume(cat, planes
+      // Check for a boudning box intersection before doing the
+      // expensive polygon intersection calculation.  This reduces CPU
+      // use by about 10% in an annealing operation.
+      if(bbox.intersects(ms->categoryBounds(cat))) {
+	double vol = ms->clippedCategoryVolume(cat, planes
 #ifdef DEBUG
-					     , verboseCategory
+					       , verboseCategory
 #endif // DEBUG
-					     );
-      totalVol += vol;
-      (*result)[cat] = vol;
+					       );
+	totalVol += vol;
+	(*result)[cat] = vol;
+      }
     }
 
     double actual = volumeInVoxelUnits(ms);
@@ -931,99 +937,6 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
 
   return result;
 
-  
-//   try {
-//     for(unsigned int cat=0; cat<ncat; cat++) {
-//       const VoxelSetBoundary *vsb = bdys[cat];
-// #ifdef DEBUG
-//       if(homtet.verboseCategory()) {
-// 	oofcerr << "CSkeletonElement::categoryVolumes: category=" << cat
-// 		<< std::endl;
-// 	// homtet.dumpEquivalences();
-// 	// writeDebugFile("*** category " + to_string(cat) + " ***\n");
-//       }
-// #endif	// DEBUG
-//       if(vsb->bbox().intersects(homtet.bounds())) {
-// 	FacetMap2D pixelplanefacets =
-// 	  homtet.findPixelPlaneFacets(cat, *vsb);
-// #ifdef DEBUG
-// 	// if(homtet.verboseCategory()) {
-// 	//   oofcerr << "CSkeletonElement::categoryVolumes: "
-// 	// 	  << "after findPixelPlaneFacets cat=" << cat << std::endl;
-// 	//   // homtet.dumpEquivalences();
-// 	// }
-// 	// if(!homtet.verify()) {
-// 	//   throw ErrProgrammingError("Verification failed", __FILE__, __LINE__);
-// 	// }
-// 	// if(verbose) {
-// 	//   oofcerr << "CSkeletonElement::categoryVolumes: calling findFaceFacets"
-// 	// 	  << std::endl;
-// 	// }
-// #endif // DEBUG
-// 	FaceFacets facefacets = homtet.findFaceFacets(cat, pixelplanefacets);
-// // #ifdef DEBUG
-// // 	if(verbose)
-// // 	  oofcerr << "CSkeletonElement::categoryVolumes: "
-// // 		  << "calling intersectionVolume for cat " << cat << std::endl;
-// // #endif // DEBUG
-// 	double v = homtet.intersectionVolume(pixelplanefacets, facefacets
-// // #ifdef DEBUG
-// // 					     , cat, *dumpfile
-// // #endif // DEBUG
-// 					     );
-// // #ifdef DEBUG
-// // 	if(verbose)
-// // 	  oofcerr << "CSkeletonElement::categoryVolumes: "
-// // 		  << "back from intersectionVolume." << std::endl;
-// // #endif // DEBUG
-// 	(*result)[cat] = v;
-// 	totalVol += v;
-
-// 	// Delete PixelPlaneFacets.  FaceFacets aren't stored by
-// 	// pointer so they don't have to be deleted manually.
-// 	for(auto iter=pixelplanefacets.begin(); iter!=pixelplanefacets.end();
-// 	    ++iter)
-// 	  {
-// 	    delete (*iter).second;
-// 	  }
-//       }	// end if VSB bbox intersects the element bbox
-//     } // end loop over categories cat
-
-//     double actual = volumeInVoxelUnits(ms);
-//     double fracvol = (totalVol - actual)/actual;
-//     bool badvol = fabs(fracvol) >= VOLTOL;
-//     if(true /*badvol || verbose*/) {
-//       oofcerr << "CSkeletonElement::categoryVolumes: element index=" << index
-// 	      << " uid=" << uid
-// 	      <<" measured volume=" << totalVol
-// 	      << " [" << *result << "]"
-// 	      << " actual=" << actual
-// 	      << " (error=" << fracvol*100 << "%)" << std::endl;
-//     }
-//     if(badvol) {
-//       throw ErrProgrammingError("categoryVolumes: total volume check failed!",
-// 				  __FILE__, __LINE__);
-//     }
-//   }
-//   catch (...) {
-//     oofcerr << "CSkeletonElement::categoryVolumes: failed for "
-// 	    << *this << std::endl;
-//     oofcerr << "CSkeletonElement::categoryVolumes: nVerbose=" << nVerbose
-// 	    << std::endl;
-// // #ifdef DEBUG
-// //     if(verbose) {
-// //       dumpfile->close();
-// //       // closeDebugFile();
-// //     }
-// // #endif // DEBUG
-//     throw;
-//   }
-// #ifdef DEBUG
-//   if(verbose) {
-//     // closeDebugFile();
-//     dumpfile->close();
-//   }
-// #endif // DEBUG
 
 } // end CSkeletonElement::categoryVolumes
 

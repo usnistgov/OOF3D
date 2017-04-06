@@ -17,7 +17,6 @@
 #include "common/cachedvalue.h"
 #include "common/coord.h"
 #include "common/doublevec.h"
-#include "common/geometry.h"
 #include "engine/cskeletonselectable.h"
 #include "engine/homogeneity.h"
 

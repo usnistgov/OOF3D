@@ -223,30 +223,6 @@ public:
     uprightfront = a;
     lowleftback = a;
     swallow(b);
-    // if(a[0] < b[0]) {
-    //   uprightfront[0] = b[0];
-    //   lowleftback[0] = a[0];
-    // }
-    // else {
-    //   uprightfront[0] = a[0];
-    //   lowleftback[0] = b[0];
-    // }
-    // if(a[1] < b[1]) {
-    //   uprightfront[1] = b[1];
-    //   lowleftback[1] = a[1];
-    // }
-    // else {
-    //   uprightfront[1] = a[1];
-    //   lowleftback[1] = b[1];
-    // }
-    // if(a[2] < b[2]) {
-    //   uprightfront[2] = b[2];
-    //   lowleftback[2] = a[2];
-    // }
-    // else {
-    //   uprightfront[2] = a[2];
-    //   lowleftback[2] = b[2];
-    // }
     size_ = uprightfront - lowleftback;
   }
   CRectangularPrism_(const std::vector<CTYPE> &vec) {

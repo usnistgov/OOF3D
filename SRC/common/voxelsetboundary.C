@@ -2366,6 +2366,10 @@ std::ostream &operator<<(std::ostream &os, const VSBNode &node) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+VSBGraph::VSBGraph()
+  : bounds(Coord3D(0,0,0), Coord3D(0,0,0))
+{}
+
 VSBGraph::~VSBGraph() {
   for(VSBNode *node : vertices)
     delete node;
@@ -2373,19 +2377,30 @@ VSBGraph::~VSBGraph() {
 }
 
 void VSBGraph::addNode(VSBNode *node) {
+  if(vertices.empty())
+    bounds = CRectangularPrism(node->position, node->position);
+  else
+    bounds.swallow(node->position);
   node->index = vertices.size();
   vertices.push_back(node);
 }
 
 void VSBGraph::addNodes(const std::vector<VSBNode*> &newNodes) {
+  assert(!newNodes.empty());
   unsigned int n = vertices.size();
+  if(n == 0) {
+    bounds = CRectangularPrism(newNodes[0]->position, newNodes[0]->position);
+  }
   for(VSBNode *node : newNodes) {
     node->index = n++;
+    bounds.swallow(node->position);
   }
   vertices.insert(vertices.end(), newNodes.begin(), newNodes.end());
 }
 
-VSBGraph::VSBGraph(const VSBGraph &other) {
+VSBGraph::VSBGraph(const VSBGraph &other)
+  : bounds(other.bounds)
+{
   vertices.reserve(other.size());
   for(const VSBNode *overtex : other.vertices) {
     addNode(new VSBNode(overtex->position));
@@ -2577,7 +2592,8 @@ void VSBGraph::clipInPlace(const COrientedPlane &plane) {
     vertices[i]->index = i;
   }
   // Add the new nodes to the graph.
-  addNodes(newNodes);
+  if(!newNodes.empty())
+    addNodes(newNodes);
 }
 
 void VSBGraph::connectClippedNodes(const std::vector<VSBNode*> &newNodes)
@@ -2882,10 +2898,6 @@ void VSBEdgeIterator::next() {
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-VoxelSetBoundary::~VoxelSetBoundary() {
-  delete bounds;
-}
 
 // protoVSBNodeFactory converts a signature (2x2x2 set of bools stored
 // as a char) to a type of ProtoVSBNode and a VoxRot.  To do

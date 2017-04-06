@@ -23,8 +23,8 @@ class VSBGraph;
 class VSBNode;
 
 #include "common/coord.h"
+#include "common/geometry.h"
 class CMicrostructure;
-class ICRectangularPrism;
 class COrientedPlane;
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -230,8 +230,9 @@ class VSBGraph {
   void connectClippedNodes(const std::vector<VSBNode*>&) const;
   std::vector<double> getDistances(const COrientedPlane&, double&, double&)
     const;
+  CRectangularPrism bounds;
  public:
-  VSBGraph() {}
+  VSBGraph();
   ~VSBGraph();
   VSBGraph(const VSBGraph&);
   // TODO: Do we need a move constructor?
@@ -248,6 +249,7 @@ class VSBGraph {
 
   double volume() const;
   Coord3D center() const;
+  const CRectangularPrism &bbox() const { return bounds; }
   
   bool checkEdges() const;
   bool checkConnectivity(int nRegions) const;
@@ -273,7 +275,6 @@ public:
 class VoxelSetBoundary {
 private:
   const unsigned int category;
-  ICRectangularPrism *bounds;
   const CMicrostructure *microstructure;
   VSBGraph graph;
   // Some two fold nodes are created during the graph building process
@@ -282,10 +283,8 @@ private:
 public:
   VoxelSetBoundary(const CMicrostructure *ms, unsigned int cat)
     : category(cat),
-      bounds(nullptr),
       microstructure(ms)
   {}
-  ~VoxelSetBoundary();
   ProtoVSBNode *protoVSBNodeFactory(unsigned char, const ICoord3D&);
   void addNode(VSBNode *node) { graph.addNode(node); }
   void addEdge(const ICoord3D&, const ICoord3D&);
@@ -295,6 +294,7 @@ public:
 
   unsigned int size() const { return graph.size(); }
   double volume() const;
+  const CRectangularPrism &bounds() const { return graph.bbox(); }
 
   double clippedVolume(const std::vector<COrientedPlane>&
 #ifdef DEBUG

@@ -273,6 +273,7 @@ public:
   bool is_categorized() const { return categorized; }
   void categorizeIfNecessary() const;
   double volumeOfCategory(unsigned int) const;
+  const CRectangularPrism &categoryBounds(unsigned int) const;
   double clippedCategoryVolume(unsigned int,
 			       const std::vector<COrientedPlane>&
 #ifdef DEBUG

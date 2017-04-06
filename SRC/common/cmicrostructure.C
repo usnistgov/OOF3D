@@ -727,6 +727,17 @@ double CMicrostructure::volumeOfCategory(unsigned int cat) const {
   return categoryBdys[cat]->volume();
 }
 
+// categoryBounds returns the bounding box of the category in voxel
+// coordinates.  It's the bounding box of the polyhedron formed by the
+// voxels, so a even single voxel has a non-trivial bounding box.
+
+const CRectangularPrism &CMicrostructure::categoryBounds(unsigned int cat)
+  const
+{
+  categorizeIfNecessary();
+  return categoryBdys[cat]->bounds();
+}
+
 void CMicrostructure::dumpVSB(unsigned int cat, const std::string &file) const {
   categorizeIfNecessary();
   std::ofstream f(file);
