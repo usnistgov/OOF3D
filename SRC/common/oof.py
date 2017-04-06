@@ -298,26 +298,26 @@ def process_inline_options():
             randomseed = int(opt[1])
             remove_option(opt[0],opt[1])
         elif opt[0] in ('--verboseElement', '--vE'):
-            from ooflib.SWIG.engine import htetdebug
-            htetdebug.addVerboseElement(opt[1])
+            from ooflib.SWIG.engine import cskeletonelement
+            cskeletonelement.addVerboseElement(opt[1])
         elif opt[0] in ('--verboseUID', '--vU'):
-            from ooflib.SWIG.engine import htetdebug
-            htetdebug.setVerboseUID(int(opt[1]))
-        elif opt[0] in ('--verbosePlane', '--vP'):
-            from ooflib.SWIG.engine import htetdebug
-            htetdebug.addVerbosePlane(opt[1])
-        elif opt[0] in ('--verboseFace', '--vF'):
-            from ooflib.SWIG.engine import htetdebug
-            htetdebug.addVerboseFace(opt[1])
+            from ooflib.SWIG.engine import cskeletonelement
+            cskeletonelement.setVerboseUID(int(opt[1]))
+        # elif opt[0] in ('--verbosePlane', '--vP'):
+        #     from ooflib.SWIG.engine import cskeletonelement
+        #     cskeletonelement.addVerbosePlane(opt[1])
+        # elif opt[0] in ('--verboseFace', '--vF'):
+        #     from ooflib.SWIG.engine import cskeletonelement
+        #     cskeletonelement.addVerboseFace(opt[1])
         elif opt[0] in ('--verboseCategory', '--vC'):
-            from ooflib.SWIG.engine import htetdebug
-            htetdebug.addVerboseCategory(int(opt[1]))
+            from ooflib.SWIG.engine import cskeletonelement
+            cskeletonelement.addVerboseCategory(int(opt[1]))
         elif opt[0] in ('--verboseWait', '--vW'):
-            from ooflib.SWIG.engine import htetdebug
-            htetdebug.setVerboseWait(int(opt[1]))
+            from ooflib.SWIG.engine import cskeletonelement
+            cskeletonelement.setVerboseWait(int(opt[1]))
         elif opt[0] in ('--verboseLimit', '--vL'):
-            from ooflib.SWIG.engine import htetdebug
-            htetdebug.setVerboseLimit(int(opt[1]))
+            from ooflib.SWIG.engine import cskeletonelement
+            cskeletonelement.setVerboseLimit(int(opt[1]))
     if help_mode:
         state_options_and_quit()
     if version_mode:

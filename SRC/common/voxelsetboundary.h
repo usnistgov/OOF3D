@@ -210,6 +210,7 @@ class VSBNode {
   VSBNode *getNeighbor(unsigned int i) { return neighbors[i]; }
   const VSBNode *getNeighbor(unsigned int i) const { return neighbors[i]; }
   void replaceNeighbor(VSBNode*, VSBNode*);
+  void replaceNeighbor(unsigned int i, VSBNode *nbr) { neighbors[i] = nbr; }
   
   VSBNode *nextCWNeighbor(const VSBNode*);
   const VSBNode *nextCWNeighbor(const VSBNode*) const;
@@ -226,6 +227,9 @@ std::ostream &operator<<(std::ostream&, const VSBNode&);
 class VSBGraph {
  private:
   std::vector<VSBNode*> vertices; // maybe a std::set instead?
+  void connectClippedNodes(const std::vector<VSBNode*>&) const;
+  std::vector<double> getDistances(const COrientedPlane&, double&, double&)
+    const;
  public:
   VSBGraph() {}
   ~VSBGraph();
@@ -236,6 +240,7 @@ class VSBGraph {
   unsigned int size() const { return vertices.size(); }
   
   void addNode(VSBNode *node);
+  void addNodes(const std::vector<VSBNode*>&);
   const VSBNode *getNode(unsigned int i) const { return vertices[i]; }
 
   VSBGraph *copyAndClip(const COrientedPlane&) const;
@@ -291,7 +296,11 @@ public:
   unsigned int size() const { return graph.size(); }
   double volume() const;
 
-  double clippedVolume(std::vector<COrientedPlane>&) const;
+  double clippedVolume(const std::vector<COrientedPlane>&
+#ifdef DEBUG
+		       , bool verbose
+#endif // DEBUG
+		       ) const;
 
   VSBEdgeIterator iterator() const { return VSBEdgeIterator(&graph); }
 
@@ -301,7 +310,7 @@ public:
   void dump(std::ostream &os) const { graph.dump(os); }
   void dumpLines(std::ostream &os) const { graph.dumpLines(os); }
   void saveClippedVSB(std::vector<COrientedPlane>&, const std::string&) const;
-  };
+};
 
 void initializeProtoNodes();
 std::string &printSig(unsigned char);

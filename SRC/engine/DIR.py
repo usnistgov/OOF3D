@@ -120,7 +120,7 @@ swigpyfiles = [
     'pixelgroupsubproblem.spy', 'preconditioner.spy', 'property.spy',
     'pypropertywrapper.spy', 'rank3tensor.spy', 
     'steperrorscaling.spy', 'symmmatrix.spy', 'entiremeshsubproblem.spy',
-    'materialvoxelfilter.spy', 'htetdebug.spy'
+    'materialvoxelfilter.spy'
     ]
 
 hfiles = [

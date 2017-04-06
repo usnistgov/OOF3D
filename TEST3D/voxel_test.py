@@ -254,6 +254,6 @@ test_set = [
     VSB_ConfigTest("ClippedVolume")
 ]
 
-test_set = [
-    VSB_ConfigTest("ClippedShape"),
-]
+# test_set = [
+#     VSB_ConfigTest("ClippedShape"),
+# ]

@@ -20,7 +20,6 @@
 
 %{
 #include "engine/cskeletonelement.h"
-#include "engine/homogeneitytet.h"
 %}
 
 void setVerboseElement(unsigned int);

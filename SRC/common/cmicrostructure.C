@@ -671,6 +671,23 @@ void CMicrostructure::categorize() const {
   
 } // end CMicrostructure::categorize
 
+double CMicrostructure::clippedCategoryVolume(
+			      unsigned int cat,
+			      const std::vector<COrientedPlane> &planes
+#ifdef DEBUG
+			      , bool verbose
+#endif // DEBUG
+					      )
+  const
+{
+  categorizeIfNecessary();
+  return categoryBdys[cat]->clippedVolume(planes
+#ifdef DEBUG
+					  , verbose
+#endif // DEBUG
+					  );
+}
+
 bool CMicrostructure::checkVSB(unsigned int cat) const {
   categorizeIfNecessary();
   assert(cat < categoryBdys.size());
@@ -686,7 +703,11 @@ double CMicrostructure::clipVSBVol(unsigned int cat, const COrientedPlane &pl)
   categorizeIfNecessary();
   assert(cat < categoryBdys.size());
   std::vector<COrientedPlane> planes(1, pl);
-  return categoryBdys[cat]->clippedVolume(planes);
+  return categoryBdys[cat]->clippedVolume(planes
+#ifdef DEBUG
+					  , false // verbose
+#endif // DEBUG
+					  );
 }
 
 void CMicrostructure::saveClippedVSB(unsigned int cat, const COrientedPlane &pl,

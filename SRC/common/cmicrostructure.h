@@ -273,6 +273,12 @@ public:
   bool is_categorized() const { return categorized; }
   void categorizeIfNecessary() const;
   double volumeOfCategory(unsigned int) const;
+  double clippedCategoryVolume(unsigned int,
+			       const std::vector<COrientedPlane>&
+#ifdef DEBUG
+			       , bool verbose
+#endif // DEBUG
+			       ) const;
   void dumpVSB(unsigned int, const std::string&) const;// save VSB graph to file
   void dumpVSBLines(unsigned int, const std::string&) const; // plot VSB edges
 

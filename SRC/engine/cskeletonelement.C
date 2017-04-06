@@ -779,14 +779,20 @@ unsigned int CSkeletonElement::getOtherFaceIndex(unsigned int f,
 // VOLTOL is the allowed fractional error in the sum of the volumes of
 // the voxel categories relative to the total volume of the element.
 //#define VOLTOL 5.e-4
-
-// TODO: This large value of VOLTOL is being used temporarily to
-// bypass some difficult to find errors, in the hope that fixing some
-// easier to find errors will fix the difficult ones.  Run all tests
-// in DEBUG mode with a small VOLTOL before release.
-#define VOLTOL 0.02
+#define VOLTOL 1.e-10
 
 #ifdef DEBUG
+static std::set<unsigned int> vcategories;
+
+void setVerboseCategory(unsigned int cat) {
+  oofcerr << "setVerboseCategory: " << cat << std::endl;
+  vcategories.insert(cat);
+}
+
+static bool verboseCategory_(bool vrbs, unsigned int category) {
+  return vrbs && (vcategories.empty() || vcategories.count(category) == 1);
+}
+
 static std::set<unsigned int> verboseElements_;
 static std::set<uidtype> verboseUIDs_;
 static bool allVerboseElements_ = false;
@@ -855,32 +861,77 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
   OOFcerrIndent indent(2);
 #endif // DEBUG
 
-//   HomogeneityTet homtet(this, ms
-// #ifdef DEBUG
-// 			, verbose
-// #endif // DEBUG
-// 			);
+  // Get the corners and planes of the element in pixel coordinates.
+  std::vector<Coord3D> epts;
+  std::vector<COrientedPlane> planes;
+  planes.reserve(4);
+  pixelCoords(ms, epts);
+  for(unsigned int f=0; f<NUM_TET_FACES; f++) {
+    Coord pt0 = epts[CSkeletonElement::getFaceArray(f)[0]];
+    Coord pt1 = epts[CSkeletonElement::getFaceArray(f)[1]];
+    Coord pt2 = epts[CSkeletonElement::getFaceArray(f)[2]];
+    Coord3D center = (pt0 + pt1 + pt2)/3.0;
+    // A more symmetric but more expensive expression for the area is
+    // 0.5*(pt0%pt1 + pt1%pt2 + pt2%pt0).
+    Coord3D areaVec = 0.5*((pt1 - pt0) % (pt2 - pt0));
+    Coord3D normalVec = areaVec/sqrt(norm2(areaVec));
+    double offset = dot(center, normalVec);
+    planes.emplace_back(normalVec, offset);
+  }
 
   // Get the number of voxel categories.  This recomputes categories
   // and boundaries if needed.
   unsigned int ncat = ms->nCategories();
   DoubleVec *result = new DoubleVec(ncat, 0.0);
-  // Get all the category boundaries.
-  const std::vector<VoxelSetBoundary*> &bdys = ms->getCategoryBdys();
-
-  // #ifdef DEBUG
-//   ofstream *dumpfile = nullptr;
-//   if(verbose) {
-//     // openDebugFile("facetdump");
-//     // std::string filename = "fullelement" + to_string(index) + ".lines";
-//     std::string filename = "fullelement.lines";
-//     oofcerr << "CSkeletonElement::categoryVolumes: writing " << filename
-// 	    << std::endl;
-//     dumpfile = new ofstream(filename);
-//   }
-// #endif	// DEBUG
-
   double totalVol = 0.0;
+
+  try {
+    for(unsigned int cat=0; cat<ncat; cat++) {
+#ifdef DEBUG
+      bool verboseCategory = verboseCategory_(verbose, cat);
+      if(verboseCategory)
+	oofcerr << "CSkeletonElement::categoryVolumes: cat=" << cat
+		<< std::endl;
+#endif // DEBUG
+
+      // TODO: Use bounding boxes.
+      
+      double vol = ms->clippedCategoryVolume(cat, planes
+#ifdef DEBUG
+					     , verboseCategory
+#endif // DEBUG
+					     );
+      totalVol += vol;
+      (*result)[cat] = vol;
+    }
+
+    double actual = volumeInVoxelUnits(ms);
+    double fracvol = (totalVol - actual)/actual;
+    bool badvol = fabs(fracvol) >= VOLTOL;
+    if(true /*badvol || verbose*/) {
+      oofcerr << "CSkeletonElement::categoryVolumes: element index=" << index
+	      << " uid=" << uid
+	      <<" measured volume=" << totalVol
+	      << " [" << *result << "]"
+	      << " actual=" << actual
+	      << " (error=" << fracvol*100 << "%)" << std::endl;
+    }
+    if(badvol) {
+      throw ErrProgrammingError("categoryVolumes: total volume check failed!",
+				  __FILE__, __LINE__);
+    }
+  }
+  catch (...) {
+    oofcerr << "CSkeletonElement::categoryVolumes: failed for "
+	    << *this << std::endl;
+    // oofcerr << "CSkeletonElement::categoryVolumes: nVerbose=" << nVerbose
+    // 	    << std::endl;
+    throw;
+  }
+
+  return result;
+
+  
 //   try {
 //     for(unsigned int cat=0; cat<ncat; cat++) {
 //       const VoxelSetBoundary *vsb = bdys[cat];
@@ -973,7 +1024,6 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
 //     dumpfile->close();
 //   }
 // #endif // DEBUG
-  return result;
 
 } // end CSkeletonElement::categoryVolumes
 

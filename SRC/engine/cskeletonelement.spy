@@ -37,4 +37,10 @@ def _CSkeletonElementPtr_repr(self):
 
 CSkeletonElementPtr.__repr__ = _CSkeletonElementPtr_repr
 
+def addVerboseElement(e):
+    if e == "all":
+        setVerboseAllElements()
+    else:
+        setVerboseElement(int(e))
+
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#

@@ -261,6 +261,8 @@ public:
 long get_globalElementCount();
 
 #ifdef DEBUG
+void setVerboseCategory(unsigned int);
+bool verboseCategory(unsigned int);
 void setVerboseElement(unsigned int);
 void setVerboseUID(uidtype);
 void setVerboseAllElements();

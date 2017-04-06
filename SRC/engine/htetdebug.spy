@@ -6,7 +6,9 @@
 # with its operation, modification and maintenance. However, to
 # facilitate maintenance we ask that before distributing modified
 # versions of this software, you first contact the authors at
-# oof_manager@nist.gov. 
+# oof_manager@nist.gov.
+
+OBSOLETE
 
 dirs = {'X':0, 'Y':1, 'Z':2, 'x':0, 'y':1, 'z':2}
 sides = {'+':1, '-':-1}

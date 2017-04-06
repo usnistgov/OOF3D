@@ -86,6 +86,18 @@ public:
 
 long get_globalElementCount();
 
+#ifdef DEBUG
+
+void setVerboseCategory(unsigned int);
+bool verboseCategory(unsigned int);
+void setVerboseElement(unsigned int);
+void setVerboseUID(unsigned long);
+void setVerboseAllElements();
+void setVerboseWait(int);
+void setVerboseLimit(int);
+
+#endif // DEBUG
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // In C++, CSkeletonElementIterator is a typemap.  These methods must be
