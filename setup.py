@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: setup.py,v $
-# $Revision: 1.100.2.26 $
-# $Author: langer $
-# $Date: 2014/11/07 22:31:18 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -22,6 +18,11 @@
 #  The flags --3D, --enable-mpi, --enable-petsc, and --enable-devel
 #  can occur anywhere after 'setup.py' in the command line.
 
+## TODO: When not building in debug mode, append "-O" to the first
+## line of the top oof2 and oof3d scripts.
+
+## TODO: The --record option for install is broken.
+
 
 # Required version numbers of required external libraries.  These
 # aren't used explicitly in this file, but they are used in the DIR.py
@@ -40,6 +41,11 @@ try:
         PYGOBJECT_VERSION = "2.6"
 except ImportError:
     PYGOBJECT_VERSION = "2.6"
+
+# The make_dist script edits the following line when a distribution is
+# built.  Don't change it by hand.  On the git master branch,
+# "(unreleased)" is replaced by the version number.
+version_from_make_dist = "(unreleased)"
     
 # will need to add vtk
 
@@ -413,27 +419,27 @@ def modification_time(phile):
 # us where to find the directories, and their names change from
 # version to version.
 
-def findvtk(basename):
+def findvtk(*basenames):
     global vtkdir
+
     if vtkdir:
-        base = os.path.expanduser(vtkdir)
-    else:
-        base = basename
-        
-    # First look for basename/include/vtk*
-    incdir = os.path.join(base, 'include')
-    files = os.listdir(incdir)
-    vtkname = None
-    for f in files:
-        ## This may fail if there is more than one version of vtk
-        ## installed.  listdir returns files in arbitrary order, and
-        ## the first one found will be used.
-        if f.startswith('vtk'):
-            vtkname = f
-            incvtk = os.path.join(base, 'include', vtkname)
-            libvtk = os.path.join(base, 'lib', vtkname)
-            if os.path.isdir(incvtk) and os.path.isdir(libvtk):
-                return (incvtk, libvtk)
+        basenames = (os.path.expanduser(vtkdir),)
+
+    for base in basenames:
+        # First look for basename/include/vtk*
+        incdir = os.path.join(base, 'include')
+        files = os.listdir(incdir)
+        vtkname = None
+        for f in files:
+            ## This may fail if there is more than one version of vtk
+            ## installed.  listdir returns files in arbitrary order, and
+            ## the first one found will be used.
+            if f.startswith('vtk'):
+                vtkname = f
+                incvtk = os.path.join(base, 'include', vtkname)
+                libvtk = os.path.join(base, 'lib', vtkname)
+                if os.path.isdir(incvtk) and os.path.isdir(libvtk):
+                    return (incvtk, libvtk)
     return (None, None)
 
 #########
@@ -564,7 +570,7 @@ typedef int Py_ssize_t;
             ## tells gcc to add missing headers to the dependency
             ## list, and then we weed them out later.  At least this
             ## way, the "missing" headers don't cause errors.
-            cmd = 'gcc -MM -MG -MT %(target)s -ISRC -I%(builddir)s -I%(buildsrc)s %(file)s' \
+            cmd = '/usr/bin/gcc -MM -MG -MT %(target)s -ISRC -I%(builddir)s -I%(buildsrc)s %(file)s' \
               % {'file' : phile,
                  'target': os.path.splitext(phile)[0] + ".o",
                  'builddir' : self.build_temp,
@@ -602,7 +608,7 @@ typedef int Py_ssize_t;
         # SRC directory.  Run gcc -MM on the swig source files.
         print "Finding dependencies for .swg files."
         for phile in allFiles('swigfiles'):
-            cmd = 'gcc -MM -MG -MT %(target)s -x c++ -I. -ISRC -I%(builddir)s %(file)s'\
+            cmd = '/usr/bin/gcc -MM -MG -MT %(target)s -x c++ -I. -ISRC -I%(builddir)s %(file)s'\
               % {'file' : phile,
                  'target': os.path.splitext(phile)[0] + '.o',
                  'builddir' : self.build_temp
@@ -1100,6 +1106,8 @@ def _get_oof_arg(arg):
         
 platform = {}
 
+home = os.path.expanduser('~')
+
 def set_platform_values():
     ## Set platform-specific flags that don't specifically depend on
     ## OOF2 stuff.  They're stored in a dictionary just to keep things
@@ -1136,7 +1144,7 @@ def set_platform_values():
         platform['extra_link_args'].append('-headerpad_max_install_names')
         if os.path.exists('/sw') and DIM_3: # fink
             platform['incdirs'].append('/sw/include')
-            vtkinc, vtklib = findvtk('/sw')
+            vtkinc, vtklib = findvtk(home, '/sw', '/usr/local')
             if vtkinc is not None:
                 platform['libdirs'].append(vtklib)
                 platform['incdirs'].append(vtkinc)
@@ -1146,7 +1154,7 @@ def set_platform_values():
             platform['incdirs'].append('/usr/X11R6/include/')
         if os.path.exists('/opt') and DIM_3: # macports
             platform['incdirs'].append('/opt/local/include')
-            vtkinc, vtklib = findvtk('/opt/local')
+            vtkinc, vtklib = findvtk(home, '/opt/local', '/usr/local')
             if vtkinc is not None:
                 platform['libdirs'].append(vtklib)
                 platform['incdirs'].append(vtkinc)
@@ -1161,10 +1169,15 @@ def set_platform_values():
             pkgpath = "/opt/local/Library/Frameworks/Python.framework/Versions/%d.%d/lib/pkgconfig/" % (sys.version_info[0], sys.version_info[1])
             print >> sys.stdout, "Adding", pkgpath
             extend_path("PKG_CONFIG_PATH", pkgpath)
-        # If we're using clang, we want to suppress some warnings
-        # about oddities in swig-generated code:
+        # Enable C++11
+        platform['extra_compile_args'].append('-Wno-c++11-extensions')
+        platform['extra_compile_args'].append('-std=c++11')
         if 'clang' in get_config_var('CC'):
+            # If we're using clang, we want to suppress some warnings
+            # about oddities in swig-generated code:
             platform['extra_compile_args'].append('-Wno-self-assign')
+            platform['extra_compile_args'].append(
+                '-Wno-tautological-constant-out-of-range-compare')
             
     elif sys.platform.startswith('linux'):
         # g2c isn't included here, because it's not always required.
@@ -1173,8 +1186,9 @@ def set_platform_values():
         # library on the command line.  The check is done later,just
         # before platform['blas_libs'] is used.
         platform['blas_libs'].extend(['lapack', 'blas', 'm'])
+        platform['extra_compile_args'].append('-std=c++11')
         if DIM_3:
-            vtkinc, vtklib = findvtk('/usr')
+            vtkinc, vtklib = findvtk(home, '/usr', '/usr/local')
             if vtkinc is not None:
                 platform['incdirs'].append(vtkinc)
                 platform['libdirs'].append(vtklib)
@@ -1421,7 +1435,7 @@ if __name__ == '__main__':
     
     setupargs = dict(
         name = OOFNAME,
-        version = "unreleased",
+        version = version_from_make_dist,
         description = "Analysis of material microstructures, from NIST.",
         author = 'The NIST OOF Team',
         author_email = 'oof_manager@nist.gov',

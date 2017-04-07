@@ -3205,11 +3205,9 @@ void ProvisionalChanges::accept() {
       // 	      << (*it).mobility[0] << " " << (*it).mobility[1] << " "
       // 	      << (*it).mobility[2] << std::endl;
       (*it).node->moveTo((*it).position);
-      if((*it).mobility != NULL) {
-	(*it).node->setMobilityX((*it).mobility[0]);
-	(*it).node->setMobilityY((*it).mobility[1]);
-	(*it).node->setMobilityZ((*it).mobility[2]);
-      }
+      (*it).node->setMobilityX((*it).mobility[0]);
+      (*it).node->setMobilityY((*it).mobility[1]);
+      (*it).node->setMobilityZ((*it).mobility[2]);
     }
 
   // Element insertions.
