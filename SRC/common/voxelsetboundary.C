@@ -2945,8 +2945,16 @@ bool VoxelSetBoundary::checkConnectivity(int nRegions) const {
   return graph.checkConnectivity(nRegions);
 }
 
+// VoxelSetBoundary::clippedVolume is the core of the element
+// homogeneity calculation.  It's called by
+// CSkeletonElement::categoryVolumes().  The checkTopology arg should
+// be true only during testing, and even then only if it's known that
+// the resulting clipped polyhedron is small.  The check is o(N^3) is
+// the number of vertices in the polyhedron.
+
 double VoxelSetBoundary::clippedVolume(
-			       const std::vector<COrientedPlane> &planes
+			       const std::vector<COrientedPlane> &planes,
+			       bool checkTopology
 #ifdef DEBUG
 			       , bool verbose
 #endif // DEBUG
@@ -2954,70 +2962,21 @@ double VoxelSetBoundary::clippedVolume(
   const
 {
   assert(!planes.empty());
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "VoxelSetBoundary::clippedVolume: initial clipping with plane "
-	    << planes[0] << std::endl;
-#endif // DEBUG
-  
   VSBGraph *clippedGraph = graph.copyAndClip(planes[0]);
-#ifdef DEBUG
-  if(verbose) {
-    oofcerr << "VoxelSetBoundary::clippedVolume: got clipped copy, size="
-	    << clippedGraph->size() << std::endl;
-  }
-  // if(!clippedGraph->checkEdges()) {
-  //   throw ErrProgrammingError("checkEdges failed for initial clipped graph!",
-  // 			      __FILE__, __LINE__);
-  // }
-  // if(!clippedGraph->checkConnectivity(0)) {
-  //   throw ErrProgrammingError(
-  // 		      "checkConnectivity failed for initial clipped graph!",
-  // 		      __FILE__, __LINE__);
-  // }
-  if(verbose)
-    oofcerr << "VoxelSetBoundary::clippedVolume: tests passed on clipped graph"
-	    << std::endl;
-#endif // DEBUG
   for(unsigned i=1; i<planes.size(); i++) {
-#ifdef DEBUG
-    if(verbose)
-      oofcerr << "VoxelSetBoundary::clippedVolume: clipping with plane "
-	      << planes[i] << std::endl;
-#endif // DEBUG
     clippedGraph->clipInPlace(planes[i]);
-#ifdef DEBUG
-    if(verbose) {
-      oofcerr << "VoxelSetBoundary::clippedVolume: clipped, size="
-	      << clippedGraph->size() << std::endl;
-    }
-    // if(!clippedGraph->checkEdges()) {
-    //   throw ErrProgrammingError("checkEdges failed!", __FILE__, __LINE__);
-    // }
-    // if(!clippedGraph->checkConnectivity(0)) {
-    //   throw ErrProgrammingError("checkConnectivity failed!",
-    // 				__FILE__, __LINE__);
-    // }
-    if(verbose)
-      oofcerr << "VoxelSetBoundary::clippedVolume:"
-	      << " tests passed on clipped graph" << std::endl;
-#endif // DEBUG
   }
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "VSBGraph::clippedVolume: getting volume" << std::endl;
-#endif // DEBUG
+  if(checkTopology) {
+    if(!clippedGraph->checkEdges()) {
+      throw ErrProgrammingError("checkEdges failed!", __FILE__, __LINE__);
+    }
+    if(!clippedGraph->checkConnectivity(0)) {
+      throw ErrProgrammingError("checkConnectivity failed!",
+				__FILE__, __LINE__);
+    }
+  }
   double vol = clippedGraph->volume();
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "VSBGraph::clippedVolume: volume=" << vol << std::endl;
-#endif // DEBUG
   delete clippedGraph;
-#ifdef DEBUG
-  if(verbose)
-    oofcerr << "VSBGraph::clippedVolume: done" << std::endl;
-#endif // DEBUG
-  
   return vol;
 }
   

@@ -673,7 +673,8 @@ void CMicrostructure::categorize() const {
 
 double CMicrostructure::clippedCategoryVolume(
 			      unsigned int cat,
-			      const std::vector<COrientedPlane> &planes
+			      const std::vector<COrientedPlane> &planes,
+			      bool checkTopology
 #ifdef DEBUG
 			      , bool verbose
 #endif // DEBUG
@@ -681,7 +682,7 @@ double CMicrostructure::clippedCategoryVolume(
   const
 {
   categorizeIfNecessary();
-  return categoryBdys[cat]->clippedVolume(planes
+  return categoryBdys[cat]->clippedVolume(planes, checkTopology
 #ifdef DEBUG
 					  , verbose
 #endif // DEBUG
@@ -703,7 +704,7 @@ double CMicrostructure::clipVSBVol(unsigned int cat, const COrientedPlane &pl)
   categorizeIfNecessary();
   assert(cat < categoryBdys.size());
   std::vector<COrientedPlane> planes(1, pl);
-  return categoryBdys[cat]->clippedVolume(planes
+  return categoryBdys[cat]->clippedVolume(planes, false
 #ifdef DEBUG
 					  , false // verbose
 #endif // DEBUG

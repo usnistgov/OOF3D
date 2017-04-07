@@ -296,7 +296,8 @@ public:
   double volume() const;
   const CRectangularPrism &bounds() const { return graph.bbox(); }
 
-  double clippedVolume(const std::vector<COrientedPlane>&
+  double clippedVolume(const std::vector<COrientedPlane>&,
+		       bool checkTopology
 #ifdef DEBUG
 		       , bool verbose
 #endif // DEBUG

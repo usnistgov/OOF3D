@@ -3494,6 +3494,59 @@ void CSkeleton::elementsAddGroupsDown(CGroupTrackerVector *vector) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// Check that that total volume of each category, summed over
+// elements, is the same as the volume of the voxels in the category.
+// Return true if the test passes.
+
+bool CSkeletonBase::checkCategoryVolumes(double tolerance) const {
+  const CMicrostructure *ms = getMicrostructure();
+  int ncat = ms->nCategories();
+  DoubleVec volumes(ncat, 0.0);
+  for(CSkeletonElementIterator elit = beginElements();
+      elit!=endElements(); ++elit)
+    {
+      // The bool checkTopology arg to categoryVolumes tells it to
+      // perform topology checks on the clipped voxel set boundaries.
+      // This is the only place where it should be set to true.  The
+      // test is o(N^3) in the size of the clipped boundary.
+      DoubleVec evols = (*elit)->categoryVolumes(ms, true);
+      for(unsigned int c=0; c<ncat; c++)
+	volumes[c] += evols[c];
+    }
+  // Count voxels in each category
+  std::vector<int> catCounts(ncat, 0);
+  const Array<int> *catMap = ms->getCategoryMap();
+  for(Array<int>::const_iterator i=catMap->begin(); i!=catMap->end(); ++i) {
+    catCounts[*i]++;
+  }
+  // Since categoryVolumes returns volumes in voxel units, the total
+  // volume of each category should be the number of voxels in the
+  // category.
+  bool ok = true;
+  for(int c=0; c<ncat; c++) {
+    if(catCounts[c] == 0) {
+      if(volumes[c] != 0) {
+	oofcerr << "CSkeletonBase::checkCategoryVolumes: category="
+		<< c << " volume=" << volumes[c] << " #voxels=" << catCounts[c]
+		<< " error=infinite!" << std::endl;
+	ok = false;
+      }
+    }
+    else {
+      double err = fabs(catCounts[c] - volumes[c])/catCounts[c];
+      if(err > tolerance) {
+	oofcerr << "CSkeletonBase::checkCategoryVolumes: category="
+		<< c << " volume=" << volumes[c] << " #voxels=" << catCounts[c]
+		<< " error=" << err << std::endl;
+	ok = false;
+      }
+    }
+  }
+  return ok;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 std::ostream &operator<<(std::ostream &os, const CSkeletonBase &skel) {
   skel.printSelf(os);
   return os;

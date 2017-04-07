@@ -289,6 +289,8 @@ public:
   bool checkExteriorSegments(CSkeletonSegmentVector*);
   bool checkExteriorFaces(CSkeletonFaceVector*);
 
+  bool checkCategoryVolumes(double);
+
   CDeputySkeleton *deputyCopy();
   CSkeleton *completeCopy();
   CSkeleton *sheriffSkeleton();

@@ -275,7 +275,8 @@ public:
   double volumeOfCategory(unsigned int) const;
   const CRectangularPrism &categoryBounds(unsigned int) const;
   double clippedCategoryVolume(unsigned int,
-			       const std::vector<COrientedPlane>&
+			       const std::vector<COrientedPlane>&,
+			       bool checkTopology
 #ifdef DEBUG
 			       , bool verbose
 #endif // DEBUG

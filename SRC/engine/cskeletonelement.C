@@ -537,10 +537,10 @@ static SLock globalElementCountLock;
    double elvol = volumeInVoxelUnits(MS);
    int category = 0;
 
-   const DoubleVec *volumes = categoryVolumes(MS);
+   const DoubleVec volumes = categoryVolumes(MS, false);
 
-   for(DoubleVec::size_type i=0; i<volumes->size(); ++i) {
-     double volume = (*volumes)[i];
+   for(DoubleVec::size_type i=0; i<volumes.size(); ++i) {
+     double volume = volumes[i];
      // oofcerr << " " << volume;
      totalVolume += volume;
      if(volume > maxvolume) {
@@ -553,7 +553,6 @@ static SLock globalElementCountLock;
    double homogeneity = maxvolume/elvol;
    // oofcerr << "CSkeletonElement::c_homogeneity: element=" << getIndex()
    // 	   << " homogeneity=" << homogeneity << std::endl;
-   delete volumes;
 
    if(homogeneity > 1.0)
      homogeneity = 1.0;
@@ -832,7 +831,13 @@ static unsigned int nVerbose = 0;
 
 #endif // DEBUG
 
-const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
+// categoryVolumes returns a vector containing the volume of the
+// intersection of this element with each voxel category.  It's used
+// by c_homogeneity to compute element homogeneities.  The
+// checkTopology argument should be false except during testing.
+
+const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
+						  bool checkTopology)
   const
 {
 #ifdef DEBUG
@@ -885,7 +890,7 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
   // Get the number of voxel categories.  This recomputes categories
   // and boundaries if needed.
   unsigned int ncat = ms->nCategories();
-  DoubleVec *result = new DoubleVec(ncat, 0.0);
+  DoubleVec result(ncat, 0.0);
   double totalVol = 0.0;
 
   try {
@@ -897,28 +902,28 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
 		<< std::endl;
 #endif // DEBUG
 
-      // Check for a boudning box intersection before doing the
+      // Check for a bounding box intersection before doing the
       // expensive polygon intersection calculation.  This reduces CPU
       // use by about 10% in an annealing operation.
       if(bbox.intersects(ms->categoryBounds(cat))) {
-	double vol = ms->clippedCategoryVolume(cat, planes
+	double vol = ms->clippedCategoryVolume(cat, planes, checkTopology
 #ifdef DEBUG
 					       , verboseCategory
 #endif // DEBUG
 					       );
 	totalVol += vol;
-	(*result)[cat] = vol;
+	result[cat] = vol;
       }
     }
 
     double actual = volumeInVoxelUnits(ms);
     double fracvol = (totalVol - actual)/actual;
     bool badvol = fabs(fracvol) >= VOLTOL;
-    if(true /*badvol || verbose*/) {
+    if(badvol) {
       oofcerr << "CSkeletonElement::categoryVolumes: element index=" << index
 	      << " uid=" << uid
 	      <<" measured volume=" << totalVol
-	      << " [" << *result << "]"
+	      << " [" << result << "]"
 	      << " actual=" << actual
 	      << " (error=" << fracvol*100 << "%)" << std::endl;
     }
@@ -936,8 +941,6 @@ const DoubleVec *CSkeletonElement::categoryVolumes(const CMicrostructure *ms)
   }
 
   return result;
-
-
 } // end CSkeletonElement::categoryVolumes
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

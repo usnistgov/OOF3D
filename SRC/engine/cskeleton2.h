@@ -334,6 +334,8 @@ public:
 
   const std::string *sanityCheck() const;
 
+  bool checkCategoryVolumes(double) const;
+
   // TODO 3.1: 3D need to move more functions below to the base?
   
 };				// CSkeletonBase

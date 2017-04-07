@@ -174,7 +174,7 @@ public:
   void pixelCoords(const CMicrostructure*, std::vector<Coord>&) const;
   
   // methods related to homogeneity, dominant pixel, and shape energy
-  const DoubleVec *categoryVolumes(const CMicrostructure *MS) const;
+  const DoubleVec categoryVolumes(const CMicrostructure *MS, bool) const;
   HomogeneityData c_homogeneity(const CMicrostructure *MS) const;
   void findHomogeneityAndDominantPixel(const CMicrostructure *MS) const;
   virtual double homogeneity(const CMicrostructure *MS) const;
