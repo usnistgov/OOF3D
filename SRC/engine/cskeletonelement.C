@@ -529,30 +529,30 @@ static SLock globalElementCountLock;
    }
 
    // writeDebugFile("computing homogeneity for element "+to_string(getUid())+"\n");
-   // oofcerr << "CSkeletonElement::c_homogeneity: computing element " << getUid()s
-   // 	  << ":";
 
    double maxvolume = 0;
    double totalVolume = 0;
-   double elvol = volumeInVoxelUnits(MS);
    int category = 0;
 
    const DoubleVec volumes = categoryVolumes(MS, false);
 
    for(DoubleVec::size_type i=0; i<volumes.size(); ++i) {
      double volume = volumes[i];
-     // oofcerr << " " << volume;
      totalVolume += volume;
      if(volume > maxvolume) {
        maxvolume = volume;
        category = i;
      }
    }
-   // oofcerr << std::endl;
 
-   double homogeneity = maxvolume/elvol;
+   // Use totalVolume instead of volumeInVoxelUnits() so that round
+   // off error in categoryVolumes can't make the homogeneity of a
+   // single-category element less than 1.0.
+   double homogeneity = maxvolume/totalVolume;
+   
    // oofcerr << "CSkeletonElement::c_homogeneity: element=" << getIndex()
-   // 	   << " homogeneity=" << homogeneity << std::endl;
+   // 	   << " homogeneity=" << homogeneity
+   // 	   << " (1-" << (1-homogeneity) <<")" << std::endl;
 
    if(homogeneity > 1.0)
      homogeneity = 1.0;
