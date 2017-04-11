@@ -203,24 +203,18 @@ class ElementModeGUI(SkeletonInfoModeGUI):
                 elif config.dimension() == 2:
                     earea = "%g" % element.area()
                 if not element.illegal():
-                    #domCat = element.dominantPixel(microstructure)
-                    domCat = -1
-                    debug.fmsg("NOT COMPUTING DOMINANT CATEGORY")
-                    # pixGrp = pixelgroup.pixelGroupNames(microstructure,
-                    #                                     domCat)
-                    # pixgrps = ", ".join(pixGrp)
-                    pixgrps = "not computed"
-                    #hom = "%f" % element.homogeneity(microstructure)
-                    hom = 'not computed'
-                    debug.fmsg("NOT COMPUTING HOMOGENEITY")
+                    domCat = element.dominantPixel(microstructure)
+                    pixGrp = pixelgroup.pixelGroupNames(microstructure,
+                                                        domCat)
+                    pixgrps = ", ".join(pixGrp)
+                    hom = "%f" % element.homogeneity(microstructure)
                     eshape = "%f" % element.energyShape()
-                    #mat = element.material(skeleton)
+                    mat = element.material(skeleton)
                     egrps = ','.join(element.groupNames())
-                    matname = "not computed"
-                    # if mat:
-                    #     matname = mat.name()
-                    # else:
-                    #     matname = "<No material>"
+                    if mat:
+                        matname = mat.name()
+                    else:
+                        matname = "<No material>"
                 else:           # illegal element
                     pixgrps = "???"
                     egrps = "???"
@@ -230,9 +224,6 @@ class ElementModeGUI(SkeletonInfoModeGUI):
                 mainthread.runBlock(self.update_thread,
                                     (etype, eid, earea, `domCat`, egrps, hom,
                                      eshape, matname))
-                # mainthread.runBlock(self.update_thread,
-                #                     (etype, eid, earea, pixgrps, egrps, hom,
-                #                      eshape, matname))
                 return
             finally:
                 skelctxt.end_reading()
