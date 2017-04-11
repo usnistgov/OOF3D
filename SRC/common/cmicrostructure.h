@@ -292,24 +292,10 @@ public:
   void saveClippedVSB(unsigned int, const COrientedPlane&, const std::string&)
     const;
 
-#if DIM==2
-  const std::vector<PixelSetBoundary> &getCategoryBdys() const {
-    return categoryBdys;
-  }
-#elif DIM==3
   const std::vector<VoxelSetBoundary*> &getCategoryBdys() const {
     return categoryBdys;
   }
-#endif // DIM==3
-#if defined(DEBUG) && DIM==3
   void drawVoxelSetBoundary(LineSegmentLayer*, int) const;
-//   void drawVoxelSetBoundaryLoops(LineSegmentLayer*, int cat, int dir,
-// 				 int offset, int normal) const;
-//   void drawVoxelSetCrossSection(LineSegmentLayer*, int cat, int dir,
-// 				int offset, int normal) const;
-//   void drawLoops(const std::vector<PixelBdyLoop*>&, const PixelPlane&,
-// 		 LineSegmentLayer*) const;
-#endif // DEBUG
 
   std::vector<ICoord> *segmentPixels(const Coord&, const Coord&, bool&, bool&,
 				     bool verbose)

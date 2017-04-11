@@ -152,11 +152,7 @@ public:
 			    int* cskel_edgecat);
 //   bool transitionPointWithPoints_unbiased(Coord *Point, Coord *Point,
 // 				 Coord *cskel_OutPoint);
-#ifdef DEBUG
   void drawVoxelSetBoundary(LineSegmentLayer*, int);
-  // void drawVoxelSetBoundaryLoops(LineSegmentLayer*, int, int, int, int);
-  // void drawVoxelSetCrossSection(LineSegmentLayer*, int, int, int, int);
-#endif // DEBUG
 };
 
 long get_globalMicrostructureCount();
