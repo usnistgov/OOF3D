@@ -284,6 +284,7 @@ public:
   CSkeletonBoundaryMap *getFaceBoundaries();
 
   %new string *compare(CSkeletonBase*, double);
+  %new string *compare2(CSkeletonBase*);
 
   bool onOuterFace(CSkeletonNodeVector *nodes);
   bool checkExteriorSegments(CSkeletonSegmentVector*);

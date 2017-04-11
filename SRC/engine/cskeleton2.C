@@ -30,6 +30,8 @@
 #include <algorithm>
 #include <limits>
 #include <math.h>
+#include <set>
+#include <map>
 #include <vtkCellLocator.h>
 #include <vtkDataArray.h>
 #include <vtkGenericCell.h>
@@ -2139,7 +2141,208 @@ std::string *CSkeleton::compare(CSkeletonBase* other, double tolerance)
   return new std::string("");
 } // CSkeleton::compare
 
+std::string *CSkeleton::compare2(const CSkeletonBase *other) const
+{
+  const CSkeleton *that = other->sheriffSkeleton();
+  std::vector<std::string> messages;
+  // Node indices may differ between the two skeletons.  Map nodes
+  // from one skeleton to the other using positions.
+  NodePositionMap nodes0, nodes1;
+  NodePositionSet pos0, pos1;
+  for(unsigned int i=0; i<nnodes(); ++i) {
+    nodes0[getNode(i)->position()] = i;
+    pos0.insert(getNode(i)->position());
+  }
+  for(unsigned int i=0; i<that->nnodes(); ++i) {
+    nodes1[that->getNode(i)->position()] = i;
+    pos1.insert(that->getNode(i)->position());
+  }
+  // Find the nodes that aren't partnered.
+  NodePositionSet ndiff;
+  std::set_difference(pos0.begin(), pos0.end(), pos1.begin(), pos1.end(),
+		      std::inserter(ndiff, ndiff.end()));
+  for(const Coord3D &missing : ndiff) {
+    messages.emplace_back("Node " + to_string(nodes0[missing]) +
+			  " at position " + to_string(missing) +
+			  " in this Skeleton is missing in that Skeleton");
+  }
+  ndiff.clear();
+  std::set_difference(pos1.begin(), pos1.end(), pos0.begin(), pos0.end(),
+		      std::inserter(ndiff, ndiff.end()));
+  for(const Coord3D &missing : ndiff) {
+    messages.emplace_back("Node " + to_string(nodes1[missing]) +
+			  " at position " + to_string(missing) +
+			  " in that Skeleton is missing in this Skeleton");
+  }
+  if(messages.empty()) {	// ie, nodes match up
+    // If the nodes have the same positions, look for sets of four
+    // elements that may have different common edges in the two
+    // Skeletons.  These would correspond to different ways of
+    // subdividing an element marked on all six edges, which is a
+    // likely source of differences between Skeletons when the
+    // roundoff in the homogeneity calculation changed.
+
+    // Find elements in this that aren't in that, and vv.
+    std::set<int> unmatchedEl0; // els in this but not in that.
+    std::set<int> unmatchedEl1; // els in that but not in this.
+    ElNodesMap elMap0, elMap1;
+    NodePosSetSet elements0, elements1;
+    for(CSkeletonElementIterator elit = beginElements(); elit != endElements();
+	++elit)
+      {
+	NodePositionSet nodes;
+	for(unsigned int i=0; i<4; i++)
+	  nodes.insert((*elit)->getNode(i)->position());
+	elMap0[nodes] = (*elit)->getIndex();
+	elements0.insert(nodes);
+      }
+    for(CSkeletonElementIterator elit = that->beginElements();
+	elit != that->endElements(); ++elit)
+      {
+	NodePositionSet nodes;
+	for(unsigned int i=0; i<4; i++)
+	  nodes.insert((*elit)->getNode(i)->position());
+	elMap1[nodes] = (*elit)->getIndex();
+	elements1.insert(nodes);
+      }
+    NodePosSetSet missing0, missing1;
+    // missing0 contains the elements in this that aren't in
+    // that. missing1 is the opposite.
+    std::set_difference(elements0.begin(), elements0.end(),
+			elements1.begin(), elements1.end(),
+			std::inserter(missing0, missing0.end()));
+    std::set_difference(elements1.begin(), elements1.end(),
+			elements0.begin(), elements0.end(),
+			std::inserter(missing1, missing1.end()));
+    
+    if(!missing0.empty() || !missing1.empty()) {
+      // For each element that doesn't have a match in the other
+      // skeleton, see if it's part of a set of four elements sharing
+      // an edge, and if that set of four has a match.
+      NodePosSetSet sixNodesSet0 = unmatchedSixNodeGroups(missing0, elMap0);
+      NodePosSetSet sixNodesSet1 = that->unmatchedSixNodeGroups(missing1,
+								elMap1);
+      // If a six node set occurs in both skeletons, then the elements
+      // in that set don't really disagree.  Remove them from the
+      // sets.
+      NodePosSetSet common;
+      std::set_intersection(sixNodesSet0.begin(), sixNodesSet0.end(),
+			    sixNodesSet1.begin(), sixNodesSet1.end(),
+			    std::inserter(common, common.end()));
+
+      oofcerr << "CSkeletonBase::compare2: found " << common.size()
+	      << " common groups of six nodes" << std::endl;
+      for(const NodePositionSet &nds : common) {
+	OOFcerrIndent indent(2);
+	oofcerr << "CSkeletonBase::compare2: ";
+	std::cerr << nds;
+	oofcerr << std::endl;
+      }
+
+      // For each unmatched element, see if it's in a shared group of
+      // six nodes.
+      NodePosSetSet okElements;
+      for(const NodePositionSet &nds : missing0) {
+	for(const NodePositionSet &sixNodes : common) {
+	  if(std::includes(sixNodes.begin(), sixNodes.end(),
+			   nds.begin(), nds.end()))
+	    {
+	      // This set of nodes is part of a common six node group.
+	      okElements.insert(nds);
+	      break;
+	    }
+	}
+      }
+      // Remove the ok elements from the missing element lists
+      NodePosSetSet badElements0;
+      std::set_difference(missing0.begin(), missing0.end(),
+			  okElements.begin(), okElements.end(),
+			  std::inserter(badElements0, badElements0.end()));
+      okElements.clear();
+      for(const NodePositionSet &nds : missing1) {
+	for(const NodePositionSet &sixNodes : common) {
+	  if(std::includes(sixNodes.begin(), sixNodes.end(),
+			   nds.begin(), nds.end()))
+	    {
+	      okElements.insert(nds);
+	      break;
+	    }
+	}
+      }
+      NodePosSetSet badElements1;
+      std::set_difference(missing1.begin(), missing1.end(),
+			  okElements.begin(), okElements.end(),
+			  std::inserter(badElements1, badElements1.end()));
+
+      for(const NodePositionSet &nds : badElements0) {
+	messages.emplace_back("Element " + to_string(elMap0[nds]) +
+			      " in this Skeleton is not in that one");
+      }
+      for(const NodePositionSet &nds : badElements1) {
+	messages.emplace_back("Element " + to_string(elMap1[nds]) +
+			      " in that Skeleton is not in this one");
+      }
+    } // end if there are missing elements in either skeleton
+  } // end if nodes match up
+
+  // Consolidate messages and return.
+  std::string *result = new std::string();
+  for(std::string &msg : messages) {
+    if(result->empty())
+      *result += msg;
+    else {
+      *result += "\n";
+      *result += msg;
+    }
+  }
+  if(result->empty())
+    *result += "OK!";
+  return result;
+}
+
+
+
+NodePosSetSet CSkeletonBase::unmatchedSixNodeGroups(const NodePosSetSet &els,
+						    const ElNodesMap &elMap
+						    )
+  const
+{
+  NodePosSetSet sixNodesSet;
+  for(const NodePositionSet &el0 : els) {
+    ElNodesMap::const_iterator it = elMap.find(el0);
+    assert(it != elMap.end());
+    unsigned int idx = it->second; // element index in Skeleton
+    const CSkeletonElement *elem0 = getElement(idx);
+    // Look at each segment of the element by looping over pairs of nodes
+    for(unsigned int j=0; j<3; j++) {
+      const CSkeletonNode *nj = elem0->getNode(j);
+      for(unsigned int k=j+1; k<4; k++) {
+	const CSkeletonNode *nk = elem0->getNode(k);
+	const CSkeletonSegment *seg = findExistingSegment(nj, nk);
+	if(seg->num_elements() == 4) {
+	  // Do the four elements on this segment use just six nodes?
+	  NodePositionSet segnodes({nj->position(), nk->position()});
+	  for(unsigned int e=0; e<4; e++) {
+	    for(const CSkeletonNode *nl : *seg->getElement(this, e)->getNodes())
+	      segnodes.insert(nl->position());
+	  }
+	  if(segnodes.size() == 6)
+	    sixNodesSet.insert(segnodes);
+	}
+      }
+    }
+  }
+  return sixNodesSet;
+}
+  
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 CSkeleton *CSkeleton::sheriffSkeleton() {
+  return this;
+}
+
+const CSkeleton *CSkeleton::sheriffSkeleton() const {
   return this;
 }
 
@@ -2569,6 +2772,10 @@ void CDeputySkeleton::deactivate() {
 }
 
 CSkeleton* CDeputySkeleton::sheriffSkeleton() {
+  return skeleton;
+}
+
+const CSkeleton* CDeputySkeleton::sheriffSkeleton() const {
   return skeleton;
 }
 

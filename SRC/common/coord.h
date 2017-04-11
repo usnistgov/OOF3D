@@ -114,11 +114,16 @@ class Coord3D
 public:
   typedef double ComponentType;
   double x[3];
-  Coord3D() { x[0] = 0.0; x[1] = 0.0; x[2] = 0.0 ;}
+  Coord3D() { x[0] = 0.0; x[1] = 0.0; x[2] = 0.0; }
   Coord3D(double x0, double y0, double z0) { x[0] = x0; x[1] = y0; x[2] = z0; }
   Coord3D(double *p) { x[0] = p[0]; x[1] = p[1]; x[2] = p[2]; }
   Coord3D(const Coord3D &c) { x[0] = c[0]; x[1] = c[1]; x[2] = c[2]; }
   virtual ~Coord3D() {}
+
+  inline Coord3D &operator=(const Coord3D &c) {
+    x[0] = c[0]; x[1] = c[1]; x[2] = c[2];
+    return *this;
+  }
   
   inline Coord3D &operator+=(const Coord3D &c) {
     x[0]+=c[0]; x[1]+=c[1]; x[2]+=c[2];

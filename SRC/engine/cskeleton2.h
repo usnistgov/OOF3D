@@ -22,6 +22,8 @@
 #include "engine/cskeletonselectable_i.h"
 
 #include <vtkSmartPointer.h>
+#include <set>
+#include <map>
 
 class FEMesh;
 class FaceSubstitution;
@@ -40,6 +42,14 @@ class vtkPoints;
 class vtkUnstructuredGrid;
 
 // TODO 3.1: make everything const that should be const.
+
+#ifdef DEBUG
+typedef std::set<Coord3D> NodePositionSet;
+typedef std::map<Coord3D, int> NodePositionMap;
+typedef std::map<const NodePositionSet, unsigned int> ElNodesMap;
+typedef std::set<const NodePositionSet> NodePosSetSet;
+
+#endif // DEBUG
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -286,6 +296,7 @@ public:
 
   // methods related to deputies and copying
   virtual CSkeleton *sheriffSkeleton() = 0;
+  virtual const CSkeleton *sheriffSkeleton() const = 0;
   virtual NodePositionsMap *getMovedNodes() const = 0;
   virtual void activate() = 0;
   CDeputySkeleton *deputyCopy();
@@ -335,6 +346,18 @@ public:
   const std::string *sanityCheck() const;
 
   bool checkCategoryVolumes(double) const;
+
+#ifdef DEBUG
+  // Code for checking that the differences between two Skeletons are
+  // understood.  Used to check that changes in reference files in the
+  // test suite aren't significant after changes to exactly how the
+  // homogeneity is computed, and roundoff error is causing the
+  // refinment routines to make different choices.
+  virtual std::string *compare2(const CSkeletonBase *other) const = 0;
+  NodePosSetSet unmatchedSixNodeGroups(const NodePosSetSet&,
+				       const ElNodesMap&) const;
+
+#endif // DEBUG
 
   // TODO 3.1: 3D need to move more functions below to the base?
   
@@ -476,6 +499,9 @@ public:
   virtual bool inSegmentMap(const CSkeletonMultiNodeKey &h) const;
 
   virtual std::string *compare(CSkeletonBase *other, double tolerance) const;
+#ifdef DEBUG
+  virtual std::string *compare2(const CSkeletonBase *other) const;
+#endif // DEBUG
 
   // boundaries
   void checkBoundaryNames(const std::string &name);
@@ -514,6 +540,7 @@ public:
 
   // methods related to deputies and sheriffs
   virtual CSkeleton* sheriffSkeleton();
+  virtual const CSkeleton* sheriffSkeleton() const;
   void addDeputy(CDeputySkeleton* dep);
   virtual NodePositionsMap *getMovedNodes() const;
   virtual void activate();
@@ -761,9 +788,15 @@ public:
   {
     return skeleton->compare(other, tolerance);
   }
+#ifdef DEBUG
+  virtual std::string *compare2(const CSkeletonBase *other) const {
+    return skeleton->compare2(other);
+  }
+#endif // DEBUG
 
   // stuff related to deputies
-  virtual CSkeleton* sheriffSkeleton();
+  virtual CSkeleton *sheriffSkeleton();
+  virtual const CSkeleton *sheriffSkeleton() const;
   virtual NodePositionsMap *getMovedNodes() const;
   virtual void activate();
   virtual void deactivate();

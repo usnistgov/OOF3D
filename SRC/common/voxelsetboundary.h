@@ -85,7 +85,9 @@ public:
   const VoxRot rotation;
   ProtoVSBNode(const VoxRot &rot);
   virtual ~ProtoVSBNode() {}
+#ifdef DEBUG
   void setSignature(unsigned char sig) const { signature = sig;}
+#endif // DEBUG
   
   // Pure virtual methods in this class are defined in subclasses
   // defined in voxelsetboundary.C.

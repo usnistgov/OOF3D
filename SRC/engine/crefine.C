@@ -366,6 +366,9 @@ ElementEdgeNodes *Refine::getElementEdgeNodes(CSkeletonElement *element,
   return elementEdgeNodes;
 }
 
+// TODO: Why are the isGood methods here instead of in
+// crefinementcriterion.C?
+
 bool MinimumVolume::isGood(CSkeletonBase *skeleton, CSkeletonMultiNodeSelectable *selectable)
   const
 {
