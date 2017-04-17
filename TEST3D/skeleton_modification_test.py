@@ -39,6 +39,23 @@ class SkeletonModify(unittest.TestCase):
             filename="skeleton_mod_test",
             mode="w", format="ascii",
             skeleton=skelname)
+        self.assert_(skelc.getObject().checkCategoryVolumes(1.e-10))
+
+        ## Keep this commented-out block, which might be useful if the
+        ## homogeneity calculation changes again.
+        # # Use CSkeleton::compare2 to check that changes to the element
+        # # homogeneity calculation have made only trivial changes to
+        # # the skeleton.  If compare2 returns "OK!" but the following
+        # # fp_file_compare fails, it's probably safe to replace the
+        # # reference file with skeleton_mod_test and carry on.
+        # OOF.Microstructure.Rename(microstructure='5color', name='modified')
+        # OOF.File.Load.Data(filename=reference_file("skeleton_data", compfile))
+        # skelc0 = skeletoncontext.skeletonContexts['modified:skeleton']
+        # skelc1 = skeletoncontext.skeletonContexts['5color:skeleton']
+        # print "Results from compare2:"
+        # print skelc0.getObject().compare2(skelc1.getObject())
+        # OOF.Microstructure.Delete(microstructure='modified')
+        
         self.assert_(file_utils.fp_file_compare(
                 "skeleton_mod_test",
                 os.path.join("skeleton_data", compfile),
@@ -77,115 +94,115 @@ def build_mod_args():
         
         [
             ("base_skel_refine", "refine_1True",
-          {"targets" : CheckAllElements(),
-           "criterion" : Unconditionally(),
-           "alpha" : 0.3}),
-         
-         ("base_skel_refine", "refine_2True",
-          {"targets" : CheckAllElements(),
-           "criterion" : MinimumVolume(threshold=10.0, unit='Voxel'),
-           "alpha" : 0.3}),
-         
-         ("base_skel_refine", "refine_2False",
-          {"targets" : CheckAllElements(),
-           "criterion" : MinimumVolume(threshold=50.0, unit='Voxel'),
-           "alpha" : 0.3}),
-             
-         ("base_skel_refine", "refine_3True",
-          {"targets" : CheckAllElements(),
-           "criterion" : MinimumVolume(threshold=10.0, unit='Physical'),
-           "alpha" : 0.3}),
-             
-         ("base_skel_refine", "refine_3False",
-          {"targets" : CheckAllElements(),
-           "criterion" : MinimumVolume(threshold=50.0, unit='Physical'),
-           "alpha" : 0.3}),
-             
-         ("base_skel_refine", "refine_4True",
-          {"targets" : CheckAllElements(),
-           "criterion" : MinimumVolume(threshold=0.002, unit='Fractional'),
-           "alpha" : 0.3}),
-             
-         ("base_skel_refine", "refine_4False",
-          {"targets" : CheckAllElements(),
-           "criterion" : MinimumVolume(threshold=50.0, unit='Fractional'),
-           "alpha" : 0.3}),
-        
-         ("base_skel_refine", "refine_5True",
-          { "targets" : CheckHomogeneity(threshold=1.0),
-            "criterion" : Unconditionally(),
-            "alpha" : 0.5}),
-             
-         ("base_skel_refine", "refine_5False",
-          { "targets" : CheckHomogeneity(threshold=0.4),
-            "criterion" : Unconditionally(),
-            "alpha" : 0.5}),
-             
-         ("base_skel_refine", "refine_6True",
-          {"targets" : CheckHomogeneity(threshold=1.0),
-           "criterion" : MinimumVolume(threshold=10.0, unit='Voxel'),
-           "alpha" : 0.3}),
-             
+             {"targets" : CheckAllElements(),
+              "criterion" : Unconditionally(),
+              "alpha" : 0.3}),
+            
+            ("base_skel_refine", "refine_2True",
+             {"targets" : CheckAllElements(),
+              "criterion" : MinimumVolume(threshold=10.0, unit='Voxel'),
+              "alpha" : 0.3}),
+            
+            ("base_skel_refine", "refine_2False",
+             {"targets" : CheckAllElements(),
+              "criterion" : MinimumVolume(threshold=50.0, unit='Voxel'),
+              "alpha" : 0.3}),
+            
+            ("base_skel_refine", "refine_3True",
+             {"targets" : CheckAllElements(),
+              "criterion" : MinimumVolume(threshold=10.0, unit='Physical'),
+              "alpha" : 0.3}),
+            
+            ("base_skel_refine", "refine_3False",
+             {"targets" : CheckAllElements(),
+              "criterion" : MinimumVolume(threshold=50.0, unit='Physical'),
+              "alpha" : 0.3}),
+            
+            ("base_skel_refine", "refine_4True",
+             {"targets" : CheckAllElements(),
+              "criterion" : MinimumVolume(threshold=0.002, unit='Fractional'),
+              "alpha" : 0.3}),
+            
+            ("base_skel_refine", "refine_4False",
+             {"targets" : CheckAllElements(),
+              "criterion" : MinimumVolume(threshold=50.0, unit='Fractional'),
+              "alpha" : 0.3}),
+            
+            ("base_skel_refine", "refine_5True",
+             { "targets" : CheckHomogeneity(threshold=1.0),
+               "criterion" : Unconditionally(),
+               "alpha" : 0.5}),
+            
+            ("base_skel_refine", "refine_5False",
+             { "targets" : CheckHomogeneity(threshold=0.4),
+               "criterion" : Unconditionally(),
+               "alpha" : 0.5}),
+            
+            ("base_skel_refine", "refine_6True",
+             {"targets" : CheckHomogeneity(threshold=1.0),
+              "criterion" : MinimumVolume(threshold=10.0, unit='Voxel'),
+              "alpha" : 0.3}),
+            
          ("base_skel_refine", "refine_6False",
           {"targets" : CheckHomogeneity(threshold=1.0),
            "criterion" : MinimumVolume(threshold=50.0, unit='Voxel'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_7True",
           {"targets" : CheckHomogeneity(threshold=1.0),
            "criterion" : MinimumVolume(threshold=10.0, unit='Physical'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_7False",
           {"targets" : CheckHomogeneity(threshold=1.0),
            "criterion" : MinimumVolume(threshold=50.0, unit='Physical'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_8True",
           {"targets" : CheckHomogeneity(threshold=1.0),
            "criterion" : MinimumVolume(threshold=0.002, unit='Fractional'),
            "alpha" : 0.3}),
-         
+            
          ("base_skel_refine", "refine_8False",
           {"targets" : CheckHomogeneity(threshold=1.0),
            "criterion" : MinimumVolume(threshold=50.0, unit='Fractional'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine","refine_9True",
           {"targets" : CheckElementsInGroup(group='egroup'),
            "criterion" : Unconditionally(),
            "alpha" : 0.5}),
-             
+            
          ("base_skel_refine", "refine_10True",
           {"targets" : CheckElementsInGroup(group='egroup'),
            "criterion" : MinimumVolume(threshold=10.0, unit='Voxel'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_10False",
           {"targets" : CheckElementsInGroup(group='egroup'),
            "criterion" : MinimumVolume(threshold=50.0, unit='Voxel'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_11True",
           {"targets" : CheckElementsInGroup(group='egroup'),
            "criterion" : MinimumVolume(threshold=10.0, unit='Physical'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_11False",
           {"targets" : CheckElementsInGroup(group='egroup'),
            "criterion" : MinimumVolume(threshold=50.0, unit='Physical'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_12True",
           {"targets" : CheckElementsInGroup(group='egroup'),
            "criterion" : MinimumVolume(threshold=0.002, unit='Fractional'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_12False",
           {"targets" : CheckElementsInGroup(group='egroup'),
            "criterion" : MinimumVolume(threshold=50.0, unit='Fractional'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine","refine_13True",
           {"targets" : CheckAllElements(),
            "criterion" : Unconditionally(),
@@ -196,215 +213,215 @@ def build_mod_args():
               threshold=1.0, choose_from=FromAllSegments()),
             "criterion" : Unconditionally(),
             "alpha" : 0.5}),
-             
+            
          ("base_skel_refine", "refine_17False",
           { "targets" : CheckHeterogeneousEdges(
               threshold=0.4, choose_from=FromAllSegments()),
             "criterion" : Unconditionally(),
             "alpha" : 0.5}),
-             
+            
          ("base_skel_refine", "refine_171True",
           { "targets" : CheckHeterogeneousEdges(
               threshold=1.0, choose_from=FromAllSegments()),
             "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
             "alpha" : 0.5}),
-             
+            
          ("base_skel_refine", "refine_171False",
           { "targets" : CheckHeterogeneousEdges(
               threshold=0.4, choose_from=FromAllSegments()),
             "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
             "alpha" : 0.5}),
-             
+            
          ("base_skel_refine", "refine_172True",
           { "targets" : CheckHeterogeneousEdges(
               threshold=1.0, choose_from=FromAllSegments()),
             "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
             "alpha" : 0.5}),
-             
+            
          ("base_skel_refine", "refine_172False",
           { "targets" : CheckHeterogeneousEdges(
               threshold=0.4, choose_from=FromAllSegments()),
             "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
             "alpha" : 0.5}),
-             
+            
          ("base_skel_refine", "refine_173True",
           { "targets" : CheckHeterogeneousEdges(
               threshold=1.0, choose_from=FromAllSegments()),
             "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
             "alpha" : 0.5}),
-             
+            
          ("base_skel_refine", "refine_173False",
           { "targets" : CheckHeterogeneousEdges(
               threshold=0.4, choose_from=FromAllSegments()),
             "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
             "alpha" : 0.5}),
-             
+            
          ("base_skel_refine", "refine_18True",
           {"targets" : CheckHeterogeneousEdges(
               threshold=1.0, choose_from=FromSelectedSegments()),
            "criterion" : Unconditionally(),
            "alpha" : 0.3}),
-              
+            
          ("base_skel_refine", "refine_18False",
           {"targets" : CheckHeterogeneousEdges(
               threshold=0.4, choose_from=FromSelectedSegments()),
            "criterion" : Unconditionally(),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_181True",
           {"targets" : CheckHeterogeneousEdges(
               threshold=1.0, choose_from=FromSelectedSegments()),
            "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_181False",
           {"targets" : CheckHeterogeneousEdges(
               threshold=0.4, choose_from=FromSelectedSegments()),
            "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_182True",
           {"targets" : CheckHeterogeneousEdges(
               threshold=1.0, choose_from=FromSelectedSegments()),
            "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_182False",
           {"targets" : CheckHeterogeneousEdges(
               threshold=0.4, choose_from=FromSelectedSegments()),
            "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_183True",
           {"targets" : CheckHeterogeneousEdges(
               threshold=1.0, choose_from=FromSelectedSegments()),
            "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
-               "alpha" : 0.3}),
-             
+           "alpha" : 0.3}),
+            
          ("base_skel_refine", "refine_183False",
           {"targets" : CheckHeterogeneousEdges(
               threshold=0.4, choose_from=FromSelectedSegments()),
            "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_19True",
           {"targets" : CheckHeterogeneousEdges(
               threshold=1.0, choose_from=FromSelectedElements()),
            "criterion" : Unconditionally(),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_19False",
           {"targets" : CheckHeterogeneousEdges(
               threshold=0.4, choose_from=FromSelectedElements()),
            "criterion" : Unconditionally(),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_191True",
           {"targets" : CheckHeterogeneousEdges(
               threshold=1.0, choose_from=FromSelectedElements()),
            "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_191False",
           {"targets" : CheckHeterogeneousEdges(
               threshold=0.4, choose_from=FromSelectedElements()),
            "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_192True",
           {"targets" : CheckHeterogeneousEdges(
               threshold=1.0, choose_from=FromSelectedElements()),
            "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_192False",
           {"targets" : CheckHeterogeneousEdges(
               threshold=0.4, choose_from=FromSelectedElements()),
            "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_193True",
           {"targets" : CheckHeterogeneousEdges(
               threshold=1.0, choose_from=FromSelectedElements()),
            "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_193False",
           {"targets" : CheckHeterogeneousEdges(
               threshold=0.4, choose_from=FromSelectedElements()),
            "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine","refine_20True",
           {"targets" : CheckSelectedEdges(),
            "criterion" : Unconditionally(),
            "alpha" : 0.5}),
-             
+            
          ("base_skel_refine", "refine_21True",
           {"targets" : CheckSelectedEdges(),
            "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
            "alpha" : 0.3}),
-         
+            
          ("base_skel_refine", "refine_21False",
           {"targets" : CheckSelectedEdges(),
            "criterion" : MinimumLength(threshold=50.0, unit='Voxel'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_22True",
           {"targets" : CheckSelectedEdges(),
            "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_22False",
           {"targets" : CheckSelectedEdges(),
            "criterion" : MinimumLength(threshold=50.0, unit='Physical'),
            "alpha" : 0.3}),
-         
+            
          ("base_skel_refine", "refine_23True",
           {"targets" : CheckSelectedEdges(),
            "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_23False",
           {"targets" : CheckSelectedEdges(),
            "criterion" : MinimumLength(threshold=50.0, unit='Fractional'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine","refine_24True",
           {"targets" : CheckSegmentsInGroup(group='sgroup'),
            "criterion" : Unconditionally(),
            "alpha" : 0.5}),
-             
+            
          ("base_skel_refine", "refine_25True",
           {"targets" : CheckSegmentsInGroup(group='sgroup'),
            "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_25False",
           {"targets" : CheckSegmentsInGroup(group='sgroup'),
            "criterion" : MinimumLength(threshold=50.0, unit='Voxel'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_26True",
           {"targets" : CheckSegmentsInGroup(group='sgroup'),
            "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_26False",
           {"targets" : CheckSegmentsInGroup(group='sgroup'),
            "criterion" : MinimumLength(threshold=50.0, unit='Physical'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_27True",
           {"targets" : CheckSegmentsInGroup(group='sgroup'),
            "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_27False",
           {"targets" : CheckSegmentsInGroup(group='sgroup'),
            "criterion" : MinimumLength(threshold=50.0, unit='Fractional'),
-               "alpha" : 0.3}),
-             
+           "alpha" : 0.3}),
+            
          ("base_skel_refine", "refine_28True",
           { "targets" : CheckSelectedFaces(),
             "criterion" : Unconditionally(),
@@ -414,7 +431,7 @@ def build_mod_args():
           {"targets" : CheckSelectedFaces(),
            "criterion" : MinimumArea(threshold=10.0, unit='Voxel'),
            "alpha" : 0.3}),
-             
+            
          ("base_skel_refine", "refine_29False",
           {"targets" : CheckSelectedFaces(),
            "criterion" : MinimumArea(threshold=50.0, unit='Voxel'),
@@ -641,12 +658,15 @@ def build_mod_args():
               "alpha" : 0.3
               }
              ),
+
+            ## Uncomment after implementing CheckAspectRatio in 3D
             # ("modgroups","snaprefine_4",
             #  {"targets" : CheckAspectRatio(threshold=1.5),
             #   "criterion" : Unconditionally(),
             #   "min_distance" : 0.01,
             #   }
             #  ),
+                
             ("modgroups","snaprefine_5",
              {"targets" : CheckHeterogeneousEdges(
                  threshold=1, choose_from=FromAllSegments()),
@@ -1731,7 +1751,7 @@ class Skeleton_Undo(unittest.TestCase):
     # Test Undo and redo that run up against the limits of a small
     # undo buffer.  To repeat the same sequence with both regular
     # Skeletons and Deputies, the next two tests each define a
-    # functions that does the modifications, and pass it to
+    # function that does the modifications, and pass it to
     # smallBuffer(), which does the testing.
     @memorycheck.check("skeltest")
     def SmallBufferAnneal(self):
@@ -1867,5 +1887,5 @@ test_set = [
 ]
 
 # test_set = [
-#     Refine("AllRules"),
+#     Skeleton_Undo("SmallBufferRefine")
 # ]
