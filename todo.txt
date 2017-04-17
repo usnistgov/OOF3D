@@ -37,3 +37,9 @@ Migrate to Python 3.x
 Convert pixel category array to octree, and construct voxel set
 boundaries from the octree, or compute element homogeneity from octree
 elements instead of voxels.  Maybe.
+
+Move swig output to the build directory, and remove SRC/SWIG3D).  The
+way it is now, building dist3d after building debug3d fails, because
+the swig output files contain code generated from #ifdef DEBUG blocks,
+but those output files are in SRC/SWIG3D and aren't rebuilt when the
+build options are changed.  Do this in 2D too.
