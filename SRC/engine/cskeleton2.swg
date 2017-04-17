@@ -136,7 +136,7 @@ public:
 
   CMicrostructure *getMicrostructure();
   // vtkUnstructuredGridPtr getGrid();
-  void getVtkCells(SkeletonFilter*, vtkUnstructuredGridPtr);
+  // void getVtkCells(SkeletonFilter*, vtkUnstructuredGridPtr);
   vtkDataArrayPtr getMaterialCellData(SkeletonFilter*);
   vtkDataArrayPtr getEnergyCellData(double, SkeletonFilter*);
   vtkPointsPtr getPoints();

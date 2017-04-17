@@ -178,6 +178,12 @@ public:
   virtual vtkSmartPointer<vtkUnstructuredGrid> getGrid() const = 0;
   virtual void getVtkCells(SkeletonFilter*, 
 			   vtkSmartPointer<vtkUnstructuredGrid>) = 0;
+#ifdef DEBUG
+  virtual void getVtkSegments(SkeletonFilter*, 
+			      vtkSmartPointer<vtkUnstructuredGrid>) = 0;
+  virtual void getExtraVtkSegments(CSkeletonBase*,
+				   vtkSmartPointer<vtkUnstructuredGrid>) = 0;
+#endif // DEBUG
   const std::string &getElementType(int eidx);
   virtual vtkSmartPointer<vtkDataArray> getMaterialCellData(
 					   const SkeletonFilter*) const = 0;
@@ -421,6 +427,12 @@ public:
   }
   virtual void getVtkCells(SkeletonFilter*,
 			   vtkSmartPointer<vtkUnstructuredGrid>);
+#ifdef DEBUG
+  virtual void getVtkSegments(SkeletonFilter*, 
+			      vtkSmartPointer<vtkUnstructuredGrid>);
+  virtual void getExtraVtkSegments(CSkeletonBase*,
+				   vtkSmartPointer<vtkUnstructuredGrid>);
+#endif // DEBUG
   virtual vtkSmartPointer<vtkDataArray> getMaterialCellData(
 						   const SkeletonFilter*) const;
   virtual vtkSmartPointer<vtkDataArray> getEnergyCellData(
@@ -615,6 +627,18 @@ public:
   {
     skeleton->getVtkCells(f, g);
   }
+#ifdef DEBUG
+  virtual void getVtkSegments(SkeletonFilter *f,
+			      vtkSmartPointer<vtkUnstructuredGrid> g)
+  {
+    skeleton->getVtkSegments(f, g);
+  }
+  virtual void getExtraVtkSegments(CSkeletonBase *other,
+				   vtkSmartPointer<vtkUnstructuredGrid> g)
+  {
+    skeleton->getExtraVtkSegments(other, g);
+  }
+#endif // DEBUG
   virtual vtkSmartPointer<vtkDataArray> getMaterialCellData(
 					   const SkeletonFilter *filter) const
   {

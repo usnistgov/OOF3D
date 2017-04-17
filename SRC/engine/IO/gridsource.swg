@@ -27,7 +27,9 @@
 %}
 
 // This is a bit of a hack.  SkeletonGridSourcePtr is not derived from
-// GridSourcePtr in C++, but swig doesn't need to know that.
+// GridSourcePtr in C++, but swig doesn't need to know that.  The
+// XXXPtr objects swigged here are typedef'd vtkSmartPointers, defined
+// in gridsource.h.
 
 // Inconsistent capitalization is due to bad interaction of vtk and
 // oof naming conventions.
@@ -72,5 +74,42 @@ public:
 
 SkeletonGridSourcePtr newSkeletonGridSource();
 MeshGridSourcePtr newMeshGridSource();
+
+#ifdef DEBUG
+
+class SkeletonSegmentGridSourcePtr : public GridSourcePtr {
+public:
+  ~SkeletonSegmentGridSourcePtr();
+  %addmethods {
+    void setSkeleton(CSkeletonBase *skel) {
+      (*self)->Setskeleton(skel);
+    }
+    void setFilter(SkeletonFilter *f) {
+      (*self)->SetFilter(f);
+    }
+  }
+};
+  
+SkeletonSegmentGridSourcePtr newSkeletonSegmentGridSource();
+
+class SkeletonEdgeDiffGridSourcePtr : public GridSourcePtr {
+public:
+  ~SkeletonEdgeDiffGridSourcePtr();
+  %addmethods {
+    void setSkeleton(CSkeletonBase *skel) {
+      (*self)->Setskeleton(skel);
+    }
+    void setOther(CSkeletonBase *other) {
+      (*self)->Setother(other);
+    }
+    void setFilter(SkeletonFilter*f) {
+      // This is a hack
+    }
+  }
+};
+
+SkeletonEdgeDiffGridSourcePtr newSkeletonEdgeDiffGridSource();
+
+#endif // DEBUG
 
 #endif // GRIDSOURCE_SWG

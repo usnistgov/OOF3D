@@ -48,6 +48,7 @@ from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
 from ooflib.common.IO import placeholder
 from ooflib.common.IO import reporter
+from ooflib.common.IO import whoville
 from ooflib.common.IO import xmlmenudump
 from ooflib.engine import mesh
 from ooflib.engine import skeletoncontext
@@ -273,7 +274,6 @@ class SkeletonDisplayMethod(SkelMeshDisplayMethod):
         hoo = self.who()
         if hoo and hoo.resolve(self.gfxwindow).path() == skeletonname:
             self.source.Modified()
-
 
 class MeshDisplayMethod(display.AnimationLayer, SkelMeshDisplayMethod):
     # A display method that displays data from a Mesh at positions
@@ -586,6 +586,84 @@ skeledges = registeredclass.Registration(
     discussion=xmlmenudump.loadFile(
         'DISCUSSIONS/engine/reg/skeletonedgedisplay.xml')
     )
+
+# SkeletonEdgeOnlyDisplay displays just the edges, and, unlike
+# SkeletonEdgeDisplay, doesn't display invisible faces, so the the
+# tets aren't selectable.  However, since the display is based on
+# segments, the filter acts on segments.  The filter in
+# SkeletonEdgeDisplay acts on elements, so it can't be used to display
+# segment groups.
+
+class SkeletonEdgeOnlyDisplay(EdgeDisplay, SkeletonDisplayMethod):
+    def __init__(self, width=defaultSkeletonWidth, color=defaultSkeletonColor,
+                 filter=defaultSkeletonFilter):
+        self.width = width
+        self.color = color
+        SkeletonDisplayMethod.__init__(self, filter)
+    # The only differences between SkeletonEdgeOnlyDisplay and
+    # SkeletonEdgeDisplay are that SkeletonEdgeOnlyDisplay uses
+    # SkeletonSegmentGridSource and CSkeleton::getVtkSegments instead
+    # of SkeletonGridSource and CSkeleton::getVtkCells, and it uses
+    # SegmentGridCanvasLayer instead of WireGridCanvasLayer.
+    def vtkSource(self):
+        return gridsource.newSkeletonSegmentGridSource()
+    def newLayer(self):
+        self.source = self.vtkSource()
+        canvaslayer = gridlayers.SegmentGridCanvasLayer(
+            self.gfxwindow.oofcanvas, self.name(), self.source)
+        return canvaslayer
+
+class SkeletonEdgeDiffDisplay(EdgeDisplay, SkeletonDisplayMethod):
+    def __init__(self, other, width=defaultSkeletonWidth,
+                 color=defaultSkeletonColor):
+        self.other = other
+        self.width = width
+        self.color = color
+        SkeletonDisplayMethod.__init__(self, filter=defaultSkeletonFilter)
+    def setParams(self):
+        EdgeDisplay.setParams(self)
+        debug.fmsg("self.other=", self.other)
+        self.source.setOther(whoville.getClass('Skeleton')[self.other].getObject())
+    def vtkSource(self):
+        return gridsource.newSkeletonEdgeDiffGridSource()
+    def newLayer(self):
+        self.source = self.vtkSource()
+        canvaslayer = gridlayers.SegmentGridCanvasLayer(
+            self.gfxwindow.oofcanvas, self.name(), self.source)
+        return canvaslayer
+
+if debug.debug:
+    registeredclass.Registration(
+        'Segments Only',
+        display.DisplayMethod,
+        SkeletonEdgeOnlyDisplay,
+        ordering=0.001,
+        layerordering=display.Linear,
+        params=[
+            color.ColorParameter('color', defaultSkeletonColor,
+                                 tip=parameter.emptyTipString),
+            IntRangeParameter('width', (1,10), defaultSkeletonWidth,
+                              tip="Line thickness, in pixels"),
+            parameter.RegisteredParameter(
+                'filter', skeletonfilter.SkeletonFilterPtr,
+                defaultSkeletonFilter, tip="Visualization filter")],
+        whoclasses = ('Skeleton',),
+        tip="Draw the disassociated edges of Skeleton Elements (debugging)",
+    )
+
+    registeredclass.Registration(
+        'Skeleton Edge Diff',
+        display.DisplayMethod,
+        SkeletonEdgeDiffDisplay,
+        ordering=10000,
+        layerordering=display.Linear,
+        params=[
+            whoville.WhoParameter('other', whoville.getClass('Skeleton')),
+            color.ColorParameter('color', defaultSkeletonColor),
+            IntRangeParameter('width', (1,10), defaultSkeletonWidth)],
+        whoclasses = ('Skeleton',)
+        )
+
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -1042,90 +1120,90 @@ ghostgfxwindow.DefaultLayer(mesh.meshes, defaultMeshEdgeDisplay)
 ## Methods for displaying parts of the voxel set boundary intersection
 ## with a single skeleton element.
 
-from ooflib.common.IO import microstructuredisplay
+# from ooflib.common.IO import microstructuredisplay
 
-class ElementPixelPlaneIntersection(display.DisplayMethod):
-    def __init__(self, element, direction, offset, color, line_width):
-        self.element = element
-        self.direction = direction
-        self.offset = offset
-        self.color = color
-        self.line_width = line_width
-        display.DisplayMethod.__init__(self)
+# class ElementPixelPlaneIntersection(display.DisplayMethod):
+#     def __init__(self, element, direction, offset, color, line_width):
+#         self.element = element
+#         self.direction = direction
+#         self.offset = offset
+#         self.color = color
+#         self.line_width = line_width
+#         display.DisplayMethod.__init__(self)
 
-    def newLayer(self):
-        return canvaslayers.LineSegmentLayer(self.gfxwindow.oofcanvas,
-                                             "ElementPixelPlaneIntersection")
+#     def newLayer(self):
+#         return canvaslayers.LineSegmentLayer(self.gfxwindow.oofcanvas,
+#                                              "ElementPixelPlaneIntersection")
 
-    def setParams(self):
-        self.canvaslayer.set_color(self.color)
-        self.canvaslayer.set_lineWidth(self.line_width)
-        skel = self.who().getObject(self.gfxwindow)
-        if skel:
-            direction = microstructuredisplay.dirDict[self.direction]
-            el = skel.getElement(self.element)
-            el.drawPlaneIntersection(self.canvaslayer, skel, direction,
-                                     self.offset)
+#     def setParams(self):
+#         self.canvaslayer.set_color(self.color)
+#         self.canvaslayer.set_lineWidth(self.line_width)
+#         skel = self.who().getObject(self.gfxwindow)
+#         if skel:
+#             direction = microstructuredisplay.dirDict[self.direction]
+#             el = skel.getElement(self.element)
+#             el.drawPlaneIntersection(self.canvaslayer, skel, direction,
+#                                      self.offset)
 
-## Intersect an element with a VSB boundary in a single pixel plane
+# ## Intersect an element with a VSB boundary in a single pixel plane
 
-class ElementPixelPlaneVSBIntersection(display.DisplayMethod):
-    def __init__(self, element, category, direction, offset, normal,
-                 color, line_width):
-        self.element = element  # element uid (or index?)
-        self.category = category # voxel category
-        self.direction = direction # PixelPlane direction
-        self.offset = offset       # PixelPlane offset
-        self.normal = normal
-        self.color = color
-        self.line_width = line_width
-        display.DisplayMethod.__init__(self)
+# class ElementPixelPlaneVSBIntersection(display.DisplayMethod):
+#     def __init__(self, element, category, direction, offset, normal,
+#                  color, line_width):
+#         self.element = element  # element uid (or index?)
+#         self.category = category # voxel category
+#         self.direction = direction # PixelPlane direction
+#         self.offset = offset       # PixelPlane offset
+#         self.normal = normal
+#         self.color = color
+#         self.line_width = line_width
+#         display.DisplayMethod.__init__(self)
 
-    def newLayer(self):
-        return canvaslayers.LineSegmentLayer(self.gfxwindow.oofcanvas,
-                                             "ElementPixelPlaneVSBIntersection")
+#     def newLayer(self):
+#         return canvaslayers.LineSegmentLayer(self.gfxwindow.oofcanvas,
+#                                              "ElementPixelPlaneVSBIntersection")
 
-    def setParams(self):
-        self.canvaslayer.set_color(self.color)
-        self.canvaslayer.set_lineWidth(self.line_width)
-        skel = self.who().getObject(self.gfxwindow)
-        if skel:
-            direction = microstructuredisplay.dirDict[self.direction]
-            normal = microstructuredisplay.nrmlDict[self.normal]
-            el = skel.getElement(self.element)
-            el.drawPlaneVSBIntersection(self.canvaslayer, skel,
-                                        self.category,
-                                        direction, self.offset, normal)
+#     def setParams(self):
+#         self.canvaslayer.set_color(self.color)
+#         self.canvaslayer.set_lineWidth(self.line_width)
+#         skel = self.who().getObject(self.gfxwindow)
+#         if skel:
+#             direction = microstructuredisplay.dirDict[self.direction]
+#             normal = microstructuredisplay.nrmlDict[self.normal]
+#             el = skel.getElement(self.element)
+#             el.drawPlaneVSBIntersection(self.canvaslayer, skel,
+#                                         self.category,
+#                                         direction, self.offset, normal)
 
-    def whoChanged(self):
-        return True             # call setParams
+#     def whoChanged(self):
+#         return True             # call setParams
 
-## Intersect an element with a voxel group
+# ## Intersect an element with a voxel group
 
-class ElementVoxelCategoryIntersectionEdges(display.DisplayMethod):
-    def __init__(self, element, category, planeFacets, color, line_width):
-        self.element = element
-        self.category = category
-        self.planeFacets = planeFacets
-        self.color = color
-        self.line_width = line_width
-        display.DisplayMethod.__init__(self)
+# class ElementVoxelCategoryIntersectionEdges(display.DisplayMethod):
+#     def __init__(self, element, category, planeFacets, color, line_width):
+#         self.element = element
+#         self.category = category
+#         self.planeFacets = planeFacets
+#         self.color = color
+#         self.line_width = line_width
+#         display.DisplayMethod.__init__(self)
 
-    def newLayer(self):
-        return canvaslayers.LineSegmentLayer(
-            self.gfxwindow.oofcanvas,
-            "ElementVoxelCategoryIntersectionEdges")
+#     def newLayer(self):
+#         return canvaslayers.LineSegmentLayer(
+#             self.gfxwindow.oofcanvas,
+#             "ElementVoxelCategoryIntersectionEdges")
 
-    def setParams(self):
-        self.canvaslayer.set_color(self.color)
-        self.canvaslayer.set_lineWidth(self.line_width)
-        skel = self.who().getObject(self.gfxwindow)
-        if skel:
-            el = skel.getElement(self.element)
-            el.drawVoxelCategoryIntersection(self.canvaslayer, skel,
-                                             self.category, self.planeFacets)
-    def whoChanged(self):
-        return True
+#     def setParams(self):
+#         self.canvaslayer.set_color(self.color)
+#         self.canvaslayer.set_lineWidth(self.line_width)
+#         skel = self.who().getObject(self.gfxwindow)
+#         if skel:
+#             el = skel.getElement(self.element)
+#             el.drawVoxelCategoryIntersection(self.canvaslayer, skel,
+#                                              self.category, self.planeFacets)
+#     def whoChanged(self):
+#         return True
 
 class DrawLinesFromFile(display.DisplayMethod):
     ## TODO: The data may have been written by a routine that used

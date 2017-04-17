@@ -166,6 +166,85 @@ vtkSmartPointer<vtkAbstractCellLocator> WireGridCanvasLayer::get_locator() {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+SegmentGridCanvasLayer::SegmentGridCanvasLayer(
+			       GhostOOFCanvas *c,
+			       const std::string &nm,
+			       vtkSmartPointer<GridSource> gridsrc)
+  : OOFCanvasLayer(c, nm),
+    gridsource(gridsrc),
+    edgeActor(vtkSmartPointer<vtkActor>::New()),
+    edgeMapper(vtkSmartPointer<vtkDataSetMapper>::New())
+    // locator(vtkSmartPointer<oofCellLocator>::New())
+{
+  addProp(edgeActor);
+  edgeActor->SetMapper(edgeMapper);
+  edgeActor->GetProperty()->SetRepresentationToWireframe(); // Needed??
+  vtkSmartPointer<vtkUnstructuredGrid> grid = gridsource->GetOutput();
+  // locator->LazyEvaluationOn();
+  // locator->SetDataSet(grid);
+  set_clipping(canvas->clipping(), canvas->invertedClipping());
+}
+
+SegmentGridCanvasLayer::~SegmentGridCanvasLayer() {}
+
+const std::string &SegmentGridCanvasLayer::classname() const {
+  static const std::string nm("SegmentGridCanvasLayer");
+  return nm;
+}
+
+void SegmentGridCanvasLayer::setModified() {
+  gridsource->Modified();
+}
+
+void SegmentGridCanvasLayer::set_color(const CColor &lineColor) {
+  edgeActor->GetProperty()->SetColor(lineColor.getRed(),
+				     lineColor.getGreen(),
+				     lineColor.getBlue());
+}
+
+void SegmentGridCanvasLayer::set_lineWidth(int lineWidth) {
+  edgeActor->GetProperty()->SetLineWidth(lineWidth);
+}
+
+void SegmentGridCanvasLayer::start_clipping() {
+  edgeClipper = getClipper(this);
+  // gridsource->GetOutput()->GetProducerPort() looks wrong to me, but
+  // I'm just copying old code...
+  edgeClipper->SetInputConnection(gridsource->GetOutput()->GetProducerPort());
+  edgeMapper->SetInputConnection(edgeClipper->GetOutputPort());
+}
+
+void SegmentGridCanvasLayer::stop_clipping() {
+  if(clipState == CLIP_ON) {
+    edgeClipper = vtkSmartPointer<vtkTableBasedClipDataSet>();
+  }
+  edgeMapper->SetInput(gridsource->GetOutput());
+}
+
+void SegmentGridCanvasLayer::set_clip_parity(bool inverted) {
+  edgeClipper->SetInsideOut(inverted);
+}
+
+// vtkSmartPointer<vtkProp3D> SegmentGridCanvasLayer::get_pickable_prop3d() {
+//   return edgeActor;
+// }
+
+// vtkSmartPointer<vtkDataSet> SegmentGridCanvasLayer::get_pickable_dataset() {
+//   return gridsource->GetOutput();
+// }
+
+// vtkSmartPointer<vtkPoints> SegmentGridCanvasLayer::get_pickable_points() {
+//   return vtkSmartPointer<vtkPoints>(gridsource->GetOutput()->GetPoints());
+// }
+
+// vtkSmartPointer<vtkAbstractCellLocator> SegmentGridCanvasLayer::get_locator() {
+//   locator->Initialize();
+//   locator->SetDataSet(gridsource->GetOutput());
+//   return locator;
+// }
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 FilledGridCanvasLayer::FilledGridCanvasLayer(GhostOOFCanvas *canvas,
 					     const std::string &nm,
 					     vtkSmartPointer<GridSource> gs)

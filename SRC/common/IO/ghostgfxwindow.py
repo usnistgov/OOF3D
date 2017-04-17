@@ -1218,6 +1218,8 @@ class GhostGfxWindow:
             self.releaseGfxLock()
         self.draw()
 
+    # In GUI/gfxwindow3d.py, draw() is redefined to call the canvas's
+    # render() method.
     def draw(self, *args, **kwargs):
         subthread.execute(self._draw, args, kwargs)
 

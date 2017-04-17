@@ -1015,6 +1015,82 @@ void CSkeleton::getVtkCells(SkeletonFilter *filter,
   }
 }
 
+#ifdef DEBUG
+void CSkeleton::getVtkSegments(SkeletonFilter *filter,
+			       vtkSmartPointer<vtkUnstructuredGrid> grd)
+{
+  OOFcerrIndent inden(2);
+  cleanUp();
+  grd->Initialize();
+  filter->resetMap();
+  grd->Allocate(elements.size()/2, elements.size()/2);
+  grd->SetPoints(points);
+  for(CSkeletonSegmentIterator sit=beginSegments(); sit!=endSegments(); ++sit) {
+    const CSkeletonSegment *seg = (*sit).second;
+    if(filter->acceptable(seg, this)) {
+      VTKCellType type = seg->getCellType();
+      vtkIdType ids[2];
+      seg->getPointIds(ids);
+      /*vtkIdType cellID = */ grd->InsertNextCell(type, 2, ids);
+      // filter->mapCellIndex(cellID, seg->getIndex());
+    }
+  }
+}
+
+void CSkeleton::getExtraVtkSegments(CSkeletonBase *other,
+				    vtkSmartPointer<vtkUnstructuredGrid> grd)
+{
+  // Display segments in this Skeleton that aren't in that one.
+  cleanUp();
+  CSkeleton *that = other->sheriffSkeleton();
+  that->cleanUp();
+  // First make sets of all segments in the two Skeletons,
+  // representing them by Coords because node indexing may
+  // not be the same.
+  typedef std::pair<Coord3D, Coord3D> CoordPair;
+  std::set<CoordPair> thatSegs, thisSegs;
+  std::map<CoordPair, const CSkeletonSegment*> segMap;
+  for(CSkeletonSegmentIterator i=beginSegments(); i!=endSegments(); i++)
+    {
+      CSkeletonSegment *seg = i->second;;
+      Coord3D p0 = seg->getNode(0)->position();
+      Coord3D p1 = seg->getNode(1)->position();
+      if(p0 < p1) {
+	thisSegs.emplace(p0, p1);
+	segMap[CoordPair(p0, p1)] = seg;
+      }
+      else {
+	thisSegs.emplace(p1, p0);
+	segMap[CoordPair(p1, p0)] = seg;
+      }
+    }
+  for(CSkeletonSegmentIterator i=that->beginSegments(); i!=that->endSegments();
+      i++)
+    {
+      CSkeletonSegment *seg = i->second;
+      Coord3D p0 = seg->getNode(0)->position();
+      Coord3D p1 = seg->getNode(1)->position();
+      if(p0 < p1)
+	thatSegs.emplace(p0, p1);
+      else
+	thatSegs.emplace(p1, p0);
+    }
+  std::set<CoordPair> diff;
+  std::set_difference(thisSegs.begin(), thisSegs.end(),
+		      thatSegs.begin(), thatSegs.end(),
+		      std::inserter(diff, diff.end()));
+  grd->Initialize();
+  grd->Allocate(diff.size(), diff.size());
+  grd->SetPoints(points);
+  for(auto &ptpair : diff) {
+    const CSkeletonSegment *seg = segMap[ptpair];
+    vtkIdType ids[2];
+    seg->getPointIds(ids);
+    grd->InsertNextCell(seg->getCellType(), 2, ids);
+  }
+}
+#endif // DEBUG
+
 vtkSmartPointer<vtkDataArray> CSkeleton::getMaterialCellData(
 					    const SkeletonFilter *filter)
   const 

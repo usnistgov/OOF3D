@@ -36,6 +36,13 @@ public:
   void set_lineWidth(int);
 };
 
+class SegmentGridCanvasLayer : public OOFCanvasLayer {
+public:
+  SegmentGridCanvasLayer(GhostOOFCanvas*, const char*, GridSourcePtr);
+  void set_color(const CColor&);
+  void set_lineWidth(int);
+};
+
 class FilledGridCanvasLayer : public OOFCanvasLayer {
 public:
   void set_lookupTable(vtkLookupTablePtr, double, double);
