@@ -1154,6 +1154,7 @@ def set_platform_values():
             platform['incdirs'].append('/usr/X11R6/include/')
         if os.path.exists('/opt') and DIM_3: # macports
             platform['incdirs'].append('/opt/local/include')
+            platform['libdirs'].append('/opt/local/lib')
             vtkinc, vtklib = findvtk(home, '/opt/local', '/usr/local')
             if vtkinc is not None:
                 platform['libdirs'].append(vtklib)
