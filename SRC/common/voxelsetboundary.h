@@ -256,7 +256,7 @@ class VSBGraph {
   bool checkEdges() const;
   bool checkConnectivity(int nRegions) const;
   void dump(std::ostream &) const;
-  void dumpLines(std::ostream &) const;
+  void dumpLines(std::ostream&, const CMicrostructure*) const;
 };
 
 class VSBEdgeIterator {
@@ -311,8 +311,11 @@ public:
   bool checkEdges() const;
   bool checkConnectivity(int) const;
   void dump(std::ostream &os) const { graph.dump(os); }
-  void dumpLines(std::ostream &os) const { graph.dumpLines(os); }
-  void saveClippedVSB(std::vector<COrientedPlane>&, const std::string&) const;
+  void dumpLines(std::ostream &os) const {
+    graph.dumpLines(os, microstructure);
+  }
+  void saveClippedVSB(const std::vector<COrientedPlane>&,
+		      const std::string&) const;
 };
 
 void initializeProtoNodes();

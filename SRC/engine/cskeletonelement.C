@@ -778,7 +778,7 @@ unsigned int CSkeletonElement::getOtherFaceIndex(unsigned int f,
 // VOLTOL is the allowed fractional error in the sum of the volumes of
 // the voxel categories relative to the total volume of the element.
 //#define VOLTOL 5.e-4
-#define VOLTOL 1.e-10
+#define VOLTOL 1.e-6
 
 #ifdef DEBUG
 static std::set<unsigned int> vcategories;
@@ -866,7 +866,7 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
   OOFcerrIndent indent(2);
 #endif // DEBUG
 
-  // Get the corners and planes of the element in pixel coordinates.
+  // Get the corners and planes of the element in voxel coordinates.
   std::vector<Coord3D> epts;
   std::vector<COrientedPlane> planes;
   planes.reserve(4);
@@ -926,6 +926,15 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
 	      << " [" << result << "]"
 	      << " actual=" << actual
 	      << " (error=" << fracvol*100 << "%)" << std::endl;
+      oofcerr << "CSkeletonElement::categoryVolumes: saving VSBs:" << std::endl;
+      for(unsigned int cat=0; cat < ncat; cat++) {
+	if(result[cat] > 0) {
+	  std::string filename = "vsb_" + to_string(cat);
+	  oofcerr << "CSkeletonElement::categoryVolumes: " << filename
+		  << std::endl;
+	  ms->saveClippedVSB(cat, planes, filename);
+	}
+      }
     }
     if(badvol) {
       throw ErrProgrammingError("categoryVolumes: total volume check failed!",

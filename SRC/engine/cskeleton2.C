@@ -869,13 +869,16 @@ void CSkeletonBase::calculateHomogeneityIndex() const {
   DefiniteProgress *progress = 
     dynamic_cast<DefiniteProgress*>(getProgress("Calculating homogeneity index",
 						DEFINITE));
+  const CMicrostructure *ms = getMicrostructure();
   try {
+    double vtot = 0.0;		// total volume
     for(CSkeletonElementIterator elit = beginElements(); 
 	elit != endElements(); ++elit)
       {
 	if(!(*elit)->illegal()) {
 	  homogeneityIndex +=
-	    (*elit)->volume()*(*elit)->homogeneity(getMicrostructure());
+	    (*elit)->volume()*(*elit)->homogeneity(ms);
+	  vtot += (*elit)->volume();
 	  if((*elit)->suspect()) 
 	    ++suspectCount;
 	}
@@ -885,7 +888,16 @@ void CSkeletonBase::calculateHomogeneityIndex() const {
 	progress->setMessage(to_string((*elit)->getIndex()) + "/" +
 			     to_string(nelements()));
       }
-    homogeneityIndex /= volume();
+    // Using the sum of the volumes of the legal elements, instead of
+    // the total volume of the microstructure, in the denominator of
+    // the homogeneity index avoids a round-off error problem that
+    // makes the index be slightly greater than 1 in some tests (eg,
+    // OOF_ElasticTimeSteppers("SS22") in solver_test.py).  The index
+    // isn't actually used for computation, so this fudge isn't
+    // crucial.  The problem isn't due to the presence of illegal
+    // elements.
+    // homogeneityIndex /= volume();
+    homogeneityIndex /= vtot;
     ++homogeneity_index_computation_time;
     ++illegal_count_computation_time;
     ++suspect_count_computation_time;

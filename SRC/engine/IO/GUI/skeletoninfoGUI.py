@@ -206,7 +206,7 @@ class ElementModeGUI(SkeletonInfoModeGUI):
                     domCat = element.dominantPixel(microstructure)
                     pixGrp = pixelgroup.pixelGroupNames(microstructure,
                                                         domCat)
-                    pixgrps = ", ".join(pixGrp)
+                    #pixgrps = ", ".join(pixGrp)
                     hom = "%f" % element.homogeneity(microstructure)
                     eshape = "%f" % element.energyShape()
                     mat = element.material(skeleton)
@@ -216,7 +216,8 @@ class ElementModeGUI(SkeletonInfoModeGUI):
                     else:
                         matname = "<No material>"
                 else:           # illegal element
-                    pixgrps = "???"
+                    domCat = "Not Computed"
+                    #pixgrps = "???"
                     egrps = "???"
                     hom = "???"
                     eshape = "???"

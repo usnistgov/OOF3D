@@ -721,6 +721,16 @@ void CMicrostructure::saveClippedVSB(unsigned int cat, const COrientedPlane &pl,
   categoryBdys[cat]->saveClippedVSB(planes, filename);
 }
 
+void CMicrostructure::saveClippedVSB(unsigned int cat,
+				     const std::vector<COrientedPlane> &planes,
+				     const std::string &filename)
+  const
+{
+  categorizeIfNecessary();
+  assert(cat < categoryBdys.size());
+  categoryBdys[cat]->saveClippedVSB(planes, filename);
+}
+
 double CMicrostructure::volumeOfCategory(unsigned int cat) const {
   categorizeIfNecessary();
   if(cat >= nCategories())

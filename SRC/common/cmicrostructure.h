@@ -291,6 +291,8 @@ public:
   double clipVSBVol(unsigned int, const COrientedPlane&) const;
   void saveClippedVSB(unsigned int, const COrientedPlane&, const std::string&)
     const;
+  void saveClippedVSB(unsigned int, const std::vector<COrientedPlane>&,
+		      const std::string&) const;
 
   const std::vector<VoxelSetBoundary*> &getCategoryBdys() const {
     return categoryBdys;

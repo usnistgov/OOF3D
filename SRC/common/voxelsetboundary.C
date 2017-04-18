@@ -2422,6 +2422,23 @@ Coord3D VSBGraph::center() const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// TODO: getDistances() computes a lot of distances that aren't ever
+// used, especially when clipping with the first face or two of a tet
+// when the graph is still large.  We don't really need to know the
+// distance from a point to the plane unless the point is on an edge
+// that crosses the plane.  Most of the time we just need to know
+// which side of the plane a point is one.
+//
+// (1) Does this calculation take a significant amount of time?
+//
+// (2) Can we create an octree that can quickly tell which side of the
+// plane a point is on, at least for points that are far from the
+// plane?  Is it faster than COrientedPlane::distance?  (Powell & Abel
+// suggest splitting volume across longest direction, instead of
+// dividing in 8.  They also say it's not worth the effort unless
+// there are a lot of voxels.)
+
+
 std::vector<double> VSBGraph::getDistances(const COrientedPlane &plane,
 					   double &dmin, double &dmax)
   const
@@ -2669,7 +2686,7 @@ double VSBGraph::volume() const {
     } // end loop over pstart
   } // end loop over vstart
 
-  return vol/6.;
+  return vol/6.;       // factors of 1/2 from area and 1/3 from volume
 } // end VSBGraph::volume
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -2856,11 +2873,12 @@ void VSBGraph::dump(std::ostream &os) const {
 }
 
 // Write out the edges in a plottable form
-void VSBGraph::dumpLines(std::ostream &os) const {
+void VSBGraph::dumpLines(std::ostream &os, const CMicrostructure *ms) const {
   for(const VSBNode *vertex : vertices) {
     for(VSBNode *nbr : vertex->neighbors) {
       if(nbr && vertex->index < nbr->index)
-	os << vertex->position << ", " << nbr->position << " # "
+	os << ms->pixel2Physical(vertex->position) << ", "
+	   << ms->pixel2Physical(nbr->position) << " # "
 	   << vertex->index << " " << nbr->index << std::endl;
     }
   }
@@ -2980,12 +2998,10 @@ double VoxelSetBoundary::clippedVolume(
   return vol;
 }
   
-void VoxelSetBoundary::saveClippedVSB(std::vector<COrientedPlane> &planes,
+void VoxelSetBoundary::saveClippedVSB(const std::vector<COrientedPlane> &planes,
 				      const std::string &filenamebase)
   const
 {
-  oofcerr << "VoxelSetBoundary::saveClippedVSB: filenamebase="
-	  << filenamebase <<std::endl;
   VSBGraph *clippedGraph = graph.copyAndClip(planes[0]);
   for(unsigned int i=1; i<planes.size(); i++) {
     clippedGraph->clipInPlace(planes[i]);
@@ -2994,7 +3010,6 @@ void VoxelSetBoundary::saveClippedVSB(std::vector<COrientedPlane> &planes,
   clippedGraph->dump(f);
   f.close();
   std::ofstream f2(filenamebase+".lines");
-  clippedGraph->dumpLines(f2);
+  clippedGraph->dumpLines(f2, microstructure);
   f2.close();
-  oofcerr << "VoxelSetBoundary::saveClippedVSB: done" << std::endl;
 }
