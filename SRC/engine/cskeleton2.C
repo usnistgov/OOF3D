@@ -3794,7 +3794,7 @@ void CSkeleton::elementsAddGroupsDown(CGroupTrackerVector *vector) {
 
 bool CSkeletonBase::checkCategoryVolumes(double tolerance) const {
   const CMicrostructure *ms = getMicrostructure();
-  int ncat = ms->nCategories();
+  unsigned int ncat = ms->nCategories();
   DoubleVec volumes(ncat, 0.0);
   for(CSkeletonElementIterator elit = beginElements();
       elit!=endElements(); ++elit)
@@ -3817,7 +3817,7 @@ bool CSkeletonBase::checkCategoryVolumes(double tolerance) const {
   // volume of each category should be the number of voxels in the
   // category.
   bool ok = true;
-  for(int c=0; c<ncat; c++) {
+  for(unsigned int c=0; c<ncat; c++) {
     if(catCounts[c] == 0) {
       if(volumes[c] != 0) {
 	oofcerr << "CSkeletonBase::checkCategoryVolumes: category="

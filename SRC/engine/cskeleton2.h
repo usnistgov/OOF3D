@@ -47,7 +47,10 @@ class vtkUnstructuredGrid;
 typedef std::set<Coord3D> NodePositionSet;
 typedef std::map<Coord3D, int> NodePositionMap;
 typedef std::map<const NodePositionSet, unsigned int> ElNodesMap;
-typedef std::set<const NodePositionSet> NodePosSetSet;
+// g++ on Linux complains if NodePosSetSet is defined as
+// std::set<const NodePositionSet> for some reason.  clang++ on Mac is
+// ok with it.
+typedef std::set<NodePositionSet> NodePosSetSet;
 
 #endif // DEBUG
 
