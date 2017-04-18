@@ -230,8 +230,8 @@ class CLibInfo:
                         platform['extra_compile_args'],
                     include_dirs = self.includeDirs + platform['incdirs'],
                     library_dirs = self.externalLibDirs + platform['libdirs'],
-                    libraries = [self.libname] + self.externalLibs,
-                                                        # + platform['libs'],
+                    libraries = ([self.libname] + self.externalLibs +
+                                 platform['libs']),
                     extra_link_args = self.extra_link_args + \
                         platform['extra_link_args']
                     )
@@ -246,7 +246,7 @@ class CLibInfo:
                 sources=self.dirdata['cfiles'],
                 extra_compile_args=platform['extra_compile_args'],
                 include_dirs=self.includeDirs + platform['incdirs'],
-                libraries=self.externalLibs,# + platform['libs'],
+                libraries=self.externalLibs + platform['libs'],
                 library_dirs=self.externalLibDirs +
                 platform['libdirs'],
                 extra_link_args=platform['extra_link_args'])
@@ -1063,7 +1063,7 @@ def get_global_args():
     # hasn't been called yet.
 
     global HAVE_MPI, HAVE_OPENMP, HAVE_PETSC, DEVEL, NO_GUI, \
-        ENABLE_SEGMENTATION, \
+        ENABLE_SEGMENTATION, PROFILER, \
         DIM_3, DATADIR, DOCDIR, OOFNAME, SWIGDIR, NANOHUB, vtkdir
     HAVE_MPI = _get_oof_arg('--enable-mpi')
     HAVE_PETSC = _get_oof_arg('--enable-petsc')
@@ -1074,6 +1074,7 @@ def get_global_args():
     NANOHUB = _get_oof_arg('--nanoHUB')
     HAVE_OPENMP = _get_oof_arg('--enable-openmp')
     vtkdir = _get_oof_arg('--vtkdir')
+    PROFILER = _get_oof_arg('--enable-profiler')
 
     # The following determine some secondary installation directories.
     # They will be created within the main installation directory
@@ -1117,10 +1118,14 @@ def set_platform_values():
     platform['blas_libs'] = []
     platform['blas_link_args'] = []
     platform['libdirs'] = []
+    platform['libs'] = []
     platform['incdirs'] = [get_config_var('INCLUDEPY')]
     platform['extra_link_args'] = []
     platform['prelink_suppression_arg'] = []
     platform['extra_swig_args'] = []
+
+    if PROFILER:
+        platform['libs'].append('profiler')
 
     if os.path.exists('/usr/local/lib'):
         platform['libdirs'].append('/usr/local/lib')
@@ -1179,6 +1184,10 @@ def set_platform_values():
             platform['extra_compile_args'].append('-Wno-self-assign')
             platform['extra_compile_args'].append(
                 '-Wno-tautological-constant-out-of-range-compare')
+        if PROFILER:
+            # Disable Address Space Layout Randomization
+            # http://stackoverflow.com/questions/10562280/line-number-in-google-perftools-cpu-profiler-on-macosx
+            platform['extra_link_args'].append('-Wl,-no_pie')
             
     elif sys.platform.startswith('linux'):
         # g2c isn't included here, because it's not always required.
