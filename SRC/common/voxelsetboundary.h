@@ -254,7 +254,7 @@ class VSBGraph {
   const CRectangularPrism &bbox() const { return bounds; }
   
   bool checkEdges() const;
-  bool checkConnectivity(int nRegions) const;
+  bool checkConnectivity(unsigned int nRegions) const;
   void dump(std::ostream &) const;
   void dumpLines(std::ostream&, const CMicrostructure*) const;
 };
@@ -309,7 +309,7 @@ public:
 
   // bool verify() const { return graph.verify(); }
   bool checkEdges() const;
-  bool checkConnectivity(int) const;
+  bool checkConnectivity(unsigned int) const;
   void dump(std::ostream &os) const { graph.dump(os); }
   void dumpLines(std::ostream &os) const {
     graph.dumpLines(os, microstructure);

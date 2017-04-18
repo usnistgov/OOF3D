@@ -210,10 +210,10 @@ public:
   virtual CSkeletonFaceIterator endFaces() const = 0;
   
   // basic info
-  virtual int nnodes() const = 0;
-  virtual int nelements() const = 0;
-  virtual int nsegments() const = 0;
-  virtual int nfaces() const = 0;
+  virtual unsigned int nnodes() const = 0;
+  virtual unsigned int nelements() const = 0;
+  virtual unsigned int nsegments() const = 0;
+  virtual unsigned int nfaces() const = 0;
   virtual double volume() const = 0;
   virtual bool getPeriodicity(int dim) const = 0;
   virtual int getIllegalCount() = 0;
@@ -478,16 +478,16 @@ public:
 
   // TODO 3.1: need to subtract defunct things?  Not subtracting
   // doesn't seem to be causing a problem...
-  virtual int nnodes() const {
+  virtual unsigned int nnodes() const {
     return nodes.size();
   }
-  virtual int nelements() const {
+  virtual unsigned int nelements() const {
     return elements.size();
   }
-  virtual int nsegments() const {
+  virtual unsigned int nsegments() const {
     return segments.size();
   }
-  virtual int nfaces() const {
+  virtual unsigned int nfaces() const {
     return faces.size();
   }
   virtual double volume() const {
@@ -703,16 +703,16 @@ public:
   virtual int nDeputies() const { return 0; }
 
   // basic info
-  virtual int nnodes() const {
+  virtual unsigned int nnodes() const {
     return skeleton->nnodes();
   }
-  virtual int nelements() const {
+  virtual unsigned int nelements() const {
     return skeleton->nelements();
   }
-  virtual int nsegments() const {
+  virtual unsigned int nsegments() const {
     return skeleton->nsegments();
   }
-  virtual int nfaces() const {
+  virtual unsigned int nfaces() const {
     return skeleton->nfaces();
   }
   virtual double volume() const {

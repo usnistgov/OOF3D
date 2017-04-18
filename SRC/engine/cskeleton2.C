@@ -577,7 +577,7 @@ void CSkeleton::addGridFacesToBoundaries(const ICoord &idx, const ICoord &nml,
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 void CSkeleton::checkIllegality() {
-  for(int i=0; i<nelements(); ++i) {
+  for(unsigned int i=0; i<nelements(); ++i) {
     if(elements[i]->illegal()) {
       illegal_ = true;
       return;
@@ -589,7 +589,7 @@ void CSkeleton::checkIllegality() {
 int CSkeleton::getIllegalCount() {
   if(illegal_count_computation_time < timestamp) {
     illegalCount = 0;
-    for(int i=0; i<nelements(); ++i) {
+    for(unsigned int i=0; i<nelements(); ++i) {
       if(elements[i]->illegal())
 	  ++illegalCount;
     }
@@ -601,7 +601,7 @@ int CSkeleton::getIllegalCount() {
 int CSkeleton::getSuspectCount() {
   if(suspect_count_computation_time < timestamp) {	
     suspectCount = 0;
-    for(int i=0; i<nelements(); ++i) {
+    for(unsigned int i=0; i<nelements(); ++i) {
       if(elements[i]->suspect()) {
 	++suspectCount;
       } 
@@ -613,7 +613,7 @@ int CSkeleton::getSuspectCount() {
 
 void CSkeleton::getIllegalElements(CSkeletonElementVector &baddies) const {
   baddies.clear();
-  for(int i=0; i<nelements(); ++i) {
+  for(unsigned int i=0; i<nelements(); ++i) {
     if(elements[i]->illegal())
       baddies.push_back(elements[i]);
   }
@@ -622,7 +622,7 @@ void CSkeleton::getIllegalElements(CSkeletonElementVector &baddies) const {
 
 void CSkeleton::getSuspectElements(CSkeletonElementVector &baddies) const {
   baddies.clear();
-  for(int i=0; i<nelements(); ++i) {
+  for(unsigned int i=0; i<nelements(); ++i) {
     if(elements[i]->suspect())
       baddies.push_back(elements[i]);
   }
@@ -911,7 +911,7 @@ void CSkeletonBase::calculateHomogeneityIndex() const {
 
 double CSkeletonBase::energyTotal(double alpha) const {
   double total = 0;
-  for(int i=0; i<nelements(); ++i) {
+  for(unsigned int i=0; i<nelements(); ++i) {
     total += getElement(i)->energyTotal(getMicrostructure(), alpha);
   }
   return total;
@@ -977,7 +977,7 @@ vtkSmartPointer<vtkCellLocator> CSkeleton::get_element_locator() {
 const CSkeletonNode* CSkeletonBase::nearestNode(Coord *point) {
   int idx = get_point_locator()->FindClosestPoint(point->xpointer());
 #ifdef DEBUG
-  if(idx < 0 || idx >= nnodes()) {
+  if(idx < 0 || (unsigned int) idx >= nnodes()) {
     oofcerr << "CSkeletonBase::nearestNode: idx=" << idx << std::endl;
     throw ErrProgrammingError("FindClosestPoint failed", __FILE__, __LINE__);
   }
@@ -2114,7 +2114,7 @@ std::string *CSkeleton::compare(CSkeletonBase* other, double tolerance)
   double tol2 = tolerance*tolerance;
   double diff;
   double diff2;
-  for(int i = 0; i < nnodes(); ++i) {
+  for(unsigned int i = 0; i < nnodes(); ++i) {
     Coord x1  = getNode(i)->position();
     Coord x2 = omar->getNode(i)->position();
     diff2 = 0;
@@ -2467,7 +2467,6 @@ void CSkeleton::needsHash() {
 
 
 void CSkeleton::populate_femesh(FEMesh *realmesh, Material *mat) {
-  int i;
   // TODO 3.1: for now we're assuming order 1
   
   // Calling cleanUp() here ensures that node and element indices
@@ -2487,14 +2486,14 @@ void CSkeleton::populate_femesh(FEMesh *realmesh, Material *mat) {
   // skeleton nodes!  Should each skeleton node keep a std::set of
   // mesh node pointers?
 
-  for(i=0; i<nnodes(); ++i) {
+  for(unsigned int i=0; i<nnodes(); ++i) {
     realmesh->newFuncNode(nodes[i]->position());
   }
 
   // TODO 3.1: Add nodes for higher order elements.
 
   // make the elements
-  for(i=0; i<nelements(); ++i) {
+  for(unsigned int i=0; i<nelements(); ++i) {
     // CSkeletonElement::realElement() creates an element from the
     // appropriate MasterElement and calls FEMesh::addElement().
     elements[i]->realElement(realmesh, i, /*fnodes,*/ this, mat);

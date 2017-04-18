@@ -14,6 +14,7 @@
 #include "common/voxelsetboundary.h"
 #include "common/cmicrostructure.h"
 #include "common/printvec.h"
+#include <limits>
 
 #define swap(x, y) { auto temp = x; x = y; y = temp; }
 
@@ -2747,7 +2748,7 @@ bool VSBGraph::checkEdges() const {
 // nRegions is positive and not equal to the number of regions, also
 // return false.
 
-bool VSBGraph::checkConnectivity(int nRegions) const {
+bool VSBGraph::checkConnectivity(unsigned int nRegions) const {
   // First find the regions.  region[i] is -1 if the node hasn't yet
   // been assigned to a region.
   int nreg = 0;
@@ -2959,7 +2960,7 @@ bool VoxelSetBoundary::checkEdges() const {
   return graph.checkEdges();
 }
 
-bool VoxelSetBoundary::checkConnectivity(int nRegions) const {
+bool VoxelSetBoundary::checkConnectivity(unsigned int nRegions) const {
   return graph.checkConnectivity(nRegions);
 }
 

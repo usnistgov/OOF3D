@@ -693,8 +693,10 @@ bool CMicrostructure::checkVSB(unsigned int cat) const {
   categorizeIfNecessary();
   assert(cat < categoryBdys.size());
   bool ok = categoryBdys[cat]->checkEdges();
-  if(ok)
-    ok = categoryBdys[cat]->checkConnectivity(-1);
+  if(ok) {
+    // arg=0 means don't check # of regions
+    ok = categoryBdys[cat]->checkConnectivity(0);
+  }
   return ok;
 }
 
