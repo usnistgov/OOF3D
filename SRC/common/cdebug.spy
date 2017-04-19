@@ -26,3 +26,12 @@ if config.debug():
 else:
     def writeDebugFile(*args):
         pass
+
+if not config.profiler():
+    # If PROFILER is defined, then these functions are swigged.  If
+    # it's not defined, these dummy functions will prevent calls in
+    # Python from causing problems.
+    def ProfilerStart(filename):
+        pass
+    def ProfilerStop():
+        pass

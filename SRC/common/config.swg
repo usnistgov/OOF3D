@@ -82,6 +82,14 @@ bool nanoHUB() {
 #endif
 }
 
+bool profiler() {
+#ifdef PROFILER
+  return true;
+#else
+  return false;
+#endif
+}
+ 
 %}
 
 bool no_gui();
@@ -92,5 +100,6 @@ int enablempi();
 bool enable_segmentation();
 int dimension();
 bool nanoHUB();
+bool profiler();
 
 #endif // CONFIG_SWG

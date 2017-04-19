@@ -387,6 +387,8 @@ def swig_clibs(dry_run, force, debug, build_temp, with_swig=None):
     extra_args = platform['extra_swig_args']
     if debug:
         extra_args.append('-DDEBUG')
+    if PROFILER:
+        extra_args.append('-DPROFILER')
     for clib in allCLibs.values():
         for swigfile in clib.dirdata['swigfiles']:
             # run_swig requires a src dir and an input file path
@@ -466,7 +468,7 @@ class oof_build_xxxx:
                 os.system('mkdir -p %s' % os.path.join(self.build_temp, 'SRC'))
                 cfgfile = open(cfgfilename, "w")
                 print >> cfgfile, """\
-// This file was created automatically by the oof2 setup script.
+// This file was created automatically by the oof3d setup script.
 // Do not edit it.
 // Re-run setup.py to change the options.
 #ifndef OOFCONFIG_H
@@ -486,6 +488,13 @@ class oof_build_xxxx:
                     print >> cfgfile, '#define ENABLE_SEGMENTATION'
                 if NANOHUB:
                     print >> cfgfile, '#define NANOHUB'
+                if PROFILER:
+                    if self.check_header("<gperftools/profiler.h>"):
+                        print >> cfgfile, '#define PROFILER'
+                        print >> cfgfile, '#include <gperftools/profiler.h>'
+                    else:
+                        print >> sys.stderr, "Can't find perftools!"
+                        sys.exit(1)
                 if DIM_3:
                     print >> cfgfile, '#define DIM 3'
                     print >> cfgfile, '#define DIM_3'
@@ -1124,8 +1133,11 @@ def set_platform_values():
     platform['prelink_suppression_arg'] = []
     platform['extra_swig_args'] = []
 
+    # Not really platform-specific, but this is a convenient spot to
+    # set these options...
     if PROFILER:
         platform['libs'].append('profiler')
+        platform['extra_compile_args'].append('-DPROFILER')
 
     if os.path.exists('/usr/local/lib'):
         platform['libdirs'].append('/usr/local/lib')

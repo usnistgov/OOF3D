@@ -18,7 +18,10 @@
 
 %{
 #include "common/cdebug.h"
-  void segfault();
+void segfault();
+#ifdef PROFILER
+#include <gperftools/profiler.h>
+#endif // PROFILER
 %}
 %pragma(python) include="cdebug.spy"
 
@@ -33,5 +36,10 @@ void writeDebugFile_(char*, char*, int);
 void closeDebugFile();
 
 void spinCycle(int);
+
+#ifdef PROFILER
+void ProfilerStart(char*);
+void ProfilerStop();
+#endif // PROFILER
 
 #endif // CDEBUG_SWG
