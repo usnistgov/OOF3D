@@ -488,13 +488,6 @@ class oof_build_xxxx:
                     print >> cfgfile, '#define ENABLE_SEGMENTATION'
                 if NANOHUB:
                     print >> cfgfile, '#define NANOHUB'
-                if PROFILER:
-                    if self.check_header("<gperftools/profiler.h>"):
-                        print >> cfgfile, '#define PROFILER'
-                        print >> cfgfile, '#include <gperftools/profiler.h>'
-                    else:
-                        print >> sys.stderr, "Can't find perftools!"
-                        sys.exit(1)
                 if DIM_3:
                     print >> cfgfile, '#define DIM 3'
                     print >> cfgfile, '#define DIM_3'
@@ -506,6 +499,12 @@ class oof_build_xxxx:
                         print >> cfgfile, '#define VTK_EXCLUDE_STRSTREAM_HEADERS'
                 else:
                     print >> cfgfile, '// #define HAVE_SSTREAM'
+                if PROFILER:
+                    if self.check_header("<gperftools/profiler.h>"):
+                        print >> cfgfile, '#include <gperftools/profiler.h>'
+                    else:
+                        print >> sys.stderr, "Can't find perftools!"
+                        sys.exit(1)
                 # Python pre-2.5 compatibility
                 print >> cfgfile, """\
 #include <Python.h>
@@ -527,7 +526,7 @@ typedef int Py_ssize_t;
         #include %s
         int main(int, char**) { return 1; }
         """ % headername
-        tmpfile.flush()
+        tmpfile.close()
         try:
             try:
                 ofiles = self.compiler.compile(
@@ -610,7 +609,8 @@ typedef int Py_ssize_t;
                 ## all be outside of our directory hierarchy, so we
                 ## just ignore any dependency that doesn't begin with
                 ## "SRC/".
-                if source.startswith('SRC/'):
+                if (source.startswith('SRC/') or
+                    source.startswith(self.build_temp)):
                     depdict.setdefault(realtarget, []).append(source)
 
         # .C and.py files in the SWIG directory depend on those in the
@@ -643,7 +643,8 @@ typedef int Py_ssize_t;
             targetpy = os.path.normpath(
                 os.path.join(swigroot, targetbase + '.py'))
             for source in files[1:]:
-                if source.startswith('SRC/'):
+                if (source.startswith('SRC/') or
+                    source.startswith(self.build_temp)):
                     depdict.setdefault(targetc, []).append(source)
                     depdict.setdefault(targetpy,[]).append(source)
 
@@ -731,6 +732,8 @@ class oof_build_ext(build_ext.build_ext, oof_build_xxxx):
         self.compiler.add_include_dir(os.path.join(self.build_temp, 'SRC'))
         self.compiler.add_include_dir('SRC')
         self.compiler.add_library_dir(self.build_lib)
+        for incdir in platform['incdirs']:
+            self.compiler.add_include_dir(incdir)
 
         if self.debug:
             self.compiler.define_macro('DEBUG')
@@ -768,12 +771,14 @@ class oof_build_shlib(build_shlib.build_shlib, oof_build_xxxx):
                                    ('library_dirs', 'library_dirs'))
         build_shlib.build_shlib.finalize_options(self)
     def build_libraries(self, libraries):
-        self.make_oofconfig()
-        self.clean_dependencies()
         self.compiler.add_include_dir(os.path.join(self.build_temp, 'SRC'))
         self.compiler.add_include_dir('SRC')
+        for incdir in platform['incdirs']:
+            self.compiler.add_include_dir(incdir)
         if self.debug:
             self.compiler.define_macro('DEBUG')
+        self.make_oofconfig()
+        self.clean_dependencies()
 
         # The blas libs and arguments weren't actually put into the
         # SharedLibrary objects when they were created, because we
@@ -794,6 +799,7 @@ class oof_build_shlib(build_shlib.build_shlib, oof_build_xxxx):
         
         for library in libraries:
             library.libraries.extend(blaslibs)
+            library.libraries.extend(platform['libs'])
             library.extra_link_args.extend(blasargs)
 
         ## TODO: Add extra libraries (python2.x) for cygwin?
