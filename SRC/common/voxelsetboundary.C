@@ -195,6 +195,11 @@
 // bit more complex because they have to some bookkeeping that's not
 // described here.
 
+// If the initial unclipped polyhedron is convex, then clipped
+// polyhedron can include incorrect edges.  However, these edges will
+// be part of oppositely oriented coplanar faces, so they have no
+// effect on the computed volume.
+
 // Finding the volume of a polyhedron relies on the same CW neighbor
 // ordering that's used by the clipping routines.
 
@@ -225,6 +230,7 @@
 //   and should only be run for small graphs, or if you have a lot of
 //   free time.
 
+#include "common/IO/canvaslayers.h"
 #include "common/IO/oofcerr.h"
 #include "common/geometry.h"
 #include "common/voxelsetboundary.h"
@@ -3087,6 +3093,20 @@ void VSBGraph::dumpLines(std::ostream &os, const CMicrostructure *ms) const {
   }
 }
 
+void VSBGraph::draw(LineSegmentLayer *layer, const CMicrostructure *ms) const {
+  unsigned int nsegs = (3*size())/2;
+  layer->set_nSegs(nsegs);
+  for(const VSBNode *node : vertices) {
+    for(VSBNode *nbr : node->neighbors) {
+      if(nbr && node->index < nbr->index) {
+	Coord3D pt0 = ms->pixel2Physical(node->position);
+	Coord3D pt1 = ms->pixel2Physical(nbr->position);
+	layer->addSegment(&pt0, &pt1);
+      }
+    }
+  }
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 VSBEdgeIterator::VSBEdgeIterator(const VSBGraph *gr)
@@ -3175,11 +3195,7 @@ bool VoxelSetBoundary::checkConnectivity(unsigned int nRegions) const {
 
 double VoxelSetBoundary::clippedVolume(
 			       const std::vector<COrientedPlane> &planes,
-			       bool checkTopology
-#ifdef DEBUG
-			       , bool verbose
-#endif // DEBUG
-				       )
+			       bool checkTopology)
   const
 {
   assert(!planes.empty());
@@ -3206,7 +3222,7 @@ void VoxelSetBoundary::saveClippedVSB(const std::vector<COrientedPlane> &planes,
   const
 {
   VSBGraph *clippedGraph = graph.copyAndClip(planes[0]);
-  for(unsigned int i=1; i<planes.size(); i++) {
+  for(unsigned i=1; i<planes.size(); i++) {
     clippedGraph->clipInPlace(planes[i]);
   }
   std::ofstream f(filenamebase+".dat");
@@ -3215,4 +3231,16 @@ void VoxelSetBoundary::saveClippedVSB(const std::vector<COrientedPlane> &planes,
   std::ofstream f2(filenamebase+".lines");
   clippedGraph->dumpLines(f2, microstructure);
   f2.close();
+  delete clippedGraph;
+}
+
+void VoxelSetBoundary::drawClippedVSB(const std::vector<COrientedPlane> &planes,
+				      LineSegmentLayer *layer)
+  const
+{
+  VSBGraph *clippedGraph = graph.copyAndClip(planes[0]);
+  for(unsigned i=1; i<planes.size(); i++) {
+    clippedGraph->clipInPlace(planes[i]);
+  }
+  clippedGraph->draw(layer, microstructure);
 }

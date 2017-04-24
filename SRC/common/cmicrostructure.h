@@ -16,7 +16,7 @@
 
 class CMicrostructure;
 
-#include "common/IO/canvaslayers.h"
+//#include "common/IO/canvaslayers.h"
 #include "common/array.h"
 #include "common/boolarray.h"
 #include "common/coord.h"
@@ -31,18 +31,18 @@ class ActiveArea;
 class CPixelSelection;
 class CRectangle;
 class PixelGroup;
+class LineSegmentLayer;
 
 #if DIM==2
 class PixelSetBoundary;
 #else
 class VoxelSetBoundary;
-class PixelBdyLoop;
-class PixelPlane;
 #endif	// DIM==2
 
 // TODO: Use unsigned ints for voxel categories.  It's inconsistent
 // now.  MicrostructureAttributes::getCategory returns an unsigned
-// int, but everything else seems to use int.
+// int, but everything else seems to use int.  That's because
+// UNKNOWN_CAT is defined as -1 in engine/homogeneity.h.
 
 // Some operations, such as finding the pixels under an element,
 // require marking pixels in the microstructure.  Neither the
@@ -276,11 +276,7 @@ public:
   const CRectangularPrism &categoryBounds(unsigned int) const;
   double clippedCategoryVolume(unsigned int,
 			       const std::vector<COrientedPlane>&,
-			       bool checkTopology
-#ifdef DEBUG
-			       , bool verbose
-#endif // DEBUG
-			       ) const;
+			       bool checkTopology) const;
   void dumpVSB(unsigned int, const std::string&) const;// save VSB graph to file
   void dumpVSBLines(unsigned int, const std::string&) const; // plot VSB edges
 

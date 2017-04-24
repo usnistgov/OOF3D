@@ -249,7 +249,8 @@ static SLock globalElementCountLock;
        x[2].xpointer(), x[3].xpointer(),
        bcoords);
    for(unsigned int i=0; i<4; ++i)
-     if(bcoords[i]<0) return false;
+     if(bcoords[i]<0)
+       return false;
    return true;
  }
 
@@ -598,12 +599,17 @@ void CSkeletonElement::getElements(const CSkeletonBase*,
 // TODO 3.1: These should be updated when we separate the CSkeletonElement
 // types.
 
+// Some of this topology info is no longer needed.  A lot of it was
+// created for the homogeneity code, which has been completely
+// rewritten.  It's left in here because it might be useful again and
+// isn't impoosing any kind of performance penalty.
+
 // Maps the edge ids at the face scope to edge ids at the tet scope.
 const unsigned int CSkeletonElement::faceEdges[4][3] = {{0,4,3},
 							{1,5,4},
 							{2,3,5},
 							{2,1,0}};
-// Map edge ids at tet scope to edge ids at face scope.  
+// Map edge ids at tet scope to edge ids at face scope.
 const unsigned int CSkeletonElement::tetEdge2FaceEdge[4][6] =
   {{0, NONE, NONE, 2, 1, NONE},	 // face 0
    {NONE, 0, NONE, NONE, 2, 1},	 // face 1
@@ -770,6 +776,36 @@ unsigned int CSkeletonElement::getOtherFaceIndex(unsigned int f,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// Given a vector of node positions, return the faces of the element
+// as COrientedPlanes.  This doesn't get the node positions from the
+// element itself, so that it can be used in different coordinate
+// systems. It's a CSkeletonElement method only because if we ever
+// have different element shapes, they'll have to have different
+// getPlanes methods.
+
+std::vector<COrientedPlane> CSkeletonElement::getPlanes(
+					const std::vector<Coord3D> &epts)
+  const
+{
+  std::vector<COrientedPlane> planes;
+  planes.reserve(4);
+  for(unsigned int f=0; f<NUM_TET_FACES; f++) {
+    Coord3D pt0 = epts[CSkeletonElement::getFaceArray(f)[0]];
+    Coord3D pt1 = epts[CSkeletonElement::getFaceArray(f)[1]];
+    Coord3D pt2 = epts[CSkeletonElement::getFaceArray(f)[2]];
+    Coord3D center = (pt0 + pt1 + pt2)/3.0;
+    // A more symmetric but more expensive expression for the area is
+    // 0.5*(pt0%pt1 + pt1%pt2 + pt2%pt0).
+    Coord3D areaVec = 0.5*((pt1 - pt0) % (pt2 - pt0));
+    Coord3D normalVec = areaVec/sqrt(norm2(areaVec));
+    double offset = dot(center, normalVec);
+    planes.emplace_back(normalVec, offset);
+  }
+  return planes;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 // categoryVolumes is the core of the homogeneity calculation. It
 // calculates the volume intersection of a tetrahedral element with a
 // voxelized region representing a material category in a
@@ -780,57 +816,6 @@ unsigned int CSkeletonElement::getOtherFaceIndex(unsigned int f,
 //#define VOLTOL 5.e-4
 #define VOLTOL 1.e-6
 
-#ifdef DEBUG
-static std::set<unsigned int> vcategories;
-
-void setVerboseCategory(unsigned int cat) {
-  oofcerr << "setVerboseCategory: " << cat << std::endl;
-  vcategories.insert(cat);
-}
-
-static bool verboseCategory_(bool vrbs, unsigned int category) {
-  return vrbs && (vcategories.empty() || vcategories.count(category) == 1);
-}
-
-static std::set<unsigned int> verboseElements_;
-static std::set<uidtype> verboseUIDs_;
-static bool allVerboseElements_ = false;
-
-void setVerboseElement(unsigned int e) {
-  oofcerr << "setVerboseElement: " << e << std::endl;
-  verboseElements_.insert(e);
-}
-
-void setVerboseUID(uidtype uid) {
-  oofcerr << "setVerboseUID: " << uid << std::endl;
-  verboseUIDs_.insert(uid);
-}
-
-void setVerboseAllElements() {
-  verboseElements_.clear();
-  allVerboseElements_ = true;
-}
-
-// Skip the first verboseWait_ opportunities to be verbose.
-
-static unsigned int verboseWait_ = 0;
-void setVerboseWait(int w) {
-  oofcerr << "setVerboseWait: " << w << std::endl;
-  verboseWait_ = w;
-}
-
-static unsigned int verboseLimit_ = NONE;
-void setVerboseLimit(int l) {
-  oofcerr << "setVerboseLimit: " << l << std::endl;
-  verboseLimit_ = l;
-}
-
-// Track the number of times verbose output has been turned on.  This
-// is useful for setting verboseWait on subsequent runs.
-static unsigned int nVerbose = 0;
-
-#endif // DEBUG
-
 // categoryVolumes returns a vector containing the volume of the
 // intersection of this element with each voxel category.  It's used
 // by c_homogeneity to compute element homogeneities.  The
@@ -840,49 +825,10 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
 						  bool checkTopology)
   const
 {
-#ifdef DEBUG
-  bool verbose = (allVerboseElements_ ||
-		  verboseElements_.count(index) > 0 ||
-		  verboseUIDs_.count(uid) > 0);
-  static int verboseWaited = 0;
-  if(verbose) {
-    if(verboseWaited < verboseWait_) {
-      verbose = false;
-      verboseWaited++;
-    }
-    if(verboseLimit_ != NONE && nVerbose >= verboseLimit_) {
-      verbose = false;
-    }
-  }
-  if(verbose)
-    oofcerr << "CSkeletonElement::categoryVolumes: " << *this
-  	    << "----------------------------------" << std::endl;
-  // Don't combine the following "if" with the previous one.  The
-  // previous one is often commented out, but the following one
-  // shouldn't be.
-  if(verbose)
-    nVerbose++;
-
-  OOFcerrIndent indent(2);
-#endif // DEBUG
-
   // Get the corners and planes of the element in voxel coordinates.
-  std::vector<Coord3D> epts;
-  std::vector<COrientedPlane> planes;
-  planes.reserve(4);
-  pixelCoords(ms, epts);
-  for(unsigned int f=0; f<NUM_TET_FACES; f++) {
-    Coord pt0 = epts[CSkeletonElement::getFaceArray(f)[0]];
-    Coord pt1 = epts[CSkeletonElement::getFaceArray(f)[1]];
-    Coord pt2 = epts[CSkeletonElement::getFaceArray(f)[2]];
-    Coord3D center = (pt0 + pt1 + pt2)/3.0;
-    // A more symmetric but more expensive expression for the area is
-    // 0.5*(pt0%pt1 + pt1%pt2 + pt2%pt0).
-    Coord3D areaVec = 0.5*((pt1 - pt0) % (pt2 - pt0));
-    Coord3D normalVec = areaVec/sqrt(norm2(areaVec));
-    double offset = dot(center, normalVec);
-    planes.emplace_back(normalVec, offset);
-  }
+  std::vector<Coord3D> epts = pixelCoords(ms);
+  std::vector<COrientedPlane> planes = getPlanes(epts);
+  // Get the element's bounding box in voxel coordinates.
   CRectangularPrism bbox(epts[0], epts[1]);
   bbox.swallow(epts[2]);
   bbox.swallow(epts[3]);
@@ -895,22 +841,11 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
 
   try {
     for(unsigned int cat=0; cat<ncat; cat++) {
-#ifdef DEBUG
-      bool verboseCategory = verboseCategory_(verbose, cat);
-      if(verboseCategory)
-	oofcerr << "CSkeletonElement::categoryVolumes: cat=" << cat
-		<< std::endl;
-#endif // DEBUG
-
       // Check for a bounding box intersection before doing the
       // expensive polygon intersection calculation.  This reduces CPU
       // use by about 10% in an annealing operation.
       if(bbox.intersects(ms->categoryBounds(cat))) {
-	double vol = ms->clippedCategoryVolume(cat, planes, checkTopology
-#ifdef DEBUG
-					       , verboseCategory
-#endif // DEBUG
-					       );
+	double vol = ms->clippedCategoryVolume(cat, planes, checkTopology);
 	totalVol += vol;
 	result[cat] = vol;
       }
@@ -944,8 +879,6 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
   catch (...) {
     oofcerr << "CSkeletonElement::categoryVolumes: failed for "
 	    << *this << std::endl;
-    // oofcerr << "CSkeletonElement::categoryVolumes: nVerbose=" << nVerbose
-    // 	    << std::endl;
     throw;
   }
 
@@ -957,16 +890,17 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
 // Compute the positions of the element's nodes in pixel coordinates.
 // Used in homogeneity calculations.
 
-void CSkeletonElement::pixelCoords(const CMicrostructure *ms,
-				   std::vector<Coord> &epts)
+std::vector<Coord3D> CSkeletonElement::pixelCoords(const CMicrostructure *ms)
   const
 {
+  std::vector<Coord3D> epts;
   epts.reserve(nnodes());
   Coord delta = ms->sizeOfPixels();
   for(unsigned int i=0; i<nnodes(); ++i) {
     Coord x = (*nodes)[i]->position();
     epts.push_back(x/delta);	// component-wise division
   }
+  return epts;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1464,94 +1398,19 @@ void CSkeletonElement::print(std::ostream &os) const {
 // These routines help to debug categoryVolumes. 
 
 #ifdef DEBUG
-// #include "engine/pixelplanefacet.h"
-// #include "engine/facefacet.h"
-
-// void CSkeletonElement::drawPlaneIntersection(LineSegmentLayer *layer,
-// 					     const CSkeletonBase *skel,
-// 					     int direction, int offset)
-//   const
-// {
-//   const CMicrostructure *ms = skel->getMicrostructure();
-//   HomogeneityTet htet(this, ms, false);
-//   const HPixelPlane *pixplane = htet.getPixelPlane(direction, offset, 1);
-//   TetIntersectionPolygon &tetPts = htet.getTetPlaneIntersectionPoints(
-// 							pixplane);
-//   layer->set_nSegs(tetPts.size());
-//   unsigned int n = tetPts.size();
-//   for(unsigned int i=0; i<n; i++) {
-//     Coord3D pt0 = tetPts[i]->location3D();
-//     Coord3D pt1 = tetPts[(i+1)%n]->location3D();
-//     layer->addSegment(&pt0, &pt1);
-//   }
-// }
-
-// void CSkeletonElement::drawPlaneVSBIntersection(LineSegmentLayer *layer,
-// 						const CSkeletonBase *skel,
-// 						unsigned int category,
-// 						int direction, int offset,
-// 						int normal)
-//   const
-// {
- 
-//   const CMicrostructure *ms = skel->getMicrostructure();
-//   ms->categorizeIfNecessary();
-//   const VoxelSetBoundary *vsb = ms->getCategoryBdys()[category];
-//   HomogeneityTet htet(this, ms, false);
-//   FacetMap2D facets = htet.findPixelPlaneFacets(category, *vsb);
-//   // Using separate vectors for start and end points lets us avoid the
-//   // FacetEdge class, which has gotten more complicated than we need
-//   // here.  If it ever becomes uncomplicated again, it might be worth
-//   // using it instead.
-//   std::vector<Coord3D> startPts;
-//   std::vector<Coord3D> endPts;
-//   if(offset >= 0 && direction > 0 && normal != 0) {
-//     // Draw just one plane
-//     const HPixelPlane *pixplane = htet.getPixelPlane(direction, offset, normal);
-//     FacetMap2D::const_iterator fmi = facets.find(pixplane);
-//     if(fmi != facets.end()) {
-//       const PixelPlaneFacet *facet = (*fmi).second;
-//       startPts.resize(startPts.size() + facet->size());
-//       endPts.resize(endPts.size() + facet->size());
-//       for(unsigned int i=0; i<facet->size(); i++) {
-// 	facet->getEndPoints(i, startPts[i], endPts[i]);
-//       }
-//     }
-//   }
-//   else  {
-//     // Draw multiple planes
-//     for(FacetMap2D::const_iterator fmi=facets.begin(); fmi!=facets.end(); ++fmi)
-//       {
-// 	const HPixelPlane *pixplane = (*fmi).first;
-// 	if((direction < 0 || pixplane->direction() == direction)
-// 	   && (offset < 0 || pixplane->normalOffset() == offset)
-// 	   && (normal == 0 || pixplane->normalSign() == normal))
-// 	  {
-// 	    const PixelPlaneFacet *facet = (*fmi).second;
-// 	    unsigned int basesize = startPts.size();
-// 	    startPts.resize(basesize + facet->size());
-// 	    endPts.resize(basesize + facet->size());
-// 	    for(unsigned int i=0; i<facet->size(); i++) {
-// 	      facet->getEndPoints(i, startPts[basesize+i], endPts[basesize+i]);
-// 	    }
-// 	  }
-//       }
-//   }
-//   layer->set_nSegs(startPts.size());
-//   for(unsigned int i=0; i<startPts.size(); i++) {
-//     layer->addSegment(&startPts[i], &endPts[i]);
-//   }
-// }
 
 void CSkeletonElement::drawVoxelCategoryIntersection(LineSegmentLayer *layer,
 						     const CSkeletonBase *skel,
-						     unsigned int category,
-						     bool drawPlaneFacets)
+						     unsigned int category)
   const
 {
-//   const CMicrostructure *ms = skel->getMicrostructure();
-//   ms->categorizeIfNecessary();
-//   const VoxelSetBoundary *vsb = ms->getCategoryBdys()[category];
+  const CMicrostructure *ms = skel->getMicrostructure();
+  ms->categorizeIfNecessary();
+  std::vector<Coord3D> epts = pixelCoords(ms);
+  std::vector<COrientedPlane> planes = getPlanes(epts);
+  const VoxelSetBoundary *vsb = ms->getCategoryBdys()[category];
+  vsb->drawClippedVSB(planes, layer);
+  
 //   HomogeneityTet htet(this, ms
 // #ifdef DEBUG
 // 		      , false // verbose?

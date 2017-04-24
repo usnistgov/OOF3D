@@ -18,6 +18,7 @@
 #include <stdlib.h>		// for abs()
 #include <vector>
 
+#include "common/IO/canvaslayers.h"
 #include "common/IO/oofcerr.h"
 #include "common/activearea.h"
 #include "common/cmicrostructure.h"
@@ -27,8 +28,8 @@
 #include "common/lock.h"
 #include "common/pixelattribute.h"
 #include "common/pixelgroup.h"
-#include "common/voxelsetboundary.h"
 #include "common/printvec.h"
+#include "common/voxelsetboundary.h"
 
 #include <iostream>
 
@@ -536,6 +537,10 @@ void CMicrostructure::categorize() const {
   // category.  See voxelsetboundary.C for an overview of the
   // VoxelSetBoundary class.
 
+  // TODO: When categories change in the MS, keep track of which ones
+  // have changed and recompute VoxelSetBoundarys only for them.
+
+
   for(unsigned int cat=0; cat<ncategories; cat++) {
     // A ProtoVSBNode is the precursor to the actual VSBNodes.
     // There's a ProtoVSBNode at each corner of each voxel, but
@@ -642,19 +647,11 @@ void CMicrostructure::categorize() const {
 double CMicrostructure::clippedCategoryVolume(
 			      unsigned int cat,
 			      const std::vector<COrientedPlane> &planes,
-			      bool checkTopology
-#ifdef DEBUG
-			      , bool verbose
-#endif // DEBUG
-					      )
+			      bool checkTopology)
   const
 {
   categorizeIfNecessary();
-  return categoryBdys[cat]->clippedVolume(planes, checkTopology
-#ifdef DEBUG
-					  , verbose
-#endif // DEBUG
-					  );
+  return categoryBdys[cat]->clippedVolume(planes, checkTopology);
 }
 
 bool CMicrostructure::checkVSB(unsigned int cat) const {
@@ -674,11 +671,7 @@ double CMicrostructure::clipVSBVol(unsigned int cat, const COrientedPlane &pl)
   categorizeIfNecessary();
   assert(cat < categoryBdys.size());
   std::vector<COrientedPlane> planes(1, pl);
-  return categoryBdys[cat]->clippedVolume(planes, false
-#ifdef DEBUG
-					  , false // verbose
-#endif // DEBUG
-					  );
+  return categoryBdys[cat]->clippedVolume(planes, false);
 }
 
 void CMicrostructure::saveClippedVSB(unsigned int cat, const COrientedPlane &pl,

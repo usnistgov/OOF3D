@@ -24,6 +24,7 @@
 #include <vtkTetra.h>
 
 class CMicrostructure;
+class COrientedPlane;
 class CSkeleton;
 class FEMesh;
 class LineSegmentLayer;
@@ -107,6 +108,7 @@ protected:
   LineIntersectionPoint *getLineIntersectionPoint(
   			  const CSkeletonBase*, std::vector<int> &, double,
   			  const Coord&, const Coord&) const;
+  std::vector<COrientedPlane> getPlanes(const std::vector<Coord3D>&) const;
 public:
   // static topological info
   static const unsigned int faceEdges[4][3];
@@ -171,7 +173,7 @@ public:
   bool suspect() const;
   void printAngles() const;
 
-  void pixelCoords(const CMicrostructure*, std::vector<Coord>&) const;
+  std::vector<Coord3D> pixelCoords(const CMicrostructure*) const;
   
   // methods related to homogeneity, dominant pixel, and shape energy
   const DoubleVec categoryVolumes(const CMicrostructure *MS, bool) const;
@@ -247,28 +249,14 @@ public:
 
 #ifdef DEBUG
   void dumpFaceInfo(const CSkeletonBase*) const; // debugging
-  // void drawPlaneIntersection(LineSegmentLayer*, const CSkeletonBase*,
-  // 			     int, int) const;
-  // void drawPlaneVSBIntersection(LineSegmentLayer*, const CSkeletonBase*,
-  // 				unsigned int, int, int, int) const;
   void drawVoxelCategoryIntersection(LineSegmentLayer*, const CSkeletonBase*,
-  				     unsigned int, bool) const;
+  				     unsigned int) const;
 #endif // DEBUG
 
 };				// CSkeletonElement
 
 long get_globalElementCount();
 
-#ifdef DEBUG
-void setVerboseCategory(unsigned int);
-bool verboseCategory(unsigned int);
-void setVerboseElement(unsigned int);
-void setVerboseUID(uidtype);
-void setVerboseAllElements();
-void setVerboseWait(int);
-void setVerboseLimit(int);
-// void dumpElements();
-#endif // DEBUG
 
 #endif	// CSKELETONELEMENT_H
 

@@ -150,13 +150,6 @@ The following options are for debugging:
 --no-bars                Don't display progress bars
 --no-rc                  Don't load .%src
 --unthreaded             Don't use multiple execution threads
---verboseElement = integer or 'all'
---verboseUID = integer
---verbosePlane = [XYZ],offset,[+-]
---verboseFace = integer or 'all'
---verboseCategory = integer
---verboseWait = integer
---verboseLimit = integer
 """ % program_name
     print main_options_string,
     if config.devel()>=1:
@@ -201,11 +194,7 @@ def process_inline_options():
                    'data=', 'image=', 'import=', 'debug', 'command=',
                    'record=', 'rerecord=', 'replay=', 'replaydelay=',
                    'pathdir=', 'no-checkpoints', 'autoload', 'geometry=',
-                   'surface', 'no-bars',
-                   'verboseElement', 'verboseUID', 'verbosePlane',
-                   'verboseFace', 'verboseCategory', 'verboseWait',
-                   'verboseLimit',
-                   'vE', 'vU', 'vC', 'vP', 'vF', 'vW', 'vL']
+                   'surface', 'no-bars']
     if config.enablempi():
         option_list += ['parallel']
     try:
@@ -297,27 +286,6 @@ def process_inline_options():
         elif opt[0] == '--seed':
             randomseed = int(opt[1])
             remove_option(opt[0],opt[1])
-        elif opt[0] in ('--verboseElement', '--vE'):
-            from ooflib.SWIG.engine import cskeletonelement
-            cskeletonelement.addVerboseElement(opt[1])
-        elif opt[0] in ('--verboseUID', '--vU'):
-            from ooflib.SWIG.engine import cskeletonelement
-            cskeletonelement.setVerboseUID(int(opt[1]))
-        # elif opt[0] in ('--verbosePlane', '--vP'):
-        #     from ooflib.SWIG.engine import cskeletonelement
-        #     cskeletonelement.addVerbosePlane(opt[1])
-        # elif opt[0] in ('--verboseFace', '--vF'):
-        #     from ooflib.SWIG.engine import cskeletonelement
-        #     cskeletonelement.addVerboseFace(opt[1])
-        elif opt[0] in ('--verboseCategory', '--vC'):
-            from ooflib.SWIG.engine import cskeletonelement
-            cskeletonelement.addVerboseCategory(int(opt[1]))
-        elif opt[0] in ('--verboseWait', '--vW'):
-            from ooflib.SWIG.engine import cskeletonelement
-            cskeletonelement.setVerboseWait(int(opt[1]))
-        elif opt[0] in ('--verboseLimit', '--vL'):
-            from ooflib.SWIG.engine import cskeletonelement
-            cskeletonelement.setVerboseLimit(int(opt[1]))
     if help_mode:
         state_options_and_quit()
     if version_mode:

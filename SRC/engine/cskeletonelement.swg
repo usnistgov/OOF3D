@@ -80,23 +80,11 @@ public:
   // void drawPlaneVSBIntersection(LineSegmentLayer*, CSkeletonBase*,
   // 				unsigned int, int , int, int);
   void drawVoxelCategoryIntersection(LineSegmentLayer*, CSkeletonBase*,
-   				     unsigned int, bool);
+   				     unsigned int);
 #endif // DEBUG
 };
 
 long get_globalElementCount();
-
-#ifdef DEBUG
-
-void setVerboseCategory(unsigned int);
-bool verboseCategory(unsigned int);
-void setVerboseElement(unsigned int);
-void setVerboseUID(unsigned long);
-void setVerboseAllElements();
-void setVerboseWait(int);
-void setVerboseLimit(int);
-
-#endif // DEBUG
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 

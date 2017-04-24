@@ -26,6 +26,7 @@ class VSBNode;
 #include "common/geometry.h"
 class CMicrostructure;
 class COrientedPlane;
+class LineSegmentLayer;
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -259,6 +260,7 @@ class VSBGraph {
   bool checkConnectivity(unsigned int nRegions) const;
   void dump(std::ostream &) const;
   void dumpLines(std::ostream&, const CMicrostructure*) const;
+  void draw(LineSegmentLayer*, const CMicrostructure*) const;
 };
 
 class VSBEdgeIterator {
@@ -301,11 +303,7 @@ public:
   const CRectangularPrism &bounds() const { return graph.bbox(); }
 
   double clippedVolume(const std::vector<COrientedPlane>&,
-		       bool checkTopology
-#ifdef DEBUG
-		       , bool verbose
-#endif // DEBUG
-		       ) const;
+		       bool checkTopology) const;
 
   VSBEdgeIterator iterator() const { return VSBEdgeIterator(&graph); }
 
@@ -317,6 +315,8 @@ public:
   }
   void saveClippedVSB(const std::vector<COrientedPlane>&,
 		      const std::string&) const;
+  void drawClippedVSB(const std::vector<COrientedPlane>&,
+		      LineSegmentLayer*) const;
 };
 
 void initializeProtoNodes();
