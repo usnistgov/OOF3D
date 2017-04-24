@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: elementnodeiterator.C,v $
-// $Revision: 1.16.6.5 $
-// $Author: langer $
-// $Date: 2014/12/14 22:49:18 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -246,12 +242,6 @@ int ElementFuncNodePositionIterator::mlistindex() const {
 ElementFuncNodePositionIterator &ElementFuncNodePositionIterator::operator+=(
 								     int n)
 {
-  // TODO: This line used to be
-  // ElementFuncNodePositionIterator::operator+=(n), which is clearly
-  // wrong, since it's infinitely recursive.  I've changed it here,
-  // but this may be wrong too.  However, the current (9/15/16) tests
-  // all pass, but since we only have linear tets and all nodes are
-  // func nodes, the tests aren't conclusive.
   ElementNodePositionIterator::operator+=(n);
   return *this;
 }

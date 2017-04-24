@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cskeletonsegment.swg,v $
-// $Revision: 1.1.2.23 $
-// $Author: langer $
-// $Date: 2013/12/06 20:05:21 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

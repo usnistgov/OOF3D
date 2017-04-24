@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: gmres.h,v $
-// $Revision: 1.24.2.3 $
-// $Author: langer $
-// $Date: 2014/07/22 21:02:48 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -45,6 +41,12 @@
 
 #include <math.h> 
 
+template < class Real >
+Real 
+abs(Real x)
+{
+  return (x > 0 ? x : -x);
+}
 
 template<class Real> 
 void GeneratePlaneRotation(Real &dx, Real &dy, Real &cs, Real &sn)
@@ -91,13 +93,6 @@ Update(Vector &x, int k, Matrix &h, Vector &s, Vector v[])
     x += v[j] * y[j];
 }
 
-
-template < class Real >
-Real 
-abs(Real x)
-{
-  return (x > 0 ? x : -x);
-}
 
 
 template < class Operator, class Vector, class Preconditioner,

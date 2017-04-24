@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: csubproblem.C,v $
-// $Revision: 1.65.2.18 $
-// $Author: fyc $
-// $Date: 2015/01/07 15:53:11 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -93,7 +89,7 @@ CSubProblem::~CSubProblem() {
   globalCSubProblemCountLock.release();
 }
 
-void CSubProblem::set_mesh(FEMesh *msh) {
+void CSubProblem::set_femesh(FEMesh *msh) {
   mesh = msh;
 }
 

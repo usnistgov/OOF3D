@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: units.py,v $
-# $Revision: 1.5.10.3 $
-# $Author: langer $
-# $Date: 2014/09/17 21:13:28 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

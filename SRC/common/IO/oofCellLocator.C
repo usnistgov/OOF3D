@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: oofCellLocator.C,v $
-// $Revision: 1.1.2.3 $
-// $Author: langer $
-// $Date: 2013/04/26 19:12:21 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -25,8 +21,8 @@ typedef vtkIdList *vtkIdListPtr;
 #define VTK_CELL_OUTSIDE 0
 #define VTK_CELL_INSIDE 1
 
-vtkCxxRevisionMacro(oofCellLocator, "$Revision: 1.1.2.3 $");
 
+vtkCxxRevisionMacro(oofCellLocator, "oofvtkmods 3.0.0");
 vtkStandardNewMacro(oofCellLocator);
 
 void oofCellLocator::BuildLocatorInternal()

@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: printvec.h,v $
-// $Revision: 1.10.10.10 $
-// $Author: langer $
-// $Date: 2014/09/25 02:15:11 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -77,6 +73,58 @@ OSTREAM &operator<<(OSTREAM &os, const std::set<TYPE> &vec) {
 }
 
 template <class OSTREAM, class TYPE>
+OSTREAM &operator<<(OSTREAM &os, const std::multiset<TYPE> &vec) {
+  if(!vec.empty()) {
+    bool first = true;
+    int prec = os.precision();
+    os << std::setprecision(PRECISION);
+    for(typename std::set<TYPE>::const_iterator i=vec.begin(); i!=vec.end();
+	++i) 
+      {
+	if(!first) {
+	  os << " ";
+	}
+	os << *i;
+	first = false;
+      }
+    os << std::setprecision(prec);
+  }
+  return os;
+}
+
+template <class OSTREAM, class KEYTYPE, class VALTYPE>
+OSTREAM &operator<<(OSTREAM &os, const std::map<KEYTYPE, VALTYPE> &map) {
+  if(!map.empty()) {
+    bool first = true;
+    for(typename std::map<KEYTYPE, VALTYPE>::const_iterator i=map.begin();
+	i!=map.end(); ++i)
+      {
+	if(!first)
+	  os << " ";
+	os << (*i).first << ":" << (*i).second;
+	first = false;
+      }
+  }
+  return os;
+}
+
+template <class OSTREAM, class KEYTYPE, class VALTYPE>
+OSTREAM &operator<<(OSTREAM &os, const std::multimap<KEYTYPE, VALTYPE> &map) {
+  if(!map.empty()) {
+    bool first = true;
+    for(typename std::multimap<KEYTYPE, VALTYPE>::const_iterator i=map.begin();
+	i!=map.end(); ++i)
+      {
+	if(!first)
+	  os << " ";
+	os << (*i).first << ":" << (*i).second;
+	first = false;
+      }
+  }
+  return os;
+}
+
+template <class OSTREAM, class TYPE>
 OSTREAM &operator<<(OSTREAM &os, const std::list<TYPE> &list) {
   int prec = os.precision();
   os << std::setprecision(PRECISION);
@@ -110,6 +158,37 @@ std::vector<std::string> derefkeyprint(
       strings.push_back(to_string(*(*i).first) + ":" + to_string((*i).second));
     }
   return strings;
+}
+
+template <class KEYTYPE, class VALTYPE, class CMP, class ALLOC>
+std::vector<std::string> derefvalprint(
+			       const std::map<KEYTYPE, VALTYPE, CMP, ALLOC> &m)
+{
+  std::vector<std::string> strings;
+  for(typename std::map<KEYTYPE, VALTYPE, CMP, ALLOC>::const_iterator
+	i=m.begin(); i!=m.end(); ++i)
+    {
+      strings.push_back(to_string((*i).first) + ":" + to_string(*(*i).second));
+    }
+  return strings;
+}
+
+template <class KEYTYPE, class VALTYPE, class CMP, class ALLOC>
+std::vector<std::string> derefvalprint(
+		       const std::multimap<KEYTYPE, VALTYPE, CMP, ALLOC> &m)
+{
+  std::vector<std::string> strings;
+  for(typename std::multimap<KEYTYPE, VALTYPE, CMP, ALLOC>::const_iterator
+	i=m.begin(); i!=m.end(); ++i)
+    {
+      strings.push_back(to_string((*i).first) + ":" + to_string(*(*i).second));
+    }
+  return strings;
+}
+
+template <class OSTREAM, class TYPE1, class TYPE2>
+OSTREAM &operator<<(OSTREAM &os, const std::pair<TYPE1, TYPE2> &pair) {
+  return os << "<" << pair.first << ", " << pair.second << ">";
 }
 
 #endif	// PRINTVEC_H

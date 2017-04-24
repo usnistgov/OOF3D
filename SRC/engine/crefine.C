@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: crefine.C,v $
-// $Revision: 1.1.4.72 $
-// $Author: langer $
-// $Date: 2014/12/14 22:49:12 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -228,10 +224,11 @@ CSkeletonBase* Refine::refine(CSkeletonBase *skeleton, CSkeleton *newSkeleton)
 
 
     int count = 0;		// for progress bar
-    for(ElementSignatureVector::iterator j=elements.begin(); j!=elements.end();
-	++j) 
+    for(ElementSignatureVector::iterator j=elements.begin();
+	j!=elements.end() && !progress->stopped(); ++j) 
       {
 	CSkeletonElement *el = j->first;
+	// oofcerr << "Refine::refinement: " << *el << std::endl;
 	RefinementSignature *sig = j->second;
 	// oofcerr << "Refine::refinement: " << *el << " signature=[";
 	// for(RefinementSignature::iterator it=sig->begin(); it!= sig->end(); ++it)
@@ -299,8 +296,9 @@ CSkeletonBase* Refine::refine(CSkeletonBase *skeleton, CSkeleton *newSkeleton)
 	      }
 	    }
 	  }	// end loop over newElements
-	progress->setFraction((count+1.0)/skeleton->nelements());
-	progress->setMessage("refining skeleton: " + to_string(count+1) 
+	count++;
+	progress->setFraction((count*1.0)/skeleton->nelements());
+	progress->setMessage("refining skeleton: " + to_string(count) 
 			     + "/" + to_string(skeleton->nelements()));
 
 	delete refinement;
@@ -367,6 +365,9 @@ ElementEdgeNodes *Refine::getElementEdgeNodes(CSkeletonElement *element,
   }
   return elementEdgeNodes;
 }
+
+// TODO: Why are the isGood methods here instead of in
+// crefinementcriterion.C?
 
 bool MinimumVolume::isGood(CSkeletonBase *skeleton, CSkeletonMultiNodeSelectable *selectable)
   const
@@ -519,31 +520,16 @@ static ProvisionalRefinement *getBestRefinement(
 {
   double energy_min = 1000;
   ProvisionalRefinement *bestRefinement = 0;
+
 // #ifdef DEBUG
 //   DoubleVec energies;
-// #endif // DEBUG
-//   for(ProvisionalRefinementVector::const_iterator it=refinements.begin(); 
-//       it!=refinements.end(); ++it)
-//     {
-//       std::cerr << "    " << (*it)->rule << std::endl;
-//       double energy = (*it)->energy(skeleton, alpha);
-// // #ifdef DEBUG
-// //       energies.push_back(energy);
-// // #endif // DEBUG
-//       // std::cerr << "getBestRefinement: energy=" << energy << " energy_min=" << energy_min << " "
-//       //  		<< energy_min-energy << std::endl;
-//       std::cerr << energy - energy_min << std::endl;
-//       if(energy - energy_min < 0) {
-// 	energy_min = energy;
-// 	bestRefinement = *it;
-//       }
-//     }
-
+// #endif	// DEBUG
   for(unsigned int i=0; i<refinements.size(); i++) {
     ProvisionalRefinement *ref = refinements[i];
-    // std::cerr << "   " << ref->rule << std::endl;
     double energy = ref->energy(skeleton, alpha);
-    //std::cerr << "      " << energy - energy_min << std::endl;
+// #ifdef DEBUG
+//     energies.push_back(energy);
+// #endif	// DEBUG
     if(energy < energy_min) {
       energy_min = energy;
       bestRefinement = ref;
@@ -551,9 +537,13 @@ static ProvisionalRefinement *getBestRefinement(
   }
 
 // #ifdef DEBUG
-//   for(unsigned int i=0; i<energies.size(); i++)
-//     energies[i] -= energy_min;
-//   std::cerr << "getBestRefinement: margins=" << energies << std::endl;
+//   if(refinements.size() > 1) {
+//     for(unsigned int i=0; i<energies.size(); i++)
+//       energies[i] -= energy_min;
+//     oofcerr << "getBestRefinement: margins=";
+//     std::cerr << energies;
+//     oofcerr << std::endl;
+//   }
 // #endif // DEBUG
 
   if(bestRefinement == 0) {

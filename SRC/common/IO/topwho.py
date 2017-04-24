@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: topwho.py,v $
-# $Revision: 1.15.18.3 $
-# $Author: langer $
-# $Date: 2014/11/05 16:54:16 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

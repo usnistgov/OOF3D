@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: initialize.py,v $
-# $Revision: 1.65.2.5 $
-# $Author: fyc $
-# $Date: 2014/09/04 19:45:53 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -39,12 +35,14 @@ import ooflib.common.IO.reportermenu
 import ooflib.common.IO.reporterror
 import ooflib.common.IO.activityviewermenu
 import ooflib.common.IO.topwho
+import ooflib.common.IO.microstructuredisplay
 import ooflib.common.IO.viewertoolbox
 import ooflib.common.IO.words
 import ooflib.common.color
 import ooflib.common.microstructure
 import ooflib.common.pixelselectionmethod
 import ooflib.common.pixelselectionmod
+import ooflib.SWIG.common.voxelsetboundary
 
 if config.dimension() == 2:
 

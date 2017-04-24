@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: display.py,v $
-# $Revision: 1.109.4.82 $
-# $Author: langer $
-# $Date: 2014/12/05 21:29:11 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

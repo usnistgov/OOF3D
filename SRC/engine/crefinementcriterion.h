@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: crefinementcriterion.h,v $
-// $Revision: 1.1.2.4 $
-// $Author: langer $
-// $Date: 2014/12/14 01:07:46 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -81,7 +77,7 @@ public:
  protected:
    SegmentMarks segmentMarks;
  public:
-   RefinementTargets() {}
+   RefinementTargets();
    virtual ~RefinementTargets() {}
    virtual void createSegmentMarks(CSkeletonBase *skeleton,
 				   RefinementCriterion *criterion, short d) = 0;
@@ -114,6 +110,15 @@ public:
    ~CheckElementsInGroup() {}
    virtual void createSegmentMarks(CSkeletonBase*, RefinementCriterion*, short);
  };
+
+class CheckSingleElement : public RefinementTargets {
+private:
+  const int index;
+public:
+  CheckSingleElement(int index) : index(index) {}
+  ~CheckSingleElement() {}
+  virtual void createSegmentMarks(CSkeletonBase*, RefinementCriterion*, short);
+};
 
  class CheckHomogeneity : public RefinementTargets{
  private:

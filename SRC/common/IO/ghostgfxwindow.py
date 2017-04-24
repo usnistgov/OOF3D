@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: ghostgfxwindow.py,v $
-# $Revision: 1.176.2.119 $
-# $Author: langer $
-# $Date: 2014/12/05 21:29:12 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,
@@ -1222,6 +1218,8 @@ class GhostGfxWindow:
             self.releaseGfxLock()
         self.draw()
 
+    # In GUI/gfxwindow3d.py, draw() is redefined to call the canvas's
+    # render() method.
     def draw(self, *args, **kwargs):
         subthread.execute(self._draw, args, kwargs)
 
@@ -1617,7 +1615,8 @@ class GhostGfxWindow:
     def findClickedCellID(self, who, point, view):
         self.acquireGfxLock()
         try:
-            layerlist = self.allwholayers(who, limit=1)
+            ## TODO: Why did this have limit=1?
+            layerlist = self.allwholayers(who)#, limit=1)
             for layer in layerlist:
                 if layer.pickable():
                     rval = mainthread.runBlock(

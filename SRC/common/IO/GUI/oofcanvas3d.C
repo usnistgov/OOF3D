@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: oofcanvas3d.C,v $
-// $Revision: 1.1.2.32 $
-// $Author: langer $
-// $Date: 2014/09/10 21:28:41 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,
@@ -353,6 +349,9 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
 // Moving around
 
 void OOFCanvas3D::mouse_tumble(double x, double y) {
+
+  // TODO: Can we tumble around the center of the displayed objects?
+  
   assert(mainthread_query());
   renderer->GetActiveCamera()->Azimuth(last_x - x);
   renderer->GetActiveCamera()->Elevation(y - last_y);
@@ -366,7 +365,7 @@ void OOFCanvas3D::mouse_track(double x, double y) {
   assert(mainthread_query());
 
   // TODO OPT: Is there any reason not to always use the focal point?
-  // Knowing what's been clicked on in nontrivial and context
+  // Knowing what's been clicked on is nontrivial and context
   // dependent.
   // // if we click on a voxel, we will track that voxel, otherwise
   // // we track the focal point.

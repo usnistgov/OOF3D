@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: geometry.spy,v $
-# $Revision: 1.2.18.1 $
-# $Author: langer $
-# $Date: 2014/09/27 22:33:50 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -14,8 +10,11 @@
 
 from ooflib.SWIG.common import config
 
-CRectanglePtr.__repr__ = lambda self:"CRectangle(Coord(%g, %g), Coord(%g, %g))"\
-                         % (self.xmin(), self.ymin(), self.xmax(), self.ymax())
+COrientedPlanePtr.__repr__ = (lambda self:"COrientedPlane(normal=%s, offset=%g)"
+                              % (self.getNormal(), self.getOffset()))
+
+# CRectanglePtr.__repr__ = lambda self:"CRectangle(Coord(%g, %g), Coord(%g, %g))"\
+#                          % (self.xmin(), self.ymin(), self.xmax(), self.ymax())
 
 ## if config.dimension() == 3:
 ##     CRectangularPrismPtr.__repr__ = lambda self:"CRectangularPrism(Coord(%g, %g, %g), Coord(%g, %g, %g))"\

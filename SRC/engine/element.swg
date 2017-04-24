@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: element.swg,v $
-// $Revision: 1.18.2.25 $
-// $Author: langer $
-// $Date: 2014/09/17 17:47:56 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,

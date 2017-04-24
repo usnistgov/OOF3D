@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: skeletoninfoGUI.py,v $
-# $Revision: 1.84.2.37 $
-# $Author: langer $
-# $Date: 2014/09/17 17:48:02 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -155,9 +151,12 @@ class ElementModeGUI(SkeletonInfoModeGUI):
     def findObjectIndex(self, position, view):
         skelctxt = self.getContext()
         if skelctxt is not None:
-            cellID, clickpos = self.gfxtoolbox.gfxwindow().findClickedCellID(
+            clickdata = self.gfxtoolbox.gfxwindow().findClickedCellID(
                 skelctxt, position, view)
-            return cellID
+            if clickdata is not None:
+                cellID, clickpos = clickdata
+                return cellID
+            debug.fmsg("findClickedCellID returned None")
 
     def activateOutputs(self, ok):
         self.type.set_sensitive(ok)
@@ -207,7 +206,7 @@ class ElementModeGUI(SkeletonInfoModeGUI):
                     domCat = element.dominantPixel(microstructure)
                     pixGrp = pixelgroup.pixelGroupNames(microstructure,
                                                         domCat)
-                    pixgrps = ", ".join(pixGrp)
+                    #pixgrps = ", ".join(pixGrp)
                     hom = "%f" % element.homogeneity(microstructure)
                     eshape = "%f" % element.energyShape()
                     mat = element.material(skeleton)
@@ -217,7 +216,8 @@ class ElementModeGUI(SkeletonInfoModeGUI):
                     else:
                         matname = "<No material>"
                 else:           # illegal element
-                    pixgrps = "???"
+                    domCat = "Not Computed"
+                    #pixgrps = "???"
                     egrps = "???"
                     hom = "???"
                     eshape = "???"
@@ -225,9 +225,6 @@ class ElementModeGUI(SkeletonInfoModeGUI):
                 mainthread.runBlock(self.update_thread,
                                     (etype, eid, earea, `domCat`, egrps, hom,
                                      eshape, matname))
-                # mainthread.runBlock(self.update_thread,
-                #                     (etype, eid, earea, pixgrps, egrps, hom,
-                #                      eshape, matname))
                 return
             finally:
                 skelctxt.end_reading()

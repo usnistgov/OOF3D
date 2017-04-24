@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: canvaslayers.C,v $
-// $Revision: 1.1.2.77 $
-// $Author: langer $
-// $Date: 2014/12/14 22:49:09 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -639,7 +635,7 @@ void SingleVoxelLayer::set_voxel(const ICoord *where, const Coord *size) {
   // voxel.  But with the current Microstructure it's not completely
   // trivial to access the vtkPoints.  Plus, doing it this way is
   // easy.
-  grid->Initialize();
+  grid->Initialize();		// TODO: Is this necessary?
   grid->Allocate(1,1);
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
   grid->SetPoints(points);
@@ -664,6 +660,34 @@ void SingleVoxelLayer::set_voxel(const ICoord *where, const Coord *size) {
   for(int i=0; i<8; ++i)
     voxel->GetPointIds()->SetId(i,i);
   grid->InsertNextCell(VTK_VOXEL, voxel->GetPointIds());
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+LineSegmentLayer::LineSegmentLayer(GhostOOFCanvas *canvas,
+				   const std::string &nm)
+  : SimpleWireframeCellLayer(canvas, false, nm)
+{}
+
+const std::string &LineSegmentLayer::classname() const {
+  static const std::string nm("LineSegmentLayer");
+  return nm;
+}
+
+void LineSegmentLayer::set_nSegs(int nseg) {
+  grid->Initialize();
+  number_cells = nseg;
+  if(nseg > 0)
+    grid->Allocate(nseg, nseg);
+  grid->SetPoints(vtkSmartPointer<vtkPoints>::New());
+}
+
+void LineSegmentLayer::addSegment(const Coord *a, const Coord *b) {
+  vtkIdType ids[2];
+  vtkSmartPointer<vtkPoints> points = grid->GetPoints();
+  ids[0] = points->InsertNextPoint((*a)[0], (*a)[1], (*a)[2]);
+  ids[1] = points->InsertNextPoint((*b)[0], (*b)[1], (*b)[2]);
+  grid->InsertNextCell(VTK_LINE, 2, ids);
 }
     
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

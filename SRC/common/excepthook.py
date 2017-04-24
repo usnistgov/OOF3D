@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: excepthook.py,v $
-# $Revision: 1.12.2.2 $
-# $Author: fyc $
-# $Date: 2014/07/21 18:08:27 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

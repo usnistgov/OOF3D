@@ -20,8 +20,8 @@
 # The stow directory name is constructed from the build version, the
 # cvs branch name (if any) and the local directory name.  This allows
 # multiple built versions to coexist, even if they're on the same cvs
-# branch.  If the local directory names begins with 'OOF2', only the
-# part after 'OOF2' is used.
+# branch.  If the local directory names begins with 'OOF3D', only the
+# part after 'OOF3D' is used.
 
 # In addition, the 'pg' argument turns on profiling in the C++ code.
 # It won't work unless you're using a python that was built with -pg.
@@ -50,7 +50,7 @@ pyversion = string.join(map(str, sys.version_info[:2]),".")
 #   devel  (must be followed by an integer devel level)
 #   debug
 
-# To make it possible to build OOF2 on different git branches, the
+# To make it possible to build OOF3D on different git branches, the
 # output for the branches needs to go into distinct directories.  We
 # derive the directory names from the git branch name. 
 proc = subprocess.Popen(['git', 'symbolic-ref', '--short', 'HEAD'],
@@ -64,14 +64,16 @@ else:
 
 
 # To make it possible to build different versions of the *same* branch
-# of OOF2 (for example, one that is up-to-date with cvs and one that
+# of OOF3D (for example, one that is up-to-date with cvs and one that
 # is locally modified), the stow directory name also includes the name
-# of the local directory, after 'OOF2'. 
+# of the local directory, after 'OOF3D'. 
 localdir = os.path.split(os.getcwd())[1]
-if localdir.startswith('OOF2'):
-    localdir = localdir[4:]
+if localdir.startswith('OOF3D'):
+    localdir = localdir[5:]
 
-build_types = ('dist', 'devel', 'debug', 'profile', 'dist3d', 'debug3d', 'profile3d')
+build_types_2D = ('dist', 'devel', 'debug', 'profile')
+build_types_3D = ('dist3d', 'debug3d', 'profile3d')
+build_types = build_types_2D + build_types_3D
 
 if len(sys.argv) < 2:
     print "You must provide a build type"
@@ -100,7 +102,14 @@ elif build_type == 'debug3d':
 elif build_type == 'profile3d':
     build_args.append("--3D")
     build_args.append("--debug")
-    os.putenv('CFLAGS', '-g -fno-inline')
+    build_args.append("--enable-profiler")
+    # build_args.append('--libraries=profiler')
+    # os.putenv('CFLAGS', '-g -fno-inline')
+
+if build_type in build_types_2D:
+    buildname = 'oof2'
+else:
+    buildname = 'oof3d'
 
 while sys.argv:
     arg = sys.argv.pop(0)
@@ -123,9 +132,9 @@ if not installdir:
 stowdir = os.path.join(installdir, 'stow')
 builddir =  "-".join(["builddir", branchtag, build_type])
 if localdir:
-    stowsubdir = "-".join(["oof2", branchtag, localdir, build_type, pyversion])
+    stowsubdir = "-".join([buildname, branchtag, localdir, build_type, pyversion])
 else:
-    stowsubdir = "-".join(["oof2", branchtag, build_type, pyversion])
+    stowsubdir = "-".join([buildname, branchtag, build_type, pyversion])
 if build_type in ['dist3d', 'debug3d', 'profile3d']:
     laststowfile = os.path.join(stowdir, '.last_oof3d_install')
 else:
@@ -138,6 +147,12 @@ try:
 except OSError:
     print "Directory %s not found, creating new build directory." % builddir
     os.mkdir('build')
+    # On OS X, prevent the build directory from being backed up.  This
+    # attribute is attached to the directory, not its path, and sticks
+    # to it when the directory is moved.
+    if sys.platform == 'darwin':
+        subprocess.check_call(['tmutil', 'addexclusion',
+                               os.path.abspath('build')])
 
 try:
     build_cmd = "python setup.py build %s install --prefix=%s" \

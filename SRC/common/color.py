@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: color.py,v $
-# $Revision: 1.37.10.8 $
-# $Author: langer $
-# $Date: 2014/07/30 21:28:35 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

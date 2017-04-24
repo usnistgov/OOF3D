@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: primitives.py,v $
-# $Revision: 1.50.10.17 $
-# $Author: langer $
-# $Date: 2014/09/15 19:53:57 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

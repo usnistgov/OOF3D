@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cskeleton2.C,v $
-// $Revision: 1.1.4.187 $
-// $Author: langer $
-// $Date: 2014/12/14 01:07:46 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -34,6 +30,8 @@
 #include <algorithm>
 #include <limits>
 #include <math.h>
+#include <set>
+#include <map>
 #include <vtkCellLocator.h>
 #include <vtkDataArray.h>
 #include <vtkGenericCell.h>
@@ -182,75 +180,81 @@ void CSkeleton::createPointGrid(int m, int n, int l) {
   DefiniteProgress *progress = 
     dynamic_cast<DefiniteProgress*>(getProgress("Allocating nodes", DEFINITE));
 
-  points->Allocate(total, total);
-  nodes.reserve(total);
+  try {
+    points->Allocate(total, total);
+    nodes.reserve(total);
 
-  CSkeletonPointBoundary *blf = getPointBoundary("XminYminZmax", true);
-  CSkeletonPointBoundary *brf = getPointBoundary("XmaxYminZmax", true);
-  CSkeletonPointBoundary *tlf = getPointBoundary("XminYmaxZmax", true);
-  CSkeletonPointBoundary *trf = getPointBoundary("XmaxYmaxZmax", true);
-  CSkeletonPointBoundary *blb = getPointBoundary("XminYminZmin", true);
-  CSkeletonPointBoundary *brb = getPointBoundary("XmaxYminZmin", true);
-  CSkeletonPointBoundary *tlb = getPointBoundary("XminYmaxZmin", true);
-  CSkeletonPointBoundary *trb = getPointBoundary("XmaxYmaxZmin", true);
+    CSkeletonPointBoundary *blf = getPointBoundary("XminYminZmax", true);
+    CSkeletonPointBoundary *brf = getPointBoundary("XmaxYminZmax", true);
+    CSkeletonPointBoundary *tlf = getPointBoundary("XminYmaxZmax", true);
+    CSkeletonPointBoundary *trf = getPointBoundary("XmaxYmaxZmax", true);
+    CSkeletonPointBoundary *blb = getPointBoundary("XminYminZmin", true);
+    CSkeletonPointBoundary *brb = getPointBoundary("XmaxYminZmin", true);
+    CSkeletonPointBoundary *tlb = getPointBoundary("XminYmaxZmin", true);
+    CSkeletonPointBoundary *trb = getPointBoundary("XmaxYmaxZmin", true);
   
-  // TODO 3.1: Why are these loops in this order?  It probably doesn't
-  // matter.  Changing it may break many of the tests...
-  for(i=0; i<n+1; ++i) { // y dimension
-    for(j=0; j<m+1; ++j) {  // x dimension
-      for(k=0; k<l+1; ++k) {  // z dimension
-	// TODO OPT: There's no need to treat the i,j,k==0 cases explicitly.
-	if(j==m)
-	  x[0] = size[0];
-	else if(j==0)
-	  x[0] = 0.0;
-	else
-	  x[0] = j*dx;
-	if(i==n)
-	  x[1] = size[1];
-	else if(i==0)
-	  x[1] = 0.0;
-	else
-	  x[1] = i*dy;
-	if(k==l)
-	  x[2] = size[2];
-	else if(k==0)
-	  x[2] = 0.0;
-	else
-	  x[2] = k*dz;
+    // TODO 3.1: Why are these loops in this order?  It probably doesn't
+    // matter.  Changing it may break many of the tests...
+    for(i=0; i<n+1; ++i) { // y dimension
+      for(j=0; j<m+1; ++j) {  // x dimension
+	for(k=0; k<l+1; ++k) {  // z dimension
+	  // TODO OPT: There's no need to treat the i,j,k==0 cases explicitly.
+	  if(j==m)
+	    x[0] = size[0];
+	  else if(j==0)
+	    x[0] = 0.0;
+	  else
+	    x[0] = j*dx;
+	  if(i==n)
+	    x[1] = size[1];
+	  else if(i==0)
+	    x[1] = 0.0;
+	  else
+	    x[1] = i*dy;
+	  if(k==l)
+	    x[2] = size[2];
+	  else if(k==0)
+	    x[2] = 0.0;
+	  else
+	    x[2] = k*dz;
 	
-	CSkeletonNode *node = addNode(x);
+	  CSkeletonNode *node = addNode(x);
 
-	// TODO OPT: need way of storing partnerships
+	  // TODO OPT: need way of storing partnerships
 
-	// Add nodes to default point boundaries
-	if(i==0 and j==0 and k==0)
-	  blb->addNode(node);
-	if(i==0 and j==m and k==0)
-	  brb->addNode(node);
-	if(i==n and j==0 and k==0)
-	  tlb->addNode(node);
-	if(i==n and j==m and k==0)
-	  trb->addNode(node);                   
-	if(i==0 and j==0 and k==l)
-	  blf->addNode(node);
-	if(i==0 and j==m and k==l)
-	  brf->addNode(node);
-	if(i==n and j==0 and k==l)
-	  tlf->addNode(node);
-	if(i==n and j==m and k==l)
-	  trf->addNode(node);
+	  // Add nodes to default point boundaries
+	  if(i==0 and j==0 and k==0)
+	    blb->addNode(node);
+	  if(i==0 and j==m and k==0)
+	    brb->addNode(node);
+	  if(i==n and j==0 and k==0)
+	    tlb->addNode(node);
+	  if(i==n and j==m and k==0)
+	    trb->addNode(node);                   
+	  if(i==0 and j==0 and k==l)
+	    blf->addNode(node);
+	  if(i==0 and j==m and k==l)
+	    brf->addNode(node);
+	  if(i==n and j==0 and k==l)
+	    tlf->addNode(node);
+	  if(i==n and j==m and k==l)
+	    trf->addNode(node);
 
-	if(progress->stopped()) {
-	  progress->finish();
-	  return;
+	  if(progress->stopped()) {
+	    progress->finish();
+	    return;
+	  }
+	  int ndone = (i*(m+1) + j)*(l+1) + k+1;
+	  progress->setFraction(ndone/float(total));
+	  progress->setMessage(to_string(ndone) + "/" + to_string(total)
+			       + " nodes");
 	}
-	int ndone = (i*(m+1) + j)*(l+1) + k+1;
-	progress->setFraction(ndone/float(total));
-	progress->setMessage(to_string(ndone) + "/" + to_string(total)
-			     + " nodes");
-       }
+      }
     }
+  }
+  catch (...) {
+    progress->finish();
+    throw;
   }
   progress->finish();
 }
@@ -277,75 +281,80 @@ void CSkeleton::createTetra(const TetArrangement *arrangement,
   DefiniteProgress *progress = 
     dynamic_cast<DefiniteProgress*>(getProgress("Creating elements from nodes",
 						DEFINITE));
+  try {
+    // arrangement is a pointer so that it can be swigged.
+    bool flip = (*arrangement == MIDDLING_ARRANGEMENT);
+    // if(*arrangement == MODERATE_ARRANGEMENT) 
+    //   flip = 0;
+    // else if(*arrangement == MIDDLING_ARRANGEMENT)
+    //   flip = 1;
 
-  // arrangement is a pointer so that it can be swigged.
-  bool flip = (*arrangement == MIDDLING_ARRANGEMENT);
-  // if(*arrangement == MODERATE_ARRANGEMENT) 
-  //   flip = 0;
-  // else if(*arrangement == MIDDLING_ARRANGEMENT)
-  //   flip = 1;
+    ICoord lim = ICoord(n,m,l);
 
-  ICoord lim = ICoord(n,m,l);
+    for(int i=0; i<n; ++i) { // y dimension
+      for(int j=0; j<m; ++j) {  // x dimension
+	for(int k=0; k<l; ++k) {  // z dimension
 
-  for(int i=0; i<n; ++i) { // y dimension
-    for(int j=0; j<m; ++j) {  // x dimension
-      for(int k=0; k<l; ++k) {  // z dimension
+	  int element_count = 5*(i*m*l+j*l+k);
 
-	int element_count = 5*(i*m*l+j*l+k);
+	  int ulf = (i+1)*(m+1)*(l+1)+j*(l+1)+k+1;      // upper left front
+	  int urf = (i+1)*(m+1)*(l+1)+(j+1)*(l+1)+k+1;  // upper right front
+	  int lrf = i*(m+1)*(l+1)+(j+1)*(l+1)+k+1;      // lower right front
+	  int llf = i*(m+1)*(l+1)+j*(l+1)+k+1;          // lower left front 
+	  int ulb = (i+1)*(m+1)*(l+1)+j*(l+1)+k;        // upper left back
+	  int urb = (i+1)*(m+1)*(l+1)+(j+1)*(l+1)+k;    // upper right back 
+	  int lrb = i*(m+1)*(l+1)+(j+1)*(l+1)+k;        // lower right back
+	  int llb = i*(m+1)*(l+1)+j*(l+1)+k;            // lower left back
 
-	int ulf = (i+1)*(m+1)*(l+1)+j*(l+1)+k+1;      // upper left front
-	int urf = (i+1)*(m+1)*(l+1)+(j+1)*(l+1)+k+1;  // upper right front
-	int lrf = i*(m+1)*(l+1)+(j+1)*(l+1)+k+1;      // lower right front
-	int llf = i*(m+1)*(l+1)+j*(l+1)+k+1;          // lower left front 
-	int ulb = (i+1)*(m+1)*(l+1)+j*(l+1)+k;        // upper left back
-	int urb = (i+1)*(m+1)*(l+1)+(j+1)*(l+1)+k;    // upper right back 
-	int lrb = i*(m+1)*(l+1)+(j+1)*(l+1)+k;        // lower right back
-	int llb = i*(m+1)*(l+1)+j*(l+1)+k;            // lower left back
+	  if(!flip) {
+	    vtkIdType ids1[4] = {llf, urf, lrf, lrb};
+	    createElement(VTK_TETRA, 4, ids1);
+	    vtkIdType ids2[4] = {llf, ulf, urf, ulb};
+	    createElement(VTK_TETRA, 4, ids2);
+	    vtkIdType ids3[4] = {lrb, urf, urb, ulb};
+	    createElement(VTK_TETRA, 4, ids3);
+	    vtkIdType ids4[4] = {llf, lrb, llb, ulb};
+	    createElement(VTK_TETRA, 4, ids4);
+	    vtkIdType ids5[4] = {llf, ulb, urf, lrb};
+	    createElement(VTK_TETRA, 4, ids5);
+	  }
+	  else {
+	    vtkIdType ids1[4] = {llf, ulf, lrf, llb};
+	    createElement(VTK_TETRA, 4, ids1);
+	    vtkIdType ids2[4] = {ulf, urf, lrf, urb};
+	    createElement(VTK_TETRA, 4, ids2);
+	    vtkIdType ids3[4] = {ulf, ulb, urb, llb};
+	    createElement(VTK_TETRA, 4, ids3);
+	    vtkIdType ids4[4] = {lrf, urb, lrb, llb};
+	    createElement(VTK_TETRA, 4, ids4);
+	    vtkIdType ids5[4] = {ulf, urb, lrf, llb};
+	    createElement(VTK_TETRA, 4, ids5);
+	  }
 
-	if(!flip) {
-	  vtkIdType ids1[4] = {llf, urf, lrf, lrb};
-	  createElement(VTK_TETRA, 4, ids1);
-	  vtkIdType ids2[4] = {llf, ulf, urf, ulb};
-	  createElement(VTK_TETRA, 4, ids2);
-	  vtkIdType ids3[4] = {lrb, urf, urb, ulb};
-	  createElement(VTK_TETRA, 4, ids3);
-	  vtkIdType ids4[4] = {llf, lrb, llb, ulb};
-	  createElement(VTK_TETRA, 4, ids4);
-	  vtkIdType ids5[4] = {llf, ulb, urf, lrb};
-	  createElement(VTK_TETRA, 4, ids5);
-	}
-	else {
-	  vtkIdType ids1[4] = {llf, ulf, lrf, llb};
-	  createElement(VTK_TETRA, 4, ids1);
-	  vtkIdType ids2[4] = {ulf, urf, lrf, urb};
-	  createElement(VTK_TETRA, 4, ids2);
-	  vtkIdType ids3[4] = {ulf, ulb, urb, llb};
-	  createElement(VTK_TETRA, 4, ids3);
-	  vtkIdType ids4[4] = {lrf, urb, lrb, llb};
-	  createElement(VTK_TETRA, 4, ids4);
-	  vtkIdType ids5[4] = {ulf, urb, lrf, llb};
-	  createElement(VTK_TETRA, 4, ids5);
-	}
+	  // for(int a=0; a<5; ++a)
+	  //   elements[element_count+a]->findHomogeneityAndDominantPixel(MS);
+	  ICoord idx = ICoord(i,j,k);
+	  addGridSegmentsToBoundaries(idx,lim);
+	  addGridFacesToBoundaries(idx,lim,flip);
 
-	// for(int a=0; a<5; ++a)
-	//   elements[element_count+a]->findHomogeneityAndDominantPixel(MS);
-	ICoord idx = ICoord(i,j,k);
-	addGridSegmentsToBoundaries(idx,lim);
-	addGridFacesToBoundaries(idx,lim,flip);
+	  flip = !flip;
 
-	flip = !flip;
+	  if(progress->stopped()) return;
+	  progress->setFraction(float(element_count)/float(total));
+	  progress->setMessage(to_string(element_count) + "/"
+			       + to_string(total) + " elements");
 
-	if(progress->stopped()) return;
-	progress->setFraction(float(element_count)/float(total));
-	progress->setMessage(to_string(element_count) + "/"
-			     + to_string(total) + " elements");
-
-      }	// end loop over z
-      if(l%2==0) flip = !flip;
-    } // end loop over x
-    if(m%2==0) flip = !flip;
-  } // end loop over y
-  incrementTimestamp();
+	}	// end loop over z
+	if(l%2==0) flip = !flip;
+      } // end loop over x
+      if(m%2==0) flip = !flip;
+    } // end loop over y
+    incrementTimestamp();
+  }
+  catch (...) {
+    progress->finish();
+    throw;
+  }
   progress->finish();
 }
 
@@ -568,7 +577,7 @@ void CSkeleton::addGridFacesToBoundaries(const ICoord &idx, const ICoord &nml,
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 void CSkeleton::checkIllegality() {
-  for(int i=0; i<nelements(); ++i) {
+  for(unsigned int i=0; i<nelements(); ++i) {
     if(elements[i]->illegal()) {
       illegal_ = true;
       return;
@@ -580,7 +589,7 @@ void CSkeleton::checkIllegality() {
 int CSkeleton::getIllegalCount() {
   if(illegal_count_computation_time < timestamp) {
     illegalCount = 0;
-    for(int i=0; i<nelements(); ++i) {
+    for(unsigned int i=0; i<nelements(); ++i) {
       if(elements[i]->illegal())
 	  ++illegalCount;
     }
@@ -592,7 +601,7 @@ int CSkeleton::getIllegalCount() {
 int CSkeleton::getSuspectCount() {
   if(suspect_count_computation_time < timestamp) {	
     suspectCount = 0;
-    for(int i=0; i<nelements(); ++i) {
+    for(unsigned int i=0; i<nelements(); ++i) {
       if(elements[i]->suspect()) {
 	++suspectCount;
       } 
@@ -604,7 +613,7 @@ int CSkeleton::getSuspectCount() {
 
 void CSkeleton::getIllegalElements(CSkeletonElementVector &baddies) const {
   baddies.clear();
-  for(int i=0; i<nelements(); ++i) {
+  for(unsigned int i=0; i<nelements(); ++i) {
     if(elements[i]->illegal())
       baddies.push_back(elements[i]);
   }
@@ -613,7 +622,7 @@ void CSkeleton::getIllegalElements(CSkeletonElementVector &baddies) const {
 
 void CSkeleton::getSuspectElements(CSkeletonElementVector &baddies) const {
   baddies.clear();
-  for(int i=0; i<nelements(); ++i) {
+  for(unsigned int i=0; i<nelements(); ++i) {
     if(elements[i]->suspect())
       baddies.push_back(elements[i]);
   }
@@ -860,31 +869,49 @@ void CSkeletonBase::calculateHomogeneityIndex() const {
   DefiniteProgress *progress = 
     dynamic_cast<DefiniteProgress*>(getProgress("Calculating homogeneity index",
 						DEFINITE));
-  for(CSkeletonElementIterator elit = beginElements(); 
-      elit != endElements(); ++elit)
-    {
-      if(!(*elit)->illegal()) {
-	homogeneityIndex +=
-	  (*elit)->volume()*(*elit)->homogeneity(getMicrostructure());
-	if((*elit)->suspect()) 
-	  ++suspectCount;
+  const CMicrostructure *ms = getMicrostructure();
+  try {
+    double vtot = 0.0;		// total volume
+    for(CSkeletonElementIterator elit = beginElements(); 
+	elit != endElements(); ++elit)
+      {
+	if(!(*elit)->illegal()) {
+	  homogeneityIndex +=
+	    (*elit)->volume()*(*elit)->homogeneity(ms);
+	  vtot += (*elit)->volume();
+	  if((*elit)->suspect()) 
+	    ++suspectCount;
+	}
+	else
+	  ++illegalCount;
+	progress->setFraction(float((*elit)->getIndex())/nelements());
+	progress->setMessage(to_string((*elit)->getIndex()) + "/" +
+			     to_string(nelements()));
       }
-      else
-	++illegalCount;
-      progress->setFraction(float((*elit)->getIndex())/nelements());
-      progress->setMessage(to_string((*elit)->getIndex()) + "/" +
-			   to_string(nelements()));
-    }
-  homogeneityIndex /= volume();
-  ++homogeneity_index_computation_time;
-  ++illegal_count_computation_time;
-  ++suspect_count_computation_time;
+    // Using the sum of the volumes of the legal elements, instead of
+    // the total volume of the microstructure, in the denominator of
+    // the homogeneity index avoids a round-off error problem that
+    // makes the index be slightly greater than 1 in some tests (eg,
+    // OOF_ElasticTimeSteppers("SS22") in solver_test.py).  The index
+    // isn't actually used for computation, so this fudge isn't
+    // crucial.  The problem isn't due to the presence of illegal
+    // elements.
+    // homogeneityIndex /= volume();
+    homogeneityIndex /= vtot;
+    ++homogeneity_index_computation_time;
+    ++illegal_count_computation_time;
+    ++suspect_count_computation_time;
+  }
+  catch (...) {
+    progress->finish();
+    throw;
+  }
   progress->finish();
 }
 
 double CSkeletonBase::energyTotal(double alpha) const {
   double total = 0;
-  for(int i=0; i<nelements(); ++i) {
+  for(unsigned int i=0; i<nelements(); ++i) {
     total += getElement(i)->energyTotal(getMicrostructure(), alpha);
   }
   return total;
@@ -950,7 +977,7 @@ vtkSmartPointer<vtkCellLocator> CSkeleton::get_element_locator() {
 const CSkeletonNode* CSkeletonBase::nearestNode(Coord *point) {
   int idx = get_point_locator()->FindClosestPoint(point->xpointer());
 #ifdef DEBUG
-  if(idx < 0 || idx >= nnodes()) {
+  if(idx < 0 || (unsigned int) idx >= nnodes()) {
     oofcerr << "CSkeletonBase::nearestNode: idx=" << idx << std::endl;
     throw ErrProgrammingError("FindClosestPoint failed", __FILE__, __LINE__);
   }
@@ -999,6 +1026,82 @@ void CSkeleton::getVtkCells(SkeletonFilter *filter,
     }
   }
 }
+
+#ifdef DEBUG
+void CSkeleton::getVtkSegments(SkeletonFilter *filter,
+			       vtkSmartPointer<vtkUnstructuredGrid> grd)
+{
+  OOFcerrIndent inden(2);
+  cleanUp();
+  grd->Initialize();
+  filter->resetMap();
+  grd->Allocate(elements.size()/2, elements.size()/2);
+  grd->SetPoints(points);
+  for(CSkeletonSegmentIterator sit=beginSegments(); sit!=endSegments(); ++sit) {
+    const CSkeletonSegment *seg = (*sit).second;
+    if(filter->acceptable(seg, this)) {
+      VTKCellType type = seg->getCellType();
+      vtkIdType ids[2];
+      seg->getPointIds(ids);
+      /*vtkIdType cellID = */ grd->InsertNextCell(type, 2, ids);
+      // filter->mapCellIndex(cellID, seg->getIndex());
+    }
+  }
+}
+
+void CSkeleton::getExtraVtkSegments(CSkeletonBase *other,
+				    vtkSmartPointer<vtkUnstructuredGrid> grd)
+{
+  // Display segments in this Skeleton that aren't in that one.
+  cleanUp();
+  CSkeleton *that = other->sheriffSkeleton();
+  that->cleanUp();
+  // First make sets of all segments in the two Skeletons,
+  // representing them by Coords because node indexing may
+  // not be the same.
+  typedef std::pair<Coord3D, Coord3D> CoordPair;
+  std::set<CoordPair> thatSegs, thisSegs;
+  std::map<CoordPair, const CSkeletonSegment*> segMap;
+  for(CSkeletonSegmentIterator i=beginSegments(); i!=endSegments(); i++)
+    {
+      CSkeletonSegment *seg = i->second;;
+      Coord3D p0 = seg->getNode(0)->position();
+      Coord3D p1 = seg->getNode(1)->position();
+      if(p0 < p1) {
+	thisSegs.emplace(p0, p1);
+	segMap[CoordPair(p0, p1)] = seg;
+      }
+      else {
+	thisSegs.emplace(p1, p0);
+	segMap[CoordPair(p1, p0)] = seg;
+      }
+    }
+  for(CSkeletonSegmentIterator i=that->beginSegments(); i!=that->endSegments();
+      i++)
+    {
+      CSkeletonSegment *seg = i->second;
+      Coord3D p0 = seg->getNode(0)->position();
+      Coord3D p1 = seg->getNode(1)->position();
+      if(p0 < p1)
+	thatSegs.emplace(p0, p1);
+      else
+	thatSegs.emplace(p1, p0);
+    }
+  std::set<CoordPair> diff;
+  std::set_difference(thisSegs.begin(), thisSegs.end(),
+		      thatSegs.begin(), thatSegs.end(),
+		      std::inserter(diff, diff.end()));
+  grd->Initialize();
+  grd->Allocate(diff.size(), diff.size());
+  grd->SetPoints(points);
+  for(auto &ptpair : diff) {
+    const CSkeletonSegment *seg = segMap[ptpair];
+    vtkIdType ids[2];
+    seg->getPointIds(ids);
+    grd->InsertNextCell(seg->getCellType(), 2, ids);
+  }
+}
+#endif // DEBUG
 
 vtkSmartPointer<vtkDataArray> CSkeleton::getMaterialCellData(
 					    const SkeletonFilter *filter)
@@ -2011,7 +2114,7 @@ std::string *CSkeleton::compare(CSkeletonBase* other, double tolerance)
   double tol2 = tolerance*tolerance;
   double diff;
   double diff2;
-  for(int i = 0; i < nnodes(); ++i) {
+  for(unsigned int i = 0; i < nnodes(); ++i) {
     Coord x1  = getNode(i)->position();
     Coord x2 = omar->getNode(i)->position();
     diff2 = 0;
@@ -2126,7 +2229,210 @@ std::string *CSkeleton::compare(CSkeletonBase* other, double tolerance)
   return new std::string("");
 } // CSkeleton::compare
 
+#ifdef DEBUG
+std::string *CSkeleton::compare2(const CSkeletonBase *other) const
+{
+  const CSkeleton *that = other->sheriffSkeleton();
+  std::vector<std::string> messages;
+  // Node indices may differ between the two skeletons.  Map nodes
+  // from one skeleton to the other using positions.
+  NodePositionMap nodes0, nodes1;
+  NodePositionSet pos0, pos1;
+  for(unsigned int i=0; i<nnodes(); ++i) {
+    nodes0[getNode(i)->position()] = i;
+    pos0.insert(getNode(i)->position());
+  }
+  for(unsigned int i=0; i<that->nnodes(); ++i) {
+    nodes1[that->getNode(i)->position()] = i;
+    pos1.insert(that->getNode(i)->position());
+  }
+  // Find the nodes that aren't partnered.
+  NodePositionSet ndiff;
+  std::set_difference(pos0.begin(), pos0.end(), pos1.begin(), pos1.end(),
+		      std::inserter(ndiff, ndiff.end()));
+  for(const Coord3D &missing : ndiff) {
+    messages.emplace_back("Node " + to_string(nodes0[missing]) +
+			  " at position " + to_string(missing) +
+			  " in this Skeleton is missing in that Skeleton");
+  }
+  ndiff.clear();
+  std::set_difference(pos1.begin(), pos1.end(), pos0.begin(), pos0.end(),
+		      std::inserter(ndiff, ndiff.end()));
+  for(const Coord3D &missing : ndiff) {
+    messages.emplace_back("Node " + to_string(nodes1[missing]) +
+			  " at position " + to_string(missing) +
+			  " in that Skeleton is missing in this Skeleton");
+  }
+  if(messages.empty()) {	// ie, nodes match up
+    // If the nodes have the same positions, look for sets of four
+    // elements that may have different common edges in the two
+    // Skeletons.  These would correspond to different ways of
+    // subdividing an element marked on all six edges, which is a
+    // likely source of differences between Skeletons when the
+    // roundoff in the homogeneity calculation changed.
+
+    // Find elements in this that aren't in that, and vv.
+    std::set<int> unmatchedEl0; // els in this but not in that.
+    std::set<int> unmatchedEl1; // els in that but not in this.
+    ElNodesMap elMap0, elMap1;
+    NodePosSetSet elements0, elements1;
+    for(CSkeletonElementIterator elit = beginElements(); elit != endElements();
+	++elit)
+      {
+	NodePositionSet nodes;
+	for(unsigned int i=0; i<4; i++)
+	  nodes.insert((*elit)->getNode(i)->position());
+	elMap0[nodes] = (*elit)->getIndex();
+	elements0.insert(nodes);
+      }
+    for(CSkeletonElementIterator elit = that->beginElements();
+	elit != that->endElements(); ++elit)
+      {
+	NodePositionSet nodes;
+	for(unsigned int i=0; i<4; i++)
+	  nodes.insert((*elit)->getNode(i)->position());
+	elMap1[nodes] = (*elit)->getIndex();
+	elements1.insert(nodes);
+      }
+    NodePosSetSet missing0, missing1;
+    // missing0 contains the elements in this that aren't in
+    // that. missing1 is the opposite.
+    std::set_difference(elements0.begin(), elements0.end(),
+			elements1.begin(), elements1.end(),
+			std::inserter(missing0, missing0.end()));
+    std::set_difference(elements1.begin(), elements1.end(),
+			elements0.begin(), elements0.end(),
+			std::inserter(missing1, missing1.end()));
+    
+    if(!missing0.empty() || !missing1.empty()) {
+      // For each element that doesn't have a match in the other
+      // skeleton, see if it's part of a set of four elements sharing
+      // an edge, and if that set of four has a match.
+      NodePosSetSet sixNodesSet0 = unmatchedSixNodeGroups(missing0, elMap0);
+      NodePosSetSet sixNodesSet1 = that->unmatchedSixNodeGroups(missing1,
+								elMap1);
+      // If a six node set occurs in both skeletons, then the elements
+      // in that set don't really disagree.  Remove them from the
+      // sets.
+      NodePosSetSet common;
+      std::set_intersection(sixNodesSet0.begin(), sixNodesSet0.end(),
+			    sixNodesSet1.begin(), sixNodesSet1.end(),
+			    std::inserter(common, common.end()));
+
+      oofcerr << "CSkeletonBase::compare2: found " << common.size()
+	      << " common groups of six nodes" << std::endl;
+      for(const NodePositionSet &nds : common) {
+	OOFcerrIndent indent(2);
+	oofcerr << "CSkeletonBase::compare2: ";
+	std::cerr << nds;
+	oofcerr << std::endl;
+      }
+
+      // For each unmatched element, see if it's in a shared group of
+      // six nodes.
+      NodePosSetSet okElements;
+      for(const NodePositionSet &nds : missing0) {
+	for(const NodePositionSet &sixNodes : common) {
+	  if(std::includes(sixNodes.begin(), sixNodes.end(),
+			   nds.begin(), nds.end()))
+	    {
+	      // This set of nodes is part of a common six node group.
+	      okElements.insert(nds);
+	      break;
+	    }
+	}
+      }
+      // Remove the ok elements from the missing element lists
+      NodePosSetSet badElements0;
+      std::set_difference(missing0.begin(), missing0.end(),
+			  okElements.begin(), okElements.end(),
+			  std::inserter(badElements0, badElements0.end()));
+      okElements.clear();
+      for(const NodePositionSet &nds : missing1) {
+	for(const NodePositionSet &sixNodes : common) {
+	  if(std::includes(sixNodes.begin(), sixNodes.end(),
+			   nds.begin(), nds.end()))
+	    {
+	      okElements.insert(nds);
+	      break;
+	    }
+	}
+      }
+      NodePosSetSet badElements1;
+      std::set_difference(missing1.begin(), missing1.end(),
+			  okElements.begin(), okElements.end(),
+			  std::inserter(badElements1, badElements1.end()));
+
+      for(const NodePositionSet &nds : badElements0) {
+	messages.emplace_back("Element " + to_string(elMap0[nds]) +
+			      " in this Skeleton is not in that one");
+      }
+      for(const NodePositionSet &nds : badElements1) {
+	messages.emplace_back("Element " + to_string(elMap1[nds]) +
+			      " in that Skeleton is not in this one");
+      }
+    } // end if there are missing elements in either skeleton
+  } // end if nodes match up
+
+  // Consolidate messages and return.
+  std::string *result = new std::string();
+  for(std::string &msg : messages) {
+    if(result->empty())
+      *result += msg;
+    else {
+      *result += "\n";
+      *result += msg;
+    }
+  }
+  if(result->empty())
+    *result += "OK!";
+  return result;
+} // end CSkeleton::compare2
+
+NodePosSetSet CSkeletonBase::unmatchedSixNodeGroups(const NodePosSetSet &els,
+						    const ElNodesMap &elMap
+						    )
+  const
+{
+  NodePosSetSet sixNodesSet;
+  for(const NodePositionSet &el0 : els) {
+    ElNodesMap::const_iterator it = elMap.find(el0);
+    assert(it != elMap.end());
+    unsigned int idx = it->second; // element index in Skeleton
+    const CSkeletonElement *elem0 = getElement(idx);
+    // Look at each segment of the element by looping over pairs of nodes
+    for(unsigned int j=0; j<3; j++) {
+      const CSkeletonNode *nj = elem0->getNode(j);
+      for(unsigned int k=j+1; k<4; k++) {
+	const CSkeletonNode *nk = elem0->getNode(k);
+	const CSkeletonSegment *seg = findExistingSegment(nj, nk);
+	if(seg->num_elements() == 4) {
+	  // Do the four elements on this segment use just six nodes?
+	  NodePositionSet segnodes({nj->position(), nk->position()});
+	  for(unsigned int e=0; e<4; e++) {
+	    for(const CSkeletonNode *nl : *seg->getElement(this, e)->getNodes())
+	      segnodes.insert(nl->position());
+	  }
+	  if(segnodes.size() == 6)
+	    sixNodesSet.insert(segnodes);
+	}
+      }
+    }
+  }
+  return sixNodesSet;
+}
+#endif // DEBUG
+
+
+  
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 CSkeleton *CSkeleton::sheriffSkeleton() {
+  return this;
+}
+
+const CSkeleton *CSkeleton::sheriffSkeleton() const {
   return this;
 }
 
@@ -2163,7 +2469,6 @@ void CSkeleton::needsHash() {
 
 
 void CSkeleton::populate_femesh(FEMesh *realmesh, Material *mat) {
-  int i;
   // TODO 3.1: for now we're assuming order 1
   
   // Calling cleanUp() here ensures that node and element indices
@@ -2183,14 +2488,14 @@ void CSkeleton::populate_femesh(FEMesh *realmesh, Material *mat) {
   // skeleton nodes!  Should each skeleton node keep a std::set of
   // mesh node pointers?
 
-  for(i=0; i<nnodes(); ++i) {
+  for(unsigned int i=0; i<nnodes(); ++i) {
     realmesh->newFuncNode(nodes[i]->position());
   }
 
   // TODO 3.1: Add nodes for higher order elements.
 
   // make the elements
-  for(i=0; i<nelements(); ++i) {
+  for(unsigned int i=0; i<nelements(); ++i) {
     // CSkeletonElement::realElement() creates an element from the
     // appropriate MasterElement and calls FEMesh::addElement().
     elements[i]->realElement(realmesh, i, /*fnodes,*/ this, mat);
@@ -2556,6 +2861,10 @@ void CDeputySkeleton::deactivate() {
 }
 
 CSkeleton* CDeputySkeleton::sheriffSkeleton() {
+  return skeleton;
+}
+
+const CSkeleton* CDeputySkeleton::sheriffSkeleton() const {
   return skeleton;
 }
 
@@ -3477,6 +3786,59 @@ void CSkeleton::elementsAddGroupsDown(CGroupTrackerVector *vector) {
     {
       (*eit)->addDown(vector->begin(), vector->end());
     }
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Check that that total volume of each category, summed over
+// elements, is the same as the volume of the voxels in the category.
+// Return true if the test passes.
+
+bool CSkeletonBase::checkCategoryVolumes(double tolerance) const {
+  const CMicrostructure *ms = getMicrostructure();
+  unsigned int ncat = ms->nCategories();
+  DoubleVec volumes(ncat, 0.0);
+  for(CSkeletonElementIterator elit = beginElements();
+      elit!=endElements(); ++elit)
+    {
+      // The bool checkTopology arg to categoryVolumes tells it to
+      // perform topology checks on the clipped voxel set boundaries.
+      // This is the only place where it should be set to true.  The
+      // test is o(N^3) in the size of the clipped boundary.
+      DoubleVec evols = (*elit)->categoryVolumes(ms, true);
+      for(unsigned int c=0; c<ncat; c++)
+	volumes[c] += evols[c];
+    }
+  // Count voxels in each category
+  std::vector<int> catCounts(ncat, 0);
+  const Array<int> *catMap = ms->getCategoryMap();
+  for(Array<int>::const_iterator i=catMap->begin(); i!=catMap->end(); ++i) {
+    catCounts[*i]++;
+  }
+  // Since categoryVolumes returns volumes in voxel units, the total
+  // volume of each category should be the number of voxels in the
+  // category.
+  bool ok = true;
+  for(unsigned int c=0; c<ncat; c++) {
+    if(catCounts[c] == 0) {
+      if(volumes[c] != 0) {
+	oofcerr << "CSkeletonBase::checkCategoryVolumes: category="
+		<< c << " volume=" << volumes[c] << " #voxels=" << catCounts[c]
+		<< " error=infinite!" << std::endl;
+	ok = false;
+      }
+    }
+    else {
+      double err = fabs(catCounts[c] - volumes[c])/catCounts[c];
+      if(err > tolerance) {
+	oofcerr << "CSkeletonBase::checkCategoryVolumes: category="
+		<< c << " volume=" << volumes[c] << " #voxels=" << catCounts[c]
+		<< " error=" << err << std::endl;
+	ok = false;
+      }
+    }
+  }
+  return ok;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

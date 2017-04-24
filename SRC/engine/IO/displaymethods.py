@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: displaymethods.py,v $
-# $Revision: 1.147.2.81 $
-# $Author: langer $
-# $Date: 2014/11/25 22:08:32 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -15,6 +11,8 @@
 # Simple display methods for Skeletons and Meshes.  Simpler than
 # contour plots, in any case.
 
+import fnmatch
+import os
 import sys
 
 from ooflib.SWIG.common import config
@@ -33,6 +31,7 @@ from ooflib.SWIG.common import smallmatrix
 from ooflib.SWIG.engine.IO import gridsource
 from ooflib.common import color
 from ooflib.common import debug
+from ooflib.common import enum
 from ooflib.common import mainthread
 from ooflib.common import parallel_enable
 from ooflib.common import primitives
@@ -42,12 +41,14 @@ from ooflib.common import utils
 from ooflib.common.IO import automatic
 from ooflib.common.IO import colormap
 from ooflib.common.IO import display
+from ooflib.common.IO import filenameparam
 from ooflib.common.IO import ghostgfxwindow
 from ooflib.common.IO import mainmenu
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
 from ooflib.common.IO import placeholder
 from ooflib.common.IO import reporter
+from ooflib.common.IO import whoville
 from ooflib.common.IO import xmlmenudump
 from ooflib.engine import mesh
 from ooflib.engine import skeletoncontext
@@ -273,7 +274,6 @@ class SkeletonDisplayMethod(SkelMeshDisplayMethod):
         hoo = self.who()
         if hoo and hoo.resolve(self.gfxwindow).path() == skeletonname:
             self.source.Modified()
-
 
 class MeshDisplayMethod(display.AnimationLayer, SkelMeshDisplayMethod):
     # A display method that displays data from a Mesh at positions
@@ -586,6 +586,84 @@ skeledges = registeredclass.Registration(
     discussion=xmlmenudump.loadFile(
         'DISCUSSIONS/engine/reg/skeletonedgedisplay.xml')
     )
+
+# SkeletonEdgeOnlyDisplay displays just the edges, and, unlike
+# SkeletonEdgeDisplay, doesn't display invisible faces, so the the
+# tets aren't selectable.  However, since the display is based on
+# segments, the filter acts on segments.  The filter in
+# SkeletonEdgeDisplay acts on elements, so it can't be used to display
+# segment groups.
+
+class SkeletonEdgeOnlyDisplay(EdgeDisplay, SkeletonDisplayMethod):
+    def __init__(self, width=defaultSkeletonWidth, color=defaultSkeletonColor,
+                 filter=defaultSkeletonFilter):
+        self.width = width
+        self.color = color
+        SkeletonDisplayMethod.__init__(self, filter)
+    # The only differences between SkeletonEdgeOnlyDisplay and
+    # SkeletonEdgeDisplay are that SkeletonEdgeOnlyDisplay uses
+    # SkeletonSegmentGridSource and CSkeleton::getVtkSegments instead
+    # of SkeletonGridSource and CSkeleton::getVtkCells, and it uses
+    # SegmentGridCanvasLayer instead of WireGridCanvasLayer.
+    def vtkSource(self):
+        return gridsource.newSkeletonSegmentGridSource()
+    def newLayer(self):
+        self.source = self.vtkSource()
+        canvaslayer = gridlayers.SegmentGridCanvasLayer(
+            self.gfxwindow.oofcanvas, self.name(), self.source)
+        return canvaslayer
+
+class SkeletonEdgeDiffDisplay(EdgeDisplay, SkeletonDisplayMethod):
+    def __init__(self, other, width=defaultSkeletonWidth,
+                 color=defaultSkeletonColor):
+        self.other = other
+        self.width = width
+        self.color = color
+        SkeletonDisplayMethod.__init__(self, filter=defaultSkeletonFilter)
+    def setParams(self):
+        EdgeDisplay.setParams(self)
+        debug.fmsg("self.other=", self.other)
+        self.source.setOther(whoville.getClass('Skeleton')[self.other].getObject())
+    def vtkSource(self):
+        return gridsource.newSkeletonEdgeDiffGridSource()
+    def newLayer(self):
+        self.source = self.vtkSource()
+        canvaslayer = gridlayers.SegmentGridCanvasLayer(
+            self.gfxwindow.oofcanvas, self.name(), self.source)
+        return canvaslayer
+
+if debug.debug():
+    registeredclass.Registration(
+        'Segments Only',
+        display.DisplayMethod,
+        SkeletonEdgeOnlyDisplay,
+        ordering=0.001,
+        layerordering=display.Linear,
+        params=[
+            color.ColorParameter('color', defaultSkeletonColor,
+                                 tip=parameter.emptyTipString),
+            IntRangeParameter('width', (1,10), defaultSkeletonWidth,
+                              tip="Line thickness, in pixels"),
+            parameter.RegisteredParameter(
+                'filter', skeletonfilter.SkeletonFilterPtr,
+                defaultSkeletonFilter, tip="Visualization filter")],
+        whoclasses = ('Skeleton',),
+        tip="Draw the disassociated edges of Skeleton Elements (debugging)",
+    )
+
+    registeredclass.Registration(
+        'Skeleton Edge Diff',
+        display.DisplayMethod,
+        SkeletonEdgeDiffDisplay,
+        ordering=10000,
+        layerordering=display.Linear,
+        params=[
+            whoville.WhoParameter('other', whoville.getClass('Skeleton')),
+            color.ColorParameter('color', defaultSkeletonColor),
+            IntRangeParameter('width', (1,10), defaultSkeletonWidth)],
+        whoclasses = ('Skeleton',)
+        )
+
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -1036,3 +1114,175 @@ def defaultMeshEdgeDisplay():
     return meshedges()
 
 ghostgfxwindow.DefaultLayer(mesh.meshes, defaultMeshEdgeDisplay)
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+## Methods for displaying parts of the voxel set boundary intersection
+## with a single skeleton element.
+
+## Intersect an element with a voxel group
+
+class ElementVoxelCategoryIntersectionEdges(display.DisplayMethod):
+    def __init__(self, element, category, color, line_width):
+        self.element = element
+        self.category = category
+        self.color = color
+        self.line_width = line_width
+        display.DisplayMethod.__init__(self)
+
+    def newLayer(self):
+        return canvaslayers.LineSegmentLayer(
+            self.gfxwindow.oofcanvas,
+            "ElementVoxelCategoryIntersectionEdges")
+
+    def setParams(self):
+        self.canvaslayer.set_color(self.color)
+        self.canvaslayer.set_lineWidth(self.line_width)
+        skel = self.who().getObject(self.gfxwindow)
+        if skel:
+            el = skel.getElement(self.element)
+            el.drawVoxelCategoryIntersection(self.canvaslayer, skel,
+                                             self.category)
+    def whoChanged(self):
+        return True
+
+class DrawLinesFromFile(display.DisplayMethod):
+    ## TODO: The data may have been written by a routine that used
+    ## voxel coordinates.  This should have a parameter that says
+    ## whether the data is in voxel coordinates, and use self.who
+    ## to convert back to physical coordinates if necessary.
+    def __init__(self, filename, color, line_width):
+        self.filename = filename
+        self.color = color
+        self.line_width = line_width
+        display.DisplayMethod.__init__(self)
+    def newLayer(self):
+        return canvaslayers.LineSegmentLayer(
+            self.gfxwindow.oofcanvas,
+            "DrawLinesFromFile")
+    def setParams(self):
+        self.canvaslayer.set_color(self.color)
+        self.canvaslayer.set_lineWidth(self.line_width)
+        f = file(self.filename, "r")
+        # lines are of the form (x0, y0, z0), (x1, y1, z1)
+        coords = [eval(line) for line in f if line[0] != '#']
+        f.close()
+        self.canvaslayer.set_nSegs(len(coords))
+        for cset in coords:
+            p0 = primitives.Point(*cset[0])
+            p1 = primitives.Point(*cset[1])
+            self.canvaslayer.addSegment(p0, p1)
+    def whoChanged(self):
+        return True
+
+class DrawLinesFromFiles(display.DisplayMethod):
+    ## TODO: See comment in DrawLinesFromFile re coordinate systems
+    ## TODO: Combine this with DrawLinesFromFile somehow, and re-use code.
+    def __init__(self, directory, pattern, color, line_width):
+        self.directory = directory
+        self.pattern = pattern
+        self.color = color
+        self.line_width = line_width
+        display.DisplayMethod.__init__(self)
+    def newLayer(self):
+        return canvaslayers.LineSegmentLayer(
+            self.gfxwindow.oofcanvas,
+            "DrawLinesFromFiles")
+    def setParams(self):
+        self.canvaslayer.set_color(self.color)
+        self.canvaslayer.set_lineWidth(self.line_width)
+        files = fnmatch.filter(os.listdir(self.directory), self.pattern)
+        coords = []
+        for filename in files:
+            f = file(filename, "r")
+            coords.extend([eval(line) for line in f if line[0] != '#'])
+            f.close()
+        self.canvaslayer.set_nSegs(len(coords))
+        for cset in coords:
+            p0 = primitives.Point(*cset[0])
+            p1 = primitives.Point(*cset[1])
+            self.canvaslayer.addSegment(p0, p1)
+    def whoChanged(self):
+        return True
+        
+    
+
+# class ElementVoxelCategoryIntersectionFaces(display.DisplayMethod):
+#     def __init__(self, element, category, color, opacity):
+#         self.element = element
+#         self.category = category
+#         self.color = color
+#         self.opacity = opacity
+#         display.DisplayMethod.__init__(self)
+#     def newLayer(self):
+#         return canvaslayers.SimpleFilledCellLayer(
+#             self.gfxwindow.oofcanvas,
+#             "ElementVoxelCategoryIntersectionFaces")
+#     def setParams(self):
+#         self.canvaslayer.set_color(self.color)
+#         self.canvaslayer.set_opacity(self.opacity)
+#         skel = self.who().getObject(self.gfxwindow)
+#         if skel:
+#             el = skel.getElement(self.element)
+#             el.drawVoxelCategoryIntersectionFaces(self.canvaslayer, skel,
+#                                                   self.category)
+
+if debug.debug():
+
+    registeredclass.Registration(
+        "ElementVoxelCategoryIntersectionEdges",
+        display.DisplayMethod,
+        ElementVoxelCategoryIntersectionEdges,
+        ordering=1010,
+        layerordering=display.Linear,
+        params=[
+            parameter.IntParameter('element', tip='Element ID'),
+            parameter.IntParameter('category'),
+            color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
+            parameter.IntRangeParameter('line_width', (1, 10), 2)
+            ],
+        whoclasses=("Skeleton",),
+        tip="Display the edges of the facets of the intersection of a voxel category with an element.")
+
+    registeredclass.Registration(
+        "DrawLinesFromFile",
+        display.DisplayMethod,
+        DrawLinesFromFile,
+        ordering=1020,
+        layerordering=display.Linear,
+        params=[
+            filenameparam.ReadFileNameParameter('filename'),
+            color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
+            parameter.IntRangeParameter('line_width', (1, 10), 2)
+            ],
+        whoclasses=("Skeleton",),
+        )
+
+    registeredclass.Registration(
+        "DrawLinesFromFiles",
+        display.DisplayMethod,
+        DrawLinesFromFiles,
+        ordering=1021,
+        layerordering=display.Linear,
+        params=[
+            filenameparam.DirectoryNameParameter('directory'),
+            parameter.StringParameter('pattern', value='*.lines'),
+            color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
+            parameter.IntRangeParameter('line_width', (1, 10), 2)
+            ],
+        whoclasses=("Skeleton",),
+        )
+
+    # registeredclass.Registration(
+    #     "ElementVoxelCategoryIntersectionFaces",
+    #     display.DisplayMethod,
+    #     ElementVoxelCategoryIntersectionFaces,
+    #     ordering=1002,
+    #     layerordering=display.SemiPlanar,
+    #     params=[
+    #         parameter.IntParameter('element', tip='Element ID'),
+    #         parameter.IntParameter('category'),
+    #         color.ColorParameter('color', color.RGBColor(0, 0, 1.0)),
+    #         parameter.FloatRangeParameter('opacity', (0., 1., 0.01), 1.0)],
+    #     whoclasses = ("Skeleton",),
+    #     tip="Display the facets of the intersection of a voxel category iwth an element.")

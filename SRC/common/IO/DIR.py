@@ -1,8 +1,4 @@
 # -*- python -*- 
-# $RCSfile: DIR.py,v $
-# $Revision: 1.16.2.18 $
-# $Author: langer $
-# $Date: 2014/09/27 22:33:59 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -68,7 +64,7 @@ else:
     'pixelgroupmenu.py', 'pixelgroupparam.py', 'progressbar_delay.py',
     'questioner.py', 'reporter.py', 'reportermenu.py',
     'scriptloader.py', 'placeholder.py', 'socket2me.py',
-    'activityviewermenu.py', 'topwho.py',
+    'activityviewermenu.py', 'topwho.py', 'microstructuredisplay.py',
     'typename.py', 'viewertoolbox.py', 'whoville.py', 'words.py',
     'reporterIO.py', 'xmlmenudump.py', 'automaticdoc.py']
 

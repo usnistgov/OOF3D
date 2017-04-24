@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: orientationimage.swg,v $
-// $Revision: 1.2.18.2 $
-// $Author: langer $
-// $Date: 2013/11/08 20:44:37 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

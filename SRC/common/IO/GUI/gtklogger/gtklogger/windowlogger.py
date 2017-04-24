@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: windowlogger.py,v $
-# $Revision: 1.3.12.1 $
-# $Author: langer $
-# $Date: 2013/07/25 20:02:56 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

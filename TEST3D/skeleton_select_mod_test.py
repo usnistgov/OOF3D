@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: skeleton_select_mod_test.py,v $
-# $Revision: 1.1.2.12 $
-# $Author: langer $
-# $Date: 2014/12/03 18:47:32 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

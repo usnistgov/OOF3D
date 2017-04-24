@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: plas_recheck.py,v $
-# $Revision: 1.4 $
-# $Author: reida $
-# $Date: 2009/02/18 21:07:59 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

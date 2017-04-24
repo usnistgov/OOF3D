@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: viewertoolbox3dGUI.py,v $
-# $Revision: 1.3.10.39 $
-# $Author: langer $
-# $Date: 2014/10/17 21:48:05 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -36,6 +32,9 @@ import gobject
 import math
 
 ndigits = 10
+
+## TODO: Continuous rotation mode.  Set angular velocity and axis
+## direction.
 
 ## TODO 3.1: Move axis parameters from the Settings menu to a new
 ## expander in the toolbox.  It should contains check buttons for

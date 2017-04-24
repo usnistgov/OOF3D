@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: cdebug.spy,v $
-# $Revision: 1.2.18.1 $
-# $Author: langer $
-# $Date: 2011/11/03 20:40:18 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -29,4 +25,13 @@ if config.debug():
         writeDebugFile_(' '.join(map(str, args)), filename, line)
 else:
     def writeDebugFile(*args):
+        pass
+
+if not config.profiler():
+    # If PROFILER is defined, then these functions are swigged.  If
+    # it's not defined, these dummy functions will prevent calls in
+    # Python from causing problems.
+    def ProfilerStart(filename):
+        pass
+    def ProfilerStop():
         pass

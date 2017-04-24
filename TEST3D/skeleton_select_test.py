@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: skeleton_select_test.py,v $
-# $Revision: 1.1.2.30 $
-# $Author: langer $
-# $Date: 2014/12/01 20:48:38 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -373,11 +369,11 @@ class Element_Selection_5Color(Skeleton_Selection_5Color, Element_Selection):
         OOF.ElementSelection.Select_by_Homogeneity(
             skeleton='skeltest:skeleton', 
             threshold=0.6)
-        self.assertEqual(self.selection().size(), 41)
-        indices = [21, 24, 42, 50, 52, 53, 54, 70, 96, 131, 132, 133,
-                   134, 141, 143, 144, 147, 151, 165, 172, 175, 177, 
-                   178, 179, 181, 183, 184, 187, 191, 192, 198, 201, 
-                   211, 212, 216, 229, 230, 250, 268, 280, 295]
+        self.assertEqual(self.selection().size(), 42)
+        indices = [21, 24, 42, 50, 52, 53, 54, 70, 96, 123, 131, 132,
+                   133, 134, 141, 143, 144, 147, 151, 165, 172, 175,
+                   177, 178, 179, 181, 183, 184, 187, 191, 192, 198,
+                   201, 211, 212, 216, 229, 230, 250, 268, 280, 295]
         self.assertEqual(self.selectionIDs(), indices)
 
     @memorycheck.check("skeltest")

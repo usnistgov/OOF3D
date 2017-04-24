@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: crationalizers.C,v $
-// $Revision: 1.1.4.47 $
-// $Author: langer $
-// $Date: 2014/12/14 22:49:12 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -209,7 +205,7 @@ void RemoveBadTetrahedra::findAngles(const CSkeletonElement *element,
 
   // finally the dihedral angles
   for(int i=0; i<6; ++i) {
-    const int *faceIds = CSkeletonElement::edgeFaces[i];
+    const unsigned int *faceIds = CSkeletonElement::edgeFaces[i];
     double cosAngle = element->cosDihedralAngle(faceIds[0], faceIds[1]);
     if(cosAngle <= obtuse_)
       large_dihedral_angles.push_back( i );

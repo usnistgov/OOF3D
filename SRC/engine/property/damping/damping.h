@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: damping.h,v $
-// $Revision: 1.3.10.4 $
-// $Author: fyc $
-// $Date: 2014/07/31 20:17:21 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

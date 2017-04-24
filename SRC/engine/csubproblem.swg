@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: csubproblem.swg,v $
-// $Revision: 1.22.2.8 $
-// $Author: fyc $
-// $Date: 2015/01/07 15:53:12 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -86,8 +82,10 @@ public:
 
   void set_rwlock(RWLock *rw);
   RWLock * get_rwlock();
-  void set_mesh(FEMesh*);
-  FEMesh *get_mesh();
+  void set_femesh(FEMesh*);
+  // A comment in femesh.spy says that FEMesh objects are never
+  // returned from C++ to python. get_mesh() was only used in 2D.
+  // FEMesh *get_mesh();
   void set_nnodes(int);
 
   int ndof();

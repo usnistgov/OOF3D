@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cskeleton2.h,v $
-// $Revision: 1.1.4.115 $
-// $Author: langer $
-// $Date: 2014/12/14 22:49:13 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -26,6 +22,8 @@
 #include "engine/cskeletonselectable_i.h"
 
 #include <vtkSmartPointer.h>
+#include <set>
+#include <map>
 
 class FEMesh;
 class FaceSubstitution;
@@ -44,6 +42,17 @@ class vtkPoints;
 class vtkUnstructuredGrid;
 
 // TODO 3.1: make everything const that should be const.
+
+#ifdef DEBUG
+typedef std::set<Coord3D> NodePositionSet;
+typedef std::map<Coord3D, int> NodePositionMap;
+typedef std::map<const NodePositionSet, unsigned int> ElNodesMap;
+// g++ on Linux complains if NodePosSetSet is defined as
+// std::set<const NodePositionSet> for some reason.  clang++ on Mac is
+// ok with it.
+typedef std::set<NodePositionSet> NodePosSetSet;
+
+#endif // DEBUG
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -172,6 +181,12 @@ public:
   virtual vtkSmartPointer<vtkUnstructuredGrid> getGrid() const = 0;
   virtual void getVtkCells(SkeletonFilter*, 
 			   vtkSmartPointer<vtkUnstructuredGrid>) = 0;
+#ifdef DEBUG
+  virtual void getVtkSegments(SkeletonFilter*, 
+			      vtkSmartPointer<vtkUnstructuredGrid>) = 0;
+  virtual void getExtraVtkSegments(CSkeletonBase*,
+				   vtkSmartPointer<vtkUnstructuredGrid>) = 0;
+#endif // DEBUG
   const std::string &getElementType(int eidx);
   virtual vtkSmartPointer<vtkDataArray> getMaterialCellData(
 					   const SkeletonFilter*) const = 0;
@@ -198,10 +213,10 @@ public:
   virtual CSkeletonFaceIterator endFaces() const = 0;
   
   // basic info
-  virtual int nnodes() const = 0;
-  virtual int nelements() const = 0;
-  virtual int nsegments() const = 0;
-  virtual int nfaces() const = 0;
+  virtual unsigned int nnodes() const = 0;
+  virtual unsigned int nelements() const = 0;
+  virtual unsigned int nsegments() const = 0;
+  virtual unsigned int nfaces() const = 0;
   virtual double volume() const = 0;
   virtual bool getPeriodicity(int dim) const = 0;
   virtual int getIllegalCount() = 0;
@@ -290,6 +305,7 @@ public:
 
   // methods related to deputies and copying
   virtual CSkeleton *sheriffSkeleton() = 0;
+  virtual const CSkeleton *sheriffSkeleton() const = 0;
   virtual NodePositionsMap *getMovedNodes() const = 0;
   virtual void activate() = 0;
   CDeputySkeleton *deputyCopy();
@@ -337,6 +353,20 @@ public:
   virtual void printSelf(std::ostream&) const = 0;
 
   const std::string *sanityCheck() const;
+
+  bool checkCategoryVolumes(double) const;
+
+#ifdef DEBUG
+  // Code for checking that the differences between two Skeletons are
+  // understood.  Used to check that changes in reference files in the
+  // test suite aren't significant after changes to exactly how the
+  // homogeneity is computed, and roundoff error is causing the
+  // refinment routines to make different choices.
+  virtual std::string *compare2(const CSkeletonBase *other) const = 0;
+  NodePosSetSet unmatchedSixNodeGroups(const NodePosSetSet&,
+				       const ElNodesMap&) const;
+
+#endif // DEBUG
 
   // TODO 3.1: 3D need to move more functions below to the base?
   
@@ -400,6 +430,12 @@ public:
   }
   virtual void getVtkCells(SkeletonFilter*,
 			   vtkSmartPointer<vtkUnstructuredGrid>);
+#ifdef DEBUG
+  virtual void getVtkSegments(SkeletonFilter*, 
+			      vtkSmartPointer<vtkUnstructuredGrid>);
+  virtual void getExtraVtkSegments(CSkeletonBase*,
+				   vtkSmartPointer<vtkUnstructuredGrid>);
+#endif // DEBUG
   virtual vtkSmartPointer<vtkDataArray> getMaterialCellData(
 						   const SkeletonFilter*) const;
   virtual vtkSmartPointer<vtkDataArray> getEnergyCellData(
@@ -445,16 +481,16 @@ public:
 
   // TODO 3.1: need to subtract defunct things?  Not subtracting
   // doesn't seem to be causing a problem...
-  virtual int nnodes() const {
+  virtual unsigned int nnodes() const {
     return nodes.size();
   }
-  virtual int nelements() const {
+  virtual unsigned int nelements() const {
     return elements.size();
   }
-  virtual int nsegments() const {
+  virtual unsigned int nsegments() const {
     return segments.size();
   }
-  virtual int nfaces() const {
+  virtual unsigned int nfaces() const {
     return faces.size();
   }
   virtual double volume() const {
@@ -478,6 +514,9 @@ public:
   virtual bool inSegmentMap(const CSkeletonMultiNodeKey &h) const;
 
   virtual std::string *compare(CSkeletonBase *other, double tolerance) const;
+#ifdef DEBUG
+  virtual std::string *compare2(const CSkeletonBase *other) const;
+#endif // DEBUG
 
   // boundaries
   void checkBoundaryNames(const std::string &name);
@@ -516,6 +555,7 @@ public:
 
   // methods related to deputies and sheriffs
   virtual CSkeleton* sheriffSkeleton();
+  virtual const CSkeleton* sheriffSkeleton() const;
   void addDeputy(CDeputySkeleton* dep);
   virtual NodePositionsMap *getMovedNodes() const;
   virtual void activate();
@@ -590,6 +630,18 @@ public:
   {
     skeleton->getVtkCells(f, g);
   }
+#ifdef DEBUG
+  virtual void getVtkSegments(SkeletonFilter *f,
+			      vtkSmartPointer<vtkUnstructuredGrid> g)
+  {
+    skeleton->getVtkSegments(f, g);
+  }
+  virtual void getExtraVtkSegments(CSkeletonBase *other,
+				   vtkSmartPointer<vtkUnstructuredGrid> g)
+  {
+    skeleton->getExtraVtkSegments(other, g);
+  }
+#endif // DEBUG
   virtual vtkSmartPointer<vtkDataArray> getMaterialCellData(
 					   const SkeletonFilter *filter) const
   {
@@ -654,16 +706,16 @@ public:
   virtual int nDeputies() const { return 0; }
 
   // basic info
-  virtual int nnodes() const {
+  virtual unsigned int nnodes() const {
     return skeleton->nnodes();
   }
-  virtual int nelements() const {
+  virtual unsigned int nelements() const {
     return skeleton->nelements();
   }
-  virtual int nsegments() const {
+  virtual unsigned int nsegments() const {
     return skeleton->nsegments();
   }
-  virtual int nfaces() const {
+  virtual unsigned int nfaces() const {
     return skeleton->nfaces();
   }
   virtual double volume() const {
@@ -763,9 +815,15 @@ public:
   {
     return skeleton->compare(other, tolerance);
   }
+#ifdef DEBUG
+  virtual std::string *compare2(const CSkeletonBase *other) const {
+    return skeleton->compare2(other);
+  }
+#endif // DEBUG
 
   // stuff related to deputies
-  virtual CSkeleton* sheriffSkeleton();
+  virtual CSkeleton *sheriffSkeleton();
+  virtual const CSkeleton *sheriffSkeleton() const;
   virtual NodePositionsMap *getMovedNodes() const;
   virtual void activate();
   virtual void deactivate();

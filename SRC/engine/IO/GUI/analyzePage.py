@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: analyzePage.py,v $
-# $Revision: 1.59.2.12 $
-# $Author: langer $
-# $Date: 2014/11/05 16:54:45 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -456,7 +452,6 @@ class AnalyzePage(BaseAnalysisPage):
 
     def retrieveCB(self, gtkobj, name): # retrieve named analysis
         if name:                        # can be empty
-            self.retrieve_analysis(name)
             analysis = namedanalysis.getNamedAnalysis(name)
             self.suppressRetrievalLoop = True
             try:

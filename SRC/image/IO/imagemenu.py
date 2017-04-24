@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: imagemenu.py,v $
-# $Revision: 1.81.2.12 $
-# $Author: langer $
-# $Date: 2014/12/12 18:53:05 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

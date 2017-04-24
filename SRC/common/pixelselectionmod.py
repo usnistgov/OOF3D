@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: pixelselectionmod.py,v $
-# $Revision: 1.29.18.11 $
-# $Author: langer $
-# $Date: 2014/09/16 00:42:25 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

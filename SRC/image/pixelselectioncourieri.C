@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: pixelselectioncourieri.C,v $
-// $Revision: 1.3.18.2 $
-// $Author: langer $
-// $Date: 2012/12/21 22:55:21 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: meshcsparams.py,v $
-# $Revision: 1.6.10.1 $
-# $Author: langer $
-# $Date: 2011/10/17 21:38:42 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

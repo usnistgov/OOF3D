@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: oofImageToGrid.C,v $
-// $Revision: 1.1.2.5 $
-// $Author: fyc $
-// $Date: 2014/07/17 15:37:59 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -30,7 +26,7 @@
 #include <vtkSmartPointer.h>
 #include <vtkStreamingDemandDrivenPipeline.h>
 
-vtkCxxRevisionMacro(oofImageToGrid, "$Revision: 1.1.2.5 $");
+vtkCxxRevisionMacro(oofImageToGrid, "oofvtkmods 3.0.0");
 vtkStandardNewMacro(oofImageToGrid);
 
 oofImageToGrid::oofImageToGrid() {}

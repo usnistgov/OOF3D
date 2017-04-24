@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: geometry.C,v $
-// $Revision: 1.7.2.4 $
-// $Author: langer $
-// $Date: 2014/12/14 22:49:07 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -14,9 +10,9 @@
  */
 
 #include <oofconfig.h>
+#include "common/coord.h"
 #include "common/geometry.h"
 
-#if DIM==2
 void CRectangle::expand(double howmuch) {
   double mid = 0.5*(lowleft[0] + upright[0]);
   double size = 0.5*(upright[0] - lowleft[0])*(1 + howmuch);
@@ -39,8 +35,6 @@ std::ostream& operator<<(std::ostream &os, const ICRectangle &rect) {
   return os;
 }
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-#elif DIM==3
 
 void CRectangularPrism::expand(double howmuch) {
   double mid = 0.5*(lowleftback[0] + uprightfront[0]);
@@ -70,8 +64,6 @@ std::ostream& operator<<(std::ostream &os, const ICRectangularPrism &rect) {
   return os;
 }
 
-#endif // DIM==3
-
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 double triangleArea(const Coord &p1, const Coord &p2, const Coord &p3) {
@@ -85,3 +77,15 @@ double triangleArea(const Coord &p1, const Coord &p2, const Coord &p3) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+COrientedPlane COrientedPlane::reversed() const {
+  return COrientedPlane(-normal, -offset);
+}
+
+double COrientedPlane::distance(const Coord3D &x) const {
+  return dot(x, normal) - offset;
+}
+
+std::ostream &operator<<(std::ostream &os, const COrientedPlane &plane) {
+  return os << "COrientedPlane(" << plane.normal << ", " << plane.offset
+	    << ")";
+}

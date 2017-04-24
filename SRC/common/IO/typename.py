@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: typename.py,v $
-# $Revision: 1.5.18.1 $
-# $Author: langer $
-# $Date: 2014/04/16 18:44:38 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

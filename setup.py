@@ -230,8 +230,8 @@ class CLibInfo:
                         platform['extra_compile_args'],
                     include_dirs = self.includeDirs + platform['incdirs'],
                     library_dirs = self.externalLibDirs + platform['libdirs'],
-                    libraries = [self.libname] + self.externalLibs,
-                                                        # + platform['libs'],
+                    libraries = ([self.libname] + self.externalLibs +
+                                 platform['libs']),
                     extra_link_args = self.extra_link_args + \
                         platform['extra_link_args']
                     )
@@ -246,7 +246,7 @@ class CLibInfo:
                 sources=self.dirdata['cfiles'],
                 extra_compile_args=platform['extra_compile_args'],
                 include_dirs=self.includeDirs + platform['incdirs'],
-                libraries=self.externalLibs,# + platform['libs'],
+                libraries=self.externalLibs + platform['libs'],
                 library_dirs=self.externalLibDirs +
                 platform['libdirs'],
                 extra_link_args=platform['extra_link_args'])
@@ -387,6 +387,8 @@ def swig_clibs(dry_run, force, debug, build_temp, with_swig=None):
     extra_args = platform['extra_swig_args']
     if debug:
         extra_args.append('-DDEBUG')
+    if PROFILER:
+        extra_args.append('-DPROFILER')
     for clib in allCLibs.values():
         for swigfile in clib.dirdata['swigfiles']:
             # run_swig requires a src dir and an input file path
@@ -466,7 +468,7 @@ class oof_build_xxxx:
                 os.system('mkdir -p %s' % os.path.join(self.build_temp, 'SRC'))
                 cfgfile = open(cfgfilename, "w")
                 print >> cfgfile, """\
-// This file was created automatically by the oof2 setup script.
+// This file was created automatically by the oof3d setup script.
 // Do not edit it.
 // Re-run setup.py to change the options.
 #ifndef OOFCONFIG_H
@@ -497,6 +499,12 @@ class oof_build_xxxx:
                         print >> cfgfile, '#define VTK_EXCLUDE_STRSTREAM_HEADERS'
                 else:
                     print >> cfgfile, '// #define HAVE_SSTREAM'
+                if PROFILER:
+                    if self.check_header("<gperftools/profiler.h>"):
+                        print >> cfgfile, '#include <gperftools/profiler.h>'
+                    else:
+                        print >> sys.stderr, "Can't find perftools!"
+                        sys.exit(1)
                 # Python pre-2.5 compatibility
                 print >> cfgfile, """\
 #include <Python.h>
@@ -518,7 +526,7 @@ typedef int Py_ssize_t;
         #include %s
         int main(int, char**) { return 1; }
         """ % headername
-        tmpfile.flush()
+        tmpfile.close()
         try:
             try:
                 ofiles = self.compiler.compile(
@@ -601,7 +609,8 @@ typedef int Py_ssize_t;
                 ## all be outside of our directory hierarchy, so we
                 ## just ignore any dependency that doesn't begin with
                 ## "SRC/".
-                if source.startswith('SRC/'):
+                if (source.startswith('SRC/') or
+                    source.startswith(self.build_temp)):
                     depdict.setdefault(realtarget, []).append(source)
 
         # .C and.py files in the SWIG directory depend on those in the
@@ -634,7 +643,8 @@ typedef int Py_ssize_t;
             targetpy = os.path.normpath(
                 os.path.join(swigroot, targetbase + '.py'))
             for source in files[1:]:
-                if source.startswith('SRC/'):
+                if (source.startswith('SRC/') or
+                    source.startswith(self.build_temp)):
                     depdict.setdefault(targetc, []).append(source)
                     depdict.setdefault(targetpy,[]).append(source)
 
@@ -722,6 +732,8 @@ class oof_build_ext(build_ext.build_ext, oof_build_xxxx):
         self.compiler.add_include_dir(os.path.join(self.build_temp, 'SRC'))
         self.compiler.add_include_dir('SRC')
         self.compiler.add_library_dir(self.build_lib)
+        for incdir in platform['incdirs']:
+            self.compiler.add_include_dir(incdir)
 
         if self.debug:
             self.compiler.define_macro('DEBUG')
@@ -759,12 +771,14 @@ class oof_build_shlib(build_shlib.build_shlib, oof_build_xxxx):
                                    ('library_dirs', 'library_dirs'))
         build_shlib.build_shlib.finalize_options(self)
     def build_libraries(self, libraries):
-        self.make_oofconfig()
-        self.clean_dependencies()
         self.compiler.add_include_dir(os.path.join(self.build_temp, 'SRC'))
         self.compiler.add_include_dir('SRC')
+        for incdir in platform['incdirs']:
+            self.compiler.add_include_dir(incdir)
         if self.debug:
             self.compiler.define_macro('DEBUG')
+        self.make_oofconfig()
+        self.clean_dependencies()
 
         # The blas libs and arguments weren't actually put into the
         # SharedLibrary objects when they were created, because we
@@ -785,6 +799,7 @@ class oof_build_shlib(build_shlib.build_shlib, oof_build_xxxx):
         
         for library in libraries:
             library.libraries.extend(blaslibs)
+            library.libraries.extend(platform['libs'])
             library.extra_link_args.extend(blasargs)
 
         ## TODO: Add extra libraries (python2.x) for cygwin?
@@ -1063,7 +1078,7 @@ def get_global_args():
     # hasn't been called yet.
 
     global HAVE_MPI, HAVE_OPENMP, HAVE_PETSC, DEVEL, NO_GUI, \
-        ENABLE_SEGMENTATION, \
+        ENABLE_SEGMENTATION, PROFILER, \
         DIM_3, DATADIR, DOCDIR, OOFNAME, SWIGDIR, NANOHUB, vtkdir
     HAVE_MPI = _get_oof_arg('--enable-mpi')
     HAVE_PETSC = _get_oof_arg('--enable-petsc')
@@ -1074,6 +1089,7 @@ def get_global_args():
     NANOHUB = _get_oof_arg('--nanoHUB')
     HAVE_OPENMP = _get_oof_arg('--enable-openmp')
     vtkdir = _get_oof_arg('--vtkdir')
+    PROFILER = _get_oof_arg('--enable-profiler')
 
     # The following determine some secondary installation directories.
     # They will be created within the main installation directory
@@ -1117,10 +1133,17 @@ def set_platform_values():
     platform['blas_libs'] = []
     platform['blas_link_args'] = []
     platform['libdirs'] = []
+    platform['libs'] = []
     platform['incdirs'] = [get_config_var('INCLUDEPY')]
     platform['extra_link_args'] = []
     platform['prelink_suppression_arg'] = []
     platform['extra_swig_args'] = []
+
+    # Not really platform-specific, but this is a convenient spot to
+    # set these options...
+    if PROFILER:
+        platform['libs'].append('profiler')
+        platform['extra_compile_args'].append('-DPROFILER')
 
     if os.path.exists('/usr/local/lib'):
         platform['libdirs'].append('/usr/local/lib')
@@ -1154,6 +1177,7 @@ def set_platform_values():
             platform['incdirs'].append('/usr/X11R6/include/')
         if os.path.exists('/opt') and DIM_3: # macports
             platform['incdirs'].append('/opt/local/include')
+            platform['libdirs'].append('/opt/local/lib')
             vtkinc, vtklib = findvtk(home, '/opt/local', '/usr/local')
             if vtkinc is not None:
                 platform['libdirs'].append(vtklib)
@@ -1178,6 +1202,10 @@ def set_platform_values():
             platform['extra_compile_args'].append('-Wno-self-assign')
             platform['extra_compile_args'].append(
                 '-Wno-tautological-constant-out-of-range-compare')
+        if PROFILER:
+            # Disable Address Space Layout Randomization
+            # http://stackoverflow.com/questions/10562280/line-number-in-google-perftools-cpu-profiler-on-macosx
+            platform['extra_link_args'].append('-Wl,-no_pie')
             
     elif sys.platform.startswith('linux'):
         # g2c isn't included here, because it's not always required.
