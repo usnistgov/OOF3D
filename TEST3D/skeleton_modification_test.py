@@ -42,7 +42,8 @@ class SkeletonModify(unittest.TestCase):
         self.assert_(skelc.getObject().checkCategoryVolumes(1.e-10))
 
         ## Keep this commented-out block, which might be useful if the
-        ## homogeneity calculation changes again.
+        ## homogeneity calculation changes again.  CSkeleton::compare2
+        ## is available only when oof3d is compiled in debug mode.
         # # Use CSkeleton::compare2 to check that changes to the element
         # # homogeneity calculation have made only trivial changes to
         # # the skeleton.  If compare2 returns "OK!" but the following

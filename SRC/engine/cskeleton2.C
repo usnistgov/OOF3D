@@ -2229,6 +2229,7 @@ std::string *CSkeleton::compare(CSkeletonBase* other, double tolerance)
   return new std::string("");
 } // CSkeleton::compare
 
+#ifdef DEBUG
 std::string *CSkeleton::compare2(const CSkeletonBase *other) const
 {
   const CSkeleton *that = other->sheriffSkeleton();
@@ -2386,9 +2387,7 @@ std::string *CSkeleton::compare2(const CSkeletonBase *other) const
   if(result->empty())
     *result += "OK!";
   return result;
-}
-
-
+} // end CSkeleton::compare2
 
 NodePosSetSet CSkeletonBase::unmatchedSixNodeGroups(const NodePosSetSet &els,
 						    const ElNodesMap &elMap
@@ -2422,6 +2421,9 @@ NodePosSetSet CSkeletonBase::unmatchedSixNodeGroups(const NodePosSetSet &els,
   }
   return sixNodesSet;
 }
+#endif // DEBUG
+
+
   
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

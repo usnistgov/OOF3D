@@ -198,7 +198,6 @@ public:
 
   double getHomogeneityIndex();
   double energyTotal(double alpha);
-  // void clearElementHomogeneityCache();
 
   CSkeletonElement* enclosingElement(Coord *Point);
   CSkeletonElement* findElement(vtkCellPtr);
@@ -284,7 +283,9 @@ public:
   CSkeletonBoundaryMap *getFaceBoundaries();
 
   %new string *compare(CSkeletonBase*, double);
+#ifdef DEBUG
   %new string *compare2(CSkeletonBase*);
+#endif // DEBUG
 
   bool onOuterFace(CSkeletonNodeVector *nodes);
   bool checkExteriorSegments(CSkeletonSegmentVector*);
@@ -296,14 +297,10 @@ public:
   CSkeleton *completeCopy();
   CSkeleton *sheriffSkeleton();
 
-  //FEMesh *femesh();
   void populate_femesh(FEMesh *fem, Material *mat=NULL);
 
   %new string *sanityCheck();
 
-  //void destroy_meshes();
-  //void destroy(PyObject*);
-  //bool destroyed();
 }; // class CSkeletonBase
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

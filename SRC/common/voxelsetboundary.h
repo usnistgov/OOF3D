@@ -199,7 +199,9 @@ public:
 class VSBNode {
  private:
   unsigned int index;		// set by VSBGraph::addNode
-  bool trimmed;
+  // TODONT: Changing this to VSBNode *neighbors[3] provided no
+  // noticable speed up, although profiling indicates that a lot of
+  // time is spent in the VSBNode constructor.
   std::vector<VSBNode*> neighbors;
  public:
   const Coord3D position;
@@ -228,7 +230,7 @@ std::ostream &operator<<(std::ostream&, const VSBNode&);
 
 class VSBGraph {
  private:
-  std::vector<VSBNode*> vertices; // maybe a std::set instead?
+  std::vector<VSBNode*> vertices;
   void connectClippedNodes(const std::vector<VSBNode*>&) const;
   std::vector<double> getDistances(const COrientedPlane&, double&, double&)
     const;
@@ -307,7 +309,6 @@ public:
 
   VSBEdgeIterator iterator() const { return VSBEdgeIterator(&graph); }
 
-  // bool verify() const { return graph.verify(); }
   bool checkEdges() const;
   bool checkConnectivity(unsigned int) const;
   void dump(std::ostream &os) const { graph.dump(os); }

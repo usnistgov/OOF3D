@@ -506,11 +506,8 @@ bool CMicrostructure::isActive(const ICoord &pxl) const {
 // This function should only be run with the category_lock acquired.
 // It is the caller's responsibility to do this -- all callers are
 // within the CMicrostructure class, because this function (and the
-// lock) is private.
-
-static const ICoord unitvector[] = {
-  ICoord(1, 0, 0), ICoord(0, 1, 0), ICoord(0, 0, 1)
-};
+// lock) is private.  TODO: category_lock is commented out.  Should it
+// be?
 
 void CMicrostructure::categorize() const {
   attributes.categorize();
@@ -534,11 +531,12 @@ void CMicrostructure::categorize() const {
     categorymap[i] = cat;
   }
 
+  // Construct VoxelSetBoundary objects, which are compact and
+  // computationally efficient representations of the voxels in each
+  // category.  See voxelsetboundary.C for an overview of the
+  // VoxelSetBoundary class.
+
   for(unsigned int cat=0; cat<ncategories; cat++) {
-// #ifdef DEBUG
-//     oofcerr << "CMicrostructure::categorize: ------ cat=" << cat << " ------"
-// 	    << std::endl;
-// #endif // DEBUG
     // A ProtoVSBNode is the precursor to the actual VSBNodes.
     // There's a ProtoVSBNode at each corner of each voxel, but
     // neighboring voxels share ProtoVSBNodes.  The array of
@@ -563,16 +561,8 @@ void CMicrostructure::categorize() const {
 	char signature = voxelSignature(i.coord(), cat);
 	// protoVSBNodeFactory also creates the VSBNodes in the graph,
 	// but doesn't connect them.
-// #ifdef DEBUG
-// 	oofcerr << "CMicrostructure::categorize: getting protoNode at "
-// 		<< i.coord() << std::endl;
-// #endif // DEBUG
 	protoNodes[i] = categoryBdys[cat]->protoVSBNodeFactory(signature,
 							       i.coord());
-// #ifdef DEBUG
-// 	oofcerr << "CMicrostructure::categorize: got protoNode at "
-// 		<< i.coord() << std::endl;
-// #endif // DEBUG
       }
     // Loop over the protoNodes, connecting each one to the next
     // protoNode in each x,y,z direction.
@@ -602,21 +592,7 @@ void CMicrostructure::categorize() const {
 #ifdef DEBUG
 		found = true;
 #endif // DEBUG
-// #ifdef DEBUG
-// 		oofcerr << "CMicrostructure::categorize: connecting "
-// 			<< here << " to " << there << std::endl;
-// 		OOFcerrIndent indent(2);
-// 		oofcerr << "CMicrostructure::categorize:  here="
-// 			<< *protoNodes[here] << std::endl;
-// 		oofcerr << "CMicrostructure::categorize: there="
-// 			<< *protoNodes[there] << std::endl;
-// #endif // DEBUG
 		protoNodes[here]->connect(protoNodes[there]);	
-// #ifdef DEBUG
-// 		oofcerr << "CMicrostructure::categorize: connected "
-// 			<< here << " to " << there << std::endl;
-// #endif // DEBUG
-		
 		break;		// done with this direction at this point
 	      }
 	    } // end search for next protonode in direction c
@@ -644,15 +620,7 @@ void CMicrostructure::categorize() const {
       {
 	delete protoNodes[p];
       }
-
-// #ifdef DEBUG
-//     if(!categoryBdys[cat]->checkEdges()) {
-//       oofcerr << "CMicrostructure::categorize:"
-// 	      <<" checkEdges failed for category " << cat << std::endl;
-//       throw ErrProgrammingError("Bad VSB!", __FILE__, __LINE__);
-//     }
-// #endif // DEBUG
-  }	// end loop over categories cat
+  } // end loop over categories cat
 
   categorized = true;
   

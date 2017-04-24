@@ -18,12 +18,19 @@ Fix Basic Tutorial -- don't use "Group" on the jpeg image, it takes
 too long and uses up way too much memory if users don't hit "Stop"
 soon enough.
 
+
 Soon
 ----
 
 Reduce memory use by optionally using chars instead of ints for the
 voxel category: CMicrostructure::categorymap is Array<char>.   Can
 images be stored with fewer bytes?
+
+Profile VSB construction on a large image with complicated category
+structures.  Does it need to be optimized?  See TODO in
+CMicrostructure::categorize() wrt not creating the full array of
+ProtoVSBNodes.
+
 
 At Some Later Time
 ------------------
