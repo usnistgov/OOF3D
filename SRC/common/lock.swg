@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: lock.swg,v $
-// $Revision: 1.16.10.4 $
-// $Author: rdw1 $
-// $Date: 2015/07/09 14:59:13 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: oof_mainiteration.py,v $
-# $Revision: 1.33.2.1 $
-# $Author: langer $
-# $Date: 2014/09/27 22:34:11 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

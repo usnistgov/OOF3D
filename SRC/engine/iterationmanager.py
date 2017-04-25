@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: iterationmanager.py,v $
-# $Revision: 1.1.2.2 $
-# $Author: langer $
-# $Date: 2011-10-11 15:06:40 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: array.h,v $
-// $Revision: 1.32.10.10 $
-// $Author: langer $
-// $Date: 2014/05/29 13:47:28 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,

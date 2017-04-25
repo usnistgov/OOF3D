@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: vtkutils.h,v $
-// $Revision: 1.1.2.15 $
-// $Author: rdw1 $
-// $Date: 2015/07/09 16:26:35 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

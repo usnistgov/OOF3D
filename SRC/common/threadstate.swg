@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: threadstate.swg,v $
-// $Revision: 1.4.2.4 $
-// $Author: langer $
-// $Date: 2013-01-28 16:58:08 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

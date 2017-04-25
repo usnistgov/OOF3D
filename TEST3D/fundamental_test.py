@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: fundamental_test.py,v $
-# $Revision: 1.2.16.6 $
-# $Author: langer $
-# $Date: 2014-01-18 20:35:14 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

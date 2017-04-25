@@ -1,0 +1,10 @@
+Vertex 0 (0, 0, 0)   nbrs=7 4 1 
+Vertex 1 (0, 0, 4)   nbrs=2 3 0 
+Vertex 2 (0, 2, 4)   nbrs=1 6 3 
+Vertex 3 (2, 0, 4)   nbrs=1 2 9 
+Vertex 4 (0, 4, 0)   nbrs=0 5 6 
+Vertex 5 (2, 4, 0)   nbrs=4 8 6 
+Vertex 6 (0, 4, 2)   nbrs=4 5 2 
+Vertex 7 (4, 0, 0)   nbrs=8 0 9 
+Vertex 8 (4, 2, 0)   nbrs=7 9 5 
+Vertex 9 (4, 0, 2)   nbrs=7 3 8 

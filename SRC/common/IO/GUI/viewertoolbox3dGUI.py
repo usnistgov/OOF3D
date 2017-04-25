@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: viewertoolbox3dGUI.py,v $
-# $Revision: 1.3.10.41 $
-# $Author: rdw1 $
-# $Date: 2015/08/06 22:03:08 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -44,6 +40,8 @@ import math
 
 ndigits = 10
 
+## TODO: Continuous rotation mode.  Set angular velocity and axis
+## direction.
 THRESHOLD = 0.4
 
 ## TODO 3.1: Move axis parameters from the Settings menu to a new
@@ -670,7 +668,6 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         cell_renderer.set_active(plane.enabled())
 
     def enableCellCB(self, cell_renderer, path):
-        debug.fmsg("")
         plane, planeID = self.clippingList[path]
         self.lastSelectedClipID = planeID
         if plane.enabled():
@@ -816,7 +813,7 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         if iter:
             return model[iter][1]
 
-      # Save and Restore Views
+    # Save and Restore Views
     ############################################################
 
     def viewChangedCB(self, gfxwindow):

@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cdebug.swg,v $
-// $Revision: 1.9.18.3 $
-// $Author: langer $
-// $Date: 2013-02-12 19:02:39 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -22,7 +18,10 @@
 
 %{
 #include "common/cdebug.h"
-  void segfault();
+void segfault();
+#ifdef PROFILER
+#include <gperftools/profiler.h>
+#endif // PROFILER
 %}
 %pragma(python) include="cdebug.spy"
 
@@ -37,5 +36,10 @@ void writeDebugFile_(char*, char*, int);
 void closeDebugFile();
 
 void spinCycle(int);
+
+#ifdef PROFILER
+void ProfilerStart(char*);
+void ProfilerStop();
+#endif // PROFILER
 
 #endif // CDEBUG_SWG

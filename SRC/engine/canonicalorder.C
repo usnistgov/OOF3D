@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: canonicalorder.C,v $
-// $Revision: 1.1.4.6 $
-// $Author: langer $
-// $Date: 2011-10-05 20:59:32 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

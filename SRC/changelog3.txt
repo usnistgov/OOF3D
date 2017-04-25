@@ -21,6 +21,8 @@ layers.
 Fixed a bug that prevented the analysis page from retrieving stored
 analyses. 
 
+The setup.py script now understands '~' in vtkdir arguments.
+
 3.0.1
 
 The interval parameter for output schedules now can't be set to zero,

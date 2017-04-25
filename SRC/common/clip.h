@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: clip.h,v $
-// $Revision: 1.1.2.5 $
-// $Author: langer $
-// $Date: 2012-12-05 20:31:54 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

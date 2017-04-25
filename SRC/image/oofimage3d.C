@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: oofimage3d.C,v $
-// $Revision: 1.5.8.61 $
-// $Author: langer $
-// $Date: 2015/07/24 19:20:20 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

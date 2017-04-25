@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cskeletonelement.swg,v $
-// $Revision: 1.1.2.21 $
-// $Author: langer $
-// $Date: 2014/12/14 01:07:48 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -78,7 +74,14 @@ public:
       return self->getIndex();
     }
   }
+#ifdef DEBUG
   void dumpFaceInfo(CSkeletonBase*); // debugging
+  // void drawPlaneIntersection(LineSegmentLayer*, CSkeletonBase*, int, int);
+  // void drawPlaneVSBIntersection(LineSegmentLayer*, CSkeletonBase*,
+  // 				unsigned int, int , int, int);
+  void drawVoxelCategoryIntersection(LineSegmentLayer*, CSkeletonBase*,
+   				     unsigned int);
+#endif // DEBUG
 };
 
 long get_globalElementCount();
@@ -104,7 +107,7 @@ public:
   }
 };
 
-void dumpElements();
+// void dumpElements();
 
 #endif	// CSKELETONELEMENT_SWG
 

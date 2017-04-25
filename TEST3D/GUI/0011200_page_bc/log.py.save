@@ -1,0 +1,960 @@
+# -*- python -*-
+# $RCSfile: log.py,v $
+# $Revision: 1.1.2.3 $
+# $Author: langer $
+# $Date: 2014-04-15 20:54:33 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+import tests
+
+#Testing the dependency betweenn the Boundary Condtitions Page and
+#the Fields & Equations Page
+#Testing the basic handling actions on a Boundary Condition
+
+findWidget('OOF3D').resize(550, 350)
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Microstructure')
+checkpoint page installed Microstructure
+findWidget('OOF3D:Microstructure Page:Pane').set_position(225)
+findWidget('OOF3D:Microstructure Page:Pane').set_position(156)
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+findMenu(findWidget('OOF3D:MenuBar'), 'File:Load:Data').activate()
+checkpoint toplevel widget mapped Dialog-Data
+findWidget('Dialog-Data').resize(190, 67)
+findWidget('Dialog-Data:filename').set_text('TEST_DATA/two_walls.skeleton')
+findWidget('Dialog-Data:gtk-ok').clicked()
+findWidget('OOF3D:Microstructure Page:Pane').set_position(159)
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint pixel page updated
+checkpoint active area status updated
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint Field page sensitized
+checkpoint Materials page updated
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint pinnodes page sensitized
+checkpoint boundary page updated
+checkpoint skeleton selection page selection sensitized
+checkpoint skeleton selection page updated
+checkpoint skeleton selection page groups sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint Solver page sensitized
+checkpoint microstructure page sensitized
+findWidget('OOF3D:Microstructure Page:Pane').set_position(225)
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint skeleton selection page selection sensitized
+checkpoint skeleton selection page updated
+checkpoint skeleton selection page groups sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Field page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint pinnodes page sensitized
+checkpoint boundary page updated
+checkpoint skeleton selection page selection sensitized
+checkpoint Solver page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint skeleton selection page updated
+checkpoint pinnodes page sensitized
+checkpoint pinnodes page sensitized
+checkpoint pinnodes page sensitized
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint toplevel widget mapped OOF3D Activity Viewer
+checkpoint boundary page updated
+findWidget('OOF3D Activity Viewer').resize(400, 300)
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint OOF.File.Load.Data
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Boundary Conditions')
+checkpoint page installed Boundary Conditions
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'FE Mesh')
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint page installed FE Mesh
+findWidget('OOF3D:FE Mesh Page:Pane').set_position(304)
+findWidget('OOF3D:FE Mesh Page:New').clicked()
+checkpoint toplevel widget mapped Dialog-Create a new mesh
+findWidget('Dialog-Create a new mesh').resize(345, 153)
+findWidget('Dialog-Create a new mesh:gtk-ok').clicked()
+findWidget('OOF3D Messages 1').resize(553, 200)
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Field page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Mesh.New
+findWidget('OOF3D:FE Mesh Page:New').clicked()
+checkpoint toplevel widget mapped Dialog-Create a new mesh
+findWidget('Dialog-Create a new mesh').resize(345, 153)
+findWidget('Dialog-Create a new mesh:gtk-ok').clicked()
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Mesh.New
+findWidget('OOF3D:FE Mesh Page:Pane:Subproblems:New').clicked()
+checkpoint toplevel widget mapped Dialog-Create a new subproblem
+findWidget('Dialog-Create a new subproblem').resize(286, 97)
+findWidget('Dialog-Create a new subproblem:gtk-ok').clicked()
+checkpoint mesh page subproblems sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.New
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Boundary Conditions')
+checkpoint page installed Boundary Conditions
+setComboBox(findWidget('OOF3D:Boundary Conditions Page:Mesh'), 'mesh<2>')
+setComboBox(findWidget('OOF3D:Boundary Conditions Page:Mesh'), 'mesh')
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Fields & Equations')
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint page installed Fields & Equations
+findWidget('OOF3D').resize(691, 350)
+findWidget('OOF3D:Fields & Equations Page:HPane').set_position(309)
+findWidget('OOF3D:Fields & Equations Page:HPane:Fields:Temperature defined').clicked()
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Field.Define
+findWidget('OOF3D:Fields & Equations Page:HPane:Fields:Temperature active').clicked()
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Field.Activate
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Boundary Conditions')
+checkpoint page installed Boundary Conditions
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Fields & Equations')
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint page installed Fields & Equations
+findWidget('OOF3D:Fields & Equations Page:HPane:Equations:Heat_Eqn active').clicked()
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Subproblem.Equation.Activate
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Boundary Conditions')
+checkpoint page installed Boundary Conditions
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Fields & Equations')
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint page installed Fields & Equations
+setComboBox(findWidget('OOF3D:Fields & Equations Page:Mesh'), 'mesh<2>')
+checkpoint Field page sensitized
+findWidget('OOF3D').resize(715, 350)
+findWidget('OOF3D:Fields & Equations Page:HPane').set_position(320)
+setComboBox(findWidget('OOF3D:Fields & Equations Page:SubProblem'), 'subproblem')
+checkpoint Field page sensitized
+findWidget('OOF3D:Fields & Equations Page:HPane:Fields:Displacement defined').clicked()
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint OOF.Subproblem.Field.Define
+findWidget('OOF3D:Fields & Equations Page:HPane:Fields:Displacement active').clicked()
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint OOF.Subproblem.Field.Activate
+findWidget('OOF3D:Fields & Equations Page:HPane:Equations:Force_Balance active').clicked()
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint OOF.Subproblem.Equation.Activate
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Boundary Conditions')
+checkpoint page installed Boundary Conditions
+setComboBox(findWidget('OOF3D:Boundary Conditions Page:Mesh'), 'mesh<2>')
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Fields & Equations')
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint page installed Fields & Equations
+findWidget('OOF3D:Fields & Equations Page:HPane:Equations:Force_Balance active').clicked()
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint OOF.Subproblem.Equation.Deactivate
+findWidget('OOF3D:Fields & Equations Page:HPane:Fields:Displacement active').clicked()
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint OOF.Subproblem.Field.Deactivate
+findWidget('OOF3D:Fields & Equations Page:HPane:Fields:Displacement defined').clicked()
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint OOF.Subproblem.Field.Undefine
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Boundary Conditions')
+checkpoint page installed Boundary Conditions
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Fields & Equations')
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint page installed Fields & Equations
+findWidget('OOF3D:Fields & Equations Page:HPane:Equations:Force_Balance active').clicked()
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint OOF.Subproblem.Equation.Activate
+findWidget('OOF3D:Fields & Equations Page:HPane:Equations:Force_Balance active').clicked()
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint OOF.Subproblem.Equation.Deactivate
+setComboBox(findWidget('OOF3D:Fields & Equations Page:SubProblem'), 'default')
+checkpoint Field page sensitized
+findWidget('OOF3D:Fields & Equations Page:HPane:Equations:Force_Balance active').clicked()
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint OOF.Subproblem.Equation.Activate
+findWidget('OOF3D:Fields & Equations Page:HPane:Fields:Displacement defined').clicked()
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint OOF.Subproblem.Field.Define
+findWidget('OOF3D:Fields & Equations Page:HPane:Fields:Displacement active').clicked()
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint OOF.Subproblem.Field.Activate
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Boundary Conditions')
+checkpoint page installed Boundary Conditions
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Fields & Equations')
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint page installed Fields & Equations
+setComboBox(findWidget('OOF3D:Fields & Equations Page:SubProblem'), 'subproblem')
+checkpoint Field page sensitized
+findWidget('OOF3D:Fields & Equations Page:HPane:Equations:Coulomb_Eqn active').clicked()
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint OOF.Subproblem.Equation.Activate
+findWidget('OOF3D:Fields & Equations Page:HPane:Fields:Voltage defined').clicked()
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint Field page sensitized
+checkpoint OOF.Subproblem.Field.Define
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Boundary Conditions')
+checkpoint page installed Boundary Conditions
+setComboBox(findWidget('OOF3D:Boundary Conditions Page:Mesh'), 'mesh')
+findWidget('OOF3D:Boundary Conditions Page:Condition:New').clicked()
+checkpoint toplevel widget mapped Dialog-New Boundary Condition
+findWidget('Dialog-New Boundary Condition').resize(412, 265)
+findWidget('Dialog-New Boundary Condition:gtk-ok').clicked()
+findWidget('OOF3D Messages 1').resize(983, 200)
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Mesh.Boundary_Conditions.New
+findWidget('OOF3D:Boundary Conditions Page:Condition:New').clicked()
+checkpoint toplevel widget mapped Dialog-New Boundary Condition
+findWidget('Dialog-New Boundary Condition').resize(412, 265)
+findWidget('Dialog-New Boundary Condition:name:Auto').clicked()
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('n')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('na')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('nam')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('name')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_b')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_bo')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_bou')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_boun')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_bound')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_bounda')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_boundar')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_boundary')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_boundary_')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_boundary_c')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_boundary_co')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_boundary_con')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_boundary_cond')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_boundary_condi')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_boundary_condit')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_boundary_conditi')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_boundary_conditio')
+findWidget('Dialog-New Boundary Condition:name:Text').set_text('named_boundary_condition')
+findWidget('Dialog-New Boundary Condition:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Mesh.Boundary_Conditions.New
+findWidget('OOF3D:Boundary Conditions Page:Condition:BCScroll:BCList').get_selection().select_path((0,))
+findWidget('OOF3D:Boundary Conditions Page:Condition:Rename').clicked()
+checkpoint toplevel widget mapped Dialog-Rename the boundary condition "bc"
+findWidget('Dialog-Rename the boundary condition "bc"').resize(190, 67)
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('r')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('re')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('ren')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('rena')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renam')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('rename')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_b')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_bo')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_bou')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_boun')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_bound')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_bounda')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_boundar')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_boundary')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_boundary_')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_boundary_c')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_boundary_co')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_boundary_con')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_boundary_cond')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_boundary_condi')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_boundary_condit')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_boundary_conditi')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_boundary_conditio')
+findWidget('Dialog-Rename the boundary condition "bc":name').set_text('renamed_boundary_condition')
+findWidget('Dialog-Rename the boundary condition "bc":gtk-ok').clicked()
+checkpoint OOF.Mesh.Boundary_Conditions.Rename
+findWidget('OOF3D:Boundary Conditions Page:Condition:BCScroll:BCList').get_selection().select_path((0,))
+findWidget('OOF3D:Boundary Conditions Page:Condition:Edit').clicked()
+checkpoint toplevel widget mapped Dialog-Edit Boundary Condition
+findWidget('Dialog-Edit Boundary Condition').resize(412, 243)
+findWidget('Dialog-Edit Boundary Condition:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Mesh.Boundary_Conditions.Edit
+findWidget('OOF3D:Boundary Conditions Page:Condition:Copy').clicked()
+checkpoint toplevel widget mapped Dialog-Choose a name and boundary.
+findWidget('Dialog-Choose a name and boundary.').resize(270, 181)
+findWidget('Dialog-Choose a name and boundary.:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Mesh.Boundary_Conditions.Copy
+findWidget('OOF3D:Boundary Conditions Page:Condition:Copy').clicked()
+checkpoint toplevel widget mapped Dialog-Choose a name and boundary.
+findWidget('Dialog-Choose a name and boundary.').resize(270, 181)
+findWidget('Dialog-Choose a name and boundary.:name:Auto').clicked()
+findWidget('Dialog-Choose a name and boundary.:name:Text').set_text('n')
+findWidget('Dialog-Choose a name and boundary.:name:Text').set_text('na')
+findWidget('Dialog-Choose a name and boundary.:name:Text').set_text('nam')
+findWidget('Dialog-Choose a name and boundary.:name:Text').set_text('name')
+findWidget('Dialog-Choose a name and boundary.:name:Text').set_text('named')
+findWidget('Dialog-Choose a name and boundary.:name:Text').set_text('named_')
+findWidget('Dialog-Choose a name and boundary.:name:Text').set_text('named_c')
+findWidget('Dialog-Choose a name and boundary.:name:Text').set_text('named_co')
+findWidget('Dialog-Choose a name and boundary.:name:Text').set_text('named_cop')
+findWidget('Dialog-Choose a name and boundary.:name:Text').set_text('named_copy')
+findWidget('Dialog-Choose a name and boundary.:name:Text').set_text('named_copy_')
+findWidget('Dialog-Choose a name and boundary.:name:Text').set_text('named_copy_b')
+findWidget('Dialog-Choose a name and boundary.:name:Text').set_text('named_copy_bc')
+findWidget('Dialog-Choose a name and boundary.:gtk-ok').clicked()
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint Solver page sensitized
+checkpoint OOF.Mesh.Boundary_Conditions.Copy
+findWidget('OOF3D:Boundary Conditions Page:Condition:CopyAll').clicked()
+checkpoint toplevel widget mapped Dialog-Choose the target mesh.
+findWidget('Dialog-Choose the target mesh.').resize(190, 131)
+setComboBox(findWidget('Dialog-Choose the target mesh.:mesh:Mesh'), 'mesh<2>')
+findWidget('Dialog-Choose the target mesh.:gtk-ok').clicked()
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint OOF.Mesh.Boundary_Conditions.Copy_All
+setComboBox(findWidget('OOF3D:Boundary Conditions Page:Mesh'), 'mesh<2>')
+findWidget('OOF3D:Boundary Conditions Page:Condition:BCScroll:BCList').get_selection().select_path((0,))
+findWidget('OOF3D:Boundary Conditions Page:Condition:Delete').clicked()
+checkpoint toplevel widget mapped Questioner
+findWidget('Questioner').resize(300, 89)
+findWidget('Questioner:gtk-yes').clicked()
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint OOF.Mesh.Boundary_Conditions.Delete
+findWidget('OOF3D:Boundary Conditions Page:Condition:BCScroll:BCList').get_selection().select_path((0,))
+findWidget('OOF3D:Boundary Conditions Page:Condition:Delete').clicked()
+checkpoint toplevel widget mapped Questioner
+findWidget('Questioner').resize(300, 89)
+findWidget('Questioner:gtk-yes').clicked()
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint OOF.Mesh.Boundary_Conditions.Delete
+findWidget('OOF3D:Boundary Conditions Page:Condition:BCScroll:BCList').get_selection().select_path((0,))
+findWidget('OOF3D:Boundary Conditions Page:Condition:Delete').clicked()
+checkpoint toplevel widget mapped Questioner
+findWidget('Questioner').resize(300, 89)
+findWidget('Questioner:gtk-yes').clicked()
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint OOF.Mesh.Boundary_Conditions.Delete
+findWidget('OOF3D:Boundary Conditions Page:Condition:BCScroll:BCList').get_selection().select_path((0,))
+findWidget('OOF3D:Boundary Conditions Page:Condition:Delete').clicked()
+checkpoint toplevel widget mapped Questioner
+findWidget('Questioner').resize(300, 89)
+findWidget('Questioner:gtk-yes').clicked()
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint OOF.Mesh.Boundary_Conditions.Delete
+findWidget('OOF3D:Boundary Conditions Page:Condition:New').clicked()
+checkpoint toplevel widget mapped Dialog-New Boundary Condition
+findWidget('Dialog-New Boundary Condition').resize(412, 289)
+findWidget('Dialog-New Boundary Condition:name:Auto').clicked()
+setComboBox(findWidget('Dialog-New Boundary Condition:condition:Dirichlet:field'), 'Voltage')
+setComboBox(findWidget('Dialog-New Boundary Condition:condition:Dirichlet:field'), 'Displacement')
+findWidget('Dialog-New Boundary Condition:gtk-ok').clicked()
+findWidget('OOF3D Messages 1').resize(1063, 200)
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint OOF.Mesh.Boundary_Conditions.New
+findWidget('OOF3D:Boundary Conditions Page:Condition:New').clicked()
+checkpoint toplevel widget mapped Dialog-New Boundary Condition
+findWidget('Dialog-New Boundary Condition').resize(412, 289)
+setComboBox(findWidget('Dialog-New Boundary Condition:condition:Dirichlet:field'), 'Voltage')
+findWidget('Dialog-New Boundary Condition:gtk-ok').clicked()
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint Field page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Solver page sensitized
+checkpoint OOF.Mesh.Boundary_Conditions.New
+setComboBox(findWidget('OOF3D:Boundary Conditions Page:Mesh'), 'mesh')
+findWidget('OOF3D:Boundary Conditions Page:Condition:New').clicked()
+checkpoint toplevel widget mapped Dialog-New Boundary Condition
+findWidget('Dialog-New Boundary Condition').resize(412, 265)
+findWidget('Dialog-New Boundary Condition:gtk-cancel').clicked()
+widget_0=findWidget('OOF3D')
+handled_0=widget_0.event(event(gtk.gdk.DELETE,window=widget_0.window))
+postpone if not handled_0: widget_0.destroy()
+checkpoint toplevel widget mapped Questioner
+findWidget('Questioner').resize(359, 91)
+findWidget('Questioner:gtk-save').clicked()
+checkpoint toplevel widget mapped Dialog-Save Log File
+findWidget('Dialog-Save Log File').resize(190, 95)
+findWidget('Dialog-Save Log File:filename').set_text('bcpage.log')
+findWidget('Dialog-Save Log File:gtk-ok').clicked()
+checkpoint OOF.File.Save.Python_Log

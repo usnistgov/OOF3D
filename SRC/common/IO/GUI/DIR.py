@@ -1,8 +1,4 @@
 # -*- python -*- 
-# $RCSfile: DIR.py,v $
-# $Revision: 1.21.2.11 $
-# $Author: rdw1 $
-# $Date: 2015/08/06 22:03:05 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

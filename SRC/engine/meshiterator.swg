@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: meshiterator.swg,v $
-// $Revision: 1.4.18.3 $
-// $Author: langer $
-// $Date: 2014-04-08 21:00:57 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

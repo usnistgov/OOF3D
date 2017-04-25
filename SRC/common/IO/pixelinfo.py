@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: pixelinfo.py,v $
-# $Revision: 1.22.18.12 $
-# $Author: rdw1 $
-# $Date: 2015/07/09 16:26:34 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

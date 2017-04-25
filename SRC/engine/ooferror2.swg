@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: ooferror2.swg,v $
-// $Revision: 1.12.4.4 $
-// $Author: langer $
-// $Date: 2014/07/22 21:02:46 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

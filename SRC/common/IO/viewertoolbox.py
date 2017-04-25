@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: viewertoolbox.py,v $
-# $Revision: 1.4.18.28 $
-# $Author: rdw1 $
-# $Date: 2015/08/06 21:52:03 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -258,8 +254,7 @@ class ViewerToolbox(toolbox.Toolbox):
                     params=[parameter.IntParameter("plane"),
                             parameter.ConvertibleRegisteredParameter(
                                 "normal", direction.Direction),
-                            parameter.FloatParameter("offset"),
-                            ]
+                            parameter.FloatParameter("offset")]
                     ))
             clipmenu.addItem(oofmenu.OOFMenuItem(
                     "Delete",

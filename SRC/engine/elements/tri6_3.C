@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: tri6_3.C,v $
-// $Revision: 1.2.18.1 $
-// $Author: langer $
-// $Date: 2014-01-18 04:42:00 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -20,20 +16,24 @@
 #include "tri3shapefunction.h"
 #include "tri6shapefunction.h"
 
-// Master element for the six node triangle.
-//
-//       2  (0,1)             //
-//       |\                   // Believe it or not, all this 
-//       | \   	              // stuff out here is just to prevent
-//       |  \                 // the compiler from warning about
-// edge1 3   1  edge0         // multi-line comments.  It doesn't like
-//       |    \               // comment lines ending in a backslash.
-//       |     \              //
-//       |      \             //
-//       4---5---0
-//  (0,0)   edge2   (1,0)
-//
-// //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+/* Master element for the six node triangle.
+ *
+ *       2  (0,1)          
+ *       |\                
+ *       | \   	           
+ *       |  \              
+ * edge1 3   1  edge0      
+ *       |    \            
+ *       |     \           
+ *       |      \          
+ *       4---5---0
+ *  (0,0)   edge2   (1,0)
+ *
+ * (Using a C-style comment here prevents compiler complaints about
+ * multi-line comments.)
+ */
+
+ //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 class Tri_6_3MasterElement : public TriangularMaster {
 public:

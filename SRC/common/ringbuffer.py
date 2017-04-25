@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: ringbuffer.py,v $
-# $Revision: 1.16.2.3 $
-# $Author: langer $
-# $Date: 2014-03-05 17:00:09 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: canvaslayers.swg,v $
-// $Revision: 1.1.2.33 $
-// $Author: rdw1 $
-// $Date: 2015/08/06 21:52:00 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -129,6 +125,13 @@ class SimpleWireframeCellLayer : public SimpleCellLayer {
 public:
   SimpleWireframeCellLayer(GhostOOFCanvas*, bool, const char*);
   void set_lineWidth(double);
+};
+
+class LineSegmentLayer : public SimpleWireframeCellLayer {
+public:
+  LineSegmentLayer(GhostOOFCanvas*, const char*);
+  void set_nSegs(int);
+  void addSegment(Coord *Point, Coord *Point);
 };
 
 class SimplePointCellLayer : public SimpleCellLayer {

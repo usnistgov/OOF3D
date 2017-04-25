@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: log.py,v $
-# $Revision: 1.1.2.17 $
-# $Author: fyc $
-# $Date: 2014/07/01 17:17:20 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

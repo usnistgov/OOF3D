@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: bitoverlay.h,v $
-// $Revision: 1.23.10.11 $
-// $Author: langer $
-// $Date: 2014/10/17 21:47:57 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

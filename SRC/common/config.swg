@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: config.swg,v $
-// $Revision: 1.9.12.2 $
-// $Author: langer $
-// $Date: 2013-02-01 20:31:05 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,
@@ -86,6 +82,14 @@ bool nanoHUB() {
 #endif
 }
 
+bool profiler() {
+#ifdef PROFILER
+  return true;
+#else
+  return false;
+#endif
+}
+ 
 %}
 
 bool no_gui();
@@ -96,5 +100,6 @@ int enablempi();
 bool enable_segmentation();
 int dimension();
 bool nanoHUB();
+bool profiler();
 
 #endif // CONFIG_SWG

@@ -1,0 +1,52 @@
+TODO LIST FOR OOF3D
+
+Before Next Release
+-------------------
+
+Higher order elements.
+
+Optimize categoryVolumes.
+
+Merge branches
+  Ryan's 3D widgets  (Needs to be finished for voxel selection)
+  Yannick's mouse buttons for rotate, zoom, etc.  (Needs to be finished?)
+  Lizhong's solvers.
+
+Use tcmalloc (already in Lizhong's branch?)
+
+Fix Basic Tutorial -- don't use "Group" on the jpeg image, it takes
+too long and uses up way too much memory if users don't hit "Stop"
+soon enough.
+
+
+Soon
+----
+
+Reduce memory use by optionally using chars instead of ints for the
+voxel category: CMicrostructure::categorymap is Array<char>.   Can
+images be stored with fewer bytes?
+
+Profile VSB construction on a large image with complicated category
+structures.  Does it need to be optimized?  See TODO in
+CMicrostructure::categorize() wrt not creating the full array of
+ProtoVSBNodes.
+
+
+At Some Later Time
+------------------
+
+Upgrade VTK
+
+Parallelize categoryVolumes.
+
+Migrate to Python 3.x
+
+Convert pixel category array to octree, and construct voxel set
+boundaries from the octree, or compute element homogeneity from octree
+elements instead of voxels.  Maybe.
+
+Move swig output to the build directory, and remove SRC/SWIG3D).  The
+way it is now, building dist3d after building debug3d fails, because
+the swig output files contain code generated from #ifdef DEBUG blocks,
+but those output files are in SRC/SWIG3D and aren't rebuilt when the
+build options are changed.  Do this in 2D too.

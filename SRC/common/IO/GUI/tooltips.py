@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: tooltips.py,v $
-# $Revision: 1.1.14.4 $
-# $Author: langer $
-# $Date: 2013-11-22 22:02:35 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

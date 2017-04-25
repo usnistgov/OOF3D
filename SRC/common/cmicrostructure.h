@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cmicrostructure.h,v $
-// $Revision: 1.51.8.36 $
-// $Author: langer $
-// $Date: 2014/12/12 19:38:50 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -20,6 +16,7 @@
 
 class CMicrostructure;
 
+//#include "common/IO/canvaslayers.h"
 #include "common/array.h"
 #include "common/boolarray.h"
 #include "common/coord.h"
@@ -32,15 +29,20 @@ class CMicrostructure;
 
 class ActiveArea;
 class CPixelSelection;
-class CSegment;
 class CRectangle;
 class PixelGroup;
+class LineSegmentLayer;
 
 #if DIM==2
 class PixelSetBoundary;
 #else
 class VoxelSetBoundary;
-#endif
+#endif	// DIM==2
+
+// TODO: Use unsigned ints for voxel categories.  It's inconsistent
+// now.  MicrostructureAttributes::getCategory returns an unsigned
+// int, but everything else seems to use int.  That's because
+// UNKNOWN_CAT is defined as -1 in engine/homogeneity.h.
 
 // Some operations, such as finding the pixels under an element,
 // require marking pixels in the microstructure.  Neither the
@@ -167,7 +169,7 @@ private:
 #if DIM==2
   mutable std::vector<PixelSetBoundary> categoryBdys;
 #elif DIM==3
-  mutable std::vector<VoxelSetBoundary> categoryBdys;
+  mutable std::vector<VoxelSetBoundary*> categoryBdys;
 #endif
 
   mutable bool categorized;
@@ -207,7 +209,7 @@ public:
 #if DIM==2
   double areaOfPixels() const { return delta_[0]*delta_[1]; }
 #elif DIM==3
-  double volumeOfPixels() const { return delta_[0]*delta_[1]*delta_[2]; }
+  double volumeOfVoxels() const { return delta_[0]*delta_[1]*delta_[2]; }
   double volume() const { return size_.x[0]*size_.x[1]*size_.x[2]; }
 #endif
   Coord physical2Pixel(const Coord&) const; // real space to pixel coords
@@ -215,6 +217,7 @@ public:
   Coord pixel2Physical(const Coord&) const;
   ICoord pixelFromPoint(const Coord&) const; // pixel containing the given point
   bool contains(const ICoord&) const;
+  bool containsPixelCoord(const Coord&) const;
   TimeStamp &getTimeStamp();
   const TimeStamp &getTimeStamp() const;
 
@@ -260,6 +263,7 @@ public:
 
   int nCategories() const;
   // Three different versions of this for convenience in calling it...
+  // TODO: Are categories signed or unsigned?  We aren't consistent.
   int category(const ICoord *where) const;
   int category(const ICoord &where) const;
   int category(const Coord *where) const; // Arbitrary physical-coord point.
@@ -267,16 +271,29 @@ public:
   void recategorize();
   
   bool is_categorized() const { return categorized; }
+  void categorizeIfNecessary() const;
+  double volumeOfCategory(unsigned int) const;
+  const CRectangularPrism &categoryBounds(unsigned int) const;
+  double clippedCategoryVolume(unsigned int,
+			       const std::vector<COrientedPlane>&,
+			       bool checkTopology) const;
+  void dumpVSB(unsigned int, const std::string&) const;// save VSB graph to file
+  void dumpVSBLines(unsigned int, const std::string&) const; // plot VSB edges
 
-#if DIM==2
-  const std::vector<PixelSetBoundary> &getCategoryBdys() const {
+  unsigned char voxelSignature(const ICoord&, unsigned int) const;
+
+  // Routines for testing the VSB construction and clipping
+  bool checkVSB(unsigned int) const;
+  double clipVSBVol(unsigned int, const COrientedPlane&) const;
+  void saveClippedVSB(unsigned int, const COrientedPlane&, const std::string&)
+    const;
+  void saveClippedVSB(unsigned int, const std::vector<COrientedPlane>&,
+		      const std::string&) const;
+
+  const std::vector<VoxelSetBoundary*> &getCategoryBdys() const {
     return categoryBdys;
   }
-#elif DIM==3
-  const std::vector<VoxelSetBoundary> &getCategoryBdys() const {
-    return categoryBdys;
-  }
-#endif
+  void drawVoxelSetBoundary(LineSegmentLayer*, int) const;
 
   std::vector<ICoord> *segmentPixels(const Coord&, const Coord&, bool&, bool&,
 				     bool verbose)
@@ -298,7 +315,7 @@ public:
   double edgeHomogeneityCat(const Coord&, const Coord&, int* cat) const;
 
   friend long get_globalMicrostructureCount();
-};
+};				// end class CMicrostructure
 
 long get_globalMicrostructureCount();
 

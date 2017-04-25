@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: swiglib.C,v $
-// $Revision: 1.11.18.5 $
-// $Author: langer $
-// $Date: 2014/09/27 22:33:56 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -359,7 +355,7 @@ SWIG_GetPtr(const char *c, void **ptr, const char *t)
   int  i, len, start, end;
   SwigPtrType *sp,*tp;
   SwigCacheType *cache;
-  register int d;
+  int d;
 
   p = 0;
   /* Pointer values must start with leading underscore */

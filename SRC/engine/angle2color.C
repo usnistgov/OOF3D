@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: angle2color.C,v $
-// $Revision: 1.3.24.1 $
-// $Author: langer $
-// $Date: 2013-11-08 20:43:05 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

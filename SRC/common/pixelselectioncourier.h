@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: pixelselectioncourier.h,v $
-// $Revision: 1.18.8.10 $
-// $Author: rdw1 $
-// $Date: 2015/08/07 12:58:21 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

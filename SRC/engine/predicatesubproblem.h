@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: predicatesubproblem.h,v $
-// $Revision: 1.10.2.2 $
-// $Author: langer $
-// $Date: 2014-01-05 03:20:03 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

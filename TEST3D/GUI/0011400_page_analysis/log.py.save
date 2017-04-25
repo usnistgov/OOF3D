@@ -1,0 +1,739 @@
+# -*- python -*-
+# $RCSfile: log.py,v $
+# $Revision: 1.1.2.3 $
+# $Author: langer $
+# $Date: 2014-04-15 20:54:38 $
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov.
+
+import tests
+
+#Testing the basic actions of the Analysis Page
+
+findWidget('OOF3D').resize(550, 350)
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Microstructure')
+checkpoint page installed Microstructure
+findWidget('OOF3D:Microstructure Page:Pane').set_position(225)
+findWidget('OOF3D:Microstructure Page:Pane').set_position(156)
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+findMenu(findWidget('OOF3D:MenuBar'), 'File:Load:Data').activate()
+checkpoint toplevel widget mapped Dialog-Data
+findWidget('Dialog-Data').resize(190, 67)
+findWidget('Dialog-Data:filename').set_text('TEST_DATA/two_walls.mesh')
+findWidget('Dialog-Data:gtk-ok').clicked()
+findWidget('OOF3D:Microstructure Page:Pane').set_position(159)
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint pixel page updated
+checkpoint active area status updated
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint Field page sensitized
+checkpoint Materials page updated
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint pinnodes page sensitized
+checkpoint boundary page updated
+checkpoint skeleton selection page selection sensitized
+checkpoint skeleton selection page updated
+checkpoint skeleton selection page groups sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint Solver page sensitized
+checkpoint microstructure page sensitized
+findWidget('OOF3D:Microstructure Page:Pane').set_position(225)
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint meshable button set
+checkpoint meshable button set
+checkpoint microstructure page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint skeleton selection page selection sensitized
+checkpoint skeleton selection page updated
+checkpoint skeleton selection page groups sensitized
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint Field page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint mesh page subproblems sensitized
+checkpoint mesh page sensitized
+checkpoint pinnodes page sensitized
+checkpoint boundary page updated
+checkpoint skeleton selection page selection sensitized
+checkpoint Solver page sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint skeleton selection page groups sensitized
+checkpoint skeleton selection page updated
+checkpoint pinnodes page sensitized
+checkpoint pinnodes page sensitized
+checkpoint pinnodes page sensitized
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint toplevel widget mapped OOF3D Activity Viewer
+checkpoint boundary page updated
+findWidget('OOF3D Activity Viewer').resize(400, 300)
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint boundary page updated
+checkpoint OOF.File.Load.Data
+setComboBox(findWidget('OOF3D:Navigation:PageMenu'), 'Analysis')
+checkpoint page installed Analysis
+findWidget('OOF3D:Analysis Page:bottom').set_position(287)
+findWidget('OOF3D').resize(787, 350)
+findWidget('OOF3D:Analysis Page:top').set_position(412)
+findWidget('OOF3D:Analysis Page:bottom').set_position(412)
+findWidget('OOF3D').resize(787, 350)
+findWidget('OOF3D').resize(787, 351)
+findWidget('OOF3D').resize(787, 352)
+findWidget('OOF3D').resize(787, 356)
+findWidget('OOF3D').resize(787, 360)
+findWidget('OOF3D').resize(787, 368)
+findWidget('OOF3D').resize(787, 373)
+findWidget('OOF3D').resize(787, 380)
+findWidget('OOF3D').resize(787, 396)
+findWidget('OOF3D').resize(787, 414)
+findWidget('OOF3D').resize(788, 424)
+findWidget('OOF3D:Analysis Page:bottom').set_position(413)
+findWidget('OOF3D:Analysis Page:top').set_position(413)
+findWidget('OOF3D').resize(788, 433)
+findWidget('OOF3D').resize(789, 448)
+findWidget('OOF3D:Analysis Page:top').set_position(414)
+findWidget('OOF3D').resize(793, 465)
+findWidget('OOF3D:Analysis Page:bottom').set_position(415)
+findWidget('OOF3D:Analysis Page:top').set_position(417)
+findWidget('OOF3D').resize(795, 474)
+findWidget('OOF3D:Analysis Page:bottom').set_position(416)
+findWidget('OOF3D:Analysis Page:top').set_position(417)
+findWidget('OOF3D').resize(798, 490)
+findWidget('OOF3D:Analysis Page:bottom').set_position(418)
+findWidget('OOF3D:Analysis Page:top').set_position(420)
+findWidget('OOF3D').resize(807, 508)
+findWidget('OOF3D:Analysis Page:bottom').set_position(423)
+findWidget('OOF3D:Analysis Page:top').set_position(428)
+findWidget('OOF3D').resize(810, 523)
+findWidget('OOF3D:Analysis Page:bottom').set_position(424)
+findWidget('OOF3D:Analysis Page:top').set_position(426)
+findWidget('OOF3D').resize(813, 540)
+findWidget('OOF3D:Analysis Page:bottom').set_position(426)
+findWidget('OOF3D:Analysis Page:top').set_position(428)
+findWidget('OOF3D').resize(816, 548)
+findWidget('OOF3D:Analysis Page:bottom').set_position(427)
+findWidget('OOF3D:Analysis Page:top').set_position(429)
+findWidget('OOF3D').resize(819, 562)
+findWidget('OOF3D:Analysis Page:bottom').set_position(429)
+findWidget('OOF3D:Analysis Page:top').set_position(431)
+findWidget('OOF3D').resize(821, 575)
+findWidget('OOF3D:Analysis Page:bottom').set_position(430)
+findWidget('OOF3D:Analysis Page:top').set_position(431)
+findWidget('OOF3D').resize(823, 587)
+findWidget('OOF3D:Analysis Page:bottom').set_position(431)
+findWidget('OOF3D:Analysis Page:top').set_position(432)
+findWidget('OOF3D').resize(826, 601)
+findWidget('OOF3D:Analysis Page:bottom').set_position(433)
+findWidget('OOF3D:Analysis Page:top').set_position(435)
+findWidget('OOF3D').resize(830, 612)
+findWidget('OOF3D:Analysis Page:bottom').set_position(435)
+findWidget('OOF3D:Analysis Page:top').set_position(437)
+findWidget('OOF3D').resize(831, 618)
+findWidget('OOF3D:Analysis Page:top').set_position(438)
+findWidget('OOF3D').resize(833, 627)
+findWidget('OOF3D:Analysis Page:bottom').set_position(439)
+findWidget('OOF3D:Analysis Page:top').set_position(439)
+findWidget('OOF3D').resize(836, 642)
+findWidget('OOF3D:Analysis Page:bottom').set_position(441)
+findWidget('OOF3D:Analysis Page:top').set_position(441)
+findWidget('OOF3D').resize(838, 648)
+findWidget('OOF3D:Analysis Page:bottom').set_position(442)
+findWidget('OOF3D:Analysis Page:top').set_position(442)
+findWidget('OOF3D').resize(838, 659)
+findWidget('OOF3D').resize(838, 670)
+findWidget('OOF3D').resize(838, 676)
+findWidget('OOF3D').resize(838, 680)
+findWidget('OOF3D').resize(838, 689)
+findWidget('OOF3D').resize(836, 699)
+findWidget('OOF3D:Analysis Page:bottom').set_position(441)
+findWidget('OOF3D:Analysis Page:top').set_position(441)
+findWidget('OOF3D').resize(835, 704)
+findWidget('OOF3D:Analysis Page:bottom').set_position(440)
+findWidget('OOF3D:Analysis Page:top').set_position(440)
+findWidget('OOF3D').resize(833, 711)
+findWidget('OOF3D:Analysis Page:bottom').set_position(439)
+findWidget('OOF3D:Analysis Page:top').set_position(439)
+findWidget('OOF3D').resize(833, 713)
+findWidget('OOF3D').resize(832, 717)
+findWidget('OOF3D:Analysis Page:bottom').set_position(438)
+findWidget('OOF3D:Analysis Page:top').set_position(438)
+findWidget('OOF3D').resize(831, 721)
+findWidget('OOF3D:Analysis Page:bottom').set_position(437)
+findWidget('OOF3D:Analysis Page:top').set_position(437)
+findWidget('OOF3D').resize(830, 724)
+findWidget('OOF3D:Analysis Page:bottom').set_position(436)
+findWidget('OOF3D:Analysis Page:top').set_position(436)
+findWidget('OOF3D').resize(830, 725)
+findWidget('OOF3D').resize(828, 728)
+findWidget('OOF3D:Analysis Page:bottom').set_position(435)
+findWidget('OOF3D:Analysis Page:top').set_position(435)
+findWidget('OOF3D').resize(828, 729)
+findWidget('OOF3D').resize(827, 731)
+findWidget('OOF3D:Analysis Page:bottom').set_position(434)
+findWidget('OOF3D:Analysis Page:top').set_position(434)
+findWidget('OOF3D').resize(827, 732)
+findWidget('OOF3D').resize(826, 734)
+findWidget('OOF3D:Analysis Page:bottom').set_position(433)
+findWidget('OOF3D:Analysis Page:top').set_position(433)
+findWidget('OOF3D').resize(826, 736)
+findWidget('OOF3D').resize(825, 739)
+findWidget('OOF3D:Analysis Page:bottom').set_position(432)
+findWidget('OOF3D:Analysis Page:top').set_position(432)
+findWidget('OOF3D').resize(825, 740)
+findWidget('OOF3D').resize(825, 741)
+findWidget('OOF3D').resize(825, 742)
+findWidget('OOF3D').resize(824, 742)
+findWidget('OOF3D:Analysis Page:top').set_position(431)
+findWidget('OOF3D:Analysis Page:bottom').set_position(431)
+findWidget('OOF3D').resize(824, 743)
+findWidget('OOF3D').resize(825, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(432)
+findWidget('OOF3D:Analysis Page:bottom').set_position(432)
+findWidget('OOF3D').resize(826, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(433)
+findWidget('OOF3D:Analysis Page:bottom').set_position(433)
+findWidget('OOF3D').resize(828, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(434)
+findWidget('OOF3D:Analysis Page:bottom').set_position(434)
+findWidget('OOF3D').resize(835, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(438)
+findWidget('OOF3D:Analysis Page:bottom').set_position(438)
+findWidget('OOF3D').resize(839, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(440)
+findWidget('OOF3D:Analysis Page:bottom').set_position(440)
+findWidget('OOF3D').resize(856, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(449)
+findWidget('OOF3D:Analysis Page:bottom').set_position(449)
+findWidget('OOF3D').resize(876, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(460)
+findWidget('OOF3D:Analysis Page:bottom').set_position(460)
+findWidget('OOF3D').resize(901, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(473)
+findWidget('OOF3D:Analysis Page:bottom').set_position(473)
+findWidget('OOF3D').resize(913, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(479)
+findWidget('OOF3D:Analysis Page:bottom').set_position(479)
+findWidget('OOF3D').resize(935, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(491)
+findWidget('OOF3D:Analysis Page:bottom').set_position(491)
+findWidget('OOF3D').resize(955, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(502)
+findWidget('OOF3D:Analysis Page:bottom').set_position(502)
+findWidget('OOF3D').resize(964, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(507)
+findWidget('OOF3D:Analysis Page:bottom').set_position(507)
+findWidget('OOF3D').resize(978, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(514)
+findWidget('OOF3D:Analysis Page:bottom').set_position(514)
+findWidget('OOF3D').resize(992, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(521)
+findWidget('OOF3D:Analysis Page:bottom').set_position(521)
+findWidget('OOF3D').resize(1004, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(527)
+findWidget('OOF3D:Analysis Page:bottom').set_position(527)
+findWidget('OOF3D').resize(1016, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(533)
+findWidget('OOF3D:Analysis Page:bottom').set_position(533)
+findWidget('OOF3D').resize(1020, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(535)
+findWidget('OOF3D:Analysis Page:bottom').set_position(535)
+findWidget('OOF3D').resize(1033, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(542)
+findWidget('OOF3D:Analysis Page:bottom').set_position(542)
+findWidget('OOF3D').resize(1043, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(547)
+findWidget('OOF3D:Analysis Page:bottom').set_position(547)
+findWidget('OOF3D').resize(1053, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(552)
+findWidget('OOF3D:Analysis Page:bottom').set_position(552)
+findWidget('OOF3D').resize(1059, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(555)
+findWidget('OOF3D:Analysis Page:bottom').set_position(555)
+findWidget('OOF3D').resize(1068, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(560)
+findWidget('OOF3D:Analysis Page:bottom').set_position(560)
+findWidget('OOF3D').resize(1075, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(564)
+findWidget('OOF3D:Analysis Page:bottom').set_position(564)
+findWidget('OOF3D').resize(1079, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(566)
+findWidget('OOF3D:Analysis Page:bottom').set_position(566)
+findWidget('OOF3D').resize(1080, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(567)
+findWidget('OOF3D:Analysis Page:bottom').set_position(567)
+findWidget('OOF3D').resize(1082, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(568)
+findWidget('OOF3D:Analysis Page:bottom').set_position(568)
+findWidget('OOF3D').resize(1083, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(569)
+findWidget('OOF3D:Analysis Page:bottom').set_position(569)
+findWidget('OOF3D').resize(1084, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(570)
+findWidget('OOF3D:Analysis Page:bottom').set_position(570)
+findWidget('OOF3D').resize(1086, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(571)
+findWidget('OOF3D:Analysis Page:bottom').set_position(571)
+findWidget('OOF3D').resize(1088, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(572)
+findWidget('OOF3D:Analysis Page:bottom').set_position(572)
+findWidget('OOF3D').resize(1092, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(574)
+findWidget('OOF3D:Analysis Page:bottom').set_position(574)
+findWidget('OOF3D').resize(1102, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(579)
+findWidget('OOF3D:Analysis Page:bottom').set_position(579)
+findWidget('OOF3D').resize(1109, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(583)
+findWidget('OOF3D:Analysis Page:bottom').set_position(583)
+findWidget('OOF3D').resize(1113, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(585)
+findWidget('OOF3D:Analysis Page:bottom').set_position(585)
+findWidget('OOF3D').resize(1117, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(587)
+findWidget('OOF3D:Analysis Page:bottom').set_position(587)
+findWidget('OOF3D').resize(1119, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(588)
+findWidget('OOF3D:Analysis Page:bottom').set_position(588)
+findWidget('OOF3D').resize(1121, 743)
+findWidget('OOF3D:Analysis Page:top').set_position(589)
+findWidget('OOF3D:Analysis Page:bottom').set_position(589)
+findWidget('OOF3D').resize(1121, 743)
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+findWidget('OOF3D:Analysis Page:top:Output:ScalarMode').clicked()
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Operation:OperationRCF:Chooser'), 'Range')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Operation:OperationRCF:Chooser'), 'Average and Deviation')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Operation:OperationRCF:Chooser'), 'Average')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Operation:OperationRCF:Chooser'), 'Integral')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Operation:OperationRCF:Chooser'), 'Standard Deviation')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Operation:OperationRCF:Chooser'), 'Direct Output')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Sampling:Sampling:Chooser'), 'Spaced Grid Points')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Sampling:Sampling:Chooser'), 'Pixels')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Sampling:Sampling:Chooser'), 'Grid Points')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Operation:OperationRCF:Chooser'), 'Range')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Operation:OperationRCF:Chooser'), 'Average and Deviation')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Operation:OperationRCF:Chooser'), 'Average')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Operation:OperationRCF:Chooser'), 'Integral')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Operation:OperationRCF:Chooser'), 'Standard Deviation')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Chooser'), 'Single Point')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Chooser'), 'Pixel Group')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Sampling:Sampling:Chooser'), 'Spaced Grid Points')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Sampling:Sampling:Chooser'), 'Pixels')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Pixel Group:pixels'), '<every>')
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Pixel Group:pixels'), '#cea039')
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Pixel Group:pixels'), '#cb9836')
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Pixel Group:pixels'), '#ca9735')
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Pixel Group:pixels'), '#9a1200')
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Pixel Group:pixels'), '#000000')
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Pixel Group:pixels'), '<selection>')
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Sampling:Sampling:Chooser'), 'Grid Points')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Chooser'), 'Linear Cross Section')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Sampling:Sampling:Chooser'), 'Element Segments')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Sampling:Sampling:Chooser'), 'Line Points')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Chooser'), 'Point Boundary')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Point Boundary:boundary'), 'XmaxYmaxZmin')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Point Boundary:boundary'), 'XmaxYminZmax')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Point Boundary:boundary'), 'XmaxYminZmin')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Point Boundary:boundary'), 'XminYmaxZmax')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Point Boundary:boundary'), 'XminYmaxZmin')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Point Boundary:boundary'), 'XminYminZmax')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Point Boundary:boundary'), 'XminYminZmin')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Point Boundary:boundary'), 'XmaxYmaxZmax')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Chooser'), 'Element Group')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Sampling:Sampling:Chooser'), 'Grid Points')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Sampling:Sampling:Chooser'), 'Spaced Grid Points')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:bottom:Sampling:Sampling:Chooser'), 'Element Set')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Domain:DomainRCF:Chooser'), 'Entire Mesh')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:component'), 'y')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:component'), 'z')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:component'), 'x')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_1'), 'Invariant')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_1'), 'Derivative')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:derivative'), 'y')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:derivative'), 'z')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:derivative'), 'x')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:component'), 'y')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:component'), 'z')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_2'), 'Invariant')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_2'), 'Component')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_1'), 'Component')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_0'), 'Flux')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_1'), 'Invariant')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_1'), 'Component')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_1'), 'Invariant')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:invariant:Chooser'), 'Trace')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:invariant:Chooser'), 'Determinant')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:invariant:Chooser'), 'SecondInvariant')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:invariant:Chooser'), 'Deviator')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_1'), 'Component')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_0'), 'Energy')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:etype'), 'Elastic')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:etype'), 'Electric')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_0'), 'Strain')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:type:Chooser'), 'Nonlinear Geometric Strain')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:type:Chooser'), 'Elastic Strain')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:type:Chooser'), 'Thermal Strain')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:type:Chooser'), 'Piezoelectric Strain')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:type:Chooser'), 'Geometric Strain')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_1'), 'Invariant')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:type:Chooser'), 'Nonlinear Geometric Strain')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:type:Chooser'), 'Elastic Strain')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:type:Chooser'), 'Thermal Strain')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:type:Chooser'), 'Piezoelectric Strain')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:type:Chooser'), 'Geometric Strain')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:invariant:Chooser'), 'Trace')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:invariant:Chooser'), 'Determinant')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:invariant:Chooser'), 'SecondInvariant')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:invariant:Chooser'), 'Deviator')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:invariant:Chooser'), 'Magnitude')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_1'), 'Component')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_0'), 'XYZFunction')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_0'), 'Difference')
+checkpoint named analysis chooser set
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 3.2000000000000e+01)
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 0.0000000000000e+00)
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:minuend:minuend_0'), 'Flux')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:minuend:minuend_0'), 'Energy')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:minuend:minuend_0'), 'Strain')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:minuend:minuend_0'), 'XYZFunction')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:minuend:minuend_0'), 'Difference')
+checkpoint named analysis chooser set
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 3.9047498559631e+01)
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 7.8094997119262e+01)
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 1.1714249567889e+02)
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 1.5618999423852e+02)
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 1.7600000000000e+02)
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 1.3695250144037e+02)
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 9.7905002880738e+01)
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 5.8857504321106e+01)
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 1.9810005761475e+01)
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 0.0000000000000e+00)
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:minuend:minuend_0'), 'Field')
+checkpoint named analysis chooser set
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 3.2000000000000e+01)
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:subtrahend:subtrahend_0'), 'Flux')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:subtrahend:subtrahend_0'), 'Energy')
+checkpoint named analysis chooser set
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 0.0000000000000e+00)
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:subtrahend:subtrahend_0'), 'Strain')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:subtrahend:subtrahend_0'), 'XYZFunction')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:subtrahend:subtrahend_0'), 'Difference')
+checkpoint named analysis chooser set
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 3.9047498559631e+01)
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 7.8094997119262e+01)
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 1.1714249567889e+02)
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:subtrahend:subtrahend_0'), 'Field')
+checkpoint named analysis chooser set
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 3.2000000000000e+01)
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 0.0000000000000e+00)
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 3.2000000000000e+01)
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:subtrahend:subtrahend_1'), 'Invariant')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:subtrahend:subtrahend_1'), 'Derivative')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:subtrahend:subtrahend_1'), 'Component')
+checkpoint named analysis chooser set
+findWidget('OOF3D:Analysis Page:top:Output').get_vadjustment().set_value( 0.0000000000000e+00)
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:minuend:minuend_0'), 'Flux')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:minuend:minuend_0'), 'Energy')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:minuend:minuend_0'), 'Strain')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:minuend:minuend_0'), 'XYZFunction')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:minuend:minuend_0'), 'Difference')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Parameters:minuend:minuend_0'), 'Field')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Scalar:Scalar_0'), 'Field')
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Aggregate_0'), 'Flux')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Aggregate_0'), 'Energy')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Aggregate_0'), 'Strain')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Aggregate_0'), 'Vector XYZFunction')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Aggregate_0'), 'Difference')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Parameters:minuend:minuend_0'), 'Flux')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Parameters:minuend:minuend_0'), 'Energy')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Parameters:minuend:minuend_0'), 'Strain')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Parameters:minuend:minuend_0'), 'Vector XYZFunction')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Parameters:minuend:minuend_0'), 'Difference')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Parameters:minuend:minuend_0'), 'Field')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Parameters:subtrahend:subtrahend_0'), 'Flux')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Parameters:subtrahend:subtrahend_0'), 'Energy')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Parameters:subtrahend:subtrahend_0'), 'Strain')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Parameters:subtrahend:subtrahend_0'), 'Vector XYZFunction')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Parameters:subtrahend:subtrahend_0'), 'Difference')
+checkpoint named analysis chooser set
+setComboBox(findWidget('OOF3D:Analysis Page:top:Output:Aggregate:Parameters:subtrahend:subtrahend_0'), 'Field')
+checkpoint named analysis chooser set
+widget_0=findWidget('OOF3D')
+handled_0=widget_0.event(event(gtk.gdk.DELETE,window=widget_0.window))
+postpone if not handled_0: widget_0.destroy()
+checkpoint toplevel widget mapped Questioner
+findWidget('Questioner').resize(359, 91)
+findWidget('Questioner:gtk-save').clicked()
+checkpoint toplevel widget mapped Dialog-Save Log File
+findWidget('Dialog-Save Log File').resize(190, 95)
+findWidget('Dialog-Save Log File:filename').set_text('a')
+findWidget('Dialog-Save Log File:filename').set_text('an')
+findWidget('Dialog-Save Log File:filename').set_text('ana')
+findWidget('Dialog-Save Log File:filename').set_text('anal')
+findWidget('Dialog-Save Log File:filename').set_text('analy')
+findWidget('Dialog-Save Log File:filename').set_text('analys')
+findWidget('Dialog-Save Log File:filename').set_text('analysi')
+findWidget('Dialog-Save Log File:filename').set_text('analysis')
+findWidget('Dialog-Save Log File:filename').set_text('analysisp')
+findWidget('Dialog-Save Log File:filename').set_text('analysispa')
+findWidget('Dialog-Save Log File:filename').set_text('analysispag')
+findWidget('Dialog-Save Log File:filename').set_text('analysispage')
+findWidget('Dialog-Save Log File:filename').set_text('analysispage.')
+findWidget('Dialog-Save Log File:filename').set_text('analysispage.l')
+findWidget('Dialog-Save Log File:filename').set_text('analysispage.lo')
+findWidget('Dialog-Save Log File:filename').set_text('analysispage.log')
+findWidget('Dialog-Save Log File:gtk-ok').clicked()

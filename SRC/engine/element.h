@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: element.h,v $
-// $Revision: 1.64.2.22 $
-// $Author: langer $
-// $Date: 2014/09/16 02:48:40 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -452,7 +448,8 @@ public:
 
 // TODO MER: This has to be redone^H^H^H^H^H^HDdeleted for 3D, where
 // these are face elements.
-
+// TODO: The TurnDirection enum in coord.h also uses LEFT and RIGHT,
+// so these names need to change (or be deleted in 3D).
 enum Sidedness { LEFT, RIGHT }; // Used for the internal element state.
 
 class InterfaceElement: public Element

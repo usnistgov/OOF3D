@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: coord.h,v $
-// $Revision: 1.25.10.28 $
-// $Author: langer $
-// $Date: 2014/12/14 22:49:06 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -29,7 +25,7 @@
 // Position, but MasterCoord isn't.  So now the classes have
 // separate but equal definitions.
 
-#include "engine/ooferror.h"
+#include "common/ooferror.h"
 #include <iostream>
 
 #include "common/coord_i.h"
@@ -118,11 +114,16 @@ class Coord3D
 public:
   typedef double ComponentType;
   double x[3];
-  Coord3D() { x[0] = 0.0; x[1] = 0.0; x[2] = 0.0 ;}
+  Coord3D() { x[0] = 0.0; x[1] = 0.0; x[2] = 0.0; }
   Coord3D(double x0, double y0, double z0) { x[0] = x0; x[1] = y0; x[2] = z0; }
   Coord3D(double *p) { x[0] = p[0]; x[1] = p[1]; x[2] = p[2]; }
   Coord3D(const Coord3D &c) { x[0] = c[0]; x[1] = c[1]; x[2] = c[2]; }
   virtual ~Coord3D() {}
+
+  inline Coord3D &operator=(const Coord3D &c) {
+    x[0] = c[0]; x[1] = c[1]; x[2] = c[2];
+    return *this;
+  }
   
   inline Coord3D &operator+=(const Coord3D &c) {
     x[0]+=c[0]; x[1]+=c[1]; x[2]+=c[2];
@@ -272,6 +273,15 @@ inline bool operator<(const Coord3D &a, const Coord3D &b) {
   return false;
 }
 
+inline bool operator>(const Coord3D &a, const Coord3D &b) {
+  if(a[0] > b[0]) return true;
+  if(a[0] < b[0]) return false;
+  if(a[1] > b[1]) return true;
+  if(a[1] < b[1]) return false;
+  if(a[2] > b[2]) return true;
+  return false;
+}
+
 std::ostream &operator<<(std::ostream&, const Coord3D&);
 // std::istream &operator>>(std::istream&, Coord3D&);
 
@@ -317,8 +327,8 @@ inline double dot(const Coord3D &c1, const Coord3D &c2) {
 
 inline Coord3D cross(const Coord3D &c1, const Coord3D &c2) {
   Coord3D temp((c1[1]*c2[2]-c1[2]*c2[1]),
-	     (c1[2]*c2[0]-c1[0]*c2[2]),
-	     (c1[0]*c2[1]-c1[1]*c2[0]));
+	       (c1[2]*c2[0]-c1[0]*c2[2]),
+	       (c1[0]*c2[1]-c1[1]*c2[0]));
   return temp;
 }
 
@@ -331,12 +341,14 @@ inline bool operator!=(const Coord3D &a, const Coord3D &b) {
 }
 
 inline Coord3D operator%(const Coord3D &c1, const Coord3D &c2) {
-  return(cross(c1,c2));
+  return cross(c1, c2);
 }
 
 inline double norm2(const Coord3D &c) {
   return dot(c, c);
 }
+
+const Coord3D &axisVector(unsigned int dir);
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -397,13 +409,19 @@ public:
 #endif // DEBUG
      return x[i];
   }
+
+  Coord2D coord() const { return Coord2D(x[0], x[1]); }
+
+  ICoord2D flip() const { return ICoord2D(x[1], x[0]); }
   
   friend Coord2D operator*(const ICoord2D &a, double x);
+  friend Coord2D operator*(double x, const ICoord2D &a);
   friend bool operator==(const ICoord2D&, const ICoord2D&);
   friend bool operator!=(const ICoord2D&, const ICoord2D&);
   friend bool operator!=(const ICoord2D &a, const Coord2D &b);
   friend int dot(const ICoord2D &c1, const ICoord2D &c2);
   friend double dot(const Coord2D &c1, const ICoord2D &c2);
+  friend double dot(const ICoord2D &c1, const Coord2D &c2);
   friend bool operator<(const ICoord2D &a, const ICoord2D &b);
   static const ICoord2D origin;
 };				// end ICoord2D
@@ -445,7 +463,7 @@ public:
   inline int operator[](int i) const {
 #ifdef DEBUG
    if(i >= 3)
-     throw ErrBoundsError("ICoord3D: Index too large."); 
+     throw ErrBoundsError("ICoord3D: Index too large: " + std::to_string(i)); 
    else if(i < 0)
      abort(); //throw ErrBoundsError("ICoord3D: Index too small.");
    else
@@ -456,20 +474,24 @@ public:
   inline int &operator[](int i) {
 #ifdef DEBUG
    if(i >= 3)
-     throw ErrBoundsError("ICoord3D: Index too large."); 
+     throw ErrBoundsError("ICoord3D: Index too large: " + std::to_string(i)); 
    else if(i < 0)
      abort(); //throw ErrBoundsError("ICoord3D: Index too small.");
    else
 #endif // DEBUG
      return x[i];
   }
+
+  Coord3D coord() const { return Coord3D(x[0], x[1], x[2]); }
   
   friend Coord3D operator*(const ICoord3D &a, double x);
+  friend Coord3D operator*(double x, const ICoord3D &a);  
   friend bool operator==(const ICoord3D&, const ICoord3D&);
   friend bool operator!=(const ICoord3D&, const ICoord3D&);
   friend bool operator!=(const ICoord3D &a, const Coord3D &b);
   friend int dot(const ICoord3D &c1, const ICoord3D &c2);
   friend double dot(const Coord3D &c1, const ICoord3D &c2);
+  friend double dot(const ICoord3D &c1, const Coord3D &c2);
   friend bool operator<(const ICoord3D &a, const ICoord3D &b);
   static const ICoord3D origin;
 };				// end ICoord3D
@@ -505,14 +527,14 @@ inline Coord2D operator-(const Coord2D &a, const ICoord2D &b) {
   return result;
 }
 
-inline Coord2D operator+(const ICoord2D &b, const Coord2D &a) {
-  Coord2D result(a);
-  result += b;
+inline Coord2D operator+(const ICoord2D &a, const Coord2D &b) {
+  Coord2D result(b);
+  result += a;
   return result;
 }
 
-inline Coord2D operator-(const ICoord2D &b, const Coord2D &a) {
-  Coord2D result(a);
+inline Coord2D operator-(const ICoord2D &a, const Coord2D &b) {
+  Coord2D result(a[0], a[1]);
   result -= b;
   return result;
 }
@@ -535,7 +557,21 @@ inline Coord2D operator*(const ICoord2D &a, double x) {
   return b;
 }
 
+inline Coord2D operator*(double x, const ICoord2D &a) {
+  Coord2D b(a[0], a[1]);
+  b *= x;
+  return b;
+}
+
 inline bool operator==(const ICoord2D &a, const ICoord2D &b) {
+  return a[0] == b[0] && a[1] == b[1];
+}
+
+inline bool operator==(const Coord2D &a, const ICoord2D &b) {
+  return a[0] == b[0] && a[1] == b[1];
+}
+
+inline bool operator==(const ICoord2D &a, const Coord2D &b) {
   return a[0] == b[0] && a[1] == b[1];
 }
 
@@ -548,17 +584,39 @@ inline bool operator!=(const ICoord2D &a, const Coord2D &b) {
 }
 
 inline int dot(const ICoord2D &c1, const ICoord2D &c2) {
-  int dotproduct = 0;
-  for(int i=0; i<2; i++)	
-    dotproduct += c1[i]*c2[i];
-  return dotproduct;
+  return c1[0]*c2[0] + c1[1]*c2[1];
 }
 
 inline double dot(const Coord2D &c1, const ICoord2D &c2) {
-  double dotproduct = 0;
-  for(int i=0; i<3; i++)	
-    dotproduct += c1[i]*(double)c2[i];
-  return dotproduct;
+  return c1[0]*c2[0] + c1[1]*c2[1];
+}
+
+inline double dot(const ICoord2D &c1, const Coord2D &c2) {
+  return c1[0]*c2[0] + c1[1]*c2[1];
+}
+
+inline int cross(const ICoord2D &c1, const ICoord2D &c2) {
+  return c1[0]*c2[1] - c1[1]*c2[0];
+}
+
+inline double cross(const Coord2D &c1, const ICoord2D &c2) {
+  return c1[0]*c2[1] - c1[1]*c2[0];
+}
+
+inline double cross(const ICoord2D &c1, const Coord2D &c2) {
+  return c1[0]*c2[1] - c1[1]*c2[0];
+}
+
+inline int operator%(const ICoord2D &c1, const ICoord2D &c2) {
+  return cross(c1, c2);
+}
+
+inline double operator%(const Coord2D &c1, const ICoord2D &c2) {
+  return cross(c1, c2);
+}
+
+inline double operator%(const ICoord2D &c1, const Coord2D &c2) {
+  return cross(c1, c2);
 }
 
 inline int norm2(const ICoord2D &c) {
@@ -567,6 +625,16 @@ inline int norm2(const ICoord2D &c) {
 
 bool operator<(const ICoord2D &a, const ICoord2D &b);
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+enum TurnDirection {LEFT, RIGHT, STRAIGHT, UTURN, UNDEFINED};
+
+TurnDirection turnDirection(const ICoord2D &pt0, const ICoord2D &pt1,
+			    const ICoord2D &pt2);
+
+std::ostream &operator<<(std::ostream&, const TurnDirection&);
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // ICoord3D operators
 
@@ -603,8 +671,8 @@ inline Coord3D operator+(const ICoord3D &b, const Coord3D &a) {
   return result;
 }
 
-inline Coord3D operator-(const ICoord3D &b, const Coord3D &a) {
-  Coord3D result(a);
+inline Coord3D operator-(const ICoord3D &a, const Coord3D &b) {
+  Coord3D result(a[0], a[1], a[2]);
   result -= b;
   return result;
 }
@@ -627,7 +695,21 @@ inline Coord3D operator*(const ICoord3D &a, double x) {
   return b;
 }
 
+inline Coord3D operator*(double x, const ICoord3D &a) {
+  Coord3D b(a[0], a[1], a[2]);
+  b *= x;
+  return b;
+}
+
 inline bool operator==(const ICoord3D &a, const ICoord3D &b) {
+  return a[0] == b[0] && a[1] == b[1] && a[2] == b[2];
+}
+
+inline bool operator==(const Coord3D &a, const ICoord3D &b) {
+  return a[0] == b[0] && a[1] == b[1] && a[2] == b[2];
+}
+
+inline bool operator==(const ICoord3D &a, const Coord3D &b) {
   return a[0] == b[0] && a[1] == b[1] && a[2] == b[2];
 }
 
@@ -640,17 +722,15 @@ inline bool operator!=(const ICoord3D &a, const Coord3D &b) {
 }
 
 inline int dot(const ICoord3D &c1, const ICoord3D &c2) {
-  int dotproduct = 0;
-  for(int i=0; i<DIM; i++)	
-    dotproduct += c1[i]*c2[i];
-  return dotproduct;
+  return c1[0]*c2[0] + c1[1]*c2[1] + c1[2]*c2[2];
 }
 
 inline double dot(const Coord3D &c1, const ICoord3D &c2) {
-  double dotproduct = 0;
-  for(int i=0; i<DIM; i++)	
-    dotproduct += c1[i]*(double)c2[i];
-  return dotproduct;
+  return c1[0]*c2[0] + c1[1]*c2[1] + c1[2]*c2[2];
+}
+
+inline double dot(const ICoord3D &c1, const Coord3D &c2) {
+  return c1[0]*c2[0] + c1[1]*c2[1] + c1[2]*c2[2];
 }
 
 inline int norm2(const ICoord3D &c) {

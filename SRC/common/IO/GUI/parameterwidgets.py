@@ -1,9 +1,4 @@
 # -*- python -*-
-# $RCSfile: parameterwidgets.py,v $
-# $Revision: 1.153.2.21 $
-# $Author: rdw1 $
-# $Date: 2015/08/06 22:03:07 $
-
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: ghostoofcanvas.C,v $
-// $Revision: 1.1.2.172 $
-// $Author: rdw1 $
-// $Date: 2015/07/09 16:26:31 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -941,7 +937,7 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
   // 	  << std::endl;
 
   // Sometimes the selecting is done on an object that's not actually
-  // displayed.  To be clickable the vtkProp3D has to be added to the
+  // displayed.  To be clickable, the vtkProp3D has to be added to the
   // vtkRenderer, but it doesn't have to actually be rendered, so here
   // we add it if necessary, and remove it at the end.
   bool propIsRendered = renderer->HasViewProp(prop);

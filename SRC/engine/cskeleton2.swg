@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cskeleton2.swg,v $
-// $Revision: 1.1.4.87 $
-// $Author: langer $
-// $Date: 2014/12/14 01:07:47 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -140,7 +136,7 @@ public:
 
   CMicrostructure *getMicrostructure();
   // vtkUnstructuredGridPtr getGrid();
-  void getVtkCells(SkeletonFilter*, vtkUnstructuredGridPtr);
+  // void getVtkCells(SkeletonFilter*, vtkUnstructuredGridPtr);
   vtkDataArrayPtr getMaterialCellData(SkeletonFilter*);
   vtkDataArrayPtr getEnergyCellData(double, SkeletonFilter*);
   vtkPointsPtr getPoints();
@@ -202,7 +198,6 @@ public:
 
   double getHomogeneityIndex();
   double energyTotal(double alpha);
-  // void clearElementHomogeneityCache();
 
   CSkeletonElement* enclosingElement(Coord *Point);
   CSkeletonElement* findElement(vtkCellPtr);
@@ -288,23 +283,24 @@ public:
   CSkeletonBoundaryMap *getFaceBoundaries();
 
   %new string *compare(CSkeletonBase*, double);
+#ifdef DEBUG
+  %new string *compare2(CSkeletonBase*);
+#endif // DEBUG
 
   bool onOuterFace(CSkeletonNodeVector *nodes);
   bool checkExteriorSegments(CSkeletonSegmentVector*);
   bool checkExteriorFaces(CSkeletonFaceVector*);
 
+  bool checkCategoryVolumes(double);
+
   CDeputySkeleton *deputyCopy();
   CSkeleton *completeCopy();
   CSkeleton *sheriffSkeleton();
 
-  //FEMesh *femesh();
   void populate_femesh(FEMesh *fem, Material *mat=NULL);
 
   %new string *sanityCheck();
 
-  //void destroy_meshes();
-  //void destroy(PyObject*);
-  //bool destroyed();
 }; // class CSkeletonBase
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

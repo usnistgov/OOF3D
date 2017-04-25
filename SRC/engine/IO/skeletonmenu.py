@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: skeletonmenu.py,v $
-# $Revision: 1.142.2.29 $
-# $Author: langer $
-# $Date: 2014/12/02 21:52:43 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -387,6 +383,8 @@ skeletonmenu.addItem(oofmenu.OOFMenuItem(
 
 ########################
 
+from ooflib.SWIG.common import cdebug
+
 def _modify_callback(menuitem, skeleton, modifier):
     if parallel_enable.enabled():
         from ooflib.engine.IO import skeletonIPC
@@ -401,6 +399,7 @@ def _modify(menuitem, skeleton, modifier):
     start_nelems = context.getObject().nelements()
     try:
         context.begin_writing()
+        cdebug.ProfilerStart("mod.prof")
         try:
             skel = modifier.apply(context.getObject())
             ## skel is None whenever the modifier fails
@@ -420,6 +419,7 @@ def _modify(menuitem, skeleton, modifier):
         ## cfiddlenodes.spy for an example.
         modifier.postProcess(context)
         modifier.cleanUp()
+        cdebug.ProfilerStop()
         skel.incrementTimestamp()
 
         end_nnodes = context.getObject().nnodes()

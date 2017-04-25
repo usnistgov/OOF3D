@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: crationalizers.swg,v $
-// $Revision: 1.1.4.5 $
-// $Author: langer $
-// $Date: 2011-10-21 21:11:45 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

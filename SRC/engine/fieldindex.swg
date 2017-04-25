@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: fieldindex.swg,v $
-// $Revision: 1.23.4.3 $
-// $Author: fyc $
-// $Date: 2014/07/24 21:36:18 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

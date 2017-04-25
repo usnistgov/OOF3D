@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: canvaslayers.h,v $
-// $Revision: 1.1.2.61 $
-// $Author: rdw1 $
-// $Date: 2015/08/06 21:52:00 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -326,6 +322,17 @@ public:
   SingleVoxelLayer(GhostOOFCanvas*, const std::string&);
   virtual const std::string &classname() const;
   void set_voxel(const ICoord *where, const Coord *size);
+};
+
+class LineSegmentLayer : public SimpleWireframeCellLayer {
+private:
+  virtual void newGrid(vtkSmartPointer<vtkPoints>, int) {}
+public:
+  LineSegmentLayer(GhostOOFCanvas*, const std::string&);
+  virtual const std::string &classname() const;
+  void set_nSegs(int);	// use instead of newGrid
+  void addSegment(const Coord*, const Coord*);
+  virtual bool pickable() { return false; }
 };
 
 class SimplePointCellLayer : public SimpleCellLayer {

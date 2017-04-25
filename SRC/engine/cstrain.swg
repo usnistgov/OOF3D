@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cstrain.swg,v $
-// $Revision: 1.6.18.2 $
-// $Author: langer $
-// $Date: 2014/06/24 20:17:48 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

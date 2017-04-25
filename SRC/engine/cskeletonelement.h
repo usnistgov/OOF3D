@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cskeletonelement.h,v $
-// $Revision: 1.1.2.59 $
-// $Author: langer $
-// $Date: 2014/12/14 22:49:13 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -28,13 +24,19 @@
 #include <vtkTetra.h>
 
 class CMicrostructure;
+class COrientedPlane;
 class CSkeleton;
 class FEMesh;
+class LineSegmentLayer;
 class Material;
 class Node;
 class OrientedCSkeletonFace;
 class VoxelBdyIntersection;
 
+#define NUM_TET_FACES 4
+#define NUM_TET_EDGES 6
+#define NUM_TET_NODES 4
+#define NUM_TET_FACE_EDGES 3
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -55,12 +57,6 @@ typedef std::pair<double, VoxelBdyIntersection> CellEdgeDatum;
 
 // A structure for storing where a line intersects an element, used by
 // the LinearCrossSectionDomain.
-
-//* TODO 3.1: The code for finding intersection points for the cross
-//* section domain was developed independently of the code for
-//* computing intersections for element homogeneity in
-//* cskeletonelement.C.  It's quite possible that there are
-//* redundancies.
 
 class LineIntersectionPoint {
 private:
@@ -97,6 +93,7 @@ std::ostream &operator<<(std::ostream&, const LineIntersectionPoint&);
 			   
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+#define NONE 12345    // larger than any tet node, edge, or face index
 
 class CSkeletonElement : public CSkeletonMultiNodeSelectable {
 protected:
@@ -109,24 +106,31 @@ protected:
   static const std::string classname_;
   static long globalElementCount;
   LineIntersectionPoint *getLineIntersectionPoint(
-			  const CSkeletonBase*, std::vector<int> &, double,
-			  const Coord&, const Coord&) const;
+  			  const CSkeletonBase*, std::vector<int> &, double,
+  			  const Coord&, const Coord&) const;
+  std::vector<COrientedPlane> getPlanes(const std::vector<Coord3D>&) const;
 public:
   // static topological info
-  static const int faceEdges[4][3];
+  static const unsigned int faceEdges[4][3];
+  static const unsigned int tetEdge2FaceEdge[4][6];
   static const int faceEdgeDirs[4][3];
-  static const int edgeFaces[6][2];
+  static const unsigned int edgeFaces[6][2];
   static const int edgeFaceDirs[6][4];
-  static const int edgeEdgeFace[6][6];
-  static const int nodeEdgeFace[4][6];
-  static const int faceFaceEdge[4][4];
-  static const int oppFace[4];
-  static const int oppNode[4];
-  static const int oppEdge[6];
-  static const int nodeFaces[4][3];
-  static const int nodeEdges[4][3];
-  static const int nodeNodeEdge[4][4];
-  static const double nodeEdgeParam[4][3];
+  static const unsigned int edgeEdgeFace[6][6];
+  static const unsigned int nodeEdgeFace[4][6];
+  static const unsigned int edgeEdgeNode[6][6];
+  static const unsigned int faceFaceEdge[4][4];
+  static const unsigned int oppFace[4];
+  static const unsigned int oppNode[4];
+  static const unsigned int oppEdge[6];
+  static const unsigned int nodeFaces[4][3];
+  static const unsigned int nodeEdges[4][3];
+  static const unsigned int nodeNodeEdge[4][4];
+  static const unsigned int ccwNeighborEdgeOrder[6][4];
+  static const unsigned int cwNeighborEdgeOrder[6][4];
+  static const unsigned int ccwNodeEdges[4][3];
+  static const unsigned int cwNodeEdges[4][3];
+  // static const double nodeEdgeParam[4][3];
 
   CSkeletonElement(int indx, CSkeletonNodeVector *ns); 
   CSkeletonElement(CSkeletonNodeVector *ns, CSkeletonElement *p=NULL,
@@ -161,17 +165,18 @@ public:
   double volume() const;
   double volumeInVoxelUnits(const CMicrostructure *MS) const;
   double volumeInFractionalUnits(const CMicrostructure *MS) const;
-  double cosCornerAngle(int fid, int cid) const;
-  double cosCornerAngleSquared(int fid, int cid) const;
-  double solidCornerAngle(int cid) const;
-  double cosDihedralAngle(int fid1, int fid2) const;
+  double cosCornerAngle(unsigned int fid, unsigned int cid) const;
+  double cosCornerAngleSquared(unsigned int fid, unsigned int cid) const;
+  double solidCornerAngle(unsigned int cid) const;
+  double cosDihedralAngle(unsigned int fid1, unsigned int fid2) const;
   bool illegal() const;
   bool suspect() const;
   void printAngles() const;
+
+  std::vector<Coord3D> pixelCoords(const CMicrostructure*) const;
   
   // methods related to homogeneity, dominant pixel, and shape energy
-  const DoubleVec *categoryVolumes(const CMicrostructure *MS) const;
-  //PositionVector getPositionVector() const;
+  const DoubleVec categoryVolumes(const CMicrostructure *MS, bool) const;
   HomogeneityData c_homogeneity(const CMicrostructure *MS) const;
   void findHomogeneityAndDominantPixel(const CMicrostructure *MS) const;
   virtual double homogeneity(const CMicrostructure *MS) const;
@@ -206,10 +211,11 @@ public:
   }
   CSkeletonMultiNodeKey getSegmentKey(int segidx) const;
   CSkeletonMultiNodeKey getFaceKey(int faceidx) const;
-  static int getFaceEdgeIndex(int i, int j) { return faceEdges[i][j]; }
-  static int getNodeEdgeIndex(int i, int j) { return nodeEdges[i][j]; }
-  static int getOppFaceIndex(int i) { return oppFace[i]; }
-  static int getOppEdgeIndex(int i) { return oppEdge[i]; }
+  static unsigned int getFaceEdgeIndex(int i, int j) { return faceEdges[i][j]; }
+  static unsigned int getNodeEdgeIndex(int i, int j) { return nodeEdges[i][j]; }
+  static unsigned int getOppFaceIndex(int i) { return oppFace[i]; }
+  static unsigned int getOppEdgeIndex(int i) { return oppEdge[i]; }
+  static unsigned int getOtherFaceIndex(unsigned int f, unsigned int s);
 
   OrientedCSkeletonFace *getOrientedFace(const CSkeletonBase*, unsigned int)
     const;
@@ -217,10 +223,10 @@ public:
   CSkeletonMultiNodeKey key() const;
 
   void lineIntersections(
-		 const CSkeletonBase*, const Coord&, const Coord&,
-		 LineIntersectionPoint**, LineIntersectionPoint**) const;
+  		 const CSkeletonBase*, const Coord&, const Coord&,
+  		 LineIntersectionPoint**, LineIntersectionPoint**) const;
   const LineIntersectionPoint *startLinearXSection(const CSkeletonBase*,
-					 const Coord*, const Coord*) const;
+  					 const Coord*, const Coord*) const;
 
   // The other subclasses of CSkeletonSelectable have getElements()
   // methods that return the CSkeletonElements that they are part of.
@@ -241,11 +247,16 @@ public:
   friend class CSkeleton;
   friend long get_globalElementCount();
 
+#ifdef DEBUG
   void dumpFaceInfo(const CSkeletonBase*) const; // debugging
+  void drawVoxelCategoryIntersection(LineSegmentLayer*, const CSkeletonBase*,
+  				     unsigned int) const;
+#endif // DEBUG
+
 };				// CSkeletonElement
 
 long get_globalElementCount();
-void dumpElements();
+
 
 #endif	// CSKELETONELEMENT_H
 
