@@ -84,7 +84,7 @@ public:
   // Element's stiffness matrix computation, so they are cached (at
   // the GaussPoints).
 
-  // derivative wrt real coordinates
+  // derivative wrt real coordinates.  "Real" means reference.
   double realderiv(const ElementBase*, ShapeFunctionIndex, SpaceIndex,
 		   const GaussPoint&) const;
   double realderiv(const ElementBase*, ShapeFunctionIndex, SpaceIndex,
