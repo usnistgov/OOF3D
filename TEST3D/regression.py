@@ -33,7 +33,8 @@ test_module_names = [
     "fundamental_test",
     "microstructure_test",
     "image_test",
-    "pixel_test",
+    "pixel_test",               # voxel selection and grouping
+    "voxel_test",               # voxel set boundaries & clipping
     "activearea_test",
     #"microstructure_extra_test", # saving options, etc.  See TODO in test file
     "matrix_test",
