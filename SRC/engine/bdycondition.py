@@ -360,7 +360,7 @@ class DirichletBC(BC):
 
             # Field.setvalue() sets the value in the FEMesh's
             # dofvalues array.
-            self.field.setvalue(subproblem.get_mesh(), node, fldcomp, value)
+            self.field.setvalue(subproblem.mesh, node, fldcomp, value)
 
             eqncomp = self.equation.getIndex(self.eqn_component).integer()
             nodalEqn = self.equation.nodaleqn(node, eqncomp)
@@ -378,7 +378,7 @@ class DirichletBC(BC):
         except ooferror2.ErrNoSuchField:
             return
         value = self.profile(location)
-        self.field.setvalue(subproblem.get_mesh(), node, fldcomp, value)
+        self.field.setvalue(subproblem.mesh, node, fldcomp, value)
 
     def setDerivatives(self, subproblem, linsys, node, location):
         if self.is_disabled(subproblem):
@@ -818,7 +818,7 @@ class FloatBCBase(BC):
                 assert self.root is self
                 self.profileStart = self.profile(location) + self.profileOffset
             else:
-                mesh = subproblem.get_mesh()
+                mesh = subproblem.meshcontext.getObject()
                 rootvalue = mesh.get_dofvalue(self.root.dofIndex)
                 value = (self.profile(location) + self.profileOffset + rootvalue
                          - self.root.profileStart)

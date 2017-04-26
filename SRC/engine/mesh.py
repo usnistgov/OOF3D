@@ -231,7 +231,7 @@ class Mesh(whoville.Who):
                 new_subpctxt.begin_writing()
                 try:
                     new_subpctxt.rename(oldname)
-                    new_subpctxt.getObject().set_mesh(self.getObject())
+                    new_subpctxt.getObject().set_mesh(self)
                 finally:
                     new_subpctxt.end_writing()
             finally:
