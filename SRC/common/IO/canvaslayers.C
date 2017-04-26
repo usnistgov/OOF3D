@@ -1436,6 +1436,7 @@ void ImageCanvasLayer::set_image(const ImageBase *img, const Coord *location,
   }
 }
 
+// TODO: Does opacity work?
 void ImageCanvasLayer::set_opacity(double opacity) {
   actor->GetProperty()->SetOpacity(opacity);
 }

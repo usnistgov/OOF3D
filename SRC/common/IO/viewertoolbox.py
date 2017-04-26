@@ -516,6 +516,9 @@ class ViewerToolbox(toolbox.Toolbox):
             finally:
                 self.gfxwindow().releaseGfxLock()
 
+        def currentClipPlane(self):
+            return None
+
         def saveView(self, menuitem, name):
             self.gfxwindow().acquireGfxLock()
             try:

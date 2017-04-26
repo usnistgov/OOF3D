@@ -131,15 +131,15 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
     def updateInversion(self, invertClip):
         # Callback for "clip inversion changed". 
         self.invertClip = invertClip
-        toolboxGUI = self.gfxwindow.getToolboxGUIByName("Viewer")
-        plane = toolboxGUI.currentClipPlane()
+        toolbox = self.gfxwindow.getToolboxByName("Viewer")
+        plane = toolbox.currentClipPlane()
         self.setPlane(plane)
 
     def updateSuppression(self, suppressClip):
         # Callback for "clip suppression changed".
         self.suppressClip = suppressClip
-        toolboxGUI = self.gfxwindow.getToolboxGUIByName("Viewer")
-        plane = toolboxGUI.currentClipPlane()
+        toolbox = self.gfxwindow.getToolboxByName("Viewer")
+        plane = toolbox.currentClipPlane()
         self.setPlane(plane)
 
     def updateScale(self, gfxwindow):
@@ -148,8 +148,8 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
         # well into the viewing window when at at the focal distance
         # from the camera.
         if gfxwindow is self.gfxwindow:
-            toolboxGUI = self.gfxwindow.getToolboxGUIByName("Viewer")
-            plane = toolboxGUI.currentClipPlane()
+            toolbox = self.gfxwindow.getToolboxByName("Viewer")
+            plane = toolbox.currentClipPlane()
             if plane is not None:
                 dist = self.gfxwindow.oofcanvas.get_camera_distance()
                 view_angle = self.gfxwindow.oofcanvas.get_camera_view_angle()
