@@ -47,7 +47,7 @@ class SubProblemContext(whoville.Who):
 
 	obj.consistency = consistencyFlag
 
-        obj.set_mesh(parent)
+        obj.set_mesh(parent.getObject())
         obj.set_nnodes(self.nfuncnodes())
 
         # These shouldn't be accessed directly.  They store the values
@@ -303,7 +303,17 @@ class SubProblemContext(whoville.Who):
             self.getObject().undefine_field(fld)
         for eqn in self.all_equations():
             self.getObject().deactivate_equation(eqn)
-        self.getObject().set_mesh(None)
+
+        ## set_mesh passes its arg through to C++ so arg=None doesn't
+        ## make sense. Earlier versions had
+        ## self.getObject().mesh=None, which only made sense for the
+        ## versions that overrode set_mesh/get_mesh so that the mesh
+        ## was also stored in CSubProblemPtr so that FEMesh never had
+        ## to be returned from C++ to Python (so that data added to
+        ## the FEMesh class in Python could be preserved).  The
+        ## correct thing to do here is probably nothing.  See also
+        ## clean(), below, which has the same problem.
+        # self.getObject().set_mesh(None)
         subproblems.remove(self.path())
         from ooflib.engine import evolve
         evolve.removeSubProblem(self)
@@ -353,7 +363,8 @@ class SubProblemContext(whoville.Who):
             self.getObject().undefine_field(fld)
         for eqn in self.all_equations():
             self.getObject().deactivate_equation(eqn)
-        self.getObject().set_mesh(None)
+        # See comment in destroy(), above.
+        # self.getObject().set_mesh(None)
         subproblems.clean(self.path())
         from ooflib.engine import evolve
         evolve.removeSubProblem(self)

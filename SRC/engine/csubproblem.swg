@@ -82,10 +82,8 @@ public:
 
   void set_rwlock(RWLock *rw);
   RWLock * get_rwlock();
-  void set_femesh(FEMesh*);
-  // A comment in femesh.spy says that FEMesh objects are never
-  // returned from C++ to python. get_mesh() was only used in 2D.
-  // FEMesh *get_mesh();
+  void set_mesh(FEMesh*);
+  FEMesh *get_mesh();
   void set_nnodes(int);
 
   int ndof();
