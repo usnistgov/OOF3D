@@ -236,6 +236,12 @@ public:
   CSkeletonElement * get_skeleton_element() const { return cskeleton_element; }
   const std::vector<Node*> & get_nodelist() const { return nodelist; }
 
+  // Deformation jacobian is defined analogously to the jacobian, but
+  // must be a method of the Element derived class in order to have
+  // access to the field values, which are of course necessary.
+  double deformation_jacobian(SpaceIndex, SpaceIndex,
+			      const GaussPoint&, const FEMesh*) const;
+  
   // getSegmentNode() is used only in ElementPtr.intersectPlane() in
   // element.spy.  It only needs to be defined for 3D elements.  TODO 3.1:
   // Fix the class hierarchy so this doesn't have to be here.
