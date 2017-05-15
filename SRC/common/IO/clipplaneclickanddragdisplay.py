@@ -49,7 +49,8 @@ import math
 # class is specified in canvaslayers.h.
 
 class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
-    def __init__(self, arrow_color, arrow_tip_radius, arrow_length, plane_color, plane_opacity):
+    def __init__(self, arrow_color, arrow_tip_radius, arrow_length,
+                 plane_color, plane_opacity):
         self.arrow_color = arrow_color
         self.arrow_tip_radius = arrow_tip_radius
         self.arrow_length = arrow_length;
@@ -82,18 +83,25 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
 
         # The following switchboard callbacks are used for updating
         # what is displayed in the layer.
-        self.sbcallbacks = [switchboard.requestCallbackMain((toolbox, "clip edited"), self.setNormalAndOffset),
-                            switchboard.requestCallbackMain((toolbox, "clip selection changed"), self.setPlane),
-                            switchboard.requestCallbackMain((toolbox, "clip inversion changed"), self.updateInversion),
-                            switchboard.requestCallbackMain((toolbox, "clip suppression changed"), self.updateSuppression),
-                            switchboard.requestCallbackMain("view almost changed", self.updateScale)
-                            ]
+        self.sbcallbacks = [
+            switchboard.requestCallbackMain(
+                (toolbox, "clip edited"), self.setNormalAndOffset),
+            switchboard.requestCallbackMain(
+                (toolbox, "clip selection changed"), self.setPlane),
+            switchboard.requestCallbackMain(
+                (toolbox, "clip inversion changed"), self.updateInversion),
+            switchboard.requestCallbackMain(
+                (toolbox, "clip suppression changed"), self.updateSuppression),
+            switchboard.requestCallbackMain(
+                "view almost changed", self.updateScale)
+        ]
 
         # Create an object of class PlaneAndArrowLayer.
         return canvaslayers.PlaneAndArrowLayer(self.gfxwindow.oofcanvas,
                                              "PlaneAndArrow") 
 
     def setParams(self):
+        debug.fmsg("calling set_arrowLength")        
         self.canvaslayer.set_visibility(False);
         self.canvaslayer.set_arrowColor(self.arrow_color)
         self.canvaslayer.set_arrowTipRadius(self.arrow_tip_radius)
@@ -101,6 +109,7 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
         self.canvaslayer.set_arrowShaftRadius(0.3 * self.arrow_tip_radius)
         self.canvaslayer.set_planeColor(self.plane_color)
         self.canvaslayer.set_planeOpacity(self.plane_opacity)
+        self.canvaslayer.setModified()
 
     def setNormalAndOffset(self, normal, offset):
         # Callback for "clip edited".  Sets the normal and offset of
@@ -113,8 +122,12 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
         # Callback for "clip selection changed".  Updates the
         # displayed 3D objects, in case the user selects a different
         # clipping plane or has unselected a clipping plane.
+        debug.fmsg()
+        debug.fmsg("plane=", type(plane))
+        debug.fmsg("plane=", plane)
         if plane is not None and (not self.suppressClip):
             if plane.enabled():
+                debug.fmsg("setting plane")
                 self.canvaslayer.set_visibility(True)
                 normal = plane.normal()
                 offset = plane.offset()
@@ -124,8 +137,11 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
                     self.direction = 1
                 else:
                     self.direction = -1
+                debug.fmsg("calling set_arrowLength")
                 self.canvaslayer.set_arrowLength(self.direction * self.arrow_length)
+                self.canvaslayer.setModified()
                 return
+        # There is no visible clipping plane.
         self.canvaslayer.set_visibility(False)
 
     def updateInversion(self, invertClip):
@@ -137,10 +153,16 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
 
     def updateSuppression(self, suppressClip):
         # Callback for "clip suppression changed".
+        debug.fmsg()
         self.suppressClip = suppressClip
         toolbox = self.gfxwindow.getToolboxByName("Viewer")
+        debug.fmsg("getting clip plane")
         plane = toolbox.currentClipPlane()
+        debug.fmsg("got plane")
+        debug.fmsg("plane=", plane)
+        debug.fmsg("calling setPlane")
         self.setPlane(plane)
+        debug.fmsg("done")
 
     def updateScale(self, gfxwindow):
         # Callback for "view almost changed". Updates the scale of the

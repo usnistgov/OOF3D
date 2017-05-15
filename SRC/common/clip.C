@@ -18,21 +18,32 @@ ClippingPlane::ClippingPlane()
     offset_(0),
     enabled_(false),
     flipped_(false)
-{}
+{
+  oofcerr << "ClippingPlane::default ctor: " << this << std::endl;
+}
 
 ClippingPlane::ClippingPlane(CDirection *nrml, double offset)
   : normal_(nrml->clone()),
     offset_(offset),
     enabled_(true),
     flipped_(false)
-{}
+{
+  oofcerr << "ClippingPlane::ctor: " << this << std::endl;
+}
 
 ClippingPlane::ClippingPlane(const ClippingPlane &other)
   : normal_(other.normal()->clone()),
     offset_(other.offset()),
     enabled_(other.enabled_),
     flipped_(other.flipped_)
-{}
+{
+  oofcerr << "ClippingPlane::copy ctor " << this << std::endl;
+}
+
+ClippingPlane::~ClippingPlane() {
+  oofcerr << "ClippingPlane::dtor: " << this << std::endl;
+  delete normal_;
+}
 
 const ClippingPlane& ClippingPlane::operator=(const ClippingPlane &other) {
   if(this != &other) {
@@ -47,10 +58,6 @@ const ClippingPlane& ClippingPlane::operator=(const ClippingPlane &other) {
 bool ClippingPlane::operator==(const ClippingPlane &other) const {
   return (offset_ == other.offset_ && *normal_ == *other.normal_ &&
 	  enabled_ == other.enabled_ && flipped_ == other.flipped_);
-}
-
-ClippingPlane::~ClippingPlane() {
-  delete normal_;
 }
 
 bool ClippingPlane::operator!=(const ClippingPlane &other) const {
@@ -73,6 +80,7 @@ bool ClippingPlane::operator<(const ClippingPlane &other) const {
 }
 
 std::ostream &operator<<(std::ostream &os, const ClippingPlane &cp) {
+  oofcerr << "ClippingPlane::print: " << &cp << std::endl;
   os << "ClippingPlane(normal="<< *cp.normal() << ", offset="
      << cp.offset() << ", enabled=" << cp.enabled() << ")";
   return os;

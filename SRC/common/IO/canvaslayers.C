@@ -242,7 +242,8 @@ vtkSmartPointer<vtkTableBasedClipDataSet> getClipper(
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas, const std::string &nm)
+PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas,
+				       const std::string &nm)
   : OOFCanvasLayer(canvas, nm),
     planeSource(vtkSmartPointer<vtkCubeSource>::New()),
     arrowSource(vtkSmartPointer<vtkArrowSource>::New()),
@@ -336,7 +337,10 @@ void PlaneAndArrowLayer::stop_clipping() { }
 
 void PlaneAndArrowLayer::set_clip_parity(bool b) { }
 
-void PlaneAndArrowLayer::setModified() { }
+void PlaneAndArrowLayer::setModified() {
+  planeSource->Modified();
+  arrowSource->Modified();
+}
 
 vtkSmartPointer<vtkActor> PlaneAndArrowLayer::get_planeActor() {
   return planeActor;
@@ -359,8 +363,10 @@ vtkSmartPointer<vtkActorCollection> PlaneAndArrowLayer::get_pickable_actors() {
 void PlaneAndArrowLayer::set_visibility(bool visible) {
   // Sets whether or not the vtk plane and arrow are to be visible
   // once the renderer is called.
+  std::cerr << "PlaneAndArrowLayer::set_visibility: " << visible << std::endl;
   planeActor->SetVisibility(int(visible));
   arrowActor->SetVisibility(int(visible));
+  setModified();
 }
 
 void PlaneAndArrowLayer::set_arrowShaftRadius(double radius) {
@@ -418,6 +424,7 @@ void PlaneAndArrowLayer::translate(const Coord3D *translationVector) {
   // Concatenate the new translation onto the current
   // translation.
   translation->Translate(translationX, translationY, translationZ);
+  setModified();
 }
 
 void PlaneAndArrowLayer::offset(double offset) {
@@ -439,6 +446,7 @@ void PlaneAndArrowLayer::offset(double offset) {
   // Concatenate the new offsetting translation onto the current
   // translation.
   translation->Translate(normal[0], normal[1], normal[2]);
+  setModified();
 }
 
 void PlaneAndArrowLayer::scale(double scale) {
@@ -450,6 +458,7 @@ void PlaneAndArrowLayer::scale(double scale) {
 
   // Concatenate the new scaling onto the current scaling.
   scaling->Concatenate(new_scaling);
+  setModified();
 }
 
 Coord3D *PlaneAndArrowLayer::get_center() {
@@ -508,6 +517,7 @@ void PlaneAndArrowLayer::set_scale(double scale) {
   // set_arrowScale(double).
   scaling->Identity();
   scaling->Scale(scale, scale, scale);
+  setModified();
 }
 
 void PlaneAndArrowLayer::set_normal(const CDirection *direction) {
@@ -533,6 +543,8 @@ void PlaneAndArrowLayer::set_normal(const CDirection *direction) {
   rotation->Identity();
   rotation->RotateWXYZ(angleOfRotation, axisOfRotation[0], axisOfRotation[1], axisOfRotation[2]);
 
+  setModified();
+
   // Free allocated memory.
   delete(normalVector);
 }
@@ -548,6 +560,7 @@ void PlaneAndArrowLayer::set_center(const Coord3D *position) {
 
   translation->Identity();
   translation->Translate(position0, position1, position2);
+  setModified();
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

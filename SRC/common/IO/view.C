@@ -49,7 +49,9 @@ View::View(const View &other)
   rebuildVtkPlanes();
 }
 
-View::~View() {}
+View::~View() {
+  oofcerr << "View::dtor: " << std::endl;
+}
 
 bool View::equiv(const View &other) const {
   return (pos == other.pos &&
@@ -113,12 +115,17 @@ void View::setCamera(vtkSmartPointer<vtkCamera> camera) const {
 }
 
 void View::addClipPlane(const ClippingPlane &plane) {
+  oofcerr << "View::addClipPlane: plane=" << &plane << " " << plane
+	  << std::endl;
+  OOFcerrIndent indent(2);
   addClipPlaneWithoutRebuilding(plane);
   rebuildVtkPlanes();
 }
 
 void View::addClipPlaneWithoutRebuilding(const ClippingPlane &plane) {
+  oofcerr << "View::addClipPlaneWithoutRebuilding" << std::endl;
   clipPlanes.push_back(plane);
+  oofcerr << "View::addClipPlaneWithoutRebuilding: done" << std::endl;
 }
 
 void View::removeClipPlane(unsigned int which) {
@@ -192,6 +199,9 @@ void View::rebuildVtkPlanes() {
   // Convert the OOF-friendly ClippingPlaneList into a vtk-friendly
   // vtkPlanes object.
 
+  oofcerr << "View::rebuildVtkPlanes: nPlanes=" << clipPlanes.size()
+	  << std::endl;
+
   // rebuildVtkPlanes is called whenever the View's clipping planes
   // are changed in any way.  It's inefficient to rebuild the whole
   // structure every time, but it's easy and not all that expensive.
@@ -223,5 +233,6 @@ void View::rebuildVtkPlanes() {
     }
   vtkplanes->SetPoints(points);
   vtkplanes->SetNormals(normals);
+  oofcerr << "View::rebuildVtkPlanes: done" << std::endl;
 }
 

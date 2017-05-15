@@ -209,14 +209,17 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
             self.sensitizeHistory()
             self.setInfo()
 
-            self.gfxwindow().setMouseHandler(self)
+            # self.gfxwindow().setMouseHandler(self)
             if config.dimension() == 3:
                 self.gfxwindow().toolbar.setSelect()
 
-    def deactivate(self):
-        if self.active:
-            # self.gfxwindow().setRubberband(rubberband.NoRubberBand())
-            toolboxGUI.GfxToolbox.deactivate(self)
+    # def deactivate(self):
+    #     if self.active:
+    #         # self.gfxwindow().setRubberband(rubberband.NoRubberBand())
+    #         toolboxGUI.GfxToolbox.deactivate(self)
+
+    def installMouseHandler(self):
+        self.gfxwindow().setMouseHandler(self)
 
     def close(self):
         map(switchboard.removeCallback, self.sbcallbacks)

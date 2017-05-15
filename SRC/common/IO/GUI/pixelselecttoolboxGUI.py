@@ -116,22 +116,22 @@ class PixelSelectToolboxGUI(genericselectGUI.GenericSelectToolboxGUI):
     # In parent class, RCF is assigned to self.selectionMethodFactory
     def methodFactory(self):
         return PixelSelectionMethodFactory(
-            self.method.registry, title="Method:", name="Method", scope=self, callback=None, widgetdict=self.selectionmethodGUIs)
-    
+            self.method.registry, title="Method:", name="Method",
+            scope=self, callback=None, widgetdict=self.selectionmethodGUIs)
+
+    def installMouseHandler(self):
+        # Update the current MouseHandler to correspond to the the
+        # current registration's subclass.
+        registration = self.selectionMethodFactory.getRegistration()
+        self.updateMouseHandler(registration)
+        
     def activate(self):
         if not self.active:
             genericselectGUI.GenericSelectToolboxGUI.activate(self)
-
-            # Update the current MouseHandler to correspond to the the
-            # current registration's subclass.
-            registration = self.selectionMethodFactory.getRegistration()
-            self.updateMouseHandler(registration)
-
             self.activecallbacks = [
                 switchboard.requestCallbackMain('pixel selection changed',
                                                 self.changedSelection)
             ]
-
 
     def deactivate(self):
         if self.active:

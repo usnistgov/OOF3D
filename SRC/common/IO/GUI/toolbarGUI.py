@@ -131,12 +131,17 @@ class ToolBar:
         self.selectbutton.set_active(True)
 
     def selectCB(self, button):
+        # In "select" mode, the specific toolbox's mouse handler is in
+        # charge.
         if button.get_active():
-            self.gfxwindow.current_toolbox.activate()
-        else:
-            # TODO 3.1: Is this necessary?  It doesn't seem to be
-            # harmful.
-            self.gfxwindow.current_toolbox.deactivate()
+            self.gfxwindow.installToolboxMouseHandler()
+        
+        # if button.get_active():
+        #     self.gfxwindow.current_toolbox.activate()
+        # else:
+        #     # TODO 3.1: Is this necessary?  It doesn't seem to be
+        #     # harmful.
+        #     self.gfxwindow.current_toolbox.deactivate()
 
     def tumbleCB(self, button):
         if button.get_active():

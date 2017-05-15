@@ -33,11 +33,19 @@ class GfxToolbox(widgetscope.WidgetScope):
     def close(self):
         pass
     def activate(self):
+        debug.fmsg(self._name)
         self.active = True
     def deactivate(self):
+        debug.fmsg(self._name)
         self.active = False
     def gfxwindow(self):
         return self.toolbox.gfxwindow()
+    def installMouseHandler(self):
+        # The default mouse handler is no mouse handler.  Subclasses
+        # should override this if they need to handle mouse clicks on
+        # the canvas when the window is in "select" mode.
+        self.gfxwindow().removeMouseHandler()
+        
     def __cmp__(self, other):           # for sorting in gfxwindow's list
         return cmp(self.toolbox.ordering, other.toolbox.ordering)
 
