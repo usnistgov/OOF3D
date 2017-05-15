@@ -434,12 +434,15 @@ class ViewerToolbox(toolbox.Toolbox):
                 viewobj = mainthread.runBlock(
                     self.gfxwindow().oofcanvas.get_view)
                 viewobj.disableClipPlane(plane)
+                # The View object here will go out of scope before
+                # we're done using the ClippingPlane that it contains,
+                # so clone the plane.
                 switchboard.notify((self, "clip selection changed"),
-                                   viewobj.getClipPlane(plane))
+                                   viewobj.getClipPlane(plane).clone())
                 # mainthread.runBlock(
                 #     switchboard.notify, 
                 #     ((self, "clip selection changed"),
-                #      viewobj.getClipPlane(plane)))
+                #      viewobj.getClipPlane(plane).clone()))
                 self._clipPlanesChanged(viewobj)
             finally:
                 self.gfxwindow().releaseGfxLock()
@@ -449,12 +452,15 @@ class ViewerToolbox(toolbox.Toolbox):
                 viewobj = mainthread.runBlock(
                     self.gfxwindow().oofcanvas.get_view)
                 viewobj.enableClipPlane(plane)
+                # The View object here will go out of scope before
+                # we're done using the ClippingPlane that it contains,
+                # so clone the plane.
                 switchboard.notify((self, "clip selection changed"),
-                                   viewobj.getClipPlane(plane))
+                                   viewobj.getClipPlane(plane).clone())
                 # mainthread.runBlock(
                 #     switchboard.notify, 
                 #     ((self, "clip selection changed"),
-                #      viewobj.getClipPlane(plane)))
+                #      viewobj.getClipPlane(plane).clone()))
                 self._clipPlanesChanged(viewobj)
             finally:
                 self.gfxwindow().releaseGfxLock()
@@ -465,9 +471,11 @@ class ViewerToolbox(toolbox.Toolbox):
             try:
                 viewobj = mainthread.runBlock(
                     self.gfxwindow().oofcanvas.get_view)
-                self._currentClipPlane = viewobj.getClipPlane(plane);
+                # The View object here will go out of scope before
+                # we're done using the ClippingPlane that it contains,
+                # so clone the plane.
+                self._currentClipPlane = viewobj.getClipPlane(plane).clone();
                 self._currentClipPlaneNo = plane
-                debug.fmsg("_currentClipPlane=", self._currentClipPlane)
                 switchboard.notify((self, "clip selection changed"),
                                    self._currentClipPlane)
             finally:
@@ -475,7 +483,6 @@ class ViewerToolbox(toolbox.Toolbox):
         def clipUnselectCB(self, menuitem):
             self.gfxwindow().acquireGfxLock()
             try:
-                debug.fmsg("Unsetting _currentClipPlane")
                 self._currentClipPlane = None
                 self._currentClipPlaneNo = None
                 switchboard.notify((self, "clip selection changed"), None)
@@ -486,7 +493,6 @@ class ViewerToolbox(toolbox.Toolbox):
                 self.gfxwindow().releaseGfxLock()
 
         def currentClipPlane(self):
-            debug.fmsg()
             return self._currentClipPlane
 
         def currentClipPlaneNo(self):
@@ -505,7 +511,7 @@ class ViewerToolbox(toolbox.Toolbox):
                 # mainthread.runBlock(
                 #     switchboard.notify, 
                 #     ((self, "clip selection changed"),
-                #      viewobj.getClipPlane(plane))) 
+                #      viewobj.getClipPlane(plane).clone())) 
                 self._clipPlanesChanged(viewobj)
             finally:
                 self.gfxwindow().releaseGfxLock()
@@ -522,7 +528,7 @@ class ViewerToolbox(toolbox.Toolbox):
                 # mainthread.runBlock(
                 #     switchboard.notify, 
                 #     ((self, "clip selection changed"),
-                #      viewobj.getClipPlane(plane))) 
+                #      viewobj.getClipPlane(plane).clone())) 
                 self._clipPlanesChanged(viewobj)
             finally:
                 self.gfxwindow().releaseGfxLock()
@@ -553,18 +559,13 @@ class ViewerToolbox(toolbox.Toolbox):
         def clipSuppressOnCB(self, menuitem):
             self.gfxwindow().acquireGfxLock()
             try:
-                debug.fmsg("getting view")
                 viewobj = mainthread.runBlock(
                     self.gfxwindow().oofcanvas.get_view)
-                debug.fmsg("calling suppressClipOn")
                 viewobj.suppressClipOn()
-                debug.fmsg("sending 'clip suppression changed'")
                 mainthread.runBlock(
                     switchboard.notify, 
                     ((self, "clip suppression changed"), True))
-                debug.fmsg("calling _clipPlanesChanged")
                 self._clipPlanesChanged(viewobj)
-                debug.fmsg("done")
             finally:
                 self.gfxwindow().releaseGfxLock()
         def clipSuppressOffCB(self, menuitem):
@@ -620,7 +621,7 @@ class ViewerToolbox(toolbox.Toolbox):
             oldView = mainthread.runBlock(self.gfxwindow().oofcanvas.get_view)
             nclip = oldView.nClipPlanes()
             for i in range(nclip):
-                newView.addClipPlane(oldView.getClipPlane(i))
+                newView.addClipPlane(oldView.getClipPlane(i).clone())
             mainthread.runBlock(self.gfxwindow().oofcanvas.set_view,
                                 (newView, False))
             self._updateView()

@@ -33,10 +33,8 @@ class GfxToolbox(widgetscope.WidgetScope):
     def close(self):
         pass
     def activate(self):
-        debug.fmsg(self._name)
         self.active = True
     def deactivate(self):
-        debug.fmsg(self._name)
         self.active = False
     def gfxwindow(self):
         return self.toolbox.gfxwindow()
