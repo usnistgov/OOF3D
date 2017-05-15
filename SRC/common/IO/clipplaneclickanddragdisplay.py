@@ -101,7 +101,6 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
                                              "PlaneAndArrow") 
 
     def setParams(self):
-        debug.fmsg("calling set_arrowLength")        
         self.canvaslayer.set_visibility(False);
         self.canvaslayer.set_arrowColor(self.arrow_color)
         self.canvaslayer.set_arrowTipRadius(self.arrow_tip_radius)
@@ -122,12 +121,8 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
         # Callback for "clip selection changed".  Updates the
         # displayed 3D objects, in case the user selects a different
         # clipping plane or has unselected a clipping plane.
-        debug.fmsg()
-        debug.fmsg("plane=", type(plane))
-        debug.fmsg("plane=", plane)
         if plane is not None and (not self.suppressClip):
             if plane.enabled():
-                debug.fmsg("setting plane")
                 self.canvaslayer.set_visibility(True)
                 normal = plane.normal()
                 offset = plane.offset()
@@ -137,7 +132,6 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
                     self.direction = 1
                 else:
                     self.direction = -1
-                debug.fmsg("calling set_arrowLength")
                 self.canvaslayer.set_arrowLength(self.direction * self.arrow_length)
                 self.canvaslayer.setModified()
                 return
@@ -153,16 +147,10 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
 
     def updateSuppression(self, suppressClip):
         # Callback for "clip suppression changed".
-        debug.fmsg()
         self.suppressClip = suppressClip
         toolbox = self.gfxwindow.getToolboxByName("Viewer")
-        debug.fmsg("getting clip plane")
         plane = toolbox.currentClipPlane()
-        debug.fmsg("got plane")
-        debug.fmsg("plane=", plane)
-        debug.fmsg("calling setPlane")
         self.setPlane(plane)
-        debug.fmsg("done")
 
     def updateScale(self, gfxwindow):
         # Callback for "view almost changed". Updates the scale of the

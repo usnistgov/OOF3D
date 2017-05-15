@@ -19,7 +19,6 @@ ClippingPlane::ClippingPlane()
     enabled_(false),
     flipped_(false)
 {
-  oofcerr << "ClippingPlane::default ctor: " << this << std::endl;
 }
 
 ClippingPlane::ClippingPlane(CDirection *nrml, double offset)
@@ -28,7 +27,6 @@ ClippingPlane::ClippingPlane(CDirection *nrml, double offset)
     enabled_(true),
     flipped_(false)
 {
-  oofcerr << "ClippingPlane::ctor: " << this << std::endl;
 }
 
 ClippingPlane::ClippingPlane(const ClippingPlane &other)
@@ -37,11 +35,9 @@ ClippingPlane::ClippingPlane(const ClippingPlane &other)
     enabled_(other.enabled_),
     flipped_(other.flipped_)
 {
-  oofcerr << "ClippingPlane::copy ctor " << this << std::endl;
 }
 
 ClippingPlane::~ClippingPlane() {
-  oofcerr << "ClippingPlane::dtor: " << this << std::endl;
   delete normal_;
 }
 
@@ -80,7 +76,6 @@ bool ClippingPlane::operator<(const ClippingPlane &other) const {
 }
 
 std::ostream &operator<<(std::ostream &os, const ClippingPlane &cp) {
-  oofcerr << "ClippingPlane::print: " << &cp << std::endl;
   os << "ClippingPlane(normal="<< *cp.normal() << ", offset="
      << cp.offset() << ", enabled=" << cp.enabled() << ")";
   return os;

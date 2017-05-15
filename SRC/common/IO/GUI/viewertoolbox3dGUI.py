@@ -761,7 +761,6 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         # Switchboard callback for "clip planes changed" 
         # Rebuilds the list of clipping planes using the clipping
         # planes on the canvas.
-        debug.fmsg()
         if gfxwindow is self.gfxwindow():
             ## Don't use historian.current() to get the clip
             ## planes!  The historian doesn't record new views if the
@@ -798,11 +797,7 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     def clipSelectionChangedCB(self, selection): # gtk callback
         debug.mainthreadTest()
         plane, planeID = self.getCurrentClipPlaneAndID() # from widget
-        debug.fmsg("gtk callback, self.active=", self.active,
-                   "planeID=", planeID)
         if planeID == self.toolbox.currentClipPlaneNo:
-            debug.fmsg("Nothing to do. planeID == currentClipPlaneNo ==",
-                       planeID)
             return
 
         if planeID is not None:
@@ -820,7 +815,6 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         # click-and-drag editing of clipping planes. Else, a
         # clipping plane has been unselected, so set the mouse
         # handler to self.
-        debug.fmsg(plane)
         if plane is not None:
             self.setCurrentClipPlane(plane)
             self.gfxwindow().setMouseHandler(

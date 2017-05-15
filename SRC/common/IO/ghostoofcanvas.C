@@ -1456,8 +1456,6 @@ void GhostOOFCanvas::physical2Display(const Coord &pt, double &x, double &y)
 // Views
 
 View *GhostOOFCanvas::get_view() const {
-  oofcerr << "GhostOOFCanvas::get_view" << std::endl;
-  OOFcerrIndent indent(2);
   Coord pos;
   Coord focal;
   Coord up;
@@ -1470,14 +1468,11 @@ View *GhostOOFCanvas::get_view() const {
   int *size = render_window->GetSize();
   View *vue = new View(pos, focal, up, angle,
 		       size[0], size[1]);
-  oofcerr << "GhostOOFCanvas::get_view: copying " << clipPlanes.size()
-	  << " planes" << std::endl;
   for(ClippingPlaneList::const_iterator i=clipPlanes.begin();
       i<clipPlanes.end(); ++i)
     {
        vue->addClipPlaneWithoutRebuilding(*i);
     }
-  oofcerr << "GhostOOFCanvas::get_view: calling rebuildVtkPlanes" << std::endl;
   vue->rebuildVtkPlanes();
   if(clipInverted)
     vue->invertClipOn();
