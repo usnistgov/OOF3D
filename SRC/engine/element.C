@@ -267,6 +267,32 @@ double Element::deformation_jacobian(SpaceIndex i, SpaceIndex j,
   return j_map + j_interp;
 }
 
+
+// MasterCoord version.
+double Element::deformation_jacobian(SpaceIndex i, SpaceIndex j,
+				     const MasterCoord &m,
+				     const FEMesh *mesh)
+  const
+{
+  double j_map = this->jacobian(i,j,m);
+  double j_interp = 0.0;
+
+  // Trick borrowed from funcnode.displaced_position.
+  static ThreeVectorField *displacement = 0;
+  if(!displacement) 
+    displacement = dynamic_cast<ThreeVectorField*>(Field::getField("Displacement"));
+  
+  
+  for(CleverPtr<ElementFuncNodeIterator> ni(funcnode_iterator());
+      !ni->end(); ++*ni)
+    {
+      double u = (*displacement)(ni->funcnode(),i)->value(mesh);
+      j_interp += u*ni->masterderiv(j, m);
+    }
+  return j_map + j_interp;
+}
+
+
 // J(i,j) = d(real_coord i)/d(master_coord j)
 
 double ElementBase::jacobian(SpaceIndex i, SpaceIndex j, const GaussPoint &g)
