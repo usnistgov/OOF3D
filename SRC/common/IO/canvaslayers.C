@@ -363,7 +363,6 @@ vtkSmartPointer<vtkActorCollection> PlaneAndArrowLayer::get_pickable_actors() {
 void PlaneAndArrowLayer::set_visibility(bool visible) {
   // Sets whether or not the vtk plane and arrow are to be visible
   // once the renderer is called.
-  std::cerr << "PlaneAndArrowLayer::set_visibility: " << visible << std::endl;
   planeActor->SetVisibility(int(visible));
   arrowActor->SetVisibility(int(visible));
   setModified();

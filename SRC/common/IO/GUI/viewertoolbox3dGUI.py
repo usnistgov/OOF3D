@@ -420,6 +420,7 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         clippingBox.pack_start(bbox, expand=0, fill=0)
 
         self.invclipButton = gtk.CheckButton("Invert All")
+        self.invclipButton.set_active(self.toolbox.invertClip)
         gtklogger.setWidgetName(self.invclipButton, "Invert")
         gtklogger.connect(self.invclipButton, 'clicked', self.invClipCB)
         tooltips.set_tooltip_text(self.invclipButton,
@@ -433,7 +434,15 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
                                   "Suppress all clipping planes.")
         bbox.pack_start(self.suppressButton)
 
-        label0 = gtk.Label("Select a clipping plane from the list to edit.\nHow to use click-and-drag editing tool:\n  (Click plane)+Move: Offset plane along its normal\n  (Click arrow)+Move: Rotate plane\n  (Ctrl+Click plane/arrow)+Move: Move base of \n    arrow around in plane\nTo deselect a plane, Ctrl+Click the plane in the list.")
+        label0 = gtk.Label(
+"""Select a clipping plane from the list to edit.
+How to use the click-and-drag editing tool:
+  (Click plane)+Move: Offset plane along its normal
+  (Click arrow)+Move: Rotate plane
+  (Ctrl+Click plane/arrow)+Move: Move base of 
+    arrow in plane
+To deselect a plane, Ctrl+Click the plane in the list."""
+        )
         label0.set_pattern("             _______\n            ________\n            ________\n            ________\n            ________\n            ________\n             _______\n")
         label0.set_justify(gtk.JUSTIFY_LEFT)
         clippingBox.pack_start(label0, fill=0, expand=0, padding=2)
@@ -441,8 +450,8 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         ## TODO 3.1: Clipping plane operations
         ##   Delete all
         ##   Save/Load?
+        ##   Undo/Redo
         ##   Copy to/from other window
-        ##   Click & drag editing
         
         # save and restore
         historyFrame = gtk.Frame("Save and Restore Views")
@@ -487,9 +496,6 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         # Mouse handler for click-and-drag editing of clipping planes.
         self.clipPlaneClickAndDragMouseHandler = ClipPlaneClickAndDragMouseHandler(self, self.gfxwindow())
 
-        # Keep track of last selected clipping plane.
-        self.lastSelectedClipID = None
-
         # # position information
         # voxelinfoFrame = gtk.Frame("Voxel Info")
         # voxelinfoFrame.set_shadow_type(gtk.SHADOW_IN)
@@ -526,11 +532,15 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
                                             self.viewRestoredCB),
             switchboard.requestCallbackMain("new view", self.newViewCB),
             switchboard.requestCallbackMain("view deleted", self.viewDeletedCB),
-            switchboard.requestCallbackMain("clip planes changed",
-                                            self.updateClipList),
+            switchboard.requestCallbackMain(
+                (self.toolbox, "clip planes changed"),
+                self.updateClipList),
             switchboard.requestCallbackMain(
                 (self.toolbox, "clip selection changed"),
-                self.updateClipSelection)
+                self.updateClipSelection),
+            # switchboard.requestCallbackMain(
+            #     (self.toolbox, "new clip plane"),
+            #     self.newClipPlaneCB)
             ]
 
         self.sensitize()
@@ -541,15 +551,9 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
             # Get the current plane from the non-gui part of the
             # toolbox, where it's stored.
             plane = self.toolbox.currentClipPlane()
-            # self.setCurrentClipPlane(plane)
             if plane is not None:
-                # self.gfxwindow().setMouseHandler(
-                #     self.clipPlaneClickAndDragMouseHandler)
-                # switchboard.notify((self.toolbox, "clip selection changed"), plane)
                 self.gfxwindow().oofcanvas.render()
-            # else:
-            #     self.gfxwindow().setMouseHandler(self)
-            self.gfxwindow().toolbar.setSelect()
+                self.gfxwindow().toolbar.setSelect()
 
     def deactivate(self):
         if self.active:
@@ -566,6 +570,7 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
                 self.clipPlaneClickAndDragMouseHandler)
 
     def close(self):
+        debug.fmsg()
         self.clipPlaneClickAndDragMouseHandler.cancel()
         map(switchboard.removeCallback, self.sbcallbacks)
         toolboxGUI.GfxToolbox.close(self)
@@ -682,7 +687,6 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
 
     def enableCellCB(self, cell_renderer, path):
         plane, planeID = self.clippingList[path]
-        # self.lastSelectedClipID = planeID
         if plane.enabled():
             self.toolbox.menu.Clip.Disable(plane=planeID)
         else:
@@ -695,7 +699,6 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
 
     def flipCellCB(self, cell_renderer, path):
         plane, planeID = self.clippingList[path]
-        # self.lastSelectedClipID = planeID
         if plane.flipped():
             self.toolbox.menu.Clip.Unflip(plane=planeID)
         else:
@@ -741,7 +744,6 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
             # selection?  The mouse handler should be reset as a side
             # effect of that, probably in updateClipSelection
             self.gfxwindow().removeMouseHandler()
-        # self.lastSelectedClipID = None
 
     def invClipCB(self, button):
         if self.invclipButton.get_active():
@@ -757,42 +759,43 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
             menuitem = self.toolbox.menu.Clip.SuppressOff
         menuitem.callWithDefaults()
 
-    def updateClipList(self, gfxwindow): 
-        # Switchboard callback for "clip planes changed" 
-        # Rebuilds the list of clipping planes using the clipping
-        # planes on the canvas.
-        if gfxwindow is self.gfxwindow():
-            ## Don't use historian.current() to get the clip
-            ## planes!  The historian doesn't record new views if the
-            ## old and new views differ only in their clip planes.
-            ## The current clip planes have to come from the canvas
-            ## itself.
-            currentView = self.gfxwindow().oofcanvas.get_view()
+    def updateClipList(self, plane): 
+        # Switchboard callback for "clip planes changed".  Called
+        # after the graphics window is updated in response to a change
+        # in clipping planes.  Rebuilds the list of clipping planes
+        # using the clipping planes on the canvas.
+        self.rebuildClipList()
+        self.selectClipPlane(plane)
+        self.sensitize()
 
-            # We have to suppress the select signal, or else
-            # self.clippingList.clear() will cause
-            # clipSelectionChangedCB to be called and to unselect the
-            # clipping plane that is currently selected.
-            self.clipSelectSignal.block()
-            try:
-                self.clippingList.clear()
-                for i in range(currentView.nClipPlanes()):
-                    plane = currentView.getClipPlane(i).clone()
-                    newIter = self.clippingList.append([plane, i])
-
-                    ## TODO: Don't select by index, select by plane!
-                    ## If a plane has been deleted by a menu command,
-                    ## the selection should not change, although the
-                    ## selection's index may change.
-                    if (i == self.lastSelectedClipID):
-                        # If a clipping plane had been selected in the
-                        # list at the time this function was called,
-                        # reselect it in the list.
-                        self.clippingListView.get_selection().select_iter(
-                            newIter)
-            finally:
-                self.clipSelectSignal.unblock()
-            self.sensitize()
+    def rebuildClipList(self):
+        # Don't use historian.current() to get the clip
+        # planes!  The historian doesn't record new views if the
+        # old and new views differ only in their clip planes.
+        # The current clip planes have to come from the canvas
+        # itself.
+        currentView = self.gfxwindow().oofcanvas.get_view()
+        curIndex = self.getCurrentClipPlaneNo()
+        # We have to suppress the select signal, so that
+        # self.clippingList.clear() won't call clipSelectionChangedCB.
+        self.clipSelectSignal.block()
+        selectedIter = None
+        try:
+            self.clippingList.clear()
+            for i in range(currentView.nClipPlanes()):
+                plane = currentView.getClipPlane(i).clone()
+                newIter = self.clippingList.append([plane, i])
+                # Reselect the plane at the same position in the list.
+                # If the plane has been edited, it should remain
+                # selected, even if it's now a different plane.  If
+                # some other choice should have been made, the calling
+                # routine will have to fix it.
+                if i == curIndex:
+                    selectedIter = newIter
+            if selectedIter is not None:
+                self.clippingListView.get_selection().select_iter(selectedIter)
+        finally:
+            self.clipSelectSignal.unblock()
 
     def clipSelectionChangedCB(self, selection): # gtk callback
         debug.mainthreadTest()
@@ -801,11 +804,9 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
             return
 
         if planeID is not None:
-            self.lastSelectedClipID = planeID
             menuitem = self.toolbox.menu.Clip.Select
             menuitem.callWithDefaults(plane=planeID)
         else:
-            self.lastSelectedClipID = None
             menuitem = self.toolbox.menu.Clip.Unselect
             menuitem.callWithDefaults()
 
@@ -816,27 +817,15 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         # clipping plane has been unselected, so set the mouse
         # handler to self.
         if plane is not None:
-            self.setCurrentClipPlane(plane)
+            self.selectClipPlane(plane)
             self.gfxwindow().setMouseHandler(
                 self.clipPlaneClickAndDragMouseHandler)
         else:
-            self.setCurrentClipPlane(None)
+            self.selectClipPlane(None)
             self.gfxwindow().removeMouseHandler()
         self.gfxwindow().updateview()
 
-        ## TODO: updateClipList should *not* be called in response to
-        ## "clip selection changed".  There should be a separate "clip
-        ## planes changed" signal to indicate that the contents of the
-        ## list have to be changed.
-        
-        # self.updateClipList(self.gfxwindow())
-
-        # plane = self.getCurrentClipPlane() # may be None
-        # switchboard.notify((self.toolbox, "clip selection changed"), plane)
-        # self.gfxwindow().updateview()
-        # self.sensitize()
-
-    def setCurrentClipPlane(self, plane):
+    def selectClipPlane(self, plane):
         # Select the given plane in the clipping list widget, without
         # invoking any callbacks.
         self.clipSelectSignal.block()
@@ -893,6 +882,7 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         if gfxwindow is self.gfxwindow():
             view = gfxwindow.oofcanvas.get_view()
             self.historian.record(view)
+            debug.fmsg(len(self.historian))
             self.updateCameraInfo()
             name, names = viewertoolbox.retrieveViewNames(gfxwindow)
             self.viewChooser.update(names)
@@ -947,31 +937,6 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         # This menu item invokes viewRestoredCB, instead.
         menuitem = self.toolbox.menu.Restore_View
         menuitem.callWithDefaults(view=view)
-
-    # Mouse interactions
-
-    ###############################################################
-    # def acceptEvent(self, eventtype):
-    #     return eventtype == "up"
-
-    # def up(self, x, y, shift, ctrl):
-    #     # TODO OPT: should we pass in the bounds of the microstructure?
-    #     p = self.gfxwindow().oofcanvas.screen_coords_to_3D_coords(x,y)
-    #     MS = self.findMicrostructure()
-    #     if p is not None and MS is not None:
-    #         voxel = MS.pixelFromPoint(primitives.Point(p[0],p[1],p[2]));
-    #         self.xtext.set_text(str(voxel[0]))
-    #         self.ytext.set_text(str(voxel[1]))
-    #         self.ztext.set_text(str(voxel[2]))
-
-    ##############################################################
-
-    ## Moved to ghostgfxwindow.py
-    # def findMicrostructure(self):
-    #     who = self.toolbox.gfxwindow().topwho('Microstructure', 'Image',
-    #                                           'Skeleton', 'Mesh')
-    #     if who is not None:
-    #         return who.getMicrostructure()
 
 # End class ViewerToolbox3DGUI
 
@@ -1137,8 +1102,9 @@ class ClipPlaneClickAndDragMouseHandler(mousehandler.MouseHandler):
                                      normal=direction.Direction.rewrap(
                                          self.layer.canvaslayer.get_normal()),
                                      offset=self.layer.canvaslayer.get_offset())
-            mainthread.runBlock(self.toolboxGUI.updateClipList,
-                                (self.gfxwindow,))
+            mainthread.runBlock(self.toolboxGUI.rebuildClipList)
+            # mainthread.runBlock(self.toolboxGUI.updateClipList,
+            #                     (self.gfxwindow,))
         self.operation = None
         self.last_x = None
         self.last_y = None
@@ -1222,6 +1188,8 @@ class ClipPlaneClickAndDragMouseHandler(mousehandler.MouseHandler):
             newplane = clip.ClippingPlane(self.layer.canvaslayer.get_normal(),
                                           self.layer.canvaslayer.get_offset())
             viewobj.replaceClipPlane(self.planeID, newplane)
+            self.toolbox.setCurrentClipPlane(newplane)
+            
         elif (self.operation == 'translate along normal'):
             last_mouse_coords = mainthread.runBlock(
                 self.gfxwindow.oofcanvas.display2Physical,
@@ -1255,6 +1223,8 @@ class ClipPlaneClickAndDragMouseHandler(mousehandler.MouseHandler):
             newplane = clip.ClippingPlane(self.layer.canvaslayer.get_normal(),
                                           self.layer.canvaslayer.get_offset())
             viewobj.replaceClipPlane(self.planeID, newplane)
+            self.toolbox.setCurrentClipPlane(newplane.clone())
+            
         elif (self.operation == 'translate in plane'):
             mouse_coords = mainthread.runBlock(
                 self.gfxwindow.oofcanvas.display2Physical, (viewobj, x, y))

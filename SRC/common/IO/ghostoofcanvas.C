@@ -689,7 +689,7 @@ Coord *GhostOOFCanvas::findClickedPositionOnActor(const Coord *click,
     throw ErrClickError();
   }
   return position;
-}
+} // end GhostOOFCanvas::findClickedPositionOnActor
 
 
 
@@ -792,13 +792,12 @@ vtkSmartPointer<vtkActor> GhostOOFCanvas::findClickedActor(const Coord *click,
     throw ErrClickError();
   }
   return pickedActor;
-}
+} // end GhostOOFCanvas::findClickedActor
 
 
 
-vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(const Coord *click,
-								      const View *view, 
-								      OOFCanvasLayer *layer)
+vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
+	      const Coord *click, const View *view, OOFCanvasLayer *layer)
 {
   // Returns a vtkActorCollection containing the actors that have been
   // clicked upon in a layer for which get_pickable_actors() is
@@ -901,7 +900,7 @@ vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(const Coor
     throw ErrClickError();
   }
   return pickedActors;
-}
+} // end GhostOOFCanvas::findClickedActors
 
 
 
