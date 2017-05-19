@@ -329,8 +329,10 @@ class ViewerToolbox(toolbox.Toolbox):
                     ))
 
         def _updateView(self):
+            # GhostGfxWindow.updateview() renders the canvas and
+            # issues "view almost changed" and "view changed"
+            # switchboard signals.
             self.gfxwindow().updateview()
-            # switchboard.notify("view changed", self.gfxwindow())
 
         def dollyIn(self, menuitem, factor):
             self.gfxwindow().oofcanvas.dolly(factor)
@@ -599,6 +601,7 @@ class ViewerToolbox(toolbox.Toolbox):
                                     (view, False))
                 self.gfxwindow().updateview()
                 switchboard.notify("view restored", self.gfxwindow())
+
                 ## TODO OPT: restoring clip planes should be a separate
                 ## operation from restoring other view parameters.
                 # switchboard.notify("clip planes changed", self.gfxwindow())
@@ -622,6 +625,7 @@ class ViewerToolbox(toolbox.Toolbox):
             mainthread.runBlock(self.gfxwindow().oofcanvas.set_view,
                                 (newView, False))
             self._updateView()
+            switchboard.notify("completed view change", self.gfxwindow())
         def setView(self, viewname): 
             # This is called by the GUI toolbox and the GUI toolbar to
             # invoke the menu command that restores the view.

@@ -40,6 +40,11 @@ import math
 
 ndigits = 10
 
+## TODO: Creating a new clipplane puts the gfxwindow in "Select" mode,
+## but the toolbar button doesn't switch to "Select".
+
+## TODO: Change sense of "Invert All" ?
+
 ## TODO: Continuous rotation mode.  Set angular velocity and axis
 ## direction.
 THRESHOLD = 0.4
@@ -54,7 +59,7 @@ THRESHOLD = 0.4
 ## TODO 3.1 MAYBE: Add a button that brings up a separate, non-modal window
 ## that displays the current camera parameters.  This window should be
 ## updated in real time as the view changes.  Remove the Camera Info
-## pane from the toolbox. 
+## pane from the toolbox.
 
 class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     def __init__(self, vwrtoolbox):
@@ -496,40 +501,10 @@ To deselect a plane, Ctrl+Click the plane in the list."""
         # Mouse handler for click-and-drag editing of clipping planes.
         self.clipPlaneClickAndDragMouseHandler = ClipPlaneClickAndDragMouseHandler(self, self.gfxwindow())
 
-        # # position information
-        # voxelinfoFrame = gtk.Frame("Voxel Info")
-        # voxelinfoFrame.set_shadow_type(gtk.SHADOW_IN)
-        # mainbox.pack_start(voxelinfoFrame)
-        # voxelinfoBox = gtk.VBox()
-        # voxelinfoFrame.add(voxelinfoBox)
-        # voxelinfotable = gtk.Table(rows=3,columns=2)
-        # voxelinfoBox.pack_start(voxelinfotable, expand=False, fill=False)
-        # label = gtk.Label('x=')
-        # label.set_alignment(1.0, 0.5)
-        # voxelinfotable.attach(label, 0,1, 0,1, xpadding=5, xoptions=gtk.FILL)
-        # self.xtext = gtk.Entry()
-        # self.xtext.set_size_request(ndigits*guitop.top().digitsize, -1)
-        # voxelinfotable.attach(self.xtext, 1,2, 0,1,
-        #                   xpadding=5, xoptions=gtk.EXPAND|gtk.FILL)
-        # label = gtk.Label('y=')
-        # label.set_alignment(1.0, 0.5)
-        # voxelinfotable.attach(label, 0,1, 1,2, xpadding=5, xoptions=gtk.FILL)
-        # self.ytext = gtk.Entry()
-        # self.ytext.set_size_request(ndigits*guitop.top().digitsize, -1)
-        # voxelinfotable.attach(self.ytext, 1,2, 1,2,
-        #                   xpadding=5, xoptions=gtk.EXPAND|gtk.FILL)
-        # label = gtk.Label('z=')
-        # label.set_alignment(1.0, 0.5)
-        # voxelinfotable.attach(label, 0,1, 2,3, xpadding=5, xoptions=gtk.FILL)
-        # self.ztext = gtk.Entry()
-        # self.ztext.set_size_request(ndigits*guitop.top().digitsize, -1)
-        # voxelinfotable.attach(self.ztext, 1,2, 2,3,
-        #                   xpadding=5, xoptions=gtk.EXPAND|gtk.FILL)
-
         self.sbcallbacks = [
             switchboard.requestCallbackMain("view changed", self.viewChangedCB),
-            switchboard.requestCallbackMain("view restored",
-                                            self.viewRestoredCB),
+            switchboard.requestCallbackMain("completed view change",
+                                            self.completedViewChangeCB),
             switchboard.requestCallbackMain("new view", self.newViewCB),
             switchboard.requestCallbackMain("view deleted", self.viewDeletedCB),
             switchboard.requestCallbackMain(
@@ -881,22 +856,19 @@ To deselect a plane, Ctrl+Click the plane in the list."""
         # switchboard "view changed" callback.
         if gfxwindow is self.gfxwindow():
             view = gfxwindow.oofcanvas.get_view()
-            self.historian.record(view)
-            debug.fmsg(len(self.historian))
+            # Do NOT update the historian here.  It should only record
+            # complete changes, not the incremental steps that can
+            # come from mouse motion on the canvas.
             self.updateCameraInfo()
-            name, names = viewertoolbox.retrieveViewNames(gfxwindow)
-            self.viewChooser.update(names)
-            self.viewChooser.set_state(name)
 
-    def viewRestoredCB(self, gfxwindow):
-        # switchboard "view restored" callback.  This is just like
-        # viewChangedCB, but it doesn't record the new state in the
-        # historian.  The new state just came from the historian.
+    def completedViewChangeCB(self, gfxwindow):
+        # switchboard callback for "completed view change".  When a
+        # change in view is complete, the view must be recorded by the
+        # historian.  This is not called when a new view is installed
+        # *by* the historian.
         if gfxwindow is self.gfxwindow():
-            self.updateCameraInfo()
-            name, names = viewertoolbox.retrieveViewNames(gfxwindow)
-            self.viewChooser.update(names)
-            self.viewChooser.set_state(name)
+            view = gfxwindow.oofcanvas.get_view()
+            self.historian.record(view)
 
     # Switchboard "new view" callback, called when a named View has
     # been created.
@@ -932,9 +904,7 @@ To deselect a plane, Ctrl+Click the plane in the list."""
     def restoreHistoricalView(self, view):
         # Callback for the Prev and Next buttons, via the historian.
         # This can't just call Settings.Camera.View, because that
-        # calls viewChangedCB (above), which calls historian.record,
-        # which shouldn't be called when recovering a previous view.
-        # This menu item invokes viewRestoredCB, instead.
+        # calls completedViewChangeCB (above).
         menuitem = self.toolbox.menu.Restore_View
         menuitem.callWithDefaults(view=view)
 
@@ -1224,6 +1194,7 @@ class ClipPlaneClickAndDragMouseHandler(mousehandler.MouseHandler):
                                           self.layer.canvaslayer.get_offset())
             viewobj.replaceClipPlane(self.planeID, newplane)
             self.toolbox.setCurrentClipPlane(newplane.clone())
+            ## TODO: Update the parameters of the plane in clippingListView
             
         elif (self.operation == 'translate in plane'):
             mouse_coords = mainthread.runBlock(

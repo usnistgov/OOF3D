@@ -1407,6 +1407,7 @@ class GhostGfxWindow:
         ## TODO OPT: Check that calling updateview here isn't repeating
         ## work done elsewhere.
         self.updateview()
+        switchboard.notify("completed view change", self)
 
 
     if config.dimension() == 2:
@@ -1873,6 +1874,7 @@ class GhostGfxWindow:
             tb.restoreNamedView('Front')
             self.viewInitialized = True
             self.viewInitializationRequired = False
+            switchboard.notify("completed view change", self)
 
             
     ##################################
