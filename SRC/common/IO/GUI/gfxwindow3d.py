@@ -42,6 +42,8 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
     initial_width = 1000
 
     def preinitialize(self, name, gfxmanager, clone):
+        # postinitialize is called by GfxWindowBase.__init__ on the
+        # main thread *before* GhostGfxWindow.__init__ is called.
         debug.mainthreadTest()
         self.gtk = None
         self.closed = None # State data used at window-close time.
@@ -205,13 +207,15 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         
 
     def postinitialize(self, name, gfxmanager, clone):
+        # postinitialize is called by GfxWindowBase.__init__ on the
+        # main thread *after* GhostGfxWindow.__init__ returns.
         debug.mainthreadTest() 
         # Add gui callbacks to the non-gui menu created by the GhostGfxWindow.
         filemenu = self.menu.File
         filemenu.Quit.add_gui_callback(quit.queryQuit)
         layermenu = self.menu.Layer
         # There's no gui callback for layermenu.New.
-        ## TODO OPT: Why are these added to the menu here, when the
+        ## TODO: Why are these added to the menu here, when the
         ## functions themselves are defined in gfxwindowbase.py?
         layermenu.Edit.add_gui_callback(self.editLayer_gui)
         layermenu.Delete.add_gui_callback(self.deleteLayer_gui)
