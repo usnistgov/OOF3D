@@ -40,9 +40,6 @@ import math
 
 ndigits = 10
 
-## TODO: Creating a new clipplane puts the gfxwindow in "Select" mode,
-## but the toolbar button doesn't switch to "Select".
-
 ## TODO: Change sense of "Invert All" ?
 
 ## TODO: Continuous rotation mode.  Set angular velocity and axis
@@ -793,8 +790,9 @@ To deselect a plane, Ctrl+Click the plane in the list."""
         # handler to self.
         if plane is not None:
             self.selectClipPlane(plane)
-            self.gfxwindow().setMouseHandler(
-                self.clipPlaneClickAndDragMouseHandler)
+            # Put the toolbox in "Select" mode, so that the new plane
+            # can be edited.
+            self.gfxwindow().toolbar.setSelect() # installs mouse handler
         else:
             self.selectClipPlane(None)
             self.gfxwindow().removeMouseHandler()
