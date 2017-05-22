@@ -14,6 +14,7 @@
 
 from ooflib.SWIG.common import switchboard
 from ooflib.common import debug
+from ooflib.common import subthread
 from ooflib.common import utils
 from ooflib.SWIG.common import guitop
 from ooflib.SWIG.common import lock
@@ -57,6 +58,7 @@ class GfxWindowManager:
         # signal.  You can't just not make the call in that case,
         # because gtk.destroy can be sent either by the window
         # manager, when the window is closed, or at exit-time.
+        debug.fmsg("closing", w.name)
         w.closed = 1
         self.lock.acquire()
         try:
@@ -66,6 +68,18 @@ class GfxWindowManager:
         finally:
             self.lock.release()
         switchboard.notify('close graphics window', w)
+        debug.fmsg("done")
+
+    def closeAllWindows(self):
+        # Calling GhostGfxWindow.close will call
+        # GfxWindowManager.closeWindow to remove the window from
+        # self.windows, so loop over a copy of the list.
+        from ooflib.common.IO import mainmenu
+        for win in self.windows[:]:
+            # Call the window's "Close" menu item callback.
+            menuitem = getattr(mainmenu.OOF, win.name).File.Close
+            menuitem.callWithDefaults()
+
 ## TODO OPT: Is GfxWindowManager.apply ever used?  It's commented out to
 ## see if anybody complains.
 ##    def apply(self, func, *args):
@@ -75,7 +89,8 @@ class GfxWindowManager:
 ##        finally:
 ##            self.lock.release()
 ##        for window in windowset:
-##            func(*(window,)+args))
+##            func(*(window,)+args)
+
     def getWindow(self, name):
         result = None
         self.lock.acquire()
@@ -91,6 +106,7 @@ class GfxWindowManager:
         return result
     def getAllWindows(self):
         return self.windows[:]
+
 
 gfxManager = GfxWindowManager()
 

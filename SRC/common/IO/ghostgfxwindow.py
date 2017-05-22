@@ -1167,6 +1167,7 @@ class GhostGfxWindow:
         # this may deadlock!
         #self.device.destroy()
 
+        debug.fmsg("GhostGfxWindow.close")
         self.acquireGfxLock()
         try:
             self.gfxmanager.closeWindow(self)

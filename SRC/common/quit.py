@@ -20,6 +20,7 @@ from ooflib.common import parallel_enable
 from ooflib.common import subthread
 from ooflib.common import threadmanager
 from ooflib.common import utils
+from ooflib.common.IO import gfxmanager
 from ooflib.common.IO import mainmenu
 import gc                       # debugging
 import sys
@@ -51,7 +52,8 @@ def atShutDown(fn):
 def cleanup(shutdownfn, exitstatus):
     # Turn off logging, so that window closing, etc. won't be logged.
     mainmenu.OOF.haltLog()
-    
+    gfxmanager.gfxManager.closeAllWindows()
+
     for fn in _cleanUpActions:
         fn()
 

@@ -281,12 +281,13 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
         return False
 
     # OOFMenu callback
-    def close(self, *args): 
+    def close(self, menuitem, *args): 
         # The subwindow menu-removal can't depend on the existence of
         # .gtk, and it's done in the non-GUI parent, so call it
         # if this is the first time through.
+        debug.fmsg("closing", self.name)
         if not self.closed:
-            ghostgfxwindow.GhostGfxWindow.close(self, *args)
+            ghostgfxwindow.GhostGfxWindow.close(self, menuitem, *args)
             self.closed = True
         if self.gtk:
             mainthread.runBlock(self.gtk.destroy) # calls destroyCB via gtk

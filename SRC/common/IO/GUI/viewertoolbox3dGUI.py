@@ -1273,11 +1273,14 @@ class ClipPlaneClickAndDragMouseHandler(mousehandler.MouseHandler):
         # return ASAP.
         debug.fmsg("Cancelling ClipPlaneClickAndDragMouseHandler")
         self.datalock.logNewEvent_acquire()
+        debug.fmsg("got lock")
         try:
             self.canceled = True
         finally:
             self.datalock.logNewEvent_release()
+            debug.fmsg("released lock")
 
     def acceptEvent(self, eventtype):
-        return (eventtype == 'down' or (self.downed and eventtype in ('move', 'up')))
+        return (eventtype == 'down' or
+                (self.downed and eventtype in ('move', 'up')))
 
