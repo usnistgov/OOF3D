@@ -18,6 +18,10 @@ import ooflib.common.quit
 # OOFMenu gui callback for the Quit commands.  Installed by
 # mainmenuGUI.py and subWindow.py.  This should only be called on the
 # main thread.
+
+## TODO: If OOF.File.Quit is invoked from a script while the GUI is
+## running, which version of shutdown is used?  Is the GUI stopped?
+
 def queryQuit(*args, **kwargs):
     if _quitQuery():
         ooflib.common.quit.cleanup(shutdown, kwargs.get('exitstatus', 0))
