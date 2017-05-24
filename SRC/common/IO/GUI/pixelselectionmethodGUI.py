@@ -95,7 +95,7 @@ class SelectionMethodGUI(mousehandler.MouseHandler):
 # that does nothing useful.
 
 # TODO: There are 8 points in the vtkPoints object belonging to a
-# RectangularPrismSelectorGUI's layer.canvaslayer attribut. These 8
+# RectangularPrismSelectorGUI's layer.canvaslayer attribute. These 8
 # points are the 8 corners of the rectangular prism representing the
 # region to be selected. We don't want to let these move outside the
 # microstructure dimensions, or else the user is apparently unable to
@@ -146,17 +146,18 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         # Indicates whether the mouse has been clicked down or not.
         self.downed = False
 
-        # This flag, when set to, inidicates that the event-processing
-        # subthread should be killed as soon as possible.
-        self.canceled = False
-
         # Start the event-processing subthread.
-        subthread.execute(self.processEvents_subthread)
+        ## TODO: All PixelSelectionMethod mouse handlers in one gfx
+        ## window should share one subthread.  Or all mouse handlers
+        ## in all gfx windows should share one subthread.  See TODO in
+        ## viewertoolbox3dGUI.py
+        self.eventThread = subthread.daemon(self.processEvents_subthread)
         
     def __call__(self, params, scope=None, name=None, verbose=False):
         # This function creates a VoxelRegionSelectWidget and
         # returns it. 
-        self.widget = pixelselectparamwidgets.VoxelRegionSelectWidget(self, params, scope=scope, name=name, verbose=verbose)
+        self.widget = pixelselectparamwidgets.VoxelRegionSelectWidget(
+            self, params, scope=scope, name=name, verbose=verbose)
         return self.widget
 
     def done(self):
@@ -227,19 +228,20 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         viewobj = mainthread.runBlock(self.gfxwindow.oofcanvas.get_view)
         point = mainthread.runBlock(self.gfxwindow.oofcanvas.display2Physical,
                                     (viewobj, x, y))
-        (self.cellID, click_pos, self.layer) = self.gfxwindow.findClickedCellIDByLayerClass_nolock(
-            voxelregionselectiondisplay.VoxelRegionSelectionDisplay,
-            point,
-            viewobj)
+        (self.cellID, click_pos, self.layer) = \
+               self.gfxwindow.findClickedCellIDByLayerClass_nolock(
+                   voxelregionselectiondisplay.VoxelRegionSelectionDisplay,
+                   point, viewobj)
         self.last_x = x;
         self.last_y = y;
 
     def processMove(self, x, y):
         viewobj = mainthread.runBlock(self.gfxwindow.oofcanvas.get_view)
-        last_mouse_coords = mainthread.runBlock(self.gfxwindow.oofcanvas.display2Physical,
-                                                (viewobj, self.last_x, self.last_y))
-        mouse_coords = mainthread.runBlock(self.gfxwindow.oofcanvas.display2Physical,
-                                           (viewobj, x, y))
+        last_mouse_coords = mainthread.runBlock(
+            self.gfxwindow.oofcanvas.display2Physical, (viewobj, self.last_x,
+                                                        self.last_y))
+        mouse_coords = mainthread.runBlock(
+            self.gfxwindow.oofcanvas.display2Physical, (viewobj, x, y))
         diff = mouse_coords - last_mouse_coords
         diff_size = math.sqrt(diff ** 2)
         if diff_size == 0:
@@ -249,11 +251,15 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         if (normal is None):
             return
         center = self.layer.canvaslayer.get_cellCenter(self.cellID)
-        camera_pos = mainthread.runBlock(self.gfxwindow.oofcanvas.get_camera_position_v2)
+        camera_pos = mainthread.runBlock(
+            self.gfxwindow.oofcanvas.get_camera_position_v2)
         dist = math.sqrt((camera_pos - center) ** 2)
-        view_angle = mainthread.runBlock(self.gfxwindow.oofcanvas.get_camera_view_angle)
+        view_angle = mainthread.runBlock(
+            self.gfxwindow.oofcanvas.get_camera_view_angle)
         canvas_size = mainthread.runBlock(self.gfxwindow.oofcanvas.get_size)
-        offset = diff.dot(normal) * dist * math.tan(math.radians(view_angle)) * math.sqrt((x - self.last_x) ** 2 + (y - self.last_y) ** 2) / canvas_size[1]
+        offset = (diff.dot(normal) * dist * math.tan(math.radians(view_angle))
+                  * math.sqrt((x - self.last_x) ** 2 +
+                              (y - self.last_y) ** 2) / canvas_size[1])
         
         # Update the canvaslayer.
         self.layer.canvaslayer.offset_cell(self.cellID, offset)
@@ -267,8 +273,6 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         while (True):
             self.datalock.handleNewEvents_acquire()
             try:
-                if self.canceled:
-                    return
                 if (len(self.eventlist) == 0):
                     continue
                 (eventtype, x, y, shift, ctrl) = self.eventlist.pop(0)
@@ -280,14 +284,6 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
             # closed at this time.
             self.gfxwindow.acquireGfxLock()
             try:
-                if self.canceled:
-                    # If this MouseHandler's graphics window and hence
-                    # its toolboxGUI have been closed, canceled will
-                    # be true, and so this subthread will end itself
-                    # before causing problems (e.g. a seg fault) by
-                    # trying to do anything that depends on the
-                    # graphics window or toolboxGUI.
-                    return
                 if eventtype is 'down':
                     self.processDown(x, y)
                 elif eventtype is 'move' and (self.cellID is not None):
@@ -298,17 +294,13 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
                 self.gfxwindow.releaseGfxLock()
 
     def cancel(self):
-        # Redefined from the base class. Set the canceled flag to
-        # true, indicating that the event-processing subthread should
-        # end.
-        self.datalock.logNewEvent_acquire()
-        try:
-            self.canceled = True
-        finally:
-            self.datalock.logNewEvent_release()
-
+        self.eventlist = []
+        
     def acceptEvent(self, eventtype):
-        return (eventtype == 'down' or (self.downed and (eventtype == 'up')) or (self.region_editing_in_progress and (eventtype in ('move', 'up'))))
+        return (eventtype == 'down' or
+                (self.downed and (eventtype == 'up')) or
+                (self.region_editing_in_progress and
+                 (eventtype in ('move', 'up'))))
         
         
    

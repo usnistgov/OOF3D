@@ -57,6 +57,7 @@ GhostOOFCanvas::GhostOOFCanvas()
     exposed(false),
     rendered(false),
     axes_showing(false),
+    deactivated(false),
     render_window(vtkSmartPointer<vtkXOpenGLRenderWindow>::New()),
     renderer(vtkSmartPointer<vtkRenderer>::New()),
     axes(vtkSmartPointer<vtkAxesActor>::New()),
@@ -126,8 +127,10 @@ void GhostOOFCanvas::toggleAxes(bool show) {
 
 void GhostOOFCanvas::render() {
   // TODO OPT: Why is this called so often, for example, after Skeleton
-  // refinement?  Does it matter? 
+  // refinement?  Does it matter?
   assert(mainthread_query());
+  if(deactivated)
+    return;
   if(exposed) {
     if(contourmap_requested && contour_layer!=0 && !contourmap_showing) {
       renderer->AddViewProp(contourMapActor);

@@ -61,6 +61,7 @@ public:
   void setContourMapPosition(float, float);
 
   void reset();
+  void deactivate();
   void render();
 
   void orthogonalize_view_up();

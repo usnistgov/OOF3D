@@ -74,6 +74,7 @@ def execute(function, args=(), kwargs={}):
     if thread_enable.query():
         littlethread = MiniThread(function, args, kwargs)
         littlethread.start()
+        return littlethread
     else:
         function(*args, **kwargs)
 
@@ -82,9 +83,18 @@ def execute_immortal(function, args=(), kwargs={}):
         littlethread = MiniThread(function, args, kwargs)
         littlethread.immortalize()
         littlethread.start()
+        return littlethread
     else:
         function(*args, **kwargs)
 
+def daemon(function, args=(), kwargs={}):
+    if thread_enable.query():
+        littlethread = MiniThread(function, args, kwargs)
+        littlethread.daemon = True
+        littlethread.start()
+        return littlethread
+    else:
+        function(*args, **kwargs)
 
 ## The purpose of the MiniThreadManager is to administer the running
 ## (mini) threads, so that when quitting time comes all minithreads
@@ -129,11 +139,8 @@ class MiniThreadManager:
             threadlist = self.listofminithreads[:]
         finally:
             self.lock.release()
-#         debug.fmsg("waiting for subthreads", 
-#                    [ts.threadstate.id() for ts in threadlist 
-#                     if not ts.immortal])
         for minithread in threadlist:
-            if not minithread.immortal:
+            if not minithread.immortal and not minithread.daemon:
                 minithread.join()
 
     # Return the calling thread's MiniThread object, if it has one, or

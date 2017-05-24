@@ -130,7 +130,6 @@ public:
 class EventLogSLock {
 private:
   bool newEvents;
-  bool waitingForNewEvent;
   pthread_mutex_t localLock;
   pthread_cond_t condition;
 #ifdef DEBUG

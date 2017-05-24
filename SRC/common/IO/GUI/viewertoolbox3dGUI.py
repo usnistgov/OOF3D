@@ -496,7 +496,7 @@ To deselect a plane, Ctrl+Click the plane in the list."""
         viewTable.attach(self.nextViewButton, 1,2, 2,3)
         
         # Mouse handler for click-and-drag editing of clipping planes.
-        self.clipPlaneClickAndDragMouseHandler = ClipPlaneClickAndDragMouseHandler(self, self.gfxwindow())
+        self.clipMouseHandler = ClipPlaneMouseHandler(self, self.gfxwindow())
 
         self.sbcallbacks = [
             switchboard.requestCallbackMain("view changed", self.viewChangedCB),
@@ -536,14 +536,10 @@ To deselect a plane, Ctrl+Click the plane in the list."""
                 self.gfxwindow().oofcanvas.render()
 
     def installMouseHandler(self):
-        plane = self.toolbox.currentClipPlane()
-        if plane is not None:
-            self.gfxwindow().setMouseHandler(
-                self.clipPlaneClickAndDragMouseHandler)
+        self.gfxwindow().setMouseHandler(self.clipMouseHandler)
 
     def close(self):
-        debug.fmsg()
-        self.clipPlaneClickAndDragMouseHandler.cancel()
+        self.clipMouseHandler.cancel()
         map(switchboard.removeCallback, self.sbcallbacks)
         toolboxGUI.GfxToolbox.close(self)
 
@@ -939,13 +935,13 @@ viewertoolbox.ViewNameParameter.makeWidget = _makeViewWidget
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# ClipPlaneClickAndDragMouseHandler is the mouseHandler for
+# ClipPlaneMouseHandler is the mouseHandler for
 # click-and-drag editing of clipping planes.
 
 # TODO: This might not work in unthreaded mode. See if something can be
 # done about this.
 
-class ClipPlaneClickAndDragMouseHandler(mousehandler.MouseHandler):
+class ClipPlaneMouseHandler(mousehandler.MouseHandler):
     def __init__(self, tbGUI, gfxwindow):
         self.gfxwindow = gfxwindow
         # Because this constructor has been called by the
@@ -1006,12 +1002,16 @@ class ClipPlaneClickAndDragMouseHandler(mousehandler.MouseHandler):
         # accepted when self.downed is True.
         self.downed = False
         
-        # Will be True when the time comes for the subthread executing
-        # self.processEvents_subthread to be killed.
-        self.canceled = False
+        # # Will be True when the time comes for the subthread executing
+        # # self.processEvents_subthread to be killed.
+        # self.canceled = False
 
         # Process all mouse events in a subthread.
-        subthread.execute(self.processEvents_subthread)
+        ## TODO: Can we have just one daemon thread, shared by all
+        ## toolboxes in all graphics windows?  One per toolbox seems
+        ## excessive.  Have a shared eventlist, and store the toolbox
+        ## as part of the event.
+        self.eventThread = subthread.daemon(self.processEvents_subthread)
         
     def up(self, x, y, shift, ctrl):
         self.datalock.logNewEvent_acquire()
@@ -1050,7 +1050,8 @@ class ClipPlaneClickAndDragMouseHandler(mousehandler.MouseHandler):
 
     def processUp(self):
         # Commands which need to be run when an 'up' event is being
-        # processed.
+        # processed.  Called by processEvents_subthread on the
+        # subthread.
         if self.operation in ('rotate about center', 'translate along normal'):
             # The mouse has been released after the user has edited
             # the clipping plane by clicking and dragging.  Any
@@ -1082,7 +1083,8 @@ class ClipPlaneClickAndDragMouseHandler(mousehandler.MouseHandler):
 
     def processDown(self, x, y, ctrl):
         # Commands which need to be run when a 'down' event is being
-        # processed.
+        # processed.  Called by processEvents_subthread on the
+        # subthread.
 
         # Figure out which clip plane is being edited.
         self.planeID = self.toolbox.currentClipPlaneNo()
@@ -1134,7 +1136,8 @@ class ClipPlaneClickAndDragMouseHandler(mousehandler.MouseHandler):
      
     def processMove(self, x, y):
         # Commands which need to be run when a 'move' event is being
-        # processed.
+        # processed.  Called by processEvents_subthread on the
+        # subthread.
         viewobj = mainthread.runBlock(self.gfxwindow.oofcanvas.get_view)
         if (self.operation == 'rotate about center'):
             last_mouse_coords_rotated_90_deg = mainthread.runBlock(
@@ -1238,10 +1241,6 @@ class ClipPlaneClickAndDragMouseHandler(mousehandler.MouseHandler):
             # subthread until a new event occurs.
             self.datalock.handleNewEvents_acquire()
             try:
-                if self.canceled:
-                    # End this subthread.
-                    return
-                else:
                     (eventtype, x, y, shift, ctrl) = self.eventlist.pop(0);
             finally:
                 self.datalock.handleNewEvents_release()
@@ -1251,14 +1250,6 @@ class ClipPlaneClickAndDragMouseHandler(mousehandler.MouseHandler):
             # closed at this time.
             self.gfxwindow.acquireGfxLock()
             try:
-                if self.canceled:
-                    # If this MouseHandler's graphics window and hence
-                    # its toolboxGUI have been closed, canceled will
-                    # be true, and so this subthread will end itself
-                    # before causing problems (e.g. a seg fault) by
-                    # trying to do anything that depends on the
-                    # graphics window or toolboxGUI.
-                    return
                 if eventtype is 'down':
                     self.processDown(x, y, ctrl)
                 elif eventtype is 'move' and self.operation is not None:
@@ -1269,16 +1260,13 @@ class ClipPlaneClickAndDragMouseHandler(mousehandler.MouseHandler):
                 self.gfxwindow.releaseGfxLock()
 
     def cancel(self):
-        # Calls for self.processEvents_subthread to stop executing and
-        # return ASAP.
-        debug.fmsg("Cancelling ClipPlaneClickAndDragMouseHandler")
-        self.datalock.logNewEvent_acquire()
-        debug.fmsg("got lock")
-        try:
-            self.canceled = True
-        finally:
-            self.datalock.logNewEvent_release()
-            debug.fmsg("released lock")
+        # The subthread is a daemon thread and doesn't need to be
+        # cancelled, but it should stop processing data.  If it
+        # weren't a daemon, the program wouldn't exit until the thread
+        # were killed.
+
+        # self.canceled = True
+        self.eventlist = []
 
     def acceptEvent(self, eventtype):
         return (eventtype == 'down' or

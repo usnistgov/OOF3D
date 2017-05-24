@@ -53,12 +53,14 @@ class GfxWindowManager:
         return window
 
     def closeWindow(self, w):
-        # Tell the graphics window that it's been closed, so it
-        # doesn't try to repeat this call when it gets its gtk.destroy
-        # signal.  You can't just not make the call in that case,
-        # because gtk.destroy can be sent either by the window
-        # manager, when the window is closed, or at exit-time.
-        debug.fmsg("closing", w.name)
+        # This doesn't actually close the window, it just does some
+        # bookkeeping that has to be done when a window is closed.  It
+        # removes the window from the GfxWindowManager's list of
+        # windows, and marks the window as closed, so that it doesn't
+        # try to repeat this call when it gets its gtk.destroy signal.
+        # You can't just not make the call in that case, because
+        # gtk.destroy can be sent either by the window manager, when
+        # the window is closed, or at exit-time.
         w.closed = 1
         self.lock.acquire()
         try:
@@ -68,7 +70,6 @@ class GfxWindowManager:
         finally:
             self.lock.release()
         switchboard.notify('close graphics window', w)
-        debug.fmsg("done")
 
     def closeAllWindows(self):
         # Calling GhostGfxWindow.close will call
@@ -79,17 +80,6 @@ class GfxWindowManager:
             # Call the window's "Close" menu item callback.
             menuitem = getattr(mainmenu.OOF, win.name).File.Close
             menuitem.callWithDefaults()
-
-## TODO OPT: Is GfxWindowManager.apply ever used?  It's commented out to
-## see if anybody complains.
-##    def apply(self, func, *args):
-##        self.lock.acquire()
-##        try:
-##            windowset = self.windows[:]
-##        finally:
-##            self.lock.release()
-##        for window in windowset:
-##            func(*(window,)+args)
 
     def getWindow(self, name):
         result = None
