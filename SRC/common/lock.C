@@ -238,7 +238,14 @@ void EventLogSLock::handleNewEvents_acquire() {
 		  << " waiting for new event on thread " << findThreadNumber()
 		  << std::endl;
 #endif // DEBUG
-      pthread_cond_wait(&condition, &localLock);
+      try {
+	pthread_cond_wait(&condition, &localLock);
+      }
+      catch (...) {
+	std::cerr << "EventLogSLock::handleNewEvents_acquire: "
+		  << "Caught an exception in pthread_cond_wait!" << std::endl;
+	throw;
+	};
 #ifdef DEBUG
       if(verbose_)
 	std::cerr << "EventLogSLock::handleNewEvents_acquire: " << this
@@ -250,7 +257,7 @@ void EventLogSLock::handleNewEvents_acquire() {
       std::cerr << "EventLogSLock::handleNewEvents_acquire: " << this
 		<< " acquired" << std::endl;
 #endif // DEBUG
-  }
+  } // end if enabled
 }
 
 void EventLogSLock::handleNewEvents_release() {
