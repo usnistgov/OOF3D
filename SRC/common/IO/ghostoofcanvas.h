@@ -94,7 +94,7 @@ public:
   void render();
   // deactivate() suppresses redrawing.  It should be called at the
   // start of the graphics window shut down sequence.
-  void deactivate() { deactivated = true; }
+  void deactivate();
 
   void set_bgColor(const CColor);
   void set_margin(double f) { margin = f; }

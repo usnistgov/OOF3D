@@ -245,7 +245,7 @@ void EventLogSLock::handleNewEvents_acquire() {
 	std::cerr << "EventLogSLock::handleNewEvents_acquire: "
 		  << "Caught an exception in pthread_cond_wait!" << std::endl;
 	throw;
-	};
+      };
 #ifdef DEBUG
       if(verbose_)
 	std::cerr << "EventLogSLock::handleNewEvents_acquire: " << this

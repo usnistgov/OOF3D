@@ -1241,7 +1241,7 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
             # subthread until a new event occurs.
             self.datalock.handleNewEvents_acquire()
             try:
-                    (eventtype, x, y, shift, ctrl) = self.eventlist.pop(0);
+                (eventtype, x, y, shift, ctrl) = self.eventlist.pop(0);
             finally:
                 self.datalock.handleNewEvents_release()
 
@@ -1264,8 +1264,6 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
         # cancelled, but it should stop processing data.  If it
         # weren't a daemon, the program wouldn't exit until the thread
         # were killed.
-
-        # self.canceled = True
         self.eventlist = []
 
     def acceptEvent(self, eventtype):

@@ -144,7 +144,7 @@ void GhostOOFCanvas::render() {
     renderLock.acquire();
     try {
       // oofcerr << "GhostOOFCanvas::render: " << this << std::endl;
-      render_window->Render(); 
+      render_window->Render();
     }
     catch(...) {
       renderLock.release();
@@ -152,6 +152,13 @@ void GhostOOFCanvas::render() {
     }
     renderLock.release();
   }
+}
+
+void GhostOOFCanvas::deactivate() {
+  // deactivate() suppresses redrawing.  It should be called at the
+  // start of the graphics window shut down sequence.
+  oofcerr << "GhostOOFCanvas::deactivate: " << this << std::endl;
+  deactivated = true;
 }
 
 void GhostOOFCanvas::newLayer(OOFCanvasLayerBase *layer) {
