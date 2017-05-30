@@ -1,7 +1,7 @@
 // $RCSfile: canvasbug.txt,v $
 // $Revision: 1.1 $
 // $Author: reida $
-// $Date: 2005/11/30 16:38:23 $
+// $Date: 2005-11-30 16:38:23 $
 
 
 There's something wrong with the canvas, that causes it to print these

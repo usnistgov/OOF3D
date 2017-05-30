@@ -96,6 +96,26 @@ public:
   ~vtkPlanePtr();
 };
 
+class vtkActorPtr {
+public:
+  ~vtkActorPtr();
+  %addmethods {
+    bool equals(vtkActorPtr actor) {
+      return (*self) == actor;
+    }
+  }
+};
+
+class vtkActorCollectionPtr {
+public:
+  ~vtkActorCollectionPtr();
+  %addmethods {
+    bool hasActor(vtkActorPtr actor) {
+      return (*self)->IsItemPresent(actor) != 0;
+    }
+  }
+};
+
 %new vtkDoubleArrayPtr fillDataArray(const DoubleList*);
 Coord cell2coord(vtkCellPtr);
 

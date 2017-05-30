@@ -758,6 +758,34 @@ class OOFMenuItem:
 ##        self.bar_name = self.path()
 ##        self.hireWorker(argdict=kwargs)
 
+    def logWithDefaults(self, **kwargs):
+        # This only logs the the menu item, without calling the
+        # callback.  This is useful for certain situations in which we
+        # trust that the contents of the menuitem's callback function
+        # have been already performed in some way, such as by the GUI,
+        # but have not been logged, and yet we want to make sure that
+        # they get logged. However, for cases in which we can't trust
+        # that the contents of the callback function have been
+        # performed, this should NOT be called.
+        argdict = {}
+        for name,value in kwargs.items():
+            argdict[name] = value
+        for p in self.params:
+            if p.name in argdict:
+                p.value = argdict[p.name]
+        for p in self.params:
+            if not p.name in argdict:
+                argdict[p.name] = p.value
+        self.logWithArgdict(argdict)
+        
+    def logWithArgdict(self, argdict):
+        # This only logs the the menu item, without calling the
+        # callback.
+        arglist = ["%s=%s" % (name, `argdict[name]`)
+                   for name in [p.name for p in self.params]
+                   if argdict[name] is not None]
+        self.log(self.path() +'(' + string.join(arglist, ', ') + ')')
+
     def hireWorker(self, argtuple=(), argdict={}):
         # Create and start the appropriate kind of Worker to perform
         # the menu item.  If menuItem is threadable create a threaded

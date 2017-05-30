@@ -462,7 +462,7 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
         debug.mainthreadTest()
         self.selmeth = self.selectionMethodFactory.getRegistration()
         self.selectionMethodFactory.set_defaults()
-        #self.gfxwindow().setRubberband(self.selmeth.getRubberBand(self.selmeth))
+        # self.gfxwindow().setRubberband(self.selmeth.getRubberBand(self.selmeth))
         # Start collecting points
         self.points = [primitives.Point(x,y)]
 

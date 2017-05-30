@@ -2,7 +2,7 @@
 // $RCSfile: skeletongroups.txt,v $
 // $Revision: 1.1 $
 // $Author: langer $
-// $Date: 2005/06/02 17:56:30 $
+// $Date: 2005-06-02 17:56:30 $
 
 Subproblems, internal boundaries, and the locations of surface
 properties can be specified by providing element groups or segment groups.

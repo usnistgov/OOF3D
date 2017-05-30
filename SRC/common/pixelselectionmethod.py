@@ -263,7 +263,6 @@ if config.dimension() == 2:
             'DISCUSSIONS/common/reg/ellipseselect.xml')
         )
 
-
 ## TODO MAYBE: Add TriangleSelector, or maybe a PolygonSelector.  This
 ## is tricky because the GenericSelectToolboxGUI isn't set up for this
 ## case.  GenericSelectToolboxGUI expects a simple mouse down, mouse
@@ -273,3 +272,29 @@ if config.dimension() == 2:
 ## process.  It will have to tell PixelSelectToolboxGUI.finish_up that
 ## it isn't really finished until after the third mouse up, and fix up
 ## the rubber bands.
+
+elif config.dimension() == 3:
+
+    BoxSelection = pixelselectioncourier.BoxSelection
+    class RectangularPrismSelector(SelectionMethod):
+        def select(self, immidge, pointlist, selector):
+            # Select pixels whose centers are in the rectangular prism
+            # defined by the points.
+            ms = immidge.getMicrostructure()
+            isize = ms.sizeInPixels()
+            psize = primitives.Point(*ms.sizeOfPixels())
+            selector(BoxSelection(ms, pointlist[0], pointlist[-1]))
+
+    rectangularPrismSelectorRegistration = PixelSelectionRegistration(
+        'Box',
+        RectangularPrismSelector,
+        ordering=0.2,
+        events=['down', 'up'],
+        whoclasses=['Microstructure', 'Image'],
+        tip="Click to select a box-shaped region."
+        )
+
+    def down_RectanglePrismSelector(x, y, shift, ctrl):
+        debug.fmsg()
+        
+    

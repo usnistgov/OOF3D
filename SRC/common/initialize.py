@@ -17,6 +17,7 @@ import ooflib.common.excepthook
 
 import ooflib.common.IO.activeareamenu
 import ooflib.common.IO.activeareamodmenu
+import ooflib.common.IO.clipplaneclickanddragdisplay
 import ooflib.common.IO.automatic
 import ooflib.common.IO.automaticdoc
 import ooflib.common.IO.bitmapdisplay
@@ -37,6 +38,7 @@ import ooflib.common.IO.activityviewermenu
 import ooflib.common.IO.topwho
 import ooflib.common.IO.microstructuredisplay
 import ooflib.common.IO.viewertoolbox
+import ooflib.common.IO.voxelregionselectiondisplay
 import ooflib.common.IO.words
 import ooflib.common.color
 import ooflib.common.microstructure

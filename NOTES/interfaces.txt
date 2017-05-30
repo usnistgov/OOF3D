@@ -2,7 +2,7 @@
 // $RCSfile: interfaces.txt,v $
 // $Revision: 1.12 $
 // $Author: rlua $
-// $Date: 2007/12/14 16:13:00 $
+// $Date: 2007-12-14 16:13:00 $
 -------------------------------------------------------------------------
 Dec. 14, 2007
 Regression tests that would fail if 'top','bottom','left','right' are defined

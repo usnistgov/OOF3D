@@ -73,7 +73,6 @@ protected:
 			vtkSmartPointer<vtkCell>&, Coord&, vtkIdType&, int&);
   vtkSmartPointer<vtkUnstructuredGrid> getFrustumSubgrid(
 		 double x, double y, const View*, OOFCanvasLayer*);
-  Coord findRayThroughPoint(const Coord&) const;
 
 #ifdef DEBUGSELECTIONS
   vtkSmartPointer<vtkActor> tempActor;
@@ -133,6 +132,13 @@ public:
 
   // TODO: These should all be const, but it might not be possible.
   // They have to call set_view.
+  Coord findRayThroughPoint(const Coord*) const;
+  Coord *findClickedPositionOnActor(const Coord*, const View*, 
+				    OOFCanvasLayer*);
+  vtkSmartPointer<vtkActor> findClickedActor(const Coord*, const View*,
+					     OOFCanvasLayer*);
+  vtkSmartPointer<vtkActorCollection> findClickedActors(const Coord*, const View*,
+					     OOFCanvasLayer*);
   vtkSmartPointer<vtkCell> findClickedCell(const Coord*, const View*,
 					   OOFCanvasLayer*);
   Coord *findClickedPosition(const Coord*, const View*,
@@ -146,12 +152,16 @@ public:
    					     OOFCanvasLayer*);
 
   // camera info
+  Coord *get_camera_position_v2() const;
+  Coord get_camera_direction_of_projection_v2() const;
+
   Coord get_camera_position() const;
   void set_camera_position(double x, double y, double z) const;
   void get_camera_focal_point(double *p) const;
   void set_camera_focal_point(double x, double y, double z) const;
   void get_camera_view_up(double *p) const;
   void get_camera_direction_of_projection(double *p) const;
+
   double get_camera_distance() const;
   double get_camera_view_angle() const;
   const ClippingPlaneList &getClipPlanes() const { return clipPlanes; }

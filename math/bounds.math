@@ -2,7 +2,7 @@
    $RCSfile: bounds.math,v $
    $Revision: 1.15 $
    $Author: reida $
-   $Date: 2001/04/12 20:29:20 $
+   $Date: 2001-04-12 20:29:20 $
             *)
 
 (* Mathematica model of an array of 4-element quadrilateral 

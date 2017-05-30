@@ -8,13 +8,20 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov. 
 
+from ooflib.SWIG.common import clip
+from ooflib.SWIG.common import coord
 from ooflib.SWIG.common import direction
 from ooflib.SWIG.common import guitop
+from ooflib.SWIG.common import lock
 from ooflib.SWIG.common import ooferror
 from ooflib.SWIG.common import switchboard
+from ooflib.SWIG.common.IO import vtkutils
 from ooflib.common import debug
+from ooflib.common import mainthread
 from ooflib.common import primitives
+from ooflib.common import subthread
 from ooflib.common import utils
+from ooflib.common.IO import clipplaneclickanddragdisplay
 from ooflib.common.IO import reporter
 from ooflib.common.IO import viewertoolbox
 from ooflib.common.IO.GUI import chooser
@@ -35,6 +42,7 @@ ndigits = 10
 
 ## TODO: Continuous rotation mode.  Set angular velocity and axis
 ## direction.
+THRESHOLD = 0.4
 
 ## TODO 3.1: Move axis parameters from the Settings menu to a new
 ## expander in the toolbox.  It should contains check buttons for
@@ -424,7 +432,11 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         tooltips.set_tooltip_text(self.suppressButton,
                                   "Suppress all clipping planes.")
         bbox.pack_start(self.suppressButton)
-        
+
+        label0 = gtk.Label("Select a clipping plane from the list to edit.\nHow to use click-and-drag editing tool:\n  (Click plane)+Move: Offset plane along its normal\n  (Click arrow)+Move: Rotate plane\n  (Ctrl+Click plane/arrow)+Move: Move base of \n    arrow around in plane\nTo deselect a plane, Ctrl+Click the plane in the list.")
+        label0.set_pattern("             _______\n            ________\n            ________\n            ________\n            ________\n            ________\n             _______\n")
+        label0.set_justify(gtk.JUSTIFY_LEFT)
+        clippingBox.pack_start(label0, fill=0, expand=0, padding=2)
 
         ## TODO 3.1: Clipping plane operations
         ##   Delete all
@@ -472,7 +484,12 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
                                   "Reinstate the next view.")
         viewTable.attach(self.nextViewButton, 1,2, 2,3)
         
+        # Instantiate the mouse handler for click-and-drag editing of
+        # clipping planes.
+        self.clipPlaneClickAndDragMouseHandler = ClipPlaneClickAndDragMouseHandler(self.gfxwindow())
 
+        # Keep track of last selected clipping plane.
+        self.lastSelectedClipID = None
 
         # # position information
         # voxelinfoFrame = gtk.Frame("Voxel Info")
@@ -504,7 +521,6 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         # voxelinfotable.attach(self.ztext, 1,2, 2,3,
         #                   xpadding=5, xoptions=gtk.EXPAND|gtk.FILL)
 
-
         self.sbcallbacks = [
             switchboard.requestCallbackMain("view changed", self.viewChangedCB),
             switchboard.requestCallbackMain("view restored",
@@ -520,10 +536,25 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     def activate(self):
         if not self.active:
             toolboxGUI.GfxToolbox.activate(self)
-            self.gfxwindow().setMouseHandler(self)
+            plane = self.currentClipPlane()
+            if plane is not None:
+                self.gfxwindow().setMouseHandler(self.clipPlaneClickAndDragMouseHandler)
+                switchboard.notify((self.toolbox, "clip selection changed"), plane)
+                self.gfxwindow().oofcanvas.render()
+            else:
+                self.gfxwindow().setMouseHandler(self)
             self.gfxwindow().toolbar.setSelect()
 
+    def deactivate(self):
+        if self.active:
+            toolboxGUI.GfxToolbox.deactivate(self)
+            plane = self.currentClipPlane()
+            if plane is not None:
+                switchboard.notify((self.toolbox, "clip selection changed"), None)
+                self.gfxwindow().oofcanvas.render()
+
     def close(self):
+        self.clipPlaneClickAndDragMouseHandler.cancel()
         map(switchboard.removeCallback, self.sbcallbacks)
         toolboxGUI.GfxToolbox.close(self)
 
@@ -638,6 +669,7 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
 
     def enableCellCB(self, cell_renderer, path):
         plane, planeID = self.clippingList[path]
+        self.lastSelectedClipID = planeID
         if plane.enabled():
             self.toolbox.menu.Clip.Disable(plane=planeID)
         else:
@@ -650,6 +682,7 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
 
     def flipCellCB(self, cell_renderer, path):
         plane, planeID = self.clippingList[path]
+        self.lastSelectedClipID = planeID
         if plane.flipped():
             self.toolbox.menu.Clip.Unflip(plane=planeID)
         else:
@@ -671,7 +704,7 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         if parameterwidgets.getParameters(title="New Clipping Plane",
                                           *menuitem.params):
             menuitem.callWithDefaults()
-
+        
     def editClipCB(self, *args):
         # Edit button *and* double click callback.  Args aren't used.
         menuitem = self.toolbox.menu.Clip.Edit
@@ -685,12 +718,14 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         if parameterwidgets.getParameters(normarg, offsetarg, 
                                           title="Edit Clipping Plane"):
             menuitem.callWithDefaults(plane=planeID)
-
+        
     def delClipCB(self, button):
         plane = self.currentClipPlaneNo()
         if plane is not None:
             menuitem = self.toolbox.menu.Clip.Delete
             menuitem.callWithDefaults(plane=plane)
+            self.gfxwindow().setMouseHandler(self)
+        self.lastSelectedClipID = None
 
     def invClipCB(self, button):
         if self.invclipButton.get_active():
@@ -706,7 +741,10 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
             menuitem = self.toolbox.menu.Clip.SuppressOff
         menuitem.callWithDefaults()
 
-    def updateClipList(self, gfxwindow): # sb callback for "clip planes changed"
+    def updateClipList(self, gfxwindow): 
+        # Switchboard callback for "clip planes changed" 
+        # Rebuilds the list of clipping planes using the clipping
+        # planes on the canvas.
         if gfxwindow is self.gfxwindow():
             ## Don't use historian.current() to get the clip
             ## planes!  The historian doesn't record new views if the
@@ -714,14 +752,45 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
             ## The current clip planes have to come from the canvas
             ## itself.
             currentView = self.gfxwindow().oofcanvas.get_view()
-            self.clippingList.clear()
-            for i in range(currentView.nClipPlanes()):
-                plane = currentView.getClipPlane(i).clone()
-                self.clippingList.append([plane, i])
+
+            # We have to suppress the select signal, or else
+            # self.clippingList.clear() will cause
+            # clipSelectionChangedCB to be called and to unselect the
+            # clipping plane that is currently selected.
+            self.clipSelectSignal.block()
+            try:
+                self.clippingList.clear()
+                for i in range(currentView.nClipPlanes()):
+                    plane = currentView.getClipPlane(i).clone()
+                    newIter = self.clippingList.append([plane, i])
+                    if (i == self.lastSelectedClipID):
+                        # If a clipping plane had been selected in the
+                        # list at the time this function was called,
+                        # reselect it in the list.
+                        self.clippingListView.get_selection().select_iter(newIter)
+            finally:
+                self.clipSelectSignal.unblock()
             self.sensitize()
 
     def clipSelectionChangedCB(self, selection):
         debug.mainthreadTest()
+        planeID = self.currentClipPlaneNo()
+        if planeID == self.lastSelectedClipID:
+            return
+        if self.active:
+            # If a clipping plane has been selected in the list, set
+            # the mouse handler to the mouse handler for
+            # click-and-drag editing of clipping planes. Else, a
+            # clipping plane has been unselected, so set the mouse
+            # handler to self.
+            if planeID is not None:
+                self.gfxwindow().setMouseHandler(self.clipPlaneClickAndDragMouseHandler)
+            else:
+                self.gfxwindow().setMouseHandler(self)
+        plane = self.currentClipPlane()
+        switchboard.notify((self.toolbox, "clip selection changed"), plane)
+        self.gfxwindow().updateview()
+        self.lastSelectedClipID = planeID
         self.sensitize()
 
     def currentClipPlane(self):
@@ -860,3 +929,314 @@ def _makeViewWidget(self, scope=None, verbose=False):
     return ViewNameWidget(self, scope=scope, name=self.name, verbose=verbose)
 
 viewertoolbox.ViewNameParameter.makeWidget = _makeViewWidget
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# ClipPlaneClickAndDragMouseHandler is the mouseHandler for
+# click-and-drag editing of clipping planes.
+
+# TODO: This might not work in unthreaded mode. See if something can be
+# done about this.
+
+class ClipPlaneClickAndDragMouseHandler(mousehandler.MouseHandler):
+    def __init__(self, gfxwindow):
+        self.gfxwindow = gfxwindow
+
+        # The ID of the clip plane being edited.
+        self.planeID = None
+
+        # The display method for the click-and-drag editing.
+        self.layer = None
+
+        # Which operation should be performed (e.g. translate, rotate).
+        self.operation = None
+
+        # Previous position, in display coordinates, of the mouse.
+        self.last_x = None
+        self.last_y = None
+
+        # The clicked point on one of the vtkActors, in world
+        # coordinates. Used when self.operation is 'translate in
+        # plane'.
+        self.click_pos = None
+
+        # datalock is an EventLogSlock on the eventList data. It has
+        # (internally) a newEvents flag that is set to true every time
+        # it is acquired and then released by the mainthread in either
+        # self.up, self.down, or self.move.
+        #
+        # If the subthread that is executing
+        # self.processEvents_subthread tries to acquire this lock
+        # while the newEvents flag is false, it will wait (block)
+        # until this lock is acquired and subsequently released by the
+        # mainthread, and then proceed to process whatever new mouse
+        # event the mainthread has just logged.
+        #
+        # If, however, the newEvents flag is true when the subthread
+        # comes back to the beginning of its internal loop, it means
+        # at least one new event has already been logged while the
+        # subthread was processing an earlier event. So, in this case,
+        # the subthread will go ahead and process that new event
+        # without waiting.
+        self.datalock = lock.EventLogSLock()
+
+        # For keeping track of which events have happened in what
+        # order. This list has a EventLogSLock on it, datalock.  The
+        # mainthread must acquire datalock in order to append a new
+        # event to it, and the subthread must acquire datalock in
+        # order to pop an event from it.
+        self.eventlist = []
+
+        # 'up' and 'move' mouse events will only be
+        # accepted when self.downed is True.
+        self.downed = False
+        
+        # Will be True when the time comes for the subthread executing
+        # self.processEvents_subthread to be killed.
+        self.canceled = False
+
+        # Process all mouse events in a subthread.
+        subthread.execute(self.processEvents_subthread)
+        
+    def up(self, x, y, shift, ctrl):
+        self.datalock.logNewEvent_acquire()
+        try:
+            self.downed = False
+            self.eventlist.append(('up', x, y, shift, ctrl))
+        finally:
+            self.datalock.logNewEvent_release()
+        
+    def down(self, x, y, shift, ctrl):
+        self.datalock.logNewEvent_acquire()
+        try:
+            self.downed = True
+            self.eventlist.append(('down', x, y, shift, ctrl))
+        finally:
+            self.datalock.logNewEvent_release()
+
+    def move(self, x, y, shift, ctrl):
+        self.datalock.logNewEvent_acquire()
+        try:
+            num_events = len(self.eventlist)
+            if num_events == 0:
+                # All events have been processed so far. Append the
+                # new move event to the list.
+               self.eventlist.append(('move', x, y, shift, ctrl))
+            elif self.eventlist[num_events - 1][0] == 'down':
+                # Previous event was a down event. Append the new move
+                # event to the list.
+                self.eventlist.append(('move', x, y, shift, ctrl))
+            elif self.eventlist[num_events - 1][0] == 'move':
+                # Previous event was a move event. Overwrite that
+                # event with the new move event.
+                self.eventlist[num_events - 1] = ('move', x, y, shift, ctrl)
+        finally:
+            self.datalock.logNewEvent_release()
+
+    def processUp(self):
+        # Commands which need to be run when an 'up' event is being
+        # processed.
+        if self.operation in ('rotate about center', 'translate along normal'):
+            # The mouse has been released after the user has edited
+            # the clipping plane by clicking and dragging.  Any
+            # changes to the currently selected clipping plane have
+            # already occurred. We call logWithDefaults for the 'Edit'
+            # menu item, thereby making sure the changes to that
+            # clipping plane are logged (and thus are repeatable by a
+            # script), while at the same time making sure that the
+            # 'Edit' menu item callback, editCB in viewertoolbox.py,
+            # does not get called. We don't want editCB to get called
+            # because we don't want to perform changes we've already
+            # made. Also, we've already acquired the gfxlock in
+            # processEvents_subthread, and editCB tries to acquire the
+            # gfxlock, so it doesn't work to have it called here.
+            toolboxGUI = self.gfxwindow.getToolboxGUIByName("Viewer")
+            menuitem = toolboxGUI.toolbox.menu.Clip.Edit
+            menuitem.logWithDefaults(plane=self.planeID,
+                                     normal=direction.Direction.rewrap(self.layer.canvaslayer.get_normal()),
+                                     offset=self.layer.canvaslayer.get_offset())
+            mainthread.runBlock(toolboxGUI.updateClipList, (self.gfxwindow,))
+        self.operation = None
+        self.last_x = None
+        self.last_y = None
+        self.layer = None
+        self.click_pos = None
+        self.planeID = None
+
+    def processDown(self, x, y, ctrl):
+        # Commands which need to be run when a 'down' event is being
+        # processed.
+
+        # Figure out which clip plane is being edited.
+        toolboxGUI = self.gfxwindow.getToolboxGUIByName("Viewer")
+        self.planeID = mainthread.runBlock(toolboxGUI.currentClipPlaneNo)
+
+        # Find the clicked point in physical coordinates.
+        viewobj = mainthread.runBlock(self.gfxwindow.oofcanvas.get_view)
+        point = mainthread.runBlock(self.gfxwindow.oofcanvas.display2Physical,
+                                    (viewobj, x, y))
+        self.last_x = x
+        self.last_y = y
+        if ctrl:
+            # Ctrl button was pressed when mouse was clicked down.
+
+            # Find the position at which a vtkActor, if any,  was
+            # clicked.
+            (self.click_pos, self.layer) = self.gfxwindow.findClickedPositionOnActor_nolock(
+                clipplaneclickanddragdisplay.ClipPlaneClickAndDragDisplay,
+                point, 
+                viewobj)
+            if self.click_pos is not None:
+                # Either the plane or arrow has been
+                # clicked. Perform the 'translate in plane'
+                # operation.
+                self.operation = 'translate in plane'
+        else:
+            # Ctrl button was not pressed when mouse was clicked down.
+
+            # Find the vtkActors that have been clicked upon.
+            (actors, self.layer) = self.gfxwindow.findClickedActors_nolock(
+                clipplaneclickanddragdisplay.ClipPlaneClickAndDragDisplay,
+                point, 
+                viewobj)
+            if actors is not None:
+                # Something has been clicked.  Decide the operation to
+                # perform based on which actors were clicked. A click
+                # on the arrow takes precedence over a click on the
+                # plane, so it is assumed that if the user clicked on
+                # the arrow through the plane, the user still intended
+                # to select the arrow, and not the plane.  This makes
+                # some sense so long as the plane is rendered opaque
+                # (so that the arrow can be seen through it); the only
+                # time this would not be the case is if the
+                # plane_opacity setting for self.layer were set to
+                # 1.0.
+                if (actors.hasActor(self.layer.canvaslayer.get_arrowActor())):
+                    self.operation = 'rotate about center'
+                elif (actors.hasActor(self.layer.canvaslayer.get_planeActor())):
+                    self.operation = 'translate along normal'
+     
+    def processMove(self, x, y):
+        # Commands which need to be run when a 'move' event is being
+        # processed.
+        viewobj = mainthread.runBlock(self.gfxwindow.oofcanvas.get_view)
+        if (self.operation == 'rotate about center'):
+            last_mouse_coords_rotated_90_deg = mainthread.runBlock(self.gfxwindow.oofcanvas.display2Physical,
+                                                                   (viewobj, -self.last_y, self.last_x))
+            mouse_coords_rotated_90_deg = mainthread.runBlock(self.gfxwindow.oofcanvas.display2Physical,
+                                                              (viewobj, -y, x))
+            axis_of_rotation =  mouse_coords_rotated_90_deg - last_mouse_coords_rotated_90_deg
+            angle_of_rotation = math.sqrt((x - self.last_x) ** 2 + (y - self.last_y) ** 2)
+
+            # Update the canvaslayer.
+            self.layer.canvaslayer.rotate(axis_of_rotation, angle_of_rotation)
+
+            # Update the actual clipping plane from the canvaslayer's
+            # values.
+            newplane = clip.ClippingPlane(self.layer.canvaslayer.get_normal(), self.layer.canvaslayer.get_offset())
+            viewobj.replaceClipPlane(self.planeID, newplane)
+        elif (self.operation == 'translate along normal'):
+            last_mouse_coords = mainthread.runBlock(self.gfxwindow.oofcanvas.display2Physical,
+                                                    (viewobj, self.last_x, self.last_y))
+            mouse_coords = mainthread.runBlock(self.gfxwindow.oofcanvas.display2Physical,
+                                                    (viewobj, x, y))
+            diff = mouse_coords - last_mouse_coords
+            diff_size = math.sqrt(diff ** 2)
+            if diff_size == 0:
+                return
+            diff = diff / diff_size
+            normal = self.layer.canvaslayer.get_normal_Coord3D()
+            center = self.layer.canvaslayer.get_center()
+            camera_pos = mainthread.runBlock(self.gfxwindow.oofcanvas.get_camera_position_v2)
+            dist = math.sqrt((camera_pos - center) ** 2)
+            view_angle = mainthread.runBlock(self.gfxwindow.oofcanvas.get_camera_view_angle)
+            canvas_size = mainthread.runBlock(self.gfxwindow.oofcanvas.get_size)
+            offset = diff.dot(normal) * dist * math.tan(math.radians(view_angle)) * math.sqrt((x - self.last_x) ** 2 + (y - self.last_y) ** 2) / canvas_size[1]
+
+            # Update the canvaslayer.
+            self.layer.canvaslayer.offset(offset) 
+
+            # Update the actual clipping plane from the canvaslayer's
+            # values.
+            newplane = clip.ClippingPlane(self.layer.canvaslayer.get_normal(), self.layer.canvaslayer.get_offset())
+            viewobj.replaceClipPlane(self.planeID, newplane)
+        elif (self.operation == 'translate in plane'):
+            mouse_coords = mainthread.runBlock(self.gfxwindow.oofcanvas.display2Physical,
+                                                    (viewobj, x, y))
+            ray_to_mouse = mainthread.runBlock(self.gfxwindow.oofcanvas.findRayThroughPoint,
+                                               (mouse_coords,))
+            normal = self.layer.canvaslayer.get_normal_Coord3D()
+            translation_vector = ray_to_mouse * (self.click_pos - mouse_coords).dot(normal) + ray_to_mouse.dot(normal) * (mouse_coords - self.click_pos)
+            cam_direction = mainthread.runBlock(self.gfxwindow.oofcanvas.get_camera_direction_of_projection_v2)
+            if (math.fabs(cam_direction.dot(normal)) < THRESHOLD):
+                cross = cam_direction.cross(normal)
+                translation_vector = (translation_vector.dot(cross) * cross) / (cross ** 2) 
+            if math.fabs(ray_to_mouse.dot(normal)) == 0:
+                return
+            translation_vector = translation_vector / ray_to_mouse.dot(normal)
+            self.click_pos = self.click_pos + translation_vector
+
+            # Update the canvaslayer.
+            self.layer.canvaslayer.translate(translation_vector)
+        # Set the old x and y mouse positions to the current x and y
+        # positions.
+        self.last_x = x
+        self.last_y = y
+
+        mainthread.runBlock(self.gfxwindow.oofcanvas.set_view,
+                            (viewobj, True))
+        # Render the changes to the vtk plane and arrow and to the
+        # actual clipping planes.
+        mainthread.runBlock(self.gfxwindow.oofcanvas.render)
+
+    def processEvents_subthread(self):
+        # Executed in a subthread. Updates the click-and-drag editing
+        # widget and determines what needs to be rendered based on the
+        # mouse events that have occurred.
+        while (True):
+            # Get the data from a new event. If no new event has
+            # occurred, handleNewEvents_acquire will block this
+            # subthread until a new event occurs.
+            self.datalock.handleNewEvents_acquire()
+            try:
+                if self.canceled:
+                    # End this subthread.
+                    return
+                else:
+                    (eventtype, x, y, shift, ctrl) = self.eventlist.pop(0);
+            finally:
+                self.datalock.handleNewEvents_release()
+
+            # Acquire the gfxlock so that we can be sure that the
+            # gfxwindow is not in the middle of being changed or
+            # closed at this time.
+            self.gfxwindow.acquireGfxLock()
+            try:
+                if self.canceled:
+                    # If this MouseHandler's graphics window and hence
+                    # its toolboxGUI have been closed, canceled will
+                    # be true, and so this subthread will end itself
+                    # before causing problems (e.g. a seg fault) by
+                    # trying to do anything that depends on the
+                    # graphics window or toolboxGUI.
+                    return
+                if eventtype is 'down':
+                    self.processDown(x, y, ctrl)
+                elif eventtype is 'move' and self.operation is not None:
+                    self.processMove(x, y)
+                elif eventtype is 'up':
+                    self.processUp()
+            finally:
+                self.gfxwindow.releaseGfxLock()
+
+    def cancel(self):
+        # Calls for self.processEvents_subthread to stop executing and
+        # return ASAP.
+        self.datalock.logNewEvent_acquire()
+        try:
+            self.canceled = True
+        finally:
+            self.datalock.logNewEvent_release()
+
+    def acceptEvent(self, eventtype):
+        return (eventtype == 'down' or (self.downed and eventtype in ('move', 'up')))

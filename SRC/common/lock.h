@@ -105,6 +105,52 @@ public:
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// A EventLogSLock, or Event Log Silent Lock, is a lock on event
+// data. An event-logging thread must acquire the lock to log a new
+// event.  Meanwhile, when an event-handling subthread tries to
+// acquire the lock, the subthread will be forced to block until at
+// least one new event has been logged by an event-logging thread.
+
+// The lock's newEvents flag is set to true whenever the event-logging
+// thread calls the logNewEvent_acquire and logNewEvent_release
+// functions (in that order). Then, once the event-handling subthread
+// calls the handleNewEvents_acquire and handleNewEvents_release
+// functions (in that order), the newEvents flag will be set to false
+// again, indicating that all new events have been taken care of. If
+// the newEvents flag is false at the time the handleNewEvents_acquire
+// function is called, the calling subthread will release the lock and
+// block until logNewEvent_release is called by an event-logging
+// thread.
+
+// The lock is silent because it doesn't care which thread it is run
+// on. BUT, NOTE: THE handleNewEvents_acquire/release FUNCTIONS SHOULD
+// NOT BE CALLED FROM THE MAINTHREAD, since they can force the calling
+// thread to block, and we *DON'T* want the mainthread to block.
+
+class EventLogSLock {
+private:
+  bool newEvents;
+  bool waitingForNewEvent;
+  pthread_mutex_t localLock;
+  pthread_cond_t condition;
+#ifdef DEBUG
+  bool verbose_;
+  std::string name;
+#endif // DEBUG
+public:
+  EventLogSLock();
+  virtual ~EventLogSLock();
+  void logNewEvent_acquire();
+  void logNewEvent_release();
+  void handleNewEvents_acquire();
+  void handleNewEvents_release();
+#ifdef DEBUG
+  void verbose(bool, const std::string&);
+#endif // DEBUG
+}; 
+  
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 // Wrapper for the custom RWLock.  Having a custom class means not
 // having to cope with architecture-dependent implementations, or the
 // even-more-inconvenient absence thereof.

@@ -20,6 +20,26 @@ from ooflib.common.IO.GUI import gtkutils
 from ooflib.common.IO.GUI import mousehandler
 from ooflib.common.IO.GUI import tooltips
 
+# TODO: It doesn't really make sense to have selection of one of the
+# toolbar mouse handlers (tumble, dolly, track) deactivate the current
+# active GfxToolbox, since the current toolbox is still visible to the
+# user. The toolbar provides tools for navigating 3D space. The
+# GfxToolboxes all provide other functionality that may involve
+# displaying objects in 3D space which we don't want to display when
+# the user changes which GfxToolbox they're working with, but still
+# want to see when the user is just rotating or shifting the view
+# (with the toolbar tools).  Instead, either one of the two following
+# things should be done:
+#
+# 1) Make it so that selecting one of the toolbar mouse handlers keeps
+#    the current GfxToolbox active, and only changes the current mouse
+#    handler we're using.
+#
+# 2) Get rid of the toolbar altogether, and assign different mouse
+#    buttons to different types of activities (e.g. left button is for
+#    working with objects on screen, right button is for tumbling,
+#    dollying, tracking, etc.).
+
 
 class ToolBar:
     def __init__(self, gfxwindow):
@@ -169,8 +189,7 @@ class ViewManipulatorMouseHandler(mousehandler.MouseHandler):
 
     def up(self, x, y, shift, ctrl):
         self.downed = False
-        # The View menuitem callback is viewCB in gfxwindow3d.py.
-        # There's also a no-op stub in ghostgfxwindow.py.
+        # The View menuitem callback is viewCB in ghostgfxwindow.py.
         self.gfxwindow.menu.Settings.Camera.View(
             view=self.gfxwindow.oofcanvas.get_view())
 

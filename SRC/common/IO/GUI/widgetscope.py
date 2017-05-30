@@ -73,7 +73,7 @@ class WidgetScope:
         # Search through widgets in related WidgetScopes, returning
         # the first one that satisfies the condition.  The search
         # order is
-        #   1.  Widgets in this scope
+        #   1.  Widgets in this scope.
         #   2.  This scope's child scopes' widgets, recursively.
         #   3.  This scope's parent scope's widgets and scopes, recursively.
         for widget in self.widgetlist:
@@ -93,6 +93,18 @@ class WidgetScope:
 #             if self.widgetlist[i+1] is widget:
 #                 return self.widgetlist[i]
     # Scope data operations -- simple.
+    def findScope(self, condition):
+        # Search this scope and possibly its ancestor scopes,
+        # returning the first one that satisfies the condition. The
+        # search order is
+        #    1. This scope
+        #    2. This scope's parent scope.
+        #    3. This scope's parent scope's parent scope.
+        #    ... etc.
+        if (condition(self)):
+            return self
+        if self.parent is not None:
+            return self.parent.findScope(condition)
     def setData(self, key, value):
         self.scope_data[key]=value
     def findData(self, key):

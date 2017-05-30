@@ -2,7 +2,7 @@
 $RCSfile: switchboard.doc,v $
 $Revision: 1.1 $
 $Author: langer $
-$Date: 2002/11/12 19:47:57 $
+$Date: 2002-11-12 19:47:57 $
 
 The switchboard allows parts of the program to tell other parts that
 something of importance has happened, without having to know that
