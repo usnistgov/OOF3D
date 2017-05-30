@@ -49,25 +49,18 @@ import math
 # class is specified in canvaslayers.h.
 
 class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
-    def __init__(self, arrow_color, arrow_tip_radius, arrow_length, plane_color, plane_opacity):
+    def __init__(self, arrow_color, arrow_tip_radius, arrow_length,
+                 plane_color, plane_opacity):
         self.arrow_color = arrow_color
         self.arrow_tip_radius = arrow_tip_radius
         self.arrow_length = arrow_length;
         self.plane_color = plane_color
         self.plane_opacity = plane_opacity
 
-        # self.direction is -1 if either the currently displayed
-        # clipping plane is flipped or if all clipping planes are
-        # inverted. Otherwise, it is 1.
-        self.direction = 1
-
         # suppressClip indicates whether or not clipping is
         # suppressed.
         self.suppressClip = False
         
-        # invertClip indicates whether or not clipping is inverted.
-        self.invertClip = False
-
         self.sbcallbacks = None
         display.DisplayMethod.__init__(self)
 
@@ -78,69 +71,59 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
         display.DisplayMethod.destroy(self, destroy_canvaslayer)
 
     def newLayer(self):
-        toolbox = self.gfxwindow.getToolboxByName("Viewer")
+        self.toolbox = self.gfxwindow.getToolboxByName("Viewer")
 
         # The following switchboard callbacks are used for updating
         # what is displayed in the layer.
-        self.sbcallbacks = [switchboard.requestCallbackMain((toolbox, "clip edited"), self.setNormalAndOffset),
-                            switchboard.requestCallbackMain((toolbox, "clip selection changed"), self.setPlane),
-                            switchboard.requestCallbackMain((toolbox, "clip inversion changed"), self.updateInversion),
-                            switchboard.requestCallbackMain((toolbox, "clip suppression changed"), self.updateSuppression),
-                            switchboard.requestCallbackMain("view almost changed", self.updateScale)
-                            ]
+        self.sbcallbacks = [
+            switchboard.requestCallbackMain(
+                (self.toolbox, "clip selection changed"),
+                self.setPlane),
+            switchboard.requestCallbackMain(
+                "view almost changed", self.updateScale)
+        ]
 
-        # Create an object of class PlaneAndArrowLayer.
+        # Create an object of class PlaneAndArrowLayer.  The "True"
+        # sets the parity of the arrow.
         return canvaslayers.PlaneAndArrowLayer(self.gfxwindow.oofcanvas,
-                                             "PlaneAndArrow") 
+                                               "PlaneAndArrow", True)
+
+    def arrowSign(self, plane):
+        # The arrow is flipped if the plane is flipped or if all
+        # planes are inverted, but not both.
+        if plane is not None and plane.flipped() != self.toolbox.invertClip:
+            return -1
+        return 1
 
     def setParams(self):
         self.canvaslayer.set_visibility(False);
         self.canvaslayer.set_arrowColor(self.arrow_color)
         self.canvaslayer.set_arrowTipRadius(self.arrow_tip_radius)
-        self.canvaslayer.set_arrowLength(self.direction * self.arrow_length)
+        if self.toolbox is not None:
+            direction = self.arrowSign(self.toolbox.currentClipPlane())
+            self.canvaslayer.set_arrowLength(direction * self.arrow_length)
         self.canvaslayer.set_arrowShaftRadius(0.3 * self.arrow_tip_radius)
         self.canvaslayer.set_planeColor(self.plane_color)
         self.canvaslayer.set_planeOpacity(self.plane_opacity)
-
-    def setNormalAndOffset(self, normal, offset):
-        # Callback for "clip edited".  Sets the normal and offset of
-        # the displayed 3D objects, in case the user has edited the
-        # currently selected clipping plane.
-        self.canvaslayer.set_normal(normal.cdirection)
-        self.canvaslayer.offset(offset - self.canvaslayer.get_offset())
+        self.canvaslayer.setModified()
 
     def setPlane(self, plane):
-        # Callback for "clip selection changed".  Updates the
-        # displayed 3D objects, in case the user selects a different
-        # clipping plane or has unselected a clipping plane.
-        if plane is not None and (not self.suppressClip):
-            if plane.enabled():
-                self.canvaslayer.set_visibility(True)
-                normal = plane.normal()
-                offset = plane.offset()
-                self.canvaslayer.set_normal(normal)
-                self.canvaslayer.offset(offset - self.canvaslayer.get_offset())
-                if (self.invertClip == plane.flipped()):
-                    self.direction = 1
-                else:
-                    self.direction = -1
-                self.canvaslayer.set_arrowLength(self.direction * self.arrow_length)
-                return
+        # Switchboard callback for "clip selection changed".
+        if plane is not None and not self.toolbox.suppressClip:
+            # Display the selected plane even if it's not enabled.
+            # The user may want to see what it will do.  This used to
+            # check plane.enabled() and only display enabled planes.
+            self.canvaslayer.set_visibility(True)
+            normal = plane.normal()
+            offset = plane.offset()
+            self.canvaslayer.set_normal(normal)
+            self.canvaslayer.offset(offset - self.canvaslayer.get_offset())
+            self.canvaslayer.set_arrowLength(
+                self.arrowSign(plane) * self.arrow_length)
+            self.canvaslayer.setModified()
+            return
+        # There is no visible clipping plane.
         self.canvaslayer.set_visibility(False)
-
-    def updateInversion(self, invertClip):
-        # Callback for "clip inversion changed". 
-        self.invertClip = invertClip
-        toolbox = self.gfxwindow.getToolboxByName("Viewer")
-        plane = toolbox.currentClipPlane()
-        self.setPlane(plane)
-
-    def updateSuppression(self, suppressClip):
-        # Callback for "clip suppression changed".
-        self.suppressClip = suppressClip
-        toolbox = self.gfxwindow.getToolboxByName("Viewer")
-        plane = toolbox.currentClipPlane()
-        self.setPlane(plane)
 
     def updateScale(self, gfxwindow):
         # Callback for "view almost changed". Updates the scale of the
@@ -148,8 +131,7 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
         # well into the viewing window when at at the focal distance
         # from the camera.
         if gfxwindow is self.gfxwindow:
-            toolbox = self.gfxwindow.getToolboxByName("Viewer")
-            plane = toolbox.currentClipPlane()
+            plane = self.toolbox.currentClipPlane()
             if plane is not None:
                 dist = self.gfxwindow.oofcanvas.get_camera_distance()
                 view_angle = self.gfxwindow.oofcanvas.get_camera_view_angle()
@@ -236,11 +218,12 @@ def predefinedClipPlaneClickAndDragLayer():
     # When a new graphics window is opened, a
     # ClipPlaneClickAndDragDisplay will be automatically created with
     # the default sizing and coloring options.
-    return ClipPlaneClickAndDragDisplay(arrow_color=defaultClipPlaneClickAndDragArrowColor,
-                                  arrow_tip_radius=defaultClipPlaneClickAndDragArrowTipRadius,
-                                  arrow_length=defaultClipPlaneClickAndDragArrowLength,
-                                  plane_color=defaultClipPlaneClickAndDragColor,
-                                  plane_opacity=defaultClipPlaneClickAndDragOpacity)
+    return ClipPlaneClickAndDragDisplay(
+        arrow_color = defaultClipPlaneClickAndDragArrowColor,
+        arrow_tip_radius = defaultClipPlaneClickAndDragArrowTipRadius,
+        arrow_length = defaultClipPlaneClickAndDragArrowLength,
+        plane_color = defaultClipPlaneClickAndDragColor,
+        plane_opacity = defaultClipPlaneClickAndDragOpacity)
 
 ghostgfxwindow.PredefinedLayer('Microstructure', '<topmost>',
                                predefinedClipPlaneClickAndDragLayer)

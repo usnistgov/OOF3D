@@ -1167,10 +1167,13 @@ class GhostGfxWindow:
         # this may deadlock!
         #self.device.destroy()
 
+        if self.oofcanvas is not None:
+            self.oofcanvas.deactivate()
+            
         self.acquireGfxLock()
         try:
             self.gfxmanager.closeWindow(self)
-
+            
             # Things can be shut down via several pathways (ie, from
             # scripts or gtk events), so at each step we have to make sure
             # that the step won't be repeated.  This function has been
@@ -1407,6 +1410,7 @@ class GhostGfxWindow:
         ## TODO OPT: Check that calling updateview here isn't repeating
         ## work done elsewhere.
         self.updateview()
+        switchboard.notify("completed view change", self)
 
 
     if config.dimension() == 2:
@@ -1873,6 +1877,7 @@ class GhostGfxWindow:
             tb.restoreNamedView('Front')
             self.viewInitialized = True
             self.viewInitializationRequired = False
+            switchboard.notify("completed view change", self)
 
             
     ##################################

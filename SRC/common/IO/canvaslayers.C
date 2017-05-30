@@ -233,16 +233,38 @@ vtkSmartPointer<vtkTableBasedClipDataSet> getClipper(
   vtkSmartPointer<vtkTableBasedClipDataSet> clipper =
     vtkSmartPointer<vtkTableBasedClipDataSet>::New();
   clipper->SetClipFunction(vplanes);
-  if(canvas->invertedClipping() || vplanes->GetNumberOfPlanes() == 0) {
-    clipper->InsideOutOn();
-  }
+
+  // From the man page for vtkTableBasedClipDataSet:::SetInsideOut():
+
+  // Set/Get the InsideOut flag. With this flag off, a vertex is
+  // considered inside (the implicit function or the isosurface) if
+  // the (function or scalar) value is greater than IVAR Value. With
+  // this flag on, a vertex is considered inside (the implicit
+  // function or the isosurface) if the (function or scalar) value is
+  // less than or equal to IVAR Value. This flag is off by default.
+
+  // From the man page for vtkPlanes:
+
+  // The function value is the closest first order distance of a point
+  // to the convex region defined by the planes. ... Note that the
+  // normals must point outside of the convex region. Thus, a negative
+  // function value means that a point is inside the convex region.
+
+  // The natural definition for OOF is that the *inside* of the convex
+  // region should be displayed, and not clipped away.  Therefore all
+  // calls to SetInsideOut need to have an extra "!".
+
+  clipper->SetInsideOut(!(canvas->invertedClipping() ||
+			  (vplanes->GetNumberOfPlanes() == 0)));
   return clipper;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas, const std::string &nm)
+PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas,
+				       const std::string &nm,
+				       bool inverted)
   : OOFCanvasLayer(canvas, nm),
     planeSource(vtkSmartPointer<vtkCubeSource>::New()),
     arrowSource(vtkSmartPointer<vtkArrowSource>::New()),
@@ -257,7 +279,8 @@ PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas, const std::string
     planeMapper(vtkSmartPointer<vtkPolyDataMapper>::New()),
     arrowMapper(vtkSmartPointer<vtkPolyDataMapper>::New()),
     planeActor(vtkSmartPointer<vtkActor>::New()),
-    arrowActor(vtkSmartPointer<vtkActor>::New())
+    arrowActor(vtkSmartPointer<vtkActor>::New()),
+    arrowParity(inverted? -1 : 1)
 {
   // Constructor for the PlaneAndArrowLayer class.  Creates
   // and joins together the pre-render portions of the vtk pipeline
@@ -290,15 +313,14 @@ PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas, const std::string
   planeTransform->Concatenate(rotation);
   planeTransform->Concatenate(scaling);
 
-  // Scales the arrow by one half the sidelength of the plane, with
-  // the (-) sign causing the arrow to point in the direction we want
-  // it to--that is, into to the otherwise empty region of the OOF3D
-  // canvas which has been clipped away by the clipping plane being
-  // edited. Otherwise the arrow could become hidden inside parts of
-  // 3D objects which are still visible in the unclipped region of the
-  // OOF3D canvas.
+  // Scales the arrow by one half the sidelength of the plane.
+  // arrowParity is set by the "inverted" constructor arg, which
+  // should be chosen so that the arrow is visible.  When using this
+  // widget to define a clipping plane, for example, the arrow should
+  // be on the clipped (hidden) side of the plane.
   arrowScaling->Identity();
-  arrowScaling->Scale(-0.5, -0.5, -0.5);
+  double s = arrowParity*0.5;
+  arrowScaling->Scale(s, s, s);
 
   arrowTransform->Identity();
   arrowTransform->Concatenate(planeTransform);
@@ -336,7 +358,10 @@ void PlaneAndArrowLayer::stop_clipping() { }
 
 void PlaneAndArrowLayer::set_clip_parity(bool b) { }
 
-void PlaneAndArrowLayer::setModified() { }
+void PlaneAndArrowLayer::setModified() {
+  planeSource->Modified();
+  arrowSource->Modified();
+}
 
 vtkSmartPointer<vtkActor> PlaneAndArrowLayer::get_planeActor() {
   return planeActor;
@@ -361,6 +386,7 @@ void PlaneAndArrowLayer::set_visibility(bool visible) {
   // once the renderer is called.
   planeActor->SetVisibility(int(visible));
   arrowActor->SetVisibility(int(visible));
+  setModified();
 }
 
 void PlaneAndArrowLayer::set_arrowShaftRadius(double radius) {
@@ -373,14 +399,15 @@ void PlaneAndArrowLayer::set_arrowTipRadius(double radius) {
 
 void PlaneAndArrowLayer::set_arrowLength(double length) {
   // Sets the arrow's length to (length * (the sidelength of the
-  // plane)), with the (-) sign causing the arrow to point in the
+  // plane)), with the (+) sign causing the arrow to point in the
   // direction we want it to--that is, into to the otherwise empty
   // region of the OOF3D canvas which has been clipped away by the
   // clipping plane being edited. Otherwise the arrow could become
   // hidden in the unclipped parts of 3D objects which are still
   // visible in the unclipped region of the OOF3D canvas.
   arrowScaling->Identity();
-  arrowScaling->Scale(-length, -length, -length);
+  double s = arrowParity*length;
+  arrowScaling->Scale(s, s, s);
 }
 
 void PlaneAndArrowLayer::set_arrowColor(const CColor& color) {
@@ -418,6 +445,7 @@ void PlaneAndArrowLayer::translate(const Coord3D *translationVector) {
   // Concatenate the new translation onto the current
   // translation.
   translation->Translate(translationX, translationY, translationZ);
+  setModified();
 }
 
 void PlaneAndArrowLayer::offset(double offset) {
@@ -439,6 +467,7 @@ void PlaneAndArrowLayer::offset(double offset) {
   // Concatenate the new offsetting translation onto the current
   // translation.
   translation->Translate(normal[0], normal[1], normal[2]);
+  setModified();
 }
 
 void PlaneAndArrowLayer::scale(double scale) {
@@ -450,6 +479,7 @@ void PlaneAndArrowLayer::scale(double scale) {
 
   // Concatenate the new scaling onto the current scaling.
   scaling->Concatenate(new_scaling);
+  setModified();
 }
 
 Coord3D *PlaneAndArrowLayer::get_center() {
@@ -507,7 +537,9 @@ void PlaneAndArrowLayer::set_scale(double scale) {
   // arrowScaling transform, which is changed by the function
   // set_arrowScale(double).
   scaling->Identity();
-  scaling->Scale(scale, scale, scale);
+  double s = arrowParity*scale;
+  scaling->Scale(s, s, s);
+  setModified();
 }
 
 void PlaneAndArrowLayer::set_normal(const CDirection *direction) {
@@ -533,6 +565,8 @@ void PlaneAndArrowLayer::set_normal(const CDirection *direction) {
   rotation->Identity();
   rotation->RotateWXYZ(angleOfRotation, axisOfRotation[0], axisOfRotation[1], axisOfRotation[2]);
 
+  setModified();
+
   // Free allocated memory.
   delete(normalVector);
 }
@@ -548,9 +582,12 @@ void PlaneAndArrowLayer::set_center(const Coord3D *position) {
 
   translation->Identity();
   translation->Translate(position0, position1, position2);
+  setModified();
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// TODO: Add arrowParity, as in PlaneAndArrowLayer.
 
 BoxAndArrowLayer::BoxAndArrowLayer(GhostOOFCanvas *canvas, const std::string &nm)
   : OOFCanvasLayer(canvas, nm),
@@ -951,7 +988,7 @@ void SimpleCellLayer::stop_clipping() {
 }
 
 void SimpleCellLayer::set_clip_parity(bool inverted) {
-  clipper->SetInsideOut(inverted);
+  clipper->SetInsideOut(!inverted);
 }
 
 void SimpleCellLayer::addCell(VTKCellType type,
@@ -1086,7 +1123,7 @@ void SimpleWireframeCellLayer::stop_clipping() {
 }
 
 void SimpleWireframeCellLayer::set_clip_parity(bool inverted) {
-  clipper->SetInsideOut(inverted);
+  clipper->SetInsideOut(!inverted);
 }
 
 const std::string &SimpleWireframeCellLayer::classname() const {
@@ -1189,7 +1226,7 @@ void GlyphedLayer::stop_clipping() {
 
 void GlyphedLayer::set_clip_parity(bool inverted) {
   SimpleCellLayer::set_clip_parity(inverted);
-  glyphClipper->SetInsideOut(inverted);
+  glyphClipper->SetInsideOut(!inverted);
 }
 
 //=\\=//=\\=//=\\=//=\\=//
@@ -1552,7 +1589,7 @@ void ImageCanvasLayer::stop_clipping() {
 
 void ImageCanvasLayer::set_clip_parity(bool inverted) {
   pipelineLock.acquire();
-  clipper->SetInsideOut(inverted);
+  clipper->SetInsideOut(!inverted);
   pipelineLock.release();
 }
 

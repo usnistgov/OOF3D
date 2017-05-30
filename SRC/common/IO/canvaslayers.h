@@ -172,8 +172,9 @@ protected:
   vtkSmartPointer<vtkPolyDataMapper> arrowMapper;
   vtkSmartPointer<vtkActor> planeActor;
   vtkSmartPointer<vtkActor> arrowActor;
+  int arrowParity;		// 1 or -1, multiplies arrowScaling
 public:
-  PlaneAndArrowLayer(GhostOOFCanvas*, const std::string&);
+  PlaneAndArrowLayer(GhostOOFCanvas*, const std::string&, bool);
   ~PlaneAndArrowLayer();
   virtual void start_clipping();
   virtual void stop_clipping();

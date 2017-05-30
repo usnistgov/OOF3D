@@ -200,12 +200,11 @@ void Condition::verbose(bool verb, const std::string &nm) {
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 EventLogSLock::EventLogSLock()
+  : newEvents(false)
 {
   if(enabled) {
     pthread_cond_init(&condition, NULL);
     pthread_mutex_init(&localLock, NULL);
-    newEvents = false;
-    waitingForNewEvent = false;
   }
 #ifdef DEBUG
   verbose_ = false;
@@ -235,30 +234,40 @@ void EventLogSLock::handleNewEvents_acquire() {
       // return.
 #ifdef DEBUG
       if(verbose_)
-	std::cerr << "EventLogSLock::handleNewEvents_acquire: " << this << " waiting for new event" << std::endl;
+	std::cerr << "EventLogSLock::handleNewEvents_acquire: " << this
+		  << " waiting for new event on thread " << findThreadNumber()
+		  << std::endl;
 #endif // DEBUG
-      waitingForNewEvent = true;
-      pthread_cond_wait(&condition, &localLock);
+      try {
+	pthread_cond_wait(&condition, &localLock);
+      }
+      catch (...) {
+	std::cerr << "EventLogSLock::handleNewEvents_acquire: "
+		  << "Caught an exception in pthread_cond_wait!" << std::endl;
+	throw;
+      };
 #ifdef DEBUG
       if(verbose_)
-	std::cerr << "EventLogSLock::handleNewEvents_acquire: " << this << " done waiting" << std::endl;
+	std::cerr << "EventLogSLock::handleNewEvents_acquire: " << this
+		  << " done waiting" << std::endl;
 #endif // DEBUG
     }
 #ifdef DEBUG
     if(verbose_)
-      std::cerr << "EventLogSLock::handleNewEvents_acquire: " << this << " acquired" << std::endl;
+      std::cerr << "EventLogSLock::handleNewEvents_acquire: " << this
+		<< " acquired" << std::endl;
 #endif // DEBUG
-  }
+  } // end if enabled
 }
 
 void EventLogSLock::handleNewEvents_release() {
   if(enabled) {
-    waitingForNewEvent = false;
     newEvents = false;
     pthread_mutex_unlock(&localLock);
 #ifdef DEBUG
     if(verbose_)
-      std::cerr << "EventLogSLock::handleNewEvents_release: " << this << " released" << std::endl;
+      std::cerr << "EventLogSLock::handleNewEvents_release: " << this
+		<< " released" << std::endl;
 #endif // DEBUG
   }
 }
@@ -268,7 +277,8 @@ void EventLogSLock::logNewEvent_acquire() {
     pthread_mutex_lock(&localLock);
 #ifdef DEBUG
     if(verbose_)
-      std::cerr << "EventLogSLock::logNewEvent_acquire: " << this << " acquired" << std::endl;
+      std::cerr << "EventLogSLock::logNewEvent_acquire: " << this
+		<< " acquired" << std::endl;
 #endif	// DEBUG
   }
 }
@@ -276,18 +286,16 @@ void EventLogSLock::logNewEvent_acquire() {
 
 void EventLogSLock::logNewEvent_release() {
   if(enabled) {
-    if (waitingForNewEvent) {
-      pthread_cond_signal(&condition);
-    }
+    pthread_cond_signal(&condition);
     newEvents = true;
     pthread_mutex_unlock(&localLock);
 #ifdef DEBUG
     if(verbose_)
-      std::cerr << "EventLogSLock::logNewEvent_release: " << this << " released" << std::endl;
+      std::cerr << "EventLogSLock::logNewEvent_release: " << this
+		<< " released" << std::endl;
 #endif	// DEBUG
   }
 }
-
 
 #ifdef DEBUG
 void EventLogSLock::verbose(bool verb, const std::string &nm) {

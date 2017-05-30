@@ -56,7 +56,7 @@ public:
 
 class PlaneAndArrowLayer: public OOFCanvasLayer {
 public:
-  PlaneAndArrowLayer(GhostOOFCanvas*, const char*);
+  PlaneAndArrowLayer(GhostOOFCanvas*, const char*, bool);
   vtkActorPtr get_planeActor();
   vtkActorPtr get_arrowActor();
   void set_visibility(bool);

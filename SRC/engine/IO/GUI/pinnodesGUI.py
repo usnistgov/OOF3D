@@ -222,10 +222,14 @@ And Ctrl-click to toggle.""")
         self.update(skeleton=skelctxt)
         switchboard.notify("redraw")
 
+    # Called when a skeleton has changed.
+    def skelChanged(self, skelcontext):
+        if skelcontext is self.getSkeletonContext():
+            self.update(skeleton=skelcontext)
+
     def activate(self):
         if not self.active:
             toolboxGUI.GfxToolbox.activate(self)
-            self.gfxwindow().setMouseHandler(self)
             if config.dimension() == 2: 
                 gtklogger.log_motion_events(
                     self.gfxwindow().oofcanvas.rootitem())
@@ -233,18 +237,15 @@ And Ctrl-click to toggle.""")
             if config.dimension() == 3:
                 self.gfxwindow().toolbar.setSelect()
 
-    # Called when a skeleton has changed.
-    def skelChanged(self, skelcontext):
-        if skelcontext is self.getSkeletonContext():
-            self.update(skeleton=skelcontext)
-
     def deactivate(self):
         if self.active:
             toolboxGUI.GfxToolbox.deactivate(self)
-            self.gfxwindow().removeMouseHandler()
             if config.dimension() == 2: 
                 gtklogger.dont_log_motion_events(
                     self.gfxwindow().oofcanvas.rootitem())
+
+    def installMouseHandler(self):
+        self.gfxwindow().setMouseHandler(self)
 
     def showPosition(self, point):
         if config.dimension() == 2:

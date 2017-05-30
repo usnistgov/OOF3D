@@ -51,6 +51,7 @@ protected:
   bool exposed;
   bool rendered;
   bool axes_showing;		// axes are actually drawn
+  bool deactivated;		// suppress redraws when shutting down
   vtkSmartPointer<vtkXOpenGLRenderWindow> render_window;
   vtkSmartPointer<vtkRenderer> renderer;
   vtkSmartPointer<vtkAxesActor> axes;
@@ -91,6 +92,9 @@ public:
 
   // This should only be called from python and only with mainthread.run
   void render();
+  // deactivate() suppresses redrawing.  It should be called at the
+  // start of the graphics window shut down sequence.
+  void deactivate();
 
   void set_bgColor(const CColor);
   void set_margin(double f) { margin = f; }

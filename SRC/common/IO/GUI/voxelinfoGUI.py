@@ -110,14 +110,17 @@ class VoxelInfoToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     def activate(self):
         if not self.active:
             toolboxGUI.GfxToolbox.activate(self)
-            self.gfxwindow().setMouseHandler(self)
+            # self.gfxwindow().setMouseHandler(self)
             self.gfxwindow().toolbar.setSelect()
             self.update()
 
-    def deactivate(self):
-        if self.active:
-            toolboxGUI.GfxToolbox.deactivate(self)
-            self.gfxwindow().removeMouseHandler()
+    # def deactivate(self):
+    #     if self.active:
+    #         toolboxGUI.GfxToolbox.deactivate(self)
+    #         self.gfxwindow().removeMouseHandler()
+
+    def installMouseHandler(self):
+        self.gfxwindow().setMouseHandler(self)
 
     def close(self):
         map(switchboard.removeCallback, self.sbcallbacks)

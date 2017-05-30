@@ -110,7 +110,8 @@ class ToolBar:
                                                  name="viewChooser")
         viewbox.pack_start(self.viewChooser.gtk, expand=0, fill=0)
         self.gfxwindow.addSwitchboardCallback(
-            switchboard.requestCallbackMain("view changed", self.viewChangedCB),
+            switchboard.requestCallbackMain("completed view change",
+                                            self.viewChangedCB),
             switchboard.requestCallbackMain("view restored", self.viewChangedCB)
         )
 
@@ -131,13 +132,11 @@ class ToolBar:
         self.selectbutton.set_active(True)
 
     def selectCB(self, button):
+        # In "select" mode, the specific toolbox's mouse handler is in
+        # charge.
         if button.get_active():
-            self.gfxwindow.current_toolbox.activate()
-        else:
-            # TODO 3.1: Is this necessary?  It doesn't seem to be
-            # harmful.
-            self.gfxwindow.current_toolbox.deactivate()
-
+            self.gfxwindow.installToolboxMouseHandler()
+        
     def tumbleCB(self, button):
         if button.get_active():
             self.gfxwindow.setMouseHandler(self.tumbleHandler)
@@ -160,7 +159,7 @@ class ToolBar:
         vtb = self.gfxwindow.getToolboxByName("Viewer")
         vtb.setView(viewname)
 
-    # switchboard "view changed" or "view restored"
+    # switchboard "completed view change" or "view restored"
     def viewChangedCB(self, gfxwindow):
         if gfxwindow == self.gfxwindow:
             name, names = viewertoolbox.retrieveViewNames(gfxwindow)

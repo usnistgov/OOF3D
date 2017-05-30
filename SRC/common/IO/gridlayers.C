@@ -137,8 +137,10 @@ void WireGridCanvasLayer::stop_clipping() {
 }
 
 void WireGridCanvasLayer::set_clip_parity(bool inverted) {
-  faceClipper->SetInsideOut(inverted);
-  edgeClipper->SetInsideOut(inverted);
+  // See comment in getClipper() in canvaslayers.C for the InsideOut
+  // parity.
+  faceClipper->SetInsideOut(!inverted);
+  edgeClipper->SetInsideOut(!inverted);
 }
 
 vtkSmartPointer<vtkProp3D> WireGridCanvasLayer::get_pickable_prop3d() {
@@ -222,7 +224,7 @@ void SegmentGridCanvasLayer::stop_clipping() {
 }
 
 void SegmentGridCanvasLayer::set_clip_parity(bool inverted) {
-  edgeClipper->SetInsideOut(inverted);
+  edgeClipper->SetInsideOut(!inverted);
 }
 
 // vtkSmartPointer<vtkProp3D> SegmentGridCanvasLayer::get_pickable_prop3d() {
@@ -280,7 +282,7 @@ void FilledGridCanvasLayer::setModified() {
 }
 
 void FilledGridCanvasLayer::set_clip_parity(bool inverted) {
-  clipper->SetInsideOut(inverted);
+  clipper->SetInsideOut(!inverted);
 }
 
 void FilledGridCanvasLayer::set_lookupTable(vtkSmartPointer<vtkLookupTable> lut,
@@ -444,7 +446,7 @@ vtkScalarsToColors *ContourGridCanvasLayer::get_lookupTable() {
 }
 
 void ContourGridCanvasLayer::set_clip_parity(bool inverted) {
-  clipper->SetInsideOut(inverted);
+  clipper->SetInsideOut(!inverted);
 }
 
 void ContourGridCanvasLayer::setModified() {

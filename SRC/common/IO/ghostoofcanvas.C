@@ -57,6 +57,7 @@ GhostOOFCanvas::GhostOOFCanvas()
     exposed(false),
     rendered(false),
     axes_showing(false),
+    deactivated(false),
     render_window(vtkSmartPointer<vtkXOpenGLRenderWindow>::New()),
     renderer(vtkSmartPointer<vtkRenderer>::New()),
     axes(vtkSmartPointer<vtkAxesActor>::New()),
@@ -126,8 +127,10 @@ void GhostOOFCanvas::toggleAxes(bool show) {
 
 void GhostOOFCanvas::render() {
   // TODO OPT: Why is this called so often, for example, after Skeleton
-  // refinement?  Does it matter? 
+  // refinement?  Does it matter?
   assert(mainthread_query());
+  if(deactivated)
+    return;
   if(exposed) {
     if(contourmap_requested && contour_layer!=0 && !contourmap_showing) {
       renderer->AddViewProp(contourMapActor);
@@ -141,7 +144,7 @@ void GhostOOFCanvas::render() {
     renderLock.acquire();
     try {
       // oofcerr << "GhostOOFCanvas::render: " << this << std::endl;
-      render_window->Render(); 
+      render_window->Render();
     }
     catch(...) {
       renderLock.release();
@@ -149,6 +152,13 @@ void GhostOOFCanvas::render() {
     }
     renderLock.release();
   }
+}
+
+void GhostOOFCanvas::deactivate() {
+  // deactivate() suppresses redrawing.  It should be called at the
+  // start of the graphics window shut down sequence.
+  oofcerr << "GhostOOFCanvas::deactivate: " << this << std::endl;
+  deactivated = true;
 }
 
 void GhostOOFCanvas::newLayer(OOFCanvasLayerBase *layer) {
@@ -689,7 +699,7 @@ Coord *GhostOOFCanvas::findClickedPositionOnActor(const Coord *click,
     throw ErrClickError();
   }
   return position;
-}
+} // end GhostOOFCanvas::findClickedPositionOnActor
 
 
 
@@ -792,13 +802,12 @@ vtkSmartPointer<vtkActor> GhostOOFCanvas::findClickedActor(const Coord *click,
     throw ErrClickError();
   }
   return pickedActor;
-}
+} // end GhostOOFCanvas::findClickedActor
 
 
 
-vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(const Coord *click,
-								      const View *view, 
-								      OOFCanvasLayer *layer)
+vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
+	      const Coord *click, const View *view, OOFCanvasLayer *layer)
 {
   // Returns a vtkActorCollection containing the actors that have been
   // clicked upon in a layer for which get_pickable_actors() is
@@ -901,7 +910,7 @@ vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(const Coor
     throw ErrClickError();
   }
   return pickedActors;
-}
+} // end GhostOOFCanvas::findClickedActors
 
 
 
@@ -1480,8 +1489,6 @@ View *GhostOOFCanvas::get_view() const {
     vue->suppressClipOn();
   return vue;
 }
-
-typedef std::set<ClippingPlane> ClippingPlaneSet;
 
 View *GhostOOFCanvas::set_view(const View *view, bool clip) {
   View *oldView = 0;

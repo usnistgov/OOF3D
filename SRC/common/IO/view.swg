@@ -51,6 +51,12 @@ public:
   void suppressClipOff();
   bool suppressedClip();
   bool equiv(View&);
+  // When getClipPlane is called in Python, care must be taken to
+  // ensure that the ClippingPlane returned does not outlive the View
+  // that's returning it.  Views returned by GhostOOFCanvas::get_view
+  // are %new'd, and Python will destroy them and the ClippingPlanes
+  // that they contain.  Planes that need to stick around should be
+  // cloned.
   const ClippingPlane &getClipPlane(unsigned int);
   %addmethods {
     %new View *clone() {

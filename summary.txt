@@ -1,0 +1,82 @@
+
+Code in common/IO is for things that have to be present even if the
+GUI is not running.  Anything that actually interacts with the GUI
+windows and widgets is in common/IO/GUI.
+
+Since session logs can be recorded with the GUI and replayed without
+it, many classes are split between common/IO and common/IO/GUI.  A
+base class in common/IO will define methods that are redefined in
+common/IO/GUI.  The class in common/IO will store data and manipulate
+it via menu commands, and the related class in common/IO/GUI will
+display the data graphically and execute menu commands interactively.
+
+The vtk objects are actually created even when the GUI is not running,
+so they're in common/IO.
+
+--------------
+
+common/IO/GUI/gfxwindow3D.py
+  GfxWindow3D is the class for the graphics window.
+  GfxWindow3D.mouseHandler is set to an instance of a MouseHandler
+  subclass, which controls how mouse clicks are handled.
+
+common/IO/GUI/gfxwindowbase.py
+  Base class for GfxWindow3D.
+  GUI versions of menu callbacks from ghostgfxwindow.py.
+
+common/IO/ghostgfxwindow.py
+  Non-gui back end for gfxwindow.
+  Stores and manages vtk layers.
+  Defines general gfx window menu items.
+
+common/IO/display.py
+  DisplayMethod base class.  Each graphics layer is a DisplayMethod of
+  some sort.  DisplayMethod is a high level python representation --
+  what the user interacts with..
+
+common/IO/clipplaneclickanddragdisplay.py
+  DisplayMethod subclass that draws the clipping plane widget.
+
+common/IO/voxelregionselectiondisplay.py
+  Analog of clipplaneclickanddragmousehandler.py for selecting
+  rectangular regions of voxel.
+  
+common/IO/canvaslayers.*
+  The low level C++ code for graphics layers.  Most of the vtk calls
+  are here.  The clipping widget is drawn by the PlaneAndArrowLayer.
+
+common/IO/GUI/mousehandler.py
+  Base class for mousehandlers.  There's not much in it.
+
+common/IO/GUI/oofcanvas3D.*
+  OOFCanvas3D is the class for the drawing area in the graphics
+  window.  It generates the events handled by the mousehandler.
+  
+common/IO/GUI/viewertoolbox3dGUI.py
+  ClipPlaneClickAndDragMouseHandler is the MouseHandler subclass that
+  controls the clipping widget.
+
+common/IO/viewertoolbox.py
+  Menu items for 3D view manipulation.
+
+common/IO/view.*
+  Defines the View object which stores the clipping planes, camera
+  position, etc.
+
+
+----------------
+
+General Infrastructure 
+
+common/IO/oofmenu.py
+common/IO/parameter.py
+  Classes for menu items and parameters.
+
+common/switchboard.*
+   Message passing between modules.  
+
+-------------------
+
+vtk 5.10 documentation
+
+http://www.vtk.org/doc/release/5.10/html/annotated.html
