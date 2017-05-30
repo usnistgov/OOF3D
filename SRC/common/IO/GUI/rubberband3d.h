@@ -57,6 +57,11 @@ public:
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// TODO: When we get 3D rubberbands working, there should be an
+// intermediate base class for all subclasses except NoRubberBand, so
+// that NoRubberBand doesn't have to define the vtkActor and
+// vtkDataSetMapper.
+
 class NoRubberBand : public RubberBand {
 protected:
   virtual void draw() {};
