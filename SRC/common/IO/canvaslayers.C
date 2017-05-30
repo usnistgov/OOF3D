@@ -291,7 +291,8 @@ PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas,
   // planeSource->SetNormal(1, 0, 0);
   // planeSource->Push(-0.001);
 
-  planeSource->SetCenter(0, 0, 0);
+  planeSource->SetCenter(arrowParity*0.001, 0, 0);
+  //planeSource->SetCenter(0, 0, 0);  
   planeSource->SetXLength(0.001);
   planeSource->SetYLength(1.0);
   planeSource->SetZLength(1.0);

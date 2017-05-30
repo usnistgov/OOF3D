@@ -43,6 +43,16 @@ ndigits = 10
 ## TODO: When a clipping plane is set using Angles, it should stay
 ## in Angles after it's been edited by the plane and arrow widget.
 
+## TODO: When the parameter for the PlaneAndArrowLayer are modified,
+## the layer disappears until the clipping plane is deselected and
+## reselected in the list.
+
+## TODO: The plane in the PlaneAndArrowLayer is drawn in the wrong color.
+
+## TODO: If the arrow in the PlaneAndArrowLayer is ctrl-dragged to a
+## new position, a second plane is selected, and the first plane is
+## reselected, the new arrow position is lost.
+
 ## TODO: Continuous rotation mode.  Set angular velocity and axis
 ## direction.
 
@@ -1129,8 +1139,8 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
                 # plane, so it is assumed that if the user clicked on
                 # the arrow through the plane, the user still intended
                 # to select the arrow, and not the plane.  This makes
-                # some sense so long as the plane is rendered opaque
-                # (so that the arrow can be seen through it); the only
+                # some sense so long as the plane is translucent (so
+                # that the arrow can be seen through it); the only
                 # time this would not be the case is if the
                 # plane_opacity setting for self.layer were set to
                 # 1.0.
