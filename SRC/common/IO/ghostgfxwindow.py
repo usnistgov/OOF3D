@@ -942,8 +942,8 @@ class GhostGfxWindow:
         self.defaultLayerCreated = {}
         self.sensitize_menus()
 
-        if not clone:
-            self.createPredefinedLayers()
+        # if not clone:
+        #     self.createPredefinedLayers()
 
         # Switchboard callbacks.  Keep a list of them so that they can
         # all be removed when the window is closed.

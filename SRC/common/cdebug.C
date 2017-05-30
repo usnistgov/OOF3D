@@ -218,3 +218,11 @@ void spinCycle(int nCycles) {
   }
   progress->finish();
 }
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+#include <vtkDebugLeaks.h>
+
+void vtkLeakCheck() {
+  vtkDebugLeaks::PrintCurrentLeaks();
+}

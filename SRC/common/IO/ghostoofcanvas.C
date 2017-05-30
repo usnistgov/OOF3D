@@ -43,6 +43,7 @@
 #include <vtkVolume.h>
 #include <vtkVolumeCollection.h>
 #include <vtkVolumeProperty.h>
+#include <vtkDebugLeaks.h>
 
 #include <vtkPropCollection.h>
 #include <vtkAssemblyPath.h>
@@ -75,6 +76,7 @@ GhostOOFCanvas::GhostOOFCanvas()
   // mode the window won't ever be displayed.  The size must be set or
   // findClickedCell_, et al, will seg fault.
   render_window->SetSize(1000, 1000);
+  render_window->DebugOn();
 
   // Some of these initial settings will be overwritten by
   // GfxWindow3D.postinitialize().

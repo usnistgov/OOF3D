@@ -15,7 +15,7 @@ import gtk
 from ooflib.SWIG.common import guitop
 from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.common.IO.GUI import oofcanvas3d 
-from ooflib.SWIG.common.IO.GUI import rubberband3d as rubberband
+#from ooflib.SWIG.common.IO.GUI import rubberband3d as rubberband
 from ooflib.common import debug
 from ooflib.common import mainthread
 from ooflib.common import utils
@@ -52,7 +52,7 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         self.zoomed = 0
         self.settings = ghostgfxwindow.GfxSettings()
         self.mouseHandler = mousehandler.nullHandler # doesn't do anything
-        self.rubberband = rubberband.NoRubberBand()
+        # self.rubberband = rubberband.NoRubberBand()
 
         # Build all the GTK objects for the interior of the box.  These
         # actually get added to the window itself after the SubWindow
@@ -371,8 +371,9 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
             self.releaseGfxLock()
 
     def setRubberband(self, rubberband):
-        self.rubberband = rubberband
-        self.oofcanvas.set_rubberband(rubberband)
+        pass
+        # self.rubberband = rubberband
+        # self.oofcanvas.set_rubberband(rubberband)
        
     def marginCB(self, menuitem, fraction):
         ghostgfxwindow.GhostGfxWindow.marginCB(self, menuitem, fraction)

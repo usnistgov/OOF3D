@@ -884,3 +884,12 @@ debugmenu.addItem(OOFMenuItem(
     'DoubleVec',
     callback=_doublevectest,
     secret=not debug.debug()))
+
+def _vtkLeakCheck(menuitem):
+    cdebug.vtkLeakCheck()
+
+debugmenu.addItem(OOFMenuItem(
+    'vtkLeakCheck',
+    callback=_vtkLeakCheck,
+    secret = not debug.debug(),
+    help="For debugging"))
