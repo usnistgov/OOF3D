@@ -40,10 +40,15 @@ import math
 
 ndigits = 10
 
-## TODO: Change sense of "Invert All" ?
+## TODO: When a clipping plane is set using Angles, it should stay
+## in Angles after it's been edited by the plane and arrow widget.
 
 ## TODO: Continuous rotation mode.  Set angular velocity and axis
 ## direction.
+
+## TODO: Rocker mode: rock back and forth on an axis.  Set axis
+## direction, frequency, and amplitude.
+
 THRESHOLD = 0.4
 
 ## TODO 3.1: Move axis parameters from the Settings menu to a new
@@ -938,7 +943,7 @@ viewertoolbox.ViewNameParameter.makeWidget = _makeViewWidget
 # ClipPlaneMouseHandler is the mouseHandler for
 # click-and-drag editing of clipping planes.
 
-# TODO: This might not work in unthreaded mode. See if something can be
+# TODO: This does not work in unthreaded mode. See if something can be
 # done about this.
 
 class ClipPlaneMouseHandler(mousehandler.MouseHandler):
@@ -1198,6 +1203,13 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
             ## TODO: Update the parameters of the plane in clippingListView
             
         elif (self.operation == 'translate in plane'):
+            # NOTE: Sometimes this *appears* to leave the plane and
+            # arrow widget in an incorrect location, in which the
+            # widget's plane is offset from the actual clipping plane.
+            # This is a trick of perspective due to a lack of depth
+            # cues.  The planes do agree, but the square representing
+            # the widget's plane does not intersect the intersection
+            # of the plane with the Microstructure.
             mouse_coords = mainthread.runBlock(
                 self.gfxwindow.oofcanvas.display2Physical, (viewobj, x, y))
             ray_to_mouse = mainthread.runBlock(

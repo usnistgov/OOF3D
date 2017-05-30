@@ -233,9 +233,29 @@ vtkSmartPointer<vtkTableBasedClipDataSet> getClipper(
   vtkSmartPointer<vtkTableBasedClipDataSet> clipper =
     vtkSmartPointer<vtkTableBasedClipDataSet>::New();
   clipper->SetClipFunction(vplanes);
-  if(canvas->invertedClipping() || vplanes->GetNumberOfPlanes() == 0) {
-    clipper->InsideOutOn();
-  }
+
+  // From the man page for vtkTableBasedClipDataSet:::SetInsideOut():
+
+  // Set/Get the InsideOut flag. With this flag off, a vertex is
+  // considered inside (the implicit function or the isosurface) if
+  // the (function or scalar) value is greater than IVAR Value. With
+  // this flag on, a vertex is considered inside (the implicit
+  // function or the isosurface) if the (function or scalar) value is
+  // less than or equal to IVAR Value. This flag is off by default.
+
+  // From the man page for vtkPlanes:
+
+  // The function value is the closest first order distance of a point
+  // to the convex region defined by the planes. ... Note that the
+  // normals must point outside of the convex region. Thus, a negative
+  // function value means that a point is inside the convex region.
+
+  // The natural definition for OOF is that the *inside* of the convex
+  // region should be displayed, and not clipped away.  Therefore all
+  // calls to SetInsideOut need to have an extra "!".
+
+  clipper->SetInsideOut(!(canvas->invertedClipping() ||
+			  (vplanes->GetNumberOfPlanes() == 0)));
   return clipper;
 }
 
@@ -243,7 +263,8 @@ vtkSmartPointer<vtkTableBasedClipDataSet> getClipper(
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas,
-				       const std::string &nm)
+				       const std::string &nm,
+				       bool inverted)
   : OOFCanvasLayer(canvas, nm),
     planeSource(vtkSmartPointer<vtkCubeSource>::New()),
     arrowSource(vtkSmartPointer<vtkArrowSource>::New()),
@@ -258,7 +279,8 @@ PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas,
     planeMapper(vtkSmartPointer<vtkPolyDataMapper>::New()),
     arrowMapper(vtkSmartPointer<vtkPolyDataMapper>::New()),
     planeActor(vtkSmartPointer<vtkActor>::New()),
-    arrowActor(vtkSmartPointer<vtkActor>::New())
+    arrowActor(vtkSmartPointer<vtkActor>::New()),
+    arrowParity(inverted? -1 : 1)
 {
   // Constructor for the PlaneAndArrowLayer class.  Creates
   // and joins together the pre-render portions of the vtk pipeline
@@ -291,15 +313,14 @@ PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas,
   planeTransform->Concatenate(rotation);
   planeTransform->Concatenate(scaling);
 
-  // Scales the arrow by one half the sidelength of the plane, with
-  // the (-) sign causing the arrow to point in the direction we want
-  // it to--that is, into to the otherwise empty region of the OOF3D
-  // canvas which has been clipped away by the clipping plane being
-  // edited. Otherwise the arrow could become hidden inside parts of
-  // 3D objects which are still visible in the unclipped region of the
-  // OOF3D canvas.
+  // Scales the arrow by one half the sidelength of the plane.
+  // arrowParity is set by the "inverted" constructor arg, which
+  // should be chosen so that the arrow is visible.  When using this
+  // widget to define a clipping plane, for example, the arrow should
+  // be on the clipped (hidden) side of the plane.
   arrowScaling->Identity();
-  arrowScaling->Scale(-0.5, -0.5, -0.5);
+  double s = arrowParity*0.5;
+  arrowScaling->Scale(s, s, s);
 
   arrowTransform->Identity();
   arrowTransform->Concatenate(planeTransform);
@@ -378,14 +399,15 @@ void PlaneAndArrowLayer::set_arrowTipRadius(double radius) {
 
 void PlaneAndArrowLayer::set_arrowLength(double length) {
   // Sets the arrow's length to (length * (the sidelength of the
-  // plane)), with the (-) sign causing the arrow to point in the
+  // plane)), with the (+) sign causing the arrow to point in the
   // direction we want it to--that is, into to the otherwise empty
   // region of the OOF3D canvas which has been clipped away by the
   // clipping plane being edited. Otherwise the arrow could become
   // hidden in the unclipped parts of 3D objects which are still
   // visible in the unclipped region of the OOF3D canvas.
   arrowScaling->Identity();
-  arrowScaling->Scale(-length, -length, -length);
+  double s = arrowParity*length;
+  arrowScaling->Scale(s, s, s);
 }
 
 void PlaneAndArrowLayer::set_arrowColor(const CColor& color) {
@@ -515,7 +537,8 @@ void PlaneAndArrowLayer::set_scale(double scale) {
   // arrowScaling transform, which is changed by the function
   // set_arrowScale(double).
   scaling->Identity();
-  scaling->Scale(scale, scale, scale);
+  double s = arrowParity*scale;
+  scaling->Scale(s, s, s);
   setModified();
 }
 
@@ -563,6 +586,8 @@ void PlaneAndArrowLayer::set_center(const Coord3D *position) {
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// TODO: Add arrowParity, as in PlaneAndArrowLayer.
 
 BoxAndArrowLayer::BoxAndArrowLayer(GhostOOFCanvas *canvas, const std::string &nm)
   : OOFCanvasLayer(canvas, nm),
@@ -963,7 +988,7 @@ void SimpleCellLayer::stop_clipping() {
 }
 
 void SimpleCellLayer::set_clip_parity(bool inverted) {
-  clipper->SetInsideOut(inverted);
+  clipper->SetInsideOut(!inverted);
 }
 
 void SimpleCellLayer::addCell(VTKCellType type,
@@ -1098,7 +1123,7 @@ void SimpleWireframeCellLayer::stop_clipping() {
 }
 
 void SimpleWireframeCellLayer::set_clip_parity(bool inverted) {
-  clipper->SetInsideOut(inverted);
+  clipper->SetInsideOut(!inverted);
 }
 
 const std::string &SimpleWireframeCellLayer::classname() const {
@@ -1201,7 +1226,7 @@ void GlyphedLayer::stop_clipping() {
 
 void GlyphedLayer::set_clip_parity(bool inverted) {
   SimpleCellLayer::set_clip_parity(inverted);
-  glyphClipper->SetInsideOut(inverted);
+  glyphClipper->SetInsideOut(!inverted);
 }
 
 //=\\=//=\\=//=\\=//=\\=//
@@ -1564,7 +1589,7 @@ void ImageCanvasLayer::stop_clipping() {
 
 void ImageCanvasLayer::set_clip_parity(bool inverted) {
   pipelineLock.acquire();
-  clipper->SetInsideOut(inverted);
+  clipper->SetInsideOut(!inverted);
   pipelineLock.release();
 }
 

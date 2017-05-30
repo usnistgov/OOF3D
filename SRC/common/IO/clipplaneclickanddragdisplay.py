@@ -83,9 +83,10 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
                 "view almost changed", self.updateScale)
         ]
 
-        # Create an object of class PlaneAndArrowLayer.
+        # Create an object of class PlaneAndArrowLayer.  The "True"
+        # sets the parity of the arrow.
         return canvaslayers.PlaneAndArrowLayer(self.gfxwindow.oofcanvas,
-                                             "PlaneAndArrow")
+                                               "PlaneAndArrow", True)
 
     def arrowSign(self, plane):
         # The arrow is flipped if the plane is flipped or if all
