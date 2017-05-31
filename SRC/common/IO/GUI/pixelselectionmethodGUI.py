@@ -151,7 +151,9 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         ## window should share one subthread.  Or all mouse handlers
         ## in all gfx windows should share one subthread.  See TODO in
         ## viewertoolbox3dGUI.py
-        self.eventThread = subthread.daemon(self.processEvents_subthread)
+        debug.fmsg("**** NOT CREATING PIXEL SELECTION THREAD ****")
+        self.eventThread = subthread.execute(self.processEvents_subthread)
+        #debug.fmsg("Created PixelSelectionMethod thread", self.eventThread.id())
         
     def __call__(self, params, scope=None, name=None, verbose=False):
         # This function creates a VoxelRegionSelectWidget and

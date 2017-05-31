@@ -42,6 +42,10 @@ class MiniThread(threading.Thread):
 
     def immortalize(self):
         self.immortal = True
+
+    def id(self):
+        if self.threadstate is not None:
+            return self.threadstate.id()
         
     def run(self):
         miniThreadManager.add(self)
@@ -68,6 +72,7 @@ class MiniThread(threading.Thread):
 
     def stop_it(self):
         if not self.immortal:
+            debug.fmsg("Canceling", self.threadstate.id())
             threadstate.cancelThread(self.threadstate)
 
 def execute(function, args=(), kwargs={}):

@@ -242,8 +242,10 @@ void EventLogSLock::handleNewEvents_acquire() {
 	pthread_cond_wait(&condition, &localLock);
       }
       catch (...) {
-	std::cerr << "EventLogSLock::handleNewEvents_acquire: "
-		  << "Caught an exception in pthread_cond_wait!" << std::endl;
+	std::cerr << "EventLogSLock::handleNewEvents_acquire:"
+		  << " Caught an exception in pthread_cond_wait!"
+		  << " this=" << this << " thread=" << findThreadNumber()
+		  << std::endl;
 	throw;
       };
 #ifdef DEBUG
