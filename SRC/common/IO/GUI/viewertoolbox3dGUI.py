@@ -1031,7 +1031,7 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
 
         # pthread_cancel, used by subthread to stop all threads,
         # doesn't work on Mac, so use a daemon thread.
-        self.eventThread = subthread.daemon(self.processEvents_subthread)
+        self.eventThread = subthread.execute(self.processEvents_subthread)
         debug.fmsg("Created ViewerToolbox thread", self.eventThread.id())
         
     def up(self, x, y, shift, ctrl):
@@ -1275,7 +1275,7 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
                 self.datalock.handleNewEvents_release()
             debug.fmsg("got event")
             if eventtype == 'exit':
-                return;
+                return
 
             # Acquire the gfxlock so that we can be sure that the
             # gfxwindow is not in the middle of being changed or
@@ -1305,6 +1305,8 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
             self.eventlist = [('exit', None, None, None, None)]
         finally:
             self.datalock.logNewEvent_release()
+        self.eventThread.join()
+        debug.fmsg("joined")
 
     def acceptEvent(self, eventtype):
         return (eventtype == 'down' or

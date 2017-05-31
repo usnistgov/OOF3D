@@ -52,7 +52,6 @@ class MiniThread(threading.Thread):
         try:
             try:
                 self.threadstate = threadstate.ThreadState()
-#                 debug.fmsg("assigning excepthook, function=", self.function)
                 hook = excepthook.assign_excepthook(excepthook.OOFexceptHook())
                 self.function(*self.args, **self.kwargs)
                 excepthook.remove_excepthook(hook)
@@ -136,7 +135,7 @@ class MiniThreadManager:
             self.lock.release()
         for minithread in threadlist:
             minithread.stop_it()
-            
+
     def waitForAllThreads(self):
         threadlist = []
         self.lock.acquire()
