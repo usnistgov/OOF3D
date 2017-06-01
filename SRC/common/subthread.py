@@ -42,13 +42,16 @@ class MiniThread(threading.Thread):
 
     def immortalize(self):
         self.immortal = True
+
+    def id(self):
+        if self.threadstate is not None:
+            return self.threadstate.id()
         
     def run(self):
         miniThreadManager.add(self)
         try:
             try:
                 self.threadstate = threadstate.ThreadState()
-#                 debug.fmsg("assigning excepthook, function=", self.function)
                 hook = excepthook.assign_excepthook(excepthook.OOFexceptHook())
                 self.function(*self.args, **self.kwargs)
                 excepthook.remove_excepthook(hook)
@@ -68,6 +71,7 @@ class MiniThread(threading.Thread):
 
     def stop_it(self):
         if not self.immortal:
+            debug.fmsg("Canceling", self.threadstate.id())
             threadstate.cancelThread(self.threadstate)
 
 def execute(function, args=(), kwargs={}):
@@ -86,6 +90,9 @@ def execute_immortal(function, args=(), kwargs={}):
         return littlethread
     else:
         function(*args, **kwargs)
+
+# A daemon thread doesn't have to be explicitly killed in order to
+# quit the program.
 
 def daemon(function, args=(), kwargs={}):
     if thread_enable.query():
@@ -131,7 +138,7 @@ class MiniThreadManager:
             self.lock.release()
         for minithread in threadlist:
             minithread.stop_it()
-            
+
     def waitForAllThreads(self):
         threadlist = []
         self.lock.acquire()

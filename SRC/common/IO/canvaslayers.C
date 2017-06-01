@@ -287,11 +287,15 @@ PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas,
   // that are need in order to display a plane, along with an arrow
   // that represents the normal vector of that plane.
 
+  // TODO: The plane isn't drawn in the correct color when inverted is
+  // false.  
+
   // If planeSource were a vtkPlaneSource and not a vtkCubeSource:
   // planeSource->SetNormal(1, 0, 0);
   // planeSource->Push(-0.001);
 
-  planeSource->SetCenter(0, 0, 0);
+  planeSource->SetCenter(arrowParity*0.001, 0, 0);
+  //planeSource->SetCenter(0, 0, 0);  
   planeSource->SetXLength(0.001);
   planeSource->SetYLength(1.0);
   planeSource->SetZLength(1.0);

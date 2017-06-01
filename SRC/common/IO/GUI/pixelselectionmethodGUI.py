@@ -146,12 +146,11 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         # Indicates whether the mouse has been clicked down or not.
         self.downed = False
 
-        # Start the event-processing subthread.
-        ## TODO: All PixelSelectionMethod mouse handlers in one gfx
-        ## window should share one subthread.  Or all mouse handlers
-        ## in all gfx windows should share one subthread.  See TODO in
-        ## viewertoolbox3dGUI.py
-        self.eventThread = subthread.daemon(self.processEvents_subthread)
+        # Start the event-processing subthread.  See the comment in
+        # viewertoolbox3dGUI.py about why execute_immortal is used
+        # here.
+        self.eventThread = subthread.execute_immortal(
+            self.processEvents_subthread)
         
     def __call__(self, params, scope=None, name=None, verbose=False):
         # This function creates a VoxelRegionSelectWidget and
@@ -278,7 +277,9 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
                 (eventtype, x, y, shift, ctrl) = self.eventlist.pop(0)
             finally:
                 self.datalock.handleNewEvents_release()
-
+            if eventtype == "exit":
+                return
+            
             # Acquire the gfxlock so that we can be sure that the
             # gfxwindow is not in the middle of being changed or
             # closed at this time.
@@ -294,7 +295,13 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
                 self.gfxwindow.releaseGfxLock()
 
     def cancel(self):
-        self.eventlist = []
+        self.datalock.logNewEvent_acquire()
+        try:
+            ## TODO: See TODO in similar code in viewertoolbox3dGUI.py.
+            self.eventlist = [('exit', None, None, None, None)]
+        finally:
+            self.datalock.logNewEvent_release()
+        self.eventThread.join()
         
     def acceptEvent(self, eventtype):
         return (eventtype == 'down' or

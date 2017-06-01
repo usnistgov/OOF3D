@@ -37,11 +37,22 @@ from ooflib.common.IO.GUI import tooltips
 import gtk
 import gobject
 import math
+import sys
 
 ndigits = 10
 
 ## TODO: When a clipping plane is set using Angles, it should stay
 ## in Angles after it's been edited by the plane and arrow widget.
+
+## TODO: When the parameter for the PlaneAndArrowLayer are modified,
+## the layer disappears until the clipping plane is deselected and
+## reselected in the list.
+
+## TODO: The plane in the PlaneAndArrowLayer is drawn in the wrong color.
+
+## TODO: If the arrow in the PlaneAndArrowLayer is ctrl-dragged to a
+## new position, a second plane is selected, and the first plane is
+## reselected, the new arrow position is lost.
 
 ## TODO: Continuous rotation mode.  Set angular velocity and axis
 ## direction.
@@ -1012,11 +1023,21 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
         # self.canceled = False
 
         # Process all mouse events in a subthread.
-        ## TODO: Can we have just one daemon thread, shared by all
-        ## toolboxes in all graphics windows?  One per toolbox seems
-        ## excessive.  Have a shared eventlist, and store the toolbox
-        ## as part of the event.
-        self.eventThread = subthread.daemon(self.processEvents_subthread)
+        ## TODO: Can we have just one thread, shared by all toolboxes
+        ## in all graphics windows?  One per toolbox seems excessive.
+        ## Have a shared eventlist, and store the toolbox as part of
+        ## the event.
+
+        # This thread is shut down when the ClipPlaneMouseHandler's
+        # cancel method is called which happens when the window is
+        # closed.  It's started with execute_immortal instead of just
+        # execute to avoid a race condition at shutdown time, in which
+        # the window can be closing at the same time as the
+        # miniThreadManager is shutting down threads.  Threads started
+        # with execute_immortal aren't shut down by the
+        # miniThreadManager.
+        self.eventThread = subthread.execute_immortal(
+            self.processEvents_subthread)
         
     def up(self, x, y, shift, ctrl):
         self.datalock.logNewEvent_acquire()
@@ -1129,8 +1150,8 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
                 # plane, so it is assumed that if the user clicked on
                 # the arrow through the plane, the user still intended
                 # to select the arrow, and not the plane.  This makes
-                # some sense so long as the plane is rendered opaque
-                # (so that the arrow can be seen through it); the only
+                # some sense so long as the plane is translucent (so
+                # that the arrow can be seen through it); the only
                 # time this would not be the case is if the
                 # plane_opacity setting for self.layer were set to
                 # 1.0.
@@ -1256,6 +1277,8 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
                 (eventtype, x, y, shift, ctrl) = self.eventlist.pop(0);
             finally:
                 self.datalock.handleNewEvents_release()
+            if eventtype == 'exit':
+                return
 
             # Acquire the gfxlock so that we can be sure that the
             # gfxwindow is not in the middle of being changed or
@@ -1276,7 +1299,15 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
         # cancelled, but it should stop processing data.  If it
         # weren't a daemon, the program wouldn't exit until the thread
         # were killed.
-        self.eventlist = []
+        self.datalock.logNewEvent_acquire()
+        try:
+            # TODO: eventlist should be a list of objects, so that we
+            # don't have to assume that it's a tuple of length 5 when
+            # we don't always need 5 values.
+            self.eventlist = [('exit', None, None, None, None)]
+        finally:
+            self.datalock.logNewEvent_release()
+        self.eventThread.join()
 
     def acceptEvent(self, eventtype):
         return (eventtype == 'down' or

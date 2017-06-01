@@ -157,7 +157,6 @@ void GhostOOFCanvas::render() {
 void GhostOOFCanvas::deactivate() {
   // deactivate() suppresses redrawing.  It should be called at the
   // start of the graphics window shut down sequence.
-  oofcerr << "GhostOOFCanvas::deactivate: " << this << std::endl;
   deactivated = true;
 }
 
