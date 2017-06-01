@@ -50,5 +50,5 @@ def shutdown(exitstatus):
     gui = guitop.top()
     if gui:
         gui.stop()
-        gui.destroy()
+        gui.destroy() 
     ooflib.common.quit.shutdown(exitstatus)

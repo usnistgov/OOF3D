@@ -69,6 +69,7 @@ def cleanup(shutdownfn, exitstatus):
     # Wait on a subthread for threads to finish, then call shutdownfn
     # on the main thread.  When called from the GUI callback for the
     # Quit command, shutdownfn is common.IO.GUI.quit.shutdown.
+
     subthread.execute_immortal(waitForThreads, (shutdownfn, exitstatus))
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#

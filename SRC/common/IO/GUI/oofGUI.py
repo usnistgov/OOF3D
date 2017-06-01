@@ -273,9 +273,6 @@ class oofGUI(widgetscope.WidgetScope):
 
         debug.mainthreadTest()
 
-        for window in gfxmanager.gfxManager.getAllWindows():
-            gfxmanager.gfxManager.closeWindow(window)
-          
         from ooflib.common.IO.GUI import console
         if console.current_console:
             console.current_console.gtk.destroy()

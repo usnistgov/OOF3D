@@ -91,6 +91,9 @@ def execute_immortal(function, args=(), kwargs={}):
     else:
         function(*args, **kwargs)
 
+# A daemon thread doesn't have to be explicitly killed in order to
+# quit the program.
+
 def daemon(function, args=(), kwargs={}):
     if thread_enable.query():
         littlethread = MiniThread(function, args, kwargs)

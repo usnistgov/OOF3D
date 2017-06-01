@@ -555,7 +555,6 @@ To deselect a plane, Ctrl+Click the plane in the list."""
         self.gfxwindow().setMouseHandler(self.clipMouseHandler)
 
     def close(self):
-        debug.fmsg("closing ViewerToolbox3DGUI")
         self.clipMouseHandler.cancel()
         map(switchboard.removeCallback, self.sbcallbacks)
         toolboxGUI.GfxToolbox.close(self)
@@ -1029,10 +1028,16 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
         ## Have a shared eventlist, and store the toolbox as part of
         ## the event.
 
-        # pthread_cancel, used by subthread to stop all threads,
-        # doesn't work on Mac, so use a daemon thread.
-        self.eventThread = subthread.execute(self.processEvents_subthread)
-        debug.fmsg("Created ViewerToolbox thread", self.eventThread.id())
+        # This thread is shut down when the ClipPlaneMouseHandler's
+        # cancel method is called which happens when the window is
+        # closed.  It's started with execute_immortal instead of just
+        # execute to avoid a race condition at shutdown time, in which
+        # the window can be closing at the same time as the
+        # miniThreadManager is shutting down threads.  Threads started
+        # with execute_immortal aren't shut down by the
+        # miniThreadManager.
+        self.eventThread = subthread.execute_immortal(
+            self.processEvents_subthread)
         
     def up(self, x, y, shift, ctrl):
         self.datalock.logNewEvent_acquire()
@@ -1270,10 +1275,8 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
             self.datalock.handleNewEvents_acquire()
             try:
                 (eventtype, x, y, shift, ctrl) = self.eventlist.pop(0);
-                debug.fmsg("eventtype=", eventtype)
             finally:
                 self.datalock.handleNewEvents_release()
-            debug.fmsg("got event")
             if eventtype == 'exit':
                 return
 
@@ -1296,7 +1299,6 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
         # cancelled, but it should stop processing data.  If it
         # weren't a daemon, the program wouldn't exit until the thread
         # were killed.
-        debug.fmsg()
         self.datalock.logNewEvent_acquire()
         try:
             # TODO: eventlist should be a list of objects, so that we
@@ -1306,7 +1308,6 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
         finally:
             self.datalock.logNewEvent_release()
         self.eventThread.join()
-        debug.fmsg("joined")
 
     def acceptEvent(self, eventtype):
         return (eventtype == 'down' or
