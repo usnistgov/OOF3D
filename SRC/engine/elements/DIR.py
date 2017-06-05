@@ -40,10 +40,12 @@ swigpyfiles = ['quad4.spy', 'quad4_8.spy', 'quad8.spy', 'quad8_4.spy',
                'tri3.spy', 'tri3_6.spy', 'tri6.spy', 'tri6_3.spy']
 
 if DIM_3:
-    cfiles.extend(['tet4.C','tet4shapefunction.C'])
-    hfiles.extend(['tet4shapefunction.h'])
-    swigfiles.extend(['tet4.swg'])
-    swigpyfiles.extend(['tet4.spy'])
+    cfiles.extend(['tet4.C','tet4shapefunction.C',
+                   'tet10.C', 'tet10shapefunction.C'])
+    hfiles.extend(['tet4shapefunction.h',
+                   'tet10shapefunction.h'])
+    swigfiles.extend(['tet4.swg', 'tet10.swg'])
+    swigpyfiles.extend(['tet4.spy', 'tet10.spy'])
 
 pyfiles = ['initialize.py']
 
