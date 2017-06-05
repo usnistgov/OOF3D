@@ -249,6 +249,11 @@ void OOFCanvas3D::set_mouse_callback(PyObject *callback) {
   //        b:  an int, the mouse button number
   //        s:  an int, 0 = no shift key, 1 = shift key
   //        c:  an int, 0 = no control key, 1 = control key
+
+  // TODO: Construct and return different types of objects for
+  // different types of events.  Then the scroll direction wouldn't
+  // have to be returned in the button number, as it is now.
+  
   mouse_callback = callback;
   PyGILState_STATE pystate = acquirePyLock();
   Py_XINCREF(callback);
