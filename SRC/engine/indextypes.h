@@ -48,6 +48,11 @@ std::ostream &operator<<(std::ostream &os, const IndexType<N> &i) {
   return os << int(i);
 }
 
+template <int N, int M>
+bool operator!=(const IndexType<N> &x, const IndexType<M> &y) {
+  return int(x) != int(y);
+}
+
 // typedef IndexType<0> NodeIndex;
 typedef IndexType<1> SpaceIndex;
 typedef IndexType<2> ShapeFunctionIndex;

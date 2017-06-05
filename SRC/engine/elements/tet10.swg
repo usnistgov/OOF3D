@@ -15,9 +15,9 @@
 %module tet10
 %include "engine/typemaps.swg"
 %{
-  extern void tet10init();
+  extern void tet10_4init();
 %}
-void tet10init();
+void tet10_4init();
 
 %pragma(python) include="tet10.spy"
 

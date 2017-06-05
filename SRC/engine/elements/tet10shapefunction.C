@@ -30,7 +30,7 @@ double Tet10ShapeFunction::value(ShapeFunctionIndex i, const MasterCoord &mc)
   if(i == 2)
     return 2.0 * (mc[2] - 0.5) * mc[2];
   if(i == 3)
-    return 2.0 * (mc[3] - 0.5) * mc[3];
+    return 2.0 * (mc[0] - 0.5) * mc[0];
   if(i == 4)
     return 4.0 * (1.0 - mc[0] - mc[1] - mc[2]) * mc[1];
   if(i == 5)

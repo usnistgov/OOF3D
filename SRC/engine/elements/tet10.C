@@ -11,6 +11,7 @@
 
 #include <oofconfig.h>
 #include "engine/masterelement.h"
+#include "tet10shapefunction.h"
 #include "tet4shapefunction.h"
 #include "common/trace.h"
 
@@ -23,7 +24,7 @@ class Tet10MasterElement : public TetrahedralMaster {
 public:
   Tet10MasterElement()
     : TetrahedralMaster("TET4_10",
-			"Subparametric 10 noded tetrahedron with linear interpolation for positions and quadratic interpolation for fields", 10, 1)
+			"Subparametric 10 noded tetrahedron with linear interpolation for positions and quadratic interpolation for fields.", 10, 1)
   {
     shapefunction = new Tet10ShapeFunction(*this);
     mapfunction = new Tet4ShapeFunction(*this);
@@ -139,5 +140,5 @@ public:
 };
 
 void tet10_4init() {
-  static Tet10MasterElement m
+  static Tet10MasterElement m;
 }
