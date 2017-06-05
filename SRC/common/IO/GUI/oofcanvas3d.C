@@ -86,6 +86,7 @@ OOFCanvas3D::OOFCanvas3D()
 				       GDK_BUTTON_PRESS_MASK |
 				       GDK_BUTTON_RELEASE_MASK |
 				       GDK_KEY_PRESS_MASK |
+				       GDK_SCROLL_MASK |
 				       GDK_POINTER_MOTION_MASK |
 				       GDK_POINTER_MOTION_HINT_MASK |
 				       GDK_ENTER_NOTIFY_MASK |
@@ -245,6 +246,7 @@ void OOFCanvas3D::set_mouse_callback(PyObject *callback) {
   //    event:  a string, either 'up', 'down', or 'move'
   //        x:  x position of the event
   //        y:  y position of the event
+  //        b:  an int, the mouse button number
   //        s:  an int, 0 = no shift key, 1 = shift key
   //        c:  an int, 0 = no control key, 1 = control key
   mouse_callback = callback;
@@ -269,6 +271,7 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
   PyObject *args = 0;
   bool shift;
   bool ctrl;
+  int buttonNumber;
   // Steal the focus so that other widgets know that their turn is over.
   // gtk_widget_grab_focus(canvas);
   // Protect the Python interpreter calls from thread interference
@@ -279,9 +282,10 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
     case GDK_BUTTON_PRESS:
       shift = event->button.state & GDK_SHIFT_MASK;
       ctrl = event->button.state & GDK_CONTROL_MASK;
-      args = Py_BuildValue("sddii", "down",
+      buttonNumber = event->button.button;
+      args = Py_BuildValue("sddiii", "down",
 			   event->button.x, event->button.y, 
-			   shift, ctrl);
+			   buttonNumber, shift, ctrl);
       last_x = event->button.x;
       last_y = event->button.y;
       mousedown = true;
@@ -289,9 +293,10 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
     case GDK_BUTTON_RELEASE:
       shift = event->button.state & GDK_SHIFT_MASK;
       ctrl = event->button.state & GDK_CONTROL_MASK;
-      args = Py_BuildValue("sddii", "up",
+      buttonNumber = event->button.button;
+      args = Py_BuildValue("sddiii", "up",
 			   event->button.x, event->button.y, 
-			   shift, ctrl);
+			   buttonNumber, shift, ctrl);
       if(rubberband && rubberband->active()) {
 	rubberband->stop(renderer);
 	render();
@@ -301,9 +306,10 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
     case GDK_MOTION_NOTIFY:
       shift = event->motion.state & GDK_SHIFT_MASK;
       ctrl = event->motion.state & GDK_CONTROL_MASK;
-      args = Py_BuildValue("sddii", "move",
-			   event->motion.x, event->motion.y, 
-			   shift, ctrl);
+      buttonNumber = event->button.button;
+      args = Py_BuildValue("sddiii", "move",
+			   event->motion.x, event->motion.y,
+			   buttonNumber, shift, ctrl);
       // TODO 3.1: 3D rubberbands
       // if(mousedown && rubberband) {
       // 	double pt[3];
@@ -320,6 +326,14 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
       // 	  render();
       // 	}
       // }
+      break;
+    case GDK_SCROLL:
+      oofcerr << "OOFCanvas3D::mouse_eventCB: scroll!" << std::endl;
+      shift = event->scroll.state & GDK_SHIFT_MASK;
+      ctrl = event->scroll.state & GDK_CONTROL_MASK;
+      args = Py_BuildValue("sddiii", "scroll",
+			   event->scroll.x, event->scroll.y,
+			   event->scroll.direction, shift, ctrl);
       break;
     default:
       ;				// (compiler warning suppression)

@@ -29,13 +29,13 @@ from ooflib.common.IO.GUI import quit
 from ooflib.common.IO.GUI import subWindow
 from ooflib.common.IO.GUI import toolbarGUI
 
-# during_callback() is called (by CanvasOutput.show()) only in
-# non-threaded mode, so we don't worry about the thread-safety of a
-# global variable here.  It may not be necessary with the vtk canvas
-# at all.
-_during_callback = 0
-def during_callback():
-    return _during_callback
+# # during_callback() is called (by CanvasOutput.show()) only in
+# # non-threaded mode, so we don't worry about the thread-safety of a
+# # global variable here.  It may not be necessary with the vtk canvas
+# # at all.
+# _during_callback = 0
+# def during_callback():
+#     return _during_callback
 
 class GfxWindow3D(gfxwindowbase.GfxWindowBase):
     initial_height = 800
@@ -331,6 +331,32 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
     # def canvasConfigureCB(self, *args):
     #     gtklogger.checkpoint("canvas configured %s" % self.name)
 
+    ################################################
+
+    ## TODO: Have a dictionary of mouse handlers keyed by (button,
+    ## shift, ctrl).  Each handler knows which events ('up', 'down',
+    ## 'move') it accepts.  How to decide which handlers to remove
+    ## when new ones are installed?  Does each toolbox also need to
+    ## remove its own mouse handlers?  Should there be a stack of
+    ## handlers?
+
+    def mouseCB(self, eventtype, x, y, button, shift, ctrl):
+        debug.mainthreadTest()
+        if self.mouseHandler.acceptEvent(eventtype):
+            if eventtype == 'up':
+                self.mouseHandler.up(x,y, button, shift, ctrl)
+            elif eventtype == 'down':
+                self.mouseHandler.down(x,y, button, shift, ctrl)
+            elif eventtype == 'move':
+                # On the Mac laptop, move events seem to always have
+                # button==1.  Moves always go with the previous down,
+                # so the button is irrelevant.
+                self.mouseHandler.move(x,y, shift, ctrl)
+            elif eventtype == 'scroll':
+                debug.fmsg("scroll: direction=", button, "pos=", x, y,
+                           "shift=", shift, "ctrl=", ctrl)
+
+    
     ################################################
 
     def draw(self):
