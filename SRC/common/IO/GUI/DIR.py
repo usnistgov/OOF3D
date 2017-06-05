@@ -48,6 +48,7 @@ pyfiles = [
     'pixelPage.py',
     'pixelgroupwidget.py',
     'pixelinfoGUI.py',
+    'pixelselectparamwidgets.py'
     'pixelselecttoolboxGUI.py',
     'progressbarGUI2.py',
     'questioner.py',

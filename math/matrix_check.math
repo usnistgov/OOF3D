@@ -2,7 +2,7 @@
    $RCSfile: matrix_check.math,v $
    $Revision: 1.2 $
    $Author: reida $
-   $Date: 2003/08/26 13:21:51 $
+   $Date: 2003-08-26 13:21:51 $
             *)
 
 (* Modified from the boundary-condition prototyper, this 

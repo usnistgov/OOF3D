@@ -2,7 +2,7 @@
    $RCSfile: bounds_6node.math,v $
    $Revision: 1.3 $
    $Author: reida $
-   $Date: 2001/02/02 14:08:30 $
+   $Date: 2001-02-02 14:08:30 $
             *)
 
 (* Modification of the 4-element Mathematica code to do

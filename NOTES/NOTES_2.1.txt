@@ -2,7 +2,7 @@
 $RCSfile: NOTES_2.1.txt,v $
 $Revision: 1.4 $
 $Author: reida $
-$Date: 2006/09/27 14:13:50 $
+$Date: 2006-09-27 14:13:50 $
 
 
   Thoughts on the 2.1 version of OOF.  This file is an update of the

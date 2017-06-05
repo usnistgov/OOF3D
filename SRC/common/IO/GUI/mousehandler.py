@@ -15,7 +15,7 @@
 # nothing.
 
 
-class MouseHandler:
+class MouseHandler(object):
     def acceptEvent(self, eventtype):
         # eventtype is either 'up', 'down', or 'move'.  Return True if it
         # can be handled.

@@ -1,6 +1,5 @@
 # -*- python -*-
 
-
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
 # Recipients of this software assume all responsibilities associated
@@ -34,7 +33,7 @@ class ParameterWidget:
     def __init__(self, gtk, scope=None, name=None, expandable=False,
                  verbose=False, faceless=False):
         debug.mainthreadTest()
-        self.gtk = gtk                  # base of gtk widget heirarchy
+        self.gtk = gtk                  # base of gtk widget hierarchy
         self.scope = scope              # WidgetScope containing this widget
         self.faceless = faceless
         self._valid = 0

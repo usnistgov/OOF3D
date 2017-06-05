@@ -18,6 +18,8 @@
 
 class CDirection;
 
+#include <vtkActor.h>
+#include <vtkActorCollection.h>
 #include <vtkCell.h>
 #include <vtkDataArray.h>
 #include <vtkDoubleArray.h>
@@ -40,6 +42,8 @@ Coord cell2coord(vtkSmartPointer<vtkCell>);
 // order for a Python reference to be counted correctly in the
 // vtkSmartPointer's bookkeeping.
 
+typedef vtkSmartPointer<vtkActor> vtkActorPtr;
+typedef vtkSmartPointer<vtkActorCollection> vtkActorCollectionPtr;
 typedef vtkSmartPointer<vtkCell> vtkCellPtr;
 typedef vtkSmartPointer<vtkDataArray> vtkDataArrayPtr;
 typedef vtkSmartPointer<vtkDoubleArray> vtkDoubleArrayPtr;

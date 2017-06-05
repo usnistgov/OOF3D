@@ -199,6 +199,116 @@ void Condition::verbose(bool verb, const std::string &nm) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+EventLogSLock::EventLogSLock()
+  : newEvents(false)
+{
+  if(enabled) {
+    pthread_cond_init(&condition, NULL);
+    pthread_mutex_init(&localLock, NULL);
+  }
+#ifdef DEBUG
+  verbose_ = false;
+#endif // DEBUG
+}
+
+EventLogSLock::~EventLogSLock() {
+  if(enabled) {
+    pthread_cond_destroy(&condition);
+    pthread_mutex_destroy(&localLock);
+  }
+#ifdef DEBUG
+  if(verbose_)
+    std::cerr << "EventLogSLock::dtor: " << this << std::endl;
+#endif // DEBUG
+}
+
+void EventLogSLock::handleNewEvents_acquire() {
+  if(enabled) {
+    pthread_mutex_lock(&localLock);
+    while (!newEvents) {
+      // newEvents will be false if logNewEvent_release has not yet
+      // been called. In this case, call pthread_cond_wait, which
+      // releases localLock and blocks this subthread. Then, once
+      // logNewEvent_release has been called, this subthread will be
+      // unblocked, localLock will be acquired, and this function will
+      // return.
+#ifdef DEBUG
+      if(verbose_)
+	std::cerr << "EventLogSLock::handleNewEvents_acquire: " << this
+		  << " waiting for new event on thread " << findThreadNumber()
+		  << std::endl;
+#endif // DEBUG
+      try {
+	pthread_cond_wait(&condition, &localLock);
+      }
+      catch (...) {
+	std::cerr << "EventLogSLock::handleNewEvents_acquire:"
+		  << " Caught an exception in pthread_cond_wait!"
+		  << " this=" << this << " thread=" << findThreadNumber()
+		  << std::endl;
+	throw;
+      };
+#ifdef DEBUG
+      if(verbose_)
+	std::cerr << "EventLogSLock::handleNewEvents_acquire: " << this
+		  << " done waiting" << std::endl;
+#endif // DEBUG
+    }
+#ifdef DEBUG
+    if(verbose_)
+      std::cerr << "EventLogSLock::handleNewEvents_acquire: " << this
+		<< " acquired" << std::endl;
+#endif // DEBUG
+  } // end if enabled
+}
+
+void EventLogSLock::handleNewEvents_release() {
+  if(enabled) {
+    newEvents = false;
+    pthread_mutex_unlock(&localLock);
+#ifdef DEBUG
+    if(verbose_)
+      std::cerr << "EventLogSLock::handleNewEvents_release: " << this
+		<< " released" << std::endl;
+#endif // DEBUG
+  }
+}
+
+void EventLogSLock::logNewEvent_acquire() {
+  if(enabled) {
+    pthread_mutex_lock(&localLock);
+#ifdef DEBUG
+    if(verbose_)
+      std::cerr << "EventLogSLock::logNewEvent_acquire: " << this
+		<< " acquired" << std::endl;
+#endif	// DEBUG
+  }
+}
+
+
+void EventLogSLock::logNewEvent_release() {
+  if(enabled) {
+    pthread_cond_signal(&condition);
+    newEvents = true;
+    pthread_mutex_unlock(&localLock);
+#ifdef DEBUG
+    if(verbose_)
+      std::cerr << "EventLogSLock::logNewEvent_release: " << this
+		<< " released" << std::endl;
+#endif	// DEBUG
+  }
+}
+
+#ifdef DEBUG
+void EventLogSLock::verbose(bool verb, const std::string &nm) {
+  std::cerr << "EventLogSLock::verbose: " << this << std::endl;
+  verbose_ = verb;
+  name = nm;
+}
+#endif // DEBUG
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 RWLock::RWLock()
   : r(0), w(0), p(0)
 {

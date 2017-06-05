@@ -2,7 +2,7 @@
 $RCSfile: NOTES_GUI,v $
 $Revision: 1.1 $
 $Author: reida $
-$Date: 2001/12/03 22:15:30 $
+$Date: 2001-12-03 22:15:30 $
 
 Things the GUI must be able to do. Items in this list do not
 necessarily correspond to particular interface widgets.

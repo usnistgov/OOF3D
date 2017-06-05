@@ -42,13 +42,16 @@ class MiniThread(threading.Thread):
 
     def immortalize(self):
         self.immortal = True
+
+    def id(self):
+        if self.threadstate is not None:
+            return self.threadstate.id()
         
     def run(self):
         miniThreadManager.add(self)
         try:
             try:
                 self.threadstate = threadstate.ThreadState()
-#                 debug.fmsg("assigning excepthook, function=", self.function)
                 hook = excepthook.assign_excepthook(excepthook.OOFexceptHook())
                 self.function(*self.args, **self.kwargs)
                 excepthook.remove_excepthook(hook)
@@ -68,12 +71,14 @@ class MiniThread(threading.Thread):
 
     def stop_it(self):
         if not self.immortal:
+            debug.fmsg("Canceling", self.threadstate.id())
             threadstate.cancelThread(self.threadstate)
 
 def execute(function, args=(), kwargs={}):
     if thread_enable.query():
         littlethread = MiniThread(function, args, kwargs)
         littlethread.start()
+        return littlethread
     else:
         function(*args, **kwargs)
 
@@ -82,9 +87,21 @@ def execute_immortal(function, args=(), kwargs={}):
         littlethread = MiniThread(function, args, kwargs)
         littlethread.immortalize()
         littlethread.start()
+        return littlethread
     else:
         function(*args, **kwargs)
 
+# A daemon thread doesn't have to be explicitly killed in order to
+# quit the program.
+
+def daemon(function, args=(), kwargs={}):
+    if thread_enable.query():
+        littlethread = MiniThread(function, args, kwargs)
+        littlethread.daemon = True
+        littlethread.start()
+        return littlethread
+    else:
+        function(*args, **kwargs)
 
 ## The purpose of the MiniThreadManager is to administer the running
 ## (mini) threads, so that when quitting time comes all minithreads
@@ -121,7 +138,7 @@ class MiniThreadManager:
             self.lock.release()
         for minithread in threadlist:
             minithread.stop_it()
-            
+
     def waitForAllThreads(self):
         threadlist = []
         self.lock.acquire()
@@ -129,11 +146,8 @@ class MiniThreadManager:
             threadlist = self.listofminithreads[:]
         finally:
             self.lock.release()
-#         debug.fmsg("waiting for subthreads", 
-#                    [ts.threadstate.id() for ts in threadlist 
-#                     if not ts.immortal])
         for minithread in threadlist:
-            if not minithread.immortal:
+            if not minithread.immortal and not minithread.daemon:
                 minithread.join()
 
     # Return the calling thread's MiniThread object, if it has one, or

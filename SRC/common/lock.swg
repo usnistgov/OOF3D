@@ -47,6 +47,16 @@ public:
   void broadcast();
 };
 
+class EventLogSLock {
+public:
+  EventLogSLock();
+  ~EventLogSLock();
+  void logNewEvent_acquire();
+  void logNewEvent_release();
+  void handleNewEvents_acquire();
+  void handleNewEvents_release();
+};
+
 class RWLock {
 public:
   RWLock();

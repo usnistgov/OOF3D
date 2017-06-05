@@ -1,6 +1,5 @@
 # -*- python -*-
 
-
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
 # Recipients of this software assume all responsibilities associated
@@ -15,7 +14,7 @@ import gtk
 from ooflib.SWIG.common import guitop
 from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.common.IO.GUI import oofcanvas3d 
-from ooflib.SWIG.common.IO.GUI import rubberband3d as rubberband
+#from ooflib.SWIG.common.IO.GUI import rubberband3d as rubberband
 from ooflib.common import debug
 from ooflib.common import mainthread
 from ooflib.common import utils
@@ -43,6 +42,8 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
     initial_width = 1000
 
     def preinitialize(self, name, gfxmanager, clone):
+        # postinitialize is called by GfxWindowBase.__init__ on the
+        # main thread *before* GhostGfxWindow.__init__ is called.
         debug.mainthreadTest()
         self.gtk = None
         self.closed = None # State data used at window-close time.
@@ -52,7 +53,7 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         self.zoomed = 0
         self.settings = ghostgfxwindow.GfxSettings()
         self.mouseHandler = mousehandler.nullHandler # doesn't do anything
-        self.rubberband = rubberband.NoRubberBand()
+        # self.rubberband = rubberband.NoRubberBand()
 
         # Build all the GTK objects for the interior of the box.  These
         # actually get added to the window itself after the SubWindow
@@ -206,13 +207,15 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         
 
     def postinitialize(self, name, gfxmanager, clone):
+        # postinitialize is called by GfxWindowBase.__init__ on the
+        # main thread *after* GhostGfxWindow.__init__ returns.
         debug.mainthreadTest() 
         # Add gui callbacks to the non-gui menu created by the GhostGfxWindow.
         filemenu = self.menu.File
         filemenu.Quit.add_gui_callback(quit.queryQuit)
         layermenu = self.menu.Layer
         # There's no gui callback for layermenu.New.
-        ## TODO OPT: Why are these added to the menu here, when the
+        ## TODO: Why are these added to the menu here, when the
         ## functions themselves are defined in gfxwindowbase.py?
         layermenu.Edit.add_gui_callback(self.editLayer_gui)
         layermenu.Delete.add_gui_callback(self.deleteLayer_gui)
@@ -358,7 +361,7 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         if self.oofcanvas and not self.empty:
             self.oofcanvas.reset()
             self.updateview()
-            switchboard.notify("view changed", self)
+            # switchboard.notify("view changed", self)
 
 
     def bgColor(self, menuitem, color):
@@ -371,8 +374,9 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
             self.releaseGfxLock()
 
     def setRubberband(self, rubberband):
-        self.rubberband = rubberband
-        self.oofcanvas.set_rubberband(rubberband)
+        pass
+        # self.rubberband = rubberband
+        # self.oofcanvas.set_rubberband(rubberband)
        
     def marginCB(self, menuitem, fraction):
         ghostgfxwindow.GhostGfxWindow.marginCB(self, menuitem, fraction)

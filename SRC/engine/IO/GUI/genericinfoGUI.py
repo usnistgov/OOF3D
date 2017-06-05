@@ -247,10 +247,13 @@ class GenericInfoToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
 
     def activate(self):
         toolboxGUI.GfxToolbox.activate(self)
-        self.gfxwindow().setMouseHandler(self)
+        # self.gfxwindow().setMouseHandler(self)
         self.sensitize()
         if config.dimension() == 3:
             self.gfxwindow().toolbar.setSelect()
+
+    def installMouseHandler(self):
+        self.gfxwindow().setMouseHandler(self)
 
     def close(self):
         for modeobj in self.modeobjdict.values():

@@ -122,7 +122,7 @@ class PixelInfoToolbox(toolbox.Toolbox):
                     self.mousepoint)
             else:
                 self.point = None
-            switchboard.notify(self) # caught by GUI toolbox, PixelInfoDisplay
+            switchboard.notify(self) # caught by GUI toolbox, PixelInfoToolboxGUI
             switchboard.notify('redraw')
 
         def queryPixelDirectly(self, menuitem, voxel):

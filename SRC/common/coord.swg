@@ -45,6 +45,12 @@ public:
   int __len__() {
     return DIM;
   }
+  Coord __add__(Coord *Point) {
+    return (*self) + (*Point);
+  }
+  Coord __sub__(Coord *Point) {
+    return (*self) - (*Point);
+  }
   Coord __mul__(double x) {
     return (*self)*x;
   }
@@ -66,7 +72,7 @@ public:
 #ifndef DIM_3
   ICoord(int x, int y);
 #else
-	ICoord(int x, int y, int z);
+  ICoord(int x, int y, int z);
 #endif
 };
 

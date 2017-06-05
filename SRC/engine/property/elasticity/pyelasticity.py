@@ -99,7 +99,6 @@ class PyElasticity(pypropertywrapper.PyFluxProperty):
 
     def integration_order(self, subproblem, element):
         if (config.dimension() == 2 and
-            # get_mesh is commented out in OOF3D.
             problem.Displacement.in_plane(subproblem.get_mesh())):
             return element.dshapefun_degree()
         return element.shapefun_degree()

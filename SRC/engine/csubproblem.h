@@ -77,10 +77,10 @@ public:
   CSubProblem();
   virtual ~CSubProblem();
 
-  // set_femesh must be called right after initialization.  It's not
+  // set_mesh must be called right after initialization.  It's not
   // called by the constructor because the constructor is called by a
   // RegisteredClass registration, before the mesh is known.
-  void set_femesh(FEMesh *msh);
+  void set_mesh(FEMesh *msh);
   void set_nnodes(int);
   FEMesh *mesh;
   FEMesh *get_mesh() const { return mesh; }

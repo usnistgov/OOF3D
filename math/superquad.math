@@ -2,7 +2,7 @@
   $RCSfile: superquad.math,v $
   $Revision: 1.1 $
   $Author: reida $
-  $Date: 2001/01/09 21:17:17 $
+  $Date: 2001-01-09 21:17:17 $
          *)
 
 (* A Mathematica model of the superparametric element,

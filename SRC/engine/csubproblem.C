@@ -89,7 +89,7 @@ CSubProblem::~CSubProblem() {
   globalCSubProblemCountLock.release();
 }
 
-void CSubProblem::set_femesh(FEMesh *msh) {
+void CSubProblem::set_mesh(FEMesh *msh) {
   mesh = msh;
 }
 

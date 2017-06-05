@@ -49,7 +49,8 @@ View::View(const View &other)
   rebuildVtkPlanes();
 }
 
-View::~View() {}
+View::~View() {
+}
 
 bool View::equiv(const View &other) const {
   return (pos == other.pos &&

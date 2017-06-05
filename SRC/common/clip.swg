@@ -42,6 +42,9 @@ public:
     %new ClippingPlane *clone() {
       return new ClippingPlane(*self);
     }
+    bool __eq__(ClippingPlane *other) {
+      return *self == *other;
+    }
   }
 };
 

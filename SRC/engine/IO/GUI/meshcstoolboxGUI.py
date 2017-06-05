@@ -187,7 +187,7 @@ class CrossSectionToolboxGUI(toolboxGUI.GfxToolbox,
         debug.mainthreadTest()
         if not self.active:
             toolboxGUI.GfxToolbox.activate(self)
-            self.gfxwindow().setMouseHandler(self)
+            # self.gfxwindow().setMouseHandler(self)
             self.gfxwindow().setRubberband(rubberband.LineRubberBand())
             self.sb_callbacks = [
                 switchboard.requestCallbackMain( (self.gfxwindow(),
@@ -208,11 +208,14 @@ class CrossSectionToolboxGUI(toolboxGUI.GfxToolbox,
         debug.mainthreadTest()
         if self.active:
             toolboxGUI.GfxToolbox.deactivate(self)
-            self.gfxwindow().removeMouseHandler()
+            # self.gfxwindow().removeMouseHandler()
             self.gfxwindow().setRubberband(rubberband.NoRubberBand())
             for s in self.sb_callbacks:
                 switchboard.removeCallback(s)
             self.sb_callbacks = []
+
+    def installMouseHandler(self):
+        self.gfxwindow().setMouseHandler(self)
         
     def validCB(self, valid):
         self.show_data()

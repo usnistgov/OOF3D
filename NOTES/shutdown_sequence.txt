@@ -1,0 +1,94 @@
+This is a modified version of OOF2/NOTES/quit.txt.
+
+What happens when the program is shutting down is complicated because
+the process can be started from a variety of points:
+
+The OOF.File.Quit menu item, invoked via:
+  the menu item in any OOF window.
+  the OOF.File.Quit menu item, invoked from a script.
+  typing OOF.File.Quit() in the console.
+  closing the main OOF window with the window manager.
+
+GUI Mode
+
+Quit menuitem GUI callback (common.IO.GUI.quit.queryQuit) and main
+window delete event callback
+(common.IO.GUI.oofGUI.oofGUI.deleteEventCB) 
+both call common.IO.GUI.quit.queryQuit.
+  Displays "Save?" dialog.
+  If not cancelled, calls common.quit.cleanup,
+    passing common.IO.GUI.quit.shutdown as the 'shutdown' arg.
+
+Text Mode
+
+Menuitem callback is common.quit.quit.  
+  Querys user.
+  Calls common.quit.cleanup,
+    passing common.quit.shutdown as the 'shutdown' arg.
+
+
+Both Modes
+
+common.quit.cleanup
+Runs on main thread
+  * Shuts down menu logging.
+  * Calls gfxManager.closeAllWindows().
+    * calls OOF.Graphics_X.File.Close() (runs on a subthread)
+      * deactivates canvas
+      * calls gfxManager.closeWindow()
+        * removes window from list
+	* sends "close graphics window" (caught by meshdataGUI)
+      * calls DisplayLayer.destroy() for all layers
+      * calls Toolbox.close() for all toolboxes
+        * ViewerToolbox3DGUI calls self.clipMouseHandler.cancel()
+	  * cancel puts 'exit' event on queue and waits for thread to stop
+      * removes menu items
+      In graphics mode, the Close() menu callback also
+      * calls self.gtk.destroy() on the main thread if self.gtk != None
+    
+  * Calls cleanUpActions registered with atShutDown calls (if any).
+  * Calls common.quit.waitForThreads via subthread.execute_immortal()
+     * sends switchboard "shutdown" signal
+        * caught by GfxWindowBase which stops animations
+	* caught by engine.IO.outputdestination.cleanUp which sets a
+   	  flag to prevent redundant explicit destruction of streams.
+     * calls subthread.miniThreadManager.quit
+        * calls MiniThreadManager.stopAll
+          * calls MiniThread.stop_it for all MiniThreads
+            * calls ThreadState.cancelThread
+	      * calls pthread_cancel
+        * calls ThreadManager.waitForAllThreads
+          * calls MiniThread.join for all non-immortal/non-daemon MiniThreads
+     * calls common.IO.threadmanager.threadManager.quit
+        * calls Worker.stop for all workers
+          * calls threadstate.impedeProgress
+            * calls Progress::stop1 for all Progress objects
+	      * sets Progress::stopped_, which is checked by Progress::stopped,
+                   which should be queried by long-running operations
+        * calls Worker.join for all workers
+    * runs the shutdown function on the main thread
+
+GUI Mode
+
+common.IO.GUI.quit.shutdown
+  * gui.stop (common.IO.GUI.oofGUI.stop)
+    * destroy console
+    * close activity viewer
+    * destroy message windows
+    * gtk.main_quit
+      * Causes gtk.main() to return to oofGUI.start() (on the next loop
+         iteration?) 
+      * oofGUI.start() calls guitop.setMainLoop(False) and returns.
+  * gui.destroy  [doesn't seem to be necessary]
+    * destroys top window and all subwindows, which are connected to
+      the top window's gtk destroy signal. 
+  * common.quit.shutdown (see below)
+
+Text Mode
+
+common.quit.shutdown
+  * restore system excepthook
+  * delete mainthreadstate
+  * sys.exit
+
+

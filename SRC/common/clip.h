@@ -27,11 +27,11 @@ public:
   ClippingPlane();
   ClippingPlane(CDirection *nrml, double offset);
   ClippingPlane(const ClippingPlane&);
+  ~ClippingPlane();
   const ClippingPlane &operator=(const ClippingPlane&);
   bool operator==(const ClippingPlane&) const;
   bool operator!=(const ClippingPlane&) const;
   bool operator<(const ClippingPlane&) const;
-  ~ClippingPlane();
   const CDirection *normal() const { return normal_; }
   CDirection *normal() { return normal_; }
   double offset() const { return offset_; }
