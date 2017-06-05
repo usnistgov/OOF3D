@@ -33,6 +33,13 @@ structures.  Does it need to be optimized?  See TODO in
 CMicrostructure::categorize() wrt not creating the full array of
 ProtoVSBNodes.
 
+categoryVolumes can probably be sped up by dividing each VSB into
+chunks of a predetermined size.  Then the bounding box of each chunk
+can be compared to the element's bounding box before the r3d
+calculation, and many chunks can be skipped.  The final result will be
+the sum over chunks.  The optimal size of the chunk will have to be
+determined.
+
 Write a python build script that doesn't use distutils.
 Move swig output to the build directory, and remove SRC/SWIG3D).  The
 way it is now, building dist3d after building debug3d fails, because
