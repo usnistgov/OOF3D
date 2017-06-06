@@ -294,7 +294,9 @@ def _CSkeletonBase_femesh(self, edict, material=None):
     realmesh = femesh.FEMesh(self.getMicrostructure(), order)
 
     # this adds the nodes and elements
-    self.populate_femesh(realmesh, material)
+    ## TODO: If we ever have non-tetrahedral 3D elements, we'll have
+    ## to do something different here.
+    self.populate_femesh(realmesh, edict['Tetrahedron'], material)
 
     # PointBoundaries
     pointboundaries = self.getPointBoundaries()

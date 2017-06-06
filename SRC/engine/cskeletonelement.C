@@ -14,7 +14,6 @@
 #include "common/cdebug.h"
 #include "common/cmicrostructure.h"
 #include "common/lock.h"
-// #include "common/pixelsetboundary.h"
 #include "common/printvec.h"
 #include "common/voxelsetboundary.h"
 #include "engine/cskeleton2.h"
@@ -23,12 +22,9 @@
 #include "engine/element.h"
 #include "engine/elementnodeiterator.h"
 #include "engine/femesh.h"
-// #include "engine/homogeneitytet.h"
 #include "engine/masterelement.h"
 #include "engine/material.h"
 #include "engine/ooferror.h"
-// #include "engine/pixelplanefacet.h"
-// #include "engine/planeintersection.h"
 
 #include <vtkMath.h>
 #include <vtkTriangle.h>
@@ -1357,7 +1353,7 @@ void LineIntersectionPoint::addTraversedElements(
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 void CSkeletonElement::realElement(FEMesh *femesh, int idx,
-				   //std::vector<Node*> *fnodes,
+				   const MasterElement *master,
 				   const CSkeleton *skel, Material *mat) 
 {
   // TODO 3.1: for now we're assuming linear tetrahedra only, matching
@@ -1371,16 +1367,10 @@ void CSkeletonElement::realElement(FEMesh *femesh, int idx,
     // real_el_nodes.push_back( (*fnodes)[(*n)->getIndex()] );
 
   Element *el;
-  // TODO 3.1: tetname shouldn't be hard-coded here.  Different types of
-  // CSkeletonElement (if we ever have them) will retrieve different
-  // master elements.  Also, we will need to choose the element order.
-  // ElementShape and order should be args?
-  const std::string &tetname = "TET4_4";
   if(mat != NULL)
-    el = getMasterElementByName(tetname)->build(this, mat, &real_el_nodes);
+    el = master->build(this, mat, &real_el_nodes);
   else
-    el = getMasterElementByName(tetname)->build(this, material(skel),
-						&real_el_nodes);
+    el = master->build(this, material(skel), &real_el_nodes);
   femesh->addElement(el);
   //
   setMeshIndex(idx);
@@ -1412,54 +1402,6 @@ void CSkeletonElement::drawVoxelCategoryIntersection(LineSegmentLayer *layer,
   std::vector<COrientedPlane> planes = getPlanes(epts);
   const VoxelSetBoundary *vsb = ms->getCategoryBdys()[category];
   vsb->drawClippedVSB(planes, layer);
-  
-//   HomogeneityTet htet(this, ms
-// #ifdef DEBUG
-// 		      , false // verbose?
-// #endif // DEBUG
-// 		      );
-//   FacetMap2D pixelplanefacets = htet.findPixelPlaneFacets(category, *vsb);
-//   FaceFacets facefacets = htet.findFaceFacets(category, pixelplanefacets);
-//   std::vector<Coord3D> startPts;
-//   std::vector<Coord3D> endPts;
-//   for(unsigned int f=0; f<NUM_TET_FACES; f++) {
-//     const FaceFacet &facefacet = facefacets[f];
-//     if(!facefacet.empty()) {
-//       // oofcerr << "drawVoxelCategoryIntersection: facefacet[" << f << "]="
-//       // 	      << facefacet << std::endl;
-//       for(auto edgeptr=facefacet.edges().begin();
-// 	  edgeptr!=facefacet.edges().end(); ++edgeptr)
-// 	{
-// 	  startPts.push_back((*edgeptr)->startPos3D());
-// 	  endPts.push_back((*edgeptr)->endPos3D());
-// 	  // oofcerr << "drawVoxelCategoryIntersection: face=" << f << " edge= "
-// 	  // 	<< (*edgeptr)->startPos3D() << " " << (*edgeptr)->endPos3D()
-// 	  // 	<< std::endl;
-// 	}
-//     }
-//   }
-//   if(drawPlaneFacets) {
-//     for(FacetMap2D::const_iterator fmi=pixelplanefacets.begin();
-// 	fmi!=pixelplanefacets.end(); ++fmi)
-//       {
-// 	const PixelPlaneFacet *facet = (*fmi).second;
-// 	if(!facet->empty()) {
-// 	  unsigned int basesize = startPts.size();
-// 	  startPts.resize(basesize + facet->size());
-// 	  endPts.resize(basesize + facet->size());
-// 	  for(unsigned int i=0; i<facet->size(); i++) {
-// 	    facet->getEndPoints(i, startPts[basesize+i], endPts[basesize+i]);
-// 	    // oofcerr << "drawVoxelCategoryIntersection: pixelplane edge "
-// 	    // 	    << startPts[basesize+i] << " " << endPts[basesize+i]
-// 	    // 	    << std::endl;
-// 	  }
-// 	}
-//       }
-//   }
-//   layer->set_nSegs(startPts.size());
-//   for(unsigned int i=0; i<startPts.size(); i++) {
-//     layer->addSegment(&startPts[i], &endPts[i]);
-//   }
 }
 
 #endif // DEBUG

@@ -24,6 +24,7 @@
 #include "engine/cskeletongroups.h"
 #include "engine/femesh.h"
 #include "engine/homogeneity.h"
+#include "engine/masterelement.h"
 #include "engine/material.h"
 #include "engine/skeletonfilter.h"
 
@@ -2468,9 +2469,9 @@ void CSkeleton::needsHash() {
 }
 
 
-void CSkeleton::populate_femesh(FEMesh *realmesh, Material *mat) {
-  // TODO 3.1: for now we're assuming order 1
-  
+void CSkeleton::populate_femesh(FEMesh *realmesh, const MasterElement *master,
+				Material *mat)
+{
   // Calling cleanUp() here ensures that node and element indices
   // agree with the objects' positions in the lists, which ensures
   // that that indices of the objects in the FEMesh agree with the
@@ -2492,13 +2493,11 @@ void CSkeleton::populate_femesh(FEMesh *realmesh, Material *mat) {
     realmesh->newFuncNode(nodes[i]->position());
   }
 
-  // TODO 3.1: Add nodes for higher order elements.
-
   // make the elements
   for(unsigned int i=0; i<nelements(); ++i) {
     // CSkeletonElement::realElement() creates an element from the
     // appropriate MasterElement and calls FEMesh::addElement().
-    elements[i]->realElement(realmesh, i, /*fnodes,*/ this, mat);
+    elements[i]->realElement(realmesh, i, master, this, mat);
   }
   
 }

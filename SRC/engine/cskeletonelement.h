@@ -28,6 +28,7 @@ class COrientedPlane;
 class CSkeleton;
 class FEMesh;
 class LineSegmentLayer;
+class MasterElement;
 class Material;
 class Node;
 class OrientedCSkeletonFace;
@@ -239,7 +240,7 @@ public:
   virtual int nElements() const { return 1; }
 
   void realElement(FEMesh *femesh, int index,
-		   //std::vector<Node*> *fnodes,
+		   const MasterElement *,
 		   const CSkeleton *, Material *mat=NULL);
 
   virtual void print(std::ostream &) const;
