@@ -1354,27 +1354,18 @@ void LineIntersectionPoint::addTraversedElements(
 
 void CSkeletonElement::realElement(FEMesh *femesh, int idx,
 				   const MasterElement *master,
-				   const CSkeleton *skel, Material *mat) 
+				   const CSkeleton *skel,
+				   SkelElNodeMap &edgeNodeMap,
+				   SkelElNodeMap &faceNodeMap,
+				   Material *mat) 
 {
-  // TODO 3.1: for now we're assuming linear tetrahedra only, matching
-  // indices, and simplifying material thing.  See TODO in
-  // elementnodeiterator.C,
-  // ElementFuncNodePositionIterator::operator+=.
-
-  std::vector<Node*> real_el_nodes;
-  for(CSkeletonNodeIterator n = nodes->begin(); n != nodes->end(); ++n)
-    real_el_nodes.push_back(femesh->getFuncNode((*n)->getIndex()));
-    // real_el_nodes.push_back( (*fnodes)[(*n)->getIndex()] );
-
-  Element *el;
-  if(mat != NULL)
-    el = master->build(this, mat, &real_el_nodes);
-  else
-    el = master->build(this, material(skel), &real_el_nodes);
+  const Material *m = (mat == nullptr? material(skel) : mat);
+  Element *el = master->build(this, skel, femesh, m, edgeNodeMap, faceNodeMap);
   femesh->addElement(el);
-  //
   setMeshIndex(idx);
 }
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 void CSkeletonElement::print(std::ostream &os) const {
   // os << "Element(" << uid << ", " << generating_function << ")";

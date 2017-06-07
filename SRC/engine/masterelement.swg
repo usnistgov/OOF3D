@@ -67,7 +67,7 @@ public:
   int nfuncnodes();
   int ninteriorfuncnodes();
   int ninteriormapnodes_only();
-  int nexteriormapnodes_only();
+  // int nexteriormapnodes_only();
   int nedges();
   const string &name();
   const string &description();
@@ -76,8 +76,8 @@ public:
   int fun_order();
 
   //  Element *build(CSkeletonElement *NONE, Material *NONE, NodeVec*);
-  FaceBoundaryElement *buildFaceBoundary(NodeVec*);
-  EdgeBoundaryElement *buildEdgeBoundary(NodeVec*);
+  FaceBoundaryElement *buildFaceBoundary(NodeVec&);
+  EdgeBoundaryElement *buildEdgeBoundary(NodeVec&);
   ElementLite *buildLite(PointVec *PointList);
 
   %addmethods {
@@ -100,10 +100,6 @@ class MasterElement1D : public MasterElement {};
 
 class MasterElement2D : public MasterElement {
 public:
-#ifndef DIM_3
-  bool onBoundary(const MasterCoord&);
-  bool onBoundary2(const MasterCoord&, const MasterCoord&);
-#endif	// DIM_3
 };
 
 class TriangularMaster : public MasterElement2D {};

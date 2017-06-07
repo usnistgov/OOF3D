@@ -74,32 +74,32 @@ class MeshInfoDisplay(display.DisplayMethod):
             mesh.releaseCachedData()
             mesh.end_reading()
 
-    def drawElement(self, device, toolbox, element, which="query"): # 2D only
-        device.set_lineColor(self.colors[which])
-        device.set_lineWidth(self.line_width)
-        if config.dimension() == 2:
-            node_iter = element.cornernode_iterator().exteriornode_iterator()
-            p_list = [node.position() for node in node_iter]
-            displaced_p_list = [
-                toolbox.meshlayer.displaced_from_undisplaced(
-                toolbox.gfxwindow, x) for x in p_list]
-            for i in range(len(displaced_p_list)):
-                p0 = displaced_p_list[i]
-                p1 = displaced_p_list[(i+1)%len(displaced_p_list)]
-                device.draw_segment(primitives.Segment(p0, p1))
-        elif config.dimension() == 3:
-            device.draw_cell(element)
+    # def drawElement(self, device, toolbox, element, which="query"): # 2D only
+    #     device.set_lineColor(self.colors[which])
+    #     device.set_lineWidth(self.line_width)
+    #     if config.dimension() == 2:
+    #         node_iter = element.cornernode_iterator().exteriornode_iterator()
+    #         p_list = [node.position() for node in node_iter]
+    #         displaced_p_list = [
+    #             toolbox.meshlayer.displaced_from_undisplaced(
+    #             toolbox.gfxwindow, x) for x in p_list]
+    #         for i in range(len(displaced_p_list)):
+    #             p0 = displaced_p_list[i]
+    #             p1 = displaced_p_list[(i+1)%len(displaced_p_list)]
+    #             device.draw_segment(primitives.Segment(p0, p1))
+    #     elif config.dimension() == 3:
+    #         device.draw_cell(element)
 
 
-    def drawNode(self, device, toolbox, node, which="query"): # 2D only
-        device.set_lineColor(self.colors[which])
-        device.set_lineWidth(self.node_size)
-        if config.dimension() == 2:
-            displaced_position = toolbox.meshlayer.displaced_from_undisplaced(
-                toolbox.gfxwindow(), node.position())
-            device.draw_dot(displaced_position)
-        elif config.dimension() == 3:
-            device.draw_dot(node.position())
+    # def drawNode(self, device, toolbox, node, which="query"): # 2D only
+    #     device.set_lineColor(self.colors[which])
+    #     device.set_lineWidth(self.node_size)
+    #     if config.dimension() == 2:
+    #         displaced_position = toolbox.meshlayer.displaced_from_undisplaced(
+    #             toolbox.gfxwindow(), node.position())
+    #         device.draw_dot(displaced_position)
+    #     elif config.dimension() == 3:
+    #         device.draw_dot(node.position())
 
     # def getTimeStamp(self, gfxwindow): # 2D only
     #     toolbox = gfxwindow.getToolboxByName("Mesh_Info")

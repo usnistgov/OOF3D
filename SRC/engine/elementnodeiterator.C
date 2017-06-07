@@ -368,70 +368,70 @@ FuncNode *InterfaceElementFuncNodeIterator::funcnode() const {
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-ElementExteriorNodePositionIterator::ElementExteriorNodePositionIterator(
-							 const ElementBase &el)
-  : ElementFuncNodePositionIterator(el)
-{}
+// ElementExteriorNodePositionIterator::ElementExteriorNodePositionIterator(
+// 							 const ElementBase &el)
+//   : ElementFuncNodePositionIterator(el)
+// {}
 
-ElementExteriorNodeIterator::ElementExteriorNodeIterator(const Element &el)
-  : ElNodeIterator<ElementExteriorNodePositionIterator, Element>(el)
-{}
+// ElementExteriorNodeIterator::ElementExteriorNodeIterator(const Element &el)
+//   : ElNodeIterator<ElementExteriorNodePositionIterator, Element>(el)
+// {}
 
-ElementExteriorNodePositionIterator::ElementExteriorNodePositionIterator(
-			 const ElementExteriorNodePositionIterator &that)
-  : ElementFuncNodePositionIterator(that)
-{}
+// ElementExteriorNodePositionIterator::ElementExteriorNodePositionIterator(
+// 			 const ElementExteriorNodePositionIterator &that)
+//   : ElementFuncNodePositionIterator(that)
+// {}
 
-ElementExteriorNodeIterator::ElementExteriorNodeIterator(
-				      const ElementExteriorNodeIterator &that)
-  : ElNodeIterator<ElementExteriorNodePositionIterator, Element>(that)
-{}
+// ElementExteriorNodeIterator::ElementExteriorNodeIterator(
+// 				      const ElementExteriorNodeIterator &that)
+//   : ElNodeIterator<ElementExteriorNodePositionIterator, Element>(that)
+// {}
 
-ElementExteriorNodePositionIterator&
-ElementExteriorNodePositionIterator::operator=(
-			       const ElementExteriorNodePositionIterator &that) 
-{
-  ElementFuncNodePositionIterator::operator=(that);
-  return *this;
-}
+// ElementExteriorNodePositionIterator&
+// ElementExteriorNodePositionIterator::operator=(
+// 			       const ElementExteriorNodePositionIterator &that) 
+// {
+//   ElementFuncNodePositionIterator::operator=(that);
+//   return *this;
+// }
 
-ElementExteriorNodeIterator&
-ElementExteriorNodeIterator::operator=(const ElementExteriorNodeIterator &that) 
-{
-  ElementExteriorNodePositionIterator::operator=(that);
-  return *this;
-}
+// ElementExteriorNodeIterator&
+// ElementExteriorNodeIterator::operator=(const ElementExteriorNodeIterator &that) 
+// {
+//   ElementExteriorNodePositionIterator::operator=(that);
+//   return *this;
+// }
 
-int ElementExteriorNodePositionIterator::mlistindex() const {
-  return element_.masterelement().exteriorfuncnodes[index_];
-}
+// int ElementExteriorNodePositionIterator::mlistindex() const {
+//   return element_.masterelement().exteriorfuncnodes[index_];
+// }
 
-ElementExteriorNodePositionIterator &
-ElementExteriorNodePositionIterator::operator+=(int n) {
-  start = false;
-  index_ = (index_ + n) % element_.nexteriorfuncnodes();
-  return *this;
-}
+// ElementExteriorNodePositionIterator &
+// ElementExteriorNodePositionIterator::operator+=(int n) {
+//   start = false;
+//   index_ = (index_ + n) % element_.nexteriorfuncnodes();
+//   return *this;
+// }
 
-ElementExteriorNodeIterator &ElementExteriorNodeIterator::operator+=(int n) {
-  ElementExteriorNodePositionIterator::operator+=(n);
-  return *this;
-}
+// ElementExteriorNodeIterator &ElementExteriorNodeIterator::operator+=(int n) {
+//   ElementExteriorNodePositionIterator::operator+=(n);
+//   return *this;
+// }
 
-ElementExteriorNodePositionIterator
-ElementExteriorNodePositionIterator::operator+(int n) const
-{
-  ElementExteriorNodePositionIterator result(*this);
-  result += n;
-  return result;
-}
+// ElementExteriorNodePositionIterator
+// ElementExteriorNodePositionIterator::operator+(int n) const
+// {
+//   ElementExteriorNodePositionIterator result(*this);
+//   result += n;
+//   return result;
+// }
 
-ElementExteriorNodeIterator ElementExteriorNodeIterator::operator+(int n) const
-{
-  ElementExteriorNodeIterator result(*this);
-  result += n;
-  return result;
-}
+// ElementExteriorNodeIterator ElementExteriorNodeIterator::operator+(int n) const
+// {
+//   ElementExteriorNodeIterator result(*this);
+//   result += n;
+//   return result;
+// }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -525,36 +525,36 @@ ElementFuncNodeIterator ElementCornerNodeIterator::funcnode_iterator() const {
   return fni;
 }
 
-ElementExteriorNodePositionIterator 
-ElementCornerNodePositionIterator::exteriornode_iterator()
-  const
-{
-  ElementExteriorNodePositionIterator eni(element_);
-  const ProtoNode *pnode = protonode();
-  while(eni.protonode() != pnode && !eni.end())
-    ++eni;
-  if(eni.end())
-    throw ErrProgrammingError(
-		      "Unable to convert a cornernode to an exterior node",
-		      __FILE__, __LINE__);
-  eni.set_start();
-  return eni;
-}
+// ElementExteriorNodePositionIterator 
+// ElementCornerNodePositionIterator::exteriornode_iterator()
+//   const
+// {
+//   ElementExteriorNodePositionIterator eni(element_);
+//   const ProtoNode *pnode = protonode();
+//   while(eni.protonode() != pnode && !eni.end())
+//     ++eni;
+//   if(eni.end())
+//     throw ErrProgrammingError(
+// 		      "Unable to convert a cornernode to an exterior node",
+// 		      __FILE__, __LINE__);
+//   eni.set_start();
+//   return eni;
+// }
 
-ElementExteriorNodeIterator ElementCornerNodeIterator::exteriornode_iterator()
-  const
-{
-  ElementExteriorNodeIterator eni(dynamic_cast<const Element&>(element_));
-  const ProtoNode *pnode = protonode();
-  while(eni.protonode() != pnode && !eni.end())
-    ++eni;
-  if(eni.end())
-    throw ErrProgrammingError(
-		      "Unable to convert a cornernode to an exterior node",
-		      __FILE__, __LINE__);
-  eni.set_start();
-  return eni;
-}
+// ElementExteriorNodeIterator ElementCornerNodeIterator::exteriornode_iterator()
+//   const
+// {
+//   ElementExteriorNodeIterator eni(dynamic_cast<const Element&>(element_));
+//   const ProtoNode *pnode = protonode();
+//   while(eni.protonode() != pnode && !eni.end())
+//     ++eni;
+//   if(eni.end())
+//     throw ErrProgrammingError(
+// 		      "Unable to convert a cornernode to an exterior node",
+// 		      __FILE__, __LINE__);
+//   eni.set_start();
+//   return eni;
+// }
 
 ElementMapNodePositionIterator
 ElementCornerNodePositionIterator::mapnode_iterator() const {
@@ -622,20 +622,20 @@ void ElementCornerNodePositionIterator::print(std::ostream &os) const {
      << "))";
 }
 
-void ElementExteriorNodePositionIterator::print(std::ostream &os) const {
-  os << "ElementExteriorNodePositionIterator(" << index_ << "(" << mlistindex()
-     << "))";
-}
+// void ElementExteriorNodePositionIterator::print(std::ostream &os) const {
+//   os << "ElementExteriorNodePositionIterator(" << index_ << "(" << mlistindex()
+//      << "))";
+// }
 
 void ElementCornerNodeIterator::print(std::ostream &os) const {
   os << "ElementCornerNodeIterator(" << index_ << "(" << mlistindex() << "), "
      << *node() << " " << mastercoord() << ")";
 }
 
-void ElementExteriorNodeIterator::print(std::ostream &os) const {
-  os << "ElementExteriorNodeIterator(" << index_ << "(" << mlistindex() << "), "
-     << *node() << " " << mastercoord() << ")";
-}
+// void ElementExteriorNodeIterator::print(std::ostream &os) const {
+//   os << "ElementExteriorNodeIterator(" << index_ << "(" << mlistindex() << "), "
+//      << *node() << " " << mastercoord() << ")";
+// }
 
 #ifdef INTERFACEELEMENTS
 void InterfaceElementFuncNodeIterator::print(std::ostream &os) const {

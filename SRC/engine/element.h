@@ -104,7 +104,7 @@ public:
   int nmapnodes() const;
   int nfuncnodes() const;
   int ncorners() const;
-  int nexteriorfuncnodes() const; // exterior to the element, not the mesh.
+  // int nexteriorfuncnodes() const; // exterior to the element, not the mesh.
 
   int nedges() const;
 
@@ -223,7 +223,8 @@ private:
   friend class ElementFuncNodeIterator;
 
 public:
-  Element(CSkeletonElement *el, const MasterElement&, const std::vector<Node*>*,
+  Element(CSkeletonElement *el, const MasterElement&,
+	  const std::vector<Node*>&,
 	  const Material*);
   virtual ~Element();
 
@@ -421,7 +422,7 @@ protected:
   const Element *front_;
   const Element *back_;
 public:
-  FaceBoundaryElement(const MasterElement&, const std::vector<Node*>*);
+  FaceBoundaryElement(const MasterElement&, const std::vector<Node*>&);
   const std::string &classname() const;
   void setFrontBulk(const Element *el) { front_ = el; }
   const Element *getFrontBulk() const;
@@ -431,7 +432,7 @@ public:
 
 class EdgeBoundaryElement: public Element {
 public:
-  EdgeBoundaryElement(const MasterElement&, const std::vector<Node*>*);
+  EdgeBoundaryElement(const MasterElement&, const std::vector<Node*>&);
   const std::string &classname() const;
 };
 

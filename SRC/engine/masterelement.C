@@ -13,18 +13,16 @@
 #include "common/IO/oofcerr.h"
 #include "common/switchboard.h"
 #include "common/tostring.h"
+#include "engine/cskeleton2.h"
+#include "engine/cskeletonelement.h"
 #include "engine/element.h"
 #include "engine/elementnodeiterator.h"
+#include "engine/femesh.h"
 #include "engine/masterelement.h"
 #include "engine/ooferror.h"
 #include "engine/shapefunction.h"
 #include <math.h>
 #include <iostream>
-
-#if DIM == 2
-#include "engine/IO/contour.h"
-#include "engine/contourcell.h"
-#endif // DIM == 2
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -113,26 +111,33 @@ int MasterElement::nexteriorfuncnodes() const {
   return exteriorfuncnodes.size();
 }
 
-// Count the number of exterior nodes that are for mapping only.
-int MasterElement::nexteriormapnodes_only() const {
+// Count the number of non-corner nodes on edges that are for mapping only.
+int MasterElement::nedgemapnodes_only() const {
   int n = 0;
-  for(std::vector<const ProtoNode*>::const_iterator pn=protonodes.begin();
-      pn<protonodes.end(); ++pn)
-    {
-      if((*pn)->mapping() && ! (*pn)->func() && (*pn)->nedges() > 0)
-	n++;
-    }
+  for(const ProtoNode *pn : protonodes) {
+    if(pn->mapping() && !pn->func() && pn->nedges() == 1)
+      n++;
+  }
   return n;
 }
+
+// Count the number of non-edge nodes on faces that are for mapping only.
+int MasterElement::nfacemapnodes_only() const {
+  int n = 0;
+  for(const ProtoNode *pn : protonodes) {
+    if(pn->mapping() && !pn->func() && pn->nedges() == 0 && pn->nfaces() == 1)
+      n++;
+  }
+  return n;
+}
+
 // Count the number of interior nodes that are for mapping only
 int MasterElement::ninteriormapnodes_only() const {
   int n = 0;
-  for(std::vector<const ProtoNode*>::const_iterator pn=protonodes.begin();
-      pn<protonodes.end(); ++pn)
-    {
-      if((*pn)->mapping() && !(*pn)->func() && (*pn)->nedges() == 0)
-	n++;
-    }
+  for(const ProtoNode *pn : protonodes) {
+    if(pn->mapping() && !pn->func() && pn->nedges() == 0 && pn->nfaces() == 0)
+      n++;
+  }
   return n;
 }
 
@@ -179,6 +184,9 @@ std::ostream &operator<<(std::ostream &os, const ProtoNode &pn) {
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// The arguments for on_edge and on_face are the vtk indices for the
+// tet edges and faces that the ProtoNode is on.
 
 void ProtoNode::on_edge(int edgeno) {
   edgeindex.push_back(edgeno);
@@ -239,18 +247,18 @@ const MasterEdge *MasterElement::masteredge(const ElementCornerNodeIterator &n0,
   throw ErrUserError("Edge not found in master element");
 }
 
-#if DIM == 3
-
 void ProtoNode::on_face(int faceno) {
   faceindex.push_back(faceno);
   element.faces[faceno]->addNode(this);
   // Put this node in its MasterElement's exterior lists, if it's not
   // already there.  Checking this way relies on not intermingling
   // on_face calls for one ProtoNode with calls for another one.
-//   if(func_)
-//     if(element.exteriorfuncnodes.empty() ||
-//        *element.exteriorfuncnodes.rbegin() != index_)
-//       element.exteriorfuncnodes.push_back(index_);
+
+  // TODO: This was commented out.  Why?
+  if(func_)
+    if(element.exteriorfuncnodes.empty() ||
+       *element.exteriorfuncnodes.rbegin() != index_)
+      element.exteriorfuncnodes.push_back(index_);
 }
 
 void MasterFace::addNode(const ProtoNode *pn) {
@@ -285,7 +293,6 @@ const MasterFace *MasterElement3D::masterface(
   }
   throw ErrUserError("Face not found in master element");
 }
-#endif	// DIM == 3
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -457,504 +464,200 @@ MasterCoord MasterElement1D::center() const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-#if DIM == 2
+// Utility functions used by MasterElement::build().
 
-// The MasterElement2D::contourcells functions return a vector of
-// pointers to ContourCellSkeletons.  This vector is passed out to
-// Python via a swig typemap (in masterelement.swg) and its elements
-// are cached and wrapped in masterelement.spy.  The wrapping
-// transfers the ownership to Python, so we don't have to worry about
-// deleting the ContourCellSkeleton pointers that we've allocated
-// here.
+template <class TYPE>
+TYPE MasterElement::interpolate(const std::vector<TYPE> &cval,
+				const MasterCoord &x)
+  const
+{
+  TYPE interpolant;
+  for(unsigned int i=0; i<nmapnodes(); i++) {
+    interpolant = interpolant + mapfunction->value(i,x)*cval[i];
+  }
+  return interpolant;
+}
 
-std::vector<ContourCellSkeleton*>*
-TriangularMaster::contourcells(int n) const {
-  // Divide a triangular master element up into n^2 triangles, like
-  // this:
-  //
-  //  even n     odd n
-  //
-  //   |\         |\               	// backslashes
-  //   | \        | \       		// terminating
-  //   ----       ----       y1		// comments
-  //   | /|\      | /|\      		// generate
-  //   |/ | \     |/ | \      		// spurious
-  //   ------     ------     y		// compiler
-  //              |\ | /|\		// warnings
-  //              | \|/ | \		//
-  //              ---------
-  //	             x  x1
+static Node *findClosestNode(std::vector<Node*> &nodes, Coord3D pos) {
+  double mindist = std::numeric_limits<double>::max();
+  Node *closest = nullptr;
+  for(Node *node : nodes) {
+    double d2 = norm2(node->position() - pos);
+    if(d2 < mindist) {
+      closest = node;
+      mindist = d2;
+    }
+  }
+  assert(closest != nullptr);
+  return closest;
+}
 
-  std::vector<ContourCellSkeleton*>* cells =
-    new std::vector<ContourCellSkeleton*>(n*n);
-  double dx = 1.0/n;
-  int k = 0;			// counts cells
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-  for(int j=0; j<n; j++) {	// loop over rows
-    bool leanleft = (j + n) % 2;
-    double y = j*dx;
-    double y1 = (j+1)*dx;
-    if(j == n-1) y1 = 1.0;	// avoid roundoff
-    for(int i=0; i<n-j-1; i++) { // loop over columns, not including the last
-      double x = i*dx;
-      double x1 = (i+1)*dx;
-      ContourCellSkeleton &cell1 = *((*cells)[k++] = new ContourCellSkeleton);
-      ContourCellSkeleton &cell2 = *((*cells)[k++] = new ContourCellSkeleton);
-      ContourCellCoord ll(x, y, i, j);
-      ContourCellCoord lr(x1, y, i+1, j);
-      ContourCellCoord ur(x1, y1, i+1, j+1);
-      ContourCellCoord ul(x, y1, i, j+1);
-      if(leanleft) {
-	// lower left triangle of a pair
-	cell1[0] = ll;
-	cell1[1] = lr;
-	cell1[2] = ul;
-	// upper right triangle of a pair
-	cell2[0] = lr;
-	cell2[1] = ur;
-	cell2[2] = ul;
+// build() creates a real mesh element at the location of the given
+// Skeleton element, creating new Nodes if necessary.
+
+Element *MasterElement::build(CSkeletonElement *el,
+			      const CSkeleton *skel, FEMesh *femesh,
+			      const Material *mat,
+			      SkelElNodeMap &edgeNodeMap,
+			      SkelElNodeMap &faceNodeMap)
+  const
+{
+  // nodes stores the Nodes that will be passed to the Element
+  // constructor.  They correspond 1 to 1 with the vector of
+  // ProtoNodes in the MasterElement.
+  std::vector<Node*> nodes(nnodes(), nullptr);
+
+  // To compute the positions of new, non-corner Nodes, we need to
+  // know the corners of the tet.
+
+  // TODO: If we ever have higher order *skeleton* elements, ie,
+  // skeleton elements with curved sides, we'll have to include all of
+  // map nodes here, not just the corners.
+  std::vector<Coord3D> corners;	// for interpolation of intermediate node pos.
+  if(nnodes() > 4) {
+    corners.reserve(ncorners());
+    for(int i=0; i<ncorners(); i++) {
+      corners.push_back(el->getNode(i)->position());
+    }
+  }
+
+  // The input maps edgeNodeMap and faceNodeMap store the nodes that
+  // have been created on the edges and faces of other elements, and
+  // that might be reused in this one.  If an edge or face of this
+  // element isn't found in the maps, it's added to the maps and the
+  // new nodes are stored.  But there may be more than one new node on
+  // a face or edge, so we don't add entries to edgeNodeMap or
+  // faceNodeMap until we're done (because we're using the existence
+  // of entries in the maps to determine if the nodes have to be
+  // created).  Instead, new nodes are stored in newEdgeNodes and
+  // newFaceNodes, which are merged with edgeNodeMap and faceNodeMap
+  // after all nodes have been created.
+  SkelElNodeMap newEdgeNodes;
+  SkelElNodeMap newFaceNodes;
+
+  // Loop over ProtoNodes and create real ones, if necessary.
+  
+  for(unsigned int pnidx=0; pnidx<nnodes(); pnidx++) {
+    const ProtoNode *pn = protonodes[pnidx];
+    // What we do depends on what kind of node this is.
+    // TODO: This big if/then could be simpler if we used different
+    // subclasses of ProtoNode for corner, edge, face, and interior
+    // nodes.
+    if(pn->corner()) {
+      // Corner nodes have already been created in
+      // CSkeleton::populate_femesh().
+      // Find out which corner this is:
+      for(unsigned int c=0; c<ncorners(); c++) {
+	// It is assumed that the calls to ProtoNode::set_corner have
+	// been done in the order determined by the vtk ordering of
+	// tet corners, so that the corner i of the SkeletonElement
+	// corresponds to the i^th corner ProtoNode.
+	if(cornernodes[c] == pnidx) {
+	  nodes[pnidx] = femesh->getFuncNode(el->getNode(c)->getIndex());
+	  break;
+	}
       }
+    } // end if ProtoNode is at a corner
+
+    else if(pn->nedges() > 0) {
+      // ProtoNode is on an edge (but not a corner)
+      assert(pn->nedges() == 1);
+      // What edge is it on?
+      int edgeNo = pn->edgeindex[0];
+      Coord3D pos = interpolate(corners, pn->mastercoord());
+      // Has the edge been seen before?
+      CSkeletonNode *n0 = el->getSegmentNode(edgeNo, 0);
+      CSkeletonNode *n1 = el->getSegmentNode(edgeNo, 1);
+      CSkeletonMultiNodeKey segkey(n0, n1);
+      SkelElNodeMap::iterator it = edgeNodeMap.find(segkey);
+      if(it == edgeNodeMap.end()) {
+	// The edge hasn't been seen before.  Create a new node.
+	Node *newNode = femesh->newFuncNode(pos);
+	nodes[pnidx] = newNode;
+	// If the edge is already in newEdgeNodes, add the node to it.
+	// Otherwise, add the edge to newEdgeNodes and add the node to it.
+	SkelElNodeMap::iterator eit = newEdgeNodes.find(segkey);
+	if(eit == newEdgeNodes.end()) {
+	  newEdgeNodes.emplace(
+		       std::make_pair(segkey, std::vector<Node*>(1, newNode)));
+	}
+	else {
+	  eit->second.push_back(newNode);
+	}
+      }	// end if edge is new.
       else {
-	// upper left triangle of a pair
-	cell1[0] = ll;
-	cell1[1] = ur;
-	cell1[2] = ul;
-	// lower right triangle of a pair
-	cell2[0] = ll;
-	cell2[1] = lr;
-	cell2[2] = ur;
-      }
-      leanleft = !leanleft;
-    }
-    // final triangle in the row
-    ContourCellSkeleton &cell = *((*cells)[k++] = new ContourCellSkeleton);
-    // See comment in TriangularMaster::exterior(), below, before
-    // changing the next two lines!
-    double x = 1.0 - y1;
-    double x1 = 1.0 - y;
-    cell[0] = ContourCellCoord(x, y, n-j-1, j);
-    cell[1] = ContourCellCoord(x1, y, n-j, j);
-    cell[2] = ContourCellCoord(x, y1, n-j-1, j+1);
-  }
-  return cells;
-}
+	// The edge has already been seen.  Re-use the nodes on it.
+	// TODO: Is searching for the closest node too inefficient?
+	// The list is probably short.  We can't just look for a node
+	// with the exact same position, because round off error in
+	// interpolate() may give different results in different
+	// elements for the positions of shared nodes.
+	nodes[pnidx] = findClosestNode(it->second, pos);
+      }	// end if edge has already been seen.
+      
+    } // end if ProtoNode is on an edge
 
-std::vector<ContourCellSkeleton*>*
-QuadrilateralMaster::contourcells(int n) const
-{
-
-  std::vector<ContourCellSkeleton*>* cells =
-    new std::vector<ContourCellSkeleton*>(2*n*n);
-  double dx = 2.0/n;
-  int k = 0;			// counts cells
-  for(int j=0; j<n; j++) {
-    bool leanleft = j%2 == 0;
-    double y = j*dx - 1.0;
-    double y1 = (j+1)*dx - 1.0;
-    if(j == n-1) y1 = 1.0;	// avoid roundoff
-    for(int i=0; i<n; i++) {
-      double x = i*dx - 1.0;
-      double x1 = (i+1)*dx - 1.0;
-      if(i == n-1) x1 = 1.0;	// avoid roundoff
-      ContourCellSkeleton &cell1 = *((*cells)[k++] = new ContourCellSkeleton);
-      ContourCellSkeleton &cell2 = *((*cells)[k++] = new ContourCellSkeleton);
-      ContourCellCoord ll(x, y, i, j);
-      ContourCellCoord lr(x1, y, i+1, j);
-      ContourCellCoord ur(x1, y1, i+1, j+1);
-      ContourCellCoord ul(x, y1, i, j+1);
-      if(leanleft) {
-	cell1[0] = ll;
-	cell1[1] = lr;
-	cell1[2] = ul;
-	cell2[0] = lr;
-	cell2[1] = ur;
-	cell2[2] = ul;
-      }
+    else if(pn->nfaces() > 0) {
+      // ProtoNode is on a face (but not an edge or corner).
+      assert(pn->nedges() == 0 && pn->nfaces() == 1);
+      int faceNo = pn->faceindex[0];
+      Coord3D pos = interpolate(corners, pn->mastercoord());
+      // Has the face been seen before?
+      CSkeletonNode *n0 = el->getFaceNode(faceNo, 0);
+      CSkeletonNode *n1 = el->getFaceNode(faceNo, 1);
+      CSkeletonNode *n2 = el->getFaceNode(faceNo, 2);
+      CSkeletonMultiNodeKey facekey(n0, n1, n2);
+      SkelElNodeMap::iterator it = faceNodeMap.find(facekey);
+      if(it == faceNodeMap.end()) {
+	// The face hasn't been seen before.  Create a new node.
+	Node *newNode = femesh->newFuncNode(pos);
+	nodes[pnidx] = newNode;
+	// Add the node to newFaceNodes.
+	SkelElNodeMap::iterator fit = newFaceNodes.find(facekey);
+	if(fit == newFaceNodes.end()) {
+	  newFaceNodes.emplace(
+		       std::make_pair(facekey, std::vector<Node*>(1, newNode)));
+	}
+	else {
+	  fit->second.push_back(newNode);
+	}
+      }	// end if face is new
       else {
-	cell1[0] = ll;
-	cell1[1] = ur;
-	cell1[2] = ul;
-	cell2[0] = ll;
-	cell2[1] = lr;
-	cell2[2] = ur;
-      }
-      leanleft ^= 1;
-    }
-  }
-  return cells;
-}
+	nodes[pnidx] = findClosestNode(it->second, pos);
+      }	// end if face has already been seen.
 
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+    } // end if ProtoNode is on a face
 
-// Is a point on the boundary of the MasterElement?
+    else {
+      // ProtoNode is interior.  It always needs to be created.
+      assert(pn->nedges() == 0 && pn->nfaces() == 0);
+      Coord3D pos = interpolate(corners, pn->mastercoord());
+      nodes[pnidx] = femesh->newFuncNode(pos);
 
-bool TriangularMaster::onBoundary(const MasterCoord &pt) const {
-  return (pt(0) == 0.0 || pt(1) == 0.0 || pt(0) + pt(1) == 1.0);
-}
+    } // end if ProtoNode is interior
+    
+  } // end loop over ProtoNodes
 
-bool QuadrilateralMaster::onBoundary(const MasterCoord &pt) const {
-  return (pt(0) == -1.0 || pt(1) == -1.0 || pt(0) == 1.0 || pt(1) == 1.0);
-}
+  // Merge the new nodes into edgeNodeMap and faceNodeMap so they can
+  // be used by future elements.
+  edgeNodeMap.insert(newEdgeNodes.begin(), newEdgeNodes.end());
+  faceNodeMap.insert(newFaceNodes.begin(), newFaceNodes.end());
 
-// Are two points on the *same* boundary of the MasterElement?
-
-bool TriangularMaster::onBoundary2(const MasterCoord &pt0,
-                                   const MasterCoord &pt1)
-  const
-{
-  return
-    (pt0(0) == 0.0 && pt1(0) == 0.0) ||
-    (pt0(1) == 0.0 && pt1(1) == 0.0) ||
-    (pt0(0) + pt0(1) == 1.0 && pt1(0) + pt1(1) == 1.0);
-}
-
-bool QuadrilateralMaster::onBoundary2(const MasterCoord &pt0,
-                                      const MasterCoord &pt1)
-  const
-{
-  return
-    (pt0(0) == -1.0 && pt1(0) == -1.0) ||
-    (pt0(1) == -1.0 && pt1(1) == -1.0) ||
-    (pt0(0) == 1.0 && pt1(0) == 1.0) ||
-    (pt0(1) == 1.0 && pt1(1) == 1.0);
-}
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// Are the two given MasterCoords on the same exterior edge of the
-// master element?  An 'exterior' edge, as far as this routine cares,
-// is one that begins at a corner listed in the given list of
-// ElementCornerNodeIterators.  In the real world, exterior edges are
-// those that form geometrical boundaries of the system.  They don't
-// necessarily have anything to do with the boundary conditions, but
-// are important for creating contour plots.
-
-bool TriangularMaster::exterior(
-			const MasterCoord &a, const MasterCoord &b,
-			const std::vector<ElementCornerNodeIterator> &ext)
-  const
-{
-  if(onBoundary(a) && onBoundary(b)) {
-    for(std::vector<ElementCornerNodeIterator>::size_type i=0; i<ext.size();i++)
-      {
-	const MasterCoord &bdystart = ext[i].mastercoord();
-	double x0 = bdystart(0);
-	double y0 = bdystart(1);
-	// We could presumably compute whether or not points a and b
-	// were on an edge in some general way, but it's probably faster
-	// and more accurate to take advantage of what we know of the
-	// master element geometry, and just make a few simple
-	// comparisons.
-	if(x0 == 0.0) {
-	  if(y0 == 0.0) {		// bottom edge, y=0
-	    if(a(1)==0.0 && b(1)==0.0) {
-	      return 1;
-	    }
-	  }
-	  else if(y0 == 1.0) {	// left edge, x=0
-	    if(a(0)==0.0 && b(0)==0.0) {
-	      return 1;
-	    }
-	  }
-	}
-	else if(x0 == 1.0) {	// upper right edge, x+y=1
-	  // Here we worry about roundoff error making it look like a
-	  // point isn't quite on an edge.  But points a and b are
-	  // really the corners of ContourCellSkeletons, so we just
-	  // have to make sure that the comparison here is compatible
-	  // with the computation there.
-	  if(a(0)==1.0-a(1) && b(0)==1.0-b(1)) {
-	    return 1;
-	  }
-	}
-      }
-  }
-  return 0;
-}
-
-bool QuadrilateralMaster::exterior(const MasterCoord &a, const MasterCoord &b,
-				   const std::vector<ElementCornerNodeIterator> &ext)
-  const
-{
-  if(onBoundary(a) && onBoundary(b)) {
-    for(std::vector<ElementCornerNodeIterator>::size_type i=0; i<ext.size();i++)
-      {
-	const MasterCoord &bdystart = ext[i].mastercoord();
-	double x0 = bdystart(0);
-	double y0 = bdystart(1);
-	if(x0 == -1.0 && y0 == -1.0) { // bottom edge, y=-1
-	  if(a(1) == -1.0 && b(1) == -1.0) {
-	    return 1;
-	  }
-	}
-	else if(x0 == 1.0 && y0 == -1.0) { // right edge, x=1
-	  if(a(0) == 1.0 &&  b(0) == 1.0) {
-	    return 1;
-	  }
-	}
-	else if(x0 == 1.0 && y0 == 1.0) {	// top edge, y=1
-	  if(a(1) == 1.0 && b(1) == 1.0) {
-	    return 1;
-	  }
-	}
-	else if(x0 == -1.0 && y0 == 1.0) { // left edge, x=-1
-	  if(a(0) == -1.0 && b(0) == -1.0) {
-	    return 1;
-	  }
-	}
-      }
-  }
-  return 0;
-}
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-const std::vector<const MasterCoord*> &TriangularMaster::perimeter() const {
-  static const std::vector<const MasterCoord*> *p = 0;
-  if(!p)
-    p = findPerimeter();
-  return *p;
-}
-
-const std::vector<const MasterCoord*> &QuadrilateralMaster::perimeter() const {
-  static const std::vector<const MasterCoord*> *p = 0;
-  if(!p)
-    p = findPerimeter();
-  return *p;
-}
-
-const std::vector<const MasterCoord*> &MasterElement1D::perimeter() const {
-  static const std::vector<const MasterCoord*> *p = 0;
-  if(!p)
-    p = findPerimeter();
-  return *p;
-}
-
-const std::vector<const MasterCoord*> *MasterElement::findPerimeter() const {
-  std::vector<const MasterCoord*> *p = new std::vector<const MasterCoord*>;
-  for(int i=0; i<nnodes(); i++) {
-    const ProtoNode *pn = protonodes[i];
-    if(pn->corner())
-      p->push_back(&pn->mastercoord());
-  }
-  return p;
-}
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// Contour plotting support functions.  It's quite possible that these
-// can be rewritten in terms of generic MasterElement functions.  It
-// would be good to do so, because these functions assume a particular
-// geometry of the MasterElements.  The geometry assumed here must be
-// consistent with the geometry laid out in the MasterElement subclass
-// constructors.
-
-CCurve *MasterElement::perimeterSection(const MasterCoord *a,
-					const MasterCoord *b) const
-{
-  CCurve *curve = new CCurve;
-  int sidea = sideno(*a);
-  int sideb = sideno(*b);
-  curve->push_back(a);
-  int n = nedges();
-  if(sidea != sideb) {
-    for(int i=sidea; i!= sideb; i=(i+1)%n) {
-      // See the "Memory Allocation Note" in contour.C.
-      curve->push_back(endpoint(i));
-    }
-  }
-  curve->push_back(b);
-  return curve;
-}
-
-// -----------
-
-int TriangularMaster::sidenumber(const MasterCoord &a) {
-  // Given a MasterCoord on the edge of a triangular MasterElement,
-  // return an integer indicating which side of the element it's on.
-  // Sides include their endpoints but not their startpoints, going
-  // counterclockwise.
-  //
-  //  |\          * (ending a comment with '\' generates a compiler warning!)
-  // 0| \2
-  //  |  \        *
-  //  ----
-  //    1
-  if(a(0) == 0.0 && a(1) != 1.0) return 0;
-  if(a(1) == 0.0) return 1;
-  return 2;
-}
-
-const MasterCoord *TriangularMaster::endpoint(int side_number) const {
-  // This returns the counterclockwise end of the side.  See the
-  // "Memory Allocation Note" in contour.C for why this function
-  // returns a pointer to static data.
-  static const MasterCoord z00(0.0, 0.0);
-  static const MasterCoord z10(1.0, 0.0);
-  static const MasterCoord z01(0.0, 1.0);
-  switch(side_number) {
-  case 0:
-    return &z00;
-  case 1:
-    return &z10;
-  case 2:
-    return &z01;
-  }
-  return 0;			// not reached
-}
-
-bool TriangularMaster::endPointComparator(const MasterEndPoint &a,
-					const MasterEndPoint &b) // static
-{
-  int sidea = sidenumber(*a.mc);
-  int sideb = sidenumber(*b.mc);
-  if(sidea != sideb)
-    return sidea < sideb;
-  // both points on the same side
-  switch(sidea) {
-  case 0:
-    if(a(1) > b(1)) return true;
-    if(a(1) < b(1)) return false;
-    break;
-  case 1:
-    if(a(0) < b(0)) return true;
-    if(a(0) > b(0)) return false;
-    break;
-  case 2:
-    if(a(0) > b(0)) return true;
-    if(a(0) < b(0)) return false;
-  }
-  // both points coincide
-  if(!a.start && b.start) return true;
-  return false;
-}
-
-MasterEndPointComparator TriangularMaster::bdysorter() const {
-  return TriangularMaster::endPointComparator;
-}
-
-// ----------
-
-int QuadrilateralMaster::sidenumber(const MasterCoord &a) {
-  //
-  //   __3__
-  //   |   |
-  //  0|   |2
-  //   -----
-  //     1
-
-  if(a(0) == -1.0 && a(1) != 1.0) return 0;
-  if(a(1) == -1.0) return 1;
-  if(a(0) == 1.0) return 2;
-  return 3;
-}
-
-const MasterCoord *QuadrilateralMaster::endpoint(int side_number) const {
-  // This returns the counterclockwise end of the side.  See the
-  // "Memory Allocation Note" in contour.C for why this function
-  // returns a pointer to static data.
-  static const MasterCoord sw(-1.0, -1.0);
-  static const MasterCoord se( 1.0, -1.0);
-  static const MasterCoord ne( 1.0,  1.0);
-  static const MasterCoord nw(-1.0,  1.0);
-  switch(side_number) {
-  case 0:
-    return &sw;
-  case 1:
-    return &se;
-  case 2:
-    return &ne;
-  case 3:
-    return &nw;
-  }
-  return 0;			// not reached
-}
-
-bool QuadrilateralMaster::endPointComparator(const MasterEndPoint &a,
-					     const MasterEndPoint &b) // static
-{
-  int sidea = sidenumber(*a.mc);
-  int sideb = sidenumber(*b.mc);
-  if(sidea != sideb)
-    return sidea < sideb;
-  switch(sidea) {
-  case 0:
-    if(a(1) > b(1)) return true;
-    if(a(1) < b(1)) return false;
-    break;
-  case 1:
-    if(a(0) < b(0)) return true;
-    if(a(0) > b(0)) return false;
-    break;
-  case 2:
-    if(a(1) < b(1)) return true;
-    if(a(1) > b(1)) return false;
-    break;
-  case 3:
-    if(a(0) > b(0)) return true;
-    if(a(0) < b(0)) return false;
-  };
-  if(!a.start && b.start) return true;
-  return false;
-}
-
-MasterEndPointComparator QuadrilateralMaster::bdysorter() const {
-  return QuadrilateralMaster::endPointComparator;
-}
-
-// -------
-
-// // Dealing with Edge elements the same way is sort of dumb, since
-// // contouring is never done on edge elements.  But the class heirarchy
-// // requires it at the moment.
-// // TODO 3.1: Fix that.
-// static bool edgeMasterEndPointComparator(const MasterEndPoint &a,
-// 					 const MasterEndPoint &b)
-// {
-//   if(a(0) < b(0)) return true;
-//   if(a(0) > b(0)) return false;
-//   if(a(1) < b(1)) return true;
-//   return false;
-// }
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// Edgement *MasterElement::buildInterfaceElement(
-// 		       PyObject *leftskelel, PyObject *rightskelel,
-// 		       int segmentordernumber,
-// 		       Material *m,
-// 		       const std::vector<Node*> *leftnodes,
-// 		       const std::vector<Node*> *rightnodes,
-// 		       bool leftnodesinorder, bool rightnodesinorder,
-// 		       const std::vector<std::string> *pInterfacenames)
-//   const
-// {
-//   return new InterfaceElement(leftskelel, rightskelel,
-// 			      segmentordernumber,
-// 			      *this,
-// 			      leftnodes, rightnodes,
-// 			      leftnodesinorder, rightnodesinorder,
-// 			      m, pInterfacenames);
-// }
-
-#endif	// DIM == 2
-
-Element *MasterElement::build(CSkeletonElement *el, const Material *m,
-			      const std::vector<Node*> *nodes)
-  const
-{
-  return new Element(el, *this, nodes, m);
+  // Element constructor uses std::move on nodes.
+  return new Element(el, *this, nodes, mat);
 }
 
 FaceBoundaryElement *MasterElement::buildFaceBoundary(
-					      const std::vector<Node*> *nodes)
+					      const std::vector<Node*> &nodes)
   const
 {
   return new FaceBoundaryElement(*this, nodes);
 }
 
 EdgeBoundaryElement *MasterElement::buildEdgeBoundary(
-					      const std::vector<Node*> *nodes)
+					      const std::vector<Node*> &nodes)
 const
 {
   return new EdgeBoundaryElement(*this, nodes);
@@ -965,8 +668,6 @@ ElementLite *MasterElement::buildLite(const std::vector<Coord> *nodes)
 {
   return new ElementLite(*this, nodes);
 }
-
-#if DIM == 3
 
 TetrahedralMaster::TetrahedralMaster(const std::string &name,
 				     const std::string &desc,
@@ -1027,9 +728,6 @@ MasterCoord TetrahedralMaster::center() const {
   return MasterCoord(fourth, fourth, fourth);
 }
 
-#endif	// DIM == 3
-
-
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 const std::string &MasterElement::modulename() const {
@@ -1052,9 +750,7 @@ const std::string &QuadrilateralMaster::classname() const {
   return nm;
 }
 
-#if DIM == 3
 const std::string &TetrahedralMaster::classname() const {
   static std::string nm("TetrahedralMaster");
   return nm;
 }
-#endif // DIM == 3

@@ -108,16 +108,16 @@ public:
 class ElementFuncNodePositionIterator : public ElementNodePositionIterator {};
 class ElementCornerNodePositionIterator : public ElementNodePositionIterator {};
 
-class ElementExteriorNodeIterator : public ElementFuncNodeIterator {
-public:
-  // %addmethods {
-  //   ElementExteriorNodeIterator next() {
-  //     return *self + 1;
-  //   }
-  //   ElementExteriorNodeIterator __add__(int i) {
-  //     return *self + 1;
-  //   }
-  // }
-};
+// class ElementExteriorNodeIterator : public ElementFuncNodeIterator {
+// public:
+//   // %addmethods {
+//   //   ElementExteriorNodeIterator next() {
+//   //     return *self + 1;
+//   //   }
+//   //   ElementExteriorNodeIterator __add__(int i) {
+//   //     return *self + 1;
+//   //   }
+//   // }
+// };
 
 #endif // ELEMENTNODEITERATOR_SWG

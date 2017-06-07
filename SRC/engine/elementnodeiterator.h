@@ -233,38 +233,38 @@ public:
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// ElementExteriorNodeIterator should really be called
-// "ElementExteriorFuncNodeIterator", but the name is too long to
-// type.
+// // ElementExteriorNodeIterator should really be called
+// // "ElementExteriorFuncNodeIterator", but the name is too long to
+// // type.
 
-class ElementExteriorNodePositionIterator 
-  : public ElementFuncNodePositionIterator
-{
-public:
-  ElementExteriorNodePositionIterator(const ElementBase&);
-  ElementExteriorNodePositionIterator(
-			      const ElementExteriorNodePositionIterator&);
-  virtual ~ElementExteriorNodePositionIterator() {}
-  ElementExteriorNodePositionIterator &operator=(
-				 const ElementExteriorNodePositionIterator&);
-  ElementExteriorNodePositionIterator operator+(int) const;
-  virtual ElementExteriorNodePositionIterator &operator+=(int);
-  virtual int mlistindex() const;
-  virtual void print(std::ostream&) const;
-};
+// class ElementExteriorNodePositionIterator 
+//   : public ElementFuncNodePositionIterator
+// {
+// public:
+//   ElementExteriorNodePositionIterator(const ElementBase&);
+//   ElementExteriorNodePositionIterator(
+// 			      const ElementExteriorNodePositionIterator&);
+//   virtual ~ElementExteriorNodePositionIterator() {}
+//   ElementExteriorNodePositionIterator &operator=(
+// 				 const ElementExteriorNodePositionIterator&);
+//   ElementExteriorNodePositionIterator operator+(int) const;
+//   virtual ElementExteriorNodePositionIterator &operator+=(int);
+//   virtual int mlistindex() const;
+//   virtual void print(std::ostream&) const;
+// };
 
-class ElementExteriorNodeIterator 
-  : public ElNodeIterator<ElementExteriorNodePositionIterator, Element>
-{
-public:
-  ElementExteriorNodeIterator(const Element&);
-  ElementExteriorNodeIterator(const ElementExteriorNodeIterator&);
-  virtual ~ElementExteriorNodeIterator() {}
-  ElementExteriorNodeIterator& operator=(const ElementExteriorNodeIterator&);
-  ElementExteriorNodeIterator operator+(int) const;
-  virtual ElementExteriorNodeIterator &operator+=(int);
-  virtual void print(std::ostream&) const;
-};
+// class ElementExteriorNodeIterator 
+//   : public ElNodeIterator<ElementExteriorNodePositionIterator, Element>
+// {
+// public:
+//   ElementExteriorNodeIterator(const Element&);
+//   ElementExteriorNodeIterator(const ElementExteriorNodeIterator&);
+//   virtual ~ElementExteriorNodeIterator() {}
+//   ElementExteriorNodeIterator& operator=(const ElementExteriorNodeIterator&);
+//   ElementExteriorNodeIterator operator+(int) const;
+//   virtual ElementExteriorNodeIterator &operator+=(int);
+//   virtual void print(std::ostream&) const;
+// };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -280,7 +280,7 @@ public:
   virtual int mlistindex() const;
   ElementFuncNodePositionIterator funcnode_iterator() const;
   ElementMapNodePositionIterator mapnode_iterator() const;
-  ElementExteriorNodePositionIterator exteriornode_iterator() const;
+  // ElementExteriorNodePositionIterator exteriornode_iterator() const;
   virtual void print(std::ostream&) const;
 };
 
@@ -296,7 +296,7 @@ public:
   ElementCornerNodeIterator operator+(int) const;
   ElementFuncNodeIterator funcnode_iterator() const;
   ElementMapNodeIterator mapnode_iterator() const;
-  ElementExteriorNodeIterator exteriornode_iterator() const;
+  // ElementExteriorNodeIterator exteriornode_iterator() const;
   FuncNode *funcnode() const;
   virtual void print(std::ostream&) const;
 };

@@ -86,9 +86,9 @@ int ElementBase::ncorners() const {
   return master.ncorners(); 
 }
 
-int ElementBase::nexteriorfuncnodes() const {
-  return master.nexteriorfuncnodes(); 
-}
+// int ElementBase::nexteriorfuncnodes() const {
+//   return master.nexteriorfuncnodes(); 
+// }
 
 double ElementBase::det_jacobian(const GaussPoint &g) const {
   return master.mapfunction->det_jacobian(this, g);
@@ -328,9 +328,9 @@ Coord ElementLite::position(int i) const {
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 Element::Element(CSkeletonElement *el, const MasterElement &me,
-		 const std::vector<Node*> *nl, const Material *mat)
+		 const std::vector<Node*> &nl, const Material *mat)
   : ElementBase(me),
-    nodelist(*nl),
+    nodelist(std::move(nl)),
     matl(mat),
 #if DIM==2
     exterior_edges(0),
@@ -1123,7 +1123,7 @@ Node* Element::getCornerNode(int i) const
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 FaceBoundaryElement::FaceBoundaryElement(const MasterElement &me,
-					 const std::vector<Node*> *nl)
+					 const std::vector<Node*> &nl)
   : Element(0, me, nl, 0),
     front_(0), back_(0)
 {}
@@ -1142,7 +1142,7 @@ const Element *FaceBoundaryElement::getFrontBulk() const {
 }
 
 EdgeBoundaryElement::EdgeBoundaryElement(const MasterElement &me,
-					 const std::vector<Node*> *nl)
+					 const std::vector<Node*> &nl)
   : Element(0, me, nl, 0)
 {}
 
