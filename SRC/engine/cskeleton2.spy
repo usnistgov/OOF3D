@@ -466,10 +466,14 @@ def _CSkeletonBase_femesh(self, edict, material=None):
                     # element in the direction of the normal to the
                     # face.
                     mastercenter = elem.center()
+                    debug.fmsg("getting facecenter")
                     facecenter = elem.from_master(mastercenter)
+                    debug.fmsg("facecenter=", facecenter)
                     normal = element.findNormal(elem, mastercenter)
                     for bulkel in meshels:
+                        debug.fmsg("getting bulkcenter")
                         bulkcenter = bulkel.from_master(bulkel.center())
+                        debug.fmsg("bulkcenter=", bulkcenter)
                         if normal.dot(bulkcenter-facecenter) > 0:
                             elem.setFrontBulk(bulkel)
                         else:

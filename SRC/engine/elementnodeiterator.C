@@ -11,6 +11,7 @@
 
 #include <oofconfig.h>
 
+#include "common/IO/oofcerr.h"
 #include "engine/element.h"
 #include "engine/elementnodeiterator.h"
 #include "engine/mastercoord.h"
@@ -169,6 +170,9 @@ ElementMapNodePositionIterator ElementMapNodePositionIterator::operator+(int n)
 double ElementMapNodePositionIterator::shapefunction(const MasterPosition &pos)
   const 
 {
+  OOFcerrIndent indent(2);
+  oofcerr << "ElementMapNodePositionIterator:shapefunction: index_="
+	  << index_ << " pos=" << pos << std::endl;
   return element_.master.mapfunction->value(index_, pos);
 }
 

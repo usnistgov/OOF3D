@@ -90,8 +90,8 @@ class ElNodeIterator : public BASE {
 public:
   ElNodeIterator(const ITERAND &obj) : BASE(obj) {}
   Node *node() const {
-    return dynamic_cast<const Element&>(
-			BASE::element()).get_nodelist()[BASE::mlistindex()];
+    return dynamic_cast<const Element&>(BASE::element()).get_nodelist()
+      [BASE::mlistindex()];
   }
   // //Cheap way to get the nodes that are 'partnered' with the main
   // //interface element nodes. Can only be used if the Element really is

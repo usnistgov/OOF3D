@@ -36,8 +36,8 @@ class MeshInfoDisplay(display.DisplayMethod):
         self.line_width = line_width
         self.tbcallbacks = []
         display.DisplayMethod.__init__(self)
-        self.drawFuncs = {"Element": self.drawElement,
-                          "Node": self.drawNode}
+        # self.drawFuncs = {"Element": self.drawElement,
+        #                   "Node": self.drawNode}
 
     ## TODO 3.1: Add Segment and Face modes, later, when interface physics
     ## is added.
@@ -52,27 +52,27 @@ class MeshInfoDisplay(display.DisplayMethod):
         self.tbcallbacks = []
         display.DisplayMethod.destroy(self, destroy_canvaslayer)
 
-    def draw(self, gfxwindow, device): # 2D only
-        toolbox = gfxwindow.getToolboxByName("Mesh_Info")
-        mesh = toolbox.meshcontext()
-        mesh.begin_reading()
-        mesh.restoreCachedData(gfxwindow.displayTime)
-        try:
-            # Drawing "queried" item.
-            if toolbox.querier and toolbox.querier.object:
-                self.drawFuncs[toolbox.querier.targetname](device, toolbox, 
-                                                           toolbox.querier.object,
-                                                           which="query")
-            # Drawing "peeked" item.
-            if toolbox.peeker and toolbox.peeker.objects.values():
-                for objtype in toolbox.peeker.objects:
-                    if toolbox.peeker.objects[objtype]:
-                        self.drawFuncs[objtype](device, toolbox, 
-                                                toolbox.peeker.objects[objtype],
-                                                which="peek")
-        finally:
-            mesh.releaseCachedData()
-            mesh.end_reading()
+    # def draw(self, gfxwindow, device): # 2D only
+    #     toolbox = gfxwindow.getToolboxByName("Mesh_Info")
+    #     mesh = toolbox.meshcontext()
+    #     mesh.begin_reading()
+    #     mesh.restoreCachedData(gfxwindow.displayTime)
+    #     try:
+    #         # Drawing "queried" item.
+    #         if toolbox.querier and toolbox.querier.object:
+    #             self.drawFuncs[toolbox.querier.targetname](device, toolbox, 
+    #                                                        toolbox.querier.object,
+    #                                                        which="query")
+    #         # Drawing "peeked" item.
+    #         if toolbox.peeker and toolbox.peeker.objects.values():
+    #             for objtype in toolbox.peeker.objects:
+    #                 if toolbox.peeker.objects[objtype]:
+    #                     self.drawFuncs[objtype](device, toolbox, 
+    #                                             toolbox.peeker.objects[objtype],
+    #                                             which="peek")
+    #     finally:
+    #         mesh.releaseCachedData()
+    #         mesh.end_reading()
 
     # def drawElement(self, device, toolbox, element, which="query"): # 2D only
     #     device.set_lineColor(self.colors[which])

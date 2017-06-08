@@ -192,10 +192,18 @@ double ElementBase::Jdmasterdx(SpaceIndex i, SpaceIndex j, const Coord &coord)
 
 Coord ElementBase::from_master(const MasterPosition &mc) const {
   Coord p;			// initialized to (0,0) or (0,0,0)
+  oofcerr << "ElementBase::from_master: this=" << *this << std::endl;
+  OOFcerrIndent indent(2);
   for(CleverPtr<ElementMapNodePositionIterator> n(mapnode_positerator()); 
       !n->end(); ++*n)
     {
+      oofcerr << "ElementBase::from_master: n=" << *n << std::endl;
+      oofcerr << "ElementBase::from_master: n->position=" << n->position()
+	      << std::endl;
+      oofcerr << "ElementBase::from_master: shapefunc=" << n->shapefunction(mc)
+	      << std::endl;
       p += n->shapefunction(mc) * n->position();
+      oofcerr << "ElementBase::from_master: p=" << p << std::endl;
     }
   return p;
 }
