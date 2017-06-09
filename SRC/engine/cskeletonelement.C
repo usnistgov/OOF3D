@@ -847,6 +847,7 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
       }
     }
 
+#ifdef DEBUG
     double actual = volumeInVoxelUnits(ms);
     double fracvol = (totalVol - actual)/actual;
     bool badvol = fabs(fracvol) >= VOLTOL;
@@ -857,20 +858,21 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
 	      << " [" << result << "]"
 	      << " actual=" << actual
 	      << " (error=" << fracvol*100 << "%)" << std::endl;
-      oofcerr << "CSkeletonElement::categoryVolumes: saving VSBs:" << std::endl;
-      for(unsigned int cat=0; cat < ncat; cat++) {
-	if(result[cat] > 0) {
-	  std::string filename = "vsb_" + to_string(cat);
-	  oofcerr << "CSkeletonElement::categoryVolumes: " << filename
-		  << std::endl;
-	  ms->saveClippedVSB(cat, planes, filename);
-	}
-      }
+      // oofcerr << "CSkeletonElement::categoryVolumes: saving VSBs:" << std::endl;
+      // for(unsigned int cat=0; cat < ncat; cat++) {
+      // 	if(result[cat] > 0) {
+      // 	  std::string filename = "vsb_" + to_string(cat);
+      // 	  oofcerr << "CSkeletonElement::categoryVolumes: " << filename
+      // 		  << std::endl;
+      // 	  ms->saveClippedVSB(cat, planes, filename);
+      // 	}
+      // }
     }
-    if(badvol) {
-      throw ErrProgrammingError("categoryVolumes: total volume check failed!",
-				  __FILE__, __LINE__);
-    }
+    // TODONT: Throwing an exception here is incorrect.  If the Skeleton
+    // contains illegal elements, it's possible that this element is
+    // legal (shape-wise) but has nodes outside the Microstructure.
+    // In that case some of its volume won't be in any pixel category.
+#endif // DEBUG
   }
   catch (...) {
     oofcerr << "CSkeletonElement::categoryVolumes: failed for "
