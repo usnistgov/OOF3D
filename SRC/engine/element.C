@@ -192,18 +192,12 @@ double ElementBase::Jdmasterdx(SpaceIndex i, SpaceIndex j, const Coord &coord)
 
 Coord ElementBase::from_master(const MasterPosition &mc) const {
   Coord p;			// initialized to (0,0) or (0,0,0)
-  oofcerr << "ElementBase::from_master: this=" << *this << std::endl;
-  OOFcerrIndent indent(2);
   for(CleverPtr<ElementMapNodePositionIterator> n(mapnode_positerator()); 
       !n->end(); ++*n)
     {
-      oofcerr << "ElementBase::from_master: n=" << *n << std::endl;
-      oofcerr << "ElementBase::from_master: n->position=" << n->position()
-	      << std::endl;
-      oofcerr << "ElementBase::from_master: shapefunc=" << n->shapefunction(mc)
-	      << std::endl;
+      Coord pp = n->position();
+      double sf = n->shapefunction(mc);
       p += n->shapefunction(mc) * n->position();
-      oofcerr << "ElementBase::from_master: p=" << p << std::endl;
     }
   return p;
 }
@@ -345,6 +339,7 @@ Element::Element(CSkeletonElement *el, const MasterElement &me,
 #endif // DIM==2
     cskeleton_element(el)
 {
+  assert(nodelist.size() == master.nnodes());
   //  Trace("Element::Element " + me.name());
   //  int nn = me.nnodes();
   //  for(int i=0; i<nn; i++) {
@@ -553,6 +548,7 @@ ElementCornerNodeIterator Element::cornernode_iterator() const {
 }
 
 Coord Element::position(int i) const {
+  assert(i >= 0 && i < nodelist.size());
   return nodelist[i]->position();
 }
 
@@ -1115,10 +1111,13 @@ void Element::drawGridCell(vtkSmartPointer<GridSource> src,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-std::ostream &operator<<(std::ostream &os, const Element &el) {
-  os << el.master.name();
-  for(ElementCornerNodeIterator it=el.cornernode_iterator(); !it.end(); ++it)
-    os << " " << it.node()->position();
+std::ostream &operator<<(std::ostream &os, const ElementBase &el) {
+  os << el.master.name() << " nnodes=" << el.nnodes() << ":";
+  // for(CleverPtr<ElementCornerNodePositionIterator>
+  // 	it(el.cornernode_positerator()); !it->end(); ++*it)
+  //   os << " " << it->position();
+  for(unsigned int i=0; i<el.nnodes(); i++)
+    os << " " << el.position(i);
   return os;
 }
 
@@ -1132,8 +1131,8 @@ Node* Element::getCornerNode(int i) const
 
 FaceBoundaryElement::FaceBoundaryElement(const MasterElement &me,
 					 const std::vector<Node*> &nl)
-  : Element(0, me, nl, 0),
-    front_(0), back_(0)
+  : Element(nullptr/*CSkeletonElement*/, me, nl, nullptr/*material*/),
+    front_(nullptr), back_(nullptr)
 {}
 
 const std::string &FaceBoundaryElement::classname() const {
@@ -1151,7 +1150,7 @@ const Element *FaceBoundaryElement::getFrontBulk() const {
 
 EdgeBoundaryElement::EdgeBoundaryElement(const MasterElement &me,
 					 const std::vector<Node*> &nl)
-  : Element(0, me, nl, 0)
+  : Element(nullptr, me, nl, nullptr)
 {}
 
 const std::string &EdgeBoundaryElement::classname() const {
@@ -1169,6 +1168,58 @@ bool Element::allNodesAreInSubProblem(const CSubProblem *subp) const {
        return false;
   }
   return true;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// getIntermediateNodes is used when building lower dimension elements
+// on boundaries.  It's given the corner nodes of a face or the end
+// nodes of an edge, and needs to return all of the nodes on the face
+// or edge, in the order required by the FaceBoundaryElement or
+// EdgeBoundaryElement constructor (ie, the order of the ProtoNodes in
+// the lower dimension MasterElement).
+
+std::vector<Node*> Element::getIntermediateNodes(
+					 const std::vector<Node*> &corners)
+  const
+{
+  assert(corners.size() == 2 || corners.size() == 3);
+
+  // Linear elements don't have intermediate nodes.
+  if(master.fun_order() == 1)
+    return corners;
+  
+  // Find the protonode numbers of the corners
+  NodeIndexVec nodeNos;
+  nodeNos.reserve(corners.size());
+  for(const Node *node : corners) {
+    for(unsigned int i=0; i<nnodes(); i++) {
+      if(node->position() == nodelist[i]->position()) {
+	nodeNos.push_back(i);
+	break;
+      }
+    }
+  }
+  assert(nodeNos.size() == corners.size());
+  
+  // Ask the master element for all of the node numbers on the face or
+  // edge.
+  // TODO: This cast is ugly.  We probably should have different
+  // classes for Elements with different dimensions, so that this
+  // method can be only in the 3D Element class.
+  const MasterElement3D &master3 = dynamic_cast<const MasterElement3D&>(master);
+  NodeIndexVec allNodeNos =
+    (corners.size() == 2 ?
+     master3.getIntermediateEdgeNodes(nodeNos) :
+     master3.getIntermediateFaceNodes(nodeNos));
+
+  // Copy the corresponding nodes into the result.
+  std::vector<Node*> allNodes;
+  allNodes.reserve(allNodeNos.size());
+  for(unsigned int i : allNodeNos) {
+    allNodes.push_back(nodelist[i]);
+  }
+  return allNodes;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

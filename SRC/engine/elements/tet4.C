@@ -94,6 +94,14 @@ public:
     return VTK_TETRA;
   };
 
+  NodeIndexVec getIntermediateEdgeNodes(const NodeIndexVec &corners) const {
+    return corners;
+  }
+  
+  NodeIndexVec getIntermediateFaceNodes(const NodeIndexVec &corners) const {
+    return corners;
+  }
+
 };
 
 void tet4init() {

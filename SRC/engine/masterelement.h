@@ -12,10 +12,6 @@
 #ifndef MASTERELEMENT_H
 #define MASTERELEMENT_H
 
-class MasterElement;
-class MasterEdge;
-class MasterFace;
-
 #include <oofconfig.h>
 
 #include "common/coord.h"
@@ -24,6 +20,7 @@ class MasterFace;
 #include "engine/elementshape.h"
 #include "engine/gausspoint.h"
 #include "engine/mastercoord.h"
+#include "engine/masterelement_i.h"
 #include <iostream>
 #include <list>
 #include <map>
@@ -53,11 +50,6 @@ class Node;
 // ShapeFunction needs to know the Gauss points so that it can
 // precompute its values there.
 
-// The instances of each MasterElement type are stored in a
-// MasterElementDict, from which they can be retrieved by name.
-
-typedef std::map<std::string, MasterElement*> MasterElementDict;
-
 std::vector<std::string> *getMasterElementNames();
 MasterElement *getMasterElementByName(const std::string&);
 MasterElement *getMasterElementByShape(const ElementShape*, int, int);
@@ -70,9 +62,9 @@ class ProtoNode {
 private:
   const MasterCoord pos;
   MasterElement &element;
-  int index_;			// local to a masterelement
-  std::vector<int> edgeindex;	// Zero length indicates an interior node.
-  std::vector<int> faceindex;
+  unsigned int index_;			// local to a masterelement
+  NodeIndexVec edgeindex;	// Zero length indicates interior node.
+  NodeIndexVec faceindex;
   bool mapping_;
   bool func_;
   bool corner_;
@@ -92,7 +84,7 @@ public:
   void on_face(int);
 
   const MasterCoord &mastercoord() const { return pos; }
-  int index() const { return index_; }
+  unsigned int index() const { return index_; }
   bool mapping() const { return mapping_; }
   bool func() const { return func_; }
   bool corner() const { return corner_; }
@@ -121,8 +113,6 @@ public:
 
   // get a ProtoNode by number
   const ProtoNode *protonode(int) const;
-  const MasterEdge *masteredge(const ElementCornerNodeIterator&,
-			       const ElementCornerNodeIterator&) const;
   int dimension() const { return shape_->dimension(); }
   const ElementShape *shape() const { return shape_; }
   int nnodes() const;
@@ -166,8 +156,6 @@ public:
   Element *build(CSkeletonElement *el, const CSkeleton *skel, FEMesh *mesh,
 		 const Material *m,
 		 SkelElNodeMap &edgeNodeMap, SkelElNodeMap &faceNodeMap) const;
-  FaceBoundaryElement *buildFaceBoundary(const std::vector<Node*>&) const;
-  EdgeBoundaryElement *buildEdgeBoundary(const std::vector<Node*>&) const;
   ElementLite *buildLite(const std::vector<Coord>*) const;
 
   //Interface branch
@@ -237,6 +225,8 @@ protected:
   friend class ProtoNode;
   friend std::ostream& operator<<(std::ostream&, const MasterElement&);
 
+  void dumpDetails() const;
+
 };  // end class MasterElement
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -248,11 +238,12 @@ public:
 		  int nnodes, int nsc)
     : MasterElement(name, desc, shape, nnodes, nsc)
   {}
-  // TODO 3.1: If we have things other than tets, we may need a four arg
-  // version of this.
-  const MasterFace *masterface(const ElementCornerNodeIterator&,
-			       const ElementCornerNodeIterator&,
-			       const ElementCornerNodeIterator&) const;
+  // getIntermediateEdgeNodes and getIntermediateFaceNodes return the
+  // ProtoNode indices of the node on the edge or face whose endpoints
+  // or corners are on the ProtoNodes whose indices are in arguments.
+  // Derived classes should redefine these.
+  virtual NodeIndexVec getIntermediateEdgeNodes(const NodeIndexVec&) const = 0;
+  virtual NodeIndexVec getIntermediateFaceNodes(const NodeIndexVec&) const = 0;
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -264,6 +255,8 @@ public:
     : MasterElement(name, desc, getShape("Line"), nnodes, nsc)
   {}
   virtual ~MasterElement1D() {}
+  EdgeBoundaryElement *buildEdgeBoundary(const std::vector<Node*>&,
+					 const Element*) const;
   virtual const GaussPtTable &gausspointtable(int deg) const;
   virtual MasterCoord center() const;
   virtual const std::string &classname() const;
@@ -282,6 +275,8 @@ public:
 		  const ElementShape *shape, int nnodes, int nsc)
     : MasterElement(name, desc, shape, nnodes, nsc) {}
   virtual ~MasterElement2D() {}
+  FaceBoundaryElement *buildFaceBoundary(const std::vector<Node*>&,
+					 const Element*) const;
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -327,9 +322,7 @@ private:
 
 class MasterEdge {
 private:
-  // linked list of nodes on this edge, in order of increasing index,
-  // therefore going counterclockwise around the element
-  std::list<const ProtoNode*> nlist;
+  std::vector<const ProtoNode*> nlist; // was std::list in OOF2
   int funcsize_;
 public:
   MasterEdge() : funcsize_(0) {}

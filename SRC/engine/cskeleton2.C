@@ -2044,18 +2044,18 @@ std::string *CSkeleton::compare(CSkeletonBase* other, double tolerance)
   // Instead, compare *sorted* lists of lists of node indices, one
   // (inner) list for each element.
 
-  std::vector< std::vector<unsigned int> > enodes, onodes;
+  std::vector< NodeIndexVec > enodes, onodes;
   for(CSkeletonElementVector::const_iterator i=elements.begin();
       i!=elements.end(); ++i) 
     {
-      std::vector<unsigned int> nidxs;
+      NodeIndexVec nidxs;
       (*i)->getNodeIndices(nidxs);
       enodes.push_back(nidxs);
     }
   for(CSkeletonElementVector::const_iterator i=omar->elements.begin(); 
       i!=omar->elements.end(); ++i) 
     {
-      std::vector<unsigned int> nidxs;
+      NodeIndexVec nidxs;
       (*i)->getNodeIndices(nidxs);
       onodes.push_back(nidxs);
     }
@@ -2071,14 +2071,14 @@ std::string *CSkeleton::compare(CSkeletonBase* other, double tolerance)
   for(CSkeletonSegmentMap::const_iterator i=segments.begin();
       i!=segments.end(); ++i) 
     {
-      std::vector<unsigned int> nidxs;
+      NodeIndexVec nidxs;
       (*i).second->getNodeIndices(nidxs);
       enodes.push_back(nidxs);
     }
   for(CSkeletonSegmentMap::const_iterator i=omar->segments.begin();
       i!=omar->segments.end(); ++i) 
     {
-      std::vector<unsigned int> nidxs;
+      NodeIndexVec nidxs;
       (*i).second->getNodeIndices(nidxs);
       onodes.push_back(nidxs);
     }
@@ -2093,14 +2093,14 @@ std::string *CSkeleton::compare(CSkeletonBase* other, double tolerance)
   enodes.clear();
   onodes.clear();
   for(CSkeletonFaceMap::const_iterator i=faces.begin(); i!=faces.end(); ++i) {
-    std::vector<unsigned int> nidxs;
+    NodeIndexVec nidxs;
     (*i).second->getNodeIndices(nidxs);
     enodes.push_back(nidxs);
   }
   for(CSkeletonFaceMap::const_iterator i=omar->faces.begin(); 
       i!=omar->faces.end(); ++i) 
     {
-      std::vector<unsigned int> nidxs;
+      NodeIndexVec nidxs;
       (*i).second->getNodeIndices(nidxs);
       onodes.push_back(nidxs);
     }

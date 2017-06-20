@@ -48,14 +48,6 @@ public:
   $target = $source->pythonObject();
 }
 
-%typemap(python, ignore) CSkeletonElement *NONE {
-  $target = 0;
-}
-
-%typemap(python, ignore) Material *NONE {
-  $target = 0;
-}
-
 class MasterElement {
 public:
   // int id();
@@ -75,9 +67,6 @@ public:
   int map_order();
   int fun_order();
 
-  //  Element *build(CSkeletonElement *NONE, Material *NONE, NodeVec*);
-  FaceBoundaryElement *buildFaceBoundary(NodeVec&);
-  EdgeBoundaryElement *buildEdgeBoundary(NodeVec&);
   ElementLite *buildLite(PointVec *PointList);
 
   %addmethods {
@@ -96,16 +85,21 @@ public:
   MasterCoord getSCpoint(int);
 };
 
-class MasterElement1D : public MasterElement {};
+class MasterElement1D : public MasterElement {
+public:
+  EdgeBoundaryElement *buildEdgeBoundary(NodeVec&, Element*);
+};
 
 class MasterElement2D : public MasterElement {
 public:
+  FaceBoundaryElement *buildFaceBoundary(NodeVec&, Element*);
 };
 
 class TriangularMaster : public MasterElement2D {};
 class QuadrilateralMaster : public MasterElement2D {};
 
 class MasterElement3D : public MasterElement {};
+
 class TetrahedralMaster : public MasterElement3D {};
 
 int integration_reduction;

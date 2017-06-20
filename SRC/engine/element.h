@@ -20,6 +20,7 @@ class MasterElement;
 #include "common/pythonexportable.h"
 #include "engine/gausspoint.h"
 #include "engine/indextypes.h"
+#include "engine/masterelement_i.h"
 #include "engine/shapefunction.h"
 #include <string>
 #include <vector>
@@ -159,6 +160,7 @@ public:
 
   friend class ElementMapNodePositionIterator;
   friend class ElementFuncNodePositionIterator;
+  friend std::ostream &operator<<(std::ostream&, const ElementBase&);
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -281,6 +283,10 @@ public:
   virtual ElementFuncNodeIterator* funcnode_iterator() const;
   ElementCornerNodeIterator cornernode_iterator() const;
 
+  std::vector<Node*> getIntermediateNodes(const std::vector<Node*>&) const;
+  NodeIndexVec getProtoNodeNumbers(const std::vector<Node*>&)
+    const;
+
   virtual Coord position(int) const;
 
   // Superconvergent patch recovery
@@ -400,8 +406,6 @@ public:
 #endif	// DIM==3
 
 
-
-  friend std::ostream &operator<<(std::ostream&, const Element&);
 
   Node* getCornerNode(int i) const;
   void setMaterial(const Material* pMat){matl=pMat;}

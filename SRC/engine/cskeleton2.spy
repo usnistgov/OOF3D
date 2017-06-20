@@ -329,6 +329,11 @@ def _CSkeletonBase_femesh(self, edict, material=None):
     prog_index = 0
     edgeelements = {}
     try:
+        ## TODO: Instead of getting the 1D and 2D master elements from
+        ## edict (ultimately from the user) should the 3D master just
+        ## specify what the 1D and 2D masters are?  Are there any
+        ## cases in which there's a real choice among compatible 1D
+        ## and 2D master elements?
         master1D = edict["Line"]
     except KeyError:
         pass
@@ -351,14 +356,10 @@ def _CSkeletonBase_femesh(self, edict, material=None):
                 # been created.
                 try:
                     key = orderedNodeIndexPair(n0idx, n1idx)
-                    edge = edgeelements[key]
+                    edgeEl = edgeelements[key]
                     reverse = (key != (n0idx, n1idx))
                 except KeyError:
-                    # Create a new 1D Element.  The first None arg is
-                    # the CSkeletonElement, and the second is the
-                    # Material, neither of which exist for elements
-                    # that are created just for imposing boundary
-                    # conditions.
+                    # Create a new 1D Element.
                     ## TODO 3.1: Allow interface materials to be assigned
                     ## to boundaries, and pass them in here.
 
@@ -369,21 +370,22 @@ def _CSkeletonBase_femesh(self, edict, material=None):
                     realn1 = realmesh.getNode(n1idx)
                     # Find the bulk elements that this edge is part of.
                     skelels = self.getSegmentElements(seg.get_segment())
-                    meshels = [realmesh.getElement(el.getIndex())
-                               for el in skelels]
-                    
-                    edge = master1D.buildEdgeBoundary([realn0, realn1])
-                    ## TODO 3.1: add meshels?  Do mesh edges need to
+                    # Pick one Mesh element, and use it to get the
+                    # nodes on the edge. 
+                    realel = realmesh.getElement(skelels[0].getIndex())
+                    # buildEdgeBoundary gets intermediate nodes from
+                    # realel if necessary.
+                    edgeEl = master1D.buildEdgeBoundary([realn0, realn1],
+                                                        realel)
+                    ## TODO 3.1: Do mesh edges need to
                     ## know their neighboring bulk elements?  It would
                     ## add a lot of data and is probably unnecessary.
 
-                    edgeelements[key] = edge
+                    edgeelements[key] = edgeEl
                     reverse = False
-                    realmesh.addInterfaceElement(edge)
+                    realmesh.addInterfaceElement(edgeEl)
 
-                realedgebndy.addEdge(edge, reverse)
-
-
+                realedgebndy.addEdge(edgeEl, reverse)
 
     #             if pbar.query_stop() !=0 \
     #                    or pbar.get_success() is progressbar.FAILED:
@@ -429,6 +431,8 @@ def _CSkeletonBase_femesh(self, edict, material=None):
             which = nodeIndices.index(lowest)
             key = tuple(nodeIndices[which:] + nodeIndices[:which]) # cyclic
             try:
+                ## TODO: This lookup should always fail.  Why are we
+                ## doing it?
                 elem = faceelements[key]
                 reverse = False
             except KeyError:
@@ -452,32 +456,30 @@ def _CSkeletonBase_femesh(self, edict, material=None):
                     ## won't match when we have split nodes, and we'll
                     ## also have to worry about which part of a split node
                     ## is on the boundary.
-                    realnodes = [realmesh.getNode(idx) for idx in nodeIndices]
-                    elem = master.buildFaceBoundary(realnodes)
-                                
+
                     # Find the bulk elements that the face is part of.
-                    skelels = self.getFaceElements(face.get_face())
-                    meshels = [realmesh.getElement(el.getIndex())
-                               for el in skelels]
-                    assert len(meshels) <= 2
+                    skelEls = self.getFaceElements(face.get_face())
+                    meshEls = [realmesh.getElement(el.getIndex())
+                               for el in skelEls]
+                    assert len(meshEls)>= 1 and len(meshEls) <= 2
+                    
+                    realnodes = [realmesh.getNode(idx) for idx in nodeIndices]
+                    elem = master.buildFaceBoundary(realnodes, meshEls[0])
+                                
                     # Figure out which of the bulk elements is in the
                     # front and which is in the back.  "Front" means
                     # that the bulk element is on the side of the face
                     # element in the direction of the normal to the
                     # face.
                     mastercenter = elem.center()
-                    debug.fmsg("getting facecenter")
                     facecenter = elem.from_master(mastercenter)
-                    debug.fmsg("facecenter=", facecenter)
                     normal = element.findNormal(elem, mastercenter)
-                    for bulkel in meshels:
-                        debug.fmsg("getting bulkcenter")
-                        bulkcenter = bulkel.from_master(bulkel.center())
-                        debug.fmsg("bulkcenter=", bulkcenter)
+                    for bulkEl in meshEls:
+                        bulkcenter = bulkEl.from_master(bulkEl.center())
                         if normal.dot(bulkcenter-facecenter) > 0:
-                            elem.setFrontBulk(bulkel)
+                            elem.setFrontBulk(bulkEl)
                         else:
-                            elem.setBackBulk(bulkel)
+                            elem.setBackBulk(bulkEl)
                     reverse = False
                     faceelements[key] = elem
                     realmesh.addInterfaceElement(elem)

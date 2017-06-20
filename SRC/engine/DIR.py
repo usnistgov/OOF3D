@@ -152,7 +152,7 @@ hfiles = [
     'shapefunction.h', 'shapefunctioncache.h', 'smalltensor.h',
     'smallsystem.h', 'sparsemat.h', 'steperrorscaling.h', 'symeig3.h',
     'symmmatrix.h', 'materialvoxelfilter.h', 'cskeletonselectable_i.h',
-    'cskeleton2_i.h'
+    'cskeleton2_i.h', 'masterelement_i.h'
 ]
 
 

@@ -15,6 +15,10 @@
 #include "tet4shapefunction.h"
 #include "common/trace.h"
 
+// TODO: Move tet topology definitions out of CSkeletonElement and
+// don't include cskeletonelement.h here.
+#include "engine/cskeletonelement.h"
+
 #include <vtkCellType.h>
 
 
@@ -137,7 +141,110 @@ public:
   VTKCellType getCellType() const {
     return VTK_TETRA;
   }
-};
+
+  // getIntermediateEdgeNodes returns the nodes for a 1D element that
+  // coincides with the edge of this element spanning the given corner
+  // nodes. The nodes are specified by their indices in this element's
+  // protonodes list.  The result is in the order expected by the 1D
+  // element's constructor.
+
+  NodeIndexVec getIntermediateEdgeNodes(const NodeIndexVec &crnrs) const {
+    assert(crnrs.size() == 2);
+    assert(crnrs[0] != crnrs[1]);
+    unsigned int edgeNo = CSkeletonElement::nodeNodeEdge[crnrs[0]][crnrs[1]];
+    NodeIndexVec result;
+    if(edgeNo == 0)
+      result = {0, 4, 1};
+    else if(edgeNo == 1)
+      result = {1, 7, 2};
+    else if(edgeNo == 2)
+      result = {0, 5, 2};
+    else if(edgeNo == 3)
+      result = {0, 6, 3};
+    else if(edgeNo == 4)
+      result = {1, 9, 3};
+    else if(edgeNo == 5)
+      result = {2, 8, 3};
+    else 
+      throw ErrProgrammingError("Bad edge number!", __FILE__, __LINE__);
+    if(result.front() != crnrs.front()) {
+      assert(result.front() == crnrs.back() && result.back() == crnrs.front());
+      std::reverse(result.begin(), result.end());
+    }
+    return result;
+  }
+  
+  // getIntermediateFaceeNodes returns the nodes for a 2D element that
+  // coincides with the face of this element spanning the given corner
+  // nodes. The nodes are specified by their indices in this element's
+  // protonodes list.  The result is in the order expected by the 2D
+  // element's constructor.
+
+  NodeIndexVec getIntermediateFaceNodes(const NodeIndexVec &crnrs) const {
+    assert(crnrs.size() == 3);
+    assert(crnrs[0]!=crnrs[1] && crnrs[1]!=crnrs[2] && crnrs[2]!=crnrs[0]);
+    // The face can be identified easily by the corner that's *not* in
+    // the given list.
+    int missingNode = 6 - crnrs[0] - crnrs[1] - crnrs[2];
+    NodeIndexVec nodes;
+    if(missingNode == 0) {
+      nodes = {1, 7, 2, 8, 3, 9};
+    }
+    else if(missingNode == 1) {
+      nodes = {0, 6, 3, 8, 2, 5};
+    }
+    else if(missingNode == 2) {
+      nodes = {0, 4, 1, 9, 3, 6};
+    }
+    else if(missingNode == 3) {
+      nodes = {0, 5, 2, 7, 1, 4};
+    }
+    else
+      throw ErrProgrammingError("Bad face number!", __FILE__, __LINE__);
+
+    // The lists of node indices created above contain the nodes of
+    // the desired face going in order around the face, but they might
+    // not go around the face in the right direction or start at the
+    // right node.  They need to start at crnrs[0] and then go to
+    // crnrs[1], with one intervening node.
+    
+    // See if the result needs to be permuted.
+    // Find the position in nodes of the first and second entries in crnrs.
+    auto i0 = std::find(nodes.begin(), nodes.end(), crnrs[0]);
+    auto i1 = std::find(nodes.begin(), nodes.end(), crnrs[1]);
+    assert(i0 < nodes.end() && i1 < nodes.end() && i0 != i1);
+    // If crnrs[0] and crnrs[1] are already the first and third
+    // entries in nodes, no permutation is needed.
+    if(i0 == nodes.begin() && i1 == i0+2)
+      return nodes;
+    // If crnrs[1] is 2 spots after crnrs[0], or if it's 4 spots
+    // earlier (the list wraps around) then the list is in the right
+    // direction but starts at the wrong place.  Use a cyclic
+    // permutation.
+    if((i0 < i1 && i1 == i0 + 2) || (i0 > i1 && i0 == i1 + 4)) {
+      NodeIndexVec result(i0, nodes.end());	      // i0 to end
+      result.insert(result.end(), nodes.begin(), i0); // beginning to i0-1
+      return result;
+    }
+    // If crnrs[1] is 4 spots after crnrs[0], or if it's 2 spots
+    // earlier (the list wraps around) then the list is in the wrong
+    // direction and maybe also starts at the wrong place.  Use a
+    // cyclic permutation of the reversed list.
+    if((i0 < i1 && i1 == i0 + 4) || (i0 > i1 && i0 == i1 + 2)) {
+      // r0 iterates backwards starting at i0.
+      auto r0=std::reverse_iterator<NodeIndexVec::iterator>(i0)-1;
+      // Include entries from i0 to the beginning (ie rend).
+      NodeIndexVec result(r0, nodes.rend());
+      // Include from the end (ie rbegin) to i0+1
+      result.insert(result.end(), nodes.rbegin(), r0);
+      return result;
+    }
+    throw ErrProgrammingError("Unexpected node ordering!",
+				__FILE__, __LINE__);
+  }
+
+  
+};				// end class Tet10MasterElement
 
 void tet10_4init() {
   static Tet10MasterElement m;

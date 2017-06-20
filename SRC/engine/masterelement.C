@@ -11,6 +11,7 @@
 
 #include <oofconfig.h>
 #include "common/IO/oofcerr.h"
+#include "common/printvec.h"
 #include "common/switchboard.h"
 #include "common/tostring.h"
 #include "engine/cskeleton2.h"
@@ -201,50 +202,11 @@ void ProtoNode::on_edge(int edgeno) {
 }
 
 void MasterEdge::addNode(const ProtoNode *pn) {
-
-  // First, keep track of func-ness of nodes, so that func_size()
-  // will work.
   if (pn->func()) {
     funcsize_++;
   }
-
-  if(nlist.empty()) {
-    nlist.push_back(pn);
-    return;
-  }
-  // Since ProtoNodes on the edges are added to the MasterElement in
-  // counterclockwise order, because the indices are assigned as
-  // they're added, and because the MasterEdge lists nodes in
-  // counterclockwise order, the nodes go into the MasterEdge's list
-  // at the end.  The exception to this is when the ProtoNode creation
-  // process wraps around.  Then the very first node created belongs
-  // at the *end* of the list, and all of the other nodes go just
-  // before it.
-  const ProtoNode *lastnode = nlist.back();
-  if(lastnode->index() == pn->index()-1) {
-    nlist.push_back(pn);
-  }
-  else {
-    // insert at the second to last spot
-    nlist.insert(--nlist.end(), pn);
-  }
+  nlist.push_back(pn);
   return;
-}
-
-const MasterEdge *MasterElement::masteredge(const ElementCornerNodeIterator &n0,
-					    const ElementCornerNodeIterator &n1)
-  const
-{
-  const ProtoNode *pn0 = n0.protonode();
-  const ProtoNode *pn1 = n1.protonode();
-  for(std::vector<MasterEdge*>::size_type i=0; i<edges.size(); i++) {
-    std::list<const ProtoNode*> &nlist = edges[i]->nlist;
-    if((nlist.front() == pn0 && nlist.back() == pn1)
-       || (nlist.front() == pn1 && nlist.back() == pn0)) {
-      return edges[i];
-    }
-  }
-  throw ErrUserError("Edge not found in master element");
 }
 
 void ProtoNode::on_face(int faceno) {
@@ -267,31 +229,6 @@ void MasterFace::addNode(const ProtoNode *pn) {
   }
   nvector.push_back(pn);
   return;
-}
-
-const MasterFace *MasterElement3D::masterface(
-				      const ElementCornerNodeIterator &n0,
-				      const ElementCornerNodeIterator &n1,
-				      const ElementCornerNodeIterator &n2)
-  const
-{
-  const ProtoNode *pn0 = n0.protonode();
-  const ProtoNode *pn1 = n1.protonode();
-  const ProtoNode *pn2 = n2.protonode();
-
-  for(std::vector<MasterFace*>::size_type i=0; i<faces.size(); i++) {
-    std::vector<const ProtoNode*> &nvector = faces[i]->nvector;
-    // find the first match
-    for(std::vector<const ProtoNode*>::size_type j=0; j<nvector.size(); ++j) {
-      if(nvector[j] == pn0 &&
-	 ((nvector[(j+1)%3] == pn1 && nvector[(j+2)%3] == pn2) ||
-	  (nvector[(j+1)%3] == pn2 && nvector[(j+2)%3] == pn1)))
-	{
-	  return faces[i];
-	}
-    }
-  }
-  throw ErrUserError("Face not found in master element");
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -479,6 +416,7 @@ TYPE MasterElement::interpolate(const std::vector<TYPE> &cval,
 }
 
 static Node *findClosestNode(std::vector<Node*> &nodes, Coord3D pos) {
+  // Linear search, but we don't expect to be searching a large set.
   double mindist = std::numeric_limits<double>::max();
   Node *closest = nullptr;
   for(Node *node : nodes) {
@@ -562,7 +500,10 @@ Element *MasterElement::build(CSkeletonElement *el,
     } // end if ProtoNode is at a corner
 
     else if(pn->nedges() > 0) {
-      // ProtoNode is on an edge (but not a corner)
+      // ProtoNode is on an edge (but not a corner).  The real node
+      // was not created in CSkeleton::populate_femesh(), but may have
+      // already been created by another call to
+      // MasterElement::build().
       assert(pn->nedges() == 1);
       // What edge is it on?
       int edgeNo = pn->edgeindex[0];
@@ -649,18 +590,30 @@ Element *MasterElement::build(CSkeletonElement *el,
   return new Element(el, *this, nodes, mat);
 }
 
-FaceBoundaryElement *MasterElement::buildFaceBoundary(
-					      const std::vector<Node*> &nodes)
+FaceBoundaryElement *MasterElement2D::buildFaceBoundary(
+					      const std::vector<Node*> &nodes,
+					      const Element *bulkEl)
   const
 {
-  return new FaceBoundaryElement(*this, nodes);
+  // nodes contains just the corner nodes of the edge that we're
+  // creating.  There may be intermediate nodes if the element is
+  // higher order.  They can be obtained from bulkEl, which is a bulk
+  // element that has an face containing the given corner nodes.
+  return new FaceBoundaryElement(*this,
+				 bulkEl->getIntermediateNodes(nodes));
 }
 
-EdgeBoundaryElement *MasterElement::buildEdgeBoundary(
-					      const std::vector<Node*> &nodes)
+EdgeBoundaryElement *MasterElement1D::buildEdgeBoundary(
+					      const std::vector<Node*> &nodes,
+					      const Element *bulkEl)
 const
 {
-  return new EdgeBoundaryElement(*this, nodes);
+  // nodes contains just the end nodes of the edge that we're
+  // creating.  There may be intermediate nodes if the element is
+  // higher order.  They can be obtained from bulkEl, which is a bulk
+  // element that has an edge between the given end nodes.
+  return new EdgeBoundaryElement(*this,
+				 bulkEl->getIntermediateNodes(nodes));
 }
 
 ElementLite *MasterElement::buildLite(const std::vector<Coord> *nodes) 
@@ -753,4 +706,27 @@ const std::string &QuadrilateralMaster::classname() const {
 const std::string &TetrahedralMaster::classname() const {
   static std::string nm("TetrahedralMaster");
   return nm;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+void MasterElement::dumpDetails() const {
+  oofcerr << "MasterElement::dumpDetails: " << name_ << std::endl;
+  for(const ProtoNode *pn : protonodes) {
+    OOFcerrIndent indent(4);
+    oofcerr << *pn << std::endl;
+  }
+  OOFcerrIndent indent(2);
+  oofcerr << "funcnodes=[";
+  std::cerr << funcnodes;
+  oofcerr << "]" << std::endl;
+  oofcerr << "mapnodes=[";
+  std::cerr << mapnodes;
+  oofcerr << "]" << std::endl;
+  oofcerr << "cornernodes=[";
+  std::cerr << cornernodes;
+  oofcerr << "]" << std::endl;
+  oofcerr << "exteriorfuncnodes=[";
+  std::cerr<< exteriorfuncnodes;
+  oofcerr << "]" << std::endl;
 }
