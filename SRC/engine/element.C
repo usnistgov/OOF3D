@@ -195,8 +195,6 @@ Coord ElementBase::from_master(const MasterPosition &mc) const {
   for(CleverPtr<ElementMapNodePositionIterator> n(mapnode_positerator()); 
       !n->end(); ++*n)
     {
-      Coord pp = n->position();
-      double sf = n->shapefunction(mc);
       p += n->shapefunction(mc) * n->position();
     }
   return p;
