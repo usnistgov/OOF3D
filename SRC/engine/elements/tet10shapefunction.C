@@ -34,27 +34,35 @@ double Tet10ShapeFunction::value(ShapeFunctionIndex i, const MasterCoord &mc)
   if(i == 4)
     return 4.0 * (1.0 - mc[0] - mc[1] - mc[2]) * mc[1];
   if(i == 5)
-    return 4.0 * (1.0 - mc[0] - mc[1] - mc[2]) * mc[2];
-  if(i == 6)
-    return 4.0 * (1.0 - mc[0] - mc[1] - mc[2]) * mc[0];
-  if(i == 7)
     return 4.0 * mc[1] * mc[2];
+  if(i == 6)
+    return 4.0 * (1.0 - mc[0] - mc[1] - mc[2]) * mc[2];
+  if(i == 7)
+    return 4.0 * (1.0 - mc[0] - mc[1] - mc[2]) * mc[0];
   if(i == 8)
-    return 4.0 * mc[0] * mc[2];
-  if(i == 9)
     return 4.0 * mc[0] * mc[1];
+  if(i == 9)
+    return 4.0 * mc[0] * mc[2];
+  throw ErrBadIndex(i, __FILE__, __LINE__);
 }
 
 double Tet10ShapeFunction::masterderiv(ShapeFunctionIndex i, SpaceIndex j,
 				       const MasterCoord &mc)
   const
 {
+  // d phi_i/d x_j
+  
   if(i == 0)
     return 4*(mc[0] + mc[0] + mc[2]) - 3.0; // for all j
-  if(i > 0 && i < 4) {
-    if(j != i)
-      return 0.0;
-    return 4.0*mc[j] - 1.0;
+  if(i == 1 || i == 2) {
+    if(j == i)
+      return 4.0*mc[j] - 1.0;
+    return 0.0;
+  }
+  if(i == 3) {
+    if(j == 3)
+      return 4.0*mc[0] - 1.0;
+    return 0.0;
   }
   if(i == 4) {
     if(j == 1)
@@ -63,40 +71,40 @@ double Tet10ShapeFunction::masterderiv(ShapeFunctionIndex i, SpaceIndex j,
       return -4.0 * mc[1];
   }
   if(i == 5) {
+    if(j == 0)
+      return 0.0;
+    if(j == 1)
+      return 4.0 * mc[2];
+    if(j == 2)
+      return 4.0 * mc[1];
+  }
+  if(i == 6) {
     if(j == 2)
       return 4.0 * (1 - mc[0] - mc[1] - 2*mc[2]);
     else
       return -4.0 * mc[2];
   }
-  if(i == 6) {
+  if(i == 7) {
     if(j == 0)
       return 4.0 * (1 - 2*mc[0] - mc[1] - mc[2]);
     else
       return -4.0 * mc[0];
   }
-  if(i == 7) {
-    if(j == 0)
-      return 0.0;
-    if(j == 1)
-      return 4.0 * mc[2];
-    if(j == 2)
-      return 4.0 * mc[1];
-  }
   if(i == 8) {
     if(j == 0)
-      return 4.0 * mc[2];
+      return 4.0 * mc[1];
     if(j == 1)
-      return 0.0;
-    if(j == 2)
       return 4.0 * mc[0];
+    if(j == 2)
+      return 0.0;
   }
   if(i == 9) {
     if(j == 0)
-      return 4.0 * mc[1];
+      return 4.0 * mc[2];
     if(j == 1)
-      return 4.0 * mc[0];
-    if(j == 2)
       return 0.0;
+    if(j == 2)
+      return 4.0 * mc[0];
   }
-  
+  throw ErrBadIndex(i, __FILE__, __LINE__);
 }

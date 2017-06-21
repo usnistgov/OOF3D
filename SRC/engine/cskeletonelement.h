@@ -123,6 +123,7 @@ public:
   static const unsigned int tetEdge2FaceEdge[4][6];
   static const int faceEdgeDirs[4][3];
   static const unsigned int edgeFaces[6][2];
+  static const unsigned int edgeNodes[6][2];
   static const int edgeFaceDirs[6][4];
   static const unsigned int edgeEdgeFace[6][6];
   static const unsigned int nodeEdgeFace[4][6];

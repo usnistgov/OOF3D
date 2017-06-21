@@ -645,6 +645,14 @@ const unsigned int CSkeletonElement::edgeFaces[6][2] = {{0,3},
 							{0,1},
 							{1,2}};
 
+// Maps an edge index to the the two nodes at its ends.
+const unsigned int CSkeletonElement::edgeNodes[6][2] = {{0,1},
+							{1,2},
+							{0,2},
+							{0,3},
+							{1,3},
+							{2,3}};
+
 // Gives the face between two edges.  NONE means the entry shouldn't
 // be used.
 const unsigned int CSkeletonElement::edgeEdgeFace[6][6] =

@@ -34,92 +34,69 @@ public:
     mapfunction = new Tet4ShapeFunction(*this);
 
     // Node ordering for the corners has to be compatible with the
-    // ordering used by vtk, which is what the Skeleton element uses.
-    // Getting it wrong will produce elements with negative volumes.
+    // ordering used by vtk.  See Chapter 5, Figure 5-4, in the VTK
+    // book.
 
-    ProtoNode *pn0 = addProtoNode(MasterCoord(0.0, 0.0, 0.0));
-    pn0->set_mapping();
-    pn0->set_func();
-    pn0->set_corner();
-    pn0->on_edge(0);
-    pn0->on_edge(2);
-    pn0->on_edge(3);
-    pn0->on_face(0);
-    pn0->on_face(2);
-    pn0->on_face(3);
+    std::vector<ProtoNode*> cpn(4, nullptr); // corner protonodes
 
-    ProtoNode *pn1 = addProtoNode(MasterCoord(0.0, 1.0, 0.0));
-    pn1->set_mapping();
-    pn1->set_func();
-    pn1->set_corner();
-    pn1->on_edge(0);
-    pn1->on_edge(1);
-    pn1->on_edge(4);
-    pn1->on_face(0);
-    pn1->on_face(1);
-    pn1->on_face(3);
+    cpn[0] = addProtoNode(MasterCoord(0.0, 0.0, 0.0));
+    cpn[0]->set_mapping();
+    cpn[0]->set_func();
+    cpn[0]->set_corner();
+    cpn[0]->on_edge(0);
+    cpn[0]->on_edge(2);
+    cpn[0]->on_edge(3);
+    cpn[0]->on_face(0);
+    cpn[0]->on_face(2);
+    cpn[0]->on_face(3);
 
-    ProtoNode *pn2 = addProtoNode(MasterCoord(0.0, 0.0, 1.0));
-    pn2->set_mapping();
-    pn2->set_func();
-    pn2->set_corner();
-    pn2->on_edge(3);
-    pn2->on_edge(4);
-    pn2->on_edge(5);
-    pn2->on_face(0);
-    pn2->on_face(1);
-    pn2->on_face(2);
+    cpn[1] = addProtoNode(MasterCoord(0.0, 1.0, 0.0));
+    cpn[1]->set_mapping();
+    cpn[1]->set_func();
+    cpn[1]->set_corner();
+    cpn[1]->on_edge(0);
+    cpn[1]->on_edge(1);
+    cpn[1]->on_edge(4);
+    cpn[1]->on_face(0);
+    cpn[1]->on_face(1);
+    cpn[1]->on_face(3);
 
-    ProtoNode *pn3 = addProtoNode(MasterCoord(1.0, 0.0, 0.0));
-    pn3->set_mapping();
-    pn3->set_func();
-    pn3->set_corner();
-    pn3->on_edge(1);
-    pn3->on_edge(2);
-    pn3->on_edge(5);
-    pn3->on_face(1);
-    pn3->on_face(2);
-    pn3->on_face(3);
+    cpn[2] = addProtoNode(MasterCoord(0.0, 0.0, 1.0));
+    cpn[2]->set_mapping();
+    cpn[2]->set_func();
+    cpn[2]->set_corner();
+    cpn[2]->on_edge(3);
+    cpn[2]->on_edge(4);
+    cpn[2]->on_edge(5);
+    cpn[2]->on_face(0);
+    cpn[2]->on_face(1);
+    cpn[2]->on_face(2);
 
-    // Nodes on edges
+    cpn[3] = addProtoNode(MasterCoord(1.0, 0.0, 0.0));
+    cpn[3]->set_mapping();
+    cpn[3]->set_func();
+    cpn[3]->set_corner();
+    cpn[3]->on_edge(1);
+    cpn[3]->on_edge(2);
+    cpn[3]->on_edge(5);
+    cpn[3]->on_face(1);
+    cpn[3]->on_face(2);
+    cpn[3]->on_face(3);
 
-    ProtoNode *pn4 = addProtoNode(MasterCoord(0.0, 0.5, 0.0));
-    pn4->set_func();
-    pn4->on_edge(0);
-    pn4->on_face(0);
-    pn4->on_face(3);
+    // Nodes on edges.  VTK kindly numbers them in order of edge
+    // numbers.  The ProtoNode index is the 4 plus the edge number.
+    for(unsigned int edge=0; edge<6; edge++) {
+      unsigned int c0 = CSkeletonElement::edgeNodes[edge][0];
+      unsigned int c1 = CSkeletonElement::edgeNodes[edge][1];
+      ProtoNode *pn = addProtoNode(0.5*(cpn[c0]->mastercoord() +
+					cpn[c1]->mastercoord()));
+      pn->set_func();
+      pn->on_edge(edge);
+      pn->on_face(CSkeletonElement::edgeFaces[edge][0]);
+      pn->on_face(CSkeletonElement::edgeFaces[edge][1]);
+    }
 
-    ProtoNode *pn5 = addProtoNode(MasterCoord(0.0, 0.0, 0.5));
-    pn5->set_func();
-    pn5->on_edge(2);
-    pn5->on_face(2);
-    pn5->on_face(3);
-
-    ProtoNode *pn6 = addProtoNode(MasterCoord(0.5, 0.0, 0.0));
-    pn6->set_func();
-    pn6->on_edge(3);
-    pn6->on_face(0);
-    pn6->on_face(2);
-
-    ProtoNode *pn7 = addProtoNode(MasterCoord(0.0, 0.5, 0.5));
-    pn7->set_func();
-    pn7->on_edge(1);
-    pn7->on_face(1);
-    pn7->on_face(3);
-
-    ProtoNode *pn8 = addProtoNode(MasterCoord(0.5, 0.0, 0.5));
-    pn8->set_func();
-    pn8->on_edge(5);
-    pn8->on_face(1);
-    pn8->on_face(2);
-
-    ProtoNode *pn9 = addProtoNode(MasterCoord(0.5, 0.5, 0.0));
-    pn9->set_func();
-    pn9->on_edge(4);
-    pn9->on_face(0);
-    pn9->on_face(1);
-
-    // There should presumably be more than on superconvergent point,
+    // There should presumably be more than one superconvergent point,
     // but we haven't implemented superconvergent patch recovery in 3D
     // yet anyway.  This point is probably incorrect.
     addSCpoint(MasterCoord(1./4, 1./4, 1./4));
@@ -139,7 +116,7 @@ public:
   }
 
   VTKCellType getCellType() const {
-    return VTK_TETRA;
+    return VTK_QUADRATIC_TETRA;
   }
 
   // getIntermediateEdgeNodes returns the nodes for a 1D element that
@@ -152,26 +129,13 @@ public:
     assert(crnrs.size() == 2);
     assert(crnrs[0] != crnrs[1]);
     unsigned int edgeNo = CSkeletonElement::nodeNodeEdge[crnrs[0]][crnrs[1]];
-    NodeIndexVec result;
-    if(edgeNo == 0)
-      result = {0, 4, 1};
-    else if(edgeNo == 1)
-      result = {1, 7, 2};
-    else if(edgeNo == 2)
-      result = {0, 5, 2};
-    else if(edgeNo == 3)
-      result = {0, 6, 3};
-    else if(edgeNo == 4)
-      result = {1, 9, 3};
-    else if(edgeNo == 5)
-      result = {2, 8, 3};
-    else 
-      throw ErrProgrammingError("Bad edge number!", __FILE__, __LINE__);
-    if(result.front() != crnrs.front()) {
-      assert(result.front() == crnrs.back() && result.back() == crnrs.front());
-      std::reverse(result.begin(), result.end());
-    }
-    return result;
+    unsigned int midPt = edgeNo + 4;
+    // NodeIndexVec result(3);
+    // result[0] = crnrs[0];
+    // result[1] = midPt;
+    // result[2] = crnrs[1];
+    // return result;
+    return NodeIndexVec({crnrs[0], midPt, crnrs[1]});
   }
   
   // getIntermediateFaceeNodes returns the nodes for a 2D element that

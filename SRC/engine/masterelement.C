@@ -645,40 +645,58 @@ const GaussPtTable &TetrahedralMaster::gausspointtable(int deg) const {
   return gptable(deg);
 }
 
-#define sixth 1./6.
-#define third 1./3.
-#define fourth 0.25
-#define c14   0.585410196624969
-#define c15   0.138196601125011
-
 const std::vector<GaussPtTable> &TetrahedralMaster::gptable_vec() const {
   static std::vector<GaussPtTable> table;
   static bool set = 0;
+
+  // The weights in each table add up to 1/6, which is the volume of
+  // the master space element.
+
+  // See Zienkiewicz & Taylor, 5th edition, Vol 1, page 223.  Section
+  // 9.10: Numerical integration -- triangular or tetrahdral regions.
 
   if(!set) {
     set = 1;
      // order = 0, npts = 1
     table.push_back(GaussPtTable(0, 1));
-    table[0].addpoint(MasterCoord(fourth, fourth, fourth), sixth);
+    table[0].addpoint(MasterCoord(0.25, 0.25, 0.25), 1./6.);
 
      // order = 1, npts = 1
     table.push_back(GaussPtTable(1, 1));
-    table[1].addpoint(MasterCoord(fourth, fourth, fourth), sixth);
+    table[1].addpoint(MasterCoord(0.25, 0.25, 0.25), 1./6.);
 
      // order = 2, npts = 4
     table.push_back(GaussPtTable(2, 4));
+#define c14   0.585410196624969
+#define c15   0.138196601125011
     table[2].addpoint(MasterCoord(c15, c15, c15), 1./24.);
     table[2].addpoint(MasterCoord(c15, c14, c15), 1./24.);
     table[2].addpoint(MasterCoord(c14, c15, c15), 1./24.);
     table[2].addpoint(MasterCoord(c15, c15, c14), 1./24.);
 
+    // order = 3, npts = 5
+    table.push_back(GaussPtTable(3, 5));
+    // With the master element's node 0 at (0, 0, 0) and node i+1 at
+    // x_i=1, the point at master coord (x, y, z) has barycentric
+    // coord (1-x-y-z, x, y, z).  This makes it easy to convert from
+    // the barycentric coords given by Zienkiewicz to master coords.
+
+    // Tet center at barycentric coordinate (1/4, 1/4, 1/4, 1/4)
+    table[3].addpoint(MasterCoord(0.25, 0.25, 0.25), -4./30.); // negative!
+    // Barycentric coordinate (1/2, 1/6, 1/6, 1/6)
+    table[3].addpoint(MasterCoord(1./6., 1./6., 1./6.), 3./40.);
+    // Barycentric coordinate (1/6, 1/2, 1/6, 1/6)
+    table[3].addpoint(MasterCoord(0.5, 1./6., 1./6.), 3./40.);
+    // etc.
+    table[3].addpoint(MasterCoord(1./6., 0.5, 1./6.), 3./40.);
+    table[3].addpoint(MasterCoord(1./6., 1./6., 0.5), 3./40.);
   }
 
   return table;
 }
 
 MasterCoord TetrahedralMaster::center() const {
-  return MasterCoord(fourth, fourth, fourth);
+  return MasterCoord(0.25, 0.25, 0.25);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
