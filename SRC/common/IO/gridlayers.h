@@ -165,7 +165,7 @@ public:
   virtual void set_clip_parity(bool);
   void set_pointData(vtkSmartPointer<vtkDoubleArray>);
   void set_nContours(int, double vmin, double vmax);
-  void set_lookupTable(vtkSmartPointer<vtkLookupTable>);
+  void set_lookupTable(vtkSmartPointer<vtkLookupTable>, double, double);
   virtual vtkScalarsToColors *get_lookupTable();
   virtual void writeVTK(const std::string&);
 };

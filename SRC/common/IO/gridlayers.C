@@ -373,6 +373,9 @@ void SolidFilledGridCanvasLayer::set_CellData(
 // Output.evaluate routine from C++, or moving the Output classes to
 // C++.
 
+// TODO: Why does FilledGridCanvasLayer store vmin and vmax, but
+// ContourGridCanvasLayer doesn't?
+
 ContourGridCanvasLayer::ContourGridCanvasLayer(GhostOOFCanvas *canvas,
 					       const std::string &nm,
 					       vtkSmartPointer<GridSource> gs)
@@ -434,9 +437,12 @@ void ContourGridCanvasLayer::set_nContours(int n, double vmin, double vmax) {
 }
 
 void ContourGridCanvasLayer::set_lookupTable(
-				     vtkSmartPointer<vtkLookupTable> lut)
+				     vtkSmartPointer<vtkLookupTable> lut,
+				     double dmin, double dmax)
 {
   assert(mainthread_query());
+  mapper->SetScalarRange(dmin, dmax);
+  lut->SetRange(dmin, dmax);
   mapper->SetLookupTable(lut);
   canvas->updateContourMap(this, lut);
 }
