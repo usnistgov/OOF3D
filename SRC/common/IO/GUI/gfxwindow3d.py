@@ -351,7 +351,7 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
                 # On the Mac laptop, move events seem to always have
                 # button==1.  Moves always go with the previous down,
                 # so the button is irrelevant.
-                self.mouseHandler.move(x,y, shift, ctrl)
+                self.mouseHandler.move(x,y, button, shift, ctrl)
             elif eventtype == 'scroll':
                 debug.fmsg("scroll: direction=", button, "pos=", x, y,
                            "shift=", shift, "ctrl=", ctrl)

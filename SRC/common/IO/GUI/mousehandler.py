@@ -24,11 +24,11 @@ class MouseHandler(object):
 	  return True
 	else:
 	  return False
-    def up(self, x, y, shift, ctrl):
+    def up(self, x, y, button, shift, ctrl):
         pass
-    def down(self, x, y, shift, ctrl):
+    def down(self, x, y, button, shift, ctrl):
         pass
-    def move(self, x, y, shift, ctrl):
+    def move(self, x, y, button, shift, ctrl):
         pass
 
     

@@ -333,7 +333,6 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
       // }
       break;
     case GDK_SCROLL:
-      oofcerr << "OOFCanvas3D::mouse_eventCB: scroll!" << std::endl;
       shift = event->scroll.state & GDK_SHIFT_MASK;
       ctrl = event->scroll.state & GDK_CONTROL_MASK;
       args = Py_BuildValue("sddiii", "scroll",
