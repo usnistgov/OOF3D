@@ -34,6 +34,11 @@ class ProtoNode;
 // don't have "Position" in their name.  They can't be used with
 // ElementLites, which don't have Nodes.
 
+// Iterators that loop over different kinds of nodes differ from each
+// other in having a different virtual mlistindex() function, which
+// uses the MasterElement's data to translate the local index_ to an
+// actual index into Element::nodelist.
+
 class ElementNodePositionIterator {	// for looping over all nodes
 protected:
   const ElementBase &element_;
