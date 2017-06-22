@@ -376,6 +376,10 @@ void SolidFilledGridCanvasLayer::set_CellData(
 // TODO: Why does FilledGridCanvasLayer store vmin and vmax, but
 // ContourGridCanvasLayer doesn't?
 
+// TODO: When a clipping plane is clipping out all the data,
+// vtkBandedPolyDataContourFilter prints an error message.  It doesn't
+// seem to be harmful, but it pollutes the screen.
+
 ContourGridCanvasLayer::ContourGridCanvasLayer(GhostOOFCanvas *canvas,
 					       const std::string &nm,
 					       vtkSmartPointer<GridSource> gs)
