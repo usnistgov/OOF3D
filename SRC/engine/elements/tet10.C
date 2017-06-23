@@ -14,6 +14,7 @@
 #include "tet10shapefunction.h"
 #include "tet4shapefunction.h"
 #include "common/trace.h"
+#include <algorithm>
 
 // TODO: Move tet topology definitions out of CSkeletonElement and
 // don't include cskeletonelement.h here.
