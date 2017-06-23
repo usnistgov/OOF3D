@@ -192,7 +192,7 @@ class Element_Selection_5Color(Skeleton_Selection_5Color, Element_Selection):
                       up=Coord(-0.0411954,0.999035,0.0152096),
                       angle=30,
                       clipPlanes=[[1.0, 0.0, 0.0, 10.01]], 
-                      invertClip=0,
+                      invertClip=1,
                       size_x=691, size_y=652), 
             shift=0, ctrl=0)
         self.assertEqual(self.selection().size(), 1)
@@ -427,7 +427,7 @@ class Element_Selection_5Color(Skeleton_Selection_5Color, Element_Selection):
                       up=Coord(-0.0411954,0.999035,0.0152096),
                       angle=30,
                       clipPlanes=[[1.0, 0.0, 0.0, 10.01]], 
-                      invertClip=0,
+                      invertClip=1,
                       size_x=691, size_y=652), 
             shift=0, ctrl=0)
         self.assertEqual(self.selectionIDs(), [205])
@@ -1071,7 +1071,7 @@ class Element_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
             points=[Point(-21.1376,5.27189,4.58318)],
             view=View(cameraPosition=Coord(-24.2583,5,5),
                       focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 3.0, 0]], invertClip=0,
+                      clipPlanes=[[1.0, 0.0, 0.0, 3.0, 0]], invertClip=1,
                       size_x=691, size_y=652),
             shift=0, ctrl=0)
         OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
@@ -1079,7 +1079,7 @@ class Element_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
             points=[Point(-21.1376,5.33602,4.71143)], 
             view=View(cameraPosition=Coord(-24.2583,5,5),
                       focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 3.0, 0]], invertClip=0,
+                      clipPlanes=[[1.0, 0.0, 0.0, 3.0, 0]], invertClip=1,
                       size_x=691, size_y=652),
             shift=1, ctrl=0)
 
@@ -1139,7 +1139,7 @@ class Face_Selection_5Color(Skeleton_Selection_5Color, Face_Selection):
             view=View(cameraPosition=Coord(-41.0587,15.4379,38.0648),
                       focalPoint=Coord(10,10,10),
                       up=Coord(0.131699,0.990139,0.0477514), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 5.0]], invertClip=0,
+                      clipPlanes=[[1.0, 0.0, 0.0, 5.0]], invertClip=1,
                       size_x=691, size_y=652),
             shift=0, ctrl=0)
         self.assertEqual(self.selection().size(), 1)
@@ -1908,7 +1908,7 @@ class Segment_Selection_5Color(Skeleton_Selection_5Color, Segment_Selection):
             view=View(cameraPosition=Coord(-39.5685,13.0046,40.9538),
                       focalPoint=Coord(10,10,10),
                       up=Coord(0.0384205,0.998634,-0.0354098), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 5.0]], invertClip=0,
+                      clipPlanes=[[1.0, 0.0, 0.0, 5.0]], invertClip=1,
                       size_x=691, size_y=652),
             shift=0, ctrl=0)
         self.assertEqual(self.selection().size(), 1)
@@ -1980,7 +1980,7 @@ class Segment_Selection_5Color(Skeleton_Selection_5Color, Segment_Selection):
             view=View(cameraPosition=Coord(-39.5685,13.0046,40.9538),
                       focalPoint=Coord(10,10,10),
                       up=Coord(0.0384205,0.998634,-0.0354098), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 5.0]], invertClip=0,
+                      clipPlanes=[[1.0, 0.0, 0.0, 5.0]], invertClip=1,
                       size_x=691, size_y=652),
             shift=0, ctrl=0)
         sel4 = id(self.selection().currentSelection())
@@ -2674,7 +2674,7 @@ class Node_Selection_5Color(Skeleton_Selection_5Color, Node_Selection):
             view=View(cameraPosition=Coord(-30.2019,37.6015,42.3445),
                       focalPoint=Coord(10,10,10),
                       up=Coord(0.288573,0.875226,-0.388207), angle=30, 
-                      clipPlanes=[[1.0, 0.0, 0.0, 4.0]], invertClip=0,
+                      clipPlanes=[[1.0, 0.0, 0.0, 4.0]], invertClip=1,
                       size_x=691, size_y=652),
             shift=0, ctrl=0)
         self.assertEqual(self.selection().size(), 1)
@@ -3320,7 +3320,7 @@ class Node_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
             points=[Point(-21.1376,5.46427,5.46555)],
             view=View(cameraPosition=Coord(-24.2583,5,5),
                       focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 2.0]], invertClip=0,
+                      clipPlanes=[[1.0, 0.0, 0.0, 2.0]], invertClip=1,
                       size_x=691, size_y=652), 
             shift=1, ctrl=0)
         OOF.NodeSelection.Clear(skeleton='skeltest:skeleton')

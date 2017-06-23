@@ -350,7 +350,7 @@ class Direct_Pixel_Selection2(PixelTest):
                       focalPoint=Coord(10,10,10),
                       up=Coord(0.094381,0.957917,-0.271087), angle=30,
                       clipPlanes=[[1.0, 0.0, 0.0, 10.5]],
-                      invertClip=0))
+                      invertClip=1))
         # This should select voxel (10, 8, 10)
         OOF.Graphics_1.Toolbox.Pixel_Select.Point(
             source='5color:5color',
@@ -358,7 +358,7 @@ class Direct_Pixel_Selection2(PixelTest):
             view=View(cameraPosition=Coord(-39.6793,22.8537,38.1238), 
                       focalPoint=Coord(10,10,10),
                       up=Coord(0.094381,0.957917,-0.271087), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 10.5]], invertClip=0),
+                      clipPlanes=[[1.0, 0.0, 0.0, 10.5]], invertClip=1),
             shift=0, ctrl=0)
         self.assertEqual(self.selectionSize(), 1)
         self.assert_(self.isSelected(10, 8, 10))
@@ -376,7 +376,7 @@ class Direct_Pixel_Selection2(PixelTest):
             view=View(cameraPosition=Coord(-39.6793,22.8537,38.1238), 
                       focalPoint=Coord(10,10,10),
                       up=Coord(0.094381,0.957917,-0.271087), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 10.5]], invertClip=0),
+                      clipPlanes=[[1.0, 0.0, 0.0, 10.5]], invertClip=1),
             shift=0, ctrl=0)
         self.assertEqual(self.selectionSize(), 1)
         self.assert_(self.isSelected(10, 8, 10))
@@ -392,7 +392,7 @@ class Direct_Pixel_Selection2(PixelTest):
             view=View(cameraPosition=Coord(-41.1612,11.8497,38.3428), 
                       focalPoint=Coord(10,10,10),
                       up=Coord(0.0205011,0.999392,-0.028217), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 10.5]], invertClip=0),
+                      clipPlanes=[[1.0, 0.0, 0.0, 10.5]], invertClip=1),
             shift=0, ctrl=0)
         self.assertEqual(self.selectionSize(), 1)
         self.assert_(self.isSelected(10, 9, 8))
@@ -661,12 +661,14 @@ class Selection_Modify(PixelTest):
             view=View(cameraPosition=Coord(-40.1038,12.3068,40.1412),
                       focalPoint=Coord(10,10,10),
                       up=Coord(0.0376411,0.999195,-0.0139001), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 10.5]], invertClip=0),
+                      clipPlanes=[[1.0, 0.0, 0.0, 10.5]], invertClip=1),
             shift=shift, ctrl=ctrl)
 
     def selectInteriorYellowPoint(self, shift=0, ctrl=0):
         # This selects a yellow voxel on the yellow/white boundary.
-        # It has 12 yellow neighbors.
+        # It has 12 yellow neighbors.  (I think.  The comment was
+        # written before the sign of the clipping plane was changed
+        # and invertClip was changed from 0 to 1 here.)
         OOF.Graphics_1.Toolbox.Pixel_Select.Point(
             source='5color:5color',
             points=[Point(-39.9903,12.3024,40.0768)],
@@ -674,7 +676,7 @@ class Selection_Modify(PixelTest):
                       focalPoint=Coord(10,10,10),
                       up=Coord(0.0376411,0.999195,-0.0139001), angle=30,
                       clipPlanes=[[1.0, 0.0, 0.0, 10.5]],
-                      invertClip=0),
+                      invertClip=1),
             shift=shift, ctrl=ctrl)
 
     ############
