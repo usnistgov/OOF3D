@@ -152,25 +152,25 @@ public:
     int missingNode = 6 - crnrs[0] - crnrs[1] - crnrs[2];
     NodeIndexVec nodes;
     if(missingNode == 0) {
-      nodes = {1, 7, 2, 8, 3, 9};
+      nodes = {1, 5, 2, 9, 3, 8};
     }
     else if(missingNode == 1) {
-      nodes = {0, 6, 3, 8, 2, 5};
+      nodes = {0, 7, 3, 9, 2, 6};
     }
     else if(missingNode == 2) {
-      nodes = {0, 4, 1, 9, 3, 6};
+      nodes = {0, 4, 1, 8, 3, 7};
     }
     else if(missingNode == 3) {
-      nodes = {0, 5, 2, 7, 1, 4};
+      nodes = {0, 6, 2, 5, 1, 4};
     }
     else
       throw ErrProgrammingError("Bad face number!", __FILE__, __LINE__);
 
     // The lists of node indices created above contain the nodes of
-    // the desired face going in order around the face, but they might
-    // not go around the face in the right direction or start at the
-    // right node.  They need to start at crnrs[0] and then go to
-    // crnrs[1], with one intervening node.
+    // the desired face going in order around the face, but possibly
+    // in the wrong direction or starting at the wrong node.  It needs
+    // to start at crnrs[0] and then go to crnrs[1], with one
+    // intervening node.
     
     // See if the result needs to be permuted.
     // Find the position in nodes of the first and second entries in crnrs.

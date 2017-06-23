@@ -1182,6 +1182,11 @@ std::vector<Node*> Element::getIntermediateNodes(
   const
 {
   assert(corners.size() == 2 || corners.size() == 3);
+  // oofcerr << "Element::getIntermediateNodes: *****************" << std::endl;
+  // oofcerr << "Element::getIntermediateNodes: this=" << *this << std::endl;
+  // oofcerr << "Element::getIntermediateNodes: corners=";
+  // std::cerr << derefprint(corners);
+  // oofcerr << std::endl;
 
   // Linear elements don't have intermediate nodes.
   if(master.fun_order() == 1)
@@ -1199,6 +1204,10 @@ std::vector<Node*> Element::getIntermediateNodes(
     }
   }
   assert(nodeNos.size() == corners.size());
+  // oofcerr << "Element::getIntermediateNodes: nodeNos=";
+  // std::cerr << nodeNos;
+  // oofcerr << std::endl;
+				     
   
   // Ask the master element for all of the node numbers on the face or
   // edge.
@@ -1210,13 +1219,19 @@ std::vector<Node*> Element::getIntermediateNodes(
     (corners.size() == 2 ?
      master3.getIntermediateEdgeNodes(nodeNos) :
      master3.getIntermediateFaceNodes(nodeNos));
-
+  // oofcerr << "Element::getIntermediateFaceNodes: allNodeNos=";
+  // std::cerr << allNodeNos;
+  // oofcerr << std::endl;
+  
   // Copy the corresponding nodes into the result.
   std::vector<Node*> allNodes;
   allNodes.reserve(allNodeNos.size());
   for(unsigned int i : allNodeNos) {
     allNodes.push_back(nodelist[i]);
   }
+  // oofcerr << "Element::getIntermediateFaceNodes: allNodes=";
+  // std::cerr << derefprint(allNodes);
+  // oofcerr << std::endl;
   return allNodes;
 }
 

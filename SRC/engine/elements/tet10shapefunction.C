@@ -23,26 +23,30 @@ Tet10ShapeFunction::Tet10ShapeFunction(const MasterElement &mel)
 double Tet10ShapeFunction::value(ShapeFunctionIndex i, const MasterCoord &mc)
   const
 {
-  if(i == 0)
+  // If we define (x, y, z) = mc and t = 1-x-y-z, then the symmetry of
+  // these expressions is more apparent, but we don't get any
+  // numerical advantage from rewriting them.  (t, x, y, z) are the
+  // barycentric coordinates of mc.
+  if(i == 0)			// 2*t*(t-0.5)
     return 2.0 * (0.5 - mc[0] - mc[1] - mc[2]) * (1.0 - mc[0] - mc[1] - mc[2]);
-  if(i == 1)
-    return 2.0 * (mc[1] - 0.5) * mc[1];
-  if(i == 2)
-    return 2.0 * (mc[2] - 0.5) * mc[2];
+  if(i == 1)			
+    return 2.0 * (mc[1] - 0.5) * mc[1];	// 2*y*(y-0.5)
+  if(i == 2)			
+    return 2.0 * (mc[2] - 0.5) * mc[2];	// 2*z*(z-0.5)
   if(i == 3)
-    return 2.0 * (mc[0] - 0.5) * mc[0];
+    return 2.0 * (mc[0] - 0.5) * mc[0];	// 2*x*(x-0.5)
   if(i == 4)
-    return 4.0 * (1.0 - mc[0] - mc[1] - mc[2]) * mc[1];
+    return 4.0 * (1.0 - mc[0] - mc[1] - mc[2]) * mc[1]; // 4*t*x;
   if(i == 5)
-    return 4.0 * mc[1] * mc[2];
+    return 4.0 * mc[1] * mc[2];	// 4*y*z
   if(i == 6)
-    return 4.0 * (1.0 - mc[0] - mc[1] - mc[2]) * mc[2];
+    return 4.0 * (1.0 - mc[0] - mc[1] - mc[2]) * mc[2]; // 4*t*z
   if(i == 7)
-    return 4.0 * (1.0 - mc[0] - mc[1] - mc[2]) * mc[0];
+    return 4.0 * (1.0 - mc[0] - mc[1] - mc[2]) * mc[0]; // 4*t*x
   if(i == 8)
-    return 4.0 * mc[0] * mc[1];
+    return 4.0 * mc[0] * mc[1];	// 4*x*y
   if(i == 9)
-    return 4.0 * mc[0] * mc[2];
+    return 4.0 * mc[0] * mc[2];	// 4*x*z
   throw ErrBadIndex(i, __FILE__, __LINE__);
 }
 

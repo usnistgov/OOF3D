@@ -146,7 +146,7 @@ public:
   double span() const; // Volume, area, or length, depending on dimension.
 
   // function to return a bunch of gausspoints, for doing integration
-  // in Python.  This is probably temporary.
+  // in Python. Used for testing, and maybe nothing else.
   std::vector<GaussPoint*>* integration_points(int order) const;
 
   GaussPointIterator integrator(int order) const;
