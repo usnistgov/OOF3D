@@ -22,17 +22,19 @@ def check(*_microstructures):
     def decorator(func):
         def checktest(self, *args, **kwargs):
             # Run the test function.
-            val = func(self, *args, **kwargs)
-            # After running the function, delete the microstructures.
-            from ooflib.common.IO.mainmenu import OOF
-            for msname in _microstructures:
-                OOF.Microstructure.Delete(microstructure=msname)
-            # Exceptions can hold references to data.  Since this file
-            # tests for exceptions as well as memory leaks, it's
-            # important to clear the exception state before checking
-            # for leaks.
-            sys.exc_clear()
-            gc.collect()
+            try:
+                val = func(self, *args, **kwargs)
+            finally:
+                # After running the function, delete the microstructures.
+                from ooflib.common.IO.mainmenu import OOF
+                for msname in _microstructures:
+                    OOF.Microstructure.Delete(microstructure=msname)
+                # Exceptions can hold references to data.  Since this file
+                # tests for exceptions as well as memory leaks, it's
+                # important to clear the exception state before checking
+                # for leaks.
+                sys.exc_clear()
+                gc.collect()
 
             from ooflib.common.worker import allWorkers, allWorkerCores
             from ooflib.common.IO import whoville

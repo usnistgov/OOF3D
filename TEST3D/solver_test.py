@@ -13,7 +13,7 @@ import memorycheck
 import math
 from UTILS import file_utils
 reference_file = file_utils.reference_file
-file_utils.generate = False
+file_utils.generate = True
 
 ## TODO 3.1: This file doesn't just test the solvers, it also tests the
 ## Output mechanism, because checking outputs is an easy way to verify
@@ -28,9 +28,9 @@ file_utils.generate = False
 shortening = 1.0
 
 class SaveableMeshTest(unittest.TestCase):
-    def saveAndLoad(self, filename, suffix=""):
+    def saveAndLoad(self, filename):
         # Save the mesh in ascii format, and compare with a reference file.
-        asciifilename = filename + suffix + "-ascii.dat"
+        asciifilename = filename + self.suffix() + "-ascii.dat"
         OOF.File.Save.Mesh(
             filename=asciifilename, mode='w', format='ascii',
             mesh = 'microstructure:skeleton:mesh')
@@ -58,7 +58,7 @@ class SaveableMeshTest(unittest.TestCase):
 
         # Save the mesh in binary format, reload it, and compare with the
         # original.
-        binaryfilename = filename + suffix + "-binary.dat"
+        binaryfilename = filename + self.suffix() + "-binary.dat"
         OOF.File.Save.Mesh(
             filename=binaryfilename, mode='w', format='binary',
             mesh='microstructure:skeleton:mesh')
@@ -72,6 +72,9 @@ class SaveableMeshTest(unittest.TestCase):
         file_utils.remove(asciifilename)
         file_utils.remove(binaryfilename)
         OOF.Microstructure.Delete(microstructure='original')
+
+    def suffix(self):
+        return ""
     
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -83,7 +86,10 @@ class OOF_StaticIsoElastic(SaveableMeshTest):
     def setUp(self):
         global mesh
         from ooflib.engine import mesh
-        OOF.File.Load.Data(filename=reference_file("mesh_data", "simple_mesh"))
+        # mesh_file_name is defined in subclasses that differ only in
+        # the starting mesh.
+        OOF.File.Load.Data(filename=reference_file("mesh_data",
+                                                   self.mesh_file_name()))
         OOF.Subproblem.Set_Solver(
             subproblem='microstructure:skeleton:mesh:default',
             solver_mode=BasicSolverMode(
@@ -93,6 +99,7 @@ class OOF_StaticIsoElastic(SaveableMeshTest):
 
     def tearDown(self):
         OOF.Material.Delete(name="material")
+
 
     @memorycheck.check("microstructure")
     def Null(self):             # Establish baseline for memory leak tests
@@ -253,6 +260,17 @@ class OOF_StaticIsoElastic(SaveableMeshTest):
                 boundary='Xmax'))
         OOF.Mesh.Solve(mesh='microstructure:skeleton:mesh', endtime=0.0)
         self.saveAndLoad("static-isotropic-float-tiltX")
+
+        
+class OOF_StaticIsoElastic_Linear(OOF_StaticIsoElastic):
+    def mesh_file_name(self):
+        return "simple_mesh"
+
+class OOF_StaticIsoElastic_Quadratic(OOF_StaticIsoElastic):
+    def mesh_file_name(self):
+        return "simple_quadratic_mesh"
+    def suffix(self):
+        return "-quadratic"
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -2194,21 +2212,34 @@ class OOF_StaticAndDynamic(OOF_ElasticTimeSteppers):
 
 
 static_set = [
-    OOF_StaticIsoElastic("Null"),
-    OOF_StaticIsoElastic("Solve0"),
-    OOF_StaticIsoElastic("SolvePlusX"),
-    OOF_StaticIsoElastic("SolveMinusX"),
-    OOF_StaticIsoElastic("SolvePlusY"),
-    OOF_StaticIsoElastic("SolveMinusY"),
-    OOF_StaticIsoElastic("SolvePlusZ"),
-    OOF_StaticIsoElastic("SolveMinusZ"),
-    OOF_StaticIsoElastic("SolveFloatFlatX"),
-    OOF_StaticIsoElastic("SolveFloatTiltX"),
+    OOF_StaticIsoElastic_Linear("Null"),
+    OOF_StaticIsoElastic_Linear("Solve0"),
+    OOF_StaticIsoElastic_Linear("SolvePlusX"),
+    OOF_StaticIsoElastic_Linear("SolveMinusX"),
+    OOF_StaticIsoElastic_Linear("SolvePlusY"),
+    OOF_StaticIsoElastic_Linear("SolveMinusY"),
+    OOF_StaticIsoElastic_Linear("SolvePlusZ"),
+    OOF_StaticIsoElastic_Linear("SolveMinusZ"),
+    OOF_StaticIsoElastic_Linear("SolveFloatFlatX"),
+    OOF_StaticIsoElastic_Linear("SolveFloatTiltX"),
     OOF_AnisoRotation("Solve00"),
     OOF_AnisoRotation("Solve0"),
     OOF_AnisoRotation("Solve"),
     OOF_SimplePiezo("Solve"),
     OOF_ElasticExact("Solve")
+    ]
+
+static_quadratic_set = [
+    OOF_StaticIsoElastic_Quadratic("Null"),
+    OOF_StaticIsoElastic_Quadratic("Solve0"),
+    OOF_StaticIsoElastic_Quadratic("SolvePlusX"),
+    OOF_StaticIsoElastic_Quadratic("SolveMinusX"),
+    OOF_StaticIsoElastic_Quadratic("SolvePlusY"),
+    OOF_StaticIsoElastic_Quadratic("SolveMinusY"),
+    OOF_StaticIsoElastic_Quadratic("SolvePlusZ"),
+    OOF_StaticIsoElastic_Quadratic("SolveMinusZ"),
+    OOF_StaticIsoElastic_Quadratic("SolveFloatFlatX"),
+    OOF_StaticIsoElastic_Quadratic("SolveFloatTiltX"),
     ]
 
 # Do a bunch of Neumann tests in a bunch of geometries.
@@ -2260,8 +2291,13 @@ dynamic_elastic_set = [
     OOF_StaticAndDynamic("SS22")
 ]
 
-test_set = static_set + dynamic_thermal_set + dynamic_elastic_set
+test_set = (static_set +
+            static_quadratic_set +
+            dynamic_thermal_set +
+            dynamic_elastic_set)
+
 #test_set = dynamic_elastic_set
 # test_set = [
 #     OOF_NonrectMixedBCStaticElastic("Solve2")
 # ]
+test_set = static_quadratic_set

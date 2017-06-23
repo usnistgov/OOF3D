@@ -24,11 +24,15 @@ reference_file = file_utils.reference_file
 class OOF_Mesh_Base(unittest.TestCase):
     def setUp(self):
         global mesh, subproblemcontext, femesh, cmicrostructure, skeletoncontext
+        global mastercoord, primitives
         from ooflib.engine import mesh
         from ooflib.engine import skeletoncontext
         from ooflib.engine import subproblemcontext
         from ooflib.SWIG.engine import femesh
         from ooflib.SWIG.common import cmicrostructure
+        from ooflib.SWIG.engine import mastercoord
+        from ooflib.common import primitives
+        
         # Some tests here use skeleton refinement, which uses random
         # numbers to shuffle element lists.  To make the tests
         # repeatable, the random number generator must be reseeded.
@@ -171,17 +175,17 @@ class OOF_Mesh(OOF_Mesh_Base):
 def memcheck(func):
     @memorycheck.check("meshtest")
     def cleanup(self, *args, **kwargs):
-        val = func(self, *args, **kwargs)
-        del self.msh
-        del self.msh_obj
-        del self.subp
+        try:
+            val = func(self, *args, **kwargs)
+        finally:
+            del self.msh
+            del self.msh_obj
+            del self.subp
         return val
     return cleanup
 
 class OOF_Mesh_FieldEquation(OOF_Mesh):
     def setUp(self):
-        global field
-        from ooflib.SWIG.engine import field
         OOF_Mesh.setUp(self)
         OOF.Mesh.New(name="fe_test", skeleton="meshtest:skeleton",
                      element_types=['TET4_4', 'T3_3', 'Q4_4', 'D2_2'])
@@ -230,31 +234,6 @@ class OOF_Mesh_FieldEquation(OOF_Mesh):
         self.assert_(not Temperature.is_active(self.subp))
         self.assert_(not Displacement.is_defined(self.subp))
         self.assert_(not Displacement.is_active(self.subp))
-
-
-    # @memcheck
-    # def In_PlaneField(self):
-    #     OOF.Mesh.Field.Define(mesh="meshtest:skeleton:fe_test",
-    #                           field=Temperature)
-    #     OOF.Mesh.Field.Activate(mesh="meshtest:skeleton:fe_test",
-    #                             field=Temperature)
-    #     self.assert_(not self.msh_obj.in_plane(Temperature))
-    #     OOF.Mesh.Field.In_Plane(mesh="meshtest:skeleton:fe_test",
-    #                             field=Temperature)
-    #     self.assert_(self.msh_obj.in_plane(Temperature))
-
-    # @memcheck
-    # def Out_of_PlaneField(self):
-    #     OOF.Mesh.Field.Define(mesh="meshtest:skeleton:fe_test",
-    #                           field=Temperature)
-    #     OOF.Mesh.Field.Activate(mesh="meshtest:skeleton:fe_test",
-    #                             field=Temperature)
-    #     OOF.Mesh.Field.In_Plane(mesh="meshtest:skeleton:fe_test",
-    #                             field=Temperature)
-    #     OOF.Mesh.Field.Out_of_Plane(mesh="meshtest:skeleton:fe_test",
-    #                                 field=Temperature)
-    #     self.assert_(not self.msh_obj.in_plane(Temperature))
-
 
     @memcheck
     def ActivateEquation(self):
@@ -373,28 +352,190 @@ class OOF_Mesh_Extra(OOF_Mesh_FieldEquation):
             self.assertEqual(val, pos[0]*pos[1]*pos[2])
         OOF.Mesh.Delete(mesh="meshtest:skeleton:mesh<2>")
 
-    @memcheck
-    def Interpolate(self):
-        from ooflib.SWIG.engine import mastercoord
-        MasterCoord = mastercoord.MasterCoord
-        # Initialize a field and test the interpolated values inside
-        # the elements.  Make sure that the field is linear, since
-        # we're using linear elements.
+# OOF_Mesh_Interpolate is the base class for
+# OOF_Mesh_Interpolate_Linear, OOF_Mesh_Interpolate_Quadratic, and
+# OOF_Mesh_Interpolate_Cubic.  These tests initialize the Temperature
+# field with a known polynomial in (x,y,z) and check that the field is
+# interpolated and integrated correctly.  This tests the shape
+# functions and the gauss points.
+
+class OOF_Mesh_Interpolate(OOF_Mesh):
+    def setUp(self):
+        OOF_Mesh.setUp(self)
+        OOF.Mesh.New(name="fe_test", skeleton="meshtest:skeleton",
+                     element_types=self.elementTypes())
+        self.volume = getMicrostructure('meshtest').volume()
+        self.size = getMicrostructure('meshtest').size()
+        self.msh = mesh.meshes["meshtest:skeleton:fe_test"]
+        self.msh_obj = self.msh.getObject()
+        self.subp = self.msh.get_default_subproblem().getObject()
+    def define_field(self, fn):
         OOF.Mesh.Field.Define(mesh="meshtest:skeleton:fe_test",
                               field=Temperature)
         OOF.Mesh.Set_Field_Initializer(
             mesh="meshtest:skeleton:fe_test",
             field=Temperature,
-            initializer=FuncScalarFieldInit(function="x+2*y+3*z"))
+            initializer=FuncScalarFieldInit(function=fn))
         OOF.Mesh.Apply_Field_Initializers(mesh="meshtest:skeleton:fe_test")
-        
+
+    def interpolate(self, fn):
+        self.define_field(fn)
         # Check a point inside each element
-        m_coord = MasterCoord(0.15, 0.2, 0.25)
+        m_coord = mastercoord.MasterCoord(0.15, 0.2, 0.25)
         for e in self.msh_obj.elements():
-            lab_coord = e.from_master(m_coord)
+            pt = e.from_master(m_coord)
             o = e.outputField(self.msh_obj, Temperature, m_coord)
-            self.assertAlmostEqual(o.valuePtr().value(),
-                             lab_coord[0]+2*lab_coord[1]+3*lab_coord[2])
+            val = eval(fn, {'x':pt[0], 'y': pt[1], 'z':pt[2]})
+            self.assertAlmostEqual(o.valuePtr().value(), val)
+
+    def integrate(self, fn, expected):
+        self.define_field(fn)
+        integral = 0.0
+        for e in self.msh_obj.elements():
+            gpts = e.integration_points(self.order())
+            for gpt in gpts:
+                pt = gpt.coord()
+                val = eval(fn, {'x':pt[0], 'y':pt[1], 'z':pt[2]})
+                integral += val*gpt.weight()
+        self.assertAlmostEqual(expected, integral)
+
+    def derivative(self, fn, derivs):
+        # fn is a string containing a function of x,y,z.
+        # derivs is a tuple of strings for the x,y,z derivatives of fn.
+        self.define_field(fn)
+        m_coord = mastercoord.MasterCoord(0.25, 0.1, 0.8)
+        for e in self.msh_obj.elements():
+            ptx = primitives.Point(0,0,0) # e.from_master(m_coord)
+            #print "ptx=", ptx.__class__, ptx.x.__class__
+            for c in range(3):
+                o = e.outputFieldDerivs(self.msh_obj, Temperature, c, [m_coord])
+                got = o[0].value()
+                #got = 0.0
+                #tuple(ptx)
+                # print "c=", c, "pt=", pt.__class__ #, pt
+                #print "c=", c, "pt="#, pt#, pt.__class__
+                #print  pt[0]
+                # p = pt.asTuple()
+                # ss = str(pt)
+                #dct = {'x':pt[0], 'y':pt[1], 'z':pt[2]}
+                expr = derivs[c]
+                # print "dct=", dct
+                # for key,val in dct.items():
+                #     print key, val, val.__class__
+                print "expr=", expr
+                expected = float(expr)
+                print "got=", got, "expected=", expected
+                self.assertAlmostEqual(got, expected)
+                
+
+class OOF_Mesh_Interpolate_Linear(OOF_Mesh_Interpolate):
+    def elementTypes(self):
+        return ['TET4_4', 'T3_3', 'Q4_4', 'D2_2']
+    def order(self):
+        return 1
+    @memcheck
+    def Interpolate_Linear(self):
+        self.interpolate('x + 2*y + 3*z')
+    @memcheck
+    @unittest.expectedFailure
+    def Interpolate_Quadratic(self):
+        self.interpolate(
+            'x**2 - 2*x*y + 3*z**2 + 2*y**2 + x - y + z + x*z + y*z')
+    @memcheck
+    def Integrate_Constant(self):
+        self.integrate('1.0', self.volume)
+    @memcheck
+    def Integrate_Linear_X(self):
+        self.integrate('x', 0.5*self.volume*self.size[0])
+    @memcheck
+    def Integrate_Linear_Y(self):
+        self.integrate('y', 0.5*self.volume*self.size[1])
+    @memcheck
+    def Integrate_Linear_Z(self):
+        self.integrate('z', 0.5*self.volume*self.size[2])
+    @memcheck
+    @unittest.expectedFailure
+    def Integrate_Quadratic_X(self):
+        self.integrate('x*x', (1/3.)*self.volume*self.size[0]**2)
+    @memcheck
+    @unittest.expectedFailure
+    def Integrate_Quadratic_Y(self):
+        self.integrate('y*y', (1/3.)*self.volume*self.size[1]**2)
+    @memcheck
+    @unittest.expectedFailure
+    def Integrate_Quadratic_Z(self):
+        self.integrate('z*z', (1/3.)*self.volume*self.size[2]**2)
+
+    @memcheck
+    def Derivative_Constant(self):
+        self.derivative('1.0', ('0.0', '0.0', '0.0'))
+        
+
+class OOF_Mesh_Interpolate_Quadratic(OOF_Mesh_Interpolate):
+    def elementTypes(self):
+        return ['TET4_10', 'T3_6', 'Q4_8', 'D2_3']
+    def order(self):
+        return 2
+    @memcheck
+    def Interpolate_Linear(self):
+        self.interpolate('x + 2*y - 3*z')
+    @memcheck
+    def Interpolate_Quadratic(self):
+        self.interpolate(
+            'x**2 - 2*x*y + 3*z**2 + 2*y**2 + x - y + z + x*z + y*z')
+    @memcheck
+    @unittest.expectedFailure
+    def Interpolate_Cubic(self):
+        self.interpolate(x**3 + y**3 + z**3)
+    @memcheck
+    def Integrate_Constant(self):
+        self.integrate('1.0', self.volume)
+    @memcheck
+    def Integrate_Linear_X(self):
+        self.integrate('x', 0.5*self.volume*self.size[0])
+    @memcheck
+    def Integrate_Linear_Y(self):
+        self.integrate('y', 0.5*self.volume*self.size[1])
+    @memcheck
+    def Integrate_Linear_Z(self):
+        self.integrate('z', 0.5*self.volume*self.size[2])
+    @memcheck
+    def Integrate_Quadratic_X(self):
+        self.integrate('x*x', (1/3.)*self.volume*self.size[0]**2)
+    @memcheck
+    def Integrate_Quadratic_Y(self):
+        self.integrate('y*y', (1/3.)*self.volume*self.size[1]**2)
+    @memcheck
+    def Integrate_Quadratic_Z(self):
+        self.integrate('z*z', (1/3.)*self.volume*self.size[2]**2)
+
+class OOF_Mesh_Interpolate_Cubic(OOF_Mesh_Interpolate):
+    def elementTypes(self):
+        return ['TET4_10', 'T3_6', 'Q4_8', 'D2_3']
+    def order(self):
+        return 3
+    @memcheck
+    def Integrate_Quadratic_X(self):
+        self.integrate('x*x', (1/3.)*self.volume*self.size[0]**2)
+    @memcheck
+    def Integrate_Quadratic_Y(self):
+        self.integrate('y*y', (1/3.)*self.volume*self.size[1]**2)
+    @memcheck
+    def Integrate_Quadratic_Z(self):
+        self.integrate('z*z', (1/3.)*self.volume*self.size[2]**2)
+    @memcheck
+    def Integrate_Cubic_X(self):
+        self.integrate('x*x*x', 0.25*self.volume*self.size[0]**3)
+    @memcheck
+    def Integrate_Cubic_Y(self):
+        self.integrate('y*y*y', 0.25*self.volume*self.size[1]**3)
+    @memcheck
+    def Integrate_Cubic_Z(self):
+        self.integrate('z*z*z', 0.25*self.volume*self.size[2]**3)
+    @memcheck
+    @unittest.expectedFailure
+    def Integrate_Quartic_X(self):
+        self.integrate('x**4', 0.20*self.volume*self.size[0]**4)
 
 
 # There is a toolbox for mesh cross-section operations, but it doesn't
@@ -1120,8 +1261,6 @@ field_equation_set = [
     OOF_Mesh_FieldEquation("UndefineField"),
     OOF_Mesh_FieldEquation("ActivateField"),
     OOF_Mesh_FieldEquation("DeactivateField"),
-    # OOF_Mesh_FieldEquation("In_PlaneField"),
-    # OOF_Mesh_FieldEquation("Out_of_PlaneField"),
     OOF_Mesh_FieldEquation("ActivateEquation"),
     OOF_Mesh_FieldEquation("DeactivateEquation")
     ]
@@ -1131,8 +1270,36 @@ extra_set = [
     OOF_Mesh_Extra("Copy_Field_State"),
     OOF_Mesh_Extra("Copy_Equation_State"),
     OOF_Mesh_Extra("Initialize"),
-    OOF_Mesh_Extra("Interpolate"),
-    ]
+    OOF_Mesh_Interpolate_Linear("Interpolate_Linear"),
+    OOF_Mesh_Interpolate_Linear("Interpolate_Quadratic"),
+    OOF_Mesh_Interpolate_Linear("Integrate_Constant"),
+    OOF_Mesh_Interpolate_Linear("Integrate_Linear_X"),
+    OOF_Mesh_Interpolate_Linear("Integrate_Linear_Y"),
+    OOF_Mesh_Interpolate_Linear("Integrate_Linear_Z"),
+    OOF_Mesh_Interpolate_Linear("Integrate_Quadratic_X"),
+    OOF_Mesh_Interpolate_Linear("Integrate_Quadratic_Y"),
+    OOF_Mesh_Interpolate_Linear("Integrate_Quadratic_Z"),
+    OOF_Mesh_Interpolate_Linear("Derivative_Constant"),
+
+    OOF_Mesh_Interpolate_Quadratic("Interpolate_Linear"),
+    OOF_Mesh_Interpolate_Quadratic("Interpolate_Quadratic"),
+    OOF_Mesh_Interpolate_Quadratic("Interpolate_Cubic"),
+    OOF_Mesh_Interpolate_Quadratic("Integrate_Constant"),
+    OOF_Mesh_Interpolate_Quadratic("Integrate_Linear_X"),
+    OOF_Mesh_Interpolate_Quadratic("Integrate_Linear_Y"),
+    OOF_Mesh_Interpolate_Quadratic("Integrate_Linear_Z"),
+    OOF_Mesh_Interpolate_Quadratic("Integrate_Quadratic_X"),
+    OOF_Mesh_Interpolate_Quadratic("Integrate_Quadratic_Y"),
+    OOF_Mesh_Interpolate_Quadratic("Integrate_Quadratic_Z"),
+
+    OOF_Mesh_Interpolate_Cubic("Integrate_Quadratic_X"),
+    OOF_Mesh_Interpolate_Cubic("Integrate_Quadratic_Y"),
+    OOF_Mesh_Interpolate_Cubic("Integrate_Quadratic_Z"),
+    OOF_Mesh_Interpolate_Cubic("Integrate_Cubic_X"),
+    OOF_Mesh_Interpolate_Cubic("Integrate_Cubic_Y"),
+    OOF_Mesh_Interpolate_Cubic("Integrate_Cubic_Z"),
+    OOF_Mesh_Interpolate_Cubic("Integrate_Quartic_X"),
+]
 
 crosssection_set = [
     OOF_Mesh_CrossSection("New"),
@@ -1177,4 +1344,4 @@ test_set = (basic_set + field_equation_set + extra_set + bc_set + file_set
             # + crosssection_set
             + special_set
             )
-#test_set = bc_extra_set
+test_set = [OOF_Mesh_Interpolate_Linear("Derivative_Constant")]
