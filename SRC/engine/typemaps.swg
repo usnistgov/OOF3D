@@ -619,7 +619,9 @@ typedef std::vector<Element*> ElementVec;
 
 %typemap(python, in) SpaceIndex* (SpaceIndex idx) {
   // typemap(python, in) SpaceIndex*
-  PyObject *pyindex = PyObject_CallMethod($source, (char *) "index", 0);
+  PyObject *pyindex = PyObject_CallMethod($source, (char *) "index", NULL);
+  if(!pyindex)
+    return NULL;
   idx = PyInt_AsLong(pyindex);
   Py_XDECREF(pyindex);
   $target = &idx;
