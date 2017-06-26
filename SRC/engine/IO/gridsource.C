@@ -49,7 +49,8 @@ MeshGridSource::MeshGridSource()
   : skeleton(),
     mesh(0),
     Enhancement(0.),
-    Filter(&defaultFilter)
+    Filter(&defaultFilter),
+    time(0.)
 {}
 
 
