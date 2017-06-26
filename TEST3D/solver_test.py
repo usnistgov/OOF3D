@@ -13,7 +13,7 @@ import memorycheck
 import math
 from UTILS import file_utils
 reference_file = file_utils.reference_file
-file_utils.generate = True
+file_utils.generate = False
 
 ## TODO 3.1: This file doesn't just test the solvers, it also tests the
 ## Output mechanism, because checking outputs is an easy way to verify
@@ -26,6 +26,9 @@ file_utils.generate = True
 # Shortening is set to 0.1 when running the short versions of the
 # time-dependent tests.
 shortening = 1.0
+
+linearElements = ['TET4_4', 'D2_2', 'T3_3', 'Q4_4']
+quadraticElements = ['TET4_10', 'D2_3', 'T3_6', 'Q4_8']
 
 class SaveableMeshTest(unittest.TestCase):
     def saveAndLoad(self, filename):
@@ -278,7 +281,7 @@ class OOF_StaticIsoElastic_Quadratic(OOF_StaticIsoElastic):
 # correctly by solving a thermal conductivity problem.  To regenerate
 # the reference file for this test, change the first line
 # mesh_data/anisotherm.log to "generate=True", load that file into
-# oof2, and save the resulting mesh into mesh_data/anisotherm.mesh.
+# oof3d, and save the resulting mesh into mesh_data/anisotherm.mesh.
 
 class OOF_AnisoRotation(SaveableMeshTest):
     def setUp(self):
@@ -767,7 +770,7 @@ class OOF_SimplePiezo(SaveableMeshTest):
         OOF.Mesh.New(
             name='mesh', 
             skeleton='microstructure:skeleton',
-            element_types=['TET4_4', 'D2_2', 'T3_3', 'Q4_4'])
+            element_types=self.elementTypes())
         OOF.Subproblem.Field.Define(
             subproblem='microstructure:skeleton:mesh:default',
             field=Displacement)
@@ -839,6 +842,14 @@ class OOF_SimplePiezo(SaveableMeshTest):
     def tearDown(self):
         OOF.Material.Delete(name='material')
 
+class OOF_SimplePiezo_Linear(OOF_SimplePiezo):
+    def elementTypes(self):
+        return linearElements
+
+class OOF_SimplePiezo_Quadratic(OOF_SimplePiezo):
+    def elementTypes(self):
+        return quadraticElements
+    
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # Check that solving a static problem after a nonstatic problem on the
@@ -1395,7 +1406,7 @@ class OOF_ElasticExact(SaveableMeshTest):
             skeleton_geometry=TetraSkeleton(arrangement='moderate'))
         OOF.Mesh.New(
             name='mesh', skeleton='microstructure:skeleton',
-            element_types=['TET4_4', 'D2_2', 'T3_3', 'Q4_4'])
+            element_types=self.elementTypes())
         OOF.Subproblem.Field.Define(
             subproblem='microstructure:skeleton:mesh:default',
             field=Displacement)
@@ -1502,6 +1513,14 @@ class OOF_ElasticExact(SaveableMeshTest):
         outputdestination.forgetTextOutputStreams()
         OOF.Property.Delete(property='Mechanical:Elasticity:Isotropic:iso8')
         OOF.Material.Delete(name="material")
+
+class OOF_ElasticExact_Linear(OOF_ElasticExact):
+    def elementTypes(self):
+        return linearElements
+
+class OOF_ElasticExact_Quadratic(OOF_ElasticExact):
+    def elementTypes(self):
+        return quadraticElements
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -2225,8 +2244,8 @@ static_set = [
     OOF_AnisoRotation("Solve00"),
     OOF_AnisoRotation("Solve0"),
     OOF_AnisoRotation("Solve"),
-    OOF_SimplePiezo("Solve"),
-    OOF_ElasticExact("Solve")
+    OOF_SimplePiezo_Linear("Solve"),
+    OOF_ElasticExact_Linear("Solve")
     ]
 
 static_quadratic_set = [
@@ -2240,6 +2259,8 @@ static_quadratic_set = [
     OOF_StaticIsoElastic_Quadratic("SolveMinusZ"),
     OOF_StaticIsoElastic_Quadratic("SolveFloatFlatX"),
     OOF_StaticIsoElastic_Quadratic("SolveFloatTiltX"),
+    OOF_SimplePiezo_Quadratic("Solve"),
+    OOF_ElasticExact_Quadratic("Solve")
     ]
 
 # Do a bunch of Neumann tests in a bunch of geometries.
@@ -2253,13 +2274,15 @@ neumanngeometries = (OOF_ElasticNeumann1,
                      OOF_ThermalNeumann4
                  )
 neumanntestnames = ("NullXmin", "NullZmax", "Xmax01", "Ymax01", "Zmin01")
+
 static_set.extend([geometry(testname)
-                 for geometry in neumanngeometries
-                 for testname in neumanntestnames])
+                   for geometry in neumanngeometries
+                   for testname in neumanntestnames])
+
 
 static_set.extend([
-    OOF_NonrectMixedBCStaticElastic("Solve1"),
-    OOF_NonrectMixedBCStaticElastic("Solve2")]
+     OOF_NonrectMixedBCStaticElastic("Solve1"),
+     OOF_NonrectMixedBCStaticElastic("Solve2")]
 )
 
 dynamic_thermal_set = [
@@ -2300,4 +2323,6 @@ test_set = (static_set +
 # test_set = [
 #     OOF_NonrectMixedBCStaticElastic("Solve2")
 # ]
-test_set = static_quadratic_set
+test_set = [OOF_ElasticExact_Quadratic("Solve"),
+            OOF_ElasticExact_Linear("Solve")]
+test_set = static_set
