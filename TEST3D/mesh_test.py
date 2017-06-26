@@ -32,6 +32,9 @@ class OOF_Mesh_Base(unittest.TestCase):
         from ooflib.SWIG.common import cmicrostructure
         from ooflib.SWIG.engine import mastercoord
         from ooflib.common import primitives
+
+        global outputClones
+        from ooflib.engine.IO import outputClones # for SpaceComponent
         
         # Some tests here use skeleton refinement, which uses random
         # numbers to shuffle element lists.  To make the tests
@@ -378,15 +381,34 @@ class OOF_Mesh_Interpolate(OOF_Mesh):
             initializer=FuncScalarFieldInit(function=fn))
         OOF.Mesh.Apply_Field_Initializers(mesh="meshtest:skeleton:fe_test")
 
+    # Set of mastercoords for testing interpolation and derivatives
+    def mastercoords(self):
+        return [
+            mastercoord.MasterCoord(0., 0., 0.), # node 0
+            mastercoord.MasterCoord(0., 1., 0.), # node 1
+            mastercoord.MasterCoord(0., 0., 1.), # node 2
+            mastercoord.MasterCoord(1., 0., 0.), # node 3
+            mastercoord.MasterCoord(0.0, 0.5, 0.0), # node 4
+            mastercoord.MasterCoord(0.0, 0.5, 0.5), # node 5
+            mastercoord.MasterCoord(0.0, 0.0, 0.5), # node 6
+            mastercoord.MasterCoord(0.5, 0.0, 0.0), # node 7
+            mastercoord.MasterCoord(0.5, 0.5, 0.0), # node 8
+            mastercoord.MasterCoord(0.5, 0.0, 0.5), # node 9
+            mastercoord.MasterCoord(0.25, 0.25, 0.25),
+            mastercoord.MasterCoord(0.15, 0.2, 0.25),
+            mastercoord.MasterCoord(0.25, 0.1, 0.3)
+        ]
+    
     def interpolate(self, fn):
         self.define_field(fn)
-        # Check a point inside each element
-        m_coord = mastercoord.MasterCoord(0.15, 0.2, 0.25)
         for e in self.msh_obj.elements():
-            pt = e.from_master(m_coord)
-            o = e.outputField(self.msh_obj, Temperature, m_coord)
-            val = eval(fn, {'x':pt[0], 'y': pt[1], 'z':pt[2]})
-            self.assertAlmostEqual(o.valuePtr().value(), val)
+            pts = [e.from_master(m) for m in self.mastercoords()]
+            expected = [eval(fn, {'x':pt[0], 'y':pt[1], 'z':pt[2]})
+                        for pt in pts]
+            o = e.outputFields(self.msh_obj, Temperature, self.mastercoords())
+            got = [oo.value() for oo in o]
+            for (gt, expctd) in zip(got, expected):
+                self.assertAlmostEqual(gt, expctd)
 
     def integrate(self, fn, expected):
         self.define_field(fn)
@@ -403,29 +425,18 @@ class OOF_Mesh_Interpolate(OOF_Mesh):
         # fn is a string containing a function of x,y,z.
         # derivs is a tuple of strings for the x,y,z derivatives of fn.
         self.define_field(fn)
-        m_coord = mastercoord.MasterCoord(0.25, 0.1, 0.8)
         for e in self.msh_obj.elements():
-            ptx = primitives.Point(0,0,0) # e.from_master(m_coord)
-            #print "ptx=", ptx.__class__, ptx.x.__class__
-            for c in range(3):
-                o = e.outputFieldDerivs(self.msh_obj, Temperature, c, [m_coord])
-                got = o[0].value()
-                #got = 0.0
-                #tuple(ptx)
-                # print "c=", c, "pt=", pt.__class__ #, pt
-                #print "c=", c, "pt="#, pt#, pt.__class__
-                #print  pt[0]
-                # p = pt.asTuple()
-                # ss = str(pt)
-                #dct = {'x':pt[0], 'y':pt[1], 'z':pt[2]}
-                expr = derivs[c]
-                # print "dct=", dct
-                # for key,val in dct.items():
-                #     print key, val, val.__class__
-                print "expr=", expr
-                expected = float(expr)
-                print "got=", got, "expected=", expected
-                self.assertAlmostEqual(got, expected)
+            pts = [e.from_master(m) for m in self.mastercoords()]
+            for c in outputClones.SpaceComponent.values:
+                expr = derivs[c.index()]
+                expected = [eval(expr, {'x':pt[0], 'y':pt[1], 'z':pt[2]})
+                            for pt in pts]
+                o = e.outputFieldDerivs(self.msh_obj, Temperature, c,
+                                        self.mastercoords())
+                self.assertEqual(len(o), len(expected))
+                got = [oo.value() for oo in o]
+                for (gt, expctd) in zip(got, expected):
+                    self.assertAlmostEqual(gt, expctd)
                 
 
 class OOF_Mesh_Interpolate_Linear(OOF_Mesh_Interpolate):
@@ -469,13 +480,21 @@ class OOF_Mesh_Interpolate_Linear(OOF_Mesh_Interpolate):
     @memcheck
     def Derivative_Constant(self):
         self.derivative('1.0', ('0.0', '0.0', '0.0'))
+    @memcheck
+    def Derivative_Linear(self):
+        self.derivative('x+2*y', ('1.0', '2.0', '0.0'))
+    @memcheck
+    @unittest.expectedFailure
+    def Derivative_Quadratic(self):
+        self.derivative('x**2 + 2*x*y + z**2', ('2*x + 2*y', '2*x', '2*z'))
+    
         
 
 class OOF_Mesh_Interpolate_Quadratic(OOF_Mesh_Interpolate):
     def elementTypes(self):
         return ['TET4_10', 'T3_6', 'Q4_8', 'D2_3']
     def order(self):
-        return 2
+        return 2                # determines no. of Gauss points
     @memcheck
     def Interpolate_Linear(self):
         self.interpolate('x + 2*y - 3*z')
@@ -508,12 +527,27 @@ class OOF_Mesh_Interpolate_Quadratic(OOF_Mesh_Interpolate):
     @memcheck
     def Integrate_Quadratic_Z(self):
         self.integrate('z*z', (1/3.)*self.volume*self.size[2]**2)
+    @memcheck
+    def Derivative_Constant(self):
+        self.derivative('1.0', ('0.0', '0.0', '0.0'))
+    @memcheck
+    def Derivative_Linear(self):
+        self.derivative('x+2*y', ('1.0', '2.0', '0.0'))
+    @memcheck
+    def Derivative_Quadratic(self):
+        self.derivative('x**2 + 2*x*y + z**2', ('2*x + 2*y', '2*x', '2*z'))
+    
+
+# Interpolate_Cubic uses the same shape functions as
+# Interpolate_Quadratic, but more Gauss points.  It only checks
+# integration, because it's identical to Interpolate_Quadratic for
+# interpolation and differentiation.
 
 class OOF_Mesh_Interpolate_Cubic(OOF_Mesh_Interpolate):
     def elementTypes(self):
         return ['TET4_10', 'T3_6', 'Q4_8', 'D2_3']
     def order(self):
-        return 3
+        return 3                # determines no. of Gauss points
     @memcheck
     def Integrate_Quadratic_X(self):
         self.integrate('x*x', (1/3.)*self.volume*self.size[0]**2)
@@ -1280,6 +1314,8 @@ extra_set = [
     OOF_Mesh_Interpolate_Linear("Integrate_Quadratic_Y"),
     OOF_Mesh_Interpolate_Linear("Integrate_Quadratic_Z"),
     OOF_Mesh_Interpolate_Linear("Derivative_Constant"),
+    OOF_Mesh_Interpolate_Linear("Derivative_Linear"),
+    OOF_Mesh_Interpolate_Linear("Derivative_Quadratic"),
 
     OOF_Mesh_Interpolate_Quadratic("Interpolate_Linear"),
     OOF_Mesh_Interpolate_Quadratic("Interpolate_Quadratic"),
@@ -1291,6 +1327,9 @@ extra_set = [
     OOF_Mesh_Interpolate_Quadratic("Integrate_Quadratic_X"),
     OOF_Mesh_Interpolate_Quadratic("Integrate_Quadratic_Y"),
     OOF_Mesh_Interpolate_Quadratic("Integrate_Quadratic_Z"),
+    OOF_Mesh_Interpolate_Quadratic("Derivative_Constant"),
+    OOF_Mesh_Interpolate_Quadratic("Derivative_Linear"),
+    OOF_Mesh_Interpolate_Quadratic("Derivative_Quadratic"),
 
     OOF_Mesh_Interpolate_Cubic("Integrate_Quadratic_X"),
     OOF_Mesh_Interpolate_Cubic("Integrate_Quadratic_Y"),
@@ -1344,4 +1383,6 @@ test_set = (basic_set + field_equation_set + extra_set + bc_set + file_set
             # + crosssection_set
             + special_set
             )
-test_set = [OOF_Mesh_Interpolate_Linear("Derivative_Constant")]
+# test_set = [OOF_Mesh_Interpolate_Quadratic("Derivative_Constant"),
+#             OOF_Mesh_Interpolate_Quadratic("Derivative_Linear"),
+#             OOF_Mesh_Interpolate_Quadratic("Derivative_Quadratic")]

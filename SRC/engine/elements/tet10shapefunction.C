@@ -36,7 +36,7 @@ double Tet10ShapeFunction::value(ShapeFunctionIndex i, const MasterCoord &mc)
   if(i == 3)
     return 2.0 * (mc[0] - 0.5) * mc[0];	// 2*x*(x-0.5)
   if(i == 4)
-    return 4.0 * (1.0 - mc[0] - mc[1] - mc[2]) * mc[1]; // 4*t*x;
+    return 4.0 * (1.0 - mc[0] - mc[1] - mc[2]) * mc[1]; // 4*t*y;
   if(i == 5)
     return 4.0 * mc[1] * mc[2];	// 4*y*z
   if(i == 6)
@@ -56,25 +56,32 @@ double Tet10ShapeFunction::masterderiv(ShapeFunctionIndex i, SpaceIndex j,
 {
   // d phi_i/d x_j
   
-  if(i == 0)
-    return 4*(mc[0] + mc[0] + mc[2]) - 3.0; // for all j
-  if(i == 1 || i == 2) {
-    if(j == i)
-      return 4.0*mc[j] - 1.0;
+  if(i == 0) {				    // sf0 = 2*t*(t-1/2)
+    double t = 1.0 - mc[0] - mc[1] - mc[2];
+    return 1.0 - 4.0*t;		// dt/x_j = -1
+  }
+  if(i == 1) {			// sf1 = 2*y*(y-1/2)
+    if(j == 1)
+      return 4.0*mc[1] - 1.0;
     return 0.0;
   }
-  if(i == 3) {
-    if(j == 3)
+  if(i == 2) {			// sf2 = 2*z*(z-1/2)
+    if(j == 2)
+      return 4.0*mc[2] - 1.0;
+    return 0.0;
+  }
+  if(i == 3) {			// sf3 = 2*x*(x-1/2)
+    if(j == 0)
       return 4.0*mc[0] - 1.0;
     return 0.0;
   }
-  if(i == 4) {
+  if(i == 4) {			// sf4 = 4*t*y
     if(j == 1)
       return 4.0 * (1 - mc[0] - 2*mc[1] - mc[2]);
     else
       return -4.0 * mc[1];
   }
-  if(i == 5) {
+  if(i == 5) {			// sf5 = 4*y*z
     if(j == 0)
       return 0.0;
     if(j == 1)
@@ -82,19 +89,19 @@ double Tet10ShapeFunction::masterderiv(ShapeFunctionIndex i, SpaceIndex j,
     if(j == 2)
       return 4.0 * mc[1];
   }
-  if(i == 6) {
+  if(i == 6) {			// sf6 = 4*t*z
     if(j == 2)
       return 4.0 * (1 - mc[0] - mc[1] - 2*mc[2]);
     else
       return -4.0 * mc[2];
   }
-  if(i == 7) {
+  if(i == 7) {			// sf7 = 4*t*x
     if(j == 0)
       return 4.0 * (1 - 2*mc[0] - mc[1] - mc[2]);
     else
       return -4.0 * mc[0];
   }
-  if(i == 8) {
+  if(i == 8) {			// sf8 = 4*x*y
     if(j == 0)
       return 4.0 * mc[1];
     if(j == 1)
@@ -102,7 +109,7 @@ double Tet10ShapeFunction::masterderiv(ShapeFunctionIndex i, SpaceIndex j,
     if(j == 2)
       return 0.0;
   }
-  if(i == 9) {
+  if(i == 9) {			// sf9 = 4*x*z
     if(j == 0)
       return 4.0 * mc[2];
     if(j == 1)
