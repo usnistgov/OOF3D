@@ -113,71 +113,81 @@ int ElementBase::mapfun_degree() const {
 double ElementBase::Jdmasterdx(SpaceIndex i, SpaceIndex j, const GaussPoint &g)
   const
 {
+  // What matters here is the dimension of the Element
+  // (Element::dimension()), not the dimension of space (DIM).
+  if(dimension() == 2) {
+    //         | J11  -J01 |
+    //  J^-1 = |           | / |J|
+    //         |-J10   J00 |
 
-#if DIM==2
-  //         | J11  -J01 |
-  //  J^-1 = |           | / |J|
-  //         |-J10   J00 |
-
-  double sum = 0;
-  if(i == j) {
-    int ii = 1 - i;
-    for(ElementNodePositionIterator ni=mapnode_positerator(); !ni.end(); ++ni) {
-      sum += (ni.position())[ii] * ni.masterderiv(ii, g);
+    double sum = 0;
+    if(i == j) {
+      int ii = 1 - i;
+      for(CleverPtr<ElementMapNodePositionIterator> ni(mapnode_positerator());
+	  !ni->end(); ++*ni)
+	{
+	  sum += (ni->position())[ii] * ni->masterderiv(ii, g);
+	}
     }
-  }
-  else {			// i != j
-    for(ElementNodePositionIterator ni=mapnode_positerator(); !ni.end(); ++ni)
-      sum -= (ni.position())[i] * ni.masterderiv(j, g);
-  }
-  return sum;
-
-#elif DIM==3
-  // Typing out a closed form in code is messy for 3d.  TODO 3.1: 3D it
-  // might be worth it to type it out eventually as this is
-  // inefficient
-  double m[DIM][DIM], inverse[DIM][DIM];
-  int ii, jj;
-  for(ii=0; ii<DIM; ++ii) {
-    for(jj=0; jj<DIM; ++jj) {
-      m[ii][jj] = jacobian(ii,jj,g);
+    else {			// i != j
+      for(CleverPtr<ElementMapNodePositionIterator> ni(mapnode_positerator());
+	  !ni->end(); ++*ni)
+	sum -= (ni->position())[i] * ni->masterderiv(j, g);
     }
+    return sum;
   }
-  double dj = vtkMath::Determinant3x3(m);
-  vtkMath::Invert3x3(m,inverse);
-  return dj*inverse[i][j];
-#endif	// DIM==3
+  if(dimension() == 3) {
+    // Typing out a closed form in code is messy for 3d.  TODO 3.1: 3D
+    // it might be worth it to type it out eventually as this is
+    // inefficient
+    double m[3][3], inverse[3][3];
+    int ii, jj;
+    for(ii=0; ii<3; ++ii) {
+      for(jj=0; jj<3; ++jj) {
+	m[ii][jj] = jacobian(ii,jj,g);
+      }
+    }
+    double dj = vtkMath::Determinant3x3(m);
+    vtkMath::Invert3x3(m,inverse);
+    return dj*inverse[i][j];
+  }
+  throw ErrProgrammingError("ElementBase::Jdmasterdx isn't defined for d=1!",
+			    __FILE__, __LINE__);
 }
 
 double ElementBase::Jdmasterdx(SpaceIndex i, SpaceIndex j,
 			       const MasterCoord &mc)
   const
 {
-#if DIM==2
-  double sum = 0;
-  if(i == j) {
-    int ii = 1 - i;
-    for(ElementNodePositionIterator ni=mapnode_positerator(); !ni.end(); ++ni)
-      sum += (ni.position())[ii] * ni.masterderiv(ii, mc);
-  }
-  else {			// i != j
-    for(ElementNodePositionIterator ni=mapnode_positerator(); !ni.end(); ++ni)
-      sum -= (ni.position())[i] * ni.masterderiv(j, mc);
-  }
-  return sum;
-
-#elif DIM==3
-  double m[DIM][DIM], inverse[DIM][DIM];
-  int ii, jj;
-  for(ii=0; ii<DIM; ++ii) {
-    for(jj=0; jj<DIM; ++jj) {
-      m[ii][jj] = jacobian(ii,jj,mc);
+  if(dimension() == 2) {
+    double sum = 0;
+    if(i == j) {
+      int ii = 1 - i;
+      for(CleverPtr<ElementMapNodePositionIterator> ni(mapnode_positerator());
+	  !ni->end(); ++*ni)
+	sum += (ni->position())[ii] * ni->masterderiv(ii, mc);
     }
+    else {			// i != j
+      for(CleverPtr<ElementMapNodePositionIterator> ni(mapnode_positerator());
+	  !ni->end(); ++*ni)
+	sum -= (ni->position())[i] * ni->masterderiv(j, mc);
+    }
+    return sum;
   }
-  double dj = vtkMath::Determinant3x3(m);
-  vtkMath::Invert3x3(m,inverse);
-  return dj*inverse[i][j];
-#endif	// DIM==3
+  if(dimension() == 3) {
+    double m[3][3], inverse[3][3];
+    int ii, jj;
+    for(ii=0; ii<3; ++ii) {
+      for(jj=0; jj<3; ++jj) {
+	m[ii][jj] = jacobian(ii,jj,mc);
+      }
+    }
+    double dj = vtkMath::Determinant3x3(m);
+    vtkMath::Invert3x3(m,inverse);
+    return dj*inverse[i][j];
+  }
+  throw ErrProgrammingError("ElementBase::Jdmasterdx isn't defined for d=1!",
+			    __FILE__, __LINE__);
 }
 
 
@@ -267,6 +277,7 @@ double ElementBase::jacobian(SpaceIndex i, SpaceIndex j, const MasterCoord &mc)
 double ElementBase::span() const {
   double a = 0.0;
   for(GaussPointIterator gpt = integrator(0); !gpt.end(); ++gpt) {
+    // GaussPoint::weight() includes the determinant of the Jacobian.
     a += gpt.gausspoint().weight();
   }
   return a;

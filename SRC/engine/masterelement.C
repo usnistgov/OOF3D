@@ -337,11 +337,11 @@ const std::vector<GaussPtTable> &TriangularMaster::gptable_vec() const {
 		.28114980244097964825351432270207695/2.);
     addPoints21(table.back(),
 		.47791988356756370000000000000000000,
-		.16288285039589191090016180418490635/2.);
+		.05218353089235368507981901063125638/2.);
     
     //* This version (from Dunavant?) has one negative weight but
     //* fewer points.
-        // table.push_back(GaussPtTable(3, 4));
+    // table.push_back(GaussPtTable(3, 4));
     // table[3].addpoint(masterCoord2D(1./3., 1./3.), -0.5*0.5625);
     // table[3].addpoint(masterCoord2D(0.6, 0.2), 0.5*25./48.);
     // table[3].addpoint(masterCoord2D(0.2, 0.6), 0.5*25./48.);

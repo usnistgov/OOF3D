@@ -355,12 +355,18 @@ class OOF_Mesh_Extra(OOF_Mesh_FieldEquation):
             self.assertEqual(val, pos[0]*pos[1]*pos[2])
         OOF.Mesh.Delete(mesh="meshtest:skeleton:mesh<2>")
 
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+        
 # OOF_Mesh_Interpolate is the base class for
 # OOF_Mesh_Interpolate_Linear, OOF_Mesh_Interpolate_Quadratic, and
 # OOF_Mesh_Interpolate_Cubic.  These tests initialize the Temperature
 # field with a known polynomial in (x,y,z) and check that the field is
 # interpolated and integrated correctly.  This tests the shape
 # functions and the gauss points.
+
+## TODO: Add interpolation, differentiation, and integration tests for
+## lower dimensional elements.  Move all of these tests into their own
+## file (element_test.py, maybe).
 
 class OOF_Mesh_Interpolate(OOF_Mesh):
     def setUp(self):
@@ -371,6 +377,8 @@ class OOF_Mesh_Interpolate(OOF_Mesh):
         self.size = getMicrostructure('meshtest').size()
         self.msh = mesh.meshes["meshtest:skeleton:fe_test"]
         self.msh_obj = self.msh.getObject()
+        # self.subp isn't needed in these tests but if we don't define
+        # it we have to change @memcheck.
         self.subp = self.msh.get_default_subproblem().getObject()
     def define_field(self, fn):
         OOF.Mesh.Field.Define(mesh="meshtest:skeleton:fe_test",
@@ -381,23 +389,6 @@ class OOF_Mesh_Interpolate(OOF_Mesh):
             initializer=FuncScalarFieldInit(function=fn))
         OOF.Mesh.Apply_Field_Initializers(mesh="meshtest:skeleton:fe_test")
 
-    # Set of mastercoords for testing interpolation and derivatives
-    def mastercoords(self):
-        return [
-            mastercoord.MasterCoord(0., 0., 0.), # node 0
-            mastercoord.MasterCoord(0., 1., 0.), # node 1
-            mastercoord.MasterCoord(0., 0., 1.), # node 2
-            mastercoord.MasterCoord(1., 0., 0.), # node 3
-            mastercoord.MasterCoord(0.0, 0.5, 0.0), # node 4
-            mastercoord.MasterCoord(0.0, 0.5, 0.5), # node 5
-            mastercoord.MasterCoord(0.0, 0.0, 0.5), # node 6
-            mastercoord.MasterCoord(0.5, 0.0, 0.0), # node 7
-            mastercoord.MasterCoord(0.5, 0.5, 0.0), # node 8
-            mastercoord.MasterCoord(0.5, 0.0, 0.5), # node 9
-            mastercoord.MasterCoord(0.25, 0.25, 0.25),
-            mastercoord.MasterCoord(0.15, 0.2, 0.25),
-            mastercoord.MasterCoord(0.25, 0.1, 0.3)
-        ]
     
     def interpolate(self, fn):
         self.define_field(fn)
@@ -407,23 +398,22 @@ class OOF_Mesh_Interpolate(OOF_Mesh):
                         for pt in pts]
             o = e.outputFields(self.msh_obj, Temperature, self.mastercoords())
             got = [oo.value() for oo in o]
-            for (gt, expctd) in zip(got, expected):
-                self.assertAlmostEqual(gt, expctd)
+            for (gt, xpctd) in zip(got, expected):
+                self.assertAlmostEqual(gt, xpctd)
 
-    def integrate(self, fn, expected):
-        self.define_field(fn)
+    def integrate(self, fn, expected, places=7, order=None):
         integral = 0.0
         for e in self.msh_obj.elements():
-            gpts = e.integration_points(self.order())
+            gpts = e.integration_points(order or self.order())
             for gpt in gpts:
                 pt = gpt.coord()
                 val = eval(fn, {'x':pt[0], 'y':pt[1], 'z':pt[2]})
                 integral += val*gpt.weight()
-        self.assertAlmostEqual(expected, integral)
+        self.assertAlmostEqual((expected-integral)/expected, 0.0, places=places)
 
     def derivative(self, fn, derivs):
-        # fn is a string containing a function of x,y,z.
-        # derivs is a tuple of strings for the x,y,z derivatives of fn.
+        # fn is a string containing a function of x,y,z.  derivs is a
+        # 3-tuple of strings for the x,y,z derivatives of fn.
         self.define_field(fn)
         for e in self.msh_obj.elements():
             pts = [e.from_master(m) for m in self.mastercoords()]
@@ -435,8 +425,8 @@ class OOF_Mesh_Interpolate(OOF_Mesh):
                                         self.mastercoords())
                 self.assertEqual(len(o), len(expected))
                 got = [oo.value() for oo in o]
-                for (gt, expctd) in zip(got, expected):
-                    self.assertAlmostEqual(gt, expctd)
+                for (gt, xpctd) in zip(got, expected):
+                    self.assertAlmostEqual(gt, xpctd)
                 
 
 class OOF_Mesh_Interpolate_Linear(OOF_Mesh_Interpolate):
@@ -444,6 +434,18 @@ class OOF_Mesh_Interpolate_Linear(OOF_Mesh_Interpolate):
         return ['TET4_4', 'T3_3', 'Q4_4', 'D2_2']
     def order(self):
         return 1
+    # Set of mastercoords for testing interpolation and derivatives on
+    # the 4-node tetrahedron.
+    def mastercoords(self):
+        return [
+            mastercoord.MasterCoord(0., 0., 0.), # node 0
+            mastercoord.MasterCoord(0., 1., 0.), # node 1
+            mastercoord.MasterCoord(0., 0., 1.), # node 2
+            mastercoord.MasterCoord(1., 0., 0.), # node 3
+            mastercoord.MasterCoord(0.25, 0.25, 0.25),
+            mastercoord.MasterCoord(0.15, 0.2, 0.25),
+            mastercoord.MasterCoord(0.25, 0.1, 0.3)
+        ]
     @memcheck
     def Interpolate_Linear(self):
         self.interpolate('x + 2*y + 3*z')
@@ -495,6 +497,24 @@ class OOF_Mesh_Interpolate_Quadratic(OOF_Mesh_Interpolate):
         return ['TET4_10', 'T3_6', 'Q4_8', 'D2_3']
     def order(self):
         return 2                # determines no. of Gauss points
+    # Set of mastercoords for testing interpolation and derivatives on
+    # the 10-node tetrahedron.
+    def mastercoords(self):
+        return [
+            mastercoord.MasterCoord(0., 0., 0.), # node 0
+            mastercoord.MasterCoord(0., 1., 0.), # node 1
+            mastercoord.MasterCoord(0., 0., 1.), # node 2
+            mastercoord.MasterCoord(1., 0., 0.), # node 3
+            mastercoord.MasterCoord(0.0, 0.5, 0.0), # node 4
+            mastercoord.MasterCoord(0.0, 0.5, 0.5), # node 5
+            mastercoord.MasterCoord(0.0, 0.0, 0.5), # node 6
+            mastercoord.MasterCoord(0.5, 0.0, 0.0), # node 7
+            mastercoord.MasterCoord(0.5, 0.5, 0.0), # node 8
+            mastercoord.MasterCoord(0.5, 0.0, 0.5), # node 9
+            mastercoord.MasterCoord(0.25, 0.25, 0.25),
+            mastercoord.MasterCoord(0.15, 0.2, 0.25),
+            mastercoord.MasterCoord(0.25, 0.1, 0.3)
+        ]
     @memcheck
     def Interpolate_Linear(self):
         self.interpolate('x + 2*y - 3*z')
@@ -571,6 +591,224 @@ class OOF_Mesh_Interpolate_Cubic(OOF_Mesh_Interpolate):
     def Integrate_Quartic_X(self):
         self.integrate('x**4', 0.20*self.volume*self.size[0]**4)
 
+class OOF_Mesh_Interpolate_Quartic(OOF_Mesh_Interpolate):
+    def elementTypes(self):
+        return ['TET4_10', 'T3_6', 'Q4_8', 'D2_3']
+    def order(self):
+        return 4                # determines no. of Gauss points
+    @memcheck
+    def Integrate_Quadratic_X(self):
+        self.integrate('x*x', (1/3.)*self.volume*self.size[0]**2)
+    @memcheck
+    def Integrate_Quadratic_Y(self):
+        self.integrate('y*y', (1/3.)*self.volume*self.size[1]**2)
+    @memcheck
+    def Integrate_Quadratic_Z(self):
+        self.integrate('z*z', (1/3.)*self.volume*self.size[2]**2)
+    @memcheck
+    def Integrate_Cubic_X(self):
+        self.integrate('x*x*x', 0.25*self.volume*self.size[0]**3)
+    @memcheck
+    def Integrate_Cubic_Y(self):
+        self.integrate('y*y*y', 0.25*self.volume*self.size[1]**3)
+    @memcheck
+    def Integrate_Cubic_Z(self):
+        self.integrate('z*z*z', 0.25*self.volume*self.size[2]**3)
+    @memcheck
+    def Integrate_Quartic_X(self):
+        self.integrate('x**4', 0.20*self.volume*self.size[0]**4)
+
+
+class OOF_Mesh_Integrate_Higher(OOF_Mesh_Interpolate):
+    def elementTypes(self):
+        return ['TET4_10', 'T3_6', 'Q4_8', 'D2_3']
+    @memcheck
+    def Integrate(self):
+        for order in (5,6,7,8):
+            fn = 'y**{o} + x**{o} + z**{o}'.format(o=order)
+            print >> sys.stderr, "Integrating", fn
+            self.integrate(fn,
+                           (1./(order+1))*self.volume*(self.size[0]**order +
+                                                       self.size[1]**order +
+                                                       self.size[2]**order),
+                           places=7, order=order)
+        # Integrate with more gauss points than necessary
+        for order in (5,6,7):
+            fn = 'y**{o} + x**{o} + z**{o}'.format(o=order)
+            print >> sys.stderr, "Integrating", fn
+            self.integrate(fn,
+                           (1./(order+1))*self.volume*(self.size[0]**order +
+                                                       self.size[1]**order +
+                                                       self.size[2]**order),
+                           places=7, order=order+1)
+
+# Tests for interpolation and integration on lower dimensional finite
+# elements.  These are most easily obtained from the boundaries of the
+# mesh.  The tests therefore logically belong in the boundary tests or
+# after them, not here.  But are there other tests before the boundary
+# tests that rely on the lower dimensional elements?
+
+class OOF_Mesh_Triangle(OOF_Mesh_Interpolate):
+    def setUp(self):
+        OOF_Mesh_Interpolate.setUp(self)
+        faces = self.msh.getBoundary("Zmax").faceset
+        self.elements = [f.element for f in faces]
+        self.area = self.size[0]*self.size[1]
+    def tearDown(self):
+        del self.elements
+        OOF_Mesh_Interpolate.tearDown(self)
+    def integrate(self, fn, expected, places=7, order=None):
+        # fn is a string containing a function of x and y, which will
+        # be integrated over the Zmax face of the Mesh.  expected is
+        # the expected value of the integral.
+        integral = 0.0
+        for e in self.elements:
+            gpts = e.integration_points(order or self.order())
+            for gpt in gpts:
+                pt = gpt.coord()
+                val = eval(fn, {'x':pt[0], 'y':pt[1]});
+                integral += val*gpt.weight()
+        self.assertAlmostEqual((expected-integral)/expected, 0.0, places=places)
+    def interpolate(self, fn):
+        # fn is a string containing a function of x and y.
+        self.define_field(fn)
+        for e in self.elements:
+            pts = [e.from_master(m) for m in self.mastercoords()]
+            expected = [eval(fn, {'x':pt[0], 'y':pt[1]}) for pt in pts]
+            o = e.outputFields(self.msh_obj, Temperature, self.mastercoords())
+            got = [oo.value() for oo in o]
+            for (gt, xpctd) in zip(got, expected):
+                self.assertAlmostEqual(gt, xpctd)
+    def derivative(self, fn, derivs):
+        # fn is a string containing a function of x and y.  derivs is
+        # a 2-tuple of strings containing the x and y derivatives of fn.
+        self.define_field(fn)
+        for e in self.elements:
+            pts = [e.from_master(m) for m in self. mastercoords()]
+            for c in outputClones.SpaceComponent.values:
+                if c == 'z':
+                    continue
+                expr = derivs[c.index()]
+                expected = [eval(expr, {'x':pt[0], 'y':pt[1]}) for pt in pts]
+                o = e.outputFieldDerivs(self.msh_obj, Temperature, c,
+                                        self.mastercoords())
+                self.assertEqual(len(o), len(expected))
+                got = [oo.value() for oo in o]
+                for (gt, xpctd) in zip(got, expected):
+                    self.assertAlmostEqual(gt, xpctd)
+        
+    # Points at which to test interpolation and derivatives
+
+class OOF_Mesh_Triangle_Linear(OOF_Mesh_Triangle):
+    def elementTypes(self):
+        return ['TET4_4', 'T3_3', 'Q4_4', 'D2_2']
+    def order(self):
+        return 1
+    def mastercoords(self):
+        return [mastercoord.masterCoord2D(0., 0.),
+                mastercoord.masterCoord2D(1., 0.),
+                mastercoord.masterCoord2D(0., 1.),
+                mastercoord.masterCoord2D(1/3., 1/3.),
+                mastercoord.masterCoord2D(0.1, 0.1),
+                mastercoord.masterCoord2D(0.3, 0.6)
+                ]
+    @memcheck
+    def Interpolate_Linear(self):
+        self.interpolate("2*x - 3*y")
+    @memcheck
+    @unittest.expectedFailure
+    def Interpolate_Quadratic(self):
+        self.interpolate("2*x*x + 3*y*y")
+        
+    @memcheck
+    def Integrate_Linear_X(self):
+        self.integrate("2*x", self.area*self.size[0])
+    @memcheck
+    @unittest.expectedFailure   # polynomial order higher than gauss pt order
+    def Integrate_Quadratic_X(self):
+        self.integrate("3*x*x", self.area*self.size[0]**2)
+    @memcheck
+    def Integrate_Quadratic_X2(self):
+        self.integrate("3*x*x", self.area*self.size[0]**2, order=2)
+    @memcheck
+    def Integrate_Higher_X(self):
+        for order in range(0, 9):
+            fn = 'x**{o}'.format(o=order)
+            print >> sys.stderr, "Integrating", fn
+            self.integrate(fn, self.area*self.size[0]**order/(order+1),
+                           order=order)
+    @memcheck
+    def Integrate_Linear_Y(self):
+        self.integrate("2*y", self.area*self.size[1])
+    @memcheck
+    @unittest.expectedFailure   # polynomial order higher than gauss pt order
+    def Integrate_Quadratic_Y(self):
+        self.integrate("3*y*y", self.area*self.size[1]**2)
+    @memcheck
+    def Integrate_Quadratic_Y2(self):
+        self.integrate("3*y*y", self.area*self.size[1]**2, order=2)
+    @memcheck
+    def Integrate_Higher_Y(self):
+        for order in range(0, 9):
+            fn = 'y**{o}'.format(o=order)
+            print >> sys.stderr, "Integrating", fn
+            self.integrate(fn, self.area*self.size[1]**order/(order+1),
+                           order=order)
+    @memcheck
+    def Derivative_Constant(self):
+        self.derivative('-3.14', ('0.0', '0.0'))
+    @memcheck
+    def Derivative_Linear(self):
+        self.derivative('x+3*y', ('1.0', '3.0'))
+    @memcheck
+    @unittest.expectedFailure
+    def Derivative_Bilinear(self):
+        self.derivative('x*y', ('y', 'x'))
+    @memcheck
+    @unittest.expectedFailure
+    def Derivative_Quadratic(self):
+        self.derivative('x**2 + y**2', ('2*x', '2*y'))
+
+class OOF_Mesh_Triangle_Quadratic(OOF_Mesh_Triangle):
+    def elementTypes(self):
+        return ['TET4_10', 'T3_6', 'Q4_8', 'D2_3']
+    def order(self):
+        return 2                # determines no. of Gauss points
+    def mastercoords(self):
+        return [mastercoord.masterCoord2D(0., 0.),
+                mastercoord.masterCoord2D(1., 0.),
+                mastercoord.masterCoord2D(0., 1.),
+                mastercoord.masterCoord2D(0., 0.5),
+                mastercoord.masterCoord2D(0.5, 0.),
+                mastercoord.masterCoord2D(0.5, 0.5),
+                mastercoord.masterCoord2D(1/3., 1/3.),
+                mastercoord.masterCoord2D(0.1, 0.1),
+                mastercoord.masterCoord2D(0.3, 0.6)
+                ]
+    @memcheck
+    def Interpolate_Linear(self):
+        self.interpolate("2*x - 3*y")
+    @memcheck
+    def Interpolate_Quadratic(self):
+        self.interpolate("2*x*x + 3*y*y")
+    @memcheck
+    def Derivative_Constant(self):
+        self.derivative('-3.14', ('0.0', '0.0'))
+    @memcheck
+    def Derivative_Linear(self):
+        self.derivative('x+3*y', ('1.0', '3.0'))
+    @memcheck
+    def Derivative_Bilinear(self):
+        self.derivative('x*y', ('y', 'x'))
+    @memcheck
+    def Derivative_Quadratic(self):
+        self.derivative('x**2 + y**2', ('2*x', '2*y'))
+    @memcheck
+    @unittest.expectedFailure
+    def Derivative_Cubic(self):
+        self.derivative("x**3 + y**3", ('3*x**2', '3*y**2'))
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # There is a toolbox for mesh cross-section operations, but it doesn't
 # have a special menu, it just makes calls to the menu items tested
@@ -1338,6 +1576,41 @@ extra_set = [
     OOF_Mesh_Interpolate_Cubic("Integrate_Cubic_Y"),
     OOF_Mesh_Interpolate_Cubic("Integrate_Cubic_Z"),
     OOF_Mesh_Interpolate_Cubic("Integrate_Quartic_X"),
+
+    OOF_Mesh_Interpolate_Quartic("Integrate_Quadratic_X"),
+    OOF_Mesh_Interpolate_Quartic("Integrate_Quadratic_Y"),
+    OOF_Mesh_Interpolate_Quartic("Integrate_Quadratic_Z"),
+    OOF_Mesh_Interpolate_Quartic("Integrate_Cubic_X"),
+    OOF_Mesh_Interpolate_Quartic("Integrate_Cubic_Y"),
+    OOF_Mesh_Interpolate_Quartic("Integrate_Cubic_Z"),
+    OOF_Mesh_Interpolate_Quartic("Integrate_Quartic_X"),
+
+    OOF_Mesh_Integrate_Higher("Integrate"),
+]
+
+low_dimension_set = [
+    OOF_Mesh_Triangle_Linear("Interpolate_Linear"),
+    OOF_Mesh_Triangle_Linear("Interpolate_Quadratic"),
+    OOF_Mesh_Triangle_Linear("Derivative_Constant"),
+    OOF_Mesh_Triangle_Linear("Derivative_Linear"),
+    OOF_Mesh_Triangle_Linear("Derivative_Bilinear"),
+    OOF_Mesh_Triangle_Linear("Derivative_Quadratic"),
+    OOF_Mesh_Triangle_Linear("Integrate_Linear_X"),
+    OOF_Mesh_Triangle_Linear("Integrate_Linear_Y"),
+    OOF_Mesh_Triangle_Linear("Integrate_Quadratic_X"),
+    OOF_Mesh_Triangle_Linear("Integrate_Quadratic_Y"),
+    OOF_Mesh_Triangle_Linear("Integrate_Quadratic_X2"),
+    OOF_Mesh_Triangle_Linear("Integrate_Quadratic_Y2"),
+    OOF_Mesh_Triangle_Linear("Integrate_Higher_X"),
+    OOF_Mesh_Triangle_Linear("Integrate_Higher_Y"),
+
+    OOF_Mesh_Triangle_Quadratic("Interpolate_Linear"),
+    OOF_Mesh_Triangle_Quadratic("Interpolate_Quadratic"),
+    OOF_Mesh_Triangle_Quadratic("Derivative_Constant"),
+    OOF_Mesh_Triangle_Quadratic("Derivative_Linear"),
+    OOF_Mesh_Triangle_Quadratic("Derivative_Bilinear"),
+    OOF_Mesh_Triangle_Quadratic("Derivative_Quadratic"),
+    OOF_Mesh_Triangle_Quadratic("Derivative_Cubic"),
 ]
 
 crosssection_set = [
@@ -1386,3 +1659,6 @@ test_set = (basic_set + field_equation_set + extra_set + bc_set + file_set
 # test_set = [OOF_Mesh_Interpolate_Quadratic("Derivative_Constant"),
 #             OOF_Mesh_Interpolate_Quadratic("Derivative_Linear"),
 #             OOF_Mesh_Interpolate_Quadratic("Derivative_Quadratic")]
+
+test_set = low_dimension_set
+#test_set = [OOF_Mesh_Triangle_Linear("Derivative_Constant")]
