@@ -213,9 +213,9 @@ class DollyMouseHandler(ViewManipulatorMouseHandler):
         self.gfxwindow.oofcanvas.mouse_dolly(x,y)
         self.gfxwindow.updateview()
 
-    def up(self, x, y, button, shift, ctrl):
-        # self.gfxwindow.oofcanvas.set_sample_distances()
-        ViewManipulatorMouseHandler.up(self,x,y,shift,ctrl)
+    # def up(self, x, y, button, shift, ctrl):
+    #     # self.gfxwindow.oofcanvas.set_sample_distances()
+    #     ViewManipulatorMouseHandler.up(self,x,y,button,shift,ctrl)
         
 
 class TrackMouseHandler(ViewManipulatorMouseHandler):
