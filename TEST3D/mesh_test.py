@@ -679,31 +679,33 @@ class OOF_Mesh_Triangle(OOF_Mesh_Interpolate):
             got = [oo.value() for oo in o]
             for (gt, xpctd) in zip(got, expected):
                 self.assertAlmostEqual(gt, xpctd)
-    def derivative(self, fn, derivs):
-        # fn is a string containing a function of x and y.  derivs is
-        # a 2-tuple of strings containing the x and y derivatives of fn.
-        self.define_field(fn)
-        for e in self.elements:
-            pts = [e.from_master(m) for m in self. mastercoords()]
-            for c in outputClones.SpaceComponent.values:
-                if c == 'z':
-                    continue
-                expr = derivs[c.index()]
-                expected = [eval(expr, {'x':pt[0], 'y':pt[1]}) for pt in pts]
-                o = e.outputFieldDerivs(self.msh_obj, Temperature, c,
-                                        self.mastercoords())
-                self.assertEqual(len(o), len(expected))
-                got = [oo.value() for oo in o]
-                for (gt, xpctd) in zip(got, expected):
-                    self.assertAlmostEqual(gt, xpctd)
+    ## Derivatives wrt real space coordinates are problematic for 2D
+    ## elements in 3-space.  See comments in ElementBase::Jdmasterdx
+    ## in element.C.
+    # def derivative(self, fn, derivs):
+    #     # fn is a string containing a function of x and y.  derivs is
+    #     # a 2-tuple of strings containing the x and y derivatives of fn.
+    #     self.define_field(fn)
+    #     for e in self.elements:
+    #         pts = [e.from_master(m) for m in self. mastercoords()]
+    #         for c in outputClones.SpaceComponent.values:
+    #             if c == 'z':
+    #                 continue
+    #             expr = derivs[c.index()]
+    #             expected = [eval(expr, {'x':pt[0], 'y':pt[1]}) for pt in pts]
+    #             o = e.outputFieldDerivs(self.msh_obj, Temperature, c,
+    #                                     self.mastercoords())
+    #             self.assertEqual(len(o), len(expected))
+    #             got = [oo.value() for oo in o]
+    #             for (gt, xpctd) in zip(got, expected):
+    #                 self.assertAlmostEqual(gt, xpctd)
         
-    # Points at which to test interpolation and derivatives
-
 class OOF_Mesh_Triangle_Linear(OOF_Mesh_Triangle):
     def elementTypes(self):
         return ['TET4_4', 'T3_3', 'Q4_4', 'D2_2']
     def order(self):
         return 1
+    # Points at which to test interpolation
     def mastercoords(self):
         return [mastercoord.masterCoord2D(0., 0.),
                 mastercoord.masterCoord2D(1., 0.),
@@ -754,20 +756,20 @@ class OOF_Mesh_Triangle_Linear(OOF_Mesh_Triangle):
             print >> sys.stderr, "Integrating", fn
             self.integrate(fn, self.area*self.size[1]**order/(order+1),
                            order=order)
-    @memcheck
-    def Derivative_Constant(self):
-        self.derivative('-3.14', ('0.0', '0.0'))
-    @memcheck
-    def Derivative_Linear(self):
-        self.derivative('x+3*y', ('1.0', '3.0'))
-    @memcheck
-    @unittest.expectedFailure
-    def Derivative_Bilinear(self):
-        self.derivative('x*y', ('y', 'x'))
-    @memcheck
-    @unittest.expectedFailure
-    def Derivative_Quadratic(self):
-        self.derivative('x**2 + y**2', ('2*x', '2*y'))
+    # @memcheck
+    # def Derivative_Constant(self):
+    #     self.derivative('-3.14', ('0.0', '0.0'))
+    # @memcheck
+    # def Derivative_Linear(self):
+    #     self.derivative('x+3*y', ('1.0', '3.0'))
+    # @memcheck
+    # @unittest.expectedFailure
+    # def Derivative_Bilinear(self):
+    #     self.derivative('x*y', ('y', 'x'))
+    # @memcheck
+    # @unittest.expectedFailure
+    # def Derivative_Quadratic(self):
+    #     self.derivative('x**2 + y**2', ('2*x', '2*y'))
 
 class OOF_Mesh_Triangle_Quadratic(OOF_Mesh_Triangle):
     def elementTypes(self):
@@ -791,22 +793,22 @@ class OOF_Mesh_Triangle_Quadratic(OOF_Mesh_Triangle):
     @memcheck
     def Interpolate_Quadratic(self):
         self.interpolate("2*x*x + 3*y*y")
-    @memcheck
-    def Derivative_Constant(self):
-        self.derivative('-3.14', ('0.0', '0.0'))
-    @memcheck
-    def Derivative_Linear(self):
-        self.derivative('x+3*y', ('1.0', '3.0'))
-    @memcheck
-    def Derivative_Bilinear(self):
-        self.derivative('x*y', ('y', 'x'))
-    @memcheck
-    def Derivative_Quadratic(self):
-        self.derivative('x**2 + y**2', ('2*x', '2*y'))
-    @memcheck
-    @unittest.expectedFailure
-    def Derivative_Cubic(self):
-        self.derivative("x**3 + y**3", ('3*x**2', '3*y**2'))
+    # @memcheck
+    # def Derivative_Constant(self):
+    #     self.derivative('-3.14', ('0.0', '0.0'))
+    # @memcheck
+    # def Derivative_Linear(self):
+    #     self.derivative('x+3*y', ('1.0', '3.0'))
+    # @memcheck
+    # def Derivative_Bilinear(self):
+    #     self.derivative('x*y', ('y', 'x'))
+    # @memcheck
+    # def Derivative_Quadratic(self):
+    #     self.derivative('x**2 + y**2', ('2*x', '2*y'))
+    # @memcheck
+    # @unittest.expectedFailure
+    # def Derivative_Cubic(self):
+    #     self.derivative("x**3 + y**3", ('3*x**2', '3*y**2'))
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -1591,10 +1593,10 @@ extra_set = [
 low_dimension_set = [
     OOF_Mesh_Triangle_Linear("Interpolate_Linear"),
     OOF_Mesh_Triangle_Linear("Interpolate_Quadratic"),
-    OOF_Mesh_Triangle_Linear("Derivative_Constant"),
-    OOF_Mesh_Triangle_Linear("Derivative_Linear"),
-    OOF_Mesh_Triangle_Linear("Derivative_Bilinear"),
-    OOF_Mesh_Triangle_Linear("Derivative_Quadratic"),
+    # OOF_Mesh_Triangle_Linear("Derivative_Constant"),
+    # OOF_Mesh_Triangle_Linear("Derivative_Linear"),
+    # OOF_Mesh_Triangle_Linear("Derivative_Bilinear"),
+    # OOF_Mesh_Triangle_Linear("Derivative_Quadratic"),
     OOF_Mesh_Triangle_Linear("Integrate_Linear_X"),
     OOF_Mesh_Triangle_Linear("Integrate_Linear_Y"),
     OOF_Mesh_Triangle_Linear("Integrate_Quadratic_X"),
@@ -1606,11 +1608,11 @@ low_dimension_set = [
 
     OOF_Mesh_Triangle_Quadratic("Interpolate_Linear"),
     OOF_Mesh_Triangle_Quadratic("Interpolate_Quadratic"),
-    OOF_Mesh_Triangle_Quadratic("Derivative_Constant"),
-    OOF_Mesh_Triangle_Quadratic("Derivative_Linear"),
-    OOF_Mesh_Triangle_Quadratic("Derivative_Bilinear"),
-    OOF_Mesh_Triangle_Quadratic("Derivative_Quadratic"),
-    OOF_Mesh_Triangle_Quadratic("Derivative_Cubic"),
+    # OOF_Mesh_Triangle_Quadratic("Derivative_Constant"),
+    # OOF_Mesh_Triangle_Quadratic("Derivative_Linear"),
+    # OOF_Mesh_Triangle_Quadratic("Derivative_Bilinear"),
+    # OOF_Mesh_Triangle_Quadratic("Derivative_Quadratic"),
+    # OOF_Mesh_Triangle_Quadratic("Derivative_Cubic"),
 ]
 
 crosssection_set = [
@@ -1660,5 +1662,5 @@ test_set = (basic_set + field_equation_set + extra_set + bc_set + file_set
 #             OOF_Mesh_Interpolate_Quadratic("Derivative_Linear"),
 #             OOF_Mesh_Interpolate_Quadratic("Derivative_Quadratic")]
 
-test_set = low_dimension_set
+#test_set = low_dimension_set
 #test_set = [OOF_Mesh_Triangle_Linear("Derivative_Constant")]

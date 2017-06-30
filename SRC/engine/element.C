@@ -110,84 +110,102 @@ int ElementBase::mapfun_degree() const {
   return master.mapfunction->degree();
 }
 
+// Jdmasterdx is used to convert derivatives in master space to
+// derivatives in real space.  It's not clear what it means if the
+// dimension of the master space is less than the dimension of the
+// real space.  What's the coordinate system for the 2D and 1D
+// derivatives in real space?
+
+// TODO: Should Jdmasterdx be defined for 3D elements only?  Is it
+// even useful for 2D or 1D elements?
+// ElementBase::Jdmasterdx is used in ShapeFunction::realderiv.
+// ShapeFunction::realderiv is used in:
+//   ElementShapeFuncIterator::dshapefunction (derived class methods)
+//   GaussPoint::dshapefunction (derived class methods)
+//   MasterCoord::dshapefunction
+// dshapefunction is used in
+//   Element::outputFieldDeriv, outputFieldDerivs
+//   DivergenceEquation::make_linear_system
+//   Properties
+// None of these are currently used for 2D or 1D elements.  They'd all
+// need some kind of additional math to make sense for 2D elements
+// when we implement interface Properties.
+//
+// SO, I've commented out the D=2 sections below, and added (for now)
+// assert statements restricted Jdmasterdx to 3D Elements.
+
 double ElementBase::Jdmasterdx(SpaceIndex i, SpaceIndex j, const GaussPoint &g)
   const
 {
-  // What matters here is the dimension of the Element
-  // (Element::dimension()), not the dimension of space (DIM).
-  if(dimension() == 2) {
-    //         | J11  -J01 |
-    //  J^-1 = |           | / |J|
-    //         |-J10   J00 |
+  // // What matters here is the dimension of the Element
+  // // (Element::dimension()), not the dimension of space (DIM).
+  // if(dimension() == 2) {
+  //   //         | J11  -J01 |
+  //   //  J^-1 = |           | / |J|
+  //   //         |-J10   J00 |
 
-    double sum = 0;
-    if(i == j) {
-      int ii = 1 - i;
-      for(CleverPtr<ElementMapNodePositionIterator> ni(mapnode_positerator());
-	  !ni->end(); ++*ni)
-	{
-	  sum += (ni->position())[ii] * ni->masterderiv(ii, g);
-	}
+  //   double sum = 0;
+  //   if(i == j) {
+  //     int ii = 1 - i;
+  //     for(CleverPtr<ElementMapNodePositionIterator> ni(mapnode_positerator());
+  // 	  !ni->end(); ++*ni)
+  // 	{
+  // 	  sum += (ni->position())[ii] * ni->masterderiv(ii, g);
+  // 	}
+  //   }
+  //   else {			// i != j
+  //     for(CleverPtr<ElementMapNodePositionIterator> ni(mapnode_positerator());
+  // 	  !ni->end(); ++*ni)
+  // 	sum -= (ni->position())[i] * ni->masterderiv(j, g);
+  //   }
+  //   return sum;
+  // }
+  assert(dimension() == 3);
+  // Typing out a closed form in code is messy for 3d.  TODO 3.1: 3D
+  // it might be worth it to type it out eventually as this is
+  // inefficient
+  double m[3][3], inverse[3][3];
+  int ii, jj;
+  for(ii=0; ii<3; ++ii) {
+    for(jj=0; jj<3; ++jj) {
+      m[ii][jj] = jacobian(ii,jj,g);
     }
-    else {			// i != j
-      for(CleverPtr<ElementMapNodePositionIterator> ni(mapnode_positerator());
-	  !ni->end(); ++*ni)
-	sum -= (ni->position())[i] * ni->masterderiv(j, g);
-    }
-    return sum;
   }
-  if(dimension() == 3) {
-    // Typing out a closed form in code is messy for 3d.  TODO 3.1: 3D
-    // it might be worth it to type it out eventually as this is
-    // inefficient
-    double m[3][3], inverse[3][3];
-    int ii, jj;
-    for(ii=0; ii<3; ++ii) {
-      for(jj=0; jj<3; ++jj) {
-	m[ii][jj] = jacobian(ii,jj,g);
-      }
-    }
-    double dj = vtkMath::Determinant3x3(m);
-    vtkMath::Invert3x3(m,inverse);
-    return dj*inverse[i][j];
-  }
-  throw ErrProgrammingError("ElementBase::Jdmasterdx isn't defined for d=1!",
-			    __FILE__, __LINE__);
+  double dj = vtkMath::Determinant3x3(m);
+  vtkMath::Invert3x3(m,inverse);
+  return dj*inverse[i][j];
 }
 
 double ElementBase::Jdmasterdx(SpaceIndex i, SpaceIndex j,
 			       const MasterCoord &mc)
   const
 {
-  if(dimension() == 2) {
-    double sum = 0;
-    if(i == j) {
-      int ii = 1 - i;
-      for(CleverPtr<ElementMapNodePositionIterator> ni(mapnode_positerator());
-	  !ni->end(); ++*ni)
-	sum += (ni->position())[ii] * ni->masterderiv(ii, mc);
+  // if(dimension() == 2) {
+  //   double sum = 0;
+  //   if(i == j) {
+  //     int ii = 1 - i;
+  //     for(CleverPtr<ElementMapNodePositionIterator> ni(mapnode_positerator());
+  // 	  !ni->end(); ++*ni)
+  // 	sum += (ni->position())[ii] * ni->masterderiv(ii, mc);
+  //   }
+  //   else {			// i != j
+  //     for(CleverPtr<ElementMapNodePositionIterator> ni(mapnode_positerator());
+  // 	  !ni->end(); ++*ni)
+  // 	sum -= (ni->position())[i] * ni->masterderiv(j, mc);
+  //   }
+  //   return sum;
+  // }
+  assert(dimension() == 3);
+  double m[3][3], inverse[3][3];
+  int ii, jj;
+  for(ii=0; ii<3; ++ii) {
+    for(jj=0; jj<3; ++jj) {
+      m[ii][jj] = jacobian(ii,jj,mc);
     }
-    else {			// i != j
-      for(CleverPtr<ElementMapNodePositionIterator> ni(mapnode_positerator());
-	  !ni->end(); ++*ni)
-	sum -= (ni->position())[i] * ni->masterderiv(j, mc);
-    }
-    return sum;
   }
-  if(dimension() == 3) {
-    double m[3][3], inverse[3][3];
-    int ii, jj;
-    for(ii=0; ii<3; ++ii) {
-      for(jj=0; jj<3; ++jj) {
-	m[ii][jj] = jacobian(ii,jj,mc);
-      }
-    }
-    double dj = vtkMath::Determinant3x3(m);
-    vtkMath::Invert3x3(m,inverse);
-    return dj*inverse[i][j];
-  }
-  throw ErrProgrammingError("ElementBase::Jdmasterdx isn't defined for d=1!",
-			    __FILE__, __LINE__);
+  double dj = vtkMath::Determinant3x3(m);
+  vtkMath::Invert3x3(m,inverse);
+  return dj*inverse[i][j];
 }
 
 
