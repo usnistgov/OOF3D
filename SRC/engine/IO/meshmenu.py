@@ -860,7 +860,6 @@ def _copyFieldInits(menuitem, source, target):
         # Copy FloatBC inititalizers
         for bcname in source_mesh.allBndyCondNames():
             initializer = source_mesh.get_bc_initializer(bcname)
-            debug.fmsg("initializer=", initializer)
             if initializer: 
                 # Check that the target mesh has a FloatBC with this name
                 try:

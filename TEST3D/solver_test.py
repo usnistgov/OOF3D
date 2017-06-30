@@ -13,7 +13,7 @@ import memorycheck
 import math
 from UTILS import file_utils
 reference_file = file_utils.reference_file
-file_utils.generate = False
+file_utils.generate = True
 
 ## TODO 3.1: This file doesn't just test the solvers, it also tests the
 ## Output mechanism, because checking outputs is an easy way to verify
@@ -403,6 +403,9 @@ class OOF_AnisoRotation(SaveableMeshTest):
 # file names to distinguish one test from another.
 
 class OOF_NeumannBase(unittest.TestCase):
+    def __init__(self, testname, elementTypes):
+        self.elementTypes = elementTypes
+        unittest.TestCase.__init__(self, testname)
     def setUp(self):
         mx, my, mz = self.microstructureSize
         sx, sy, sz = self.skeletonSize
@@ -436,7 +439,7 @@ class OOF_NeumannBase(unittest.TestCase):
         OOF.Mesh.New(
             name='mesh',
             skeleton='microstructure:skeleton',
-            element_types=['TET4_4', 'Q4_4', 'T3_3', 'D2_2'])
+            element_types=self.elementTypes)
         OOF.Subproblem.Set_Solver(
             subproblem='microstructure:skeleton:mesh:default', 
             solver_mode=BasicSolverMode(
@@ -449,7 +452,11 @@ class OOF_NeumannBase(unittest.TestCase):
             endtime=0.0)
 
     def compare(self, filename):
-        realfilename = filename + '-' + self.testname
+        basefilename = filename + '-' + self.testname
+        if self.elementTypes is quadraticElements:
+            realfilename = basefilename + '-quadratic'
+        else:
+            realfilename = basefilename
         OOF.File.Save.Mesh(
             filename=realfilename,
             mode='w', format='ascii',
@@ -458,7 +465,33 @@ class OOF_NeumannBase(unittest.TestCase):
             realfilename,
             os.path.join('mesh_data', realfilename),
             1.e-6))
+
         file_utils.remove(realfilename)
+
+        fieldfilename = realfilename + '-field'
+        OOF.Mesh.Analyze.Direct_Output(
+            mesh='microstructure:skeleton:mesh',
+            time=latest,
+            data=getOutput('Field:Value',field=self.field()),
+            domain=EntireMesh(),
+            sampling=GridSampleSet(x_points=11,y_points=11,z_points=11,
+                                   show_x=False,show_y=False,show_z=False),
+            destination=OutputStream(
+                filename='output.dat',
+                mode='w'))
+        self.assert_(file_utils.fp_file_compare(
+            'output.dat',
+            os.path.join('mesh_data', fieldfilename),
+            1.e-6))
+        if self.elementTypes is quadraticElements:
+            linearfieldfilename = basefilename + '-field'
+            # Compare quadratic field data to linear field data
+            self.assert_(file_utils.fp_file_compare(
+                'output.dat',
+                os.path.join("mesh_data", linearfieldfilename),
+                1.e-6))
+        file_utils.remove('output.dat')
+        
     def tearDown(self):
         OOF.Material.Delete(name='material')
         OOF.Property.Delete(property='Mechanical:Elasticity:Isotropic:instance')
@@ -476,6 +509,8 @@ class NeumannElastic(OOF_NeumannBase):
         OOF.Subproblem.Equation.Activate(
             subproblem='microstructure:skeleton:mesh:default',
             equation=Force_Balance)
+    def field(self):
+        return Displacement
     def makeDirichletBCs(self, exclude=[]):
         for bdyname in ('Xmax', 'Xmin', 'Ymax', 'Ymin', 'Zmax', 'Zmin'):
             if bdyname not in exclude:
@@ -551,6 +586,8 @@ class NeumannThermal(OOF_NeumannBase):
         OOF.Subproblem.Equation.Activate(
             subproblem='microstructure:skeleton:mesh:default',
             equation=Heat_Eqn)
+    def field(self):
+        return Temperature
     def makeDirichletBCs(self, include=[]):
         for bdyname in include:
             OOF.Mesh.Boundary_Conditions.New(
@@ -2275,15 +2312,14 @@ neumanngeometries = (OOF_ElasticNeumann1,
                  )
 neumanntestnames = ("NullXmin", "NullZmax", "Xmax01", "Ymax01", "Zmin01")
 
-static_set.extend([geometry(testname)
-                   for geometry in neumanngeometries
-                   for testname in neumanntestnames])
+static_neumann_set = [geometry(testname, elementTypes)
+                      for geometry in neumanngeometries
+                      for testname in neumanntestnames
+                      for elementTypes in (linearElements, quadraticElements)]
 
 
-static_set.extend([
-     OOF_NonrectMixedBCStaticElastic("Solve1"),
-     OOF_NonrectMixedBCStaticElastic("Solve2")]
-)
+mixed_bc_set = [OOF_NonrectMixedBCStaticElastic("Solve1"),
+                OOF_NonrectMixedBCStaticElastic("Solve2")]
 
 dynamic_thermal_set = [
     OOF_ThermalDiffusionTimeSteppers("CNdirect"),
@@ -2316,13 +2352,9 @@ dynamic_elastic_set = [
 
 test_set = (static_set +
             static_quadratic_set +
+            static_neumann_set +
+            mixed_bc_set +
             dynamic_thermal_set +
             dynamic_elastic_set)
 
-#test_set = dynamic_elastic_set
-# test_set = [
-#     OOF_NonrectMixedBCStaticElastic("Solve2")
-# ]
-test_set = [OOF_ElasticExact_Quadratic("Solve"),
-            OOF_ElasticExact_Linear("Solve")]
-test_set = static_set
+# test_set = static_neumann_set
