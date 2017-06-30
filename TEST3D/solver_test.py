@@ -697,33 +697,51 @@ class OOF_ThermalNeumann4(NeumannThermal, MeshGeometry4):
 ## elasticity problem with Dirichlet, Neumann, and Floating BCs all
 ## mixed together.
 
-class OOF_NonrectMixedBCStaticElastic(SaveableMeshTest):
-    def setUp(self):
-        OOF.File.Load.Data(
-            filename=reference_file("mesh_data", "everythingbagel0.mesh"))
+# This isn't derived from SaveableMeshTest so that it can more easily
+# re-solve a Mesh.  Also, it doesn't bother to test the binary format.
 
-    @memorycheck.check("solved", "microstructure")
-    def Solve1(self):
-        OOF.Mesh.Solve(mesh="microstructure:skeleton:mesh", endtime=0.0)
-        # Rename the microstructure, load in a pre-solved version, and
-        # compare.
-        OOF.Microstructure.Rename(
-            microstructure='microstructure', 
-            name='solved')
-        OOF.File.Load.Data(
-            filename=reference_file("mesh_data", "everythingbagel1.mesh"))
-        
+class OOF_NonrectMixedBCStaticElastic(unittest.TestCase):
+    def setUp(self):
+        global mesh
         from ooflib.engine import mesh
-        saved = mesh.meshes["solved:skeleton:mesh"]
+    def loadAndCompare(self, savedMeshFile):
+        # The loaded Microstructure should be called 'saved'.
+        OOF.File.Load.Data(
+            filename=reference_file("mesh_data", savedMeshFile))
+        saved = mesh.meshes["saved:skeleton:mesh"]
         damned = mesh.meshes["microstructure:skeleton:mesh"]
         self.assertEqual(saved.compare(damned, 1.0e-13), 0)
+        return saved    # for future comparisons
+    
+    @memorycheck.check("microstructure", "saved")
+    def Solve1(self):
+        global mesh
 
+        OOF.File.Load.Data(
+            filename=reference_file("mesh_data", "everythingbagel0.mesh"))
+        OOF.Mesh.Solve(mesh="microstructure:skeleton:mesh", endtime=0.0)
+        saved = self.loadAndCompare('everythingbagel1.mesh')
         # Check that re-solving the mesh works. 
         OOF.Mesh.Solve(mesh='microstructure:skeleton:mesh', endtime=0.0)
-        self.assertEqual(saved.compare(damned, 1.0e-13), 0)
+        self.assertEqual(
+            saved.compare(mesh.meshes['microstructure:skeleton:mesh'], 1.0e-13),
+            0)
 
-    @memorycheck.check("microstructure")
+    # Repeat part of Solve1 with a quadratic mesh.  Don't compare with
+    # the linear mesh, because the shear in the solution means that
+    # the linear solution isn't accurate.
+    @memorycheck.check("microstructure", "saved")
+    def SolveQ(self):
+        OOF.File.Load.Data(
+            filename=reference_file("mesh_data",
+                                    "everythingbagel0-quadratic.mesh"))
+        OOF.Mesh.Solve(mesh="microstructure:skeleton:mesh", endtime=0.0)
+        self.loadAndCompare('everythingbagel1-quadratic.mesh')
+
+    @memorycheck.check("microstructure", "saved")
     def Solve2(self):
+        OOF.File.Load.Data(
+            filename=reference_file("mesh_data", "everythingbagel0.mesh"))
         OOF.Mesh.Solve(mesh="microstructure:skeleton:mesh", endtime=0.0)
         # Change the value of the Neumann condition
         OOF.Mesh.Boundary_Conditions.Edit(
@@ -745,7 +763,8 @@ class OOF_NonrectMixedBCStaticElastic(SaveableMeshTest):
                 boundary='topedge'))
         # Resolve
         OOF.Mesh.Solve(mesh="microstructure:skeleton:mesh", endtime=0.0)
-        self.saveAndLoad("everythingbagel2")
+        self.loadAndCompare("everythingbagel2.mesh")
+        OOF.Microstructure.Delete(microstructure="saved")
         # Change the Neumann condition again
         OOF.Mesh.Boundary_Conditions.Edit(
             name='weight', 
@@ -758,7 +777,7 @@ class OOF_NonrectMixedBCStaticElastic(SaveableMeshTest):
                 boundary='rightface'))
         # Solve again
         OOF.Mesh.Solve(mesh="microstructure:skeleton:mesh", endtime=0.0)
-        self.saveAndLoad("everythingbagel3")
+        self.loadAndCompare("everythingbagel3.mesh")
 
     def tearDown(self):
         OOF.Material.Delete(name='material')
@@ -2319,7 +2338,9 @@ static_neumann_set = [geometry(testname, elementTypes)
 
 
 mixed_bc_set = [OOF_NonrectMixedBCStaticElastic("Solve1"),
-                OOF_NonrectMixedBCStaticElastic("Solve2")]
+                OOF_NonrectMixedBCStaticElastic("Solve2"),
+                OOF_NonrectMixedBCStaticElastic("SolveQ")
+]
 
 dynamic_thermal_set = [
     OOF_ThermalDiffusionTimeSteppers("CNdirect"),
@@ -2357,4 +2378,4 @@ test_set = (static_set +
             dynamic_thermal_set +
             dynamic_elastic_set)
 
-# test_set = static_neumann_set
+#test_set = mixed_bc_set
