@@ -84,10 +84,20 @@ public:
   // Element's stiffness matrix computation, so they are cached (at
   // the GaussPoints).
 
+  // Derivatives wrt displaced coordinates.  Requires fields to be
+  // defined. Takes an element rather than an element-base because it
+  // needs to compute the displaced Jacobian.
+  double displacedderiv(const Element*, ShapeFunctionIndex,
+			SpaceIndex, const GaussPoint&) const;
+  double displacedderiv(const Element*, ShapeFunctionIndex,
+			SpaceIndex, const MasterCoord&) const;
+  double displacedderiv(const Element*, ShapeFunctionIndex,
+			SpaceIndex, const MasterPosition&) const;
+  
   // derivative wrt real coordinates.  "Real" means reference.
-  double realderiv(const ElementBase*, ShapeFunctionIndex, SpaceIndex,
+  double realderiv(const ElementBase*, const ShapeFunctionIndex, SpaceIndex,
 		   const GaussPoint&) const;
-  double realderiv(const ElementBase*, ShapeFunctionIndex, SpaceIndex,
+  double realderiv(const ElementBase*, const ShapeFunctionIndex, SpaceIndex,
 		   const MasterCoord&) const;
   double realderiv(const ElementBase*, ShapeFunctionIndex, SpaceIndex,
 		   const MasterPosition&) const;

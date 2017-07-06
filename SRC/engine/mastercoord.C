@@ -33,6 +33,16 @@ double MasterCoord::shapefunction(const ShapeFunction &sf, ShapeFunctionIndex n)
   return sf.value(n, *this);
 }
 
+// Derivative of shapefunction wrt displaced coordinates.
+
+double MasterCoord::displacedderiv(const Element *el,
+				   const ShapeFunction &sf,
+				   ShapeFunctionIndex n, SpaceIndex i)
+  const
+{
+  return sf.displacedderiv(el, n, i, *this);
+}
+
 // derivative of shapefunction wrt master coordinates
 double MasterCoord::mdshapefunction(const ShapeFunction &sf,
 				   ShapeFunctionIndex n,

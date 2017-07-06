@@ -324,6 +324,20 @@ ElementFuncNodeIterator ElementFuncNodeIterator::operator+(int n) const {
   return result;
 }
 
+// "Current-configuration" shape function derivatives.
+// We take the element, because there's no easy way for the efi to
+// deduce it's element, it only knows its ElementBase, and all our
+// calllers should know ther elements anyways.
+double ElementFuncNodeIterator::displacedsfderiv(const Element *el,
+						 SpaceIndex i,
+						 const MasterPosition &mp)
+  const
+{
+  return element_.master.shapefunction->displacedderiv(el,
+						       index_, i,
+						       mp);
+}
+
 void ElementFuncNodeIterator::set_start() {
   dofsum = 0;
   ElementFuncNodePositionIterator::set_start();

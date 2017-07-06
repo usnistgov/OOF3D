@@ -27,6 +27,7 @@ class MasterPosition;
 
 class ElementBase;
 class ShapeFunction;
+class Element;
 
 // The Coord and MasterCoord classes used to be both derived from the
 // same template, so that they could share the same code but still be
@@ -49,6 +50,8 @@ public:
   virtual double mdshapefunction(const ShapeFunction&, ShapeFunctionIndex,
 				SpaceIndex) const = 0;
   virtual double dshapefunction(const ElementBase*, const ShapeFunction&,
+				ShapeFunctionIndex, SpaceIndex) const = 0;
+  virtual double displacedderiv(const Element*, const ShapeFunction&,
 				ShapeFunctionIndex, SpaceIndex) const = 0;
   virtual std::ostream &print(std::ostream&) const = 0;
 };
@@ -117,6 +120,8 @@ public:
   virtual double mdshapefunction(const ShapeFunction&, ShapeFunctionIndex,
 				SpaceIndex) const;
   virtual double dshapefunction(const ElementBase*, const ShapeFunction&,
+				ShapeFunctionIndex, SpaceIndex) const;
+  virtual double displacedderiv(const Element*, const ShapeFunction&,
 				ShapeFunctionIndex, SpaceIndex) const;
   virtual std::ostream &print(std::ostream&) const;
   friend bool operator==(const MasterCoord&, const MasterCoord&);

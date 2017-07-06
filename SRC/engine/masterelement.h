@@ -237,6 +237,7 @@ protected:
   friend class ElementExteriorNodePositionIterator;
   friend class ElementFuncNodePositionIterator;
   friend class ElementMapNodePositionIterator;
+  friend class ElementFuncNodeIterator;
   friend class ShapeFunction;
   friend class ProtoNode;
   friend std::ostream& operator<<(std::ostream&, const MasterElement&);

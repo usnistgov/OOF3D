@@ -88,6 +88,13 @@ double ShapeFunction::masterderiv(ShapeFunctionIndex n, SpaceIndex j,
   return p.mdshapefunction(*this, n, j);
 }
 
+double ShapeFunction::displacedderiv(const Element *el, ShapeFunctionIndex n,
+				     SpaceIndex j, const MasterPosition &p)
+  const
+{
+  return p.displacedderiv(el,*this, n, j);
+}
+
 double ShapeFunction::realderiv(const ElementBase *el, ShapeFunctionIndex n,
 				SpaceIndex j, const MasterPosition &p)
   const
@@ -144,6 +151,21 @@ void ShapeFunction::precompute(const MasterElement &master) {
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+double ShapeFunction::displacedderiv(const Element *el,
+				     ShapeFunctionIndex n, SpaceIndex i,
+				     const GaussPoint &g) const
+{
+  return 0.0;
+}
+
+double ShapeFunction::displacedderiv(const Element *el,
+				     ShapeFunctionIndex n, SpaceIndex i,
+				     const MasterCoord &mc) const
+{
+  return 0.0;
+}
+
 
 double ShapeFunction::realderiv(const ElementBase *el,
 				ShapeFunctionIndex n, SpaceIndex i,

@@ -76,6 +76,14 @@ double GaussPoint::dshapefunction(const ElementBase *el,
   return sf.realderiv(el, n, i, *this);
 }
 
+double GaussPoint::displacedderiv(const Element *el,
+				  const ShapeFunction &sf,
+				  ShapeFunctionIndex n, SpaceIndex i)
+  const
+{
+  return sf.displacedderiv(el, n, i, *this);
+}
+
 #else  // DONT_USE_CACHED_VALUES
 
 double GaussPoint::shapefunction(const ShapeFunction &sf, ShapeFunctionIndex n)
@@ -98,6 +106,15 @@ double GaussPoint::dshapefunction(const ElementBase *el,
 {
   return sf.realderiv(el, n, i, mastercoord());
 }
+
+double GaussPoint::displacedderiv(const Element *el,
+				  const ShapeFuction &sf,
+				  ShapeFunctionIndex n, SpaceIndex i)
+  const
+{
+  return sf.displacedderiv(el, n, i, mastercoord());
+}
+
 
 #endif // DONT_USE_CACHED_VALUES
 
@@ -965,6 +982,14 @@ double EdgeGaussPoint::dshapefunction(const ElementBase *el,
 const
 {
   return sf.realderiv(el, n, i, mastercoord());
+}
+
+double EdgeGaussPoint::displacedderiv(const Element *el,
+				      const ShapeFunction &sf,
+				      ShapeFunctionIndex n, SpaceIndex i)
+  const
+{
+  return sf.displacedderiv(el, n, i, mastercoord());
 }
 
 std::ostream &EdgeGaussPoint::print(std::ostream &os) const {

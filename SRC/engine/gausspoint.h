@@ -29,6 +29,7 @@ class GaussPtTable;		// used privately for storing sets of points
 
 class BoundaryEdge;
 class ElementBase;
+class Element;
 
 // Do Gaussian integration like this:
 
@@ -90,6 +91,8 @@ public:
   virtual double mdshapefunction(const ShapeFunction&, ShapeFunctionIndex,
 				SpaceIndex) const;
   virtual double dshapefunction(const ElementBase*, const ShapeFunction&,
+				ShapeFunctionIndex, SpaceIndex) const;
+  virtual double displacedderiv(const Element*, const ShapeFunction&,
 				ShapeFunctionIndex, SpaceIndex) const;
   virtual std::ostream &print(std::ostream&) const;
 
@@ -229,6 +232,8 @@ public:
   virtual double mdshapefunction(const ShapeFunction&, ShapeFunctionIndex,
 				 SpaceIndex) const;
   virtual double dshapefunction(const ElementBase*, const ShapeFunction&,
+				ShapeFunctionIndex, SpaceIndex) const;
+  virtual double displacedderiv(const Element*, const ShapeFunction&,
 				ShapeFunctionIndex, SpaceIndex) const;
   virtual std::ostream &print(std::ostream&) const;
 };

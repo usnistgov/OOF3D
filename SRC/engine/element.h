@@ -163,6 +163,7 @@ public:
 
   friend class ElementMapNodePositionIterator;
   friend class ElementFuncNodePositionIterator;
+  friend class ElementFuncNodeIterator;
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
