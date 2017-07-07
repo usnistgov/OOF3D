@@ -355,8 +355,7 @@ class AutoNumberWidget(AutoWidget):
                             verbose=verbose)
         self.set_value(param.value)
         self.widgetChanged(1, interactive=0)
-        tooltips.set_tooltip_text(self.autocheck,
-            "Switch between automatic and integer.")
+        tooltips.set_tooltip_text(self.autocheck, self.checkTooltip)
 
     # The AutoWidget get_value returns automatic or a string, or none.
     # If we get a string, evaluate it and return the result.
@@ -364,15 +363,34 @@ class AutoNumberWidget(AutoWidget):
         v = AutoWidget.get_value(self)
         if v==automatic.automatic:
             return v
-        return utils.OOFeval(v)
-        
+        try:
+            return self.numerictype(utils.OOFeval(v))
+        except:
+            return None
+    def validText(self, x):
+        try:
+            x = self.numerictype(utils.OOFeval(x))
+        except:
+            return False
+        return True
 
-def _AutoNumberWidget_makeWidget(self, scope, verbose=False):
-    return AutoNumberWidget(self, scope=scope, name=self.name, verbose=verbose)
+class AutoIntWidget(AutoNumberWidget):
+    checkTooltip = "Switch between automatic and integer."
+    numerictype = int
 
-parameter.AutoIntParameter.makeWidget = _AutoNumberWidget_makeWidget
+class AutoFloatWiget(AutoNumberWidget):
+    checkTooltip = "Switch between automatic and float."
+    numerictype = float
 
-parameter.AutoNumericParameter.makeWidget = _AutoNumberWidget_makeWidget
+def _AutoIntWidget_makeWidget(self, scope, verbose=False):
+    return AutoIntWidget(self, scope=scope, name=self.name, verbose=verbose)
+
+def _AutoFloatWidget_makeWidget(self, scope, verbose=False):
+    return AutoFloatWidget(self, scope=scope, name=self.name, verbose=verbose)
+
+parameter.AutoIntParameter.makeWidget = _AutoIntWidget_makeWidget
+
+parameter.AutoNumericParameter.makeWidget = _AutoFloatWidget_makeWidget
     
 
 #########################
@@ -736,6 +754,7 @@ class ParameterTable(ParameterWidget, widgetscope.WidgetScope):
                 val = widget.get_value()
                 param.value = val
             except (Exception, ooferror.ErrError), exception:
+                print >> sys.stderr, "Error reading widget", param, widget
                 exceptions.append(exception)
         if exceptions:
             raise exceptions[0]
