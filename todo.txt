@@ -22,6 +22,11 @@ soon enough.
 
 Fix bug in Fix Illegal.  See Rachel's example of an unfixable element.
 
+Why is homogeneity recomputed after Undo/Redo?
+
+Skeleton widget on Skeleton page doesn't automatically switch to new
+Skeleton?
+
 Soon
 ----
 

@@ -240,9 +240,13 @@ int MasterElement::ngauss(int order) const {
 }
 
 const GaussPtTable &MasterElement::gptable(int i) const {
-  if(i >= int(gptable_vec().size()))
+  if(i >= int(gptable_vec().size())) {
+    oofcerr << "MasterElement::gptable: i=" << i << " size=" << gptable_vec().size() << std::endl;
     throw ErrResourceShortage(
-	  "GaussPtTable: No table for order of integration = " + to_string(i));
+	  "GaussPtTable: No table for order of integration = "
+	  + to_string(i) + " in element " + name());
+      ;
+  }
   i -= integration_reduction;
   if(i < 0) i = 0;
   return gptable_vec()[i];
@@ -258,6 +262,34 @@ int MasterElement::ngauss_sets() const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// Routines for adding symmetrically placed points to Gauss point
+// tables for the triangle.  In a symmetric quadrature rule, If a
+// point has barycentric coordinates (r,s,t), with r+s+t=1, then any
+// permutation of (r,s,t) is also a Gauss point with the same weight.
+// The master space reference element is x>=0, y>=0, x+y<=1, and the
+// barycentric coords of (x,y) are just (x,y,1-x-y).  Therefore, the
+// actual coordinates of a barycentric point (r,s,t) are just (r,s).
+// This makes it easy to find the symmetric points.
+
+static void addPoints21(GaussPtTable &tbl, double r, double w) {
+  // Barycentric coords are permutations of (r, r, 1-2r)
+  double s = 1. - 2.*r;
+  tbl.addpoint(masterCoord2D(r, r), w);
+  tbl.addpoint(masterCoord2D(r, s), w);
+  tbl.addpoint(masterCoord2D(s, r), w);
+}
+
+static void addPoints111(GaussPtTable &tbl, double r, double s, double w) {
+  // Barycentric coords are permutations of (r, s, 1-r-s)
+  double t = 1. - r - s;
+  tbl.addpoint(masterCoord2D(r, s), w);
+  tbl.addpoint(masterCoord2D(s, r), w);
+  tbl.addpoint(masterCoord2D(r, t), w);
+  tbl.addpoint(masterCoord2D(t, r), w);
+  tbl.addpoint(masterCoord2D(s, t), w);
+  tbl.addpoint(masterCoord2D(t, s), w);
+}
+
 const GaussPtTable &TriangularMaster::gausspointtable(int deg) const {
   return gptable(deg);
 }
@@ -268,51 +300,122 @@ const std::vector<GaussPtTable> &TriangularMaster::gptable_vec() const {
   if(!set) {
     set = 1;
 
-    // Gauss points for a triangle are from "High Degree Efficient
-    // Symmetrical Gaussian Quadrature Rules for the Triangle",
-    // D.A. Dunavant, International Journal for Numerical Methods in
-    // Engineering, vol 21, 1129, (1985).  The weights given there
+    // Gauss points for a triangle and tetrahedron are from A SET OF
+    // SYMMETRIC QUADRATURE RULES ON TRIANGLES AND TETRAHEDRA, Linbo
+    // Zhang, Tao Cui and Hui Liu, Journal of Computational
+    // Mathematics, Vol.27, No.1, 2009, 89–96.  The numbers were
+    // copied out of the source code file src/quad.c from
+    // http://lsec.cc.ac.cn/phg/download/phg-0.9.3-20170615.tar.bz2.
+
+    // The weights given there
     // don't include the factor of the area of the triangle, so the
-    // weights used here all have an additional factor of 0.5.
+    // weights used here all have an additional factor of 0.5.  It's
+    // (mostly) written explicitly for easier comparison to the source
+    // text.
+
+    // Previously we had used "High Degree Efficient Symmetrical
+    // Gaussian Quadrature Rules for the Triangle", D.A. Dunavant,
+    // International Journal for Numerical Methods in Engineering, vol
+    // 21, 1129, (1985), but Zhang et al has more values.
 
      // order = 0, npts = 1
-    table.push_back(GaussPtTable(0, 1));
-    table[0].addpoint(masterCoord2D(1./3., 1./3.), 0.5);
+    table.emplace_back(0, 1);
+    table.back().addpoint(masterCoord2D(1./3., 1./3.), 0.5);
 
      // order = 1, npts = 1
-    table.push_back(GaussPtTable(1, 1));
-    table[1].addpoint(masterCoord2D(1./3., 1./3.), 0.5);
+    table.emplace_back(1, 1);
+    table.back().addpoint(masterCoord2D(1./3., 1./3.), 0.5);
 
-     // order = 2, npts = 3
-    table.push_back(GaussPtTable(2, 3));
-    table[2].addpoint(masterCoord2D(2./3., 1./6.), 1./6.);
-    table[2].addpoint(masterCoord2D(1./6., 2./3.), 1./6.);
-    table[2].addpoint(masterCoord2D(1./6., 1./6.), 1./6.);
+     // order = 2, npts = 3: Zhang QUAD_2D_P2_
+    table.emplace_back(2, 3);
+    addPoints21(table.back(), 1./6., (1/3.)/2.);
 
-    // order = 3, npts = 4
-    table.push_back(GaussPtTable(3, 4));
-    table[3].addpoint(masterCoord2D(1./3., 1./3.), -0.5*0.5625);
-    table[3].addpoint(masterCoord2D(0.6, 0.2), 0.5*25./48.);
-    table[3].addpoint(masterCoord2D(0.2, 0.6), 0.5*25./48.);
-    table[3].addpoint(masterCoord2D(0.2, 0.2), 0.5*25./48.);
+    // order = 3, npts = 6
+    table.emplace_back(3, 6);
+    addPoints21(table.back(),
+		.16288285039589191090016180418490635,
+		.28114980244097964825351432270207695/2.);
+    addPoints21(table.back(),
+		.47791988356756370000000000000000000,
+		.05218353089235368507981901063125638/2.);
+    
+    //* This version (from Dunavant?) has one negative weight but
+    //* fewer points.
+    // table.push_back(GaussPtTable(3, 4));
+    // table[3].addpoint(masterCoord2D(1./3., 1./3.), -0.5*0.5625);
+    // table[3].addpoint(masterCoord2D(0.6, 0.2), 0.5*25./48.);
+    // table[3].addpoint(masterCoord2D(0.2, 0.6), 0.5*25./48.);
+    // table[3].addpoint(masterCoord2D(0.2, 0.2), 0.5*25./48.);
 
     // order = 4, npts = 6
-    table.push_back(GaussPtTable(4, 6));
-    table[4].addpoint(masterCoord2D(0.108103018168070, 0.445948490915965),
-		      0.5*0.223381589678011);
-    table[4].addpoint(masterCoord2D(0.445948490915965, 0.108103018168070),
-		      0.5*0.223381589678011);
-    table[4].addpoint(masterCoord2D(0.445948490915965, 0.445948490915965),
-		      0.5*0.223381589678011);
-    table[4].addpoint(masterCoord2D(0.816847572980459, 0.091576213509771),
-		      0.5*0.109951743655322);
-    table[4].addpoint(masterCoord2D(0.091576213509771, 0.816847572980459),
-		      0.5*0.109951743655322);
-    table[4].addpoint(masterCoord2D(0.091576213509771, 0.091576213509771),
-		      0.5*0.109951743655322);
-  }
+    table.emplace_back(4, 6);
+    addPoints21(table.back(),
+		.44594849091596488631832925388305199,
+		.22338158967801146569500700843312280/2.);
+    addPoints21(table.back(),
+		.09157621350977074345957146340220151,
+		.10995174365532186763832632490021053/2.);
+    
+    // order = 5, npts = 7
+    table.emplace_back(5, 7);
+    addPoints21(table.back(),
+		(6. - sqrt(15.))/21,
+		(155. - sqrt(15.))/1200./2.);
+    addPoints21(table.back(),
+		(6 + sqrt(15.))/21,
+		(155 + sqrt(15.))/1200./2.);
+    table.back().addpoint(masterCoord2D(1./3., 1./3.), 9./40./2.);
+
+    // order = 6, npts = 12
+    table.emplace_back(6, 12);
+    addPoints21(table.back(),
+		.06308901449150222834033160287081916,
+		.05084490637020681692093680910686898/2.);
+    addPoints21(table.back(),
+		.24928674517091042129163855310701908,
+		.11678627572637936602528961138557944/2.);
+    addPoints111(table.back(),
+		 .05314504984481694735324967163139815,
+		 .31035245103378440541660773395655215,
+		 .08285107561837357519355345642044245/2.);
+
+    // order = 7, npts = 15
+    table.emplace_back(7, 15);
+    addPoints21(table.back(),
+		.02826392415607634022359600691324002,
+		.01353386251566556156682309245259393/2.);
+    addPoints21(table.back(),
+		.47431132326722257527522522793181654,
+		.07895125443201098137652145029770332/2.);
+    addPoints21(table.back(),
+		.24114332584984881025414351267036207,
+		.12860792781890607455665553308952344/2.);
+    addPoints111(table.back(),
+		 .76122274802452380000000000000000000,
+		 .04627087779880891064092559391702049,
+		 .05612014428337535791666662874675632/2.);
+    
+    // order = 8, npts = 16
+    table.emplace_back(8, 16);
+    table.back().addpoint(masterCoord2D(1./3., 1./3.),
+			  .14431560767778716825109111048906462/2.);
+    addPoints21(table.back(),
+		.17056930775176020662229350149146450,
+		.10321737053471825028179155029212903/2.);
+    addPoints21(table.back(),
+		.05054722831703097545842355059659895,
+		.03245849762319808031092592834178060/2.);
+    addPoints21(table.back(),
+		.45929258829272315602881551449416932,
+		.09509163426728462479389610438858432/2.);
+    addPoints111(table.back(),
+		 .26311282963463811342178578628464359,
+		 .00839477740995760533721383453929445,
+		 .02723031417443499426484469007390892/2.);
+
+  } // end if not set
   return table;
-}
+} // end TriangularMaster::gptable_vec
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -622,6 +725,8 @@ ElementLite *MasterElement::buildLite(const std::vector<Coord> *nodes)
   return new ElementLite(*this, nodes);
 }
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 TetrahedralMaster::TetrahedralMaster(const std::string &name,
 				     const std::string &desc,
 				     int nnodes, int nsc)
@@ -645,6 +750,52 @@ const GaussPtTable &TetrahedralMaster::gausspointtable(int deg) const {
   return gptable(deg);
 }
 
+static void addPoints31(GaussPtTable &tbl, double r, double w) {
+  // Add gauss points whose position in barycentric coords is a
+  // permutation of (r, r, r, 1-3r).  The "31" notation is from Zhang,
+  // and means that 3 of the coordinate's components have one value
+  // and one has another.  By symmetry, all the points must have the
+  // same weight.  Because barycentric coords in the master tet
+  // geometry are just (x, y, z, 1-x-y-z), the actual position of a
+  // point is given by the first three barycentric components.
+  double s = 1. - 3.*r;
+  tbl.addpoint(MasterCoord(s, r, r), w);
+  tbl.addpoint(MasterCoord(r, s, r), w);
+  tbl.addpoint(MasterCoord(r, r, s), w);
+  tbl.addpoint(MasterCoord(r, r, r), w);
+}
+
+static void addPoints22(GaussPtTable &tbl, double r, double w) {
+  // Same as addPoints31, but the barycentric coords are a permutation
+  // of (r, r, 0.5-r, 0.5-r).
+  double s = 0.5 - r;
+  tbl.addpoint(MasterCoord(r, r, s), w);
+  tbl.addpoint(MasterCoord(r, s, r), w);
+  tbl.addpoint(MasterCoord(s, r, r), w);
+  tbl.addpoint(MasterCoord(s, s, r), w);
+  tbl.addpoint(MasterCoord(s, r, s), w);
+  tbl.addpoint(MasterCoord(r, s, s), w);
+}
+
+static void addPoints211(GaussPtTable &tbl, double r, double s, double w) {
+  // Barycentric coords are a permutation of (r, r, s, 1-2r-s)
+  double t = 1. - 2*r - s;
+  tbl.addpoint(MasterCoord(r, r, s), w);
+  tbl.addpoint(MasterCoord(r, s, r), w);
+  tbl.addpoint(MasterCoord(s, r, r), w);
+  
+  tbl.addpoint(MasterCoord(r, r, t), w);
+  tbl.addpoint(MasterCoord(r, t, r), w);
+  tbl.addpoint(MasterCoord(t, r, r), w);
+
+  tbl.addpoint(MasterCoord(r, s, t), w);
+  tbl.addpoint(MasterCoord(r, t, s), w);
+  tbl.addpoint(MasterCoord(s, r, t), w);
+  tbl.addpoint(MasterCoord(s, t, r), w);
+  tbl.addpoint(MasterCoord(t, r, s), w);
+  tbl.addpoint(MasterCoord(t, s, r), w);
+}
+
 const std::vector<GaussPtTable> &TetrahedralMaster::gptable_vec() const {
   static std::vector<GaussPtTable> table;
   static bool set = 0;
@@ -652,48 +803,135 @@ const std::vector<GaussPtTable> &TetrahedralMaster::gptable_vec() const {
   // The weights in each table add up to 1/6, which is the volume of
   // the master space element.
 
-  // See Zienkiewicz & Taylor, 5th edition, Vol 1, page 223.  Section
-  // 9.10: Numerical integration -- triangular or tetrahdral regions.
+  // Gauss points for a triangle and tetrahedron are from A SET OF
+  // SYMMETRIC QUADRATURE RULES ON TRIANGLES AND TETRAHEDRA, Linbo
+  // Zhang, Tao Cui and Hui Liu, Journal of Computational
+  // Mathematics, Vol.27, No.1, 2009, 89–96.  The numbers were
+  // copied out of the source code file src/quad.c from
+  // http://lsec.cc.ac.cn/phg/download/phg-0.9.3-20170615.tar.bz2.
 
   if(!set) {
     set = 1;
      // order = 0, npts = 1
-    table.push_back(GaussPtTable(0, 1));
-    table[0].addpoint(MasterCoord(0.25, 0.25, 0.25), 1./6.);
+    table.emplace_back(0, 1);
+    table.back().addpoint(MasterCoord(0.25, 0.25, 0.25), 1./6.);
 
      // order = 1, npts = 1
-    table.push_back(GaussPtTable(1, 1));
-    table[1].addpoint(MasterCoord(0.25, 0.25, 0.25), 1./6.);
+    table.emplace_back(1, 1);
+    table.back().addpoint(MasterCoord(0.25, 0.25, 0.25), 1./6.);
 
-     // order = 2, npts = 4
-    table.push_back(GaussPtTable(2, 4));
-#define c14   0.585410196624969
-#define c15   0.138196601125011
-    table[2].addpoint(MasterCoord(c15, c15, c15), 1./24.);
-    table[2].addpoint(MasterCoord(c15, c14, c15), 1./24.);
-    table[2].addpoint(MasterCoord(c14, c15, c15), 1./24.);
-    table[2].addpoint(MasterCoord(c15, c15, c14), 1./24.);
+    // order = 2, npts = 4
+    table.emplace_back(2, 4);
+    addPoints31(table.back(), (5. - sqrt(5.))/20., 1./24.);
 
-    // order = 3, npts = 5
-    table.push_back(GaussPtTable(3, 5));
-    // With the master element's node 0 at (0, 0, 0) and node i+1 at
-    // x_i=1, the point at master coord (x, y, z) has barycentric
-    // coord (1-x-y-z, x, y, z).  This makes it easy to convert from
-    // the barycentric coords given by Zienkiewicz to master coords.
+    // Zienkiewicz and Taylor (5th edition, Vol 1, page 223.  Section
+    // 9.10: Numerical integration -- triangular or tetrahdral
+    // regions) provide this 5 point rule for order 3, but it includes
+    // a negative weight, which most authors object to. 
+    // table.emplace_back(3, 5);
+    // table.back().addpoint(MasterCoord(0.25, 0.25, 0.25), -4./30.); 
+    // table.back().addpoint(MasterCoord(1./6., 1./6., 1./6.), 3./40.);
+    // table.back().addpoint(MasterCoord(0.5, 1./6., 1./6.), 3./40.);
+    // table.back().addpoint(MasterCoord(1./6., 0.5, 1./6.), 3./40.);
+    // table.back().addpoint(MasterCoord(1./6., 1./6., 0.5), 3./40.);
 
-    // Tet center at barycentric coordinate (1/4, 1/4, 1/4, 1/4)
-    table[3].addpoint(MasterCoord(0.25, 0.25, 0.25), -4./30.); // negative!
-    // Barycentric coordinate (1/2, 1/6, 1/6, 1/6)
-    table[3].addpoint(MasterCoord(1./6., 1./6., 1./6.), 3./40.);
-    // Barycentric coordinate (1/6, 1/2, 1/6, 1/6)
-    table[3].addpoint(MasterCoord(0.5, 1./6., 1./6.), 3./40.);
-    // etc.
-    table[3].addpoint(MasterCoord(1./6., 0.5, 1./6.), 3./40.);
-    table[3].addpoint(MasterCoord(1./6., 1./6., 0.5), 3./40.);
-  }
+    // order = 3, npts = 8: Zhang, et al QUAD_3D_P3_
+    table.emplace_back(3, 8);
+    addPoints31(table.back(),
+		.32805469671142664733580581998119743,
+		.13852796651186214232361769837564129/6.);
+    addPoints31(table.back(),
+		.10695227393293068277170204157061650,
+		.11147203348813785767638230162435871/6.);
 
+    // order = 4, npts = 14:  Zhang QUAD_3D_P4_
+    table.emplace_back(4, 14);
+    addPoints31(table.back(),
+		.09273525031089122628655892066032137,
+		.07349304311636194934358694586367885/6.);
+    addPoints31(table.back(),
+		.31088591926330060975814749494040332,
+		.11268792571801585036501492847638892/6.);
+    addPoints22(table.back(),
+		.04550370412564965000000000000000000,
+		.04254602077708146686093208377328816/6.);
+
+    // order = 5, npts = 14: Zhang QUAD_3D_P5_
+    table.emplace_back(5, 14);
+    addPoints31(table.back(),
+		.31088591926330060979734573376345783,
+		.11268792571801585079918565233328633/6.);
+    addPoints31(table.back(),
+		.09273525031089122640232391373703061,
+		.07349304311636194954371020548632750/6.);
+    addPoints22(table.back(),
+		.04550370412564964949188052627933943,
+		.04254602077708146643806942812025744/6.);
+
+    // order = 6, npts = 24: Zhang QUAD_3D_P6_
+    table.emplace_back(6, 24);
+    addPoints31(table.back(),
+		.21460287125915202928883921938628499,
+		.03992275025816749209969062755747998/6.);
+    addPoints31(table.back(),
+		.04067395853461135311557944895641006,
+		.01007721105532064294801323744593686/6.);
+    addPoints31(table.back(),
+		.32233789014227551034399447076249213,
+		.05535718154365472209515327785372602/6.);
+    addPoints211(table.back(),
+		 .06366100187501752529923552760572698,
+		 .60300566479164914136743113906093969,
+		 (27./560.)/6.);
+
+    // order = 7, npts = 35
+    table.emplace_back(7, 35);
+    table.back().addpoint(MasterCoord(0.25, 0.25, 0.25),
+			  .09548528946413084886057843611722638/6.);
+    addPoints31(table.back(),
+		.31570114977820279942342999959331149,
+		.04232958120996702907628617079854674/6.);
+    addPoints22(table.back(),
+		.05048982259839636876305382298656247,
+		.03189692783285757993427482408294246/6.);
+    addPoints211(table.back(),
+		 .18883383102600104773643110385458576,
+		 .57517163758700002348324157702230752,
+		 .03720713072833462136961556119148112/6.);
+    addPoints211(table.back(),
+		 .02126547254148324598883610149981994,
+		 .81083024109854856111810537984823239,
+		 .00811077082990334156610343349109654/6.);
+
+    // order = 8, npts = 46
+    table.emplace_back(8, 46);
+    addPoints31(table.back(),
+		.03967542307038990126507132953938949,
+		.00639714777990232132145142033517302/6.);
+    addPoints31(table.back(),
+		.31448780069809631378416056269714830,
+		.04019044802096617248816115847981783/6.);
+    addPoints31(table.back(),
+		.10198669306270330000000000000000000,
+		.02430797550477032117486910877192260/6.);
+    addPoints31(table.back(),
+		.18420369694919151227594641734890918,
+		.05485889241369744046692412399039144/6.);
+    addPoints22(table.back(),
+		.06343628775453989240514123870189827,
+		.03571961223409918246495096899661762/6.);
+    addPoints211(table.back(),
+		 .02169016206772800480266248262493018,
+		 .71993192203946593588943495335273478,
+		 .00718319069785253940945110521980376/6.);
+    addPoints211(table.back(),
+		 .20448008063679571424133557487274534,
+		 .58057719012880922417539817139062041,
+		 .01637218194531911754093813975611913/6.);
+
+  } // end if not set
   return table;
-}
+} // end TetrahedralMaster::gptable_vec
 
 MasterCoord TetrahedralMaster::center() const {
   return MasterCoord(0.25, 0.25, 0.25);

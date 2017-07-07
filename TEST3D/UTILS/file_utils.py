@@ -117,6 +117,11 @@ def reference_file(*args):
     # This does the right thing if referencedir is an empty string.
     return os.path.join(referencedir, *args)
 
+def generating(*path):
+    # Would fp_file_compare() generate the given reference file?  Only
+    # if generate==True and the file doesn't already exist.
+    return generate and not os.path.exists(reference_file(*path))
+
 def fp_file_compare(file1, file2, tolerance, comment="#", pdfmode=False,
                     ignoretime=False, quiet=False, nlines=None):
     # file1 is assumed to be in the current directory. file2 is
@@ -160,6 +165,9 @@ def fp_file_compare(file1, file2, tolerance, comment="#", pdfmode=False,
     filename2 = file2
     errorcount = 0
     silent = quiet
+
+    worst_abs = 0               # biggest absolute error so far
+    worst_rel = 0               # biggest relative error so far
 
     try:
         f1_lineno = -1        # just in case file1 is empty
@@ -207,16 +215,20 @@ def fp_file_compare(file1, file2, tolerance, comment="#", pdfmode=False,
                         conversion_error(f1_lineno, item1, item2)
                     else:
                         diff = abs(float1 - float2)
-                        reltol = min(abs(float1), abs(float2))*tolerance
+                        scale = min(abs(float1), abs(float2))
                         # This uses the same tolerance for both absolute
                         # and relative error, which isn't usually a good
                         # idea, but is ok if the numbers being compared
                         # are more or less of order 1.
-                        ok = diff < reltol or diff < tolerance
+                        ok = diff <= tolerance*scale or diff <= tolerance
                         if not ok:
                             print_float_mismatch(f1_lineno, float1, float2)
+                        if diff > worst_abs:
+                            worst_abs = diff
+                        if scale > 0 and diff/scale > worst_rel:
+                            worst_rel = diff/scale
                 else: # Integer conversion worked, do comparison.
-                    if int1!=int2:
+                    if int1 != int2:
                         print_int_mismatch(f1_lineno, int1, int2)
 
         # end for f1_lineno, f1_line in enumerate(f1)
@@ -242,16 +254,17 @@ def fp_file_compare(file1, file2, tolerance, comment="#", pdfmode=False,
             # nothing left in file 2.
             if moref2:
                 eof_error(f1_lineno, filename1)
-        
-        if errorcount > 0:
-            if not silent:
-                print >> sys.stderr, ("%d error%s in file comparison!" %
-                                      (errorcount, "s"*(errorcount!=1)))
-            return False
 
         if not silent:
-            print >> sys.stderr, "Files", filename1, "and", filename2, "agree."
-        return True
+            if errorcount > 0:
+                print >> sys.stderr, ("%d error%s in file comparison!" %
+                                      (errorcount, "s"*(errorcount!=1)))
+            else:
+                print >> sys.stderr, "Files %s and %s agree." % (filename1,
+                                                                 filename2)
+            print >> sys.stderr, ("Worst absolute difference=%g, relative=%g"
+                                  % ( worst_abs, worst_rel))
+        return errorcount == 0
     finally:
         f1.close()
         f2.close()

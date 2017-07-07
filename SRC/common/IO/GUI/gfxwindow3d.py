@@ -353,8 +353,9 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
                 # so the button is irrelevant.
                 self.mouseHandler.move(x,y, button, shift, ctrl)
             elif eventtype == 'scroll':
-                debug.fmsg("scroll: direction=", button, "pos=", x, y,
-                           "shift=", shift, "ctrl=", ctrl)
+                pass
+                # debug.fmsg("scroll: direction=", button, "pos=", x, y,
+                #            "shift=", shift, "ctrl=", ctrl)
 
     
     ################################################

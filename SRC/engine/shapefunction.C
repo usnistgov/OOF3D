@@ -14,6 +14,7 @@
 #include "common/doublevec.h"
 #include "common/tostring.h"
 #include "common/trace.h"
+#include "common/IO/oofcerr.h"
 #include "engine/element.h"
 #include "engine/masterelement.h"
 #include "engine/shapefunction.h"
@@ -155,7 +156,7 @@ double ShapeFunction::realderiv(const ElementBase *el,
   // realderiv(ElementBase*, ..., MasterCoord&) because that one
   // doesn't use the precomputed values of the shape function
   // derivatives!
-  for(SpaceIndex j=0; j<DIM; ++j)
+  for(SpaceIndex j=0; j<el->dimension(); ++j)
     result += el->Jdmasterdx(j, i, g)*masterderiv(n, j, g);
   result /= el->det_jacobian(g);
 
@@ -169,8 +170,9 @@ double ShapeFunction::realderiv(const ElementBase *el,
 {
   //  Trace("ShapeFunction::realderiv 2");
   double result = 0;
-  for(SpaceIndex j=0; j<DIM; ++j)
+  for(SpaceIndex j=0; j<el->dimension(); ++j) {
     result += el->Jdmasterdx(j, i, mc)*masterderiv(n, j, mc);
+  }
   result /= el->det_jacobian(mc);
   return result;
 }

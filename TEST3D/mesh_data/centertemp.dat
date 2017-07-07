@@ -1,0 +1,18 @@
+# Operation: Average
+# Output: Temperature
+# Domain: SinglePoint(point=Point(0.5, 0.5, 0.5))
+# Sampling: StatPointSampleSet
+# Columns:
+# 1. time
+# 2. average of Temperature
+0.0, 3.5
+0.05, 2.9008461544
+0.1, 2.35756057275
+0.15, 2.0234358554
+0.2, 1.81947762534
+0.25, 1.69499207852
+0.3, 1.61901271288
+0.35, 1.57263895141
+0.4, 1.54433487904
+0.45, 1.52705958624
+0.5, 1.51651567443

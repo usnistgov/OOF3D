@@ -1237,6 +1237,7 @@ class GhostGfxWindow:
             self.releaseGfxLock()
 
     def drawAtTime(self, *args, **kwargs):
+        debug.fmsg("drawAtTime calling _draw on subthread")
         subthread.execute(self._draw, args, kwargs)
 
     def animate(self, *args, **kwargs):
@@ -1874,10 +1875,13 @@ class GhostGfxWindow:
         # added.
         if self.viewInitializationRequired and not self.viewInitialized:
             tb = self.getToolboxByName('Viewer')
+            debug.fmsg("calling restoreNamedView")
             tb.restoreNamedView('Front')
             self.viewInitialized = True
             self.viewInitializationRequired = False
+            debug.fmsg("Sending 'completed view change'")
             switchboard.notify("completed view change", self)
+            debug.fmsg("done")
 
             
     ##################################
