@@ -976,17 +976,27 @@ meshmenu.addItem(oofmenu.OOFMenuItem(
 
 def _applyFieldInitsAtTime(menuitem, mesh, time):
     themesh = ooflib.engine.mesh.meshes[mesh]
+    debug.fmsg("locking")
     themesh.reserve()
     themesh.begin_writing()
     try:
+        debug.fmsg("Calling initialize_fields")
         themesh.initialize_fields(time)
+        debug.fmsg("Calling initialize_bcs")
         themesh.initialize_bcs(time)
     finally:
+        debug.fmsg("unlocking")
         themesh.end_writing()
         themesh.cancel_reservation()
+    debug.fmsg("Sending 'mesh data changed'")
     switchboard.notify("mesh data changed", themesh)
+    debug.fmsg("Calling setStatus")
     themesh.setStatus(meshstatus.Unsolved("Fields initialized."))
+    debug.fmsg("Sending 'draw at time'", time)
+    sbstatus = switchboard.verbose(None, True)
     switchboard.notify("draw at time", time)
+    switchboard.verbose(None, sbstatus)
+    debug.fmsg("Done")
 
 meshmenu.addItem(oofmenu.OOFMenuItem(
     'Apply_Field_Initializers_at_Time',

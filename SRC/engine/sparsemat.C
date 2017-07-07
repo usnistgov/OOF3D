@@ -911,6 +911,10 @@ std::ostream &operator<<(std::ostream &os, const SparseMat &m) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// is_lower_triangular seems to be really expensive.  The iterators
+// are inefficient.  The assert(is_lower_triangular) calls have been
+// commented out.
+
 bool SparseMatCore::is_lower_triangular(bool diag) const {
   if(diag) {			// diagonal elements allowed
     for(const_iterator ij=begin(); ij!=end(); ++ij)
@@ -1004,7 +1008,9 @@ void SparseMatCore::solve_lower_triangle_unitd(const DoubleVec &rhs,
 {
   // Solve a lower triangular matrix assuming that the diagonal
   // elements are 1.0.  rhs and x can be the same vector.
-  assert(is_lower_triangular(false)); // diags aren't stored explicitly
+
+  //assert(is_lower_triangular(false)); // diags aren't stored explicitly
+
   // x_n = rhs_n - \sum{i=0}^{n-1} L_ni x_i
   for(unsigned int rowno=0; rowno<rhs.size(); rowno++) {
     double sum = 0.0;
@@ -1019,7 +1025,7 @@ void SparseMatCore::solve_lower_triangle(const DoubleVec &rhs, DoubleVec &x)
 {
   // Solve a lower triangular matrix. rhs and x can be the same
   // vector.
-  assert(is_lower_triangular(true)); // diag elements are stored explicitly
+  // assert(is_lower_triangular(true)); // diag elements are stored explicitly
   // x_n = (1/L_nn) (rhs_n - \sum{i=0}^{n-1} L_ni x_i)
   for(unsigned int rowno=0; rowno<rhs.size(); rowno++) {
     double sum = 0.0;
@@ -1088,7 +1094,7 @@ void SparseMatCore::solve_lower_triangle_trans(const DoubleVec &rhs,
   // stored diagonal elements.  rhs and x can be the same vector.
   
   // x_i = (1/L_ii) (rhs_i - \sum_{j=i+1}^M L_ji x_j)
-  assert(is_lower_triangular(true));
+  // assert(is_lower_triangular(true));
   assert(rhs.size() == nrows_);
   assert(x.size() == nrows_);
   assert(nrows_ == ncols_);
@@ -1118,7 +1124,7 @@ SparseMatCore::solve_lower_triangle_trans_unitd(const DoubleVec &rhs,
 
   // x_i = rhs_i - \sum_{j=i+1}^M L_ji x_j
 
-  assert(is_lower_triangular(false));
+  // assert(is_lower_triangular(false));
   if(&x[0] != &rhs[0])
     x = rhs;
   for(int j=int(x.size()-1); j>=0; j--) {
