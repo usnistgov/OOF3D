@@ -378,7 +378,7 @@ class AutoIntWidget(AutoNumberWidget):
     checkTooltip = "Switch between automatic and integer."
     numerictype = int
 
-class AutoFloatWiget(AutoNumberWidget):
+class AutoFloatWidget(AutoNumberWidget):
     checkTooltip = "Switch between automatic and float."
     numerictype = float
 
