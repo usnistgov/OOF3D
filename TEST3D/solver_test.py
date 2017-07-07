@@ -1027,7 +1027,26 @@ class OOF_1x1ElasticDynamic(SaveableMeshTest):
 # Use various time steppers to solve a simple thermal diffusion
 # problem.
 
+# These tests also compare different types of elements.  The initial
+# and boundary conditions are set so that there is no t=0
+# discontinuity anywhere, since different types of elements will fail
+# to represent that discontinuity in different ways, making the
+# comparison difficult.
+
+# The output is computed at a single point at a node in the center of
+# the Microstructure so that its initial value doesn't depend on the
+# element and its shape functions.
+
+# The number of elements in the X direction and the solution tolerance
+# are set by constructor args, and are varied to ensure that the
+# linear solutions are converging towards the quadratic one.
+
 class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
+    def __init__(self, name, tol, nX=4, endtime=0.5):
+        self.nXElements = nX
+        self.tolerance = tol
+        self.endtime = endtime
+        SaveableMeshTest.__init__(self, name)
     def setUp(self):
         global outputdestination
         from ooflib.engine.IO import outputdestination
@@ -1046,12 +1065,12 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             material='material', microstructure='microstructure', pixels=all)
         OOF.Skeleton.New(
             name='skeleton', microstructure='microstructure',
-            x_elements=4, y_elements=4, z_elements=4,
+            x_elements=self.nXElements, y_elements=4, z_elements=4,
             skeleton_geometry=TetraSkeleton(arrangement='moderate'))
         OOF.Mesh.New(
             name='mesh',
             skeleton='microstructure:skeleton',
-            element_types=['TET4_4', 'D2_2', 'T3_3', 'Q4_4'])
+            element_types=self.elementTypes())
         OOF.Subproblem.Field.Define(
             subproblem='microstructure:skeleton:mesh:default',
             field=Temperature)
@@ -1078,26 +1097,28 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
         OOF.Mesh.Set_Field_Initializer(
             mesh='microstructure:skeleton:mesh',
             field=Temperature,
-            initializer=ConstScalarFieldInit(value=4))
+            initializer=FuncScalarFieldInit(function='2+x+4*x*(1-x)'))
         OOF.Mesh.Apply_Field_Initializers_at_Time(
             mesh='microstructure:skeleton:mesh', time=0.0)
+
         OOF.Mesh.Scheduled_Output.New(
             mesh='microstructure:skeleton:mesh',
             name=AutomaticName('Average Temperature on top'),
             output=ScheduledAnalysis(
                 data=getOutput('Field:Value',field=Temperature),
                 operation=AverageOutput(),
-                domain=FaceBoundaryDomain(boundary='Ymax',side='FRONT'),
-                sampling=ContinuumSampleSet(order=automatic)),
+                domain=SinglePoint(point=Point(0.5, 0.5, 0.5)),
+                sampling=StatPointSampleSet()
+            ),
             scheduletype=AbsoluteOutputSchedule(),
             schedule=Periodic(delay=0.0,interval=0.05*shortening),
             destination=OutputStream(filename='test.dat',mode='w'))
 
     @memorycheck.check('microstructure')
     def CNdirect(self):
-        # Use CN to generate the reference files, and do it with a
-        # tight tolerance.
-        if file_utils.generate:
+        # Use CNdirect to generate the reference files, and do it with
+        # a tight tolerance.
+        if file_utils.generating('mesh_data', 'centertemp.dat'):
             tol = 1.e-8
         else:
             tol = 1.e-6
@@ -1117,11 +1138,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
 
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-5))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1142,11 +1163,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-3))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
         self.saveAndLoad('timedep-thermo')
@@ -1169,11 +1190,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-3))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1194,11 +1215,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-6))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1219,11 +1240,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-3))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1250,11 +1271,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-3))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
 
         # Repeat, because there seems to be some problem with repeated
         # SS22 nonlinear solutions, so it's good to know if repeated
@@ -1266,11 +1287,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
 
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-3))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1280,8 +1301,10 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             solver_mode=AdvancedSolverMode(
                 time_stepper=AdaptiveDriver(
                     initialstep=0.001,
-                    tolerance=1e-7,
-                    minstep=1e-5,
+                    tolerance=1e-6,
+                    # minstep is small so that the tests with large nX
+                    # will work.
+                    minstep=1e-7,
                     errorscaling=AbsoluteErrorScaling(),
                     stepper=TwoStep(singlestep=CrankNicolson())),
                 nonlinear_solver=NoNonlinearSolver(),
@@ -1296,11 +1319,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-6))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1327,14 +1350,14 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
         # Get there in two stages.
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.25*shortening)
+            endtime=0.5*self.endtime*shortening)
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-6))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1360,11 +1383,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-3))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1390,11 +1413,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-6))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1420,17 +1443,25 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-3))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     def tearDown(self):
         outputdestination.forgetTextOutputStreams()
         OOF.Material.Delete(name='material')
 
+class OOF_ThermalDiffusionTimeSteppers_Linear(OOF_ThermalDiffusionTimeSteppers):
+    def elementTypes(self):
+        return linearElements
+
+class OOF_ThermalDiffusionTimeSteppers_Quadratic(OOF_ThermalDiffusionTimeSteppers):
+    def elementTypes(self):
+        return quadraticElements
+    
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 ## Check that a simple elasticity problem can be solved exactly.
@@ -2342,19 +2373,58 @@ mixed_bc_set = [OOF_NonrectMixedBCStaticElastic("Solve1"),
                 OOF_NonrectMixedBCStaticElastic("SolveQ")
 ]
 
-dynamic_thermal_set = [
-    OOF_ThermalDiffusionTimeSteppers("CNdirect"),
-    OOF_ThermalDiffusionTimeSteppers("SS22directSaveRestore"),
-    OOF_ThermalDiffusionTimeSteppers("BEdirect"),
-    OOF_ThermalDiffusionTimeSteppers("RK4direct"),
-    OOF_ThermalDiffusionTimeSteppers("RK2direct"),
-    OOF_ThermalDiffusionTimeSteppers("SS22"),
-    OOF_ThermalDiffusionTimeSteppers("CN"),
-    OOF_ThermalDiffusionTimeSteppers("CNdouble"),
-    OOF_ThermalDiffusionTimeSteppers("BE"),
-    OOF_ThermalDiffusionTimeSteppers("RK4"),
-    OOF_ThermalDiffusionTimeSteppers("RK2"),
+dynamic_thermal_quadratic_set = [
+    # The reference data is generated by CNdirect with a smaller time
+    # step tolerance than is used in production, so we can't compare
+    # too strictly here.
+
+    # When generating the reference data,
+    # OOF_ThermalDiffusionTimeSteppers_Quadratic("CNdirect") must be
+    # the first OOF_ThermalDiffusionTimeSteppers test.
+
+    # OOF_ThermalDiffusionTimeSteppers_Quadratic("CNdirect", tol=1.e-5),
+    # OOF_ThermalDiffusionTimeSteppers_Quadratic("SS22", tol=1.e-5),
+    # OOF_ThermalDiffusionTimeSteppers_Quadratic("CN", tol=1.e-5),
+    # OOF_ThermalDiffusionTimeSteppers_Quadratic("BE", tol=1.e-3),
+
+    ## TODO: These take a very long time to run.  Reduce endtime.
+    OOF_ThermalDiffusionTimeSteppers_Quadratic("RK4", tol=1.e-5, endtime=0.2),
+    OOF_ThermalDiffusionTimeSteppers_Quadratic("RK2", tol=1.e-5, endtime=0.2),
 ]
+
+# Check that increasing the number of elements in the X direction
+# (the direction in which the field varies) makes the solution
+# with linear elements converge to the solution with quadratic
+# elements.
+
+dynamic_thermal_convergence_set = [
+    OOF_ThermalDiffusionTimeSteppers_Linear("CN", tol=0.1),
+    OOF_ThermalDiffusionTimeSteppers_Linear("CN", nX=8, tol=0.02),
+    OOF_ThermalDiffusionTimeSteppers_Linear("CN", nX=16, tol=0.005),
+    OOF_ThermalDiffusionTimeSteppers_Linear("CN", nX=32, tol=0.001)
+    ]
+
+dynamic_thermal_linear_set = [
+    ## Some of these tests use the default nX=4 just so that they'll
+    ## run quickly.  The reference file is generated by a quadratic
+    ## mesh with a small time step tolerance, so the linear meshes
+    ## here have trouble keeping up.  On the other hand, they're fast.
+    OOF_ThermalDiffusionTimeSteppers_Linear("CNdirect", nX=8, tol=0.02),
+    OOF_ThermalDiffusionTimeSteppers_Linear("SS22directSaveRestore", tol=0.1),
+    OOF_ThermalDiffusionTimeSteppers_Linear("BEdirect", nX=6, tol=0.02),
+    OOF_ThermalDiffusionTimeSteppers_Linear("RK4direct", nX=6, tol=0.02),
+    OOF_ThermalDiffusionTimeSteppers_Linear("RK2direct", nX=6, tol=0.02),
+    OOF_ThermalDiffusionTimeSteppers_Linear("SS22", nX=6, tol=0.02),
+    OOF_ThermalDiffusionTimeSteppers_Linear("CN", tol=0.06),
+    OOF_ThermalDiffusionTimeSteppers_Linear("CNdouble", tol=0.06),
+    OOF_ThermalDiffusionTimeSteppers_Linear("BE", tol=0.05),
+    OOF_ThermalDiffusionTimeSteppers_Linear("RK4", tol=0.06),
+    OOF_ThermalDiffusionTimeSteppers_Linear("RK2", tol=0.06),
+]
+
+dynamic_thermal_set = (dynamic_thermal_quadratic_set +
+                       dynamic_thermal_convergence_set +
+                       dynamic_thermal_linear_set)
 
 dynamic_elastic_set = [
     # In "generate" mode, SS22 provides the reference data for the
@@ -2378,4 +2448,5 @@ test_set = (static_set +
             dynamic_thermal_set +
             dynamic_elastic_set)
 
-#test_set = mixed_bc_set
+test_set = dynamic_thermal_linear_set
+#test_set = [OOF_ThermalDiffusionTimeSteppers_Quadratic("CNdirect")]
