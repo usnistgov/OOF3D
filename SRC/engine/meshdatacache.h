@@ -35,7 +35,7 @@ protected:
   virtual bool checkTime(double) const = 0;
   virtual DoubleVec *allTimes() const = 0;
 public:
-  MeshDataCache() : mesh(0), latest(0) {}
+  MeshDataCache();
   virtual ~MeshDataCache();
   void setMesh(FEMesh *mesh);
   virtual const DoubleVec *times() const { return &times_; }

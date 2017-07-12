@@ -25,6 +25,11 @@
 #include <unistd.h>		// for mkstemp, unlink, access
 extern int errno;
 
+MeshDataCache::MeshDataCache()
+  : mesh(0), latest(0), latesttime(-1.0)
+{
+}
+
 MeshDataCache::~MeshDataCache() {
   restoreLatest();
 }
@@ -49,7 +54,6 @@ void MeshDataCache::add_time(double time) {
 
 void MeshDataCache::restore(double time) {
   if(mesh->getCurrentTime() != time) {
-    oofcerr << "MeshDataCache::restore: t=" << time << std::endl;
     restore_(time);
     interpolant.resize(0);
   }
@@ -224,7 +228,6 @@ void MemoryDataCache::record() {
   // If the cache is cleared properly in the Solve menu item, there
   // should never be pre-existing data. But it probably doesn't hurt
   // to check.
-  oofcerr << "MemoryDataCache::record: time=" << time << std::endl;
   DataCache::iterator i = cache.find(time);
   if(i == cache.end()) {
     cache[time] = DoubleVec();
@@ -435,9 +438,9 @@ void DiskDataCache::record() {
   char buf[100];
   char *c = fgets(buf, sizeof(buf), ff);
   int nchars = atoi(c);
-  oofcerr << "DiskDataCache::record: wrote " << nchars << " bytes ("
-	  << n << " doubles) to "
-	  << filename << std::endl;
+  // oofcerr << "DiskDataCache::record: wrote " << nchars << " bytes ("
+  // 	  << n << " doubles) to "
+  // 	  << filename << std::endl;
 #endif // DEBUG
 }
 
