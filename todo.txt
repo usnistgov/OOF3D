@@ -3,9 +3,7 @@ TODO LIST FOR OOF3D
 Before Next Release
 -------------------
 
-Higher order elements.
-
-Optimize categoryVolumes.
+Optimize categoryVolumes?
 
 Merge branches
   Ryan's 3D widgets  (Needs to be finished for voxel selection)
