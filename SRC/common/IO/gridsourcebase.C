@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: gridsourcebase.C,v $
-// $Revision: 1.1.2.2 $
-// $Author: langer $
-// $Date: 2014/11/24 21:44:50 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -18,7 +14,8 @@
 #include "common/IO/gridsourcebase.h"
 #include "common/IO/oofcerr.h"
 
-vtkCxxRevisionMacro(GridSource, "$Revision: 1.1.2.2 $");
+vtkCxxRevisionMacro(GridSource, "oofvtkmods 3.0.0");
+
 
 GridSource::GridSource() 
   : PointData(0),

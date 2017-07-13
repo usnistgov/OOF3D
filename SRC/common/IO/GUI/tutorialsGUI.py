@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: tutorialsGUI.py,v $
-# $Revision: 1.48.2.6 $
-# $Author: langer $
-# $Date: 2014/09/25 20:04:13 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

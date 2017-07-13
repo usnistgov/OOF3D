@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: plas2.py,v $
-# $Revision: 1.13 $
-# $Author: reida $
-# $Date: 2007/02/12 16:33:50 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: canvaslayers.C,v $
-// $Revision: 1.1.2.77 $
-// $Author: langer $
-// $Date: 2014/12/14 22:49:09 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -11,7 +7,7 @@
  * facilitate maintenance we ask that before distributing modified
  * versions of this software, you first contact the authors at
  * oof_manager@nist.gov. 
- */
+ */ 
 
 #include <oofconfig.h>
 
@@ -28,10 +24,14 @@
 #include "common/voxelfilter.h"
 
 #include <vtkAlgorithmOutput.h>
+#include <vtkCellType.h>
 #include <vtkPointData.h>	// required implicitly by GetPointData
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
+#include <vtkType.h>
 #include <vtkVoxel.h>
+
+#include <math.h>
 
 // TODO 3.1: Give each layer a flag indicating whether or not it should be
 // clipped, and make the flag settable in the gfx window's layer list.
@@ -192,6 +192,10 @@ vtkScalarsToColors *OOFCanvasLayer::get_lookupTable() {
   return 0;
 }
 
+vtkSmartPointer<vtkActorCollection> OOFCanvasLayer::get_pickable_actors() {
+  return vtkSmartPointer<vtkActorCollection>();
+}
+
 vtkSmartPointer<vtkProp3D> OOFCanvasLayer::get_pickable_prop3d() {
   return vtkSmartPointer<vtkProp3D>();
 }
@@ -229,10 +233,716 @@ vtkSmartPointer<vtkTableBasedClipDataSet> getClipper(
   vtkSmartPointer<vtkTableBasedClipDataSet> clipper =
     vtkSmartPointer<vtkTableBasedClipDataSet>::New();
   clipper->SetClipFunction(vplanes);
-  if(canvas->invertedClipping() || vplanes->GetNumberOfPlanes() == 0) {
-    clipper->InsideOutOn();
-  }
+
+  // From the man page for vtkTableBasedClipDataSet:::SetInsideOut():
+
+  // Set/Get the InsideOut flag. With this flag off, a vertex is
+  // considered inside (the implicit function or the isosurface) if
+  // the (function or scalar) value is greater than IVAR Value. With
+  // this flag on, a vertex is considered inside (the implicit
+  // function or the isosurface) if the (function or scalar) value is
+  // less than or equal to IVAR Value. This flag is off by default.
+
+  // From the man page for vtkPlanes:
+
+  // The function value is the closest first order distance of a point
+  // to the convex region defined by the planes. ... Note that the
+  // normals must point outside of the convex region. Thus, a negative
+  // function value means that a point is inside the convex region.
+
+  // The natural definition for OOF is that the *inside* of the convex
+  // region should be displayed, and not clipped away.  Therefore all
+  // calls to SetInsideOut need to have an extra "!".
+
+  clipper->SetInsideOut(!(canvas->invertedClipping() ||
+			  (vplanes->GetNumberOfPlanes() == 0)));
   return clipper;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas,
+				       const std::string &nm,
+				       bool inverted)
+  : OOFCanvasLayer(canvas, nm),
+    planeSource(vtkSmartPointer<vtkCubeSource>::New()),
+    arrowSource(vtkSmartPointer<vtkArrowSource>::New()),
+    scaling(vtkSmartPointer<vtkTransform>::New()),
+    arrowScaling(vtkSmartPointer<vtkTransform>::New()),
+    rotation(vtkSmartPointer<vtkTransform>::New()),
+    translation(vtkSmartPointer<vtkTransform>::New()),
+    planeTransform(vtkSmartPointer<vtkTransform>::New()),
+    arrowTransform(vtkSmartPointer<vtkTransform>::New()),
+    planeFilter(vtkSmartPointer<vtkTransformPolyDataFilter>::New()),
+    arrowFilter(vtkSmartPointer<vtkTransformPolyDataFilter>::New()),
+    planeMapper(vtkSmartPointer<vtkPolyDataMapper>::New()),
+    arrowMapper(vtkSmartPointer<vtkPolyDataMapper>::New()),
+    planeActor(vtkSmartPointer<vtkActor>::New()),
+    arrowActor(vtkSmartPointer<vtkActor>::New()),
+    arrowParity(inverted? -1 : 1)
+{
+  // Constructor for the PlaneAndArrowLayer class.  Creates
+  // and joins together the pre-render portions of the vtk pipeline
+  // that are need in order to display a plane, along with an arrow
+  // that represents the normal vector of that plane.
+
+  // TODO: The plane isn't drawn in the correct color when inverted is
+  // false.  
+
+  // If planeSource were a vtkPlaneSource and not a vtkCubeSource:
+  // planeSource->SetNormal(1, 0, 0);
+  // planeSource->Push(-0.001);
+
+  planeSource->SetCenter(arrowParity*0.001, 0, 0);
+  //planeSource->SetCenter(0, 0, 0);  
+  planeSource->SetXLength(0.001);
+  planeSource->SetYLength(1.0);
+  planeSource->SetZLength(1.0);
+  planeSource->Update();
+
+  // The arrow tip is a cone, and its shaft is a cylinder.  The
+  // following lines of code set the cone and cylinder to be
+  // approximated by a dodecagonal pyramid and a dodecagonal prism,
+  // respectively.
+  arrowSource->SetTipResolution(12);
+  arrowSource->SetShaftResolution(12);
+  arrowSource->Update();
+
+  scaling->Identity();
+  rotation->Identity();
+  translation->Identity();
+  planeTransform->Identity();
+  planeTransform->Concatenate(translation);
+  planeTransform->Concatenate(rotation);
+  planeTransform->Concatenate(scaling);
+
+  // Scales the arrow by one half the sidelength of the plane.
+  // arrowParity is set by the "inverted" constructor arg, which
+  // should be chosen so that the arrow is visible.  When using this
+  // widget to define a clipping plane, for example, the arrow should
+  // be on the clipped (hidden) side of the plane.
+  arrowScaling->Identity();
+  double s = arrowParity*0.5;
+  arrowScaling->Scale(s, s, s);
+
+  arrowTransform->Identity();
+  arrowTransform->Concatenate(planeTransform);
+  arrowTransform->Concatenate(arrowScaling);
+
+  planeFilter->SetInputConnection(planeSource->GetOutputPort());
+  planeFilter->SetTransform(planeTransform);
+
+  arrowFilter->SetInputConnection(arrowSource->GetOutputPort());
+  arrowFilter->SetTransform(arrowTransform);
+
+  planeMapper->SetInputConnection(planeFilter->GetOutputPort());
+  arrowMapper->SetInputConnection(arrowFilter->GetOutputPort());
+
+  planeActor->SetMapper(planeMapper);
+  planeActor->GetProperty()->BackfaceCullingOn();
+  arrowActor->SetMapper(arrowMapper);
+
+  addProp(planeActor);
+  addProp(arrowActor);
+}
+
+PlaneAndArrowLayer::~PlaneAndArrowLayer() {}
+
+const std::string &PlaneAndArrowLayer::classname() const {
+  static const std::string nm("PlaneAndArrowLayer");
+  return nm;
+}
+
+// The following four functions are inherited from OOFCanvasLayer and
+// need to be defined, but aren't used by this particular subclass.
+void PlaneAndArrowLayer::start_clipping() { }
+
+void PlaneAndArrowLayer::stop_clipping() { }
+
+void PlaneAndArrowLayer::set_clip_parity(bool b) { }
+
+void PlaneAndArrowLayer::setModified() {
+  planeSource->Modified();
+  arrowSource->Modified();
+}
+
+vtkSmartPointer<vtkActor> PlaneAndArrowLayer::get_planeActor() {
+  return planeActor;
+}
+
+vtkSmartPointer<vtkActor> PlaneAndArrowLayer::get_arrowActor() {
+  return arrowActor;
+}
+
+vtkSmartPointer<vtkActorCollection> PlaneAndArrowLayer::get_pickable_actors() {
+  vtkSmartPointer<vtkActorCollection> actors = 
+    vtkSmartPointer<vtkActorCollection>::New();
+  
+  actors->AddItem(planeActor);   
+  actors->AddItem(arrowActor);
+ 
+  return actors;
+}
+
+void PlaneAndArrowLayer::set_visibility(bool visible) {
+  // Sets whether or not the vtk plane and arrow are to be visible
+  // once the renderer is called.
+  planeActor->SetVisibility(int(visible));
+  arrowActor->SetVisibility(int(visible));
+  setModified();
+}
+
+void PlaneAndArrowLayer::set_arrowShaftRadius(double radius) {
+  arrowSource->SetShaftRadius(radius);
+}
+
+void PlaneAndArrowLayer::set_arrowTipRadius(double radius) {
+  arrowSource->SetTipRadius(radius);
+}
+
+void PlaneAndArrowLayer::set_arrowLength(double length) {
+  // Sets the arrow's length to (length * (the sidelength of the
+  // plane)), with the (+) sign causing the arrow to point in the
+  // direction we want it to--that is, into to the otherwise empty
+  // region of the OOF3D canvas which has been clipped away by the
+  // clipping plane being edited. Otherwise the arrow could become
+  // hidden in the unclipped parts of 3D objects which are still
+  // visible in the unclipped region of the OOF3D canvas.
+  arrowScaling->Identity();
+  double s = arrowParity*length;
+  arrowScaling->Scale(s, s, s);
+}
+
+void PlaneAndArrowLayer::set_arrowColor(const CColor& color) {
+  arrowActor->GetProperty()->SetColor(color.getRed(), color.getGreen(), 
+				      color.getBlue());
+}
+
+void PlaneAndArrowLayer::set_planeColor(const CColor& color) {
+  planeActor->GetProperty()->SetColor(color.getRed(), color.getGreen(), 
+				      color.getBlue());
+}
+
+void PlaneAndArrowLayer::set_planeOpacity(double opacity) {
+  planeActor->GetProperty()->SetOpacity(opacity);
+ }
+
+void PlaneAndArrowLayer::rotate(const Coord3D *axisOfRotation, double angleOfRotation) {
+  vtkSmartPointer<vtkTransform> new_rotation =
+    vtkSmartPointer<vtkTransform>::New();
+  new_rotation->RotateWXYZ(-angleOfRotation, (*axisOfRotation)[0], (*axisOfRotation)[1], (*axisOfRotation)[2]);
+
+  // Concatenate the new rotation after the current rotation. 
+  rotation->PostMultiply();
+  rotation->Concatenate(new_rotation);
+  rotation->PreMultiply();
+} 
+
+void PlaneAndArrowLayer::translate(const Coord3D *translationVector) {
+  // Shifts the plane and arrow by the specified displacement vector.
+
+  double translationX = (*translationVector)[0];
+  double translationY = (*translationVector)[1];
+  double translationZ = (*translationVector)[2];
+
+  // Concatenate the new translation onto the current
+  // translation.
+  translation->Translate(translationX, translationY, translationZ);
+  setModified();
+}
+
+void PlaneAndArrowLayer::offset(double offset) {
+  // Offsets the plane and arrow by the specified amount along the
+  // plane's normal.
+
+  double unitX[3] = {1, 0, 0};
+  double normal_double[3];
+
+  rotation->TransformPoint(unitX, normal_double);
+
+  Coord3D normal(normal_double);
+  
+  // We multiply the normal vector by the offset in order to get the
+  // vector representing the plane's displacement from the
+  // origin. This will be the coordinates of our translation.
+  normal *= offset;
+
+  // Concatenate the new offsetting translation onto the current
+  // translation.
+  translation->Translate(normal[0], normal[1], normal[2]);
+  setModified();
+}
+
+void PlaneAndArrowLayer::scale(double scale) {
+  // Scales the plane and arrow by the specified amount.
+
+  vtkSmartPointer<vtkTransform> new_scaling =
+    vtkSmartPointer<vtkTransform>::New();
+  new_scaling->Scale(scale, scale, scale);
+
+  // Concatenate the new scaling onto the current scaling.
+  scaling->Concatenate(new_scaling);
+  setModified();
+}
+
+Coord3D *PlaneAndArrowLayer::get_center() {
+  // Returns the world coordinates of the arrow base, which are the
+  // same coordinates as the center of the plane.
+  double center_double[3];
+  translation->GetPosition(center_double);
+  Coord3D *center = new Coord3D(center_double[0], center_double[1], center_double[2]);
+  return center;
+}
+
+Coord3D *PlaneAndArrowLayer::get_normal_Coord3D() {
+  // Returns the normal vector as a Coord3D*.
+  double unitX[3] = {1, 0, 0};
+  double normal_double[3];
+
+  rotation->TransformPoint(unitX, normal_double);
+
+  Coord3D *normal = new Coord3D(normal_double);
+  return normal;
+}
+
+CUnitVectorDirection *PlaneAndArrowLayer::get_normal() {
+  // Returns the normal vector as a CUnitVectorDirection*.
+  double unitX[3] = {1, 0, 0};
+  double normal_double[3];
+
+  rotation->TransformPoint(unitX, normal_double);
+
+  CUnitVectorDirection *normal = 
+    new CUnitVectorDirection(normal_double[0], normal_double[1], normal_double[2]);
+
+  return normal;
+}
+
+double PlaneAndArrowLayer::get_offset() {
+  Coord3D center;
+  translation->GetPosition(center.xpointer());
+
+  double unitX[3] = {1, 0, 0};
+  double normal_double[3];
+
+  rotation->TransformPoint(unitX, normal_double);
+
+  Coord3D normal(normal_double);
+
+  return dot(center, normal);
+}
+
+void PlaneAndArrowLayer::set_scale(double scale) {
+  // Sets the length of the plane's edges to the specified scale,
+  // while keeping the plane and arrow centered at their current
+  // position and facing in their current direction.  The arrow is
+  // scaled relative to the specified scale by means of the
+  // arrowScaling transform, which is changed by the function
+  // set_arrowScale(double).
+  scaling->Identity();
+  double s = arrowParity*scale;
+  scaling->Scale(s, s, s);
+  setModified();
+}
+
+void PlaneAndArrowLayer::set_normal(const CDirection *direction) {
+  // Sets the direction of the plane's normal vector (which is
+  // opposite the direction which should be pointed to by the arrow)
+  // to the specified direction, while keeping the plane and arrow
+  // centered at their current position and sized at their current
+  // scale.
+  Coord3D *normalVector = direction->coord();
+  Coord3D xVector = Coord3D(1, 0, 0);
+
+  // We calculate the angle to rotate the plane's normal vector away
+  // from the x-axis as the angle between the unit vector in the
+  // x-direction (xVector) and the desired normal vector
+  // (normalVector).  We further find the axis to perform this
+  // rotation about by taking the cross product of the the two
+  // vectors.
+  double angleOfRotation = (180 / M_PI) * acos(dot(*normalVector, xVector));
+  Coord3D axisOfRotation = cross(xVector, *normalVector); 
+
+  // Reset the transform controling the rotation of the plane and the
+  // direction of the arrow.
+  rotation->Identity();
+  rotation->RotateWXYZ(angleOfRotation, axisOfRotation[0], axisOfRotation[1], axisOfRotation[2]);
+
+  setModified();
+
+  // Free allocated memory.
+  delete(normalVector);
+}
+
+void PlaneAndArrowLayer::set_center(const Coord3D *position) {
+  // Sets the center of the plane and the base of the arrow to the
+  // specified position, while while keeping the plane and arrow
+  // facing in their current direction and sized at their current
+  // scale.
+  double position0 = (*position)[0];
+  double position1 = (*position)[1];
+  double position2 = (*position)[2];
+
+  translation->Identity();
+  translation->Translate(position0, position1, position2);
+  setModified();
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// TODO: Add arrowParity, as in PlaneAndArrowLayer.
+
+BoxAndArrowLayer::BoxAndArrowLayer(GhostOOFCanvas *canvas, const std::string &nm)
+  : OOFCanvasLayer(canvas, nm),
+    grid(vtkSmartPointer<vtkUnstructuredGrid>::New()),
+    points(vtkSmartPointer<vtkPoints>::New()),
+    arrowSource(vtkSmartPointer<vtkArrowSource>::New()),  
+    arrowScaling(vtkSmartPointer<vtkTransform>::New()),
+    arrowRotation(vtkSmartPointer<vtkTransform>::New()),
+    arrowTranslation(vtkSmartPointer<vtkTransform>::New()),
+    arrowTransform(vtkSmartPointer<vtkTransform>::New()),
+    arrowFilter(vtkSmartPointer<vtkTransformPolyDataFilter>::New()),
+    boxMapper(vtkSmartPointer<vtkDataSetMapper>::New()),
+    arrowMapper(vtkSmartPointer<vtkPolyDataMapper>::New()),
+    boxActor(vtkSmartPointer<vtkActor>::New()),
+    arrowActor(vtkSmartPointer<vtkActor>::New()),
+    locator(vtkSmartPointer<oofCellLocator>::New())
+{
+  points->Initialize();
+  points->SetNumberOfPoints(8);
+  
+  for (int i = 0; i < 8; i++) {
+    points->SetPoint(i, double(i % 2), double((i / 2) % 2), double((i / 4) % 2));
+  }
+
+  grid->Initialize();
+  grid->Allocate(26, 26);
+  grid->SetPoints(points);
+
+  for (int i = 0; i < 8; i++) {
+    // Store the 8 vertices of the box.
+    vtkIdType ptID;
+    ptID = i;
+    grid->InsertNextCell(VTK_VERTEX, 1, &ptID);
+  }
+
+  // Store the 12 edges of the box.
+  vtkIdType edge_ptIDs[12][2];
+  edge_ptIDs[0][0] = 0;
+  edge_ptIDs[0][1] = 1;
+  edge_ptIDs[1][0] = 0;
+  edge_ptIDs[1][1] = 2;
+  edge_ptIDs[2][0] = 0;
+  edge_ptIDs[2][1] = 4;
+  edge_ptIDs[3][0] = 1;
+  edge_ptIDs[3][1] = 3;
+  edge_ptIDs[4][0] = 1;
+  edge_ptIDs[4][1] = 5;
+  edge_ptIDs[5][0] = 2;
+  edge_ptIDs[5][1] = 3;
+  edge_ptIDs[6][0] = 2;
+  edge_ptIDs[6][1] = 6;
+  edge_ptIDs[7][0] = 3;
+  edge_ptIDs[7][1] = 7;
+  edge_ptIDs[8][0] = 4;
+  edge_ptIDs[8][1] = 5;
+  edge_ptIDs[9][0] = 4;
+  edge_ptIDs[9][1] = 6;
+  edge_ptIDs[10][0] = 5;
+  edge_ptIDs[10][1] = 7;
+  edge_ptIDs[11][0] = 6;
+  edge_ptIDs[11][1] = 7;
+  for (int i = 0; i < 12; i++) {
+    grid->InsertNextCell(VTK_LINE, 2, edge_ptIDs[i]);
+  }
+
+  // Store the 6 faces of the box.
+  vtkIdType face_ptIDs[6][4];
+  face_ptIDs[0][0] = 0;
+  face_ptIDs[0][1] = 1;
+  face_ptIDs[0][2] = 5;
+  face_ptIDs[0][3] = 4;
+  //
+  face_ptIDs[1][0] = 0;
+  face_ptIDs[1][1] = 4;
+  face_ptIDs[1][2] = 6;
+  face_ptIDs[1][3] = 2;
+  //
+  face_ptIDs[2][0] = 0;
+  face_ptIDs[2][1] = 2;
+  face_ptIDs[2][2] = 3;
+  face_ptIDs[2][3] = 1;
+  //
+  face_ptIDs[3][0] = 1;
+  face_ptIDs[3][1] = 3;
+  face_ptIDs[3][2] = 7;
+  face_ptIDs[3][3] = 5;
+  //
+  face_ptIDs[4][0] = 2;
+  face_ptIDs[4][1] = 6;
+  face_ptIDs[4][2] = 7;
+  face_ptIDs[4][3] = 3;
+  //
+  face_ptIDs[5][0] = 4;
+  face_ptIDs[5][1] = 5;
+  face_ptIDs[5][2] = 7;
+  face_ptIDs[5][3] = 6;
+  for (int i = 0; i < 6; i++) {
+    grid->InsertNextCell(VTK_QUAD, 4, face_ptIDs[i]);
+  }
+  
+  arrowSource->SetTipResolution(12);
+  arrowSource->SetShaftResolution(12);
+  arrowSource->Update();
+
+  arrowScaling->Identity();
+  arrowScaling->Scale(-0.25, -0.25, -0.25);
+
+  arrowRotation->Identity();
+  arrowTranslation->Identity();
+  arrowTransform->Concatenate(arrowTranslation);
+  arrowTransform->Concatenate(arrowRotation);
+  arrowTransform->Concatenate(arrowScaling);
+
+  arrowFilter->SetInputConnection(arrowSource->GetOutputPort());
+  arrowFilter->SetTransform(arrowTransform);
+
+  boxMapper->SetInputConnection(grid->GetProducerPort());
+  arrowMapper->SetInputConnection(arrowFilter->GetOutputPort());
+
+  boxActor->SetMapper(boxMapper);
+  boxActor->GetProperty()->SetEdgeVisibility(true);
+  arrowActor->SetMapper(arrowMapper);
+
+  this->set_totalVisibility(false);
+  this->set_arrowVisibility(false);
+
+  addProp(boxActor);
+  addProp(arrowActor);
+
+  locator->LazyEvaluationOn();
+}
+
+BoxAndArrowLayer::~BoxAndArrowLayer() {}
+
+const std::string &BoxAndArrowLayer::classname() const {
+  static const std::string nm("BoxAndArrowLayer");
+  return nm;
+}
+
+void BoxAndArrowLayer::start_clipping() { }
+
+void BoxAndArrowLayer::stop_clipping() { }
+
+void BoxAndArrowLayer::set_clip_parity(bool b) { }
+
+void BoxAndArrowLayer::setModified() {
+  grid->Modified();
+}
+
+vtkSmartPointer<vtkDataSet> BoxAndArrowLayer::get_pickable_dataset() {
+  return boxMapper->GetInput();
+}
+
+vtkSmartPointer<vtkProp3D> BoxAndArrowLayer::get_pickable_prop3d() {
+  return boxActor;
+}
+
+vtkSmartPointer<vtkPoints> BoxAndArrowLayer::get_pickable_points() {
+  return points;
+}
+
+vtkSmartPointer<vtkAbstractCellLocator> BoxAndArrowLayer::get_locator() {
+  locator->Initialize();
+  locator->SetDataSet(grid);
+  return locator;
+}
+
+// TODO: Define this to work for cell types other than VTK_QUAD.
+Coord3D *BoxAndArrowLayer::get_cellCenter(vtkIdType cellID) {
+  int cellType = grid->GetCellType(cellID);
+  if (cellType == VTK_QUAD) {
+    vtkIdType *pointIDs;
+    vtkIdType npts;
+    grid->GetCellPoints(cellID, npts, pointIDs);
+    Coord3D corners[4];
+    Coord3D *center = new Coord3D(0, 0, 0);
+    for (int i = 0; i < 4; i++) {
+      double temp[3]; 
+      points->GetPoint(pointIDs[i], temp);
+      corners[i] = Coord3D(temp);
+      *center += corners[i];
+    }
+    *center /= 4;
+    return center;
+  }
+  return NULL;
+}
+
+// TODO: Define this to work for cell types other than VTK_QUAD.
+Coord3D *BoxAndArrowLayer::get_cellNormal_Coord3D(vtkIdType cellID) {
+  // Returns the "normal" vector to the cell. If the cell is a
+  // VTK_QUAD (a box face), this is straightforward, since the normal
+  // vector is just the normal vector of [the plane in which [the face
+  // in question] lies]. But, if the cell is a VTK_LINE (an edge of
+  // the box), the "normal" should be the vector from [the center of
+  // the opposite edge] to [the center of the edge in
+  // question]. Further, if the cell is a VTK_VERTEX (a corner of the
+  // box), the normal vector should be the box's diagonal from [the
+  // opposite corner] to [the corner in question].
+  int cellType = grid->GetCellType(cellID);
+  if (cellType == VTK_QUAD) {
+    vtkIdType *pointIDs;
+    vtkIdType npts;
+    grid->GetCellPoints(cellID, npts, pointIDs);
+    Coord3D corners[4];
+    for (int i = 0; i < 4; i++) {
+      double temp[3];
+      points->GetPoint(pointIDs[i], temp);
+      corners[i] = Coord3D(temp);
+    }
+    Coord3D vectors[2];
+    vectors[0] = corners[1] - corners[0];
+    vectors[1] = corners[2] - corners[1];
+    Coord3D *normal = new Coord3D();
+    *normal = cross(vectors[0], vectors[1]);
+    double norm = sqrt(norm2(*normal));
+    if (norm == 0) {
+      delete normal;
+      return NULL; 
+    }
+    *normal /= norm;
+    return normal;
+  } 
+  return NULL;
+}
+
+void BoxAndArrowLayer::set_box(const Coord3D *point) {
+  // Resets the box to a rectangular prism with one corner at (0, 0,
+  // 0) and the opposite corner at the position specified by point.
+  double dimensions[3];
+  dimensions[0] = (*point)[0];
+  dimensions[1] = (*point)[1];
+  dimensions[2] = (*point)[2];
+  for (int i = 0; i < 8; i++) {
+    points->SetPoint(i, dimensions[0] * double(i % 2), dimensions[1] * double((i / 2) % 2), dimensions[2] * double((i / 4) % 2));
+  }
+}
+
+void BoxAndArrowLayer::set_totalVisibility(bool visible) {
+  // Sets whether or not the box is visible, and whether or not the
+  // vtk arrow is allowed to be visible, once the renderer is called.
+  totalVisibility = visible;
+  boxActor->SetVisibility(int(visible));
+  arrowActor->SetVisibility(int(visible && arrowVisibility));
+}
+
+void BoxAndArrowLayer::set_arrowVisibility(bool visible) {
+  // This sets whether or not the vtk arrow is to be visible whenever
+  // the totalVisibility is true. If totalVisibility is false, then
+  // the arrow will not be visible.
+  arrowVisibility = visible;
+  arrowActor->SetVisibility(int(visible && totalVisibility));
+}
+
+void BoxAndArrowLayer::set_arrowShaftRadius(double radius) {
+  arrowSource->SetShaftRadius(radius);
+}
+
+void BoxAndArrowLayer::set_arrowTipRadius(double radius) {
+  arrowSource->SetTipRadius(radius);
+}
+
+void BoxAndArrowLayer::set_arrowLength(double length) {
+  arrowScaling->Identity();
+  arrowScaling->Scale(-length, -length, -length);
+}
+
+void BoxAndArrowLayer::set_arrowColor(const CColor& color) {
+  arrowActor->GetProperty()->SetColor(color.getRed(), color.getGreen(), 
+				      color.getBlue());
+}
+
+void BoxAndArrowLayer::set_pointSize(float size) {
+  boxActor->GetProperty()->SetPointSize(size);
+}
+
+void BoxAndArrowLayer::set_lineWidth(float width) {
+  boxActor->GetProperty()->SetLineWidth(width);
+}
+
+void BoxAndArrowLayer::set_lineColor(const CColor &color) {
+  boxActor->GetProperty()->SetEdgeColor(color.getRed(), color.getGreen(), color.getBlue());
+}
+
+void BoxAndArrowLayer::set_faceColor(const CColor &color) {
+  boxActor->GetProperty()->SetColor(color.getRed(), color.getGreen(), color.getBlue());
+}
+
+void BoxAndArrowLayer::set_faceOpacity(double opacity) {
+  boxActor->GetProperty()->SetOpacity(opacity);
+}
+
+void BoxAndArrowLayer::set_position(const Coord3D *point) {
+  // Sets the position of the 0th point of the box to the specified
+  // location.
+
+  // Compute the vector (as a double*) to translate each point by.
+  double temp[3];
+  points->GetPoint(0, temp);
+  double translation[3];
+
+  // Translate point 0.
+  for (int j = 0; j < 3; j++) {
+    translation[j] = (*point)[j] - temp[j];
+    temp[j] = (*point)[j];
+  }
+  points->SetPoint(0, temp);
+
+  // Translate points 1-7.
+  for (int i = 1; i < 8; i++) {
+    points->GetPoint(i, temp);
+    for (int j = 0; j < 3; j++) {
+      temp[j] += translation[j];
+    }
+    points->SetPoint(i, temp);
+  }
+}
+
+// TODO: Define this to work for cell types other than VTK_QUAD.
+void BoxAndArrowLayer::offset_cell(vtkIdType cellID, double offset) {
+  // Offsets the cell by the given amount in the direction of its
+  // "normal".
+  int cellType = grid->GetCellType(cellID);
+  if (cellType == VTK_QUAD) {
+    vtkIdType *pointIDs;
+    vtkIdType npts;
+    grid->GetCellPoints(cellID, npts, pointIDs);
+    Coord3D corners[4];
+    for (int i = 0; i < 4; i++) {
+      double temp[3]; 
+      points->GetPoint(pointIDs[i], temp);
+      corners[i] = Coord3D(temp);
+    }
+    Coord3D vectors[2];
+    vectors[0] = corners[1] - corners[0];
+    vectors[1] = corners[2] - corners[1];
+    Coord3D *normal = new Coord3D();
+    *normal = cross(vectors[0], vectors[1]);
+    double norm = sqrt(norm2(*normal));
+    if (norm == 0) {
+      delete normal;
+      return; 
+    }
+    *normal /= norm;
+    *normal *= offset;
+    for (int i = 0; i < 4; i++) {
+      corners[i] += *normal;
+      points->SetPoint(pointIDs[i], corners[i][0], corners[i][1], corners[i][2]);
+    }
+    delete normal;
+  } 
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -282,7 +992,7 @@ void SimpleCellLayer::stop_clipping() {
 }
 
 void SimpleCellLayer::set_clip_parity(bool inverted) {
-  clipper->SetInsideOut(inverted);
+  clipper->SetInsideOut(!inverted);
 }
 
 void SimpleCellLayer::addCell(VTKCellType type,
@@ -417,7 +1127,7 @@ void SimpleWireframeCellLayer::stop_clipping() {
 }
 
 void SimpleWireframeCellLayer::set_clip_parity(bool inverted) {
-  clipper->SetInsideOut(inverted);
+  clipper->SetInsideOut(!inverted);
 }
 
 const std::string &SimpleWireframeCellLayer::classname() const {
@@ -520,7 +1230,7 @@ void GlyphedLayer::stop_clipping() {
 
 void GlyphedLayer::set_clip_parity(bool inverted) {
   SimpleCellLayer::set_clip_parity(inverted);
-  glyphClipper->SetInsideOut(inverted);
+  glyphClipper->SetInsideOut(!inverted);
 }
 
 //=\\=//=\\=//=\\=//=\\=//
@@ -639,7 +1349,7 @@ void SingleVoxelLayer::set_voxel(const ICoord *where, const Coord *size) {
   // voxel.  But with the current Microstructure it's not completely
   // trivial to access the vtkPoints.  Plus, doing it this way is
   // easy.
-  grid->Initialize();
+  grid->Initialize();		// TODO: Is this necessary?
   grid->Allocate(1,1);
   vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
   grid->SetPoints(points);
@@ -664,6 +1374,34 @@ void SingleVoxelLayer::set_voxel(const ICoord *where, const Coord *size) {
   for(int i=0; i<8; ++i)
     voxel->GetPointIds()->SetId(i,i);
   grid->InsertNextCell(VTK_VOXEL, voxel->GetPointIds());
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+LineSegmentLayer::LineSegmentLayer(GhostOOFCanvas *canvas,
+				   const std::string &nm)
+  : SimpleWireframeCellLayer(canvas, false, nm)
+{}
+
+const std::string &LineSegmentLayer::classname() const {
+  static const std::string nm("LineSegmentLayer");
+  return nm;
+}
+
+void LineSegmentLayer::set_nSegs(int nseg) {
+  grid->Initialize();
+  number_cells = nseg;
+  if(nseg > 0)
+    grid->Allocate(nseg, nseg);
+  grid->SetPoints(vtkSmartPointer<vtkPoints>::New());
+}
+
+void LineSegmentLayer::addSegment(const Coord *a, const Coord *b) {
+  vtkIdType ids[2];
+  vtkSmartPointer<vtkPoints> points = grid->GetPoints();
+  ids[0] = points->InsertNextPoint((*a)[0], (*a)[1], (*a)[2]);
+  ids[1] = points->InsertNextPoint((*b)[0], (*b)[1], (*b)[2]);
+  grid->InsertNextCell(VTK_LINE, 2, ids);
 }
     
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -737,6 +1475,11 @@ void ImageCanvasLayer::set_image(const ImageBase *img, const Coord *location,
     gridifier->SetInputConnection(image->getVTKImageData()->GetProducerPort());
     pipelineLock.release();
   }
+}
+
+// TODO: Does opacity work?
+void ImageCanvasLayer::set_opacity(double opacity) {
+  actor->GetProperty()->SetOpacity(opacity);
 }
 
 void ImageCanvasLayer::noOverlayers() {
@@ -850,7 +1593,7 @@ void ImageCanvasLayer::stop_clipping() {
 
 void ImageCanvasLayer::set_clip_parity(bool inverted) {
   pipelineLock.acquire();
-  clipper->SetInsideOut(inverted);
+  clipper->SetInsideOut(!inverted);
   pipelineLock.release();
 }
 

@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: typemaps.swg,v $
-// $Revision: 1.70.2.32 $
-// $Author: langer $
-// $Date: 2014/10/08 20:17:32 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -30,7 +26,6 @@
 // Unnamed typemaps defined in this file:
 
 // in		CColor		Color -> CColor*
-// in		CSegmentVec*	[CSegment] -> std::vector<CSegment*>*
 // in		CoordVec*	[Coord] -> std::vector<Coord*>*
 // in		DoubleList*	[Float] -> std::vector<double>*
 // in		IntVec*		[Int] -> std::vector<int>*
@@ -106,7 +101,6 @@
 #include "common/threadstate.h"
 #include <string>
 #include <vector>
-typedef std::vector<CSegment*> CSegmentVec;
 typedef std::vector<Coord*> CoordVec;
 typedef std::vector<Coord> PointVec;
 typedef std::vector<ICoord> ICoordVec;
@@ -905,30 +899,6 @@ using std::string;
   Py_XDECREF(zobj);
 #endif
   $target = &ic;
-}
-
-%typemap(python,in) CSegmentVec* (CSegmentVec v) {
-  // typemap(python,in) CSegmentVec* (CSegmentVec v)
-  if(!PyList_Check($source)) {
-    PyErr_SetString(PyExc_TypeError, "Type error in CSegmentVec* typemap. Python list required.");
-    return NULL;
-  }
-  CSegmentVec::size_type sz = Py_SAFE_DOWNCAST(PyList_Size($source),
-					       Py_ssize_t,
-					       CSegmentVec::size_type);
-  v.resize(sz);
-  for(CSegmentVec::size_type i=0; i<sz; i++) {
-    PyObject *strobj = PyObject_GetAttrString(PyList_GET_ITEM($source,
-							      (Py_ssize_t) i),
-					      "this");
-    if(!strobj) return NULL;
-    char *str = PyString_AsString(strobj);
-    Py_XDECREF(strobj);
-    CSegment *c;
-    SWIG_GetPtr(str, (void**) &c, "_CSegment_p");
-    v[i] = c;
-  }
-  $target = &v;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

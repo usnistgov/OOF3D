@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: geometry.swg,v $
-// $Revision: 1.12.18.3 $
-// $Author: langer $
-// $Date: 2014/09/27 22:33:50 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -27,27 +23,7 @@ typedef class CPolygon<double, Coord> CPolygonCoord;
 %include "common/typemaps.swg"
 
 
-class CSegment {
-public:
-  CSegment(const Coord&, const Coord&);
-};
-
 class CPolygonCoord {};
-
-#ifndef DIM_3
-class CRectangle : public CPolygonCoord {
-public:
-  CRectangle(const Coord&, const Coord&);
-  double xmin();
-  double xmax();
-  double ymin();
-  double ymax();
-  double height();
-  double width();
-  void expand(double factor);
-};
-
-#else // DIM==3
 
 class CRectangularPrism : public CPolygonCoord {
 public:
@@ -64,7 +40,15 @@ public:
   void expand(double factor);
 };
 
-#endif	// DIM==3
+class COrientedPlane {
+public:
+  COrientedPlane(Coord *Point, double);
+  COrientedPlane reversed();
+  %addmethods {
+    double getOffset() { return self->offset; }
+    Coord getNormal() { return self->normal; }
+  }
+};
 
 // class CQuadrilateral : public CPolygonCoord {
 // public:

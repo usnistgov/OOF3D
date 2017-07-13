@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: pinnodes.py,v $
-# $Revision: 1.36.18.5 $
-# $Author: langer $
-# $Date: 2013/06/06 19:37:20 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

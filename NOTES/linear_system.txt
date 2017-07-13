@@ -2,7 +2,7 @@
 $RCSfile: linear_system.txt,v $
 $Revision: 1.9 $
 $Author: langer $
-$Date: 2008/06/17 15:26:24 $
+$Date: 2008-06-17 15:26:24 $
 
 
 Notes on low-level construction of the linear system, for up to

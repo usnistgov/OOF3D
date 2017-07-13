@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: sincos.C,v $
-// $Revision: 1.1.26.2 $
-// $Author: langer $
-// $Date: 2014/09/27 22:33:55 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -14,6 +10,7 @@
  */
 
 #include <oofconfig.h>
+#include <math.h>
 #include "common/sincos.h"
 
 // Efficient calculation of sin and cos together.  Algorithm borrowed
@@ -24,7 +21,7 @@
 
 void sincos(const double angle, double &sine, double &cosine) {
   double tn = tan(0.5*angle);
-  if(!finite(tn)) {
+  if(!isfinite(tn)) {
     sine = sin(angle);
     cosine = cos(angle);
     return;

@@ -1,8 +1,4 @@
 # -*- makefile -*- 
-# $RCSfile: DIR.py,v $
-# $Revision: 1.1.48.1 $
-# $Author: langer $
-# $Date: 2013/05/16 17:57:30 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

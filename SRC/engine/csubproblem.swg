@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: csubproblem.swg,v $
-// $Revision: 1.22.2.8 $
-// $Author: fyc $
-// $Date: 2015/01/07 15:53:12 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

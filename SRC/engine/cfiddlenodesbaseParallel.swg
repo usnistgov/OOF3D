@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cfiddlenodesbaseParallel.swg,v $
-// $Revision: 1.4.18.1 $
-// $Author: langer $
-// $Date: 2014/09/27 22:34:18 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,

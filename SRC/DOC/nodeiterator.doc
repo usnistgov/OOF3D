@@ -2,7 +2,7 @@
 $RCSfile: nodeiterator.doc,v $
 $Revision: 1.1 $
 $Author: reida $
-$Date: 2001/12/03 21:59:50 $
+$Date: 2001-12-03 21:59:50 $
 
 The ElementNodeIterator classes are used for looping over all of the
 Nodes belonging to an element.  Each Element class has functions that

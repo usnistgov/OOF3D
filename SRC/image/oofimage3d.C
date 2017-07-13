@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: oofimage3d.C,v $
-// $Revision: 1.5.8.60 $
-// $Author: langer $
-// $Date: 2014/12/14 22:49:22 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -368,6 +364,16 @@ void OOFImage3D::gray() {
 }
 
 void OOFImage3D::threshold(double T) {
+
+  // TODO: This crashes if the image has already been converted to
+  // gray or previously thresholded.  On Linux there's an error
+  // message about vtkImageLuminance needing 3 components and getting
+  // just one.  On Mac it just spews bits to std::cerr.  However,
+  // image->GetDataDimension() returns 3 in all cases, so I don't
+  // really know what's going on.
+  
+  // std::cerr << "OOFImage3D::threshold: data dimension="
+  // 	    << image->GetDataDimension() << std::endl;
   vtkSmartPointer<vtkImageLuminance> luminance 
     = vtkSmartPointer<vtkImageLuminance>::New();
   luminance->SetInputConnection(image->GetProducerPort());

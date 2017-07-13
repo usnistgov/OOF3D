@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: gfxmenu.py,v $
-# $Revision: 1.56.2.4 $
-# $Author: langer $
-# $Date: 2014/07/30 21:28:37 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

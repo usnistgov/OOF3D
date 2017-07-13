@@ -2,7 +2,7 @@
 # $RCSfile: switchboard.txt,v $
 # $Revision: 1.75 $
 # $Author: langer $
-# $Date: 2008/06/17 15:26:24 $
+# $Date: 2008-06-17 15:26:24 $
 
 # This file is an attempt to catalog the switchboard messages so that
 # we don't keep creating new messages when an existing one will serve

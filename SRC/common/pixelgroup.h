@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: pixelgroup.h,v $
-// $Revision: 1.32.2.17 $
-// $Author: langer $
-// $Date: 2014/09/12 19:56:22 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,

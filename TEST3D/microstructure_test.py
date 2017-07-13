@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: microstructure_test.py,v $
-# $Revision: 1.2.16.10 $
-# $Author: langer $
-# $Date: 2014/12/08 19:43:08 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -114,7 +110,7 @@ class OOF_Microstructure(unittest.TestCase):
         ms_0 = getMicrostructure("three")
         ms_1 = getMicrostructure("four")
         self.assertEqual(ms_0.sizeInPixels(), ms_1.sizeInPixels())
-        self.assertEqual(ms_0.volumeOfPixels(), ms_1.volumeOfPixels())
+        self.assertEqual(ms_0.volumeOfVoxels(), ms_1.volumeOfVoxels())
         self.assertEqual(ms_0.size(), ms_1.size())
 
     # Uses New, does not make assumptions about existing microstructures.

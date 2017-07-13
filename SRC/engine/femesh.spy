@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: femesh.spy,v $
-# $Revision: 1.50.2.18 $
-# $Author: langer $
-# $Date: 2014/11/05 16:54:24 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -36,6 +32,16 @@ def _FEMeshPtr_getNodes(self):
 
 FEMeshPtr.getNodes = _FEMeshPtr_getNodes
 
+## TODO: All of the data added to the class here in _FEMesh___init__
+## belongs in the MeshContext instead.  The old comment here about
+## FEMesh objects never being returned from C++ to Python, so that it
+## was safe to add data to FEMesh, is not true.  CSubProblems have a
+## get_mesh() method.  The right thing to do is to put this data (if
+## it's needed at all) in MeshContext, *don't* override
+## FEMesh.__init__, and *don't* monkeypatch CSubProblem.set_mesh or
+## CSubProblem.get_mesh.
+##
+## Here's the old comment:
 # Over-ride for the FEMesh initializer.  FEMesh objects are only
 # created in Python, and never returned from C++ to Python.  That
 # means that the extra data can be in the FEMesh object, and *not*
@@ -45,6 +51,8 @@ def _FEMesh___init__(self, microstructure, order):
     self.this = femeshc.new_FEMesh(microstructure)
     FEMeshPtr.__init__(self, self.this)
     self.thisown = 1
+
+    # Code from AMR or interfaces, not used (yet) in 3D.
 
     # order of femesh
     self._order = order

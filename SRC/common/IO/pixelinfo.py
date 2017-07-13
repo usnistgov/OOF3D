@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: pixelinfo.py,v $
-# $Revision: 1.22.18.11 $
-# $Author: fyc $
-# $Date: 2014/07/22 17:56:01 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,
@@ -126,7 +122,7 @@ class PixelInfoToolbox(toolbox.Toolbox):
                     self.mousepoint)
             else:
                 self.point = None
-            switchboard.notify(self) # caught by GUI toolbox, PixelInfoDisplay
+            switchboard.notify(self) # caught by GUI toolbox, PixelInfoToolboxGUI
             switchboard.notify('redraw')
 
         def queryPixelDirectly(self, menuitem, voxel):

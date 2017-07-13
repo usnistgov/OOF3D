@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: crefinementcriterion.spy,v $
-# $Revision: 1.1.2.3 $
-# $Author: langer $
-# $Date: 2014/09/16 00:42:27 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -114,6 +110,18 @@ cregisteredclass.Registration(
     discussion= """<para>
     Refine all segments of the elements in the given element group.
     </para>""")
+
+cregisteredclass.Registration(
+    'Single Element',
+    RefinementTargetsPtr,
+    CheckSingleElement,
+    ordering=1.55,
+    params=[
+        parameter.IntParameter(
+            'index', 0, tip='Index of the element to be refined')],
+    tip="Refine a single element.",
+    components=('Element',)
+    )
 
 cregisteredclass.Registration(
     'Heterogenous Elements',

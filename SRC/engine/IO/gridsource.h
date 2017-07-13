@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: gridsource.h,v $
-// $Revision: 1.1.2.7 $
-// $Author: langer $
-// $Date: 2014/03/14 21:14:43 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -92,5 +88,61 @@ vtkSmartPointer<MeshGridSource> newMeshGridSource();
 // Typedefs used in swig files.
 typedef vtkSmartPointer<SkeletonGridSource> SkeletonGridSourcePtr;
 typedef vtkSmartPointer<MeshGridSource> MeshGridSourcePtr;
+
+#ifdef DEBUG
+
+// Although SkeletonGridSource can be used to draw segments,
+// SkeletonSegmentGridSource is used when its necessary to filter by
+// segments instead of elements. TODO: Should probably be derived from
+// SkeletonGridSource instead of from SkelMeshSource.
+
+class SkeletonSegmentGridSource : public SkelMeshSource {
+public:
+  vtkTypeRevisionMacro(SkeletonSegmentGridSource, SkelMeshSource);
+  void PrintSelf(std::ostream&, vtkIndent);
+  static SkeletonSegmentGridSource *New();
+  vtkSetMacro(skeleton, CSkeletonBase*);
+  vtkGetMacro(skeleton, CSkeletonBase*);
+  vtkSetMacro(Filter, SkeletonFilter*);
+  vtkGetMacro(Filter, SkeletonFilter*);
+protected:
+  SkeletonSegmentGridSource();
+  virtual ~SkeletonSegmentGridSource() {}
+  CSkeletonBase *skeleton;
+  SkeletonFilter *Filter;
+  virtual bool GetGrid(vtkUnstructuredGrid*);
+private:
+  SkeletonSegmentGridSource(const SkeletonSegmentGridSource&) = delete;
+  void operator=(const SkeletonSegmentGridSource&) = delete;
+};
+
+vtkSmartPointer<SkeletonSegmentGridSource> newSkeletonSegmentGridSource();
+
+typedef vtkSmartPointer<SkeletonSegmentGridSource> SkeletonSegmentGridSourcePtr;
+
+class SkeletonEdgeDiffGridSource : public SkelMeshSource {
+public:
+  vtkTypeRevisionMacro(SkeletonEdgeDiffGridSource, SkelMeshSource);
+  void PrintSelf(std::ostream&, vtkIndent);
+  static SkeletonEdgeDiffGridSource *New();
+  vtkSetMacro(skeleton, CSkeletonBase*);
+  vtkGetMacro(skeleton, CSkeletonBase*);
+  vtkSetMacro(other, CSkeletonBase*);
+  vtkGetMacro(other, CSkeletonBase*);
+protected:
+  SkeletonEdgeDiffGridSource();
+  virtual ~SkeletonEdgeDiffGridSource() {}
+  CSkeletonBase *skeleton;
+  CSkeletonBase *other;
+  virtual bool GetGrid(vtkUnstructuredGrid*);
+private:
+  SkeletonEdgeDiffGridSource(const SkeletonEdgeDiffGridSource&) = delete;
+  void operator=(const SkeletonEdgeDiffGridSource&) = delete;
+};
+
+vtkSmartPointer<SkeletonEdgeDiffGridSource> newSkeletonEdgeDiffGridSource();
+typedef vtkSmartPointer<SkeletonEdgeDiffGridSource> SkeletonEdgeDiffGridSourcePtr;
+
+#endif // DEBUG
 
 #endif // GRIDSOURCE_H

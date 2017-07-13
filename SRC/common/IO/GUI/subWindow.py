@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: subWindow.py,v $
-# $Revision: 1.42.2.3 $
-# $Author: langer $
-# $Date: 2014/10/17 21:48:05 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

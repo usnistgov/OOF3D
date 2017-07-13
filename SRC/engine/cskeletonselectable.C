@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cskeletonselectable.C,v $
-// $Revision: 1.1.4.66 $
-// $Author: fyc $
-// $Date: 2015/01/07 15:53:10 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -428,15 +424,6 @@ void CSkeletonSelectable::removeDown(const std::string &group,
 {
   // TODO 3.1: Why is this done unconditionally?  Shouldn't it check that
   // none of the parents are in the group, ala deselectChildren?
-  //
-  //I think it is fine here. Because you don't need to check that the parents
-  //are in the group or not because you are removing down.
-  for(CSkeletonSelectableList::iterator it=parents.begin();
-      it!=parents.end(); ++it) 
-    {
-      if((*it)->groups->count(group) != 0)
-  return;
-    }
   groups->erase(group);
   CGroupTracker *tracker = dynamic_cast<CGroupTracker*>(*begin);
   assert(tracker != 0);		// *begin can't be a deputy

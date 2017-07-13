@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: activeareamenu.py,v $
-# $Revision: 1.5.18.3 $
-# $Author: langer $
-# $Date: 2014/09/15 15:08:54 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,

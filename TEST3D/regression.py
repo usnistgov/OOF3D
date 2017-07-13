@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: regression.py,v $
-# $Revision: 1.2.8.35 $
-# $Author: langer $
-# $Date: 2014/10/03 17:44:57 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -37,7 +33,8 @@ test_module_names = [
     "fundamental_test",
     "microstructure_test",
     "image_test",
-    "pixel_test",
+    "pixel_test",               # voxel selection and grouping
+    "voxel_test",               # voxel set boundaries & clipping
     "activearea_test",
     #"microstructure_extra_test", # saving options, etc.  See TODO in test file
     "matrix_test",
@@ -112,11 +109,11 @@ if __name__=="__main__":
     try:
         opts,args = getopt.getopt(sys.argv[1:],"f:a:t:o:d",
                                   ["from=", "after=", "to=", "oofargs=",
-                                   "forever", "debug", "backwards",
+                                   "forever", "debug", "backwards", "noclean",
                                    "dryrun"])
     except getopt.GetoptError, err:
         print str(err)
-        print "Usage: regression.py [--from <starttest> | --after <starttest>] [--to <endtest>] [--forever] [--oofargs <oofargs>] [--debug] [--backwards] [tests]"
+        print "Usage: regression.py [--from <starttest> | --after <starttest>] [--to <endtest>] [--forever] [--oofargs <oofargs>] [--debug] [--noclean] [--backwards] [tests]"
         print "       Don't use --from or --to if tests are listed explicitly."
         sys.exit(2)
 
@@ -127,6 +124,7 @@ if __name__=="__main__":
     forever = False
     debug = False
     backwards = False
+    noclean = False
 
     global dryrun
     dryrun = False
@@ -162,6 +160,8 @@ if __name__=="__main__":
             debug = True
         elif o == "--backwards":
             backwards = True
+        elif o == "--noclean":
+            noclean = True
         elif o in ("-d", "--dryrun"):
             dryrun = True
 
@@ -227,8 +227,10 @@ if __name__=="__main__":
         OOF.File.Quit()
     finally:
         if ok:
-            os.rmdir(tmpdir)
             print >> sys.stderr, "All tests completed successfully!"
+            if not noclean:
+                os.rmdir(tmpdir)
         else:
             print >> sys.stderr, "Tests failed."
+        if noclean or not ok:
             print >> sys.stderr, "Temp dir", tmpdir, "was not removed."

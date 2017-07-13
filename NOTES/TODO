@@ -2,7 +2,7 @@
 // $RCSfile: TODO,v $
 // $Revision: 1.1 $
 // $Author: reida $
-// $Date: 2001/12/03 22:15:30 $
+// $Date: 2001-12-03 22:15:30 $
 
 
 Encapsulate Field data (defined_index, etc) into a FieldData struct,

@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: viewertoolbox.py,v $
-# $Revision: 1.4.18.26 $
-# $Author: langer $
-# $Date: 2014/09/22 18:53:09 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -42,7 +38,8 @@ class ViewNameParameter(parameter.StringParameter):
 
 # Switchboard signals:
 # "view changed" (gfxwindow, name) 
-#    sent by _updateView, _clipPlanesChanged, saveView
+#    sent by ooflib.common.IO.gxwindow.updateview , which is called
+#    here by _updateView, _clipPlanesChanged, saveView
 #      _updateView called by dollyIn, etc, restoreNamedView
 #      _clipPlanesChanged called by newClipCB, editClipCB, etc,
 #    caught by ViewerToolbox3DGUI - updates view chooser, camera info, historian
@@ -162,6 +159,10 @@ class ViewNameParameter(parameter.StringParameter):
 class ViewerToolbox(toolbox.Toolbox):
     def __init__(self, gfxwindow):
         toolbox.Toolbox.__init__(self, 'Viewer', gfxwindow)
+        self._currentClipPlane = None
+        self._currentClipPlaneNo = None
+        self.invertClip = False
+        self.suppressClip = False
     tip="Seeing is believing."
     discussion="TODO 3.1: write this."
 
@@ -296,7 +297,16 @@ class ViewerToolbox(toolbox.Toolbox):
             clipmenu.addItem(oofmenu.OOFMenuItem(
                     "SuppressOff",
                     callback=self.clipSuppressOffCB))
-                         
+            clipmenu.addItem(oofmenu.OOFMenuItem(
+                "Select",
+                callback=self.clipSelectCB,
+                params=[parameter.IntParameter("plane")]
+            ))
+            clipmenu.addItem(oofmenu.OOFMenuItem(
+                "Unselect",
+                callback=self.clipUnselectCB
+            ))
+            
             menu.addItem(oofmenu.OOFMenuItem(
                     "Restore_View",
                     callback=self.restoreView,
@@ -319,8 +329,10 @@ class ViewerToolbox(toolbox.Toolbox):
                     ))
 
         def _updateView(self):
+            # GhostGfxWindow.updateview() renders the canvas and
+            # issues "view almost changed" and "view changed"
+            # switchboard signals.
             self.gfxwindow().updateview()
-            switchboard.notify("view changed", self.gfxwindow())
 
         def dollyIn(self, menuitem, factor):
             self.gfxwindow().oofcanvas.dolly(factor)
@@ -377,13 +389,27 @@ class ViewerToolbox(toolbox.Toolbox):
             self.gfxwindow().oofcanvas.zoom_fill()
             self._updateView()
 
-        def _clipPlanesChanged(self, viewobj, viewname=None):
+        #=--=##=--=##=--=##=--=#
+
+        # Clipping plane stuff
+
+        def _clipPlanesChanged(self, viewobj, plane):
             # The "true" arg tells set_view to set the clip planes.
             mainthread.runBlock(self.gfxwindow().oofcanvas.set_view,
                                 (viewobj, True))
+
+            ## TODO: Do we need both "clip selection changed" and
+            ## "clip planes changed"?  The GUI toolbox uses the first
+            ## to set the selection state in the list of planes
+            ## (without rebuilding the list), and install the mouse
+            ## handler.  It uses the second to rebuild the list of
+            ## planes.  It wouldn't be bad to rebuild the list even if
+            ## only the selection state has changed.
+            
+            switchboard.notify((self, "clip selection changed"), plane)
+            # updateview sends "view changed" sb signal and renders
             self.gfxwindow().updateview()
-            switchboard.notify("view changed", self.gfxwindow())
-            switchboard.notify("clip planes changed", self.gfxwindow())
+            switchboard.notify((self, "clip planes changed"), plane)
 
         def newClipCB(self, menuitem, normal, offset):
             self.gfxwindow().acquireGfxLock()
@@ -391,103 +417,168 @@ class ViewerToolbox(toolbox.Toolbox):
                 plane = clip.ClippingPlane(normal.cdirection, offset)
                 viewobj = mainthread.runBlock(
                     self.gfxwindow().oofcanvas.get_view)
+                nplanes = viewobj.nClipPlanes()
                 viewobj.addClipPlane(plane)
-                self._clipPlanesChanged(viewobj)
+                self.setCurrentClipPlane(plane)
+                self._currentClipPlaneNo = nplanes
+                self._clipPlanesChanged(viewobj, plane)
+                # switchboard.notify((self, "new clip plane"), plane)
             finally:
                 self.gfxwindow().releaseGfxLock()
+                
         def editClipCB(self, menuitem, plane, normal, offset):
+            # This callback is called when the command is read from a
+            # script, but the mouse handler *doesn't* call the
+            # callback.  It just logs the command.  See
+            # ClipPlaneClickAndDragMouseHander.processUp() in
+            # viewertoolbox3dGUI.py.
             self.gfxwindow().acquireGfxLock()
             try:
                 viewobj = mainthread.runBlock(
                     self.gfxwindow().oofcanvas.get_view)
                 newplane = clip.ClippingPlane(normal.cdirection, offset)
                 viewobj.replaceClipPlane(plane, newplane)
-                self._clipPlanesChanged(viewobj)
+                self.setCurrentClipPlane(newplane.clone())
+                self._clipPlanesChanged(viewobj, self._currentClipPlane)
             finally:
                 self.gfxwindow().releaseGfxLock()
+                
         def delClipCB(self, menuitem, plane):
             self.gfxwindow().acquireGfxLock()
             try:
                 viewobj = mainthread.runBlock(
                     self.gfxwindow().oofcanvas.get_view)
                 viewobj.removeClipPlane(plane)
-                self._clipPlanesChanged(viewobj)
+                self.setCurrentClipPlane(None)
+                self._currentClipPlaneNo = None
+                self._clipPlanesChanged(viewobj, None)
             finally:
                 self.gfxwindow().releaseGfxLock()
+
         def clipDisableCB(self, menuitem, plane):
             self.gfxwindow().acquireGfxLock()
             try:
                 viewobj = mainthread.runBlock(
                     self.gfxwindow().oofcanvas.get_view)
                 viewobj.disableClipPlane(plane)
-                self._clipPlanesChanged(viewobj)
+                self.setCurrentClipPlane(viewobj.getClipPlane(plane).clone())
+                self._clipPlanesChanged(viewobj, self._currentClipPlane)
             finally:
                 self.gfxwindow().releaseGfxLock()
+                
         def clipEnableCB(self, menuitem, plane):
             self.gfxwindow().acquireGfxLock()
             try:
                 viewobj = mainthread.runBlock(
                     self.gfxwindow().oofcanvas.get_view)
                 viewobj.enableClipPlane(plane)
-                self._clipPlanesChanged(viewobj)
+                self.setCurrentClipPlane(viewobj.getClipPlane(plane).clone())
+                self._clipPlanesChanged(viewobj, self._currentClipPlane)
             finally:
                 self.gfxwindow().releaseGfxLock()
+
+        def clipSelectCB(self, menuitem, plane):
+            self.gfxwindow().acquireGfxLock()
+            try:
+                viewobj = mainthread.runBlock(
+                    self.gfxwindow().oofcanvas.get_view)
+                # The View object here will go out of scope before
+                # we're done using the ClippingPlane that it contains,
+                # so clone the plane.
+                self.setCurrentClipPlane(viewobj.getClipPlane(plane).clone())
+                self._currentClipPlaneNo = plane
+                self.gfxwindow().toolbar.setSelect()
+                switchboard.notify((self, "clip selection changed"),
+                                   self._currentClipPlane)
+            finally:
+                self.gfxwindow().releaseGfxLock()
+                
+        def clipUnselectCB(self, menuitem):
+            self.gfxwindow().acquireGfxLock()
+            try:
+                self.setCurrentClipPlane(None)
+                self._currentClipPlaneNo = None
+                switchboard.notify((self, "clip selection changed"), None)
+            finally:
+                self.gfxwindow().releaseGfxLock()
+
+        def currentClipPlane(self):
+            return self._currentClipPlane
+
+        def currentClipPlaneNo(self):
+            return self._currentClipPlaneNo
+
+        def setCurrentClipPlane(self, plane):
+            self._currentClipPlane = plane
+                
         def clipFlipCB(self, menuitem, plane):
             self.gfxwindow().acquireGfxLock()
             try:
                 viewobj = mainthread.runBlock(
                     self.gfxwindow().oofcanvas.get_view)
                 viewobj.flipClipPlane(plane)
-                self._clipPlanesChanged(viewobj)
+                self.setCurrentClipPlane(viewobj.getClipPlane(plane).clone())
+                self._clipPlanesChanged(viewobj, self._currentClipPlane)
             finally:
                 self.gfxwindow().releaseGfxLock()
+                
         def clipUnflipCB(self, menuitem, plane):
             self.gfxwindow().acquireGfxLock()
             try:
                 viewobj = mainthread.runBlock(
                     self.gfxwindow().oofcanvas.get_view)
                 viewobj.unflipClipPlane(plane)
-                self._clipPlanesChanged(viewobj)
+                self.setCurrentClipPlane(viewobj.getClipPlane(plane).clone())
+                self._clipPlanesChanged(viewobj, self._currentClipPlane)
             finally:
                 self.gfxwindow().releaseGfxLock()
+
         def clipInvertOnCB(self, menuitem):
             self.gfxwindow().acquireGfxLock()
             try:
                 viewobj = mainthread.runBlock(
                     self.gfxwindow().oofcanvas.get_view)
                 viewobj.invertClipOn()
-                self._clipPlanesChanged(viewobj)
+                self.invertClip = True;
+                self._clipPlanesChanged(viewobj, self._currentClipPlane)
             finally:
                 self.gfxwindow().releaseGfxLock()
+                
         def clipInvertOffCB(self, menuitem):
             self.gfxwindow().acquireGfxLock()
             try:
                 viewobj = mainthread.runBlock(
                     self.gfxwindow().oofcanvas.get_view)
                 viewobj.invertClipOff()
-                self._clipPlanesChanged(viewobj)
+                self.invertClip = False
+                self._clipPlanesChanged(viewobj, self._currentClipPlane)
             finally:
                 self.gfxwindow().releaseGfxLock()
-
+                
         def clipSuppressOnCB(self, menuitem):
             self.gfxwindow().acquireGfxLock()
             try:
                 viewobj = mainthread.runBlock(
                     self.gfxwindow().oofcanvas.get_view)
+                self.suppressClip = True
                 viewobj.suppressClipOn()
-                self._clipPlanesChanged(viewobj)
+                self._clipPlanesChanged(viewobj, self._currentClipPlane)
             finally:
                 self.gfxwindow().releaseGfxLock()
+                
         def clipSuppressOffCB(self, menuitem):
             self.gfxwindow().acquireGfxLock()
             try:
                 viewobj = mainthread.runBlock(
                     self.gfxwindow().oofcanvas.get_view)
+                self.suppressClip = False
                 viewobj.suppressClipOff()
-                self._clipPlanesChanged(viewobj)
+                self._clipPlanesChanged(viewobj, self._currentClipPlane)
             finally:
                 self.gfxwindow().releaseGfxLock()
 
+        #=--=##=--=##=--=##=--=#
+        
         def saveView(self, menuitem, name):
             self.gfxwindow().acquireGfxLock()
             try:
@@ -498,6 +589,7 @@ class ViewerToolbox(toolbox.Toolbox):
                 switchboard.notify("view changed", self.gfxwindow())
             finally:
                 self.gfxwindow().releaseGfxLock()
+                
         def restoreView(self, menuitem, view):
             # Restore_View is invoked by the Next and Prev buttons in
             # the viewer toolbox. 
@@ -509,8 +601,9 @@ class ViewerToolbox(toolbox.Toolbox):
                                     (view, False))
                 self.gfxwindow().updateview()
                 switchboard.notify("view restored", self.gfxwindow())
+
                 ## TODO OPT: restoring clip planes should be a separate
-                ## operation
+                ## operation from restoring other view parameters.
                 # switchboard.notify("clip planes changed", self.gfxwindow())
             finally:
                 self.gfxwindow().releaseGfxLock()
@@ -528,10 +621,11 @@ class ViewerToolbox(toolbox.Toolbox):
             oldView = mainthread.runBlock(self.gfxwindow().oofcanvas.get_view)
             nclip = oldView.nClipPlanes()
             for i in range(nclip):
-                newView.addClipPlane(oldView.getClipPlane(i))
+                newView.addClipPlane(oldView.getClipPlane(i).clone())
             mainthread.runBlock(self.gfxwindow().oofcanvas.set_view,
                                 (newView, False))
             self._updateView()
+            switchboard.notify("completed view change", self.gfxwindow())
         def setView(self, viewname): 
             # This is called by the GUI toolbox and the GUI toolbar to
             # invoke the menu command that restores the view.
@@ -546,6 +640,7 @@ class ViewerToolbox(toolbox.Toolbox):
             else:
                 raise ooferror.ErrUserError(
                     "Please don't delete the predefined Views.")
+
 
     
 

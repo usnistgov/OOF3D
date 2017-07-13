@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: gridlayers.h,v $
-// $Revision: 1.1.2.4 $
-// $Author: langer $
-// $Date: 2014/11/25 19:20:08 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -31,6 +27,10 @@
 #include <vtkSmartPointer.h>
 
 class GridSource;
+
+// WireGridCanvasLayer draws the wire-frame representation of a grid
+// of 3D cells.  To draw a grid of 1D cells, use
+// SegmentGridCanvasLayer
 
 class WireGridCanvasLayer : public OOFCanvasLayer {
 protected:
@@ -62,6 +62,37 @@ public:
   virtual vtkSmartPointer<vtkDataSet> get_pickable_dataset();
   virtual vtkSmartPointer<vtkPoints> get_pickable_points();
   virtual vtkSmartPointer<vtkAbstractCellLocator> get_locator();
+
+  vtkSmartPointer<GridSource> source() { return gridsource; }
+};
+
+// SegmentGridCanvasLayer displays a grid of line segments.  To
+// display the edges of a grid of 3D cells, use WireGridCanvasLayer.
+
+class SegmentGridCanvasLayer : public OOFCanvasLayer {
+protected:
+  vtkSmartPointer<GridSource> gridsource;
+  vtkSmartPointer<vtkActor> edgeActor;
+  vtkSmartPointer<vtkDataSetMapper> edgeMapper;
+  // vtkSmartPointer<oofCellLocator> locator;
+  vtkSmartPointer<vtkTableBasedClipDataSet> edgeClipper;
+public:
+  // TODO: Should the ctor arg be a SkeletonSegmentGridSource or
+  // SegmentGridSource instead of a generic GridSource?
+  SegmentGridCanvasLayer(GhostOOFCanvas*, const std::string&,
+			 vtkSmartPointer<GridSource>);
+  ~SegmentGridCanvasLayer();
+  virtual const std::string &classname() const;
+  virtual void setModified();
+  virtual void start_clipping();
+  virtual void stop_clipping();
+  virtual void set_clip_parity(bool);
+  void set_color(const CColor &lineColor);
+  void set_lineWidth(int lineWidth);
+  // virtual vtkSmartPointer<vtkProp3D> get_pickable_prop3d();
+  // virtual vtkSmartPointer<vtkDataSet> get_pickable_dataset();
+  // virtual vtkSmartPointer<vtkPoints> get_pickable_points();
+  // virtual vtkSmartPointer<vtkAbstractCellLocator> get_locator();
 
   vtkSmartPointer<GridSource> source() { return gridsource; }
 };

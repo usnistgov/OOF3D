@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: findgauss.C,v $
-// $Revision: 1.1 $
-// $Author: roosen $
-// $Date: 2001/11/30 19:59:09 $
 
 // Find Gauss-Legendre integration points and weights
 // Based on the Numerical Recipes routine gauleg

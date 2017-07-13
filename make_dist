@@ -1,8 +1,4 @@
 #!/usr/bin/env python
-# $RCSfile: make_dist,v $
-# $Revision: 1.7.8.9 $
-# $Author: langer $
-# $Date: 2014/07/07 22:06:27 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -13,58 +9,62 @@
 # oof_manager@nist.gov. 
 
 
-# Script for building a distribution of OOF2 using python distutils.
-# Takes care of cvs and distutils stuff, and sets the version number
-# in the packaged source code.
+# Script for building a distribution of OOF2 or OOF3D.  Takes care of
+# git stuff, and sets the version number in the packaged source code.
+
+# This script assumes that the version to be packaged is the HEAD of
+# the master branch on github.  The previous cvs versions of this
+# script allowed a release to be built from any cvs branch.  If we
+# want the oof version number to be stored in the committed versions
+# of setup.py and oofversion.py, however, then we can only set the oof
+# version number on one branch.  If we released from different branch,
+# we'd get a conflict if and when the branch was later merged into
+# master.  This wasn't so much of a problem in cvs, because the
+# repository was private, and so it didn't matter if the branch number
+# was never set in the committed files.
 
 # The options are:
 #    --version     a string of nonpunctuation characters and dots (required)
 #    --comment     a string containing no dots (optional)
-#    --branch      a cvs branch tag (optional)
 
 import getopt
 import os
 import os.path
 import shutil
+import subprocess
 import sys
 import tempfile
 import time
 
-options = ['version=', 'comment=', 'branch=', 'dryrun', 'help', 'noclean',
-           'notag']
+
+def osCall(*args):
+    print >> sys.stderr, "--->", ' '.join(args)
+    status = subprocess.call(args)
+    if status != 0:
+        sys.exit(status)
+        
+options = ['version=', 'comment=', 'dryrun', 'help', 'noclean', 'branch=']
 
 def state_options_and_quit():
     print >> sys.stderr,  \
 """Options are:
-version=<version number>  version number can contain numbers, letters, and dots
-comment=<comment>         comment cannot contain dots or spaces 
-branch=<cvs tag>          build from the given branch, not the cvs head
-  comment and branch are optional, version is required.
+--version=<version number> Version number.
+--comment=<comment>        Optional comment, cannot contain dots or spaces 
 
 Debugging options are:
-noclean                   don't remove temp directory
-notag                     don't tag files
-dryrun                    don't actually do anything in distutils
-help                      print this
+--noclean              Don't remove temp directory
+--dryrun               Don't actually commit, tag, or push in git
+--branch=<branchname>  Use branch, not master.  Implies --dryrun and --noclean
+                       Real distributions are always made without --branch.
+--help                 Print this
 """
     sys.exit()
-
-cvsmodule = 'OOF2'
-
-def run_cmd(*args):
-    cmd = ' '.join(args)
-    print >> sys.stderr, cmd
-    status = os.system(cmd)
-    if status != 0:
-        print >> sys.stderr, "make_dist failed."
-        sys.exit(status)
 
 version = None
 comment = None
 branch = None
 dryrun = False
 noclean = False
-notag = False
 dimension = 2
 
 try:
@@ -78,71 +78,78 @@ for opt in optlist:
         version = opt[1]
     elif opt[0] == '--comment':
         comment = opt[1]
-    elif opt[0] == '--branch':
-        branch = opt[1]
     elif opt[0] == '--noclean':
         noclean = True
-    elif opt[0] == '--notag':
-        notag = True
+    elif opt[0] == '--dryrun':
+        dryrun = True
+    elif opt[0] == '--branch':
+        branch = opt[1]
+        dryrun = True
+        noclean = True
     elif opt[0] == '--help':
         state_options_and_quit()
 
-print >> sys.stderr, "Building OOF2 distribution named", version
-
 startdir = os.getcwd()
 
-# Find the name of the CVS Root.
-cvsrootfile = file(os.path.join('CVS','Root'), 'r')
-cvsroot = cvsrootfile.readline().strip()
+# Are we building oof2 or oof3d? This info is stored in
+# distname.distname.  We get this from the directory in which
+# make_dist is being run.
+import distname
+
+print >> sys.stderr, \
+    "Building", distname.distname, "distribution named", version
+
 
 # Create a temp directory.
-tempdir = tempfile.mkdtemp(prefix='oof2-tempdir-'+version+'-')
+tempdir = tempfile.mkdtemp(prefix='oof-tempdir-'+version+'-')
 print >> sys.stderr, "Using temp directory", tempdir
 
-# cd to the temp directory
-os.chdir(tempdir)
-
 try:
-    # Check out a copy of OOF2 in the temp directory
-    cmd = ['cvs -d', cvsroot, 'checkout -P']
-    if branch:
-        cmd.extend(['-r', branch])
-    cmd.append(cvsmodule)
-    run_cmd(*cmd)
+    # Get the git repository location
+    proc = subprocess.Popen(['git', 'remote', 'get-url', 'origin'],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdoutdata, stderrdata = proc.communicate()
+    if stderrdata:
+        print "*** Failed to get git repository!", stderrdata.strip()
+        sys.exit(1)
+    giturl = stdoutdata.strip()
 
-    # Clean out unwanted leftover empty directories.  (This shouldn't be
-    # necessary since we're using the "-P" flag with "cvs checkout", but
-    # it seems not to be working, at least on OS X.)
-    run_cmd('cvs update -P')
+    # cd to the temp directory
+    os.chdir(tempdir)
 
-    os.chdir(cvsmodule)
+    # Clone the git repository into a directory whose name is given by
+    # the oof version number: oof2-version or oof3d-version
+    distdir = distname.distname + "-" + version
+    # # Use --quiet so that stderr is empty if the command succeeds.
+    # cmd = ['git', 'clone', '--quiet', giturl, distdir]
+    if branch is None:
+        cmd = ['git', 'clone', giturl, distdir]
+    else:
+        cmd = ['git', 'clone', '--branch', branch, giturl, distdir]
+    osCall(*cmd)
 
-    # Get version-dependent information
+    # cd to the cloned source code directory
+    os.chdir(distdir)
+
     import localexclusions
-    import distname
-
-    # Create a cvs tag for the distribution, and tag the files.  This is
-    # slow, so use --notag if just testing the script, but don't use
-    # --notag when creating an actual distribution.
-    if not notag:
-        if comment:
-            tag = "package-" + version + "--" + comment
-        else:
-            tag = "package-" + version
-        tag = tag.replace('.', '-')
-        tag = tag.replace(' ', '-')
-        if branch:
-            run_cmd('cvs tag -c -r', branch, tag)
-        else:
-            run_cmd('cvs tag -c', tag)
-
-    # Set the version number
+    
+    # Set the version number in setup.py and SRC/common/oofversion.py.
+    # The sed command finds a line beginning with
+    # "version_from_make_dist" and replaces everything after the
+    # equals sign with a string containing the version number.
+    sedcmd = '/^version_from_make_dist/s/=.*/= \\\"%s\\\"/' % version
     tmpfile, tmpfilename = tempfile.mkstemp(dir=tempdir)
-    run_cmd('sed "s?unreleased?%s?" setup.py > %s' % (version, tmpfilename))
+    if subprocess.call(["sed", sedcmd, "setup.py"], stdout=tmpfile) != 0:
+        sys.exit(proc.returncode)
+    os.close(tmpfile)
     print >> sys.stderr, "Moving", tmpfilename, "to setup.py"
     os.rename(tmpfilename, 'setup.py')
-    run_cmd('sed "s?(unreleased)?%s?" SRC/common/oofversion.py > %s'
-            % (version, tmpfilename))
+
+    tmpfile, tmpfilename = tempfile.mkstemp(dir=tempdir)
+    if subprocess.call(['sed', sedcmd, 'SRC/common/oofversion.py'],
+                       stdout=tmpfile) != 0:
+        sys.exit(proc.returncode)
+    os.close(tmpfile)
     print >> sys.stderr, "Moving", tmpfilename, "to SRC/common/oofversion.py"
     os.rename(tmpfilename, 'SRC/common/oofversion.py')
 
@@ -151,32 +158,28 @@ try:
     print >> timefile, time.ctime()
     timefile.close()
 
+    
+    # Make the MANIFEST file after moving back up to the temp
+    # directory.  Moving up to the temp directory means that the path
+    # names in the file will all start with "oof{2,3d}-version/",
+    # which is nice and modular.
+
+    # We aren't using distutils to automatically create a MANIFEST
+    # file because it wants to include the swig output files.  Once
+    # we've built the file ourselves, there's really no need to use
+    # distutils here at all.
+    
     os.chdir(tempdir)
-
-    # Change the name of the top directory to "oof2-version" or
-    # "oof3d-version", which ever is appropriate.
-
-    distdir = distname.distname + "-" + version
-    os.rename(cvsmodule, distdir)
-
-    # Make the MANIFEST file. 
-
-    # If we don't provide an MANIFEST, or let distutils build it from a
-    # MANIFEST.in template, then it tries to include the swig output files
-    # since they're contained in setup.py's packages list.  But those
-    # files don't exist in cvs, so the distutils sdist command will fail.
-    # We have to construct an explicit list of files to include, which is
-    # everything that's in cvs except for the files listed below:
-
-
+    
     globalExcludeDirs = [
-        "CVS"
+        ".git"
     ] + localexclusions.globalExcludeDirs
 
     excludeDirs = [
         "math", 
         "NOTES", 
         "3DSandbox",
+        "SRC/DOC",
         "SRC/TEST-DATA", "SRC/TEST-SRC",
         "SRC/common/EXTRA",
         "SRC/engine/EXTRA",
@@ -185,7 +188,7 @@ try:
     ] + localexclusions.excludeDirs
 
     globalExcludeFiles = [
-        ".cvsignore"
+        ".gitignore"
     ] + localexclusions.globalExcludeFiles
 
     excludeFiles = [
@@ -214,15 +217,63 @@ try:
                     fname not in excludeDirs):
                     getFiles(fname, manifest)
 
-    manifest = open("MANIFEST", "w")
+    manifest = open(os.path.join(distdir, "MANIFEST"), "w")
     getFiles(distdir, manifest)   
     manifest.close()
 
+    # Check all the modifications into git, and tag with the version
+    # number.  It's necessary to go back to the distribution directory
+    # to use git.
+    print >> sys.stderr, "Changing directory to", distdir
+    os.chdir(distdir)
+    osCall('git', 'add', 'SRC/common/oofversion.py', 'setup.py')
+        
+    commit_msg = ("Building " + distname.distname + " release version " +
+                  version)
+    if comment:
+        commit_msg += " -- " + comment
+    tag = distname.distname + "-" + version
+    if comment:
+        oldtag = tag
+        comment.replace(' ', '-')
+        tag += "--" + comment
+    # Check and/or fix the tag if it's not legal
+    proc = subprocess.Popen(['git', 'check-ref-format', '--normalize',
+                             '--allow-onelevel', tag],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdoutdata, stderrdata = proc.communicate()
+    if proc.returncode == 0:    # success
+        tag = stdoutdata.strip()
+    else:
+        print >> sys.stderr, "Failed to convert '%s' to a legal tag." % tag
+        print >> sys.stderr, "Using '%s' instead." % oldtag
+        tag = oldtag
+    
+    if not dryrun:
+        osCall('git', 'commit', '-m', commit_msg)
+        osCall('git', 'tag', tag)
+        osCall('git', 'push', 'origin')        
+        osCall('git', 'push', 'origin', tag)
+    else:
+        print >> sys.stderr, "Dry run! Not running:"
+        print >> sys.stderr, '*** git commit -m %s' % commit_msg
+        print >> sys.stderr, '*** git tag', tag
+        print >> sys.stderr, '*** git push origin'
+        print >> sys.stderr, '*** git push origin %s' % tag
+    
     # Build the distribution.
-
+    os.chdir(tempdir)
     distfilename = distdir + ".tar.gz"
     print >> sys.stderr, "Distribution file is", distfilename
-    run_cmd("tar -T MANIFEST -czf", distfilename)
+
+    
+    cmd = ['tar', '-T', os.path.join(distdir, 'MANIFEST'), '-czf', distfilename]
+    osCall(*cmd)
+    # print >> sys.stderr, ' '.join(cmd)
+    # status = subprocess.call(cmd)
+    # if status != 0:
+    #     print >> sys.stderr, "tar failed!"
+    #     sys.exit(status)
     print >> sys.stderr, "Moving", distfilename, "to", startdir
     os.rename(distfilename, os.path.join(startdir, distfilename))
 
@@ -236,6 +287,6 @@ finally:
 
 print >> sys.stderr, "Done.", distfilename, "is ready."
 print >> sys.stderr, \
-"""To publish it, copy it to WEBPAGES/oof2/source and edit
-WEBPAGES/oof2/index.html.  Remember to check that the README file in
-WEBPAGES/oof2/source is up to date."""
+"""To publish it, copy it to WEBPAGES/%(dist)s/source and edit
+WEBPAGES/%(dist)s/index.html.  Remember to check that the README file in
+WEBPAGES/%(dist)s/source is up to date.""" % {'dist':distname.distname}

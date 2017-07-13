@@ -2,7 +2,7 @@
    $RCSfile: plane_stress.math,v $
    $Revision: 1.1 $
    $Author: reida $
-   $Date: 2005/07/29 21:11:45 $
+   $Date: 2005-07-29 21:11:45 $
             *)
 
 (* Mathematica file with an OOF2 work-alike which solves a 

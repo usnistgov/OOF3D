@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: bitmapdisplay.py,v $
-# $Revision: 1.16.18.21 $
-# $Author: langer $
-# $Date: 2014/12/05 21:29:10 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -24,8 +20,10 @@ from ooflib.common.IO import parameter
 from ooflib.common.IO import xmlmenudump
 
 class BitmapDisplayMethod(display.DisplayMethod):
-    def __init__(self, filter):
+    def __init__(self, filter, opacity):
         self.filter = filter
+        self.opacity = opacity
+        self.sbcallbacks = None
         display.DisplayMethod.__init__(self)
 
     def draw(self, gfxwindow, canvas): # Obsolete in 3D
@@ -34,6 +32,12 @@ class BitmapDisplayMethod(display.DisplayMethod):
 
     def layerName(self):        # redefine in derived classes
         return "Bitmap"
+
+    def destroy(self, destroy_canvaslayer):
+        if self.sbcallbacks is not None:
+            map(switchboard.removeCallback, self.sbcallbacks)
+            self.sbcallbacks = None
+        display.DisplayMethod.destroy(self, destroy_canvaslayer)
 
     def newLayer(self):
         return canvaslayers.ImageCanvasLayer(
@@ -62,6 +66,7 @@ class BitmapDisplayMethod(display.DisplayMethod):
 
     def setParams(self):
         self.canvaslayer.set_filter(self.filter)
+        self.canvaslayer.set_opacity(self.opacity)
         self.setMicrostructure()
         
     def setMicrostructure(self):
@@ -72,6 +77,8 @@ class BitmapDisplayMethod(display.DisplayMethod):
     def isImage(self):
         return True
     
+defaultImageOpacity = 1.0
+opacityRange = (0, 1, 0.05)
 
 bitmapDisplay = registeredclass.Registration(
     'Bitmap',
@@ -84,7 +91,12 @@ bitmapDisplay = registeredclass.Registration(
             "filter",
             voxelfilter.VoxelFilterPtr,
             voxelfilter.AllVoxels(),
-            tip="Voxels to include in the display.")
+            tip="Voxels to include in the display."),
+        parameter.FloatRangeParameter(
+            "opacity",
+            opacityRange,
+            defaultImageOpacity,
+            tip='Opacity of the image.')          
         ],
     whoclasses = ('Image',),
     tip="Display an Image as a bitmap.",

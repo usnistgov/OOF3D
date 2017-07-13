@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: invariant.swg,v $
-// $Revision: 1.6.18.2 $
-// $Author: langer $
-// $Date: 2014/06/27 20:30:33 $
 
 
 /* This software was produced by NIST, an agency of the U.S. government,

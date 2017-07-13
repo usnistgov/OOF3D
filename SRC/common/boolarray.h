@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: boolarray.h,v $
-// $Revision: 1.11.12.5 $
-// $Author: langer $
-// $Date: 2014/05/29 13:47:28 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

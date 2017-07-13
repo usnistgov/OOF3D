@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: logutils.py,v $
-# $Revision: 1.9 $
-# $Author: langer $
-# $Date: 2008/10/15 15:09:00 $
 
 # Some of this stuff might want to live elsewhere, eventually... It's
 # stuff that has been moved out of gtklogger.py to keep the public API

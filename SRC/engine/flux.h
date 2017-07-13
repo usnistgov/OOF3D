@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: flux.h,v $
-// $Revision: 1.48.4.6 $
-// $Author: langer $
-// $Date: 2014/12/14 22:49:19 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

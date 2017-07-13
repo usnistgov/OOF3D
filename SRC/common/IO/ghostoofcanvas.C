@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: ghostoofcanvas.C,v $
-// $Revision: 1.1.2.171 $
-// $Author: langer $
-// $Date: 2014/11/24 21:44:49 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -37,6 +33,7 @@
 #include <vtkDataSetMapper.h>
 #include <vtkExtractSelectedFrustum.h>
 #include <vtkPointPicker.h>
+#include <vtkPropPicker.h>
 #include <vtkProp3D.h>
 #include <vtkProp3DCollection.h>
 #include <vtkProperty.h>
@@ -60,6 +57,7 @@ GhostOOFCanvas::GhostOOFCanvas()
     exposed(false),
     rendered(false),
     axes_showing(false),
+    deactivated(false),
     render_window(vtkSmartPointer<vtkXOpenGLRenderWindow>::New()),
     renderer(vtkSmartPointer<vtkRenderer>::New()),
     axes(vtkSmartPointer<vtkAxesActor>::New()),
@@ -129,8 +127,10 @@ void GhostOOFCanvas::toggleAxes(bool show) {
 
 void GhostOOFCanvas::render() {
   // TODO OPT: Why is this called so often, for example, after Skeleton
-  // refinement?  Does it matter? 
+  // refinement?  Does it matter?
   assert(mainthread_query());
+  if(deactivated)
+    return;
   if(exposed) {
     if(contourmap_requested && contour_layer!=0 && !contourmap_showing) {
       renderer->AddViewProp(contourMapActor);
@@ -144,7 +144,7 @@ void GhostOOFCanvas::render() {
     renderLock.acquire();
     try {
       // oofcerr << "GhostOOFCanvas::render: " << this << std::endl;
-      render_window->Render(); 
+      render_window->Render();
     }
     catch(...) {
       renderLock.release();
@@ -152,6 +152,12 @@ void GhostOOFCanvas::render() {
     }
     renderLock.release();
   }
+}
+
+void GhostOOFCanvas::deactivate() {
+  // deactivate() suppresses redrawing.  It should be called at the
+  // start of the graphics window shut down sequence.
+  deactivated = true;
 }
 
 void GhostOOFCanvas::newLayer(OOFCanvasLayerBase *layer) {
@@ -506,6 +512,13 @@ void GhostOOFCanvas::elevation(double a) {
   renderer->GetActiveCamera()->Elevation(a); 
 }
 
+Coord *GhostOOFCanvas::get_camera_position_v2() const {
+  Coord *p = new Coord();
+  assert(mainthread_query());
+  renderer->GetActiveCamera()->GetPosition(p->xpointer());
+  return p;
+}
+
 Coord GhostOOFCanvas::get_camera_position() const {
   Coord p;
   assert(mainthread_query());
@@ -534,6 +547,13 @@ void GhostOOFCanvas::get_camera_view_up(double *p) const {
   renderer->GetActiveCamera()->GetViewUp(p);
 }
 
+Coord GhostOOFCanvas::get_camera_direction_of_projection_v2() const {
+  Coord p;
+  assert(mainthread_query());
+  renderer->GetActiveCamera()->GetDirectionOfProjection(p.xpointer());
+  return p;
+}
+
 void GhostOOFCanvas::get_camera_direction_of_projection(double *p) const {
   assert(mainthread_query());
   renderer->GetActiveCamera()->GetDirectionOfProjection(p);
@@ -555,7 +575,7 @@ double GhostOOFCanvas::get_camera_view_angle() const {
 // coordinates of a click are translated into a 3D position depend on
 // what's being clicked on, so there are multiple ways of doing it.
 
-Coord GhostOOFCanvas::findRayThroughPoint(const Coord &point) 
+Coord GhostOOFCanvas::findRayThroughPoint(const Coord *point) 
   const
 {
   // Given a point in world coordinates, compute the line passing
@@ -563,10 +583,335 @@ Coord GhostOOFCanvas::findRayThroughPoint(const Coord &point)
   // the line.
   vtkCamera *camera = renderer->GetActiveCamera();
   Coord cameraPos(camera->GetPosition());
-  Coord ray = point - cameraPos;
+  Coord ray = (*point) - cameraPos;
   ray /= sqrt(norm2(ray));		// normalized
   return ray;
 }
+
+
+
+Coord *GhostOOFCanvas::findClickedPositionOnActor(const Coord *click,
+						  const View *view, 
+						  OOFCanvasLayer *layer)
+{
+  // Returns the world coordinates where an actor is clicked in a
+  // layer for which get_pickable_actors() is defined. click is the
+  // physical coordinates of the mouse click, view is the current
+  // view, layer is the OOFCanvasLayer in question. Return NULL if no
+  // actor was picked.
+  assert(mainthread_query());
+
+  vtkSmartPointer<vtkActorCollection> actors = layer->get_pickable_actors();
+
+  // Assert that some collection of actors was passed by the
+  // programmer.
+  assert(actors.GetPointer() != 0);
+
+  int n = actors->GetNumberOfItems();
+  bool *actorIsRendered = new bool[n];
+
+  // Reset the Current pointer in the vtkActorCollection to the
+  // topmost actor in the collection, so that we can begin traversing
+  // the list.
+  actors->InitTraversal();
+
+  // Traverse the list, and determine whether each pickable actor is
+  // currently rendered or not. If not, we need to render that actor
+  // so that our vtkPropPicker can eventually pick it.
+  vtkSmartPointer<vtkActor> currentActor = actors->GetNextActor();
+  assert(currentActor.GetPointer() != 0);
+  for (int i = 0; currentActor.GetPointer() != 0; i++) {
+    actorIsRendered[i] = renderer->HasViewProp(currentActor);
+    if (!actorIsRendered[i]) {
+      renderer->AddViewProp(currentActor);
+    }
+    currentActor = actors->GetNextActor();
+  }
+
+  makeAllUnpickable();
+  
+  viewLock.acquire();
+  View *oldView = set_view_nolock(view, true);
+  
+  bool clickOk = false;
+
+  vtkSmartPointer<vtkActor> pickedActor;
+
+  Coord *position = NULL;
+
+  try {
+    vtkSmartPointer<vtkPropPicker> picker = 
+      vtkSmartPointer<vtkPropPicker>::New();
+    
+    // Traverse the collection and make all its actors pickable.
+    actors->InitTraversal();
+    currentActor = actors->GetNextActor();
+    while (currentActor.GetPointer() != 0) {
+      currentActor->PickableOn();
+      currentActor = actors->GetNextActor();
+    }
+    
+    // Convert the click coordinates to display coordinates.
+    double x, y;
+    physical2Display(*click, x, y);
+
+    if (picker->Pick(x, y, 0.0, renderer)) {
+      pickedActor = picker->GetActor();  
+      if (pickedActor.GetPointer() != 0) {
+	
+	// Get the picked position.
+	double pickPosition[3];
+	picker->GetPickPosition(pickPosition);
+	position = new Coord(pickPosition);
+
+	clickOk = true;
+      }
+    }  
+  }
+  catch(...) {
+    actors->InitTraversal();
+    currentActor = actors->GetNextActor();
+    for (int i = 0; currentActor.GetPointer() != 0; i++) {
+      if (!actorIsRendered[i]) {
+	renderer->RemoveViewProp(currentActor);
+      }
+      currentActor = actors->GetNextActor();
+    }
+
+    restore_view(oldView, true);
+    delete oldView;
+    viewLock.release();
+    throw;
+  }
+  actors->InitTraversal();
+  currentActor = actors->GetNextActor();
+  for (int i = 0; currentActor.GetPointer() != 0; i++) {
+    if (!actorIsRendered[i]) {
+      renderer->RemoveViewProp(currentActor);
+    }
+    currentActor = actors->GetNextActor();
+  }
+  restore_view(oldView, true);
+  delete oldView;
+  viewLock.release();
+  if(!clickOk) {
+    throw ErrClickError();
+  }
+  return position;
+} // end GhostOOFCanvas::findClickedPositionOnActor
+
+
+
+vtkSmartPointer<vtkActor> GhostOOFCanvas::findClickedActor(const Coord *click,
+							   const View *view, 
+							   OOFCanvasLayer *layer)
+{
+  // Returns the vtkActor that has been clicked upon in a layer for
+  // which get_pickable_actors() is defined. click is the physical
+  // coordinates of the mouse click, view is the current view,
+  // layer is the OOFCanvasLayer in question.
+  assert(mainthread_query());
+
+  vtkSmartPointer<vtkActorCollection> actors = layer->get_pickable_actors();
+
+  // Assert that some collection of actors was passed by the
+  // programmer.
+  assert(actors.GetPointer() != 0);
+
+  int n = actors->GetNumberOfItems();
+  bool *actorIsRendered = new bool[n];
+
+  // Reset the Current pointer in the vtkActorCollection to the
+  // topmost actor in the collection, so that we can begin traversing
+  // the list.
+  actors->InitTraversal();
+
+  // Traverse the list, and determine whether each pickable actor is
+  // currently rendered or not. If not, we need to render that actor
+  // so that our vtkPropPicker can eventually pick it.
+  vtkSmartPointer<vtkActor> currentActor = actors->GetNextActor();
+  assert(currentActor.GetPointer() != 0);
+  for (int i = 0; currentActor.GetPointer() != 0; i++) {
+    actorIsRendered[i] = renderer->HasViewProp(currentActor);
+    if (!actorIsRendered[i]) {
+      renderer->AddViewProp(currentActor);
+    }
+    currentActor = actors->GetNextActor();
+  }
+
+  makeAllUnpickable();
+  
+  viewLock.acquire();
+  View *oldView = set_view_nolock(view, true);
+  
+  bool clickOk = false;
+
+  vtkSmartPointer<vtkActor> pickedActor;
+
+  try {
+    vtkSmartPointer<vtkPropPicker> picker = 
+      vtkSmartPointer<vtkPropPicker>::New();
+    
+    // Traverse the collection and make all its actors pickable.
+    actors->InitTraversal();
+    currentActor = actors->GetNextActor();
+    while (currentActor.GetPointer() != 0) {
+      currentActor->PickableOn();
+      currentActor = actors->GetNextActor();
+    }
+    
+    // Convert the click coordinates to display coordinates.
+    double x, y;
+    physical2Display(*click, x, y);
+
+    if (picker->Pick(x, y, 0.0, renderer)) {
+      pickedActor = picker->GetActor();  
+      if (pickedActor.GetPointer() != 0) {
+	clickOk = true;
+      }
+    }  
+  }
+  catch(...) {
+    actors->InitTraversal();
+    currentActor = actors->GetNextActor();
+    for (int i = 0; currentActor.GetPointer() != 0; i++) {
+      if (!actorIsRendered[i]) {
+	renderer->RemoveViewProp(currentActor);
+      }
+      currentActor = actors->GetNextActor();
+    }
+
+    restore_view(oldView, true);
+    delete oldView;
+    viewLock.release();
+    throw;
+  }
+  actors->InitTraversal();
+  currentActor = actors->GetNextActor();
+  for (int i = 0; currentActor.GetPointer() != 0; i++) {
+    if (!actorIsRendered[i]) {
+      renderer->RemoveViewProp(currentActor);
+    }
+    currentActor = actors->GetNextActor();
+  }
+  restore_view(oldView, true);
+  delete oldView;
+  viewLock.release();
+  if(!clickOk) {
+    throw ErrClickError();
+  }
+  return pickedActor;
+} // end GhostOOFCanvas::findClickedActor
+
+
+
+vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
+	      const Coord *click, const View *view, OOFCanvasLayer *layer)
+{
+  // Returns a vtkActorCollection containing the actors that have been
+  // clicked upon in a layer for which get_pickable_actors() is
+  // defined. click is the physical coordinates of the mouse click,
+  // view is the current view, and layer is the OOFCanvasLayer in
+  // question.
+  assert(mainthread_query());
+
+  vtkSmartPointer<vtkActorCollection> actors = layer->get_pickable_actors();
+
+  // Assert that some collection of actors was passed by the
+  // programmer.
+  assert(actors.GetPointer() != 0);
+
+  int n = actors->GetNumberOfItems();
+  bool *actorIsRendered = new bool[n];
+
+  // Reset the Current pointer in the vtkActorCollection to the
+  // topmost actor in the collection, so that we can begin traversing
+  // the list.
+  actors->InitTraversal();
+
+  // Traverse the list, and determine whether each pickable actor is
+  // currently rendered or not. If not, we need to render that actor
+  // so that our vtkPropPicker can eventually pick it.
+  vtkSmartPointer<vtkActor> currentActor = actors->GetNextActor();
+  assert(currentActor.GetPointer() != 0);
+  for (int i = 0; currentActor.GetPointer() != 0; i++) {
+    actorIsRendered[i] = renderer->HasViewProp(currentActor);
+    if (!actorIsRendered[i]) {
+      renderer->AddViewProp(currentActor);
+    }
+    currentActor = actors->GetNextActor();
+  }
+
+  makeAllUnpickable();
+  
+  viewLock.acquire();
+  View *oldView = set_view_nolock(view, true);
+  
+  bool clickOk = false;
+
+  vtkSmartPointer<vtkActorCollection> pickedActors =
+    vtkSmartPointer<vtkActorCollection>::New();
+
+  try {
+    vtkSmartPointer<vtkPropPicker> picker = 
+      vtkSmartPointer<vtkPropPicker>::New();
+    
+    // Convert the click coordinates to display coordinates.
+    double x, y;
+    physical2Display(*click, x, y);
+
+    // Traverse the actors collection, and for each actor in the
+    // collection, make ONLY that actor pickable, then check if it is
+    // picked.  If it is picked, add that actor to the pickedActors
+    // collection.
+    actors->InitTraversal();
+    currentActor = actors->GetNextActor();
+    while (currentActor.GetPointer() != 0) {
+      currentActor->PickableOn();
+      if (picker->Pick(x, y, 0.0, renderer)) {
+	vtkSmartPointer<vtkActor> pickedActor = picker->GetActor();  
+	if (pickedActor.GetPointer() != 0) {
+	  pickedActors->AddItem(pickedActor);
+	  clickOk = true;
+	}
+      } 
+      currentActor->PickableOff();
+      currentActor = actors->GetNextActor();
+    }
+  }
+  catch(...) {
+    actors->InitTraversal();
+    currentActor = actors->GetNextActor();
+    for (int i = 0; currentActor.GetPointer() != 0; i++) {
+      if (!actorIsRendered[i]) {
+	renderer->RemoveViewProp(currentActor);
+      }
+      currentActor = actors->GetNextActor();
+    }
+
+    restore_view(oldView, true);
+    delete oldView;
+    viewLock.release();
+    throw;
+  }
+  actors->InitTraversal();
+  currentActor = actors->GetNextActor();
+  for (int i = 0; currentActor.GetPointer() != 0; i++) {
+    if (!actorIsRendered[i]) {
+      renderer->RemoveViewProp(currentActor);
+    }
+    currentActor = actors->GetNextActor();
+  }
+  restore_view(oldView, true);
+  delete oldView;
+  viewLock.release();
+  if(!clickOk) {
+    throw ErrClickError();
+  }
+  return pickedActors;
+} // end GhostOOFCanvas::findClickedActors
+
+
 
 void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
 				      OOFCanvasLayer *layer,
@@ -705,7 +1050,6 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
     throw ErrClickError();
   }
 } // GhostOOFCanvas::findClickedCell_
-
 
 vtkSmartPointer<vtkCell> GhostOOFCanvas::findClickedCell(
 		 const Coord *click, const View *view, OOFCanvasLayer *layer)
@@ -977,7 +1321,7 @@ Coord *GhostOOFCanvas::findClickedSegment(const Coord *click, const View *view,
     for(int i=0; i<3; i++)
       clickPos[i] = worldCoords[i]/worldCoords[3];
     clickPosition = clickPos; // convert to Coord for convenience
-    ray = findRayThroughPoint(clickPosition);
+    ray = findRayThroughPoint(&clickPosition);
   }
   catch(...) {
     restore_view(oldView, true);
@@ -1144,8 +1488,6 @@ View *GhostOOFCanvas::get_view() const {
     vue->suppressClipOn();
   return vue;
 }
-
-typedef std::set<ClippingPlane> ClippingPlaneSet;
 
 View *GhostOOFCanvas::set_view(const View *view, bool clip) {
   View *oldView = 0;

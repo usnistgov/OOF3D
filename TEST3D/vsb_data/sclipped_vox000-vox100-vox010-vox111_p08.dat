@@ -1,0 +1,6 @@
+Vertex 0 (1, 1, 1)   nbrs=1 2 3 
+Vertex 1 (2.22231, 1, 1)   nbrs=0 5 2 
+Vertex 2 (1, 2.49393, 1)   nbrs=0 1 4 
+Vertex 3 (1, 1, 2)   nbrs=4 5 0 
+Vertex 4 (1, 1.38282, 2)   nbrs=3 2 5 
+Vertex 5 (1.31322, 1, 2)   nbrs=3 4 1 

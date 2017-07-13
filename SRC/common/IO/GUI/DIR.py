@@ -1,8 +1,4 @@
 # -*- python -*- 
-# $RCSfile: DIR.py,v $
-# $Revision: 1.21.2.10 $
-# $Author: fyc $
-# $Date: 2014/09/04 19:45:56 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,
@@ -52,6 +48,7 @@ pyfiles = [
     'pixelPage.py',
     'pixelgroupwidget.py',
     'pixelinfoGUI.py',
+    'pixelselectparamwidgets.py'
     'pixelselecttoolboxGUI.py',
     'progressbarGUI2.py',
     'questioner.py',

@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cmicrostructure.swg,v $
-// $Revision: 1.35.8.14 $
-// $Author: langer $
-// $Date: 2014/09/27 22:33:48 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -122,7 +118,7 @@ public:
 #ifndef DIM_3
   double areaOfPixels();
 #else
-  double volumeOfPixels();
+  double volumeOfVoxels();
 #endif
   ICoord pixelFromPoint(Coord Point);
   // TimeStamp &getTimeStamp();
@@ -142,6 +138,12 @@ public:
   bool is_categorized();
   ArrayInt *getCategoryMap();
   %new ArrayInt *getCategoryMapRO();
+  double volumeOfCategory(unsigned int);
+  void dumpVSB(unsigned int, char*);
+  void dumpVSBLines(unsigned int, char*);
+  bool checkVSB(unsigned int);
+  double clipVSBVol(unsigned int, COrientedPlane);
+  void saveClippedVSB(unsigned int, COrientedPlane, char*);
   //ICoord getRepresentativePixel(int category);
 //   bool transitionPointWithPoints(Coord *Point, Coord *Point,
 // 				 Coord *cskel_OutPoint);
@@ -150,7 +152,7 @@ public:
 			    int* cskel_edgecat);
 //   bool transitionPointWithPoints_unbiased(Coord *Point, Coord *Point,
 // 				 Coord *cskel_OutPoint);
-
+  void drawVoxelSetBoundary(LineSegmentLayer*, int);
 };
 
 long get_globalMicrostructureCount();

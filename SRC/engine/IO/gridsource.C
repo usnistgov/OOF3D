@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: gridsource.C,v $
-// $Revision: 1.1.2.15 $
-// $Author: langer $
-// $Date: 2014/12/14 01:07:54 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -26,8 +22,16 @@
 #include <vtkObjectFactory.h>
 #include <vtkPointData.h>
 
-vtkCxxRevisionMacro(SkeletonGridSource, "$Revision: 1.1.2.15 $");
-vtkCxxRevisionMacro(MeshGridSource, "$Revision: 1.1.2.15 $");
+// TODO: We need to have different kinds of GridSources for different
+// kinds of cells: tets, faces, edges, & nodes.  Then each of those
+// can have its own kind of SkeletonFilter.  Some DisplayMethods will
+// use more than one GridSource and more than one vtk pipeline.  The
+// SkeletonEdgeDisplay will use and EdgeSource and a TetSource, so
+// that Tets can be selected, for example.  This should be done only
+// after moving to vtk6 or vtk7.
+
+vtkCxxRevisionMacro(SkeletonGridSource, "oofvtkmods 3.0.0");
+vtkCxxRevisionMacro(MeshGridSource, "oofvtkmods 3.0.0");
 
 vtkStandardNewMacro(SkeletonGridSource);
 vtkStandardNewMacro(MeshGridSource);
@@ -112,3 +116,73 @@ void MeshGridSource::PrintSelf(std::ostream &os, vtkIndent indent) {
   os << indent << "MeshGridSource: filter = " << this->Filter << "\n";
 }
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+#ifdef DEBUG
+
+// SkeletonSegmentGridSource is just in DEBUG because doing it right
+// involves some changes to our vtk scheme, which ought to be done
+// only after migrating from vtk5 to vtk6 or vtk7.  For now, it's just
+// being used to compare Skeleton reference files in the regression
+// suite when testing the r3d categoryVolumes code.
+
+vtkCxxRevisionMacro(SkeletonSegmentGridSource, "oofvtkmods 3.0.0");
+vtkStandardNewMacro(SkeletonSegmentGridSource);
+
+SkeletonSegmentGridSource::SkeletonSegmentGridSource()
+  : skeleton(0),
+    Filter(&defaultFilter)
+{}
+
+bool SkeletonSegmentGridSource::GetGrid(vtkUnstructuredGrid *grid) {
+  if(!this->skeleton)
+    return false;
+  this->skeleton->getVtkSegments(this->Filter, grid);
+  if(this->PointData)
+    grid->GetPointData()->SetScalars(this->PointData);
+  if(this->CellData)
+    grid->GetCellData()->SetScalars(this->CellData);
+  return true;
+}
+
+vtkSmartPointer<SkeletonSegmentGridSource> newSkeletonSegmentGridSource() {
+  return vtkSmartPointer<SkeletonSegmentGridSource>::New();
+}
+
+void SkeletonSegmentGridSource::PrintSelf(std::ostream &os, vtkIndent indent) {
+  this->Superclass::PrintSelf(os, indent);
+  os << indent << "SkeletonSegmentGridSource: skeleton = "
+     << this->skeleton << "\n";
+  os << indent << "SkeletonSegmentGridSource: filter = " << this->Filter
+     << "\n";
+}
+
+vtkCxxRevisionMacro(SkeletonEdgeDiffGridSource, "oofvtkmods 3.0.0");
+vtkStandardNewMacro(SkeletonEdgeDiffGridSource);
+
+SkeletonEdgeDiffGridSource::SkeletonEdgeDiffGridSource()
+  : skeleton(0),
+    other(0)
+{}
+
+bool SkeletonEdgeDiffGridSource::GetGrid(vtkUnstructuredGrid *grid) {
+  if(!this->skeleton || !this->other)
+    return false;
+  // Get segments that are in this but not in other.
+  this->skeleton->getExtraVtkSegments(this->other, grid);
+  return true;
+}
+
+vtkSmartPointer<SkeletonEdgeDiffGridSource> newSkeletonEdgeDiffGridSource() {
+  return vtkSmartPointer<SkeletonEdgeDiffGridSource>::New();
+}
+
+void SkeletonEdgeDiffGridSource::PrintSelf(std::ostream &os, vtkIndent indent) {
+  this->Superclass::PrintSelf(os, indent);
+  os << indent << "SkeletonEdgeDiffGridSource: skeleton = "
+     << this->skeleton << "\n";
+  os << indent << "SkeletonEdgeDiffGridSource: other = " << this->other
+     << "\n";
+}
+
+#endif // DEBUG

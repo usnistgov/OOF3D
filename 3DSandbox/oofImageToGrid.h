@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: oofImageToGrid.h,v $
-// $Revision: 1.1.2.1 $
-// $Author: langer $
-// $Date: 2012/07/25 18:03:39 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

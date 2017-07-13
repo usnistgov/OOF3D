@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: nonconstant_force_density.C,v $
-// $Revision: 1.8.10.3 $
-// $Author: langer $
-// $Date: 2014/07/17 19:44:03 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.

@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: clip.C,v $
-// $Revision: 1.1.2.9 $
-// $Author: langer $
-// $Date: 2013/07/19 20:24:45 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -22,21 +18,28 @@ ClippingPlane::ClippingPlane()
     offset_(0),
     enabled_(false),
     flipped_(false)
-{}
+{
+}
 
 ClippingPlane::ClippingPlane(CDirection *nrml, double offset)
   : normal_(nrml->clone()),
     offset_(offset),
     enabled_(true),
     flipped_(false)
-{}
+{
+}
 
 ClippingPlane::ClippingPlane(const ClippingPlane &other)
   : normal_(other.normal()->clone()),
     offset_(other.offset()),
     enabled_(other.enabled_),
     flipped_(other.flipped_)
-{}
+{
+}
+
+ClippingPlane::~ClippingPlane() {
+  delete normal_;
+}
 
 const ClippingPlane& ClippingPlane::operator=(const ClippingPlane &other) {
   if(this != &other) {
@@ -51,10 +54,6 @@ const ClippingPlane& ClippingPlane::operator=(const ClippingPlane &other) {
 bool ClippingPlane::operator==(const ClippingPlane &other) const {
   return (offset_ == other.offset_ && *normal_ == *other.normal_ &&
 	  enabled_ == other.enabled_ && flipped_ == other.flipped_);
-}
-
-ClippingPlane::~ClippingPlane() {
-  delete normal_;
 }
 
 bool ClippingPlane::operator!=(const ClippingPlane &other) const {

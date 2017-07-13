@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: movenodeGUI.py,v $
-# $Revision: 1.82.8.11 $
-# $Author: langer $
-# $Date: 2014/10/31 17:58:49 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,
@@ -309,7 +305,7 @@ class MoveNodeToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     def activate(self):
         if not self.active:
             toolboxGUI.GfxToolbox.activate(self)
-            self.gfxwindow().setMouseHandler(self)
+            # self.gfxwindow().setMouseHandler(self)
             self.sensitize()
             if config.dimension() == 3:
                 self.gfxwindow().toolbar.setSelect()
@@ -317,8 +313,11 @@ class MoveNodeToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     def deactivate(self):
         if self.active:
             toolboxGUI.GfxToolbox.deactivate(self)
-            self.gfxwindow().removeMouseHandler()
+            # self.gfxwindow().removeMouseHandler()
 
+    def installMouseHandler(self):
+        self.gfxwindow().setMouseHandler(self)
+        
     def close(self):
         map(switchboard.removeCallback, self.sbcallbacks)
         toolboxGUI.GfxToolbox.close(self)

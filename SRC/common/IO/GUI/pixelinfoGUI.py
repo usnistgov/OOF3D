@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: pixelinfoGUI.py,v $
-# $Revision: 1.42.18.7 $
-# $Author: langer $
-# $Date: 2014/07/31 18:32:50 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -106,15 +102,18 @@ class PixelInfoToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
             self.plugins.append(pluginclass(self, self.table, row+1))
             row += pluginclass.nrows+1
 
-    def activate(self):
-        if not self.active:
-            toolboxGUI.GfxToolbox.activate(self)
-            self.gfxwindow().setMouseHandler(self)
+    # def activate(self):
+    #     if not self.active:
+    #         toolboxGUI.GfxToolbox.activate(self)
+    #         self.gfxwindow().setMouseHandler(self)
 
-    def deactivate(self):
-        if self.active:
-            toolboxGUI.GfxToolbox.deactivate(self)
-            self.gfxwindow().removeMouseHandler()
+    # def deactivate(self):
+    #     if self.active:
+    #         toolboxGUI.GfxToolbox.deactivate(self)
+    #         self.gfxwindow().removeMouseHandler()
+
+    def installMouseHandler(self):
+        self.gfxwindow().setMouseHandler(self)
 
     def close(self):
         map(switchboard.removeCallback, self.sbcallbacks)

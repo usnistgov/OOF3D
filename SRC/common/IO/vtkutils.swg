@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: vtkutils.swg,v $
-// $Revision: 1.1.2.12 $
-// $Author: langer $
-// $Date: 2014/11/25 19:20:09 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -98,6 +94,26 @@ public:
 class vtkPlanePtr {
 public:
   ~vtkPlanePtr();
+};
+
+class vtkActorPtr {
+public:
+  ~vtkActorPtr();
+  %addmethods {
+    bool equals(vtkActorPtr actor) {
+      return (*self) == actor;
+    }
+  }
+};
+
+class vtkActorCollectionPtr {
+public:
+  ~vtkActorCollectionPtr();
+  %addmethods {
+    bool hasActor(vtkActorPtr actor) {
+      return (*self)->IsItemPresent(actor) != 0;
+    }
+  }
 };
 
 %new vtkDoubleArrayPtr fillDataArray(const DoubleList*);

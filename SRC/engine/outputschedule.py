@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: outputschedule.py,v $
-# $Revision: 1.12.2.5 $
-# $Author: langer $
-# $Date: 2014/10/03 14:29:57 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: cmicrostructure.spy,v $
-# $Revision: 1.2.18.14 $
-# $Author: langer $
-# $Date: 2014/09/15 15:08:53 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -21,7 +17,6 @@ from ooflib.common import pixelselection
 from ooflib.common import primitives
 from ooflib.common import utils
 from ooflib.common.IO import whoville
-import ooflib.common.microstructure
 
 
 # TODO OPT: There should be a way to change the physical size of a
@@ -49,6 +44,7 @@ def _CMicrostructure___init__(self, name, isize, size):
     # context Who object is created, because Who object creation
     # might trigger switchboard calls that use the plug-ins.
     self.plugins = {}
+    import ooflib.common.microstructure
     for pluginname, pluginclass in ooflib.common.microstructure.plugInClasses.items():
         self.plugins[pluginname] = pluginclass(self)
 

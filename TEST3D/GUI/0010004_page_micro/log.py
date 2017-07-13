@@ -1,7 +1,4 @@
 # -*- python -*-
-# $Revision: 1.1.2.10 $
-# $Author: fyc $
-# $Date: 2014/09/26 21:48:23 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

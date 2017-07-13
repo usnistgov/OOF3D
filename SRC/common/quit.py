@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: quit.py,v $
-# $Revision: 1.46.2.5 $
-# $Author: langer $
-# $Date: 2014/10/09 02:50:29 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,
@@ -24,6 +20,7 @@ from ooflib.common import parallel_enable
 from ooflib.common import subthread
 from ooflib.common import threadmanager
 from ooflib.common import utils
+from ooflib.common.IO import gfxmanager
 from ooflib.common.IO import mainmenu
 import gc                       # debugging
 import sys
@@ -55,7 +52,8 @@ def atShutDown(fn):
 def cleanup(shutdownfn, exitstatus):
     # Turn off logging, so that window closing, etc. won't be logged.
     mainmenu.OOF.haltLog()
-    
+    gfxmanager.gfxManager.closeAllWindows()
+
     for fn in _cleanUpActions:
         fn()
 
@@ -71,6 +69,7 @@ def cleanup(shutdownfn, exitstatus):
     # Wait on a subthread for threads to finish, then call shutdownfn
     # on the main thread.  When called from the GUI callback for the
     # Quit command, shutdownfn is common.IO.GUI.quit.shutdown.
+
     subthread.execute_immortal(waitForThreads, (shutdownfn, exitstatus))
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#

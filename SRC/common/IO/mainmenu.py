@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: mainmenu.py,v $
-# $Revision: 1.164.2.14 $
-# $Author: langer $
-# $Date: 2014/10/08 14:24:34 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,
@@ -421,6 +417,35 @@ gfxdefaultsmenu.addItem(OOFMenuItem(
     to set defaults for every &oof2; session.
 
     </para>"""))
+gfxdefaultsmenu.addItem(OOFMenuItem(
+    "Clipping_Planes",
+    ordering=4,
+    help="Set default parameters for displaying clipping planes.",
+    discussion="""<para>
+
+    This menu contains commands for setting the default values of
+    various parameters controlling how clipping planes
+    are displayed in the graphics window.  Put these
+    commands into your &oof2rc; file
+    to set defaults for every &oof2; session.
+
+    </para>"""))
+
+if (config.dimension() == 3):
+
+    gfxdefaultsmenu.addItem(OOFMenuItem(
+        "Voxel_Selection",
+        ordering=5,
+        help="Set default parameters for displaying voxel selection tools.",
+        discussion="""<para>
+
+        This menu contains commands for setting the default values of
+        various parameters controlling how voxel selection tools
+        are displayed in the graphics window.  Put these
+        commands into your &oof2rc; file
+        to set defaults for every &oof2; session.
+
+        </para>"""))
 
 import random
 from ooflib.SWIG.common import crandom

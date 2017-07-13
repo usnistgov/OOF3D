@@ -1,7 +1,4 @@
-# $RCSfile: activeareaPage.py,v $
-# $Revision: 1.31.18.4 $
-# $Author: langer $
-# $Date: 2013/11/15 22:03:17 $
+# -*- python -*-
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -9,7 +6,7 @@
 # with its operation, modification and maintenance. However, to
 # facilitate maintenance we ask that before distributing modified
 # versions of this software, you first contact the authors at
-# oof_manager@nist.gov.
+# oof_manager@nist.gov. 
 
 # GUI page for manipulating pixel groups.
 

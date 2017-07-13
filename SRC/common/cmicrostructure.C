@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: cmicrostructure.C,v $
-// $Revision: 1.83.2.54 $
-// $Author: langer $
-// $Date: 2014/12/12 19:38:50 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -22,6 +18,7 @@
 #include <stdlib.h>		// for abs()
 #include <vector>
 
+#include "common/IO/canvaslayers.h"
 #include "common/IO/oofcerr.h"
 #include "common/activearea.h"
 #include "common/cmicrostructure.h"
@@ -31,8 +28,8 @@
 #include "common/lock.h"
 #include "common/pixelattribute.h"
 #include "common/pixelgroup.h"
-#include "common/pixelsetboundary.h"
 #include "common/printvec.h"
+#include "common/voxelsetboundary.h"
 
 #include <iostream>
 
@@ -293,6 +290,13 @@ CMicrostructure::~CMicrostructure() {
   globalMicrostructureCountLock.acquire();
   --globalMicrostructureCount;
   globalMicrostructureCountLock.release();
+#if DIM==3
+  for(std::vector<VoxelSetBoundary*>::iterator i=categoryBdys.begin();
+      i!=categoryBdys.end(); ++i)
+    {
+      delete *i;
+    }
+#endif	// DIM==3
 }
 
 
@@ -402,12 +406,26 @@ ICoord CMicrostructure::pixelFromPoint(const Coord &pt) const {
 #endif
 }
 
+// Is the given point inside the microstructure?
 bool CMicrostructure::contains(const ICoord &ip) const {
 #if DIM==2
   return ((ip[0]>=0 && ip[0]<pxlsize_[0]) && (ip[1]>=0 && ip[1]<pxlsize_[1]));
 #elif DIM==3
   return ((ip[0]>=0 && ip[0]<pxlsize_[0]) && (ip[1]>=0 && ip[1]<pxlsize_[1])
 	  && (ip[2]>=0 && ip[2]<pxlsize_[2]));
+#endif	// DIM==3
+}
+
+// Is the given point (given as a Coord but in pixel coordinates)
+// inside the microstructure?  containsPixelCoord(x) is *not* the same
+// as contains(pixelFromPoint(x)), since pixelFromPoint rounds off
+// input values that are out of bounds.
+bool CMicrostructure::containsPixelCoord(const Coord &pt) const {
+#if DIM==2
+  return ((pt[0]>=0 && pt[0]<=pxlsize_[0]) && (pt[1]>=0 && pt[1]<=pxlsize_[1]));
+#elif DIM==3
+  return ((pt[0]>=0 && pt[0]<=pxlsize_[0]) && (pt[1]>=0 && pt[1]<=pxlsize_[1])
+	  && (pt[2]>=0 && pt[2]<=pxlsize_[2]));
 #endif	// DIM==3
 }
 
@@ -489,72 +507,228 @@ bool CMicrostructure::isActive(const ICoord &pxl) const {
 // This function should only be run with the category_lock acquired.
 // It is the caller's responsibility to do this -- all callers are
 // within the CMicrostructure class, because this function (and the
-// lock) is private.
+// lock) is private.  TODO: category_lock is commented out.  Should it
+// be?
+
 void CMicrostructure::categorize() const {
-
-  // groups_attributes_lock.read_acquire();
   attributes.categorize();
-  categoryBdys.clear();  // PixelSetBoundary has no default constructor.
+  for(std::vector<VoxelSetBoundary*>::iterator vsb=categoryBdys.begin();
+      vsb!=categoryBdys.end(); ++vsb)
+    {
+      delete *vsb;
+    }
+  categoryBdys.clear();
 
-#if DIM==3
-  // the polydata we return is done in the pixel coordinate system so
-  // that we can use some integer math in calculating the homogeneity
-  ICoord dirs[3];
-  dirs[0]=ICoord(-1,0,0);
-  dirs[1]=ICoord(0,-1,0);
-  dirs[2]=ICoord(0,0,-1);
-#endif	// DIM==3
   ncategories = attributes.ncategories();
-  for(int i=0; i < ncategories; ++i) {
-#if DIM==2
-    PixelSetBoundary psb(this);
-    categoryBdys.push_back(psb);
-#elif DIM==3
-    VoxelSetBoundary vsb;
-    // TODO OPT: VoxelSetBoundary objects are fairly large. Do we
-    // really want to be copying them into categoryBdys?
-    categoryBdys.push_back(vsb);
-#endif	// DIM==3
-  }
+  categoryBdys.reserve(ncategories);
+  for(unsigned int cat=0; cat<ncategories; ++cat)
+    categoryBdys.push_back(new VoxelSetBoundary(this, cat));
 
-  // loop over pixels in the microstructure
+  // Loop over pixels in the microstructure, and get their categories.
   for(Array<int>::iterator i=categorymap.begin(); i!=categorymap.end(); ++i) {
-    const ICoord &where = i.coord();
+    const ICoord3D &where = i.coord();
     // attributeVectors is an Array<PixelAttributeVector*>
-    categorymap[i] = attributes.getCategory(attributeVectors[where]);
-
-#if DIM==2
-    categoryBdys[ (*cat).second ].add_pixel(where);
-#elif DIM==3
-    // Insert bottom, left, and back faces into polydata.
-    for(int j=0; j<3; j++) {
-      if(categorymap.contains(where+dirs[j])) {
-	unsigned int vxlcat0 = categorymap[where];
-	unsigned int vxlcat1 = categorymap[where+dirs[j]];
-	if(vxlcat0 != vxlcat1) {
-#ifdef DEBUG
-	  assert(vxlcat0 < categoryBdys.size());
-	  assert(vxlcat1 < categoryBdys.size());
-#endif	// DEBUG
-	  categoryBdys[ vxlcat0 ].add_face(where, j, -1);
-	  categoryBdys[ vxlcat1 ].add_face(where, j, 1);
-	} // end if vxlcat0 != vxlcat1
-      } // end if(categorymap.contains....
-    } // end loop over directions
-#endif	// DIM==3
-  }  // end loop over category map
-
-  // Find the boundaries.
-#if DIM==2
-  for(std::vector<PixelSetBoundary>::iterator i = categoryBdys.begin();
-      i!=categoryBdys.end(); ++i ) {
-    (*i).find_boundary();
+    int cat = attributes.getCategory(attributeVectors[where]);
+    categorymap[i] = cat;
   }
-#endif	// DIM==2
 
- categorized = true;
- // groups_attributes_lock.read_release();
+  // Construct VoxelSetBoundary objects, which are compact and
+  // computationally efficient representations of the voxels in each
+  // category.  See voxelsetboundary.C for an overview of the
+  // VoxelSetBoundary class.
+
+  // TODO: When categories change in the MS, keep track of which ones
+  // have changed and recompute VoxelSetBoundarys only for them.
+
+
+  for(unsigned int cat=0; cat<ncategories; cat++) {
+    // A ProtoVSBNode is the precursor to the actual VSBNodes.
+    // There's a ProtoVSBNode at each corner of each voxel, but
+    // neighboring voxels share ProtoVSBNodes.  The array of
+    // protonodes is one larger in each dimension than the array of
+    // voxels.
+
+    // TODO: To avoid creating the full array of ProtoVSBNode*s, we
+    // might be able to get away with a map keyed by ICoords.  Finding
+    // the next ProtoVSBNode in a given direction would be slow, but
+    // it might be ok if we keep the map small by deleting any
+    // ProtoVSBNode that has already been fully connected.
+    
+    Array<ProtoVSBNode*> protoNodes(
+			    ICRectangularPrism(ICoord3D(0,0,0),
+					       pxlsize_+ICoord3D(1,1,1)));
+    protoNodes.clear(nullptr);
+    for(Array<ProtoVSBNode*>::iterator i=protoNodes.begin();
+	i!=protoNodes.end(); ++i)
+      {
+	// The type of ProtoVSBNode depends on which of the 8 voxels
+	// surrounding the corner point are in the category.
+	char signature = voxelSignature(i.coord(), cat);
+	// protoVSBNodeFactory also creates the VSBNodes in the graph,
+	// but doesn't connect them.
+	protoNodes[i] = categoryBdys[cat]->protoVSBNodeFactory(signature,
+							       i.coord());
+      }
+    // Loop over the protoNodes, connecting each one to the next
+    // protoNode in each x,y,z direction.
+    for(auto i=protoNodes.begin(); i!=protoNodes.end(); ++i) {
+      ICoord3D here = i.coord();
+      ProtoVSBNode *pnode = protoNodes[here];
+      if(pnode != nullptr) {
+	// Get the reference space directions in which this
+	// ProtoVSBNode needs to find neighbors.
+	const std::vector<VoxelEdgeDirection> &dirs(pnode->connectDirs());
+	for(const VoxelEdgeDirection &dir : dirs) {
+	  // Convert the reference space directions to actual space.
+	  VoxelEdgeDirection actualDir = pnode->rotation.toActual(dir);
+	  // It's only necessary to look in the positive directions
+	  // because the connections in the negative directions are
+	  // checked when examining the other node of the edge.
+	  if(actualDir.dir == 1) {
+	    unsigned int c = actualDir.axis;
+	    // Look for the next protonode in this direction
+#ifdef DEBUG
+	    bool found = false;
+#endif // DEBUG
+	    for(unsigned int k=here[c]+1; k<pxlsize_[c]+1; k++) {
+	      ICoord3D there = here;
+	      there[c] = k;
+	      if(protoNodes[there] != nullptr) { // found the next node
+#ifdef DEBUG
+		found = true;
+#endif // DEBUG
+		protoNodes[here]->connect(protoNodes[there]);	
+		break;		// done with this direction at this point
+	      }
+	    } // end search for next protonode in direction c
+#ifdef DEBUG
+	    if(!found) {
+	      oofcerr << "CMicrostructure::categorize:"
+		      << " failed to find next node!" << std::endl;
+	      oofcerr << "CMicrostructure::categorize: here=" << here
+		      << " c=" << c << " cat=" << cat << std::endl;
+	      throw ErrProgrammingError("CMicrostructure::categorize failed!",
+					__FILE__, __LINE__);
+	    }
+#endif // DEBUG
+	  } // end if actualDir is positive
+	} // end loop over directions dir
+      }	// end if a protonode exists at i
+    } // end loop over voxels i
+
+    // Remove the 2-fold connected nodes.
+    categoryBdys[cat]->fixTwoFoldNodes();
+
+    // Delete the protonodes.
+    for(Array<ProtoVSBNode*>::iterator p=protoNodes.begin();
+	p!=protoNodes.end(); ++p)
+      {
+	delete protoNodes[p];
+      }
+  } // end loop over categories cat
+
+  categorized = true;
+  
+// #ifdef DEBUG
+//   oofcerr << "CMicrostructure::categorize: volumes=" << std::endl;
+//   OOFcerrIndent indent(2);
+//   double vol = 0.0;
+//   for(unsigned int i=0; i<categoryBdys.size(); i++) {
+//     double dv = categoryBdys[i]->volume();
+//     vol += dv;
+//     oofcerr << "CMicrostructure::categorize: cat=" << i << " vol=" << dv
+// 	    << std::endl;
+//   }
+//   oofcerr << "CMicrostructure::categorize: total=" << vol << std::endl;
+// #endif // DEBUG
+  
 } // end CMicrostructure::categorize
+
+double CMicrostructure::clippedCategoryVolume(
+			      unsigned int cat,
+			      const std::vector<COrientedPlane> &planes,
+			      bool checkTopology)
+  const
+{
+  categorizeIfNecessary();
+  return categoryBdys[cat]->clippedVolume(planes, checkTopology);
+}
+
+bool CMicrostructure::checkVSB(unsigned int cat) const {
+  categorizeIfNecessary();
+  assert(cat < categoryBdys.size());
+  bool ok = categoryBdys[cat]->checkEdges();
+  if(ok) {
+    // arg=0 means don't check # of regions
+    ok = categoryBdys[cat]->checkConnectivity(0);
+  }
+  return ok;
+}
+
+double CMicrostructure::clipVSBVol(unsigned int cat, const COrientedPlane &pl)
+  const
+{
+  categorizeIfNecessary();
+  assert(cat < categoryBdys.size());
+  std::vector<COrientedPlane> planes(1, pl);
+  return categoryBdys[cat]->clippedVolume(planes, false);
+}
+
+void CMicrostructure::saveClippedVSB(unsigned int cat, const COrientedPlane &pl,
+				     const std::string &filename)
+  const
+{
+  categorizeIfNecessary();
+  assert(cat < categoryBdys.size());
+  std::vector<COrientedPlane> planes(1, pl);
+  categoryBdys[cat]->saveClippedVSB(planes, filename);
+}
+
+void CMicrostructure::saveClippedVSB(unsigned int cat,
+				     const std::vector<COrientedPlane> &planes,
+				     const std::string &filename)
+  const
+{
+  categorizeIfNecessary();
+  assert(cat < categoryBdys.size());
+  categoryBdys[cat]->saveClippedVSB(planes, filename);
+}
+
+double CMicrostructure::volumeOfCategory(unsigned int cat) const {
+  categorizeIfNecessary();
+  if(cat >= nCategories())
+    throw ErrProgrammingError("Category number too large!", __FILE__, __LINE__);
+  return categoryBdys[cat]->volume();
+}
+
+// categoryBounds returns the bounding box of the category in voxel
+// coordinates.  It's the bounding box of the polyhedron formed by the
+// voxels, so a even single voxel has a non-trivial bounding box.
+
+const CRectangularPrism &CMicrostructure::categoryBounds(unsigned int cat)
+  const
+{
+  categorizeIfNecessary();
+  return categoryBdys[cat]->bounds();
+}
+
+void CMicrostructure::dumpVSB(unsigned int cat, const std::string &file) const {
+  categorizeIfNecessary();
+  std::ofstream f(file);
+  categoryBdys[cat]->dump(f);
+}
+void CMicrostructure::dumpVSBLines(unsigned int cat, const std::string &file)
+  const
+{
+  categorizeIfNecessary();
+  std::ofstream f(file);
+  categoryBdys[cat]->dumpLines(f);
+}
+
+void CMicrostructure::categorizeIfNecessary() const {
+  if(!categorized)
+    categorize();
+}
 
 int CMicrostructure::nCategories() const {
   // oofcerr << "Acquire, nCategories." << std::endl;
@@ -659,6 +833,42 @@ void CMicrostructure::recategorize() {
   ++timestamp;
   // category_lock.release();
   // oofcerr << "Release." << std::endl;
+}
+
+unsigned char CMicrostructure::voxelSignature(const ICoord3D &pos,
+					      unsigned int cat)
+  const
+{
+  // The voxelSignature indicates which of the eight voxels
+  // surrounding a voxel corner are in the given category.  pos is the
+  // lower-left-back corner of a voxel, so the components of the
+  // coordinates of the other voxels at pos are one less.
+
+  // A bit of the signature is 1 if the voxel corresponding to the bit
+  // is in the category, cat.  The correspondence is
+  // Bit          Position relative to pos
+  // (0 is LSB)   
+  // 0  0x1       (-1, -1, -1)
+  // 1  0x2       (0, -1, -1)
+  // 2  0x4       (-1, 0, -1)
+  // 3  0x8       (0, 0, -1)
+  // 4  0x10      (-1, -1, 0)
+  // 5  0x20      (0, -1, 0)
+  // 6  0x40      (-1, 0, 0)
+  // 7  0x80      (0, 0, 0)
+  unsigned char sig = 0;
+  unsigned char b = 1;
+  for(int k=0; k<2; k++) {
+    for(int j=0; j<2; j++) {
+      for(int i=0; i<2; i++) {
+	ICoord3D offset = pos + ICoord3D(i-1, j-1, k-1);
+	if(contains(offset) && categorymap[offset] == cat)
+	  sig |= b;
+	b <<= 1;
+      }
+    }
+  }
+  return sig;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1609,6 +1819,8 @@ double CMicrostructure::edgeHomogeneityCat(const Coord &c0, const Coord &c1,
 //   }
 // }
 
+// TODO: Remove verbose arg, or put it within #ifdef DEBUG/#endif
+
 TransitionPointIterator::TransitionPointIterator(
 			const CMicrostructure *microstructure,
 			const Coord &c0, const Coord &c1, bool verbose) 
@@ -1814,4 +2026,27 @@ Coord TransitionPointIterator::last() {
   return p1;
 }  
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+void CMicrostructure::drawVoxelSetBoundary(LineSegmentLayer *layer,
+					   int category)
+  const
+{
+  categorizeIfNecessary();
+  assert(category < nCategories());
+  const VoxelSetBoundary *vsb = categoryBdys[category];
+  VSBEdgeIterator iter = vsb->iterator();
+  layer->set_nSegs(vsb->size()*3/2);
+  while(!iter.done()) {
+    Coord3D pt0 = pixel2Physical(iter.node0()->position);
+    Coord3D pt1 = pixel2Physical(iter.node1()->position);
+    if(pt1 > pt0) {
+      layer->addSegment(&pt0, &pt1);
+    }
+    iter.next();
+  }
+  vsb->dump(std::cerr);
+  double vol = vsb->volume();
+  oofcerr << "CMicrostructure::drawVoxelSetBoundary: volume=" << vol
+  	  << std::endl;
+}

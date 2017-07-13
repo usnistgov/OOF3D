@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: fixillegal.C,v $
-// $Revision: 1.1.2.11 $
-// $Author: fyc $
-// $Date: 2015/01/07 15:53:12 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -47,8 +43,6 @@ CSkeletonBase* FixIllegal::apply(CSkeletonBase *skeleton) {
   // solved by moving a node *towards* the average position of its
   // neighbors, but not all the way.  Try moving problem nodes until
   // their elements become barely legal.
-  // We will hold on to this untill we find a use case with which we think
-  // it is necessary
  
   newSkeleton->cleanUp();
   newSkeleton->checkIllegality();
@@ -88,9 +82,6 @@ void FixIllegal::smoothTheNode(CDeputySkeleton *newSkeleton,
     }
 
   // Move node to its average position WRT its neighbor nodes
-  // The TODO 3.1 idea is to setup a coefficient alpha that will be reduced to the
-  // maximum by moving the node slowly from its position to the average one when
-  // the average position is not suitable (1-alpha) AveragePosition + CurrentPosition
   newSkeleton->moveNodeTo(node, newSkeleton->averageNeighborPosition(node));
 
   int n_still_guilty = 0;

@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: genericinfoGUI.py,v $
-# $Revision: 1.1.2.7 $
-# $Author: langer $
-# $Date: 2014/11/05 16:54:51 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -251,10 +247,13 @@ class GenericInfoToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
 
     def activate(self):
         toolboxGUI.GfxToolbox.activate(self)
-        self.gfxwindow().setMouseHandler(self)
+        # self.gfxwindow().setMouseHandler(self)
         self.sensitize()
         if config.dimension() == 3:
             self.gfxwindow().toolbar.setSelect()
+
+    def installMouseHandler(self):
+        self.gfxwindow().setMouseHandler(self)
 
     def close(self):
         for modeobj in self.modeobjdict.values():

@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: vtkutils.h,v $
-// $Revision: 1.1.2.14 $
-// $Author: langer $
-// $Date: 2014/12/14 22:49:10 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -22,6 +18,8 @@
 
 class CDirection;
 
+#include <vtkActor.h>
+#include <vtkActorCollection.h>
 #include <vtkCell.h>
 #include <vtkDataArray.h>
 #include <vtkDoubleArray.h>
@@ -44,6 +42,8 @@ Coord cell2coord(vtkSmartPointer<vtkCell>);
 // order for a Python reference to be counted correctly in the
 // vtkSmartPointer's bookkeeping.
 
+typedef vtkSmartPointer<vtkActor> vtkActorPtr;
+typedef vtkSmartPointer<vtkActorCollection> vtkActorCollectionPtr;
 typedef vtkSmartPointer<vtkCell> vtkCellPtr;
 typedef vtkSmartPointer<vtkDataArray> vtkDataArrayPtr;
 typedef vtkSmartPointer<vtkDoubleArray> vtkDoubleArrayPtr;

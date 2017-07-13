@@ -1,8 +1,4 @@
 # -*- python -*- 
-# $RCSfile: DIR.py,v $
-# $Revision: 1.54.2.36 $
-# $Author: langer $
-# $Date: 2014/12/14 01:07:44 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -31,7 +27,8 @@ cfiles = [
     'cskeleton2.C', 'cskeletonselectable.C', 'cskeletonmodifier.C', 
     'cskeletonnode2.C', 'crystalsymmetry.C',
     'cskeletonsegment.C', 'cskeletonelement.C', 'cskeletongroups.C',
-    'cfiddlenodes.C', 'crefine.C', 'crefinementcriterion.C', 'csnapnodes.C', 'csnaprefine.C',
+    'cfiddlenodes.C', 'crefine.C', 'crefinementcriterion.C', 'csnapnodes.C',
+    'csnaprefine.C', 
     'crationalizers.C', 'elementshape.C',
     'angle2color.C', 'bdyanalysis.C', 'boundarycond.C', 'cskeletonboundary.C',
     'cconjugate.C', 'celectricfield.C', 'cmatrixmethods.C',
@@ -47,7 +44,6 @@ cfiles = [
     'meshdatacache.C', 'meshiterator.C', 'nodalequation.C',
     'nodalfluxes.C', 'nodalscpatches.C', 'node.C', 'ooferror.C',
     'orientationimage.C', 'outputval.C', 'pixelgroupsubproblem.C',
-    #'pixelintersection.C',
     'pixelselectioncouriere.C', 'pointdata.C', 'preconditioner.C',
     'property.C', 'pypropertywrapper.C', 'rank3tensor.C',
     'recoveredflux.C', 'shapefunction.C', 'shapefunctioncache.C',
@@ -79,7 +75,7 @@ swigfiles = [
     'pointdata.swg',
     'properties.swg', 'pypropertywrapper.swg', 'rank3tensor.swg',
     'smallsystem.swg', 'sparsemat.swg',
-    'steperrorscaling.swg', 'symmmatrix.swg', 'materialvoxelfilter.swg'
+    'steperrorscaling.swg', 'symmmatrix.swg', 'materialvoxelfilter.swg',
     ]
 
 pyfiles = [
@@ -132,8 +128,8 @@ hfiles = [
     'cskeleton2.h', 'cskeletonselectable.h', 'cskeletonmodifier.h',
     'cskeletonnode2.h', 'crystalsymmetry.h',
     'cskeletonsegment.h', 'cskeletonelement.h', 'cskeletongroups.h',
-    'cfiddlenodes.h', 'crefine.h', 'crefinementcriterion.h', 'csnapnodes.h', 'csnaprefine.h',
-    'crationalizers.h',
+    'cfiddlenodes.h', 'crefine.h', 'crefinementcriterion.h', 'csnapnodes.h',
+    'csnaprefine.h', 'crationalizers.h', 
     'angle2color.h', 'bdyanalysis.h', 'cskeletonboundary.h',
     'boundarycond.h', 'cconjugate.h', 'celectricfield.h',
     'cmatrixmethods.h', 'compoundsubproblem.h', 'constraint.h',

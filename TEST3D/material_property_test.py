@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: material_property_test.py,v $
-# $Revision: 1.2.8.12 $
-# $Author: langer $
-# $Date: 2014/09/27 22:34:46 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

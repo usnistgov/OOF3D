@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: oofGUI.py,v $
-# $Revision: 1.78.2.16 $
-# $Author: langer $
-# $Date: 2014/10/17 21:48:02 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -277,9 +273,6 @@ class oofGUI(widgetscope.WidgetScope):
 
         debug.mainthreadTest()
 
-        for window in gfxmanager.gfxManager.getAllWindows():
-            gfxmanager.gfxManager.closeWindow(window)
-          
         from ooflib.common.IO.GUI import console
         if console.current_console:
             console.current_console.gtk.destroy()

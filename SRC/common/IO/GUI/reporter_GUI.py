@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: reporter_GUI.py,v $
-# $Revision: 1.82.2.8 $
-# $Author: fyc $
-# $Date: 2014/09/18 20:10:44 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.

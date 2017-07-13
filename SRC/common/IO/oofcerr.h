@@ -1,8 +1,4 @@
 // -*- C++ -*-
-// $RCSfile: oofcerr.h,v $
-// $Revision: 1.1.2.4 $
-// $Author: langer $
-// $Date: 2014/09/16 02:48:39 $
 
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
@@ -36,9 +32,9 @@ class OOFcerr { //: public CoutType {
 private:
   bool newline;
   void printHeader() const;
+  unsigned int indent;
 public:
-  OOFcerr() : newline(true) {}
-
+  OOFcerr() : newline(true), indent(0) {}
   template <class TYPE> 
   OOFcerr &operator<<(const TYPE &x) { 
     if(newline) {
@@ -58,8 +54,24 @@ public:
   // TODO 3.1: This needs to be done like std::setprecision or else
   // OOFcerr can't be used with the printvec.h templates.
   void precision(int p) { std::cerr.precision(p); }
+
+  friend class OOFcerrIndent;
 };
 
 extern OOFcerr oofcerr;
+
+class OOFcerrIndent {
+private:
+  unsigned int howfar;
+public:
+  OOFcerrIndent(unsigned int howfar)
+    : howfar(howfar)
+  {
+    oofcerr.indent += howfar;
+  }
+  ~OOFcerrIndent() {
+    oofcerr.indent -= howfar;
+  }
+};
 
 #endif // OOFCERR_H

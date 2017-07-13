@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: csubproblem.spy,v $
-# $Revision: 1.27.2.7 $
-# $Author: fyc $
-# $Date: 2015/01/07 15:53:11 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -17,6 +13,14 @@ from ooflib.SWIG.engine import femesh
 from ooflib.common import debug
 from ooflib.engine import scpatch
 
+
+## TODO: We used to store mesh and meshcontext in CSubProblemPtr so
+## that they didn't have to be returned from C++ to Python, and so
+## that Python data added to FEMesh in the monkeypatched
+## FEMesh.__init__ would be available.  This is dumb.  That data
+## should be in MeshContext, and CSubProblem should store its Mesh only
+## in one place, in C++.
+
 # Not used anymore because of CSubProblem.set_mesh. No need to keep
 # meshcontext because we are using it only to get the mesh object when
 # calling set_mesh.
@@ -27,7 +31,7 @@ from ooflib.engine import scpatch
     # CSubProblem, but mesh and meshctxt will be set in only one of
     # the CSubProblemPtrs.  This is a issue inside pypropertywrapper
     # functions.)  The property code below may be useful.  We probably
-    # need to get rid of meshcontext as well, which may mean
+    # need to get rid of self.meshcontext as well, which may mean
     # storing it in C++ as a PyObject*.
     # self.meshcontext = meshctxt
 #    if  meshctxt is not None:
@@ -36,11 +40,7 @@ from ooflib.engine import scpatch
 #        self.set_femesh(None)
 # CSubProblemPtr.set_mesh = _set_mesh
 
-## Code that may be useful when getting rid of self.get_mesh().
-## Not necessary for now. It means certainly on the property requirements
-## that the CSubProblemPtr should derives from object to have it working 
-## properly. Which means modify Swig to derive *Prs from object which may
-## result into some other troubles that we don't know of yet.
+## Code that may be useful when getting rid of self.mesh.
 # def _mesh_setter(self, meshobj):
 #      # raise ooferror2.ErrPyProgrammingError("Don't set CSubProblem.mesh!")
 #      print "Accessing the mesh setter...\n"

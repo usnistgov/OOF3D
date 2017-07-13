@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: quit.py,v $
-# $Revision: 1.37.2.2 $
-# $Author: langer $
-# $Date: 2012/03/13 15:01:10 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -22,6 +18,10 @@ import ooflib.common.quit
 # OOFMenu gui callback for the Quit commands.  Installed by
 # mainmenuGUI.py and subWindow.py.  This should only be called on the
 # main thread.
+
+## TODO: If OOF.File.Quit is invoked from a script while the GUI is
+## running, which version of shutdown is used?  Is the GUI stopped?
+
 def queryQuit(*args, **kwargs):
     if _quitQuery():
         ooflib.common.quit.cleanup(shutdown, kwargs.get('exitstatus', 0))
@@ -50,5 +50,5 @@ def shutdown(exitstatus):
     gui = guitop.top()
     if gui:
         gui.stop()
-        gui.destroy()
+        gui.destroy() 
     ooflib.common.quit.shutdown(exitstatus)

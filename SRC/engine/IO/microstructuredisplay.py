@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: microstructuredisplay.py,v $
-# $Revision: 1.26.10.18 $
-# $Author: langer $
-# $Date: 2014/09/10 21:28:43 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -33,10 +29,10 @@ from ooflib.common.IO import parameter
 from ooflib.common.IO import xmlmenudump
 
 class MicrostructureMaterialDisplay(bitmapdisplay.BitmapDisplayMethod):
-    def __init__(self, no_material, no_color, filter):
+    def __init__(self, no_material, no_color, opacity, filter):
         self.no_material = no_material    # color if Material isn't assigned
         self.no_color = no_color    # color if Material has no ColorProperty
-        bitmapdisplay.BitmapDisplayMethod.__init__(self, filter)
+        bitmapdisplay.BitmapDisplayMethod.__init__(self, filter, opacity)
         self.matChangedSignals = [
             switchboard.requestCallback(
                 "materials changed in microstructure", self.matMSChangedCB),
@@ -102,6 +98,11 @@ registeredclass.Registration(
         color.ColorParameter(
             'no_color', color.blue,
             tip="Color to use if the assigned material has no assigned color"),
+        parameter.FloatRangeParameter(
+            "opacity",
+            bitmapdisplay.opacityRange,
+            bitmapdisplay.defaultImageOpacity,
+            tip="Opacity of material colors."),
         parameter.RegisteredParameter(
             "filter",
             voxelfilter.VoxelFilterPtr,

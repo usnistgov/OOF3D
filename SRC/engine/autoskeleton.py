@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: autoskeleton.py,v $
-# $Revision: 1.11.2.5 $
-# $Author: langer $
-# $Date: 2014/08/20 02:21:17 $
 
 
 # This software was produced by NIST, an agency of the U.S. government,
