@@ -687,10 +687,8 @@ void CSkeletonMultiNodeSelectable::getPointIds(vtkIdType *ids) const {
     ids[i] = (*nodes)[i]->getIndex();
 }
 
-void CSkeletonMultiNodeSelectable::getNodeIndices(
-				  std::vector<unsigned int> &nidxs)
-  const 
-{
+void CSkeletonMultiNodeSelectable::getNodeIndices(NodeIndexVec &nidxs) const {
+  // TODO: This should return the vector.
   for(unsigned int i=0; i<nodes->size(); ++i) 
     nidxs.push_back((*nodes)[i]->getIndex());
 }

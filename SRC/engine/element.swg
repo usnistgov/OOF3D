@@ -175,6 +175,11 @@ public:
   Element *getFrontBulk();
   void setBackBulk(Element*);
   Element *getBackBulk();
+  %addmethods {
+    %new const string *__repr__() {
+      return self->repr();
+    } 
+  } // addmethods
 };
 #endif // DIM_3
 

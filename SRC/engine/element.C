@@ -86,9 +86,9 @@ int ElementBase::ncorners() const {
   return master.ncorners(); 
 }
 
-int ElementBase::nexteriorfuncnodes() const {
-  return master.nexteriorfuncnodes(); 
-}
+// int ElementBase::nexteriorfuncnodes() const {
+//   return master.nexteriorfuncnodes(); 
+// }
 
 double ElementBase::det_jacobian(const GaussPoint &g) const {
   return master.mapfunction->det_jacobian(this, g);
@@ -110,74 +110,102 @@ int ElementBase::mapfun_degree() const {
   return master.mapfunction->degree();
 }
 
+// Jdmasterdx is used to convert derivatives in master space to
+// derivatives in real space.  It's not clear what it means if the
+// dimension of the master space is less than the dimension of the
+// real space.  What's the coordinate system for the 2D and 1D
+// derivatives in real space?
+
+// TODO: Should Jdmasterdx be defined for 3D elements only?  Is it
+// even useful for 2D or 1D elements?
+// ElementBase::Jdmasterdx is used in ShapeFunction::realderiv.
+// ShapeFunction::realderiv is used in:
+//   ElementShapeFuncIterator::dshapefunction (derived class methods)
+//   GaussPoint::dshapefunction (derived class methods)
+//   MasterCoord::dshapefunction
+// dshapefunction is used in
+//   Element::outputFieldDeriv, outputFieldDerivs
+//   DivergenceEquation::make_linear_system
+//   Properties
+// None of these are currently used for 2D or 1D elements.  They'd all
+// need some kind of additional math to make sense for 2D elements
+// when we implement interface Properties.
+//
+// SO, I've commented out the D=2 sections below, and added (for now)
+// assert statements restricted Jdmasterdx to 3D Elements.
+
 double ElementBase::Jdmasterdx(SpaceIndex i, SpaceIndex j, const GaussPoint &g)
   const
 {
+  // // What matters here is the dimension of the Element
+  // // (Element::dimension()), not the dimension of space (DIM).
+  // if(dimension() == 2) {
+  //   //         | J11  -J01 |
+  //   //  J^-1 = |           | / |J|
+  //   //         |-J10   J00 |
 
-#if DIM==2
-  //         | J11  -J01 |
-  //  J^-1 = |           | / |J|
-  //         |-J10   J00 |
-
-  double sum = 0;
-  if(i == j) {
-    int ii = 1 - i;
-    for(ElementNodePositionIterator ni=mapnode_positerator(); !ni.end(); ++ni) {
-      sum += (ni.position())[ii] * ni.masterderiv(ii, g);
-    }
-  }
-  else {			// i != j
-    for(ElementNodePositionIterator ni=mapnode_positerator(); !ni.end(); ++ni)
-      sum -= (ni.position())[i] * ni.masterderiv(j, g);
-  }
-  return sum;
-
-#elif DIM==3
-  // Typing out a closed form in code is messy for 3d.  TODO 3.1: 3D it
-  // might be worth it to type it out eventually as this is
+  //   double sum = 0;
+  //   if(i == j) {
+  //     int ii = 1 - i;
+  //     for(CleverPtr<ElementMapNodePositionIterator> ni(mapnode_positerator());
+  // 	  !ni->end(); ++*ni)
+  // 	{
+  // 	  sum += (ni->position())[ii] * ni->masterderiv(ii, g);
+  // 	}
+  //   }
+  //   else {			// i != j
+  //     for(CleverPtr<ElementMapNodePositionIterator> ni(mapnode_positerator());
+  // 	  !ni->end(); ++*ni)
+  // 	sum -= (ni->position())[i] * ni->masterderiv(j, g);
+  //   }
+  //   return sum;
+  // }
+  assert(dimension() == 3);
+  // Typing out a closed form in code is messy for 3d.  TODO 3.1: 3D
+  // it might be worth it to type it out eventually as this is
   // inefficient
-  double m[DIM][DIM], inverse[DIM][DIM];
+  double m[3][3], inverse[3][3];
   int ii, jj;
-  for(ii=0; ii<DIM; ++ii) {
-    for(jj=0; jj<DIM; ++jj) {
+  for(ii=0; ii<3; ++ii) {
+    for(jj=0; jj<3; ++jj) {
       m[ii][jj] = jacobian(ii,jj,g);
     }
   }
   double dj = vtkMath::Determinant3x3(m);
   vtkMath::Invert3x3(m,inverse);
   return dj*inverse[i][j];
-#endif	// DIM==3
 }
 
 double ElementBase::Jdmasterdx(SpaceIndex i, SpaceIndex j,
 			       const MasterCoord &mc)
   const
 {
-#if DIM==2
-  double sum = 0;
-  if(i == j) {
-    int ii = 1 - i;
-    for(ElementNodePositionIterator ni=mapnode_positerator(); !ni.end(); ++ni)
-      sum += (ni.position())[ii] * ni.masterderiv(ii, mc);
-  }
-  else {			// i != j
-    for(ElementNodePositionIterator ni=mapnode_positerator(); !ni.end(); ++ni)
-      sum -= (ni.position())[i] * ni.masterderiv(j, mc);
-  }
-  return sum;
-
-#elif DIM==3
-  double m[DIM][DIM], inverse[DIM][DIM];
+  // if(dimension() == 2) {
+  //   double sum = 0;
+  //   if(i == j) {
+  //     int ii = 1 - i;
+  //     for(CleverPtr<ElementMapNodePositionIterator> ni(mapnode_positerator());
+  // 	  !ni->end(); ++*ni)
+  // 	sum += (ni->position())[ii] * ni->masterderiv(ii, mc);
+  //   }
+  //   else {			// i != j
+  //     for(CleverPtr<ElementMapNodePositionIterator> ni(mapnode_positerator());
+  // 	  !ni->end(); ++*ni)
+  // 	sum -= (ni->position())[i] * ni->masterderiv(j, mc);
+  //   }
+  //   return sum;
+  // }
+  assert(dimension() == 3);
+  double m[3][3], inverse[3][3];
   int ii, jj;
-  for(ii=0; ii<DIM; ++ii) {
-    for(jj=0; jj<DIM; ++jj) {
+  for(ii=0; ii<3; ++ii) {
+    for(jj=0; jj<3; ++jj) {
       m[ii][jj] = jacobian(ii,jj,mc);
     }
   }
   double dj = vtkMath::Determinant3x3(m);
   vtkMath::Invert3x3(m,inverse);
   return dj*inverse[i][j];
-#endif	// DIM==3
 }
 
 
@@ -267,6 +295,7 @@ double ElementBase::jacobian(SpaceIndex i, SpaceIndex j, const MasterCoord &mc)
 double ElementBase::span() const {
   double a = 0.0;
   for(GaussPointIterator gpt = integrator(0); !gpt.end(); ++gpt) {
+    // GaussPoint::weight() includes the determinant of the Jacobian.
     a += gpt.gausspoint().weight();
   }
   return a;
@@ -328,15 +357,16 @@ Coord ElementLite::position(int i) const {
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 Element::Element(CSkeletonElement *el, const MasterElement &me,
-		 const std::vector<Node*> *nl, const Material *mat)
+		 const std::vector<Node*> &nl, const Material *mat)
   : ElementBase(me),
-    nodelist(*nl),
+    nodelist(std::move(nl)),
     matl(mat),
 #if DIM==2
     exterior_edges(0),
 #endif // DIM==2
     cskeleton_element(el)
 {
+  assert(nodelist.size() == master.nnodes());
   //  Trace("Element::Element " + me.name());
   //  int nn = me.nnodes();
   //  for(int i=0; i<nn; i++) {
@@ -545,6 +575,7 @@ ElementCornerNodeIterator Element::cornernode_iterator() const {
 }
 
 Coord Element::position(int i) const {
+  assert(i >= 0 && i < nodelist.size());
   return nodelist[i]->position();
 }
 
@@ -1107,10 +1138,13 @@ void Element::drawGridCell(vtkSmartPointer<GridSource> src,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-std::ostream &operator<<(std::ostream &os, const Element &el) {
-  os << el.master.name();
-  for(ElementCornerNodeIterator it=el.cornernode_iterator(); !it.end(); ++it)
-    os << " " << it.node()->position();
+std::ostream &operator<<(std::ostream &os, const ElementBase &el) {
+  os << el.master.name() << " nnodes=" << el.nnodes() << ":";
+  // for(CleverPtr<ElementCornerNodePositionIterator>
+  // 	it(el.cornernode_positerator()); !it->end(); ++*it)
+  //   os << " " << it->position();
+  for(unsigned int i=0; i<el.nnodes(); i++)
+    os << " " << el.position(i);
   return os;
 }
 
@@ -1123,9 +1157,9 @@ Node* Element::getCornerNode(int i) const
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 FaceBoundaryElement::FaceBoundaryElement(const MasterElement &me,
-					 const std::vector<Node*> *nl)
-  : Element(0, me, nl, 0),
-    front_(0), back_(0)
+					 const std::vector<Node*> &nl)
+  : Element(nullptr/*CSkeletonElement*/, me, nl, nullptr/*material*/),
+    front_(nullptr), back_(nullptr)
 {}
 
 const std::string &FaceBoundaryElement::classname() const {
@@ -1142,8 +1176,8 @@ const Element *FaceBoundaryElement::getFrontBulk() const {
 }
 
 EdgeBoundaryElement::EdgeBoundaryElement(const MasterElement &me,
-					 const std::vector<Node*> *nl)
-  : Element(0, me, nl, 0)
+					 const std::vector<Node*> &nl)
+  : Element(nullptr, me, nl, nullptr)
 {}
 
 const std::string &EdgeBoundaryElement::classname() const {
@@ -1161,6 +1195,73 @@ bool Element::allNodesAreInSubProblem(const CSubProblem *subp) const {
        return false;
   }
   return true;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// getIntermediateNodes is used when building lower dimension elements
+// on boundaries.  It's given the corner nodes of a face or the end
+// nodes of an edge, and needs to return all of the nodes on the face
+// or edge, in the order required by the FaceBoundaryElement or
+// EdgeBoundaryElement constructor (ie, the order of the ProtoNodes in
+// the lower dimension MasterElement).
+
+std::vector<Node*> Element::getIntermediateNodes(
+					 const std::vector<Node*> &corners)
+  const
+{
+  assert(corners.size() == 2 || corners.size() == 3);
+  // oofcerr << "Element::getIntermediateNodes: *****************" << std::endl;
+  // oofcerr << "Element::getIntermediateNodes: this=" << *this << std::endl;
+  // oofcerr << "Element::getIntermediateNodes: corners=";
+  // std::cerr << derefprint(corners);
+  // oofcerr << std::endl;
+
+  // Linear elements don't have intermediate nodes.
+  if(master.fun_order() == 1)
+    return corners;
+  
+  // Find the protonode numbers of the corners
+  NodeIndexVec nodeNos;
+  nodeNos.reserve(corners.size());
+  for(const Node *node : corners) {
+    for(unsigned int i=0; i<nnodes(); i++) {
+      if(node->position() == nodelist[i]->position()) {
+	nodeNos.push_back(i);
+	break;
+      }
+    }
+  }
+  assert(nodeNos.size() == corners.size());
+  // oofcerr << "Element::getIntermediateNodes: nodeNos=";
+  // std::cerr << nodeNos;
+  // oofcerr << std::endl;
+				     
+  
+  // Ask the master element for all of the node numbers on the face or
+  // edge.
+  // TODO: This cast is ugly.  We probably should have different
+  // classes for Elements with different dimensions, so that this
+  // method can be only in the 3D Element class.
+  const MasterElement3D &master3 = dynamic_cast<const MasterElement3D&>(master);
+  NodeIndexVec allNodeNos =
+    (corners.size() == 2 ?
+     master3.getIntermediateEdgeNodes(nodeNos) :
+     master3.getIntermediateFaceNodes(nodeNos));
+  // oofcerr << "Element::getIntermediateFaceNodes: allNodeNos=";
+  // std::cerr << allNodeNos;
+  // oofcerr << std::endl;
+  
+  // Copy the corresponding nodes into the result.
+  std::vector<Node*> allNodes;
+  allNodes.reserve(allNodeNos.size());
+  for(unsigned int i : allNodeNos) {
+    allNodes.push_back(nodelist[i]);
+  }
+  // oofcerr << "Element::getIntermediateFaceNodes: allNodes=";
+  // std::cerr << derefprint(allNodes);
+  // oofcerr << std::endl;
+  return allNodes;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

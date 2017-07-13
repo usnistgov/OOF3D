@@ -169,6 +169,8 @@ class SkeletonSelectionToolboxGUI(toolboxGUI.GfxToolbox):
             self.tbdict[self.currentMode].deactivate()
             toolboxGUI.GfxToolbox.deactivate(self)
 
+    def installMouseHandler(self):
+        self.tbdict[self.currentMode].installMouseHandler()
 
 ######################################
 

@@ -169,7 +169,7 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         finally:
             self.datalock.logNewEvent_release()
 
-    def up(self, x, y, shift, ctrl):
+    def up(self, x, y, button, shift, ctrl):
         self.downed = False
         self.datalock.logNewEvent_acquire()
         try:
@@ -184,7 +184,7 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         finally:
             self.datalock.logNewEvent_release()
 
-    def down(self, x, y, shift, ctrl):
+    def down(self, x, y, button, shift, ctrl):
         self.datalock.logNewEvent_acquire()
         try:
             self.downed = True
@@ -193,7 +193,7 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         finally:
             self.datalock.logNewEvent_release()
 
-    def move(self, x, y, shift, ctrl):
+    def move(self, x, y, button, shift, ctrl):
         self.datalock.logNewEvent_acquire()
         try:
             num_events = len(self.eventlist)

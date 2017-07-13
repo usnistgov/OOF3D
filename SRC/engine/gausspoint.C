@@ -237,6 +237,10 @@ void GaussPtTable1::addpoint(double x, double w) {
 // Gaussian integration of order N exactly integrates polynomials of
 // order 2N-1.
 
+// Gauss points tables for the triangle and tetrahedron are defined in
+// masterelement.C.  They definitely don't belong here, but it would
+// be nice if these and those were in the same place.
+
 double GaussPoint1::Mmin = -1;
 double GaussPoint1::Mmax =  1;
 

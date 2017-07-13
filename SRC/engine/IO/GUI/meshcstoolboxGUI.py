@@ -332,9 +332,9 @@ class CrossSectionToolboxGUI(toolboxGUI.GfxToolbox,
     # Mouse-handler stuff.
     def acceptEvent(self, event):
         return event=='up' or event=='down'
-    def down(self,x,y,shift,ctrl):
+    def down(self,x,y,button,shift,ctrl):
         self.startpoint = primitives.Point(x,y)
-    def up(self,x,y,shift,ctrl):
+    def up(self,x,y,button,shift,ctrl):
         self.endpoint = primitives.Point(x,y)
         self.toolbox.makeCS(self.startpoint, self.endpoint)
 

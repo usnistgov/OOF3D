@@ -183,6 +183,8 @@ class Mesh(whoville.Who):
         # Call to setFEMesh() must precede calls to
         # CSubProblem.set_mesh(), which are made by the
         # SubProblemContext constructor.
+        ## TODO: Why call FEMesh.set_parent_mesh in __init__ but
+        ## Mesh.setFEMesh here?  setFEMesh calls set_parent_mesh.
         self.setFEMesh(new_femesh)
 
         self.setDataCache(meshdatacache.newMeshDataCache())

@@ -375,7 +375,7 @@ def _makeFieldIndexParameterWidget(param, scope, verbose=False):
 meshparameters.FieldIndexParameter.makeWidget = _makeFieldIndexParameterWidget
 
 
-class SubProblemExluder:
+class SubProblemExcluder:
       def __init__(self, widget, base):
 	  self.widget = widget
 	  self.subps = []
@@ -408,7 +408,7 @@ class SubProblemWidget(MeshParamWidget):
         self.targetwidget = self.scope.findWidget(
             lambda w: isinstance(w, whowidget.WhoParameterWidget))
         
-        self.exclude = SubProblemExluder(
+        self.exclude = SubProblemExcluder(
             self.targetwidget, subproblemcontext.subproblems)
         
         MeshParamWidget.__init__(self, param, self.exclude, scope, name,

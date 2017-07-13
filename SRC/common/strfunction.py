@@ -92,6 +92,7 @@ class XYTStrFunction(StrFunction):
             StrFunction.__init__(self, 'x, y, z, t', funcstr)
     def __call__(self, coord, t):
         if self.function:
+            # This relies on coord being iterable.
             args = tuple(coord) + (t,)
             return self.function(*args) # unpacks Coord into x,y,t or x,y,z,t
     def __repr__(self):

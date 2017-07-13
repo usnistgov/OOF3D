@@ -20,6 +20,7 @@ class MasterElement;
 #include "common/pythonexportable.h"
 #include "engine/gausspoint.h"
 #include "engine/indextypes.h"
+#include "engine/masterelement_i.h"
 #include "engine/shapefunction.h"
 #include <string>
 #include <vector>
@@ -104,7 +105,7 @@ public:
   int nmapnodes() const;
   int nfuncnodes() const;
   int ncorners() const;
-  int nexteriorfuncnodes() const; // exterior to the element, not the mesh.
+  // int nexteriorfuncnodes() const; // exterior to the element, not the mesh.
 
   int nedges() const;
 
@@ -145,7 +146,7 @@ public:
   double span() const; // Volume, area, or length, depending on dimension.
 
   // function to return a bunch of gausspoints, for doing integration
-  // in Python.  This is probably temporary.
+  // in Python. Used for testing, and maybe nothing else.
   std::vector<GaussPoint*>* integration_points(int order) const;
 
   GaussPointIterator integrator(int order) const;
@@ -159,6 +160,7 @@ public:
 
   friend class ElementMapNodePositionIterator;
   friend class ElementFuncNodePositionIterator;
+  friend std::ostream &operator<<(std::ostream&, const ElementBase&);
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -223,7 +225,8 @@ private:
   friend class ElementFuncNodeIterator;
 
 public:
-  Element(CSkeletonElement *el, const MasterElement&, const std::vector<Node*>*,
+  Element(CSkeletonElement *el, const MasterElement&,
+	  const std::vector<Node*>&,
 	  const Material*);
   virtual ~Element();
 
@@ -279,6 +282,10 @@ public:
   ElementMapNodeIterator mapnode_iterator() const;
   virtual ElementFuncNodeIterator* funcnode_iterator() const;
   ElementCornerNodeIterator cornernode_iterator() const;
+
+  std::vector<Node*> getIntermediateNodes(const std::vector<Node*>&) const;
+  NodeIndexVec getProtoNodeNumbers(const std::vector<Node*>&)
+    const;
 
   virtual Coord position(int) const;
 
@@ -400,8 +407,6 @@ public:
 
 
 
-  friend std::ostream &operator<<(std::ostream&, const Element&);
-
   Node* getCornerNode(int i) const;
   void setMaterial(const Material* pMat){matl=pMat;}
 
@@ -421,7 +426,7 @@ protected:
   const Element *front_;
   const Element *back_;
 public:
-  FaceBoundaryElement(const MasterElement&, const std::vector<Node*>*);
+  FaceBoundaryElement(const MasterElement&, const std::vector<Node*>&);
   const std::string &classname() const;
   void setFrontBulk(const Element *el) { front_ = el; }
   const Element *getFrontBulk() const;
@@ -431,7 +436,7 @@ public:
 
 class EdgeBoundaryElement: public Element {
 public:
-  EdgeBoundaryElement(const MasterElement&, const std::vector<Node*>*);
+  EdgeBoundaryElement(const MasterElement&, const std::vector<Node*>&);
   const std::string &classname() const;
 };
 

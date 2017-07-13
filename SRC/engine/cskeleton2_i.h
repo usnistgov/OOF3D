@@ -18,6 +18,7 @@
 
 #include <oofconfig.h>
 
+#include <map>
 #include <vector>
 
 class CDeputySkeleton;
@@ -30,6 +31,13 @@ class ProvisionalChangesBase;
 class ProvisionalInsertion;
 class ProvisionalMerge;
 typedef std::vector<ProvisionalChangesBase*> ProvisionalChangesVector;
+
+// SkelElNodeMap maps a part of a skeleton element (edge or face) to a
+// list of Nodes that have been created on that part when constructing
+// the real mesh elements.
+class CSkeletonMultiNodeKey;
+class Node;
+typedef std::map<CSkeletonMultiNodeKey, std::vector<Node*>> SkelElNodeMap;
 
 
 #endif // CSKELETON2_I_H

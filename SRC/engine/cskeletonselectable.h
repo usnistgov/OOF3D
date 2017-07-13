@@ -19,6 +19,7 @@
 #include "common/lock.h"
 #include "common/pythonexportable.h"
 #include "engine/cskeletonselectable_i.h"
+#include "engine/masterelement_i.h"
 
 #include <string>
 #include <vtkCell.h>
@@ -205,7 +206,7 @@ public:
   virtual bool active(const CSkeletonBase*) const;
   virtual vtkSmartPointer<vtkIdList> getPointIds() const;
   virtual void getPointIds(vtkIdType *) const;
-  void getNodeIndices(std::vector<unsigned int>&) const;
+  void getNodeIndices(NodeIndexVec&) const;
   virtual vtkSmartPointer<vtkCell> getVtkCell() const;
   virtual vtkSmartPointer<vtkCell> getEmptyVtkCell() const = 0;
   CSkeletonNodeVector *get_node_children();

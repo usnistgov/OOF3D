@@ -527,19 +527,6 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
     def removeMouseHandler(self):
         self.mouseHandler = mousehandler.nullHandler
 
-    def mouseCB(self, eventtype, x, y, shift, ctrl):
-        debug.mainthreadTest()
-        global _during_callback
-        _during_callback = 1
-        if self.mouseHandler.acceptEvent(eventtype):
-            if eventtype == 'up':
-                self.mouseHandler.up(x,y, shift, ctrl)
-            elif eventtype == 'down':
-                self.mouseHandler.down(x,y, shift, ctrl)
-            elif eventtype == 'move':
-                self.mouseHandler.move(x,y, shift, ctrl)
-        _during_callback = 0
-
     #############################################
 
     # Time Controls

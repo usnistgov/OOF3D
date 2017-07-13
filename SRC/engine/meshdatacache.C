@@ -25,6 +25,11 @@
 #include <unistd.h>		// for mkstemp, unlink, access
 extern int errno;
 
+MeshDataCache::MeshDataCache()
+  : mesh(0), latest(0), latesttime(-1.0)
+{
+}
+
 MeshDataCache::~MeshDataCache() {
   restoreLatest();
 }
@@ -433,9 +438,9 @@ void DiskDataCache::record() {
   char buf[100];
   char *c = fgets(buf, sizeof(buf), ff);
   int nchars = atoi(c);
-  oofcerr << "DiskDataCache::record: wrote " << nchars << " bytes ("
-	  << n << " doubles) to "
-	  << filename << std::endl;
+  // oofcerr << "DiskDataCache::record: wrote " << nchars << " bytes ("
+  // 	  << n << " doubles) to "
+  // 	  << filename << std::endl;
 #endif // DEBUG
 }
 

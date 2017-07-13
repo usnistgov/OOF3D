@@ -1,0 +1,24 @@
+// -*- C++ -*-
+
+/* This software was produced by NIST, an agency of the U.S. government,
+ * and by statute is not subject to copyright in the United States.
+ * Recipients of this software assume all responsibilities associated
+ * with its operation, modification and maintenance. However, to
+ * facilitate maintenance we ask that before distributing modified
+ * versions of this software, you first contact the authors at
+ * oof_manager@nist.gov. 
+ */
+
+#ifndef TET10_SWIG
+#define TET10_SWIG
+
+%module tet10
+%include "engine/typemaps.swg"
+%{
+  extern void tet10_4init();
+%}
+void tet10_4init();
+
+%pragma(python) include="tet10.spy"
+
+#endif // TET10_SWIG

@@ -3,9 +3,7 @@ TODO LIST FOR OOF3D
 Before Next Release
 -------------------
 
-Higher order elements.
-
-Optimize categoryVolumes.
+Optimize categoryVolumes?
 
 Merge branches
   Ryan's 3D widgets  (Needs to be finished for voxel selection)
@@ -20,6 +18,12 @@ Fix Basic Tutorial -- don't use "Group" on the jpeg image, it takes
 too long and uses up way too much memory if users don't hit "Stop"
 soon enough.
 
+Fix bug in Fix Illegal.  See Rachel's example of an unfixable element.
+
+Why is homogeneity recomputed after Undo/Redo?
+
+Skeleton widget on Skeleton page doesn't automatically switch to new
+Skeleton?
 
 Soon
 ----
@@ -49,6 +53,9 @@ the swig output files contain code generated from #ifdef DEBUG blocks,
 but those output files are in SRC/SWIG3D and aren't rebuilt when the
 build options are changed.  Do this in 2D too.
 
+Move output operations to C++.  See TODO in
+FilledContourDisplay.setData in engine/IO/contourdisplay.py.
+
 
 At Some Later Time
 ------------------
@@ -60,4 +67,14 @@ Migrate to Python 3.x
 Convert pixel category array to octree, and construct voxel set
 boundaries from the octree, or compute element homogeneity from octree
 elements instead of voxels.  Maybe.
+
+
+
+BUGS TO FIX
+
+Display a contour plot.  Set contour display's filter to "Selected".
+Select a (skeleton) element.  Crash!  Selecting an element before
+setting the filter doesn't crash.
+
+Contour displays are incorrect when the elements are filtered.
 

@@ -13,7 +13,7 @@ import memorycheck
 import math
 from UTILS import file_utils
 reference_file = file_utils.reference_file
-file_utils.generate = False
+file_utils.generate = True
 
 ## TODO 3.1: This file doesn't just test the solvers, it also tests the
 ## Output mechanism, because checking outputs is an easy way to verify
@@ -27,10 +27,13 @@ file_utils.generate = False
 # time-dependent tests.
 shortening = 1.0
 
+linearElements = ['TET4_4', 'D2_2', 'T3_3', 'Q4_4']
+quadraticElements = ['TET4_10', 'D2_3', 'T3_6', 'Q4_8']
+
 class SaveableMeshTest(unittest.TestCase):
-    def saveAndLoad(self, filename, suffix=""):
+    def saveAndLoad(self, filename):
         # Save the mesh in ascii format, and compare with a reference file.
-        asciifilename = filename + suffix + "-ascii.dat"
+        asciifilename = filename + self.suffix() + "-ascii.dat"
         OOF.File.Save.Mesh(
             filename=asciifilename, mode='w', format='ascii',
             mesh = 'microstructure:skeleton:mesh')
@@ -58,7 +61,7 @@ class SaveableMeshTest(unittest.TestCase):
 
         # Save the mesh in binary format, reload it, and compare with the
         # original.
-        binaryfilename = filename + suffix + "-binary.dat"
+        binaryfilename = filename + self.suffix() + "-binary.dat"
         OOF.File.Save.Mesh(
             filename=binaryfilename, mode='w', format='binary',
             mesh='microstructure:skeleton:mesh')
@@ -72,6 +75,9 @@ class SaveableMeshTest(unittest.TestCase):
         file_utils.remove(asciifilename)
         file_utils.remove(binaryfilename)
         OOF.Microstructure.Delete(microstructure='original')
+
+    def suffix(self):
+        return ""
     
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -83,7 +89,10 @@ class OOF_StaticIsoElastic(SaveableMeshTest):
     def setUp(self):
         global mesh
         from ooflib.engine import mesh
-        OOF.File.Load.Data(filename=reference_file("mesh_data", "simple_mesh"))
+        # mesh_file_name is defined in subclasses that differ only in
+        # the starting mesh.
+        OOF.File.Load.Data(filename=reference_file("mesh_data",
+                                                   self.mesh_file_name()))
         OOF.Subproblem.Set_Solver(
             subproblem='microstructure:skeleton:mesh:default',
             solver_mode=BasicSolverMode(
@@ -93,6 +102,7 @@ class OOF_StaticIsoElastic(SaveableMeshTest):
 
     def tearDown(self):
         OOF.Material.Delete(name="material")
+
 
     @memorycheck.check("microstructure")
     def Null(self):             # Establish baseline for memory leak tests
@@ -254,13 +264,24 @@ class OOF_StaticIsoElastic(SaveableMeshTest):
         OOF.Mesh.Solve(mesh='microstructure:skeleton:mesh', endtime=0.0)
         self.saveAndLoad("static-isotropic-float-tiltX")
 
+        
+class OOF_StaticIsoElastic_Linear(OOF_StaticIsoElastic):
+    def mesh_file_name(self):
+        return "simple_mesh"
+
+class OOF_StaticIsoElastic_Quadratic(OOF_StaticIsoElastic):
+    def mesh_file_name(self):
+        return "simple_quadratic_mesh"
+    def suffix(self):
+        return "-quadratic"
+
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # OOF_AnisoRotation tests that an anisotropic property is rotated
 # correctly by solving a thermal conductivity problem.  To regenerate
 # the reference file for this test, change the first line
 # mesh_data/anisotherm.log to "generate=True", load that file into
-# oof2, and save the resulting mesh into mesh_data/anisotherm.mesh.
+# oof3d, and save the resulting mesh into mesh_data/anisotherm.mesh.
 
 class OOF_AnisoRotation(SaveableMeshTest):
     def setUp(self):
@@ -382,6 +403,9 @@ class OOF_AnisoRotation(SaveableMeshTest):
 # file names to distinguish one test from another.
 
 class OOF_NeumannBase(unittest.TestCase):
+    def __init__(self, testname, elementTypes):
+        self.elementTypes = elementTypes
+        unittest.TestCase.__init__(self, testname)
     def setUp(self):
         mx, my, mz = self.microstructureSize
         sx, sy, sz = self.skeletonSize
@@ -415,7 +439,7 @@ class OOF_NeumannBase(unittest.TestCase):
         OOF.Mesh.New(
             name='mesh',
             skeleton='microstructure:skeleton',
-            element_types=['TET4_4', 'Q4_4', 'T3_3', 'D2_2'])
+            element_types=self.elementTypes)
         OOF.Subproblem.Set_Solver(
             subproblem='microstructure:skeleton:mesh:default', 
             solver_mode=BasicSolverMode(
@@ -428,7 +452,11 @@ class OOF_NeumannBase(unittest.TestCase):
             endtime=0.0)
 
     def compare(self, filename):
-        realfilename = filename + '-' + self.testname
+        basefilename = filename + '-' + self.testname
+        if self.elementTypes is quadraticElements:
+            realfilename = basefilename + '-quadratic'
+        else:
+            realfilename = basefilename
         OOF.File.Save.Mesh(
             filename=realfilename,
             mode='w', format='ascii',
@@ -437,7 +465,33 @@ class OOF_NeumannBase(unittest.TestCase):
             realfilename,
             os.path.join('mesh_data', realfilename),
             1.e-6))
+
         file_utils.remove(realfilename)
+
+        fieldfilename = realfilename + '-field'
+        OOF.Mesh.Analyze.Direct_Output(
+            mesh='microstructure:skeleton:mesh',
+            time=latest,
+            data=getOutput('Field:Value',field=self.field()),
+            domain=EntireMesh(),
+            sampling=GridSampleSet(x_points=11,y_points=11,z_points=11,
+                                   show_x=False,show_y=False,show_z=False),
+            destination=OutputStream(
+                filename='output.dat',
+                mode='w'))
+        self.assert_(file_utils.fp_file_compare(
+            'output.dat',
+            os.path.join('mesh_data', fieldfilename),
+            1.e-6))
+        if self.elementTypes is quadraticElements:
+            linearfieldfilename = basefilename + '-field'
+            # Compare quadratic field data to linear field data
+            self.assert_(file_utils.fp_file_compare(
+                'output.dat',
+                os.path.join("mesh_data", linearfieldfilename),
+                1.e-6))
+        file_utils.remove('output.dat')
+        
     def tearDown(self):
         OOF.Material.Delete(name='material')
         OOF.Property.Delete(property='Mechanical:Elasticity:Isotropic:instance')
@@ -455,6 +509,8 @@ class NeumannElastic(OOF_NeumannBase):
         OOF.Subproblem.Equation.Activate(
             subproblem='microstructure:skeleton:mesh:default',
             equation=Force_Balance)
+    def field(self):
+        return Displacement
     def makeDirichletBCs(self, exclude=[]):
         for bdyname in ('Xmax', 'Xmin', 'Ymax', 'Ymin', 'Zmax', 'Zmin'):
             if bdyname not in exclude:
@@ -530,6 +586,8 @@ class NeumannThermal(OOF_NeumannBase):
         OOF.Subproblem.Equation.Activate(
             subproblem='microstructure:skeleton:mesh:default',
             equation=Heat_Eqn)
+    def field(self):
+        return Temperature
     def makeDirichletBCs(self, include=[]):
         for bdyname in include:
             OOF.Mesh.Boundary_Conditions.New(
@@ -639,33 +697,51 @@ class OOF_ThermalNeumann4(NeumannThermal, MeshGeometry4):
 ## elasticity problem with Dirichlet, Neumann, and Floating BCs all
 ## mixed together.
 
-class OOF_NonrectMixedBCStaticElastic(SaveableMeshTest):
-    def setUp(self):
-        OOF.File.Load.Data(
-            filename=reference_file("mesh_data", "everythingbagel0.mesh"))
+# This isn't derived from SaveableMeshTest so that it can more easily
+# re-solve a Mesh.  Also, it doesn't bother to test the binary format.
 
-    @memorycheck.check("solved", "microstructure")
-    def Solve1(self):
-        OOF.Mesh.Solve(mesh="microstructure:skeleton:mesh", endtime=0.0)
-        # Rename the microstructure, load in a pre-solved version, and
-        # compare.
-        OOF.Microstructure.Rename(
-            microstructure='microstructure', 
-            name='solved')
-        OOF.File.Load.Data(
-            filename=reference_file("mesh_data", "everythingbagel1.mesh"))
-        
+class OOF_NonrectMixedBCStaticElastic(unittest.TestCase):
+    def setUp(self):
+        global mesh
         from ooflib.engine import mesh
-        saved = mesh.meshes["solved:skeleton:mesh"]
+    def loadAndCompare(self, savedMeshFile):
+        # The loaded Microstructure should be called 'saved'.
+        OOF.File.Load.Data(
+            filename=reference_file("mesh_data", savedMeshFile))
+        saved = mesh.meshes["saved:skeleton:mesh"]
         damned = mesh.meshes["microstructure:skeleton:mesh"]
         self.assertEqual(saved.compare(damned, 1.0e-13), 0)
+        return saved    # for future comparisons
+    
+    @memorycheck.check("microstructure", "saved")
+    def Solve1(self):
+        global mesh
 
+        OOF.File.Load.Data(
+            filename=reference_file("mesh_data", "everythingbagel0.mesh"))
+        OOF.Mesh.Solve(mesh="microstructure:skeleton:mesh", endtime=0.0)
+        saved = self.loadAndCompare('everythingbagel1.mesh')
         # Check that re-solving the mesh works. 
         OOF.Mesh.Solve(mesh='microstructure:skeleton:mesh', endtime=0.0)
-        self.assertEqual(saved.compare(damned, 1.0e-13), 0)
+        self.assertEqual(
+            saved.compare(mesh.meshes['microstructure:skeleton:mesh'], 1.0e-13),
+            0)
 
-    @memorycheck.check("microstructure")
+    # Repeat part of Solve1 with a quadratic mesh.  Don't compare with
+    # the linear mesh, because the shear in the solution means that
+    # the linear solution isn't accurate.
+    @memorycheck.check("microstructure", "saved")
+    def SolveQ(self):
+        OOF.File.Load.Data(
+            filename=reference_file("mesh_data",
+                                    "everythingbagel0-quadratic.mesh"))
+        OOF.Mesh.Solve(mesh="microstructure:skeleton:mesh", endtime=0.0)
+        self.loadAndCompare('everythingbagel1-quadratic.mesh')
+
+    @memorycheck.check("microstructure", "saved")
     def Solve2(self):
+        OOF.File.Load.Data(
+            filename=reference_file("mesh_data", "everythingbagel0.mesh"))
         OOF.Mesh.Solve(mesh="microstructure:skeleton:mesh", endtime=0.0)
         # Change the value of the Neumann condition
         OOF.Mesh.Boundary_Conditions.Edit(
@@ -687,7 +763,8 @@ class OOF_NonrectMixedBCStaticElastic(SaveableMeshTest):
                 boundary='topedge'))
         # Resolve
         OOF.Mesh.Solve(mesh="microstructure:skeleton:mesh", endtime=0.0)
-        self.saveAndLoad("everythingbagel2")
+        self.loadAndCompare("everythingbagel2.mesh")
+        OOF.Microstructure.Delete(microstructure="saved")
         # Change the Neumann condition again
         OOF.Mesh.Boundary_Conditions.Edit(
             name='weight', 
@@ -700,7 +777,7 @@ class OOF_NonrectMixedBCStaticElastic(SaveableMeshTest):
                 boundary='rightface'))
         # Solve again
         OOF.Mesh.Solve(mesh="microstructure:skeleton:mesh", endtime=0.0)
-        self.saveAndLoad("everythingbagel3")
+        self.loadAndCompare("everythingbagel3.mesh")
 
     def tearDown(self):
         OOF.Material.Delete(name='material')
@@ -749,7 +826,7 @@ class OOF_SimplePiezo(SaveableMeshTest):
         OOF.Mesh.New(
             name='mesh', 
             skeleton='microstructure:skeleton',
-            element_types=['TET4_4', 'D2_2', 'T3_3', 'Q4_4'])
+            element_types=self.elementTypes())
         OOF.Subproblem.Field.Define(
             subproblem='microstructure:skeleton:mesh:default',
             field=Displacement)
@@ -821,6 +898,14 @@ class OOF_SimplePiezo(SaveableMeshTest):
     def tearDown(self):
         OOF.Material.Delete(name='material')
 
+class OOF_SimplePiezo_Linear(OOF_SimplePiezo):
+    def elementTypes(self):
+        return linearElements
+
+class OOF_SimplePiezo_Quadratic(OOF_SimplePiezo):
+    def elementTypes(self):
+        return quadraticElements
+    
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # Check that solving a static problem after a nonstatic problem on the
@@ -942,7 +1027,26 @@ class OOF_1x1ElasticDynamic(SaveableMeshTest):
 # Use various time steppers to solve a simple thermal diffusion
 # problem.
 
+# These tests also compare different types of elements.  The initial
+# and boundary conditions are set so that there is no t=0
+# discontinuity anywhere, since different types of elements will fail
+# to represent that discontinuity in different ways, making the
+# comparison difficult.
+
+# The output is computed at a single point at a node in the center of
+# the Microstructure so that its initial value doesn't depend on the
+# element and its shape functions.
+
+# The number of elements in the X direction and the solution tolerance
+# are set by constructor args, and are varied to ensure that the
+# linear solutions are converging towards the quadratic one.
+
 class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
+    def __init__(self, name, tol, nX=4, endtime=0.5):
+        self.nXElements = nX
+        self.tolerance = tol
+        self.endtime = endtime
+        SaveableMeshTest.__init__(self, name)
     def setUp(self):
         global outputdestination
         from ooflib.engine.IO import outputdestination
@@ -961,12 +1065,12 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             material='material', microstructure='microstructure', pixels=all)
         OOF.Skeleton.New(
             name='skeleton', microstructure='microstructure',
-            x_elements=4, y_elements=4, z_elements=4,
+            x_elements=self.nXElements, y_elements=4, z_elements=4,
             skeleton_geometry=TetraSkeleton(arrangement='moderate'))
         OOF.Mesh.New(
             name='mesh',
             skeleton='microstructure:skeleton',
-            element_types=['TET4_4', 'D2_2', 'T3_3', 'Q4_4'])
+            element_types=self.elementTypes())
         OOF.Subproblem.Field.Define(
             subproblem='microstructure:skeleton:mesh:default',
             field=Temperature)
@@ -993,26 +1097,28 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
         OOF.Mesh.Set_Field_Initializer(
             mesh='microstructure:skeleton:mesh',
             field=Temperature,
-            initializer=ConstScalarFieldInit(value=4))
+            initializer=FuncScalarFieldInit(function='2+x+4*x*(1-x)'))
         OOF.Mesh.Apply_Field_Initializers_at_Time(
             mesh='microstructure:skeleton:mesh', time=0.0)
+
         OOF.Mesh.Scheduled_Output.New(
             mesh='microstructure:skeleton:mesh',
             name=AutomaticName('Average Temperature on top'),
             output=ScheduledAnalysis(
                 data=getOutput('Field:Value',field=Temperature),
                 operation=AverageOutput(),
-                domain=FaceBoundaryDomain(boundary='Ymax',side='FRONT'),
-                sampling=ContinuumSampleSet(order=automatic)),
+                domain=SinglePoint(point=Point(0.5, 0.5, 0.5)),
+                sampling=StatPointSampleSet()
+            ),
             scheduletype=AbsoluteOutputSchedule(),
             schedule=Periodic(delay=0.0,interval=0.05*shortening),
             destination=OutputStream(filename='test.dat',mode='w'))
 
     @memorycheck.check('microstructure')
     def CNdirect(self):
-        # Use CN to generate the reference files, and do it with a
-        # tight tolerance.
-        if file_utils.generate:
+        # Use CNdirect to generate the reference files, and do it with
+        # a tight tolerance.
+        if file_utils.generating('mesh_data', 'centertemp.dat'):
             tol = 1.e-8
         else:
             tol = 1.e-6
@@ -1032,11 +1138,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
 
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-5))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1057,11 +1163,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-3))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
         self.saveAndLoad('timedep-thermo')
@@ -1084,11 +1190,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-3))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1109,11 +1215,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-6))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1134,11 +1240,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-3))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1165,11 +1271,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-3))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
 
         # Repeat, because there seems to be some problem with repeated
         # SS22 nonlinear solutions, so it's good to know if repeated
@@ -1181,11 +1287,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
 
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-3))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1195,8 +1301,10 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             solver_mode=AdvancedSolverMode(
                 time_stepper=AdaptiveDriver(
                     initialstep=0.001,
-                    tolerance=1e-7,
-                    minstep=1e-5,
+                    tolerance=1e-6,
+                    # minstep is small so that the tests with large nX
+                    # will work.
+                    minstep=1e-7,
                     errorscaling=AbsoluteErrorScaling(),
                     stepper=TwoStep(singlestep=CrankNicolson())),
                 nonlinear_solver=NoNonlinearSolver(),
@@ -1211,11 +1319,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-6))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1242,14 +1350,14 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
         # Get there in two stages.
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.25*shortening)
+            endtime=0.5*self.endtime*shortening)
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-6))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1275,11 +1383,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-3))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1305,11 +1413,11 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-6))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1335,17 +1443,25 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
             )
         OOF.Mesh.Solve(
             mesh='microstructure:skeleton:mesh',
-            endtime=0.5*shortening)
+            endtime=self.endtime*shortening)
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
-                os.path.join('mesh_data', 'avgtemp.dat'),
-                1.e-3))
+                os.path.join('mesh_data', 'centertemp.dat'),
+                self.tolerance))
         file_utils.remove('test.dat')
 
     def tearDown(self):
         outputdestination.forgetTextOutputStreams()
         OOF.Material.Delete(name='material')
 
+class OOF_ThermalDiffusionTimeSteppers_Linear(OOF_ThermalDiffusionTimeSteppers):
+    def elementTypes(self):
+        return linearElements
+
+class OOF_ThermalDiffusionTimeSteppers_Quadratic(OOF_ThermalDiffusionTimeSteppers):
+    def elementTypes(self):
+        return quadraticElements
+    
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 ## Check that a simple elasticity problem can be solved exactly.
@@ -1377,7 +1493,7 @@ class OOF_ElasticExact(SaveableMeshTest):
             skeleton_geometry=TetraSkeleton(arrangement='moderate'))
         OOF.Mesh.New(
             name='mesh', skeleton='microstructure:skeleton',
-            element_types=['TET4_4', 'D2_2', 'T3_3', 'Q4_4'])
+            element_types=self.elementTypes())
         OOF.Subproblem.Field.Define(
             subproblem='microstructure:skeleton:mesh:default',
             field=Displacement)
@@ -1484,6 +1600,14 @@ class OOF_ElasticExact(SaveableMeshTest):
         outputdestination.forgetTextOutputStreams()
         OOF.Property.Delete(property='Mechanical:Elasticity:Isotropic:iso8')
         OOF.Material.Delete(name="material")
+
+class OOF_ElasticExact_Linear(OOF_ElasticExact):
+    def elementTypes(self):
+        return linearElements
+
+class OOF_ElasticExact_Quadratic(OOF_ElasticExact):
+    def elementTypes(self):
+        return quadraticElements
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -2194,21 +2318,36 @@ class OOF_StaticAndDynamic(OOF_ElasticTimeSteppers):
 
 
 static_set = [
-    OOF_StaticIsoElastic("Null"),
-    OOF_StaticIsoElastic("Solve0"),
-    OOF_StaticIsoElastic("SolvePlusX"),
-    OOF_StaticIsoElastic("SolveMinusX"),
-    OOF_StaticIsoElastic("SolvePlusY"),
-    OOF_StaticIsoElastic("SolveMinusY"),
-    OOF_StaticIsoElastic("SolvePlusZ"),
-    OOF_StaticIsoElastic("SolveMinusZ"),
-    OOF_StaticIsoElastic("SolveFloatFlatX"),
-    OOF_StaticIsoElastic("SolveFloatTiltX"),
+    OOF_StaticIsoElastic_Linear("Null"),
+    OOF_StaticIsoElastic_Linear("Solve0"),
+    OOF_StaticIsoElastic_Linear("SolvePlusX"),
+    OOF_StaticIsoElastic_Linear("SolveMinusX"),
+    OOF_StaticIsoElastic_Linear("SolvePlusY"),
+    OOF_StaticIsoElastic_Linear("SolveMinusY"),
+    OOF_StaticIsoElastic_Linear("SolvePlusZ"),
+    OOF_StaticIsoElastic_Linear("SolveMinusZ"),
+    OOF_StaticIsoElastic_Linear("SolveFloatFlatX"),
+    OOF_StaticIsoElastic_Linear("SolveFloatTiltX"),
     OOF_AnisoRotation("Solve00"),
     OOF_AnisoRotation("Solve0"),
     OOF_AnisoRotation("Solve"),
-    OOF_SimplePiezo("Solve"),
-    OOF_ElasticExact("Solve")
+    OOF_SimplePiezo_Linear("Solve"),
+    OOF_ElasticExact_Linear("Solve")
+    ]
+
+static_quadratic_set = [
+    OOF_StaticIsoElastic_Quadratic("Null"),
+    OOF_StaticIsoElastic_Quadratic("Solve0"),
+    OOF_StaticIsoElastic_Quadratic("SolvePlusX"),
+    OOF_StaticIsoElastic_Quadratic("SolveMinusX"),
+    OOF_StaticIsoElastic_Quadratic("SolvePlusY"),
+    OOF_StaticIsoElastic_Quadratic("SolveMinusY"),
+    OOF_StaticIsoElastic_Quadratic("SolvePlusZ"),
+    OOF_StaticIsoElastic_Quadratic("SolveMinusZ"),
+    OOF_StaticIsoElastic_Quadratic("SolveFloatFlatX"),
+    OOF_StaticIsoElastic_Quadratic("SolveFloatTiltX"),
+    OOF_SimplePiezo_Quadratic("Solve"),
+    OOF_ElasticExact_Quadratic("Solve")
     ]
 
 # Do a bunch of Neumann tests in a bunch of geometries.
@@ -2222,28 +2361,70 @@ neumanngeometries = (OOF_ElasticNeumann1,
                      OOF_ThermalNeumann4
                  )
 neumanntestnames = ("NullXmin", "NullZmax", "Xmax01", "Ymax01", "Zmin01")
-static_set.extend([geometry(testname)
-                 for geometry in neumanngeometries
-                 for testname in neumanntestnames])
 
-static_set.extend([
-    OOF_NonrectMixedBCStaticElastic("Solve1"),
-    OOF_NonrectMixedBCStaticElastic("Solve2")]
-)
+static_neumann_set = [geometry(testname, elementTypes)
+                      for geometry in neumanngeometries
+                      for testname in neumanntestnames
+                      for elementTypes in (linearElements, quadraticElements)]
 
-dynamic_thermal_set = [
-    OOF_ThermalDiffusionTimeSteppers("CNdirect"),
-    OOF_ThermalDiffusionTimeSteppers("SS22directSaveRestore"),
-    OOF_ThermalDiffusionTimeSteppers("BEdirect"),
-    OOF_ThermalDiffusionTimeSteppers("RK4direct"),
-    OOF_ThermalDiffusionTimeSteppers("RK2direct"),
-    OOF_ThermalDiffusionTimeSteppers("SS22"),
-    OOF_ThermalDiffusionTimeSteppers("CN"),
-    OOF_ThermalDiffusionTimeSteppers("CNdouble"),
-    OOF_ThermalDiffusionTimeSteppers("BE"),
-    OOF_ThermalDiffusionTimeSteppers("RK4"),
-    OOF_ThermalDiffusionTimeSteppers("RK2"),
+
+mixed_bc_set = [OOF_NonrectMixedBCStaticElastic("Solve1"),
+                OOF_NonrectMixedBCStaticElastic("Solve2"),
+                OOF_NonrectMixedBCStaticElastic("SolveQ")
 ]
+
+dynamic_thermal_quadratic_set = [
+    # The reference data is generated by CNdirect with a smaller time
+    # step tolerance than is used in production, so we can't compare
+    # too strictly here.
+
+    # When generating the reference data,
+    # OOF_ThermalDiffusionTimeSteppers_Quadratic("CNdirect") must be
+    # the first OOF_ThermalDiffusionTimeSteppers test.
+
+    # OOF_ThermalDiffusionTimeSteppers_Quadratic("CNdirect", tol=1.e-5),
+    # OOF_ThermalDiffusionTimeSteppers_Quadratic("SS22", tol=1.e-5),
+    # OOF_ThermalDiffusionTimeSteppers_Quadratic("CN", tol=1.e-5),
+    # OOF_ThermalDiffusionTimeSteppers_Quadratic("BE", tol=1.e-3),
+
+    ## TODO: These take a very long time to run.  Reduce endtime.
+    OOF_ThermalDiffusionTimeSteppers_Quadratic("RK4", tol=1.e-5, endtime=0.2),
+    OOF_ThermalDiffusionTimeSteppers_Quadratic("RK2", tol=1.e-5, endtime=0.2),
+]
+
+# Check that increasing the number of elements in the X direction
+# (the direction in which the field varies) makes the solution
+# with linear elements converge to the solution with quadratic
+# elements.
+
+dynamic_thermal_convergence_set = [
+    OOF_ThermalDiffusionTimeSteppers_Linear("CN", tol=0.1),
+    OOF_ThermalDiffusionTimeSteppers_Linear("CN", nX=8, tol=0.02),
+    OOF_ThermalDiffusionTimeSteppers_Linear("CN", nX=16, tol=0.005),
+    OOF_ThermalDiffusionTimeSteppers_Linear("CN", nX=32, tol=0.001)
+    ]
+
+dynamic_thermal_linear_set = [
+    ## Some of these tests use the default nX=4 just so that they'll
+    ## run quickly.  The reference file is generated by a quadratic
+    ## mesh with a small time step tolerance, so the linear meshes
+    ## here have trouble keeping up.  On the other hand, they're fast.
+    OOF_ThermalDiffusionTimeSteppers_Linear("CNdirect", nX=8, tol=0.02),
+    OOF_ThermalDiffusionTimeSteppers_Linear("SS22directSaveRestore", tol=0.1),
+    OOF_ThermalDiffusionTimeSteppers_Linear("BEdirect", nX=6, tol=0.02),
+    OOF_ThermalDiffusionTimeSteppers_Linear("RK4direct", nX=6, tol=0.02),
+    OOF_ThermalDiffusionTimeSteppers_Linear("RK2direct", nX=6, tol=0.02),
+    OOF_ThermalDiffusionTimeSteppers_Linear("SS22", nX=6, tol=0.02),
+    OOF_ThermalDiffusionTimeSteppers_Linear("CN", tol=0.06),
+    OOF_ThermalDiffusionTimeSteppers_Linear("CNdouble", tol=0.06),
+    OOF_ThermalDiffusionTimeSteppers_Linear("BE", tol=0.05),
+    OOF_ThermalDiffusionTimeSteppers_Linear("RK4", tol=0.06),
+    OOF_ThermalDiffusionTimeSteppers_Linear("RK2", tol=0.06),
+]
+
+dynamic_thermal_set = (dynamic_thermal_quadratic_set +
+                       dynamic_thermal_convergence_set +
+                       dynamic_thermal_linear_set)
 
 dynamic_elastic_set = [
     # In "generate" mode, SS22 provides the reference data for the
@@ -2260,8 +2441,12 @@ dynamic_elastic_set = [
     OOF_StaticAndDynamic("SS22")
 ]
 
-test_set = static_set + dynamic_thermal_set + dynamic_elastic_set
-#test_set = dynamic_elastic_set
-# test_set = [
-#     OOF_NonrectMixedBCStaticElastic("Solve2")
-# ]
+test_set = (static_set +
+            static_quadratic_set +
+            static_neumann_set +
+            mixed_bc_set +
+            dynamic_thermal_set +
+            dynamic_elastic_set)
+
+test_set = dynamic_thermal_linear_set
+#test_set = [OOF_ThermalDiffusionTimeSteppers_Quadratic("CNdirect")]

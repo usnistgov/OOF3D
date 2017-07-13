@@ -264,7 +264,7 @@ class GenericInfoToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     def acceptEvent(self, eventtype):
         return eventtype == 'up'
 
-    def up(self, x, y, shift, ctrl):
+    def up(self, x, y, button, shift, ctrl):
         canvas = self.toolbox.gfxwindow().oofcanvas
         view = canvas.get_view()
         realpt = canvas.display2Physical(view, x, y)

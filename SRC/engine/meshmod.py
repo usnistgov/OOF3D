@@ -52,6 +52,7 @@ class RebuildMesh(MeshModification):
     def apply(self, meshcontext):
         meshcontext.rebuildMesh()
     def signal(self, meshcontext):
+        switchboard.notify("femesh replaced", meshcontext)
         switchboard.notify("mesh changed", meshcontext)
         switchboard.notify("mesh boundaries changed", meshcontext.getObject())
         switchboard.notify("redraw")

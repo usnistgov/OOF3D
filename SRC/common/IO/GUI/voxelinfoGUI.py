@@ -135,7 +135,7 @@ class VoxelInfoToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     # outside the image/microstructure.  In this case, do nothing --
     # the behavior is then the same as if you click outside the drawn
     # area.
-    def up(self, x, y, shift, ctrl):
+    def up(self, x, y, button, shift, ctrl):
         msOrImage = self.gfxwindow().topmost('Microstructure', 'Image')
         if msOrImage:
             if config.dimension() == 3:
