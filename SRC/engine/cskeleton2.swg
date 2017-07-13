@@ -297,7 +297,7 @@ public:
   CSkeleton *completeCopy();
   CSkeleton *sheriffSkeleton();
 
-  void populate_femesh(FEMesh *fem, Material *mat=NULL);
+  void populate_femesh(FEMesh *fem, MasterElement*, Material *mat=NULL);
 
   %new string *sanityCheck();
 

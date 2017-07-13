@@ -759,7 +759,7 @@ class Skeleton_Boundary(unittest.TestCase):
             view=View(cameraPosition=Coord(-21.9309,5.54845,16.4225),
                       focalPoint=Coord(5,5,5),
                       up=Coord(0.00575824,0.999391,-0.0344091), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 5.0, 0]], invertClip=0,
+                      clipPlanes=[[1.0, 0.0, 0.0, 5.0, 0]], invertClip=1,
                       size_x=691, size_y=652),
             shift=1, ctrl=0)
         OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
@@ -768,7 +768,7 @@ class Skeleton_Boundary(unittest.TestCase):
             view=View(cameraPosition=Coord(-21.9309,5.54845,16.4225),
                       focalPoint=Coord(5,5,5),
                       up=Coord(0.00575824,0.999391,-0.0344091), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 5.0, 0]], invertClip=0,
+                      clipPlanes=[[1.0, 0.0, 0.0, 5.0, 0]], invertClip=1,
                       size_x=691, size_y=652), 
             shift=1, ctrl=0)
         OOF.Graphics_1.Toolbox.Select_Face.Single_Face(

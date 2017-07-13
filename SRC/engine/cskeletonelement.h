@@ -17,6 +17,7 @@
 #include "common/cachedvalue.h"
 #include "common/coord.h"
 #include "common/doublevec.h"
+#include "engine/cskeleton2_i.h"
 #include "engine/cskeletonselectable.h"
 #include "engine/homogeneity.h"
 
@@ -28,6 +29,7 @@ class COrientedPlane;
 class CSkeleton;
 class FEMesh;
 class LineSegmentLayer;
+class MasterElement;
 class Material;
 class Node;
 class OrientedCSkeletonFace;
@@ -93,6 +95,11 @@ std::ostream &operator<<(std::ostream&, const LineIntersectionPoint&);
 			   
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// TODO: Do we still need to define NONE?  It was used heavily in the
+// old failed (sad!) category volumes code.  It's still used in the
+// tetrahedral topology tables, but most of those may not be needed
+// any more either.
+
 #define NONE 12345    // larger than any tet node, edge, or face index
 
 class CSkeletonElement : public CSkeletonMultiNodeSelectable {
@@ -109,12 +116,14 @@ protected:
   			  const CSkeletonBase*, std::vector<int> &, double,
   			  const Coord&, const Coord&) const;
   std::vector<COrientedPlane> getPlanes(const std::vector<Coord3D>&) const;
+
 public:
   // static topological info
   static const unsigned int faceEdges[4][3];
   static const unsigned int tetEdge2FaceEdge[4][6];
   static const int faceEdgeDirs[4][3];
   static const unsigned int edgeFaces[6][2];
+  static const unsigned int edgeNodes[6][2];
   static const int edgeFaceDirs[6][4];
   static const unsigned int edgeEdgeFace[6][6];
   static const unsigned int nodeEdgeFace[4][6];
@@ -239,8 +248,11 @@ public:
   virtual int nElements() const { return 1; }
 
   void realElement(FEMesh *femesh, int index,
-		   //std::vector<Node*> *fnodes,
-		   const CSkeleton *, Material *mat=NULL);
+		   const MasterElement *master,
+		   const CSkeleton *skeleton,
+		   SkelElNodeMap &edgeNodes,
+		   SkelElNodeMap &faceNodes,
+		   Material *mat=NULL);
 
   virtual void print(std::ostream &) const;
 

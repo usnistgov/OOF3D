@@ -24,6 +24,7 @@
 #include "engine/cskeletongroups.h"
 #include "engine/femesh.h"
 #include "engine/homogeneity.h"
+#include "engine/masterelement.h"
 #include "engine/material.h"
 #include "engine/skeletonfilter.h"
 
@@ -2043,18 +2044,18 @@ std::string *CSkeleton::compare(CSkeletonBase* other, double tolerance)
   // Instead, compare *sorted* lists of lists of node indices, one
   // (inner) list for each element.
 
-  std::vector< std::vector<unsigned int> > enodes, onodes;
+  std::vector< NodeIndexVec > enodes, onodes;
   for(CSkeletonElementVector::const_iterator i=elements.begin();
       i!=elements.end(); ++i) 
     {
-      std::vector<unsigned int> nidxs;
+      NodeIndexVec nidxs;
       (*i)->getNodeIndices(nidxs);
       enodes.push_back(nidxs);
     }
   for(CSkeletonElementVector::const_iterator i=omar->elements.begin(); 
       i!=omar->elements.end(); ++i) 
     {
-      std::vector<unsigned int> nidxs;
+      NodeIndexVec nidxs;
       (*i)->getNodeIndices(nidxs);
       onodes.push_back(nidxs);
     }
@@ -2070,14 +2071,14 @@ std::string *CSkeleton::compare(CSkeletonBase* other, double tolerance)
   for(CSkeletonSegmentMap::const_iterator i=segments.begin();
       i!=segments.end(); ++i) 
     {
-      std::vector<unsigned int> nidxs;
+      NodeIndexVec nidxs;
       (*i).second->getNodeIndices(nidxs);
       enodes.push_back(nidxs);
     }
   for(CSkeletonSegmentMap::const_iterator i=omar->segments.begin();
       i!=omar->segments.end(); ++i) 
     {
-      std::vector<unsigned int> nidxs;
+      NodeIndexVec nidxs;
       (*i).second->getNodeIndices(nidxs);
       onodes.push_back(nidxs);
     }
@@ -2092,14 +2093,14 @@ std::string *CSkeleton::compare(CSkeletonBase* other, double tolerance)
   enodes.clear();
   onodes.clear();
   for(CSkeletonFaceMap::const_iterator i=faces.begin(); i!=faces.end(); ++i) {
-    std::vector<unsigned int> nidxs;
+    NodeIndexVec nidxs;
     (*i).second->getNodeIndices(nidxs);
     enodes.push_back(nidxs);
   }
   for(CSkeletonFaceMap::const_iterator i=omar->faces.begin(); 
       i!=omar->faces.end(); ++i) 
     {
-      std::vector<unsigned int> nidxs;
+      NodeIndexVec nidxs;
       (*i).second->getNodeIndices(nidxs);
       onodes.push_back(nidxs);
     }
@@ -2468,20 +2469,33 @@ void CSkeleton::needsHash() {
 }
 
 
-void CSkeleton::populate_femesh(FEMesh *realmesh, Material *mat) {
-  // TODO 3.1: for now we're assuming order 1
-  
+void CSkeleton::populate_femesh(FEMesh *realmesh, const MasterElement *master,
+				Material *mat)
+{
   // Calling cleanUp() here ensures that node and element indices
   // agree with the objects' positions in the lists, which ensures
   // that that indices of the objects in the FEMesh agree with the
   // indices in the Skeleton.
   cleanUp();
 
-  realmesh->reserveFuncNodes(nnodes());
-  //  realmesh->reserveMapNodes(nnodes()); // all nodes are func nodes 
+  // The calculation of nfuncnodes and nmapnodes assumes that corner
+  // nodes are both funcnodes and mapnodes.
+  int nfuncnodes = (nnodes()
+		    + nsegments()*(master->fun_order()-1)
+		    + nelements()*master->ninteriorfuncnodes());
+  realmesh->reserveFuncNodes(nfuncnodes);
+  // mapnodes only includes nodes that are only for mapping.  Nodes
+  // that have dofs and are mapping nodes are included in funcnodes.
+  int nmapnodes = (nsegments()*master->nedgemapnodes_only()
+		   + nfaces()*master->nfacemapnodes_only()); 
+  realmesh->reserveMapNodes(nmapnodes);
   
-  // Make the nodes.  Doing it this way guarantees that node indices
-  // in the Skeleton and FEMesh agree. 
+  // Make the corner nodes.  Doing it now in this order guarantees
+  // that node indices in the Skeleton and FEMesh agree.
+
+  // TODO: This means that in the Mesh's dof list, the corner nodes
+  // for all elements precede any of the non-corner nodes.  Does this
+  // cause poor cache management or poor matrix block structure?
   
   // TODO OPT: SPLIT NODES When we have split nodes in the Mesh, indices
   // won't agree.  We need a better way of matching mesh nodes and
@@ -2492,13 +2506,20 @@ void CSkeleton::populate_femesh(FEMesh *realmesh, Material *mat) {
     realmesh->newFuncNode(nodes[i]->position());
   }
 
-  // TODO 3.1: Add nodes for higher order elements.
+  // edgeNodeMap and faceNodeMap map edges and faces to the Nodes that
+  // have been created on them, so that the nodes will be re-used on
+  // neighboring elements.  They're set and used by realElement().
+  // They could be FEMesh data, but they're not needed after the mesh
+  // is constructed.
+  SkelElNodeMap edgeNodeMap;
+  SkelElNodeMap faceNodeMap;
 
   // make the elements
   for(unsigned int i=0; i<nelements(); ++i) {
     // CSkeletonElement::realElement() creates an element from the
     // appropriate MasterElement and calls FEMesh::addElement().
-    elements[i]->realElement(realmesh, i, /*fnodes,*/ this, mat);
+    elements[i]->realElement(realmesh, i, master, this,
+			     edgeNodeMap, faceNodeMap, mat);
   }
   
 }

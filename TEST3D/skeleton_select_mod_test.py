@@ -387,7 +387,7 @@ class ElementSelection(SelectionTest, skeleton_select_test.Element_Selection):
             view=View(cameraPosition=Coord(17.208,19.147,27.5139),
                       focalPoint=Coord(5,5,5),
                       up=Coord(-0.121734,0.868821,-0.479928), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 8.0, 1]], invertClip=0,
+                      clipPlanes=[[1.0, 0.0, 0.0, 8.0, 1]], invertClip=1,
                       suppressClip=0, size_x=621, size_y=615), shift=1, ctrl=0)
         # The next two selections don't select complete unrefined elements.
         OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
@@ -395,14 +395,14 @@ class ElementSelection(SelectionTest, skeleton_select_test.Element_Selection):
             points=[Point(2.7932,2.73647,21.2376)],
             view=View(cameraPosition=Coord(5,5,34.2583),
                       focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 8.0, 1]], invertClip=0,
+                      clipPlanes=[[1.0, 0.0, 0.0, 8.0, 1]], invertClip=1,
                       suppressClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
         OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
             skeleton='skeltest:skeleton',
             points=[Point(4.7901,5.33471,21.2376)],
             view=View(cameraPosition=Coord(5,5,34.2583),
                       focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 8.0, 1]], invertClip=0,
+                      clipPlanes=[[1.0, 0.0, 0.0, 8.0, 1]], invertClip=1,
                       suppressClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
 
         tenElements = [320, 344, 345, 346, 347, 348, 349, 350, 351, 376]

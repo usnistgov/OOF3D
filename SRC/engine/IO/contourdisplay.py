@@ -470,13 +470,14 @@ class FilledContourDisplay(ContourDisplay):
         ## parameters require the data to be recomputed, but some do
         ## not.
         self.setData(self.who().resolve(self.gfxwindow))
-        if self.datarange is not None:
-            self.setContourLevels()
+        self.setContourLevels()
         
     def setContourLevels(self):
         # This is the part of setParams that can't be done unless the
         # data has already been computed.  It's also repeated whenever
         # the data changes.
+        if not self.datarange:
+            return
         if self.min_contour is automatic.automatic:
             self.contour_min = self.datarange[0]
         else:
@@ -554,7 +555,8 @@ class FilledContourDisplay(ContourDisplay):
         ptdata = vtkutils.fillDataArray(values)
         self.canvaslayer.set_pointData(ptdata)
         # TODO OPT: This is inefficient.
-        self.datarange = (min(values), max(values))
+        if values:
+            self.datarange = (min(values), max(values))
         self.setContourLevels()
         self.redraw()
                                        

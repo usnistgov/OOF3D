@@ -29,6 +29,7 @@ class FEMesh;
 class FaceSubstitution;
 class GhostOOFCanvas;
 class HomogeneityData;
+class MasterElement;
 class Material;
 class ProvisionalMerge;
 class SegmentSubstitution;
@@ -346,7 +347,8 @@ public:
 
   // real meshes
   //virtual FEMesh* femesh() = 0;
-  virtual void populate_femesh(FEMesh *fem, Material *mat=NULL) = 0;
+  virtual void populate_femesh(FEMesh *fem, const MasterElement*,
+			       Material *mat=NULL) = 0;
 
   virtual void cleanUp() = 0;
 
@@ -589,7 +591,8 @@ public:
 
   // real meshes
   //virtual FEMesh* femesh();
-  virtual void populate_femesh(FEMesh *fem, Material *mat=NULL);
+  virtual void populate_femesh(FEMesh *fem, const MasterElement*,
+			       Material *mat=NULL);
 
   virtual void printSelf(std::ostream&) const;
 
@@ -855,8 +858,10 @@ public:
 
   // real meshes
   //virtual FEMesh* femesh() {return skeleton->femesh();}
-  virtual void populate_femesh(FEMesh *fem, Material *mat=NULL) {
-    skeleton->populate_femesh(fem);
+  virtual void populate_femesh(FEMesh *fem, const MasterElement *me,
+			       Material *mat=NULL)
+  {
+    skeleton->populate_femesh(fem, me, mat);
   }
 
   virtual void cleanUp() {

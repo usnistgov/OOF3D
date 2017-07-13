@@ -36,8 +36,8 @@ class MeshInfoDisplay(display.DisplayMethod):
         self.line_width = line_width
         self.tbcallbacks = []
         display.DisplayMethod.__init__(self)
-        self.drawFuncs = {"Element": self.drawElement,
-                          "Node": self.drawNode}
+        # self.drawFuncs = {"Element": self.drawElement,
+        #                   "Node": self.drawNode}
 
     ## TODO 3.1: Add Segment and Face modes, later, when interface physics
     ## is added.
@@ -52,54 +52,54 @@ class MeshInfoDisplay(display.DisplayMethod):
         self.tbcallbacks = []
         display.DisplayMethod.destroy(self, destroy_canvaslayer)
 
-    def draw(self, gfxwindow, device): # 2D only
-        toolbox = gfxwindow.getToolboxByName("Mesh_Info")
-        mesh = toolbox.meshcontext()
-        mesh.begin_reading()
-        mesh.restoreCachedData(gfxwindow.displayTime)
-        try:
-            # Drawing "queried" item.
-            if toolbox.querier and toolbox.querier.object:
-                self.drawFuncs[toolbox.querier.targetname](device, toolbox, 
-                                                           toolbox.querier.object,
-                                                           which="query")
-            # Drawing "peeked" item.
-            if toolbox.peeker and toolbox.peeker.objects.values():
-                for objtype in toolbox.peeker.objects:
-                    if toolbox.peeker.objects[objtype]:
-                        self.drawFuncs[objtype](device, toolbox, 
-                                                toolbox.peeker.objects[objtype],
-                                                which="peek")
-        finally:
-            mesh.releaseCachedData()
-            mesh.end_reading()
+    # def draw(self, gfxwindow, device): # 2D only
+    #     toolbox = gfxwindow.getToolboxByName("Mesh_Info")
+    #     mesh = toolbox.meshcontext()
+    #     mesh.begin_reading()
+    #     mesh.restoreCachedData(gfxwindow.displayTime)
+    #     try:
+    #         # Drawing "queried" item.
+    #         if toolbox.querier and toolbox.querier.object:
+    #             self.drawFuncs[toolbox.querier.targetname](device, toolbox, 
+    #                                                        toolbox.querier.object,
+    #                                                        which="query")
+    #         # Drawing "peeked" item.
+    #         if toolbox.peeker and toolbox.peeker.objects.values():
+    #             for objtype in toolbox.peeker.objects:
+    #                 if toolbox.peeker.objects[objtype]:
+    #                     self.drawFuncs[objtype](device, toolbox, 
+    #                                             toolbox.peeker.objects[objtype],
+    #                                             which="peek")
+    #     finally:
+    #         mesh.releaseCachedData()
+    #         mesh.end_reading()
 
-    def drawElement(self, device, toolbox, element, which="query"): # 2D only
-        device.set_lineColor(self.colors[which])
-        device.set_lineWidth(self.line_width)
-        if config.dimension() == 2:
-            node_iter = element.cornernode_iterator().exteriornode_iterator()
-            p_list = [node.position() for node in node_iter]
-            displaced_p_list = [
-                toolbox.meshlayer.displaced_from_undisplaced(
-                toolbox.gfxwindow, x) for x in p_list]
-            for i in range(len(displaced_p_list)):
-                p0 = displaced_p_list[i]
-                p1 = displaced_p_list[(i+1)%len(displaced_p_list)]
-                device.draw_segment(primitives.Segment(p0, p1))
-        elif config.dimension() == 3:
-            device.draw_cell(element)
+    # def drawElement(self, device, toolbox, element, which="query"): # 2D only
+    #     device.set_lineColor(self.colors[which])
+    #     device.set_lineWidth(self.line_width)
+    #     if config.dimension() == 2:
+    #         node_iter = element.cornernode_iterator().exteriornode_iterator()
+    #         p_list = [node.position() for node in node_iter]
+    #         displaced_p_list = [
+    #             toolbox.meshlayer.displaced_from_undisplaced(
+    #             toolbox.gfxwindow, x) for x in p_list]
+    #         for i in range(len(displaced_p_list)):
+    #             p0 = displaced_p_list[i]
+    #             p1 = displaced_p_list[(i+1)%len(displaced_p_list)]
+    #             device.draw_segment(primitives.Segment(p0, p1))
+    #     elif config.dimension() == 3:
+    #         device.draw_cell(element)
 
 
-    def drawNode(self, device, toolbox, node, which="query"): # 2D only
-        device.set_lineColor(self.colors[which])
-        device.set_lineWidth(self.node_size)
-        if config.dimension() == 2:
-            displaced_position = toolbox.meshlayer.displaced_from_undisplaced(
-                toolbox.gfxwindow(), node.position())
-            device.draw_dot(displaced_position)
-        elif config.dimension() == 3:
-            device.draw_dot(node.position())
+    # def drawNode(self, device, toolbox, node, which="query"): # 2D only
+    #     device.set_lineColor(self.colors[which])
+    #     device.set_lineWidth(self.node_size)
+    #     if config.dimension() == 2:
+    #         displaced_position = toolbox.meshlayer.displaced_from_undisplaced(
+    #             toolbox.gfxwindow(), node.position())
+    #         device.draw_dot(displaced_position)
+    #     elif config.dimension() == 3:
+    #         device.draw_dot(node.position())
 
     # def getTimeStamp(self, gfxwindow): # 2D only
     #     toolbox = gfxwindow.getToolboxByName("Mesh_Info")

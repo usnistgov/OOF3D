@@ -55,6 +55,8 @@ public:
   }
 };
 
+MasterCoord masterCoord2D(double, double);
+MasterCoord masterCoord1D(double);
 
 #endif // MASTERCOORD_SWG
 

@@ -34,6 +34,11 @@ class ProtoNode;
 // don't have "Position" in their name.  They can't be used with
 // ElementLites, which don't have Nodes.
 
+// Iterators that loop over different kinds of nodes differ from each
+// other in having a different virtual mlistindex() function, which
+// uses the MasterElement's data to translate the local index_ to an
+// actual index into Element::nodelist.
+
 class ElementNodePositionIterator {	// for looping over all nodes
 protected:
   const ElementBase &element_;
@@ -42,7 +47,7 @@ protected:
   bool start;			// are we just starting?
 
 public:
-  ElementNodePositionIterator(const ElementBase&);
+  explicit ElementNodePositionIterator(const ElementBase&);
   ElementNodePositionIterator(const ElementNodePositionIterator&);
   virtual ~ElementNodePositionIterator() {}
   ElementNodePositionIterator &operator=(const ElementNodePositionIterator&);
@@ -88,10 +93,10 @@ public:
 template <class BASE, class ITERAND>
 class ElNodeIterator : public BASE {
 public:
-  ElNodeIterator(const ITERAND &obj) : BASE(obj) {}
+  explicit ElNodeIterator(const ITERAND &obj) : BASE(obj) {}
   Node *node() const {
-    return dynamic_cast<const Element&>(
-			BASE::element()).get_nodelist()[BASE::mlistindex()];
+    return dynamic_cast<const Element&>(BASE::element()).get_nodelist()
+      [BASE::mlistindex()];
   }
   // //Cheap way to get the nodes that are 'partnered' with the main
   // //interface element nodes. Can only be used if the Element really is
@@ -115,7 +120,7 @@ public:
 
 class ElementShapeFuncIterator : public ElementNodePositionIterator {
 public:
-  ElementShapeFuncIterator(const ElementBase&);
+  explicit ElementShapeFuncIterator(const ElementBase&);
   virtual int mlistindex() const = 0;
   virtual ElementShapeFuncIterator &operator+=(int) = 0;
   // shapefunctions corresponding to this node
@@ -133,7 +138,7 @@ class ElementNodeIterator
   : public ElNodeIterator<ElementNodePositionIterator, Element>
 {
 public:
-  ElementNodeIterator(const Element&);
+  explicit ElementNodeIterator(const Element&);
   ElementNodeIterator(const ElementNodeIterator&);
   virtual ElementNodeIterator &operator+=(int);	// returns *this
   ElementNodeIterator &operator++() { return operator+=(1); } // returns *this
@@ -145,7 +150,7 @@ public:
 
 class ElementMapNodePositionIterator : public ElementShapeFuncIterator {
 public:
-  ElementMapNodePositionIterator(const ElementBase&);
+  explicit ElementMapNodePositionIterator(const ElementBase&);
   ElementMapNodePositionIterator(const ElementMapNodePositionIterator&);
   ElementMapNodePositionIterator &operator=(
 				    const ElementMapNodePositionIterator&);
@@ -165,7 +170,7 @@ class ElementMapNodeIterator
   : public ElNodeIterator<ElementMapNodePositionIterator, Element>
 {
 public:
-  ElementMapNodeIterator(const Element&);
+  explicit ElementMapNodeIterator(const Element&);
   ElementMapNodeIterator(const ElementMapNodeIterator&);
   ElementMapNodeIterator &operator=(const ElementMapNodeIterator&);
   virtual ElementMapNodeIterator &operator+=(int);
@@ -177,7 +182,7 @@ public:
 
 class ElementFuncNodePositionIterator : public ElementShapeFuncIterator {
 public:
-  ElementFuncNodePositionIterator(const ElementBase&);
+  explicit ElementFuncNodePositionIterator(const ElementBase&);
   ElementFuncNodePositionIterator(const ElementFuncNodePositionIterator&);
   virtual ~ElementFuncNodePositionIterator() {}
   ElementFuncNodePositionIterator &operator=(
@@ -200,7 +205,7 @@ class ElementFuncNodeIterator
 protected:
   int dofsum;			// no. of dofs seen so far
 public:
-  ElementFuncNodeIterator(const Element&);
+  explicit ElementFuncNodeIterator(const Element&);
   ElementFuncNodeIterator(const ElementFuncNodeIterator&);
   virtual ~ElementFuncNodeIterator() {}
   ElementFuncNodeIterator &operator=(const ElementFuncNodeIterator&);
@@ -223,7 +228,7 @@ class InterfaceElementFuncNodeIterator : public ElementFuncNodeIterator {
 private:
   Sidedness side;
 public:
-  InterfaceElementFuncNodeIterator(const Element&);
+  explicit InterfaceElementFuncNodeIterator(const Element&);
   InterfaceElementFuncNodeIterator(const InterfaceElementFuncNodeIterator&);
   virtual FuncNode *funcnode() const;
   virtual void print(std::ostream&) const;
@@ -233,44 +238,44 @@ public:
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// ElementExteriorNodeIterator should really be called
-// "ElementExteriorFuncNodeIterator", but the name is too long to
-// type.
+// // ElementExteriorNodeIterator should really be called
+// // "ElementExteriorFuncNodeIterator", but the name is too long to
+// // type.
 
-class ElementExteriorNodePositionIterator 
-  : public ElementFuncNodePositionIterator
-{
-public:
-  ElementExteriorNodePositionIterator(const ElementBase&);
-  ElementExteriorNodePositionIterator(
-			      const ElementExteriorNodePositionIterator&);
-  virtual ~ElementExteriorNodePositionIterator() {}
-  ElementExteriorNodePositionIterator &operator=(
-				 const ElementExteriorNodePositionIterator&);
-  ElementExteriorNodePositionIterator operator+(int) const;
-  virtual ElementExteriorNodePositionIterator &operator+=(int);
-  virtual int mlistindex() const;
-  virtual void print(std::ostream&) const;
-};
+// class ElementExteriorNodePositionIterator 
+//   : public ElementFuncNodePositionIterator
+// {
+// public:
+//   ElementExteriorNodePositionIterator(const ElementBase&);
+//   ElementExteriorNodePositionIterator(
+// 			      const ElementExteriorNodePositionIterator&);
+//   virtual ~ElementExteriorNodePositionIterator() {}
+//   ElementExteriorNodePositionIterator &operator=(
+// 				 const ElementExteriorNodePositionIterator&);
+//   ElementExteriorNodePositionIterator operator+(int) const;
+//   virtual ElementExteriorNodePositionIterator &operator+=(int);
+//   virtual int mlistindex() const;
+//   virtual void print(std::ostream&) const;
+// };
 
-class ElementExteriorNodeIterator 
-  : public ElNodeIterator<ElementExteriorNodePositionIterator, Element>
-{
-public:
-  ElementExteriorNodeIterator(const Element&);
-  ElementExteriorNodeIterator(const ElementExteriorNodeIterator&);
-  virtual ~ElementExteriorNodeIterator() {}
-  ElementExteriorNodeIterator& operator=(const ElementExteriorNodeIterator&);
-  ElementExteriorNodeIterator operator+(int) const;
-  virtual ElementExteriorNodeIterator &operator+=(int);
-  virtual void print(std::ostream&) const;
-};
+// class ElementExteriorNodeIterator 
+//   : public ElNodeIterator<ElementExteriorNodePositionIterator, Element>
+// {
+// public:
+//   ElementExteriorNodeIterator(const Element&);
+//   ElementExteriorNodeIterator(const ElementExteriorNodeIterator&);
+//   virtual ~ElementExteriorNodeIterator() {}
+//   ElementExteriorNodeIterator& operator=(const ElementExteriorNodeIterator&);
+//   ElementExteriorNodeIterator operator+(int) const;
+//   virtual ElementExteriorNodeIterator &operator+=(int);
+//   virtual void print(std::ostream&) const;
+// };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 class ElementCornerNodePositionIterator : public ElementNodePositionIterator {
 public:
-  ElementCornerNodePositionIterator(const ElementBase&);
+  explicit ElementCornerNodePositionIterator(const ElementBase&);
   ElementCornerNodePositionIterator(const ElementCornerNodePositionIterator&);
   virtual ~ElementCornerNodePositionIterator() {}
   ElementCornerNodePositionIterator &operator=(
@@ -280,7 +285,7 @@ public:
   virtual int mlistindex() const;
   ElementFuncNodePositionIterator funcnode_iterator() const;
   ElementMapNodePositionIterator mapnode_iterator() const;
-  ElementExteriorNodePositionIterator exteriornode_iterator() const;
+  // ElementExteriorNodePositionIterator exteriornode_iterator() const;
   virtual void print(std::ostream&) const;
 };
 
@@ -288,7 +293,7 @@ class ElementCornerNodeIterator
   : public ElNodeIterator<ElementCornerNodePositionIterator, Element>
 {
 public:
-  ElementCornerNodeIterator(const Element&);
+  explicit ElementCornerNodeIterator(const Element&);
   ElementCornerNodeIterator(const ElementCornerNodeIterator&);
   virtual ~ElementCornerNodeIterator() {}
   ElementCornerNodeIterator &operator=(const ElementCornerNodeIterator&);
@@ -296,7 +301,7 @@ public:
   ElementCornerNodeIterator operator+(int) const;
   ElementFuncNodeIterator funcnode_iterator() const;
   ElementMapNodeIterator mapnode_iterator() const;
-  ElementExteriorNodeIterator exteriornode_iterator() const;
+  // ElementExteriorNodeIterator exteriornode_iterator() const;
   FuncNode *funcnode() const;
   virtual void print(std::ostream&) const;
 };

@@ -99,18 +99,22 @@ def EnumClass(*args):
     # that Enum.
     Enum.names = []
     Enum.helpdict = {}
+    Enum.values = []
     for arg in args:
         if type(arg) is types.StringType:
             Enum.names.append(arg)
+            nm = arg
         else:
             Enum.names.append(arg[0])
             if arg[1]:
                 Enum.helpdict[arg[0]] = arg[1]
-
+            nm = arg[0]
+        Enum.values.append(Enum(nm))
     return Enum
 
 def addEnumName(enumclass, name, help=None):
     enumclass.names.append(name)
+    enumclass.values.append(enumclass(name))
     if help is not None:
         enumclass.helpdict[name] = help
     switchboard.notify(enumclass)
@@ -124,15 +128,19 @@ def addEnumName(enumclass, name, help=None):
 def subClassEnum(baseclass, *args):
     class Enum(baseclass):
         names = baseclass.names[:]
+        values = baseclass.values[:]
         helpdict = {}
     Enum.helpdict.update(baseclass.helpdict)
     for arg in args:
         if type(arg) is types.StringType:
             Enum.names.append(arg)
+            nm = arg
         else:
             Enum.names.append(arg[0])
             if arg[1]:
                 Enum.helpdict[arg[0]] = arg[1]
+            nm = arg[0]
+        Enum.values.append(Enum(nm))
     return Enum
 
 class EnumParameter(parameter.Parameter):
@@ -215,8 +223,7 @@ class ListOfEnumsParameter(parameter.Parameter):
         return self.__class__(self.name, self.enumclasses, self.value,
                               self.default, self.tip)
         
-if __name__ == '__main__':
-
+def test():
     class TestEnum(EnumClass('A', 'B', 'C')): pass
 
     class AnotherEnum(EnumClass('hey', 'B')): pass
@@ -250,3 +257,9 @@ if __name__ == '__main__':
     print 'one == two:', one == two
     print 'one == One:', one == One 
     print 'bb == b:', bb == b
+
+    for x in TestEnum.values:
+        print x
+ 
+if __name__ == '__main__':
+    test()

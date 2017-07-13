@@ -119,6 +119,7 @@ public:
   double areaOfPixels();
 #else
   double volumeOfVoxels();
+  double volume();
 #endif
   ICoord pixelFromPoint(Coord Point);
   // TimeStamp &getTimeStamp();

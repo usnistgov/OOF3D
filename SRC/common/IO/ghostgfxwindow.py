@@ -1237,6 +1237,7 @@ class GhostGfxWindow:
             self.releaseGfxLock()
 
     def drawAtTime(self, *args, **kwargs):
+        debug.fmsg("drawAtTime calling _draw on subthread")
         subthread.execute(self._draw, args, kwargs)
 
     def animate(self, *args, **kwargs):

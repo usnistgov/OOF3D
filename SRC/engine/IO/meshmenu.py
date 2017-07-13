@@ -40,6 +40,7 @@ from ooflib.engine import skeletoncontext
 from ooflib.engine import subproblemcontext
 from ooflib.engine.IO import meshparameters
 from ooflib.engine.IO import skeletonIO
+from ooflib.engine.IO import subproblemmenu
 
 
 if parallel_enable.enabled():
@@ -859,7 +860,6 @@ def _copyFieldInits(menuitem, source, target):
         # Copy FloatBC inititalizers
         for bcname in source_mesh.allBndyCondNames():
             initializer = source_mesh.get_bc_initializer(bcname)
-            debug.fmsg("initializer=", initializer)
             if initializer: 
                 # Check that the target mesh has a FloatBC with this name
                 try:
@@ -1367,7 +1367,7 @@ def modifyMesh(menuitem, mesh, modifier):
         meshcontext.cancel_reservation()
     modifier.signal(meshcontext)
     modifier.setStatus(meshcontext)
-    switchboard.notify('Mesh modified', mesh, modifier)
+    switchboard.notify('Mesh modified', mesh, modifier) # caught by Mesh page
 
 OOF.Mesh.addItem(oofmenu.OOFMenuItem(
     'Modify',
@@ -1488,7 +1488,8 @@ def _copyAllSolvers(menuitem, source, target):
     solvers = {}
     try:
         for subp in sourceMesh.subproblems():
-            solvers[subp.name()] = subp.solver_mode.clone()
+            if subp.solver_mode is not None:
+                solvers[subp.name()] = subp.solver_mode.clone()
     finally:
         sourceMesh.end_reading()
     meshpath = targetMesh.path()
@@ -1499,7 +1500,7 @@ def _copyAllSolvers(menuitem, source, target):
         except KeyError:
             pass
         else:
-            _setSolver(menuitem, subppath, solver)
+            subproblemmenu.setSolver(menuitem, subppath, solver)
 
 OOF.Mesh.addItem(oofmenu.OOFMenuItem(
         'Copy_All_Solvers',

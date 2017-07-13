@@ -25,6 +25,7 @@ import ooflib.SWIG.engine.elements.quad9
 
 if config.dimension() == 3:
     import ooflib.SWIG.engine.elements.tet4
+    import ooflib.SWIG.engine.elements.tet10
 
 from ooflib.SWIG.engine import masterelement
 masterelement.makeMasterElementEnums()

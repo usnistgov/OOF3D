@@ -15,6 +15,9 @@
 
 3.0.2
 
+Vastly improved method for calculating element homogeneity.  It's
+faster and more robust.
+
 Fixed a bug involving cloning graphics windows with hidden display
 layers.
 
@@ -22,6 +25,8 @@ Fixed a bug that prevented the analysis page from retrieving stored
 analyses. 
 
 The setup.py script now understands '~' in vtkdir arguments.
+
+Fixed the "Copy All" command for copying solvers from one Mesh to another.
 
 3.0.1
 

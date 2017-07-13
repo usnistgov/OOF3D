@@ -282,10 +282,15 @@ class MeshDisplayMethod(display.AnimationLayer, SkelMeshDisplayMethod):
         self.freezetime = None
         display.AnimationLayer.__init__(self, when)
         SkelMeshDisplayMethod.__init__(self, filter)
-        self.meshDataChangedSignal = switchboard.requestCallback(
-            "mesh data changed", self.meshDataChangedCB)
+        self.sbsignals = [
+            switchboard.requestCallback(
+                "mesh data changed", self.meshDataChangedCB),
+            switchboard.requestCallback(
+                "femesh replaced", self.femeshReplacedCB)
+        ]
+
     def destroy(self, destroy_canvaslayer):
-        switchboard.removeCallback(self.meshDataChangedSignal)
+        map(switchboard.removeCallback, self.sbsignals)
         super(MeshDisplayMethod, self).destroy(destroy_canvaslayer)
         # SkelMeshDisplayMethod.destroy(self, destroy_canvaslayer)
     def incomputable(self):
@@ -396,6 +401,13 @@ class MeshDisplayMethod(display.AnimationLayer, SkelMeshDisplayMethod):
         if hoo and meshctxt is hoo.resolve(self.gfxwindow):
             self.source.Modified()
 
+    def femeshReplacedCB(self, meshctxt): # sb "femesh replaced"
+        # When a Mesh gets a new FEMesh, tell the MeshGridSource to
+        # stop using the old one.
+        themesh = self.who().resolve(self.gfxwindow)
+        if meshctxt is themesh:
+            self.source.setMesh(themesh.getObject())
+            
     # Routines for converting between displaced and undisplaced
     # coordinates using this layer's MeshNodePosition object
     # ("self.where").  This is here primarily so that the mesh info

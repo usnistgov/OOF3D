@@ -59,7 +59,7 @@ public:
   ContourGridCanvasLayer(GhostOOFCanvas*, const char*, GridSourcePtr);
   void set_pointData(vtkDoubleArrayPtr);
   void set_nContours(int, double, double);
-  void set_lookupTable(vtkLookupTablePtr);
+  void set_lookupTable(vtkLookupTablePtr, double, double);
 };
 
 

@@ -843,8 +843,13 @@ void FEMesh::getGrid(
     Element *el = ei.element();
     CSkeletonElement *skelel = el->get_skeleton_element();
     if(filter->acceptable(skelel, skel)) {
-      vtkIdType ids[4];
+      vtkIdType ids[el->nfuncnodes()];
       int j = 0;
+      // The nodes must be looped over in the order expected by VTK,
+      // which means that the order of ProtoNodes in each
+      // MasterElement subclass must be the same as the order of nodes
+      // in each vtkCell class.  See Chapter 5 and Fig 5-4 in the VTK
+      // book.
       for(CleverPtr<ElementFuncNodeIterator> node(el->funcnode_iterator());
 	  !node->end(); ++*node)
 	{
@@ -858,7 +863,8 @@ void FEMesh::getGrid(
 	     node->funcnode()->displaced_position(this, factor).xpointer());
 	  ids[j++] = nidx;
 	}
-      vtkIdType cellID = grid->InsertNextCell(VTK_TETRA, 4, ids);
+      vtkIdType cellID = grid->InsertNextCell(el->getCellType(),
+					      el->nfuncnodes(), ids);
       // Keep track of the correspondence between element indices and
       // vtk cell IDs.  This information is used by
       // findClickedCellID() in ghostgfxwindow.py.

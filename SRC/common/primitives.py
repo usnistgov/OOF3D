@@ -61,7 +61,9 @@ class Point(object):
         return config.dimension()
 
     def asTuple(self):
-        return tuple(self[i] for i in range(config.dimension()))
+        ## TODO: Get rid of asTuple and just use tuple()
+        return tuple(self)
+        # return tuple(self[i] for i in range(config.dimension()))
 
     if config.dimension() == 2:
         def enclosing_rectangle(self):
@@ -229,8 +231,7 @@ class Point(object):
             return 1
 
     def __repr__(self):
-        fmt = ",".join(("%g",)*config.dimension())
-        return "Point(" + fmt%self.asTuple() + ")"
+        return "Point" + `self.asTuple()`
     
 # end Point
 utils.OOFdefine('Point', Point)

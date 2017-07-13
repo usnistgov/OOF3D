@@ -117,6 +117,13 @@ public:
     std::sort(r->begin(), r->end());
     return r;
   }
+
+  void dump() {
+    std::cerr << "DoubleVec::dump:";
+    for(double d : *self)
+      std::cerr << " " <<  d;
+    std::cerr << std::endl;
+  }
  };
 
 

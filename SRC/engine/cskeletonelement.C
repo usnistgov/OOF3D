@@ -14,7 +14,6 @@
 #include "common/cdebug.h"
 #include "common/cmicrostructure.h"
 #include "common/lock.h"
-// #include "common/pixelsetboundary.h"
 #include "common/printvec.h"
 #include "common/voxelsetboundary.h"
 #include "engine/cskeleton2.h"
@@ -23,12 +22,9 @@
 #include "engine/element.h"
 #include "engine/elementnodeiterator.h"
 #include "engine/femesh.h"
-// #include "engine/homogeneitytet.h"
 #include "engine/masterelement.h"
 #include "engine/material.h"
 #include "engine/ooferror.h"
-// #include "engine/pixelplanefacet.h"
-// #include "engine/planeintersection.h"
 
 #include <vtkMath.h>
 #include <vtkTriangle.h>
@@ -649,6 +645,14 @@ const unsigned int CSkeletonElement::edgeFaces[6][2] = {{0,3},
 							{0,1},
 							{1,2}};
 
+// Maps an edge index to the the two nodes at its ends.
+const unsigned int CSkeletonElement::edgeNodes[6][2] = {{0,1},
+							{1,2},
+							{0,2},
+							{0,3},
+							{1,3},
+							{2,3}};
+
 // Gives the face between two edges.  NONE means the entry shouldn't
 // be used.
 const unsigned int CSkeletonElement::edgeEdgeFace[6][6] =
@@ -851,6 +855,7 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
       }
     }
 
+#ifdef DEBUG
     double actual = volumeInVoxelUnits(ms);
     double fracvol = (totalVol - actual)/actual;
     bool badvol = fabs(fracvol) >= VOLTOL;
@@ -861,20 +866,21 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
 	      << " [" << result << "]"
 	      << " actual=" << actual
 	      << " (error=" << fracvol*100 << "%)" << std::endl;
-      oofcerr << "CSkeletonElement::categoryVolumes: saving VSBs:" << std::endl;
-      for(unsigned int cat=0; cat < ncat; cat++) {
-	if(result[cat] > 0) {
-	  std::string filename = "vsb_" + to_string(cat);
-	  oofcerr << "CSkeletonElement::categoryVolumes: " << filename
-		  << std::endl;
-	  ms->saveClippedVSB(cat, planes, filename);
-	}
-      }
+      // oofcerr << "CSkeletonElement::categoryVolumes: saving VSBs:" << std::endl;
+      // for(unsigned int cat=0; cat < ncat; cat++) {
+      // 	if(result[cat] > 0) {
+      // 	  std::string filename = "vsb_" + to_string(cat);
+      // 	  oofcerr << "CSkeletonElement::categoryVolumes: " << filename
+      // 		  << std::endl;
+      // 	  ms->saveClippedVSB(cat, planes, filename);
+      // 	}
+      // }
     }
-    if(badvol) {
-      throw ErrProgrammingError("categoryVolumes: total volume check failed!",
-				  __FILE__, __LINE__);
-    }
+    // TODONT: Throwing an exception here is incorrect.  If the Skeleton
+    // contains illegal elements, it's possible that this element is
+    // legal (shape-wise) but has nodes outside the Microstructure.
+    // In that case some of its volume won't be in any pixel category.
+#endif // DEBUG
   }
   catch (...) {
     oofcerr << "CSkeletonElement::categoryVolumes: failed for "
@@ -1357,34 +1363,19 @@ void LineIntersectionPoint::addTraversedElements(
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 void CSkeletonElement::realElement(FEMesh *femesh, int idx,
-				   //std::vector<Node*> *fnodes,
-				   const CSkeleton *skel, Material *mat) 
+				   const MasterElement *master,
+				   const CSkeleton *skel,
+				   SkelElNodeMap &edgeNodeMap,
+				   SkelElNodeMap &faceNodeMap,
+				   Material *mat) 
 {
-  // TODO 3.1: for now we're assuming linear tetrahedra only, matching
-  // indices, and simplifying material thing.  See TODO in
-  // elementnodeiterator.C,
-  // ElementFuncNodePositionIterator::operator+=.
-
-  std::vector<Node*> real_el_nodes;
-  for(CSkeletonNodeIterator n = nodes->begin(); n != nodes->end(); ++n)
-    real_el_nodes.push_back(femesh->getFuncNode((*n)->getIndex()));
-    // real_el_nodes.push_back( (*fnodes)[(*n)->getIndex()] );
-
-  Element *el;
-  // TODO 3.1: tetname shouldn't be hard-coded here.  Different types of
-  // CSkeletonElement (if we ever have them) will retrieve different
-  // master elements.  Also, we will need to choose the element order.
-  // ElementShape and order should be args?
-  const std::string &tetname = "TET4_4";
-  if(mat != NULL)
-    el = getMasterElementByName(tetname)->build(this, mat, &real_el_nodes);
-  else
-    el = getMasterElementByName(tetname)->build(this, material(skel),
-						&real_el_nodes);
+  const Material *m = (mat == nullptr? material(skel) : mat);
+  Element *el = master->build(this, skel, femesh, m, edgeNodeMap, faceNodeMap);
   femesh->addElement(el);
-  //
   setMeshIndex(idx);
 }
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 void CSkeletonElement::print(std::ostream &os) const {
   // os << "Element(" << uid << ", " << generating_function << ")";
@@ -1412,54 +1403,6 @@ void CSkeletonElement::drawVoxelCategoryIntersection(LineSegmentLayer *layer,
   std::vector<COrientedPlane> planes = getPlanes(epts);
   const VoxelSetBoundary *vsb = ms->getCategoryBdys()[category];
   vsb->drawClippedVSB(planes, layer);
-  
-//   HomogeneityTet htet(this, ms
-// #ifdef DEBUG
-// 		      , false // verbose?
-// #endif // DEBUG
-// 		      );
-//   FacetMap2D pixelplanefacets = htet.findPixelPlaneFacets(category, *vsb);
-//   FaceFacets facefacets = htet.findFaceFacets(category, pixelplanefacets);
-//   std::vector<Coord3D> startPts;
-//   std::vector<Coord3D> endPts;
-//   for(unsigned int f=0; f<NUM_TET_FACES; f++) {
-//     const FaceFacet &facefacet = facefacets[f];
-//     if(!facefacet.empty()) {
-//       // oofcerr << "drawVoxelCategoryIntersection: facefacet[" << f << "]="
-//       // 	      << facefacet << std::endl;
-//       for(auto edgeptr=facefacet.edges().begin();
-// 	  edgeptr!=facefacet.edges().end(); ++edgeptr)
-// 	{
-// 	  startPts.push_back((*edgeptr)->startPos3D());
-// 	  endPts.push_back((*edgeptr)->endPos3D());
-// 	  // oofcerr << "drawVoxelCategoryIntersection: face=" << f << " edge= "
-// 	  // 	<< (*edgeptr)->startPos3D() << " " << (*edgeptr)->endPos3D()
-// 	  // 	<< std::endl;
-// 	}
-//     }
-//   }
-//   if(drawPlaneFacets) {
-//     for(FacetMap2D::const_iterator fmi=pixelplanefacets.begin();
-// 	fmi!=pixelplanefacets.end(); ++fmi)
-//       {
-// 	const PixelPlaneFacet *facet = (*fmi).second;
-// 	if(!facet->empty()) {
-// 	  unsigned int basesize = startPts.size();
-// 	  startPts.resize(basesize + facet->size());
-// 	  endPts.resize(basesize + facet->size());
-// 	  for(unsigned int i=0; i<facet->size(); i++) {
-// 	    facet->getEndPoints(i, startPts[basesize+i], endPts[basesize+i]);
-// 	    // oofcerr << "drawVoxelCategoryIntersection: pixelplane edge "
-// 	    // 	    << startPts[basesize+i] << " " << endPts[basesize+i]
-// 	    // 	    << std::endl;
-// 	  }
-// 	}
-//       }
-//   }
-//   layer->set_nSegs(startPts.size());
-//   for(unsigned int i=0; i<startPts.size(); i++) {
-//     layer->addSegment(&startPts[i], &endPts[i]);
-//   }
 }
 
 #endif // DEBUG

@@ -30,7 +30,7 @@ public:
     mapfunction = shapefunction;
 
     // Node ordering here has to be compatible with the ordering used
-    // by vtk, which is what the Skeleton element use.  Getting it
+    // by vtk, which is what the Skeleton element uses.  Getting it
     // wrong will produce elements with negative volumes.
 
     ProtoNode *pn0 = addProtoNode(MasterCoord(0.0, 0.0, 0.0));
@@ -93,6 +93,14 @@ public:
   VTKCellType getCellType() const {
     return VTK_TETRA;
   };
+
+  NodeIndexVec getIntermediateEdgeNodes(const NodeIndexVec &corners) const {
+    return corners;
+  }
+  
+  NodeIndexVec getIntermediateFaceNodes(const NodeIndexVec &corners) const {
+    return corners;
+  }
 
 };
 

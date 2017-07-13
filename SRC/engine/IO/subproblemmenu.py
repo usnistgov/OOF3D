@@ -930,7 +930,9 @@ subproblemMenu.addItem(oofmenu.OOFMenuItem(
 
 ################
 
-def _setSolver(menuitem, subproblem, solver_mode):
+# setSolver is also used by _copyAllSolvers in meshmenu.py.
+
+def setSolver(menuitem, subproblem, solver_mode):
     subpctxt = ooflib.engine.subproblemcontext.subproblems[subproblem]
     subpctxt.begin_writing()
     try:
@@ -945,7 +947,7 @@ def _setSolver(menuitem, subproblem, solver_mode):
 
 subproblemMenu.addItem(oofmenu.OOFMenuItem(
         'Set_Solver',
-        callback=_setSolver,
+        callback=setSolver,
         threadable=oofmenu.THREADABLE,
         params=[
             whoville.WhoParameter('subproblem',
@@ -970,7 +972,7 @@ def _copySolver(menuitem, source, target):
         solver = sourceCtxt.solver_mode.clone()
     finally:
         sourceCtxt.end_reading()
-    _setSolver(menuitem, target, solver)
+    setSolver(menuitem, target, solver)
 
 subproblemMenu.addItem(oofmenu.OOFMenuItem(
         'Copy_Solver',

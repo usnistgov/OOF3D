@@ -11,20 +11,19 @@
 
 #include <oofconfig.h>
 #include "common/IO/oofcerr.h"
+#include "common/printvec.h"
 #include "common/switchboard.h"
 #include "common/tostring.h"
+#include "engine/cskeleton2.h"
+#include "engine/cskeletonelement.h"
 #include "engine/element.h"
 #include "engine/elementnodeiterator.h"
+#include "engine/femesh.h"
 #include "engine/masterelement.h"
 #include "engine/ooferror.h"
 #include "engine/shapefunction.h"
 #include <math.h>
 #include <iostream>
-
-#if DIM == 2
-#include "engine/IO/contour.h"
-#include "engine/contourcell.h"
-#endif // DIM == 2
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -113,26 +112,33 @@ int MasterElement::nexteriorfuncnodes() const {
   return exteriorfuncnodes.size();
 }
 
-// Count the number of exterior nodes that are for mapping only.
-int MasterElement::nexteriormapnodes_only() const {
+// Count the number of non-corner nodes on edges that are for mapping only.
+int MasterElement::nedgemapnodes_only() const {
   int n = 0;
-  for(std::vector<const ProtoNode*>::const_iterator pn=protonodes.begin();
-      pn<protonodes.end(); ++pn)
-    {
-      if((*pn)->mapping() && ! (*pn)->func() && (*pn)->nedges() > 0)
-	n++;
-    }
+  for(const ProtoNode *pn : protonodes) {
+    if(pn->mapping() && !pn->func() && pn->nedges() == 1)
+      n++;
+  }
   return n;
 }
+
+// Count the number of non-edge nodes on faces that are for mapping only.
+int MasterElement::nfacemapnodes_only() const {
+  int n = 0;
+  for(const ProtoNode *pn : protonodes) {
+    if(pn->mapping() && !pn->func() && pn->nedges() == 0 && pn->nfaces() == 1)
+      n++;
+  }
+  return n;
+}
+
 // Count the number of interior nodes that are for mapping only
 int MasterElement::ninteriormapnodes_only() const {
   int n = 0;
-  for(std::vector<const ProtoNode*>::const_iterator pn=protonodes.begin();
-      pn<protonodes.end(); ++pn)
-    {
-      if((*pn)->mapping() && !(*pn)->func() && (*pn)->nedges() == 0)
-	n++;
-    }
+  for(const ProtoNode *pn : protonodes) {
+    if(pn->mapping() && !pn->func() && pn->nedges() == 0 && pn->nfaces() == 0)
+      n++;
+  }
   return n;
 }
 
@@ -180,6 +186,9 @@ std::ostream &operator<<(std::ostream &os, const ProtoNode &pn) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// The arguments for on_edge and on_face are the vtk indices for the
+// tet edges and faces that the ProtoNode is on.
+
 void ProtoNode::on_edge(int edgeno) {
   edgeindex.push_back(edgeno);
   element.edges[edgeno]->addNode(this);
@@ -193,53 +202,12 @@ void ProtoNode::on_edge(int edgeno) {
 }
 
 void MasterEdge::addNode(const ProtoNode *pn) {
-
-  // First, keep track of func-ness of nodes, so that func_size()
-  // will work.
   if (pn->func()) {
     funcsize_++;
   }
-
-  if(nlist.empty()) {
-    nlist.push_back(pn);
-    return;
-  }
-  // Since ProtoNodes on the edges are added to the MasterElement in
-  // counterclockwise order, because the indices are assigned as
-  // they're added, and because the MasterEdge lists nodes in
-  // counterclockwise order, the nodes go into the MasterEdge's list
-  // at the end.  The exception to this is when the ProtoNode creation
-  // process wraps around.  Then the very first node created belongs
-  // at the *end* of the list, and all of the other nodes go just
-  // before it.
-  const ProtoNode *lastnode = nlist.back();
-  if(lastnode->index() == pn->index()-1) {
-    nlist.push_back(pn);
-  }
-  else {
-    // insert at the second to last spot
-    nlist.insert(--nlist.end(), pn);
-  }
+  nlist.push_back(pn);
   return;
 }
-
-const MasterEdge *MasterElement::masteredge(const ElementCornerNodeIterator &n0,
-					    const ElementCornerNodeIterator &n1)
-  const
-{
-  const ProtoNode *pn0 = n0.protonode();
-  const ProtoNode *pn1 = n1.protonode();
-  for(std::vector<MasterEdge*>::size_type i=0; i<edges.size(); i++) {
-    std::list<const ProtoNode*> &nlist = edges[i]->nlist;
-    if((nlist.front() == pn0 && nlist.back() == pn1)
-       || (nlist.front() == pn1 && nlist.back() == pn0)) {
-      return edges[i];
-    }
-  }
-  throw ErrUserError("Edge not found in master element");
-}
-
-#if DIM == 3
 
 void ProtoNode::on_face(int faceno) {
   faceindex.push_back(faceno);
@@ -247,10 +215,12 @@ void ProtoNode::on_face(int faceno) {
   // Put this node in its MasterElement's exterior lists, if it's not
   // already there.  Checking this way relies on not intermingling
   // on_face calls for one ProtoNode with calls for another one.
-//   if(func_)
-//     if(element.exteriorfuncnodes.empty() ||
-//        *element.exteriorfuncnodes.rbegin() != index_)
-//       element.exteriorfuncnodes.push_back(index_);
+
+  // TODO: This was commented out.  Why?
+  if(func_)
+    if(element.exteriorfuncnodes.empty() ||
+       *element.exteriorfuncnodes.rbegin() != index_)
+      element.exteriorfuncnodes.push_back(index_);
 }
 
 void MasterFace::addNode(const ProtoNode *pn) {
@@ -261,32 +231,6 @@ void MasterFace::addNode(const ProtoNode *pn) {
   return;
 }
 
-const MasterFace *MasterElement3D::masterface(
-				      const ElementCornerNodeIterator &n0,
-				      const ElementCornerNodeIterator &n1,
-				      const ElementCornerNodeIterator &n2)
-  const
-{
-  const ProtoNode *pn0 = n0.protonode();
-  const ProtoNode *pn1 = n1.protonode();
-  const ProtoNode *pn2 = n2.protonode();
-
-  for(std::vector<MasterFace*>::size_type i=0; i<faces.size(); i++) {
-    std::vector<const ProtoNode*> &nvector = faces[i]->nvector;
-    // find the first match
-    for(std::vector<const ProtoNode*>::size_type j=0; j<nvector.size(); ++j) {
-      if(nvector[j] == pn0 &&
-	 ((nvector[(j+1)%3] == pn1 && nvector[(j+2)%3] == pn2) ||
-	  (nvector[(j+1)%3] == pn2 && nvector[(j+2)%3] == pn1)))
-	{
-	  return faces[i];
-	}
-    }
-  }
-  throw ErrUserError("Face not found in master element");
-}
-#endif	// DIM == 3
-
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 int integration_reduction = 0;
@@ -296,9 +240,13 @@ int MasterElement::ngauss(int order) const {
 }
 
 const GaussPtTable &MasterElement::gptable(int i) const {
-  if(i >= int(gptable_vec().size()))
+  if(i >= int(gptable_vec().size())) {
+    oofcerr << "MasterElement::gptable: i=" << i << " size=" << gptable_vec().size() << std::endl;
     throw ErrResourceShortage(
-	  "GaussPtTable: No table for order of integration = " + to_string(i));
+	  "GaussPtTable: No table for order of integration = "
+	  + to_string(i) + " in element " + name());
+      ;
+  }
   i -= integration_reduction;
   if(i < 0) i = 0;
   return gptable_vec()[i];
@@ -314,6 +262,34 @@ int MasterElement::ngauss_sets() const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// Routines for adding symmetrically placed points to Gauss point
+// tables for the triangle.  In a symmetric quadrature rule, If a
+// point has barycentric coordinates (r,s,t), with r+s+t=1, then any
+// permutation of (r,s,t) is also a Gauss point with the same weight.
+// The master space reference element is x>=0, y>=0, x+y<=1, and the
+// barycentric coords of (x,y) are just (x,y,1-x-y).  Therefore, the
+// actual coordinates of a barycentric point (r,s,t) are just (r,s).
+// This makes it easy to find the symmetric points.
+
+static void addPoints21(GaussPtTable &tbl, double r, double w) {
+  // Barycentric coords are permutations of (r, r, 1-2r)
+  double s = 1. - 2.*r;
+  tbl.addpoint(masterCoord2D(r, r), w);
+  tbl.addpoint(masterCoord2D(r, s), w);
+  tbl.addpoint(masterCoord2D(s, r), w);
+}
+
+static void addPoints111(GaussPtTable &tbl, double r, double s, double w) {
+  // Barycentric coords are permutations of (r, s, 1-r-s)
+  double t = 1. - r - s;
+  tbl.addpoint(masterCoord2D(r, s), w);
+  tbl.addpoint(masterCoord2D(s, r), w);
+  tbl.addpoint(masterCoord2D(r, t), w);
+  tbl.addpoint(masterCoord2D(t, r), w);
+  tbl.addpoint(masterCoord2D(s, t), w);
+  tbl.addpoint(masterCoord2D(t, s), w);
+}
+
 const GaussPtTable &TriangularMaster::gausspointtable(int deg) const {
   return gptable(deg);
 }
@@ -324,51 +300,122 @@ const std::vector<GaussPtTable> &TriangularMaster::gptable_vec() const {
   if(!set) {
     set = 1;
 
-    // Gauss points for a triangle are from "High Degree Efficient
-    // Symmetrical Gaussian Quadrature Rules for the Triangle",
-    // D.A. Dunavant, International Journal for Numerical Methods in
-    // Engineering, vol 21, 1129, (1985).  The weights given there
+    // Gauss points for a triangle and tetrahedron are from A SET OF
+    // SYMMETRIC QUADRATURE RULES ON TRIANGLES AND TETRAHEDRA, Linbo
+    // Zhang, Tao Cui and Hui Liu, Journal of Computational
+    // Mathematics, Vol.27, No.1, 2009, 89–96.  The numbers were
+    // copied out of the source code file src/quad.c from
+    // http://lsec.cc.ac.cn/phg/download/phg-0.9.3-20170615.tar.bz2.
+
+    // The weights given there
     // don't include the factor of the area of the triangle, so the
-    // weights used here all have an additional factor of 0.5.
+    // weights used here all have an additional factor of 0.5.  It's
+    // (mostly) written explicitly for easier comparison to the source
+    // text.
+
+    // Previously we had used "High Degree Efficient Symmetrical
+    // Gaussian Quadrature Rules for the Triangle", D.A. Dunavant,
+    // International Journal for Numerical Methods in Engineering, vol
+    // 21, 1129, (1985), but Zhang et al has more values.
 
      // order = 0, npts = 1
-    table.push_back(GaussPtTable(0, 1));
-    table[0].addpoint(masterCoord2D(1./3., 1./3.), 0.5);
+    table.emplace_back(0, 1);
+    table.back().addpoint(masterCoord2D(1./3., 1./3.), 0.5);
 
      // order = 1, npts = 1
-    table.push_back(GaussPtTable(1, 1));
-    table[1].addpoint(masterCoord2D(1./3., 1./3.), 0.5);
+    table.emplace_back(1, 1);
+    table.back().addpoint(masterCoord2D(1./3., 1./3.), 0.5);
 
-     // order = 2, npts = 3
-    table.push_back(GaussPtTable(2, 3));
-    table[2].addpoint(masterCoord2D(2./3., 1./6.), 1./6.);
-    table[2].addpoint(masterCoord2D(1./6., 2./3.), 1./6.);
-    table[2].addpoint(masterCoord2D(1./6., 1./6.), 1./6.);
+     // order = 2, npts = 3: Zhang QUAD_2D_P2_
+    table.emplace_back(2, 3);
+    addPoints21(table.back(), 1./6., (1/3.)/2.);
 
-    // order = 3, npts = 4
-    table.push_back(GaussPtTable(3, 4));
-    table[3].addpoint(masterCoord2D(1./3., 1./3.), -0.5*0.5625);
-    table[3].addpoint(masterCoord2D(0.6, 0.2), 0.5*25./48.);
-    table[3].addpoint(masterCoord2D(0.2, 0.6), 0.5*25./48.);
-    table[3].addpoint(masterCoord2D(0.2, 0.2), 0.5*25./48.);
+    // order = 3, npts = 6
+    table.emplace_back(3, 6);
+    addPoints21(table.back(),
+		.16288285039589191090016180418490635,
+		.28114980244097964825351432270207695/2.);
+    addPoints21(table.back(),
+		.47791988356756370000000000000000000,
+		.05218353089235368507981901063125638/2.);
+    
+    //* This version (from Dunavant?) has one negative weight but
+    //* fewer points.
+    // table.push_back(GaussPtTable(3, 4));
+    // table[3].addpoint(masterCoord2D(1./3., 1./3.), -0.5*0.5625);
+    // table[3].addpoint(masterCoord2D(0.6, 0.2), 0.5*25./48.);
+    // table[3].addpoint(masterCoord2D(0.2, 0.6), 0.5*25./48.);
+    // table[3].addpoint(masterCoord2D(0.2, 0.2), 0.5*25./48.);
 
     // order = 4, npts = 6
-    table.push_back(GaussPtTable(4, 6));
-    table[4].addpoint(masterCoord2D(0.108103018168070, 0.445948490915965),
-		      0.5*0.223381589678011);
-    table[4].addpoint(masterCoord2D(0.445948490915965, 0.108103018168070),
-		      0.5*0.223381589678011);
-    table[4].addpoint(masterCoord2D(0.445948490915965, 0.445948490915965),
-		      0.5*0.223381589678011);
-    table[4].addpoint(masterCoord2D(0.816847572980459, 0.091576213509771),
-		      0.5*0.109951743655322);
-    table[4].addpoint(masterCoord2D(0.091576213509771, 0.816847572980459),
-		      0.5*0.109951743655322);
-    table[4].addpoint(masterCoord2D(0.091576213509771, 0.091576213509771),
-		      0.5*0.109951743655322);
-  }
+    table.emplace_back(4, 6);
+    addPoints21(table.back(),
+		.44594849091596488631832925388305199,
+		.22338158967801146569500700843312280/2.);
+    addPoints21(table.back(),
+		.09157621350977074345957146340220151,
+		.10995174365532186763832632490021053/2.);
+    
+    // order = 5, npts = 7
+    table.emplace_back(5, 7);
+    addPoints21(table.back(),
+		(6. - sqrt(15.))/21,
+		(155. - sqrt(15.))/1200./2.);
+    addPoints21(table.back(),
+		(6 + sqrt(15.))/21,
+		(155 + sqrt(15.))/1200./2.);
+    table.back().addpoint(masterCoord2D(1./3., 1./3.), 9./40./2.);
+
+    // order = 6, npts = 12
+    table.emplace_back(6, 12);
+    addPoints21(table.back(),
+		.06308901449150222834033160287081916,
+		.05084490637020681692093680910686898/2.);
+    addPoints21(table.back(),
+		.24928674517091042129163855310701908,
+		.11678627572637936602528961138557944/2.);
+    addPoints111(table.back(),
+		 .05314504984481694735324967163139815,
+		 .31035245103378440541660773395655215,
+		 .08285107561837357519355345642044245/2.);
+
+    // order = 7, npts = 15
+    table.emplace_back(7, 15);
+    addPoints21(table.back(),
+		.02826392415607634022359600691324002,
+		.01353386251566556156682309245259393/2.);
+    addPoints21(table.back(),
+		.47431132326722257527522522793181654,
+		.07895125443201098137652145029770332/2.);
+    addPoints21(table.back(),
+		.24114332584984881025414351267036207,
+		.12860792781890607455665553308952344/2.);
+    addPoints111(table.back(),
+		 .76122274802452380000000000000000000,
+		 .04627087779880891064092559391702049,
+		 .05612014428337535791666662874675632/2.);
+    
+    // order = 8, npts = 16
+    table.emplace_back(8, 16);
+    table.back().addpoint(masterCoord2D(1./3., 1./3.),
+			  .14431560767778716825109111048906462/2.);
+    addPoints21(table.back(),
+		.17056930775176020662229350149146450,
+		.10321737053471825028179155029212903/2.);
+    addPoints21(table.back(),
+		.05054722831703097545842355059659895,
+		.03245849762319808031092592834178060/2.);
+    addPoints21(table.back(),
+		.45929258829272315602881551449416932,
+		.09509163426728462479389610438858432/2.);
+    addPoints111(table.back(),
+		 .26311282963463811342178578628464359,
+		 .00839477740995760533721383453929445,
+		 .02723031417443499426484469007390892/2.);
+
+  } // end if not set
   return table;
-}
+} // end TriangularMaster::gptable_vec
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -457,507 +504,219 @@ MasterCoord MasterElement1D::center() const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-#if DIM == 2
+// Utility functions used by MasterElement::build().
 
-// The MasterElement2D::contourcells functions return a vector of
-// pointers to ContourCellSkeletons.  This vector is passed out to
-// Python via a swig typemap (in masterelement.swg) and its elements
-// are cached and wrapped in masterelement.spy.  The wrapping
-// transfers the ownership to Python, so we don't have to worry about
-// deleting the ContourCellSkeleton pointers that we've allocated
-// here.
+template <class TYPE>
+TYPE MasterElement::interpolate(const std::vector<TYPE> &cval,
+				const MasterCoord &x)
+  const
+{
+  TYPE interpolant;
+  for(unsigned int i=0; i<nmapnodes(); i++) {
+    interpolant = interpolant + mapfunction->value(i,x)*cval[i];
+  }
+  return interpolant;
+}
 
-std::vector<ContourCellSkeleton*>*
-TriangularMaster::contourcells(int n) const {
-  // Divide a triangular master element up into n^2 triangles, like
-  // this:
-  //
-  //  even n     odd n
-  //
-  //   |\         |\               	// backslashes
-  //   | \        | \       		// terminating
-  //   ----       ----       y1		// comments
-  //   | /|\      | /|\      		// generate
-  //   |/ | \     |/ | \      		// spurious
-  //   ------     ------     y		// compiler
-  //              |\ | /|\		// warnings
-  //              | \|/ | \		//
-  //              ---------
-  //	             x  x1
+static Node *findClosestNode(std::vector<Node*> &nodes, Coord3D pos) {
+  // Linear search, but we don't expect to be searching a large set.
+  double mindist = std::numeric_limits<double>::max();
+  Node *closest = nullptr;
+  for(Node *node : nodes) {
+    double d2 = norm2(node->position() - pos);
+    if(d2 < mindist) {
+      closest = node;
+      mindist = d2;
+    }
+  }
+  assert(closest != nullptr);
+  return closest;
+}
 
-  std::vector<ContourCellSkeleton*>* cells =
-    new std::vector<ContourCellSkeleton*>(n*n);
-  double dx = 1.0/n;
-  int k = 0;			// counts cells
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-  for(int j=0; j<n; j++) {	// loop over rows
-    bool leanleft = (j + n) % 2;
-    double y = j*dx;
-    double y1 = (j+1)*dx;
-    if(j == n-1) y1 = 1.0;	// avoid roundoff
-    for(int i=0; i<n-j-1; i++) { // loop over columns, not including the last
-      double x = i*dx;
-      double x1 = (i+1)*dx;
-      ContourCellSkeleton &cell1 = *((*cells)[k++] = new ContourCellSkeleton);
-      ContourCellSkeleton &cell2 = *((*cells)[k++] = new ContourCellSkeleton);
-      ContourCellCoord ll(x, y, i, j);
-      ContourCellCoord lr(x1, y, i+1, j);
-      ContourCellCoord ur(x1, y1, i+1, j+1);
-      ContourCellCoord ul(x, y1, i, j+1);
-      if(leanleft) {
-	// lower left triangle of a pair
-	cell1[0] = ll;
-	cell1[1] = lr;
-	cell1[2] = ul;
-	// upper right triangle of a pair
-	cell2[0] = lr;
-	cell2[1] = ur;
-	cell2[2] = ul;
+// build() creates a real mesh element at the location of the given
+// Skeleton element, creating new Nodes if necessary.
+
+Element *MasterElement::build(CSkeletonElement *el,
+			      const CSkeleton *skel, FEMesh *femesh,
+			      const Material *mat,
+			      SkelElNodeMap &edgeNodeMap,
+			      SkelElNodeMap &faceNodeMap)
+  const
+{
+  // nodes stores the Nodes that will be passed to the Element
+  // constructor.  They correspond 1 to 1 with the vector of
+  // ProtoNodes in the MasterElement.
+  std::vector<Node*> nodes(nnodes(), nullptr);
+
+  // To compute the positions of new, non-corner Nodes, we need to
+  // know the corners of the tet.
+
+  // TODO: If we ever have higher order *skeleton* elements, ie,
+  // skeleton elements with curved sides, we'll have to include all of
+  // map nodes here, not just the corners.
+  std::vector<Coord3D> corners;	// for interpolation of intermediate node pos.
+  if(nnodes() > 4) {
+    corners.reserve(ncorners());
+    for(int i=0; i<ncorners(); i++) {
+      corners.push_back(el->getNode(i)->position());
+    }
+  }
+
+  // The input maps edgeNodeMap and faceNodeMap store the nodes that
+  // have been created on the edges and faces of other elements, and
+  // that might be reused in this one.  If an edge or face of this
+  // element isn't found in the maps, it's added to the maps and the
+  // new nodes are stored.  But there may be more than one new node on
+  // a face or edge, so we don't add entries to edgeNodeMap or
+  // faceNodeMap until we're done (because we're using the existence
+  // of entries in the maps to determine if the nodes have to be
+  // created).  Instead, new nodes are stored in newEdgeNodes and
+  // newFaceNodes, which are merged with edgeNodeMap and faceNodeMap
+  // after all nodes have been created.
+  SkelElNodeMap newEdgeNodes;
+  SkelElNodeMap newFaceNodes;
+
+  // Loop over ProtoNodes and create real ones, if necessary.
+  
+  for(unsigned int pnidx=0; pnidx<nnodes(); pnidx++) {
+    const ProtoNode *pn = protonodes[pnidx];
+    // What we do depends on what kind of node this is.
+    // TODO: This big if/then could be simpler if we used different
+    // subclasses of ProtoNode for corner, edge, face, and interior
+    // nodes.
+    if(pn->corner()) {
+      // Corner nodes have already been created in
+      // CSkeleton::populate_femesh().
+      // Find out which corner this is:
+      for(unsigned int c=0; c<ncorners(); c++) {
+	// It is assumed that the calls to ProtoNode::set_corner have
+	// been done in the order determined by the vtk ordering of
+	// tet corners, so that the corner i of the SkeletonElement
+	// corresponds to the i^th corner ProtoNode.
+	if(cornernodes[c] == pnidx) {
+	  nodes[pnidx] = femesh->getFuncNode(el->getNode(c)->getIndex());
+	  break;
+	}
       }
+    } // end if ProtoNode is at a corner
+
+    else if(pn->nedges() > 0) {
+      // ProtoNode is on an edge (but not a corner).  The real node
+      // was not created in CSkeleton::populate_femesh(), but may have
+      // already been created by another call to
+      // MasterElement::build().
+      assert(pn->nedges() == 1);
+      // What edge is it on?
+      int edgeNo = pn->edgeindex[0];
+      Coord3D pos = interpolate(corners, pn->mastercoord());
+      // Has the edge been seen before?
+      CSkeletonNode *n0 = el->getSegmentNode(edgeNo, 0);
+      CSkeletonNode *n1 = el->getSegmentNode(edgeNo, 1);
+      CSkeletonMultiNodeKey segkey(n0, n1);
+      SkelElNodeMap::iterator it = edgeNodeMap.find(segkey);
+      if(it == edgeNodeMap.end()) {
+	// The edge hasn't been seen before.  Create a new node.
+	Node *newNode = femesh->newFuncNode(pos);
+	nodes[pnidx] = newNode;
+	// If the edge is already in newEdgeNodes, add the node to it.
+	// Otherwise, add the edge to newEdgeNodes and add the node to it.
+	SkelElNodeMap::iterator eit = newEdgeNodes.find(segkey);
+	if(eit == newEdgeNodes.end()) {
+	  newEdgeNodes.emplace(
+		       std::make_pair(segkey, std::vector<Node*>(1, newNode)));
+	}
+	else {
+	  eit->second.push_back(newNode);
+	}
+      }	// end if edge is new.
       else {
-	// upper left triangle of a pair
-	cell1[0] = ll;
-	cell1[1] = ur;
-	cell1[2] = ul;
-	// lower right triangle of a pair
-	cell2[0] = ll;
-	cell2[1] = lr;
-	cell2[2] = ur;
-      }
-      leanleft = !leanleft;
-    }
-    // final triangle in the row
-    ContourCellSkeleton &cell = *((*cells)[k++] = new ContourCellSkeleton);
-    // See comment in TriangularMaster::exterior(), below, before
-    // changing the next two lines!
-    double x = 1.0 - y1;
-    double x1 = 1.0 - y;
-    cell[0] = ContourCellCoord(x, y, n-j-1, j);
-    cell[1] = ContourCellCoord(x1, y, n-j, j);
-    cell[2] = ContourCellCoord(x, y1, n-j-1, j+1);
-  }
-  return cells;
-}
+	// The edge has already been seen.  Re-use the nodes on it.
+	// TODO: Is searching for the closest node too inefficient?
+	// The list is probably short.  We can't just look for a node
+	// with the exact same position, because round off error in
+	// interpolate() may give different results in different
+	// elements for the positions of shared nodes.
+	nodes[pnidx] = findClosestNode(it->second, pos);
+      }	// end if edge has already been seen.
+      
+    } // end if ProtoNode is on an edge
 
-std::vector<ContourCellSkeleton*>*
-QuadrilateralMaster::contourcells(int n) const
-{
-
-  std::vector<ContourCellSkeleton*>* cells =
-    new std::vector<ContourCellSkeleton*>(2*n*n);
-  double dx = 2.0/n;
-  int k = 0;			// counts cells
-  for(int j=0; j<n; j++) {
-    bool leanleft = j%2 == 0;
-    double y = j*dx - 1.0;
-    double y1 = (j+1)*dx - 1.0;
-    if(j == n-1) y1 = 1.0;	// avoid roundoff
-    for(int i=0; i<n; i++) {
-      double x = i*dx - 1.0;
-      double x1 = (i+1)*dx - 1.0;
-      if(i == n-1) x1 = 1.0;	// avoid roundoff
-      ContourCellSkeleton &cell1 = *((*cells)[k++] = new ContourCellSkeleton);
-      ContourCellSkeleton &cell2 = *((*cells)[k++] = new ContourCellSkeleton);
-      ContourCellCoord ll(x, y, i, j);
-      ContourCellCoord lr(x1, y, i+1, j);
-      ContourCellCoord ur(x1, y1, i+1, j+1);
-      ContourCellCoord ul(x, y1, i, j+1);
-      if(leanleft) {
-	cell1[0] = ll;
-	cell1[1] = lr;
-	cell1[2] = ul;
-	cell2[0] = lr;
-	cell2[1] = ur;
-	cell2[2] = ul;
-      }
+    else if(pn->nfaces() > 0) {
+      // ProtoNode is on a face (but not an edge or corner).
+      assert(pn->nedges() == 0 && pn->nfaces() == 1);
+      int faceNo = pn->faceindex[0];
+      Coord3D pos = interpolate(corners, pn->mastercoord());
+      // Has the face been seen before?
+      CSkeletonNode *n0 = el->getFaceNode(faceNo, 0);
+      CSkeletonNode *n1 = el->getFaceNode(faceNo, 1);
+      CSkeletonNode *n2 = el->getFaceNode(faceNo, 2);
+      CSkeletonMultiNodeKey facekey(n0, n1, n2);
+      SkelElNodeMap::iterator it = faceNodeMap.find(facekey);
+      if(it == faceNodeMap.end()) {
+	// The face hasn't been seen before.  Create a new node.
+	Node *newNode = femesh->newFuncNode(pos);
+	nodes[pnidx] = newNode;
+	// Add the node to newFaceNodes.
+	SkelElNodeMap::iterator fit = newFaceNodes.find(facekey);
+	if(fit == newFaceNodes.end()) {
+	  newFaceNodes.emplace(
+		       std::make_pair(facekey, std::vector<Node*>(1, newNode)));
+	}
+	else {
+	  fit->second.push_back(newNode);
+	}
+      }	// end if face is new
       else {
-	cell1[0] = ll;
-	cell1[1] = ur;
-	cell1[2] = ul;
-	cell2[0] = ll;
-	cell2[1] = lr;
-	cell2[2] = ur;
-      }
-      leanleft ^= 1;
-    }
-  }
-  return cells;
+	nodes[pnidx] = findClosestNode(it->second, pos);
+      }	// end if face has already been seen.
+
+    } // end if ProtoNode is on a face
+
+    else {
+      // ProtoNode is interior.  It always needs to be created.
+      assert(pn->nedges() == 0 && pn->nfaces() == 0);
+      Coord3D pos = interpolate(corners, pn->mastercoord());
+      nodes[pnidx] = femesh->newFuncNode(pos);
+
+    } // end if ProtoNode is interior
+    
+  } // end loop over ProtoNodes
+
+  // Merge the new nodes into edgeNodeMap and faceNodeMap so they can
+  // be used by future elements.
+  edgeNodeMap.insert(newEdgeNodes.begin(), newEdgeNodes.end());
+  faceNodeMap.insert(newFaceNodes.begin(), newFaceNodes.end());
+
+  // Element constructor uses std::move on nodes.
+  return new Element(el, *this, nodes, mat);
 }
 
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// Is a point on the boundary of the MasterElement?
-
-bool TriangularMaster::onBoundary(const MasterCoord &pt) const {
-  return (pt(0) == 0.0 || pt(1) == 0.0 || pt(0) + pt(1) == 1.0);
-}
-
-bool QuadrilateralMaster::onBoundary(const MasterCoord &pt) const {
-  return (pt(0) == -1.0 || pt(1) == -1.0 || pt(0) == 1.0 || pt(1) == 1.0);
-}
-
-// Are two points on the *same* boundary of the MasterElement?
-
-bool TriangularMaster::onBoundary2(const MasterCoord &pt0,
-                                   const MasterCoord &pt1)
+FaceBoundaryElement *MasterElement2D::buildFaceBoundary(
+					      const std::vector<Node*> &nodes,
+					      const Element *bulkEl)
   const
 {
-  return
-    (pt0(0) == 0.0 && pt1(0) == 0.0) ||
-    (pt0(1) == 0.0 && pt1(1) == 0.0) ||
-    (pt0(0) + pt0(1) == 1.0 && pt1(0) + pt1(1) == 1.0);
+  // nodes contains just the corner nodes of the edge that we're
+  // creating.  There may be intermediate nodes if the element is
+  // higher order.  They can be obtained from bulkEl, which is a bulk
+  // element that has an face containing the given corner nodes.
+  return new FaceBoundaryElement(*this,
+				 bulkEl->getIntermediateNodes(nodes));
 }
 
-bool QuadrilateralMaster::onBoundary2(const MasterCoord &pt0,
-                                      const MasterCoord &pt1)
-  const
-{
-  return
-    (pt0(0) == -1.0 && pt1(0) == -1.0) ||
-    (pt0(1) == -1.0 && pt1(1) == -1.0) ||
-    (pt0(0) == 1.0 && pt1(0) == 1.0) ||
-    (pt0(1) == 1.0 && pt1(1) == 1.0);
-}
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// Are the two given MasterCoords on the same exterior edge of the
-// master element?  An 'exterior' edge, as far as this routine cares,
-// is one that begins at a corner listed in the given list of
-// ElementCornerNodeIterators.  In the real world, exterior edges are
-// those that form geometrical boundaries of the system.  They don't
-// necessarily have anything to do with the boundary conditions, but
-// are important for creating contour plots.
-
-bool TriangularMaster::exterior(
-			const MasterCoord &a, const MasterCoord &b,
-			const std::vector<ElementCornerNodeIterator> &ext)
-  const
-{
-  if(onBoundary(a) && onBoundary(b)) {
-    for(std::vector<ElementCornerNodeIterator>::size_type i=0; i<ext.size();i++)
-      {
-	const MasterCoord &bdystart = ext[i].mastercoord();
-	double x0 = bdystart(0);
-	double y0 = bdystart(1);
-	// We could presumably compute whether or not points a and b
-	// were on an edge in some general way, but it's probably faster
-	// and more accurate to take advantage of what we know of the
-	// master element geometry, and just make a few simple
-	// comparisons.
-	if(x0 == 0.0) {
-	  if(y0 == 0.0) {		// bottom edge, y=0
-	    if(a(1)==0.0 && b(1)==0.0) {
-	      return 1;
-	    }
-	  }
-	  else if(y0 == 1.0) {	// left edge, x=0
-	    if(a(0)==0.0 && b(0)==0.0) {
-	      return 1;
-	    }
-	  }
-	}
-	else if(x0 == 1.0) {	// upper right edge, x+y=1
-	  // Here we worry about roundoff error making it look like a
-	  // point isn't quite on an edge.  But points a and b are
-	  // really the corners of ContourCellSkeletons, so we just
-	  // have to make sure that the comparison here is compatible
-	  // with the computation there.
-	  if(a(0)==1.0-a(1) && b(0)==1.0-b(1)) {
-	    return 1;
-	  }
-	}
-      }
-  }
-  return 0;
-}
-
-bool QuadrilateralMaster::exterior(const MasterCoord &a, const MasterCoord &b,
-				   const std::vector<ElementCornerNodeIterator> &ext)
-  const
-{
-  if(onBoundary(a) && onBoundary(b)) {
-    for(std::vector<ElementCornerNodeIterator>::size_type i=0; i<ext.size();i++)
-      {
-	const MasterCoord &bdystart = ext[i].mastercoord();
-	double x0 = bdystart(0);
-	double y0 = bdystart(1);
-	if(x0 == -1.0 && y0 == -1.0) { // bottom edge, y=-1
-	  if(a(1) == -1.0 && b(1) == -1.0) {
-	    return 1;
-	  }
-	}
-	else if(x0 == 1.0 && y0 == -1.0) { // right edge, x=1
-	  if(a(0) == 1.0 &&  b(0) == 1.0) {
-	    return 1;
-	  }
-	}
-	else if(x0 == 1.0 && y0 == 1.0) {	// top edge, y=1
-	  if(a(1) == 1.0 && b(1) == 1.0) {
-	    return 1;
-	  }
-	}
-	else if(x0 == -1.0 && y0 == 1.0) { // left edge, x=-1
-	  if(a(0) == -1.0 && b(0) == -1.0) {
-	    return 1;
-	  }
-	}
-      }
-  }
-  return 0;
-}
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-const std::vector<const MasterCoord*> &TriangularMaster::perimeter() const {
-  static const std::vector<const MasterCoord*> *p = 0;
-  if(!p)
-    p = findPerimeter();
-  return *p;
-}
-
-const std::vector<const MasterCoord*> &QuadrilateralMaster::perimeter() const {
-  static const std::vector<const MasterCoord*> *p = 0;
-  if(!p)
-    p = findPerimeter();
-  return *p;
-}
-
-const std::vector<const MasterCoord*> &MasterElement1D::perimeter() const {
-  static const std::vector<const MasterCoord*> *p = 0;
-  if(!p)
-    p = findPerimeter();
-  return *p;
-}
-
-const std::vector<const MasterCoord*> *MasterElement::findPerimeter() const {
-  std::vector<const MasterCoord*> *p = new std::vector<const MasterCoord*>;
-  for(int i=0; i<nnodes(); i++) {
-    const ProtoNode *pn = protonodes[i];
-    if(pn->corner())
-      p->push_back(&pn->mastercoord());
-  }
-  return p;
-}
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// Contour plotting support functions.  It's quite possible that these
-// can be rewritten in terms of generic MasterElement functions.  It
-// would be good to do so, because these functions assume a particular
-// geometry of the MasterElements.  The geometry assumed here must be
-// consistent with the geometry laid out in the MasterElement subclass
-// constructors.
-
-CCurve *MasterElement::perimeterSection(const MasterCoord *a,
-					const MasterCoord *b) const
-{
-  CCurve *curve = new CCurve;
-  int sidea = sideno(*a);
-  int sideb = sideno(*b);
-  curve->push_back(a);
-  int n = nedges();
-  if(sidea != sideb) {
-    for(int i=sidea; i!= sideb; i=(i+1)%n) {
-      // See the "Memory Allocation Note" in contour.C.
-      curve->push_back(endpoint(i));
-    }
-  }
-  curve->push_back(b);
-  return curve;
-}
-
-// -----------
-
-int TriangularMaster::sidenumber(const MasterCoord &a) {
-  // Given a MasterCoord on the edge of a triangular MasterElement,
-  // return an integer indicating which side of the element it's on.
-  // Sides include their endpoints but not their startpoints, going
-  // counterclockwise.
-  //
-  //  |\          * (ending a comment with '\' generates a compiler warning!)
-  // 0| \2
-  //  |  \        *
-  //  ----
-  //    1
-  if(a(0) == 0.0 && a(1) != 1.0) return 0;
-  if(a(1) == 0.0) return 1;
-  return 2;
-}
-
-const MasterCoord *TriangularMaster::endpoint(int side_number) const {
-  // This returns the counterclockwise end of the side.  See the
-  // "Memory Allocation Note" in contour.C for why this function
-  // returns a pointer to static data.
-  static const MasterCoord z00(0.0, 0.0);
-  static const MasterCoord z10(1.0, 0.0);
-  static const MasterCoord z01(0.0, 1.0);
-  switch(side_number) {
-  case 0:
-    return &z00;
-  case 1:
-    return &z10;
-  case 2:
-    return &z01;
-  }
-  return 0;			// not reached
-}
-
-bool TriangularMaster::endPointComparator(const MasterEndPoint &a,
-					const MasterEndPoint &b) // static
-{
-  int sidea = sidenumber(*a.mc);
-  int sideb = sidenumber(*b.mc);
-  if(sidea != sideb)
-    return sidea < sideb;
-  // both points on the same side
-  switch(sidea) {
-  case 0:
-    if(a(1) > b(1)) return true;
-    if(a(1) < b(1)) return false;
-    break;
-  case 1:
-    if(a(0) < b(0)) return true;
-    if(a(0) > b(0)) return false;
-    break;
-  case 2:
-    if(a(0) > b(0)) return true;
-    if(a(0) < b(0)) return false;
-  }
-  // both points coincide
-  if(!a.start && b.start) return true;
-  return false;
-}
-
-MasterEndPointComparator TriangularMaster::bdysorter() const {
-  return TriangularMaster::endPointComparator;
-}
-
-// ----------
-
-int QuadrilateralMaster::sidenumber(const MasterCoord &a) {
-  //
-  //   __3__
-  //   |   |
-  //  0|   |2
-  //   -----
-  //     1
-
-  if(a(0) == -1.0 && a(1) != 1.0) return 0;
-  if(a(1) == -1.0) return 1;
-  if(a(0) == 1.0) return 2;
-  return 3;
-}
-
-const MasterCoord *QuadrilateralMaster::endpoint(int side_number) const {
-  // This returns the counterclockwise end of the side.  See the
-  // "Memory Allocation Note" in contour.C for why this function
-  // returns a pointer to static data.
-  static const MasterCoord sw(-1.0, -1.0);
-  static const MasterCoord se( 1.0, -1.0);
-  static const MasterCoord ne( 1.0,  1.0);
-  static const MasterCoord nw(-1.0,  1.0);
-  switch(side_number) {
-  case 0:
-    return &sw;
-  case 1:
-    return &se;
-  case 2:
-    return &ne;
-  case 3:
-    return &nw;
-  }
-  return 0;			// not reached
-}
-
-bool QuadrilateralMaster::endPointComparator(const MasterEndPoint &a,
-					     const MasterEndPoint &b) // static
-{
-  int sidea = sidenumber(*a.mc);
-  int sideb = sidenumber(*b.mc);
-  if(sidea != sideb)
-    return sidea < sideb;
-  switch(sidea) {
-  case 0:
-    if(a(1) > b(1)) return true;
-    if(a(1) < b(1)) return false;
-    break;
-  case 1:
-    if(a(0) < b(0)) return true;
-    if(a(0) > b(0)) return false;
-    break;
-  case 2:
-    if(a(1) < b(1)) return true;
-    if(a(1) > b(1)) return false;
-    break;
-  case 3:
-    if(a(0) > b(0)) return true;
-    if(a(0) < b(0)) return false;
-  };
-  if(!a.start && b.start) return true;
-  return false;
-}
-
-MasterEndPointComparator QuadrilateralMaster::bdysorter() const {
-  return QuadrilateralMaster::endPointComparator;
-}
-
-// -------
-
-// // Dealing with Edge elements the same way is sort of dumb, since
-// // contouring is never done on edge elements.  But the class heirarchy
-// // requires it at the moment.
-// // TODO 3.1: Fix that.
-// static bool edgeMasterEndPointComparator(const MasterEndPoint &a,
-// 					 const MasterEndPoint &b)
-// {
-//   if(a(0) < b(0)) return true;
-//   if(a(0) > b(0)) return false;
-//   if(a(1) < b(1)) return true;
-//   return false;
-// }
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// Edgement *MasterElement::buildInterfaceElement(
-// 		       PyObject *leftskelel, PyObject *rightskelel,
-// 		       int segmentordernumber,
-// 		       Material *m,
-// 		       const std::vector<Node*> *leftnodes,
-// 		       const std::vector<Node*> *rightnodes,
-// 		       bool leftnodesinorder, bool rightnodesinorder,
-// 		       const std::vector<std::string> *pInterfacenames)
-//   const
-// {
-//   return new InterfaceElement(leftskelel, rightskelel,
-// 			      segmentordernumber,
-// 			      *this,
-// 			      leftnodes, rightnodes,
-// 			      leftnodesinorder, rightnodesinorder,
-// 			      m, pInterfacenames);
-// }
-
-#endif	// DIM == 2
-
-Element *MasterElement::build(CSkeletonElement *el, const Material *m,
-			      const std::vector<Node*> *nodes)
-  const
-{
-  return new Element(el, *this, nodes, m);
-}
-
-FaceBoundaryElement *MasterElement::buildFaceBoundary(
-					      const std::vector<Node*> *nodes)
-  const
-{
-  return new FaceBoundaryElement(*this, nodes);
-}
-
-EdgeBoundaryElement *MasterElement::buildEdgeBoundary(
-					      const std::vector<Node*> *nodes)
+EdgeBoundaryElement *MasterElement1D::buildEdgeBoundary(
+					      const std::vector<Node*> &nodes,
+					      const Element *bulkEl)
 const
 {
-  return new EdgeBoundaryElement(*this, nodes);
+  // nodes contains just the end nodes of the edge that we're
+  // creating.  There may be intermediate nodes if the element is
+  // higher order.  They can be obtained from bulkEl, which is a bulk
+  // element that has an edge between the given end nodes.
+  return new EdgeBoundaryElement(*this,
+				 bulkEl->getIntermediateNodes(nodes));
 }
 
 ElementLite *MasterElement::buildLite(const std::vector<Coord> *nodes) 
@@ -966,7 +725,7 @@ ElementLite *MasterElement::buildLite(const std::vector<Coord> *nodes)
   return new ElementLite(*this, nodes);
 }
 
-#if DIM == 3
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 TetrahedralMaster::TetrahedralMaster(const std::string &name,
 				     const std::string &desc,
@@ -991,44 +750,192 @@ const GaussPtTable &TetrahedralMaster::gausspointtable(int deg) const {
   return gptable(deg);
 }
 
-#define sixth 1./6.
-#define third 1./3.
-#define fourth 0.25
-#define c14   0.585410196624969
-#define c15   0.138196601125011
+static void addPoints31(GaussPtTable &tbl, double r, double w) {
+  // Add gauss points whose position in barycentric coords is a
+  // permutation of (r, r, r, 1-3r).  The "31" notation is from Zhang,
+  // and means that 3 of the coordinate's components have one value
+  // and one has another.  By symmetry, all the points must have the
+  // same weight.  Because barycentric coords in the master tet
+  // geometry are just (x, y, z, 1-x-y-z), the actual position of a
+  // point is given by the first three barycentric components.
+  double s = 1. - 3.*r;
+  tbl.addpoint(MasterCoord(s, r, r), w);
+  tbl.addpoint(MasterCoord(r, s, r), w);
+  tbl.addpoint(MasterCoord(r, r, s), w);
+  tbl.addpoint(MasterCoord(r, r, r), w);
+}
+
+static void addPoints22(GaussPtTable &tbl, double r, double w) {
+  // Same as addPoints31, but the barycentric coords are a permutation
+  // of (r, r, 0.5-r, 0.5-r).
+  double s = 0.5 - r;
+  tbl.addpoint(MasterCoord(r, r, s), w);
+  tbl.addpoint(MasterCoord(r, s, r), w);
+  tbl.addpoint(MasterCoord(s, r, r), w);
+  tbl.addpoint(MasterCoord(s, s, r), w);
+  tbl.addpoint(MasterCoord(s, r, s), w);
+  tbl.addpoint(MasterCoord(r, s, s), w);
+}
+
+static void addPoints211(GaussPtTable &tbl, double r, double s, double w) {
+  // Barycentric coords are a permutation of (r, r, s, 1-2r-s)
+  double t = 1. - 2*r - s;
+  tbl.addpoint(MasterCoord(r, r, s), w);
+  tbl.addpoint(MasterCoord(r, s, r), w);
+  tbl.addpoint(MasterCoord(s, r, r), w);
+  
+  tbl.addpoint(MasterCoord(r, r, t), w);
+  tbl.addpoint(MasterCoord(r, t, r), w);
+  tbl.addpoint(MasterCoord(t, r, r), w);
+
+  tbl.addpoint(MasterCoord(r, s, t), w);
+  tbl.addpoint(MasterCoord(r, t, s), w);
+  tbl.addpoint(MasterCoord(s, r, t), w);
+  tbl.addpoint(MasterCoord(s, t, r), w);
+  tbl.addpoint(MasterCoord(t, r, s), w);
+  tbl.addpoint(MasterCoord(t, s, r), w);
+}
 
 const std::vector<GaussPtTable> &TetrahedralMaster::gptable_vec() const {
   static std::vector<GaussPtTable> table;
   static bool set = 0;
 
+  // The weights in each table add up to 1/6, which is the volume of
+  // the master space element.
+
+  // Gauss points for a triangle and tetrahedron are from A SET OF
+  // SYMMETRIC QUADRATURE RULES ON TRIANGLES AND TETRAHEDRA, Linbo
+  // Zhang, Tao Cui and Hui Liu, Journal of Computational
+  // Mathematics, Vol.27, No.1, 2009, 89–96.  The numbers were
+  // copied out of the source code file src/quad.c from
+  // http://lsec.cc.ac.cn/phg/download/phg-0.9.3-20170615.tar.bz2.
+
   if(!set) {
     set = 1;
      // order = 0, npts = 1
-    table.push_back(GaussPtTable(0, 1));
-    table[0].addpoint(MasterCoord(fourth, fourth, fourth), sixth);
+    table.emplace_back(0, 1);
+    table.back().addpoint(MasterCoord(0.25, 0.25, 0.25), 1./6.);
 
      // order = 1, npts = 1
-    table.push_back(GaussPtTable(1, 1));
-    table[1].addpoint(MasterCoord(fourth, fourth, fourth), sixth);
+    table.emplace_back(1, 1);
+    table.back().addpoint(MasterCoord(0.25, 0.25, 0.25), 1./6.);
 
-     // order = 2, npts = 4
-    table.push_back(GaussPtTable(2, 4));
-    table[2].addpoint(MasterCoord(c15, c15, c15), 1./24.);
-    table[2].addpoint(MasterCoord(c15, c14, c15), 1./24.);
-    table[2].addpoint(MasterCoord(c14, c15, c15), 1./24.);
-    table[2].addpoint(MasterCoord(c15, c15, c14), 1./24.);
+    // order = 2, npts = 4
+    table.emplace_back(2, 4);
+    addPoints31(table.back(), (5. - sqrt(5.))/20., 1./24.);
 
-  }
+    // Zienkiewicz and Taylor (5th edition, Vol 1, page 223.  Section
+    // 9.10: Numerical integration -- triangular or tetrahdral
+    // regions) provide this 5 point rule for order 3, but it includes
+    // a negative weight, which most authors object to. 
+    // table.emplace_back(3, 5);
+    // table.back().addpoint(MasterCoord(0.25, 0.25, 0.25), -4./30.); 
+    // table.back().addpoint(MasterCoord(1./6., 1./6., 1./6.), 3./40.);
+    // table.back().addpoint(MasterCoord(0.5, 1./6., 1./6.), 3./40.);
+    // table.back().addpoint(MasterCoord(1./6., 0.5, 1./6.), 3./40.);
+    // table.back().addpoint(MasterCoord(1./6., 1./6., 0.5), 3./40.);
 
+    // order = 3, npts = 8: Zhang, et al QUAD_3D_P3_
+    table.emplace_back(3, 8);
+    addPoints31(table.back(),
+		.32805469671142664733580581998119743,
+		.13852796651186214232361769837564129/6.);
+    addPoints31(table.back(),
+		.10695227393293068277170204157061650,
+		.11147203348813785767638230162435871/6.);
+
+    // order = 4, npts = 14:  Zhang QUAD_3D_P4_
+    table.emplace_back(4, 14);
+    addPoints31(table.back(),
+		.09273525031089122628655892066032137,
+		.07349304311636194934358694586367885/6.);
+    addPoints31(table.back(),
+		.31088591926330060975814749494040332,
+		.11268792571801585036501492847638892/6.);
+    addPoints22(table.back(),
+		.04550370412564965000000000000000000,
+		.04254602077708146686093208377328816/6.);
+
+    // order = 5, npts = 14: Zhang QUAD_3D_P5_
+    table.emplace_back(5, 14);
+    addPoints31(table.back(),
+		.31088591926330060979734573376345783,
+		.11268792571801585079918565233328633/6.);
+    addPoints31(table.back(),
+		.09273525031089122640232391373703061,
+		.07349304311636194954371020548632750/6.);
+    addPoints22(table.back(),
+		.04550370412564964949188052627933943,
+		.04254602077708146643806942812025744/6.);
+
+    // order = 6, npts = 24: Zhang QUAD_3D_P6_
+    table.emplace_back(6, 24);
+    addPoints31(table.back(),
+		.21460287125915202928883921938628499,
+		.03992275025816749209969062755747998/6.);
+    addPoints31(table.back(),
+		.04067395853461135311557944895641006,
+		.01007721105532064294801323744593686/6.);
+    addPoints31(table.back(),
+		.32233789014227551034399447076249213,
+		.05535718154365472209515327785372602/6.);
+    addPoints211(table.back(),
+		 .06366100187501752529923552760572698,
+		 .60300566479164914136743113906093969,
+		 (27./560.)/6.);
+
+    // order = 7, npts = 35
+    table.emplace_back(7, 35);
+    table.back().addpoint(MasterCoord(0.25, 0.25, 0.25),
+			  .09548528946413084886057843611722638/6.);
+    addPoints31(table.back(),
+		.31570114977820279942342999959331149,
+		.04232958120996702907628617079854674/6.);
+    addPoints22(table.back(),
+		.05048982259839636876305382298656247,
+		.03189692783285757993427482408294246/6.);
+    addPoints211(table.back(),
+		 .18883383102600104773643110385458576,
+		 .57517163758700002348324157702230752,
+		 .03720713072833462136961556119148112/6.);
+    addPoints211(table.back(),
+		 .02126547254148324598883610149981994,
+		 .81083024109854856111810537984823239,
+		 .00811077082990334156610343349109654/6.);
+
+    // order = 8, npts = 46
+    table.emplace_back(8, 46);
+    addPoints31(table.back(),
+		.03967542307038990126507132953938949,
+		.00639714777990232132145142033517302/6.);
+    addPoints31(table.back(),
+		.31448780069809631378416056269714830,
+		.04019044802096617248816115847981783/6.);
+    addPoints31(table.back(),
+		.10198669306270330000000000000000000,
+		.02430797550477032117486910877192260/6.);
+    addPoints31(table.back(),
+		.18420369694919151227594641734890918,
+		.05485889241369744046692412399039144/6.);
+    addPoints22(table.back(),
+		.06343628775453989240514123870189827,
+		.03571961223409918246495096899661762/6.);
+    addPoints211(table.back(),
+		 .02169016206772800480266248262493018,
+		 .71993192203946593588943495335273478,
+		 .00718319069785253940945110521980376/6.);
+    addPoints211(table.back(),
+		 .20448008063679571424133557487274534,
+		 .58057719012880922417539817139062041,
+		 .01637218194531911754093813975611913/6.);
+
+  } // end if not set
   return table;
-}
+} // end TetrahedralMaster::gptable_vec
 
 MasterCoord TetrahedralMaster::center() const {
-  return MasterCoord(fourth, fourth, fourth);
+  return MasterCoord(0.25, 0.25, 0.25);
 }
-
-#endif	// DIM == 3
-
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -1052,9 +959,30 @@ const std::string &QuadrilateralMaster::classname() const {
   return nm;
 }
 
-#if DIM == 3
 const std::string &TetrahedralMaster::classname() const {
   static std::string nm("TetrahedralMaster");
   return nm;
 }
-#endif // DIM == 3
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+void MasterElement::dumpDetails() const {
+  oofcerr << "MasterElement::dumpDetails: " << name_ << std::endl;
+  for(const ProtoNode *pn : protonodes) {
+    OOFcerrIndent indent(4);
+    oofcerr << *pn << std::endl;
+  }
+  OOFcerrIndent indent(2);
+  oofcerr << "funcnodes=[";
+  std::cerr << funcnodes;
+  oofcerr << "]" << std::endl;
+  oofcerr << "mapnodes=[";
+  std::cerr << mapnodes;
+  oofcerr << "]" << std::endl;
+  oofcerr << "cornernodes=[";
+  std::cerr << cornernodes;
+  oofcerr << "]" << std::endl;
+  oofcerr << "exteriorfuncnodes=[";
+  std::cerr<< exteriorfuncnodes;
+  oofcerr << "]" << std::endl;
+}

@@ -186,38 +186,40 @@ class ViewManipulatorMouseHandler(mousehandler.MouseHandler):
         self.gfxwindow = gfxwindow
         self.downed = False
 
-    def up(self, x, y, shift, ctrl):
+    def up(self, x, y, button, shift, ctrl):
         self.downed = False
         # The View menuitem callback is viewCB in ghostgfxwindow.py.
         self.gfxwindow.menu.Settings.Camera.View(
             view=self.gfxwindow.oofcanvas.get_view())
 
-    def down(self, x, y, shift, ctrl):
+    def down(self, x, y, button, shift, ctrl):
         self.downed = True
 
     def acceptEvent(self, eventtype):
         return (eventtype == 'down' or 
-               (self.downed and eventtype in ('move', 'up')))
+               (self.downed and eventtype in ('move', 'up')) or
+                eventtype == 'scroll'
+        )
 
 
 class TumbleMouseHandler(ViewManipulatorMouseHandler):
-    def move(self, x, y, shift, ctrl):
+    def move(self, x, y, button, shift, ctrl):
         self.gfxwindow.oofcanvas.mouse_tumble(x,y)
         self.gfxwindow.updateview()
 
 
 class DollyMouseHandler(ViewManipulatorMouseHandler):
-    def move(self, x, y, shift, ctrl):
+    def move(self, x, y, button, shift, ctrl):
         self.gfxwindow.oofcanvas.mouse_dolly(x,y)
         self.gfxwindow.updateview()
 
-    def up(self, x, y, shift, ctrl):
-        # self.gfxwindow.oofcanvas.set_sample_distances()
-        ViewManipulatorMouseHandler.up(self,x,y,shift,ctrl)
+    # def up(self, x, y, button, shift, ctrl):
+    #     # self.gfxwindow.oofcanvas.set_sample_distances()
+    #     ViewManipulatorMouseHandler.up(self,x,y,button,shift,ctrl)
         
 
 class TrackMouseHandler(ViewManipulatorMouseHandler):
-    def move(self, x, y, shift, ctrl):
+    def move(self, x, y, button, shift, ctrl):
         self.gfxwindow.oofcanvas.mouse_track(x,y)
         self.gfxwindow.updateview()
 

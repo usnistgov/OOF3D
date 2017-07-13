@@ -369,7 +369,7 @@ class MoveNodeToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         elif self.mode == "Keyboard":
             return eventtype=='up'
 
-    def down(self, x, y, shift, ctrl):
+    def down(self, x, y, button, shift, ctrl):
         subthread.execute(self.down_subthread, (x,y,shift,ctrl))
 
     def down_subthread(self, x, y, shift, ctrl):
@@ -422,7 +422,7 @@ class MoveNodeToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         finally:
             self.mouselock.release()
             
-    def move(self, x, y, shift, ctrl):
+    def move(self, x, y, button, shift, ctrl):
         skeleton = self.getSkeleton()
         subthread.execute(self.move_thread, (skeleton, x, y, shift, ctrl))
     def move_thread(self, skeleton, x, y, shift, ctrl):
@@ -466,7 +466,7 @@ class MoveNodeToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     # move, the move is not performed -- no menu items are called,
     # nothing is scripted.
 
-    def up(self, x, y, shift, ctrl):
+    def up(self, x, y, button, shift, ctrl):
         # "Downed" must be cleared at the earliest opportunity,
         # otherwise spurious "move" events can be processed,
         # unilaterally changing the node position.

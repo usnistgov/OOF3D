@@ -275,12 +275,12 @@ And Ctrl-click to toggle.""")
     def acceptEvent(self, eventtype):
         return eventtype in ('move', 'up')
 
-    def up(self, x, y, shift, ctrl):
+    def up(self, x, y, button, shift, ctrl):
         debug.mainthreadTest()
         if config.dimension() == 2:
             self.up2(x, y, shift, ctrl)
         else:
-            self.up3(x, y, shift, ctrl)
+            self.up3(x, y, button, shift, ctrl)
 
     def up2(self, x, y, shift, ctrl):
         thepoint = primitives.Point(x,y)
@@ -322,7 +322,7 @@ And Ctrl-click to toggle.""")
 
                 gtklogger.checkpoint(self.gfxwindow().name + " Pin Nodes up")
 
-    def up3(self, x, y, shift, ctrl):
+    def up3(self, x, y, button, shift, ctrl):
         skelctxt = self.getSkeletonContext()
         if skelctxt:
             canvas = self.toolbox.gfxwindow().oofcanvas
