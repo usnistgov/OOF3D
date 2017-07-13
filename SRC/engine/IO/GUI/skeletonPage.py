@@ -222,8 +222,8 @@ class SkeletonPage(oofGUI.MainPage):
                                             self.updateskelmod),
             switchboard.requestCallbackMain(("new who", "Microstructure"),
                                             self.newMicrostructure),
-            switchboard.requestCallback(("new who", 'Skeleton'),
-                                        self.newSkeleton),
+            switchboard.requestCallbackMain(("new who", 'Skeleton'),
+                                            self.newSkeleton),
             # Pages should catch the signal from updates to the widget
             # which don't originate on this page, e.g. deletions via
             # menu command.
@@ -295,7 +295,7 @@ class SkeletonPage(oofGUI.MainPage):
             self.update(skel_name, locked=False)
         
     def newSkeleton(self, whoname):     # switchboard ("new who", "Skeleton")
-        self.update(whoname, locked=False)
+        self.skelwidget.set_value(whoname)
 
     def skel_update(self, *args, **kwargs):  # Switchboard "self.skelwidget"
         skelname = self.currentSkeletonFullName()
