@@ -20,9 +20,6 @@ soon enough.
 
 Fix bug in Fix Illegal.  See Rachel's example of an unfixable element.
 
-Why is homogeneity recomputed after Undo/Redo?  Undoing Anneal
-computes homogeneity for each element.  Redo doesn't.
-
 
 Soon
 ----

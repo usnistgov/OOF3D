@@ -2918,7 +2918,12 @@ const Coord CDeputySkeleton::originalPosition(CSkeletonNode *n) {
 
 void CDeputySkeleton::swapPositions() {
   // For each moved node, swap the position stored in nodePositions
-  // with the position stored in the Skeleton's main data.
+  // with the position stored in the Skeleton's main data.  Called
+  // when a DeputySkeleton is activated or deactivated.
+
+  // The timestamp should *not* be updated.  This operation does not
+  // change this Skeleton, it just changes where its data is stored.
+  
   for(NodePositionsMap::iterator npmit=nodePositions->begin();
       npmit!=nodePositions->end(); ++npmit) 
     {
@@ -2928,7 +2933,6 @@ void CDeputySkeleton::swapPositions() {
       node->unconstrainedMoveTo(temp);
     }
   skeleton->needsHash();
-  skeleton->incrementTimestamp();
 }
 
 NodePositionsMap *CDeputySkeleton::getMovedNodes() const {

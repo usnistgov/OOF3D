@@ -96,10 +96,6 @@ class SkeletonContext(whoville.WhoDoUndo):
         whoville.WhoDoUndo.__init__(self, name, 'Skeleton', skel, parent,
                                     overwritefn=self.skeletonStackOverwrite)
 
-        # # Overwrite function, gets called when an item in the stack is
-        # # about to be overwritten. 
-        # self.undobuffer.overwrite = self.skeletonStackOverwrite
-
         # When a skeleton with deputies is overwritten, a reference to
         # it must be kept as long any deputies exist.
         self.zombieSheriff = None
