@@ -2448,5 +2448,5 @@ test_set = (static_set +
             dynamic_thermal_set +
             dynamic_elastic_set)
 
-test_set = dynamic_thermal_linear_set
+#test_set = static_quadratic_set
 #test_set = [OOF_ThermalDiffusionTimeSteppers_Quadratic("CNdirect")]
