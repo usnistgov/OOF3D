@@ -351,8 +351,8 @@ public:
   // constructor and destructor should *not* be swigged, so that python
   // never has ownership of a CDeputySkeleton.
 
-  void moveNodeTo(CSkeletonNode *node, double doubleDIMArray[3]);
-  void moveNodeBy(CSkeletonNode *node, double doubleDIMArray[3]);
+  bool moveNodeTo(CSkeletonNode *node, double doubleDIMArray[3]);
+  bool moveNodeBy(CSkeletonNode *node, double doubleDIMArray[3]);
   %addmethods{
     // __repr__ must be defined in the derived class, not the base
     // class, because if there's no derived class method swig will

@@ -577,9 +577,13 @@ void CSkeleton::addGridFacesToBoundaries(const ICoord &idx, const ICoord &nml,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-void CSkeleton::checkIllegality() {
-  for(unsigned int i=0; i<nelements(); ++i) {
-    if(elements[i]->illegal()) {
+// checkIllegality does a quick check, stopping after it finds one
+// illegal element.  Therefore it does *not* set
+// CSkeletonBase::illegalCount.
+
+void CSkeletonBase::checkIllegality() {
+  for(CSkeletonElementIterator el=beginElements(); el!=endElements(); ++el) {
+    if((*el)->illegal()) {
       illegal_ = true;
       return;
     }
@@ -587,23 +591,32 @@ void CSkeleton::checkIllegality() {
   illegal_ = false;
 }
 
-int CSkeleton::getIllegalCount() {
+// getIllegalCount checks all elements.  It sets
+// CSkeletonBase::illegal_ as well as CSkeletonBase::illegalCount.
+
+int CSkeletonBase::getIllegalCount() {
   if(illegal_count_computation_time < timestamp) {
     illegalCount = 0;
-    for(unsigned int i=0; i<nelements(); ++i) {
-      if(elements[i]->illegal())
-	  ++illegalCount;
+    for(CSkeletonElementIterator el=beginElements(); el!=endElements(); ++el) {
+      if((*el)->illegal())
+	++illegalCount;
     }
     ++illegal_count_computation_time;	  
   }
+  illegal_ = illegalCount > 0;
   return illegalCount;
 }
 
-int CSkeleton::getSuspectCount() {
+void CSkeletonBase::backdateIllegalityTimeStamp() {
+  // Force illegal element count to be repeated.
+  illegal_count_computation_time.backdate();
+}
+
+int CSkeletonBase::getSuspectCount() {
   if(suspect_count_computation_time < timestamp) {	
     suspectCount = 0;
-    for(unsigned int i=0; i<nelements(); ++i) {
-      if(elements[i]->suspect()) {
+    for(CSkeletonElementIterator el=beginElements(); el!=endElements(); ++el) {
+      if((*el)->suspect()) {
 	++suspectCount;
       } 
     }
@@ -612,20 +625,20 @@ int CSkeleton::getSuspectCount() {
   return suspectCount;
 }
 
-void CSkeleton::getIllegalElements(CSkeletonElementVector &baddies) const {
+void CSkeletonBase::getIllegalElements(CSkeletonElementVector &baddies) const {
   baddies.clear();
-  for(unsigned int i=0; i<nelements(); ++i) {
-    if(elements[i]->illegal())
-      baddies.push_back(elements[i]);
+  for(CSkeletonElementIterator el=beginElements(); el!=endElements(); ++el) {
+    if((*el)->illegal())
+      baddies.push_back(*el);
   }
 }
 
 
-void CSkeleton::getSuspectElements(CSkeletonElementVector &baddies) const {
+void CSkeletonBase::getSuspectElements(CSkeletonElementVector &baddies) const {
   baddies.clear();
-  for(unsigned int i=0; i<nelements(); ++i) {
-    if(elements[i]->suspect())
-      baddies.push_back(elements[i]);
+  for(CSkeletonElementIterator el=beginElements(); el!=endElements(); ++el) {
+    if((*el)->suspect())
+      baddies.push_back(*el);
   }
 }
 
@@ -1032,7 +1045,6 @@ void CSkeleton::getVtkCells(SkeletonFilter *filter,
 void CSkeleton::getVtkSegments(SkeletonFilter *filter,
 			       vtkSmartPointer<vtkUnstructuredGrid> grd)
 {
-  OOFcerrIndent inden(2);
   cleanUp();
   grd->Initialize();
   filter->resetMap();
@@ -1450,6 +1462,8 @@ void CSkeletonBase::getFaceElements(const CSkeletonFace *face,
 }
 
 
+// TODO: Use C++11 move constructors and return the CSkeletonNodeSet
+// instead of passing it as an argument.
 void CSkeletonBase::getNeighborNodes(const CSkeletonNode *node,
 				     CSkeletonNodeSet &result)
   const
@@ -1682,6 +1696,31 @@ Coord CSkeletonBase::averageNeighborPosition(const CSkeletonNode *node,
   return x;
 }
 
+Coord CSkeletonBase::averageConstrainedNbrPosition(const CSkeletonNode *node)
+  const
+{
+  // Just like averageNeighborPosition, except that if the node is
+  // constrained to move only on certain planes, only neighbors with
+  // at least the same constraints are used.
+  bool mobx = node->movable_x();
+  bool moby = node->movable_y();
+  bool mobz = node->movable_z();
+  CSkeletonNodeSet neighborNodes;
+  getNeighborNodes(node, neighborNodes);
+  if(mobx && moby && mobz)
+    return averageNeighborPosition(node, neighborNodes);
+  
+  CSkeletonNodeSet oknbrs;
+  for(CSkeletonNode *nbr : neighborNodes) {
+    if((mobx || !nbr->movable_x()) &&
+       (moby || !nbr->movable_y()) &&
+       (mobz || !nbr->movable_z()))
+      {
+	oknbrs.insert(nbr);
+      }
+  }
+  return averageNeighborPosition(node, oknbrs);
+}
 
 //     // Two versions of neighborNodes are needed for
 //     // PeriodicSkeletonNode because in most contexts we want the
@@ -2726,18 +2765,20 @@ void CSkeleton::removeNode(CSkeletonNode *node) {
   ++numDefunctNodes;
 }
 
-void CSkeleton::moveNodeTo(CSkeletonNode *node, const Coord &position) {
-  node->moveTo(position);
+bool CSkeleton::moveNodeTo(CSkeletonNode *node, const Coord &position) {
+  bool moved = node->moveTo(position);
   //         node.moveTo(position)
   //         for partner in node.getPartners():
   //             partner.moveTo(position)
+  return moved;
 }
 
-void CSkeleton::moveNodeBy(CSkeletonNode *node, const Coord &disp) {
-  node->moveBy(disp);
+bool CSkeleton::moveNodeBy(CSkeletonNode *node, const Coord &disp) {
+  bool moved = node->moveBy(disp);
   //         node.moveTo(position)
   //         for partner in node.getPartners():
   //             partner.moveTo(position)
+  return moved;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -2961,28 +3002,30 @@ NodePositionsMap *CDeputySkeleton::getMovedNodes() const {
   return new NodePositionsMap(*nodePositions);
 }
 
-void CDeputySkeleton::moveNodeTo(CSkeletonNode *node, const Coord &position) {
+bool CDeputySkeleton::moveNodeTo(CSkeletonNode *node, const Coord &position) {
   NodePositionsMap::iterator npmit = nodePositions->find(node);
   if(npmit == nodePositions->end()) {
     (*nodePositions)[node] = node->getPosition();
   }
-  node->moveTo(position);
+  bool moved = node->moveTo(position);
 //         for partner in node.getPartners():
 //             if not self.nodePositions.has_key(partner):
 //                 self.nodePositions[partner] = partner.position()
 //             partner.moveTo(position)
+  return moved;
 }
 
-void CDeputySkeleton::moveNodeBy(CSkeletonNode *node, const Coord &disp) {
+bool CDeputySkeleton::moveNodeBy(CSkeletonNode *node, const Coord &disp) {
   NodePositionsMap::iterator npmit = nodePositions->find(node);
   if(npmit == nodePositions->end()) {
     (*nodePositions)[node] = node->getPosition();
   }
-  node->moveBy(disp);
+  bool moved = node->moveBy(disp);
 //         for partner in node.getPartners():
 //             if not self.nodePositions.has_key(partner):
 //                 self.nodePositions[partner] = partner.position()
 //             partner.moveTo(position)
+  return moved;
 }
 
 void CDeputySkeleton::moveNodeBack(CSkeletonNode *node) {
