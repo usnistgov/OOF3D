@@ -286,7 +286,11 @@ TutorialClass(subject="Basics",
     While the bar is still moving, you can abort the process by
     clicking on the BOLD(Stop) button.
 
-    Cool, isn't it?
+    BOLD(CAUTION) Make sure you really do stop the Group operation.
+    In order to create an example that is guaranteed to be stoppable,
+    we chose one that takes a long time to run.  It also uses a lot of
+    memory!  Stop it before it becomes unreasonable.
+
     """
     ),
 

@@ -9,6 +9,7 @@
  * oof_manager@nist.gov. 
  */
 
+#include "common/IO/oofcerr.h"
 #include "engine/fixillegal.h"
 #include "engine/cfiddlenodes.h"
 #include "engine/cskeleton2.h"
@@ -21,7 +22,6 @@ CSkeletonBase* FixIllegal::apply(CSkeletonBase *skeleton) {
 
   CDeputySkeleton *newSkeleton = skeleton->deputyCopy();
   newSkeleton->activate();
-
   CSkeletonElementVector baddies;
   newSkeleton->getIllegalElements(baddies);
   CSkeletonElementSet bad_set;
@@ -33,7 +33,7 @@ CSkeletonBase* FixIllegal::apply(CSkeletonBase *skeleton) {
   int count = 0;
   nguilty = baddies.size();
 
-  while(bad_set.size() and count<max) {
+  while(!bad_set.empty() and count<max) {
     ++count;
     smoothIllegalElements(newSkeleton, bad_set, baddies);
   }
@@ -45,8 +45,8 @@ CSkeletonBase* FixIllegal::apply(CSkeletonBase *skeleton) {
   // their elements become barely legal.
  
   newSkeleton->cleanUp();
-  newSkeleton->checkIllegality();
-  
+  newSkeleton->backdateIllegalityTimeStamp();
+  newSkeleton->getIllegalCount(); // caches illegalCount, illegal_.
   return newSkeleton;
 
 }
@@ -72,7 +72,8 @@ void FixIllegal::smoothTheNode(CDeputySkeleton *newSkeleton,
 			       CSkeletonElementSet &bad_set, 
 			       CSkeletonElementVector &baddies)
 {
-  int n_local_guilty = 0;
+  // Find out how many neighboring elements of this node are illegal.
+  int n_local_guilty = 0; 
   CSkeletonElementVector *neighborElements = node->getElements();
   for(CSkeletonElementIterator it=neighborElements->begin();
       it!=neighborElements->end(); ++it)
@@ -81,31 +82,41 @@ void FixIllegal::smoothTheNode(CDeputySkeleton *newSkeleton,
 	++n_local_guilty;
     }
 
-  // Move node to its average position WRT its neighbor nodes
-  newSkeleton->moveNodeTo(node, newSkeleton->averageNeighborPosition(node));
+  // Move node to its average position WRT its neighbor nodes.  Use
+  // the "constrained" average position, which only includes neighbors
+  // that are in the planes to which the node in question is
+  // constrained, if it is constrained.  moveNodeTo returns false if
+  // it couldn't move the node.
 
-  int n_still_guilty = 0;
-  for(CSkeletonElementIterator it=neighborElements->begin();
-      it!=neighborElements->end(); ++it)
+  if(newSkeleton->moveNodeTo(
+	     node, newSkeleton->averageConstrainedNbrPosition(node)))
     {
-      if((*it)->illegal())
-	++n_still_guilty;
-    }
 
-  if(n_local_guilty <= n_still_guilty)
-    newSkeleton->moveNodeBack(node);
-  else {
-    for(CSkeletonElementIterator it=neighborElements->begin();
-	it!=neighborElements->end(); ++it) 
-      {
-	bool estillguilty = (*it)->illegal();
-	bool ewasguilty = bad_set.count((*it));
-	if(ewasguilty and !estillguilty)
-	  bad_set.erase(*it);
-	else if(estillguilty and !ewasguilty) {
-	  baddies.push_back(*it);
-	  bad_set.insert(*it);
+      // Find out how many neighboring elements are still illegal
+      int n_still_guilty = 0;
+      for(CSkeletonElementIterator it=neighborElements->begin();
+	  it!=neighborElements->end(); ++it)
+	{
+	  if((*it)->illegal())
+	    ++n_still_guilty;
 	}
+      
+      // Move the node back if the number of illegal neighbors hasn't improved.
+      if(n_local_guilty <= n_still_guilty)
+	newSkeleton->moveNodeBack(node);
+      else {
+	for(CSkeletonElementIterator it=neighborElements->begin();
+	    it!=neighborElements->end(); ++it) 
+	  {
+	    bool estillguilty = (*it)->illegal();
+	    bool ewasguilty = bad_set.count((*it));
+	    if(ewasguilty and !estillguilty)
+	      bad_set.erase(*it);
+	    else if(estillguilty and !ewasguilty) {
+	      baddies.push_back(*it);
+	      bad_set.insert(*it);
+	    }
+	  }
       }
-  }
+    }
 }

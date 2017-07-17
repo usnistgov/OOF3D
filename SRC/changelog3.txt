@@ -15,6 +15,17 @@
 
 3.0.2
 
+"Fix Illegal Elements" now does a better job with elements that have
+nodes on external faces of the microstructure, and the status of fixed
+Skeletons is correctly displayed in the GUI.
+
+Fixed a bug that was causing the Skeleton homogeneity to be recomputed
+after some Undo and Redo operations.
+
+Fixed the behavior of the progress bars when automatically creating
+voxel groups. They weren't able to interrupt long computations
+effectively.
+
 Vastly improved method for calculating element homogeneity.  It's
 faster and more robust.
 

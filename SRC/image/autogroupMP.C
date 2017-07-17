@@ -10,6 +10,7 @@
  */
 
 #include <oofconfig.h>
+#include "common/IO/oofcerr.h"
 #include "common/cmicrostructure.h"
 #include "common/coord.h"
 #include "common/oofomp.h"
@@ -47,12 +48,8 @@ std::string *autogroup(CMicrostructure *ms, OOFImage3D *image,
   ICoord size(ms->sizeInPixels());
   const int width = size[0];
   const int height = size[1];
-#if DIM==2
-  const double npixels = height*width; // double, used as denominator
-#elif DIM==3
   const int depth = size[2];
   const double npixels = height*width*depth; // double, used as denominator
-#endif
 
   int ndone = 0;	    // number of pixels that have been checked
   int nlists = 0;	    // number of pixel lists created by all threads
@@ -76,71 +73,37 @@ std::string *autogroup(CMicrostructure *ms, OOFImage3D *image,
 
     // Put pixels with the same color into lists.
 //#pragma omp for schedule(dynamic,10)
-
-// #if DIM==2
-//     for(int j=0; j<height; ++j) {
-//       if(!progress->stopped()) {
-// 	for(int i=0; i<width && !progress->stopped(); ++i) {
-// 	  ICoord pxl(i, j);
-// 	  // Direct lookup in the ImageMagick image is not thread safe
-// 	  // somehow.
-// //  	  const CColor color((*image)[pxl]);
-// 	  // This is uglier but faster and also apparently thread
-// 	  // safe.
-//  	  const CColor color(packet2color(packet[i + j*width]));
-// 	  // Look for a list for this color.
-// 	  ColorListMap::iterator findlist = colorlist.find(color);
-// 	  if(findlist == colorlist.end()) {
-// 	    // didn't find existing list of pixels for this color
-//  	    colorlist[color] = ICoordVector(1, pxl);
-// 	  }
-// 	  else {
-// 	    (*findlist).second.push_back(pxl);
-// 	  }
-// 	} // loop over i
-// //#pragma omp critical
-// 	{
-// 	  ndone += width;
-// 	  progress->setFraction(ndone/npixels);
-// 	}
-//       }
-//     } // loop over j
-
-// #elif DIM==3
-
-    for(int k=0; k<depth; ++k) {
-      for(int j=0; j<height; ++j) {
-	if(!progress->stopped()) {
-	  for(int i=0; i<width && !progress->stopped(); ++i) {
-	    ICoord pxl(i, j, k);
-	    const CColor color((*image)[pxl]);
-	    // Look for a list for this color.
-	    ColorListMap::iterator findlist = colorlist.find(color);
-	    if(findlist == colorlist.end()) {
-	      // didn't find existing list of pixels for this color
-	      colorlist[color].push_back(pxl);
-	    }
-	    else {
-	      (*findlist).second.push_back(pxl);
-	    }
-	  } // loop over i
-//#pragma omp critical
-	  {
-	    ndone += width;
-	    progress->setMessage("Examining " + to_string(ndone)
-				 + "/" + to_string(npixels) + " pixels");
-	    progress->setFraction(ndone/npixels);
+    for(int k=0; k<depth && !progress->stopped(); ++k) {
+      for(int j=0; j<height && !progress->stopped(); ++j) {
+	for(int i=0; i<width && !progress->stopped(); ++i) {
+	  ICoord pxl(i, j, k);
+	  const CColor color((*image)[pxl]);
+	  // Look for a list for this color.
+	  ColorListMap::iterator findlist = colorlist.find(color);
+	  if(findlist == colorlist.end()) {
+	    // didn't find existing list of pixels for this color
+	    colorlist[color].push_back(pxl);
 	  }
+	  else {
+	    (*findlist).second.push_back(pxl);
+	  }
+	} // loop over i
+//#pragma omp critical
+	{
+	  ndone += width;
+	  progress->setMessage("Examining " + to_string(ndone)
+			       + "/" + to_string(npixels) + " pixels");
+	  progress->setFraction(ndone/npixels);
 	}
       } // loop over j
     } // loop over k
-    //#endif
 
   } // end parallel
 
-  if(progress->stopped())
+  if(progress->stopped()) {
     return new std::string("");
-
+  }
+  
   // Create pixel groups in the Microstructure for each Color.  This
   // has to be done serially.
   progress->setMessage("Creating groups");
@@ -166,29 +129,31 @@ std::string *autogroup(CMicrostructure *ms, OOFImage3D *image,
 
   for(unsigned int ic=0; ic<colorlists.size() && !progress->stopped(); ++ic) {
     ColorListMap &colorlist = colorlists[ic];
-    for(ColorListMap::iterator i=colorlist.begin(); i!=colorlist.end(); ++i) {
-      const CColor &color = (*i).first;
-      // Have we already found the group for this color?
-      ColorGroupMap::iterator findgrp = colorgroupmap.find(color);
-      if(findgrp == colorgroupmap.end()) { // Didn't find it.
-	std::string grpname = name_template;
-	grpname = substitute(grpname, "%c", color.name());
-	grpname = substitute(grpname, "%n", to_string(grpcount++));
-	bool newness = false;
-	PixelGroup *grp = ms->getGroup(grpname, &newness); // create group
-	groups.push_back(grp);
-	// Can't use cologroupmap[color] = grp since the key is const.
-	colorgroupmap.insert(ColorGroupMap::value_type(color, grp));
-	groupcolormap.insert(GroupColorMap::value_type(grp, color));
-	if(newness)
-	  *newgroupname = grpname;
+    for(ColorListMap::iterator i=colorlist.begin();
+	i!=colorlist.end() && !progress->stopped(); ++i)
+      {
+	const CColor &color = (*i).first;
+	// Have we already found the group for this color?
+	ColorGroupMap::iterator findgrp = colorgroupmap.find(color);
+	if(findgrp == colorgroupmap.end()) { // Didn't find it.
+	  std::string grpname = name_template;
+	  grpname = substitute(grpname, "%c", color.name());
+	  grpname = substitute(grpname, "%n", to_string(grpcount++));
+	  bool newness = false;
+	  PixelGroup *grp = ms->getGroup(grpname, &newness); // create group
+	  groups.push_back(grp);
+	  // Can't use cologroupmap[color] = grp since the key is const.
+	  colorgroupmap.insert(ColorGroupMap::value_type(color, grp));
+	  groupcolormap.insert(GroupColorMap::value_type(grp, color));
+	  if(newness)
+	    *newgroupname = grpname;
+	}
+	progress->setFraction(++ndone/(double)nlists);
+	progress->setMessage("Creating " + to_string(ndone) + "/"
+			     + to_string(nlists) + " groups.");
       }
-      progress->setFraction(++ndone/(double)nlists);
-      progress->setMessage("Creating " + to_string(ndone) + "/"
-			   + to_string(nlists) + " groups.");
-    }
   }
-
+  
   if(progress->stopped()) {
     delete newgroupname;
     return new std::string("");
@@ -206,26 +171,27 @@ std::string *autogroup(CMicrostructure *ms, OOFImage3D *image,
   {
 //#pragma omp for nowait 
     // loop over groups
-    for(unsigned int igrp=0; igrp<groups.size(); igrp++) {
-      PixelGroup *grp = groups[igrp];
-      const CColor &color = groupcolormap[grp];
-      // loop over maps of lists created by different threads
-      for(unsigned int c=0; c<colorlists.size(); c++) {
-	const ColorListMap &colorlist = colorlists[c];
-	// See if this color has a list in this map
-	ColorListMap::const_iterator listptr = colorlist.find(color);
-	if(listptr != colorlist.end()) {
-	  grp->add(&(*listptr).second);
+    for(unsigned int igrp=0; igrp<groups.size() && !progress->stopped(); igrp++)
+      {
+	PixelGroup *grp = groups[igrp];
+	const CColor &color = groupcolormap[grp];
+	// loop over maps of lists created by different threads
+	for(unsigned int c=0; c<colorlists.size(); c++) {
+	  const ColorListMap &colorlist = colorlists[c];
+	  // See if this color has a list in this map
+	  ColorListMap::const_iterator listptr = colorlist.find(color);
+	  if(listptr != colorlist.end()) {
+	    grp->add(&(*listptr).second);
+	  }
 	}
-      }
-//#pragma omp atomic 
-      ++ndone;
-      if(omp_get_thread_num() == 0) {
-	progress->setMessage("Populating " + to_string(ndone) + "/"
-			     + to_string(grpcount) + " groups.");
-	progress->setFraction(ndone/(double) grpcount);
-      }
-    }	// end loop over groups
+	//#pragma omp atomic 
+	++ndone;
+	if(omp_get_thread_num() == 0) {
+	  progress->setMessage("Populating " + to_string(ndone) + "/"
+			       + to_string(grpcount) + " groups.");
+	  progress->setFraction(ndone/(double) grpcount);
+	}
+      }	// end loop over groups
   }	// end parallel
 
   // Return the name of the last pixel group created, if any.

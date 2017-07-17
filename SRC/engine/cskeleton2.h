@@ -167,13 +167,6 @@ public:
   // void updateGeometry() { 
   //   ++timestamp;
   // }
-  bool illegal() const {
-    return illegal_;
-  }
-  void setIllegal() {
-    illegal_=true; 
-  }
-  virtual void checkIllegality() = 0;
   void incrementTimestamp();
   const TimeStamp &getTimeStamp() const;
 
@@ -220,10 +213,15 @@ public:
   virtual unsigned int nfaces() const = 0;
   virtual double volume() const = 0;
   virtual bool getPeriodicity(int dim) const = 0;
-  virtual int getIllegalCount() = 0;
-  virtual void getIllegalElements(CSkeletonElementVector &) const = 0;
-  virtual int getSuspectCount() = 0;
-  virtual void getSuspectElements(CSkeletonElementVector &) const = 0;
+
+  bool illegal() const { return illegal_; }
+  void setIllegal() { illegal_= true; }
+  void checkIllegality();
+  void backdateIllegalityTimeStamp();
+  int getIllegalCount();
+  void getIllegalElements(CSkeletonElementVector &) const;
+  int getSuspectCount();
+  void getSuspectElements(CSkeletonElementVector &) const;
 
   virtual int nDeputies() const = 0;
 
@@ -263,6 +261,7 @@ public:
   Coord averageNeighborPosition(const CSkeletonNode*) const;
   Coord averageNeighborPosition(const CSkeletonNode*, const CSkeletonNodeSet&)
     const;
+  Coord averageConstrainedNbrPosition(const CSkeletonNode*) const;
 
   // convenience functions for boundary building
   CSkeletonElement *getOrientedSegmentElement(OrientedCSkeletonSegment *seg);
@@ -501,12 +500,7 @@ public:
   virtual bool getPeriodicity(int dim) const {
     return periodicity[dim];
   }
-  virtual void checkIllegality();
-  virtual int getIllegalCount();
   //vtkPoints *getElementPoints(int eidx);
-  virtual void getIllegalElements(CSkeletonElementVector &) const;
-  virtual int getSuspectCount();
-  virtual void getSuspectElements(CSkeletonElementVector &) const;
   uidtype getNodeUid(int nidx) const;
   uidtype getElementUid(int eidx) const;
 
@@ -581,8 +575,8 @@ public:
   void dirty() { washMe = true; }
   virtual void cleanUp();
 
-  void moveNodeTo(CSkeletonNode *node, const Coord &position);
-  void moveNodeBy(CSkeletonNode *node, const Coord &position);
+  bool moveNodeTo(CSkeletonNode *node, const Coord &position);
+  bool moveNodeBy(CSkeletonNode *node, const Coord &position);
 
   virtual void nodesAddGroupsDown(CGroupTrackerVector*);
   virtual void segmentsAddGroupsDown(CGroupTrackerVector*);
@@ -741,21 +735,9 @@ public:
   virtual bool getPeriodicity(int dim) const {
     return skeleton->getPeriodicity(dim);
   }
-  virtual void checkIllegality() {
-    skeleton->checkIllegality();
-  }
-  virtual int getIllegalCount() {
-    return skeleton->getIllegalCount();
-  }
-  virtual void getIllegalElements(CSkeletonElementVector &ills) const {
-    skeleton->getIllegalElements(ills);
-  }
-  virtual int getSuspectCount() {
-    return skeleton->getSuspectCount();
-  }
-  virtual void getSuspectElements(CSkeletonElementVector &sus) const {
-    skeleton->getSuspectElements(sus);
-  }
+  // virtual void getIllegalElements(CSkeletonElementVector &ills) const {
+  //   skeleton->getIllegalElements(ills);
+  // }
   virtual const Coord nodePositionForSkeleton(CSkeletonNode *n);    
   const Coord originalPosition(CSkeletonNode *n);    
 
@@ -842,8 +824,8 @@ public:
 
   // moving nodes
   void swapPositions();
-  void moveNodeTo(CSkeletonNode *node, const Coord &position);
-  void moveNodeBy(CSkeletonNode *node, const Coord &position);
+  bool moveNodeTo(CSkeletonNode *node, const Coord &position);
+  bool moveNodeBy(CSkeletonNode *node, const Coord &position);
   void moveNodeBack(CSkeletonNode *node);
 
   virtual CSkeletonPointBoundaryMap *getPointBoundaries() {

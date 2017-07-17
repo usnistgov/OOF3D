@@ -18,13 +18,6 @@ Fix Basic Tutorial -- don't use "Group" on the jpeg image, it takes
 too long and uses up way too much memory if users don't hit "Stop"
 soon enough.
 
-Fix bug in Fix Illegal.  See Rachel's example of an unfixable element.
-
-Why is homogeneity recomputed after Undo/Redo?
-
-Skeleton widget on Skeleton page doesn't automatically switch to new
-Skeleton?
-
 Soon
 ----
 
