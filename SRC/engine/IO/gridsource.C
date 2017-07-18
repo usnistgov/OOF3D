@@ -79,8 +79,12 @@ bool MeshGridSource::GetGrid(vtkUnstructuredGrid *grid) {
   this->mesh->restoreCachedData(this->time);
   try {
     this->mesh->getGrid(this->Enhancement, this->skeleton, this->Filter, grid);
+    oofcerr << "MeshGridSource::GetGrid: got grid" << std::endl;
     if(this->PointData) {
+      oofcerr << "MeshGridSource::GetGrid: setting point data" << std::endl;
       grid->GetPointData()->SetScalars(this->PointData);
+      oofcerr << "MeshGridSource::GetGrid: set point data, size="
+	      << this->PointData->GetNumberOfTuples() << std::endl;
     }
     // TODO: Also handle cell data?  Do we ever have cell data for
     // Meshes?

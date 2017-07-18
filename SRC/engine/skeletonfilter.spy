@@ -31,10 +31,21 @@ class SkeletonFilterRegistration(cregisteredclass.Registration):
                 switchboard.requestCallback(signal, callback, registration=self)
 
 def filterModified(*args, **kwargs):
+    debug.fmsg("args=", args, "kwargs=", kwargs)
     registration = kwargs['registration']
     for philtre in getSkeletonFilters():
         if philtre.getRegistration().subclass is registration.subclass:
+            ## TODO: Printing philtre here doesn't work because it's a
+            ## SomethingFilterPtr object returned from C++, and the
+            ## monkeypatching in cregisteredclass.py only applies to
+            ## SomethingFilter, not SomethingFilterPtr.
+            debug.fmsg("Calling setModified on", philtre.__class__)
+            ## TODO: This calls setModified on all filters of a given
+            ## subclass, but it ought to just call them for the
+            ## filters whose output has changed.
+            switchboard.notify("filter changed", philtre)
             philtre.setModified()
+            debug.fmsg("Back from setModified")
 
 # NullFilter must be registered before it's used as a default argument
 # for other SkeletonFilters, or the type checking in the

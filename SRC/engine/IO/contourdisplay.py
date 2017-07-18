@@ -11,6 +11,7 @@
 from ooflib.SWIG.common import config
 from ooflib.SWIG.common import lock
 from ooflib.SWIG.common import progress
+from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.common.IO import gridlayers
 from ooflib.SWIG.engine import skeletonfilter
 from ooflib.common import color
@@ -312,6 +313,8 @@ class FilledContourDisplay(ContourDisplay):
                  filter=displaymethods.defaultMeshFilter):
         ContourDisplay.__init__(self, when, what, where,
                                 min_contour, max_contour, levels, nbins, filter)
+        self.sbsignals.append(
+            switchboard.requestCallback("filter changed", self.filterChanged))
         self.colormap = colormap
         # contour_min and contour_max are the actual limits used for
         # the contour color map.  min_contour and max_contour are the
@@ -512,8 +515,17 @@ class FilledContourDisplay(ContourDisplay):
             if self.source:
                 self.source.setTime(self.getTime(self.gfxwindow))
 
+    def filterChanged(self, filter):
+        ## TODO: This needs to check that the given filter is the same
+        ## as self.filter, or use some other means to know that the
+        ## changed filter is the one used in this display layer.
+        hoo = self.who()
+        self.setData(hoo.resolve(self.gfxwindow))
+
     def setData(self, meshctxt):
-        # Called by whoChanged(), meshDataChangedCB(), and timeChanged().
+        debug.fmsg()
+        # Called by setParams(), whoChanged(), meshDataChangedCB(),
+        # and timeChanged().
         ## TODO OPT: This should check to make sure that something
         ## actually has changed before doing any calculations.
         meshctxt.precompute_all_subproblems()

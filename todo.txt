@@ -7,25 +7,30 @@ Optimize categoryVolumes?
 
 Merge branches
   Ryan's 3D widgets  (Needs to be finished for voxel selection)
-  Yannick's mouse buttons for rotate, zoom, etc.  (Needs to be finished?)
   Lizhong's solvers.
 
 Use tcmalloc (already in Lizhong's branch?)
 
 Use Eigen?  Use DPF's sparse_matrix_optimization branch?
+  On 7/17/17, merged origin/development into
+  sparse_matrix_optimization.  The difference in performance on
+  solver_test.py/static_quadratic_set was negligible.
 
-Fix Basic Tutorial -- don't use "Group" on the jpeg image, it takes
-too long and uses up way too much memory if users don't hit "Stop"
-soon enough.
 
 Soon
 ----
 
 Upgrade VTK
 
+User-settable behavior for mouse buttons, so that more than one mouse
+button can be used and it's not necessary to use the
+Select/Tumble/Dolly/etc buttons at the top of the canvas.  Also enable
+scroll wheels.
+  
 Reduce memory use by optionally using chars instead of ints for the
 voxel category: CMicrostructure::categorymap is Array<char>.   Can
-images be stored with fewer bytes?
+images be stored with fewer bytes?  Make the type of a category be
+settable at build time, in case users need more than 256 categories?
 
 Profile VSB construction on a large image with complicated category
 structures.  Does it need to be optimized?  See TODO in
@@ -68,6 +73,11 @@ BUGS TO FIX
 Display a contour plot.  Set contour display's filter to "Selected".
 Select a (skeleton) element.  Crash!  Selecting an element before
 setting the filter doesn't crash.
+ The problem is that selecting the element changes the filter's
+ output, but doesn't change the filter parameter of the
+ FilledContourDisplay, so FilledContourDisplay.setData isn't called.
+
 
 Contour displays are incorrect when the elements are filtered.
+  Same problem as above, probably.
 
