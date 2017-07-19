@@ -15,6 +15,7 @@
 from ooflib.SWIG.common import config
 from ooflib.SWIG.common import ooferror
 from ooflib.SWIG.common import pixelgroup
+from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.engine import cskeleton2
 from ooflib.common import debug
 from ooflib.common import microstructure
@@ -139,13 +140,15 @@ def _remove_group(menuitem, skeleton, group):
         raise ooferror.ErrUserError("Group %s does not exist." % group)
     else:
         groupset.removeGroup(group)
+        switchboard.notify("redraw")
 
 # Delete all groups.
 def _remove_all_groups(menuitem, skeleton):
     skelc = whoville.getClass('Skeleton')[skeleton]
     groupset = getattr(skelc, menuitem.data)
     groupset.removeGroup(*groupset.allGroups().copy())
-    
+    switchboard.notify("redraw")
+        
 # Copy an existing group.
 def _copy_group(menuitem, skeleton, group, new_name):
     skelc = whoville.getClass('Skeleton')[skeleton]
@@ -154,7 +157,7 @@ def _copy_group(menuitem, skeleton, group, new_name):
         raise ooferror.ErrUserError("Group %s already exists." % new_name)
     if groupset.isGroup(group):
         groupset.copyGroup(group, new_name)
-
+        switchboard.notify("redraw")
 
 # Add the current selection to the named group, creating
 # the group if required.
@@ -164,20 +167,21 @@ def _add_selection_to_group(menuitem, skeleton, group):
     if not groupset.isGroup(group):
         groupset.addGroup(group)
     groupset.addSelectionToGroup(group)
-
+    switchboard.notify("redraw")
+    
 # Remove the currently-selected objects from the named group.
 def _remove_selection_from_group(menuitem, skeleton, group):
     skelc = whoville.getClass('Skeleton')[skeleton]
     groupset = getattr(skelc, menuitem.data)
     groupset.removeSelectionFromGroup(group)
-
+    switchboard.notify("redraw")
     
 # Rename an existing group.
 def _rename_group(menuitem, skeleton, group, new_name):
     skelc = whoville.getClass('Skeleton')[skeleton]
     groupset = getattr(skelc, menuitem.data)
     groupset.renameGroup(group, new_name)
-        
+    switchboard.notify("redraw")        
 
 # Clear a group (remove all pixels from it, but don't delete the group).
 def _clear_group(menuitem, skeleton, group):
@@ -186,26 +190,30 @@ def _clear_group(menuitem, skeleton, group):
     if not groupset.isGroup(group):
         raise ooferror.ErrUserError("Group %s does not exist." % group)
     groupset.clearGroup(group)
-
+    switchboard.notify("redraw")
+        
 def _clear_all_groups(menuitem, skeleton):
     skelc = whoville.getClass('Skeleton')[skeleton]
     groupset = getattr(skelc, menuitem.data)
     groupset.clearGroup(*groupset.allGroups())
-
+    switchboard.notify("redraw")
+        
 def _assign_matl(menuitem, skeleton, group, material):
     skelc = whoville.getClass('Skeleton')[skeleton]
     groupset = getattr(skelc, menuitem.data)
     if not groupset.isGroup(group):
         raise ooferror.ErrUserError("Group %s does not exist." % group)
     groupset.assignMaterial(group, materialmanager.getMaterial(material))
-
+    switchboard.notify("redraw")
+    
 def _remove_matl(menuitem, skeleton, group):
     skelc = whoville.getClass('Skeleton')[skeleton]
     groupset = getattr(skelc, menuitem.data)
     if not groupset.isGroup(group):
         raise ooferror.ErrUserError("Group %s does not exist." % group)
     groupset.removeMaterial(group)
-
+    switchboard.notify("redraw")
+    
 #######################################
 
 class GroupNameResolver:
