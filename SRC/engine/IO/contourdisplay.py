@@ -515,15 +515,22 @@ class FilledContourDisplay(ContourDisplay):
             if self.source:
                 self.source.setTime(self.getTime(self.gfxwindow))
 
-    def filterChanged(self, filter):
-        ## TODO: This needs to check that the given filter is the same
-        ## as self.filter, or use some other means to know that the
-        ## changed filter is the one used in this display layer.
-        hoo = self.who()
-        self.setData(hoo.resolve(self.gfxwindow))
+    def filterChanged(self, filter, *args, **kwargs):
+        ## TODO: when any filter of the same subclass as self.filter
+        ## changes, this method will be called for *all* filters of
+        ## that subclass, because the SkeletonFilterRegistration
+        ## mechanism that sent the "filter changed" signal has no way
+        ## to know which filters are affected. This method should
+        ## somehow use use self.filter, args, and kwargs to determine
+        ## if setData really needs to be called.  args and kwargs are
+        ## switchboard arguments that were forwarded from the original
+        ## switchboard message caught by the Registration.
+        if filter == self.filter:
+            hoo = self.who()
+            self.setData(hoo.resolve(self.gfxwindow))
+            filter.setModified()
 
     def setData(self, meshctxt):
-        debug.fmsg()
         # Called by setParams(), whoChanged(), meshDataChangedCB(),
         # and timeChanged().
         ## TODO OPT: This should check to make sure that something

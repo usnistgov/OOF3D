@@ -47,6 +47,11 @@ public:
   int getCellIndex(int);
   void setModified();
   void setSource(GridSourcePtr);
+  %addmethods {
+    bool __eq__(SkeletonFilter *other) {
+      return self->id() == other->id();
+    }
+  }
 };
 
 class NullFilter: public SkeletonFilter {

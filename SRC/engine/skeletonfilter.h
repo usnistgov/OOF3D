@@ -30,11 +30,17 @@ private:
   std::map<vtkIdType, int> cellIndexMap;
   static std::vector<SkeletonFilter*> all_;
   static SLock lock;
+  static int nextID_;
+  int id_;
 protected:
   vtkSmartPointer<GridSource> gridsource;
 public:
   SkeletonFilter();
   virtual ~SkeletonFilter();
+  int id() const { return id_; }
+  bool operator==(const SkeletonFilter &other) const {
+    return id_ == other.id_;
+  }
   virtual const std::string &modulename() const;
   virtual void precompute(const CSkeletonBase*) {}
   virtual bool acceptable(const CSkeletonSelectable*, const CSkeletonBase*) 

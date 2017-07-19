@@ -25,6 +25,12 @@
 SLock SkeletonFilter::lock;			   // static
 std::vector<SkeletonFilter*> SkeletonFilter::all_; // static
 
+// nextID is used to set SkeletonFilter::id_, which is used to check
+// SkeletonFilter object identity in Python.  It's not sufficient to
+// use the size of SkeletonFilter::all_, since filters may be deleted
+// from all_.
+int SkeletonFilter::nextID_ = 0;
+
 const std::string &SkeletonFilter::modulename() const {
   static const std::string name = "ooflib.SWIG.engine.skeletonfilter";
   return name;
@@ -35,6 +41,7 @@ SkeletonFilter::SkeletonFilter()
 {
   lock.acquire();
   all_.push_back(this);
+  id_ = nextID_++;
   lock.release();
 }
 
