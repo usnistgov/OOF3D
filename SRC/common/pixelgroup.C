@@ -148,15 +148,10 @@ void PixelSet::add(const ICoordVector *pixels) {
 void PixelSet::addWithoutCheck(const ICoordVector *pxls) {
   members_.insert(members_.end(), pxls->begin(), pxls->end());
   weeded = false;
-  // oofcerr << "PixelSet::addWithoutCheck: afterwards, members=";
-  // std::cerr << members_;
-  // oofcerr << std::endl;
 }
 
 void PixelGroup::add(const ICoordVector *pixels) {
   // TODO OPT: should this use the override flag too?
-  // oofcerr << "PixelGroup::add: adding " << pixels->size() << " pixels to group "
-  // 	  << name() << std::endl;
   if(microstructure->getActiveArea()->len() == 0)
     PixelSet::addWithoutCheck(pixels);
   else
@@ -279,42 +274,25 @@ void PixelSet::remove(const ICoordVector *pixels) {
 }
 
 void PixelSet::removeWithoutCheck(const ICoordVector *pixels) {
+
   ICoordVector rejects(*pixels);	// copy, so we can sort
   member_lock.acquire();
 
   weed();			// sort and weed the group
   std::sort(rejects.begin(), rejects.end()); // sort pixels to be rejected
-  // oofcerr << "PixelSet::removeWithoutCheck: # rejects = " << rejects.size()
-  // 	  << std::endl;
-  // std::cerr << rejects;
-  // oofcerr << std::endl;
-  // oofcerr << "PixelSet::removeWithoutCheck: group size=" << members_.size()
-  // 	  << std::endl;
-  // std::cerr << members_;
-  // oofcerr << std::endl;
-
-  // oofcerr << "PixelSet::removeWithoutCheck: after weeding, group size="
-  // 	  << members_.size() << std::endl;
   unsigned int g = 0;			// next group member to consider
   unsigned int r = 0;			// next reject to consider
   unsigned int newsize = 0;
 
   while(g < members_.size() && r < rejects.size()) {
-    // oofcerr << "PixelSet::removeWithoutCheck: newsize=" << newsize
-    // 	    << " members[" << g << "]=" << members_[g]
-    // 	    << " rejects[" << r << "]=" << rejects[r] << " ";
     if(r < rejects.size()-1 && rejects[r]==rejects[r+1]) {
       r++;			// skip duplications in reject list
-      // oofcerr << "duplicate reject" << std::endl;;
     }
     else if(members_[g] == rejects[r]) {
       g++;			// skip rejects in member list
-      // oofcerr << "rejected" << std::endl;
     }
     else if(members_[g] < rejects[r]) {
       // retain nonrejected members
-      // oofcerr << "retained" << std::endl;
-      assert(g >= newsize);
       if(g > newsize)
 	members_[newsize] = members_[g];
       g++;
@@ -322,7 +300,6 @@ void PixelSet::removeWithoutCheck(const ICoordVector *pixels) {
     }
     else {
       // go on to next reject
-      // oofcerr << "reject not in group" << std::endl;
       r++;
     }
   }
@@ -336,18 +313,11 @@ void PixelSet::removeWithoutCheck(const ICoordVector *pixels) {
 }
 
 void PixelGroup::remove(const ICoordVector *pixels) {
-  oofcerr << "PixelGroup::remove: removing " << pixels->size() << " pixels"
-	  << std::endl;
-  oofcerr << "PixelGroup::remove: original size=" << members_.size()
-	  << std::endl;
   const ActiveArea *aa = microstructure->getActiveArea();
-  oofcerr << "PixelGroup::remove: aa->len=" << aa->len() << " override="
-	  << aa->getOverride() << std::endl;
   if(aa->len() == 0 || aa->getOverride())
     PixelSet::removeWithoutCheck(pixels);
   else
     PixelSet::remove(pixels);
-  oofcerr << "PixelGroup::remove: final size=" << members_.size() << std::endl;
   AttributeVectorMap avm;
   buildAttributeChangeMap(avm, &GroupList::add, this, reg, microstructure);
   for(ICoordVector::const_iterator i=pixels->begin(); i!=pixels->end(); ++i) {
@@ -438,7 +408,7 @@ void PixelSet::weed() const {
   if(!members_.empty()) {
     std::sort(members_.begin(), members_.end());
     ICoordVector::iterator newend = std::unique(members_.begin(),
-						members_.end());
+						       members_.end());
     members_.erase(newend, members_.end());
    }
   weeded = true;
