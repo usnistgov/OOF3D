@@ -45,8 +45,11 @@ OSTREAM &operator<<(OSTREAM &os, const std::vector<TYPE> &vec) {
     int prec = os.precision();
     os << std::setprecision(PRECISION);
     os << vec[0];
-    for(unsigned int i=1; i<vec.size(); i++)
+    for(unsigned int i=1; i<vec.size(); i++) {
       os << " " << vec[i];
+      if(i%10 == 0)
+	os << std::endl;
+    }
     os << std::setprecision(prec);
   }
   return os;
