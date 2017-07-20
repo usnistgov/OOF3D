@@ -457,6 +457,7 @@ public:
   virtual const std::string &classname() const;
   virtual void destroy();
   virtual void setModified();
+  void filterModified();
   void set_image(const ImageBase*, const Coord *location, const Coord *size);
   void set_filter(VoxelFilter*);
   void unset_filter();

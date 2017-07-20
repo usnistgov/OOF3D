@@ -319,7 +319,7 @@ void PixelGroup::remove(const ICoordVector *pixels) {
   else
     PixelSet::remove(pixels);
   AttributeVectorMap avm;
-  buildAttributeChangeMap(avm, &GroupList::add, this, reg, microstructure);
+  buildAttributeChangeMap(avm, &GroupList::remove, this, reg, microstructure);
   for(ICoordVector::const_iterator i=pixels->begin(); i!=pixels->end(); ++i) {
     microstructure->updateAttributeVector(*i, avm);
   }

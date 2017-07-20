@@ -15,6 +15,14 @@
 
 3.0.2
 
+Fixed the filters for limiting display layers to particular voxel or
+skeleton groups.  They now update properly when the underlying groups
+are modified.
+
+Fixed a bug in which voxels that had been removed from a voxel group
+could be still considered part of the group.  The cross-referencing
+had not been fully updated.
+
 "Fix Illegal Elements" now does a better job with elements that have
 nodes on external faces of the microstructure, and the status of fixed
 Skeletons is correctly displayed in the GUI.
@@ -26,8 +34,8 @@ Fixed the behavior of the progress bars when automatically creating
 voxel groups. They weren't able to interrupt long computations
 effectively.
 
-Vastly improved method for calculating element homogeneity.  It's
-faster and more robust.
+Implemented a new and vastly superior method for calculating element
+homogeneity.  It's faster and more robust.
 
 Fixed a bug involving cloning graphics windows with hidden display
 layers.

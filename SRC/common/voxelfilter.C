@@ -29,6 +29,8 @@
 SLock VoxelFilter::lock;
 std::vector<VoxelFilter*> VoxelFilter::all_; // static
 
+int VoxelFilter::nextID_ = 0;
+
 const std::string &VoxelFilter::modulename() const {
   static const std::string name = "ooflib.SWIG.common.voxelfilter";
   return name;
@@ -40,6 +42,7 @@ VoxelFilter::VoxelFilter()
 {
   lock.acquire();
   all_.push_back(this);
+  id_ = nextID_++;
   lock.release();
 }
 

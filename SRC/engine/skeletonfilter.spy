@@ -34,7 +34,8 @@ def filterModified(*args, **kwargs):
     registration = kwargs['registration']
     for philtre in getSkeletonFilters():
         if philtre.getRegistration().subclass is registration.subclass:
-            switchboard.notify("filter changed", philtre, *args, **kwargs)
+            switchboard.notify("skeleton filter changed", philtre,
+                               *args, **kwargs)
 
 # NullFilter must be registered before it's used as a default argument
 # for other SkeletonFilters, or the type checking in the

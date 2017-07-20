@@ -43,6 +43,11 @@ public:
   void setMicrostructure(CMicrostructure*);
   void setCanvasLayer(OOFCanvasLayerBase*);
   void setModified();
+  %addmethods {
+    bool __eq__(VoxelFilter *other) {
+      return self->id() == other->id();
+    }
+  }
 };
 
 class AllVoxels : public VoxelFilter {

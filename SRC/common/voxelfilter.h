@@ -32,12 +32,16 @@ class VoxelFilter : public PythonExportable<VoxelFilter> {
 private:
   static std::vector<VoxelFilter*> all_;
   static SLock lock;
+  static int nextID_;
+  int id_;
 protected:
   const CMicrostructure *microstructure;
   OOFCanvasLayerBase *canvaslayer;
 public:
   VoxelFilter();
   virtual ~VoxelFilter();
+  int id() const { return id_; }
+  bool operator==(const VoxelFilter &other) const { return id_ == other.id_; }
   virtual const std::string &modulename() const;
   virtual bool includeVoxel(const ICoord&) const = 0;
   virtual bool precompute() { return true; }

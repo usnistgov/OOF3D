@@ -23,7 +23,10 @@ class BitmapDisplayMethod(display.DisplayMethod):
     def __init__(self, filter, opacity):
         self.filter = filter
         self.opacity = opacity
-        self.sbcallbacks = None
+        self.sbcallbacks = [
+            switchboard.requestCallback("voxel filter changed",
+                                        self.filterChanged)
+        ]
         display.DisplayMethod.__init__(self)
 
     def draw(self, gfxwindow, canvas): # Obsolete in 3D
@@ -34,9 +37,8 @@ class BitmapDisplayMethod(display.DisplayMethod):
         return "Bitmap"
 
     def destroy(self, destroy_canvaslayer):
-        if self.sbcallbacks is not None:
-            map(switchboard.removeCallback, self.sbcallbacks)
-            self.sbcallbacks = None
+        map(switchboard.removeCallback, self.sbcallbacks)
+        self.sbcallbacks = []
         display.DisplayMethod.destroy(self, destroy_canvaslayer)
 
     def newLayer(self):
@@ -68,6 +70,13 @@ class BitmapDisplayMethod(display.DisplayMethod):
         self.canvaslayer.set_filter(self.filter)
         self.canvaslayer.set_opacity(self.opacity)
         self.setMicrostructure()
+
+    def filterChanged(self, filter, *args, **kwargs):
+        if filter == self.filter:
+            # It may not be necessary to call both of these, but it
+            # doesn't hurt.
+            self.filter.setModified();
+            self.canvaslayer.filterModified()
         
     def setMicrostructure(self):
         who = self.who()

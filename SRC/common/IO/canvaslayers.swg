@@ -151,6 +151,7 @@ public:
   ImageCanvasLayer(GhostOOFCanvas*, const char*);
   void set_image(ImageBase*, Coord *Point, Coord *Point);
   void set_filter(VoxelFilter*);
+  void filterModified();
   void connectBottomOverlayer(ImageCanvasOverlayer*);
   void connectTopOverlayer(ImageCanvasOverlayer*);
   void noOverlayers();

@@ -42,7 +42,8 @@ def filterModified(*args, **kwargs):
     registration = kwargs['registration']
     for philtre in getVoxelFilters():
         if philtre.getRegistration().subclass is registration.subclass:
-            philtre.setModified()
+            switchboard.notify("voxel filter changed", philtre,
+                               *args, **kwargs)
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -73,6 +74,7 @@ VoxelFilterRegistration(
         pixelgroupparam.PixelGroupParameter('group',
                                             tip='Voxel group to be included.')
         ],
+    sbcallbacks={"changed pixel group":filterModified},
     tip="Include the voxels in the given group."
     )
 

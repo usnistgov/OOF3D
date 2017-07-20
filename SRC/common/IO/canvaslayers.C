@@ -1465,6 +1465,10 @@ void ImageCanvasLayer::setModified() {
   gridifier->Modified();
 }
 
+void ImageCanvasLayer::filterModified() {
+  excluder->Modified();
+}
+
 void ImageCanvasLayer::set_image(const ImageBase *img, const Coord *location,
 				 const Coord *size)
 {
