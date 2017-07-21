@@ -1042,10 +1042,11 @@ class OOF_1x1ElasticDynamic(SaveableMeshTest):
 # linear solutions are converging towards the quadratic one.
 
 class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
-    def __init__(self, name, tol, nX=4, endtime=0.5):
+    def __init__(self, name, tol, nX=4, endtime=0.5, nlines=None):
         self.nXElements = nX
         self.tolerance = tol
         self.endtime = endtime
+        self.nlines = nlines
         SaveableMeshTest.__init__(self, name)
     def setUp(self):
         global outputdestination
@@ -1142,7 +1143,7 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
                 os.path.join('mesh_data', 'centertemp.dat'),
-                self.tolerance))
+                self.tolerance, nlines=self.nlines))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1167,7 +1168,7 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
                 os.path.join('mesh_data', 'centertemp.dat'),
-                self.tolerance))
+                self.tolerance, nlines=self.nlines))
         file_utils.remove('test.dat')
 
         self.saveAndLoad('timedep-thermo')
@@ -1194,7 +1195,7 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
                 os.path.join('mesh_data', 'centertemp.dat'),
-                self.tolerance))
+                self.tolerance, nlines=self.nlines))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1219,7 +1220,7 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
                 os.path.join('mesh_data', 'centertemp.dat'),
-                self.tolerance))
+                self.tolerance, nlines=self.nlines))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1244,7 +1245,7 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
                 os.path.join('mesh_data', 'centertemp.dat'),
-                self.tolerance))
+                self.tolerance, nlines=self.nlines))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1275,7 +1276,7 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
                 os.path.join('mesh_data', 'centertemp.dat'),
-                self.tolerance))
+                self.tolerance, nlines=self.nlines))
 
         # Repeat, because there seems to be some problem with repeated
         # SS22 nonlinear solutions, so it's good to know if repeated
@@ -1323,7 +1324,7 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
                 os.path.join('mesh_data', 'centertemp.dat'),
-                self.tolerance))
+                self.tolerance, nlines=self.nlines))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1357,7 +1358,7 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
                 os.path.join('mesh_data', 'centertemp.dat'),
-                self.tolerance))
+                self.tolerance, nlines=self.nlines))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1387,7 +1388,7 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
                 os.path.join('mesh_data', 'centertemp.dat'),
-                self.tolerance))
+                self.tolerance, nlines=self.nlines))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1417,7 +1418,7 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
                 os.path.join('mesh_data', 'centertemp.dat'),
-                self.tolerance))
+                self.tolerance, nlines=self.nlines))
         file_utils.remove('test.dat')
 
     @memorycheck.check('microstructure')
@@ -1447,7 +1448,7 @@ class OOF_ThermalDiffusionTimeSteppers(SaveableMeshTest):
         self.assert_(file_utils.fp_file_compare(
                 'test.dat',
                 os.path.join('mesh_data', 'centertemp.dat'),
-                self.tolerance))
+                self.tolerance, nlines=self.nlines))
         file_utils.remove('test.dat')
 
     def tearDown(self):
@@ -2388,8 +2389,8 @@ dynamic_thermal_quadratic_set = [
     # OOF_ThermalDiffusionTimeSteppers_Quadratic("BE", tol=1.e-3),
 
     ## TODO: These take a very long time to run.  Reduce endtime.
-    OOF_ThermalDiffusionTimeSteppers_Quadratic("RK4", tol=1.e-5, endtime=0.2),
-    OOF_ThermalDiffusionTimeSteppers_Quadratic("RK2", tol=1.e-5, endtime=0.2),
+    OOF_ThermalDiffusionTimeSteppers_Quadratic("RK4", tol=1.e-5, endtime=0.2, nlines=12),
+    OOF_ThermalDiffusionTimeSteppers_Quadratic("RK2", tol=1.e-5, endtime=0.2, nlines=12),
 ]
 
 # Check that increasing the number of elements in the X direction
@@ -2449,4 +2450,4 @@ test_set = (static_set +
             dynamic_elastic_set)
 
 #test_set = static_quadratic_set
-#test_set = [OOF_ThermalDiffusionTimeSteppers_Quadratic("CNdirect")]
+#test_set = dynamic_thermal_quadratic_set
