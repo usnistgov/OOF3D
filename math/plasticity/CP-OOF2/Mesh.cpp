@@ -86,7 +86,7 @@ void Mesh::addeqn(string const& name,int const& size){
     
 }*/
 
-void Mesh::addmaterial(Material mtl){
+void Mesh::addmaterial(Material *mtl){
     
     for (int i = 0 ; i < sizeof(ellist) ; i++){
         ellist[i].addmaterial(mtl);

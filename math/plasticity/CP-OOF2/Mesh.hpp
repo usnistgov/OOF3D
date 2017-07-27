@@ -30,7 +30,7 @@ public:
     Mesh(int &xelement, int &yelement, int &zelement);
 //    void addfield(string const& name,int const& size);
 //    void addeqn(string const& name,int const& size);
-    void addmaterial(Material mtl);
+    void addmaterial(Material *mtl);
 
     void make_stiffness();
     

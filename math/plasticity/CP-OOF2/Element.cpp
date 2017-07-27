@@ -10,7 +10,7 @@
 #include "Material.hpp"
 
 Element::Element(int id,int nnode,std::vector<int> &elconnectivities){
-    
+
     ielem = id;
     lnode.resize(nnode);
     for (int i = 0 ; i < nnode ; i++){
@@ -18,9 +18,9 @@ Element::Element(int id,int nnode,std::vector<int> &elconnectivities){
     }
 }
 
-void Element::addmaterial(Material mtl){
+void Element::addmaterial(Material *mtl){
     
-    material = &mtl;
+    material = mtl;
     
 }
 

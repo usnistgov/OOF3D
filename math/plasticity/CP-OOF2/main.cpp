@@ -34,7 +34,7 @@ int main(int argc, const char * argv[]) {
     
     Material mtl(materialtype,n_slip,n_dim,phi,theta,omega);
     
-    mesh.addmaterial(mtl);
+    mesh.addmaterial(&mtl);
     
 //    mesh.addfield("Displacement", n_dim);
     
