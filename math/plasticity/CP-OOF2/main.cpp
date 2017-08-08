@@ -35,7 +35,6 @@ int main(int argc, const char * argv[]) {
     Material mtl(materialtype,n_slip,n_dim,phi,theta,omega);
     
     mesh.addmaterial(&mtl);
-    cout << "Back from addmaterial." << endl;
     
     mesh.addfield("Displacement", n_dim,0.0);
     cout << "Back from addfield." << endl;

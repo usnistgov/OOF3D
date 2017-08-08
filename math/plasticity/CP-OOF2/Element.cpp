@@ -10,7 +10,6 @@
 #include "Material.hpp"
 
 Element::Element(int id,int nnode,std::vector<Node> &nodelist){
-    
     ielem = id;
     
     nodes = nodelist;

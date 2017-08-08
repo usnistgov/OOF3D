@@ -31,7 +31,6 @@ public:
     Element(int id,int nnode,std::vector<Node> &nodelist);
     
     void addmaterial(Material *mtl);
-
     std::vector<Node> nodes;
 
     void make_linear_system();
