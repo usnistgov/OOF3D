@@ -8,11 +8,15 @@
 
 #include "Field.hpp"
 
-Field::Field(string const& nam,int const& idx,int const& siz){
+Field::Field(string const nam,int const idx,int const siz){
     
     name = nam;
     index = idx;
     size = siz;
+    value.clear();
+    for (int i = 0 ; i < size ; i++)
+        value.push_back(0.0);
+    
     
     
 }

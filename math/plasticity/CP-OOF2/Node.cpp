@@ -17,14 +17,16 @@ Node::Node(int id,double x,double y,double z){
     
     
 }
+
 /*
-void Node::addfield(Field field){
+void Node::addfield(Field *field){
     
-    fields.push_back(field);
+    fields->push_back(*field);
 
 }
+*/
 
-
+/*
 void Node::addeqn(Eqn eqn){
     
     eqns.push_back(eqn);

@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 #include <vector>
-//#include "Field.hpp"
+#include "Field.hpp"
 //#include "Eqn.hpp"
 
 
@@ -23,7 +23,9 @@ public:
     Node(int id,double x,double y,double z);
     
     
-//    void addfield(Field field);
+//    void addfield(Field *field);
+    
+    
 //    void addeqn(Eqn eqn);
     
     int inode;
@@ -31,7 +33,11 @@ public:
     double coory;
     double coorz;
     
-//    vector<Field> fields;
+    vector<Field*> fields;
+    
+    
+    
+    
 //    vector<Eqn> eqns;
  
     

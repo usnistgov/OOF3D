@@ -17,8 +17,10 @@
 class GptPlasticData {
 public:
     GptPlasticData();
-    std::vector<double> ft;
-    
+
+    std::vector<std::vector<double>> Ft;
+    std::vector<std::vector<double>> Fpt;
+
 };
 
 #endif /* GptPlasticData_hpp */

@@ -47,10 +47,23 @@ void Material::begin_element(Element *el){
     else {
 
         pd = dynamic_cast<PlasticData *>(ed);
-        for(int i = 0 ; i < 9 ; i++)
-            cout<<pd->gptdata[7].ft[i]<<"   ";
-
-//        cout<<pd->fp[7].ft[8]<<"  ";
+        for(int i = 0 ; i < 3 ; i++)
+            for(int j = 0 ; j < 3 ; j++)
+                cout<<pd->gptdata[7].Fpt[i][j]<<"   ";
+        
+        //        cout<<pd->fp[7].ft[8]<<"  ";
+        
+    }
+    
+    //    std::vector<vector<double>> XYZ(8,vector<double>(3,0.0));
+    //    std::vector<vector<double>> xyz(8,vector<double>(3,0.0));
+    
+    
+    
+    
+    std::vector<vector<double>> SHP;
+    for (vector<GaussPoint>::iterator gpti = el->gptable.begin() ; gpti!=el->gptable.end(); gpti++){
+        SHP = el->dshapefnRef(gpti->xi,gpti->zeta, gpti->mu);
         
     }
 

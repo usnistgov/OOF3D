@@ -20,9 +20,9 @@ using namespace std;
 int main(int argc, const char * argv[]) {
     
     int n_dim = 3;
-    int xelement = 2;
-    int yelement = 2;
-    int zelement = 2;
+    int xelement = 1;
+    int yelement = 1;
+    int zelement = 1;
     
     Mesh mesh(xelement,yelement,zelement);
     
@@ -34,24 +34,29 @@ int main(int argc, const char * argv[]) {
     
     Material mtl(materialtype,n_slip,n_dim,phi,theta,omega);
     
-    mesh.addmaterial(mtl);
+    mesh.addmaterial(&mtl);
+    cout << "Back from addmaterial." << endl;
     
-//    mesh.addfield("Displacement", n_dim);
+    mesh.addfield("Displacement", n_dim,0.0);
+    cout << "Back from addfield." << endl;
     
 //    mesh.addeqn("Force",3);
     
-    for (int i = 0 ; i <2 ; i++)
+    for (int i = 0 ; i <2 ; i++) {
+        cout << "Calling make_stiffness i=" << i << endl;
         mesh.make_stiffness();
-    
+        cout << "Back from make_stiffness." << endl;
+    }
+/*
     for(int i=0 ; i < mesh.nelem ; i++){
         cout<<mesh.ellist[i].ielem<<"  ";
         for(int j = 0 ; j < mesh.nnode ; j++){
             
-            cout<<mesh.ellist[i].lnode[j]<<"   ";
+            cout<<mesh.ellist[i].nodes[i].inode<<"   ";
         }
         cout<<endl;
     }
-    
+   */
 /*    for(int i = 0 ; i < 3 ; i++){
         for(int j = 0 ; j < 3 ; j++){
             cout<<mtl.qrot[i][j]<<"   ";
@@ -61,6 +66,6 @@ int main(int argc, const char * argv[]) {
     }
     
 */
-    
+    cout << "Finished!" << endl;
     return 0;
 }

@@ -16,7 +16,7 @@
 #include "Node.hpp"
 #include "Element.hpp"
 #include "Material.hpp"
-//#include "Field.hpp"
+#include "Field.hpp"
 //#include "Eqn.hpp"
 
 
@@ -28,9 +28,9 @@ class Mesh{
 public:
     
     Mesh(int &xelement, int &yelement, int &zelement);
-//    void addfield(string const& name,int const& size);
+    void addfield(string const name,int const size, double value);
 //    void addeqn(string const& name,int const& size);
-    void addmaterial(Material mtl);
+    void addmaterial(Material *mtl);
 
     void make_stiffness();
     
@@ -38,6 +38,9 @@ public:
     int nnode;
     int tnode;
     int nelem;
+    
+    vector<Node> nodes; // nodes members are the element conectivities.
+
     
     vector<Element> ellist;
 //    vector <Field> fieldlist;

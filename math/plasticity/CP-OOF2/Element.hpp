@@ -19,6 +19,8 @@
 #include "GptPlasticData.hpp"
 
 //#include "Material.hpp"
+#include "Node.hpp"
+
 
 class Material;
 
@@ -26,9 +28,11 @@ class Material;
 class Element {
     
 public:
-    Element(int id,int nnode,std::vector<int> &elconnectivities);
+    Element(int id,int nnode,std::vector<Node> &nodelist);
     
-    void addmaterial(Material mtl);
+    void addmaterial(Material *mtl);
+
+    std::vector<Node> nodes;
 
     void make_linear_system();
     
@@ -65,6 +69,48 @@ public:
     void delData(int i) ;
     void delDataByName(const std::string &name);
     void clearData();
+    
+    
+    std::vector<std::vector<double>> dshapefnRef(double xi,double zeta,double mu);
+    void jacobianmtx(double xi,double zeta,double mu);
+    void dsfnsvec(double xi,double zeta,double mu);
+    
+    std::vector<vector<double>> dsfns;
+    std::vector<vector<double>> jacobian;
+    
+    
+    double dsf0d0(double xi,double zeta,double mu);
+    double dsf0d1(double xi,double zeta,double mu);
+    double dsf0d2(double xi,double zeta,double mu);
+    
+    double dsf1d0(double xi,double zeta,double mu);
+    double dsf1d1(double xi,double zeta,double mu);
+    double dsf1d2(double xi,double zeta,double mu);
+    
+    double dsf2d0(double xi,double zeta,double mu);
+    double dsf2d1(double xi,double zeta,double mu);
+    double dsf2d2(double xi,double zeta,double mu);
+    
+    double dsf3d0(double xi,double zeta,double mu);
+    double dsf3d1(double xi,double zeta,double mu);
+    double dsf3d2(double xi,double zeta,double mu);
+    
+    double dsf4d0(double xi,double zeta,double mu);
+    double dsf4d1(double xi,double zeta,double mu);
+    double dsf4d2(double xi,double zeta,double mu);
+    
+    double dsf5d0(double xi,double zeta,double mu);
+    double dsf5d1(double xi,double zeta,double mu);
+    double dsf5d2(double xi,double zeta,double mu);
+    
+    double dsf6d0(double xi,double zeta,double mu);
+    double dsf6d1(double xi,double zeta,double mu);
+    double dsf6d2(double xi,double zeta,double mu);
+    
+    double dsf7d0(double xi,double zeta,double mu);
+    double dsf7d1(double xi,double zeta,double mu);
+    double dsf7d2(double xi,double zeta,double mu);
+
     
 private:
     

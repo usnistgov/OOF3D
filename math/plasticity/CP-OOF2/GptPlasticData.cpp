@@ -10,10 +10,14 @@
 
 GptPlasticData::GptPlasticData(){
     
-    ft.clear();
-    ft.push_back(1.0) , ft.push_back(0.0) , ft.push_back(0.0);
-    ft.push_back(0.0) , ft.push_back(1.0) , ft.push_back(0.0);
-    ft.push_back(0.0) , ft.push_back(0.0) , ft.push_back(1.0);
+    std::vector<double> ft{0.0,0.0,0.0};
     
-//    ft = {1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0};
+    for (int i = 0 ; i < 3 ; i++){
+        Ft.push_back(ft);
+        Fpt.push_back(ft);
+    }
+    
+    Ft[0][0] = Ft[1][1] = Ft[2][2] = 1.0;
+    Fpt[0][0] = Fpt[1][1] = Fpt[2][2] = 1.0;
+    
 }

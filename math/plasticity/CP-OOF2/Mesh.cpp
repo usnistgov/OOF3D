@@ -14,7 +14,8 @@ Mesh::Mesh(int &xelement, int &yelement, int &zelement){
     dx = 1.0/xelement;
     dy = 1.0/yelement;
     dz = 1.0/zelement;
-    
+    nodelist.clear();
+
     tnode = -1;
     for (int i = 0 ; i < zelement + 1 ; i++){
         for (int j = 0 ; j < yelement + 1 ; j++){
@@ -36,16 +37,23 @@ Mesh::Mesh(int &xelement, int &yelement, int &zelement){
     for (int i = 0 ; i < zelement ; i++){
         for (int j = 0 ; j < yelement ; j++){
             for (int k = 0 ; k < xelement ; k++){
-                elconnectivities[0] = i*(xelement+1)*(yelement+1)+j*(xelement+1)+k;
-                elconnectivities[1] = i*(xelement+1)*(yelement+1)+j*(xelement+1)+k+1;
-                elconnectivities[2] = i*(xelement+1)*(yelement+1)+(j+1)*(xelement+1)+k+1;
-                elconnectivities[3] = i*(xelement+1)*(yelement+1)+(j+1)*(xelement+1)+k;
-                elconnectivities[4] = (i+1)*(xelement+1)*(yelement+1)+j*(xelement+1)+k;
-                elconnectivities[5] = (i+1)*(xelement+1)*(yelement+1)+j*(xelement+1)+k+1;
-                elconnectivities[6] = (i+1)*(xelement+1)*(yelement+1)+(j+1)*(xelement+1)+k+1;
-                elconnectivities[7] = (i+1)*(xelement+1)*(yelement+1)+(j+1)*(xelement+1)+k;
+                nodes.clear();
+                elconnectivities[0] = (i*(xelement+1)+j)*(yelement+1)+k;
+                elconnectivities[1] = ((i+1)*(xelement+1)+j)*(yelement+1)+k;
+                elconnectivities[2] = (i*(xelement+1)+(j+1))*(yelement+1)+k;
+                elconnectivities[3] = ((i+1)*(xelement+1)+(j+1))*(yelement+1)+k;
+                elconnectivities[4] = (i*(xelement+1)+j)*(yelement+1)+k+1;
+                elconnectivities[5] = ((i+1)*(xelement+1)+j)*(yelement+1)+k+1;
+                elconnectivities[6] = (i*(xelement+1)+(j+1))*(yelement+1)+k+1;
+                elconnectivities[7] = ((i+1)*(xelement+1)+(j+1))*(yelement+1)+k+1;
+                
                 nelem += 1;
-                Element el(nelem,nnode,elconnectivities);
+                for (int ki = 0 ; ki < nnode ; ki++){
+                    nodes.push_back(nodelist[elconnectivities[ki]]);
+                }
+                cout<<endl;
+                Element el(nelem,nnode,nodes);
+                
                 ellist.push_back(el);
             }
         }
@@ -56,21 +64,27 @@ Mesh::Mesh(int &xelement, int &yelement, int &zelement){
     
     
 }
-/*
-void Mesh::addfield(string const& name,int const& size){
+
+void Mesh::addfield(string const name,int const size, double value){
     
     int count = 0;
-    for (int i = 0 ; i < sizeof(nodelist) ; i++){
+    for (vector<Node>::iterator ni = nodelist.begin() ; ni!=nodelist.end(); ni++){
+        
+//    for (int i = 0 ; i < tnode ; i++){
         
         Field newf(name,size*count,size);
-        nodelist[i].addfield(newf);
-        fieldlist.push_back(newf);
+
+//        ni->addfield(&newf);
+        
+        
+        //        nodelist[i].addfield(&newf);
+        //        fieldlist.push_back(newf);
         count += 1;
         
     }
     
 }
-
+/*
 void Mesh::addeqn(string const& name,int const& size){
     
     int counteq = 0;
@@ -86,7 +100,7 @@ void Mesh::addeqn(string const& name,int const& size){
     
 }*/
 
-void Mesh::addmaterial(Material mtl){
+void Mesh::addmaterial(Material *mtl){
     
     for (int i = 0 ; i < sizeof(ellist) ; i++){
         ellist[i].addmaterial(mtl);
