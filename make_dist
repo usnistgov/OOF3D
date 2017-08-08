@@ -41,6 +41,8 @@ def osCall(*args):
     print >> sys.stderr, "--->", ' '.join(args)
     status = subprocess.call(args)
     if status != 0:
+        print >> sys.stderr, "Failed to execute", ' '.join(args)
+        print >> sys.stderr, "Aborting!"
         sys.exit(status)
         
 options = ['version=', 'comment=', 'dryrun', 'help', 'noclean', 'branch=']
@@ -131,6 +133,10 @@ try:
     # cd to the cloned source code directory
     os.chdir(distdir)
 
+    # TODO: localexclusions isn't currently used.  Get rid of it?  Its
+    # purpose was to allow the same make_dist file to be used by both
+    # OOF2 and OOF3D.  The only entry it contains is the non-existent
+    # (in OOF3D) TEST directory.
     import localexclusions
     
     # Set the version number in setup.py and SRC/common/oofversion.py.
@@ -250,13 +256,18 @@ try:
         tag = oldtag
     
     if not dryrun:
-        osCall('git', 'commit', '-m', commit_msg)
+        # If there's nothing to commit, this call to "git commit" will
+        # fail unless we give the --allow-empty option.  There will be
+        # nothing to commit if setup.py and oofversion.py haven't
+        # changed, which will be the case if this is not the first
+        # attempt to package this version.
+        osCall('git', 'commit', '-m', '"'+commit_msg+'"', "--allow-empty")
         osCall('git', 'tag', tag)
         osCall('git', 'push', 'origin')        
         osCall('git', 'push', 'origin', tag)
     else:
         print >> sys.stderr, "Dry run! Not running:"
-        print >> sys.stderr, '*** git commit -m %s' % commit_msg
+        print >> sys.stderr, '*** git commit -m %s --allow-empty' % commit_msg
         print >> sys.stderr, '*** git tag', tag
         print >> sys.stderr, '*** git push origin'
         print >> sys.stderr, '*** git push origin %s' % tag
