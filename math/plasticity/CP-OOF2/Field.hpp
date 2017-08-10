@@ -1,8 +1,8 @@
 //
 //  Field.hpp
-//  sr
+//  CPOOF
 //
-//  Created by Keshavarzhadad, Shahriyar on 6/29/17.
+//  Created by Keshavarzhadad, Shahriyar on 8/9/17.
 //  Copyright © 2017 Keshavarzhadad, Shahriyar. All rights reserved.
 //
 
@@ -29,6 +29,5 @@ public:
     std::vector<double> value;
     
 };
-
 
 #endif /* Field_hpp */

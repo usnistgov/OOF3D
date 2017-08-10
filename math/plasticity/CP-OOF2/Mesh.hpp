@@ -1,9 +1,8 @@
 //
 //  Mesh.hpp
-//  sr
+//  CPOOF
 //
-//  Created by Keshavarzhadad, Shahriyar on 6/28/17.
-//  Copyright © 2017 Keshavarzhadad, Shahriyar. All rights reserved.
+//  Created by Keshavarzhadad, Shahriyar on 8/9/17.hts reserved.
 //
 
 #ifndef Mesh_hpp
@@ -12,12 +11,13 @@
 #include <stdio.h>
 #include<vector>
 #include <string>
+#include <iostream>
 
 #include "Node.hpp"
 #include "Element.hpp"
 #include "Material.hpp"
 #include "Field.hpp"
-//#include "Eqn.hpp"
+
 
 
 
@@ -28,23 +28,21 @@ class Mesh{
 public:
     
     Mesh(int &xelement, int &yelement, int &zelement);
-    void addfield(string const name,int const size, double value);
-//    void addeqn(string const& name,int const& size);
     void addmaterial(Material *mtl);
-
+    void addfield(string const name,int const size, double value);
     void make_stiffness();
+
+
     
-    vector<Node> nodelist;
+    vector<Node*> nodelist;
     int nnode;
     int tnode;
     int nelem;
     
-    vector<Node> nodes; // nodes members are the element conectivities.
+    // vector<Node*> nodes; // nodes members are the element conectivities.
 
     
-    vector<Element> ellist;
-//    vector <Field> fieldlist;
-//    vector <Eqn> eqnlist;
+    vector<Element*> ellist;
     
     
 private:
@@ -53,11 +51,8 @@ private:
     double dy;
     double dz;
     vector <int> elconnectivities;
-    
+
 };
-
-
-
 
 
 #endif /* Mesh_hpp */

@@ -1,8 +1,8 @@
 //
 //  Mesh.cpp
-//  sr
+//  CPOOF
 //
-//  Created by Keshavarzhadad, Shahriyar on 6/28/17.
+//  Created by Keshavarzhadad, Shahriyar on 8/9/17.
 //  Copyright © 2017 Keshavarzhadad, Shahriyar. All rights reserved.
 //
 
@@ -15,13 +15,13 @@ Mesh::Mesh(int &xelement, int &yelement, int &zelement){
     dy = 1.0/yelement;
     dz = 1.0/zelement;
     nodelist.clear();
-
+    
     tnode = -1;
     for (int i = 0 ; i < zelement + 1 ; i++){
         for (int j = 0 ; j < yelement + 1 ; j++){
             for (int k = 0 ; k < xelement + 1 ; k++){
                 tnode += 1;
-                Node nod(tnode,k*dx,j*dy,i*dz);
+                Node *nod = new Node(tnode,k*dx,j*dy,i*dz);
                 nodelist.push_back(nod);
                 
             }
@@ -37,7 +37,7 @@ Mesh::Mesh(int &xelement, int &yelement, int &zelement){
     for (int i = 0 ; i < zelement ; i++){
         for (int j = 0 ; j < yelement ; j++){
             for (int k = 0 ; k < xelement ; k++){
-                nodes.clear();
+                vector<Node*> nodes(0);
                 elconnectivities[0] = (i*(xelement+1)+j)*(yelement+1)+k;
                 elconnectivities[1] = ((i+1)*(xelement+1)+j)*(yelement+1)+k;
                 elconnectivities[2] = (i*(xelement+1)+(j+1))*(yelement+1)+k;
@@ -46,13 +46,14 @@ Mesh::Mesh(int &xelement, int &yelement, int &zelement){
                 elconnectivities[5] = ((i+1)*(xelement+1)+j)*(yelement+1)+k+1;
                 elconnectivities[6] = (i*(xelement+1)+(j+1))*(yelement+1)+k+1;
                 elconnectivities[7] = ((i+1)*(xelement+1)+(j+1))*(yelement+1)+k+1;
-                
+                for (int kj = 0 ; kj < 8 ; kj++)
+                    cout<<elconnectivities[kj]<<"   ";
                 nelem += 1;
                 for (int ki = 0 ; ki < nnode ; ki++){
                     nodes.push_back(nodelist[elconnectivities[ki]]);
                 }
                 cout<<endl;
-                Element el(nelem,nnode,nodes);
+                Element *el = new Element(nelem,nnode,nodes);
                 
                 ellist.push_back(el);
             }
@@ -65,16 +66,25 @@ Mesh::Mesh(int &xelement, int &yelement, int &zelement){
     
 }
 
+void Mesh::addmaterial(Material *mtl){
+    
+    for (int i = 0 ; i < sizeof(ellist) ; i++){
+        ellist[i]->addmaterial(mtl);
+    }
+    
+}
+
 void Mesh::addfield(string const name,int const size, double value){
     
     int count = 0;
-    for (vector<Node>::iterator ni = nodelist.begin() ; ni!=nodelist.end(); ni++){
+    for (vector<Node*>::iterator ni = nodelist.begin() ; ni!=nodelist.end(); ni++){
         
-//    for (int i = 0 ; i < tnode ; i++){
+        //    for (int i = 0 ; i < tnode ; i++){
         
-        Field newf(name,size*count,size);
+        Field *newf = new Field(name,size*count,size);
 
-//        ni->addfield(&newf);
+        
+        (*ni)->addfield(newf);
         
         
         //        nodelist[i].addfield(&newf);
@@ -84,41 +94,8 @@ void Mesh::addfield(string const name,int const size, double value){
     }
     
 }
-/*
-void Mesh::addeqn(string const& name,int const& size){
-    
-    int counteq = 0;
-    for (int i = 0 ; i < sizeof(nodelist) ; i++){
-        
-        Eqn neweqn(name,size*counteq,size);
-        nodelist[i].addeqn(neweqn);
-        eqnlist.push_back(neweqn);
-        counteq += 1;
-        
-    }
-    
-    
-}*/
 
-void Mesh::addmaterial(Material *mtl){
-    
-    for (int i = 0 ; i < sizeof(ellist) ; i++){
-        ellist[i].addmaterial(mtl);
-    }
-    
-}
 
-void Mesh::make_stiffness(){
-    ///////////////////////////////////////
-//    ellist[0].gausspts();
-    ///////////////////////////////////////
-    
-    for (int i = 0 ; i < nelem ; i++){
-        ellist[i].gausspts();
-        ellist[i].make_linear_system();
-    }
-    
-}
 
 
 

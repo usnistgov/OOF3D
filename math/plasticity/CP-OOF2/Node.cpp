@@ -1,13 +1,12 @@
 //
 //  Node.cpp
-//  sr
+//  CPOOF
 //
-//  Created by Keshavarzhadad, Shahriyar on 6/28/17.
+//  Created by Keshavarzhadad, Shahriyar on 8/9/17.
 //  Copyright © 2017 Keshavarzhadad, Shahriyar. All rights reserved.
 //
 
 #include "Node.hpp"
-
 Node::Node(int id,double x,double y,double z){
     
     inode = id;
@@ -18,18 +17,8 @@ Node::Node(int id,double x,double y,double z){
     
 }
 
-/*
 void Node::addfield(Field *field){
     
-    fields->push_back(*field);
-
-}
-*/
-
-/*
-void Node::addeqn(Eqn eqn){
-    
-    eqns.push_back(eqn);
+    fields.push_back(field);
     
 }
-*/
