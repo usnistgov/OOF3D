@@ -68,8 +68,9 @@ Mesh::Mesh(int &xelement, int &yelement, int &zelement){
 
 void Mesh::addmaterial(Material *mtl){
     
-    for (int i = 0 ; i < sizeof(ellist) ; i++){
-        ellist[i]->addmaterial(mtl);
+    for (vector<Element*>::iterator eli = ellist.begin() ; eli!=ellist.end(); eli++){
+
+        (*eli)->addmaterial(mtl);
     }
     
 }
@@ -91,6 +92,16 @@ void Mesh::addfield(string const name,int const size, double value){
         //        fieldlist.push_back(newf);
         count += 1;
         
+    }
+    
+}
+
+
+void Mesh::make_stiffness(){
+    
+    for (vector<Element*>::iterator eli = ellist.begin() ; eli!=ellist.end(); eli++){
+        (*eli)->gausspts();
+        (*eli)->make_linear_system();
     }
     
 }

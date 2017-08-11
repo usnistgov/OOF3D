@@ -34,6 +34,9 @@ int main(int argc, const char * argv[]) {
     
     mesh.addfield("Displacement", n_dim,0.0);
     
+    for (int i = 0 ; i <2 ; i++) {
+        mesh.make_stiffness();
+    }
 
 
 

@@ -1,13 +1,12 @@
 //
 //  GptPlasticData.cpp
-//  sr
+//  CPOOF
 //
-//  Created by Keshavarzhadad, Shahriyar on 6/28/17.
+//  Created by Keshavarzhadad, Shahriyar on 8/10/17.
 //  Copyright © 2017 Keshavarzhadad, Shahriyar. All rights reserved.
 //
 
 #include "GptPlasticData.hpp"
-
 GptPlasticData::GptPlasticData(){
     
     std::vector<double> ft{0.0,0.0,0.0};

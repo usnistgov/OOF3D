@@ -1,13 +1,12 @@
 //
 //  Cijkl.cpp
-//  sr
+//  CPOOF
 //
-//  Created by Keshavarzhadad, Shahriyar on 6/29/17.
+//  Created by Keshavarzhadad, Shahriyar on 8/10/17.
 //  Copyright © 2017 Keshavarzhadad, Shahriyar. All rights reserved.
 //
 
 #include "Cijkl.hpp"
-
 Cijkl::Cijkl() {
     
     for(int i = 0 ; i < 3 ; i++){

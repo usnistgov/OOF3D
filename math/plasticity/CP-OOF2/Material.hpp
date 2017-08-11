@@ -13,6 +13,9 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include "CauchyStress.hpp"
+#include "ElementData.hpp"
+#include "PlasticData.hpp"
 
 using namespace std;
 
@@ -23,12 +26,19 @@ class Material{
 public:
     
     Material(string materialtype,int const nslip,int const ndim,double const a1,double const a2,double const a3);
+    void begin_element(Element *el);
+    void Orientation(double phi,double theta,double omega);
+
+    
+    
     string name;
     int n_slip;
     int n_dim;
     double phi;
     double theta;
     double omega;
+    double **qrot;
+    PlasticData *pd;
 
     
 private:

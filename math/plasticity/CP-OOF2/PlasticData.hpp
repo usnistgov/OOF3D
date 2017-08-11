@@ -1,8 +1,8 @@
 //
 //  PlasticData.hpp
-//  sr
+//  CPOOF
 //
-//  Created by Keshavarzhadad, Shahriyar on 6/28/17.
+//  Created by Keshavarzhadad, Shahriyar on 8/10/17.
 //  Copyright © 2017 Keshavarzhadad, Shahriyar. All rights reserved.
 //
 
@@ -26,7 +26,8 @@ public:
     std::vector<GptPlasticData> fp;
     
     std::vector<GptPlasticData> gptdata;
-
+    
 };
+
 
 #endif /* PlasticData_hpp */
