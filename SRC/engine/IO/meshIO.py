@@ -773,7 +773,7 @@ import string
 def writeABAQUSfromMesh(filename, mode, meshcontext):
     femesh=meshcontext.femesh()
 
-    buffer=["*HEADING\nABAQUS-style file created by OOF2 on %s from a mesh of the microstructure %s.\n "
+    buffer=["*HEADING\nABAQUS-style file created by OOF3D on %s from a mesh of the microstructure %s.\n "
         % (datetime.datetime.today(),
            meshcontext.getSkeleton().getMicrostructure().name())]
 
@@ -816,7 +816,7 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
             elementdict[el.get_index()] = i
             i += 1
 
-    buffer.append("** Materials defined by OOF2:\n")
+    buffer.append("** Materials defined by OOF3D:\n")
     for matname, details in materiallist.items():
         buffer.append("**   %s:\n" % (matname))
         for prop in details.properties():
@@ -825,7 +825,7 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
 
     # Note that meshcontext.elementdict is different from elementdict
     # we constructed above!
-    buffer.append("** Master elements used in OOF2:\n")
+    buffer.append("** Master elements used in OOF3D:\n")
     for ekey, ename in meshcontext.elementdict.items():
         buffer.append("**   %s: %s, %s\n"
                       % (ekey, ename.name(), ename.description()))
@@ -839,7 +839,7 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
 **   The set of nodes and elements may be different from the set
 **    created from a skeleton depending on the element type and if the
 **    mesh was refined.
-** The materials and boundary conditions provided by OOF2 may be
+** The materials and boundary conditions provided by OOF3D may be
 **   translated into ABAQUS by the user.
 ** The element type provided below should be verified and modified
 **   accordingly.
@@ -851,7 +851,7 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
     # Get nodes that are associated with elements that have a material
     # definition.  Other nodes aren't in nodedict.
     for (position, index) in nodedict.items():
-        listbuf.append("%d, %s, %s\n" % (index, position.x, position.y))
+        listbuf.append("%d, %s, %s, %s\n" % (index, position.x, position.y, position.z))
     buffer.extend(listbuf)
 
     for ename in meshcontext.elementdict.values():
@@ -861,9 +861,9 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
         try:
             # Group the elements according to element type
             listbuf=[
-"""** The OOF2 element type is %s. The type provided for ABAQUS is only a guess
+"""** The OOF3D element type is %s. The type provided for ABAQUS is only a guess
 ** and may have to be modified by the user to be meaningful.
-*ELEMENT, TYPE=CPS%d
+*ELEMENT, TYPE=C3D%d
 """
 % (`ename`,masterElementDict[ename.name()].nnodes())]
             # Trivia: C stands for Continuum, PS for Plane Stress (PE
@@ -891,7 +891,7 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
             ## exception.
             pass
 
-    buffer.append("** Point boundaries in OOF2\n")
+    buffer.append("** Point boundaries in OOF3D\n")
     for pbname in meshcontext.pointBoundaryNames():
         buffer.append("*NSET, NSET=%s\n" % (pbname))
         listbuf=[]
@@ -910,7 +910,7 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
                 i+=1
         buffer.append(string.join(listbuf,", ")+"\n")
 
-    buffer.append("** Edge boundaries in OOF2\n")
+    buffer.append("** Edge boundaries in OOF3D\n")
     for ebname in meshcontext.edgeBoundaryNames():
         buffer+="*NSET, NSET=%s\n" % (ebname)
         listbuf=[]
@@ -930,12 +930,12 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
         buffer.append(string.join(listbuf,", ")+"\n")
 
     if config.dimension() == 3:
-        buffer.append("** Face boundaries in OOF2\n")
+        buffer.append("** Face boundaries in OOF3D\n")
         for ebname in meshcontext.faceBoundaryNames():
             buffer+="*NSET, NSET=%s\n" % (ebname)
             listbuf=[]
             i=0
-            for node in femesh.getBoundary(ebname).faceset.nodes():
+            for node in femesh.getBoundary(ebname).faceset.getNodes():
                 try:
                     somevalue=nodedict[node.position()]
                 except KeyError:
@@ -949,6 +949,7 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
                     i+=1
             buffer.append(string.join(listbuf,", ")+"\n")
 
+    buffer.append("** Materials targeted elements from OOF3D.\n")
     for matname in materiallist:
         ## TODO OPT: Use a separate buffer for each material, and only
         ## loop over elements once.
