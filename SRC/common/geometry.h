@@ -253,14 +253,9 @@ public:
     size_ = uprightfront - lowleftback;
   }
   template <class VTYPE2, class CTYPE2>
-  void swallow(const CRectangularPrism_<VTYPE2, CTYPE2> &other) {
+  void swallowPrism(const CRectangularPrism_<VTYPE2, CTYPE2> &other) {
     swallow(other.upperrightfront());
     swallow(other.lowerleftback());
-  }
-  template <class VTYPE2, class CTYPE2>
-  void swallow(const CRectangle_<VTYPE2, CTYPE2> &rect) {
-    swallow(rect.lowerleft());
-    swallow(rect.upperright());
   }
   inline VTYPE xmin() const { return lowleftback[0]; }
   inline VTYPE xmax() const { return uprightfront[0]; }
