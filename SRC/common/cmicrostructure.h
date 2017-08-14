@@ -329,4 +329,9 @@ public:
 
 long get_globalMicrostructureCount();
 
+// These are temporary to help find values for the subsize and
+// slopsize parameters used in CMicrostructure::categorize();
+void set_subregion_size(int);
+void set_subregion_slop(int);
+
 #endif // CMICROSTRUCTURE_H

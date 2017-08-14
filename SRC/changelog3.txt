@@ -13,7 +13,12 @@
  * oof_manager@nist.gov. 
  */
 
-3.0.2
+3.1.1
+
+Much faster element homogeneity calculation by dividing the
+Microstructure into subregions to limit the size of the graphs.
+
+3.1.0
 
 Fixed the filters for limiting display layers to particular voxel or
 skeleton groups.  They now update properly when the underlying groups

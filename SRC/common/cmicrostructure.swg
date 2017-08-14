@@ -158,6 +158,9 @@ public:
 
 long get_globalMicrostructureCount();
 
+void set_subregion_size(int);
+void set_subregion_slop(int);
+
 //For SnapRefine.
 %typemap(python, argout) int *cskel_edgecat {}
 %typemap(python, ignore) int *cskel_edgecat {}
