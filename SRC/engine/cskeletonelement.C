@@ -527,7 +527,7 @@ static SLock globalElementCountLock;
 
    // writeDebugFile("computing homogeneity for element "+to_string(getUid())+"\n");
 
-   double maxvolume = 0;
+   double maxvolume = -std::numeric_limits<double>::max();
    double totalVolume = 0;
    int category = 0;
 
@@ -848,8 +848,11 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
       // Check for a bounding box intersection before doing the
       // expensive polygon intersection calculation.  This reduces CPU
       // use by about 10% in an annealing operation.
+      // TODO: That was an old comment... clippedCategoryVolume does
+      // its own bbox check now, so the check here may be useless.
       if(bbox.intersects(ms->categoryBounds(cat))) {
-	double vol = ms->clippedCategoryVolume(cat, planes, checkTopology);
+	double vol = ms->clippedCategoryVolume(cat, bbox, planes,
+					       checkTopology);
 	totalVol += vol;
 	result[cat] = vol;
       }

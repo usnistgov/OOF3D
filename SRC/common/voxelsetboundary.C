@@ -26,24 +26,30 @@
 // has corners with more than three edges, the graph contains multiple
 // nodes with the same position.
 
+// Actually, the VSB is represented by a bunch of graphs.  The
+// Microstructure is split into subregions and a graph is constructed
+// for each subregion.  This allows the expensive graph clipping
+// operation to be skipped for large parts of the Microstructure when
+// computing an Element's homogeneiety.
+
 // There are three main parts to the calculation.
 // (1) Constructing the graph representation of the VSB.
 // (2) Clipping the VSB by planes (the faces of a Skeleton element).
 // (3) Computing the volume of the clipped polyhedron.
 
-// The graph is a VSBGraph object, and is contained in a
+// The graphs are VSBGraph objects, and are contained in a
 // VoxelSetBoundary object.  (The VoxelSetBoundary contains a bit more
-// information than the VSBGraph, but pretty much passes all of its
-// work to the graph.)  The graph is constructed by
+// information than the VSBGraphs, but pretty much passes all of its
+// work to the graphs.)  The graphs are constructed by
 // CMicrostructure::categorize(), which creates a 3D array,
 // protoNodes, of ProtoVSBNode pointers at the corners of every voxel
-// in the Microstructure.  Each point in protoNodes is the center of a
-// 2x2x2 cube of voxels, but only some of the 8 voxels are occupied
-// (ie, in the voxel set). (The 2x2x2 cubes on the edges of the
-// Microstructure always contain some unoccupied voxels.)  At the
-// locations in the array where the configuration of voxels in the
-// 2x2x2 cube defines a corner of the polyhedron, an instance of a
-// ProtoVSBNode subclass is created.
+// in each graph's subregion of the Microstructure.  Each point in
+// protoNodes is the center of a 2x2x2 cube of voxels, but only some
+// of the 8 voxels are occupied (ie, in the voxel set). (The 2x2x2
+// cubes on the edges of the Microstructure always contain some
+// unoccupied voxels.)  At the locations in the array where the
+// configuration of voxels in the 2x2x2 cube defines a corner of the
+// polyhedron, an instance of a ProtoVSBNode subclass is created.
 
 // ProtoVSBNodes are different from VSBNodes.  There is never more
 // than one ProtoVSBNode at a point, and ProtoVSBNodes may have up to
@@ -195,7 +201,7 @@
 // bit more complex because they have to some bookkeeping that's not
 // described here.
 
-// If the initial unclipped polyhedron is convex, then clipped
+// If the initial unclipped polyhedron is not convex, then clipped
 // polyhedron can include incorrect edges.  However, these edges will
 // be part of oppositely oriented coplanar faces, so they have no
 // effect on the computed volume.
@@ -518,9 +524,10 @@ std::ostream &operator<<(std::ostream &os, const ProtoVSBNode &pnode) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-void SingleNode::makeVSBNodes(VoxelSetBoundary *vsb, const ICoord3D &here) {
+void SingleNode::makeVSBNodes(VSBGraph *graph, const ICoord3D &here)
+{
   vsbNode = new VSBNode(here);
-  vsb->addNode(vsbNode);
+  graph->addNode(vsbNode);
 }
 
 const Coord3D &SingleNode::position() const {
@@ -552,26 +559,26 @@ const Coord3D &MultiNode::position() const {
   return vsbNodes[0]->position;
 }
 
-void DoubleNode::makeVSBNodes(VoxelSetBoundary *vsb, const ICoord3D &here) {
+void DoubleNode::makeVSBNodes(VSBGraph *graph, const ICoord3D &here) {
   vsbNode0 = new VSBNode(here);
   vsbNode1 = new VSBNode(here);
-  vsb->addNode(vsbNode0);
-  vsb->addNode(vsbNode1);
+  graph->addNode(vsbNode0);
+  graph->addNode(vsbNode1);
 }
 
-void TripleNode::makeVSBNodes(VoxelSetBoundary *vsb, const ICoord3D  &here) {
+void TripleNode::makeVSBNodes(VSBGraph *graph, const ICoord3D  &here) {
   vsbNode0 = new VSBNode(here);
   vsbNode1 = new VSBNode(here);
   vsbNode2 = new VSBNode(here);
-  vsb->addNode(vsbNode0);
-  vsb->addNode(vsbNode1);
-  vsb->addNode(vsbNode2);
+  graph->addNode(vsbNode0);
+  graph->addNode(vsbNode1);
+  graph->addNode(vsbNode2);
 }
 
-void MultiNode::makeVSBNodes(VoxelSetBoundary *vsb, const ICoord3D  &here) {
+void MultiNode::makeVSBNodes(VSBGraph *graph, const ICoord3D  &here) {
   for(unsigned int i=0; i<vsbNodes.size(); i++) {
     vsbNodes[i] = new VSBNode(here);
-    vsb->addNode(vsbNodes[i]);
+    graph->addNode(vsbNodes[i]);
   }
 }
 
@@ -1098,11 +1105,11 @@ public:
     return v;
   }
 
-  void makeVSBNodes(VoxelSetBoundary *vsb, const ICoord3D &here) {
+  void makeVSBNodes(VSBGraph *graph, const ICoord3D &here) {
     vsbNode0 = new VSBNode(here);
     vsbNode1 = new VSBNode(here);
-    vsb->addNode(vsbNode0);
-    vsb->twoFoldNode(vsbNode1);
+    graph->addNode(vsbNode0);
+    graph->twoFoldNode(vsbNode1);
     // Don't add vsbNode1 to the graph! It's not a real node.
   }
 
@@ -1216,8 +1223,8 @@ public:
     return v;
   }
 
-  void makeVSBNodes(VoxelSetBoundary *vsb, const ICoord3D &here) {
-    TripleNode::makeVSBNodes(vsb, here);
+  void makeVSBNodes(VSBGraph *graph, const ICoord3D &here) {
+    TripleNode::makeVSBNodes(graph, here);
     vsbNode0->setNeighbor(2, vsbNode2);
     vsbNode1->setNeighbor(1, vsbNode2);
     vsbNode2->setNeighbor(2, vsbNode0);
@@ -1479,8 +1486,8 @@ public:
     return allDirs;
   }
 
-  virtual void makeVSBNodes(VoxelSetBoundary *vsb, const ICoord3D &here) {
-    MultiNode::makeVSBNodes(vsb, here);
+  virtual void makeVSBNodes(VSBGraph *graph, const ICoord3D &here) {
+    MultiNode::makeVSBNodes(graph, here);
     for(unsigned int i=0; i<6; i++) {
       // Same as Pyramid::makeVSBNodes()
       vsbNodes[i]->setNeighbor(2, vsbNodes[(i+5)%6]);
@@ -1636,8 +1643,8 @@ public:
     return v;
   }
 
-  virtual void makeVSBNodes(VoxelSetBoundary *vsb, const ICoord3D &here) {
-    DoubleNode::makeVSBNodes(vsb, here);
+  virtual void makeVSBNodes(VSBGraph *graph, const ICoord3D &here) {
+    DoubleNode::makeVSBNodes(graph, here);
     vsbNode0->setNeighbor(0, vsbNode1);
     vsbNode1->setNeighbor(0, vsbNode0);
   }
@@ -1717,8 +1724,8 @@ public:
     return v;
   }
 
-  virtual void makeVSBNodes(VoxelSetBoundary *vsb, const ICoord3D &here) {
-    DoubleNode::makeVSBNodes(vsb, here);
+  virtual void makeVSBNodes(VSBGraph *graph, const ICoord3D &here) {
+    DoubleNode::makeVSBNodes(graph, here);
     vsbNode0->setNeighbor(0, vsbNode1);
     vsbNode1->setNeighbor(0, vsbNode0);
   }
@@ -1799,8 +1806,8 @@ public:
     return allDirs;
   }
 
-  virtual void makeVSBNodes(VoxelSetBoundary *vsb, const ICoord3D &here) {
-    MultiNode::makeVSBNodes(vsb, here);
+  virtual void makeVSBNodes(VSBGraph *graph, const ICoord3D &here) {
+    MultiNode::makeVSBNodes(graph, here);
     for(unsigned int i=0; i<6; i++) {
       // Neighbor 1 is the previous node in the hexagonal face.
       vsbNodes[i]->setNeighbor(1, vsbNodes[(i+5)%6]);
@@ -2575,8 +2582,9 @@ std::ostream &operator<<(std::ostream &os, const VSBNode &node) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-VSBGraph::VSBGraph()
-  : bounds(Coord3D(0,0,0), Coord3D(0,0,0))
+VSBGraph::VSBGraph(const ICRectangularPrism &domain)
+  : bounds(Coord3D(0,0,0), Coord3D(0,0,0)),
+    domain(domain)
 {}
 
 VSBGraph::~VSBGraph() {
@@ -2679,12 +2687,12 @@ VSBGraph *VSBGraph::copyAndClip(const COrientedPlane &plane) const {
   }
   if(dmin > 0) {
     // entire graph is outside the clipping region
-    return new VSBGraph();		// empty graph
+    return new VSBGraph(domain); // empty graph
   }
 
   // Copy the nodes that are to be kept, and create new nodes at the
   // clipping plane.
-  VSBGraph *newGraph = new VSBGraph();
+  VSBGraph *newGraph = new VSBGraph(domain);
   // copies[i] is the node in the new graph that is a copy of the node
   // with index i in the old graph.
   std::vector<VSBNode*> copies(vertices.size(), nullptr);
@@ -2853,7 +2861,9 @@ double VSBGraph::volume() const {
   // splitting each face into triangles, and computing the volume of
   // the each tet formed by a triangle and the center of the
   // polyhedron.
-
+ 
+  if(empty())
+    return 0.0;
   Coord3D cntr = center();
   double vol = 0.0;
   // emarks[node][nbr] indicates which edges have been used.
@@ -3109,19 +3119,24 @@ void VSBGraph::draw(LineSegmentLayer *layer, const CMicrostructure *ms) const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-VSBEdgeIterator::VSBEdgeIterator(const VSBGraph *gr)
-  : graph(gr),
+VSBEdgeIterator::VSBEdgeIterator(const VoxelSetBoundary *vsb)
+  : vsb(vsb),
+    igraph(0),
     ihere(0),
     inbr(0),
     finished(false)
-{}
+{
+  if(vsb->microstructure->nSubregions() == 0) {
+    finished = true;
+  }
+}
 
 const VSBNode *VSBEdgeIterator::node0() const {
-  return graph->getNode(ihere);
+  return vsb->graphs[igraph].getNode(ihere);
 }
 
 const VSBNode *VSBEdgeIterator::node1() const {
-  return graph->getNode(ihere)->getNeighbor(inbr);
+  return vsb->graphs[igraph].getNode(ihere)->getNeighbor(inbr);
 }
 
 void VSBEdgeIterator::next() {
@@ -3132,22 +3147,53 @@ void VSBEdgeIterator::next() {
   // nbr == 2
   inbr = 0;
   ihere++;
-  if(ihere == graph->size()) {
-    finished = true;
-    return;
+  if(ihere == vsb->graphs[igraph].size()) {
+    igraph++;
+    if(igraph == vsb->graphs.size()) {
+      finished = true;
+      return;
+    }
+    ihere = 0;
   }
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// pixsize is the maximum size, in pixels of a block of pixels to
+// include in a single VSBGraph.  If the microstructure is bigger than
+// pixsize in any dimension, it will be broken up into more than one
+// VSBGraph.  This allows many elements to skip the clipping step if
+// they're outside of a graph's bounding box.  Making pixsize too
+// large will make the clipping step slow (it will spend a lot of time
+// clipping voxels that are no where near the element).  Making it too
+// small will make it run too often.
+
+// slopsize is the amount by which a block of pixels is allowed to
+// exceed pixsize if doing so would fill the Microstructure without
+// adding a new block.
+
+VoxelSetBoundary::VoxelSetBoundary(
+			   const CMicrostructure *ms,
+			   unsigned int cat)
+  : category(cat),
+    microstructure(ms),
+    bbox_(nullptr)
+{
+  graphs.reserve(ms->nSubregions());
+  for(unsigned int s=0; s<ms->nSubregions(); s++)
+    graphs.emplace_back(ms->subregion(s));
+}
 
 // protoVSBNodeFactory converts a signature (2x2x2 set of bools stored
 // as a char) to a type of ProtoVSBNode and a VoxRot.  To do
 // that, it clones the ProtoVSBNode that's in the protoNodeTable for
 // that signature.
 
-ProtoVSBNode *VoxelSetBoundary::protoVSBNodeFactory(unsigned char signature,
+ProtoVSBNode *VoxelSetBoundary::protoVSBNodeFactory(unsigned int subregionNo,
+						    unsigned char signature,
 						    const ICoord3D &here)
 {
+  
   const ProtoVSBNode *prototype = protoNodeTable[signature];
   if(prototype == nullptr)
     return nullptr;
@@ -3155,15 +3201,15 @@ ProtoVSBNode *VoxelSetBoundary::protoVSBNodeFactory(unsigned char signature,
 #ifdef DEBUG
   protoNode->setSignature(signature);
 #endif // DEBUG
-  protoNode->makeVSBNodes(this, here);
+  protoNode->makeVSBNodes(&graphs[subregionNo], here);
   return protoNode;
 }
 
-void VoxelSetBoundary::twoFoldNode(VSBNode *node) {
+void VSBGraph::twoFoldNode(VSBNode *node) {
   twoFoldNodes.insert(node);
 }
 
-void VoxelSetBoundary::fixTwoFoldNodes() {
+void VSBGraph::fixTwoFoldNodes() {
   for(VSBNode *node : twoFoldNodes) {
     VSBNode *n0 = node->neighbors[0];
     VSBNode *n1 = node->neighbors[1];
@@ -3175,15 +3221,24 @@ void VoxelSetBoundary::fixTwoFoldNodes() {
 }
 
 double VoxelSetBoundary::volume() const {
-  return graph.volume() * microstructure->volumeOfVoxels();    
+  double vol = 0.0;
+  for(const VSBGraph &graph : graphs)
+    vol += graph.volume();
+  return vol * microstructure->volumeOfVoxels();    
 }
 
 bool VoxelSetBoundary::checkEdges() const {
-  return graph.checkEdges();
+  bool ok = true;
+  for(const VSBGraph &graph : graphs)
+    ok &= graph.checkEdges();
+  return ok;
 }
 
 bool VoxelSetBoundary::checkConnectivity(unsigned int nRegions) const {
-  return graph.checkConnectivity(nRegions);
+  bool ok = true;
+  for(const VSBGraph &graph : graphs)
+    ok &= graph.checkConnectivity(nRegions);
+  return ok;
 }
 
 // VoxelSetBoundary::clippedVolume is the core of the element
@@ -3194,53 +3249,107 @@ bool VoxelSetBoundary::checkConnectivity(unsigned int nRegions) const {
 // the number of vertices in the polyhedron.
 
 double VoxelSetBoundary::clippedVolume(
+			       const CRectangularPrism &ebbox,
 			       const std::vector<COrientedPlane> &planes,
 			       bool checkTopology)
   const
 {
   assert(!planes.empty());
-  VSBGraph *clippedGraph = graph.copyAndClip(planes[0]);
-  for(unsigned i=1; i<planes.size(); i++) {
-    clippedGraph->clipInPlace(planes[i]);
-  }
-  if(checkTopology) {
-    if(!clippedGraph->checkEdges()) {
-      throw ErrProgrammingError("checkEdges failed!", __FILE__, __LINE__);
-    }
-    if(!clippedGraph->checkConnectivity(0)) {
-      throw ErrProgrammingError("checkConnectivity failed!",
-				__FILE__, __LINE__);
-    }
-  }
-  double vol = clippedGraph->volume();
-  delete clippedGraph;
+  double vol = 0.0;
+  // loop over subregions
+
+  // TODO: Instead of looping over all subregions, compute which
+  // subregions to use, since we know the sizes of the regions.  Or
+  // perhaps use an octree structure for the subregions so that we can
+  // find the subregions containing the corners of the element
+  // bounding box quickly, and then examine only the subregions
+  // between the corners.
+  for(unsigned int s=0; s<microstructure->nSubregions(); s++) {
+    if(!graphs[s].empty() && microstructure->subregion(s).intersects(ebbox)) {
+      VSBGraph *clippedGraph = graphs[s].copyAndClip(planes[0]);
+      for(unsigned i=1; i<planes.size(); i++) {
+	clippedGraph->clipInPlace(planes[i]);
+      }
+      if(checkTopology) {
+	if(!clippedGraph->checkEdges()) {
+	  throw ErrProgrammingError("checkEdges failed!", __FILE__, __LINE__);
+	}
+	if(!clippedGraph->checkConnectivity(0)) {
+	  throw ErrProgrammingError("checkConnectivity failed!",
+				    __FILE__, __LINE__);
+	}
+      }
+      vol += clippedGraph->volume();
+      delete clippedGraph;
+    } // end if graph intersects elements
+  }   // end loop over subregions s
   return vol;
+}
+
+void VoxelSetBoundary::findBBox() {
+  for(unsigned int i=0; i<graphs.size(); i++) {
+    if(!graphs[i].empty()) {
+      bbox_ = new CRectangularPrism(graphs[i].bbox());
+      for(unsigned int j=i+1; j<graphs.size(); j++)
+	if(!graphs[j].empty())
+	  bbox_->swallowPrism(graphs[j].bbox());
+      return;
+    }
+  }
+}
+
+unsigned int VoxelSetBoundary::size() const {
+  unsigned int sz = 0;
+  for(unsigned int i=0; i<graphs.size(); i++)
+    sz += graphs[i].size();
+  return sz;
 }
   
 void VoxelSetBoundary::saveClippedVSB(const std::vector<COrientedPlane> &planes,
 				      const std::string &filenamebase)
   const
 {
-  VSBGraph *clippedGraph = graph.copyAndClip(planes[0]);
-  for(unsigned i=1; i<planes.size(); i++) {
-    clippedGraph->clipInPlace(planes[i]);
-  }
   std::ofstream f(filenamebase+".dat");
-  clippedGraph->dump(f);
+    std::ofstream f2(filenamebase+".lines");
+  for(unsigned int s=0; s<microstructure->nSubregions(); s++) {
+    VSBGraph *clippedGraph = graphs[s].copyAndClip(planes[0]);
+    for(unsigned i=1; i<planes.size(); i++) {
+      clippedGraph->clipInPlace(planes[i]);
+    }
+    clippedGraph->dump(f);
+    clippedGraph->dumpLines(f2, microstructure);
+    delete clippedGraph;
+  }
   f.close();
-  std::ofstream f2(filenamebase+".lines");
-  clippedGraph->dumpLines(f2, microstructure);
   f2.close();
-  delete clippedGraph;
 }
 
 void VoxelSetBoundary::drawClippedVSB(const std::vector<COrientedPlane> &planes,
 				      LineSegmentLayer *layer)
   const
 {
-  VSBGraph *clippedGraph = graph.copyAndClip(planes[0]);
-  for(unsigned i=1; i<planes.size(); i++) {
-    clippedGraph->clipInPlace(planes[i]);
+  for(unsigned int s=0; s<microstructure->nSubregions(); s++) {
+    VSBGraph *clippedGraph = graphs[s].copyAndClip(planes[0]);
+    for(unsigned i=1; i<planes.size(); i++) {
+      clippedGraph->clipInPlace(planes[i]);
+    }
+    clippedGraph->draw(layer, microstructure);
+    delete clippedGraph;
   }
-  clippedGraph->draw(layer, microstructure);
+}
+
+void VoxelSetBoundary::dump(std::ostream &os) const {
+  for(unsigned int s=0; s<graphs.size(); s++) {
+    os << "Subregion " << s << " " << microstructure->subregion(s)
+       << std::endl;
+    graphs[s].dump(os);
+  }
+}
+
+void VoxelSetBoundary::dumpLines(std::ostream &os) const {
+  for(unsigned int s=0; s<graphs.size(); s++) {
+    os << "# Subregion " << s << " " << microstructure->subregion(s)
+       << std::endl;
+    graphs[s].dumpLines(os, microstructure);
+  }
 }

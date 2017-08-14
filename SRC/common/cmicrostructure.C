@@ -510,6 +510,10 @@ bool CMicrostructure::isActive(const ICoord &pxl) const {
 // lock) is private.  TODO: category_lock is commented out.  Should it
 // be?
 
+// TODO: Set these some more sensible way.
+#define subsize 5
+#define slopsize 0
+
 void CMicrostructure::categorize() const {
   attributes.categorize();
   for(std::vector<VoxelSetBoundary*>::iterator vsb=categoryBdys.begin();
@@ -518,6 +522,47 @@ void CMicrostructure::categorize() const {
       delete *vsb;
     }
   categoryBdys.clear();
+
+  // Divide the Microstructure into regions that are at most subsize
+  // pixels in each direction, except that one region can be
+  // pixsize+slop pixels if it will prevent creating an additional
+  // region. slop should be small.
+  subregions.clear();
+  unsigned int nsubs[3];	// number of subregions in each direction
+  for(unsigned int c=0; c<3; c++) {
+    nsubs[c] = pxlsize_[c]/subsize; // integer division
+    if(nsubs[c] == 0)
+      nsubs[c] = 1;
+    else if(pxlsize_[c] - nsubs[c]*subsize > slopsize) {
+      // Add one more region for the remaining pixels, unless there
+      // are fewer than slopsize remaining, in which case they'll just
+      // be included in the last region.
+      nsubs[c] += 1;
+    }
+  }
+
+  subregions.reserve(nsubs[0]*nsubs[1]*nsubs[2]);
+  for(unsigned int ix=0; ix<nsubs[0]; ix++) {
+    unsigned int xmin = ix*subsize;
+    unsigned int xmax = (ix+1)*subsize;
+    if(pxlsize_[0] < xmax + slopsize)
+      xmax = pxlsize_[0];
+    for(unsigned int iy=0; iy<nsubs[1]; iy++) {
+      unsigned int ymin = iy*subsize;
+      unsigned int ymax = (iy+1)*subsize;
+      if(pxlsize_[1] < ymax + slopsize)
+  	ymax = pxlsize_[1];
+      for(unsigned int iz=0; iz<nsubs[2]; iz++) {
+  	unsigned int zmin = iz*subsize;
+  	unsigned int zmax = (iz+1)*subsize;
+  	if(pxlsize_[2] < zmax + slopsize)
+  	  zmax = pxlsize_[2];
+  	subregions.emplace_back(ICoord(xmin, ymin, zmin),
+				ICoord(xmax, ymax, zmax));
+	
+      }
+    }
+  }
 
   ncategories = attributes.ncategories();
   categoryBdys.reserve(ncategories);
@@ -540,7 +585,6 @@ void CMicrostructure::categorize() const {
   // TODO: When categories change in the MS, keep track of which ones
   // have changed and recompute VoxelSetBoundarys only for them.
 
-
   for(unsigned int cat=0; cat<ncategories; cat++) {
     // A ProtoVSBNode is the precursor to the actual VSBNodes.
     // There's a ProtoVSBNode at each corner of each voxel, but
@@ -553,78 +597,87 @@ void CMicrostructure::categorize() const {
     // the next ProtoVSBNode in a given direction would be slow, but
     // it might be ok if we keep the map small by deleting any
     // ProtoVSBNode that has already been fully connected.
-    
-    Array<ProtoVSBNode*> protoNodes(
-			    ICRectangularPrism(ICoord3D(0,0,0),
-					       pxlsize_+ICoord3D(1,1,1)));
-    protoNodes.clear(nullptr);
-    for(Array<ProtoVSBNode*>::iterator i=protoNodes.begin();
-	i!=protoNodes.end(); ++i)
-      {
-	// The type of ProtoVSBNode depends on which of the 8 voxels
-	// surrounding the corner point are in the category.
-	char signature = voxelSignature(i.coord(), cat);
-	// protoVSBNodeFactory also creates the VSBNodes in the graph,
-	// but doesn't connect them.
-	protoNodes[i] = categoryBdys[cat]->protoVSBNodeFactory(signature,
-							       i.coord());
-      }
-    // Loop over the protoNodes, connecting each one to the next
-    // protoNode in each x,y,z direction.
-    for(auto i=protoNodes.begin(); i!=protoNodes.end(); ++i) {
-      ICoord3D here = i.coord();
-      ProtoVSBNode *pnode = protoNodes[here];
-      if(pnode != nullptr) {
-	// Get the reference space directions in which this
-	// ProtoVSBNode needs to find neighbors.
-	const std::vector<VoxelEdgeDirection> &dirs(pnode->connectDirs());
-	for(const VoxelEdgeDirection &dir : dirs) {
-	  // Convert the reference space directions to actual space.
-	  VoxelEdgeDirection actualDir = pnode->rotation.toActual(dir);
-	  // It's only necessary to look in the positive directions
-	  // because the connections in the negative directions are
-	  // checked when examining the other node of the edge.
-	  if(actualDir.dir == 1) {
-	    unsigned int c = actualDir.axis;
-	    // Look for the next protonode in this direction
+
+    for(unsigned int s=0; s<subregions.size(); s++) {
+      const ICRectangularPrism &subregion = subregions[s];
+
+      Array<ProtoVSBNode*> protoNodes(ICRectangularPrism(
+				 subregion.lowerleftback(),
+				 subregion.upperrightfront()+ICoord(1,1,1)));
+
+      protoNodes.clear(nullptr);
+
+
+      for(Array<ProtoVSBNode*>::iterator i=protoNodes.begin();
+	  i!=protoNodes.end(); ++i)
+	{
+	  // The type of ProtoVSBNode depends on which of the 8 voxels
+	  // surrounding the corner point are in the category.
+	  char signature = voxelSignature(i.coord(), cat, subregion);
+	  // protoVSBNodeFactory also creates the VSBNodes in the graph,
+	  // but doesn't connect them.
+	  protoNodes[i] = categoryBdys[cat]->protoVSBNodeFactory(s, signature,
+								 i.coord());
+	}
+      // Loop over the protoNodes, connecting each one to the next
+      // protoNode in each x,y,z direction.
+      for(auto i=protoNodes.begin(); i!=protoNodes.end(); ++i) {
+	ICoord3D here = i.coord();
+	ProtoVSBNode *pnode = protoNodes[here];
+	if(pnode != nullptr) {
+	  // Get the reference space directions in which this
+	  // ProtoVSBNode needs to find neighbors.
+	  const std::vector<VoxelEdgeDirection> &dirs(pnode->connectDirs());
+	  for(const VoxelEdgeDirection &dir : dirs) {
+	    // Convert the reference space directions to actual space.
+	    VoxelEdgeDirection actualDir = pnode->rotation.toActual(dir);
+	    // It's only necessary to look in the positive directions
+	    // because the connections in the negative directions are
+	    // checked when examining the other node of the edge.
+	    if(actualDir.dir == 1) {
+	      unsigned int c = actualDir.axis;
+	      // Look for the next protonode in this direction
 #ifdef DEBUG
-	    bool found = false;
+	      bool found = false;
 #endif // DEBUG
-	    for(unsigned int k=here[c]+1; k<pxlsize_[c]+1; k++) {
-	      ICoord3D there = here;
-	      there[c] = k;
-	      if(protoNodes[there] != nullptr) { // found the next node
+	      for(unsigned int k=here[c]+1; k<pxlsize_[c]+1; k++) {
+		ICoord3D there = here;
+		there[c] = k;
+		if(protoNodes[there] != nullptr) { // found the next node
 #ifdef DEBUG
-		found = true;
+		  found = true;
 #endif // DEBUG
-		protoNodes[here]->connect(protoNodes[there]);	
-		break;		// done with this direction at this point
+		  protoNodes[here]->connect(protoNodes[there]);	
+		  break;     // done with this direction at this point
+		}
+	      } // end search for next protonode in direction c
+#ifdef DEBUG
+	      if(!found) {
+		oofcerr << "CMicrostructure::categorize:"
+			<< " failed to find next node!" << std::endl;
+		oofcerr << "CMicrostructure::categorize: here=" << here
+			<< " c=" << c << " cat=" << cat << std::endl;
+		throw ErrProgrammingError("CMicrostructure::categorize failed!",
+					  __FILE__, __LINE__);
 	      }
-	    } // end search for next protonode in direction c
-#ifdef DEBUG
-	    if(!found) {
-	      oofcerr << "CMicrostructure::categorize:"
-		      << " failed to find next node!" << std::endl;
-	      oofcerr << "CMicrostructure::categorize: here=" << here
-		      << " c=" << c << " cat=" << cat << std::endl;
-	      throw ErrProgrammingError("CMicrostructure::categorize failed!",
-					__FILE__, __LINE__);
-	    }
 #endif // DEBUG
-	  } // end if actualDir is positive
-	} // end loop over directions dir
-      }	// end if a protonode exists at i
-    } // end loop over voxels i
+	    } // end if actualDir is positive
+	  } // end loop over directions dir
+	}   // end if a protonode exists at i
+      } // end loop over voxels (protoNode locations) i
 
-    // Remove the 2-fold connected nodes.
-    categoryBdys[cat]->fixTwoFoldNodes();
-
-    // Delete the protonodes.
-    for(Array<ProtoVSBNode*>::iterator p=protoNodes.begin();
-	p!=protoNodes.end(); ++p)
-      {
-	delete protoNodes[p];
-      }
+      // Remove the 2-fold connected nodes.
+      categoryBdys[cat]->fixTwoFoldNodes(s);
+      
+      // Delete the protonodes.
+      for(Array<ProtoVSBNode*>::iterator p=protoNodes.begin();
+	  p!=protoNodes.end(); ++p)
+	{
+	  delete protoNodes[p];
+	}
+    } //  end loop over subregions
+    categoryBdys[cat]->findBBox();
+    
   } // end loop over categories cat
 
   categorized = true;
@@ -646,12 +699,13 @@ void CMicrostructure::categorize() const {
 
 double CMicrostructure::clippedCategoryVolume(
 			      unsigned int cat,
+			      const CRectangularPrism &ebbox, // element bbox
 			      const std::vector<COrientedPlane> &planes,
 			      bool checkTopology)
   const
 {
   categorizeIfNecessary();
-  return categoryBdys[cat]->clippedVolume(planes, checkTopology);
+  return categoryBdys[cat]->clippedVolume(ebbox, planes, checkTopology);
 }
 
 bool CMicrostructure::checkVSB(unsigned int cat) const {
@@ -665,14 +719,14 @@ bool CMicrostructure::checkVSB(unsigned int cat) const {
   return ok;
 }
 
-double CMicrostructure::clipVSBVol(unsigned int cat, const COrientedPlane &pl)
-  const
-{
-  categorizeIfNecessary();
-  assert(cat < categoryBdys.size());
-  std::vector<COrientedPlane> planes(1, pl);
-  return categoryBdys[cat]->clippedVolume(planes, false);
-}
+// double CMicrostructure::clipVSBVol(unsigned int cat, const COrientedPlane &pl)
+//   const
+// {
+//   categorizeIfNecessary();
+//   assert(cat < categoryBdys.size());
+//   std::vector<COrientedPlane> planes(1, pl);
+//   return categoryBdys[cat]->clippedVolume(planes, false);
+// }
 
 void CMicrostructure::saveClippedVSB(unsigned int cat, const COrientedPlane &pl,
 				     const std::string &filename)
@@ -733,8 +787,9 @@ void CMicrostructure::categorizeIfNecessary() const {
 int CMicrostructure::nCategories() const {
   // oofcerr << "Acquire, nCategories." << std::endl;
   // category_lock.acquire();
-  if(!categorized)
+  if(!categorized) {
     categorize();
+  }
   int res = ncategories;
   // category_lock.release();
   // oofcerr << "Release." << std::endl;
@@ -836,7 +891,8 @@ void CMicrostructure::recategorize() {
 }
 
 unsigned char CMicrostructure::voxelSignature(const ICoord3D &pos,
-					      unsigned int cat)
+					      unsigned int cat,
+					      const ICRectangularPrism &region)
   const
 {
   // The voxelSignature indicates which of the eight voxels
@@ -862,7 +918,7 @@ unsigned char CMicrostructure::voxelSignature(const ICoord3D &pos,
     for(int j=0; j<2; j++) {
       for(int i=0; i<2; i++) {
 	ICoord3D offset = pos + ICoord3D(i-1, j-1, k-1);
-	if(contains(offset) && categorymap[offset] == cat)
+	if(region.contains(offset) && categorymap[offset] == cat)
 	  sig |= b;
 	b <<= 1;
       }

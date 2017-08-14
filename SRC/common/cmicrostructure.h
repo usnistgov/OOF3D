@@ -164,6 +164,9 @@ private:
   // It's mutable because CMicrostructure::category() is
   // logically const, but it caches the categories in the categorymap.
   mutable Array<int> categorymap;
+  // subregions are used to make the element homogeneity calculations
+  // more efficient, and are created by categorize(), which is const.
+  mutable std::vector<ICRectangularPrism> subregions;
 
   // List of the boundaries of the categories.
 #if DIM==2
@@ -229,6 +232,11 @@ public:
   void setPixelSelection(CPixelSelection *pxlsl) { pixelSelection = pxlsl; }
   bool isSelected(const ICoord*) const;
 
+  unsigned int nSubregions() const { return subregions.size(); }
+  const ICRectangularPrism &subregion(unsigned int i) const {
+    return subregions[i];
+  }
+
   int nGroups() const;
   PixelGroup *getGroup(const std::string &name, bool *newness);
   PixelGroup *findGroup(const std::string &name) const;
@@ -275,16 +283,18 @@ public:
   double volumeOfCategory(unsigned int) const;
   const CRectangularPrism &categoryBounds(unsigned int) const;
   double clippedCategoryVolume(unsigned int,
+			       const CRectangularPrism&,
 			       const std::vector<COrientedPlane>&,
 			       bool checkTopology) const;
   void dumpVSB(unsigned int, const std::string&) const;// save VSB graph to file
   void dumpVSBLines(unsigned int, const std::string&) const; // plot VSB edges
 
-  unsigned char voxelSignature(const ICoord&, unsigned int) const;
+  unsigned char voxelSignature(const ICoord&, unsigned int,
+			       const ICRectangularPrism&) const;
 
   // Routines for testing the VSB construction and clipping
   bool checkVSB(unsigned int) const;
-  double clipVSBVol(unsigned int, const COrientedPlane&) const;
+  // double clipVSBVol(unsigned int, const COrientedPlane&) const;
   void saveClippedVSB(unsigned int, const COrientedPlane&, const std::string&)
     const;
   void saveClippedVSB(unsigned int, const std::vector<COrientedPlane>&,
