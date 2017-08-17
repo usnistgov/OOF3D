@@ -213,7 +213,8 @@ public:
   virtual void set_start();
   virtual FuncNode *funcnode() const;
   double displacedsfderiv(const Element *,
-			  SpaceIndex, const MasterPosition&) const;
+			  SpaceIndex, const MasterPosition&,
+			  const FEMesh *) const;
   bool hasField(const Field&) const;
   bool hasEquation(const Equation&) const;
   int localindex(const Field&, const FieldIndex*) const;

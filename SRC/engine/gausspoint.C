@@ -78,10 +78,11 @@ double GaussPoint::dshapefunction(const ElementBase *el,
 
 double GaussPoint::displacedderiv(const Element *el,
 				  const ShapeFunction &sf,
+				  const FEMesh *mesh,
 				  ShapeFunctionIndex n, SpaceIndex i)
   const
 {
-  return sf.displacedderiv(el, n, i, *this);
+  return sf.displacedderiv(el, n, i, *this, mesh);
 }
 
 #else  // DONT_USE_CACHED_VALUES
@@ -986,10 +987,11 @@ const
 
 double EdgeGaussPoint::displacedderiv(const Element *el,
 				      const ShapeFunction &sf,
+				      const FEMesh *mesh,
 				      ShapeFunctionIndex n, SpaceIndex i)
   const
 {
-  return sf.displacedderiv(el, n, i, mastercoord());
+  return sf.displacedderiv(el, n, i, mastercoord(), mesh);
 }
 
 std::ostream &EdgeGaussPoint::print(std::ostream &os) const {

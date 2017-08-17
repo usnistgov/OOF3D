@@ -88,13 +88,18 @@ public:
   // defined. Takes an element rather than an element-base because it
   // needs to compute the displaced Jacobian.
   double displacedderiv(const Element*, ShapeFunctionIndex,
-			SpaceIndex, const GaussPoint&) const;
+			SpaceIndex, const GaussPoint&, const FEMesh *) const;
   double displacedderiv(const Element*, ShapeFunctionIndex,
-			SpaceIndex, const MasterCoord&) const;
+			SpaceIndex, const MasterCoord&, const FEMesh *) const;
   double displacedderiv(const Element*, ShapeFunctionIndex,
-			SpaceIndex, const MasterPosition&) const;
+			SpaceIndex, const MasterPosition&, const FEMesh *)
+    const;
   
   // derivative wrt real coordinates.  "Real" means reference.
+  // Dispatch trick, the "outermost" one is the MasterPosition one,
+  // which dispatches through the actual masterposition object to
+  // call the right one of the other two.  TODO PLAS: Do we need two?
+  // Caching is hard because of the dynamism of the field object.
   double realderiv(const ElementBase*, const ShapeFunctionIndex, SpaceIndex,
 		   const GaussPoint&) const;
   double realderiv(const ElementBase*, const ShapeFunctionIndex, SpaceIndex,
@@ -105,6 +110,8 @@ public:
   // det_jacobian() calls either det_jacobian1, det_jacobian2, or
   // det_jacobian3, depending on the element dimension.  It also
   // handles caching.
+  // TODO PLAS: Do we need a displaced version of this?  Caching
+  // is more complicated because displacement is dynamic.
   double det_jacobian(const ElementBase*, const GaussPoint&) const;
   double det_jacobian(const ElementBase*, const MasterCoord&) const;
 
