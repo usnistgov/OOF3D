@@ -829,6 +829,8 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
 						  bool checkTopology)
   const
 {
+  // oofcerr << "CSkeletonElement::categoryVolumes: " << *this << std::endl;
+  OOFcerrIndent indent(2);
   // Get the corners and planes of the element in voxel coordinates.
   std::vector<Coord3D> epts = pixelCoords(ms);
   std::vector<COrientedPlane> planes = getPlanes(epts);
@@ -843,6 +845,7 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
   DoubleVec result(ncat, 0.0);
   double totalVol = 0.0;
 
+
   try {
     for(unsigned int cat=0; cat<ncat; cat++) {
       // Check for a bounding box intersection before doing the
@@ -851,12 +854,18 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
       // TODO: That was an old comment... clippedCategoryVolume does
       // its own bbox check now, so the check here may be useless.
       if(bbox.intersects(ms->categoryBounds(cat))) {
+	// oofcerr << "CSkeletonElement::categoryVolumes:"
+	// 	<< " calling clippedCategoryVolume for cat " << cat
+	// 	<< std::endl;
+	setVerboseVSB(index == 195);
 	double vol = ms->clippedCategoryVolume(cat, bbox, planes,
 					       checkTopology);
+	// oofcerr << "CSkeletonElement::categoryVolumes: "
+	// 	<< "back from clippedCategoryVolume, vol=" << vol << std::endl;
 	totalVol += vol;
 	result[cat] = vol;
       }
-    }
+    } // end loop over categories
 
 #ifdef DEBUG
     double actual = volumeInVoxelUnits(ms);

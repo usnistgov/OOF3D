@@ -53,10 +53,6 @@ typedef std::pair<double, VoxelBdyIntersection> CellEdgeDatum;
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
 // A structure for storing where a line intersects an element, used by
 // the LinearCrossSectionDomain.
 
@@ -268,7 +264,6 @@ public:
 };				// CSkeletonElement
 
 long get_globalElementCount();
-
 
 #endif	// CSKELETONELEMENT_H
 

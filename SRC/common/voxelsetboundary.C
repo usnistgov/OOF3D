@@ -231,10 +231,10 @@
 //   graph doesn't divide it into two disconnected parts.  Because the
 //   graph is allowed to have disconnected portions, this test applies
 //   to each disconnected subgraph individually.  Three-vertex
-//   connectivity is necessary for a well formed graph.  I don't know
-//   if it's sufficient.  checkConnectivity() is very slow (o(N^3))
-//   and should only be run for small graphs, or if you have a lot of
-//   free time.
+//   connectivity is necessary for a well formed graph for a CONVEX
+//   polygon.  I don't know if it's sufficient.  checkConnectivity()
+//   is very slow (o(N^3)) and should only be run for small graphs, or
+//   if you have a lot of free time.
 
 #include "common/IO/canvaslayers.h"
 #include "common/IO/oofcerr.h"
@@ -245,6 +245,11 @@
 #include <limits>
 
 #define swap(x, y) { auto temp = (x); x = (y); y = temp; }
+
+#ifdef DEBUG
+static bool verbose = false;
+void setVerboseVSB(bool f) { verbose = f; }
+#endif // DEBUG
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -2545,24 +2550,51 @@ unsigned int VSBNode::neighborIndex(const VSBNode *nbr) const {
 
 // nextCWNeighbor returns the neighbor of this node that follows the
 // given node CW in the neighbor list.  This is where the CW storage
-// ordering of the neighbors is important.
+// ordering of the neighbors is important.  If the initial graph is
+// insufficiently connected, it's possible that a clipped graph has
+// nodes with duplicate neighbors.  In that case, nextCWNeighbor
+// should always return the neighbor that's *not* the argument.
+
+// TODO: Can the result of nextCWNeighbor be computed at graph
+// construction time and cached?
 
 const VSBNode *VSBNode::nextCWNeighbor(const VSBNode *nbr) const {
-  if(neighbors[0] == nbr)
+  if(neighbors[0] == nbr) {
+    // if(neighbors[1] == nbr)
+    //   return neighbors[2];
     return neighbors[1];
-  if(neighbors[1] == nbr)
+  }
+  if(neighbors[1] == nbr) {
+    // if(neighbors[2] == nbr)
+    //   return neighbors[0];
     return neighbors[2];
+  }
   assert(neighbors[2] == nbr);
+  // if(neighbors[0] == nbr)
+  //   return neighbors[1];
   return neighbors[0];
 }
 
 VSBNode *VSBNode::nextCWNeighbor(const VSBNode *nbr) {
-  if(neighbors[0] == nbr)
+  if(neighbors[0] == nbr) {
+    // if(neighbors[1] == nbr)
+    //   return neighbors[2];
     return neighbors[1];
-  if(neighbors[1] == nbr)
+  }
+  if(neighbors[1] == nbr) {
+    // if(neighbors[2] == nbr)
+    //   return neighbors[0];
     return neighbors[2];
+  }
   assert(neighbors[2] == nbr);
+  // if(neighbors[0] == nbr)
+  //   return neighbors[1];
   return neighbors[0];
+}
+
+bool VSBNode::degenerateNeighbor(const VSBNode *other) const {
+  return (other->neighbors[1] == this && other->neighbors[2] == this &&
+	  neighbors[1] == other && neighbors[2] == other);
 }
 
 std::ostream &operator<<(std::ostream &os, const VSBNode &node) {
@@ -2667,6 +2699,11 @@ std::vector<double> VSBGraph::getDistances(const COrientedPlane &plane,
   for(const VSBNode *vertex : vertices) {
     double d = plane.distance(vertex->position);
     dists.push_back(d);
+// #ifdef DEBUG
+//     if(verbose)
+//       oofcerr << "getDistances: vertex=" << vertex->index << " "
+// 	      << vertex->position << " " << "d=" << d << std::endl;
+// #endif // DEBUG
     if(d > dmax)
       dmax = d;
     if(d < dmin)
@@ -2749,7 +2786,8 @@ VSBGraph *VSBGraph::copyAndClip(const COrientedPlane &plane) const {
 			   / (nbrDistance - d0));
 	      VSBNode *newNbr = new VSBNode(p);
 	      danglingNodes.push_back(newNbr);
-	      newGraph->addNode(newNbr);
+	      // Don't add the new node to the graph yet, since it
+	      // might be part of a degenerate face.
 	      newNode->setNeighbor(n, newNbr);
 	      newNbr->setNeighbor(0, newNode);
 	    }
@@ -2763,7 +2801,11 @@ VSBGraph *VSBGraph::copyAndClip(const COrientedPlane &plane) const {
   // graph that are on the correct side of the clipping plane, and a
   // bunch of dangling nodes that are on the clipping plane. Connect
   // the dangling nodes to each other.
-  connectClippedNodes(danglingNodes);
+  newGraph->connectClippedNodes(danglingNodes);
+  std::vector<VSBNode*> keptNodes =
+    newGraph->removeDegenerateFaces(danglingNodes);
+  if(!keptNodes.empty())
+    newGraph->addNodes(keptNodes);
  
   return newGraph;
 } // end VSBGraph::copyAndClip
@@ -2773,8 +2815,14 @@ VSBGraph *VSBGraph::copyAndClip(const COrientedPlane &plane) const {
 void VSBGraph::clipInPlace(const COrientedPlane &plane) {
   // Modeled after r3d_clip, more or less. This is more like it than
   // copyAndClip is.
+  // oofcerr << "VSBGraph::clipInPlace" << std::endl;
   double dmin, dmax;
   std::vector<double> distance = getDistances(plane, dmin, dmax);
+// #ifdef DEBUG
+//   if(verbose)
+//     oofcerr << "VSBGraph::clipInPlace: dmin=" << dmin << " dmax=" << dmax
+// 	    << std::endl;
+// #endif // DEBUG
   if(dmax < 0) {
     // Entire graph is within the clipping region.  There's nothing to do.
     return;
@@ -2799,17 +2847,35 @@ void VSBGraph::clipInPlace(const COrientedPlane &plane) {
 	if(d1 >= 0) {
 	  // The neighbor needs to be clipped.
 	  Coord3D p = (thisvert->position*d1 - nbr->position*d0)/(d1 - d0);
+// #ifdef DEBUG
+// 	  if(verbose) {
+// 	    oofcerr << "VSBGraph::clipInPlace: clipping! thisvert=" << *thisvert
+// 		    << " nbr=" << *nbr << std::endl;
+// 	  }
+// #endif // DEBUG
 	  VSBNode *newNode = new VSBNode(p);
 	  newNodes.push_back(newNode);
 	  thisvert->replaceNeighbor(n, newNode);
 	  newNode->setNeighbor(0, thisvert);
+// #ifdef DEBUG
+// 	  if(verbose) {
+// 	    oofcerr << "VSBGraph::clipInPlace: newNode=" << *newNode
+// 		    << std::endl;
+// 	    oofcerr << "VSBGraph::clipInPlace: after clipping, thisvert="
+// 		    << *thisvert << std::endl;
+// 	  }
+// #endif // DEBUG
 	}
       }	// end loop over neighbors n of v0
     } // end if v0 is being kept
   } // end loop over vertices v0
 
+  // oofcerr << "VSBGraph::clipInPlace: clipped" << std::endl;
   // Connect the new nodes to one another.
   connectClippedNodes(newNodes);
+  // oofcerr << "VSBGraph::clipInPlace: connected" << std::endl;
+  std::vector<VSBNode*> realNewNodes = removeDegenerateFaces(newNodes);
+  // oofcerr << "VSBGraph::clipInPlace: removed degenerate" << std::endl;
 
   // Delete the nodes that were removed.  This invalidates
   // VSBNode::index for each node.
@@ -2821,17 +2887,18 @@ void VSBGraph::clipInPlace(const COrientedPlane &plane) {
       vertices[nkept++] = vertices[v0];
   }
   vertices.resize(nkept);
+  // oofcerr << "VSBGraph::clipInPlace: removed" << std::endl;
   // Fix VSBNode::index for the retained nodes.
   for(unsigned int i=0; i<vertices.size(); i++) {
     vertices[i]->index = i;
   }
   // Add the new nodes to the graph.
-  if(!newNodes.empty())
-    addNodes(newNodes);
+  if(!realNewNodes.empty())
+    addNodes(realNewNodes);
 }
 
 void VSBGraph::connectClippedNodes(const std::vector<VSBNode*> &newNodes)
-const
+  const
 {
   // Each node in newNodes has exactly one neighbor, in slot 0.
   // Starting from that neighbor, go from node to node
@@ -2839,6 +2906,12 @@ const
   // new node, and connect to it.  We know when we've found the next
   // new node because it won't have a neighbor in slot 1.
   for(VSBNode *newNode : newNodes) {
+// #ifdef DEBUG
+//     if(verbose)
+//       oofcerr << "VSBGraph::connectClippedNodes: newNode=" << *newNode
+// 	      << std::endl;
+//     OOFcerrIndent indent(2);
+// #endif // DEBUG
     VSBNode *vcur = newNode;
     VSBNode *vnext = newNode->getNeighbor(0);
     do {
@@ -2848,10 +2921,69 @@ const
       VSBNode *vtemp = vnext->nextCWNeighbor(vcur);
       vcur = vnext;
       vnext = vtemp;
+// #ifdef DEBUG
+//       if(verbose)
+// 	oofcerr << "VSBGraph::connectClippedNodes: vcur=" << *vcur << std::endl;
+// #endif // DEBUG
     } while(vcur->getNeighbor(1) != nullptr);
     vcur->setNeighbor(1, newNode);
     newNode->setNeighbor(2, vcur);
+// #ifdef DEBUG
+//     if(verbose)
+//       oofcerr << "VSBGraph::connectClippedNodes: connected "
+// 	      << *vcur << " " << *newNode << std::endl;
+// #endif // DEBUG
   }
+}
+
+std::vector<VSBNode*> VSBGraph::removeDegenerateFaces(
+					      std::vector<VSBNode*> &newNodes)
+  const
+{
+  // oofcerr << "VSBGraph::removeDegenerateFaces: nNew=" << newNodes.size()
+  // 	  << std::endl;
+  if(newNodes.empty())
+    return newNodes;
+  // If the graph isn't 3-vertex connected, clipping can produce a
+  // degenerate new face, in which two nodes have two connections to
+  // each other, both of which have to be neighbor slots 1 and 2.
+  // There can be no change of direction at such nodes, so we can
+  // remove the two nodes and connect their other neighbors directly
+  // to each other.
+  std::vector<bool> removed(newNodes.size(), false); // has a node been removed?
+  unsigned int nremoved = 0;
+  // Loop over pairs of new nodes that haven't yet been removed from newNodes
+  for(unsigned int i=0; i<newNodes.size()-1; i++) {
+    if(!removed[i]) {
+      for(unsigned int j=i+1; j<newNodes.size(); j++) {
+	if(!removed[j]) {
+	  if(newNodes[i]->degenerateNeighbor(newNodes[j])) {
+	    // The two nodes are multiply connected.  Remove them.
+	    VSBNode *oldnbr0 = newNodes[i]->getNeighbor(0);
+	    VSBNode *oldnbr1 = newNodes[j]->getNeighbor(0);
+	    oldnbr0->replaceNeighbor(newNodes[i], oldnbr1);
+	    oldnbr1->replaceNeighbor(newNodes[j], oldnbr0);
+	    removed[i] = true;
+	    removed[j] = true;
+	    nremoved += 2;
+	  }
+	}
+      }
+    }
+  }
+  // oofcerr << "VSBGraph::removeDegenerateFaces: nremoved=" << nremoved
+  // 	  << std::endl;
+  if(nremoved == 0)
+    return newNodes;
+  std::vector<VSBNode*> retained;
+  retained.reserve(newNodes.size() - nremoved);
+  for(unsigned int k=0; k<newNodes.size(); k++) {
+    if(!removed[k])
+      retained.push_back(newNodes[k]);
+    else
+      delete newNodes[k];
+  }
+  return retained;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -2889,6 +3021,23 @@ double VSBGraph::volume() const {
 	  const VSBNode *next = cur->nextCWNeighbor(prev);
 	  prev = cur;
 	  cur = next;
+	  // If the graph includes doubly connected edges (which can
+	  // happen when a non-3-vertex connected graph is clipped)
+	  // then it's unclear which of the two edges we are
+	  // traversing, and emarks may already be set.
+
+	  
+	  
+// #ifdef DEBUG
+// 	  if(emarks[prev->index][prev->neighborIndex(cur)]) {
+// 	    oofcerr << "VSBGraph::volume: attempt to reuse an edge!"
+// 		    << std::endl;
+// 	    oofcerr << "VSBGraph::volume: startNode=" << *startNode
+// 		    << " prev=" << *prev << " cur=" << *cur << std::endl;
+// 	    throw ErrProgrammingError("VSBGraph::volume failed!", __FILE__,
+// 				      __LINE__);
+// 	  }
+// #endif // DEBUG
 	  emarks[prev->index][prev->neighborIndex(cur)] = true;
 	  if(cur == startNode) {
 	    done = true;
@@ -2904,7 +3053,6 @@ double VSBGraph::volume() const {
       }
     } // end loop over pstart
   } // end loop over vstart
-
   return vol/6.;       // factors of 1/2 from area and 1/3 from volume
 } // end VSBGraph::volume
 
@@ -2966,9 +3114,14 @@ bool VSBGraph::checkEdges() const {
 // nRegions is positive and not equal to the number of regions, also
 // return false.
 
-bool VSBGraph::checkConnectivity(unsigned int nRegions) const {
-  // First find the regions.  region[i] is -1 if the node hasn't yet
-  // been assigned to a region.
+// ** checkConnectivity only applies to convex polygons. **
+
+bool VSBGraph::checkConnectivity(unsigned int nRegions,
+				 const ICRectangularPrism &subregion)
+  const
+{
+  // First find the regions.  region[i] is nullptr if the node hasn't
+  // yet been assigned to a region.
   int nreg = 0;
   bool ok = true;
   typedef std::set<const VSBNode*> Region;
@@ -3048,18 +3201,22 @@ bool VSBGraph::checkConnectivity(unsigned int nRegions) const {
 	if(visited.size() != reg->size()) {
 	  oofcerr << "VSBGraph::checkConnectivity:"
 		  << " region is insufficiently connected!" << std::endl;
-	  for(const VSBNode *node : *reg) {
-	    oofcerr << "VSBGraph::checkConnectivity: index=" << node->index
-		    << " position=" << node->position
-		    << " nbrs=[" << node->getNeighbor(0)->index << ", "
-		    << node->getNeighbor(1)->index << ", "
-		    << node->getNeighbor(2)->index << "]";
-	    if(node == nodeA)
-	      oofcerr << " A";
-	    else if(node == nodeB)
-	      oofcerr << " B";
-	    oofcerr << std::endl;
-	  }
+	  oofcerr << "VSBGraph::checkConnectivity: subregion=" << subregion
+		  << std::endl;
+	  oofcerr << "VSBGraph::checkConnectivity: nodeA=" << *nodeA
+		  << " nodeB=" << *nodeB << std::endl;
+	  // for(const VSBNode *node : *reg) {
+	  //   oofcerr << "VSBGraph::checkConnectivity: index=" << node->index
+	  // 	    << " position=" << node->position
+	  // 	    << " nbrs=[" << node->getNeighbor(0)->index << ", "
+	  // 	    << node->getNeighbor(1)->index << ", "
+	  // 	    << node->getNeighbor(2)->index << "]";
+	  //   if(node == nodeA)
+	  //     oofcerr << " A";
+	  //   else if(node == nodeB)
+	  //     oofcerr << " B";
+	  //   oofcerr << std::endl;
+	  // }
 	  okreg = false;	// go to next region
 	  ok = false;
 	}
@@ -3236,9 +3393,25 @@ bool VoxelSetBoundary::checkEdges() const {
 
 bool VoxelSetBoundary::checkConnectivity(unsigned int nRegions) const {
   bool ok = true;
-  for(const VSBGraph &graph : graphs)
-    ok &= graph.checkConnectivity(nRegions);
+  for(unsigned int s=0; s<graphs.size(); s++) {
+    const VSBGraph &graph = graphs[s];
+    const ICRectangularPrism &subregion = microstructure->subregion(s);
+    bool regionOk = graph.checkConnectivity(nRegions, subregion);
+    ok &= regionOk;
+  }
   return ok;
+}
+
+static int nRegionsUsed = 0;	// For figuring out optimal subregions...
+static int nHomogCalcs = 0;
+
+void printHomogRegionStats() {
+  oofcerr << "printHomogRegionStats: nRegionsUsed=" << nRegionsUsed
+	  << " nHomogCalcs=" << nHomogCalcs
+	  << " average regions/calc =" << nRegionsUsed/(double)nHomogCalcs
+	  << std::endl;
+  nRegionsUsed = 0;
+  nHomogCalcs = 0;
 }
 
 // VoxelSetBoundary::clippedVolume is the core of the element
@@ -3255,6 +3428,14 @@ double VoxelSetBoundary::clippedVolume(
   const
 {
   assert(!planes.empty());
+// #ifdef DEBUG
+//   if(verbose) {
+//     oofcerr << "VoxelSetBoundary::clippedVolume"
+// 	    << std::endl;
+//   }
+//   OOFcerrIndent indent(2);
+// #endif // DEBUG
+  
   double vol = 0.0;
   // loop over subregions
 
@@ -3266,23 +3447,85 @@ double VoxelSetBoundary::clippedVolume(
   // between the corners.
   for(unsigned int s=0; s<microstructure->nSubregions(); s++) {
     if(!graphs[s].empty() && microstructure->subregion(s).intersects(ebbox)) {
+      ++nRegionsUsed;
+// #ifdef DEBUG
+//       if(verbose) {
+// 	oofcerr << "VoxelSetBoundary::clippedVolume: subregion=" << s << " "
+// 		<< microstructure->subregion(s) << std::endl;
+// 	std::ofstream f("clipped0.lines");
+// 	graphs[s].dumpLines(f, microstructure);
+// 	std::ofstream fd("clipped0.dat");
+// 	graphs[s].dump(fd);
+//       }
+//       // if(!graphs[s].checkEdges()) {
+//       // 	throw ErrProgrammingError("Bad initial graph!", __FILE__, __LINE__);
+//       // }
+// #endif // DEBUG
       VSBGraph *clippedGraph = graphs[s].copyAndClip(planes[0]);
+// #ifdef DEBUG
+//       if(verbose) {
+// 	std::ofstream f("clipped1.lines");
+// 	clippedGraph->dumpLines(f, microstructure);
+// 	std::ofstream fd("clipped1.dat");
+// 	clippedGraph->dump(fd);
+//       }
+//       // if(!clippedGraph->checkEdges()) {
+//       // 	throw ErrProgrammingError("checkEdges failed! first clip",
+//       // 				  __FILE__, __LINE__);
+//       // }
+// #endif // DEBUG
       for(unsigned i=1; i<planes.size(); i++) {
+// #ifdef DEBUG
+// 	if(verbose)
+// 	  oofcerr << "VoxelSetBoundary::clippedVolume: clipping " << planes[i]
+// 		  << std::endl;
+// #endif // DEBUG
 	clippedGraph->clipInPlace(planes[i]);
+// #ifdef DEBUG
+// 	if(verbose) {
+// 	  std::ofstream f("clipped"+to_string(i+1)+".lines");
+// 	  clippedGraph->dumpLines(f, microstructure);
+// 	  std::ofstream fd("clipped"+to_string(i+1)+".dat");
+// 	  clippedGraph->dump(fd);
+// 	}
+// 	// if(!clippedGraph->checkEdges()) {
+// 	//   throw ErrProgrammingError("checkEdges failed!", __FILE__, __LINE__);
+// 	// }
+// #endif // DEBUG
       }
-      if(checkTopology) {
-	if(!clippedGraph->checkEdges()) {
-	  throw ErrProgrammingError("checkEdges failed!", __FILE__, __LINE__);
-	}
-	if(!clippedGraph->checkConnectivity(0)) {
-	  throw ErrProgrammingError("checkConnectivity failed!",
-				    __FILE__, __LINE__);
-	}
-      }
+// #ifdef DEBUG
+//       if(verbose)
+// 	oofcerr << "VoxelSetBoundary::clippedVolume: done clipping"
+// 		<< std::endl;
+//       if(true /*checkTopology*/) {
+// 	// if(!clippedGraph->checkEdges()) {
+// 	//   std::ofstream f("badgraph.lines");
+// 	//   clippedGraph->dumpLines(f, microstructure);
+// 	//   std::ofstream ff("badgraph.dat");
+// 	//   clippedGraph->dump(ff);
+// 	//   throw ErrProgrammingError("checkEdges failed!", __FILE__, __LINE__);
+// 	// }
+
+// 	// if(!clippedGraph->checkConnectivity(0, microstructure->subregion(s))) {
+// 	//   throw ErrProgrammingError("checkConnectivity failed!",
+// 	// 			    __FILE__, __LINE__);
+// 	// }
+//       }
+//       if(verbose)
+// 	oofcerr << "VoxelSetBoundary::clippedVolume: getting volume,"
+// 		<< " subregion=" << microstructure->subregion(s)
+// 		<< std::endl;
+// #endif // DEBUG
       vol += clippedGraph->volume();
+// #ifdef DEBUG
+//       if(verbose)
+// 	oofcerr << "VoxelSetBoundary::clippedVolume: cumulative vol=" << vol
+// 		<< std::endl;
+// #endif // DEBUG
       delete clippedGraph;
     } // end if graph intersects elements
   }   // end loop over subregions s
+  ++nHomogCalcs;
   return vol;
 }
 
@@ -3346,10 +3589,14 @@ void VoxelSetBoundary::dump(std::ostream &os) const {
   }
 }
 
-void VoxelSetBoundary::dumpLines(std::ostream &os) const {
+void VoxelSetBoundary::dumpLines(const std::string &filename) const {
   for(unsigned int s=0; s<graphs.size(); s++) {
-    os << "# Subregion " << s << " " << microstructure->subregion(s)
-       << std::endl;
+    std::string fname = filename + '_' + to_string(s);
+    oofcerr << "# Writing subregion " << s << " "
+	    << microstructure->subregion(s) << " to file " << fname
+	    << std::endl;
+    std::ofstream os(fname);
     graphs[s].dumpLines(os, microstructure);
+    os.close();
   }
 }

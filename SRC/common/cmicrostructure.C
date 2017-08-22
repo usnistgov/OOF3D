@@ -507,8 +507,11 @@ bool CMicrostructure::isActive(const ICoord &pxl) const {
 // subsize and slopsize determine the size of the subregions used by
 // categorize().  Setting them here is presumably a temporary measure.
 
-static int subsize = 20;
-static int slopsize = 5;
+// If subsize is negative or zero, a single subregion will be used
+// (equivalent to not using subregions at all).
+
+static int subsize = -1;
+static int slopsize = 2;
 
 void set_subregion_size(int s) { subsize = s; }
 void set_subregion_slop(int s) { slopsize = s; }
@@ -535,39 +538,45 @@ void CMicrostructure::categorize() const {
   // pixsize+slop pixels if it will prevent creating an additional
   // region. slop should be small.
   subregions.clear();
-  unsigned int nsubs[3];	// number of subregions in each direction
-  for(unsigned int c=0; c<3; c++) {
-    nsubs[c] = pxlsize_[c]/subsize; // integer division
-    if(nsubs[c] == 0)
-      nsubs[c] = 1;
-    else if(pxlsize_[c] > slopsize + nsubs[c]*subsize) {
-      // Add one more region for the remaining pixels, unless there
-      // are fewer than slopsize remaining, in which case they'll just
-      // be included in the last region.
-      nsubs[c] += 1;
-    }
-  }
-  subregions.reserve(nsubs[0]*nsubs[1]*nsubs[2]);
-  for(unsigned int ix=0; ix<nsubs[0]; ix++) {
-    unsigned int xmin = ix*subsize;
-    unsigned int xmax = (ix+1)*subsize;
-    if(pxlsize_[0] <= xmax + slopsize)
-      xmax = pxlsize_[0];
-    for(unsigned int iy=0; iy<nsubs[1]; iy++) {
-      unsigned int ymin = iy*subsize;
-      unsigned int ymax = (iy+1)*subsize;
-      if(pxlsize_[1] <= ymax + slopsize)
-  	ymax = pxlsize_[1];
-      for(unsigned int iz=0; iz<nsubs[2]; iz++) {
-  	unsigned int zmin = iz*subsize;
-  	unsigned int zmax = (iz+1)*subsize;
-  	if(pxlsize_[2] <= zmax + slopsize)
-  	  zmax = pxlsize_[2];
-  	subregions.emplace_back(ICoord(xmin, ymin, zmin),
-				ICoord(xmax, ymax, zmax));
-	
+  if(subsize > 0) {
+    unsigned int nsubs[3];	// number of subregions in each direction
+    for(unsigned int c=0; c<3; c++) {
+      nsubs[c] = pxlsize_[c]/subsize; // integer division
+      if(nsubs[c] == 0)
+	nsubs[c] = 1;
+      else if(pxlsize_[c] > slopsize + nsubs[c]*subsize) {
+	// Add one more region for the remaining pixels, unless there
+	// are fewer than slopsize remaining, in which case they'll just
+	// be included in the last region.
+	nsubs[c] += 1;
       }
     }
+    subregions.reserve(nsubs[0]*nsubs[1]*nsubs[2]);
+    for(unsigned int ix=0; ix<nsubs[0]; ix++) {
+      unsigned int xmin = ix*subsize;
+      unsigned int xmax = (ix+1)*subsize;
+      if(pxlsize_[0] <= xmax + slopsize)
+	xmax = pxlsize_[0];
+      for(unsigned int iy=0; iy<nsubs[1]; iy++) {
+	unsigned int ymin = iy*subsize;
+	unsigned int ymax = (iy+1)*subsize;
+	if(pxlsize_[1] <= ymax + slopsize)
+	  ymax = pxlsize_[1];
+	for(unsigned int iz=0; iz<nsubs[2]; iz++) {
+	  unsigned int zmin = iz*subsize;
+	  unsigned int zmax = (iz+1)*subsize;
+	  if(pxlsize_[2] <= zmax + slopsize)
+	    zmax = pxlsize_[2];
+	  subregions.emplace_back(ICoord(xmin, ymin, zmin),
+				  ICoord(xmax, ymax, zmax));
+	
+	}
+      }
+    }
+  }
+  else {
+    // subsize is not positive.  Use a single subregion.
+    subregions.emplace_back(ICoord(0, 0, 0), pxlsize_);
   }
 
   ncategories = attributes.ncategories();
@@ -718,10 +727,11 @@ bool CMicrostructure::checkVSB(unsigned int cat) const {
   categorizeIfNecessary();
   assert(cat < categoryBdys.size());
   bool ok = categoryBdys[cat]->checkEdges();
-  if(ok) {
-    // arg=0 means don't check # of regions
-    ok = categoryBdys[cat]->checkConnectivity(0);
-  }
+  //* checkConnectivity doesn't apply for non-convex polygons.
+  // if(ok) {
+  //   // arg=0 means don't check # of regions
+  //   ok = categoryBdys[cat]->checkConnectivity(0);
+  // }
   return ok;
 }
 
@@ -781,8 +791,7 @@ void CMicrostructure::dumpVSBLines(unsigned int cat, const std::string &file)
   const
 {
   categorizeIfNecessary();
-  std::ofstream f(file);
-  categoryBdys[cat]->dumpLines(f);
+  categoryBdys[cat]->dumpLines(file);
 }
 
 void CMicrostructure::categorizeIfNecessary() const {

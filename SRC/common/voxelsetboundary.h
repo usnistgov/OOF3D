@@ -221,6 +221,8 @@ class VSBNode {
   const VSBNode *nextCWNeighbor(const VSBNode*) const;
   unsigned int neighborIndex(const VSBNode*) const;
   unsigned int getIndex() const { return index; }
+
+  bool degenerateNeighbor(const VSBNode*) const;
   
   friend class VoxelSetBoundary;
   friend class VSBGraph;
@@ -258,6 +260,7 @@ class VSBGraph {
   const VSBNode *getNode(unsigned int i) const { return vertices[i]; }
   void twoFoldNode(VSBNode*);
   void fixTwoFoldNodes();
+  std::vector<VSBNode*> removeDegenerateFaces(std::vector<VSBNode*>&) const;
 
   VSBGraph *copyAndClip(const COrientedPlane&) const;
   void clipInPlace(const COrientedPlane&);
@@ -267,7 +270,8 @@ class VSBGraph {
   const CRectangularPrism &bbox() const { return bounds; }
   
   bool checkEdges() const;
-  bool checkConnectivity(unsigned int nRegions) const;
+  bool checkConnectivity(unsigned int nRegions, const ICRectangularPrism&)
+    const;
   void dump(std::ostream &) const;
   void dumpLines(std::ostream&, const CMicrostructure*) const;
   void draw(LineSegmentLayer*, const CMicrostructure*) const;
@@ -318,7 +322,7 @@ public:
   bool checkEdges() const;
   bool checkConnectivity(unsigned int) const;
   void dump(std::ostream &os) const;
-  void dumpLines(std::ostream &os) const;
+  void dumpLines(const std::string&) const;
   void saveClippedVSB(const std::vector<COrientedPlane>&,
 		      const std::string&) const;
   void drawClippedVSB(const std::vector<COrientedPlane>&,
@@ -328,6 +332,12 @@ public:
 };
 
 void initializeProtoNodes();
+
+void printHomogRegionStats();
 std::string &printSig(unsigned char);
+
+#ifdef DEBUG
+void setVerboseVSB(bool);
+#endif // DEBUG
 
 #endif // VOXELSETBOUNDARY_H
