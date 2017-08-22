@@ -286,6 +286,16 @@ public:
     if(lowleftback[2] > other.uprightfront[2]) return false;
     return true;
   }
+  template <class VTYPE2, class CTYPE2>
+  bool intersects_open(const CRectangularPrism_<VTYPE2, CTYPE2> &other) const {
+    if(uprightfront[0] <= other.lowleftback[0]) return false;
+    if(uprightfront[1] <= other.lowleftback[1]) return false;
+    if(uprightfront[2] <= other.lowleftback[2]) return false;
+    if(lowleftback[0] >= other.uprightfront[0]) return false;
+    if(lowleftback[1] >= other.uprightfront[1]) return false;
+    if(lowleftback[2] >= other.uprightfront[2]) return false;
+    return true;
+  }
   virtual int ncorners() const { return 8; }
   virtual CTYPE operator[](int i) const {
     switch(i) {
