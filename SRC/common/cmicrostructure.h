@@ -294,7 +294,7 @@ public:
 
   // Routines for testing the VSB construction and clipping
   bool checkVSB(unsigned int) const;
-  // double clipVSBVol(unsigned int, const COrientedPlane&) const;
+  double clipVSBVol(unsigned int, const COrientedPlane&) const;
   void saveClippedVSB(unsigned int, const COrientedPlane&, const std::string&)
     const;
   void saveClippedVSB(unsigned int, const std::vector<COrientedPlane>&,

@@ -735,14 +735,15 @@ bool CMicrostructure::checkVSB(unsigned int cat) const {
   return ok;
 }
 
-// double CMicrostructure::clipVSBVol(unsigned int cat, const COrientedPlane &pl)
-//   const
-// {
-//   categorizeIfNecessary();
-//   assert(cat < categoryBdys.size());
-//   std::vector<COrientedPlane> planes(1, pl);
-//   return categoryBdys[cat]->clippedVolume(planes, false);
-// }
+double CMicrostructure::clipVSBVol(unsigned int cat, const COrientedPlane &pl)
+  const
+{
+  categorizeIfNecessary();
+  assert(cat < categoryBdys.size());
+  std::vector<COrientedPlane> planes(1, pl);
+  CRectangularPrism bbox(Coord3D(0,0,0), sizeInPixels().coord());
+  return categoryBdys[cat]->clippedVolume(bbox, planes, false);
+}
 
 void CMicrostructure::saveClippedVSB(unsigned int cat, const COrientedPlane &pl,
 				     const std::string &filename)

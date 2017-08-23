@@ -857,7 +857,9 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
 	// oofcerr << "CSkeletonElement::categoryVolumes:"
 	// 	<< " calling clippedCategoryVolume for cat " << cat
 	// 	<< std::endl;
-	setVerboseVSB(index == 195);
+// #ifdef DEBUG
+// 	setVerboseVSB(index == 195);
+// #endif // DEBUG
 	double vol = ms->clippedCategoryVolume(cat, bbox, planes,
 					       checkTopology);
 	// oofcerr << "CSkeletonElement::categoryVolumes: "
