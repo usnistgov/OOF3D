@@ -47,8 +47,8 @@ FEMeshPtr.getNodes = _FEMeshPtr_getNodes
 # means that the extra data can be in the FEMesh object, and *not*
 # in the FEMeshPtr object. 
 
-def _FEMesh___init__(self, microstructure, order):
-    self.this = femeshc.new_FEMesh(microstructure)
+def _FEMesh___init__(self, skeleton, order):
+    self.this = femeshc.new_FEMesh(skeleton)
     FEMeshPtr.__init__(self, self.this)
     self.thisown = 1
 

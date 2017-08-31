@@ -291,7 +291,7 @@ def _CSkeletonBase_femesh(self, edict, material=None):
     # edict is created in newMesh() in IO/meshmenu.py.  It's a
     # dictionary of MasterElements keyed by ElementShape names.
     order = edict.values()[0].fun_order()
-    realmesh = femesh.FEMesh(self.getMicrostructure(), order)
+    realmesh = femesh.FEMesh(self, order)
 
     # this adds the nodes and elements
     ## TODO: If we ever have non-tetrahedral 3D elements, we'll have

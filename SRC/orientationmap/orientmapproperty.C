@@ -28,9 +28,9 @@ OrientationMapProp::~OrientationMapProp() {}
 
 class OrientMapMeshData {
 public:
-  CMicrostructure *microstructure;
+  const CMicrostructure *microstructure;
   OrientMap *odata;
-  OrientMapMeshData(CMicrostructure *ms, OrientMap *orientmap)
+  OrientMapMeshData(const CMicrostructure *ms, OrientMap *orientmap)
     : microstructure(ms),
       odata(orientmap)
   {}
@@ -38,7 +38,7 @@ public:
 
 void OrientationMapProp::precompute(FEMesh *mesh) {
   if(mesh) {
-    CMicrostructure *microstructure = mesh->get_microstructure();
+    const CMicrostructure *microstructure = mesh->get_microstructure();
     OrientMap *orientmap = getOrientMap(microstructure->name());
     if(orientmap == 0)
       throw ErrUserError("Microstructure does not have an Orientation Map!");

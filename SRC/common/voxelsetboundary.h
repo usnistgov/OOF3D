@@ -270,8 +270,7 @@ class VSBGraph {
   const CRectangularPrism &bbox() const { return bounds; }
   
   bool checkEdges() const;
-  bool checkConnectivity(unsigned int nRegions, const ICRectangularPrism&)
-    const;
+  bool checkConnectivity() const;
   void dump(std::ostream &) const;
   void dumpLines(std::ostream&, const CMicrostructure*) const;
   void draw(LineSegmentLayer*, const CMicrostructure*) const;
@@ -295,13 +294,15 @@ public:
 
 class VoxelSetBoundary {
 private:
-  const unsigned int category;
+  const unsigned int category;	// for debugging only
   const CMicrostructure *microstructure;
   // There's one VSBGraph for each subregion in the CMicrostructure. 
   std::vector<VSBGraph> graphs;
   CRectangularPrism *bbox_;
 public:
-  VoxelSetBoundary(const CMicrostructure *ms, unsigned int cat);
+  VoxelSetBoundary(const CMicrostructure *ms,
+		   const std::vector<ICRectangularPrism>&,
+		   unsigned int cat);
   ProtoVSBNode *protoVSBNodeFactory(unsigned int, unsigned char,
 				    const ICoord3D&);
   void addEdge(const ICoord3D&, const ICoord3D&);
@@ -313,15 +314,15 @@ public:
   void findBBox();
   const CRectangularPrism &bounds() const { return *bbox_; }
 
-  double clippedVolume(const CRectangularPrism&,
-		       const std::vector<COrientedPlane>&,
-		       bool checkTopology) const;
+  double clippedVolume(const std::vector<ICRectangularPrism>&,
+		       const CRectangularPrism&,
+		       const std::vector<COrientedPlane>&) const;
 
   VSBEdgeIterator iterator() const { return VSBEdgeIterator(this); }
 
   bool checkEdges() const;
-  bool checkConnectivity(unsigned int) const;
-  void dump(std::ostream &os) const;
+  bool checkConnectivity() const;
+  void dump(std::ostream &os, const std::vector<ICRectangularPrism>&) const;
   void dumpLines(const std::string&) const;
   void saveClippedVSB(const std::vector<COrientedPlane>&,
 		      const std::string&) const;
@@ -338,6 +339,7 @@ std::string &printSig(unsigned char);
 
 #ifdef DEBUG
 void setVerboseVSB(bool);
+bool verboseVSB();
 #endif // DEBUG
 
 #endif // VOXELSETBOUNDARY_H

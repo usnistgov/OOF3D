@@ -259,7 +259,7 @@ CSkeletonBase* Refine::refine(CSkeletonBase *skeleton, CSkeleton *newSkeleton)
 	  {
 	    // if the parent's homogeneity is 1, this element's
 	    // homogeneity is 1
-	    if(el->homogeneity(skeleton->getMicrostructure()) == 1.0) {
+	    if(el->homogeneity(skeleton) == 1.0) {
 	      (*new_it)->copyHomogeneity(*el);
 	    }
 	    // The calls to Skeleton.newElement() made by the refinement
@@ -445,7 +445,7 @@ double ProvisionalRefinement::energy(CSkeleton *skeleton, double alpha) const {
   double energy = 0.0;
   for(CSkeletonElementVector::iterator it = newElements->begin();
       it != newElements->end(); ++it)
-    energy += (*it)->energyTotal(skeleton->getMicrostructure(), alpha);
+    energy += (*it)->energyTotal(skeleton, alpha);
   return energy/newElements->size();
 }
 

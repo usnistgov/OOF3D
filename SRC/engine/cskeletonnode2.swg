@@ -76,7 +76,7 @@ public:
 				       CPinnedNodeTrackerVector *cvector, 
 				       CPinnedNodeTrackerVector *pvector);
 
-  int dominantPixel(CMicrostructure*);
+  int dominantPixel(CSkeletonBase*);
 
   %addmethods {
     int uiIdentifier() {

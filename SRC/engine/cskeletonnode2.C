@@ -858,8 +858,8 @@ void CSkeletonNode::print(std::ostream &os) const {
 }
 
 
-int CSkeletonNode::dominantPixel(const CMicrostructure *ms) const {
-  return ms->category(getPosition());
+int CSkeletonNode::dominantPixel(const CSkeletonBase *skel) const {
+  return skel->getMicrostructure()->category(getPosition());
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

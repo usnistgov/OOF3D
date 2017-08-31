@@ -39,8 +39,8 @@ public:
   double length();
   double lengthInVoxelUnits(CMicrostructure *MS);
   double lengthInFractionalUnits(CMicrostructure *MS);
-  double homogeneity(CMicrostructure*);
-  int dominantPixel(CMicrostructure*);
+  double homogeneity(CSkeletonBase*);
+  int dominantPixel(CSkeletonBase*);
   %addmethods {
     int uiIdentifier() { 
       return self->getUid();

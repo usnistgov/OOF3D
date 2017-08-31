@@ -111,7 +111,7 @@ CSkeletonNodeVector* FiddleHeterogeneousElements::getNodes(
     for(CSkeletonElementIterator elit = skeleton->beginElements();
 	elit != skeleton->endElements(); ++elit) {
       if((*elit)->active(skeleton) &&
-	 (*elit)->homogeneity(skeleton->getMicrostructure()) < threshold)
+	 (*elit)->homogeneity(skeleton) < threshold)
 	{
 	  for(CSkeletonNodeIterator nodeit = (*elit)->getNodes()->begin();
 	      nodeit != (*elit)->getNodes()->end(); ++nodeit)
@@ -276,9 +276,9 @@ Coord SurfaceSmooth::getPosition(const CDeputySkeleton *skeleton,
     CSkeletonElementVector els;
     skeleton->getSegmentElements(*s, els);
     if(!els.empty()) {
-      int cat1 = els[0]->dominantPixel(skeleton->getMicrostructure());
+      int cat1 = els[0]->dominantPixel(skeleton);
       for(unsigned int i=1; i<els.size(); ++i) {
-	int cat2 = els[i]->dominantPixel(skeleton->getMicrostructure());
+	int cat2 = els[i]->dominantPixel(skeleton);
 	if(cat1!=cat2 && cat1!=UNKNOWN_CATEGORY && cat2!=UNKNOWN_CATEGORY) {
 	  neighborNodes.insert((*s)->get_other_node(node));
 	  break;

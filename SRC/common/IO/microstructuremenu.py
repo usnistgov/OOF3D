@@ -299,26 +299,3 @@ _fixmenu()
 switchboard.requestCallback(('new who', 'Microstructure'), _fixmenu)
 switchboard.requestCallback(('remove who', 'Microstructure'), _fixmenu)
 
-####################
-
-homogmenu = mainmenu.settingsmenu.addItem(oofmenu.OOFMenuItem(
-    "HomogeneityParams",
-    help="For tweaking the homogeneity calculation"))
-
-def setSubregionSize(menuitem, size):
-    cmicrostructure.set_subregion_size(size);
-
-def setSubregionSlop(menuitem, slop):
-    cmicrostructure.set_subregion_slop(slop)
-
-homogmenu.addItem(oofmenu.OOFMenuItem(
-    "SubregionSize",
-    callback=setSubregionSize,
-    params=[parameter.IntParameter('size', 20)]
-    ))
-
-homogmenu.addItem(oofmenu.OOFMenuItem(
-    "SubregionSlop",
-    callback=setSubregionSlop,
-    params=[parameter.IntParameter('slop', 5)]
-    ))

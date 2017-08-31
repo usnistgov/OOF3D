@@ -292,6 +292,13 @@ public:
   bool checkExteriorFaces(CSkeletonFaceVector*);
 
   bool checkCategoryVolumes(double);
+  bool checkVSB(unsigned int);
+  void dumpVSB(unsigned int, char*);
+  void dumpVSBLines(unsigned int, char*);
+  void drawVoxelSetBoundary(LineSegmentLayer*, int);
+  void saveClippedVSB(unsigned int, COrientedPlane&, char*);
+  double clipVSBVol(unsigned int, COrientedPlane&);
+
 
   CDeputySkeleton *deputyCopy();
   CSkeleton *completeCopy();

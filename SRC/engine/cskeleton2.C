@@ -18,6 +18,7 @@
 #include "common/progress.h"
 #include "common/timestamp.h"
 #include "common/tostring.h"
+#include "common/voxelsetboundary.h"
 #include "engine/cskeleton2.h"
 #include "engine/cskeletonelement.h"
 #include "engine/cskeletonface.h"
@@ -50,7 +51,21 @@ const std::string CDeputySkeleton::classname_("CDeputySkeleton");
 
 unsigned long CSkeletonBase::uidbase = 0;
 
-CSkeletonBase::CSkeletonBase() {
+// Values used when setting the size of the bins used in
+// VoxelSetBoundary construction.  The nominal linear size of the bins
+// is the cube root of average element volume time VSB_FUDGE, but not
+// less than MIN_VSB_BINSIZE.  The size is set to DEFAULT_VSB_BIN if
+// no other information is available with which to make a better
+// choice.
+#define VSB_FUDGE 8.0
+#define DEFAULT_VSB_BIN 20
+#define MIN_VSB_BINSIZE 5
+
+
+CSkeletonBase::CSkeletonBase()
+  : illegal_(false),
+    defaultVSBbin(DEFAULT_VSB_BIN, DEFAULT_VSB_BIN, DEFAULT_VSB_BIN)
+{
   // oofcerr << "CSkeletonBase::ctor: " << this << std::endl;
   uid = uidbase;
   ++uidbase;
@@ -61,10 +76,12 @@ CSkeletonBase::CSkeletonBase() {
   homogeneity_index_computation_time.backdate();
   illegal_count_computation_time.backdate();
   suspect_count_computation_time.backdate();
+  vsbTimeStamp.backdate();
 }
 
 CSkeletonBase::~CSkeletonBase() {
   // oofcerr << "CSkeletonBase::dtor: " << this << std::endl;
+  clearVSBs();
 }
 
 const TimeStamp &CSkeletonBase::getTimeStamp() const {
@@ -100,6 +117,7 @@ CSkeleton::CSkeleton(CMicrostructure *ms, bool prdcty[DIM])
 
   washMe = false;
   numDefunctNodes = 0;
+  // oofcerr << "CSkeleton::ctor: done" << std::endl;
 }
 
 // Creating a new CSkeleton from Python should always be done by
@@ -332,8 +350,6 @@ void CSkeleton::createTetra(const TetArrangement *arrangement,
 	    createElement(VTK_TETRA, 4, ids5);
 	  }
 
-	  // for(int a=0; a<5; ++a)
-	  //   elements[element_count+a]->findHomogeneityAndDominantPixel(MS);
 	  ICoord idx = ICoord(i,j,k);
 	  addGridSegmentsToBoundaries(idx,lim);
 	  addGridFacesToBoundaries(idx,lim,flip);
@@ -878,20 +894,20 @@ double CSkeletonBase::getHomogeneityIndex() const {
 }
 
 void CSkeletonBase::calculateHomogeneityIndex() const {
+  // oofcerr << "CSkeletonBase::calculateHomogeneityIndex" << std::endl;
   homogeneityIndex = 0.0;
   illegalCount = 0;
   DefiniteProgress *progress = 
     dynamic_cast<DefiniteProgress*>(getProgress("Calculating homogeneity index",
 						DEFINITE));
-  const CMicrostructure *ms = getMicrostructure();
   try {
+    buildVSBs();
     double vtot = 0.0;		// total volume
     for(CSkeletonElementIterator elit = beginElements(); 
 	elit != endElements(); ++elit)
       {
 	if(!(*elit)->illegal()) {
-	  homogeneityIndex +=
-	    (*elit)->volume()*(*elit)->homogeneity(ms);
+	  homogeneityIndex += (*elit)->volume()*(*elit)->homogeneity(this);
 	  vtot += (*elit)->volume();
 	  if((*elit)->suspect()) 
 	    ++suspectCount;
@@ -926,7 +942,7 @@ void CSkeletonBase::calculateHomogeneityIndex() const {
 double CSkeletonBase::energyTotal(double alpha) const {
   double total = 0;
   for(unsigned int i=0; i<nelements(); ++i) {
-    total += getElement(i)->energyTotal(getMicrostructure(), alpha);
+    total += getElement(i)->energyTotal(this, alpha);
   }
   return total;
 }
@@ -992,7 +1008,6 @@ const CSkeletonNode* CSkeletonBase::nearestNode(Coord *point) {
   int idx = get_point_locator()->FindClosestPoint(point->xpointer());
 #ifdef DEBUG
   if(idx < 0 || (unsigned int) idx >= nnodes()) {
-    oofcerr << "CSkeletonBase::nearestNode: idx=" << idx << std::endl;
     throw ErrProgrammingError("FindClosestPoint failed", __FILE__, __LINE__);
   }
 #endif	// DEBUG
@@ -1126,7 +1141,7 @@ vtkSmartPointer<vtkDataArray> CSkeleton::getMaterialCellData(
   for(CSkeletonElementIterator it=elements.begin(); it!=elements.end(); ++it) {
     CSkeletonElement *el = *it;
     if(filter->acceptable(el, this)) {
-      int cat = el->dominantPixel(MS);
+      int cat = el->dominantPixel(this);
       intCellData->InsertNextValue(cat);
     }
   }
@@ -1143,7 +1158,7 @@ const
   for(CSkeletonElementIterator it=elements.begin(); it!=elements.end(); ++it) {
     CSkeletonElement *el = *it;
     if(filter->acceptable(el, this)) {
-      double energy = el->energyTotal(getMicrostructure(), alpha);
+      double energy = el->energyTotal(this, alpha);
       // if(energy > max)
       // 	max = energy;
       // if(energy < min)
@@ -1546,7 +1561,7 @@ void CSkeletonBase::getFaceSegments(const CSkeletonFace *face,
 	      << std::endl;
       oofcerr << "    nodes are: " << *face->getNode(i) << " " 
 	      << *face->getNode((i+1)%3) << std::endl;
-      assert(0);
+      throw ErrProgrammingError("getFaceSegments failed!", __FILE__, __LINE__);
     }
     segset.insert(seg);
     // oofcerr << "CSkeletonBase::getFaceSegments: inserted" << std::endl;
@@ -1639,9 +1654,9 @@ void CSkeletonBase::getInternalBoundaryNodes(CSkeletonNodeSet &nodes) const {
   int cat1, cat2;
   for(CSkeletonNodeIterator nit = beginNodes(); nit != endNodes(); ++nit) {
     elvec = (*nit)->getElements();
-    cat1 = (*elvec)[0]->dominantPixel(getMicrostructure());
+    cat1 = (*elvec)[0]->dominantPixel(this);
     for(CSkeletonElementVector::size_type i=1; i<elvec->size(); ++i) {
-      cat2 = (*elvec)[i]->dominantPixel(getMicrostructure());
+      cat2 = (*elvec)[i]->dominantPixel(this);
       if(cat1 != cat2 && cat1 != UNKNOWN_CATEGORY && cat2 != UNKNOWN_CATEGORY) {
 	nodes.insert(*nit);
 	break;
@@ -2564,7 +2579,8 @@ void CSkeleton::populate_femesh(FEMesh *realmesh, const MasterElement *master,
 }
 
 CDeputySkeleton *CSkeletonBase::deputyCopy() {
-  CDeputySkeleton *dep = new CDeputySkeleton(this); 
+  CDeputySkeleton *dep = new CDeputySkeleton(this);
+  dep->setDefaultVSBbinSize(this);
   return dep;
 }
 
@@ -2593,6 +2609,7 @@ CSkeleton *CSkeleton::nodeOnlyCopy() {
   cleanUp();
 
   CSkeleton *result = new CSkeleton(MS, periodicity);
+  result->setDefaultVSBbinSize(this);
 
   copyNodes(result);
 
@@ -2608,6 +2625,7 @@ CSkeleton *CSkeleton::completeCopy() {
   // This isn't const, because it has to set parent/child pointers.
   cleanUp();
   CSkeleton *result = new CSkeleton(MS, periodicity);
+  result->setDefaultVSBbinSize(this);
 
   copyNodes(result);
 
@@ -3294,7 +3312,7 @@ double DeputyProvisionalChanges::deltaE(double alpha) {
 	++elit) 
       {
 	double vol = 1; // (*elit)->volume();
-	oldE += vol*(*elit)->energyTotal(deputy->getMicrostructure(), alpha);
+	oldE += vol*(*elit)->energyTotal(deputy, alpha);
 	oldV += vol;
       }
     oldE /= oldV;
@@ -3308,10 +3326,10 @@ double DeputyProvisionalChanges::deltaE(double alpha) {
       {
 	// we must call this explicitly so that the cached homogeneity
 	// is correct
-	(*elit)->findHomogeneityAndDominantPixel(deputy->getMicrostructure());
+	(*elit)->findHomogeneityAndDominantPixel(deputy);
 	const HomogeneityData &homogeneity = (*elit)->getHomogeneityData();
 	double vol = 1; //(*elit)->volume();
-	newE += vol*(*elit)->energyTotal(deputy->getMicrostructure(), alpha);
+	newE += vol*(*elit)->energyTotal(deputy, alpha);
 	newV += vol;
 	cachedNewHomogeneity[(*elit)] = homogeneity;
       }
@@ -3399,14 +3417,14 @@ double ProvisionalChanges::deltaE(double alpha) {
     for(ConstCSkeletonElementSet::const_iterator elit = before.begin(); 
 	elit != before.end(); ++elit) 
       {
-	oldE += (*elit)->energyTotal(skeleton->getMicrostructure(), alpha);
+	oldE += (*elit)->energyTotal(skeleton, alpha);
       }
     oldE /= before.size();
     makeNodeMove();
     double newE = 0.0;
     for(CSkeletonElementSet::const_iterator elit = after.begin(); 
 	elit != after.end(); ++elit) 
-      newE += (*elit)->energyTotal(skeleton->getMicrostructure(), alpha);
+      newE += (*elit)->energyTotal(skeleton, alpha);
     if(!after.empty())
       newE /= after.size();
     moveNodeBack();
@@ -3858,6 +3876,241 @@ void CSkeleton::elementsAddGroupsDown(CGroupTrackerVector *vector) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+void CSkeletonBase::clearVSBs() const {
+  for(VoxelSetBoundary *vsb : voxelSetBdys)
+    delete vsb;
+  voxelSetBdys.clear();
+}
+
+void CSkeletonBase::buildVSBs() const {
+  const CMicrostructure *ms = getMicrostructure();
+  if(vsbTimeStamp > timestamp && vsbTimeStamp > ms->getTimeStamp())
+    return;
+  
+  // Get the bin size from the average element volume.  Each bin is a
+  // rectangular region of the microstructure.  A VSBGraph is computed
+  // in each bin for each voxel category, instead of constructing one
+  // graph that spans the whole microstructure.
+
+  // This constructs bins that are the same size in each direction,
+  // but it doesn't need to be that way.
+
+  // The default size is used when there are no elements yet in the
+  // Skeleton.  It's set by the constructor to DEFAULT_VSB_BIN, but
+  // if this Skeleton is a copy of another Skeleton, it has been reset
+  // by setDefaultVSBbinSize to the bin size of the copied Skeleton.
+  ICoord3D newBinSize = defaultVSBbin;
+  if(nelements() > 0) {
+    newBinSize = getDefaultVSBbinSize();
+  }
+  // Don't recompute the VSBs if neither the bin size nor the voxel
+  // categories have changed.
+  if(newBinSize == vsbBinSize && vsbTimeStamp > ms->getTimeStamp())
+    return;
+
+  vsbBinSize = newBinSize;
+  ICoord3D msSize = ms->sizeInPixels();
+  
+  // Find out how many bins to use.  
+  ICoord3D nbins;
+  for(unsigned int c=0; c<3; c++) {
+    nbins[c] = msSize[c]/vsbBinSize[c]; // integer division
+    if(nbins[c] == 0)
+      nbins[c] = 1;
+  }
+
+  // Compute how large each bin should be in each direction.  They
+  // won't all be the same and the actual sizes of some bins will be
+  // larger than the nominal size if it does not divide the
+  // microstructure size exactly.
+  std::vector<std::vector<unsigned int>> sizes(3); // size of each bin
+  std::vector<std::vector<unsigned int>> sumsizes(3); // cumulative sum of sizes
+  for(unsigned int c=0; c<3; c++) {
+    int subsize = msSize[c]/nbins[c]; // integer division.
+    int extra = msSize[c] - subsize*nbins[c]; // remainder
+    sizes[c].clear();
+    sizes[c].resize(nbins[c], subsize);
+    if(extra > 0) {
+      for(unsigned int i=0; i<extra; i++)
+	sizes[c][i] += 1;
+    }
+    // sumsizes gives the starting and ending voxels for each bin
+    int sum = 0;
+    sumsizes[c].resize(nbins[c]+1);
+    for(unsigned int i=0; i<nbins[c]; i++) {
+      sumsizes[c][i] = sum;
+      sum += sizes[c][i];
+    }
+    assert(sum == msSize[c]);
+    sumsizes[c][nbins[c]] = msSize[c];
+  }
+      
+  // Make the bins.  They're stored here rather than in the
+  // VoxelSetBoundary objects because all VoxelSetBoundaries use the
+  // same bins.  The order in which the bins are created here
+  // determines the order in which the VoxelSetBoundaries will create
+  // and store their VSBGraphs.  The order doesn't matter as long as
+  // the CSkeletonBase and VoxelSetBoundaries agree on it.
+  vsbBins.clear();
+  vsbBins.reserve(nbins[0]*nbins[1]*nbins[2]);
+  for(unsigned int ix=0; ix<nbins[0]; ix++) {
+    for(unsigned int iy=0; iy<nbins[1]; iy++) {
+      for(unsigned int iz=0; iz<nbins[2]; iz++) {
+	vsbBins.emplace_back(
+	     ICoord3D(sumsizes[0][ix], sumsizes[1][iy], sumsizes[2][iz]),
+	     ICoord3D(sumsizes[0][ix+1], sumsizes[1][iy+1], sumsizes[2][iz+1]));
+      }
+    }
+  }
+
+  ms->categorizeIfNecessary();
+  clearVSBs();
+  voxelSetBdys.reserve(ms->nCategories());
+
+  for(unsigned int cat=0; cat<ms->nCategories(); cat++) {
+    VoxelSetBoundary *thisVSB = new VoxelSetBoundary(ms, vsbBins, cat);
+    voxelSetBdys[cat] = thisVSB;
+    // A ProtoVSBNode is the precursor to the actual VSBNodes.
+    // There's a ProtoVSBNode at each corner of each voxel, but
+    // neighboring voxels share ProtoVSBNodes.  The array of
+    // protonodes is one larger in each dimension than the array of
+    // voxels.
+
+    // TODO: To avoid creating the full array of ProtoVSBNode*s, we
+    // might be able to get away with a map keyed by ICoords.  Finding
+    // the next ProtoVSBNode in a given direction would be slow, but
+    // it might be ok if we keep the map small by deleting any
+    // ProtoVSBNode that has already been fully connected.
+
+    for(unsigned int s=0; s<vsbBins.size(); s++) {
+      const ICRectangularPrism &bin = vsbBins[s];
+      Array<ProtoVSBNode*> protoNodes(
+		      ICRectangularPrism(bin.lowerleftback(),
+					 bin.upperrightfront()+ICoord(1,1,1)));
+      protoNodes.clear(nullptr);
+
+      for(Array<ProtoVSBNode*>::iterator i=protoNodes.begin();
+	  i!=protoNodes.end(); ++i)
+	{
+	  // The type of ProtoVSBNode depends on which of the 8 voxels
+	  // surrounding the corner point are in the current category.
+	  // The bits in the signature indicate which voxels are in
+	  // the category.
+	  char signature = ms->voxelSignature(i.coord(), cat, bin);
+	  // protoVSBNodeFactory returns a ProtoNode and also creates
+	  // the VSBNodes in the graph, but it doesn't connect them.
+	  // That can be done only after all the ProtoNodes are
+	  // constructed.
+	  protoNodes[i] = thisVSB->protoVSBNodeFactory(s, signature, i.coord());
+	}
+      // Loop over the protoNodes, connecting each one to the next
+      // protoNode in each x,y,z direction.
+      for(auto i=protoNodes.begin(); i!=protoNodes.end(); ++i) {
+	ICoord3D here = i.coord();
+	ProtoVSBNode *pnode = protoNodes[here];
+	if(pnode != nullptr) {
+	  // Get the reference space directions in which this
+	  // ProtoVSBNode needs to find neighbors.
+	  const std::vector<VoxelEdgeDirection> &dirs(pnode->connectDirs());
+	  for(const VoxelEdgeDirection &dir : dirs) {
+	    // Convert the reference space directions to actual space.
+	    VoxelEdgeDirection actualDir = pnode->rotation.toActual(dir);
+	    // It's only necessary to look in the positive directions
+	    // because the connections in the negative directions are
+	    // checked when examining the other node of the edge.
+	    if(actualDir.dir == 1) {
+	      unsigned int c = actualDir.axis;
+	      // Look for the next protonode in this direction
+#ifdef DEBUG
+	      bool found = false;
+#endif // DEBUG
+	      for(unsigned int k=here[c]+1; k<msSize[c]+1; k++) {
+		ICoord3D there = here;
+		there[c] = k;
+		if(protoNodes[there] != nullptr) { // found the next node
+#ifdef DEBUG
+		  found = true;
+#endif // DEBUG
+		  protoNodes[here]->connect(protoNodes[there]);	
+		  break;     // done with this direction at this point
+		}
+	      } // end search for next protonode in direction c
+#ifdef DEBUG
+	      if(!found) {
+		oofcerr << "CMicrostructure::categorize:"
+			<< " failed to find next node!" << std::endl;
+		oofcerr << "CMicrostructure::categorize: here=" << here
+			<< " c=" << c << " cat=" << cat << std::endl;
+		throw ErrProgrammingError("CMicrostructure::categorize failed!",
+					  __FILE__, __LINE__);
+	      }
+#endif // DEBUG
+	    } // end if actualDir is positive
+	  } // end loop over directions dir
+	}   // end if a protonode exists at i
+      } // end loop over voxels (protoNode locations) i
+      // oofcerr << "CSkeletonBase::buildVSBs: connected protonodes" << std::endl;
+
+      // Remove the 2-fold connected nodes.
+      thisVSB->fixTwoFoldNodes(s);
+      
+      // Delete the protonodes.
+      for(Array<ProtoVSBNode*>::iterator p=protoNodes.begin();
+	  p!=protoNodes.end(); ++p)
+	{
+	  delete protoNodes[p];
+	}
+    } //  end loop over bins
+    thisVSB->findBBox();
+    
+  } // end loop over categories cat
+  
+  // Construct VoxelSetBoundary objects, which are compact and
+  // computationally efficient representations of the voxels in each
+  // category.  See voxelsetboundary.C for an overview of the
+  // VoxelSetBoundary class.
+
+  ++vsbTimeStamp;
+} // end CSkeletonBase::buildVSBs
+
+void CSkeletonBase::setDefaultVSBbinSize(const CSkeletonBase *other) {
+  // Compute a new bin size from the other Skeleton.  The other
+  // skeleton may have been modified after it last constructed its
+  // bins, so don't simply copy its bin size.
+  if(other->nelements() != 0) {
+    defaultVSBbin = other->getDefaultVSBbinSize();
+  }
+  else if(other->vsbBinSize != ICoord3D(0,0,0)) {
+    defaultVSBbin = other->vsbBinSize;
+  }
+  else {
+    // The other skeleton hasn't even created elements somehow...
+    defaultVSBbin = ICoord3D(DEFAULT_VSB_BIN, DEFAULT_VSB_BIN, DEFAULT_VSB_BIN);
+  }
+}
+
+ICoord3D CSkeletonBase::getDefaultVSBbinSize() const {
+  const CMicrostructure *ms = getMicrostructure();
+  double avgElVol = ms->volume()/(ms->volumeOfVoxels()*nelements());
+  // TODO: This may not be a good value to use if the element size
+  // distribution is very broad:
+  int isize = pow(VSB_FUDGE*avgElVol, 1./3.);
+  if(isize < MIN_VSB_BINSIZE)
+    isize = MIN_VSB_BINSIZE;
+  return ICoord3D(isize, isize, isize);
+}
+
+
+double CSkeletonBase::clippedCategoryVolume(
+				    unsigned int cat,
+				    const CRectangularPrism &ebbox,
+				    const std::vector<COrientedPlane> &planes)
+  const
+{
+  return voxelSetBdys[cat]->clippedVolume(vsbBins, ebbox, planes);
+}
+
+
 // Check that that total volume of each category, summed over
 // elements, is the same as the volume of the voxels in the category.
 // Return true if the test passes.
@@ -3865,15 +4118,12 @@ void CSkeleton::elementsAddGroupsDown(CGroupTrackerVector *vector) {
 bool CSkeletonBase::checkCategoryVolumes(double tolerance) const {
   const CMicrostructure *ms = getMicrostructure();
   unsigned int ncat = ms->nCategories();
+  buildVSBs();
   DoubleVec volumes(ncat, 0.0);
   for(CSkeletonElementIterator elit = beginElements();
       elit!=endElements(); ++elit)
     {
-      // The bool checkTopology arg to categoryVolumes tells it to
-      // perform topology checks on the clipped voxel set boundaries.
-      // This is the only place where it should be set to true.  The
-      // test is o(N^3) in the size of the clipped boundary.
-      DoubleVec evols = (*elit)->categoryVolumes(ms, true);
+      DoubleVec evols = (*elit)->categoryVolumes(this);
       for(unsigned int c=0; c<ncat; c++)
 	volumes[c] += evols[c];
     }
@@ -3907,6 +4157,84 @@ bool CSkeletonBase::checkCategoryVolumes(double tolerance) const {
     }
   }
   return ok;
+} // end CSkeletonBase::checkCategoryVolumes
+
+bool CSkeletonBase::checkVSB(unsigned int cat) const {
+  getMicrostructure()->categorizeIfNecessary();
+  buildVSBs();
+  return voxelSetBdys[cat]->checkEdges();
+}
+
+void CSkeletonBase::dumpVSB(unsigned int cat, const std::string &file) const {
+  getMicrostructure()->categorizeIfNecessary();
+  buildVSBs();
+  std::ofstream f(file);
+  voxelSetBdys[cat]->dump(f, vsbBins);
+}
+
+void CSkeletonBase::dumpVSBLines(unsigned int cat, const std::string &file)
+  const
+{
+  getMicrostructure()->categorizeIfNecessary();
+  buildVSBs();
+  voxelSetBdys[cat]->dumpLines(file);
+}
+
+void CSkeletonBase::drawVoxelSetBoundary(LineSegmentLayer *layer,
+					 int category)
+  const
+{
+  const CMicrostructure *ms = getMicrostructure();
+  ms->categorizeIfNecessary();
+  assert(category < ms->nCategories());
+  buildVSBs();
+  const VoxelSetBoundary *vsb = voxelSetBdys[category];
+  VSBEdgeIterator iter = vsb->iterator();
+  layer->set_nSegs(vsb->size()*3/2);
+  while(!iter.done()) {
+    Coord3D pt0 = ms->pixel2Physical(iter.node0()->position);
+    Coord3D pt1 = ms->pixel2Physical(iter.node1()->position);
+    if(pt1 > pt0) {
+      layer->addSegment(&pt0, &pt1);
+    }
+    iter.next();
+  }
+  // vsb->dump(std::cerr, vsbBins);
+  // double vol = vsb->volume();
+  // oofcerr << "CSkeletonBase::drawVoxelSetBoundary: volume=" << vol
+  // 	  << std::endl;
+}
+
+void CSkeletonBase::saveClippedVSB(unsigned int cat,
+				   const std::vector<COrientedPlane> &planes,
+				   const std::string &filename)
+  const
+{
+  const CMicrostructure *ms = getMicrostructure();
+  ms->categorizeIfNecessary();
+  buildVSBs();
+  assert(cat < ms->nCategories());
+  voxelSetBdys[cat]->saveClippedVSB(planes, filename);
+}
+
+void CSkeletonBase::saveClippedVSB(unsigned int cat,
+				   const COrientedPlane &plane,
+				   const std::string &filename)
+  const
+{
+  std::vector<COrientedPlane> planes(1, plane);
+  saveClippedVSB(cat, planes, filename);
+}
+
+double CSkeletonBase::clipVSBVol(unsigned int cat, const COrientedPlane &plane)
+  const
+{
+  const CMicrostructure *ms = getMicrostructure();
+  ms->categorizeIfNecessary();
+  buildVSBs();
+  std::vector<COrientedPlane> planes(1, plane);
+  CRectangularPrism bbox(Coord3D(0,0,0), ms->sizeInPixels().coord());
+  return voxelSetBdys[cat]->clippedVolume(vsbBins, bbox, planes);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

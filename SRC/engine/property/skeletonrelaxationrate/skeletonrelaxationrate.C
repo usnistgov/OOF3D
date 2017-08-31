@@ -77,7 +77,7 @@ void SkeletonRelaxationRate::flux_offset(const FEMesh *mesh,
   // HomogeneityEnergy is a function of the homogeneity, which we
   // don't know, but we can ask the element, and then pass the result
   // through.
-  double energyH = skelel->energyHomogeneity(mesh->get_microstructure());
+  double energyH = skelel->energyHomogeneity(mesh->get_skeleton());
   // TODO OPT: compute S in-line.
   const SymmMatrix3 S = shapetensor(element);
   for(SymTensorIterator ij; !ij.end(); ++ij) {

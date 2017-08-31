@@ -95,7 +95,7 @@ double CSkeletonFace::areaInFractionalUnits(const CMicrostructure *MS) const  {
   return a;
 }
 
-double CSkeletonFace::homogeneity(const CMicrostructure*) const {
+double CSkeletonFace::homogeneity(const CSkeletonBase*) const {
   // TODO 3.1: Write this!  And then use it to choose faces to refine,
   // maybe.
   return 1.0;

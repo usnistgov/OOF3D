@@ -249,6 +249,7 @@
 #ifdef DEBUG
 static bool verbose = false;
 void setVerboseVSB(bool f) { verbose = f; }
+bool verboseVSB() { return verbose; }
 #endif // DEBUG
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -3116,13 +3117,10 @@ bool VSBGraph::checkEdges() const {
 
 // ** checkConnectivity only applies to convex polygons. **
 
-bool VSBGraph::checkConnectivity(unsigned int nRegions,
-				 const ICRectangularPrism &subregion)
-  const
+bool VSBGraph::checkConnectivity() const
 {
   // First find the regions.  region[i] is nullptr if the node hasn't
   // yet been assigned to a region.
-  int nreg = 0;
   bool ok = true;
   typedef std::set<const VSBNode*> Region;
   std::set<Region*> regions;
@@ -3153,11 +3151,6 @@ bool VSBGraph::checkConnectivity(unsigned int nRegions,
       }
     } // end if vertex "start" isn't in a region.
   }   // end loop over vertices "start"
-  if(nRegions > 0 && nRegions != regions.size()) {
-    oofcerr << "VSBGraph::checkConnectivity: expected " << nRegions
-	    << " regions but found " << nreg << "!" << std::endl;
-    ok = false;
-  }
   // Loop over pairs of vertices in the same region, and check that
   // removing them doesn't divide the region into two.
   for(Region *reg : regions) {
@@ -3201,8 +3194,6 @@ bool VSBGraph::checkConnectivity(unsigned int nRegions,
 	if(visited.size() != reg->size()) {
 	  oofcerr << "VSBGraph::checkConnectivity:"
 		  << " region is insufficiently connected!" << std::endl;
-	  oofcerr << "VSBGraph::checkConnectivity: subregion=" << subregion
-		  << std::endl;
 	  oofcerr << "VSBGraph::checkConnectivity: nodeA=" << *nodeA
 		  << " nodeB=" << *nodeB << std::endl;
 	  // for(const VSBNode *node : *reg) {
@@ -3283,9 +3274,8 @@ VSBEdgeIterator::VSBEdgeIterator(const VoxelSetBoundary *vsb)
     inbr(0),
     finished(false)
 {
-  if(vsb->microstructure->nSubregions() == 0) {
+  if(vsb->graphs.empty())
     finished = true;
-  }
 }
 
 const VSBNode *VSBEdgeIterator::node0() const {
@@ -3331,14 +3321,15 @@ void VSBEdgeIterator::next() {
 
 VoxelSetBoundary::VoxelSetBoundary(
 			   const CMicrostructure *ms,
+			   const std::vector<ICRectangularPrism> &subregions,
 			   unsigned int cat)
   : category(cat),
     microstructure(ms),
     bbox_(nullptr)
 {
-  graphs.reserve(ms->nSubregions());
-  for(unsigned int s=0; s<ms->nSubregions(); s++)
-    graphs.emplace_back(ms->subregion(s));
+  graphs.reserve(subregions.size());
+  for(unsigned int s=0; s<subregions.size(); s++)
+    graphs.emplace_back(subregions[s]);
 }
 
 // protoVSBNodeFactory converts a signature (2x2x2 set of bools stored
@@ -3391,12 +3382,10 @@ bool VoxelSetBoundary::checkEdges() const {
   return ok;
 }
 
-bool VoxelSetBoundary::checkConnectivity(unsigned int nRegions) const {
+bool VoxelSetBoundary::checkConnectivity() const {
   bool ok = true;
-  for(unsigned int s=0; s<graphs.size(); s++) {
-    const VSBGraph &graph = graphs[s];
-    const ICRectangularPrism &subregion = microstructure->subregion(s);
-    bool regionOk = graph.checkConnectivity(nRegions, subregion);
+  for(const VSBGraph &graph : graphs) {
+    bool regionOk = graph.checkConnectivity();
     ok &= regionOk;
   }
   return ok;
@@ -3416,118 +3405,35 @@ void printHomogRegionStats() {
 
 // VoxelSetBoundary::clippedVolume is the core of the element
 // homogeneity calculation.  It's called by
-// CSkeletonElement::categoryVolumes().  The checkTopology arg should
-// be true only during testing, and even then only if it's known that
-// the resulting clipped polyhedron is small.  The check is o(N^3) is
-// the number of vertices in the polyhedron.
+// CSkeletonElement::categoryVolumes().
 
 double VoxelSetBoundary::clippedVolume(
+			       const std::vector<ICRectangularPrism> &bins,
 			       const CRectangularPrism &ebbox,
-			       const std::vector<COrientedPlane> &planes,
-			       bool checkTopology)
+			       const std::vector<COrientedPlane> &planes)
   const
 {
   assert(!planes.empty());
-// #ifdef DEBUG
-//   if(verbose) {
-//     oofcerr << "VoxelSetBoundary::clippedVolume"
-// 	    << std::endl;
-//   }
-//   OOFcerrIndent indent(2);
-// #endif // DEBUG
-  
   double vol = 0.0;
-  // loop over subregions
-
-  // TODO: Instead of looping over all subregions, compute which
-  // subregions to use, since we know the sizes of the regions.  Or
-  // perhaps use an octree structure for the subregions so that we can
-  // find the subregions containing the corners of the element
-  // bounding box quickly, and then examine only the subregions
-  // between the corners.
-  for(unsigned int s=0; s<microstructure->nSubregions(); s++) {
-    if(!graphs[s].empty() && microstructure->subregion(s).intersects(ebbox)) {
+  // TODO: Instead of looping over all bins, compute which bvins to
+  // use, since we know their sizes.  Or perhaps use an octree
+  // structure for the bins so that we can find the bins containing
+  // the corners of the element bounding box quickly, and then examine
+  // only the bins between the corners.
+  for(unsigned int s=0; s<bins.size(); s++) { // loop over bins
+    if(!graphs[s].empty() && bins[s].intersects(ebbox)) {
       ++nRegionsUsed;
-// #ifdef DEBUG
-//       if(verbose) {
-// 	oofcerr << "VoxelSetBoundary::clippedVolume: subregion=" << s << " "
-// 		<< microstructure->subregion(s) << std::endl;
-// 	std::ofstream f("clipped0.lines");
-// 	graphs[s].dumpLines(f, microstructure);
-// 	std::ofstream fd("clipped0.dat");
-// 	graphs[s].dump(fd);
-//       }
-//       // if(!graphs[s].checkEdges()) {
-//       // 	throw ErrProgrammingError("Bad initial graph!", __FILE__, __LINE__);
-//       // }
-// #endif // DEBUG
       VSBGraph *clippedGraph = graphs[s].copyAndClip(planes[0]);
-// #ifdef DEBUG
-//       if(verbose) {
-// 	std::ofstream f("clipped1.lines");
-// 	clippedGraph->dumpLines(f, microstructure);
-// 	std::ofstream fd("clipped1.dat");
-// 	clippedGraph->dump(fd);
-//       }
-//       // if(!clippedGraph->checkEdges()) {
-//       // 	throw ErrProgrammingError("checkEdges failed! first clip",
-//       // 				  __FILE__, __LINE__);
-//       // }
-// #endif // DEBUG
       for(unsigned i=1; i<planes.size(); i++) {
-// #ifdef DEBUG
-// 	if(verbose)
-// 	  oofcerr << "VoxelSetBoundary::clippedVolume: clipping " << planes[i]
-// 		  << std::endl;
-// #endif // DEBUG
 	clippedGraph->clipInPlace(planes[i]);
-// #ifdef DEBUG
-// 	if(verbose) {
-// 	  std::ofstream f("clipped"+to_string(i+1)+".lines");
-// 	  clippedGraph->dumpLines(f, microstructure);
-// 	  std::ofstream fd("clipped"+to_string(i+1)+".dat");
-// 	  clippedGraph->dump(fd);
-// 	}
-// 	// if(!clippedGraph->checkEdges()) {
-// 	//   throw ErrProgrammingError("checkEdges failed!", __FILE__, __LINE__);
-// 	// }
-// #endif // DEBUG
       }
-// #ifdef DEBUG
-//       if(verbose)
-// 	oofcerr << "VoxelSetBoundary::clippedVolume: done clipping"
-// 		<< std::endl;
-//       if(true /*checkTopology*/) {
-// 	// if(!clippedGraph->checkEdges()) {
-// 	//   std::ofstream f("badgraph.lines");
-// 	//   clippedGraph->dumpLines(f, microstructure);
-// 	//   std::ofstream ff("badgraph.dat");
-// 	//   clippedGraph->dump(ff);
-// 	//   throw ErrProgrammingError("checkEdges failed!", __FILE__, __LINE__);
-// 	// }
-
-// 	// if(!clippedGraph->checkConnectivity(0, microstructure->subregion(s))) {
-// 	//   throw ErrProgrammingError("checkConnectivity failed!",
-// 	// 			    __FILE__, __LINE__);
-// 	// }
-//       }
-//       if(verbose)
-// 	oofcerr << "VoxelSetBoundary::clippedVolume: getting volume,"
-// 		<< " subregion=" << microstructure->subregion(s)
-// 		<< std::endl;
-// #endif // DEBUG
       vol += clippedGraph->volume();
-// #ifdef DEBUG
-//       if(verbose)
-// 	oofcerr << "VoxelSetBoundary::clippedVolume: cumulative vol=" << vol
-// 		<< std::endl;
-// #endif // DEBUG
       delete clippedGraph;
     } // end if graph intersects elements
-  }   // end loop over subregions s
+  }   // end loop over bins s
   ++nHomogCalcs;
   return vol;
-}
+} // end VoxelSetBoundary::clippedVolume
 
 void VoxelSetBoundary::findBBox() {
   for(unsigned int i=0; i<graphs.size(); i++) {
@@ -3554,8 +3460,8 @@ void VoxelSetBoundary::saveClippedVSB(const std::vector<COrientedPlane> &planes,
 {
   std::ofstream f(filenamebase+".dat");
     std::ofstream f2(filenamebase+".lines");
-  for(unsigned int s=0; s<microstructure->nSubregions(); s++) {
-    VSBGraph *clippedGraph = graphs[s].copyAndClip(planes[0]);
+    for(const VSBGraph &graph : graphs) {
+    VSBGraph *clippedGraph = graph.copyAndClip(planes[0]);
     for(unsigned i=1; i<planes.size(); i++) {
       clippedGraph->clipInPlace(planes[i]);
     }
@@ -3571,8 +3477,8 @@ void VoxelSetBoundary::drawClippedVSB(const std::vector<COrientedPlane> &planes,
 				      LineSegmentLayer *layer)
   const
 {
-  for(unsigned int s=0; s<microstructure->nSubregions(); s++) {
-    VSBGraph *clippedGraph = graphs[s].copyAndClip(planes[0]);
+  for(const VSBGraph &graph : graphs) {
+    VSBGraph *clippedGraph = graph.copyAndClip(planes[0]);
     for(unsigned i=1; i<planes.size(); i++) {
       clippedGraph->clipInPlace(planes[i]);
     }
@@ -3581,10 +3487,12 @@ void VoxelSetBoundary::drawClippedVSB(const std::vector<COrientedPlane> &planes,
   }
 }
 
-void VoxelSetBoundary::dump(std::ostream &os) const {
+void VoxelSetBoundary::dump(std::ostream &os,
+			    const std::vector<ICRectangularPrism> &bins)
+  const
+{
   for(unsigned int s=0; s<graphs.size(); s++) {
-    os << "Subregion " << s << " " << microstructure->subregion(s)
-       << std::endl;
+    os << "Subregion " << s << " " << bins[s] << std::endl;
     graphs[s].dump(os);
   }
 }
@@ -3592,8 +3500,7 @@ void VoxelSetBoundary::dump(std::ostream &os) const {
 void VoxelSetBoundary::dumpLines(const std::string &filename) const {
   for(unsigned int s=0; s<graphs.size(); s++) {
     std::string fname = filename + '_' + to_string(s);
-    oofcerr << "# Writing subregion " << s << " "
-	    << microstructure->subregion(s) << " to file " << fname
+    oofcerr << "# Writing subregion " << s << " to file " << fname
 	    << std::endl;
     std::ofstream os(fname);
     graphs[s].dumpLines(os, microstructure);

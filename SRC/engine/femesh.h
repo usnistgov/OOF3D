@@ -108,7 +108,8 @@ class FEMesh {    // : public PythonExportable<FEMesh> {
   // FEMesh used to be derived from PythonExportable so that it could
   // be used as an argument in switchboard messages.
 private:
-  CMicrostructure * microstructure;
+  const CMicrostructure * microstructure;
+  const CSkeletonBase * skeleton;
   RWLock *rwlock;
   static long globalFEMeshCount;
   DoubleVec *dofvalues;
@@ -128,9 +129,10 @@ private:
   int nCacheReaders;		// number of cache readers
 
 public:
-  FEMesh(CMicrostructure *);
+  FEMesh(CSkeletonBase*);
   virtual ~FEMesh();
-  CMicrostructure *get_microstructure() const { return microstructure; }
+  const CMicrostructure *get_microstructure() const { return microstructure; }
+  const CSkeletonBase *get_skeleton() const { return skeleton; }
   virtual const std::string &classname() const;
   virtual const std::string &modulename() const;
 

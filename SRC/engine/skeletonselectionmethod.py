@@ -488,7 +488,7 @@ class PixelElementSelect(ElementSelectMethod):
         skel = skeletoncontext.getObject()
         for i in xrange(skel.nelements()):
             el = skel.getElement(i)
-            if el.dominantPixel(ms) == category:
+            if el.dominantPixel(skel) == category:
                 reslist.append(el)
         selector(reslist)
 

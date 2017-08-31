@@ -15,6 +15,7 @@
 #define CSKELETON2_H
 
 #include "common/coord_i.h"
+#include "common/geometry.h"
 #include "common/pythonexportable.h"
 #include "engine/cskeleton2_i.h"
 #include "engine/cskeletonboundary.h"
@@ -29,12 +30,14 @@ class FEMesh;
 class FaceSubstitution;
 class GhostOOFCanvas;
 class HomogeneityData;
+class LineSegmentLayer;
 class MasterElement;
 class Material;
 class ProvisionalMerge;
 class SegmentSubstitution;
 class SkeletonFilter;
 class TimeStamp;
+class VoxelSetBoundary;
 
 class vtkCellLocator;
 class vtkDataArray;
@@ -142,6 +145,9 @@ protected:
   static uidtype uidbase;
   uidtype uid;
   bool illegal_;
+  // TODO: Is too much mutable here?  The methods that compute
+  // homogeneities are const, so the data that they use has to be
+  // mutable.
   mutable int illegalCount;
   mutable int suspectCount;
   mutable double homogeneityIndex;
@@ -153,6 +159,21 @@ protected:
   static const std::string modulename_;
   OuterFaceID onOuterFace_(const CSkeletonNodeVector*, bool boundary[6]) 
     const;
+  
+  // The voxel set boundary data is stored in the Skeleton because its
+  // bin size is matched to the average Skeleton element size.
+  mutable std::vector<VoxelSetBoundary*> voxelSetBdys; // one for each category.
+  // The prisms that define the subregions are stored here in the
+  // skeleton because they're shared by all VoxelSetBoundaries.
+  mutable std::vector<ICRectangularPrism> vsbBins;
+  mutable ICoord3D vsbBinSize;		// nominal size of bins.
+  // defaultVSBbin is the size used when there's not enough
+  // information to determine a good bin size.  It's set by the
+  // constructor to DEFAULT_VSB_BIN, and reset by
+  // setDefaultVSBbinSize(), which is called by routines that copy
+  // CSkeletons.
+  ICoord3D defaultVSBbin;
+  mutable TimeStamp vsbTimeStamp;
 
 public:
   CSkeletonBase();
@@ -171,6 +192,10 @@ public:
   const TimeStamp &getTimeStamp() const;
 
   // basic get methods
+
+  // TODO: There's no good reason for getMicrostructure() to be virtual.
+  // Move the MS pointer to CSkeletonBase.
+  
   virtual const CMicrostructure *getMicrostructure() const = 0;
   virtual vtkSmartPointer<vtkUnstructuredGrid> getGrid() const = 0;
   virtual void getVtkCells(SkeletonFilter*, 
@@ -205,7 +230,7 @@ public:
   virtual CSkeletonSegmentIterator endSegments() const = 0;
   virtual CSkeletonFaceIterator beginFaces() const = 0;
   virtual CSkeletonFaceIterator endFaces() const = 0;
-  
+
   // basic info
   virtual unsigned int nnodes() const = 0;
   virtual unsigned int nelements() const = 0;
@@ -302,6 +327,27 @@ public:
   double getHomogeneityIndex() const;
   void calculateHomogeneityIndex() const;
   double energyTotal(double alpha) const;
+  double clippedCategoryVolume(unsigned int,
+			       const CRectangularPrism&,
+			       const std::vector<COrientedPlane>&) const;
+  void setDefaultVSBbinSize(const CSkeletonBase*);
+  void buildVSBs() const;
+  void clearVSBs() const;
+  const VoxelSetBoundary *getVoxelSetBoundary(int cat) const {
+    return voxelSetBdys[cat];
+  }
+  ICoord3D getDefaultVSBbinSize() const; // guesses a reasonable size
+  // Routines for testing and debugging VSBs
+  bool checkCategoryVolumes(double) const;
+  bool checkVSB(unsigned int) const;
+  void dumpVSB(unsigned int, const std::string&) const;// save VSB graph to file
+  void dumpVSBLines(unsigned int, const std::string&) const; // plot VSB edge
+  void drawVoxelSetBoundary(LineSegmentLayer*, int) const;
+  void saveClippedVSB(unsigned int, const std::vector<COrientedPlane>&,
+		      const std::string&) const;
+  void saveClippedVSB(unsigned int, const COrientedPlane&, const std::string&)
+    const;
+  double clipVSBVol(unsigned int, const COrientedPlane&) const;
 
   // methods related to deputies and copying
   virtual CSkeleton *sheriffSkeleton() = 0;
@@ -354,8 +400,6 @@ public:
   virtual void printSelf(std::ostream&) const = 0;
 
   const std::string *sanityCheck() const;
-
-  bool checkCategoryVolumes(double) const;
 
 #ifdef DEBUG
   // Code for checking that the differences between two Skeletons are

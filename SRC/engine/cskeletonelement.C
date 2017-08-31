@@ -468,7 +468,7 @@ static SLock globalElementCountLock;
 
 
  void CSkeletonElement::findHomogeneityAndDominantPixel(
-						const CMicrostructure *MS)
+						const CSkeletonBase *skel)
    const 
  {
    // oofcerr << "CSkeletonElement::findHomogeneityAndDominantPixel: el="
@@ -483,6 +483,7 @@ static SLock globalElementCountLock;
    //   writeDebugFile(" " + to_string((*nodes)[i]->getUid()) +
    // 		   " " + to_string((*nodes)[i]->nodemoved));
 
+   const CMicrostructure *MS = skel->getMicrostructure();
    if(homogeneity_data.timestamp() > MS->getTimeStamp()) {
      bool uptodate = true;
      // oofcerr << "CSkeletonElement::findHomogeneityAndDominantPixel: el="
@@ -491,7 +492,7 @@ static SLock globalElementCountLock;
        // oofcerr << (*nodes)[i]->getUid() << " " << (*nodes)[i]->nodemoved
        // 		<< " ";
        if(homogeneity_data.timestamp() < (*nodes)[i]->nodemoved) {
-	 uptodate=false;
+	 uptodate = false;
 	 break;
        }
      }
@@ -503,86 +504,87 @@ static SLock globalElementCountLock;
    // else
    //   writeDebugFile(" out-of-date\n");
 
-   homogeneity_data.set_value(c_homogeneity(MS));
+   skel->buildVSBs();
+   homogeneity_data.set_value(c_homogeneity(skel));
  }
 
- HomogeneityData CSkeletonElement::c_homogeneity(const CMicrostructure *MS)
-   const 
- {
-   if(illegal()) {
-     // oofcerr << "CSkeletonElement::c_homogeneity: illegal!" << std::endl;
-     // writeDebugFile("illegal element " + to_string(getUid()) + "\n");
-     return HomogeneityData(0, UNKNOWN_CATEGORY);
-   }
+HomogeneityData CSkeletonElement::c_homogeneity(const CSkeletonBase *skel) const
+{
+  if(illegal()) {
+    // oofcerr << "CSkeletonElement::c_homogeneity: illegal!" << std::endl;
+    // writeDebugFile("illegal element " + to_string(getUid()) + "\n");
+    return HomogeneityData(0, UNKNOWN_CATEGORY);
+  }
 
-   // If the element is suspect, there's not much point in doing the
-   // homogeneity calculation. We set the homogeneity to something a
-   // little worse than the worst possible homogeneity that can occur
-   // naturally, but not 0.
-   if(suspect()) {
-     // writeDebugFile("suspect element " + to_string(getUid()) + "\n");
-     // oofcerr << "CSkeletonElement::c_homogeneity: suspect!" << std::endl;
-     return HomogeneityData(1.0/(MS->nCategories()+1), UNKNOWN_CATEGORY);
-   }
+  // If the element is suspect, there's not much point in doing the
+  // homogeneity calculation. We set the homogeneity to something a
+  // little worse than the worst possible homogeneity that can occur
+  // naturally, but not 0.
+  if(suspect()) {
+    // writeDebugFile("suspect element " + to_string(getUid()) + "\n");
+    // oofcerr << "CSkeletonElement::c_homogeneity: suspect!" << std::endl;
+    const CMicrostructure *ms = skel->getMicrostructure();
+    return HomogeneityData(1.0/(ms->nCategories()+1), UNKNOWN_CATEGORY);
+  }
+  
+  // writeDebugFile("computing homogeneity for element "+to_string(getUid())+"\n");
 
-   // writeDebugFile("computing homogeneity for element "+to_string(getUid())+"\n");
+  double maxvolume = -std::numeric_limits<double>::max();
+  double totalVolume = 0;
+  int category = 0;
+  
+  const DoubleVec volumes = categoryVolumes(skel);
+  
+  for(DoubleVec::size_type i=0; i<volumes.size(); ++i) {
+    double volume = volumes[i];
+    totalVolume += volume;
+    if(volume > maxvolume) {
+      maxvolume = volume;
+      category = i;
+    }
+  }
 
-   double maxvolume = -std::numeric_limits<double>::max();
-   double totalVolume = 0;
-   int category = 0;
-
-   const DoubleVec volumes = categoryVolumes(MS, false);
-
-   for(DoubleVec::size_type i=0; i<volumes.size(); ++i) {
-     double volume = volumes[i];
-     totalVolume += volume;
-     if(volume > maxvolume) {
-       maxvolume = volume;
-       category = i;
-     }
-   }
-
-   // Use totalVolume instead of volumeInVoxelUnits() so that round
-   // off error in categoryVolumes can't make the homogeneity of a
-   // single-category element less than 1.0.
-   double homogeneity = maxvolume/totalVolume;
-   
-   // oofcerr << "CSkeletonElement::c_homogeneity: element=" << getIndex()
-   // 	   << " homogeneity=" << homogeneity
-   // 	   << " (1-" << (1-homogeneity) <<")" << std::endl;
-
-   if(homogeneity > 1.0)
-     homogeneity = 1.0;
-   return HomogeneityData(homogeneity, category);
- }
+  // Use totalVolume instead of volumeInVoxelUnits() so that round
+  // off error in categoryVolumes can't make the homogeneity of a
+  // single-category element less than 1.0.
+  double homogeneity = maxvolume/totalVolume;
+  
+  // oofcerr << "CSkeletonElement::c_homogeneity: element=" << getIndex()
+  // 	   << " homogeneity=" << homogeneity
+  // 	   << " (1-" << (1-homogeneity) <<")" << std::endl;
+  
+  if(homogeneity > 1.0)
+    homogeneity = 1.0;
+  return HomogeneityData(homogeneity, category);
+}
 
 
- // It is convenient to store some topological information which all
- // tets share in static variables.  This can save us some expensive
- // GetEdge or GetFace calls.  Other information is available in static
- // member functions of vtkTetra, specifically,
- // vtkTetra::GetEdgeArray(int) returns a pointer with two point ids
- // defining an edge.  vtkTetra::GetFaceArray(int) returns the point
- // ids defining a face.
+// It is convenient to store some topological information which all
+// tets share in static variables.  This can save us some expensive
+// GetEdge or GetFace calls.  Other information is available in static
+// member functions of vtkTetra, specifically,
+// vtkTetra::GetEdgeArray(int) returns a pointer with two point ids
+// defining an edge.  vtkTetra::GetFaceArray(int) returns the point
+// ids defining a face.
 
- int *CSkeletonElement::getEdgeArray(int i) { // static method
-   return vtkTetra::GetEdgeArray(i);
- }
+int *CSkeletonElement::getEdgeArray(int i) { // static method
+  return vtkTetra::GetEdgeArray(i);
+}
 
- int *CSkeletonElement::getFaceArray(int i) { // static method
-   return vtkTetra::GetFaceArray(i);
- }
-
- void CSkeletonElement::getElements(const CSkeletonBase*,
-				    ConstCSkeletonElementVector &result)
-   const
- {
-   result.clear();
-   result.push_back(this);
- }
+int *CSkeletonElement::getFaceArray(int i) { // static method
+  return vtkTetra::GetFaceArray(i);
+}
 
 void CSkeletonElement::getElements(const CSkeletonBase*,
-				    CSkeletonElementVector &result)
+				   ConstCSkeletonElementVector &result)
+  const
+{
+  result.clear();
+  result.push_back(this);
+}
+
+void CSkeletonElement::getElements(const CSkeletonBase*,
+				   CSkeletonElementVector &result)
 {
   result.clear();
   result.push_back(this);
@@ -822,15 +824,12 @@ std::vector<COrientedPlane> CSkeletonElement::getPlanes(
 
 // categoryVolumes returns a vector containing the volume of the
 // intersection of this element with each voxel category.  It's used
-// by c_homogeneity to compute element homogeneities.  The
-// checkTopology argument should be false except during testing.
+// by c_homogeneity to compute element homogeneities.
 
-const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
-						  bool checkTopology)
+const DoubleVec CSkeletonElement::categoryVolumes(const CSkeletonBase *skel)
   const
 {
-  // oofcerr << "CSkeletonElement::categoryVolumes: " << *this << std::endl;
-  OOFcerrIndent indent(2);
+  const CMicrostructure *ms = skel->getMicrostructure();
   // Get the corners and planes of the element in voxel coordinates.
   std::vector<Coord3D> epts = pixelCoords(ms);
   std::vector<COrientedPlane> planes = getPlanes(epts);
@@ -839,34 +838,18 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
   bbox.swallow(epts[2]);
   bbox.swallow(epts[3]);
 
-  // Get the number of voxel categories.  This recomputes categories
-  // and boundaries if needed.
   unsigned int ncat = ms->nCategories();
   DoubleVec result(ncat, 0.0);
   double totalVol = 0.0;
 
-
   try {
     for(unsigned int cat=0; cat<ncat; cat++) {
-      // Check for a bounding box intersection before doing the
-      // expensive polygon intersection calculation.  This reduces CPU
-      // use by about 10% in an annealing operation.
-      // TODO: That was an old comment... clippedCategoryVolume does
-      // its own bbox check now, so the check here may be useless.
-      if(bbox.intersects(ms->categoryBounds(cat))) {
-	// oofcerr << "CSkeletonElement::categoryVolumes:"
-	// 	<< " calling clippedCategoryVolume for cat " << cat
-	// 	<< std::endl;
-// #ifdef DEBUG
-// 	setVerboseVSB(index == 195);
-// #endif // DEBUG
-	double vol = ms->clippedCategoryVolume(cat, bbox, planes,
-					       checkTopology);
-	// oofcerr << "CSkeletonElement::categoryVolumes: "
-	// 	<< "back from clippedCategoryVolume, vol=" << vol << std::endl;
-	totalVol += vol;
-	result[cat] = vol;
-      }
+#ifdef DEBUG
+	setVerboseVSB(index == 0 && cat == 1);
+#endif // DEBUG
+      double vol = skel->clippedCategoryVolume(cat, bbox, planes);
+      totalVol += vol;
+      result[cat] = vol;
     } // end loop over categories
 
 #ifdef DEBUG
@@ -880,15 +863,17 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CMicrostructure *ms,
 	      << " [" << result << "]"
 	      << " actual=" << actual
 	      << " (error=" << fracvol*100 << "%)" << std::endl;
-      // oofcerr << "CSkeletonElement::categoryVolumes: saving VSBs:" << std::endl;
-      // for(unsigned int cat=0; cat < ncat; cat++) {
-      // 	if(result[cat] > 0) {
-      // 	  std::string filename = "vsb_" + to_string(cat);
-      // 	  oofcerr << "CSkeletonElement::categoryVolumes: " << filename
-      // 		  << std::endl;
-      // 	  ms->saveClippedVSB(cat, planes, filename);
-      // 	}
-      // }
+      if(verboseVSB()) {
+	oofcerr << "CSkeletonElement::categoryVolumes: saving VSBs:" << std::endl;
+	for(unsigned int cat=0; cat < ncat; cat++) {
+	  if(result[cat] > 0) {
+	    std::string filename = "vsb_" + to_string(cat);
+	    oofcerr << "CSkeletonElement::categoryVolumes: " << filename
+		    << std::endl;
+	    skel->saveClippedVSB(cat, planes, filename);
+	  }
+	}
+      }
     }
     // TODONT: Throwing an exception here is incorrect.  If the Skeleton
     // contains illegal elements, it's possible that this element is
@@ -926,13 +911,13 @@ std::vector<Coord3D> CSkeletonElement::pixelCoords(const CMicrostructure *ms)
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 
-double CSkeletonElement::homogeneity(const CMicrostructure *MS) const {
-  findHomogeneityAndDominantPixel(MS);
+double CSkeletonElement::homogeneity(const CSkeletonBase *skel) const {
+  findHomogeneityAndDominantPixel(skel);
   return homogeneity_data.value().get_homogeneity();
 }
 
-double CSkeletonElement::energyHomogeneity(const CMicrostructure *MS) const {
-  findHomogeneityAndDominantPixel(MS);
+double CSkeletonElement::energyHomogeneity(const CSkeletonBase *skel) const {
+  findHomogeneityAndDominantPixel(skel);
   return homogeneity_data.value().get_energy();
 }
 
@@ -946,8 +931,8 @@ void CSkeletonElement::revertHomogeneity() {
   homogeneity_data.revert();
 }
 
-int CSkeletonElement::dominantPixel(const CMicrostructure *MS) const {
-  findHomogeneityAndDominantPixel(MS);
+int CSkeletonElement::dominantPixel(const CSkeletonBase *skel) const {
+  findHomogeneityAndDominantPixel(skel);
   return homogeneity_data.value().get_dominantpixel();
 }
 
@@ -1017,21 +1002,21 @@ const Material *CSkeletonElement::material(const CSkeletonBase* skel) const {
   
   // The element isn't in any groups that have assigned materials.
   // Return the material of the dominant pixel.
-  int dominantpixel = dominantPixel(skel->getMicrostructure());
+  int dominantpixel = dominantPixel(skel);
   // getMaterialFromCategory is declared in material.h
   return getMaterialFromCategory(skel->getMicrostructure(), dominantpixel);
 }
 
-double CSkeletonElement::energyTotal(const CMicrostructure *MS, double alpha)
+double CSkeletonElement::energyTotal(const CSkeletonBase *skel, double alpha)
   const 
 {
   if(alpha == 1)
-    return energyHomogeneity(MS);
+    return energyHomogeneity(skel);
   Coord x[4];
   positionPointer(x);
   if(alpha == 0)
     return energyShape(x);
-  double eHomog = energyHomogeneity(MS);
+  double eHomog = energyHomogeneity(skel);
   double eShape = energyShape(x);
   // writeDebugFile(to_string(getUid()) +
   // 		 " eHomog=" + to_string(eHomog) +
@@ -1415,7 +1400,7 @@ void CSkeletonElement::drawVoxelCategoryIntersection(LineSegmentLayer *layer,
   ms->categorizeIfNecessary();
   std::vector<Coord3D> epts = pixelCoords(ms);
   std::vector<COrientedPlane> planes = getPlanes(epts);
-  const VoxelSetBoundary *vsb = ms->getCategoryBdys()[category];
+  const VoxelSetBoundary *vsb = skel->getVoxelSetBoundary(category);
   vsb->drawClippedVSB(planes, layer);
 }
 

@@ -123,9 +123,9 @@ void MeshGridSource::PrintSelf(std::ostream &os, vtkIndent indent) {
 
 // SkeletonSegmentGridSource is just in DEBUG because doing it right
 // involves some changes to our vtk scheme, which ought to be done
-// only after migrating from vtk5 to vtk6 or vtk7.  For now, it's just
-// being used to compare Skeleton reference files in the regression
-// suite when testing the r3d categoryVolumes code.
+// only after migrating from vtk5 to vtk6 or vtk7 or vtk8.  For now,
+// it's just being used to compare Skeleton reference files in the
+// regression suite when testing the r3d categoryVolumes code.
 
 vtkCxxRevisionMacro(SkeletonSegmentGridSource, "oofvtkmods 3.0.0");
 vtkStandardNewMacro(SkeletonSegmentGridSource);

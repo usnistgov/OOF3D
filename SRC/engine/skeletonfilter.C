@@ -158,7 +158,7 @@ bool HomogeneityFilter::acceptable(const CSkeletonSelectable *selectable,
 				   const CSkeletonBase *skeleton)
   const
 {
-  double homog = selectable->homogeneity(skeleton->getMicrostructure());
+  double homog = selectable->homogeneity(skeleton);
   // The allowed range is open at the upper end and closed at the
   // lower.  This makes it easy to select all of the inhomogeneous
   // elements, for example.
@@ -202,7 +202,7 @@ bool ElementQualityFilter::acceptable(const CSkeletonSelectable *selectable,
   selectable->getElements(skeleton, els);
   const CMicrostructure *ms = skeleton->getMicrostructure();
   for(ConstCSkeletonElementVector::iterator i=els.begin(); i<els.end(); ++i) {
-    double e = (*i)->energyTotal(ms, alpha);
+    double e = (*i)->energyTotal(skeleton, alpha);
     if(e >= min && e <= max) {
       return true;
     }

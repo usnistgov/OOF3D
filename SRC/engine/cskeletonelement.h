@@ -181,14 +181,14 @@ public:
   std::vector<Coord3D> pixelCoords(const CMicrostructure*) const;
   
   // methods related to homogeneity, dominant pixel, and shape energy
-  const DoubleVec categoryVolumes(const CMicrostructure *MS, bool) const;
-  HomogeneityData c_homogeneity(const CMicrostructure *MS) const;
-  void findHomogeneityAndDominantPixel(const CMicrostructure *MS) const;
-  virtual double homogeneity(const CMicrostructure *MS) const;
+  const DoubleVec categoryVolumes(const CSkeletonBase*) const;
+  HomogeneityData c_homogeneity(const CSkeletonBase*) const;
+  void findHomogeneityAndDominantPixel(const CSkeletonBase*) const;
+  virtual double homogeneity(const CSkeletonBase*) const;
   void copyHomogeneity(const CSkeletonElement &el);
   void revertHomogeneity();
-  double energyHomogeneity(const CMicrostructure *MS) const;
-  int dominantPixel(const CMicrostructure *MS) const;
+  double energyHomogeneity(const CSkeletonBase*) const;
+  int dominantPixel(const CSkeletonBase*) const;
   const HomogeneityData &getHomogeneityData() const {
     return homogeneity_data.value();
   }
@@ -198,7 +198,7 @@ public:
   double energyShape() const;
   static double energyShape(const Coord*);
   const Material *material(const CSkeletonBase*) const;
-  double energyTotal(const CMicrostructure *MS, double alpha) const;
+  double energyTotal(const CSkeletonBase*, double) const;
   //const std::vector<ICoord> *underlying_pixels(const CMicrostructure&)
 
   // TODO 3.1: make these return #defined numbers

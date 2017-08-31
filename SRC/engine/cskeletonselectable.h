@@ -132,7 +132,7 @@ class CSkeletonSelectable : public PythonExportable<CSkeletonSelectable> {
   void map(SelectableMap &s);
   bool inList(const CSkeletonSelectableList &list) const;
 
-  virtual double homogeneity(const CMicrostructure*) const = 0;
+  virtual double homogeneity(const CSkeletonBase*) const = 0;
 
   virtual VTKCellType getCellType() const = 0;
   virtual vtkSmartPointer<vtkCell> getVtkCell() const = 0;

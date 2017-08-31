@@ -142,7 +142,7 @@ void CheckHomogeneity::createSegmentMarks(CSkeletonBase *skeleton,
 	it != skeleton->endElements(); ++it) 
       {
 	if(criterion->isGood(skeleton,*it) && (*it)->active(skeleton) && 
-	   (*it)->homogeneity(skeleton->getMicrostructure()) < threshold)
+	   (*it)->homogeneity(skeleton) < threshold)
 	  {
 	    markElement(*it, d);
 	  }
@@ -199,8 +199,11 @@ void CheckHeterogeneousEdges::createSegmentMarks(CSkeletonBase *skeleton,
   CSkeletonSegmentVector *segs = chooser->getSegments(skeleton);
   for(CSkeletonSegmentVector::iterator it=segs->begin(); it!=segs->end(); ++it) 
     {
-      if(criterion->isGood(skeleton,(*it)) && (*it)->homogeneity(skeleton->getMicrostructure()) < threshold) 
+      if(criterion->isGood(skeleton,(*it)) &&
+	 (*it)->homogeneity(skeleton) < threshold)
+	{
 	markSegment((*it),d);
+	}
     }
 }
 

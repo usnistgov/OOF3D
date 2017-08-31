@@ -16,7 +16,6 @@
 
 class CMicrostructure;
 
-//#include "common/IO/canvaslayers.h"
 #include "common/array.h"
 #include "common/boolarray.h"
 #include "common/coord.h"
@@ -25,19 +24,13 @@ class CMicrostructure;
 #include "common/timestamp.h"
 
 #include <list>
+#include <map>
 #include <vector>
 
 class ActiveArea;
 class CPixelSelection;
 class CRectangle;
 class PixelGroup;
-class LineSegmentLayer;
-
-#if DIM==2
-class PixelSetBoundary;
-#else
-class VoxelSetBoundary;
-#endif	// DIM==2
 
 // TODO: Use unsigned ints for voxel categories.  It's inconsistent
 // now.  MicrostructureAttributes::getCategory returns an unsigned
@@ -159,22 +152,12 @@ private:
   // each pixel.
   mutable Array<PixelAttributeVector*> attributeVectors;
   mutable MicrostructureAttributes attributes;
+  mutable std::vector<int> categoryCounts; // no. of voxels in each category.
 
   // categorymap caches the pixel categories assigned by categorize().
   // It's mutable because CMicrostructure::category() is
   // logically const, but it caches the categories in the categorymap.
   mutable Array<int> categorymap;
-  // subregions are used to make the element homogeneity calculations
-  // more efficient, and are created by categorize(), which is const.
-  mutable std::vector<ICRectangularPrism> subregions;
-
-  // List of the boundaries of the categories.
-#if DIM==2
-  mutable std::vector<PixelSetBoundary> categoryBdys;
-#elif DIM==3
-  mutable std::vector<VoxelSetBoundary*> categoryBdys;
-#endif
-
   mutable bool categorized;
   mutable int ncategories;
   void categorize() const;
@@ -232,11 +215,6 @@ public:
   void setPixelSelection(CPixelSelection *pxlsl) { pixelSelection = pxlsl; }
   bool isSelected(const ICoord*) const;
 
-  unsigned int nSubregions() const { return subregions.size(); }
-  const ICRectangularPrism &subregion(unsigned int i) const {
-    return subregions[i];
-  }
-
   int nGroups() const;
   PixelGroup *getGroup(const std::string &name, bool *newness);
   PixelGroup *findGroup(const std::string &name) const;
@@ -277,33 +255,13 @@ public:
   int category(const Coord *where) const; // Arbitrary physical-coord point.
   int category(const Coord &where) const; // Arbitrary physical-coord point.
   void recategorize();
-  
+
   bool is_categorized() const { return categorized; }
   void categorizeIfNecessary() const;
   double volumeOfCategory(unsigned int) const;
-  const CRectangularPrism &categoryBounds(unsigned int) const;
-  double clippedCategoryVolume(unsigned int,
-			       const CRectangularPrism&,
-			       const std::vector<COrientedPlane>&,
-			       bool checkTopology) const;
-  void dumpVSB(unsigned int, const std::string&) const;// save VSB graph to file
-  void dumpVSBLines(unsigned int, const std::string&) const; // plot VSB edges
 
   unsigned char voxelSignature(const ICoord&, unsigned int,
 			       const ICRectangularPrism&) const;
-
-  // Routines for testing the VSB construction and clipping
-  bool checkVSB(unsigned int) const;
-  double clipVSBVol(unsigned int, const COrientedPlane&) const;
-  void saveClippedVSB(unsigned int, const COrientedPlane&, const std::string&)
-    const;
-  void saveClippedVSB(unsigned int, const std::vector<COrientedPlane>&,
-		      const std::string&) const;
-
-  const std::vector<VoxelSetBoundary*> &getCategoryBdys() const {
-    return categoryBdys;
-  }
-  void drawVoxelSetBoundary(LineSegmentLayer*, int) const;
 
   std::vector<ICoord> *segmentPixels(const Coord&, const Coord&, bool&, bool&,
 				     bool verbose)
@@ -328,10 +286,5 @@ public:
 };				// end class CMicrostructure
 
 long get_globalMicrostructureCount();
-
-// These are temporary to help find values for the subsize and
-// slopsize parameters used in CMicrostructure::categorize();
-void set_subregion_size(int);
-void set_subregion_slop(int);
 
 #endif // CMICROSTRUCTURE_H

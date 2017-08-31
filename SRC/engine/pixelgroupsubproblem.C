@@ -40,10 +40,11 @@ bool PixelGroupSubProblemPredicate::operator()(const FEMesh *mesh,
 					       const Element *element) const
 {
   const CMicrostructure *microstructure = mesh->get_microstructure();
+  const CSkeletonBase *skel = mesh->get_skeleton();
   if(pixelgroup == 0) {
     pixelgroup = microstructure->findGroup(groupname);
   }
-  int dompxl = element->get_skeleton_element()->dominantPixel(microstructure);
+  int dompxl = element->get_skeleton_element()->dominantPixel(skel);
   // Are pixels in category dompxl in the given pixelgroup?
   return pixelGroupQueryCategory(*microstructure, dompxl, pixelgroup);
 }

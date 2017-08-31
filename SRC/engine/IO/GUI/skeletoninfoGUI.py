@@ -203,11 +203,11 @@ class ElementModeGUI(SkeletonInfoModeGUI):
                 elif config.dimension() == 2:
                     earea = "%g" % element.area()
                 if not element.illegal():
-                    domCat = element.dominantPixel(microstructure)
+                    domCat = element.dominantPixel(skeleton)
                     pixGrp = pixelgroup.pixelGroupNames(microstructure,
                                                         domCat)
                     #pixgrps = ", ".join(pixGrp)
-                    hom = "%f" % element.homogeneity(microstructure)
+                    hom = "%f" % element.homogeneity(skeleton)
                     eshape = "%f" % element.energyShape()
                     mat = element.material(skeleton)
                     egrps = ','.join(element.groupNames())
@@ -466,7 +466,7 @@ class SegmentModeGUI(SkeletonInfoModeGUI):
                         self.updateFaceList(self.faces, 
                                             skeleton.getSegmentFaces(segment))
                     length = `segment.length()`
-                    homogval = segment.homogeneity(skelctxt.getMicrostructure())
+                    homogval = segment.homogeneity(skeleton)
                     if 0.9999 < homogval < 1.0:
                         homog = "1 - (%e)" % (1.0 - homogval)
                     else:
@@ -576,7 +576,7 @@ class FaceModeGUI(SkeletonInfoModeGUI):
                     area = `face.area()`
                     ## TODO 3.1: Uncomment this when
                     ## CSkeletonFace::homogeneity has been implemented.
-                    # homogval = face.homogeneity(skelctxt.getMicrostructure())
+                    # homogval = face.homogeneity(skeleton)
                     # if 0.9999 < homogval < 1.0:
                     #     homog = "1.0 - (%e)" % (1.0-homogval)
                     # else:
