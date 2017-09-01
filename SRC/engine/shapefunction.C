@@ -160,7 +160,9 @@ double ShapeFunction::displacedderiv(const Element *el,
 				     const FEMesh *mesh) const
 {
   // HERE
+  // Thing we want to transform is masterdriv(n, component, g).
   // el->deformation_jacobian(SpaceIndex, SpaceIndex, gpt, mesh)
+  // is the ... master-space derivs of the shape fns.
   return 0.0;
 }
 
