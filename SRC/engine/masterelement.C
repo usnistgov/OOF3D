@@ -624,7 +624,7 @@ Element *MasterElement::build(CSkeletonElement *el,
 	// Otherwise, add the edge to newEdgeNodes and add the node to it.
 	SkelElNodeMap::iterator eit = newEdgeNodes.find(segkey);
 	if(eit == newEdgeNodes.end()) {
-	  newEdgeNodes.emplace(
+	  newEdgeNodes.insert(
 		       std::make_pair(segkey, std::vector<Node*>(1, newNode)));
 	}
 	else {
@@ -661,7 +661,7 @@ Element *MasterElement::build(CSkeletonElement *el,
 	// Add the node to newFaceNodes.
 	SkelElNodeMap::iterator fit = newFaceNodes.find(facekey);
 	if(fit == newFaceNodes.end()) {
-	  newFaceNodes.emplace(
+	  newFaceNodes.insert(
 		       std::make_pair(facekey, std::vector<Node*>(1, newNode)));
 	}
 	else {
