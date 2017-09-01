@@ -109,6 +109,7 @@ def _new_group(menuitem, skeleton, name):
 def _auto_group(menuitem, skeleton):
     ## TODO OPT: Move this to C++
     skelc = whoville.getClass('Skeleton')[skeleton]
+    skel = skelc.getObject()
     groupset = getattr(skelc, menuitem.data)
     ms = skelc.getMicrostructure()
     mscontext = microstructure.microStructures[ms.name()]
@@ -122,8 +123,8 @@ def _auto_group(menuitem, skeleton):
         newgrps = [name for name in groupnames if not groupset.isGroup(name)]
         groupset.addGroup(*newgrps)
         # Find objects to add to groups
-        for obj in menuitem.iterator(skelc.getObject().sheriffSkeleton()):
-            cat = obj.dominantPixel(ms) # dominant pxl category
+        for obj in menuitem.iterator(skel.sheriffSkeleton()):
+            cat = obj.dominantPixel(skel) # dominant pxl category
             grplist = pixelgroup.pixelGroupNames(ms, cat)
             for name in grplist:
                 gdict.setdefault(name, []).append(obj)
@@ -822,9 +823,9 @@ def _query_elem_group(menuitem, skeleton, group):
             areaname = "volume"
             for element in members:
                 size += element.volume()
-        ms = skelc.getObject().getMicrostructure()
+        skeleton = skelc.getObject()
         for element in members:
-            homog += element.homogeneity(ms)
+            homog += element.homogeneity(skeleton)
         homog /= num
     plural="s"*(num!=1)
     strings = ["Group '%s'" % group,

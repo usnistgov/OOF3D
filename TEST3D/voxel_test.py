@@ -22,6 +22,7 @@ from ooflib.SWIG.common.geometry import COrientedPlane
 from ooflib.common import microstructure
 from ooflib.common import pixelselection
 from ooflib.common import primitives
+from ooflib.engine import skeletoncontext
 
 # For selecting voxels and defining a voxel set.
 vox000 = voxelsetboundary.cvar.vox000
@@ -65,13 +66,15 @@ planes = [
 
 class VSB_ConfigTest(unittest.TestCase):
     def setUp(self):
-        
         OOF.Microstructure.New(
             name='microstructure', width=4.0, height=4.0, depth=4.0,
             width_in_pixels=4, height_in_pixels=4, depth_in_pixels=4)
         OOF.PixelGroup.New(
             name='pixelgroup', microstructure='microstructure')
-
+        OOF.Skeleton.New(
+            name='skeleton', microstructure='microstructure',
+            x_elements=4, y_elements=4, z_elements=4,
+            skeleton_geometry=TetraSkeleton(arrangement='moderate'))
     def selectionSize(self):
         ps = pixelselection.pixelselectionWhoClass['microstructure']
         return ps.getObject().len()
@@ -113,6 +116,7 @@ class VSB_ConfigTest(unittest.TestCase):
     @memorycheck.check("microstructure")
     def All2x2x2(self):
         ms = microstructure.getMicrostructure('microstructure')
+        skel = skeletoncontext.getSkeleton(ms, "skeleton").getObject()
         # The non-trivial combinations of voxels correspond to voxel
         # signatures between 1 and 255.  Signature 0 has no voxels in
         # it, and would be equivalent to the Trivial test, above.
@@ -132,8 +136,8 @@ class VSB_ConfigTest(unittest.TestCase):
             print "selectedCat=", selectedCat, "unselectedCat=",\
                 unselectedCat
 
-            ms.dumpVSB(selectedCat, "selected.dat")
-            ms.dumpVSB(unselectedCat, "unselected.dat")
+            skel.dumpVSB(selectedCat, "selected.dat")
+            skel.dumpVSB(unselectedCat, "unselected.dat")
             # ms.dumpVSBLines(selectedCat, "selected_"+sigstr+".lines")
             # ms.dumpVSBLines(unselectedCat, "unselected_"+sigstr+".lines")
 
@@ -143,10 +147,10 @@ class VSB_ConfigTest(unittest.TestCase):
                 "unselectedVol=", unselectedVol
             print "Checking connectivity for selected voxels, category",\
                 selectedCat
-            self.assert_(ms.checkVSB(selectedCat))
+            self.assert_(skel.checkVSB(selectedCat))
             print "Checking connectivity for unselected voxels, category",\
                 unselectedCat
-            self.assert_(ms.checkVSB(unselectedCat))
+            self.assert_(skel.checkVSB(unselectedCat))
             self.assertAlmostEqual(selectedVol, nvox)
             self.assertAlmostEqual(unselectedVol, 64-nvox);
             # Check that the saved VSB graphs are correct
@@ -176,6 +180,7 @@ class VSB_ConfigTest(unittest.TestCase):
             vox000|vox100|vox010|vox111,
             )
         ms = microstructure.getMicrostructure('microstructure')
+        skel = skeletoncontext.getSkeleton(ms, "skeleton").getObject()
         for sig in sigs:
             sigstr = voxelsetboundary.printSig(sig)
             print "Selecting voxels", sigstr
@@ -187,8 +192,8 @@ class VSB_ConfigTest(unittest.TestCase):
             selectedCat = 1-unselectedCat
             for i, plane in enumerate(planes):
                 # saveClippedVSB writes filename.dat and filename.lines
-                ms.saveClippedVSB(selectedCat, plane, 'selected')
-                ms.saveClippedVSB(unselectedCat, plane, 'unselected')
+                skel.saveClippedVSB(selectedCat, plane, 'selected')
+                skel.saveClippedVSB(unselectedCat, plane, 'unselected')
 
                 fnamebase = "clipped_%s_p%02d" % (sigstr, i)
                 self.assert_(file_utils.fp_file_compare(
@@ -216,14 +221,16 @@ class VSB_ConfigTest(unittest.TestCase):
     @memorycheck.check("microstructure")
     def TrivialClippedVolume(self):
         ms = microstructure.getMicrostructure('microstructure')
+        skel = skeletoncontext.getSkeleton(ms, "skeleton").getObject()
         for plane in planes:
-            v0 = ms.clipVSBVol(0, plane)
-            v1 = ms.clipVSBVol(0, plane.reversed())
+            v0 = skel.clipVSBVol(0, plane)
+            v1 = skel.clipVSBVol(0, plane.reversed())
             self.assertAlmostEqual(v0+v1, 64.)
 
     @memorycheck.check("microstructure")
     def ClippedVolume(self):
         ms = microstructure.getMicrostructure('microstructure')
+        skel = skeletoncontext.getSkeleton(ms, "skeleton").getObject()
         sigs = range(1, 256)
         #sigs = (105,)
         for sig in sigs:
@@ -235,11 +242,11 @@ class VSB_ConfigTest(unittest.TestCase):
             selectedCat = 1 - unselectedCat
             for plane in planes:
                 print "plane=%s"%plane
-                v00 = ms.clipVSBVol(selectedCat, plane)
-                v10 = ms.clipVSBVol(unselectedCat, plane)
+                v00 = skel.clipVSBVol(selectedCat, plane)
+                v10 = skel.clipVSBVol(unselectedCat, plane)
                 opposite = plane.reversed()
-                v01 = ms.clipVSBVol(selectedCat, opposite)
-                v11 = ms.clipVSBVol(unselectedCat, opposite);
+                v01 = skel.clipVSBVol(selectedCat, opposite)
+                v11 = skel.clipVSBVol(unselectedCat, opposite);
                 self.assertAlmostEqual(nvox, v00+v01)
                 self.assertAlmostEqual(64-nvox, v10+v11)
                 self.assertAlmostEqual(v00+v01+v10+v11, 64)

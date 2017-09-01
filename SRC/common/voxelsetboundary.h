@@ -95,7 +95,7 @@ public:
 
   // makeVSBNodes constructs the VSBnodes and puts them in the graph,
   // but doesn't connect them.
-  virtual void makeVSBNodes(VoxelSetBoundary*, const ICoord3D&) = 0;
+  virtual void makeVSBNodes(VSBGraph*, const ICoord3D&) = 0;
   // connect connects nodes by creating links between VSBNodes in the
   // graph.  
   virtual void connect(ProtoVSBNode*) = 0;
@@ -153,7 +153,7 @@ public:
     : ProtoVSBNode(rot),
       vsbNode(nullptr)
   {}
-  virtual void makeVSBNodes(VoxelSetBoundary*, const ICoord3D &here);
+  virtual void makeVSBNodes(VSBGraph*, const ICoord3D&);
   virtual const Coord3D &position() const;
 };
 
@@ -165,7 +165,7 @@ public:
     : ProtoVSBNode(rot),
       vsbNode0(nullptr), vsbNode1(nullptr)
   {}
-  virtual void makeVSBNodes(VoxelSetBoundary*, const ICoord3D &here);
+  virtual void makeVSBNodes(VSBGraph*, const ICoord3D&);
   virtual const Coord3D &position() const;
 };
 
@@ -177,7 +177,7 @@ public:
     : ProtoVSBNode(rot),
       vsbNode0(nullptr), vsbNode1(nullptr), vsbNode2(nullptr)
   {}
-  virtual void makeVSBNodes(VoxelSetBoundary*, const ICoord3D &here);
+  virtual void makeVSBNodes(VSBGraph*, const ICoord3D&);
   virtual const Coord3D &position() const;
 };
 
@@ -190,7 +190,7 @@ public:
     : ProtoVSBNode(rot),
       vsbNodes(n, nullptr)
   {}
-  virtual void makeVSBNodes(VoxelSetBoundary*, const ICoord3D &here);
+  virtual void makeVSBNodes(VSBGraph*, const ICoord3D&);
   virtual const Coord3D &position() const;
 };
 
@@ -221,6 +221,8 @@ class VSBNode {
   const VSBNode *nextCWNeighbor(const VSBNode*) const;
   unsigned int neighborIndex(const VSBNode*) const;
   unsigned int getIndex() const { return index; }
+
+  bool degenerateNeighbor(const VSBNode*) const;
   
   friend class VoxelSetBoundary;
   friend class VSBGraph;
@@ -235,19 +237,30 @@ class VSBGraph {
   void connectClippedNodes(const std::vector<VSBNode*>&) const;
   std::vector<double> getDistances(const COrientedPlane&, double&, double&)
     const;
+  // bounds is the actual extent of the graph.  domain is the region
+  // of Microstructure that the graph was built from.  It may be
+  // bigger than the actual extent.
   CRectangularPrism bounds;
+  ICRectangularPrism domain;
+  // Some two fold nodes are created during the graph building process
+  // and need to be fixed later.  They're stored here:
+  std::set<VSBNode*> twoFoldNodes;
  public:
-  VSBGraph();
+  VSBGraph(const ICRectangularPrism &subregion);
   ~VSBGraph();
   VSBGraph(const VSBGraph&);
   // TODO: Do we need a move constructor?
   VSBGraph(const VSBGraph&&) = delete;
 
   unsigned int size() const { return vertices.size(); }
+  bool empty() const { return vertices.empty(); }
   
   void addNode(VSBNode *node);
   void addNodes(const std::vector<VSBNode*>&);
   const VSBNode *getNode(unsigned int i) const { return vertices[i]; }
+  void twoFoldNode(VSBNode*);
+  void fixTwoFoldNodes();
+  std::vector<VSBNode*> removeDegenerateFaces(std::vector<VSBNode*>&) const;
 
   VSBGraph *copyAndClip(const COrientedPlane&) const;
   void clipInPlace(const COrientedPlane&);
@@ -257,7 +270,7 @@ class VSBGraph {
   const CRectangularPrism &bbox() const { return bounds; }
   
   bool checkEdges() const;
-  bool checkConnectivity(unsigned int nRegions) const;
+  bool checkConnectivity() const;
   void dump(std::ostream &) const;
   void dumpLines(std::ostream&, const CMicrostructure*) const;
   void draw(LineSegmentLayer*, const CMicrostructure*) const;
@@ -265,12 +278,13 @@ class VSBGraph {
 
 class VSBEdgeIterator {
 private:
-  const VSBGraph *graph;
+  const VoxelSetBoundary *vsb;
+  unsigned int igraph;
   unsigned int ihere;
   unsigned int inbr;
   bool finished;
 public:
-  VSBEdgeIterator(const VSBGraph *g);
+  VSBEdgeIterator(const VoxelSetBoundary*);
   bool done() const { return finished; }
   const VSBNode *node0() const;
   const VSBNode *node1() const;
@@ -280,46 +294,52 @@ public:
 
 class VoxelSetBoundary {
 private:
-  const unsigned int category;
+  const unsigned int category;	// for debugging only
   const CMicrostructure *microstructure;
-  VSBGraph graph;
-  // Some two fold nodes are created during the graph building process
-  // and need to be fixed later.  They're stored here:
-  std::set<VSBNode*> twoFoldNodes;
+  // There's one VSBGraph for each subregion in the CMicrostructure. 
+  std::vector<VSBGraph> graphs;
+  CRectangularPrism *bbox_;
 public:
-  VoxelSetBoundary(const CMicrostructure *ms, unsigned int cat)
-    : category(cat),
-      microstructure(ms)
-  {}
-  ProtoVSBNode *protoVSBNodeFactory(unsigned char, const ICoord3D&);
-  void addNode(VSBNode *node) { graph.addNode(node); }
+  VoxelSetBoundary(const CMicrostructure *ms,
+		   const std::vector<ICRectangularPrism>&,
+		   unsigned int cat);
+  ProtoVSBNode *protoVSBNodeFactory(unsigned int, unsigned char,
+				    const ICoord3D&);
   void addEdge(const ICoord3D&, const ICoord3D&);
+  void fixTwoFoldNodes(unsigned int s) { graphs[s].fixTwoFoldNodes(); }
   // void find_boundaries();
-  void twoFoldNode(VSBNode*);
-  void fixTwoFoldNodes();
 
-  unsigned int size() const { return graph.size(); }
+  unsigned int size() const;
   double volume() const;
-  const CRectangularPrism &bounds() const { return graph.bbox(); }
+  void findBBox();
+  const CRectangularPrism &bounds() const { return *bbox_; }
 
-  double clippedVolume(const std::vector<COrientedPlane>&,
-		       bool checkTopology) const;
+  double clippedVolume(const std::vector<ICRectangularPrism>&,
+		       const CRectangularPrism&,
+		       const std::vector<COrientedPlane>&) const;
 
-  VSBEdgeIterator iterator() const { return VSBEdgeIterator(&graph); }
+  VSBEdgeIterator iterator() const { return VSBEdgeIterator(this); }
 
   bool checkEdges() const;
-  bool checkConnectivity(unsigned int) const;
-  void dump(std::ostream &os) const { graph.dump(os); }
-  void dumpLines(std::ostream &os) const {
-    graph.dumpLines(os, microstructure);
-  }
+  bool checkConnectivity() const;
+  void dump(std::ostream &os, const std::vector<ICRectangularPrism>&) const;
+  void dumpLines(const std::string&) const;
   void saveClippedVSB(const std::vector<COrientedPlane>&,
 		      const std::string&) const;
   void drawClippedVSB(const std::vector<COrientedPlane>&,
 		      LineSegmentLayer*) const;
+
+  friend class VSBEdgeIterator;
 };
 
 void initializeProtoNodes();
+
+void printHomogRegionStats();
 std::string &printSig(unsigned char);
+
+#ifdef DEBUG
+void setVerboseVSB(bool);
+bool verboseVSB();
+#endif // DEBUG
 
 #endif // VOXELSETBOUNDARY_H

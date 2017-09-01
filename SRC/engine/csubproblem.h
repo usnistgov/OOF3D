@@ -89,7 +89,7 @@ public:
   bool precomputeRequired;
   bool consistency;
 
-  CMicrostructure *get_microstructure() const;
+  const CMicrostructure *get_microstructure() const;
   virtual MaterialSet *getMaterials() const;
 
   // redefined() must be called when the criteria for choosing nodes

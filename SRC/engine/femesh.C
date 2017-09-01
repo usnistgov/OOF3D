@@ -28,6 +28,7 @@
 #include "common/trace.h"
 #include "common/IO/oofcerr.h"
 #include "engine/cscpatch.h"
+#include "engine/cskeleton2.h"
 #include "engine/cskeletonelement.h"
 #include "engine/csubproblem.h"
 #include "engine/dofmap.h"
@@ -60,8 +61,9 @@
 long FEMesh::globalFEMeshCount = 0; // used for code testing
 static SLock globalFEMeshCountLock;
 
-FEMesh::FEMesh(CMicrostructure * mc)
-  : microstructure(mc),
+FEMesh::FEMesh(CSkeletonBase *skel)
+  : microstructure(skel->getMicrostructure()),
+    skeleton(skel),
     rwlock(0),
     dofvalues(new DoubleVec),
     time(0.0),
@@ -884,7 +886,7 @@ vtkSmartPointer<vtkIntArray> FEMesh::getMaterialCellData(
     Element *el = ei.element();
     CSkeletonElement *skelel = el->get_skeleton_element();
     if(filter->acceptable(skelel, skel)) {
-      int cat = skelel->dominantPixel(get_microstructure());
+      int cat = skelel->dominantPixel(skel);
       array->InsertNextValue(cat);
     }
   }

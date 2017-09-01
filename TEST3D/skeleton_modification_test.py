@@ -144,355 +144,355 @@ def build_mod_args():
               "criterion" : MinimumVolume(threshold=10.0, unit='Voxel'),
               "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_6False",
-          {"targets" : CheckHomogeneity(threshold=1.0),
-           "criterion" : MinimumVolume(threshold=50.0, unit='Voxel'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_6False",
+             {"targets" : CheckHomogeneity(threshold=1.0),
+              "criterion" : MinimumVolume(threshold=50.0, unit='Voxel'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_7True",
-          {"targets" : CheckHomogeneity(threshold=1.0),
-           "criterion" : MinimumVolume(threshold=10.0, unit='Physical'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_7True",
+             {"targets" : CheckHomogeneity(threshold=1.0),
+              "criterion" : MinimumVolume(threshold=10.0, unit='Physical'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_7False",
-          {"targets" : CheckHomogeneity(threshold=1.0),
-           "criterion" : MinimumVolume(threshold=50.0, unit='Physical'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_7False",
+             {"targets" : CheckHomogeneity(threshold=1.0),
+              "criterion" : MinimumVolume(threshold=50.0, unit='Physical'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_8True",
-          {"targets" : CheckHomogeneity(threshold=1.0),
-           "criterion" : MinimumVolume(threshold=0.002, unit='Fractional'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_8True",
+             {"targets" : CheckHomogeneity(threshold=1.0),
+              "criterion" : MinimumVolume(threshold=0.002, unit='Fractional'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_8False",
-          {"targets" : CheckHomogeneity(threshold=1.0),
-           "criterion" : MinimumVolume(threshold=50.0, unit='Fractional'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_8False",
+             {"targets" : CheckHomogeneity(threshold=1.0),
+              "criterion" : MinimumVolume(threshold=50.0, unit='Fractional'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine","refine_9True",
-          {"targets" : CheckElementsInGroup(group='egroup'),
-           "criterion" : Unconditionally(),
-           "alpha" : 0.5}),
+            ("base_skel_refine","refine_9True",
+             {"targets" : CheckElementsInGroup(group='egroup'),
+              "criterion" : Unconditionally(),
+              "alpha" : 0.5}),
             
-         ("base_skel_refine", "refine_10True",
-          {"targets" : CheckElementsInGroup(group='egroup'),
-           "criterion" : MinimumVolume(threshold=10.0, unit='Voxel'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_10True",
+             {"targets" : CheckElementsInGroup(group='egroup'),
+              "criterion" : MinimumVolume(threshold=10.0, unit='Voxel'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_10False",
-          {"targets" : CheckElementsInGroup(group='egroup'),
-           "criterion" : MinimumVolume(threshold=50.0, unit='Voxel'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_10False",
+             {"targets" : CheckElementsInGroup(group='egroup'),
+              "criterion" : MinimumVolume(threshold=50.0, unit='Voxel'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_11True",
-          {"targets" : CheckElementsInGroup(group='egroup'),
-           "criterion" : MinimumVolume(threshold=10.0, unit='Physical'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_11True",
+             {"targets" : CheckElementsInGroup(group='egroup'),
+              "criterion" : MinimumVolume(threshold=10.0, unit='Physical'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_11False",
-          {"targets" : CheckElementsInGroup(group='egroup'),
-           "criterion" : MinimumVolume(threshold=50.0, unit='Physical'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_11False",
+             {"targets" : CheckElementsInGroup(group='egroup'),
+              "criterion" : MinimumVolume(threshold=50.0, unit='Physical'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_12True",
-          {"targets" : CheckElementsInGroup(group='egroup'),
-           "criterion" : MinimumVolume(threshold=0.002, unit='Fractional'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_12True",
+             {"targets" : CheckElementsInGroup(group='egroup'),
+              "criterion" : MinimumVolume(threshold=0.002, unit='Fractional'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_12False",
-          {"targets" : CheckElementsInGroup(group='egroup'),
-           "criterion" : MinimumVolume(threshold=50.0, unit='Fractional'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_12False",
+             {"targets" : CheckElementsInGroup(group='egroup'),
+              "criterion" : MinimumVolume(threshold=50.0, unit='Fractional'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine","refine_13True",
-          {"targets" : CheckAllElements(),
-           "criterion" : Unconditionally(),
-           "alpha" : 0.5}),
+            ("base_skel_refine","refine_13True",
+             {"targets" : CheckAllElements(),
+              "criterion" : Unconditionally(),
+              "alpha" : 0.5}),
 
-         ("base_skel_refine", "refine_17True",
-          { "targets" : CheckHeterogeneousEdges(
-              threshold=1.0, choose_from=FromAllSegments()),
-            "criterion" : Unconditionally(),
-            "alpha" : 0.5}),
+            ("base_skel_refine", "refine_17True",
+             { "targets" : CheckHeterogeneousEdges(
+                 threshold=1.0, choose_from=FromAllSegments()),
+               "criterion" : Unconditionally(),
+               "alpha" : 0.5}),
             
-         ("base_skel_refine", "refine_17False",
-          { "targets" : CheckHeterogeneousEdges(
-              threshold=0.4, choose_from=FromAllSegments()),
-            "criterion" : Unconditionally(),
-            "alpha" : 0.5}),
+            ("base_skel_refine", "refine_17False",
+             { "targets" : CheckHeterogeneousEdges(
+                 threshold=0.4, choose_from=FromAllSegments()),
+               "criterion" : Unconditionally(),
+               "alpha" : 0.5}),
             
-         ("base_skel_refine", "refine_171True",
-          { "targets" : CheckHeterogeneousEdges(
-              threshold=1.0, choose_from=FromAllSegments()),
-            "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
-            "alpha" : 0.5}),
+            ("base_skel_refine", "refine_171True",
+             { "targets" : CheckHeterogeneousEdges(
+                 threshold=1.0, choose_from=FromAllSegments()),
+               "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
+               "alpha" : 0.5}),
             
-         ("base_skel_refine", "refine_171False",
-          { "targets" : CheckHeterogeneousEdges(
-              threshold=0.4, choose_from=FromAllSegments()),
-            "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
-            "alpha" : 0.5}),
+            ("base_skel_refine", "refine_171False",
+             { "targets" : CheckHeterogeneousEdges(
+                 threshold=0.4, choose_from=FromAllSegments()),
+               "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
+               "alpha" : 0.5}),
             
-         ("base_skel_refine", "refine_172True",
-          { "targets" : CheckHeterogeneousEdges(
-              threshold=1.0, choose_from=FromAllSegments()),
-            "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
-            "alpha" : 0.5}),
+            ("base_skel_refine", "refine_172True",
+             { "targets" : CheckHeterogeneousEdges(
+                 threshold=1.0, choose_from=FromAllSegments()),
+               "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
+               "alpha" : 0.5}),
             
-         ("base_skel_refine", "refine_172False",
-          { "targets" : CheckHeterogeneousEdges(
-              threshold=0.4, choose_from=FromAllSegments()),
-            "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
-            "alpha" : 0.5}),
+            ("base_skel_refine", "refine_172False",
+             { "targets" : CheckHeterogeneousEdges(
+                 threshold=0.4, choose_from=FromAllSegments()),
+               "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
+               "alpha" : 0.5}),
             
-         ("base_skel_refine", "refine_173True",
-          { "targets" : CheckHeterogeneousEdges(
-              threshold=1.0, choose_from=FromAllSegments()),
-            "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
-            "alpha" : 0.5}),
+            ("base_skel_refine", "refine_173True",
+             { "targets" : CheckHeterogeneousEdges(
+                 threshold=1.0, choose_from=FromAllSegments()),
+               "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
+               "alpha" : 0.5}),
             
-         ("base_skel_refine", "refine_173False",
-          { "targets" : CheckHeterogeneousEdges(
-              threshold=0.4, choose_from=FromAllSegments()),
-            "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
-            "alpha" : 0.5}),
+            ("base_skel_refine", "refine_173False",
+             { "targets" : CheckHeterogeneousEdges(
+                 threshold=0.4, choose_from=FromAllSegments()),
+               "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
+               "alpha" : 0.5}),
             
-         ("base_skel_refine", "refine_18True",
-          {"targets" : CheckHeterogeneousEdges(
-              threshold=1.0, choose_from=FromSelectedSegments()),
-           "criterion" : Unconditionally(),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_18True",
+             {"targets" : CheckHeterogeneousEdges(
+                 threshold=1.0, choose_from=FromSelectedSegments()),
+              "criterion" : Unconditionally(),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_18False",
-          {"targets" : CheckHeterogeneousEdges(
-              threshold=0.4, choose_from=FromSelectedSegments()),
-           "criterion" : Unconditionally(),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_18False",
+             {"targets" : CheckHeterogeneousEdges(
+                 threshold=0.4, choose_from=FromSelectedSegments()),
+              "criterion" : Unconditionally(),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_181True",
-          {"targets" : CheckHeterogeneousEdges(
-              threshold=1.0, choose_from=FromSelectedSegments()),
-           "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_181True",
+             {"targets" : CheckHeterogeneousEdges(
+                 threshold=1.0, choose_from=FromSelectedSegments()),
+              "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_181False",
-          {"targets" : CheckHeterogeneousEdges(
-              threshold=0.4, choose_from=FromSelectedSegments()),
-           "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_181False",
+             {"targets" : CheckHeterogeneousEdges(
+                 threshold=0.4, choose_from=FromSelectedSegments()),
+              "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_182True",
-          {"targets" : CheckHeterogeneousEdges(
-              threshold=1.0, choose_from=FromSelectedSegments()),
-           "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_182True",
+             {"targets" : CheckHeterogeneousEdges(
+                 threshold=1.0, choose_from=FromSelectedSegments()),
+              "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_182False",
-          {"targets" : CheckHeterogeneousEdges(
-              threshold=0.4, choose_from=FromSelectedSegments()),
-           "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_182False",
+             {"targets" : CheckHeterogeneousEdges(
+                 threshold=0.4, choose_from=FromSelectedSegments()),
+              "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_183True",
-          {"targets" : CheckHeterogeneousEdges(
-              threshold=1.0, choose_from=FromSelectedSegments()),
-           "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_183True",
+             {"targets" : CheckHeterogeneousEdges(
+                 threshold=1.0, choose_from=FromSelectedSegments()),
+              "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_183False",
-          {"targets" : CheckHeterogeneousEdges(
-              threshold=0.4, choose_from=FromSelectedSegments()),
-           "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_183False",
+             {"targets" : CheckHeterogeneousEdges(
+                 threshold=0.4, choose_from=FromSelectedSegments()),
+              "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_19True",
-          {"targets" : CheckHeterogeneousEdges(
-              threshold=1.0, choose_from=FromSelectedElements()),
-           "criterion" : Unconditionally(),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_19True",
+             {"targets" : CheckHeterogeneousEdges(
+                 threshold=1.0, choose_from=FromSelectedElements()),
+              "criterion" : Unconditionally(),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_19False",
-          {"targets" : CheckHeterogeneousEdges(
-              threshold=0.4, choose_from=FromSelectedElements()),
-           "criterion" : Unconditionally(),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_19False",
+             {"targets" : CheckHeterogeneousEdges(
+                 threshold=0.4, choose_from=FromSelectedElements()),
+              "criterion" : Unconditionally(),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_191True",
-          {"targets" : CheckHeterogeneousEdges(
-              threshold=1.0, choose_from=FromSelectedElements()),
-           "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_191True",
+             {"targets" : CheckHeterogeneousEdges(
+                 threshold=1.0, choose_from=FromSelectedElements()),
+              "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_191False",
-          {"targets" : CheckHeterogeneousEdges(
-              threshold=0.4, choose_from=FromSelectedElements()),
-           "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_191False",
+             {"targets" : CheckHeterogeneousEdges(
+                 threshold=0.4, choose_from=FromSelectedElements()),
+              "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_192True",
-          {"targets" : CheckHeterogeneousEdges(
-              threshold=1.0, choose_from=FromSelectedElements()),
-           "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_192True",
+             {"targets" : CheckHeterogeneousEdges(
+                 threshold=1.0, choose_from=FromSelectedElements()),
+              "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_192False",
-          {"targets" : CheckHeterogeneousEdges(
-              threshold=0.4, choose_from=FromSelectedElements()),
-           "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_192False",
+             {"targets" : CheckHeterogeneousEdges(
+                 threshold=0.4, choose_from=FromSelectedElements()),
+              "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_193True",
-          {"targets" : CheckHeterogeneousEdges(
-              threshold=1.0, choose_from=FromSelectedElements()),
-           "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_193True",
+             {"targets" : CheckHeterogeneousEdges(
+                 threshold=1.0, choose_from=FromSelectedElements()),
+              "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_193False",
-          {"targets" : CheckHeterogeneousEdges(
-              threshold=0.4, choose_from=FromSelectedElements()),
-           "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_193False",
+             {"targets" : CheckHeterogeneousEdges(
+                 threshold=0.4, choose_from=FromSelectedElements()),
+              "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine","refine_20True",
-          {"targets" : CheckSelectedEdges(),
-           "criterion" : Unconditionally(),
-           "alpha" : 0.5}),
+            ("base_skel_refine","refine_20True",
+             {"targets" : CheckSelectedEdges(),
+              "criterion" : Unconditionally(),
+              "alpha" : 0.5}),
             
-         ("base_skel_refine", "refine_21True",
-          {"targets" : CheckSelectedEdges(),
-           "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_21True",
+             {"targets" : CheckSelectedEdges(),
+              "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_21False",
-          {"targets" : CheckSelectedEdges(),
-           "criterion" : MinimumLength(threshold=50.0, unit='Voxel'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_21False",
+             {"targets" : CheckSelectedEdges(),
+              "criterion" : MinimumLength(threshold=50.0, unit='Voxel'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_22True",
-          {"targets" : CheckSelectedEdges(),
-           "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_22True",
+             {"targets" : CheckSelectedEdges(),
+              "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_22False",
-          {"targets" : CheckSelectedEdges(),
-           "criterion" : MinimumLength(threshold=50.0, unit='Physical'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_22False",
+             {"targets" : CheckSelectedEdges(),
+              "criterion" : MinimumLength(threshold=50.0, unit='Physical'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_23True",
-          {"targets" : CheckSelectedEdges(),
-           "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_23True",
+             {"targets" : CheckSelectedEdges(),
+              "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_23False",
-          {"targets" : CheckSelectedEdges(),
-           "criterion" : MinimumLength(threshold=50.0, unit='Fractional'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_23False",
+             {"targets" : CheckSelectedEdges(),
+              "criterion" : MinimumLength(threshold=50.0, unit='Fractional'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine","refine_24True",
-          {"targets" : CheckSegmentsInGroup(group='sgroup'),
-           "criterion" : Unconditionally(),
-           "alpha" : 0.5}),
+            ("base_skel_refine","refine_24True",
+             {"targets" : CheckSegmentsInGroup(group='sgroup'),
+              "criterion" : Unconditionally(),
+              "alpha" : 0.5}),
             
-         ("base_skel_refine", "refine_25True",
-          {"targets" : CheckSegmentsInGroup(group='sgroup'),
-           "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_25True",
+             {"targets" : CheckSegmentsInGroup(group='sgroup'),
+              "criterion" : MinimumLength(threshold=5.0, unit='Voxel'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_25False",
-          {"targets" : CheckSegmentsInGroup(group='sgroup'),
-           "criterion" : MinimumLength(threshold=50.0, unit='Voxel'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_25False",
+             {"targets" : CheckSegmentsInGroup(group='sgroup'),
+              "criterion" : MinimumLength(threshold=50.0, unit='Voxel'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_26True",
-          {"targets" : CheckSegmentsInGroup(group='sgroup'),
-           "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_26True",
+             {"targets" : CheckSegmentsInGroup(group='sgroup'),
+              "criterion" : MinimumLength(threshold=5.0, unit='Physical'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_26False",
-          {"targets" : CheckSegmentsInGroup(group='sgroup'),
-           "criterion" : MinimumLength(threshold=50.0, unit='Physical'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_26False",
+             {"targets" : CheckSegmentsInGroup(group='sgroup'),
+              "criterion" : MinimumLength(threshold=50.0, unit='Physical'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_27True",
-          {"targets" : CheckSegmentsInGroup(group='sgroup'),
-           "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_27True",
+             {"targets" : CheckSegmentsInGroup(group='sgroup'),
+              "criterion" : MinimumLength(threshold=0.002, unit='Fractional'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_27False",
-          {"targets" : CheckSegmentsInGroup(group='sgroup'),
-           "criterion" : MinimumLength(threshold=50.0, unit='Fractional'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_27False",
+             {"targets" : CheckSegmentsInGroup(group='sgroup'),
+              "criterion" : MinimumLength(threshold=50.0, unit='Fractional'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_28True",
-          { "targets" : CheckSelectedFaces(),
-            "criterion" : Unconditionally(),
-            "alpha" : 0.5}),
+            ("base_skel_refine", "refine_28True",
+             { "targets" : CheckSelectedFaces(),
+               "criterion" : Unconditionally(),
+               "alpha" : 0.5}),
 
-         ("base_skel_refine", "refine_29True",
-          {"targets" : CheckSelectedFaces(),
-           "criterion" : MinimumArea(threshold=10.0, unit='Voxel'),
-           "alpha" : 0.3}),
+            ("base_skel_refine", "refine_29True",
+             {"targets" : CheckSelectedFaces(),
+              "criterion" : MinimumArea(threshold=10.0, unit='Voxel'),
+              "alpha" : 0.3}),
             
-         ("base_skel_refine", "refine_29False",
-          {"targets" : CheckSelectedFaces(),
-           "criterion" : MinimumArea(threshold=50.0, unit='Voxel'),
-           "alpha" : 0.3}),
-         
-         ("base_skel_refine", "refine_30True",
-          {"targets" : CheckSelectedFaces(),
-           "criterion" : MinimumArea(threshold=10.0, unit='Physical'),
-           "alpha" : 0.3}),
-             
-         ("base_skel_refine", "refine_30False",
-          {"targets" : CheckSelectedFaces(),
-           "criterion" : MinimumArea(threshold=50.0, unit='Physical'),
-           "alpha" : 0.3}),
-             
-         ("base_skel_refine","refine_31True",
-          {"targets" : CheckSelectedFaces(),
-           "criterion" : MinimumArea(threshold=0.002, unit='Fractional'),
-           "alpha" : 0.5}),
-             
-         ("base_skel_refine","refine_31False",
-          {"targets" : CheckSelectedFaces(),
-           "criterion" : MinimumArea(threshold=50.0, unit='Fractional'),
-           "alpha" : 0.5}),
-         
-         ("base_skel_refine", "refine_32True",
-          {"targets" : CheckFacesInGroup(group='fgroup'),
-           "criterion" : Unconditionally(),
-               "alpha" : 0.3}),
-             
-         ("base_skel_refine", "refine_33True",
-          {"targets" : CheckFacesInGroup(group='fgroup'),
-           "criterion" : MinimumArea(threshold=10.0, unit='Voxel'),
-           "alpha" : 0.3}),
-             
-         ("base_skel_refine", "refine_33False",
-          {"targets" : CheckFacesInGroup(group='fgroup'),
-           "criterion" : MinimumArea(threshold=50.0, unit='Voxel'),
-           "alpha" : 0.3}),
-         
-         ("base_skel_refine", "refine_34True",
-          {"targets" : CheckFacesInGroup(group='fgroup'),
-           "criterion" : MinimumArea(threshold=10.0, unit='Physical'),
-           "alpha" : 0.3}),
-             
-         ("base_skel_refine", "refine_34False",
-          {"targets" : CheckFacesInGroup(group='fgroup'),
-           "criterion" : MinimumArea(threshold=50.0, unit='Physical'),
-           "alpha" : 0.3}),
-             
-         ("base_skel_refine", "refine_35True",
-          {"targets" : CheckFacesInGroup(group='fgroup'),
-           "criterion" : MinimumArea(threshold=0.002, unit='Fractional'),
-           "alpha" : 0.3}),
-             
-         ("base_skel_refine", "refine_35False",
-          {"targets" : CheckFacesInGroup(group='fgroup'),
-           "criterion" : MinimumArea(threshold=50.0, unit='Fractional'),
-           "alpha" : 0.3})
-     ],
+            ("base_skel_refine", "refine_29False",
+             {"targets" : CheckSelectedFaces(),
+              "criterion" : MinimumArea(threshold=50.0, unit='Voxel'),
+              "alpha" : 0.3}),
+            
+            ("base_skel_refine", "refine_30True",
+             {"targets" : CheckSelectedFaces(),
+              "criterion" : MinimumArea(threshold=10.0, unit='Physical'),
+              "alpha" : 0.3}),
+            
+            ("base_skel_refine", "refine_30False",
+             {"targets" : CheckSelectedFaces(),
+              "criterion" : MinimumArea(threshold=50.0, unit='Physical'),
+              "alpha" : 0.3}),
+            
+            ("base_skel_refine","refine_31True",
+             {"targets" : CheckSelectedFaces(),
+              "criterion" : MinimumArea(threshold=0.002, unit='Fractional'),
+              "alpha" : 0.5}),
+            
+            ("base_skel_refine","refine_31False",
+             {"targets" : CheckSelectedFaces(),
+              "criterion" : MinimumArea(threshold=50.0, unit='Fractional'),
+              "alpha" : 0.5}),
+            
+            ("base_skel_refine", "refine_32True",
+             {"targets" : CheckFacesInGroup(group='fgroup'),
+              "criterion" : Unconditionally(),
+              "alpha" : 0.3}),
+            
+            ("base_skel_refine", "refine_33True",
+             {"targets" : CheckFacesInGroup(group='fgroup'),
+              "criterion" : MinimumArea(threshold=10.0, unit='Voxel'),
+              "alpha" : 0.3}),
+            
+            ("base_skel_refine", "refine_33False",
+             {"targets" : CheckFacesInGroup(group='fgroup'),
+              "criterion" : MinimumArea(threshold=50.0, unit='Voxel'),
+              "alpha" : 0.3}),
+            
+            ("base_skel_refine", "refine_34True",
+             {"targets" : CheckFacesInGroup(group='fgroup'),
+              "criterion" : MinimumArea(threshold=10.0, unit='Physical'),
+              "alpha" : 0.3}),
+            
+            ("base_skel_refine", "refine_34False",
+             {"targets" : CheckFacesInGroup(group='fgroup'),
+              "criterion" : MinimumArea(threshold=50.0, unit='Physical'),
+              "alpha" : 0.3}),
+            
+            ("base_skel_refine", "refine_35True",
+             {"targets" : CheckFacesInGroup(group='fgroup'),
+              "criterion" : MinimumArea(threshold=0.002, unit='Fractional'),
+              "alpha" : 0.3}),
+            
+            ("base_skel_refine", "refine_35False",
+             {"targets" : CheckFacesInGroup(group='fgroup'),
+              "criterion" : MinimumArea(threshold=50.0, unit='Fractional'),
+              "alpha" : 0.3})
+        ],
         # "Relax" :
         #     [
         #     ("modbase", "relax",
@@ -676,6 +676,7 @@ def build_mod_args():
               "alpha" : 0.3
               }
              ),
+            ]
         # "Swap Edges" :
         #     [ ("modsecond", "swapedges",
         #        {"targets" : AllElements(),
@@ -690,22 +691,23 @@ def build_mod_args():
         #         }
         #        )
         #       ],
-            ]
         }
 
     # skel_modify_args = {
     #     "Anneal" :
-    #         [
-    #         ("modgroups2", "anneal_2",
-    #          {"targets" : NodesInGroup(group='#5959f3'),
+    #     [
+    #         ("modgroups_bg", "anneal_3",
+    #          {"targets" : FiddleElementsInGroup(group='#a1fc93'),
     #           "criterion" : AverageEnergy(alpha=0.7),
     #           "T" : 0.0,
-    #           "delta" : 1.0,
-    #           "iteration" : FixedIteration(iterations=50)            
-    #           }
-    #          ),
-    #         ],
-    #     }
+    #           "delta" : 0.25,
+    #           "iteration" : FixedIteration(iterations=20)            
+    #          }
+    #         ),
+    #     ],
+    # }
+        
+    
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 

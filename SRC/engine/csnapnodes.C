@@ -68,7 +68,7 @@ CSkeletonElementVector* SnapHeterogenous::getElements(CSkeletonBase *skeleton) {
   elements->clear();
   for(CSkeletonElementIterator elit = skeleton->beginElements();
       elit != skeleton->endElements(); ++elit) {
-    if((*elit)->homogeneity(skeleton->getMicrostructure()) < threshold)
+    if((*elit)->homogeneity(skeleton) < threshold)
       elements->push_back(*elit);
   }
   return elements;
@@ -131,7 +131,7 @@ CSkeletonBase* SnapNodes::apply(CSkeletonBase *skeleton) {
       {
 	// oofcerr << "considering element " << (*it)->getIndex() << std::endl;
     
-	if( (*it)->homogeneity(skeleton->getMicrostructure()) == 1.0)
+	if((*it)->homogeneity(skeleton) == 1.0)
 	  continue;
 	// Loop over the segments to find the transition points, if
 	// any. tpoints gets deleted by the snapper destructors.

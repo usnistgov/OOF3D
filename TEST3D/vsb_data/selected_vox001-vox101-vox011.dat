@@ -1,3 +1,4 @@
+Subregion 0 ICRectangularPrism((0, 0, 0), (4, 4, 4))
 Vertex 0 (1, 1, 2)   nbrs=1 4 6 
 Vertex 1 (3, 1, 2)   nbrs=3 0 7 
 Vertex 2 (2, 2, 2)   nbrs=5 3 8 

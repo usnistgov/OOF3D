@@ -368,7 +368,7 @@ class Element_Selection_5Color(Skeleton_Selection_5Color, Element_Selection):
         self.assertEqual(self.selection().size(), 0)
         OOF.ElementSelection.Select_by_Homogeneity(
             skeleton='skeltest:skeleton', 
-            threshold=0.6)
+            threshold=0.601)    # some elements have homog=0.6
         self.assertEqual(self.selection().size(), 42)
         indices = [21, 24, 42, 50, 52, 53, 54, 70, 96, 123, 131, 132,
                    133, 134, 141, 143, 144, 147, 151, 165, 172, 175,

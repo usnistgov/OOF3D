@@ -40,8 +40,8 @@ public:
   double length() const;
   double lengthInVoxelUnits(const CMicrostructure *MS) const;
   double lengthInFractionalUnits(const CMicrostructure *MS) const;
-  virtual double homogeneity(const CMicrostructure *MS) const;
-  int dominantPixel(const CMicrostructure*) const;
+  virtual double homogeneity(const CSkeletonBase*) const;
+  int dominantPixel(const CSkeletonBase*) const;
   void increment_nelements();
   void decrement_nelements();
   int num_elements() const { return nelements; }

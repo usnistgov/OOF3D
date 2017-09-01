@@ -54,8 +54,8 @@ public:
   double volumeInFractionalUnits(CMicrostructure*);
   bool illegal();
   bool suspect();
-  double homogeneity(CMicrostructure*);
-  int dominantPixel(CMicrostructure*); 
+  double homogeneity(CSkeletonBase*);
+  int dominantPixel(CSkeletonBase*); 
   double energyShape();
   Material *material(CSkeletonBase*);
   int getNumberOfNodes();

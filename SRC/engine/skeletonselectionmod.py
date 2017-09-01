@@ -256,9 +256,9 @@ class SelectInternalBoundaryNodes(NodeSelectionModifier):
                 elements = node.getElements()
             # Select the Node if not all of its Elements have the same
             # category.
-            cat = elements[0].dominantPixel(skel.getMicrostructure())
+            cat = elements[0].dominantPixel(skel)
             for element in elements[1:]:
-                if cat != element.dominantPixel(skel.getMicrostructure()):
+                if cat != element.dominantPixel(skel):
                     nodelist.append(node)
                     break
         selection.start()
@@ -759,14 +759,14 @@ class SelectInternalBoundarySegments(SegmentSelectionModifier):
         for segment in skel.segments.values():
             elements = segment.getElements()
             if (len(elements) == 2 and 
-                elements[0].dominantPixel(skel.getMicrostructure()) != 
-                elements[1].dominantPixel(skel.getMicrostructure())):
+                elements[0].dominantPixel(skel) != 
+                elements[1].dominantPixel(skel)):
                 seglist.append(segment)
             elif not self.ignorePBC and len(elements) == 1:
                 p = segment.getPartner(skel)
                 if (p and
-                    (p.getElements()[0].dominantPixel(skel.getMicrostructure())
-                     != elements[0].dominantPixel(skel.getMicrostructure()))):
+                    (p.getElements()[0].dominantPixel(skel)
+                     != elements[0].dominantPixel(skel))):
                     seglist.append(segment)
         selection.start()
         selection.clear()
@@ -791,8 +791,9 @@ class SelectInternalBoundarySegments3D(SegmentSelectionModifier):
         segset = set()
         for face in skel.getFaces():
             elements = skel.getFaceElements(face)
-            if(len(elements) == 2 and
-               elements[0].dominantPixel(ms) != elements[1].dominantPixel(ms)):
+            if (len(elements) == 2 and
+                (elements[0].dominantPixel(skel)
+                 != elements[1].dominantPixel(skel))):
                 segset.update(skel.getFaceSegments(face))
         selection.start()
         selection.clear()
@@ -923,7 +924,7 @@ class SegmentHomogeneity(SegmentSelectionModifier):
         selected = []
         skel = skeleton.getObject()
         for segment in skel.getSegments():
-            if segment.homogeneity(skel.getMicrostructure()) < self.threshold:
+            if segment.homogeneity(skel) < self.threshold:
                 selected.append(segment)
         selection.start()
         selection.clear()
@@ -1106,7 +1107,8 @@ class SelectInternalBoundaryFaces(FaceSelectionModifier):
         for face in skel.getFaces():
             elements = skel.getFaceElements(face)
             if (len(elements) == 2 and
-                elements[0].dominantPixel(ms) != elements[1].dominantPixel(ms)):
+                (elements[0].dominantPixel(skel)
+                 != elements[1].dominantPixel(skel))):
                 faceset.add(face)
         selection.start()
         selection.clear()
@@ -1421,7 +1423,7 @@ class ElementHomogeneity(ElementSelectionModifier):
         skel = skeleton.getObject()
         ms = skel.getMicrostructure()
         for i in xrange(skel.nelements()):
-            if skel.getElement(i).homogeneity(ms) < self.threshold:
+            if skel.getElement(i).homogeneity(skel) < self.threshold:
                 selected.append(skel.getElement(i))
         selection.start()
         selection.clear()
@@ -1805,7 +1807,7 @@ class ElementByPixelGroup(ElementSelectionModifier):
         pxlgrp = ms.findGroup(self.group)
         for i in xrange(skel.nelements()):
             grpnames = pixelgroup.pixelGroupNames(
-                ms, skel.getElement(i).dominantPixel(ms))
+                ms, skel.getElement(i).dominantPixel(skel))
             if self.group in grpnames:
                 selected.append(skel.getElement(i))
         selection.start()

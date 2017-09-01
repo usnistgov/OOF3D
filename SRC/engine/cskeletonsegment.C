@@ -69,13 +69,14 @@ double CSkeletonSegment::lengthInFractionalUnits(const CMicrostructure *MS) cons
   return sqrt(norm2(spts[0] - spts[1]));
 }
 
-double CSkeletonSegment::homogeneity(const CMicrostructure *MS) const {
-  return MS->edgeHomogeneity((*nodes)[0]->position(), (*nodes)[1]->position());
+double CSkeletonSegment::homogeneity(const CSkeletonBase *skel) const {
+  return skel->getMicrostructure()->edgeHomogeneity(
+			    (*nodes)[0]->position(), (*nodes)[1]->position());
 }
 
-int CSkeletonSegment::dominantPixel(const CMicrostructure *ms) const {
+int CSkeletonSegment::dominantPixel(const CSkeletonBase *skel) const {
   int cat;
-  ms->edgeHomogeneityCat((*nodes)[0]->position(), (*nodes)[1]->position(), &cat);
+  skel->getMicrostructure()->edgeHomogeneityCat((*nodes)[0]->position(), (*nodes)[1]->position(), &cat);
   return cat;
 }
 

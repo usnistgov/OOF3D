@@ -298,3 +298,4 @@ _fixmenu()
     
 switchboard.requestCallback(('new who', 'Microstructure'), _fixmenu)
 switchboard.requestCallback(('remove who', 'Microstructure'), _fixmenu)
+

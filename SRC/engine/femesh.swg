@@ -67,7 +67,7 @@ typedef FEMesh::ElementShapeCountMap ElementShapeCountMap;
 
 class FEMesh {
 public:
-  FEMesh(CMicrostructure*);
+  FEMesh(CSkeletonBase*);
   ~FEMesh();
 
 

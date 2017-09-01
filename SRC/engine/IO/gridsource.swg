@@ -102,7 +102,7 @@ public:
     void setOther(CSkeletonBase *other) {
       (*self)->Setother(other);
     }
-    void setFilter(SkeletonFilter*f) {
+    void setFilter(SkeletonFilter *f) {
       // This is a hack
     }
   }

@@ -253,14 +253,9 @@ public:
     size_ = uprightfront - lowleftback;
   }
   template <class VTYPE2, class CTYPE2>
-  void swallow(const CRectangularPrism_<VTYPE2, CTYPE2> &other) {
+  void swallowPrism(const CRectangularPrism_<VTYPE2, CTYPE2> &other) {
     swallow(other.upperrightfront());
     swallow(other.lowerleftback());
-  }
-  template <class VTYPE2, class CTYPE2>
-  void swallow(const CRectangle_<VTYPE2, CTYPE2> &rect) {
-    swallow(rect.lowerleft());
-    swallow(rect.upperright());
   }
   inline VTYPE xmin() const { return lowleftback[0]; }
   inline VTYPE xmax() const { return uprightfront[0]; }
@@ -289,6 +284,16 @@ public:
     if(lowleftback[0] > other.uprightfront[0]) return false;
     if(lowleftback[1] > other.uprightfront[1]) return false;
     if(lowleftback[2] > other.uprightfront[2]) return false;
+    return true;
+  }
+  template <class VTYPE2, class CTYPE2>
+  bool intersects_open(const CRectangularPrism_<VTYPE2, CTYPE2> &other) const {
+    if(uprightfront[0] <= other.lowleftback[0]) return false;
+    if(uprightfront[1] <= other.lowleftback[1]) return false;
+    if(uprightfront[2] <= other.lowleftback[2]) return false;
+    if(lowleftback[0] >= other.uprightfront[0]) return false;
+    if(lowleftback[1] >= other.uprightfront[1]) return false;
+    if(lowleftback[2] >= other.uprightfront[2]) return false;
     return true;
   }
   virtual int ncorners() const { return 8; }

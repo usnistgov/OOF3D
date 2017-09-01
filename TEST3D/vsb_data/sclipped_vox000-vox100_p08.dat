@@ -1,8 +1,8 @@
-Vertex 0 (1, 1, 1)   nbrs=1 5 2 
-Vertex 1 (2.22231, 1, 1)   nbrs=0 4 6 
-Vertex 2 (1, 1, 2)   nbrs=3 4 0 
-Vertex 3 (1, 1.38282, 2)   nbrs=2 7 4 
-Vertex 4 (1.31322, 1, 2)   nbrs=2 3 1 
-Vertex 5 (1, 2, 1)   nbrs=0 6 7 
-Vertex 6 (1.40412, 2, 1)   nbrs=5 1 7 
-Vertex 7 (1, 2, 1.44454)   nbrs=5 6 3 
+Vertex 0 (1, 1, 1)   nbrs=3 2 1 
+Vertex 1 (1, 1, 2)   nbrs=4 5 0 
+Vertex 2 (1, 2, 1)   nbrs=0 6 7 
+Vertex 3 (2.22231, 1, 1)   nbrs=0 5 6 
+Vertex 4 (1, 1.38282, 2)   nbrs=1 7 5 
+Vertex 5 (1.31322, 1, 2)   nbrs=1 4 3 
+Vertex 6 (1.40412, 2, 1)   nbrs=2 3 7 
+Vertex 7 (1, 2, 1.44454)   nbrs=2 6 4 

@@ -43,7 +43,7 @@ public:
   virtual VTKCellType  getCellType() const { return VTK_TRIANGLE; }
   virtual vtkSmartPointer<vtkCell> getEmptyVtkCell() const;
 
-  virtual double homogeneity(const CMicrostructure*) const;
+  virtual double homogeneity(const CSkeletonBase*) const;
 
   double area() const;		// always non-negative!
   double areaInVoxelUnits(const CMicrostructure *MS) const;

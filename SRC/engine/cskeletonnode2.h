@@ -23,7 +23,7 @@
 #include <algorithm>
 
 class CPinnedNodeTracker;
-class CSkeleton;
+class CSkeletonBase;
 
 typedef std::vector<CPinnedNodeTracker*> CPinnedNodeTrackerVector;
 
@@ -98,7 +98,7 @@ public:
 #endif
   void copyMobility(CSkeletonNode *);
 
-  int dominantPixel(const CMicrostructure*) const;
+  int dominantPixel(const CSkeletonBase*) const;
 
   bool pinned() const { return !(mobility & unpinned_); }
   void setPinned(bool pin);  
@@ -151,7 +151,7 @@ public:
   // HomogeneityFilter.  TODO OPT: Change the filter classes so that
   // filters can specify which classes they operate on, and remove
   // this function.
-  virtual double homogeneity(const CMicrostructure*) const { return 1.0; }
+  virtual double homogeneity(const CSkeletonBase*) const { return 1.0; }
 
   // static functions for pin modifiers
   // TODO MER: These don't really belong in this class.  Move to CSkeleton?

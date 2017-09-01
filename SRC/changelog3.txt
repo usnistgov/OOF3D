@@ -13,7 +13,17 @@
  * oof_manager@nist.gov. 
  */
 
-3.0.2
+3.1.1
+
+Much faster element homogeneity calculation by dividing the
+Microstructure into subregions to limit the size of the graphs.
+
+Fixed a possible infinite loop in the homogeneity calculation.
+
+Fixed the abaqus output for Skeletons and Meshes.  It still needs to
+be tested by a real abaqus user.
+
+3.1.0
 
 Fixed the filters for limiting display layers to particular voxel or
 skeleton groups.  They now update properly when the underlying groups

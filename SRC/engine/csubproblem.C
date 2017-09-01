@@ -101,7 +101,7 @@ long get_globalCSubProblemCount() {
   return CSubProblem::globalCSubProblemCount;
 }
 
-CMicrostructure *CSubProblem::get_microstructure() const {
+const CMicrostructure *CSubProblem::get_microstructure() const {
   return mesh->get_microstructure();
 }
 

@@ -930,20 +930,20 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
     try:
         skeleton = skelcontext.getObject()
 
-        buffer="*HEADING\nABAQUS-style file created by OOF2 on %s from a skeleton " % (datetime.datetime.today())
+        buffer="*HEADING\nABAQUS-style file created by OOF3D on %s from a skeleton " % (datetime.datetime.today())
         buffer+="of the microstructure %s.\n" % skeleton.getMicrostructure().name()
 
         # Build dictionary (instead of using index()) for elements and nodes
         #  as was done in previous writeXXX() methods
         nodedict = {}
         i = 1
-        for node in skeleton.nodes:
+        for node in skeleton.getNodes():
             nodedict[node] = i
             i += 1
         # same for elements
         elementdict = {}
         i = 1
-        for el in skeleton.elements:
+        for el in skeleton.getElements():
             elementdict[el] = i
             i += 1
 
@@ -954,7 +954,7 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
         #  something like this has been done in the OOF universe.
         materiallist={}
         elementlist={}
-        for el in skeleton.elements:
+        for el in skeleton.getElements():
             matl = el.material(skeleton)
             if matl:
                 matname = matl.name()
@@ -976,18 +976,18 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
         buffer+="**   More information may be obtained by saving ABAQUS from a mesh.\n"
 
         listbuf=["*NODE\n"]
-        for node in skeleton.nodes:
-            listbuf.append("%d, %s, %s\n" % (nodedict[node],node.position().x,node.position().y))
+        for node in skeleton.getNodes():
+            listbuf.append("%d, %s, %s, %s\n" % (nodedict[node],node.position().x,node.position().y,node.position().z))
         buffer+=string.join(listbuf,"")
 
         # Only expecting 3 or 4 noded skeleton elements
         for numnodes in [3,4]:
             listbuf=["** The element type provided for ABAQUS is only a guess " \
                      "and may have to be modified by the user to be meaningful.\n*ELEMENT, TYPE=CPS%d\n" % numnodes]
-            for el in skeleton.elements:
+            for el in skeleton.getElements():
                 if el.nnodes()==numnodes:
                     listbuf2=["%d" % (elementdict[el])]
-                    for node in el.nodes:
+                    for node in el.getNodes():
                         listbuf2.append("%d" % (nodedict[node]))
                     listbuf.append(string.join(listbuf2,", ")+"\n")
             if len(listbuf)>1:
@@ -1017,12 +1017,12 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                 i+=1
             buffer+=string.join(listbuf,", ")+"\n"
 
-        buffer+="** Include point and edge boundaries from OOF2.\n"
-        for pbname, pbdy in skeleton.pointboundaries.items():
+        buffer+="**/n** Point, edge, and face boundaries from OOF3D.\n**\n"
+        for pbname, pbdy in skeleton.getPointBoundaries().items():
             buffer+="*NSET, NSET=%s\n" % (pbname)
             listbuf=[]
             i=0
-            for node in pbdy.nodes:
+            for node in pbdy.getNodes():
                 if i>0 and i%16==0:
                     listbuf.append("\n%d" % (nodedict[node]))
                 else:
@@ -1030,14 +1030,14 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                 i+=1
             buffer+=string.join(listbuf,", ")+"\n"
 
-        # Use rearrangeEdges() to chain the edges together, then pick the
-        #  unique nodes. It seems the edges can't be selected if they
-        #  are empty, so edgeset=[(a,b),(b,c),...] is not checked
-        #  for null content
-        for ebname, ebdy in skeleton.edgeboundaries.items():
+        # Use rearrangeEdges() to chain the edges together, then pick
+        # the unique nodes. It seems the edges can't be selected if
+        # they are empty, so edgeset=[(a,b),(b,c),...] is not checked
+        # for null content
+        for ebname, ebdy in skeleton.getEdgeBoundaries().items():
             edgeset = rearrangeEdges([
-                tuple(nodedict[node] for node in edge.get_nodes())
-                for edge in ebdy.edges
+                tuple(nodedict[node] for node in edge.get_segment().getNodes())
+                for edge in ebdy.getSegments()
                 ])
             buffer+="*NSET, NSET=%s\n" % (ebname)
             listbuf=["%d" % edgeset[0][0]]
@@ -1050,6 +1050,25 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                 i+=1
             buffer+=string.join(listbuf,", ")+"\n"
 
+        for fbname, fbdy in skeleton.getFaceBoundaries().items():
+            if fbdy.size() > 0:
+                nodeset = set()
+                for oface in fbdy.getFaces():
+                    face = oface.get_face()
+                    for node in face.getNodes():
+                        nodeset.add(nodedict[node])
+                buffer += "*NSET, NSET=%s" % fbname
+                listbuf = []
+                i = 0
+                for node in nodeset:
+                    if i%16 == 0:
+                        listbuf.append("\n%d" % node)
+                    else:
+                        listbuf.append("%d" % node)
+                    i += 1
+                buffer += string.join(listbuf, ", ") + "\n"
+
+        buffer+="**/n** Element groups for OOF3D materials.\n**\n"
         for matname in materiallist:
             buffer+="*ELSET, ELSET=%s\n" % matname
             listbuf=[]
