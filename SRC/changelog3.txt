@@ -13,6 +13,10 @@
  * oof_manager@nist.gov. 
  */
 
+3.1.1.1
+
+Minor changes to make the old gcc 4.7 compilers happy.
+
 3.1.1
 
 Much faster element homogeneity calculation by dividing the
