@@ -45,7 +45,7 @@ except ImportError:
 # The make_dist script edits the following line when a distribution is
 # built.  Don't change it by hand.  On the git master branch,
 # "(unreleased)" is replaced by the version number.
-version_from_make_dist = "3.1.1"
+version_from_make_dist = "3.1.1.1"
     
 # will need to add vtk
 
