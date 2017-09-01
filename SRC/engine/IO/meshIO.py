@@ -841,8 +841,8 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
 **    mesh was refined.
 ** The materials and boundary conditions provided by OOF2 may be
 **   translated into ABAQUS by the user.
-** The element type provided below should be verified and modified
-**   accordingly.
+** The element type(s) *will* have to be modified by the user. Search for
+**   ABAQUSELEMENTTYPE in this file.
 ** Only elements (and nodes of such elements) that have an associated
 **   material are included in this file.
 """)
@@ -851,7 +851,8 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
     # Get nodes that are associated with elements that have a material
     # definition.  Other nodes aren't in nodedict.
     for (position, index) in nodedict.items():
-        listbuf.append("%d, %s, %s\n" % (index, position.x, position.y))
+        listbuf.append("%d, %s, %s, %s\n"
+                       % (index, position.x, position.y, position.z))
     buffer.extend(listbuf)
 
     for ename in meshcontext.elementdict.values():
@@ -861,16 +862,18 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
         try:
             # Group the elements according to element type
             listbuf=[
-"""** The OOF2 element type is %s. The type provided for ABAQUS is only a guess
-** and may have to be modified by the user to be meaningful.
-*ELEMENT, TYPE=CPS%d
+"""** The OOF2 element type is %s. The ABAQUS element type will
+** have to be modified by the user to be meaningful.
+*ELEMENT, TYPE=ABAQUSELEMENTTYPE
 """
-% (`ename`,masterElementDict[ename.name()].nnodes())]
+% ename.name()]
             # Trivia: C stands for Continuum, PS for Plane Stress (PE
             # - Plane strain)
+            wrotesomething = False
             for el in femesh.elements():
                 if el.material():
                     if el.masterelement().name()==ename.name():
+                        wrotesomething = True
                         listbuf2=["%d" % (elementdict[el.get_index()])]
                         cornernodelist=[]
                         # List corner nodes first, as preferred by ABAQUS
@@ -884,7 +887,8 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
                                 listbuf2.append(
                                     "%d" % (nodedict[node.position()]))
                         listbuf.append(string.join(listbuf2,", ")+"\n")
-            buffer.extend(listbuf)
+            if wrotesomething:
+                buffer.extend(listbuf)
         except KeyError:
             ## TODO: Which KeyError are we ignoring here?  Use
             ## try/except/else to put the 'except' closer to the
@@ -935,7 +939,7 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
             buffer+="*NSET, NSET=%s\n" % (ebname)
             listbuf=[]
             i=0
-            for node in femesh.getBoundary(ebname).faceset.nodes():
+            for node in femesh.getBoundary(ebname).faceset.getNodes():
                 try:
                     somevalue=nodedict[node.position()]
                 except KeyError:
