@@ -145,6 +145,18 @@ public:
   }
 };
 
+class ErrHomogeneityNotCalculable : public ErrError {
+public:
+  ErrHomogeneityNotCalculable();
+  ~ErrHomogeneityNotCalculable();
+  %addmethods {
+    %new const string *__repr__() {
+      return self-> summary();
+    }
+  }
+};
+
+
 // class ErrSearchFailure : public ErrError {
 // public:
 //   ErrSearchFailure();

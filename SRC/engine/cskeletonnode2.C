@@ -702,6 +702,17 @@ void CSkeletonNode::unconstrainedMoveTo(const Coord &pos) {
      (*it)->revertHomogeneity();
  }
 
+//Don't change lastmoved
+//Increment nodemoved
+void CSkeletonNode::moveBackScaled(double scalingFactor) {
+  if (scalingFactor <=0 || scalingFactor > 1) {return;}
+  if (scalingFactor == 1) {moveBack(); return;}
+  Coord targetPos = scalingFactor * last_position + (1 - scalingFactor) * position();
+  points->SetPoint(index, targetPos);
+  ++nodemoved;
+
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // Can this node be moved to and merge with another node?

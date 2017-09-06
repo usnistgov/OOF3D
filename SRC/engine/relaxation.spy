@@ -1,0 +1,482 @@
+# -*- python -*-
+
+from ooflib.common import cregisteredclass 
+from ooflib.common import debug 
+from ooflib.common.IO import parameter 
+from ooflib.common.IO import xmlmenudump 
+from ooflib.common.IO import reporter 
+from ooflib.SWIG.engine import cskeletonmodifier 
+from ooflib.SWIG.common import switchboard 
+from ooflib.SWIG.common import progress 
+from ooflib.engine import bdycondition 
+from ooflib.SWIG.engine import field 
+from ooflib.SWIG.engine import masterelement 
+from ooflib.engine import materialmanager 
+from ooflib.SWIG.engine.property.elasticity.iso import iso 
+from ooflib.SWIG.engine.property.skeletonrelaxationrate \
+import skeletonrelaxationrate 
+from ooflib.engine.IO import isocijkl 
+from ooflib.SWIG.engine import equation 
+from ooflib.engine import profile 
+from ooflib.SWIG.common import threadstate 
+from ooflib.engine import fieldinit 
+from ooflib.engine.IO import meshmenu 
+from ooflib.engine import solvermode 
+from ooflib.engine import staticstep 
+from ooflib.engine import nonlinearsolver 
+from ooflib.engine import matrixmethod 
+from ooflib.SWIG.engine import preconditioner 
+from ooflib.engine import evolve 
+#from ooflib.engine import propertyregistration
+#line above needed for lines that are currently commented out
+import ooflib.engine.mesh 
+
+#Class registration for classes related to Rescale Settings
+cregisteredclass.registerCClass(RescaleSettingsPtr)
+
+RescaleSettingsPtr.tip = "Enable or disable automatic rescaling of node displacement"
+RescaleSettingsPtr.discussion = """The user can choose how to handle situations where the skeleton relaxes too far and 
+illegal elements are created. If rescaling is enabled, an iteration that produces an illegal element is repeated with the node 
+displacement scaled by the ratio given by the user (equivalent to repeating the iteration with a smaller gamma). 
+If rescaling is disabled, any iteration that produces an illegal element is undone and Relax aborts."""
+
+
+#Sets the elasticity and skeleton relaxation rate properties
+#for the secret material used in relaxation.
+#"Secret" means that the material and properties are not displayed
+def _Relax_setProperties(self):
+    
+    #Uses thread number to make unique names that avoid collisions
+    threadno = threadstate.findThreadNumber()
+    
+    #Makes an isotropic elasticity instance and sets to default parameters
+    stiffnessPropReg = iso.IsotropicElasticity.named_copy(
+            "__stiffness%d__" % threadno, secret=True)
+    stiffnessPropReg.getParameter('cijkl').value = \
+        isocijkl.IsotropicRank4TensorCij(c11=1.0, c12=0.5)
+    
+    #Makes a skeleton relaxation rate instance and sets to user-given parameters
+    self.relaxPropReg = skeletonrelaxationrate.SkeletonRelaxationRateTensor.\
+                   named_copy("__relaxationrate%d__" % threadno, secret=True)
+    self.relaxPropReg.getParameter("alpha").value = self.getAlpha()
+    self.relaxPropReg.getParameter("gamma").value = self.getGamma()
+    
+    #Names the material and assigns it the properties created above
+    self.materialName = 'boneMarrow'
+    materialmanager.materialmanager.add_secret(self.materialName)
+    self.stiffness = stiffnessPropReg()
+    materialmanager.materialmanager.add_prop(self.materialName,
+                                             self.stiffness.name())
+    self.skelRelRate = self.relaxPropReg()
+    materialmanager.materialmanager.add_prop(self.materialName,
+                                             self.skelRelRate.name())
+   
+RelaxPtr.setProperties = _Relax_setProperties
+
+
+
+#Returns the material object we are using
+def _Relax_material(self):
+    return materialmanager.getMaterial(self.materialName)
+RelaxPtr.material = _Relax_material
+
+
+#Checks that we can proceed.
+#canRelaxFurther is false when rescaling is disabled OR
+#we have rescaled too many times.
+#solverConverged is false if the solver threw an exception
+#during the previous iteration.
+def _Relax_goodToGo(self, skeleton):
+    return (self.canRelaxFurther
+            and self.count < self.iterations
+            and self.solverConverged)
+RelaxPtr.goodToGo = _Relax_goodToGo
+
+
+#Increments iteration counter
+def _Relax_updateIteration(self, prog):
+    self.count += 1
+RelaxPtr.updateIteration = _Relax_updateIteration
+
+
+#Creates a mesh with the default subproblem
+#Context is a skeleton context
+def _Relax_create_mesh(self, context):
+    #Creates an element dictionary with tetrahedra and triangles
+    #(The triangles are needed for the boundaries of the microstructure
+    edict = {}
+    edict['Tetrahedron'] = masterelement.getMasterElementByName('TET4_4')
+    edict['Triangle'] = masterelement.getMasterElementByName('T3_3')
+
+    #Gets skeleton object from context
+    skel = context.getObject()
+    #Gives the mesh a unique name
+    self.meshName = context.path() + ":__internal_mesh__"
+    #Creates an FEmesh with the element dictionary and the dummy material
+    femesh = skel.femesh(edict, self.material())
+    
+    #Creates and returns a  meshcontext that has the default subproblem
+    meshcontext = ooflib.engine.mesh.meshes.add(
+        self.meshName, femesh,
+        parent=context,
+        skeleton=skel, elementdict=edict)
+    meshcontext.createDefaultSubProblem()
+    
+    return meshcontext
+RelaxPtr.create_mesh =  _Relax_create_mesh
+
+
+#Defines and activates the displacement field for the default subproblem
+#of the mesh context
+def _Relax_define_fields(self, meshctxt):    
+    femesh = meshctxt.femesh()
+    subp = meshctxt.get_default_subproblem().getObject()
+    displacement = field.getField('Displacement')
+    subp.define_field(displacement)
+    subp.activate_field(displacement)
+RelaxPtr.define_fields = _Relax_define_fields
+
+
+#Activates force-balance equation for the default subproblem
+def _Relax_activate_equations(self, meshctxt):
+    meshctxt.get_default_subproblem().getObject().activate_equation(
+        equation.getEquation('Force_Balance'))
+RelaxPtr.activate_equations = _Relax_activate_equations
+
+
+#Sets conditions along all six boundaries to
+#restrict movement of boundary nodes.
+#All boundary conditions are Dirichlet, have to do with the displacement
+#field and force-balance equation, and are set to 0.
+def _Relax_set_boundary_conditions(self, mesh):
+    
+    displacement = field.getField('Displacement')
+    self.leftBoundaryCondition = \
+        bdycondition.DirichletBC(displacement,
+                                 'x',
+                                 equation.getEquation('Force_Balance'),
+                                 'x',
+                                 profile.ConstantProfile(0),
+                                 'Xmin'
+                                 )
+    self.leftBoundaryCondition.add_to_mesh('left', mesh.path())
+
+    self.rightBoundaryCondition = \
+        bdycondition.DirichletBC(displacement,
+                                 'x',
+                                 equation.getEquation('Force_Balance'),
+                                 'x',
+                                 profile.ConstantProfile(0),
+                                 'Xmax'
+                                 )
+    self.rightBoundaryCondition.add_to_mesh('right', mesh.path())
+
+    self.topBoundaryCondition = \
+        bdycondition.DirichletBC(displacement,
+                                 'y',
+                                 equation.getEquation('Force_Balance'),
+                                 'y',
+                                 profile.ConstantProfile(0),
+                                 'Ymax'
+                                 )
+    self.topBoundaryCondition.add_to_mesh('top', mesh.path())
+
+    self.bottomBoundaryCondition = \
+        bdycondition.DirichletBC(displacement,
+                                 'y',
+                                 equation.getEquation('Force_Balance'),
+                                 'y',
+                                 profile.ConstantProfile(0),
+                                 'Ymin'
+                                 )
+    self.bottomBoundaryCondition.add_to_mesh('bottom', mesh.path())
+
+    self.frontBoundaryCondition = \
+        bdycondition.DirichletBC(displacement,
+                                 'z',
+                                 equation.getEquation('Force_Balance'),
+                                 'z',
+                                 profile.ConstantProfile(0),
+                                 'Zmax'
+                                 )
+    self.frontBoundaryCondition.add_to_mesh('front', mesh.path())
+
+    self.backBoundaryCondition = \
+        bdycondition.DirichletBC(displacement,
+                                 'z',
+                                 equation.getEquation('Force_Balance'),
+                                 'z',
+                                 profile.ConstantProfile(0),
+                                 'Zmin'
+                                 )
+    self.backBoundaryCondition.add_to_mesh('back', mesh.path())
+
+RelaxPtr.set_boundary_conditions = _Relax_set_boundary_conditions
+
+
+#This is a wrapper for the C++ function that moves the nodes
+def _Relax_update_node_positions(self, skeleton, mesh):
+    #Increments skeleton timestamp because it is being changed
+    # Waiting for the Modify callback to increment the timestamp
+    # doesn't work because we need to be able to check illegality
+    # while the relaxation is in progress. 
+    skeleton.incrementTimestamp()
+    #Retrieves FEmesh object from the mesh context
+    femesh = mesh.getObject()
+    
+    #Calls the C++ function that handles the main loop for moving nodes.
+    #If this function returns false, it means that the skeleton had to
+    #be adjusted to prevent it from becoming illegal. What happens
+    #now depends on what the rescaling settings are.
+    if not self.updateNodePositionsC(skeleton, femesh):
+        #If rescaling isn't allowed, tell the user that Relax is aborting.
+        #Set flag to prevent further iterations
+        if not self.getRescaleAllowed():
+            reporter.report("Aborted relaxation in iteration", self.count,
+                            "to prevent formation of illegal elements")
+            reporter.report("Try using Rationalize or a smaller gamma")
+            self.canRelaxFurther = False
+        #If rescaling is allowed but we've run out of rescales, tell
+        #the user that Relax is aborting for this reason. Set flag
+        #to prevent further iterations.
+        elif self.getRescaleCounter() > self.getMaxRescales():
+            reporter.report("Aborted relaxation in iteration", self.count,
+                            "because the maximum number of allowable",
+                            "rescales was surpassed")
+            self.canRelaxFurther = False
+        #If we had to rescale but didn't surpass the limit, notify user of
+        #the new displacementMultiplier value
+        else:
+            reporter.report("As of iteration %d," % (self.count),
+                            "node displacement has been rescaled to",
+                            "%3.4f%% of original"
+                            % (100*self.getDisplacementMultiplier()) ) 
+
+RelaxPtr.update_node_positions = _Relax_update_node_positions
+
+
+#This function initializes the displacement field to zero
+def _Relax_initialize_fields(self, mesh):
+    initializer = fieldinit.ConstThreeVectorFieldInit(cx=0.0, cy=0.0, cz=0.0)
+    meshmenu.initField(self, self.meshName, field.getField('Displacement'),
+                       initializer)
+    meshmenu.applyFieldInits(self, self.meshName)
+RelaxPtr.initialize_fields = _Relax_initialize_fields
+
+
+#Handles the overall relaxation process
+#(This function is kind of like main for relaxation.*)
+#The context is a skeleton context
+def _Relax_postProcess(self, context):
+    #Creates progress bar
+    prog = progress.getProgress("Relax", progress.DEFINITE)
+       
+    #Creates the relaxation material and initializes its properties
+    self.setProperties()
+
+    #Gets skeleton object and checks that it is legal, which it
+    #should be since the OK button for Relax is supposed to be
+    #grayed out when the skeleton is illegal
+    skeleton = context.getObject()
+    if skeleton.checkIllegality():
+        reporter.report("Illegal elements detected, could not perform relaxation")
+        return
+    
+    #Gets the initial value of the energy functional
+    before = skeleton.energyTotal(self.getAlpha())
+
+    #Initializes counter and flags
+    self.count = 0
+    self.iterations = self.getIterations()
+    self.solverConverged = True
+    self.canRelaxFurther = True
+    
+    try:
+        #Keeps iterating as long as progress hasn't stopped and
+        #goodToGo is still returning true
+        while self.goodToGo(skeleton) and not prog.stopped():
+
+            #Creates a mesh based on the skeleton context and sets up the
+            #fields, equations, and boundary conditions
+            mesh = self.create_mesh(context)
+            self.define_fields(mesh)
+            self.initialize_fields(mesh)
+            self.activate_equations(mesh)
+            mesh.changed("Relaxing") 
+            self.set_boundary_conditions(mesh)
+
+            #Calls coreProcess, which solves the mesh's default subproblem
+            self.coreProcess(mesh, mesh.get_default_subproblem()) 
+            if prog.stopped():
+                break
+
+            #Edits the skeleton context to reflect the new node positions
+            context.begin_writing()
+            try:
+                self.update_node_positions(skeleton, mesh)
+            finally:
+                context.end_writing()
+
+            #Cleans up the mesh and notifies switchboard of the changes
+            mesh.lockAndDelete()
+            switchboard.notify("Skeleton changed", context.path())
+            switchboard.notify("redraw")    
+
+            #Increments the counter and updates progress bar
+            self.updateIteration(prog)    
+            prog.setFraction(1.0 * self.count/ self.iterations)
+            prog.setMessage("%d/%d iterations" % (self.count, self.iterations))
+
+            
+            
+        #Calculates ending energy and compares it to the initial energy
+        after = skeleton.energyTotal(self.getAlpha())
+        
+        if before:
+            rate = 100.0*(before - after)/before
+        else:
+            rate = 0.0
+        diffE = after - before
+        reporter.report("Relaxation complete: deltaE = %10.4e (%6.3f%%)"
+                    % (diffE, rate))
+
+    #cleanup actions for postprocess
+    finally:
+        #Tells the progress bar that we are done
+        prog.finish()
+
+        #Deletes the boundary condition objects
+        del self.topBoundaryCondition
+        del self.bottomBoundaryCondition
+        del self.leftBoundaryCondition
+        del self.rightBoundaryCondition
+        del self.backBoundaryCondition
+        del self.frontBoundaryCondition
+        
+        #Deletes the properties, and then the relaxation material
+        materialmanager.materialmanager.delete_prop(self.stiffness.name())
+        materialmanager.materialmanager.delete_prop(self.skelRelRate.name())
+        #It's not clear whether there are circumstances
+        #where the next two deletes are needed.
+        #As of now, they are commented out because they
+        #cause a (non-fatal) exception
+        #propertyregistration.AllProperties.delete(self.stiffness.name())
+        #propertyregistration.AllProperties.delete(self.skelRelRate.name())
+        materialmanager.materialmanager.delete_secret(self.materialName)
+
+RelaxPtr.postProcess = _Relax_postProcess
+
+
+#Solves the problem that was set up in postprocess
+def _Relax_coreProcess(self, meshctxt, subp):
+    #Sets solver mode 
+    subp.solver_mode = solvermode.AdvancedSolverMode(
+        time_stepper=staticstep.StaticDriver(),
+        nonlinear_solver=nonlinearsolver.NoNonlinearSolver(),
+        symmetric_solver=matrixmethod.ConjugateGradient(
+            preconditioner.ILUPreconditioner(),
+            1.e-5,          # tolerance
+            1000            # max_iterations
+            ),
+        asymmetric_solver=matrixmethod.BiConjugateGradient(
+            preconditioner.ILUPreconditioner(),
+            1.e-5,          # tolerance
+            1000            # max_iterations
+            )
+        )
+    
+    #Change mesh according to the result of the solver.
+    #If the except block is reached, something has gone wrong and we
+    #set the solver status flag to false.
+    meshctxt.begin_writing()
+    try:
+        evolve.evolve(meshctxt, 0.0)
+    except:
+        # TODO: Be more explicit about what exceptions
+        # should be handled here, to distinguish actual
+        # convergence failures from programming errors.
+        self.solverConverged = False
+    else:
+        self.solverConverged = True
+    finally:
+        meshctxt.end_writing()
+    
+RelaxPtr.coreProcess = _Relax_coreProcess
+
+
+#Helps Relax instances print properly (for debugging purposes)
+def _Relax___repr__(self):
+    return "Relaxation"
+RelaxPtr.repr = _Relax___repr__
+
+
+#The progressbar here is continuous because there's always a fixed
+#number of iterations
+def _Relax_get_progressbar_type(self):
+    return "continuous"
+RelaxPtr.getProgressbarType = _Relax_get_progressbar_type
+
+
+#Class registration for Relax class
+relaxReg = cregisteredclass.Registration(
+    'Relax',
+    CSkeletonModifierBasePtr,
+    Relax,
+    ordering= 0.1,
+    params = [
+        cskeletonmodifier.alphaParameter,
+        parameter.PositiveFloatParameter(name = 'gamma', value = 0.5,
+                                 tip = 'Node mobility'),
+        parameter.PositiveIntParameter('iterations', value = 1,
+                                       tip = 'number of steps'),
+        parameter.RegisteredParameter('autoRescale', RescaleSettings,
+                                      tip='options for automatic rescaling of node mobility')
+        ],
+    tip='Improve a skeleton by solving a finite element system where the properties are functions of the underlying homogeneity and shape',
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/relax.xml')
+    )
+
+def _Relax___init__(self, alpha, gamma, iterations, rescaleSettings,
+                    oldinit=Relax.__init__):
+    oldinit(self, alpha, gamma, iterations, rescaleSettings)
+    self.intro="Preparing to relax skeleton..."
+    self.header = "Relaxing skeleton: "
+    self.outro = "Relaxing done: "
+Relax.__init__ = _Relax___init__
+
+######################################################
+
+
+#Class registration for YesRescale
+yesRescaleReg = cregisteredclass.Registration(
+    'Enabled',
+    RescaleSettingsPtr,
+    YesRescale,
+    ordering=1,
+    params = [parameter.FloatRangeParameter('rescaleRatio', (0.01, 0.99, 0.01),
+                                            value = 0.5,
+                                            tip = 'when illegal elements form, repeat the current iteration with node displacement scaled by this factor'),
+              parameter.PositiveIntParameter('maxRescales',
+                                             value = 5,
+                                             tip = 'maximum number of times the node displacement can be rescaled before Relax aborts')
+              ],
+    tip='Allow the node displacement to automatically rescale if an illegal element will be formed on the next iteration',
+    discussion = """This option allows for automatic rescaling of the node
+    displacement if Relax moves a node too far and creates an illegal element. 
+    If an illegal element forms, all nodes move back partway towards 
+    their previous position. 
+    This is equivalent to repeating an illegal iteration with a 
+    smaller gamma (but is not exactly implemented as such).    """
+    )
+
+#Class registration for NoRescale
+noRescaleReg = cregisteredclass.Registration(
+    'Disabled',
+    RescaleSettingsPtr,
+    NoRescale,
+    ordering=0,
+    tip= 'If an illegal element forms, revert skeleton to previous legal state and abort Relax',
+    discussion = """This option disables automatic 
+    rescaling of node displacement. """
+    )
+

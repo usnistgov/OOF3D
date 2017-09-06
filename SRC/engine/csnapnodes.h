@@ -16,7 +16,7 @@
 #include "common/coord_i.h"
 #include "engine/cskeleton2_i.h"
 #include "engine/cskeletonmodifier.h"
-
+#include <queue>
 
 typedef std::pair<bool, Coord*> TransitionPointDatum;
 typedef std::map<CSkeletonMultiNodeKey, TransitionPointDatum>
@@ -101,9 +101,11 @@ class NodeSnapperBase {
 public:
   NodeSnapperBase() {};
   virtual ~NodeSnapperBase() {};
-  void apply(CDeputySkeleton *skeleton, CSkelModCriterion *criterion, IndexSet *movedNodes);
+  void apply(CDeputySkeleton *skeleton, CSkelModCriterion *criterion,
+	     IndexSet *movedNodes, IndexSet *curMoveNodesAffected);
   virtual SnapMoveVector *get_movelist(IndexSet *movedNodes) = 0;
   virtual short get_priority() = 0;
+  virtual CSkeletonElement* getElement() = 0;
 };
 
 template <class X>
@@ -121,7 +123,7 @@ class NodeSnapper : public NodeSnapperBase {
     : element(el), signature(sig), transitionPoints(tps) {};
   virtual ~NodeSnapper();
   static NodeSnapperBase* factory(CSkeletonElement *el, SnapSignature sig, TransitionPointVector *tps);
-
+  CSkeletonElement* getElement() {return element;}
 };
 
 
@@ -213,6 +215,8 @@ typedef std::map<SnapSignature, FactoryPointer> SnapperMapper;
 typedef std::vector<NodeSnapperBase*> SnapperVector;
 typedef std::pair<short, SnapperVector*> PrioritySnapperPair;
 typedef std::map<short, SnapperVector*> PrioritizedSnappers;
+typedef std::vector<NodeSnapperBase*> AllMovesVector;
+typedef std::queue<NodeSnapperBase*> NextMovesQueue;
 
 /******************************************************
 

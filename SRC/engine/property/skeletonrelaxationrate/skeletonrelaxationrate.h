@@ -35,7 +35,7 @@ class SmallSystem;
 // energy shape/homogeneity.
 
 class SkeletonRelaxationRate : public FluxProperty {
-private:
+  private:
   // Physical parameters.
   double gamma_;
   double alpha_;
@@ -56,6 +56,7 @@ public:
   virtual int integration_order(const CSubProblem*, const Element*) const;
 
   double alpha() const { return alpha_; }
+  double gamma() const {return gamma_;}
   virtual bool constant_in_space() const { return true; }
 };
 

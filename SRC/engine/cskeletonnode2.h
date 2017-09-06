@@ -123,6 +123,7 @@ public:
   
   void unconstrainedMoveTo(const Coord&);
   void moveBack();
+  void moveBackScaled(double scalingFactor);
   bool canMergeWith(const CSkeletonNode *other) const;
   bool illegal() const;
 

@@ -28,6 +28,7 @@ class SkeletonRelaxationRate : public Property {
 public:
   SkeletonRelaxationRate(PyObject *reg, char *name, double alpha, double beta);
   const double alpha();
+  const double gamma();
 };
 
 %pragma(python) include="skeletonrelaxationrate.spy"

@@ -19,7 +19,9 @@ from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.common import progress
 from ooflib.engine.IO import skeletongroupparams
 
-cregisteredclass.registerCClass(FiddleNodesTargetsPtr)    
+
+cregisteredclass.registerCClass(FiddleNodesTargetsPtr)
+
 FiddleNodesTargetsPtr.tip = "Set target Nodes for Skeleton modifiers."
 FiddleNodesTargetsPtr.discussion = """<para>
 <classname>FiddleNodesTargets</classname> objects are used as the
@@ -193,7 +195,7 @@ annealReg = cregisteredclass.Registration(
             tip="Failed moves will be accepted if T>0 and exp(-diffE/T) > r,"
             " where diffE is the energy gained and r is a random number between"
             " 0 and 1."),
-        parameter.FloatParameter(
+        parameter.PositiveFloatParameter(
             'delta', value=1.0,
             tip="Width of the distribution of attempted node motions,"
             " in units of the pixel size."),
@@ -218,6 +220,9 @@ def _Anneal___init__(self, targets, criterion, T, delta, iteration,
 Anneal.__init__ = _Anneal___init__
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+
+
 
 smoothReg = cregisteredclass.Registration(
     'Smooth',
@@ -270,9 +275,10 @@ surfaceSmoothReg = cregisteredclass.Registration(
             tip='Failed moves will be accepted if T>0 and exp(-diffE/T) > r,'
             ' where diffE is the energy gained and r is a random number'
             ' between 0 and 1.'),
-        parameter.FloatParameter(
-            'gamma', value=0.1,
-            tip='Damping factor.'),
+        parameter.FloatRangeParameter(
+            'gamma', (0.0, 1.0, 0.01), value=0.1,
+            tip='Damping factor that indicates, on a scale of 0 to 1, '
+            'how far a node should move towards the average position of its neighbors.'),
         parameter.RegisteredParameter(
             'iteration', iterationmanager.IterationManager,
             tip='Iteration method.')

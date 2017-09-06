@@ -19,9 +19,10 @@
 #include <algorithm>
 
 CSkeletonBase* FixIllegal::apply(CSkeletonBase *skeleton) {
-
+  //This line is the problem when the volume problems occur
   CDeputySkeleton *newSkeleton = skeleton->deputyCopy();
   newSkeleton->activate();
+
   CSkeletonElementVector baddies;
   newSkeleton->getIllegalElements(baddies);
   CSkeletonElementSet bad_set;

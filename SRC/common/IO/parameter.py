@@ -608,6 +608,11 @@ class IntParameter(Parameter):
     def valueDesc(self):
         return "Integer."
 
+class PositiveIntParameter(IntParameter):
+    def valueDesc(self):
+        return "A positive integer."
+
+
 class ListOfIntsParameter(Parameter):
     def __init__(self, name, value=None, default=[], tip=None, auxData={}):
         Parameter.__init__(self, name, value, default, tip, auxData)

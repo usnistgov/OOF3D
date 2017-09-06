@@ -176,7 +176,7 @@ public:
   bool getPeriodicity(int dim);
   int getIllegalCount();
   int getSuspectCount();
-  void checkIllegality();
+  bool checkIllegality();
 
   int nDeputies();
 
@@ -197,7 +197,10 @@ public:
 
 
   double getHomogeneityIndex();
+  double getUnweightedHomogeneity();
   double energyTotal(double alpha);
+  double getUnweightedShapeEnergy();
+  double getWeightedShapeEnergy();
 
   CSkeletonElement* enclosingElement(Coord *Point);
   CSkeletonElement* findElement(vtkCellPtr);
@@ -298,7 +301,6 @@ public:
   void drawVoxelSetBoundary(LineSegmentLayer*, int);
   void saveClippedVSB(unsigned int, COrientedPlane&, char*);
   double clipVSBVol(unsigned int, COrientedPlane&);
-
 
   CDeputySkeleton *deputyCopy();
   CSkeleton *completeCopy();

@@ -20,6 +20,7 @@ registerErrorClass(ErrBadMaterial)
 registerErrorClass(ErrInvalidDestination)
 registerErrorClass(ErrTimeStepTooSmall)
 registerErrorClass(ErrInstabilityError)
+registerErrorClass(ErrHomogeneityNotCalculable)
 # registerErrorClass(ErrSearchFailure)
 
 def _ErrBadMaterial_details(self):

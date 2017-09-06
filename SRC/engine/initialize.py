@@ -60,6 +60,7 @@ import ooflib.engine.IO.scheduledoutputmenu
 import ooflib.SWIG.engine.crefine
 import ooflib.SWIG.engine.csnapnodes
 import ooflib.SWIG.engine.csnaprefine
+import ooflib.SWIG.engine.relaxation
 # import ooflib.engine.refinementtarget
 import ooflib.engine.rationalize
 import ooflib.SWIG.engine.crationalizers
@@ -76,7 +77,7 @@ import ooflib.SWIG.engine.crationalizers
 # import ooflib.engine.adaptivemeshrefinement
 # import ooflib.engine.revertmesh
 # import ooflib.engine.errorestimator
-# import ooflib.engine.relaxation
+# import ooflib.engine.relaxation #DO NOT USE
 
 import ooflib.SWIG.engine.cfiddlenodes
 import ooflib.SWIG.engine.fixillegal

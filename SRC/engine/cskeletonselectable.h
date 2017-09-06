@@ -201,6 +201,7 @@ public:
   unsigned int nnodes() const { return nodes->size(); }
   const CSkeletonNodeVector *getNodes() const { return nodes; }
   CSkeletonNode *getNode(int i) const { return (*nodes)[i]; }
+  std::set<int> getNodesIndexSet() const;
   int getNodeOrder(const CSkeletonNode*, const CSkeletonNode*) const;
   int getNodeIndexIntoList(const CSkeletonNode *) const;
   virtual bool active(const CSkeletonBase*) const;

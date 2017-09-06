@@ -18,7 +18,7 @@ from ooflib.common import utils
 from ooflib.common.IO.GUI import gtklogger
 from ooflib.engine.IO import skeletoninfo
 from ooflib.engine.IO.GUI import genericinfoGUI
-
+from ooflib.SWIG.engine import ooferror2
 import gtk
 
 ## Nodes and Elements are identified by index, because they can be

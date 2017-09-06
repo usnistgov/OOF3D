@@ -151,11 +151,17 @@ protected:
   mutable int illegalCount;
   mutable int suspectCount;
   mutable double homogeneityIndex;
+  mutable double unweightedHomogIndex;
+  mutable double unweightedShapeEnergy;
+  mutable double weightedShapeEnergy;
   mutable TimeStamp homogeneity_index_computation_time;
-  // TimeStamp most_recent_geometry_change;
+  mutable TimeStamp unweighted_homogeneity_computation_time;
+  mutable TimeStamp unweighted_shape_energy_computation_time;
+  mutable TimeStamp weighted_shape_energy_computation_time;
+  mutable TimeStamp illegality_computation_time;
   mutable TimeStamp illegal_count_computation_time;
   mutable TimeStamp suspect_count_computation_time;
-  TimeStamp timestamp;
+  TimeStamp geometry_timestamp;
   static const std::string modulename_;
   OuterFaceID onOuterFace_(const CSkeletonNodeVector*, bool boundary[6]) 
     const;
@@ -241,7 +247,7 @@ public:
 
   bool illegal() const { return illegal_; }
   void setIllegal() { illegal_= true; }
-  void checkIllegality();
+  bool checkIllegality();
   void backdateIllegalityTimeStamp();
   int getIllegalCount();
   void getIllegalElements(CSkeletonElementVector &) const;
@@ -323,9 +329,13 @@ public:
   bool checkExteriorSegments(const CSkeletonSegmentVector*) const;
   bool checkExteriorFaces(const CSkeletonFaceVector*) const;
 
-  // homogeneity
+  // homogeneity and shape energy
   double getHomogeneityIndex() const;
   void calculateHomogeneityIndex() const;
+  double getUnweightedHomogeneity() const;
+  void calculateUnweightedHomogeneity() const;
+  double getUnweightedShapeEnergy() const;
+  double getWeightedShapeEnergy() const;
   double energyTotal(double alpha) const;
   double clippedCategoryVolume(unsigned int,
 			       const CRectangularPrism&,

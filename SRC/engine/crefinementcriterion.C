@@ -202,7 +202,7 @@ void CheckHeterogeneousEdges::createSegmentMarks(CSkeletonBase *skeleton,
       if(criterion->isGood(skeleton,(*it)) &&
 	 (*it)->homogeneity(skeleton) < threshold)
 	{
-	markSegment((*it),d);
+	  markSegment((*it),d);
 	}
     }
 }
@@ -230,6 +230,32 @@ void CheckSegmentsInGroup::createSegmentMarks(CSkeletonBase *skeleton,
     {
       if(criterion->isGood(skeleton,(*it).second) && (*it).second->active(skeleton) && (*it).second->is_in_group(group))
 	markSegment((*it).second,d);
+    }
+}
+
+void CheckLongSegments::createSegmentMarks(CSkeletonBase *skeleton,
+					   RefinementCriterion *criterion,
+					   short d)
+{
+  for(CSkeletonElementIterator it = skeleton->beginElements();
+      it!=skeleton->endElements(); ++it)
+    {
+      if(criterion->isGood(skeleton, *it) && (*it)->active(skeleton)) {
+	CSkeletonElement *el = *it;
+	std::vector<double> lengths(el->getNumberOfSegments());
+	double shortest = std::numeric_limits<double>::max();
+	for(unsigned int i=0; i<el->getNumberOfSegments(); i++) {
+	  Coord3D disp = (el->getSegmentNode(i, 0)->position() -
+			  el->getSegmentNode(i, 1)->position());
+	  lengths[i] = sqrt(norm2(disp));
+	  if(lengths[i] < shortest)
+	    shortest = lengths[i];
+	}
+	for(unsigned int i=0; i<el->getNumberOfSegments(); i++) {
+	  if(lengths[i] > factor*shortest)
+	    mark(el->getSegmentNode(i,0), el->getSegmentNode(i,1), d);
+	}
+      }
     }
 }
 

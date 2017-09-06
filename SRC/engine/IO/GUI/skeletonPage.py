@@ -15,6 +15,7 @@ from ooflib.common import labeltree
 from ooflib.common import mainthread
 from ooflib.common import subthread
 from ooflib.common.IO import mainmenu
+from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter, reporter
 from ooflib.common.IO import whoville
 from ooflib.common.IO.GUI import fixedwidthtext
@@ -28,6 +29,7 @@ from ooflib.common.IO.GUI import tooltips
 from ooflib.common.IO.GUI import whowidget
 from ooflib.engine import skeletoncontext
 from ooflib.SWIG.engine import cskeletonmodifier
+from ooflib.SWIG.engine import ooferror2
 import gtk
 import pango
 
@@ -222,8 +224,8 @@ class SkeletonPage(oofGUI.MainPage):
                                             self.updateskelmod),
             switchboard.requestCallbackMain(("new who", "Microstructure"),
                                             self.newMicrostructure),
-            switchboard.requestCallbackMain(("new who", 'Skeleton'),
-                                            self.newSkeleton),
+            switchboard.requestCallback(("new who", 'Skeleton'),
+                                        self.newSkeleton),
             # Pages should catch the signal from updates to the widget
             # which don't originate on this page, e.g. deletions via
             # menu command.
@@ -295,7 +297,7 @@ class SkeletonPage(oofGUI.MainPage):
             self.update(skel_name, locked=False)
         
     def newSkeleton(self, whoname):     # switchboard ("new who", "Skeleton")
-        self.skelwidget.set_value(whoname)
+        self.update(whoname, locked=False)
 
     def skel_update(self, *args, **kwargs):  # Switchboard "self.skelwidget"
         skelname = self.currentSkeletonFullName()
@@ -360,24 +362,73 @@ class SkeletonPage(oofGUI.MainPage):
             finally:
                 if not locked:
                     skelctxt.end_reading()
+            #Info about homogeneity and shape energy is set to None for now
+            #because the display runs once without that information
             mainthread.runBlock(self.writeInfoBuffer,
                                 (nNodes, nElements, nFaces, nSegments, 
                                  illegalcount, suspectcount, shapecounts,
-                                 None, x_periodicity, y_periodicity,
+                                 None, None, None, None,
+                                 x_periodicity, y_periodicity,
                                  z_periodicity))
-            # Homogeneity Index stuff.  
-            if not locked:
-                skelctxt.begin_writing()
-            try:
-                homogIndex = skel.getHomogeneityIndex()
-            finally:
+            
+            #Homogeneity index and shape energy stuff
+            #In each case, calculate the value if the user wants to see it,
+            #or just set it to None
+            if showHomogIndex():
+                if not locked:
+                    skelctxt.begin_writing()
+                try:
+                    homogIndex = skel.getHomogeneityIndex()
+                except ooferror2.ErrHomogeneityNotCalculable:
+                    homogIndex = None
+                finally:
+                    if not locked:
+                        skelctxt.end_writing()
+            else:
+                homogIndex = None
+
+            if showUnweightedHomogIndex():
+                if not locked:
+                    skelctxt.begin_writing()
+                try:
+                    unweightedHomog = skel.getUnweightedHomogeneity()
+                except ooferror2.ErrHomogeneityNotCalculable:
+                    unweightedHomog = None
+                finally:
+                    if not locked:
+                        skelctxt.end_writing()
+            else:
+                unweightedHomog = None
+
+            if showAverageShapeEnergy():
+                if not locked:
+                    skelctxt.begin_writing()
+                unweightedShape = skel.getUnweightedShapeEnergy()
                 if not locked:
                     skelctxt.end_writing()
-            mainthread.runBlock(self.writeInfoBuffer,
-                                (nNodes, nElements, nFaces, nSegments,
-                                 illegalcount, suspectcount, shapecounts,
-                                 homogIndex, x_periodicity, y_periodicity,
-                                 z_periodicity))
+            else:
+                unweightedShape = None
+
+            if showWeightedAverageShapeEnergy():
+                if not locked:
+                    skelctxt.begin_writing()
+                weightedShape = skel.getWeightedShapeEnergy()
+                if not locked:
+                    skelctxt.end_writing()
+            else:
+                weightedShape = None
+
+
+            #If the user doesn't want to see anything about homogeneity
+            #or shape energy, we don't need to update the display again
+            if showHomogIndex() or showUnweightedHomogIndex() \
+            or showAverageShapeEnergy() or showWeightedAverageShapeEnergy():
+                mainthread.runBlock(self.writeInfoBuffer,
+                                    (nNodes, nElements, nFaces, nSegments,
+                                     illegalcount, suspectcount, shapecounts,
+                                     homogIndex, unweightedHomog, unweightedShape,
+                                     weightedShape, x_periodicity, y_periodicity,
+                                     z_periodicity))
         else:
             mainthread.runBlock(self.deleteInfoBuffer)
         self.sensitize()
@@ -390,6 +441,7 @@ class SkeletonPage(oofGUI.MainPage):
 
     def writeInfoBuffer(self, nNodes, nElements, nFaces, nSegments, 
                         illegalcount, suspectcount, shapecounts, homogIndex,
+                        unweightedHomog, unweightedShape, weightedShape,
                         x_periodicity, y_periodicity, z_periodicity):
         # Called by update() to actually fill in the data on the
         # main thread.
@@ -438,14 +490,43 @@ class SkeletonPage(oofGUI.MainPage):
         # if config.dimension() == 3:
         #     buffer.insert(buffer.get_end_iter(),
         #                   "Z Periodicity: %s\n" % z_periodicity)
-            
 
-        if homogIndex is not None:
-           buffer.insert(buffer.get_end_iter(),
+        #For each type of homogeneity or shape energy information,
+        #show nothing if the user doesn't want to see it, show the value
+        #if it exists, or show None if the value is set to None
+
+        if showHomogIndex():
+            if homogIndex is not None:
+                buffer.insert(buffer.get_end_iter(),
                          "Homogeneity Index: %s\n" % homogIndex)
-        else:
-           buffer.insert(buffer.get_end_iter(),
-                         "Homogeneity Index: ????\n")
+            else:
+               buffer.insert(buffer.get_end_iter(),
+                         "Homogeneity Index: ????\n") 
+        
+        if showUnweightedHomogIndex():
+            if unweightedHomog is not None:
+                buffer.insert(buffer.get_end_iter(),
+                              "Unweighted Homogeneity: %s\n" % unweightedHomog)
+            else:
+                buffer.insert(buffer.get_end_iter(),
+                              "Unweighted Homogeneity: ????\n")
+
+        if showAverageShapeEnergy():
+            if unweightedShape is not None:
+                buffer.insert(buffer.get_end_iter(),
+                              "Unweighted Shape Energy: %s\n" % unweightedShape)
+            else:
+                buffer.insert(buffer.get_end_iter(),
+                              "Unweighted Shape Energy: ????\n")
+
+        if showWeightedAverageShapeEnergy():
+            if weightedShape is not None:
+                buffer.insert(buffer.get_end_iter(),
+                              "Weighted Shape Energy: %s\n" % weightedShape)
+            else:
+                buffer.insert(buffer.get_end_iter(),
+                              "Weighted Shape Energy: ????\n")
+           
         gtklogger.checkpoint("skeleton page info updated")
 
     def new_skeleton_CB(self, gtkobj): # gtk callback for "New..." button
@@ -594,3 +675,55 @@ class SkeletonPage(oofGUI.MainPage):
 # Create the page.
 skeletonpage = SkeletonPage()
 
+############################################
+#Items related to skeleton display settings in the mainmenu
+
+#Add menu for display options
+displaymenu = mainmenu.OOF.Settings.addItem(oofmenu.OOFMenuItem(
+    'Skeleton_Display',
+    help = "Options for what information to display on the skeleton page."))
+
+
+#Returns true if user has checked the option to show weighted homogeneity index (default)
+def showHomogIndex():
+    return displaymenu.Show_Homogeneity_Index.value
+#Creates menu item for weighted homogeneity index option
+displaymenu.addItem(oofmenu.CheckOOFMenuItem(
+    'Show_Homogeneity_Index',
+    value=True,
+    callback = skeletonpage.skel_update,
+    help='Show or hide the average homogeneity, weighted by element volume (recommended).'
+))
+
+#Returns true if user has checked the option to display unweighted homogeneity index
+def showUnweightedHomogIndex():
+    return displaymenu.Show_Unweighted_Homogeneity_Index.value
+#Creates menu option for unweighted homogeneity index option
+displaymenu.addItem(oofmenu.CheckOOFMenuItem(
+    'Show_Unweighted_Homogeneity_Index',
+    value=False,
+    callback = skeletonpage.skel_update,
+    help='Show or hide the unweighted average homogeneity.'
+))
+
+#Returns true if user has checked the option to show unweighted shape energy
+def showAverageShapeEnergy():
+    return displaymenu.Show_Average_Shape_Energy.value
+#Creates menu item for unweighted shape energy option
+displaymenu.addItem(oofmenu.CheckOOFMenuItem(
+    'Show_Average_Shape_Energy',
+    value=False,
+    callback= skeletonpage.skel_update,
+    help='Show or hide the average shape energy on the skeleton page.'
+))
+
+#Returns true if user has checked the option to show weighted shape energy
+def showWeightedAverageShapeEnergy():
+    return displaymenu.Show_Weighted_Average_Shape_Energy.value
+#Creates menu item for weighted shape energy option
+displaymenu.addItem(oofmenu.CheckOOFMenuItem(
+    'Show_Weighted_Average_Shape_Energy',
+    value=False,
+    callback= skeletonpage.skel_update,
+    help='Show or hide the average shape energy, weighted by element volume.'
+))

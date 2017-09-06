@@ -838,6 +838,8 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CSkeletonBase *skel)
   bbox.swallow(epts[2]);
   bbox.swallow(epts[3]);
 
+  // Get the number of voxel categories.  This recomputes categories
+  // and boundaries if needed.
   unsigned int ncat = ms->nCategories();
   DoubleVec result(ncat, 0.0);
   double totalVol = 0.0;

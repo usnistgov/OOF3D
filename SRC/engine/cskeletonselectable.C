@@ -620,6 +620,17 @@ CSkeletonMultiNodeSelectable::CSkeletonMultiNodeSelectable(
 {}
 
 
+std::set<int> CSkeletonMultiNodeSelectable::getNodesIndexSet() const
+{
+  std::set<int> nodeIndices;
+  for (unsigned int i = 0; i < nodes->size(); i++)
+    {
+      nodeIndices.insert((*nodes)[i]->getIndex());
+    }
+  return nodeIndices;
+}
+
+
 int CSkeletonMultiNodeSelectable::getNodeIndexIntoList(const CSkeletonNode *n)
 const 
 {

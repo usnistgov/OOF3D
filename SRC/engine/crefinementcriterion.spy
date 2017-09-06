@@ -190,6 +190,17 @@ cregisteredclass.Registration(
     )
 
 cregisteredclass.Registration(
+    'Long Segments',
+    RefinementTargetsPtr,
+    CheckLongSegments,
+    ordering=3.6,
+    params=[
+        parameter.PositiveFloatParameter('factor', 10., tip='Refine edges longer than this multiple of the shortest edge in an element.')
+        ],
+    tip="Divide the longest edges of elements.",
+    components=('Element',))
+    
+cregisteredclass.Registration(
     'Selected Faces',
     RefinementTargetsPtr,
     CheckSelectedFaces,
@@ -207,6 +218,7 @@ cregisteredclass.Registration(
             'group', tip='Examine faces in this group')],
     tip='Refine faces in a face group',
     components=('Face',))
+
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -252,7 +264,7 @@ cregisteredclass.Registration(
     MinimumVolume,
     ordering=1,
     params=[
-        parameter.FloatParameter(
+        parameter.NonNegativeFloatParameter(
             'threshold', 10,
             tip="Minimum acceptable element volume.") ,
         enum.EnumParameter('units', units.Units, value='Voxel',
@@ -269,7 +281,7 @@ cregisteredclass.Registration(
     MinimumArea,
     ordering=2,
     params=[
-        parameter.FloatParameter(
+        parameter.NonNegativeFloatParameter(
             'threshold', 10,
             tip="Minimum acceptable surface area.") ,
         enum.EnumParameter('units', units.Units, value='Voxel',
@@ -286,7 +298,7 @@ cregisteredclass.Registration(
     MinimumLength,
     ordering=3,
     params=[
-        parameter.FloatParameter(
+        parameter.NonNegativeFloatParameter(
             'threshold', 10,
             tip="Minimum acceptable segment length.") ,
         enum.EnumParameter('units', units.Units, value='Voxel',

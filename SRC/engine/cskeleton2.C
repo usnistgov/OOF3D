@@ -73,7 +73,15 @@ CSkeletonBase::CSkeletonBase()
   illegalCount = 0;
   suspectCount = 0;
   homogeneityIndex = 0;
+  unweightedHomogIndex = 0;
+  unweightedShapeEnergy = 0;
+  weightedShapeEnergy = 0;
   homogeneity_index_computation_time.backdate();
+  unweighted_homogeneity_computation_time.backdate();
+  unweighted_shape_energy_computation_time.backdate();
+  weighted_shape_energy_computation_time.backdate();
+  illegality_computation_time.backdate();
+  
   illegal_count_computation_time.backdate();
   suspect_count_computation_time.backdate();
   vsbTimeStamp.backdate();
@@ -86,13 +94,13 @@ CSkeletonBase::~CSkeletonBase() {
 
 const TimeStamp &CSkeletonBase::getTimeStamp() const {
   const TimeStamp &mts = getMicrostructure()->getTimeStamp();
-  if(mts > timestamp)
+  if(mts > geometry_timestamp)
     return mts;
-  return timestamp;
+  return geometry_timestamp;
 }
 
 void CSkeletonBase::incrementTimestamp() {
-  ++timestamp;
+  ++geometry_timestamp;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -390,7 +398,7 @@ void CSkeleton::addElement(CSkeletonElement *element, vtkIdType *ids) {
 				       nodes[ids[ptIds[2]]]);
     f->increment_nelements();
   }
-  // ++timestamp;
+  // ++geometry_timestamp;
 }
 
 void CSkeleton::createElement(vtkIdType type, vtkIdType numpts, vtkIdType* ids) 
@@ -597,39 +605,44 @@ void CSkeleton::addGridFacesToBoundaries(const ICoord &idx, const ICoord &nml,
 // illegal element.  Therefore it does *not* set
 // CSkeletonBase::illegalCount.
 
-void CSkeletonBase::checkIllegality() {
+bool CSkeletonBase::checkIllegality() {
+  if(illegality_computation_time > geometry_timestamp)
+    return illegal_;
   for(CSkeletonElementIterator el=beginElements(); el!=endElements(); ++el) {
     if((*el)->illegal()) {
       illegal_ = true;
-      return;
     }
   }
   illegal_ = false;
+  ++illegality_computation_time;
+  return illegal_;
 }
 
 // getIllegalCount checks all elements.  It sets
 // CSkeletonBase::illegal_ as well as CSkeletonBase::illegalCount.
 
 int CSkeletonBase::getIllegalCount() {
-  if(illegal_count_computation_time < timestamp) {
-    illegalCount = 0;
-    for(CSkeletonElementIterator el=beginElements(); el!=endElements(); ++el) {
-      if((*el)->illegal())
-	++illegalCount;
-    }
-    ++illegal_count_computation_time;	  
+  if(illegal_count_computation_time < geometry_timestamp)
+    return illegalCount;
+  illegalCount = 0;
+  for(CSkeletonElementIterator el=beginElements(); el!=endElements(); ++el) {
+    if((*el)->illegal())
+      ++illegalCount;
   }
   illegal_ = illegalCount > 0;
+  ++illegal_count_computation_time;	  
+  ++illegality_computation_time;
   return illegalCount;
 }
 
 void CSkeletonBase::backdateIllegalityTimeStamp() {
   // Force illegal element count to be repeated.
   illegal_count_computation_time.backdate();
+  illegality_computation_time.backdate();
 }
 
 int CSkeletonBase::getSuspectCount() {
-  if(suspect_count_computation_time < timestamp) {	
+  if(suspect_count_computation_time < geometry_timestamp) {	
     suspectCount = 0;
     for(CSkeletonElementIterator el=beginElements(); el!=endElements(); ++el) {
       if((*el)->suspect()) {
@@ -885,18 +898,26 @@ bool CSkeletonBase::checkExteriorFaces(const CSkeletonFaceVector *faces)
 }
 
 
-
+//Returns (weighted) homogeneity index, which is the default
 double CSkeletonBase::getHomogeneityIndex() const {
+//Only recalculate if skeleton has changed since last time it was calculated
   if(homogeneity_index_computation_time < getTimeStamp()) {
-    calculateHomogeneityIndex();
+    try {calculateHomogeneityIndex();}
+    catch (...) {
+      throw ErrHomogeneityNotCalculable();
+    }
   }
   return homogeneityIndex;
 }
 
+// Handles the calculation for (weighted) homogeneity index
+
 void CSkeletonBase::calculateHomogeneityIndex() const {
-  // oofcerr << "CSkeletonBase::calculateHomogeneityIndex" << std::endl;
+  // Keep track of element homogeneities and bad elements
   homogeneityIndex = 0.0;
   illegalCount = 0;
+  suspectCount = 0;
+  // Creates progress bar since this can be a long calculation
   DefiniteProgress *progress = 
     dynamic_cast<DefiniteProgress*>(getProgress("Calculating homogeneity index",
 						DEFINITE));
@@ -906,14 +927,19 @@ void CSkeletonBase::calculateHomogeneityIndex() const {
     for(CSkeletonElementIterator elit = beginElements(); 
 	elit != endElements(); ++elit)
       {
+	//If element isn't illegal, add its info to the homogeneity calculation
 	if(!(*elit)->illegal()) {
 	  homogeneityIndex += (*elit)->volume()*(*elit)->homogeneity(this);
 	  vtot += (*elit)->volume();
+	  //If it is legal but suspect, increment the suspect counter
 	  if((*elit)->suspect()) 
 	    ++suspectCount;
 	}
-	else
+	//If it's not legal, increment the illegal counter
+	else {
 	  ++illegalCount;
+	}
+	//Progress bar shows how many elements we've gotten through
 	progress->setFraction(float((*elit)->getIndex())/nelements());
 	progress->setMessage(to_string((*elit)->getIndex()) + "/" +
 			     to_string(nelements()));
@@ -939,6 +965,68 @@ void CSkeletonBase::calculateHomogeneityIndex() const {
   progress->finish();
 }
 
+// Gets average homogeneity, not weighted by volume
+double CSkeletonBase::getUnweightedHomogeneity() const {
+  //Only recalculate if the skeleton has changed since last time
+  if(unweighted_homogeneity_computation_time < getTimeStamp()) {
+    try {
+      calculateUnweightedHomogeneity();
+    }
+    catch (...) {
+      throw ErrHomogeneityNotCalculable();
+    }
+  }
+  return unweightedHomogIndex;
+}
+
+// Calculates average homogeneity, not weighted by volume
+void CSkeletonBase::calculateUnweightedHomogeneity() const {
+  //Keep track of homogeneity data and bad elements
+  unweightedHomogIndex = 0.0;
+  illegalCount = 0;
+  suspectCount = 0;
+  //Create progress bar since this can be a long calculation
+  DefiniteProgress *progress = 
+    dynamic_cast<DefiniteProgress*>(
+			    getProgress("Calculating unweighted homogeneity",
+					DEFINITE));
+  try {
+    for (CSkeletonElementIterator elit = beginElements();
+	 elit != endElements(); ++elit)
+      {
+	//If an element isn't illegal, get its homogeneity data
+	if(!(*elit)->illegal()) {
+	  unweightedHomogIndex += (*elit)->homogeneity(this);
+	  //If it is suspect, increment the suspect counter
+	  if((*elit)->suspect()) {++suspectCount;}
+	}
+	//If it is illegal, increment the illegal counter
+	else {
+	  ++illegalCount;
+	}
+	//Set progress bar to show how many elements we've gotten through
+	progress->setFraction(float((*elit)->getIndex())/nelements());
+	progress->setMessage(to_string((*elit)->getIndex()) + "/" +
+			     to_string(nelements()));
+      }
+    //Divide by number of elements instead of total volume
+    //because this is an unweighted average
+    unweightedHomogIndex /= nelements();
+    ++unweighted_homogeneity_computation_time;
+    ++illegal_count_computation_time;
+    ++suspect_count_computation_time;
+  }
+  catch(...) {
+    progress->finish();
+    throw;
+  }
+  progress->finish();
+}
+
+// Returns the current value of the energy functional, which depends
+// on the alpha level used in skeleton modifiers Alpha = 0 gives only
+// shape energy, while alpha = 1 gives only homogeneity energy
+
 double CSkeletonBase::energyTotal(double alpha) const {
   double total = 0;
   for(unsigned int i=0; i<nelements(); ++i) {
@@ -946,6 +1034,40 @@ double CSkeletonBase::energyTotal(double alpha) const {
   }
   return total;
 }
+
+//Gets the unweighted average shape energy
+double CSkeletonBase::getUnweightedShapeEnergy() const {
+  //Only recalculate if skeleton has changed since last time
+  if (unweighted_shape_energy_computation_time < getTimeStamp()) {
+    //Divide total shape energy by number of elements to get unweighted average
+    unweightedShapeEnergy = energyTotal(0) / nelements();
+    ++unweighted_shape_energy_computation_time;
+  }
+  return unweightedShapeEnergy;
+}
+
+//Gets the weighted average shape energy
+double CSkeletonBase::getWeightedShapeEnergy() const {
+  //Only recalculate if skeleton has changed since last time
+  if (weighted_shape_energy_computation_time < getTimeStamp()) {
+    //Keep track of element shape energies and volumes
+    weightedShapeEnergy = 0.0;
+    double vtot = 0.0;
+    for (CSkeletonElementIterator elit = beginElements();
+	 elit != endElements(); ++elit)
+      {
+	//Add each element's shape energy, scaled by its volume
+	weightedShapeEnergy +=
+	  (*elit)->energyTotal(this, 0) * (*elit)->volume();
+	vtot += (*elit)->volume();
+      }
+    //Divide running total by total volume to get weighted average
+    weightedShapeEnergy /= vtot;
+    ++weighted_shape_energy_computation_time;
+  }
+  return weightedShapeEnergy;
+}
+
 
 const CSkeletonElement* CSkeletonBase::enclosingElement(Coord *point) {
   vtkIdType cellId = get_element_locator()->FindCell(point->xpointer());
@@ -2900,8 +3022,15 @@ CDeputySkeleton::CDeputySkeleton(CSkeletonBase *skel)
   // reference Skeleton's nodes are stored in the nodePositions
   // dictionary.  When it's inactive, it's the other way around.
   nodePositions = skel->getMovedNodes(); // returns a new NodePositionsMap*.
-  homogeneityIndex = skel->getHomogeneityIndex();
+  try {
+    homogeneityIndex = skel->getHomogeneityIndex();
+    //unweightedHomogIndex = skel->getUnweightedHomogeneity();
+  } catch (ErrHomogeneityNotCalculable) {
+    oofcerr << "HomogeneityNotCalculable error occurred when constructing deputy skeleton!" << std::endl;
+    throw;
+  }
   ++homogeneity_index_computation_time;
+  //++unweighted_homogeneity_computation_time;
 }
 
 // Creating a new CDeputySkeleton from Python should always be done by
@@ -3883,8 +4012,7 @@ void CSkeletonBase::clearVSBs() const {
 }
 
 void CSkeletonBase::buildVSBs() const {
-  const CMicrostructure *ms = getMicrostructure();
-  if(vsbTimeStamp > timestamp && vsbTimeStamp > ms->getTimeStamp())
+  if(vsbTimeStamp > getTimeStamp())
     return;
   
   // Get the bin size from the average element volume.  Each bin is a
@@ -3905,6 +4033,7 @@ void CSkeletonBase::buildVSBs() const {
   }
   // Don't recompute the VSBs if neither the bin size nor the voxel
   // categories have changed.
+  const CMicrostructure *ms = getMicrostructure();
   if(newBinSize == vsbBinSize && vsbTimeStamp > ms->getTimeStamp())
     return;
 

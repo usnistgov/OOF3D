@@ -148,6 +148,15 @@ public:
   virtual void createSegmentMarks(CSkeletonBase*, RefinementCriterion*, short);
 };
 
+class CheckLongSegments : public RefinementTargets {
+private:
+  double factor;
+public:
+  CheckLongSegments(double f) : factor(f) {}
+  virtual ~CheckLongSegments() {}
+  virtual void createSegmentMarks(CSkeletonBase*, RefinementCriterion*, short);
+};
+
 class CheckSegmentsInGroup : public RefinementTargets {
 private:
   const std::string group;
