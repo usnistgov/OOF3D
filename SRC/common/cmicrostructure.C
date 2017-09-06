@@ -29,6 +29,7 @@
 #include "common/pixelattribute.h"
 #include "common/pixelgroup.h"
 #include "common/printvec.h"
+#include "common/tostring.h"
 #include "common/voxelsetboundary.h"
 
 #include <iostream>
@@ -172,8 +173,9 @@ PixelAttribute *MicrostructureAttributes::getAttributeFromCategory(
 {
   if(cat < attrVecVec.size())
     return (*attrVecVec[cat])[index];
-  throw ErrProgrammingError("Could not find attribute for category",
-   			    __FILE__, __LINE__);
+  throw ErrProgrammingError(
+		    "Could not find attribute for category " + to_string(cat),
+		    __FILE__, __LINE__);
 }
 
 
