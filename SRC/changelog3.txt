@@ -13,10 +13,14 @@
  * oof_manager@nist.gov. 
  */
 
-3.1.2?
+3.1.2
 
 Fixed a bug that was making the Microstructure recalculate voxel
 categories far too often.
+
+Added the Relax Skeleton modifier.
+
+Added a RefinementTarget to split the long edges of a Skeleton element.
 
 3.1.1.1
 
