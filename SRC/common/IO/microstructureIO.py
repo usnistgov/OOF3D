@@ -107,7 +107,8 @@ categorymenu = micromenu.addItem(oofmenu.OOFMenuItem('DefineCategory'))
 
 class CategoryMap:
     def __init__(self, array):
-        prog = progress.getProgress("CategoryMap", progress.DEFINITE)
+        prog = progress.getProgress("Loading voxel categories",
+                                    progress.DEFINITE)
         n = 0
         # array is a list of lists of Ints, which are pixel categories
         self.pxls = {}                  # list of pixels, keyed by category
@@ -132,8 +133,7 @@ class CategoryMap:
                             self.pxls[category].append(where)
                         except KeyError:
                             self.pxls[category] = [where]
-                        prog.setMessage("Got category for %d/%d voxels"
-                                        % (n,total))
+                        prog.setMessage("%d/%d" % (n, total))
                         prog.setFraction(float(n)/total)
                         n = n+1
         prog.finish()
