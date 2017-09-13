@@ -143,7 +143,8 @@ class SkeletonSelectionToolboxGUI(toolboxGUI.GfxToolbox):
         self.currentMode = None
 
     def switchModeCB(self, button, modename):
-        self.setMode(modename)
+        if button.get_active():
+            self.setMode(modename)
         
     def setMode(self, modename):
         debug.mainthreadTest()
@@ -154,6 +155,7 @@ class SkeletonSelectionToolboxGUI(toolboxGUI.GfxToolbox):
         self.currentMode = modename
         mode = self.tbdict[modename]
         self.tbbox.add(mode.gtk)
+        self.installMouseHandler()
         mode.show()
         mode.activate()
 
