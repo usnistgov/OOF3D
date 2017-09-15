@@ -89,6 +89,8 @@ for opt in optlist:
     elif opt[0] == '--help':
         state_options_and_quit()
 
+assert version is not None
+
 startdir = os.getcwd()
 
 # Are we building oof2 or oof3d? This info is stored in
@@ -115,6 +117,7 @@ try:
     giturl = stdoutdata.strip()
 
     # cd to the temp directory
+    print >> sys.stderr, "Changing directory to", tempdir
     os.chdir(tempdir)
 
     # Clone the git repository into a directory whose name is given by
@@ -129,10 +132,58 @@ try:
     osCall(*cmd)
 
     # cd to the cloned source code directory
+    print >> sys.stderr, "Changing directory to", distdir
     os.chdir(distdir)
 
-    import localexclusions
+    # Construct the commit message and new branch name (aka tag)
+    commit_msg = ("Building " + distname.distname + " release version " +
+                  version)
+    if comment:
+        commit_msg += " -- " + comment
+    tag = distname.distname + "-" + version
+    if comment:
+        oldtag = tag
+        comment.replace(' ', '-')
+        tag += "--" + comment
+    # Check and/or fix the tag if it's not legal
+    proc = subprocess.Popen(['git', 'check-ref-format', '--normalize',
+                             '--allow-onelevel', tag],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdoutdata, stderrdata = proc.communicate()
+    if proc.returncode == 0:    # success
+        tag = stdoutdata.strip()
+    else:
+        print >> sys.stderr, "Failed to convert '%s' to a legal tag." % tag
+        print >> sys.stderr, "Using '%s' instead." % oldtag
+        tag = oldtag
     
+    
+    # Create a branch for the release.
+
+    # First see if the branch already exists.  "git ls-remote" returns
+    # 2 if the branch doesn't exist, when given the --exit-code
+    # argument.
+    if subprocess.call(['git', 'ls-remote', '--exit-code', 'origin', tag],
+                       stdout=None, stderr=None) == 2:
+        # The branch doesn't already exist.
+        newbranch = True
+        osCall('git', 'checkout', '-b', tag)
+    else:
+        # The branch already exists.  Check it out, and merge the
+        # current master into it.  There *should* be no conflicts in
+        # the merge, since nobod
+        newbranch = False
+        osCall('git', 'checkout', tag)
+        print >> sys.stderr, "Merging master branch into", tag
+        proc = subprocess.Popen(['git', 'merge', '--no-edit', 'master'],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        print >> sys.stderr, stdoutdata
+        stdoutdata, stderrdata = proc.communicate()
+        if proc.returncode != 0:
+            print >> sys.stderr, stderrdata
+            print >> sys.stderr, "Failed to merge master into", tag
+            sys.exit(1)
+
     # Set the version number in setup.py and SRC/common/oofversion.py.
     # The sed command finds a line beginning with
     # "version_from_make_dist" and replaces everything after the
@@ -153,23 +204,57 @@ try:
     print >> sys.stderr, "Moving", tmpfilename, "to SRC/common/oofversion.py"
     os.rename(tmpfilename, 'SRC/common/oofversion.py')
 
+    # Check all the modifications into git, and tag with the version
+    # number.  It's necessary to go back to the distribution directory
+    # to use git.
+    osCall('git', 'add', 'SRC/common/oofversion.py', 'setup.py')
+
+    cmd = ['git', 'commit', '--allow-empty', '-m', commit_msg]
+    print >> sys.stderr, '--->', ' '.join(cmd)
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdoutdata, stderrdata = proc.communicate()
+    if proc.returncode != 0:
+        print >> sys.stderr, "Back from commit, status=", proc.returncode
+        print >> sys.stderr, "stdoutdata=", stdoutdata
+        print >> sys.stderr, "stderrdata=", stderrdata
+        sys.exit(0)
+
+    if not newbranch:
+        cmd = ['git', 'push', 'origin', tag]
+    else:
+        cmd = ['git', 'push', '--set-upstream', 'origin', tag]
+
+    # Push the modifications to the server, unless this is just a dry
+    # run.
+    if not dryrun:
+        osCall(*cmd)
+    else:
+        print >> sys.stderr, "Dry run! Not running:"
+        print >> sys.stderr, " ".join(cmd)
+
+    # The distribution includes two files, MANIFEST and package_date,
+    # that aren't in git, and are therefore constructed only now that
+    # all the git manipulations are complete.
+        
     # Make a timestamp file for the distribution.
     timefile = file("package_date", "w")
     print >> timefile, time.ctime()
     timefile.close()
-
     
     # Make the MANIFEST file after moving back up to the temp
     # directory.  Moving up to the temp directory means that the path
     # names in the file will all start with "oof{2,3d}-version/",
     # which is nice and modular.
+    os.chdir(tempdir)
 
     # We aren't using distutils to automatically create a MANIFEST
     # file because it wants to include the swig output files.  Once
     # we've built the file ourselves, there's really no need to use
     # distutils here at all.
-    
-    os.chdir(tempdir)
+
+    import localexclusions
+
+    print >> sys.stderr, "Changing directory to", tempdir
     
     globalExcludeDirs = [
         ".git"
@@ -217,52 +302,13 @@ try:
                     fname not in excludeDirs):
                     getFiles(fname, manifest)
 
+    print >> sys.stderr, "Building MANIFEST"
     manifest = open(os.path.join(distdir, "MANIFEST"), "w")
     getFiles(distdir, manifest)   
     manifest.close()
 
-    # Check all the modifications into git, and tag with the version
-    # number.  It's necessary to go back to the distribution directory
-    # to use git.
-    print >> sys.stderr, "Changing directory to", distdir
-    os.chdir(distdir)
-    osCall('git', 'add', 'SRC/common/oofversion.py', 'setup.py')
-        
-    commit_msg = ("Building " + distname.distname + " release version " +
-                  version)
-    if comment:
-        commit_msg += " -- " + comment
-    tag = distname.distname + "-" + version
-    if comment:
-        oldtag = tag
-        comment.replace(' ', '-')
-        tag += "--" + comment
-    # Check and/or fix the tag if it's not legal
-    proc = subprocess.Popen(['git', 'check-ref-format', '--normalize',
-                             '--allow-onelevel', tag],
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdoutdata, stderrdata = proc.communicate()
-    if proc.returncode == 0:    # success
-        tag = stdoutdata.strip()
-    else:
-        print >> sys.stderr, "Failed to convert '%s' to a legal tag." % tag
-        print >> sys.stderr, "Using '%s' instead." % oldtag
-        tag = oldtag
-    
-    if not dryrun:
-        osCall('git', 'commit', '-m', commit_msg)
-        osCall('git', 'tag', tag)
-        osCall('git', 'push', 'origin')        
-        osCall('git', 'push', 'origin', tag)
-    else:
-        print >> sys.stderr, "Dry run! Not running:"
-        print >> sys.stderr, '*** git commit -m %s' % commit_msg
-        print >> sys.stderr, '*** git tag', tag
-        print >> sys.stderr, '*** git push origin'
-        print >> sys.stderr, '*** git push origin %s' % tag
     
     # Build the distribution.
-    os.chdir(tempdir)
     distfilename = distdir + ".tar.gz"
     print >> sys.stderr, "Distribution file is", distfilename
 
