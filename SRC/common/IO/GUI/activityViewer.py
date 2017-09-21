@@ -103,6 +103,9 @@ class ActivityViewer(subWindow.SubWindow):
         self.proglock.acquire()
         try:
             for worker in threadmanager.threadManager.allWorkers():
+                ## TODO: When loading a script, the next line once
+                ## failed with threadstate==None.  Is there a race
+                ## condition?  The problem was not repeatable.
                 worker.threadstate.acquireProgressLock()
                 try:
                     progressnames = worker.threadstate.getProgressNames()
