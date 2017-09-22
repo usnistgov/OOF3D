@@ -208,7 +208,12 @@ void Refine::getElementSignatures(CSkeletonBase *skeleton,
 
 CSkeletonBase* Refine::refine(CSkeletonBase *skeleton, CSkeleton *newSkeleton)
 {
-
+#ifdef TESTCOVERAGE
+  oofcerr << "*** Running Refine::refine() with TESTCOVERAGE defined."
+	  << std::endl;
+  oofcerr << "*** Change it in crefine.h if that's not what you meant to do."
+	  << std::endl;
+#endif // TESTCOVERAGE
   DefiniteProgress *progress = 
     dynamic_cast<DefiniteProgress*>(getProgress("Refine", DEFINITE));
   try {
