@@ -51,10 +51,10 @@
 #include "engine/property.h"
 #include "engine/skeletonfilter.h"
 
-#include <vtkTetra.h>
-#include <vtkUnstructuredGrid.h>
 #include <vtkIntArray.h>
 #include <vtkPointData.h>
+#include <vtkTetra.h>
+#include <vtkUnstructuredGrid.h>
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 

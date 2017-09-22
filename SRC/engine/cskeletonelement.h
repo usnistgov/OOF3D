@@ -24,6 +24,8 @@
 #include <vtkSmartPointer.h>
 #include <vtkTetra.h>
 
+#include <limits>
+
 class CMicrostructure;
 class COrientedPlane;
 class CSkeleton;
@@ -39,6 +41,11 @@ class VoxelBdyIntersection;
 #define NUM_TET_EDGES 6
 #define NUM_TET_NODES 4
 #define NUM_TET_FACE_EDGES 3
+
+#define LEGAL_COS_TOLERANCE std::numeric_limits<double>::epsilon()
+#define LEGAL_COS2_TOLERANCE 2*LEGAL_COS_TOLERANCE
+#define SUSPECT_COS_TOLERANCE 1.0e-6
+#define SUSPECT_COS2_TOLERANCE 2*SUSPECT_COS_TOLERANCE
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -176,6 +183,8 @@ public:
   double cosDihedralAngle(unsigned int fid1, unsigned int fid2) const;
   bool illegal() const;
   bool suspect() const;
+  void edgeLengthAndDiameter2(unsigned int, unsigned int, double&, double&)
+    const;
   void printAngles() const;
 
   std::vector<Coord3D> pixelCoords(const CMicrostructure*) const;
@@ -217,6 +226,8 @@ public:
   CSkeletonMultiNodeKey getSegmentKey(int segidx) const;
   CSkeletonMultiNodeKey getFaceKey(int faceidx) const;
   static unsigned int getFaceEdgeIndex(int i, int j) { return faceEdges[i][j]; }
+  // getNodeEdgeIndex(i,j) returns the element-scope index of the jth
+  // edge at node i.
   static unsigned int getNodeEdgeIndex(int i, int j) { return nodeEdges[i][j]; }
   static unsigned int getOppFaceIndex(int i) { return oppFace[i]; }
   static unsigned int getOppEdgeIndex(int i) { return oppEdge[i]; }

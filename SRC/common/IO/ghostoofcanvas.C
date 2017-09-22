@@ -93,7 +93,8 @@ GhostOOFCanvas::GhostOOFCanvas()
   tprop->ItalicOff();
   tprop->SetColor(0, 0, 0);
   tprop->ShadowOff();
-  
+
+  axes->UseBoundsOff();	// don't use when computing bounds of visible region
   axes->GetXAxisCaptionActor2D()->GetCaptionTextProperty()->ShadowOff();
   axes->GetYAxisCaptionActor2D()->GetCaptionTextProperty()->ShadowOff();
   axes->GetZAxisCaptionActor2D()->GetCaptionTextProperty()->ShadowOff();

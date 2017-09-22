@@ -242,6 +242,7 @@ public:
   inline const CTYPE &upperright() const { return uprightfront; }
   inline const CTYPE &lowerleftback() const { return lowleftback; }
   inline const CTYPE &upperrightfront() const { return uprightfront; }
+  inline const CTYPE center() const { return 0.5*(lowleftback+uprightfront); }
   template <class CTYPE2>
   void swallow(const CTYPE2 &pt) {
     if(uprightfront[0] < pt[0]) uprightfront[0] = pt[0];
@@ -344,6 +345,7 @@ public:
 
 class CRectangularPrism: public CRectangularPrism_<double, Coord> {
 public:
+  CRectangularPrism() {}
   CRectangularPrism(const Coord &a, const Coord &b)
     : CRectangularPrism_<double, Coord>(a,b)
   {}

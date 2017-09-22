@@ -1803,6 +1803,20 @@ CSkeletonElement *CSkeletonBase::getOrientedFaceElement(
   return els[0];
 }
 
+// There are four versions of averageNeighborPosition.  The ones with
+// just one CSkeletonNode* argument return the average position of the
+// neighbors of the given node.  The ones with a second
+// CSkeletonNodeSet argument return the average position of the nodes
+// in the given set, unless the set is empty, in which case the
+// position of the node is returned.  The functions called
+// averageConstrainedNbrPosition compute the average using only nodes
+// that have the same mobility (or less) than the given node, so that,
+// for example, a node on a face can be moved to the average position
+// of its neighbors on the same face.  (This will fail if the node has
+// neighbors on opposing faces, but if the Skeleton has elements that
+// span the whole Microstructure, the smoothing methods that use
+// averageConstrainedNbrPosition are being applied prematurely.)
+
 Coord CSkeletonBase::averageNeighborPosition(const CSkeletonNode *node)
   const
 {
@@ -1812,7 +1826,7 @@ Coord CSkeletonBase::averageNeighborPosition(const CSkeletonNode *node)
 }
 
 Coord CSkeletonBase::averageNeighborPosition(const CSkeletonNode *node,
-					    const CSkeletonNodeSet &nbrs)
+					     const CSkeletonNodeSet &nbrs)
   const
 {
   // Compute the average position x of the nodes in the set nbrs.  If
@@ -1856,6 +1870,28 @@ Coord CSkeletonBase::averageConstrainedNbrPosition(const CSkeletonNode *node)
 	oknbrs.insert(nbr);
       }
   }
+  return averageNeighborPosition(node, oknbrs);
+}
+
+Coord CSkeletonBase::averageConstrainedNbrPosition(const CSkeletonNode *node,
+						   const CSkeletonNodeSet &nbrs)
+  const
+{
+  Coord3D x;
+  bool mobx = node->movable_x();
+  bool moby = node->movable_y();
+  bool mobz = node->movable_z();
+  if(mobx && moby && mobz)
+    return averageNeighborPosition(node, nbrs);
+  CSkeletonNodeSet oknbrs;
+  for(CSkeletonNode *nbr : nbrs) {
+    if((mobx || !nbr->movable_x()) &&
+       (moby || !nbr->movable_y()) &&
+       (mobz || !nbr->movable_z()))
+      {
+	oknbrs.insert(nbr);
+      }
+    }
   return averageNeighborPosition(node, oknbrs);
 }
 
@@ -2824,6 +2860,7 @@ ProvisionalMerge* CSkeleton::addElementsToMerge(
   for(CSkeletonElementIterator it = node0Elements->begin();
       it != node0Elements->end(); ++it)
     {
+      // TODO: Why not just compare CSkeletonNode pointers here?
       if((*it)->getNode(0)->getIndex() != n1->getIndex() && 
 	 (*it)->getNode(1)->getIndex() != n1->getIndex() && 
 	 (*it)->getNode(2)->getIndex() != n1->getIndex() && 
@@ -3368,7 +3405,7 @@ const std::string *CSkeletonBase::sanityCheck() const {
   }
   prog->finish();
   return new std::string(diag.str());
-}
+} // CSkeletonBase::sanityCheck
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -3391,6 +3428,9 @@ void DeputyProvisionalChanges::moveNode(CSkeletonNode *node, const Coord &x,
 		  node_elements->end());
 }
 
+// TODO: Combine illegal() and suspect(), if they're always used
+// together.
+
 bool DeputyProvisionalChanges::illegal() {
   // Will this change produce any illegal elements?
   if(!illegalCached) {
@@ -3411,6 +3451,25 @@ bool DeputyProvisionalChanges::illegal() {
     }
   }
   return cachedIllegal;
+}
+
+bool DeputyProvisionalChanges::suspect() {
+  // Will this change increase the number of suspect elements?
+  // TODO: Cache the return value?
+  int nBefore = 0;
+  for(CSkeletonElement *el : elements) {
+    if(el->suspect())
+      ++nBefore;
+  }
+  makeNodeMove();
+  int nAfter = 0;
+  for(CSkeletonElement *el : elements) {
+    if(el->suspect()) {
+      ++nAfter;
+    }
+  }
+  moveNodeBack();
+  return nAfter > nBefore;
 }
 
 void DeputyProvisionalChanges::makeNodeMove() {
@@ -3504,13 +3563,30 @@ bool ProvisionalChanges::illegal() {
   for(CSkeletonElementSet::iterator elit = after.begin();
       elit != after.end(); ++elit) 
     {
-      if((*elit)->illegal()) {
+      if((*elit)->illegal() || (*elit)->suspect()) {
 	verboten = true;
 	break;
       }
     }
   moveNodeBack();
   return verboten;
+}
+
+bool ProvisionalChanges::suspect() {
+  // Will this change increase the number of suspect elements?
+  int nBefore = 0;
+  for(const CSkeletonElement *el : before) {
+    if(el->suspect())
+      ++nBefore;
+  }
+  makeNodeMove();
+  int nAfter = 0;
+  for(const CSkeletonElement *el : after) {
+    if(el->suspect())
+      ++nAfter;
+  }
+  moveNodeBack();
+  return nAfter > nBefore;
 }
 
 void ProvisionalChanges::moveNode(CSkeletonNode *node, const Coord &x,
@@ -3714,6 +3790,29 @@ bool FaceSubstitutionLT::operator()(const FaceSubstitution &fs0,
 }
 
 void ProvisionalChanges::accept() {
+#ifdef DEBUG
+  int deltaSuspect = 0;
+  int deltaIllegal = 0;
+  // Count number of suspect and illegal elements being removed before
+  // nodes are moved
+  for(CSkeletonSelectablePairSet::iterator it=substitutions.begin();
+      it!=substitutions.end(); ++it)
+    {
+      CSkeletonElement *oldel = dynamic_cast<CSkeletonElement*>((*it).first);
+      if(oldel->suspect())
+	--deltaSuspect;
+      if(oldel->illegal())
+	--deltaIllegal;
+    }
+  for(CSkeletonElement *el : removed) {
+    if(el->illegal())
+      --deltaIllegal;
+    if(el->suspect())
+      --deltaSuspect;
+  }
+#endif // DEBUG  
+
+
   // Must move nodes first because newly inserted elements legality
   // depends on the new positions
   // oofcerr << "ProvisionalChanges::accept: " << this << " " << name
@@ -3734,6 +3833,7 @@ void ProvisionalChanges::accept() {
       (*it).node->setMobilityZ((*it).mobility[2]);
     }
 
+
   // Element insertions.
   for(CSkeletonElementSet::iterator it=inserted.begin(); it!=inserted.end(); 
       ++it)
@@ -3742,6 +3842,16 @@ void ProvisionalChanges::accept() {
       // the face and segment objects if necessary.
       // oofcerr << "   Inserting element " << **it << std::endl;
       skeleton->acceptProvisionalElement((*it));
+#ifdef DEBUG
+      if((*it)->suspect()) {
+	++deltaSuspect;
+	// oofcerr << "ProvisionalChanges::accept: suspect element created by "
+	// 	<< name << std::endl;
+	// oofcerr << "ProvisionalChanges::accept:    " << *(*it) << std::endl;
+      }
+      if((*it)->illegal())
+	++deltaIllegal;
+#endif // DEBUG
     }
 
   // Element substitutions (insertion of one and removal of another
@@ -3753,6 +3863,12 @@ void ProvisionalChanges::accept() {
       // 	      << "                          new= " << *(*it).second <<std::endl;
       CSkeletonElement *oldel = dynamic_cast<CSkeletonElement*>((*it).first);
       CSkeletonElement *newel = dynamic_cast<CSkeletonElement*>((*it).second);
+#ifdef DEBUG
+      if(newel->suspect())
+	++deltaSuspect;
+      if(newel->illegal())
+	++deltaIllegal;
+#endif // DEBUG
       skeleton->acceptProvisionalElement(newel);
       // the old segments and faces must be in the same order
       for(unsigned int i = 0; i < oldel->getNumberOfSegments(); ++i) {
@@ -3844,6 +3960,13 @@ void ProvisionalChanges::accept() {
   // oofcerr << "ProvisionalChanges::accept: removing elements" << std::endl;
   skeleton->removeElements(removed);
   // oofcerr << "ProvisionalChanges::accept: done" << std::endl;
+
+#ifdef DEBUG
+  if(deltaIllegal > 0 || deltaSuspect > 0)
+    oofcerr << "ProvisionalChanges::accept: " << name << " deltaIllegal="
+	    << deltaIllegal << " deltaSuspect=" << deltaSuspect << std::endl;
+#endif	// DEBUG
+  
 } // end ProvisionalChanges::accept
 
 void ProvisionalMerge::accept() {  

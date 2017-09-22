@@ -293,6 +293,8 @@ public:
   Coord averageNeighborPosition(const CSkeletonNode*, const CSkeletonNodeSet&)
     const;
   Coord averageConstrainedNbrPosition(const CSkeletonNode*) const;
+  Coord averageConstrainedNbrPosition(const CSkeletonNode*,
+				      const CSkeletonNodeSet&) const;
 
   // convenience functions for boundary building
   CSkeletonElement *getOrientedSegmentElement(OrientedCSkeletonSegment *seg);
@@ -999,6 +1001,7 @@ public:
 // #endif
 
   virtual bool illegal() = 0;
+  virtual bool suspect() = 0;
   // deltaE() is not const because it may need to call moveNode.
   virtual double deltaE(double alpha) = 0;
   virtual void moveNode(CSkeletonNode *node, const Coord &x, bool *mob=NULL) = 0;
@@ -1027,6 +1030,7 @@ public:
   virtual void moveNode(CSkeletonNode *node, const Coord &x, bool *mob=NULL);
   virtual void accept();
   virtual bool illegal();
+  virtual bool suspect();
   void makeNodeMove();
   void moveNodeBack();
   virtual void removeAddedNodes() {};
@@ -1066,6 +1070,7 @@ public:
   CSkeletonSelectablePairSet& getSubstitutions() { return substitutions; }
   CSkeletonElementSet& getRemoved() { return removed; }
   virtual bool illegal();
+  virtual bool suspect();
   virtual void moveNode(CSkeletonNode *node, const Coord &x, bool *mob=NULL);
   virtual void makeNodeMove();
   virtual void moveNodeBack();

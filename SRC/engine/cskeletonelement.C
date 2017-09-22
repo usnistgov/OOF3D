@@ -30,14 +30,8 @@
 #include <vtkTriangle.h>
 #include <vtkLine.h>
 #include <algorithm>
-#include <limits>
 #include <set>
 #include <math.h>
-
-#define LEGAL_COS_TOLERANCE std::numeric_limits<double>::epsilon()
-#define LEGAL_COS2_TOLERANCE 2*LEGAL_COS_TOLERANCE
-#define SUSPECT_COS_TOLERANCE 1.0e-6
-#define SUSPECT_COS2_TOLERANCE 2*SUSPECT_COS_TOLERANCE
 
 const std::string CSkeletonElement::modulename_(
 					 "ooflib.SWIG.engine.cskeletonelement");
@@ -417,18 +411,22 @@ static SLock globalElementCountLock;
  // must be eliminated from skeleton modifications. Users should be
  // alerted to their presence so that they can correct them.
  bool CSkeletonElement::suspect() const {
-   for(unsigned int i=0; i<4; ++i) {
-     for(unsigned int j=0; j<3; ++j) {
+   for(unsigned int i=0; i<4; ++i) {   // loop over faces
+     for(unsigned int j=0; j<3; ++j) { // loop over corners of face
        double cos = cosCornerAngleSquared(i,j);
-       if( 1-cos < SUSPECT_COS2_TOLERANCE || 1+cos < SUSPECT_COS2_TOLERANCE )
-	 return true;
+       if( 1-cos < SUSPECT_COS2_TOLERANCE || 1+cos < SUSPECT_COS2_TOLERANCE ) {
+   	 // printAngles();
+   	 return true;
+       }
      }
    }
-   for(unsigned int i=0; i<4; ++i) {
-     for(unsigned int j=0; j<i; ++j) {
+   for(unsigned int i=0; i<3; ++i) {	 // loop over faces
+     for(unsigned int j=i+1; j<4; ++j) { // loop over other faces
        double cos = cosDihedralAngle(i, j);
-       if( 1-cos < SUSPECT_COS_TOLERANCE || 1+cos < SUSPECT_COS_TOLERANCE )
-	 return true;
+       if( 1-cos < SUSPECT_COS_TOLERANCE || 1+cos < SUSPECT_COS_TOLERANCE ) {
+   	 // printAngles();
+   	 return true;
+       }
      } 
    }
    return false;
@@ -436,7 +434,9 @@ static SLock globalElementCountLock;
 
  // Useful for debugging.
  void CSkeletonElement::printAngles() const {
-   oofcerr << "corner angles: " << std::endl;
+   oofcerr << "CSkeletonElement::printAngles: this=" << *this << std::endl;
+   OOFcerrIndent indent(2);
+   oofcerr << "corner angles (face, corner, cos, 1-cos, 1+cos): " << std::endl;
    for(unsigned int i=0; i<4; ++i) {
      for(unsigned int j=0; j<3; ++j) {
        double cos = cosCornerAngleSquared(i,j);
@@ -444,7 +444,7 @@ static SLock globalElementCountLock;
 		 << (cos+1) << std::endl;
      }
    }
-   oofcerr << "dihedral angles: " << std::endl;
+   oofcerr << "dihedral angles: (face, face, cos, 1-cos, 1+cos) " << std::endl;
    for(unsigned int i=0; i<4; ++i) {
      for(unsigned int j=0; j<i; ++j) {
        double cos = cosDihedralAngle(i, j);
@@ -452,7 +452,51 @@ static SLock globalElementCountLock;
 		 << (cos+1) << std::endl;
      } 
    }
+   if(!parents.empty()) {
+     oofcerr << "Parents:" << std::endl;
+     OOFcerrIndent indent2(2);
+     for(CSkeletonSelectable *p : parents) {
+       CSkeletonElement *parent = dynamic_cast<CSkeletonElement*>(p);
+       oofcerr << *parent << std::endl;
+       OOFcerrIndent indent3(2);
+       oofcerr << "edges (node, node, length, dist to opposite edge, ratio)"
+	       << std::endl;
+       for(unsigned int n0=0; n0<3; n0++) {
+	 for(unsigned int n1=n0+1; n1<4; n1++) {
+	   double len2, dist2;
+	   parent->edgeLengthAndDiameter2(n0, n1, len2, dist2);
+	   oofcerr << n0 << " " << n1 << " " << sqrt(len2)
+		   << " " << sqrt(dist2) << " ratio=" << sqrt(len2/dist2)
+		   << std::endl;
+	 }
+       }
+     }
+   }
  }
+
+// Find the distance squared between nodes n0 and n1 divided by the
+// distance squared from their midpoint to the midpoint of the
+// opposite edge.
+
+void CSkeletonElement::edgeLengthAndDiameter2(unsigned int n0, unsigned int n1,
+					      double &len2, double &diam2) const
+{
+  unsigned int sharedEdge = CSkeletonElement::nodeNodeEdge[n0][n1];
+  const CSkeletonNode *node0 = getNode(n0);
+  const CSkeletonNode *node1 = getNode(n1);
+  Coord3D pos0 = node0->position();
+  Coord3D pos1 = node1->position();
+  // Find the opposite edge of the tet.
+  unsigned int oppEdge = CSkeletonElement::oppEdge[sharedEdge];
+  const CSkeletonNode *oppNode0 = getSegmentNode(oppEdge, 0);
+  const CSkeletonNode *oppNode1 = getSegmentNode(oppEdge, 1);
+  Coord3D oPos0 = oppNode0->position();
+  Coord3D oPos1 = oppNode1->position();
+  // Find the distance between the midpoints
+  diam2 = 0.25*norm2(pos0 + pos1 - oPos0 - oPos1);
+  // and the length of the edge
+  len2 = norm2(pos0 - pos1);
+}
 
 
  CSkeletonMultiNodeKey CSkeletonElement::getSegmentKey(int segidx) const {
@@ -520,12 +564,12 @@ HomogeneityData CSkeletonElement::c_homogeneity(const CSkeletonBase *skel) const
   // homogeneity calculation. We set the homogeneity to something a
   // little worse than the worst possible homogeneity that can occur
   // naturally, but not 0.
-  if(suspect()) {
-    // writeDebugFile("suspect element " + to_string(getUid()) + "\n");
-    // oofcerr << "CSkeletonElement::c_homogeneity: suspect!" << std::endl;
-    const CMicrostructure *ms = skel->getMicrostructure();
-    return HomogeneityData(1.0/(ms->nCategories()+1), UNKNOWN_CATEGORY);
-  }
+  // if(suspect()) {
+  //   // writeDebugFile("suspect element " + to_string(getUid()) + "\n");
+  //   // oofcerr << "CSkeletonElement::c_homogeneity: suspect!" << std::endl;
+  //   const CMicrostructure *ms = skel->getMicrostructure();
+  //   return HomogeneityData(1.0/(ms->nCategories()+1), UNKNOWN_CATEGORY);
+  // }
   
   // writeDebugFile("computing homogeneity for element "+to_string(getUid())+"\n");
 

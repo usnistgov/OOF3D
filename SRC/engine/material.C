@@ -859,6 +859,8 @@ TimeStamp getMaterialTimeStamp(const CMicrostructure *ms) {
 const Material *getMaterialFromCategory(const CMicrostructure *ms,
 					int category)
 {
+  if(category == UNKNOWN_CATEGORY)
+    throw ErrProgrammingError("Unknown voxel category!", __FILE__, __LINE__);
   MaterialAttribute *m = dynamic_cast<MaterialAttribute*>
     (ms->getAttributeFromCategory(category, reg->index()));
   return m->get();

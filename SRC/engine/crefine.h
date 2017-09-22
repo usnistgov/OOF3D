@@ -22,7 +22,7 @@ class CSkeleton;
 // Define TESTCOVERAGE to include code that checks to see which
 // refinement rules are used.  This is useful when developing
 // regression tests.
-//#define TESTCOVERAGE
+#define TESTCOVERAGE
 
 #ifdef TESTCOVERAGE
 typedef std::map<std::string, int> RuleCounter;

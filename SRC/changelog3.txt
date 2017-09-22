@@ -26,6 +26,8 @@ element.
 Loading Skeleton node and element selections from data files is now
 much faster.
 
+Fixed a bug that was preventing compilation on gcc 7.
+
 3.1.1.1
 
 Minor changes to make the old gcc 4.7 compilers happy.

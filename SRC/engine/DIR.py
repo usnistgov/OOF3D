@@ -29,7 +29,7 @@ cfiles = [
     'cskeletonsegment.C', 'cskeletonelement.C', 'cskeletongroups.C',
     'cfiddlenodes.C', 'crefine.C', 'crefinementcriterion.C', 'csnapnodes.C',
     'csnaprefine.C', 
-    'crationalizers.C', 'elementshape.C',
+    'crationalizers.C', 'elementshape.C', 'homogeneity.C',
     'angle2color.C', 'bdyanalysis.C', 'boundarycond.C', 'cskeletonboundary.C',
     'cconjugate.C', 'celectricfield.C', 'cmatrixmethods.C',
     'compoundsubproblem.C', 'contourcell.C',

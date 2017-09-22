@@ -45,9 +45,19 @@ public:
   BadlyShapedElements(double th);
 };
 
+class IllegalElements : public CSkelModTargets {
+public:
+  IllegalElements();
+};
+
 class SuspectElements : public CSkelModTargets {
 public:
   SuspectElements();
+};
+
+class SuspectOrIllegalElements : public CSkelModTargets {
+public:
+  SuspectOrIllegalElements();
 };
 
 class CSkelModCriterion {
