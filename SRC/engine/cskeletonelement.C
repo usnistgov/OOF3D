@@ -515,11 +515,6 @@ void CSkeletonElement::edgeLengthAndDiameter2(unsigned int n0, unsigned int n1,
 						const CSkeletonBase *skel)
    const 
  {
-   // oofcerr << "CSkeletonElement::findHomogeneityAndDominantPixel: el="
-   // 	  << getUid() << " hd="
-   // 	  << homogeneity_data.timestamp() << " ms=" 
-   // 	  << MS->getTimeStamp()
-   // 	  << std::endl;
    // writeDebugFile("computing el=" + to_string(getUid()) +
    // 		 " hd=" + to_string(homogeneity_data.timestamp()) + 
    // 		 " nodes=");
@@ -532,7 +527,7 @@ void CSkeletonElement::edgeLengthAndDiameter2(unsigned int n0, unsigned int n1,
      bool uptodate = true;
      // oofcerr << "CSkeletonElement::findHomogeneityAndDominantPixel: el="
      // 	      << getUid() << " nodes= ";
-     for(unsigned int i=0; i<nodes->size(); ++i) {
+     for(unsigned int i=0; i<nodes->size() && uptodate; ++i) {
        // oofcerr << (*nodes)[i]->getUid() << " " << (*nodes)[i]->nodemoved
        // 		<< " ";
        if(homogeneity_data.timestamp() < (*nodes)[i]->nodemoved) {
@@ -548,6 +543,18 @@ void CSkeletonElement::edgeLengthAndDiameter2(unsigned int n0, unsigned int n1,
    // else
    //   writeDebugFile(" out-of-date\n");
 
+// #ifdef DEBUG
+//    if(debug()) {
+//      oofcerr << "CSkeletonElement::findHomogeneityAndDominantPixel: el="
+// 	     << getUid()
+// 	     << " hd=" << homogeneity_data.timestamp()
+// 	     << " ms=" << MS->getTimeStamp()
+// 	     << " nodes=";
+//      for(const CSkeletonNode *node : *nodes)
+//        oofcerr << node->nodemoved << " ";
+//      oofcerr << std::endl;
+//    }
+// #endif // DEBUG
    skel->buildVSBs();
    homogeneity_data.set_value(c_homogeneity(skel));
  }

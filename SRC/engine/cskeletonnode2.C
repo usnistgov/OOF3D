@@ -87,17 +87,16 @@ CSkeletonNode *CSkeletonNode::new_child(int idx, vtkSmartPointer<vtkPoints> pts)
   return child;
 }
 
-// CSkeletonNode *CSkeletonNode::copy_child(int idx,
-// 					 vtkSmartPointer<vtkPoints> pts)
-// {
-//   CSkeletonNode *child = dynamic_cast<CSkeletonNode*>(
-// 			      CSkeletonSelectable::copy_child(idx, pts));
-//   child->nodemoved = nodemoved;
-//   child->lastmoved = lastmoved;
-//   for(int i=0; i<DIM; i++)
-//     child->last_position[i] = last_position[i];
-//   return child;
-// }
+CSkeletonNode *CSkeletonNode::copy_child(int idx,
+					 vtkSmartPointer<vtkPoints> pts)
+{
+  CSkeletonNode *child = dynamic_cast<CSkeletonNode*>(
+			      CSkeletonSelectable::copy_child(idx, pts));
+  child->nodemoved = nodemoved;
+  child->lastmoved = lastmoved;
+  child->last_position = last_position;
+  return child;
+}
 
 void CSkeletonNode::setMobilityX(bool mob) {
   if(mob)

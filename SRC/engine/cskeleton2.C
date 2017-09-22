@@ -902,7 +902,9 @@ bool CSkeletonBase::checkExteriorFaces(const CSkeletonFaceVector *faces)
 double CSkeletonBase::getHomogeneityIndex() const {
 //Only recalculate if skeleton has changed since last time it was calculated
   if(homogeneity_index_computation_time < getTimeStamp()) {
-    try {calculateHomogeneityIndex();}
+    try {
+      calculateHomogeneityIndex();
+    }
     catch (...) {
       throw ErrHomogeneityNotCalculable();
     }
@@ -2816,6 +2818,31 @@ CSkeleton *CSkeleton::completeCopy() {
   }
 
   result->illegal_ = this->illegal_;
+  result->illegalCount = illegalCount;
+  result->suspectCount = suspectCount;
+  result->homogeneityIndex = homogeneityIndex;
+  result->unweightedHomogIndex = unweightedHomogIndex;
+  result->unweightedShapeEnergy = unweightedShapeEnergy;
+  result->weightedShapeEnergy = weightedShapeEnergy;
+  result->homogeneity_index_computation_time =
+    homogeneity_index_computation_time.clone();
+  result->unweighted_homogeneity_computation_time =
+    unweighted_homogeneity_computation_time.clone();
+  result->unweighted_shape_energy_computation_time =
+    unweighted_shape_energy_computation_time.clone();
+  result->weighted_shape_energy_computation_time =
+    weighted_shape_energy_computation_time.clone();
+  result->illegality_computation_time =
+    illegality_computation_time.clone();
+  result->illegal_count_computation_time =
+    illegal_count_computation_time.clone();
+  result->suspect_count_computation_time =
+    suspect_count_computation_time.clone();
+  result->geometry_timestamp =
+    geometry_timestamp.clone();
+
+  // TODO: Copy voxelSetBdys and vsbBins?
+  vsbTimeStamp.backdate();
 
   // oofcerr << "CSkeleton::completeCopy: done" << std::endl;
   return result;

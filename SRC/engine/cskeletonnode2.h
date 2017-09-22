@@ -61,7 +61,7 @@ public:
   virtual const std::string &modulename() const { return modulename_; }
   virtual const std::string &classname() const { return classname_; }
 
-  // virtual CSkeletonNode *copy_child(int, vtkSmartPointer<vtkPoints>);
+  virtual CSkeletonNode *copy_child(int, vtkSmartPointer<vtkPoints>);
   virtual CSkeletonNode *new_child(int idx, vtkSmartPointer<vtkPoints> pts);
   Coord position() const;// { return points->GetPoint(index); }
   Coord getPosition() const;

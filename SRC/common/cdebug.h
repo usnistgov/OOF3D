@@ -20,6 +20,9 @@
 #include <string>
 #include <vector>
 
+void setDebugMode(bool);
+bool debug();
+
 void initDebug(PyObject*);
 void installSignals_();
 void restoreSignals_();

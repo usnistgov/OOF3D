@@ -162,6 +162,9 @@ protected:
   mutable TimeStamp illegal_count_computation_time;
   mutable TimeStamp suspect_count_computation_time;
   TimeStamp geometry_timestamp;
+  // If more timestamps and other such data is added here, make sure
+  // that CSkeleton::completeCopy() copies them.
+
   static const std::string modulename_;
   OuterFaceID onOuterFace_(const CSkeletonNodeVector*, bool boundary[6]) 
     const;

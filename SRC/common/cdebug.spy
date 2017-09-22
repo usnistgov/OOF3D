@@ -8,10 +8,10 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov. 
 
-from ooflib.common import debug
 import sys
 
 def stackDumper(signal):
+    from ooflib.common import debug
     print >> sys.stderr, "*********", signal, "**********"
     debug.dumpTrace()
 

@@ -193,6 +193,7 @@ class CSkeletonMultiNodeSelectable : public CSkeletonSelectable {
 protected:
   // nodes is a pointer because the vector of nodes is sometimes
   // created externally and passed to the constructor.
+  // TODO: With std::move in C++11 nodes doesn't have to be a pointer.
   CSkeletonNodeVector *nodes;
 public:
   CSkeletonMultiNodeSelectable();

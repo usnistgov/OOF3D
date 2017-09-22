@@ -25,6 +25,8 @@ void segfault();
 %}
 %pragma(python) include="cdebug.spy"
 
+void setDebugMode(bool);
+
 void initDebug(PyObject*);
 void segfault(int);
 void throwException();
