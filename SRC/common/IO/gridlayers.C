@@ -171,8 +171,6 @@ bool WireGridCanvasLayer::visibleBoundingBox(vtkSmartPointer<vtkRenderer> rend,
 					     CRectangularPrism *bbox)
   const
 {
-  // oofcerr << "WireGridCanvasLayer::visibleBoundingBox: " << name()
-  // 	  << std::endl;
   return getVisibleBoundingBox(edgeMapper->GetInput(), rend, bbox,
 			       true);
 }

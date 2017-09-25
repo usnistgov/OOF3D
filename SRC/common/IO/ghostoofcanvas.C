@@ -576,22 +576,7 @@ void GhostOOFCanvas::setTumbleCenter(Coord3D *pt) {
 	  << std::endl;
 }
 
-// const FrustumPlanes *GhostOOFCanvas::getCameraFrustumPlanes() {
-//   assert(mainthread_query());
-//   double planedata[24];
-//   double aspect[2];
-//   renderer->ResetCameraClippingRange();
-//   renderer->ComputeAspect();
-//   renderer->GetAspect(aspect);
-//   oofcerr << "GhostOOFCanvas::getCameraFrustumPlanes: aspect="
-// 	  << aspect[0] << "/" << aspect[1] << " = " << aspect[0]/aspect[1]
-// 	  << std::endl;
-//   renderer->GetActiveCamera()->GetFrustumPlanes(aspect[0]/aspect[1], planedata);
-//   cameraFrustum.setPlanes(planedata);
-//   return &cameraFrustum;
-// }
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+  //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // Routines for handling mouse clicks.  The way in which the 2D
 // coordinates of a click are translated into a 3D position depend on
@@ -1627,56 +1612,4 @@ bool findSegLineDistance(const Coord &A, const Coord &B,
   return alpha >= 0.0 && alpha <= 1.0;
 }
 
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// // Take the plane data from vtkCamera::GetFrustumPlanes and convert it
-// // to COrientedPlanes.
-
-// void FrustumPlanes::setPlanes(double *planedata) {
-//   planes.clear();
-//   planes.reserve(6);
-
-//   // This is what the vtk manual says about GetFrustumPlanes:
-//   // The plane normals point inward. The planes array contains six
-//   // plane equations of the form (Ax+By+Cz+D=0), the first four values
-//   // are (A,B,C,D) which repeats for each of the planes. The planes
-//   // are given in the following order: -x,+x,-y,+y,-z,+z. Warning: it
-//   // means left,right,bottom,top,far,near (NOT near,far)
-
-//   // That is,  (A,B,C).(x,y,z) + D = 0
-//   // The normal is (A,B,C)/|(A,B,C)| and the offset is D/|(A,B,C)|.
-
-//   for(unsigned int i=0; i<6; i++) {
-//     double *pd = planedata + 4*i;
-//     Coord3D normalvec(pd);	// uses first three entries
-//     double offset = pd[3];
-//     double norm = sqrt(norm2(normalvec));
-//     normalvec /= norm;
-//     offset /= norm;
-//     planes.emplace_back(normalvec, offset);
-//   }
-// }
-
-// bool FrustumPlanes::contains(const Coord3D &pt) const {
-//   OOFcerrIndent indent(2);
-//   // Upper limit is 4 to loop only over the x & y planes, 6 to include z too
-//   for(unsigned int i=0; i<4; i++) {
-//     oofcerr << "FrustumPlanes::contains: plane=" << planes[i]
-// 	    << " distance=" << planes[i].distance(pt) << std::endl;
-//     // It would have been nice if the vtk manual had said how to
-//     // compute the sign of the normal from A, B, C, and D.  The ">"
-//     // here has been determined by trial and error.
-//     if(planes[i].distance(pt) > 0)
-//       return false;
-//   }
-//   return true;
-// }
-
-// std::ostream &operator<<(std::ostream &os, const FrustumPlanes &planes) {
-//   os << "FrustumPlanes(";
-//   for(const COrientedPlane &plane : planes.planes) {
-//     os << std::endl << "   " << plane;
-//   }
-//   os << ")";
-//   return os;
-// }

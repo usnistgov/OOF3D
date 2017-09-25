@@ -44,21 +44,6 @@ class ImageFormat;
 class OOFCanvasLayer;
 class OOFCanvasLayerBase;
 
-// class FrustumPlanes {
-// private:
-//   std::vector<COrientedPlane> planes;
-// public:
-//   FrustumPlanes() {}
-//   // setPlanes takes the output of vtkCamera::GetFrustumPlanes
-//   // and converts it to COrientedPlanes.
-//   void setPlanes(double*);
-//   bool contains(const Coord3D&) const;	// is a point within the frustum?
-//   friend std::ostream &operator<<(std::ostream&, const FrustumPlanes&);
-// };
-
-// std::ostream &operator<<(std::ostream&, const FrustumPlanes&);
-
-
 class GhostOOFCanvas {
 protected:
   static bool initialized;	// has pygtk been initialized?

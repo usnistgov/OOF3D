@@ -1083,8 +1083,6 @@ int SimpleCellLayer::get_gridsize() const {
 bool SimpleCellLayer::visibleBoundingBox(vtkSmartPointer<vtkRenderer> renderer,
 					 CRectangularPrism *bbox) const
 {
-  // oofcerr << "SimpleCellLayer::visibleBoundingBox: " << name()
-  // 	  << std::endl;
   return getVisibleBoundingBox(grid, renderer, bbox);
 }
 
