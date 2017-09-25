@@ -218,12 +218,21 @@ protected:
   CTYPE lowleftback;
   CTYPE size_;
 public:
-  CRectangularPrism_() {}
+  CRectangularPrism_() {
+    // The null constructor creates an "uninitialized" prism, with its
+    // min and max reversed.  When it swallows its first point or
+    // prism it will contain only that point or prism.
+    uprightfront = CTYPE(-std::numeric_limits<VTYPE>::max(),
+			 -std::numeric_limits<VTYPE>::max(),
+			 -std::numeric_limits<VTYPE>::max());
+    lowleftback = CTYPE(std::numeric_limits<VTYPE>::max(),
+			std::numeric_limits<VTYPE>::max(),
+			std::numeric_limits<VTYPE>::max());
+  }
   CRectangularPrism_(const CTYPE &a, const CTYPE &b) {
     uprightfront = a;
     lowleftback = a;
     swallow(b);
-    size_ = uprightfront - lowleftback;
   }
   CRectangularPrism_(const std::vector<CTYPE> &vec) {
     // construct the bounding box of the points in vec

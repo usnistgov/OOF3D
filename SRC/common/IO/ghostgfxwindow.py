@@ -2127,6 +2127,26 @@ class GhostGfxWindow:
         pass
                 
     #####################################
+
+    # computeTumbleCenter is called by the TumbleMouseHandler when the
+    # button is pressed.  It has to find the point about which to
+    # rotate the camera and focal plane.
+
+    def computeTumbleCenter(self):
+        renderer = self.oofcanvas.get_renderer()
+        bbox = None
+        for layer in self.layers:
+            if layer.canvaslayer.showing():
+                ok, layerbbox = layer.canvaslayer.visibleBoundingBox(renderer)
+                if ok:
+                    if bbox is None:
+                        bbox = layerbbox
+                    else:
+                        bbox.swallowPrism(layerbbox)
+        if bbox is not None:
+            self.oofcanvas.setTumbleCenter(bbox.center())
+
+    #####################################    
     
     def findAnimationTimes(self):
         # Return a lsit of all possible tiems that can appear in an

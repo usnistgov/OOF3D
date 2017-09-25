@@ -23,6 +23,7 @@
 #include <vtkDataArray.h>
 #include <vtkGeometryFilter.h>
 #include <vtkPolyDataMapper.h>
+#include <vtkRenderer.h>
 #include <vtkScalarBarActor.h>
 #include <vtkSmartPointer.h>
 
@@ -64,6 +65,8 @@ public:
   virtual vtkSmartPointer<vtkAbstractCellLocator> get_locator();
 
   vtkSmartPointer<GridSource> source() { return gridsource; }
+  virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
+				  CRectangularPrism*) const;
 };
 
 // SegmentGridCanvasLayer displays a grid of line segments.  To

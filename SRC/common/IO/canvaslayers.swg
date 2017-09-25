@@ -16,6 +16,7 @@
 %include "common/typemaps.swg"
 %extern "common/coord.swg"
 %extern "common/direction.swg"
+%extern "common/geometry.swg"
 
 %{
 #include "common/ccolor.h"
@@ -40,7 +41,10 @@ public:
   void show(bool);
   void hide(bool);
   bool pickable();
+  bool showing();
   void writeVTK(char*);
+
+  bool visibleBoundingBox(vtkRendererPtr, CRectangularPrism *outPrism);
 };
 
 class OOFCanvasLayer : public OOFCanvasLayerBase { 

@@ -30,6 +30,7 @@ class PlaneAndArrowLayer;
 #include "common/IO/oofCellLocator.h"
 
 class CColor;
+class CRectangularPrism;
 class GhostOOFCanvas;
 class ImageBase;
 class oofImageToGrid;
@@ -95,10 +96,22 @@ public:
 
   virtual void show(bool) {}
   virtual void hide(bool) {}
+  virtual bool showing() const { return false; }
 
   virtual bool pickable() { return false; }
 
   const GhostOOFCanvas *getCanvas() const { return canvas; }
+
+  // visibleBoundingBox returns false if none of the layer is visible
+  // inside the given camera frustum.  It returns true and sets the
+  // CRectangularPrism to the bounding box of the visible region if
+  // any of the layer is within the frustum.
+  //    visibleBoundingBox is used to choose the center of rotation for
+  // view modifications.  Layers that don't display anything relevant
+  // for that purpose don't have to redefine it.  The base class
+  // implementation just returns false.
+  virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
+				  CRectangularPrism*) const;
 
   virtual void writeVTK(const std::string &) {}
 };
@@ -133,7 +146,7 @@ public:
 
   virtual void show(bool);
   virtual void hide(bool);
-  bool showing() const { return showing_; }
+  virtual bool showing() const { return showing_; }
   virtual void destroy();
 
   // Machinery to allow mouse selections.
@@ -284,6 +297,8 @@ public:
   void set_opacity(double);
   virtual void set_size(double);
   int get_gridsize() const;
+  virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
+				  CRectangularPrism*) const;
 };
 
 class SimpleFilledCellLayer : public SimpleCellLayer {
@@ -504,4 +519,6 @@ public:
 
 vtkSmartPointer<vtkTableBasedClipDataSet> getClipper(const OOFCanvasLayer*);
 
+bool getVisibleBoundingBox(vtkDataSet*, vtkSmartPointer<vtkRenderer>,
+			   CRectangularPrism*, bool verbose=false);
 #endif // CANVASLAYERS_H

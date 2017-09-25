@@ -39,6 +39,60 @@
 // TODO 3.1: When multiple intersecting clipping planes are used, the
 // Skeleton isn't clipped correctly.  See clipbug2.log in TEST3D.
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Compute the bounding box of the part of the data that's within the
+// frustum.  The frustum is the volume that's visible to the camera.
+// This is used to find the center of the visible objects on the
+// canvas.  We need it because vtkRenderer::ComputeVisiblePropBounds
+// uses all the points in a grid, not just the ones that are in the
+// drawn cells.
+
+bool getVisibleBoundingBox(vtkDataSet *data,
+			   vtkSmartPointer<vtkRenderer> renderer,
+			   CRectangularPrism *bbox, bool verbose)
+{
+  vtkIdType ncells = data->GetNumberOfCells();
+  if(ncells == 0)
+    return false;
+  CRectangularPrism layerbbox;	// "uninitialized", with max < min
+  int foundSomething = false;
+  for(vtkIdType c=0; c<ncells; c++) {
+    vtkCell *cell = data->GetCell(c); // not thread safe! Should be ok if locked
+    vtkIdType npts = cell->GetNumberOfPoints();
+    for(vtkIdType i=0; i<npts; i++) {
+      // Is this point visible?  Rather than compute the frustum
+      // planes and check that the point is on the correct side of all
+      // of them, it's easier to covert the point to ViewPort
+      // coordinates.  The visible part of the ViewPort is defined by
+      // -1<x<1, -1<y<1, and z between the clipping planes. But I
+      // can't seem to get sensible values for the clipping planes
+      // from vtkCamera::GetClippingRange, so we're ignoring z values
+      // here.
+      Coord3D pt(data->GetPoint(cell->GetPointId(i)));
+      double x = pt[0];
+      double y = pt[1];
+      double z = pt[2];
+      renderer->WorldToView(x, y, z); // converts values in place
+      // I don't understand the values returned by GetClippingRange,
+      // so we're just ignoring them.
+      if(x >= -1 && x <= 1 && y >= -1 && y <= 1
+	 //	 && z >= zmin && z <= zmax
+	 )
+	{
+	  layerbbox.swallow(pt);
+	  foundSomething = true;
+	}
+    } // end loop over points i in cell
+  } // end loop over cells c
+  if(foundSomething) {
+    *bbox = layerbbox;
+  }
+  return foundSomething;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 const std::string &OOFCanvasLayerBase::modulename() const {
   static const std::string modname("ooflib.SWIG.common.IO.canvaslayer");
   return modname;
@@ -69,6 +123,13 @@ void OOFCanvasLayerBase::set_clipping(bool clip, bool inverted) {
   }
   if(clipState == CLIP_ON)
     set_clip_parity(inverted);
+}
+
+bool OOFCanvasLayerBase::visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
+					    CRectangularPrism*)
+  const
+{
+  return false;
 }
 
 std::ostream &operator<<(std::ostream &os, const OOFCanvasLayerBase &layer) {
@@ -1017,6 +1078,14 @@ void SimpleCellLayer::set_opacity(double opacity) {
 
 int SimpleCellLayer::get_gridsize() const {
   return number_cells;
+}
+
+bool SimpleCellLayer::visibleBoundingBox(vtkSmartPointer<vtkRenderer> renderer,
+					 CRectangularPrism *bbox) const
+{
+  // oofcerr << "SimpleCellLayer::visibleBoundingBox: " << name()
+  // 	  << std::endl;
+  return getVisibleBoundingBox(grid, renderer, bbox);
 }
 
 //=\\=//=\\=//=\\=//=\\=//

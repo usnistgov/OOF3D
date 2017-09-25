@@ -16,6 +16,7 @@
 #include "common/IO/oofcerr.h"
 #include "common/ooferror.h"
 #include "common/pythonlock.h"
+#include "common/smallmatrix.h"
 #include "common/threadstate.h"
 #include "common/tostring.h"
 
@@ -367,13 +368,31 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
 // Moving around
 
 void OOFCanvas3D::mouse_tumble(double x, double y) {
-
-  // TODO: Can we tumble around the center of the displayed objects?
-  
   assert(mainthread_query());
-  renderer->GetActiveCamera()->Azimuth(last_x - x);
-  renderer->GetActiveCamera()->Elevation(y - last_y);
-  renderer->GetActiveCamera()->OrthogonalizeViewUp();
+
+  double dAzimuth = last_x - x;
+  double dElevation = last_y - y;
+  vtkCamera *camera = renderer->GetActiveCamera();
+  camera->OrthogonalizeViewUp();
+  Coord3D cameraPosition(camera->GetPosition());
+  Coord3D focalPoint(camera->GetFocalPoint());
+  Coord3D viewUp(camera->GetViewUp());
+  // Rotate by dAzimuth about view up vector
+  SmallMatrix R0 = rotateAboutAxis(M_PI*dAzimuth/180., viewUp);
+  // Rotate by dElevation about the normal to the view up vector and
+  // the camera's projection direction.
+  Coord3D projectionDir(camera->GetDirectionOfProjection());
+  SmallMatrix R1 = rotateAboutAxis(M_PI*dElevation/180.,
+				   cross(projectionDir, viewUp));
+  SmallMatrix R = R1*R0;
+  cameraPosition = tumbleCenter + R*(cameraPosition - tumbleCenter);
+  focalPoint = tumbleCenter + R*(focalPoint - tumbleCenter);
+  camera->SetFocalPoint(focalPoint.xpointer());
+  camera->SetPosition(cameraPosition.xpointer());
+  // This just rotates about the focal point:
+  // renderer->GetActiveCamera()->Azimuth(last_x - x);
+  // renderer->GetActiveCamera()->Elevation(y - last_y);
+  // renderer->GetActiveCamera()->OrthogonalizeViewUp();
   last_x = x;
   last_y = y;
 }

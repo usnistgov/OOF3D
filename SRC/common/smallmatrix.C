@@ -13,6 +13,7 @@
 #include "common/vectormath.h"
 #include "common/ooferror.h"
 #include "common/tostring.h"
+#include <math.h>
 #include <string.h>		// for memset
 
 SmallMatrix::SmallMatrix(unsigned int rows, unsigned int cols)
@@ -272,6 +273,18 @@ DoubleVec operator*(const SmallMatrix &m, const DoubleVec &v) {
   return result;
 }
 
+Coord3D operator*(const SmallMatrix &m, const Coord3D &v) {
+  assert(m.nrows == 3 && m.ncols == 3);
+  const int one = 1;
+  const double One = 1.0;
+  const char enn = 'n';		// indicates no transpose
+  const double zero = 0.0;
+  Coord3D result;
+  dgemv_(&enn, &m.nrows, &m.ncols, &One, &m(0,0), &m.nrows, v.xpointer(),
+	 &one, &zero, result.xpointer(), &one);
+  return result;
+}
+
 // Matrix multiplication, accessing result matrix in column order.                                     
 SmallMatrix operator*(const SmallMatrix &a, const SmallMatrix &b) {
   assert(a.ncols == b.nrows);
@@ -306,3 +319,26 @@ std::ostream &operator<<(std::ostream &os, const SmallMatrix &mat) {
   }
   return os;
 }
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+#include "common/sincos.h"
+
+SmallMatrix rotateAboutAxis(double angle, const Coord3D &axis) {
+  SmallMatrix R(3);
+  double cosA, sinA;
+  sincos(angle, sinA, cosA);
+  double omcosA = 1.0 - cosA;
+  // This formula was copied from https://en.wikipedia.org/wiki/Rotation_matrix
+  R(0,0) = cosA + axis[0]*axis[0]*omcosA;
+  R(0,1) = axis[0]*axis[1]*omcosA - axis[2]*sinA;
+  R(0,2) = axis[0]*axis[2]*omcosA + axis[1]*sinA;
+  R(1,0) = axis[1]*axis[0]*omcosA + axis[2]*sinA;
+  R(1,1) = cosA + axis[1]*axis[1]*omcosA;
+  R(1,2) = axis[1]*axis[2]*omcosA - axis[0]*sinA;
+  R(2,0) = axis[2]*axis[0]*omcosA - axis[1]*sinA;
+  R(2,1) = axis[2]*axis[1]*omcosA + axis[0]*sinA;
+  R(2,2) = cosA + axis[2]*axis[2]*omcosA;
+  return R;
+}
+

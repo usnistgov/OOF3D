@@ -24,6 +24,7 @@ class GhostOOFCanvas;
 #include "common/clip.h"
 #include "common/coord_i.h"
 #include "common/direction.h"
+#include "common/geometry.h"
 #include "common/lock.h"
 #include "common/IO/canvaslayers.h"
 
@@ -42,6 +43,20 @@ class View;
 class ImageFormat;
 class OOFCanvasLayer;
 class OOFCanvasLayerBase;
+
+// class FrustumPlanes {
+// private:
+//   std::vector<COrientedPlane> planes;
+// public:
+//   FrustumPlanes() {}
+//   // setPlanes takes the output of vtkCamera::GetFrustumPlanes
+//   // and converts it to COrientedPlanes.
+//   void setPlanes(double*);
+//   bool contains(const Coord3D&) const;	// is a point within the frustum?
+//   friend std::ostream &operator<<(std::ostream&, const FrustumPlanes&);
+// };
+
+// std::ostream &operator<<(std::ostream&, const FrustumPlanes&);
 
 
 class GhostOOFCanvas {
@@ -66,6 +81,8 @@ protected:
   vtkSmartPointer<vtkPlanes> vClipPlanes;
   CanvasLayerList layers;
   SLock viewLock;
+
+  Coord3D tumbleCenter;
 
   double margin;
   void makeAllUnpickable() const;
@@ -133,6 +150,7 @@ public:
   void zoom(double a);
   void zoom_fill();
   void recenter();
+  void setTumbleCenter(Coord3D*);
 
   // TODO: These should all be const, but it might not be possible.
   // They have to call set_view.
@@ -141,8 +159,9 @@ public:
 				    OOFCanvasLayer*);
   vtkSmartPointer<vtkActor> findClickedActor(const Coord*, const View*,
 					     OOFCanvasLayer*);
-  vtkSmartPointer<vtkActorCollection> findClickedActors(const Coord*, const View*,
-					     OOFCanvasLayer*);
+  vtkSmartPointer<vtkActorCollection> findClickedActors(const Coord*,
+							const View*,
+							OOFCanvasLayer*);
   vtkSmartPointer<vtkCell> findClickedCell(const Coord*, const View*,
 					   OOFCanvasLayer*);
   Coord *findClickedPosition(const Coord*, const View*,
@@ -165,10 +184,11 @@ public:
   void set_camera_focal_point(double x, double y, double z) const;
   void get_camera_view_up(double *p) const;
   void get_camera_direction_of_projection(double *p) const;
-
   double get_camera_distance() const;
   double get_camera_view_angle() const;
   const ClippingPlaneList &getClipPlanes() const { return clipPlanes; }
+  vtkSmartPointer<vtkRenderer> get_renderer() { return renderer; }
+  
   bool clipping() const;
   vtkSmartPointer<vtkPlanes> getVTKClipPlanes() const { return vClipPlanes; }
   bool invertedClipping() const { return clipInverted; }
@@ -178,8 +198,6 @@ public:
   Coord display2Physical(const View*, double, double);
   void physical2Display(const Coord&, double&, double&) const;
   
-
-  vtkSmartPointer<vtkRenderer> get_renderer() { return renderer; }
 
   // Views
   View *get_view() const;
@@ -207,7 +225,7 @@ public:
 bool findSegLineDistance(const Coord&, const Coord&, const Coord&, const Coord&,
 			 double &, double&);
 
-#endif
+#endif // GHOSTOOFCANVAS_H
 
 
 

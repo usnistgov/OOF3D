@@ -144,10 +144,12 @@ public:
   %new Coord *get_camera_position_v2();
   Coord get_camera_direction_of_projection_v2();
 
+  vtkRendererPtr get_renderer();
   double get_camera_distance();
   double get_camera_view_angle();
   void set_camera_position(double, double, double);
   void set_camera_focal_point(double, double, double);
+  void setTumbleCenter(Coord *Point);
 
   Coord findRayThroughPoint(const Coord *Point);
   %new Coord *findClickedPositionOnActor(Coord *Point, View*, OOFCanvasLayer*);

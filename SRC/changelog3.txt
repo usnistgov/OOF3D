@@ -13,6 +13,7 @@
  * oof_manager@nist.gov. 
  */
 
+
 3.1.2
 
 Fixed a bug that was making the Microstructure recalculate voxel
@@ -27,6 +28,9 @@ Loading Skeleton node and element selections from data files is now
 much faster.
 
 Fixed a bug that was preventing compilation on gcc 7.
+
+Modified the "Tumble" method, so that objects are rotated about the
+center of the visible region.
 
 3.1.1.1
 

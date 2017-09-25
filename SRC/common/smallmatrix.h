@@ -23,6 +23,7 @@
 #define SMALLMATRIX_H
 
 #include "common/doublevec.h"
+#include "common/coord.h"
 
 class Cijkl;
 
@@ -34,6 +35,7 @@ public:
   SmallMatrix(unsigned int size); // Makes a square matrix, not a vector.
   SmallMatrix(unsigned int rows, unsigned int cols);
   SmallMatrix(const SmallMatrix&);
+  // TODO:  Add a move constructor.
   SmallMatrix(const Cijkl*);	// for SCPR
   virtual ~SmallMatrix();
   
@@ -73,6 +75,7 @@ public:
 
   friend SmallMatrix operator*(const SmallMatrix&, const SmallMatrix &);
   friend DoubleVec operator*(const SmallMatrix&, const DoubleVec&);
+  friend Coord3D operator*(const SmallMatrix&, const Coord3D&);
   friend DoubleVec operator+(const DoubleVec&, const SmallMatrix&);
   friend DoubleVec operator+(const SmallMatrix&, const DoubleVec&);
 };
@@ -82,5 +85,8 @@ SmallMatrix operator-(const SmallMatrix&, const SmallMatrix&);
 SmallMatrix operator*(const SmallMatrix&, double);
 
 std::ostream &operator<<(std::ostream&, const SmallMatrix&);
+
+// Generate a 3x3 rotation matrix.
+SmallMatrix rotateAboutAxis(double, const Coord3D&);
 
 #endif	// SMALLMATRIX_H
