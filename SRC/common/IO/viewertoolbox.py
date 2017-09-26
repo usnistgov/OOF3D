@@ -196,8 +196,9 @@ class ViewerToolbox(toolbox.Toolbox):
                     threadable=oofmenu.UNTHREADABLE,
                     params=[parameter.FloatParameter("distance")]))
             trackmenu.addItem(oofmenu.OOFMenuItem(
-                    "Recenter",
-                    callback=self.recenter))
+                "Recenter",
+                callback=self.recenter,
+                threadable=oofmenu.UNTHREADABLE))
 
             rotatemenu = menu.addItem(oofmenu.OOFMenuItem("Rotate", cli_only=1))
             rotatemenu.addItem(oofmenu.OOFMenuItem(
