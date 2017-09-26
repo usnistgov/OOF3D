@@ -66,7 +66,7 @@ class ComboCanvasLayer(object):
             if sublayer.showing():
                 subok, subbbox = sublayer.visibleBoundingBox(renderer)
                 if subok:
-                    bbox.swallow(subbbox)
+                    bbox.swallowPrism(subbbox)
                     ok = subok
         return ok, bbox
     
