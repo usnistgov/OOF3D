@@ -12,6 +12,7 @@ from ooflib.SWIG.common import switchboard
 from ooflib.common import debug
 from ooflib.common import utils
 from ooflib.common.IO import placeholder
+from ooflib.common.IO import whoville
 from ooflib.common.IO.GUI import chooser
 from ooflib.common.IO.GUI import gtklogger
 from ooflib.common.IO.GUI import parameterwidgets
@@ -76,6 +77,12 @@ class SkeletonGroupWidget(parameterwidgets.ParameterWidget):
             return None
 
     def update(self):
+        ## TODO: If this widget is being used to define a display
+        ## layer, it's possible that getSkeleton can return a
+        ## WhoProxy, which will be unresolvable because the widget
+        ## doesn't know the gfxwindow.  Currently the redraw methods
+        ## check for and ignore a WhoProxy, but maybe there's
+        ## something more intelligent to do.
         self.redraw(self.getSkeleton())
 
     def cleanUp(self):
@@ -105,7 +112,8 @@ class NodeGroupWidget(SkeletonGroupWidget):
                                      verbose=verbose)
 
     def redraw(self, skeletoncontext):
-        if skeletoncontext:
+        if skeletoncontext and not isinstance(skeletoncontext,
+                                              whoville.WhoProxy):
             self.widget.update(list(
                 self.defaults.union(skeletoncontext.nodegroups.allGroups())))
         else:
@@ -141,7 +149,8 @@ class SegmentGroupWidget(SkeletonGroupWidget):
                                      verbose=verbose)
 
     def redraw(self, skeletoncontext):
-        if skeletoncontext:
+        if skeletoncontext and not isinstance(skeletoncontext,
+                                              whoville.WhoProxy):
             self.widget.update(list(
                 self.defaults.union(skeletoncontext.segmentgroups.allGroups())))
         else:
@@ -237,7 +246,8 @@ class FaceGroupWidget(SkeletonGroupWidget):
                                      verbose=verbose)
 
     def redraw(self, skeletoncontext):
-        if skeletoncontext:
+        if skeletoncontext and not isinstance(skeletoncontext,
+                                              whoville.WhoProxy):
             self.widget.update(list(
                 self.defaults.union(skeletoncontext.facegroups.allGroups())))
         else:
@@ -316,7 +326,8 @@ class ElementGroupWidget(SkeletonGroupWidget):
                                      scope=scope, name=name, verbose=verbose)
 
     def redraw(self, skeletoncontext):
-        if skeletoncontext:
+        if skeletoncontext and not isinstance(skeletoncontext,
+                                              whoville.WhoProxy):
             self.widget.update(list(
                 self.defaults.union(skeletoncontext.elementgroups.allGroups())))
         else:
@@ -399,7 +410,7 @@ class SkeletonBoundaryWidgetBase(parameterwidgets.ParameterWidget):
         self.redraw(skel)
 
     def redraw(self, skel):
-        if skel:
+        if skel and not isinstance(skel, whoville.WhoProxy):
             self.widget.update(self.names(skel))
         else:
             self.widget.update([])
