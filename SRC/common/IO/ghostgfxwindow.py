@@ -2128,9 +2128,9 @@ class GhostGfxWindow:
                 
     #####################################
 
-    # computeTumbleCenter is called by the TumbleMouseHandler when the
-    # button is pressed.  It has to find the point about which to
-    # rotate the camera and focal plane.
+    # computeTumbleCenter is called by the TumbleMouseHandler (in
+    # toolbarGUI.py) when the mouse button is pressed.  It has to find
+    # the point about which to rotate the camera and focal plane.
 
     def computeTumbleCenter(self):
         renderer = self.oofcanvas.get_renderer()

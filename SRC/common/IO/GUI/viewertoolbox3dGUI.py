@@ -480,6 +480,9 @@ To deselect a plane, Ctrl+Click the plane in the list."""
         align = gtk.Alignment(xalign=0.9, yalign=0.5)
         align.add(gtk.Label("Restore:"))
         viewTable.attach(align, 0,1, 0,1)
+
+        ## TODO: When the View changes, the viewChooser widget needs
+        ## to change, the way the one in the toolbar does.
         self.viewChooser = chooser.ChooserWidget(viewertoolbox.viewNames(),
                                                  callback=self.setViewCB,
                                                  name="viewChooser")

@@ -367,34 +367,58 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
 
 // Moving around
 
-void OOFCanvas3D::mouse_tumble(double x, double y) {
-  assert(mainthread_query());
-
-  double dAzimuth = last_x - x;
-  double dElevation = last_y - y;
-  vtkCamera *camera = renderer->GetActiveCamera();
-  camera->OrthogonalizeViewUp();
+static void rotateCameraAndFocalPoint_(vtkCamera *camera, const Coord3D &pivot,
+				      const SmallMatrix &R)
+{
   Coord3D cameraPosition(camera->GetPosition());
   Coord3D focalPoint(camera->GetFocalPoint());
-  Coord3D viewUp(camera->GetViewUp());
-  // Rotate by dAzimuth about view up vector
-  SmallMatrix R0 = rotateAboutAxis(M_PI*dAzimuth/180., viewUp);
+  cameraPosition = pivot + R*(cameraPosition - pivot);
+  focalPoint = pivot + R*(focalPoint - pivot);
+  camera->SetPosition(cameraPosition.xpointer());
+  camera->SetFocalPoint(focalPoint.xpointer());
+}
+
+void OOFCanvas3D::mouse_tumble(double x, double y) {
+  assert(mainthread_query());
+  // TODO: Large changes in elevation sometimes do strange things.
+  // Dolly way out and move the Microstructure off towards the left or
+  // right side of the canvas, and then violently tumble it by moving
+  // the mouse quickly up and down.  The Microstructure will jump to
+  // the other side of the canvas.  I assume this has something to do
+  // with choosing the wrong quadrant somewhere...
+
+  
+  // Get the rotation angles in radians. The factor converting degrees
+  // to radians here is sort of arbitrary, since x and y aren't in
+  // degrees, but it does give a reasonable rotation rate.  Making
+  // factor much larger makes the tumbling too sensitive to the mouse
+  // position, and making it much smaller makes it too sluggish.
+  // Perhaps factor should be set so that moving the mouse by the size
+  // of the canvas rotates it by a fixed amount.
+  double factor = M_PI/180.;
+  double dAzimuth = factor*(last_x - x);
+  double dElevation = factor*(last_y - y);
+  if(dElevation > 0.5*M_PI) dElevation = 0.5*M_PI;
+  if(dElevation < -0.5*M_PI) dElevation = -0.5*M_PI;
+  last_x = x;
+  last_y = y;
+  vtkCamera *camera = renderer->GetActiveCamera();
+  camera->OrthogonalizeViewUp();
+  // Rotate by dAzimuth about the view up vector. 
+  SmallMatrix R0 = rotateAboutAxis(dAzimuth, camera->GetViewUp());
+  rotateCameraAndFocalPoint_(camera, tumbleCenter, R0);
+  // If the two rotation matrices are both calculated before applying
+  // either of them, then the view up vector will be incorrect for the
+  // second rotation, and the rotated object will appear to walk
+  // across the screen if the rotations are large.  The two rotations
+  // have to be applied separately.
+  camera->OrthogonalizeViewUp();
   // Rotate by dElevation about the normal to the view up vector and
   // the camera's projection direction.
   Coord3D projectionDir(camera->GetDirectionOfProjection());
-  SmallMatrix R1 = rotateAboutAxis(M_PI*dElevation/180.,
-				   cross(projectionDir, viewUp));
-  SmallMatrix R = R1*R0;
-  cameraPosition = tumbleCenter + R*(cameraPosition - tumbleCenter);
-  focalPoint = tumbleCenter + R*(focalPoint - tumbleCenter);
-  camera->SetFocalPoint(focalPoint.xpointer());
-  camera->SetPosition(cameraPosition.xpointer());
-  // This just rotates about the focal point:
-  // renderer->GetActiveCamera()->Azimuth(last_x - x);
-  // renderer->GetActiveCamera()->Elevation(y - last_y);
-  // renderer->GetActiveCamera()->OrthogonalizeViewUp();
-  last_x = x;
-  last_y = y;
+  Coord3D elevationAxis = cross(projectionDir, camera->GetViewUp());
+  SmallMatrix R1 = rotateAboutAxis(dElevation, elevationAxis);
+  rotateCameraAndFocalPoint_(camera, tumbleCenter, R1);
 }
 
 

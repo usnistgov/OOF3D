@@ -167,12 +167,12 @@ vtkSmartPointer<vtkAbstractCellLocator> WireGridCanvasLayer::get_locator() {
   return locator;
 }
 
-bool WireGridCanvasLayer::visibleBoundingBox(vtkSmartPointer<vtkRenderer> rend,
-					     CRectangularPrism *bbox)
+bool WireGridCanvasLayer::visibleBoundingBox(
+				     vtkSmartPointer<vtkRenderer> renderer,
+				     CRectangularPrism *bbox)
   const
 {
-  return getVisibleBoundingBox(edgeMapper->GetInput(), rend, bbox,
-			       true);
+  return getVisibleBoundingBox(edgeMapper->GetInput(), renderer, bbox);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -234,6 +234,14 @@ void SegmentGridCanvasLayer::stop_clipping() {
 
 void SegmentGridCanvasLayer::set_clip_parity(bool inverted) {
   edgeClipper->SetInsideOut(!inverted);
+}
+
+bool SegmentGridCanvasLayer::visibleBoundingBox(
+					vtkSmartPointer<vtkRenderer> renderer,
+					CRectangularPrism *bbox)
+  const
+{
+  return getVisibleBoundingBox(edgeMapper->GetInput(), renderer, bbox);
 }
 
 // vtkSmartPointer<vtkProp3D> SegmentGridCanvasLayer::get_pickable_prop3d() {
@@ -333,6 +341,14 @@ vtkSmartPointer<vtkAbstractCellLocator> FilledGridCanvasLayer::get_locator() {
   locator->Initialize();
   locator->SetDataSet(gridsource->GetOutput());
   return locator;
+}
+
+bool FilledGridCanvasLayer::visibleBoundingBox(
+				       vtkSmartPointer<vtkRenderer> renderer,
+				       CRectangularPrism *bbox)
+  const
+{
+  return getVisibleBoundingBox(mapper->GetInput(), renderer, bbox);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -482,4 +498,12 @@ void ContourGridCanvasLayer::writeVTK(const std::string &filename) {
   writer->SetFileName(filename.c_str());
   writer->SetDataModeToAscii();
   writer->Write();
+}
+
+bool ContourGridCanvasLayer::visibleBoundingBox(
+					vtkSmartPointer<vtkRenderer> renderer,
+					CRectangularPrism *bbox)
+  const
+{
+  return getVisibleBoundingBox(mapper->GetInput(), renderer, bbox);
 }

@@ -484,6 +484,9 @@ public:
   virtual vtkSmartPointer<vtkProp3D> get_pickable_prop3d();
   virtual vtkSmartPointer<vtkAbstractCellLocator> get_locator();
   virtual vtkSmartPointer<vtkDataSet> get_pickable_dataset();
+
+  virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
+				  CRectangularPrism*) const;
 };
 
 class ImageCanvasOverlayer : public OOFCanvasLayerBase {
@@ -520,5 +523,5 @@ public:
 vtkSmartPointer<vtkTableBasedClipDataSet> getClipper(const OOFCanvasLayer*);
 
 bool getVisibleBoundingBox(vtkDataSet*, vtkSmartPointer<vtkRenderer>,
-			   CRectangularPrism*, bool verbose=false);
+			   CRectangularPrism*);
 #endif // CANVASLAYERS_H

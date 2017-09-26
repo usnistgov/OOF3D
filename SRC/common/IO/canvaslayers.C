@@ -44,13 +44,16 @@
 // Compute the bounding box of the part of the data that's within the
 // frustum.  The frustum is the volume that's visible to the camera.
 // This is used to find the center of the visible objects on the
-// canvas.  We need it because vtkRenderer::ComputeVisiblePropBounds
-// uses all the points in a grid, not just the ones that are in the
-// drawn cells.
+// canvas, which is used by OOFCanvas3D::mouse_tumble.  mouse_tumble
+// would use vtkRenderer::ComputeVisiblePropBounds instead, except
+// that ComputeVisiblePropBounds includes all the points in a grid,
+// not just the ones that are in the drawn cells.  As a result, all
+// tumbles are centered on the center of the Microstructure, making it
+// impossible to rotate a small cluster of elements.
 
 bool getVisibleBoundingBox(vtkDataSet *data,
 			   vtkSmartPointer<vtkRenderer> renderer,
-			   CRectangularPrism *bbox, bool verbose)
+			   CRectangularPrism *bbox)
 {
   vtkIdType ncells = data->GetNumberOfCells();
   if(ncells == 0)
@@ -1689,6 +1692,13 @@ vtkSmartPointer<vtkAbstractCellLocator> ImageCanvasLayer::get_locator() {
 vtkSmartPointer<vtkDataSet> ImageCanvasLayer::get_pickable_dataset() {
   // mapper->Update();
   return mapper->GetInput();
+}
+
+bool ImageCanvasLayer::visibleBoundingBox(vtkSmartPointer<vtkRenderer> renderer,
+					  CRectangularPrism *bbox)
+  const
+{
+  return getVisibleBoundingBox(mapper->GetInput(), renderer, bbox);
 }
     
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

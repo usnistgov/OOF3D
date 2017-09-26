@@ -571,7 +571,10 @@ double GhostOOFCanvas::get_camera_view_angle() const {
 }
 
 void GhostOOFCanvas::setTumbleCenter(Coord3D *pt) {
+  // Called by GhostGfxWindow.computeTumbleCenter, which is called
+  // when the mouse button is pressed in Tumble mode.
   tumbleCenter = *pt;
+  //  renderer->GetActiveCamera()->OrthogonalizeViewUp();
   oofcerr << "GhostOOFCanvas::setTumbleCenter: tumbleCenter=" << tumbleCenter
 	  << std::endl;
 }

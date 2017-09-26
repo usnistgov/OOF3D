@@ -21,6 +21,9 @@ Fix bugs in OOFImage3D::threshold.  See TODO in oofimage3d.C.
     graphics window -- they're gray and are in the wrong place.
     Probably the image has changed its storage format.
   * Applying it twice yields garbage, or worse.
+
+Fix bug: Opening a graphics window after closing one will crash the
+program.
   
 Soon
 ----

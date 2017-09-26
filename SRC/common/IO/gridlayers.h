@@ -98,6 +98,8 @@ public:
   // virtual vtkSmartPointer<vtkAbstractCellLocator> get_locator();
 
   vtkSmartPointer<GridSource> source() { return gridsource; }
+  virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
+				  CRectangularPrism*) const;
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -134,6 +136,8 @@ public:
   virtual vtkSmartPointer<vtkDataSet> get_pickable_dataset();
   virtual vtkSmartPointer<vtkPoints> get_pickable_points();
   virtual vtkSmartPointer<vtkAbstractCellLocator> get_locator();
+  virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
+				  CRectangularPrism*) const;
 };
 
 class SolidFilledGridCanvasLayer : public FilledGridCanvasLayer {
@@ -171,6 +175,8 @@ public:
   void set_lookupTable(vtkSmartPointer<vtkLookupTable>, double, double);
   virtual vtkScalarsToColors *get_lookupTable();
   virtual void writeVTK(const std::string&);
+  virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
+				  CRectangularPrism*) const;
 };
 
 // TODO: SolidFilledGridCanvasLayer and ContourGridCanvasLayer should
