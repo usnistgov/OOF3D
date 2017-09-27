@@ -24,6 +24,7 @@
 #include "common/coord.h"
 #include "common/ooferror.h"
 #include <iostream>
+#include <limits>
 #include <vector>
 #include <math.h>
 
