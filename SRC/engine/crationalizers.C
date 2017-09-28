@@ -885,6 +885,13 @@ static void removeFlat(CSkeleton *skel, short segidx1, short segidx2,
   // joined at a point near where the old edges nearly
   // intersected. All of the neighbor elements that share one of the
   // old edges will have to be bisected through the junction point.
+
+  // TODO: If one of the segments with a large dihedral has only two
+  // other elements (other than the flat element) and those two
+  // elements share a face, then it's possible to remove the flat tet
+  // without adding an extra node.  Replace the two neighbor elements
+  // with two formed with the other large dihedral edge.
+  
   CSkeletonSegment *seg1 = skel->getElementSegment(el, segidx1);
   CSkeletonSegment *seg2 = skel->getElementSegment(el, segidx2);
   // oofcerr << "removeFlat: seg1= " << *seg1 << std::endl;
@@ -958,7 +965,7 @@ static void removeFlat(CSkeleton *skel, short segidx1, short segidx2,
 	changes->push_back(change);
       else
 	delete change;
-    }
+  }
   for(int i=0; i<callbacks.size(); i++)
     delete callbacks[i];
 } // end removeFlat

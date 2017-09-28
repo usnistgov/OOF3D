@@ -205,7 +205,7 @@ clipPlaneClickAndDragDisplay = registeredclass.Registration(
     display.DisplayMethod,
     ClipPlaneClickAndDragDisplay,
     params=clipplaneclickanddragparams,
-    ordering=0.0,
+    ordering=3.0,
     layerordering=display.Volume,
     whoclasses=('Microstructure'),
     tip="Display the widget for viewing and click-and-drag editing of clipping planes."

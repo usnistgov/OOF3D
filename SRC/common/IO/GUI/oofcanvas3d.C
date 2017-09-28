@@ -374,8 +374,8 @@ static void rotateCameraAndFocalPoint_(vtkCamera *camera, const Coord3D &pivot,
   Coord3D focalPoint(camera->GetFocalPoint());
   cameraPosition = pivot + R*(cameraPosition - pivot);
   focalPoint = pivot + R*(focalPoint - pivot);
-  camera->SetPosition(cameraPosition.xpointer());
-  camera->SetFocalPoint(focalPoint.xpointer());
+  camera->SetPosition(cameraPosition);
+  camera->SetFocalPoint(focalPoint);
 }
 
 void OOFCanvas3D::mouse_tumble(double x, double y) {

@@ -60,6 +60,11 @@ Write CSkeletonFace::homogeneity()
 Allow graphics windows to be synched, so that view changes in one are
 done in all.
 
+Tumbling large images or Microstruture Material displays can be very
+slow because it takes a long time to recompute the center point.
+Either find a faster way to compute the center, or make computing the
+center optional and re-use the old point.
+
 At Some Later Time
 ------------------
 

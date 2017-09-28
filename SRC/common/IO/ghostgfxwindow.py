@@ -2135,6 +2135,7 @@ class GhostGfxWindow:
     def computeTumbleCenter(self):
         renderer = self.oofcanvas.get_renderer()
         bbox = None
+        debug.fmsg()
         for layer in self.layers:
             if layer.canvaslayer.showing():
                 ok, layerbbox = layer.canvaslayer.visibleBoundingBox(renderer)
@@ -2145,6 +2146,7 @@ class GhostGfxWindow:
                         bbox.swallowPrism(layerbbox)
         if bbox is not None:
             self.oofcanvas.setTumbleCenter(bbox.center())
+        debug.fmsg("done")
 
     #####################################    
     

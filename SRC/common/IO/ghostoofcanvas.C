@@ -516,14 +516,14 @@ void GhostOOFCanvas::elevation(double a) {
 Coord *GhostOOFCanvas::get_camera_position_v2() const {
   Coord *p = new Coord();
   assert(mainthread_query());
-  renderer->GetActiveCamera()->GetPosition(p->xpointer());
+  renderer->GetActiveCamera()->GetPosition(*p);
   return p;
 }
 
 Coord GhostOOFCanvas::get_camera_position() const {
   Coord p;
   assert(mainthread_query());
-  renderer->GetActiveCamera()->GetPosition(p.xpointer());
+  renderer->GetActiveCamera()->GetPosition(p);
   return p;
 }
 
@@ -551,7 +551,7 @@ void GhostOOFCanvas::get_camera_view_up(double *p) const {
 Coord GhostOOFCanvas::get_camera_direction_of_projection_v2() const {
   Coord p;
   assert(mainthread_query());
-  renderer->GetActiveCamera()->GetDirectionOfProjection(p.xpointer());
+  renderer->GetActiveCamera()->GetDirectionOfProjection(p);
   return p;
 }
 

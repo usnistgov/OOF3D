@@ -196,11 +196,11 @@ mainmenu.gfxdefaultsmenu.Voxel_Selection.addItem(oofmenu.OOFMenuItem(
     </para>"""))
 
 voxelRegionSelectionDisplay = registeredclass.Registration(
-    'Voxel Region ',
+    'Voxel Region Click-and-Drag Editor',
     display.DisplayMethod,
     VoxelRegionSelectionDisplay,
     params=voxelregionselectionparams,
-    ordering=2.70,
+    ordering=3.1,
     layerordering=display.Volume(0.5),
     whoclasses=('Microstructure'),
     tip="Display the widget for editing a region containing all the voxels to be selected."
@@ -214,14 +214,15 @@ def predefinedVoxelRegionSelectionLayer():
     # When a new graphics window is opened, a
     # VoxelRegionSelectionDisplay will be automatically created with
     # the default sizing and coloring options.
-    return VoxelRegionSelectionDisplay(arrow_color=defaultVoxelRegionSelectionArrowColor,
-                                       arrow_tip_radius=defaultVoxelRegionSelectionArrowTipRadius,
-                                       arrow_length=defaultVoxelRegionSelectionArrowLength,
-                                       point_size=defaultVoxelRegionSelectionPointSize,
-                                       line_width=defaultVoxelRegionSelectionLineWidth,
-                                       line_color=defaultVoxelRegionSelectionLineColor,
-                                       face_color=defaultVoxelRegionSelectionFaceColor,
-                                       face_opacity=defaultVoxelRegionSelectionFaceOpacity)
+    return VoxelRegionSelectionDisplay(
+        arrow_color=defaultVoxelRegionSelectionArrowColor,
+        arrow_tip_radius=defaultVoxelRegionSelectionArrowTipRadius,
+        arrow_length=defaultVoxelRegionSelectionArrowLength,
+        point_size=defaultVoxelRegionSelectionPointSize,
+        line_width=defaultVoxelRegionSelectionLineWidth,
+        line_color=defaultVoxelRegionSelectionLineColor,
+        face_color=defaultVoxelRegionSelectionFaceColor,
+        face_opacity=defaultVoxelRegionSelectionFaceOpacity)
 
 ghostgfxwindow.PredefinedLayer('Microstructure', '<topmost>',
                                predefinedVoxelRegionSelectionLayer)

@@ -256,7 +256,10 @@ CSkeletonBase* Refine::refine(CSkeletonBase *skeleton, CSkeleton *newSkeleton)
 #ifdef DEBUG
 	for(CSkeletonElement *el : *newElements) {
 	  if(el->suspect()) {
-	    oofcerr << "Refine::refine: " << refinement->rule
+	    oofcerr << "Refine::refine: "
+#ifdef TESTCOVERAGE
+		    << refinement->rule
+#endif // TESTCOVERAGE
 		    << " created suspect element " << *el << std::endl;
 	    el->printAngles();
 	  }
