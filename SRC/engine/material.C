@@ -622,7 +622,8 @@ public:
   {
     vtkSmartPointer<vtkLookupTable> lut = 
       vtkSmartPointer<vtkLookupTable>::New();
-    lut->SetNumberOfColors(microstructure->nCategories());
+    lut->SetNumberOfTableValues(microstructure->nCategories());
+    lut->SetTableRange(0, microstructure->nCategories()-1);
     for(int i=0; i<microstructure->nCategories(); ++i) {
       const Material *mat = getMaterialFromCategory(microstructure, i);
       if(mat) {
@@ -886,12 +887,14 @@ MaterialImage::MaterialImage(CMicrostructure *ms,
     noMaterial(*noMaterial),
     noColor(*noColor)
 {
-  
   sizeInPixels_ = microstructure->sizeInPixels();
   size_ = microstructure->size();
 
   vtkSmartPointer<vtkImageData> mImage = vtkSmartPointer<vtkImageData>::New();
   mImage->SetDimensions(sizeInPixels_);
+  // Using unsigned char here is ok if there are fewer than 257 voxel
+  // categories.  If it's changed to int, make sure to change the type
+  // of ptr in the loop below.
   mImage->SetScalarTypeToUnsignedChar();
   mImage->SetNumberOfScalarComponents(1);
   mImage->AllocateScalars();
@@ -909,7 +912,6 @@ MaterialImage::MaterialImage(CMicrostructure *ms,
 				   i.coord()[0], i.coord()[1], i.coord()[2]);
       *ptr = microstructure->category(i.coord());
     }
-
   mImage->Update();
 
   vtkSmartPointer<vtkLookupTable> lut = 
