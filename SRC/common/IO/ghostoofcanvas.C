@@ -68,6 +68,7 @@ GhostOOFCanvas::GhostOOFCanvas()
     clipInverted(false),
     clipSuppressed(false),
     vClipPlanes(vtkSmartPointer<vtkPlanes>::New()),
+    tumbleAroundFocalPoint(true),
     margin(.10)
 {
   assert(mainthread_query());
@@ -574,9 +575,11 @@ void GhostOOFCanvas::setTumbleCenter(Coord3D *pt) {
   // Called by GhostGfxWindow.computeTumbleCenter, which is called
   // when the mouse button is pressed in Tumble mode.
   tumbleCenter = *pt;
-  //  renderer->GetActiveCamera()->OrthogonalizeViewUp();
-  oofcerr << "GhostOOFCanvas::setTumbleCenter: tumbleCenter=" << tumbleCenter
-	  << std::endl;
+  tumbleAroundFocalPoint = false;
+}
+
+void GhostOOFCanvas::setTumbleAroundFocalPoint() {
+  tumbleAroundFocalPoint = true;
 }
 
   //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

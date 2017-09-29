@@ -30,10 +30,15 @@ much faster.
 Fixed a bug that was preventing compilation on gcc 7.
 
 Modified the "Tumble" method, so that objects are rotated about the
-center of the visible region.
+center of the visible region if "shift" is pressed when clicking the
+mouse.  If "control" is pressed, objects are rotated around the focal
+point.  If neither is pressed, the previous pivot point is used.
 
 Fixed a bug with the "Recenter" button in the Translate group in the
 Viewer toolbox.
+
+Fixed a bug that was making the Material Color display layer for
+Microstructures show incorrect colors.
 
 3.1.1.1
 

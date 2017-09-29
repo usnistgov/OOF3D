@@ -150,6 +150,7 @@ public:
   void set_camera_position(double, double, double);
   void set_camera_focal_point(double, double, double);
   void setTumbleCenter(Coord *Point);
+  void setTumbleAroundFocalPoint();
 
   Coord findRayThroughPoint(const Coord *Point);
   %new Coord *findClickedPositionOnActor(Coord *Point, View*, OOFCanvasLayer*);

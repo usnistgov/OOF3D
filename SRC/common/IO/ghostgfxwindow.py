@@ -2132,21 +2132,30 @@ class GhostGfxWindow:
     # toolbarGUI.py) when the mouse button is pressed.  It has to find
     # the point about which to rotate the camera and focal plane.
 
-    def computeTumbleCenter(self):
-        renderer = self.oofcanvas.get_renderer()
-        bbox = None
-        debug.fmsg()
-        for layer in self.layers:
-            if layer.canvaslayer.showing():
-                ok, layerbbox = layer.canvaslayer.visibleBoundingBox(renderer)
-                if ok:
-                    if bbox is None:
-                        bbox = layerbbox
-                    else:
-                        bbox.swallowPrism(layerbbox)
-        if bbox is not None:
-            self.oofcanvas.setTumbleCenter(bbox.center())
-        debug.fmsg("done")
+    # If the shift key was pressed at mouse-down, then a new center of
+    # rotation is computed from the bounding box of the visible
+    # objects.  This can be slow to compute, so the default is to use
+    # the previous center.  The control key says to set the center to
+    # the focal point.
+
+    def computeTumbleCenter(self, shift, ctrl):
+        if shift:
+            renderer = self.oofcanvas.get_renderer()
+            bbox = None
+            for layer in self.layers:
+                if layer.canvaslayer.showing():
+                    ok, layerbbox = layer.canvaslayer.visibleBoundingBox(
+                        renderer)
+                    if ok:
+                        if bbox is None:
+                            bbox = layerbbox
+                        else:
+                            bbox.swallowPrism(layerbbox)
+            if bbox is not None:
+                self.oofcanvas.setTumbleCenter(bbox.center())
+        elif ctrl:
+            self.oofcanvas.setTumbleAroundFocalPoint()
+                
 
     #####################################    
     

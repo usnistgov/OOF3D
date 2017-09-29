@@ -205,8 +205,7 @@ class ViewManipulatorMouseHandler(mousehandler.MouseHandler):
 class TumbleMouseHandler(ViewManipulatorMouseHandler):
     def down(self, x, y, button, shift, ctrl):
         ViewManipulatorMouseHandler.down(self, x, y, button, shift, ctrl)
-        # TODO: pass args to setTumbleCenter to affect what point it chooses?
-        self.gfxwindow.computeTumbleCenter()
+        self.gfxwindow.computeTumbleCenter(shift, ctrl)
         
     def move(self, x, y, button, shift, ctrl):
         self.gfxwindow.oofcanvas.mouse_tumble(x,y)

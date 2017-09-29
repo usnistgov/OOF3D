@@ -68,6 +68,7 @@ protected:
   SLock viewLock;
 
   Coord3D tumbleCenter;
+  bool tumbleAroundFocalPoint;
 
   double margin;
   void makeAllUnpickable() const;
@@ -136,6 +137,7 @@ public:
   void zoom_fill();
   void recenter();
   void setTumbleCenter(Coord3D*);
+  void setTumbleAroundFocalPoint();
 
   // TODO: These should all be const, but it might not be possible.
   // They have to call set_view.
