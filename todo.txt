@@ -24,6 +24,18 @@ Fix bugs in OOFImage3D::threshold.  See TODO in oofimage3d.C.
 
 Fix bug: Opening a graphics window after closing one will crash the
 program.
+
+Fix bug: Are element groups/materials not being recomputed for
+refinement undo/redo?  Or are filters on the skeleton displays not
+updating?
+  Use Auto to create element groups.
+  Display skeleton edges and materials limited to some groups.
+  Undo/Redo refinement
+  Elements in other groups appear.
+Maybe related to this?
+Warning: In /Users/langer/UTIL/VTK/VTK-5.10.1/Filtering/vtkDataSet.cxx, line 446
+vtkUnstructuredGrid (0x7f961e6a4280): Cell array  with 1 components, has 8239 tuples but there are only 1484 cells
+
   
 Soon
 ----
