@@ -65,7 +65,10 @@ class ToolBar:
         gtklogger.connect(tumblebutton, 'clicked', self.tumbleCB)
         tooltips.set_tooltip_text(
             tumblebutton,
-            "Click and drag on the graphics window to rotate the view.")
+            "Click and drag on the graphics window to rotate the view."
+            " Hold 'shift' to rotate about the center of the visible region."
+            " Hold 'control' to rotate about the focal point."
+            " Using no keys rotates about the previous axis.")
 
         dollybutton = gtk.RadioButton(label='Dolly', group=self.selectbutton)
         buttonrow.pack_start(dollybutton, expand=0, fill=0)
