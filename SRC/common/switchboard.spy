@@ -259,6 +259,15 @@ class _Switchboard:
         finally:
             self.lock.release()
 
+    def dump(self, filename):
+        print "Saving current switchboard state to", filename
+        phile = open(filename, "w")
+        for msg, tasklist in self.taskdict.items():
+            print >> phile, "message=", msg
+            for callback in tasklist.callbacks:
+                print >> phile, "   ", callback
+        phile.close()
+
 
 switchboard = _Switchboard()
 init_switchboard_api(switchboard.cnotify)
@@ -284,3 +293,6 @@ def verbose(menuitem, flag):
     old = switchboard.verbose
     switchboard.verbose = flag
     return old
+
+def dump(menuitem, filename):
+    switchboard.dump(filename)

@@ -586,6 +586,12 @@ debugmenu.addItem(CheckOOFMenuItem(
     discussion=xmlmenudump.loadFile('DISCUSSIONS/common/menu/verbosesb.xml')
     ))
 
+debugmenu.addItem(OOFMenuItem(
+    "Dump_Switchboard",
+    callback=switchboard.dump,
+    params=[filenameparam.WriteFileNameParameter("filename")]
+))
+
 if config.debug():
     # Debug data dump functions are only defined if the C++ code was
     # built in DEBUG mode.
