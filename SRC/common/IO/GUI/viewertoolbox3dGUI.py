@@ -20,6 +20,7 @@ from ooflib.common import debug
 from ooflib.common import mainthread
 from ooflib.common import primitives
 from ooflib.common import subthread
+from ooflib.common import thread_enable
 from ooflib.common import utils
 from ooflib.common.IO import clipplaneclickanddragdisplay
 from ooflib.common.IO import reporter
@@ -515,7 +516,11 @@ To deselect a plane, Ctrl+Click the plane in the list."""
         viewTable.attach(self.nextViewButton, 1,2, 2,3)
         
         # Mouse handler for click-and-drag editing of clipping planes.
-        self.clipMouseHandler = ClipPlaneMouseHandler(self, self.gfxwindow())
+        if thread_enable.query():
+            self.clipMouseHandler = \
+                                   ClipPlaneMouseHandler(self, self.gfxwindow())
+        else:
+            self.clipMouseHandler = None
 
         self.sbcallbacks = [
             switchboard.requestCallbackMain("view changed", self.viewChangedCB),
@@ -555,10 +560,12 @@ To deselect a plane, Ctrl+Click the plane in the list."""
                 self.gfxwindow().oofcanvas.render()
 
     def installMouseHandler(self):
-        self.gfxwindow().setMouseHandler(self.clipMouseHandler)
+        if self.clipMouseHandler is not None:
+            self.gfxwindow().setMouseHandler(self.clipMouseHandler)
 
     def close(self):
-        self.clipMouseHandler.cancel()
+        if self.clipMouseHandler is not None:
+            self.clipMouseHandler.cancel()
         map(switchboard.removeCallback, self.sbcallbacks)
         toolboxGUI.GfxToolbox.close(self)
 
