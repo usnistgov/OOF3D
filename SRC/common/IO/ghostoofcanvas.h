@@ -196,9 +196,6 @@ public:
   View *set_view_nolock(const View*, bool);
   void restore_view(const View*, bool);
 
-  Coord get_visible_center() const;
-  Coord get_visible_size() const;
-
   ICoord get_size() const;
   void set_size(int, int);
 

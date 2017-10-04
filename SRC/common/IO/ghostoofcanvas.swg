@@ -166,10 +166,6 @@ public:
 
   Coord display2Physical(View*, double, double);
 
-  // Coord get_bounds();
-  Coord get_visible_center();
-  Coord get_visible_size();
-
   // views
   %new View *get_view();
   // set_view() returns the old view, which was obtained with

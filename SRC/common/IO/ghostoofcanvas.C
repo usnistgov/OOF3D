@@ -327,21 +327,6 @@ void GhostOOFCanvas::orthogonalize_view_up() {
   renderer->GetActiveCamera()->OrthogonalizeViewUp();
 }
 
-Coord GhostOOFCanvas::get_visible_center() const {
-  assert(mainthread_query());
-  double *bounds = renderer->ComputeVisiblePropBounds();
-  return 0.5*Coord(bounds[0] + bounds[1],
-		   bounds[2] + bounds[3],
-		   bounds[4] + bounds[5]);
-}
-
-Coord GhostOOFCanvas::get_visible_size() const {
-  double *bounds = renderer->ComputeVisiblePropBounds();
-  return Coord(bounds[1] - bounds[0],
-	       bounds[3] - bounds[2],
-	       bounds[5] - bounds[4]);
-}
-
 // get_size() shouldn't really return an ICoord, since the return
 // value only has two dimensions even in oof3D. However, using an
 // ICoord is convenient, we don't have another structure handy, and
