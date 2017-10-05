@@ -42,6 +42,8 @@ Soon
 
 Upgrade VTK
 
+Add a surface-smoothness-energy so surface smoothing works better.
+
 User-settable behavior for mouse buttons, so that more than one mouse
 button can be used and it's not necessary to use the
 Select/Tumble/Dolly/etc buttons at the top of the canvas.  Also enable
