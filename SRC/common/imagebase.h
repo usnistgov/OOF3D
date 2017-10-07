@@ -36,7 +36,9 @@ public:
     return image; 
   }
   void modified() const { image->Modified(); }
-  void update() const { image->Update(); }
+  void update() const {
+    // image->Update();
+  }
 
   // These are building blocks for other functions.
   static vtkSmartPointer<vtkImageData> getRGB(vtkSmartPointer<vtkImageData>);

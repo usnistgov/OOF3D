@@ -28,7 +28,7 @@ class PixelSet;
 class oofOverlayVoxels : public vtkRectilinearGridAlgorithm
 {
  public:
-  vtkTypeRevisionMacro(oofOverlayVoxels, vtkRectilinearGridAlgorithm);
+  vtkTypeMacro(oofOverlayVoxels, vtkRectilinearGridAlgorithm);
   void PrintSelf(std::ostream&, vtkIndent);
   static oofOverlayVoxels *New();
 

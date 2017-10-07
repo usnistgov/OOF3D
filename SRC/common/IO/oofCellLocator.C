@@ -22,7 +22,7 @@ typedef vtkIdList *vtkIdListPtr;
 #define VTK_CELL_INSIDE 1
 
 
-vtkCxxRevisionMacro(oofCellLocator, "oofvtkmods 3.0.0");
+// vtkCxxRevisionMacro(oofCellLocator, "oofvtkmods 3.0.0");
 vtkStandardNewMacro(oofCellLocator);
 
 void oofCellLocator::BuildLocatorInternal()

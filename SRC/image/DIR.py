@@ -62,16 +62,16 @@ def set_clib_flags(c_lib):
         c_lib.externalLibs.append('oof2common')
 
     else:
-
-        c_lib.externalLibs.append('vtkImaging')
-        c_lib.externalLibs.append('vtkCommon')
+        pass
+        # c_lib.externalLibs.append('vtkImaging')
+        # c_lib.externalLibs.append('vtkCommon')
         # c_lib.externalLibs.append('vtkCommonPythonD')
-        c_lib.externalLibs.append('vtkIO')
+        # c_lib.externalLibs.append('vtkIO')
         # c_lib.externalLibs.append('vtkIOPythonD')
-        c_lib.externalLibs.append('vtkFiltering')
-        c_lib.externalLibs.append('vtkRendering')
-        c_lib.externalLibs.append('vtkVolumeRendering')
-        c_lib.externalLibs.append('oof3dcommon')
+        # c_lib.externalLibs.append('vtkFiltering')
+        # c_lib.externalLibs.append('vtkRendering')
+        # c_lib.externalLibs.append('vtkVolumeRendering')
+        # c_lib.externalLibs.append('oof3dcommon')
 
 
 

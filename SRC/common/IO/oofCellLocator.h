@@ -23,7 +23,7 @@
 
 class oofCellLocator : public vtkCellLocator {
  public:
-  vtkTypeRevisionMacro(oofCellLocator, vtkCellLocator);
+  vtkTypeMacro(oofCellLocator, vtkCellLocator);
   oofCellLocator() {}
   virtual ~oofCellLocator() {}
   static oofCellLocator *New();

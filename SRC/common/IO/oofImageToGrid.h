@@ -21,7 +21,7 @@
 class oofImageToGrid : public vtkRectilinearGridAlgorithm
 {
  public:
-  vtkTypeRevisionMacro(oofImageToGrid, vtkRectilinearGridAlgorithm);
+  vtkTypeMacro(oofImageToGrid, vtkRectilinearGridAlgorithm);
   void PrintSelf(std::ostream &, vtkIndent);
 
   static oofImageToGrid *New();

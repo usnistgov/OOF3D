@@ -772,7 +772,7 @@ BoxAndArrowLayer::BoxAndArrowLayer(GhostOOFCanvas *canvas, const std::string &nm
   arrowFilter->SetInputConnection(arrowSource->GetOutputPort());
   arrowFilter->SetTransform(arrowTransform);
 
-  boxMapper->SetInputConnection(grid->GetProducerPort());
+  boxMapper->SetInputData(grid);
   arrowMapper->SetInputConnection(arrowFilter->GetOutputPort());
 
   boxActor->SetMapper(boxMapper);
@@ -1043,7 +1043,7 @@ void SimpleCellLayer::newGrid(vtkSmartPointer<vtkPoints> pts, int ncells) {
 
 void SimpleCellLayer::start_clipping() {
   clipper = getClipper(this);
-  clipper->SetInputConnection(grid->GetProducerPort());
+  clipper->SetInputData(grid);
   mapper->SetInputConnection(clipper->GetOutputPort());
 }
 
@@ -1052,7 +1052,7 @@ void SimpleCellLayer::stop_clipping() {
     clipper->RemoveAllInputs();
     clipper = vtkSmartPointer<vtkTableBasedClipDataSet>();
   }
-  mapper->SetInputConnection(grid->GetProducerPort());
+  mapper->SetInputData(grid);
 }
 
 void SimpleCellLayer::set_clip_parity(bool inverted) {
@@ -1164,11 +1164,11 @@ void SimpleWireframeCellLayer::setup() {
   actor->GetProperty()->SetRepresentationToWireframe();
   if(extract) {
     edgeExtractor = vtkSmartPointer<vtkExtractEdges>::New();
-    edgeExtractor->SetInputConnection(grid->GetProducerPort());
+    edgeExtractor->SetInputData(grid);
     mapper->SetInputConnection(edgeExtractor->GetOutputPort());
   }
   else {
-    mapper->SetInputConnection(grid->GetProducerPort());
+    mapper->SetInputData(grid);
   }
   // set_clipping() completes the pipeline
   set_clipping(canvas->clipping(), canvas->invertedClipping());
@@ -1180,7 +1180,7 @@ void SimpleWireframeCellLayer::start_clipping() {
   if(extract)
     clipper->SetInputConnection(edgeExtractor->GetOutputPort());
   else
-    clipper->SetInputConnection(grid->GetProducerPort());
+    clipper->SetInputData(grid);
   mapper->SetInputConnection(clipper->GetOutputPort());
 }
 
@@ -1193,7 +1193,7 @@ void SimpleWireframeCellLayer::stop_clipping() {
   if(extract)
     mapper->SetInputConnection(edgeExtractor->GetOutputPort());
   else
-    mapper->SetInputConnection(grid->GetProducerPort());
+    mapper->SetInputData(grid);
 }
 
 void SimpleWireframeCellLayer::set_clip_parity(bool inverted) {
@@ -1239,7 +1239,7 @@ GlyphedLayer::GlyphedLayer(GhostOOFCanvas *canvas, const std::string &name)
     centerFinder(vtkSmartPointer<vtkCellCenters>::New())
 {
   glyphCenters = centerFinder->GetOutput();
-  glyph->SetInput(glyphCenters);
+  glyph->SetInputData(glyphCenters);
   glyphDirections->SetNumberOfComponents(3);
   // addProp(glyphActor) is not called here because the input to
   // centerFinder can't be set until newGrid is called.
@@ -1257,7 +1257,7 @@ void GlyphedLayer::set_glyphColor(const CColor *color) {
 void GlyphedLayer::newGrid(vtkSmartPointer<vtkPoints> pts, int n) {
   SimpleCellLayer::newGrid(pts, n);
   glyphDirections->Reset();	// resize to empty, without freeing memory
-  centerFinder->SetInputConnection(grid->GetProducerPort());
+  centerFinder->SetInputData(grid);
   glyphCenters->GetPointData()->SetNormals(glyphDirections);
   addProp(glyphActor);
 }
@@ -1271,7 +1271,7 @@ void GlyphedLayer::addDirectedCell(VTKCellType type, vtkIdList *ptIds,
 				   double direction[3]) 
 {
   SimpleCellLayer::addCell(type, ptIds);
-  glyphDirections->InsertNextTupleValue(direction);
+  glyphDirections->InsertNextTuple(direction);
 }
 
 void GlyphedLayer::start_clipping() {
@@ -1309,7 +1309,7 @@ ConeGlyphLayer::ConeGlyphLayer(GhostOOFCanvas *canvas, const std::string &name)
   : GlyphedLayer(canvas, name),
     coneSource(vtkSmartPointer<vtkConeSource>::New())
 {
-  glyph->SetSource(coneSource->GetOutput());
+  glyph->SetSourceConnection(coneSource->GetOutputPort());
 }
 
 void ConeGlyphLayer::set_coneGeometry(double len, int resolution) {
@@ -1330,7 +1330,7 @@ void ConeGlyphLayer::stop_clipping() {
     
 void ConeGlyphLayer::recomputeDirections() {
   if(glyphDirections->GetSize() > 0) {
-    glyphCenters->Update();
+    // glyphCenters->Update();
     glyphCenters->GetPointData()->SetNormals(glyphDirections);
   }
 }
@@ -1382,7 +1382,7 @@ PointGlyphLayer::PointGlyphLayer(GhostOOFCanvas *canvas,
   glyph->ScalingOn();
   glyph->SetScaleFactor(1);
   glyph->OrientOff();
-  glyph->SetSource(sphereSource->GetOutput());
+  glyph->SetSourceConnection(sphereSource->GetOutputPort());
   set_clipping(canvas->clipping(), canvas->invertedClipping());
 }
 
@@ -1545,8 +1545,8 @@ void ImageCanvasLayer::set_image(const ImageBase *img, const Coord *location,
   if(image != img) {
     pipelineLock.acquire();
     image = img;
-    image->getVTKImageData()->Update();
-    gridifier->SetInputConnection(image->getVTKImageData()->GetProducerPort());
+    // image->getVTKImageData()->Update();
+    gridifier->SetInputData(image->getVTKImageData());
     pipelineLock.release();
   }
 }

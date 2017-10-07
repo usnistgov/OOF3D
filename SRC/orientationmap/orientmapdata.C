@@ -126,9 +126,10 @@ OrientMapImage::OrientMapImage(const OrientMap *data, const Angle2Color *scheme)
 {
   image = vtkSmartPointer<vtkImageData>::New();
   image->SetDimensions(sizeInPixels()[0],sizeInPixels()[1],sizeInPixels()[2]);
-  image->SetScalarTypeToUnsignedChar();
-  image->SetNumberOfScalarComponents(3);
-  image->AllocateScalars();
+  // image->SetScalarTypeToUnsignedChar();
+  // image->SetNumberOfScalarComponents(3);
+  // image->AllocateScalars();
+  image->AllocateScalars(VTK_UNSIGNED_CHAR, 3);
 
   for(Array<COrientABG>::const_iterator i=orientmap->begin();
       i!=orientmap->end(); ++i) 
@@ -144,7 +145,8 @@ OrientMapImage::OrientMapImage(const OrientMap *data, const Angle2Color *scheme)
   }
 
   // padImage(1);
-  image->Update();
+
+  // image->Update();
 }
 
 OrientMapImage::~OrientMapImage() {

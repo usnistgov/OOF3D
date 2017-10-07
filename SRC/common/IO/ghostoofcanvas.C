@@ -962,7 +962,7 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
     // The locator and dataset must be obtained *after* the view is
     // set.
     vtkSmartPointer<vtkDataSet> dataset = layer->get_pickable_dataset();
-    dataset->Update();
+    // dataset->Update();
     vtkSmartPointer<vtkAbstractCellLocator> locator = layer->get_locator();
     assert(locator.GetPointer() != 0);
     vtkSmartPointer<vtkCellPicker> picker = 
@@ -1174,7 +1174,7 @@ vtkSmartPointer<vtkUnstructuredGrid> GhostOOFCanvas::getFrustumSubgrid(
   extractor->SetFrustum(picker->GetFrustum());
   extractor->PreserveTopologyOff();
   vtkSmartPointer<vtkDataSet> dataset = layer->get_pickable_dataset();
-  extractor->SetInputConnection(0, dataset->GetProducerPort());
+  extractor->SetInputData(0, dataset);
   extractor->Update();
   subgrid = vtkUnstructuredGrid::SafeDownCast(extractor->GetOutput());
   return subgrid;
@@ -1224,7 +1224,7 @@ Coord *GhostOOFCanvas::findClickedPoint(const Coord *click, const View *view,
 #endif // DEBUGSELECTIONS
     tempActor->SetMapper(mapper);
     tempActor->PickableOn();
-    mapper->SetInput(subgrid);
+    mapper->SetInputData(subgrid);
     tempActor->GetProperty()->SetRepresentationToPoints();
 #ifdef DEBUGSELECTIONS
     tempActor->GetProperty()->SetRepresentationToWireframe();
@@ -1233,7 +1233,7 @@ Coord *GhostOOFCanvas::findClickedPoint(const Coord *click, const View *view,
     tempActor->GetProperty()->SetColor(0.9, 0.1, 0.1);
 #endif // DEBUGSELECTIONS
     renderer->AddActor(tempActor);
-    subgrid->Update();
+    // subgrid->Update();
 
     // Use a vtkPointPicker to select the appropriate point.
     vtkSmartPointer<vtkPointPicker> pointpicker =
@@ -1295,7 +1295,7 @@ Coord *GhostOOFCanvas::findClickedSegment(const Coord *click, const View *view,
       getFrustumSubgrid(x, y, view, layer);
     vtkSmartPointer<vtkExtractEdges> exEdges = 
       vtkSmartPointer<vtkExtractEdges>::New();
-    exEdges->SetInput(subgrid);
+    exEdges->SetInputData(subgrid);
     edges = exEdges->GetOutput();
     exEdges->Update();
   

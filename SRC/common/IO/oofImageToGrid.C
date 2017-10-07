@@ -26,7 +26,7 @@
 #include <vtkSmartPointer.h>
 #include <vtkStreamingDemandDrivenPipeline.h>
 
-vtkCxxRevisionMacro(oofImageToGrid, "oofvtkmods 3.0.0");
+// vtkCxxRevisionMacro(oofImageToGrid, "oofvtkmods 3.0.0");
 vtkStandardNewMacro(oofImageToGrid);
 
 oofImageToGrid::oofImageToGrid() {}

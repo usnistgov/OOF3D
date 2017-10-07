@@ -32,7 +32,7 @@ void ImageBase::setSize(const Coord *sighs) {
 
     vtkSmartPointer<vtkImageChangeInformation> changer
       = vtkSmartPointer<vtkImageChangeInformation>::New();
-    changer->SetInputConnection(image->GetProducerPort());
+    changer->SetInputData(image);
     changer->SetOutputSpacing(x_spacing, y_spacing, z_spacing);
     image = changer->GetOutput();
   }	
@@ -61,18 +61,18 @@ vtkSmartPointer<vtkImageData> ImageBase::getRGB(
   switch(numcomponents) {
   case 1:
     for(int i=0; i<3; i++)
-      appender->AddInputConnection(input->GetProducerPort());
+      appender->AddInputDataObject(input);
     result = appender->GetOutput();
     break;
   case 2:
-    extractor->SetInputConnection(input->GetProducerPort());
+    extractor->SetInputData(input);
     extractor->SetComponents(0);
     for(int i=0; i<3; i++) 
       appender->AddInputConnection(extractor->GetOutputPort());
     result = appender->GetOutput();
     break;
   case 4:
-    extractor->SetInputConnection(input->GetProducerPort());
+    extractor->SetInputData(input);
     extractor->SetComponents(0,1,2);
     result = extractor->GetOutput();
     break;

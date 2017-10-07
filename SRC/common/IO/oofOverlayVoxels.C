@@ -23,6 +23,7 @@
 
 
 #include <vtkCellData.h>
+#include <vtkDataArray.h>
 #include <vtkInformation.h>
 #include <vtkInformationVector.h>
 #include <vtkObjectFactory.h>
@@ -31,7 +32,7 @@
 
 #include <limits>
 
-vtkCxxRevisionMacro(oofOverlayVoxels, "oofvtkmods 3.0.0");
+// vtkCxxRevisionMacro(oofOverlayVoxels, "oofvtkmods 3.0.0");
 vtkStandardNewMacro(oofOverlayVoxels);
 
 oofOverlayVoxels::oofOverlayVoxels()

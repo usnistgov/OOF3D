@@ -62,7 +62,7 @@ SpiderRubberBand::SpiderRubberBand(const std::vector<Coord> *coords)
     line->GetPointIds()->SetId(0,i);
     poly->InsertNextCell(line->GetCellType(), line->GetPointIds());
   }
-  mapper->SetInput(poly);
+  mapper->SetInputData(poly);
 }
 
 SpiderRubberBand::~SpiderRubberBand() {}

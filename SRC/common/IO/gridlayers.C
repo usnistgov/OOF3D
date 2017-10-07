@@ -68,7 +68,7 @@ WireGridCanvasLayer::WireGridCanvasLayer(GhostOOFCanvas *c,
   // it tetrahedralizes the clipped cells.  We need to extract the
   // edges because the wireframe rendering of the original grid omits
   // all internal edges.
-  edgeExtractor->SetInputConnection(grid->GetProducerPort());
+  edgeExtractor->SetInputData(grid);
 
   // set_clipping finishes building the pipeline.
   set_clipping(canvas->clipping(), canvas->invertedClipping());
@@ -110,7 +110,7 @@ void WireGridCanvasLayer::start_clipping() {
   //* draw them only once, and to give different properties to the
   //* intersections drawn on the clipping planes.
 
-  vtkSmartPointer<vtkPolyData> edges = edgeExtractor->GetOutput();
+  // vtkSmartPointer<vtkPolyData> edges = edgeExtractor->GetOutput();
   cutActor = vtkSmartPointer<vtkActor>::New();
   cutActor->SetProperty(edgeActor->GetProperty());
   cutMapper = vtkSmartPointer<vtkDataSetMapper>::New();
@@ -121,6 +121,8 @@ void WireGridCanvasLayer::start_clipping() {
   cutMapper->SetInputConnection(faceClipper->GetOutputPort());
   faceMapper->SetInputConnection(faceClipper->GetOutputPort());
   edgeClipper = getClipper(this);
+  // edgeExtractor is a vtkExtractEdges <- vtkPolyDataAlgorithm <- vtkAlgorithm
+  // edgeClipper is a vtkTableBasedClipDataSet <- vtkUnstructuredGridAlgorithm
   edgeClipper->SetInputConnection(edgeExtractor->GetOutputPort());
   edgeMapper->SetInputConnection(edgeClipper->GetOutputPort());
 }
@@ -133,8 +135,13 @@ void WireGridCanvasLayer::stop_clipping() {
   }
   cutActor = vtkSmartPointer<vtkActor>();
   cutMapper = vtkSmartPointer<vtkDataSetMapper>();
-  faceMapper->SetInput(gridsource->GetOutput());
-  edgeMapper->SetInput(edgeExtractor->GetOutput());
+  // gridsource is a GridSource <- vtkUnstructuredGridAlgorithm <- vtkAlgorithm
+  // faceMapper is a vtkDataSetMapper.
+  //    vtkDataSetMapper::SetInputData(vtkDataSet*)
+  //    vtkAlgorithm::SetInputDataObject(vtkDataObject*)
+  //
+  faceMapper->SetInputConnection(gridsource->GetOutputPort());
+  edgeMapper->SetInputConnection(edgeExtractor->GetOutputPort());
 }
 
 void WireGridCanvasLayer::set_clip_parity(bool inverted) {
@@ -221,7 +228,7 @@ void SegmentGridCanvasLayer::start_clipping() {
   edgeClipper = getClipper(this);
   // gridsource->GetOutput()->GetProducerPort() looks wrong to me, but
   // I'm just copying old code...
-  edgeClipper->SetInputConnection(gridsource->GetOutput()->GetProducerPort());
+  edgeClipper->SetInputConnection(gridsource->GetOutputPort());
   edgeMapper->SetInputConnection(edgeClipper->GetOutputPort());
 }
 
@@ -229,7 +236,7 @@ void SegmentGridCanvasLayer::stop_clipping() {
   if(clipState == CLIP_ON) {
     edgeClipper = vtkSmartPointer<vtkTableBasedClipDataSet>();
   }
-  edgeMapper->SetInput(gridsource->GetOutput());
+  edgeMapper->SetInputConnection(gridsource->GetOutputPort());
 }
 
 void SegmentGridCanvasLayer::set_clip_parity(bool inverted) {

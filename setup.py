@@ -430,18 +430,26 @@ def findvtk(*basenames):
     for base in basenames:
         # First look for basename/include/vtk*
         incdir = os.path.join(base, 'include')
-        files = os.listdir(incdir)
-        vtkname = None
-        for f in files:
-            ## This may fail if there is more than one version of vtk
-            ## installed.  listdir returns files in arbitrary order, and
-            ## the first one found will be used.
-            if f.startswith('vtk'):
-                vtkname = f
-                incvtk = os.path.join(base, 'include', vtkname)
-                libvtk = os.path.join(base, 'lib', vtkname)
-                if os.path.isdir(incvtk) and os.path.isdir(libvtk):
-                    return (incvtk, libvtk)
+        if os.path.isdir(incdir):
+            files = os.listdir(incdir)
+            vtkname = None
+            for f in files:
+                ## This may fail if there is more than one version of vtk
+                ## installed.  listdir returns files in arbitrary order, and
+                ## the first one found will be used.
+                if f.startswith('vtk'):
+                    vtkname = f
+                    incvtk = os.path.join(base, 'include', vtkname)
+                    libvtk = os.path.join(base, 'lib')
+                    if os.path.isdir(incvtk) and os.path.isdir(libvtk):
+                        ## TODO: Extract actual vtk version number
+                        ## from incvtk/vtkVersionMacros.h.  It's in a
+                        ## line like #define VTK_VERSION "7.1.1"
+#grep VTK_VERSION /usr/local/include/vtk-7.1/vtkVersionMacros.h |cut -d \" -f 2
+                        print >> sys.stderr, "Using", vtkname,"in", incvtk
+                        print >> sys.stderr, "VTK library directory is", libvtk
+                        return (incvtk, libvtk)
+    print >> sys.stderr, "Did not find vtk!"
     return (None, None)
 
 #########
@@ -1191,7 +1199,7 @@ def set_platform_values():
             ## wrong.  If and when pkgconfig acquires a more robust
             ## way of finding its files, use it.
             pkgpath = "/opt/local/Library/Frameworks/Python.framework/Versions/%d.%d/lib/pkgconfig/" % (sys.version_info[0], sys.version_info[1])
-            print >> sys.stdout, "Adding", pkgpath
+            print >> sys.stdout, "Adding", pkgpath, "to PKG_CONFIG_PATH"
             extend_path("PKG_CONFIG_PATH", pkgpath)
         # Enable C++11
         platform['extra_compile_args'].append('-Wno-c++11-extensions')
@@ -1202,6 +1210,9 @@ def set_platform_values():
             platform['extra_compile_args'].append('-Wno-self-assign')
             platform['extra_compile_args'].append(
                 '-Wno-tautological-constant-out-of-range-compare')
+            # This is because vtk 7.1.1 uses VTK_OVERRIDE inconsistently
+            platform['extra_compile_args'].append(
+                '-Wno-inconsistent-missing-override')
         if PROFILER:
             # Disable Address Space Layout Randomization
             # http://stackoverflow.com/questions/10562280/line-number-in-google-perftools-cpu-profiler-on-macosx
