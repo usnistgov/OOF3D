@@ -63,11 +63,12 @@ def set_clib_flags(c_lib):
 
     else:
         pass
+        ## These libraries were used with vtk 5.10.  With the switch
+        ## to 7.1.1 the libraries are all included in common/DIR.py
+        ## and aren't needed here.
         # c_lib.externalLibs.append('vtkImaging')
         # c_lib.externalLibs.append('vtkCommon')
-        # c_lib.externalLibs.append('vtkCommonPythonD')
         # c_lib.externalLibs.append('vtkIO')
-        # c_lib.externalLibs.append('vtkIOPythonD')
         # c_lib.externalLibs.append('vtkFiltering')
         # c_lib.externalLibs.append('vtkRendering')
         # c_lib.externalLibs.append('vtkVolumeRendering')
