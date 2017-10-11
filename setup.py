@@ -442,6 +442,8 @@ def findvtk(*basenames):
                     incvtk = os.path.join(base, 'include', vtkname)
                     libvtk = os.path.join(base, 'lib')
                     if os.path.isdir(incvtk) and os.path.isdir(libvtk):
+                        global vtksuffix
+                        vtksuffix = vtkname[3:] # all but the 'vtk'
                         ## TODO: Extract actual vtk version number
                         ## from incvtk/vtkVersionMacros.h.  It's in a
                         ## line like #define VTK_VERSION "7.1.1"
