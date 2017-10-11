@@ -47,3 +47,21 @@ Coord cell2coord(vtkSmartPointer<vtkCell> cell) {
   return Coord(xmin, ymin, zmin);
 }
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+#include <vtkAutoInit.h>
+
+// Call this before any other vtk code runs.
+// See https://www.vtk.org/Wiki/VTK/Build_System_Migration
+// Run-time messages like
+//    Error: no override found for 'vtkActor'.
+// mean that another module needs to be initialized here.
+
+void initialize_vtk() {
+  static bool initialized = false;
+  if(!initialized) {
+    VTK_MODULE_INIT(vtkRenderingOpenGL2);
+    VTK_MODULE_INIT(vtkRenderingFreeTypeOpenGL);
+    VTK_MODULE_INIT(vtkRenderingVolumeOpenGL);
+  }
+}

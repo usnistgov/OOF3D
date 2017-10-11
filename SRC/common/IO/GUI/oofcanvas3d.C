@@ -28,7 +28,6 @@
 #include <pygtk/pygtk.h>
 
 #include <vtkCamera.h>
-#include <vtkXOpenGLRenderWindow.h>
 
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

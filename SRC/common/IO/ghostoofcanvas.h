@@ -38,6 +38,7 @@ class GhostOOFCanvas;
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkXOpenGLRenderWindow.h>
+#include <vtkRenderWindow.h>
 
 class View;
 class ImageFormat;

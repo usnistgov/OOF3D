@@ -34,6 +34,8 @@
   $target = dpair;
 }
 
+void initialize_vtk();		// Call before any other vtk code
+
 class vtkDoubleArrayPtr {
 public:
   ~vtkDoubleArrayPtr();

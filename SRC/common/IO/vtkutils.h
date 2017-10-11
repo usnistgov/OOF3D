@@ -34,6 +34,8 @@ class CDirection;
 
 #include <vector>
 
+void initialize_vtk();
+
 vtkSmartPointer<vtkDoubleArray> fillDataArray(const std::vector<double>*);
 void getDataArrayRange(vtkSmartPointer<vtkDataArray>, double*);
 Coord cell2coord(vtkSmartPointer<vtkCell>);

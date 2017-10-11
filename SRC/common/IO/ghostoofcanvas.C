@@ -81,7 +81,6 @@ GhostOOFCanvas::GhostOOFCanvas()
 
   // Some of these initial settings will be overwritten by
   // GfxWindow3D.postinitialize().
-#if VTK_MAJOR_VERSION == 5 && VTK_MINOR_VERSION > 8
   contourMapActor->DrawBackgroundOn();
   contourMapActor->DrawFrameOn();
   vtkProperty2D *prop = contourMapActor->GetBackgroundProperty();
@@ -89,7 +88,6 @@ GhostOOFCanvas::GhostOOFCanvas()
   prop->SetOpacity(0.5);
   prop = contourMapActor->GetFrameProperty();
   prop->SetColor(0, 0, 0);
-# endif
   vtkTextProperty *tprop = contourMapActor->GetLabelTextProperty();
   tprop->ItalicOff();
   tprop->SetColor(0, 0, 0);
