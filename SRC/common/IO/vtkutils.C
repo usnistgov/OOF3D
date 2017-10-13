@@ -61,7 +61,7 @@ void initialize_vtk() {
   static bool initialized = false;
   if(!initialized) {
     VTK_MODULE_INIT(vtkRenderingOpenGL2);
-    VTK_MODULE_INIT(vtkRenderingFreeTypeOpenGL);
-    VTK_MODULE_INIT(vtkRenderingVolumeOpenGL);
+    VTK_MODULE_INIT(vtkRenderingVolumeOpenGL2);
+    VTK_MODULE_INIT(vtkRenderingFreeType);
   }
 }
