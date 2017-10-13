@@ -54,6 +54,9 @@
 #include <vtkTIFFWriter.h>
 #include <vtk_tiff.h>		// for ORIENTATION_BOTLEFT
 
+#include <vtkExecutive.h>
+#include <vtkScalarsToColors.h>
+#include <vtkImageMapToColors.h>
 
 OOFImage3D::OOFImage3D(const std::string &name,
 		       const std::vector<std::string> *files, 
@@ -153,32 +156,57 @@ OOFImage3D::OOFImage3D(const std::string &name,
   // crashing.
 
   imageReader->SetDataScalarTypeToUnsignedChar();
-  image = imageReader->GetOutput(); // vtkImageData*
+  vtkSmartPointer<vtkAlgorithm> pipelineTail = imageReader;
 
-  // image->Update();		// The actual reading takes place here.
 
   // For certain image formats such as PNG, the bit depth may be
   // greater than 8 and the reader will return a vtkImageData object
   // with a scalar type other than unsigned char.  We need to scale
   // the data and make it an unsigned char type.
+  image = vtkImageData::SafeDownCast(pipelineTail->GetOutputDataObject(0));
   if(image->GetScalarType() != VTK_UNSIGNED_CHAR) {
     vtkSmartPointer<vtkImageShiftScale> shiftscale = 
       vtkSmartPointer<vtkImageShiftScale>::New();
-    shiftscale->SetInputData(image);
     shiftscale->SetShift(0);
     shiftscale->SetScale(255.0/image->GetScalarTypeMax());
     shiftscale->SetOutputScalarTypeToUnsignedChar();
-    image = shiftscale->GetOutput();
-    // image->Update();
+    shiftscale->SetInputConnection(pipelineTail->GetOutputPort());
+    pipelineTail = shiftscale;
   }
-  // Make sure that the image has three channels.  TODO OPT: If this uses
-  // too much memory, we could allow gray scale images to have only
-  // one channel, but we'd either have to do something clever in
+
+  // Make sure that the image has three channels.  TODO OPT: If this
+  // uses too much memory, we could allow grayscale images to have
+  // only one channel, but we'd either have to do something clever in
   // oofOverlayVoxels.C, or require that the overlay color also be
   // gray.  Also, getPixels() would be need to be smarter.
-  image = ImageBase::getRGB(image);
-  // image->Update();
-} // end OOFImage constructor
+  image = vtkImageData::SafeDownCast(pipelineTail->GetOutputDataObject(0));
+  int numcomponents = image->GetNumberOfScalarComponents();
+  if(numcomponents != 3) {
+    vtkSmartPointer<vtkImageMapToColors> rgbconv =
+      vtkSmartPointer<vtkImageMapToColors>::New();
+    vtkSmartPointer<vtkScalarsToColors> clut =
+      vtkSmartPointer<vtkScalarsToColors>::New();
+    // The default behavior for vtkScalarsToColors is to replicate
+    // input in output.  TODO: This is what we want if
+    // numcomponents==1, but what if numcomponents == 4?  We should
+    // copy the first three components and ignore the 4th.
+    rgbconv->SetOutputFormatToRGB();
+    rgbconv->SetLookupTable(clut);
+    rgbconv->SetInputConnection(pipelineTail->GetOutputPort());
+    pipelineTail = rgbconv;
+  }
+  
+  image = vtkImageData::SafeDownCast(pipelineTail->GetOutputDataObject(0));
+
+  // This is where the rest of the files are read.
+  imageReader->GetExecutive()->Update();
+
+  // oofcerr << "OOFImage3D::ctor: image size=";
+  // for(int i=0; i<3; i++)
+  //   oofcerr << " " << image->GetDimensions()[i];
+  // oofcerr << std::endl;
+  
+} // end OOFImage3D constructor
 
 
 OOFImage3D::~OOFImage3D() {}

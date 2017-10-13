@@ -39,10 +39,6 @@ public:
   void update() const {
     // image->Update();
   }
-
-  // These are building blocks for other functions.
-  static vtkSmartPointer<vtkImageData> getRGB(vtkSmartPointer<vtkImageData>);
-  //static vtkSmartPointer<vtkImageData> getRGBA(vtkSmartPointer<vtkImageData>);
 };
 
 

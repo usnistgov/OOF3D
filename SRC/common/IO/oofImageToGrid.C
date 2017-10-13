@@ -104,7 +104,7 @@ int oofImageToGrid::RequestData(vtkInformation*,
   extent[1] += 1;
   extent[3] += 1;
   extent[5] += 1;
-  output->SetExtent(extent);	// creates vtkCells and vtkPoints
+  output->SetExtent(extent);
 
   double spacing[3];
   image->GetSpacing(spacing);
