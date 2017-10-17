@@ -970,10 +970,18 @@ class GhostGfxWindow:
         # Create pre-defined layers.  These are in all graphics
         # windows, regardless of whether or not they are drawable at
         # the moment.
-        for predeflayer in PredefinedLayer.allPredefinedLayers:
+
+        # for debugging:
+        npredef = len(PredefinedLayer.allPredefinedLayers)
+        debug.fmsg("npredef=", npredef)
+        minpredef = 8
+        maxpredef = 9
+        #
+        for predeflayer in PredefinedLayer.allPredefinedLayers[minpredef:maxpredef]:
             # The gfxlock has been acquired already, so we call
             # incorporateLayer with lock=False.
             layer, who = predeflayer.createLayer(self)
+            debug.fmsg("installing predefined layer", layer)
             self.incorporateLayer(layer, who, autoselect=False, lock=False)
         
         # Create default layers if possible.  One layer is created for
@@ -1631,7 +1639,8 @@ class GhostGfxWindow:
                              point, view, layer.canvaslayer)
                             ),
                         layer
-                        )  
+                        )
+            return (None, None)
         finally:
             self.releaseGfxLock()
 
@@ -1649,6 +1658,7 @@ class GhostGfxWindow:
                         ),
                     layer
                     )
+        return (None, None)
 
     def findClickedActor(self, classinfo, point, view):
         self.acquireGfxLock()
@@ -1663,7 +1673,8 @@ class GhostGfxWindow:
                              point, view, layer.canvaslayer)
                             ),
                         layer
-                        )  
+                        )
+            return (None, None)
         finally:
             self.releaseGfxLock()
 
@@ -1681,6 +1692,7 @@ class GhostGfxWindow:
                             ),
                         layer
                         )
+            return (None, None)
         finally:
             self.releaseGfxLock()
 
@@ -1698,6 +1710,7 @@ class GhostGfxWindow:
                         ),
                     layer
                     )
+        return (None, None)
 
     def findClickedCell(self, who, point, view):
         self.acquireGfxLock()
@@ -1737,8 +1750,8 @@ class GhostGfxWindow:
                         # This shouldn't happen...
                         raise ooferror.ErrPyProgrammingError(
                             "Filter failure in findClickedCellID")
-                        # return (None, None)
                     return (cellidx, rval[1])
+            return (None, None)
         finally:
             self.releaseGfxLock()
 
@@ -1768,6 +1781,7 @@ class GhostGfxWindow:
                     raise ooferror.ErrPyProgrammingError(
                         "Filter failure in findClickedCellID")
                 return (cellidx, rval[1], layer)
+        return (None, None, None)
         
     def findClickedCellCenter(self, who, point, view):
         self.acquireGfxLock()

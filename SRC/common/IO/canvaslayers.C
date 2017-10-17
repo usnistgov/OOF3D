@@ -1052,6 +1052,20 @@ void SimpleCellLayer::stop_clipping() {
     clipper->RemoveAllInputs();
     clipper = vtkSmartPointer<vtkTableBasedClipDataSet>();
   }
+
+  // When not clipping and connecting the grid directly to the mapper,
+  // if there are no cells being drawn vtk7 (and vtk8) prints:
+  
+  // Warning: In ... Filters/Geometry/vtkDataSetSurfaceFilter.cxx, line 166
+  // vtkDataSetSurfaceFilter: Number of cells is zero, no data to process.
+
+  // The vtkDataSetSurfaceFilter is the GeometryExtractor of the
+  // vtkDataSetMapper, and is used when the input data isn't
+  // VTK_POLY_DATA.
+
+  // If the grid is clipped, the vtkDataSetSurfaceFilter, isn't used,
+  // and whatever is used doesn't complain about getting no data.
+
   mapper->SetInputData(grid);
 }
 
