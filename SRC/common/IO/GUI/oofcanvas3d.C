@@ -58,17 +58,20 @@ OOFCanvas3D::OOFCanvas3D()
   }
 
   drawing_area = gtk_drawing_area_new(); 
-
-  // we need to set the colormap of the drawing_area before it is realized
   Display* dis = GDK_DISPLAY();
   render_window->SetDisplayId(dis);
-  XVisualInfo *v = render_window->GetDesiredVisualInfo();
-  Colormap cm = render_window->GetDesiredColormap();
-  GdkVisual *gdkv = gdkx_visual_get(v->visualid);
-  GdkColormap *gdkcm = gdk_x11_colormap_foreign_new(gdkv, cm);
-  gtk_widget_set_colormap(drawing_area, gdkcm);
-  // free the memory allocated by GetDesiredVisualInfo
-  XFree(v);
+
+  // Using vtk5, we had to set the colormap of the drawing area.  I
+  // don't know if it was required on Linux or Mac or both.  Using the
+  // recommended generic vtkRenderWindow in vtk7, it's not possible to
+  // set the colormap, but it doesn't seem to be necessary on Linux.
+  //   XVisualInfo *v = render_window->GetDesiredVisualInfo();
+  //   Colormap cm = render_window->GetDesiredColormap();
+  //   GdkVisual *gdkv = gdkx_visual_get(v->visualid);
+  //   GdkColormap *gdkcm = gdk_x11_colormap_foreign_new(gdkv, cm);
+  //   gtk_widget_set_colormap(drawing_area, gdkcm);
+  //   // free the memory allocated by GetDesiredVisualInfo
+  //   XFree(v);
 
   g_signal_connect(drawing_area, "destroy",
 		   G_CALLBACK(OOFCanvas3D::gtk_destroy),

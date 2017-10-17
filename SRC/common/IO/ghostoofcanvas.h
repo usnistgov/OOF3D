@@ -37,7 +37,8 @@ class GhostOOFCanvas;
 #include <vtkScalarsToColors.h>
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
-#include <vtkXOpenGLRenderWindow.h>
+
+// #include <vtkXOpenGLRenderWindow.h>
 #include <vtkRenderWindow.h>
 
 class View;
@@ -53,7 +54,8 @@ protected:
   bool rendered;
   bool axes_showing;		// axes are actually drawn
   bool deactivated;		// suppress redraws when shutting down
-  vtkSmartPointer<vtkXOpenGLRenderWindow> render_window;
+  // vtkSmartPointer<vtkXOpenGLRenderWindow> render_window;
+  vtkSmartPointer<vtkRenderWindow> render_window;
   vtkSmartPointer<vtkRenderer> renderer;
   vtkSmartPointer<vtkAxesActor> axes;
   vtkSmartPointer<vtkScalarBarActor> contourMapActor;

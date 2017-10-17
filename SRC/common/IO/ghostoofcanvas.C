@@ -44,7 +44,6 @@
 #include <vtkVolume.h>
 #include <vtkVolumeCollection.h>
 #include <vtkVolumeProperty.h>
-
 #include <vtkPropCollection.h>
 #include <vtkAssemblyPath.h>
 
@@ -58,7 +57,8 @@ GhostOOFCanvas::GhostOOFCanvas()
     rendered(false),
     axes_showing(false),
     deactivated(false),
-    render_window(vtkSmartPointer<vtkXOpenGLRenderWindow>::New()),
+    // render_window(vtkSmartPointer<vtkXOpenGLRenderWindow>::New()),
+    render_window(vtkSmartPointer<vtkRenderWindow>::New()),
     renderer(vtkSmartPointer<vtkRenderer>::New()),
     axes(vtkSmartPointer<vtkAxesActor>::New()),
     contourMapActor(vtkSmartPointer<vtkScalarBarActor>::New()),
@@ -143,8 +143,11 @@ void GhostOOFCanvas::render() {
     
     renderLock.acquire();
     try {
-      // oofcerr << "GhostOOFCanvas::render: " << this << std::endl;
-      render_window->Render();
+      if(render_window->IsDrawable()) {
+	oofcerr << "GhostOOFCanvas::render: calling Render " << std::endl;
+	render_window->Render();
+	oofcerr << "GhostOOFCanvas::render: back from Render" << std::endl;
+      }
     }
     catch(...) {
       renderLock.release();
