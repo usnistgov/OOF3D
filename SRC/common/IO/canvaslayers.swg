@@ -54,6 +54,7 @@ public:
   // void lower_layer(int);
   // void add_to_renderer();
   // void remove_from_renderer();
+  void setEmpty(bool);
   void setModified();
   void installContourMap();
 };
@@ -117,7 +118,6 @@ public:
   void set_color(const CColor&);
   void set_opacity(double);
   void clear();
-  long get_gridsize();
 };
 
 class SimpleFilledCellLayer : public SimpleCellLayer {

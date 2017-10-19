@@ -521,6 +521,7 @@ class EdgeDisplay(object):
         self.source = self.vtkSource()
         canvaslayer = gridlayers.WireGridCanvasLayer(
             self.gfxwindow.oofcanvas, self.name(), self.source)
+        canvaslayer.setEmpty(False)
         return canvaslayer
     def setParams(self):
         self.setSource()
@@ -623,6 +624,7 @@ class SkeletonEdgeOnlyDisplay(EdgeDisplay, SkeletonDisplayMethod):
         self.source = self.vtkSource()
         canvaslayer = gridlayers.SegmentGridCanvasLayer(
             self.gfxwindow.oofcanvas, self.name(), self.source)
+        canvaslayer.setEmpty(False)
         return canvaslayer
 
 class SkeletonEdgeDiffDisplay(EdgeDisplay, SkeletonDisplayMethod):
@@ -642,6 +644,7 @@ class SkeletonEdgeDiffDisplay(EdgeDisplay, SkeletonDisplayMethod):
         self.source = self.vtkSource()
         canvaslayer = gridlayers.SegmentGridCanvasLayer(
             self.gfxwindow.oofcanvas, self.name(), self.source)
+        canvaslayer.setEmpty(False)
         return canvaslayer
 
 if debug.debug():
@@ -815,6 +818,7 @@ class SolidFillMeshDisplay(object):  # For Skeletons too.
         self.source = self.vtkSource()
         canvaslayer = gridlayers.SolidFilledGridCanvasLayer(
             self.gfxwindow.oofcanvas, self.name(), self.source)
+        canvaslayer.setEmpty(False)
         return canvaslayer
     def whoChanged(self):
         # setSource() is defined in SkeletonDisplayMethod or
@@ -1143,9 +1147,11 @@ class ElementVoxelCategoryIntersectionEdges(display.DisplayMethod):
         display.DisplayMethod.__init__(self)
 
     def newLayer(self):
-        return canvaslayers.LineSegmentLayer(
+        layer = canvaslayers.LineSegmentLayer(
             self.gfxwindow.oofcanvas,
             "ElementVoxelCategoryIntersectionEdges")
+        layer.setEmpty(False)
+        return layer
 
     def setParams(self):
         self.canvaslayer.set_color(self.color)
@@ -1169,9 +1175,10 @@ class DrawLinesFromFile(display.DisplayMethod):
         self.line_width = line_width
         display.DisplayMethod.__init__(self)
     def newLayer(self):
-        return canvaslayers.LineSegmentLayer(
-            self.gfxwindow.oofcanvas,
-            "DrawLinesFromFile")
+        layer = canvaslayers.LineSegmentLayer(self.gfxwindow.oofcanvas,
+                                              "DrawLinesFromFile")
+        layer.setEmpty(False)
+        return layer
     def setParams(self):
         self.canvaslayer.set_color(self.color)
         self.canvaslayer.set_lineWidth(self.line_width)
@@ -1197,9 +1204,10 @@ class DrawLinesFromFiles(display.DisplayMethod):
         self.line_width = line_width
         display.DisplayMethod.__init__(self)
     def newLayer(self):
-        return canvaslayers.LineSegmentLayer(
-            self.gfxwindow.oofcanvas,
-            "DrawLinesFromFiles")
+        layer = canvaslayers.LineSegmentLayer(self.gfxwindow.oofcanvas,
+                                              "DrawLinesFromFiles")
+        layer.setEmpty(False)
+        return layer
     def setParams(self):
         self.canvaslayer.set_color(self.color)
         self.canvaslayer.set_lineWidth(self.line_width)

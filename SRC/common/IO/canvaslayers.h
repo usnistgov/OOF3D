@@ -127,8 +127,14 @@ typedef std::vector< vtkSmartPointer<vtkProp> > PropVec;
 
 class OOFCanvasLayer : public OOFCanvasLayerBase {
 private:
+   // showing_ is set by show() and hide(), which also toggle the vtk
+   // Visibility flags.
   bool showing_;
+  bool empty_;
   PropVec props;
+  // setPropVisibility toggles vtk visibility, without touching the
+  // OOFCanvasLayer state.
+  void setPropVisibility(bool);
 public:
   OOFCanvasLayer(GhostOOFCanvas*, const std::string&);
   virtual ~OOFCanvasLayer();
@@ -143,6 +149,9 @@ public:
   void addProp(vtkSmartPointer<vtkProp>);
   void removeProp(vtkSmartPointer<vtkProp>);
   void removeAllProps();
+  // setEmpty should be called when nothing will be drawn.  See the
+  // comment in the .C file.
+  void setEmpty(bool);
 
   virtual void show(bool);
   virtual void hide(bool);
@@ -283,7 +292,6 @@ protected:
   vtkSmartPointer<vtkActor> actor;
   vtkSmartPointer<vtkDataSetMapper> mapper;
   vtkSmartPointer<vtkTableBasedClipDataSet> clipper;
-  int number_cells;
   virtual void start_clipping();
   virtual void stop_clipping();
   virtual void set_clip_parity(bool);
@@ -296,7 +304,6 @@ public:
   void set_color(const CColor&);
   void set_opacity(double);
   virtual void set_size(double);
-  int get_gridsize() const;
   virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
 				  CRectangularPrism*) const;
 };

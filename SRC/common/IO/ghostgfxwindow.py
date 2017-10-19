@@ -1,6 +1,5 @@
 # -*- python -*-
 
-
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
 # Recipients of this software assume all responsibilities associated
@@ -971,17 +970,19 @@ class GhostGfxWindow:
         # windows, regardless of whether or not they are drawable at
         # the moment.
 
-        # for debugging:
-        npredef = len(PredefinedLayer.allPredefinedLayers)
-        debug.fmsg("npredef=", npredef)
-        minpredef = 8
-        maxpredef = 9
-        #
-        for predeflayer in PredefinedLayer.allPredefinedLayers[minpredef:maxpredef]:
+        # For debugging predefined layers, it's sometimes useful to
+        # include only a subset of them.  This loop is done in a
+        # clumsy way so that it's easy to narrow down the set of
+        # layers that are included.
+        ## npre = len(PredefinedLayer.allPredefinedLayers)
+        ## debug.fmsg("npre=", npre)
+        minpre = 0
+        maxpre = -1
+        for predeflayer in PredefinedLayer.allPredefinedLayers[minpre:maxpre]:
+            layer, who = predeflayer.createLayer(self)
+            ## debug.fmsg("installing predefined layer", layer)
             # The gfxlock has been acquired already, so we call
             # incorporateLayer with lock=False.
-            layer, who = predeflayer.createLayer(self)
-            debug.fmsg("installing predefined layer", layer)
             self.incorporateLayer(layer, who, autoselect=False, lock=False)
         
         # Create default layers if possible.  One layer is created for

@@ -141,7 +141,8 @@ std::ostream &operator<<(std::ostream &os, const OOFCanvasLayerBase &layer) {
 
 OOFCanvasLayer::OOFCanvasLayer(GhostOOFCanvas *c, const std::string &nm)
   : OOFCanvasLayerBase(c, nm),
-    showing_(false)
+    showing_(false),
+    empty_(true)
 {}
 
 OOFCanvasLayer::~OOFCanvasLayer() {
@@ -150,6 +151,33 @@ OOFCanvasLayer::~OOFCanvasLayer() {
 void OOFCanvasLayer::addProp(vtkSmartPointer<vtkProp> prop) {
   props.push_back(prop);
   canvas->renderer->AddViewProp(prop);
+}
+
+void OOFCanvasLayer::setEmpty(bool empty) {
+  // This is a hack to avoid a peculiarity in vtk (in versions 7.1.1
+  // and 8.0.1, at least).  vtkDataSetMapper::Render creates a
+  // vtkDataSetSurfaceFilter when the mapper's input type isn't
+  // VTK_POLY_DATA, and this filter raises a warning when its input
+  // contains no cells, although the empty input actually causes no
+  // errors.  We often have input data with no cells, such as the
+  // selection layers when nothing is selected.  To avoid filling the
+  // screen with ignorable warnings, those layers should call
+  // setEmpty(true) when they become empty.
+
+  // setEmpty(true) does *not* mean that there are no vtkProps.  It
+  // means that the props won't result in anything being drawn.
+
+  // Layers that don't use a vtkDataSetMapper or always pass
+  // VTK_POLY_DATA to it can probably get away with just calling
+  // setEmpty(false) in newLayer() and ignoring it thereafter.
+
+  if(empty != empty_) {
+    empty_ = empty;
+    if(empty_)
+      setPropVisibility(false);
+    else
+      setPropVisibility(showing_);
+  }
 }
 
 void OOFCanvasLayer::removeProp(vtkSmartPointer<vtkProp> prop) {
@@ -172,6 +200,7 @@ void OOFCanvasLayer::removeAllProps() {
     }
   }
   props.resize(0);
+  empty_ = true;
 }
 
 // void OOFCanvasLayer::raise_layer(int h) {
@@ -220,18 +249,32 @@ void OOFCanvasLayer::removeAllProps() {
 //   }
 // }
 
+// setPropVisibility toggles the vtkProp's visibilities, without
+// touching the OOFCanvasLayer flags that say whether or not the layer
+// *should* be visible.
+
+void OOFCanvasLayer::setPropVisibility(bool visible) {
+  if(empty_)
+    visible = false;
+  for(unsigned int i=0; i<props.size(); i++) {
+    // If the new value is the same as the old one, don't call
+    // SetVisibility because it'll update the vtk modification time
+    // unnecessarily.
+    if((bool) props[i]->GetVisibility() != visible)
+      props[i]->SetVisibility(visible);
+  }
+}
+
 void OOFCanvasLayer::show(bool forced) {
   if(!showing_ || forced) {
-    for(unsigned int i=0; i<props.size(); i++)
-      props[i]->VisibilityOn();
+    setPropVisibility(true);
     showing_ = true;
   }
 }
 
 void OOFCanvasLayer::hide(bool forced) {
   if(showing_ || forced) {
-    for(unsigned int i=0; i<props.size(); i++)
-      props[i]->VisibilityOff();
+    setPropVisibility(false);
     showing_ = false;
   }
 }
@@ -1030,12 +1073,10 @@ void SimpleCellLayer::setModified() {
 
 void SimpleCellLayer::clear() {
   grid->Initialize();
-  number_cells = 0;
 }
 
 void SimpleCellLayer::newGrid(vtkSmartPointer<vtkPoints> pts, int ncells) {
   grid->Initialize();
-  number_cells = ncells;
   if(ncells > 0)
     grid->Allocate(ncells, ncells);
   grid->SetPoints(pts);
@@ -1091,10 +1132,6 @@ void SimpleCellLayer::set_color(const CColor &color) {
 
 void SimpleCellLayer::set_opacity(double opacity) {
   actor->GetProperty()->SetOpacity(opacity);
-}
-
-int SimpleCellLayer::get_gridsize() const {
-  return number_cells;
 }
 
 bool SimpleCellLayer::visibleBoundingBox(vtkSmartPointer<vtkRenderer> renderer,
@@ -1474,7 +1511,6 @@ const std::string &LineSegmentLayer::classname() const {
 
 void LineSegmentLayer::set_nSegs(int nseg) {
   grid->Initialize();
-  number_cells = nseg;
   if(nseg > 0)
     grid->Allocate(nseg, nseg);
   grid->SetPoints(vtkSmartPointer<vtkPoints>::New());

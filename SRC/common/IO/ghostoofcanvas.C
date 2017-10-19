@@ -144,9 +144,9 @@ void GhostOOFCanvas::render() {
     renderLock.acquire();
     try {
       if(render_window->IsDrawable()) {
-	oofcerr << "GhostOOFCanvas::render: calling Render " << std::endl;
+	// oofcerr << "GhostOOFCanvas::render: calling Render " << std::endl;
 	render_window->Render();
-	oofcerr << "GhostOOFCanvas::render: back from Render" << std::endl;
+	// oofcerr << "GhostOOFCanvas::render: back from Render" << std::endl;
       }
     }
     catch(...) {

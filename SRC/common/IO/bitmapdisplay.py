@@ -42,8 +42,10 @@ class BitmapDisplayMethod(display.DisplayMethod):
         display.DisplayMethod.destroy(self, destroy_canvaslayer)
 
     def newLayer(self):
-        return canvaslayers.ImageCanvasLayer(
+        layer = canvaslayers.ImageCanvasLayer(
             self.gfxwindow.oofcanvas, self.layerName())
+        layer.setEmpty(False)
+        return layer
 
     def layersChanged(self):
         overlayers = self.gfxwindow.getOverlayers()
