@@ -41,7 +41,17 @@
 #  Set your LD_LIBRARY_PATH to include $OOFINSTALL/lib.  This isn't
 #  necessary on OS X.
 
-import sys, string, os, subprocess
+## TODO: The oof2 and oof3d versions of this script have diverged a
+## bit... Ideally they should be identical except for the next line.
+## Perhaps that line should be in a separate local config file that is
+## imported here.  The --3D flag and other dimension-specific data
+## should be in that file too.  Then we wouldn't need separate build
+## targets for 2d and 3d -- running "oof2-build debug" in an oof2
+## directory would build oof2, and running it in a oof3d directory
+## would build oof3d.
+oofname = "oof3d"
+
+import sys, string, os, subprocess, glob
 
 pyversion = string.join(map(str, sys.version_info[:2]),".")
 
@@ -64,12 +74,12 @@ else:
 
 
 # To make it possible to build different versions of the *same* branch
-# of OOF3D (for example, one that is up-to-date with cvs and one that
+# of OOF3D (for example, one that is up-to-date with git and one that
 # is locally modified), the stow directory name also includes the name
 # of the local directory, after 'OOF3D'. 
 localdir = os.path.split(os.getcwd())[1]
-if localdir.startswith('OOF3D'):
-    localdir = localdir[5:]
+if localdir.startswith(oofname) or localdir.startswith(oofname.upper()):
+    localdir = localdir[len(oofname):]
 
 build_types_2D = ('dist', 'devel', 'debug', 'profile')
 build_types_3D = ('dist3d', 'debug3d', 'profile3d')
@@ -106,10 +116,11 @@ elif build_type == 'profile3d':
     # build_args.append('--libraries=profiler')
     # os.putenv('CFLAGS', '-g -fno-inline')
 
-if build_type in build_types_2D:
-    buildname = 'oof2'
-else:
-    buildname = 'oof3d'
+# if build_type in build_types_2D:
+#     buildname = 'oof2'
+# else:
+#     buildname = 'oof3d'
+buildname = oofname
 
 while sys.argv:
     arg = sys.argv.pop(0)
@@ -132,7 +143,8 @@ if not installdir:
 stowdir = os.path.join(installdir, 'stow')
 builddir =  "-".join(["builddir", branchtag, build_type])
 if localdir:
-    stowsubdir = "-".join([buildname, branchtag, localdir, build_type, pyversion])
+    stowsubdir = "-".join([buildname, branchtag, localdir, build_type,
+                           pyversion])
 else:
     stowsubdir = "-".join([buildname, branchtag, build_type, pyversion])
 if build_type in ['dist3d', 'debug3d', 'profile3d']:
@@ -143,6 +155,7 @@ startdir = os.getcwd()
 
 # Move builddir to build
 try:
+    print "oof2-build: Using build directory", builddir
     os.rename(builddir, 'build')
 except OSError:
     print "Directory %s not found, creating new build directory." % builddir
@@ -154,7 +167,20 @@ except OSError:
         subprocess.check_call(['tmutil', 'addexclusion',
                                os.path.abspath('build')])
 
+
 try:
+    # Hack.  Remove the oof2 or oof3d script from the build/script*
+    # directory, if it exists.  setup.py will rebuild it trivally if
+    # it's missing.  It has to be rebuilt if the python version has
+    # changed, but the setup.py script won't notice that.
+    fnames = glob.glob(os.path.join('build', 'script*', oofname))
+    if len(fnames) != 1:
+        print "Expected to find one script named", oofname, "but found",\
+            len(fnames), "!"
+        sys.exit()
+    print "Removing", fnames[0]
+    os.remove(fnames[0])
+
     build_cmd = "python setup.py build %s install --prefix=%s" \
                 % (string.join(build_args),
                    os.path.join(stowdir, stowsubdir))
