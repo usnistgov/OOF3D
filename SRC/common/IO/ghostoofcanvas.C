@@ -57,8 +57,11 @@ GhostOOFCanvas::GhostOOFCanvas()
     rendered(false),
     axes_showing(false),
     deactivated(false),
-    // render_window(vtkSmartPointer<vtkXOpenGLRenderWindow>::New()),
+#ifdef OOF_USE_COCOA
+    render_window(vtkSmartPointer<vtkCocoaRenderWindow>::New()),
+#else
     render_window(vtkSmartPointer<vtkRenderWindow>::New()),
+#endif // OOF_USE_COCOA
     renderer(vtkSmartPointer<vtkRenderer>::New()),
     axes(vtkSmartPointer<vtkAxesActor>::New()),
     contourMapActor(vtkSmartPointer<vtkScalarBarActor>::New()),

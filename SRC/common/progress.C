@@ -28,7 +28,7 @@ std::map<int, Progress*> idmap;
 
 static const bool verboseLocks = false;
 
-Progress::Progress(const std::string &nm, ThreadState *ts)
+Progress::Progress(const std::string &nm, OOFThreadState *ts)
   : name_(nm),
     stopped_(false),
     finished_(false),
@@ -86,7 +86,7 @@ void Progress::start() {
 void Progress::stop() {
   // Stop all Progress objects on the thread on which this Progress
   // object is running.  stop() may be called from another thread, so
-  // it can't use findThreadState() to get the ThreadState.
+  // it can't use findThreadState() to get the OOFThreadState.
   threadstate->impedeProgress();
 }
 
@@ -130,8 +130,8 @@ const std::string *Progress::message() const {
 //   abort();
 // }
 
-// Acquire and release the ThreadState's progressLock.  This prevents
-// the ThreadState from deleting the Progress object.
+// Acquire and release the OOFThreadState's progressLock.  This prevents
+// the OOFThreadState from deleting the Progress object.
 
 void Progress::acquireThreadLock() {
   threadstate->acquireProgressLock();
@@ -144,14 +144,14 @@ void Progress::releaseThreadLock() {
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // If new Progress subclasses are created, remember to update the
-// factory function ThreadState::getProgress.
+// factory function OOFThreadState::getProgress.
 
 const std::string Progress::modulename_("ooflib.SWIG.common.progress");
 const std::string DefiniteProgress::classname_("DefiniteProgress");
 const std::string LogDefiniteProgress::classname_("LogDefiniteProgress");
 const std::string IndefiniteProgress::classname_("IndefiniteProgress");
 
-DefiniteProgress::DefiniteProgress(const std::string &name, ThreadState *ts)
+DefiniteProgress::DefiniteProgress(const std::string &name, OOFThreadState *ts)
   : Progress(name, ts),
     fraction_(0.0)
 {}
@@ -169,7 +169,7 @@ double DefiniteProgress::getFraction() const {
   return fraction_;
 }
 
-IndefiniteProgress::IndefiniteProgress(const std::string &name, ThreadState *ts)
+IndefiniteProgress::IndefiniteProgress(const std::string &name, OOFThreadState *ts)
   : Progress(name, ts),
     count_(0)
 {}
@@ -190,7 +190,7 @@ unsigned long IndefiniteProgress::pulsecount() const {
 }
 
 LogDefiniteProgress::LogDefiniteProgress(const std::string &name,
-					 ThreadState *ts)
+					 OOFThreadState *ts)
   : DefiniteProgress(name, ts)
 {}
 
@@ -265,14 +265,14 @@ void Progress::disconnectBar(PyObject *pbar) {
 // there's an existing object with the given name, in which case it
 // returns that one instead.
 Progress *getProgress(const std::string &name, ProgressType ptype) {
-  ThreadState *ts = findThreadState();
+  OOFThreadState *ts = findThreadState();
   return ts->getProgress(name, ptype);
 }
 
 // findProgress returns the existing Progress object with the given
 // name.  It raises an exception if there isn't one.
 Progress *findProgress(const std::string &name) {
-  ThreadState *ts = findThreadState();
+  OOFThreadState *ts = findThreadState();
   return ts->findProgress(name);
 }
 

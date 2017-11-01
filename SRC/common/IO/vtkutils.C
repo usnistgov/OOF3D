@@ -64,5 +64,38 @@ void initialize_vtk() {
     VTK_MODULE_INIT(vtkRenderingContextOpenGL2);
     VTK_MODULE_INIT(vtkRenderingVolumeOpenGL2);
     VTK_MODULE_INIT(vtkRenderingFreeType);
+
+
+    // A comment on vtk-users led me to the VTK
+    // Utilities/Maintenance/WhatModules.py script, which supposedly
+    // scans your code and determines what modules it needs.
+    // According to the script, we need the following.  But it doesn't
+    // say if they should be imported via VTK_MODULE_INIT, or what.
+    // Apparently this is incorrect, because it just leads to a Symbol
+    // not found error for __Z32vtkCommonCore_AutoInit_Constructv,
+    // although libvtkCommonCore is linked.
+    
+    // VTK_MODULE_INIT(vtkCommonCore);
+    // VTK_MODULE_INIT(vtkCommonDataModel);
+    // VTK_MODULE_INIT(vtkCommonExecutionModel);
+    // VTK_MODULE_INIT(vtkCommonTransforms);
+    // VTK_MODULE_INIT(vtkFiltersCore);
+    // VTK_MODULE_INIT(vtkFiltersExtraction);
+    // VTK_MODULE_INIT(vtkFiltersGeneral);
+    // VTK_MODULE_INIT(vtkFiltersGeometry);
+    // VTK_MODULE_INIT(vtkFiltersModeling);
+    // VTK_MODULE_INIT(vtkFiltersSources);
+    // VTK_MODULE_INIT(vtkIOExport);
+    // VTK_MODULE_INIT(vtkIOImage);
+    // VTK_MODULE_INIT(vtkIOXML);
+    // VTK_MODULE_INIT(vtkImagingColor);
+    // VTK_MODULE_INIT(vtkImagingCore);
+    // VTK_MODULE_INIT(vtkImagingGeneral);
+    // VTK_MODULE_INIT(vtkImagingMath);
+    // VTK_MODULE_INIT(vtkRenderingAnnotation);
+    // VTK_MODULE_INIT(vtkRenderingCore);
+    // VTK_MODULE_INIT(vtkRenderingOpenGL);
+    // VTK_MODULE_INIT(vtkWrappingPythonCore);
+    // VTK_MODULE_INIT(vtktiff);
   }
 }

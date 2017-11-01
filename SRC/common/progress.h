@@ -17,7 +17,7 @@
 // Progress objects keep track of a task's progress toward its goal
 // (DefiniteProgress subclass) or just that it's still active
 // (IndefiniteProgress subclass).  They're created by
-// ThreadState.getProgress() and deleted when the ThreadState is
+// OOFThreadState.getProgress() and deleted when the OOFThreadState is
 // destroyed.  Progress objects are lightweight so that running
 // processes don't have to do much work to maintain them, even inside
 // inner loops.  UI elements that display progress (ProgressBars) can
@@ -26,7 +26,7 @@
 #include "common/pythonexportable.h"
 #include "common/lock.h"
 
-class ThreadState;
+class OOFThreadState;
 
 #include <string>
 #include <vector>
@@ -37,7 +37,7 @@ class Progress : public PythonExportable<Progress> {
   std::string message_; 
   bool stopped_;
   bool finished_;
-  ThreadState *threadstate;
+  OOFThreadState *threadstate;
   static const std::string modulename_;
   PyObject *progressbar;
   // Progress objects need to have __eq__ and __hash__ methods in
@@ -62,7 +62,7 @@ protected:
   // be built in the GUI.
   void start();
 public:
-  Progress(const std::string&, ThreadState*);
+  Progress(const std::string&, OOFThreadState*);
   virtual ~Progress();
   int id() const { return id_; }
 
@@ -80,7 +80,7 @@ public:
   // decide whether or not to abort, and finished() should be called
   // from outside the thread to find out if the task is still running.
   // Note that determining if the *thread* is still running should be
-  // done by querying the Worker or ThreadState, not the Progress
+  // done by querying the Worker or OOFThreadState, not the Progress
   // object(s)!
   bool stopped() const { return stopped_; } 
   bool finished() const { return finished_; }
@@ -116,7 +116,7 @@ private:
 protected:
   double fraction_;
 public:
-  DefiniteProgress(const std::string&, ThreadState*);
+  DefiniteProgress(const std::string&, OOFThreadState*);
   virtual ~DefiniteProgress();
   virtual const std::string &classname() const { return classname_; }
   virtual void setFraction(double x);
@@ -138,7 +138,7 @@ private:
   double log_init_over_targ;
   static const std::string classname_;
 public:
-  LogDefiniteProgress(const std::string &, ThreadState*);
+  LogDefiniteProgress(const std::string &, OOFThreadState*);
   virtual const std::string &classname() const { return classname_; }
   void setRange(double initial, double target);
   virtual void setFraction(double);
@@ -149,7 +149,7 @@ private:
   unsigned long count_;
   static const std::string classname_;
 public:
-  IndefiniteProgress(const std::string&, ThreadState*);
+  IndefiniteProgress(const std::string&, OOFThreadState*);
   virtual ~IndefiniteProgress();
   virtual const std::string &classname() const { return classname_; }
   // The backend should call pulse() to indicate that it's still alive

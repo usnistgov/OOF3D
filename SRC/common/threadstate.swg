@@ -23,11 +23,11 @@
 #include "common/tostring.h"
 %}
 
-class ThreadID {
+class OOFThreadID {
 public:
-  ThreadID();
+  OOFThreadID();
   %addmethods {
-    bool __eq__(ThreadID &right) {
+    bool __eq__(OOFThreadID &right) {
       return operator==(*self,right);
     }
     %new const string *__repr__() {
@@ -36,11 +36,11 @@ public:
   }
 };
 
-class ThreadState {
+class OOFThreadState {
  public:
-  ThreadState();
-  ~ThreadState();
-  const ThreadID & get_thread_ID();
+  OOFThreadState();
+  ~OOFThreadState();
+  const OOFThreadID & get_thread_ID();
   int id();
   %new StringVec *getProgressNames();
   Progress *getProgress(char*, ProgressType);
@@ -49,7 +49,7 @@ class ThreadState {
   void acquireProgressLock();
   void releaseProgressLock();
   %addmethods {
-    int __eq__(ThreadState &right) {
+    int __eq__(OOFThreadState &right) {
       return operator==(*self,right);
     }
   }
@@ -57,7 +57,7 @@ class ThreadState {
 
 void initThreadState();
 int findThreadNumber();
-ThreadState *findThreadState();
+OOFThreadState *findThreadState();
 bool mainthread_query();
 void mainthread_delete();
 int nThreadStates();
@@ -67,7 +67,7 @@ void textMode();
 bool threading_enabled;
 
 
-void cancelThread(ThreadState &tobecancelled); 
+void cancelThread(OOFThreadState &tobecancelled); 
 /*
   Handle with care!! cancelThread WILL stop a thread without any regard to 
   any cleanup that must be done.

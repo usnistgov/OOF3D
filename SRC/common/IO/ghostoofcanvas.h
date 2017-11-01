@@ -39,7 +39,11 @@ class GhostOOFCanvas;
 #include <vtkUnstructuredGrid.h>
 
 // #include <vtkXOpenGLRenderWindow.h>
+#ifdef OOF_USE_COCOA
+#include <vtkCocoaRenderWindow.h>
+#else
 #include <vtkRenderWindow.h>
+#endif // OOF_USE_COCOA
 
 class View;
 class ImageFormat;
@@ -55,7 +59,11 @@ protected:
   bool axes_showing;		// axes are actually drawn
   bool deactivated;		// suppress redraws when shutting down
   // vtkSmartPointer<vtkXOpenGLRenderWindow> render_window;
+#ifdef OOF_USE_COCOA
+  vtkSmartPointer<vtkCocoaRenderWindow> render_window;
+#else
   vtkSmartPointer<vtkRenderWindow> render_window;
+#endif // OOF_USE_COCOA
   vtkSmartPointer<vtkRenderer> renderer;
   vtkSmartPointer<vtkAxesActor> axes;
   vtkSmartPointer<vtkScalarBarActor> contourMapActor;

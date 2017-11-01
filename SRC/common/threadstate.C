@@ -33,18 +33,18 @@ bool text_mode = false;
 // here, which will never be instrumented.
 UndebuggableLock lockListOfStates;
 
-static std::vector<ThreadState*> &listOfStates() {
-  static std::vector<ThreadState*> list;
+static std::vector<OOFThreadState*> &listOfStates() {
+  static std::vector<OOFThreadState*> list;
   return list;
 }
 
-ThreadState *findThreadState() {
-  const ThreadID currentThread;
-  std::vector<ThreadState*> &list = listOfStates();
+OOFThreadState *findThreadState() {
+  const OOFThreadID currentThread;
+  std::vector<OOFThreadState*> &list = listOfStates();
   KeyHolder hldr(lockListOfStates); 
 
-  for(std::vector<ThreadState*>::size_type i=0; i<list.size(); i++) {
-    ThreadState *ts = list[i];
+  for(std::vector<OOFThreadState*>::size_type i=0; i<list.size(); i++) {
+    OOFThreadState *ts = list[i];
     if(ts->get_thread_ID() == currentThread) {
       return ts;
     }
@@ -53,7 +53,7 @@ ThreadState *findThreadState() {
 }
 
 int findThreadNumber() {
-  ThreadState *ts = findThreadState();
+  OOFThreadState *ts = findThreadState();
   if(!ts)
     // If this function has been called too early in the thread
     // creation process, the call to findThreadState() can fail.  The
@@ -63,26 +63,26 @@ int findThreadNumber() {
     // an otherwise impossible number.
     return -1;
     // throw ErrProgrammingError(
-    // 	   "findThreadNumber called on a thread with no ThreadState!",
+    // 	   "findThreadNumber called on a thread with no OOFThreadState!",
     // 	   __FILE__, __LINE__);
   return ts->id();
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-ThreadID::ThreadID() {
+OOFThreadID::OOFThreadID() {
   _ID = pthread_self();
 }
 
-bool operator==(const ThreadID &t1, const ThreadID &t2) {
+bool operator==(const OOFThreadID &t1, const OOFThreadID &t2) {
   return pthread_equal(t1.get_ID(), t2.get_ID());
 }
 
-bool operator!=(const ThreadID &t1, const ThreadID &t2) {
+bool operator!=(const OOFThreadID &t1, const OOFThreadID &t2) {
   return not pthread_equal(t1.get_ID(), t2.get_ID());
 }
 
-std::ostream &operator<<(std::ostream &os, const ThreadID &tid) {
+std::ostream &operator<<(std::ostream &os, const OOFThreadID &tid) {
   return os << tid.get_ID();
 }
 
@@ -99,28 +99,28 @@ static int uniqueThreadSafeID() {
 
 class ThreadIDcompare {
 private:
-  const ThreadID _ID;
+  const OOFThreadID _ID;
 public:
-  ThreadIDcompare(const ThreadState *ts) : _ID(ts->get_thread_ID()) {}
-  bool operator()(const ThreadState *ts) const {
+  ThreadIDcompare(const OOFThreadState *ts) : _ID(ts->get_thread_ID()) {}
+  bool operator()(const OOFThreadState *ts) const {
     return ts->get_thread_ID() == _ID;
   }
 };
 
 
-ThreadState::ThreadState()
+OOFThreadState::OOFThreadState()
   : _id(uniqueThreadSafeID())
 {
-  // oofcerr << "ThreadState::ctor: " << this << " " << id() << std::endl;
+  // oofcerr << "OOFThreadState::ctor: " << this << " " << id() << std::endl;
   KeyHolder hldr(lockListOfStates);
-  // If there is another ThreadState with the same ThreadID, it must
+  // If there is another OOFThreadState with the same OOFThreadID, it must
   // correspond to a thread that's finished (because the system won't
   // reuse a pthread_t from a live thread) but for some reason the
-  // ThreadState hasn't been destroyed. 
+  // OOFThreadState hasn't been destroyed. 
 
-  std::vector<ThreadState*> &los = listOfStates();
+  std::vector<OOFThreadState*> &los = listOfStates();
   bool replaced = false;
-  for(std::vector<ThreadState*>::iterator i=los.begin(); i<los.end(); ++i) {
+  for(std::vector<OOFThreadState*>::iterator i=los.begin(); i<los.end(); ++i) {
     if((*i)->get_thread_ID() == get_thread_ID()) {
       *i = this;
       replaced = true;
@@ -137,8 +137,8 @@ ThreadState::ThreadState()
   pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &old_cancel_type);
 }
 
-ThreadState::~ThreadState() {
-  // oofcerr << "ThreadState::dtor: " << this << " " << id() << std::endl;
+OOFThreadState::~OOFThreadState() {
+  // oofcerr << "OOFThreadState::dtor: " << this << " " << id() << std::endl;
   progressLock.acquire();
   for(ProgressList::iterator i=progressList.begin(); i<progressList.end(); ++i)
     {
@@ -147,11 +147,11 @@ ThreadState::~ThreadState() {
   progressList.clear();
   progressLock.release();
   KeyHolder hldr(lockListOfStates);
-  std::vector<ThreadState*> &list = listOfStates();
-  // It's possible that the ThreadState has already been removed from
-  // the list, if another ThreadState with the same pthread ID has
+  std::vector<OOFThreadState*> &list = listOfStates();
+  // It's possible that the OOFThreadState has already been removed from
+  // the list, if another OOFThreadState with the same pthread ID has
   // already been created.
-  for(std::vector<ThreadState*>::iterator i=list.begin(); i<list.end(); ++i) {
+  for(std::vector<OOFThreadState*>::iterator i=list.begin(); i<list.end(); ++i) {
     if((*i) == this) {
       list.erase(i);
       break;
@@ -164,25 +164,25 @@ int nThreadStates() {
   return listOfStates().size();
 }
 
-std::ostream &operator<<(std::ostream &os, const ThreadState &ts) {
-  return os << "ThreadState(id=" << ts.id() << ", ID=" << ts.get_thread_ID()
+std::ostream &operator<<(std::ostream &os, const OOFThreadState &ts) {
+  return os << "OOFThreadState(id=" << ts.id() << ", ID=" << ts.get_thread_ID()
 	    << ")";
 }
 
-int operator==(const ThreadState &t1, const ThreadState &t2) {
+int operator==(const OOFThreadState &t1, const OOFThreadState &t2) {
   return t1.id() == t2.id();
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-void ThreadState::acquireProgressLock() {
-  // oofcerr << "ThreadState::acquireProgressLock: " << this << " " << id()
+void OOFThreadState::acquireProgressLock() {
+  // oofcerr << "OOFThreadState::acquireProgressLock: " << this << " " << id()
   // 	  << std::endl;
   progressLock.acquire();
 }
 
-void ThreadState::releaseProgressLock() {
-  // oofcerr << "ThreadState::releaseProgressLock: " << this << " " << id() 
+void OOFThreadState::releaseProgressLock() {
+  // oofcerr << "OOFThreadState::releaseProgressLock: " << this << " " << id() 
   // 	  << std::endl;
   progressLock.release();
 }
@@ -191,9 +191,9 @@ void ThreadState::releaseProgressLock() {
 // name in the calling thread.  It creates a new one if there isn't an
 // existing Progress object with that name.
 
-Progress *ThreadState::getProgress(const std::string &name, ProgressType ptype)
+Progress *OOFThreadState::getProgress(const std::string &name, ProgressType ptype)
 {
-  // oofcerr << "ThreadState::getProgress: " << this << " " << id()
+  // oofcerr << "OOFThreadState::getProgress: " << this << " " << id()
   // 	  << std::endl;
   ProgressList::iterator iter;
   try {
@@ -226,7 +226,7 @@ Progress *ThreadState::getProgress(const std::string &name, ProgressType ptype)
   // to any other Progress objects in the thread.
   progressLock.acquire();
   Progress *progress = *iter;
-  // oofcerr << "ThreadState::getProgress: reusing old Progress object "
+  // oofcerr << "OOFThreadState::getProgress: reusing old Progress object "
   // 	  << progress << " " << name <<  std::endl;
   progressList.erase(iter);
   progressList.push_back(progress);
@@ -239,12 +239,12 @@ Progress *ThreadState::getProgress(const std::string &name, ProgressType ptype)
 // name in the calling thread.  It throws ErrNoProgress if the
 // Progress object doesn't exist.
 
-Progress *ThreadState::findProgress(const std::string &name) {
+Progress *OOFThreadState::findProgress(const std::string &name) {
   return *findProgressIterator(name);
 }
 
-ThreadState::ProgressList::iterator
-ThreadState::findProgressIterator(const std::string &name)
+OOFThreadState::ProgressList::iterator
+OOFThreadState::findProgressIterator(const std::string &name)
 {
   // This linear search shouldn't be too slow, because there should
   // never be hundreds of Progress objects in a single thread.  If we
@@ -262,13 +262,13 @@ ThreadState::findProgressIterator(const std::string &name)
   throw ErrNoProgress();
 }
 
-void ThreadState::impedeProgress() {
+void OOFThreadState::impedeProgress() {
   KeyHolder key(progressLock);
   for(ProgressList::iterator i=progressList.begin(); i<progressList.end(); ++i)
     (*i)->stop1();
 }
 
-std::vector<std::string> *ThreadState::getProgressNames() const {
+std::vector<std::string> *OOFThreadState::getProgressNames() const {
   std::vector<std::string> *pnames(new std::vector<std::string>());
   // When this is called by ActivityViewer.__init__ or
   // TextThreadedWorker._drawProgressBars, progressLock has already
@@ -285,7 +285,7 @@ std::vector<std::string> *ThreadState::getProgressNames() const {
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 
-static ThreadState *mainthreadstate = 0;
+static OOFThreadState *mainthreadstate = 0;
 
 void initThreadState() {
 #ifdef _OPENMP
@@ -298,23 +298,23 @@ void initThreadState() {
     }
   }
 #endif // _OPENMP
-  // Create a ThreadState object for the main thread.  This is created
+  // Create a OOFThreadState object for the main thread.  This is created
   // when the oof module is loaded by Python.
-  mainthreadstate = new ThreadState();
+  mainthreadstate = new OOFThreadState();
 }
 
 // // Reassign the mainthreadstate variable -- used to set a new main
 // // thread.  This probably should never be used.
-// ThreadState *make_thread_main() {
-//   ThreadState *ts = findThreadState();
+// OOFThreadState *make_thread_main() {
+//   OOFThreadState *ts = findThreadState();
 //   if (*ts == *mainthreadstate) 
 //     return mainthreadstate; // Calling thread is already main, do nothing.
-//   ThreadState *oldmain = mainthreadstate;
+//   OOFThreadState *oldmain = mainthreadstate;
 //   mainthreadstate = ts;
 //   return oldmain;
 // }
 // // Undo the effect of make_thread_main().
-// void restore_main_thread(ThreadState *ts) {
+// void restore_main_thread(OOFThreadState *ts) {
 //   mainthreadstate = ts;
 // }
 
@@ -338,8 +338,8 @@ bool mainthread_query() {
     // serial.  
     return true;
   }
-  ThreadState *ts = findThreadState();
-  // The main thread always has a ThreadState object=, so if
+  OOFThreadState *ts = findThreadState();
+  // The main thread always has a OOFThreadState object=, so if
   // findThreadState fails, we're not on the main thread.
   return ts && *ts == *mainthreadstate;
 }
@@ -349,14 +349,14 @@ void mainthread_delete() {
   mainthreadstate = 0;
 }
 
-void cancelThread(ThreadState &tobecancelled) {
-  // TODO OPT: Why isn't this a ThreadState member function?
+void cancelThread(OOFThreadState &tobecancelled) {
+  // TODO OPT: Why isn't this a OOFThreadState member function?
   if(tobecancelled == *mainthreadstate) {
     // make sure that the main thread is NOT stopped by this function
     return; 
   }
   else {
-    ThreadID id = tobecancelled.get_thread_ID();
+    OOFThreadID id = tobecancelled.get_thread_ID();
     pthread_cancel(id.get_ID());
   }
 }

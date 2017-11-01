@@ -174,7 +174,7 @@ class ThreadedWorkerCore(threading.Thread, WorkerCore):
     # threading.Thread.start().
     def run(self):
         if self.menuitem.callback is not None:
-            self.threadstate = threadstate.ThreadState()
+            self.threadstate = threadstate.OOFThreadState()
             threadmanager.threadManager.newWorker(self)
             try:
                 self.initialize()

@@ -92,8 +92,8 @@ def shutdown(exitstatus):
     excepthook.assign_excepthook()
 
     # On some systems (at least OS X 10.5.7) it's important to delete
-    # the main thread's ThreadState object explicitly before calling
-    # sys.exit().  If called implicitly by sys.exit, the ThreadState
+    # the main thread's OOFThreadState object explicitly before calling
+    # sys.exit().  If called implicitly by sys.exit, the OOFThreadState
     # destructor crashes.  This must come after the GUI has been
     # stopped, or else subthreads used in stopping the GUI will fail.
     threadstate.mainthread_delete()

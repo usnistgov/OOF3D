@@ -22,12 +22,17 @@
 
 #include <iostream>
 
-#include <gdk/gdkx.h>
+//#include <gdk/gdkx.h>
+#include <gdk/gdk.h>
 #include <gtk/gtk.h>
 #include <pygobject.h>
 #include <pygtk/pygtk.h>
 
 #include <vtkCamera.h>
+
+#ifdef OOF_USE_COCOA
+#include <gdk/gdkquartz.h>
+#endif // OOF_USE_COCOA
 
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -57,9 +62,13 @@ OOFCanvas3D::OOFCanvas3D()
     releasePyLock(pystate);
   }
 
-  drawing_area = gtk_drawing_area_new(); 
+  drawing_area = gtk_drawing_area_new();
+#ifndef OOF_USE_COCOA
   Display* dis = GDK_DISPLAY();
   render_window->SetDisplayId(dis);
+#else
+
+#endif // OOF_USE_COCOA
 
   // Using vtk5, we had to set the colormap of the drawing area.  I
   // don't know if it was required on Linux or Mac or both.  Using the
@@ -105,7 +114,7 @@ OOFCanvas3D::OOFCanvas3D()
 
 OOFCanvas3D::~OOFCanvas3D() {}
 
-PyObject *OOFCanvas3D::widget() { 
+PyObject *OOFCanvas3D::widget() {
   PyObject *wdgt;
   PyGILState_STATE pystate = acquirePyLock();
   try {
@@ -162,12 +171,18 @@ gboolean OOFCanvas3D::realize() {
   assert(mainthread_query());
   if(!created) {
     gtk_widget_realize(drawing_area);
+#ifndef OOF_USE_COCOA
     XID wid = GDK_WINDOW_XID(drawing_area->window);
     // this version only works in gtk 2.14 and up  
     //GDK_WINDOW_XID(gtk_widget_get_window(drawing_area));
     //XID pid = GDK_WINDOW_XID(gtk_widget_get_parent_window(drawing_area));
     //render_window->SetParentId((void*)pid);
     render_window->SetWindowId((void*)wid);
+#else
+    render_window->SetRootWindow(gtk_widget_get_root_window(drawing_area));
+    GdkWindow *gparent = gtk_widget_get_parent_window(drawing_area);
+    render_window->SetParentId(gdk_quartz_window_get_nsview(gparent));
+#endif // OOF_USE_COCOA
     created = true;
   }
   return true;
@@ -188,6 +203,10 @@ gboolean OOFCanvas3D::configure(GdkEventConfigure *event) {
   sz = render_window->GetSize();
   if(event->width != sz[0] || event->height != sz[1]) {
     render_window->SetSize(event->width, event->height);
+#ifdef OOF_USE_COCOA
+    render_window->SetPosition(drawing_area->allocation.x,
+     			       drawing_area->allocation.y);
+#endif // OOF_USE_COCOA						
   }
   return true;
 }

@@ -83,6 +83,9 @@ from types import *
 # Tell distutils that .C is a C++ file suffix.
 from distutils.ccompiler import CCompiler
 CCompiler.language_map['.C'] = 'c++'
+CCompiler.language_map['.mm'] = 'objc'
+from distutils import unixccompiler
+unixccompiler.UnixCCompiler.src_extensions.append('.mm')
 
 ## needed to save installation log to a saved variable before
 calledFromInstall = False # checks if build is being called from oof_install
@@ -473,7 +476,7 @@ class oof_build_xxxx:
         # forced to.  It would require everything that depends on it
         # to be recompiled unnecessarily.
         if self.force or not os.path.exists(cfgfilename):
-            print "creating", cfgfilename
+            print "Creating config file:", cfgfilename
             if not self.dry_run:
                 os.system('mkdir -p %s' % os.path.join(self.build_temp, 'SRC'))
                 cfgfile = open(cfgfilename, "w")
@@ -483,6 +486,7 @@ class oof_build_xxxx:
 // Re-run setup.py to change the options.
 #ifndef OOFCONFIG_H
 #define OOFCONFIG_H
+#include <Python.h>
                 """
                 if HAVE_PETSC:
                     print >> cfgfile, '#define HAVE_PETSC 1'
@@ -515,17 +519,22 @@ class oof_build_xxxx:
                     else:
                         print >> sys.stderr, "Can't find perftools!"
                         sys.exit(1)
-                # Python pre-2.5 compatibility
-                print >> cfgfile, """\
-#include <Python.h>
-#if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
-typedef int Py_ssize_t;
-#define PY_SSIZE_T_MAX INT_MAX
-#define PY_SSIZE_T_MIN INT_MIN
-#endif /* PY_VERSION_HEX check */
-"""
+                if USE_COCOA:
+                    print >> cfgfile, "#define OOF_USE_COCOA"
+                    
+#                 # Python pre-2.5 compatibility
+#                 print >> cfgfile, """\
+# #include <Python.h>
+# #if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
+# typedef int Py_ssize_t;
+# #define PY_SSIZE_T_MAX INT_MAX
+# #define PY_SSIZE_T_MIN INT_MIN
+# #endif /* PY_VERSION_HEX check */
+# """
                 print >> cfgfile, "#endif"
                 cfgfile.close()
+        else:
+            print "Reusing config file:", cfgfilename
 
     def check_header(self, headername):
         # Check that a c++ header file exists on the system.
@@ -1088,14 +1097,16 @@ def get_global_args():
     # hasn't been called yet.
 
     global HAVE_MPI, HAVE_OPENMP, HAVE_PETSC, DEVEL, NO_GUI, \
-        ENABLE_SEGMENTATION, PROFILER, \
+        ENABLE_SEGMENTATION, PROFILER, USE_COCOA, \
         DIM_3, DATADIR, DOCDIR, OOFNAME, SWIGDIR, NANOHUB, vtkdir
+
     HAVE_MPI = _get_oof_arg('--enable-mpi')
     HAVE_PETSC = _get_oof_arg('--enable-petsc')
     DEVEL = _get_oof_arg('--enable-devel')
     NO_GUI = _get_oof_arg('--disable-gui')
     ENABLE_SEGMENTATION = _get_oof_arg('--enable-segmentation')
     DIM_3 = _get_oof_arg('--3D')
+    USE_COCOA = _get_oof_arg('--cocoa')
     NANOHUB = _get_oof_arg('--nanoHUB')
     HAVE_OPENMP = _get_oof_arg('--enable-openmp')
     vtkdir = _get_oof_arg('--vtkdir')
