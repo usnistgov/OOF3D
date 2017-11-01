@@ -165,13 +165,12 @@ gboolean OOFCanvas3D::realize() {
     render_window->SetWindowId((void*) wid);
 
     // An old comment here said "this version only works in gtk
-    // 2.14. and up", but the code following it didn't make sense.  I
+    // 2.14 and up", but the code following it didn't make sense.  I
     // *think* that it should have been the following, but I'm not
     // sure.  Anyhow it doesn't seem to work -- it crashes when the
-    // window is closed, unless SetWindowId is set as well (not
-    // necessary in the Cocoa version).
-    XID pid = GDK_WINDOW_XID(gtk_widget_get_parent_window(drawing_area));
-    render_window->SetParentId((void*) pid);
+    // window is closed, unless SetWindowId is also set, as above.
+    // XID pid = GDK_WINDOW_XID(gtk_widget_get_parent_window(drawing_area));
+    // render_window->SetParentId((void*) pid);
 #else  // OOF_USE_COCOA
     render_window->SetRootWindow(gtk_widget_get_root_window(drawing_area));
     GdkWindow *gparent = gtk_widget_get_parent_window(drawing_area);
