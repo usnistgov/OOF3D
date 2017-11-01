@@ -522,15 +522,6 @@ class oof_build_xxxx:
                 if USE_COCOA:
                     print >> cfgfile, "#define OOF_USE_COCOA"
                     
-#                 # Python pre-2.5 compatibility
-#                 print >> cfgfile, """\
-# #include <Python.h>
-# #if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
-# typedef int Py_ssize_t;
-# #define PY_SSIZE_T_MAX INT_MAX
-# #define PY_SSIZE_T_MIN INT_MIN
-# #endif /* PY_VERSION_HEX check */
-# """
                 print >> cfgfile, "#endif"
                 cfgfile.close()
         else:

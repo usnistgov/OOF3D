@@ -22,7 +22,6 @@
 
 #include <iostream>
 
-//#include <gdk/gdkx.h>
 #include <gdk/gdk.h>
 #include <gtk/gtk.h>
 #include <pygobject.h>
@@ -32,7 +31,9 @@
 
 #ifdef OOF_USE_COCOA
 #include <gdk/gdkquartz.h>
-#endif // OOF_USE_COCOA
+#else // not OOF_USE_COCOA
+#include <gdk/gdkx.h>
+#endif // not OOF_USE_COCOA
 
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -69,18 +70,6 @@ OOFCanvas3D::OOFCanvas3D()
 #else
 
 #endif // OOF_USE_COCOA
-
-  // Using vtk5, we had to set the colormap of the drawing area.  I
-  // don't know if it was required on Linux or Mac or both.  Using the
-  // recommended generic vtkRenderWindow in vtk7, it's not possible to
-  // set the colormap, but it doesn't seem to be necessary on Linux.
-  //   XVisualInfo *v = render_window->GetDesiredVisualInfo();
-  //   Colormap cm = render_window->GetDesiredColormap();
-  //   GdkVisual *gdkv = gdkx_visual_get(v->visualid);
-  //   GdkColormap *gdkcm = gdk_x11_colormap_foreign_new(gdkv, cm);
-  //   gtk_widget_set_colormap(drawing_area, gdkcm);
-  //   // free the memory allocated by GetDesiredVisualInfo
-  //   XFree(v);
 
   g_signal_connect(drawing_area, "destroy",
 		   G_CALLBACK(OOFCanvas3D::gtk_destroy),
@@ -173,15 +162,21 @@ gboolean OOFCanvas3D::realize() {
     gtk_widget_realize(drawing_area);
 #ifndef OOF_USE_COCOA
     XID wid = GDK_WINDOW_XID(drawing_area->window);
-    // this version only works in gtk 2.14 and up  
-    //GDK_WINDOW_XID(gtk_widget_get_window(drawing_area));
-    //XID pid = GDK_WINDOW_XID(gtk_widget_get_parent_window(drawing_area));
-    //render_window->SetParentId((void*)pid);
-    render_window->SetWindowId((void*)wid);
-#else
+    render_window->SetWindowId((void*) wid);
+
+    // An old comment here said "this version only works in gtk
+    // 2.14. and up", but the code following it didn't make sense.  I
+    // *think* that it should have been the following, but I'm not
+    // sure.  Anyhow it doesn't seem to work -- it crashes when the
+    // window is closed, unless SetWindowId is set as well (not
+    // necessary in the Cocoa version).
+    XID pid = GDK_WINDOW_XID(gtk_widget_get_parent_window(drawing_area));
+    render_window->SetParentId((void*) pid);
+#else  // OOF_USE_COCOA
     render_window->SetRootWindow(gtk_widget_get_root_window(drawing_area));
     GdkWindow *gparent = gtk_widget_get_parent_window(drawing_area);
-    render_window->SetParentId(gdk_quartz_window_get_nsview(gparent));
+    NSView *pid = gdk_quartz_window_get_nsview(gparent);
+    render_window->SetParentId((void*) pid);
 #endif // OOF_USE_COCOA
     created = true;
   }
@@ -203,10 +198,10 @@ gboolean OOFCanvas3D::configure(GdkEventConfigure *event) {
   sz = render_window->GetSize();
   if(event->width != sz[0] || event->height != sz[1]) {
     render_window->SetSize(event->width, event->height);
-#ifdef OOF_USE_COCOA
+    //#ifdef OOF_USE_COCOA
     render_window->SetPosition(drawing_area->allocation.x,
      			       drawing_area->allocation.y);
-#endif // OOF_USE_COCOA						
+    //#endif // OOF_USE_COCOA
   }
   return true;
 }
