@@ -61,16 +61,17 @@ WireGridCanvasLayer::WireGridCanvasLayer(GhostOOFCanvas *c,
   vtkSmartPointer<vtkUnstructuredGrid> grid = gridsource->GetOutput();
 
   locator->LazyEvaluationOn();
-  locator->SetDataSet(grid);
+  locator->SetDataSet(grid);	// TODO: Does this update when grid updates?
 
   // vtkExtractEdges has to operate on the original grid, not the
   // clipped grid, because clipping introduces new internal edges when
   // it tetrahedralizes the clipped cells.  We need to extract the
   // edges because the wireframe rendering of the original grid omits
   // all internal edges.
-  edgeExtractor->SetInputData(grid);
+  edgeExtractor->SetInputConnection(gridsrc->GetOutputPort());
 
-  // set_clipping finishes building the pipeline.
+  // set_clipping finishes building the pipeline by calling
+  // start_clipping or stop_clipping.
   set_clipping(canvas->clipping(), canvas->invertedClipping());
 }
 
@@ -110,7 +111,6 @@ void WireGridCanvasLayer::start_clipping() {
   //* draw them only once, and to give different properties to the
   //* intersections drawn on the clipping planes.
 
-  // vtkSmartPointer<vtkPolyData> edges = edgeExtractor->GetOutput();
   cutActor = vtkSmartPointer<vtkActor>::New();
   cutActor->SetProperty(edgeActor->GetProperty());
   cutMapper = vtkSmartPointer<vtkDataSetMapper>::New();

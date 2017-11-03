@@ -11,6 +11,9 @@
 
 #include <oofconfig.h>
 
+// TODO: Check for compatibility with vtk 7.1.1.  Is this even still
+// needed?
+
 #include "common/IO/oofCellLocator.h"
 
 #include <vtkObjectFactory.h>
