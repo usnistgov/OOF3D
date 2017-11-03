@@ -30,6 +30,8 @@
 #include <vtkCamera.h>
 
 #ifdef OOF_USE_COCOA
+// gdkquartz.h includes some ObjectiveC headers, so this file is
+// wrapped by oofcanvas3d.mm when using Cocoa.
 #include <gdk/gdkquartz.h>
 #else // not OOF_USE_COCOA
 #include <gdk/gdkx.h>
@@ -67,9 +69,7 @@ OOFCanvas3D::OOFCanvas3D()
 #ifndef OOF_USE_COCOA
   Display* dis = GDK_DISPLAY();
   render_window->SetDisplayId(dis);
-#else
-
-#endif // OOF_USE_COCOA
+#endif // not OOF_USE_COCOA
 
   g_signal_connect(drawing_area, "destroy",
 		   G_CALLBACK(OOFCanvas3D::gtk_destroy),
@@ -197,10 +197,10 @@ gboolean OOFCanvas3D::configure(GdkEventConfigure *event) {
   sz = render_window->GetSize();
   if(event->width != sz[0] || event->height != sz[1]) {
     render_window->SetSize(event->width, event->height);
-    //#ifdef OOF_USE_COCOA
+    // #ifdef OOF_USE_COCOA
     render_window->SetPosition(drawing_area->allocation.x,
      			       drawing_area->allocation.y);
-    //#endif // OOF_USE_COCOA
+    // #endif // OOF_USE_COCOA
   }
   return true;
 }
@@ -219,6 +219,7 @@ gboolean OOFCanvas3D::expose() {
   exposed = true;
   // This is called not just when the window is first exposed, but
   // whenever a part of it is re-exposed, so we have to call render().
+  // TODO: Check if this is actually necessary.
   render();
   return true;
 }
