@@ -99,7 +99,7 @@ public:
 
   // newLayer() and removeLayer() are called by the OOFCanvasLayerBase
   // constructor and destructor.
-  void newLayer(OOFCanvasLayerBase *);
+  void newLayer(OOFCanvasLayerBase*);
   void removeLayer(OOFCanvasLayerBase*);
 
   void reset();

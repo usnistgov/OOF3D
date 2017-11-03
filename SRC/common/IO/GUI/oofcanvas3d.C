@@ -193,8 +193,7 @@ gboolean OOFCanvas3D::gtk_configure(GtkWidget*, GdkEventConfigure *config,
 
 gboolean OOFCanvas3D::configure(GdkEventConfigure *event) {
   assert(mainthread_query());
-  int *sz;
-  sz = render_window->GetSize();
+  int *sz = render_window->GetSize();
   if(event->width != sz[0] || event->height != sz[1]) {
     render_window->SetSize(event->width, event->height);
     // #ifdef OOF_USE_COCOA

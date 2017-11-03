@@ -147,7 +147,19 @@ void GhostOOFCanvas::render() {
     renderLock.acquire();
     try {
       if(render_window->IsDrawable()) {
+#ifdef DEBUG
 	// oofcerr << "GhostOOFCanvas::render: calling Render " << std::endl;
+	// oofcerr << "GhostOOFCanvas::render: actors are:";
+	// vtkSmartPointer<vtkActorCollection> actors = renderer->GetActors();
+	// actors->InitTraversal();
+	// for(int i=0; i<actors->GetNumberOfItems(); i++) {
+	//   vtkSmartPointer<vtkActor> actor = actors->GetNextActor();
+	//   oofcerr << " " << actor.GetPointer()
+	// 	  << " vis=" << actor->GetVisibility();
+	// };
+	// oofcerr << std::endl;
+#endif // DEBUG
+	
 	render_window->Render();
 	// oofcerr << "GhostOOFCanvas::render: back from Render" << std::endl;
       }

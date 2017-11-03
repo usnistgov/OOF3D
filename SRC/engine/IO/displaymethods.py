@@ -1092,7 +1092,6 @@ class SkeletonQualityDisplay(SolidFillMeshDisplay, SkeletonDisplayMethod):
                 #self.setSource()
                 self.setCellData(skelctxt)
                 self.setLUT()
-                self.source.Modified()
         
 registeredclass.Registration(
     'SkeletonQuality',
