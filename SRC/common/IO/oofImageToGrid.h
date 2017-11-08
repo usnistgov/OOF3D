@@ -28,7 +28,9 @@ class oofImageToGrid : public vtkRectilinearGridAlgorithm
 
  protected:
   oofImageToGrid();
+  virtual ~oofImageToGrid() {};
   virtual int FillInputPortInformation(int port, vtkInformation *info);
+  virtual int FillOutputPortInformation(int, vtkInformation*);
   virtual int RequestData(vtkInformation*, vtkInformationVector**,
 			  vtkInformationVector*);
   virtual int RequestInformation(vtkInformation*, vtkInformationVector**,

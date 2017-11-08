@@ -1562,7 +1562,7 @@ ImageCanvasLayer::ImageCanvasLayer(
   addProp(actor);
   actor->SetMapper(mapper);
   locator->LazyEvaluationOn();
-  
+
   // Build the initial pipeline, with no image and no excluded voxels.
   pipelineLock.acquire();
   downstreamSocket()->SetInputConnection(gridifier->GetOutputPort());
@@ -1595,7 +1595,6 @@ void ImageCanvasLayer::set_image(const ImageBase *img, const Coord *location,
   if(image != img) {
     pipelineLock.acquire();
     image = img;
-    // image->getVTKImageData()->Update();
     gridifier->SetInputData(image->getVTKImageData());
     pipelineLock.release();
   }

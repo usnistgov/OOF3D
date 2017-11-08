@@ -26,7 +26,6 @@
 #include <vtkSmartPointer.h>
 #include <vtkStreamingDemandDrivenPipeline.h>
 
-// vtkCxxRevisionMacro(oofImageToGrid, "oofvtkmods 3.0.0");
 vtkStandardNewMacro(oofImageToGrid);
 
 oofImageToGrid::oofImageToGrid() {}
@@ -38,6 +37,13 @@ void oofImageToGrid::PrintSelf(std::ostream &os, vtkIndent indent) {
 
 int oofImageToGrid::FillInputPortInformation(int port, vtkInformation *info) {
   info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkImageData");
+  return 1;
+}
+
+int oofImageToGrid::FillOutputPortInformation(int vtkNotUsed(port),
+					      vtkInformation *info)
+{
+  info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkRectilinearGrid");
   return 1;
 }
 
@@ -90,8 +96,17 @@ int oofImageToGrid::RequestData(vtkInformation*,
 				vtkInformationVector **inputVector,
 				vtkInformationVector *outputVector)
 {
-  vtkImageData *image = vtkImageData::SafeDownCast(this->GetInput());
-  vtkRectilinearGrid *output = this->GetOutput();
+  vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
+  vtkInformation *outInfo = outputVector->GetInformationObject(0);
+  
+  vtkImageData *image = vtkImageData::SafeDownCast(
+				   inInfo->Get(vtkImageData::DATA_OBJECT()));
+  assert(image != NULL);
+  oofcerr << "oofImageToGrid::RequestData: image=" << image << std::endl;
+
+  vtkRectilinearGrid *output = vtkRectilinearGrid::SafeDownCast(
+			     outInfo->Get(vtkRectilinearGrid::DATA_OBJECT()));
+  assert(output != NULL);
 
   vtkDebugMacro(<< "Converting to vtkRectilinearGrid");
 
@@ -134,9 +149,9 @@ int oofImageToGrid::RequestData(vtkInformation*,
   output->SetZCoordinates(zcoords);
 
   vtkPointData *pointData = image->GetPointData();
+  
   vtkCellData *cellData = output->GetCellData();
-  cellData->ShallowCopy(pointData); // TODO OPT: Is this legal?  Changing
-				    // it to DeepCopy doesn't help
-				    // with crashx2.log.
+  cellData->ShallowCopy(pointData);
+  
   return 1;
 }

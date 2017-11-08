@@ -37,7 +37,7 @@ public:
   }
   void modified() const { image->Modified(); }
   void update() const {
-    // image->Update();
+    // TODO: Get rid of this method?
   }
 };
 

@@ -58,6 +58,7 @@
 #include <vtkScalarsToColors.h>
 #include <vtkImageMapToColors.h>
 
+
 OOFImage3D::OOFImage3D(const std::string &name,
 		       const std::vector<std::string> *files, 
 		       const Coord *size)
@@ -221,21 +222,14 @@ OOFImage3D::OOFImage3D(const std::string &name)
 // Constructor that takes color values from a vector of unsigned
 // chars.  Used when loading images embedded in an OOF data file.
 
-OOFImage3D::OOFImage3D(const std::string &name,
+OOFImage3DFromData::OOFImage3DFromData(const std::string &name,
 		       const Coord &size, const ICoord &isize,
 		       const std::vector<unsigned char> *data) 
-  : name_(name)
+  : OOFImage3D(name),
+    importer(vtkSmartPointer<vtkImageImport>::New())
 {
   assert((int) data->size() == 3*isize[0]*isize[1]*isize[2]);
-#ifdef DEBUG
-  oofcerr << "OOFImage3D::ctor: data=";
-  for(unsigned char x : *data)
-    oofcerr << ", " << (unsigned int) x;
-  oofcerr << std::endl;
-#endif // DEBUG
 
-  vtkSmartPointer<vtkImageImport> importer =
-    vtkSmartPointer<vtkImageImport>::New();
   importer->SetDataSpacing(
 		   size[0]/isize[0], size[1]/isize[1], size[2]/isize[2]);
   importer->SetDataOrigin(0, 0, 0);
@@ -249,22 +243,6 @@ OOFImage3D::OOFImage3D(const std::string &name,
   getPixelSizeFromImage();	// sets sizeInPixels_
   setSize(&size);		// sets size_ and adjusts spacing
 
-#ifdef DEBUG
-  oofcerr << "OOFImage3D::ctor: image=" << image.GetPointer() << std::endl;
-  oofcerr << "OOFImage3D::ctor: retrieved pixels=";
-  std::vector<unsigned char> *pxls = getPixels();
-  for(unsigned char x: *pxls)
-    oofcerr << ", " << (unsigned int) x;
-  oofcerr << std::endl;
-  delete pxls;
-  oofcerr << "OOFImage3D::ctor: retrieved colors=";
-  ICoord sz = sizeInPixels();
-  for(unsigned int k=0; k<sz[2]; k++)
-    for(unsigned int j=0; j<sz[1]; j++)
-      for(unsigned int i=0; i<sz[0]; i++)
-	oofcerr << ", " << (*this)[ICoord(i,j,k)];
-  oofcerr << std::endl;
-#endif // DEBUG
 }
 
 // Wrapper for the above constructor, so that we can call it from
@@ -275,7 +253,7 @@ OOFImage3D *newImageFromData(const std::string &name,
 			     const ICoord *isize,
 			     const std::vector<unsigned char> *data)
 {
-  return new OOFImage3D(name, *size, *isize, data);
+  return new OOFImage3DFromData(name, *size, *isize, data);
 }
 
 // getPixels() is the inverse of newImageFromData().
@@ -358,27 +336,22 @@ void OOFImage3D::save(const std::string &filepattern, const std::string &format)
 }
 
 const CColor OOFImage3D::operator[](const ICoord &c) const {
-  // Slow version for debugging
-  CColor col(image->GetScalarComponentAsDouble(c[0], c[1], c[2], 0),
-	     image->GetScalarComponentAsDouble(c[0], c[1], c[2], 1),
-	     image->GetScalarComponentAsDouble(c[0], c[1], c[2], 2));
-  oofcerr << "OOFImage3D::operator[]: " << c << " " << col << std::endl;
-  return col;
+  // // Slow version for debugging
+  // CColor col(image->GetScalarComponentAsDouble(c[0], c[1], c[2], 0),
+  // 	     image->GetScalarComponentAsDouble(c[0], c[1], c[2], 1),
+  // 	     image->GetScalarComponentAsDouble(c[0], c[1], c[2], 2));
+  // // oofcerr << "OOFImage3D::operator[]: " << c << " " << col << std::endl;
+  // return col;
   
-  // // It's important to cast to unsigned char* and then to
-  // // double. Casting directly to double* will give the wrong value.
-  // unsigned char* ptr = (unsigned char*)
-  //   image->GetScalarPointer(c[0], c[1], c[2]);
-  // if(image->GetNumberOfScalarComponents() == 1) {
-  //   double g = *ptr/255.;
-  //   return CColor(g, g, g);
-  // }
-  // oofcerr << "OOFImage3D::operator[]: " << image.GetPointer()
-  // 	  << " " << c << " "
-  // 	  << (int) ptr[0] << " " << (int) ptr[1] << " " << (int) ptr[2]
-  // 	  << " released=" << image->GetDataReleased()
-  // 	  << std::endl;
-  // return CColor(ptr[0]/255., ptr[1]/255., ptr[2]/255.);
+  // It's important to cast to unsigned char* and then to
+  // double. Casting directly to double* will give the wrong value.
+  unsigned char* ptr = (unsigned char*)
+    image->GetScalarPointer(c[0], c[1], c[2]);
+  if(image->GetNumberOfScalarComponents() == 1) {
+    double g = *ptr/255.;
+    return CColor(g, g, g);
+  }
+  return CColor(ptr[0]/255., ptr[1]/255., ptr[2]/255.);
 }
 
 bool OOFImage3D::compare(const OOFImage3D &other, double tol) const {
