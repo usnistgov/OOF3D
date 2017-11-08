@@ -227,6 +227,12 @@ OOFImage3D::OOFImage3D(const std::string &name,
   : name_(name)
 {
   assert((int) data->size() == 3*isize[0]*isize[1]*isize[2]);
+#ifdef DEBUG
+  oofcerr << "OOFImage3D::ctor: data=";
+  for(unsigned char x : *data)
+    oofcerr << ", " << (unsigned int) x;
+  oofcerr << std::endl;
+#endif // DEBUG
 
   vtkSmartPointer<vtkImageImport> importer =
     vtkSmartPointer<vtkImageImport>::New();
@@ -239,11 +245,26 @@ OOFImage3D::OOFImage3D(const std::string &name,
   importer->SetNumberOfScalarComponents(3);
   importer->CopyImportVoidPointer((void*)(&(*data)[0]), data->size());
   image = importer->GetOutput();
-  // TODO OPT: Check that importer is being destroyed.  Would
-  // image->ShallowCopy(importer->GetOutput()) help?
-  //  image->Update();
+  importer->GetExecutive()->Update();
   getPixelSizeFromImage();	// sets sizeInPixels_
   setSize(&size);		// sets size_ and adjusts spacing
+
+#ifdef DEBUG
+  oofcerr << "OOFImage3D::ctor: image=" << image.GetPointer() << std::endl;
+  oofcerr << "OOFImage3D::ctor: retrieved pixels=";
+  std::vector<unsigned char> *pxls = getPixels();
+  for(unsigned char x: *pxls)
+    oofcerr << ", " << (unsigned int) x;
+  oofcerr << std::endl;
+  delete pxls;
+  oofcerr << "OOFImage3D::ctor: retrieved colors=";
+  ICoord sz = sizeInPixels();
+  for(unsigned int k=0; k<sz[2]; k++)
+    for(unsigned int j=0; j<sz[1]; j++)
+      for(unsigned int i=0; i<sz[0]; i++)
+	oofcerr << ", " << (*this)[ICoord(i,j,k)];
+  oofcerr << std::endl;
+#endif // DEBUG
 }
 
 // Wrapper for the above constructor, so that we can call it from
@@ -267,7 +288,6 @@ std::vector<unsigned char> *OOFImage3D::getPixels() {
   exporter->SetInputData(image);
   exporter->ImageLowerLeftOn();
   exporter->Export(&(*pxls)[0]);
-  // TODO OPT: Check that exporter is being destroyed.
   return pxls;
 }
 
@@ -334,20 +354,31 @@ void OOFImage3D::save(const std::string &filepattern, const std::string &format)
 
   writer->SetFilePattern(filepattern.c_str());
   writer->SetInputData(image);
-  //writer->Update();		// is this necessary?
   writer->Write();
 }
 
 const CColor OOFImage3D::operator[](const ICoord &c) const {
-  // It's important to cast to unsigned char* and then to
-  // double. Casting directly to double* will give the wrong value.
-  unsigned char* ptr = (unsigned char*)
-    image->GetScalarPointer(c[0], c[1], c[2]);
-  if(image->GetNumberOfScalarComponents() == 1) {
-    double g = *ptr/255.;
-    return CColor(g, g, g);
-  }
-  return CColor(ptr[0]/255., ptr[1]/255., ptr[2]/255.);
+  // Slow version for debugging
+  CColor col(image->GetScalarComponentAsDouble(c[0], c[1], c[2], 0),
+	     image->GetScalarComponentAsDouble(c[0], c[1], c[2], 1),
+	     image->GetScalarComponentAsDouble(c[0], c[1], c[2], 2));
+  oofcerr << "OOFImage3D::operator[]: " << c << " " << col << std::endl;
+  return col;
+  
+  // // It's important to cast to unsigned char* and then to
+  // // double. Casting directly to double* will give the wrong value.
+  // unsigned char* ptr = (unsigned char*)
+  //   image->GetScalarPointer(c[0], c[1], c[2]);
+  // if(image->GetNumberOfScalarComponents() == 1) {
+  //   double g = *ptr/255.;
+  //   return CColor(g, g, g);
+  // }
+  // oofcerr << "OOFImage3D::operator[]: " << image.GetPointer()
+  // 	  << " " << c << " "
+  // 	  << (int) ptr[0] << " " << (int) ptr[1] << " " << (int) ptr[2]
+  // 	  << " released=" << image->GetDataReleased()
+  // 	  << std::endl;
+  // return CColor(ptr[0]/255., ptr[1]/255., ptr[2]/255.);
 }
 
 bool OOFImage3D::compare(const OOFImage3D &other, double tol) const {

@@ -137,9 +137,6 @@ void WireGridCanvasLayer::stop_clipping() {
   cutMapper = vtkSmartPointer<vtkDataSetMapper>();
   // gridsource is a GridSource <- vtkUnstructuredGridAlgorithm <- vtkAlgorithm
   // faceMapper is a vtkDataSetMapper.
-  //    vtkDataSetMapper::SetInputData(vtkDataSet*)
-  //    vtkAlgorithm::SetInputDataObject(vtkDataObject*)
-  //
   faceMapper->SetInputConnection(gridsource->GetOutputPort());
   edgeMapper->SetInputConnection(edgeExtractor->GetOutputPort());
 }

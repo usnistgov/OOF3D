@@ -40,6 +40,13 @@ Viewer toolbox.
 Fixed a bug that was making the Material Color display layer for
 Microstructures show incorrect colors.
 
+Fixed a bug in saving 3D images as a set of files.
+
+** Upgraded vtk from 5.10.1 to 7.1.1.  Probably everybody will need to
+   build vtk by hand now.  Apple users should build it to use Cocoa
+   instead of X11.
+   
+
 3.1.1.1
 
 Minor changes to make the old gcc 4.7 compilers happy.
