@@ -391,18 +391,17 @@ void OOFImage3D::gray() {
     = vtkSmartPointer<vtkImageLuminance>::New();
   luminance->SetInputData(image);
   image = luminance->GetOutput();
-  // image->Update();
+  luminance->GetExecutive()->Update();
   imageChanged();
 }
 
 void OOFImage3D::threshold(double T) {
 
   // TODO: This crashes if the image has already been converted to
-  // gray or previously thresholded.  On Linux there's an error
-  // message about vtkImageLuminance needing 3 components and getting
-  // just one.  On Mac it just spews bits to std::cerr.  However,
-  // image->GetDataDimension() returns 3 in all cases, so I don't
-  // really know what's going on.  (From before upgrade to vtk 7.1.1)
+  // gray or previously thresholded.  There's an error message about
+  // vtkImageLuminance needing 3 components and getting just one.
+  // However, image->GetDataDimension() returns 3, so I don't really
+  // know what's going on. 
   
   // std::cerr << "OOFImage3D::threshold: data dimension="
   // 	    << image->GetDataDimension() << std::endl;
@@ -425,7 +424,7 @@ void OOFImage3D::threshold(double T) {
   thold2->SetInputConnection(thold1->GetOutputPort());
 
   image = thold2->GetOutput();
-  // image->Update();
+  thold2->GetExecutive()->Update();
   imageChanged();
 }
 
@@ -437,7 +436,7 @@ void OOFImage3D::blur(double radius, double sigma) {
   gauss->SetStandardDeviation(sigma, sigma, sigma);
   gauss->SetInputData(image);
   image = gauss->GetOutput();
-  // image->Update();
+  gauss->GetExecutive()->Update();
   imageChanged();
 }
 
@@ -450,7 +449,7 @@ void OOFImage3D::dim(double factor) {
   dimmer->SetInputData(image);
   image = dimmer->GetOutput();
   // image->SetScalarTypeToUnsignedChar();
-  // image->Update();
+  dimmer->GetExecutive()->Update();
   imageChanged();
 }
 
@@ -469,7 +468,7 @@ void OOFImage3D::fade(double factor) {
 	
   image = fade2->GetOutput();
   // image->SetScalarTypeToUnsignedChar();
-  // image->Update();
+  fade2->GetExecutive()->Update();
   imageChanged();
 }
 
@@ -489,7 +488,7 @@ void OOFImage3D::negate(double dummy) {
 
   image = corrector->GetOutput();
   // image->SetScalarTypeToUnsignedChar();
-  // image->Update();
+  corrector->GetExecutive()->Update();
   imageChanged();
 }
 
@@ -503,7 +502,7 @@ void OOFImage3D::medianFilter(int radius) {
   median->SetInputData(image);
 	
   image = median->GetOutput();
-  // image->Update();
+  median->GetExecutive()->Update();
   imageChanged();
 }
 
@@ -548,7 +547,7 @@ void OOFImage3D::normalize() {
   }
 
   image = appender->GetOutput();
-  // image->Update();
+  appender->GetExecutive()->Update();
   imageChanged();
 }
 
@@ -573,7 +572,7 @@ void OOFImage3D::contrast(double factor) {
   scale->SetOutputScalarTypeToUnsignedChar();
   
   image = scale->GetOutput();
-  // image->Update();
+  scale->GetExecutive()->Update();
   imageChanged();
 }
 	
@@ -585,7 +584,7 @@ void OOFImage3D::flip(const std::string &axis) {
     flipper->SetFilteredAxis((int)axis[i]-(int)'x');
     flipper->SetInputData(image);
     image = flipper->GetOutput();
-    // image->Update();
+    flipper->GetExecutive()->Update();
   }
   imageChanged();
 }
@@ -603,7 +602,7 @@ void OOFImage3D::permuteAxes(const std::string &axes) {
   permute->SetFilteredAxes(iaxes);
   permute->SetInputData(image);
   image = permute->GetOutput();
-  // image->Update();
+  permute->GetExecutive()->Update();
   imageChanged();
 }
 

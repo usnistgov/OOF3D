@@ -166,6 +166,7 @@ def set_clib_flags(clib):
         addVTKlib('vtkIOImage')
         addVTKlib('vtkIOXML')
         addVTKlib('vtkImagingCore')
+        addVTKlib('vtkImagingGeneral')
         addVTKlib('vtkRenderingAnnotation')
         addVTKlib('vtkRenderingContextOpenGL2')
         addVTKlib('vtkRenderingCore')

@@ -102,7 +102,6 @@ int oofImageToGrid::RequestData(vtkInformation*,
   vtkImageData *image = vtkImageData::SafeDownCast(
 				   inInfo->Get(vtkImageData::DATA_OBJECT()));
   assert(image != NULL);
-  oofcerr << "oofImageToGrid::RequestData: image=" << image << std::endl;
 
   vtkRectilinearGrid *output = vtkRectilinearGrid::SafeDownCast(
 			     outInfo->Get(vtkRectilinearGrid::DATA_OBJECT()));
