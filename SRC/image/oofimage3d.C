@@ -30,6 +30,7 @@
 
 #include <vtkBMPReader.h>
 #include <vtkBMPWriter.h>
+#include <vtkExecutive.h>
 #include <vtkImageAppendComponents.h>
 #include <vtkImageExport.h>
 #include <vtkImageExtractComponents.h>
@@ -37,6 +38,7 @@
 #include <vtkImageGaussianSmooth.h>
 #include <vtkImageImport.h>
 #include <vtkImageLuminance.h>
+#include <vtkImageMapToColors.h>
 #include <vtkImageMathematics.h>
 #include <vtkImageMedian3D.h>
 #include <vtkImagePermute.h>
@@ -49,14 +51,12 @@
 #include <vtkPNMWriter.h>
 #include <vtkPointData.h>
 #include <vtkPostScriptWriter.h>
+#include <vtkScalarsToColors.h>
 #include <vtkStringArray.h>
 #include <vtkTIFFReader.h>
 #include <vtkTIFFWriter.h>
+#include <vtkTrivialProducer.h>
 #include <vtk_tiff.h>		// for ORIENTATION_BOTLEFT
-
-#include <vtkExecutive.h>
-#include <vtkScalarsToColors.h>
-#include <vtkImageMapToColors.h>
 
 
 OOFImage3D::OOFImage3D(const std::string &name,
@@ -396,35 +396,35 @@ void OOFImage3D::gray() {
 }
 
 void OOFImage3D::threshold(double T) {
-
-  // TODO: This crashes if the image has already been converted to
-  // gray or previously thresholded.  There's an error message about
-  // vtkImageLuminance needing 3 components and getting just one.
-  // However, image->GetDataDimension() returns 3, so I don't really
-  // know what's going on. 
-  
-  // std::cerr << "OOFImage3D::threshold: data dimension="
-  // 	    << image->GetDataDimension() << std::endl;
-  vtkSmartPointer<vtkImageLuminance> luminance 
-    = vtkSmartPointer<vtkImageLuminance>::New();
-  luminance->SetInputData(image);
-  // vtkSmartPointer<vtkImageData> gray = luminance->GetOutput();
+  vtkSmartPointer<vtkAlgorithm> thresholdee;
+  int ncomponents = image->GetNumberOfScalarComponents();
+  assert(ncomponents == 1 || ncomponents == 3);
+  // If the input is more than one channel, convert it to gray before
+  // thresholding.
+  if(ncomponents == 3) {
+    vtkSmartPointer<vtkImageLuminance> luminance 
+      = vtkSmartPointer<vtkImageLuminance>::New();
+    luminance->SetInputData(image);
+    thresholdee = luminance;
+  }
+  else {
+    vtkSmartPointer<vtkTrivialProducer> trivial =
+      vtkSmartPointer<vtkTrivialProducer>::New();
+    trivial->SetOutput(image);
+    thresholdee = trivial;
+  }
 	
-  vtkSmartPointer<vtkImageThreshold> thold1 =
+  vtkSmartPointer<vtkImageThreshold> thresh =
     vtkSmartPointer<vtkImageThreshold>::New();
-  thold1->ThresholdByUpper(T*255);
-  thold1->SetOutValue(0);
-  // thold1->SetInputConnection(gray->GetProducerPort());
-  thold1->SetInputConnection(luminance->GetOutputPort());
+  thresh->ThresholdByUpper(T*255); // values above T are "in"
+  thresh->SetOutValue(0);	   // replacement value for "out" pixels
+  thresh->SetInValue(255);	   // replacement value for "in" pixels
+  thresh->ReplaceInOn();	   // replace "in" pixels
+  thresh->ReplaceOutOn();	   // replace "out" pixels
+  thresh->SetInputConnection(thresholdee->GetOutputPort());
 	
-  vtkSmartPointer<vtkImageThreshold> thold2 = 
-    vtkSmartPointer<vtkImageThreshold>::New();
-  thold2->ThresholdByLower(T*255);
-  thold2->SetOutValue(255);
-  thold2->SetInputConnection(thold1->GetOutputPort());
-
-  image = thold2->GetOutput();
-  thold2->GetExecutive()->Update();
+  image = thresh->GetOutput();
+  thresh->GetExecutive()->Update();
   imageChanged();
 }
 

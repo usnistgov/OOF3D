@@ -470,7 +470,7 @@ registeredclass.Registration(
     params=[parameter.FloatRangeParameter('T', (0,1,.01),value=.5,
                                           tip="Threshold value."),
             ],
-    tip="Threshold an image given a threshold value.",
+    tip="Set all voxels to black or white, depending on whether their equivalent gray value is below or above the given threshold.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/image/reg/threshold.xml')
     )
 

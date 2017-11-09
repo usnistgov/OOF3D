@@ -465,9 +465,16 @@ def findvtk(*basenames):
 # oof_build_xxxx contains the routines that are being added to both
 # build_ext and build_shlib.
 
-_dependencies_checked = 0
+_dependencies_checked = False
+_oofconfig_checked = False
+
 class oof_build_xxxx:
     def make_oofconfig(self):
+        global _oofconfig_checked
+        if _oofconfig_checked:
+            return
+        _oofconfig_checked = True
+        
         cfgfilename = os.path.normpath(os.path.join(self.build_temp,
                                                     'SRC/oofconfig.h'))
         includedir = os.path.join('include', OOFNAME)
@@ -721,7 +728,7 @@ class oof_build_xxxx:
         if not _dependencies_checked:
             depdict = self.find_dependencies()
             self.clean_targets(depdict)
-            _dependencies_checked = 1
+            _dependencies_checked = True
 
 
 # This does the swigging.
