@@ -58,6 +58,7 @@
 #include <vtkTrivialProducer.h>
 #include <vtk_tiff.h>		// for ORIENTATION_BOTLEFT
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 OOFImage3D::OOFImage3D(const std::string &name,
 		       const std::vector<std::string> *files, 
@@ -157,14 +158,14 @@ OOFImage3D::OOFImage3D(const std::string &name,
   // crashing.
 
   imageReader->SetDataScalarTypeToUnsignedChar();
-  vtkSmartPointer<vtkAlgorithm> pipelineTail = imageReader;
+  vtkSmartPointer<vtkImageAlgorithm> pipelineTail = imageReader;
 
 
   // For certain image formats such as PNG, the bit depth may be
   // greater than 8 and the reader will return a vtkImageData object
   // with a scalar type other than unsigned char.  We need to scale
   // the data and make it an unsigned char type.
-  image = vtkImageData::SafeDownCast(pipelineTail->GetOutputDataObject(0));
+  image = pipelineTail->GetOutput();
   if(image->GetScalarType() != VTK_UNSIGNED_CHAR) {
     vtkSmartPointer<vtkImageShiftScale> shiftscale = 
       vtkSmartPointer<vtkImageShiftScale>::New();
@@ -175,33 +176,16 @@ OOFImage3D::OOFImage3D(const std::string &name,
     pipelineTail = shiftscale;
   }
 
-  // Make sure that the image has three channels.  TODO OPT: If this
-  // uses too much memory, we could allow grayscale images to have
-  // only one channel, but we'd either have to do something clever in
-  // oofOverlayVoxels.C, or require that the overlay color also be
-  // gray.  Also, getPixels() would be need to be smarter.
-  image = vtkImageData::SafeDownCast(pipelineTail->GetOutputDataObject(0));
   int numcomponents = image->GetNumberOfScalarComponents();
-  if(numcomponents != 3) {
-    vtkSmartPointer<vtkImageMapToColors> rgbconv =
-      vtkSmartPointer<vtkImageMapToColors>::New();
-    vtkSmartPointer<vtkScalarsToColors> clut =
-      vtkSmartPointer<vtkScalarsToColors>::New();
-    // The default behavior for vtkScalarsToColors is to replicate
-    // input in output.  TODO: This is what we want if
-    // numcomponents==1, but what if numcomponents == 4?  We should
-    // copy the first three components and ignore the 4th.
-    rgbconv->SetOutputFormatToRGB();
-    rgbconv->SetLookupTable(clut);
-    rgbconv->SetInputConnection(pipelineTail->GetOutputPort());
-    pipelineTail = rgbconv;
+  if(numcomponents == 1) {
+    pipelineTail = convertToRGB(pipelineTail);
   }
+  else if(numcomponents == 4) {
+    // TODO: Get rid of alpha channel?
+  }
+  pipelineTail->GetExecutive()->Update();
+  image = pipelineTail->GetOutput();
   
-  image = vtkImageData::SafeDownCast(pipelineTail->GetOutputDataObject(0));
-
-  // This is where the rest of the files are read.
-  imageReader->GetExecutive()->Update();
-
   // oofcerr << "OOFImage3D::ctor: image size=";
   // for(int i=0; i<3; i++)
   //   oofcerr << " " << image->GetDimensions()[i];
@@ -386,34 +370,27 @@ void OOFImage3D::imageChanged() {
 
 // Modifiers.  These operate in-place on OOFImage3D::image.
 
+
 void OOFImage3D::gray() {
   vtkSmartPointer<vtkImageLuminance> luminance 
     = vtkSmartPointer<vtkImageLuminance>::New();
   luminance->SetInputData(image);
-  image = luminance->GetOutput();
-  luminance->GetExecutive()->Update();
+  // Convert back to three channel data.  See comment in constructor
+  // about making life easy for oofOverlayVoxels.
+  vtkSmartPointer<vtkImageAlgorithm> converter = convertToRGB(luminance);
+  converter->GetExecutive()->Update();
+  image = converter->GetOutput(0);
   imageChanged();
 }
 
 void OOFImage3D::threshold(double T) {
-  vtkSmartPointer<vtkAlgorithm> thresholdee;
-  int ncomponents = image->GetNumberOfScalarComponents();
-  assert(ncomponents == 1 || ncomponents == 3);
-  // If the input is more than one channel, convert it to gray before
-  // thresholding.
-  if(ncomponents == 3) {
-    vtkSmartPointer<vtkImageLuminance> luminance 
-      = vtkSmartPointer<vtkImageLuminance>::New();
-    luminance->SetInputData(image);
-    thresholdee = luminance;
-  }
-  else {
-    vtkSmartPointer<vtkTrivialProducer> trivial =
-      vtkSmartPointer<vtkTrivialProducer>::New();
-    trivial->SetOutput(image);
-    thresholdee = trivial;
-  }
-	
+    int ncomponents = image->GetNumberOfScalarComponents();
+  assert(ncomponents == 3);
+  // Convert to gray scale before thresholding.
+  vtkSmartPointer<vtkImageLuminance> luminance 
+    = vtkSmartPointer<vtkImageLuminance>::New();
+  luminance->SetInputData(image);
+  	
   vtkSmartPointer<vtkImageThreshold> thresh =
     vtkSmartPointer<vtkImageThreshold>::New();
   thresh->ThresholdByUpper(T*255); // values above T are "in"
@@ -421,10 +398,11 @@ void OOFImage3D::threshold(double T) {
   thresh->SetInValue(255);	   // replacement value for "in" pixels
   thresh->ReplaceInOn();	   // replace "in" pixels
   thresh->ReplaceOutOn();	   // replace "out" pixels
-  thresh->SetInputConnection(thresholdee->GetOutputPort());
-	
-  image = thresh->GetOutput();
-  thresh->GetExecutive()->Update();
+  thresh->SetInputConnection(luminance->GetOutputPort());
+
+  vtkSmartPointer<vtkImageAlgorithm> converter = convertToRGB(thresh);
+  converter->GetExecutive()->Update();
+  image = converter->GetOutput();
   imageChanged();
 }
 
@@ -631,4 +609,30 @@ void OOFImage3D::getColorPoints(const CColor &ref,
 
 }
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// Utility function that converts gray scale to RGB by duplicating the
+// channels.  We assume elsewhere (oofOverlayVoxels.C and getPixels())
+// that the image data always has three channels.
+
+// TODO OPT: If this uses too much memory, we could allow grayscale
+// images to have only one channel, but we'd either have to do
+// something clever in oofOverlayVoxels.C, or require that the overlay
+// color also be gray.  Also, getPixels() would be need to be smarter.
+
+vtkSmartPointer<vtkImageAlgorithm> convertToRGB(
+				vtkSmartPointer<vtkImageAlgorithm> input)
+{
+  vtkSmartPointer<vtkImageMapToColors> rgbconv =
+    vtkSmartPointer<vtkImageMapToColors>::New();
+  vtkSmartPointer<vtkScalarsToColors> clut =
+    vtkSmartPointer<vtkScalarsToColors>::New();
+  // The default behavior for vtkScalarsToColors is to replicate
+  // input in output.  TODO: This is what we want if
+  // numcomponents==1, but what if numcomponents == 4?  We should
+  // copy the first three components and ignore the 4th.
+  rgbconv->SetOutputFormatToRGB();
+  rgbconv->SetLookupTable(clut);
+  rgbconv->SetInputConnection(input->GetOutputPort());
+  return rgbconv;
+}

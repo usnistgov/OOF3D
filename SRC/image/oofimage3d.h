@@ -113,5 +113,9 @@ OOFImage3D *newImageFromData(const std::string &name,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// convertToRGB adds a converter to RGB to the pipeline.
+
+vtkSmartPointer<vtkImageAlgorithm> convertToRGB(
+					vtkSmartPointer<vtkImageAlgorithm>);
 
 #endif // OOFIMAGE3D_H

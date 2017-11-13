@@ -44,6 +44,20 @@ oofOverlayVoxels::oofOverlayVoxels()
   this->pixelSet = 0;
 }
 
+int oofOverlayVoxels::FillInputPortInformation(int vtkNotUsed(port),
+					       vtkInformation *info)
+{
+  info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkRectilinearGrid");
+  return 1;
+}
+
+int oofOverlayVoxels::FillOutputPortInformation(int vtkNotUsed(port),
+						vtkInformation *info)
+{
+  info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkRectilinearGrid");
+  return 1;
+}
+
 void oofOverlayVoxels::PrintSelf(std::ostream &os, vtkIndent indent) {
   this->Superclass::PrintSelf(os, indent);
   os << indent << "Color:";
@@ -110,11 +124,7 @@ void oofOverlayVoxels::_doOverlayVoxels(vtkRectilinearGrid *input,
       const TYPE *oldColor = inData + cellID*tupleSize;
       TYPE *newColor = outData + cellID*tupleSize;
       
-      // TODO OPT: This assumes that the image has three channels,
-      // which is a good assumption only as long as we convert all
-      // images to RGB.  See the TODO OPT in the OOFImage3D
-      // constructor.
-      for(int i=0; i<3; i++) {
+      for(int i=0; i<tupleSize; i++) {
 	newColor[i] = tint[i]*opacity + oldColor[i]*(1-opacity);
       }
     }
@@ -146,6 +156,10 @@ int oofOverlayVoxels::RequestData(vtkInformation *request,
   vtkDataArray *iScalars = input->GetCellData()->GetScalars();
   int dataType = iScalars->GetDataType();
   int tupleSize = iScalars->GetNumberOfComponents();
+  // See comment in OOFImage3D constructor.  We're requiring all
+  // images to have 3 components just so this filter doesn't have to
+  // figure out how to add components back in to colorize the voxels.
+  assert(tupleSize == 3);
 
   void *inData = iScalars->GetVoidPointer(0);
   void *outData = oScalars->GetVoidPointer(0);

@@ -374,7 +374,6 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
     def show_contourmap_info(self):
         # TODO MERGE: This is only used in 2D and will go away when 2D
         # uses vtk for contouring.
-        debug.fmsg()
         if not self.gtk:
             return
         current_contourmethod = self.current_contourmap_method

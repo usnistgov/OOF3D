@@ -45,6 +45,8 @@ class oofOverlayVoxels : public vtkRectilinearGridAlgorithm
   oofOverlayVoxels();
   // virtual int RequestInformation(vtkInformation*, vtkInformationVector**,
   // 				 vtkInformationVector*);
+  virtual int FillInputPortInformation(int, vtkInformation*);
+  virtual int FillOutputPortInformation(int, vtkInformation*);
   virtual int RequestData(vtkInformation*, vtkInformationVector**,
 			  vtkInformationVector*);
   double Color[3];
