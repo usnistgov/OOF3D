@@ -457,6 +457,13 @@ def findvtk(*basenames):
     print >> sys.stderr, "Did not find vtk!"
     return (None, None)
 
+# addVTKlibs is used in the DIR.py files to specify which vtk libraries
+# need to be linked to each OOF3D shared library.
+
+def addVTKlibs(clib, libnames):
+    for libname in libnames:
+        clib.externalLibs.append(libname + vtksuffix)
+
 #########
 
 # Define subclasses of the distutils build_ext and build_shlib class.

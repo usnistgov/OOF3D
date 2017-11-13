@@ -150,29 +150,27 @@ def set_clib_flags(clib):
         clib.externalLibs.append('pmpich++')
         clib.externalLibs.append('mpich')
     if DIM_3:
-        def addVTKlib(libname):
-            # vtksuffix is a globar var defined by findvtk() in setup.py
-            clib.externalLibs.append(libname+vtksuffix)
-        addVTKlib('vtkCommonCore')
-        addVTKlib('vtkCommonDataModel')
-        addVTKlib('vtkCommonExecutionModel')
-        addVTKlib('vtkCommonMisc')
-        addVTKlib('vtkCommonTransforms')
-        addVTKlib('vtkFiltersCore')
-        addVTKlib('vtkFiltersExtraction')
-        addVTKlib('vtkFiltersGeneral')
-        addVTKlib('vtkFiltersModeling')
-        addVTKlib('vtkFiltersSources')        
-        addVTKlib('vtkIOImage')
-        addVTKlib('vtkIOXML')
-        addVTKlib('vtkImagingCore')
-        addVTKlib('vtkImagingGeneral')
-        addVTKlib('vtkRenderingAnnotation')
-        addVTKlib('vtkRenderingContextOpenGL2')
-        addVTKlib('vtkRenderingCore')
-        addVTKlib('vtkRenderingFreeType')
-        addVTKlib('vtkRenderingOpenGL2')
-        addVTKlib('vtkRenderingVolumeOpenGL2')
+        addVTKlibs(clib, ['vtkCommonCore',
+                          'vtkCommonDataModel',
+                          'vtkCommonExecutionModel',
+                          'vtkCommonMisc',
+                          'vtkCommonTransforms',
+                          'vtkFiltersCore',
+                          'vtkFiltersExtraction',
+                          'vtkFiltersGeneral',
+                          'vtkFiltersModeling',
+                          'vtkFiltersSources',        
+                          'vtkIOImage',
+                          'vtkIOXML',
+                          'vtkImagingCore',
+                          'vtkImagingColor',
+                          'vtkImagingGeneral',
+                          'vtkRenderingAnnotation',
+                          'vtkRenderingContextOpenGL2',
+                          'vtkRenderingCore',
+                          'vtkRenderingFreeType',
+                          'vtkRenderingOpenGL2',
+                          'vtkRenderingVolumeOpenGL2'])
 
         ## Libs included before upgrading from vtk5.
         # clib.externalLibs.append('vtkImaging')
