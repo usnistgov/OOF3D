@@ -231,13 +231,10 @@ registeredclass.Registration(
     ImageModifier,
     BlurImage,
     ordering=2.00,
-    params=[parameter.FloatParameter('radius', 0.0,
-      # TODO: not sure if this tip is accurate for the 3D case -- the
-      # vtk documentation isn't very clear about what units the radius
-      # is in.
-      tip="Radius of the Gaussian, in pixels, not counting the center pixel."),
-            parameter.FloatParameter('sigma', 1.0,
-      tip="Standard deviation of the Gaussian, in pixels")
+    params=[parameter.PositiveFloatParameter('radius', 1.0,
+      tip="Radius of the Gaussian kernel, in pixels(?)."),
+            parameter.PositiveFloatParameter('sigma', 1.0,
+      tip="Standard deviation of the Gaussian, in pixels(?).")
     ],
     tip="Blur an image by convolving it with a Gaussian operator of the given radius and standard deviation (sigma).",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/image/reg/blurimage.xml')

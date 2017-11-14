@@ -16,14 +16,10 @@ Use Eigen?  Use DPF's sparse_matrix_optimization branch?
   sparse_matrix_optimization.  The difference in performance on
   solver_test.py/static_quadratic_set was negligible.
 
-Fix bugs in OOFImage3D::threshold.  See TODO in oofimage3d.C.
-  * After using it, voxel selections don't appear properly in the
-    graphics window -- they're gray and are in the wrong place.
-    Probably the image has changed its storage format.
-  * Applying it twice yields garbage, or worse.
+Fix: Resize layer list in cocoa gfx window & canvas position is incorrect.
 
-Fix bug: Opening a graphics window after closing one will crash the
-program.
+Mesh Material display not working?
+Mesh filled contour display not working?
 
 Fix bug: Are element groups/materials not being recomputed for
 refinement undo/redo?  Or are filters on the skeleton displays not

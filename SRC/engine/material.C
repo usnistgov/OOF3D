@@ -40,6 +40,7 @@
 #include <vector>
 #include <map>
 
+#include <vtkExecutive.h>
 #include <vtkImageMapToColors.h>
 
 
@@ -922,6 +923,7 @@ MaterialImage::MaterialImage(CMicrostructure *ms,
   map->SetLookupTable(lut);
   map->SetOutputFormatToRGBA();
   map->SetInputData(mImage);
+  map->GetExecutive()->Update();
   image = map->GetOutput();
 }
 

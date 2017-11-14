@@ -123,8 +123,10 @@ void oofOverlayVoxels::_doOverlayVoxels(vtkRectilinearGrid *input,
       vtkIdType cellID = input->ComputeCellId(const_cast<int*>(ijkvals));
       const TYPE *oldColor = inData + cellID*tupleSize;
       TYPE *newColor = outData + cellID*tupleSize;
-      
-      for(int i=0; i<tupleSize; i++) {
+
+      // Only modify the RGB components if tupleSize is 4.
+      int imax = tupleSize > 3 ? 3 : tupleSize;
+      for(int i=0; i<imax; i++) {
 	newColor[i] = tint[i]*opacity + oldColor[i]*(1-opacity);
       }
     }
@@ -157,9 +159,10 @@ int oofOverlayVoxels::RequestData(vtkInformation *request,
   int dataType = iScalars->GetDataType();
   int tupleSize = iScalars->GetNumberOfComponents();
   // See comment in OOFImage3D constructor.  We're requiring all
-  // images to have 3 components just so this filter doesn't have to
-  // figure out how to add components back in to colorize the voxels.
-  assert(tupleSize == 3);
+  // images to have at least 3 components just so that this filter
+  // doesn't have to figure out how to add components back in to
+  // colorize the voxels.
+  assert(tupleSize >= 3);
 
   void *inData = iScalars->GetVoidPointer(0);
   void *outData = oScalars->GetVoidPointer(0);
