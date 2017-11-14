@@ -16,8 +16,6 @@ Use Eigen?  Use DPF's sparse_matrix_optimization branch?
   sparse_matrix_optimization.  The difference in performance on
   solver_test.py/static_quadratic_set was negligible.
 
-Fix: Resize layer list in cocoa gfx window & canvas position is incorrect.
-
 Mesh Material display not working?
 Mesh filled contour display not working?
 
@@ -30,7 +28,10 @@ updating?
   Elements in other groups appear.
 Maybe related to this?
 Warning: In /Users/langer/UTIL/VTK/VTK-5.10.1/Filtering/vtkDataSet.cxx, line 446
-vtkUnstructuredGrid (0x7f961e6a4280): Cell array  with 1 components, has 8239 tuples but there are only 1484 cells
+vtkUnstructuredGrid (0x7f961e6a4280): Cell array  with 1 components,
+has 8239 tuples but there are only 1484 cells
+
+Remove opacity param from MicrostructureMaterialDisplay?  Is it used?
 
   
 Soon
