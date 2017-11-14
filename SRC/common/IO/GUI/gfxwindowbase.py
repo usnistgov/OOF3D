@@ -281,12 +281,15 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
         return False
 
     # OOFMenu callback
-    def close(self, menuitem, *args): 
+    # This is called closeMenuCB because searching for 'close' in the
+    # code is too hard.
+    def closeMenuCB(self, menuitem, *args):
+        debug.fmsg()
         # The subwindow menu-removal can't depend on the existence of
         # .gtk, and it's done in the non-GUI parent, so call it
         # if this is the first time through.
         if not self.closed:
-            ghostgfxwindow.GhostGfxWindow.close(self, menuitem, *args)
+            ghostgfxwindow.GhostGfxWindow.closeMenuCB(self, menuitem, *args)
             self.closed = True
         if self.gtk:
             mainthread.runBlock(self.gtk.destroy) # calls destroyCB via gtk
@@ -295,6 +298,7 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
     def destroyCB(self, *args):
         # See comment in GhostGfxWindow.close about the order of operations.
         if self.gtk:
+            debug.fmsg()
             ## tell all the miniThreads to stop and go home.
 #             self.device.destroy()
 #             if config.dimension() == 2:

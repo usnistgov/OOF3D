@@ -148,7 +148,7 @@ void GhostOOFCanvas::render() {
     try {
       if(render_window->IsDrawable()) {
 #ifdef DEBUG
-	// oofcerr << "GhostOOFCanvas::render: calling Render " << std::endl;
+	oofcerr << "GhostOOFCanvas::render: calling Render " << std::endl;
 	// oofcerr << "GhostOOFCanvas::render: actors are:";
 	// vtkSmartPointer<vtkActorCollection> actors = renderer->GetActors();
 	// actors->InitTraversal();

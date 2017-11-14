@@ -33,7 +33,10 @@ has 8239 tuples but there are only 1484 cells
 
 Remove opacity param from MicrostructureMaterialDisplay?  Is it used?
 
-  
+Fix bug:  open two graphics windows on Linux.  Close the first one with the
+window manager close button.  The program will crash.
+
+
 Soon
 ----
 

@@ -383,7 +383,7 @@ class GhostGfxWindow:
 
         filemenu.addItem(OOFMenuItem(
             'Close',
-            callback=self.close,
+            callback=self.closeMenuCB,
             accel='w',
             help="Close the graphics window.",
             discussion="<para>Close the graphics window.</para>"))
@@ -1172,7 +1172,8 @@ class GhostGfxWindow:
         finally:
             self.releaseGfxLock()
 
-    def close(self, menuitem, *args):
+    def closeMenuCB(self, menuitem, *args):
+        debug.fmsg()
         # Before acquiring the gfx lock, kill all subthreads, or
         # this may deadlock!
         #self.device.destroy()

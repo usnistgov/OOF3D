@@ -157,6 +157,7 @@ gboolean OOFCanvas3D::gtk_realize(GtkWidget*, gpointer data) {
 }
 
 gboolean OOFCanvas3D::realize() {
+  oofcerr << "OOFCanvas3D::realize" << std::endl;
   assert(mainthread_query());
   if(!created) {
     gtk_widget_realize(drawing_area);
@@ -192,6 +193,7 @@ gboolean OOFCanvas3D::gtk_configure(GtkWidget*, GdkEventConfigure *config,
 }
 
 gboolean OOFCanvas3D::configure(GdkEventConfigure *event) {
+  oofcerr << "OOFCanvas3D::configure" << std::endl;
   assert(mainthread_query());
   // The height, width, x, and y elements of event are the same as
   // those of drawing_area->allocation.
@@ -220,6 +222,7 @@ gboolean OOFCanvas3D::gtk_expose(GtkWidget*, GdkEventExpose *event,
 }
 
 gboolean OOFCanvas3D::expose() {
+  oofcerr << "OOFCanvas3D::expose" << std::endl;
   assert(mainthread_query());
   exposed = true;
   // This is called not just when the window is first exposed, but
@@ -230,6 +233,7 @@ gboolean OOFCanvas3D::expose() {
 }
 
 void OOFCanvas3D::show() {
+  oofcerr << "OOFCanvas3D::show" << std::endl;
   assert(mainthread_query());
   if(!drawing_area) 
     throw ErrProgrammingError("No canvas!", __FILE__, __LINE__);
