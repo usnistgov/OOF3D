@@ -196,12 +196,17 @@ gboolean OOFCanvas3D::configure(GdkEventConfigure *event) {
   // The height, width, x, and y elements of event are the same as
   // those of drawing_area->allocation.
   render_window->SetSize(event->width, event->height);
+
+#ifdef OOF_USE_COCOA
   // vtk measures y *up* from the bottom edge of the top level
   // window, but gtk measures it down from the top of the window.
   GtkWidget *topwindow = gtk_widget_get_toplevel(drawing_area);
   assert(topwindow != nullptr);
   int top_height = topwindow->allocation.height;
   render_window->SetPosition(event->x, top_height - event->y - event->height);
+#else
+  render_window->SetPosition(event->x, event->y);
+#endif // not OOF_USE_COCOA
   return true;
 }
 
