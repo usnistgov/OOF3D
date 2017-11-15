@@ -65,10 +65,13 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
         display.DisplayMethod.__init__(self)
 
     def destroy(self, destroy_canvaslayer):
+        debug.fmsg()
         if self.sbcallbacks is not None:
             map(switchboard.removeCallback, self.sbcallbacks)
             self.sbcallbacks = None
+        debug.fmsg("Calling DisplayMethod.destroy")
         display.DisplayMethod.destroy(self, destroy_canvaslayer)
+        debug.fmsg("Done")
 
     def newLayer(self):
         self.toolbox = self.gfxwindow.getToolboxByName("Viewer")

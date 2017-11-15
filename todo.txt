@@ -1,5 +1,6 @@
 TODO LIST FOR OOF3D
 
+
 Before Next Release
 -------------------
 
@@ -35,8 +36,24 @@ Remove opacity param from MicrostructureMaterialDisplay?  Is it used?
 
 Fix bug:  open two graphics windows on Linux.  Close the first one with the
 window manager close button.  The program will crash.
+Changes that prevent crashing:
+   Comment out call to Render
+   Run on Mac with Cocoa
+Changes that don't prevent crashing:
+   Don't add renderer to render_window.
+   Remove renderer from render_window at start of destroyCB.
+   Toolboxes aren't removed in GfxWindowBase.destroyCB.
+   No layers created (immediate return in createPredefinedLayers,
+      don't create axes)
+   Switch to vtk8. -- Crashes when closing just 1 graphics window, using
+     either the menu item (seg fault) or the window manager (X11 error).
+     Even when Render call is commented out.  Seg fault is in
+     PlaneAndArrowLayer::destroy->OOFCanvasLayer::removeAllProps.
+     When no layers are defined, closing with the menu item leads to
+     the X11 error, so there may be two separate problems.
 
 
+---------------------------------------------------------------------------
 Soon
 ----
 
@@ -77,6 +94,7 @@ slow because it takes a long time to recompute the center point.
 Either find a faster way to compute the center, or make computing the
 center optional and re-use the old point.
 
+----------------------------------------------------------------------------
 At Some Later Time
 ------------------
 

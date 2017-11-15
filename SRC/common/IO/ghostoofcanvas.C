@@ -75,7 +75,9 @@ GhostOOFCanvas::GhostOOFCanvas()
     margin(.10)
 {
   assert(mainthread_query());
+
   render_window->AddRenderer(renderer);
+
   // Choose an arbitrary size for the render window.  This will be
   // reset when the window is actually displayed, but if we're in text
   // mode the window won't ever be displayed.  The size must be set or
@@ -129,6 +131,7 @@ void GhostOOFCanvas::toggleAxes(bool show) {
 // This should only be called from python and only with mainthread.run
 
 void GhostOOFCanvas::render() {
+  oofcerr << "GhostOOFCanvas::render" << std::endl;
   // TODO OPT: Why is this called so often, for example, after Skeleton
   // refinement?  Does it matter?
   assert(mainthread_query());
@@ -159,8 +162,10 @@ void GhostOOFCanvas::render() {
 	// };
 	// oofcerr << std::endl;
 #endif // DEBUG
-	
+
+	//oofcerr << "GhostOOFCanvas::render: NOT rendering!" << std::endl;
 	render_window->Render();
+	
 	// oofcerr << "GhostOOFCanvas::render: back from Render" << std::endl;
       }
     }
@@ -176,6 +181,11 @@ void GhostOOFCanvas::deactivate() {
   // deactivate() suppresses redrawing.  It should be called at the
   // start of the graphics window shut down sequence.
   deactivated = true;
+  if(renderer) {
+    render_window->RemoveRenderer(renderer);
+    renderer = vtkSmartPointer<vtkRenderer>();
+  }
+  
 }
 
 void GhostOOFCanvas::newLayer(OOFCanvasLayerBase *layer) {

@@ -980,7 +980,7 @@ class GhostGfxWindow:
         maxpre = -1
         for predeflayer in PredefinedLayer.allPredefinedLayers[minpre:maxpre]:
             layer, who = predeflayer.createLayer(self)
-            ## debug.fmsg("installing predefined layer", layer)
+            debug.fmsg("installing predefined layer", layer)
             # The gfxlock has been acquired already, so we call
             # incorporateLayer with lock=False.
             self.incorporateLayer(layer, who, autoselect=False, lock=False)
@@ -1179,10 +1179,12 @@ class GhostGfxWindow:
         #self.device.destroy()
 
         if self.oofcanvas is not None:
+            debug.fmsg("Deactivating canvas")
             self.oofcanvas.deactivate()
             
         self.acquireGfxLock()
         try:
+            debug.fmsg("Calling closeWindow")
             self.gfxmanager.closeWindow(self)
             
             # Things can be shut down via several pathways (ie, from
@@ -1192,24 +1194,31 @@ class GhostGfxWindow:
             # callback.
             menuitem.callback = None
 
+            debug.fmsg("Removing callbacks")
             for callback in self.switchboardCallbacks:
                 switchboard.removeCallback(callback)
             self.switchboardCallbacks = []
 
+            debug.fmsg("Destroying layers")
             for layer in self.layers[:]:
+                debug.fmsg("Destroying layer:", layer, self.gtk_destruction_in_progress)
                 layer.destroy(not self.gtk_destruction_in_progress)
             self.layers = []
 
+            debug.fmsg("Closing toolboxes")
             for toolbox in self.toolboxes:
                 toolbox.close()
 
             # cleanup to prevent possible circular references
             ## del self.display
+            debug.fmsg("Deleting gfxmanager reference")
             del self.gfxmanager
+            debug.fmsg("Clearing menu items")
             self.menu.clearMenu()
             OOF.Windows.Graphics.removeItem(self.name)
             OOF.removeItem(self.name)
             self.menu = None
+            debug.fmsg("Deleting selectedLayer and toolboxes")
             del self.selectedLayer
             del self.toolboxes
         finally:
@@ -1220,6 +1229,7 @@ class GhostGfxWindow:
             # Fix this comment.  There's no device.destroy call. Could
             # the threads actually try to draw something?
             self.releaseGfxLock()
+        debug.fmsg("Done")
 
     def clear(self, *args, **kwargs):
         # Remove all user specified layers from the display.

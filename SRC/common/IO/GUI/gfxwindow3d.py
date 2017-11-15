@@ -283,7 +283,7 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         self.oofcanvas.setContourMapPosition(
             self.settings.contourmap_position[0],
             self.settings.contourmap_position[1])
-        
+
         self.gtk.show_all()    # calls realizeCB(), which calls drawAtTime()
 
         self.updateToolboxChooser()

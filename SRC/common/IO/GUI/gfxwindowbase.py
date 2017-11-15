@@ -299,11 +299,9 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
         # See comment in GhostGfxWindow.close about the order of operations.
         if self.gtk:
             debug.fmsg()
-            ## tell all the miniThreads to stop and go home.
-#             self.device.destroy()
-#             if config.dimension() == 2:
-#                 self.contourmapdata.device.destroy()
-            
+            if self.oofcanvas is not None:
+                self.oofcanvas.deactivate()
+                
             for tbgui in self.toolboxGUIs:
                 if tbgui.active:
                     tbgui.deactivate()
