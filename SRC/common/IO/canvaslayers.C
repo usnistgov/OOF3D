@@ -194,20 +194,13 @@ void OOFCanvasLayer::removeProp(vtkSmartPointer<vtkProp> prop) {
 }
 
 void OOFCanvasLayer::removeAllProps() {
-  oofcerr << "OOFCanvasLayer::removeAllProps" << std::endl;
   for(PropVec::iterator i=props.begin(); i<props.end(); ++i) {
-    oofcerr << "OOFCanvasLayer::removeAllProps: prop=" << (*i).GetPointer()
-	    << std::endl;
     if(canvas->renderer->HasViewProp(*i)) {
-      oofcerr << "OOFCanvasLayer::removeAllProps: removing ";
-      (*i)->Print(std::cerr);
-      oofcerr << std::endl;
       canvas->renderer->RemoveViewProp(*i);
     }
   }
   props.resize(0);
   empty_ = true;
-  oofcerr << "OOFCanvasLayer::removeAllProps: done" << std::endl;
 }
 
 // void OOFCanvasLayer::raise_layer(int h) {
@@ -457,11 +450,6 @@ PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas,
   planeActor->GetProperty()->BackfaceCullingOn();
   arrowActor->SetMapper(arrowMapper);
 
-  oofcerr << "PlaneAndArrowLayer::ctor: planeActor=" << planeActor.GetPointer()
-	  << std::endl;
-  oofcerr << "PlaneAndArrowLayer::ctor: arrowActor=" << arrowActor.GetPointer()
-	  << std::endl;
-  planeActor->DebugOn();
   addProp(planeActor);
   addProp(arrowActor);
 }

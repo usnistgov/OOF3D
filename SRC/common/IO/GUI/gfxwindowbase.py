@@ -296,22 +296,28 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
 
     # gtk callback
     def destroyCB(self, *args):
+        debug.fmsg("destroyCB for gfxwindow")
         # See comment in GhostGfxWindow.close about the order of operations.
         if self.gtk:
             debug.fmsg()
             if self.oofcanvas is not None:
                 self.oofcanvas.deactivate()
-                
+
+            debug.fmsg("Deactivating toolboxes")
             for tbgui in self.toolboxGUIs:
                 if tbgui.active:
                     tbgui.deactivate()
                 tbgui.close()
             del self.toolboxGUIs
+            debug.fmsg("Deleting mouseHandler", self.mouseHandler)
             del self.mouseHandler
+            debug.fmsg("Deleted mouseHandler")
             if self.menu:
                 self.menu.gui_callback=None
 
+            debug.fmsg("Unsetting gtk")
             self.gtk = None             # make sure this isn't repeated
+            debug.fmsg("Unset gtk")
 
             # self.menu.File.Close() will call its callback on a
             # subthread without blocking, which means that the caller
@@ -323,8 +329,10 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
             # window is already in the process of being closed.
             self.gtk_destruction_in_progress = True
 
-            if self.menu:
-                self.menu.File.Close()    # calls self.close()
+            # self.menu is set to None in GhostGfxWindow.closeMenuCB.
+            if self.menu:  
+                debug.fmsg("Calling File.Close")
+                self.menu.File.Close()    # calls self.closeMenuCB()
 
 
     # Toolbox callbacks

@@ -44,7 +44,7 @@ public:
   void set_mouse_callback(PyObject*);
 
   // Callback functions
-  static void gtk_destroy(GtkWidget*, gpointer);
+  static gboolean gtk_destroy(GtkWidget*, gpointer);
   void destroy();
   static gboolean gtk_realize(GtkWidget*, gpointer);
   gboolean realize();

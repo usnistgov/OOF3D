@@ -191,10 +191,8 @@ class DisplayMethod(registeredclass.RegisteredClass):
             switchboard.removeCallback(self.whoChangedSignal)
             switchboard.removeCallback(self.whoRenamedSignal)
         if destroy_canvaslayer and self.canvaslayer is not None:
-            debug.fmsg("Calling canvaslayer.destroy")
             mainthread.runBlock(self.canvaslayer.destroy)
             self.canvaslayer = None
-            debug.fmsg("Done")
 
     # Derived classes must redefine this (2D only):
     def draw(self, canvas):

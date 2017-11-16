@@ -214,8 +214,10 @@ public:
 
   void save_canvas(const std::string &filename, const ImageFormat*) const;
 
+  void dumpProps();		// debugging
+
   friend class OOFCanvasLayer;
-};
+};				// end GhostOOFCanvas
 
 bool findSegLineDistance(const Coord&, const Coord&, const Coord&, const Coord&,
 			 double &, double&);

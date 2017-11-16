@@ -176,6 +176,8 @@ public:
 // save
   void save_canvas(char *filename, ImageFormat*);
 
+  void dumpProps();		// debugging
+
 };
 
 #endif	// GHOSTOOFCANVAS_SWG

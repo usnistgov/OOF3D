@@ -131,7 +131,7 @@ void GhostOOFCanvas::toggleAxes(bool show) {
 // This should only be called from python and only with mainthread.run
 
 void GhostOOFCanvas::render() {
-  oofcerr << "GhostOOFCanvas::render" << std::endl;
+  // oofcerr << "GhostOOFCanvas::render" << std::endl;
   // TODO OPT: Why is this called so often, for example, after Skeleton
   // refinement?  Does it matter?
   assert(mainthread_query());
@@ -151,7 +151,7 @@ void GhostOOFCanvas::render() {
     try {
       if(render_window->IsDrawable()) {
 #ifdef DEBUG
-	oofcerr << "GhostOOFCanvas::render: calling Render " << std::endl;
+	// oofcerr << "GhostOOFCanvas::render: calling Render " << std::endl;
 	// oofcerr << "GhostOOFCanvas::render: actors are:";
 	// vtkSmartPointer<vtkActorCollection> actors = renderer->GetActors();
 	// actors->InitTraversal();
@@ -163,7 +163,7 @@ void GhostOOFCanvas::render() {
 	// oofcerr << std::endl;
 #endif // DEBUG
 
-	//oofcerr << "GhostOOFCanvas::render: NOT rendering!" << std::endl;
+	// oofcerr << "GhostOOFCanvas::render: NOT rendering!" << std::endl;
 	render_window->Render();
 	
 	// oofcerr << "GhostOOFCanvas::render: back from Render" << std::endl;
@@ -181,9 +181,11 @@ void GhostOOFCanvas::deactivate() {
   // deactivate() suppresses redrawing.  It should be called at the
   // start of the graphics window shut down sequence.
   deactivated = true;
+  // Don't unset GhostOOFCanvas::renderer here!  CanvasLayers haven't
+  // been destroyed yet, and they will try to remove their vtkActors
+  // from the renderer.
   if(renderer) {
     render_window->RemoveRenderer(renderer);
-    renderer = vtkSmartPointer<vtkRenderer>();
   }
   
 }
@@ -1630,3 +1632,18 @@ bool findSegLineDistance(const Coord &A, const Coord &B,
 }
 
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+void GhostOOFCanvas::dumpProps() {
+  vtkSmartPointer<vtkPropCollection> props = renderer->GetViewProps();
+  oofcerr << "GhostOOFCanvas::dumpProps: n=" << props->GetNumberOfItems()
+	  << std::endl;
+  props->InitTraversal();
+  for(int i=0; i<props->GetNumberOfItems(); i++) {
+    OOFcerrIndent indent(2);
+    vtkSmartPointer<vtkProp> prop = props->GetNextProp();
+    oofcerr << "GhostOOFCanvas::dumpProps: " << prop.GetPointer();
+    oofcerr << " " << prop->GetClassName() << std::endl;
+  }
+  oofcerr << "GhostOOFCanvas::dumpProps: done" << std::endl;
+}

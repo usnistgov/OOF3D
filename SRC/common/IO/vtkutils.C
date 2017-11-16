@@ -11,6 +11,7 @@
 
 #include <oofconfig.h>
 #include <limits>
+#include "common/IO/oofcerr.h"
 #include "common/IO/vtkutils.h"
 #include "common/coord.h"
 

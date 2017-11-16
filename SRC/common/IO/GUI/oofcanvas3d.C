@@ -49,6 +49,7 @@ OOFCanvas3D::OOFCanvas3D()
     mouse_callback(0),
     rubberband(0)
 {
+  oofcerr << "OOFCanvas3D::ctor: " << this << std::endl;
   assert(mainthread_query());
 
   if(!OOFCanvas3D::initialized) {
@@ -101,7 +102,13 @@ OOFCanvas3D::OOFCanvas3D()
   show();
 }
 
-OOFCanvas3D::~OOFCanvas3D() {}
+OOFCanvas3D::~OOFCanvas3D() {
+  oofcerr << "OOFCanvas3D::dtor: " << this << std::endl;
+  render_window->Finalize();
+  //gtk_widget_destroy(drawing_area); // TODO: Is this needed?
+  //render_window = vtkSmartPointer<vtkRenderWindow>(); // removes reference
+  oofcerr << "OOFCanvas3D:dtor: done" << std::endl;
+}
 
 PyObject *OOFCanvas3D::widget() {
   PyObject *wdgt;
@@ -119,12 +126,16 @@ PyObject *OOFCanvas3D::widget() {
 
 
 // static
-void OOFCanvas3D::gtk_destroy(GtkWidget*, gpointer data) {
+gboolean OOFCanvas3D::gtk_destroy(GtkWidget*, gpointer data) {
   // This is a static function.  It's the gtk callback for the
   // "destroy" signal.
-  OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
-  oofcanvas->destroy();
-  delete oofcanvas;
+  oofcerr << "OOFCanvas3D::gtk_destroy: NOT DOING ANYTHING" << std::endl;
+  // OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
+  // oofcanvas->destroy();
+  // oofcerr << "OOFCanvas3D::gtk_destroy: deleting oofcanvas" << std::endl;
+  // delete oofcanvas;
+  // oofcerr << "OOFCanvas3D::gtk_destroy: done" << std::endl;
+  return true;
 }
 
 void OOFCanvas3D::destroy() {
@@ -157,7 +168,6 @@ gboolean OOFCanvas3D::gtk_realize(GtkWidget*, gpointer data) {
 }
 
 gboolean OOFCanvas3D::realize() {
-  oofcerr << "OOFCanvas3D::realize" << std::endl;
   assert(mainthread_query());
   if(!created) {
     gtk_widget_realize(drawing_area);
@@ -193,7 +203,6 @@ gboolean OOFCanvas3D::gtk_configure(GtkWidget*, GdkEventConfigure *config,
 }
 
 gboolean OOFCanvas3D::configure(GdkEventConfigure *event) {
-  oofcerr << "OOFCanvas3D::configure" << std::endl;
   assert(mainthread_query());
   // The height, width, x, and y elements of event are the same as
   // those of drawing_area->allocation.
@@ -222,7 +231,6 @@ gboolean OOFCanvas3D::gtk_expose(GtkWidget*, GdkEventExpose *event,
 }
 
 gboolean OOFCanvas3D::expose() {
-  oofcerr << "OOFCanvas3D::expose" << std::endl;
   assert(mainthread_query());
   exposed = true;
   // This is called not just when the window is first exposed, but
@@ -233,7 +241,6 @@ gboolean OOFCanvas3D::expose() {
 }
 
 void OOFCanvas3D::show() {
-  oofcerr << "OOFCanvas3D::show" << std::endl;
   assert(mainthread_query());
   if(!drawing_area) 
     throw ErrProgrammingError("No canvas!", __FILE__, __LINE__);
