@@ -1178,14 +1178,17 @@ class GhostGfxWindow:
     def closeMenuCB(self, menuitem, *args):
         # Before acquiring the gfx lock, kill all subthreads, or
         # this may deadlock!
-        #self.device.destroy()
 
-        if self.oofcanvas is not None:
-            self.oofcanvas.deactivate()
-            self.oofcanvas = None
-            
         self.acquireGfxLock()
         try:
+            for layer in self.layers[:]:
+                layer.destroy(not self.gtk_destruction_in_progress)
+            self.layers = []
+
+            if self.oofcanvas is not None:
+                self.oofcanvas.deactivate()
+                self.oofcanvas = None
+                
             self.gfxmanager.closeWindow(self)
             
             # Things can be shut down via several pathways (ie, from
@@ -1199,9 +1202,6 @@ class GhostGfxWindow:
                 switchboard.removeCallback(callback)
             self.switchboardCallbacks = []
 
-            for layer in self.layers[:]:
-                layer.destroy(not self.gtk_destruction_in_progress)
-            self.layers = []
 
             for toolbox in self.toolboxes:
                 toolbox.close()
