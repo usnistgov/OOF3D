@@ -71,19 +71,18 @@ OOFCanvas3D::OOFCanvas3D()
   Display* dis = GDK_DISPLAY();
   render_window->SetDisplayId(dis);
 #endif // not OOF_USE_COCOA
-
-  g_signal_connect(drawing_area, "destroy",
-		   G_CALLBACK(OOFCanvas3D::gtk_destroy),
-		   this);
-  g_signal_connect(drawing_area, "realize",
-		   G_CALLBACK(OOFCanvas3D::gtk_realize),
-		   this);
-  g_signal_connect(drawing_area, "expose_event",
-		   G_CALLBACK(OOFCanvas3D::gtk_expose),
-		   this);
-  g_signal_connect(drawing_area, "configure_event",
-		   G_CALLBACK(OOFCanvas3D::gtk_configure),
-		   this);
+  g_handlers.push_back(g_signal_connect(drawing_area, "destroy",
+					G_CALLBACK(OOFCanvas3D::gtk_destroy),
+					this));
+  g_handlers.push_back(g_signal_connect(drawing_area, "realize",
+					G_CALLBACK(OOFCanvas3D::gtk_realize),
+					this));
+  g_handlers.push_back(g_signal_connect(drawing_area, "expose_event",
+					G_CALLBACK(OOFCanvas3D::gtk_expose),
+					this));
+  g_handlers.push_back(g_signal_connect(drawing_area, "configure_event",
+					G_CALLBACK(OOFCanvas3D::gtk_configure),
+					this));
   gtk_widget_add_events(drawing_area, (GDK_EXPOSURE_MASK |
 				       GDK_BUTTON_PRESS_MASK |
 				       GDK_BUTTON_RELEASE_MASK |
@@ -104,8 +103,11 @@ OOFCanvas3D::OOFCanvas3D()
 
 OOFCanvas3D::~OOFCanvas3D() {
   oofcerr << "OOFCanvas3D::dtor: " << this << std::endl;
+  for(gulong handler : g_handlers) {
+    g_signal_handler_disconnect(drawing_area, handler);
+  }
+  gtk_widget_destroy(drawing_area); // TODO: Is this needed?
   render_window->Finalize();
-  //gtk_widget_destroy(drawing_area); // TODO: Is this needed?
   //render_window = vtkSmartPointer<vtkRenderWindow>(); // removes reference
   oofcerr << "OOFCanvas3D:dtor: done" << std::endl;
 }
@@ -163,6 +165,7 @@ void OOFCanvas3D::destroy() {
 
 // static
 gboolean OOFCanvas3D::gtk_realize(GtkWidget*, gpointer data) {
+  oofcerr << "OOFCanvas3D::gtk_realize" << std::endl;
   OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
   return oofcanvas->realize();
 }
@@ -197,6 +200,7 @@ gboolean OOFCanvas3D::realize() {
 gboolean OOFCanvas3D::gtk_configure(GtkWidget*, GdkEventConfigure *config,
 				    gpointer data) 
 {
+  oofcerr << "OOFCanvas3D::gtk_configure" << std::endl;
   assert(mainthread_query());
   OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
   return oofcanvas->configure(config);
@@ -225,6 +229,7 @@ gboolean OOFCanvas3D::configure(GdkEventConfigure *event) {
 gboolean OOFCanvas3D::gtk_expose(GtkWidget*, GdkEventExpose *event,
 				 gpointer data) 
 {
+  oofcerr << "OOFCanvas3D::gtk_expose" << std::endl;
   assert(mainthread_query());
   OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
   return oofcanvas->expose();
@@ -241,6 +246,7 @@ gboolean OOFCanvas3D::expose() {
 }
 
 void OOFCanvas3D::show() {
+  oofcerr << "OOFCanvas3D::show" << std::endl;
   assert(mainthread_query());
   if(!drawing_area) 
     throw ErrProgrammingError("No canvas!", __FILE__, __LINE__);

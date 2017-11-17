@@ -30,6 +30,7 @@ private:
   PyObject *mouse_callback;
   guint mouse_handler_id; //, config_handler_id;
   RubberBand *rubberband;
+  std::vector<gulong> g_handlers; // gtk signal handler ids
 protected:
   GtkWidget *drawing_area;
 
