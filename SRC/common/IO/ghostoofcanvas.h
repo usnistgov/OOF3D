@@ -57,8 +57,7 @@ protected:
   bool exposed;
   bool rendered;
   bool axes_showing;		// axes are actually drawn
-  bool deactivated;		// suppress redraws when shutting down
-  // vtkSmartPointer<vtkXOpenGLRenderWindow> render_window;
+  // bool deactivated;		// suppress redraws when shutting down
 #ifdef OOF_USE_COCOA
   vtkSmartPointer<vtkCocoaRenderWindow> render_window;
 #else

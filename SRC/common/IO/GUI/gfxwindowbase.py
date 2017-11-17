@@ -296,10 +296,11 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
 
     # gtk callback
     def destroyCB(self, *args):
-        debug.fmsg("destroyCB for gfxwindow")
-        # See comment in GhostGfxWindow.close about the order of operations.
+        debug.fmsg("destroyCB for gfxwindow, self.gtk=", self.gtk)
+        # See comment in GhostGfxWindow.closeMenuCB about the order of
+        # operations.
         if self.gtk:
-            debug.fmsg()
+            self.removeAllLayers()
             if self.oofcanvas is not None:
                 self.oofcanvas.deactivate()
 

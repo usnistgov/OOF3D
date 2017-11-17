@@ -56,7 +56,7 @@ GhostOOFCanvas::GhostOOFCanvas()
     exposed(false),
     rendered(false),
     axes_showing(false),
-    deactivated(false),
+    // deactivated(false),
 #ifdef OOF_USE_COCOA
     render_window(vtkSmartPointer<vtkCocoaRenderWindow>::New()),
 #else
@@ -135,8 +135,8 @@ void GhostOOFCanvas::render() {
   // TODO OPT: Why is this called so often, for example, after Skeleton
   // refinement?  Does it matter?
   assert(mainthread_query());
-  if(deactivated)
-    return;
+  // if(deactivated)
+  //   return;
   if(exposed) {
     if(contourmap_requested && contour_layer!=0 && !contourmap_showing) {
       renderer->AddViewProp(contourMapActor);
@@ -178,14 +178,18 @@ void GhostOOFCanvas::render() {
 }
 
 void GhostOOFCanvas::deactivate() {
-  // deactivate() suppresses redrawing.  It should be called at the
-  // start of the graphics window shut down sequence.
-  deactivated = true;
-  // Don't unset GhostOOFCanvas::renderer here!  CanvasLayers haven't
-  // been destroyed yet, and they will try to remove their vtkActors
-  // from the renderer.
+  // // deactivate() suppresses redrawing.  It should be called at the
+  // // start of the graphics window shut down sequence.
+  // deactivated = true;
   if(renderer) {
+    oofcerr << "GhostOOFCanvas::deactivate: finalizing render_window"
+	    << std::endl;
+    render_window->Finalize();
+    oofcerr << "GhostOOFCanvas::deactivate: removing renderer" << std::endl;
     render_window->RemoveRenderer(renderer);
+    oofcerr << "GhostOOFCanvas::deactivate: deleting renderer" << std::endl;
+    renderer = vtkSmartPointer<vtkRenderer>();
+    oofcerr << "GhostOOFCanvas::deactivate: done" << std::endl;
   }
   
 }

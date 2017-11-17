@@ -106,8 +106,11 @@ OOFCanvas3D::~OOFCanvas3D() {
   for(gulong handler : g_handlers) {
     g_signal_handler_disconnect(drawing_area, handler);
   }
-  gtk_widget_destroy(drawing_area); // TODO: Is this needed?
-  render_window->Finalize();
+  // oofcerr << "OOFCanvas3D::dtor: finalizing render_window" << std::endl;
+  // render_window->Finalize();
+  // oofcerr << "OOFCanvas3D::dtor: Destroying drawing_area" << std::endl;
+  // gtk_widget_destroy(drawing_area); // TODO: Is this needed?
+
   //render_window = vtkSmartPointer<vtkRenderWindow>(); // removes reference
   oofcerr << "OOFCanvas3D:dtor: done" << std::endl;
 }

@@ -194,8 +194,6 @@ void OOFCanvasLayer::removeProp(vtkSmartPointer<vtkProp> prop) {
 }
 
 void OOFCanvasLayer::removeAllProps() {
-  OOFcerrIndent indent(2);
-  oofcerr << "OOFCanvasLayer::removeAllProps: n=" << props.size() << std::endl;
   for(PropVec::iterator i=props.begin(); i<props.end(); ++i) {
     if(canvas->renderer->HasViewProp(*i)) {
       canvas->renderer->RemoveViewProp(*i);
@@ -203,7 +201,6 @@ void OOFCanvasLayer::removeAllProps() {
   }
   props.resize(0);
   empty_ = true;
-  oofcerr << "OOFCanvasLayer::removeAllProps: done" << std::endl;
 }
 
 // void OOFCanvasLayer::raise_layer(int h) {
@@ -283,10 +280,7 @@ void OOFCanvasLayer::hide(bool forced) {
 }
 
 void OOFCanvasLayer::destroy() {
-  oofcerr << "OOFCanvasLayer::destroy: calling removeAllProps "
-	  << name() << std::endl;
   removeAllProps();
-  oofcerr << "OOFCanvasLayer::destroy: done" << std::endl;
 }
 
 void OOFCanvasLayer::installContourMap() {

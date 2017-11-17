@@ -1175,33 +1175,40 @@ class GhostGfxWindow:
         finally:
             self.releaseGfxLock()
 
-    def closeMenuCB(self, menuitem, *args):
-        # Before acquiring the gfx lock, kill all subthreads, or
-        # this may deadlock!
-
-        self.acquireGfxLock()
-        try:
+    def removeAllLayers(self):
+        if self.layers:
+            debug.fmsg("Destroying layers")
             for layer in self.layers[:]:
                 layer.destroy(not self.gtk_destruction_in_progress)
             self.layers = []
 
+    def closeMenuCB(self, menuitem, *args):
+        # OLD COMMENT: Before acquiring the gfx lock, kill all
+        # subthreads, or this may deadlock!  SHOULD WE WORRY ABOUT
+        # THAT?
+
+        # Things can be shut down via several pathways (ie, from
+        # scripts or gtk events), so at each step we have to make sure
+        # that the step won't be repeated.  This function has been
+        # called from the menus, so here we turn off the menu
+        # callback.
+        menuitem.callback = None
+
+        self.acquireGfxLock()
+        try:
+            self.removeAllLayers()
+            
             if self.oofcanvas is not None:
                 self.oofcanvas.deactivate()
+                debug.fmsg("Deactivated canvas")
                 self.oofcanvas = None
+                debug.fmsg("Deleted reference to canvas")
                 
             self.gfxmanager.closeWindow(self)
             
-            # Things can be shut down via several pathways (ie, from
-            # scripts or gtk events), so at each step we have to make sure
-            # that the step won't be repeated.  This function has been
-            # called from the menus, so here we turn off the menu
-            # callback.
-            menuitem.callback = None
-
             for callback in self.switchboardCallbacks:
                 switchboard.removeCallback(callback)
             self.switchboardCallbacks = []
-
 
             for toolbox in self.toolboxes:
                 toolbox.close()
@@ -1216,6 +1223,7 @@ class GhostGfxWindow:
             del self.selectedLayer
             del self.toolboxes
         finally:
+            debug.fmsg("Done")
             # Although the window is closing, it's important to
             # release the lock so that any remaining drawing threads
             # can finish.  They won't actually try to draw anything,
