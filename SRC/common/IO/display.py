@@ -184,15 +184,17 @@ class DisplayMethod(registeredclass.RegisteredClass):
     # shutdown procedure has begun.  All calls to destroy() should have
     # destroy_canvaslayer=True, except for calls from
     # GhostGfxWindow.close().
+    ## TODO: In OOF3D, this may be irrelevant, because the components
+    ## of the canvas layers are vtk objects, not gtk objects.
 
     def destroy(self, destroy_canvaslayer=True):
-        self.gfxwindow = None   # TODO OPT: Is this necessary?
         if self.whoChangedSignal:
             switchboard.removeCallback(self.whoChangedSignal)
             switchboard.removeCallback(self.whoRenamedSignal)
         if destroy_canvaslayer and self.canvaslayer is not None:
             mainthread.runBlock(self.canvaslayer.destroy)
             self.canvaslayer = None
+        self.gfxwindow = None   # TODO OPT: Is this necessary?
 
     # Derived classes must redefine this (2D only):
     def draw(self, canvas):

@@ -1181,23 +1181,20 @@ class GhostGfxWindow:
             for layer in self.layers[:]:
                 layer.destroy(not self.gtk_destruction_in_progress)
             self.layers = []
+            debug.fmsg("Done")
 
     def closeMenuCB(self, menuitem, *args):
-        # OLD COMMENT: Before acquiring the gfx lock, kill all
-        # subthreads, or this may deadlock!  SHOULD WE WORRY ABOUT
-        # THAT?
+        # This method is redefined in gfxwindowbase.py in GUI mode
+        debug.fmsg("GhostGfxWindow.closeMenuCB!")
+        self.gtk_destruction_in_progress = True # shouldn't be needed?
+        mainthread.runBlock(self.removeAllLayers)
+        self.shutdownGfx_menu() # needs to be on subthread
 
-        # Things can be shut down via several pathways (ie, from
-        # scripts or gtk events), so at each step we have to make sure
-        # that the step won't be repeated.  This function has been
-        # called from the menus, so here we turn off the menu
-        # callback.
-        menuitem.callback = None
-
+    def shutdownGfx_menu(self):
+        # The non-gui part of the gfx window shutdown procedure.
+        debug.fmsg()
         self.acquireGfxLock()
         try:
-            self.removeAllLayers()
-            
             if self.oofcanvas is not None:
                 self.oofcanvas.deactivate()
                 debug.fmsg("Deactivated canvas")
