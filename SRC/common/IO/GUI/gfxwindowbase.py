@@ -335,6 +335,19 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
                 debug.fmsg("Calling File.Close")
                 self.menu.File.Close()    # calls self.closeMenuCB()
 
+    def destroy_gui(self):
+        if self.gtk:
+            self.removeAllLayers()
+            if self.oofcanvas is not None:
+                self.oofcanvas.deactivate()
+            for tbgui in self.toolboxGUIs:
+                if tbgui.active:
+                    tbgui.deactivate()
+                tbgui.close()
+            del self.toolboxGUIs
+            del self.mouseHandler
+            self.gtk = None
+
 
     # Toolbox callbacks
     ##################################################
