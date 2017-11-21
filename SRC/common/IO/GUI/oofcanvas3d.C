@@ -134,16 +134,23 @@ PyObject *OOFCanvas3D::widget() {
 gboolean OOFCanvas3D::gtk_destroy(GtkWidget*, gpointer data) {
   // This is a static function.  It's the gtk callback for the
   // "destroy" signal.
-  oofcerr << "OOFCanvas3D::gtk_destroy: NOT DOING ANYTHING" << std::endl;
-  // OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
-  // oofcanvas->destroy();
+  oofcerr << "OOFCanvas3D::gtk_destroy: handling gtk destroy signal"
+	  << std::endl;
+  OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
+  oofcanvas->destroy();
   // oofcerr << "OOFCanvas3D::gtk_destroy: deleting oofcanvas" << std::endl;
   // delete oofcanvas;
-  // oofcerr << "OOFCanvas3D::gtk_destroy: done" << std::endl;
+  oofcerr << "OOFCanvas3D::gtk_destroy: done" << std::endl;
   return true;
 }
 
+#include <vtkXOpenGLRenderWindow.h>
+
 void OOFCanvas3D::destroy() {
+  OOFcerrIndent indent(2);
+  oofcerr << "OOFCanvas3D::destroy: gl context="
+	  << vtkXOpenGLRenderWindow::SafeDownCast(render_window)->getContext()
+	  << std::endl;
   // for(DisplayLayerList::iterator i=layers.begin(); i!=layers.end(); ++i)
   //     delete *i;
   //delete underlayer;
@@ -162,6 +169,7 @@ void OOFCanvas3D::destroy() {
 //     releasePyLock(pystate);
 //   }
 
+  render_window->Finalize();
   // TODO OPT: Does *drawing_area need to be explicitly destroyed?
   drawing_area = 0;
 }

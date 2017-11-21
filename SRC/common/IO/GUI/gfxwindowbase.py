@@ -314,7 +314,6 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
             # The menu callback hasn't been run.  Run it, and it will
             # call runShutdownSequence.
             self.menu.File.Close()
-        debug.fmsg("Done")
         # return False
             
         # # See comment in GhostGfxWindow.closeMenuCB about the order of
