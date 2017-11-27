@@ -1196,6 +1196,7 @@ class GhostGfxWindow:
         self.acquireGfxLock()
         try:
             if self.oofcanvas is not None:
+                debug.fmsg("Deactivating canvas")
                 self.oofcanvas.deactivate()
                 debug.fmsg("Deactivated canvas")
                 self.oofcanvas = None

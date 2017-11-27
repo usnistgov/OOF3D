@@ -186,14 +186,14 @@ void GhostOOFCanvas::deactivate() {
   // // start of the graphics window shut down sequence.
   // deactivated = true;
   if(renderer) {
-    oofcerr << "GhostOOFCanvas::deactivate: finalizing render_window "
+    oofcerr << "GhostOOFCanvas::deactivate: NOT finalizing render_window "
 	    << render_window->GetClassName() << " "
 	    << render_window.GetPointer()
-	    << " context="
+	    << " gl context="
 	    << vtkXOpenGLRenderWindow::SafeDownCast(render_window)->getContext()
 	    << std::endl;
     render_window->DebugOn();
-    render_window->Finalize();
+    // render_window->Finalize();
     oofcerr << "GhostOOFCanvas::deactivate: removing renderer" << std::endl;
     render_window->RemoveRenderer(renderer);
     oofcerr << "GhostOOFCanvas::deactivate: deleting renderer" << std::endl;

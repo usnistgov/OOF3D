@@ -83,6 +83,29 @@ OOFCanvas3D::OOFCanvas3D()
   g_handlers.push_back(g_signal_connect(drawing_area, "configure_event",
 					G_CALLBACK(OOFCanvas3D::gtk_configure),
 					this));
+
+  // On Linux with vtk8, we're getting errors when
+  // vtkXOpenGLRenderWindowlDestroYWindow calls XUnmapWindow.
+  // Suspecting that the window has already been unmapped by gtk, I
+  // tried to see when gtk unmaps it by connecting to the unmap and
+  // unmap-event signals, but I'm not seeing them at all. Supposedly
+  // "unmap" indicates that gtk has requested that the window be
+  // unmapped, and "unmap-event" indicates that it is actually being
+  // unmapped (or just about to be, or just was?).  Adding
+  // GDK_STRUCTURE_MASK to the gtk_widget_add_events args is supposed
+  // to enable these signals.
+
+  // NO.  Calling XUnmapWindow multiple times has no effect, so that's
+  // not the problem.  XUnmapWindow raises BadWindow if the WindowId
+  // "does not name a defined window". 
+
+  // g_handlers.push_back(g_signal_connect(drawing_area, "unmap",
+  // 					G_CALLBACK(OOFCanvas3D::gtk_unmap),
+  // 					this));
+  // g_handlers.push_back(g_signal_connect(drawing_area, "unmap_event",
+  // 					G_CALLBACK(OOFCanvas3D::gtk_unmap_event),
+  // 					this));
+
   gtk_widget_add_events(drawing_area, (GDK_EXPOSURE_MASK |
 				       GDK_BUTTON_PRESS_MASK |
 				       GDK_BUTTON_RELEASE_MASK |
@@ -91,7 +114,9 @@ OOFCanvas3D::OOFCanvas3D()
 				       GDK_POINTER_MOTION_MASK |
 				       GDK_POINTER_MOTION_HINT_MASK |
 				       GDK_ENTER_NOTIFY_MASK |
-				       GDK_LEAVE_NOTIFY_MASK));
+				       GDK_LEAVE_NOTIFY_MASK
+				       // | GDK_STRUCTURE_MASK
+				       ));
 
 //         # need this to be able to handle key_press events.
 //         self.set_flags(gtk.CAN_FOCUS)
@@ -106,8 +131,8 @@ OOFCanvas3D::~OOFCanvas3D() {
   for(gulong handler : g_handlers) {
     g_signal_handler_disconnect(drawing_area, handler);
   }
-  // oofcerr << "OOFCanvas3D::dtor: finalizing render_window" << std::endl;
-  // render_window->Finalize();
+  oofcerr << "OOFCanvas3D::dtor: finalizing render_window" << std::endl;
+  render_window->Finalize();
   // oofcerr << "OOFCanvas3D::dtor: Destroying drawing_area" << std::endl;
   // gtk_widget_destroy(drawing_area); // TODO: Is this needed?
 
@@ -132,8 +157,8 @@ PyObject *OOFCanvas3D::widget() {
 
 // static
 gboolean OOFCanvas3D::gtk_destroy(GtkWidget*, gpointer data) {
-  // This is a static function.  It's the gtk callback for the
-  // "destroy" signal.
+  // This static function is the gtk callback for the "destroy"
+  // signal.
   oofcerr << "OOFCanvas3D::gtk_destroy: handling gtk destroy signal"
 	  << std::endl;
   OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
@@ -169,6 +194,8 @@ void OOFCanvas3D::destroy() {
 //     releasePyLock(pystate);
 //   }
 
+  oofcerr << "OOFCanvas3D::destroy: calling render_window->Finalize"
+	  << std::endl;
   render_window->Finalize();
   // TODO OPT: Does *drawing_area need to be explicitly destroyed?
   drawing_area = 0;
@@ -187,6 +214,7 @@ gboolean OOFCanvas3D::realize() {
     gtk_widget_realize(drawing_area);
 #ifndef OOF_USE_COCOA
     XID wid = GDK_WINDOW_XID(drawing_area->window);
+    oofcerr << "OOFCanvas3D::realize: wid=" << wid << std::endl;
     render_window->SetWindowId((void*) wid);
 
     // An old comment here said "this version only works in gtk
@@ -255,6 +283,20 @@ gboolean OOFCanvas3D::expose() {
   render();
   return true;
 }
+
+// // static
+// gboolean OOFCanvas3D::gtk_unmap(GtkWidget*, GdkEvent*, gpointer)
+// {
+//   oofcerr << "OOFCanvas3D::gtk_unmap" << std::endl;
+//   return true;
+// }
+
+// // static
+// gboolean OOFCanvas3D::gtk_unmap_event(GtkWidget*, GdkEvent*, gpointer)
+// {
+//   oofcerr << "OOFCanvas3D::gtk_unmap_event" << std::endl;
+//   return true;
+// }
 
 void OOFCanvas3D::show() {
   oofcerr << "OOFCanvas3D::show" << std::endl;

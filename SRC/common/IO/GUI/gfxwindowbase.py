@@ -55,6 +55,7 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
         # GhostGfxWindow.__init__ creates the canvas, among other things.
         ghostgfxwindow.GhostGfxWindow.__init__(self, name, gfxmgr,
                                                clone=clone)
+        # postinitialize calls the SubWindow constructor.
         mainthread.runBlock(self.postinitialize, (name, gfxmgr, clone))
         self.releaseGfxLock()
 
@@ -355,7 +356,9 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
         #         self.menu.File.Close()    # calls self.closeMenuCB()
 
     def runShutdownSequence(self):
+        debug.fmsg()
         debug.subthreadTest()
+        assert not self.gtk_destruction_in_progress
         self.gtk_destruction_in_progress = True # shouldn't be needed?
         mainthread.runBlock(self.removeAllLayers)
         mainthread.runBlock(self.shutdownGfx_gtk)
