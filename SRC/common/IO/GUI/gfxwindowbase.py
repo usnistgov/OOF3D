@@ -291,18 +291,26 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
     # This is called closeMenuCB because searching for 'close' in the
     # code is too hard.
     def closeMenuCB(self, menuitem, *args):
-        debug.subthreadTest()
+        # Menu item is UNTHREADABLE
+        debug.mainthreadTest()
+        # debug.subthreadTest()
         debug.fmsg()
         self.menu_shutdown = True
         if self.gtk_shutdown:
             # The gtk destroy callback has already been run. 
             self.runShutdownSequence()
         else:
-            mainthread.runBlock(self.gtk.destroy) # calls destroyCB via gtk
+            # destroyCB is installed as the callback for the gtk
+            # 'destroy' signal in GfxWindow3D.postinitialize() in
+            # gfxwindow3d.py
+            self.gtk.destroy()
+            # mainthread.runBlock(self.gtk.destroy) # calls destroyCB via gtk
         debug.fmsg("Done")
 
     # gtk callback
     def destroyCB(self, *args):
+        # This callback runs (and finishes) *before* the window is
+        # actually destroyed.
         debug.fmsg()
         debug.mainthreadTest()
         self.gtk_shutdown = True
@@ -310,12 +318,14 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
             # The menu callback has already been run.  Run
             # shutdownGfx_menu on a subthread, then shutdownGfx_gtk on
             # the main thread.
-            subthread.execute(self.runShutdownSequence)
+            self.runShutdownSequence()
+            # subthread.execute(self.runShutdownSequence)
         else:
             # The menu callback hasn't been run.  Run it, and it will
             # call runShutdownSequence.
             self.menu.File.Close()
-        # return False
+        debug.fmsg("Returning True")
+        return True
             
         # # See comment in GhostGfxWindow.closeMenuCB about the order of
         # # operations.
@@ -357,12 +367,21 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
 
     def runShutdownSequence(self):
         debug.fmsg()
-        debug.subthreadTest()
+        debug.mainthreadTest()
         assert not self.gtk_destruction_in_progress
         self.gtk_destruction_in_progress = True # shouldn't be needed?
-        mainthread.runBlock(self.removeAllLayers)
-        mainthread.runBlock(self.shutdownGfx_gtk)
-        self.shutdownGfx_menu(); # needs to be on subthread
+        self.removeAllLayers()
+        self.shutdownGfx_gtk()
+        self.shutdownGfx_menu(); # in ghostgfxwindow.py
+
+    # def runShutdownSequence(self):
+    #     debug.fmsg()
+    #     debug.subthreadTest()
+    #     assert not self.gtk_destruction_in_progress
+    #     self.gtk_destruction_in_progress = True # shouldn't be needed?
+    #     mainthread.runBlock(self.removeAllLayers)
+    #     mainthread.runBlock(self.shutdownGfx_gtk)
+    #     self.shutdownGfx_menu(); # in ghostgfxwindow.py
 
     def shutdownGfx_gtk(self):
         debug.fmsg()

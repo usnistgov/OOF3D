@@ -385,6 +385,7 @@ class GhostGfxWindow:
             'Close',
             callback=self.closeMenuCB,
             accel='w',
+            threadable=oofmenu.UNTHREADABLE,
             help="Close the graphics window.",
             discussion="<para>Close the graphics window.</para>"))
         filemenu.addItem(OOFMenuItem(
@@ -966,9 +967,9 @@ class GhostGfxWindow:
         self.switchboardCallbacks.extend(callbacks)
 
     def createPredefinedLayers(self):
-        # if 1:
-        #     debug.fmsg("NOT CREATING PREDEFINED LAYERS")
-        #     return
+        if 1:
+            debug.fmsg("NOT CREATING PREDEFINED LAYERS")
+            return
 
         # Create pre-defined layers.  These are in all graphics
         # windows, regardless of whether or not they are drawable at
@@ -1184,16 +1185,20 @@ class GhostGfxWindow:
             debug.fmsg("Done")
 
     def closeMenuCB(self, menuitem, *args):
+        debug.mainthreadTest()
         # This method is redefined in gfxwindowbase.py in GUI mode
         debug.fmsg("GhostGfxWindow.closeMenuCB!")
         self.gtk_destruction_in_progress = True # shouldn't be needed?
-        mainthread.runBlock(self.removeAllLayers)
+        self.removeAllLayers()
+        # mainthread.runBlock(self.removeAllLayers)
         self.shutdownGfx_menu() # needs to be on subthread
 
     def shutdownGfx_menu(self):
         # The non-gui part of the gfx window shutdown procedure.
         debug.fmsg()
-        self.acquireGfxLock()
+        # debug.subthreadTest()
+        debug.mainthreadTest()
+        #self.acquireGfxLock()
         try:
             if self.oofcanvas is not None:
                 debug.fmsg("Deactivating canvas")
@@ -1228,7 +1233,7 @@ class GhostGfxWindow:
             # because of the device.destroy call, above.  TODO 3.1:
             # Fix this comment.  There's no device.destroy call. Could
             # the threads actually try to draw something?
-            self.releaseGfxLock()
+            #self.releaseGfxLock()
 
     def clear(self, *args, **kwargs):
         # Remove all user specified layers from the display.

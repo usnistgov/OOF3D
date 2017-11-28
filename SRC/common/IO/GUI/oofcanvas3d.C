@@ -131,8 +131,8 @@ OOFCanvas3D::~OOFCanvas3D() {
   for(gulong handler : g_handlers) {
     g_signal_handler_disconnect(drawing_area, handler);
   }
-  oofcerr << "OOFCanvas3D::dtor: finalizing render_window" << std::endl;
-  render_window->Finalize();
+  // oofcerr << "OOFCanvas3D::dtor: finalizing render_window" << std::endl;
+  // render_window->Finalize();
   // oofcerr << "OOFCanvas3D::dtor: Destroying drawing_area" << std::endl;
   // gtk_widget_destroy(drawing_area); // TODO: Is this needed?
 
@@ -173,9 +173,10 @@ gboolean OOFCanvas3D::gtk_destroy(GtkWidget*, gpointer data) {
 
 void OOFCanvas3D::destroy() {
   OOFcerrIndent indent(2);
-  oofcerr << "OOFCanvas3D::destroy: gl context="
-	  << vtkXOpenGLRenderWindow::SafeDownCast(render_window)->getContext()
-	  << std::endl;
+  oofcerr << "OOFCanvas3D::destroy" << std::endl;
+  // oofcerr << "OOFCanvas3D::destroy: gl context="
+  // 	  << vtkXOpenGLRenderWindow::SafeDownCast(render_window)->getContext()
+  // 	  << std::endl;
   // for(DisplayLayerList::iterator i=layers.begin(); i!=layers.end(); ++i)
   //     delete *i;
   //delete underlayer;

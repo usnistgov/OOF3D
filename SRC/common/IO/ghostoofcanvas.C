@@ -189,8 +189,8 @@ void GhostOOFCanvas::deactivate() {
     oofcerr << "GhostOOFCanvas::deactivate: NOT finalizing render_window "
 	    << render_window->GetClassName() << " "
 	    << render_window.GetPointer()
-	    << " gl context="
-	    << vtkXOpenGLRenderWindow::SafeDownCast(render_window)->getContext()
+	    // << " gl context="
+	    // << vtkXOpenGLRenderWindow::SafeDownCast(render_window)->getContext()
 	    << std::endl;
     render_window->DebugOn();
     // render_window->Finalize();
