@@ -56,7 +56,6 @@ GhostOOFCanvas::GhostOOFCanvas()
     exposed(false),
     rendered(false),
     axes_showing(false),
-    // deactivated(false),
 #ifdef OOF_USE_COCOA
     render_window(vtkSmartPointer<vtkCocoaRenderWindow>::New()),
 #else
@@ -137,8 +136,6 @@ void GhostOOFCanvas::render() {
   // TODO OPT: Why is this called so often, for example, after Skeleton
   // refinement?  Does it matter?
   assert(mainthread_query());
-  // if(deactivated)
-  //   return;
   if(exposed) {
     if(contourmap_requested && contour_layer!=0 && !contourmap_showing) {
       renderer->AddViewProp(contourMapActor);
@@ -179,36 +176,35 @@ void GhostOOFCanvas::render() {
   }
 }
 
-#include <vtkXOpenGLRenderWindow.h> // debugging on linux only
+//#include <vtkXOpenGLRenderWindow.h> // debugging on linux only
 
-void GhostOOFCanvas::deactivate() {
-  // // deactivate() suppresses redrawing.  It should be called at the
-  // // start of the graphics window shut down sequence.
-  // deactivated = true;
-  if(true) {
-    oofcerr << "GhostOOFCanvas::deactivate: not doing anything" << std::endl;
-    return;
-  }
-  if(renderer) {
-    oofcerr << "GhostOOFCanvas::deactivate: NOT finalizing render_window "
-	    << render_window->GetClassName() << " "
-	    << render_window.GetPointer()
-	    // << " gl context="
-	    // << vtkXOpenGLRenderWindow::SafeDownCast(render_window)->getContext()
-	    << std::endl;
-    render_window->DebugOn();
-    // Don't call render_window->Finalize().  The
-    // vtkXOpenGLRenderWindow destructor calls it.
+// void GhostOOFCanvas::deactivate() {
+//   // deactivate() suppresses redrawing.  It should be called at the
+//   // start of the graphics window shut down sequence.
+//   if(true) {
+//     oofcerr << "GhostOOFCanvas::deactivate: not doing anything" << std::endl;
+//     return;
+//   }
+//   if(renderer) {
+//     // oofcerr << "GhostOOFCanvas::deactivate: NOT finalizing render_window "
+//     // 	    << render_window->GetClassName() << " "
+//     // 	    << render_window.GetPointer()
+//     // 	    // << " gl context="
+//     // 	    // << vtkXOpenGLRenderWindow::SafeDownCast(render_window)->getContext()
+//     // 	    << std::endl;
+//     render_window->DebugOn();
+//     // Don't call render_window->Finalize().  The
+//     // vtkXOpenGLRenderWindow destructor calls it.
     
-    // render_window->Finalize();
-    oofcerr << "GhostOOFCanvas::deactivate: removing renderer" << std::endl;
-    render_window->RemoveRenderer(renderer);
-    oofcerr << "GhostOOFCanvas::deactivate: deleting renderer" << std::endl;
-    renderer = vtkSmartPointer<vtkRenderer>();
-    oofcerr << "GhostOOFCanvas::deactivate: done" << std::endl;
-  }
+//     // render_window->Finalize();
+//     // oofcerr << "GhostOOFCanvas::deactivate: removing renderer" << std::endl;
+//     render_window->RemoveRenderer(renderer);
+//     // oofcerr << "GhostOOFCanvas::deactivate: deleting renderer" << std::endl;
+//     renderer = vtkSmartPointer<vtkRenderer>();
+//     // oofcerr << "GhostOOFCanvas::deactivate: done" << std::endl;
+//   }
   
-}
+// }
 
 void GhostOOFCanvas::newLayer(OOFCanvasLayerBase *layer) {
   layers.push_back(layer);

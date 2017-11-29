@@ -1185,27 +1185,22 @@ class GhostGfxWindow:
             debug.fmsg("Done")
 
     def closeMenuCB(self, menuitem, *args):
-        debug.mainthreadTest()
         # This method is redefined in gfxwindowbase.py in GUI mode
-        debug.fmsg("GhostGfxWindow.closeMenuCB!")
+        debug.mainthreadTest()
         self.gtk_destruction_in_progress = True # shouldn't be needed?
         self.removeAllLayers()
-        # mainthread.runBlock(self.removeAllLayers)
-        self.shutdownGfx_menu() # needs to be on subthread
+        #mainthread.runBlock(self.shutdownGfx_menu)
+        self.shutdownGfx_menu()
 
     def shutdownGfx_menu(self):
         # The non-gui part of the gfx window shutdown procedure.
         debug.fmsg()
-        # debug.subthreadTest()
+        #debug.subthreadTest()
         debug.mainthreadTest()
         #self.acquireGfxLock()
         try:
-            if self.oofcanvas is not None:
-                debug.fmsg("Deactivating canvas")
-                self.oofcanvas.deactivate()
-                debug.fmsg("Deactivated canvas")
-                self.oofcanvas = None
-                debug.fmsg("Deleted reference to canvas")
+            # This calls the OOFCanvas3D destructor.
+            self.oofcanvas = None
                 
             self.gfxmanager.closeWindow(self)
             

@@ -74,9 +74,6 @@ OOFCanvas3D::OOFCanvas3D()
   render_window->SetDisplayId(dis);
 #endif // not OOF_USE_COCOA
 
-  g_handlers.push_back(g_signal_connect(drawing_area, "destroy",
-  					G_CALLBACK(OOFCanvas3D::gtk_destroy),
-  					this));
   g_handlers.push_back(g_signal_connect(drawing_area, "realize",
 					G_CALLBACK(OOFCanvas3D::gtk_realize),
 					this));
@@ -87,45 +84,16 @@ OOFCanvas3D::OOFCanvas3D()
 					G_CALLBACK(OOFCanvas3D::gtk_configure),
 					this));
 
-  // On Linux with vtk8, we're getting errors when
-  // vtkXOpenGLRenderWindowlDestroYWindow calls XUnmapWindow.
-  // Suspecting that the window has already been unmapped by gtk, I
-  // tried to see when gtk unmaps it by connecting to the unmap and
-  // unmap-event signals, but I'm not seeing them at all. Supposedly
-  // "unmap" indicates that gtk has requested that the window be
-  // unmapped, and "unmap-event" indicates that it is actually being
-  // unmapped (or just about to be, or just was?).  Adding
-  // GDK_STRUCTURE_MASK to the gtk_widget_add_events args is supposed
-  // to enable these signals.
-
-  // NO.  Calling XUnmapWindow multiple times has no effect, so that's
-  // not the problem.  XUnmapWindow raises BadWindow if the WindowId
-  // "does not name a defined window". 
-
-  // g_handlers.push_back(g_signal_connect(drawing_area, "unmap",
-  // 					G_CALLBACK(OOFCanvas3D::gtk_unmap),
-  // 					this));
-  // g_handlers.push_back(g_signal_connect(drawing_area, "unmap_event",
-  // 					G_CALLBACK(OOFCanvas3D::gtk_unmap_event),
-  // 					this));
-
-  gtk_widget_add_events(drawing_area, (GDK_EXPOSURE_MASK |
-				       GDK_BUTTON_PRESS_MASK |
-				       GDK_BUTTON_RELEASE_MASK |
-				       GDK_KEY_PRESS_MASK |
-				       GDK_SCROLL_MASK |
-				       GDK_POINTER_MOTION_MASK |
-				       GDK_POINTER_MOTION_HINT_MASK |
-				       GDK_ENTER_NOTIFY_MASK |
-				       GDK_LEAVE_NOTIFY_MASK
-				       // | GDK_STRUCTURE_MASK
+  gtk_widget_add_events(drawing_area, (GDK_EXPOSURE_MASK
+				       | GDK_BUTTON_PRESS_MASK
+				       | GDK_BUTTON_RELEASE_MASK
+				       | GDK_KEY_PRESS_MASK
+				       | GDK_SCROLL_MASK
+				       | GDK_POINTER_MOTION_MASK
+				       | GDK_POINTER_MOTION_HINT_MASK
+				       | GDK_ENTER_NOTIFY_MASK
+				       | GDK_LEAVE_NOTIFY_MASK
 				       ));
-
-//         # need this to be able to handle key_press events.
-//         self.set_flags(gtk.CAN_FOCUS)
-//         # default size
-//         self.set_size_request(300, 300)
-
   show();
 }
 
@@ -142,17 +110,15 @@ OOFCanvas3D::~OOFCanvas3D() {
   }
 
 #ifndef OOF_USE_COCOA
-  oofcerr << "OOFCanvas3D::dtor: unsetting WindowId" << std::endl;
+  // Setting the WindowId to 0 prevents errors that arise in the
+  // vtkXOpenGLRenderWindowlDestroYWindow destructor.  The errors are
+  // different in vtk7 and vtk8 but always involve a BadWindow in a
+  // call to X or functions.  I think the errors are due to gtk and
+  // vtk squabbling over who owns the window.  I don't know if zeroing
+  // the WindowId here is the correct solution, but nothing else seems
+  // to work.
   render_window->SetWindowId(0);
 #endif // OOF_USE_COCOA
-
-  // oofcerr << "OOFCanvas3D::dtor: finalizing render_window" << std::endl;
-  // render_window->Finalize();
-  // oofcerr << "OOFCanvas3D::dtor: Destroying drawing_area" << std::endl;
-  // gtk_widget_destroy(drawing_area); // TODO: Is this needed?
-
-  //render_window = vtkSmartPointer<vtkRenderWindow>(); // removes reference
-  oofcerr << "OOFCanvas3D:dtor: done" << std::endl;
 }
 
 PyObject *OOFCanvas3D::widget() {
@@ -167,58 +133,6 @@ PyObject *OOFCanvas3D::widget() {
   }
   releasePyLock(pystate);
   return wdgt;
-}
-
-
-// static
-gboolean OOFCanvas3D::gtk_destroy(GtkWidget*, gpointer data) {
-  // This static function is the gtk callback for the "destroy"
-  // signal.
-  oofcerr << "OOFCanvas3D::gtk_destroy: handling gtk destroy signal"
-	  << std::endl;
-  OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
-  oofcanvas->destroy();
-  // oofcerr << "OOFCanvas3D::gtk_destroy: deleting oofcanvas" << std::endl;
-  // delete oofcanvas;
-  oofcerr << "OOFCanvas3D::gtk_destroy: done" << std::endl;
-  return true;
-}
-
-#include <vtkXOpenGLRenderWindow.h>
-
-void OOFCanvas3D::destroy() {
-  OOFcerrIndent indent(2);
-  oofcerr << "OOFCanvas3D::destroy" << std::endl;
-  // oofcerr << "OOFCanvas3D::destroy: gl context="
-  // 	  << vtkXOpenGLRenderWindow::SafeDownCast(render_window)->getContext()
-  // 	  << std::endl;
-  // for(DisplayLayerList::iterator i=layers.begin(); i!=layers.end(); ++i)
-  //     delete *i;
-  //delete underlayer;
-  
-//   if(mouse_callback) {
-//     gtk_signal_disconnect(GTK_OBJECT(root), mouse_handler_id);
-//     PyGILState_STATE pystate = acquirePyLock();
-//     Py_XDECREF(mouse_callback);
-//     releasePyLock(pystate);
-//   }
-
-//   if(config_callback) {
-//     gtk_signal_disconnect(GTK_OBJECT(canvas), config_handler_id);
-//     PyGILState_STATE pystate = acquirePyLock();
-//     Py_XDECREF(config_callback);
-//     releasePyLock(pystate);
-//   }
-
-  // No need to call render_window->Finalize(), because the
-  // vtkXOpenGLRenderWindow destructor calls it.
-  
-  // oofcerr << "OOFCanvas3D::destroy: calling render_window->Finalize"
-  // 	  << std::endl;
-  // render_window->Finalize();
-
-  // TODO OPT: Does *drawing_area need to be explicitly destroyed?
-  drawing_area = 0;
 }
 
 // static
@@ -288,7 +202,6 @@ gboolean OOFCanvas3D::configure(GdkEventConfigure *event) {
 gboolean OOFCanvas3D::gtk_expose(GtkWidget*, GdkEventExpose *event,
 				 gpointer data) 
 {
-  oofcerr << "OOFCanvas3D::gtk_expose" << std::endl;
   assert(mainthread_query());
   OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
   return oofcanvas->expose();
@@ -319,7 +232,6 @@ gboolean OOFCanvas3D::expose() {
 // }
 
 void OOFCanvas3D::show() {
-  oofcerr << "OOFCanvas3D::show" << std::endl;
   assert(mainthread_query());
   if(!drawing_area) 
     throw ErrProgrammingError("No canvas!", __FILE__, __LINE__);

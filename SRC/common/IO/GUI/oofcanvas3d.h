@@ -44,9 +44,6 @@ public:
   // Separate callbacks for mouse events and resize events.
   void set_mouse_callback(PyObject*);
 
-  // Callback functions
-  static gboolean gtk_destroy(GtkWidget*, gpointer);
-  void destroy();
   static gboolean gtk_realize(GtkWidget*, gpointer);
   gboolean realize();
   static gboolean gtk_configure(GtkWidget*, GdkEventConfigure*, gpointer);

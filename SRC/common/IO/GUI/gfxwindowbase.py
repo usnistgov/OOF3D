@@ -291,20 +291,20 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
     # This is called closeMenuCB because searching for 'close' in the
     # code is too hard.
     def closeMenuCB(self, menuitem, *args):
-        # Menu item is UNTHREADABLE
+        # # Menu item is UNTHREADABLE
         debug.mainthreadTest()
-        # debug.subthreadTest()
+        #debug.subthreadTest()
         debug.fmsg()
         self.menu_shutdown = True
         if self.gtk_shutdown:
-            # The gtk destroy callback has already been run. 
+            # The gtk destroy callback has already been run.
             self.runShutdownSequence()
         else:
             # destroyCB is installed as the callback for the gtk
             # 'destroy' signal in GfxWindow3D.postinitialize() in
             # gfxwindow3d.py
             self.gtk.destroy()
-            # mainthread.runBlock(self.gtk.destroy) # calls destroyCB via gtk
+            #mainthread.runBlock(self.gtk.destroy) # calls destroyCB via gtk
         debug.fmsg("Done")
 
     # gtk callback
@@ -319,7 +319,7 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
             # shutdownGfx_menu on a subthread, then shutdownGfx_gtk on
             # the main thread.
             self.runShutdownSequence()
-            # subthread.execute(self.runShutdownSequence)
+            #subthread.execute(self.runShutdownSequence)
         else:
             # The menu callback hasn't been run.  Run it, and it will
             # call runShutdownSequence.
@@ -385,20 +385,17 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
 
     def shutdownGfx_gtk(self):
         debug.fmsg()
-        # from the old gtk callback
-        # if self.oofcanvas is not None:
-        #     self.oofcanvas.deactivate()
-        debug.fmsg("Deactivating toolboxes")
+        # debug.fmsg("Deactivating toolboxes")
         for tbgui in self.toolboxGUIs:
             if tbgui.active:
                 tbgui.deactivate()
             tbgui.close()
         del self.toolboxGUIs
-        debug.fmsg("Deleting mousehandler")
+        # debug.fmsg("Deleting mousehandler")
         del self.mouseHandler
-        debug.fmsg("Unsetting gtk")
+        # debug.fmsg("Unsetting gtk")
         self.gtk = None
-        debug.fmsg("Done")
+        # debug.fmsg("Done")
 
 
     # Toolbox callbacks

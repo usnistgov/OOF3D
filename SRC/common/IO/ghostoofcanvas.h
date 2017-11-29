@@ -105,9 +105,9 @@ public:
 
   // This should only be called from python and only with mainthread.run
   void render();
-  // deactivate() suppresses redrawing.  It should be called at the
-  // start of the graphics window shut down sequence.
-  void deactivate();
+  // // deactivate() suppresses redrawing.  It should be called at the
+  // // start of the graphics window shut down sequence.
+  // void deactivate();
 
   void set_bgColor(const CColor);
   void set_margin(double f) { margin = f; }
