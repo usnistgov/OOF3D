@@ -35,6 +35,7 @@ class CDirection;
 #include <vector>
 
 void initialize_vtk();
+void initialize_X11();
 
 vtkSmartPointer<vtkDoubleArray> fillDataArray(const std::vector<double>*);
 void getDataArrayRange(vtkSmartPointer<vtkDataArray>, double*);

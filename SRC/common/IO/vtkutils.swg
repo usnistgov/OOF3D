@@ -35,6 +35,7 @@
 }
 
 void initialize_vtk();		// Call before any other vtk code
+void initialize_X11();
 
 class vtkDoubleArrayPtr {
 public:

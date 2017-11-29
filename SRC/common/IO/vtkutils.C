@@ -58,6 +58,20 @@ Coord cell2coord(vtkSmartPointer<vtkCell> cell) {
 //    Error: no override found for 'vtkActor'.
 // mean that another module needs to be initialized here.
 
+#ifndef OOF_USE_COCOA
+#include <X11/Xlib.h>
+#endif // OOF_USE_COCOA
+
+void initialize_X11() {
+#ifndef OOF_USE_COCOA
+  static bool initialized = false;
+  if(!initialized) {
+    initialized = true;
+    XInitThreads();
+  }
+#endif // OOF_USE_COCOA
+}
+
 void initialize_vtk() {
   static bool initialized = false;
   if(!initialized) {
