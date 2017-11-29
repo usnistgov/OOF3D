@@ -967,9 +967,9 @@ class GhostGfxWindow:
         self.switchboardCallbacks.extend(callbacks)
 
     def createPredefinedLayers(self):
-        if 1:
-            debug.fmsg("NOT CREATING PREDEFINED LAYERS")
-            return
+        # if 1:
+        #     debug.fmsg("NOT CREATING PREDEFINED LAYERS")
+        #     return
 
         # Create pre-defined layers.  These are in all graphics
         # windows, regardless of whether or not they are drawable at
@@ -2238,6 +2238,9 @@ class GhostGfxWindow:
         self.draw()
         
     def newToolboxClass(self, tbclass):
+        # if True:
+        #     debug.fmsg("NOT CREATING TOOLBOXES")
+        #     return
         tb = tbclass(self)              # constructs toolbox
         self.toolboxes.append(tb)
         menu = self.toolboxmenu.addItem(

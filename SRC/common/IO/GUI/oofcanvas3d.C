@@ -35,6 +35,7 @@
 #include <gdk/gdkquartz.h>
 #else // not OOF_USE_COCOA
 #include <gdk/gdkx.h>
+#include <vtkXOpenGLRenderWindow.h>
 #endif // not OOF_USE_COCOA
 
 
@@ -67,13 +68,15 @@ OOFCanvas3D::OOFCanvas3D()
   }
 
   drawing_area = gtk_drawing_area_new();
+
 #ifndef OOF_USE_COCOA
   Display* dis = GDK_DISPLAY();
   render_window->SetDisplayId(dis);
 #endif // not OOF_USE_COCOA
+
   g_handlers.push_back(g_signal_connect(drawing_area, "destroy",
-					G_CALLBACK(OOFCanvas3D::gtk_destroy),
-					this));
+  					G_CALLBACK(OOFCanvas3D::gtk_destroy),
+  					this));
   g_handlers.push_back(g_signal_connect(drawing_area, "realize",
 					G_CALLBACK(OOFCanvas3D::gtk_realize),
 					this));
@@ -131,6 +134,18 @@ OOFCanvas3D::~OOFCanvas3D() {
   for(gulong handler : g_handlers) {
     g_signal_handler_disconnect(drawing_area, handler);
   }
+
+  if(mouse_callback) {
+    PyGILState_STATE pystate = acquirePyLock();
+    Py_XDECREF(mouse_callback);
+    releasePyLock(pystate);
+  }
+
+#ifndef OOF_USE_COCOA
+  oofcerr << "OOFCanvas3D::dtor: unsetting WindowId" << std::endl;
+  render_window->SetWindowId(0);
+#endif // OOF_USE_COCOA
+
   // oofcerr << "OOFCanvas3D::dtor: finalizing render_window" << std::endl;
   // render_window->Finalize();
   // oofcerr << "OOFCanvas3D::dtor: Destroying drawing_area" << std::endl;
@@ -195,9 +210,13 @@ void OOFCanvas3D::destroy() {
 //     releasePyLock(pystate);
 //   }
 
-  oofcerr << "OOFCanvas3D::destroy: calling render_window->Finalize"
-	  << std::endl;
-  render_window->Finalize();
+  // No need to call render_window->Finalize(), because the
+  // vtkXOpenGLRenderWindow destructor calls it.
+  
+  // oofcerr << "OOFCanvas3D::destroy: calling render_window->Finalize"
+  // 	  << std::endl;
+  // render_window->Finalize();
+
   // TODO OPT: Does *drawing_area need to be explicitly destroyed?
   drawing_area = 0;
 }
@@ -233,7 +252,7 @@ gboolean OOFCanvas3D::realize() {
 #endif // OOF_USE_COCOA
     created = true;
   }
-  return true;
+  return FALSE;
 }
 
 // static
@@ -262,7 +281,7 @@ gboolean OOFCanvas3D::configure(GdkEventConfigure *event) {
 #else
   render_window->SetPosition(event->x, event->y);
 #endif // not OOF_USE_COCOA
-  return true;
+  return FALSE;
 }
 
 // static
@@ -282,7 +301,7 @@ gboolean OOFCanvas3D::expose() {
   // whenever a part of it is re-exposed, so we have to call render().
   // TODO: Check if this is actually necessary.
   render();
-  return true;
+  return FALSE;
 }
 
 // // static
@@ -351,14 +370,14 @@ void OOFCanvas3D::set_mouse_callback(PyObject *callback) {
   PyGILState_STATE pystate = acquirePyLock();
   Py_XINCREF(callback);
   releasePyLock(pystate);
-  mouse_handler_id = 
-    gtk_signal_connect(GTK_OBJECT(drawing_area), "event",
-		       GTK_SIGNAL_FUNC(OOFCanvas3D::mouse_event), this);
+  g_handlers.push_back(g_signal_connect(drawing_area, "event",
+					G_CALLBACK(OOFCanvas3D::mouse_event),
+					this));
 }
 
 // static
-gint OOFCanvas3D::mouse_event(GtkWidget *item, GdkEvent *event,
-			    gpointer data)
+gboolean OOFCanvas3D::mouse_event(GtkWidget *item, GdkEvent *event,
+				  gpointer data)
 {
   OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
   oofcanvas->mouse_eventCB(item, event);

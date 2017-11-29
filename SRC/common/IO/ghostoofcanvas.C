@@ -185,6 +185,10 @@ void GhostOOFCanvas::deactivate() {
   // // deactivate() suppresses redrawing.  It should be called at the
   // // start of the graphics window shut down sequence.
   // deactivated = true;
+  if(true) {
+    oofcerr << "GhostOOFCanvas::deactivate: not doing anything" << std::endl;
+    return;
+  }
   if(renderer) {
     oofcerr << "GhostOOFCanvas::deactivate: NOT finalizing render_window "
 	    << render_window->GetClassName() << " "
@@ -193,6 +197,9 @@ void GhostOOFCanvas::deactivate() {
 	    // << vtkXOpenGLRenderWindow::SafeDownCast(render_window)->getContext()
 	    << std::endl;
     render_window->DebugOn();
+    // Don't call render_window->Finalize().  The
+    // vtkXOpenGLRenderWindow destructor calls it.
+    
     // render_window->Finalize();
     oofcerr << "GhostOOFCanvas::deactivate: removing renderer" << std::endl;
     render_window->RemoveRenderer(renderer);
