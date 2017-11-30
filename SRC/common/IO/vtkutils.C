@@ -147,6 +147,6 @@ void initialize_X11() {
 
     XInitThreads();
   }
-#endif USE_XINITTHREADS
+#endif // USE_XINITTHREADS
 }
 
