@@ -51,6 +51,7 @@ Coord cell2coord(vtkSmartPointer<vtkCell> cell) {
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 #include <vtkAutoInit.h>
+#include <vtkVersionMacros.h>
 
 // Call this before any other vtk code runs.
 // See https://www.vtk.org/Wiki/VTK/Build_System_Migration
@@ -58,23 +59,13 @@ Coord cell2coord(vtkSmartPointer<vtkCell> cell) {
 //    Error: no override found for 'vtkActor'.
 // mean that another module needs to be initialized here.
 
-#ifndef OOF_USE_COCOA
-#include <X11/Xlib.h>
-#endif // OOF_USE_COCOA
-
-void initialize_X11() {
-#ifndef OOF_USE_COCOA
-  static bool initialized = false;
-  if(!initialized) {
-    initialized = true;
-    XInitThreads();
-  }
-#endif // OOF_USE_COCOA
-}
 
 void initialize_vtk() {
   static bool initialized = false;
   if(!initialized) {
+#ifdef DEBUG
+    oofcerr << "Using vtk version " << VTK_VERSION << std::endl;
+#endif // DEBUG
     VTK_MODULE_INIT(vtkRenderingOpenGL2);
     VTK_MODULE_INIT(vtkRenderingContextOpenGL2);
     VTK_MODULE_INIT(vtkRenderingVolumeOpenGL2);
@@ -114,3 +105,48 @@ void initialize_vtk() {
     // VTK_MODULE_INIT(vtktiff);
   }
 }
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Some X11 errors indicated that we needed to call XInitThreads.
+// That doesn't seem to be the case.  This code was inserted to see if
+// calling XInitThreads would fix the problem.  It doesn't do anything
+// unless USE_XINITTHREADS is defined (which it isn't).  The code is
+// here so that if the problem recurs, searching for XInitThreads will
+// find this comment.
+
+// Using vtk8, and NOT calling XInitThreads here, all is ok whether or
+// not --sync is used on the command line.  Calling XInitThreads here
+// makes the program crash as soon as it enters the gtk main loop.
+
+// Using vtk7, calling XInitThreads is ok if --sync is NOT used.
+// --sync makes the program crash in the main loop.  Not calling
+// XinitThreads is ok with or without --sync.
+
+// vtk  --sync  XinitThreads  crash
+//   7     no      yes          none
+//   7     yes     yes          main loop
+//   7     yes     no           main loop
+//   7     no      no           none
+
+//   8     no      yes          main loop
+//   8     yes     yes          main loop
+//   8     yes     no           none
+//   8     no      no           none
+
+#ifdef OOF_USE_COCOA
+#include <X11/Xlib.h>
+#endif // OOF_USE_COCOA
+
+void initialize_X11() {
+  // TODO: This doesn't really belong in this file.
+#ifdef USE_XINITTHREADS
+  static bool initialized = false;
+  if(!initialized) {
+    initialized = true;
+
+    XInitThreads();
+  }
+#endif USE_XINITTHREADS
+}
+

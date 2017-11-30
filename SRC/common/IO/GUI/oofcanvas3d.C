@@ -110,15 +110,31 @@ OOFCanvas3D::~OOFCanvas3D() {
   }
 
 #ifndef OOF_USE_COCOA
-  // Setting the WindowId to 0 prevents errors that arise in the
-  // vtkXOpenGLRenderWindowlDestroYWindow destructor.  The errors are
-  // different in vtk7 and vtk8 but always involve a BadWindow in a
-  // call to X or functions.  I think the errors are due to gtk and
-  // vtk squabbling over who owns the window.  I don't know if zeroing
-  // the WindowId here is the correct solution, but nothing else seems
-  // to work.
+  // Attempt to prevent errors when closing windows with vtk8:
+  // [xcb] Unknown sequence number while processing queue
+  // [xcb] Most likely this is a multi-threaded client and XInitThreads
+  //      has not been called
+  // [xcb] Aborting, sorry about that.
+  // python: ../../src/xcb_io.c:274: poll_for_event: Assertion
+  //     `!xcb_xlib_threads_sequence_lost' failed.
+
+  // However, calling XInitThreads (see initialize_X11 in vtkutils.C)
+  // doesn't seem to make a difference, and all of the X calls should
+  // be coming from a single thread (unless vtk is making calls from
+  // more than one...)
+  
+  XSync(GDK_DISPLAY(), true); // true ==> discard pending events
+
+  // Setting the WindowId to 0 prevents(?) errors that arise in the
+  // vtkXOpenGLRenderWindow destructor.  The errors are different in
+  // vtk7 and vtk8 but always involve a BadWindow in a call to X or
+  // functions.  I think the errors are due to gtk and vtk squabbling
+  // over who owns the window.  I don't know if zeroing the WindowId
+  // here is the correct solution, but nothing else seems to work.
+  // Arrgh.  Zeroing the WindowId doesn't work all the time...
   render_window->SetWindowId(0);
 #endif // OOF_USE_COCOA
+  oofcerr << "OOFCanvas3D::dtor: done" << std::endl;
 }
 
 PyObject *OOFCanvas3D::widget() {
