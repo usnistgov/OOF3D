@@ -134,19 +134,22 @@ void initialize_vtk() {
 //   8     yes     no           none
 //   8     no      no           none
 
-#ifdef OOF_USE_COCOA
+#ifdef USE_XINITTHREADS
 #include <X11/Xlib.h>
-#endif // OOF_USE_COCOA
 
 void initialize_X11() {
   // TODO: This doesn't really belong in this file.
-#ifdef USE_XINITTHREADS
   static bool initialized = false;
   if(!initialized) {
     initialized = true;
 
     XInitThreads();
   }
-#endif // USE_XINITTHREADS
+
 }
 
+#else  // not USE_XINITTHREADS
+
+void initialize_X11() {}
+
+#endif // not USE_XINITTHREADS
