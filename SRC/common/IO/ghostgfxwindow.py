@@ -264,7 +264,11 @@ class GhostGfxWindow:
         if not hasattr(self, 'settings'):
             self.settings = GfxSettings()
 
-        self.gtk_destruction_in_progress = False # see GfxWindowBase.destroyCB
+        # Flag that tells when the window is being destroyed.  See
+        # comments in GfxWindowBase.closeMenuCB,
+        # GfxWindowBase.runShutdownSequence, and
+        # DisplayMethod.destroy.
+        self.unfenestrating = False
 
         self.menu = OOF.addItem(OOFMenuItem(
             self.name,
@@ -1179,13 +1183,13 @@ class GhostGfxWindow:
     def removeAllLayers(self):
         if self.layers:
             for layer in self.layers[:]:
-                layer.destroy(not self.gtk_destruction_in_progress)
+                layer.destroy(not self.unfenestrating)
             self.layers = []
 
     def closeMenuCB(self, menuitem, *args):
         # This method is redefined in gfxwindowbase.py in GUI mode
         debug.mainthreadTest()
-        self.gtk_destruction_in_progress = True 
+        self.unfenestrating = True 
         self.removeAllLayers()
         self.shutdownGfx_menu()
 

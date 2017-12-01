@@ -299,8 +299,11 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
         else:
             # destroyCB() is installed as the callback for the gtk
             # 'destroy' signal in GfxWindow3D.postinitialize() in
-            # gfxwindow3d.py, so calling gtk.destroy() will call
-            # destroyCB() before destroying the gtk widgets.
+            # gfxwindow3d.py.  It seems to destroy the widgets
+            # *before* calling the callback.  This means that if the
+            # window is closed by the window manager's close button,
+            # we have to assume that the widgets have already been
+            # destroyed.
             self.gtk.destroy()
 
     # gtk callback
@@ -320,8 +323,12 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
             
     def runShutdownSequence(self):
         debug.mainthreadTest()
-        assert not self.gtk_destruction_in_progress
-        self.gtk_destruction_in_progress = True 
+        assert not self.unfenestrating
+        # unfenestrating is used to tell the OOFCanvasLayers not to
+        # destroy their vtk actors when the layers are destroyed.  See
+        # comments in closeMenuCB, above, and DisplayMethod.destroy,
+        # in display.py.
+        self.unfenestrating = True 
         self.removeAllLayers()
         self.shutdownGfx_gtk()
         self.shutdownGfx_menu(); # in ghostgfxwindow.py
