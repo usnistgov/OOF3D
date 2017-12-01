@@ -50,7 +50,6 @@ OOFCanvas3D::OOFCanvas3D()
     mouse_callback(0),
     rubberband(0)
 {
-  // oofcerr << "OOFCanvas3D::ctor: " << this << std::endl;
   assert(mainthread_query());
 
   if(!OOFCanvas3D::initialized) {
@@ -98,7 +97,6 @@ OOFCanvas3D::OOFCanvas3D()
 }
 
 OOFCanvas3D::~OOFCanvas3D() {
-  // oofcerr << "OOFCanvas3D::dtor: " << this << std::endl;
   for(gulong handler : g_handlers) {
     g_signal_handler_disconnect(drawing_area, handler);
   }
@@ -138,7 +136,6 @@ OOFCanvas3D::~OOFCanvas3D() {
   render_window->SetWindowId(0);
 
 #endif // OOF_USE_COCOA
-  // oofcerr << "OOFCanvas3D::dtor: done" << std::endl;
 }
 
 PyObject *OOFCanvas3D::widget() {
