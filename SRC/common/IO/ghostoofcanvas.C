@@ -85,6 +85,8 @@ GhostOOFCanvas::GhostOOFCanvas()
   // findClickedCell_, et al, will seg fault.
   render_window->SetSize(1000, 1000);
 
+  render_window->SetUseOffScreenBuffers(1);
+
   // Some of these initial settings will be overwritten by
   // GfxWindow3D.postinitialize().
   contourMapActor->DrawBackgroundOn();
@@ -150,7 +152,7 @@ void GhostOOFCanvas::render() {
     try {
       if(render_window->IsDrawable()) {
 #ifdef DEBUG
-	// oofcerr << "GhostOOFCanvas::render: calling Render " << std::endl;
+	oofcerr << "GhostOOFCanvas::render: calling Render " << std::endl;
 	// oofcerr << "GhostOOFCanvas::render: actors are:";
 	// vtkSmartPointer<vtkActorCollection> actors = renderer->GetActors();
 	// actors->InitTraversal();

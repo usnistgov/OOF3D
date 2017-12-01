@@ -48,6 +48,8 @@ public:
   gboolean realize();
   static gboolean gtk_configure(GtkWidget*, GdkEventConfigure*, gpointer);
   gboolean configure(GdkEventConfigure*);
+  static gboolean gtk_configure_after(GtkWidget*, GdkEventConfigure*, gpointer);
+  gboolean configure_after(GdkEventConfigure*);
   static gboolean gtk_expose(GtkWidget*, GdkEventExpose*, gpointer);
   gboolean expose();
   static gint mouse_event(GtkWidget*, GdkEvent*, gpointer);

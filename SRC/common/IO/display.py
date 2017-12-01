@@ -171,7 +171,6 @@ class DisplayMethod(registeredclass.RegisteredClass):
         self.gridSize = 0
 
     def destroy(self, destroy_canvaslayer=True):
-        debug.fmsg("destroying", self)
         if self.whoChangedSignal:
             switchboard.removeCallback(self.whoChangedSignal)
             switchboard.removeCallback(self.whoRenamedSignal)
