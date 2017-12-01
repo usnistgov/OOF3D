@@ -291,112 +291,49 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
     # This is called closeMenuCB because searching for 'close' in the
     # code is too hard.
     def closeMenuCB(self, menuitem, *args):
-        # # Menu item is UNTHREADABLE
-        debug.mainthreadTest()
-        #debug.subthreadTest()
-        debug.fmsg()
+        debug.mainthreadTest()  # menu item is UNTHREADABLE
         self.menu_shutdown = True
         if self.gtk_shutdown:
             # The gtk destroy callback has already been run.
             self.runShutdownSequence()
         else:
-            # destroyCB is installed as the callback for the gtk
+            # destroyCB() is installed as the callback for the gtk
             # 'destroy' signal in GfxWindow3D.postinitialize() in
-            # gfxwindow3d.py
+            # gfxwindow3d.py, so calling gtk.destroy() will call
+            # destroyCB() before destroying the gtk widgets.
             self.gtk.destroy()
-            #mainthread.runBlock(self.gtk.destroy) # calls destroyCB via gtk
-        debug.fmsg("Done")
 
     # gtk callback
     def destroyCB(self, *args):
         # This callback runs (and finishes) *before* the window is
         # actually destroyed.
-        debug.fmsg()
         debug.mainthreadTest()
         self.gtk_shutdown = True
         if self.menu_shutdown:
-            # The menu callback has already been run.  Run
-            # shutdownGfx_menu on a subthread, then shutdownGfx_gtk on
-            # the main thread.
+            # The menu callback has already been run.  Actually shut
+            # down the window.
             self.runShutdownSequence()
-            #subthread.execute(self.runShutdownSequence)
         else:
             # The menu callback hasn't been run.  Run it, and it will
             # call runShutdownSequence.
             self.menu.File.Close()
-        debug.fmsg("Returning True")
-        return True
             
-        # # See comment in GhostGfxWindow.closeMenuCB about the order of
-        # # operations.
-        # if self.gtk:
-        #     self.removeAllLayers()
-        #     if self.oofcanvas is not None:
-        #         self.oofcanvas.deactivate()
-
-        #     debug.fmsg("Deactivating toolboxes")
-        #     for tbgui in self.toolboxGUIs:
-        #         if tbgui.active:
-        #             tbgui.deactivate()
-        #         tbgui.close()
-        #     del self.toolboxGUIs
-        #     debug.fmsg("Deleting mouseHandler", self.mouseHandler)
-        #     del self.mouseHandler
-        #     debug.fmsg("Deleted mouseHandler")
-        #     if self.menu:
-        #         self.menu.gui_callback=None
-
-        #     debug.fmsg("Unsetting gtk")
-        #     self.gtk = None             # make sure this isn't repeated
-        #     debug.fmsg("Unset gtk")
-
-        #     # self.menu.File.Close() will call its callback on a
-        #     # subthread without blocking, which means that the caller
-        #     # of this function will continue as soon as this function
-        #     # finishes.  Since the caller of this function may be
-        #     # destroying other gtk objects in the gfx window, there
-        #     # may be race conditions.  Setting a flag here, before
-        #     # calling Close() allows other callbacks to know that the
-        #     # window is already in the process of being closed.
-        #     self.gtk_destruction_in_progress = True
-
-        #     # self.menu is set to None in GhostGfxWindow.closeMenuCB.
-        #     if self.menu:  
-        #         debug.fmsg("Calling File.Close")
-        #         self.menu.File.Close()    # calls self.closeMenuCB()
-
     def runShutdownSequence(self):
-        debug.fmsg()
         debug.mainthreadTest()
         assert not self.gtk_destruction_in_progress
-        self.gtk_destruction_in_progress = True # shouldn't be needed?
+        self.gtk_destruction_in_progress = True 
         self.removeAllLayers()
         self.shutdownGfx_gtk()
         self.shutdownGfx_menu(); # in ghostgfxwindow.py
 
-    # def runShutdownSequence(self):
-    #     debug.fmsg()
-    #     debug.subthreadTest()
-    #     assert not self.gtk_destruction_in_progress
-    #     self.gtk_destruction_in_progress = True # shouldn't be needed?
-    #     mainthread.runBlock(self.removeAllLayers)
-    #     mainthread.runBlock(self.shutdownGfx_gtk)
-    #     self.shutdownGfx_menu(); # in ghostgfxwindow.py
-
     def shutdownGfx_gtk(self):
-        debug.fmsg()
-        # debug.fmsg("Deactivating toolboxes")
         for tbgui in self.toolboxGUIs:
             if tbgui.active:
                 tbgui.deactivate()
             tbgui.close()
         del self.toolboxGUIs
-        # debug.fmsg("Deleting mousehandler")
         del self.mouseHandler
-        # debug.fmsg("Unsetting gtk")
         self.gtk = None
-        # debug.fmsg("Done")
-
 
     # Toolbox callbacks
     ##################################################

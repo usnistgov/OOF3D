@@ -1178,57 +1178,44 @@ class GhostGfxWindow:
 
     def removeAllLayers(self):
         if self.layers:
-            debug.fmsg("Destroying layers")
             for layer in self.layers[:]:
                 layer.destroy(not self.gtk_destruction_in_progress)
             self.layers = []
-            debug.fmsg("Done")
 
     def closeMenuCB(self, menuitem, *args):
         # This method is redefined in gfxwindowbase.py in GUI mode
         debug.mainthreadTest()
-        self.gtk_destruction_in_progress = True # shouldn't be needed?
+        self.gtk_destruction_in_progress = True 
         self.removeAllLayers()
-        #mainthread.runBlock(self.shutdownGfx_menu)
         self.shutdownGfx_menu()
 
     def shutdownGfx_menu(self):
         # The non-gui part of the gfx window shutdown procedure.
-        debug.fmsg()
-        #debug.subthreadTest()
         debug.mainthreadTest()
-        #self.acquireGfxLock()
-        try:
-            # This calls the OOFCanvas3D destructor.
-            self.oofcanvas = None
-                
-            self.gfxmanager.closeWindow(self)
-            
-            for callback in self.switchboardCallbacks:
-                switchboard.removeCallback(callback)
-            self.switchboardCallbacks = []
+        # To prevent timiing issues, the whole window shutdown
+        # sequence is on the main thread, so the gfxLock isn't
+        # acquired here.
 
-            for toolbox in self.toolboxes:
-                toolbox.close()
+        self.oofcanvas = None   # calls the OOFCanvas3D destructor
 
-            # cleanup to prevent possible circular references
-            ## del self.display
-            del self.gfxmanager
-            self.menu.clearMenu()
-            OOF.Windows.Graphics.removeItem(self.name)
-            OOF.removeItem(self.name)
-            self.menu = None
-            del self.selectedLayer
-            del self.toolboxes
-        finally:
-            debug.fmsg("Done")
-            # Although the window is closing, it's important to
-            # release the lock so that any remaining drawing threads
-            # can finish.  They won't actually try to draw anything,
-            # because of the device.destroy call, above.  TODO 3.1:
-            # Fix this comment.  There's no device.destroy call. Could
-            # the threads actually try to draw something?
-            #self.releaseGfxLock()
+        self.gfxmanager.closeWindow(self)
+
+        for callback in self.switchboardCallbacks:
+            switchboard.removeCallback(callback)
+        self.switchboardCallbacks = []
+
+        for toolbox in self.toolboxes:
+            toolbox.close()
+
+        # cleanup to prevent possible circular references
+        ## del self.display
+        del self.gfxmanager
+        self.menu.clearMenu()
+        OOF.Windows.Graphics.removeItem(self.name)
+        OOF.removeItem(self.name)
+        self.menu = None
+        del self.selectedLayer
+        del self.toolboxes
 
     def clear(self, *args, **kwargs):
         # Remove all user specified layers from the display.

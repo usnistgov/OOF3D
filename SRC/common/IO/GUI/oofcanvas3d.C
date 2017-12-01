@@ -50,7 +50,7 @@ OOFCanvas3D::OOFCanvas3D()
     mouse_callback(0),
     rubberband(0)
 {
-  oofcerr << "OOFCanvas3D::ctor: " << this << std::endl;
+  // oofcerr << "OOFCanvas3D::ctor: " << this << std::endl;
   assert(mainthread_query());
 
   if(!OOFCanvas3D::initialized) {
@@ -98,7 +98,7 @@ OOFCanvas3D::OOFCanvas3D()
 }
 
 OOFCanvas3D::~OOFCanvas3D() {
-  oofcerr << "OOFCanvas3D::dtor: " << this << std::endl;
+  // oofcerr << "OOFCanvas3D::dtor: " << this << std::endl;
   for(gulong handler : g_handlers) {
     g_signal_handler_disconnect(drawing_area, handler);
   }
@@ -110,31 +110,35 @@ OOFCanvas3D::~OOFCanvas3D() {
   }
 
 #ifndef OOF_USE_COCOA
-  // Attempt to prevent errors when closing windows with vtk8:
-  // [xcb] Unknown sequence number while processing queue
-  // [xcb] Most likely this is a multi-threaded client and XInitThreads
-  //      has not been called
-  // [xcb] Aborting, sorry about that.
-  // python: ../../src/xcb_io.c:274: poll_for_event: Assertion
-  //     `!xcb_xlib_threads_sequence_lost' failed.
-
+  // We were getting this error when closing windows and using vtk8:
+  //    [xcb] Unknown sequence number while processing queue
+  //    [xcb] Most likely this is a multi-threaded client and XInitThreads
+  //         has not been called
+  //    [xcb] Aborting, sorry about that.
+  //    python: ../../src/xcb_io.c:274: poll_for_event: Assertion
+  //        `!xcb_xlib_threads_sequence_lost' failed.
   // However, calling XInitThreads (see initialize_X11 in vtkutils.C)
-  // doesn't seem to make a difference, and all of the X calls should
-  // be coming from a single thread (unless vtk is making calls from
-  // more than one...)
-  
-  XSync(GDK_DISPLAY(), true); // true ==> discard pending events
+  // didn't make a difference (except for crashing earlier), and all
+  // of the X calls should be coming from a single thread unless vtk is
+  // making calls from more than one.  Anyway, either vtk or pygtk is
+  // probably already calling XInitThreads.  The solution here seems
+  // to be to flush the X11 event queue before closing the window.
 
-  // Setting the WindowId to 0 prevents(?) errors that arise in the
-  // vtkXOpenGLRenderWindow destructor.  The errors are different in
-  // vtk7 and vtk8 but always involve a BadWindow in a call to X or
-  // functions.  I think the errors are due to gtk and vtk squabbling
-  // over who owns the window.  I don't know if zeroing the WindowId
-  // here is the correct solution, but nothing else seems to work.
-  // Arrgh.  Zeroing the WindowId doesn't work all the time...
+  // TODO: discard only the events pertaining to this window.
+  // Discarding all of them may cause problems with other open
+  // graphics windows.
+  XSync(GDK_DISPLAY(), false); // true ==> discard pending events
+
+  // Both vtk7 and vtk8 sometimes generate a BadWindow error when
+  // closing a vtkXOpenGLRenderWindow, although the errors arise at
+  // different points, in different X function calls.  I think the
+  // errors are due to gtk and vtk squabbling over who owns the
+  // window.  I don't know if zeroing the WindowId here is the correct
+  // solution, but it seems to work.
   render_window->SetWindowId(0);
+
 #endif // OOF_USE_COCOA
-  oofcerr << "OOFCanvas3D::dtor: done" << std::endl;
+  // oofcerr << "OOFCanvas3D::dtor: done" << std::endl;
 }
 
 PyObject *OOFCanvas3D::widget() {
@@ -153,7 +157,6 @@ PyObject *OOFCanvas3D::widget() {
 
 // static
 gboolean OOFCanvas3D::gtk_realize(GtkWidget*, gpointer data) {
-  oofcerr << "OOFCanvas3D::gtk_realize" << std::endl;
   OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
   return oofcanvas->realize();
 }
@@ -164,7 +167,6 @@ gboolean OOFCanvas3D::realize() {
     gtk_widget_realize(drawing_area);
 #ifndef OOF_USE_COCOA
     XID wid = GDK_WINDOW_XID(drawing_area->window);
-    oofcerr << "OOFCanvas3D::realize: wid=" << wid << std::endl;
     render_window->SetWindowId((void*) wid);
 
     // An old comment here said "this version only works in gtk
@@ -189,13 +191,13 @@ gboolean OOFCanvas3D::realize() {
 gboolean OOFCanvas3D::gtk_configure(GtkWidget*, GdkEventConfigure *config,
 				    gpointer data) 
 {
-  oofcerr << "OOFCanvas3D::gtk_configure" << std::endl;
   assert(mainthread_query());
   OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
   return oofcanvas->configure(config);
 }
 
 gboolean OOFCanvas3D::configure(GdkEventConfigure *event) {
+  oofcerr << "OOFCanvas3D::configure" << std::endl;
   assert(mainthread_query());
   // The height, width, x, and y elements of event are the same as
   // those of drawing_area->allocation.
@@ -232,20 +234,6 @@ gboolean OOFCanvas3D::expose() {
   render();
   return FALSE;
 }
-
-// // static
-// gboolean OOFCanvas3D::gtk_unmap(GtkWidget*, GdkEvent*, gpointer)
-// {
-//   oofcerr << "OOFCanvas3D::gtk_unmap" << std::endl;
-//   return true;
-// }
-
-// // static
-// gboolean OOFCanvas3D::gtk_unmap_event(GtkWidget*, GdkEvent*, gpointer)
-// {
-//   oofcerr << "OOFCanvas3D::gtk_unmap_event" << std::endl;
-//   return true;
-// }
 
 void OOFCanvas3D::show() {
   assert(mainthread_query());
