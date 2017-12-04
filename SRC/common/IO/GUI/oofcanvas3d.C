@@ -88,11 +88,6 @@ OOFCanvas3D::OOFCanvas3D()
 			"configure_event",
 			G_CALLBACK(OOFCanvas3D::gtk_configure),
 			this));
-  g_handlers.push_back(g_signal_connect_after(
-		        drawing_area,
-			"configure-event",
-			G_CALLBACK(OOFCanvas3D::gtk_configure_after),
-			this));
 
   gtk_widget_add_events(drawing_area, (GDK_EXPOSURE_MASK
 				       | GDK_BUTTON_PRESS_MASK
@@ -192,7 +187,7 @@ gboolean OOFCanvas3D::realize() {
 #endif // OOF_USE_COCOA
     created = true;
   }
-  return FALSE;
+  return FALSE;	// Returning FALSE propagates the event to parent items.
 }
 
 // static
@@ -205,7 +200,7 @@ gboolean OOFCanvas3D::gtk_configure(GtkWidget*, GdkEventConfigure *config,
 }
 
 gboolean OOFCanvas3D::configure(GdkEventConfigure *event) {
-  oofcerr << "OOFCanvas3D::configure" << std::endl;
+  // oofcerr << "OOFCanvas3D::configure" << std::endl;
   assert(mainthread_query());
   // The height, width, x, and y elements of event are the same as
   // those of drawing_area->allocation.
@@ -221,26 +216,7 @@ gboolean OOFCanvas3D::configure(GdkEventConfigure *event) {
 #else
   render_window->SetPosition(event->x, event->y);
 #endif // not OOF_USE_COCOA
-  return FALSE;
-}
-
-// static
-gboolean OOFCanvas3D::gtk_configure_after(GtkWidget*, GdkEventConfigure *config,
-					  gpointer data)
-{
-  assert(mainthread_query());
-  OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
-  return oofcanvas->configure_after(config);
-}
-
-gboolean OOFCanvas3D::configure_after(GdkEventConfigure *event) {
-  if(created) {
-    oofcerr << "OOFCanvas3D::configure_after" << std::endl;
-    // render_window->CopyResultFrame();
-    // render_window->Render();
-    // render_window->DebugOn();
-  }
-  return FALSE;
+  return FALSE;	// Returning FALSE propagates the event to parent items.
 }
 
 // static
@@ -254,15 +230,36 @@ gboolean OOFCanvas3D::gtk_expose(GtkWidget*, GdkEventExpose *event,
 
 gboolean OOFCanvas3D::expose() {
   assert(mainthread_query());
+  // oofcerr << "OOFCanvas3D::expose" << std::endl;
   exposed = true;
   // This is called not just when the window is first exposed, but
-  // whenever a part of it is re-exposed, so we have to call render().
-  // TODO: Check if this is actually necessary.
-  render();
-  return FALSE;
+  // whenever a part of it is re-exposed, so we have to call
+  // Render(). It's also called after the 'configure' callback when a
+  // window is resized.
+
+  // On Linux, after a window is resized (with a 'configure' event)
+  // the contents disappear unless Render() is called again.  Whatever
+  // is clearing the window is happening after the 'configure',
+  // 'configure_after', and 'expose' callbacks have completed, so
+  // calling Render() from the callbacks isn't sufficient.  We need to
+  // run it from an idle callback.
+  g_idle_add(OOFCanvas3D::redrawIdleCB, this);
+  return FALSE;	// Returning FALSE propagates the event to parent items.
+}
+
+// static
+gboolean OOFCanvas3D::redrawIdleCB(gpointer data) {
+  OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
+  return oofcanvas->redrawIdleCB();
+}
+
+gboolean OOFCanvas3D::redrawIdleCB() {
+  render_window->Render();
+  return FALSE;		    // Remove function from idle callback list
 }
 
 void OOFCanvas3D::show() {
+  // oofcerr << "OOFCanvas3D::show" << std::endl;
   assert(mainthread_query());
   if(!drawing_area) 
     throw ErrProgrammingError("No canvas!", __FILE__, __LINE__);

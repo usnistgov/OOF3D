@@ -73,8 +73,6 @@ GhostOOFCanvas::GhostOOFCanvas()
     tumbleAroundFocalPoint(true),
     margin(.10)
 {
-  oofcerr << "GhostOOFCanvas::ctor: render_window="
-	  << render_window.GetPointer() << std::endl;
   assert(mainthread_query());
 
   render_window->AddRenderer(renderer);
@@ -152,7 +150,7 @@ void GhostOOFCanvas::render() {
     try {
       if(render_window->IsDrawable()) {
 #ifdef DEBUG
-	oofcerr << "GhostOOFCanvas::render: calling Render " << std::endl;
+	// oofcerr << "GhostOOFCanvas::render: calling Render " << std::endl;
 	// oofcerr << "GhostOOFCanvas::render: actors are:";
 	// vtkSmartPointer<vtkActorCollection> actors = renderer->GetActors();
 	// actors->InitTraversal();

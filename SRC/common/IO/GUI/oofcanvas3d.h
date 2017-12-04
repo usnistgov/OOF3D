@@ -55,6 +55,9 @@ public:
   static gint mouse_event(GtkWidget*, GdkEvent*, gpointer);
   void mouse_eventCB(GtkWidget*, GdkEvent*);
 
+  static gboolean redrawIdleCB(gpointer);
+  gboolean redrawIdleCB();
+
   // movements
   void mouse_tumble(double x, double y);
   void mouse_track(double x, double y);
