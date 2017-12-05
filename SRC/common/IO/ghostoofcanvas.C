@@ -83,8 +83,6 @@ GhostOOFCanvas::GhostOOFCanvas()
   // findClickedCell_, et al, will seg fault.
   render_window->SetSize(1000, 1000);
 
-  render_window->SetUseOffScreenBuffers(1);
-
   // Some of these initial settings will be overwritten by
   // GfxWindow3D.postinitialize().
   contourMapActor->DrawBackgroundOn();

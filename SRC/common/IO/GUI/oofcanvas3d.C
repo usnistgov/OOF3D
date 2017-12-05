@@ -243,19 +243,21 @@ gboolean OOFCanvas3D::expose() {
   // 'configure_after', and 'expose' callbacks have completed, so
   // calling Render() from the callbacks isn't sufficient.  We need to
   // run it from an idle callback.
-  g_idle_add(OOFCanvas3D::redrawIdleCB, this);
+  g_idle_add(OOFCanvas3D::gtk_redrawIdle, this);
   return FALSE;	// Returning FALSE propagates the event to parent items.
 }
 
 // static
-gboolean OOFCanvas3D::redrawIdleCB(gpointer data) {
+gboolean OOFCanvas3D::gtk_redrawIdle(gpointer data) {
   OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
-  return oofcanvas->redrawIdleCB();
+  return oofcanvas->redrawIdle();
 }
 
-gboolean OOFCanvas3D::redrawIdleCB() {
+gboolean OOFCanvas3D::redrawIdle() {
+  // gtk idle callback installed and run once by the expose event
+  // callback.
   render_window->Render();
-  return FALSE;		    // Remove function from idle callback list
+  return FALSE;			// FALSE means "run just once".
 }
 
 void OOFCanvas3D::show() {
