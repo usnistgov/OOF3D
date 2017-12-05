@@ -23,6 +23,7 @@
 
 
 #include <vtkCellData.h>
+#include <vtkDataArray.h>
 #include <vtkInformation.h>
 #include <vtkInformationVector.h>
 #include <vtkObjectFactory.h>
@@ -31,7 +32,7 @@
 
 #include <limits>
 
-vtkCxxRevisionMacro(oofOverlayVoxels, "oofvtkmods 3.0.0");
+// vtkCxxRevisionMacro(oofOverlayVoxels, "oofvtkmods 3.0.0");
 vtkStandardNewMacro(oofOverlayVoxels);
 
 oofOverlayVoxels::oofOverlayVoxels()
@@ -41,6 +42,20 @@ oofOverlayVoxels::oofOverlayVoxels()
   this->Color[2] = 0.0;
   this->Opacity = 1.0;
   this->pixelSet = 0;
+}
+
+int oofOverlayVoxels::FillInputPortInformation(int vtkNotUsed(port),
+					       vtkInformation *info)
+{
+  info->Set(vtkAlgorithm::INPUT_REQUIRED_DATA_TYPE(), "vtkRectilinearGrid");
+  return 1;
+}
+
+int oofOverlayVoxels::FillOutputPortInformation(int vtkNotUsed(port),
+						vtkInformation *info)
+{
+  info->Set(vtkDataObject::DATA_TYPE_NAME(), "vtkRectilinearGrid");
+  return 1;
 }
 
 void oofOverlayVoxels::PrintSelf(std::ostream &os, vtkIndent indent) {
@@ -108,12 +123,10 @@ void oofOverlayVoxels::_doOverlayVoxels(vtkRectilinearGrid *input,
       vtkIdType cellID = input->ComputeCellId(const_cast<int*>(ijkvals));
       const TYPE *oldColor = inData + cellID*tupleSize;
       TYPE *newColor = outData + cellID*tupleSize;
-      
-      // TODO OPT: This assumes that the image has three channels,
-      // which is a good assumption only as long as we convert all
-      // images to RGB.  See the TODO OPT in the OOFImage3D
-      // constructor.
-      for(int i=0; i<3; i++) {
+
+      // Only modify the RGB components if tupleSize is 4.
+      int imax = tupleSize > 3 ? 3 : tupleSize;
+      for(int i=0; i<imax; i++) {
 	newColor[i] = tint[i]*opacity + oldColor[i]*(1-opacity);
       }
     }
@@ -145,6 +158,11 @@ int oofOverlayVoxels::RequestData(vtkInformation *request,
   vtkDataArray *iScalars = input->GetCellData()->GetScalars();
   int dataType = iScalars->GetDataType();
   int tupleSize = iScalars->GetNumberOfComponents();
+  // See comment in OOFImage3D constructor.  We're requiring all
+  // images to have at least 3 components just so that this filter
+  // doesn't have to figure out how to add components back in to
+  // colorize the voxels.
+  assert(tupleSize >= 3);
 
   void *inData = iScalars->GetVoidPointer(0);
   void *outData = oScalars->GetVoidPointer(0);

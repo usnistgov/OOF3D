@@ -4191,7 +4191,7 @@ void CSkeletonBase::buildVSBs() const {
   ICoord3D msSize = ms->sizeInPixels();
   
   // Find out how many bins to use.  
-  ICoord3D nbins;
+  unsigned int nbins[3];
   for(unsigned int c=0; c<3; c++) {
     nbins[c] = msSize[c]/vsbBinSize[c]; // integer division
     if(nbins[c] == 0)
@@ -4210,7 +4210,7 @@ void CSkeletonBase::buildVSBs() const {
     sizes[c].clear();
     sizes[c].resize(nbins[c], subsize);
     if(extra > 0) {
-      for(unsigned int i=0; i<extra; i++)
+      for(int i=0; i<extra; i++)
 	sizes[c][i] += 1;
     }
     // sumsizes gives the starting and ending voxels for each bin

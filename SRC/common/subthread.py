@@ -51,7 +51,7 @@ class MiniThread(threading.Thread):
         miniThreadManager.add(self)
         try:
             try:
-                self.threadstate = threadstate.ThreadState()
+                self.threadstate = threadstate.OOFThreadState()
                 hook = excepthook.assign_excepthook(excepthook.OOFexceptHook())
                 self.function(*self.args, **self.kwargs)
                 excepthook.remove_excepthook(hook)

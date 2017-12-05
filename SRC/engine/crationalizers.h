@@ -67,10 +67,10 @@ private:
   /// in a struct and pass around a pointer to the struct.
   mutable std::vector< std::pair<short, short> > obtuse_angles;
   mutable std::vector< std::pair<short, short> > acute_angles;
-  mutable std::vector<short> small_solid_angles;
-  mutable std::vector<short> large_solid_angles;
-  mutable std::vector<short> large_dihedral_angles;
-  mutable std::vector<short> small_dihedral_angles;
+  mutable std::vector<unsigned short> small_solid_angles;
+  mutable std::vector<unsigned short> large_solid_angles;
+  mutable std::vector<unsigned short> large_dihedral_angles;
+  mutable std::vector<unsigned short> small_dihedral_angles;
   void findAngles(const CSkeletonElement*, bool) const;
 
 public:

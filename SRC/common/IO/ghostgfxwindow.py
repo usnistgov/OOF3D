@@ -1,6 +1,5 @@
 # -*- python -*-
 
-
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
 # Recipients of this software assume all responsibilities associated
@@ -265,7 +264,11 @@ class GhostGfxWindow:
         if not hasattr(self, 'settings'):
             self.settings = GfxSettings()
 
-        self.gtk_destruction_in_progress = False # see GfxWindowBase.destroyCB
+        # Flag that tells when the window is being destroyed.  See
+        # comments in GfxWindowBase.closeMenuCB,
+        # GfxWindowBase.runShutdownSequence, and
+        # DisplayMethod.destroy.
+        self.unfenestrating = False
 
         self.menu = OOF.addItem(OOFMenuItem(
             self.name,
@@ -384,8 +387,9 @@ class GhostGfxWindow:
 
         filemenu.addItem(OOFMenuItem(
             'Close',
-            callback=self.close,
+            callback=self.closeMenuCB,
             accel='w',
+            threadable=oofmenu.UNTHREADABLE,
             help="Close the graphics window.",
             discussion="<para>Close the graphics window.</para>"))
         filemenu.addItem(OOFMenuItem(
@@ -518,9 +522,10 @@ class GhostGfxWindow:
                 </para>"""
                 ))
 
-            ## TODO 3.1: It's not clear that layer ordering has any
-            ## meaning in 3D, so the menu items for raising, lowering,
-            ## and sorting the layers aren't included in 3D.
+            ## TODO 3.1: The menu items for raising, lowering, and
+            ## sorting the layers aren't yet included in 3D.  They
+            ## need to be implemented using the CoincidentTopology
+            ## methods in vtkMapper, somehow.
             raisemenu = layermenu.addItem(OOFMenuItem(
                 'Raise',
                 help='Make a layer more visible.',
@@ -966,13 +971,26 @@ class GhostGfxWindow:
         self.switchboardCallbacks.extend(callbacks)
 
     def createPredefinedLayers(self):
+        # if 1:
+        #     debug.fmsg("NOT CREATING PREDEFINED LAYERS")
+        #     return
+
         # Create pre-defined layers.  These are in all graphics
         # windows, regardless of whether or not they are drawable at
         # the moment.
-        for predeflayer in PredefinedLayer.allPredefinedLayers:
+
+        # For debugging predefined layers, it's sometimes useful to
+        # include only a subset of them.  This loop is done in a
+        # clumsy way so that it's easy to narrow down the set of
+        # layers that are included.
+        ## npre = len(PredefinedLayer.allPredefinedLayers)
+        ## debug.fmsg("npre=", npre)
+        minpre = 0
+        maxpre = -1
+        for predeflayer in PredefinedLayer.allPredefinedLayers[minpre:maxpre]:
+            layer, who = predeflayer.createLayer(self)
             # The gfxlock has been acquired already, so we call
             # incorporateLayer with lock=False.
-            layer, who = predeflayer.createLayer(self)
             self.incorporateLayer(layer, who, autoselect=False, lock=False)
         
         # Create default layers if possible.  One layer is created for
@@ -1162,53 +1180,46 @@ class GhostGfxWindow:
         finally:
             self.releaseGfxLock()
 
-    def close(self, menuitem, *args):
-        # Before acquiring the gfx lock, kill all subthreads, or
-        # this may deadlock!
-        #self.device.destroy()
-
-        if self.oofcanvas is not None:
-            self.oofcanvas.deactivate()
-            
-        self.acquireGfxLock()
-        try:
-            self.gfxmanager.closeWindow(self)
-            
-            # Things can be shut down via several pathways (ie, from
-            # scripts or gtk events), so at each step we have to make sure
-            # that the step won't be repeated.  This function has been
-            # called from the menus, so here we turn off the menu
-            # callback.
-            menuitem.callback = None
-
-            for callback in self.switchboardCallbacks:
-                switchboard.removeCallback(callback)
-            self.switchboardCallbacks = []
-
+    def removeAllLayers(self):
+        if self.layers:
             for layer in self.layers[:]:
-                layer.destroy(not self.gtk_destruction_in_progress)
+                layer.destroy(not self.unfenestrating)
             self.layers = []
 
-            for toolbox in self.toolboxes:
-                toolbox.close()
+    def closeMenuCB(self, menuitem, *args):
+        # This method is redefined in gfxwindowbase.py in GUI mode
+        debug.mainthreadTest()
+        self.unfenestrating = True 
+        self.removeAllLayers()
+        self.shutdownGfx_menu()
 
-            # cleanup to prevent possible circular references
-            ## del self.display
-            del self.gfxmanager
-            self.menu.clearMenu()
-            OOF.Windows.Graphics.removeItem(self.name)
-            OOF.removeItem(self.name)
-            self.menu = None
-            del self.selectedLayer
-            del self.toolboxes
-        finally:
-            # Although the window is closing, it's important to
-            # release the lock so that any remaining drawing threads
-            # can finish.  They won't actually try to draw anything,
-            # because of the device.destroy call, above.  TODO 3.1:
-            # Fix this comment.  There's no device.destroy call. Could
-            # the threads actually try to draw something?
-            self.releaseGfxLock()
+    def shutdownGfx_menu(self):
+        # The non-gui part of the gfx window shutdown procedure.
+        debug.mainthreadTest()
+        # To prevent timiing issues, the whole window shutdown
+        # sequence is on the main thread, so the gfxLock isn't
+        # acquired here.
+
+        self.oofcanvas = None   # calls the OOFCanvas3D destructor
+
+        self.gfxmanager.closeWindow(self)
+
+        for callback in self.switchboardCallbacks:
+            switchboard.removeCallback(callback)
+        self.switchboardCallbacks = []
+
+        for toolbox in self.toolboxes:
+            toolbox.close()
+
+        # cleanup to prevent possible circular references
+        ## del self.display
+        del self.gfxmanager
+        self.menu.clearMenu()
+        OOF.Windows.Graphics.removeItem(self.name)
+        OOF.removeItem(self.name)
+        self.menu = None
+        del self.selectedLayer
+        del self.toolboxes
 
     def clear(self, *args, **kwargs):
         # Remove all user specified layers from the display.
@@ -1237,7 +1248,6 @@ class GhostGfxWindow:
             self.releaseGfxLock()
 
     def drawAtTime(self, *args, **kwargs):
-        debug.fmsg("drawAtTime calling _draw on subthread")
         subthread.execute(self._draw, args, kwargs)
 
     def animate(self, *args, **kwargs):
@@ -1630,7 +1640,8 @@ class GhostGfxWindow:
                              point, view, layer.canvaslayer)
                             ),
                         layer
-                        )  
+                        )
+            return (None, None)
         finally:
             self.releaseGfxLock()
 
@@ -1648,6 +1659,7 @@ class GhostGfxWindow:
                         ),
                     layer
                     )
+        return (None, None)
 
     def findClickedActor(self, classinfo, point, view):
         self.acquireGfxLock()
@@ -1662,7 +1674,8 @@ class GhostGfxWindow:
                              point, view, layer.canvaslayer)
                             ),
                         layer
-                        )  
+                        )
+            return (None, None)
         finally:
             self.releaseGfxLock()
 
@@ -1680,6 +1693,7 @@ class GhostGfxWindow:
                             ),
                         layer
                         )
+            return (None, None)
         finally:
             self.releaseGfxLock()
 
@@ -1697,6 +1711,7 @@ class GhostGfxWindow:
                         ),
                     layer
                     )
+        return (None, None)
 
     def findClickedCell(self, who, point, view):
         self.acquireGfxLock()
@@ -1736,8 +1751,8 @@ class GhostGfxWindow:
                         # This shouldn't happen...
                         raise ooferror.ErrPyProgrammingError(
                             "Filter failure in findClickedCellID")
-                        # return (None, None)
                     return (cellidx, rval[1])
+            return (None, None)
         finally:
             self.releaseGfxLock()
 
@@ -1767,6 +1782,7 @@ class GhostGfxWindow:
                     raise ooferror.ErrPyProgrammingError(
                         "Filter failure in findClickedCellID")
                 return (cellidx, rval[1], layer)
+        return (None, None, None)
         
     def findClickedCellCenter(self, who, point, view):
         self.acquireGfxLock()
@@ -2208,6 +2224,9 @@ class GhostGfxWindow:
         self.draw()
         
     def newToolboxClass(self, tbclass):
+        # if True:
+        #     debug.fmsg("NOT CREATING TOOLBOXES")
+        #     return
         tb = tbclass(self)              # constructs toolbox
         self.toolboxes.append(tb)
         menu = self.toolboxmenu.addItem(

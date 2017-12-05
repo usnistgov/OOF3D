@@ -12,10 +12,10 @@
 #include <oofconfig.h>
 
 //  Objects and functions for storing and retrieving thread
-//  information.  There is exactly one ThreadState object per thread.
-//  There can be more than one ThreadID object for one thread, but
-//  they are all equal.  The ThreadID is used by findThreadState to
-//  retrieve the thread's ThreadState.
+//  information.  There is exactly one OOFThreadState object per thread.
+//  There can be more than one OOFThreadID object for one thread, but
+//  they are all equal.  The OOFThreadID is used by findThreadState to
+//  retrieve the thread's OOFThreadState.
 
 #ifndef THREADSTATE
 #define THREADSTATE
@@ -26,21 +26,21 @@
 #include <pthread.h>
 #include <vector>
 
-class ThreadID {
+class OOFThreadID {
 private:
   pthread_t _ID;
 public:
-  ThreadID();
+  OOFThreadID();
   const pthread_t & get_ID() const { return _ID; }
 };
 
-std::ostream &operator<<(std::ostream&, const ThreadID&);
-bool operator==(const ThreadID&, const ThreadID&);
-bool operator!=(const ThreadID&, const ThreadID&);
+std::ostream &operator<<(std::ostream&, const OOFThreadID&);
+bool operator==(const OOFThreadID&, const OOFThreadID&);
+bool operator!=(const OOFThreadID&, const OOFThreadID&);
 
-class ThreadState {
+class OOFThreadState {
 private:
-  ThreadID _ID;	// May be re-used. Depends on pthread implementation.
+  OOFThreadID _ID;	// May be re-used. Depends on pthread implementation.
   int _id;	// Unique among all threads for all time.
 
   typedef std::vector<Progress*> ProgressList;
@@ -48,10 +48,10 @@ private:
   ProgressList::iterator findProgressIterator(const std::string&);
   mutable SLock progressLock;
 public:
-  ThreadState();
-  ~ThreadState();
+  OOFThreadState();
+  ~OOFThreadState();
   int id() const { return _id; }
-  const ThreadID & get_thread_ID() const { return _ID; }
+  const OOFThreadID & get_thread_ID() const { return _ID; }
   
   // getProgress returns an existing Progress object with the given
   // name, or creates a new one with the given type if there isn't an
@@ -65,18 +65,18 @@ public:
   void acquireProgressLock();
   void releaseProgressLock();
 private:
-  ThreadState(const ThreadState&); // prohibited
+  OOFThreadState(const OOFThreadState&); // prohibited
 };
 
-int operator==(const ThreadState&, const ThreadState&);
-std::ostream &operator<<(std::ostream&, const ThreadState&);
+int operator==(const OOFThreadState&, const OOFThreadState&);
+std::ostream &operator<<(std::ostream&, const OOFThreadState&);
 
 //void make_thread_main(); // Make the calling thread the new "main" thread.
 
 void initThreadState();
 
 int findThreadNumber();
-ThreadState *findThreadState();
+OOFThreadState *findThreadState();
 int nThreadStates();
 
 bool mainthread_query();	// returns true on main thread, false on others.
@@ -84,13 +84,13 @@ void mainthread_delete();
 
 // void cleanThreadList();
 
-void cancelThread(ThreadState &tobecancelled);
+void cancelThread(OOFThreadState &tobecancelled);
 void testcancel();
 
 void textMode();
 
-// ThreadState *make_thread_main(); 
-// void restore_main_thread(ThreadState*);
+// OOFThreadState *make_thread_main(); 
+// void restore_main_thread(OOFThreadState*);
 
 extern bool threading_enabled;
 

@@ -40,6 +40,7 @@
 #include <vector>
 #include <map>
 
+#include <vtkExecutive.h>
 #include <vtkImageMapToColors.h>
 
 
@@ -895,9 +896,10 @@ MaterialImage::MaterialImage(CMicrostructure *ms,
   // Using unsigned char here is ok if there are fewer than 257 voxel
   // categories.  If it's changed to int, make sure to change the type
   // of ptr in the loop below.
-  mImage->SetScalarTypeToUnsignedChar();
-  mImage->SetNumberOfScalarComponents(1);
-  mImage->AllocateScalars();
+  // mImage->SetScalarTypeToUnsignedChar();
+  // mImage->SetNumberOfScalarComponents(1);
+  // mImage->AllocateScalars();
+  mImage->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
 
   Coord pixelSize = microstructure->sizeOfPixels();
   mImage->SetSpacing(pixelSize);
@@ -912,7 +914,7 @@ MaterialImage::MaterialImage(CMicrostructure *ms,
 				   i.coord()[0], i.coord()[1], i.coord()[2]);
       *ptr = microstructure->category(i.coord());
     }
-  mImage->Update();
+  // mImage->Update();
 
   vtkSmartPointer<vtkLookupTable> lut = 
     getMaterialColorLookupTable(microstructure, noColor, noMaterial);
@@ -920,7 +922,8 @@ MaterialImage::MaterialImage(CMicrostructure *ms,
     vtkSmartPointer<vtkImageMapToColors>::New();
   map->SetLookupTable(lut);
   map->SetOutputFormatToRGBA();
-  map->SetInputConnection(mImage->GetProducerPort());
+  map->SetInputData(mImage);
+  map->GetExecutive()->Update();
   image = map->GetOutput();
 }
 

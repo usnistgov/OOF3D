@@ -44,7 +44,6 @@
 #include <vtkVolume.h>
 #include <vtkVolumeCollection.h>
 #include <vtkVolumeProperty.h>
-
 #include <vtkPropCollection.h>
 #include <vtkAssemblyPath.h>
 
@@ -57,8 +56,11 @@ GhostOOFCanvas::GhostOOFCanvas()
     exposed(false),
     rendered(false),
     axes_showing(false),
-    deactivated(false),
-    render_window(vtkSmartPointer<vtkXOpenGLRenderWindow>::New()),
+#ifdef OOF_USE_COCOA
+    render_window(vtkSmartPointer<vtkCocoaRenderWindow>::New()),
+#else
+    render_window(vtkSmartPointer<vtkRenderWindow>::New()),
+#endif // OOF_USE_COCOA
     renderer(vtkSmartPointer<vtkRenderer>::New()),
     axes(vtkSmartPointer<vtkAxesActor>::New()),
     contourMapActor(vtkSmartPointer<vtkScalarBarActor>::New()),
@@ -72,7 +74,9 @@ GhostOOFCanvas::GhostOOFCanvas()
     margin(.10)
 {
   assert(mainthread_query());
+
   render_window->AddRenderer(renderer);
+
   // Choose an arbitrary size for the render window.  This will be
   // reset when the window is actually displayed, but if we're in text
   // mode the window won't ever be displayed.  The size must be set or
@@ -81,7 +85,6 @@ GhostOOFCanvas::GhostOOFCanvas()
 
   // Some of these initial settings will be overwritten by
   // GfxWindow3D.postinitialize().
-#if VTK_MAJOR_VERSION == 5 && VTK_MINOR_VERSION > 8
   contourMapActor->DrawBackgroundOn();
   contourMapActor->DrawFrameOn();
   vtkProperty2D *prop = contourMapActor->GetBackgroundProperty();
@@ -89,7 +92,6 @@ GhostOOFCanvas::GhostOOFCanvas()
   prop->SetOpacity(0.5);
   prop = contourMapActor->GetFrameProperty();
   prop->SetColor(0, 0, 0);
-# endif
   vtkTextProperty *tprop = contourMapActor->GetLabelTextProperty();
   tprop->ItalicOff();
   tprop->SetColor(0, 0, 0);
@@ -128,11 +130,10 @@ void GhostOOFCanvas::toggleAxes(bool show) {
 // This should only be called from python and only with mainthread.run
 
 void GhostOOFCanvas::render() {
+  // oofcerr << "GhostOOFCanvas::render" << std::endl;
   // TODO OPT: Why is this called so often, for example, after Skeleton
   // refinement?  Does it matter?
   assert(mainthread_query());
-  if(deactivated)
-    return;
   if(exposed) {
     if(contourmap_requested && contour_layer!=0 && !contourmap_showing) {
       renderer->AddViewProp(contourMapActor);
@@ -145,8 +146,25 @@ void GhostOOFCanvas::render() {
     
     renderLock.acquire();
     try {
-      // oofcerr << "GhostOOFCanvas::render: " << this << std::endl;
-      render_window->Render();
+      if(render_window->IsDrawable()) {
+#ifdef DEBUG
+	// oofcerr << "GhostOOFCanvas::render: calling Render " << std::endl;
+	// oofcerr << "GhostOOFCanvas::render: actors are:";
+	// vtkSmartPointer<vtkActorCollection> actors = renderer->GetActors();
+	// actors->InitTraversal();
+	// for(int i=0; i<actors->GetNumberOfItems(); i++) {
+	//   vtkSmartPointer<vtkActor> actor = actors->GetNextActor();
+	//   oofcerr << " " << actor.GetPointer()
+	// 	  << " vis=" << actor->GetVisibility();
+	// };
+	// oofcerr << std::endl;
+#endif // DEBUG
+
+	// oofcerr << "GhostOOFCanvas::render: NOT rendering!" << std::endl;
+	render_window->Render();
+	
+	// oofcerr << "GhostOOFCanvas::render: back from Render" << std::endl;
+      }
     }
     catch(...) {
       renderLock.release();
@@ -156,11 +174,35 @@ void GhostOOFCanvas::render() {
   }
 }
 
-void GhostOOFCanvas::deactivate() {
-  // deactivate() suppresses redrawing.  It should be called at the
-  // start of the graphics window shut down sequence.
-  deactivated = true;
-}
+//#include <vtkXOpenGLRenderWindow.h> // debugging on linux only
+
+// void GhostOOFCanvas::deactivate() {
+//   // deactivate() suppresses redrawing.  It should be called at the
+//   // start of the graphics window shut down sequence.
+//   if(true) {
+//     oofcerr << "GhostOOFCanvas::deactivate: not doing anything" << std::endl;
+//     return;
+//   }
+//   if(renderer) {
+//     // oofcerr << "GhostOOFCanvas::deactivate: NOT finalizing render_window "
+//     // 	    << render_window->GetClassName() << " "
+//     // 	    << render_window.GetPointer()
+//     // 	    // << " gl context="
+//     // 	    // << vtkXOpenGLRenderWindow::SafeDownCast(render_window)->getContext()
+//     // 	    << std::endl;
+//     render_window->DebugOn();
+//     // Don't call render_window->Finalize().  The
+//     // vtkXOpenGLRenderWindow destructor calls it.
+    
+//     // render_window->Finalize();
+//     // oofcerr << "GhostOOFCanvas::deactivate: removing renderer" << std::endl;
+//     render_window->RemoveRenderer(renderer);
+//     // oofcerr << "GhostOOFCanvas::deactivate: deleting renderer" << std::endl;
+//     renderer = vtkSmartPointer<vtkRenderer>();
+//     // oofcerr << "GhostOOFCanvas::deactivate: done" << std::endl;
+//   }
+  
+// }
 
 void GhostOOFCanvas::newLayer(OOFCanvasLayerBase *layer) {
   layers.push_back(layer);
@@ -962,7 +1004,7 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
     // The locator and dataset must be obtained *after* the view is
     // set.
     vtkSmartPointer<vtkDataSet> dataset = layer->get_pickable_dataset();
-    dataset->Update();
+    // dataset->Update();
     vtkSmartPointer<vtkAbstractCellLocator> locator = layer->get_locator();
     assert(locator.GetPointer() != 0);
     vtkSmartPointer<vtkCellPicker> picker = 
@@ -1174,7 +1216,7 @@ vtkSmartPointer<vtkUnstructuredGrid> GhostOOFCanvas::getFrustumSubgrid(
   extractor->SetFrustum(picker->GetFrustum());
   extractor->PreserveTopologyOff();
   vtkSmartPointer<vtkDataSet> dataset = layer->get_pickable_dataset();
-  extractor->SetInputConnection(0, dataset->GetProducerPort());
+  extractor->SetInputData(0, dataset);
   extractor->Update();
   subgrid = vtkUnstructuredGrid::SafeDownCast(extractor->GetOutput());
   return subgrid;
@@ -1224,7 +1266,7 @@ Coord *GhostOOFCanvas::findClickedPoint(const Coord *click, const View *view,
 #endif // DEBUGSELECTIONS
     tempActor->SetMapper(mapper);
     tempActor->PickableOn();
-    mapper->SetInput(subgrid);
+    mapper->SetInputData(subgrid);
     tempActor->GetProperty()->SetRepresentationToPoints();
 #ifdef DEBUGSELECTIONS
     tempActor->GetProperty()->SetRepresentationToWireframe();
@@ -1233,7 +1275,7 @@ Coord *GhostOOFCanvas::findClickedPoint(const Coord *click, const View *view,
     tempActor->GetProperty()->SetColor(0.9, 0.1, 0.1);
 #endif // DEBUGSELECTIONS
     renderer->AddActor(tempActor);
-    subgrid->Update();
+    // subgrid->Update();
 
     // Use a vtkPointPicker to select the appropriate point.
     vtkSmartPointer<vtkPointPicker> pointpicker =
@@ -1295,7 +1337,7 @@ Coord *GhostOOFCanvas::findClickedSegment(const Coord *click, const View *view,
       getFrustumSubgrid(x, y, view, layer);
     vtkSmartPointer<vtkExtractEdges> exEdges = 
       vtkSmartPointer<vtkExtractEdges>::New();
-    exEdges->SetInput(subgrid);
+    exEdges->SetInputData(subgrid);
     edges = exEdges->GetOutput();
     exEdges->Update();
   
@@ -1604,3 +1646,18 @@ bool findSegLineDistance(const Coord &A, const Coord &B,
 }
 
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+void GhostOOFCanvas::dumpProps() {
+  vtkSmartPointer<vtkPropCollection> props = renderer->GetViewProps();
+  oofcerr << "GhostOOFCanvas::dumpProps: n=" << props->GetNumberOfItems()
+	  << std::endl;
+  props->InitTraversal();
+  for(int i=0; i<props->GetNumberOfItems(); i++) {
+    OOFcerrIndent indent(2);
+    vtkSmartPointer<vtkProp> prop = props->GetNextProp();
+    oofcerr << "GhostOOFCanvas::dumpProps: " << prop.GetPointer();
+    oofcerr << " " << prop->GetClassName() << std::endl;
+  }
+  oofcerr << "GhostOOFCanvas::dumpProps: done" << std::endl;
+}

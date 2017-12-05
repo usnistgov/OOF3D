@@ -256,7 +256,10 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         # and .mainbox is a gtk.VBox that holds the menu bar.
         windowname = utils.underscore2space("OOF3D " + name)
         subWindow.SubWindow.__init__(self, windowname, menu=self.menu)
-
+        # This 'destroy' signal is for the window itself.  The
+        # SubWindwo constructor installs a handler for the 'destroy'
+        # signal from the top OOF3D window, so that this window will
+        # close when the top window closes.
         self.gtk.connect('destroy', self.destroyCB)
         self.gtk.connect_after('realize', self.realizeCB)
         self.gtk.set_default_size(GfxWindow3D.initial_width,
@@ -283,7 +286,7 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         self.oofcanvas.setContourMapPosition(
             self.settings.contourmap_position[0],
             self.settings.contourmap_position[1])
-        
+
         self.gtk.show_all()    # calls realizeCB(), which calls drawAtTime()
 
         self.updateToolboxChooser()
@@ -374,7 +377,6 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
     def show_contourmap_info(self):
         # TODO MERGE: This is only used in 2D and will go away when 2D
         # uses vtk for contouring.
-        debug.fmsg()
         if not self.gtk:
             return
         current_contourmethod = self.current_contourmap_method

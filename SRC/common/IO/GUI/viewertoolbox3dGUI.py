@@ -1136,10 +1136,11 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
 
             # Find the position at which a vtkActor, if any,  was
             # clicked.
-            (self.click_pos, self.layer) = self.gfxwindow.findClickedPositionOnActor_nolock(
-                clipplaneclickanddragdisplay.ClipPlaneClickAndDragDisplay,
-                point, 
-                viewobj)
+            (self.click_pos, self.layer) = \
+                  self.gfxwindow.findClickedPositionOnActor_nolock(
+                      clipplaneclickanddragdisplay.ClipPlaneClickAndDragDisplay,
+                      point, 
+                      viewobj)
             if self.click_pos is not None:
                 # Either the plane or arrow has been
                 # clicked. Perform the 'translate in plane'

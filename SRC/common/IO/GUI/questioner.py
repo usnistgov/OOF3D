@@ -73,7 +73,8 @@ class _Questioner:
                 "Questioner must have at least one possible answer.")
 
         self.answers = answers
-        self.gtk = gtklogger.Dialog(parent=guitop.top().gtk)
+        self.gtk = gtklogger.Dialog()
+        self.gtk.set_keep_above(True)
         gtklogger.newTopLevelWidget(self.gtk, "Questioner")
         hbox = gtk.HBox()
         self.gtk.vbox.pack_start(hbox, padding=15)

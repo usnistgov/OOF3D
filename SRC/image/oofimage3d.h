@@ -20,6 +20,9 @@
 #include "common/imagebase.h"
 #include "common/timestamp.h"
 
+#include <vtkImageImport.h>
+#include <vtkSmartPointer.h>
+
 #include <string>
 #include <vector>
 
@@ -40,9 +43,6 @@ public:
   OOFImage3D(const std::string &nm);
   OOFImage3D(const std::string &name, const std::vector<std::string> *files,
 	     const Coord*);
-  OOFImage3D(const std::string &name, 
-	     const Coord &size, const ICoord &isize,
-	     const std::vector<unsigned char> *data);
   virtual ~OOFImage3D();
 
   const std::string &name() const { return name_; }
@@ -90,6 +90,22 @@ public:
 
 };
 
+// OOFImage3DFromData needs to be a separate class so that it can hold
+// on to a reference to the vtkImageImport object, which stores the
+// only copy of the data.  It used to just be a separate constructor
+// for OOFImage3D, but that stopped working with vtk 7 (or at least
+// was noticed not to work when switching to vtk 7).
+
+class OOFImage3DFromData : public OOFImage3D {
+private:
+  vtkSmartPointer<vtkImageImport> importer;
+public:
+  OOFImage3DFromData(const std::string &name, 
+		     const Coord &size, const ICoord &isize,
+		     const std::vector<unsigned char> *data);
+  ~OOFImage3DFromData() {}
+};
+
 OOFImage3D *newImageFromData(const std::string &name,
 			     const Coord *size,
 			     const ICoord *isize,
@@ -97,5 +113,9 @@ OOFImage3D *newImageFromData(const std::string &name,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// convertToRGB adds a converter to RGB to the pipeline.
+
+vtkSmartPointer<vtkImageAlgorithm> convertToRGB(
+					vtkSmartPointer<vtkImageAlgorithm>);
 
 #endif // OOFIMAGE3D_H

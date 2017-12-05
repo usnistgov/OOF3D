@@ -881,7 +881,13 @@ void rebuildLayerCells(const CSkeletonBase *skel,
 {
   const CSkeletonSelectableSet *s = tracker->get();
   canvaslayer->newGrid(skel->getPoints(), s->size());
-  for(CSkeletonSelectableSet::const_iterator i=s->begin(); i!=s->end(); ++i) {
-    canvaslayer->addCell((*i)->getCellType(), (*i)->getPointIds());
+  if(s->empty()) {
+    canvaslayer->setEmpty(true);
+  }
+  else {
+    canvaslayer->setEmpty(false);
+    for(CSkeletonSelectableSet::const_iterator i=s->begin(); i!=s->end(); ++i) {
+      canvaslayer->addCell((*i)->getCellType(), (*i)->getPointIds());
+    }
   }
 }

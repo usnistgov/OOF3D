@@ -106,9 +106,9 @@ class GUIProgressBar(progressbar.ProgressBar):
                 pgrs.releaseThreadLock()
 
     def _updateGUI(self):       # timeout callback
-        # Progress.acquireThreadLock() prevents the ThreadState from
-        # deleting the Progress object until
-        # Progress.releaseThreadLock() is called. 
+        # Progress.acquireThreadLock() prevents the OOFThreadState
+        # from deleting the Progress object until
+        # Progress.releaseThreadLock() is called.
         debug.mainthreadTest()
         self.progress.acquireThreadLock()
         gtk.gdk.threads_enter()

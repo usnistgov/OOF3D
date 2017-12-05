@@ -73,8 +73,10 @@ class MoveNodeDisplay(display.DisplayMethod):
             skelcontext = self.movenodeToolbox.getSkeletonContext()
             self.canvaslayer.newGrid(skelcontext.getObject().getPoints(), 1)
             self.canvaslayer.addCell(node.getCellType(), node.getPointIds())
+            self.canvaslayer.setEmpty(False)
         else:
             self.canvaslayer.clear()
+            self.canvaslayer.setEmpty(True)
 
 defaultMoveNodeColor = color.RGBColor(1.0, 0.2, 0.2)
 defaultMoveNodeSize = 8

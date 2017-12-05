@@ -62,7 +62,7 @@ void Rationalizer::rationalize(CSkeleton *skel, CSkelModTargets *targets,
     oofshuffle(elements.begin(), elements.end(), r);
 
 #ifdef DEBUG
-    int nel = elements.size(); 
+    unsigned int nel = elements.size(); 
 #endif
 
     for(CSkeletonElementIterator it=elements.begin();
@@ -966,7 +966,7 @@ static void removeFlat(CSkeleton *skel, short segidx1, short segidx2,
       else
 	delete change;
   }
-  for(int i=0; i<callbacks.size(); i++)
+  for(unsigned int i=0; i<callbacks.size(); i++)
     delete callbacks[i];
 } // end removeFlat
 

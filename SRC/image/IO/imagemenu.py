@@ -223,15 +223,18 @@ def saveImage(menuitem, image, filename, format, mode):
             # doesn't contain '%i', '_%i' will be appended to it.  If
             # the given name looks like "name.suffix", the new name
             # will be "name_%i.suffix".
-            if "%i" not in filename:
-	        path = filename
+	    path, fname = os.path.split(filename)
+            if "%i" not in fname:
 	        if not os.path.exists(path):
 		  os.makedirs(path)
-                fn = filename.rsplit(".", 1)
+                fn = fname.rsplit(".", 1)
                 if len(fn) > 1:
-                    filename = path + "/" + fn[0] + "_%i." + fn[1]
+                    fname = fn[0] + "_%i." + fn[1]
+                    # filename = path + "/" + fn[0] + "_%i." + fn[1]
                 else:
-                    filename = path + "/" + filename + "_%i"
+                    fname = fn[0] + "_i"
+                    # filename = path + "/" + filename + "_%i"
+                filename = os.path.join(path, fname)
         immidge.save(filename, format.string())
     else:
         reporter.warn("Image was not saved!")

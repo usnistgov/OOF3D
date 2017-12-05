@@ -22,13 +22,21 @@
 
 #include <iostream>
 
-#include <gdk/gdkx.h>
+#include <gdk/gdk.h>
 #include <gtk/gtk.h>
 #include <pygobject.h>
 #include <pygtk/pygtk.h>
 
 #include <vtkCamera.h>
+
+#ifdef OOF_USE_COCOA
+// gdkquartz.h includes some ObjectiveC headers, so this file is
+// wrapped by oofcanvas3d.mm when using Cocoa.
+#include <gdk/gdkquartz.h>
+#else // not OOF_USE_COCOA
+#include <gdk/gdkx.h>
 #include <vtkXOpenGLRenderWindow.h>
+#endif // not OOF_USE_COCOA
 
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -58,52 +66,85 @@ OOFCanvas3D::OOFCanvas3D()
     releasePyLock(pystate);
   }
 
-  drawing_area = gtk_drawing_area_new(); 
+  drawing_area = gtk_drawing_area_new();
 
-  // we need to set the colormap of the drawing_area before it is realized
+#ifndef OOF_USE_COCOA
   Display* dis = GDK_DISPLAY();
   render_window->SetDisplayId(dis);
-  XVisualInfo *v = render_window->GetDesiredVisualInfo();
-  Colormap cm = render_window->GetDesiredColormap();
-  GdkVisual *gdkv = gdkx_visual_get(v->visualid);
-  GdkColormap *gdkcm = gdk_x11_colormap_foreign_new(gdkv, cm);
-  gtk_widget_set_colormap(drawing_area, gdkcm);
-  // free the memory allocated by GetDesiredVisualInfo
-  XFree(v);
+#endif // not OOF_USE_COCOA
 
-  g_signal_connect(drawing_area, "destroy",
-		   G_CALLBACK(OOFCanvas3D::gtk_destroy),
-		   this);
-  g_signal_connect(drawing_area, "realize",
-		   G_CALLBACK(OOFCanvas3D::gtk_realize),
-		   this);
-  g_signal_connect(drawing_area, "expose_event",
-		   G_CALLBACK(OOFCanvas3D::gtk_expose),
-		   this);
-  g_signal_connect(drawing_area, "configure_event",
-		   G_CALLBACK(OOFCanvas3D::gtk_configure),
-		   this);
-  gtk_widget_add_events(drawing_area, (GDK_EXPOSURE_MASK |
-				       GDK_BUTTON_PRESS_MASK |
-				       GDK_BUTTON_RELEASE_MASK |
-				       GDK_KEY_PRESS_MASK |
-				       GDK_SCROLL_MASK |
-				       GDK_POINTER_MOTION_MASK |
-				       GDK_POINTER_MOTION_HINT_MASK |
-				       GDK_ENTER_NOTIFY_MASK |
-				       GDK_LEAVE_NOTIFY_MASK));
+  g_handlers.push_back(g_signal_connect(
+			drawing_area,
+			"realize",
+			G_CALLBACK(OOFCanvas3D::gtk_realize),
+			this));
+  g_handlers.push_back(g_signal_connect(
+			drawing_area,
+			"expose_event",
+			G_CALLBACK(OOFCanvas3D::gtk_expose),
+			this));
+  g_handlers.push_back(g_signal_connect(
+			drawing_area,
+			"configure_event",
+			G_CALLBACK(OOFCanvas3D::gtk_configure),
+			this));
 
-//         # need this to be able to handle key_press events.
-//         self.set_flags(gtk.CAN_FOCUS)
-//         # default size
-//         self.set_size_request(300, 300)
-
+  gtk_widget_add_events(drawing_area, (GDK_EXPOSURE_MASK
+				       | GDK_BUTTON_PRESS_MASK
+				       | GDK_BUTTON_RELEASE_MASK
+				       | GDK_KEY_PRESS_MASK
+				       | GDK_SCROLL_MASK
+				       | GDK_POINTER_MOTION_MASK
+				       | GDK_POINTER_MOTION_HINT_MASK
+				       | GDK_ENTER_NOTIFY_MASK
+				       | GDK_LEAVE_NOTIFY_MASK
+				       ));
   show();
 }
 
-OOFCanvas3D::~OOFCanvas3D() {}
+OOFCanvas3D::~OOFCanvas3D() {
+  for(gulong handler : g_handlers) {
+    g_signal_handler_disconnect(drawing_area, handler);
+  }
 
-PyObject *OOFCanvas3D::widget() { 
+  if(mouse_callback) {
+    PyGILState_STATE pystate = acquirePyLock();
+    Py_XDECREF(mouse_callback);
+    releasePyLock(pystate);
+  }
+
+#ifndef OOF_USE_COCOA
+  // We were getting this error when closing windows and using vtk8:
+  //    [xcb] Unknown sequence number while processing queue
+  //    [xcb] Most likely this is a multi-threaded client and XInitThreads
+  //         has not been called
+  //    [xcb] Aborting, sorry about that.
+  //    python: ../../src/xcb_io.c:274: poll_for_event: Assertion
+  //        `!xcb_xlib_threads_sequence_lost' failed.
+  // However, calling XInitThreads (see initialize_X11 in vtkutils.C)
+  // didn't make a difference (except for crashing earlier), and all
+  // of the X calls should be coming from a single thread unless vtk is
+  // making calls from more than one.  Anyway, either vtk or pygtk is
+  // probably already calling XInitThreads.  The solution here seems
+  // to be to flush the X11 event queue before closing the window.
+
+  // TODO: discard only the events pertaining to this window.
+  // Discarding all of them may cause problems with other open
+  // graphics windows.
+  XSync(GDK_DISPLAY(), false); // true ==> discard pending events
+
+  // Both vtk7 and vtk8 sometimes generate a BadWindow error when
+  // closing a vtkXOpenGLRenderWindow, although the errors arise at
+  // different points, in different X function calls.  I think the
+  // errors are due to gtk and vtk squabbling over who owns the
+  // window.  I don't know if zeroing the WindowId here is the correct
+  // solution, but it seems to work.
+  render_window->SetWindowId(0);
+
+#endif // OOF_USE_COCOA
+}
+
+PyObject *OOFCanvas3D::widget() {
   PyObject *wdgt;
   PyGILState_STATE pystate = acquirePyLock();
   try {
@@ -117,39 +158,6 @@ PyObject *OOFCanvas3D::widget() {
   return wdgt;
 }
 
-
-// static
-void OOFCanvas3D::gtk_destroy(GtkWidget*, gpointer data) {
-  // This is a static function.  It's the gtk callback for the
-  // "destroy" signal.
-  OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
-  oofcanvas->destroy();
-  delete oofcanvas;
-}
-
-void OOFCanvas3D::destroy() {
-  // for(DisplayLayerList::iterator i=layers.begin(); i!=layers.end(); ++i)
-  //     delete *i;
-  //delete underlayer;
-  
-//   if(mouse_callback) {
-//     gtk_signal_disconnect(GTK_OBJECT(root), mouse_handler_id);
-//     PyGILState_STATE pystate = acquirePyLock();
-//     Py_XDECREF(mouse_callback);
-//     releasePyLock(pystate);
-//   }
-
-//   if(config_callback) {
-//     gtk_signal_disconnect(GTK_OBJECT(canvas), config_handler_id);
-//     PyGILState_STATE pystate = acquirePyLock();
-//     Py_XDECREF(config_callback);
-//     releasePyLock(pystate);
-//   }
-
-  // TODO OPT: Does *drawing_area need to be explicitly destroyed?
-  drawing_area = 0;
-}
-
 // static
 gboolean OOFCanvas3D::gtk_realize(GtkWidget*, gpointer data) {
   OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
@@ -160,15 +168,26 @@ gboolean OOFCanvas3D::realize() {
   assert(mainthread_query());
   if(!created) {
     gtk_widget_realize(drawing_area);
+#ifndef OOF_USE_COCOA
     XID wid = GDK_WINDOW_XID(drawing_area->window);
-    // this version only works in gtk 2.14 and up  
-    //GDK_WINDOW_XID(gtk_widget_get_window(drawing_area));
-    //XID pid = GDK_WINDOW_XID(gtk_widget_get_parent_window(drawing_area));
-    //render_window->SetParentId((void*)pid);
-    render_window->SetWindowId((void*)wid);
+    render_window->SetWindowId((void*) wid);
+
+    // An old comment here said "this version only works in gtk
+    // 2.14 and up", but the code following it didn't make sense.  I
+    // *think* that it should have been the following, but I'm not
+    // sure.  Anyhow it doesn't seem to work -- it crashes when the
+    // window is closed, unless SetWindowId is also set, as above.
+    // XID pid = GDK_WINDOW_XID(gtk_widget_get_parent_window(drawing_area));
+    // render_window->SetParentId((void*) pid);
+#else  // OOF_USE_COCOA
+    render_window->SetRootWindow(gtk_widget_get_root_window(drawing_area));
+    GdkWindow *gparent = gtk_widget_get_parent_window(drawing_area);
+    NSView *pid = gdk_quartz_window_get_nsview(gparent);
+    render_window->SetParentId((void*) pid);
+#endif // OOF_USE_COCOA
     created = true;
   }
-  return true;
+  return FALSE;	// Returning FALSE propagates the event to parent items.
 }
 
 // static
@@ -181,13 +200,23 @@ gboolean OOFCanvas3D::gtk_configure(GtkWidget*, GdkEventConfigure *config,
 }
 
 gboolean OOFCanvas3D::configure(GdkEventConfigure *event) {
+  // oofcerr << "OOFCanvas3D::configure" << std::endl;
   assert(mainthread_query());
-  int *sz;
-  sz = render_window->GetSize();
-  if(event->width != sz[0] || event->height != sz[1]) {
-    render_window->SetSize(event->width, event->height);
-  }
-  return true;
+  // The height, width, x, and y elements of event are the same as
+  // those of drawing_area->allocation.
+  render_window->SetSize(event->width, event->height);
+
+#ifdef OOF_USE_COCOA
+  // vtk measures y *up* from the bottom edge of the top level
+  // window, but gtk measures it down from the top of the window.
+  GtkWidget *topwindow = gtk_widget_get_toplevel(drawing_area);
+  assert(topwindow != nullptr);
+  int top_height = topwindow->allocation.height;
+  render_window->SetPosition(event->x, top_height - event->y - event->height);
+#else
+  render_window->SetPosition(event->x, event->y);
+#endif // not OOF_USE_COCOA
+  return FALSE;	// Returning FALSE propagates the event to parent items.
 }
 
 // static
@@ -201,14 +230,38 @@ gboolean OOFCanvas3D::gtk_expose(GtkWidget*, GdkEventExpose *event,
 
 gboolean OOFCanvas3D::expose() {
   assert(mainthread_query());
+  // oofcerr << "OOFCanvas3D::expose" << std::endl;
   exposed = true;
   // This is called not just when the window is first exposed, but
-  // whenever a part of it is re-exposed, so we have to call render().
-  render();
-  return true;
+  // whenever a part of it is re-exposed, so we have to call
+  // Render(). It's also called after the 'configure' callback when a
+  // window is resized.
+
+  // On Linux, after a window is resized (with a 'configure' event)
+  // the contents disappear unless Render() is called again.  Whatever
+  // is clearing the window is happening after the 'configure',
+  // 'configure_after', and 'expose' callbacks have completed, so
+  // calling Render() from the callbacks isn't sufficient.  We need to
+  // run it from an idle callback.
+  g_idle_add(OOFCanvas3D::gtk_redrawIdle, this);
+  return FALSE;	// Returning FALSE propagates the event to parent items.
+}
+
+// static
+gboolean OOFCanvas3D::gtk_redrawIdle(gpointer data) {
+  OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
+  return oofcanvas->redrawIdle();
+}
+
+gboolean OOFCanvas3D::redrawIdle() {
+  // gtk idle callback installed and run once by the expose event
+  // callback.
+  render_window->Render();
+  return FALSE;			// FALSE means "run just once".
 }
 
 void OOFCanvas3D::show() {
+  // oofcerr << "OOFCanvas3D::show" << std::endl;
   assert(mainthread_query());
   if(!drawing_area) 
     throw ErrProgrammingError("No canvas!", __FILE__, __LINE__);
@@ -259,14 +312,14 @@ void OOFCanvas3D::set_mouse_callback(PyObject *callback) {
   PyGILState_STATE pystate = acquirePyLock();
   Py_XINCREF(callback);
   releasePyLock(pystate);
-  mouse_handler_id = 
-    gtk_signal_connect(GTK_OBJECT(drawing_area), "event",
-		       GTK_SIGNAL_FUNC(OOFCanvas3D::mouse_event), this);
+  g_handlers.push_back(g_signal_connect(drawing_area, "event",
+					G_CALLBACK(OOFCanvas3D::mouse_event),
+					this));
 }
 
 // static
-gint OOFCanvas3D::mouse_event(GtkWidget *item, GdkEvent *event,
-			    gpointer data)
+gboolean OOFCanvas3D::mouse_event(GtkWidget *item, GdkEvent *event,
+				  gpointer data)
 {
   OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
   oofcanvas->mouse_eventCB(item, event);

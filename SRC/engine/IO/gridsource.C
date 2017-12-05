@@ -30,8 +30,8 @@
 // that Tets can be selected, for example.  This should be done only
 // after moving to vtk6 or vtk7.
 
-vtkCxxRevisionMacro(SkeletonGridSource, "oofvtkmods 3.0.0");
-vtkCxxRevisionMacro(MeshGridSource, "oofvtkmods 3.0.0");
+// vtkCxxRevisionMacro(SkeletonGridSource, "oofvtkmods 3.0.0");
+// vtkCxxRevisionMacro(MeshGridSource, "oofvtkmods 3.0.0");
 
 vtkStandardNewMacro(SkeletonGridSource);
 vtkStandardNewMacro(MeshGridSource);
@@ -127,7 +127,7 @@ void MeshGridSource::PrintSelf(std::ostream &os, vtkIndent indent) {
 // it's just being used to compare Skeleton reference files in the
 // regression suite when testing the r3d categoryVolumes code.
 
-vtkCxxRevisionMacro(SkeletonSegmentGridSource, "oofvtkmods 3.0.0");
+// vtkCxxRevisionMacro(SkeletonSegmentGridSource, "oofvtkmods 3.0.0");
 vtkStandardNewMacro(SkeletonSegmentGridSource);
 
 SkeletonSegmentGridSource::SkeletonSegmentGridSource()
@@ -158,7 +158,7 @@ void SkeletonSegmentGridSource::PrintSelf(std::ostream &os, vtkIndent indent) {
      << "\n";
 }
 
-vtkCxxRevisionMacro(SkeletonEdgeDiffGridSource, "oofvtkmods 3.0.0");
+// vtkCxxRevisionMacro(SkeletonEdgeDiffGridSource, "oofvtkmods 3.0.0");
 vtkStandardNewMacro(SkeletonEdgeDiffGridSource);
 
 SkeletonEdgeDiffGridSource::SkeletonEdgeDiffGridSource()

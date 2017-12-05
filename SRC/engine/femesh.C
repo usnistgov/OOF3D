@@ -877,7 +877,7 @@ void FEMesh::getGrid(
   // 	  << " nodes" << std::endl;
 }
 
-vtkSmartPointer<vtkIntArray> FEMesh::getMaterialCellData(
+vtkSmartPointer<vtkDataArray> FEMesh::getMaterialCellData(
 		 const CSkeletonBase *skel, const SkeletonFilter *filter)
   const 
 {
@@ -890,5 +890,5 @@ vtkSmartPointer<vtkIntArray> FEMesh::getMaterialCellData(
       array->InsertNextValue(cat);
     }
   }
-  return array;
+  return vtkSmartPointer<vtkDataArray>(array.GetPointer());
 }

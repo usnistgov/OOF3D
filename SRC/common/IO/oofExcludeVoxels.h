@@ -26,7 +26,7 @@ class VoxelFilter;
 
 class oofExcludeVoxels : public vtkExtractCells {
 public:
-  vtkTypeRevisionMacro(oofExcludeVoxels, vtkExtractCells);
+  vtkTypeMacro(oofExcludeVoxels, vtkExtractCells);
   void PrintSelf(std::ostream&, vtkIndent);
   static oofExcludeVoxels *New();
 

@@ -30,6 +30,7 @@ private:
   PyObject *mouse_callback;
   guint mouse_handler_id; //, config_handler_id;
   RubberBand *rubberband;
+  std::vector<gulong> g_handlers; // gtk signal handler ids
 protected:
   GtkWidget *drawing_area;
 
@@ -43,17 +44,19 @@ public:
   // Separate callbacks for mouse events and resize events.
   void set_mouse_callback(PyObject*);
 
-  // Callback functions
-  static void gtk_destroy(GtkWidget*, gpointer);
-  void destroy();
   static gboolean gtk_realize(GtkWidget*, gpointer);
   gboolean realize();
   static gboolean gtk_configure(GtkWidget*, GdkEventConfigure*, gpointer);
   gboolean configure(GdkEventConfigure*);
+  static gboolean gtk_configure_after(GtkWidget*, GdkEventConfigure*, gpointer);
+  gboolean configure_after(GdkEventConfigure*);
   static gboolean gtk_expose(GtkWidget*, GdkEventExpose*, gpointer);
   gboolean expose();
   static gint mouse_event(GtkWidget*, GdkEvent*, gpointer);
   void mouse_eventCB(GtkWidget*, GdkEvent*);
+
+  static gboolean gtk_redrawIdle(gpointer);
+  gboolean redrawIdle();
 
   // movements
   void mouse_tumble(double x, double y);

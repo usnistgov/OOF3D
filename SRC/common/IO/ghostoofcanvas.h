@@ -37,7 +37,13 @@ class GhostOOFCanvas;
 #include <vtkScalarsToColors.h>
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
-#include <vtkXOpenGLRenderWindow.h>
+
+// #include <vtkXOpenGLRenderWindow.h>
+#ifdef OOF_USE_COCOA
+#include <vtkCocoaRenderWindow.h>
+#else
+#include <vtkRenderWindow.h>
+#endif // OOF_USE_COCOA
 
 class View;
 class ImageFormat;
@@ -51,8 +57,12 @@ protected:
   bool exposed;
   bool rendered;
   bool axes_showing;		// axes are actually drawn
-  bool deactivated;		// suppress redraws when shutting down
-  vtkSmartPointer<vtkXOpenGLRenderWindow> render_window;
+  // bool deactivated;		// suppress redraws when shutting down
+#ifdef OOF_USE_COCOA
+  vtkSmartPointer<vtkCocoaRenderWindow> render_window;
+#else
+  vtkSmartPointer<vtkRenderWindow> render_window;
+#endif // OOF_USE_COCOA
   vtkSmartPointer<vtkRenderer> renderer;
   vtkSmartPointer<vtkAxesActor> axes;
   vtkSmartPointer<vtkScalarBarActor> contourMapActor;
@@ -88,16 +98,16 @@ public:
 
   // newLayer() and removeLayer() are called by the OOFCanvasLayerBase
   // constructor and destructor.
-  void newLayer(OOFCanvasLayerBase *);
+  void newLayer(OOFCanvasLayerBase*);
   void removeLayer(OOFCanvasLayerBase*);
 
   void reset();
 
   // This should only be called from python and only with mainthread.run
   void render();
-  // deactivate() suppresses redrawing.  It should be called at the
-  // start of the graphics window shut down sequence.
-  void deactivate();
+  // // deactivate() suppresses redrawing.  It should be called at the
+  // // start of the graphics window shut down sequence.
+  // void deactivate();
 
   void set_bgColor(const CColor);
   void set_margin(double f) { margin = f; }
@@ -203,8 +213,10 @@ public:
 
   void save_canvas(const std::string &filename, const ImageFormat*) const;
 
+  void dumpProps();		// debugging
+
   friend class OOFCanvasLayer;
-};
+};				// end GhostOOFCanvas
 
 bool findSegLineDistance(const Coord&, const Coord&, const Coord&, const Coord&,
 			 double &, double&);

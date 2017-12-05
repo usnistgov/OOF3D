@@ -1,5 +1,6 @@
 TODO LIST FOR OOF3D
 
+
 Before Next Release
 -------------------
 
@@ -16,14 +17,8 @@ Use Eigen?  Use DPF's sparse_matrix_optimization branch?
   sparse_matrix_optimization.  The difference in performance on
   solver_test.py/static_quadratic_set was negligible.
 
-Fix bugs in OOFImage3D::threshold.  See TODO in oofimage3d.C.
-  * After using it, voxel selections don't appear properly in the
-    graphics window -- they're gray and are in the wrong place.
-    Probably the image has changed its storage format.
-  * Applying it twice yields garbage, or worse.
-
-Fix bug: Opening a graphics window after closing one will crash the
-program.
+Mesh Material display not working?
+Mesh filled contour display not working?
 
 Fix bug: Are element groups/materials not being recomputed for
 refinement undo/redo?  Or are filters on the skeleton displays not
@@ -34,13 +29,24 @@ updating?
   Elements in other groups appear.
 Maybe related to this?
 Warning: In /Users/langer/UTIL/VTK/VTK-5.10.1/Filtering/vtkDataSet.cxx, line 446
-vtkUnstructuredGrid (0x7f961e6a4280): Cell array  with 1 components, has 8239 tuples but there are only 1484 cells
+vtkUnstructuredGrid (0x7f961e6a4280): Cell array  with 1 components,
+has 8239 tuples but there are only 1484 cells
 
-  
+Remove opacity param from MicrostructureMaterialDisplay?  Is it used?
+
+
+Fix this TODO in ghostgfxwindow.py: After cloning a window containing
+only a hidden image layer and showing the layer in the clone, the
+image is drawn at the wrong size and with a black border. Making any
+change to the view fixes it.
+
+Fix bug?  Edit a clipping plane by double-clicking in the list in the
+toolbox, and change the convertible RC to "angles". It's possible to
+get the error "Parameter value out of range for phi".
+	    
+---------------------------------------------------------------------------
 Soon
 ----
-
-Upgrade VTK
 
 Add a surface-smoothness-energy so surface smoothing works better.
 
@@ -79,6 +85,7 @@ slow because it takes a long time to recompute the center point.
 Either find a faster way to compute the center, or make computing the
 center optional and re-use the old point.
 
+----------------------------------------------------------------------------
 At Some Later Time
 ------------------
 
@@ -104,4 +111,34 @@ setting the filter doesn't crash.
 
 Contour displays are incorrect when the elements are filtered.
   Same problem as above, probably.
+
+
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+
+FIXED
+
+2017-12-05
+Fix bug:  open two graphics windows on Linux.  Close the first one with the
+window manager close button.  The program will crash.
+Changes that prevent crashing:
+   Comment out call to Render
+   Run on Mac with Cocoa
+Changes that don't prevent crashing:
+   Don't add renderer to render_window.
+   Remove renderer from render_window at start of destroyCB.
+   Toolboxes aren't removed in GfxWindowBase.destroyCB.
+   No layers created (immediate return in createPredefinedLayers,
+      don't create axes)
+   Switch to vtk8. -- Crashes when closing just 1 graphics window, using
+     either the menu item (seg fault) or the window manager (X11 error),
+     even when Render call is commented out.
+     * Seg fault is in
+       PlaneAndArrowLayer::destroy->OOFCanvasLayer::removeAllProps. When
+       no layers are defined, closing with either the menu item or the
+       window manager leads to the X11 error, so there may be two
+       separate problems.  Fixed that... Now there's an x11 error in both cases.
+
+
+Upgrade VTK 2017-12-05
 
