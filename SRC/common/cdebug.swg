@@ -38,6 +38,7 @@ void writeDebugFile_(char*, char*, int);
 void closeDebugFile();
 
 void spinCycle(int);
+void vtkLeakCheck();
 
 #ifdef PROFILER
 void ProfilerStart(char*);

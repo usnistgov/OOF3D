@@ -26,16 +26,19 @@
 #include <math.h>
 
 #include <vtkAreaPicker.h>
+#include <vtkAssemblyPath.h>
 #include <vtkCamera.h>
 #include <vtkCaptionActor2D.h>
 #include <vtkCellPicker.h>
 #include <vtkDataSet.h>
 #include <vtkDataSetMapper.h>
+#include <vtkDebugLeaks.h>
 #include <vtkExtractSelectedFrustum.h>
 #include <vtkPointPicker.h>
-#include <vtkPropPicker.h>
 #include <vtkProp3D.h>
 #include <vtkProp3DCollection.h>
+#include <vtkPropCollection.h>
+#include <vtkPropPicker.h>
 #include <vtkProperty.h>
 #include <vtkProperty2D.h>
 #include <vtkTextActor.h>
@@ -44,8 +47,6 @@
 #include <vtkVolume.h>
 #include <vtkVolumeCollection.h>
 #include <vtkVolumeProperty.h>
-#include <vtkPropCollection.h>
-#include <vtkAssemblyPath.h>
 
 // "initialized" is used by the OOFCanvas and OOFCanvas3D
 // constructors.
@@ -82,6 +83,7 @@ GhostOOFCanvas::GhostOOFCanvas()
   // mode the window won't ever be displayed.  The size must be set or
   // findClickedCell_, et al, will seg fault.
   render_window->SetSize(1000, 1000);
+  render_window->DebugOn();
 
   // Some of these initial settings will be overwritten by
   // GfxWindow3D.postinitialize().
