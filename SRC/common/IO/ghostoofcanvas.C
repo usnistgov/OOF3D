@@ -32,7 +32,6 @@
 #include <vtkCellPicker.h>
 #include <vtkDataSet.h>
 #include <vtkDataSetMapper.h>
-#include <vtkDebugLeaks.h>
 #include <vtkExtractSelectedFrustum.h>
 #include <vtkPointPicker.h>
 #include <vtkProp3D.h>
@@ -83,7 +82,6 @@ GhostOOFCanvas::GhostOOFCanvas()
   // mode the window won't ever be displayed.  The size must be set or
   // findClickedCell_, et al, will seg fault.
   render_window->SetSize(1000, 1000);
-  render_window->DebugOn();
 
   // Some of these initial settings will be overwritten by
   // GfxWindow3D.postinitialize().
