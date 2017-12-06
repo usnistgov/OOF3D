@@ -17,8 +17,12 @@ Use Eigen?  Use DPF's sparse_matrix_optimization branch?
   sparse_matrix_optimization.  The difference in performance on
   solver_test.py/static_quadratic_set was negligible.
 
-Mesh Material display not working?
 Mesh filled contour display not working?
+
+Fix bug: Displaying filtered Skeletons and Meshes leads to errors
+like:
+Warning: In /Users/langer/UTIL/VTK/VTK-8.1.0.rc2/Common/DataModel/vtkDataSet.cxx, line 476
+vtkUnstructuredGrid (0x7fd2d39a6cc0): Cell array  with 1 components, has 1871 tuples but there are only 689 cells
 
 Fix bug: Are element groups/materials not being recomputed for
 refinement undo/redo?  Or are filters on the skeleton displays not
@@ -33,16 +37,16 @@ vtkUnstructuredGrid (0x7f961e6a4280): Cell array  with 1 components,
 has 8239 tuples but there are only 1484 cells
 
 Remove opacity param from MicrostructureMaterialDisplay?  Is it used?
+It's passed through to vtkActor::GetProperty()->SetOpacity(), but it
+doesn't have any effect on what's displayed.
 
-
-Fix this TODO in ghostgfxwindow.py: After cloning a window containing
-only a hidden image layer and showing the layer in the clone, the
-image is drawn at the wrong size and with a black border. Making any
-change to the view fixes it.
 
 Fix bug?  Edit a clipping plane by double-clicking in the list in the
 toolbox, and change the convertible RC to "angles". It's possible to
 get the error "Parameter value out of range for phi".
+
+Fix bug: Using upper-right corner arrows for switching views sometimes
+draws the canvas in the wrong location.
 	    
 ---------------------------------------------------------------------------
 Soon
@@ -118,7 +122,6 @@ Contour displays are incorrect when the elements are filtered.
 
 FIXED
 
-2017-12-05
 Fix bug:  open two graphics windows on Linux.  Close the first one with the
 window manager close button.  The program will crash.
 Changes that prevent crashing:
@@ -138,7 +141,18 @@ Changes that don't prevent crashing:
        no layers are defined, closing with either the menu item or the
        window manager leads to the X11 error, so there may be two
        separate problems.  Fixed that... Now there's an x11 error in both cases.
+** Fixed 2017-12-05
 
 
-Upgrade VTK 2017-12-05
+Upgrade VTK
+** Finished(?) 2017-12-05
+
+Fix this TODO in ghostgfxwindow.py: After cloning a window containing
+only a hidden image layer and showing the layer in the clone, the
+image is drawn at the wrong size and with a black border. Making any
+change to the view fixes it.
+** Can't reproduce with vtk 7.1.1, 2017-12-06
+
+Mesh Material display not working?
+** Fixed 2017-12-06  CellData wasn't being included in MeshGridSource::GetGrid
 

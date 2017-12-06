@@ -1172,11 +1172,6 @@ class GhostGfxWindow:
             newwindow.draw()
             newwindow.viewCB(None, view)
             ## TODO 3.1: Clone the view history.
-
-            ## TODO: After cloning a window containing only a hidden
-            ## image layer and showing the layer in the clone, the
-            ## image is drawn at the wrong size and with a black
-            ## border. Making any change to the view fixes it. 
         finally:
             self.releaseGfxLock()
 
