@@ -54,7 +54,7 @@ bool GhostOOFCanvas::initialized = 0;
 GhostOOFCanvas::GhostOOFCanvas() 
   : created(false),
     exposed(false),
-    rendered(false),
+    rendered(false),		// TODO: Is this used?
     axes_showing(false),
 #ifdef OOF_USE_COCOA
     render_window(vtkSmartPointer<vtkCocoaRenderWindow>::New()),
@@ -351,13 +351,20 @@ void GhostOOFCanvas::setContourMapSize(float w, float h) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-void GhostOOFCanvas::setAntiAlias(bool antialias) {
+void GhostOOFCanvas::setMultiSamples(unsigned int samples) {
   assert(mainthread_query());
-  if(antialias)
-    render_window->SetAAFrames(6);
-  else
-    render_window->SetAAFrames(0);
+  render_window->SetMultiSamples(samples);
+  if(created)
+    render_window->Render();
 }
+
+// void GhostOOFCanvas::setAntiAlias(bool antialias) {
+//   assert(mainthread_query());
+//   if(antialias)
+//     render_window->SetAAFrames(6);
+//   else
+//     render_window->SetAAFrames(0);
+// }
 
 void GhostOOFCanvas::set_bgColor(CColor color) {
   assert(mainthread_query());

@@ -186,7 +186,8 @@ class GfxSettings:
     longlayernames = 0                   # Use long form of layer reprs.
     listall = 0                          # Are all layers to be listed?
     autoreorder = 1                      # Automatically reorder layers?
-    antialias = 0
+    # antialias = 0
+    multisamples = 0
     if config.dimension() == 2:
         aspectratio = 5           # Aspect ratio of the contourmap.
         contourmap_markersize = 2 # Size in pixels of contourmap marker.
@@ -618,16 +619,25 @@ class GhostGfxWindow:
             </para>"""
             ))
 
-        settingmenu.addItem(CheckOOFMenuItem(
-                'Antialias',
-                callback=self.toggleAntialias,
-                value=self.settings.antialias,
-                threadable=oofmenu.THREADABLE,
-                help=
-                "Use antialiased rendering.",
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/antialias.xml')
-                ))
+        # settingmenu.addItem(CheckOOFMenuItem(
+        #         'Antialias',
+        #         callback=self.toggleAntialias,
+        #         value=self.settings.antialias,
+        #         threadable=oofmenu.THREADABLE,
+        #         help=
+        #         "Use antialiased rendering.",
+        #         discussion=xmlmenudump.loadFile(
+        #                 'DISCUSSIONS/common/menu/antialias.xml')
+        #         ))
+        settingmenu.addItem(OOFMenuItem(
+            'Multisampling',
+            callback=self.setMultiSampling,
+            params=[
+                parameter.NonNegativeIntParameter(
+                    'samples',
+                    value=self.settings.multisamples)],
+            help="Set degree of multisampling (similar to antialiasing)"))
+                
         if config.dimension() == 3:
             axesmenu = settingmenu.addItem(OOFMenuItem('Axes'))
             axesmenu.addItem(CheckOOFMenuItem(
@@ -947,8 +957,8 @@ class GhostGfxWindow:
         self.defaultLayerCreated = {}
         self.sensitize_menus()
 
-        # if not clone:
-        #     self.createPredefinedLayers()
+        if not clone:
+            self.createPredefinedLayers()
 
         # Switchboard callbacks.  Keep a list of them so that they can
         # all be removed when the window is closed.
@@ -1277,10 +1287,15 @@ class GhostGfxWindow:
         # self.backdate()                    # backdates timestamps
         self.draw()
 
-    def toggleAntialias(self, menuitem, antialias):
-        self.settings.antialias = antialias
-        mainthread.runBlock(self.oofcanvas.setAntiAlias, (antialias,))
-        self.draw()
+    # def toggleAntialias(self, menuitem, antialias):
+    #     self.settings.antialias = antialias
+    #     mainthread.runBlock(self.oofcanvas.setAntiAlias, (antialias,))
+    #     self.draw()
+
+    def setMultiSampling(self, menuitem, samples):
+        self.settings.multisamples = samples
+        mainthread.runBlock(self.oofcanvas.setMultiSamples, (samples,))
+        # Calling self.draw() here doesn't actually redraw? Why?
 
     def toggleListAll(self, menuitem, listall):
         self.acquireGfxLock()

@@ -270,7 +270,8 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         self.mainbox.pack_start(self.mainpane, fill=1, expand=1)
 
         self.oofcanvas.set_bgColor(self.settings.bgcolor)
-        self.oofcanvas.setAntiAlias(self.settings.antialias)
+        # self.oofcanvas.setAntiAlias(self.settings.antialias)
+        self.oofcanvas.setMultiSamples(self.settings.multisamples)
 
         self.oofcanvas.setAxisLabelColor(self.settings.axislabelcolor)
         self.oofcanvas.setAxisLabelFontSize(self.settings.axisfontsize)

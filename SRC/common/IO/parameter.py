@@ -612,6 +612,10 @@ class PositiveIntParameter(IntParameter):
     def valueDesc(self):
         return "A positive integer."
 
+class NonNegativeIntParameter(IntParameter):
+    def valueDesc(self):
+        return "A non-negative integer."
+
 
 class ListOfIntsParameter(Parameter):
     def __init__(self, name, value=None, default=[], tip=None, auxData={}):
