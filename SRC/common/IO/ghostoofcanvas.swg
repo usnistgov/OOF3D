@@ -44,7 +44,7 @@ public:
 
   void set_bgColor(const CColor);
   void set_margin(double f);
-  // void setAntiAlias(bool);
+  void setAntiAlias(bool);
   void setMultiSamples(int);
 
   void setAxisOffset(Coord *Point);

@@ -47,6 +47,10 @@
 #include <vtkVolumeCollection.h>
 #include <vtkVolumeProperty.h>
 
+#include <vtkSSAAPass.h>
+#include <vtkRenderStepsPass.h>
+#include <vtkOpenGLRenderer.h>
+
 // "initialized" is used by the OOFCanvas and OOFCanvas3D
 // constructors.
 bool GhostOOFCanvas::initialized = 0;
@@ -353,18 +357,40 @@ void GhostOOFCanvas::setContourMapSize(float w, float h) {
 
 void GhostOOFCanvas::setMultiSamples(unsigned int samples) {
   assert(mainthread_query());
+  oofcerr << "GhostOOFCanvas::setMultiSamples: " << samples << std::endl;
   render_window->SetMultiSamples(samples);
-  if(created)
-    render_window->Render();
 }
 
-// void GhostOOFCanvas::setAntiAlias(bool antialias) {
-//   assert(mainthread_query());
-//   if(antialias)
-//     render_window->SetAAFrames(6);
-//   else
-//     render_window->SetAAFrames(0);
-// }
+//#define OOF_USE_SSAA_ANTIALIASING
+
+void GhostOOFCanvas::setAntiAlias(bool antialias) {
+  assert(mainthread_query());
+  if(antialias) {
+#ifdef OOF_USE_SSAA_ANTIALIASING
+    // SSAA antialiasing copied from
+    // https://github.com/Kitware/VTK/blob/master/Rendering/OpenGL2/Testing/Cxx/TestSSAAPass.cxx
+    vtkOpenGLRenderer *glrenderer = vtkOpenGLRenderer::SafeDownCast(renderer);
+    vtkSmartPointer<vtkRenderStepsPass> basicPasses =
+      vtkSmartPointer<vtkRenderStepsPass>::New();
+    vtkSmartPointer<vtkSSAAPass> ssaa = vtkSmartPointer<vtkSSAAPass>::New();
+    ssaa->SetDelegatePass(basicPasses);
+    render_window->SetMultiSamples(0);
+    glrenderer->SetPass(ssaa);
+#else  // not OOF_USE_SSAA_ANTIALIASING
+    renderer->UseFXAAOn();
+#endif // not OOF_USE_SSAA_ANTIALIASING
+  }
+  else {
+#ifdef OOF_USE_SSAA_ANTIALIASING
+    vtkOpenGLRenderer *glrenderer = vtkOpenGLRenderer::SafeDownCast(renderer);
+    vtkSmartPointer<vtkRenderStepsPass> basicPasses =
+      vtkSmartPointer<vtkRenderStepsPass>::New();
+    glrenderer->SetPass(basicPasses);
+#else
+    renderer->UseFXAAOff();
+#endif // not OOF_USE_SSAA_ANTIALIASING
+  }
+}
 
 void GhostOOFCanvas::set_bgColor(CColor color) {
   assert(mainthread_query());

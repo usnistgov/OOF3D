@@ -112,7 +112,7 @@ public:
   void set_bgColor(const CColor);
   void set_margin(double f) { margin = f; }
   
-  // void setAntiAlias(bool);
+  void setAntiAlias(bool);
   void setMultiSamples(unsigned int);
 
   void setAxisOffset(const Coord*);

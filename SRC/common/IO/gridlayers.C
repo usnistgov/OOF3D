@@ -51,6 +51,10 @@ WireGridCanvasLayer::WireGridCanvasLayer(GhostOOFCanvas *c,
   edgeActor->GetProperty()->SetRepresentationToWireframe();
   // edgeActor->GetProperty()->SetAmbient(1.0);
 
+  // TODO: Turning on RenderLinesAsTubes creates shader error messages
+  // when the grid is drawn.  (vtk 8.1.0.rc2, OS X, Cocoa)
+  //edgeActor->GetProperty()->SetRenderLinesAsTubes(true);
+
   faceActor->SetMapper(faceMapper);
   faceActor->GetProperty()->SetRepresentationToSurface();
   // Draw the displayed tets almost invisibly, since they haven't

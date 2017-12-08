@@ -186,7 +186,7 @@ class GfxSettings:
     longlayernames = 0                   # Use long form of layer reprs.
     listall = 0                          # Are all layers to be listed?
     autoreorder = 1                      # Automatically reorder layers?
-    # antialias = 0
+    antialias = 0
     multisamples = 0
     if config.dimension() == 2:
         aspectratio = 5           # Aspect ratio of the contourmap.
@@ -619,16 +619,16 @@ class GhostGfxWindow:
             </para>"""
             ))
 
-        # settingmenu.addItem(CheckOOFMenuItem(
-        #         'Antialias',
-        #         callback=self.toggleAntialias,
-        #         value=self.settings.antialias,
-        #         threadable=oofmenu.THREADABLE,
-        #         help=
-        #         "Use antialiased rendering.",
-        #         discussion=xmlmenudump.loadFile(
-        #                 'DISCUSSIONS/common/menu/antialias.xml')
-        #         ))
+        settingmenu.addItem(CheckOOFMenuItem(
+                'Antialias',
+                callback=self.toggleAntialias,
+                value=self.settings.antialias,
+                threadable=oofmenu.THREADABLE,
+                help=
+                "Use antialiased rendering.",
+                discussion=xmlmenudump.loadFile(
+                        'DISCUSSIONS/common/menu/antialias.xml')
+                ))
         settingmenu.addItem(OOFMenuItem(
             'Multisampling',
             callback=self.setMultiSampling,
@@ -1287,15 +1287,17 @@ class GhostGfxWindow:
         # self.backdate()                    # backdates timestamps
         self.draw()
 
-    # def toggleAntialias(self, menuitem, antialias):
-    #     self.settings.antialias = antialias
-    #     mainthread.runBlock(self.oofcanvas.setAntiAlias, (antialias,))
-    #     self.draw()
+    def toggleAntialias(self, menuitem, antialias):
+        self.settings.antialias = antialias
+        mainthread.runBlock(self.oofcanvas.setAntiAlias, (antialias,))
+        self.draw()
 
     def setMultiSampling(self, menuitem, samples):
         self.settings.multisamples = samples
+        ## TODO: Changing the value of multisamples in an existing
+        ## vtkRenderWindow doesn't seem to do anything.  It's
+        ## necessary to destroy and rebuild the canvas.
         mainthread.runBlock(self.oofcanvas.setMultiSamples, (samples,))
-        # Calling self.draw() here doesn't actually redraw? Why?
 
     def toggleListAll(self, menuitem, listall):
         self.acquireGfxLock()
