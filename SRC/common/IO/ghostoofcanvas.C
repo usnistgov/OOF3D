@@ -33,6 +33,7 @@
 #include <vtkDataSet.h>
 #include <vtkDataSetMapper.h>
 #include <vtkExtractSelectedFrustum.h>
+#include <vtkOpenGLRenderer.h>
 #include <vtkPointPicker.h>
 #include <vtkProp3D.h>
 #include <vtkProp3DCollection.h>
@@ -40,16 +41,14 @@
 #include <vtkPropPicker.h>
 #include <vtkProperty.h>
 #include <vtkProperty2D.h>
+#include <vtkRenderStepsPass.h>
+#include <vtkSSAAPass.h>
 #include <vtkTextActor.h>
 #include <vtkTextProperty.h>
 #include <vtkTransform.h>
 #include <vtkVolume.h>
 #include <vtkVolumeCollection.h>
 #include <vtkVolumeProperty.h>
-
-#include <vtkSSAAPass.h>
-#include <vtkRenderStepsPass.h>
-#include <vtkOpenGLRenderer.h>
 
 // "initialized" is used by the OOFCanvas and OOFCanvas3D
 // constructors.
@@ -58,8 +57,8 @@ bool GhostOOFCanvas::initialized = 0;
 GhostOOFCanvas::GhostOOFCanvas() 
   : created(false),
     exposed(false),
-    rendered(false),		// TODO: Is this used?
     axes_showing(false),
+    antialiasing(false),
 #ifdef OOF_USE_COCOA
     render_window(vtkSmartPointer<vtkCocoaRenderWindow>::New()),
 #else
@@ -177,36 +176,6 @@ void GhostOOFCanvas::render() {
     renderLock.release();
   }
 }
-
-//#include <vtkXOpenGLRenderWindow.h> // debugging on linux only
-
-// void GhostOOFCanvas::deactivate() {
-//   // deactivate() suppresses redrawing.  It should be called at the
-//   // start of the graphics window shut down sequence.
-//   if(true) {
-//     oofcerr << "GhostOOFCanvas::deactivate: not doing anything" << std::endl;
-//     return;
-//   }
-//   if(renderer) {
-//     // oofcerr << "GhostOOFCanvas::deactivate: NOT finalizing render_window "
-//     // 	    << render_window->GetClassName() << " "
-//     // 	    << render_window.GetPointer()
-//     // 	    // << " gl context="
-//     // 	    // << vtkXOpenGLRenderWindow::SafeDownCast(render_window)->getContext()
-//     // 	    << std::endl;
-//     render_window->DebugOn();
-//     // Don't call render_window->Finalize().  The
-//     // vtkXOpenGLRenderWindow destructor calls it.
-    
-//     // render_window->Finalize();
-//     // oofcerr << "GhostOOFCanvas::deactivate: removing renderer" << std::endl;
-//     render_window->RemoveRenderer(renderer);
-//     // oofcerr << "GhostOOFCanvas::deactivate: deleting renderer" << std::endl;
-//     renderer = vtkSmartPointer<vtkRenderer>();
-//     // oofcerr << "GhostOOFCanvas::deactivate: done" << std::endl;
-//   }
-  
-// }
 
 void GhostOOFCanvas::newLayer(OOFCanvasLayerBase *layer) {
   layers.push_back(layer);
@@ -355,40 +324,63 @@ void GhostOOFCanvas::setContourMapSize(float w, float h) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-void GhostOOFCanvas::setMultiSamples(unsigned int samples) {
-  assert(mainthread_query());
-  oofcerr << "GhostOOFCanvas::setMultiSamples: " << samples << std::endl;
-  render_window->SetMultiSamples(samples);
-}
 
-//#define OOF_USE_SSAA_ANTIALIASING
+// If using FXAA instead of SSAA:
+//
+// void GhostOOFCanvas::setAntiAlias(bool antialias) {
+//   if(antialias)
+//     renderer->UseFXAAOn();
+//   else
+//     renderer->UseFXAAOff();
+// }
+//
+// #include <vtkFXAAOptions.h>
+//
+// void GhostOOFCanvas::setFXAAOptions(double RelativeContrastThreshold,
+// 				    double HardContrastThreshold,
+// 				    double SubpixelBlendLimit,
+// 				    double SubpixelContrastThreshold,
+// 				    int EndpointSearchIterations,
+// 				    bool UseHighQualityEndpoints)
+// {
+//   vtkSmartPointer<vtkFXAAOptions> opts = vtkSmartPointer<vtkFXAAOptions>::New();
+//   opts->SetRelativeContrastThreshold(RelativeContrastThreshold);
+//   opts->SetHardContrastThreshold(HardContrastThreshold);
+//   opts->SetSubpixelBlendLimit(SubpixelBlendLimit);
+//   opts->SetSubpixelContrastThreshold(SubpixelContrastThreshold);
+//   opts->SetEndpointSearchIterations(EndpointSearchIterations);
+//   opts->SetUseHighQualityEndpoints(UseHighQualityEndpoints);
+// }
+
 
 void GhostOOFCanvas::setAntiAlias(bool antialias) {
   assert(mainthread_query());
   if(antialias) {
-#ifdef OOF_USE_SSAA_ANTIALIASING
-    // SSAA antialiasing copied from
+    // Start antialiasing.  SSAA antialiasing code was copied from
     // https://github.com/Kitware/VTK/blob/master/Rendering/OpenGL2/Testing/Cxx/TestSSAAPass.cxx
     vtkOpenGLRenderer *glrenderer = vtkOpenGLRenderer::SafeDownCast(renderer);
-    vtkSmartPointer<vtkRenderStepsPass> basicPasses =
-      vtkSmartPointer<vtkRenderStepsPass>::New();
-    vtkSmartPointer<vtkSSAAPass> ssaa = vtkSmartPointer<vtkSSAAPass>::New();
+    vtkNew<vtkRenderStepsPass> basicPasses;
+    vtkNew<vtkSSAAPass> ssaa;
     ssaa->SetDelegatePass(basicPasses);
     render_window->SetMultiSamples(0);
     glrenderer->SetPass(ssaa);
-#else  // not OOF_USE_SSAA_ANTIALIASING
-    renderer->UseFXAAOn();
-#endif // not OOF_USE_SSAA_ANTIALIASING
+    antialiasing = true;
   }
   else {
-#ifdef OOF_USE_SSAA_ANTIALIASING
+    // Turn antialiasing off.
     vtkOpenGLRenderer *glrenderer = vtkOpenGLRenderer::SafeDownCast(renderer);
-    vtkSmartPointer<vtkRenderStepsPass> basicPasses =
-      vtkSmartPointer<vtkRenderStepsPass>::New();
+    // The initial call to setAntiAlias during the gfx window
+    // construction procedure comes before the render window is
+    // realized.  Either because of that, or because SetPass hasn't
+    // been called yet, calling ReleaseGraphicsResources crashes at
+    // that point, so we don't call it unless antialiasing has been
+    // explicitly turned on.
+    if(antialiasing) {
+      renderer->GetPass()->ReleaseGraphicsResources(render_window);
+      antialiasing = false;
+    }
+    vtkNew<vtkRenderStepsPass> basicPasses;
     glrenderer->SetPass(basicPasses);
-#else
-    renderer->UseFXAAOff();
-#endif // not OOF_USE_SSAA_ANTIALIASING
   }
 }
 

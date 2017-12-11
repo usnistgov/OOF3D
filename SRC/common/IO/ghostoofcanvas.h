@@ -55,9 +55,11 @@ protected:
   static bool initialized;	// has pygtk been initialized?
   bool created;			// used by OOFCanvas3D::realize
   bool exposed;
-  bool rendered;
   bool axes_showing;		// axes are actually drawn
-  // bool deactivated;		// suppress redraws when shutting down
+  bool antialiasing;		// has antialiasing been turned on?
+  // TODO: Use vtkNew instead of vtkSmartPointer here, and remove the
+  // lines that initialize the vtkSmartPointers in the GhostOOFCanvas
+  // constructor.  Doing this requires vtk8, though.
 #ifdef OOF_USE_COCOA
   vtkSmartPointer<vtkCocoaRenderWindow> render_window;
 #else
@@ -105,15 +107,12 @@ public:
 
   // This should only be called from python and only with mainthread.run
   void render();
-  // // deactivate() suppresses redrawing.  It should be called at the
-  // // start of the graphics window shut down sequence.
-  // void deactivate();
 
   void set_bgColor(const CColor);
   void set_margin(double f) { margin = f; }
   
   void setAntiAlias(bool);
-  void setMultiSamples(unsigned int);
+  //void setFXAAOptions(double, double, double, double, int, bool);
 
   void setAxisOffset(const Coord*);
   void setAxisLength(const Coord*);

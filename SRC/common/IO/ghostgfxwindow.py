@@ -187,7 +187,6 @@ class GfxSettings:
     listall = 0                          # Are all layers to be listed?
     autoreorder = 1                      # Automatically reorder layers?
     antialias = 0
-    multisamples = 0
     if config.dimension() == 2:
         aspectratio = 5           # Aspect ratio of the contourmap.
         contourmap_markersize = 2 # Size in pixels of contourmap marker.
@@ -629,15 +628,47 @@ class GhostGfxWindow:
                 discussion=xmlmenudump.loadFile(
                         'DISCUSSIONS/common/menu/antialias.xml')
                 ))
-        settingmenu.addItem(OOFMenuItem(
-            'Multisampling',
-            callback=self.setMultiSampling,
-            params=[
-                parameter.NonNegativeIntParameter(
-                    'samples',
-                    value=self.settings.multisamples)],
-            help="Set degree of multisampling (similar to antialiasing)"))
-                
+
+## For FXAA antialiasing
+ #        settingmenu.addItem(OOFMenuItem(
+ #            'Antialias_Parameters',
+ #            callback=self.setAntialiasOptions,
+ #            threadable=oofmenu.THREADABLE,
+ #            params=[
+ #                parameter.FloatRangeParameter(
+ #                    'RelativeContrastThreshold', (0.,1.,0.01), value=0.125,
+ #                    tip="""Threshold for applying FXAA to a pixel, relative to the maximum luminosity of its 4 immediate neighbors.
+ # 1/3: Too little
+ # 1/4: Low quality
+ # 1/8: High quality (default)
+ # 1/16: Overkill"""),
+ #                parameter.FloatRangeParameter(
+ #                    'HardContrastThreshold', (0.,1.,0.01), value=0.0625,
+ #                    tip="""If the contrast of the current pixel and it's 4 immediate NSWE neighbors is less than HardContrastThreshold, the pixel is not considered aliased and will not be affected by FXAA.
+ # 1/32: Visible limit
+ # 1/16: High quality (default)
+ # 1/12: Upper limit (start of visible unfiltered edges)"""),
+ #                parameter.FloatRangeParameter(
+ #                    'SubpixelBlendLimit', (0.,1.,0.01), value=0.75,
+ #                    tip="This parameter sets an upper limit to the amount of subpixel blending to prevent the image from simply getting blurred."),
+ #                parameter.FloatRangeParameter(
+ #                    'SubpixelContrastThreshold', (0.,1.,0.01), value=0.25,
+ #                    tip="""Minimum amount of subpixel aliasing required for subpixel antialiasing to be applied.
+ # 1/2: Low subpixel aliasing removal
+ # 1/3: Medium subpixel aliasing removal
+ # 1/4: Default subpixel aliasing removal
+ # 1/8: High subpixel aliasing removal
+ # 0: Complete subpixel aliasing removal"""
+ #                ),
+ #                parameter.NonNegativeIntParameter(
+ #                    'EndpointSearchIterations', value=12,
+ #                    tip="Increasing this value will increase runtime, but also properly detect longer edges. The current implementation steps one pixel in both the positive and negative directions per iteration. The default value is 12, which will resolve endpoints of edges < 25 pixels long."),
+ #                parameter.BooleanParameter(
+ #                    'UseHighQualityEndpoints', value=1,
+ #                    tip="Use an improved edge endpoint detection algorithm.")
+ #                ],
+ #            help="Set various parameters for vtk's FXAA antialiasing"))
+ 
         if config.dimension() == 3:
             axesmenu = settingmenu.addItem(OOFMenuItem('Axes'))
             axesmenu.addItem(CheckOOFMenuItem(
@@ -1292,12 +1323,22 @@ class GhostGfxWindow:
         mainthread.runBlock(self.oofcanvas.setAntiAlias, (antialias,))
         self.draw()
 
-    def setMultiSampling(self, menuitem, samples):
-        self.settings.multisamples = samples
-        ## TODO: Changing the value of multisamples in an existing
-        ## vtkRenderWindow doesn't seem to do anything.  It's
-        ## necessary to destroy and rebuild the canvas.
-        mainthread.runBlock(self.oofcanvas.setMultiSamples, (samples,))
+    # def setAntialiasOptions(self, menuitem,
+    #                         RelativeContrastThreshold,
+    #                         HardContrastThreshold,
+    #                         SubpixelBlendLimit,
+    #                         SubpixelContrastThreshold,
+    #                         EndpointSearchIterations,
+    #                         UseHighQualityEndpoints):
+    #     mainthread.runBlock(self.oofcanvas.setFXAAOptions,
+    #                         (RelativeContrastThreshold,
+    #                          HardContrastThreshold,
+    #                          SubpixelBlendLimit,
+    #                          SubpixelContrastThreshold,
+    #                          EndpointSearchIterations,
+    #                          UseHighQualityEndpoints))
+    #     self.draw()
+        
 
     def toggleListAll(self, menuitem, listall):
         self.acquireGfxLock()

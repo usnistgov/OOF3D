@@ -45,7 +45,7 @@ public:
   void set_bgColor(const CColor);
   void set_margin(double f);
   void setAntiAlias(bool);
-  void setMultiSamples(int);
+  // void setFXAAOptions(double, double, double, double, int, bool);
 
   void setAxisOffset(Coord *Point);
   void setAxisLength(Coord *Point);
