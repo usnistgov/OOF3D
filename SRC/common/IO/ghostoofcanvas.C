@@ -33,6 +33,7 @@
 #include <vtkDataSet.h>
 #include <vtkDataSetMapper.h>
 #include <vtkExtractSelectedFrustum.h>
+#include <vtkNew.h>
 #include <vtkOpenGLRenderer.h>
 #include <vtkPointPicker.h>
 #include <vtkProp3D.h>
@@ -359,8 +360,10 @@ void GhostOOFCanvas::setAntiAlias(bool antialias) {
     // Start antialiasing.  SSAA antialiasing code was copied from
     // https://github.com/Kitware/VTK/blob/master/Rendering/OpenGL2/Testing/Cxx/TestSSAAPass.cxx
     vtkOpenGLRenderer *glrenderer = vtkOpenGLRenderer::SafeDownCast(renderer);
-    vtkNew<vtkRenderStepsPass> basicPasses;
-    vtkNew<vtkSSAAPass> ssaa;
+    // vtkNew<vtkRenderStepsPass> basicPasses;
+    vtkSmartPointer<vtkRenderStepsPass> basicPasses = vtkSmartPointer<vtkRenderStepsPass>::New();
+    // vtkNew<vtkSSAAPass> ssaa;
+    vtkSmartPointer<vtkSSAAPass> ssaa = vtkSmartPointer<vtkSSAAPass>::New();
     ssaa->SetDelegatePass(basicPasses);
     render_window->SetMultiSamples(0);
     glrenderer->SetPass(ssaa);
@@ -379,7 +382,8 @@ void GhostOOFCanvas::setAntiAlias(bool antialias) {
       renderer->GetPass()->ReleaseGraphicsResources(render_window);
       antialiasing = false;
     }
-    vtkNew<vtkRenderStepsPass> basicPasses;
+    // vtkNew<vtkRenderStepsPass> basicPasses;
+    vtkSmartPointer<vtkRenderStepsPass> basicPasses = vtkSmartPointer<vtkRenderStepsPass>::New();
     glrenderer->SetPass(basicPasses);
   }
 }
