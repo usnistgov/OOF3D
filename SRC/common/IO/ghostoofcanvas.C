@@ -354,16 +354,15 @@ void GhostOOFCanvas::setContourMapSize(float w, float h) {
 // }
 
 
+#if VTK_MAJOR_VERSION > 8 || (VTK_MAJOR_VERSION == 8 && VTK_MINOR_VERSION >= 1)
 void GhostOOFCanvas::setAntiAlias(bool antialias) {
   assert(mainthread_query());
   if(antialias) {
     // Start antialiasing.  SSAA antialiasing code was copied from
     // https://github.com/Kitware/VTK/blob/master/Rendering/OpenGL2/Testing/Cxx/TestSSAAPass.cxx
     vtkOpenGLRenderer *glrenderer = vtkOpenGLRenderer::SafeDownCast(renderer);
-    // vtkNew<vtkRenderStepsPass> basicPasses;
-    vtkSmartPointer<vtkRenderStepsPass> basicPasses = vtkSmartPointer<vtkRenderStepsPass>::New();
-    // vtkNew<vtkSSAAPass> ssaa;
-    vtkSmartPointer<vtkSSAAPass> ssaa = vtkSmartPointer<vtkSSAAPass>::New();
+    vtkNew<vtkRenderStepsPass> basicPasses;
+    vtkNew<vtkSSAAPass> ssaa;
     ssaa->SetDelegatePass(basicPasses);
     render_window->SetMultiSamples(0);
     glrenderer->SetPass(ssaa);
@@ -382,11 +381,16 @@ void GhostOOFCanvas::setAntiAlias(bool antialias) {
       renderer->GetPass()->ReleaseGraphicsResources(render_window);
       antialiasing = false;
     }
-    // vtkNew<vtkRenderStepsPass> basicPasses;
-    vtkSmartPointer<vtkRenderStepsPass> basicPasses = vtkSmartPointer<vtkRenderStepsPass>::New();
+    vtkNew<vtkRenderStepsPass> basicPasses;
     glrenderer->SetPass(basicPasses);
   }
 }
+#else  // VTK_VERSION < 8.1
+void GhostOOFCanvas::setAntiAlias(bool antialias) {
+  assert(mainthread_query());
+  renderer->SetUseFXAA(antialias);
+}
+#endif // VTK_VERSION < 8.1
 
 void GhostOOFCanvas::set_bgColor(CColor color) {
   assert(mainthread_query());

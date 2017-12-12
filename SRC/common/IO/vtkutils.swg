@@ -20,6 +20,7 @@
 #include "common/IO/vtkutils.h"
 #include "common/direction.h"
 #include <vtkDataArray.h>
+#include <vtkVersion.h>
 %}
 
 %typemap(python, argout) double *outDoublePair {
@@ -36,6 +37,12 @@
 
 void initialize_vtk();		// Call before any other vtk code
 void initialize_X11();
+
+%inline %{
+int vtkMajorVersion() { return VTK_MAJOR_VERSION; }
+int vtkMinorVersion() { return VTK_MINOR_VERSION; }
+int vtkBuildVersion() { return VTK_BUILD_VERSION; }
+%}
 
 class vtkDoubleArrayPtr {
 public:
