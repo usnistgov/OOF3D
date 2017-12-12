@@ -66,7 +66,9 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         # Pane dividing upper pane horizontally into 2 parts.
         self.paned1 = gtk.HPaned()
         gtklogger.setWidgetName(self.paned1, "Pane2")
-        self.mainpane.pack1(self.paned1, resize=True)
+        # When we used resize=True for mainpane.pack1, on Ubuntu the
+        # other part of the pane would get an initial height of 0.
+        self.mainpane.pack1(self.paned1, resize=False)
         gtklogger.connect_passive(self.paned1, 'size-allocate')
 
         # The toolbox is in the left half of paned1 (ie the left frame of 3)

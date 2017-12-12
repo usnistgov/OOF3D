@@ -200,7 +200,10 @@ gboolean OOFCanvas3D::gtk_configure(GtkWidget*, GdkEventConfigure *config,
 }
 
 gboolean OOFCanvas3D::configure(GdkEventConfigure *event) {
-  // oofcerr << "OOFCanvas3D::configure" << std::endl;
+   // oofcerr << "OOFCanvas3D::configure: w=" << event->width
+   // 	   << " h=" << event->height
+   // 	   << " x=" << event->x << " y=" << event->y
+   // 	   << std::endl;
   assert(mainthread_query());
   // The height, width, x, and y elements of event are the same as
   // those of drawing_area->allocation.
