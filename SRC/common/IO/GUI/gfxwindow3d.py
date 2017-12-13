@@ -66,9 +66,16 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         # Pane dividing upper pane horizontally into 2 parts.
         self.paned1 = gtk.HPaned()
         gtklogger.setWidgetName(self.paned1, "Pane2")
-        # When we used resize=True for mainpane.pack1, on Ubuntu the
-        # other part of the pane would get an initial height of 0.
-        self.mainpane.pack1(self.paned1, resize=False)
+
+        # "resize=True" here means that when the window is resized
+        # vertically, the canvas and toolboxes will resize, but the
+        # layer list won't.  It also makes the layer list compact when
+        # the window is first opened.  This is what we want. However,
+        # on some systems (Ubuntu 16.04 on VirtualBox on OS X, at
+        # least) the layer list is completely collapsed in the initial
+        # window, which is unfriendly but not fatal.  Ubuntu 17.10
+        # doesn't have the problem so it's not going to be fixed.
+        self.mainpane.pack1(self.paned1, resize=True)
         gtklogger.connect_passive(self.paned1, 'size-allocate')
 
         # The toolbox is in the left half of paned1 (ie the left frame of 3)
