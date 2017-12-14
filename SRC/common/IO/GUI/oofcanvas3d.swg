@@ -33,7 +33,7 @@ public:
   PyObject *widget();
 
   void set_mouse_callback(PyObject *pythonCallable);
-
+  void matchSize();
   void show();
 
   void mouse_tumble(double x, double y);

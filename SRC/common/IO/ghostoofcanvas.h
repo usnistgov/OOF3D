@@ -71,6 +71,7 @@ protected:
   bool contourmap_requested;
   bool contourmap_showing;
   OOFCanvasLayer *contour_layer;
+  virtual void repositionRenderWindow() {}
 
   ClippingPlaneList clipPlanes;	// typedef in common/clip.h
   bool clipInverted;
@@ -96,7 +97,7 @@ protected:
 
 public:
   GhostOOFCanvas();
-  ~GhostOOFCanvas();
+  virtual ~GhostOOFCanvas();
 
   // newLayer() and removeLayer() are called by the OOFCanvasLayerBase
   // constructor and destructor.

@@ -196,30 +196,40 @@ gboolean OOFCanvas3D::gtk_configure(GtkWidget*, GdkEventConfigure *config,
 {
   assert(mainthread_query());
   OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
-  return oofcanvas->configure(config);
-}
-
-gboolean OOFCanvas3D::configure(GdkEventConfigure *event) {
-   // oofcerr << "OOFCanvas3D::configure: w=" << event->width
-   // 	   << " h=" << event->height
-   // 	   << " x=" << event->x << " y=" << event->y
-   // 	   << std::endl;
-  assert(mainthread_query());
   // The height, width, x, and y elements of event are the same as
   // those of drawing_area->allocation.
-  render_window->SetSize(event->width, event->height);
+  oofcanvas->configure(config->x, config->y, config->width, config->height);
+  return FALSE;	// Returning FALSE propagates the event to parent items.
+}
 
+void OOFCanvas3D::configure(int x, int y, int width, int height) {
+  oofcerr << "OOFCanvas3D::configure: w=" << width << " h=" << height
+	  << " x=" << x << " y=" << y << std::endl;
+  assert(mainthread_query());
+  render_window->SetSize(width, height);
+  repositionRenderWindow();
+}
+
+void OOFCanvas3D::repositionRenderWindow() {
+  int x = drawing_area->allocation.x;
+  int y = drawing_area->allocation.y;
 #ifdef OOF_USE_COCOA
   // vtk measures y *up* from the bottom edge of the top level
   // window, but gtk measures it down from the top of the window.
   GtkWidget *topwindow = gtk_widget_get_toplevel(drawing_area);
-  assert(topwindow != nullptr);
   int top_height = topwindow->allocation.height;
-  render_window->SetPosition(event->x, top_height - event->y - event->height);
+  int height = drawing_area->allocation.height;
+  render_window->SetPosition(x, top_height - y - height);
 #else
-  render_window->SetPosition(event->x, event->y);
-#endif // not OOF_USE_COCOA
-  return FALSE;	// Returning FALSE propagates the event to parent items.
+  render_window->SetPosition(x, y);
+#endif	// not OOF_USE_COCOA
+}
+
+void OOFCanvas3D::matchSize() {
+  // Ensure that the vtk render window coincides exactly with the gtk
+  // drawing area.
+  GtkAllocation &allocation = drawing_area->allocation;
+  configure(allocation.x, allocation.y, allocation.width, allocation.height);
 }
 
 // static
@@ -259,9 +269,21 @@ gboolean OOFCanvas3D::gtk_redrawIdle(gpointer data) {
 gboolean OOFCanvas3D::redrawIdle() {
   // gtk idle callback installed and run once by the expose event
   // callback.
+  // oofcerr << "OOFCanvas3D::redrawIdle" << std::endl;
   render_window->Render();
   return FALSE;			// FALSE means "run just once".
 }
+
+// gboolean OOFCanvas3D::gtk_redrawAndResizeIdle(gpointer data) {
+//   OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
+//   return oofcanvas->redrawAndResizeIdle();
+// }
+
+// gboolean OOFCanvas3D::redrawAndResizeIdle() {
+//   matchSize();
+//   render_window->Render();
+//   return FALSE;
+// }
 
 void OOFCanvas3D::show() {
   // oofcerr << "OOFCanvas3D::show" << std::endl;

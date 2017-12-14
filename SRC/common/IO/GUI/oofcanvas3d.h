@@ -47,7 +47,7 @@ public:
   static gboolean gtk_realize(GtkWidget*, gpointer);
   gboolean realize();
   static gboolean gtk_configure(GtkWidget*, GdkEventConfigure*, gpointer);
-  gboolean configure(GdkEventConfigure*);
+  void configure(int x, int y, int w, int h);
   static gboolean gtk_configure_after(GtkWidget*, GdkEventConfigure*, gpointer);
   gboolean configure_after(GdkEventConfigure*);
   static gboolean gtk_expose(GtkWidget*, GdkEventExpose*, gpointer);
@@ -57,6 +57,8 @@ public:
 
   static gboolean gtk_redrawIdle(gpointer);
   gboolean redrawIdle();
+  void matchSize();
+  virtual void repositionRenderWindow();
 
   // movements
   void mouse_tumble(double x, double y);

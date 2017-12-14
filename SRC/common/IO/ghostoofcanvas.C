@@ -325,16 +325,12 @@ void GhostOOFCanvas::setContourMapSize(float w, float h) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// I tried playing with FXAA options and didn't find anything that
+// made a difference, so maybe I wasn't doing it right.  In any case
+// SSAA seems to work better, and we're only using FXAA on older
+// systems that don't support vtk-8.1 yet. Eventually we won't use FXAA
+// at all.
 
-// If using FXAA instead of SSAA:
-//
-// void GhostOOFCanvas::setAntiAlias(bool antialias) {
-//   if(antialias)
-//     renderer->UseFXAAOn();
-//   else
-//     renderer->UseFXAAOff();
-// }
-//
 // #include <vtkFXAAOptions.h>
 //
 // void GhostOOFCanvas::setFXAAOptions(double RelativeContrastThreshold,
@@ -1603,7 +1599,14 @@ void GhostOOFCanvas::restore_view(const View *view, bool clip) {
   // data.  In that case we just assume that the window size hasn't
   // changed, which seems to work for the relevant test scripts.
   if(view->size_x > 0 && view->size_y > 0) {
+#ifdef DEBUG
+    int *oldsize = render_window->GetSize();
+    oofcerr << "GhostOOFCanvas::restore_view: oldsize=" << oldsize[0]
+	    << "," << oldsize[1] << " newsize=" << view->size_x
+	    << "," << view->size_y << std::endl;
+#endif // DEBUG
     render_window->SetSize(view->size_x, view->size_y);
+    repositionRenderWindow();
   }
   view->setCamera(renderer->GetActiveCamera()); // change active camera settings
   if(clip) {

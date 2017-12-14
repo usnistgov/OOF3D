@@ -29,14 +29,6 @@ from ooflib.common.IO.GUI import quit
 from ooflib.common.IO.GUI import subWindow
 from ooflib.common.IO.GUI import toolbarGUI
 
-# # during_callback() is called (by CanvasOutput.show()) only in
-# # non-threaded mode, so we don't worry about the thread-safety of a
-# # global variable here.  It may not be necessary with the vtk canvas
-# # at all.
-# _during_callback = 0
-# def during_callback():
-#     return _during_callback
-
 class GfxWindow3D(gfxwindowbase.GfxWindowBase):
     initial_height = 800
     initial_width = 1000
@@ -71,10 +63,10 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         # vertically, the canvas and toolboxes will resize, but the
         # layer list won't.  It also makes the layer list compact when
         # the window is first opened.  This is what we want. However,
-        # on some systems (Ubuntu 16.04 on VirtualBox on OS X, at
-        # least) the layer list is completely collapsed in the initial
-        # window, which is unfriendly but not fatal.  Ubuntu 17.10
-        # doesn't have the problem so it's not going to be fixed.
+        # on some systems (those using Unity WM, maybe) the layer list
+        # is completely collapsed in the initial window, which is
+        # unfriendly but not fatal.  Ubuntu 17.10 doesn't have the
+        # problem so it's not going to be fixed.
         self.mainpane.pack1(self.paned1, resize=True)
         gtklogger.connect_passive(self.paned1, 'size-allocate')
 
@@ -131,11 +123,6 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         self.canvasBox.pack_start(self.canvasFrame, expand=1, fill=1, padding=0)
 
         self.paned1.pack2(self.canvasBox, resize=True)
-
-        # HACK.  Set the position of the toolbox/canvas divider.  This
-        # prevents the toolbox pane from coming up minimized.
-        ##self.paned1.set_position(300)
-
 
         # Bottom part of main pane is a list of layers.  The actual
         # DisplayLayer objects are stored in self.display.
@@ -318,7 +305,7 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         self.oofcanvas.set_bgColor(self.settings.bgcolor)
         self.canvasFrame.add(self.oofcanvas.widget())
         
-        # Retrieving the drawing area and initiating the logging.
+        # Retrieve the drawing area and initiate logging.
         canvasdrawingarea = self.oofcanvas.widget()
         init_canvas_logging(canvasdrawingarea) 
         # Since the drawing area isn't a gtk widget it must be adopted
@@ -326,9 +313,7 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         gtklogger.adoptGObject(canvasdrawingarea, self.canvasFrame,
                                access_function=findCanvasDrawingArea,
                                access_kwargs={"windowname":self.name})
-        # Setting the connection.
         gtklogger.connect_passive(canvasdrawingarea, "event")
-        
         self.oofcanvas.set_mouse_callback(self.mouseCB)
 
         # self.oofcanvas.widget().connect("configure-event",
@@ -339,6 +324,11 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         #    self.oofcanvas.set_view(view)
 
         self.oofcanvas.show()
+
+        # Make sure that the canvas is the same size as the drawing
+        # area
+        self.oofcanvas.matchSize()
+        
 
     # def canvasConfigureCB(self, *args):
     #     gtklogger.checkpoint("canvas configured %s" % self.name)

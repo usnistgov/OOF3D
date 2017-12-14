@@ -47,6 +47,16 @@ get the error "Parameter value out of range for phi".
 
 Fix bug: Using upper-right corner arrows for switching views sometimes
 draws the canvas in the wrong location.
+
+Fix bug: Adjust gfx window main pane divider, then clone window.
+Canvas size and divider position don't agree.  Clicking on canvas may
+select the wrong item.  Also, if the graphics window is created in a
+script, the canvas is the wrong size when the window opens.
+
+Fix bug: Loading a script containing a Graphics.Settings.Camera.View
+command can leave the render window misaligned with the drawing
+area. The size_x and size_y arguments should be removed.  The View
+object shouldn't include size information.
 	    
 ---------------------------------------------------------------------------
 Soon

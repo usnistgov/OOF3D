@@ -13,8 +13,6 @@
 # graphics window.  The actual graphics window, GfxWindow, is derived
 # from GhostGfxWindow and overrides some of its functions.
 
-## TODO 3.1: Hidden layers aren't being hidden in cloned windows.
-
 ## TODO 3.1: Synchronize the view parameters in multiple gfx windows,
 ## so that changes in one are reflected automatically in all the
 ## others.
@@ -401,6 +399,12 @@ class GhostGfxWindow:
             discussion="""<para>
             See <xref linkend='MenuItem:OOF.File.Quit'/>.
             </para>"""))
+        filemenu.addItem(OOFMenuItem(
+            'MatchSize',
+            callback=self.matchSize,
+            threadable = oofmenu.UNTHREADABLE,
+            help="Force canvas to fill drawing area, for debugging"))
+        
         self.toolboxmenu = self.menu.addItem(OOFMenuItem(
             'Toolbox',
             cli_only=1,
@@ -1310,6 +1314,12 @@ class GhostGfxWindow:
                 layer.modified()
         finally:
             self.releaseGfxLock()
+
+    def matchSize(self, menuitem):
+        try:
+            self.oofcanvas.matchSize()
+        except AttributeError:
+            pass
         
     def redraw(self, menuitem):
         for layer in self.layers:
