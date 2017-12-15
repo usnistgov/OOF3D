@@ -399,11 +399,6 @@ class GhostGfxWindow:
             discussion="""<para>
             See <xref linkend='MenuItem:OOF.File.Quit'/>.
             </para>"""))
-        filemenu.addItem(OOFMenuItem(
-            'MatchSize',
-            callback=self.matchSize,
-            threadable = oofmenu.UNTHREADABLE,
-            help="Force canvas to fill drawing area, for debugging"))
         
         self.toolboxmenu = self.menu.addItem(OOFMenuItem(
             'Toolbox',
@@ -1315,12 +1310,6 @@ class GhostGfxWindow:
         finally:
             self.releaseGfxLock()
 
-    def matchSize(self, menuitem):
-        try:
-            self.oofcanvas.matchSize()
-        except AttributeError:
-            pass
-        
     def redraw(self, menuitem):
         for layer in self.layers:
             if not layer.frozen:

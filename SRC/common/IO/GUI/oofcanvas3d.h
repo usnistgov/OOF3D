@@ -57,7 +57,6 @@ public:
 
   static gboolean gtk_redrawIdle(gpointer);
   gboolean redrawIdle();
-  void matchSize();
   virtual void repositionRenderWindow();
 
   // movements

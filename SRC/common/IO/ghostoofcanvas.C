@@ -700,7 +700,7 @@ Coord *GhostOOFCanvas::findClickedPositionOnActor(const Coord *click,
   makeAllUnpickable();
   
   viewLock.acquire();
-  View *oldView = set_view_nolock(view, true);
+  View *oldView = set_view_nolock(view, true, true);
   
   bool clickOk = false;
 
@@ -747,7 +747,7 @@ Coord *GhostOOFCanvas::findClickedPositionOnActor(const Coord *click,
       currentActor = actors->GetNextActor();
     }
 
-    restore_view(oldView, true);
+    restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     throw;
@@ -760,7 +760,7 @@ Coord *GhostOOFCanvas::findClickedPositionOnActor(const Coord *click,
     }
     currentActor = actors->GetNextActor();
   }
-  restore_view(oldView, true);
+  restore_view(oldView, true, true);
   delete oldView;
   viewLock.release();
   if(!clickOk) {
@@ -811,7 +811,7 @@ vtkSmartPointer<vtkActor> GhostOOFCanvas::findClickedActor(const Coord *click,
   makeAllUnpickable();
   
   viewLock.acquire();
-  View *oldView = set_view_nolock(view, true);
+  View *oldView = set_view_nolock(view, true, true);
   
   bool clickOk = false;
 
@@ -850,7 +850,7 @@ vtkSmartPointer<vtkActor> GhostOOFCanvas::findClickedActor(const Coord *click,
       currentActor = actors->GetNextActor();
     }
 
-    restore_view(oldView, true);
+    restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     throw;
@@ -863,7 +863,7 @@ vtkSmartPointer<vtkActor> GhostOOFCanvas::findClickedActor(const Coord *click,
     }
     currentActor = actors->GetNextActor();
   }
-  restore_view(oldView, true);
+  restore_view(oldView, true, true);
   delete oldView;
   viewLock.release();
   if(!clickOk) {
@@ -914,7 +914,7 @@ vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
   makeAllUnpickable();
   
   viewLock.acquire();
-  View *oldView = set_view_nolock(view, true);
+  View *oldView = set_view_nolock(view, true, true);
   
   bool clickOk = false;
 
@@ -958,7 +958,7 @@ vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
       currentActor = actors->GetNextActor();
     }
 
-    restore_view(oldView, true);
+    restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     throw;
@@ -971,7 +971,7 @@ vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
     }
     currentActor = actors->GetNextActor();
   }
-  restore_view(oldView, true);
+  restore_view(oldView, true, true);
   delete oldView;
   viewLock.release();
   if(!clickOk) {
@@ -1025,7 +1025,7 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
   makeAllUnpickable();
   
   viewLock.acquire();
-  View *oldView = set_view_nolock(view, true);
+  View *oldView = set_view_nolock(view, true, true);
 
   bool clickOk = false;
 
@@ -1103,7 +1103,7 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
     if(!propIsRendered) {
       renderer->RemoveViewProp(prop);
     }
-    restore_view(oldView, true);
+    restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     throw;
@@ -1112,7 +1112,7 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
     renderer->RemoveViewProp(prop);
     // Calling render() here is not necessary.
   }
-  restore_view(oldView, true);
+  restore_view(oldView, true, true);
   delete oldView;
   viewLock.release();
   if(!clickOk) {
@@ -1268,7 +1268,7 @@ Coord *GhostOOFCanvas::findClickedPoint(const Coord *click, const View *view,
 {
   assert(mainthread_query());
   viewLock.acquire();
-  const View *oldView = set_view_nolock(view, true);
+  const View *oldView = set_view_nolock(view, true, true);
   try {
     double x, y;		// display coordinates
     physical2Display(*click, x, y);
@@ -1319,7 +1319,7 @@ Coord *GhostOOFCanvas::findClickedPoint(const Coord *click, const View *view,
 	renderer->RemoveActor(tempActor);
 	mapper->RemoveAllInputs();
 #endif // DEBUGSELECTIONS
-	restore_view(oldView, true);
+	restore_view(oldView, true, true);
 	delete oldView;
 	viewLock.release();
 	return coord;
@@ -1331,12 +1331,12 @@ Coord *GhostOOFCanvas::findClickedPoint(const Coord *click, const View *view,
 #endif // DEBUGSELECTIONS
   }
   catch(...) {
-    restore_view(oldView, true);
+    restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     throw;
   }
-  restore_view(oldView, true);
+  restore_view(oldView, true, true);
   delete oldView;
   viewLock.release();
   // There is no point.  (The heat death of the universe is unavoidable.)
@@ -1357,7 +1357,7 @@ Coord *GhostOOFCanvas::findClickedSegment(const Coord *click, const View *view,
   Coord ray;
 
   viewLock.acquire();
-  View *oldView = set_view_nolock(view, true);
+  View *oldView = set_view_nolock(view, true, true);
   try  {
     double x, y;		// display coordinates
     physical2Display(*click, x, y);
@@ -1393,12 +1393,12 @@ Coord *GhostOOFCanvas::findClickedSegment(const Coord *click, const View *view,
     ray = findRayThroughPoint(&clickPosition);
   }
   catch(...) {
-    restore_view(oldView, true);
+    restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     throw;
   }
-  restore_view(oldView, true);
+  restore_view(oldView, true, true);
   delete oldView;
   viewLock.release();
 
@@ -1493,7 +1493,7 @@ Coord GhostOOFCanvas::display2Physical(const View *view, double x, double y) {
   // GenericSelectToolboxGUI.up) so it can't assume that the gfxlock
   // has been acquired.  That's why there's a separate viewLock.
   viewLock.acquire();
-  View *oldView = set_view_nolock(view, true);
+  View *oldView = set_view_nolock(view, true, true);
   try {
     renderer->SetDisplayPoint(x, y, 0);
     renderer->DisplayToWorld();
@@ -1502,13 +1502,13 @@ Coord GhostOOFCanvas::display2Physical(const View *view, double x, double y) {
 
     for(int i=0; i<3; i++)	// convert from homogeneous coords
       worldpoint[i] /= worldpoint[3];
-    restore_view(oldView, true);
+    restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     return Coord(worldpoint);
   }
   catch(...) {
-    restore_view(oldView, true);
+    restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     throw;
@@ -1563,7 +1563,7 @@ View *GhostOOFCanvas::set_view(const View *view, bool clip) {
   assert(mainthread_query());
   viewLock.acquire();
   try {
-    oldView = set_view_nolock(view, clip);
+    oldView = set_view_nolock(view, clip, false);
   }
   catch(...) {
     viewLock.release();
@@ -1573,7 +1573,8 @@ View *GhostOOFCanvas::set_view(const View *view, bool clip) {
   return oldView;
 }
 
-View *GhostOOFCanvas::set_view_nolock(const View *view, bool clip) {
+View *GhostOOFCanvas::set_view_nolock(const View *view, bool clip, bool resize)
+{
   assert(mainthread_query());
   assert(view != 0); // maybe running an old script with no view parameter?
   View *oldView = get_view();
@@ -1581,11 +1582,11 @@ View *GhostOOFCanvas::set_view_nolock(const View *view, bool clip) {
     delete oldView;
     return 0;
   }
-  restore_view(view, clip);
+  restore_view(view, clip, resize);
   return oldView;
 }
 
-void GhostOOFCanvas::restore_view(const View *view, bool clip) {
+void GhostOOFCanvas::restore_view(const View *view, bool clip, bool resize) {
   // restore_view is called either by set_view_nolock, or in a
   // set_view/restore_view pair (as in findClickedCell_, et. al.)  In
   // the first case, we know that view!=0.  In the second case, if
@@ -1598,7 +1599,7 @@ void GhostOOFCanvas::restore_view(const View *view, bool clip) {
   // script written before the sizes were provided as part of the View
   // data.  In that case we just assume that the window size hasn't
   // changed, which seems to work for the relevant test scripts.
-  if(view->size_x > 0 && view->size_y > 0) {
+  if(resize && view->size_x > 0 && view->size_y > 0) {
 #ifdef DEBUG
     int *oldsize = render_window->GetSize();
     oofcerr << "GhostOOFCanvas::restore_view: oldsize=" << oldsize[0]
@@ -1606,7 +1607,6 @@ void GhostOOFCanvas::restore_view(const View *view, bool clip) {
 	    << "," << view->size_y << std::endl;
 #endif // DEBUG
     render_window->SetSize(view->size_x, view->size_y);
-    repositionRenderWindow();
   }
   view->setCamera(renderer->GetActiveCamera()); // change active camera settings
   if(clip) {

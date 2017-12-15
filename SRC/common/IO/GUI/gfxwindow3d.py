@@ -325,11 +325,6 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
 
         self.oofcanvas.show()
 
-        # Make sure that the canvas is the same size as the drawing
-        # area
-        self.oofcanvas.matchSize()
-        
-
     # def canvasConfigureCB(self, *args):
     #     gtklogger.checkpoint("canvas configured %s" % self.name)
 

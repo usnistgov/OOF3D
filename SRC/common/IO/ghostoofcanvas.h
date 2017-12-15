@@ -91,6 +91,15 @@ protected:
   vtkSmartPointer<vtkUnstructuredGrid> getFrustumSubgrid(
 		 double x, double y, const View*, OOFCanvasLayer*);
 
+  // Set and restore the View.  The first bool indicates whether or
+  // clipping planes should be set.  The second indicates whether or
+  // not the render window should be resized.  When interpreting saved
+  // mouse clicks, the window size matters.  These methods are
+  // protected.  set_view is unprotected and is the only one that
+  // should be used externally.
+  View *set_view_nolock(const View*, bool, bool);
+  void restore_view(const View*, bool, bool);
+  
 #ifdef DEBUGSELECTIONS
   vtkSmartPointer<vtkActor> tempActor;
 #endif // DEBUGSELECTIONS
@@ -204,8 +213,6 @@ public:
   // the old view before releasing the lock, acquire the lock
   // explicitly and use set_view_nolock.  See findClickedCell_ et al.
   View *set_view(const View*, bool);
-  View *set_view_nolock(const View*, bool);
-  void restore_view(const View*, bool);
 
   ICoord get_size() const;
   void set_size(int, int);

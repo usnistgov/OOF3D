@@ -48,15 +48,8 @@ get the error "Parameter value out of range for phi".
 Fix bug: Using upper-right corner arrows for switching views sometimes
 draws the canvas in the wrong location.
 
-Fix bug: Adjust gfx window main pane divider, then clone window.
-Canvas size and divider position don't agree.  Clicking on canvas may
-select the wrong item.  Also, if the graphics window is created in a
-script, the canvas is the wrong size when the window opens.
 
-Fix bug: Loading a script containing a Graphics.Settings.Camera.View
-command can leave the render window misaligned with the drawing
-area. The size_x and size_y arguments should be removed.  The View
-object shouldn't include size information.
+Fix bug: Skeleton Info display isn't working.  Is Mesh Info working?
 	    
 ---------------------------------------------------------------------------
 Soon
@@ -166,3 +159,15 @@ change to the view fixes it.
 Mesh Material display not working?
 ** Fixed 2017-12-06  CellData wasn't being included in MeshGridSource::GetGrid
 
+Fix bug: Adjust gfx window main pane divider, then clone window.
+Canvas size and divider position don't agree.  Clicking on canvas may
+select the wrong item.  Also, if the graphics window is created in a
+script, the canvas is the wrong size when the window opens.
+** Fixed 2017-12-15 as part of the next item.
+Fix bug: Loading a script containing a Graphics.Settings.Camera.View
+command can leave the render window misaligned with the drawing
+area. The size_x and size_y arguments should be removed.  The View
+object shouldn't include size information.
+** Fixed 2017-12-15.  The size information is needed to properly record
+and reproduce mouse clicks. GhostOOFCanvas:set_view should ignore the
+size information *except* when reproducing mouse clicks.

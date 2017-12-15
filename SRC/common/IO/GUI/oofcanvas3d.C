@@ -203,8 +203,8 @@ gboolean OOFCanvas3D::gtk_configure(GtkWidget*, GdkEventConfigure *config,
 }
 
 void OOFCanvas3D::configure(int x, int y, int width, int height) {
-  oofcerr << "OOFCanvas3D::configure: w=" << width << " h=" << height
-	  << " x=" << x << " y=" << y << std::endl;
+  // oofcerr << "OOFCanvas3D::configure: w=" << width << " h=" << height
+  // 	  << " x=" << x << " y=" << y << std::endl;
   assert(mainthread_query());
   render_window->SetSize(width, height);
   repositionRenderWindow();
@@ -223,13 +223,6 @@ void OOFCanvas3D::repositionRenderWindow() {
 #else
   render_window->SetPosition(x, y);
 #endif	// not OOF_USE_COCOA
-}
-
-void OOFCanvas3D::matchSize() {
-  // Ensure that the vtk render window coincides exactly with the gtk
-  // drawing area.
-  GtkAllocation &allocation = drawing_area->allocation;
-  configure(allocation.x, allocation.y, allocation.width, allocation.height);
 }
 
 // static
@@ -273,17 +266,6 @@ gboolean OOFCanvas3D::redrawIdle() {
   render_window->Render();
   return FALSE;			// FALSE means "run just once".
 }
-
-// gboolean OOFCanvas3D::gtk_redrawAndResizeIdle(gpointer data) {
-//   OOFCanvas3D *oofcanvas = (OOFCanvas3D*)(data);
-//   return oofcanvas->redrawAndResizeIdle();
-// }
-
-// gboolean OOFCanvas3D::redrawAndResizeIdle() {
-//   matchSize();
-//   render_window->Render();
-//   return FALSE;
-// }
 
 void OOFCanvas3D::show() {
   // oofcerr << "OOFCanvas3D::show" << std::endl;
