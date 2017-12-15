@@ -32,9 +32,10 @@ updating?
   Undo/Redo refinement
   Elements in other groups appear.
 Maybe related to this?
-Warning: In /Users/langer/UTIL/VTK/VTK-5.10.1/Filtering/vtkDataSet.cxx, line 446
-vtkUnstructuredGrid (0x7f961e6a4280): Cell array  with 1 components,
-has 8239 tuples but there are only 1484 cells
+SCRATCH/meshmaterialdisplay2.log: Load 5color, group voxels, assign 2
+materials to groups, display mesh material filtered by one material.
+Wrong materials are shown, and get error:
+  vtkUnstructuredGrid (0x7fb55e7f65e0): Cell array with 1 components, has 135 tuples but there are only 115 cells
 
 Remove opacity param from MicrostructureMaterialDisplay?  Is it used?
 It's passed through to vtkActor::GetProperty()->SetOpacity(), but it
@@ -48,8 +49,16 @@ get the error "Parameter value out of range for phi".
 Fix bug: Using upper-right corner arrows for switching views sometimes
 draws the canvas in the wrong location.
 
+Fix bug: Typing to select a line in the file chooser isn't working on Mac.
 
-Fix bug: Skeleton Info display isn't working.  Is Mesh Info working?
+Missing feature: contextual menu in layer list.
+
+Missing feature: raise and lower layers, by menu or drag-and-drop.
+
+Try calling vtkRenderWindow::SetUseOffScreenBuffers(1).  It caused
+problems before, but other things have been fixed since then.  It
+might reduce graphics flickering on the VMs.
+
 	    
 ---------------------------------------------------------------------------
 Soon
@@ -171,3 +180,7 @@ object shouldn't include size information.
 ** Fixed 2017-12-15.  The size information is needed to properly record
 and reproduce mouse clicks. GhostOOFCanvas:set_view should ignore the
 size information *except* when reproducing mouse clicks.
+
+Fix bug: Skeleton Info display isn't working.  Is Mesh Info working?
+** Fixed 2017-12-15.  setEmpty() wasn't being called.  Pixel Info and
+Mesh Info weren't working either.
