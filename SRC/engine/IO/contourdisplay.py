@@ -475,6 +475,7 @@ class FilledContourDisplay(ContourDisplay):
         ## not.
         self.setData(self.who().resolve(self.gfxwindow))
         self.setContourLevels()
+        self.canvaslayer.setEmpty(False)
         
     def setContourLevels(self):
         # This is the part of setParams that can't be done unless the

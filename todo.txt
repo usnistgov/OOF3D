@@ -17,12 +17,6 @@ Use Eigen?  Use DPF's sparse_matrix_optimization branch?
   sparse_matrix_optimization.  The difference in performance on
   solver_test.py/static_quadratic_set was negligible.
 
-Mesh filled contour display not working?
-
-Fix bug: Displaying filtered Skeletons and Meshes leads to errors
-like:
-Warning: In /Users/langer/UTIL/VTK/VTK-8.1.0.rc2/Common/DataModel/vtkDataSet.cxx, line 476
-vtkUnstructuredGrid (0x7fd2d39a6cc0): Cell array  with 1 components, has 1871 tuples but there are only 689 cells
 
 Fix bug: Are element groups/materials not being recomputed for
 refinement undo/redo?  Or are filters on the skeleton displays not
@@ -31,11 +25,6 @@ updating?
   Display skeleton edges and materials limited to some groups.
   Undo/Redo refinement
   Elements in other groups appear.
-Maybe related to this?
-SCRATCH/meshmaterialdisplay2.log: Load 5color, group voxels, assign 2
-materials to groups, display mesh material filtered by one material.
-Wrong materials are shown, and get error:
-  vtkUnstructuredGrid (0x7fb55e7f65e0): Cell array with 1 components, has 135 tuples but there are only 115 cells
 
 Remove opacity param from MicrostructureMaterialDisplay?  Is it used?
 It's passed through to vtkActor::GetProperty()->SetOpacity(), but it
@@ -184,3 +173,16 @@ size information *except* when reproducing mouse clicks.
 Fix bug: Skeleton Info display isn't working.  Is Mesh Info working?
 ** Fixed 2017-12-15.  setEmpty() wasn't being called.  Pixel Info and
 Mesh Info weren't working either.
+
+Fix bug: Displaying filtered Skeletons and Meshes leads to errors
+like:
+Warning: In /Users/langer/UTIL/VTK/VTK-8.1.0.rc2/Common/DataModel/vtkDataSet.cxx, line 476
+vtkUnstructuredGrid (0x7fd2d39a6cc0): Cell array  with 1 components, has 1871 tuples but there are only 689 cells
+eg, SCRATCH/meshmaterialdisplay2.log: Load 5color, group voxels, assign 2
+materials to groups, display mesh material filtered by one material.
+Wrong materials are shown, and get error.
+** Fixed 2017-12-18  Had to reset cell data in MaterialDisplay.setParams.
+
+Mesh filled contour display not working?
+** Seems to be ok.  2017-12-18  Probably because of the above.
+

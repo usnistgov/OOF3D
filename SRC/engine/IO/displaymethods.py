@@ -898,6 +898,8 @@ class MaterialDisplay(SolidFillMeshDisplay):
  
     def setParams(self):
         self.setSource()
+        # If the filter has changed, the cell data will be different
+        self.setCellData(self.who().resolve(self.gfxwindow))
         self.setLUT()
 
     def getLUT(self, themesh):
