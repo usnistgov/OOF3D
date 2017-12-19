@@ -132,6 +132,7 @@ def _auto_group(menuitem, skeleton):
         groupset.addToGroup(**gdict)
     finally:
         mscontext.end_reading()
+        switchboard.notify("redraw")
     
 # Delete a group.
 def _remove_group(menuitem, skeleton, group):

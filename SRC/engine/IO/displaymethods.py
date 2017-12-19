@@ -230,7 +230,37 @@ class SkelMeshDisplayMethod(display.DisplayMethod):
     def __init__(self, filter):
         self.filter = filter
         display.DisplayMethod.__init__(self)
-
+        self.sbsignals = [
+            switchboard.requestCallback(
+                "skeleton filter changed", self.filterChangedCB)
+            ]
+    def destroy(self, destroy_canvaslayer):
+        map(switchboard.removeCallback, self.sbsignals)
+        super(SkelMeshDisplayMethod, self).destroy(destroy_canvaslayer)
+    def filterChangedCB(self, filter, *args, **kwargs):
+        # "skeleton filter changed" is called whenever the output of a
+        # filter has been changed.  If the filter itself has changed,
+        # the layer will already be updated because its parameters
+        # have changed.  But if the filter is selecting only one
+        # group, for example, and the group's content changes, then
+        # the filter itself won't change but its output will.  In that
+        # case, the filter's Registration should have requested a
+        # callback when groups change, and will issue "skeleton filter
+        # changed" when it's notified.  See skeletonfilter.spy.
+        
+        ## TODO: when any filter of the same subclass as self.filter
+        ## changes, this method will be called for *all* filters of
+        ## that subclass, because the SkeletonFilterRegistration
+        ## mechanism that sent the "skeleton filter changed" signal
+        ## has no way to know which filters are affected. This method
+        ## should somehow use use self.filter, args, and kwargs to
+        ## determine if setModified really needs to be called.  args
+        ## and kwargs are switchboard arguments that were forwarded
+        ## from the original switchboard message caught by the
+        ## Registration.
+        if filter == self.filter:
+            filter.setModified()
+            
 class SkeletonDisplayMethod(SkelMeshDisplayMethod):
     def __init__(self, filter):
         SkelMeshDisplayMethod.__init__(self, filter)
@@ -282,17 +312,13 @@ class MeshDisplayMethod(display.AnimationLayer, SkelMeshDisplayMethod):
         self.freezetime = None
         display.AnimationLayer.__init__(self, when)
         SkelMeshDisplayMethod.__init__(self, filter)
-        self.sbsignals = [
-            switchboard.requestCallback(
+        self.sbsignals.extend(
+            [switchboard.requestCallback(
                 "mesh data changed", self.meshDataChangedCB),
-            switchboard.requestCallback(
-                "femesh replaced", self.femeshReplacedCB)
-        ]
+             switchboard.requestCallback(
+                 "femesh replaced", self.femeshReplacedCB)
+            ])
 
-    def destroy(self, destroy_canvaslayer):
-        map(switchboard.removeCallback, self.sbsignals)
-        super(MeshDisplayMethod, self).destroy(destroy_canvaslayer)
-        # SkelMeshDisplayMethod.destroy(self, destroy_canvaslayer)
     def incomputable(self):
         themesh = self.who().resolve(self.gfxwindow)
         return (display.DisplayMethod.incomputable(self) or

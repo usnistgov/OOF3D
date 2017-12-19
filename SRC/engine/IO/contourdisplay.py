@@ -313,9 +313,6 @@ class FilledContourDisplay(ContourDisplay):
                  filter=displaymethods.defaultMeshFilter):
         ContourDisplay.__init__(self, when, what, where,
                                 min_contour, max_contour, levels, nbins, filter)
-        self.sbsignals.append(
-            switchboard.requestCallback("skeleton filter changed",
-                                        self.filterChanged))
         self.colormap = colormap
         # contour_min and contour_max are the actual limits used for
         # the contour color map.  min_contour and max_contour are the
@@ -517,17 +514,10 @@ class FilledContourDisplay(ContourDisplay):
             if self.source:
                 self.source.setTime(self.getTime(self.gfxwindow))
 
-    def filterChanged(self, filter, *args, **kwargs):
-        ## TODO: when any filter of the same subclass as self.filter
-        ## changes, this method will be called for *all* filters of
-        ## that subclass, because the SkeletonFilterRegistration
-        ## mechanism that sent the "skeleton filter changed" signal
-        ## has no way to know which filters are affected. This method
-        ## should somehow use use self.filter, args, and kwargs to
-        ## determine if setData really needs to be called.  args and
-        ## kwargs are switchboard arguments that were forwarded from
-        ## the original switchboard message caught by the
-        ## Registration.
+    def filterChangedCB(self, filter, *args, **kwargs):
+        # This redefines SkelMeshDisplayMethod.filterChangedCB.
+        ## TODO: Is this necessary?  It calls setData but is otherwise
+        ## identical to the base class method.
         if filter == self.filter:
             hoo = self.who()
             self.setData(hoo.resolve(self.gfxwindow))

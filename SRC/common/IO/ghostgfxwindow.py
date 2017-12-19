@@ -1313,8 +1313,7 @@ class GhostGfxWindow:
     def redraw(self, menuitem):
         for layer in self.layers:
             if not layer.frozen:
-                layer.redraw()
-        # self.backdate()                    # backdates timestamps
+                layer.redraw()  # sets vtk Modified flag for layer
         self.draw()
 
     def toggleAntialias(self, menuitem, antialias):

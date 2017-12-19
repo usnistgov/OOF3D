@@ -44,11 +44,10 @@ Missing feature: contextual menu in layer list.
 
 Missing feature: raise and lower layers, by menu or drag-and-drop.
 
-Try calling vtkRenderWindow::SetUseOffScreenBuffers(1).  It caused
-problems before, but other things have been fixed since then.  It
-might reduce graphics flickering on the VMs.
+Fix bug: Display skeleton filtered by element group.  Edit layer.
+Wrong group is displayed initially for filter param in dialog box.
 
-	    
+
 ---------------------------------------------------------------------------
 Soon
 ----
@@ -185,4 +184,17 @@ Wrong materials are shown, and get error.
 
 Mesh filled contour display not working?
 ** Seems to be ok.  2017-12-18  Probably because of the above.
+
+Try calling vtkRenderWindow::SetUseOffScreenBuffers(1).  It caused
+problems before, but other things have been fixed since then.  It
+might reduce graphics flickering on the VMs.
+** Doesn't seem to help.  2017-12-18
+
+Fix bug: Clearing groups (individually or all at once) doesn't clear
+the display when a Skeleton display is filtered by group.
+  Group changes aren't leading to SkeletonGridSource::GetGrid
+  Filters need to be notified that their groups have changed, and they
+  can call SkeletonFilter::setModified.
+** Fixed 2017-12-19 by copying the code that already did this from
+ContourDisplay.
 
