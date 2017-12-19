@@ -32,8 +32,8 @@ from ooflib.engine.IO.GUI import bdymodparamwidget
 # other examples could include "all", "none", and possibly others.
 
 class SkeletonGroupWidget(parameterwidgets.ParameterWidget):
-    def __init__(self, groups=[], defaults=utils.OrderedSet(), scope=None,
-                 name=None, verbose=False):
+    def __init__(self, param, groups=[], defaults=utils.OrderedSet(),
+                 scope=None, name=None, verbose=False):
         self.defaults = defaults
         self.widget = chooser.ChooserWidget(groups, self.selectCB,
                                             name=name)
@@ -47,6 +47,8 @@ class SkeletonGroupWidget(parameterwidgets.ParameterWidget):
         self.sbcallbacks = [switchboard.requestCallbackMain(self.skelmeshwidget,
                                                             self.skelwidgetCB)]
         self.update()
+        if param.value is not None:
+            self.set_value(param.value)
         self.sbcallbacks += [
             switchboard.requestCallbackMain("groupset member added",
                                             self.grpCB),
@@ -58,6 +60,8 @@ class SkeletonGroupWidget(parameterwidgets.ParameterWidget):
 
     def get_value(self):
         return self.widget.get_value()
+    def set_value(self, groupname):
+        self.widget.set_state(groupname)
 
     def selectCB(self, gtkobj, result):
         self.widgetChanged(self.widget.nChoices() > 0, interactive=1)
@@ -108,8 +112,8 @@ faceExtractor = {}
 
 class NodeGroupWidget(SkeletonGroupWidget):
     def __init__(self, param, groups=[], scope=None, name=None, verbose=False):
-        SkeletonGroupWidget.__init__(self, groups, scope=scope, name=name,
-                                     verbose=verbose)
+        SkeletonGroupWidget.__init__(self, param, groups, scope=scope,
+                                     name=name, verbose=verbose)
 
     def redraw(self, skeletoncontext):
         if skeletoncontext and not isinstance(skeletoncontext,
@@ -128,7 +132,7 @@ skeletongroupparams.NodeGroupParameter.makeWidget = _makeNodeGroupWidget
 class NodeAggregateWidget(SkeletonAggregateWidget, NodeGroupWidget):
     def __init__(self, param, groups=[], scope=None, name=None, verbose=False):
         SkeletonGroupWidget.__init__(
-            self, groups,
+            self, param, groups,
             defaults=utils.OrderedSet([placeholder.selection.IDstring]),
             scope=scope, name=name, verbose=verbose)
         
@@ -145,8 +149,8 @@ segmentExtractor[NodeAggregateWidget] = \
 
 class SegmentGroupWidget(SkeletonGroupWidget):
     def __init__(self, param, groups=[], scope=None, name=None, verbose=False):
-        SkeletonGroupWidget.__init__(self, groups, scope=scope, name=name,
-                                     verbose=verbose)
+        SkeletonGroupWidget.__init__(self, param, groups, scope=scope,
+                                     name=name, verbose=verbose)
 
     def redraw(self, skeletoncontext):
         if skeletoncontext and not isinstance(skeletoncontext,
@@ -167,7 +171,7 @@ skeletongroupparams.SegmentGroupParameter.makeWidget = _makeSegmentGroupWidget
 class SegmentAggregateWidget(SkeletonAggregateWidget, SegmentGroupWidget):
     def __init__(self, param, groups=[], scope=None, name=None, verbose=False):
         SkeletonGroupWidget.__init__(
-            self, groups,
+            self, param, groups,
             defaults=utils.OrderedSet(
                 [placeholder.selection.IDstring]),
             scope=scope, name=name, verbose=verbose)
@@ -242,8 +246,8 @@ segmentExtractor[BdyModSegmentAggregateWidget] = \
 
 class FaceGroupWidget(SkeletonGroupWidget):
     def __init__(self, param, groups=[], scope=None, name=None, verbose=False):
-        SkeletonGroupWidget.__init__(self, groups, scope=scope, name=name,
-                                     verbose=verbose)
+        SkeletonGroupWidget.__init__(self, param, groups, scope=scope,
+                                     name=name, verbose=verbose)
 
     def redraw(self, skeletoncontext):
         if skeletoncontext and not isinstance(skeletoncontext,
@@ -262,7 +266,7 @@ skeletongroupparams.FaceGroupParameter.makeWidget = _makeFaceGroupWidget
 class FaceAggregateWidget(SkeletonAggregateWidget, FaceGroupWidget):
     def __init__(self, param, groups=[], scope=None, name=None, verbose=False):
         SkeletonGroupWidget.__init__(
-            self, groups,
+            self, param, groups,
             defaults=utils.OrderedSet(
                 [placeholder.selection.IDstring]),
             scope=scope, name=name, verbose=verbose)
@@ -322,7 +326,8 @@ faceExtractor[BdyModFaceAggregateWidget] = \
 
 class ElementGroupWidget(SkeletonGroupWidget):
     def __init__(self, param, groups=[], scope=None, name=None, verbose=False):
-        SkeletonGroupWidget.__init__(self, groups, defaults=utils.OrderedSet(),
+        SkeletonGroupWidget.__init__(self, param, groups,
+                                     defaults=utils.OrderedSet(),
                                      scope=scope, name=name, verbose=verbose)
 
     def redraw(self, skeletoncontext):
@@ -343,7 +348,7 @@ skeletongroupparams.ElementGroupParameter.makeWidget = _makeElementGroupWidget
 class ElementAggregateWidget(SkeletonAggregateWidget, ElementGroupWidget):
     def __init__(self, param, groups=[], scope=None, name=None, verbose=False):
         SkeletonGroupWidget.__init__(
-            self, groups,
+            self, param, groups,
             defaults=utils.OrderedSet(
                 [placeholder.selection.IDstring]),
             scope=scope, name=name,

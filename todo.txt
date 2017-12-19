@@ -44,9 +44,6 @@ Missing feature: contextual menu in layer list.
 
 Missing feature: raise and lower layers, by menu or drag-and-drop.
 
-Fix bug: Display skeleton filtered by element group.  Edit layer.
-Wrong group is displayed initially for filter param in dialog box.
-
 
 ---------------------------------------------------------------------------
 Soon
@@ -198,3 +195,8 @@ the display when a Skeleton display is filtered by group.
 ** Fixed 2017-12-19 by copying the code that already did this from
 ContourDisplay.
 
+Fix bug: Display skeleton filtered by element group.  Edit layer.
+Wrong group is displayed initially for filter param in dialog box.
+Problem occurs in other ElementGroupParameter widgets too.
+** Fixed 2017-12-19.  SkeletonGroupWidgets had no set_value method and
+weren't calling it in their __init__.  OOF2 appears to have the same problem.
