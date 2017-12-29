@@ -18,14 +18,6 @@ Use Eigen?  Use DPF's sparse_matrix_optimization branch?
   solver_test.py/static_quadratic_set was negligible.
 
 
-Fix bug: Are element groups/materials not being recomputed for
-refinement undo/redo?  Or are filters on the skeleton displays not
-updating?
-  Use Auto to create element groups.
-  Display skeleton edges and materials limited to some groups.
-  Undo/Redo refinement
-  Elements in other groups appear.
-
 Remove opacity param from MicrostructureMaterialDisplay?  Is it used?
 It's passed through to vtkActor::GetProperty()->SetOpacity(), but it
 doesn't have any effect on what's displayed.
@@ -117,7 +109,7 @@ Contour displays are incorrect when the elements are filtered.
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------
 
-FIXED
+FIXED OR OTHERWISE DISPOSED OF
 
 Fix bug:  open two graphics windows on Linux.  Close the first one with the
 window manager close button.  The program will crash.
@@ -200,3 +192,16 @@ Wrong group is displayed initially for filter param in dialog box.
 Problem occurs in other ElementGroupParameter widgets too.
 ** Fixed 2017-12-19.  SkeletonGroupWidgets had no set_value method and
 weren't calling it in their __init__.  OOF2 appears to have the same problem.
+
+Fix bug: Are element groups/materials not being recomputed for
+refinement undo/redo?  Or are filters on the skeleton displays not
+updating?
+  Use Auto to create element groups.
+  Display skeleton edges and materials limited to some groups.
+  Undo/Redo refinement
+  Elements in other groups appear.
+** Fixed? 2017-12-19  I can't reproduce this.  Maybe it's been fixed,
+or maybe it was based on a misunderstanding.  Material inheritance is
+different from group inheritance, so it's possible that element groups
+created from pixel groups will contain more than one material after
+refinement, even if the pixel groups correspond 1:1 to materials.

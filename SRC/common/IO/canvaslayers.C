@@ -1063,6 +1063,7 @@ SimpleCellLayer::SimpleCellLayer(GhostOOFCanvas *canvas, const std::string &nm)
 {
   actor->SetMapper(mapper);
   addProp(actor);
+  mapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(-3, -3);
 }
 
 SimpleCellLayer::~SimpleCellLayer() {}
@@ -1562,6 +1563,9 @@ ImageCanvasLayer::ImageCanvasLayer(
   addProp(actor);
   actor->SetMapper(mapper);
   locator->LazyEvaluationOn();
+
+  oofcerr << "ImageCanvasLayer::ctor: ResolveCoincidentTopology="
+	  << mapper->GetResolveCoincidentTopology() << std::endl;
 
   // Build the initial pipeline, with no image and no excluded voxels.
   pipelineLock.acquire();

@@ -15,6 +15,8 @@
 #include "common/IO/vtkutils.h"
 #include "common/coord.h"
 
+#include <vtkMapper.h>
+
 // Copy a std::vector of doubles into a new vtkDoubleArray, and return
 // a vtkSmartPointer to the array.
 
@@ -71,6 +73,7 @@ void initialize_vtk() {
     VTK_MODULE_INIT(vtkRenderingVolumeOpenGL2);
     VTK_MODULE_INIT(vtkRenderingFreeType);
 
+    vtkMapper::SetResolveCoincidentTopologyToPolygonOffset();
 
     // A comment on vtk-users led me to the VTK
     // Utilities/Maintenance/WhatModules.py script, which supposedly

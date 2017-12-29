@@ -42,12 +42,18 @@ Microstructures show incorrect colors.
 
 Fixed a bug in saving 3D images as a set of files.
 
-** Upgraded vtk from 5.10.1 to 7.1.1.  Probably everybody will need to
-   build vtk by hand now.  Apple users should build it to use Cocoa
-   instead of X11.
+Upgraded vtk from 5.10.1 to 7.1.1.  Probably everybody will need to
+build vtk by hand now.  Apple users should build vtk to use Cocoa
+instead of X11 and build oof3d with the --cocoa argument.
 
 Fixed the Threshold function for images.
 
+Fixed a bug in the widgets for choosing Skeleton groups when used as
+command arguments. 
+
+Fixed errors in updating filtered skeleton and mesh displays.
+
+Fixed the pixel, skeleton, and mesh info displays.
 
 3.1.1.1
 
