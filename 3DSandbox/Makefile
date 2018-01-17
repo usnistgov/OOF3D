@@ -1,13 +1,21 @@
 #CXX = clang++
 CXX = g++
 
-#VTKDIR = /Users/langer
-VTKDIR = /opt/local
-CFLAGS = -I$(VTKDIR)/include/vtk-5.10 -g -I/opt/local/include
-VTKLIBS = -L$(VTKDIR)/lib/vtk-5.10 -lvtkCommon -lvtkIO -lvtkFiltering -lvtkRendering -lvtkVolumeRendering -lvtkGraphics -lvtkRendering -lvtkHybrid -lvtkImaging -lvtkWidgets
+VTKDIR = /Users/langer
+#VTKDIR = /usr/local
+
+CFLAGS = -I$(VTKDIR)/include/vtk-8.1 -g -I/opt/local/include -std=c++11 -Wno-inconsistent-missing-override
+
+VTKLIBS= -L$(VTKDIR)/lib -lvtkCommonCore-8.1 -lvtkCommonDataModel-8.1 -lvtkCommonExecutionModel-8.1 -lvtkCommonMisc-8.1 -lvtkCommonTransforms-8.1 -lvtkFiltersCore-8.1 -lvtkFiltersExtraction-8.1 -lvtkFiltersGeneral-8.1 -lvtkFiltersModeling-8.1 -lvtkFiltersSources-8.1 -lvtkIOImage-8.1 -lvtkIOXML-8.1 -lvtkImagingColor-8.1 -lvtkImagingCore-8.1 -lvtkImagingGeneral-8.1 -lvtkRenderingAnnotation-8.1 -lvtkRenderingContextOpenGL2-8.1 -lvtkRenderingCore-8.1 -lvtkRenderingFreeType-8.1 -lvtkRenderingOpenGL2-8.1 -lvtkRenderingVolumeOpenGL2-8.1 -lvtkInteractionStyle-8.1
+
+#VTKLIBS = -L$(VTKDIR)/lib/ -lvtkCommonCore-8.1 -lvtkIO -lvtkFiltering -lvtkRendering -lvtkVolumeRendering -lvtkGraphics -lvtkRendering -lvtkHybrid -lvtkImaging -lvtkWidgets
 
 .C.o:
 	$(CXX) $(CFLAGS) -c $<
+
+tetsandcubes: tetsandcubes.o
+	$(CXX) -o tetsandcubes tetsandcubes.o $(VTKLIBS)
+
 
 readppm: readppm.o
 	$(CXX) -o readppm readppm.o $(VTKLIBS)
