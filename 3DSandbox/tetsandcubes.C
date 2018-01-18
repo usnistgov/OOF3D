@@ -1,3 +1,9 @@
+// This program draws a checkerboard ala an OOF3D image display, and a
+// tetrahedral grid ala an OOF3D skeleton.  The tets should be drawn
+// "over" the checkerboard, but they're not drawn consistently.
+// Tested with the cocoa versions of vtk 7.1.1, 8.0.1, and 8.1.0 on
+// macOS 10.12, and with vtk 8.1.0 on Ubuntu 17.10.
+
 #include <vtkActor.h>
 #include <vtkCellData.h>
 #include <vtkDataSetMapper.h>
@@ -7,7 +13,7 @@
 #include <vtkImageMapToColors.h>
 #include <vtkLookupTable.h>
 #include <vtkMapper.h>
-#include <vtkNew.h>
+//#include <vtkNew.h>
 #include <vtkPointData.h>
 #include <vtkRectilinearGrid.h>
 #include <vtkRenderWindow.h>
@@ -20,9 +26,9 @@
 #include <vtkTetra.h>
 #include <vtkProperty.h>
 
-#define IMAGESIZE 8
-#define MESHSIZE  3
-#define CUBESIZE 20.0
+#define IMAGESIZE 8		// number of checkerboard squares on a side
+#define MESHSIZE  3		// number of subcubes on a side for the tet mesh
+#define CUBESIZE 20.0		// physical linear dimension of entire system
 
 // Color for the checkerboard image
 #define IMAGE_R 0.5
@@ -44,11 +50,10 @@
 // simplicity.
 
 vtkSmartPointer<vtkRectilinearGrid> makeImage(int n) {
-
-  // Create the rectilinear grid from an image because that's what
-  // OOF3D does. 
-
-  vtkNew<vtkImageData> image0;
+  // This is a simplification of a program that uses actual image data
+  // as a source for the rectilinear grid.  In order to recreate the
+  // same vtk calls, create a dummy image here.
+  vtkSmartPointer<vtkImageData> image0 = vtkSmartPointer<vtkImageData>::New();
   image0->SetDimensions(n, n, n);
   image0->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
   image0->SetSpacing(CUBESIZE/n, CUBESIZE/n, CUBESIZE/n);
@@ -60,14 +65,15 @@ vtkSmartPointer<vtkRectilinearGrid> makeImage(int n) {
       }
     }
   }
-  // Lookup table values come from material definitions in OOF3D
-  vtkNew<vtkLookupTable> lut;
+  
+  vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
   lut->SetNumberOfTableValues(2);
   lut->SetTableRange(0, 1);
   lut->SetTableValue(0, IMAGE_R, IMAGE_G, IMAGE_B, IMAGE_A);
   lut->SetTableValue(1, DIM*IMAGE_R, DIM*IMAGE_G, DIM*IMAGE_B, IMAGE_A);
 
-  vtkNew<vtkImageMapToColors> map;
+  vtkSmartPointer<vtkImageMapToColors> map =
+    vtkSmartPointer<vtkImageMapToColors>::New();
   map->SetLookupTable(lut);
   map->SetOutputFormatToRGBA();
   map->SetInputData(image0);
@@ -77,7 +83,8 @@ vtkSmartPointer<vtkRectilinearGrid> makeImage(int n) {
   // Convert the image to a rectilinear grid.  Each point in the image
   // becomes a cubic cell in the grid.
   
-  vtkNew<vtkRectilinearGrid> rectgrid;
+  vtkSmartPointer<vtkRectilinearGrid> rectgrid =
+    vtkSmartPointer<vtkRectilinearGrid>::New();
 
   int extent[6];
   image->GetExtent(extent);
@@ -86,7 +93,12 @@ vtkSmartPointer<vtkRectilinearGrid> makeImage(int n) {
   extent[5] += 1;
   rectgrid->SetExtent(extent);
 
-  vtkNew<vtkDoubleArray> xcoords, ycoords, zcoords;
+  vtkSmartPointer<vtkDoubleArray> xcoords =
+    vtkSmartPointer<vtkDoubleArray>::New();
+  vtkSmartPointer<vtkDoubleArray> ycoords =
+    vtkSmartPointer<vtkDoubleArray>::New();
+  vtkSmartPointer<vtkDoubleArray> zcoords =
+    vtkSmartPointer<vtkDoubleArray>::New();
   xcoords->SetNumberOfValues(n+1);
   ycoords->SetNumberOfValues(n+1);
   zcoords->SetNumberOfValues(n+1);
@@ -113,13 +125,14 @@ vtkSmartPointer<vtkRectilinearGrid> makeImage(int n) {
 // into 5 tetrahedra.  n is the number of subcubes on a side.
 
 vtkSmartPointer<vtkUnstructuredGrid> makeMesh(unsigned int n) {
-  vtkNew<vtkUnstructuredGrid> mesh;
-  vtkNew<vtkPoints> points;
   int total = 5*n*n*n;		// total number of tets
+  double delta = CUBESIZE/n;
+
+  vtkSmartPointer<vtkUnstructuredGrid> mesh =
+    vtkSmartPointer<vtkUnstructuredGrid>::New();
+  vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
   mesh->Allocate(total, total);
   mesh->SetPoints(points);
-  bool flip = false;
-  double delta = CUBESIZE/n;
   
   // Create points.  Order of loops is weird, but historical.
   for(int i=0; i<=n; i++) {			 // y dimension
@@ -149,8 +162,8 @@ vtkSmartPointer<vtkUnstructuredGrid> makeMesh(unsigned int n) {
 
 	// There are two possible arrangements of the 5 tets in the
 	// subcube.  Adjacent subcubes must have alternating
-	// arrangements..
-	if(!flip) {
+	// arrangements.
+	if((i+j+k)%2 == 0) {
 	  vtkIdType ids1[4] = {llf, urf, lrf, lrb}; // tet in lrf corner
 	  mesh->InsertNextCell(VTK_TETRA, 4, ids1);
 	  vtkIdType ids2[4] = {llf, ulf, urf, ulb}; // tet in ulf corner
@@ -176,12 +189,8 @@ vtkSmartPointer<vtkUnstructuredGrid> makeMesh(unsigned int n) {
 	  // vtkIdType ids5[4] = {ulf, urb, lrf, llb}; // tet in middle
 	  // mesh->InsertNextCell(VTK_TETRA, 4, ids5);
 	}
-	flip = !flip;
-
-      }	// end loop over z
-      if(n%2 == 0) flip = !flip;
+      }
     }
-    if(n%2 == 0) flip = !flip;
   }
   return mesh;
 }
@@ -194,16 +203,20 @@ int main(int argc, char *argv[]) {
   VTK_MODULE_INIT(vtkRenderingContextOpenGL2);
   VTK_MODULE_INIT(vtkRenderingVolumeOpenGL2);
   VTK_MODULE_INIT(vtkRenderingFreeType);
+  VTK_MODULE_INIT(vtkInteractionStyle);
 
   vtkMapper::SetResolveCoincidentTopologyToPolygonOffset();
   
-  vtkNew<vtkRenderer> renderer;
+  vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
   renderer->SetBackground(1.0, 1.0, 1.0);
 
-  vtkNew<vtkRenderWindow> renderWindow;
+  vtkSmartPointer<vtkRenderWindow> renderWindow =
+    vtkSmartPointer<vtkRenderWindow>::New();
   renderWindow->AddRenderer(renderer);
-  vtkNew<vtkRenderWindowInteractor> interactor;
-  vtkNew<vtkInteractorStyleSwitch> style;
+  vtkSmartPointer<vtkRenderWindowInteractor> interactor =
+    vtkSmartPointer<vtkRenderWindowInteractor>::New();
+  vtkSmartPointer<vtkInteractorStyleSwitch> style =
+    vtkSmartPointer<vtkInteractorStyleSwitch>::New();
   interactor->SetInteractorStyle(style);
   interactor->SetRenderWindow(renderWindow);
 
@@ -211,14 +224,16 @@ int main(int argc, char *argv[]) {
   // image->Print(std::cerr);
   vtkSmartPointer<vtkUnstructuredGrid> mesh = makeMesh(MESHSIZE);
 
-  vtkNew<vtkDataSetMapper> imageMapper;
-  vtkNew<vtkActor> imageActor;
+  vtkSmartPointer<vtkDataSetMapper> imageMapper =
+    vtkSmartPointer<vtkDataSetMapper>::New();
+  vtkSmartPointer<vtkActor> imageActor = vtkSmartPointer<vtkActor>::New();
   imageActor->SetMapper(imageMapper);
   renderer->AddViewProp(imageActor);
   imageMapper->SetInputData(image);
 
-  vtkNew<vtkDataSetMapper> meshMapper;
-  vtkNew<vtkActor> meshActor;
+  vtkSmartPointer<vtkDataSetMapper> meshMapper =
+    vtkSmartPointer<vtkDataSetMapper>::New();
+  vtkSmartPointer<vtkActor> meshActor = vtkSmartPointer<vtkActor>::New();
   meshActor->GetProperty()->SetRepresentationToSurface();
   meshActor->GetProperty()->SetColor(MESH_R, MESH_G, MESH_B);
   meshActor->GetProperty()->SetOpacity(MESH_A);
