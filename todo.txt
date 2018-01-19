@@ -20,7 +20,8 @@ Use Eigen?  Use DPF's sparse_matrix_optimization branch?
 
 Remove opacity param from MicrostructureMaterialDisplay?  Is it used?
 It's passed through to vtkActor::GetProperty()->SetOpacity(), but it
-doesn't have any effect on what's displayed.
+doesn't have any effect on what's displayed.  Also, there's a TODO
+asking if ImageCanvasLayer::set_opacity() works.
 
 
 Fix bug?  Edit a clipping plane by double-clicking in the list in the
@@ -35,6 +36,13 @@ Fix bug: Typing to select a line in the file chooser isn't working on Mac.
 Missing feature: contextual menu in layer list.
 
 Missing feature: raise and lower layers, by menu or drag-and-drop.
+Maybe not possible.
+
+Fix bug or badly designed feature: Select voxels or skeleton
+components while a clipping plane plane-and-arrow widget is displayed.
+It's not clear whether clicking on the widget should be interpreted as
+a selection operation or not.   Probably the widget should not be
+visible unless the Viewer toolbox is active.
 
 
 ---------------------------------------------------------------------------

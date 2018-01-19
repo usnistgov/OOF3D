@@ -30,12 +30,13 @@ private:
   PyObject *mouse_callback;
   guint mouse_handler_id; //, config_handler_id;
   RubberBand *rubberband;
+  int rescaleFudgeFactor;
   std::vector<gulong> g_handlers; // gtk signal handler ids
 protected:
   GtkWidget *drawing_area;
 
 public:
-  OOFCanvas3D();
+  OOFCanvas3D(bool rescale);
   ~OOFCanvas3D();
 
   PyObject *widget();
@@ -65,6 +66,8 @@ public:
   void mouse_dolly(double x, double y);
 
   void set_rubberband(RubberBand*);
+
+  virtual void setFixCanvasScaleBug(bool);
 
   friend class RubberBand;
 

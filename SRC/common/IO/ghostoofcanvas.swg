@@ -166,6 +166,8 @@ public:
 
   Coord display2Physical(View*, double, double);
 
+  void setFixCanvasScaleBug(bool);
+
   // views
   %new View *get_view();
   // set_view() returns the old view, which was obtained with

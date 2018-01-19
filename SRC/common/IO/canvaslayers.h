@@ -67,7 +67,7 @@ class VoxelFilter;
 
 #include <vector>
 
-typedef std::vector<OOFCanvasLayerBase*> CanvasLayerList;
+typedef std::vector<OOFCanvasLayer*> CanvasLayerList;
 
 enum ClipState {CLIP_OFF, CLIP_ON, CLIP_UNKNOWN};
 
@@ -101,6 +101,10 @@ public:
   virtual bool pickable() { return false; }
 
   const GhostOOFCanvas *getCanvas() const { return canvas; }
+
+  // nVTKProps returns the total number of vtkProps or vtkActors that
+  // the layer uses.
+  virtual int nVTKProps() const = 0;
 
   // visibleBoundingBox returns false if none of the layer is visible
   // inside the given camera frustum.  It returns true and sets the
@@ -202,6 +206,7 @@ public:
   virtual void stop_clipping();
   virtual void set_clip_parity(bool);
   virtual void setModified();
+  virtual int nVTKProps() const { return 2; }
   virtual const std::string &classname() const;
   vtkSmartPointer<vtkActor> get_planeActor();
   vtkSmartPointer<vtkActor> get_arrowActor();
@@ -259,6 +264,7 @@ public:
   virtual vtkSmartPointer<vtkProp3D> get_pickable_prop3d();
   virtual vtkSmartPointer<vtkPoints> get_pickable_points();
   virtual vtkSmartPointer<vtkAbstractCellLocator> get_locator();
+  virtual int nVTKProps() const { return 2; }
   Coord3D *get_cellCenter(vtkIdType);
   Coord3D *get_cellNormal_Coord3D(vtkIdType);
   void reset();
@@ -300,6 +306,7 @@ public:
   virtual void setModified();
   virtual void newGrid(vtkSmartPointer<vtkPoints>, int ncells);
   virtual void addCell(VTKCellType type, vtkSmartPointer<vtkIdList> ptIds);
+  virtual int nVTKProps() const { return 1; }
   void clear();
   void set_color(const CColor&);
   void set_opacity(double);
@@ -396,6 +403,7 @@ protected:
   virtual void start_clipping();
   virtual void stop_clipping();
   virtual void set_clip_parity(bool);
+  virtual int nVTKProps() const { return 2; }
 public:
   void newGrid(vtkSmartPointer<vtkPoints>, int);
   void addDirectedCell(VTKCellType, vtkIdList*, double[]);
@@ -479,6 +487,7 @@ public:
   virtual const std::string &classname() const;
   virtual void destroy();
   virtual void setModified();
+  virtual int nVTKProps() const { return 1; }
   void filterModified();
   void set_image(const ImageBase*, const Coord *location, const Coord *size);
   void set_filter(VoxelFilter*);
@@ -512,6 +521,7 @@ public:
   virtual void connectToOverlayer(ImageCanvasOverlayer*);
   virtual void connectToAlgorithm(vtkSmartPointer<vtkAlgorithmOutput>);
   virtual vtkSmartPointer<vtkAlgorithmOutput> output();
+  virtual int nVTKProps() const { return 0; }
   friend class ImageCanvasLayer;
 };
 

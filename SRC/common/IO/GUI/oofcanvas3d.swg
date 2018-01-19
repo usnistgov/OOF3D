@@ -28,7 +28,7 @@
 
 class OOFCanvas3D : public GhostOOFCanvas {
 public:
-  OOFCanvas3D();
+  OOFCanvas3D(bool);
   ~OOFCanvas3D();
   PyObject *widget();
 

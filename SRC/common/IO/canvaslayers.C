@@ -106,13 +106,11 @@ OOFCanvasLayerBase::OOFCanvasLayerBase(GhostOOFCanvas *c, const std::string &nm)
     name_(nm),
     clipState(CLIP_UNKNOWN)
 {
-  c->newLayer(this);
   // oofcerr << "OOFCanvasLayerBase::ctor: " << this << " " << name() 
   // 	  << std::endl;
 }
 
 OOFCanvasLayerBase::~OOFCanvasLayerBase() {
-  canvas->removeLayer(this);
 }
 
 void OOFCanvasLayerBase::set_clipping(bool clip, bool inverted) {
@@ -143,9 +141,12 @@ OOFCanvasLayer::OOFCanvasLayer(GhostOOFCanvas *c, const std::string &nm)
   : OOFCanvasLayerBase(c, nm),
     showing_(false),
     empty_(true)
-{}
+{
+  c->newLayer(this);
+}
 
 OOFCanvasLayer::~OOFCanvasLayer() {
+  canvas->removeLayer(this);
 }
 
 void OOFCanvasLayer::addProp(vtkSmartPointer<vtkProp> prop) {
@@ -220,7 +221,7 @@ void OOFCanvasLayer::removeAllProps() {
 // void OOFCanvasLayer::raise_to_top() {
 //   canvas->raise_layer_to_top(this);
 //   // if(rendered_) 
-//   //   remove_from_renderer);
+//   //   remove_from_renderer();
 //   if(showing)
 //     add_to_renderer();
 // }
@@ -1563,9 +1564,6 @@ ImageCanvasLayer::ImageCanvasLayer(
   addProp(actor);
   actor->SetMapper(mapper);
   locator->LazyEvaluationOn();
-
-  oofcerr << "ImageCanvasLayer::ctor: ResolveCoincidentTopology="
-	  << mapper->GetResolveCoincidentTopology() << std::endl;
 
   // Build the initial pipeline, with no image and no excluded voxels.
   pipelineLock.acquire();

@@ -90,6 +90,15 @@ void WireGridCanvasLayer::setModified() {
   gridsource->Modified();
 }
 
+int WireGridCanvasLayer::nVTKProps() const {
+  if(clipState == CLIP_OFF)
+    return 2;			// edgeActor and faceActor ...
+  if(clipState == CLIP_ON)
+    return 3;			// ... and also cutActor
+  throw ErrProgrammingError("nVTKProps called in ambiguous clipping state",
+			    __FILE__, __LINE__);
+}
+
 void WireGridCanvasLayer::set_color(const CColor &lineColor) {
   edgeActor->GetProperty()->SetColor(lineColor.getRed(),
 				     lineColor.getGreen(),

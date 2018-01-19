@@ -41,14 +41,19 @@
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+static int _fudgeFactor(bool fixCanvasScaleBug) {
+  return fixCanvasScaleBug ? 2 : 1;
+}
 
-OOFCanvas3D::OOFCanvas3D() 
+
+OOFCanvas3D::OOFCanvas3D(bool fixCanvasScaleBug) 
   : GhostOOFCanvas(),
     mousedown(false),
     last_x(0),
     last_y(0),
     mouse_callback(0),
-    rubberband(0)
+    rubberband(0),
+    rescaleFudgeFactor(_fudgeFactor(fixCanvasScaleBug))
 {
   assert(mainthread_query());
 
@@ -190,9 +195,6 @@ gboolean OOFCanvas3D::realize() {
   return FALSE;	// Returning FALSE propagates the event to parent items.
 }
 
-//#define FUDGE 2.0
-#define FUDGE 1.0
-
 // static
 gboolean OOFCanvas3D::gtk_configure(GtkWidget*, GdkEventConfigure *config,
 				    gpointer data) 
@@ -206,19 +208,12 @@ gboolean OOFCanvas3D::gtk_configure(GtkWidget*, GdkEventConfigure *config,
 }
 
 void OOFCanvas3D::configure(int x, int y, int width, int height) {
-#ifdef DEBUG
-  int sclx, scly; render_window->GetTileScale(sclx, scly);
-  oofcerr << "OOFCanvas3D::configure: w=" << width << " h=" << height
-  	  << " x=" << x << " y=" << y;
-  int *sz = render_window->GetSize();
-  oofcerr << " renderwindow size=" << sz[0] << "," << sz[1];
-  int *asz = render_window->GetActualSize();
-  oofcerr << " actual size=" << asz[0] << "," << asz[1];
-  oofcerr << " tile scale=" << sclx << "," << scly 
-	  << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//   oofcerr << "OOFCanvas3D::configure: w=" << width << " h=" << height
+//   	  << " x=" << x << " y=" << y << std::endl;
+// #endif // DEBUG
   assert(mainthread_query());
-  render_window->SetSize(FUDGE*width, FUDGE*height);
+  render_window->SetSize(rescaleFudgeFactor*width, rescaleFudgeFactor*height);
   repositionRenderWindow();
 }
 
@@ -231,13 +226,22 @@ void OOFCanvas3D::repositionRenderWindow() {
   GtkWidget *topwindow = gtk_widget_get_toplevel(drawing_area);
   int top_height = topwindow->allocation.height;
   int height = drawing_area->allocation.height;
-  oofcerr << "OOFCanvas3D::repositionRenderWindow: x=" << x << " y=" << y
-	  << " top_height=" << top_height << " height=" << height
-	  << " new y=" << (top_height - y - height) << std::endl;
-  render_window->SetPosition(FUDGE*x, FUDGE*(top_height - y - height));
+  // oofcerr << "OOFCanvas3D::repositionRenderWindow: x=" << x << " y=" << y
+  // 	  << " top_height=" << top_height << " height=" << height
+  // 	  << " new y=" << (top_height - y - height) << std::endl;
+  render_window->SetPosition(rescaleFudgeFactor*x,
+			     rescaleFudgeFactor*(top_height - y - height));
 #else
   render_window->SetPosition(x, y);
 #endif	// not OOF_USE_COCOA
+}
+
+void OOFCanvas3D::setFixCanvasScaleBug(bool fixit) {
+  rescaleFudgeFactor = _fudgeFactor(fixit);
+  int h = drawing_area->allocation.height;
+  int w = drawing_area->allocation.width;
+  render_window->SetSize(rescaleFudgeFactor*w, rescaleFudgeFactor*h);
+  repositionRenderWindow();
 }
 
 // static
@@ -365,7 +369,8 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
       ctrl = event->button.state & GDK_CONTROL_MASK;
       buttonNumber = event->button.button;
       args = Py_BuildValue("sddiii", "down",
-			   FUDGE*event->button.x, FUDGE*event->button.y, 
+			   rescaleFudgeFactor*event->button.x,
+			   rescaleFudgeFactor*event->button.y, 
 			   buttonNumber, shift, ctrl);
       last_x = event->button.x;
       last_y = event->button.y;
@@ -376,7 +381,8 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
       ctrl = event->button.state & GDK_CONTROL_MASK;
       buttonNumber = event->button.button;
       args = Py_BuildValue("sddiii", "up",
-			   FUDGE*event->button.x, FUDGE*event->button.y, 
+			   rescaleFudgeFactor*event->button.x,
+			   rescaleFudgeFactor*event->button.y, 
 			   buttonNumber, shift, ctrl);
       if(rubberband && rubberband->active()) {
 	rubberband->stop(renderer);
@@ -389,7 +395,8 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
       ctrl = event->motion.state & GDK_CONTROL_MASK;
       buttonNumber = event->button.button;
       args = Py_BuildValue("sddiii", "move",
-			   FUDGE*event->motion.x, FUDGE*event->motion.y,
+			   rescaleFudgeFactor*event->motion.x,
+			   rescaleFudgeFactor*event->motion.y,
 			   buttonNumber, shift, ctrl);
       // TODO 3.1: 3D rubberbands
       // if(mousedown && rubberband) {
@@ -412,7 +419,8 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
       shift = event->scroll.state & GDK_SHIFT_MASK;
       ctrl = event->scroll.state & GDK_CONTROL_MASK;
       args = Py_BuildValue("sddiii", "scroll",
-			   FUDGE*event->scroll.x, FUDGE*event->scroll.y,
+			   rescaleFudgeFactor*event->scroll.x,
+			   rescaleFudgeFactor*event->scroll.y,
 			   event->scroll.direction, shift, ctrl);
       break;
     default:

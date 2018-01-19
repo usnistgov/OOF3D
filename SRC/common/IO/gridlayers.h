@@ -54,6 +54,7 @@ public:
   ~WireGridCanvasLayer();
   virtual const std::string &classname() const;
   virtual void setModified();
+  virtual int nVTKProps() const;
   virtual void start_clipping();
   virtual void stop_clipping();
   virtual void set_clip_parity(bool);
@@ -87,6 +88,7 @@ public:
   ~SegmentGridCanvasLayer();
   virtual const std::string &classname() const;
   virtual void setModified();
+  virtual int nVTKProps() const { return 1; }
   virtual void start_clipping();
   virtual void stop_clipping();
   virtual void set_clip_parity(bool);
@@ -119,6 +121,7 @@ public:
   ~FilledGridCanvasLayer();
   virtual const std::string &classname() const;
   virtual void setModified();
+  virtual int nVTKProps() const { return 1; }
 
   // Colormap methods are defined to be virtual just in case a
   // subclass needs to override them.  They're not defined in general
@@ -167,6 +170,7 @@ public:
 			 vtkSmartPointer<GridSource>);
   virtual const std::string &classname() const;
   virtual void setModified();
+  virtual int nVTKProps() const { return 1; }
   virtual void start_clipping();
   virtual void stop_clipping();
   virtual void set_clip_parity(bool);

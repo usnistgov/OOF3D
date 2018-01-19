@@ -178,11 +178,11 @@ void GhostOOFCanvas::render() {
   }
 }
 
-void GhostOOFCanvas::newLayer(OOFCanvasLayerBase *layer) {
+void GhostOOFCanvas::newLayer(OOFCanvasLayer *layer) {
   layers.push_back(layer);
 }
 
-void GhostOOFCanvas::removeLayer(OOFCanvasLayerBase *layer) {
+void GhostOOFCanvas::removeLayer(OOFCanvasLayer *layer) {
   for(CanvasLayerList::iterator i=layers.begin(); i<layers.end(); ++i) {
     if(*i == layer) {
       layers.erase(i);

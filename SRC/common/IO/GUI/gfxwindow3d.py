@@ -301,10 +301,11 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
             view = self.oofcanvas.get_view()
             self.oofcanvas.widget().destroy()
 
-        self.oofcanvas = oofcanvas3d.OOFCanvas3D() #self.settings)
+        self.oofcanvas = oofcanvas3d.OOFCanvas3D(
+            self.settings.fixCanvasScaleBug)
         self.oofcanvas.set_bgColor(self.settings.bgcolor)
         self.canvasFrame.add(self.oofcanvas.widget())
-        
+
         # Retrieve the drawing area and initiate logging.
         canvasdrawingarea = self.oofcanvas.widget()
         init_canvas_logging(canvasdrawingarea) 

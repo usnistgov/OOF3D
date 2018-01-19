@@ -204,6 +204,8 @@ class GfxSettings:
                                         automatic.automatic,
                                         automatic.automatic)
         axisoffset = RelativeAxisOffset(*defaultOffset)
+        # work around for macOS canvas size bug on laptop
+        fixCanvasScaleBug = False 
         
     def __init__(self):
         # Copy all default (class) values into local (instance) variables.
@@ -622,8 +624,7 @@ class GhostGfxWindow:
                 callback=self.toggleAntialias,
                 value=self.settings.antialias,
                 threadable=oofmenu.THREADABLE,
-                help=
-                "Use antialiased rendering.",
+                help="Use antialiased rendering.",
                 discussion=xmlmenudump.loadFile(
                         'DISCUSSIONS/common/menu/antialias.xml')
                 ))
@@ -943,6 +944,14 @@ class GhostGfxWindow:
             ' when zooming to full size.',
             discussion=xmlmenudump.loadFile(
                     'DISCUSSIONS/common/menu/margin.xml')
+            ))
+
+        settingmenu.addItem(CheckOOFMenuItem(
+            'Fix_Scaling_Bug',
+            callback=self.fixScalingBug,
+            value=self.settings.fixCanvasScaleBug,
+            threadable=oofmenu.THREADABLE,
+            help="Fix a factor of two error in canvas size and position. (NOT OUR FAULT!)"
             ))
 
         if config.dimension() == 2:
@@ -1321,6 +1330,10 @@ class GhostGfxWindow:
         mainthread.runBlock(self.oofcanvas.setAntiAlias, (antialias,))
         self.draw()
 
+    def fixScalingBug(self, menuitem, fixit):
+        self.settings.fixCanvasScaleBug = fixit
+        mainthread.runBlock(self.oofcanvas.setFixCanvasScaleBug, (fixit,))
+        
     # def setAntialiasOptions(self, menuitem,
     #                         RelativeContrastThreshold,
     #                         HardContrastThreshold,
@@ -2331,6 +2344,8 @@ class PredefinedLayer:
 
 ################################################
 
+# Global defaults
+
 ## Set default values for the gfx window size.  This isn't handled by
 ## GfxSettings, because the window size isn't set in the window's own
 ## settings menu.
@@ -2351,6 +2366,19 @@ mainmenu.gfxdefaultsmenu.addItem(oofmenu.OOFMenuItem(
                                    tip="Window height in pixels.")],
     help="Set the initial size of graphics windows.",
     discussion="<para> Set the initial size of graphics windows. </para>"
+    ))
+
+
+def _fixScalingBug(menuitem, fixit):
+    GfxSettings.fixCanvasScaleBug = fixit
+    
+mainmenu.gfxdefaultsmenu.addItem(oofmenu.CheckOOFMenuItem(
+    "Fix_Scaling_Bug",
+    callback=_fixScalingBug,
+    ordering=100,
+    value=GfxSettings.fixCanvasScaleBug,
+    threadable=oofmenu.THREADABLE,
+    help="Work around a bug in window scaling. (NOT OUR FAULT!)"
     ))
 
 

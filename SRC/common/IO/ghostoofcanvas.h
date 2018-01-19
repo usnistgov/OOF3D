@@ -57,6 +57,9 @@ protected:
   bool exposed;
   bool axes_showing;		// axes are actually drawn
   bool antialiasing;		// has antialiasing been turned on?
+
+  bool fixScalingBug; // set to true if vtk canvas is 1/2 size and mispositioned
+  
   // TODO: Use vtkNew instead of vtkSmartPointer here, and remove the
   // lines that initialize the vtkSmartPointers in the GhostOOFCanvas
   // constructor.  Doing this requires vtk8, though.
@@ -110,8 +113,8 @@ public:
 
   // newLayer() and removeLayer() are called by the OOFCanvasLayerBase
   // constructor and destructor.
-  void newLayer(OOFCanvasLayerBase*);
-  void removeLayer(OOFCanvasLayerBase*);
+  void newLayer(OOFCanvasLayer*);
+  void removeLayer(OOFCanvasLayer*);
 
   void reset();
 
@@ -216,6 +219,8 @@ public:
 
   ICoord get_size() const;
   void set_size(int, int);
+
+  virtual void setFixCanvasScaleBug(bool) {}
 
   SLock renderLock;
 
