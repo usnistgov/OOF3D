@@ -22,6 +22,7 @@ from ooflib.common.IO import gfxmanager
 from ooflib.common.IO import ghostgfxwindow
 from ooflib.common.IO import mainmenu
 from ooflib.common.IO.GUI import chooser
+from ooflib.common.IO.GUI import gfxmenu
 from ooflib.common.IO.GUI import gfxwindowbase
 from ooflib.common.IO.GUI import gtklogger
 from ooflib.common.IO.GUI import mousehandler
@@ -29,12 +30,16 @@ from ooflib.common.IO.GUI import quit
 from ooflib.common.IO.GUI import subWindow
 from ooflib.common.IO.GUI import toolbarGUI
 
+## TODO: Much of the code in preinitialize and postinitialize is the
+## same for 2D and 3D, and so it should be in GfxWindowBase and not
+## here.  The current situation is a mess.
+
 class GfxWindow3D(gfxwindowbase.GfxWindowBase):
     initial_height = 800
     initial_width = 1000
 
     def preinitialize(self, name, gfxmanager, clone):
-        # postinitialize is called by GfxWindowBase.__init__ on the
+        # preinitialize is called by GfxWindowBase.__init__ on the
         # main thread *before* GhostGfxWindow.__init__ is called.
         debug.mainthreadTest()
         self.gtk = None
@@ -146,6 +151,11 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         gtklogger.adoptGObject(self.layerList, self.layerListView,
                               access_method=self.layerListView.get_model)
 
+        # Handle right-clicks on the layer list.  They pop up the
+        # Layer menu.
+        gtklogger.connect(self.layerListView, 'button-press-event',
+                          self.layerListButtonCB)
+
         # The row-deleted and row-inserted signals are used to detect
         # when the user has reordered rows manually.  When the program
         # does anything that might cause these signals to be emitted,
@@ -232,6 +242,9 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         self.toolbar.gtk.show()
         self.timebox = self.makeTimeBox()
         self.toolbarBox.pack_start(self.timebox, expand=False, fill=False)
+
+        self.layerpopup = gfxmenu.gtkOOFPopUpMenu(self.menu.Layer,
+                                                  self.layerListView)
 
         # Construct gui's for toolboxes.  This must be done after the
         # base class is constructed so that *all* non-gui toolboxes
