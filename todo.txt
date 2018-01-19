@@ -33,10 +33,11 @@ draws the canvas in the wrong location.
 
 Fix bug: Typing to select a line in the file chooser isn't working on Mac.
 
-Missing feature: contextual menu in layer list.
-
 Missing feature: raise and lower layers, by menu or drag-and-drop.
-Maybe not possible.
+2018-01-19: Revived the OOF2 raising and lowering menu items and GUI.
+Still need to implement DisplayMethod.raise_layer and
+DisplayMethod.lower_layer.  Layer ordering will have to translate to
+SetRelativeCoincidentTopologyPolygonOffsetParameters parameters.
 
 Fix bug or badly designed feature: Select voxels or skeleton
 components while a clipping plane plane-and-arrow widget is displayed.
@@ -213,3 +214,7 @@ or maybe it was based on a misunderstanding.  Material inheritance is
 different from group inheritance, so it's possible that element groups
 created from pixel groups will contain more than one material after
 refinement, even if the pixel groups correspond 1:1 to materials.
+
+Missing feature: contextual menu in layer list.
+** Added. 2018-01-19
+

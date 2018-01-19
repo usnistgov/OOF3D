@@ -227,10 +227,10 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         layermenu.Delete.add_gui_callback(self.deleteLayer_gui)
         layermenu.Hide.add_gui_callback(self.hideLayer_gui)
         layermenu.Show.add_gui_callback(self.showLayer_gui)
-#         layermenu.Raise.One_Level.add_gui_callback(self.raiseLayer_gui)
-#         layermenu.Raise.To_Top.add_gui_callback(self.raiseToTop_gui)
-#         layermenu.Lower.One_Level.add_gui_callback(self.lowerLayer_gui)
-#         layermenu.Lower.To_Bottom.add_gui_callback(self.lowerToBottom_gui)
+        layermenu.Raise.One_Level.add_gui_callback(self.raiseLayer_gui)
+        layermenu.Raise.To_Top.add_gui_callback(self.raiseToTop_gui)
+        layermenu.Lower.One_Level.add_gui_callback(self.lowerLayer_gui)
+        layermenu.Lower.To_Bottom.add_gui_callback(self.lowerToBottom_gui)
         settingmenu = self.menu.Settings
         toolboxmenu = self.menu.Toolbox
 

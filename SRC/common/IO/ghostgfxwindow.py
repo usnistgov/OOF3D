@@ -527,88 +527,89 @@ class GhostGfxWindow:
             ## sorting the layers aren't yet included in 3D.  They
             ## need to be implemented using the CoincidentTopology
             ## methods in vtkMapper, somehow.
-            raisemenu = layermenu.addItem(OOFMenuItem(
-                'Raise',
-                help='Make a layer more visible.',
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/raiselayer.xml')
-                ))
-            raisemenu.addItem(OOFMenuItem(
-                'One_Level',
-                callback=self.raiseLayer,
-                accel='r',
-                params=[IntParameter('n', 0, tip="Layer index.")],
-                help="Raise the selected graphics layer.",
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/raiseone.xml')
-                ))
-            raisemenu.addItem(OOFMenuItem(
-                'To_Top',
-                callback=self.raiseToTop,
-                accel='t',
-                params=[IntParameter('n', 0, tip="Layer index.")],
-                help=\
-                "Draw the selected graphics layer on top of all other layers.",
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/raisetop.xml')
-                ))
-            raisemenu.addItem(OOFMenuItem(
-                'By',
-                callback=self.raiseBy,
-                cli_only = 1,
-                params=[IntParameter('n', 0, tip="Layer index."),
-                        IntParameter('howfar', 1,
-                                     tip="How far to raise the layer.")
-                        ],
-                help="Raise the selected graphics layer over"
-                " a given number of other layers.",
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/raiseby.xml')
-                ))
-            lowermenu = layermenu.addItem(OOFMenuItem(
-                'Lower',
-                help='Make a layer less visible.',
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/lowerlayer.xml')
-                ))
-            lowermenu.addItem(OOFMenuItem(
-                'One_Level',
-                callback=self.lowerLayer,
-                accel='l',
-                params=[IntParameter('n', 0, tip="Layer index.")],
-                help="Lower the selected graphics layer.",
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/lowerone.xml')
-                ))
-            lowermenu.addItem(OOFMenuItem(
-                'To_Bottom',
-                callback=self.lowerToBottom,
-                accel='b',
-                params=[IntParameter('n', 0, tip="Layer index.")],
-                help="Draw the selected graphics layer below all other layers.",
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/lowerbtm.xml')
-                ))
-            lowermenu.addItem(OOFMenuItem(
-                'By',
-                callback=self.lowerBy,
-                cli_only = 1,
-                params=[IntParameter('n', 0, tip="Layer index."),
-                        IntParameter('howfar', 1,
-                                     tip="How far to lower the layer.")
-                        ],
-                help="Lower the selected graphics layer under"
-                " a given number of other layers.",
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/lowerby.xml')
-                ))
-            layermenu.addItem(OOFMenuItem(
-                'Reorder_All',
-                callback=self.reorderLayers,
-                help="Put the graphics layers in their default order.",
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/reorderlayers.xml')
-                ))
+        raisemenu = layermenu.addItem(OOFMenuItem(
+            'Raise',
+            help='Make a layer more visible.',
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/raiselayer.xml')
+            ))
+        raisemenu.addItem(OOFMenuItem(
+            'One_Level',
+            callback=self.raiseLayer,
+            accel='r',
+            params=[IntParameter('n', 0, tip="Layer index.")],
+            help="Raise the selected graphics layer.",
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/raiseone.xml')
+            ))
+        raisemenu.addItem(OOFMenuItem(
+            'To_Top',
+            callback=self.raiseToTop,
+            accel='t',
+            params=[IntParameter('n', 0, tip="Layer index.")],
+            help=\
+            "Draw the selected graphics layer on top of all other layers.",
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/raisetop.xml')
+            ))
+        raisemenu.addItem(OOFMenuItem(
+            'By',
+            callback=self.raiseBy,
+            cli_only = 1,
+            params=[IntParameter('n', 0, tip="Layer index."),
+                    IntParameter('howfar', 1,
+                                 tip="How far to raise the layer.")
+                    ],
+            help="Raise the selected graphics layer over"
+            " a given number of other layers.",
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/raiseby.xml')
+            ))
+        lowermenu = layermenu.addItem(OOFMenuItem(
+            'Lower',
+            help='Make a layer less visible.',
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/lowerlayer.xml')
+            ))
+        lowermenu.addItem(OOFMenuItem(
+            'One_Level',
+            callback=self.lowerLayer,
+            accel='l',
+            params=[IntParameter('n', 0, tip="Layer index.")],
+            help="Lower the selected graphics layer.",
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/lowerone.xml')
+            ))
+        lowermenu.addItem(OOFMenuItem(
+            'To_Bottom',
+            callback=self.lowerToBottom,
+            accel='b',
+            params=[IntParameter('n', 0, tip="Layer index.")],
+            help="Draw the selected graphics layer below all other layers.",
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/lowerbtm.xml')
+            ))
+        lowermenu.addItem(OOFMenuItem(
+            'By',
+            callback=self.lowerBy,
+            cli_only = 1,
+            params=[IntParameter('n', 0, tip="Layer index."),
+                    IntParameter('howfar', 1,
+                                 tip="How far to lower the layer.")
+                    ],
+            help="Lower the selected graphics layer under"
+            " a given number of other layers.",
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/lowerby.xml')
+            ))
+        layermenu.addItem(OOFMenuItem(
+            'Reorder_All',
+            callback=self.reorderLayers,
+            help="Put the graphics layers in their default order.",
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/reorderlayers.xml')
+            ))
+
         settingmenu = self.menu.addItem(OOFMenuItem(
             'Settings',
             help='Control Graphics window behavior.',
@@ -1124,22 +1125,22 @@ class GhostGfxWindow:
                 self.menu.Layer.Freeze.enable()
                 self.menu.Layer.Unfreeze.disable()
 
-            if config.dimension() == 2:
-                if self.selectedLayer.hidden:
-                    self.menu.Layer.Show.enable()
-                    self.menu.Layer.Hide.disable()
-                else:
-                    self.menu.Layer.Show.disable()
-                    self.menu.Layer.Hide.enable()
-                if self.layerID(self.selectedLayer) == 0:
-                    self.menu.Layer.Lower.disable()
-                else:
-                    self.menu.Layer.Lower.enable()
-                if self.layerID(self.selectedLayer) == self.nlayers()-1:
-                    self.menu.Layer.Raise.disable()
-                else:
-                    self.menu.Layer.Raise.enable()
+            if self.selectedLayer.hidden:
+                self.menu.Layer.Show.enable()
+                self.menu.Layer.Hide.disable()
+            else:
+                self.menu.Layer.Show.disable()
+                self.menu.Layer.Hide.enable()
+            if self.layerID(self.selectedLayer) == 0:
+                self.menu.Layer.Lower.disable()
+            else:
+                self.menu.Layer.Lower.enable()
+            if self.layerID(self.selectedLayer) == self.nlayers()-1:
+                self.menu.Layer.Raise.disable()
+            else:
+                self.menu.Layer.Raise.enable()
 
+            if config.dimension() == 2:
                 self.menu.Layer.Show_Contour_Map.disable()
                 self.menu.Layer.Hide_Contour_Map.disable()
                 if self.selectedLayer.contour_capable():
@@ -1602,7 +1603,7 @@ class GhostGfxWindow:
     ## runs in 3D.
 
     def sortLayers(self, forced=False):
-        if forced or config.dimension() == 3 or self.settings.autoreorder:
+        if forced or self.settings.autoreorder:
             self.layers.sort(display.layercomparator)
             self.sortedLayers = True
 

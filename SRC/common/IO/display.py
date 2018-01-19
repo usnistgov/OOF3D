@@ -413,14 +413,13 @@ class DisplayMethod(registeredclass.RegisteredClass):
         ## force a redraw.
         self.canvaslayer.setModified()
 
-    # TODO MERGE: raise_layer and lower_layer don't make sense in 3D.
-    # The 2D version will have to do something here.
-    if config.dimension() == 2:
-        def raise_layer(self, howfar=1):
-            pass
+    def raise_layer(self, howfar=1):
+        ## TODO: This.
+        debug.fmsg("Display.raise_layer is not yet implemented!")
 
-        def lower_layer(self, howfar=1):
-            pass
+    def lower_layer(self, howfar=1):
+        ## TODO: This.
+        debug.fmsg("Display.lower_layer is not yet implemented!")
 
     def layerordering(self):
         return self.getRegistration().layerordering
