@@ -523,10 +523,6 @@ class GhostGfxWindow:
                 </para>"""
                 ))
 
-            ## TODO 3.1: The menu items for raising, lowering, and
-            ## sorting the layers aren't yet included in 3D.  They
-            ## need to be implemented using the CoincidentTopology
-            ## methods in vtkMapper, somehow.
         raisemenu = layermenu.addItem(OOFMenuItem(
             'Raise',
             help='Make a layer more visible.',
