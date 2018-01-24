@@ -606,6 +606,13 @@ class GhostGfxWindow:
                     'DISCUSSIONS/common/menu/reorderlayers.xml')
             ))
 
+        if debug.debug():
+            layermenu.addItem(OOFMenuItem(
+                'Dump_Layers',
+                callback=self.dumpLayers,
+                help="Print a list of the current graphics layers."
+                ))
+
         settingmenu = self.menu.addItem(OOFMenuItem(
             'Settings',
             help='Control Graphics window behavior.',
@@ -1606,7 +1613,6 @@ class GhostGfxWindow:
         # and the second, "units", is a constant offset.  I don't know
         # what the slope multiplies, or what "units" is supposed to
         # mean.
-        debug.fmsg()
         if self.nlayers() < 2:
             return
         delta = -10./self.nlayers() # negative!
@@ -1622,8 +1628,9 @@ class GhostGfxWindow:
         ## TODO OPT: Lock?
         if n < self.nlayers()-howfar:
             thislayer = self.layers[n]
-            for i in range(howfar): # TODO OPT: Use slice copy instead of loop
-                self.layers[n+i] = self.layers[n+i+1]
+            self.layers[n:n+howfar] = self.layers[n+1:n+howfar+1]
+            # for i in range(howfar): # TODO OPT: Use slice copy instead of loop
+            #     self.layers[n+i] = self.layers[n+i+1]
             self.layers[n+howfar] = thislayer
             self.setLayerOffsetParameters()
             self.sortedLayers = False
@@ -1637,8 +1644,9 @@ class GhostGfxWindow:
         ## TODO OPT: Lock?
         if n >= howfar:
             thislayer = self.layers[n]
-            for i in range(howfar): # TODO OPT: Use slice copy instead of loop
-                self.layers[n-i] = self.layers[n-i-1]
+            self.layers[n-howfar+1:n+1] = self.layers[n-howfar:n]
+            # for i in range(howfar): # TODO OPT: Use slice copy instead of loop
+            #     self.layers[n-i] = self.layers[n-i-1]
             self.layers[n-howfar] = thislayer
             self.setLayerOffsetParameters()
             self.sortedLayers = False
@@ -2207,6 +2215,10 @@ class GhostGfxWindow:
         self.sensitize_menus()
         self.newLayerMembers()
         self.draw()
+
+    def dumpLayers(self, menuitem):
+        for i, layer in enumerate(self.layers):
+            print i, layer.__class__.__name__
 
     def listedLayers(self):             # for testing
         result = []
