@@ -107,6 +107,7 @@ SemiPlanar = LayerOrdering(1.)          # partially filled meshes or images
 Linear = LayerOrdering(2.)              # mesh boundaries
 SemiLinear = LayerOrdering(3.)          # partial mesh boundaries
 PointLike = LayerOrdering(4.)           # single pixels or nodes
+Celestial = LayerOrdering(1000.)        # always on top
 
 ############
 

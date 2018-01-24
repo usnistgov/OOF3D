@@ -183,6 +183,14 @@ bool WireGridCanvasLayer::visibleBoundingBox(
   return getVisibleBoundingBox(edgeMapper->GetInput(), renderer, bbox);
 }
 
+void WireGridCanvasLayer::setCoincidentTopologyParams(double factor,
+						      double units)
+{
+  edgeMapper->SetRelativeCoincidentTopologyLineOffsetParameters(factor, units);
+  // Since the faces aren't drawn to be seen, don't adjust their offset.
+  //faceMapper->SetRelativeCoincidentTopologyLineOffsetParameters(factor,units);
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 SegmentGridCanvasLayer::SegmentGridCanvasLayer(
@@ -250,6 +258,12 @@ bool SegmentGridCanvasLayer::visibleBoundingBox(
   const
 {
   return getVisibleBoundingBox(edgeMapper->GetInput(), renderer, bbox);
+}
+
+void SegmentGridCanvasLayer::setCoincidentTopologyParams(double factor,
+							 double units)
+{
+  edgeMapper->SetRelativeCoincidentTopologyLineOffsetParameters(factor, units);
 }
 
 // vtkSmartPointer<vtkProp3D> SegmentGridCanvasLayer::get_pickable_prop3d() {
@@ -357,6 +371,12 @@ bool FilledGridCanvasLayer::visibleBoundingBox(
   const
 {
   return getVisibleBoundingBox(mapper->GetInput(), renderer, bbox);
+}
+
+void FilledGridCanvasLayer::setCoincidentTopologyParams(double factor,
+							double units)
+{
+  mapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor, units);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -514,4 +534,10 @@ bool ContourGridCanvasLayer::visibleBoundingBox(
   const
 {
   return getVisibleBoundingBox(mapper->GetInput(), renderer, bbox);
+}
+
+void ContourGridCanvasLayer::setCoincidentTopologyParams(double factor,
+							 double units)
+{
+  mapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor, units);
 }

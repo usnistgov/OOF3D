@@ -97,6 +97,7 @@ public:
   virtual void show(bool) {}
   virtual void hide(bool) {}
   virtual bool showing() const { return false; }
+  virtual void setCoincidentTopologyParams(double, double) = 0;
 
   virtual bool pickable() { return false; }
 
@@ -138,6 +139,7 @@ private:
 public:
   OOFCanvasLayer(GhostOOFCanvas*, const std::string&);
   virtual ~OOFCanvasLayer();
+
   void raise_layer(int);
   void raise_to_top();
   void lower_layer(int);
@@ -225,6 +227,7 @@ public:
   void set_scale(double);
   void set_normal(const CDirection*);
   void set_center(const Coord3D*);
+  virtual void setCoincidentTopologyParams(double, double);
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -276,6 +279,7 @@ public:
   void set_faceOpacity(double);
   void set_position(const Coord3D*);
   void offset_cell(vtkIdType, double);
+  virtual void setCoincidentTopologyParams(double, double);
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -306,6 +310,7 @@ public:
   virtual void set_size(double);
   virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
 				  CRectangularPrism*) const;
+  virtual void setCoincidentTopologyParams(double, double);
 };
 
 class SimpleFilledCellLayer : public SimpleCellLayer {
@@ -494,6 +499,8 @@ public:
 
   virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
 				  CRectangularPrism*) const;
+
+  virtual void setCoincidentTopologyParams(double, double);
 };
 
 class ImageCanvasOverlayer : public OOFCanvasLayerBase {
@@ -512,6 +519,7 @@ public:
   virtual void connectToOverlayer(ImageCanvasOverlayer*);
   virtual void connectToAlgorithm(vtkSmartPointer<vtkAlgorithmOutput>);
   virtual vtkSmartPointer<vtkAlgorithmOutput> output();
+  virtual void setCoincidentTopologyParams(double, double) {}
   friend class ImageCanvasLayer;
 };
 

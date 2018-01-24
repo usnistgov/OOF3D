@@ -1591,18 +1591,33 @@ class GhostGfxWindow:
                 return layer
         return None
 
-    ## TODO 3.1: It's not clear that layer ordering has any meaning in
-    ## 3D, so the menu items for raising, lowering, and sorting the
-    ## layers aren't included in 3D.  HOWEVER, if the layers aren't
-    ## sorted in the canonical order when they're first constructed in
-    ## 3D, the selected voxels don't appear, so sortLayers() *always*
-    ## runs in 3D.
-
     def sortLayers(self, forced=False):
         if forced or self.settings.autoreorder:
             self.layers.sort(display.layercomparator)
             self.sortedLayers = True
+            self.setLayerOffsetParameters()
 
+    def setLayerOffsetParameters(self):
+        # Adjust the coincident topology offset parameters that vtk
+        # uses to determine how to draw coincident objects.  Objects
+        # with more negative offsets hide those with more positive
+        # ones.  It's not really clear (to me) what the parameters
+        # mean, but the first one, "factor", is some sort of slope,
+        # and the second, "units", is a constant offset.  I don't know
+        # what the slope multiplies, or what "units" is supposed to
+        # mean.
+        debug.fmsg()
+        if self.nlayers() < 2:
+            return
+        delta = -10./self.nlayers() # negative!
+        factor = 0.
+        units = 0.
+        for layer in self.layers:
+            if layer.canvaslayer is not None:
+                layer.canvaslayer.setCoincidentTopologyParams(factor, units)
+            factor += delta
+            units += delta
+            
     def raise_layer_by(self, n, howfar):
         ## TODO OPT: Lock?
         if n < self.nlayers()-howfar:
@@ -1610,7 +1625,7 @@ class GhostGfxWindow:
             for i in range(howfar): # TODO OPT: Use slice copy instead of loop
                 self.layers[n+i] = self.layers[n+i+1]
             self.layers[n+howfar] = thislayer
-            thislayer.raise_layer(howfar) # Currently a no-op!
+            self.setLayerOffsetParameters()
             self.sortedLayers = False
             # self.layerChangeTime.increment()
     def raise_layer(self, n):
@@ -1625,7 +1640,7 @@ class GhostGfxWindow:
             for i in range(howfar): # TODO OPT: Use slice copy instead of loop
                 self.layers[n-i] = self.layers[n-i-1]
             self.layers[n-howfar] = thislayer
-            thislayer.lower_layer(howfar) # Currently a no-op!
+            self.setLayerOffsetParameters()
             self.sortedLayers = False
             # self.layerChangeTime.increment()
     def lower_layer(self, n):

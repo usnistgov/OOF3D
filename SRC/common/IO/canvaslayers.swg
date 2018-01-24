@@ -45,6 +45,7 @@ public:
   void writeVTK(char*);
 
   bool visibleBoundingBox(vtkRendererPtr, CRectangularPrism *outPrism);
+  void setCoincidentTopologyParams(double, double);
 };
 
 class OOFCanvasLayer : public OOFCanvasLayerBase { 

@@ -48,7 +48,6 @@ class GhostOOFCanvas;
 class View;
 class ImageFormat;
 class OOFCanvasLayer;
-class OOFCanvasLayerBase;
 
 class GhostOOFCanvas {
 protected:

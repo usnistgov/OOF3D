@@ -697,6 +697,15 @@ void PlaneAndArrowLayer::set_center(const Coord3D *position) {
   setModified();
 }
 
+void PlaneAndArrowLayer::setCoincidentTopologyParams(double factor,
+						     double units)
+{
+  planeMapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor,
+								    units);
+  arrowMapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor,
+								    units);
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // TODO: Add arrowParity, as in PlaneAndArrowLayer.
@@ -1053,6 +1062,14 @@ void BoxAndArrowLayer::offset_cell(vtkIdType cellID, double offset) {
   } 
 }
 
+void BoxAndArrowLayer::setCoincidentTopologyParams(double factor, double units)
+{
+  boxMapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor,
+								  units);
+  arrowMapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor,
+								    units);
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -1064,7 +1081,6 @@ SimpleCellLayer::SimpleCellLayer(GhostOOFCanvas *canvas, const std::string &nm)
 {
   actor->SetMapper(mapper);
   addProp(actor);
-  mapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(-3, -3);
 }
 
 SimpleCellLayer::~SimpleCellLayer() {}
@@ -1140,6 +1156,12 @@ bool SimpleCellLayer::visibleBoundingBox(vtkSmartPointer<vtkRenderer> renderer,
 					 CRectangularPrism *bbox) const
 {
   return getVisibleBoundingBox(grid, renderer, bbox);
+}
+
+void SimpleCellLayer::setCoincidentTopologyParams(double factor, double units) {
+  mapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor, units);
+  mapper->SetRelativeCoincidentTopologyLineOffsetParameters(factor, units);
+  mapper->SetRelativeCoincidentTopologyPointOffsetParameter(units);
 }
 
 //=\\=//=\\=//=\\=//=\\=//
@@ -1750,6 +1772,11 @@ bool ImageCanvasLayer::visibleBoundingBox(vtkSmartPointer<vtkRenderer> renderer,
   const
 {
   return getVisibleBoundingBox(mapper->GetInput(), renderer, bbox);
+}
+
+void ImageCanvasLayer::setCoincidentTopologyParams(double factor, double units)
+{
+  mapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor, units);
 }
     
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

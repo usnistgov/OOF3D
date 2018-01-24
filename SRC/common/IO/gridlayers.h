@@ -67,6 +67,8 @@ public:
   vtkSmartPointer<GridSource> source() { return gridsource; }
   virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
 				  CRectangularPrism*) const;
+
+  virtual void setCoincidentTopologyParams(double, double);
 };
 
 // SegmentGridCanvasLayer displays a grid of line segments.  To
@@ -100,6 +102,7 @@ public:
   vtkSmartPointer<GridSource> source() { return gridsource; }
   virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
 				  CRectangularPrism*) const;
+  virtual void setCoincidentTopologyParams(double, double);
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -138,6 +141,7 @@ public:
   virtual vtkSmartPointer<vtkAbstractCellLocator> get_locator();
   virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
 				  CRectangularPrism*) const;
+  virtual void setCoincidentTopologyParams(double, double);
 };
 
 class SolidFilledGridCanvasLayer : public FilledGridCanvasLayer {
@@ -177,6 +181,7 @@ public:
   virtual void writeVTK(const std::string&);
   virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
 				  CRectangularPrism*) const;
+  virtual void setCoincidentTopologyParams(double, double);
 };
 
 // TODO: SolidFilledGridCanvasLayer and ContourGridCanvasLayer should
