@@ -201,7 +201,7 @@ voxelRegionSelectionDisplay = registeredclass.Registration(
     VoxelRegionSelectionDisplay,
     params=voxelregionselectionparams,
     ordering=3.1,
-    layerordering=display.Volume(0.5),
+    layerordering=display.Celestial(0.5),
     whoclasses=('Microstructure'),
     tip="Display the widget for editing a region containing all the voxels to be selected."
     )

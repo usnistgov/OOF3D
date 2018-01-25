@@ -23,7 +23,6 @@ It's passed through to vtkActor::GetProperty()->SetOpacity(), but it
 doesn't have any effect on what's displayed.  Also, there's a TODO
 asking if ImageCanvasLayer::set_opacity() works.
 
-
 Fix bug?  Edit a clipping plane by double-clicking in the list in the
 toolbox, and change the convertible RC to "angles". It's possible to
 get the error "Parameter value out of range for phi".
@@ -82,10 +81,9 @@ Write CSkeletonFace::homogeneity()
 Allow graphics windows to be synched, so that view changes in one are
 done in all.
 
-Tumbling large images or Microstruture Material displays can be very
-slow because it takes a long time to recompute the center point.
-Either find a faster way to compute the center, or make computing the
-center optional and re-use the old point.
+Change AutoWidgets so that they return automatic.automatic if the text
+box is empty.  Get rid of the check button.  See TODO in
+parameterwidgets.py.
 
 ----------------------------------------------------------------------------
 At Some Later Time
@@ -218,3 +216,8 @@ refinement, even if the pixel groups correspond 1:1 to materials.
 Missing feature: contextual menu in layer list.
 ** Added. 2018-01-19
 
+Tumbling large images or Microstruture Material displays can be very
+slow because it takes a long time to recompute the center point.
+Either find a faster way to compute the center, or make computing the
+center optional and re-use the old point.
+** Done, but not removed from the todo list until later...

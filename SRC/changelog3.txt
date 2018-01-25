@@ -55,6 +55,9 @@ Fixed errors in updating filtered skeleton and mesh displays.
 
 Fixed the pixel, skeleton, and mesh info displays.
 
+Right-clicking on the layer list in the graphics window brings up the
+layer editing menu.
+
 3.1.1.1
 
 Minor changes to make the old gcc 4.7 compilers happy.

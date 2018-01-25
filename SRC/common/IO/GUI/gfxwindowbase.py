@@ -177,7 +177,6 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
                                    
     def selectionChangedCB(self, selection): # self.layerListView callback
         debug.mainthreadTest()
-        debug.fmsg()
         model, iter = selection.get_selected()
         self.suppressSelectionSignals()
         try:
@@ -209,19 +208,16 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
     # the layer list.  "row-inserted" is sent first.
     
     def listRowInsertedCB(self, model, path, iter):
-        debug.fmsg()
         # "row-inserted" is sent before the row is built, so we can't
         # get the actual layer here, just where it's going to be.
         self.destination_path = path
         self.suppressSelectionSignals()
 
     def listRowDeletedCB(self, model, path):
-        debug.fmsg(self.destination_path is not None)
         self.allowSelectionSignals()
         if self.destination_path is not None:
             source_row = path[0]
             dest_row = self.destination_path[0]
-            debug.fmsg("source_row=", source_row, "dest_row=", dest_row)
             if source_row > dest_row:
                 # The layer has been raised.  Remember that indices in the
                 # gtk ListStore run in the opposite direction from indices
