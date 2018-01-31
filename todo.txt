@@ -23,10 +23,6 @@ It's passed through to vtkActor::GetProperty()->SetOpacity(), but it
 doesn't have any effect on what's displayed.  Also, there's a TODO
 asking if ImageCanvasLayer::set_opacity() works.
 
-Fix bug?  Edit a clipping plane by double-clicking in the list in the
-toolbox, and change the convertible RC to "angles". It's possible to
-get the error "Parameter value out of range for phi".
-
 Fix bug: Using upper-right corner arrows for switching views sometimes
 draws the canvas in the wrong location.
 
@@ -227,3 +223,10 @@ Still need to implement DisplayMethod.raise_layer and
 DisplayMethod.lower_layer.  Layer ordering will have to translate to
 SetRelativeCoincidentTopologyPolygonOffsetParameters parameters.
 ** 2018-01-2?  Done.  Needs vtk bug fix. Version 9.0.0 has it.
+
+Fix bug?  Edit a clipping plane by double-clicking in the list in the
+toolbox, and change the convertible RC to "angles". It's possible to
+get the error "Parameter value out of range for phi".
+**  Fixed.  2018-01-31  atan2 returns -180->180 angles, but
+AngleDirection was expecting 0->360.
+

@@ -11,6 +11,7 @@
 
 #include <oofconfig.h>
 
+#include "common/IO/oofcerr.h"
 #include "common/coord.h"
 #include "common/corientation.h"
 #include "common/differ.h"
@@ -83,7 +84,16 @@ double CUnitVectorDirection::theta() const {
 }
 
 double CUnitVectorDirection::phi() const {
-  return atan2(vec[1], vec[0]);
+  // atan2 returns a value in the range -pi/2, pi/2, but the
+  // AngleDirection class for some reason wants phi between 0 and
+  // 2*pi.
+  double fie = atan2(vec[1], vec[0]);
+  if(fie < 0) {
+    fie += 2*M_PI;
+    if(fie > 2*M_PI)		// Just in case of round off error
+      fie = 0.0;
+  }
+  return fie;
 }
 
 CAngleDirection CUnitVectorDirection::angles() const {
