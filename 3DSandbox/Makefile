@@ -1,14 +1,15 @@
-#CXX = clang++
-CXX = g++
+CXX = clang++
+#CXX = g++
 
-VTKDIR = /Users/langer
-#VTKDIR = /usr/local
+#VTKDIR = /Users/langer
+VTKDIR = /usr/local
+VTK = 9.0
 
-CFLAGS = -I$(VTKDIR)/include/vtk-8.1 -g -I/opt/local/include -std=c++11 -Wno-inconsistent-missing-override
+CFLAGS = -I$(VTKDIR)/include/vtk-$(VTK) -g -I/opt/local/include -std=c++11 -Wno-inconsistent-missing-override
 
-VTKLIBS= -L$(VTKDIR)/lib -lvtkCommonCore-8.1 -lvtkCommonDataModel-8.1 -lvtkCommonExecutionModel-8.1 -lvtkCommonMisc-8.1 -lvtkCommonTransforms-8.1 -lvtkFiltersCore-8.1 -lvtkFiltersExtraction-8.1 -lvtkFiltersGeneral-8.1 -lvtkFiltersModeling-8.1 -lvtkFiltersSources-8.1 -lvtkIOImage-8.1 -lvtkIOXML-8.1 -lvtkImagingColor-8.1 -lvtkImagingCore-8.1 -lvtkImagingGeneral-8.1 -lvtkRenderingAnnotation-8.1 -lvtkRenderingContextOpenGL2-8.1 -lvtkRenderingCore-8.1 -lvtkRenderingFreeType-8.1 -lvtkRenderingOpenGL2-8.1 -lvtkRenderingVolumeOpenGL2-8.1 -lvtkInteractionStyle-8.1
+VTKLIBS= -L$(VTKDIR)/lib -lvtkCommonCore-$(VTK) -lvtkCommonDataModel-$(VTK) -lvtkCommonExecutionModel-$(VTK) -lvtkCommonMisc-$(VTK) -lvtkCommonTransforms-$(VTK) -lvtkFiltersCore-$(VTK) -lvtkFiltersExtraction-$(VTK) -lvtkFiltersGeneral-$(VTK) -lvtkFiltersModeling-$(VTK) -lvtkFiltersSources-$(VTK) -lvtkIOImage-$(VTK) -lvtkIOXML-$(VTK) -lvtkImagingColor-$(VTK) -lvtkImagingCore-$(VTK) -lvtkImagingGeneral-$(VTK) -lvtkRenderingAnnotation-$(VTK) -lvtkRenderingContextOpenGL2-$(VTK) -lvtkRenderingCore-$(VTK) -lvtkRenderingFreeType-$(VTK) -lvtkRenderingOpenGL2-$(VTK) -lvtkRenderingVolumeOpenGL2-$(VTK) -lvtkInteractionStyle-$(VTK)
 
-#VTKLIBS = -L$(VTKDIR)/lib/ -lvtkCommonCore-8.1 -lvtkIO -lvtkFiltering -lvtkRendering -lvtkVolumeRendering -lvtkGraphics -lvtkRendering -lvtkHybrid -lvtkImaging -lvtkWidgets
+#VTKLIBS = -L$(VTKDIR)/lib/ -lvtkCommonCore-$(VTK) -lvtkIO -lvtkFiltering -lvtkRendering -lvtkVolumeRendering -lvtkGraphics -lvtkRendering -lvtkHybrid -lvtkImaging -lvtkWidgets
 
 .C.o:
 	$(CXX) $(CFLAGS) -c $<
