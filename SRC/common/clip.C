@@ -52,7 +52,13 @@ const ClippingPlane& ClippingPlane::operator=(const ClippingPlane &other) {
 }
 
 bool ClippingPlane::operator==(const ClippingPlane &other) const {
-  return (offset_ == other.offset_ && *normal_ == *other.normal_ &&
+  // Clipping planes are unequal if their normals are represented by
+  // different subclasses of CDirection, even if the directions refer
+  // to the same vectors.  This ensures that when a clipping plane is
+  // edited and only its subclass changes, the GUI list will be
+  // updated.
+  return (offset_ == other.offset_ &&
+	  normal_->identical(*other.normal_) &&
 	  enabled_ == other.enabled_ && flipped_ == other.flipped_);
 }
 

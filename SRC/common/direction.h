@@ -50,6 +50,8 @@ public:
   
   bool operator==(const CDirection&) const;
   bool operator<(const CDirection&) const;
+  // Identical means == and the same class too.
+  bool identical(const CDirection&) const;
 };
 
 std::ostream &operator<<(std::ostream&, const CDirection&);

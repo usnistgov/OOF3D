@@ -36,7 +36,7 @@ CDirection::CDirection() {}
 CDirection::~CDirection() {}
 
 std::ostream &operator<<(std::ostream &os, const CDirection &dir) {
-  return os << "CDirection(" << *dir.identifier() << ")";
+  return os << dir.classname() << "(" << *dir.identifier() << ")";
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -265,6 +265,10 @@ bool CDirection::operator==(const CDirection &other) const {
   CUnitVectorDirection ua = unitVector();
   CUnitVectorDirection ub = other.unitVector();
   return ua == ub;
+}
+
+bool CDirection::identical(const CDirection &other) const {
+  return (classname() == other.classname()) && (*this == other);
 }
 
 bool CUnitVectorDirection::operator==(const CUnitVectorDirection &other) const {
