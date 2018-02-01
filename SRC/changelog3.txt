@@ -56,7 +56,8 @@ Fixed errors in updating filtered skeleton and mesh displays.
 Fixed the pixel, skeleton, and mesh info displays.
 
 Right-clicking on the layer list in the graphics window brings up the
-layer editing menu.
+layer editing menu.  Layers can be rearranged by drag and drop on the
+list (but maybe not reliably on macOS).
 
 3.1.1.1
 
