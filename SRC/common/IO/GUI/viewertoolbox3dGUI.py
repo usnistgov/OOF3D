@@ -45,18 +45,13 @@ ndigits = 10
 ## TODO: When a clipping plane is set using Angles, it should stay
 ## in Angles after it's been edited by the plane and arrow widget.
 
-## TODO: When the parameter for the PlaneAndArrowLayer are modified,
-## the layer disappears until the clipping plane is deselected and
-## reselected in the list.
-
-## TODO: The plane in the PlaneAndArrowLayer is drawn in the wrong color.
-
 ## TODO: If the arrow in the PlaneAndArrowLayer is ctrl-dragged to a
 ## new position, a second plane is selected, and the first plane is
 ## reselected, the new arrow position is lost.
 
 ## TODO: Continuous rotation mode.  Set angular velocity and axis
-## direction.
+## direction.  Like vtk joystick interactor?  Toggle between joystick
+## and trackball modes?
 
 ## TODO: Rocker mode: rock back and forth on an axis.  Set axis
 ## direction, frequency, and amplitude.

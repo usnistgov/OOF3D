@@ -97,7 +97,6 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
         return 1
 
     def setParams(self):
-        self.canvaslayer.set_visibility(False);
         self.canvaslayer.set_arrowColor(self.arrow_color)
         self.canvaslayer.set_arrowTipRadius(self.arrow_tip_radius)
         if self.toolbox is not None:
@@ -148,7 +147,10 @@ radiusRange = (0, 0.2, 0.02)
 lengthRange = (0.2, 1, 0.05)
 opacityRange = (0, 1, 0.05)
 
-def _setDefaultClipPlaneClickAndDragParams(menuitem, arrow_color, arrow_tip_radius, arrow_length, plane_color, plane_opacity):
+def _setDefaultClipPlaneClickAndDragParams(menuitem,
+                                           arrow_color, arrow_tip_radius,
+                                           arrow_length,
+                                           plane_color, plane_opacity):
     global defaultClipPlaneClickAndDragArrowColor
     defaultClipPlaneClickAndDragArrowColor = arrow_color
     global defaultClipPlaneClickAndDragArrowTipRadius
@@ -175,16 +177,16 @@ clipplaneclickanddragparams = [
     parameter.FloatRangeParameter(
         'arrow_length', 
         lengthRange,
-        defaultClipPlaneClickAndDragArrowLength,                                        
-        tip="Length of the arrow relative to the plane"),                         
+        defaultClipPlaneClickAndDragArrowLength,
+        tip="Length of the arrow relative to the plane"),
     color.ColorParameter(
         'plane_color', 
-        defaultClipPlaneClickAndDragColor,                                             
+        defaultClipPlaneClickAndDragColor,
         tip="Color of the plane."),                   
     parameter.FloatRangeParameter(
         'plane_opacity', 
         opacityRange,                                                 
-        defaultClipPlaneClickAndDragOpacity,                                             
+        defaultClipPlaneClickAndDragOpacity,
         tip="Opacity of the plane.")]
 
 mainmenu.gfxdefaultsmenu.Clipping_Planes.addItem(oofmenu.OOFMenuItem(
@@ -194,10 +196,8 @@ mainmenu.gfxdefaultsmenu.Clipping_Planes.addItem(oofmenu.OOFMenuItem(
     params=clipplaneclickanddragparams,
     help="Set default parameters for viewing and click-and-drag editing of clipping planes.",
     discussion="""<para>
-
     Set default parameters for <link linkend="RegisteredClass:ClipPlaneClickAndDragDisplay"><classname>ClipPlaneClickAndDragDisplays</classname></link>.
     See <xref linkend="RegisteredClass:ClipPlaneClickAndDragDisplay"/> for the details.
-
     </para>"""))
 
 clipPlaneClickAndDragDisplay = registeredclass.Registration(
