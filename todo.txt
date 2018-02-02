@@ -28,11 +28,16 @@ draws the canvas in the wrong location.
 
 Fix bug: Typing to select a line in the file chooser isn't working on Mac.
 
-Fix bug or badly designed feature: Select voxels or skeleton
-components while a clipping plane plane-and-arrow widget is displayed.
-It's not clear whether clicking on the widget should be interpreted as
-a selection operation or not.   Probably the widget should not be
-visible unless the Viewer toolbox is active.
+
+
+The Box widget for selecting voxels shouldn't be visible unless the
+Voxel Selection method is set to Box, and should be dimmed when its
+toolbox isn't active.  Mouse-down on one side of the box should
+highlight that side, so the user knows which side has been clicked.
+Should image and/or microstructure layers automatically become
+translucent when the box widget is active?  Maybe there should be
+options for making the image translucent, and for dimming or hiding
+the box when the widget isn't active.
 
 Fix bug?  Drag and drop on layer list on Mac/Cocoa can result in
 duplicate entries in list, and the layers aren't actually reordered.
@@ -230,3 +235,11 @@ get the error "Parameter value out of range for phi".
 **  Fixed.  2018-01-31  atan2 returns -180->180 angles, but
 AngleDirection was expecting 0->360.
 
+Fix bug or badly designed feature: Select voxels or skeleton
+components while a clipping plane plane-and-arrow widget is displayed.
+It's not clear whether clicking on the widget should be interpreted as
+a selection operation or not.   Probably the widget should not be
+visible unless the Viewer toolbox is active, or should be drawn
+faintly (without its arrow?).  Maybe there should be auto-dim and
+auto-hide options in the layer plane-and-arrow settings.
+** Done: 2018-02-02

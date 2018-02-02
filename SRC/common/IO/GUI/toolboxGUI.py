@@ -9,6 +9,7 @@
 # oof_manager@nist.gov. 
 
 from ooflib.SWIG.common import config
+from ooflib.SWIG.common import switchboard
 from ooflib.common import debug
 from ooflib.common import mainthread
 from ooflib.common import toolbox
@@ -33,9 +34,19 @@ class GfxToolbox(widgetscope.WidgetScope):
     def close(self):
         pass
     def activate(self):
+        ## TODO: active should only be in the Toolbox class.  No need
+        ## to store it in GfxToolbox as well.  There may be places in
+        ## the code that assume it's in GfxToolbox, which should be
+        ## changed.
         self.active = True
+        self.toolbox.active = True
+        switchboard.notify("toolbox activated " + self._name,
+                           self.toolbox.gfxwindow())
     def deactivate(self):
         self.active = False
+        self.toolbox.active = False
+        switchboard.notify("toolbox deactivated " + self._name,
+                           self.toolbox.gfxwindow())
     def gfxwindow(self):
         return self.toolbox.gfxwindow()
     def installMouseHandler(self):

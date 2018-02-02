@@ -36,6 +36,7 @@ class Toolbox:
     def __init__(self, name, gfxwindow):
         self._name = name
         self._gfxwindow = gfxwindow      # GhostGfxWindow or GfxWindow
+        self.active = False
     def name(self):
         return self._name
     def gfxwindow(self):
