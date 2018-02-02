@@ -667,7 +667,7 @@ To deselect a plane, Ctrl+Click the plane in the list."""
 
     ## TODO 3.1: Edit clipping planes graphically using
     ## vtkImplicitPlaneWidget.  Or add a comment explaining why the
-    ## ClipPlaneClickAndDragDisplay is better.
+    ## ClippingPlaneWidget is better.
 
     def renderEnableCell(self, column, cell_renderer, model, iter):
         debug.mainthreadTest()
@@ -1133,7 +1133,7 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
             # clicked.
             (self.click_pos, self.layer) = \
                   self.gfxwindow.findClickedPositionOnActor_nolock(
-                      clipplaneclickanddragdisplay.ClipPlaneClickAndDragDisplay,
+                      clipplaneclickanddragdisplay.ClippingPlaneWidget,
                       point, 
                       viewobj)
             if self.click_pos is not None:
@@ -1146,7 +1146,7 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
 
             # Find the vtkActors that have been clicked upon.
             (actors, self.layer) = self.gfxwindow.findClickedActors_nolock(
-                clipplaneclickanddragdisplay.ClipPlaneClickAndDragDisplay,
+                clipplaneclickanddragdisplay.ClippingPlaneWidget,
                 point, 
                 viewobj)
             if actors is not None:

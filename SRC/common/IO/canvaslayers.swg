@@ -88,19 +88,14 @@ public:
   void set_center(Coord* Point);
 };
 
-class BoxAndArrowLayer : public OOFCanvasLayer {
+class BoxWidgetLayer : public OOFCanvasLayer {
 public:
-  BoxAndArrowLayer(GhostOOFCanvas*, const char*);
+  BoxWidgetLayer(GhostOOFCanvas*, const char*);
   %new Coord *get_cellCenter(int);
   %new Coord *get_cellNormal_Coord3D(int);
   void reset();
   void set_box(Coord *Point);
   void set_totalVisibility(bool);
-  void set_arrowVisibility(bool);
-  void set_arrowShaftRadius(double);
-  void set_arrowTipRadius(double);
-  void set_arrowLength(double);
-  void set_arrowColor(const CColor&);
   void set_pointSize(float);
   void set_lineWidth(float);
   void set_lineColor(const CColor&);

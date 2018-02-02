@@ -50,10 +50,8 @@ import math
 # that situation work.
 
 class VoxelRegionSelectionDisplay(display.DisplayMethod):
-    def __init__(self, arrow_color, arrow_tip_radius, arrow_length, point_size, line_width, line_color, face_color, face_opacity):
-        self.arrow_color = arrow_color
-        self.arrow_tip_radius = arrow_tip_radius
-        self.arrow_length = arrow_length
+    def __init__(self, point_size, line_width, line_color,
+                 face_color, face_opacity):
         self.point_size = point_size
         self.line_width = line_width
         self.line_color = line_color
@@ -75,17 +73,12 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
                             switchboard.requestCallbackMain("region editing finished", self.hideRegion)
                             ]
 
-        # Create an object of class BoxAndArrowLayer.
-        return canvaslayers.BoxAndArrowLayer(self.gfxwindow.oofcanvas,
-                                             "BoxAndArrow") 
+        # Create an object of class BoxWidgetLayer.
+        return canvaslayers.BoxWidgetLayer(self.gfxwindow.oofcanvas,
+                                           "BoxWidget") 
 
     def setParams(self):
         self.canvaslayer.set_totalVisibility(False)
-        self.canvaslayer.set_arrowVisibility(False)
-        self.canvaslayer.set_arrowColor(self.arrow_color)
-        self.canvaslayer.set_arrowTipRadius(self.arrow_tip_radius)
-        self.canvaslayer.set_arrowShaftRadius(0.3 * self.arrow_tip_radius)
-        self.canvaslayer.set_arrowLength(self.arrow_length)
         self.canvaslayer.set_pointSize(self.point_size)
         self.canvaslayer.set_lineWidth(self.line_width)
         self.canvaslayer.set_lineColor(self.line_color)
@@ -101,7 +94,6 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
         dimensions = microstructure.size()
         self.canvaslayer.set_box(dimensions)
         self.canvaslayer.setModified()
-        self.canvaslayer.set_arrowVisibility(False)
         self.canvaslayer.set_totalVisibility(True)
 
     def hideRegion(self, gfxwindow):
@@ -109,27 +101,16 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
             return
         self.canvaslayer.set_totalVisibility(False)
 
-defaultVoxelRegionSelectionArrowColor = color.red
-defaultVoxelRegionSelectionArrowTipRadius = 0.1
-defaultVoxelRegionSelectionArrowLength = 0.5
 defaultVoxelRegionSelectionPointSize = 5.0
 defaultVoxelRegionSelectionLineWidth = 3.0
 defaultVoxelRegionSelectionLineColor = color.blue
 defaultVoxelRegionSelectionFaceColor = color.blue
 defaultVoxelRegionSelectionFaceOpacity = 0.85
-arrowRadiusRange = (0, 0.2, 0.02)
-arrowLengthRange = (0.2, 1, 0.05)
 pointSizeRange = (0, 15, 1)
 lineWidthRange = (1, 10, 1)
 opacityRange = (0, 1, 0.05)
 
-def _setDefaultVoxelRegionSelectionParams(menuitem, arrow_color, arrow_tip_radius, arrow_length, plane_color, plane_opacity):
-    global defaultVoxelRegionSelectionArrowColor
-    defaultVoxelRegionSelectionArrowColor = arrow_color
-    global defaultVoxelRegionSelectionArrowTipRadius
-    defaultVoxelRegionSelectionArrowTipRadius = arrow_tip_radius
-    global defaultVoxelRegionSelectionArrowLength
-    defaultVoxelRegionSelectionArrowLength = arrow_length
+def _setDefaultVoxelRegionSelectionParams(menuitem, plane_color, plane_opacity):
     global defaultVoxelRegionSelectionPointSize
     defaultVoxelRegionSelectionPointSize = point_size
     global defaultVoxelRegionSelectionLineWidth
@@ -144,20 +125,6 @@ def _setDefaultVoxelRegionSelectionParams(menuitem, arrow_color, arrow_tip_radiu
 # Sizing and coloring options for the box and arrow. These can be
 # set in the graphics defaults menu.
 voxelregionselectionparams = [
-    color.ColorParameter(
-        'arrow_color', 
-        defaultVoxelRegionSelectionArrowColor,
-        tip="Color of the arrow."),
-    parameter.FloatRangeParameter(
-        'arrow_tip_radius', 
-        arrowRadiusRange,
-        defaultVoxelRegionSelectionArrowTipRadius,
-        tip="Radius of the arrow tip."),
-    parameter.FloatRangeParameter(
-        'arrow_length', 
-        arrowLengthRange,
-        defaultVoxelRegionSelectionArrowLength,                                        
-        tip="Length of the arrow."),
     parameter.FloatRangeParameter(
         'point_size', 
         pointSizeRange,
@@ -215,9 +182,6 @@ def predefinedVoxelRegionSelectionLayer():
     # VoxelRegionSelectionDisplay will be automatically created with
     # the default sizing and coloring options.
     return VoxelRegionSelectionDisplay(
-        arrow_color=defaultVoxelRegionSelectionArrowColor,
-        arrow_tip_radius=defaultVoxelRegionSelectionArrowTipRadius,
-        arrow_length=defaultVoxelRegionSelectionArrowLength,
         point_size=defaultVoxelRegionSelectionPointSize,
         line_width=defaultVoxelRegionSelectionLineWidth,
         line_color=defaultVoxelRegionSelectionLineColor,

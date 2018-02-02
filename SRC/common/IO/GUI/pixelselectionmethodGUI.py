@@ -104,7 +104,7 @@ class SelectionMethodGUI(mousehandler.MouseHandler):
 
 # TODO: Allow the user to adjust the box by selecting edges and
 # corners too (see TODOs in commo/IO/canvaslayer.C for some of the
-# BoxAndArrowLayer functions).
+# BoxWidgetLayer functions).
 
 class RectangularPrismSelectorGUI(SelectionMethodGUI):
     targetName = pixelselectionmethod.RectangularPrismSelector

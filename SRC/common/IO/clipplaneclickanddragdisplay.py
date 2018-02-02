@@ -32,13 +32,17 @@ from ooflib.common.IO import xmlmenudump
 
 import math
 
-# The ClipPlaneClickAndDragDisplay class is an extension of the
-# DisplayMethod class. The ClipPlaneClickAndDragDisplay controls a 3D
-# graphical representation of a clipping plane that the user has
-# currently selected in the "Viewer" toolbox.  This 3D graphical
-# representation can be clicked and dragged to allow easy editing of
-# clipping planes. It uses the class PlaneAndArrowLayer (described in
-# the next paragraph) for the 3D graphical representation.
+# The ClippingPlaneWidget class is an extension of the DisplayMethod
+# class. The ClippingPlaneWidget controls a 3D graphical
+# representation of a clipping plane that the user has currently
+# selected in the "Viewer" toolbox.  This 3D graphical representation
+# can be clicked and dragged to allow easy editing of clipping
+# planes. It uses the class PlaneAndArrowLayer (described in the next
+# paragraph) for the 3D graphical representation.
+
+# ClippingPlaneWidget used to be called ClipPlaneClickAndDragDisplay,
+# which was too long.  Some of the internal names in this file haven't
+# been updated, though.
 
 # An object of class PlaneAndArrowLayer contains two vtk actors: a
 # plane, and an arrow which points out of the plane and represents the
@@ -48,7 +52,7 @@ import math
 # the functions defined in canvaslayers.swg. The PlaneAndArrowLayer
 # class is specified in canvaslayers.h.
 
-class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
+class ClippingPlaneWidget(display.DisplayMethod):
     def __init__(self, arrow_color, arrow_tip_radius, arrow_length,
                  plane_color, plane_opacity,
                  hide_inactive, dim_inactive):
@@ -243,14 +247,14 @@ mainmenu.gfxdefaultsmenu.Clipping_Planes.addItem(oofmenu.OOFMenuItem(
     params=clipplaneclickanddragparams,
     help="Set default parameters for viewing and click-and-drag editing of clipping planes.",
     discussion="""<para>
-    Set default parameters for <link linkend="RegisteredClass:ClipPlaneClickAndDragDisplay"><classname>ClipPlaneClickAndDragDisplays</classname></link>.
-    See <xref linkend="RegisteredClass:ClipPlaneClickAndDragDisplay"/> for the details.
+    Set default parameters for <link linkend="RegisteredClass:ClippingPlaneWidget"><classname>ClippingPlaneWidget</classname></link>.
+    See <xref linkend="RegisteredClass:ClippingPlaneWidget"/> for the details.
     </para>"""))
 
 clipPlaneClickAndDragDisplay = registeredclass.Registration(
     'Clipping Plane Click-and-Drag Editor',
     display.DisplayMethod,
-    ClipPlaneClickAndDragDisplay,
+    ClippingPlaneWidget,
     params=clipplaneclickanddragparams,
     ordering=3.0,
     layerordering=display.Celestial,
@@ -264,9 +268,9 @@ from ooflib.common.IO import whoville
 
 def predefinedClipPlaneClickAndDragLayer():
     # When a new graphics window is opened, a
-    # ClipPlaneClickAndDragDisplay will be automatically created with
+    # ClippingPlaneWidget will be automatically created with
     # the default sizing and coloring options.
-    return ClipPlaneClickAndDragDisplay(
+    return ClippingPlaneWidget(
         arrow_color = defaultClipPlaneClickAndDragArrowColor,
         arrow_tip_radius = defaultClipPlaneClickAndDragArrowTipRadius,
         arrow_length = defaultClipPlaneClickAndDragArrowLength,

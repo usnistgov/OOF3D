@@ -15,7 +15,7 @@
 #define CANVASLAYERS_H
 
 // Classes defined in this file:
-class BoxAndArrowLayer;
+class BoxWidgetLayer;
 class FilledGridCanvasLayer;
 class ImageCanvasLayer;
 class ImageCanvasOverlayer;
@@ -232,26 +232,17 @@ public:
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-class BoxAndArrowLayer : public OOFCanvasLayer {
+class BoxWidgetLayer : public OOFCanvasLayer {
 protected:
   vtkSmartPointer<vtkUnstructuredGrid> grid;
   vtkSmartPointer<vtkPoints> points;
-  vtkSmartPointer<vtkArrowSource> arrowSource;
-  vtkSmartPointer<vtkTransform> arrowScaling;
-  vtkSmartPointer<vtkTransform> arrowRotation;
-  vtkSmartPointer<vtkTransform> arrowTranslation;
-  vtkSmartPointer<vtkTransform> arrowTransform;
-  vtkSmartPointer<vtkTransformPolyDataFilter> arrowFilter;
   vtkSmartPointer<vtkDataSetMapper> boxMapper;
-  vtkSmartPointer<vtkPolyDataMapper> arrowMapper;
   vtkSmartPointer<vtkActor> boxActor;
-  vtkSmartPointer<vtkActor> arrowActor;
   vtkSmartPointer<oofCellLocator> locator;
   bool totalVisibility;
-  bool arrowVisibility;
 public:
-  BoxAndArrowLayer(GhostOOFCanvas*, const std::string&);
-  ~BoxAndArrowLayer();
+  BoxWidgetLayer(GhostOOFCanvas*, const std::string&);
+  ~BoxWidgetLayer();
   virtual void start_clipping();
   virtual void stop_clipping();
   virtual void set_clip_parity(bool);
@@ -267,11 +258,6 @@ public:
   void reset();
   void set_box(const Coord3D*);
   void set_totalVisibility(bool);
-  void set_arrowVisibility(bool);
-  void set_arrowShaftRadius(double);
-  void set_arrowTipRadius(double);
-  void set_arrowLength(double);
-  void set_arrowColor(const CColor&);
   void set_pointSize(float);
   void set_lineWidth(float);
   void set_lineColor(const CColor&);

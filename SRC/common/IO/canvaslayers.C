@@ -708,29 +708,21 @@ void PlaneAndArrowLayer::setCoincidentTopologyParams(double factor,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// TODO: Add arrowParity, as in PlaneAndArrowLayer.
-
-BoxAndArrowLayer::BoxAndArrowLayer(GhostOOFCanvas *canvas, const std::string &nm)
+BoxWidgetLayer::BoxWidgetLayer(GhostOOFCanvas *canvas, const std::string &nm)
   : OOFCanvasLayer(canvas, nm),
     grid(vtkSmartPointer<vtkUnstructuredGrid>::New()),
     points(vtkSmartPointer<vtkPoints>::New()),
-    arrowSource(vtkSmartPointer<vtkArrowSource>::New()),  
-    arrowScaling(vtkSmartPointer<vtkTransform>::New()),
-    arrowRotation(vtkSmartPointer<vtkTransform>::New()),
-    arrowTranslation(vtkSmartPointer<vtkTransform>::New()),
-    arrowTransform(vtkSmartPointer<vtkTransform>::New()),
-    arrowFilter(vtkSmartPointer<vtkTransformPolyDataFilter>::New()),
     boxMapper(vtkSmartPointer<vtkDataSetMapper>::New()),
-    arrowMapper(vtkSmartPointer<vtkPolyDataMapper>::New()),
     boxActor(vtkSmartPointer<vtkActor>::New()),
-    arrowActor(vtkSmartPointer<vtkActor>::New()),
     locator(vtkSmartPointer<oofCellLocator>::New())
 {
   points->Initialize();
   points->SetNumberOfPoints(8);
   
   for (int i = 0; i < 8; i++) {
-    points->SetPoint(i, double(i % 2), double((i / 2) % 2), double((i / 4) % 2));
+    points->SetPoint(i, double(i % 2),
+		     double((i / 2) % 2),
+		     double((i / 4) % 2));
   }
 
   grid->Initialize();
@@ -809,75 +801,54 @@ BoxAndArrowLayer::BoxAndArrowLayer(GhostOOFCanvas *canvas, const std::string &nm
     grid->InsertNextCell(VTK_QUAD, 4, face_ptIDs[i]);
   }
   
-  arrowSource->SetTipResolution(12);
-  arrowSource->SetShaftResolution(12);
-  arrowSource->Update();
-
-  arrowScaling->Identity();
-  arrowScaling->Scale(-0.25, -0.25, -0.25);
-
-  arrowRotation->Identity();
-  arrowTranslation->Identity();
-  arrowTransform->Concatenate(arrowTranslation);
-  arrowTransform->Concatenate(arrowRotation);
-  arrowTransform->Concatenate(arrowScaling);
-
-  arrowFilter->SetInputConnection(arrowSource->GetOutputPort());
-  arrowFilter->SetTransform(arrowTransform);
-
   boxMapper->SetInputData(grid);
-  arrowMapper->SetInputConnection(arrowFilter->GetOutputPort());
 
   boxActor->SetMapper(boxMapper);
   boxActor->GetProperty()->SetEdgeVisibility(true);
-  arrowActor->SetMapper(arrowMapper);
 
   this->set_totalVisibility(false);
-  this->set_arrowVisibility(false);
 
   addProp(boxActor);
-  addProp(arrowActor);
-
   locator->LazyEvaluationOn();
 }
 
-BoxAndArrowLayer::~BoxAndArrowLayer() {}
+BoxWidgetLayer::~BoxWidgetLayer() {}
 
-const std::string &BoxAndArrowLayer::classname() const {
-  static const std::string nm("BoxAndArrowLayer");
+const std::string &BoxWidgetLayer::classname() const {
+  static const std::string nm("BoxWidgetLayer");
   return nm;
 }
 
-void BoxAndArrowLayer::start_clipping() { }
+void BoxWidgetLayer::start_clipping() { }
 
-void BoxAndArrowLayer::stop_clipping() { }
+void BoxWidgetLayer::stop_clipping() { }
 
-void BoxAndArrowLayer::set_clip_parity(bool b) { }
+void BoxWidgetLayer::set_clip_parity(bool b) { }
 
-void BoxAndArrowLayer::setModified() {
+void BoxWidgetLayer::setModified() {
   grid->Modified();
 }
 
-vtkSmartPointer<vtkDataSet> BoxAndArrowLayer::get_pickable_dataset() {
+vtkSmartPointer<vtkDataSet> BoxWidgetLayer::get_pickable_dataset() {
   return boxMapper->GetInput();
 }
 
-vtkSmartPointer<vtkProp3D> BoxAndArrowLayer::get_pickable_prop3d() {
+vtkSmartPointer<vtkProp3D> BoxWidgetLayer::get_pickable_prop3d() {
   return boxActor;
 }
 
-vtkSmartPointer<vtkPoints> BoxAndArrowLayer::get_pickable_points() {
+vtkSmartPointer<vtkPoints> BoxWidgetLayer::get_pickable_points() {
   return points;
 }
 
-vtkSmartPointer<vtkAbstractCellLocator> BoxAndArrowLayer::get_locator() {
+vtkSmartPointer<vtkAbstractCellLocator> BoxWidgetLayer::get_locator() {
   locator->Initialize();
   locator->SetDataSet(grid);
   return locator;
 }
 
 // TODO: Define this to work for cell types other than VTK_QUAD.
-Coord3D *BoxAndArrowLayer::get_cellCenter(vtkIdType cellID) {
+Coord3D *BoxWidgetLayer::get_cellCenter(vtkIdType cellID) {
   int cellType = grid->GetCellType(cellID);
   if (cellType == VTK_QUAD) {
     vtkIdType *pointIDs;
@@ -898,7 +869,7 @@ Coord3D *BoxAndArrowLayer::get_cellCenter(vtkIdType cellID) {
 }
 
 // TODO: Define this to work for cell types other than VTK_QUAD.
-Coord3D *BoxAndArrowLayer::get_cellNormal_Coord3D(vtkIdType cellID) {
+Coord3D *BoxWidgetLayer::get_cellNormal_Coord3D(vtkIdType cellID) {
   // Returns the "normal" vector to the cell. If the cell is a
   // VTK_QUAD (a box face), this is straightforward, since the normal
   // vector is just the normal vector of [the plane in which [the face
@@ -935,7 +906,7 @@ Coord3D *BoxAndArrowLayer::get_cellNormal_Coord3D(vtkIdType cellID) {
   return NULL;
 }
 
-void BoxAndArrowLayer::set_box(const Coord3D *point) {
+void BoxWidgetLayer::set_box(const Coord3D *point) {
   // Resets the box to a rectangular prism with one corner at (0, 0,
   // 0) and the opposite corner at the position specified by point.
   double dimensions[3];
@@ -943,65 +914,41 @@ void BoxAndArrowLayer::set_box(const Coord3D *point) {
   dimensions[1] = (*point)[1];
   dimensions[2] = (*point)[2];
   for (int i = 0; i < 8; i++) {
-    points->SetPoint(i, dimensions[0] * double(i % 2), dimensions[1] * double((i / 2) % 2), dimensions[2] * double((i / 4) % 2));
+    points->SetPoint(i, dimensions[0] * double(i % 2),
+		     dimensions[1] * double((i / 2) % 2),
+		     dimensions[2] * double((i / 4) % 2));
   }
 }
 
-void BoxAndArrowLayer::set_totalVisibility(bool visible) {
-  // Sets whether or not the box is visible, and whether or not the
-  // vtk arrow is allowed to be visible, once the renderer is called.
+void BoxWidgetLayer::set_totalVisibility(bool visible) {
+  // Sets whether or not the box is visible.
   totalVisibility = visible;
   boxActor->SetVisibility(int(visible));
-  arrowActor->SetVisibility(int(visible && arrowVisibility));
 }
 
-void BoxAndArrowLayer::set_arrowVisibility(bool visible) {
-  // This sets whether or not the vtk arrow is to be visible whenever
-  // the totalVisibility is true. If totalVisibility is false, then
-  // the arrow will not be visible.
-  arrowVisibility = visible;
-  arrowActor->SetVisibility(int(visible && totalVisibility));
-}
-
-void BoxAndArrowLayer::set_arrowShaftRadius(double radius) {
-  arrowSource->SetShaftRadius(radius);
-}
-
-void BoxAndArrowLayer::set_arrowTipRadius(double radius) {
-  arrowSource->SetTipRadius(radius);
-}
-
-void BoxAndArrowLayer::set_arrowLength(double length) {
-  arrowScaling->Identity();
-  arrowScaling->Scale(-length, -length, -length);
-}
-
-void BoxAndArrowLayer::set_arrowColor(const CColor& color) {
-  arrowActor->GetProperty()->SetColor(color.getRed(), color.getGreen(), 
-				      color.getBlue());
-}
-
-void BoxAndArrowLayer::set_pointSize(float size) {
+void BoxWidgetLayer::set_pointSize(float size) {
   boxActor->GetProperty()->SetPointSize(size);
 }
 
-void BoxAndArrowLayer::set_lineWidth(float width) {
+void BoxWidgetLayer::set_lineWidth(float width) {
   boxActor->GetProperty()->SetLineWidth(width);
 }
 
-void BoxAndArrowLayer::set_lineColor(const CColor &color) {
-  boxActor->GetProperty()->SetEdgeColor(color.getRed(), color.getGreen(), color.getBlue());
+void BoxWidgetLayer::set_lineColor(const CColor &color) {
+  boxActor->GetProperty()->SetEdgeColor(
+			color.getRed(), color.getGreen(), color.getBlue());
 }
 
-void BoxAndArrowLayer::set_faceColor(const CColor &color) {
-  boxActor->GetProperty()->SetColor(color.getRed(), color.getGreen(), color.getBlue());
+void BoxWidgetLayer::set_faceColor(const CColor &color) {
+  boxActor->GetProperty()->SetColor(
+		    color.getRed(), color.getGreen(), color.getBlue());
 }
 
-void BoxAndArrowLayer::set_faceOpacity(double opacity) {
+void BoxWidgetLayer::set_faceOpacity(double opacity) {
   boxActor->GetProperty()->SetOpacity(opacity);
 }
 
-void BoxAndArrowLayer::set_position(const Coord3D *point) {
+void BoxWidgetLayer::set_position(const Coord3D *point) {
   // Sets the position of the 0th point of the box to the specified
   // location.
 
@@ -1028,7 +975,7 @@ void BoxAndArrowLayer::set_position(const Coord3D *point) {
 }
 
 // TODO: Define this to work for cell types other than VTK_QUAD.
-void BoxAndArrowLayer::offset_cell(vtkIdType cellID, double offset) {
+void BoxWidgetLayer::offset_cell(vtkIdType cellID, double offset) {
   // Offsets the cell by the given amount in the direction of its
   // "normal".
   int cellType = grid->GetCellType(cellID);
@@ -1056,18 +1003,17 @@ void BoxAndArrowLayer::offset_cell(vtkIdType cellID, double offset) {
     *normal *= offset;
     for (int i = 0; i < 4; i++) {
       corners[i] += *normal;
-      points->SetPoint(pointIDs[i], corners[i][0], corners[i][1], corners[i][2]);
+      points->SetPoint(pointIDs[i],
+		       corners[i][0], corners[i][1], corners[i][2]);
     }
     delete normal;
   } 
 }
 
-void BoxAndArrowLayer::setCoincidentTopologyParams(double factor, double units)
+void BoxWidgetLayer::setCoincidentTopologyParams(double factor, double units)
 {
   boxMapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor,
 								  units);
-  arrowMapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor,
-								    units);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
