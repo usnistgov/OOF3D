@@ -18,7 +18,7 @@ import sys
 words = {}
 
 words['Credits'] = """
-OOF3D was written at the National Institute of Standards and Technology in Gaithersburg, Maryland, USA, by Valerie R. Coffman, Stephen A. Langer, Andrew C.E. Reid, Yannick Congo, Gunay Dogan, and Lucianna Kiffer.
+OOF3D was written at the National Institute of Standards and Technology in Gaithersburg, Maryland, USA, by Stephen A. Langer, Andrew C.E. Reid, Valerie R. Coffman, Gunay Dogan, Yannick Congo, David Feraud, Lizhong Zhang, Lucianna Kiffer, Ryan Weller, and Rachel Linder.
 
 OOF3D includes a lot of code from OOF2.  Contributors have included R. Edwin Garcia, Rhonald C. Lua, Seung-Ill Haan, and Eric Ma.
 
