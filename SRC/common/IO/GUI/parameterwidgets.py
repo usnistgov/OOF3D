@@ -605,6 +605,22 @@ def _PositiveIntParameter_makeWidget(self, scope=None, verbose=False):
                              verbose=verbose)
 parameter.PositiveIntParameter.makeWidget = _PositiveIntParameter_makeWidget
 
+class NonNegativeIntWidget(IntWidget):
+    def validValue(self, val):
+        try:
+            if type(val) is StringType:
+                ival = utils.OOFeval(val)
+                return type(ival) is IntType and ival >= 0
+            else:
+                return isinstance(val, IntType) and val >= 0
+        except:
+            return False
+
+def _NonNegativeIntParameter_makeWidget(self, scope=None, verbose=False):
+    return NonNegativeIntWidget(self, scope=scope, name=self.name,
+                                verbose=verbose)
+parameter.NonNegativeIntParameter.makeWidget = \
+                                          _NonNegativeIntParameter_makeWidget
 
 
 #######################

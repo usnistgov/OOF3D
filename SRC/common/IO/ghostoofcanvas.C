@@ -26,26 +26,30 @@
 #include <math.h>
 
 #include <vtkAreaPicker.h>
+#include <vtkAssemblyPath.h>
 #include <vtkCamera.h>
 #include <vtkCaptionActor2D.h>
 #include <vtkCellPicker.h>
 #include <vtkDataSet.h>
 #include <vtkDataSetMapper.h>
 #include <vtkExtractSelectedFrustum.h>
+#include <vtkNew.h>
+#include <vtkOpenGLRenderer.h>
 #include <vtkPointPicker.h>
-#include <vtkPropPicker.h>
 #include <vtkProp3D.h>
 #include <vtkProp3DCollection.h>
+#include <vtkPropCollection.h>
+#include <vtkPropPicker.h>
 #include <vtkProperty.h>
 #include <vtkProperty2D.h>
+#include <vtkRenderStepsPass.h>
+#include <vtkSSAAPass.h>
 #include <vtkTextActor.h>
 #include <vtkTextProperty.h>
 #include <vtkTransform.h>
 #include <vtkVolume.h>
 #include <vtkVolumeCollection.h>
 #include <vtkVolumeProperty.h>
-#include <vtkPropCollection.h>
-#include <vtkAssemblyPath.h>
 
 // "initialized" is used by the OOFCanvas and OOFCanvas3D
 // constructors.
@@ -54,8 +58,8 @@ bool GhostOOFCanvas::initialized = 0;
 GhostOOFCanvas::GhostOOFCanvas() 
   : created(false),
     exposed(false),
-    rendered(false),
     axes_showing(false),
+    antialiasing(false),
 #ifdef OOF_USE_COCOA
     render_window(vtkSmartPointer<vtkCocoaRenderWindow>::New()),
 #else
@@ -174,41 +178,11 @@ void GhostOOFCanvas::render() {
   }
 }
 
-//#include <vtkXOpenGLRenderWindow.h> // debugging on linux only
-
-// void GhostOOFCanvas::deactivate() {
-//   // deactivate() suppresses redrawing.  It should be called at the
-//   // start of the graphics window shut down sequence.
-//   if(true) {
-//     oofcerr << "GhostOOFCanvas::deactivate: not doing anything" << std::endl;
-//     return;
-//   }
-//   if(renderer) {
-//     // oofcerr << "GhostOOFCanvas::deactivate: NOT finalizing render_window "
-//     // 	    << render_window->GetClassName() << " "
-//     // 	    << render_window.GetPointer()
-//     // 	    // << " gl context="
-//     // 	    // << vtkXOpenGLRenderWindow::SafeDownCast(render_window)->getContext()
-//     // 	    << std::endl;
-//     render_window->DebugOn();
-//     // Don't call render_window->Finalize().  The
-//     // vtkXOpenGLRenderWindow destructor calls it.
-    
-//     // render_window->Finalize();
-//     // oofcerr << "GhostOOFCanvas::deactivate: removing renderer" << std::endl;
-//     render_window->RemoveRenderer(renderer);
-//     // oofcerr << "GhostOOFCanvas::deactivate: deleting renderer" << std::endl;
-//     renderer = vtkSmartPointer<vtkRenderer>();
-//     // oofcerr << "GhostOOFCanvas::deactivate: done" << std::endl;
-//   }
-  
-// }
-
-void GhostOOFCanvas::newLayer(OOFCanvasLayerBase *layer) {
+void GhostOOFCanvas::newLayer(OOFCanvasLayer *layer) {
   layers.push_back(layer);
 }
 
-void GhostOOFCanvas::removeLayer(OOFCanvasLayerBase *layer) {
+void GhostOOFCanvas::removeLayer(OOFCanvasLayer *layer) {
   for(CanvasLayerList::iterator i=layers.begin(); i<layers.end(); ++i) {
     if(*i == layer) {
       layers.erase(i);
@@ -351,13 +325,68 @@ void GhostOOFCanvas::setContourMapSize(float w, float h) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// I tried playing with FXAA options and didn't find anything that
+// made a difference, so maybe I wasn't doing it right.  In any case
+// SSAA seems to work better, and we're only using FXAA on older
+// systems that don't support vtk-8.1 yet. Eventually we won't use FXAA
+// at all.
+
+// #include <vtkFXAAOptions.h>
+//
+// void GhostOOFCanvas::setFXAAOptions(double RelativeContrastThreshold,
+// 				    double HardContrastThreshold,
+// 				    double SubpixelBlendLimit,
+// 				    double SubpixelContrastThreshold,
+// 				    int EndpointSearchIterations,
+// 				    bool UseHighQualityEndpoints)
+// {
+//   vtkSmartPointer<vtkFXAAOptions> opts = vtkSmartPointer<vtkFXAAOptions>::New();
+//   opts->SetRelativeContrastThreshold(RelativeContrastThreshold);
+//   opts->SetHardContrastThreshold(HardContrastThreshold);
+//   opts->SetSubpixelBlendLimit(SubpixelBlendLimit);
+//   opts->SetSubpixelContrastThreshold(SubpixelContrastThreshold);
+//   opts->SetEndpointSearchIterations(EndpointSearchIterations);
+//   opts->SetUseHighQualityEndpoints(UseHighQualityEndpoints);
+// }
+
+
+#if VTK_MAJOR_VERSION > 8 || (VTK_MAJOR_VERSION == 8 && VTK_MINOR_VERSION >= 1)
 void GhostOOFCanvas::setAntiAlias(bool antialias) {
   assert(mainthread_query());
-  if(antialias)
-    render_window->SetAAFrames(6);
-  else
-    render_window->SetAAFrames(0);
+  if(antialias) {
+    // Start antialiasing.  SSAA antialiasing code was copied from
+    // https://github.com/Kitware/VTK/blob/master/Rendering/OpenGL2/Testing/Cxx/TestSSAAPass.cxx
+    vtkOpenGLRenderer *glrenderer = vtkOpenGLRenderer::SafeDownCast(renderer);
+    vtkNew<vtkRenderStepsPass> basicPasses;
+    vtkNew<vtkSSAAPass> ssaa;
+    ssaa->SetDelegatePass(basicPasses);
+    render_window->SetMultiSamples(0);
+    glrenderer->SetPass(ssaa);
+    antialiasing = true;
+  }
+  else {
+    // Turn antialiasing off.
+    vtkOpenGLRenderer *glrenderer = vtkOpenGLRenderer::SafeDownCast(renderer);
+    // The initial call to setAntiAlias during the gfx window
+    // construction procedure comes before the render window is
+    // realized.  Either because of that, or because SetPass hasn't
+    // been called yet, calling ReleaseGraphicsResources crashes at
+    // that point, so we don't call it unless antialiasing has been
+    // explicitly turned on.
+    if(antialiasing) {
+      renderer->GetPass()->ReleaseGraphicsResources(render_window);
+      antialiasing = false;
+    }
+    vtkNew<vtkRenderStepsPass> basicPasses;
+    glrenderer->SetPass(basicPasses);
+  }
 }
+#else  // VTK_VERSION < 8.1
+void GhostOOFCanvas::setAntiAlias(bool antialias) {
+  assert(mainthread_query());
+  renderer->SetUseFXAA(antialias);
+}
+#endif // VTK_VERSION < 8.1
 
 void GhostOOFCanvas::set_bgColor(CColor color) {
   assert(mainthread_query());
@@ -671,7 +700,7 @@ Coord *GhostOOFCanvas::findClickedPositionOnActor(const Coord *click,
   makeAllUnpickable();
   
   viewLock.acquire();
-  View *oldView = set_view_nolock(view, true);
+  View *oldView = set_view_nolock(view, true, true);
   
   bool clickOk = false;
 
@@ -718,7 +747,7 @@ Coord *GhostOOFCanvas::findClickedPositionOnActor(const Coord *click,
       currentActor = actors->GetNextActor();
     }
 
-    restore_view(oldView, true);
+    restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     throw;
@@ -731,7 +760,7 @@ Coord *GhostOOFCanvas::findClickedPositionOnActor(const Coord *click,
     }
     currentActor = actors->GetNextActor();
   }
-  restore_view(oldView, true);
+  restore_view(oldView, true, true);
   delete oldView;
   viewLock.release();
   if(!clickOk) {
@@ -782,7 +811,7 @@ vtkSmartPointer<vtkActor> GhostOOFCanvas::findClickedActor(const Coord *click,
   makeAllUnpickable();
   
   viewLock.acquire();
-  View *oldView = set_view_nolock(view, true);
+  View *oldView = set_view_nolock(view, true, true);
   
   bool clickOk = false;
 
@@ -821,7 +850,7 @@ vtkSmartPointer<vtkActor> GhostOOFCanvas::findClickedActor(const Coord *click,
       currentActor = actors->GetNextActor();
     }
 
-    restore_view(oldView, true);
+    restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     throw;
@@ -834,7 +863,7 @@ vtkSmartPointer<vtkActor> GhostOOFCanvas::findClickedActor(const Coord *click,
     }
     currentActor = actors->GetNextActor();
   }
-  restore_view(oldView, true);
+  restore_view(oldView, true, true);
   delete oldView;
   viewLock.release();
   if(!clickOk) {
@@ -885,7 +914,7 @@ vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
   makeAllUnpickable();
   
   viewLock.acquire();
-  View *oldView = set_view_nolock(view, true);
+  View *oldView = set_view_nolock(view, true, true);
   
   bool clickOk = false;
 
@@ -929,7 +958,7 @@ vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
       currentActor = actors->GetNextActor();
     }
 
-    restore_view(oldView, true);
+    restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     throw;
@@ -942,7 +971,7 @@ vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
     }
     currentActor = actors->GetNextActor();
   }
-  restore_view(oldView, true);
+  restore_view(oldView, true, true);
   delete oldView;
   viewLock.release();
   if(!clickOk) {
@@ -996,7 +1025,7 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
   makeAllUnpickable();
   
   viewLock.acquire();
-  View *oldView = set_view_nolock(view, true);
+  View *oldView = set_view_nolock(view, true, true);
 
   bool clickOk = false;
 
@@ -1074,7 +1103,7 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
     if(!propIsRendered) {
       renderer->RemoveViewProp(prop);
     }
-    restore_view(oldView, true);
+    restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     throw;
@@ -1083,7 +1112,7 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
     renderer->RemoveViewProp(prop);
     // Calling render() here is not necessary.
   }
-  restore_view(oldView, true);
+  restore_view(oldView, true, true);
   delete oldView;
   viewLock.release();
   if(!clickOk) {
@@ -1239,7 +1268,7 @@ Coord *GhostOOFCanvas::findClickedPoint(const Coord *click, const View *view,
 {
   assert(mainthread_query());
   viewLock.acquire();
-  const View *oldView = set_view_nolock(view, true);
+  const View *oldView = set_view_nolock(view, true, true);
   try {
     double x, y;		// display coordinates
     physical2Display(*click, x, y);
@@ -1290,7 +1319,7 @@ Coord *GhostOOFCanvas::findClickedPoint(const Coord *click, const View *view,
 	renderer->RemoveActor(tempActor);
 	mapper->RemoveAllInputs();
 #endif // DEBUGSELECTIONS
-	restore_view(oldView, true);
+	restore_view(oldView, true, true);
 	delete oldView;
 	viewLock.release();
 	return coord;
@@ -1302,12 +1331,12 @@ Coord *GhostOOFCanvas::findClickedPoint(const Coord *click, const View *view,
 #endif // DEBUGSELECTIONS
   }
   catch(...) {
-    restore_view(oldView, true);
+    restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     throw;
   }
-  restore_view(oldView, true);
+  restore_view(oldView, true, true);
   delete oldView;
   viewLock.release();
   // There is no point.  (The heat death of the universe is unavoidable.)
@@ -1328,7 +1357,7 @@ Coord *GhostOOFCanvas::findClickedSegment(const Coord *click, const View *view,
   Coord ray;
 
   viewLock.acquire();
-  View *oldView = set_view_nolock(view, true);
+  View *oldView = set_view_nolock(view, true, true);
   try  {
     double x, y;		// display coordinates
     physical2Display(*click, x, y);
@@ -1364,12 +1393,12 @@ Coord *GhostOOFCanvas::findClickedSegment(const Coord *click, const View *view,
     ray = findRayThroughPoint(&clickPosition);
   }
   catch(...) {
-    restore_view(oldView, true);
+    restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     throw;
   }
-  restore_view(oldView, true);
+  restore_view(oldView, true, true);
   delete oldView;
   viewLock.release();
 
@@ -1464,7 +1493,7 @@ Coord GhostOOFCanvas::display2Physical(const View *view, double x, double y) {
   // GenericSelectToolboxGUI.up) so it can't assume that the gfxlock
   // has been acquired.  That's why there's a separate viewLock.
   viewLock.acquire();
-  View *oldView = set_view_nolock(view, true);
+  View *oldView = set_view_nolock(view, true, true);
   try {
     renderer->SetDisplayPoint(x, y, 0);
     renderer->DisplayToWorld();
@@ -1473,13 +1502,13 @@ Coord GhostOOFCanvas::display2Physical(const View *view, double x, double y) {
 
     for(int i=0; i<3; i++)	// convert from homogeneous coords
       worldpoint[i] /= worldpoint[3];
-    restore_view(oldView, true);
+    restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     return Coord(worldpoint);
   }
   catch(...) {
-    restore_view(oldView, true);
+    restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     throw;
@@ -1534,7 +1563,7 @@ View *GhostOOFCanvas::set_view(const View *view, bool clip) {
   assert(mainthread_query());
   viewLock.acquire();
   try {
-    oldView = set_view_nolock(view, clip);
+    oldView = set_view_nolock(view, clip, false);
   }
   catch(...) {
     viewLock.release();
@@ -1544,7 +1573,8 @@ View *GhostOOFCanvas::set_view(const View *view, bool clip) {
   return oldView;
 }
 
-View *GhostOOFCanvas::set_view_nolock(const View *view, bool clip) {
+View *GhostOOFCanvas::set_view_nolock(const View *view, bool clip, bool resize)
+{
   assert(mainthread_query());
   assert(view != 0); // maybe running an old script with no view parameter?
   View *oldView = get_view();
@@ -1552,11 +1582,11 @@ View *GhostOOFCanvas::set_view_nolock(const View *view, bool clip) {
     delete oldView;
     return 0;
   }
-  restore_view(view, clip);
+  restore_view(view, clip, resize);
   return oldView;
 }
 
-void GhostOOFCanvas::restore_view(const View *view, bool clip) {
+void GhostOOFCanvas::restore_view(const View *view, bool clip, bool resize) {
   // restore_view is called either by set_view_nolock, or in a
   // set_view/restore_view pair (as in findClickedCell_, et. al.)  In
   // the first case, we know that view!=0.  In the second case, if
@@ -1569,7 +1599,13 @@ void GhostOOFCanvas::restore_view(const View *view, bool clip) {
   // script written before the sizes were provided as part of the View
   // data.  In that case we just assume that the window size hasn't
   // changed, which seems to work for the relevant test scripts.
-  if(view->size_x > 0 && view->size_y > 0) {
+  if(resize && view->size_x > 0 && view->size_y > 0) {
+#ifdef DEBUG
+    int *oldsize = render_window->GetSize();
+    oofcerr << "GhostOOFCanvas::restore_view: oldsize=" << oldsize[0]
+	    << "," << oldsize[1] << " newsize=" << view->size_x
+	    << "," << view->size_y << std::endl;
+#endif // DEBUG
     render_window->SetSize(view->size_x, view->size_y);
   }
   view->setCamera(renderer->GetActiveCamera()); // change active camera settings

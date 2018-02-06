@@ -48,16 +48,20 @@ class GhostOOFCanvas;
 class View;
 class ImageFormat;
 class OOFCanvasLayer;
-class OOFCanvasLayerBase;
 
 class GhostOOFCanvas {
 protected:
   static bool initialized;	// has pygtk been initialized?
   bool created;			// used by OOFCanvas3D::realize
   bool exposed;
-  bool rendered;
   bool axes_showing;		// axes are actually drawn
-  // bool deactivated;		// suppress redraws when shutting down
+  bool antialiasing;		// has antialiasing been turned on?
+
+  bool fixScalingBug; // set to true if vtk canvas is 1/2 size and mispositioned
+  
+  // TODO: Use vtkNew instead of vtkSmartPointer here, and remove the
+  // lines that initialize the vtkSmartPointers in the GhostOOFCanvas
+  // constructor.  Doing this requires vtk8, though.
 #ifdef OOF_USE_COCOA
   vtkSmartPointer<vtkCocoaRenderWindow> render_window;
 #else
@@ -69,6 +73,7 @@ protected:
   bool contourmap_requested;
   bool contourmap_showing;
   OOFCanvasLayer *contour_layer;
+  virtual void repositionRenderWindow() {}
 
   ClippingPlaneList clipPlanes;	// typedef in common/clip.h
   bool clipInverted;
@@ -88,31 +93,38 @@ protected:
   vtkSmartPointer<vtkUnstructuredGrid> getFrustumSubgrid(
 		 double x, double y, const View*, OOFCanvasLayer*);
 
+  // Set and restore the View.  The first bool indicates whether or
+  // clipping planes should be set.  The second indicates whether or
+  // not the render window should be resized.  When interpreting saved
+  // mouse clicks, the window size matters.  These methods are
+  // protected.  set_view is unprotected and is the only one that
+  // should be used externally.
+  View *set_view_nolock(const View*, bool, bool);
+  void restore_view(const View*, bool, bool);
+  
 #ifdef DEBUGSELECTIONS
   vtkSmartPointer<vtkActor> tempActor;
 #endif // DEBUGSELECTIONS
 
 public:
   GhostOOFCanvas();
-  ~GhostOOFCanvas();
+  virtual ~GhostOOFCanvas();
 
   // newLayer() and removeLayer() are called by the OOFCanvasLayerBase
   // constructor and destructor.
-  void newLayer(OOFCanvasLayerBase*);
-  void removeLayer(OOFCanvasLayerBase*);
+  void newLayer(OOFCanvasLayer*);
+  void removeLayer(OOFCanvasLayer*);
 
   void reset();
 
   // This should only be called from python and only with mainthread.run
   void render();
-  // // deactivate() suppresses redrawing.  It should be called at the
-  // // start of the graphics window shut down sequence.
-  // void deactivate();
 
   void set_bgColor(const CColor);
   void set_margin(double f) { margin = f; }
   
   void setAntiAlias(bool);
+  //void setFXAAOptions(double, double, double, double, int, bool);
 
   void setAxisOffset(const Coord*);
   void setAxisLength(const Coord*);
@@ -203,11 +215,11 @@ public:
   // the old view before releasing the lock, acquire the lock
   // explicitly and use set_view_nolock.  See findClickedCell_ et al.
   View *set_view(const View*, bool);
-  View *set_view_nolock(const View*, bool);
-  void restore_view(const View*, bool);
 
   ICoord get_size() const;
   void set_size(int, int);
+
+  virtual void setFixCanvasScaleBug(bool) {}
 
   SLock renderLock;
 

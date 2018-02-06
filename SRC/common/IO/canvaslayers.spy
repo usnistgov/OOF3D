@@ -43,6 +43,10 @@ class ComboCanvasLayer(object):
         for sublayer in self.sublayers.values():
             sublayer.hide(forced)
 
+    def setCoincidentTopologyParams(self, factor, units):
+        for sublayer in self.sublayers.values():
+            sublayer.setCoincidentTopologyParams(factor, units)
+
     # def recompute(self):
     #     for sublayer in self.sublayers.values():
     #         sublayer.recompute()

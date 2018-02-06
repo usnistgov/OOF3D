@@ -82,8 +82,9 @@ bool MeshGridSource::GetGrid(vtkUnstructuredGrid *grid) {
     if(this->PointData) {
       grid->GetPointData()->SetScalars(this->PointData);
     }
-    // TODO: Also handle cell data?  Do we ever have cell data for
-    // Meshes?
+    if(this->CellData) {
+      grid->GetCellData()->SetScalars(this->CellData);
+    }
   }
   catch (...) {
     this->mesh->releaseCachedData();

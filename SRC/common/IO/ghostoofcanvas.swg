@@ -45,6 +45,7 @@ public:
   void set_bgColor(const CColor);
   void set_margin(double f);
   void setAntiAlias(bool);
+  // void setFXAAOptions(double, double, double, double, int, bool);
 
   void setAxisOffset(Coord *Point);
   void setAxisLength(Coord *Point);
@@ -164,6 +165,8 @@ public:
   vtkIdListPtr findClickedFace(Coord *Point, View*, OOFCanvasLayer*);
 
   Coord display2Physical(View*, double, double);
+
+  void setFixCanvasScaleBug(bool);
 
   // views
   %new View *get_view();

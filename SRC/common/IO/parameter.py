@@ -389,6 +389,8 @@ class _RangeParameter(Parameter):
                 self._value = value
                 # self.timestamp.increment()
             else:
+                debug.fmsg("Parameter out of range: %s=%g, range=(%g,%g)"
+                           % (self.name, value, self.range[0], self.range[1]))
                 raise ValueError('Parameter value out of range for '
                                  + self.name)
     def classRepr(self):
@@ -425,7 +427,7 @@ class FloatRangeParameter(_RangeParameter):
         (val,) = struct.unpack(FloatRangeParameter.structfmt, b)
         return val
     def valueDesc(self):
-        return "A real number in the range [%d, %d]." % \
+        return "A real number in the range [%g, %g]." % \
                (self.range[0], self.range[1])
         
 # Parameter class that can take a float or an integer,
@@ -611,6 +613,10 @@ class IntParameter(Parameter):
 class PositiveIntParameter(IntParameter):
     def valueDesc(self):
         return "A positive integer."
+
+class NonNegativeIntParameter(IntParameter):
+    def valueDesc(self):
+        return "A non-negative integer."
 
 
 class ListOfIntsParameter(Parameter):

@@ -94,8 +94,10 @@ class PixelInfoDisplay(display.DisplayMethod):
             if microstructure is not None:
                 vsize = microstructure.sizeOfPixels()
                 self.canvaslayer.set_voxel(pixel, vsize)
+                self.canvaslayer.setEmpty(False)
                 return
         self.canvaslayer.clear()
+        self.canvaslayer.setEmpty(True)
 
         
 defaultPixelInfoColor = color.blue

@@ -113,8 +113,10 @@ class SkeletonInfoDisplay(display.DisplayMethod):
                             layer.newGrid(skelctxt.getObject().getPoints(), 1)
                             layer.addCell(queryobj.getCellType(),
                                           queryobj.getPointIds())
+                            layer.setEmpty(False)
                         else:
                             layer.clear() # clear peek sublayers
+                            layer.setEmpty(True)
                     return
             except:
                 pass
@@ -129,8 +131,10 @@ class SkeletonInfoDisplay(display.DisplayMethod):
             if peekobj:
                 sublayer.newGrid(skelctxt.getObject().getPoints(), 1)
                 sublayer.addCell(peekobj.getCellType(), peekobj.getPointIds())
+                sublayer.setEmpty(False)
             else:
                 sublayer.clear()
+                sublayer.setEmpty(True)
                 
 # # This object should be created via the registration, and not
 # # directly via the initializer, because the registration creation

@@ -191,6 +191,12 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
     def layerDoubleClickCB(self, treeview, path, col):
         self.editLayer_gui(self.menu.Layer.Edit)
 
+    # Callback for mouse clicks on the layer list.
+    def layerListButtonCB(self, gtkobj, event):
+        if event.button == 3:   # Right click
+           self.layerpopup.popup(None, None, None, event.button, event.time)
+        return False            # allows other handlers to see the event
+
     # TreeView callback that determines if a row is displayed as a
     # separator.
     def layerRowSepFunc(self, model, iter):

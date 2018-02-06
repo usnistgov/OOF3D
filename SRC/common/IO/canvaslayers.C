@@ -106,13 +106,11 @@ OOFCanvasLayerBase::OOFCanvasLayerBase(GhostOOFCanvas *c, const std::string &nm)
     name_(nm),
     clipState(CLIP_UNKNOWN)
 {
-  c->newLayer(this);
   // oofcerr << "OOFCanvasLayerBase::ctor: " << this << " " << name() 
   // 	  << std::endl;
 }
 
 OOFCanvasLayerBase::~OOFCanvasLayerBase() {
-  canvas->removeLayer(this);
 }
 
 void OOFCanvasLayerBase::set_clipping(bool clip, bool inverted) {
@@ -143,9 +141,12 @@ OOFCanvasLayer::OOFCanvasLayer(GhostOOFCanvas *c, const std::string &nm)
   : OOFCanvasLayerBase(c, nm),
     showing_(false),
     empty_(true)
-{}
+{
+  c->newLayer(this);
+}
 
 OOFCanvasLayer::~OOFCanvasLayer() {
+  canvas->removeLayer(this);
 }
 
 void OOFCanvasLayer::addProp(vtkSmartPointer<vtkProp> prop) {
@@ -220,7 +221,7 @@ void OOFCanvasLayer::removeAllProps() {
 // void OOFCanvasLayer::raise_to_top() {
 //   canvas->raise_layer_to_top(this);
 //   // if(rendered_) 
-//   //   remove_from_renderer);
+//   //   remove_from_renderer();
 //   if(showing)
 //     add_to_renderer();
 // }
@@ -696,6 +697,15 @@ void PlaneAndArrowLayer::set_center(const Coord3D *position) {
   setModified();
 }
 
+void PlaneAndArrowLayer::setCoincidentTopologyParams(double factor,
+						     double units)
+{
+  planeMapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor,
+								    units);
+  arrowMapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor,
+								    units);
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // TODO: Add arrowParity, as in PlaneAndArrowLayer.
@@ -1052,6 +1062,14 @@ void BoxAndArrowLayer::offset_cell(vtkIdType cellID, double offset) {
   } 
 }
 
+void BoxAndArrowLayer::setCoincidentTopologyParams(double factor, double units)
+{
+  boxMapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor,
+								  units);
+  arrowMapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor,
+								    units);
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -1138,6 +1156,12 @@ bool SimpleCellLayer::visibleBoundingBox(vtkSmartPointer<vtkRenderer> renderer,
 					 CRectangularPrism *bbox) const
 {
   return getVisibleBoundingBox(grid, renderer, bbox);
+}
+
+void SimpleCellLayer::setCoincidentTopologyParams(double factor, double units) {
+  mapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor, units);
+  mapper->SetRelativeCoincidentTopologyLineOffsetParameters(factor, units);
+  mapper->SetRelativeCoincidentTopologyPointOffsetParameter(units);
 }
 
 //=\\=//=\\=//=\\=//=\\=//
@@ -1748,6 +1772,11 @@ bool ImageCanvasLayer::visibleBoundingBox(vtkSmartPointer<vtkRenderer> renderer,
   const
 {
   return getVisibleBoundingBox(mapper->GetInput(), renderer, bbox);
+}
+
+void ImageCanvasLayer::setCoincidentTopologyParams(double factor, double units)
+{
+  mapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor, units);
 }
     
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
