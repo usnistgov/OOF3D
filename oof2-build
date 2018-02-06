@@ -62,11 +62,14 @@ pyversion = string.join(map(str, sys.version_info[:2]),".")
 
 # To make it possible to build OOF3D on different git branches, the
 # output for the branches needs to go into distinct directories.  We
-# derive the directory names from the git branch name. 
+# derive the directory names from the git branch name.
+
 proc = subprocess.Popen(['git', 'symbolic-ref', '--short', 'HEAD'],
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 stdoutdata, stderrdata = proc.communicate()
 if stderrdata:
+    # TODO: This happens when git is in 'detached HEAD' state.
+    # Something smarter should be done in that case.
     print "*** Failed to get git branch name!", stderrdata.strip()
     branchtag = ""
 else:
