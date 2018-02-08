@@ -505,14 +505,6 @@ vtkSmartPointer<vtkActorCollection> PlaneAndArrowLayer::get_pickable_actors() {
   return actors;
 }
 
-// void PlaneAndArrowLayer::set_visibility(bool visible) {
-//   // Sets whether or not the vtk plane and arrow are to be visible
-//   // once the renderer is called.
-//   planeActor->SetVisibility(int(visible));
-//   arrowActor->SetVisibility(int(visible));
-//   setModified();
-// }
-
 void PlaneAndArrowLayer::set_arrowShaftRadius(double radius) {
   arrowSource->SetShaftRadius(radius);
 }
@@ -942,12 +934,6 @@ void BoxWidgetLayer::set_box(const Coord3D *point) {
 		     dimensions[2] * double((i / 4) % 2));
   }
 }
-
-// void BoxWidgetLayer::set_visibility(bool visible) {
-//   // Sets whether or not the box is visible.
-//   oofcerr << "BoxWidgetLayer::set_visibility: " << int(visible) << std::endl;
-//   boxActor->SetVisibility(int(visible));
-// }
 
 void BoxWidgetLayer::set_pointSize(float size) {
   boxActor->GetProperty()->SetPointSize(size);

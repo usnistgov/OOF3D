@@ -209,7 +209,6 @@ public:
   vtkSmartPointer<vtkActor> get_arrowActor();
   virtual bool pickable() { return true; }
   virtual vtkSmartPointer<vtkActorCollection> get_pickable_actors();
-  // void set_visibility(bool);
   void set_arrowShaftRadius(double);
   void set_arrowTipRadius(double);
   void set_arrowLength(double);
@@ -238,7 +237,7 @@ protected:
   vtkSmartPointer<vtkPoints> points;
   vtkSmartPointer<vtkDataSetMapper> boxMapper;
   vtkSmartPointer<vtkActor> boxActor;
-  vtkSmartPointer<vtkCellLocator> locator;
+  vtkSmartPointer<oofCellLocator> locator;
 public:
   BoxWidgetLayer(GhostOOFCanvas*, const std::string&);
   ~BoxWidgetLayer();
@@ -256,7 +255,6 @@ public:
   Coord3D *get_cellNormal_Coord3D(vtkIdType);
   void reset();
   void set_box(const Coord3D*);
-  //  void set_visibility(bool);
   void set_pointSize(float);
   void set_lineWidth(float);
   void set_lineColor(const CColor&);

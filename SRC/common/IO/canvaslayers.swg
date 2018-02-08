@@ -65,7 +65,6 @@ public:
   PlaneAndArrowLayer(GhostOOFCanvas*, const char*, bool);
   vtkActorPtr get_planeActor();
   vtkActorPtr get_arrowActor();
-  // void set_visibility(bool);
   void set_arrowShaftRadius(double);
   void set_arrowTipRadius(double);
   void set_arrowLength(double);
@@ -95,7 +94,6 @@ public:
   %new Coord *get_cellNormal_Coord3D(int);
   void reset();
   void set_box(Coord *Point);
-  // void set_visibility(bool);
   void set_pointSize(float);
   void set_lineWidth(float);
   void set_lineColor(const CColor&);
