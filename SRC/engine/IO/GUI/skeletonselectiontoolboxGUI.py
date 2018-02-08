@@ -35,8 +35,8 @@ import gtk
 class SkeletonSelectionToolboxModeGUI(genericselectGUI.GenericSelectToolboxGUI):
     def __init__(self, mode, tb):
         self.mode = mode
-        genericselectGUI.GenericSelectToolboxGUI.__init__(self, mode.name,
-                                                          tb, mode.methodclass)
+        genericselectGUI.GenericSelectToolboxGUI.__init__(self, tb,
+                                                          mode.methodclass)
         # Switchboard callbacks that should be performed even when the
         # toolbox isn't active go here.  Callbacks that are performed
         # only when the toolbox IS active are installed in activate().
@@ -99,7 +99,7 @@ class SkeletonSelectionToolboxGUI(toolboxGUI.GfxToolbox):
         # The 'toolbox' argument here is the non-gui toolbox
         # corresponding to one of the inner toolboxes.  It doesn't
         # matter which one.
-        toolboxGUI.GfxToolbox.__init__(self, "Skeleton Selection", toolbox)
+        toolboxGUI.GfxToolbox.__init__(self, toolbox)
         vbox = gtk.VBox(spacing=2)
         self.gtk.add(vbox)
         bbox = gtk.HBox(spacing=2)

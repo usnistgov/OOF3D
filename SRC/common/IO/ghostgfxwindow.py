@@ -1244,9 +1244,8 @@ class GhostGfxWindow:
     def shutdownGfx_menu(self):
         # The non-gui part of the gfx window shutdown procedure.
         debug.mainthreadTest()
-        # To prevent timiing issues, the whole window shutdown
-        # sequence is on the main thread, so the gfxLock isn't
-        # acquired here.
+        # To prevent timing issues, the whole window shutdown sequence
+        # is on the main thread, so the gfxLock isn't acquired here.
 
         self.oofcanvas = None   # calls the OOFCanvas3D destructor
 
@@ -1846,12 +1845,14 @@ class GhostGfxWindow:
         # it takes a layer class (e.g. VoxelRegionSelectionDisplay)
         # instead of a who as its argument (classinfo).
         layer = self.getLayerByClass(classinfo)
+        debug.fmsg("classinfo=", classinfo, " layer=", layer)
         if layer is not None:
             if layer.pickable():
                 rval = mainthread.runBlock(
                     clickErrorHandler,
                     (self.oofcanvas.findClickedCellID,
                      point, view, layer.canvaslayer))
+                debug.fmsg("rval=", rval)
                 if rval is None:
                     return (None, None, layer)
                 # If the layer has a filter, then vtk's cell ID is
@@ -1859,13 +1860,16 @@ class GhostGfxWindow:
                 try:
                     fltr = layer.filter
                 except AttributeError:
+                    debug.fmsg("No filter, returning", rval[0])
                     return (rval[0], rval[1], layer)
                 cellidx = fltr.getCellIndex(rval[0])
                 if cellidx == -1:
                     # This shouldn't happen...
                     raise ooferror.ErrPyProgrammingError(
                         "Filter failure in findClickedCellID")
+                debug.fmsg("filter, returning", cellidx)
                 return (cellidx, rval[1], layer)
+        debug.fmsg("Returning nothing")
         return (None, None, None)
         
     def findClickedCellCenter(self, who, point, view):

@@ -43,8 +43,7 @@ noCS = '<None>'
 class CrossSectionToolboxGUI(toolboxGUI.GfxToolbox,
                              mousehandler.MouseHandler):
     def __init__(self, toolbox):
-        toolboxGUI.GfxToolbox.__init__(
-            self, utils.underscore2space(toolbox.name()), toolbox)
+        toolboxGUI.GfxToolbox.__init__(self, toolbox)
 
         mainbox = gtk.VBox()
         self.gtk.add(mainbox)

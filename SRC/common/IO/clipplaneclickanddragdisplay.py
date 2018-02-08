@@ -96,8 +96,10 @@ class ClippingPlaneWidget(display.DisplayMethod):
         # Create an object of class PlaneAndArrowLayer.  The "False"
         # says that the arrow is oriented opposite to the positive
         # plane normal.
-        return canvaslayers.PlaneAndArrowLayer(self.gfxwindow.oofcanvas,
+        layer = canvaslayers.PlaneAndArrowLayer(self.gfxwindow.oofcanvas,
                                                "PlaneAndArrow", False)
+        layer.setEmpty(False)
+        return layer
 
     def arrowSign(self, plane):
         # The arrow is flipped if the plane is flipped or if all
@@ -125,19 +127,19 @@ class ClippingPlaneWidget(display.DisplayMethod):
         self.canvaslayer.set_planeColor(self.plane_color)
         self.canvaslayer.set_planeOpacity(
             self.plane_opacity*self.opacityFactor())
-        self.canvaslayer.set_visibility(
+        self.setVisibility(
             (self.toolbox.active or not self.hide_inactive) and
             self.planeExists())
         self.canvaslayer.setModified()
 
     def activatedCB(self, gfxwindow):
-        if gfxwindow == self.gfxwindow:
-            self.canvaslayer.set_visibility(self.planeExists())
+        if gfxwindow is self.gfxwindow:
+            self.setVisibility(self.planeExists())
             self.canvaslayer.set_planeOpacity(self.plane_opacity)
+
     def deactivatedCB(self, gfxwindow):
-        if gfxwindow == self.gfxwindow:
-            self.canvaslayer.set_visibility(not self.hide_inactive
-                                            and self.planeExists())
+        if gfxwindow is self.gfxwindow:
+            self.setVisibility(not self.hide_inactive and self.planeExists())
             self.canvaslayer.set_planeOpacity(
                 self.plane_opacity*self.opacityFactor())
             
@@ -148,7 +150,7 @@ class ClippingPlaneWidget(display.DisplayMethod):
             # Display the selected plane even if it's not enabled.
             # The user may want to see what it will do.  This used to
             # check plane.enabled() and only display enabled planes.
-            self.canvaslayer.set_visibility(True)
+            self.setVisibility(True)
             normal = plane.normal()
             offset = plane.offset()
             self.canvaslayer.set_normal(normal)
@@ -158,7 +160,7 @@ class ClippingPlaneWidget(display.DisplayMethod):
             self.canvaslayer.setModified()
             return
         # There is no visible clipping plane.
-        self.canvaslayer.set_visibility(False)
+        self.setVisibility(False)
 
     def updateScale(self, gfxwindow):
         # Callback for "view almost changed". Updates the scale of the

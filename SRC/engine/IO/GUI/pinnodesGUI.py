@@ -33,7 +33,7 @@ class PinnedNodesToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     def __init__(self, pinnodestoolbox):
         debug.mainthreadTest()
 
-        toolboxGUI.GfxToolbox.__init__(self, "Pin Nodes", pinnodestoolbox)
+        toolboxGUI.GfxToolbox.__init__(self, pinnodestoolbox)
         mainbox = gtk.VBox()
         self.gtk.add(mainbox)
 
@@ -212,7 +212,7 @@ And Ctrl-click to toggle.""")
         self.invertbutton.set_sensitive(skelctxt is not None)
 
         gtklogger.checkpoint(self.gfxwindow().name + " " +
-                             self._name + " updated")
+                             self.name() + " updated")
 
     def currentSkeleton(self):
         return self.gfxwindow().topwho('Skeleton')
@@ -336,7 +336,7 @@ And Ctrl-click to toggle.""")
             else:
                 self.toolbox.menu.Pin(skeleton=path, point=pt, view=view)
 
-    def move(self, x, y, shift, ctrl):
+    def move(self, x, y, button, shift, ctrl):
         # The toolbox is updated when the mouse *moves*, even before a
         # click, because it's displaying node information which helps
         # the user decide which node to click on.

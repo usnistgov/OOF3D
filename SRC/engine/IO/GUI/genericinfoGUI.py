@@ -122,8 +122,9 @@ class GenericInfoModeGUI(object):
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class GenericInfoToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
+    ## TODO: Remove 'name' arg from constructor
     def __init__(self, name, infotb):
-        toolboxGUI.GfxToolbox.__init__(self, name, infotb)
+        toolboxGUI.GfxToolbox.__init__(self, infotb)
         self.mainbox = gtk.VBox()
         self.gtk.add(self.mainbox)
 

@@ -54,9 +54,9 @@ class HistoricalSelection:
 
 class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
                               mousehandler.MouseHandler):
-    def __init__(self, name, toolbox, method):
+    def __init__(self, toolbox, method):
         debug.mainthreadTest()
-        toolboxGUI.GfxToolbox.__init__(self, name, toolbox)
+        toolboxGUI.GfxToolbox.__init__(self, toolbox)
         self.method = method            # RegisteredClass of selection methods
         self.points = []                # locations of mouse events
         # Was a modifier key pressed during the last button event?
@@ -204,7 +204,7 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
 
     def activate(self):
         if not self.active:
-            toolboxGUI.GfxToolbox.activate(self)
+            super(GenericSelectToolboxGUI, self).activate()
             self.sensitize()
             self.sensitizeHistory()
             self.setInfo()
@@ -213,10 +213,10 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
             if config.dimension() == 3:
                 self.gfxwindow().toolbar.setSelect()
 
-    # def deactivate(self):
-    #     if self.active:
-    #         # self.gfxwindow().setRubberband(rubberband.NoRubberBand())
-    #         toolboxGUI.GfxToolbox.deactivate(self)
+    def deactivate(self):
+        if self.active:
+            super(GenericSelectToolboxGUI, self).deactivate()
+            # self.gfxwindow().setRubberband(rubberband.NoRubberBand())
 
     def installMouseHandler(self):
         self.gfxwindow().setMouseHandler(self)
@@ -281,7 +281,7 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
             finally:
                 selection.end_reading()
         mainthread.runBlock(self._set_button_sensitivities, (u,r,c,i))
-        #gtklogger.checkpoint(self.gfxwindow().name + " " + self._name + " sensitized")
+        #gtklogger.checkpoint(self.gfxwindow().name + " " + self.name() + " sensitized")
         
     def _set_button_sensitivities(self, u,r,c,i):
         debug.mainthreadTest()

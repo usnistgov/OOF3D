@@ -266,10 +266,14 @@ void OOFCanvasLayer::setPropVisibility(bool visible) {
   }
 }
 
+// TODO: Do we need the 'forced' arg for show and hide?  It seems to
+// always be false.
+
 void OOFCanvasLayer::show(bool forced) {
   if(!showing_ || forced) {
     setPropVisibility(true);
     showing_ = true;
+    // setModified();
   }
 }
 
@@ -277,6 +281,7 @@ void OOFCanvasLayer::hide(bool forced) {
   if(showing_ || forced) {
     setPropVisibility(false);
     showing_ = false;
+    // setModified();
   }
 }
 
@@ -369,6 +374,13 @@ vtkSmartPointer<vtkTableBasedClipDataSet> getClipper(
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// The PlaneAndArrowLayer is used when interactively editing clipping
+// planes, and possibly other sorts of planes too.  It's probably
+// redundant with the vtkImplicitPlaneWidget, but in order to use VTK
+// widgets we probably would have to use VTK's interactor event loop
+// instead of the gtk2 event loop.  That would be possible, and maybe
+// should be considered.
 
 PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas,
 				       const std::string &nm,
@@ -493,13 +505,13 @@ vtkSmartPointer<vtkActorCollection> PlaneAndArrowLayer::get_pickable_actors() {
   return actors;
 }
 
-void PlaneAndArrowLayer::set_visibility(bool visible) {
-  // Sets whether or not the vtk plane and arrow are to be visible
-  // once the renderer is called.
-  planeActor->SetVisibility(int(visible));
-  arrowActor->SetVisibility(int(visible));
-  setModified();
-}
+// void PlaneAndArrowLayer::set_visibility(bool visible) {
+//   // Sets whether or not the vtk plane and arrow are to be visible
+//   // once the renderer is called.
+//   planeActor->SetVisibility(int(visible));
+//   arrowActor->SetVisibility(int(visible));
+//   setModified();
+// }
 
 void PlaneAndArrowLayer::set_arrowShaftRadius(double radius) {
   arrowSource->SetShaftRadius(radius);
@@ -532,14 +544,19 @@ void PlaneAndArrowLayer::set_planeColor(const CColor& color) {
 				      color.getBlue());
 }
 
+// TODO: Change set_planeOpacity to set_opacity.
 void PlaneAndArrowLayer::set_planeOpacity(double opacity) {
   planeActor->GetProperty()->SetOpacity(opacity);
+  arrowActor->GetProperty()->SetOpacity(opacity/2.); // it has two sides
  }
 
-void PlaneAndArrowLayer::rotate(const Coord3D *axisOfRotation, double angleOfRotation) {
+void PlaneAndArrowLayer::rotate(const Coord3D *axisOfRotation,
+				double angleOfRotation)
+{
   vtkSmartPointer<vtkTransform> new_rotation =
     vtkSmartPointer<vtkTransform>::New();
-  new_rotation->RotateWXYZ(-angleOfRotation, (*axisOfRotation)[0], (*axisOfRotation)[1], (*axisOfRotation)[2]);
+  new_rotation->RotateWXYZ(-angleOfRotation, (*axisOfRotation)[0],
+			   (*axisOfRotation)[1], (*axisOfRotation)[2]);
 
   // Concatenate the new rotation after the current rotation. 
   rotation->PostMultiply();
@@ -599,7 +616,8 @@ Coord3D *PlaneAndArrowLayer::get_center() {
   // same coordinates as the center of the plane.
   double center_double[3];
   translation->GetPosition(center_double);
-  Coord3D *center = new Coord3D(center_double[0], center_double[1], center_double[2]);
+  Coord3D *center =
+    new Coord3D(center_double[0], center_double[1], center_double[2]);
   return center;
 }
 
@@ -622,7 +640,8 @@ CUnitVectorDirection *PlaneAndArrowLayer::get_normal() {
   rotation->TransformPoint(unitX, normal_double);
 
   CUnitVectorDirection *normal = 
-    new CUnitVectorDirection(normal_double[0], normal_double[1], normal_double[2]);
+    new CUnitVectorDirection(normal_double[0], normal_double[1],
+			     normal_double[2]);
 
   return normal;
 }
@@ -675,7 +694,8 @@ void PlaneAndArrowLayer::set_normal(const CDirection *direction) {
   // Reset the transform controling the rotation of the plane and the
   // direction of the arrow.
   rotation->Identity();
-  rotation->RotateWXYZ(angleOfRotation, axisOfRotation[0], axisOfRotation[1], axisOfRotation[2]);
+  rotation->RotateWXYZ(angleOfRotation,
+		       axisOfRotation[0], axisOfRotation[1], axisOfRotation[2]);
 
   setModified();
 
@@ -708,6 +728,9 @@ void PlaneAndArrowLayer::setCoincidentTopologyParams(double factor,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// BoxWidgetLayer could be replaced by vtkBoxWidget if we were using
+// the VTK event loop.
+
 BoxWidgetLayer::BoxWidgetLayer(GhostOOFCanvas *canvas, const std::string &nm)
   : OOFCanvasLayer(canvas, nm),
     grid(vtkSmartPointer<vtkUnstructuredGrid>::New()),
@@ -718,7 +741,7 @@ BoxWidgetLayer::BoxWidgetLayer(GhostOOFCanvas *canvas, const std::string &nm)
 {
   points->Initialize();
   points->SetNumberOfPoints(8);
-  
+
   for (int i = 0; i < 8; i++) {
     points->SetPoint(i, double(i % 2),
 		     double((i / 2) % 2),
@@ -806,7 +829,7 @@ BoxWidgetLayer::BoxWidgetLayer(GhostOOFCanvas *canvas, const std::string &nm)
   boxActor->SetMapper(boxMapper);
   boxActor->GetProperty()->SetEdgeVisibility(true);
 
-  this->set_totalVisibility(false);
+  hide(false);
 
   addProp(boxActor);
   locator->LazyEvaluationOn();
@@ -830,7 +853,7 @@ void BoxWidgetLayer::setModified() {
 }
 
 vtkSmartPointer<vtkDataSet> BoxWidgetLayer::get_pickable_dataset() {
-  return boxMapper->GetInput();
+  return grid;
 }
 
 vtkSmartPointer<vtkProp3D> BoxWidgetLayer::get_pickable_prop3d() {
@@ -920,11 +943,11 @@ void BoxWidgetLayer::set_box(const Coord3D *point) {
   }
 }
 
-void BoxWidgetLayer::set_totalVisibility(bool visible) {
-  // Sets whether or not the box is visible.
-  totalVisibility = visible;
-  boxActor->SetVisibility(int(visible));
-}
+// void BoxWidgetLayer::set_visibility(bool visible) {
+//   // Sets whether or not the box is visible.
+//   oofcerr << "BoxWidgetLayer::set_visibility: " << int(visible) << std::endl;
+//   boxActor->SetVisibility(int(visible));
+// }
 
 void BoxWidgetLayer::set_pointSize(float size) {
   boxActor->GetProperty()->SetPointSize(size);
@@ -944,7 +967,7 @@ void BoxWidgetLayer::set_faceColor(const CColor &color) {
 		    color.getRed(), color.getGreen(), color.getBlue());
 }
 
-void BoxWidgetLayer::set_faceOpacity(double opacity) {
+void BoxWidgetLayer::set_opacity(double opacity) {
   boxActor->GetProperty()->SetOpacity(opacity);
 }
 
@@ -992,7 +1015,8 @@ void BoxWidgetLayer::offset_cell(vtkIdType cellID, double offset) {
     Coord3D vectors[2];
     vectors[0] = corners[1] - corners[0];
     vectors[1] = corners[2] - corners[1];
-    Coord3D *normal = new Coord3D();
+    Coord3D *normal = new Coord3D(); // TODO: Why use a pointer?
+    // TODO: Use vtk methods to get the normal
     *normal = cross(vectors[0], vectors[1]);
     double norm = sqrt(norm2(*normal));
     if (norm == 0) {

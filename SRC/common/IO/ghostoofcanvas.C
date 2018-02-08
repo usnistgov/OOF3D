@@ -988,8 +988,10 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
 				      Coord &pos, vtkIdType &cellId,
 				      int &subId) 
 {
-  // oofcerr << "GhostOOFCanvas::findClickedCell_: click=" << *click
-  // 	  << std::endl;
+  oofcerr << "GhostOOFCanvas::findClickedCell_: click=" << *click
+   	  << std::endl;
+  oofcerr << "GhostOOFCanvas::findClickedCell_: layer=" << *layer
+	  << std::endl;
   
   // TODO MERGE: click is a Coord although it really should be an ICoord.
   // This is because in *2D* the conversion from screen to physical
@@ -1010,8 +1012,8 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
 
   vtkSmartPointer<vtkProp3D> prop = layer->get_pickable_prop3d();
   assert(prop.GetPointer() != 0);
-  // oofcerr << "GhostOOFCanvas::findClickedCell_: prop=" << prop.GetPointer()
-  // 	  << std::endl;
+  oofcerr << "GhostOOFCanvas::findClickedCell_: prop=" << prop.GetPointer()
+   	  << std::endl;
 
   // Sometimes the selecting is done on an object that's not actually
   // displayed.  To be clickable, the vtkProp3D has to be added to the
@@ -1038,20 +1040,22 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
     assert(locator.GetPointer() != 0);
     vtkSmartPointer<vtkCellPicker> picker = 
       vtkSmartPointer<vtkCellPicker>::New();
-    picker->AddLocator(locator);	// requires vtk >= 5.6
+    picker->AddLocator(locator);
 
     prop->PickableOn();
 
     // Compute the display coordinates of the click.
     double x, y;
     physical2Display(*click, x, y);
-    // oofcerr << "GhostOOFCanvas::findClickedCell_: x=" << x << " y=" << y 
-    // 	    << std::endl;
+    oofcerr << "GhostOOFCanvas::findClickedCell_: x=" << x << " y=" << y 
+     	    << std::endl;
 
     // Try to pick something.
     if(picker->Pick(x, y, 0.0, renderer)) {
       vtkSmartPointer<vtkProp3DCollection> props = picker->GetProp3Ds();
       int nprops = props->GetNumberOfItems();
+      oofcerr << "GhostOOFCanvas::findClickedCell_: nprops=" << nprops
+	      << std::endl;
       // When a click command is loaded from a file and the clipping
       // state in the command is different from the current state,
       // more than one Prop3D can be picked, somehow. (Is that still
@@ -1094,10 +1098,10 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
 	clickOk = true;
       }	// end if nprops > 0
     } // end if(picker->Pick(...))
-    // else {			// picker->Pick returned 0
-    //   oofcerr << "GhostOOFCanvas::findClickedCell_: Pick failed!"
-    // 	      << std::endl;
-    // }
+    else {			// picker->Pick returned 0
+      oofcerr << "GhostOOFCanvas::findClickedCell_: Pick failed!"
+    	      << std::endl;
+    }
   }
   catch(...) {
     if(!propIsRendered) {

@@ -158,7 +158,8 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         
     def __call__(self, params, scope=None, name=None, verbose=False):
         # This function creates a VoxelRegionSelectWidget and
-        # returns it. 
+        # returns it.
+        ## TODO: Give this function a real name.
         self.widget = pixelselectparamwidgets.VoxelRegionSelectWidget(
             self, params, scope=scope, name=name, verbose=verbose)
         return self.widget
@@ -200,19 +201,18 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
     def move(self, x, y, button, shift, ctrl):
         self.datalock.logNewEvent_acquire()
         try:
-            num_events = len(self.eventlist)
-            if num_events == 0:
+            if not self.eventlist:
                 # All events have been processed so far. Append the
                 # new move event to the list.
                self.eventlist.append(('move', x, y, shift, ctrl))
-            elif self.eventlist[num_events - 1][0] == 'down':
+            elif self.eventlist[-1][0] == 'down':
                 # Previous event was a down event. Append the new move
                 # event to the list.
                 self.eventlist.append(('move', x, y, shift, ctrl))
-            elif self.eventlist[num_events - 1][0] == 'move':
+            elif self.eventlist[-1][0] == 'move':
                 # Previous event was a move event. Overwrite that
                 # event with the new move event.
-                self.eventlist[num_events - 1] = ('move', x, y, shift, ctrl)
+                self.eventlist[-1] = ('move', x, y, shift, ctrl)
         finally:
             self.datalock.logNewEvent_release()
     
@@ -276,7 +276,7 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         while (True):
             self.datalock.handleNewEvents_acquire()
             try:
-                if (len(self.eventlist) == 0):
+                if not self.eventlist:
                     continue
                 (eventtype, x, y, shift, ctrl) = self.eventlist.pop(0)
             finally:
@@ -311,7 +311,7 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
     def acceptEvent(self, eventtype):
         return (eventtype == 'down' or
                 (self.downed and (eventtype == 'up')) or
-                (self.region_editing_in_progress and
+                (self.region_editing_in_progress and self.downed and
                  (eventtype in ('move', 'up'))))
         
         

@@ -22,11 +22,13 @@ from ooflib.common import color
 from ooflib.common import debug
 from ooflib.common import primitives
 from ooflib.common import registeredclass
+from ooflib.common import subthread
 from ooflib.common.IO import display
 from ooflib.common.IO import ghostgfxwindow
 from ooflib.common.IO import mainmenu
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
+from ooflib.common.IO import pixelselectiontoolbox
 from ooflib.common.IO import xmlmenudump
 
 import math
@@ -49,41 +51,87 @@ import math
 # situation makes more sense, and make the changes necessary to make
 # that situation work.
 
+# TODO: Drag an edge or a corner.  Corners are dragged along a line
+# from the opposite corner.  Edges are dragged along a line from the
+# center of the opposite edge through the center of the selected edge.
+
+# TODO: Translate the box without changing its size, using shift-click
+# or control-click.
+
+# TODO: Rotate the box using option-click?
+
+# TODO: Is the initial click to establish the box widget necessary?
+# Wouldn't a button in the toolbox be better?  It would simplify the
+# mouse handler (pixelselectionmethodGUI.py).
+
 class VoxelRegionSelectionDisplay(display.DisplayMethod):
     def __init__(self, point_size, line_width, line_color,
-                 face_color, face_opacity):
+                 face_color, face_opacity,
+                 hide_inactive, dim_inactive):
         self.point_size = point_size
         self.line_width = line_width
         self.line_color = line_color
         self.face_color = face_color
         self.face_opacity = face_opacity
-        self.sbcallbacks = None
+        self.hide_inactive = hide_inactive
+        self.dim_inactive = dim_inactive
+        self.sbcallbacks = []
         display.DisplayMethod.__init__(self)
 
     def destroy(self, destroy_canvaslayer):
-        if self.sbcallbacks is not None:
-            map(switchboard.removeCallback, self.sbcallbacks)
-            self.sbcallbacks = None
+        map(switchboard.removeCallback, self.sbcallbacks)
+        self.sbcallbacks = []
         display.DisplayMethod.destroy(self, destroy_canvaslayer)
 
     def newLayer(self):
+        self.toolbox = self.gfxwindow.getToolboxByName(
+            pixelselectiontoolbox.toolboxName())
         # The following switchboard callbacks are used for updating
         # what is displayed in the layer.
-        self.sbcallbacks = [switchboard.requestCallbackMain("region editing begun", self.beginRegion),
-                            switchboard.requestCallbackMain("region editing finished", self.hideRegion)
-                            ]
+        self.sbcallbacks.extend([
+            switchboard.requestCallbackMain("region editing begun",
+                                            self.beginRegion),
+            switchboard.requestCallbackMain("region editing finished",
+                                            self.hideRegion),
+            switchboard.requestCallbackMain("toolbox activated "
+                                            + self.toolbox.name(),
+                                            self.activatedCB),
+            switchboard.requestCallbackMain("toolbox deactivated "
+                                            + self.toolbox.name(),
+                                            self.deactivatedCB)
+                            ])
 
-        # Create an object of class BoxWidgetLayer.
-        return canvaslayers.BoxWidgetLayer(self.gfxwindow.oofcanvas,
-                                           "BoxWidget") 
+        layer = canvaslayers.BoxWidgetLayer(self.gfxwindow.oofcanvas,
+                                            "BoxWidget")
+        layer.setEmpty(False)
+        return layer
 
     def setParams(self):
-        self.canvaslayer.set_totalVisibility(False)
         self.canvaslayer.set_pointSize(self.point_size)
         self.canvaslayer.set_lineWidth(self.line_width)
         self.canvaslayer.set_lineColor(self.line_color)
         self.canvaslayer.set_faceColor(self.face_color)
-        self.canvaslayer.set_faceOpacity(self.face_opacity)
+        self.canvaslayer.set_opacity(self.face_opacity*self.opacityFactor())
+        self.setVisibility(self.toolbox.active or not self.hide_inactive)
+
+    def opacityFactor(self):
+        if self.toolbox.active:
+            return 1.0
+        return 1. - self.dim_inactive
+
+    def activatedCB(self, gfxwindow):
+        if gfxwindow is self.gfxwindow:
+            self.canvaslayer.set_opacity(self.face_opacity)
+            self.setVisibility(True)
+            self.canvaslayer.setModified()
+            subthread.execute(gfxwindow.draw)
+            
+    def deactivatedCB(self, gfxwindow):
+        if gfxwindow is self.gfxwindow:
+            self.setVisibility(not self.hide_inactive)
+            self.canvaslayer.set_opacity(self.face_opacity*self.opacityFactor())
+            self.canvaslayer.setModified()
+            subthread.execute(gfxwindow.draw)
 
     def beginRegion(self, gfxwindow):
         if gfxwindow is not self.gfxwindow:
@@ -94,23 +142,26 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
         dimensions = microstructure.size()
         self.canvaslayer.set_box(dimensions)
         self.canvaslayer.setModified()
-        self.canvaslayer.set_totalVisibility(True)
+        self.setVisibility(True)
 
     def hideRegion(self, gfxwindow):
         if gfxwindow is not self.gfxwindow:
             return
-        self.canvaslayer.set_totalVisibility(False)
+        self.setVisibility(False)
 
 defaultVoxelRegionSelectionPointSize = 5.0
 defaultVoxelRegionSelectionLineWidth = 3.0
 defaultVoxelRegionSelectionLineColor = color.blue
 defaultVoxelRegionSelectionFaceColor = color.blue
 defaultVoxelRegionSelectionFaceOpacity = 0.85
+defaultHideInactive = False
+defaultDimInactive = 0.5
 pointSizeRange = (0, 15, 1)
 lineWidthRange = (1, 10, 1)
 opacityRange = (0, 1, 0.05)
 
-def _setDefaultVoxelRegionSelectionParams(menuitem, plane_color, plane_opacity):
+def _setDefaultVoxelRegionSelectionParams(menuitem, plane_color, plane_opacity,
+                                          hide_inactive, dim_inactive):
     global defaultVoxelRegionSelectionPointSize
     defaultVoxelRegionSelectionPointSize = point_size
     global defaultVoxelRegionSelectionLineWidth
@@ -121,6 +172,10 @@ def _setDefaultVoxelRegionSelectionParams(menuitem, plane_color, plane_opacity):
     defaultVoxelRegionSelectionFaceColor = face_color
     global defaultVoxelRegionSelectionFaceOpacity
     defaultVoxelRegionSelectionFaceOpacity = face_opacity
+    global defaultHideInactive
+    defaultHideInactive = hide_inactive
+    global defaultDimInactive
+    defaultDimInactive = dim_inactive
 
 # Sizing and coloring options for the box and arrow. These can be
 # set in the graphics defaults menu.
@@ -128,26 +183,34 @@ voxelregionselectionparams = [
     parameter.FloatRangeParameter(
         'point_size', 
         pointSizeRange,
-        defaultVoxelRegionSelectionPointSize,                                        
+        defaultVoxelRegionSelectionPointSize,
         tip="Size of the points on the corners of the box."),
     parameter.FloatRangeParameter(
         'line_width', 
         lineWidthRange,
-        defaultVoxelRegionSelectionLineWidth,                                        
+        defaultVoxelRegionSelectionLineWidth,
         tip="Width of the lines on the edges of the box."),
     color.ColorParameter(
         'line_color', 
-        defaultVoxelRegionSelectionLineColor,                                             
+        defaultVoxelRegionSelectionLineColor,
         tip="Color for the edges of the box."), 
     color.ColorParameter(
         'face_color', 
-        defaultVoxelRegionSelectionFaceColor,                                             
+        defaultVoxelRegionSelectionFaceColor,
         tip="Color of the faces of the box."),                   
     parameter.FloatRangeParameter(
         'face_opacity', 
         opacityRange,                                                 
-        defaultVoxelRegionSelectionFaceOpacity,                                             
-        tip="Opacity of the faces of the box.")]
+        defaultVoxelRegionSelectionFaceOpacity,
+        tip="Opacity of the faces of the box."),
+    parameter.BooleanParameter(
+        'hide_inactive', defaultHideInactive,
+        tip='Hide the widget when the toolbox is inactive.'),
+    parameter.FloatRangeParameter(
+        'dim_inactive', opacityRange, defaultDimInactive,
+        tip='Factor by which to decrease the opacity of an inactive widget')
+
+]
 
 mainmenu.gfxdefaultsmenu.Voxel_Selection.addItem(oofmenu.OOFMenuItem(
     "Voxel_Region_Selection",
@@ -186,7 +249,9 @@ def predefinedVoxelRegionSelectionLayer():
         line_width=defaultVoxelRegionSelectionLineWidth,
         line_color=defaultVoxelRegionSelectionLineColor,
         face_color=defaultVoxelRegionSelectionFaceColor,
-        face_opacity=defaultVoxelRegionSelectionFaceOpacity)
+        face_opacity=defaultVoxelRegionSelectionFaceOpacity,
+        hide_inactive=defaultHideInactive,
+        dim_inactive=defaultDimInactive)
 
 ghostgfxwindow.PredefinedLayer('Microstructure', '<topmost>',
                                predefinedVoxelRegionSelectionLayer)

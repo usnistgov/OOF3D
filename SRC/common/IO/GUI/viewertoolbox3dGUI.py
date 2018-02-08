@@ -74,7 +74,7 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     def __init__(self, vwrtoolbox):
         debug.mainthreadTest()
 
-        toolboxGUI.GfxToolbox.__init__(self, "Viewer", vwrtoolbox)
+        toolboxGUI.GfxToolbox.__init__(self, vwrtoolbox)
         mainbox = gtk.VBox(spacing=3)
         self.gtk.add(mainbox)
 
@@ -664,10 +664,6 @@ To deselect a plane, Ctrl+Click the plane in the list."""
 
     # Clipping
     ############################################################
-
-    ## TODO 3.1: Edit clipping planes graphically using
-    ## vtkImplicitPlaneWidget.  Or add a comment explaining why the
-    ## ClippingPlaneWidget is better.
 
     def renderEnableCell(self, column, cell_renderer, model, iter):
         debug.mainthreadTest()

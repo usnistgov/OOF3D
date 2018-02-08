@@ -404,16 +404,23 @@ class DisplayMethod(registeredclass.RegisteredClass):
     #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
     def hide(self):
-        self.canvaslayer.hide()
+        self.canvaslayer.hide(False) # arg is 'force'
 
     def show(self):
-        self.canvaslayer.show()
+        self.canvaslayer.show(False)
+
+    def setVisibility(self, vis):
+        if vis:
+            self.canvaslayer.show(False)
+        else:
+            self.canvaslayer.hide(False)
 
     def modified(self):
         ## Explicitly tell a layer that it's been modified.  This will
         ## force a redraw.
         self.canvaslayer.setModified()
 
+    ## TODO:  Are raise_layer and lower_layer used?
     def raise_layer(self, howfar=1):
         ## TODO: This.
         debug.fmsg("Display.raise_layer is not yet implemented!")

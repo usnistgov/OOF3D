@@ -39,15 +39,10 @@ class PixelSelectionMethodFactory(regclassfactory.RegisteredClassFactory):
         if self.current_who_class is None:
             return True
         return self.current_who_class in registration.whoclasses
-        
 
 class PixelSelectToolboxGUI(genericselectGUI.GenericSelectToolboxGUI):
     def __init__(self, pixelselecttoolbox, method):
         debug.mainthreadTest()
-        if config.dimension() == 2:
-            name = "Pixel Selection"
-        elif config.dimension() == 3:
-            name = "Voxel Selection"
 
         # This is a dict of all the SelectionMethodGUI objects which
         # belong to this PixelToolboxGUI. For each subclass of
@@ -78,7 +73,6 @@ class PixelSelectToolboxGUI(genericselectGUI.GenericSelectToolboxGUI):
                 self.selectionmethodGUIs[registration.subclass] = selmethGUIclass(pixelselecttoolbox.gfxwindow())
 
         genericselectGUI.GenericSelectToolboxGUI.__init__(self,
-                                                   name,
                                                    pixelselecttoolbox,
                                                    method)
 
@@ -127,7 +121,8 @@ class PixelSelectToolboxGUI(genericselectGUI.GenericSelectToolboxGUI):
         
     def activate(self):
         if not self.active:
-            genericselectGUI.GenericSelectToolboxGUI.activate(self)
+            super(PixelSelectToolboxGUI, self).activate()
+            # genericselectGUI.GenericSelectToolboxGUI.activate(self)
             self.activecallbacks = [
                 switchboard.requestCallbackMain('pixel selection changed',
                                                 self.changedSelection)
@@ -135,8 +130,9 @@ class PixelSelectToolboxGUI(genericselectGUI.GenericSelectToolboxGUI):
 
     def deactivate(self):
         if self.active:
-            genericselectGUI.GenericSelectToolboxGUI.deactivate(self)
             map(switchboard.removeCallback, self.activecallbacks)
+            super(PixelSelectToolboxGUI, self).deactivate()
+            # genericselectGUI.GenericSelectToolboxGUI.deactivate(self)
             self.activecallbacks = []
             
     def getSource(self):

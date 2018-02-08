@@ -46,7 +46,7 @@ class MoveNodeToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
             self.mode = "Keyboard"
         self.mouselock = lock.Lock()
         
-        toolboxGUI.GfxToolbox.__init__(self, "Move Nodes", movenodetoolbox)
+        toolboxGUI.GfxToolbox.__init__(self, movenodetoolbox)
         mainbox = gtk.VBox()
         self.gtk.add(mainbox)
 
@@ -270,7 +270,7 @@ class MoveNodeToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
             text.set_editable(editable)
 
         gtklogger.checkpoint(self.gfxwindow().name + " " +
-                             self._name + " sensitized")
+                             self.name() + " sensitized")
 
     def rsrvChanged(self, reserved, whocls):
         skelcontext = self.getSkeletonContext()

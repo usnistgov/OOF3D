@@ -26,7 +26,7 @@ import gtk
 class VoxelInfoToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     def __init__(self, pixelinfotoolbox):
         debug.mainthreadTest()
-        toolboxGUI.GfxToolbox.__init__(self, "Voxel Info", pixelinfotoolbox)
+        toolboxGUI.GfxToolbox.__init__(self, pixelinfotoolbox)
         mainbox = gtk.VBox()
         self.gtk.add(mainbox)
 
@@ -202,7 +202,7 @@ class VoxelInfoToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
             self.ztsignal.unblock()
 
         gtklogger.checkpoint(self.gfxwindow().name + " " +
-                             self._name + " updated")
+                             self.name() + " updated")
 
     def updateButtonCB(self, button):
         debug.mainthreadTest()

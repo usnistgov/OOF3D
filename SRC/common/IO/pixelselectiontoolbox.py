@@ -8,6 +8,7 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov. 
 
+from ooflib.SWIG.common import config
 from ooflib.SWIG.common import switchboard
 from ooflib.common import debug
 from ooflib.common import labeltree
@@ -25,11 +26,18 @@ from ooflib.common.IO import whoville
 # and invokes the non-GUI menu item, which creates the actual method
 # does the selection.
 
+def toolboxName():
+    if config.dimension() == 3:
+        return 'Voxel_Select'
+    else:
+        return 'Pixel_Select'
+    
+
 class PixelSelectToolbox(genericselecttoolbox.GenericSelectToolbox):
     def __init__(self, gfxwindow):
         genericselecttoolbox.GenericSelectToolbox.__init__(
             self,
-            name='Pixel_Select',
+            name=toolboxName(),
             method=pixelselectionmethod.SelectionMethod,
             gfxwindow=gfxwindow)
 

@@ -20,19 +20,19 @@ import gtk
 import sys
 
 class GfxToolbox(widgetscope.WidgetScope):
-    def __init__(self, name, toolbox):
+    def __init__(self, toolbox):
         debug.mainthreadTest()
         self.toolbox = toolbox          # non-GUI toolbox
         self.gtk = gtk.Frame()          # root of toolbox's gtk widget tree
-        gtklogger.setWidgetName(self.gtk, name)
+        gtklogger.setWidgetName(self.gtk, self.toolbox.name())
         self.gtk.set_shadow_type(gtk.SHADOW_NONE)
         self.active = 0
-        self._name = name
         widgetscope.WidgetScope.__init__(self, parent=None)
     def name(self):
-        return self._name
+        return self.toolbox.name()
     def close(self):
         pass
+
     def activate(self):
         ## TODO: active should only be in the Toolbox class.  No need
         ## to store it in GfxToolbox as well.  There may be places in
@@ -40,12 +40,12 @@ class GfxToolbox(widgetscope.WidgetScope):
         ## changed.
         self.active = True
         self.toolbox.active = True
-        switchboard.notify("toolbox activated " + self._name,
+        switchboard.notify("toolbox activated " + self.name(),
                            self.toolbox.gfxwindow())
     def deactivate(self):
         self.active = False
         self.toolbox.active = False
-        switchboard.notify("toolbox deactivated " + self._name,
+        switchboard.notify("toolbox deactivated " + self.name(),
                            self.toolbox.gfxwindow())
     def gfxwindow(self):
         return self.toolbox.gfxwindow()
