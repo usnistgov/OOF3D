@@ -734,11 +734,11 @@ BoxWidgetLayer::BoxWidgetLayer(GhostOOFCanvas *canvas, const std::string &nm)
   points->Initialize();
   points->SetNumberOfPoints(8);
 
-  for (int i = 0; i < 8; i++) {
-    points->SetPoint(i, double(i % 2),
-		     double((i / 2) % 2),
-		     double((i / 4) % 2));
-  }
+  // for (int i = 0; i < 8; i++) {
+  //   points->SetPoint(i, double(i % 2),
+  // 		     double((i / 2) % 2),
+  // 		     double((i / 4) % 2));
+  // }
 
   grid->Initialize();
   grid->Allocate(26, 26);
@@ -817,7 +817,6 @@ BoxWidgetLayer::BoxWidgetLayer(GhostOOFCanvas *canvas, const std::string &nm)
   }
   
   boxMapper->SetInputData(grid);
-
   boxActor->SetMapper(boxMapper);
   boxActor->GetProperty()->SetEdgeVisibility(true);
 
@@ -862,7 +861,8 @@ vtkSmartPointer<vtkAbstractCellLocator> BoxWidgetLayer::get_locator() {
   return locator;
 }
 
-// TODO: Define this to work for cell types other than VTK_QUAD.
+// TODO: Define this to work for cell types other than VTK_QUAD.  Is
+// there a vtk function that does this?
 Coord3D *BoxWidgetLayer::get_cellCenter(vtkIdType cellID) {
   int cellType = grid->GetCellType(cellID);
   if (cellType == VTK_QUAD) {
@@ -922,17 +922,19 @@ Coord3D *BoxWidgetLayer::get_cellNormal_Coord3D(vtkIdType cellID) {
 }
 
 void BoxWidgetLayer::set_box(const Coord3D *point) {
-  // Resets the box to a rectangular prism with one corner at (0, 0,
-  // 0) and the opposite corner at the position specified by point.
-  double dimensions[3];
-  dimensions[0] = (*point)[0];
-  dimensions[1] = (*point)[1];
-  dimensions[2] = (*point)[2];
-  for (int i = 0; i < 8; i++) {
-    points->SetPoint(i, dimensions[0] * double(i % 2),
-		     dimensions[1] * double((i / 2) % 2),
-		     dimensions[2] * double((i / 4) % 2));
-  }
+  // Resets the box to a rectangular prism with one corner at the
+  // origin and the opposite corner at point.
+  Coord3D corner0(0., 0., 0.);
+  Coord3D corner1 = *point;
+  points->SetPoint(0, corner0[0], corner0[1], corner0[2]);
+  points->SetPoint(1, corner1[0], corner0[1], corner0[2]);
+  points->SetPoint(2, corner0[0], corner1[1], corner0[2]);
+  points->SetPoint(3, corner1[0], corner1[1], corner0[2]);
+  points->SetPoint(4, corner0[0], corner0[1], corner1[2]);
+  points->SetPoint(5, corner1[0], corner0[1], corner1[2]);
+  points->SetPoint(6, corner0[0], corner1[1], corner1[2]);
+  points->SetPoint(7, corner1[0], corner1[1], corner1[2]);
+  points->Modified();
 }
 
 void BoxWidgetLayer::set_pointSize(float size) {
@@ -981,6 +983,7 @@ void BoxWidgetLayer::set_position(const Coord3D *point) {
     }
     points->SetPoint(i, temp);
   }
+  points->Modified();
 }
 
 // TODO: Define this to work for cell types other than VTK_QUAD.
@@ -1016,6 +1019,7 @@ void BoxWidgetLayer::offset_cell(vtkIdType cellID, double offset) {
       points->SetPoint(pointIDs[i],
 		       corners[i][0], corners[i][1], corners[i][2]);
     }
+    points->Modified();
     delete normal;
   } 
 }

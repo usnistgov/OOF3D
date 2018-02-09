@@ -712,6 +712,7 @@ vtkSmartPointer<vtkCell> CSkeletonMultiNodeSelectable::getVtkCell() const {
     x = (*nodes)[i]->position();
     cell->GetPoints()->SetPoint(i,x.xpointer());
   }
+  cell->GetPoints()->Modified();
   return cell;
 }
 
