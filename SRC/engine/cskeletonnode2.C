@@ -756,7 +756,7 @@ vtkSmartPointer<vtkCell> CSkeletonNode::getVtkCell() const {
   cell->GetPointIds()->SetId(0,0); //index);
   x = position();
   cell->GetPoints()->SetPoint(0,x.xpointer());
-  cell->GetPoints()->Modified();
+  // cell->GetPoints()->Modified();
   return cell;
 }
 
