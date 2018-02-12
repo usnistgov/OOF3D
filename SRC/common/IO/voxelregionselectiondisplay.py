@@ -76,6 +76,7 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
         self.hide_inactive = hide_inactive
         self.dim_inactive = dim_inactive
         self.sbcallbacks = []
+        self.editingInProgress = False
         display.DisplayMethod.__init__(self)
 
     def destroy(self, destroy_canvaslayer):
@@ -90,9 +91,9 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
         # what is displayed in the layer.
         self.sbcallbacks.extend([
             switchboard.requestCallbackMain("region editing begun",
-                                            self.beginRegion),
+                                            self.beginEditingCB),
             switchboard.requestCallbackMain("region editing finished",
-                                            self.hideRegion),
+                                            self.endEditingCB),
             switchboard.requestCallbackMain("toolbox activated "
                                             + self.toolbox.name(),
                                             self.activatedCB),
@@ -106,48 +107,57 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
         layer.setEmpty(False)
         return layer
 
+    def _visibility(self):
+        return (self.editingInProgress and
+                (self.toolbox.active or not self.hide_inactive))
+
+    def _opacity(self):
+        if self.toolbox.active:
+            return self.face_opacity
+        return self.face_opacity * (1. - self.dim_inactive)
+
     def setParams(self):
         self.canvaslayer.set_pointSize(self.point_size)
         self.canvaslayer.set_lineWidth(self.line_width)
         self.canvaslayer.set_lineColor(self.line_color)
         self.canvaslayer.set_faceColor(self.face_color)
-        self.canvaslayer.set_opacity(self.face_opacity*self.opacityFactor())
-        self.setVisibility(self.toolbox.active or not self.hide_inactive)
-
-    def opacityFactor(self):
-        if self.toolbox.active:
-            return 1.0
-        return 1. - self.dim_inactive
+        self.canvaslayer.set_opacity(self._opacity())
+        self.setVisibility(self._visibility())
 
     def activatedCB(self, gfxwindow):
         if gfxwindow is self.gfxwindow:
-            self.canvaslayer.set_opacity(self.face_opacity)
-            self.setVisibility(True)
+            self.canvaslayer.set_opacity(self._opacity())
+            self.setVisibility(self._visibility())
             self.canvaslayer.setModified()
             subthread.execute(gfxwindow.draw)
             
     def deactivatedCB(self, gfxwindow):
         if gfxwindow is self.gfxwindow:
-            self.setVisibility(not self.hide_inactive)
-            self.canvaslayer.set_opacity(self.face_opacity*self.opacityFactor())
+            self.canvaslayer.set_opacity(self._opacity())
+            self.setVisibility(self._visibility())
             self.canvaslayer.setModified()
             subthread.execute(gfxwindow.draw)
 
-    def beginRegion(self, gfxwindow):
+    def beginEditingCB(self, gfxwindow):
         if gfxwindow is not self.gfxwindow:
             return
         microstructure = self.gfxwindow.findMicrostructure()
         if microstructure is None:
             return
-        dimensions = microstructure.size()
-        self.canvaslayer.set_box(dimensions)
+        self.editingInProgress = True
+        ## TODO: Set to previous selection, so use a RectangularPrism arg
+        ## instead of a Coord 
+        self.canvaslayer.set_box(microstructure.size())
+        self.setVisibility(self._visibility())
         self.canvaslayer.setModified()
-        self.setVisibility(True)
 
-    def hideRegion(self, gfxwindow):
+    def endEditingCB(self, gfxwindow):
+        debug.fmsg()
         if gfxwindow is not self.gfxwindow:
             return
-        self.setVisibility(False)
+        self.editingInProgress = False
+        self.setVisibility(self._visibility())
+        self.canvaslayer.setModified()
 
 defaultVoxelRegionSelectionPointSize = 5.0
 defaultVoxelRegionSelectionLineWidth = 3.0

@@ -34,7 +34,7 @@ import math
 # performing any steps in the 3D oofcanvas necessary for specifying
 # the 3D region enclosing all the voxels they wish to select.  Each
 # widget is associated with a SelectionMethodGUI.
-#
+
 # The SelectionMethodGUI is an object that manages both the gtk-based
 # VoxelRegionSelectWidget and any associated vtk-based 3D widget on
 # the oofcanvas which the user may be interacting with via the
@@ -62,39 +62,56 @@ class VoxelRegionSelectWidget(parameterwidgets.ParameterWidget):
         # PixelSelectionMethodFactory to build for certain
         # PixelSelectionMethodRegistrations.
         self.extraGUIbox = gtk.VBox()
+        base.pack_start(self.extraGUIbox, expand=0, fill=0)
 
         # Instructions for using the associated pixel SelectionMethod.
         # TODO: Make these look nicer. Tailor them to different region
         # shapes (e.g. we probably want different instructions if
         # we're trying to select an ellipsoid-shaped region).
         label = gtk.Label("How to use this tool:\n  Click image to begin editing a box-shaped region.\n  (Click a face/edge/corner of the box)+Move to\n    adjust the boundaries of the box.\n  Click 'Done' to finish editing the region, and\n    select all voxels within that region.")
-        label.set_pattern("             _______\n             _______\n            ________\n            ________\n            ________\n")
+
         label.set_justify(gtk.JUSTIFY_LEFT)
         self.extraGUIbox.pack_start(label, fill=0, expand=0, padding=2)
 
         # COSMETIC: This aligns the button that we are creating with
         # the center of extraGUIBox.       
         alignment = gtk.Alignment(xalign=0.5, yalign=0.5)
+        self.extraGUIbox.pack_start(alignment, expand=0, fill=0)
 
         # COSMETIC: hbox is simply here in order to contain the 'Done'
         # button, thereby forcing the 'Done' button to remain a fixed
         # width.
         # TODO?: Stick a 'Cancel' button in here so that the user can
         # quit editing a region without selecting any voxels.
-        hbox = gtk.HBox() 
+        hbox = gtk.HBox()
+        alignment.add(hbox)
+        hbox.set_homogeneous(True)
+
+        # Clicking the "Start" button brings up the voxel selection
+        # widget.
+        self.startbutton = gtkutils.StockButton(gtk.STOCK_GO_FORWARD, 'Start')
+        gtklogger.setWidgetName(self.startbutton, "Start")
+        gtklogger.connect(self.startbutton, 'clicked', self.startCB)
+        tooltips.set_tooltip_text(self.startbutton,
+                                  "Start choosing voxels graphically.")
+        hbox.pack_start(self.startbutton, expand=0, fill=0)
        
         # A button that the user presses once they are done adjusting
         # the region containing the voxels which they wish to select,
         # and are ready to perform the actual selection.
-        self.donebutton = gtk.Button('Done')
+        self.donebutton = gtkutils.StockButton(gtk.STOCK_APPLY, 'Done')
         gtklogger.setWidgetName(self.donebutton, "Done")
         gtklogger.connect(self.donebutton, 'clicked', self.doneCB)
-        tooltips.set_tooltip_text(self.donebutton, "Click once you are done editing the displayed region. All the voxels within that region will then be selected.")
+        tooltips.set_tooltip_text(self.donebutton, "Click when you are done editing the displayed region. All the voxels within that region will then be selected.")
         hbox.pack_start(self.donebutton, expand=0, fill=0) 
-        alignment.add(hbox)
-        self.extraGUIbox.pack_start(alignment, expand=0, fill=0)
-        
-        base.pack_start(self.extraGUIbox, expand=0, fill=0)
+
+        self.cancelbutton = gtkutils.StockButton(gtk.STOCK_CANCEL, "Cancel")
+        gtklogger.setWidgetName(self.cancelbutton, 'Cancel')
+        gtklogger.connect(self.cancelbutton, 'clicked', self.cancelCB)
+        tooltips.set_tooltip_text(
+            self.cancelbutton,
+            "Stop choosing voxels without selecting anything.")
+        hbox.pack_start(self.cancelbutton, expand=0, fill=0)
         
         self.sensitize()
 
@@ -122,10 +139,20 @@ class VoxelRegionSelectWidget(parameterwidgets.ParameterWidget):
         self.parameterTable.get_values()
         self.params = self.parameterTable.params
 
+    def startCB(self, button):
+        self.selectionmethodGUI.start()
+        self.sensitize()
+
+    def cancelCB(self, button):
+        self.selectionmethodGUI.done()
+        self.sensitize()
+
     def doneCB(self, button):
         # Switchboard callback, called when the 'Done' button is
         # pressed. This causes the 'Done' button to be desensitized.
         self.selectionmethodGUI.done()
+        self.sensitize()
+        # TODO: Actually make the selection
 
     def sensitize(self):
         # Decides whether or not the 'Done' button should be sensitive
@@ -136,5 +163,6 @@ class VoxelRegionSelectWidget(parameterwidgets.ParameterWidget):
         # True. In this case, the 'Done' button will become sensitive.
         # Otherwise, the button will remain insensitive until the user
         # begins editing a new region to be selected.
-        self.donebutton.set_sensitive(self.selectionmethodGUI.region_editing_in_progress)
+        self.donebutton.set_sensitive(
+            self.selectionmethodGUI.region_editing_in_progress)
 

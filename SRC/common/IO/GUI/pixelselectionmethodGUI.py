@@ -95,15 +95,8 @@ class SelectionMethodGUI(mousehandler.MouseHandler):
 # voxels. Right now, we just have a little click-and-drag-able curio
 # that does nothing useful.
 
-# TODO: There are 8 points in the vtkPoints object belonging to a
-# RectangularPrismSelectorGUI's layer.canvaslayer attribute. These 8
-# points are the 8 corners of the rectangular prism representing the
-# region to be selected. We don't want to let these move outside the
-# microstructure dimensions, or else the user is apparently unable to
-# click and drag the cells associated with those points.
-
 # TODO: Allow the user to adjust the box by selecting edges and
-# corners too (see TODOs in commo/IO/canvaslayer.C for some of the
+# corners too (see TODOs in common/IO/canvaslayer.C for some of the
 # BoxWidgetLayer functions).
 
 class RectangularPrismSelectorGUI(SelectionMethodGUI):
@@ -168,24 +161,22 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         self.datalock.logNewEvent_acquire()
         try:
             self.region_editing_in_progress = False
-            self.widget.sensitize()
             switchboard.notify("region editing finished", self.gfxwindow)
             self.gfxwindow.oofcanvas.render()
         finally:
             self.datalock.logNewEvent_release()
+
+    def start(self):
+        self.region_editing_in_progress = True
+        switchboard.notify("region editing begun", self.gfxwindow)
+        self.gfxwindow.oofcanvas.render()
 
     def up(self, x, y, button, shift, ctrl):
         self.downed = False
         self.datalock.logNewEvent_acquire()
         try:
             self.downed = False
-            if not self.region_editing_in_progress:
-                self.region_editing_in_progress = True
-                self.widget.sensitize()
-                switchboard.notify("region editing begun", self.gfxwindow)
-                self.gfxwindow.oofcanvas.render()
-            else:
-                self.eventlist.append(('up', x, y, shift, ctrl))
+            self.eventlist.append(('up', x, y, shift, ctrl))
         finally:
             self.datalock.logNewEvent_release()
 
@@ -310,7 +301,6 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         
     def acceptEvent(self, eventtype):
         return (eventtype == 'down' or
-                (self.downed and (eventtype == 'up')) or
                 (self.region_editing_in_progress and self.downed and
                  (eventtype in ('move', 'up'))))
         

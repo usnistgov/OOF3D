@@ -40,6 +40,8 @@ class PixelSelectionMethodFactory(regclassfactory.RegisteredClassFactory):
             return True
         return self.current_who_class in registration.whoclasses
 
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+    
 class PixelSelectToolboxGUI(genericselectGUI.GenericSelectToolboxGUI):
     def __init__(self, pixelselecttoolbox, method):
         debug.mainthreadTest()
