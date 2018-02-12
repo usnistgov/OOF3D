@@ -512,7 +512,7 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
                 
             self.points = []            # get ready for next event
             
-    def acceptEvent(self, eventtype): #L ocked the validation for just these three events.
+    def acceptEvent(self, eventtype):
         if eventtype == 'up' or eventtype == 'down' or eventtype == 'move':
 	  return True
 	else:
