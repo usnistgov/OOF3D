@@ -356,7 +356,8 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
 
     def selectToolbox(self, tbname):
         debug.mainthreadTest()
-        if not (self.current_toolbox and (self.current_toolbox.name()==tbname)):
+        if not (self.current_toolbox and
+                (self.current_toolbox.displayName()==tbname)):
             self.removeMouseHandler()
             if self.current_toolbox:
                 self.current_toolbox.deactivate()
@@ -369,7 +370,7 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
 
     def getToolboxGUIByName(self, name):
         for tbgui in self.toolboxGUIs:
-            if tbgui.name() == name:
+            if tbgui.displayName() == name:
                 return tbgui
 
     def makeToolboxGUI(self, tb):
@@ -381,7 +382,8 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
                
     def updateToolboxChooser(self):
         self.toolboxGUIs.sort()
-        self.toolboxchooser.update([tb.name() for tb in self.toolboxGUIs])
+        self.toolboxchooser.update([tb.displayName()
+                                    for tb in self.toolboxGUIs])
 
 
     # Layer callbacks

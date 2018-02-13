@@ -24,12 +24,14 @@ class GfxToolbox(widgetscope.WidgetScope):
         debug.mainthreadTest()
         self.toolbox = toolbox          # non-GUI toolbox
         self.gtk = gtk.Frame()          # root of toolbox's gtk widget tree
-        gtklogger.setWidgetName(self.gtk, self.toolbox.name())
+        gtklogger.setWidgetName(self.gtk, self.toolbox.displayName())
         self.gtk.set_shadow_type(gtk.SHADOW_NONE)
         self.active = 0
         widgetscope.WidgetScope.__init__(self, parent=None)
     def name(self):
         return self.toolbox.name()
+    def displayName(self):
+        return self.toolbox.displayName()
     def close(self):
         pass
 

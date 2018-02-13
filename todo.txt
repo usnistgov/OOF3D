@@ -45,7 +45,12 @@ anything that forces the list to be redrawn fixes it.
 
 Fix bug: load5color.log; open graphics window; add clipping plane
 w/default values (x, offset=0); drag clipping plane to right.  Front
-face of image is not rendered.  Modifying the view in any way fixes it.
+face of image is not rendered.  Modifying the view in any way fixes
+it.
+
+Toolbox names are inconsistent in the chooser.  Names like
+'Voxel_Info' are ok for oofmenus but not for gui elements. Maybe all
+toolboxes should have a displayName().
 
 ---------------------------------------------------------------------------
 Soon

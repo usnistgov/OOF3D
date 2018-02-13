@@ -49,8 +49,10 @@ class HistoricalSelection:
 #  redoCB()
 #  clearCB()
 #  invertCB()
+#  installMouseHandler()  install the appropriate mouse handler (optional)
 #  methodFactory()  Returns a RegisteredClassFactory for the
 #                                                 appropriate registry.
+
 
 class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
                               mousehandler.MouseHandler):
@@ -208,8 +210,7 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
             self.sensitize()
             self.sensitizeHistory()
             self.setInfo()
-
-            # self.gfxwindow().setMouseHandler(self)
+            self.installMouseHandler()
             if config.dimension() == 3:
                 self.gfxwindow().toolbar.setSelect()
 

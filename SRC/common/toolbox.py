@@ -39,6 +39,10 @@ class Toolbox:
         self.active = False
     def name(self):
         return self._name
+    def displayName(self):
+        # Override this in subclasses that should display something
+        # other than self._name in the toolbox chooser widget.
+        return self._name
     def gfxwindow(self):
         return self._gfxwindow
     def makeGUI(self):                 

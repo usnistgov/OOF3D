@@ -40,6 +40,10 @@ class SkeletonSelectionToolbox(genericselecttoolbox.GenericSelectToolbox):
             gfxwindow=gfxwindow,
             mode=mode,
             method=mode.methodclass)
+    def displayName(self):
+        # name() returns the mode name, which is not what the toolbox
+        # chooser should display.
+        return "Skeleton Selection"
     def modename(self):
         return self.mode.name
     def emptyMessage(self):

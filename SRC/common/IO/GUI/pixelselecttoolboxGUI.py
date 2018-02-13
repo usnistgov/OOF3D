@@ -124,7 +124,6 @@ class PixelSelectToolboxGUI(genericselectGUI.GenericSelectToolboxGUI):
     def activate(self):
         if not self.active:
             super(PixelSelectToolboxGUI, self).activate()
-            # genericselectGUI.GenericSelectToolboxGUI.activate(self)
             self.activecallbacks = [
                 switchboard.requestCallbackMain('pixel selection changed',
                                                 self.changedSelection)
