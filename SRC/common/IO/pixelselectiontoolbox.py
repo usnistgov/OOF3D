@@ -31,7 +31,18 @@ def toolboxName():
         return 'Voxel_Select'
     else:
         return 'Pixel_Select'
+
+
+class PixelSelectToolboxNew(genericselecttoolbox.GenericSelectToolbox):
+    def __init__(self, gfxwindow):
+        genericselecttoolbox.GenericSelectToolbox.__init__(
+            self.
+            name=toolboxName() + "NEW",
+            method=pixelselectionmethod.Self
     
+##############
+## OLD CODE ##
+##############
 
 class PixelSelectToolbox(genericselecttoolbox.GenericSelectToolbox):
     def __init__(self, gfxwindow):

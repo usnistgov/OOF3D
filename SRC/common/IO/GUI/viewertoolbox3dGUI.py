@@ -56,6 +56,8 @@ ndigits = 10
 ## TODO: Rocker mode: rock back and forth on an axis.  Set axis
 ## direction, frequency, and amplitude.
 
+## TODO: Use new mouse handler code in toolboxGUI.py
+
 THRESHOLD = 0.4
 
 ## TODO 3.1: Move axis parameters from the Settings menu to a new
@@ -1297,10 +1299,6 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
                 self.gfxwindow.releaseGfxLock()
 
     def cancel(self):
-        # The subthread is a daemon thread and doesn't need to be
-        # cancelled, but it should stop processing data.  If it
-        # weren't a daemon, the program wouldn't exit until the thread
-        # were killed.
         self.datalock.logNewEvent_acquire()
         try:
             # TODO: eventlist should be a list of objects, so that we

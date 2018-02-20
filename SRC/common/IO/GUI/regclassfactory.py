@@ -120,6 +120,12 @@ class RegisteredClassFactory(RCFBase):
         self.expand = expand    
 
         self.readonly = False
+
+        ## TODO: Why is RCFBase.__init__ called here, instead of
+        ## earlier, before self.callbacks is set?  RCFBase.__init__
+        ## should initialize self.callbacks to an empty list.
+        ## RCFBase.set_callback should be eliminated.  add_callback
+        ## should always be used instead.
         RCFBase.__init__(self, gtk.Frame(), scope, widgetdict, name, 
                          verbose=verbose)
         

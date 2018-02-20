@@ -61,6 +61,7 @@ import math
 # "name" is the menu tree entry, as well as the string that will
 # appear on the notebook tab in the GUI window.  "method" is the base
 # of a registered class hierarchy of selection operations.
+## TODO: "method" is a stupid name for it.
 
 class GenericSelectToolbox(toolbox.Toolbox):
     def __init__(self, name, method, gfxwindow, **extrakwargs):
@@ -69,9 +70,10 @@ class GenericSelectToolbox(toolbox.Toolbox):
         self.lastclick = None           # position of last mouse click
         self.menu = None
 
-        ## extrakwargs are passed to the getSelectionContext()
-        ## function to retrieve the Who object of the current
-        ## selection.
+        ## extrakwargs is passed to the getSelectionContext() function
+        ## to retrieve the Who object of the current selection.  It
+        ## contains the selection mode when selecting Skeleton
+        ## objects.  It's not used when selecting voxels.
         self.extrakwargs = extrakwargs
 
         self.sb_callbacks = [

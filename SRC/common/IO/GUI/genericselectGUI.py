@@ -28,6 +28,67 @@ from ooflib.common.IO.GUI import toolboxGUI
 from ooflib.common.IO.GUI import tooltips
 import gtk, sys
 
+class GenericSelectToolboxNew(toolboxGUI.GfxToolbox):
+    def __init__(self, toolbox, sources, target):
+        debug.mainthreadTest()
+        # target is a string indicating what's being selected.
+        # Different toolboxes have different targets.
+        self.target = target
+        # sources is a tuple of WhoClass names (eg, 'Image',
+        # 'Skeleton') from which the selection can be made.  The
+        # topmost layer displaying one of the given classes is the
+        # source.
+        self.sources = sources
+        self.source = self.getSource()
+        toolboxGUI.GfxToolbox.__init__(self, toolbox)
+
+        outerbox = gtk.VBox(spacing=2)
+        self.gtk.add(outerbox)
+        chooserframe = gtk.Frame()
+        outerbox.pack_start(chooserframe, expand=1, fill=1)
+        chooserbox = gtk.VBox()
+        chooserframe.add(chooserbox)
+        hbox = gtk.HBox()
+        chooserbox.pack_start(hbox, expand=0, fill=0)
+        hbox.pack_start(gtk.Label("Method:"), expand=0, fill=0)
+        self.chooser = chooser.ChooserWidget([], callback=self.chooserCB)
+        hbox.pack_start(self.chooser, expand=1, fill=1)
+
+        self.paramWidget = None
+        self.gtk.show_all()
+        
+        switchboard.requestCallbackMain("new selection operation " + target,
+                                        self.newOperation)
+    def getSource(self):
+        return self.gfxwindow.topwho(self.sources)
+    def updateChooser(self):
+        if self.source is not None:
+            whoclassname = self.source.classname
+            self.ops = genericselectionop.getSelectionOperations(whoclassname,
+                                                                 self.target)
+            names = sorted(ops.keys(),
+                           lambda x,y:cmp(ops[x].order, ops[y].order))
+            self.chooser.update(names, {nm:ops[nm].tip for nm in names})
+            self.updateParameterTable()
+
+    def updateParameterTable(self):
+        if self.paramWidget is not None:
+            self.paramWidget.destroy()
+        opname = self.chooser.get_value()
+        if opname:
+            op = self.ops[optname]
+            self.paramWidget = parameter.ParameterTable(
+                op.params, scope=self, name=op.name)
+            self.chooserbox.pack_start(self.paramWidget.gtk, expand=1, fill=1)
+            self.paramWidget.gtk.show_all()
+    def newOperation(self):     # sb "new selection operation"
+        self.updateChooser()
+
+
+###########################
+### OLD CODE BELOW HERE ###
+###########################
+
 class HistoricalSelection:
     def __init__(self, selectionMethod, points):
         # Store a copy of the selection method.
@@ -74,8 +135,6 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
 
         # Retrieve the registered class factory from the subclass.
         self.selectionMethodFactory = self.methodFactory()
-        # self.selectionMethodFactory = regclassfactory.RegisteredClassFactory(
-        #     method.registry, title="Method:", name="Method")
 ##        scroll.add_with_viewport(self.selectionMethodFactory.gtk)
         outerbox.pack_start(self.selectionMethodFactory.gtk, expand=1, fill=1)
         self.historian = historian.Historian(self.setHistory,

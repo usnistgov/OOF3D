@@ -542,6 +542,8 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
 
     #### Mouse clicks ############
 
+    # installToolboxMouseHandler is called by the toolbar when it
+    # needs to switch to the toolbox's mouse handler.
     def installToolboxMouseHandler(self):
         self.removeMouseHandler()
         self.current_toolbox.installMouseHandler()

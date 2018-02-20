@@ -41,7 +41,16 @@ class PixelSelectionMethodFactory(regclassfactory.RegisteredClassFactory):
         return self.current_who_class in registration.whoclasses
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-    
+
+class PixelSelectToolboxGUINew(genericselectGUI.GenericSelectToolboxNew):
+    def __init__(self):
+        genericselectGUI.GenericSelectToolboxNew.__init__(
+            self, ('Microstructure', 'Image'), 'Voxel')
+        
+##############
+## OLD CODE ## 
+##############
+
 class PixelSelectToolboxGUI(genericselectGUI.GenericSelectToolboxGUI):
     def __init__(self, pixelselecttoolbox, method):
         debug.mainthreadTest()
@@ -191,9 +200,15 @@ class PixelSelectToolboxGUI(genericselectGUI.GenericSelectToolboxGUI):
 # PixelSelectToolboxGUI object.
 
 def _makeGUI(self):
+    # self.method is the base class of the selector class hierarchy.
     return PixelSelectToolboxGUI(self, self.method)
 
 pixelselectiontoolbox.PixelSelectToolbox.makeGUI = _makeGUI
+
+def _makeGUInew(self):
+    return PixelSelectToolboxGUINew(self)
+
+pixelselectiontoolbox.PixelSelectToolboxNew.makeGUI = _makeGUInew
 
 
 ######################
