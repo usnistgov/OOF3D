@@ -2526,56 +2526,69 @@ void CSkeleton::needsHash() {
 void CSkeleton::populate_femesh(FEMesh *realmesh, const MasterElement *master,
 				Material *mat)
 {
-  // Calling cleanUp() here ensures that node and element indices
-  // agree with the objects' positions in the lists, which ensures
-  // that that indices of the objects in the FEMesh agree with the
-  // indices in the Skeleton.
-  cleanUp();
+  DefiniteProgress *progress =
+    dynamic_cast<DefiniteProgress*>(getProgress("Building mesh", DEFINITE));
+  try {
+    // Calling cleanUp() here ensures that node and element indices
+    // agree with the objects' positions in the lists, which ensures
+    // that that indices of the objects in the FEMesh agree with the
+    // indices in the Skeleton.
+    cleanUp();
 
-  // The calculation of nfuncnodes and nmapnodes assumes that corner
-  // nodes are both funcnodes and mapnodes.
-  int nfuncnodes = (nnodes()
-		    + nsegments()*(master->fun_order()-1)
-		    + nelements()*master->ninteriorfuncnodes());
-  realmesh->reserveFuncNodes(nfuncnodes);
-  // mapnodes only includes nodes that are only for mapping.  Nodes
-  // that have dofs and are mapping nodes are included in funcnodes.
-  int nmapnodes = (nsegments()*master->nedgemapnodes_only()
-		   + nfaces()*master->nfacemapnodes_only()); 
-  realmesh->reserveMapNodes(nmapnodes);
+    // The calculation of nfuncnodes and nmapnodes assumes that corner
+    // nodes are both funcnodes and mapnodes.
+    int nfuncnodes = (nnodes()
+		      + nsegments()*(master->fun_order()-1)
+		      + nelements()*master->ninteriorfuncnodes());
+    realmesh->reserveFuncNodes(nfuncnodes);
+    // mapnodes only includes nodes that are only for mapping.  Nodes
+    // that have dofs and are mapping nodes are included in funcnodes.
+    int nmapnodes = (nsegments()*master->nedgemapnodes_only()
+		     + nfaces()*master->nfacemapnodes_only()); 
+    realmesh->reserveMapNodes(nmapnodes);
   
-  // Make the corner nodes.  Doing it now in this order guarantees
-  // that node indices in the Skeleton and FEMesh agree.
+    // Make the corner nodes.  Doing it now in this order guarantees
+    // that node indices in the Skeleton and FEMesh agree.
 
-  // TODO: This means that in the Mesh's dof list, the corner nodes
-  // for all elements precede any of the non-corner nodes.  Does this
-  // cause poor cache management or poor matrix block structure?
+    // TODO: This means that in the Mesh's dof list, the corner nodes
+    // for all elements precede any of the non-corner nodes.  Does this
+    // cause poor cache management or poor matrix block structure?
   
-  // TODO OPT: SPLIT NODES When we have split nodes in the Mesh, indices
-  // won't agree.  We need a better way of matching mesh nodes and
-  // skeleton nodes!  Should each skeleton node keep a std::set of
-  // mesh node pointers?
+    // TODO OPT: SPLIT NODES When we have split nodes in the Mesh, indices
+    // won't agree.  We need a better way of matching mesh nodes and
+    // skeleton nodes!  Should each skeleton node keep a std::set of
+    // mesh node pointers?
 
-  for(unsigned int i=0; i<nnodes(); ++i) {
-    realmesh->newFuncNode(nodes[i]->position());
+    for(unsigned int i=0; i<nnodes(); ++i) {
+      realmesh->newFuncNode(nodes[i]->position());
+    }
+
+    // edgeNodeMap and faceNodeMap map edges and faces to the Nodes that
+    // have been created on them, so that the nodes will be re-used on
+    // neighboring elements.  They're set and used by realElement().
+    // They could be FEMesh data, but they're not needed after the mesh
+    // is constructed.
+    SkelElNodeMap edgeNodeMap;
+    SkelElNodeMap faceNodeMap;
+
+    // make the elements
+    for(unsigned int i=0; i<nelements(); ++i) {
+      // CSkeletonElement::realElement() creates an element from the
+      // appropriate MasterElement and calls FEMesh::addElement().
+      progress->setMessage(to_string(i) + "/" + to_string(nelements()) +
+			   " elements");
+      progress->setFraction(i/(float) nelements());
+      elements[i]->realElement(realmesh, i, master, this,
+			       edgeNodeMap, faceNodeMap, mat);
+      if(progress->stopped())
+	throw ErrInterrupted();
+    }
   }
-
-  // edgeNodeMap and faceNodeMap map edges and faces to the Nodes that
-  // have been created on them, so that the nodes will be re-used on
-  // neighboring elements.  They're set and used by realElement().
-  // They could be FEMesh data, but they're not needed after the mesh
-  // is constructed.
-  SkelElNodeMap edgeNodeMap;
-  SkelElNodeMap faceNodeMap;
-
-  // make the elements
-  for(unsigned int i=0; i<nelements(); ++i) {
-    // CSkeletonElement::realElement() creates an element from the
-    // appropriate MasterElement and calls FEMesh::addElement().
-    elements[i]->realElement(realmesh, i, master, this,
-			     edgeNodeMap, faceNodeMap, mat);
+  catch (...) {
+    progress->finish();
+    throw;
   }
-  
+  progress->finish();
 }
 
 CDeputySkeleton *CSkeletonBase::deputyCopy() {
