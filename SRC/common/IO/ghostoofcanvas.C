@@ -233,6 +233,8 @@ void GhostOOFCanvas::setAxisProperties() {
   double actualTipLength = 0.05*refLength;
   for(int i=0; i<3; i++) {
     relativeTipSizes[i] = actualTipLength/lengths[i]; // relative size
+    if(relativeTipSizes[i] > 1.0)
+      relativeTipSizes[i] = 1.0;
     relativeShaftLengths[i] = 1 - relativeTipSizes[i];
   }
   axes->SetNormalizedTipLength(relativeTipSizes);
