@@ -770,7 +770,10 @@ registeredclass.Registration(
 
 import datetime
 import string
+import time
 def writeABAQUSfromMesh(filename, mode, meshcontext):
+    time0 = time.time()
+
     femesh=meshcontext.femesh()
 
     buffer=["*HEADING\nABAQUS-style file created by OOF2 on %s from a mesh of the microstructure %s.\n "
@@ -785,6 +788,7 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
     # nodes don't appear in the abaqus output.  All oof2 nodes at the
     # same position are represented by a single abaqus node.
 
+    ## TODO: make nodedict in C++.  This is very slow.
     nodedict = {}
     i = 1
     # use only those nodes that are associated with elements that have
@@ -795,6 +799,10 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
                 if node.position() not in nodedict:
                     nodedict[node.position()] = i
                     i += 1
+        
+    debug.fmsg("made nodedict, time=", time.time()-time0)
+    time0 = time.time()
+    
     # same for elements
     elementdict = {}
     i = 1
@@ -816,6 +824,9 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
             elementdict[el.get_index()] = i
             i += 1
 
+    debug.fmsg("made elementdict, time=", time.time()-time0)
+    time0 = time.time()
+    
     buffer.append("** Materials defined by OOF2:\n")
     for matname, details in materiallist.items():
         buffer.append("**   %s:\n" % (matname))
@@ -823,13 +834,14 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
             for param in prop.registration().params:
                 buffer.append("**     %s: %s\n" % (param.name,param.value))
 
+    debug.fmsg("saved props, time=", time.time()-time0)
+    
     # Note that meshcontext.elementdict is different from elementdict
     # we constructed above!
     buffer.append("** Master elements used in OOF2:\n")
     for ekey, ename in meshcontext.elementdict.items():
         buffer.append("**   %s: %s, %s\n"
                       % (ekey, ename.name(), ename.description()))
-
     buffer.append("** Boundary Conditions:\n")
     for bcname in meshcontext.allBndyCondNames():
         bc=meshcontext.getBdyCondition(bcname)
@@ -847,6 +859,7 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
 **   material are included in this file.
 """)
 
+    time0 = time.time()
     listbuf=["*NODE\n"]
     # Get nodes that are associated with elements that have a material
     # definition.  Other nodes aren't in nodedict.
@@ -854,11 +867,14 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
         listbuf.append("%d, %s, %s, %s\n"
                        % (index, position.x, position.y, position.z))
     buffer.extend(listbuf)
+    debug.fmsg("saved nodes, time=", time.time()-time0)
+    time0 = time.time()
 
     for ename in meshcontext.elementdict.values():
         ## TODO OPT: Use a separate buffer for each element type, and
         ## only loop over the elements once!  Concatenate the buffers
         ## at the end.
+        ## TODO OPT: Move this to C++.  It's very slow.
         try:
             # Group the elements according to element type
             listbuf=[
@@ -894,7 +910,11 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
             ## try/except/else to put the 'except' closer to the
             ## exception.
             pass
+    debug.fmsg("saved elements, time=", time.time()-time0)
+    time0 = time.time()
 
+    ## TODO: Move boundary saving to C++.  It's slow, but not as slow
+    ## as the nodedict and element-saving loops.
     buffer.append("** Point boundaries in OOF2\n")
     for pbname in meshcontext.pointBoundaryNames():
         buffer.append("*NSET, NSET=%s\n" % (pbname))
@@ -913,7 +933,7 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
                     listbuf.append("%d" % (somevalue))
                 i+=1
         buffer.append(string.join(listbuf,", ")+"\n")
-
+        
     buffer.append("** Edge boundaries in OOF2\n")
     for ebname in meshcontext.edgeBoundaryNames():
         buffer+="*NSET, NSET=%s\n" % (ebname)
@@ -952,7 +972,9 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
                         listbuf.append("%d" % (somevalue))
                     i+=1
             buffer.append(string.join(listbuf,", ")+"\n")
-
+    debug.fmsg("saved boundaries, time=", time.time()-time0)
+    time0 = time.time()
+    
     for matname in materiallist:
         ## TODO OPT: Use a separate buffer for each material, and only
         ## loop over elements once.
@@ -973,9 +995,12 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
 
     for matname in materiallist:
         buffer.append("*MATERIAL, NAME=%s\n** Use the information in the header to complete these fields under MATERIAL\n" % matname)
-
+    debug.fmsg("saved materials, time=", time.time()-time0)
+    time0 = time.time()
+    
     # Save/Commit to file. Perhaps should be done outside the current method.
     fp=open(filename,mode)
     fp.write("".join(buffer))
     fp.close()
 
+    debug.fmsg("wrote file, time=", time.time()-time0)
