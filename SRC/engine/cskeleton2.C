@@ -4116,9 +4116,9 @@ ICoord3D CSkeletonBase::getDefaultVSBbinSize() const {
   avgsize /= nelements();
   Coord3D voxelsize = ms->sizeOfPixels();
 #define MAX(a,b) (a > b ? a : b)
-  return ICoord3D(MAX(avgsize[0]/voxelsize[0], 1),
-		  MAX(avgsize[1]/voxelsize[1], 1),
-		  MAX(avgsize[2]/voxelsize[2], 1));
+  return ICoord3D(MAX(avgsize[0]/voxelsize[0], MIN_VSB_BINSIZE),
+		  MAX(avgsize[1]/voxelsize[1], MIN_VSB_BINSIZE),
+		  MAX(avgsize[2]/voxelsize[2], MIN_VSB_BINSIZE));
 }
 
 
