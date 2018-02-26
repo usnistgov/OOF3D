@@ -520,6 +520,7 @@ void CMicrostructure::categorize() const {
     categorymap[i] = cat;
     ++categoryCounts[cat];
   }
+  categorized = true;
 } // end CMicrostructure::categorize
 
 double CMicrostructure::volumeOfCategory(unsigned int cat) const {

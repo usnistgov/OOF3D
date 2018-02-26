@@ -106,18 +106,23 @@ def newMesh(menuitem, name, skeleton, element_types):
         el = masterelement.getMasterElementFromEnum(eltype)
         edict[el.shape().name()] = el
     skelpath = labeltree.makePath(skeleton)
-    skel = skeletoncontext.skeletonContexts[skelpath].getObject()
-    femesh = skel.femesh(edict)
-    if femesh is not None:
-        meshctxt = ooflib.engine.mesh.meshes.add(
-            skelpath+[name], femesh,
-            parent=skeletoncontext.skeletonContexts[skelpath],
-            skeleton=skel,
-            elementdict=edict,
-            materialfactory=None)
-        meshctxt.createDefaultSubProblem()
+    skelctxt = skeletoncontext.skeletonContexts[skelpath]
+    skelctxt.begin_reading()
+    try:
+        skel = skelctxt.getObject()
+        femesh = skel.femesh(edict)
+        if femesh is not None:
+            meshctxt = ooflib.engine.mesh.meshes.add(
+                skelpath+[name], femesh,
+                parent=skelctxt,
+                skeleton=skel,
+                elementdict=edict,
+                materialfactory=None)
+            meshctxt.createDefaultSubProblem()
 
-        meshctxt.setStatus(meshstatus.Unsolved("New mesh."))
+            meshctxt.setStatus(meshstatus.Unsolved("New mesh."))
+    finally:
+        skelctxt.end_reading()
     switchboard.notify("redraw")
 
 class MasterElementTypesParameter(enum.ListOfEnumsParameter):

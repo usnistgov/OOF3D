@@ -772,11 +772,11 @@ import string
 def writeABAQUSfromMesh(filename, mode, meshcontext):
     femesh=meshcontext.femesh()
 
-    buffer=["*HEADING\n**ABAQUS-style file created by OOF2 on %s from a mesh of the microstructure %s.\n"
+    buffer=["*HEADING\n**ABAQUS-style file created by OOF3D on %s from a mesh of the microstructure %s.\n"
         % (datetime.datetime.today(),
            meshcontext.getSkeleton().getMicrostructure().name())]
 
-    buffer.append("** Materials defined by OOF2:\n")
+    buffer.append("** Materials defined by OOF3D:\n")
     materials = femesh.getAllMaterials()
     for mat in materials:
         buffer.append("**  %s:\n" % mat.name())
@@ -785,8 +785,6 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
             for param in prop.registration().params:
                 buffer.append("**      %s: %s\n" % (param.name, param.value))
 
-    # Note that meshcontext.elementdict is different from elementdict
-    # we constructed above!
     buffer.append("** Master elements used in OOF2:\n")
     for ekey, ename in meshcontext.elementdict.items():
         buffer.append("**   %s: %s, %s\n"
