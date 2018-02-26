@@ -16,6 +16,7 @@
 #define FEMESH_H
 
 class FEMesh;
+class AbaqusMeshData;		// used when saving mesh in abaqus format
 
 #include "common/coord_i.h"
 #include "common/lock.h"
@@ -101,6 +102,19 @@ public:
 // Also need a list of the localdofsizes [dofsize0,dofsize1,...]
 
 #endif // HAVE_MPI
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// AbaqusMeshData holds data that has to be passed back to Python to
+// complete the abaqus file.
+class AbaqusMeshData {
+public:
+  typedef std::map<Coord, int> NodeDict;
+  friend class FEMesh;
+  int getAbaqusIndex(const Coord *pt) const;
+private:
+  NodeDict nodeDict;	// maps oof node position to abaqus node index
+};
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -311,6 +325,9 @@ public:
   bool atLatest() const;
   bool isEmptyCache() const;
   int dataCacheSize() const;
+
+  AbaqusMeshData *writeAbaqus(const std::string &filename,
+		   const std::vector<std::string> *masterElementTypes) const;
 
 private:
   friend class Equation::FindAllEquationWrappers;

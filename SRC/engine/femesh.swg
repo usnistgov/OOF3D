@@ -63,6 +63,10 @@ typedef FEMesh::ElementShapeCountMap ElementShapeCountMap;
 
 %pragma(python) include="femesh.spy"
 
+class AbaqusMeshData {
+public:
+  int getAbaqusIndex(Coord *Point);
+};
 
 
 class FEMesh {
@@ -141,6 +145,8 @@ public:
   bool atLatest();
   bool isEmptyCache();
   int dataCacheSize();
+
+  %new AbaqusMeshData *writeAbaqus(char*, StringVec*);
 };				// class FEMesh
 
 long get_globalFEMeshCount();
