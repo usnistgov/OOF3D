@@ -29,6 +29,7 @@ from ooflib.SWIG.engine import cskeletonboundary
 from ooflib.SWIG.engine import cskeletonface
 from ooflib.SWIG.engine import cskeletonsegment
 from ooflib.SWIG.engine import cskeletonselectable
+from ooflib.SWIG.engine import material
 from ooflib.common import debug
 from ooflib.common.IO import mainmenu
 from ooflib.common.IO import oofmenu
@@ -949,7 +950,6 @@ def rearrangeEdges(edges):
     return newedges
 
 
-#TODO 3.1: Needs update in general, for new storage in C++ and interfaces
 ##########
 # ABAQUS #
 ##########
@@ -960,8 +960,10 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
     try:
         skeleton = skelcontext.getObject()
 
-        buffer="*HEADING\nABAQUS-style file created by OOF3D on %s from a skeleton " % (datetime.datetime.today())
-        buffer+="of the microstructure %s.\n" % skeleton.getMicrostructure().name()
+        buffer=["*HEADING\n**ABAQUS-style file created by OOF3D on %s from a skeleton of the microstructure %s.\n" %
+                (datetime.datetime.today(),
+                 skeleton.getMicrostructure().name())
+        ]
 
         # Build dictionary (instead of using index()) for elements and nodes
         #  as was done in previous writeXXX() methods
@@ -995,20 +997,21 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                     elementlist[matname] = [elindex]
                     materiallist[matname] = matl
 
-        buffer+="** Materials defined by OOF2:\n"
-        for matname, details in materiallist.items():
-            buffer+="**   %s:\n" % (matname)
-            for prop in details.properties():
+        buffer.append("** Materials defined by OOF3D:\n")
+        for mat in material.getMaterials(skelcontext.getMicrostructure()):
+            buffer.append("**   %s:\n" % mat.name())
+            for prop in mat.properties():
+                buffer.append("**    %s:\n" % prop.name())
                 for param in prop.registration().params:
-                    buffer+="**     %s: %s\n" % (param.name,param.value)
+                    buffer.append("**      %s: %s\n" % (param.name,param.value))
 
-        buffer+="** Notes:\n**   The nodes for a skeleton are always located at vertices or corners.\n"
-        buffer+="**   More information may be obtained by saving ABAQUS from a mesh.\n"
+        buffer.append("** Notes:\n**   The nodes for a skeleton are always located at vertices or corners.\n")
+        buffer.append("**   More information may be obtained by saving ABAQUS from a mesh.\n")
 
         listbuf=["*NODE\n"]
         for node in skeleton.getNodes():
             listbuf.append("%d, %s, %s, %s\n" % (nodedict[node],node.position().x,node.position().y,node.position().z))
-        buffer+=string.join(listbuf,"")
+        buffer.append(string.join(listbuf,""))
 
         # Only expecting 3 or 4 noded skeleton elements
         for numnodes in [3,4]:
@@ -1021,10 +1024,10 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                         listbuf2.append("%d" % (nodedict[node]))
                     listbuf.append(string.join(listbuf2,", ")+"\n")
             if len(listbuf)>1:
-                buffer+=string.join(listbuf,"")
+                buffer.append(string.join(listbuf,""))
 
         for group in skelcontext.nodegroups.groups:
-            buffer+="*NSET, NSET=%s\n" % (group)
+            buffer.append("*NSET, NSET=%s\n" % (group))
             listbuf=[]
             i=0
             for node in skelcontext.nodegroups.get_group(group):
@@ -1033,10 +1036,10 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                 else:
                     listbuf.append("%d" % (nodedict[node]))
                 i+=1
-            buffer+=string.join(listbuf,", ")+"\n"
+            buffer.append(string.join(listbuf,", ")+"\n")
 
         for elgroup in skelcontext.elementgroups.groups:
-            buffer+="*ELSET, ELSET=%s\n" % (elgroup)
+            buffer.append("*ELSET, ELSET=%s\n" % (elgroup))
             listbuf=[]
             i=0
             for el in skelcontext.elementgroups.get_group(elgroup):
@@ -1045,11 +1048,12 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                 else:
                     listbuf.append("%d" % (elementdict[el]))
                 i+=1
-            buffer+=string.join(listbuf,", ")+"\n"
+            buffer.append(string.join(listbuf,", ")+"\n")
 
-        buffer+="**/n** Point, edge, and face boundaries from OOF3D.\n**\n"
+        buffer.append(
+            "**/n** Point, edge, and face boundaries from OOF3D.\n**\n")
         for pbname, pbdy in skeleton.getPointBoundaries().items():
-            buffer+="*NSET, NSET=%s\n" % (pbname)
+            buffer.append("*NSET, NSET=%s\n" % (pbname))
             listbuf=[]
             i=0
             for node in pbdy.getNodes():
@@ -1058,7 +1062,7 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                 else:
                     listbuf.append("%d" % (nodedict[node]))
                 i+=1
-            buffer+=string.join(listbuf,", ")+"\n"
+            buffer.append(string.join(listbuf,", ")+"\n")
 
         # Use rearrangeEdges() to chain the edges together, then pick
         # the unique nodes. It seems the edges can't be selected if
@@ -1069,7 +1073,7 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                 tuple(nodedict[node] for node in edge.get_segment().getNodes())
                 for edge in ebdy.getSegments()
                 ])
-            buffer+="*NSET, NSET=%s\n" % (ebname)
+            buffer.append("*NSET, NSET=%s\n" % (ebname))
             listbuf=["%d" % edgeset[0][0]]
             i=1
             for edge in edgeset:
@@ -1078,7 +1082,7 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                 else:
                     listbuf.append("%d" % (edge[1]))
                 i+=1
-            buffer+=string.join(listbuf,", ")+"\n"
+            buffer.append(string.join(listbuf,", ")+"\n")
 
         for fbname, fbdy in skeleton.getFaceBoundaries().items():
             if fbdy.size() > 0:
@@ -1087,7 +1091,7 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                     face = oface.get_face()
                     for node in face.getNodes():
                         nodeset.add(nodedict[node])
-                buffer += "*NSET, NSET=%s" % fbname
+                buffer.append("*NSET, NSET=%s" % fbname)
                 listbuf = []
                 i = 0
                 for node in nodeset:
@@ -1096,11 +1100,11 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                     else:
                         listbuf.append("%d" % node)
                     i += 1
-                buffer += string.join(listbuf, ", ") + "\n"
+                buffer.append(string.join(listbuf, ", ") + "\n")
 
-        buffer+="**/n** Element groups for OOF3D materials.\n**\n"
+        buffer.append("**/n** Element groups for OOF3D materials.\n**\n")
         for matname in materiallist:
-            buffer+="*ELSET, ELSET=%s\n" % matname
+            buffer.append("*ELSET, ELSET=%s\n" % matname)
             listbuf=[]
             i=0
             for elindex in elementlist[matname]:
@@ -1109,17 +1113,17 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                 else:
                     listbuf.append("%d" % (elindex))
                 i+=1
-            buffer += (string.join(listbuf,", ") + 
+            buffer.append((string.join(listbuf,", ") + 
                        "\n*SOLID SECTION, ELSET=%s, MATERIAL=%s\n"
-                       % (matname,matname))
+                       % (matname,matname)))
 
         for matname in materiallist:
-            buffer+="*MATERIAL, NAME=%s\n** Use the information in the header to complete these fields under MATERIAL\n" % matname
+            buffer.append("*MATERIAL, NAME=%s\n** Use the information in the header to complete these fields under MATERIAL\n" % matname)
 
         # Save/Commit to file. Perhaps should be done outside the
         # current method.
         fp=open(filename,mode)
-        fp.write(buffer)
+        fp.write("".join(buffer))
         fp.close()
     finally:
         skelcontext.end_reading()
