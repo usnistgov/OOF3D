@@ -14,6 +14,7 @@
 #include "common/IO/canvaslayers.h"
 #include "common/IO/oofcerr.h"
 #include "common/coord.h"
+#include "common/geometry.h"
 #include "engine/cskeleton2.h"
 #include "engine/cskeletonelement.h"
 #include "engine/cskeletonselectable.h"
@@ -684,6 +685,14 @@ Coord CSkeletonMultiNodeSelectable::center() const {
   x /= nodes->size();
   return x;
 }
+
+CRectangularPrism CSkeletonMultiNodeSelectable::boundingBox() const {
+  CRectangularPrism bbox((*nodes)[0]->position(), (*nodes)[1]->position());
+  for(unsigned int i=2; i<nodes->size(); ++i)
+    bbox.swallow((*nodes)[i]->position());
+  return bbox;
+}
+
 
 vtkSmartPointer<vtkIdList> CSkeletonMultiNodeSelectable::getPointIds() const {
   vtkSmartPointer<vtkIdList> list = vtkSmartPointer<vtkIdList>::New();
