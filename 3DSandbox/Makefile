@@ -14,6 +14,15 @@ VTKLIBS= -L$(VTKDIR)/lib -lvtkCommonCore-$(VTK) -lvtkCommonDataModel-$(VTK) -lvt
 .C.o:
 	$(CXX) $(CFLAGS) -c $<
 
+clipMesh: clipMesh.o
+	$(CXX) -o clipMesh clipMesh.o $(VTKLIBS)
+
+clipImage3a: clipImage3a.o
+	$(CXX) -o clipImage3a clipImage3a.o $(VTKLIBS)
+
+clipImage3: clipImage3.o
+	$(CXX) -o clipImage3 clipImage3.o $(VTKLIBS)
+
 tetsandcubes: tetsandcubes.o
 	$(CXX) -o tetsandcubes tetsandcubes.o $(VTKLIBS)
 

@@ -11,19 +11,22 @@
 # Base class for Selection toolboxes.
 
 from ooflib.SWIG.common import config
-from ooflib.SWIG.common import switchboard
+from ooflib.SWIG.common import guitop
 from ooflib.SWIG.common import ooferror
+from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.common.IO.GUI import rubberband3d as rubberband
 from ooflib.common import debug
-from ooflib.SWIG.common import guitop
+from ooflib.common import genericselectionop
+from ooflib.common import mainthread
 from ooflib.common import primitives
 from ooflib.common import subthread
-from ooflib.common import mainthread
 from ooflib.common import utils
+from ooflib.common.IO import mousehandler
+from ooflib.common.IO.GUI import chooser
 from ooflib.common.IO.GUI import gtklogger
 from ooflib.common.IO.GUI import gtkutils
 from ooflib.common.IO.GUI import historian
-from ooflib.common.IO.GUI import mousehandler
+from ooflib.common.IO.GUI import parameterwidgets
 from ooflib.common.IO.GUI import toolboxGUI
 from ooflib.common.IO.GUI import tooltips
 import gtk, sys
@@ -31,6 +34,8 @@ import gtk, sys
 class GenericSelectToolboxNew(toolboxGUI.GfxToolbox):
     def __init__(self, toolbox, sources, target):
         debug.mainthreadTest()
+        toolboxGUI.GfxToolbox.__init__(self, toolbox)
+
         # target is a string indicating what's being selected.
         # Different toolboxes have different targets.
         self.target = target
@@ -40,35 +45,51 @@ class GenericSelectToolboxNew(toolboxGUI.GfxToolbox):
         # source.
         self.sources = sources
         self.source = self.getSource()
-        toolboxGUI.GfxToolbox.__init__(self, toolbox)
+        self.handler = None     # mouse handler
 
         outerbox = gtk.VBox(spacing=2)
         self.gtk.add(outerbox)
         chooserframe = gtk.Frame()
         outerbox.pack_start(chooserframe, expand=1, fill=1)
-        chooserbox = gtk.VBox()
-        chooserframe.add(chooserbox)
+        self.chooserbox = gtk.VBox()
+        chooserframe.add(self.chooserbox)
         hbox = gtk.HBox()
-        chooserbox.pack_start(hbox, expand=0, fill=0)
+        self.chooserbox.pack_start(hbox, expand=0, fill=0)
         hbox.pack_start(gtk.Label("Method:"), expand=0, fill=0)
-        self.chooser = chooser.ChooserWidget([], callback=self.chooserCB)
-        hbox.pack_start(self.chooser, expand=1, fill=1)
-
+        self.chooser = chooser.ChooserWidget([], callback=self.chooserCB,
+                                             name="GenericSelectChooser")
+        hbox.pack_start(self.chooser.gtk, expand=1, fill=1)
         self.paramWidget = None
+        self.updateChooser()
+
         self.gtk.show_all()
+
+        self.sbcallbacks = [
+            switchboard.requestCallbackMain("new selection operation " + target,
+                                            self.newOperation),
+            switchboard.requestCallback((self.toolbox.gfxwindow(),
+                                         'layers changed'),
+                                        self.layerChangeCB)
+            ]
+    def close(self):
+        if self.handler:
+            self.handler.stop()
+        map(switchboard.removeCallback, self.sbcallbacks)
+        toolboxGUI.GfxToolbox.close(self)
         
-        switchboard.requestCallbackMain("new selection operation " + target,
-                                        self.newOperation)
     def getSource(self):
-        return self.gfxwindow.topwho(self.sources)
+        return self.gfxwindow().topwho(*self.sources)
+
     def updateChooser(self):
+        debug.fmsg("source=", self.source)
         if self.source is not None:
             whoclassname = self.source.classname
             self.ops = genericselectionop.getSelectionOperations(whoclassname,
                                                                  self.target)
-            names = sorted(ops.keys(),
-                           lambda x,y:cmp(ops[x].order, ops[y].order))
-            self.chooser.update(names, {nm:ops[nm].tip for nm in names})
+            debug.fmsg("ops=", self.ops)
+            names = sorted(self.ops.keys(),
+                           lambda x,y:cmp(self.ops[x].order, self.ops[y].order))
+            self.chooser.update(names, {nm:self.ops[nm].tip for nm in names})
             self.updateParameterTable()
 
     def updateParameterTable(self):
@@ -76,13 +97,61 @@ class GenericSelectToolboxNew(toolboxGUI.GfxToolbox):
             self.paramWidget.destroy()
         opname = self.chooser.get_value()
         if opname:
-            op = self.ops[optname]
-            self.paramWidget = parameter.ParameterTable(
+            op = self.ops[opname]
+            self.paramWidget = parameterwidgets.ParameterTable(
                 op.params, scope=self, name=op.name)
             self.chooserbox.pack_start(self.paramWidget.gtk, expand=1, fill=1)
             self.paramWidget.gtk.show_all()
+
     def newOperation(self):     # sb "new selection operation"
+        # A new operation has been defined
         self.updateChooser()
+
+    def chooserCB(self, *args):
+        debug.fmsg()
+        self.updateParameterTable()
+        self.installMouseHandler()
+        # TODO: Add extra buttons if the mouse handler needs them (eg,
+        # Start, Cancel, Done)
+
+    def layerChangeCB(self):
+        self.source = self.getSource()
+        self.updateChooser()
+
+    def activate(self):
+        if not self.active:
+            super(GenericSelectToolboxNew, self).activate()
+            self.installMouseHandler()
+            self.gfxwindow().toolbar.setSelect()
+
+    def deactivate(self):
+        if self.active:
+            super(GenericSelectToolboxNew, self).deactivate()
+
+    def installMouseHandler(self):
+        if self.handler:
+            self.handler.stop()
+        opname = self.chooser.get_value()
+        if opname is None:
+            self.handler = mousehandler.nullHandler
+        else:
+            self.currentOp = self.ops[opname]()
+            handlerType = self.ops[opname].mouseBehavior
+            if handlerType in ("SingleClick", "MultiClick"):
+                self.handler = toolboxGUI.SingleClickMouseHandler(
+                    self.currentOp)
+            elif handlerType in ("ClickAndDrag", "MultiDrag"):
+                self.handler = toolboxGUI.ClickAndDragMouseHandler(
+                    self.currentOp, ("up", "down"))
+            elif handlerType in ("ClickAndDrag+", "MultiDrag+"):
+                self.handler = toolboxGUI.ThreadedMouseHandler(
+                    self.currentOp, ("up", "move", "down"))
+        self.gfxwindow.setMouseHandler(self.handler)
+        ## TODO: Don't call start() here.  It should be called only
+        ## when the Start button is pressed.  start/stop need to be
+        ## disassociated from installation and uninstallation.
+        self.handler.start()
+
 
 
 ###########################

@@ -41,12 +41,12 @@
 
 from ooflib.common import debug
 
-class WidgetScope:
+class WidgetScope(object):
     def __init__(self, parent):
-        self.parent = parent            # another WidgetScope, or None
-        self.children = []              # WidgetScopes
-        self.widgetlist = []               # widget wrappers
-        self.scope_data = {}            # Optional scope data.
+        self.parent = parent    # another WidgetScope, or None
+        self.children = []      # WidgetScopes
+        self.widgetlist = []    # widget wrappers
+        self.scope_data = {}    # Optional scope data.
         if parent is not None:
             parent._addChild(self)
     def _addChild(self, child):

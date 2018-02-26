@@ -32,17 +32,46 @@ def toolboxName():
     else:
         return 'Pixel_Select'
 
+class PixelSelectToolboxNew(genericselecttoolbox.GenericSelectToolboxNew):
+    tip = "Select voxels in a Microstructure."
+    discussion = """<para>
+    Commands for <link
+    linkend='Section:Concepts:Microstructure:PixelSelection'>selecting</link>
+    voxels in a &micro;, based on mouse input.
+    </para>"""
 
-class PixelSelectToolboxNew(genericselecttoolbox.GenericSelectToolbox):
     def __init__(self, gfxwindow):
-        genericselecttoolbox.GenericSelectToolbox.__init__(
-            self.
-            name=toolboxName() + "NEW",
-            method=pixelselectionmethod.Self
-    
+        genericselecttoolbox.GenericSelectToolboxNew.__init__(
+            self,
+            name=toolboxName()+"NEW",
+            gfxwindow=gfxwindow)
+    def sourceParams(self):
+        return [whoville.AnyWhoParameter('source',
+                                         tip='Microstructure or Image')]
+    def setSourceParams(self, menuitem, source):
+        menuitem.get_arg('source').value = source.path()
+    def getSourceObject(self, params, gfxwindow):
+        # We're expecting a Microstructure or Image.
+        # params is a dictionary of parameter values passed to a
+        # menuitem that is operatinng on the source, and includes the
+        # params defined by sourceParams() and set by
+        # setSourceParams().
+        whopath = labeltree.makePath(params['source'])
+        if len(whopath) == 1:
+            return whoville.getClass('Microstructure')[whopath]
+        if len(whopath) == 2:
+            return whoville.getClass('Image')[whopath]
+
+    def signal(self, method, who):
+        switchboard.notify("pixel selection changed", who)
+        switchboard.notify("new pixel selection", method)
+        switchboard.notify("redraw")
+
+toolbox.registerToolboxClass(PixelSelectToolboxNew, ordering=1.5001)
+        
 ##############
 ## OLD CODE ##
-##############
+##############    
 
 class PixelSelectToolbox(genericselecttoolbox.GenericSelectToolbox):
     def __init__(self, gfxwindow):

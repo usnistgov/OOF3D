@@ -232,8 +232,7 @@ registeredclass.Registration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-## Geometrical selection.  These will have GUI counterparts
-## when we figure out how to click and drag on the 3D canvas.
+# Geometrical selection.
 
 # The selection methods operate upon sets of pixels defined by shapes
 # from the SelectionShape class.  The SelectionShape subclasses don't

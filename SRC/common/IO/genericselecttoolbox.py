@@ -63,7 +63,10 @@ import math
 # of a registered class hierarchy of selection operations.
 ## TODO: "method" is a stupid name for it.
 
+
 class GenericSelectToolbox(toolbox.Toolbox):
+    # The poorly named "method" arg for the __init__ is the
+    # RegisteredClass of selection methods.
     def __init__(self, name, method, gfxwindow, **extrakwargs):
         toolbox.Toolbox.__init__(self, name, gfxwindow)
         self.method = method
@@ -309,3 +312,106 @@ class GenericSelectToolbox(toolbox.Toolbox):
         # nothing to make a selection from.  Redefined in subclasses
         # if more clarity is needed.
         return "No source!"
+
+
+##############
+## NEW CODE ##
+##############
+
+class GenericSelectToolboxNew(toolbox.Toolbox):
+    def __init__(self, name, gfxwindow, **extrakwargs):
+        # extrakwargs, if provided, are passed to
+        # getSelectionContext() to retrieve the current selection.
+        toolbox.Toolbox.__init__(self, name, gfxwindow)
+        self.extrakwargs = extrakwargs
+        self.menu = None
+        self.sbcallbacks = []
+
+    def makeMenu(self, menu):
+        self.menu = menu
+        sourceparams = self.sourceParams()
+        
+        self.menu.addItem(oofmenu.OOFMenuItem(
+            'Clear',
+            params=sourceparams,
+            callback=self.clearCB,
+            help="Clear the selection."))
+        self.menu.addItem(oofmenu.OOFMenuItem(
+            'Undo',
+            params=sourceparams,
+            callback=self.undoCB,
+            help="Undo the latest selection operation."))
+        self.menu.addItem(oofmenu.OOFMenuItem(
+            'Redo',
+            params=sourceparams,
+            callback=self.redoCB,
+            help="Redo the latest undone selection operation."))
+        self.menu.addItem(oofmenu.OOFMenuItem(
+            'Invert',
+            params=sourceparams,
+            callback=self.invertCB,
+            help="Invert the selection."))
+        
+    def close(self):
+        map(switchboard.removeCallback, self.sbcallbacks)
+
+    def getSelection(self, params):
+        # params is the dictionary of args passed to the menum callback.
+        source = self.getSourceObject(params, self.gfxwindow())
+        if source is not None:
+            return source.getSelectionContext(**self.extrakwargs)
+
+    def clearCB(self, menuitem, **params):
+        selection = self.getSelection(params)
+        if selection is not None:
+            selection.begin_writing()
+            try:
+                selection.start()
+                selection.clear()
+            finally:
+                selection.end_writing()
+            self.signal(None, selection)
+
+    def undoCB(self, menuitem, **params):
+        selection = self.getSelection(params)
+        if selection is not None:
+            selection.begin_writing()
+            try:
+                selection.undo()
+            finally:
+                selection.end_writing()
+            self.signal(None, selection)
+
+    def redoCB(self, menuitem, **params):
+        selection = self.getSelection(params)
+        if selection is not None:
+            selection.begin_writing()
+            try:
+                selection.redo()
+            finally:
+                selection.end_writing()
+            self.signal(None, selection)
+            
+    def invertCB(self, menuitem, **params):
+        selection = self.getSelection(params)
+        if selection is not None:
+            selection.begin_writing()
+            try:
+                selection.start()
+                selection.invert()
+            finally:
+                selection.end_writing()
+            self.signal(None, selection)
+
+    # Default signal, should be overridden by child classes.  This
+    # routine should send a switchboard signal that is caught by the
+    # appropriate graphics objects to tell them to update themselves.
+    def signal(self, selector, who):
+        pass
+
+    def emptyMessage(self):
+        # Called to get a string to display in the GUI when there's
+        # nothing to make a selection from.  Redefined in subclasses
+        # if more clarity is needed.
+        return "No source!"
+    

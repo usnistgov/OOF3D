@@ -43,10 +43,19 @@ class PixelSelectionMethodFactory(regclassfactory.RegisteredClassFactory):
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class PixelSelectToolboxGUINew(genericselectGUI.GenericSelectToolboxNew):
-    def __init__(self):
+    def __init__(self, toolbox):
         genericselectGUI.GenericSelectToolboxNew.__init__(
-            self, ('Microstructure', 'Image'), 'Voxel')
+            self, toolbox, ('Microstructure', 'Image'), 'Voxel')
+
+    # def getSource(self):
+    #     return self.gfxwindow().topwho('Microstructure', 'Image')
         
+def _makeGUInew(self):
+    return PixelSelectToolboxGUINew(self)
+
+pixelselectiontoolbox.PixelSelectToolboxNew.makeGUI = _makeGUInew
+
+
 ##############
 ## OLD CODE ## 
 ##############
@@ -204,12 +213,6 @@ def _makeGUI(self):
     return PixelSelectToolboxGUI(self, self.method)
 
 pixelselectiontoolbox.PixelSelectToolbox.makeGUI = _makeGUI
-
-def _makeGUInew(self):
-    return PixelSelectToolboxGUINew(self)
-
-pixelselectiontoolbox.PixelSelectToolboxNew.makeGUI = _makeGUInew
-
 
 ######################
 

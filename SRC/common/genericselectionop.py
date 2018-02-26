@@ -11,17 +11,20 @@
 from ooflib.SWIG.common import config
 from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.common import ooferror
+from ooflib.common import enum
 from ooflib.common import registeredclass
 
 # Classes for building UIs and GUIs for making selections.  Not to be
 # confused with cpixelselection.* and cskeletonselectable.* which
 # contain the classes that describe the selected sets themselves.
 
-# Selection operation classes must be registered with the
-# register decorator defined here.  They don't otherwise
-# need to belong to a particular class hierarchy.  They must provide
-# the following class-level data:
+# Selection operation classes must be registered with the "register"
+# decorator defined here, which stores them in a dict so that the GUI
+# can find and list them.  They don't otherwise need to belong to a
+# particular class hierarchy.  They must provide the following
+# class-level data and methods:
 
+## Data:
 # * sources: a tuple of names of WhoClasses that the selection operates on,
 #   eg ('Skeleton') or ('Microstructure', 'Image')
 # * target: the name of the objects being selected, eg 'Voxels', 'Elements'
@@ -32,22 +35,29 @@ from ooflib.common import registeredclass
 #   class is used.
 # * params: Parameters to be displayed in the gui and passed to the menu item
 #   (eg, brush width).
+## Methods:
+# * __init__(self)   takes no other args!
+# * up(x, y, button, shift, ctrl)
+# * down(x, y, button, shift, ctrl) if mouseBehavior is anything but SingleClick
+# * move(x, y, button, shift, ctrl) if mouseBehavior is ClickAndDrag+
+#   or MultiClick+
 
 # _selectables[source][target] is a dict, keyed by operation name, of
 # SelectionOperations applicable to the given source and target. 'source' and
 # 'target' are strings.
+
 _selectables = {}
 
 def register(cls):
     try:
         nm = cls.name
-    except KeyError:
+    except AttributeError:
         nm = cls.__name__
         cls.name = nm
     try:
         for src in cls.sources:
             srcdict = _selectables.setdefault(src, {})
-            srcdist.setdefault(cls.target, {})[nm] = cls
+            srcdict.setdefault(cls.target, {})[nm] = cls
         switchboard.notify("new selection operation " + cls.target)
     except KeyError:
         raise ooferror.ErrPyProgrammingError(
@@ -84,19 +94,19 @@ class MouseBehavior(enum.EnumClass(
 class SelectionBoolean(registeredclass.RegisteredClass):
     registry = []
     
-class Select(SelectionBoolean):
+class SelectNEW(SelectionBoolean):
     def operate(self, selection, courier):
         selection.select(courier)
 
-class SelectOnly(SelectionBoolean):
+class SelectOnlyNEW(SelectionBoolean):
     def operate(self, selection, courier):
         selection.clearAndSelect(courier)
 
-class Unselect(SelectionBoolean):
+class UnselectNEW(SelectionBoolean):
     def operator(self, selection, courier):
         selection.unselect(courier)
 
-class Intersect(SelectionBoolean):
+class IntersectNEW(SelectionBoolean):
     def operator(self, selection, courier):
         selection.intersect(courier)
         # # The selection needs to be cloned before calling
@@ -112,28 +122,28 @@ class Intersect(SelectionBoolean):
 registeredclass.Registration(
     'Select',
     SelectionBoolean,
-    Select,
+    SelectNEW,
     ordering=0,
     tip="Select new objects, leaving the old ones selected.")
 
 registeredclass.Registration(
     "Select Only",
     SelectionBoolean,
-    SelectOnly,
+    SelectOnlyNEW,
     ordering=1,
     tip="Select new objects after deselecting the old ones.")
 
 registeredclass.Registration(
     "Unselect",
     SelectionBoolean,
-    Unselect,
+    UnselectNEW,
     ordering=2,
     tip="Unselect only the given objects, leaving others selected.")
 
 registeredclass.Registration(
     "Intersect",
     SelectionBoolean,
-    Intersect,
+    IntersectNEW,
     ordering=3,
     tip="Unselect all objects that are not in the given set.")
     

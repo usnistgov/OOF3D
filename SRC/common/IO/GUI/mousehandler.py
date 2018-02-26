@@ -8,11 +8,7 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov. 
 
-
-# A GfxWindow always has a current MouseHandler, which knows what to
-# do with mouse events on the canvas.  The window's toolboxes can
-# install new MouseHandlers.  The base class defined here does
-# nothing.
+OBSOLETE
 
 
 class MouseHandler(object):
@@ -31,5 +27,9 @@ class MouseHandler(object):
     def move(self, x, y, button, shift, ctrl):
         pass
 
+class NullMouseHandler(MouseHandler):
+    def acceptEvent(self, eventtype):
+        return False
+
     
-nullHandler = MouseHandler()            # doesn't do anything
+nullHandler = NullMouseHandler()            # doesn't do anything

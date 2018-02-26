@@ -91,7 +91,8 @@ class Registration(object):
             # ok, name isn't already defined.
             self.exportToOOF()
         else:
-            raise NameError("RegisteredClass subclass '%s' is already defined."
+            raise NameError(
+                "RegisteredClass subclass '%s' is already defined."
                             % subclass.__name__)
 
         self.__dict__.update(kwargs)

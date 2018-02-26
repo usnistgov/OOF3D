@@ -46,6 +46,9 @@ import ooflib.common.pixelselectionmethod
 import ooflib.common.pixelselectionmod
 import ooflib.SWIG.common.voxelsetboundary
 
+# new selection machinery
+import ooflib.common.voxelselectionmethod
+
 if config.dimension() == 2:
 
     from ooflib.common import parallel_enable

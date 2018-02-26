@@ -1176,7 +1176,7 @@ class GhostGfxWindow:
     def newCanvas(self):
         # This is redefined in GUI mode.
         if self.oofcanvas:
-            view = self.oofcanvas.get_view()
+            view = self.oofcanvas.get_view() # Why?
         self.oofcanvas = ghostoofcanvas.GhostOOFCanvas()
         self.oofcanvas.set_bgColor(self.settings.bgcolor)
 
@@ -1189,6 +1189,9 @@ class GhostGfxWindow:
         switchboard.notify("view almost changed", self)
         self.oofcanvas.render()
         switchboard.notify("view changed", self)
+
+    def getView(self):
+        return self.oofcanvas.get_view()
     
     def is_empty(self):
         for layer in self.layers:
@@ -1868,6 +1871,7 @@ class GhostGfxWindow:
         return (None, None, None)
         
     def findClickedCellCenter(self, who, point, view):
+        debug.fmsg("point=", point, point.__class__)
         self.acquireGfxLock()
         try:
             layerlist = self.allwholayers(who)
