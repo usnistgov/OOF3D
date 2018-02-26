@@ -14,6 +14,7 @@
 #include "common/cdebug.h"
 #include "common/cmicrostructure.h"
 #include "common/coord.h"
+#include "common/geometry.h"
 #include "common/printvec.h"
 #include "common/progress.h"
 #include "common/timestamp.h"
@@ -894,7 +895,7 @@ double CSkeletonBase::getHomogeneityIndex() const {
 }
 
 void CSkeletonBase::calculateHomogeneityIndex() const {
-  // oofcerr << "CSkeletonBase::calculateHomogeneityIndex" << std::endl;
+  //  oofcerr << "CSkeletonBase::calculateHomogeneityIndex" << std::endl;
   homogeneityIndex = 0.0;
   illegalCount = 0;
   DefiniteProgress *progress = 
@@ -4104,13 +4105,20 @@ void CSkeletonBase::setDefaultVSBbinSize(const CSkeletonBase *other) {
 
 ICoord3D CSkeletonBase::getDefaultVSBbinSize() const {
   const CMicrostructure *ms = getMicrostructure();
-  double avgElVol = ms->volume()/(ms->volumeOfVoxels()*nelements());
-  // TODO: This may not be a good value to use if the element size
-  // distribution is very broad:
-  int isize = pow(VSB_FUDGE*avgElVol, 1./3.);
-  if(isize < MIN_VSB_BINSIZE)
-    isize = MIN_VSB_BINSIZE;
-  return ICoord3D(isize, isize, isize);
+  // Get the average bounding box for the elements.  If the average
+  // element has an aspect ratio far from 1, assuming that it's near 1
+  // will lead to a very non-optimum bin size.
+  Coord3D avgsize;
+  for(CSkeletonElementIterator el=beginElements(); el!=endElements(); ++el) {
+    CRectangularPrism bbox = (*el)->boundingBox();
+    avgsize += bbox.upperrightfront() - bbox.lowerleftback();
+  }
+  avgsize /= nelements();
+  Coord3D voxelsize = ms->sizeOfPixels();
+#define MAX(a,b) (a > b ? a : b)
+  return ICoord3D(MAX(avgsize[0]/voxelsize[0], 1),
+		  MAX(avgsize[1]/voxelsize[1], 1),
+		  MAX(avgsize[2]/voxelsize[2], 1));
 }
 
 
