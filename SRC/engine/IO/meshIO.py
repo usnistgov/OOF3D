@@ -26,6 +26,7 @@ from ooflib.common import utils
 from ooflib.common.IO import datafile
 from ooflib.common.IO import filenameparam
 from ooflib.common.IO import mainmenu
+from ooflib.common.IO import microstructureIO
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
 from ooflib.common.IO import reporter
@@ -43,17 +44,14 @@ from ooflib.engine import subproblemtype
 from ooflib.engine.IO import meshparameters
 from ooflib.engine.IO import outputdestination
 from ooflib.engine.IO import scheduledoutput
+from ooflib.engine.IO import skeletonIO
 from ooflib.engine.IO.skeletonIO import rearrangeEdges
 import ooflib.SWIG.engine.equation
 import ooflib.SWIG.engine.field
+import ooflib.engine.IO.boundaryconditionmenu
+import ooflib.engine.IO.meshmenu
 import ooflib.engine.mesh
 import ooflib.engine.subproblemcontext
-
-from ooflib.common.IO import microstructureIO
-from ooflib.engine.IO import skeletonIO
-
-import ooflib.engine.IO.meshmenu
-import ooflib.engine.IO.boundaryconditionmenu
 
 OOFMenuItem = oofmenu.OOFMenuItem
 
@@ -770,87 +768,36 @@ registeredclass.Registration(
 
 import datetime
 import string
-import time
-def writeABAQUSfromMesh(filename, mode, meshcontext):
-    time0 = time.time()
 
+def writeABAQUSfromMesh(filename, mode, meshcontext):
     femesh=meshcontext.femesh()
 
-    buffer=["*HEADING\nABAQUS-style file created by OOF2 on %s from a mesh of the microstructure %s.\n "
+    buffer=["*HEADING\n**ABAQUS-style file created by OOF2 on %s from a mesh of the microstructure %s.\n"
         % (datetime.datetime.today(),
            meshcontext.getSkeleton().getMicrostructure().name())]
 
-    # Build dictionaries of elements and nodes, giving each one a
-    # unique index. Elements and nodes already have indices, but the
-    # sets of indices may have gaps.  Abaqus require a contiguous set
-    # starting at 1.  The element dict is keyed by the oof2 element
-    # index, but the node dict is keyed by *position* so that split
-    # nodes don't appear in the abaqus output.  All oof2 nodes at the
-    # same position are represented by a single abaqus node.
-
-    ## TODO: make nodedict in C++.  This is very slow.
-    nodedict = {}
-    i = 1
-    # use only those nodes that are associated with elements that have
-    # a material
-    for el in femesh.elements():
-        if el.material():
-            for node in el.nodes():
-                if node.position() not in nodedict:
-                    nodedict[node.position()] = i
-                    i += 1
-        
-    debug.fmsg("made nodedict, time=", time.time()-time0)
-    time0 = time.time()
-    
-    # same for elements
-    elementdict = {}
-    i = 1
-    # In the same loop, get the list of materials and masterelements
-    # directly from the elements (i.e. straight from the horses'
-    # mouths. May be inefficient.)
-    materiallist={}
-    masterElementDict={}
-    for el in femesh.elements():
-        ematerial = el.material()
-        emasterelement = el.masterelement()
-        if ematerial:
-            matname = ematerial.name()
-            if matname not in materiallist:
-                materiallist[matname] = ematerial
-            melname = emasterelement.name()
-            if melname not in masterElementDict:
-                masterElementDict[melname] = emasterelement
-            elementdict[el.get_index()] = i
-            i += 1
-
-    debug.fmsg("made elementdict, time=", time.time()-time0)
-    time0 = time.time()
-    
     buffer.append("** Materials defined by OOF2:\n")
-    for matname, details in materiallist.items():
-        buffer.append("**   %s:\n" % (matname))
-        for prop in details.properties():
+    materials = femesh.getAllMaterials()
+    for mat in materials:
+        buffer.append("**  %s:\n" % mat.name())
+        for prop in mat.properties():
+            buffer.append("**    %s:\n" % prop.name())
             for param in prop.registration().params:
-                buffer.append("**     %s: %s\n" % (param.name,param.value))
+                buffer.append("**      %s: %s\n" % (param.name, param.value))
 
-    debug.fmsg("saved props, time=", time.time()-time0)
-    
     # Note that meshcontext.elementdict is different from elementdict
     # we constructed above!
     buffer.append("** Master elements used in OOF2:\n")
     for ekey, ename in meshcontext.elementdict.items():
         buffer.append("**   %s: %s, %s\n"
                       % (ekey, ename.name(), ename.description()))
+        
     buffer.append("** Boundary Conditions:\n")
     for bcname in meshcontext.allBndyCondNames():
         bc=meshcontext.getBdyCondition(bcname)
         buffer.append("**   %s: %s\n" % (bcname,`bc`))
 
     buffer.append("""** Notes:
-**   The set of nodes and elements may be different from the set
-**    created from a skeleton depending on the element type and if the
-**    mesh was refined.
 ** The materials and boundary conditions provided by OOF2 may be
 **   translated into ABAQUS by the user.
 ** The element type(s) *will* have to be modified by the user. Search for
@@ -859,70 +806,29 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
 **   material are included in this file.
 """)
 
-    time0 = time.time()
-    listbuf=["*NODE\n"]
-    # Get nodes that are associated with elements that have a material
-    # definition.  Other nodes aren't in nodedict.
-    for (position, index) in nodedict.items():
-        listbuf.append("%d, %s, %s, %s\n"
-                       % (index, position.x, position.y, position.z))
-    buffer.extend(listbuf)
-    debug.fmsg("saved nodes, time=", time.time()-time0)
-    time0 = time.time()
+    fp = open(filename, mode)
+    fp.write("".join(buffer))
+    buffer = []
+    fp.close()
 
-    for ename in meshcontext.elementdict.values():
-        ## TODO OPT: Use a separate buffer for each element type, and
-        ## only loop over the elements once!  Concatenate the buffers
-        ## at the end.
-        ## TODO OPT: Move this to C++.  It's very slow.
-        try:
-            # Group the elements according to element type
-            listbuf=[
-"""** The OOF2 element type is %s. The ABAQUS element type will
-** have to be modified by the user to be meaningful.
-*ELEMENT, TYPE=ABAQUSELEMENTTYPE
-"""
-% ename.name()]
-            # Trivia: C stands for Continuum, PS for Plane Stress (PE
-            # - Plane strain)
-            wrotesomething = False
-            for el in femesh.elements():
-                if el.material():
-                    if el.masterelement().name()==ename.name():
-                        wrotesomething = True
-                        listbuf2=["%d" % (elementdict[el.get_index()])]
-                        cornernodelist=[]
-                        # List corner nodes first, as preferred by ABAQUS
-                        for node in el.cornernodes():
-                            listbuf2.append("%d" % (nodedict[node.position()]))
-                            cornernodelist.append(node.index())
-                        # List the non-corner nodes (midpoints and
-                        # center point of a Q9_9)
-                        for node in el.nodes():
-                            if node.index() not in cornernodelist:
-                                listbuf2.append(
-                                    "%d" % (nodedict[node.position()]))
-                        listbuf.append(string.join(listbuf2,", ")+"\n")
-            if wrotesomething:
-                buffer.extend(listbuf)
-        except KeyError:
-            ## TODO: Which KeyError are we ignoring here?  Use
-            ## try/except/else to put the 'except' closer to the
-            ## exception.
-            pass
-    debug.fmsg("saved elements, time=", time.time()-time0)
-    time0 = time.time()
+    # Write node and element data directly from C++
+    abqdata = femesh.writeAbaqus(
+        filename, [me.name() for me in meshcontext.elementdict.values()])
 
-    ## TODO: Move boundary saving to C++.  It's slow, but not as slow
-    ## as the nodedict and element-saving loops.
-    buffer.append("** Point boundaries in OOF2\n")
+    # Save boundaries.
+
+    ## TODO: If calling getAbaqusIndex for each point is too slow,
+    ## either convert AbaqusMeshData.nodeDict to a python dict, or
+    ## (probably better) pass a CoordVec in to C++ and have
+    ## AbaqusMeshData write the abaqus indices.
+    buffer.append("** Point boundaries in OOF3D\n")
     for pbname in meshcontext.pointBoundaryNames():
         buffer.append("*NSET, NSET=%s\n" % (pbname))
         listbuf=[]
         i=0
         for node in femesh.getBoundary(pbname).nodeset:
             try:
-                somevalue=nodedict[node.position()]
+                somevalue=abqdata.getAbaqusIndex(node.position())
             except KeyError:
                 pass
             else:
@@ -934,14 +840,14 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
                 i+=1
         buffer.append(string.join(listbuf,", ")+"\n")
         
-    buffer.append("** Edge boundaries in OOF2\n")
+    buffer.append("** Edge boundaries in OOF3D\n")
     for ebname in meshcontext.edgeBoundaryNames():
         buffer+="*NSET, NSET=%s\n" % (ebname)
         listbuf=[]
         i=0
         for node in femesh.getBoundary(ebname).edgeset.nodes():
             try:
-                somevalue=nodedict[node.position()]
+                somevalue=abqdata.getAbaqusIndex(node.position())
             except KeyError:
                 pass
             else:
@@ -954,14 +860,14 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
         buffer.append(string.join(listbuf,", ")+"\n")
 
     if config.dimension() == 3:
-        buffer.append("** Face boundaries in OOF2\n")
+        buffer.append("** Face boundaries in OOF3D\n")
         for ebname in meshcontext.faceBoundaryNames():
             buffer+="*NSET, NSET=%s\n" % (ebname)
             listbuf=[]
             i=0
             for node in femesh.getBoundary(ebname).faceset.getNodes():
                 try:
-                    somevalue=nodedict[node.position()]
+                    somevalue=abqdata.getAbaqusIndex(node.position())
                 except KeyError:
                     pass
                 else:
@@ -972,35 +878,9 @@ def writeABAQUSfromMesh(filename, mode, meshcontext):
                         listbuf.append("%d" % (somevalue))
                     i+=1
             buffer.append(string.join(listbuf,", ")+"\n")
-    debug.fmsg("saved boundaries, time=", time.time()-time0)
-    time0 = time.time()
     
-    for matname in materiallist:
-        ## TODO OPT: Use a separate buffer for each material, and only
-        ## loop over elements once.
-        buffer+="*ELSET, ELSET=%s\n" % matname
-        listbuf=[]
-        i=0
-        for el in femesh.elements():
-            if el.material():
-                if el.material().name()==matname:
-                    if i>0 and i%16==0:
-                        listbuf.append("\n%d" % elementdict[el.get_index()])
-                    else:
-                        listbuf.append("%d" % elementdict[el.get_index()])
-                    i+=1
-        buffer.append(string.join(listbuf,", ") +
-                      "\n*SOLID SECTION, ELSET=%s, MATERIAL=%s\n" % (matname,
-                                                                     matname))
-
-    for matname in materiallist:
-        buffer.append("*MATERIAL, NAME=%s\n** Use the information in the header to complete these fields under MATERIAL\n" % matname)
-    debug.fmsg("saved materials, time=", time.time()-time0)
-    time0 = time.time()
-    
-    # Save/Commit to file. Perhaps should be done outside the current method.
-    fp=open(filename,mode)
+    # Write buffer to file.. Reopen it with mode="a" because it was
+    # closed after C++ wrote to it.
+    fp = open(filename, "a")
     fp.write("".join(buffer))
     fp.close()
-
-    debug.fmsg("wrote file, time=", time.time()-time0)

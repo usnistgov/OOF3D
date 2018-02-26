@@ -892,3 +892,162 @@ vtkSmartPointer<vtkIntArray> FEMesh::getMaterialCellData(
   }
   return array;
 }
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// FEMesh::writeAbaqus is called by writeABAQUSfromMesh() in meshIO.py
+// to save the parts of the Mesh that are too massive to write
+// efficiently from Python.
+
+AbaqusMeshData *FEMesh::writeAbaqus(
+			    const std::string &filename,
+			    const std::vector<std::string> *masterElementTypes)
+  const
+{
+  // Open the file for *appending* because some info has already been
+  // written into it by writeABAQUSfromMesh in Python.
+  std::ofstream file(filename, std::ios_base::app);
+  AbaqusMeshData *abqdata = new AbaqusMeshData();
+  AbaqusMeshData::NodeDict &nodeDict = abqdata->nodeDict;
+
+  // Build dictionaries of elements and nodes, giving each one a
+  // unique index. Elements and nodes already have indices, but the
+  // sets of indices may have gaps.  Abaqus requires a contiguous set
+  // starting at 1.  The element dict is keyed by the oof2 element
+  // index, but the node dict is keyed by *position* so that split
+  // nodes don't appear in the abaqus output.  All oof2 nodes at the
+  // same position are represented by a single abaqus node.
+
+  unsigned int i = 1;	       // abaqus indices start at 1
+  for(ElementIterator ei=element_iterator(); !ei.end(); ++ei) {
+    const Element *element = ei.element();
+    if(element->material()) {
+      for(ElementNodeIterator node(element->node_iterator());
+	  !node.end(); ++node)
+	{
+	  if(nodeDict.find(node.position()) == nodeDict.end()) {
+	    nodeDict[node.position()] = i++;
+	  }
+	}
+    }
+  }
+
+  file << "*NODE" << std::endl;
+  for(auto nn = nodeDict.begin(); nn!=nodeDict.end(); ++nn) {
+    file << nn->second << ", " << nn->first[0] << ", " << nn->first[1] << ", "
+	 << nn->first[2] << std::endl;
+  }
+
+  // ElementMap maps an oof element index to an abaqus element index
+  typedef std::map<int, int> ElementMap;
+  // abaqus elements should be grouped by type, so we create lists of
+  // elements for each type.  The relevant types are in masterElementTypes.
+  std::map<std::string, ElementMap> elementMaps;
+  for(const std::string &name : *masterElementTypes)
+    elementMaps[name] = ElementMap();
+  // We also need to create an abaqus ELSET for each Material.
+  // MaterialMap maps oof Materials to lists of abaqus element indices.
+  typedef std::map<const Material*, std::vector<int>> MaterialMap;
+  MaterialMap materialMap;
+  // We also need a global map that includes all elements.
+  ElementMap allElements;
+  
+  // Insert each element into its ElementMap.  The abaqus indices will
+  // be applied later.
+  for(ElementIterator ei=element_iterator(); !ei.end(); ++ei) {
+    const Element *element = ei.element();
+    const Material *ematerial = element->material();
+    if(ematerial) {
+      const MasterElement &master = element->masterelement();
+      elementMaps[master.name()][element->get_index()] = -1;//dummy abaqus index
+    }
+  }
+
+  // Write the elements and assign the actual abaqus indices;
+  i = 1;			// starting from 1 again!
+  for(auto it = elementMaps.begin(); it!=elementMaps.end(); ++it) {
+    ElementMap &emap = it->second;
+    if(!emap.empty()) {
+      file << "** The OOF3D element type is " << it->first
+	   << ". The ABAQUS element \n"
+	   << "** will have to be modified by the user to be meaningful.\n"
+	   << "*ELEMENT, TYPE=ABAQUSELEMENTTYPE" << std::endl;
+      // Loop over elements of this type
+      for(auto eit = emap.begin(); eit!=emap.end(); ++eit) {
+	const Element *el = element[eit->first];
+	assert(el->get_index() == eit->first);
+	eit->second = i++;	// Set abaqus element index
+	allElements[eit->first] = eit->second;
+	MaterialMap::iterator mm = materialMap.find(el->material());
+	if(mm == materialMap.end())
+	  materialMap[el->material()] = std::vector<int>(1, eit->second);
+	else
+	  mm->second.push_back(eit->second);
+	// Write the element and its nodes to the output file.
+	file << eit->second;
+	// List corner nodes first.
+	std::set<int> used;
+	for(ElementCornerNodeIterator n=el->cornernode_iterator(); !n.end();
+	    ++n)
+	  {
+	    int idx = nodeDict[n.position()];
+	    used.insert(idx);
+	    file << ", " << idx;
+	  }
+	// List other nodes.
+	for(ElementNodeIterator n=el->node_iterator(); !n.end(); ++n) {
+	  int idx = nodeDict[n.position()];
+	  if(used.count(idx) == 0)
+	    file << ", " << idx;
+	}
+	file << std::endl;
+      }	// end loop over elements of this type
+    } // end if emap not empty
+  }   // end loop over element types
+
+  // Create an ELSET for each Material
+  for(MaterialMap::iterator mm=materialMap.begin(); mm!=materialMap.end(); ++mm)
+    {
+      const Material *mat = mm->first;
+      file << "*ELSET, ELSET=" << mat->name() << std::endl;
+      // List elements with this material, no more than 16 per line.
+      int n = mm->second.size(); // number of elements
+      int nfullrows = n/16;	 // integer division
+      int nfinal = n - 16*nfullrows; // number in final row
+      if(nfinal == 0) {
+	nfullrows -= 1;
+	nfinal = 16;
+      }
+      for(int row=0; row<nfullrows; row++) { 
+	for(int k=0; k<16; k++) {
+	  file << mm->second[16*row + k] << ", ";
+	}
+	file << std::endl;
+      }
+      // The final row doesn't have a comma at the end
+      for(int k=0; k<nfinal; k++) {
+	file << mm->second[16*nfullrows + k];
+	if(k != nfinal-1)
+	  file << ", ";
+      }
+      file << std::endl;
+    }
+  
+  // Save boundaries???
+  
+  file.close();
+  return abqdata;
+} // end FEMesh::writeAbaqus
+
+int AbaqusMeshData::getAbaqusIndex(const Coord *pt) const {
+  auto iter = nodeDict.find(*pt);
+#ifdef DEBUG
+  if(iter == nodeDict.end()) {
+    oofcerr << "AbaqusMeshData::getAbaqusIndex failed! pt=" << *pt
+	    << " npts=" << nodeDict.size() << std::endl;
+    throw ErrProgrammingError("AbaqusMeshData::getAbaqusIndex failed!"
+			      __FILE__, __LINE__);
+  }
+#endif // DEBUG
+  return iter->second;
+}
