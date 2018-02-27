@@ -103,6 +103,9 @@ parameterwidgets.py.
 Upgrade to gtk3.  Possibly switch to the VTK event loop instead of the
 gtk event loop, so that we can use VTK interactors and widgets.
 
+Allow materials to be assigned to Skeleton element groups.  See TODOs
+in CSkeletonElement::material() and skeletongroupmenu.py.
+
 ----------------------------------------------------------------------------
 At Some Later Time
 ------------------

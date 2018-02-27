@@ -251,9 +251,11 @@ void GhostOOFCanvas::setAxisProperties() {
   Coord relativeShaftLengths;
   double actualTipLength = 0.05*refLength;
   for(int i=0; i<3; i++) {
-    relativeTipSizes[i] = actualTipLength/lengths[i]; // relative size
-    if(relativeTipSizes[i] > 1.0)
-      relativeTipSizes[i] = 1.0;
+    // Set the tip size to no more than 90% of the size of the arrow,
+    // so that the tail of the arrow is always visible.
+    relativeTipSizes[i] = actualTipLength/lengths[i];
+    if(relativeTipSizes[i] > 0.9)
+      relativeTipSizes[i] = 0.9;
     relativeShaftLengths[i] = 1 - relativeTipSizes[i];
   }
   axes->SetNormalizedTipLength(relativeTipSizes);
