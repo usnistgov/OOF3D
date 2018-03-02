@@ -28,6 +28,7 @@ import os
 import os.path
 import re
 import string
+import types
 import weakref
 
 ## TODO 3.1: Typing <return> in the File entry should be the same as
@@ -533,7 +534,14 @@ class WriteFileSelectorWidget(FileSelectorWidget):
         if phile:
             self.fileEntrySignal.block()
             try:
-                self.fileEntry.set_text(phile)
+                # If the current directory was last read by a
+                # FileListWidget, then phile contains a list of
+                # strings.
+                if type(phile) is types.StringType:
+                    self.fileEntry.set_text(phile)
+                elif (isinstance(phile, (types.ListType, types.TupleType))
+                      and type(phile[0]) is types.StringType):
+                    self.fileEntry.set_text(phile[0])
             finally:
                 self.fileEntrySignal.unblock()
 
