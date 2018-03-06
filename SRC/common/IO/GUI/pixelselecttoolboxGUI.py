@@ -22,6 +22,51 @@ from ooflib.common.IO.GUI import genericselectGUI
 from ooflib.common.IO.GUI import pixelselectionmethodGUI
 from ooflib.common.IO.GUI import regclassfactory
 
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# RegisteredClassFactory specialized for use in the PixxelSelectionToolbox.
+
+class VoxelSelectionMethodFactory(regclassfactory.RegisteredClassFactory):
+    def __init__(self, toolbox):
+        self.toolbox = toolbox
+        
+        widgetdict = {}
+        for reg in voxelselectionmethod.VoxelSelectionOp.registry:
+            try:
+                widgetdict[reg.subclass] = reg.widgetType
+            except AttributeError:
+                widgetdict[reg.subclass] = parameterwidgets.ParameterTable
+                
+        regclassfactory.RegisteredClassFactory(
+            self,
+            voxelselectionmethod.VoxelSelectionOp.registry,
+            obj=None,
+            title="Method:",
+            callback=callback,
+            fill=1,
+            expand=1,
+            scope=toolbox,
+            widgetdict=widgetdict)
+    def update
+
+class PixelSelectToolboxGUINew(genericselectGUI.GenericSelectToolboxNew):
+    def __init__(self, toolbox):
+        genericselectGUI.GenericSelectToolboxNew.__init__(
+            self, toolbox, ('Microstructure', 'Image'), 'Voxel')
+
+    def methodFactory(self):
+        return VoxelSelectionMethodFactory(toolbox=self)
+    
+def _makeGUInew(self):
+    return PixelSelectToolboxGUINew(self)
+
+pixelselectiontoolbox.PixelSelectToolboxNew.makeGUI = _makeGUInew
+
+
+##############
+## OLD CODE ## 
+##############
+
 class PixelSelectionMethodFactory(regclassfactory.RegisteredClassFactory):
     def __init__(self, registry, obj=None, title=None,
                  callback=None, fill=0, expand=0, scope=None, name=None,
@@ -39,26 +84,6 @@ class PixelSelectionMethodFactory(regclassfactory.RegisteredClassFactory):
         if self.current_who_class is None:
             return True
         return self.current_who_class in registration.whoclasses
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-class PixelSelectToolboxGUINew(genericselectGUI.GenericSelectToolboxNew):
-    def __init__(self, toolbox):
-        genericselectGUI.GenericSelectToolboxNew.__init__(
-            self, toolbox, ('Microstructure', 'Image'), 'Voxel')
-
-    # def getSource(self):
-    #     return self.gfxwindow().topwho('Microstructure', 'Image')
-        
-def _makeGUInew(self):
-    return PixelSelectToolboxGUINew(self)
-
-pixelselectiontoolbox.PixelSelectToolboxNew.makeGUI = _makeGUInew
-
-
-##############
-## OLD CODE ## 
-##############
 
 class PixelSelectToolboxGUI(genericselectGUI.GenericSelectToolboxGUI):
     def __init__(self, pixelselecttoolbox, method):

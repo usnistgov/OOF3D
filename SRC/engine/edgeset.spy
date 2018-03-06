@@ -129,3 +129,27 @@ def _SubDimensionalIterator_next(self):
     
 SubDimensionalIteratorPtr.next = _SubDimensionalIterator_next
 
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Super-cautious destructors, to avoid complaints at shut-down time.
+# Code recommended by SWIG authors in mailing list at
+# <http://mailman.cs.uchicago.edu/pipermail/swig/2002-April.txt>,
+# look for message with subject: [Swig] Shadow class as a global
+
+## TODO: 3.1.2 (branch from 3.1.1.1) complains at shut down-time about
+## the FaceSet destructor, but when the cautious destructor is added
+## here (on a development branch not derived from 3.1.1.1) it fails
+## because edgesetc.delete_EdgeSet isn't defined.  I don't know what's
+## going on here.
+
+# def edge_set_del(self, destruct=edgesetc.delete_EdgeSet):
+#     if getattr(self, 'thisown', 0):
+#         destruct(self)
+
+# EdgeSetPtr.__del__ = edge_set_del
+
+# def face_set_del(self, destruct=edgesetc.delete_FaceSet):
+#     if getattr(self, 'thisown', 0):
+#         destruct(self)
+
+# FaceSetPtr.__del__ = face_set_del

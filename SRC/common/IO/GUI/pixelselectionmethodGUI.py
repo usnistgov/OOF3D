@@ -27,6 +27,17 @@ from ooflib.SWIG.common import switchboard
 import gtk
 import math
 
+from ooflib.common.IO.GUI import genericselectGUI
+
+class VoxelBoxSelectionGUI(genericselectGUI.GenericSelectionMethodGUI):
+    pass
+
+voxelselectionmethod.boxreg.selectionGUI = VoxelBoxSelectionGUI
+
+#########################
+## OLD CODE BELOW HERE ##
+#########################
+
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # selmethodGUIdict is a dictionary which stores the SelectionMethodGUI

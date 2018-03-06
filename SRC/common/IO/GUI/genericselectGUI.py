@@ -31,10 +31,33 @@ from ooflib.common.IO.GUI import toolboxGUI
 from ooflib.common.IO.GUI import tooltips
 import gtk, sys
 
-## TODO: Allow the canvas widgets to add gtk fields to the toolbox
-## parambox.  For instance, the VoxelRegionsSelectionDisplay should
-## show the numerical values of the corners of the box, and the
-## positions should be editable.
+# The registration for each selection method that appears in a
+# selection toolbox needs to include a "selectionGUI" datum that is
+# set to a subclass of GenericSelectionMethodGUI.  It fills three
+# roles:
+# * MouseHandler:  down(), move(), and up() callbacks
+# * Graphics Widget: controls a vtk canvas layer that displays the
+#   selection state.
+# * ParameterTable: displays gtk widgets in the toolbox that can
+#   reflect and control the state of the vtk widget, as well as
+#   provide additional parameters related to the selection method.
+
+# If the selection method can get all the information it needs from
+# the canvas widget after the widget has been set, and if the
+# ParameterTable-like part of the GenericSelectionMethodGUI has a
+# "Done" button, then doesn't need to provide the mouse handling
+# functions.
+
+class GenericSelectionMethodGUI(object):
+    def down(self, x, y, shft, ctrl, gfxwindow):
+        pass
+    def move(self, x, y, shft, ctrl, gfxwindow):
+        pass
+    def up(self, x, y, shft, ctrl, gfxwindow):
+        pass
+    def mouseHandler(self):
+        return mousehandler.NullMouseHandler()
+    
 
 class GenericSelectToolboxNew(toolboxGUI.GfxToolbox):
     def __init__(self, toolbox, sources, target):
@@ -47,7 +70,8 @@ class GenericSelectToolboxNew(toolboxGUI.GfxToolbox):
         # sources is a tuple of WhoClass names (eg, 'Image',
         # 'Skeleton') from which the selection can be made.  The
         # topmost layer displaying one of the given classes is the
-        # source.
+        # source.  The selection operations listed in the toolbox must
+        # each operate on a subset of these sources.
         self.sources = sources
         self.source = self.getSource()
         self.handler = None     # mouse handler
@@ -56,22 +80,17 @@ class GenericSelectToolboxNew(toolboxGUI.GfxToolbox):
 
         outerbox = gtk.VBox(spacing=2)
         self.gtk.add(outerbox)
-        chooserframe = gtk.Frame()
-        outerbox.pack_start(chooserframe, expand=1, fill=1)
-        self.chooserbox = gtk.VBox()
-        chooserframe.add(self.chooserbox)
-        hbox = gtk.HBox()
-        self.chooserbox.pack_start(hbox, expand=0, fill=0)
-        hbox.pack_start(gtk.Label("Method:"), expand=0, fill=0)
-        self.chooser = chooser.ChooserWidget([], callback=self.chooserCB,
-                                             name="GenericSelectChooser")
-        hbox.pack_start(self.chooser.gtk, expand=1, fill=1)
+        # Get the registeredclassfactory from the subclass.  The
+        # factory's widgetdict should return GenericSelectionMethodGUI
+        # subclasses that are ParameterTables (for display in the
+        # toolbox) and simultaneously mouse handlers (for the canvas)
+        # and graphics widgets (for feedback from the canvas).
+        self.selectionMethodFactory = self.methodFactory(
+            toolbox=self, callback=self.methodCB)
+        
+        outerbox.pack_start(self.selectionMethodFactory, expand=1, fill=1)
 
-        # parambox is a place to put the parameter widgets for the
-        # current selection method, if any.
-        self.parambox = gtk.VBox()
-        self.chooserbox.pack_start(self.parambox, expand=0, fill=0)
-
+        ## These buttons belong in a GenericSelectionMethodGUI subclass:
         # buttonbox contains the "Start", "Done", and "Cancel"
         # buttons.  It's only visible if the mouse behavior is
         # "MultiClick", "MultiDrag", or "MultiDrag+".
@@ -146,6 +165,11 @@ press the Done button to complete the selection."""
         
     def getSource(self):
         return self.gfxwindow().topwho(*self.sources)
+
+    def getSourceName(self):
+        source = self.getSource()
+        if source is not None:
+            return source.path()
 
     def updateChooser(self):
         if self.source is not None:
@@ -277,7 +301,7 @@ press the Done button to complete the selection."""
         self.gfxwindow().oofcanvas.render()
 
         debug.fmsg("widget value is", self.canvasWidget.get_value())
-        #self.currentOp.select(self.handler.get_value(), ... )
+        self.currentOp.select(self.handler.get_value(), ... )
 
     def cancelCB(self, button):
         self.handler.stop()
