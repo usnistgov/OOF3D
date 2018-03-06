@@ -31,6 +31,11 @@ from ooflib.common.IO.GUI import toolboxGUI
 from ooflib.common.IO.GUI import tooltips
 import gtk, sys
 
+## TODO: Allow the canvas widgets to add gtk fields to the toolbox
+## parambox.  For instance, the VoxelRegionsSelectionDisplay should
+## show the numerical values of the corners of the box, and the
+## positions should be editable.
+
 class GenericSelectToolboxNew(toolboxGUI.GfxToolbox):
     def __init__(self, toolbox, sources, target):
         debug.mainthreadTest()
@@ -46,6 +51,8 @@ class GenericSelectToolboxNew(toolboxGUI.GfxToolbox):
         self.sources = sources
         self.source = self.getSource()
         self.handler = None     # mouse handler
+        self.canvasWidget = None # selection widget drawn on the canvas
+        self.editing = False
 
         outerbox = gtk.VBox(spacing=2)
         self.gtk.add(outerbox)
@@ -59,6 +66,54 @@ class GenericSelectToolboxNew(toolboxGUI.GfxToolbox):
         self.chooser = chooser.ChooserWidget([], callback=self.chooserCB,
                                              name="GenericSelectChooser")
         hbox.pack_start(self.chooser.gtk, expand=1, fill=1)
+
+        # parambox is a place to put the parameter widgets for the
+        # current selection method, if any.
+        self.parambox = gtk.VBox()
+        self.chooserbox.pack_start(self.parambox, expand=0, fill=0)
+
+        # buttonbox contains the "Start", "Done", and "Cancel"
+        # buttons.  It's only visible if the mouse behavior is
+        # "MultiClick", "MultiDrag", or "MultiDrag+".
+        self.buttonbox = gtk.VBox(spacing=2)
+        self.chooserbox.pack_start(self.buttonbox, expand=0, fill=0)
+        self.instructionsLabel = gtk.Label("")
+        self.buttonbox.pack_start(self.instructionsLabel)
+        # innerbbox = gtk.HBox(spacing=2)
+        # self.buttonbox.pack_start(innerbbox, expand=0, fill=0)
+        # innerbbox.set_homogeneous(True)
+        btable = gtk.Table(rows=2, columns=2, homogeneous=True)
+        self.buttonbox.pack_start(btable, expand=0, fill=0)
+        self.startbutton = gtk.Button('Start')
+        self.donebutton = gtk.Button('Done')
+        self.cancelbutton = gtk.Button('Cancel')
+        self.resetbutton = gtk.Button('Reset')
+        btable.attach(self.startbutton, 0,1, 0,1, xpadding=1, ypadding=1)
+        btable.attach(self.donebutton, 1,2, 0,1, xpadding=1, ypadding=1)
+        btable.attach(self.resetbutton, 0,1, 1,2, xpadding=1, ypadding=1)
+        btable.attach(self.cancelbutton, 1,2, 1,2, xpadding=1, ypadding=1)
+        gtklogger.setWidgetName(self.startbutton, "Start")
+        gtklogger.setWidgetName(self.donebutton, "Done")
+        gtklogger.setWidgetName(self.resetbutton, "Reset")
+        gtklogger.setWidgetName(self.cancelbutton, "Cancel")
+        gtklogger.connect(self.startbutton, 'clicked', self.startCB)
+        gtklogger.connect(self.donebutton, 'clicked', self.doneCB)
+        gtklogger.connect(self.resetbutton, 'clicked', self.resetCB)
+        gtklogger.connect(self.cancelbutton, 'clicked', self.cancelCB)
+        tooltips.set_tooltip_text(
+            self.startbutton,
+            "Create a widget and start a graphical selection operation.")
+        tooltips.set_tooltip_text(
+            self.donebutton,
+            "Complete the current graphical selection operation and hide the widget.")
+        tooltips.set_tooltip_text(
+            self.resetbutton,
+            "Reset the selection widget.")
+        tooltips.set_tooltip_text(
+            self.cancelbutton,
+            "Cancel the current graphical selection operation.")
+        
+        
         self.paramWidget = None
         self.updateChooser()
 
@@ -67,10 +122,22 @@ class GenericSelectToolboxNew(toolboxGUI.GfxToolbox):
         self.sbcallbacks = [
             switchboard.requestCallbackMain("new selection operation " + target,
                                             self.newOperation),
-            switchboard.requestCallback((self.toolbox.gfxwindow(),
-                                         'layers changed'),
-                                        self.layerChangeCB)
+            switchboard.requestCallbackMain((self.toolbox.gfxwindow(),
+                                             'layers changed'),
+                                            self.layerChangeCB)
             ]
+
+    def genericInstructions(self):
+        # If the current selection method has a class-level
+        # "instructions" string, that string is displayed above the
+        # Start/Done buttons.  If the string doesn't exist, the string
+        # returned by this function is used.  Subclasses might want to
+        # redefine this function.
+        return """\
+Press the Start button to display the selection widget
+in the canvas. Use the mouse to adjust the widget and
+press the Done button to complete the selection."""
+
     def close(self):
         if self.handler:
             self.handler.stop()
@@ -81,16 +148,14 @@ class GenericSelectToolboxNew(toolboxGUI.GfxToolbox):
         return self.gfxwindow().topwho(*self.sources)
 
     def updateChooser(self):
-        debug.fmsg("source=", self.source)
         if self.source is not None:
             whoclassname = self.source.classname
             self.ops = genericselectionop.getSelectionOperations(whoclassname,
                                                                  self.target)
-            debug.fmsg("ops=", self.ops)
             names = sorted(self.ops.keys(),
                            lambda x,y:cmp(self.ops[x].order, self.ops[y].order))
             self.chooser.update(names, {nm:self.ops[nm].tip for nm in names})
-            self.updateParameterTable()
+        self.updateParameterTable()
 
     def updateParameterTable(self):
         if self.paramWidget is not None:
@@ -100,19 +165,32 @@ class GenericSelectToolboxNew(toolboxGUI.GfxToolbox):
             op = self.ops[opname]
             self.paramWidget = parameterwidgets.ParameterTable(
                 op.params, scope=self, name=op.name)
-            self.chooserbox.pack_start(self.paramWidget.gtk, expand=1, fill=1)
-            self.paramWidget.gtk.show_all()
+            self.parambox.pack_start(self.paramWidget.gtk, expand=1, fill=1)
+            self.parambox.show_all()
+            try:
+                howto = op.instructions
+            except AttributeError:
+                howto = self.genericInstructions()
+            self.instructionsLabel.set_text(howto)
+        if (opname and
+            op.mouseBehavior in ("MultiClick", "MultiDrag", "MultiDrag+")):
+            self.buttonbox.show()
+        else:
+            self.buttonbox.hide()
+
+    def sensitizeButtons(self):
+        self.startbutton.set_sensitive(not self.editing)
+        self.cancelbutton.set_sensitive(self.editing)
+        self.donebutton.set_sensitive(self.editing)
+        self.resetbutton.set_sensitive(self.editing)
 
     def newOperation(self):     # sb "new selection operation"
         # A new operation has been defined
         self.updateChooser()
 
     def chooserCB(self, *args):
-        debug.fmsg()
         self.updateParameterTable()
         self.installMouseHandler()
-        # TODO: Add extra buttons if the mouse handler needs them (eg,
-        # Start, Cancel, Done)
 
     def layerChangeCB(self):
         self.source = self.getSource()
@@ -123,36 +201,97 @@ class GenericSelectToolboxNew(toolboxGUI.GfxToolbox):
             super(GenericSelectToolboxNew, self).activate()
             self.installMouseHandler()
             self.gfxwindow().toolbar.setSelect()
+            self.updateParameterTable()
+            if self.canvasWidget is not None:
+                self.canvasWidget.activate(self.gfxwindow())
 
     def deactivate(self):
         if self.active:
             super(GenericSelectToolboxNew, self).deactivate()
-
+            if self.canvasWidget is not None:
+                self.canvasWidget.deactivate(self.gfxwindow())
+            
     def installMouseHandler(self):
         if self.handler:
             self.handler.stop()
+            self.handler = None
+        if self.canvasWidget is not None:
+            self.canvasWidget.deactivate(self.gfxwindow())
+            self.canvasWidget = None
         opname = self.chooser.get_value()
         if opname is None:
             self.handler = mousehandler.nullHandler
         else:
+            # TODO: Pass MouseHandler args through.  VoxelSelectionOp
+            # classes need to have __init__s.
             self.currentOp = self.ops[opname]()
+            if self.currentOp.widgetType is not None:
+                self.canvasWidget = self.gfxwindow().getLayerByClass(
+                    self.currentOp.widgetType)
+                stage2handler = self.canvasWidget
+            else:
+                stage2handler = self.currentOp
             handlerType = self.ops[opname].mouseBehavior
             if handlerType in ("SingleClick", "MultiClick"):
-                self.handler = toolboxGUI.SingleClickMouseHandler(
-                    self.currentOp)
+                self.handler = mousehandler.SingleClickMouseHandler(
+                    self.gfxwindow(), stage2handler)
             elif handlerType in ("ClickAndDrag", "MultiDrag"):
-                self.handler = toolboxGUI.ClickAndDragMouseHandler(
-                    self.currentOp, ("up", "down"))
+                self.handler = mousehandler.KangarooMouseHandler(
+                    self.gfxwindow(), stage2handler, ("up", "move", "down"))
             elif handlerType in ("ClickAndDrag+", "MultiDrag+"):
-                self.handler = toolboxGUI.ThreadedMouseHandler(
-                    self.currentOp, ("up", "move", "down"))
-        self.gfxwindow.setMouseHandler(self.handler)
-        ## TODO: Don't call start() here.  It should be called only
-        ## when the Start button is pressed.  start/stop need to be
-        ## disassociated from installation and uninstallation.
+                self.handler = mousehandler.ThreadedMouseHandler(
+                    self.gfxwindow(), stage2handler, ("up", "move", "down"))
+        self.gfxwindow().setMouseHandler(self.handler)
+        if self.canvasWidget is not None:
+            self.canvasWidget.activate(self.gfxwindow())
+            if self.editing:
+                # Continue a previous editing session
+                self.handler.start()
+                self.canvasWidget.beginEditingCB(self.gfxwindow())
+        self.sensitizeButtons()
+
+    def startCB(self, button):
+        # Callback for the Start button.  If self.currentOp has a
+        # nontrivial widgetType, the mouse handler will show the
+        # widget and start sending events to it.
         self.handler.start()
+        # Old method was for the toolbox to send sb "region editing
+        # begun" to the widget layer, which already exists in the
+        # canvas.  Could use GhostGfxWindow.getLayerByClass instead.
+        if self.canvasWidget is not None:
+            self.canvasWidget.beginEditingCB(self.gfxwindow())
+        self.editing = True
+        self.sensitizeButtons()
+        self.gfxwindow().oofcanvas.render()
 
+    def doneCB(self, button):
+        # Callback for the Done button.  If self.currentOp has a
+        # nontrivial widgetType, the mouse handler will hide the
+        # widget and stop sending events to it.
+        self.handler.stop()
+        # process results
+        if self.canvasWidget is not None:
+            self.canvasWidget.endEditingCB(self.gfxwindow())
+        self.editing = False
+        self.sensitizeButtons()
+        self.gfxwindow().oofcanvas.render()
 
+        debug.fmsg("widget value is", self.canvasWidget.get_value())
+        #self.currentOp.select(self.handler.get_value(), ... )
+
+    def cancelCB(self, button):
+        self.handler.stop()
+        if self.canvasWidget is not None:
+            self.canvasWidget.endEditingCB(self.gfxwindow())
+        self.editing = False
+        self.sensitizeButtons()
+        self.gfxwindow().oofcanvas.render()
+
+    def resetCB(self, button):
+        if self.canvasWidget is not None:
+            self.canvasWidget.reset()
+            self.gfxwindow().oofcanvas.render()
+        
 
 ###########################
 ### OLD CODE BELOW HERE ###

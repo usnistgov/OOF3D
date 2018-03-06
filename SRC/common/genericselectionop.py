@@ -41,6 +41,9 @@ from ooflib.common import registeredclass
 # * down(x, y, button, shift, ctrl) if mouseBehavior is anything but SingleClick
 # * move(x, y, button, shift, ctrl) if mouseBehavior is ClickAndDrag+
 #   or MultiClick+
+# (Mouse handling methods are optional if the selection operation has a
+# widgetType that handles events.)
+
 
 # _selectables[source][target] is a dict, keyed by operation name, of
 # SelectionOperations applicable to the given source and target. 'source' and

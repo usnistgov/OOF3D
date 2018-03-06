@@ -255,6 +255,8 @@ public:
   Coord3D *get_cellNormal_Coord3D(vtkIdType);
   void reset();
   void set_box(const Coord3D*);
+  void set_box(const CRectangularPrism*);
+  CRectangularPrism *get_box() const;
   void set_pointSize(float);
   void set_lineWidth(float);
   void set_lineColor(const CColor&);

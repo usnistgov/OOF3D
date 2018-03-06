@@ -362,6 +362,9 @@ public:
   CRectangularPrism(const std::vector<Coord> &v)
     : CRectangularPrism_<double, Coord>(v)
   {}
+  CRectangularPrism(const Coord *a, const Coord *b)
+    : CRectangularPrism_<double, Coord>(*a, *b)
+  {}
   friend std::ostream& operator<<(std::ostream&, const CRectangularPrism&);
   virtual std::ostream &print(std::ostream &os) const {
     return os << *this;

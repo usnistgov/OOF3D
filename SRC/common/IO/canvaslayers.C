@@ -740,14 +740,17 @@ BoxWidgetLayer::BoxWidgetLayer(GhostOOFCanvas *canvas, const std::string &nm)
   // 		     double((i / 4) % 2));
   // }
 
+  // Node, edge, and face indexing follows the VTK_VOXEL convention.
+  // TODO: Perhaps VTK_HEXAHEDRON would be better if the sides of the
+  // box aren't going to always be orthogonal.
+
   grid->Initialize();
   grid->Allocate(26, 26);
   grid->SetPoints(points);
 
   for (int i = 0; i < 8; i++) {
     // Store the 8 vertices of the box.
-    vtkIdType ptID;
-    ptID = i;
+    vtkIdType ptID = 0;
     grid->InsertNextCell(VTK_VERTEX, 1, &ptID);
   }
 
@@ -924,8 +927,13 @@ Coord3D *BoxWidgetLayer::get_cellNormal_Coord3D(vtkIdType cellID) {
 void BoxWidgetLayer::set_box(const Coord3D *point) {
   // Resets the box to a rectangular prism with one corner at the
   // origin and the opposite corner at point.
-  Coord3D corner0(0., 0., 0.);
-  Coord3D corner1 = *point;
+  CRectangularPrism bocks(Coord3D(0.0, 0.0, 0.0), *point);
+  set_box(&bocks);
+}
+
+void BoxWidgetLayer::set_box(const CRectangularPrism *box) {
+  Coord3D corner0(box->lowerleftback());
+  Coord3D corner1(box->upperrightfront());
   points->SetPoint(0, corner0[0], corner0[1], corner0[2]);
   points->SetPoint(1, corner1[0], corner0[1], corner0[2]);
   points->SetPoint(2, corner0[0], corner1[1], corner0[2]);
@@ -935,6 +943,12 @@ void BoxWidgetLayer::set_box(const Coord3D *point) {
   points->SetPoint(6, corner0[0], corner1[1], corner1[2]);
   points->SetPoint(7, corner1[0], corner1[1], corner1[2]);
   points->Modified();
+}
+
+CRectangularPrism *BoxWidgetLayer::get_box() const {
+  Coord3D pt0(points->GetPoint(0));
+  Coord3D pt1(points->GetPoint(7));
+  return new CRectangularPrism(pt0, pt1);
 }
 
 void BoxWidgetLayer::set_pointSize(float size) {

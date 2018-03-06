@@ -8,8 +8,8 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov. 
 
-OBSOLETE
-
+## TODO: This file will be obsolete after the new selection method
+## code is finished.
 
 class MouseHandler(object):
     def acceptEvent(self, eventtype):

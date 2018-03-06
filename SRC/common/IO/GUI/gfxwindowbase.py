@@ -362,11 +362,11 @@ class GfxWindowBase(subWindow.SubWindow, ghostgfxwindow.GhostGfxWindow):
             if self.current_toolbox:
                 self.current_toolbox.deactivate()
             self.current_toolbox = self.getToolboxGUIByName(tbname)
-            self.current_toolbox.activate()
             self.current_toolbox.installMouseHandler()
             self.toolboxbody.foreach(self.toolboxbody.remove)
             self.toolboxbody.add(self.current_toolbox.gtk)
             self.toolboxbody.show_all()
+            self.current_toolbox.activate()
 
     def getToolboxGUIByName(self, name):
         for tbgui in self.toolboxGUIs:

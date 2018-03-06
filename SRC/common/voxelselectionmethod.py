@@ -25,19 +25,30 @@ from ooflib.common import enum
 from ooflib.common import genericselectionop
 from ooflib.common import primitives
 from ooflib.common.IO import colordiffparameter
+from ooflib.common.IO import mousehandler
 from ooflib.common.IO import parameter
+from ooflib.common.IO import voxelregionselectiondisplay
 
 # See genericselectionop.py for a list of methods and class-level data
 # that each VoxelSelectionOp subclass must provide.
 
 class VoxelSelectionOp(object):
     target = 'Voxel'
-    params = []                 # override in subclasses
+    params = []       # override in subclasses
+    widgetType = None # subclasses can set this to a DisplayMethod subclass
+    # Subclasses that don't set widgetType must redefine at least one
+    # of up(), down(), or move().
+    def up(self, *args):
+        debug.fmsg("VoxelSelectionOp base class")
+    def down(self, *args):
+        debug.fmsg("VoxelSelectionOp base class")
+    def move(self, *args):
+        debug.fmsg("VoxelSelectionOp base class")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 @genericselectionop.register
-class PointNEW(VoxelSelectionOp, mousehandler.SingleClickMouseHandler):
+class PointNEW(VoxelSelectionOp):
     sources = ('Microstructure', 'Image')
     mouseBehavior = genericselectionop.MouseBehavior('SingleClick')
     tip = "Select a single voxel."
@@ -45,19 +56,25 @@ class PointNEW(VoxelSelectionOp, mousehandler.SingleClickMouseHandler):
     # def select(self, ms, operator, point):
     #     operator.operate(ms.getSelectionContext(),
     #                      pixelselectioncourier.PointSelection(ms, point))
-    def doUp(self, x, y, button, ctrl, shift, gfxwindow):
+    def up(self, x, y, button, ctrl, shift, gfxwindow):
         view = gfxwindow.getView()
-        # TODO: How does this get the source and booleanoperator?
-        # Should it call back to the GenericSelectToolbox?
+        # TODO: Use self.sources and gfxwindow to get the top relevant
+        # layer.
+        # Get boolean operation from shift/ctrl.
         pt = gfxwindow.findClickedCellCenter(immidge, (x, y), view)
         menuitem(courier(pt), booleanoperator)
 
 @genericselectionop.register
 class BoxNEW(VoxelSelectionOp):
     sources = ('Microstructure', 'Image')
-    mouseBehavior = genericselectionop.MouseBehavior('MultiDrag+')
+    mouseBehavior = genericselectionop.MouseBehavior('MultiDrag')
     tip = "Select a rectangular box of voxels."
     order = 1
+    widgetType = voxelregionselectiondisplay.VoxelRegionSelectionDisplay
+    instructions = """\
+Press the Start button, and then click and drag the
+sides of the blue box on the canvas.  Voxels inside
+the box will be selected when you press the Done button."""
     # def select(self, ms, operator, point0, point1):
     #     operator.operate(ms.getSelectionContext(),
     #                      pixelselectioncourier.BoxSelection(ms, point0, point1))
