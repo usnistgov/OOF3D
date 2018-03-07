@@ -12,13 +12,15 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov. 
 
+from ooflib.SWIG.common import config
 from ooflib.common import debug
+from ooflib.SWIG.common import ooferror
 from ooflib.common import mainthread
 from ooflib.common import pixelselectionmethod
 from ooflib.common import subthread
 from ooflib.common import thread_enable
+from ooflib.common.IO import mousehandler
 from ooflib.common.IO import voxelregionselectiondisplay
-from ooflib.common.IO.GUI import mousehandler
 from ooflib.common.IO.GUI import pixelselectparamwidgets
 from ooflib.common.IO.GUI import parameterwidgets
 from ooflib.common.IO.GUI import regclassfactory
@@ -29,29 +31,26 @@ import math
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# selmethodGUIdict is a dictionary which stores the SelectionMethodGUI
-# subclasses for each type of selection method. For a given subclass
-# of SelectionMethodGUI, the key in the dictionary is the associated
-# subclass of pixelselectionmethod.SelectionMethod:
-# RectangularPrismSelector, SphereSelector, etc.
+# Each SelectionMethodGUI should use this decorator. The argument(s)
+# of the decorator are the SelectionMethods that the gui applies to.
+# The decorator adds a "gui" member to the SelectionMethod's
+# registration.
 
-selmethGUIdict = {}
-
-class SelectionMethodGUIMetaClass(type):
-    def __init__(cls, name, bases, dct):
-        super(SelectionMethodGUIMetaClass, cls).__init__(name, bases, dct)
-        try:
-            targetName = dct['targetName']
-        except KeyError:
-            pass
-        else:
-            selmethGUIdict[targetName] = cls
-
+def selectionGUIfor(*_selectorClasses):
+    def decorator(guicls):
+        for cls in _selectorClasses:
+            cls.registration.gui = guicls
+        return guicls
+    return decorator
+    
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+## TODO:  Update these comments.
 # Subclasses of SelectionMethodGUI are in charge of managing what
 # state a particular tool for selecting regions of pixels (or voxels)
 # is in, and they also act as MouseHandlers for that particular tool.
+# They should have a class-level 'selectionMethod' datum that
+# indicates which PixelSelectionMethod they apply to.
 
 # Some selection methods/tools (e.g. that to select a rectangular
 # prism of voxels) require the user to perform multiple steps
@@ -72,20 +71,35 @@ class SelectionMethodGUIMetaClass(type):
 class SelectionMethodGUI(mousehandler.MouseHandler):
     # Base class for RectangularPrismSelectorGUI, SphereSelectorGUI,
     # etc.
-    __metaclass__ = SelectionMethodGUIMetaClass
-    def __init__(self, gfxwindow):
-        self.gfxwindow = gfxwindow
+    def __init__(self, toolbox):
+        self.toolbox = toolbox
+    def gfxwindow(self):
+        return self.toolbox.gfxwindow()
     
     def __call__(self, params, scope=None, name=None, verbose=False):
-        # This function should be redefined for derived classes.  It
-        # should return a ParameterWidget of some sort.
-        pass
+        # This function may be redefined for derived classes.  It
+        # should return a ParameterWidget of some sort.  It must be
+        # called __call__ because it's called by
+        # RegisteredClassFactory.makeWidget, which thinks it's
+        # instantiating an object of a class.  The default version
+        # here does what RegisteredClassFactory does if it doesn't a
+        # specialized widget isn't defined.
+        return parameterwidgets.ParameterTable(params, scope, name, verbose)
     
-    def cancel(self):
-        # This function should be redefined for derived classes. It
-        # should be used to notify a SelectionMethodGUI to cancel any
-        # subthreads it started, and should be called when the
-        # SelectionMethodGUI's toolboxGUI is being closed.
+    # def cancel(self):
+    #     # This function should be redefined for derived classes. It
+    #     # should be used to notify a SelectionMethodGUI to cancel any
+    #     # subthreads it started, and should be called when the
+    #     # SelectionMethodGUI's toolboxGUI is being closed.
+    #     pass
+
+    def mouseHandler(self):
+        return mousehandler.NullMouseHandler()
+
+    def close(self):
+        # close() is called whent the toolbox is closing.  It should
+        # do any necessary cleanup.  It can assume that the
+        # mousehandler (if any) has already been stopped.
         pass
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
@@ -99,10 +113,17 @@ class SelectionMethodGUI(mousehandler.MouseHandler):
 # corners too (see TODOs in common/IO/canvaslayer.C for some of the
 # BoxWidgetLayer functions).
 
+## TODO: Move the contents of VoxelRegionSelectWidget into this class.
+## Add a superclass for RectangularPrismSelectorGUI that installs the
+## Start/Cancel/Reset/Done buttons so that they can be used with other
+## selection methods.  OR keep VoxelRegionSelectWidget separate, but
+## refactor it so that parts if it can be used elsewhere.
+
+@selectionGUIfor(pixelselectionmethod.RectangularPrismSelector)
 class RectangularPrismSelectorGUI(SelectionMethodGUI):
-    targetName = pixelselectionmethod.RectangularPrismSelector
-    def __init__(self, gfxwindow):
-        SelectionMethodGUI.__init__(self, gfxwindow)
+    # targetName = pixelselectionmethod.RectangularPrismSelector
+    def __init__(self, toolbox):
+        SelectionMethodGUI.__init__(self, toolbox)
         self.widget = None
 
         # ID of the vtk cell currently being edited.
@@ -137,77 +158,79 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         # False again once the user has pressed the 'Done' button.
         self.region_editing_in_progress = False
 
-        # Indicates whether the mouse has been clicked down or not.
-        self.downed = False
+        # # Indicates whether the mouse has been clicked down or not.
+        # self.downed = False
 
-        # Start the event-processing subthread.  See the comment in
-        # viewertoolbox3dGUI.py about why execute_immortal is used
-        # here.
-        if thread_enable.query():
-            self.eventThread = subthread.execute_immortal(
-                self.processEvents_subthread)
-        else:
-            self.eventThread = None
+        # # Start the event-processing subthread.  See the comment in
+        # # viewertoolbox3dGUI.py about why execute_immortal is used
+        # # here.
+        # if thread_enable.query():
+        #     self.eventThread = subthread.execute_immortal(
+        #         self.processEvents_subthread)
+        # else:
+        #     self.eventThread = None
         
     def __call__(self, params, scope=None, name=None, verbose=False):
+        debug.dumpCaller()
         # This function creates a VoxelRegionSelectWidget and
         # returns it.
-        ## TODO: Give this function a real name.
         self.widget = pixelselectparamwidgets.VoxelRegionSelectWidget(
             self, params, scope=scope, name=name, verbose=verbose)
         return self.widget
 
+    def mouseHandler(self):
+        return mousehandler.KangarooMouseHandler(self, ("up", "move", "down"))
     def done(self):
         self.datalock.logNewEvent_acquire()
         try:
             self.region_editing_in_progress = False
-            switchboard.notify("region editing finished", self.gfxwindow)
-            self.gfxwindow.oofcanvas.render()
+            switchboard.notify("region editing finished", self.gfxwindow())
+            self.gfxwindow().oofcanvas.render()
         finally:
             self.datalock.logNewEvent_release()
 
     def start(self):
         self.region_editing_in_progress = True
-        switchboard.notify("region editing begun", self.gfxwindow)
-        self.gfxwindow.oofcanvas.render()
+        switchboard.notify("region editing begun", self.gfxwindow())
+        self.gfxwindow().oofcanvas.render()
 
-    def up(self, x, y, button, shift, ctrl):
-        self.downed = False
-        self.datalock.logNewEvent_acquire()
-        try:
-            self.downed = False
-            self.eventlist.append(('up', x, y, shift, ctrl))
-        finally:
-            self.datalock.logNewEvent_release()
+    # def up(self, x, y, button, shift, ctrl):
+    #     self.downed = False
+    #     self.datalock.logNewEvent_acquire()
+    #     try:
+    #         self.downed = False
+    #         self.eventlist.append(('up', x, y, shift, ctrl))
+    #     finally:
+    #         self.datalock.logNewEvent_release()
 
-    def down(self, x, y, button, shift, ctrl):
-        self.datalock.logNewEvent_acquire()
-        try:
-            self.downed = True
-            if self.region_editing_in_progress:
-                self.eventlist.append(('down', x, y, shift, ctrl))
-        finally:
-            self.datalock.logNewEvent_release()
+    # def down(self, x, y, button, shift, ctrl):
+    #     self.datalock.logNewEvent_acquire()
+    #     try:
+    #         self.downed = True
+    #         if self.region_editing_in_progress:
+    #             self.eventlist.append(('down', x, y, shift, ctrl))
+    #     finally:
+    #         self.datalock.logNewEvent_release()
 
-    def move(self, x, y, button, shift, ctrl):
-        self.datalock.logNewEvent_acquire()
-        try:
-            if not self.eventlist:
-                # All events have been processed so far. Append the
-                # new move event to the list.
-               self.eventlist.append(('move', x, y, shift, ctrl))
-            elif self.eventlist[-1][0] == 'down':
-                # Previous event was a down event. Append the new move
-                # event to the list.
-                self.eventlist.append(('move', x, y, shift, ctrl))
-            elif self.eventlist[-1][0] == 'move':
-                # Previous event was a move event. Overwrite that
-                # event with the new move event.
-                self.eventlist[-1] = ('move', x, y, shift, ctrl)
-        finally:
-            self.datalock.logNewEvent_release()
+    # def move(self, x, y, button, shift, ctrl):
+    #     self.datalock.logNewEvent_acquire()
+    #     try:
+    #         if not self.eventlist:
+    #             # All events have been processed so far. Append the
+    #             # new move event to the list.
+    #            self.eventlist.append(('move', x, y, shift, ctrl))
+    #         elif self.eventlist[-1][0] == 'down':
+    #             # Previous event was a down event. Append the new move
+    #             # event to the list.
+    #             self.eventlist.append(('move', x, y, shift, ctrl))
+    #         elif self.eventlist[-1][0] == 'move':
+    #             # Previous event was a move event. Overwrite that
+    #             # event with the new move event.
+    #             self.eventlist[-1] = ('move', x, y, shift, ctrl)
+    #     finally:
+    #         self.datalock.logNewEvent_release()
     
-    def processUp(self):
+    def up(self, x, y, button, shift, ctrl):
         # Commands which need to be run when an 'up' event is being
         # processed.
         self.last_x = None
@@ -216,26 +239,27 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         self.cellID = None
         return
         
-    def processDown(self, x, y):
+    def down(self, x, y, button, shift, ctrl):
         # Commands which need to be run when a 'down' event is being
         # processed.
-        viewobj = mainthread.runBlock(self.gfxwindow.oofcanvas.get_view)
-        point = mainthread.runBlock(self.gfxwindow.oofcanvas.display2Physical,
+        debug.fmsg()
+        viewobj = mainthread.runBlock(self.gfxwindow().oofcanvas.get_view)
+        point = mainthread.runBlock(self.gfxwindow().oofcanvas.display2Physical,
                                     (viewobj, x, y))
         (self.cellID, click_pos, self.layer) = \
-               self.gfxwindow.findClickedCellIDByLayerClass_nolock(
+               self.gfxwindow().findClickedCellIDByLayerClass_nolock(
                    voxelregionselectiondisplay.VoxelRegionSelectionDisplay,
                    point, viewobj)
         self.last_x = x;
         self.last_y = y;
 
-    def processMove(self, x, y):
-        viewobj = mainthread.runBlock(self.gfxwindow.oofcanvas.get_view)
+    def move(self, x, y, button, shift, ctrl):
+        viewobj = mainthread.runBlock(self.gfxwindow().oofcanvas.get_view)
         last_mouse_coords = mainthread.runBlock(
-            self.gfxwindow.oofcanvas.display2Physical, (viewobj, self.last_x,
+            self.gfxwindow().oofcanvas.display2Physical, (viewobj, self.last_x,
                                                         self.last_y))
         mouse_coords = mainthread.runBlock(
-            self.gfxwindow.oofcanvas.display2Physical, (viewobj, x, y))
+            self.gfxwindow().oofcanvas.display2Physical, (viewobj, x, y))
         diff = mouse_coords - last_mouse_coords
         diff_size = math.sqrt(diff ** 2)
         if diff_size == 0:
@@ -246,11 +270,11 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
             return
         center = self.layer.canvaslayer.get_cellCenter(self.cellID)
         camera_pos = mainthread.runBlock(
-            self.gfxwindow.oofcanvas.get_camera_position_v2)
+            self.gfxwindow().oofcanvas.get_camera_position_v2)
         dist = math.sqrt((camera_pos - center) ** 2)
         view_angle = mainthread.runBlock(
-            self.gfxwindow.oofcanvas.get_camera_view_angle)
-        canvas_size = mainthread.runBlock(self.gfxwindow.oofcanvas.get_size)
+            self.gfxwindow().oofcanvas.get_camera_view_angle)
+        canvas_size = mainthread.runBlock(self.gfxwindow().oofcanvas.get_size)
         offset = (diff.dot(normal) * dist * math.tan(math.radians(view_angle))
                   * math.sqrt((x - self.last_x) ** 2 +
                               (y - self.last_y) ** 2) / canvas_size[1])
@@ -261,48 +285,51 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
 
         self.last_x = x;
         self.last_y = y;
-        mainthread.runBlock(self.gfxwindow.oofcanvas.render)
+        mainthread.runBlock(self.gfxwindow().oofcanvas.render)
 
-    def processEvents_subthread(self):
-        while (True):
-            self.datalock.handleNewEvents_acquire()
-            try:
-                if not self.eventlist:
-                    continue
-                (eventtype, x, y, shift, ctrl) = self.eventlist.pop(0)
-            finally:
-                self.datalock.handleNewEvents_release()
-            if eventtype == "exit":
-                return
+    # def processEvents_subthread(self):
+    #     while (True):
+    #         self.datalock.handleNewEvents_acquire()
+    #         try:
+    #             if not self.eventlist:
+    #                 continue
+    #             (eventtype, x, y, shift, ctrl) = self.eventlist.pop(0)
+    #         finally:
+    #             self.datalock.handleNewEvents_release()
+    #         if eventtype == "exit":
+    #             return
             
-            # Acquire the gfxlock so that we can be sure that the
-            # gfxwindow is not in the middle of being changed or
-            # closed at this time.
-            self.gfxwindow.acquireGfxLock()
-            try:
-                if eventtype is 'down':
-                    self.processDown(x, y)
-                elif eventtype is 'move' and (self.cellID is not None):
-                    self.processMove(x, y)
-                elif eventtype is 'up':
-                    self.processUp()
-            finally:
-                self.gfxwindow.releaseGfxLock()
+    #         # Acquire the gfxlock so that we can be sure that the
+    #         # gfxwindow is not in the middle of being changed or
+    #         # closed at this time.
+    #         self.gfxwindow.acquireGfxLock()
+    #         try:
+    #             if eventtype is 'down':
+    #                 self.processDown(x, y)
+    #             elif eventtype is 'move' and (self.cellID is not None):
+    #                 self.processMove(x, y)
+    #             elif eventtype is 'up':
+    #                 self.processUp()
+    #         finally:
+    #             self.gfxwindow.releaseGfxLock()
 
-    def cancel(self):
-        if self.eventThread is not None:
-            self.datalock.logNewEvent_acquire()
-            try:
-                ## TODO: See TODO in similar code in viewertoolbox3dGUI.py.
-                self.eventlist = [('exit', None, None, None, None)]
-            finally:
-                self.datalock.logNewEvent_release()
-            self.eventThread.join()
+    # def cancel(self):
+    #     self.currentMouseHandler.stop()
+
+    
+        # if self.eventThread is not None:
+        #     self.datalock.logNewEvent_acquire()
+        #     try:
+        #         ## TODO: See TODO in similar code in viewertoolbox3dGUI.py.
+        #         self.eventlist = [('exit', None, None, None, None)]
+        #     finally:
+        #         self.datalock.logNewEvent_release()
+        #     self.eventThread.join()
         
-    def acceptEvent(self, eventtype):
-        return (eventtype == 'down' or
-                (self.region_editing_in_progress and self.downed and
-                 (eventtype in ('move', 'up'))))
+    # def acceptEvent(self, eventtype):
+    #     return (eventtype == 'down' or
+    #             (self.region_editing_in_progress and self.downed and
+    #              (eventtype in ('move', 'up'))))
         
         
    

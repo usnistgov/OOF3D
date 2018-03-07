@@ -11,21 +11,23 @@
 # Base class for Selection toolboxes.
 
 from ooflib.SWIG.common import config
-from ooflib.SWIG.common import switchboard
+from ooflib.SWIG.common import guitop
 from ooflib.SWIG.common import ooferror
+from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.common.IO.GUI import rubberband3d as rubberband
 from ooflib.common import debug
-from ooflib.SWIG.common import guitop
+from ooflib.common import mainthread
 from ooflib.common import primitives
 from ooflib.common import subthread
-from ooflib.common import mainthread
 from ooflib.common import utils
+from ooflib.common.IO import mousehandler
 from ooflib.common.IO.GUI import gtklogger
 from ooflib.common.IO.GUI import gtkutils
 from ooflib.common.IO.GUI import historian
-from ooflib.common.IO.GUI import mousehandler
+from ooflib.common.IO.GUI import regclassfactory
 from ooflib.common.IO.GUI import toolboxGUI
 from ooflib.common.IO.GUI import tooltips
+
 import gtk, sys
 
 class HistoricalSelection:
@@ -53,9 +55,23 @@ class HistoricalSelection:
 #  methodFactory()  Returns a RegisteredClassFactory for the
 #                                                 appropriate registry.
 
+class SelectionMethodFactory(regclassfactory.RegisteredClassFactory):
+    def __init__(self, registry, obj=None, title=None,
+                 callback=None, fill=0, expand=0, scope=None, name=None,
+                 widgetdict={}, *args, **kwargs):
+        self.current_who_class = None
+        regclassfactory.RegisteredClassFactory.__init__(
+            self, registry, obj=obj, title=title, callback=callback,
+            fill=fill, expand=expand, scope=scope, name=name,
+            widgetdict=widgetdict, *args, **kwargs)
+    def set_whoclass_name(self, name):
+        self.current_who_class = name
+    def includeRegistration(self, registration):
+        if self.current_who_class is None:
+            return True
+        return self.current_who_class in registration.whoclasses
 
-class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
-                              mousehandler.MouseHandler):
+class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
     def __init__(self, toolbox, method):
         debug.mainthreadTest()
         toolboxGUI.GfxToolbox.__init__(self, toolbox)
@@ -65,6 +81,9 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
         self.shift = 0                 
         self.ctrl = 0
 
+        self.currentGUI = None
+        self.currentMouseHandler = mousehandler.nullHandler
+
         outerbox = gtk.VBox(spacing=2)
         self.gtk.add(outerbox)
 
@@ -72,15 +91,29 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
 ##        scroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 ##        outerbox.pack_start(scroll, expand=1, fill=1)
 
-        # Retrieve the registered class factory from the subclass.
-        self.selectionMethodFactory = self.methodFactory()
+        # Create an instance of each SelectionMethod's
+        # SelectionMethodGUI and store it in a dictionary keyed by the
+        # method's registration.
+        self.methodGUIs = {reg.subclass : reg.gui(self)
+                           for reg in method.registry if hasattr(reg, 'gui')}
+
+        # # Retrieve the registered class factory from the subclass.
+        # self.selectionMethodFactory = self.methodFactory()
+
+        self.selectionMethodFactory = SelectionMethodFactory(
+            method.registry, title="Method:", name="Method",
+            scope=self, callback=self.changedSelectionMethod,
+            widgetdict=self.methodGUIs)
+        
         # self.selectionMethodFactory = regclassfactory.RegisteredClassFactory(
         #     method.registry, title="Method:", name="Method")
 ##        scroll.add_with_viewport(self.selectionMethodFactory.gtk)
         outerbox.pack_start(self.selectionMethodFactory.gtk, expand=1, fill=1)
         self.historian = historian.Historian(self.setHistory,
                                              self.sensitizeHistory)
-        self.selectionMethodFactory.set_callback(self.historian.stateChangeCB)
+        self.selectionMethodFactory.add_callback(self.historian.stateChangeCB)
+        self.selectionMethodFactory.add_callback(self.changedSelectionMethod)
+
 
         # Undo, Redo, Clear, and Invert buttons.  The callbacks for
         # these have to be defined in the derived classes.
@@ -204,6 +237,17 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
                                         self.setInfo_subthread)
         ]
 
+
+    def changedSelectionMethod(self, registration): # Chooser callback
+        # try:
+        #     guiclass = registration.gui
+        # except AttributeError:
+        #     self.currentGUI = None
+        # else:
+        #     self.currentGUI = guiclass(self) # creates SelectionMethodGUI obj
+        self.currentGUI = self.methodGUIs.get(registration.subclass, None)
+        self.installMouseHandler()
+
     def activate(self):
         if not self.active:
             super(GenericSelectToolboxGUI, self).activate()
@@ -217,13 +261,23 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
     def deactivate(self):
         if self.active:
             super(GenericSelectToolboxGUI, self).deactivate()
+            self.currentMouseHandler.stop()
             # self.gfxwindow().setRubberband(rubberband.NoRubberBand())
 
     def installMouseHandler(self):
-        self.gfxwindow().setMouseHandler(self)
+        if self.currentGUI is not None:
+            self.currentMouseHandler = self.currentGUI.mouseHandler()
+        else:
+            self.currentMouseHandler = mousehandler.nullHandler
+        self.gfxwindow().setMouseHandler(self.currentMouseHandler)
+        self.currentMouseHandler.start()
 
     def close(self):
         map(switchboard.removeCallback, self.sbcallbacks)
+        self.currentMouseHandler.stop()
+        for gui in self.methodGUIs.values():
+            if gui is not None:
+                gui.close()
         toolboxGUI.GfxToolbox.close(self)
 
     def getSourceName(self):
@@ -462,60 +516,60 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
         
     # MouseHandler functions
     
-    def down(self, x, y, button, shift, ctrl):  # mouse down
-        debug.mainthreadTest()
-        self.selmeth = self.selectionMethodFactory.getRegistration()
-        self.selectionMethodFactory.set_defaults()
-        # self.gfxwindow().setRubberband(self.selmeth.getRubberBand(self.selmeth))
-        # Start collecting points
-        self.points = [primitives.Point(x,y)]
+    # def down(self, x, y, button, shift, ctrl):  # mouse down
+    #     debug.mainthreadTest()
+    #     self.selmeth = self.selectionMethodFactory.getRegistration()
+    #     self.selectionMethodFactory.set_defaults()
+    #     # self.gfxwindow().setRubberband(self.selmeth.getRubberBand(self.selmeth))
+    #     # Start collecting points
+    #     self.points = [primitives.Point(x,y)]
 
-    def move(self, x, y, button, shift, ctrl):  # mouse move
-        # Continue the collection of points, if it's been started...
-        if self.points:
-            self.points.append(primitives.Point(x,y))
+    # def move(self, x, y, button, shift, ctrl):  # mouse move
+    #     # Continue the collection of points, if it's been started...
+    #     if self.points:
+    #         self.points.append(primitives.Point(x,y))
 
-    def up(self, x, y, button, shift, ctrl):    # mouse up
-        debug.mainthreadTest()
-        # Finish the collection of points
-        self.points.append(primitives.Point(x,y))
-        if self.selmeth is not None:
-            # Construct the list of points that the method needs
-            ptlist = []
-            if 'down' in self.selmeth.events:
-                ptlist.append(self.points[0])
-            if 'move' in self.selmeth.events and len(self.points) > 2:
-                ptlist.extend(self.points[1:-2])
-            if 'up' in self.selmeth.events:
-                ptlist.append(self.points[-1])
+    # def up(self, x, y, button, shift, ctrl):    # mouse up
+    #     debug.mainthreadTest()
+    #     # Finish the collection of points
+    #     self.points.append(primitives.Point(x,y))
+    #     if self.selmeth is not None:
+    #         # Construct the list of points that the method needs
+    #         ptlist = []
+    #         if 'down' in self.selmeth.events:
+    #             ptlist.append(self.points[0])
+    #         if 'move' in self.selmeth.events and len(self.points) > 2:
+    #             ptlist.extend(self.points[1:-2])
+    #         if 'up' in self.selmeth.events:
+    #             ptlist.append(self.points[-1])
 
-            source = self.getSource()
+    #         source = self.getSource()
 
-            canvas = self.toolbox.gfxwindow().oofcanvas
-            view = canvas.get_view()
-            ## TODO OPT: display2Physical is potentially expensive, since
-            ## it calls set_view.  If more than one point is being
-            ## processed, they should all be processed in one call to
-            ## display2Physical.
-            realptlist = [canvas.display2Physical(view, pt.x, pt.y)
-                          for pt in ptlist]
+    #         canvas = self.toolbox.gfxwindow().oofcanvas
+    #         view = canvas.get_view()
+    #         ## TODO OPT: display2Physical is potentially expensive, since
+    #         ## it calls set_view.  If more than one point is being
+    #         ## processed, they should all be processed in one call to
+    #         ## display2Physical.
+    #         realptlist = [canvas.display2Physical(view, pt.x, pt.y)
+    #                       for pt in ptlist]
 
-            if source:
-                # We've done as much generic work as we can do --
-                # we have a mouse-up event, a set of points,
-                # a selection method, and a who.
-                # Child classes know what to do next.
-                ## TODO MER: In 3D, are all finish_up routines actually
-                ## identical except for calling a different menu item?
-                ## Maybe they can be all done inline here, despite
-                ## what the comment says.
-                self.finish_up(realptlist, view, shift, ctrl, self.selmeth)
+    #         if source:
+    #             # We've done as much generic work as we can do --
+    #             # we have a mouse-up event, a set of points,
+    #             # a selection method, and a who.
+    #             # Child classes know what to do next.
+    #             ## TODO MER: In 3D, are all finish_up routines actually
+    #             ## identical except for calling a different menu item?
+    #             ## Maybe they can be all done inline here, despite
+    #             ## what the comment says.
+    #             self.finish_up(realptlist, view, shift, ctrl, self.selmeth)
                 
-            self.points = []            # get ready for next event
+    #         self.points = []            # get ready for next event
             
-    def acceptEvent(self, eventtype):
-        if eventtype == 'up' or eventtype == 'down' or eventtype == 'move':
-	  return True
-	else:
-	  return False
+    # def acceptEvent(self, eventtype):
+    #     if eventtype == 'up' or eventtype == 'down' or eventtype == 'move':
+    #       return True
+    #     else:
+    #       return False
 
