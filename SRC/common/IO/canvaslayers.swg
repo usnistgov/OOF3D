@@ -23,11 +23,13 @@
 #include "common/IO/canvaslayers.h"
 #include "common/IO/vtkutils.h"
 #include "common/pixelgroup.h"
+#include "common/geometry.h"
 %}
 
 %pragma(python) include="canvaslayers.spy"
 %pragma(python) code="from ooflib.SWIG.common.coord import CoordPtr"
 %pragma(python) code="from ooflib.SWIG.common.direction import CUnitVectorDirectionPtr"
+%pragma(python) code="from ooflib.SWIG.common.geometry import CRectangularPrismPtr"
 
 %typemap(python, out) OOFCanvasLayerBase* {
   $target = $source->pythonObject();
@@ -93,7 +95,8 @@ public:
   %new Coord *get_cellCenter(int);
   %new Coord *get_cellNormal_Coord3D(int);
   void reset();
-  void set_box(Coord *Point);
+  void set_box(CRectangularPrism*);
+  CRectangularPrism *get_box();
   void set_pointSize(float);
   void set_lineWidth(float);
   void set_lineColor(const CColor&);

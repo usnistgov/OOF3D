@@ -102,6 +102,16 @@ class SelectionMethodGUI(mousehandler.MouseHandler):
         # mousehandler (if any) has already been stopped.
         pass
 
+    # activate() and deactivate() are called when the toolbox is
+    # activated and deactivated.
+    def activate(self):
+        pass
+    def deactivate(self):
+        pass
+
+    def sensitize(self):
+        pass
+
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # TODO: Have the done function in RectangularPrismSelectorGUI call the
@@ -113,12 +123,6 @@ class SelectionMethodGUI(mousehandler.MouseHandler):
 # corners too (see TODOs in common/IO/canvaslayer.C for some of the
 # BoxWidgetLayer functions).
 
-## TODO: Move the contents of VoxelRegionSelectWidget into this class.
-## Add a superclass for RectangularPrismSelectorGUI that installs the
-## Start/Cancel/Reset/Done buttons so that they can be used with other
-## selection methods.  OR keep VoxelRegionSelectWidget separate, but
-## refactor it so that parts if it can be used elsewhere.
-
 @selectionGUIfor(pixelselectionmethod.RectangularPrismSelector)
 class RectangularPrismSelectorGUI(SelectionMethodGUI):
     # targetName = pixelselectionmethod.RectangularPrismSelector
@@ -129,123 +133,84 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         # ID of the vtk cell currently being edited.
         self.cellID = None
 
-        # The VoxelRegionSelectionDisplay layer that's being updated.
-        self.layer = None
 
         # Previous position, in display coordinates, of the mouse.
         self.last_x = None
         self.last_y = None
 
-        # eventlist is a queue of events that have occurred.  datalock
-        # is an EventLogSLock on the data in eventlist. The lock is
-        # acquired and released from the mainthread in the down, up,
-        # and move mouse callbacks using the
-        # logNewEvent_acquire/release functions. The mainthread adds
-        # down, up, and move events to the queue. When new events are
-        # logged, the lock is acquired and released from an
-        # event-processing subthread using the
-        # handleNewEvents_acquire/release functions. This
-        # event-processing subthread handles determining what has been
-        # clicked on, making changes to the display layer, and
-        # updating the graphics in time with the events being
-        # processed.
-        self.datalock = lock.EventLogSLock()
-        self.eventlist = []
-
+        # The VoxelRegionSelectionDisplay canvas layer that's being
+        # updated.
+        self.layer = toolbox.gfxwindow().getLayerByClass(
+            voxelregionselectiondisplay.VoxelRegionSelectionDisplay)
+        assert self.layer is not None
+        
         # This flag will be True whenever the user is currently using
         # the mouse on the canvas to edit the dimensions of the box
         # enclosing the voxels to be selected. The flag will be set to
         # False again once the user has pressed the 'Done' button.
-        self.region_editing_in_progress = False
+        self._editing = False
 
-        # # Indicates whether the mouse has been clicked down or not.
-        # self.downed = False
-
-        # # Start the event-processing subthread.  See the comment in
-        # # viewertoolbox3dGUI.py about why execute_immortal is used
-        # # here.
-        # if thread_enable.query():
-        #     self.eventThread = subthread.execute_immortal(
-        #         self.processEvents_subthread)
-        # else:
-        #     self.eventThread = None
-        
     def __call__(self, params, scope=None, name=None, verbose=False):
-        debug.dumpCaller()
-        # This function creates a VoxelRegionSelectWidget and
-        # returns it.
+        # This function returns the VoxelRegionSelectWidget that
+        # creates buttons and other gui elements in the toolbox.
         self.widget = pixelselectparamwidgets.VoxelRegionSelectWidget(
             self, params, scope=scope, name=name, verbose=verbose)
         return self.widget
 
+    def sensitize(self):
+        if self.widget:
+            self.widget.sensitize()
+
+    def editing(self):
+        return self._editing
+
     def mouseHandler(self):
         return mousehandler.KangarooMouseHandler(self, ("up", "move", "down"))
-    def done(self):
-        self.datalock.logNewEvent_acquire()
-        try:
-            self.region_editing_in_progress = False
-            switchboard.notify("region editing finished", self.gfxwindow())
-            self.gfxwindow().oofcanvas.render()
-        finally:
-            self.datalock.logNewEvent_release()
 
     def start(self):
-        self.region_editing_in_progress = True
-        switchboard.notify("region editing begun", self.gfxwindow())
+        self._editing = True
+        self.layer.start()
+        self.sensitize()
         self.gfxwindow().oofcanvas.render()
 
-    # def up(self, x, y, button, shift, ctrl):
-    #     self.downed = False
-    #     self.datalock.logNewEvent_acquire()
-    #     try:
-    #         self.downed = False
-    #         self.eventlist.append(('up', x, y, shift, ctrl))
-    #     finally:
-    #         self.datalock.logNewEvent_release()
+    def done(self):
+        self._editing = False
+        self.layer.stop()
+        self.sensitize()
+        ## TODO: Make the selection!
+        self.gfxwindow().oofcanvas.render()
+        
+    def cancel(self):
+        self._editing = False
+        self.layer.stop()
+        self.sensitize()
+        self.gfxwindow().oofcanvas.render()
 
-    # def down(self, x, y, button, shift, ctrl):
-    #     self.datalock.logNewEvent_acquire()
-    #     try:
-    #         self.downed = True
-    #         if self.region_editing_in_progress:
-    #             self.eventlist.append(('down', x, y, shift, ctrl))
-    #     finally:
-    #         self.datalock.logNewEvent_release()
+    def reset(self):
+        self.layer.reset()
+        self.gfxwindow().oofcanvas.render()
 
-    # def move(self, x, y, button, shift, ctrl):
-    #     self.datalock.logNewEvent_acquire()
-    #     try:
-    #         if not self.eventlist:
-    #             # All events have been processed so far. Append the
-    #             # new move event to the list.
-    #            self.eventlist.append(('move', x, y, shift, ctrl))
-    #         elif self.eventlist[-1][0] == 'down':
-    #             # Previous event was a down event. Append the new move
-    #             # event to the list.
-    #             self.eventlist.append(('move', x, y, shift, ctrl))
-    #         elif self.eventlist[-1][0] == 'move':
-    #             # Previous event was a move event. Overwrite that
-    #             # event with the new move event.
-    #             self.eventlist[-1] = ('move', x, y, shift, ctrl)
-    #     finally:
-    #         self.datalock.logNewEvent_release()
-    
+    def activate(self):
+        self.layer.activate()
+    def deactivate(self):
+        self.layer.deactivate()
+        
     def up(self, x, y, button, shift, ctrl):
         # Commands which need to be run when an 'up' event is being
         # processed.
         self.last_x = None
         self.last_y = None
-        self.layer = None
         self.cellID = None
         return
         
     def down(self, x, y, button, shift, ctrl):
         # Commands which need to be run when a 'down' event is being
         # processed.
-        debug.fmsg()
         viewobj = mainthread.runBlock(self.gfxwindow().oofcanvas.get_view)
         point = mainthread.runBlock(self.gfxwindow().oofcanvas.display2Physical,
                                     (viewobj, x, y))
+        ## TODO: We know the layer, so use a (new) findClickedCell
+        ## method that takes a layer arg instead of a layer class arg.
         (self.cellID, click_pos, self.layer) = \
                self.gfxwindow().findClickedCellIDByLayerClass_nolock(
                    voxelregionselectiondisplay.VoxelRegionSelectionDisplay,
@@ -287,51 +252,6 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         self.last_y = y;
         mainthread.runBlock(self.gfxwindow().oofcanvas.render)
 
-    # def processEvents_subthread(self):
-    #     while (True):
-    #         self.datalock.handleNewEvents_acquire()
-    #         try:
-    #             if not self.eventlist:
-    #                 continue
-    #             (eventtype, x, y, shift, ctrl) = self.eventlist.pop(0)
-    #         finally:
-    #             self.datalock.handleNewEvents_release()
-    #         if eventtype == "exit":
-    #             return
-            
-    #         # Acquire the gfxlock so that we can be sure that the
-    #         # gfxwindow is not in the middle of being changed or
-    #         # closed at this time.
-    #         self.gfxwindow.acquireGfxLock()
-    #         try:
-    #             if eventtype is 'down':
-    #                 self.processDown(x, y)
-    #             elif eventtype is 'move' and (self.cellID is not None):
-    #                 self.processMove(x, y)
-    #             elif eventtype is 'up':
-    #                 self.processUp()
-    #         finally:
-    #             self.gfxwindow.releaseGfxLock()
-
-    # def cancel(self):
-    #     self.currentMouseHandler.stop()
-
-    
-        # if self.eventThread is not None:
-        #     self.datalock.logNewEvent_acquire()
-        #     try:
-        #         ## TODO: See TODO in similar code in viewertoolbox3dGUI.py.
-        #         self.eventlist = [('exit', None, None, None, None)]
-        #     finally:
-        #         self.datalock.logNewEvent_release()
-        #     self.eventThread.join()
-        
-    # def acceptEvent(self, eventtype):
-    #     return (eventtype == 'down' or
-    #             (self.region_editing_in_progress and self.downed and
-    #              (eventtype in ('move', 'up'))))
-        
-        
    
                                       
     

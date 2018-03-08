@@ -112,8 +112,6 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
         self.historian = historian.Historian(self.setHistory,
                                              self.sensitizeHistory)
         self.selectionMethodFactory.add_callback(self.historian.stateChangeCB)
-        self.selectionMethodFactory.add_callback(self.changedSelectionMethod)
-
 
         # Undo, Redo, Clear, and Invert buttons.  The callbacks for
         # these have to be defined in the derived classes.
@@ -239,18 +237,14 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
 
 
     def changedSelectionMethod(self, registration): # Chooser callback
-        # try:
-        #     guiclass = registration.gui
-        # except AttributeError:
-        #     self.currentGUI = None
-        # else:
-        #     self.currentGUI = guiclass(self) # creates SelectionMethodGUI obj
         self.currentGUI = self.methodGUIs.get(registration.subclass, None)
         self.installMouseHandler()
 
     def activate(self):
         if not self.active:
             super(GenericSelectToolboxGUI, self).activate()
+            if self.currentGUI is not None:
+                self.currentGUI.activate()
             self.sensitize()
             self.sensitizeHistory()
             self.setInfo()
@@ -262,6 +256,8 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
         if self.active:
             super(GenericSelectToolboxGUI, self).deactivate()
             self.currentMouseHandler.stop()
+            if self.currentGUI is not None:
+                self.currentGUI.deactivate()
             # self.gfxwindow().setRubberband(rubberband.NoRubberBand())
 
     def installMouseHandler(self):
@@ -314,6 +310,8 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
             historicalSelection.points)
 
     def sensitize(self):
+        if self.currentGUI is not None:
+            self.currentGUI.sensitize()
         subthread.execute(self.sensitize_subthread)
 
     def sensitize_subthread(self):

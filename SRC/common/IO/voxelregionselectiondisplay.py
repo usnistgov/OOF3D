@@ -14,9 +14,10 @@
 # oof_manager@nist.gov.
 
 from ooflib.SWIG.common import config
-from ooflib.SWIG.common import coord
-from ooflib.SWIG.common import direction
-from ooflib.SWIG.common import switchboard
+#from ooflib.SWIG.common import coord
+#from ooflib.SWIG.common import direction
+from ooflib.SWIG.common import geometry
+#from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.common.IO import canvaslayers
 from ooflib.common import color
 from ooflib.common import debug
@@ -68,6 +69,7 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
     def __init__(self, point_size, line_width, line_color,
                  face_color, face_opacity,
                  hide_inactive, dim_inactive):
+        # Display parameters
         self.point_size = point_size
         self.line_width = line_width
         self.line_color = line_color
@@ -75,32 +77,42 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
         self.face_opacity = face_opacity
         self.hide_inactive = hide_inactive
         self.dim_inactive = dim_inactive
-        self.sbcallbacks = []
+        # self.sbcallbacks = []
+
+        # Widget state data
         self.editingInProgress = False
+        self.cellID = None      # face that was clicked
+        self.last_x = None      # 2D position of click in the window
+        self.last_y = None
+        self.initialized = False
+        self.active = False
+        
         display.DisplayMethod.__init__(self)
 
-    def destroy(self, destroy_canvaslayer):
-        map(switchboard.removeCallback, self.sbcallbacks)
-        self.sbcallbacks = []
-        display.DisplayMethod.destroy(self, destroy_canvaslayer)
+    # def destroy(self, destroy_canvaslayer):
+    #     map(switchboard.removeCallback, self.sbcallbacks)
+    #     self.sbcallbacks = []
+    #     display.DisplayMethod.destroy(self, destroy_canvaslayer)
 
     def newLayer(self):
-        self.toolbox = self.gfxwindow.getToolboxByName(
-            pixelselectiontoolbox.toolboxName())
-        # The following switchboard callbacks are used for updating
-        # what is displayed in the layer.
-        self.sbcallbacks.extend([
-            switchboard.requestCallbackMain("region editing begun",
-                                            self.beginEditingCB),
-            switchboard.requestCallbackMain("region editing finished",
-                                            self.endEditingCB),
-            switchboard.requestCallbackMain("toolbox activated "
-                                            + self.toolbox.name(),
-                                            self.activatedCB),
-            switchboard.requestCallbackMain("toolbox deactivated "
-                                            + self.toolbox.name(),
-                                            self.deactivatedCB)
-                            ])
+        # ## TODO: Could this layer be used by a different kind of
+        # ## toolbox?  It shouldn't hard-code the toolbox type here.
+        # self.toolbox = self.gfxwindow.getToolboxByName(
+        #     pixelselectiontoolbox.toolboxName())
+        # # The following switchboard callbacks are used for updating
+        # # what is displayed in the layer.
+        # self.sbcallbacks.extend([
+        #     # switchboard.requestCallbackMain("region editing begun",
+        #     #                                 self.beginEditingCB),
+        #     # switchboard.requestCallbackMain("region editing finished",
+        #     #                                 self.endEditingCB),
+        #     switchboard.requestCallbackMain("toolbox activated "
+        #                                     + self.toolbox.name(),
+        #                                     self.activatedCB),
+        #     switchboard.requestCallbackMain("toolbox deactivated "
+        #                                     + self.toolbox.name(),
+        #                                     self.deactivatedCB)
+        #                     ])
 
         layer = canvaslayers.BoxWidgetLayer(self.gfxwindow.oofcanvas,
                                             "BoxWidget")
@@ -109,10 +121,10 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
 
     def _visibility(self):
         return (self.editingInProgress and
-                (self.toolbox.active or not self.hide_inactive))
+                (self.active or not self.hide_inactive))
 
     def _opacity(self):
-        if self.toolbox.active:
+        if self.active:
             return self.face_opacity
         return self.face_opacity * (1. - self.dim_inactive)
 
@@ -124,40 +136,46 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
         self.canvaslayer.set_opacity(self._opacity())
         self.setVisibility(self._visibility())
 
-    def activatedCB(self, gfxwindow):
-        if gfxwindow is self.gfxwindow:
+    def activate(self):
+        if not self.active:
+            self.active = True
             self.canvaslayer.set_opacity(self._opacity())
             self.setVisibility(self._visibility())
             self.canvaslayer.setModified()
-            subthread.execute(gfxwindow.draw)
+            subthread.execute(self.gfxwindow.draw)
             
-    def deactivatedCB(self, gfxwindow):
-        if gfxwindow is self.gfxwindow:
+    def deactivate(self):
+        if self.active:
+            self.active = False
             self.canvaslayer.set_opacity(self._opacity())
             self.setVisibility(self._visibility())
             self.canvaslayer.setModified()
-            subthread.execute(gfxwindow.draw)
+            subthread.execute(self.gfxwindow.draw)
 
-    def beginEditingCB(self, gfxwindow):
-        if gfxwindow is not self.gfxwindow:
-            return
+    def start(self):
         microstructure = self.gfxwindow.findMicrostructure()
         if microstructure is None:
             return
         self.editingInProgress = True
-        ## TODO: Set to previous selection, so use a RectangularPrism arg
-        ## instead of a Coord 
-        self.canvaslayer.set_box(microstructure.size())
+        # Initialize the box only if it hasn't been used already.
+        if not self.initialized:
+            self.initialized = True
+            self.reset()
         self.setVisibility(self._visibility())
         self.canvaslayer.setModified()
 
-    def endEditingCB(self, gfxwindow):
-        debug.fmsg()
-        if gfxwindow is not self.gfxwindow:
-            return
+    def stop(self):
         self.editingInProgress = False
         self.setVisibility(self._visibility())
         self.canvaslayer.setModified()
+
+    def reset(self):
+        # Set the box to a default size.
+        microstructure = self.gfxwindow.findMicrostructure()
+        if microstructure is not None:
+            voxelbox = geometry.CRectangularPrism(
+                primitives.Point(0,0,0), microstructure.size())
+            self.canvaslayer.set_box(voxelbox)
 
 defaultVoxelRegionSelectionPointSize = 5.0
 defaultVoxelRegionSelectionLineWidth = 3.0
