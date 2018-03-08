@@ -41,8 +41,7 @@ import math
 
 # It is associated with a canvaslayer that contains a box-shaped
 # vtkUnstructuredGrid with faces, edges, and vertices all as separate
-# vtkCells, and a vtk arrow (to represent the direction in which
-# things are being dragged).
+# vtkCells.
 
 # TODO: Once multiple voxel region selection tools are created
 # (e.g. we have tools for selecting both a box-shaped region AND an
@@ -77,7 +76,6 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
         self.face_opacity = face_opacity
         self.hide_inactive = hide_inactive
         self.dim_inactive = dim_inactive
-        # self.sbcallbacks = []
 
         # Widget state data
         self.editingInProgress = False
@@ -89,31 +87,7 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
         
         display.DisplayMethod.__init__(self)
 
-    # def destroy(self, destroy_canvaslayer):
-    #     map(switchboard.removeCallback, self.sbcallbacks)
-    #     self.sbcallbacks = []
-    #     display.DisplayMethod.destroy(self, destroy_canvaslayer)
-
     def newLayer(self):
-        # ## TODO: Could this layer be used by a different kind of
-        # ## toolbox?  It shouldn't hard-code the toolbox type here.
-        # self.toolbox = self.gfxwindow.getToolboxByName(
-        #     pixelselectiontoolbox.toolboxName())
-        # # The following switchboard callbacks are used for updating
-        # # what is displayed in the layer.
-        # self.sbcallbacks.extend([
-        #     # switchboard.requestCallbackMain("region editing begun",
-        #     #                                 self.beginEditingCB),
-        #     # switchboard.requestCallbackMain("region editing finished",
-        #     #                                 self.endEditingCB),
-        #     switchboard.requestCallbackMain("toolbox activated "
-        #                                     + self.toolbox.name(),
-        #                                     self.activatedCB),
-        #     switchboard.requestCallbackMain("toolbox deactivated "
-        #                                     + self.toolbox.name(),
-        #                                     self.deactivatedCB)
-        #                     ])
-
         layer = canvaslayers.BoxWidgetLayer(self.gfxwindow.oofcanvas,
                                             "BoxWidget")
         layer.setEmpty(False)

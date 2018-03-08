@@ -8,9 +8,6 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov. 
 
-
-# Pixel selection tools.  See comments in common/pixelselectmethod.py.
-
 from ooflib.SWIG.common import config
 from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.common.IO.GUI import rubberband3d as rubberband
@@ -21,63 +18,15 @@ from ooflib.common.IO import pixelselectiontoolbox
 from ooflib.common.IO.GUI import genericselectGUI
 from ooflib.common.IO.GUI import pixelselectionmethodGUI
 
-# class PixelSelectionMethodFactory(regclassfactory.RegisteredClassFactory):
-#     def __init__(self, registry, obj=None, title=None,
-#                  callback=None, fill=0, expand=0, scope=None, name=None,
-#                  widgetdict={}, *args, **kwargs):
-#         self.current_who_class = None
-#         regclassfactory.RegisteredClassFactory.__init__(
-#             self, registry, obj=obj, title=title, callback=callback,
-#             fill=fill, expand=expand, scope=scope, name=name,
-#             widgetdict=widgetdict, *args, **kwargs)
-
-#     def set_whoclass_name(self, name):
-#         self.current_who_class = name
-
-#     def includeRegistration(self, registration):
-#         if self.current_who_class is None:
-#             return True
-#         return self.current_who_class in registration.whoclasses
-
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
     
 class PixelSelectToolboxGUI(genericselectGUI.GenericSelectToolboxGUI):
     def __init__(self, pixelselecttoolbox, method):
         debug.mainthreadTest()
 
-        # # This is a dict of all the SelectionMethodGUI objects which
-        # # belong to this PixelToolboxGUI. For each subclass of
-        # # SelectionMethodGUI (from
-        # # common.IO.GUI.pixelselectionmethodGUI) there is one instance
-        # # of that subclass in this dictionary, keyed by the
-        # # corresponding subclass of SelectionMethod (from
-        # # common.pixelselectionmethod).  These SelectionMethodGUI
-        # # objects keep track of interactions between the user and GUI
-        # # when the user uses certain pixel selection tools, such as
-        # # those to select box-, sphere-, and ellipsoid-shaped regions
-        # # of voxels.
-        # self.selectionmethodGUIs = {}
-        # for registration in method.registry:
-        #     # Look at all registrations for registered subclasses of
-        #     # SelectionMethod.
-        #     try:
-        #         # See if there is a subclass of SelectionMethodGUI
-        #         # associated with that registered class.
-        #         selmethGUIclass = registration.gui
-        #     except AttributeError:
-        #         pass
-        #     else:
-        #         # If there is, create an instance of that
-        #         # SelectionMethodGUI. The self argument to the
-        #         # constructor tells the created SelectionMethodGUI to
-        #         # know what toolboxGUI it belongs to.
-        #         self.selectionmethodGUIs[registration.subclass] = selmethGUIclass(pixelselecttoolbox.gfxwindow())
-
         genericselectGUI.GenericSelectToolboxGUI.__init__(self,
                                                    pixelselecttoolbox,
                                                    method)
-
-        # self.selectionMethodFactory.add_callback(self.updateMouseHandler)
 
         # Switchboard callbacks that should be performed even when the
         # toolbox isn't active go here.  Callbacks that are performed
@@ -90,36 +39,6 @@ class PixelSelectToolboxGUI(genericselectGUI.GenericSelectToolboxGUI):
                                             self.layerChangeCB)
             ])
 
-    # def close(self):
-    #     for selmeth in self.selectionmethodGUIs:
-    #         self.selectionmethodGUIs[selmeth].cancel()
-    #     genericselectGUI.GenericSelectToolboxGUI.close(self)
-
-    # def updateMouseHandler(self, registration):
-    #     # Callback for when the user selects a new option from the
-    #     # drop-down menu. Check if a SelectMethodGUI exists for
-    #     # registration.subclass. If so, set the current MouseHandler
-    #     # to that SelectionMethodGUI, instead of to self. Otherwise,
-    #     # set the current MouseHandler to self.
-    #     try:
-    #         selmethGUI = self.selectionmethodGUIs[registration.subclass]
-    #     except KeyError:
-    #         self.gfxwindow().setMouseHandler(self)
-    #     else:
-    #         self.gfxwindow().setMouseHandler(selmethGUI)
-            
-    # # In parent class, RCF is assigned to self.selectionMethodFactory
-    # def methodFactory(self):
-    #     return PixelSelectionMethodFactory(
-    #         self.method.registry, title="Method:", name="Method",
-    #         scope=self, callback=None, widgetdict=self.selectionmethodGUIs)
-
-    # def installMouseHandler(self):
-    #     # Update the current MouseHandler to correspond to the the
-    #     # current registration's subclass.
-    #     registration = self.selectionMethodFactory.getRegistration()
-    #     self.updateMouseHandler(registration)
-        
     def activate(self):
         if not self.active:
             super(PixelSelectToolboxGUI, self).activate()
