@@ -22,6 +22,9 @@ typedef class CPolygon<double, Coord> CPolygonCoord;
 %pragma(python) include="geometry.spy"
 %include "common/typemaps.swg"
 
+   // TODO: Why do we need this typemap?  Does it predate our
+   // knowledge of %new?  It would seem to make an unnecessary copy of
+   // its input.
 %typemap(python, argout) CRectangularPrism *outPrism {
   // typemap(python, argout) CRectangularPrism *outPrism
   char _ptemp[128];
@@ -59,7 +62,7 @@ class CPolygonCoord {};
 
 class CRectangularPrism : public CPolygonCoord {
 public:
-  CRectangularPrism();
+  CRectangularPrism(Coord *Point, Coord *Point);
   double xmin();
   double xmax();
   double ymin();
