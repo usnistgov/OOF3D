@@ -33,7 +33,7 @@ utils.OOFdefine('ColorNorm', ColorNorm)
 
 BurnSelection = pixelselectioncourieri.BurnSelection
 
-class Burn(pixelselectionmethod.SelectionMethod):
+class Burn(pixelselectionmethod.VoxelSelectionMethod):
     def __init__(self, local_flammability, global_flammability,
                  color_space_norm,
                  next_nearest):

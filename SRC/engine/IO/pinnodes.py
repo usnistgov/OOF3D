@@ -12,10 +12,10 @@ from ooflib.SWIG.common import config
 from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.common.IO import view
 from ooflib.common import debug
-from ooflib.common import primitives
 from ooflib.common import toolbox
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
+from ooflib.common.IO import pointparameter
 from ooflib.common.IO import whoville
 from ooflib.common.IO import xmlmenudump
 from ooflib.engine import skeletoncontext
@@ -37,12 +37,12 @@ class PinnedNodesToolbox(toolbox.Toolbox):
         self.menu = menu
         if config.dimension() == 2:
             pinparams = [self.skeleton_param,
-                         primitives.PointParameter('point',
-                                                   tip='Target point.')]
+                         pointparameter.PointParameter('point',
+                                                       tip='Target point.')]
         else:                   # 3D
             pinparams = [self.skeleton_param,
-                         primitives.PointParameter('point',
-                                                   tip='Target point'),
+                         pointparameter.PointParameter('point',
+                                                       tip='Target point'),
                          view.ViewParameter('view')]
 
 

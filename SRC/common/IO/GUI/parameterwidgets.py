@@ -10,6 +10,7 @@
 
 # GTK widgets for inputting Parameter objects.
 from ooflib.SWIG.common import config
+from ooflib.SWIG.common import coord
 from ooflib.SWIG.common import guitop
 from ooflib.SWIG.common import ooferror
 from ooflib.SWIG.common import switchboard
@@ -19,6 +20,7 @@ from ooflib.common import primitives
 from ooflib.common import strfunction
 from ooflib.common import utils
 from ooflib.common.IO import parameter
+from ooflib.common.IO import pointparameter
 from ooflib.common.IO.GUI import gtklogger
 from ooflib.common.IO.GUI import tooltips
 from ooflib.common.IO.GUI import widgetscope
@@ -1221,8 +1223,9 @@ class PointWidget(ParameterWidget):
         valid = all(w.isValid() for w in self.componentWidgets)
         self.widgetChanged(valid, interactive=0)
     def set_value(self, point):
-        for i in range(config.dimension()):
-            self.componentWidgets[i].set_value(point[i])
+        if point is not None:
+            for i in range(config.dimension()):
+                self.componentWidgets[i].set_value(point[i])
     def get_value(self):
         components = tuple(w.get_value() for w in self.componentWidgets)
         return primitives.Point(*components)
@@ -1236,5 +1239,16 @@ class PointWidget(ParameterWidget):
 def _PointParameter_makeWidget(self, scope=None, verbose=False):
     return PointWidget(self, scope=scope, name=self.name, verbose=verbose)
 
-primitives.PointParameter.makeWidget = _PointParameter_makeWidget
+pointparameter.PointParameter.makeWidget = _PointParameter_makeWidget
+
+class CoordWidget(PointWidget):
+    def get_value(self):
+        pt = PointWidget.get_value(self)
+        if pt is not None:
+            return coord.Coord(pt[0], pt[1], pt[2])
+
+def _CoordParameter_makeWidget(self, scope=None, verbose=False):
+    return CoordWidget(self, scope=scope, name=self.name, verbose=verbose)
+
+coord.CoordParameter.makeWidget = _CoordParameter_makeWidget
  

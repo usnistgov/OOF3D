@@ -15,10 +15,10 @@ from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.common.IO import view
 from ooflib.SWIG.common.IO import vtkutils
 from ooflib.common import debug
-from ooflib.common import primitives
 from ooflib.common import toolbox
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
+from ooflib.common.IO import pointparameter
 from ooflib.common.IO import reporter
 
 
@@ -55,7 +55,7 @@ class PixelInfoToolbox(toolbox.Toolbox):
         else:
             pixelname = 'voxel'
         positionparams = [
-            primitives.PointParameter(
+            pointparameter.PointParameter(
                 'point', tip='The position of the queried %s.' % pixelname)
             ]
         if config.dimension() == 3:
@@ -84,7 +84,7 @@ class PixelInfoToolbox(toolbox.Toolbox):
         menu.addItem(oofmenu.OOFMenuItem(
                 'QueryDirectly',
                 callback=self.queryPixelDirectly,
-                params=[primitives.PointParameter(
+                params=[pointparameter.PointParameter(
                         'voxel', tip="The coordinates of the queried voxel.")],
                 help="Query the voxel at the given position in the image.",
                 discussion="""<para>

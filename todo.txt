@@ -52,6 +52,21 @@ Toolbox names are inconsistent in the chooser.  Names like
 'Voxel_Info' are ok for oofmenus but not for gui elements. Maybe all
 toolboxes should have a displayName().
 
+Add an 'editable' keyword argument to all Parameters, with default
+value True.  Parameters that aren't editable appear in ParameterTable
+but can't be edited by the user.  Make the Point parameters in
+selection toolboxes uneditable, since they should come only from the
+canvas and the user shouldn't type in them.  Doing this will require
+changing all Parameter classes, so it should be done only after all
+the other selection gui changes to keep the git commits reasonable.
+
+Fix selection commands in the Pixel Page, which broke when the menu
+items were changed for the pixel selection toolbox.
+
+Raising a Microstructure layer removes Color and Burn from the voxel
+selection toolbox options, but raising an Image layer doesn't restore
+them.
+
 ---------------------------------------------------------------------------
 Soon
 ----
@@ -94,6 +109,9 @@ parameterwidgets.py.
 
 Upgrade to gtk3.  Possibly switch to the VTK event loop instead of the
 gtk event loop, so that we can use VTK interactors and widgets.
+
+Warn when saving a Mesh that only contains empty elements.  Maybe
+don't allow any operations at all on such a Mesh.
 
 ----------------------------------------------------------------------------
 At Some Later Time

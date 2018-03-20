@@ -21,6 +21,7 @@
 #include "common/cmicrostructure.h"
 #include "common/pixelselectioncourier.h"
 #include "common/tostring.h"
+#include "common/geometry.h"
 %}
 
 class PixelSelectionCourier {
@@ -55,7 +56,7 @@ public:
 
 class BoxSelection : public PixelSelectionCourier {
 public:
-  BoxSelection(CMicrostructure*, Coord *Point, Coord *Point);
+  BoxSelection(CMicrostructure*, CRectangularPrism*);
   ~BoxSelection();
 };
 

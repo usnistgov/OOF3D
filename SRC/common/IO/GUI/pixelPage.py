@@ -270,11 +270,11 @@ class SelectionPage(oofGUI.MainPage):
             self.historian.record(selectionModifier)
 
     def undoCB(self, button):
-        mainmenu.OOF.PixelSelection.Undo(microstructure=self.getCurrentMSName())
+        mainmenu.OOF.VoxelSelection.Undo(microstructure=self.getCurrentMSName())
     def redoCB(self, button):
-        mainmenu.OOF.PixelSelection.Redo(microstructure=self.getCurrentMSName())
+        mainmenu.OOF.VoxelSelection.Redo(microstructure=self.getCurrentMSName())
     def clearCB(self, button):
-        mainmenu.OOF.PixelSelection.Clear(
+        mainmenu.OOF.VoxelSelection.Clear(
             microstructure=self.getCurrentMSName())
 
     def okbuttonCB(self, *args):
@@ -286,6 +286,8 @@ class SelectionPage(oofGUI.MainPage):
             # Invoke the method by calling the corresponding menu
             # item.  The menu item and method registration share a
             # parameter list.
+            ## TODO: Rewrite this to use the new VoxelSelection.Select
+            ## menu item.
             menuitem = getattr(mainmenu.OOF.PixelSelection,
                                utils.space2underscore(modmeth.name()))
             menuitem.callWithDefaults(microstructure=self.getCurrentMSName())

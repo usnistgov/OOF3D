@@ -18,7 +18,6 @@ from ooflib.common import enum
 from ooflib.common import utils
 from ooflib.common.IO import parameter
 import math
-import struct
 import types
 
 ## TODO OPT: It would be better to have two separate classes, Point2
@@ -274,61 +273,6 @@ else:
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-class PointParameter(parameter.Parameter):
-    types = (Point,)
-
-    def __init__(self, name, value=None, default=None, tip=None, auxData={}):
-        if value is None:
-            value = origin()
-        parameter.Parameter.__init__(self, name, value, default, tip, auxData)
-    structfmt = '>' + 'd'*config.dimension()
-    structlen = struct.calcsize(structfmt)
-
-    def binaryRepr(self, datafile, value):
-        return struct.pack(PointParameter.structfmt, *value.asTuple())
-
-    def binaryRead(self, parser):
-        b = parser.getBytes(PointParameter.structlen)
-        vals = struct.unpack(PointParameter.structfmt, b)
-        return Point(*vals)
-
-    def valueDesc(self):
-        return "A <link linkend='Object:Point'><classname>Point</classname></link> object (eg, <userinput>Point(1.1, 2.0)</userinput>)."
-
-class ListOfPointsParameter(parameter.Parameter):
-
-    def __init__(self, name, value=None, default=[], tip=None):
-        parameter.Parameter.__init__(self, name, value, default, tip)
-
-    def checker(self, x):
-        if type(x) is not types.ListType:
-            parameter.raiseTypeError(type(x), "list of Points")
-        for y in x:
-            if not isinstance(y, Point):
-                parameter.raiseTypeError("list of %s" % type(y),
-                                         "list of Points")
-    def valueDesc(self):
-        return "A list of <link linkend='Object:Point'><classname>Point</classname></link> objects."
-
-
-class iPointParameter(parameter.Parameter):
-    types = (iPoint,)
-    def __init__(self, name, value=None, default=None, tip=None, auxData={}):
-        if value is None:
-            value = iOrigin()
-        parameter.Parameter.__init__(self, name, value, default, tip, auxData)
-    structfmt = '>' + 'i'*config.dimension()
-    structlen = struct.calcsize(structfmt)
-    def binaryRepr(self, datafile, value):
-        return struct.pack(iPointParameter.structfmt, *value.asTuple())
-    def binaryRead(self, parser):
-        b = parser.getBytes(iPointParameter.structlen)
-        vals = struct.unpack(iPointParameter.structfmt, b)
-        return iPoint(*vals)
-    def valueDesc(self):
-        return "An <link linkend='Object:iPoint'><classname>iPoint</classname></link> (integer Point) object (eg <userinput>iPoint(1,2)</userinput>)."
-
-
 def pontify(ptlist):
     # Convert a Thing of Stuff to a Thing of Points.  Thing is
     # probably Curve or Polygon, and Stuff is probably MasterCoord or
@@ -505,7 +449,8 @@ else:
 # Utility function for finding intersections between the segment
 # p1->p2 and the segment p3->p4 in 2D.
 
-## TODO 3.1: Move this to C++?  It looks like a lot of arithmetic for Python.
+## TODO 3.1: Move this to C++?  It looks like a lot of arithmetic for
+## Python.  ONLY USED IN 2D.
 def _point_intersect2D(p1, p2, p3, p4):
     # Check endpoints explicitly first.  If we didn't do this here,
     # then intersections that were supposed to be exactly at endpoints

@@ -99,7 +99,7 @@ private:
   ICoord ur;
   ICoord currentpt;
 public:
-  BoxSelection(CMicrostructure *ms, const Coord *pt0, const Coord *pt1);
+  BoxSelection(CMicrostructure *ms, const CRectangularPrism*);
   virtual ~BoxSelection() {}
   virtual void start();
   virtual ICoord currentPoint() const;

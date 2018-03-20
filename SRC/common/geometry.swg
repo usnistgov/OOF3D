@@ -74,6 +74,8 @@ public:
   double depth();
   void expand(double factor);
   Coord center();
+  Coord lowerleftback();
+  Coord upperrightfront();
   void swallowPrism(CRectangularPrism&);
 };
 

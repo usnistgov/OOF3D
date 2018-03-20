@@ -15,25 +15,38 @@ from ooflib.common import subthread
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+# MouseButtons stores which mouse button was pressed and the state of
+# the modifier keys at the time.  For each event, GfxWindow3D.mouseCB
+# creates a MouseButtons object and passes it to the MouseHandler's
+# up, down, or move method.
+
+class MouseButtons(object):
+    def __init__(self, button=None, shift=None, ctrl=None):
+        self.button = button
+        self.shift = shift
+        self.ctrl = ctrl
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
 # A GfxWindow always has a current MouseHandler, which knows what to
 # do with mouse events on the canvas.  The window's toolboxes can
 # install new MouseHandlers.  The base class defined here does
 # nothing.  Toolboxes can themselves be subclasses of MouseHandler, or
 # they can use one of the classes defined below.
 
-
 class MouseHandler(object):
     def __init__(self, nextHandler):
         self.nextHandler = nextHandler
+        self.buttons = MouseButtons()
     def acceptEvent(self, eventtype):
         # eventtype is either 'up', 'down', or 'move'.  Return True if it
         # can be handled.
         return eventtype in ('up', 'down','move')
-    def up(self, x, y, button, shift, ctrl):
+    def up(self, x, y, buttons):
         pass
-    def down(self, x, y, button, shift, ctrl):
+    def down(self, x, y, buttons):
         pass
-    def move(self, x, y, button, shift, ctrl):
+    def move(self, x, y, buttons):
         pass
     # start() is called just after the handler is installed
     def start(self):
@@ -57,24 +70,17 @@ nullHandler = NullMouseHandler()            # doesn't do anything
 class SingleClickMouseHandler(MouseHandler):
     def __init__(self, nextHandler):
         MouseHandler.__init__(self, nextHandler)
-        self.downed = False
-        self.button_down = None
-        self.shift_down = None
-        self.ctrl_down = None
+        self._downed = False
     def acceptEvent(self, event):
         return event in ("up", "down")
-    def down(self, x, y, button, shift, ctrl):
-        self.button_down = button
-        self.shift_down = shift
-        self.ctrl_down = ctrl
-        self.downed = True
-        self.nextHandler.down(
-            x, y, self.button_down, self.shift_down, self.ctrl_down)
-    def up(self, x, y, button, shift, ctrl):
-        if self.downed:
-            self.nextHandler.up(
-                x, y, self.button_down, self.shift_down, self.ctrl_down)
-        self.downed = False
+    def down(self, x, y, buttons):
+        self.buttons = buttons
+        self._downed = True
+        subthread.execute(self.nextHandler.down, (x, y, buttons))
+    def up(self, x, y, buttons):
+        if self._downed:
+            self._downed = False
+            subthread.execute(self.nextHandler.up, (x, y, self.buttons))
 
 
 # Threaded mouse handler stores events on a queue and processes them
@@ -95,52 +101,45 @@ class ThreadedMouseHandler(MouseHandler):
             assert event in ("up", "down", "move")
         self.eventlist = []
         self.datalock = lock.EventLogSLock()
-        self.downed = False
+        self._downed = False
         self.eventThread = None
         # The modifier keys are detected when the mouse button is
         # pressed, but are stored here so that the toolboxes don't
         # have to remember them for processing when the mouse is
         # released.
-        self.button_down = None
-        self.shift_down = None
-        self.ctrl_down = None
-
+        self.buttons = MouseButtons()
 
     def clear(self):
         self.datalock.logNewEvent_acquire()
         try:
             self.eventlist = []
-            self.downed = False
+            self._downed = False
         finally:
             self.datalock.logNewEvent_release()
     def acceptEvent(self, eventtype):
         return True
-    def down(self, x, y, button, shift, ctrl):
+    def down(self, x, y, buttons):
         self.datalock.logNewEvent_acquire()
         try:
-            self.downed = True
-            self.button_down = button
-            self.shift_down = shift
-            self.ctrl_down = ctrl
+            self._downed = True
+            self.buttons = buttons
             if 'down' in self.eventtypes:
-                self.eventlist.append(MouseDown(x, y, button, shift, ctrl))
+                self.eventlist.append(MouseDown(x, y, self.buttons))
         finally:
             self.datalock.logNewEvent_release()
-    def up(self, x, y, button, shift, ctrl):
+    def up(self, x, y, buttons):
         self.datalock.logNewEvent_acquire()
         try:
-            self.downed = False
+            self._downed = False
             if 'up' in self.eventtypes:
-                self.eventlist.append(MouseUp(
-                    x, y, self.button_down, self.shift_down, self.ctrl_down))
+                self.eventlist.append(MouseUp(x, y, self.buttons))
         finally:
             self.datalock.logNewEvent_release()
-    def move(self, x, y, button, shift, ctrl):
-        if self.downed and 'move' in self.eventtypes:
+    def move(self, x, y, buttons):
+        if self._downed and 'move' in self.eventtypes:
             self.datalock.logNewEvent_acquire()
             try:
-                self.eventlist.append(MouseMove(
-                    x, y, self.button_down, self.shift_down, self.ctrl_down))
+                self.eventlist.append(MouseMove(x, y, self.buttons))
             finally:
                 self.datalock.logNewEvent_release()
 
@@ -178,19 +177,17 @@ class ThreadedMouseHandler(MouseHandler):
             if not event.process(self.nextHandler):
                 return
 
-
 # KangarooMouseHandler is just like ThreadedMouseHandler but if move
 # events accumulate in the queue, the mouse *jumps* to the latest
 # position.  It should be used in cases where the intermediate points
 # will be used to update the display but otherwise aren't important.
 
 class KangarooMouseHandler(ThreadedMouseHandler):
-    def move(self, x, y, button, shift, ctrl):
-        if self.downed and 'move' in self.eventtypes:
+    def move(self, x, y, buttons):
+        if self._downed and 'move' in self.eventtypes:
             self.datalock.logNewEvent_acquire()
             try:
-                mevent = MouseMove(x, y, self.button_down, self.shift_down,
-                                   self.ctrl_down)
+                mevent = MouseMove(x, y, self.buttons)
                 if self.eventlist and isinstance(self.eventlist[-1], MouseMove):
                     self.eventlist[-1] = mevent
                 else:
@@ -204,28 +201,26 @@ class KangarooMouseHandler(ThreadedMouseHandler):
 # Mouse events stored in the ThreadedMouseHandlers' queue.
 
 class MouseEvent(object):
-    def __init__(self, x, y, button, shift, ctrl):
+    def __init__(self, x, y, buttons):
         self.x = x
         self.y = y
-        self.button = button
-        self.shift = shift
-        self.ctrl = ctrl
+        self.buttons = buttons
     def __repr__(self):
         return "%s(%d, %d)" % (self.__class__.__name__, self.x, self.y)
 
 class MouseDown(MouseEvent):
     def process(self, nextHandler):
-        nextHandler.down(self.x, self.y, self.button, self.shift, self.ctrl)
+        nextHandler.down(self.x, self.y, self.buttons)
         return True
 
 class MouseUp(MouseEvent):
     def process(self, nextHandler):
-        nextHandler.up(self.x, self.y, self.button, self.shift, self.ctrl)
+        nextHandler.up(self.x, self.y, self.buttons)
         return True
 
 class MouseMove(MouseEvent):
     def process(self, nextHandler):
-        nextHandler.move(self.x, self.y, self.button, self.shift, self.ctrl)
+        nextHandler.move(self.x, self.y, self.buttons)
         return True
 
 class MouseTrap(MouseEvent):

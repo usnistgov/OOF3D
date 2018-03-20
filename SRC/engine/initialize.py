@@ -14,6 +14,8 @@
 # used should be imported here.  Using OOFexec makes the names
 # available in the __main__ environment in text mode.
 
+import sys
+
 from ooflib.common import debug
 from ooflib.common import parallel_enable
 from ooflib.common import utils
@@ -92,7 +94,8 @@ import ooflib.SWIG.engine.compoundsubproblem
 import ooflib.engine.pixelselect
 import ooflib.SWIG.engine.pixelselectioncouriere
 import ooflib.engine.skeletonselectionmod
-import ooflib.engine.IO.skeletonselectiontoolbox
+print >> sys.stderr, "Not loading skeletonselectiontoolbox"
+#import ooflib.engine.IO.skeletonselectiontoolbox
 import ooflib.engine.IO.skeletoninfo
 import ooflib.engine.IO.meshinfo
 import ooflib.engine.IO.movenode

@@ -19,6 +19,7 @@ from ooflib.common import primitives
 from ooflib.common.IO import mainmenu
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
+from ooflib.common.IO import pointparameter
 from ooflib.common.IO import whoville
 from ooflib.common.IO import xmlmenudump
 import ooflib.common.microstructure
@@ -49,9 +50,9 @@ micromenu.addItem(oofmenu.OOFMenuItem(
         callback=_newMicrostructure,
         params=[parameter.StringParameter(
                 'name', tip="Name of Microstructure."),
-                primitives.iPointParameter(
+                pointparameter.iPointParameter(
                 'isize', tip="Pixel resolution of Microstructure."),
-                primitives.PointParameter(
+                pointparameter.PointParameter(
                 'size', tip="Physical size of Microstructure.")],
         help="Create a new Microstructure.  Used internally in data files.",
         

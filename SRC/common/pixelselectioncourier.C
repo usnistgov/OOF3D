@@ -151,8 +151,7 @@ static bool canonicalDiagonal(COORD &point0, COORD &point1) {
 
 ///////////
 
-BoxSelection::BoxSelection(CMicrostructure *ms,
-			   const Coord *pt0, const Coord *pt1)
+BoxSelection::BoxSelection(CMicrostructure *ms, const CRectangularPrism *box)
   : PixelSelectionCourier(ms)
 {
   // ll and ur are the lowerleft and upperright pixel coordinates of
@@ -160,8 +159,8 @@ BoxSelection::BoxSelection(CMicrostructure *ms,
   // the physical coordinates pt0 and pt1.
   
   // Compute the pixel-space coordinates of pt0 and pt1.
-  Coord pll = ms->physical2Pixel(*pt0);
-  Coord pur = ms->physical2Pixel(*pt1);
+  Coord pll = ms->physical2Pixel(box->lowerleftback());
+  Coord pur = ms->physical2Pixel(box->upperrightfront());
   done_ = !canonicalDiagonal(pll, pur);
   // Round all components to the nearest integer.
   ll = pll.roundComponents();

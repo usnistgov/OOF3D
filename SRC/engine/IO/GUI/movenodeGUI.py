@@ -14,7 +14,7 @@ from ooflib.SWIG.common import guitop
 from ooflib.SWIG.common import lock
 from ooflib.SWIG.common import ooferror
 from ooflib.SWIG.common import switchboard
-from ooflib.SWIG.common.IO.GUI import rubberband3d as rubberband
+#from ooflib.SWIG.common.IO.GUI import rubberband3d as rubberband
 from ooflib.common import debug
 from ooflib.common import mainthread
 from ooflib.common import primitives
@@ -369,10 +369,10 @@ class MoveNodeToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
         elif self.mode == "Keyboard":
             return eventtype=='up'
 
-    def down(self, x, y, button, shift, ctrl):
-        subthread.execute(self.down_subthread, (x,y,shift,ctrl))
+    def down(self, x, y, buttons):
+        subthread.execute(self.down_subthread, (x,y,buttons))
 
-    def down_subthread(self, x, y, shift, ctrl):
+    def down_subthread(self, x, y, buttons):
         debug.subthreadTest()
         self.mouselock.acquire()
         try:
@@ -407,24 +407,24 @@ class MoveNodeToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
                         if not element.illegal():
                             self.homogeneity0 += element.homogeneity(skel)
                             self.shapeenergy0 += element.energyShape()
-                    # Create rubberband
-                    points = []
-                    for n in self.nbrnodes:
-                        pos = n.position()
-                        points.append(primitives.Point(pos[0],pos[1],pos[2]))
-                    # points = [n.position() for n in self.nbrnodes]
-                    rb = mainthread.runBlock(rubberband.SpiderRubberBand,
-                                             (points,))
-                    mainthread.runBlock(
-                        self.gfxwindow().setRubberband, (rb,) )
+                    # # Create rubberband
+                    # points = []
+                    # for n in self.nbrnodes:
+                    #     pos = n.position()
+                    #     points.append(primitives.Point(pos[0],pos[1],pos[2]))
+                    # # points = [n.position() for n in self.nbrnodes]
+                    # rb = mainthread.runBlock(rubberband.SpiderRubberBand,
+                    #                          (points,))
+                    # mainthread.runBlock(
+                    #     self.gfxwindow().setRubberband, (rb,) )
             gtklogger.checkpoint("Move Node toolbox down event")
         finally:
             self.mouselock.release()
             
-    def move(self, x, y, button, shift, ctrl):
+    def move(self, x, y, buttons):
         skeleton = self.getSkeleton()
-        subthread.execute(self.move_thread, (skeleton, x, y, shift, ctrl))
-    def move_thread(self, skeleton, x, y, shift, ctrl):
+        subthread.execute(self.move_thread, (skeleton, x, y, buttons))
+    def move_thread(self, skeleton, x, y, buttons):
         debug.subthreadTest()
         self.mouselock.acquire()
         try:
@@ -464,7 +464,7 @@ class MoveNodeToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     # move, the move is not performed -- no menu items are called,
     # nothing is scripted.
 
-    def up(self, x, y, button, shift, ctrl):
+    def up(self, x, y, buttons):
         # "Downed" must be cleared at the earliest opportunity,
         # otherwise spurious "move" events can be processed,
         # unilaterally changing the node position.
@@ -475,9 +475,9 @@ class MoveNodeToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
             pt = canvas.display2Physical(view, x, y)
             self.toolbox.menu.SelectNode(position=pt, view=view)
         else:                   # self.mode == "Mouse"
-            subthread.execute(self.up_subthread_mouse, (x,y,shift,ctrl))
+            subthread.execute(self.up_subthread_mouse, (x,y,buttons))
 
-    def up_subthread_mouse(self, x, y, shift, ctrl):
+    def up_subthread_mouse(self, x, y, buttons):
         debug.subthreadTest()
         self.mouselock.acquire()
         try:
@@ -510,9 +510,9 @@ class MoveNodeToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
                             origin=self.downpt,
                             destination=point)
                     finally:
-                        rbb = mainthread.runBlock(rubberband.NoRubberBand)
-                        mainthread.runBlock(self.gfxwindow().setRubberband,
-                                            (rbb,) )
+                        # rbb = mainthread.runBlock(rubberband.NoRubberBand)
+                        # mainthread.runBlock(self.gfxwindow().setRubberband,
+                        #                     (rbb,) )
                         self.nbrnodes = []
 
             # elif self.mode == "Keyboard":

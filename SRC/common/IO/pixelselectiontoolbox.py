@@ -16,6 +16,9 @@ from ooflib.common import toolbox
 from ooflib.common import pixelselectionmethod
 from ooflib.common.IO import genericselecttoolbox
 from ooflib.common.IO import whoville
+from ooflib.common.IO import pixelselectionmenu
+
+# See NOTES/selection_machinery.txt
 
 # The GUI version of the toolbox contains a RegisteredClassFactory for
 # the SelectionMethods.  It installs itself as the graphics window's
@@ -28,9 +31,9 @@ from ooflib.common.IO import whoville
 
 def toolboxName():
     if config.dimension() == 3:
-        return 'Voxel_Select'
+        return 'Voxel_Selection'
     else:
-        return 'Pixel_Select'
+        return 'Pixel_Selection'
     
 
 class PixelSelectToolbox(genericselecttoolbox.GenericSelectToolbox):
@@ -38,48 +41,59 @@ class PixelSelectToolbox(genericselecttoolbox.GenericSelectToolbox):
         genericselecttoolbox.GenericSelectToolbox.__init__(
             self,
             name=toolboxName(),
-            method=pixelselectionmethod.SelectionMethod,
+            method=pixelselectionmethod.VoxelSelectionMethod,
+            menu = pixelselectionmenu.selectmenu,
             gfxwindow=gfxwindow)
 
-    def signal(self, method, pointlist, who):
-        switchboard.notify("pixel selection changed", who)
-        switchboard.notify("new pixel selection", method, pointlist)
-        switchboard.notify("redraw")
+    # def signal(self, method, pointlist, who):
+    #     debug.dumpTrace()
+    #     switchboard.notify("pixel selection changed", who)
+    #     switchboard.notify("new pixel selection", method, pointlist)
+    #     switchboard.notify("redraw")
 
-    def sourceParams(self):
-        return [whoville.AnyWhoParameter('source',
-                                         tip="Microstructure or Image")]
+    def getSource(self):
+        # Return the Microstructure of the top Microstructure or Image
+        # layer.
+        who = self.gfxwindow().topwho('Microstructure', 'Image')
+        if who is not None:
+            if who.getClassName() == 'Microstructure':
+                return who
+            return who.getParent() # Microstructure is the parent of Image
 
-    def setSourceParams(self, menuitem, source):
-        menuitem.get_arg('source').value = source.path()
+    # def sourceParams(self):
+    #     return [whoville.AnyWhoParameter('source',
+    #                                      tip="Microstructure or Image")]
 
-    def getSourceObject(self, params, gfxwindow):
-        # We're expecting a MicroStructure or an Image.
+    # def setSourceParams(self, menuitem, source):
+    #     menuitem.get_arg('source').value = source.path()
 
-        # params is a dictionary of parameter values that was passed
-        # to the menu item that was automatically created from a
-        # PixelSelectionRegistration by
-        # GenericSelectToolbox.rebuildMenus().  rebuildMenus() used
-        # the derived sourceParams function to add the 'source'
-        # parameter to the parameter list.
-
-        # gfxwindow is the GfxWindow or GhostGfxWindow that the
-        # selection was initiated in.  It might not be needed here
-        # anymore.
+    # def getSourceObject(self, params, gfxwindow):
+    #     # Used by GenericSelectionToolbox.getSelection()
         
-        whopath = labeltree.makePath(params['source'])
-        if len(whopath) == 1:
-            return whoville.getClass('Microstructure')[whopath]
-        if len(whopath) == 2:
-            return whoville.getClass('Image')[whopath]
+    #     # We're expecting a MicroStructure or an Image.
+
+    #     # params is a dictionary of parameter values that was passed
+    #     # to the menu item that was automatically created from a
+    #     # PixelSelectionRegistration by
+    #     # GenericSelectToolbox.rebuildMenus().  rebuildMenus() used
+    #     # the derived sourceParams function to add the 'source'
+    #     # parameter to the parameter list.
+
+    #     # gfxwindow is the GfxWindow or GhostGfxWindow that the
+    #     # selection was initiated in.  It might not be needed here
+    #     # anymore.
+        
+    #     whopath = labeltree.makePath(params['source'])
+    #     if len(whopath) == 1:
+    #         return whoville.getClass('Microstructure')[whopath]
+    #     if len(whopath) == 2:
+    #         return whoville.getClass('Image')[whopath]
 
     # The following two functions are used when generating xml output.
     def objName(self):
         return 'Pixel'
     def sourceName(self):
         return '&micro; or &image;'
-    def sourceParamName(self):
-        return 'source'
 
     tip = "Select pixels in a Microstructure."
     discussion = """<para>

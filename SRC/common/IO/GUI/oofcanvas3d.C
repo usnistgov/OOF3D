@@ -52,7 +52,6 @@ OOFCanvas3D::OOFCanvas3D(bool fixCanvasScaleBug)
     last_x(0),
     last_y(0),
     mouse_callback(0),
-    rubberband(0),
     rescaleFudgeFactor(_fudgeFactor(fixCanvasScaleBug))
 {
   assert(mainthread_query());
@@ -384,10 +383,6 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
 			   rescaleFudgeFactor*event->button.x,
 			   rescaleFudgeFactor*event->button.y, 
 			   buttonNumber, shift, ctrl);
-      if(rubberband && rubberband->active()) {
-	rubberband->stop(renderer);
-	render();
-      }
       mousedown = false;
       break;
     case GDK_MOTION_NOTIFY:
@@ -398,22 +393,6 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
 			   rescaleFudgeFactor*event->motion.x,
 			   rescaleFudgeFactor*event->motion.y,
 			   buttonNumber, shift, ctrl);
-      // TODO 3.1: 3D rubberbands
-      // if(mousedown && rubberband) {
-      // 	double pt[3];
-      // 	if(!rubberband->active()) {
-      // 	  screen_coords_to_3D_coords(last_x, last_y, last_z, pt);
-      // 	  rubberband->start(Coord(pt[0], pt[1], pt[2]));
-      // 	}
-      // 	// we include this condition because if the rubberband is
-      // 	// NoRubberBand, active is always false, and we can avoid some
-      // 	// expensive calls
-      // 	if(rubberband->active()) {
-      // 	  screen_coords_to_3D_coords(event->motion.x, event->motion.y, pt);
-      // 	  rubberband->redraw(renderer, Coord(pt[0], pt[1], pt[2])); 
-      // 	  render();
-      // 	}
-      // }
       break;
     case GDK_SCROLL:
       shift = event->scroll.state & GDK_SHIFT_MASK;
@@ -568,10 +547,6 @@ void OOFCanvas3D::mouse_dolly(double x, double y) {
   dolly(factor);
   last_x = x;
   last_y = y;
-}
-
-void OOFCanvas3D::set_rubberband(RubberBand *rb) {
-  rubberband = rb;
 }
 
 

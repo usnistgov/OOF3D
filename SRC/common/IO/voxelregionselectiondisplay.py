@@ -4,7 +4,6 @@
 # $Author: rdw1 $
 # $Date: 2015/08/07 12:45:05 $
 
-
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
 # Recipients of this software assume all responsibilities associated
@@ -12,6 +11,8 @@
 # facilitate maintenance we ask that before distributing modified
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov.
+
+# See NOTES/selection_machinery.txt
 
 from ooflib.SWIG.common import config
 #from ooflib.SWIG.common import coord
@@ -60,9 +61,7 @@ import math
 
 # TODO: Rotate the box using option-click?
 
-# TODO: Is the initial click to establish the box widget necessary?
-# Wouldn't a button in the toolbox be better?  It would simplify the
-# mouse handler (pixelselectionmethodGUI.py).
+# TODO: Opacity isn't correct when box is first drawn.
 
 class VoxelRegionSelectionDisplay(display.DisplayMethod):
     def __init__(self, point_size, line_width, line_color,
@@ -110,6 +109,9 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
         self.canvaslayer.set_opacity(self._opacity())
         self.setVisibility(self._visibility())
 
+    def get_box(self):
+        return self.canvaslayer.get_box()
+
     def activate(self):
         if not self.active:
             self.active = True
@@ -119,7 +121,8 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
             subthread.execute(self.gfxwindow.draw)
             
     def deactivate(self):
-        if self.active:
+        # gfxwindow may already be None if window is closing.
+        if self.active and self.gfxwindow is not None:
             self.active = False
             self.canvaslayer.set_opacity(self._opacity())
             self.setVisibility(self._visibility())

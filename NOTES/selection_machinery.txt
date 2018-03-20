@@ -1,0 +1,218 @@
+This file documents the menus and toolboxes for selecting voxels and
+skeleton components using the mouse in a graphics window.
+
+The machinery is complicated so that the same code can be used in all
+situations, as much as possible.  It's significantly more complicated
+that the OOF2 version because mouse handling in 3D is harder.  In 2D,
+all selections in the GUI can be done with a simple mouse event
+series: (down, [move, [move...]], up), possibly coupled with a
+simple RubberBand object.  3D may require more than one series of
+mouse events and interaction with a relatively complicated 3D widget
+on the canvas.
+
+TERMINLOGY
+
+Each type of selectable object (voxel, element, etc) has a WhoContext
+stored in its parent WhoContext (Microstructure or Skeleton).  This
+selectable WhoContext is called the "selection object" here.  It does
+the actual selecting and unselecting.  The GUI communicates with it by
+creating a "courier" object and passing it to the selection object.
+The courier is a simple lightweight description of the objects to be
+selected or deselected and can be easily passed from Python to C++.
+
+MENU COMMANDS
+
+Unlike earlier versions in which a different selection methods
+each had their own menu items, now all selections of a particular type
+of object are made from a single menu item like this:
+
+OOF.VoxelSelection.Select(source=..., method=..., operator=...)
+
+The "method" argument is a RegisteredParameter for the
+VoxelSelectionMethod registered class (when selecting voxels).
+VoxelSelectionMethod is a subclass of GenericSelectionMethod, which
+should be used as a base class for other types of selections.
+
+Each registered GenericSelectionMethod subclass needs a 'select'
+method that takes arguments named 'source', 'selection', and
+'operator'.  'source' is a Who object.  'selection' is the selection
+context contained in the object, and 'operator' is one of the the
+PixelSelectionOperators defined in pixelselectionmod.py (which should
+be made generic and moved out of that file, if possible).  'select'
+should construct an appropriate courier object and call
+operator.operate to actually make the selection.
+
+The Registrations for the GenericSelectionMethod subclasses need to
+contain an entry 'whoclasses', which is a list of the names of the
+WhoClasses that the method can be used on.  For example, the method
+that selects a voxel with a single click has
+whoclasses=['Microstructure', 'Image'] but the one that selects voxels
+of a given color has whoclasses=['Image'].
+
+TOOLBOX
+
+Selection toolboxes have non-gui and gui components.  The non-gui
+component is derived from GenericSelectToolbox and the gui component
+from GenericSelectToolboxGUI.
+
+The base non-gui GenericSelectToolbox class stores the menu and
+defines Undo, Redo, Invert, and Clear methods.  It provides a method,
+getSelection(), for other methods to find the selection object.
+getSelection calls the getSelectionContext() method in the
+Microstructure and Skeleton who classes.  That method can require
+extra arguments, which must be provided when the GenericSelectToolbox
+init is called.
+
+The derived non-gui GenericSelectToolbox classes must provide a
+getSource() method, which returns the Who object that contains the
+selection object that the toolbox commands operate on, and a signal()
+method that is called after selections are made and sends the relevant
+switchboard signals.
+
+The GUI toolbox has a RegisteredClassFactory that switches between
+selection methods (the subclasses of GenericSelectionMethod).  Each
+selection method is associated with a subclass of SelectionMethodGUI,
+which is in charge of three things:
+ * Mouse handling in the canvas
+ * Displaying gtk widgets in the toolbox
+ * Connecting to a vtk layer in the canvas that guides the user
+One SelectionMethodGUI subclass can be associated with many selection
+methods.  The association is made by using the "selectionGUIfor"
+decorator defined in the module common.IO.GUI.pixelselectionmethodGUI.
+
+The GenericSelectToolboxGUI constructor creates instances of the
+SelectionMethodGUI for each selection method in the toolbox, and
+stores them in a dict keyed by selection method.  This dict is used as
+the widgetdict for the RegisteredClassFactory of selection methods.  
+Each SelectionMethodGUI has a __call__ method that the toolbox's
+RegisteredClassFactory uses to create the gtk widgets for the
+method. It returns an object that acts like a ParameterTable, as far
+as the RegisteredClassFactory is concerned.  If __call__ isn't defined
+in a subclass, the base class provides one that returns a a
+ParameterTable for the params in the method's registration.
+
+MOUSE HANDLING
+
+When a new selection method is chosen, the toolbox sets
+self.currentGUI to the method's SelectionMethodGUI, and the currentGUI
+stores the value of the registration, so that it can have access to
+the values of the parameters.  The toolbox then calls currentGUI's
+mouseHandler() method and installs the result as the canvas's mouse
+handler.
+
+The MouseHandler base class and some derived classes are
+defined in common/IO/mousehandler.py.  These classes only handle
+low-level stuff, and take a constructor arg which is a higher level
+object and which is called when the low level handler needs it.  The
+higher level handler can conveniently be the SelectionMethodGUI
+itself, so MouseHandler is also a base class for SelectionMethodGUI.
+
+The low-level handlers must have these methods:
+  * acceptEvent: determines which events to process ("down", "up",
+  and/or "move").
+  * up, down, move: called by the canvas to handle an event
+  * start, stop: called by the toolbox when the mouse handler should
+  become active or inactive.
+
+The low-level handlers in mousehandler.py are:
+
+ * NullMouseHandler does nothing.
+
+ * SingleClickMouseHandler calls its high level handler on mouse down
+   and up, passing the button configuration (mouse button number and
+   keyboard modifiers) from the down event and the position from
+   either down or up, as appropriate.
+
+ * ThreadedMouseHandler stores the requested events on a queue and
+   calls the high level handler on a separate thread.  This smooths
+   out gui interaction.  It records move events only between up and
+   down events.
+
+ * KangarooMouseHandler is a subclass of ThreadedMouseHandler that
+   discards queued move events if they haven't been processed by the
+   time the next event occurs.  That is, it jumps.
+
+A SelectionMethodGUI that uses a SingleClickMouseHandler probably will
+use a high level handler (possibly itself) that just defines up(), and
+which calls GenericSelectGUI.invokeMenuItem to actually make the
+selection.  The argument to invokeMenuItem is an instance of the
+associated GenericSelectionMethod subclass, which can be constructed
+from the registration parameters and the mouse click information.  An
+intermediate base class, SingleClickVoxelSelectionMethodGUI, defines a
+routine getVoxel() which returns the 3D coords of a clicked voxel.
+SelectionMethodGUI's also know their registration, toolbox, and
+graphics window if they need more information.
+
+A SelectionMethodGUI will use a ThreadedMouseHandler if it requires
+more than a single click to define the selection.  As such it probably
+also needs to provide feedback to the user in the form of updates to
+the graphics window.  It can do this by creating a new vtk display
+layer or connecting to an existing one.  It can control the layer in
+response to mouse clicks in the canvas or on gtk widgets that it
+defines. 
+
+
+FILES:
+
+common/IO/GUI/genericselectGUI.py
+   Defines GenericSelectToolboxGUI, the base class for the gtk
+   selection toolboxes, and SelectionMethodGUI, the base class for the
+   GUIs for each selection method.
+   
+   
+common/IO/GUI/pixelselectionmethodGUI.py
+   Defines SelectionMethodGUI, SingleClickVoxelSelectionMethodGUI
+   and concrete subclasses PointSelectorGUI (gui for PointSelector)
+   and RectangularPrismSelectorGUI (gui for RectangularPrismSelector)
+  
+common/IO/GUI/pixelselecttoolboxGUI.py
+   Defines PixelSelectToolboxGUI, a subclass of
+   GenericSelectToolboxGUI for selecting voxels.
+   
+common/IO/genericselecttoolbox.py
+   Defines GenericSelectToolbox, the base class for the non-gui part
+   of the selection toolboxes.
+   
+common/IO/mousehandler.py
+   Defines MouseHandler and derived low-level mosue handler classes,
+   NullMouseHandler, SingleClickMouseHandler, ThreadedMouseHandler,
+   and KangarooMouseHandler.
+   
+common/IO/pixelselectionmenu.py
+   Defines the VoxelSelection menu and the Select command.
+   
+common/IO/pixelselectiontoolbox.py
+   Defines PixelSelectionToolbox, the derived class of
+   GenericSelectionToolbox for selecting voxels.
+
+common/IO/voxelregionselectiondisplay.py
+   Defines VoxelRegionSelectionDisplay, the DisplayMethod that wraps
+   the vtk methods for drawing a box showing what voxels will be
+   selected.  Will be extended to draw spheres and ellipsoids
+   eventually.
+   
+common/pixelselectioncourier.{C,h,swg}
+   Courier classes for voxel selections.
+ 
+common/pixelselectionmethod.py
+   Defines VoxelSelectionMethod, derived from GenericSelectionMethod,
+   and subclasses for specific voxel selection methods.
+
+common/pixelselectionmod.py
+   Defines SelectionModifier, a registered class for methods of
+   modifying the selected set of voxels without mouse interaction and
+   which are only tangentially related to the topic of this
+   discussion.
+
+   Also defines PixelSelectionOperator, a registered class for ways to
+   combine the current selection with the existing selection.  In GUI
+   methods these can be controlled by modifier keys:  shift-click =>
+   Select, click => SelectOnly, ctrl-click => Toggle, etc.  This class
+   needs to be made generic and moved out of this file so that it can be
+   used for Skeleton selections too.
+   
+image/pixelselectionmethod.py
+   defines ColorSelector.
+
+image/IO/GUI/pixelselectionmethodGUI.py
+   Defines ColorSelectorGUI, the GUI for ColorSelector.

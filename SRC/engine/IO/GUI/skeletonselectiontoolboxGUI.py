@@ -10,7 +10,6 @@
 
 from ooflib.SWIG.common import config
 from ooflib.SWIG.common import switchboard
-from ooflib.SWIG.common.IO.GUI import rubberband3d as rubberband
 from ooflib.common import debug
 from ooflib.common import primitives
 from ooflib.common.IO.GUI import genericselectGUI
@@ -187,48 +186,3 @@ def _makeGUI(self):
     return SkeletonSelectionToolboxGUI(self)
 
 skeletonselmodebase.firstMode().tbclass.makeGUI = _makeGUI
-
-#####################################
-
-## Assignment of rubberband types to SkeletonSelectionRegistration
-## instances.  Most assignments are to *instances*, and as such are
-## not member functions.  The default assignment (no rubberband) is to
-## the class, and so the function needs a 'self' argument.
-
-def _NoRubberBand(self, reg):
-    debug.mainthreadTest()
-    return rubberband.NoRubberBand()
-
-skeletonselectionmethod.SkeletonSelectionRegistration.getRubberBand = \
-    _NoRubberBand
-
-if config.dimension() == 2:
-
-
-    def _RectangleSelectorRB(reg):
-        return rubberband.RectangleRubberBand()
-
-    def _CircleSelectorRB(reg):
-        return rubberband.CircleRubberBand()
-
-    def _EllipseSelectorRB(reg):
-        return rubberband.EllipseRubberBand()
-
-    skeletonselectionmethod.rectangleNodeSelector.getRubberBand = \
-        _RectangleSelectorRB
-    skeletonselectionmethod.circleNodeSelector.getRubberBand = \
-        _CircleSelectorRB
-    skeletonselectionmethod.ellipseNodeSelector.getRubberBand = \
-        _EllipseSelectorRB
-    skeletonselectionmethod.rectangleSegmentSelector.getRubberBand = \
-        _RectangleSelectorRB
-    skeletonselectionmethod.circleSegmentSelector.getRubberBand = \
-        _CircleSelectorRB
-    skeletonselectionmethod.ellipseSegmentSelector.getRubberBand = \
-        _EllipseSelectorRB
-    skeletonselectionmethod.rectangleElementSelector.getRubberBand = \
-        _RectangleSelectorRB
-    skeletonselectionmethod.circleElementSelector.getRubberBand = \
-        _CircleSelectorRB
-    skeletonselectionmethod.ellipseElementSelector.getRubberBand = \
-        _EllipseSelectorRB

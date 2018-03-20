@@ -46,6 +46,7 @@ from ooflib.common.IO import mainmenu
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
 from ooflib.common.IO import placeholder
+from ooflib.common.IO import pointparameter
 from ooflib.common.IO import whoville
 from ooflib.common.IO import xmlmenudump
 from ooflib.engine.IO import meshparameters
@@ -862,7 +863,7 @@ class GhostGfxWindow:
                 'InFocussed',
                 callback=self.zoomInFocussed,
                 secret=1,
-                params=[primitives.PointParameter(
+                params=[pointparameter.PointParameter(
                             'focus', tip='Point to magnify about.')],
                 help='Magnify the image about a mouse click.',
                 discussion="""<para>
@@ -884,7 +885,7 @@ class GhostGfxWindow:
                 'OutFocussed',
                 callback=self.zoomOutFocussed,
                 secret=1,
-                params=[primitives.PointParameter(
+                params=[pointparameter.PointParameter(
                             'focus', tip='Point to demagnify about.')],
                 help='Magnify the image about a mouse click.',
                 discussion="""<para>
@@ -2241,8 +2242,8 @@ class GhostGfxWindow:
     # the previous center.  The control key says to set the center to
     # the focal point.
 
-    def computeTumbleCenter(self, shift, ctrl):
-        if shift:
+    def computeTumbleCenter(self, buttons):
+        if buttons.shift:
             renderer = self.oofcanvas.get_renderer()
             bbox = None
             for layer in self.layers:
@@ -2256,7 +2257,7 @@ class GhostGfxWindow:
                             bbox.swallowPrism(layerbbox)
             if bbox is not None:
                 self.oofcanvas.setTumbleCenter(bbox.center())
-        elif ctrl:
+        elif buttons.ctrl:
             self.oofcanvas.setTumbleAroundFocalPoint()
                 
 

@@ -29,56 +29,13 @@ from ooflib.common.IO import xmlmenudump
 import ooflib.common.microstructure
 import ooflib.common.units
 
-# First, some basic methods: Clear, Undo, Redo
-# These are no longer called from the generic toolbox, but they are
-# still set as menu callbacks in the selectionmodmenu, in common/IO.
-
-def clear(menuitem, microstructure):
-    ms = ooflib.common.microstructure.microStructures[microstructure]
-    selection = ms.getSelectionContext()
-    selection.reserve()
-    selection.begin_writing()
-    try:
-        selection.start()
-        selection.clear()
-    finally:
-        selection.end_writing()
-        selection.cancel_reservation()
-    switchboard.notify('pixel selection changed', selection)
-    switchboard.notify('redraw')
-
-def undo(menuitem, microstructure):
-    ms = ooflib.common.microstructure.microStructures[microstructure]
-    selection = ms.getSelectionContext()
-    selection.reserve()
-    selection.begin_writing()
-    try:
-        selection.undo()
-    finally:
-        selection.end_writing()
-        selection.cancel_reservation()
-    switchboard.notify('pixel selection changed', selection)
-    switchboard.notify('redraw')
-
-def redo(menuitem, microstructure):
-    ms = ooflib.common.microstructure.microStructures[microstructure]
-    selection = ms.getSelectionContext()
-    selection.reserve()
-    selection.begin_writing()
-    try:
-        selection.redo()
-    finally:
-        selection.end_writing()
-        selection.cancel_reservation()
-    switchboard.notify('pixel selection changed', selection)
-    switchboard.notify('redraw')
-
+# First, some basic methods: Clear, Undo, Redo, Invert
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# Selection methods derived from SelectionModifier are automatically
-# put into the PixelSelection menu, via a switchboard call in their
-# Registration's __init__.
+# # Selection methods derived from SelectionModifier are automatically
+# # put into the PixelSelection menu, via a switchboard call in their
+# # Registration's __init__.
 
 class SelectionModifier(registeredclass.RegisteredClass):
     registry = []
@@ -87,59 +44,59 @@ class SelectionModifier(registeredclass.RegisteredClass):
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# OOFMenu callback, installed automatically for each SelectionModifier
-# class by the switchboard callback invoked when the class is
-# registered.
+# # OOFMenu callback, installed automatically for each SelectionModifier
+# # class by the switchboard callback invoked when the class is
+# # registered.
 
-def doSelectionMod(menuitem, microstructure, **params):
-    registration = menuitem.data
-    # create the SelectionModifier
-    selectionModifier = registration(**params)
-    # apply the SelectionModifier
-    ms = ooflib.common.microstructure.microStructures[microstructure].getObject()
-    selection = ms.pixelselection
-    selection.reserve()
-    selection.begin_writing()
-    try:
-        selectionModifier(ms, selection)
-    finally:
-        selection.end_writing()
-        selection.cancel_reservation()
-    # Switchboard signals:
+# def doSelectionMod(menuitem, microstructure, **params):
+#     registration = menuitem.data
+#     # create the SelectionModifier
+#     selectionModifier = registration(**params)
+#     # apply the SelectionModifier
+#     ms = ooflib.common.microstructure.microStructures[microstructure].getObject()
+#     selection = ms.pixelselection
+#     selection.reserve()
+#     selection.begin_writing()
+#     try:
+#         selectionModifier(ms, selection)
+#     finally:
+#         selection.end_writing()
+#         selection.cancel_reservation()
+#     # Switchboard signals:
 
-    # "pixel selection changed" is caught by GUI components that
-    # display the number of selected pixels, or the selected pixels
-    # themselves, or contain widgets whose sensitivity depends on the
-    # selection state.
-    switchboard.notify('pixel selection changed', selection)
-    # "modified pixel selection" indicates that a pixel selection
-    # modifier has been applied.  It's caught by the Pixel Page to
-    # update its historian.
-    switchboard.notify('modified pixel selection', selectionModifier)
-    # "new pixel selection" is similar to "modified pixel selection",
-    # except that it's used by the pixel selection toolbox.
-    ## TODO OPT: Do we really need both "pixel selection changed" and
-    ## "modified pixel selection"?
-    switchboard.notify('new pixel selection', None, None)
+#     # "pixel selection changed" is caught by GUI components that
+#     # display the number of selected pixels, or the selected pixels
+#     # themselves, or contain widgets whose sensitivity depends on the
+#     # selection state.
+#     switchboard.notify('pixel selection changed', selection)
+#     # "modified pixel selection" indicates that a pixel selection
+#     # modifier has been applied.  It's caught by the Pixel Page to
+#     # update its historian.
+#     switchboard.notify('modified pixel selection', selectionModifier)
+#     # "new pixel selection" is similar to "modified pixel selection",
+#     # except that it's used by the pixel selection toolbox.
+#     ## TODO OPT: Do we really need both "pixel selection changed" and
+#     ## "modified pixel selection"?
+#     switchboard.notify('new pixel selection', None, None)
 
-    switchboard.notify('redraw')
+#     switchboard.notify('redraw')
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-class Invert(SelectionModifier):
-    def __call__(self, ms, selection):
-        selection.start()
-        selection.invert()
+# class Invert(SelectionModifier):
+#     def __call__(self, ms, selection):
+#         selection.start()
+#         selection.invert()
 
-registeredclass.Registration(
-    'Invert',
-    SelectionModifier,
-    Invert,
-    ordering=0.0,
-    tip="Select all unselected pixels and unselect all selected pixels.",
-    discussion="""<para>
-    Selected pixels will be unselected and unselelcted ones will be
-    selected.</para>""")
+# registeredclass.Registration(
+#     'Invert',
+#     SelectionModifier,
+#     Invert,
+#     ordering=0.0,
+#     tip="Select all unselected pixels and unselect all selected pixels.",
+#     discussion="""<para>
+#     Selected pixels will be unselected and unselelcted ones will be
+#     selected.</para>""")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -162,6 +119,10 @@ class SelectOnly(PixelSelectionOperator):
 class Unselect(PixelSelectionOperator):
     def operate(self, selection, courier):
         selection.unselect(courier)
+
+class Toggle(PixelSelectionOperator):
+    def operate(self, selection, courier):
+        selection.toggle(courier)
 
 class Intersect(PixelSelectionOperator):
     def operate(self, selection, courier):
@@ -197,13 +158,33 @@ registeredclass.Registration(
     tip="Unselect only the given objects, leaving others selected.")
 
 registeredclass.Registration(
+    "Toggle",
+    PixelSelectionOperator,
+    Toggle,
+    ordering=3,
+    tip="Unselect the given objects if they're currently selected,"
+    " and select them if they're not.")
+
+registeredclass.Registration(
     "Intersect",
     PixelSelectionOperator,
     Intersect,
     ordering=3,
     tip="Unselect all objects that are not in the given set.")
 
+
+def getSelectionOperator(buttons):
+    if buttons.shift:
+        if buttons.ctrl:
+            return Unselect()   # shift and ctrl
+        return Select()         # shift only
+    if buttons.ctrl:
+        return Toggle()         # ctrl only
+    return SelectOnly()         # no modifier keys
+        
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+## TODO: Rewrite to use VoxelSelectionMethod instead of SelectionModifier
 
 class GroupSelector(SelectionModifier):
     def __init__(self, group, operator):
@@ -231,9 +212,6 @@ registeredclass.Registration(
     " with the pixels in a pixel group.")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-## Geometrical selection.  These will have GUI counterparts
-## when we figure out how to click and drag on the 3D canvas.
 
 # The selection methods operate upon sets of pixels defined by shapes
 # from the SelectionShape class.  The SelectionShape subclasses don't

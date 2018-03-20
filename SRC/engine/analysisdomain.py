@@ -33,6 +33,7 @@ from ooflib.common import registeredclass
 from ooflib.common.IO import parameter
 from ooflib.common.IO import pixelgroupparam
 from ooflib.common.IO import placeholder
+from ooflib.common.IO import pointparameter
 from ooflib.common.IO import whoville
 from ooflib.common.IO import xmlmenudump
 from ooflib.engine import analysissample
@@ -465,7 +466,7 @@ registeredclass.Registration(
     SinglePoint,
     ordering=0.5,
     params=[
-        primitives.PointParameter(
+        pointparameter.PointParameter(
             'point', tip='Undisplaced position of the sample point.')
     ],
     sampling=(analysissample.PointSampleSet,),

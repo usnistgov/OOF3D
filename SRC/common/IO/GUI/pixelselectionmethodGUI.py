@@ -12,125 +12,63 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov. 
 
+# See NOTES/selection_machinery.txt
+
 from ooflib.SWIG.common import config
-from ooflib.common import debug
 from ooflib.SWIG.common import ooferror
+from ooflib.common import debug
 from ooflib.common import mainthread
 from ooflib.common import pixelselectionmethod
-from ooflib.common import subthread
-from ooflib.common import thread_enable
 from ooflib.common.IO import mousehandler
 from ooflib.common.IO import voxelregionselectiondisplay
+from ooflib.common.IO.GUI import genericselectGUI
 from ooflib.common.IO.GUI import pixelselectparamwidgets
-from ooflib.common.IO.GUI import parameterwidgets
-from ooflib.common.IO.GUI import regclassfactory
-from ooflib.SWIG.common import lock
-from ooflib.SWIG.common import switchboard
 import gtk
 import math
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# Each SelectionMethodGUI should use this decorator. The argument(s)
-# of the decorator are the SelectionMethods that the gui applies to.
-# The decorator adds a "gui" member to the SelectionMethod's
-# registration.
 
-def selectionGUIfor(*_selectorClasses):
-    def decorator(guicls):
-        for cls in _selectorClasses:
-            cls.registration.gui = guicls
-        return guicls
-    return decorator
-    
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-## TODO:  Update these comments.
-# Subclasses of SelectionMethodGUI are in charge of managing what
-# state a particular tool for selecting regions of pixels (or voxels)
-# is in, and they also act as MouseHandlers for that particular tool.
-# They should have a class-level 'selectionMethod' datum that
-# indicates which PixelSelectionMethod they apply to.
-
-# Some selection methods/tools (e.g. that to select a rectangular
-# prism of voxels) require the user to perform multiple steps
-# (e.g. create a new box-shaped region, edit that region using the
-# mouse, finish editing the region and finally select all voxels
-# within that region). Therefore, we must somehow keep track of which
-# step the user is currently performing. It makes sense to have this
-# tracking done by an object that is registered with (but separate
-# from) the PixelSelectToolboxGUI that the user is working with, and
-# to have this object's class associated with the selection
-# method/tool whose GUI it is managing.  So, we let this object be an
-# instance of a certain SelectionMethodGUI subclass, and we associate
-# each subclass of SelectionMethodGUI
-# (e.g. RectangularPrismSelectorGUI) with a subclass of
-# SelectionMethod (e.g. RectangularPrismSelector) using the dictionary
-# selmethGUIdict.
-
-class SelectionMethodGUI(mousehandler.MouseHandler):
-    # Base class for RectangularPrismSelectorGUI, SphereSelectorGUI,
-    # etc.
-    def __init__(self, toolbox):
-        self.toolbox = toolbox
-    def gfxwindow(self):
-        return self.toolbox.gfxwindow()
-    
-    def __call__(self, params, scope=None, name=None, verbose=False):
-        # This function may be redefined for derived classes.  It
-        # should return a ParameterWidget of some sort.  It must be
-        # called __call__ because it's called by
-        # RegisteredClassFactory.makeWidget, which thinks it's
-        # instantiating an object of a class.  The default version
-        # here does what RegisteredClassFactory does if it doesn't a
-        # specialized widget isn't defined.
-        return parameterwidgets.ParameterTable(params, scope, name, verbose)
-    
-    # def cancel(self):
-    #     # This function should be redefined for derived classes. It
-    #     # should be used to notify a SelectionMethodGUI to cancel any
-    #     # subthreads it started, and should be called when the
-    #     # SelectionMethodGUI's toolboxGUI is being closed.
-    #     pass
-
+class SingleClickVoxelSelectionMethodGUI(genericselectGUI.SelectionMethodGUI):
     def mouseHandler(self):
-        return mousehandler.NullMouseHandler()
+        return mousehandler.SingleClickMouseHandler(self)
+    def getVoxel(self, x, y):
+        viewobj = mainthread.runBlock(self.gfxwindow().oofcanvas.get_view)
+        point = mainthread.runBlock(self.gfxwindow().oofcanvas.display2Physical,
+                                    (viewobj, x, y))
+        who = self.gfxwindow().topwho(*self.methodRegistration.whoclasses)
+        voxel = self.gfxwindow().findClickedCellCenter(who, point, viewobj)
+        return voxel
 
-    def close(self):
-        # close() is called whent the toolbox is closing.  It should
-        # do any necessary cleanup.  It can assume that the
-        # mousehandler (if any) has already been stopped.
-        pass
-
-    # activate() and deactivate() are called when the toolbox is
-    # activated and deactivated.
-    def activate(self):
-        pass
-    def deactivate(self):
-        pass
-
-    def sensitize(self):
-        pass
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# TODO: Have the done function in RectangularPrismSelectorGUI call the
-# menu item to select a rectangular-prism-shaped region of
-# voxels. Right now, we just have a little click-and-drag-able curio
-# that does nothing useful.
+@genericselectGUI.selectionGUIfor(pixelselectionmethod.PointSelector)
+class PointSelectorGUI(SingleClickVoxelSelectionMethodGUI):
+    # def __init__(self, toolbox):
+    #     SelectionMethodGUI.__init__(self, toolbox)
+
+    def up(self, x, y, buttons):
+        voxel = self.getVoxel(x, y)
+        self.toolbox.setParamValues(point=voxel)
+        self.toolbox.invokeMenuItem(pixelselectionmethod.PointSelector(voxel))
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # TODO: Allow the user to adjust the box by selecting edges and
 # corners too (see TODOs in common/IO/canvaslayer.C for some of the
 # BoxWidgetLayer functions).
 
-@selectionGUIfor(pixelselectionmethod.RectangularPrismSelector)
-class RectangularPrismSelectorGUI(SelectionMethodGUI):
-    # targetName = pixelselectionmethod.RectangularPrismSelector
-    def __init__(self, toolbox):
-        SelectionMethodGUI.__init__(self, toolbox)
-        self.widget = None
+from ooflib.common import selectionshape
 
-        # ID of the vtk cell currently being edited.
+@genericselectGUI.selectionGUIfor(pixelselectionmethod.RectangularPrismSelector)
+class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
+    def __init__(self, toolbox):
+        # toolbox is a PixelSelectToolboxGUI object.
+        genericselectGUI.SelectionMethodGUI.__init__(self, toolbox)
+        self.widget = None      # gtk widget in the toolbox
+
+        # id of the vtk cell currently being edited.
         self.cellID = None
 
 
@@ -168,17 +106,39 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         return mousehandler.KangarooMouseHandler(self, ("up", "move", "down"))
 
     def start(self):
+        debug.dumpCaller()
         self._editing = True
         self.layer.start()
         self.sensitize()
         self.gfxwindow().oofcanvas.render()
+        self.voxelbox = self.layer.get_box()
+        self.setPointWidgets()
 
     def done(self):
+        # Call the menu item that actually makes the selection.
         self._editing = False
         self.layer.stop()
         self.sensitize()
-        ## TODO: Make the selection!
-        self.gfxwindow().oofcanvas.render()
+        ## TODO: Converting from CRectangularPrism to Coords here is
+        ## clumsy. The Coords are converted back to a
+        ## CRectangularPrism when the BoxSelection courier is created
+        ## in RectangularPrismSelectorGUI.select in
+        ## pixelselectionmethod.py.  The only reason for converting
+        ## here is that we don't have a gtk widget for
+        ## CRectangularPrism parameters.
+
+        ## TODO: Creating the RectangularPrismSelector here without
+        ## using the Registration is odd.  The actual parameters in
+        ## the Registration are never used.  This could use
+        ## toolbox.getParamValues() or just instantiate the object
+        ## from the Registration.
+        
+        self.toolbox.invokeMenuItem(
+            pixelselectionmethod.RectangularPrismSelector(
+                self.voxelbox.lowerleftback(),
+                self.voxelbox.upperrightfront()))
+        # There's no need to redraw, since the menu item will do it.
+        # self.gfxwindow().oofcanvas.render()
         
     def cancel(self):
         self._editing = False
@@ -189,26 +149,34 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
     def reset(self):
         self.layer.reset()
         self.gfxwindow().oofcanvas.render()
+        self.voxelbox = self.layer.get_box()
+        self.setPointWidgets()
 
     def activate(self):
         self.layer.activate()
     def deactivate(self):
         self.layer.deactivate()
+
+    def setPointWidgets(self):
+        # Copy coordinates from self.voxelbox (the vtk box in the
+        # canvas) to the parameters displayed in the gtk toolbox.
+        self.toolbox.setParamValues(corner0=self.voxelbox.lowerleftback(),
+                                    corner1=self.voxelbox.upperrightfront())
         
-    def up(self, x, y, button, shift, ctrl):
-        # Commands which need to be run when an 'up' event is being
-        # processed.
+    def up(self, x, y, buttons):
+        # An 'up' event is being processed.
         self.last_x = None
         self.last_y = None
         self.cellID = None
         return
         
-    def down(self, x, y, button, shift, ctrl):
-        # Commands which need to be run when a 'down' event is being
-        # processed.
+    def down(self, x, y, buttons):
+        # A 'down' event is being processed.
         viewobj = mainthread.runBlock(self.gfxwindow().oofcanvas.get_view)
         point = mainthread.runBlock(self.gfxwindow().oofcanvas.display2Physical,
                                     (viewobj, x, y))
+        # Get the clicked position on the box widget and the ID of the
+        # clicked cell.
         ## TODO: We know the layer, so use a (new) findClickedCell
         ## method that takes a layer arg instead of a layer class arg.
         (self.cellID, click_pos, self.layer) = \
@@ -217,8 +185,11 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
                    point, viewobj)
         self.last_x = x;
         self.last_y = y;
+        self.voxelbox = self.layer.get_box()
+        self.setPointWidgets()
+        
 
-    def move(self, x, y, button, shift, ctrl):
+    def move(self, x, y, buttons):
         viewobj = mainthread.runBlock(self.gfxwindow().oofcanvas.get_view)
         last_mouse_coords = mainthread.runBlock(
             self.gfxwindow().oofcanvas.display2Physical, (viewobj, self.last_x,
@@ -251,7 +222,5 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         self.last_x = x;
         self.last_y = y;
         mainthread.runBlock(self.gfxwindow().oofcanvas.render)
-
-   
-                                      
-    
+        self.voxelbox = self.layer.get_box()
+        self.setPointWidgets()

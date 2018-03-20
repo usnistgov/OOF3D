@@ -10,6 +10,7 @@
 
 # engine specific GUI initialization code
 
+import sys
 from ooflib.SWIG.common import config
 from ooflib.common import debug
     
@@ -55,7 +56,8 @@ import ooflib.engine.IO.GUI.movenodeGUI
 import ooflib.engine.IO.GUI.pinnodesGUI
 import ooflib.engine.IO.GUI.pixelinfoGUI
 import ooflib.engine.IO.GUI.skeletoninfoGUI
-import ooflib.engine.IO.GUI.skeletonselectiontoolboxGUI
+print >> sys.stderr, "Not loading skeletonselectiontoolboxGUI"
+#import ooflib.engine.IO.GUI.skeletonselectiontoolboxGUI
 
 # GUI page definitions.
 import ooflib.engine.IO.GUI.analyzePage

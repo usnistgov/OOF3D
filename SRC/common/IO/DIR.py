@@ -54,19 +54,22 @@ else:
                  'view.swg', 'canvaslayers.swg', 'gridsourcebase.swg', 
                  'gridlayers.swg', 'imageformat.swg']
 
-    pyfiles = ['clipplaneclickanddragdisplay.py', 'automatic.py', 'binarydata.py', 'bitmapdisplay.py',
-    'bitoverlaydisplay.py', 'colordiffparameter.py', 'colormap.py',
-    'datafile.py', 'display.py',
-    'genericselecttoolbox.py', 'gfxmanager.py', 'ghostgfxwindow.py',
-    'mainmenu.py', 'menudump.py', 'menuparser.py',
-    'microstructureIO.py', 'microstructuremenu.py', 'oofmenu.py',
-    'output.py', 'parameter.py',
-    'pixelgroupmenu.py', 'pixelgroupparam.py', 'pixelinfo.py', 'pixelinfodisplay.py',
-    'progressbar_delay.py', 'questioner.py', 'reporter.py', 'reportermenu.py',
-    'scriptloader.py', 'placeholder.py', 'socket2me.py',
-    'activityviewermenu.py', 'topwho.py', 'microstructuredisplay.py',
-    'typename.py', 'viewertoolbox.py', 'voxelregionselectiondisplay.py', 'whoville.py', 'words.py',
-    'reporterIO.py', 'xmlmenudump.py', 'automaticdoc.py']
+    pyfiles = [
+        'activityviewermenu.py', 'automatic.py', 'automaticdoc.py',
+        'binarydata.py', 'bitmapdisplay.py', 'bitoverlaydisplay.py',
+        'clipplaneclickanddragdisplay.py', 'colordiffparameter.py',
+        'colormap.py', 'datafile.py', 'display.py', 'genericselecttoolbox.py',
+        'gfxmanager.py', 'ghostgfxwindow.py', 'mainmenu.py', 'menudump.py',
+        'menuparser.py', 'microstructureIO.py', 'microstructuredisplay.py',
+        'microstructuremenu.py', 'oofmenu.py', 'output.py', 'parameter.py',
+        'pixelgroupmenu.py', 'pixelgroupparam.py', 'pixelinfo.py',
+        'pixelinfodisplay.py', 'placeholder.py', 'pointparameter.py',
+        'pointparameter.py', 'progressbar_delay.py', 'questioner.py',
+        'reporter.py', 'reporterIO.py', 'reportermenu.py', 'scriptloader.py',
+        'socket2me.py', 'topwho.py', 'typename.py', 'viewertoolbox.py',
+        'voxelregionselectiondisplay.py', 'whoville.py', 'words.py',
+        'xmlmenudump.py'
+    ]
 
     swigpyfiles = ['bitoverlay.spy', 'view.spy', 'imageformat.spy']
 

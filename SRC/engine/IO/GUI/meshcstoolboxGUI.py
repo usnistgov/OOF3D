@@ -12,7 +12,6 @@
 # clicks, draws paths, etc.
 
 from ooflib.SWIG.common import switchboard
-from ooflib.SWIG.common.IO.GUI import rubberband
 from ooflib.common import debug
 from ooflib.common import primitives
 from ooflib.common import utils
@@ -187,7 +186,6 @@ class CrossSectionToolboxGUI(toolboxGUI.GfxToolbox,
         if not self.active:
             toolboxGUI.GfxToolbox.activate(self)
             # self.gfxwindow().setMouseHandler(self)
-            self.gfxwindow().setRubberband(rubberband.LineRubberBand())
             self.sb_callbacks = [
                 switchboard.requestCallbackMain( (self.gfxwindow(),
                                                   "layers changed"),
@@ -208,7 +206,6 @@ class CrossSectionToolboxGUI(toolboxGUI.GfxToolbox,
         if self.active:
             toolboxGUI.GfxToolbox.deactivate(self)
             # self.gfxwindow().removeMouseHandler()
-            self.gfxwindow().setRubberband(rubberband.NoRubberBand())
             for s in self.sb_callbacks:
                 switchboard.removeCallback(s)
             self.sb_callbacks = []

@@ -28,9 +28,7 @@ from ooflib.common.IO import xmlmenudump
 ############################
 
 ## Common base class for the different types of skeleton selection
-## method registrations.  The only purpose of this base class is so
-## that a common default rubberband function can be assigned to it in
-## engine/IO/GUI/skeletonselectiontoolboxGUI.py.
+## method registrations.  
 
 class SkeletonSelectionRegistration(registeredclass.Registration):
     def __init__(self, name, regclass, subclass, ordering, params=[],

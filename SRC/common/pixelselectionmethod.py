@@ -9,61 +9,83 @@
 # oof_manager@nist.gov. 
 
 
-# Each way of selecting pixels is described by a SelectionMethod
-# subclass.  SelectionMethod is a RegisteredClass.  The
-# PixelSelectToolbox builds an OOFMenu with a menu item for each
-# subclass.  The arguments to the menu item are the parameters for the
-# SelectionMethod plus a list of Points.  Invoking the menu item
-# creates an instance of the method and calls its select() function on
-# the list of points.
+# Each way of selecting pixels is described by a VoxelSelectionMethod
+# subclass.  VoxelSelectionMethod is a RegisteredClass.  Instances of
+# the subclasses are used as arguments to the Select command in the
+# VoxelSelection menu, defined in pixelselectionmenu.py.  Selection
+# methods that can use mouse input can have GUIs assigned to them.
+# See SelectionMethodGUI and selectionGUIfor in genericselectGUI.py.
 
-# Each Registration for a SelectionMethod subclass needs to have an
-# 'events' attribute, which consists of a list of strings indicating
-# which mouse events it requires.  Allowed events are 'down', 'move',
-# and 'up'.
-
-# If a SelectionMethod requires a rubberband to be drawn in graphics
-# mode, its Registration must have a getRubberBand function added to
-# it when graphics code is loaded.  See
-# common/IO/GUI/pixelselecttoolboxGUI.py for examples.
+# See NOTES/selection_machinery.txt
 
 from ooflib.SWIG.common import config
 if config.dimension() == 2:
     from ooflib.SWIG.common import brushstyle
-from ooflib.SWIG.common import pixelselectioncourier
+from ooflib.SWIG.common import coord
+from ooflib.SWIG.common import geometry
 from ooflib.SWIG.common import ooferror
+from ooflib.SWIG.common import pixelselectioncourier
 from ooflib.SWIG.common.IO import vtkutils
 from ooflib.common import debug
 from ooflib.common import primitives
 from ooflib.common import registeredclass
 from ooflib.common.IO import parameter
+from ooflib.common.IO import pointparameter
 from ooflib.common.IO import xmlmenudump
 import math
 
 ###################
 
-# Base class for pixel selection methods
+# Base class for generic methods for selecting objects in the graphics
+# window.  Subclasses should have registries.  Registrations should
+# have a 'whoclasses' member that is a list or tuple of the names of the
+# WhoClasses that the selector operates on.
 
-class SelectionMethod(registeredclass.RegisteredClass):
+class GenericSelectionMethod(registeredclass.RegisteredClass):
+    def getSource(self, gfxwindow):
+        return gfxwindow.topwho(*self.registration.whoclasses)
+    def getSourceName(self, gfxwindow):
+        src = self.getSource(gfxwindow)
+        if src is not None:
+            return src.path()
+
+#################
+
+# Base class for voxel selection methods
+
+class VoxelSelectionMethod(GenericSelectionMethod):
     registry = []
     
-    def select(self, immidge, pointlist, selector):
-        # immidge is the Who for the OOFImage or Microstructure on
-        # which to operate.  pointlist is the list of points received
-        # from the mouse.  selector is the function to call with the
-        # list of selected pixels.
-        pass
+    # def select(self, immidge, pointlist, selector):
+    #     # immidge is the Who for the OOFImage or Microstructure on
+    #     # which to operate.  pointlist is the list of points received
+    #     # from the mouse.  selector is the function to call with the
+    #     # list of selected pixels.
+    #     pass
+
+    # Source is a Microstructure or Image.  Selection is the
+    # Microstructure's PixelSelection object. Operator is a
+    # PixelSelectionOperator, from pixelselectionmod.py.  Called from
+    # pixelselectionmenu.select(), which is the callback for the menu
+    # item OOF.VOxelSelection.Select.
+    def select(self, source, selection, operator):
+        raise ooferror.ErrPyProgrammingError(
+            "'select' isn't defined for " + self.registration.name)
+
+    
+## TODO: Rename to VoxelSelectionRegistration
 
 class PixelSelectionRegistration(registeredclass.Registration):
     def __init__(self, name, subclass, ordering, params=[], secret=0, **kwargs):
-        registeredclass.Registration.__init__(self,
-                                              name=name,
-                                              registeredclass=SelectionMethod,
-                                              subclass=subclass,
-                                              ordering=ordering,
-                                              params=params,
-                                              secret=secret,
-                                              **kwargs)
+        registeredclass.Registration.__init__(
+            self,
+            name=name,
+            registeredclass=VoxelSelectionMethod,
+            subclass=subclass,
+            ordering=ordering,
+            params=params,
+            secret=secret,
+            **kwargs)
 
 ###################
 
@@ -71,34 +93,20 @@ class PixelSelectionRegistration(registeredclass.Registration):
 # accept a list of points, it only receives one point because the
 # registration only requests 'up'.
 
-class PointSelector(SelectionMethod):
-    def select(self, immidge, gfxwindow, pointlist, view, selector):
-        # 'selector' is a PixelSelectionContext method, 'select',
-        # 'unselect', 'toggle', etc.
-        ms = immidge.getMicrostructure()
-        if config.dimension() == 2:
-            mpt = pointlist[0]
-            selector(pixelselectioncourier.PointSelection(ms, mpt))
-        else:                   # 3D
-            ## This needs to use findClickedCellCenter instead of
-            ## findClickedPosition.  findClickedPosition will return a
-            ## coord on the boundary of a voxel, which might be
-            ## ambiguous in PointSelection if not all of the voxels in
-            ## the image are displayed.  If the point in the center of
-            ## the voxel is returned instead, it will always be
-            ## resolved correctly.
-            mpt = gfxwindow.findClickedCellCenter(immidge, pointlist[0], view)
-            if mpt is not None:
-                selector(pixelselectioncourier.PointSelection(ms, mpt))
-            else:
-                selector(pixelselectioncourier.PointlessSelection(ms));
+class PointSelector(VoxelSelectionMethod):
+    def __init__(self, point):
+        self.point = point
+    def select(self, source, selection, operator):
+        ms = source.getMicrostructure()
+        operator.operate(selection,
+                         pixelselectioncourier.PointSelection(ms, self.point))
 
 PixelSelectionRegistration(
     'Point',
     PointSelector,
     ordering=0.1,
-    events=['up'],
     whoclasses=['Microstructure', 'Image'],
+    params=[pointparameter.PointParameter('point')],
     tip="Select a single pixel.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/common/reg/pointselect.xml')
     )
@@ -271,30 +279,31 @@ if config.dimension() == 2:
 ## involve giving the SelectionMethod a more active role in the
 ## process.  It will have to tell PixelSelectToolboxGUI.finish_up that
 ## it isn't really finished until after the third mouse up, and fix up
-## the rubber bands.
+## the rubber bands.  NEW OOF3D MOUSEHANDLER AND TOOLBOX ARCHITECTURE
+## CAN DO THIS, PROBABLY.
 
-elif config.dimension() == 3:
 
-    BoxSelection = pixelselectioncourier.BoxSelection
-    class RectangularPrismSelector(SelectionMethod):
-        def select(self, immidge, pointlist, selector):
-            # Select pixels whose centers are in the rectangular prism
-            # defined by the points.
-            ms = immidge.getMicrostructure()
-            isize = ms.sizeInPixels()
-            psize = primitives.Point(*ms.sizeOfPixels())
-            selector(BoxSelection(ms, pointlist[0], pointlist[-1]))
+class RectangularPrismSelector(VoxelSelectionMethod):
+    def __init__(self, corner0, corner1):
+        self.corner0 = corner0
+        self.corner1 = corner1
+    def select(self, source, selection, operator):
+        # operator is a PixelSelectionOperator from pixelselectionmod.py
+        ms = source.getMicrostructure()
+        operator.operate(
+            selection,
+            pixelselectioncourier.BoxSelection(
+                ms,
+                geometry.CRectangularPrism(self.corner0, self.corner1)))
 
-    rectangularPrismSelectorRegistration = PixelSelectionRegistration(
-        'Box',
-        RectangularPrismSelector,
-        ordering=0.2,
-        events=['down', 'up'],
-        whoclasses=['Microstructure', 'Image'],
-        tip="Click to select a box-shaped region."
-        )
+PixelSelectionRegistration(
+    'Box',
+    RectangularPrismSelector,
+    ordering=0.2,
+    params=[pointparameter.PointParameter('corner0'),
+            pointparameter.PointParameter('corner1')],
+    whoclasses=['Microstructure', 'Image'],
+    tip="Click to select a box-shaped region."
+    )
 
-    def down_RectanglePrismSelector(x, y, shift, ctrl):
-        debug.fmsg()
-        
-    
+

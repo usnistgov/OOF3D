@@ -55,7 +55,9 @@ class VoxelRegionSelectWidget(parameterwidgets.ParameterWidget):
         parameterwidgets.ParameterWidget.__init__(self, base, scope=scope, name=name, verbose=verbose)
 
         # A ParameterTable for the params passed into the constructor.
-        self.parameterTable = parameterwidgets.ParameterTable(params, scope=scope, name=name, showLabels=showLabels, data=data, verbose=verbose)
+        self.parameterTable = parameterwidgets.ParameterTable(
+            params, scope=scope, name=name,
+            showLabels=showLabels, data=data, verbose=verbose)
         base.pack_start(self.parameterTable.gtk, expand=0, fill=0)
 
         # This is a VBox holding extra GUI content that we want a
@@ -72,7 +74,7 @@ class VoxelRegionSelectWidget(parameterwidgets.ParameterWidget):
 Click the Start button.
 Adjust the box widget in the canvas by
 clicking and dragging its faces.
-Click Done" to select all the voxels within the box."""
+Click Done to select all the voxels in the box."""
 )
         howTo.set_justify(gtk.JUSTIFY_LEFT)
         self.extraGUIbox.pack_start(howTo, fill=0, expand=0, padding=2)
@@ -163,7 +165,9 @@ Click Done" to select all the voxels within the box."""
         # TODO: Actually make the selection
 
     def sensitize(self):
-        self.startbutton.set_sensitive(not self.selectionmethodGUI.editing())
-        self.donebutton.set_sensitive(self.selectionmethodGUI.editing())
-        self.cancelbutton.set_sensitive(self.selectionmethodGUI.editing())
-        self.resetbutton.set_sensitive(self.selectionmethodGUI.editing())
+        if self.selectionmethodGUI is not None:
+            self.startbutton.set_sensitive(
+                not self.selectionmethodGUI.editing())
+            self.donebutton.set_sensitive(self.selectionmethodGUI.editing())
+            self.cancelbutton.set_sensitive(self.selectionmethodGUI.editing())
+            self.resetbutton.set_sensitive(self.selectionmethodGUI.editing())
