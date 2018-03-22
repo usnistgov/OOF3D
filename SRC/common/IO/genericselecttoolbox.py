@@ -49,9 +49,9 @@ import math
 
 # Selections are made to Selection objects that live inside some
 # source object.  For example, the pixel selection lives inside a
-# Microstructure.  Derived classes must provide a getSource() method
-# that returns the Who object that contains the selection (probably a
-# Microstructure or Skeleton).
+# Microstructure.  Derived classes must provide a getSelectionSource()
+# method that returns the Who object that contains the selection
+# (probably a Microstructure or Skeleton).
 
 class GenericSelectToolbox(toolbox.Toolbox):
     def __init__(self, name, method, menu, gfxwindow,
@@ -88,7 +88,7 @@ class GenericSelectToolbox(toolbox.Toolbox):
             switchboard.removeCallback(s)
 
     def getSourceName(self):
-        source = self.getSource()
+        source = self.getSelectionSource()
         if source is not None:
             return source.path()
 
@@ -203,7 +203,7 @@ class GenericSelectToolbox(toolbox.Toolbox):
 
     def getSelection(self):
         # This returns the object that holds the current selection.
-        source = self.getSource()
+        source = self.getSelectionSource()
         if source is not None:
             return source.getSelectionContext(**self.extrakwargs)
 

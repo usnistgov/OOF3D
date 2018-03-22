@@ -261,8 +261,9 @@ void OOFCanvasLayer::setPropVisibility(bool visible) {
     // If the new value is the same as the old one, don't call
     // SetVisibility because it'll update the vtk modification time
     // unnecessarily.
-    if((bool) props[i]->GetVisibility() != visible)
+    if((bool) props[i]->GetVisibility() != visible) {
       props[i]->SetVisibility(visible);
+    }
   }
 }
 
@@ -1560,7 +1561,6 @@ ImageCanvasLayer::ImageCanvasLayer(
   addProp(actor);
   actor->SetMapper(mapper);
   locator->LazyEvaluationOn();
-
   // Build the initial pipeline, with no image and no excluded voxels.
   pipelineLock.acquire();
   downstreamSocket()->SetInputConnection(gridifier->GetOutputPort());

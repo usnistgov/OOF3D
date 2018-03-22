@@ -1689,6 +1689,12 @@ class GhostGfxWindow:
                     break
         return layerlist
 
+    def allWhoClassLayers(self, *whoclasses):
+        return [layer for layer in self.layers
+                if (not layer.hidden
+                    and (layer.who().getClassName() in whoclasses)
+                    and not isinstance(layer.who(), whoville.WhoProxy))]
+
     def topmost(self, *whoclasses):
         # Find the topmost layer whose 'who' belongs to the given
         # whoclass.  Eg, topmost('Image') returns the topmost image.
@@ -1701,6 +1707,14 @@ class GhostGfxWindow:
             for method in displaymethods:
                 if isinstance(self.layers[i], method):
                     return self.layers[i]
+
+    def allWhoClassNames(self):
+        whoclasses = set()
+        for layer in self.layers:
+            who = layer.who()
+            if (not isinstance(who, whoville.WhoProxy) and not layer.hidden):
+                whoclasses.add(who.getClassName())
+        return whoclasses
 
     #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -1878,6 +1892,23 @@ class GhostGfxWindow:
                         clickErrorHandler,
                         (self.oofcanvas.findClickedCellCenter,
                          point, view, layer.canvaslayer))
+        finally:
+            self.releaseGfxLock()
+
+    def findClickedCellCenterMulti(self, layers, point, view):
+        self.acquireGfxLock()
+        canvaslayers = [layer.canvaslayer for layer in layers]
+        try:
+            pos, which = mainthread.runBlock(
+                clickErrorHandler,
+                (self.oofcanvas.findClickedCellCenterMulti,
+                 point, view, canvaslayers))
+            if which == -1:
+                # Nothing was clicked
+                debug.fmsg("Click was off target!")
+                return (None, None)
+            return (layers[which].who(), pos)
+            
         finally:
             self.releaseGfxLock()
 

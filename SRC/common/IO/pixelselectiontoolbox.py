@@ -51,7 +51,7 @@ class PixelSelectToolbox(genericselecttoolbox.GenericSelectToolbox):
     #     switchboard.notify("new pixel selection", method, pointlist)
     #     switchboard.notify("redraw")
 
-    def getSource(self):
+    def getSelectionSource(self):
         # Return the Microstructure of the top Microstructure or Image
         # layer.
         who = self.gfxwindow().topwho('Microstructure', 'Image')

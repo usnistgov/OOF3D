@@ -1045,7 +1045,7 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
         self.datalock.logNewEvent_acquire()
         try:
             self.downed = False
-            self.eventlist.append(('up', x, y, buttons.shift, buttonsctrl))
+            self.eventlist.append(('up', x, y, buttons.shift, buttons.ctrl))
         finally:
             self.datalock.logNewEvent_release()
         

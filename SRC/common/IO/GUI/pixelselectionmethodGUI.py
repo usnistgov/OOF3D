@@ -33,13 +33,22 @@ class SingleClickVoxelSelectionMethodGUI(genericselectGUI.SelectionMethodGUI):
     def mouseHandler(self):
         return mousehandler.SingleClickMouseHandler(self)
     def getVoxel(self, x, y):
+        # getVoxel returns a tuple containing the Who object that was
+        # clicked on and the 3D position of the click.
         viewobj = mainthread.runBlock(self.gfxwindow().oofcanvas.get_view)
         point = mainthread.runBlock(self.gfxwindow().oofcanvas.display2Physical,
                                     (viewobj, x, y))
-        who = self.gfxwindow().topwho(*self.methodRegistration.whoclasses)
-        voxel = self.gfxwindow().findClickedCellCenter(who, point, viewobj)
-        return voxel
 
+        # Get all layers displaying the target objects, from bottom to
+        # top in the window's layer ordering.
+        layers = self.gfxwindow().allWhoClassLayers(
+            *self.methodRegistration.whoclasses)
+        debug.fmsg("layers=", layers)
+        # Find the position of the click on the topmost object
+        result = self.gfxwindow().findClickedCellCenterMulti(
+            layers, point, viewobj)
+        debug.fmsg("result=", result)
+        return result
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -49,9 +58,10 @@ class PointSelectorGUI(SingleClickVoxelSelectionMethodGUI):
     #     SelectionMethodGUI.__init__(self, toolbox)
 
     def up(self, x, y, buttons):
-        voxel = self.getVoxel(x, y)
+        who, voxel = self.getVoxel(x, y)
         self.toolbox.setParamValues(point=voxel)
-        self.toolbox.invokeMenuItem(pixelselectionmethod.PointSelector(voxel))
+        self.toolbox.invokeMenuItem(who,
+                                    pixelselectionmethod.PointSelector(voxel))
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -134,6 +144,7 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         ## from the Registration.
         
         self.toolbox.invokeMenuItem(
+            self.toolbox.getSelectionSource(),
             pixelselectionmethod.RectangularPrismSelector(
                 self.voxelbox.lowerleftback(),
                 self.voxelbox.upperrightfront()))

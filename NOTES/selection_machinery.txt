@@ -64,10 +64,8 @@ extra arguments, which must be provided when the GenericSelectToolbox
 init is called.
 
 The derived non-gui GenericSelectToolbox classes must provide a
-getSource() method, which returns the Who object that contains the
-selection object that the toolbox commands operate on, and a signal()
-method that is called after selections are made and sends the relevant
-switchboard signals.
+getSelectionSource() method, which returns the Who object that
+contains the selection object that the toolbox commands operate on.
 
 The GUI toolbox has a RegisteredClassFactory that switches between
 selection methods (the subclasses of GenericSelectionMethod).  Each
@@ -158,7 +156,6 @@ common/IO/GUI/genericselectGUI.py
    Defines GenericSelectToolboxGUI, the base class for the gtk
    selection toolboxes, and SelectionMethodGUI, the base class for the
    GUIs for each selection method.
-   
    
 common/IO/GUI/pixelselectionmethodGUI.py
    Defines SelectionMethodGUI, SingleClickVoxelSelectionMethodGUI

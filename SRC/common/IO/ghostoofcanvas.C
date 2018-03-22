@@ -982,7 +982,6 @@ vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
 } // end GhostOOFCanvas::findClickedActors
 
 
-
 void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
 				      OOFCanvasLayer *layer,
 				      vtkSmartPointer<vtkCell> &cell, 
@@ -1029,8 +1028,12 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
     // The locator and dataset must be obtained *after* the view is
     // set.
     vtkSmartPointer<vtkDataSet> dataset = layer->get_pickable_dataset();
-    // dataset->Update();
+    // oofcerr << "GhostOOFCanvas::findClickedCell_: dataset=" << std::endl;
+    // dataset->Print(std::cerr);
     vtkSmartPointer<vtkAbstractCellLocator> locator = layer->get_locator();
+    // oofcerr << "GhostOOFCanvas::findClickedCell_: locator=" << std::endl;
+    // locator->Print(std::cerr);
+    
     assert(locator.GetPointer() != 0);
     vtkSmartPointer<vtkCellPicker> picker = 
       vtkSmartPointer<vtkCellPicker>::New();
@@ -1041,7 +1044,7 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
     // Compute the display coordinates of the click.
     double x, y;
     physical2Display(*click, x, y);
-
+    
     // Try to pick something.
     if(picker->Pick(x, y, 0.0, renderer)) {
       vtkSmartPointer<vtkProp3DCollection> props = picker->GetProp3Ds();
@@ -1088,12 +1091,14 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
 	clickOk = true;
       }	// end if nprops > 0
     } // end if(picker->Pick(...))
-    // else {			// picker->Pick returned 0
-    //   oofcerr << "GhostOOFCanvas::findClickedCell_: Pick failed!"
-    // 	      << std::endl;
-    // }
+    else {			// picker->Pick returned 0
+      oofcerr << "GhostOOFCanvas::findClickedCell_: Pick failed!"
+    	      << std::endl;
+    }
   }
   catch(...) {
+    oofcerr << "GhostOOFCanvas::findClickedCell_: caught an error!"
+	    << std::endl;
     if(!propIsRendered) {
       renderer->RemoveViewProp(prop);
     }
@@ -1146,7 +1151,6 @@ Coord *GhostOOFCanvas::findClickedCellCenter(
   vtkIdType cellId;
   int subId;
   findClickedCell_(click, view, layer, cell, pos, cellId, subId);
-  
   Coord pcenter;		// parametric center
   cell->GetParametricCenter(pcenter);
   Coord center;
@@ -1214,6 +1218,64 @@ vtkSmartPointer<vtkIdList> GhostOOFCanvas::findClickedFace(
   tetlayer.destroy();
   return cell->GetPointIds();
 } // GhostOOFCanvas::findClickedFace
+
+
+// findClickedCellMulti_ is like findClickedCell_, but it searches
+// through a list of OOFCanvasLayer and returns the index of the layer
+// with the closest hit, or -1 if no hits were found.
+
+int GhostOOFCanvas::findClickedCellMulti_(
+			  const Coord *click, const View *view,
+			  const std::vector<OOFCanvasLayer*> *layers,
+			  vtkSmartPointer<vtkCell> &cell, 
+			  Coord &pos, vtkIdType &cellId, int &subId)
+{
+  assert(mainthread_query());
+  assert(!layers->empty());
+  double bestdist2 = std::numeric_limits<double>::max();
+  int best = -1;
+  // The layers are listed from bottom to top in the window's layer ordering.
+  for(unsigned int i=0; i<layers->size(); i++) {
+    vtkSmartPointer<vtkCell> thisCell;
+    Coord thisPos;
+    vtkIdType thisCellId;
+    int thisSubId;
+    try {
+      findClickedCell_(click, view, (*layers)[i], thisCell, thisPos, thisCellId,
+		       thisSubId);
+    }
+    catch (ErrClickError&) {
+      continue;
+    }
+    double dist2 = norm2(view->pos - thisPos);
+    // Use <= here so that if two layers have clickable points at the
+    // same position, the topmost layer will be selected.
+    if(dist2 <= bestdist2) {
+      bestdist2 = dist2;
+      best = i;
+      cell = thisCell;
+      pos = thisPos;
+      cellId = thisCellId;
+      subId = thisSubId;
+    }
+  }
+  return best;
+}
+
+CoordAndInt *GhostOOFCanvas::findClickedCellCenterMulti(
+				     const Coord *click, const View *view,
+				     const std::vector<OOFCanvasLayer*> *layers)
+{
+  vtkSmartPointer<vtkCell> cell;
+  vtkIdType cellId;
+  int subId;
+  Coord pos;
+  int which = findClickedCellMulti_(click, view, layers, cell,
+				    pos, cellId, subId);
+  return new CoordAndInt(pos, which);
+}
+
+
 
 vtkSmartPointer<vtkUnstructuredGrid> GhostOOFCanvas::getFrustumSubgrid(
 	       double x, double y, const View *view, OOFCanvasLayer *layer)
