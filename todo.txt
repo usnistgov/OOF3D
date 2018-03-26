@@ -66,6 +66,12 @@ items were changed for the pixel selection toolbox.
 Fix this: When both an Image and a Microstructure material layer are
 displayed, and one or both has a filter applied so that both should be
 visible, only the top one is visible.
+BitmapDisplayMethod.layersChanged hides all but the topmost image
+layer, and applies the overlayer pipeline to it.  This is wrong.
+Probably we should display all images and replace the overlayer
+pipeline with separate translucent vtk layers and rely on vtk's
+coincident object resolution.  Will that be too slow for drawing
+selected voxels?
 
 When a click doesn't result in a selection because it went to a layer
 that can't handle it, display a warning.

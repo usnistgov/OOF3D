@@ -2089,8 +2089,8 @@ class GhostGfxWindow:
                     layer.setParams()
                 if autoselect:
                     self.selectLayer(self.layerID(layer))
-            
-            self.newLayerMembers()
+
+                self.newLayerMembers()
             self.sensitize_menus()
         finally:
             if lock:
@@ -2249,7 +2249,7 @@ class GhostGfxWindow:
 
     def dumpLayers(self, menuitem):
         for i, layer in enumerate(self.layers):
-            print i, layer.__class__.__name__
+            print i, layer.__class__.__name__, layer.who()
 
     def listedLayers(self):             # for testing
         result = []
