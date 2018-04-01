@@ -98,7 +98,6 @@ class PixelInfoDisplay(display.DisplayMethod):
                 return
         self.canvaslayer.clear()
         self.canvaslayer.setEmpty(True)
-
         
 defaultPixelInfoColor = color.blue
 if config.dimension() == 2:
@@ -149,6 +148,9 @@ pixelInfoDisplay = registeredclass.Registration(
     )
 
 ########################
+
+## TODO: Move TopBitmap into its own file.  It's used in
+## pixelselectiondisplay too.
 
 # In order to have a single layer that displays pixel info for *both*
 # Images and Microstructures, we create a new WhoClass that contains

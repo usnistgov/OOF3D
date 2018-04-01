@@ -47,26 +47,6 @@ class BitmapDisplayMethod(display.DisplayMethod):
         layer.setEmpty(False)
         return layer
 
-    def layersChanged(self):
-
-        ## TODO: Overlayers don't just apply to the top image, They
-        ## must apply to all images, because filters can allow
-        ## multiple images to be visible.  BUT maybe it's better to
-        ## let vtk handle it -- can we just use a translucent
-        ## BitmapDisplayMethod and not use the overlayer machinery at
-        ## all?  The vtk coincident object resolution should work.
-        
-        topImage = self.gfxwindow.topImage()
-        if topImage is self:
-            overlayers = self.gfxwindow.getOverlayers()
-            self.canvaslayer.show(False) # hidden layers are never the top image
-            if not overlayers:
-                self.canvaslayer.noOverlayers()
-            else:
-                self.canvaslayer.connectTopOverlayer(overlayers[-1].canvaslayer)
-        else:
-            self.canvaslayer.hide(False)
-
     def whoChanged(self):
         # The who object itself has been modified, or a new one
         # assigned.  This is the switchboard callback for "who

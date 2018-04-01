@@ -204,51 +204,6 @@ void OOFCanvasLayer::removeAllProps() {
   empty_ = true;
 }
 
-// void OOFCanvasLayer::raise_layer(int h) {
-//   canvas->raise_layer(this, h);
-// }
-
-// void GhostOOFCanvas::raise_layer(OOFCanvasLayer *layer, int h) {
-//   for(DisplayLayerList::iterator it=layers.begin(); it!=layers.end(); ++it) {
-//     if(*it == layer) {
-//       layers.erase(it);
-//       layers.insert(it+h, layer);
-//       return;
-//     }
-//   }
-// }
-
-// void OOFCanvasLayer::raise_to_top() {
-//   canvas->raise_layer_to_top(this);
-//   // if(rendered_) 
-//   //   remove_from_renderer();
-//   if(showing)
-//     add_to_renderer();
-// }
-
-// void GhostOOFCanvas::raise_layer_to_top(OOFCanvasLayer *layer) {
-//   for(DisplayLayerList::iterator it=layers.begin(); it!=layers.end(); ++it) {
-//     if(*it == layer) {
-//       layers.erase(it);
-//       layers.push_back(layer);
-//       return;
-//     }
-//   }
-// }
-
-// void OOFCanvasLayer::lower_layer(int h) {
-//   canvas->lower_layer(this, h);
-// }
-
-// void GhostOOFCanvas::lower_layer(OOFCanvasLayer *layer, int h) {
-//   for(DisplayLayerList::iterator it=layers.begin(); it!=layers.end(); ++it) {
-//     if(*it == layer) {
-//       layers.erase(it);
-//       layers.insert(it-h, layer);
-//       return;
-//     }
-//   }
-// }
 
 // setPropVisibility toggles the vtkProp's visibilities, without
 // touching the OOFCanvasLayer flags that say whether or not the layer
@@ -1527,14 +1482,11 @@ void LineSegmentLayer::addSegment(const Coord *a, const Coord *b) {
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // The pipeline is:
-// Image -> oofImageToGrid -> 
-//    overlayers -> oofExcludeVoxels -> Clipper -> Mapper
-// Overlayers, oofExcludeVoxels, and Clipper are all optional but must
-// occur in that order if they're used.  There may be more than one
-// instance of oofOverlayVoxels, or other similar operations, in the
-// overlayers list.
+// Image -> oofImageToGrid -> oofExcludeVoxels -> Clipper -> Mapper
+// oofExcludeVoxels and Clipper are all optional but must
+// occur in that order if they're used.
 
-// oofImageToGrid and oofOverlayVoxels are vtkRectilinearGridAlgorithms.
+// oofImageToGrid is a vtkRectilinearGridAlgorithm.
 // oofExcludeVoxels and Clipper are vtkUnstructuredGridAlgorithms.
 // vtkAlgorithm is a base class for Mapper, too.
 
@@ -1554,16 +1506,14 @@ ImageCanvasLayer::ImageCanvasLayer(
     locator(vtkSmartPointer<vtkCellLocator>::New()),
     mapper(vtkSmartPointer<vtkDataSetMapper>::New()),
     actor(vtkSmartPointer<vtkActor>::New()),
-    filter(0),
-    bottomOverlayer(0),
-    topOverlayer(0)
+    filter(0)
 {
   addProp(actor);
   actor->SetMapper(mapper);
   locator->LazyEvaluationOn();
   // Build the initial pipeline, with no image and no excluded voxels.
   pipelineLock.acquire();
-  downstreamSocket()->SetInputConnection(gridifier->GetOutputPort());
+  mapper->SetInputConnection(gridifier->GetOutputPort());
   pipelineLock.release();
   set_clipping(canvas->clipping(), canvas->invertedClipping());
 }
@@ -1598,64 +1548,21 @@ void ImageCanvasLayer::set_image(const ImageBase *img, const Coord *location,
   }
 }
 
-// TODO: Does opacity work?
+vtkSmartPointer<vtkAlgorithmOutput> ImageCanvasLayer::griddedImage() {
+  return gridifier->GetOutputPort();
+}
+
 void ImageCanvasLayer::set_opacity(double opacity) {
   actor->GetProperty()->SetOpacity(opacity);
-}
-
-void ImageCanvasLayer::noOverlayers() {
-  // There are no overlayers.  Connect the grid directly to the
-  // downstream pipeline socket.
-  if(topOverlayer) {
-    topOverlayer = 0;
-    downstreamSocket()->SetInputConnection(gridifier->GetOutputPort());
-  }
-}
-
-void ImageCanvasLayer::connectBottomOverlayer(ImageCanvasOverlayer *overlayer) {
-  vtkSmartPointer<vtkAlgorithmOutput> gridOut = gridifier->GetOutputPort();
-  if(overlayer != bottomOverlayer || bottomOverlayer->input != gridOut) {
-    if(bottomOverlayer) {
-      bottomOverlayer->disconnect();
-    }
-    bottomOverlayer = overlayer;
-    overlayer->connectToAlgorithm(gridOut);
-  }
-}
-
-void ImageCanvasLayer::connectTopOverlayer(ImageCanvasOverlayer *overlayer) {
-  if(overlayer != topOverlayer) {
-    topOverlayer = overlayer;
-    downstreamSocket()->SetInputConnection(overlayer->output());
-  }
-}
-
-vtkSmartPointer<vtkAlgorithm> ImageCanvasLayer::downstreamSocket() const {
-  // Return the object that the downstream end of the overlayer
-  // pipeline should be plugged into.
-  if(excluder.GetPointer() != 0)
-    return excluder;
-  if(clipper.GetPointer() != 0)
-    return clipper;
-  return mapper;
-}
-
-vtkSmartPointer<vtkAlgorithmOutput> ImageCanvasLayer::overlayerOutput() {
-  if(topOverlayer)
-    return topOverlayer->output();
-  return gridifier->GetOutputPort();
 }
 
 vtkSmartPointer<vtkAlgorithmOutput> ImageCanvasLayer::clipperInput() {
   if(excluder.GetPointer() != 0)
     return excluder->GetOutputPort();
-  return overlayerOutput();
+  return gridifier->GetOutputPort();
 }
 
 void ImageCanvasLayer::set_filter(VoxelFilter *condition) {
-  // Voxel exclusion needs to be applied downstream from the
-  // overlayers, because it creates a unstructured grid, but the
-  // overlayers work on a rectilinear grid.
   pipelineLock.acquire();
 
   vtkSmartPointer<vtkAlgorithm> socket; // what the excluder connects to
@@ -1668,8 +1575,7 @@ void ImageCanvasLayer::set_filter(VoxelFilter *condition) {
     if(excluder.GetPointer() == 0) {
       // Create and connect a new excluder.
       excluder = vtkSmartPointer<oofExcludeVoxels>::New();
-      // connect last overlay or grid to excluder input
-      excluder->SetInputConnection(overlayerOutput());
+      excluder->SetInputConnection(gridifier->GetOutputPort());
       // connect excluder output to clipper or mapper
       socket->SetInputConnection(excluder->GetOutputPort());
     } 
@@ -1682,8 +1588,7 @@ void ImageCanvasLayer::set_filter(VoxelFilter *condition) {
       // Remove existing excluder
       filter = 0;
       excluder = vtkSmartPointer<oofExcludeVoxels>();
-      // connect last overlay or grid to clipper or mapper
-      socket->SetInputConnection(overlayerOutput());
+      socket->SetInputConnection(gridifier->GetOutputPort());
     }
   }
   pipelineLock.release();
@@ -1755,75 +1660,93 @@ void ImageCanvasLayer::setCoincidentTopologyParams(double factor, double units)
     
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-ImageCanvasOverlayer::ImageCanvasOverlayer(
-	   GhostOOFCanvas *canvas, const std::string &nm,
-	   vtkSmartPointer<vtkRectilinearGridAlgorithm> alg)
-  : OOFCanvasLayerBase(canvas, nm),
-    algorithm(alg),
-    input(vtkSmartPointer<vtkAlgorithmOutput>())
+// MonochromeVoxelLayer connects to an existing ImageCanvasLayer and
+// uses its gridifier output to draw voxels, all of which are the same
+// color, but may be translucent.  It's used to display the set of
+// selected voxels.  To be useful in that context, the vtk coincident
+// object resolution machinery must put this layer "above" the image
+// that it's based on, and this layer must be filtered to display only
+// selected voxels.
+
+MonochromeVoxelLayer::MonochromeVoxelLayer(GhostOOFCanvas *canvas,
+				       const std::string &nm)
+  : OOFCanvasLayer(canvas, nm),
+    imageLayer(0),
+    excluder(vtkSmartPointer<oofExcludeVoxels>::New()),
+    mapper(vtkSmartPointer<vtkDataSetMapper>::New()),
+    actor(vtkSmartPointer<vtkActor>::New())
 {
-  // oofcerr << "ImageCanvasOverlayer::ctor: " << this << " " << name()
-  // 	  << std::endl;
+  // Pipeline is
+  //   image gridifier -> excluder -> clipper (optional) -> mapper
+  // Unlike ImageCanvasLayer, there is always an excluder.
+  addProp(actor);
+  actor->SetMapper(mapper);
+  mapper->ScalarVisibilityOff();
+  set_clipping(canvas->clipping(), canvas->invertedClipping());
+  // excluder->DebugOn();
 }
 
-ImageCanvasOverlayer::~ImageCanvasOverlayer() {}
+MonochromeVoxelLayer::~MonochromeVoxelLayer() {}
 
-void ImageCanvasOverlayer::setModified() {
-  algorithm->Modified();
-}
-
-void ImageCanvasOverlayer::disconnect() {
-  if(input.GetPointer() != 0) {
-    algorithm->RemoveAllInputs();
-    input = vtkSmartPointer<vtkAlgorithmOutput>();
-  }
-}
-
-void ImageCanvasOverlayer::connectToAlgorithm(
-			      vtkSmartPointer<vtkAlgorithmOutput> inp)
-{
-  if(inp != input) {
-    disconnect();
-    algorithm->SetInputConnection(inp);
-    input = inp;
-  }
-}
-
-void ImageCanvasOverlayer::connectToOverlayer(ImageCanvasOverlayer *other) {
-  connectToAlgorithm(other->output());
-}
-
-vtkSmartPointer<vtkAlgorithmOutput> ImageCanvasOverlayer::output() {
-  return algorithm->GetOutputPort();
-}
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-OverlayVoxels::OverlayVoxels(GhostOOFCanvas *canvas, const std::string &name)
-  : ImageCanvasOverlayer(canvas, name, vtkSmartPointer<oofOverlayVoxels>::New())
-{}
-
-const std::string &OverlayVoxels::classname() const {
-  static const std::string nm("OverlayVoxels");
+const std::string &MonochromeVoxelLayer::classname() const {
+  static const std::string nm("MonochromeVoxelLayer");
   return nm;
 }
 
-void OverlayVoxels::setTintOpacity(double opacity) {
-  oofOverlayVoxels::SafeDownCast(algorithm)->SetOpacity(opacity);
+void MonochromeVoxelLayer::setModified() {
+  imageLayer->setModified();
 }
 
-void OverlayVoxels::setColor(const CColor *color) {
-  double r = color->getRed();
-  double g = color->getGreen();
-  double b = color->getBlue();
-  double x[] = {r, g, b};
-  oofOverlayVoxels::SafeDownCast(algorithm)->SetColor(x);
+void MonochromeVoxelLayer::set_opacity(double opacity) {
+  actor->GetProperty()->SetOpacity(opacity);
 }
 
-void OverlayVoxels::setPixelSet(PixelSet *pixset) {
-  oofOverlayVoxels::SafeDownCast(algorithm)->SetPixelSet(pixset);
+void MonochromeVoxelLayer::set_color(const CColor &color) {
+  actor->GetProperty()->SetColor(color.getRed(), color.getGreen(),
+				 color.getBlue());
 }
 
-void OverlayVoxels::clearPixelSet() {
-  oofOverlayVoxels::SafeDownCast(algorithm)->SetPixelSet(0);
+void MonochromeVoxelLayer::set_image_layer(ImageCanvasLayer *newImageLayer) {
+  if(imageLayer) {
+    // Disconnect old image layer
+    excluder->RemoveAllInputs();
+  }
+  excluder->SetInputConnection(newImageLayer->griddedImage());
+  imageLayer = newImageLayer;
 }
+
+void MonochromeVoxelLayer::set_filter(VoxelFilter *philtre) {
+  // When used in the PixelSelectionDisplay, the filter will allow
+  // only the selected voxels to be shown.  See
+  // common/IO/pixelselectiondisplay.py.
+  filter = philtre;
+  filter->setCanvasLayer(this);
+  excluder->SetFilter(filter);
+  setModified();
+}
+
+void MonochromeVoxelLayer::start_clipping() {
+  clipper = getClipper(this);
+  clipper->SetInputConnection(excluder->GetOutputPort());
+  mapper->SetInputConnection(clipper->GetOutputPort());
+}
+
+void MonochromeVoxelLayer::stop_clipping() {
+  if(clipState == CLIP_ON) {
+    clipper->RemoveAllInputs();
+    clipper = vtkSmartPointer<vtkTableBasedClipDataSet>(); // null object
+  }
+  mapper->SetInputConnection(excluder->GetOutputPort());
+}
+
+void MonochromeVoxelLayer::set_clip_parity(bool inverted) {
+  clipper->SetInsideOut(!inverted);
+}
+
+void MonochromeVoxelLayer::setCoincidentTopologyParams(double factor,
+						       double units)
+{
+  mapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor, units);
+}
+
+

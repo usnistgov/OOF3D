@@ -52,11 +52,6 @@ public:
 
 class OOFCanvasLayer : public OOFCanvasLayerBase { 
 public:
-  // void raise_layer(int);
-  // void raise_to_top();
-  // void lower_layer(int);
-  // void add_to_renderer();
-  // void remove_from_renderer();
   void setEmpty(bool);
   void setModified();
   void installContourMap();
@@ -153,26 +148,16 @@ public:
   void set_image(ImageBase*, Coord *Point, Coord *Point);
   void set_filter(VoxelFilter*);
   void filterModified();
-  void connectBottomOverlayer(ImageCanvasOverlayer*);
-  void connectTopOverlayer(ImageCanvasOverlayer*);
-  void noOverlayers();
   void set_opacity(double);
 };
 
-class ImageCanvasOverlayer : public OOFCanvasLayerBase {
+class MonochromeVoxelLayer : public OOFCanvasLayer {
 public:
-  ~ImageCanvasOverlayer();
-  void connectToOverlayer(ImageCanvasOverlayer*);
-  void disconnect();
-};
-
-class OverlayVoxels : public ImageCanvasOverlayer {
-public:
-  OverlayVoxels(GhostOOFCanvas*, const char*);
-  void setTintOpacity(double);
-  void setColor(CColor*);
-  void setPixelSet(PixelSet*);
-  void clearPixelSet();
+  MonochromeVoxelLayer(GhostOOFCanvas*, const char*);
+  void set_image_layer(ImageCanvasLayer*);
+  void set_filter(VoxelFilter*);
+  void set_opacity(double);
+  void set_color(CColor&);
 };
 
 class GlyphedLayer : public SimpleCellLayer {

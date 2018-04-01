@@ -1897,7 +1897,8 @@ class GhostGfxWindow:
 
     def findClickedCellCenterMulti(self, layers, point, view):
         self.acquireGfxLock()
-        canvaslayers = [layer.canvaslayer for layer in layers]
+        canvaslayers = [layer.canvaslayer for layer in layers
+                        if layer.pickable()]
         try:
             pos, which = mainthread.runBlock(
                 clickErrorHandler,

@@ -43,11 +43,9 @@ class SingleClickVoxelSelectionMethodGUI(genericselectGUI.SelectionMethodGUI):
         # top in the window's layer ordering.
         layers = self.gfxwindow().allWhoClassLayers(
             *self.methodRegistration.whoclasses)
-        debug.fmsg("layers=", layers)
         # Find the position of the click on the topmost object
         result = self.gfxwindow().findClickedCellCenterMulti(
             layers, point, viewobj)
-        debug.fmsg("result=", result)
         return result
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#

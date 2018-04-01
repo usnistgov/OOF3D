@@ -78,6 +78,20 @@ that can't handle it, display a warning.
 
 Restore Skeleton selection toolboxes.
 
+Fix this: Display only the white voxel group.  Clicking to select a
+single pixel on some faces (faces with normals in the +x, +y, or +z
+directions?) of the group selects the neighboring voxel instead.
+
+Remove the BitmapOverlay class.  It's not used for graphics
+anymore. It's only used to provide a quick way to see if a voxel is
+selected, but an array of bools would suffice there.
+
+In the Select Voxels toolbox, clicking outside the Microstructure
+generates an error.
+
+Change the abaqus element type in skeleton output to C3D4.  In mesh
+abaqus output it should be C3D4 or C3D10.
+
 ---------------------------------------------------------------------------
 Soon
 ----

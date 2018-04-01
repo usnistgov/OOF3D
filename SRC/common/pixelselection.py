@@ -11,23 +11,15 @@
 
 
 # There is one set of selected pixels for each Microstructure.  It's
-# maintained as a list of iPoints and as a BitmapOverlay for quick
-# drawing.  It's created by CMicrostructure.__init__, as modified in
-# cmicrostructure.spy.
+# maintained as a list of iPoints.  It's created by
+# CMicrostructure.__init__, as modified in cmicrostructure.spy.
 
 # PixelSelections have to know their Microstructures at the C++ level
 # so that they can find their active areas.
 
 from ooflib.SWIG.common import config
-from ooflib.common import color
 from ooflib.common import debug
-from ooflib.common.IO import bitoverlaydisplay
-from ooflib.common.IO import ghostgfxwindow
-from ooflib.common.IO import mainmenu
-from ooflib.common.IO import oofmenu
-from ooflib.common.IO import parameter
 from ooflib.common.IO import whoville
-from ooflib.common.IO import topwho       # required for '<top microstructure>'
 import types
 
 # class PixelSelection(cpixelselection.CPixelSelection):
@@ -89,8 +81,8 @@ class PixelSelectionContext(whoville.WhoDoUndo):
     def empty(self):
         obj = self.getObject()
         return obj is None or obj.empty()
-    def getBitmap(self):        # TODO OPT: Is this still needed?
-        return self.getObject().getBitmap()
+    # def getBitmap(self):        # TODO OPT: Is this still needed?
+    #     return self.getObject().getBitmap()
     def getPixelSet(self):
         obj = self.getObject()
         if obj is not None:
@@ -109,49 +101,3 @@ pixelselectionWhoClass = whoville.WhoDoUndoClass(
     secret=0,
     proxyClasses=['<top microstructure>'])
 
-###################
-
-defaultPixelSelectionColor = color.RGBColor(1.0, 0.22, 0.09)
-defaultTintOpacity = 0.9
-
-def _setDefaultPixelSelectionParams(menuitem, color, tintOpacity):
-    global defaultPixelSelectionColor
-    global defaultTintOpacity
-    defaultPixelSelectionColor = color
-    defaultTintOpacity = tintopacity
-
-
-colorparams=[
-    color.ColorParameter(
-        'color',
-        defaultPixelSelectionColor,
-        tip='Color of selected pixels.'),
-    parameter.FloatRangeParameter(
-        'tintOpacity',
-        (0., 1., 0.01), defaultTintOpacity,
-        tip='Opacity of tint of selected pixels.'
-        '  0 is transparent, 1 is opaque.')
-    ]
-
-
-mainmenu.gfxdefaultsmenu.Pixels.addItem(oofmenu.OOFMenuItem(
-    'Pixel_Selection',
-    callback=_setDefaultPixelSelectionParams,
-    params = colorparams,
-    help="Set default parameters for displaying selected pixels.",
-    discussion="""<para>
-
-    Set default parameters for the <xref
-    linkend="RegisteredClass:BitmapOverlayDisplayMethod"/> that is used
-    to display <link linkend="Section:Concepts:Microstructure:PixelSelection">pixel selections</link>.
-    This command can be put in the &oof2rc; file to set defaults for all
-    &oof2; sessions.
-
-    </para>"""))
-
-def predefinedPixelSelectionLayer():
-    return bitoverlaydisplay.bitmapOverlay(color=defaultPixelSelectionColor,
-                                           tintOpacity=defaultTintOpacity)
-
-ghostgfxwindow.PredefinedLayer('Pixel Selection', '<top microstructure>',
-                               predefinedPixelSelectionLayer)

@@ -43,20 +43,25 @@ if not DIM_3:
 
     hfiles = ['bitoverlay.h', 'ghostoofcanvas.h']
 else:
-    cfiles = ['bitoverlay.C', 'ghostoofcanvas.C',
-              'vtkutils.C', 'view.C', 'canvaslayers.C', 'oofcerr.C',
-              'oofImageToGrid.C', 'oofOverlayVoxels.C', 'oofExcludeVoxels.C',
-              'gridsourcebase.C', 'gridlayers.C', 'oofCellLocator.C',
-              'imageformat.C'
-              ]
+    cfiles = [
+        'bitoverlay.C',
+        'ghostoofcanvas.C',
+        'vtkutils.C', 'view.C', 'canvaslayers.C', 'oofcerr.C',
+        'oofImageToGrid.C', 'oofOverlayVoxels.C', 'oofExcludeVoxels.C',
+        'gridsourcebase.C', 'gridlayers.C', 'oofCellLocator.C',
+        'imageformat.C'
+    ]
 
-    swigfiles = ['bitoverlay.swg', 'ghostoofcanvas.swg', 'vtkutils.swg', 
-                 'view.swg', 'canvaslayers.swg', 'gridsourcebase.swg', 
-                 'gridlayers.swg', 'imageformat.swg']
+    swigfiles = [
+        #'bitoverlay.swg',
+        'ghostoofcanvas.swg', 'vtkutils.swg', 
+        'view.swg', 'canvaslayers.swg', 'gridsourcebase.swg', 
+        'gridlayers.swg', 'imageformat.swg']
 
     pyfiles = [
         'activityviewermenu.py', 'automatic.py', 'automaticdoc.py',
-        'binarydata.py', 'bitmapdisplay.py', 'bitoverlaydisplay.py',
+        'binarydata.py', 'bitmapdisplay.py',
+        #'bitoverlaydisplay.py',
         'clipplaneclickanddragdisplay.py', 'colordiffparameter.py',
         'colormap.py', 'datafile.py', 'display.py', 'genericselecttoolbox.py',
         'gfxmanager.py', 'ghostgfxwindow.py', 'mainmenu.py', 'menudump.py',
@@ -71,13 +76,16 @@ else:
         'xmlmenudump.py'
     ]
 
-    swigpyfiles = ['bitoverlay.spy', 'view.spy', 'imageformat.spy']
+    swigpyfiles = [#'bitoverlay.spy',
+        'view.spy', 'imageformat.spy']
 
-    hfiles = ['bitoverlay.h', 'vtkutils.h', 'view.h',
-              'canvaslayers.h', 'oofcerr.h', 'gridsourcebase.h', 'gridlayers.h',
-              'oofImageToGrid.h', 'oofOverlayVoxels.h', 'oofExcludeVoxels.h',
-              'oofCellLocator.h', 'imageformat.h']
-
+    hfiles = [
+        'bitoverlay.h',
+        'vtkutils.h', 'view.h',
+        'canvaslayers.h', 'oofcerr.h', 'gridsourcebase.h', 'gridlayers.h',
+        'oofImageToGrid.h', 'oofOverlayVoxels.h', 'oofExcludeVoxels.h',
+        'oofCellLocator.h', 'imageformat.h']
+    
 if HAVE_MPI:
     pyfiles.extend(['parallelmainmenu.py', 'microstructureIPC.py',
                     'pixelgroupIPC.py'])
