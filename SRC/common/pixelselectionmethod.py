@@ -56,13 +56,6 @@ class GenericSelectionMethod(registeredclass.RegisteredClass):
 class VoxelSelectionMethod(GenericSelectionMethod):
     registry = []
     
-    # def select(self, immidge, pointlist, selector):
-    #     # immidge is the Who for the OOFImage or Microstructure on
-    #     # which to operate.  pointlist is the list of points received
-    #     # from the mouse.  selector is the function to call with the
-    #     # list of selected pixels.
-    #     pass
-
     # Source is a Microstructure or Image.  Selection is the
     # Microstructure's PixelSelection object. Operator is a
     # PixelSelectionOperator, from pixelselectionmod.py.  Called from
@@ -73,9 +66,7 @@ class VoxelSelectionMethod(GenericSelectionMethod):
             "'select' isn't defined for " + self.registration.name)
 
     
-## TODO: Rename to VoxelSelectionRegistration
-
-class PixelSelectionRegistration(registeredclass.Registration):
+class VoxelSelectionRegistration(registeredclass.Registration):
     def __init__(self, name, subclass, ordering, params=[], secret=0, **kwargs):
         registeredclass.Registration.__init__(
             self,
@@ -101,7 +92,7 @@ class PointSelector(VoxelSelectionMethod):
         operator.operate(selection,
                          pixelselectioncourier.PointSelection(ms, self.point))
 
-PixelSelectionRegistration(
+VoxelSelectionRegistration(
     'Point',
     PointSelector,
     ordering=0.1,
@@ -189,7 +180,7 @@ if config.dimension() == 2:
                 return 1
             return 0
 
-    brushSelectorRegistration = PixelSelectionRegistration(
+    brushSelectorRegistration = VoxelSelectionRegistration(
         'Brush',
         BrushSelector,
         ordering=0.101,
@@ -214,7 +205,7 @@ if config.dimension() == 2:
             psize = primitives.Point(*ms.sizeOfPixels())
             selector(BoxSelection(ms, pointlist[0], pointlist[-1]))
 
-    rectangleSelectorRegistration = PixelSelectionRegistration(
+    rectangleSelectorRegistration = VoxelSelectionRegistration(
         'Rectangle',
         RectangleSelector,
         ordering=0.2,
@@ -237,7 +228,7 @@ if config.dimension() == 2:
             selector(CircleSelection(ms, center, r)) #, ll, ur
 
 
-    circleSelectorRegistration = PixelSelectionRegistration(
+    circleSelectorRegistration = VoxelSelectionRegistration(
         'Circle',
         CircleSelector,
         ordering=0.3,
@@ -260,7 +251,7 @@ if config.dimension() == 2:
                                   max(pointlist[0].y, pointlist[-1].y))
             selector(EllipseSelection(ms, ll, ur))
 
-    ellipseSelectorRegistration = PixelSelectionRegistration(
+    ellipseSelectorRegistration = VoxelSelectionRegistration(
         'Ellipse',
         EllipseSelector,
         ordering=0.4,
@@ -296,7 +287,7 @@ class RectangularPrismSelector(VoxelSelectionMethod):
                 ms,
                 geometry.CRectangularPrism(self.corner0, self.corner1)))
 
-PixelSelectionRegistration(
+VoxelSelectionRegistration(
     'Box',
     RectangularPrismSelector,
     ordering=0.2,

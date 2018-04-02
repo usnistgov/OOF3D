@@ -33,7 +33,7 @@ class ColorSelector(pixelselectionmethod.VoxelSelectionMethod):
             pixelselectioncourieri.ColorSelection(ms, image,
                                                   ref_color, self.range))
 
-pixelselectionmethod.PixelSelectionRegistration(
+pixelselectionmethod.VoxelSelectionRegistration(
     'Color',
     ColorSelector,
     ordering=0.6,

@@ -20,7 +20,7 @@ from ooflib.engine import skeletoncontext
 from ooflib.engine.IO import materialparameter
 
 ElementSelection = pixelselectioncouriere.ElementSelection
-class SelectPixelsInElement(pixelselectionmod.SelectionModifier):
+class SelectPixelsInElement(pixelselectionmod.VoxelSelectionModifier):
     def __init__(self, skeleton):
         self.skeleton = skeleton
     def __call__(self, ms, selection):
@@ -33,7 +33,7 @@ class SelectPixelsInElement(pixelselectionmod.SelectionModifier):
 ## TODO 3.1: 3D Fix this method and uncomment the Registration.
 # registeredclass.Registration(
 #     'Select Element Pixels',
-#     registeredclass=pixelselectionmod.SelectionModifier,
+#     registeredclass=pixelselectionmod.VoxelSelectionModifier,
 #     subclass=SelectPixelsInElement,
 #     ordering=100,
 #     params=[whoville.WhoParameter('skeleton', skeletoncontext.skeletonContexts,
@@ -45,7 +45,7 @@ class SelectPixelsInElement(pixelselectionmod.SelectionModifier):
 #     </para>""")
 
 SegmentSelection = pixelselectioncouriere.SegmentSelection
-class SelectPixelsUnderSegment(pixelselectionmod.SelectionModifier):
+class SelectPixelsUnderSegment(pixelselectionmod.VoxelSelectionModifier):
     def __init__(self, skeleton):
         self.skeleton = skeleton
     def __call__(self, ms, selection):
@@ -60,7 +60,7 @@ class SelectPixelsUnderSegment(pixelselectionmod.SelectionModifier):
 ## TODO 3.1: 3D Fix this method and uncomment the Registration.
 # registeredclass.Registration(
 #     'Select Segment Pixels',
-#     registeredclass=pixelselectionmod.SelectionModifier,
+#     registeredclass=pixelselectionmod.VoxelSelectionModifier,
 #     subclass=SelectPixelsUnderSegment,
 #     ordering=105,
 #     params=[whoville.WhoParameter('skeleton', skeletoncontext.skeletonContexts,
@@ -79,7 +79,7 @@ MaterialSelection = pixelselectioncouriere.MaterialSelection
 AnyMaterialSelection = pixelselectioncouriere.AnyMaterialSelection
 NoMaterialSelection = pixelselectioncouriere.NoMaterialSelection
 
-class SelectMaterialPixels(pixelselectionmod.SelectionModifier):
+class SelectMaterialPixels(pixelselectionmod.VoxelSelectionModifier):
     def __init__(self, material):
         self.material = material
     def __call__(self, ms, selection):
@@ -95,7 +95,7 @@ class SelectMaterialPixels(pixelselectionmod.SelectionModifier):
 
 registeredclass.Registration(
     'Select Material',
-    registeredclass=pixelselectionmod.SelectionModifier,
+    registeredclass=pixelselectionmod.VoxelSelectionModifier,
     subclass=SelectMaterialPixels,
     ordering=110,
     params=[materialparameter.AnyMaterialParameter('material',

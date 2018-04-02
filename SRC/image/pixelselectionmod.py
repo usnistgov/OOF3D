@@ -18,7 +18,7 @@ from ooflib.common.IO import colordiffparameter
 from ooflib.common.IO import parameter
 from ooflib.common.IO import whoville
 
-class ColorRange(pixelselectionmod.SelectionModifier):
+class ColorRange(pixelselectionmod.VoxelSelectionModifier):
     def __init__(self, image, reference, range):
         self.image = image
         self.reference = reference
@@ -36,7 +36,7 @@ class ColorRange(pixelselectionmod.SelectionModifier):
 
 registeredclass.Registration(
     'Color Range',
-    pixelselectionmod.SelectionModifier,
+    pixelselectionmod.VoxelSelectionModifier,
     ColorRange,
     ordering=3.14,
     params=[whoville.WhoParameter('image', whoville.getClass('Image'),

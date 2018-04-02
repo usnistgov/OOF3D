@@ -91,7 +91,7 @@ class SelectionPage(oofGUI.MainPage):
 ##        scroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 ##        vbox.add(scroll)
         self.selectionModFactory = regclassfactory.RegisteredClassFactory(
-            pixelselectionmod.SelectionModifier.registry, title="Method:",
+            pixelselectionmod.VoxelSelectionModifier.registry, title="Method:",
             scope=self, name="Method")
         vbox.pack_start(self.selectionModFactory.gtk, expand=1, fill=1)
 ##        scroll.add_with_viewport(self.selectionModFactory.gtk)
@@ -154,7 +154,7 @@ class SelectionPage(oofGUI.MainPage):
             switchboard.requestCallbackMain('modified pixel selection',
                                             self.updateHistory),
             switchboard.requestCallbackMain(
-                pixelselectionmod.SelectionModifier,
+                pixelselectionmod.VoxelSelectionModifier,
                 self.updateSelectionModifiers),
             switchboard.requestCallbackMain(('validity',
                                              self.selectionModFactory),
@@ -258,7 +258,7 @@ class SelectionPage(oofGUI.MainPage):
 
     def updateSelectionModifiers(self): # SB: New selection modifier created
         self.selectionModFactory.update(
-            pixelselectionmod.SelectionModifier.registry)
+            pixelselectionmod.VoxelSelectionModifier.registry)
 
     def sensitizeHistory(self):
         debug.mainthreadTest()
@@ -288,7 +288,7 @@ class SelectionPage(oofGUI.MainPage):
             # parameter list.
             ## TODO: Rewrite this to use the new VoxelSelection.Select
             ## menu item.
-            menuitem = getattr(mainmenu.OOF.PixelSelection,
+            menuitem = getattr(mainmenu.OOF.VoxelSelection,
                                utils.space2underscore(modmeth.name()))
             menuitem.callWithDefaults(microstructure=self.getCurrentMSName())
 

@@ -69,7 +69,7 @@ class Burn(pixelselectionmethod.VoxelSelectionMethod):
     #         selector(BurnSelection(ms, b, immidge.getObject(), startpt))
 
 
-burnSelectorRegistration = pixelselectionmethod.PixelSelectionRegistration(
+burnSelectorRegistration = pixelselectionmethod.VoxelSelectionRegistration(
     'Burn',
     Burn,
     ordering=1.0,

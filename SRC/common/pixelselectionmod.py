@@ -29,15 +29,10 @@ from ooflib.common.IO import xmlmenudump
 import ooflib.common.microstructure
 import ooflib.common.units
 
-# First, some basic methods: Clear, Undo, Redo, Invert
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# # Selection methods derived from SelectionModifier are automatically
-# # put into the PixelSelection menu, via a switchboard call in their
-# # Registration's __init__.
-
-class SelectionModifier(registeredclass.RegisteredClass):
+class VoxelSelectionModifier(registeredclass.RegisteredClass):
     registry = []
     def __call__(self):
         pass
@@ -173,6 +168,9 @@ registeredclass.Registration(
     tip="Unselect all objects that are not in the given set.")
 
 
+## TODO: Make the interpretation of the modifier keys settable by the
+## user?
+
 def getSelectionOperator(buttons):
     if buttons.shift:
         if buttons.ctrl:
@@ -184,9 +182,11 @@ def getSelectionOperator(buttons):
         
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-## TODO: Rewrite to use VoxelSelectionMethod instead of SelectionModifier
+## TODO: Rewrite to use VoxelSelectionMethod instead of
+## VoxelSelectionModifier? No-- all VoxelSelectionMethods appear in the
+## toolbox, and not all VoxelSelectionModifiers are appropriate there.
 
-class GroupSelector(SelectionModifier):
+class GroupSelector(VoxelSelectionModifier):
     def __init__(self, group, operator):
         self.group = group
         self.operator = operator
@@ -199,7 +199,7 @@ class GroupSelector(SelectionModifier):
 
 registeredclass.Registration(
     'Group',
-    SelectionModifier,
+    VoxelSelectionModifier,
     GroupSelector,
     ordering=1,
     params=[
@@ -244,7 +244,7 @@ couriers[selectionshape.EllipseSelectionShape] = _elps_courier
 
 #=--=##=--=##=--=##=--=##=--=#
 
-class RegionSelector(SelectionModifier):
+class RegionSelector(VoxelSelectionModifier):
     def __init__(self, shape, units, operator):
         self.shape = shape
         self.units = units
@@ -257,7 +257,7 @@ class RegionSelector(SelectionModifier):
 
 registeredclass.Registration(
     "Region",
-    SelectionModifier,
+    VoxelSelectionModifier,
     RegionSelector,
     ordering=1.5,
     params=[
@@ -278,7 +278,7 @@ registeredclass.Registration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-class Despeckle(SelectionModifier):
+class Despeckle(VoxelSelectionModifier):
     def __init__(self, neighbors):
         self.neighbors = neighbors
     def __call__(self, ms, selection):
@@ -286,7 +286,7 @@ class Despeckle(SelectionModifier):
         selection.select(pixelselectioncourier.DespeckleSelection(
             ms, selection.getSelectionAsGroup(), self.neighbors))
         
-class Elkcepsed(SelectionModifier):
+class Elkcepsed(VoxelSelectionModifier):
     def __init__(self, neighbors):
         self.neighbors = neighbors
     def __call__(self, ms, selection):
@@ -310,7 +310,7 @@ else:
 
 registeredclass.Registration(
     'Despeckle',
-    SelectionModifier,
+    VoxelSelectionModifier,
     Despeckle,
     ordering=2.0,
     params=[parameter.IntRangeParameter(
@@ -323,7 +323,7 @@ registeredclass.Registration(
 
 registeredclass.Registration(
     'Elkcepsed',
-    SelectionModifier,
+    VoxelSelectionModifier,
     Elkcepsed,
     ordering=2.1,
     params=[parameter.IntRangeParameter(
@@ -336,7 +336,7 @@ registeredclass.Registration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-class Expand(SelectionModifier):
+class Expand(VoxelSelectionModifier):
     def __init__(self, radius):
         self.radius = radius
     def __call__(self, ms, selection):
@@ -344,7 +344,7 @@ class Expand(SelectionModifier):
         selection.select(pixelselectioncourier.ExpandSelection(
             ms, selection.getSelectionAsGroup(), self.radius))
 
-class Shrink(SelectionModifier):
+class Shrink(VoxelSelectionModifier):
     def __init__(self, radius):
         self.radius = radius
     def __call__(self, ms, selection):
@@ -357,7 +357,7 @@ class Shrink(SelectionModifier):
 
 registeredclass.Registration(
     'Expand',
-    SelectionModifier,
+    VoxelSelectionModifier,
     Expand,
     ordering=3.0,
     params=[
@@ -371,7 +371,7 @@ registeredclass.Registration(
 
 registeredclass.Registration(
     'Shrink',
-    SelectionModifier,
+    VoxelSelectionModifier,
     Shrink,
     ordering=3.1,
     params=[
@@ -385,7 +385,7 @@ registeredclass.Registration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-class CopyPixelSelection(SelectionModifier):
+class CopyPixelSelection(VoxelSelectionModifier):
     def __init__(self, source):
         self.source = source
     def __call__(self, ms, selection):
@@ -396,7 +396,7 @@ class CopyPixelSelection(SelectionModifier):
 
 registeredclass.Registration(
     'Copy',
-    SelectionModifier,
+    VoxelSelectionModifier,
     CopyPixelSelection,
     ordering=4.0,
     params=[
