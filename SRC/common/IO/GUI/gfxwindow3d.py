@@ -344,13 +344,6 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
 
     ################################################
 
-    ## TODO: Have a dictionary of mouse handlers keyed by (button,
-    ## shift, ctrl).  Each handler knows which events ('up', 'down',
-    ## 'move') it accepts.  How to decide which handlers to remove
-    ## when new ones are installed?  Does each toolbox also need to
-    ## remove its own mouse handlers?  Should there be a stack of
-    ## handlers?
-
     def mouseCB(self, eventtype, x, y, button, shift, ctrl):
         debug.mainthreadTest()
         if self.mouseHandler.acceptEvent(eventtype):
@@ -369,6 +362,8 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
                     pass
                     # debug.fmsg("scroll: direction=", button, "pos=", x, y,
                     #            "shift=", shift, "ctrl=", ctrl)
+                elif eventtype == 'modkeys':
+                    self.mouseHandler.modkeys(buttons)
             except:
                 print >> sys.stderr, \
                     "Failure calling mousehandler", self.mouseHandler

@@ -23,6 +23,7 @@
 #include <iostream>
 
 #include <gdk/gdk.h>
+#include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 #include <pygobject.h>
 #include <pygtk/pygtk.h>
@@ -294,7 +295,7 @@ void OOFCanvas3D::show() {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// Mouse event handling
+// Mouse (and keyboard) event handling
 
 // Mouse click calling sequence:
 //
@@ -308,7 +309,7 @@ void OOFCanvas3D::show() {
 // Arguments include the type of event ("down", "move", or "up") and
 // its screen coordinates.
 //
-// (3) GfxWindowBase.mouseCB() calls the up(), down(), or move()
+// (3) GfxWindow3D.mouseCB() calls the up(), down(), move(), or modkeys()
 // method of the current mouseHandler, if the mouseHandler's
 // acceptEvent() method says that it can handle the given event type.
 // The mouseHandler is set when a toolbox or the toolbar calls
@@ -354,9 +355,10 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
   PyObject *args = 0;
   bool shift;
   bool ctrl;
+  guint keyval;
   int buttonNumber;
-  // Steal the focus so that other widgets know that their turn is over.
-  // gtk_widget_grab_focus(canvas);
+  bool keypress = false;	// distinguish key press from release
+
   // Protect the Python interpreter calls from thread interference
   // by obtaining the global interpreter lock.
   PyGILState_STATE state = (PyGILState_STATE) pyg_gil_state_ensure();
@@ -401,9 +403,50 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
 			   rescaleFudgeFactor*event->scroll.y,
 			   event->scroll.direction, shift, ctrl);
       break;
+
+      // Mouse handlers that need to know the state of the modifier
+      // keys at all times have to monitor key press and release
+      // events.  They also need to know when the mouse enters the
+      // canvas, because the modifier keys might have been pressed
+      // when the mouse was outside.
     case GDK_KEY_PRESS:
+      keypress = true;
+      // fall through, no break!
     case GDK_KEY_RELEASE:
-      oofcerr << "OOFCanvas3D::mouse_eventCB: key press!" << std::endl;
+      // For KEY_PRESS and KEY_RELEASE, event->key.state records the
+      // state of the modifier keys *before* the key press or release.
+      // Set shift and ctrl to the previous values, and then change
+      // the one corresponding to the pressed or released key.
+      keyval = event->key.keyval;
+      shift = event->key.state & GDK_SHIFT_MASK;
+      ctrl = event->key.state & GDK_CONTROL_MASK;
+      if(keyval == GDK_KEY_Shift_L || keyval == GDK_KEY_Shift_R) {
+	// keypress is false if we got here via GDK_KEY_RELEASE, and
+	// true if it was via GDK_KEY_PRESS.
+	shift = keypress;
+      }
+      else if(keyval == GDK_KEY_Control_L || keyval == GDK_KEY_Control_R) {
+	ctrl = keypress;
+      }
+      // TODO: Add support for Meta/Alt modifiers?
+      else {
+	// Not a key that we care about.  Don't set args.
+	// TODO: If we ever care about other keys, they should be
+	// handled here, and only if keypress==true.
+	break;
+      }
+      // TODO: There's only one mouse_callback, and it takes arguments
+      // which are irrelevant here (x,y,buttonNumber) so they're just
+      // set to zero. We should have different callbacks for different
+      // event types.  Maybe we're adding too many layers of code and
+      // should just wrap the gtk and gdk methods directly.
+      args = Py_BuildValue("sddiii", "modkeys", 0.0, 0.0, 0, shift, ctrl);
+      break;
+    case GDK_ENTER_NOTIFY:
+      gtk_widget_grab_focus(drawing_area);
+      shift = event->crossing.state & GDK_SHIFT_MASK;
+      ctrl = event->crossing.state & GDK_CONTROL_MASK;
+      args = Py_BuildValue("sddiii", "modkeys", 0.0, 0.0, 0, shift, ctrl);
       break;
     default:
       ;				// (compiler warning suppression)

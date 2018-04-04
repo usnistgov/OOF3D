@@ -41,12 +41,14 @@ class MouseHandler(object):
     def acceptEvent(self, eventtype):
         # eventtype is either 'up', 'down', or 'move'.  Return True if it
         # can be handled.
-        return eventtype in ('up', 'down','move')
+        return eventtype in ('up', 'down','move', 'modkeys')
     def up(self, x, y, buttons):
         pass
     def down(self, x, y, buttons):
         pass
     def move(self, x, y, buttons):
+        pass
+    def modkeys(self, buttons):
         pass
     # start() is called just after the handler is installed
     def start(self):
@@ -71,7 +73,7 @@ class SingleClickMouseHandler(MouseHandler):
         MouseHandler.__init__(self, nextHandler)
         self._downed = False
     def acceptEvent(self, event):
-        return event in ("up", "down")
+        return event in ("up", "down", "modkeys")
     def down(self, x, y, buttons):
         self.buttons = buttons
         self._downed = True
@@ -80,7 +82,9 @@ class SingleClickMouseHandler(MouseHandler):
         if self._downed:
             self._downed = False
             subthread.execute(self.nextHandler.up, (x, y, self.buttons))
-
+    def modkeys(self, buttons):
+        self.buttons = buttons
+        subthread.execute(self.nextHandler.modkeys, (buttons,))
 
 # Threaded mouse handler stores events on a queue and processes them
 # on a thread.  This give smoother handling if there's non-trivial
@@ -94,10 +98,10 @@ class ThreadedMouseHandler(MouseHandler):
         # It always gets all events from the canvas.
         MouseHandler.__init__(self, nextHandler)
         # eventtypes is a tuple containing some or all of "up",
-        # "down", and "move".
+        # "down", "move", and "modkeys".
         self.eventtypes = eventtypes
         for event in eventtypes:
-            assert event in ("up", "down", "move")
+            assert event in ("up", "down", "move", "modkeys")
         self.eventlist = []
         self.datalock = lock.EventLogSLock()
         self._downed = False
@@ -141,7 +145,12 @@ class ThreadedMouseHandler(MouseHandler):
                 self.eventlist.append(MouseMove(x, y, self.buttons))
             finally:
                 self.datalock.logNewEvent_release()
-
+    def modkeys(self, buttons):
+        self.datalock.logNewEvent_acquire()
+        try:
+            self.eventlist.append(ModKeys(buttons))
+        finally:
+            self.datalock.logNewEvent_release()
     def start(self):
         assert self.eventThread is None
         # This thread is shut down when cancel method is called which
@@ -220,6 +229,13 @@ class MouseUp(MouseEvent):
 class MouseMove(MouseEvent):
     def process(self, nextHandler):
         nextHandler.move(self.x, self.y, self.buttons)
+        return True
+
+class ModKeys(MouseEvent):
+    def __init__(self, buttons):
+        self.buttons = buttons
+    def process(self, nextHandler):
+        nextHandler.modkeys(self.buttons)
         return True
 
 class MouseTrap(MouseEvent):

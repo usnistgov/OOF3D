@@ -55,6 +55,10 @@ class SingleClickVoxelSelectionMethodGUI(genericselectGUI.SelectionMethodGUI):
             point=voxel,
             operator=selectionoperators.getSelectionOperator(buttons))
 
+    def modkeys(self, buttons):
+        self.toolbox.setParamValues(
+            operator=selectionoperators.getSelectionOperator(buttons))
+
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 @genericselectGUI.selectionGUIfor(pixelselectionmethod.PointSelector)

@@ -97,7 +97,7 @@ passiveOperatorParam = parameter.RegisteredParameter(
 How the new selection modifies the existing selection.
 Use control and shift keys while clicking on the canvas
 to change the value of this parameter.""",
-    value=selectionoperators.SelectOnly())
+    value=selectionoperators.Select())
 passiveOperatorParam.set_data('passive widget', True)
 
 # Selection methods that require more than a single click will want to
@@ -108,7 +108,7 @@ operatorParam = parameter.RegisteredParameter(
     'operator',
     selectionoperators.PixelSelectionOperator,
     tip='How the new selection modifies the existing selection.',
-    value=selectionoperators.SelectOnly())
+    value=selectionoperators.Select())
 
 ###################
 

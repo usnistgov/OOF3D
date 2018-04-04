@@ -22,11 +22,11 @@ class PixelSelectionOperator(registeredclass.RegisteredClass):
 
 class Select(PixelSelectionOperator):
     def operate(self, selection, courier):
-        selection.select(courier)
-
-class SelectOnly(PixelSelectionOperator):
-    def operate(self, selection, courier):
         selection.clearAndSelect(courier)
+
+class AddSelection(PixelSelectionOperator):
+    def operate(self, selection, courier):
+        selection.select(courier)
 
 class Unselect(PixelSelectionOperator):
     def operate(self, selection, courier):
@@ -49,18 +49,18 @@ class Intersect(PixelSelectionOperator):
                 courier.getMicrostructure(), selgrp, courier))
 
 registeredclass.Registration(
-    'Select',
+    "Select",
     PixelSelectionOperator,
     Select,
     ordering=0,
-    tip="Select new objects, leaving the old ones selected.")
+    tip="Select new objects after deselecting the old ones.")
 
 registeredclass.Registration(
-    "Select Only",
+    'Add Selection',
     PixelSelectionOperator,
-    SelectOnly,
+    AddSelection,
     ordering=1,
-    tip="Select new objects after deselecting the old ones.")
+    tip="Select new objects, leaving the old ones selected.")
 
 registeredclass.Registration(
     "Unselect",
@@ -92,8 +92,8 @@ def getSelectionOperator(buttons):
     if buttons.shift:
         if buttons.ctrl:
             return Unselect()   # shift and ctrl
-        return Select()         # shift only
+        return AddSelection()   # shift only
     if buttons.ctrl:
         return Toggle()         # ctrl only
-    return SelectOnly()         # no modifier keys
+    return Select()             # no modifier keys
 
