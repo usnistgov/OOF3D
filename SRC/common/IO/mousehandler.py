@@ -64,8 +64,7 @@ class NullMouseHandler(MouseHandler):
 nullHandler = NullMouseHandler()            # doesn't do anything
 
 # SingleClickMouseHandler just uses the location of the mouse-up
-# event, if a mouse-down event was detected earlier.  Subclasses must
-# define doUp().
+# event, if a mouse-down event was detected earlier. 
 
 class SingleClickMouseHandler(MouseHandler):
     def __init__(self, nextHandler):

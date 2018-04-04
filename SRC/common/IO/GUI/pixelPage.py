@@ -87,14 +87,10 @@ class SelectionPage(oofGUI.MainPage):
         mainpane.pack2(modframe, resize=0, shrink=0)
         vbox = gtk.VBox()
         modframe.add(vbox)
-##        scroll = gtk.ScrolledWindow()
-##        scroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-##        vbox.add(scroll)
         self.selectionModFactory = regclassfactory.RegisteredClassFactory(
             pixelselectionmod.VoxelSelectionModifier.registry, title="Method:",
             scope=self, name="Method")
         vbox.pack_start(self.selectionModFactory.gtk, expand=1, fill=1)
-##        scroll.add_with_viewport(self.selectionModFactory.gtk)
         self.historian = historian.Historian(self.selectionModFactory.set,
                                              self.sensitizeHistory,
                                              setCBkwargs={'interactive':1})
@@ -279,18 +275,9 @@ class SelectionPage(oofGUI.MainPage):
 
     def okbuttonCB(self, *args):
         # Actually perform the current selection modification operation.
-        modmeth = self.selectionModFactory.getRegistration()
-        if modmeth is not None:
-            # Copy parameters from widgets to the registration.
-            self.selectionModFactory.set_defaults()
-            # Invoke the method by calling the corresponding menu
-            # item.  The menu item and method registration share a
-            # parameter list.
-            ## TODO: Rewrite this to use the new VoxelSelection.Select
-            ## menu item.
-            menuitem = getattr(mainmenu.OOF.VoxelSelection,
-                               utils.space2underscore(modmeth.name()))
-            menuitem.callWithDefaults(microstructure=self.getCurrentMSName())
+        reg = self.selectionModFactory.getRegistration()
+        modmeth = self.selectionModFactory.get_value()
+        reg.callMenuItem(self.getCurrentMSName(), modmeth)
 
 ####################################
         

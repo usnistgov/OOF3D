@@ -19,6 +19,7 @@ from ooflib.SWIG.common import ooferror
 from ooflib.common import debug
 from ooflib.common import mainthread
 from ooflib.common import pixelselectionmethod
+from ooflib.common import selectionoperators
 from ooflib.common.IO import mousehandler
 from ooflib.common.IO import voxelregionselectiondisplay
 from ooflib.common.IO.GUI import genericselectGUI
@@ -48,18 +49,23 @@ class SingleClickVoxelSelectionMethodGUI(genericselectGUI.SelectionMethodGUI):
             layers, point, viewobj)
         return result
 
+    def down(self, x, y, buttons):
+        who, voxel = self.getVoxel(x, y)
+        self.toolbox.setParamValues(
+            point=voxel,
+            operator=selectionoperators.getSelectionOperator(buttons))
+
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 @genericselectGUI.selectionGUIfor(pixelselectionmethod.PointSelector)
 class PointSelectorGUI(SingleClickVoxelSelectionMethodGUI):
-    # def __init__(self, toolbox):
-    #     SelectionMethodGUI.__init__(self, toolbox)
-
     def up(self, x, y, buttons):
         who, voxel = self.getVoxel(x, y)
         self.toolbox.setParamValues(point=voxel)
-        self.toolbox.invokeMenuItem(who,
-                                    pixelselectionmethod.PointSelector(voxel))
+        operator = selectionoperators.getSelectionOperator(buttons)
+        self.toolbox.invokeMenuItem(
+            who,
+            pixelselectionmethod.PointSelector(voxel, operator))
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -140,12 +146,15 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         ## the Registration are never used.  This could use
         ## toolbox.getParamValues() or just instantiate the object
         ## from the Registration.
+
+        operator = self.toolbox.getParamValues('operator')
         
         self.toolbox.invokeMenuItem(
             self.toolbox.getSelectionSource(),
             pixelselectionmethod.RectangularPrismSelector(
                 self.voxelbox.lowerleftback(),
-                self.voxelbox.upperrightfront()))
+                self.voxelbox.upperrightfront(),
+                operator))
         # There's no need to redraw, since the menu item will do it.
         # self.gfxwindow().oofcanvas.render()
         

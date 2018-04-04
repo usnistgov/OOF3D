@@ -743,6 +743,9 @@ class ParameterTable(ParameterWidget, widgetscope.WidgetScope):
             widget.verbose = True
         self.widgets.append(widget)
 
+        if param.get_data('passive widget'):
+            widget.gtk.set_sensitive(False)
+
         # if self.verbose:
         #     debug.fmsg("requesting callback 2")
         self.sbcallbacks.append(

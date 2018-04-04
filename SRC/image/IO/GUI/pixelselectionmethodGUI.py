@@ -14,9 +14,10 @@ from ooflib.SWIG.common import config
 from ooflib.SWIG.image import burn
 from ooflib.common import debug
 from ooflib.common import mainthread
-from ooflib.image import pixelselectionmethod
+from ooflib.common import selectionoperators
 from ooflib.common.IO.GUI import genericselectGUI
-import ooflib.common.IO.GUI.pixelselectionmethodGUI as pixselmethGUI
+from ooflib.common.IO.GUI import pixelselectionmethodGUI as pixselmethGUI
+from ooflib.image import pixelselectionmethod
 
 @genericselectGUI.selectionGUIfor(pixelselectionmethod.ColorSelector)
 class ColorSelectorGUI(pixselmethGUI.SingleClickVoxelSelectionMethodGUI):
@@ -24,9 +25,11 @@ class ColorSelectorGUI(pixselmethGUI.SingleClickVoxelSelectionMethodGUI):
         who, voxel = self.getVoxel(x, y)
         if voxel is not None:
             wrange = self.toolbox.getParamValues('range')
+            operator = selectionoperators.getSelectionOperator(buttons)
             self.toolbox.setParamValues(point=voxel)
             self.toolbox.invokeMenuItem(
-                who, pixelselectionmethod.ColorSelector(voxel, wrange))
+                who,
+                pixelselectionmethod.ColorSelector(voxel, wrange, operator))
         
 
 @genericselectGUI.selectionGUIfor(burn.Burn)
@@ -42,6 +45,8 @@ class BurnGUI(pixselmethGUI.SingleClickVoxelSelectionMethodGUI):
                                                          "global_flammability",
                                                          "color_space_norm",
                                                          "next_nearest")
+            operator = selectionoperators.getSelectionOperator(buttons)
             self.toolbox.invokeMenuItem(
                 who, burn.Burn(voxel, local_flammability, global_flammability,
-                               color_space_norm, next_nearest))
+                               color_space_norm, next_nearest,
+                               operator))

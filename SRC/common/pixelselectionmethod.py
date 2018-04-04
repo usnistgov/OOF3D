@@ -29,12 +29,13 @@ from ooflib.SWIG.common.IO import vtkutils
 from ooflib.common import debug
 from ooflib.common import primitives
 from ooflib.common import registeredclass
+from ooflib.common import selectionoperators
 from ooflib.common.IO import parameter
 from ooflib.common.IO import pointparameter
 from ooflib.common.IO import xmlmenudump
 import math
 
-###################
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # Base class for generic methods for selecting objects in the graphics
 # window.  Subclasses should have registries.  Registrations should
@@ -49,7 +50,7 @@ class GenericSelectionMethod(registeredclass.RegisteredClass):
         if src is not None:
             return src.path()
 
-#################
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#        
 
 # Base class for voxel selection methods
 
@@ -78,6 +79,37 @@ class VoxelSelectionRegistration(registeredclass.Registration):
             secret=secret,
             **kwargs)
 
+
+# Many (but not all) selection methods will have a
+# PixelSelectionOperator argument that indicates how the new selection
+# combines with the previous selection.  That argument will appear in
+# the toolbox GUI for the selection method.  In many cases, however,
+# its value should be set by modifier keys (shift, ctrl, etc) and not
+# by the toolbox widget for the parameter.  To make it less confusing
+# (we hope) for the user, the parameter widget can be made passive, so
+# it reflects the state of the modifier keys but does not affect them.
+# This parameter object can be used in all such cases:
+passiveOperatorParam = parameter.RegisteredParameter(
+    'operator',
+    selectionoperators.PixelSelectionOperator,
+    tip=
+    """\
+How the new selection modifies the existing selection.
+Use control and shift keys while clicking on the canvas
+to change the value of this parameter.""",
+    value=selectionoperators.SelectOnly())
+passiveOperatorParam.set_data('passive widget', True)
+
+# Selection methods that require more than a single click will want to
+# get their selection operator directly from the toolbox instead of
+# from a mouse click, and should use this parameter, which is settable
+# by the user:
+operatorParam = parameter.RegisteredParameter(
+    'operator',
+    selectionoperators.PixelSelectionOperator,
+    tip='How the new selection modifies the existing selection.',
+    value=selectionoperators.SelectOnly())
+
 ###################
 
 # Select a single pixel.  Although the select function is written to
@@ -85,11 +117,12 @@ class VoxelSelectionRegistration(registeredclass.Registration):
 # registration only requests 'up'.
 
 class PointSelector(VoxelSelectionMethod):
-    def __init__(self, point):
+    def __init__(self, point, operator):
         self.point = point
-    def select(self, source, selection, operator):
+        self.operator = operator
+    def select(self, source, selection):
         ms = source.getMicrostructure()
-        operator.operate(selection,
+        self.operator.operate(selection,
                          pixelselectioncourier.PointSelection(ms, self.point))
 
 VoxelSelectionRegistration(
@@ -97,7 +130,8 @@ VoxelSelectionRegistration(
     PointSelector,
     ordering=0.1,
     whoclasses=['Microstructure', 'Image'],
-    params=[pointparameter.PointParameter('point')],
+    params=[pointparameter.PointParameter('point'),
+            passiveOperatorParam],
     tip="Select a single pixel.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/common/reg/pointselect.xml')
     )
@@ -275,13 +309,13 @@ if config.dimension() == 2:
 
 
 class RectangularPrismSelector(VoxelSelectionMethod):
-    def __init__(self, corner0, corner1):
+    def __init__(self, corner0, corner1, operator):
         self.corner0 = corner0
         self.corner1 = corner1
-    def select(self, source, selection, operator):
-        # operator is a PixelSelectionOperator from pixelselectionmod.py
+        self.operator = operator
+    def select(self, source, selection):
         ms = source.getMicrostructure()
-        operator.operate(
+        self.operator.operate(
             selection,
             pixelselectioncourier.BoxSelection(
                 ms,
@@ -292,7 +326,8 @@ VoxelSelectionRegistration(
     RectangularPrismSelector,
     ordering=0.2,
     params=[pointparameter.PointParameter('corner0'),
-            pointparameter.PointParameter('corner1')],
+            pointparameter.PointParameter('corner1'),
+            operatorParam],
     whoclasses=['Microstructure', 'Image'],
     tip="Click to select a box-shaped region."
     )

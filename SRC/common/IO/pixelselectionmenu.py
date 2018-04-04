@@ -15,7 +15,7 @@ from ooflib.SWIG.common import switchboard
 from ooflib.common import debug
 from ooflib.common import labeltree
 from ooflib.common import pixelselectionmethod
-from ooflib.common import pixelselectionmod
+from ooflib.common import registeredclass
 from ooflib.common import utils
 from ooflib.common.IO import mainmenu
 from ooflib.common.IO import oofmenu
@@ -26,6 +26,8 @@ from ooflib.common.IO import xmlmenudump
  # 'microstructure' is a param name
 from ooflib.common import microstructure as msmodule
 
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
 selectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
     'VoxelSelection',
     help='Tools for selecting pixels.',
@@ -33,7 +35,9 @@ selectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
         'DISCUSSIONS/common/menu/pixelselection.xml'),
     cli_only=1))
 
-def select(menuitem, source, method, operator):
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+def select(menuitem, source, method):
     # source is the name of a Microstructure or Image.  Get the object.
     whopath = labeltree.makePath(source)
     if len(whopath) == 1:
@@ -48,7 +52,7 @@ def select(menuitem, source, method, operator):
     selection.begin_writing()
     try:
         selection.start()
-        method.select(source, selection, operator)
+        method.select(source, selection)
     finally:
         selection.end_writing()
         selection.cancel_reservation()
@@ -63,17 +67,13 @@ selectmenu.addItem(oofmenu.OOFMenuItem(
         parameter.RegisteredParameter(
             'method',
             pixelselectionmethod.VoxelSelectionMethod,
-            tip="How the pixels will be selected."),
-        parameter.RegisteredParameter(
-            'operator',
-            pixelselectionmod.PixelSelectionOperator,
-            tip="How the new selection modifies the existing selection.",
-            value=pixelselectionmod.SelectOnly())
+            tip="How the pixels will be selected.")
         ],
     callback=select,
     help="Select some voxels."
 ))
 
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 def clear(menuitem, microstructure):
     ms = msmodule.microStructures[microstructure]

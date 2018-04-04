@@ -92,17 +92,16 @@ OOFCanvas3D::OOFCanvas3D(bool fixCanvasScaleBug)
 			"configure_event",
 			G_CALLBACK(OOFCanvas3D::gtk_configure),
 			this));
-
-  gtk_widget_add_events(drawing_area, (GDK_EXPOSURE_MASK
-				       | GDK_BUTTON_PRESS_MASK
-				       | GDK_BUTTON_RELEASE_MASK
-				       | GDK_KEY_PRESS_MASK
-				       | GDK_SCROLL_MASK
-				       | GDK_POINTER_MOTION_MASK
-				       | GDK_POINTER_MOTION_HINT_MASK
-				       | GDK_ENTER_NOTIFY_MASK
-				       | GDK_LEAVE_NOTIFY_MASK
-				       ));
+  gtk_widget_set_can_focus(drawing_area, (gboolean) 1); // allow keyboard events
+  gtk_widget_add_events(drawing_area,
+			(GDK_EXPOSURE_MASK
+			 | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK
+			 | GDK_KEY_PRESS_MASK | GDK_KEY_RELEASE_MASK
+			 | GDK_SCROLL_MASK
+			 | GDK_POINTER_MOTION_MASK
+			 | GDK_POINTER_MOTION_HINT_MASK
+			 | GDK_ENTER_NOTIFY_MASK | GDK_LEAVE_NOTIFY_MASK
+			 ));
   show();
 }
 
@@ -401,6 +400,10 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
 			   rescaleFudgeFactor*event->scroll.x,
 			   rescaleFudgeFactor*event->scroll.y,
 			   event->scroll.direction, shift, ctrl);
+      break;
+    case GDK_KEY_PRESS:
+    case GDK_KEY_RELEASE:
+      oofcerr << "OOFCanvas3D::mouse_eventCB: key press!" << std::endl;
       break;
     default:
       ;				// (compiler warning suppression)

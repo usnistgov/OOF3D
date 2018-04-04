@@ -183,26 +183,13 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
     def invokeMenuItem(self, who, method):
         # method is a SelectionMethod subclass
         menuitem = self.toolbox.menuitem
-        # source = method.getSourceName(self.gfxwindow())
-        # self.toolbox.setSourceParams(menuitem, source)
-
-        ## TODO: This assumes that the relevant mouse button state is
-        ## what the handler recorded last.  Is that always a correct
-        ## assumption?
         buttons = self.currentMouseHandler.buttons
-
-        ## TODO: Move the selection operator stuff out of
-        ## pixelselectionmod, because this file is for generic
-        ## selections.
-
-        menuitem.callWithDefaults(
-            source=who.path(),
-            method=method,
-            operator=pixelselectionmod.getSelectionOperator(buttons))
+        menuitem.callWithDefaults(source=who.path(), method=method)
 
     def getParamValues(self, *paramnames):
         # Return the values of the given parameters from the
-        # RegisteredClassFactory.
+        # RegisteredClassFactory.  If just one is given, return it.
+        # If there's more than one, return a tuple.
         mainthread.runBlock(self.selectionMethodFactory.set_defaults)
         reg = self.selectionMethodFactory.getRegistration()
         values = [reg.getParameter(name).value for name in paramnames]

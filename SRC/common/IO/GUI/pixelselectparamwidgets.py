@@ -44,7 +44,8 @@ import math
 # separately.
 
 class VoxelRegionSelectWidget(parameterwidgets.ParameterWidget):
-    def __init__(self, selectionmethodGUI, params, scope=None, name=None, showLabels=True, data={}, verbose=False):
+    def __init__(self, selectionmethodGUI, params, scope=None, name=None,
+                 showLabels=True, data={}, verbose=False):
         debug.mainthreadTest()
         self.selectionmethodGUI = selectionmethodGUI
         self.params = params
@@ -52,7 +53,8 @@ class VoxelRegionSelectWidget(parameterwidgets.ParameterWidget):
         # A VBox, which will be the self.gtk attribute of this
         # ParameterWidget.
         base = gtk.VBox()
-        parameterwidgets.ParameterWidget.__init__(self, base, scope=scope, name=name, verbose=verbose)
+        parameterwidgets.ParameterWidget.__init__(
+            self, base, scope=scope, name=name, verbose=verbose)
 
         # A ParameterTable for the params passed into the constructor.
         self.parameterTable = parameterwidgets.ParameterTable(

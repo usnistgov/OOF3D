@@ -36,20 +36,21 @@ BurnSelection = pixelselectioncourieri.BurnSelection
 
 class Burn(pixelselectionmethod.VoxelSelectionMethod):
     def __init__(self, point, local_flammability, global_flammability,
-                 color_space_norm, next_nearest):
+                 color_space_norm, next_nearest, operator):
         self.point = point
         self.local_flammability = local_flammability
         self.global_flammability = global_flammability
         self.color_space_norm = color_space_norm
         self.next_nearest = next_nearest
-    def select(self, source, selection, operator):
+        self.operator = operator
+    def select(self, source, selection):
         ms = source.getMicrostructure()
         startpt = ms.pixelFromPoint(self.point)
         image = source.getObject()
         if source.getSelectionContext().getObject().checkpixel(startpt):
             b = BasicBurner(self.local_flammability, self.global_flammability,
                             self.color_space_norm==L2, self.next_nearest)
-            operator.operate(
+            self.operator.operate(
                 selection,
                 BurnSelection(ms, b, source.getObject(), startpt))
         
@@ -91,7 +92,8 @@ burnSelectorRegistration = pixelselectionmethod.VoxelSelectionRegistration(
         ),
         parameter.BooleanParameter(
             'next_nearest', value=0,
-            tip="Burn next-nearest neighbors?")
+            tip="Burn next-nearest neighbors?"),
+        pixelselectionmethod.passiveOperatorParam
     ],
     events=['up'],
     whoclasses=['Image'],

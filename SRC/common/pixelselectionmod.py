@@ -17,12 +17,16 @@ from ooflib.SWIG.common import switchboard
 from ooflib.common import color
 from ooflib.common import debug
 from ooflib.common import enum
+from ooflib.common import microstructure as msmodule
 from ooflib.common import primitives
 from ooflib.common import registeredclass
 from ooflib.common import selectionshape
+from ooflib.common import selectionoperators
 from ooflib.common.IO import colordiffparameter
+from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
 from ooflib.common.IO import pixelgroupparam
+from ooflib.common.IO import pixelselectionmenu
 from ooflib.common.IO import reporter
 from ooflib.common.IO import whoville
 from ooflib.common.IO import xmlmenudump
@@ -32,155 +36,128 @@ import ooflib.common.units
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+# VoxelSelectionModifier is the registered class for the selection
+# tools that appear in the RCF on the PixelPage.
+
+# Simple selection modifiers that don't take any parameters other than
+# a Microstructure or Image should be registered using
+# SimpleVoxelSelectionModRegistration, which will automatically create
+# a menu item for them.  The subclasses need to have a select() method
+# which takes a PixelSelectionContext arg.
+
+# Other selection modifiers are registered with
+# VoxelSelectionModRegistration.  When used, an instance of the
+# subclass is passed as the 'method' argument to
+# OOF.VoxelSelection.Select.
+
 class VoxelSelectionModifier(registeredclass.RegisteredClass):
     registry = []
-    def __call__(self):
-        pass
+
+    
+def simpleSelectionCB(menuitem, microstructure):
+    ms = msmodule.microStructures[microstructure]
+    selection = ms.getSelectionContext()
+    selection.reserve()
+    selection.begin_writing()
+    try:
+        # SimpleVoxelSelectionModRegistration sets menuitem.data to a
+        # VoxelSelectionModifier subclass, which has a static select()
+        # method.
+        menuitem.data.select(selection)
+    finally:
+        selection.end_writing()
+        selection.cancel_reservation()
+    switchboard.notify('pixel selection changed', selection)
+    switchboard.notify('redraw')
+
+
+class SimpleVoxelSelectionModRegistration(registeredclass.Registration):
+    def __init__(self, name, subclass, ordering, secret=0, **kwargs):
+        registeredclass.Registration.__init__(
+            self,
+            name=name,
+            registeredclass=VoxelSelectionModifier,
+            subclass=subclass,
+            ordering=ordering,
+            params=[],
+            secret=secret,
+            **kwargs)
+        self.menuitem = pixelselectionmenu.selectmenu.addItem(
+            oofmenu.OOFMenuItem(
+                name,
+                params=[whoville.WhoParameter('microstructure',
+                                              msmodule.microStructures,
+                                              tip=parameter.emptyTipString)],
+                ordering=ordering,
+                callback=simpleSelectionCB))
+        self.menuitem.data = subclass
+    def callMenuItem(self, microstructure, selectionModifier):
+        self.menuitem.callWithDefaults(microstructure=microstructure)
+
+class VoxelSelectionModRegistration(registeredclass.Registration):
+    def __init__(self, name, subclass, ordering, secret=0, **kwargs):
+        registeredclass.Registration.__init__(
+            self,
+            name=name,
+            registeredclass=VoxelSelectionModifier,
+            subclass=subclass,
+            ordering=ordering,
+            params=[],
+            secret=secret,
+            **kwargs)
+        self.menuitem = pixelselectionmenu.selectmenu.Select
+    def callMenuItem(self, microstructure, selectionModifier):
+        self.menuitem.callWithDefaults(source=microstructure,
+                                       method=selectionModifier)
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# # OOFMenu callback, installed automatically for each SelectionModifier
-# # class by the switchboard callback invoked when the class is
-# # registered.
+# Simple selection methods
 
-# def doSelectionMod(menuitem, microstructure, **params):
-#     registration = menuitem.data
-#     # create the SelectionModifier
-#     selectionModifier = registration(**params)
-#     # apply the SelectionModifier
-#     ms = ooflib.common.microstructure.microStructures[microstructure].getObject()
-#     selection = ms.pixelselection
-#     selection.reserve()
-#     selection.begin_writing()
-#     try:
-#         selectionModifier(ms, selection)
-#     finally:
-#         selection.end_writing()
-#         selection.cancel_reservation()
-#     # Switchboard signals:
+class ClearVoxelSelection(VoxelSelectionModifier):
+    @staticmethod
+    def select(selection):
+        selection.start()
+        selection.clear()
 
-#     # "pixel selection changed" is caught by GUI components that
-#     # display the number of selected pixels, or the selected pixels
-#     # themselves, or contain widgets whose sensitivity depends on the
-#     # selection state.
-#     switchboard.notify('pixel selection changed', selection)
-#     # "modified pixel selection" indicates that a pixel selection
-#     # modifier has been applied.  It's caught by the Pixel Page to
-#     # update its historian.
-#     switchboard.notify('modified pixel selection', selectionModifier)
-#     # "new pixel selection" is similar to "modified pixel selection",
-#     # except that it's used by the pixel selection toolbox.
-#     ## TODO OPT: Do we really need both "pixel selection changed" and
-#     ## "modified pixel selection"?
-#     switchboard.notify('new pixel selection', None, None)
+SimpleVoxelSelectionModRegistration(
+    'Clear', ClearVoxelSelection, ordering=0,
+    discussion="<para>Unselect all voxels.</para>")
 
-#     switchboard.notify('redraw')
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-# class Invert(SelectionModifier):
-#     def __call__(self, ms, selection):
-#         selection.start()
-#         selection.invert()
-
-# registeredclass.Registration(
-#     'Invert',
-#     SelectionModifier,
-#     Invert,
-#     ordering=0.0,
-#     tip="Select all unselected pixels and unselect all selected pixels.",
-#     discussion="""<para>
-#     Selected pixels will be unselected and unselelcted ones will be
-#     selected.</para>""")
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-# Different ways that groups and shapes can be used when modifying
-# selections.
-
-## TODO 3.1: Can these be used in Skeleton selection operations as well?
-
-class PixelSelectionOperator(registeredclass.RegisteredClass):
-    registry = []
-
-class Select(PixelSelectionOperator):
-    def operate(self, selection, courier):
-        selection.select(courier)
-
-class SelectOnly(PixelSelectionOperator):
-    def operate(self, selection, courier):
-        selection.clearAndSelect(courier)
-
-class Unselect(PixelSelectionOperator):
-    def operate(self, selection, courier):
-        selection.unselect(courier)
-
-class Toggle(PixelSelectionOperator):
-    def operate(self, selection, courier):
-        selection.toggle(courier)
-
-class Intersect(PixelSelectionOperator):
-    def operate(self, selection, courier):
-        # The selection needs to be cloned before calling
-        # clearAndSelect, or else it will be empty by the time the
-        # intersection is actually computed.  The clone has to be
-        # stored in a variable here, so that it won't be garbage
-        # collected until the calculation is complete.
-        selgrp = selection.getSelectionAsGroup().clone()
-        selection.clearAndSelect(
-            pixelselectioncourier.IntersectSelection(
-                courier.getMicrostructure(), selgrp, courier))
-
-registeredclass.Registration(
-    'Select',
-    PixelSelectionOperator,
-    Select,
-    ordering=0,
-    tip="Select new objects, leaving the old ones selected.")
-
-registeredclass.Registration(
-    "Select Only",
-    PixelSelectionOperator,
-    SelectOnly,
-    ordering=1,
-    tip="Select new objects after deselecting the old ones.")
-
-registeredclass.Registration(
-    "Unselect",
-    PixelSelectionOperator,
-    Unselect,
-    ordering=2,
-    tip="Unselect only the given objects, leaving others selected.")
-
-registeredclass.Registration(
-    "Toggle",
-    PixelSelectionOperator,
-    Toggle,
-    ordering=3,
-    tip="Unselect the given objects if they're currently selected,"
-    " and select them if they're not.")
-
-registeredclass.Registration(
-    "Intersect",
-    PixelSelectionOperator,
-    Intersect,
-    ordering=3,
-    tip="Unselect all objects that are not in the given set.")
-
-
-## TODO: Make the interpretation of the modifier keys settable by the
-## user?
-
-def getSelectionOperator(buttons):
-    if buttons.shift:
-        if buttons.ctrl:
-            return Unselect()   # shift and ctrl
-        return Select()         # shift only
-    if buttons.ctrl:
-        return Toggle()         # ctrl only
-    return SelectOnly()         # no modifier keys
+class InvertVoxelSelection(VoxelSelectionModifier):
+    @staticmethod
+    def select(selection):
+        selection.start()
+        selection.invert()
         
+SimpleVoxelSelectionModRegistration(
+    'Invert', InvertVoxelSelection, ordering=0.1,
+    discussion="""<para>
+    Selected voxels will be unselected and unselelcted ones will be
+    selected.</para>"""
+)
+
+# Undo and Redo are secret because they have buttons and don't need to
+# be in the RCF.
+
+class UndoVoxelSelection(VoxelSelectionModifier):
+    @staticmethod
+    def select(selection):
+        selection.undo()
+
+SimpleVoxelSelectionModRegistration('Undo', UndoVoxelSelection, ordering=-1,
+                                    secret=True)
+
+class RedoVoxelSelection(VoxelSelectionModifier):
+    @staticmethod
+    def select(selection):
+        selection.redo()
+
+SimpleVoxelSelectionModRegistration('Redo', RedoVoxelSelection, ordering=-1,
+                                    secret=True)
+
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
 
 ## TODO: Rewrite to use VoxelSelectionMethod instead of
 ## VoxelSelectionModifier? No-- all VoxelSelectionMethods appear in the
@@ -206,7 +183,7 @@ registeredclass.Registration(
         pixelgroupparam.PixelGroupParameter('group',
                                             tip='Pixel group to work with.'),
         parameter.RegisteredParameter(
-            'operator', PixelSelectionOperator,
+            'operator', selectionoperators.PixelSelectionOperator,
             tip="How to use the group to modify the current selection.")],
     tip="Modify the current selection via boolean operations"
     " with the pixels in a pixel group.")
@@ -269,7 +246,7 @@ registeredclass.Registration(
             value=ooflib.common.units.PhysicalUnits(),
             tip="The units for the shape's length parameters."),
         parameter.RegisteredParameter(
-            'operator', PixelSelectionOperator,
+            'operator', selectionoperators.PixelSelectionOperator,
             tip="How to use the region to modify the current selection.")
         ],
     tip="Modify the current selection via boolean operations using the pixels"

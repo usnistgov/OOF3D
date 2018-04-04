@@ -20,15 +20,16 @@ from ooflib.common.IO import pointparameter
 from ooflib.common.IO import xmlmenudump
 
 class ColorSelector(pixelselectionmethod.VoxelSelectionMethod):
-    def __init__(self, point, range):
+    def __init__(self, point, range, operator):
         self.point = point
         self.range = range
-    def select(self, source, selection, operator):
+        self.operator = operator
+    def select(self, source, selection):
         ms = source.getMicrostructure()
         pt = ms.pixelFromPoint(self.point)
         image = source.getObject() # OOFImage3D
         ref_color = image[pt]
-        operator.operate(
+        self.operator.operate(
             selection,
             pixelselectioncourieri.ColorSelection(ms, image,
                                                   ref_color, self.range))
@@ -41,7 +42,9 @@ pixelselectionmethod.VoxelSelectionRegistration(
     params=[
         pointparameter.PointParameter('point'),
         colordiffparameter.ColorDifferenceParameter(
-        'range', tip='Acceptable deviation from the reference color.')],
+            'range', tip='Acceptable deviation from the reference color.'),
+        pixelselectionmethod.passiveOperatorParam
+    ],
     whoclasses=['Image'],
     tip="""\
 Select voxels whose color is close
