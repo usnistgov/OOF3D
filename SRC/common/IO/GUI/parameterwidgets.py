@@ -785,6 +785,7 @@ class ParameterTable(ParameterWidget, widgetscope.WidgetScope):
         # if self.verbose:
         #     debug.fmsg("done")
     def get_values(self):
+        # Copy values from the widgets into the Parameters
         debug.mainthreadTest()
         exceptions = []
         for param, widget in zip(self.params, self.widgets):
@@ -797,6 +798,24 @@ class ParameterTable(ParameterWidget, widgetscope.WidgetScope):
                 exceptions.append(exception)
         if exceptions:
             raise exceptions[0]
+    def setParamValues(self, **kwargs):
+        # Set the values of the widgets for the given parameters
+        if debug.debug():
+            names = [param.name for param in self.params]
+            for name in kwargs:
+                if not name in names:
+                    raise ooferror.ErrPyProgrammingError(
+                        "No parameter named '%s' in ParameterTable!" % name)
+        for param, widget in zip(self.params, self.widgets):
+            try:
+                value = kwargs[param.name]
+            except KeyError:
+                # Not all of the params in the table are being set.
+                # That's ok.
+                pass
+            else:
+                widget.set_value(value)
+
     def vcheck(self, widgetnumber, validity):
         # callback for ('validity', widget).  This just stores the
         # validity value.  The subsequent widget changed switchboard

@@ -81,13 +81,16 @@ decorator defined in the module common.IO.GUI.pixelselectionmethodGUI.
 The GenericSelectToolboxGUI constructor creates instances of the
 SelectionMethodGUI for each selection method in the toolbox, and
 stores them in a dict keyed by selection method.  This dict is used as
-the widgetdict for the RegisteredClassFactory of selection methods.  
+the widgetdict for the RegisteredClassFactory of selection methods.
 Each SelectionMethodGUI has a __call__ method that the toolbox's
 RegisteredClassFactory uses to create the gtk widgets for the
 method. It returns an object that acts like a ParameterTable, as far
 as the RegisteredClassFactory is concerned.  If __call__ isn't defined
-in a subclass, the base class provides one that returns a a
-ParameterTable for the params in the method's registration.
+in a subclass, the base class provides one that returns a
+ParameterTable for the params in the method's registration.  The
+subclass must provide a work-alike for
+ParameterTable.setParamValues(**vals), which set the widgets in the
+name from the given name=value pairs in vals.
 
 MOUSE HANDLING
 
@@ -107,10 +110,14 @@ itself, so MouseHandler is also a base class for SelectionMethodGUI.
 
 The low-level handlers must have these methods:
   * acceptEvent: determines which events to process ("down", "up",
-  and/or "move").
-  * up, down, move: called by the canvas to handle an event
+  "move", and/or "modkeys").
+  * up, down, move, modkeys: called by the canvas to handle an event.
   * start, stop: called by the toolbox when the mouse handler should
   become active or inactive.
+
+modkeys is called when the shift or control keys are pressed,
+separately from mouse clicks (so calling this section "mouse handling"
+is misleading).
 
 The low-level handlers in mousehandler.py are:
 
@@ -201,7 +208,8 @@ common/pixelselectionmod.py
    which are only tangentially related to the topic of this
    discussion.
 
-   Also defines PixelSelectionOperator, a registered class for ways to
+common/selectionoperators.py
+   Defines PixelSelectionOperator, a registered class for ways to
    combine the current selection with the existing selection.  In GUI
    methods these can be controlled by modifier keys:  shift-click =>
    Select, click => SelectOnly, ctrl-click => Toggle, etc.  This class

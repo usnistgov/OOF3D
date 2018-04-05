@@ -20,8 +20,8 @@ Use Eigen?  Use DPF's sparse_matrix_optimization branch?
 
 Remove opacity param from MicrostructureMaterialDisplay?  Is it used?
 It's passed through to vtkActor::GetProperty()->SetOpacity(), but it
-doesn't have any effect on what's displayed.  Also, there's a TODO
-asking if ImageCanvasLayer::set_opacity() works.
+doesn't have any effect on what's displayed.  [Also, there's a TODO
+asking if ImageCanvasLayer::set_opacity() works. -- Fixed]
 
 Fix bug: Using upper-right corner arrows for switching views sometimes
 draws the canvas in the wrong location.

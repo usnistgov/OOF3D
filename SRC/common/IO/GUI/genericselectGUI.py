@@ -200,17 +200,8 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
     def setParamValues(self, **kwargs):
         # Set the values of the given parameters in the
         # RegisteredClassFactory.
-        reg = self.selectionMethodFactory.getRegistration()
-        for key,value in kwargs.items():
-            reg.getParameter(key).value = value
-        # TODO: Calling setByRegistration is inefficient here, because
-        # we're not changing the RCF's current registration.
-        # setByRegistration() will completely rebuild the widget.  Add
-        # a new RCF function that just updates widgets with values
-        # from the current registration.
         mainthread.runBlock(
-            self.selectionMethodFactory.setByRegistration, (reg,))
-
+            self.selectionMethodFactory.setParamValues, (), kwargs)
 
     def layerChangeCB(self):
         # Called when layers have been added, removed, or moved in the gfxwindow

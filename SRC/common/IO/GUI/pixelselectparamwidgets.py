@@ -43,6 +43,9 @@ import math
 # hand-in-hand, since it makes little sense for them to exist
 # separately.
 
+# TODO: Switching to a different voxel selection method should cancel
+# the current operation.
+
 class VoxelRegionSelectWidget(parameterwidgets.ParameterWidget):
     def __init__(self, selectionmethodGUI, params, scope=None, name=None,
                  showLabels=True, data={}, verbose=False):
@@ -147,6 +150,9 @@ Click Done to select all the voxels in the box."""
         debug.mainthreadTest()
         self.parameterTable.get_values()
         self.params = self.parameterTable.params
+
+    def setParamValues(self, **kwargs):
+        self.parameterTable.setParamValues(**kwargs)
 
     def startCB(self, button):
         self.selectionmethodGUI.start()
