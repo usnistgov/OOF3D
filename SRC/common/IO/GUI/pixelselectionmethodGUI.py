@@ -51,9 +51,10 @@ class SingleClickVoxelSelectionMethodGUI(genericselectGUI.SelectionMethodGUI):
 
     def down(self, x, y, buttons):
         who, voxel = self.getVoxel(x, y)
-        self.toolbox.setParamValues(
-            point=voxel,
-            operator=selectionoperators.getSelectionOperator(buttons))
+        if voxel is not None:
+            self.toolbox.setParamValues(
+                point=voxel,
+                operator=selectionoperators.getSelectionOperator(buttons))
 
     def modkeys(self, buttons):
         self.toolbox.setParamValues(
@@ -65,11 +66,12 @@ class SingleClickVoxelSelectionMethodGUI(genericselectGUI.SelectionMethodGUI):
 class PointSelectorGUI(SingleClickVoxelSelectionMethodGUI):
     def up(self, x, y, buttons):
         who, voxel = self.getVoxel(x, y)
-        self.toolbox.setParamValues(point=voxel)
-        operator = selectionoperators.getSelectionOperator(buttons)
-        self.toolbox.invokeMenuItem(
-            who,
-            pixelselectionmethod.PointSelector(voxel, operator))
+        if who is not None:
+            self.toolbox.setParamValues(point=voxel)
+            operator = selectionoperators.getSelectionOperator(buttons)
+            self.toolbox.invokeMenuItem(
+                who,
+                pixelselectionmethod.PointSelector(voxel, operator))
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 

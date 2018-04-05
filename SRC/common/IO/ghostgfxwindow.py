@@ -1906,7 +1906,6 @@ class GhostGfxWindow:
                  point, view, canvaslayers))
             if which == -1:
                 # Nothing was clicked
-                debug.fmsg("Click was off target!")
                 return (None, None)
             return (layers[which].who(), pos)
             
