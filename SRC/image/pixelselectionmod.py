@@ -25,13 +25,12 @@ class ColorRange(pixelselection.VoxelSelectionModifier):
         self.image = image
         self.reference = reference
         self.range = range
-    def __call__(self, ms, selection):
+    def select(self, ms, selection):
         curselection = selection.getObject()
         # 'cause my teeth are perly...
         image = whoville.getClass('Image')[self.image]
         imageobj = image.getObject()
         ms = image.getMicrostructure()
-        selection.start()
         selection.clearAndSelect(
             pixelselectioncourieri.ColorSelection(ms, imageobj,
                                                   self.reference, self.range))

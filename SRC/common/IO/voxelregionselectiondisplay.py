@@ -112,6 +112,11 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
     def get_box(self):
         return self.canvaslayer.get_box()
 
+    # Activate and deactivate are called by GenericSelectToolboxGUI
+    # when the toolbox is activated or deactivated.  This can happen
+    # in the middle of an editing session if the graphics window
+    # switches to a different toolbox.
+    
     def activate(self):
         if not self.active:
             self.active = True
@@ -129,6 +134,9 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
             self.canvaslayer.setModified()
             subthread.execute(self.gfxwindow.draw)
 
+    # Start and stop are called in response to the Start and Done or
+    # Cancel buttons in the toolbox, marking the beginning and end of
+    # an editing session.  The toolbox must be active already.
     def start(self):
         microstructure = self.gfxwindow.findMicrostructure()
         if microstructure is None:

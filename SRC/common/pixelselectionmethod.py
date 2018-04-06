@@ -64,8 +64,7 @@ class RectangularPrismSelector(pixelselection.VoxelSelectionMethod):
         self.operator.operate(
             selection,
             pixelselectioncourier.BoxSelection(
-                ms,
-                geometry.CRectangularPrism(self.corner0, self.corner1)))
+                ms, geometry.CRectangularPrism(self.corner0, self.corner1)))
 
 pixelselection.VoxelSelectionMethodRegistration(
     'Box',

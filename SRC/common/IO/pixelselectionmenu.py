@@ -22,9 +22,7 @@ from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
 from ooflib.common.IO import whoville
 from ooflib.common.IO import xmlmenudump
-
- # 'microstructure' is a param name
-from ooflib.common import microstructure as msmodule
+import ooflib.common.microstructure # 'microstructure' is a param name
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -37,16 +35,18 @@ selectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# Generic selection menu callbacks.  The callbacks do *not* call
-# PixelSelectionContext.start(), because then the Undo and Redo
-# commands couldn't use the callbacks.  The "select" methods in the
-# VoxelSelectionMethod and VoxelSelectionModifier subclasses have to
-# call selection.start().
+# Generic selection menu callbacks.
 
-# Menu item for simple voxel selection operations.
+
+# Menu item for simple voxel selection operations.  The callback does
+# *not* call PixelSelectionContext.start(), because then the Undo and
+# Redo commands couldn't use the callbacks.  The "select" methods in
+# the VoxelSelectionMethod and VoxelSelectionModifier subclasses have
+# to call selection.start().
+
 
 def simpleSelectionCB(menuitem, microstructure):
-    ms = msmodule.microStructures[microstructure]
+    ms = ooflib.common.microstructure.microStructures[microstructure]
     selection = ms.getSelectionContext()
     selection.reserve()
     selection.begin_writing()
@@ -62,7 +62,9 @@ def simpleSelectionCB(menuitem, microstructure):
     switchboard.notify('redraw')
 
 
-# Menu item for complex voxel selection operations.
+# Menu item for complex voxel selection operations.  This one *does*
+# call PixelSelectionContext.start(), so the subclasses should not
+# call it.
 
 def select(menuitem, source, method):
     # source is the name of a Microstructure or Image.  Get the object.
@@ -78,7 +80,7 @@ def select(menuitem, source, method):
     selection.reserve()
     selection.begin_writing()
     try:
-        # selection.start()
+        selection.start()
         method.select(source, selection)
     finally:
         selection.end_writing()

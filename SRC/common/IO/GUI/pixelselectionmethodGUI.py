@@ -91,7 +91,6 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         # id of the vtk cell currently being edited.
         self.cellID = None
 
-
         # Previous position, in display coordinates, of the mouse.
         self.last_x = None
         self.last_y = None
@@ -126,6 +125,8 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         return mousehandler.KangarooMouseHandler(self, ("up", "move", "down"))
 
     def start(self):
+        # Called by VoxelRegionSelectWidget.startCB, in response to
+        # the 'Start' button.
         self._editing = True
         self.layer.start()
         self.sensitize()
@@ -164,17 +165,31 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         # self.gfxwindow().oofcanvas.render()
         
     def cancel(self):
-        self._editing = False
-        self.layer.stop()
-        self.sensitize()
-        self.gfxwindow().oofcanvas.render()
+        if self._editing:
+            self._editing = False
+            self.layer.stop()
+            self.sensitize()
+            self.gfxwindow().oofcanvas.render()
 
     def reset(self):
-        self.layer.reset()
-        self.gfxwindow().oofcanvas.render()
-        self.voxelbox = self.layer.get_box()
-        self.setPointWidgets()
+        if self._editing:
+            self.layer.reset()
+            self.gfxwindow().oofcanvas.render()
+            self.voxelbox = self.layer.get_box()
+            self.setPointWidgets()
 
+    # install and uninstall are called by the toolbox when switching
+    # between selection methods in this toolbox.
+    def install(self):
+        self.activate()
+    def uninstall(self):
+        self.cancel()           # Cancel any editing in progress.
+        self.deactivate()
+
+    # activate and deactivate are called when switching between
+    # toolboxes.  Switching to a different toolbox doesn't halt the
+    # editing session in this toolbox, but it temporarily dims the vtk
+    # widget.
     def activate(self):
         self.layer.activate()
     def deactivate(self):

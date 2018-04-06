@@ -131,10 +131,12 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
             return
         # currentGUI can be None if the subclass doesn't have a GUI
         if self.currentGUI is not None:
+            self.currentGUI.uninstall()
             self.currentGUI.setCurrentRegistration(None)
         self.currentGUI = self.methodGUIs.get(registration.subclass, None)
         if self.currentGUI is not None:
             self.currentGUI.setCurrentRegistration(registration)
+            self.currentGUI.install()
         self.installMouseHandler()
 
     def activate(self):
@@ -392,9 +394,16 @@ class SelectionMethodGUI(mousehandler.MouseHandler):
         return mousehandler.NullMouseHandler()
 
     def close(self):
-        # close() is called whent the toolbox is closing.  It should
+        # close() is called when the toolbox is closing.  It should
         # do any necessary cleanup.  It can assume that the
         # mousehandler (if any) has already been stopped.
+        pass
+
+    # Install and uninstall are called when the toolbox switches to or
+    # away from this SelectionMethod.
+    def install(self):
+        pass
+    def uninstall(self):
         pass
 
     # activate() and deactivate() are called when the toolbox is
