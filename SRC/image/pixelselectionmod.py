@@ -12,13 +12,15 @@
 
 from ooflib.SWIG.image import pixelselectioncourieri
 from ooflib.common import color
-from ooflib.common import pixelselectionmod
+from ooflib.common import pixelselection
 from ooflib.common import registeredclass
 from ooflib.common.IO import colordiffparameter
 from ooflib.common.IO import parameter
 from ooflib.common.IO import whoville
 
-class ColorRange(pixelselectionmod.VoxelSelectionModifier):
+# TODO: Add operatorParam
+
+class ColorRange(pixelselection.VoxelSelectionModifier):
     def __init__(self, image, reference, range):
         self.image = image
         self.reference = reference
@@ -34,9 +36,8 @@ class ColorRange(pixelselectionmod.VoxelSelectionModifier):
             pixelselectioncourieri.ColorSelection(ms, imageobj,
                                                   self.reference, self.range))
 
-registeredclass.Registration(
+pixelselection.VoxelSelectionModRegistration(
     'Color Range',
-    pixelselectionmod.VoxelSelectionModifier,
     ColorRange,
     ordering=3.14,
     params=[whoville.WhoParameter('image', whoville.getClass('Image'),

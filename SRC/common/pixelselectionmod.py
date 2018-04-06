@@ -21,7 +21,6 @@ from ooflib.common import microstructure as msmodule
 from ooflib.common import primitives
 from ooflib.common import registeredclass
 from ooflib.common import selectionshape
-from ooflib.common import selectionoperators
 from ooflib.common.IO import colordiffparameter
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
@@ -33,11 +32,14 @@ from ooflib.common.IO import xmlmenudump
 import ooflib.common.microstructure
 import ooflib.common.units
 
+# I don't usually like "from x.y.z import p,d,q" but these names are too long.
+
+from ooflib.common.pixelselection import \
+    SimpleVoxelSelectionModRegistration, \
+    VoxelSelectionModifier, \
+    VoxelSelectionModRegistration
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-# VoxelSelectionModifier is the registered class for the selection
-# tools that appear in the RCF on the PixelPage.
 
 # Simple selection modifiers that don't take any parameters other than
 # a Microstructure or Image should be registered using
@@ -49,66 +51,6 @@ import ooflib.common.units
 # VoxelSelectionModRegistration.  When used, an instance of the
 # subclass is passed as the 'method' argument to
 # OOF.VoxelSelection.Select.
-
-class VoxelSelectionModifier(registeredclass.RegisteredClass):
-    registry = []
-
-    
-def simpleSelectionCB(menuitem, microstructure):
-    ms = msmodule.microStructures[microstructure]
-    selection = ms.getSelectionContext()
-    selection.reserve()
-    selection.begin_writing()
-    try:
-        # SimpleVoxelSelectionModRegistration sets menuitem.data to a
-        # VoxelSelectionModifier subclass, which has a static select()
-        # method.
-        menuitem.data.select(selection)
-    finally:
-        selection.end_writing()
-        selection.cancel_reservation()
-    switchboard.notify('pixel selection changed', selection)
-    switchboard.notify('redraw')
-
-
-class SimpleVoxelSelectionModRegistration(registeredclass.Registration):
-    def __init__(self, name, subclass, ordering, secret=0, **kwargs):
-        registeredclass.Registration.__init__(
-            self,
-            name=name,
-            registeredclass=VoxelSelectionModifier,
-            subclass=subclass,
-            ordering=ordering,
-            params=[],
-            secret=secret,
-            **kwargs)
-        self.menuitem = pixelselectionmenu.selectmenu.addItem(
-            oofmenu.OOFMenuItem(
-                name,
-                params=[whoville.WhoParameter('microstructure',
-                                              msmodule.microStructures,
-                                              tip=parameter.emptyTipString)],
-                ordering=ordering,
-                callback=simpleSelectionCB))
-        self.menuitem.data = subclass
-    def callMenuItem(self, microstructure, selectionModifier):
-        self.menuitem.callWithDefaults(microstructure=microstructure)
-
-class VoxelSelectionModRegistration(registeredclass.Registration):
-    def __init__(self, name, subclass, ordering, secret=0, **kwargs):
-        registeredclass.Registration.__init__(
-            self,
-            name=name,
-            registeredclass=VoxelSelectionModifier,
-            subclass=subclass,
-            ordering=ordering,
-            params=[],
-            secret=secret,
-            **kwargs)
-        self.menuitem = pixelselectionmenu.selectmenu.Select
-    def callMenuItem(self, microstructure, selectionModifier):
-        self.menuitem.callWithDefaults(source=microstructure,
-                                       method=selectionModifier)
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -158,33 +100,26 @@ SimpleVoxelSelectionModRegistration('Redo', RedoVoxelSelection, ordering=-1,
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-
-## TODO: Rewrite to use VoxelSelectionMethod instead of
-## VoxelSelectionModifier? No-- all VoxelSelectionMethods appear in the
-## toolbox, and not all VoxelSelectionModifiers are appropriate there.
-
 class GroupSelector(VoxelSelectionModifier):
     def __init__(self, group, operator):
         self.group = group
         self.operator = operator
-    def __call__(self, ms, selection):
-        group = ms.findGroup(self.group)
+    def select(self, ms, selection):
+        group = ms.getObject().findGroup(self.group)
         if group is not None:
             selection.start()
             self.operator.operate(
-                selection, pixelselectioncourier.GroupSelection(ms, group))
+                selection, pixelselectioncourier.GroupSelection(ms.getObject(),
+                                                                group))
 
-registeredclass.Registration(
+VoxelSelectionModRegistration(
     'Group',
-    VoxelSelectionModifier,
     GroupSelector,
     ordering=1,
     params=[
         pixelgroupparam.PixelGroupParameter('group',
                                             tip='Pixel group to work with.'),
-        parameter.RegisteredParameter(
-            'operator', selectionoperators.PixelSelectionOperator,
-            tip="How to use the group to modify the current selection.")],
+        pixelselectionmenu.operatorParam],
     tip="Modify the current selection via boolean operations"
     " with the pixels in a pixel group.")
 
@@ -226,15 +161,14 @@ class RegionSelector(VoxelSelectionModifier):
         self.shape = shape
         self.units = units
         self.operator = operator
-    def __call__(self, ms, selection):
+    def select(self, ms, selection):
         selection.start()
-        scaled = self.units.scale(ms, self.shape)
-        courier = couriers[self.shape.__class__](scaled, ms)
+        scaled = self.units.scale(ms.getObject(), self.shape)
+        courier = couriers[self.shape.__class__](scaled, ms.getObject())
         self.operator.operate(selection, courier)
 
-registeredclass.Registration(
+VoxelSelectionModRegistration(
     "Region",
-    VoxelSelectionModifier,
     RegionSelector,
     ordering=1.5,
     params=[
@@ -245,9 +179,7 @@ registeredclass.Registration(
             'units', ooflib.common.units.UnitsRC,
             value=ooflib.common.units.PhysicalUnits(),
             tip="The units for the shape's length parameters."),
-        parameter.RegisteredParameter(
-            'operator', selectionoperators.PixelSelectionOperator,
-            tip="How to use the region to modify the current selection.")
+        pixelselectionmenu.operatorParam
         ],
     tip="Modify the current selection via boolean operations using the pixels"
     " within a given geometrically defined region."
@@ -258,7 +190,7 @@ registeredclass.Registration(
 class Despeckle(VoxelSelectionModifier):
     def __init__(self, neighbors):
         self.neighbors = neighbors
-    def __call__(self, ms, selection):
+    def select(self, ms, selection):
         selection.start()
         selection.select(pixelselectioncourier.DespeckleSelection(
             ms, selection.getSelectionAsGroup(), self.neighbors))
@@ -266,7 +198,7 @@ class Despeckle(VoxelSelectionModifier):
 class Elkcepsed(VoxelSelectionModifier):
     def __init__(self, neighbors):
         self.neighbors = neighbors
-    def __call__(self, ms, selection):
+    def select(self, ms, selection):
         selection.start()
         selection.unselect(pixelselectioncourier.ElkcepsedSelection(
             ms, selection.getSelectionAsGroup(), self.neighbors))
@@ -285,9 +217,8 @@ else:
     elkcepsedRange = (1, 13)
     elkcepsedDefault = 9
 
-registeredclass.Registration(
+VoxelSelectionModRegistration(
     'Despeckle',
-    VoxelSelectionModifier,
     Despeckle,
     ordering=2.0,
     params=[parameter.IntRangeParameter(
@@ -298,9 +229,8 @@ registeredclass.Registration(
     discussion=xmlmenudump.loadFile('DISCUSSIONS/common/menu/despeckle.xml')
     )
 
-registeredclass.Registration(
+VoxelSelectionModRegistration(
     'Elkcepsed',
-    VoxelSelectionModifier,
     Elkcepsed,
     ordering=2.1,
     params=[parameter.IntRangeParameter(
@@ -316,25 +246,24 @@ registeredclass.Registration(
 class Expand(VoxelSelectionModifier):
     def __init__(self, radius):
         self.radius = radius
-    def __call__(self, ms, selection):
+    def select(self, ms, selection):
         selection.start()
         selection.select(pixelselectioncourier.ExpandSelection(
-            ms, selection.getSelectionAsGroup(), self.radius))
+            ms.getObject(), selection.getSelectionAsGroup(), self.radius))
 
 class Shrink(VoxelSelectionModifier):
     def __init__(self, radius):
         self.radius = radius
-    def __call__(self, ms, selection):
+    def select(self, ms, selection):
         selection.start()
         selection.unselect(pixelselectioncourier.ShrinkSelection(
-            ms, selection.getSelectionAsGroup(), self.radius))
+            ms.getObject(), selection.getSelectionAsGroup(), self.radius))
 
 ## TODO 3.1: Allow radius to be set in either physical or pixel units
 ## by adding a "units" parameter.
 
-registeredclass.Registration(
+VoxelSelectionModRegistration(
     'Expand',
-    VoxelSelectionModifier,
     Expand,
     ordering=3.0,
     params=[
@@ -346,9 +275,8 @@ registeredclass.Registration(
     discussion=xmlmenudump.loadFile("DISCUSSIONS/common/menu/expand_pixsel.xml")
     )
 
-registeredclass.Registration(
+VoxelSelectionModRegistration(
     'Shrink',
-    VoxelSelectionModifier,
     Shrink,
     ordering=3.1,
     params=[
@@ -365,15 +293,14 @@ registeredclass.Registration(
 class CopyPixelSelection(VoxelSelectionModifier):
     def __init__(self, source):
         self.source = source
-    def __call__(self, ms, selection):
+    def select(self, ms, selection):
         selection.start()
         sourceMS = ooflib.common.microstructure.microStructures[self.source]
         selection.selectFromGroup(
             sourceMS.getObject().pixelselection.getSelectionAsGroup())
 
-registeredclass.Registration(
+VoxelSelectionModRegistration(
     'Copy',
-    VoxelSelectionModifier,
     CopyPixelSelection,
     ordering=4.0,
     params=[

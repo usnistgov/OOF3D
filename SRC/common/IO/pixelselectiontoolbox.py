@@ -13,7 +13,7 @@ from ooflib.SWIG.common import switchboard
 from ooflib.common import debug
 from ooflib.common import labeltree
 from ooflib.common import toolbox
-from ooflib.common import pixelselectionmethod
+from ooflib.common import pixelselection
 from ooflib.common.IO import genericselecttoolbox
 from ooflib.common.IO import whoville
 from ooflib.common.IO import pixelselectionmenu
@@ -41,7 +41,7 @@ class PixelSelectToolbox(genericselecttoolbox.GenericSelectToolbox):
         genericselecttoolbox.GenericSelectToolbox.__init__(
             self,
             name=toolboxName(),
-            method=pixelselectionmethod.VoxelSelectionMethod,
+            method=pixelselection.VoxelSelectionMethod,
             menu = pixelselectionmenu.selectmenu,
             gfxwindow=gfxwindow)
 

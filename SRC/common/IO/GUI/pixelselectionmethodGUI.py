@@ -126,7 +126,6 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         return mousehandler.KangarooMouseHandler(self, ("up", "move", "down"))
 
     def start(self):
-        debug.dumpCaller()
         self._editing = True
         self.layer.start()
         self.sensitize()
@@ -189,6 +188,8 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         
     def up(self, x, y, buttons):
         # An 'up' event is being processed.
+        if not self._editing:
+            return
         self.last_x = None
         self.last_y = None
         self.cellID = None
@@ -196,6 +197,8 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         
     def down(self, x, y, buttons):
         # A 'down' event is being processed.
+        if not self._editing:
+            return
         viewobj = mainthread.runBlock(self.gfxwindow().oofcanvas.get_view)
         point = mainthread.runBlock(self.gfxwindow().oofcanvas.display2Physical,
                                     (viewobj, x, y))
@@ -214,6 +217,8 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         
 
     def move(self, x, y, buttons):
+        if not self._editing:
+            return
         viewobj = mainthread.runBlock(self.gfxwindow().oofcanvas.get_view)
         last_mouse_coords = mainthread.runBlock(
             self.gfxwindow().oofcanvas.display2Physical, (viewobj, self.last_x,

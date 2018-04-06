@@ -1038,7 +1038,51 @@ class RegisteredParameter(Parameter):
             return \
          "An object of the <link linkend='RegisteredClass-%s'><classname>%s</classname></link> class." % (nm,nm)
 
+# MultiRegisteredParameter is a RegisteredParameter that can take
+# values from more than one RegisteredClass.
 
+class MultiRegisteredParameter(RegisteredParameter):
+    def __init__(self, name, regs, value=None, default=None, tip=None,
+                 auxData={}):
+        self.regs = regs[:]
+        Parameter.__init__(self, name, value, default, tip, auxData)
+    def registry(self):
+        # The registries of the RegisteredClasses can change, so don't
+        # save the return value of this function and expect it to be
+        # valid later.
+        registrations = []
+        for reg in self.regs:
+            registrations.extend(reg.registry)
+        return registrations
+    def checker(self, x):
+        for registration in self.registry():
+            if isinstance(x, registration.subclass):
+                return
+        # Type check failed. Compose a useful error message.
+        if type(x) is InstanceType:
+            gotname = x.__class__.__name__
+        else:
+            gotname = type(x)
+        raise TypeError(
+            'Bad type for RegisteredParameter! Got %s\nExpected one of %s'
+            % (gotname, [reg.subclass.__name__ for reg in self.registry()]))
+    def clone(self):
+        try:
+            return self.__class__(self.name, self.regs, self.value,
+                                  self.default, self.tip, self.auxData)
+        except:
+            debug.fmsg("Failed to clone MultiRegisteredParameter of class",
+                       self.__class__.__name__)
+            raise
+    def regnames(self):
+        return "(" + ",".join([reg.name for reg in self.regs]) + ")"
+    def __repr__(self):
+        return '%s(%s, %s, %s, %s)' %\
+            (self.__class__.__name__, self.name, self.regnames(),
+             `self.value`, self.tip)
+    ## TODO: Probably need to add binaryRepr, binaryRead, classRepr,
+    ## valueRepr and valueDesc.
+        
 # RegisteredListParameter stores a list of instances of
 # RegisteredClasses.  No more than one member of each subclass can be
 # present, although this restriction isn't enforced here.  The

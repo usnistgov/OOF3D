@@ -14,12 +14,13 @@ from ooflib.SWIG.common import config
 from ooflib.SWIG.common.IO import vtkutils
 from ooflib.SWIG.image import pixelselectioncourieri
 from ooflib.common import debug
-from ooflib.common import pixelselectionmethod
+from ooflib.common import pixelselection
 from ooflib.common.IO import colordiffparameter
+from ooflib.common.IO import pixelselectionmenu
 from ooflib.common.IO import pointparameter
 from ooflib.common.IO import xmlmenudump
 
-class ColorSelector(pixelselectionmethod.VoxelSelectionMethod):
+class ColorSelector(pixelselection.VoxelSelectionMethod):
     def __init__(self, point, range, operator):
         self.point = point
         self.range = range
@@ -34,7 +35,7 @@ class ColorSelector(pixelselectionmethod.VoxelSelectionMethod):
             pixelselectioncourieri.ColorSelection(ms, image,
                                                   ref_color, self.range))
 
-pixelselectionmethod.VoxelSelectionRegistration(
+pixelselection.VoxelSelectionMethodRegistration(
     'Color',
     ColorSelector,
     ordering=0.6,
@@ -43,7 +44,7 @@ pixelselectionmethod.VoxelSelectionRegistration(
         pointparameter.PointParameter('point'),
         colordiffparameter.ColorDifferenceParameter(
             'range', tip='Acceptable deviation from the reference color.'),
-        pixelselectionmethod.passiveOperatorParam
+        pixelselectionmenu.passiveOperatorParam
     ],
     whoclasses=['Image'],
     tip="""\

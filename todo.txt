@@ -63,16 +63,6 @@ the other selection gui changes to keep the git commits reasonable.
 Fix selection commands in the Pixel Page, which broke when the menu
 items were changed for the pixel selection toolbox.
 
-Fix this: When both an Image and a Microstructure material layer are
-displayed, and one or both has a filter applied so that both should be
-visible, only the top one is visible.
-BitmapDisplayMethod.layersChanged hides all but the topmost image
-layer, and applies the overlayer pipeline to it.  This is wrong.
-Probably we should display all images and replace the overlayer
-pipeline with separate translucent vtk layers and rely on vtk's
-coincident object resolution.  Will that be too slow for drawing
-selected voxels?
-
 When a click doesn't result in a selection because it went to a layer
 that can't handle it, display a warning.
 
@@ -88,6 +78,9 @@ selected, but an array of bools would suffice there.
 
 Change the abaqus element type in skeleton output to C3D4.  In mesh
 abaqus output it should be C3D4 or C3D10.
+
+Opacity works for Image layers but not Microstructure Material
+displays. ?
 
 ---------------------------------------------------------------------------
 Soon
@@ -293,3 +286,16 @@ visible unless the Viewer toolbox is active, or should be drawn
 faintly (without its arrow?).  Maybe there should be auto-dim and
 auto-hide options in the layer plane-and-arrow settings.
 ** Done: 2018-02-02
+
+Fix this: When both an Image and a Microstructure material layer are
+displayed, and one or both has a filter applied so that both should be
+visible, only the top one is visible.
+BitmapDisplayMethod.layersChanged hides all but the topmost image
+layer, and applies the overlayer pipeline to it.  This is wrong.
+Probably we should display all images and replace the overlayer
+pipeline with separate translucent vtk layers and rely on vtk's
+coincident object resolution.  Will that be too slow for drawing
+selected voxels?
+** Done: 2018-04-05
+
+

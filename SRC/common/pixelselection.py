@@ -19,16 +19,12 @@
 
 from ooflib.SWIG.common import config
 from ooflib.common import debug
+from ooflib.common import genericselection
+from ooflib.common import registeredclass
+from ooflib.common.IO import oofmenu
+from ooflib.common.IO import parameter
 from ooflib.common.IO import whoville
 import types
-
-# class PixelSelection(cpixelselection.CPixelSelection):
-#     def __repr__(self):
-#         return "PixelSelection(%s)" % len(self)
-#     def getMicrostructure(self):
-#         return self.getCMicrostructure()
-#         # Find which Microstructure corresponds to this CMicrostructure.
-#         #return common.microstructure.microStructures[cms.name()]
 
 #####################################
 
@@ -100,4 +96,104 @@ pixelselectionWhoClass = whoville.WhoDoUndoClass(
     ordering=999,
     secret=0,
     proxyClasses=['<top microstructure>'])
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Infrastructure for voxel selection methods.
+
+# There are two (poorly named) main classes of voxel selection methods.
+
+# VoxelSelectionMethod is the registered class for mouse-based
+# selection methods that appear in the Select Voxels toolbox in
+# graphics windows.
+
+# VoxelSelectionModifier is the registered class for the selection
+# tools that appear in the RCF on the PixelPage.  There are two kinds
+# of VoxelSelectionModifiers: simple ones that don't take any
+# arguments other than the name of the Microstructure or Image that
+# they're operating on.  They should be registered with
+# SimpleVoxelSelectionModRegistration, which automatically create a
+# menu item for them. The registered subclasses need to have a static
+# "select" method which takes a PixelSelectionContext arg.
+
+# More complicated selection operations that require arguments are all
+# handled by a single menu item which takes a VoxelSelectionModifier
+# or VoxelSelectionMethod arg as well as the name of the
+# Microstructure or Image.  They should be registered with
+# VoxelSelectionMethodRegistration or VoxelSelectionModRegistration.
+# The subclsases need to have a non-static "select" method that takes
+# a source and a selection argument.  source is the name of an Image
+# or Microstructure.
+
+class VoxelSelectionMethod(genericselection.GenericSelectionMethod):
+    registry = []
+    # Source is a Microstructure or Image.  Selection is the
+    # Microstructure's PixelSelection object. Operator is a
+    # PixelSelectionOperator, from selectionoperators.py.  Called from
+    # pixelselectionmenu.select(), which is the callback for the menu
+    # item OOF.VOxelSelection.Select.
+    def select(self, source, selection, operator):
+        raise ooferror.ErrPyProgrammingError(
+            "'select' isn't defined for " + self.registration.name)
+
+    
+class VoxelSelectionMethodRegistration(registeredclass.Registration):
+    def __init__(self, name, subclass, ordering, params=[], secret=0, **kwargs):
+        registeredclass.Registration.__init__(
+            self,
+            name=name,
+            registeredclass=VoxelSelectionMethod,
+            subclass=subclass,
+            ordering=ordering,
+            params=params,
+            secret=secret,
+            **kwargs)
+
+
+class VoxelSelectionModifier(registeredclass.RegisteredClass):
+    registry = []
+
+    
+class SimpleVoxelSelectionModRegistration(registeredclass.Registration):
+    def __init__(self, name, subclass, ordering, secret=0, **kwargs):
+        registeredclass.Registration.__init__(
+            self,
+            name=name,
+            registeredclass=VoxelSelectionModifier,
+            subclass=subclass,
+            ordering=ordering,
+            params=[],
+            secret=secret,
+            **kwargs)
+        from ooflib.common.IO import pixelselectionmenu
+        self.menuitem = pixelselectionmenu.selectmenu.addItem(
+            oofmenu.OOFMenuItem(
+                name,
+                params=[whoville.WhoParameter(
+                    'microstructure',
+                    whoville.getClass('Microstructure'),
+                    tip=parameter.emptyTipString)],
+                ordering=ordering,
+                callback=pixelselectionmenu.simpleSelectionCB))
+        self.menuitem.data = subclass
+    def callMenuItem(self, microstructure, selectionModifier):
+        self.menuitem.callWithDefaults(microstructure=microstructure)
+
+class VoxelSelectionModRegistration(registeredclass.Registration):
+    def __init__(self, name, subclass, ordering, params, secret=0, **kwargs):
+        registeredclass.Registration.__init__(
+            self,
+            name=name,
+            registeredclass=VoxelSelectionModifier,
+            subclass=subclass,
+            ordering=ordering,
+            params=params,
+            secret=secret,
+            **kwargs)
+        from ooflib.common.IO import pixelselectionmenu
+        self.menuitem = pixelselectionmenu.selectmenu.Select
+    def callMenuItem(self, microstructure, selectionModifier):
+        self.menuitem.callWithDefaults(source=microstructure,
+                                       method=selectionModifier)
 

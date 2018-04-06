@@ -13,10 +13,11 @@ from ooflib.SWIG.common.IO import vtkutils
 from ooflib.SWIG.image import pixelselectioncourieri
 from ooflib.common import debug
 from ooflib.common import enum
-from ooflib.common import pixelselectionmethod
+from ooflib.common import pixelselection
 from ooflib.common import primitives
 from ooflib.common import utils
 from ooflib.common.IO import parameter
+from ooflib.common.IO import pixelselectionmenu
 from ooflib.common.IO import pointparameter
 from ooflib.common.IO import xmlmenudump
 
@@ -34,7 +35,7 @@ utils.OOFdefine('ColorNorm', ColorNorm)
 
 BurnSelection = pixelselectioncourieri.BurnSelection
 
-class Burn(pixelselectionmethod.VoxelSelectionMethod):
+class Burn(pixelselection.VoxelSelectionMethod):
     def __init__(self, point, local_flammability, global_flammability,
                  color_space_norm, next_nearest, operator):
         self.point = point
@@ -54,23 +55,8 @@ class Burn(pixelselectionmethod.VoxelSelectionMethod):
                 selection,
                 BurnSelection(ms, b, source.getObject(), startpt))
         
-    # def select(self, immidge, gfxwindow, points, view, selector):
-    #     ms = immidge.getMicrostructure()
-    #     if config.dimension() == 2:
-    #         startpt = ms.pixelFromPoint(points[0])
-    #     else:                   # 3D
-    #         cell = gfxwindow.findClickedCell (immidge, points[0], view)
-    #         if cell is None:
-    #             return
-    #         startcoord = vtkutils.cell2coord(cell)
-    #         startpt = ms.pixelFromPoint(startcoord)
-    #     if immidge.getSelectionContext().getObject().checkpixel(startpt):
-    #         b = BasicBurner(self.local_flammability, self.global_flammability,
-    #                         self.color_space_norm==L2, self.next_nearest)
-    #         selector(BurnSelection(ms, b, immidge.getObject(), startpt))
 
-
-burnSelectorRegistration = pixelselectionmethod.VoxelSelectionRegistration(
+burnSelectorRegistration = pixelselection.VoxelSelectionMethodRegistration(
     'Burn',
     Burn,
     ordering=1.0,
@@ -93,7 +79,7 @@ burnSelectorRegistration = pixelselectionmethod.VoxelSelectionRegistration(
         parameter.BooleanParameter(
             'next_nearest', value=0,
             tip="Burn next-nearest neighbors?"),
-        pixelselectionmethod.passiveOperatorParam
+        pixelselectionmenu.passiveOperatorParam
     ],
     events=['up'],
     whoclasses=['Image'],
@@ -102,17 +88,3 @@ burnSelectorRegistration = pixelselectionmethod.VoxelSelectionRegistration(
     discussion=xmlmenudump.loadFile('DISCUSSIONS/image/reg/burn.xml'))
 
 
-##class RGBBurn(pixelselectionmethod.SelectionMethod):
-##    def __init__(self, red_flammability, green_flammability, blue_flammability):
-##        self.red_flammability = red_flammability
-##        self.green_flammability = green_flammability
-##        self.blue_flammability = blue_flammability
-##    def select(self, immidge, points, selector):
-##        debug.fmsg('Not implemented!')
-
-##Registration('RGBBurn', pixelselect.SelectionMethod, RGBBurn, ordering=1.1,
-##             params=[Parameter('red_flammability', IntType, 10),
-##                     Parameter('green_flammability', IntType, 10),
-##                     Parameter('blue_flammability', IntType, 10)],
-##             events=['up'],
-##             tip="Select a contiguous set of similar pixels, using a slightly different forest fire algorithm.")

@@ -159,7 +159,7 @@ Click Done to select all the voxels in the box."""
         self.sensitize()
 
     def cancelCB(self, button):
-        self.selectionmethodGUI.done()
+        self.selectionmethodGUI.cancel()
         self.sensitize()
 
     def resetCB(self, button):
@@ -170,7 +170,6 @@ Click Done to select all the voxels in the box."""
         # pressed. This causes the 'Done' button to be desensitized.
         self.selectionmethodGUI.done()
         self.sensitize()
-        # TODO: Actually make the selection
 
     def sensitize(self):
         if self.selectionmethodGUI is not None:

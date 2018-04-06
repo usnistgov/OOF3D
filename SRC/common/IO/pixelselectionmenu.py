@@ -14,8 +14,8 @@ from ooflib.SWIG.common import config
 from ooflib.SWIG.common import switchboard
 from ooflib.common import debug
 from ooflib.common import labeltree
-from ooflib.common import pixelselectionmethod
-from ooflib.common import registeredclass
+from ooflib.common import pixelselection
+from ooflib.common import selectionoperators
 from ooflib.common import utils
 from ooflib.common.IO import mainmenu
 from ooflib.common.IO import oofmenu
@@ -37,6 +37,33 @@ selectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+# Generic selection menu callbacks.  The callbacks do *not* call
+# PixelSelectionContext.start(), because then the Undo and Redo
+# commands couldn't use the callbacks.  The "select" methods in the
+# VoxelSelectionMethod and VoxelSelectionModifier subclasses have to
+# call selection.start().
+
+# Menu item for simple voxel selection operations.
+
+def simpleSelectionCB(menuitem, microstructure):
+    ms = msmodule.microStructures[microstructure]
+    selection = ms.getSelectionContext()
+    selection.reserve()
+    selection.begin_writing()
+    try:
+        # SimpleVoxelSelectionModRegistration sets menuitem.data to a
+        # VoxelSelectionModifier subclass, which has a static select()
+        # method.
+        menuitem.data.select(selection)
+    finally:
+        selection.end_writing()
+        selection.cancel_reservation()
+    switchboard.notify('pixel selection changed', selection)
+    switchboard.notify('redraw')
+
+
+# Menu item for complex voxel selection operations.
+
 def select(menuitem, source, method):
     # source is the name of a Microstructure or Image.  Get the object.
     whopath = labeltree.makePath(source)
@@ -51,7 +78,7 @@ def select(menuitem, source, method):
     selection.reserve()
     selection.begin_writing()
     try:
-        selection.start()
+        # selection.start()
         method.select(source, selection)
     finally:
         selection.end_writing()
@@ -64,9 +91,10 @@ selectmenu.addItem(oofmenu.OOFMenuItem(
     'Select',
     params=[
         whoville.AnyWhoParameter('source', tip="A Microstructure or Image."),
-        parameter.RegisteredParameter(
+        parameter.MultiRegisteredParameter(
             'method',
-            pixelselectionmethod.VoxelSelectionMethod,
+            (pixelselection.VoxelSelectionMethod,
+             pixelselection.VoxelSelectionModifier),
             tip="How the pixels will be selected.")
         ],
     callback=select,
@@ -75,163 +103,32 @@ selectmenu.addItem(oofmenu.OOFMenuItem(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-def clear(menuitem, microstructure):
-    ms = msmodule.microStructures[microstructure]
-    selection = ms.getSelectionContext()
-    selection.reserve()
-    selection.begin_writing()
-    try:
-        selection.start()
-        selection.clear()
-    finally:
-        selection.end_writing()
-        selection.cancel_reservation()
-    switchboard.notify('pixel selection changed', selection)
-    switchboard.notify('redraw')
+# Many (but not all) selection methods will have a
+# PixelSelectionOperator argument that indicates how the new selection
+# combines with the previous selection.  That argument will appear in
+# the toolbox GUI for the selection method.  In many cases, however,
+# its value should be set by modifier keys (shift, ctrl, etc) and not
+# by the toolbox widget for the parameter.  To make it less confusing
+# (we hope) for the user, the parameter widget can be made passive, so
+# it reflects the state of the modifier keys but does not affect them.
+# This parameter object can be used in all such cases:
+passiveOperatorParam = parameter.RegisteredParameter(
+    'operator',
+    selectionoperators.PixelSelectionOperator,
+    tip=
+    """\
+How the new selection modifies the existing selection.
+Use control and shift keys while clicking on the canvas
+to change the value of this parameter.""",
+    value=selectionoperators.Select())
+passiveOperatorParam.set_data('passive widget', True)
 
-selectmenu.addItem(oofmenu.OOFMenuItem(
-    'Clear',
-    params=[whoville.WhoParameter('microstructure',
-                                  msmodule.microStructures,
-                                  tip=parameter.emptyTipString)],
-    callback=clear,
-    help="Clear the current selection.",
-    discussion="<para>Clear the current selection.</para>"))
-
-    
-def undo(menuitem, microstructure):
-    ms = msmodule.microStructures[microstructure]
-    selection = ms.getSelectionContext()
-    selection.reserve()
-    selection.begin_writing()
-    try:
-        selection.undo()
-    finally:
-        selection.end_writing()
-        selection.cancel_reservation()
-    switchboard.notify('pixel selection changed', selection)
-    switchboard.notify('redraw')
-
-selectmenu.addItem(oofmenu.OOFMenuItem(
-    'Undo',
-    params=[whoville.WhoParameter('microstructure',
-                                  msmodule.microStructures,
-                                  tip=parameter.emptyTipString)],
-    callback=undo,
-    help="Undo the latest selection.",
-    discussion=xmlmenudump.loadFile('DISCUSSIONS/common/menu/undo_pixsel.xml')
-))
-
-
-def redo(menuitem, microstructure):
-    ms = msmodule.microStructures[microstructure]
-    selection = ms.getSelectionContext()
-    selection.reserve()
-    selection.begin_writing()
-    try:
-        selection.redo()
-    finally:
-        selection.end_writing()
-        selection.cancel_reservation()
-    switchboard.notify('pixel selection changed', selection)
-    switchboard.notify('redraw')
-
-selectmenu.addItem(oofmenu.OOFMenuItem(
-    'Redo',
-    params=[whoville.WhoParameter('microstructure',
-                                  msmodule.microStructures,
-                                  tip=parameter.emptyTipString)],
-    callback=redo,
-    help="Redo the latest undone selection.",
-    discussion=xmlmenudump.loadFile('DISCUSSIONS/common/menu/redo_pixsel.xml')
-))
-
-    
-def invert(menuitem, microstructure):
-    ms = msmodule.microStructures[microstructure]
-    selection = ms.getSelectionContext()
-    selection.reserve()
-    selection.begin_writing()
-    try:
-        selection.start()
-        selection.invert()
-    finally:
-        selection.end_writing()
-        selection.cancel_reservation()
-    switchboard.notify('pixel selection changed', selection)
-    switchboard.notify('redraw')
-
-selectmenu.addItem(oofmenu.OOFMenuItem(
-    'Invert',
-    params=[whoville.WhoParameter('microstructure',
-                                  msmodule.microStructures,
-                                  tip=parameter.emptyTipString)],
-    callback=invert,
-    help="Invert the current selection.",
-    discussion="<para>Invert the current selection.</para>"))
-
-
-# def buildSelectionModMenu():
-#     selectmenu.clearMenu()
-#     selectmenu.addItem(oofmenu.OOFMenuItem(
-#         'Undo',
-#         params=[whoville.WhoParameter('microstructure',
-#                                       microstructure.microStructures,
-#                                       tip=parameter.emptyTipString)],
-#         callback=pixelselectionmod.undo,
-#         help="Undo the latest selection.",
-#         discussion=xmlmenudump.loadFile('DISCUSSIONS/common/menu/undo_pixsel.xml')
-#         ))
-    
-#     selectmenu.addItem(oofmenu.OOFMenuItem(
-#         'Redo',
-#         params=[whoville.WhoParameter('microstructure',
-#                                       microstructure.microStructures,
-#                                       tip=parameter.emptyTipString)],
-#         callback=pixelselectionmod.redo,
-#         help="Redo the latest undone selection.",
-#         discussion=xmlmenudump.loadFile('DISCUSSIONS/common/menu/redo_pixsel.xml')
-#         ))
-
-#     selectmenu.addItem(oofmenu.OOFMenuItem(
-#         'Clear',
-#         params=[whoville.WhoParameter('microstructure',
-#                                       microstructure.microStructures,
-#                                       tip=parameter.emptyTipString)],
-#         callback=pixelselectionmod.clear,
-#         help="Clear the current selection.",
-#         discussion="<para>Clear the current selection.</para>"))
-    
-#     for registration in pixelselectionmod.SelectionModifier.registry:
-#         # Help string
-#         try:
-#             help = registration.tip
-#         except AttributeError:
-#             help = None
-#         # Discussion
-#         try:
-#             discussion = registration.discussion
-#         except AttributeError:
-#             discussion = None
-#         menuitem = selectmenu.addItem(
-#             oofmenu.OOFMenuItem(utils.space2underscore(registration.name()),
-#                                 callback=pixelselectionmod.doSelectionMod,
-#                                 threadable=oofmenu.THREADABLE,
-#                                 params=[
-#             whoville.WhoParameter('microstructure',
-#                                   microstructure.microStructures,
-#                                   tip=parameter.emptyTipString)
-#             ]+registration.params,
-#                                 help=help,
-#                                 discussion=discussion))
-#         menuitem.data = registration
-    
-# # Rebuild the selection modification menu whenever a new
-# # SelectionModifier Registration is created.  Hopefully this won't be
-# # too often.
-
-# switchboard.requestCallback(pixelselectionmod.SelectionModifier,
-#                             buildSelectionModMenu)
-
-
-# buildSelectionModMenu()
+# Selection methods that require more than a single click will want to
+# get their selection operator directly from the toolbox instead of
+# from a mouse click, and should use this parameter, which is settable
+# by the user:
+operatorParam = parameter.RegisteredParameter(
+    'operator',
+    selectionoperators.PixelSelectionOperator,
+    tip='How the new selection modifies the existing selection.',
+    value=selectionoperators.Select())
