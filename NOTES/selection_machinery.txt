@@ -178,7 +178,7 @@ common/IO/genericselecttoolbox.py
    of the selection toolboxes.
    
 common/IO/mousehandler.py
-   Defines MouseHandler and derived low-level mosue handler classes,
+   Defines MouseHandler and derived low-level mouse handler classes,
    NullMouseHandler, SingleClickMouseHandler, ThreadedMouseHandler,
    and KangarooMouseHandler.
    
