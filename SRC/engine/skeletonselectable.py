@@ -304,10 +304,15 @@ class Selection(SelectionBase):
             del plist[0]
         return (clist, plist)
 
-    # The Four Selection Operations. Which need to go away.
+    # The Five Selection Operations. Which need to go away.
     ## TODO OPT: Move these to C++ and use couriers to avoid constructing
     ## lists of objects in Python and translating them to C++.
+
     def select(self, objlist):
+        self.clear()
+        self.addSelect(objlist)
+        
+    def addSelect(self, objlist):
         (clist, plist) = self.trackerlist()
         skeleton = self.skeletoncontext.getObject()
         for o in objlist:
@@ -395,14 +400,13 @@ class SegmentSelection(Selection):
     def mode(self):
         return skeletonselmodebase.getMode("Segment")
 
-if config.dimension() == 3:
-    class FaceSelection(Selection):
-        def num_objects(self):
-            return self.skeletoncontext.getObject().nfaces()
-        def get_objects(self):
-            return self.skeletoncontext.getObject().getFaces()
-        def mode(self):
-            return skeletonselmodebase.getMode("Face")
+class FaceSelection(Selection):
+    def num_objects(self):
+        return self.skeletoncontext.getObject().nfaces()
+    def get_objects(self):
+        return self.skeletoncontext.getObject().getFaces()
+    def mode(self):
+        return skeletonselmodebase.getMode("Face")
 
 class NodeSelection(Selection):
     def num_objects(self):

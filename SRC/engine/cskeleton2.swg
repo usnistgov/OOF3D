@@ -152,7 +152,7 @@ public:
   bool doesSegmentExist(CSkeletonNode*, CSkeletonNode*);
   CSkeletonFace *findExistingFace(CSkeletonNode*, CSkeletonNode*,
 				  CSkeletonNode*);
-  CSkeletonFace *findExistingFaceByIds(vtkIdListPtr);
+  CSkeletonFace *findExistingFaceByIds(IntVec*);
   OrientedCSkeletonFace *createOrientedFace(CSkeletonNode*, CSkeletonNode*,
 					    CSkeletonNode*);
 

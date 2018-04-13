@@ -67,6 +67,7 @@ When a click doesn't result in a selection because it went to a layer
 that can't handle it, display a warning.
 
 Restore Skeleton selection toolboxes.
+Fix sensitization of undo/redo buttons in selection toolboxes.
 
 Fix this: Display only the white voxel group.  Clicking to select a
 single pixel on some faces (faces with normals in the +x, +y, or +z

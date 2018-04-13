@@ -9,6 +9,7 @@
 # oof_manager@nist.gov. 
 
 from ooflib.SWIG.common import config
+from ooflib.SWIG.common import ooferror
 from ooflib.common import registeredclass
 
 # Base class for generic methods for selecting objects in the graphics
@@ -23,4 +24,12 @@ class GenericSelectionMethod(registeredclass.RegisteredClass):
         src = self.getSource(gfxwindow)
         if src is not None:
             return src.path()
+    def select(self, context, selection):
+        raise ooferror.ErrPyProgrammingError(
+            self.__class__.__name__, "has no 'select' method!")
 
+
+class GenericSelectionModifier(registeredclass.RegisteredClass):
+    def select(self, context, selection):
+        raise ooferror.ErrPyProgrammingError(
+            self.__class__.__name__, "has no 'select' method!")

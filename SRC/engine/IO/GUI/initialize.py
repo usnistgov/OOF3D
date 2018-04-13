@@ -56,8 +56,7 @@ import ooflib.engine.IO.GUI.movenodeGUI
 import ooflib.engine.IO.GUI.pinnodesGUI
 import ooflib.engine.IO.GUI.pixelinfoGUI
 import ooflib.engine.IO.GUI.skeletoninfoGUI
-print >> sys.stderr, "Not loading skeletonselectiontoolboxGUI"
-#import ooflib.engine.IO.GUI.skeletonselectiontoolboxGUI
+import ooflib.engine.IO.GUI.skeletonselectiontoolboxGUI
 
 # GUI page definitions.
 import ooflib.engine.IO.GUI.analyzePage
@@ -74,3 +73,4 @@ import ooflib.engine.IO.GUI.solverPage
 if config.dimension() == 2:
     import ooflib.engine.IO.GUI.interfacePage #Interface branch
 
+import ooflib.engine.IO.GUI.skeletonselectionmethodGUI

@@ -319,7 +319,7 @@ public:
   const CSkeletonFace* nearestFace(Coord *point);
   CSkeletonFace* findExistingFace(CSkeletonNode *n1, CSkeletonNode *n2,
 				  CSkeletonNode *n3) const;
-  CSkeletonFace* findExistingFaceByIds(vtkSmartPointer<vtkIdList>) const;
+  CSkeletonFace *findExistingFaceByIds(const std::vector<int>*) const;
   OrientedCSkeletonFace *createOrientedFace(CSkeletonNode *n1,
 					    CSkeletonNode *n2,
 					    CSkeletonNode *n3) const;

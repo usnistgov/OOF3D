@@ -297,6 +297,10 @@ class Parameter(object):
     def set_data(self, tag, data):
         self.auxData[tag] = data
 
+    def set_data_dict(self, **kwargs):
+        # Same as set_data, but can do multiple values at once
+        self.auxData.update(kwargs)
+        
     def get_data(self, tag):
         return self.auxData.get(tag, None)
             
@@ -1412,3 +1416,22 @@ class EmptyTip:
         return ""
 
 emptyTipString = EmptyTip()
+
+###########################
+
+# Sometimes its useful to use the Parameter's set_data/get_data
+# mechanism to add additional attributes, such as how a Parameter will
+# be displayed in the GUI. This is really a hack, but it's easier to
+# do this than it is to add new constructor parameters to all of the
+# Parameter classes.
+
+## hidden and passive parameters are currently only hidden or
+## deactivated in ParameterTables.
+
+def passive(param):
+    param.set_data_dict(passiveWidget=True)
+    return param
+
+def hidden(param):
+    param.set_data_dict(hiddenWidget=True)
+    return param

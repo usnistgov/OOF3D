@@ -24,7 +24,6 @@ from ooflib.common import registeredclass
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
 from ooflib.common.IO import whoville
-import types
 
 #####################################
 
@@ -177,7 +176,9 @@ class SimpleVoxelSelectionModRegistration(registeredclass.Registration):
                 ordering=ordering,
                 callback=pixelselectionmenu.simpleSelectionCB))
         self.menuitem.data = subclass
+        
     def callMenuItem(self, microstructure, selectionModifier):
+        # Called by PixelPage when the OK button is pressed
         self.menuitem.callWithDefaults(microstructure=microstructure)
 
 class VoxelSelectionModRegistration(registeredclass.Registration):
@@ -193,7 +194,9 @@ class VoxelSelectionModRegistration(registeredclass.Registration):
             **kwargs)
         from ooflib.common.IO import pixelselectionmenu
         self.menuitem = pixelselectionmenu.selectmenu.Select
+        
     def callMenuItem(self, microstructure, selectionModifier):
+        # Called by PixelPage when the OK button is pressed
         self.menuitem.callWithDefaults(source=microstructure,
                                        method=selectionModifier)
 

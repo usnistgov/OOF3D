@@ -11,12 +11,12 @@
 # See NOTES/selection_machinery.txt
 
 from ooflib.SWIG.common import config
-from ooflib.SWIG.common.IO import vtkutils
 from ooflib.SWIG.image import pixelselectioncourieri
 from ooflib.common import debug
 from ooflib.common import pixelselection
+from ooflib.common import selectionoperators
 from ooflib.common.IO import colordiffparameter
-from ooflib.common.IO import pixelselectionmenu
+from ooflib.common.IO import parameter
 from ooflib.common.IO import pointparameter
 from ooflib.common.IO import xmlmenudump
 
@@ -41,10 +41,12 @@ pixelselection.VoxelSelectionMethodRegistration(
     ordering=0.6,
     events=['up'],
     params=[
-        pointparameter.PointParameter('point'),
+        parameter.passive(
+            pointparameter.PointParameter('point',
+                                          tip="Where the mouse was clicked.")),
         colordiffparameter.ColorDifferenceParameter(
             'range', tip='Acceptable deviation from the reference color.'),
-        pixelselectionmenu.passiveOperatorParam
+        selectionoperators.SelectionOperatorParam('operator', passive=1)
     ],
     whoclasses=['Image'],
     tip="""\

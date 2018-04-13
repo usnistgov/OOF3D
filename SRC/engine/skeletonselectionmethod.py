@@ -8,465 +8,148 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov.
 
-
-# This file contains the selection methods for the Skeleton Selection
-# Toolboxes.  The toolboxes are derived from GenericSelectToolbox, so
-# the menu callback associated with each selection method is
-# GenericSelectToolbox.selectCB.  The menus are created by
-# GenericSelectToolbox.rebuildMenus.
-
-# The "selector" argument to the "select" functions is a method in the
-# Selection class (in skeletonselectable.py): either Selection.select,
-# Selection.selectSelected, Selection.deselect, or Selection.toggle.
+# See NOTES/selection_machinery.txt.  
 
 from ooflib.SWIG.common import config
 from ooflib.common import debug
 from ooflib.common import primitives
 from ooflib.common import registeredclass
+from ooflib.common import selectionoperators
+from ooflib.common.IO import parameter
+from ooflib.common.IO import pointparameter
 from ooflib.common.IO import xmlmenudump
+from ooflib.engine import skeletonselectable
 
-############################
+from ooflib.engine.skeletonselection import \
+    NodeSelectionMethod, SegmentSelectionMethod, FaceSelectionMethod, \
+    ElementSelectionMethod, \
+    NodeSelectionMethodRegistration, SegmentSelectionMethodRegistration, \
+    FaceSelectionMethodRegistration, ElementSelectionMethodRegistration
 
-## Common base class for the different types of skeleton selection
-## method registrations.  
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-class SkeletonSelectionRegistration(registeredclass.Registration):
-    def __init__(self, name, regclass, subclass, ordering, params=[],
-                 secret=0, **kwargs):
-        registeredclass.Registration.__init__(self, name, regclass,
-                                              subclass, ordering, params,
-                                              secret, **kwargs)
+# Hack. We don't have selection couriers for skeleton selections yet,
+# so using the SelectionOperators that are used for voxel selections
+# isn't going to work.  But we'd like to make the interface for
+# skeleton selections look just like the one for voxel selections, so
+# this dict here maps the SelectionOperations to
+# skeletonselection.Selection methods.  TODO: Once couriers are
+# implemented, we should be able to adapt the SelectionOperator
+# classes so that they can be used directly here, and get rid of
+# _operatorDict and applyOperator.
 
-############################
+_operatorDict = {
+    selectionoperators.Select : skeletonselectable.Selection.select,
+    selectionoperators.AddSelection : skeletonselectable.Selection.addSelect,
+    selectionoperators.Unselect : skeletonselectable.Selection.deselect,
+    selectionoperators.Toggle : skeletonselectable.Selection.toggle,
+    selectionoperators.Intersect : skeletonselectable.Selection.selectSelected
+}
 
-class NodeSelectMethod(registeredclass.RegisteredClass):
-    registry = []
-    def select(self, *args, **kwargs):
-        pass
-    ## No tip or discussion members are required here because the
-    ## NodeSelectMethod classes are converted into menu items.
+def applyOperator(operator, selection, selectees):
+    # _operatorDict values are unbound methods of the Selection class,
+    # so they need an explicit 'self' argument when they're called.
+    _operatorDict[operator.__class__](selection, selectees)
+    
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-class NodeSelectionRegistration(SkeletonSelectionRegistration):
-    def __init__(self, name, subclass, ordering, params=[], secret=0, **kwargs):
-        SkeletonSelectionRegistration.__init__(self,
-                                               name=name,
-                                               regclass=NodeSelectMethod,
-                                               subclass=subclass,
-                                               ordering=ordering,
-                                               params=params,
-                                               secret=secret,
-                                               **kwargs)
-# # # # # # # # # # # # # # # #
-
-# Should call the selector with the skeletoncontext and a list of
-# nodes on which to operate.
-class SingleNodeSelect(NodeSelectMethod):
-    def select(self, skeletoncontext, gfxwindow, pointlist, view, selector):
-        pts = []
-        if config.dimension() == 3:
-            pt = gfxwindow.findClickedPoint(skeletoncontext, pointlist[0], view)
-            if pt is not None:
-                # Calling nearestNode here seems to be repeating the
-                # work that was already doen in findClickedPoint, but
-                # that's not actually the case.  findClickedPoint
-                # works on a subgrid and doesn't use the same
-                # vtkPoints as the skeleton, so it can't compute the
-                # Node index.
-                pts.append(skeletoncontext.getObject().nearestNode(pt))
-        else:                   # 2D
-            pts.append(skeletoncontext.getObject().nearestNode(pointlist[0]))
-        selector(pts)
+class SingleNodeSelect(NodeSelectionMethod):
+    def __init__(self, point, operator):
+        self.point = point
+        self.operator = operator
+    def select(self, source, selection):
+        # Calling nearestNode here seems to be repeating the work that
+        # was already doen in findClickedPoint, but that's not
+        # actually the case.  findClickedPoint works on a subgrid
+        # consisting only of points beneath the mouse and doesn't use
+        # the same vtkPoints as the skeleton, so it can't compute the
+        # Node index.
+        node = source.getObject().nearestNode(self.point)
+        applyOperator(self.operator, selection, [node])
         
-NodeSelectionRegistration(
+NodeSelectionMethodRegistration(
     'Single_Node',
     SingleNodeSelect,
     ordering=0,
-    events=['up'],
+    params=[
+        parameter.passive(
+            pointparameter.PointParameter('point')),
+        selectionoperators.SelectionOperatorParam('operator', passive=1)],
     tip="Select a single node.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/single_node.xml'))
 
-if config.dimension() == 2:
-    class RectangleNodeSelect(NodeSelectMethod):
-        def select(self, skeletoncontext, pointlist, selector):
-            reslist = []
-            xmin = min(pointlist[0].x, pointlist[1].x)
-            xmax = max(pointlist[0].x, pointlist[1].x)
-            ymin = min(pointlist[0].y, pointlist[1].y)
-            ymax = max(pointlist[0].y, pointlist[1].y)
-            for n in skeletoncontext.getObject().nodes:
-                if n.position().x < xmax and n.position().x > xmin and \
-                       n.position().y < ymax and n.position().y > ymin:
-                    reslist.append(n)
-            selector(reslist)
 
-    rectangleNodeSelector = NodeSelectionRegistration(
-        'Rectangle',
-        RectangleNodeSelect,
-        ordering=1,
-        events=['down', 'up'],
-        tip="Drag to select nodes within a rectangle.",
-        discussion=xmlmenudump.loadFile(
-            'DISCUSSIONS/engine/reg/rectangle_node.xml')
-        )
-
-
-    class CircleNodeSelect(NodeSelectMethod):
-        def select(self, skeletoncontext, pointlist, selector):
-            reslist = []
-            center = pointlist[0]
-            radius2 = (pointlist[1]-pointlist[0])**2
-
-            for n in skeletoncontext.getObject().nodes:
-                dist2 = (n.position() - center)**2
-                if dist2 < radius2:
-                    reslist.append(n)
-            selector(reslist)
-
-    circleNodeSelector = NodeSelectionRegistration(
-        'Circle',
-        CircleNodeSelect,
-        ordering=2,
-        events=['down', 'up'],
-        tip="Drag to select nodes within a circle.",
-        discussion=xmlmenudump.loadFile(
-            'DISCUSSIONS/engine/reg/circle_node.xml')
-        )
-
-
-    class EllipseNodeSelect(NodeSelectMethod):
-        def select(self, skeletoncontext, pointlist, selector):
-            reslist = []
-            aa = (0.5*(pointlist[0].x - pointlist[-1].x))**2
-            bb = (0.5*(pointlist[0].y - pointlist[-1].y))**2
-            center = 0.5*(pointlist[0]+pointlist[-1])
-            for n in skeletoncontext.getObject().nodes:
-                dx = n.position() - center
-                if dx.x*dx.x*bb + dx.y*dx.y*aa < aa*bb:
-                    reslist.append(n)
-            selector(reslist)
-
-    ellipseNodeSelector = NodeSelectionRegistration(
-        'Ellipse',
-        EllipseNodeSelect,
-        ordering=3,
-        events=['down', 'up'],
-        tip="Drag to select nodes within an ellipse.",
-        discussion=xmlmenudump.loadFile(
-            'DISCUSSIONS/engine/reg/ellipse_node.xml'))
-                
-##########################################
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # Segment selection is like node selection, except for details.
-# SegmentSelectMethods convert mouse-clicks into lists of segments.
-class SegmentSelectMethod(registeredclass.RegisteredClass):
-    registry = []
-    def select(self, *args, **kwargs):
-        pass
-    ## No tip or discussion members are required here because the
-    ## SegmentSelectMethod classes are converted into menu items.
+# SegmentSelectionMethods convert mouse-clicks into lists of segments.
 
+class SingleSegmentSelect(SegmentSelectionMethod):
+    def __init__(self, point, operator):
+        self.point = point
+        self.operator = operator
+    def select(self, source, selection):
+        segment = source.getObject().nearestSegment(self.point)
+        applyOperator(self.operator, selection, [segment])
 
-class SegmentSelectionRegistration(SkeletonSelectionRegistration):
-    def __init__(self, name, subclass, ordering, params=[], secret=0, **kwargs):
-        SkeletonSelectionRegistration.__init__(
-            self,
-            name=name,
-            regclass=SegmentSelectMethod,
-            subclass=subclass,
-            ordering=ordering,
-            params=params,
-            secret=secret,
-            **kwargs)
-
-# # # # # # # # # #
-
-class SingleSegmentSelect(SegmentSelectMethod):
-    def select(self, skeletoncontext, gfxwindow, pointlist, view, selector):
-        segs = [] 
-        if config.dimension() == 2:
-            segs.append(skeletoncontext.getObject().nearestSegment(
-                    pointlist[0]))
-        else:                   # 3D
-            pt = gfxwindow.findClickedSegment(skeletoncontext, pointlist[0],
-                                              view)
-            if pt is not None:
-                segs.append(skeletoncontext.getObject().nearestSegment(pt))
-        selector(segs)
-
-SegmentSelectionRegistration(
+SegmentSelectionMethodRegistration(
     'Single_Segment',
     SingleSegmentSelect, ordering=0,
-    events=['up'],
+    params=[
+        parameter.hidden(pointparameter.PointParameter('point')),
+        selectionoperators.SelectionOperatorParam('operator', passive=1)],
     tip="Select a segment joining two nodes.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/single_segment.xml')
     )
 
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-if config.dimension() == 2:
-    # Parent class for all the area selectors.  Sets self.xmin, self.xmax,
-    # self.ymin, self.ymax.  Subclasses provide the "interior" function.
-    class AreaSegmentSelect(SegmentSelectMethod):
-        def select(self, skeletoncontext, pointlist, selector):
-            reslist = []
-            self.first = pointlist[0]
-            self.xmin = min(pointlist[0].x, pointlist[1].x)
-            self.xmax = max(pointlist[0].x, pointlist[1].x)
-            self.ymin = min(pointlist[0].y, pointlist[1].y)
-            self.ymax = max(pointlist[0].y, pointlist[1].y)
-            self.xspan2 = (self.xmax-self.xmin)**2
-            self.yspan2 = (self.ymax-self.ymin)**2
-            self.center = primitives.Point(0.5*(self.xmax+self.xmin),
-                                           0.5*(self.ymax+self.ymin))
+class SingleFaceSelect(FaceSelectionMethod):
+    def __init__(self, nodes, operator):
+        self.nodes = nodes     
+        self.operator = operator
+    def select(self, source, selection):
+        face = source.getObject().findExistingFaceByIds(self.nodes)
+        applyOperator(self.operator, selection, [face])
 
-            for (k,v) in skeletoncontext.getObject().segments.items():
-                if self.interior(k[0]) and self.interior(k[1]):
-                    reslist.append(v)
-            selector(reslist)
-
-    class RectangleSegmentSelect(AreaSegmentSelect):
-        # Determine whether or a point is inside the rectangle.
-        def interior(self, n):
-            if (n.position().x < self.xmax and n.position().x > self.xmin and 
-                n.position().y < self.ymax and n.position().y > self.ymin):
-                return True
-            return False
-
-    rectangleSegmentSelector = SegmentSelectionRegistration(
-        'Rectangle',
-        RectangleSegmentSelect,
-        ordering=1,
-        events=['down', 'up'],
-        tip="Drag to select segments within a rectangle.",
-        discussion=xmlmenudump.loadFile(
-            'DISCUSSIONS/engine/reg/rectangle_segment.xml')
-        )
-
-
-    class CircleSegmentSelect(AreaSegmentSelect):
-        # Determine whether or not a point is inside the ellipse.
-        def interior(self, n):
-            delta = n.position() - self.first
-            if delta**2 < (self.xspan2 + self.yspan2):
-                return True
-            return False
-
-    circleSegmentSelector = SegmentSelectionRegistration(
-        'Circle',
-        CircleSegmentSelect,
-        ordering=2,
-        events=['down', 'up'],
-        tip="Drag to select segments within an ellipse.",
-        discussion=xmlmenudump.loadFile(
-            'DISCUSSIONS/engine/reg/circle_segment.xml')
-        )
-
-
-    class EllipseSegmentSelect(AreaSegmentSelect):
-        # Determine whether or not a point is inside the ellipse.
-        def interior(self, n):
-            delta = n.position() - self.center
-            if (delta.x*delta.x*self.yspan2 + delta.y*delta.y*self.xspan2 < 
-                (self.xspan2*self.yspan2)/4.0):
-                return True
-            return False
-
-
-    ellipseSegmentSelector = SegmentSelectionRegistration(
-        'Ellipse',
-        EllipseSegmentSelect,
-        ordering=3,
-        events=['down', 'up'],
-        tip="Drag to select segments within an ellipse.",
-        discussion=xmlmenudump.loadFile(
-            'DISCUSSIONS/engine/reg/ellipse_segment.xml')
-        )
-
-##########################################
-
-class FaceSelectMethod(registeredclass.RegisteredClass):
-    registry = []
-    def select(self, skeletoncontext, pointlist, selector):
-        pass
-    ## No tip or discussion members are required here because the
-    ## FaceSelectMethod classes are converted into menu items.
-
-if config.dimension() == 3:
-    class FaceSelectionRegistration(SkeletonSelectionRegistration):
-        def __init__(self, name, subclass, ordering, params=[], secret=0,
-                     **kwargs):
-            SkeletonSelectionRegistration.__init__(
-                self,
-                name=name,
-                regclass=FaceSelectMethod,
-                subclass=subclass,
-                ordering=ordering,
-                params=params,
-                secret=secret,
-                **kwargs)
-else: # 2D
-    def FaceSelectionRegistration(*args, **kwargs):
-        pass
-
-# # # # # # # # # # # #
-
-class SingleFaceSelect(FaceSelectMethod):
-    def select(self, skeletoncontext, gfxwindow, pointlist, view, selector):
-        faceIds = gfxwindow.findClickedFace(
-            skeletoncontext, pointlist[0], view)
-        if faceIds is not None:
-            face = skeletoncontext.getObject().findExistingFaceByIds(
-                faceIds)
-            selector([face])
-        else:
-            selector([])
-
-FaceSelectionRegistration(
+FaceSelectionMethodRegistration(
     'Single_Face',
-    SingleFaceSelect, ordering=0,
-    events=['up'],
+    SingleFaceSelect,
+    ordering=0,
+    params=[
+        parameter.hidden(
+            parameter.ListOfIntsParameter('nodes', tip="List of node IDs.")),
+        selectionoperators.SelectionOperatorParam('operator', passive=1)],
     tip="Select a face joining three nodes.",
     discussion=xmlmenudump.loadFile(
         'DISCUSSIONS/engine/reg/single_face.xml')
     )
 
-#############################################
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+class SingleElementSelect(ElementSelectionMethod):
+    def __init__(self, element, operator):
+        self.element = element
+        self.operator = operator
+    def select(self, source, selection):
+        el = source.getObject().getElement(self.element)
+        applyOperator(self. operator, selection, [el])
 
-class ElementSelectMethod(registeredclass.RegisteredClass):
-    registry = []
-    def select(self, *args, **kwargs):
-        pass
-    ## No tip or discussion members are required here because the
-    ## ElementSelectMethod classes are converted into menu items.
-
-
-class ElementSelectionRegistration(SkeletonSelectionRegistration):
-    def __init__(self, name, subclass, ordering, params=[], secret=0, **kwargs):
-        SkeletonSelectionRegistration.__init__(
-            self,
-            name=name,
-            regclass=ElementSelectMethod,
-            subclass=subclass,
-            ordering=ordering,
-            params=params,
-            secret=secret,
-            **kwargs)
-
-# # # # # # # # # # # #
-
-class SingleElementSelect(ElementSelectMethod):
-    def select(self, skeletoncontext, gfxwindow, pointlist, view, selector):
-        if config.dimension() == 3:
-            cell = gfxwindow.findClickedCell(skeletoncontext, pointlist[0],
-                                             view)
-            if cell is not None:
-                el = skeletoncontext.getObject().findElement(cell)
-                if el:
-                    selector([el])
-                    return
-            selector([])
-        else:                   # 2D
-            pt = pointlist[0]
-            res = []
-            el = skeletoncontext.getObject().enclosingElement(pt)
-            # TODO 3.1: why call interior here?
-            if el and el.interior(pt):
-                res = [el]
-            selector(res)
-        
-ElementSelectionRegistration(
+ElementSelectionMethodRegistration(
     'Single_Element',
     SingleElementSelect,
     ordering=0,
-    events=['up'],
+    params=[
+        parameter.hidden(
+            parameter.IntParameter('element', tip="An element index.")),
+        selectionoperators.SelectionOperatorParam('operator', passive=1)],
     tip="Select an element.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/single_element.xml')
     )
 
-#####################################
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-if config.dimension() == 2:
-    class AreaElementSelect(ElementSelectMethod):
-        def select(self, skeletoncontext, pointlist, selector):
-            reslist = []
-            self.first = pointlist[0]
-            self.xmin = min(pointlist[0].x, pointlist[-1].x)
-            self.xmax = max(pointlist[0].x, pointlist[-1].x)
-            self.ymin = min(pointlist[0].y, pointlist[-1].y)
-            self.ymax = max(pointlist[0].y, pointlist[-1].y)
-            self.xspan2 = (self.xmax-self.xmin)**2
-            self.yspan2 = (self.ymax-self.ymin)**2
-            self.center = primitives.Point(0.5*(self.xmax+self.xmin),
-                                           0.5*(self.ymax+self.ymin))
-
-            for e in skeletoncontext.getObject().elements:
-                for n in e.nodes:
-                    if not self.interior(n):
-                        break
-                else:
-                    reslist.append(e)
-            selector(reslist)
-
-
-    class RectangleElementSelect(AreaElementSelect):
-        # Determine whether or a point is inside the rectangle.
-        def interior(self, n):
-            if (n.position().x < self.xmax and n.position().x > self.xmin and 
-                n.position().y < self.ymax and n.position().y > self.ymin):
-                return True
-            return False
-
-    rectangleElementSelector = ElementSelectionRegistration(
-        'Rectangle',
-        RectangleElementSelect,
-        ordering=1,
-        events=['down', 'up'],
-        tip="Drag to select elements within a rectangle.",
-        discussion=xmlmenudump.loadFile(
-            'DISCUSSIONS/engine/reg/rectangle_element.xml')
-        )
-
-
-    class CircleElementSelect(AreaElementSelect):
-        # Determine whether or not a point is inside the ellipse.
-        def interior(self, n):
-            delta = n.position() - self.first
-            if delta**2 < (self.xspan2 + self.yspan2):
-                return 1
-            return None
-
-    circleElementSelector = ElementSelectionRegistration(
-        'Circle',
-        CircleElementSelect,
-        ordering=2,
-        events=['down', 'up'],
-        tip="Drag to select elements within a circle.",
-        discussion=xmlmenudump.loadFile(
-            'DISCUSSIONS/engine/reg/circle_element.xml')
-        )
-
-
-    class EllipseElementSelect(AreaElementSelect):
-        # Determine whether or not a point is inside the ellipse.
-        def interior(self, n):
-            delta = n.position() - self.center
-            if (delta.x*delta.x*self.yspan2 + delta.y*delta.y*self.xspan2 < 
-                (self.xspan2*self.yspan2)/4.0):
-                return 1
-            return None
-
-    ellipseElementSelector = ElementSelectionRegistration(
-        'Ellipse',
-        EllipseElementSelect,
-        ordering=3,
-        events=['down', 'up'],
-        tip="Drag to select elements within an ellipse.",
-        discussion=xmlmenudump.loadFile(
-            'DISCUSSIONS/engine/reg/ellipse_element.xml')
-        )
-
-
-class PixelElementSelect(ElementSelectMethod):
+class PixelElementSelect(ElementSelectionMethod):
     def select(self, skeletoncontext, gfxwindow, pointlist, view, selector):
         ms = skeletoncontext.getMicrostructure()
         if config.dimension() == 3:
@@ -490,7 +173,7 @@ class PixelElementSelect(ElementSelectMethod):
                 reslist.append(el)
         selector(reslist)
 
-ElementSelectionRegistration(
+ElementSelectionMethodRegistration(
     'ByDominantPixel',
     PixelElementSelect, ordering=4,
     events=['up'],

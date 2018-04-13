@@ -30,7 +30,7 @@ pyfiles = [
     'skeletonselectiontoolboxGUI.py', 'solverPage.py', 'strainwidget.py',
     'tensorwidgets.py', 'bdyinitparamwidget.py',
     'outputdestinationwidget.py', 'outputschedulewidget.py', 'outputwidget.py',
-    'genericinfoGUI.py'
+    'genericinfoGUI.py', 'skeletonselectionmethodGUI.py'
     ]
 
 

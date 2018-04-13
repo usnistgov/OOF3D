@@ -15,8 +15,6 @@ from ooflib.SWIG.common import switchboard
 from ooflib.common import debug
 from ooflib.common import labeltree
 from ooflib.common import pixelselection
-from ooflib.common import selectionoperators
-from ooflib.common import utils
 from ooflib.common.IO import mainmenu
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
@@ -103,34 +101,3 @@ selectmenu.addItem(oofmenu.OOFMenuItem(
     help="Select some voxels."
 ))
 
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-# Many (but not all) selection methods will have a
-# PixelSelectionOperator argument that indicates how the new selection
-# combines with the previous selection.  That argument will appear in
-# the toolbox GUI for the selection method.  In many cases, however,
-# its value should be set by modifier keys (shift, ctrl, etc) and not
-# by the toolbox widget for the parameter.  To make it less confusing
-# (we hope) for the user, the parameter widget can be made passive, so
-# it reflects the state of the modifier keys but does not affect them.
-# This parameter object can be used in all such cases:
-passiveOperatorParam = parameter.RegisteredParameter(
-    'operator',
-    selectionoperators.PixelSelectionOperator,
-    tip=
-    """\
-How the new selection modifies the existing selection.
-Use control and shift keys while clicking on the canvas
-to change the value of this parameter.""",
-    value=selectionoperators.Select())
-passiveOperatorParam.set_data('passive widget', True)
-
-# Selection methods that require more than a single click will want to
-# get their selection operator directly from the toolbox instead of
-# from a mouse click, and should use this parameter, which is settable
-# by the user:
-operatorParam = parameter.RegisteredParameter(
-    'operator',
-    selectionoperators.PixelSelectionOperator,
-    tip='How the new selection modifies the existing selection.',
-    value=selectionoperators.Select())

@@ -12,37 +12,42 @@
 
 from ooflib.SWIG.common import config
 from ooflib.common import registeredclass
+from ooflib.common.IO import parameter
 
 ## TODO: This file should work with generic selections, and not be
 ## specific to Pixel selections.
 from ooflib.SWIG.common import pixelselectioncourier
 
-class PixelSelectionOperator(registeredclass.RegisteredClass):
+class SelectionOperator(registeredclass.RegisteredClass):
     registry = []
 
-class Select(PixelSelectionOperator):
+class Select(SelectionOperator):
     def operate(self, selection, courier):
         selection.clearAndSelect(courier)
 
-class AddSelection(PixelSelectionOperator):
+class AddSelection(SelectionOperator):
     def operate(self, selection, courier):
         selection.select(courier)
 
-class Unselect(PixelSelectionOperator):
+class Unselect(SelectionOperator):
     def operate(self, selection, courier):
         selection.unselect(courier)
 
-class Toggle(PixelSelectionOperator):
+class Toggle(SelectionOperator):
     def operate(self, selection, courier):
         selection.toggle(courier)
 
-class Intersect(PixelSelectionOperator):
+class Intersect(SelectionOperator):
     def operate(self, selection, courier):
         # The selection needs to be cloned before calling
         # clearAndSelect, or else it will be empty by the time the
         # intersection is actually computed.  The clone has to be
         # stored in a variable here, so that it won't be garbage
         # collected until the calculation is complete.
+
+        # TODO: If the selection can create the appropriate kind of
+        # IntersectionSelection courier, then this code can be generic
+        # and apply to all kinds of selections.
         selgrp = selection.getSelectionAsGroup().clone()
         selection.clearAndSelect(
             pixelselectioncourier.IntersectSelection(
@@ -50,28 +55,28 @@ class Intersect(PixelSelectionOperator):
 
 registeredclass.Registration(
     "Select",
-    PixelSelectionOperator,
+    SelectionOperator,
     Select,
     ordering=0,
     tip="Select new objects after deselecting the old ones.")
 
 registeredclass.Registration(
     'Add Selection',
-    PixelSelectionOperator,
+    SelectionOperator,
     AddSelection,
     ordering=1,
     tip="Select new objects, leaving the old ones selected.")
 
 registeredclass.Registration(
     "Unselect",
-    PixelSelectionOperator,
+    SelectionOperator,
     Unselect,
     ordering=2,
     tip="Unselect only the given objects, leaving others selected.")
 
 registeredclass.Registration(
     "Toggle",
-    PixelSelectionOperator,
+    SelectionOperator,
     Toggle,
     ordering=3,
     tip="Unselect the given objects if they're currently selected,"
@@ -79,7 +84,7 @@ registeredclass.Registration(
 
 registeredclass.Registration(
     "Intersect",
-    PixelSelectionOperator,
+    SelectionOperator,
     Intersect,
     ordering=3,
     tip="Unselect all objects that are not in the given set.")
@@ -97,3 +102,35 @@ def getSelectionOperator(buttons):
         return Toggle()         # ctrl only
     return Select()             # no modifier keys
 
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Many (but not all) selection methods will have a SelectionOperator
+# argument that indicates how the new selection combines with the
+# previous selection.  That argument will appear in the toolbox GUI
+# for the selection method.  In many cases, however, its value should
+# be set by modifier keys (shift, ctrl, etc) and not by the toolbox
+# widget for the parameter.  To make it less confusing (we hope) for
+# the user, the parameter widget can be made passive so that it
+# reflects the state of the modifier keys but does not affect them.
+# Use this parameter class with passive=True in those cases.
+# This is better than parameter.passive(parameter.RegisteredParameter(...))
+# only because it also sets the tip string.
+
+class SelectionOperatorParam(parameter.RegisteredParameter):
+    def __init__(self, name, value=Select(), default=Select(),
+                 tip=None, auxData={}, passive=False):
+        if passive:
+            tip = """\
+How the new selection modifies the existing selection.
+Use control and shift keys while clicking on the canvas
+to change the value of this parameter."""
+        else:
+            tip="How the new selection modifies the existing selection."
+        parameter.RegisteredParameter.__init__(
+            self, name, SelectionOperator,
+            value=value, default=default,
+            tip=tip,
+            auxData=auxData)
+        if passive:
+            self.set_data('passiveWidget', True)

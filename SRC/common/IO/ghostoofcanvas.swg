@@ -16,12 +16,14 @@
 %module ghostoofcanvas
 %include "common/typemaps.swg"
 %extern "common/coord.swg"
+%extern "common/IO/vtkutils.swg"
 %pragma(python) code="from ooflib.SWIG.common.coord import CoordPtr"
 %extern "common/IO/view.swg"
 %pragma(python) code="from ooflib.SWIG.common.IO.view import ViewPtr"
 %pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkCellPtrPtr"
 %pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkActorPtrPtr"
 %pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkActorCollectionPtrPtr"
+%pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkIdListPtrPtr"
 
 class vtkActorCollectionPtr;
 class vtkActorPtr;

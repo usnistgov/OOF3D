@@ -34,6 +34,7 @@ import ooflib.engine.builtinprops
 # elif config.dimension() == 3:
 #     import ooflib.engine.skeleton3d
 import ooflib.engine.skeletoncontext
+import ooflib.engine.skeletonselection
 import ooflib.engine.skeletonselectionmodes
 import ooflib.SWIG.engine.masterelement
 import ooflib.SWIG.engine.material
@@ -94,8 +95,7 @@ import ooflib.SWIG.engine.compoundsubproblem
 import ooflib.engine.pixelselect
 import ooflib.SWIG.engine.pixelselectioncouriere
 import ooflib.engine.skeletonselectionmod
-print >> sys.stderr, "Not loading skeletonselectiontoolbox"
-#import ooflib.engine.IO.skeletonselectiontoolbox
+import ooflib.engine.IO.skeletonselectiontoolbox
 import ooflib.engine.IO.skeletoninfo
 import ooflib.engine.IO.meshinfo
 import ooflib.engine.IO.movenode
@@ -137,3 +137,4 @@ import ooflib.common.runtimeflags
 if config.dimension() == 2 and ooflib.common.runtimeflags.surface_mode:
     #Interface branch
     import ooflib.engine.IO.interfacemenu
+

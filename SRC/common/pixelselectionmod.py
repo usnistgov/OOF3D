@@ -15,6 +15,7 @@ from ooflib.SWIG.common import config
 from ooflib.SWIG.common import geometry
 from ooflib.SWIG.common import pixelselectioncourier
 from ooflib.common import debug
+from ooflib.common import selectionoperators
 from ooflib.common import selectionshape
 from ooflib.common.IO import parameter
 from ooflib.common.IO import pixelgroupparam
@@ -36,8 +37,8 @@ from ooflib.common.pixelselection import \
 # Simple selection modifiers that don't take any parameters other than
 # a Microstructure or Image should be registered using
 # SimpleVoxelSelectionModRegistration, which will automatically create
-# a menu item for them.  The subclasses need to have a select() method
-# which takes a PixelSelectionContext arg.
+# a menu item for them.  The subclasses need to have a static select()
+# method which takes a PixelSelectionContext arg.
 
 # Other selection modifiers are registered with
 # VoxelSelectionModRegistration.  When used, an instance of the
@@ -110,7 +111,7 @@ VoxelSelectionModRegistration(
     params=[
         pixelgroupparam.PixelGroupParameter('group',
                                             tip='Pixel group to work with.'),
-        pixelselectionmenu.operatorParam],
+        selectionoperators.SelectionOperatorParam('operator')],
     tip="Modify the current selection via boolean operations"
     " with the pixels in a pixel group.")
 
@@ -169,7 +170,7 @@ VoxelSelectionModRegistration(
             'units', ooflib.common.units.UnitsRC,
             value=ooflib.common.units.PhysicalUnits(),
             tip="The units for the shape's length parameters."),
-        pixelselectionmenu.operatorParam
+        selectionoperators.SelectionOperatorParam('operator')
         ],
     tip="Modify the current selection via boolean operations using the pixels"
     " within a given geometrically defined region."

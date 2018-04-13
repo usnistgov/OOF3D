@@ -15,7 +15,90 @@ from ooflib.common.IO import genericselecttoolbox
 from ooflib.common import toolbox
 from ooflib.common.IO import parameter
 from ooflib.common.IO import whoville
+from ooflib.engine import skeletonselectionmethod
+from ooflib.engine.IO import skeletonselectmenu
 from ooflib.engine import skeletonselmodebase
+
+class SkeletonSelectionToolbox(genericselecttoolbox.GenericSelectToolbox):
+    def __init__(self, name, method, menu, gfxwindow, **extrakwargs):
+        genericselecttoolbox.GenericSelectToolbox.__init__(
+            self, name=name, method=method, menu=menu,
+            gfxwindow=gfxwindow, **extrakwargs)
+    def getSelectionSource(self):
+        return self.gfxwindow().topwho('Skeleton')
+    def sourceName(self):
+        return "Skeleton"
+    def emptyMessage(self):
+        return "No Skeleton!"           # you spineless bastard
+
+    discussion = "Methods for selecting &skel; components in a graphics window."
+
+
+class SkeletonNodeSelectionToolbox(SkeletonSelectionToolbox):
+    def __init__(self, gfxwindow):
+        SkeletonSelectionToolbox.__init__(
+            self, name="Skeleton_Selection",
+            method=skeletonselectionmethod.NodeSelectionMethod,
+            menu=skeletonselectmenu.nodeselectmenu,
+            mode=skeletonselmodebase.getMode('Node'),
+            gfxwindow=gfxwindow)
+
+    def objName(self):
+        return "Node"
+
+    tip = "Select nodes in a Skeleton."
+
+class SkeletonSegmentSelectionToolbox(SkeletonSelectionToolbox):
+    def __init__(self, gfxwindow):
+        SkeletonSelectionToolbox.__init__(
+            self, name="Skeleton_Selection",
+            method=skeletonselectionmethod.SegmentSelectionMethod,
+            menu=skeletonselectmenu.segmentselectmenu,
+            mode=skeletonselmodebase.getMode('Segment'),
+            gfxwindow=gfxwindow)
+
+    def objName(self):
+        return "Segment"
+
+    tip = "Select segments in a Skeleton."
+
+class SkeletonFaceSelectionToolbox(SkeletonSelectionToolbox):
+    def __init__(self, gfxwindow):
+        SkeletonSelectionToolbox.__init__(
+            self, name="Skeleton_Selection",
+            method=skeletonselectionmethod.FaceSelectionMethod,
+            menu=skeletonselectmenu.faceselectmenu,
+            mode=skeletonselmodebase.getMode('Face'),
+            gfxwindow=gfxwindow)
+
+    def objName(self):
+        return "Face"
+
+    tip = "Select faces in a Skeleton."
+
+class SkeletonElementSelectionToolbox(SkeletonSelectionToolbox):
+    def __init__(self, gfxwindow):
+        SkeletonSelectionToolbox.__init__(
+            self, name="Skeleton_Selection",
+            method=skeletonselectionmethod.ElementSelectionMethod,
+            menu=skeletonselectmenu.elementselectmenu,
+            mode=skeletonselmodebase.getMode('Element'),
+            gfxwindow=gfxwindow)
+
+    def objName(self):
+        return "Element"
+
+    tip = "Select elements in a Skeleton."
+    
+                        
+toolbox.registerToolboxClass(SkeletonElementSelectionToolbox, ordering=2.50)
+toolbox.registerToolboxClass(SkeletonFaceSelectionToolbox, ordering=2.51)
+toolbox.registerToolboxClass(SkeletonSegmentSelectionToolbox, ordering=2.52)
+toolbox.registerToolboxClass(SkeletonNodeSelectionToolbox, ordering=2.53)
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+## OLD CODE BELOW HERE
 
 ## There are four skeleton selection toolboxes, for selecting
 ## Elements, Nodes, Faces, and Segments.  Each is a subclass of
@@ -25,7 +108,7 @@ from ooflib.engine import skeletonselmodebase
 
 #############################
 
-class SkeletonSelectionToolbox(genericselecttoolbox.GenericSelectToolbox):
+class OLDSkeletonSelectionToolbox(genericselecttoolbox.GenericSelectToolbox):
     def __init__(self, mode, gfxwindow):
         ## 'mode' is a SkeletonSelectionMode object.  It's stored in
         ## the extrakwargs dict in the GenericSelectToolbox, and is
@@ -105,8 +188,8 @@ def _newSelectionMode(mode):
     mode.tbclass = SkelSelectToolbox
     toolbox.registerToolboxClass(SkelSelectToolbox, ordering=tbordering)
     
-for mode in skeletonselmodebase.SkeletonSelectionMode.modes:
-    _newSelectionMode(mode)
+# for mode in skeletonselmodebase.SkeletonSelectionMode.modes:
+#     _newSelectionMode(mode)
     
-switchboard.requestCallback(skeletonselmodebase.SkeletonSelectionMode,
-                            _newSelectionMode)
+# switchboard.requestCallback(skeletonselmodebase.SkeletonSelectionMode,
+#                             _newSelectionMode)

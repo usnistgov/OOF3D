@@ -9,15 +9,13 @@
 # oof_manager@nist.gov.
 
 from ooflib.SWIG.common import config
-from ooflib.SWIG.common.IO import vtkutils
 from ooflib.SWIG.image import pixelselectioncourieri
 from ooflib.common import debug
 from ooflib.common import enum
 from ooflib.common import pixelselection
-from ooflib.common import primitives
+from ooflib.common import selectionoperators
 from ooflib.common import utils
 from ooflib.common.IO import parameter
-from ooflib.common.IO import pixelselectionmenu
 from ooflib.common.IO import pointparameter
 from ooflib.common.IO import xmlmenudump
 
@@ -61,7 +59,9 @@ burnSelectorRegistration = pixelselection.VoxelSelectionMethodRegistration(
     Burn,
     ordering=1.0,
     params=[
-        pointparameter.PointParameter('point'),
+        parameter.passive(
+            pointparameter.PointParameter('point',
+                                          tip="Where the mouse was clicked.")),
         parameter.FloatRangeParameter(
             'local_flammability',
             range=(0, 1, 0.001), value=0.1,
@@ -79,7 +79,7 @@ burnSelectorRegistration = pixelselection.VoxelSelectionMethodRegistration(
         parameter.BooleanParameter(
             'next_nearest', value=0,
             tip="Burn next-nearest neighbors?"),
-        pixelselectionmenu.passiveOperatorParam
+        selectionoperators.SelectionOperatorParam('operator', passive=1)
     ],
     events=['up'],
     whoclasses=['Image'],

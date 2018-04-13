@@ -1416,12 +1416,12 @@ CSkeletonFace* CSkeletonBase::findExistingFace(CSkeletonNode *n1,
 }
 
 CSkeletonFace *CSkeletonBase::findExistingFaceByIds(
-				    vtkSmartPointer<vtkIdList> pointIds)
+					    const std::vector<int> *pointIds)
   const
 {
-  CSkeletonNode *n0 = getNode(pointIds->GetId(0));
-  CSkeletonNode *n1 = getNode(pointIds->GetId(1));
-  CSkeletonNode *n2 = getNode(pointIds->GetId(2));
+  CSkeletonNode *n0 = getNode((*pointIds)[0]);
+  CSkeletonNode *n1 = getNode((*pointIds)[1]);
+  CSkeletonNode *n2 = getNode((*pointIds)[2]);
   return findExistingFace(n0, n1, n2);
 }
 

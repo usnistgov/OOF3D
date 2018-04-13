@@ -14,7 +14,6 @@ from ooflib.common import labeltree
 from ooflib.common import mainthread
 from ooflib.common import microstructure
 from ooflib.common import subthread
-from ooflib.common import utils
 from ooflib.common.IO import reporter
 from ooflib.common.IO.GUI import chooser
 from ooflib.common.IO.GUI import gtklogger
@@ -28,8 +27,6 @@ from ooflib.common.IO.GUI import whowidget
 from ooflib.engine import skeletoncontext
 from ooflib.engine import skeletonselmodebase
 import gtk
-import sys
-
 
 # Main GUI page for selecting Skeleton objects.
 
@@ -42,7 +39,8 @@ import sys
 # object.
 
 ## TODO 3.1: Clear out the forest of switchboard signals used by this
-## page.
+## page.  See comment in skeletonselmodebase.py about the different
+## signals.
 
 class ModeData:
     def __init__(self, page, mode):
@@ -898,16 +896,10 @@ class SelectionGUI:
     # historyboxes are connected to this, but only the current one can
     # have sent the signal, so it's the only one operated on.
     def okCB(self, gtkobj):
-        mod = self.activemode().factory.getRegistration()
-        if mod is not None:
-            self.activemode().factory.set_defaults()
-            menuitem = getattr(self.activemode().getSelectionMenu(),
-                               utils.space2underscore(mod.name()) )
-            skelpath = self.parent.getCurrentSkeletonName()
-
-            # Set the skeleton parameter and call the registered class.
-            menuitem.callWithDefaults(skeleton=skelpath)
-            
+        reg = self.activemode().factory.getRegistration()
+        modmeth = self.activemode().factory.get_value()
+        reg.callMenuItem(self.parent.getCurrentSkeletonName(), modmeth)
+        
     # Called when the historian switches to a new object. 
     def setCB(self, object):
         self.activemode().factory.set(object,interactive=True)

@@ -14,15 +14,15 @@
 from ooflib.SWIG.common import config
 from ooflib.SWIG.common import lock
 from ooflib.SWIG.common import switchboard
-from ooflib.engine import skeletonselectionmod
-from ooflib.engine import skeletoncontext
-from ooflib.common.microstructure import getMicrostructure
 from ooflib.common import utils
 from ooflib.common.IO import mainmenu
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
 from ooflib.common.IO import whoville
 from ooflib.common.IO import xmlmenudump
+from ooflib.common.microstructure import getMicrostructure
+from ooflib.engine import skeletoncontext
+from ooflib.engine import skeletonselection
 import types
 
 nodeselectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
@@ -61,24 +61,23 @@ segmentselectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
     </para>"""
 ))
 
-if config.dimension() == 3:
-    faceselectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
-        'FaceSelection',
-        cli_only=1,
-        help='Select faces in a Skeleton.',
-        discussion="""<para>
-        The <command>FaceSelection</command> menu contains commands for
-        selecting sets of &skel; &faces; and for modifying the set of
-        selected &faces;.  In the GUI, these commands originate in the
-        <link linkend='Section-Tasks-SkeletonSelection'>Skeleton Selection
-        task page</link>.  None of the commands rely upon mouse input.
-        Commands that take mouse input are found in the <xref
-        linkend='MenuItem-OOF.Graphics_n.Toolbox.Select_Face'/> menu
-        and originate in the <link
-        linkend='Section-Graphics-SkeletonSelection'>Skeleton Selection
-        toolbox</link>.
-        </para>"""
-    ))
+faceselectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
+    'FaceSelection',
+    cli_only=1,
+    help='Select faces in a Skeleton.',
+    discussion="""<para>
+    The <command>FaceSelection</command> menu contains commands for
+    selecting sets of &skel; &faces; and for modifying the set of
+    selected &faces;.  In the GUI, these commands originate in the
+    <link linkend='Section-Tasks-SkeletonSelection'>Skeleton Selection
+    task page</link>.  None of the commands rely upon mouse input.
+    Commands that take mouse input are found in the <xref
+    linkend='MenuItem-OOF.Graphics_n.Toolbox.Select_Face'/> menu
+    and originate in the <link
+    linkend='Section-Graphics-SkeletonSelection'>Skeleton Selection
+    toolbox</link>.
+    </para>"""
+))
 
 elementselectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
     'ElementSelection',
@@ -97,6 +96,19 @@ elementselectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
     toolbox</link>.
     </para>"""
 ))
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+## TODO: The voxel versions of these routine, in
+## pixelselectionmenu.py, call selection.reserve() and
+## selection.cancel_reservation().  Why don't these routines?  Is it
+## required or not?
+
+## TODO: The voxel versions of these routines are defined with
+## subclasses of VoxelSelectionModifier and simpleSelectionCB, which
+## is a bit more complex organizationally but reduces some code
+## duplication.  Both the skeleton and voxel versions should work the
+## same way.
 
 def _undo(menuitem, skeleton):
     skelc = skeletoncontext.skeletonContexts[skeleton]
@@ -140,9 +152,31 @@ def _invert(menuitem, skeleton):
         selection.end_writing()
     selection.signal()
 
+# select is the menu callback for all selection operations that are
+# defined by a XXXXSelectionModifier or XXXXSelectionMethod.
 
-
-def makeMenu(menu, modifier, selection_name):
+def select(menuitem, skeleton, method):
+    skelc = skeletoncontext.skeletonContexts[skeleton]
+    selection = getattr(skelc, menuitem.data)
+    # selection.reserve()
+    selection.begin_writing()
+    try:
+        selection.start()
+        method.select(skelc, selection)
+    finally:
+        selection.end_writing()
+        # selection.cancel_reservation()
+    selection.signal() # sends switchboard "node selection changed", eg.
+    
+    
+def makeMenu(menu, selection_name, methodclass, modifierclass):
+    # methodclass is the registered class for the selection methods,
+    # NodeSelectionMethod, FaceSelectionMethod, etc, that are invoked via
+    # the Skeleton Selection graphics toolbox and mouse interaction.
+    # modifierclass is the registered class for the selection
+    # modifiers, NodeSelectionModifier, FaceSelectionModifier, etc,
+    # that are called from the Skeleton Selection page and don't
+    # involve the mouse.
     menu.clearMenu()
 
     objname = selection_name[:-9] # 'node', 'segment', 'face', or 'element'
@@ -155,8 +189,7 @@ def makeMenu(menu, modifier, selection_name):
                               tip=parameter.emptyTipString)],
         help="Undo the latest Skeleton %s selection operation." % objname,
         discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/%s_undo.xml'
-                                        % objname)
-        ))
+                                        % objname)))
     undo_item.data = selection_name
 
     redo_item = menu.addItem(oofmenu.OOFMenuItem(
@@ -168,8 +201,7 @@ def makeMenu(menu, modifier, selection_name):
         help="Redo the latest undone Skeleton %s selection operation."\
         % objname,
         discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/%s_redo.xml'
-                                        % objname)
-        ))
+                                        % objname)))
     redo_item.data = selection_name
 
     clear_item = menu.addItem(oofmenu.OOFMenuItem(
@@ -193,68 +225,39 @@ def makeMenu(menu, modifier, selection_name):
         discussion="""<para>
         Select the unselected %ss, and unselect the selected %ss in the &skel;.
         </para>""" % (objname, objname)))
-    invert_item.data = selection_name    
-        
-    for r in modifier.registry:
-        # For help
-        try:
-            help = r.tip
-        except AttributeError:
-            help = None
-        # For discussion
-        try:
-            discussion = r.discussion
-        except AttributeError:
-            discussion = None
-        menuitem = menu.addItem(
-            oofmenu.OOFMenuItem(utils.space2underscore(r.name()),
-                                callback = skeletonselectionmod.modify,
-                                params = [
+    invert_item.data = selection_name
+
+    select_item = menu.addItem(oofmenu.OOFMenuItem(
+        "Select",
+        callback=select,
+        params = [
             whoville.WhoParameter("skeleton",
                                   whoville.getClass('Skeleton'),
-                                  tip=parameter.emptyTipString)] +
-                                r.params,
-                                help=help,
-                                discussion=discussion))
-        menuitem.data = r
-
-# Callback for new registration entries added in later imports.
-switchboard.requestCallback(skeletonselectionmod.NodeSelectionModifier,
-                            makeMenu, nodeselectmenu,
-                            skeletonselectionmod.NodeSelectionModifier,
-                            "nodeselection")
-
-switchboard.requestCallback(skeletonselectionmod.SegmentSelectionModifier,
-                            makeMenu, segmentselectmenu,
-                            skeletonselectionmod.SegmentSelectionModifier,
-                            "segmentselection")
-
-if config.dimension() == 3:
-    switchboard.requestCallback(skeletonselectionmod.FaceSelectionModifier,
-                                makeMenu, faceselectmenu,
-                                skeletonselectionmod.FaceSelectionModifier,
-                                "faceselection")
-
-switchboard.requestCallback(skeletonselectionmod.ElementSelectionModifier,
-                            makeMenu, elementselectmenu,
-                            skeletonselectionmod.ElementSelectionModifier,
-                            "elementselection")
-
-
-# Insert menu items for the ones already in the registry at
-# import-time.
-makeMenu(nodeselectmenu, skeletonselectionmod.NodeSelectionModifier,
-         "nodeselection")
+                                  tip=parameter.emptyTipString),
+            parameter.MultiRegisteredParameter(
+                'method',
+                (methodclass, modifierclass),
+                tip="How the %ss will be selected." % objname)
+            ],
+        help="Select some %ss." % objname))
+    select_item.data = selection_name
+        
+makeMenu(nodeselectmenu,
+         "nodeselection",
+         skeletonselection.NodeSelectionMethod,
+         skeletonselection.NodeSelectionModifier)
 
 makeMenu(segmentselectmenu,
-         skeletonselectionmod.SegmentSelectionModifier,
-         "segmentselection")
-
-if config.dimension() == 3:
-    makeMenu(faceselectmenu,
-             skeletonselectionmod.FaceSelectionModifier,
-             "faceselection")
+         "segmentselection",
+         skeletonselection.SegmentSelectionMethod,
+         skeletonselection.SegmentSelectionModifier)
+            
+makeMenu(faceselectmenu,
+         "faceselection",
+         skeletonselection.FaceSelectionMethod,
+         skeletonselection.FaceSelectionModifier)
 
 makeMenu(elementselectmenu,
-         skeletonselectionmod.ElementSelectionModifier,
-         "elementselection")
+         "elementselection",
+         skeletonselection.ElementSelectionMethod,
+         skeletonselection.ElementSelectionModifier)

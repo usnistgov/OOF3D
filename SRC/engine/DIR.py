@@ -96,7 +96,7 @@ pyfiles = [
     'scpatch.py', 'skeleton.py', 'skeletonboundary.py',
     'skeletoncontext.py', 'skeletondiff.py', 'skeletonelement.py',
     'skeletongroups.py', 'skeletonnode.py',
-    'skeletonsegment.py', 'skeletonselectable.py',
+    'skeletonsegment.py', 'skeletonselectable.py', 'skeletonselection.py',
     'skeletonselectionmethod.py', 'skeletonselectionmod.py',
     'skeletonselectionmodes.py', 'skeletonselmodebase.py', 'snapnode.py',
     'snaprefine.py', 'snaprefinemethod.py', 'splitquads.py', 'ss22.py',

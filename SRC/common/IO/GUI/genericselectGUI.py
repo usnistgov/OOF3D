@@ -28,18 +28,6 @@ from ooflib.common.IO.GUI import tooltips
 
 import gtk, sys
 
-class SelectionMethodFactory(regclassfactory.RegisteredClassFactory):
-    def __init__(self, registry, obj=None, title=None,
-                 callback=None, fill=0, expand=0, scope=None, name=None,
-                 widgetdict={}, *args, **kwargs):
-        self.current_who_classes = []
-        regclassfactory.RegisteredClassFactory.__init__(
-            self, registry, obj=obj, title=title, callback=callback,
-            fill=fill, expand=expand, scope=scope, name=name,
-            widgetdict=widgetdict, *args, **kwargs)
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
 class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
     def __init__(self, toolbox, method):
         debug.mainthreadTest()
@@ -57,7 +45,7 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
         self.methodGUIs = {reg.subclass : reg.gui(self)
                            for reg in method.registry if hasattr(reg, 'gui')}
 
-        self.selectionMethodFactory = SelectionMethodFactory(
+        self.selectionMethodFactory = regclassfactory.RegisteredClassFactory(
             method.registry, title="Method:", name="Method",
             scope=self, callback=self.changedSelectionMethod,
             widgetdict=self.methodGUIs)
@@ -145,16 +133,20 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
             if self.currentGUI is not None:
                 self.currentGUI.activate()
             self.sensitize()
-            # self.sensitizeHistory()
             self.setInfo()
             self.installMouseHandler()
             self.layerChangeCB()
             if config.dimension() == 3:
                 self.gfxwindow().toolbar.setSelect()
+            self.activecallbacks = [
+                switchboard.requestCallbackMain(self.changeSignal,
+                                                self.changedSelection)]
 
     def deactivate(self):
         if self.active:
             super(GenericSelectToolboxGUI, self).deactivate()
+            map(switchboard.removeCallback, self.activecallbacks)
+            self.activecallbacks = []
             self.currentMouseHandler.stop()
             if self.currentGUI is not None:
                 self.currentGUI.deactivate()
@@ -186,7 +178,11 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
         # method is a SelectionMethod subclass
         menuitem = self.toolbox.menuitem
         buttons = self.currentMouseHandler.buttons
-        menuitem.callWithDefaults(source=who.path(), method=method)
+        # Assume that the first argument is the Microstructure,
+        # Skeleton, or whatever, and find its name.
+        sourceargname = menuitem.params[0].name
+        argdict = {sourceargname : who.path(), 'method' : method}
+        menuitem.callWithDefaults(**argdict)
 
     def getParamValues(self, *paramnames):
         # Return the values of the given parameters from the
@@ -224,7 +220,7 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
             self.sensitize()
 
     def changedSelection(self, selection): # switchboard callback
-        # sb callback for 'pixel selection changed'.  
+        # sb callback for '<something> selection changed'.  
         self.sensitize()
         self.setInfo()
 
@@ -252,6 +248,7 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
                 i = 1
             finally:
                 selection.end_reading()
+        debug.fmsg("u=", u, "r=", r, "c=", c, "i=", i)
         mainthread.runBlock(self._set_button_sensitivities, (u,r,c,i))
         #gtklogger.checkpoint(self.gfxwindow().name + " " + self.name() + " sensitized")
         

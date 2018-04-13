@@ -11,21 +11,23 @@
 from ooflib.SWIG.common import config
 from ooflib.common.IO import mainmenu
 from ooflib.engine import skeletonselmodebase
-from ooflib.engine import skeletonselectionmethod
-from ooflib.engine import skeletonselectionmod
 from ooflib.engine.IO import skeletongroupmenu
 from ooflib.SWIG.engine import material
+from ooflib.engine import skeletonselection
 
 # Subclasses and singleton instances of SkeletonSelectionMode.  See
 # comments in skeletonselmodebase.py.
+
+# See comment in skeletonselmodebase.py for the difference between the
+# switchboard signals. 
 
 class ElementSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
     def __init__(self):
         skeletonselmodebase.SkeletonSelectionMode.__init__(
             self,
             name="Element",
-            methodclass=skeletonselectionmethod.ElementSelectMethod,
-            modifierclass=skeletonselectionmod.ElementSelectionModifier,
+            methodclass=skeletonselection.ElementSelectionMethod,
+            modifierclass=skeletonselection.ElementSelectionModifier,
             modifierappliedsignal="element selection modified",
             newselectionsignal="new element selection",
             changedselectionsignal="changed element selection",
@@ -47,8 +49,8 @@ class NodeSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
         skeletonselmodebase.SkeletonSelectionMode.__init__(
             self,
             name="Node",
-            methodclass=skeletonselectionmethod.NodeSelectMethod,
-            modifierclass=skeletonselectionmod.NodeSelectionModifier,
+            methodclass=skeletonselection.NodeSelectionMethod,
+            modifierclass=skeletonselection.NodeSelectionModifier,
             modifierappliedsignal="node selection modified",
             newselectionsignal="new node selection",
             changedselectionsignal="changed node selection",
@@ -67,8 +69,8 @@ class SegmentSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
         skeletonselmodebase.SkeletonSelectionMode.__init__(
             self,
             name="Segment",
-            methodclass=skeletonselectionmethod.SegmentSelectMethod,
-            modifierclass=skeletonselectionmod.SegmentSelectionModifier,
+            methodclass=skeletonselection.SegmentSelectionMethod,
+            modifierclass=skeletonselection.SegmentSelectionModifier,
             modifierappliedsignal="segment selection modified",
             newselectionsignal="new segment selection",
             changedselectionsignal="changed segment selection",
@@ -87,26 +89,25 @@ class SegmentSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
     def getGroupMenu(self):
         return skeletongroupmenu.segmentgroupmenu
 
-if config.dimension() == 3:
-    class FaceSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
-        def __init__(self):
-            skeletonselmodebase.SkeletonSelectionMode.__init__(
-                self,
-                name="Face",
-                methodclass=skeletonselectionmethod.FaceSelectMethod,
-                modifierclass=skeletonselectionmod.FaceSelectionModifier,
-                modifierappliedsignal="face selection modified",
-                newselectionsignal="new face selection",
-                changedselectionsignal="changed face selection",
-                groupmenu=skeletongroupmenu.facegroupmenu)
-        def getSelectionContext(self, skeletoncontext):
-            return skeletoncontext.faceselection
-        def getSelectionMenu(self):
-            return mainmenu.OOF.FaceSelection
-        def getGroups(self, skeletoncontext):
-            return skeletoncontext.facegroups
-        def getGroupMenu(self):
-            return skeletongroupmenu.facegroupmenu
+class FaceSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
+    def __init__(self):
+        skeletonselmodebase.SkeletonSelectionMode.__init__(
+            self,
+            name="Face",
+            methodclass=skeletonselection.FaceSelectionMethod,
+            modifierclass=skeletonselection.FaceSelectionModifier,
+            modifierappliedsignal="face selection modified",
+            newselectionsignal="new face selection",
+            changedselectionsignal="changed face selection",
+            groupmenu=skeletongroupmenu.facegroupmenu)
+    def getSelectionContext(self, skeletoncontext):
+        return skeletoncontext.faceselection
+    def getSelectionMenu(self):
+        return mainmenu.OOF.FaceSelection
+    def getGroups(self, skeletoncontext):
+        return skeletoncontext.facegroups
+    def getGroupMenu(self):
+        return skeletongroupmenu.facegroupmenu
 
 # Modes appear in the GUI in the order in which they're constructed
 # here (for example, in the radio buttons at the top of the Skeleton

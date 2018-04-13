@@ -1221,8 +1221,8 @@ vtkSmartPointer<vtkIdList> GhostOOFCanvas::findClickedFace(
 
 
 // findClickedCellMulti_ is like findClickedCell_, but it searches
-// through a list of OOFCanvasLayer and returns the index of the layer
-// with the closest hit, or -1 if no hits were found.
+// through a list of OOFCanvasLayers and returns the index of the
+// layer with the closest hit, or -1 if no hits were found.
 
 int GhostOOFCanvas::findClickedCellMulti_(
 			  const Coord *click, const View *view,

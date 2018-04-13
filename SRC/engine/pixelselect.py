@@ -11,8 +11,7 @@
 from ooflib.SWIG.engine import pixelselectioncouriere
 from ooflib.common import debug
 from ooflib.common import pixelselection
-from ooflib.common.IO import parameter
-from ooflib.common.IO import pixelselectionmenu
+from ooflib.common import selectionoperators
 from ooflib.common.IO import whoville
 from ooflib.engine import materialmanager
 from ooflib.engine import skeletoncontext
@@ -92,7 +91,7 @@ pixelselection.VoxelSelectionModRegistration(
     params=[
         materialparameter.AnyMaterialParameter(
             'material', tip='The name of a material, or \'None\'.'),
-        pixelselectionmenu.operatorParam
+        selectionoperators.SelectionOperatorParam('operator')
     ],
     tip="Select pixels to which a given Material has been assigned.",
     discussion="""

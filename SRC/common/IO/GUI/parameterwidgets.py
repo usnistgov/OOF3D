@@ -624,6 +624,18 @@ def _NonNegativeIntParameter_makeWidget(self, scope=None, verbose=False):
 parameter.NonNegativeIntParameter.makeWidget = \
                                           _NonNegativeIntParameter_makeWidget
 
+class ListOfIntsWidget(GenericWidget):
+    def get_value(self):
+        x = GenericWidget.get_value(self)
+        if x is not None:
+            return x
+        return []
+    def validValue(self, string):
+        return 1
+
+def _ListOfIntsParameter_makeWidget(self, scope=None, verbose=False):
+    return ListOfIntsWidget(self, scope=scope, name=self.name, verbose=verbose)
+parameter.ListOfIntsParameter.makeWidget = _ListOfIntsParameter_makeWidget
 
 #######################
 
@@ -698,6 +710,10 @@ class ParameterTable(ParameterWidget, widgetscope.WidgetScope):
         self.showLabels = showLabels
         self.labels = []
         self.widgets = []
+        # Widgets that aren't actually displayed won't receive the gtk
+        # destoy signal and have to be destroyed explicitly, so a list
+        # of them has to be kept.
+        self.hiddenWidgets = []
         self.sbcallbacks = []           # switchboard callbacks
         self.subscopes = []             # Widgetscopes for ParameterGroups
         self.set_values()
@@ -743,7 +759,7 @@ class ParameterTable(ParameterWidget, widgetscope.WidgetScope):
             widget.verbose = True
         self.widgets.append(widget)
 
-        if param.get_data('passive widget'):
+        if param.get_data('passiveWidget'):
             widget.gtk.set_sensitive(False)
 
         # if self.verbose:
@@ -764,7 +780,8 @@ class ParameterTable(ParameterWidget, widgetscope.WidgetScope):
         # if self.verbose:
         #     debug.fmsg("validity =", self.validities[tablepos])
 
-        if widget.faceless:
+        if widget.faceless or param.get_data('hiddenWidget'):
+            self.hiddenWidgets.append(widget)
             return
 
         label = gtk.Label(param.name + ' =')
@@ -847,8 +864,12 @@ class ParameterTable(ParameterWidget, widgetscope.WidgetScope):
     def cleanUp(self):
         # Make sure we don't have any circular references...
         map(switchboard.removeCallback, self.sbcallbacks)
+        for widget in self.hiddenWidgets:
+            # Hidden widgets don't receive the gtk "destroy" signal.
+            widget.destroy()
         self.params = []
         self.widgets = []
+        self.hiddenWidgets = []
         ParameterWidget.cleanUp(self)
         self.destroyScope()
         self.destroySubScopes()

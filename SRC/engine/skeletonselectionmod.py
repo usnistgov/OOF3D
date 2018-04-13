@@ -33,7 +33,12 @@ from ooflib.engine.IO import interfaceparameters
 
 import ooflib.engine.coverage
 
-
+from ooflib.engine.skeletonselection import \
+    NodeSelectionModifier, SegmentSelectionModifier, \
+    FaceSelectionModifier, ElementSelectionModifier, \
+    NodeSelectionModRegistration, SegmentSelectionModRegistration, \
+    FaceSelectionModRegistration, ElementSelectionModRegistration
+    
 
 ## TODO 3.1 OPT: Should this be moved to C++?  Yes, and use couriers as in pixel
 ## selection.
@@ -57,6 +62,9 @@ import ooflib.engine.coverage
 # in the menus should be as similar as possible for the different
 # selection modes.  The order is determined by the "ordering" arg in
 # the registrations.
+
+## TODO: These aren't used consistently below.  Make sure that all
+## orderings use them.
 
 #   The group selection methods, Select Group, Unselect Group, Add
 #   Group, and Intersect Group, come first, in that order, with
@@ -83,39 +91,35 @@ _periodicPartnerOrdering = 8
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# This is the function that actually runs a selection modification.
-# It is the menu callback for the automatically-generated menu
-# items in engine/IO/skeletonselectmenu.py.  This one routine
-# works for node, segment, and element selections.
+        
+# # This is the function that actually runs a selection modification.
+# # It is the menu callback for the automatically-generated menu
+# # items in engine/IO/skeletonselectmenu.py.  This one routine
+# # works for node, segment, and element selections.
 
-def modify(menuitem, skeleton, **params):
-    registration = menuitem.data
-    modifier = registration(**params)
-    skelcontext = whoville.getClass('Skeleton')[skeleton]
-    selection = modifier.getSelection(skelcontext)
-    selection.begin_writing()
-    try:
-        modifier(skelcontext, selection)
-    finally:
-        selection.end_writing()
+# def modify(menuitem, skeleton, **params):
+#     registration = menuitem.data
+#     modifier = registration(**params)
+#     skelcontext = whoville.getClass('Skeleton')[skeleton]
+#     selection = modifier.getSelection(skelcontext)
+#     selection.begin_writing()
+#     try:
+#         modifier(skelcontext, selection)
+#     finally:
+#         selection.end_writing()
 
-    selection.mode().modifierApplied(modifier) # sends switchboard signal
-    selection.signal()
+#     selection.mode().modifierApplied(modifier) # sends switchboard signal
+#     selection.signal()
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # Node selection modifiers
 
-class NodeSelectionModifier(registeredclass.RegisteredClass):
-    registry = []
-    def getSelection(self, skelcontext):
-        return skelcontext.nodeselection
-
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
     
 class NodeFromSelectedSegments(NodeSelectionModifier):
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         nodes = set()
         for segment in skeleton.segmentselection.retrieve():
             nodes.update(segment.getNodes())
@@ -123,9 +127,8 @@ class NodeFromSelectedSegments(NodeSelectionModifier):
         selection.clear()
         selection.select(nodes)
 
-registeredclass.Registration(
+NodeSelectionModRegistration(
     'Select from Selected Segments',
-    NodeSelectionModifier,
     NodeFromSelectedSegments,
     ordering=_selectFromSegmentsOrdering,
     tip="Select nodes from selected segments.",
@@ -175,7 +178,7 @@ class NodeFromSelectedElements(NodeSelectionModifier):
                 nodes.update(face.getNodes())
             return nodes
                 
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         if self.coverage == "All":
             selected = self.getAllNodes(skeleton)
         elif self.coverage == "Exterior":
@@ -188,9 +191,8 @@ class NodeFromSelectedElements(NodeSelectionModifier):
         selection.select(selected)
 
 
-registeredclass.Registration(
+NodeSelectionModRegistration(
     'Select from Selected Elements',
-    NodeSelectionModifier,
     NodeFromSelectedElements,
     ordering=_selectFromElementsOrdering,
     params = [enum.EnumParameter('coverage', ooflib.engine.coverage.Coverage)],
@@ -204,7 +206,7 @@ class NodeFromSelectedFaces(NodeSelectionModifier):
     def __init__(self, coverage):
         self.coverage = coverage
 
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         if self.coverage == "All":
             nodes = self.getAllNodes(skeleton)
         elif self.coverage == "Exterior":
@@ -232,9 +234,8 @@ class NodeFromSelectedFaces(NodeSelectionModifier):
         return nodes
         
 
-registeredclass.ThreeDOnlyRegistration(
+NodeSelectionModRegistration(
     'Select from Selected Faces',
-    NodeSelectionModifier,
     NodeFromSelectedFaces,
     ordering=_selectFromFacesOrdering,
     params = [enum.EnumParameter('coverage', ooflib.engine.coverage.Coverage)],
@@ -246,7 +247,7 @@ registeredclass.ThreeDOnlyRegistration(
 class SelectInternalBoundaryNodes(NodeSelectionModifier):
     def __init__(self, ignorePBC=False):
         self.ignorePBC = ignorePBC
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         skel = skeleton.getObject()
         nodelist = []
         for node in skel.getNodes():
@@ -271,9 +272,8 @@ if config.dimension() == 2:
 else:
     params = []
 
-registeredclass.Registration(
+NodeSelectionModRegistration(
     'Select Internal Boundaries',
-    NodeSelectionModifier,
     SelectInternalBoundaryNodes,
     ordering=_internalBoundaryOrdering,
     params=params,
@@ -286,16 +286,15 @@ registeredclass.Registration(
 class SelectNamedBoundaryNodes(NodeSelectionModifier):
     def __init__(self, boundary):
         self.boundary = boundary
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         bdy = skeleton.getBoundary(self.boundary)
         nodes = bdy.boundary(skeleton.getObject()).getNodes()
         selection.start()
         selection.clear()
         selection.select(nodes)
 
-registeredclass.Registration(
+NodeSelectionModRegistration(
     'Select Named Boundary',
-    NodeSelectionModifier,
     SelectNamedBoundaryNodes,
     ordering=_namedBoundaryOrdering,
     params=[
@@ -317,7 +316,7 @@ registeredclass.Registration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class SelectPeriodicPartnerNodes(NodeSelectionModifier):
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         oldnodes = skeleton.nodeselection.retrieve()
         newnodes = set()
         for node in oldnodes:
@@ -328,7 +327,6 @@ class SelectPeriodicPartnerNodes(NodeSelectionModifier):
 
 registeredclass.TwoDOnlyRegistration(
     'Select Periodic Partners',
-    NodeSelectionModifier,
     SelectPeriodicPartnerNodes,
     ordering=_periodicPartnerOrdering,
     tip="Select nodes whose periodic partners are already selected.",
@@ -346,136 +344,38 @@ registeredclass.TwoDOnlyRegistration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-if config.dimension() == 2:
-    ## TODO MER: The 2D version should be rewritten to be more like
-    ## ExpandElementSelection.  There really isn't a need for a
-    ## RegisteredClass here.
-    class ExpandCriterion(registeredclass.RegisteredClass):
-        registry = []
-        def expand(self, skeleton):
-            pass
-        tip = "Ways of expanding the node selection."
-        discussion = """<para>
-        Objects of the <classname>ExpandCriterion</classname> are used as
-        the <varname>criterion</varname> parameter of <xref
-        linkend='MenuItem-OOF.NodeSelection.Expand_Node_Selection'/>.
-        They describe different ways of expanding the set of currently
-        selected &nodes; in a &skel;.
-        </para>"""
+## Since we only have tetrahedral elements in 3D, there's no
+## difference between expanding by shared elements, segments, or
+## faces.  TODO 3.1: If we ever add non-tetrahedral elements, this
+## should be rewritten to look like ExpandElementSelection.
 
-    class ExpandByElements(ExpandCriterion):
-        def expand(self, skeleton, ignorePBC):
-            # Get the current set of selected nodes
-            oldnodes = set(skeleton.nodeselection.retrieve())
-            skel = skeleton.getObject()
-            # Define a function to retrieve the desired neighbor elements
-            if ignorePBC:
-                def elf(n):
-                    return n.aperiodicNeighborElements()
-            else:
-                def elf(n):
-                    return n.neighborElements()
-            # Get the set of nodes of the neighbor elements.  We don't
-            # bother to check for duplications, because the Set machinery
-            # will do that for us.  We also don't bother to check to see
-            # if an element is on the boundary of the original set of
-            # nodes, because checking for boundary-ness is just as hard as
-            # looping over all the nodes and putting them in the Set.
-            newnodes = set()
-            for node in oldnodes:
-                for el in elf(node):
-                    newnodes.update(el.nodes)
-            return oldnodes.union(newnodes)
+class ExpandNodeSelection(NodeSelectionModifier):
+    def select(self, skeleton, selection):
+        skel = skeleton.getObject()
+        newnodes = set()
+        for node in selection.retrieve():
+            for segment in skel.getNodeSegments(node):
+                    newnodes.add(segment.get_other_node(node))
+        selection.start()
+        selection.select(newnodes)
 
-    registeredclass.Registration(
-        'By Elements',
-        ExpandCriterion,
-        ExpandByElements,
-        ordering=2.0,
-        tip="Expand the node selection by selecting all nodes of neighboring elements.",
-        discussion=xmlmenudump.loadFile(
-            'DISCUSSIONS/engine/reg/expand_by_elements.xml'))
-
-    class ExpandBySegments(ExpandCriterion):
-        def expand(self, skeleton, ignorePBC):
-            skel = skeleton.getObject()
-            oldnodes = set(skeleton.nodeselection.retrieve())
-            if ignorePBC:
-                def elf(n):
-                    return n.aperiodicNeighborNodes(skel)
-            else:
-                def elf(n):
-                    return n.neighborNodes(skel)
-            newnodes = set()
-            for n in oldnodes:
-                newnodes.update(elf(n))
-            return oldnodes.union(newnodes)
-
-    registeredclass.Registration(
-        'By Segments',
-        ExpandCriterion,
-        ExpandBySegments,
-        ordering=1,
-        tip="Expand the node selection by selecting all nodes of neighboring segments.",
-        discussion=xmlmenudump.loadFile(
-            'DISCUSSIONS/engine/reg/expand_by_segments.xml'))
-
-    class ExpandNodeSelection(NodeSelectionModifier):
-        def __init__(self, criterion, ignorePBC=False):
-            self.criterion = criterion
-            self.ignorePBC = ignorePBC
-        def __call__(self, skeleton, selection):
-            selected = self.criterion.expand(skeleton, self.ignorePBC)
-            selection.start()
-            selection.clear()
-            selection.select(selected)        
-
-    registeredclass.Registration(
-        'Expand Node Selection',
-        NodeSelectionModifier, ExpandNodeSelection,
-        ordering=2.0,
-        params=[parameter.RegisteredParameter("criterion", ExpandCriterion,
-                                              tip="How to select new nodes."),
-                pbcparams.PBCBooleanParameter("ignorePBC", False,
-                                              tip='Ignore periodicity?')
-                ],
-        tip="Expand node selection by either neighboring elements or segments.",
-        discussion=xmlmenudump.loadFile(
-            'DISCUSSIONS/engine/menu/expand_node.xml'))
-# end dimension==2
-
-if config.dimension() == 3:
-    ## Since we only have tetrahedral elements in 3D, there's no
-    ## difference between expanding by shared elements, segments, or
-    ## faces.  TODO 3.1: If we ever add non-tetrahedral elements, this
-    ## should be rewritten to look like ExpandElementSelection.
-
-    class ExpandNodeSelection(NodeSelectionModifier):
-        def __call__(self, skeleton, selection):
-            skel = skeleton.getObject()
-            newnodes = set()
-            for node in selection.retrieve():
-                for segment in skel.getNodeSegments(node):
-                        newnodes.add(segment.get_other_node(node))
-            selection.start()
-            selection.select(newnodes)
-
-    registeredclass.Registration(
-        'Expand',
-        NodeSelectionModifier,
-        ExpandNodeSelection,
-        ordering=2.0,
-        tip="Select the neighbors of selected Nodes.")
-# end dimension==3
+NodeSelectionModRegistration(
+    'Expand',
+    ExpandNodeSelection,
+    ordering=2.0,
+    tip="Select the neighbors of selected Nodes.")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # Select the indicated group.
 
+## TODO: Compine the various "Group" selectors into one, and use the
+## SelectionOperators.
+
 class NodeSelectGroup(NodeSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         # Retrieve the members first -- if an exception occurs, the
         # system state will be as before.
         members = skeleton.nodegroups.get_group(self.group)
@@ -483,9 +383,8 @@ class NodeSelectGroup(NodeSelectionModifier):
         selection.clear()
         selection.select(members)
 
-registeredclass.Registration(
+NodeSelectionModRegistration(
     'Select Group',
-    NodeSelectionModifier,
     NodeSelectGroup,
     ordering=_selectGroupOrdering,
     params=[
@@ -508,14 +407,13 @@ registeredclass.Registration(
 class NodeDeselectGroup(NodeSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         members = skeleton.nodegroups.get_group(self.group)
         selection.start()
         selection.deselect(members)
 
-registeredclass.Registration(
+NodeSelectionModRegistration(
     'Unselect Group',
-    NodeSelectionModifier,
     NodeDeselectGroup,
     ordering=_unselectGroupOrdering,
     params=[skeletongroupparams.NodeGroupParameter('group',
@@ -535,7 +433,7 @@ registeredclass.Registration(
 class NodeAddSelectGroup(NodeSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         members = skeleton.nodegroups.get_group(self.group)
         selection.start()
         # Minor inefficiency: this reselects already-selected group
@@ -544,9 +442,8 @@ class NodeAddSelectGroup(NodeSelectionModifier):
         selection.select(members)
 
 
-registeredclass.Registration(
+NodeSelectionModRegistration(
     'Add Group',
-    NodeSelectionModifier,
     NodeAddSelectGroup,
     ordering=_addGroupOrdering,
     params=[skeletongroupparams.NodeGroupParameter('group',
@@ -569,16 +466,15 @@ registeredclass.Registration(
 class NodeIntersectGroup(NodeSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         nlist = skeleton.nodegroups.get_group(self.group)
         ilist = filter(lambda x: x.isSelected(), nlist)
         selection.start()
         selection.clear()
         selection.select(ilist)
 
-registeredclass.Registration(
+NodeSelectionModRegistration(
     'Intersect Group',
-    NodeSelectionModifier,
     NodeIntersectGroup,
     ordering=_intersectGroupOrdering,
     params=[skeletongroupparams.NodeGroupParameter('group',
@@ -598,13 +494,6 @@ registeredclass.Registration(
 
 # Segment selection modifiers
 
-class SegmentSelectionModifier(registeredclass.RegisteredClass):
-    registry = []
-    def getSelection(self, skelcontext):
-        return skelcontext.segmentselection
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-    
 class SegFromSelectedElements(SegmentSelectionModifier):
     def __init__(self, coverage):
         self.coverage = coverage
@@ -646,7 +535,7 @@ class SegFromSelectedElements(SegmentSelectionModifier):
         allsegs = set(self.getAllSegments(skelcontext))
         return allsegs - bdysegs
 
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         if self.coverage == "All":
             selected = self.getAllSegments(skeleton)
         elif self.coverage == "Exterior":
@@ -657,9 +546,8 @@ class SegFromSelectedElements(SegmentSelectionModifier):
         selection.clear()
         selection.select(selected)
 
-registeredclass.Registration(
+SegmentSelectionModRegistration(
     'Select from Selected Elements',
-    SegmentSelectionModifier,
     SegFromSelectedElements,
     ordering=_selectFromElementsOrdering,
     params = [
@@ -679,7 +567,7 @@ registeredclass.Registration(
 class SegFromSelectedNodes(SegmentSelectionModifier):
     def __init__(self, min_nodes):
         self.min_nodes = min_nodes
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         selected = set()
         skel = skeleton.getObject()
         if self.min_nodes == 1:
@@ -695,9 +583,8 @@ class SegFromSelectedNodes(SegmentSelectionModifier):
         selection.clear()
         selection.select(selected)
 
-registeredclass.Registration(
+SegmentSelectionModRegistration(
     "Select from Selected Nodes",
-    SegmentSelectionModifier,
     SegFromSelectedNodes,
     params=[
         parameter.IntRangeParameter(
@@ -727,7 +614,7 @@ class SegFromSelectedFaces(SegmentSelectionModifier):
         bdysegs = set(self.getExteriorSegments(skelctxt))
         return allsegs - bdysegs
 
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         if self.coverage == 'All':
             selected = self.getAllSegments(skeleton)
         elif self.coverage == 'Exterior':
@@ -738,54 +625,18 @@ class SegFromSelectedFaces(SegmentSelectionModifier):
         selection.clear()
         selection.select(selected)
 
-if config.dimension() == 3:
-    registeredclass.Registration(
-        'Select from Selected Faces',
-        SegmentSelectionModifier,
-        SegFromSelectedFaces,
-        ordering=_selectFromFacesOrdering,
-        params=[
-            enum.EnumParameter('coverage', ooflib.engine.coverage.Coverage)],
-        tip="Select the edges of the selected faces.")
+SegmentSelectionModRegistration(
+    'Select from Selected Faces',
+    SegFromSelectedFaces,
+    ordering=_selectFromFacesOrdering,
+    params=[
+        enum.EnumParameter('coverage', ooflib.engine.coverage.Coverage)],
+    tip="Select the edges of the selected faces.")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class SelectInternalBoundarySegments(SegmentSelectionModifier):
-    def __init__(self, ignorePBC=False):
-        self.ignorePBC = ignorePBC
-    def __call__(self, skeleton, selection):
-        skel = skeleton.getObject()
-        seglist = []
-        for segment in skel.segments.values():
-            elements = segment.getElements()
-            if (len(elements) == 2 and 
-                elements[0].dominantPixel(skel) != 
-                elements[1].dominantPixel(skel)):
-                seglist.append(segment)
-            elif not self.ignorePBC and len(elements) == 1:
-                p = segment.getPartner(skel)
-                if (p and
-                    (p.getElements()[0].dominantPixel(skel)
-                     != elements[0].dominantPixel(skel))):
-                    seglist.append(segment)
-        selection.start()
-        selection.clear()
-        selection.select(seglist)
-
-registeredclass.TwoDOnlyRegistration(
-    'Select Internal Boundaries',
-    SegmentSelectionModifier,
-    SelectInternalBoundarySegments,
-    ordering=_internalBoundaryOrdering,
-    params=[pbcparams.PBCBooleanParameter("ignorePBC", value=False,
-                                          tip="Ignore periodicity?")],
-    tip="Select segments on material or group boundaries.",
-    discussion=xmlmenudump.loadFile(
-        'DISCUSSIONS/engine/menu/boundary_segments.xml'))
-
-
-class SelectInternalBoundarySegments3D(SegmentSelectionModifier):
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         skel = skeleton.getObject()
         ms = skeleton.getMicrostructure()
         segset = set()
@@ -799,10 +650,9 @@ class SelectInternalBoundarySegments3D(SegmentSelectionModifier):
         selection.clear()
         selection.select(segset)
 
-registeredclass.ThreeDOnlyRegistration(
+SegmentSelectionModRegistration(
     'Select Internal Boundaries',
-    SegmentSelectionModifier,
-    SelectInternalBoundarySegments3D,
+    SelectInternalBoundarySegments,
     ordering=_internalBoundaryOrdering,
     tip="Select segments on material or group boundaries.")
 
@@ -812,7 +662,7 @@ registeredclass.ThreeDOnlyRegistration(
 class SelectInterfaceSegments(SegmentSelectionModifier):
     def __init__(self, interface):
         self.interface = interface
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         skel = skeleton.getObject()
         interfacemsplugin=skel.getMicrostructure().getPlugIn("Interfaces")
         try:
@@ -830,7 +680,7 @@ class SelectInterfaceSegments(SegmentSelectionModifier):
         selection.select(seglist)
 
 if config.dimension() == 2:
-    registeredclass.Registration(
+    SegmentSelectionModRegistration(
         'Select Interface Segments',
         SegmentSelectionModifier,
         SelectInterfaceSegments,
@@ -850,7 +700,7 @@ if config.dimension() == 2:
 class SelectNamedBoundarySegments(SegmentSelectionModifier):
     def __init__(self, boundary):
         self.boundary = boundary
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         bdy = skeleton.getBoundary(self.boundary) # A SkelContextEdgeBoundary
         bdyobj = bdy.boundary(skeleton.getObject()) # A CSkeletonEdgeBoundary
         if config.dimension() == 2:
@@ -863,9 +713,8 @@ class SelectNamedBoundarySegments(SegmentSelectionModifier):
         selection.select(edges)
             
 
-registeredclass.Registration(
+SegmentSelectionModRegistration(
     'Select Named Boundary',
-    SegmentSelectionModifier,
     SelectNamedBoundarySegments,
     ordering=_namedBoundaryOrdering,
     params=[skeletongroupparams.SkeletonEdgeBoundaryParameter(
@@ -886,7 +735,7 @@ registeredclass.Registration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class SelectPeriodicPartnerSegments(SegmentSelectionModifier):
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         oldsegs = skeleton.segmentselection.retrieve()
         newsegs = set()
         skel = skeleton.getObject()
@@ -920,7 +769,7 @@ class SegmentHomogeneity(SegmentSelectionModifier):
     def __init__(self, threshold=0.9):
         self.threshold = threshold
 
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         selected = []
         skel = skeleton.getObject()
         for segment in skel.getSegments():
@@ -930,9 +779,8 @@ class SegmentHomogeneity(SegmentSelectionModifier):
         selection.clear()
         selection.select(selected)
 
-registeredclass.Registration(
+SegmentSelectionModRegistration(
     'Select by Homogeneity',
-    SegmentSelectionModifier,
     SegmentHomogeneity,
     ordering=_homogeneityOrdering,
     params = [parameter.FloatRangeParameter('threshold', (0.0, 1.0, 0.01),
@@ -947,7 +795,7 @@ registeredclass.Registration(
 class RandomSegments(SegmentSelectionModifier):
     def __init__(self, probability=0.5):
         self.probability = probability
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         selected = []
         skel = skeleton.getObject()
         for segment in skel.getSegments():
@@ -957,9 +805,8 @@ class RandomSegments(SegmentSelectionModifier):
         selection.clear()
         selection.select(selected)
 
-registeredclass.Registration(
+SegmentSelectionModRegistration(
     'Select Randomly',
-    SegmentSelectionModifier,
     RandomSegments,
     ordering=100,
     params = [
@@ -971,20 +818,22 @@ registeredclass.Registration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+## TODO: Combine all group selection operations into one, using
+## SelectionOperators.
+
 # Select the indicated group.
 class SegmentSelectGroup(SegmentSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         # Group retrieval may throw an exception -- do it first.
         members = skeleton.segmentgroups.get_group(self.group)
         selection.start()
         selection.clear()
         selection.select(members)
 
-registeredclass.Registration(
+SegmentSelectionModRegistration(
     'Select Group',
-    SegmentSelectionModifier,
     SegmentSelectGroup,
     ordering=_selectGroupOrdering,
     params=[skeletongroupparams.SegmentGroupParameter('group',
@@ -1006,14 +855,13 @@ registeredclass.Registration(
 class SegmentDeselectGroup(SegmentSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         members = skeleton.segmentgroups.get_group(self.group)
         selection.start()
         selection.deselect(members)
 
-registeredclass.Registration(
+SegmentSelectionModRegistration(
     'Unselect Group',
-    SegmentSelectionModifier,
     SegmentDeselectGroup,
     ordering=_unselectGroupOrdering,
     params=[
@@ -1033,14 +881,13 @@ registeredclass.Registration(
 class SegmentAddSelectGroup(SegmentSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         members = skeleton.segmentgroups.get_group(self.group)
         selection.start()
         selection.select(members)
 
-registeredclass.Registration(
+SegmentSelectionModRegistration(
     'Add Group',
-    SegmentSelectionModifier,
     SegmentAddSelectGroup,
     ordering=_addGroupOrdering,
     params=[
@@ -1062,16 +909,15 @@ registeredclass.Registration(
 class SegmentIntersectGroup(SegmentSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         slist = skeleton.segmentgroups.get_group(self.group)
         ilist = filter(lambda x: x.isSelected(), slist)
         selection.start()
         selection.clear()
         selection.select(ilist)
 
-registeredclass.Registration(
+SegmentSelectionModRegistration(
     'Intersect Group',
-    SegmentSelectionModifier,
     SegmentIntersectGroup,
     ordering=_intersectGroupOrdering,
     params=[
@@ -1090,17 +936,10 @@ registeredclass.Registration(
 
 # Face selection modifiers
 
-class FaceSelectionModifier(registeredclass.RegisteredClass):
-    registry = []
-    def getSelection(self, skelcontext):
-        return skelcontext.faceselection
-
 # TODO 3.1: add more face selection modifiers.
 
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
 class SelectInternalBoundaryFaces(FaceSelectionModifier):
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         skel = skeleton.getObject()
         ms = skeleton.getMicrostructure()
         faceset = set()
@@ -1114,9 +953,8 @@ class SelectInternalBoundaryFaces(FaceSelectionModifier):
         selection.clear()
         selection.select(faceset)
 
-registeredclass.ThreeDOnlyRegistration(
+FaceSelectionModRegistration(
     'Select Internal Boundaries',
-    FaceSelectionModifier,
     SelectInternalBoundaryFaces,
     ordering=_internalBoundaryOrdering,
     tip="Select faces on material or group boundaries.")
@@ -1127,7 +965,7 @@ registeredclass.ThreeDOnlyRegistration(
 class SelectNamedBoundaryFaces(FaceSelectionModifier):
     def __init__(self, boundary):
         self.boundary = boundary
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         bdy = skeleton.getBoundary(self.boundary)
         faces = bdy.boundary(skeleton.getObject()).getFaces()
         # faces is a set of OrientedCSkeletonFaces.
@@ -1135,9 +973,8 @@ class SelectNamedBoundaryFaces(FaceSelectionModifier):
         selection.clear()
         selection.select([f.get_face() for f in faces])
 
-registeredclass.ThreeDOnlyRegistration(
+FaceSelectionModRegistration(
     'Select Named Boundary',
-    FaceSelectionModifier,
     SelectNamedBoundaryFaces,
     ordering=_namedBoundaryOrdering,
     params=[
@@ -1151,15 +988,14 @@ registeredclass.ThreeDOnlyRegistration(
 class FaceSelectGroup(FaceSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         members = skeleton.facegroups.get_group(self.group)
         selection.start()
         selection.clear()
         selection.select(members)
 
-registeredclass.ThreeDOnlyRegistration(
+FaceSelectionModRegistration(
     'Select Group',
-    FaceSelectionModifier,
     FaceSelectGroup,
     ordering=_selectGroupOrdering,
     params=[
@@ -1171,17 +1007,19 @@ registeredclass.ThreeDOnlyRegistration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+## TODO: Combine all group selection operations into one, using
+## SelectionOperators
+
 class FaceDeselectGroup(FaceSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         members = skeleton.facegroups.get_group(self.group)
         selection.start()
         selection.deselect(members)
 
-registeredclass.ThreeDOnlyRegistration(
+FaceSelectionModRegistration(
     'Unselect Group',
-    FaceSelectionModifier,
     FaceDeselectGroup,
     ordering=_unselectGroupOrdering,
     params=[
@@ -1194,14 +1032,13 @@ registeredclass.ThreeDOnlyRegistration(
 class FaceAddSelectGroup(FaceSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         members = skeleton.facegroups.get_group(self.group)
         selection.start()
         selection.select(members)
 
-registeredclass.ThreeDOnlyRegistration(
+FaceSelectionModRegistration(
     'Add Group',
-    FaceSelectionModifier,
     FaceAddSelectGroup,
     ordering=_addGroupOrdering,
     params=[
@@ -1216,16 +1053,15 @@ registeredclass.ThreeDOnlyRegistration(
 class FaceIntersectGroup(FaceSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         flist = skeleton.facegroups.get_group(self.group)
         ilist = filter(lambda x: x.isSelected(), flist)
         selection.start()
         selection.clear()
         selection.select(ilist)
 
-registeredclass.ThreeDOnlyRegistration(
+FaceSelectionModRegistration(
     'Intersect Group',
-    FaceSelectionModifier,
     FaceIntersectGroup,
     ordering=_intersectGroupOrdering,
     params=[
@@ -1241,7 +1077,7 @@ class FaceFromSelectedElements(FaceSelectionModifier):
     def __init__(self, coverage):
         self.coverage = coverage
     
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         if self.coverage == 'All':
             selected = self.getAllFaces(skeleton)
         elif self.coverage == 'Exterior':
@@ -1267,9 +1103,8 @@ class FaceFromSelectedElements(FaceSelectionModifier):
         bdyfaces = self.getExteriorFaces(skelctxt)
         return allfaces - bdyfaces
 
-registeredclass.ThreeDOnlyRegistration(
+FaceSelectionModRegistration(
     'Select from Selected Elements',
-    FaceSelectionModifier,
     FaceFromSelectedElements,
     ordering=_selectFromElementsOrdering,
     params = [
@@ -1281,7 +1116,7 @@ registeredclass.ThreeDOnlyRegistration(
 class FaceFromSelectedNodes(FaceSelectionModifier):
     def __init__(self, min_nodes):
         self.min_nodes = min_nodes
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         selected = set()
         skel = skeleton.getObject()
         if self.min_nodes == 1:
@@ -1300,9 +1135,8 @@ class FaceFromSelectedNodes(FaceSelectionModifier):
         selection.clear()
         selection.select(selected)
 
-registeredclass.ThreeDOnlyRegistration(
+FaceSelectionModRegistration(
     'Select from Selected Nodes',
-    FaceSelectionModifier,
     FaceFromSelectedNodes,
     params=[
         parameter.IntRangeParameter(
@@ -1314,7 +1148,7 @@ registeredclass.ThreeDOnlyRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class FaceFromSelectedSegments(FaceSelectionModifier):
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         selected = set()
         skel = skeleton.getObject()
         for seg in skeleton.segmentselection.retrieve():
@@ -1323,9 +1157,8 @@ class FaceFromSelectedSegments(FaceSelectionModifier):
         selection.clear()
         selection.select(selected)
 
-registeredclass.ThreeDOnlyRegistration(
+FaceSelectionModRegistration(
     'Select from Selected Segments',
-    FaceSelectionModifier,
     FaceFromSelectedSegments,
     ordering=_selectFromSegmentsOrdering,
     tip="Select every face adjacent to a selected segment.")
@@ -1334,54 +1167,10 @@ registeredclass.ThreeDOnlyRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# Element selection modifiers
-
-class ElementSelectionModifier(registeredclass.RegisteredClass):
-    registry = []
-    def getSelection(self, skelcontext):
-        return skelcontext.elementselection
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-class ByElementType(ElementSelectionModifier):
-    def __init__(self, shape):
-        self.shape = shape
-
-    def __call__(self, skeleton, selection):
-        selected = []
-        for i in xrange(skeleton.getObject().nelements()):
-            if skeleton.getObject().getElement(i).type() == self.shape:
-                selected.append(skeleton.getObject().getElement(i))
-        selection.start()
-        selection.clear()
-        selection.select(selected)
-
-if config.dimension() == 2:
-    # This needs to check config.dimension explicitly, instead of just
-    # relying on TwoDOnlyRegistration, because skeletonelement isn't
-    # imported in 3D.  After merging, this "if" won't be needed.
-    registeredclass.TwoDOnlyRegistration(
-        'Select by Element Type',
-        ElementSelectionModifier,
-        ByElementType,
-        ordering=2.7,
-        params = [
-        enum.EnumParameter('shape', skeletonelement.ElementShapeType,
-                           skeletonelement.ElementShapeType('triangle'),
-                           tip="Element shape.")],
-        tip='Select elements by shape.',
-        discussion="""<para>
-        <command>Select_By_Element_Type</command> selects all &elems; of a
-        given topology, <foreignphrase>i.e,</foreignphrase> triangular or
-        quadrilateral.
-        </para>""")
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
 class ByElementMaterial(ElementSelectionModifier):
     def __init__(self, material):
         self.material = material
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         selected = []
         skel = skeleton.getObject()
         ms = skel.getMicrostructure()
@@ -1402,9 +1191,8 @@ class ByElementMaterial(ElementSelectionModifier):
         selection.clear()
         selection.select(selected)
 
-registeredclass.Registration(
+ElementSelectionModRegistration(
     'Select by Material',
-    ElementSelectionModifier,
     ByElementMaterial,
     ordering=2.2,
     params=[materialparameter.AnyMaterialParameter('material',
@@ -1418,7 +1206,7 @@ class ElementHomogeneity(ElementSelectionModifier):
     def __init__(self, threshold=0.9):
         self.threshold = threshold
 
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         selected = []
         skel = skeleton.getObject()
         ms = skel.getMicrostructure()
@@ -1429,9 +1217,8 @@ class ElementHomogeneity(ElementSelectionModifier):
         selection.clear()
         selection.select(selected)
 
-registeredclass.Registration(
+ElementSelectionModRegistration(
     'Select by Homogeneity',
-    ElementSelectionModifier,
     ElementHomogeneity,
     ordering=2.3,
     params = [
@@ -1447,7 +1234,7 @@ registeredclass.Registration(
 class ElementShapeEnergy(ElementSelectionModifier):
     def __init__(self, threshold = 0.8):
         self.threshold = threshold
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         selected = []
         skel = skeleton.getObject()
         for i in xrange(skel.nelements()):
@@ -1457,9 +1244,8 @@ class ElementShapeEnergy(ElementSelectionModifier):
         selection.clear()
         selection.select(selected)
 
-registeredclass.Registration(
+ElementSelectionModRegistration(
     'Select by Shape Energy',
-    ElementSelectionModifier,
     ElementShapeEnergy,
     ordering=2.4,
     params = [
@@ -1474,7 +1260,7 @@ registeredclass.Registration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class ElementIllegal(ElementSelectionModifier):
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         selected = []
         skel = skeleton.getObject()
         for i in xrange(skel.nelements()):
@@ -1484,9 +1270,8 @@ class ElementIllegal(ElementSelectionModifier):
         selection.clear()
         selection.select(selected)
 
-registeredclass.Registration(
+ElementSelectionModRegistration(
     'Select Illegal Elements',
-    ElementSelectionModifier,
     ElementIllegal,
     ordering=2.5,
     tip="Select illegal elements.",
@@ -1503,7 +1288,7 @@ registeredclass.Registration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class ElementSuspect(ElementSelectionModifier):
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         selected = []
         skel = skeleton.getObject()
         for i in xrange(skel.nelements()):
@@ -1514,9 +1299,8 @@ class ElementSuspect(ElementSelectionModifier):
         selection.select(selected)
 
 # TODO 3.1: need link for suspect elements concept
-registeredclass.Registration(
+ElementSelectionModRegistration(
     'Select Suspect Elements',
-    ElementSelectionModifier,
     ElementSuspect,
     ordering=2.6,
     tip="Select suspect elements.",
@@ -1533,7 +1317,7 @@ registeredclass.Registration(
 class ElementFromSelectedNodes(ElementSelectionModifier):
     def __init__(self, min_nodes):
         self.min_nodes = min_nodes
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         selected = set()
         if self.min_nodes == 1:
             for node in skeleton.nodeselection.retrieve():
@@ -1551,9 +1335,8 @@ class ElementFromSelectedNodes(ElementSelectionModifier):
         selection.clear()
         selection.select(selected)
 
-registeredclass.Registration(
+ElementSelectionModRegistration(
     'Select from Selected Nodes',
-    ElementSelectionModifier,
     ElementFromSelectedNodes,
     ordering=_selectFromNodesOrdering,
     params=[
@@ -1567,7 +1350,7 @@ registeredclass.Registration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class ElementFromSelectedSegments(ElementSelectionModifier):
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         selected = set()
         skel = skeleton.getObject()
         for segment in skeleton.segmentselection.retrieve():
@@ -1576,9 +1359,8 @@ class ElementFromSelectedSegments(ElementSelectionModifier):
         selection.clear()
         selection.select(selected)
 
-registeredclass.Registration(
+ElementSelectionModRegistration(
     'Select from Selected Segments',
-    ElementSelectionModifier,
     ElementFromSelectedSegments,
     ordering=_selectFromElementsOrdering,
     tip="Select every element adjacent to selected segments.",
@@ -1586,7 +1368,7 @@ registeredclass.Registration(
         'DISCUSSIONS/engine/menu/elements_from_segments.xml'))
 
 class ElementFromSelectedFaces(ElementSelectionModifier):
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         selected = set()
         skel = skeleton.getObject()
         for face in skeleton.faceselection.retrieve():
@@ -1595,45 +1377,13 @@ class ElementFromSelectedFaces(ElementSelectionModifier):
         selection.clear()
         selection.select(selected)
 
-registeredclass.ThreeDOnlyRegistration(
+ElementSelectionModRegistration(
     'Select from Selected Faces',
-    ElementSelectionModifier,
     ElementFromSelectedFaces,
     ordering=_selectFromFacesOrdering,
     tip='Select every element adjacent to selected faces.')
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-class ExpandElementSelection(ElementSelectionModifier):
-    def __init__(self, ignorePBC=False):
-        self.ignorePBC = ignorePBC
-
-    def __call__(self, skeleton, selection):
-        skel = skeleton.getObject()
-        if self.ignorePBC:
-            def elf(n):
-                return n.aperiodicNeighborElements()
-        else:
-            def elf(n):
-                return n.neighborElements()
-        newelements = set()
-        for element in selection.retrieve():
-            for node in element.getNodes():
-                newelements.update(elf(node))
-        selection.start()
-        selection.clear()
-        selection.select(newelements)
-
-registeredclass.TwoDOnlyRegistration(
-    'Expand',
-    ElementSelectionModifier,
-    ExpandElementSelection,
-    ordering=2.0,
-    params=[pbcparams.PBCBooleanParameter("ignorePBC", False,
-                                          tip="Ignore periodicity?")],
-    tip="Select the neighbors of the selected elements.",
-    discussion=xmlmenudump.loadFile(
-        'DISCUSSIONS/engine/menu/expand_elements.xml'))
 
 class ElementSelectionExpansionMode(enum.EnumClass(
         ("Faces",
@@ -1647,7 +1397,7 @@ class ElementSelectionExpansionMode(enum.EnumClass(
 class ExpandElementSelection3D(ElementSelectionModifier):
     def __init__(self, mode):
         self.mode = mode
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         skel = skeleton.getObject()
         newelements = set()
         for element in selection.retrieve():
@@ -1684,19 +1434,19 @@ registeredclass.ThreeDOnlyRegistration(
 class ElementSelectGroup(ElementSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         members = skeleton.elementgroups.get_group(self.group)
         selection.start()
         selection.clear()
         selection.select(members)
 
-registeredclass.Registration(
+ElementSelectionModRegistration(
     'Select Group',
-    ElementSelectionModifier,
     ElementSelectGroup,
     ordering=_selectGroupOrdering,
     params=[
-    skeletongroupparams.ElementGroupParameter('group', tip="Name of the group.")
+        skeletongroupparams.ElementGroupParameter('group',
+                                                  tip="Name of the group.")
     ],
     tip='Select the members of a group, discarding the current selection.',
     discussion="""<para>
@@ -1714,14 +1464,13 @@ registeredclass.Registration(
 class ElementDeselectGroup(ElementSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         members = skeleton.elementgroups.get_group(self.group)
         selection.start()
         selection.deselect(members)
 
-registeredclass.Registration(
+ElementSelectionModRegistration(
     'Unselect Group',
-    ElementSelectionModifier,
     ElementDeselectGroup,
     ordering=_unselectGroupOrdering,
     params=[
@@ -1742,14 +1491,13 @@ registeredclass.Registration(
 class ElementAddSelectGroup(ElementSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         members = skeleton.elementgroups.get_group(self.group)
         selection.start()
         selection.select(members)
 
-registeredclass.Registration(
+ElementSelectionModRegistration(
     'Add Group',
-    ElementSelectionModifier,
     ElementAddSelectGroup,
     ordering=_addGroupOrdering,
     params=[
@@ -1773,7 +1521,7 @@ registeredclass.Registration(
 class ElementIntersectGroup(ElementSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         elist = skeleton.elementgroups.get_group(self.group)
         ilist = filter(lambda x: x.isSelected(), elist)
         selection.start()
@@ -1781,9 +1529,9 @@ class ElementIntersectGroup(ElementSelectionModifier):
         selection.select(ilist)
 
 
-registeredclass.Registration(
+ElementSelectionModRegistration(
     'Intersect Group',
-    ElementSelectionModifier, ElementIntersectGroup,
+    ElementIntersectGroup,
     ordering=_intersectGroupOrdering,
     params=[
     skeletongroupparams.ElementGroupParameter('group', tip="Name of the group.")
@@ -1800,7 +1548,7 @@ registeredclass.Registration(
 class ElementByPixelGroup(ElementSelectionModifier):
     def __init__(self, group):
         self.group = group
-    def __call__(self, skeleton, selection):
+    def select(self, skeleton, selection):
         selected = []
         ms = skeleton.getMicrostructure()
         skel = skeleton.getObject()
@@ -1814,9 +1562,8 @@ class ElementByPixelGroup(ElementSelectionModifier):
         selection.clear()
         selection.select(selected)
 
-registeredclass.Registration(
+ElementSelectionModRegistration(
     'Select by Pixel Group',
-    ElementSelectionModifier,
     ElementByPixelGroup,
     ordering=2.1,
     params=[pixelgroupparam.PixelGroupParameter(

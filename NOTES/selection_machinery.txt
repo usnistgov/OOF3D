@@ -26,21 +26,63 @@ Unlike earlier versions in which a different selection methods
 each had their own menu items, now all selections of a particular type
 of object are made from a single menu item like this:
 
-OOF.VoxelSelection.Select(source=..., method=..., operator=...)
+OOF.VoxelSelection.Select(source=..., method=...)
 
-The "method" argument is a RegisteredParameter for the
-VoxelSelectionMethod registered class (when selecting voxels).
-VoxelSelectionMethod is a subclass of GenericSelectionMethod, which
-should be used as a base class for other types of selections.
+Skeleton selections are similar:
 
-Each registered GenericSelectionMethod subclass needs a 'select'
-method that takes arguments named 'source', 'selection', and
-'operator'.  'source' is a Who object.  'selection' is the selection
-context contained in the object, and 'operator' is one of the the
-PixelSelectionOperators defined in pixelselectionmod.py (which should
-be made generic and moved out of that file, if possible).  'select'
-should construct an appropriate courier object and call
-operator.operate to actually make the selection.
+OOF.NodeSelection.Select(skeleton=..., method=...)
+OOF.SegmentSelection.Select(skeleton=..., method=...)
+OOF.FaceSelection.Select(skeleton=..., method=...)
+OOF.ElementSelection.Select(skeleton=..., method=...)
+
+The first argument to the Select command must be the name of the Who
+object containing the things to be selected.  For Voxels, it's a
+Microstructure or Image.  For Skeleton components, it's a Skeleton.
+The argument must be first because the generic GUI needs to be able to
+discover the name of the argument.
+
+The "method" argument is a RegisteredParameter for a subclass of
+GenericSelectionMethod (ie, VoxelSelectionMethod or a subclass of
+SkeletonSelectionMethod) or GenericSelectionModifier
+(VoxelSelectionModifier or a subclass of SkeletonSelectionModifier).
+The XXXXMethod classes use mouse-based methods and are used in the
+selection toolboxes and are listed in a RegisteredClassFactory there.
+The XXXXModifier classes don't require mouse input and are listed in a
+RegisteredClassFactory in the Voxel Selection or Skeleton Selection
+page in the main OOF3D window.
+
+Subclasses of GenericSelectionModifier should be registered using the
+subclasses of Registration that are defined in pixelselection.py
+(VoxelSelectionModRegistration) and skeletonselection.py
+(NodeSelectionModRegistration, etc).  These add some information that
+the GUI uses to call the correct menu item.  Similarly, subclasses of
+GenericSelectionMethod should be registered with
+VoxelSelectionMethodRegistration, NodeSelectionMethodRegistration,
+etc.
+
+Instances of GenericSelectionMethod and GenericSelectionModifier are
+created by the GUI either in a RegisteredClassFactory or a specialized
+context (see below).  The GUI can use the registrations params to call
+the constructor or is specialized to a particular selection method.
+In either case, it knows what particular non-generic constructor
+arguments are required.  If appropriate, a GenericSelectionMethod
+subclass should store an 'operator' datum, which is one of the the
+SelectionOperators (Select, Unselect, etc) defined in
+selectionoperators.py.
+
+The menu callback for *all* GenericSelectionModifier and
+GenericSelectionMethod subclasses is the "select" function in
+pixelselectionmenu.py (for voxels) or skeletonselectmenu.py (for
+skeleton components).  The subclasses must define
+  select(self, source, selection),
+where "source" is the name of the Who object containing the objects
+being selected (ie, Microstructure, Image, or Skeleton), and selection
+is the Who object for the selection itself (ie, PixelSelectionContext,
+NodeSelection, etc).  If using a SelectionOperator, 'select' should
+construct an appropriate courier object and call self.operator.operate()
+to actually make the selection.  (Skeleton selections don't do this
+correctly yet, because couriers aren't yet implemented.  There's a
+hack in place to make the interface look the same as for voxels.)
 
 The Registrations for the GenericSelectionMethod subclasses need to
 contain an entry 'whoclasses', which is a list of the names of the
@@ -55,16 +97,15 @@ Selection toolboxes have non-gui and gui components.  The non-gui
 component is derived from GenericSelectToolbox and the gui component
 from GenericSelectToolboxGUI.
 
-The base non-gui GenericSelectToolbox class stores the menu and
-defines Undo, Redo, Invert, and Clear methods.  It provides a method,
-getSelection(), for other methods to find the selection object.
-getSelection calls the getSelectionContext() method in the
-Microstructure and Skeleton who classes.  That method can require
-extra arguments, which must be provided when the GenericSelectToolbox
-init is called.
+The base non-gui GenericSelectToolbox class stores the menun and
+provides a method, getSelection(), for other methods to find the
+selection object.  getSelection calls the getSelectionContext() method
+in the Microstructure and Skeleton who classes.  That method can
+require extra arguments, which must be provided when the
+GenericSelectToolbox init is called.
 
-The derived non-gui GenericSelectToolbox classes must provide a
-getSelectionSource() method, which returns the Who object that
+The derived non-gui GenericSelectToolbox classes provide
+getSelectionSource() methods, which return the Who object that
 contains the selection object that the toolbox commands operate on.
 
 The GUI toolbox has a RegisteredClassFactory that switches between
@@ -76,9 +117,9 @@ which is in charge of three things:
  * Connecting to a vtk layer in the canvas that guides the user
 One SelectionMethodGUI subclass can be associated with many selection
 methods.  The association is made by using the "selectionGUIfor"
-decorator defined in the module common.IO.GUI.pixelselectionmethodGUI.
+decorator defined in the module common.IO.GUI.genericselectGUI.py.
 
-The GenericSelectToolboxGUI constructor creates instances of the
+The GenericSelectToolboxGUI constructor creates instances of a
 SelectionMethodGUI for each selection method in the toolbox, and
 stores them in a dict keyed by selection method.  This dict is used as
 the widgetdict for the RegisteredClassFactory of selection methods.
@@ -87,10 +128,10 @@ RegisteredClassFactory uses to create the gtk widgets for the
 method. It returns an object that acts like a ParameterTable, as far
 as the RegisteredClassFactory is concerned.  If __call__ isn't defined
 in a subclass, the base class provides one that returns a
-ParameterTable for the params in the method's registration.  The
-subclass must provide a work-alike for
-ParameterTable.setParamValues(**vals), which set the widgets in the
-name from the given name=value pairs in vals.
+ParameterTable for the params in the method's registration. If a
+non-default __call__ is defined, the object it returns must provide a
+work-alike for ParameterTable.setParamValues(**vals), which set the
+widgets in the toolbox from the given name=value pairs in vals.
 
 MOUSE HANDLING
 
@@ -153,8 +194,8 @@ more than a single click to define the selection.  As such it probably
 also needs to provide feedback to the user in the form of updates to
 the graphics window.  It can do this by creating a new vtk display
 layer or connecting to an existing one.  It can control the layer in
-response to mouse clicks in the canvas or on gtk widgets that it
-defines. 
+response to mouse clicks in the canvas or in gtk widgets that it
+defines.
 
 
 FILES:
@@ -165,7 +206,7 @@ common/IO/GUI/genericselectGUI.py
    GUIs for each selection method.
    
 common/IO/GUI/pixelselectionmethodGUI.py
-   Defines SelectionMethodGUI, SingleClickVoxelSelectionMethodGUI
+   Defines SingleClickVoxelSelectionMethodGUI
    and concrete subclasses PointSelectorGUI (gui for PointSelector)
    and RectangularPrismSelectorGUI (gui for RectangularPrismSelector)
   
@@ -194,6 +235,9 @@ common/IO/voxelregionselectiondisplay.py
    the vtk methods for drawing a box showing what voxels will be
    selected.  Will be extended to draw spheres and ellipsoids
    eventually.
+
+common/genericselection.py
+   Defines GenericSelectionMethod and GenericSelectionModifier.
    
 common/pixelselectioncourier.{C,h,swg}
    Courier classes for voxel selections.
