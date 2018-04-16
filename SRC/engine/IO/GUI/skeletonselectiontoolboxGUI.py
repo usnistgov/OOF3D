@@ -9,62 +9,30 @@
 # oof_manager@nist.gov. 
 
 from ooflib.SWIG.common import config
-from ooflib.SWIG.common import switchboard
 from ooflib.common import debug
-from ooflib.common import primitives
 from ooflib.common.IO.GUI import genericselectGUI
-from ooflib.common.IO.GUI import gtklogger
-from ooflib.common.IO.GUI import regclassfactory
-from ooflib.common.IO.GUI import toolboxGUI
-from ooflib.engine import skeletonselectionmethod
+from ooflib.engine import skeletonselectionmodes
 from ooflib.engine import skeletonselmodebase
 from ooflib.engine.IO import skeletonselectiontoolbox
-import gtk
+
+
+# Generate selection toolbox GUI subclasses for each of the selection
+# modes (Element, Node, etc) defined in skeletonselectionmodes.py.
 
 class SkeletonSelectionToolboxGUI(genericselectGUI.GenericSelectToolboxGUI):
     pass
 
-class SkeletonNodeSelectToolboxGUI(SkeletonSelectionToolboxGUI):
-    changeSignal = "node selection changed"
-    def displayName(self):
-        return "Select Nodes"
+for mode in skeletonselmodebase.SkeletonSelectionMode.modes:
+    class SpecificSkeletonSelectToolboxGUI(SkeletonSelectionToolboxGUI):
+        selectionMode = mode
+        changeSignal = mode.changedselectionsignal
+        def displayName(self, name=mode.name):
+            return "Select " + name + "s"
+    def _makeGUI(self, tbgui=SpecificSkeletonSelectToolboxGUI):
+        return tbgui(self, self.method)
+    mode.toolboxclass.makeGUI = _makeGUI
+        
 
-def _makeNodeGUI(self):
-    return SkeletonNodeSelectToolboxGUI(self, self.method)
-
-skeletonselectiontoolbox.SkeletonNodeSelectionToolbox.makeGUI = _makeNodeGUI
-
-class SkeletonSegmentSelectToolboxGUI(SkeletonSelectionToolboxGUI):
-    changeSignal = "segment selection changed"
-    def displayName(self):
-        return "Select Segments"
-
-def _makeSegmentGUI(self):
-    return SkeletonSegmentSelectToolboxGUI(self, self.method)
-
-skeletonselectiontoolbox.SkeletonSegmentSelectionToolbox.makeGUI = \
-                                                            _makeSegmentGUI
-
-class SkeletonFaceSelectToolboxGUI(SkeletonSelectionToolboxGUI):
-    changeSignal = "face selection changed"
-    def displayName(self):
-        return "Select Faces"
-
-def _makeFaceGUI(self):
-    return SkeletonFaceSelectToolboxGUI(self, self.method)
-
-skeletonselectiontoolbox.SkeletonFaceSelectionToolbox.makeGUI = _makeFaceGUI
-
-class SkeletonElementSelectToolboxGUI(SkeletonSelectionToolboxGUI):
-    changeSignal = "element selection changed"
-    def displayName(self):
-        return "Select Elements"
-
-def _makeElementGUI(self):
-    return SkeletonElementSelectToolboxGUI(self, self.method)
-
-skeletonselectiontoolbox.SkeletonElementSelectionToolbox.makeGUI = \
-                                                            _makeElementGUI
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 

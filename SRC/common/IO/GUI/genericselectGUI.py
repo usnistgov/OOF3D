@@ -104,9 +104,7 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
                                         self.setInfo_subthread),
             switchboard.requestCallbackMain((self.gfxwindow(),
                                              'layers changed'),
-                                            self.layerChangeCB),
-            switchboard.requestCallbackMain('new pixel selection',
-                                            self.newSelection),
+                                            self.layerChangeCB)
         ]
 
         # Make sure that the initial state is self-consistent
@@ -139,8 +137,11 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
             if config.dimension() == 3:
                 self.gfxwindow().toolbar.setSelect()
             self.activecallbacks = [
+                # changeSignal is defined as class-level data in the
+                # derived classes.
                 switchboard.requestCallbackMain(self.changeSignal,
-                                                self.changedSelection)]
+                                                self.changedSelection)
+            ]
 
     def deactivate(self):
         if self.active:
@@ -206,21 +207,10 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
         self.updateSelectionMethods()
         self.sensitize()
 
-    ## TODO: What's the difference between 'new pixel selection' and
-    ## 'pixel selection changed', and why does the Pixel selection
-    ## toolbox always respond to the first but not to the second
-    ## unless the toolbox is active?
-
-    def newSelection(self, selectionMethod, pointlist):
-        # sb callback for 'new pixel selection' 
-        debug.mainthreadTest()
-        if selectionMethod is not None:
-            self.selectionMethodFactory.setByRegistration(
-                selectionMethod.getRegistration())
-            self.sensitize()
-
-    def changedSelection(self, selection): # switchboard callback
-        # sb callback for '<something> selection changed'.  
+    def changedSelection(self, selection): # switchboard callback sb
+        # callback for 'changed <something> selection'.  The precise
+        # wording of the signal is stored in the toolboxGUI subclass
+        # as 'changeSignal'
         self.sensitize()
         self.setInfo()
 
@@ -248,9 +238,9 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
                 i = 1
             finally:
                 selection.end_reading()
-        debug.fmsg("u=", u, "r=", r, "c=", c, "i=", i)
         mainthread.runBlock(self._set_button_sensitivities, (u,r,c,i))
-        #gtklogger.checkpoint(self.gfxwindow().name + " " + self.name() + " sensitized")
+        # gtklogger.checkpoint(self.gfxwindow().name + " " + self.name()
+        #                      + " sensitized")
         
     def _set_button_sensitivities(self, u,r,c,i):
         debug.mainthreadTest()

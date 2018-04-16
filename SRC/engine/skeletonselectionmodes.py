@@ -12,6 +12,7 @@ from ooflib.SWIG.common import config
 from ooflib.common.IO import mainmenu
 from ooflib.engine import skeletonselmodebase
 from ooflib.engine.IO import skeletongroupmenu
+from ooflib.engine.IO import skeletonselectiontoolbox
 from ooflib.SWIG.engine import material
 from ooflib.engine import skeletonselection
 
@@ -28,8 +29,9 @@ class ElementSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             name="Element",
             methodclass=skeletonselection.ElementSelectionMethod,
             modifierclass=skeletonselection.ElementSelectionModifier,
+            toolboxclass=
+            skeletonselectiontoolbox.SkeletonElementSelectionToolbox,
             modifierappliedsignal="element selection modified",
-            newselectionsignal="new element selection",
             changedselectionsignal="changed element selection",
             groupmenu=skeletongroupmenu.elementgroupmenu,
             materialsallowed = material.MATERIALTYPE_BULK)
@@ -51,8 +53,8 @@ class NodeSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             name="Node",
             methodclass=skeletonselection.NodeSelectionMethod,
             modifierclass=skeletonselection.NodeSelectionModifier,
+            toolboxclass=skeletonselectiontoolbox.SkeletonNodeSelectionToolbox,
             modifierappliedsignal="node selection modified",
-            newselectionsignal="new node selection",
             changedselectionsignal="changed node selection",
             groupmenu=skeletongroupmenu.nodegroupmenu)
     def getSelectionContext(self, skeletoncontext):
@@ -71,8 +73,9 @@ class SegmentSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             name="Segment",
             methodclass=skeletonselection.SegmentSelectionMethod,
             modifierclass=skeletonselection.SegmentSelectionModifier,
+            toolboxclass=
+            skeletonselectiontoolbox.SkeletonSegmentSelectionToolbox,
             modifierappliedsignal="segment selection modified",
-            newselectionsignal="new segment selection",
             changedselectionsignal="changed segment selection",
             groupmenu=skeletongroupmenu.segmentgroupmenu,
             ## Materials are *not* allowed to be assigned directly to
@@ -96,8 +99,8 @@ class FaceSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             name="Face",
             methodclass=skeletonselection.FaceSelectionMethod,
             modifierclass=skeletonselection.FaceSelectionModifier,
+            toolboxclass=skeletonselectiontoolbox.SkeletonFaceSelectionToolbox,
             modifierappliedsignal="face selection modified",
-            newselectionsignal="new face selection",
             changedselectionsignal="changed face selection",
             groupmenu=skeletongroupmenu.facegroupmenu)
     def getSelectionContext(self, skeletoncontext):
