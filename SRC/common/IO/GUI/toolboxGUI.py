@@ -35,6 +35,11 @@ class GfxToolbox(widgetscope.WidgetScope):
     def close(self):
         pass
 
+    def show(self):
+        # Redefine in derived classes if this is the wrong thing to
+        # do.
+        self.gtk.show_all()
+
     def activate(self):
         ## TODO: active should only be in the Toolbox class.  No need
         ## to store it in GfxToolbox as well.  There may be places in

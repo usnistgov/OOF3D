@@ -111,7 +111,6 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
         self.changedSelectionMethod(
             self.selectionMethodFactory.getRegistration())
 
-
     def changedSelectionMethod(self, registration): # Chooser callback
         if registration is None:
             return

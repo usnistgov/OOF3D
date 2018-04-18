@@ -9,10 +9,11 @@
 # oof_manager@nist.gov. 
 
 from ooflib.SWIG.common import config
+from ooflib.common import debug
 from ooflib.common.IO import mainmenu
 from ooflib.engine import skeletonselmodebase
 from ooflib.engine.IO import skeletongroupmenu
-from ooflib.engine.IO import skeletonselectiontoolbox
+# from ooflib.engine.IO import skeletonselectiontoolbox
 from ooflib.SWIG.engine import material
 from ooflib.engine import skeletonselection
 
@@ -20,7 +21,10 @@ from ooflib.engine import skeletonselection
 # comments in skeletonselmodebase.py.
 
 # See comment in skeletonselmodebase.py for the difference between the
-# switchboard signals. 
+# switchboard signals.
+
+## TODO: Why are there "get" methods for some but not all of the data
+## members in these classes? 
 
 class ElementSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
     def __init__(self):
@@ -29,8 +33,6 @@ class ElementSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             name="Element",
             methodclass=skeletonselection.ElementSelectionMethod,
             modifierclass=skeletonselection.ElementSelectionModifier,
-            toolboxclass=
-            skeletonselectiontoolbox.SkeletonElementSelectionToolbox,
             modifierappliedsignal="element selection modified",
             changedselectionsignal="changed element selection",
             groupmenu=skeletongroupmenu.elementgroupmenu,
@@ -53,7 +55,6 @@ class NodeSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             name="Node",
             methodclass=skeletonselection.NodeSelectionMethod,
             modifierclass=skeletonselection.NodeSelectionModifier,
-            toolboxclass=skeletonselectiontoolbox.SkeletonNodeSelectionToolbox,
             modifierappliedsignal="node selection modified",
             changedselectionsignal="changed node selection",
             groupmenu=skeletongroupmenu.nodegroupmenu)
@@ -73,8 +74,6 @@ class SegmentSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             name="Segment",
             methodclass=skeletonselection.SegmentSelectionMethod,
             modifierclass=skeletonselection.SegmentSelectionModifier,
-            toolboxclass=
-            skeletonselectiontoolbox.SkeletonSegmentSelectionToolbox,
             modifierappliedsignal="segment selection modified",
             changedselectionsignal="changed segment selection",
             groupmenu=skeletongroupmenu.segmentgroupmenu,
@@ -99,7 +98,6 @@ class FaceSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             name="Face",
             methodclass=skeletonselection.FaceSelectionMethod,
             modifierclass=skeletonselection.FaceSelectionModifier,
-            toolboxclass=skeletonselectiontoolbox.SkeletonFaceSelectionToolbox,
             modifierappliedsignal="face selection modified",
             changedselectionsignal="changed face selection",
             groupmenu=skeletongroupmenu.facegroupmenu)
@@ -120,9 +118,16 @@ class FaceSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
 # each column of the table of buttons in the gfxwindow toolbox have
 # nearly the same size, thereby minimizing the width of the table.
 
-ElementSelectionMode()
-FaceSelectionMode()
-SegmentSelectionMode()
-NodeSelectionMode()
+initialized = False
+
+# Anything that uses the skeletonselectionmodes should call initialize() first.
+def initialize():
+    global initialized
+    if not initialized:
+        ElementSelectionMode()
+        FaceSelectionMode()
+        SegmentSelectionMode()
+        NodeSelectionMode()
+        initialized = True
 
 

@@ -22,7 +22,7 @@ from ooflib.common.IO.GUI import genericselectGUI
 class PixelSelectToolboxGUI(genericselectGUI.GenericSelectToolboxGUI):
     changeSignal = "pixel selection changed"
     def displayName(self):
-        return "Select Voxels"
+        return "Voxel Selection"
 
 def _makeGUI(self):
     return PixelSelectToolboxGUI(self, self.method)
