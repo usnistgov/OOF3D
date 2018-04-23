@@ -45,6 +45,20 @@ protected:
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+class SingleObjectCourier : public SkeletonSelectionCourier {
+private:
+  CSkeletonSelectable *object;
+public:
+  SingleObjectCourier(CSkeletonBase*,
+		      CSkeletonSelectable*,
+		      CSelectionTrackerVector*, CSelectionTrackerVector*);
+  virtual void start() { done_ = false; }
+  virtual CSkeletonSelectable *currentObj() const { return object; }
+  virtual void next() { done_ = true; }
+};
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 class SkeletonGroupCourier : public SkeletonSelectionCourier {
 private:
   const CGroupTrackerBase *groupTracker;
@@ -62,6 +76,7 @@ public:
 		       CSelectionTrackerVector*, CSelectionTrackerVector*);
 };
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // NodeSelection methods which compute and store a set of nodes in
 // their constructor can be derived from NodeSelectionCourier.
@@ -124,6 +139,23 @@ public:
 			   const CSelectionTracker*,
 			   CSelectionTrackerVector*,
 			   CSelectionTrackerVector*);
+};
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// CategoryElementCourier selects all elements of a given category.
+
+class CategoryElementCourier : public SkeletonSelectionCourier {
+private:
+  int category;
+  CSkeletonElementIterator iter;
+  void skipOthers();
+public:
+  CategoryElementCourier(CSkeletonBase*, int,
+			 CSelectionTrackerVector*, CSelectionTrackerVector*);
+  virtual void start();
+  virtual CSkeletonSelectable *currentObj() const { return *iter; }
+  virtual void next();
 };
 
 #endif // SKELETONSELECTIONCOURIER_H

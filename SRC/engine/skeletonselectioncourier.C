@@ -93,6 +93,19 @@ void SkeletonGroupCourier::next() {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// SingleObjectCourier can be used to select a single element, face,
+// segment, or node.
+
+SingleObjectCourier::SingleObjectCourier(CSkeletonBase *skeleton,
+					 CSkeletonSelectable *obj,
+					 CSelectionTrackerVector *clist,
+					 CSelectionTrackerVector *plist)
+  : SkeletonSelectionCourier(skeleton, clist, plist),
+    object(obj)
+{}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 // NodeSelection methods which compute and store a set of nodes in
 // their constructor are derived from NodeSelectionCourier.
 
@@ -257,4 +270,34 @@ NodesFromSegmentsCourier::NodesFromSegmentsCourier(
     selectedNodes.insert(segment->getNode(0));
     selectedNodes.insert(segment->getNode(1));
   }
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+CategoryElementCourier::CategoryElementCourier(
+					       CSkeletonBase *skel,
+					       int cat,
+					       CSelectionTrackerVector *clist,
+					       CSelectionTrackerVector *plist)
+  : SkeletonSelectionCourier(skel, clist, plist),
+    category(cat)
+{}
+
+void CategoryElementCourier::skipOthers() {
+  // Skip over elements that have the wrong category.
+  while(iter != skeleton->endElements() &&
+	(*iter)->dominantPixel(skeleton) != category) {
+    ++iter;
+  }
+  done_ = (iter == skeleton->endElements());
+}
+
+void CategoryElementCourier::start() {
+  iter = skeleton->beginElements();
+  skipOthers();
+}
+
+void CategoryElementCourier::next() {
+  iter++;
+  skipOthers();
 }

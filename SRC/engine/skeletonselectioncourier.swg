@@ -30,6 +30,12 @@ public:
   void toggle();
 };
 
+class SingleObjectCourier : public SkeletonSelectionCourier {
+public:
+  SingleObjectCourier(CSkeletonBase*, CSkeletonSelectable*,
+		      CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
 class SkeletonGroupCourier : public SkeletonSelectionCourier {
 public:
   SkeletonGroupCourier(CSkeletonBase*, char*, CGroupTrackerBase*,
@@ -57,6 +63,12 @@ public:
   NodesFromSegmentsCourier(CSkeletonBase*,
 			   CSelectionTracker*,
 			   CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class CategoryElementCourier : public SkeletonSelectionCourier {
+public:
+  CategoryElementCourier(CSkeletonBase*, int,
+			 CSelectionTrackerVector*, CSelectionTrackerVector*);
 };
 
 #endif // SKELETONSELECTIONCOURIER_SWG

@@ -104,8 +104,16 @@ class SkeletonSelectionMethodRegistration(registeredclass.Registration):
     # also have a module named 'registeredclass'.  The choice of
     # argument name in registeredclass.Registration.__init__ was
     # unfortunate.
+
+    # Some selection methods actually require a mouse click on
+    # something other than a Skeleton. They should set whoclasses in
+    # the args to their Registration's __init__. Otherwise, it's
+    # automatically set to ['Skeleton'] here.
+
     def __init__(self, name, regclass, subclass,
-                 ordering, params=[], secret=0, **kwargs):
+                 ordering, params=[],
+                 whoclasses = ['Skeleton'],
+                 secret=0, **kwargs):
         registeredclass.Registration.__init__(
             self,
             name=name,
@@ -113,8 +121,8 @@ class SkeletonSelectionMethodRegistration(registeredclass.Registration):
             subclass=subclass,
             ordering=ordering,
             params=params,
+            whoclasses=whoclasses,
             secret=secret,
-            whoclasses=['Skeleton'],
             **kwargs)
                                             
 

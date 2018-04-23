@@ -60,6 +60,14 @@ class SingleClickSkelSelectionMethodGUI(genericselectGUI.SelectionMethodGUI):
                                                 realpoint, viewobj)
         return realpoint, cell
 
+    def getClickedVoxel(self, x, y):
+        viewobj, realpoint = self.getViewAndPoint(x, y)
+        layers = self.gfxwindow().allWhoClassLayers(
+            *self.methodRegistration.whoclasses)
+        result = self.gfxwindow().findClickedCellCenterMulti(
+            layers, realpoint, viewobj)
+        return result           # (clicked Who obj, position)
+
 @genericselectGUI.selectionGUIfor(skeletonselectionmethod.SingleNodeSelect)
 class NodeSelectorGUI(SingleClickSkelSelectionMethodGUI):
     def down(self, x, y, buttons):
@@ -133,3 +141,16 @@ class ElementSelectorGUI(SingleClickSkelSelectionMethodGUI):
                     who, skeletonselectionmethod.SingleElementSelect(
                         element.getIndex(), operator))
                         
+
+@genericselectGUI.selectionGUIfor(skeletonselectionmethod.PixelElementSelect)
+class PixelElementSelectorGUI(SingleClickSkelSelectionMethodGUI):
+    def up(self, x,y, buttons):
+        who = self.toolbox.getSelectionSource()
+        if who is not None:
+            msorimage, voxel = self.getClickedVoxel(x, y)
+            ms = msorimage.getMicrostructure()
+            category = ms.category(ms.pixelFromPoint(voxel))
+            operator = selectionoperators.getSelectionOperator(buttons)
+            self.toolbox.invokeMenuItem(
+                who,
+                skeletonselectionmethod.PixelElementSelect(category, operator))
