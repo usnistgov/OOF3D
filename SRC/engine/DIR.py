@@ -48,7 +48,8 @@ cfiles = [
     'property.C', 'pypropertywrapper.C', 'rank3tensor.C',
     'recoveredflux.C', 'shapefunction.C', 'shapefunctioncache.C',
     'smallsystem.C', 'sparsemat.C', 'steperrorscaling.C',
-    'symeig3.C', 'symmmatrix.C', 'materialvoxelfilter.C'
+    'symeig3.C', 'symmmatrix.C', 'materialvoxelfilter.C',
+    'skeletonselectioncourier.C',
 ]
 
 swigfiles = [
@@ -74,7 +75,7 @@ swigfiles = [
     'pixelselectioncouriere.swg', 'planarity.swg', 'preconditioner.swg',
     'pointdata.swg',
     'properties.swg', 'pypropertywrapper.swg', 'rank3tensor.swg',
-    'smallsystem.swg', 'sparsemat.swg',
+    'smallsystem.swg', 'sparsemat.swg', 'skeletonselectioncourier.swg',
     'steperrorscaling.swg', 'symmmatrix.swg', 'materialvoxelfilter.swg',
     ]
 
@@ -152,7 +153,7 @@ hfiles = [
     'shapefunction.h', 'shapefunctioncache.h', 'smalltensor.h',
     'smallsystem.h', 'sparsemat.h', 'steperrorscaling.h', 'symeig3.h',
     'symmmatrix.h', 'materialvoxelfilter.h', 'cskeletonselectable_i.h',
-    'cskeleton2_i.h', 'masterelement_i.h'
+    'cskeleton2_i.h', 'masterelement_i.h', 'skeletonselectioncourier.h'
 ]
 
 

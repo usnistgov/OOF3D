@@ -39,11 +39,11 @@ from ooflib.engine.skeletonselection import \
 # _operatorDict and applyOperator.
 
 _operatorDict = {
-    selectionoperators.Select : skeletonselectable.Selection.select,
-    selectionoperators.AddSelection : skeletonselectable.Selection.addSelect,
-    selectionoperators.Unselect : skeletonselectable.Selection.deselect,
-    selectionoperators.Toggle : skeletonselectable.Selection.toggle,
-    selectionoperators.Intersect : skeletonselectable.Selection.selectSelected
+    # selectionoperators.Select : skeletonselectable.Selection.select,
+    # selectionoperators.AddSelection : skeletonselectable.Selection.addSelect,
+    # selectionoperators.Unselect : skeletonselectable.Selection.deselect,
+    # selectionoperators.Toggle : skeletonselectable.Selection.toggle,
+    # selectionoperators.Intersect : skeletonselectable.Selection.selectSelected
 }
 
 def applyOperator(operator, selection, selectees):
@@ -82,7 +82,6 @@ NodeSelectionMethodRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # Segment selection is like node selection, except for details.
-# SegmentSelectionMethods convert mouse-clicks into lists of segments.
 
 class SingleSegmentSelect(SegmentSelectionMethod):
     def __init__(self, point, operator):

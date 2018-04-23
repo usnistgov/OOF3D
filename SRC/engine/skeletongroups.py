@@ -58,6 +58,9 @@ import weakref
 ## GenericGroupSet is derived.  SelectionSetBase and Selection should
 ## be treated the same way, at the same time.  The current scheme
 ## sometimes requires loops over possibly long lists in Python.
+### TODO? Is that really necessary?  The trackers store the long lists
+### of objects in C++ already.  If addToGroup, et al, were changed to
+### use couriers, then there would be no long python loops.
 
 class GenericGroupSet(object):
     def __init__(self, skeletoncontext, groupset=[]):

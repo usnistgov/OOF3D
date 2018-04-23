@@ -13,7 +13,6 @@ from ooflib.common import debug
 from ooflib.common.IO import mainmenu
 from ooflib.engine import skeletonselmodebase
 from ooflib.engine.IO import skeletongroupmenu
-# from ooflib.engine.IO import skeletonselectiontoolbox
 from ooflib.SWIG.engine import material
 from ooflib.engine import skeletonselection
 

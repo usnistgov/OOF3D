@@ -144,6 +144,10 @@ class SelectionBase:
     def start(self):
         self.stack.push(self.stack.current().clone())
 
+    def unstart(self):
+        # Call unstart if the undoable operation failed.
+        self.stack.pop()
+
     def whoChanged0(self, context, oldskeleton, newskeleton):
         if self.skeletoncontext is context:
             # Loop over SelectionSets in the RingBuffer.
@@ -304,58 +308,66 @@ class Selection(SelectionBase):
             del plist[0]
         return (clist, plist)
 
-    # The Five Selection Operations. Which need to go away.
-    ## TODO OPT: Move these to C++ and use couriers to avoid constructing
-    ## lists of objects in Python and translating them to C++.
-
-    def select(self, objlist):
+    def clearAndSelect(self, courier):
         self.clear()
-        self.addSelect(objlist)
+        courier.select()
+    def select(self, courier):
+        courier.select()
+    def unselect(self, courier):
+        courier.deselect()
+    def toggle(self, courier):
+        courier.toggle()
+
+    ###### OLD VERSIONS TO BE REPLACED BY NEW VERSIONS USING COURIERS ######
+    # def select(self, objlist):
+    #     self.clear()
+    #     self.addSelect(objlist)
         
-    def addSelect(self, objlist):
-        (clist, plist) = self.trackerlist()
-        skeleton = self.skeletoncontext.getObject()
-        for o in objlist:
-            if o.active(skeleton):
-                o.select(clist, plist) 
+    # def addSelect(self, objlist):
+    #     (clist, plist) = self.trackerlist()
+    #     skeleton = self.skeletoncontext.getObject()
+    #     for o in objlist:
+    #         if o.active(skeleton):
+    #             o.select(clist, plist) 
 
-    def deselect(self, objlist):
-        (clist, plist) = self.trackerlist()
-        skeleton = self.skeletoncontext.getObject()
-        for o in objlist:
-            if o.active(skeleton):
-                o.deselect(clist, plist)
+    # def deselect(self, objlist):
+    #     (clist, plist) = self.trackerlist()
+    #     skeleton = self.skeletoncontext.getObject()
+    #     for o in objlist:
+    #         if o.active(skeleton):
+    #             o.deselect(clist, plist)
         
-    def toggle(self, objlist):
-        (clist, plist) = self.trackerlist()
-        skeleton = self.skeletoncontext.getObject()
-        for o in objlist:
-            if o.active(skeleton):
-                if o.isSelected():
-                    o.deselect(clist, plist)
-                else:
-                    o.select(clist, plist)
+    # def toggle(self, objlist):
+    #     (clist, plist) = self.trackerlist()
+    #     skeleton = self.skeletoncontext.getObject()
+    #     for o in objlist:
+    #         if o.active(skeleton):
+    #             if o.isSelected():
+    #                 o.deselect(clist, plist)
+    #             else:
+    #                 o.select(clist, plist)
 
-    def invert(self):
-        # Invert the selection status of all objects.  Loop over all
-        # elements is unavoidable in this case, since every object
-        # must be operated on.
-        (clist, plist) = self.trackerlist()
-        skeleton = self.skeletoncontext.getObject()
-        for o in self.get_objects():
-            if o.active(skeleton):
-                if o.isSelected():
-                    o.deselect(clist, plist)
-                else:
-                    o.select(clist, plist)
+    # def invert(self):
+    #     # Invert the selection status of all objects.  Loop over all
+    #     # elements is unavoidable in this case, since every object
+    #     # must be operated on.
+    #     (clist, plist) = self.trackerlist()
+    #     skeleton = self.skeletoncontext.getObject()
+    #     for o in self.get_objects():
+    #         if o.active(skeleton):
+    #             if o.isSelected():
+    #                 o.deselect(clist, plist)
+    #             else:
+    #                 o.select(clist, plist)
 
-    # Selects objects from already selected ones
-    def selectSelected(self, objlist):
-        (clist, plist) = self.trackerlist()
-        skeleton = self.skeletoncontext.getObject()        
-        for o in self.get_objects():
-            if o.active(skeleton) and o.isSelected() and o not in objlist:
-                o.deselect(clist, plist)
+    # # Selects objects from already selected ones
+    # def selectSelected(self, objlist):
+    #     (clist, plist) = self.trackerlist()
+    #     skeleton = self.skeletoncontext.getObject()        
+    #     for o in self.get_objects():
+    #         if o.active(skeleton) and o.isSelected() and o not in objlist:
+    #             o.deselect(clist, plist)
+    ####### END OLD VERSIONS TO BE REPLACED BY COURIER VERSIONS ######
 
     def clear(self):
         # "Clear" needs to really clear the selection in all

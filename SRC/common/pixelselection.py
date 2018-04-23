@@ -24,6 +24,7 @@ from ooflib.common import registeredclass
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
 from ooflib.common.IO import whoville
+from ooflib.SWIG.common import pixelselectioncourier
 
 #####################################
 
@@ -86,6 +87,15 @@ class PixelSelectionContext(whoville.WhoDoUndo):
         obj = self.getObject()
         if obj is not None:
             return self.getObject().getBounds()
+
+    def intersectionCourier(self, group, courier):
+        # intersectionCourier is used by selectionoperators.Intersect,
+        # which needs to fetch a different kind of IntersectSelection
+        # courier when selecting different kinds of objects.  It
+        # returns a courier that computes the intersection of the
+        # given group with selection represented by the given courier.
+        return pixelselectioncourier.IntersectSelection(
+            self.getMicrostructure(), group, courier)
 
 ##################
     

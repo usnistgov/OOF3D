@@ -10,23 +10,24 @@
 
 from ooflib.SWIG.common import config
 from ooflib.SWIG.common import crandom
+from ooflib.SWIG.common import ooferror
 from ooflib.SWIG.common import pixelgroup
 from ooflib.SWIG.common import switchboard
-from ooflib.SWIG.common import ooferror
+from ooflib.SWIG.engine import skeletonselectioncourier
 from ooflib.common import debug
 from ooflib.common import enum
 from ooflib.common import primitives
 from ooflib.common import registeredclass
+from ooflib.common import selectionoperators
 from ooflib.common import utils
 from ooflib.common.IO import parameter
 from ooflib.common.IO import pixelgroupparam
 from ooflib.common.IO import whoville
 from ooflib.common.IO import xmlmenudump
-if config.dimension() == 2:
-    from ooflib.engine import skeletonelement
 from ooflib.engine.IO import materialparameter
 from ooflib.engine.IO import pbcparams
 from ooflib.engine.IO import skeletongroupparams
+
 import types
 #Interface branch
 from ooflib.engine.IO import interfaceparameters
@@ -40,21 +41,19 @@ from ooflib.engine.skeletonselection import \
     FaceSelectionModRegistration, ElementSelectionModRegistration
     
 
-## TODO 3.1 OPT: Should this be moved to C++?  Yes, and use couriers as in pixel
-## selection.
+## TODO : Use couriers as in pixel selection.
 
 ## TODO 3.1: Add more face selection methods.  Select by aspect ratio?
 ## Area?
-
-## TODO MER: Combine the group selection methods (Add Group, Intersect
-## Group, etc) into one method with a SkeletonSelectionOperator arg,
-## the way the GroupSelector in pixelselectionmod.py works.  
 
 ## TODO 3.1: Add Region selection methods, in the style of BoxSelection
 ## for voxels.
 
 # TODO 3.1: Can the Segment/Element/Node/Face operations here all be
 # derived from common SkeletonSelectable classes?
+
+## TODO: None of these methods should call selection.start().  That's
+## called in the menu item callback.
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -66,50 +65,28 @@ from ooflib.engine.skeletonselection import \
 ## TODO: These aren't used consistently below.  Make sure that all
 ## orderings use them.
 
-#   The group selection methods, Select Group, Unselect Group, Add
-#   Group, and Intersect Group, come first, in that order, with
-#   ordering=0.x, where x=1,2,3,4.
+# The group selection methods, Select Group, Unselect Group, Add
+# Group, and Intersect Group, come first, in that order, with
+# ordering=0.x, where x=1,2,3,4.
 _selectGroupOrdering = 0.0
 _unselectGroupOrdering = 0.1
 _addGroupOrdering = 0.2
 _intersectGroupOrdering=0.3
 
-#   The "Select from Selected Object" methods have ordering=1.x, where
-#   x is the dimension of the Object.
+# The "Select from Selected Object" methods have ordering=1.x, where
+# x is the dimension of the Object.
 _selectFromNodesOrdering = 1.0
 _selectFromSegmentsOrdering = 1.1
 _selectFromFacesOrdering = 1.2
 _selectFromElementsOrdering = 1.3
 
-#   Other selection methods have ordering >= 2.0
+# Other selection methods have ordering >= 2.0
 _homogeneityOrdering = 3.3
 _internalBoundaryOrdering = 3.5
 _namedBoundaryOrdering = 3.6
 _interfaceOrdering = 3.7
 
 _periodicPartnerOrdering = 8
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-        
-# # This is the function that actually runs a selection modification.
-# # It is the menu callback for the automatically-generated menu
-# # items in engine/IO/skeletonselectmenu.py.  This one routine
-# # works for node, segment, and element selections.
-
-# def modify(menuitem, skeleton, **params):
-#     registration = menuitem.data
-#     modifier = registration(**params)
-#     skelcontext = whoville.getClass('Skeleton')[skeleton]
-#     selection = modifier.getSelection(skelcontext)
-#     selection.begin_writing()
-#     try:
-#         modifier(skelcontext, selection)
-#     finally:
-#         selection.end_writing()
-
-#     selection.mode().modifierApplied(modifier) # sends switchboard signal
-#     selection.signal()
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
@@ -119,18 +96,23 @@ _periodicPartnerOrdering = 8
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
     
 class NodeFromSelectedSegments(NodeSelectionModifier):
-    def select(self, skeleton, selection):
-        nodes = set()
-        for segment in skeleton.segmentselection.retrieve():
-            nodes.update(segment.getNodes())
-        selection.start()
-        selection.clear()
-        selection.select(nodes)
+    def __init__(self, operator):
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.NodesFromSegmentsCourier(
+            skelctxt.getObject(),
+            skelctxt.segmentselection.currentSelectionTracker(),
+            clist, plist)
+        self.operator.operate(selection, courier)
 
 NodeSelectionModRegistration(
     'Select from Selected Segments',
     NodeFromSelectedSegments,
     ordering=_selectFromSegmentsOrdering,
+    params = [
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     tip="Select nodes from selected segments.",
     discussion=xmlmenudump.loadFile(
         'DISCUSSIONS/engine/menu/nodes_from_segments.xml'))
@@ -138,64 +120,27 @@ NodeSelectionModRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class NodeFromSelectedElements(NodeSelectionModifier):
-    def __init__(self, coverage):
+    def __init__(self, coverage, operator):
         self.coverage = coverage
+        self.operator = operator
 
-    def getAllNodes(self, context):
-        nodes = set()
-        for element in context.elementselection.retrieve():
-            nodes.update(element.getNodes())
-        return nodes
-
-    if config.dimension() == 2:
-        def getExteriorNodes(self, context):
-            # A segment is on the boundary of the selection if it
-            # belongs to only one selected element.
-            skel = context.getObject()
-            segdict = {}   # counts how many times each segment has been seen
-            for element in context.elementselection.retrieve():
-                for i in range(len(element.getNodes())):
-                    n0 = element.nodes[i]
-                    n1 = element.nodes[(i+1)%element.nnodes()]
-                    seg = skel.findSegment(n0, n1)
-                    segdict[seg] = segdict.get(seg, 0) + 1
-            bdysegs = [seg for seg,count in segdict.items() if count == 1]
-            nodes = set()
-            for seg in bdysegs:
-                segnodes = seg.nodes()
-                nodes.add(segnodes[0])
-                nodes.add(segnodes[1])
-            return nodes
-    else:                       # dimension == 3
-        def getExteriorNodes(self, context):
-            # In 3D, a node is on a boundary of the element selection
-            # if it's on a boundary face of the element selection.
-            # TODO OPT: Might it be faster to skip the faces and just ask
-            # if a node has both selected and unselected elements?
-            bdyfaces = context.exteriorFacesOfSelectedElements()
-            nodes = set()
-            for face in bdyfaces:
-                nodes.update(face.getNodes())
-            return nodes
-                
-    def select(self, skeleton, selection):
-        if self.coverage == "All":
-            selected = self.getAllNodes(skeleton)
-        elif self.coverage == "Exterior":
-            selected = self.getExteriorNodes(skeleton)
-        else:                   # self.coverage == "Interior"
-            selected = (self.getAllNodes(skeleton) -
-                        self.getExteriorNodes(skeleton))
-        selection.start()
-        selection.clear()
-        selection.select(selected)
-
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.NodesFromElementsCourier(
+            skelctxt.getObject(),
+            self.coverage,
+            skelctxt.elementselection.currentSelectionTracker(),
+            clist, plist)
+        self.operator.operate(selection, courier)
 
 NodeSelectionModRegistration(
     'Select from Selected Elements',
     NodeFromSelectedElements,
     ordering=_selectFromElementsOrdering,
-    params = [enum.EnumParameter('coverage', ooflib.engine.coverage.Coverage)],
+    params = [
+        enum.EnumParameter('coverage', ooflib.engine.coverage.Coverage),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     tip="Select nodes from selected elements.",
     discussion=xmlmenudump.loadFile(
         'DISCUSSIONS/engine/menu/nodes_from_elements.xml'))
@@ -203,42 +148,27 @@ NodeSelectionModRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class NodeFromSelectedFaces(NodeSelectionModifier):
-    def __init__(self, coverage):
+    def __init__(self, coverage, operator):
         self.coverage = coverage
+        self.operator = operator
 
-    def select(self, skeleton, selection):
-        if self.coverage == "All":
-            nodes = self.getAllNodes(skeleton)
-        elif self.coverage == "Exterior":
-            nodes = self.getExteriorNodes(skeleton)
-        else:
-            nodes = (self.getAllNodes(skeleton)
-                     - self.getExteriorNodes(skeleton))
-        selection.start()
-        selection.clear()
-        selection.select(nodes)
-
-    def getAllNodes(self, skeleton):
-        nodes = set()
-        for face in skeleton.faceselection.retrieve():
-            nodes.update(face.getNodes())
-        return nodes
-    def getExteriorNodes(self, skeleton):
-        # Exterior nodes are the nodes that are on the exterior
-        # segments, which are the segments belonging to only one
-        # selected face.
-        segs = skeleton.exteriorSegmentsOfSelectedFaces()
-        nodes = set()
-        for seg in segs:
-            nodes.update(seg.getNodes())
-        return nodes
-        
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.NodesFromFacesCourier(
+            skelctxt.getObject(),
+            self.coverage,
+            skelctxt.faceselection.currentSelectionTracker(),
+            clist, plist)
+        self.operator.operate(selection, courier)
 
 NodeSelectionModRegistration(
     'Select from Selected Faces',
     NodeFromSelectedFaces,
     ordering=_selectFromFacesOrdering,
-    params = [enum.EnumParameter('coverage', ooflib.engine.coverage.Coverage)],
+    params = [
+        enum.EnumParameter('coverage', ooflib.engine.coverage.Coverage),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     tip="Select nodes from selected faces.")
     
 
@@ -369,122 +299,33 @@ NodeSelectionModRegistration(
 
 # Select the indicated group.
 
-## TODO: Compine the various "Group" selectors into one, and use the
-## SelectionOperators.
-
 class NodeSelectGroup(NodeSelectionModifier):
-    def __init__(self, group):
+    def __init__(self, group, operator):
         self.group = group
-    def select(self, skeleton, selection):
-        # Retrieve the members first -- if an exception occurs, the
-        # system state will be as before.
-        members = skeleton.nodegroups.get_group(self.group)
-        selection.start()
-        selection.clear()
-        selection.select(members)
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.SkeletonGroupCourier(
+            skelctxt.getObject(),
+            self.group,
+            skelctxt.nodegroups.getTracker(skelctxt.getObject()),
+            clist, plist)
+        self.operator.operate(selection, courier)
+        
 
 NodeSelectionModRegistration(
-    'Select Group',
+    'Group',
     NodeSelectGroup,
     ordering=_selectGroupOrdering,
     params=[
         skeletongroupparams.NodeGroupParameter('group',
-                                               tip="Node group to select.")
-        ],
-    tip='Select the members of a group, discarding the current selection.',
+                                               tip="Node group to select."),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
+    tip='Select the members of a group.',
     discussion="""<para>
     Select all the &nodes; in the given <link
-    linkend='Section-Concepts-Skeleton-Groups'>group</link>.  The
-    currently selected &nodes; will first be deselected.  To select a
-    group without first deselecting, use <xref
-    linkend='MenuItem-OOF.NodeSelection.Add_Group'/>.
-    </para>""")
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-# Unselect the indicated group.
-
-class NodeDeselectGroup(NodeSelectionModifier):
-    def __init__(self, group):
-        self.group = group
-    def select(self, skeleton, selection):
-        members = skeleton.nodegroups.get_group(self.group)
-        selection.start()
-        selection.deselect(members)
-
-NodeSelectionModRegistration(
-    'Unselect Group',
-    NodeDeselectGroup,
-    ordering=_unselectGroupOrdering,
-    params=[skeletongroupparams.NodeGroupParameter('group',
-                                             tip="Node group to deselect.")],
-    tip='Unselect the members of a group.',
-    discussion="""<para>
-    Deselect all of the &nodes; that are members of the specified
-    <link linkend='Section-Concepts-Skeleton-Groups'>group</link>.
-    Any &nodes; that are members of the group but that are not
-    currently selected will be unaffected.
-    </para>""")
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-# Add the group to the selection, retaining the current selection.
-
-class NodeAddSelectGroup(NodeSelectionModifier):
-    def __init__(self, group):
-        self.group = group
-    def select(self, skeleton, selection):
-        members = skeleton.nodegroups.get_group(self.group)
-        selection.start()
-        # Minor inefficiency: this reselects already-selected group
-        # members, but it would probably take just as much effort to
-        # *not* select them.
-        selection.select(members)
-
-
-NodeSelectionModRegistration(
-    'Add Group',
-    NodeAddSelectGroup,
-    ordering=_addGroupOrdering,
-    params=[skeletongroupparams.NodeGroupParameter('group',
-                                                   tip="Node group to select.")
-            ],
-    tip='Select the members of a group, retaining the current selection.',
-    discussion="""<para>
-    Select all of the &nodes; in the given <link
-    linkend='Section-Concepts-Skeleton-Groups'>group</link> in
-    addition to all of the currently selected &nodes;.  To select
-    <emphasis>only</emphasis> the &nodes; in a group, discarding the
-    previous selection, use <xref
-    linkend='MenuItem-OOF.NodeSelection.Select_Group'/>.
-    </para>""")
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-# Select the intersection of the group and the selection.
-
-class NodeIntersectGroup(NodeSelectionModifier):
-    def __init__(self, group):
-        self.group = group
-    def select(self, skeleton, selection):
-        nlist = skeleton.nodegroups.get_group(self.group)
-        ilist = filter(lambda x: x.isSelected(), nlist)
-        selection.start()
-        selection.clear()
-        selection.select(ilist)
-
-NodeSelectionModRegistration(
-    'Intersect Group',
-    NodeIntersectGroup,
-    ordering=_intersectGroupOrdering,
-    params=[skeletongroupparams.NodeGroupParameter('group',
-                                                   tip="Node group to select.")
-            ],
-    tip='Select the intersection of a group and the current selection.',
-    discussion="""<para>
-    Select the &nodes; that are both in the given <link
-    linkend='Section-Concepts-Skeleton-Groups'>group</link> and in the
-    current selection.
+    linkend='Section-Concepts-Skeleton-Groups'>group</link>..
     </para>""")
 
 
@@ -818,117 +659,35 @@ SegmentSelectionModRegistration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-## TODO: Combine all group selection operations into one, using
-## SelectionOperators.
-
 # Select the indicated group.
 class SegmentSelectGroup(SegmentSelectionModifier):
-    def __init__(self, group):
+    def __init__(self, group, operator):
         self.group = group
-    def select(self, skeleton, selection):
-        # Group retrieval may throw an exception -- do it first.
-        members = skeleton.segmentgroups.get_group(self.group)
-        selection.start()
-        selection.clear()
-        selection.select(members)
-
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.SkeletonGroupCourier(
+            skelctxt.getObject(),
+            self.group,
+            skelctxt.segmentgroups.getTracker(skelctxt.getObject()),
+            clist, plist)
+        self.operator.operate(selection, courier)
+        
 SegmentSelectionModRegistration(
     'Select Group',
     SegmentSelectGroup,
     ordering=_selectGroupOrdering,
-    params=[skeletongroupparams.SegmentGroupParameter('group',
-                                                      tip="Name of the group")],
-    tip='Select the members of a group, discarding the current selection.',
+    params=[
+        skeletongroupparams.SegmentGroupParameter('group',
+                                                  tip="Name of the group"),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
+    tip='Select the members of a group.',
     discussion="""<para>
     Select all of the &sgmts; in the given <link
-    linkend='Section-Concepts-Skeleton-Groups'>group</link> after unselecting
-    all of the currently selected &sgmts;.  To select
-    <emphasis>only</emphasis> the &sgmts; in a group, retaining the
-    previous selection, use <xref
-    linkend='MenuItem-OOF.SegmentSelection.Select_Group'/>.
+    linkend='Section-Concepts-Skeleton-Groups'>group</link>.
     </para>"""
 )
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-# Unselect the indicated group.
-class SegmentDeselectGroup(SegmentSelectionModifier):
-    def __init__(self, group):
-        self.group = group
-    def select(self, skeleton, selection):
-        members = skeleton.segmentgroups.get_group(self.group)
-        selection.start()
-        selection.deselect(members)
-
-SegmentSelectionModRegistration(
-    'Unselect Group',
-    SegmentDeselectGroup,
-    ordering=_unselectGroupOrdering,
-    params=[
-    skeletongroupparams.SegmentGroupParameter('group',
-                                              tip="Segment group to select.")],
-    tip='Unselect the members of a group.',
-    discussion="""<para>
-    Deselect all of the &sgmts; that are members of the specified
-    <link linkend='Section-Concepts-Skeleton-Groups'>group</link>.
-    Any &sgmts; that are members of the group but that are not
-    currently selected will be unaffected.
-    </para>""")
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-# Add the group to the selection, retaining the current selection.
-class SegmentAddSelectGroup(SegmentSelectionModifier):
-    def __init__(self, group):
-        self.group = group
-    def select(self, skeleton, selection):
-        members = skeleton.segmentgroups.get_group(self.group)
-        selection.start()
-        selection.select(members)
-
-SegmentSelectionModRegistration(
-    'Add Group',
-    SegmentAddSelectGroup,
-    ordering=_addGroupOrdering,
-    params=[
-    skeletongroupparams.SegmentGroupParameter('group',
-                                              tip="Segment group to select.")],
-    tip='Select the members of a group, retaining the current selection.',
-    discussion="""<para>
-    Select all of the &sgmts; in the given <link
-    linkend='Section-Concepts-Skeleton-Groups'>group</link> in
-    addition to all of the currently selected &sgmts;.  To select
-    <emphasis>only</emphasis> the &sgmts; in a group, discarding the
-    previous selection, use <xref
-    linkend='MenuItem-OOF.SegmentSelection.Select_Group'/>.
-    </para>""")
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-# Select the intersection of the group and the selection.
-class SegmentIntersectGroup(SegmentSelectionModifier):
-    def __init__(self, group):
-        self.group = group
-    def select(self, skeleton, selection):
-        slist = skeleton.segmentgroups.get_group(self.group)
-        ilist = filter(lambda x: x.isSelected(), slist)
-        selection.start()
-        selection.clear()
-        selection.select(ilist)
-
-SegmentSelectionModRegistration(
-    'Intersect Group',
-    SegmentIntersectGroup,
-    ordering=_intersectGroupOrdering,
-    params=[
-    skeletongroupparams.SegmentGroupParameter('group',
-                                              tip="Segment group to select.")],
-    tip='Select the intersection of a group and the current selection.',
-    discussion="""<para>
-    Select the &sgmts; that are both in the given <link
-    linkend='Section-Concepts-Skeleton-Groups'>group</link> and in the
-    current selection.
-    </para>""")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
@@ -986,13 +745,17 @@ FaceSelectionModRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class FaceSelectGroup(FaceSelectionModifier):
-    def __init__(self, group):
+    def __init__(self, group, operator):
         self.group = group
-    def select(self, skeleton, selection):
-        members = skeleton.facegroups.get_group(self.group)
-        selection.start()
-        selection.clear()
-        selection.select(members)
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.SkeletonGroupCourier(
+            skelctxt.getObject(),
+            self.group,
+            skelctxt.segmentgroups.getTracker(skelctxt.getObject()),
+            clist, plist)
+        self.operator.operate(selection, courier)
 
 FaceSelectionModRegistration(
     'Select Group',
@@ -1000,7 +763,8 @@ FaceSelectionModRegistration(
     ordering=_selectGroupOrdering,
     params=[
         skeletongroupparams.FaceGroupParameter('group',
-                                               tip="Face group to select.")
+                                               tip="Face group to select."),
+        selectionoperators.SelectionOperatorParam('operator')
         ],
     tip="Select the members of a group, discarding the current selection."
     )
@@ -1394,7 +1158,7 @@ class ElementSelectionExpansionMode(enum.EnumClass(
          "Select Elements that share a Node with a selected Element."))):
     tip="How to choose the neighboring Elements."
 
-class ExpandElementSelection3D(ElementSelectionModifier):
+class ExpandElementSelection(ElementSelectionModifier):
     def __init__(self, mode):
         self.mode = mode
     def select(self, skeleton, selection):
@@ -1414,10 +1178,9 @@ class ExpandElementSelection3D(ElementSelectionModifier):
         selection.clear()
         selection.select(newelements)
     
-registeredclass.ThreeDOnlyRegistration(
+ElementSelectionModRegistration(
     'Expand',
-    ElementSelectionModifier,
-    ExpandElementSelection3D,
+    ExpandElementSelection,
     ordering=2.0,
     params=[
         enum.EnumParameter(
@@ -1432,13 +1195,17 @@ registeredclass.ThreeDOnlyRegistration(
 # Select the indicated group.
 
 class ElementSelectGroup(ElementSelectionModifier):
-    def __init__(self, group):
+    def __init__(self, group, operator):
         self.group = group
-    def select(self, skeleton, selection):
-        members = skeleton.elementgroups.get_group(self.group)
-        selection.start()
-        selection.clear()
-        selection.select(members)
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.SkeletonGroupCourier(
+            skelctxt.getObject(),
+            self.group,
+            skelctxt.elementgroups.getTracker(skelctxt.getObject()),
+            clist, plist)
+        self.operator.operate(selection, courier)
 
 ElementSelectionModRegistration(
     'Select Group',
@@ -1446,15 +1213,13 @@ ElementSelectionModRegistration(
     ordering=_selectGroupOrdering,
     params=[
         skeletongroupparams.ElementGroupParameter('group',
-                                                  tip="Name of the group.")
+                                                  tip="Name of the group."),
+        selectionoperators.SelectionOperatorParam('operator')
     ],
     tip='Select the members of a group, discarding the current selection.',
     discussion="""<para>
     Select all the &elems; in the given <link
-    linkend='Section-Concepts-Skeleton-Groups'>group</link>.  The
-    currently selected &elems; will first be deselected.  To select a
-    group without first deselecting, use <xref
-    linkend='MenuItem-OOF.ElementSelection.Add_Group'/>.
+    linkend='Section-Concepts-Skeleton-Groups'>group</link>.
     </para>""")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#

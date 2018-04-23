@@ -11,12 +11,9 @@
 # Different ways that selections can be applied.
 
 from ooflib.SWIG.common import config
+from ooflib.common import debug
 from ooflib.common import registeredclass
 from ooflib.common.IO import parameter
-
-## TODO: This file should work with generic selections, and not be
-## specific to Pixel selections.
-from ooflib.SWIG.common import pixelselectioncourier
 
 class SelectionOperator(registeredclass.RegisteredClass):
     registry = []
@@ -44,14 +41,9 @@ class Intersect(SelectionOperator):
         # intersection is actually computed.  The clone has to be
         # stored in a variable here, so that it won't be garbage
         # collected until the calculation is complete.
-
-        # TODO: If the selection can create the appropriate kind of
-        # IntersectionSelection courier, then this code can be generic
-        # and apply to all kinds of selections.
         selgrp = selection.getSelectionAsGroup().clone()
         selection.clearAndSelect(
-            pixelselectioncourier.IntersectSelection(
-                courier.getMicrostructure(), selgrp, courier))
+            selection.intersectionCourier(selgrp, courier))
 
 registeredclass.Registration(
     "Select",
@@ -120,13 +112,14 @@ def getSelectionOperator(buttons):
 class SelectionOperatorParam(parameter.RegisteredParameter):
     def __init__(self, name, value=Select(), default=Select(),
                  tip=None, auxData={}, passive=False):
-        if passive:
-            tip = """\
+        if tip is None:
+            if passive:
+                tip = """\
 How the new selection modifies the existing selection.
 Use control and shift keys while clicking on the canvas
 to change the value of this parameter."""
-        else:
-            tip="How the new selection modifies the existing selection."
+            else:
+                tip="How the new selection modifies the existing selection."
         parameter.RegisteredParameter.__init__(
             self, name, SelectionOperator,
             value=value, default=default,

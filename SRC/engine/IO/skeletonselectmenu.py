@@ -14,6 +14,7 @@
 from ooflib.SWIG.common import config
 from ooflib.SWIG.common import lock
 from ooflib.SWIG.common import switchboard
+from ooflib.common import debug
 from ooflib.common import utils
 from ooflib.common.IO import mainmenu
 from ooflib.common.IO import oofmenu
@@ -162,7 +163,11 @@ def select(menuitem, skeleton, method):
     selection.begin_writing()
     try:
         selection.start()
-        method.select(skelc, selection)
+        try:
+            method.select(skelc, selection)
+        except:
+            selection.unstart()
+            raise
     finally:
         selection.end_writing()
         # selection.cancel_reservation()

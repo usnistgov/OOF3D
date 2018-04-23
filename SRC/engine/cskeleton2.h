@@ -21,6 +21,7 @@
 #include "engine/cskeletonboundary.h"
 #include "engine/cskeletonface.h"
 #include "engine/cskeletonselectable_i.h"
+#include "engine/homogeneity.h"
 
 #include <vtkSmartPointer.h>
 #include <set>
