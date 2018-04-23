@@ -68,6 +68,9 @@ void SkeletonSelectionCourier::toggle() {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// SkeletonGroupCourier works on a group of elements, faces, segments,
+// or nodes.
+
 SkeletonGroupCourier::SkeletonGroupCourier(CSkeletonBase *skel,
 					   const std::string &name,
 					   const CGroupTrackerBase *tracker,
@@ -103,6 +106,26 @@ SingleObjectCourier::SingleObjectCourier(CSkeletonBase *skeleton,
   : SkeletonSelectionCourier(skeleton, clist, plist),
     object(obj)
 {}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+StupidCourier::StupidCourier(CSkeletonBase *skeleton,
+			     CSkeletonSelectableVector *objects,
+			     CSelectionTrackerVector *clist,
+			     CSelectionTrackerVector *plist)
+  : SkeletonSelectionCourier(skeleton, clist, plist),
+    objects(std::move(*objects))
+{}
+
+void StupidCourier::start() {
+  iter = objects.begin();
+  done_ = (iter == objects.end());
+}
+
+void StupidCourier::next() {
+  ++iter;
+  done_ = (iter == objects.end());
+}
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -270,6 +293,30 @@ NodesFromSegmentsCourier::NodesFromSegmentsCourier(
     selectedNodes.insert(segment->getNode(0));
     selectedNodes.insert(segment->getNode(1));
   }
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+InternalBoundaryNodesCourier::InternalBoundaryNodesCourier(
+					   CSkeletonBase *skel,
+					   CSelectionTrackerVector *clist,
+					   CSelectionTrackerVector *plist)
+  : NodeSelectionCourier(skel, clist, plist)
+{
+  for(CSkeletonNodeIterator node=skel->beginNodes(); node!=skel->endNodes();
+      ++node)
+    {
+      // A node is on an internal boundary if not all of its Elements
+      // have the same category.
+      CSkeletonElementVector *elements = (*node)->getElements();
+      int cat = (*elements)[0]->dominantPixel(skel);
+      for(CSkeletonElement *element : *elements) {
+	if(element->dominantPixel(skel) != cat) {
+	  selectedNodes.insert(*node);
+	  break;
+	}
+      }	// end loop over elements at a node
+    } // end loop over nodes
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

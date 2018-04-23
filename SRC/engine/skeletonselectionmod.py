@@ -175,32 +175,22 @@ NodeSelectionModRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class SelectInternalBoundaryNodes(NodeSelectionModifier):
-    def __init__(self, ignorePBC=False):
+    def __init__(self, operator, ignorePBC=False):
+        self.operator = operator
         self.ignorePBC = ignorePBC
-    def select(self, skeleton, selection):
-        skel = skeleton.getObject()
-        nodelist = []
-        for node in skel.getNodes():
-            if self.ignorePBC:
-                elements = node.aperiodicNeighborElements()
-            else:
-                elements = node.getElements()
-            # Select the Node if not all of its Elements have the same
-            # category.
-            cat = elements[0].dominantPixel(skel)
-            for element in elements[1:]:
-                if cat != element.dominantPixel(skel):
-                    nodelist.append(node)
-                    break
-        selection.start()
-        selection.clear()
-        selection.select(nodelist)
-                    
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.InternalBoundaryNodesCourier(
+            skelctxt.getObject(), clist, plist)
+        self.operator.operate(selection, courier)
+        
 if config.dimension() == 2:
-    params=[pbcparams.PBCBooleanParameter('ignorePBC', False,
+    params=[
+        selectionoperators.SelectionOperatorParam('operator'),
+        pbcparams.PBCBooleanParameter('ignorePBC', False,
                                           tip='Ignore periodicity?')]
 else:
-    params = []
+    params = [selectionoperators.SelectionOperatorParam('operator')]
 
 NodeSelectionModRegistration(
     'Select Internal Boundaries',
@@ -214,14 +204,19 @@ NodeSelectionModRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class SelectNamedBoundaryNodes(NodeSelectionModifier):
-    def __init__(self, boundary):
+    def __init__(self, boundary, operator):
         self.boundary = boundary
-    def select(self, skeleton, selection):
-        bdy = skeleton.getBoundary(self.boundary)
-        nodes = bdy.boundary(skeleton.getObject()).getNodes()
-        selection.start()
-        selection.clear()
-        selection.select(nodes)
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        bdy = skelctxt.getBoundary(self.boundary)
+        nodes = bdy.boundary(skelctxt.getObject()).getNodes()
+        debug.fmsg("nodes=", nodes)
+        # This has to use the StupidCourier because the list of nodes
+        # on the boundary is only present in Python.
+        courier = skeletonselectioncourier.StupidCourier(
+            skelctxt.getObject(), nodes, clist, plist)
+        self.operator.operate(selection, courier)
 
 NodeSelectionModRegistration(
     'Select Named Boundary',
@@ -229,7 +224,8 @@ NodeSelectionModRegistration(
     ordering=_namedBoundaryOrdering,
     params=[
         skeletongroupparams.SkeletonPointBoundaryParameter(
-            'boundary', tip="Select nodes in this boundary")
+            'boundary', tip="Select nodes in this boundary"),
+        selectionoperators.SelectionOperatorParam('operator')
         ],
     tip="Select nodes belonging to the given skeleton point boundary.",
     discussion="""<para>
@@ -674,7 +670,7 @@ class SegmentSelectGroup(SegmentSelectionModifier):
         self.operator.operate(selection, courier)
         
 SegmentSelectionModRegistration(
-    'Select Group',
+    'Group',
     SegmentSelectGroup,
     ordering=_selectGroupOrdering,
     params=[
@@ -758,7 +754,7 @@ class FaceSelectGroup(FaceSelectionModifier):
         self.operator.operate(selection, courier)
 
 FaceSelectionModRegistration(
-    'Select Group',
+    'Group',
     FaceSelectGroup,
     ordering=_selectGroupOrdering,
     params=[
@@ -767,72 +763,6 @@ FaceSelectionModRegistration(
         selectionoperators.SelectionOperatorParam('operator')
         ],
     tip="Select the members of a group, discarding the current selection."
-    )
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-## TODO: Combine all group selection operations into one, using
-## SelectionOperators
-
-class FaceDeselectGroup(FaceSelectionModifier):
-    def __init__(self, group):
-        self.group = group
-    def select(self, skeleton, selection):
-        members = skeleton.facegroups.get_group(self.group)
-        selection.start()
-        selection.deselect(members)
-
-FaceSelectionModRegistration(
-    'Unselect Group',
-    FaceDeselectGroup,
-    ordering=_unselectGroupOrdering,
-    params=[
-        skeletongroupparams.FaceGroupParameter(
-            'group', tip='Face group to deselect.')],
-    tip="Unselect the members of a group.")
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-class FaceAddSelectGroup(FaceSelectionModifier):
-    def __init__(self, group):
-        self.group = group
-    def select(self, skeleton, selection):
-        members = skeleton.facegroups.get_group(self.group)
-        selection.start()
-        selection.select(members)
-
-FaceSelectionModRegistration(
-    'Add Group',
-    FaceAddSelectGroup,
-    ordering=_addGroupOrdering,
-    params=[
-        skeletongroupparams.FaceGroupParameter('group',
-                                               tip="Face group to select.")
-        ],
-    tip="Select the members of a group, retaining the current selection."
-    )
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-class FaceIntersectGroup(FaceSelectionModifier):
-    def __init__(self, group):
-        self.group = group
-    def select(self, skeleton, selection):
-        flist = skeleton.facegroups.get_group(self.group)
-        ilist = filter(lambda x: x.isSelected(), flist)
-        selection.start()
-        selection.clear()
-        selection.select(ilist)
-
-FaceSelectionModRegistration(
-    'Intersect Group',
-    FaceIntersectGroup,
-    ordering=_intersectGroupOrdering,
-    params=[
-        skeletongroupparams.FaceGroupParameter('group',
-                                               tip="Face group to select.")
-        ],
-    tip="Select the intersection of a group and the current selection."
     )
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
@@ -1208,7 +1138,7 @@ class ElementSelectGroup(ElementSelectionModifier):
         self.operator.operate(selection, courier)
 
 ElementSelectionModRegistration(
-    'Select Group',
+    'Group',
     ElementSelectGroup,
     ordering=_selectGroupOrdering,
     params=[
@@ -1222,91 +1152,6 @@ ElementSelectionModRegistration(
     linkend='Section-Concepts-Skeleton-Groups'>group</link>.
     </para>""")
 
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-# Unselect the indicated group.
-
-class ElementDeselectGroup(ElementSelectionModifier):
-    def __init__(self, group):
-        self.group = group
-    def select(self, skeleton, selection):
-        members = skeleton.elementgroups.get_group(self.group)
-        selection.start()
-        selection.deselect(members)
-
-ElementSelectionModRegistration(
-    'Unselect Group',
-    ElementDeselectGroup,
-    ordering=_unselectGroupOrdering,
-    params=[
-    skeletongroupparams.ElementGroupParameter('group', tip="Name of the group.")
-    ],
-    tip='Unselect the members of a group.',
-    discussion="""<para>
-    Deselect all of the &elems; that are members of the specified
-    <link linkend='Section-Concepts-Skeleton-Groups'>group</link>.
-    Any &elems; that are members of the group but that are not
-    currently selected will be unaffected.
-    </para>""")
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-# Add the group to the selection, retaining the current selection.
-
-class ElementAddSelectGroup(ElementSelectionModifier):
-    def __init__(self, group):
-        self.group = group
-    def select(self, skeleton, selection):
-        members = skeleton.elementgroups.get_group(self.group)
-        selection.start()
-        selection.select(members)
-
-ElementSelectionModRegistration(
-    'Add Group',
-    ElementAddSelectGroup,
-    ordering=_addGroupOrdering,
-    params=[
-    skeletongroupparams.ElementGroupParameter('group', tip="Name of the group.")
-    ],
-    tip='Select the members of a group, retaining the current selection.',
-    discussion="""<para>
-    Select all of the &elems; in the given <link
-    linkend='Section-Concepts-Skeleton-Groups'>group</link> in
-    addition to all of the currently selected &elems;.  To select
-    <emphasis>only</emphasis> the &elems; in a group, discarding the
-    previous selection, use <xref
-    linkend='MenuItem-OOF.NodeSelection.Select_Group'/>.
-    </para>"""
-    )
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-# Select the intersection of the group and the selection.
-
-class ElementIntersectGroup(ElementSelectionModifier):
-    def __init__(self, group):
-        self.group = group
-    def select(self, skeleton, selection):
-        elist = skeleton.elementgroups.get_group(self.group)
-        ilist = filter(lambda x: x.isSelected(), elist)
-        selection.start()
-        selection.clear()
-        selection.select(ilist)
-
-
-ElementSelectionModRegistration(
-    'Intersect Group',
-    ElementIntersectGroup,
-    ordering=_intersectGroupOrdering,
-    params=[
-    skeletongroupparams.ElementGroupParameter('group', tip="Name of the group.")
-    ],
-    tip='Select the intersection of a group and the current selection.',
-    discussion="""<para>
-    Select the &elems; that are both in the given <link
-    linkend='Section-Concepts-Skeleton-Groups'>group</link> and in the
-    current selection.
-    </para>""")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 

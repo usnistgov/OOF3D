@@ -58,8 +58,9 @@
 // out   CSkeletonElementVector* std::vector<CSkeletonElement*>* -> [CSkeletonElement]
 // out   CSkeletonSegmentVector* std::vector<CSkeletonSegment*>* -> [CSkeletonSegment]
 // out   CSkeletonSelectableSet* std::set<CSkeletonSelectable*>* -> Set(CSkeletonSelectable)
+// in    CSkeletonSelectableVector* iterable of(CSkeletonSelectable* -> std::vector<CSkeletonSelectable*>
 // out   CSkeletonSelectableList* std::list<CSkeletonSelectable*>* -> [CSkeletonSelectable]
-// in    CSkeletonSelectableList* [CSkeletonSelectable] -> std::list<CSkeletonSelectable>
+// in    CSkeletonSelectableList* [CSkeletonSelectable] -> std::list<CSkeletonSelectable*>
 // in    CSelectionTrackerVector* [CSelectionTracker] -> std::vector<CSelectionTracker*>* 
 // in    CPinnedNodeTrackerVector* [CPinnedNodeTracker] -> std::vector<CPinnedNodeTracker*>* 
 // in    CGroupTrackerVector* [CGroupTracker] -> std::vector<CGroupTracker*>* 
@@ -976,6 +977,41 @@ typedef std::vector<Element*> ElementVec;
   // typemap(python,newfree) CSkeletonFaceMap*
   delete $source;
 }
+
+// This typemap converts any python iterable container of
+// CSkeletonSelectable objects to a std::vector of them.
+%typemap(python, in) CSkeletonSelectableVector* (CSkeletonSelectableVector v) {
+  // typemap(python, in) CSkeletonSelectableVector*
+  if(!PyIter_Check($source)) {
+    PyErr_SetString(
+        PyExc_TypeError,
+	"Error in CSkeletonSelectableVector* typemap. Python iterable required."
+		    );
+    return NULL;
+  }
+  PyObject *iterator = PyObject_GetIter($source);
+  PyObject *item;
+  try {
+    while((item = PyIter_Next(iterator))) {
+      CSkeletonSelectable *obj;
+      PyObject *stg = PyObject_GetAttrString(item, "this");
+      if(!stg) {
+	Py_DECREF(item);
+	return NULL;
+      }
+      char *str = PyString_AsString(stg);
+      SWIG_GetPtr(str, (void**) &obj, "_CSkeletonSelectable_p");
+      v.push_back(obj);
+      Py_DECREF(item);
+    }
+  }
+  catch(...) {
+    Py_DECREF(iterator);
+    throw;
+  }
+  Py_DECREF(iterator);
+  $target = &v;
+ }
 
 // %typemap(python,out) CSkeletonSelectableSet* {
 //   CSkeletonSelectableSet::size_type sz = $source->size();

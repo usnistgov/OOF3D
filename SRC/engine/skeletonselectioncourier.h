@@ -57,6 +57,24 @@ public:
   virtual void next() { done_ = true; }
 };
 
+// StupidCourier just carries in a list of objects.  It's stupid
+// because transmitting a list of objects from Python to C++ is what
+// the courier classes are meant to avoid, but sometimes there's no
+// choice.
+
+class StupidCourier : public SkeletonSelectionCourier {
+private:
+  CSkeletonSelectableVector objects;
+  CSkeletonSelectableVector::iterator iter;
+public:
+  StupidCourier(CSkeletonBase*,
+		CSkeletonSelectableVector*,
+		CSelectionTrackerVector*, CSelectionTrackerVector*);
+  virtual void start();
+  virtual CSkeletonSelectable *currentObj() const { return *iter; }
+  virtual void next();
+};
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 class SkeletonGroupCourier : public SkeletonSelectionCourier {
@@ -139,6 +157,14 @@ public:
 			   const CSelectionTracker*,
 			   CSelectionTrackerVector*,
 			   CSelectionTrackerVector*);
+};
+
+
+class InternalBoundaryNodesCourier : NodeSelectionCourier {
+public:
+  InternalBoundaryNodesCourier(CSkeletonBase*,
+			       CSelectionTrackerVector*,
+			       CSelectionTrackerVector*);
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

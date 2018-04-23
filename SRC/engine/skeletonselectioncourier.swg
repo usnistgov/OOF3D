@@ -36,6 +36,12 @@ public:
 		      CSelectionTrackerVector*, CSelectionTrackerVector*);
 };
 
+class StupidCourier : public SkeletonSelectionCourier {
+public:
+  StupidCourier(CSkeletonBase*, CSkeletonSelectableVector*,
+		CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
 class SkeletonGroupCourier : public SkeletonSelectionCourier {
 public:
   SkeletonGroupCourier(CSkeletonBase*, char*, CGroupTrackerBase*,
@@ -63,6 +69,13 @@ public:
   NodesFromSegmentsCourier(CSkeletonBase*,
 			   CSelectionTracker*,
 			   CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class InternalBoundaryNodesCourier : public SkeletonSelectionCourier {
+public:
+  InternalBoundaryNodesCourier(CSkeletonBase*,
+			       CSelectionTrackerVector*,
+			       CSelectionTrackerVector*);
 };
 
 class CategoryElementCourier : public SkeletonSelectionCourier {
