@@ -308,6 +308,9 @@ class Selection(SelectionBase):
             del plist[0]
         return (clist, plist)
 
+    # TODO: It's sort of weird that most of these methods don't use
+    # self at all. They're called by SelectionOperators.  Why don't
+    # the SelectionOperators just call the courier methods directly?
     def clearAndSelect(self, courier):
         self.clear()
         courier.select()
@@ -318,57 +321,12 @@ class Selection(SelectionBase):
     def toggle(self, courier):
         courier.toggle()
 
-    ###### OLD VERSIONS TO BE REPLACED BY NEW VERSIONS USING COURIERS ######
-    # def select(self, objlist):
-    #     self.clear()
-    #     self.addSelect(objlist)
-        
-    # def addSelect(self, objlist):
-    #     (clist, plist) = self.trackerlist()
-    #     skeleton = self.skeletoncontext.getObject()
-    #     for o in objlist:
-    #         if o.active(skeleton):
-    #             o.select(clist, plist) 
-
-    # def deselect(self, objlist):
-    #     (clist, plist) = self.trackerlist()
-    #     skeleton = self.skeletoncontext.getObject()
-    #     for o in objlist:
-    #         if o.active(skeleton):
-    #             o.deselect(clist, plist)
-        
-    # def toggle(self, objlist):
-    #     (clist, plist) = self.trackerlist()
-    #     skeleton = self.skeletoncontext.getObject()
-    #     for o in objlist:
-    #         if o.active(skeleton):
-    #             if o.isSelected():
-    #                 o.deselect(clist, plist)
-    #             else:
-    #                 o.select(clist, plist)
-
-    # def invert(self):
-    #     # Invert the selection status of all objects.  Loop over all
-    #     # elements is unavoidable in this case, since every object
-    #     # must be operated on.
-    #     (clist, plist) = self.trackerlist()
-    #     skeleton = self.skeletoncontext.getObject()
-    #     for o in self.get_objects():
-    #         if o.active(skeleton):
-    #             if o.isSelected():
-    #                 o.deselect(clist, plist)
-    #             else:
-    #                 o.select(clist, plist)
-
-    # # Selects objects from already selected ones
-    # def selectSelected(self, objlist):
-    #     (clist, plist) = self.trackerlist()
-    #     skeleton = self.skeletoncontext.getObject()        
-    #     for o in self.get_objects():
-    #         if o.active(skeleton) and o.isSelected() and o not in objlist:
-    #             o.deselect(clist, plist)
-    ####### END OLD VERSIONS TO BE REPLACED BY COURIER VERSIONS ######
-
+    def invert(self):
+        clist, plist = self.trackerlist()
+        courier = self.mode().allCourier(self.skeletoncontext.getObject(),
+                                         clist, plist)
+        courier.toggle()
+            
     def clear(self):
         # "Clear" needs to really clear the selection in all
         # CSkeletons, not just the current one.  There may be objects

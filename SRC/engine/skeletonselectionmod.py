@@ -210,12 +210,9 @@ class SelectNamedBoundaryNodes(NodeSelectionModifier):
     def select(self, skelctxt, selection):
         clist, plist = selection.trackerlist()
         bdy = skelctxt.getBoundary(self.boundary)
-        nodes = bdy.boundary(skelctxt.getObject()).getNodes()
-        debug.fmsg("nodes=", nodes)
-        # This has to use the StupidCourier because the list of nodes
-        # on the boundary is only present in Python.
-        courier = skeletonselectioncourier.StupidCourier(
-            skelctxt.getObject(), nodes, clist, plist)
+        courier = skeletonselectioncourier.PointBoundaryCourier(
+            skelctxt.getObject(), bdy.getBoundarySet(skelctxt.getObject()),
+            clist, plist)
         self.operator.operate(selection, courier)
 
 NodeSelectionModRegistration(
@@ -276,14 +273,13 @@ registeredclass.TwoDOnlyRegistration(
 ## should be rewritten to look like ExpandElementSelection.
 
 class ExpandNodeSelection(NodeSelectionModifier):
-    def select(self, skeleton, selection):
-        skel = skeleton.getObject()
-        newnodes = set()
-        for node in selection.retrieve():
-            for segment in skel.getNodeSegments(node):
-                    newnodes.add(segment.get_other_node(node))
-        selection.start()
-        selection.select(newnodes)
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.ExpandNodeSelectionCourier(
+            skelctxt.getObject(),
+            skelctxt.nodeselection.currentSelectionTracker(),
+            clist, plist);
+        selection.select(courier)
 
 NodeSelectionModRegistration(
     'Expand',
@@ -310,7 +306,7 @@ class NodeSelectGroup(NodeSelectionModifier):
         
 
 NodeSelectionModRegistration(
-    'Group',
+    'Select Group',
     NodeSelectGroup,
     ordering=_selectGroupOrdering,
     params=[
@@ -326,170 +322,108 @@ NodeSelectionModRegistration(
 
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+#      Segment Selection Modifiers
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# Segment selection modifiers
 
 class SegFromSelectedElements(SegmentSelectionModifier):
-    def __init__(self, coverage):
+    def __init__(self, coverage, operator):
         self.coverage = coverage
+        self.operator = operator
 
-    def getAllSegments(self, context):
-        segments = set()
-        skel = context.getObject()
-        for element in context.elementselection.retrieve():
-            if config.dimension() == 2:
-                el_segments = element.getSegments(skel)
-                for seg in el_segments:
-                    segments.add(seg)
-            else: # dimension==3
-                segments.update(skel.getElementSegments(element))
-        return segments
-
-    def getExteriorSegments(self, context):
-        segments = set()
-        if config.dimension() == 2:
-            skel = context.getObject()
-            for element in context.elementselection.retrieve():
-                el_segments = element.getSegments(skel)
-                for seg in el_segments:
-                    # A segment is on the exterior of the selection if it
-                    # belongs to only one element.
-                    n = 0
-                    for el in seg.getElements():
-                        if el.selected:
-                            n += 1
-                    if n == 1:
-                        segments.add(seg)
-
-        else:               # dimension==3 
-            segments = context.exteriorSegmentsOfSelectedElements()
-        return segments
-
-    def getInternalSegments(self, skelcontext):
-        bdysegs = set(self.getExteriorSegments(skelcontext))
-        allsegs = set(self.getAllSegments(skelcontext))
-        return allsegs - bdysegs
-
-    def select(self, skeleton, selection):
-        if self.coverage == "All":
-            selected = self.getAllSegments(skeleton)
-        elif self.coverage == "Exterior":
-            selected = self.getExteriorSegments(skeleton)
-        else:                   # self.coverge == "Interior"
-            selected = self.getInternalSegments(skeleton)
-        selection.start()
-        selection.clear()
-        selection.select(selected)
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.SegmentsFromElementsCourier(
+            skelctxt.getObject(),
+            self.coverage,
+            skelctxt.elementselection.currentSelectionTracker(),
+            clist, plist)
+        self.operator.operate(selection, courier)
 
 SegmentSelectionModRegistration(
     'Select from Selected Elements',
     SegFromSelectedElements,
     ordering=_selectFromElementsOrdering,
     params = [
-        enum.EnumParameter("coverage", 
-                           ooflib.engine.coverage.Coverage)],
+        enum.EnumParameter("coverage", ooflib.engine.coverage.Coverage),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     tip="Select segments from selected elements.",
     discussion=xmlmenudump.loadFile(
         'DISCUSSIONS/engine/menu/segments_from_elements.xml'))
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-## TODO 3.1: Add a modifier that deselects segments with fewer than n
-## selected nodes, where n is 1 or 2.  Maybe just add a parameter to
-## this method that tells it whether to select segments with at least
-## n selected nodes, or to deselect segments with fewer.
-
 class SegFromSelectedNodes(SegmentSelectionModifier):
-    def __init__(self, min_nodes):
-        self.min_nodes = min_nodes
-    def select(self, skeleton, selection):
-        selected = set()
-        skel = skeleton.getObject()
-        if self.min_nodes == 1:
-            for node in skeleton.nodeselection.retrieve():
-                selected.update(skel.getNodeSegments(node))
-        elif self.min_nodes == 2:
-            for node in skeleton.nodeselection.retrieve():
-                segs = skel.getNodeSegments(node)
-                for seg in segs:
-                    if seg.get_other_node(node).isSelected():
-                        selected.add(seg)
-        selection.start()
-        selection.clear()
-        selection.select(selected)
+    def __init__(self, one, two, operator):
+        self.one = one
+        self.two = two
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.SegmentsFromNodesCourier(
+            skelctxt.getObject(),
+            self.one, self.two,
+            skelctxt.nodeselection.currentSelectionTracker(),
+            clist, plist)
+        self.operator.operate(selection, courier)
 
 SegmentSelectionModRegistration(
     "Select from Selected Nodes",
     SegFromSelectedNodes,
     params=[
-        parameter.IntRangeParameter(
-            'min_nodes', (1,2), value=1,
-            tip="Select segments with at least this many selected endpoints.")],
+        parameter.BooleanParameter(
+            'one', value=True,
+            tip='Select segments with one selected node.'),
+        parameter.BooleanParameter(
+            'two', value=True,
+            tip='Select segments with two selected nodes.'),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     ordering=_selectFromNodesOrdering,
     tip="Select segments from the selected nodes.")
         
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class SegFromSelectedFaces(SegmentSelectionModifier):
-    def __init__(self, coverage):
+    def __init__(self, coverage, operator):
         self.coverage = coverage
+        self.operator = operator
 
-    def getAllSegments(self, skelctxt):
-        segments = set()
-        skel = skelctxt.getObject()
-        for face in skelctxt.faceselection.retrieve():
-            segments.update(skel.getFaceSegments(face))
-        return segments
-
-    def getExteriorSegments(self, skelctxt):
-        return skelctxt.exteriorSegmentsOfSelectedFaces()
-
-    def getInternalSegments(self, skelctxt):
-        allsegs = set(self.getAllSegments(skelctxt))
-        bdysegs = set(self.getExteriorSegments(skelctxt))
-        return allsegs - bdysegs
-
-    def select(self, skeleton, selection):
-        if self.coverage == 'All':
-            selected = self.getAllSegments(skeleton)
-        elif self.coverage == 'Exterior':
-            selected = self.getExteriorSegments(skeleton)
-        else:                   # self.coverage == 'Interior'
-            selected = self.getInternalSegments(skeleton)
-        selection.start()
-        selection.clear()
-        selection.select(selected)
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.SegmentsFromFacesCourier(
+            skelctxt.getObject(),
+            self.coverage,
+            skelctxt.faceselection.currentSelectionTracker(),
+            clist, plist)
+        self.operator.operate(selection, courier)
 
 SegmentSelectionModRegistration(
     'Select from Selected Faces',
     SegFromSelectedFaces,
     ordering=_selectFromFacesOrdering,
     params=[
-        enum.EnumParameter('coverage', ooflib.engine.coverage.Coverage)],
+        enum.EnumParameter('coverage', ooflib.engine.coverage.Coverage),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     tip="Select the edges of the selected faces.")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class SelectInternalBoundarySegments(SegmentSelectionModifier):
-    def select(self, skeleton, selection):
-        skel = skeleton.getObject()
-        ms = skeleton.getMicrostructure()
-        segset = set()
-        for face in skel.getFaces():
-            elements = skel.getFaceElements(face)
-            if (len(elements) == 2 and
-                (elements[0].dominantPixel(skel)
-                 != elements[1].dominantPixel(skel))):
-                segset.update(skel.getFaceSegments(face))
-        selection.start()
-        selection.clear()
-        selection.select(segset)
+    def __init__(self, operator):
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.InternalBoundarySegmentsCourier(
+            skelctxt.getObject(), clist, plist)
+        self.operator.operate(selection, courier)
 
 SegmentSelectionModRegistration(
     'Select Internal Boundaries',
     SelectInternalBoundarySegments,
+    params=[selectionoperators.SelectionOperatorParam('operator')],
     ordering=_internalBoundaryOrdering,
     tip="Select segments on material or group boundaries.")
 
@@ -535,28 +469,28 @@ if config.dimension() == 2:
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class SelectNamedBoundarySegments(SegmentSelectionModifier):
-    def __init__(self, boundary):
+    def __init__(self, boundary, operator):
         self.boundary = boundary
-    def select(self, skeleton, selection):
-        bdy = skeleton.getBoundary(self.boundary) # A SkelContextEdgeBoundary
-        bdyobj = bdy.boundary(skeleton.getObject()) # A CSkeletonEdgeBoundary
-        if config.dimension() == 2:
-            edges = [e.segment for e in bdyobj.edges]
-        else:                   # dim = 3
-            edges = bdyobj.getUnorientedSegments() # list of CSkeletonSegments
-            # edges = [e.get_segment() for e in oredges] # 
-        selection.start()
-        selection.clear()
-        selection.select(edges)
-            
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        bdy = skelctxt.getBoundary(self.boundary) # A SkelContextEdgeBoundary
+        courier = skeletonselectioncourier.EdgeBoundaryCourier(
+            skelctxt.getObject(),
+            bdy.getBoundarySet(skelctxt.getObject()),
+            clist, plist)
+        self.operator.operate(selection, courier)
 
 SegmentSelectionModRegistration(
     'Select Named Boundary',
     SelectNamedBoundarySegments,
     ordering=_namedBoundaryOrdering,
-    params=[skeletongroupparams.SkeletonEdgeBoundaryParameter(
+    params=[
+        skeletongroupparams.SkeletonEdgeBoundaryParameter(
             'boundary',
-            tip="Select segments in this boundary")],
+            tip="Select segments in this boundary"),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     tip="Select segments belonging to the given skeleton edge boundary.",
     discussion="""<para>
 
@@ -603,18 +537,15 @@ registeredclass.TwoDOnlyRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class SegmentHomogeneity(SegmentSelectionModifier):
-    def __init__(self, threshold=0.9):
+    def __init__(self, threshold, operator):
         self.threshold = threshold
+        self.operator = operator
 
-    def select(self, skeleton, selection):
-        selected = []
-        skel = skeleton.getObject()
-        for segment in skel.getSegments():
-            if segment.homogeneity(skel) < self.threshold:
-                selected.append(segment)
-        selection.start()
-        selection.clear()
-        selection.select(selected)
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.InhomogeneousSegmentCourier(
+            skelctxt.getObject(), self.threshold, clist, plist)
+        self.operator.operate(selection, courier)
 
 SegmentSelectionModRegistration(
     'Select by Homogeneity',
@@ -622,7 +553,9 @@ SegmentSelectionModRegistration(
     ordering=_homogeneityOrdering,
     params = [parameter.FloatRangeParameter('threshold', (0.0, 1.0, 0.01),
                                             value=0.9,
-                                            tip='The threshold homogeneity.')],
+                                            tip='The threshold homogeneity.'),
+              selectionoperators.SelectionOperatorParam('operator')
+    ],
     tip="Select segments with homogeneity less than the given threshold.",
     discussion=xmlmenudump.loadFile(
         'DISCUSSIONS/engine/menu/hetero_segments.xml'))
@@ -630,17 +563,14 @@ SegmentSelectionModRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class RandomSegments(SegmentSelectionModifier):
-    def __init__(self, probability=0.5):
+    def __init__(self, probability, operator):
         self.probability = probability
-    def select(self, skeleton, selection):
-        selected = []
-        skel = skeleton.getObject()
-        for segment in skel.getSegments():
-            if crandom.rndm() < self.probability:
-                selected.append(segment)
-        selection.start()
-        selection.clear()
-        selection.select(selected)
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.RandomSegmentCourier(
+            skelctxt.getObject(), self.probability, clist, plist)
+        self.operator.operate(selection, courier)
 
 SegmentSelectionModRegistration(
     'Select Randomly',
@@ -650,7 +580,9 @@ SegmentSelectionModRegistration(
         parameter.FloatRangeParameter(
             'probability', (0.0, 1.0, 0.01),
             value=0.5,
-            tip='The probability of selecting a segment.')],
+            tip='The probability of selecting a segment.'),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     tip="Select segments randomly.")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
@@ -670,7 +602,7 @@ class SegmentSelectGroup(SegmentSelectionModifier):
         self.operator.operate(selection, courier)
         
 SegmentSelectionModRegistration(
-    'Group',
+    'Select Group',
     SegmentSelectGroup,
     ordering=_selectGroupOrdering,
     params=[
@@ -686,10 +618,10 @@ SegmentSelectionModRegistration(
 )
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+#       Face Selection Modifiers
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# Face selection modifiers
+
 
 # TODO 3.1: add more face selection modifiers.
 
@@ -754,7 +686,7 @@ class FaceSelectGroup(FaceSelectionModifier):
         self.operator.operate(selection, courier)
 
 FaceSelectionModRegistration(
-    'Group',
+    'Select Group',
     FaceSelectGroup,
     ordering=_selectGroupOrdering,
     params=[
@@ -1138,7 +1070,7 @@ class ElementSelectGroup(ElementSelectionModifier):
         self.operator.operate(selection, courier)
 
 ElementSelectionModRegistration(
-    'Group',
+    'Select Group',
     ElementSelectGroup,
     ordering=_selectGroupOrdering,
     params=[

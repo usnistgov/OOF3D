@@ -135,6 +135,16 @@ const CSkeletonElement *CSkeletonFace::getElement(const CSkeletonBase *skel,
   return elements[which];
 }
 
+CSkeletonSegment *CSkeletonFace::getSegment(const CSkeletonBase *skel,
+					    int which)
+  const
+{
+  assert(which < nnodes());
+  const CSkeletonNode *n0 = getNode(which);
+  const CSkeletonNode *n1 = getNode((which+1)%nnodes());
+  return skel->findExistingSegment(n0, n1);
+}
+
 Coord CSkeletonFace::normal() const {
   Coord x[3];
   Coord n;

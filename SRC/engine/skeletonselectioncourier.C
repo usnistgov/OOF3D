@@ -11,6 +11,7 @@
 
 #include <oofconfig.h>
 #include "common/IO/oofcerr.h"
+#include "common/random.h"
 #include "engine/cskeleton2.h"
 #include "engine/cskeletonelement.h"
 #include "engine/cskeletongroups.h"
@@ -18,8 +19,53 @@
 #include "engine/cskeletonselectable.h"
 #include "engine/skeletonselectioncourier.h"
 
+
+// Some utility functions.
+
+static
+CSkeletonFaceSet internalBoundaryFaces(const CSkeletonBase *skel) {
+  CSkeletonFaceSet faces;
+  for(CSkeletonFaceIterator f=skel->beginFaces(); f!=skel->endFaces(); ++f) {
+    CSkeletonFace *face = (*f).second;
+    if(face->nElements() == 2 &&
+       (face->getElement(skel, 0)->dominantPixel(skel) !=
+	face->getElement(skel, 1)->dominantPixel(skel)))
+      faces.insert(face);
+  }
+  return faces;
+}
+
+static
+CSkeletonFaceSet exteriorFacesOfElements(const CSkeletonBase *skeleton,
+					 const CSkeletonSelectableSet *els)
+{
+  // An exterior face of an element set is a face that's only part of
+  // one element.
+  CSkeletonFaceSet faces;
+  for(const CSkeletonSelectable *ell : *els) {
+    const CSkeletonElement *el = dynamic_cast<const CSkeletonElement*>(ell);
+    for(int i=0; i<4; i++) {
+      const CSkeletonMultiNodeKey fkey = el->getFaceKey(i);
+      CSkeletonFace *face = skeleton->getFace(fkey);
+      // Faces can't be part of more than two elements, so if this
+      // face is already in the set, it's not exterior and we can
+      // remove it.  We won't encounter it again and re-add it by
+      // mistake.
+      if(faces.count(face) == 0)
+	faces.insert(face);
+      else
+	faces.erase(face);
+    }
+  }
+  return faces;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+
 SkeletonSelectionCourier::SkeletonSelectionCourier(
-				   CSkeletonBase *skel,
+				   const CSkeletonBase *skel,
 				   CSelectionTrackerVector *clist,
 				   CSelectionTrackerVector *plist)
   : skeleton(skel),
@@ -71,7 +117,7 @@ void SkeletonSelectionCourier::toggle() {
 // SkeletonGroupCourier works on a group of elements, faces, segments,
 // or nodes.
 
-SkeletonGroupCourier::SkeletonGroupCourier(CSkeletonBase *skel,
+SkeletonGroupCourier::SkeletonGroupCourier(const CSkeletonBase *skel,
 					   const std::string &name,
 					   const CGroupTrackerBase *tracker,
 					   CSelectionTrackerVector *clist,
@@ -99,7 +145,7 @@ void SkeletonGroupCourier::next() {
 // SingleObjectCourier can be used to select a single element, face,
 // segment, or node.
 
-SingleObjectCourier::SingleObjectCourier(CSkeletonBase *skeleton,
+SingleObjectCourier::SingleObjectCourier(const CSkeletonBase *skeleton,
 					 CSkeletonSelectable *obj,
 					 CSelectionTrackerVector *clist,
 					 CSelectionTrackerVector *plist)
@@ -109,54 +155,50 @@ SingleObjectCourier::SingleObjectCourier(CSkeletonBase *skeleton,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-StupidCourier::StupidCourier(CSkeletonBase *skeleton,
-			     CSkeletonSelectableVector *objects,
+// StupidCourier copies a list of objects from Python to C++.  It's
+// stupid because the whole point of the couriers is to avoid doing
+// just that. It's useful for testing, and in hypothetical situations
+// in which the source of the selected objects can't be easily
+// accessed from C++.
+
+StupidCourier::StupidCourier(const CSkeletonBase *skeleton,
+			     CSkeletonSelectableVector *objs,
 			     CSelectionTrackerVector *clist,
 			     CSelectionTrackerVector *plist)
-  : SkeletonSelectionCourier(skeleton, clist, plist),
-    objects(std::move(*objects))
-{}
-
-void StupidCourier::start() {
-  iter = objects.begin();
-  done_ = (iter == objects.end());
-}
-
-void StupidCourier::next() {
-  ++iter;
-  done_ = (iter == objects.end());
+  : BulkSkelSelCourier<CSkeletonSelectableVector>(skeleton, clist, plist)
+{
+  selectedObjects = std::move(*objs);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+//            Node Selection Couriers
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// NodeSelection methods which compute and store a set of nodes in
-// their constructor are derived from NodeSelectionCourier.
-
-NodeSelectionCourier::NodeSelectionCourier(CSkeletonBase *skel,
-					   CSelectionTrackerVector *clist,
-					   CSelectionTrackerVector *plist)
+AllNodesCourier::AllNodesCourier(const CSkeletonBase *skel,
+				 CSelectionTrackerVector *clist,
+				 CSelectionTrackerVector *plist)
   : SkeletonSelectionCourier(skel, clist, plist)
 {}
 
-void NodeSelectionCourier::start() {
-  iter = selectedNodes.begin();
-  done_ = (iter == selectedNodes.end());
+void AllNodesCourier::start() {
+  iter = skeleton->beginNodes();
+  done_ = (iter == skeleton->endNodes());
 }
 
-void NodeSelectionCourier::next() {
+void AllNodesCourier::next() {
   ++iter;
-  done_ = (iter == selectedNodes.end());
+  done_ = (iter == skeleton->endNodes());
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 NodesFromOtherCourier::NodesFromOtherCourier(
-			CSkeletonBase *skel,
+			const CSkeletonBase *skel,
 			const std::string *cvrage,
 			const CSelectionTracker *oTracker,
 			CSelectionTrackerVector *clist,
 			CSelectionTrackerVector *plist)
-  : NodeSelectionCourier(skel, clist, plist),
+  : BulkSkelSelCourier<CSkeletonNodeSet>(skel, clist, plist),
     coverage(*cvrage),
     otherTracker(oTracker)
 {}
@@ -164,20 +206,20 @@ NodesFromOtherCourier::NodesFromOtherCourier(
 void NodesFromOtherCourier::start() {
   // coverage is a string because it comes from a Python Enum via swig.
   if(coverage == std::string("Exterior")) {
-    selectedNodes = exteriorNodes();
+    selectedObjects = exteriorNodes();
   }
   else if(coverage == std::string("Interior")) {
     CSkeletonNodeSet allnodes = allNodes();
     CSkeletonNodeSet extnodes = exteriorNodes();
     std::set_difference(allnodes.begin(), allnodes.end(),
 			extnodes.begin(), extnodes.end(),
-			std::inserter(selectedNodes, selectedNodes.end()));
+			std::inserter(selectedObjects, selectedObjects.end()));
   }
   else {
     assert(coverage == std::string("All"));
-    selectedNodes = allNodes();
+    selectedObjects = allNodes();
   }
-  NodeSelectionCourier::start();
+  BulkSkelSelCourier<CSkeletonNodeSet>::start();
 }
 
 CSkeletonNodeSet NodesFromOtherCourier::allNodes() const
@@ -196,7 +238,7 @@ CSkeletonNodeSet NodesFromOtherCourier::allNodes() const
 //----------
 
 NodesFromElementsCourier::NodesFromElementsCourier(
-				   CSkeletonBase *skel,
+				   const CSkeletonBase *skel,
 				   const std::string *coverage,
 				   const CSelectionTracker *otherTracker,
 				   CSelectionTrackerVector *clist,
@@ -238,7 +280,7 @@ CSkeletonNodeSet NodesFromElementsCourier::exteriorNodes() const
 //-----------
 
 NodesFromFacesCourier::NodesFromFacesCourier(
-				     CSkeletonBase *skel,
+				     const CSkeletonBase *skel,
 				     const std::string *coverage,
 				     const CSelectionTracker *otherTracker,
 				     CSelectionTrackerVector *clist,
@@ -257,9 +299,10 @@ CSkeletonNodeSet NodesFromFacesCourier::exteriorNodes() const {
     const CSkeletonFace *face = dynamic_cast<const CSkeletonFace*>(f);
     int nn = face->nnodes();
     for(int i=0; i<nn; i++) {
-      const CSkeletonNode *n0 = face->getNode(i);
-      const CSkeletonNode *n1 = face->getNode((i+1)%nn);
-      CSkeletonSegment *segment = skeleton->findExistingSegment(n0, n1);
+      CSkeletonSegment *segment = face->getSegment(skeleton, i);
+      // const CSkeletonNode *n0 = face->getNode(i);
+      // const CSkeletonNode *n1 = face->getNode((i+1)%nn);
+      // CSkeletonSegment *segment = skeleton->findExistingSegment(n0, n1);
       if(segments.count(segment) == 0)
 	segments.insert(segment);
       else
@@ -281,27 +324,69 @@ CSkeletonNodeSet NodesFromFacesCourier::exteriorNodes() const {
 // exterior nodes.
 
 NodesFromSegmentsCourier::NodesFromSegmentsCourier(
-				   CSkeletonBase *skel,
+				   const CSkeletonBase *skel,
 				   const CSelectionTracker *segmentTracker,
 				   CSelectionTrackerVector *clist,
 				   CSelectionTrackerVector *plist)
-  : NodeSelectionCourier(skel, clist, plist)
+  : BulkSkelSelCourier<CSkeletonNodeSet>(skel, clist, plist)
 {
   const CSkeletonSelectableSet *segments = segmentTracker->get();
   for(const CSkeletonSelectable *sg : *segments) {
     const CSkeletonSegment *segment = dynamic_cast<const CSkeletonSegment*>(sg);
-    selectedNodes.insert(segment->getNode(0));
-    selectedNodes.insert(segment->getNode(1));
+    selectedObjects.insert(segment->getNode(0));
+    selectedObjects.insert(segment->getNode(1));
   }
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-InternalBoundaryNodesCourier::InternalBoundaryNodesCourier(
-					   CSkeletonBase *skel,
+ExpandNodeSelectionCourier::ExpandNodeSelectionCourier(
+				       const CSkeletonBase *skel,
+				       const CSelectionTracker *nodesel,
+				       CSelectionTrackerVector *clist,
+				       CSelectionTrackerVector *plist)
+  : BulkSkelSelCourier(skel, clist, plist)
+{
+  const CSkeletonSelectableSet *nodes = nodesel->get(); // currently selected
+  for(const CSkeletonSelectable *selectable : *nodes) {
+    const CSkeletonNode *node = dynamic_cast<const CSkeletonNode*>(selectable);
+    selectedObjects.insert(const_cast<CSkeletonNode*>(node));
+    CSkeletonSegmentSet segs;
+    skeleton->getNodeSegments(node, segs);
+    for(CSkeletonSegment *segment : segs) {
+      CSkeletonNode *otherNode = segment->get_other_node(node);
+      selectedObjects.insert(otherNode);
+    }
+  }
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+PointBoundaryCourier::PointBoundaryCourier(const CSkeletonBase *skel,
+					   const CSkeletonPointBoundary *bdy,
 					   CSelectionTrackerVector *clist,
 					   CSelectionTrackerVector *plist)
-  : NodeSelectionCourier(skel, clist, plist)
+  : SkeletonSelectionCourier(skel, clist, plist),
+    nodes(bdy->getNodes())
+{}
+
+void PointBoundaryCourier::start() {
+  iter = nodes->begin();
+  done_ = (iter == nodes->end());
+}
+
+void PointBoundaryCourier::next() {
+  ++iter;
+  done_ = (iter == nodes->end());
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+InternalBoundaryNodesCourier::InternalBoundaryNodesCourier(
+					   const CSkeletonBase *skel,
+					   CSelectionTrackerVector *clist,
+					   CSelectionTrackerVector *plist)
+  : BulkSkelSelCourier(skel, clist, plist)
 {
   for(CSkeletonNodeIterator node=skel->beginNodes(); node!=skel->endNodes();
       ++node)
@@ -312,7 +397,7 @@ InternalBoundaryNodesCourier::InternalBoundaryNodesCourier(
       int cat = (*elements)[0]->dominantPixel(skel);
       for(CSkeletonElement *element : *elements) {
 	if(element->dominantPixel(skel) != cat) {
-	  selectedNodes.insert(*node);
+	  selectedObjects.insert(*node);
 	  break;
 	}
       }	// end loop over elements at a node
@@ -320,9 +405,314 @@ InternalBoundaryNodesCourier::InternalBoundaryNodesCourier(
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+//        Segment Selection Couriers
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+AllSegmentsCourier::AllSegmentsCourier(const CSkeletonBase *skel,
+				       CSelectionTrackerVector *clist,
+				       CSelectionTrackerVector *plist)
+  : SkeletonSelectionCourier(skel, clist, plist)
+{}
+
+void AllSegmentsCourier::start() {
+  iter = skeleton->beginSegments();
+  done_ = (iter == skeleton->endSegments());
+}
+
+void AllSegmentsCourier::next() {
+  ++iter;
+  done_ = (iter == skeleton->endSegments());
+}
+
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+SegmentsFromOtherCourier::SegmentsFromOtherCourier(
+					 const CSkeletonBase *skel,
+					 const std::string *cvrage,
+					 const CSelectionTracker *oTracker,
+					 CSelectionTrackerVector *clist,
+					 CSelectionTrackerVector *plist)
+  : BulkSkelSelCourier<CSkeletonSegmentSet>(skel, clist, plist),
+  coverage(*cvrage),
+  otherTracker(oTracker)
+{}
+
+void SegmentsFromOtherCourier::start() {
+  if(coverage == std::string("Exterior")) {
+    selectedObjects = exteriorSegments();
+  }
+  else if(coverage == std::string("Interior")) {
+    CSkeletonSegmentSet allsegs = allSegments();
+    CSkeletonSegmentSet extsegs = exteriorSegments();
+    std::set_difference(allsegs.begin(), allsegs.end(),
+			extsegs.begin(), extsegs.end(),
+			std::inserter(selectedObjects, selectedObjects.end()));
+  }
+  else {
+    selectedObjects = allSegments();
+  }
+  BulkSkelSelCourier<CSkeletonSegmentSet>::start();
+};
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+SegmentsFromElementsCourier::SegmentsFromElementsCourier(
+					 const CSkeletonBase *skel,
+					 const std::string *coverage,
+					 const CSelectionTracker *otherTracker,
+					 CSelectionTrackerVector *clist,
+					 CSelectionTrackerVector *plist)
+  : SegmentsFromOtherCourier(skel, coverage, otherTracker, clist, plist)
+{}
+
+CSkeletonSegmentSet SegmentsFromElementsCourier::allSegments() const {
+  CSkeletonSegmentSet segments;				       
+  const CSkeletonSelectableSet *others = otherTracker->get(); // selected els
+  for(const CSkeletonSelectable *other : *others) {
+    const CSkeletonElement *el = dynamic_cast<const CSkeletonElement*>(other);
+    for(int i=0; i<6; i++) {
+      CSkeletonMultiNodeKey segkey = el->getSegmentKey(i);
+      CSkeletonSegment *segment = skeleton->getSegment(segkey);
+      segments.insert(segment);
+    }
+  }
+  return segments;
+}
+
+CSkeletonSegmentSet SegmentsFromElementsCourier::exteriorSegments() const {
+  // A segment is on the exterior of the element set if it's an edge
+  // of an exterior face.
+  const CSkeletonSelectableSet *elements = otherTracker->get();
+  CSkeletonFaceSet exteriorFaces = exteriorFacesOfElements(skeleton, elements);
+  CSkeletonSegmentSet segments;
+  for(CSkeletonFace *face : exteriorFaces) {
+    int nn = face->nnodes();
+    for(int i=0; i<nn; i++) { 	// loop over segments
+      segments.insert(face->getSegment(skeleton, i));
+      // const CSkeletonNode *n0 = face->getNode(i);
+      // const CSkeletonNode *n1 = face->getNode((i+1)%nn);
+      // CSkeletonSegment *segment = skeleton->findExistingSegment(n0, n1);
+      // segments.insert(segment);
+    }
+  }
+  return segments;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+SegmentsFromFacesCourier::SegmentsFromFacesCourier(
+					 const CSkeletonBase *skel,
+					 const std::string *coverage,
+					 const CSelectionTracker *otherTracker,
+					 CSelectionTrackerVector *clist,
+					 CSelectionTrackerVector *plist)
+  : SegmentsFromOtherCourier(skel, coverage, otherTracker, clist, plist)
+{}
+
+CSkeletonSegmentSet SegmentsFromFacesCourier::allSegments() const {
+  CSkeletonSegmentSet segments;
+  const CSkeletonSelectableSet *others = otherTracker->get(); // selected faces
+  for(const CSkeletonSelectable *other : *others) {
+    const CSkeletonFace *face = dynamic_cast<const CSkeletonFace*>(other);
+    for(int i=0; i<face->nnodes(); i++)
+      segments.insert(face->getSegment(skeleton, i));
+  }
+  return segments;
+}
+
+CSkeletonSegmentSet SegmentsFromFacesCourier::exteriorSegments() const {
+  // A segment is on an exterior boundary of a set of faces if only
+  // one of the segment's faces is in the set.
+  const CSkeletonSelectableSet *faces = otherTracker->get();
+  std::multiset<CSkeletonSegment*> segcounts;
+  for(const CSkeletonSelectable *f : *faces) {
+    const CSkeletonFace *face = dynamic_cast<const CSkeletonFace*>(f);
+    for(int i=0; i<face->nnodes(); i++) {
+      segcounts.insert(face->getSegment(skeleton, i));
+    }
+  }
+  CSkeletonSegmentSet segments;
+  for(CSkeletonSegment *seg : segcounts)
+    if(segcounts.count(seg) == 1)
+      segments.insert(seg);
+  return segments;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+SegmentsFromNodesCourier::SegmentsFromNodesCourier(
+				   const CSkeletonBase *skel,
+				   bool oneNode, bool twoNodes,
+				   const CSelectionTracker *otherTracker,
+				   CSelectionTrackerVector *clist,
+				   CSelectionTrackerVector *plist)
+  : BulkSkelSelCourier<CSkeletonSegmentSet>(skel, clist, plist)
+{
+  if(oneNode || twoNodes) {
+    // Find all segments of the selected nodes
+    CSkeletonSegmentSet allSegs;
+    const CSkeletonSelectableSet *others = otherTracker->get();
+    for(const CSkeletonSelectable *other : *others) {
+      const CSkeletonNode *node = dynamic_cast<const CSkeletonNode*>(other);
+      CSkeletonSegmentSet nodesegs;
+      skeleton->getNodeSegments(node, nodesegs);
+      allSegs.insert(nodesegs.begin(), nodesegs.end());
+    }
+    // Pick out the segments with the desired number of selected
+    // nodes.  They all have either one or two.
+    for(CSkeletonSegment *segment : allSegs) {
+      int nsel = 0;
+      if(segment->getNode(0)->isSelected()) nsel = 1;
+      if(segment->getNode(1)->isSelected()) nsel += 1;
+      if((nsel == 1 && oneNode) || (nsel == 2 && twoNodes))
+	selectedObjects.insert(segment);
+    }
+  }
+  else {
+    // Select segments with zero selected nodes.  otherTracker is
+    // useless.  Just look at all segments in the Skeleton.
+    for(CSkeletonSegmentIterator s=skeleton->beginSegments();
+	s!=skeleton->endSegments(); ++s)
+      {
+	CSkeletonSegment *segment = (*s).second;
+	if(!segment->getNode(0)->isSelected() &&
+	   !segment->getNode(1)->isSelected())
+	  selectedObjects.insert(segment);
+      }
+  }
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+InternalBoundarySegmentsCourier::InternalBoundarySegmentsCourier(
+						 const CSkeletonBase *skel,
+						 CSelectionTrackerVector *clist,
+						 CSelectionTrackerVector *plist)
+  : BulkSkelSelCourier<CSkeletonSegmentSet>(skel, clist, plist)
+{
+  // Internal boundary segments are the segments of the internal
+  // boundary faces, which are faces whose elements have different
+  // categories.
+  CSkeletonFaceSet faces = internalBoundaryFaces(skeleton);
+  for(CSkeletonFace *face : faces) {
+    for(int i=0; i<face->nnodes(); i++)
+      selectedObjects.insert(face->getSegment(skeleton, i));
+  }
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+EdgeBoundaryCourier::EdgeBoundaryCourier(const CSkeletonBase *skel,
+					 const CSkeletonEdgeBoundary *bdy,
+					 CSelectionTrackerVector *clist,
+					 CSelectionTrackerVector *plist)
+  : SkeletonSelectionCourier(skel, clist, plist),
+    segments(bdy->getUnorientedSegments())
+{}
+
+EdgeBoundaryCourier::~EdgeBoundaryCourier() {
+  // getUnorientedSegments returns a new vector.
+  delete segments;
+}
+
+void EdgeBoundaryCourier::start() {
+  iter = segments->begin();
+  done_ = (iter == segments->end());
+}
+
+void EdgeBoundaryCourier::next() {
+  ++iter;
+  done_ = (iter == segments->end());
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+InhomogeneousSegmentCourier::InhomogeneousSegmentCourier(
+					     const CSkeletonBase *skel,
+					     double threshold,
+					     CSelectionTrackerVector *clist,
+					     CSelectionTrackerVector *plist)
+  : BulkSkelSelCourier<CSkeletonSegmentSet>(skel, clist, plist)
+{
+  for(CSkeletonSegmentIterator s=skeleton->beginSegments();
+      s!=skeleton->endSegments(); ++s)
+    {
+      CSkeletonSegment *segment = (*s).second;
+      if(segment->homogeneity(skeleton) < threshold)
+	selectedObjects.insert(segment);
+    }
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+RandomSegmentCourier::RandomSegmentCourier(const CSkeletonBase *skel,
+					   double prob,
+					   CSelectionTrackerVector *clist,
+					   CSelectionTrackerVector *plist)
+  : SkeletonSelectionCourier(skel, clist, plist),
+    probability(prob)
+{}
+
+void RandomSegmentCourier::start() {
+  iter = skeleton->beginSegments();
+  increment();
+}
+
+void RandomSegmentCourier::increment() {
+  while(iter != skeleton->endSegments() && rndm() >= probability)
+    ++iter;
+  done_ = (iter == skeleton->endSegments());
+}
+
+void RandomSegmentCourier::next() {
+  iter++;
+  increment();
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+//        Face Selection Couriers
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+AllFacesCourier::AllFacesCourier(const CSkeletonBase *skel,
+				 CSelectionTrackerVector *clist,
+				 CSelectionTrackerVector *plist)
+  : SkeletonSelectionCourier(skel, clist, plist)
+{}
+
+void AllFacesCourier::start() {
+  iter = skeleton->beginFaces();
+  done_ = (iter == skeleton->endFaces());
+}
+
+void AllFacesCourier::next() {
+  ++iter;
+  done_ = (iter == skeleton->endFaces());
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+//        Element Selection Couriers
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+
+AllElementsCourier::AllElementsCourier(const CSkeletonBase *skel,
+				       CSelectionTrackerVector *clist,
+				       CSelectionTrackerVector *plist)
+  : SkeletonSelectionCourier(skel, clist, plist)
+{}
+
+void AllElementsCourier::start() {
+  iter = skeleton->beginElements();
+  done_ = (iter == skeleton->endElements());
+}
+
+void AllElementsCourier::next() {
+  ++iter;
+  done_ = (iter == skeleton->endElements());
+}
 
 CategoryElementCourier::CategoryElementCourier(
-					       CSkeletonBase *skel,
+					       const CSkeletonBase *skel,
 					       int cat,
 					       CSelectionTrackerVector *clist,
 					       CSelectionTrackerVector *plist)
@@ -348,3 +738,24 @@ void CategoryElementCourier::next() {
   iter++;
   skipOthers();
 }
+
+
+// TODO:
+// Faces from elements
+// Faces from nodes
+// Faces from segments
+// Named boundary faces
+// Internal boundary faces
+// Faces by homogeneity (?)
+
+// Elements by material
+// Elements by homogeneity
+// Elements by shape energy
+// Illegal elements
+// Suspect elements
+// Elements from nodes
+// Elements from segments
+// Elements from faces
+// Expand element selection
+// Elements by pixel group
+

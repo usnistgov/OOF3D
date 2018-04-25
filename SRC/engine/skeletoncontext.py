@@ -47,15 +47,6 @@ class SkeletonContext(whoville.WhoDoUndo):
         # Who.__init__.  Probably a better solution using
         # RegisteredClasses could be found.
 
-        # Keep track of node/segment/element index data (in that
-        # order), so selectables can be uniquely identified within
-        # this context, independently of which skeleton they're in.
-        # This used to be done in the individual selectable classes,
-        # but for repeatability reasons, it's desirable to restart the
-        # indices in each context, ensuring that skeleton copies
-        # really are absolutely identical in every respect.
-        #self.next_indices = (0, 0, 0)
-
         if config.dimension() == 3:
             self.faceboundaries = utils.OrderedDict() 
         self.edgeboundaries = utils.OrderedDict() 

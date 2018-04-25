@@ -9,6 +9,7 @@
 # oof_manager@nist.gov. 
 
 from ooflib.SWIG.common import config
+from ooflib.SWIG.engine import skeletonselectioncourier
 from ooflib.common import debug
 from ooflib.common.IO import mainmenu
 from ooflib.engine import skeletonselmodebase
@@ -34,6 +35,7 @@ class ElementSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             modifierclass=skeletonselection.ElementSelectionModifier,
             modifierappliedsignal="element selection modified",
             changedselectionsignal="changed element selection",
+            allCourier = skeletonselectioncourier.AllElementsCourier,
             groupmenu=skeletongroupmenu.elementgroupmenu,
             materialsallowed = material.MATERIALTYPE_BULK)
     def getSelectionContext(self, skeletoncontext):
@@ -56,6 +58,7 @@ class NodeSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             modifierclass=skeletonselection.NodeSelectionModifier,
             modifierappliedsignal="node selection modified",
             changedselectionsignal="changed node selection",
+            allCourier = skeletonselectioncourier.AllNodesCourier,
             groupmenu=skeletongroupmenu.nodegroupmenu)
     def getSelectionContext(self, skeletoncontext):
         return skeletoncontext.nodeselection
@@ -75,6 +78,7 @@ class SegmentSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             modifierclass=skeletonselection.SegmentSelectionModifier,
             modifierappliedsignal="segment selection modified",
             changedselectionsignal="changed segment selection",
+            allCourier = skeletonselectioncourier.AllSegmentsCourier,
             groupmenu=skeletongroupmenu.segmentgroupmenu,
             ## Materials are *not* allowed to be assigned directly to
             ## segments, because segments aren't directed. Materials
@@ -99,6 +103,7 @@ class FaceSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             modifierclass=skeletonselection.FaceSelectionModifier,
             modifierappliedsignal="face selection modified",
             changedselectionsignal="changed face selection",
+            allCourier = skeletonselectioncourier.AllFacesCourier,
             groupmenu=skeletongroupmenu.facegroupmenu)
     def getSelectionContext(self, skeletoncontext):
         return skeletoncontext.faceselection

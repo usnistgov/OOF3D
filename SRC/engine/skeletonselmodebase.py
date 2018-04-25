@@ -28,6 +28,7 @@ class SkeletonSelectionMode:
     modes = []
     def __init__(self, name, methodclass, modifierclass,
                  modifierappliedsignal, changedselectionsignal, groupmenu,
+                 allCourier,
                  materialsallowed=None):
         self.name = name
 
@@ -51,6 +52,11 @@ class SkeletonSelectionMode:
         # groupmenu is the menu of commands for manipulating groups of
         # the object.
         self.groupmenu = groupmenu
+
+        # allCourier is a SkeletonSelectionCourier class that can be
+        # used to loop over all objects of this category in the
+        # Skeleton.
+        self.allCourier = allCourier
 
         # materialsallowed is either None or a MaterialType instance.
         # If not None, it indicates what kinds of material may be

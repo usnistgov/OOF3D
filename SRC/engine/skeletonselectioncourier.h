@@ -20,11 +20,11 @@ class CGroupTrackerBase;
 
 class SkeletonSelectionCourier {
 protected:
-  CSkeletonBase *skeleton;
+  const CSkeletonBase *skeleton;
   CSelectionTrackerVector clist, plist; // Trackers for the selection
   bool done_;
 public:
-  SkeletonSelectionCourier(CSkeletonBase*, CSelectionTrackerVector*,
+  SkeletonSelectionCourier(const CSkeletonBase*, CSelectionTrackerVector*,
 			   CSelectionTrackerVector*);
   virtual ~SkeletonSelectionCourier() {}
 
@@ -45,11 +45,14 @@ protected:
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// Generic couriers that work with any type of selectable skeleton
+// component.
+
 class SingleObjectCourier : public SkeletonSelectionCourier {
 private:
   CSkeletonSelectable *object;
 public:
-  SingleObjectCourier(CSkeletonBase*,
+  SingleObjectCourier(const CSkeletonBase*,
 		      CSkeletonSelectable*,
 		      CSelectionTrackerVector*, CSelectionTrackerVector*);
   virtual void start() { done_ = false; }
@@ -57,25 +60,45 @@ public:
   virtual void next() { done_ = true; }
 };
 
-// StupidCourier just carries in a list of objects.  It's stupid
-// because transmitting a list of objects from Python to C++ is what
-// the courier classes are meant to avoid, but sometimes there's no
-// choice.
+// BulkSkelSelCourier is a base class for any courier that can
+// compute and store all of the objects that it will iterate over in
+// its constructor.  TYPE should be CSkeletonSelectableSet,
+// CSkeletonNodeVector, or some such.
 
-class StupidCourier : public SkeletonSelectionCourier {
-private:
-  CSkeletonSelectableVector objects;
-  CSkeletonSelectableVector::iterator iter;
+template <class TYPE>
+class BulkSkelSelCourier : public SkeletonSelectionCourier {
+protected:
+  TYPE selectedObjects;
+  typename TYPE::iterator iter;
 public:
-  StupidCourier(CSkeletonBase*,
-		CSkeletonSelectableVector*,
-		CSelectionTrackerVector*, CSelectionTrackerVector*);
-  virtual void start();
-  virtual CSkeletonSelectable *currentObj() const { return *iter; }
-  virtual void next();
+  BulkSkelSelCourier(const CSkeletonBase *skel, CSelectionTrackerVector *clist,
+		      CSelectionTrackerVector *plist)
+    : SkeletonSelectionCourier(skel, clist, plist)
+  {}
+  virtual void start() {
+    iter = selectedObjects.begin();
+    done_ = (iter == selectedObjects.end()); 
+  }
+  virtual CSkeletonSelectable *currentObj() const {
+    return *iter;
+  }
+  virtual void next() {
+    ++iter;
+    done_ = (iter == selectedObjects.end());
+  }
+  
 };
 
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+// StupidCourier just carries in a list of objects.  It's stupid
+// because transmitting a list of objects from Python to C++ is what
+// the courier classes are meant to avoid.
+
+class StupidCourier : public BulkSkelSelCourier<CSkeletonSelectableVector> {
+public:
+  StupidCourier(const CSkeletonBase*,
+		CSkeletonSelectableVector*,
+		CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
 
 class SkeletonGroupCourier : public SkeletonSelectionCourier {
 private:
@@ -88,7 +111,7 @@ protected:
   virtual CSkeletonSelectable *currentObj() const { return *iter; }
   virtual void next();
 public:
-  SkeletonGroupCourier(CSkeletonBase*,
+  SkeletonGroupCourier(const CSkeletonBase*,
 		       const std::string&,
 		       const CGroupTrackerBase*,
 		       CSelectionTrackerVector*, CSelectionTrackerVector*);
@@ -96,32 +119,32 @@ public:
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// NodeSelection methods which compute and store a set of nodes in
-// their constructor can be derived from NodeSelectionCourier.
+// Node selection couriers
 
-class NodeSelectionCourier : public SkeletonSelectionCourier {
-protected:
-  CSkeletonNodeSet selectedNodes;
-  CSkeletonNodeSet::iterator iter;
+class AllNodesCourier : public SkeletonSelectionCourier {
+private:
+  CSkeletonNodeIterator iter;
 public:
-  NodeSelectionCourier(CSkeletonBase*, CSelectionTrackerVector*,
-		       CSelectionTrackerVector*);
+  AllNodesCourier(const CSkeletonBase*,
+		  CSelectionTrackerVector*, CSelectionTrackerVector*);
   virtual void start();
   virtual CSkeletonSelectable *currentObj() const { return *iter; }
   virtual void next();
 };
 
+
 // Intermediate base class for selecting Nodes from other kinds of
 // selections.
 
-class NodesFromOtherCourier : public NodeSelectionCourier {
+class NodesFromOtherCourier : public BulkSkelSelCourier<CSkeletonNodeSet> {
 protected:
   virtual CSkeletonNodeSet exteriorNodes() const = 0;
   CSkeletonNodeSet allNodes() const;
   std::string coverage;
   const CSelectionTracker *otherTracker;
 public:
-  NodesFromOtherCourier(CSkeletonBase*, const std::string*,
+  NodesFromOtherCourier(const CSkeletonBase*,
+			const std::string*, // coverage
 			const CSelectionTracker*,
 			CSelectionTrackerVector*,
 			CSelectionTrackerVector*);
@@ -133,7 +156,7 @@ class NodesFromElementsCourier : public NodesFromOtherCourier {
 private:
   virtual CSkeletonNodeSet exteriorNodes() const;
 public:
-  NodesFromElementsCourier(CSkeletonBase*,
+  NodesFromElementsCourier(const CSkeletonBase*,
 			   const std::string*,
 			   const CSelectionTracker*,
 			   CSelectionTrackerVector*,
@@ -144,30 +167,193 @@ class NodesFromFacesCourier : public NodesFromOtherCourier {
 private:
   virtual CSkeletonNodeSet exteriorNodes() const;
 public:
-  NodesFromFacesCourier(CSkeletonBase*,
+  NodesFromFacesCourier(const CSkeletonBase*,
 			const std::string*,
 			const CSelectionTracker*,
 			CSelectionTrackerVector*,
 			CSelectionTrackerVector*);
 };
 
-class NodesFromSegmentsCourier : public NodeSelectionCourier {
+class NodesFromSegmentsCourier : public BulkSkelSelCourier<CSkeletonNodeSet> {
 public:
-  NodesFromSegmentsCourier(CSkeletonBase*,
+  NodesFromSegmentsCourier(const CSkeletonBase*,
 			   const CSelectionTracker*,
 			   CSelectionTrackerVector*,
 			   CSelectionTrackerVector*);
 };
 
 
-class InternalBoundaryNodesCourier : NodeSelectionCourier {
+class InternalBoundaryNodesCourier
+  : public BulkSkelSelCourier<CSkeletonNodeSet> {
 public:
-  InternalBoundaryNodesCourier(CSkeletonBase*,
+  InternalBoundaryNodesCourier(const CSkeletonBase*,
 			       CSelectionTrackerVector*,
 			       CSelectionTrackerVector*);
 };
 
+class PointBoundaryCourier : public SkeletonSelectionCourier {
+private:
+  const CSkeletonNodeSet *nodes;
+  CSkeletonNodeSet::iterator iter;
+public:
+  PointBoundaryCourier(const CSkeletonBase*,
+		       const CSkeletonPointBoundary*,
+		       CSelectionTrackerVector*,
+		       CSelectionTrackerVector*);
+  virtual void start();
+  virtual CSkeletonSelectable *currentObj() const { return *iter; }
+  virtual void next();
+};
+
+class ExpandNodeSelectionCourier : BulkSkelSelCourier<CSkeletonNodeSet> {
+public:
+  ExpandNodeSelectionCourier(const CSkeletonBase*,
+			     const CSelectionTracker*,
+			     CSelectionTrackerVector*,
+			     CSelectionTrackerVector*);
+};
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Segment selection couriers
+
+class AllSegmentsCourier : public SkeletonSelectionCourier {
+private:
+  CSkeletonSegmentIterator iter;
+public:
+  AllSegmentsCourier(const CSkeletonBase*,
+		  CSelectionTrackerVector*, CSelectionTrackerVector*);
+  virtual void start();
+  virtual CSkeletonSelectable *currentObj() const { return (*iter).second; }
+  virtual void next();
+};
+
+class SegmentsFromOtherCourier
+  : public BulkSkelSelCourier<CSkeletonSegmentSet> {
+protected:
+  virtual CSkeletonSegmentSet exteriorSegments() const = 0;
+  virtual CSkeletonSegmentSet allSegments() const = 0;
+  std::string coverage;
+  const CSelectionTracker *otherTracker;
+public:
+  SegmentsFromOtherCourier(const CSkeletonBase*,
+			   const std::string*, // coverage
+			   const CSelectionTracker*,
+			   CSelectionTrackerVector*,
+			   CSelectionTrackerVector*);
+  virtual void start();
+  ~SegmentsFromOtherCourier() {}
+};
+
+class SegmentsFromElementsCourier : public SegmentsFromOtherCourier {
+private:
+  virtual CSkeletonSegmentSet exteriorSegments() const;
+  virtual CSkeletonSegmentSet allSegments() const;
+public:
+  SegmentsFromElementsCourier(const CSkeletonBase*,
+			      const std::string*, // coverage
+			      const CSelectionTracker*,
+			      CSelectionTrackerVector*,
+			      CSelectionTrackerVector*);
+};
+
+class SegmentsFromFacesCourier : public SegmentsFromOtherCourier {
+private:
+  virtual CSkeletonSegmentSet exteriorSegments() const;
+  virtual CSkeletonSegmentSet allSegments() const;
+public:
+  SegmentsFromFacesCourier(const CSkeletonBase*,
+			   const std::string*, // coverage
+			   const CSelectionTracker*, // selected faces
+			   CSelectionTrackerVector*,
+			   CSelectionTrackerVector*);
+};
+
+class SegmentsFromNodesCourier : public BulkSkelSelCourier<CSkeletonSegmentSet>
+{
+public:
+  SegmentsFromNodesCourier(const CSkeletonBase*,
+			   bool, bool,
+			   const CSelectionTracker*,
+			   CSelectionTrackerVector*,
+			   CSelectionTrackerVector*);
+};
+
+class InternalBoundarySegmentsCourier
+  : public BulkSkelSelCourier<CSkeletonSegmentSet>
+{
+public:
+  InternalBoundarySegmentsCourier(const CSkeletonBase*,
+				  CSelectionTrackerVector*,
+				  CSelectionTrackerVector*);
+};
+
+class EdgeBoundaryCourier : public SkeletonSelectionCourier {
+private:
+  const CSkeletonSegmentVector *segments;
+  CSkeletonSegmentVector::const_iterator iter;
+public:
+  EdgeBoundaryCourier(const CSkeletonBase*,
+		      const CSkeletonEdgeBoundary*,
+		      CSelectionTrackerVector*,
+		      CSelectionTrackerVector*);
+  ~EdgeBoundaryCourier();
+  virtual void start();
+  virtual CSkeletonSelectable *currentObj() const { return *iter; }
+  virtual void next();
+};
+
+class InhomogeneousSegmentCourier
+  : public BulkSkelSelCourier<CSkeletonSegmentSet>
+{
+public:
+  InhomogeneousSegmentCourier(const CSkeletonBase*, double,
+			     CSelectionTrackerVector*,
+			     CSelectionTrackerVector*);
+};
+
+class RandomSegmentCourier : public SkeletonSelectionCourier {
+private:
+  CSkeletonSegmentIterator iter;
+  const double probability;
+  void increment();
+public:
+  RandomSegmentCourier(const CSkeletonBase*, double,
+		       CSelectionTrackerVector*, CSelectionTrackerVector*);
+  virtual void start();
+  virtual CSkeletonSelectable *currentObj() const { return (*iter).second; }
+  virtual void next();
+};
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Face selection couriers
+
+class AllFacesCourier : public SkeletonSelectionCourier {
+private:
+  CSkeletonFaceIterator iter;
+public:
+  AllFacesCourier(const CSkeletonBase*,
+		  CSelectionTrackerVector*, CSelectionTrackerVector*);
+  virtual void start();
+  virtual CSkeletonSelectable *currentObj() const { return (*iter).second; }
+  virtual void next();
+};
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Element selection couriers
+
+class AllElementsCourier : public SkeletonSelectionCourier {
+private:
+  CSkeletonElementIterator iter;
+public:
+  AllElementsCourier(const CSkeletonBase*,
+		  CSelectionTrackerVector*, CSelectionTrackerVector*);
+  virtual void start();
+  virtual CSkeletonSelectable *currentObj() const { return *iter; }
+  virtual void next();
+};
 
 // CategoryElementCourier selects all elements of a given category.
 
@@ -177,7 +363,7 @@ private:
   CSkeletonElementIterator iter;
   void skipOthers();
 public:
-  CategoryElementCourier(CSkeletonBase*, int,
+  CategoryElementCourier(const CSkeletonBase*, int,
 			 CSelectionTrackerVector*, CSelectionTrackerVector*);
   virtual void start();
   virtual CSkeletonSelectable *currentObj() const { return *iter; }

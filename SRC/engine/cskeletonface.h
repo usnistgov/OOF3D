@@ -61,6 +61,8 @@ public:
   const CSkeletonElement *get_other_element(const CSkeletonBase*,
 					    const CSkeletonElement*) const;
 
+  CSkeletonSegment *getSegment(const CSkeletonBase*, int) const;
+
   bool contains(const Coord&) const;
   virtual void print(std::ostream&) const;
 
