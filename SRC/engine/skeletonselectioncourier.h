@@ -40,7 +40,9 @@ protected:
   virtual void start() = 0;
   virtual CSkeletonSelectable *currentObj() const = 0;
   virtual void next() = 0;
-  bool done() const { return done_; }
+  virtual bool done() const { return done_; }
+
+  friend class IntersectionCourier;
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -115,6 +117,21 @@ public:
 		       const std::string&,
 		       const CGroupTrackerBase*,
 		       CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class IntersectionCourier : public SkeletonSelectionCourier {
+private:
+  void advance();
+  CSkeletonSelectableSet oldSelection;
+  CSkeletonSelectableSet courierObjs;
+  CSkeletonSelectableSet::iterator oldSelIter;
+  CSkeletonSelectableSet::iterator courierIter;
+public:
+  IntersectionCourier(CSelectionTracker*, SkeletonSelectionCourier*);
+  virtual void start();
+  virtual CSkeletonSelectable *currentObj() const { return *courierIter; }
+  virtual void next();
+  virtual bool done() const;
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -316,7 +333,7 @@ class RandomSegmentCourier : public SkeletonSelectionCourier {
 private:
   CSkeletonSegmentIterator iter;
   const double probability;
-  void increment();
+  void advance();
 public:
   RandomSegmentCourier(const CSkeletonBase*, double,
 		       CSelectionTrackerVector*, CSelectionTrackerVector*);

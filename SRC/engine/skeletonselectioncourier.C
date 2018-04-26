@@ -155,6 +155,52 @@ SingleObjectCourier::SingleObjectCourier(const CSkeletonBase *skeleton,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// IntersectionCourier loops over the intersection of the current
+// selection (give as a CSelectionTracker) and the objects defined by
+// the given courier.
+
+IntersectionCourier::IntersectionCourier(CSelectionTracker *selection,
+					 SkeletonSelectionCourier *courier)
+  : SkeletonSelectionCourier(courier->skeleton, &courier->clist,
+			     &courier->plist),
+    oldSelection(*selection->get()) // copy!
+{
+  courier->start();
+  while(!courier->done()) {
+    courierObjs.insert(courier->currentObj());
+    courier->next();
+  }
+}
+
+bool IntersectionCourier::done() const {
+  return (oldSelIter == oldSelection.end() || courierIter == courierObjs.end());
+}
+
+void IntersectionCourier::start() {
+  oldSelIter = oldSelection.begin();
+  courierIter = courierObjs.begin();
+  advance();
+}
+
+void IntersectionCourier::next() {
+  ++oldSelIter;
+  ++courierIter;
+  advance();
+}
+
+void IntersectionCourier::advance() {
+  while(!done()) {
+    if(*oldSelIter == *courierIter)
+      return;
+    if(*oldSelIter < *courierIter)
+      ++oldSelIter;
+    else if(*courierIter < *oldSelIter)
+      ++courierIter;
+  }
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 // StupidCourier copies a list of objects from Python to C++.  It's
 // stupid because the whole point of the couriers is to avoid doing
 // just that. It's useful for testing, and in hypothetical situations
@@ -656,10 +702,10 @@ RandomSegmentCourier::RandomSegmentCourier(const CSkeletonBase *skel,
 
 void RandomSegmentCourier::start() {
   iter = skeleton->beginSegments();
-  increment();
+  advance();
 }
 
-void RandomSegmentCourier::increment() {
+void RandomSegmentCourier::advance() {
   while(iter != skeleton->endSegments() && rndm() >= probability)
     ++iter;
   done_ = (iter == skeleton->endSegments());
@@ -667,7 +713,7 @@ void RandomSegmentCourier::increment() {
 
 void RandomSegmentCourier::next() {
   iter++;
-  increment();
+  advance();
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

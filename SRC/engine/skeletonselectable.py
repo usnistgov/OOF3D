@@ -12,6 +12,7 @@ from ooflib.SWIG.common import config
 from ooflib.SWIG.common import lock
 from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.engine import cskeletonselectable
+from ooflib.SWIG.engine import skeletonselectioncourier
 from ooflib.common import debug
 from ooflib.common import ringbuffer
 from ooflib.common import utils
@@ -183,6 +184,8 @@ class SelectionBase:
     def retrieve(self):
         # self.stack.current().selected is a WeakKeyDict of
         # SelectionTrackers, keyed by Skeleton.
+        # SelectionTracker.get() returns a CSkeletonSelectableSet*
+        # which is typemapped to a list by SWIG.
         return \
          self.stack.current().selected[self.skeletoncontext.getObject()].get()
 
@@ -326,6 +329,10 @@ class Selection(SelectionBase):
         courier = self.mode().allCourier(self.skeletoncontext.getObject(),
                                          clist, plist)
         courier.toggle()
+
+    def intersectionCourier(self, courier):
+        tracker = self.currentSelectionTracker()
+        return skeletonselectioncourier.IntersectionCourier(tracker, courier)
             
     def clear(self):
         # "Clear" needs to really clear the selection in all
@@ -353,6 +360,8 @@ class Selection(SelectionBase):
 # signals.  They are also distinguished by their method for getting
 # all of the objects in the current skeleton, which is needed by
 # "invert".
+
+## TODO: DO we need get_objects() and num_objects() any more?
 
 class ElementSelection(Selection):
     def num_objects(self):

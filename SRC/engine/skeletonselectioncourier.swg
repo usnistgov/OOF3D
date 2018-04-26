@@ -48,6 +48,11 @@ public:
 		       CSelectionTrackerVector*, CSelectionTrackerVector*);
 };
 
+class IntersectionCourier : public SkeletonSelectionCourier {
+public:
+  IntersectionCourier(CSelectionTracker*, SkeletonSelectionCourier*);
+};
+
 //---------
 
 class AllNodesCourier : public SkeletonSelectionCourier {
