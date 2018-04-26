@@ -27,7 +27,11 @@
 class PixelSelectionCourier {
 public:
   %addmethods {
-    %new const string *repr() {	// for debugging
+    // TODO: Putting the __repr__ here doesn't work. SWIG will
+    // generate a new (and nearly useless) __repr__for each subclass
+    // automatically.  This needs to be copied into each subclass to
+    // prevent SWIG from redefining it.
+    %new const string *__repr__() {	// for debugging
       return new std::string(to_string(*self));
     }
   }
@@ -82,6 +86,11 @@ class IntersectSelection : public PixelSelectionCourier {
 public:
   IntersectSelection(CMicrostructure*, PixelSet*, PixelSelectionCourier*);
   ~IntersectSelection();
+  %addmethods {
+    %new const string *__repr__() {
+      return new std::string(to_string(*self));
+    }
+  }
 };
 
 class DespeckleSelection : public PixelSelectionCourier {

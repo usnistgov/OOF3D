@@ -36,14 +36,12 @@ class Toggle(SelectionOperator):
 
 class Intersect(SelectionOperator):
     def operate(self, selection, courier):
-        # The selection needs to be cloned before calling
-        # clearAndSelect, or else it will be empty by the time the
-        # intersection is actually computed.  The clone has to be
-        # stored in a variable here, so that it won't be garbage
-        # collected until the calculation is complete.
-        selgrp = selection.getSelectionAsGroup().clone()
-        selection.clearAndSelect(
-            selection.intersectionCourier(selgrp, courier))
+        # selection.intersectionCourier returns a courier that
+        # computes the intersection of courier's pixels and the
+        # current selection.  It must copy the current selection,
+        # because clearAndSelect will clear the selection before
+        # using the courier.
+        selection.clearAndSelect(selection.intersectionCourier(courier))
 
 registeredclass.Registration(
     "Select",

@@ -72,7 +72,7 @@ PixelGroup::PixelGroup(const std::string &name, const ICoord *geometry,
 
 PixelSet::PixelSet(const PixelSet &other)
   : id_(ngroups++),
-    weeded(false),
+    weeded(other.weeded),
     geometry(other.geometry),
     microstructure(other.microstructure)
 {

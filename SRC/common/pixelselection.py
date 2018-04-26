@@ -88,14 +88,15 @@ class PixelSelectionContext(whoville.WhoDoUndo):
         if obj is not None:
             return self.getObject().getBounds()
 
-    def intersectionCourier(self, group, courier):
+    def intersectionCourier(self, courier):
         # intersectionCourier is used by selectionoperators.Intersect,
         # which needs to fetch a different kind of IntersectSelection
         # courier when selecting different kinds of objects.  It
         # returns a courier that computes the intersection of the
         # given group with selection represented by the given courier.
+        currentPxls = self.getSelectionAsGroup()
         return pixelselectioncourier.IntersectSelection(
-            self.getMicrostructure(), group, courier)
+            self.getMicrostructure(), currentPxls, courier)
 
 ##################
     

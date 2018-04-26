@@ -166,7 +166,7 @@ public:
 // Intersect
 class IntersectSelection : public PixelSelectionCourier {
 private:
-  const PixelSet *selpix;
+  const PixelSet selpix;
   PixelSet courpix;
   PixelSelectionCourier *courier;
   ICoordVector::const_iterator sel_iter;

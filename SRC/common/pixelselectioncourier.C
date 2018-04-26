@@ -312,10 +312,16 @@ IntersectSelection::IntersectSelection(CMicrostructure *ms,
 				       const PixelSet *selpix,
 				       PixelSelectionCourier *courier)
   : PixelSelectionCourier(ms),
-    selpix(selpix),
+    selpix(*selpix),		// copy!
     courpix(&ms->sizeInPixels(), ms),
     courier(courier)
-{}
+{
+  // selpix contains the currently selected pixels at the time that
+  // this courier is constructed.  The pixels must be copied, because
+  // this courier may be being used in
+  // PixelSelectionContext.clearAndSelect(), which clears the
+  // selection before applying the courier.
+}
 
 void IntersectSelection::start() {
   // Use the passed-in courier to create a PixelSet to loop over.  We
@@ -323,6 +329,7 @@ void IntersectSelection::start() {
   // be in order.
   //* TODO OPT: This involves a lot of extra copying, especially creating
   //* the intermediate ICoordVector.  Fix that.
+
   ICoordVector pxls;
   courpix.clear();
   courier->start();
@@ -330,14 +337,14 @@ void IntersectSelection::start() {
     pxls.push_back(courier->currentPoint());
     courier->next();
   }
-  courpix.add(&pxls);
+  courpix.addWithoutCheck(&pxls);
 
-  sel_iter = selpix->members()->begin();
+  // Calling members() sorts the voxels and removes duplicates.
+  sel_iter = selpix.members()->begin();
   cour_iter = courpix.members()->begin();
-  if(selpix->members()->empty() || courpix.members()->empty())
+  if(selpix.members()->empty() || courpix.members()->empty())
     done_ = true;
-  else if (!(*sel_iter == *cour_iter))
-    next();
+  advance();
 }
   
 ICoord IntersectSelection::currentPoint() const {
@@ -345,27 +352,26 @@ ICoord IntersectSelection::currentPoint() const {
 }
 
 void IntersectSelection::advance() {
-  if ( (sel_iter == --selpix->members()->end()) ||
-       (cour_iter == --courpix.members()->end()) ) {
-    done_ = true;
-  }
-  else {
-    if (*sel_iter == *cour_iter) {
-      ++sel_iter;
-      ++cour_iter;
+  // Move the iterators until they point to the same pixel, unless the
+  // already do.  They're iterating over sorted lists, so always move
+  // the iterator that's pointing to the "smaller" pixel.
+  while(!(sel_iter == selpix.members()->end()) &&
+	!(cour_iter == courpix.members()->end()))
+    {
+      if(*sel_iter == *cour_iter)
+	return;
+      if(*sel_iter < *cour_iter)
+	++sel_iter;
+      else if(*cour_iter < *sel_iter)
+	++cour_iter;
     }
-    else if (*sel_iter < *cour_iter)
-      ++sel_iter;
-    else if (*cour_iter < *sel_iter)
-      ++cour_iter;
-  }
+  done_ = true;
 }
 
 void IntersectSelection::next() {
+  ++sel_iter;
+  ++cour_iter;
   advance();
-  while (!(*sel_iter == *cour_iter) && !done_) {
-    advance();
-  }
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -544,7 +550,7 @@ void GroupSelection::print(std::ostream &os) const {
 }
 
 void IntersectSelection::print(std::ostream &os) const {
-  os << "IntersectSelection()";
+  os << "IntersectSelection(" << this << ", " << selpix.len() << ")";
 }
 
 void DespeckleSelection::print(std::ostream &os) const {
