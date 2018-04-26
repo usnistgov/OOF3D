@@ -700,41 +700,53 @@ FaceSelectionModRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class FaceFromSelectedElements(FaceSelectionModifier):
-    def __init__(self, coverage):
+    def __init__(self, coverage, operator):
         self.coverage = coverage
+        self.operator = operator
+
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.FacesFromElementsCourier(
+            skelctxt.getObject(),
+            self.coverage,
+            skelctxt.elementselection.currentSelectionTracker(),
+            clist, plist)
+        self.operator.operate(selection, courier)
     
-    def select(self, skeleton, selection):
-        if self.coverage == 'All':
-            selected = self.getAllFaces(skeleton)
-        elif self.coverage == 'Exterior':
-            selected = self.getExteriorFaces(skeleton)
-        else:                   # self.coverage == 'Interior'
-            selected = self.getInternalFaces(skeleton)
-        selection.start()
-        selection.clear()
-        selection.select(selected)
+    # def select(self, skeleton, selection):
+    #     if self.coverage == 'All':
+    #         selected = self.getAllFaces(skeleton)
+    #     elif self.coverage == 'Exterior':
+    #         selected = self.getExteriorFaces(skeleton)
+    #     else:                   # self.coverage == 'Interior'
+    #         selected = self.getInternalFaces(skeleton)
+    #     selection.start()
+    #     selection.clear()
+    #     selection.select(selected)
 
-    def getAllFaces(self, skelctxt):
-        faces = set()
-        skel = skelctxt.getObject()
-        for element in skelctxt.elementselection.retrieve():
-            faces.update(skel.getElementFaces(element))
-        return faces
+    # def getAllFaces(self, skelctxt):
+    #     faces = set()
+    #     skel = skelctxt.getObject()
+    #     for element in skelctxt.elementselection.retrieve():
+    #         faces.update(skel.getElementFaces(element))
+    #     return faces
 
-    def getExteriorFaces(self, skelctxt):
-        return skelctxt.exteriorFacesOfSelectedElements()
+    # def getExteriorFaces(self, skelctxt):
+    #     return skelctxt.exteriorFacesOfSelectedElements()
 
-    def getInternalFaces(self, skelctxt):
-        allfaces = self.getAllFaces(skelctxt)
-        bdyfaces = self.getExteriorFaces(skelctxt)
-        return allfaces - bdyfaces
+    # def getInternalFaces(self, skelctxt):
+    #     allfaces = self.getAllFaces(skelctxt)
+    #     bdyfaces = self.getExteriorFaces(skelctxt)
+    #     return allfaces - bdyfaces
 
 FaceSelectionModRegistration(
     'Select from Selected Elements',
     FaceFromSelectedElements,
     ordering=_selectFromElementsOrdering,
     params = [
-        enum.EnumParameter('coverage', ooflib.engine.coverage.Coverage)],
+        enum.EnumParameter('coverage', ooflib.engine.coverage.Coverage),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     tip="Select the faces of the selected elements.")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#

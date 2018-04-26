@@ -179,4 +179,11 @@ public:
 			 CSelectionTrackerVector*, CSelectionTrackerVector*);
 };
 
+class FacesFromElementsCourier : public SkeletonSelectionCourier {
+public:
+  FacesFromElementsCourier(CSkeletonBase*, std::string *enum2string,
+			   CSelectionTracker*,
+			   CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
 #endif // SKELETONSELECTIONCOURIER_SWG

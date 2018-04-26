@@ -357,6 +357,18 @@ public:
   virtual void next();
 };
 
+class FacesFromElementsCourier : public BulkSkelSelCourier<CSkeletonFaceSet> {
+protected:
+  CSkeletonFaceSet allFaces(const CSelectionTracker*) const;
+  CSkeletonFaceSet exteriorFaces(const CSelectionTracker*) const;
+public:
+  FacesFromElementsCourier(const CSkeletonBase*,
+			   const std::string*,
+			   const CSelectionTracker*,
+			   CSelectionTrackerVector*,
+			   CSelectionTrackerVector*);
+};
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // Element selection couriers

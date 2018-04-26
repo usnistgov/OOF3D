@@ -737,6 +737,54 @@ void AllFacesCourier::next() {
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+FacesFromElementsCourier::FacesFromElementsCourier(
+				   const CSkeletonBase *skel,
+				   const std::string *coverage,
+				   const CSelectionTracker *elemTracker,
+				   CSelectionTrackerVector *clist,
+				   CSelectionTrackerVector *plist)
+  : BulkSkelSelCourier<CSkeletonFaceSet>(skel, clist, plist)
+{
+  if(*coverage == std::string("Exterior"))
+    selectedObjects = exteriorFaces(elemTracker);
+  else if(*coverage == std::string("All"))
+    selectedObjects = allFaces(elemTracker);
+  else {
+    CSkeletonFaceSet allfaces = allFaces(elemTracker);
+    CSkeletonFaceSet extfaces = exteriorFaces(elemTracker);
+    std::set_difference(allfaces.begin(), allfaces.end(),
+			extfaces.begin(), extfaces.end(),
+			std::inserter(selectedObjects, selectedObjects.end()));
+  }
+}
+
+CSkeletonFaceSet FacesFromElementsCourier::exteriorFaces(
+				 const CSelectionTracker *tracker)
+  const
+{
+  return exteriorFacesOfElements(skeleton, tracker->get());
+}
+
+CSkeletonFaceSet FacesFromElementsCourier::allFaces(
+					    const CSelectionTracker *tracker)
+  const
+{
+  CSkeletonFaceSet faces;
+  const CSkeletonSelectableSet *elements = tracker->get();
+  for(const CSkeletonSelectable *e : *elements) {
+    const CSkeletonElement *el = dynamic_cast<const CSkeletonElement*>(e);
+    for(int i=0; i<4; i++) {
+      const CSkeletonMultiNodeKey fkey = el->getFaceKey(i);
+      CSkeletonFace *face = skeleton->getFace(fkey);
+      faces.insert(face);
+    }
+  }
+  return faces;
+}
+
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 //        Element Selection Couriers
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
