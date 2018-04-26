@@ -351,47 +351,28 @@ class Selection(SelectionBase):
         ## TODO OPT: When a new Skeleton is created, this routine is
         ## called once for each type of selectable, resulting in more
         ## redraws than are strictly necessary. "redraw" should be
-        ## sent only from the calling menuitem.
+        ## sent only from the calling menuitem.  OTOH, extra redraws
+        ## are cheap.
         switchboard.notify("redraw")
 
 # Subclasses of Selection must have a "mode" function that returns the
 # corresponding SkeletonSelectionMode object, so that the generic
 # selection manipulation routines can send the correct switchboard
-# signals.  They are also distinguished by their method for getting
-# all of the objects in the current skeleton, which is needed by
-# "invert".
-
-## TODO: DO we need get_objects() and num_objects() any more?
+# signals.
 
 class ElementSelection(Selection):
-    def num_objects(self):
-        return self.skeletoncontext.getObject().nelements()
-    def get_objects(self):
-        return self.skeletoncontext.getObject().getElements()
     def mode(self):
         return skeletonselmodebase.getMode("Element")
 
 class SegmentSelection(Selection):
-    def num_objects(self):
-        return self.skeletoncontext.getObject().nsegments()
-    def get_objects(self):
-        return self.skeletoncontext.getObject().getSegments()
     def mode(self):
         return skeletonselmodebase.getMode("Segment")
 
 class FaceSelection(Selection):
-    def num_objects(self):
-        return self.skeletoncontext.getObject().nfaces()
-    def get_objects(self):
-        return self.skeletoncontext.getObject().getFaces()
     def mode(self):
         return skeletonselmodebase.getMode("Face")
 
 class NodeSelection(Selection):
-    def num_objects(self):
-        return self.skeletoncontext.getObject().nnodes()
-    def get_objects(self):
-        return self.skeletoncontext.getObject().getNodes()
     def mode(self):
         return skeletonselmodebase.getMode("Node")
 
