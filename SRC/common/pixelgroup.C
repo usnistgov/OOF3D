@@ -181,6 +181,11 @@ void PixelSet::add(const ICoord &pixel) {
   }
 }
 
+void PixelSet::addWithoutCheck(const ICoord &pixel) {
+  members_.push_back(pixel);
+  weeded = false;
+}
+
 void PixelGroup::add(const ICoord &pixel) {
   PixelSet::add(pixel);
   AttributeVectorMap avm;

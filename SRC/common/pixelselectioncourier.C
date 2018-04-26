@@ -327,17 +327,12 @@ void IntersectSelection::start() {
   // Use the passed-in courier to create a PixelSet to loop over.  We
   // could use the courier itself, except that its members might not
   // be in order.
-  //* TODO OPT: This involves a lot of extra copying, especially creating
-  //* the intermediate ICoordVector.  Fix that.
-
-  ICoordVector pxls;
   courpix.clear();
   courier->start();
   while(!courier->done()) {
-    pxls.push_back(courier->currentPoint());
+    courpix.addWithoutCheck(courier->currentPoint());
     courier->next();
   }
-  courpix.addWithoutCheck(&pxls);
 
   // Calling members() sorts the voxels and removes duplicates.
   sel_iter = selpix.members()->begin();
