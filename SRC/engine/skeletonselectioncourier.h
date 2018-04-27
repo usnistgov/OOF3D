@@ -17,6 +17,7 @@
 
 class CSkeletonBase;
 class CGroupTrackerBase;
+class Material;
 
 class SkeletonSelectionCourier {
 protected:
@@ -239,14 +240,15 @@ private:
   CSkeletonSegmentIterator iter;
 public:
   AllSegmentsCourier(const CSkeletonBase*,
-		  CSelectionTrackerVector*, CSelectionTrackerVector*);
+		     CSelectionTrackerVector*, CSelectionTrackerVector*);
   virtual void start();
   virtual CSkeletonSelectable *currentObj() const { return (*iter).second; }
   virtual void next();
 };
 
 class SegmentsFromOtherCourier
-  : public BulkSkelSelCourier<CSkeletonSegmentSet> {
+  : public BulkSkelSelCourier<CSkeletonSegmentSet>
+{
 protected:
   virtual CSkeletonSegmentSet exteriorSegments() const = 0;
   virtual CSkeletonSegmentSet allSegments() const = 0;
@@ -369,6 +371,47 @@ public:
 			   CSelectionTrackerVector*);
 };
 
+class FacesFromNodesCourier : public BulkSkelSelCourier<CSkeletonFaceSet> {
+public:
+  FacesFromNodesCourier(const CSkeletonBase*,
+			int,
+			const CSelectionTracker*,
+			CSelectionTrackerVector*,
+			CSelectionTrackerVector*);
+};
+
+class FacesFromSegmentsCourier : public BulkSkelSelCourier<CSkeletonFaceSet> {
+public:
+  FacesFromSegmentsCourier(const CSkeletonBase*,
+			   int,
+			   const CSelectionTracker*,
+			   CSelectionTrackerVector*,
+			   CSelectionTrackerVector*);
+};
+
+class FaceBoundaryCourier : public SkeletonSelectionCourier {
+private:
+  const CSkeletonFaceVector *faces;
+  CSkeletonFaceVector::const_iterator iter;
+public:
+  FaceBoundaryCourier(const CSkeletonBase*,
+		      const CSkeletonFaceBoundary*,
+		      CSelectionTrackerVector*,
+		      CSelectionTrackerVector*);
+  ~FaceBoundaryCourier();
+  virtual void start();
+  virtual CSkeletonSelectable *currentObj() const { return *iter; }
+  virtual void next();
+};
+
+class InternalBoundaryFacesCourier : public BulkSkelSelCourier<CSkeletonFaceSet>
+{
+public:
+  InternalBoundaryFacesCourier(const CSkeletonBase*,
+			       CSelectionTrackerVector*,
+			       CSelectionTrackerVector*);
+};
+  
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // Element selection couriers
@@ -384,19 +427,125 @@ public:
   virtual void next();
 };
 
-// CategoryElementCourier selects all elements of a given category.
+// ConditionalElementCourier is an intermediate base class for looping
+// over elements that meet a simply stated criterion.
 
-class CategoryElementCourier : public SkeletonSelectionCourier {
+class ConditionalElementCourier : public SkeletonSelectionCourier {
 private:
-  int category;
   CSkeletonElementIterator iter;
-  void skipOthers();
+  void advance();
+protected:
+  virtual bool includeElement(const CSkeletonElement*) const = 0;
 public:
-  CategoryElementCourier(const CSkeletonBase*, int,
-			 CSelectionTrackerVector*, CSelectionTrackerVector*);
+  ConditionalElementCourier(const CSkeletonBase*,
+			    CSelectionTrackerVector*, CSelectionTrackerVector*);
   virtual void start();
   virtual CSkeletonSelectable *currentObj() const { return *iter; }
   virtual void next();
+};
+
+// CategoryElementCourier selects all elements of a given category.
+
+class CategoryElementCourier : public ConditionalElementCourier {
+private:
+  int category;
+public:
+  CategoryElementCourier(const CSkeletonBase*, int,
+			 CSelectionTrackerVector*, CSelectionTrackerVector*);
+  virtual bool includeElement(const CSkeletonElement*) const;
+};
+
+class MaterialElementCourier : public ConditionalElementCourier {
+private:
+  const Material *material;
+public:
+  MaterialElementCourier(const CSkeletonBase*, const Material*,
+			 CSelectionTrackerVector*, CSelectionTrackerVector*);
+  virtual bool includeElement(const CSkeletonElement*) const;
+};
+
+class NoMaterialElementCourier : public ConditionalElementCourier {
+public:
+  NoMaterialElementCourier(const CSkeletonBase*,
+			   CSelectionTrackerVector*, CSelectionTrackerVector*);
+  virtual bool includeElement(const CSkeletonElement*) const;
+};
+
+class AnyMaterialElementCourier : public ConditionalElementCourier {
+public:
+  AnyMaterialElementCourier(const CSkeletonBase*,
+			    CSelectionTrackerVector*, CSelectionTrackerVector*);
+  virtual bool includeElement(const CSkeletonElement*) const;
+};
+
+class ElementHomogeneityCourier : public ConditionalElementCourier {
+private:
+  double min_homogeneity, max_homogeneity;
+public:
+  ElementHomogeneityCourier(const CSkeletonBase*, double, double,
+			    CSelectionTrackerVector*, CSelectionTrackerVector*);
+  virtual bool includeElement(const CSkeletonElement*) const;
+};
+
+class ElementShapeEnergyCourier : public ConditionalElementCourier {
+private:
+  double min_energy, max_energy;
+public:
+  ElementShapeEnergyCourier(const CSkeletonBase*, double, double,
+			    CSelectionTrackerVector*, CSelectionTrackerVector*);
+  virtual bool includeElement(const CSkeletonElement*) const;
+};
+
+class IllegalElementCourier : public ConditionalElementCourier {
+public:
+  IllegalElementCourier(const CSkeletonBase*,
+			CSelectionTrackerVector*, CSelectionTrackerVector*);
+  virtual bool includeElement(const CSkeletonElement*) const;
+};
+
+class SuspectElementCourier : public ConditionalElementCourier {
+public:
+  SuspectElementCourier(const CSkeletonBase*,
+			CSelectionTrackerVector*, CSelectionTrackerVector*);
+  virtual bool includeElement(const CSkeletonElement*) const;
+};
+
+class ElementsFromNodesCourier
+  : public BulkSkelSelCourier<CSkeletonElementSet>
+{
+public:
+  ElementsFromNodesCourier(const CSkeletonBase*, int,
+			  const CSelectionTracker*,
+			  CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class ElementsFromSegmentsCourier
+  : public BulkSkelSelCourier<CSkeletonElementSet>
+{
+public:
+  ElementsFromSegmentsCourier(const CSkeletonBase*, int,
+			  const CSelectionTracker*,
+			  CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class ElementsFromFacesCourier
+  : public BulkSkelSelCourier<CSkeletonElementSet>
+{
+public:
+  ElementsFromFacesCourier(const CSkeletonBase*, int,
+			   const CSelectionTracker*,
+			   CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class ExpandElementSelectionCourier
+  : public BulkSkelSelCourier<CSkeletonElementSet>
+{
+public:
+  ExpandElementSelectionCourier(const CSkeletonBase*,
+				std::string*,
+				const CSelectionTracker*,
+				CSelectionTrackerVector*,
+				CSelectionTrackerVector*);
 };
 
 #endif // SKELETONSELECTIONCOURIER_H

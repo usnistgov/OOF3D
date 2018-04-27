@@ -83,9 +83,19 @@ abaqus output it should be C3D4 or C3D10.
 Opacity works for Image layers but not Microstructure Material
 displays. ?
 
+Fix the Skeleton Info toolbox.
+
+
+
 ---------------------------------------------------------------------------
 Soon
 ----
+
+There are a number of cases (in the skeleton selection couriers and
+probably elsewhere) in which the user chooses a range, setting both a
+min and a max value.  It would be convenient to have a Parameter and a
+Widget for this.  The widget would ensure that min <= max.  Probably
+there should be two Parameters whose widgets communicate with each other.
 
 Add a surface-smoothness-energy so surface smoothing works better.
 

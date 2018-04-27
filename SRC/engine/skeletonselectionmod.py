@@ -24,6 +24,7 @@ from ooflib.common.IO import parameter
 from ooflib.common.IO import pixelgroupparam
 from ooflib.common.IO import whoville
 from ooflib.common.IO import xmlmenudump
+from ooflib.engine import materialmanager
 from ooflib.engine.IO import materialparameter
 from ooflib.engine.IO import pbcparams
 from ooflib.engine.IO import skeletongroupparams
@@ -626,23 +627,18 @@ SegmentSelectionModRegistration(
 # TODO 3.1: add more face selection modifiers.
 
 class SelectInternalBoundaryFaces(FaceSelectionModifier):
-    def select(self, skeleton, selection):
-        skel = skeleton.getObject()
-        ms = skeleton.getMicrostructure()
-        faceset = set()
-        for face in skel.getFaces():
-            elements = skel.getFaceElements(face)
-            if (len(elements) == 2 and
-                (elements[0].dominantPixel(skel)
-                 != elements[1].dominantPixel(skel))):
-                faceset.add(face)
-        selection.start()
-        selection.clear()
-        selection.select(faceset)
+    def __init__(self, operator):
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.InternalBoundaryFacesCourier(
+            skelctxt.getObject(), clist, plist)
+        self.operator.operate(selection, courier)
 
 FaceSelectionModRegistration(
     'Select Internal Boundaries',
     SelectInternalBoundaryFaces,
+    params=[selectionoperators.SelectionOperatorParam('operator')],
     ordering=_internalBoundaryOrdering,
     tip="Select faces on material or group boundaries.")
                 
@@ -650,15 +646,17 @@ FaceSelectionModRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class SelectNamedBoundaryFaces(FaceSelectionModifier):
-    def __init__(self, boundary):
+    def __init__(self, boundary, operator):
         self.boundary = boundary
-    def select(self, skeleton, selection):
-        bdy = skeleton.getBoundary(self.boundary)
-        faces = bdy.boundary(skeleton.getObject()).getFaces()
-        # faces is a set of OrientedCSkeletonFaces.
-        selection.start()
-        selection.clear()
-        selection.select([f.get_face() for f in faces])
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        bdy = skelctxt.getBoundary(self.boundary)
+        courier = skeletonselectioncourier.FaceBoundaryCourier(
+            skelctxt.getObject(),
+            bdy.getBoundarySet(skelctxt.getObject()),
+            clist, plist)
+        self.operator.operate(selection, courier)
 
 FaceSelectionModRegistration(
     'Select Named Boundary',
@@ -666,9 +664,11 @@ FaceSelectionModRegistration(
     ordering=_namedBoundaryOrdering,
     params=[
         skeletongroupparams.SkeletonFaceBoundaryParameter(
-            'boundary', tip='Select faces in this boundary')
-        ],
+            'boundary', tip='Select faces in this boundary'),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     tip='Select faces belonging to the given skeleton face boundary.')
+
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -713,32 +713,6 @@ class FaceFromSelectedElements(FaceSelectionModifier):
             clist, plist)
         self.operator.operate(selection, courier)
     
-    # def select(self, skeleton, selection):
-    #     if self.coverage == 'All':
-    #         selected = self.getAllFaces(skeleton)
-    #     elif self.coverage == 'Exterior':
-    #         selected = self.getExteriorFaces(skeleton)
-    #     else:                   # self.coverage == 'Interior'
-    #         selected = self.getInternalFaces(skeleton)
-    #     selection.start()
-    #     selection.clear()
-    #     selection.select(selected)
-
-    # def getAllFaces(self, skelctxt):
-    #     faces = set()
-    #     skel = skelctxt.getObject()
-    #     for element in skelctxt.elementselection.retrieve():
-    #         faces.update(skel.getElementFaces(element))
-    #     return faces
-
-    # def getExteriorFaces(self, skelctxt):
-    #     return skelctxt.exteriorFacesOfSelectedElements()
-
-    # def getInternalFaces(self, skelctxt):
-    #     allfaces = self.getAllFaces(skelctxt)
-    #     bdyfaces = self.getExteriorFaces(skelctxt)
-    #     return allfaces - bdyfaces
-
 FaceSelectionModRegistration(
     'Select from Selected Elements',
     FaceFromSelectedElements,
@@ -752,26 +726,17 @@ FaceSelectionModRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class FaceFromSelectedNodes(FaceSelectionModifier):
-    def __init__(self, min_nodes):
+    def __init__(self, min_nodes, operator):
         self.min_nodes = min_nodes
-    def select(self, skeleton, selection):
-        selected = set()
-        skel = skeleton.getObject()
-        if self.min_nodes == 1:
-            for node in skeleton.nodeselection.retrieve():
-                selected.update(skel.getNodeFaces(node))
-        else:
-            for node in skeleton.nodeselection.retrieve():
-                for face in skel.getNodeFaces(node):
-                    n = 0
-                    for facenode in face.getNodes():
-                        if facenode.isSelected():
-                            n += 1
-                    if n >= self.min_nodes:
-                        selected.add(face)
-        selection.start()
-        selection.clear()
-        selection.select(selected)
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.FacesFromNodesCourier(
+            skelctxt.getObject(),
+            self.min_nodes,
+            skelctxt.nodeselection.currentSelectionTracker(),
+            clist, plist)
+        self.operator.operate(selection, courier)
 
 FaceSelectionModRegistration(
     'Select from Selected Nodes',
@@ -779,25 +744,36 @@ FaceSelectionModRegistration(
     params=[
         parameter.IntRangeParameter(
             'min_nodes', (1, 3), value=1,
-            tip="Select faces with at least this many selected nodes.")],
+            tip="Select faces with at least this many selected nodes."),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     ordering=_selectFromNodesOrdering,
     tip="Select every face containing selected nodes.")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class FaceFromSelectedSegments(FaceSelectionModifier):
-    def select(self, skeleton, selection):
-        selected = set()
-        skel = skeleton.getObject()
-        for seg in skeleton.segmentselection.retrieve():
-            selected.update(skel.getSegmentFaces(seg))
-        selection.start()
-        selection.clear()
-        selection.select(selected)
+    def __init__(self, min_segments, operator):
+        self.min_segments = min_segments
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.FacesFromSegmentsCourier(
+            skelctxt.getObject(),
+            self.min_segments,
+            skelctxt.segmentselection.currentSelectionTracker(),
+            clist, plist)
+        self.operator.operate(selection, courier)
 
 FaceSelectionModRegistration(
     'Select from Selected Segments',
     FaceFromSelectedSegments,
+    params=[
+        parameter.IntRangeParameter(
+            'min_segments', (1,3), value=1,
+            tip="Select faces with at least this many selected segments."),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     ordering=_selectFromSegmentsOrdering,
     tip="Select every face adjacent to a selected segment.")
 
@@ -806,90 +782,99 @@ FaceSelectionModRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class ByElementMaterial(ElementSelectionModifier):
-    def __init__(self, material):
+    def __init__(self, material, operator):
         self.material = material
-    def select(self, skeleton, selection):
-        selected = []
-        skel = skeleton.getObject()
-        ms = skel.getMicrostructure()
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
         if self.material == '<Any>':
-            for i in xrange(skel.nelements()):
-                if skel.getElement(i).material(skel) is not None:
-                    selected.append(skel.getElement(i))
+            courier = skeletonselectioncourier.AnyMaterialElementCourier(
+                skelctxt.getObject(),
+                clist, plist)
         elif self.material == '<None>':
-            for i in xrange(skel.nelements()):
-                if skel.getElement(i).material(skel) is None:
-                    selected.append(skel.getElement(i))
+            courier = skeletonselectioncourier.NoMaterialElementCourier(
+                skelctxt.getObject(),
+                clist, plist)
         else:
-            for i in xrange(skel.nelements()):
-                matl = skel.getElement(i).material(skel)
-                if matl is not None and matl.name() == self.material:
-                    selected.append(skel.getElement(i))
-        selection.start()
-        selection.clear()
-        selection.select(selected)
+            courier = skeletonselectioncourier.MaterialElementCourier(
+                skelctxt.getObject(),
+                materialmanager.getMaterial(self.material),
+                clist, plist)
+        self.operator.operate(selection, courier)
 
 ElementSelectionModRegistration(
     'Select by Material',
     ByElementMaterial,
     ordering=2.2,
-    params=[materialparameter.AnyMaterialParameter('material',
-                                tip="Select elements with this material.")],
+    params=[
+        materialparameter.AnyMaterialParameter(
+            'material', tip="Select elements with this material."),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     tip="Select all Elements with a given Material.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/bymaterial.xml'))
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class ElementHomogeneity(ElementSelectionModifier):
-    def __init__(self, threshold=0.9):
-        self.threshold = threshold
+    def __init__(self, min_homogeneity, max_homogeneity, operator):
+        self.min_homogeneity = min_homogeneity
+        self.max_homogeneity = max_homogeneity
+        self.operator = operator
 
-    def select(self, skeleton, selection):
-        selected = []
-        skel = skeleton.getObject()
-        ms = skel.getMicrostructure()
-        for i in xrange(skel.nelements()):
-            if skel.getElement(i).homogeneity(skel) < self.threshold:
-                selected.append(skel.getElement(i))
-        selection.start()
-        selection.clear()
-        selection.select(selected)
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.ElementHomogeneityCourier(
+            skelctxt.getObject(),
+            self.min_homogeneity, self.max_homogeneity,
+            clist, plist)
+        self.operator.operate(selection, courier)
 
 ElementSelectionModRegistration(
     'Select by Homogeneity',
     ElementHomogeneity,
     ordering=2.3,
     params = [
-    parameter.FloatRangeParameter('threshold', (0.0, 1.0, 0.01), value=0.9,
-                                  tip='Threshold homogeneity.')],
-    tip="Select Elements with homogeneity less than the threshold homogeneity.",
+        parameter.FloatRangeParameter(
+            'min_homogeneity', (0.0, 1.0, 0.01), value=0.0,
+            tip='Select elements with homogeneity greater than this.'),
+        parameter.FloatRangeParameter(
+            'max_homogeneity', (0.0, 1.0, 0.01), value=1.0,
+            tip='Select elements with homogeneity less than this.'),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
+    tip="Select Elements with homogeneity in a given range.",
     discussion=xmlmenudump.loadFile(
-        'DISCUSSIONS/engine/menu/hetero_elements.xml')
-    )
+        'DISCUSSIONS/engine/menu/hetero_elements.xml'))
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class ElementShapeEnergy(ElementSelectionModifier):
-    def __init__(self, threshold = 0.8):
-        self.threshold = threshold
-    def select(self, skeleton, selection):
-        selected = []
-        skel = skeleton.getObject()
-        for i in xrange(skel.nelements()):
-            if skel.getElement(i).energyShape() > self.threshold:
-                selected.append(skel.getElement(i))
-        selection.start()
-        selection.clear()
-        selection.select(selected)
+    def __init__(self, min_energy, max_energy, operator):
+        self.min_energy = min_energy
+        self.max_energy = max_energy
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.ElementShapeEnergyCourier(
+            skelctxt.getObject(),
+            self.min_energy, self.max_energy,
+            clist, plist)
+        self.operator.operate(selection, courier)
 
 ElementSelectionModRegistration(
     'Select by Shape Energy',
     ElementShapeEnergy,
     ordering=2.4,
     params = [
-    parameter.FloatRangeParameter(
-            'threshold', (0.0, 1.0, 0.01), value=0.8,
-            tip='Select Elements with shape-energy greater than this.')],
+        parameter.FloatRangeParameter(
+            'min_energy', (0.0, 1.0, 0.01), value=0.0,
+            tip='Select Elements with shape-energy greater than this.'),
+        parameter.FloatRangeParameter(
+            'max_energy', (0.0, 1.0, 0.01), value=1.0,
+            tip='Select Elements with shape-energy less than this.'),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     tip="Select elements by shape-energy."
     " The greater the shape-energy the uglier the element.",
     discussion=xmlmenudump.loadFile(
@@ -898,20 +883,19 @@ ElementSelectionModRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class ElementIllegal(ElementSelectionModifier):
-    def select(self, skeleton, selection):
-        selected = []
-        skel = skeleton.getObject()
-        for i in xrange(skel.nelements()):
-            if skel.getElement(i).illegal():
-                selected.append(skel.getElement(i))
-        selection.start()
-        selection.clear()
-        selection.select(selected)
+    def __init__(self, operator):
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.IllegalElementCourier(
+            skelctxt.getObject(), clist, plist)
+        self.operator.operate(selection, courier)
 
 ElementSelectionModRegistration(
     'Select Illegal Elements',
     ElementIllegal,
     ordering=2.5,
+    params=[selectionoperators.SelectionOperatorParam('operator')],
     tip="Select illegal elements.",
     discussion="""  <para>
     <command>Select_Illegal_Elements</command> selects all of the
@@ -920,59 +904,48 @@ ElementSelectionModRegistration(
     &elems; in the given &skel;.  Illegal &elems; are hard to create,
     but if they have been created somehow, this command can be useful
     in eradicating them.
-    </para>"""
-    )
+    </para>""")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class ElementSuspect(ElementSelectionModifier):
-    def select(self, skeleton, selection):
-        selected = []
-        skel = skeleton.getObject()
-        for i in xrange(skel.nelements()):
-            if skel.getElement(i).suspect():
-                selected.append(skel.getElement(i))
-        selection.start()
-        selection.clear()
-        selection.select(selected)
+    def __init__(self, operator):
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.SuspectElementCourier(
+            skelctxt.getObject(), clist, plist)
+        self.operator.operate(selection, courier)
 
 # TODO 3.1: need link for suspect elements concept
 ElementSelectionModRegistration(
     'Select Suspect Elements',
     ElementSuspect,
     ordering=2.6,
+    params=[selectionoperators.SelectionOperatorParam('operator')],
     tip="Select suspect elements.",
     discussion="""  <para>
     <command>Select_Suspect_Elements</command> selects all of the
     <link
     linkend="Section-Concepts-Skeleton-Suspect">suspect</link>
     &elems; in the given &skel;.
-    </para>"""
-    )
+    </para>""")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class ElementFromSelectedNodes(ElementSelectionModifier):
-    def __init__(self, min_nodes):
+    def __init__(self, min_nodes, operator):
         self.min_nodes = min_nodes
-    def select(self, skeleton, selection):
-        selected = set()
-        if self.min_nodes == 1:
-            for node in skeleton.nodeselection.retrieve():
-                selected.update(node.getElements())
-        else:
-            for node in skeleton.nodeselection.retrieve():
-                for elem in node.getElements():
-                    n = 0
-                    for elemnode in elem.getNodes():
-                        if elemnode.isSelected():
-                            n += 1
-                    if n >= self.min_nodes:
-                        selected.add(elem)
-        selection.start()
-        selection.clear()
-        selection.select(selected)
-
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.ElementsFromNodesCourier(
+            skelctxt.getObject(),
+            self.min_nodes,
+            skelctxt.nodeselection.currentSelectionTracker(),
+            clist, plist)
+        self.operator.operate(selection, courier)
+            
 ElementSelectionModRegistration(
     'Select from Selected Nodes',
     ElementFromSelectedNodes,
@@ -980,44 +953,66 @@ ElementSelectionModRegistration(
     params=[
         parameter.IntRangeParameter(
             'min_nodes', (1,4), value=1,
-            tip='Select elements with at least this many selected nodes.')],
-    tip="Select every element containing a selected node.",
+            tip='Select elements with at least this many selected nodes.'),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
+    tip="Select elements containing a minimum number of selected nodes.",
     discussion=xmlmenudump.loadFile(
         'DISCUSSIONS/engine/menu/elements_from_nodes.xml'))
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class ElementFromSelectedSegments(ElementSelectionModifier):
-    def select(self, skeleton, selection):
-        selected = set()
-        skel = skeleton.getObject()
-        for segment in skeleton.segmentselection.retrieve():
-            selected.update(skel.getSegmentElements(segment))
-        selection.start()
-        selection.clear()
-        selection.select(selected)
-
+    def __init__(self, min_segments, operator):
+        self.min_segments = min_segments
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.ElementsFromSegmentsCourier(
+            skelctxt.getObject(),
+            self.min_segments,
+            skelctxt.segmentselection.currentSelectionTracker(),
+            clist, plist)
+        self.operator.operate(selection, courier)
+        
 ElementSelectionModRegistration(
     'Select from Selected Segments',
     ElementFromSelectedSegments,
-    ordering=_selectFromElementsOrdering,
-    tip="Select every element adjacent to selected segments.",
+    ordering=_selectFromSegmentsOrdering,
+    params=[
+        parameter.IntRangeParameter(
+            'min_segments', (1,6), value=1,
+            tip="Select elements with at least this many selected segments."),
+        selectionoperators.SelectionOperatorParam('operator')
+        ],
+    tip="Select elements with a minimum number of selected segments.",
     discussion=xmlmenudump.loadFile(
         'DISCUSSIONS/engine/menu/elements_from_segments.xml'))
 
-class ElementFromSelectedFaces(ElementSelectionModifier):
-    def select(self, skeleton, selection):
-        selected = set()
-        skel = skeleton.getObject()
-        for face in skeleton.faceselection.retrieve():
-            selected.update(skel.getFaceElements(face))
-        selection.start()
-        selection.clear()
-        selection.select(selected)
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+class ElementFromSelectedFaces(ElementSelectionModifier):
+    def __init__(self, min_faces, operator):
+        self.min_faces = min_faces
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.ElementsFromFacesCourier(
+            skelctxt.getObject(),
+            self.min_faces,
+            skelctxt.faceselection.currentSelectionTracker(),
+            clist, plist)
+        self.operator.operate(selection, courier)
+        
 ElementSelectionModRegistration(
     'Select from Selected Faces',
     ElementFromSelectedFaces,
+    params=[
+        parameter.IntRangeParameter(
+            'min_faces', (1,4), value=1,
+            tip="Select elements with at least this many selected faces."),
+        selectionoperators.SelectionOperatorParam('operator')
+        ],
     ordering=_selectFromFacesOrdering,
     tip='Select every element adjacent to selected faces.')
 
@@ -1035,22 +1030,14 @@ class ElementSelectionExpansionMode(enum.EnumClass(
 class ExpandElementSelection(ElementSelectionModifier):
     def __init__(self, mode):
         self.mode = mode
-    def select(self, skeleton, selection):
-        skel = skeleton.getObject()
-        newelements = set()
-        for element in selection.retrieve():
-            if self.mode == "Faces":
-                for face in skel.getElementFaces(element):
-                    newelements.update(skel.getFaceElements(face))
-            elif self.mode == "Nodes":
-                for node in element.getNodes():
-                    newelements.update(node.getElements())
-            elif self.mode == "Segments":
-                for segment in skel.getElementSegments(element):
-                    newelements.update(skel.getSegmentElements(segment))
-        selection.start()
-        selection.clear()
-        selection.select(newelements)
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        courier = skeletonselectioncourier.ExpandElementSelectionCourier(
+            skelctxt.getObject(),
+            self.mode,
+            skelctxt.elementselection.currentSelectionTracker(),
+            clist, plist)
+        selection.select(courier)
     
 ElementSelectionModRegistration(
     'Expand',

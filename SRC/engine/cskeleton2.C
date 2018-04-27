@@ -1546,6 +1546,18 @@ void CSkeletonBase::getConstSegmentElements(const CSkeletonSegment *segment,
   selectable_vector_intersection(&els0, &els1, &result);
 }
 
+CSkeletonElementVector CSkeletonBase::getSegmentElements(
+					 const CSkeletonSegment *segment)
+  const
+{
+  CSkeletonElementVector elems;
+  const CSkeletonNodeVector *nodes = segment->getNodes();
+  CSkeletonElementVector *els0 = (*nodes)[0]->getElements();
+  CSkeletonElementVector *els1 = (*nodes)[1]->getElements();
+  selectable_vector_intersection(els0, els1, &elems);
+  return elems;
+}
+
 void CSkeletonBase::getSegmentFaces(const CSkeletonSegment *segment,
 				    CSkeletonFaceVector &result) 
   const

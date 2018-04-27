@@ -53,7 +53,7 @@ public:
   IntersectionCourier(CSelectionTracker*, SkeletonSelectionCourier*);
 };
 
-//---------
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 class AllNodesCourier : public SkeletonSelectionCourier {
 public:
@@ -79,7 +79,7 @@ public:
 		  CSelectionTrackerVector*);
 };
 
-//-----------
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 class NodesFromElementsCourier : public SkeletonSelectionCourier {
 public:
@@ -123,6 +123,8 @@ public:
 		     CSkeletonBase*, CSelectionTracker*,
 		     CSelectionTrackerVector*, CSelectionTrackerVector*);
 };
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 class SegmentsFromElementsCourier : public SkeletonSelectionCourier {
 public:
@@ -173,6 +175,34 @@ public:
 		       CSelectionTrackerVector*, CSelectionTrackerVector*);
 };
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+class FacesFromNodesCourier : public SkeletonSelectionCourier {
+public:
+  FacesFromNodesCourier(CSkeletonBase*, int, CSelectionTracker*,
+			CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class FacesFromSegmentsCourier : public SkeletonSelectionCourier {
+public:
+  FacesFromSegmentsCourier(CSkeletonBase*, int, CSelectionTracker*,
+			   CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class FaceBoundaryCourier : public SkeletonSelectionCourier {
+public:
+  FaceBoundaryCourier(CSkeletonBase*, CSkeletonFaceBoundary*,
+		      CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class InternalBoundaryFacesCourier : public SkeletonSelectionCourier {
+public:
+  InternalBoundaryFacesCourier(CSkeletonBase*, CSelectionTrackerVector*,
+			       CSelectionTrackerVector*);
+};
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 class CategoryElementCourier : public SkeletonSelectionCourier {
 public:
   CategoryElementCourier(CSkeletonBase*, int,
@@ -184,6 +214,75 @@ public:
   FacesFromElementsCourier(CSkeletonBase*, std::string *enum2string,
 			   CSelectionTracker*,
 			   CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class MaterialElementCourier : public SkeletonSelectionCourier {
+public:
+  MaterialElementCourier(CSkeletonBase*, Material*,
+			 CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class AnyMaterialElementCourier : public SkeletonSelectionCourier {
+public:
+  AnyMaterialElementCourier(CSkeletonBase*,
+			    CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class NoMaterialElementCourier : public SkeletonSelectionCourier {
+public:
+  NoMaterialElementCourier(CSkeletonBase*,
+			   CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class ElementHomogeneityCourier : public SkeletonSelectionCourier {
+public:
+  ElementHomogeneityCourier(CSkeletonBase*, double, double,
+			    CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class ElementShapeEnergyCourier : public SkeletonSelectionCourier {
+public:
+  ElementShapeEnergyCourier(CSkeletonBase*, double, double,
+			    CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class IllegalElementCourier : public SkeletonSelectionCourier {
+public:
+  IllegalElementCourier(CSkeletonBase*,
+			CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class SuspectElementCourier : public SkeletonSelectionCourier {
+public:
+  SuspectElementCourier(CSkeletonBase*,
+			CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class ElementsFromNodesCourier : public SkeletonSelectionCourier {
+public:
+  ElementsFromNodesCourier(CSkeletonBase*, int, CSelectionTracker*,
+			  CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class ElementsFromSegmentsCourier : public SkeletonSelectionCourier {
+public:
+  ElementsFromSegmentsCourier(
+		      CSkeletonBase*, int, CSelectionTracker*,
+		      CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class ElementsFromFacesCourier : public SkeletonSelectionCourier {
+public:
+  ElementsFromFacesCourier(CSkeletonBase*, int, CSelectionTracker*,
+			   CSelectionTrackerVector*, CSelectionTrackerVector*);
+};
+
+class ExpandElementSelectionCourier : public SkeletonSelectionCourier {
+public:
+  ExpandElementSelectionCourier(CSkeletonBase*, std::string *enum2string,
+				CSelectionTracker*,
+				CSelectionTrackerVector*,
+				CSelectionTrackerVector*);
 };
 
 #endif // SKELETONSELECTIONCOURIER_SWG

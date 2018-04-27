@@ -269,10 +269,14 @@ public:
   virtual void elementsAddGroupsDown(CGroupTrackerVector*) = 0;
 
   // connectivity
+  // TODO: Many of these methods should be rewritten to just
+  // return a std container, instead of returning the result in an
+  // argument.
   void getSegmentElements(const CSkeletonSegment *segment,
 			  CSkeletonElementVector &) const;
   void getConstSegmentElements(const CSkeletonSegment *segment,
 			       ConstCSkeletonElementVector &) const;
+  CSkeletonElementVector getSegmentElements(const CSkeletonSegment*) const;
   void getSegmentFaces(const CSkeletonSegment*, CSkeletonFaceVector&) const;
   void getFaceElements(const CSkeletonFace*, CSkeletonElementVector&) const;
   void getFaceElements(const CSkeletonFace*, ConstCSkeletonElementVector&)
