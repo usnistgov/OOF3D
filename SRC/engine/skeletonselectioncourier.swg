@@ -20,6 +20,7 @@
   #include <oofconfig.h>
   #include "engine/cskeletongroups.h"
   #include "engine/skeletonselectioncourier.h"
+  #include "common/pixelgroup.h"
 %}
 
 class SkeletonSelectionCourier {
@@ -283,6 +284,12 @@ public:
 				CSelectionTracker*,
 				CSelectionTrackerVector*,
 				CSelectionTrackerVector*);
+};
+
+class PixelGroupCourier : public SkeletonSelectionCourier {
+public:
+  PixelGroupCourier(CSkeletonBase*, PixelGroup*,
+		    CSelectionTrackerVector*, CSelectionTrackerVector*);
 };
 
 #endif // SKELETONSELECTIONCOURIER_SWG

@@ -17,6 +17,7 @@
 
 class CSkeletonBase;
 class CGroupTrackerBase;
+class PixelGroup;
 class Material;
 
 class SkeletonSelectionCourier {
@@ -546,6 +547,15 @@ public:
 				const CSelectionTracker*,
 				CSelectionTrackerVector*,
 				CSelectionTrackerVector*);
+};
+
+class PixelGroupCourier : public ConditionalElementCourier {
+private:
+  const PixelGroup *group;
+public:
+  PixelGroupCourier(const CSkeletonBase*, const PixelGroup*,
+		    CSelectionTrackerVector*, CSelectionTrackerVector*);
+  virtual bool includeElement(const CSkeletonElement*) const;
 };
 
 #endif // SKELETONSELECTIONCOURIER_H

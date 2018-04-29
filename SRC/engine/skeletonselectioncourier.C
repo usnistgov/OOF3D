@@ -11,6 +11,8 @@
 
 #include <oofconfig.h>
 #include "common/IO/oofcerr.h"
+#include "common/cmicrostructure.h"
+#include "common/pixelgroup.h"
 #include "common/random.h"
 #include "engine/cskeleton2.h"
 #include "engine/cskeletonelement.h"
@@ -1244,8 +1246,18 @@ ExpandElementSelectionCourier::ExpandElementSelectionCourier(
   }
 }
 
-// TODO:
-// Faces by homogeneity (?)
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// Elements by pixel group
+PixelGroupCourier::PixelGroupCourier(const CSkeletonBase *skel,
+				     const PixelGroup *grp,
+				     CSelectionTrackerVector *clist,
+				     CSelectionTrackerVector *plist)
+  : ConditionalElementCourier(skel, clist, plist),
+    group(grp)
+{}
 
+bool PixelGroupCourier::includeElement(const CSkeletonElement *element) const
+{
+  int cat = element->dominantPixel(skeleton);
+  return pixelGroupQueryCategory(*skeleton->getMicrostructure(), cat, group);
+}

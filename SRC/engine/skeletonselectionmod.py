@@ -1086,29 +1086,30 @@ ElementSelectionModRegistration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+# Select elements whose dominant pixel is in a given pixel group.
+
 class ElementByPixelGroup(ElementSelectionModifier):
-    def __init__(self, group):
+    def __init__(self, group, operator):
         self.group = group
-    def select(self, skeleton, selection):
-        selected = []
-        ms = skeleton.getMicrostructure()
-        skel = skeleton.getObject()
-        pxlgrp = ms.findGroup(self.group)
-        for i in xrange(skel.nelements()):
-            grpnames = pixelgroup.pixelGroupNames(
-                ms, skel.getElement(i).dominantPixel(skel))
-            if self.group in grpnames:
-                selected.append(skel.getElement(i))
-        selection.start()
-        selection.clear()
-        selection.select(selected)
+        self.operator = operator
+    def select(self, skelctxt, selection):
+        clist, plist = selection.trackerlist()
+        grp = skelctxt.getMicrostructure().findGroup(self.group)
+        courier = skeletonselectioncourier.PixelGroupCourier(
+            skelctxt.getObject(),
+            grp,
+            clist, plist)
+        self.operator.operate(selection, courier)
 
 ElementSelectionModRegistration(
     'Select by Pixel Group',
     ElementByPixelGroup,
     ordering=2.1,
-    params=[pixelgroupparam.PixelGroupParameter(
-            'group', tip='The name of a pixel group.')],
+    params=[
+        pixelgroupparam.PixelGroupParameter(
+            'group', tip='The name of a pixel group.'),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     tip="Select all Elements whose dominant pixel is in a given pixel group.",
     discussion="""<para>
     This command selects all &skel; &elems; whose
