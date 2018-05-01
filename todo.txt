@@ -76,6 +76,11 @@ displays. ?
 Update tests that broke when selection method parameters were
 changed.
 
+Make sure that Active Volumes are respected for all voxel & skeleton
+selection operations.
+
+Use couriers for all Active Volume modifications. 
+
 ---------------------------------------------------------------------------
 Soon
 ----

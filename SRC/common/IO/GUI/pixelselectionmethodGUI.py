@@ -239,7 +239,8 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         
 
     def move(self, x, y, buttons):
-        if not self._editing:
+        # cellID is None if we haven't seen a down event.
+        if not self._editing or self.cellID is None:
             return
         viewobj = mainthread.runBlock(self.gfxwindow().oofcanvas.get_view)
         last_mouse_coords = mainthread.runBlock(
