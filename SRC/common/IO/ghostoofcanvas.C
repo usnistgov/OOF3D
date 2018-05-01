@@ -1091,10 +1091,10 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
 	clickOk = true;
       }	// end if nprops > 0
     } // end if(picker->Pick(...))
-    else {			// picker->Pick returned 0
-      oofcerr << "GhostOOFCanvas::findClickedCell_: Pick failed!"
-    	      << std::endl;
-    }
+    // else {			// picker->Pick returned 0
+    //   oofcerr << "GhostOOFCanvas::findClickedCell_: Pick failed!"
+    // 	      << std::endl;
+    // }
   }
   catch(...) {
     oofcerr << "GhostOOFCanvas::findClickedCell_: caught an error!"
@@ -1259,6 +1259,8 @@ int GhostOOFCanvas::findClickedCellMulti_(
       subId = thisSubId;
     }
   }
+  if(best == -1)
+    throw ErrClickError();
   return best;
 }
 

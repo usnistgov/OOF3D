@@ -63,9 +63,6 @@ the other selection gui changes to keep the git commits reasonable.
 When a click doesn't result in a selection because it went to a layer
 that can't handle it, display a warning.
 
-Voxel section methods are crashing when the click is outside the
-microstructure.
-
 Remove the BitmapOverlay class.  It's not used for graphics
 anymore. It's only used to provide a quick way to see if a voxel is
 selected, but an array of bools would suffice there.
@@ -322,3 +319,7 @@ computation from findClickedCellCenter.
 Add an "Invert" button to the Voxel Selection page, as in the Skeleton
 Selection page.
 ** Done: 2018-05-01
+
+Voxel section methods are crashing when the click is outside the
+microstructure.
+** Fixed: 2018-05-01

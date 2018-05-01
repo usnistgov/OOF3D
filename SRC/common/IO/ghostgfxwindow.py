@@ -1900,13 +1900,14 @@ class GhostGfxWindow:
         canvaslayers = [layer.canvaslayer for layer in layers
                         if layer.pickable()]
         try:
-            pos, which = mainthread.runBlock(
+            result = mainthread.runBlock(
                 clickErrorHandler,
                 (self.oofcanvas.findClickedCellCenterMulti,
                  point, view, canvaslayers))
-            if which == -1:
+            if result is None:
                 # Nothing was clicked
                 return (None, None)
+            pos, which = result
             return (layers[which].who(), pos)
             
         finally:
