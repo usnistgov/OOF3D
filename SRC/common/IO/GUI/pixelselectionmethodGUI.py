@@ -44,10 +44,17 @@ class SingleClickVoxelSelectionMethodGUI(genericselectGUI.SelectionMethodGUI):
         # top in the window's layer ordering.
         layers = self.gfxwindow().allWhoClassLayers(
             *self.methodRegistration.whoclasses)
-        # Find the position of the click on the topmost object
-        result = self.gfxwindow().findClickedCellCenterMulti(
+        # Find the position of the click on the topmost object.  This
+        # is actually the center of the topmost vtk cell that was
+        # clicked, which may not be the actual click point, but is
+        # what we need to know to identify the clicked voxel.
+        who, point = self.gfxwindow().findClickedCellCenterMulti(
             layers, point, viewobj)
-        return result
+        if who is not None:
+            ms = who.getMicrostructure()
+            voxel = ms.pixelFromPoint(point)
+            return (who, voxel)
+        return (None, None)
 
     def down(self, x, y, buttons):
         who, voxel = self.getVoxel(x, y)

@@ -44,14 +44,13 @@ class Burn(pixelselection.VoxelSelectionMethod):
         self.operator = operator
     def select(self, source, selection):
         ms = source.getMicrostructure()
-        startpt = ms.pixelFromPoint(self.point)
         image = source.getObject()
-        if source.getSelectionContext().getObject().checkpixel(startpt):
+        if source.getSelectionContext().getObject().checkpixel(self.point):
             b = BasicBurner(self.local_flammability, self.global_flammability,
                             self.color_space_norm==L2, self.next_nearest)
             self.operator.operate(
                 selection,
-                BurnSelection(ms, b, source.getObject(), startpt))
+                BurnSelection(ms, b, source.getObject(), self.point))
         
 
 burnSelectorRegistration = pixelselection.VoxelSelectionMethodRegistration(

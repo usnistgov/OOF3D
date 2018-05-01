@@ -1235,7 +1235,7 @@ parameter.AutomaticValueSetParameter.makeWidget = _makeAVSPWidget
 
 #######################################################################
 
-class PointWidget(ParameterWidget):
+class PointWidgetBase(ParameterWidget):
     def __init__(self, param, scope=None, name=None, verbose=False):
         debug.mainthreadTest()
         
@@ -1252,8 +1252,10 @@ class PointWidget(ParameterWidget):
             label.set_alignment(1.0, 0.5)
             table.attach(label, 0,1, i,i+1, xpadding=3,
                          xoptions=gtk.FILL, yoptions=0)
-            p = parameter.FloatParameter(labels[i], 0.0) 
-            widget = FloatWidget(p, name=labels[i]+"Componenent")
+            # parameterClass and widgetClass are data members defined
+            # in the subclasses.
+            p = self.parameterClass(labels[i], 0) 
+            widget = self.widgetClass(p, name=labels[i]+"Componenent")
             self.componentWidgets.append(widget)
             table.attach(widget.gtk, 1,2, i,i+1, xpadding=3,
                          xoptions=gtk.EXPAND|gtk.FILL, yoptions=0)
@@ -1271,7 +1273,8 @@ class PointWidget(ParameterWidget):
                 self.componentWidgets[i].set_value(point[i])
     def get_value(self):
         components = tuple(w.get_value() for w in self.componentWidgets)
-        return primitives.Point(*components)
+        # valueClass is defined in the subclasses.
+        return self.valueClass(*components)
     def widgetChangeCB(self, interactive):
         self.widgetChanged(all(w.isValid() for w in self.componentWidgets),
                            interactive)
@@ -1279,10 +1282,26 @@ class PointWidget(ParameterWidget):
         map(switchboard.removeCallback, self.sbcallbacks)
         ParameterWidget.cleanUp(self)
 
+class PointWidget(PointWidgetBase):
+    parameterClass = parameter.FloatParameter
+    widgetClass = FloatWidget
+    valueClass = primitives.Point
+
+class iPointWidget(PointWidgetBase):
+    parameterClass = parameter.IntParameter
+    widgetClass = IntWidget
+    valueClass = primitives.iPoint
+
 def _PointParameter_makeWidget(self, scope=None, verbose=False):
     return PointWidget(self, scope=scope, name=self.name, verbose=verbose)
 
 pointparameter.PointParameter.makeWidget = _PointParameter_makeWidget
+
+def _iPointParameter_makeWidget(self, scope=None, verbose=False):
+    return iPointWidget(self, scope=scope, name=self.name, verbose=verbose)
+
+pointparameter.iPointParameter.makeWidget = _iPointParameter_makeWidget
+
 
 class CoordWidget(PointWidget):
     def get_value(self):

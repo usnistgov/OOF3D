@@ -791,7 +791,7 @@ class SelectionGUI:
         for modeobj in parent.modedict.values():
             modeobj.factory = regclassfactory.RegisteredClassFactory(
                 modeobj.mode.modifierclass.registry,
-                title="Action: ",
+                title="Method: ",
                 scope=parent, name=modeobj.name()+"Action")
             modeobj.historybox = HistoryBox(self.setCB, self.okCB)
             gtklogger.setWidgetName(modeobj.historybox.gtk,

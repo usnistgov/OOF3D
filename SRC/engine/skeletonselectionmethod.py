@@ -52,7 +52,7 @@ class SingleNodeSelect(NodeSelectionMethod):
         self.operator.operate(selection, courier)
         
 NodeSelectionMethodRegistration(
-    'Single_Node',
+    'Single Node',
     SingleNodeSelect,
     ordering=0,
     params=[
@@ -78,7 +78,7 @@ class SingleSegmentSelect(SegmentSelectionMethod):
         self.operator.operate(selection, courier)
 
 SegmentSelectionMethodRegistration(
-    'Single_Segment',
+    'Single Segment',
     SingleSegmentSelect, ordering=0,
     params=[
         parameter.hidden(pointparameter.PointParameter('point')),
@@ -101,7 +101,7 @@ class SingleFaceSelect(FaceSelectionMethod):
         self.operator.operate(selection, courier)
 
 FaceSelectionMethodRegistration(
-    'Single_Face',
+    'Single Face',
     SingleFaceSelect,
     ordering=0,
     params=[
@@ -127,7 +127,7 @@ class SingleElementSelect(ElementSelectionMethod):
         self. operator.operate(selection, courier)
 
 ElementSelectionMethodRegistration(
-    'Single_Element',
+    'Single Element',
     SingleElementSelect,
     ordering=0,
     params=[
@@ -151,7 +151,7 @@ class PixelElementSelect(ElementSelectionMethod):
         self.operator.operate(selection, courier)
 
 ElementSelectionMethodRegistration(
-    'ByDominantPixel',
+    'By Dominant Pixel',
     PixelElementSelect, ordering=4,
     params=[
         parameter.passive(

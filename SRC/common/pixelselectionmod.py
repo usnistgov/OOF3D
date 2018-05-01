@@ -49,6 +49,9 @@ from ooflib.common.pixelselection import \
 
 # Simple selection methods
 
+# All of the Registrations are secret because the methods have buttons
+# and don't need to be in the RCF.
+
 class ClearVoxelSelection(VoxelSelectionModifier):
     @staticmethod
     def select(selection):
@@ -56,7 +59,7 @@ class ClearVoxelSelection(VoxelSelectionModifier):
         selection.clear()
 
 SimpleVoxelSelectionModRegistration(
-    'Clear', ClearVoxelSelection, ordering=0,
+    'Clear', ClearVoxelSelection, ordering=0, secret=1,
     discussion="<para>Unselect all voxels.</para>")
 
 class InvertVoxelSelection(VoxelSelectionModifier):
@@ -66,14 +69,11 @@ class InvertVoxelSelection(VoxelSelectionModifier):
         selection.invert()
         
 SimpleVoxelSelectionModRegistration(
-    'Invert', InvertVoxelSelection, ordering=0.1,
+    'Invert', InvertVoxelSelection, ordering=0.1, secret=1,
     discussion="""<para>
     Selected voxels will be unselected and unselelcted ones will be
     selected.</para>"""
 )
-
-# Undo and Redo are secret because they have buttons and don't need to
-# be in the RCF.
 
 class UndoVoxelSelection(VoxelSelectionModifier):
     @staticmethod

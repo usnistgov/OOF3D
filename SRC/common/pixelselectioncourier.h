@@ -59,9 +59,9 @@ public:
 // Point
 class PointSelection : public PixelSelectionCourier {
 private:
-  const Coord mousepoint;
+  const ICoord mousepoint;
 public:
-  PointSelection(CMicrostructure *ms, const Coord *mp);
+  PointSelection(CMicrostructure *ms, const ICoord *mp);
   virtual ~PointSelection() {}
   virtual void start() {}
   virtual ICoord currentPoint() const;

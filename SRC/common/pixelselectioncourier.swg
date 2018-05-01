@@ -40,7 +40,7 @@ public:
 
 class PointSelection : public PixelSelectionCourier {
 public:
-  PointSelection(CMicrostructure*, Coord *Point);
+  PointSelection(CMicrostructure*, ICoord *iPoint);
   ~PointSelection();
 };
 

@@ -132,9 +132,14 @@ pixelselectionWhoClass = whoville.WhoDoUndoClass(
 # or VoxelSelectionMethod arg as well as the name of the
 # Microstructure or Image.  They should be registered with
 # VoxelSelectionMethodRegistration or VoxelSelectionModRegistration.
-# The subclsases need to have a non-static "select" method that takes
+# The subclasses need to have a non-static "select" method that takes
 # a source and a selection argument.  source is the name of an Image
 # or Microstructure.
+
+## TODO: SimpleVoxelSelectionModRegistration isn't really
+## necessary. It's only used for Undo, Redo, Clear, and Invert, and
+## those can be implemented directly as menu commands, as in
+## skeletonselectmenu.py.
 
 class VoxelSelectionMethod(genericselection.GenericSelectionMethod):
     registry = []

@@ -85,7 +85,7 @@ class SelectMaterialPixels(pixelselection.VoxelSelectionModifier):
         self.operator.operate(selection, courier)
 
 pixelselection.VoxelSelectionModRegistration(
-    'Select Material',
+    'Material',
     subclass=SelectMaterialPixels,
     ordering=110,
     params=[

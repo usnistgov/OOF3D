@@ -27,9 +27,8 @@ class ColorSelector(pixelselection.VoxelSelectionMethod):
         self.operator = operator
     def select(self, source, selection):
         ms = source.getMicrostructure()
-        pt = ms.pixelFromPoint(self.point)
         image = source.getObject() # OOFImage3D
-        ref_color = image[pt]
+        ref_color = image[self.point]
         self.operator.operate(
             selection,
             pixelselectioncourieri.ColorSelection(ms, image,
@@ -42,8 +41,8 @@ pixelselection.VoxelSelectionMethodRegistration(
     events=['up'],
     params=[
         parameter.passive(
-            pointparameter.PointParameter('point',
-                                          tip="Where the mouse was clicked.")),
+            pointparameter.iPointParameter(
+                'point', tip="Where the mouse was clicked.",)),
         colordiffparameter.ColorDifferenceParameter(
             'range', tip='Acceptable deviation from the reference color.'),
         selectionoperators.SelectionOperatorParam('operator', passive=1)

@@ -47,16 +47,16 @@ ICoord PointlessSelection::currentPoint() const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-PointSelection::PointSelection(CMicrostructure *ms, const Coord *mp)
+PointSelection::PointSelection(CMicrostructure *ms, const ICoord *mp)
   : PixelSelectionCourier(ms),
     mousepoint(*mp)
 {
    // oofcerr << "PointSelection::ctor: " << mousepoint 
-   // 	   << " " << ms->pixelFromPoint(mousepoint) << std::endl;
+   // 	   << " " << pixelFromPoint(mousepoint) << std::endl;
 }
 
 ICoord PointSelection::currentPoint() const {
-  return pixelFromPoint(mousepoint);
+  return mousepoint;
 }
 
 void PointSelection::next() {

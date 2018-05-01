@@ -76,7 +76,7 @@ class VoxelRegionSelectWidget(parameterwidgets.ParameterWidget):
         # shapes (e.g. we probably want different instructions if
         # we're trying to select an ellipsoid-shaped region).
         howTo = gtk.Label("""\
-Click the Start button.
+Click the Start button below.
 Adjust the box widget in the canvas by
 clicking and dragging its faces.
 Click Done to select all the voxels in the box."""

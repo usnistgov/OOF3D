@@ -25,6 +25,7 @@ from ooflib.SWIG.common import pixelselectioncourier
 from ooflib.common import debug
 from ooflib.common import pixelselection
 from ooflib.common import selectionoperators
+from ooflib.common.IO import parameter
 from ooflib.common.IO import pointparameter
 from ooflib.common.IO import xmlmenudump
 
@@ -46,11 +47,11 @@ pixelselection.VoxelSelectionMethodRegistration(
     PointSelector,
     ordering=0.1,
     whoclasses=['Microstructure', 'Image'],
-    params=[pointparameter.PointParameter('point'),
+    params=[parameter.passive(pointparameter.iPointParameter('point')),
             selectionoperators.SelectionOperatorParam('operator', passive=1)],
     tip="Select a single pixel.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/common/reg/pointselect.xml')
-    )
+)
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -75,6 +76,6 @@ pixelselection.VoxelSelectionMethodRegistration(
             selectionoperators.SelectionOperatorParam('operator')],
     whoclasses=['Microstructure', 'Image'],
     tip="Click to select a box-shaped region."
-    )
+)
 
 

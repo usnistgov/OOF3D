@@ -53,9 +53,6 @@ from ooflib.engine.skeletonselection import \
 # TODO 3.1: Can the Segment/Element/Node/Face operations here all be
 # derived from common SkeletonSelectable classes?
 
-## TODO: None of these methods should call selection.start().  That's
-## called in the menu item callback.
-
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # Ordering: The order in which the skeleton selection modifiers appear
@@ -66,13 +63,7 @@ from ooflib.engine.skeletonselection import \
 ## TODO: These aren't used consistently below.  Make sure that all
 ## orderings use them.
 
-# The group selection methods, Select Group, Unselect Group, Add
-# Group, and Intersect Group, come first, in that order, with
-# ordering=0.x, where x=1,2,3,4.
 _selectGroupOrdering = 0.0
-_unselectGroupOrdering = 0.1
-_addGroupOrdering = 0.2
-_intersectGroupOrdering=0.3
 
 # The "Select from Selected Object" methods have ordering=1.x, where
 # x is the dimension of the Object.
@@ -82,10 +73,20 @@ _selectFromFacesOrdering = 1.2
 _selectFromElementsOrdering = 1.3
 
 # Other selection methods have ordering >= 2.0
+_materialOrdering = 2.0
+_pixelGroupOrdering = 2.1
 _homogeneityOrdering = 3.3
+_shapeEnergyOrdering = 3.4
+_illegalOrdering = 3.45
+_suspectOrdering = 3.46
 _internalBoundaryOrdering = 3.5
 _namedBoundaryOrdering = 3.6
 _interfaceOrdering = 3.7
+
+_expandOrdering = 4.0
+_shrinkOrdering = 4.1
+_invertOrdering = 5.0
+_randomOrdering = 6.0
 
 _periodicPartnerOrdering = 8
 
@@ -108,7 +109,7 @@ class NodeFromSelectedSegments(NodeSelectionModifier):
         self.operator.operate(selection, courier)
 
 NodeSelectionModRegistration(
-    'Select from Selected Segments',
+    'From Selected Segments',
     NodeFromSelectedSegments,
     ordering=_selectFromSegmentsOrdering,
     params = [
@@ -135,7 +136,7 @@ class NodeFromSelectedElements(NodeSelectionModifier):
         self.operator.operate(selection, courier)
 
 NodeSelectionModRegistration(
-    'Select from Selected Elements',
+    'From Selected Elements',
     NodeFromSelectedElements,
     ordering=_selectFromElementsOrdering,
     params = [
@@ -163,7 +164,7 @@ class NodeFromSelectedFaces(NodeSelectionModifier):
         self.operator.operate(selection, courier)
 
 NodeSelectionModRegistration(
-    'Select from Selected Faces',
+    'From Selected Faces',
     NodeFromSelectedFaces,
     ordering=_selectFromFacesOrdering,
     params = [
@@ -194,7 +195,7 @@ else:
     params = [selectionoperators.SelectionOperatorParam('operator')]
 
 NodeSelectionModRegistration(
-    'Select Internal Boundaries',
+    'Internal Boundaries',
     SelectInternalBoundaryNodes,
     ordering=_internalBoundaryOrdering,
     params=params,
@@ -217,7 +218,7 @@ class SelectNamedBoundaryNodes(NodeSelectionModifier):
         self.operator.operate(selection, courier)
 
 NodeSelectionModRegistration(
-    'Select Named Boundary',
+    'Named Boundary',
     SelectNamedBoundaryNodes,
     ordering=_namedBoundaryOrdering,
     params=[
@@ -239,6 +240,8 @@ NodeSelectionModRegistration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+## This 2D method has not been updated to use selection couriers!
+
 class SelectPeriodicPartnerNodes(NodeSelectionModifier):
     def select(self, skeleton, selection):
         oldnodes = skeleton.nodeselection.retrieve()
@@ -250,7 +253,7 @@ class SelectPeriodicPartnerNodes(NodeSelectionModifier):
         selection.select(newnodes)
 
 registeredclass.TwoDOnlyRegistration(
-    'Select Periodic Partners',
+    'Periodic Partners',
     SelectPeriodicPartnerNodes,
     ordering=_periodicPartnerOrdering,
     tip="Select nodes whose periodic partners are already selected.",
@@ -285,7 +288,7 @@ class ExpandNodeSelection(NodeSelectionModifier):
 NodeSelectionModRegistration(
     'Expand',
     ExpandNodeSelection,
-    ordering=2.0,
+    ordering=_expandOrdering,
     tip="Select the neighbors of selected Nodes.")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
@@ -307,7 +310,7 @@ class NodeSelectGroup(NodeSelectionModifier):
         
 
 NodeSelectionModRegistration(
-    'Select Group',
+    'Group',
     NodeSelectGroup,
     ordering=_selectGroupOrdering,
     params=[
@@ -342,7 +345,7 @@ class SegFromSelectedElements(SegmentSelectionModifier):
         self.operator.operate(selection, courier)
 
 SegmentSelectionModRegistration(
-    'Select from Selected Elements',
+    'From Selected Elements',
     SegFromSelectedElements,
     ordering=_selectFromElementsOrdering,
     params = [
@@ -370,7 +373,7 @@ class SegFromSelectedNodes(SegmentSelectionModifier):
         self.operator.operate(selection, courier)
 
 SegmentSelectionModRegistration(
-    "Select from Selected Nodes",
+    "From Selected Nodes",
     SegFromSelectedNodes,
     params=[
         parameter.BooleanParameter(
@@ -401,7 +404,7 @@ class SegFromSelectedFaces(SegmentSelectionModifier):
         self.operator.operate(selection, courier)
 
 SegmentSelectionModRegistration(
-    'Select from Selected Faces',
+    'From Selected Faces',
     SegFromSelectedFaces,
     ordering=_selectFromFacesOrdering,
     params=[
@@ -422,7 +425,7 @@ class SelectInternalBoundarySegments(SegmentSelectionModifier):
         self.operator.operate(selection, courier)
 
 SegmentSelectionModRegistration(
-    'Select Internal Boundaries',
+    'Internal Boundaries',
     SelectInternalBoundarySegments,
     params=[selectionoperators.SelectionOperatorParam('operator')],
     ordering=_internalBoundaryOrdering,
@@ -431,6 +434,8 @@ SegmentSelectionModRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 #Interface branch
+## This 2D method has not been updated to use selection couriers!
+
 class SelectInterfaceSegments(SegmentSelectionModifier):
     def __init__(self, interface):
         self.interface = interface
@@ -453,7 +458,7 @@ class SelectInterfaceSegments(SegmentSelectionModifier):
 
 if config.dimension() == 2:
     SegmentSelectionModRegistration(
-        'Select Interface Segments',
+        'Interface Segments',
         SegmentSelectionModifier,
         SelectInterfaceSegments,
         ordering=_interfaceOrdering,
@@ -483,7 +488,7 @@ class SelectNamedBoundarySegments(SegmentSelectionModifier):
         self.operator.operate(selection, courier)
 
 SegmentSelectionModRegistration(
-    'Select Named Boundary',
+    'Named Boundary',
     SelectNamedBoundarySegments,
     ordering=_namedBoundaryOrdering,
     params=[
@@ -506,6 +511,8 @@ SegmentSelectionModRegistration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+## This 2D method has not been updated to use selection couriers! 
+
 class SelectPeriodicPartnerSegments(SegmentSelectionModifier):
     def select(self, skeleton, selection):
         oldsegs = skeleton.segmentselection.retrieve()
@@ -519,10 +526,10 @@ class SelectPeriodicPartnerSegments(SegmentSelectionModifier):
         selection.select(newsegs)
 
 registeredclass.TwoDOnlyRegistration(
-    'Select Periodic Partners',
+    'Periodic Partners',
     SegmentSelectionModifier,
     SelectPeriodicPartnerSegments,
-    ordering=8,
+    ordering=_periodicPartnerOrdering,
     tip="Select the periodic partners of the currently selected Segments.",
     discussion="""<para>
 
@@ -549,7 +556,7 @@ class SegmentHomogeneity(SegmentSelectionModifier):
         self.operator.operate(selection, courier)
 
 SegmentSelectionModRegistration(
-    'Select by Homogeneity',
+    'By Homogeneity',
     SegmentHomogeneity,
     ordering=_homogeneityOrdering,
     params = [parameter.FloatRangeParameter('threshold', (0.0, 1.0, 0.01),
@@ -574,9 +581,9 @@ class RandomSegments(SegmentSelectionModifier):
         self.operator.operate(selection, courier)
 
 SegmentSelectionModRegistration(
-    'Select Randomly',
+    'Randomly',
     RandomSegments,
-    ordering=100,
+    ordering=_randomOrdering,
     params = [
         parameter.FloatRangeParameter(
             'probability', (0.0, 1.0, 0.01),
@@ -603,7 +610,7 @@ class SegmentSelectGroup(SegmentSelectionModifier):
         self.operator.operate(selection, courier)
         
 SegmentSelectionModRegistration(
-    'Select Group',
+    'Group',
     SegmentSelectGroup,
     ordering=_selectGroupOrdering,
     params=[
@@ -636,7 +643,7 @@ class SelectInternalBoundaryFaces(FaceSelectionModifier):
         self.operator.operate(selection, courier)
 
 FaceSelectionModRegistration(
-    'Select Internal Boundaries',
+    'Internal Boundaries',
     SelectInternalBoundaryFaces,
     params=[selectionoperators.SelectionOperatorParam('operator')],
     ordering=_internalBoundaryOrdering,
@@ -659,7 +666,7 @@ class SelectNamedBoundaryFaces(FaceSelectionModifier):
         self.operator.operate(selection, courier)
 
 FaceSelectionModRegistration(
-    'Select Named Boundary',
+    'Named Boundary',
     SelectNamedBoundaryFaces,
     ordering=_namedBoundaryOrdering,
     params=[
@@ -686,7 +693,7 @@ class FaceSelectGroup(FaceSelectionModifier):
         self.operator.operate(selection, courier)
 
 FaceSelectionModRegistration(
-    'Select Group',
+    'Group',
     FaceSelectGroup,
     ordering=_selectGroupOrdering,
     params=[
@@ -714,7 +721,7 @@ class FaceFromSelectedElements(FaceSelectionModifier):
         self.operator.operate(selection, courier)
     
 FaceSelectionModRegistration(
-    'Select from Selected Elements',
+    'From Selected Elements',
     FaceFromSelectedElements,
     ordering=_selectFromElementsOrdering,
     params = [
@@ -739,7 +746,7 @@ class FaceFromSelectedNodes(FaceSelectionModifier):
         self.operator.operate(selection, courier)
 
 FaceSelectionModRegistration(
-    'Select from Selected Nodes',
+    'From Selected Nodes',
     FaceFromSelectedNodes,
     params=[
         parameter.IntRangeParameter(
@@ -766,7 +773,7 @@ class FaceFromSelectedSegments(FaceSelectionModifier):
         self.operator.operate(selection, courier)
 
 FaceSelectionModRegistration(
-    'Select from Selected Segments',
+    'From Selected Segments',
     FaceFromSelectedSegments,
     params=[
         parameter.IntRangeParameter(
@@ -803,9 +810,9 @@ class ByElementMaterial(ElementSelectionModifier):
         self.operator.operate(selection, courier)
 
 ElementSelectionModRegistration(
-    'Select by Material',
+    'By Material',
     ByElementMaterial,
-    ordering=2.2,
+    ordering=_materialOrdering,
     params=[
         materialparameter.AnyMaterialParameter(
             'material', tip="Select elements with this material."),
@@ -831,9 +838,9 @@ class ElementHomogeneity(ElementSelectionModifier):
         self.operator.operate(selection, courier)
 
 ElementSelectionModRegistration(
-    'Select by Homogeneity',
+    'By Homogeneity',
     ElementHomogeneity,
-    ordering=2.3,
+    ordering=_homogeneityOrdering,
     params = [
         parameter.FloatRangeParameter(
             'min_homogeneity', (0.0, 1.0, 0.01), value=0.0,
@@ -863,9 +870,9 @@ class ElementShapeEnergy(ElementSelectionModifier):
         self.operator.operate(selection, courier)
 
 ElementSelectionModRegistration(
-    'Select by Shape Energy',
+    'By Shape Energy',
     ElementShapeEnergy,
-    ordering=2.4,
+    ordering=_shapeEnergyOrdering,
     params = [
         parameter.FloatRangeParameter(
             'min_energy', (0.0, 1.0, 0.01), value=0.0,
@@ -892,9 +899,9 @@ class ElementIllegal(ElementSelectionModifier):
         self.operator.operate(selection, courier)
 
 ElementSelectionModRegistration(
-    'Select Illegal Elements',
+    'Illegal Elements',
     ElementIllegal,
-    ordering=2.5,
+    ordering=_illegalOrdering,
     params=[selectionoperators.SelectionOperatorParam('operator')],
     tip="Select illegal elements.",
     discussion="""  <para>
@@ -919,9 +926,9 @@ class ElementSuspect(ElementSelectionModifier):
 
 # TODO 3.1: need link for suspect elements concept
 ElementSelectionModRegistration(
-    'Select Suspect Elements',
+    'Suspect Elements',
     ElementSuspect,
-    ordering=2.6,
+    ordering=_suspectOrdering,
     params=[selectionoperators.SelectionOperatorParam('operator')],
     tip="Select suspect elements.",
     discussion="""  <para>
@@ -947,7 +954,7 @@ class ElementFromSelectedNodes(ElementSelectionModifier):
         self.operator.operate(selection, courier)
             
 ElementSelectionModRegistration(
-    'Select from Selected Nodes',
+    'From Selected Nodes',
     ElementFromSelectedNodes,
     ordering=_selectFromNodesOrdering,
     params=[
@@ -976,7 +983,7 @@ class ElementFromSelectedSegments(ElementSelectionModifier):
         self.operator.operate(selection, courier)
         
 ElementSelectionModRegistration(
-    'Select from Selected Segments',
+    'From Selected Segments',
     ElementFromSelectedSegments,
     ordering=_selectFromSegmentsOrdering,
     params=[
@@ -1005,7 +1012,7 @@ class ElementFromSelectedFaces(ElementSelectionModifier):
         self.operator.operate(selection, courier)
         
 ElementSelectionModRegistration(
-    'Select from Selected Faces',
+    'From Selected Faces',
     ElementFromSelectedFaces,
     params=[
         parameter.IntRangeParameter(
@@ -1042,7 +1049,7 @@ class ExpandElementSelection(ElementSelectionModifier):
 ElementSelectionModRegistration(
     'Expand',
     ExpandElementSelection,
-    ordering=2.0,
+    ordering=_expandOrdering,
     params=[
         enum.EnumParameter(
             'mode', ElementSelectionExpansionMode,
@@ -1069,7 +1076,7 @@ class ElementSelectGroup(ElementSelectionModifier):
         self.operator.operate(selection, courier)
 
 ElementSelectionModRegistration(
-    'Select Group',
+    'Group',
     ElementSelectGroup,
     ordering=_selectGroupOrdering,
     params=[
@@ -1102,9 +1109,9 @@ class ElementByPixelGroup(ElementSelectionModifier):
         self.operator.operate(selection, courier)
 
 ElementSelectionModRegistration(
-    'Select by Pixel Group',
+    'By Pixel Group',
     ElementByPixelGroup,
-    ordering=2.1,
+    ordering=_pixelGroupOrdering,
     params=[
         pixelgroupparam.PixelGroupParameter(
             'group', tip='The name of a pixel group.'),

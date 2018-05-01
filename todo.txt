@@ -60,18 +60,11 @@ canvas and the user shouldn't type in them.  Doing this will require
 changing all Parameter classes, so it should be done only after all
 the other selection gui changes to keep the git commits reasonable.
 
-Fix selection commands in the Pixel Page, which broke when the menu
-items were changed for the pixel selection toolbox.
-
 When a click doesn't result in a selection because it went to a layer
 that can't handle it, display a warning.
 
-Restore Skeleton selection toolboxes.
-Fix sensitization of undo/redo buttons in selection toolboxes.
-
-Fix this: Display only the white voxel group.  Clicking to select a
-single pixel on some faces (faces with normals in the +x, +y, or +z
-directions?) of the group selects the neighboring voxel instead.
+Voxel section methods are crashing when the click is outside the
+microstructure.
 
 Remove the BitmapOverlay class.  It's not used for graphics
 anymore. It's only used to provide a quick way to see if a voxel is
@@ -83,9 +76,8 @@ abaqus output it should be C3D4 or C3D10.
 Opacity works for Image layers but not Microstructure Material
 displays. ?
 
-Fix the Skeleton Info toolbox.
-
-
+Update tests that broke when selection method parameters were
+changed.
 
 ---------------------------------------------------------------------------
 Soon
@@ -309,4 +301,24 @@ coincident object resolution.  Will that be too slow for drawing
 selected voxels?
 ** Done: 2018-04-05
 
+Restore Skeleton selection toolboxes.
+Fix sensitization of undo/redo buttons in selection toolboxes.
+** Done: 2018-04=29
 
+Fix the Skeleton Info toolbox.
+** Done: 2018-04-30.  Hadn't been updated for new mousehandler args.
+
+Fix selection commands in the Pixel Page, which broke when the menu
+items were changed for the pixel selection toolbox.
+** Done? 2018-04-30  It seems to work.  Not sure what prompted this TODO.
+
+Fix this: Display only the white voxel group.  Clicking to select a
+single pixel on some faces (faces with normals in the +x, +y, or +z
+directions?) of the group selects the neighboring voxel instead.
+** Done: 2018-05-01.  GhostOOFCanvas::findClickedCellCenterMulti
+wasn't actually computing the cell center. Copied cell center
+computation from findClickedCellCenter.
+
+Add an "Invert" button to the Voxel Selection page, as in the Skeleton
+Selection page.
+** Done: 2018-05-01

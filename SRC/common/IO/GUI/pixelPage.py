@@ -118,7 +118,7 @@ class SelectionPage(oofGUI.MainPage):
         tooltips.set_tooltip_text(self.nextmethodbutton,
                         "Recall the next selection modification operation.")
 
-        # Undo, Redo, and Clear buttons
+        # Undo, Redo, Clear, and Invert buttons
         hbox = gtk.HBox()
         vbox.pack_start(hbox, expand=0, fill=0, padding=2)
         self.undobutton = gtk.Button(stock=gtk.STOCK_UNDO)
@@ -141,6 +141,12 @@ class SelectionPage(oofGUI.MainPage):
         gtklogger.connect(self.clearbutton, 'clicked', self.clearCB)
         tooltips.set_tooltip_text(self.clearbutton,
                                   "Unselect all %ss."%pixstring)
+        self.invertbutton = gtk.Button('Invert')
+        hbox.pack_start(self.invertbutton, expand=1, fill=0)
+        gtklogger.setWidgetName(self.invertbutton, "Invert")
+        gtklogger.connect(self.invertbutton, 'clicked', self.invertCB)
+        tooltips.set_tooltip_text(self.invertbutton,
+                                  "Toggle the current selection.")
 
         self.sbcallbacks = [
             switchboard.requestCallbackMain(self.mswidget,
@@ -271,6 +277,9 @@ class SelectionPage(oofGUI.MainPage):
         mainmenu.OOF.VoxelSelection.Redo(microstructure=self.getCurrentMSName())
     def clearCB(self, button):
         mainmenu.OOF.VoxelSelection.Clear(
+            microstructure=self.getCurrentMSName())
+    def invertCB(self, button):
+        mainmenu.OOF.VoxelSelection.Invert(
             microstructure=self.getCurrentMSName())
 
     def okbuttonCB(self, *args):

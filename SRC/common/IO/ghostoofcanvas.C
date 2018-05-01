@@ -1272,7 +1272,12 @@ CoordAndInt *GhostOOFCanvas::findClickedCellCenterMulti(
   Coord pos;
   int which = findClickedCellMulti_(click, view, layers, cell,
 				    pos, cellId, subId);
-  return new CoordAndInt(pos, which);
+  Coord pcenter;
+  cell->GetParametricCenter(pcenter);
+  double weights[cell->GetNumberOfPoints()];
+  Coord center;
+  cell->EvaluateLocation(subId, pcenter, center, weights);
+  return new CoordAndInt(center, which);
 }
 
 
