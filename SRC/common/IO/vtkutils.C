@@ -121,6 +121,8 @@ void initialize_vtk() {
 // Using vtk8, and NOT calling XInitThreads here, all is ok whether or
 // not --sync is used on the command line.  Calling XInitThreads here
 // makes the program crash as soon as it enters the gtk main loop.
+// (initialize_X11 had been called from oof.py just before calling
+// initialize_vtk.)
 
 // Using vtk7, calling XInitThreads is ok if --sync is NOT used.
 // --sync makes the program crash in the main loop.  Not calling
