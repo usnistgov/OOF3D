@@ -101,8 +101,8 @@ class GroupSelector(VoxelSelectionModifier):
         group = ms.getObject().findGroup(self.group)
         if group is not None:
             self.operator.operate(
-                selection, pixelselectioncourier.GroupSelection(ms.getObject(),
-                                                                group))
+                selection,
+                pixelselectioncourier.GroupSelection(ms.getObject(), group))
 
 VoxelSelectionModRegistration(
     'Group',
@@ -183,14 +183,14 @@ class Despeckle(VoxelSelectionModifier):
         self.neighbors = neighbors
     def select(self, ms, selection):
         selection.select(pixelselectioncourier.DespeckleSelection(
-            ms.getObject(), selection.getSelectionAsGroup(), self.neighbors))
+            ms.getObject(), selection.getPixelSet(), self.neighbors))
         
 class Elkcepsed(VoxelSelectionModifier):
     def __init__(self, neighbors):
         self.neighbors = neighbors
     def select(self, ms, selection):
         selection.unselect(pixelselectioncourier.ElkcepsedSelection(
-            ms.getObject(), selection.getSelectionAsGroup(), self.neighbors))
+            ms.getObject(), selection.getPixelSet(), self.neighbors))
 
 # The allowed ranges for the parameters are determined by geometry.
 # Settings outside of the allowed ranges either select all pixels or
@@ -237,14 +237,14 @@ class Expand(VoxelSelectionModifier):
         self.radius = radius
     def select(self, ms, selection):
         selection.select(pixelselectioncourier.ExpandSelection(
-            ms.getObject(), selection.getSelectionAsGroup(), self.radius))
+            ms.getObject(), selection.getPixelSet(), self.radius))
 
 class Shrink(VoxelSelectionModifier):
     def __init__(self, radius):
         self.radius = radius
     def select(self, ms, selection):
         selection.unselect(pixelselectioncourier.ShrinkSelection(
-            ms.getObject(), selection.getSelectionAsGroup(), self.radius))
+            ms.getObject(), selection.getPixelSet(), self.radius))
 
 ## TODO 3.1: Allow radius to be set in either physical or pixel units
 ## by adding a "units" parameter.
@@ -278,22 +278,27 @@ VoxelSelectionModRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class CopyPixelSelection(VoxelSelectionModifier):
-    def __init__(self, source):
+    def __init__(self, source, operator):
         self.source = source
+        self.operator = operator
     def select(self, ms, selection):
         sourceMS = ooflib.common.microstructure.microStructures[self.source]
-        selection.selectFromGroup(
-            sourceMS.getObject().pixelselection.getSelectionAsGroup())
+        courier = pixelselectioncourier.GroupSelection(
+            ms.getObject(),
+            sourceMS.getObject().pixelselection.getPixelSet())
+        self.operator.operate(selection, courier)
 
 VoxelSelectionModRegistration(
     'Copy',
     CopyPixelSelection,
     ordering=4.0,
     params=[
-    whoville.WhoParameter(
-        'source',
-        ooflib.common.microstructure.microStructures,
-        tip="Copy the current selection from this Microstructure.")],
+        whoville.WhoParameter(
+            'source',
+            ooflib.common.microstructure.microStructures,
+            tip="Copy the current selection from this Microstructure."),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     tip="Copy the current selection from another Microstructure.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/common/menu/copy_pixsel.xml')
     )

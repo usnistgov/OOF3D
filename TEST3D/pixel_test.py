@@ -110,16 +110,10 @@ class Direct_Pixel_Selection(PixelTest):
     #     self.assertEqual(ps.getObject().len(), 2000)
 
     def select1(self):
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
+        OOF.VoxelSelection.Select(
             source='jpeg:jpeg',
-            points=[Point(40.6039,49.6023,212.283)], 
-            view=View(cameraPosition=Coord(50,50,333.253),
-                      focalPoint=Coord(50,50,50),
-                      up=Coord(0,1,0),
-                      angle=30,
-                      clipPlanes=[], invertClip=0),
-            shift=0, ctrl=0)
-
+            method=PointSelector(point=iPoint(31,49,99),
+                                 operator=Select()))
     @memorycheck.check("jpeg")
     def Point(self):
         self.select1()
@@ -132,32 +126,10 @@ class Direct_Pixel_Selection(PixelTest):
         OOF.Graphics_1.Settings.Camera.View(
             view=View(Coord(-111.325,205.675,223.124), Coord(50,50,50),
                       Coord(0.211865,0.81662,-0.536885), 30, [], 0))
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
+        OOF.VoxelSelection.Select(
             source='jpeg:jpeg',
-            points=[Point(-110.985,205.205,222.6)], 
-            view=View(cameraPosition=Coord(-111.325,205.675,223.124),
-                      focalPoint=Coord(50,50,50),
-                      up=Coord(0.211865,0.81662,-0.536885),
-                      angle=30,
-                      clipPlanes=[], invertClip=0),
-            shift=0, ctrl=0)
-        self.assertEqual(self.selectionSize(), 1)
-        self.assert_(self.isSelected(0,51,51))
-
-    @memorycheck.check("jpeg")
-    def PointRotated2(self):
-        # Just like PointRotated, but the view given in the selection
-        # command is not the current view when the command is issued.
-        OOF.Graphics_1.Toolbox.Viewer.Restore_Named_View(
-            view='Right')
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source='jpeg:jpeg',
-            points=[Point(-110.985,205.205,222.6)], 
-            view=View(cameraPosition=Coord(-111.325,205.675,223.124),
-                      focalPoint=Coord(50,50,50),
-                      up=Coord(0.211865,0.81662,-0.536885),
-                      angle=30, clipPlanes=[], invertClip=0),
-            shift=0, ctrl=0)
+            method=PointSelector(point=iPoint(0, 51, 51),
+                                 operator=Select()))
         self.assertEqual(self.selectionSize(), 1)
         self.assert_(self.isSelected(0,51,51))
 
@@ -166,8 +138,7 @@ class Direct_Pixel_Selection(PixelTest):
     def Clear(self):
         self.select1()
         self.assertNotEqual(self.selectionSize(), 0)
-        OOF.Graphics_1.Toolbox.Pixel_Select.Clear(
-            source="jpeg:jpeg")
+        OOF.VoxelSelection.Clear(microstructure='jpeg')
         self.assertEqual(self.selectionSize(), 0)
 
     # Remining direct selection methods --
@@ -221,70 +192,45 @@ class Direct_Pixel_Selection(PixelTest):
 
     @memorycheck.check("jpeg")
     def Color(self):
-        OOF.Graphics_1.Toolbox.Pixel_Select.Color(
+        OOF.VoxelSelection.Select(
             source='jpeg:jpeg',
-            range=DeltaRGB(delta_red=0.3,delta_green=0.3,delta_blue=0.3),
-            points=[Point(38.7148,45.6251,212.283)],
-            view=View(cameraPosition=Coord(50,50,333.253), 
-                      focalPoint=Coord(50,50,50),
-                      up=Coord(0,1,0), 
-                      angle=30, 
-                      clipPlanes=[], invertClip=0),
-            shift=0, ctrl=0)
-        self.assertEqual(self.selectionSize(), 332104)
-
-    @memorycheck.check("jpeg")
-    def ColorRotated(self):
-        OOF.Graphics_1.Settings.Camera.View(
-            view=View(cameraPosition=Coord(185.464,154.852,275.584), 
-                      focalPoint=Coord(50,50,50),
-                      up=Coord(-0.40712,0.896951,-0.172429), 
-                      angle=30,
-                      clipPlanes=[], invertClip=0))
-        OOF.Graphics_1.Toolbox.Pixel_Select.Color(
-            source='jpeg:jpeg', 
-            range=DeltaRGB(delta_red=0.3,delta_green=0.3,delta_blue=0.3),
-            points=[Point(175.356,147.521,262.265)], 
-            view=View(cameraPosition=Coord(185.464,154.852,275.584),
-                      focalPoint=Coord(50,50,50), 
-                      up=Coord(-0.40712,0.896951,-0.172429), 
-                      angle=30,
-                      clipPlanes=[], invertClip=0),
-            shift=0, ctrl=0)
-        self.assertEqual(self.selectionSize(), 318395)
-
-    @memorycheck.check("jpeg")
-    def ColorRotated2(self):
-        # Just like ColorRotated, but the view given in the selection
-        # command is not the current view when the command is issued.
-        OOF.Graphics_1.Toolbox.Viewer.Restore_Named_View(
-            view='Right')
-        OOF.Graphics_1.Toolbox.Pixel_Select.Color(
-            source='jpeg:jpeg', 
-            range=DeltaRGB(delta_red=0.3,delta_green=0.3,delta_blue=0.3),
-            points=[Point(175.356,147.521,262.265)], 
-            view=View(cameraPosition=Coord(185.464,154.852,275.584),
-                      focalPoint=Coord(50,50,50), 
-                      up=Coord(-0.40712,0.896951,-0.172429), 
-                      angle=30,
-                      clipPlanes=[], invertClip=0),
-            shift=0, ctrl=0)
-        self.assertEqual(self.selectionSize(), 318395)
+            method=ColorSelector(
+                point=iPoint(27,24,99),
+                range=DeltaRGB(delta_red=0.3,delta_green=0.3,delta_blue=0.3),
+                operator=Select()))
+        self.assertEqual(self.selectionSize(), 315647)
 
     @memorycheck.check("jpeg")
     def Burn(self):
-        OOF.Graphics_1.Toolbox.Pixel_Select.Burn(
+        OOF.VoxelSelection.Select(
             source='jpeg:jpeg',
-            local_flammability=0.1, global_flammability=0.2,
-            color_space_norm='L1', next_nearest=False,
-            points=[Point(29.7661,56.3635,212.283)],
-            view=View(cameraPosition=Coord(50,50,333.253),
-                      focalPoint=Coord(50,50,50),
-                      up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0),
-            shift=0, ctrl=0)
-        self.assertEqual(self.selectionSize(), 347925)
-
+            method=Burn(point=iPoint(51,49,99),
+                        local_flammability=0.1,
+                        global_flammability=0.2,
+                        color_space_norm='L1',
+                        next_nearest=False,
+                        operator=Select()))
+        self.assertEqual(self.selectionSize(), 348922)
+        # Click on same blob with smaller flammabilities
+        OOF.VoxelSelection.Select(
+            source='jpeg:jpeg',
+            method=Burn(point=iPoint(50,51,99),
+                        local_flammability=0.05,
+                        global_flammability=0.1,
+                        color_space_norm='L1',
+                        next_nearest=False,
+                        operator=Select()))
+        self.assertEqual(self.selectionSize(), 280340)
+        # Click on different blob
+        OOF.VoxelSelection.Select(
+            source='jpeg:jpeg',
+            method=Burn(point=iPoint(91,48,99),
+                        local_flammability=0.05,
+                        global_flammability=0.1,
+                        color_space_norm='L1',
+                        next_nearest=False,
+                        operator=Select()))
+        self.assertEqual(self.selectionSize(), 4186)
 
     # Then, mechanical ones -- Undo, Redo, Invert.
 
@@ -298,8 +244,8 @@ class Direct_Pixel_Selection(PixelTest):
         self.assert_(ps.undoable())
         ps_1_id = id(ps.getObject())
         self.assertNotEqual(ps_0_id, ps_1_id)
-        OOF.Graphics_1.Toolbox.Pixel_Select.Undo(
-            source="jpeg:jpeg")
+        OOF.VoxelSelection.Undo(
+            microstructure="jpeg")
         ps_2_id = id(ps.getObject())
         self.assertEqual(ps_0_id, ps_2_id)
         self.assertEqual(self.selectionSize(), 0)
@@ -310,24 +256,27 @@ class Direct_Pixel_Selection(PixelTest):
          ps_0_id = id(ps.getObject())
          self.select1()
          ps_1_id = id(ps.getObject())
-         OOF.Graphics_1.Toolbox.Pixel_Select.Undo(
-             source="jpeg:jpeg")
+         OOF.VoxelSelection.Undo(
+             microstructure="jpeg")
          self.assert_(ps.redoable())
-         OOF.Graphics_1.Toolbox.Pixel_Select.Redo(
-             source="jpeg:jpeg")
+         OOF.VoxelSelection.Redo(
+             microstructure="jpeg")
          self.assertEqual(id(ps.getObject()), ps_1_id)
          self.assert_(not ps.redoable())
 
     @memorycheck.check("jpeg")
     def Invert(self):
          self.select1()
-         OOF.Graphics_1.Toolbox.Pixel_Select.Invert(
-             source="jpeg:jpeg")
-         # Magic number is total minus circle-selected number.
+         OOF.VoxelSelection.Invert(
+             microstructure="jpeg")
          self.assertEqual(self.selectionSize(), 999999)
          
 # Direct_Pixel_Selection2 is just like Direct_Pixel_Selection, but it
-# uses a different image. 
+# uses a different image and the pixels aren't 1x1x1.  These tests
+# made more sense when the voxel selection menu commands contained
+# mouse click and view information.  Now they contain voxel
+# coordinates and the mouse click and graphics configuration are
+# irrelevant.
 
 class Direct_Pixel_Selection2(PixelTest):
     def setUp(self):
@@ -338,7 +287,7 @@ class Direct_Pixel_Selection2(PixelTest):
                 pattern='slice(0|([1-9][0-9]*))\\.png',
                 sort=NumericalOrder()),
             microstructure_name='5color',
-            height=automatic, width=automatic, depth=automatic)
+            height=2.0, width=automatic, depth=automatic)
 
     # Clip, rotate, and select.
     @memorycheck.check("5color")
@@ -351,51 +300,12 @@ class Direct_Pixel_Selection2(PixelTest):
                       up=Coord(0.094381,0.957917,-0.271087), angle=30,
                       clipPlanes=[[1.0, 0.0, 0.0, 10.5]],
                       invertClip=1))
-        # This should select voxel (10, 8, 10)
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
+        OOF.VoxelSelection.Select(
             source='5color:5color',
-            points=[Point(-39.5607,22.8204,38.0586)],
-            view=View(cameraPosition=Coord(-39.6793,22.8537,38.1238), 
-                      focalPoint=Coord(10,10,10),
-                      up=Coord(0.094381,0.957917,-0.271087), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 10.5]], invertClip=1),
-            shift=0, ctrl=0)
-        self.assertEqual(self.selectionSize(), 1)
+            method=PointSelector(point=iPoint(10, 8, 10),
+                                 operator=Select()))
+        
         self.assert_(self.isSelected(10, 8, 10))
-
-    # Clip and then select from a rotated viewpoint, without
-    # explicitly rotating.
-    @memorycheck.check("5color")
-    def PointClipped1(self):
-        OOF.Graphics_1.Toolbox.Viewer.Clip.New(
-            normal=VectorDirection(x=1.0,y=0.0,z=0.0), offset=10.5)
-        # This should select voxel (10, 8, 10)
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source='5color:5color',
-            points=[Point(-39.5607,22.8204,38.0586)],
-            view=View(cameraPosition=Coord(-39.6793,22.8537,38.1238), 
-                      focalPoint=Coord(10,10,10),
-                      up=Coord(0.094381,0.957917,-0.271087), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 10.5]], invertClip=1),
-            shift=0, ctrl=0)
-        self.assertEqual(self.selectionSize(), 1)
-        self.assert_(self.isSelected(10, 8, 10))
-
-    # Select from a clipped and rotated viewpoint, without explicitly
-    # either rotating or clipping.
-    @memorycheck.check("5color")
-    def PointClipped2(self):
-        # This should select voxel (10, 9, 8)
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source='5color:5color', 
-            points=[Point(-41.0493,11.8455,38.2788)], 
-            view=View(cameraPosition=Coord(-41.1612,11.8497,38.3428), 
-                      focalPoint=Coord(10,10,10),
-                      up=Coord(0.0205011,0.999392,-0.028217), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 10.5]], invertClip=1),
-            shift=0, ctrl=0)
-        self.assertEqual(self.selectionSize(), 1)
-        self.assert_(self.isSelected(10, 9, 8))
 
     def tearDown(self):
         OOF.Graphics_1.File.Close()
@@ -453,6 +363,12 @@ class Pixel_Groups(PixelTest):
             microstructure_name=automatic,
             height=automatic, width=automatic, depth=automatic)
 
+    def select1(self):
+        OOF.VoxelSelection.Select(
+            source='5color:5color',
+            method=PointSelector(point=iPoint(17,18,19),
+                                 operator=Select()))
+
     @memorycheck.check("5color")
     def AutoGroup(self):
         OOF.Image.AutoGroup(image="5color:5color")
@@ -490,19 +406,15 @@ class Pixel_Groups(PixelTest):
     def AddSelection(self):
         OOF.PixelGroup.New(name="test", microstructure="5color")
         ms = microstructure.getMicrostructure("5color")
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
+        OOF.VoxelSelection.Select(
             source="5color:5color",
-            points=[Point(7.20603,12.9232,42.4565)], 
-            view=View(cameraPosition=Coord(10,10,66.6506),
-                      focalPoint=Coord(10,10,10), 
-                      up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0),
-            shift=0,ctrl=0)
+            method=PointSelector(point=iPoint(1,2,3),
+                                 operator=Select()))
         OOF.PixelGroup.AddSelection(
             microstructure="5color", group="test")
         sel_size = self.selectionSize()
-        OOF.Graphics_1.Toolbox.Pixel_Select.Clear(
-            source="5color:5color")
+        OOF.VoxelSelection.Clear(
+            microstructure="5color")
         group = ms.findGroup("test")
         self.assertEqual(len(group), sel_size)
        
@@ -512,31 +424,22 @@ class Pixel_Groups(PixelTest):
         OOF.PixelGroup.New(name="test", microstructure="5color")
         ms = microstructure.getMicrostructure("5color")
         # Select a lot of pixels
-        OOF.Graphics_1.Toolbox.Pixel_Select.Color(
+        OOF.VoxelSelection.Select(
             source='5color:5color',
-            range=DeltaRGB(delta_red=0,delta_green=0,delta_blue=0),
-            points=[Point(7.20603,12.9232,42.4565)], 
-            view=View(cameraPosition=Coord(10,10,66.6506),
-                      focalPoint=Coord(10,10,10), 
-                      up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0),
-            shift=0, ctrl=0)
+            method=ColorSelector(
+                point=iPoint(10,15,2),
+                range=DeltaRGB(delta_red=0.3,delta_green=0.3,delta_blue=0.3),
+                operator=Select()))
         sel_large = self.selectionSize()
         OOF.PixelGroup.AddSelection(
             microstructure="5color", group="test")
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source="5color:5color",
-            points=[Point(7.20603,12.9232,42.4565)], 
-            view=View(cameraPosition=Coord(10,10,66.6506),
-                      focalPoint=Coord(10,10,10), 
-                      up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0),
-            shift=0,ctrl=0)
+        self.select1()
+        
         sel_small = self.selectionSize()
         OOF.PixelGroup.RemoveSelection(
             microstructure="5color", group="test")
-        OOF.Graphics_1.Toolbox.Pixel_Select.Clear(
-            source="5color:5color")
+        OOF.VoxelSelection.Clear(
+            microstructure="5color")
         group = ms.findGroup("test")
         self.assertEqual(len(group), sel_large-sel_small)
 
@@ -545,14 +448,7 @@ class Pixel_Groups(PixelTest):
     def Copy(self):
         ms = microstructure.getMicrostructure("5color")
         OOF.PixelGroup.New(name="test", microstructure="5color")
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source="5color:5color",
-            points=[Point(7.20603,12.9232,42.4565)], 
-            view=View(cameraPosition=Coord(10,10,66.6506),
-                      focalPoint=Coord(10,10,10), 
-                      up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0),
-            shift=0,ctrl=0)
+        self.select1()
         OOF.PixelGroup.AddSelection(
             microstructure="5color", group="test")
         group = ms.findGroup("test")
@@ -569,14 +465,7 @@ class Pixel_Groups(PixelTest):
     def Rename(self):
         ms = microstructure.getMicrostructure("5color")
         OOF.PixelGroup.New(name="test", microstructure="5color")
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source="5color:5color",
-            points=[Point(7.20603,12.9232,42.4565)], 
-            view=View(cameraPosition=Coord(10,10,66.6506),
-                      focalPoint=Coord(10,10,10), 
-                      up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0),
-            shift=0,ctrl=0)
+        self.select1()
         OOF.PixelGroup.AddSelection(
             microstructure="5color", group="test")
         group = ms.findGroup("test")
@@ -621,63 +510,47 @@ class Selection_Modify(PixelTest):
             microstructure_name='5color',
             height=automatic, width=automatic, depth=automatic)
 
-    def selectWhite(self, shift=0, ctrl=0):
-        OOF.Graphics_1.Toolbox.Pixel_Select.Color(
-            source='5color:5color', 
-            range=DeltaRGB(delta_red=0,delta_green=0,delta_blue=0),
-            points=[Point(5.90108,9.44349,42.4752)],
-            view=View(cameraPosition=Coord(10,10,68.5167),
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0),
-            shift=shift, ctrl=ctrl)
-
-
-    def selectBlue(self, shift=0, ctrl=0):
-        OOF.Graphics_1.Toolbox.Pixel_Select.Color(
-            source='5color:5color', 
-            range=DeltaRGB(delta_red=0,delta_green=0,delta_blue=0),
-            points=[Point(5.79406,14.0454,42.4752)], 
-            view=View(cameraPosition=Coord(10,10,68.5167),
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0), angle=30, 
-                      clipPlanes=[], invertClip=0), 
-            shift=shift, ctrl=ctrl)
-
-    def selectYellow(self, shift=0, ctrl=0):
-        OOF.Graphics_1.Toolbox.Pixel_Select.Color(
+    def selectWhite(self, operator):
+        OOF.VoxelSelection.Select(
             source='5color:5color',
-            range=DeltaRGB(delta_red=0,delta_green=0,delta_blue=0),
-            points=[Point(8.16993,7.96659,42.4752)],
-            view=View(cameraPosition=Coord(10,10,68.5167),
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0),
-            shift=shift, ctrl=ctrl)
+            method=ColorSelector(
+                point=iPoint(8,9,19),
+                range=DeltaRGB(delta_red=0,delta_green=0,delta_blue=0),
+                operator=operator))
 
-    def selectInteriorWhitePoint(self, shift=0, ctrl=0):
+    def selectBlue(self, operator):
+        OOF.VoxelSelection.Select(
+            source='5color:5color',
+            method=ColorSelector(
+                point=iPoint(3,16,9),
+                range=DeltaRGB(delta_red=0,delta_green=0,delta_blue=0),
+                operator=operator))
+
+    def selectYellow(self, operator):
+        OOF.VoxelSelection.Select(
+            source='5color:5color',
+            method=ColorSelector(
+                point=iPoint(5,2,19),
+                range=DeltaRGB(delta_red=0,delta_green=0,delta_blue=0),
+                operator=operator))
+
+    def selectInteriorWhitePoint(self, operator):
         # This selects a white voxel completely surrounded by white
         # voxels.
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source='5color:5color', 
-            points=[Point(-39.9938,12.3018,40.071)], 
-            view=View(cameraPosition=Coord(-40.1038,12.3068,40.1412),
-                      focalPoint=Coord(10,10,10),
-                      up=Coord(0.0376411,0.999195,-0.0139001), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 10.5]], invertClip=1),
-            shift=shift, ctrl=ctrl)
-
-    def selectInteriorYellowPoint(self, shift=0, ctrl=0):
-        # This selects a yellow voxel on the yellow/white boundary.
-        # It has 12 yellow neighbors.  (I think.  The comment was
-        # written before the sign of the clipping plane was changed
-        # and invertClip was changed from 0 to 1 here.)
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
+        OOF.VoxelSelection.Select(
             source='5color:5color',
-            points=[Point(-39.9903,12.3024,40.0768)],
-            view=View(cameraPosition=Coord(-40.1038,12.3068,40.1412),
-                      focalPoint=Coord(10,10,10),
-                      up=Coord(0.0376411,0.999195,-0.0139001), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 10.5]],
-                      invertClip=1),
-            shift=shift, ctrl=ctrl)
+            method=PointSelector(
+                point=iPoint(8,15,12),
+                operator=operator))
+
+    def selectInteriorYellowPoint(self, operator):
+        # This selects a yellow voxel on the yellow/white boundary.
+        # It has 17 yellow neighbors. 
+        OOF.VoxelSelection.Select(
+            source='5color:5color',
+            method=PointSelector(
+                point=iPoint(7,13,10),
+                operator=operator))
 
     ############
 
@@ -687,9 +560,9 @@ class Selection_Modify(PixelTest):
         # test in Direct_Pixel_Selection.
         ps = pixelselection.pixelselectionWhoClass["5color"]
         ps_0_id = id(ps.getObject())
-        self.selectWhite()
+        self.selectWhite(operator=Select())
         ps_1_id = id(ps.getObject())
-        OOF.PixelSelection.Undo(microstructure="5color")
+        OOF.VoxelSelection.Undo(microstructure="5color")
         ps_2_id = id(ps.getObject())
         self.assertEqual(ps_2_id, ps_0_id)
         self.assertNotEqual(ps_2_id, ps_1_id)
@@ -698,10 +571,10 @@ class Selection_Modify(PixelTest):
     def Redo(self):
         ps = pixelselection.pixelselectionWhoClass["5color"]
         ps_0_id = id(ps.getObject())
-        self.selectWhite()
+        self.selectWhite(operator=Select())
         ps_1_id = id(ps.getObject())
-        OOF.PixelSelection.Undo(microstructure="5color")
-        OOF.PixelSelection.Redo(microstructure="5color")
+        OOF.VoxelSelection.Undo(microstructure="5color")
+        OOF.VoxelSelection.Redo(microstructure="5color")
         ps_2_id = id(ps.getObject())
         self.assert_(not ps.redoable())
         self.assertEqual(ps_2_id, ps_1_id)
@@ -711,39 +584,53 @@ class Selection_Modify(PixelTest):
     def Clear(self):
         ps = pixelselection.pixelselectionWhoClass["5color"]
         ps_0_id = id(ps.getObject())
-        self.selectWhite()
-        OOF.PixelSelection.Clear(microstructure="5color")
+        self.selectWhite(operator=Select())
+        OOF.VoxelSelection.Clear(microstructure="5color")
         ps_1_id = id(ps.getObject())
         self.assertEqual(self.selectionSize(), 0)
         self.assertNotEqual(ps_0_id, ps_1_id)
 
     @memorycheck.check("5color")
     def Invert(self):
-        self.selectWhite()
-        OOF.PixelSelection.Invert(microstructure="5color")
+        self.selectWhite(operator=Select())
+        OOF.VoxelSelection.Invert(microstructure="5color")
         self.assertEqual(self.selectionSize(), 8000-color_counts["white"])
 
     @memorycheck.check("5color")
     def Copy(self):
         OOF.Microstructure.Copy(microstructure="5color", name="copy")
         copy_ps = pixelselection.pixelselectionWhoClass["copy"]
-        self.selectWhite()
+        self.selectWhite(operator=Select())
         self.assertEqual(copy_ps.getObject().len(), 0)
-        OOF.PixelSelection.Copy(microstructure="copy", source="5color")
+        OOF.VoxelSelection.Select(
+            source='copy',
+            method=CopyPixelSelection(
+                source="5color",
+                operator=Select()))
         self.assertEqual(copy_ps.getObject().len(),
                          copy_ps.getObject().len())
+        # Select more pixels in 5color and add them to the selection in 'copy.
+        self.selectBlue(operator=AddSelection())
+        OOF.VoxelSelection.Select(
+            source='copy',
+            method=CopyPixelSelection(
+                source="5color",
+                operator=AddSelection()))
+        self.assertEqual(copy_ps.getObject().len(),
+                         color_counts['white'] + color_counts['blue'])
         OOF.Microstructure.Delete(microstructure="copy")
 
     @memorycheck.check("5color")
     def Select_Group(self):
         ps = pixelselection.pixelselectionWhoClass["5color"]
-        self.selectWhite()
+        self.selectWhite(operator=Select())
         ps_0_id = id(ps.getObject())
         OOF.PixelGroup.New(name="test", microstructure="5color")
         OOF.PixelGroup.AddSelection(microstructure="5color", group="test")
-        OOF.PixelSelection.Undo(microstructure="5color")
-        OOF.PixelSelection.Group(
-            microstructure="5color", group="test", operator=SelectOnly())
+        OOF.VoxelSelection.Undo(microstructure="5color")
+        OOF.VoxelSelection.Select(
+            source="5color",
+            method=GroupSelector(group="test", operator=Select()))
         ps_1_id = id(ps.getObject())
         self.assertNotEqual(ps_0_id, ps_1_id)
         self.assertEqual(self.selectionSize(), color_counts["white"])
@@ -751,14 +638,18 @@ class Selection_Modify(PixelTest):
     @memorycheck.check("5color")
     def Add_Group(self):
         ps = pixelselection.pixelselectionWhoClass["5color"]
-        self.selectWhite()
+        self.selectWhite(operator=Select())
         OOF.PixelGroup.New(name="test", microstructure="5color")
         OOF.PixelGroup.AddSelection(microstructure="5color", group="test")
-        OOF.PixelSelection.Undo(microstructure="5color")
-        self.selectBlue(shift=1)
+        OOF.VoxelSelection.Undo(microstructure="5color")
+        self.assertEqual(self.selectionSize(), 0)
+        self.selectBlue(operator=AddSelection())
+        self.assertEqual(self.selectionSize(), color_counts["blue"])
         ps_0_id = id(ps.getObject())
-        OOF.PixelSelection.Group(
-            microstructure="5color", group="test", operator=Select())
+        OOF.VoxelSelection.Select(
+            source="5color",
+            method=GroupSelector(group="test",
+                                 operator=AddSelection()))
         ps_1_id = id(ps.getObject())
         self.assertNotEqual(ps_0_id, ps_1_id)
         self.assertEqual(self.selectionSize(),
@@ -768,20 +659,22 @@ class Selection_Modify(PixelTest):
     def Unselect_Group(self):
         ps = pixelselection.pixelselectionWhoClass["5color"]
         # Select a bunch of voxels
-        self.selectWhite()
+        self.selectWhite(operator=Select())
         ps_0_id = id(ps.getObject())
         size0 = self.selectionSize()
         # Add them to a group
         OOF.PixelGroup.New(name='test', microstructure='5color')
         OOF.PixelGroup.AddSelection(microstructure='5color', group='test')
         # Select all of the voxels.
-        OOF.Graphics_1.Toolbox.Pixel_Select.Clear(source='5color:5color')
-        OOF.Graphics_1.Toolbox.Pixel_Select.Invert(source='5color:5color')
+        OOF.VoxelSelection.Clear(microstructure='5color')
+        OOF.VoxelSelection.Invert(microstructure='5color')
         ps_1_id = id(ps.getObject())
         size1 = self.selectionSize()
         # Unselect the voxels in the group.
-        OOF.PixelSelection.Group(
-            microstructure='5color', group='test', operator=Unselect())
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=GroupSelector(group='test',
+                                 operator=Unselect()))
         ps_2_id = id(ps.getObject())
         size2 = self.selectionSize()
         self.assertNotEqual(ps_0_id, ps_2_id)
@@ -792,159 +685,199 @@ class Selection_Modify(PixelTest):
     @memorycheck.check("5color")
     def Intersect_Group(self):
         ps = pixelselection.pixelselectionWhoClass["5color"]
-        self.selectWhite()
-        self.selectBlue(shift=1)
+        self.selectWhite(operator=Select())
+        self.selectBlue(operator=AddSelection())
         self.assertEqual(self.selectionSize(), 
                          color_counts["white"] + color_counts["blue"])
         OOF.PixelGroup.New(name="test", microstructure="5color")
         OOF.PixelGroup.AddSelection(microstructure="5color", group="test")
-        OOF.PixelSelection.Clear(microstructure="5color")
-        self.selectYellow()
-        self.selectWhite(shift=1)
+        OOF.VoxelSelection.Clear(microstructure="5color")
+        self.selectYellow(operator=Select())
+        self.selectWhite(operator=AddSelection())
         self.assertEqual(self.selectionSize(), 
                          color_counts["white"] + color_counts["yellow"])
         ps_0_id = id(ps.getObject())
-        OOF.PixelSelection.Group(
-            microstructure="5color", group="test", operator=Intersect())
+        OOF.VoxelSelection.Select(
+            source="5color",
+            method=GroupSelector(group="test", operator=Intersect()))
         ps_1_id = id(ps.getObject())
         self.assertNotEqual(ps_0_id, ps_1_id)
         self.assertEqual(self.selectionSize(), color_counts["white"])
 
     @memorycheck.check("5color")
     def Despeckle(self):
-        self.selectWhite()
+        self.selectWhite(operator=Select())
         # Deselect a point completely within the white region
-        self.selectInteriorWhitePoint(ctrl=1) 
+        self.selectInteriorWhitePoint(operator=Unselect()) 
         self.assertEqual(self.selectionSize(), color_counts["white"]-1)
         # Despecking with neighbors=26 should reselect just the one point
-        OOF.PixelSelection.Despeckle(microstructure="5color", neighbors=26)
+        OOF.VoxelSelection.Select(
+            source="5color",
+            method= Despeckle(neighbors=26))
         self.assertEqual(self.selectionSize(), color_counts["white"])
 
     @memorycheck.check("5color")
     def Elkcepsed(self):
-        self.selectBlue()
+        self.selectBlue(operator=Select())
         # Elkcepseding the blue region with neighbors=3 doesn't do anything.
-        OOF.PixelSelection.Elkcepsed(microstructure="5color", neighbors=3)
+        OOF.VoxelSelection.Select(
+            source="5color",
+            method=Elkcepsed(neighbors=3))
         self.assertEqual(self.selectionSize(), color_counts["blue"])
         # Add an isolated voxel to the selection.
-        self.selectInteriorWhitePoint(shift=1)
+        self.selectInteriorWhitePoint(
+            operator=AddSelection())
         self.assertEqual(self.selectionSize(), color_counts["blue"]+1)
         # Elkcepseding deselects just the isolated voxel.
-        OOF.PixelSelection.Elkcepsed(microstructure="5color", neighbors=3)
+        OOF.VoxelSelection.Select(
+            source="5color",
+            method=Elkcepsed(neighbors=3))
         self.assertEqual(self.selectionSize(), color_counts["blue"])
 
         # Run Elkcepsed with neighbors=10 on the white voxels.
-        OOF.PixelSelection.Clear(microstructure="5color")
-        self.selectWhite()
-        OOF.PixelSelection.Elkcepsed(microstructure="5color", neighbors=10)
+        OOF.VoxelSelection.Clear(microstructure="5color")
+        self.selectWhite(operator=Select())
+        OOF.VoxelSelection.Select(
+            source="5color",
+            method=Elkcepsed(neighbors=10))
         n1 = self.selectionSize()
         self.assertEqual(n1, 2174)
 
-        OOF.PixelSelection.Clear(microstructure="5color")
+        OOF.VoxelSelection.Clear(microstructure="5color")
         
-        # Select a single voxel that is adjacent to 9 white voxels.
+        # Select a single yellow voxel that is adjacent to 9 white voxels.
         OOF.Image.AutoGroup(image='5color:5color', name_template='%c')
-        # ... display the yellow voxels only
-        OOF.Graphics_1.Layer.Edit(
-            n=0, category='Image', what='5color:5color',
-            how=BitmapDisplayMethod(filter=VoxelGroupFilter(group='#f3f359')))
-        OOF.Graphics_1.Settings.Camera.View(
-            view=View(cameraPosition=Coord(62.2089,-13.7614,-1.56859),
-                      focalPoint=Coord(10,10,10), 
-                      up=Coord(-0.417769,-0.90834,-0.0196926), angle=30, 
-                      clipPlanes=[], invertClip=0))
-        # ... and select one of them
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source='5color:5color', 
-            points=[Point(62.0759,-13.7173,-1.54606)],
-            view=View(cameraPosition=Coord(62.2089,-13.7614,-1.56859),
-                      focalPoint=Coord(10,10,10),
-                      up=Coord(-0.417769,-0.90834,-0.0196926), angle=30,
-                      clipPlanes=[], invertClip=0), 
-            shift=0, ctrl=0)
+        OOF.VoxelSelection.Select(
+            source='5color:5color',
+            method=PointSelector(point=iPoint(6,13,11),
+                                 operator=Select()))
+        
         # Select the white voxels too.
-        OOF.PixelSelection.Group(
-            microstructure='5color', group='#fefefe', operator=Select())
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=GroupSelector(group='#fefefe',
+                                 operator=AddSelection()))
         self.assertEqual(self.selectionSize(), color_counts["white"]+1)
-        # Now run Elkcepsed with neighbors=9 again.  The single yellow
+        # Now run Elkcepsed with neighbors=10 again.  The single yellow
         # voxel shouldn't have made a difference.
-        OOF.PixelSelection.Elkcepsed(microstructure="5color", neighbors=10)
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=Elkcepsed(neighbors=10))
         self.assertEqual(self.selectionSize(), n1)
 
     @memorycheck.check("5color")
     def Expand(self):
-        self.selectInteriorWhitePoint()
+        self.selectInteriorWhitePoint(operator=Select())
         self.assertEqual(self.selectionSize(), 1)
         # Expanding with a radius of 0.9 doesn't do anything
-        OOF.PixelSelection.Expand(microstructure="5color", radius=0.9)
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=Expand(radius=0.9))
         self.assertEqual(self.selectionSize(), 1)
         # radius=1 selects near neighbors
-        OOF.PixelSelection.Expand(microstructure="5color", radius=1.0)
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=Expand(radius=1.0))
         self.assertEqual(self.selectionSize(), 7)
-        OOF.PixelSelection.Undo(microstructure="5color")
+        OOF.VoxelSelection.Undo(microstructure="5color")
         # radius=sqrt(2) selects nearest neighbors and next-nearest
-        OOF.PixelSelection.Expand(microstructure="5color", radius=1.415)
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=Expand(radius=1.415))
         self.assertEqual(self.selectionSize(), 19)
-        OOF.PixelSelection.Undo(microstructure="5color")
+        OOF.VoxelSelection.Undo(microstructure="5color")
         # radius=sqrt(3) selects a full 3x3x3 voxel cube
-        OOF.PixelSelection.Expand(microstructure="5color", radius=1.733)
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=Expand(radius=1.733))
         self.assertEqual(self.selectionSize(), 27)
         # Add another layer
-        OOF.PixelSelection.Expand(microstructure="5color", radius=1.733)
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=Expand(radius=1.733))
         self.assertEqual(self.selectionSize(), 125)
 
     @memorycheck.check("5color")
     def Shrink(self): 
         # A single voxel should vanish.
-        self.selectInteriorWhitePoint()
-        OOF.PixelSelection.Shrink(microstructure="5color", radius=1.0)
+        self.selectInteriorWhitePoint(operator=Select())
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=Shrink(radius=1.0))
         self.assertEqual(self.selectionSize(), 0)
         # A 3x3x3 cube ...
-        self.selectInteriorWhitePoint()
-        OOF.PixelSelection.Expand(microstructure="5color", radius=1.733)
+        self.selectInteriorWhitePoint(operator=Select())
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=Expand(radius=1.733))
         # ... shrinking by 1 produces a 1x1x1 cube
-        OOF.PixelSelection.Shrink(microstructure="5color", radius=1.0)
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=Shrink(radius=1.0))
         self.assertEqual(self.selectionSize(), 1)
         # A 5x5x5 cube ...
-        self.selectInteriorWhitePoint()
-        OOF.PixelSelection.Expand(microstructure="5color", radius=1.733)
-        OOF.PixelSelection.Expand(microstructure="5color", radius=1.733)
+        self.selectInteriorWhitePoint(operator=Select())
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=Expand(radius=1.733))
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=Expand(radius=1.733))
         # ... shrink by one produces a 3x3x3 cube
-        OOF.PixelSelection.Shrink(microstructure="5color", radius=1.0)
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=Shrink(radius=1.0))
         self.assertEqual(self.selectionSize(), 27)
         # 5x5 again
-        OOF.PixelSelection.Expand(microstructure="5color", radius=1.733)
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=Expand(radius=1.733))
         # Shrink by 2 to get back to 1x1x1
-        OOF.PixelSelection.Shrink(microstructure="5color", radius=2.0)
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=Shrink(radius=2.0))
         self.assertEqual(self.selectionSize(), 1)
 
-        self.selectWhite()
-        OOF.PixelSelection.Shrink(microstructure="5color", radius=1.42)
+        self.selectWhite(operator=Select())
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=Shrink(radius=1.42))
         self.assertEqual(self.selectionSize(), 253)
-        OOF.PixelSelection.Shrink(microstructure="5color", radius=1.)
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=Shrink(radius=1.))
         self.assertEqual(self.selectionSize(), 5)
 
     # Color range is a selector, not really a modifer, but there you go.
     @memorycheck.check("5color")
     def Color_Range(self):
         # Select the "white" pixels, which aren't quite white.
-        OOF.PixelSelection.Color_Range(
-            microstructure='5color', image='5color:5color',
-            reference=RGBColor(red=1.00000,green=1.00000,blue=1.00000), 
-            range=DeltaGray(delta_gray=0.174603))
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=ColorRange(
+                image='5color:5color',
+                reference=RGBColor(red=1.00000,green=1.00000,blue=1.00000), 
+                range=DeltaGray(delta_gray=0.174603),
+                operator=Select()))
         self.assertEqual(self.selectionSize(), color_counts["white"])
         # Fail to select any pixels, by restricting the range.
-        OOF.PixelSelection.Color_Range(
-            microstructure='5color', image='5color:5color',
-            reference=RGBColor(red=1.00000,green=1.00000,blue=1.00000), 
-            range=DeltaGray(delta_gray=0.001))
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=ColorRange(
+                image='5color:5color',
+                reference=RGBColor(red=1.00000,green=1.00000,blue=1.00000), 
+                range=DeltaGray(delta_gray=0.001),
+                operator=Select()))
         self.assertEqual(self.selectionSize(), 0)   
         # Select the blue pixels
-        OOF.PixelSelection.Color_Range(
-            microstructure='5color', image='5color:5color', 
-            reference=RGBColor(red=0.00000,green=0.00000,blue=1.00000),
-            range=DeltaRGB(delta_red=0.380952,delta_green=0.396825,
-                           delta_blue=0.0952381))
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=ColorRange(
+                image='5color:5color', 
+                reference=RGBColor(red=0.00000,green=0.00000,blue=1.00000),
+                range=DeltaRGB(delta_red=0.380952,delta_green=0.396825,
+                               delta_blue=0.0952381),
+                operator=Select()))
         self.assertEqual(self.selectionSize(), color_counts["blue"])
 
     # Element and segment ops can't be tested until skeletons exist.
@@ -957,7 +890,7 @@ class Selection_Modify(PixelTest):
     def Rich_MS_Copy(self):
         from ooflib.common import color
         OOF.Image.AutoGroup(image="5color:5color")
-        self.selectInteriorYellowPoint()
+        self.selectInteriorYellowPoint(operator=Select())
         OOF.Microstructure.Copy(microstructure="5color", name="copy")
 
         # Make sure that the groups were copied correctly.  This is
@@ -982,68 +915,83 @@ class Selection_Modify(PixelTest):
         
     @memorycheck.check("5color")
     def Box(self):
-        OOF.PixelSelection.Region(
-            microstructure='5color',
-            shape=BoxSelectionShape(point0=Point(0,0,0),point1=Point(2,3,4)),
-            units=PhysicalUnits(),
-            operator=Select())
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=RegionSelector(
+                shape=BoxSelectionShape(point0=Point(0,0,0),
+                                        point1=Point(2,3,4)),
+                units=PhysicalUnits(),
+                operator=Select()))
         self.assertEqual(self.selectionSize(), 24)
-        OOF.PixelSelection.Region(
-            microstructure='5color', 
-            shape=BoxSelectionShape(point0=Point(1,1,1),point1=Point(2,3,4)),
-            units=PhysicalUnits(),
-            operator=SelectOnly())
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=RegionSelector(
+                shape=BoxSelectionShape(point0=Point(1,1,1),
+                                        point1=Point(2,3,4)),
+                units=PhysicalUnits(),
+                operator=Select()))
         self.assertEqual(self.selectionSize(), 6)
         # Only voxels with centers inside the region are selected.
-        OOF.PixelSelection.Region(
-            microstructure='5color', 
-            shape=BoxSelectionShape(point0=Point(0.6,1,1),point1=Point(2,3,4)),
-            units=PhysicalUnits(),
-            operator=SelectOnly())
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=RegionSelector(
+                shape=BoxSelectionShape(point0=Point(0.6,1,1),
+                                        point1=Point(2,3,4)),
+                units=PhysicalUnits(),
+                operator=Select()))
         self.assertEqual(self.selectionSize(), 6)
-        OOF.PixelSelection.Region(
-            microstructure='5color', 
-            shape=BoxSelectionShape(point0=Point(0.4,1,1),point1=Point(2,3,4)),
-            units=PhysicalUnits(),
-            operator=SelectOnly())
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=RegionSelector(
+                shape=BoxSelectionShape(point0=Point(0.4,1,1),
+                                        point1=Point(2,3,4)),
+                units=PhysicalUnits(),
+                operator=Select()))
         self.assertEqual(self.selectionSize(), 12)
-        OOF.PixelSelection.Region(
-            microstructure='5color',
-            shape=BoxSelectionShape(point0=Point(0,0,0),point1=Point(0,0,0)),
-            units=PhysicalUnits(),
-            operator=SelectOnly())
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=RegionSelector(
+                shape=BoxSelectionShape(point0=Point(0,0,0),
+                                        point1=Point(0,0,0)),
+                units=PhysicalUnits(),
+                operator=Select()))
         self.assertEqual(self.selectionSize(), 0)
 
     @memorycheck.check("5color")
     def Circle(self):
-        OOF.PixelSelection.Region(
-            microstructure='5color',
-            shape=CircleSelectionShape(center=Point(10,10,10),radius=0.0),
-            units=PhysicalUnits(),
-            operator=SelectOnly())
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=RegionSelector(
+                shape=CircleSelectionShape(center=Point(10,10,10),radius=0.0),
+                units=PhysicalUnits(),
+                operator=Select()))
         self.assertEqual(self.selectionSize(), 0)
         # The center is at the corner of 8 voxels. r=sqrt(3)/2 should
         # make the sphere include the centers of all 8.
-        OOF.PixelSelection.Region(
-            microstructure='5color',
-            shape=CircleSelectionShape(center=Point(10,10,10), radius=0.867),
-            units=PhysicalUnits(),
-            operator=SelectOnly())
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=RegionSelector(
+                shape=CircleSelectionShape(center=Point(10,10,10),
+                                           radius=0.867),
+                units=PhysicalUnits(),
+                operator=Select()))
         self.assertEqual(self.selectionSize(), 8)
         # Move the center to the center of a voxel.
-        OOF.PixelSelection.Region(
-            microstructure='5color',
-            shape=CircleSelectionShape(center=Point(10.5,10.5,10.5),
-                                       radius=0.867),
-            units=PhysicalUnits(),
-            operator=SelectOnly())
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=RegionSelector(
+                shape=CircleSelectionShape(center=Point(10.5,10.5,10.5),
+                                           radius=0.867),
+                units=PhysicalUnits(),
+                operator=Select()))
         self.assertEqual(self.selectionSize(), 1)
-        OOF.PixelSelection.Region(
-            microstructure='5color',
-            shape=CircleSelectionShape(center=Point(10.5,10.5,10.5),
-                                       radius=1.00001),
-            units=PhysicalUnits(),
-            operator=SelectOnly())
+        OOF.VoxelSelection.Select(
+            source='5color',
+            method=RegionSelector(
+                shape=CircleSelectionShape(center=Point(10.5,10.5,10.5),
+                                           radius=1.00001),
+                units=PhysicalUnits(),
+                operator=Select()))
         self.assertEqual(self.selectionSize(), 7)
         
     def tearDown(self):
@@ -1068,72 +1016,13 @@ class SaveGroup(PixelTest):
                 no_color=RGBColor(red=0.00000,green=0.00000,blue=1.00000),
                 filter=AllVoxels()))
         # Select the eight voxels at the corners of the microstructure.
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source='microstructure', 
-            points=[Point(0.342583,0.657046,2.57092)],
-            view=View(cameraPosition=Coord(0.5,0.5,3.42583), 
-                      focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), 
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=622, size_y=617),
-            shift=0, ctrl=0)
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source='microstructure',
-            points=[Point(0.638854,0.619919,2.57092)],
-            view=View(cameraPosition=Coord(0.5,0.5,3.42583),
-                      focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=622, size_y=617),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source='microstructure',
-            points=[Point(0.649249,0.416465,2.57092)],
-            view=View(cameraPosition=Coord(0.5,0.5,3.42583),
-                      focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=622, size_y=617),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source='microstructure',
-            points=[Point(0.398273,0.383051,2.57092)],
-            view=View(cameraPosition=Coord(0.5,0.5,3.42583),
-                      focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=622, size_y=617),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Settings.Camera.View(
-            view=View(cameraPosition=Coord(-0.367231,0.596516,-2.29269),
-                      focalPoint=Coord(0.5,0.5,0.5),
-                      up=Coord(0.237723,0.970497,-0.0402811), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=622, size_y=617))
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source='microstructure',
-            points=[Point(-0.364019,0.597374,-2.28699)],
-            view=View(cameraPosition=Coord(-0.367231,0.596516,-2.29269),
-                      focalPoint=Coord(0.5,0.5,0.5),
-                      up=Coord(0.237723,0.970497,-0.0402811), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=622, size_y=617),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source='microstructure',
-            points=[Point(-0.365889,0.597349,-2.28641)],
-            view=View(cameraPosition=Coord(-0.367231,0.596516,-2.29269),
-                      focalPoint=Coord(0.5,0.5,0.5),
-                      up=Coord(0.237723,0.970497,-0.0402811), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=622, size_y=617),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source='microstructure',
-            points=[Point(-0.36603,0.595397,-2.28643)],
-            view=View(cameraPosition=Coord(-0.367231,0.596516,-2.29269),
-                      focalPoint=Coord(0.5,0.5,0.5),
-                      up=Coord(0.237723,0.970497,-0.0402811), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=622, size_y=617),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source='microstructure',
-            points=[Point(-0.364197,0.595208,-2.28701)],
-            view=View(cameraPosition=Coord(-0.367231,0.596516,-2.29269),
-                      focalPoint=Coord(0.5,0.5,0.5),
-                      up=Coord(0.237723,0.970497,-0.0402811), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=622, size_y=617),
-            shift=1, ctrl=0)
+        for x in (0,2):
+            for y in (0,2):
+                for z in (0,2):
+                    OOF.VoxelSelection.Select(
+                        source='microstructure',
+                        method=PointSelector(point=iPoint(x,y,z),
+                                             operator=AddSelection()))
         OOF.PixelGroup.New(
             name='pixelgroup', microstructure='microstructure')
         OOF.PixelGroup.AddSelection(
@@ -1175,10 +1064,10 @@ class SaveGroup(PixelTest):
 
     def _checkVoxels(self):
         # Check that only the corner voxels are in the pixel group.
-        OOF.PixelSelection.Group(
-            microstructure="microstructure",
-            group="pixelgroup",
-            operator=SelectOnly())
+        OOF.VoxelSelection.Select(
+            source="microstructure",
+            method=GroupSelector(
+                group="pixelgroup", operator=Select()))
         self.assertEqual(self.selectionSize(), 8)
         for i in range(3):
             for j in range(3):
@@ -1196,17 +1085,16 @@ test_set = [
     #Direct_Pixel_Selection("Circle"),
     Direct_Pixel_Selection("Point"),
     Direct_Pixel_Selection("PointRotated"),
-    Direct_Pixel_Selection("PointRotated2"),
     Direct_Pixel_Selection2("PointClipped0"),
-    Direct_Pixel_Selection2("PointClipped1"),
-    Direct_Pixel_Selection2("PointClipped2"),
+    ## Direct_Pixel_Selection2("PointClipped1"), ** obsolete **
+    ## Direct_Pixel_Selection2("PointClipped2"), ** obsolete **
     Direct_Pixel_Selection("Clear"),
     #Direct_Pixel_Selection("Brush"),
     #Direct_Pixel_Selection("Rectangle"),
     #Direct_Pixel_Selection("Ellipse"),
     Direct_Pixel_Selection("Color"),
-    Direct_Pixel_Selection("ColorRotated"),
-    Direct_Pixel_Selection("ColorRotated2"),
+    ## Direct_Pixel_Selection("ColorRotated"),  ** obsolete **
+    ## Direct_Pixel_Selection("ColorRotated2"), ** obsolete **
     Direct_Pixel_Selection("Burn"),
     Direct_Pixel_Selection("Undo"),
     Direct_Pixel_Selection("Redo"),

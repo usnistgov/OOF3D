@@ -58,8 +58,6 @@ class PixelSelectionContext(whoville.WhoDoUndo):
         self.getObject().invert()
     def getSelection(self):
         return self.getObject().members()
-    def getSelectionAsGroup(self):
-        return self.getObject().getPixelGroup()
     def undo(self):
         self.undoModification()
     def redo(self):
@@ -94,7 +92,7 @@ class PixelSelectionContext(whoville.WhoDoUndo):
         # courier when selecting different kinds of objects.  It
         # returns a courier that computes the intersection of the
         # given group with selection represented by the given courier.
-        currentPxls = self.getSelectionAsGroup()
+        currentPxls = self.getPixelSet()
         return pixelselectioncourier.IntersectSelection(
             self.getMicrostructure(), currentPxls, courier)
 
