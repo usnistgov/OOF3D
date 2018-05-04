@@ -49,7 +49,7 @@ import ooflib.SWIG.engine.property.piezoelectricity.piezoelectricity
 import ooflib.SWIG.engine.property.pyroelectricity.pyroelectricity
 import ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain
 import ooflib.SWIG.engine.property.thermalexpansion.thermalexpansion
-#import ooflib.engine.property.plasticity.plasticity
+import ooflib.SWIG.engine.property.plasticity.plasticity
 
 #Interface branch
 if config.dimension() == 2:
