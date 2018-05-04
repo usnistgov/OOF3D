@@ -192,13 +192,17 @@ void IntersectionCourier::next() {
 }
 
 void IntersectionCourier::advance() {
+  auto key_comp = oldSelection.key_comp();
   while(!done()) {
-    if(*oldSelIter == *courierIter)
-      return;
-    if(*oldSelIter < *courierIter)
+    if(key_comp(*oldSelIter, *courierIter)) {
       ++oldSelIter;
-    else if(*courierIter < *oldSelIter)
+    }
+    else if(key_comp(*courierIter, *oldSelIter)) {
       ++courierIter;
+    }
+    else {
+      return;
+    }
   }
 }
 

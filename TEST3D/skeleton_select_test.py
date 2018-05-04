@@ -118,16 +118,6 @@ class Skeleton_Selection_BlueGreen50(Skeleton_Selection):
     def tearDown(self):
         OOF.Graphics_1.File.Close()
 
-class Skeleton_Selection_TwoWalls(Skeleton_Selection):
-    skeletonpath = "two_walls:skeleton"
-    def setUp(self):
-        Skeleton_Selection.setUp(self)
-        OOF.Windows.Graphics.New()
-        OOF.File.LoadStartUp.Data(
-            filename=reference_file("skeleton_data", 'two_walls.skeleton'))
-    def tearDown(self):
-        OOF.Graphics_1.File.Close()
-
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # The actual test classes are derived from a Skeleton_Selection
@@ -175,61 +165,36 @@ class Element_Selection_5Color(Skeleton_Selection_5Color, Element_Selection):
     def SingleElement(self):
         self.makeSkeleton(4, 4, 4)
         self.assertEqual(self.selection().size(), 0)
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(6.37197,13.4461,42.4752)], 
-            view=View(cameraPosition=Coord(10,10,68.5167),
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0),
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
+            method=SingleElementSelect(element=255,operator=Select()))
         self.assertEqual(self.selection().size(), 1)
         ids = self.selectionIDs()
         self.assertEqual(ids, [255])
-        # Select an interior element by clipping the display
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
-            skeleton='skeltest:skeleton', 
-            points=[Point(-38.3282,7.57619,40.5221)], 
-            view=View(cameraPosition=Coord(-39.4091,7.48683,41.251),
-                      focalPoint=Coord(10,10,10),
-                      up=Coord(-0.0411954,0.999035,0.0152096),
-                      angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 10.01]], 
-                      invertClip=1,
-                      size_x=691, size_y=652), 
-            shift=0, ctrl=0)
+        # Select an interior element by clipping the display. (Now
+        # that the menu command stores the element ID and not the
+        # click position and view information, this test is sort of
+        # meaningless.)
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleElementSelect(element=205,operator=Select()))
         self.assertEqual(self.selection().size(), 1)
         self.assertEqual(self.selectionIDs(), [205])
         # shift-click to select an additional element on the unclipped
         # display
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(13.9736,5.34458,42.4752)],
-            view=View(cameraPosition=Coord(10,10,68.5167),
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0),
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=1, ctrl=0)
+            method=SingleElementSelect(element=75,operator=AddSelection()))
         self.assertEqual(self.selectionIDs(), [75, 205])
         # control-click to toggle it off
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(14.698,5.17413,42.4752)],
-            view=View(cameraPosition=Coord(10,10,68.5167),
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=1)
+            method=SingleElementSelect(element=75,operator=Toggle()))
         self.assertEqual(self.selectionIDs(), [205])
         # control-click to toggle it back on
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(14.698,5.17413,42.4752)],
-            view=View(cameraPosition=Coord(10,10,68.5167),
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=1)
+            method=SingleElementSelect(element=75,operator=Toggle()))
         self.assertEqual(self.selectionIDs(), [75, 205])
 
     @memorycheck.check("skeltest")
@@ -242,14 +207,9 @@ class Element_Selection_5Color(Skeleton_Selection_5Color, Element_Selection):
         sel0 = id(self.selection().currentSelection())
         self.assertEqual(self.selectionIDs(), [])
         # Select one element
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(8.81206,10.2569,42.4752)],
-            view=View(cameraPosition=Coord(10,10,68.5167),
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0),
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
+            method=SingleElementSelect(element=195,operator=Select()))
         # Check that the selection object is different
         sel1 = id(self.selection().currentSelection())
         self.assertNotEqual(sel0, sel1)
@@ -267,14 +227,9 @@ class Element_Selection_5Color(Skeleton_Selection_5Color, Element_Selection):
         self.assertEqual(sel1, sel3)
         self.assertEqual(self.selectionIDs(), [195])
         # Select another element
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(14.1417,14.5377,42.4752)],
-            view=View(cameraPosition=Coord(10,10,68.5167), 
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
+            method=SingleElementSelect(element=316,operator=Select()))
         sel4 = id(self.selection().currentSelection())
         self.assertNotEqual(sel0, sel4)
         self.assertNotEqual(sel1, sel4)
@@ -297,14 +252,9 @@ class Element_Selection_5Color(Skeleton_Selection_5Color, Element_Selection):
     def Clear(self):
         self.makeSkeleton(4, 4, 4)
         # Select an element
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(14.1417,14.5377,42.4752)],
-            view=View(cameraPosition=Coord(10,10,68.5167), 
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
+            method=SingleElementSelect(element=316,operator=Select()))
         self.assertEqual(self.selectionIDs(), [316])
         OOF.ElementSelection.Clear(skeleton='skeltest:skeleton')
         self.assertEqual(self.selectionIDs(), [])
@@ -323,14 +273,9 @@ class Element_Selection_5Color(Skeleton_Selection_5Color, Element_Selection):
         # Nothing should be selected 
         self.assertEqual(self.selectionIDs(), [])
         # Select a single element
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
-            skeleton='skeltest:skeleton', 
-            points=[Point(7.37797,13.81,42.4752)],
-            view=View(cameraPosition=Coord(10,10,68.5167), 
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0), angle=30, 
-                      clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleElementSelect(element=26,operator=Select()))
         self.assertEqual(self.selectionIDs(), [26])
         OOF.ElementSelection.Invert(skeleton='skeltest:skeleton')
         elist.remove(26)
@@ -340,38 +285,25 @@ class Element_Selection_5Color(Skeleton_Selection_5Color, Element_Selection):
     def DominantPixel(self):
         self.makeSkeleton(4, 4, 4)
         # Click on a green voxel
-        OOF.Graphics_1.Toolbox.Select_Element.ByDominantPixel(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(14.9979,5.65493,42.4752)],
-            view=View(cameraPosition=Coord(10,10,68.5167), 
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0),
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
+            method=PixelElementSelect(category=1,operator=Select()))
         self.assertEqual(self.selection().size(), 38)
         indices = [40, 43, 44, 46, 48, 60, 61, 63, 64, 65, 66, 67, 68, 69,
                    70, 71, 72, 73, 74, 75, 77, 125, 127, 145, 146, 147, 148,
                    149, 150, 151, 152, 153, 154, 156, 158, 230, 233, 234]
-        self.assertEqual(indices, self.selectionIDs())
-        # Click on a different green voxel, from a different point of view.
-        OOF.Graphics_1.Toolbox.Select_Element.ByDominantPixel(
-            skeleton='skeltest:skeleton',
-            points=[Point(6.95145,5.4335,-48.1508)],
-            view=View(cameraPosition=Coord(6.93943,5.4413,-48.2585), 
-                      focalPoint=Coord(10,10,10),
-                      up=Coord(0.155032,0.984232,-0.0851602),
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
         self.assertEqual(indices, self.selectionIDs())
 
     @memorycheck.check("skeltest")
     def Homogeneity(self):
         self.makeSkeleton(4, 4, 4)
         self.assertEqual(self.selection().size(), 0)
-        OOF.ElementSelection.Select_by_Homogeneity(
-            skeleton='skeltest:skeleton', 
-            threshold=0.601)    # some elements have homog=0.6
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementHomogeneity(
+                min_homogeneity=0,
+                max_homogeneity=0.601, # some elements have homog=0.6
+                operator=Select()))
         self.assertEqual(self.selection().size(), 42)
         indices = [21, 24, 42, 50, 52, 53, 54, 70, 96, 123, 131, 132,
                    133, 134, 141, 143, 144, 147, 151, 165, 172, 175,
@@ -386,65 +318,80 @@ class Element_Selection_5Color(Skeleton_Selection_5Color, Element_Selection):
         # In a cubically symmetric Skeleton the tets at the corners of
         # each cubical subunit have shape energy 0.159104 and the ones
         # at the centers have shape energy 0.0.
-        OOF.ElementSelection.Select_by_Shape_Energy(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            threshold=1.0)
+            method=ElementShapeEnergy(
+                min_energy=1,
+                max_energy=1,
+                operator=Select()))
         # No elements have shape energy >= 1
         self.assertEqual(self.selection().size(), 0)
-        OOF.ElementSelection.Select_by_Shape_Energy(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            threshold=0.1)
+            method=ElementShapeEnergy(
+                min_energy=0.1,
+                max_energy=1,
+                operator=Select()))
         # Only the corners are selected.
         self.assertEqual(self.selection().size(), 256)
-        OOF.ElementSelection.Select_by_Shape_Energy(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            threshold=0.0)
+            method=ElementShapeEnergy(
+                min_energy=0,
+                max_energy=1,
+                operator=Select()))
         # All elements are selected.
         self.assertEqual(self.selection().size(), 320)
 
     @memorycheck.check("skeltest")
     def Material(self):
         self.makeSkeleton(4, 4, 4)
-        OOF.ElementSelection.Select_by_Material(
-            skeleton='skeltest:skeleton', material='thing1')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ByElementMaterial(material='thing1',
+                                     operator=Select()))
         self.assertEqual(self.selection().size(), 110)
-        OOF.ElementSelection.Select_by_Material(
-            skeleton='skeltest:skeleton', material='thing2')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ByElementMaterial(material='thing2',
+                                     operator=Select()))
         self.assertEqual(self.selection().size(), 91)
-        OOF.ElementSelection.Select_by_Material(
-            skeleton='skeltest:skeleton', material='<Any>')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ByElementMaterial(material='<Any>',
+                                     operator=Select()))
         self.assertEqual(self.selection().size(), 201)
-        OOF.ElementSelection.Select_by_Material(
-            skeleton='skeltest:skeleton', material='<None>')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ByElementMaterial(material='<None>',
+                                     operator=Select()))
         self.assertEqual(self.selection().size(), 119)
 
     @memorycheck.check("skeltest")
     def Expand(self):
         self.makeSkeleton(4, 4, 4)
         # Select an interior element
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
-            skeleton='skeltest:skeleton', 
-            points=[Point(-38.3282,7.57619,40.5221)], 
-            view=View(cameraPosition=Coord(-39.4091,7.48683,41.251),
-                      focalPoint=Coord(10,10,10),
-                      up=Coord(-0.0411954,0.999035,0.0152096),
-                      angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 10.01]], 
-                      invertClip=1,
-                      size_x=691, size_y=652), 
-            shift=0, ctrl=0)
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleElementSelect(element=205,operator=Select()))
         self.assertEqual(self.selectionIDs(), [205])
         # Expand via faces
-        OOF.ElementSelection.Expand(
-            skeleton='skeltest:skeleton', mode='Faces')        
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ExpandElementSelection(mode='Faces'))
+        # OOF.ElementSelection.Expand(
+        #     skeleton='skeltest:skeleton', mode='Faces')        
         indices = [126, 185, 205, 209, 213]
         self.assertEqual(indices, self.selectionIDs())
         # Undo
         OOF.ElementSelection.Undo(skeleton='skeltest:skeleton')
         self.assertEqual([205], self.selectionIDs())
         # Expand via segments
-        OOF.ElementSelection.Expand(
-            skeleton='skeltest:skeleton', mode='Segments')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ExpandElementSelection(mode='Segments'))
+        # OOF.ElementSelection.Expand(
+        #     skeleton='skeltest:skeleton', mode='Segments')
         indices = [106, 126, 127, 129, 132, 185, 187, 189, 193,
                    205, 206, 207, 208, 209, 212, 213, 214]
         self.assertEqual(indices, self.selectionIDs())
@@ -452,8 +399,11 @@ class Element_Selection_5Color(Skeleton_Selection_5Color, Element_Selection):
         OOF.ElementSelection.Undo(skeleton='skeltest:skeleton')
         self.assertEqual([205], self.selectionIDs())
         # Expand via nodes
-        OOF.ElementSelection.Expand(
-            skeleton='skeltest:skeleton', mode='Nodes')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ExpandElementSelection(mode='Nodes'))
+        # OOF.ElementSelection.Expand(
+        #     skeleton='skeltest:skeleton', mode='Nodes')
         indices = [100, 101, 102, 104, 106, 107, 108, 109, 112, 120, 121,
                    122, 124, 125, 126, 127, 128, 129, 131, 132, 133, 134,
                    145, 146, 147, 149, 151, 152, 153, 154, 180, 181, 183,
@@ -464,23 +414,35 @@ class Element_Selection_5Color(Skeleton_Selection_5Color, Element_Selection):
                    290, 292, 293, 294]
         self.assertEqual(indices, self.selectionIDs())
         # Now try starting with two adjacent elements on a boundary
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
+        # and do the tests again.
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(9.28624,15.0176,42.4752)],
-            view=View(cameraPosition=Coord(10,10,68.5167),
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0),
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
+            method=SingleElementSelect(element=276,operator=Select()))
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(10.5646,14.975,42.4752)],
-            view=View(cameraPosition=Coord(10,10,68.5167),
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0),
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=1, ctrl=0)
+            method=SingleElementSelect(element=296,operator=AddSelection()))
 
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ExpandElementSelection(mode='Faces'))
+        indices = [276, 279, 296, 299]
+        self.assertEqual(indices, self.selectionIDs())
+        OOF.ElementSelection.Undo(skeleton='skeltest:skeleton')
+
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ExpandElementSelection(mode='Segments'))
+        indices = [275, 276, 277, 278, 279, 295, 296, 297, 298, 299]
+        self.assertEqual(indices, self.selectionIDs())
+        OOF.ElementSelection.Undo(skeleton='skeltest:skeleton')
+
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ExpandElementSelection(mode='Nodes'))
+        indices = [195, 196, 197, 199, 215, 216, 217, 219, 255, 256, 257,
+                   259, 270, 271, 272, 274, 275, 276, 277, 278, 279, 290,
+                   291, 292, 294, 295, 296, 297, 298, 299, 315, 316, 317, 319]
+        self.assertEqual(indices, self.selectionIDs())
         
 #     def Rectangle(self):
 #         self.assertEqual(self.e_selection.size(), 0)
@@ -569,28 +531,18 @@ class Element_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
         OOF.ElementGroup.New_Group(
             skeleton='skeltest:skeleton', name='newgroup')
         self.assertEqual(self.groupNames(), ['newgroup'])
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(5.49945,6.25114,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), 
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652), 
-            shift=0, ctrl=0)
+            method=SingleElementSelect(element=35,operator=Select()))
         self.assertEqual(self.selectionIDs(), [35])
         OOF.ElementGroup.Add_to_Group(
             skeleton='skeltest:skeleton', group='newgroup')
         self.assertEqual(self.groupSize('newgroup'), 1)
         self.assertEqual(self.groupIDs('newgroup'), [35])
         # Select another element
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
-            skeleton='skeltest:skeleton', 
-            points=[Point(5.31783,4.16255,21.9826)], 
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0),
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleElementSelect(element=16,operator=Select()))
         self.assertEqual(self.selectionIDs(), [16])
         OOF.ElementGroup.Add_to_Group(
             skeleton='skeltest:skeleton', group='newgroup')
@@ -606,19 +558,14 @@ class Element_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
         OOF.ElementGroup.New_Group(
             skeleton='skeltest:skeleton', name='newgroup')
         # Select an element
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(5.49945,6.25114,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), 
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652), 
-            shift=0, ctrl=0)
+            method=SingleElementSelect(element=35,operator=Select()))
         self.assertEqual(self.selectionIDs(), [35])
         # Select the elements in the empty group
-        OOF.ElementSelection.Select_Group(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            group='newgroup')
+            method=ElementSelectGroup(group='newgroup',operator=Select()))
         self.assertEqual(self.selectionIDs(), [])
         # Undo the selection of the empty group
         OOF.ElementSelection.Undo(skeleton='skeltest:skeleton')
@@ -627,30 +574,23 @@ class Element_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
             skeleton='skeltest:skeleton', 
             group='newgroup')
         # Clear the selection
-        OOF.Graphics_1.Toolbox.Select_Element.Clear(
-            skeleton='skeltest:skeleton')
+        OOF.ElementSelection.Clear(skeleton='skeltest:skeleton')
         self.assertEqual(self.selectionIDs(), [])
         # Select the element in the group
-        OOF.ElementSelection.Select_Group(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            group='newgroup')
+            method=ElementSelectGroup(group='newgroup',operator=Select()))
         self.assertEqual(self.selectionIDs(), [35])
         # Select a different element
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
-            skeleton='skeltest:skeleton', 
-            points=[Point(-22.723,-3.11097,0.735203)],
-            view=View(cameraPosition=Coord(-22.7831,-3.12125,0.734417), 
-                      focalPoint=Coord(5,5,5), 
-                      up=Coord(-0.177623,0.859443,-0.479382), angle=30,
-                      clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleElementSelect(element=3,operator=Select()))
         self.assertEqual(self.selectionIDs(), [3])
         # Select the element in the group and make sure that the
         # different element is not selected.
-        OOF.ElementSelection.Select_Group(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            group='newgroup')
+            method=ElementSelectGroup(group='newgroup',operator=Select()))
         self.assertEqual(self.selectionIDs(), [35])
 
     @memorycheck.check("skeltest")
@@ -659,60 +599,50 @@ class Element_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
         OOF.ElementGroup.New_Group(
             skeleton='skeltest:skeleton', name='newgroup')
         # Select an element
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(5.49945,6.25114,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), 
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652), 
-            shift=0, ctrl=0)
+            method=SingleElementSelect(element=35,operator=Select()))
         self.assertEqual(self.selectionIDs(), [35])
         # Add the elements in the empty group to the selection and
         # make sure the selected element stays selected.
-        OOF.ElementSelection.Add_Group(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            group='newgroup')
+            method=ElementSelectGroup(group='newgroup',operator=AddSelection()))
         self.assertEqual(self.selectionIDs(), [35])
         # Make the group non-empty
         OOF.ElementGroup.Add_to_Group(
             skeleton='skeltest:skeleton', 
             group='newgroup')
         # Clear the selection
-        OOF.Graphics_1.Toolbox.Select_Element.Clear(
-            skeleton='skeltest:skeleton')
+        OOF.ElementSelection.Clear(skeleton='skeltest:skeleton')
         self.assertEqual(self.selectionIDs(), [])
         # Add the non-empty group to the empty selection.
-        OOF.ElementSelection.Add_Group(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            group='newgroup')
+            method=ElementSelectGroup(group='newgroup',operator=AddSelection()))
         self.assertEqual(self.selectionIDs(), [35])
         # Select a different element
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
-            skeleton='skeltest:skeleton', 
-            points=[Point(-22.723,-3.11097,0.735203)],
-            view=View(cameraPosition=Coord(-22.7831,-3.12125,0.734417), 
-                      focalPoint=Coord(5,5,5), 
-                      up=Coord(-0.177623,0.859443,-0.479382), angle=30,
-                      clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleElementSelect(element=3,operator=Select()))
         self.assertEqual(self.selectionIDs(), [3])
         # Add the group to the selection and make sure both elements
         # are selected.
-        OOF.ElementSelection.Add_Group(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            group='newgroup')
+            method=ElementSelectGroup(group='newgroup',operator=AddSelection()))
         self.assertEqual(self.selectionIDs(), [3, 35])
 
     @memorycheck.check("skeltest")
     def SelectFromPixelGroup(self):
         self.makeSkeleton(2, 2, 2)
-        OOF.ElementSelection.Select_by_Pixel_Group(
-            skeleton='skeltest:skeleton', group='#a1fc93')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementByPixelGroup(group='#a1fc93', operator=Select()))
         self.assertEqual(self.selectionIDs(), self.green_elems)
-        OOF.ElementSelection.Select_by_Pixel_Group(
-            skeleton='skeltest:skeleton', group='#868cfe')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementByPixelGroup(group='#868cfe', operator=Select()))
         self.assertEqual(self.selectionIDs(), self.blue_elems)
 
     @memorycheck.check("skeltest")
@@ -725,12 +655,14 @@ class Element_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
         self.assertEqual(self.groupIDs('#a1fc93'), self.green_elems)
         self.assertEqual(self.groupIDs('#868cfe'), self.blue_elems)
         # Select one group
-        OOF.ElementSelection.Select_Group(
-            skeleton='skeltest:skeleton', group='#a1fc93')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='#a1fc93',operator=Select()))
         self.assertEqual(self.selectionIDs(), self.green_elems)
         # Select the other
-        OOF.ElementSelection.Select_Group(
-            skeleton='skeltest:skeleton', group='#868cfe')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='#868cfe',operator=Select()))
         self.assertEqual(self.selectionIDs(), self.blue_elems)
 
     @memorycheck.check("skeltest")
@@ -741,39 +673,39 @@ class Element_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
         OOF.ElementGroup.New_Group(
             skeleton='skeltest:skeleton', name='newgroup')
         # Select the green group
-        OOF.ElementSelection.Select_Group(
-            skeleton='skeltest:skeleton', group='#a1fc93')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='#a1fc93',operator=Select()))
         # Unselect the empty group
-        OOF.ElementSelection.Unselect_Group(
-            skeleton='skeltest:skeleton', group='newgroup')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='newgroup',operator=Unselect()))
         self.assertEqual(self.selectionIDs(), self.green_elems)
         # Unselect a non-empty but non intersecting group
-        OOF.ElementSelection.Unselect_Group(
-            skeleton='skeltest:skeleton', group='#868cfe')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='#868cfe',operator=Unselect()))
         self.assertEqual(self.selectionIDs(), self.green_elems)
         # Unselect the green group
-        OOF.ElementSelection.Unselect_Group(
-            skeleton='skeltest:skeleton', group='#a1fc93')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='#a1fc93',operator=Unselect()))
         self.assertEqual(self.selectionIDs(), [])
         # Select a single element and put it in newgroup
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
-            skeleton='skeltest:skeleton', 
-            points=[Point(-22.7261,-3.10941,0.752654)],
-            view=View(cameraPosition=Coord(-22.7831,-3.12125,0.734417), 
-                      focalPoint=Coord(5,5,5), 
-                      up=Coord(-0.177623,0.859443,-0.479382),
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleElementSelect(element=5,operator=Select()))
         OOF.ElementGroup.Add_to_Group(
             skeleton='skeltest:skeleton', group='newgroup')
         self.assertEqual(self.selectionIDs(), [5])
         # Reselect the green group
-        OOF.ElementSelection.Select_Group(
-            skeleton='skeltest:skeleton', group='#a1fc93')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='#a1fc93',operator=Select()))
         # Unselect the single element in newgroup
-        OOF.ElementSelection.Unselect_Group(
-            skeleton='skeltest:skeleton', group='newgroup')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='newgroup',operator=Unselect()))
         indices = self.green_elems[:]
         indices.remove(5)
         self.assertEqual(self.selectionIDs(), indices)
@@ -786,38 +718,47 @@ class Element_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
         OOF.ElementGroup.New_Group(
             skeleton='skeltest:skeleton', name='newgroup')
         # Select the green group
-        OOF.ElementSelection.Select_Group(
-            skeleton='skeltest:skeleton', group='#a1fc93')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='#a1fc93',operator=Select()))
         # Intersect it with itself
-        OOF.ElementSelection.Intersect_Group(
-            skeleton='skeltest:skeleton', group='#a1fc93')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='#a1fc93',operator=Intersect()))
         self.assertEqual(self.selectionIDs(), self.green_elems)
         # Intersect it with the (disjoint) blue group
-        OOF.ElementSelection.Intersect_Group(
-            skeleton='skeltest:skeleton', group='#868cfe')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='#868cfe',operator=Intersect()))
         self.assertEqual(self.selectionIDs(), [])
         # Reselect the green group and intersect it with the empty
         # group
-        OOF.ElementSelection.Select_Group(
-            skeleton='skeltest:skeleton', group='#a1fc93')
-        OOF.ElementSelection.Intersect_Group(
-            skeleton='skeltest:skeleton', group='newgroup')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='#a1fc93',operator=Select()))
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='newgroup',operator=Intersect()))
         self.assertEqual(self.selectionIDs(), [])
         # Add all the elements to newgroup
         OOF.ElementSelection.Invert(skeleton='skeltest:skeleton')
         OOF.ElementGroup.Add_to_Group(
             skeleton='skeltest:skeleton', group='newgroup')
         # Reselect the green group and intersect it with the full group
-        OOF.ElementSelection.Select_Group(
-            skeleton='skeltest:skeleton', group='#a1fc93')
-        OOF.ElementSelection.Intersect_Group(
-            skeleton='skeltest:skeleton', group='newgroup')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='#a1fc93',operator=Select()))
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='newgroup',operator=Intersect()))
         self.assertEqual(self.selectionIDs(), self.green_elems)
         # Reselect the full group and intersect it with the green group
-        OOF.ElementSelection.Select_Group(
-            skeleton='skeltest:skeleton', group='newgroup')
-        OOF.ElementSelection.Intersect_Group(
-            skeleton='skeltest:skeleton', group='#a1fc93')
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='newgroup',operator=Select()))
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=ElementSelectGroup(group='#a1fc93',operator=Intersect()))
         self.assertEqual(self.selectionIDs(), self.green_elems)
         
     @memorycheck.check("skeltest")
@@ -827,14 +768,9 @@ class Element_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
         OOF.ElementGroup.Auto_Group(
             skeleton='skeltest:skeleton')
         # Select a single green element
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
-            skeleton='skeltest:skeleton', 
-            points=[Point(6.2906,5.79847,21.9826)], 
-            view=View(cameraPosition=Coord(5,5,34.2583), 
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0),
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652), 
-            shift=0, ctrl=0)
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleElementSelect(element=35,operator=Select()))
         self.assertEqual(self.selectionIDs(), [35])
         # Try to remove it from the blue group
         OOF.ElementGroup.Remove_from_Group(
@@ -1125,58 +1061,38 @@ class Face_Selection_5Color(Skeleton_Selection_5Color, Face_Selection):
         self.makeSkeleton(4, 4, 4)
         self.assertEqual(self.selection().size(), 0)
         # Select a face on the perimeter
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(10.5886,11.3485,42.4752)], 
-            view=View(cameraPosition=Coord(10,10,68.5167),
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0),
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
+            method=SingleFaceSelect(nodes=[109, 89, 114],
+                                    operator=Select()))
         self.assertEqual(self.selection().size(), 1)
-        self.assertEqual(self.selectionIDs(), [1237])
+        self.assertEqual(self.selectionIDs(), [1535])
         # Select an interior face
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton='skeltest:skeleton', 
-            points=[Point(-39.9119,15.3349,37.4114)], 
-            view=View(cameraPosition=Coord(-41.0587,15.4379,38.0648),
-                      focalPoint=Coord(10,10,10),
-                      up=Coord(0.131699,0.990139,0.0477514), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 5.0]], invertClip=1,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleFaceSelect(nodes=[87, 62, 57],
+                                    operator=Select()))
         self.assertEqual(self.selection().size(), 1)
-        self.assertEqual(self.selectionIDs(), [1030])
+        self.assertEqual(self.selectionIDs(), [1109])
         # shift-click to select an additional face
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton='skeltest:skeleton', 
-            points=[Point(10.5859,10.3942,42.4752)], 
-            view=View(cameraPosition=Coord(10,10,68.5167), 
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0),
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        self.assertEqual(self.selectionIDs(), [1030, 1237])
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleFaceSelect(nodes=[123, 98, 97],
+                                    operator=AddSelection()))
+        self.assertEqual(self.selectionIDs(), [1109, 1684])
+
         # control-click
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton='skeltest:skeleton', 
-            points=[Point(10.5859,10.3942,42.4752)], 
-            view=View(cameraPosition=Coord(10,10,68.5167), 
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0),
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=1)
-        self.assertEqual(self.selectionIDs(), [1030])
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleFaceSelect(nodes=[123, 98, 97],
+                                    operator=Toggle()))
+        self.assertEqual(self.selectionIDs(), [1109])
         # control-click again
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton='skeltest:skeleton', 
-            points=[Point(10.5859,10.3942,42.4752)], 
-            view=View(cameraPosition=Coord(10,10,68.5167), 
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0),
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=1)
-        self.assertEqual(self.selectionIDs(), [1030, 1237])
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleFaceSelect(nodes=[123, 98, 97],
+                                    operator=Toggle()))
+        self.assertEqual(self.selectionIDs(), [1109, 1684])
 
     @memorycheck.check("skeltest")
     def UndoRedo(self):
@@ -1184,17 +1100,13 @@ class Face_Selection_5Color(Skeleton_Selection_5Color, Face_Selection):
         sel0 = id(self.selection().currentSelection())
         self.assertEqual(self.selectionIDs(), [])
         # Select one face
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(9.41408,11.1825,42.4752)],
-            view=View(cameraPosition=Coord(10,10,68.5167), 
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0),
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
+            method=SingleFaceSelect(nodes=[109, 89, 114],
+                                    operator=Select()))
         sel1 = id(self.selection().currentSelection())
         self.assertNotEqual(sel0, sel1)
-        self.assertEqual(self.selectionIDs(), [1151])
+        self.assertEqual(self.selectionIDs(), [1535])
         # Undo
         OOF.FaceSelection.Undo(skeleton='skeltest:skeleton')
         sel2 = id(self.selection().currentSelection())
@@ -1204,24 +1116,20 @@ class Face_Selection_5Color(Skeleton_Selection_5Color, Face_Selection):
         OOF.FaceSelection.Redo(skeleton='skeltest:skeleton')
         sel3 = id(self.selection().currentSelection())
         self.assertEqual(sel1, sel3)
-        self.assertEqual(self.selectionIDs(), [1151])
+        self.assertEqual(self.selectionIDs(), [1535])
         # Select another face
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(5.7494,5.34458,42.4752)], 
-            view=View(cameraPosition=Coord(10,10,68.5167), 
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
+            method=SingleFaceSelect(nodes=[87, 62, 57],
+                                    operator=Select()))
         sel4 = id(self.selection().currentSelection())
         self.assertNotEqual(sel0, sel4)
         self.assertNotEqual(sel1, sel4)
-        self.assertEqual(self.selectionIDs(), [238])
+        self.assertEqual(self.selectionIDs(), [1109])
         # Undo
         OOF.FaceSelection.Undo(skeleton='skeltest:skeleton')
         self.assertEqual(id(self.selection().currentSelection()), sel1)
-        self.assertEqual(self.selectionIDs(), [1151])
+        self.assertEqual(self.selectionIDs(), [1535])
         # Undo again
         OOF.FaceSelection.Undo(skeleton='skeltest:skeleton')
         self.assertEqual(id(self.selection().currentSelection()), sel0)
@@ -1230,20 +1138,16 @@ class Face_Selection_5Color(Skeleton_Selection_5Color, Face_Selection):
         OOF.FaceSelection.Redo(skeleton='skeltest:skeleton')     
         OOF.FaceSelection.Redo(skeleton='skeltest:skeleton')
         self.assertEqual(id(self.selection().currentSelection()), sel4)
-        self.assertEqual(self.selectionIDs(), [238])
+        self.assertEqual(self.selectionIDs(), [1109])
         
     @memorycheck.check("skeltest")
     def Clear(self):
         self.makeSkeleton(4, 4, 4)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(6.82146,8.86557,42.4752)],
-            view=View(cameraPosition=Coord(10,10,68.5167),
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0),
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
-        self.assertEqual(self.selectionIDs(), [680])
+            method=SingleFaceSelect(nodes=[87, 62, 57],
+                                    operator=Select()))
+        self.assertEqual(self.selectionIDs(), [1109])
         OOF.FaceSelection.Clear(skeleton='skeltest:skeleton')
         self.assertEqual(self.selectionIDs(), [])
 
@@ -1264,62 +1168,67 @@ class Face_Selection_5Color(Skeleton_Selection_5Color, Face_Selection):
         self.assertEqual(self.selectionIDs(), facelist)
         OOF.FaceSelection.Invert(skeleton='skeltest:skeleton')
         self.assertEqual(self.selectionIDs(), [])
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(8.83347,8.54451,42.4752)],
-            view=View(cameraPosition=Coord(10,10,68.5167), 
-                      focalPoint=Coord(10,10,10), up=Coord(0,1,0), angle=30, 
-                      clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652),
-            shift=0, ctrl=0)
-        self.assertEqual(self.selectionIDs(), [86])
+            method=SingleFaceSelect(nodes=[11, 14, 23],operator=Select()))
+        self.assertEqual(self.selectionIDs(), [194])
         OOF.FaceSelection.Invert(skeleton='skeltest:skeleton')
-        facelist.remove(86)
+        facelist.remove(194)
         self.assertEqual(self.selectionIDs(), facelist)
 
 # end Face_Selection_5Color
 
 def makeFaceGroups():
-     # The Element, Segment, and Node tests use AutoGroup to create
-     # groups, but AutoGroup hasn't been implemented for Faces yet.
-     # Instead, this utility function creates and populates two
-     # groups.  
+    # The Element, Segment, and Node tests use AutoGroup to create
+    # groups, but AutoGroup hasn't been implemented for Faces yet.
+    # Instead, this utility function creates and populates two
+    # groups.  
 
     # This function is called from other test modules, and when it's
     # called that way, the oof namespace isn't imported to this
     # module, so we have to import some classes manually.
     from ooflib.common.IO.mainmenu import OOF
-    from ooflib.SWIG.common.coord import Coord
-    from ooflib.common.primitives import Point
-    from ooflib.SWIG.common.IO.view import View
-    def clickPt(pt, shift):
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton='skeltest:skeleton', 
-            points=[pt],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=shift, ctrl=0)
-    clickPt(Point(3.71355,6.5841,21.9826), 0)
-    clickPt(Point(4.33912,6.1906,21.9826), 1)
-    clickPt(Point(5.18666,6.20069,21.9826), 1)
-    clickPt(Point(6.30663,6.70518,21.9826), 1)
+    from ooflib.engine.skeletonselectionmethod import SingleFaceSelect
+    from ooflib.common.selectionoperators import Select, AddSelection
+
+    OOF.FaceSelection.Select(
+        skeleton='skeltest:skeleton',
+        method=SingleFaceSelect(nodes=[11, 23, 20],operator=Select()))
+    OOF.FaceSelection.Select(
+        skeleton='skeltest:skeleton',
+        method=SingleFaceSelect(nodes=[11, 14, 23],operator=AddSelection()))
+    OOF.FaceSelection.Select(
+        skeleton='skeltest:skeleton',
+        method=SingleFaceSelect(nodes=[11, 5, 14],operator=AddSelection()))
+    OOF.FaceSelection.Select(
+        skeleton='skeltest:skeleton',
+        method=SingleFaceSelect(nodes=[2, 5, 11],operator=AddSelection()))
+
     OOF.FaceGroup.New_Group(
         skeleton='skeltest:skeleton', name='groupA')
     OOF.FaceGroup.Add_to_Group(
         skeleton='skeltest:skeleton', group='groupA')
 
-    clickPt(Point(3.78418,4.16255,21.9826), 0)
-    clickPt(Point(3.50166,3.32509,21.9826), 1)
-    clickPt(Point(5.3481,3.96075,21.9826), 1)
-    clickPt(Point(6.47816,3.20401,21.9826), 1)
+    OOF.FaceSelection.Select(
+        skeleton='skeltest:skeleton',
+        method=SingleFaceSelect(nodes=[23, 17, 26],operator=Select()))
+    OOF.FaceSelection.Select(
+        skeleton='skeltest:skeleton',
+        method=SingleFaceSelect(nodes=[14, 17, 23],operator=AddSelection()))
+    OOF.FaceSelection.Select(
+        skeleton='skeltest:skeleton',
+        method=SingleFaceSelect(nodes=[5, 17, 14],operator=AddSelection()))
+    OOF.FaceSelection.Select(
+        skeleton='skeltest:skeleton',
+        method=SingleFaceSelect(nodes=[5, 8, 17],operator=AddSelection()))
+
     OOF.FaceGroup.New_Group(
         skeleton='skeltest:skeleton', name='groupB')
     OOF.FaceGroup.Add_to_Group(
         skeleton='skeltest:skeleton', group='groupB')
 
-a_faces = [194, 204, 243, 253]
-b_faces = [76, 86, 140, 146]
+a_faces = [76, 86, 194, 204]
+b_faces = [140, 146, 243, 253]
 
 class Face_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
                                  Face_Selection):
@@ -1353,34 +1262,26 @@ class Face_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
         OOF.FaceGroup.New_Group(
             skeleton='skeltest:skeleton', name='newgroup')
         self.assertEqual(self.groupNames(), ['newgroup'])
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(4.44884,5.90968,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583), 
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
+            method=SingleFaceSelect(nodes=[11, 14, 23],operator=Select()))
         self.assertEqual(self.selectionIDs(), [194])
         OOF.FaceGroup.Add_to_Group(
             skeleton='skeltest:skeleton', group='newgroup')
         self.assertEqual(self.groupSize('newgroup'), 1)
         self.assertEqual(self.groupIDs('newgroup'), [194])
         # Select another face
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(5.58327,4.0047,21.2376)], 
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
-        self.assertEqual(self.selectionIDs(), [146])
+            method=SingleFaceSelect(nodes=[14, 17, 23],operator=Select()))
+        self.assertEqual(self.selectionIDs(), [243])
         OOF.FaceGroup.Add_to_Group(
             skeleton='skeltest:skeleton', group='newgroup')
-        self.assertEqual(self.groupIDs('newgroup'), [146, 194])
+        self.assertEqual(self.groupIDs('newgroup'), [194, 243])
         # Re-add the same face
         OOF.FaceGroup.Add_to_Group(
             skeleton='skeltest:skeleton', group='newgroup')
-        self.assertEqual(self.groupIDs('newgroup'), [146, 194])
+        self.assertEqual(self.groupIDs('newgroup'), [194, 243])
 
     @memorycheck.check("skeltest")
     def SelectGroup(self):
@@ -1388,19 +1289,14 @@ class Face_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
         OOF.FaceGroup.New_Group(
             skeleton='skeltest:skeleton', name='newgroup')
         # Select a face
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(5.49945,6.25114,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), 
-                      angle=30, clipPlanes=[], invertClip=0,
-                      size_x=691, size_y=652), 
-            shift=0, ctrl=0)
-        self.assertEqual(self.selectionIDs(), [243])
+            method=SingleFaceSelect(nodes=[11, 14, 23],operator=Select()))
+        self.assertEqual(self.selectionIDs(), [194])
         # Select the faces in the empty group
-        OOF.FaceSelection.Select_Group(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            group='newgroup')
+            method=FaceSelectGroup(group='newgroup',operator=Select()))
         self.assertEqual(self.selectionIDs(), [])
         # Undo the selection of the empty group
         OOF.FaceSelection.Undo(skeleton='skeltest:skeleton')
@@ -1409,29 +1305,25 @@ class Face_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
             skeleton='skeltest:skeleton', 
             group='newgroup')
         # Clear the selection
-        OOF.Graphics_1.Toolbox.Select_Face.Clear(
+        OOF.FaceSelection.Clear(
             skeleton='skeltest:skeleton')
         self.assertEqual(self.selectionIDs(), [])
         # Select the face in the group
-        OOF.FaceSelection.Select_Group(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            group='newgroup')
-        self.assertEqual(self.selectionIDs(), [243])
+            method=FaceSelectGroup(group='newgroup',operator=Select()))
+        self.assertEqual(self.selectionIDs(), [194])
         # Select a different face
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(3.34652,3.69434,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
-        self.assertEqual(self.selectionIDs(), [76])
+            method=SingleFaceSelect(nodes=[23, 17, 26],operator=Select()))
+        self.assertEqual(self.selectionIDs(), [253])
         # Select the face in the group and make sure that the
         # different face is not selected.
-        OOF.FaceSelection.Select_Group(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            group='newgroup')
-        self.assertEqual(self.selectionIDs(), [243])
+            method=FaceSelectGroup(group='newgroup',operator=Select()))
+        self.assertEqual(self.selectionIDs(), [194])
 
     @memorycheck.check("skeltest")
     def AddGroup(self):
@@ -1439,48 +1331,40 @@ class Face_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
         OOF.FaceGroup.New_Group(
             skeleton='skeltest:skeleton', name='newgroup')
         # Select a face
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton='skeltest:skeleton', 
-            points=[Point(3.12834,5.89799,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
-        self.assertEqual(self.selectionIDs(), [204])
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleFaceSelect(nodes=[11, 14, 23],operator=Select()))
+        self.assertEqual(self.selectionIDs(), [194])
         # Add the faces in the empty group to the selection and
         # make sure the selected face stays selected.
-        OOF.FaceSelection.Add_Group(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            group='newgroup')
-        self.assertEqual(self.selectionIDs(), [204])
+            method=FaceSelectGroup(group='newgroup',operator=AddSelection()))
+        self.assertEqual(self.selectionIDs(), [194])
         # Make the group non-empty
         OOF.FaceGroup.Add_to_Group(
             skeleton='skeltest:skeleton', 
             group='newgroup')
         # Clear the selection
-        OOF.Graphics_1.Toolbox.Select_Face.Clear(
+        OOF.FaceSelection.Clear(
             skeleton='skeltest:skeleton')
         self.assertEqual(self.selectionIDs(), [])
         # Add the non-empty group to the empty selection.
-        OOF.FaceSelection.Add_Group(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            group='newgroup')
-        self.assertEqual(self.selectionIDs(), [204])
+            method=FaceSelectGroup(group='newgroup',operator=AddSelection()))
+        self.assertEqual(self.selectionIDs(), [194])
         # Select a different face
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(6.9322,3.7085,21.9826)], 
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
-        self.assertEqual(self.selectionIDs(), [140])
+            method=SingleFaceSelect(nodes=[23, 17, 26],operator=Select()))
+        self.assertEqual(self.selectionIDs(), [253])
         # Add the group to the selection and make sure both faces
         # are selected.
-        OOF.FaceSelection.Add_Group(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            group='newgroup')
-        self.assertEqual(self.selectionIDs(), [140, 204])
+            method=FaceSelectGroup(group='newgroup',operator=AddSelection()))
+        self.assertEqual(self.selectionIDs(), [194, 253])
 
     @memorycheck.check("skeltest")
     def UnselectGroup(self):
@@ -1489,40 +1373,42 @@ class Face_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
         OOF.FaceGroup.New_Group(
             skeleton='skeltest:skeleton', name='newgroup')
         # Select a group
-        OOF.FaceSelection.Select_Group(
-            skeleton='skeltest:skeleton', group='groupA')
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=FaceSelectGroup(group='groupA',operator=Select()))
         # Unselect the empty group
-        OOF.FaceSelection.Unselect_Group(
-            skeleton='skeltest:skeleton', group='newgroup')
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=FaceSelectGroup(group='newgroup', operator=Unselect()))
         self.assertEqual(self.selectionIDs(), a_faces)
         # Unselect a non-empty but non intersecting group
-        OOF.FaceSelection.Unselect_Group(
-            skeleton='skeltest:skeleton', group='groupB')
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=FaceSelectGroup(group='groupB', operator=Unselect()))
         self.assertEqual(self.selectionIDs(), a_faces)
         # Unselect the actually selected group
-        OOF.FaceSelection.Unselect_Group(
-            skeleton='skeltest:skeleton', group='groupA')
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=FaceSelectGroup(group='groupA', operator=Unselect()))
         self.assertEqual(self.selectionIDs(), [])
         # Select a single face and put it in newgroup.  The selected
         # face is already in groupA.
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton='skeltest:skeleton', 
-            points=[Point(5.50835,6.27356,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleFaceSelect(nodes=[11, 14, 23],operator=Select()))
         OOF.FaceGroup.Add_to_Group(
             skeleton='skeltest:skeleton', group='newgroup')
-        self.assertEqual(self.selectionIDs(), [243])
+        self.assertEqual(self.selectionIDs(), [194])
         # Reselect the first group
-        OOF.FaceSelection.Select_Group(
-            skeleton='skeltest:skeleton', group='groupA')
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=FaceSelectGroup(group='groupA', operator=Select()))
         # Unselect the single face in newgroup
-        OOF.FaceSelection.Unselect_Group(
-            skeleton='skeltest:skeleton', group='newgroup')
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=FaceSelectGroup(group='newgroup', operator=Unselect()))
         indices = a_faces[:]
-        indices.remove(243)
+        indices.remove(194)
         self.assertEqual(self.selectionIDs(), indices)
 
     @memorycheck.check("skeltest")
@@ -1532,38 +1418,47 @@ class Face_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
         OOF.FaceGroup.New_Group(
             skeleton='skeltest:skeleton', name='newgroup')
         # Select the A group
-        OOF.FaceSelection.Select_Group(
-            skeleton='skeltest:skeleton', group='groupA')
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=FaceSelectGroup(group='groupA', operator=Select()))
         # Intersect it with itself
-        OOF.FaceSelection.Intersect_Group(
-            skeleton='skeltest:skeleton', group='groupA')
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=FaceSelectGroup(group='groupA', operator=Intersect()))
         self.assertEqual(self.selectionIDs(), a_faces)
         # Intersect it with the (disjoint) B group
-        OOF.FaceSelection.Intersect_Group(
-            skeleton='skeltest:skeleton', group='groupB')
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=FaceSelectGroup(group='groupB', operator=Intersect()))
         self.assertEqual(self.selectionIDs(), [])
         # Reselect the A group and intersect it with the empty
         # group
-        OOF.FaceSelection.Select_Group(
-            skeleton='skeltest:skeleton', group='groupA')
-        OOF.FaceSelection.Intersect_Group(
-            skeleton='skeltest:skeleton', group='newgroup')
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=FaceSelectGroup(group='groupA', operator=Select()))
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=FaceSelectGroup(group='newgroup', operator=Intersect()))
         self.assertEqual(self.selectionIDs(), [])
         # Add all the faces to newgroup
         OOF.FaceSelection.Invert(skeleton='skeltest:skeleton')
         OOF.FaceGroup.Add_to_Group(
             skeleton='skeltest:skeleton', group='newgroup')
         # Reselect the A group and intersect it with the full group
-        OOF.FaceSelection.Select_Group(
-            skeleton='skeltest:skeleton', group='groupA')
-        OOF.FaceSelection.Intersect_Group(
-            skeleton='skeltest:skeleton', group='newgroup')
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=FaceSelectGroup(group='groupA', operator=Select()))
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=FaceSelectGroup(group='newgroup', operator=Intersect()))
         self.assertEqual(self.selectionIDs(), a_faces)
         # Reselect the full group and intersect it with the A group
-        OOF.FaceSelection.Select_Group(
-            skeleton='skeltest:skeleton', group='newgroup')
-        OOF.FaceSelection.Intersect_Group(
-            skeleton='skeltest:skeleton', group='groupA')
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=FaceSelectGroup(group='newgroup', operator=Select()))
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=FaceSelectGroup(group='groupA', operator=Intersect()))
         self.assertEqual(self.selectionIDs(), a_faces)
 
     @memorycheck.check("skeltest")
@@ -1571,14 +1466,10 @@ class Face_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
         self.makeSkeleton(2, 2, 2)
         makeFaceGroups()
         # Select a single A face
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton='skeltest:skeleton', 
-            points=[Point(3.87499,6.7859,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
-        self.assertEqual(self.selectionIDs(), [204])
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleFaceSelect(nodes=[11, 14, 23],operator=Select()))
+        self.assertEqual(self.selectionIDs(), [194])
         # Try to remove it from the B group
         OOF.FaceGroup.Remove_from_Group(
             skeleton='skeltest:skeleton', group='groupB')
@@ -1589,7 +1480,7 @@ class Face_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
             skeleton='skeltest:skeleton', group='groupA')
         self.assertEqual(self.groupIDs('groupB'), b_faces)
         indices = a_faces[:]
-        indices.remove(204)
+        indices.remove(194)
         self.assertEqual(self.groupIDs('groupA'), indices)
 
     @memorycheck.check("skeltest")
@@ -1801,8 +1692,9 @@ class Face_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
     @memorycheck.check("skeltest")
     def InternalBoundaries(self):
         self.makeSkeleton(4, 4, 4)
-        OOF.FaceSelection.Select_Internal_Boundaries(
-            skeleton='skeltest:skeleton')
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SelectInternalBoundaryFaces(operator=Select()))
         self.assertEqual(
             self.selectionIDs(),
             [174, 184, 302, 308, 408, 418, 522, 528, 628, 638, 729, 739, 821,
@@ -1835,55 +1727,6 @@ class Face_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
 
     ## TODO 3.0: Add tests for the rest of the face selection and group
     ## operations when they are implemented.
-
-class Face_Selection_TwoWalls(Skeleton_Selection_TwoWalls, Face_Selection):
-    # This operation used to select the wrong faces because the front
-    # and back vtk clipping planes weren't being reset correctly.
-    @memorycheck.check("two_walls")
-    def DefaultClipTest(self):
-        OOF.Graphics_1.Layer.Edit(
-            n=0, category='Image',
-            what='two_walls:two_walls',
-            how=BitmapDisplayMethod(
-                filter=VoxelNot(a=VoxelGroupFilter(group='#000000'))))
-        OOF.Graphics_1.Settings.Camera.View(
-            view=View(cameraPosition=Coord(-26.9322,98.0598,93.9657),
-                      focalPoint=Coord(25,25,5),
-                      up=Coord(0.818648,-0.105512,0.56452), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=614, size_y=550))
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton='two_walls:skeleton',
-            points=[Point(-21.9322,90.7391,82.2603)],
-            view=View(cameraPosition=Coord(-26.9322,98.0598,93.9657),
-                      focalPoint=Coord(25,25,5),
-                      up=Coord(0.818648,-0.105512,0.56452), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=614, size_y=550),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton='two_walls:skeleton',
-            points=[Point(-22.6394,90.233,82.263)],
-            view=View(cameraPosition=Coord(-26.9322,98.0598,93.9657),
-                      focalPoint=Coord(25,25,5),
-                      up=Coord(0.818648,-0.105512,0.56452), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=614, size_y=550),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton='two_walls:skeleton',
-            points=[Point(-22.801,89.5835,82.7021)],
-            view=View(cameraPosition=Coord(-26.9322,98.0598,93.9657),
-                      focalPoint=Coord(25,25,5),
-                      up=Coord(0.818648,-0.105512,0.56452), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=614, size_y=550),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton='two_walls:skeleton',
-            points=[Point(-22.2825,89.2607,83.2699)],
-            view=View(cameraPosition=Coord(-26.9322,98.0598,93.9657),
-                      focalPoint=Coord(25,25,5),
-                      up=Coord(0.818648,-0.105512,0.56452), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=614, size_y=550),
-            shift=1, ctrl=0)
-        self.assertEqual(self.selectionIDs(), [301, 311, 411, 421])
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
@@ -3601,7 +3444,6 @@ face_set = [
     Face_Selection_BlueGreen50("InternalBoundaries"),
     Face_Selection_BlueGreen50("Save"),
     Face_Selection_BlueGreen50("Load"),
-    Face_Selection_TwoWalls("DefaultClipTest"),
     #Direct_Face_Selection("Rectangle"),
     #Direct_Face_Selection("Circle"),
     #Direct_Face_Selection("Ellipse"),
@@ -3692,6 +3534,7 @@ face_set2 = [
 test_set = (element_set + face_set + segment_set + node_set +
             element_set2 + node_set2 + segment_set2 + face_set2)
 
+#test_set = segment_set
 # test_set = [
 #     Element_Selection_5Color("ShapeEnergy"),
 # ]

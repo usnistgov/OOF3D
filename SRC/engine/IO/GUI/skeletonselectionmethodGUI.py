@@ -113,7 +113,8 @@ class FaceSelectorGUI(SingleClickSkelSelectionMethodGUI):
         if who is not None:
             corners = self.getClickedFace(x, y) # vtkIdListPtr object
             if corners is not None:
-                # Convert the vtkIdList object to a list of int node ids.
+                # Convert the vtkIdList object to a python list of int
+                # node ids.
                 ## TODO: This conversion could be avoided if we wanted
                 ## to make the vtkIdListPtr object constructible in
                 ## Python, and just use it directly in scripts.  The

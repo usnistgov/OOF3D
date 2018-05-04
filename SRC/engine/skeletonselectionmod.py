@@ -688,7 +688,7 @@ class FaceSelectGroup(FaceSelectionModifier):
         courier = skeletonselectioncourier.SkeletonGroupCourier(
             skelctxt.getObject(),
             self.group,
-            skelctxt.segmentgroups.getTracker(skelctxt.getObject()),
+            skelctxt.facegroups.getTracker(skelctxt.getObject()),
             clist, plist)
         self.operator.operate(selection, courier)
 

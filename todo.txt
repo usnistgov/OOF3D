@@ -79,7 +79,13 @@ changed.
 Make sure that Active Volumes are respected for all voxel & skeleton
 selection operations.
 
-Use couriers for all Active Volume modifications. 
+Use couriers for all Active Volume modifications.
+
+Bug: Voxels selected at the time a graphics window is opened aren't
+highlighted.
+
+Prev and Next buttons in the Skeleton Selection page aren't working.
+Check the Voxel Selection page.
 
 ---------------------------------------------------------------------------
 Soon
