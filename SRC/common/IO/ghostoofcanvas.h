@@ -197,7 +197,8 @@ public:
 			      Coord*);
   Coord *findClickedCellCenter(const Coord*, const View*, OOFCanvasLayer*);
   Coord *findClickedPoint(const Coord*, const View*, OOFCanvasLayer*);
-  Coord *findClickedSegment(const Coord*, const View*, OOFCanvasLayer*);
+  vtkSmartPointer<vtkIdList> findClickedSegment(const Coord*, const View*,
+				       OOFCanvasLayer*);
   vtkSmartPointer<vtkIdList> findClickedFace(const Coord*, const View*,
    					     OOFCanvasLayer*);
 

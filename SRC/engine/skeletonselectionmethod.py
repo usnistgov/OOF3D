@@ -29,11 +29,6 @@ from ooflib.engine.skeletonselection import \
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-## TODO: SingleNodeSelect and SingleSegmentSelect use a mouse-click
-## position argument, but SingleFaceSelect and SingleElementSelect use
-## object indices.  They should all use the same method (probably
-## object indices).
-
 class SingleNodeSelect(NodeSelectionMethod):
     def __init__(self, point, operator):
         self.point = point
@@ -67,11 +62,11 @@ NodeSelectionMethodRegistration(
 # Segment selection is like node selection, except for details.
 
 class SingleSegmentSelect(SegmentSelectionMethod):
-    def __init__(self, point, operator):
-        self.point = point
+    def __init__(self, nodes, operator):
+        self.nodes = nodes
         self.operator = operator
     def select(self, skelctxt, selection):
-        segment = skelctxt.getObject().nearestSegment(self.point)
+        segment = skelctxt.getObject().findExistingSegmentByIds(self.nodes)
         clist, plist = selection.trackerlist()
         courier = skeletonselectioncourier.SingleObjectCourier(
             skelctxt.getObject(), segment, clist, plist)
@@ -81,7 +76,8 @@ SegmentSelectionMethodRegistration(
     'Single Segment',
     SingleSegmentSelect, ordering=0,
     params=[
-        parameter.hidden(pointparameter.PointParameter('point')),
+        parameter.hidden(
+            parameter.ListOfIntsParameter('nodes', tip="List of node IDs.")),
         selectionoperators.SelectionOperatorParam('operator', passive=1)],
     tip="Select a segment joining two nodes.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/single_segment.xml')

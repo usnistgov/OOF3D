@@ -319,6 +319,7 @@ public:
   const CSkeletonSegment* nearestSegment(Coord *point);
   CSkeletonSegment* findExistingSegment(const CSkeletonNode *n1,
 					const CSkeletonNode *n2) const;
+  CSkeletonSegment *findExistingSegmentByIds(const std::vector<int>*) const;
   bool doesSegmentExist(const CSkeletonNode *n1, const CSkeletonNode *n2) const;
   virtual bool inSegmentMap(const CSkeletonMultiNodeKey &h) const = 0;
   const CSkeletonFace* nearestFace(Coord *point);

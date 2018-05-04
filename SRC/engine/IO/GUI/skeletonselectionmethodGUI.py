@@ -44,9 +44,9 @@ class SingleClickSkelSelectionMethodGUI(genericselectGUI.SelectionMethodGUI):
 
     def getClickedSegment(self, x, y):
         viewobj, realpoint = self.getViewAndPoint(x, y)
-        segpt = self.gfxwindow().findClickedSegment(self.getSourceContext(),
-                                                    realpoint, viewobj)
-        return segpt
+        endPtIds = self.gfxwindow().findClickedSegment(self.getSourceContext(),
+                                                       realpoint, viewobj)
+        return endPtIds
 
     def getClickedFace(self, x, y):
         viewobj, realpoint = self.getViewAndPoint(x, y)
@@ -89,22 +89,18 @@ class NodeSelectorGUI(SingleClickSkelSelectionMethodGUI):
                                                
 @genericselectGUI.selectionGUIfor(skeletonselectionmethod.SingleSegmentSelect)
 class SegmentSelectorGUI(SingleClickSkelSelectionMethodGUI):
-    def down(self, x, y, buttons):
-        pt = self.getClickedPoint(x, y)
-        self.toolbox.setParamValues(
-            point=pt,
-            operator=selectionoperators.getSelectionOperator(buttons))
-
     def up(self, x, y, buttons):
         who = self.toolbox.getSelectionSource()
         if who is not None:
-            pt = self.getClickedSegment(x, y)
-            if pt is not None:
+            endPts = self.getClickedSegment(x, y)
+            if endPts is not None:
+                # See comment and TODO in FaceSelectorGUI below
+                nodes = [endPts[i] for i in (0,1)]
                 operator = selectionoperators.getSelectionOperator(buttons)
                 self.toolbox.invokeMenuItem(
                     who,
                     skeletonselectionmethod.SingleSegmentSelect(
-                        pt, operator))
+                        nodes, operator))
 
 @genericselectGUI.selectionGUIfor(skeletonselectionmethod.SingleFaceSelect)
 class FaceSelectorGUI(SingleClickSkelSelectionMethodGUI):

@@ -149,6 +149,7 @@ public:
   CSkeletonSegment *getSegmentByUid(uidtype);
   CSkeletonFace *getFaceByUid(uidtype);
   CSkeletonSegment* findExistingSegment(CSkeletonNode*, CSkeletonNode*);
+  CSkeletonSegment* findExistingSegmentByIds(IntVec*);
   bool doesSegmentExist(CSkeletonNode*, CSkeletonNode*);
   CSkeletonFace *findExistingFace(CSkeletonNode*, CSkeletonNode*,
 				  CSkeletonNode*);

@@ -1337,6 +1337,15 @@ CSkeletonSegment* CSkeletonBase::findExistingSegment(const CSkeletonNode *n1,
   return getSegment(h);
 }
 
+CSkeletonSegment *CSkeletonBase::findExistingSegmentByIds(
+					  const std::vector<int> *pointIds)
+  const
+{
+  CSkeletonNode *n0 = getNode((*pointIds)[0]);
+  CSkeletonNode *n1 = getNode((*pointIds)[1]);
+  return findExistingSegment(n0, n1);
+}
+
 CSkeletonSegment* CSkeleton::getSegment(const CSkeletonMultiNodeKey &h) const {
   CSkeletonSegmentMap::const_iterator it;
   it = segments.find(h);

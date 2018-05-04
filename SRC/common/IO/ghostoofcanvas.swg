@@ -209,7 +209,7 @@ public:
   %new Coord *findClickedCellCenter(Coord *Point, View*, OOFCanvasLayer*);
   %new Coord *findClickedPosition(Coord *Point, View*, OOFCanvasLayer*);
   %new Coord *findClickedPoint(Coord *Point, View*, OOFCanvasLayer*);
-  %new Coord *findClickedSegment(Coord *Point, View*, OOFCanvasLayer*);
+  vtkIdListPtr findClickedSegment(Coord *Point, View*, OOFCanvasLayer*);
   vtkIdListPtr findClickedFace(Coord *Point, View*, OOFCanvasLayer*);
 
   %new CoordAndInt *findClickedCellCenterMulti(Coord *Point, View*,

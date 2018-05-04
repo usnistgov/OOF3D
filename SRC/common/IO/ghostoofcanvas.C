@@ -1411,8 +1411,8 @@ Coord *GhostOOFCanvas::findClickedPoint(const Coord *click, const View *view,
 // click in 2D screen coordinates to a 3D Coord that's on or near a
 // segment in the given layer's vtkCells.  
 
-Coord *GhostOOFCanvas::findClickedSegment(const Coord *click, const View *view,
-					  OOFCanvasLayer *layer)
+vtkSmartPointer<vtkIdList> GhostOOFCanvas::findClickedSegment(
+	      const Coord *click, const View *view, OOFCanvasLayer *layer)
 {
   assert(mainthread_query());
   vtkSmartPointer<vtkDataSet> edges;
@@ -1484,6 +1484,7 @@ Coord *GhostOOFCanvas::findClickedSegment(const Coord *click, const View *view,
   // to the camera (dot product of nearest point with ray is smallest).
   double smallestDistance2 = std::numeric_limits<double>::max();
   Coord closestPoint;
+  Coord closestEndPtA, closestEndPtB;
   bool found = false;
   vtkIdType nCells = edges->GetNumberOfCells();
   // oofcerr << "GhostOOFCanvas::findClickedSegment: nCells=" << nCells
@@ -1507,6 +1508,8 @@ Coord *GhostOOFCanvas::findClickedSegment(const Coord *click, const View *view,
 	// 	<< " ptB=" << ptB << " d2=" << d2 << std::endl;
 	smallestDistance2 = d2;
 	closestPoint = (1-alpha)*ptA + alpha*ptB;
+	closestEndPtA = ptA;
+	closestEndPtB = ptB;
 	found = true;
       }
       else if(found && d2 == smallestDistance2) {
@@ -1515,12 +1518,23 @@ Coord *GhostOOFCanvas::findClickedSegment(const Coord *click, const View *view,
 	if(dot(candidate, ray) < dot(closestPoint, ray)) {
 	  smallestDistance2 = d2;
 	  closestPoint = candidate;
+	  closestEndPtA = ptA;
+	  closestEndPtB = ptB;
 	}
       }
     } // end if findSegLineDistance(...)
   }
-  if(found)
-    return new Coord(closestPoint);
+  if(found) {
+    // The endpoints were found in a different grid with different
+    // points, so to find the right ids, we have to search in the
+    // layer's points.
+    vtkSmartPointer<vtkDataSet> dataset = layer->get_pickable_dataset();
+    vtkSmartPointer<vtkIdList> pts = vtkSmartPointer<vtkIdList>::New();
+    pts->SetNumberOfIds(2);
+    pts->InsertId(0, dataset->FindPoint(closestEndPtA));
+    pts->InsertId(1, dataset->FindPoint(closestEndPtB));
+    return pts;
+  }
   throw ErrClickError();
 } // GhostOOFCanvas::findClickedSegment
 
