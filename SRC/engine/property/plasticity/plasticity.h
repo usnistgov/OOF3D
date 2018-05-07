@@ -50,6 +50,8 @@ class TwoVectorField;
 class ThreeVectorField;
 class SmallSystem;
 
+class OrientationPropBase;
+
 class Plasticity : public FluxProperty {
 public:
   Plasticity(PyObject *rg, const std::string &nm,
@@ -71,6 +73,7 @@ public:
   virtual int integration_order(const CSubProblem *, const Element*) const;
   virtual bool constant_in_space() const { return true; }
   virtual void precompute(FEMesh*);
+  virtual void cross_reference(Material*);
   
   const Cijkl cijkl(const FEMesh*, const Element*,
 		    const MasterPosition&);
@@ -83,7 +86,7 @@ protected:
   ThreeVectorField *displacement;
   SymmetricTensorFlux *stress_flux;
 private:
-  // Orientation...
+  const OrientationPropBase *orientation;
   const Cijkl xtal_cijkl_;
   const Cijkl lab_cijkl_;
 };

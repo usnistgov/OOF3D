@@ -49,7 +49,7 @@ class TriclinicPlasticity(CijklPlasticity):
     pass
 
 reg = PropertyRegistration(
-    'Mechanical:Plasticity:Triclinic', TriclinicPlasticity,
+    'Mechanical:Plasticity:Generic', TriclinicPlasticity,
     "ooflib.SWIG.engine.property.plasticity.plasticity",18,
     [anisocijkl.TriclinicCijklParameter(
         'cijkl',

@@ -27,17 +27,38 @@
 #include "engine/material.h"
 #include "engine/ooferror.h"
 #include "engine/smallsystem.h"
+#include "engine/property/orientation/orientation.h"
+
 
 Plasticity::Plasticity(PyObject *reg, const std::string &name,
 		       const Cijkl &c)
-  : FluxProperty(name, reg), xtal_cijkl_(c)
+  : FluxProperty(name, reg), xtal_cijkl_(c), orientation(0)
 {
   displacement = dynamic_cast<ThreeVectorField*>(Field::getField("Displacement"));
   stress_flux = dynamic_cast<SymmetricTensorFlux*>(Flux::getFlux("Stress"));
 }
 
 
-void Plasticity::precompute(FEMesh*) {}
+void Plasticity::cross_reference(Material *mtl) {
+  try {
+    orientation = 
+      dynamic_cast<OrientationPropBase*>(mtl->fetchProperty("Orientation"));
+  }
+  catch (ErrNoSuchProperty&) {
+    // If fetchProperty failed, we have to ensure that an old pointer
+    // value isn't still being stored.
+    orientation = 0;
+    throw;
+  }
+}
+
+void Plasticity::precompute(FEMesh*) {
+  // Do the orientation thing.
+  // if(orientation && orientation->constant_in_space()) {
+  //    lab_cijkl_ = xtal_cijkl_.transform(orientation->orientation());
+  //    // Also do the constitutive rule.
+  // }
+}
 
 void Plasticity::begin_element(const CSubProblem *c, const Element *e) {}
 
