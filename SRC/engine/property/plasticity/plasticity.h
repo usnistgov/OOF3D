@@ -29,6 +29,7 @@
 #include <oofconfig.h>
 #include "engine/property.h"
 #include "engine/property/elasticity/cijkl.h"
+#include "common/pythonexportable.h"
 #include <string>
 
 // TODO: cijkl is in a different hierarchy, needs to be higher?
@@ -71,7 +72,6 @@ public:
   virtual bool constant_in_space() const { return true; }
   virtual void precompute(FEMesh*);
   
-  // Option: Crystallographic subclasses, later.
   const Cijkl cijkl(const FEMesh*, const Element*,
 		    const MasterPosition&);
 
@@ -83,8 +83,29 @@ protected:
   ThreeVectorField *displacement;
   SymmetricTensorFlux *stress_flux;
 private:
+  // Orientation...
   const Cijkl xtal_cijkl_;
   const Cijkl lab_cijkl_;
+};
+
+
+// We need an "interposed" class to inherit from PythonNative so that
+// we can extend to symmetry variants in Python.  We want to extend
+// to symmetry variants in Python because there is no generic
+// Cijkl parameter, the lowest-symmetry one is the TriclinicCijkl,
+// which participates in the symmetry game.
+
+
+class CPlasticity
+  : public Plasticity, virtual public PythonNative<Property>
+{
+public:
+  CPlasticity(PyObject *registry, PyObject *self,
+	      const std::string &name, const Cijkl &c)
+    : PythonNative<Property>(self),
+    Plasticity(registry, name, c)
+  {}
+  virtual ~CPlasticity() {}
 };
 
 #endif // PLASTICITY_H

@@ -17,14 +17,40 @@ from ooflib.common.IO import parameter
 
 PropertyRegistration = propertyregistration.PropertyRegistration
 
-class PlasticityProp(Plasticity):
+# Interposed class to convert the symmetry-specific cijkl into a
+# generic cijkl, which is what the CPlasticity constructor takes, to
+# hand off to the base plasticity class.
+class CijklPlasticity(CPlasticity):
     def __init__(self, registration, name, cijkl):
-        Plasticity.__init__(self, registration, name, cijkl.tensorForm())
+        CPlasticity.__init__(self, registration, self,
+                             name, cijkl.tensorForm())
 
-        
+
+class CubicPlasticity(CijklPlasticity):
+    pass
+
 reg = PropertyRegistration(
-    'Mechanical:Plasticity',PlasticityProp,
+    'Mechanical:Plasticity:Cubic', CubicPlasticity,
     "ooflib.SWIG.engine.property.plasticity.plasticity",17,
+    [anisocijkl.CubicCijklParameter(
+        'cijkl', anisocijkl.CubicRank4TensorCij(c11=1.0,
+                                                c12=0.5,
+                                                c44=0.25),
+        tip=parameter.emptyTipString)],
+    outputs=[],
+    propertyType="Plasticity",
+    discussion=None)
+
+reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
+             time_derivs=[0])
+
+
+class TriclinicPlasticity(CijklPlasticity):
+    pass
+
+reg = PropertyRegistration(
+    'Mechanical:Plasticity:Triclinic', TriclinicPlasticity,
+    "ooflib.SWIG.engine.property.plasticity.plasticity",18,
     [anisocijkl.TriclinicCijklParameter(
         'cijkl',
         anisocijkl.TriclinicRank4TensorCij(c11=1.0, c12=0.5, c13=0.5, c14=0.0,

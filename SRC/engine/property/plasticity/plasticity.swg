@@ -16,6 +16,7 @@
 
 %{
 #include "engine/property/plasticity/plasticity.h"
+#include "engine/property/elasticity/cijkl.h"
 %}
 
 %include "common/typemaps.swg"
@@ -25,8 +26,13 @@
 
 class Plasticity : public Property {
 public:
-  Plasticity(PyObject *reg, char *name, Cijkl &c);
-  ~Plasticity();
+  Cijkl cijkl(const FEMesh*, const Element*, const MasterPosition&);
+}
+
+class CPlasticity : public Plasticity {
+public:
+  CPlasticity(PyObject *reg, PyObject *self, char *name, Cijkl &c);
+  ~CPlasticity();
 };
 
 %pragma(python) include="plasticity.spy"
