@@ -545,24 +545,30 @@ registeredclass.TwoDOnlyRegistration(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class SegmentHomogeneity(SegmentSelectionModifier):
-    def __init__(self, threshold, operator):
-        self.threshold = threshold
+    def __init__(self, min_homogeneity, max_homogeneity, operator):
+        self.min_homogeneity = min_homogeneity
+        self.max_homogeneity = max_homogeneity
         self.operator = operator
 
     def select(self, skelctxt, selection):
         clist, plist = selection.trackerlist()
-        courier = skeletonselectioncourier.InhomogeneousSegmentCourier(
-            skelctxt.getObject(), self.threshold, clist, plist)
+        courier = skeletonselectioncourier.SegmentHomogeneityCourier(
+            skelctxt.getObject(), self.min_homogeneity, self.max_homogeneity,
+            clist, plist)
         self.operator.operate(selection, courier)
 
 SegmentSelectionModRegistration(
     'By Homogeneity',
     SegmentHomogeneity,
     ordering=_homogeneityOrdering,
-    params = [parameter.FloatRangeParameter('threshold', (0.0, 1.0, 0.01),
-                                            value=0.9,
-                                            tip='The threshold homogeneity.'),
-              selectionoperators.SelectionOperatorParam('operator')
+    params = [
+        parameter.FloatRangeParameter(
+            'min_homogeneity', (0.0, 1.0, 0.01), value=0.0,
+            tip='Select segments with homogeneity greater than this.'),
+        parameter.FloatRangeParameter(
+            'max_homogeneity', (0.0, 1.0, 0.01), value=0.0,
+            tip='Select segments with homogeneity lesss than this.'),
+        selectionoperators.SelectionOperatorParam('operator')
     ],
     tip="Select segments with homogeneity less than the given threshold.",
     discussion=xmlmenudump.loadFile(

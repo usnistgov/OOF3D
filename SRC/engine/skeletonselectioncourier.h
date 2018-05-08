@@ -323,13 +323,13 @@ public:
   virtual void next();
 };
 
-class InhomogeneousSegmentCourier
+class SegmentHomogeneityCourier
   : public BulkSkelSelCourier<CSkeletonSegmentSet>
 {
 public:
-  InhomogeneousSegmentCourier(const CSkeletonBase*, double,
-			     CSelectionTrackerVector*,
-			     CSelectionTrackerVector*);
+  SegmentHomogeneityCourier(const CSkeletonBase*, double, double,
+			    CSelectionTrackerVector*,
+			    CSelectionTrackerVector*);
 };
 
 class RandomSegmentCourier : public SkeletonSelectionCourier {

@@ -164,9 +164,9 @@ public:
 			  CSelectionTrackerVector*, CSelectionTrackerVector*);
 };
 
-class InhomogeneousSegmentCourier : public SkeletonSelectionCourier {
+class SegmentHomogeneityCourier : public SkeletonSelectionCourier {
 public:
-  InhomogeneousSegmentCourier(CSkeletonBase*, double,
+  SegmentHomogeneityCourier(CSkeletonBase*, double, double,
 			    CSelectionTrackerVector*, CSelectionTrackerVector*);
 };
 

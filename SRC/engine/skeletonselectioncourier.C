@@ -498,9 +498,39 @@ void SegmentsFromOtherCourier::start() {
   else if(coverage == std::string("Interior")) {
     CSkeletonSegmentSet allsegs = allSegments();
     CSkeletonSegmentSet extsegs = exteriorSegments();
-    std::set_difference(allsegs.begin(), allsegs.end(),
-			extsegs.begin(), extsegs.end(),
-			std::inserter(selectedObjects, selectedObjects.end()));
+
+    // For reasons that I don't understand, set_difference does not
+    // work here.
+    // std::set_difference(allsegs.begin(), allsegs.end(),
+    // 			extsegs.begin(), extsegs.end(),
+    // 			std::inserter(selectedObjects, selectedObjects.end()));
+    CSkeletonSegmentSet::const_iterator iterA = allsegs.begin();
+    CSkeletonSegmentSet::const_iterator iterE = extsegs.begin();
+    CSkeletonSegmentSet::key_compare compare;
+    // Find segments that are in allsegs but not extsegs
+    while(iterE != extsegs.end()) {
+      if(compare(*iterA, *iterE)) {
+    	selectedObjects.insert(*iterA);
+    	++iterA;
+      }
+#ifdef DEBUG
+      // This can't happen because extsegs is a subset of allsegs.
+      else if(compare(*iterE, *iterA)) {
+    	throw ErrProgrammingError(
+	  "SegmentsFromOtherCourier::start: external segment not in allsegs!",
+	  __FILE__, __LINE__);
+      }
+#endif // DEBUG
+      else {
+    	++iterA;
+    	++iterE;
+      }
+    }
+    // If iterE finished before iterA, then the rest of the entries in
+    // allsegs are also interior.
+    selectedObjects.insert(iterA, allsegs.end());
+
+
   }
   else {
     selectedObjects = allSegments();
@@ -543,10 +573,6 @@ CSkeletonSegmentSet SegmentsFromElementsCourier::exteriorSegments() const {
     int nn = face->nnodes();
     for(int i=0; i<nn; i++) { 	// loop over segments
       segments.insert(face->getSegment(skeleton, i));
-      // const CSkeletonNode *n0 = face->getNode(i);
-      // const CSkeletonNode *n1 = face->getNode((i+1)%nn);
-      // CSkeletonSegment *segment = skeleton->findExistingSegment(n0, n1);
-      // segments.insert(segment);
     }
   }
   return segments;
@@ -681,9 +707,10 @@ void EdgeBoundaryCourier::next() {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-InhomogeneousSegmentCourier::InhomogeneousSegmentCourier(
+SegmentHomogeneityCourier::SegmentHomogeneityCourier(
 					     const CSkeletonBase *skel,
-					     double threshold,
+					     double min_homog,
+					     double max_homog,
 					     CSelectionTrackerVector *clist,
 					     CSelectionTrackerVector *plist)
   : BulkSkelSelCourier<CSkeletonSegmentSet>(skel, clist, plist)
@@ -692,7 +719,8 @@ InhomogeneousSegmentCourier::InhomogeneousSegmentCourier(
       s!=skeleton->endSegments(); ++s)
     {
       CSkeletonSegment *segment = (*s).second;
-      if(segment->homogeneity(skeleton) < threshold)
+      double homog = segment->homogeneity(skeleton);
+      if(homog >= min_homog && homog <= max_homog)
 	selectedObjects.insert(segment);
     }
 }
@@ -760,9 +788,34 @@ FacesFromElementsCourier::FacesFromElementsCourier(
   else {
     CSkeletonFaceSet allfaces = allFaces(elemTracker);
     CSkeletonFaceSet extfaces = exteriorFaces(elemTracker);
-    std::set_difference(allfaces.begin(), allfaces.end(),
-			extfaces.begin(), extfaces.end(),
-			std::inserter(selectedObjects, selectedObjects.end()));
+
+    // For reasons which I don't understand, set_difference does not
+    // work here.
+    // std::set_difference(allfaces.begin(), allfaces.end(),
+    // 			extfaces.begin(), extfaces.end(),
+    // 			std::inserter(selectedObjects, selectedObjects.end()));
+    CSkeletonFaceSet::const_iterator iterA = allfaces.begin();
+    CSkeletonFaceSet::const_iterator iterE = extfaces.begin();
+    CSkeletonFaceSet::key_compare compare;
+    while(iterE != extfaces.end()) {
+      if(compare(*iterA, *iterE)) {
+	selectedObjects.insert(*iterA);
+	++iterA;
+      }
+#ifdef DEBUG
+      else if(compare(*iterE, *iterA)) {
+	// This can't happen because extfaces is a subset of allfaces.
+	throw ErrProgrammingError(
+	  "FacesFromElementsCourier::start: external face not in allfaces!",
+	  __FILE__, __LINE__);
+      }
+#endif // DEBUG
+      else {
+	++iterA;
+	++iterE;
+      }
+    }
+    selectedObjects.insert(iterA, allfaces.end());
   }
 }
 
