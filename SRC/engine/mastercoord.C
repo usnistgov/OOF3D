@@ -37,10 +37,11 @@ double MasterCoord::shapefunction(const ShapeFunction &sf, ShapeFunctionIndex n)
 
 double MasterCoord::displacedderiv(const Element *el,
 				   const ShapeFunction &sf,
+				   const FEMesh *mesh,
 				   ShapeFunctionIndex n, SpaceIndex i)
   const
 {
-  return sf.displacedderiv(el, n, i, *this);
+  return sf.displacedderiv(el, n, i, *this, mesh);
 }
 
 // derivative of shapefunction wrt master coordinates

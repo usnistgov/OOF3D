@@ -93,6 +93,7 @@ public:
   virtual double dshapefunction(const ElementBase*, const ShapeFunction&,
 				ShapeFunctionIndex, SpaceIndex) const;
   virtual double displacedderiv(const Element*, const ShapeFunction&,
+				const FEMesh *,
 				ShapeFunctionIndex, SpaceIndex) const;
   virtual std::ostream &print(std::ostream&) const;
 
@@ -234,6 +235,7 @@ public:
   virtual double dshapefunction(const ElementBase*, const ShapeFunction&,
 				ShapeFunctionIndex, SpaceIndex) const;
   virtual double displacedderiv(const Element*, const ShapeFunction&,
+				const FEMesh *,
 				ShapeFunctionIndex, SpaceIndex) const;
   virtual std::ostream &print(std::ostream&) const;
 };

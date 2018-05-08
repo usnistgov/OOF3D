@@ -12,6 +12,11 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov. 
 
-dirname   = 'plasticity'
-pyfiles = ['plasticity.py']  
+dirname = 'plasticity'
 
+clib = 'oof3dengine'
+
+cfiles =      ['plasticity.C']
+hfiles =      ['plasticity.h']
+swigfiles =   ['plasticity.swg']
+swigpyfiles = ['plasticity.spy']

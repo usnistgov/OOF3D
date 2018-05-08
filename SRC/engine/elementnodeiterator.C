@@ -330,12 +330,13 @@ ElementFuncNodeIterator ElementFuncNodeIterator::operator+(int n) const {
 // calllers should know ther elements anyways.
 double ElementFuncNodeIterator::displacedsfderiv(const Element *el,
 						 SpaceIndex i,
-						 const MasterPosition &mp)
+						 const MasterPosition &mp,
+						 const FEMesh *mesh)
   const
 {
   return element_.master.shapefunction->displacedderiv(el,
 						       index_, i,
-						       mp);
+						       mp, mesh);
 }
 
 void ElementFuncNodeIterator::set_start() {

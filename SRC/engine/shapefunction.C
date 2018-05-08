@@ -89,10 +89,11 @@ double ShapeFunction::masterderiv(ShapeFunctionIndex n, SpaceIndex j,
 }
 
 double ShapeFunction::displacedderiv(const Element *el, ShapeFunctionIndex n,
-				     SpaceIndex j, const MasterPosition &p)
+				     SpaceIndex j, const MasterPosition &p,
+				     const FEMesh *mesh)
   const
 {
-  return p.displacedderiv(el,*this, n, j);
+  return p.displacedderiv(el,*this, mesh, n, j);
 }
 
 double ShapeFunction::realderiv(const ElementBase *el, ShapeFunctionIndex n,
@@ -152,21 +153,31 @@ void ShapeFunction::precompute(const MasterElement &master) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// Current config.
 double ShapeFunction::displacedderiv(const Element *el,
 				     ShapeFunctionIndex n, SpaceIndex i,
-				     const GaussPoint &g) const
+				     const GaussPoint &g,
+				     const FEMesh *mesh) const
 {
+  // HERE
+  // Thing we want to transform is masterdriv(n, component, g).
+  // el->deformation_jacobian(SpaceIndex, SpaceIndex, gpt, mesh)
+  // is the ... master-space derivs of the shape fns.
   return 0.0;
 }
 
+// Current config.
 double ShapeFunction::displacedderiv(const Element *el,
 				     ShapeFunctionIndex n, SpaceIndex i,
-				     const MasterCoord &mc) const
+				     const MasterCoord &mc,
+				     const FEMesh *mesh) const
 {
+  // ALSO HERE OF COURSE
   return 0.0;
 }
 
 
+// "Real" means reference configuration, not current configuration.
 double ShapeFunction::realderiv(const ElementBase *el,
 				ShapeFunctionIndex n, SpaceIndex i,
 				const GaussPoint &g) const
