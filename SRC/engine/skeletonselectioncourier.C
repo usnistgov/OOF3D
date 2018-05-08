@@ -265,8 +265,9 @@ void NodesFromOtherCourier::start() {
     CSkeletonNodeSet allnodes = allNodes();
     CSkeletonNodeSet extnodes = exteriorNodes();
     std::set_difference(allnodes.begin(), allnodes.end(),
-			extnodes.begin(), extnodes.end(),
-			std::inserter(selectedObjects, selectedObjects.end()));
+    			extnodes.begin(), extnodes.end(),
+    			std::inserter(selectedObjects, selectedObjects.end()),
+			CSkeletonNodeSet::key_compare());
   }
   else {
     assert(coverage == std::string("All"));
@@ -498,39 +499,10 @@ void SegmentsFromOtherCourier::start() {
   else if(coverage == std::string("Interior")) {
     CSkeletonSegmentSet allsegs = allSegments();
     CSkeletonSegmentSet extsegs = exteriorSegments();
-
-    // For reasons that I don't understand, set_difference does not
-    // work here.
-    // std::set_difference(allsegs.begin(), allsegs.end(),
-    // 			extsegs.begin(), extsegs.end(),
-    // 			std::inserter(selectedObjects, selectedObjects.end()));
-    CSkeletonSegmentSet::const_iterator iterA = allsegs.begin();
-    CSkeletonSegmentSet::const_iterator iterE = extsegs.begin();
-    CSkeletonSegmentSet::key_compare compare;
-    // Find segments that are in allsegs but not extsegs
-    while(iterE != extsegs.end()) {
-      if(compare(*iterA, *iterE)) {
-    	selectedObjects.insert(*iterA);
-    	++iterA;
-      }
-#ifdef DEBUG
-      // This can't happen because extsegs is a subset of allsegs.
-      else if(compare(*iterE, *iterA)) {
-    	throw ErrProgrammingError(
-	  "SegmentsFromOtherCourier::start: external segment not in allsegs!",
-	  __FILE__, __LINE__);
-      }
-#endif // DEBUG
-      else {
-    	++iterA;
-    	++iterE;
-      }
-    }
-    // If iterE finished before iterA, then the rest of the entries in
-    // allsegs are also interior.
-    selectedObjects.insert(iterA, allsegs.end());
-
-
+    std::set_difference(allsegs.begin(), allsegs.end(),
+    			extsegs.begin(), extsegs.end(),
+    			std::inserter(selectedObjects, selectedObjects.end()),
+			CSkeletonSegmentSet::key_compare());
   }
   else {
     selectedObjects = allSegments();
@@ -788,34 +760,10 @@ FacesFromElementsCourier::FacesFromElementsCourier(
   else {
     CSkeletonFaceSet allfaces = allFaces(elemTracker);
     CSkeletonFaceSet extfaces = exteriorFaces(elemTracker);
-
-    // For reasons which I don't understand, set_difference does not
-    // work here.
-    // std::set_difference(allfaces.begin(), allfaces.end(),
-    // 			extfaces.begin(), extfaces.end(),
-    // 			std::inserter(selectedObjects, selectedObjects.end()));
-    CSkeletonFaceSet::const_iterator iterA = allfaces.begin();
-    CSkeletonFaceSet::const_iterator iterE = extfaces.begin();
-    CSkeletonFaceSet::key_compare compare;
-    while(iterE != extfaces.end()) {
-      if(compare(*iterA, *iterE)) {
-	selectedObjects.insert(*iterA);
-	++iterA;
-      }
-#ifdef DEBUG
-      else if(compare(*iterE, *iterA)) {
-	// This can't happen because extfaces is a subset of allfaces.
-	throw ErrProgrammingError(
-	  "FacesFromElementsCourier::start: external face not in allfaces!",
-	  __FILE__, __LINE__);
-      }
-#endif // DEBUG
-      else {
-	++iterA;
-	++iterE;
-      }
-    }
-    selectedObjects.insert(iterA, allfaces.end());
+    std::set_difference(allfaces.begin(), allfaces.end(),
+    			extfaces.begin(), extfaces.end(),
+    			std::inserter(selectedObjects, selectedObjects.end()),
+			CSkeletonFaceSet::key_compare());
   }
 }
 
