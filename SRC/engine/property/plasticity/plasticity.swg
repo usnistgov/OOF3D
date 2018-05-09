@@ -24,16 +24,36 @@
 %extern "engine/property/elasticity/cijkl.swg"
 %pragma(python) code="from ooflib.SWIG.engine.property.elasticity.cijkl import CijklPtr"
 
-class Plasticity : public Property {
-public:
-  Cijkl cijkl(const FEMesh*, const Element*, const MasterPosition&);
+// Magic for converting a parameter argument to a Cijkl.
+%typemap(python,in) Cijkl * (Cijkl *c) {
+   PyObject *wrapped_cijkl = PyObject_CallMethod($source,
+ 						 (char *)"tensorForm", NULL);
+   if(!wrapped_cijkl) {
+     restoreSignals;
+     return 0;
+   }
+   PyObject *cijkl_str = PyObject_GetAttrString(wrapped_cijkl,"this");
+   if(!cijkl_str) { return NULL; }
+   char *_str = PyString_AsString(cijkl_str);
+   SWIG_GetPtr(_str, (void **)&c, "_Cijkl_p");
+   $target = c;
+   // TODO: Ownership?
 }
 
-class CPlasticity : public Plasticity {
+
+
+
+   
+class Plasticity : public Property {
 public:
-  CPlasticity(PyObject *reg, PyObject *self, char *name, Cijkl &c);
-  ~CPlasticity();
-};
+  const Cijkl cijkl(const FEMesh*, const Element*, const MasterPosition&);
+}
+
+class FCCPlasticity : public Plasticity {
+public:
+  FCCPlasticity(PyObject *, char *, Cijkl &);
+  virtual ~FCCPlasticity();
+}
 
 %pragma(python) include="plasticity.spy"
    

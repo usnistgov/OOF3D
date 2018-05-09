@@ -20,8 +20,25 @@
 // incremented the displacements.  The plastic constitutive rule is a
 // parameter to this object, not yet written.
 
+// Crystal plasticity classes are richer than that, though, they also
+// know the crystallography, and can construct the Schmid tensors for
+// common crystal classes.
+
+// The base class knows the Cijkl, and that there are slip systems,
+// derived classes know the specific slip systems, and the plastic
+// data objects which have the gausspoint-specific, per-time-step
+// information about the accumulated slip on each of these systems.
+
+// Constitutive models know how to compute the slip increment given
+// the stress, and have additional per-time-step gausspoint-specific
+// data about the state of the hardening variables.
+
+// At the moment, there's no top-level "generic" way of doing this,
+// but there probably should be.  That's a TODO.
+
 // TODO: We might want to use a different property sub-class
 // to ensure the right kind of equation does the derivatives.
+
 
 #ifndef PLASTICITY_H
 #define PLASTICITY_H
@@ -85,30 +102,19 @@ protected:
   // TODO: 2D version?
   ThreeVectorField *displacement;
   SymmetricTensorFlux *stress_flux;
-private:
+protected:
   const OrientationPropBase *orientation;
   const Cijkl xtal_cijkl_;
   const Cijkl lab_cijkl_;
 };
 
 
-// We need an "interposed" class to inherit from PythonNative so that
-// we can extend to symmetry variants in Python.  We want to extend
-// to symmetry variants in Python because there is no generic
-// Cijkl parameter, the lowest-symmetry one is the TriclinicCijkl,
-// which participates in the symmetry game.
-
-
-class CPlasticity
-  : public Plasticity, virtual public PythonNative<Property>
-{
+class FCCPlasticity : public Plasticity {
 public:
-  CPlasticity(PyObject *registry, PyObject *self,
-	      const std::string &name, const Cijkl &c)
-    : PythonNative<Property>(self),
-    Plasticity(registry, name, c)
-  {}
-  virtual ~CPlasticity() {}
+  FCCPlasticity(PyObject *rg, const std::string &nm,
+		const Cijkl &c);
+  virtual ~FCCPlasticity() {}
 };
+
 
 #endif // PLASTICITY_H

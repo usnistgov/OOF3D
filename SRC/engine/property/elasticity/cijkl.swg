@@ -23,6 +23,7 @@
 %extern "engine/symmmatrix.swg"
 %pragma(python) code="from ooflib.SWIG.engine.symmmatrix import SymmMatrix3Ptr"
 
+   
 class Cijkl {
 public:
   Cijkl();

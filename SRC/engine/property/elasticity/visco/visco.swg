@@ -31,6 +31,19 @@
 // object from engine/property/elasticity/cijkl.h"
 // TODO 3.1: Why does this have an explicit typemap?  Elasticity
 // doesn't.  This should use the same mechanism as Elasticity.
+
+// This is actually highly debatable. Elasticity has a computational
+// base class written in C++, and symmetry-specific Python extensions
+// which primarily exist to have differernt Cijkl parameter types.
+// Because the base Elasticity class is extended by Python classes,
+// there is an intermediate class that inherits from
+// PythonNative<Property>, and that class has a constructor that just
+// calls the ".tensorForm" method of the Cijkl python wrapper object
+// built by the parameter.  The tensorForm return value is a generic
+// Cijkl object (or Python wrapper for it).  It's not a typemap, but
+// it achieves the same goal, that of converting a symmetry-specific
+// Python Cijkl subclass to a C++ non-symmetry-specific Cijkl.
+
 %typemap(python,in) Cijkl* {
   PyObject *basevalue = PyObject_CallMethod($source,(char *) "to_base",NULL);
   if(!basevalue) {

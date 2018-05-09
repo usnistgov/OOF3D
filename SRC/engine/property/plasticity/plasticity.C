@@ -32,7 +32,7 @@
 
 Plasticity::Plasticity(PyObject *reg, const std::string &name,
 		       const Cijkl &c)
-  : FluxProperty(name, reg), xtal_cijkl_(c), orientation(0)
+  : FluxProperty(name, reg), orientation(0), xtal_cijkl_(c)
 {
   displacement = dynamic_cast<ThreeVectorField*>(Field::getField("Displacement"));
   stress_flux = dynamic_cast<SymmetricTensorFlux*>(Flux::getFlux("Stress"));
@@ -91,4 +91,13 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
 			     SmallSystem *fluxmtx)
   const
 {
+}
+
+
+FCCPlasticity::FCCPlasticity(PyObject *reg, const std::string &nm,
+			     const Cijkl &c)
+  : Plasticity(reg,nm,c) {
+
+  std::cerr << xtal_cijkl_ << std::endl;
+  // Crystallography-specific slip system stuff goes here.
 }
