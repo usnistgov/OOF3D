@@ -1187,12 +1187,12 @@ def makeFaceGroups():
     # Instead, this utility function creates and populates two
     # groups.  
 
-    # This function is called from other test modules, and when it's
-    # called that way, the oof namespace isn't imported to this
-    # module, so we have to import some classes manually.
-    from ooflib.common.IO.mainmenu import OOF
-    from ooflib.engine.skeletonselectionmethod import SingleFaceSelect
-    from ooflib.common.selectionoperators import Select, AddSelection
+    # # This function is called from other test modules, and when it's
+    # # called that way, the oof namespace isn't imported to this
+    # # module, so we have to import some classes manually.
+    # from ooflib.common.IO.mainmenu import OOF
+    # from ooflib.engine.skeletonselectionmethod import SingleFaceSelect
+    # from ooflib.common.selectionoperators import Select, AddSelection
 
     OOF.FaceSelection.Select(
         skeleton='skeltest:skeleton',
@@ -3514,6 +3514,7 @@ test_set = (element_set + face_set + segment_set + node_set +
             element_set2 + node_set2 + segment_set2 + face_set2)
 
 #test_set = face_set2
-# test_set = [
-#     Element_Selection_5Color("ShapeEnergy"),
-# ]
+test_set = [
+    Face_Selection_BlueGreen50("UnselectGroup"),
+
+]
