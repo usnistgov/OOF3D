@@ -543,6 +543,8 @@ bool CSkeletonSelectable::is_in_group(const std::string &group) const {
 
 void CSkeletonSelectable::map(SelectableMap &s) {
   // pass the map in by reference to avoid a bunch of copying.
+  // TODO: Give SelectableMap a move constructor and have this method
+  // return the map instead of passing it in by reference.
   s.source.clear();
   s.target.clear();
 
