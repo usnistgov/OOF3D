@@ -15,6 +15,11 @@ from ooflib.engine import problem
 from ooflib.engine.IO import anisocijkl
 from ooflib.common.IO import parameter
 
+# We will need constitutive rules, import them here.
+# Also the parameter comes from here, but this is not actually a
+# good idea, it should be in an IO directory, probably.  TODO.
+from ooflib.SWIG.engine.property.plasticity.constitutive import constitutive
+
 PropertyRegistration = propertyregistration.PropertyRegistration
 
 
@@ -25,7 +30,11 @@ reg = PropertyRegistration(
         'cijkl', anisocijkl.CubicRank4TensorCij(c11=1.0,
                                                 c12=0.5,
                                                 c44=0.25),
-        tip=parameter.emptyTipString)],
+        tip=parameter.emptyTipString),
+     parameter.RegisteredParameter('constitutive rule',
+                                   constitutive.PlasticConstitutiveRule,
+                                   constitutive.PowerLawConstitutiveRule(1.0))
+    ],
     outputs=[],
     propertyType="Plasticity",
     discussion=None)

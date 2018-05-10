@@ -12,13 +12,11 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov. 
 
-dirname = 'plasticity'
+dirname = 'constitutive'
 
 clib = 'oof3dengine'
 
-subdirs = ['constitutive']
-
-cfiles =      ['plasticity.C']
-hfiles =      ['plasticity.h']
-swigfiles =   ['plasticity.swg']
-swigpyfiles = ['plasticity.spy']
+cfiles =      ['constitutive.C']
+hfiles =      ['constitutive.h']
+swigfiles =   ['constitutive.swg']
+swigpyfiles = ['constitutive.spy']

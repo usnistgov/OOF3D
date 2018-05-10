@@ -47,6 +47,7 @@
 #include "engine/property.h"
 #include "engine/property/elasticity/cijkl.h"
 #include "common/pythonexportable.h"
+#include "engine/property/plasticity/constitutive/constitutive.h"
 #include <string>
 
 // TODO: cijkl is in a different hierarchy, needs to be higher?
@@ -66,13 +67,14 @@ class SymmetricTensorFlux;
 class TwoVectorField;
 class ThreeVectorField;
 class SmallSystem;
+class PlasticConstitutiveRule;
 
 class OrientationPropBase;
 
 class Plasticity : public FluxProperty {
 public:
   Plasticity(PyObject *rg, const std::string &nm,
-	     const Cijkl &c);
+	     const Cijkl &c, PlasticConstitutiveRule *r);
   virtual ~Plasticity() {}
   virtual void begin_element(const CSubProblem*, const Element*); 
   virtual void flux_matrix(const FEMesh *mesh,
@@ -106,13 +108,14 @@ protected:
   const OrientationPropBase *orientation;
   const Cijkl xtal_cijkl_;
   const Cijkl lab_cijkl_;
+  const PlasticConstitutiveRule *rule;
 };
 
 
 class FCCPlasticity : public Plasticity {
 public:
   FCCPlasticity(PyObject *rg, const std::string &nm,
-		const Cijkl &c);
+		const Cijkl &c, PlasticConstitutiveRule *rule);
   virtual ~FCCPlasticity() {}
 };
 

@@ -51,7 +51,7 @@ public:
 
 class FCCPlasticity : public Plasticity {
 public:
-  FCCPlasticity(PyObject *, char *, Cijkl &);
+  FCCPlasticity(PyObject *, char *, Cijkl &, PlasticConstitutiveRule *);
   virtual ~FCCPlasticity();
 }
 

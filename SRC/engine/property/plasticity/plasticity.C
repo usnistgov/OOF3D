@@ -15,6 +15,7 @@
 #include "common/threadstate.h"
 #include "common/trace.h"
 #include "engine/property/plasticity/plasticity.h"
+#include "engine/property/plasticity/constitutive/constitutive.h"
 #include "engine/IO/propertyoutput.h"
 #include "engine/cstrain.h"
 #include "engine/csubproblem.h"
@@ -31,8 +32,8 @@
 
 
 Plasticity::Plasticity(PyObject *reg, const std::string &name,
-		       const Cijkl &c)
-  : FluxProperty(name, reg), orientation(0), xtal_cijkl_(c)
+		       const Cijkl &c, PlasticConstitutiveRule *r)
+  : FluxProperty(name, reg), orientation(0), xtal_cijkl_(c), rule(r)
 {
   displacement = dynamic_cast<ThreeVectorField*>(Field::getField("Displacement"));
   stress_flux = dynamic_cast<SymmetricTensorFlux*>(Flux::getFlux("Stress"));
@@ -95,8 +96,8 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
 
 
 FCCPlasticity::FCCPlasticity(PyObject *reg, const std::string &nm,
-			     const Cijkl &c)
-  : Plasticity(reg,nm,c) {
+			     const Cijkl &c, PlasticConstitutiveRule *r)
+  : Plasticity(reg,nm,c,r) {
 
   std::cerr << xtal_cijkl_ << std::endl;
   // Crystallography-specific slip system stuff goes here.
