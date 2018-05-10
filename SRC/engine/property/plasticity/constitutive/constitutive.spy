@@ -14,13 +14,13 @@ from ooflib.common import cregisteredclass
 from ooflib.common.IO import parameter
 
 cregisteredclass.registerCClass(PlasticConstitutiveRulePtr)
+PlasticConstitutiveRulePtr.registry = []
 
 Registration = cregisteredclass.Registration
 
-Registration('PowerLaw',PlasticConstitutiveRule,
-             PowerLawConstitutiveRule,1,
-             [parameter.FloatParameter('exponent', 1.0,
-                                       tip=parameter.emptyTipString)])
-
+powerlawreg = Registration('PowerLaw',PlasticConstitutiveRulePtr,
+                           PowerLawConstitutiveRule,1,
+                           [parameter.FloatParameter('exponent', 1.0,
+                                                     tip=parameter.emptyTipString)])
 
     

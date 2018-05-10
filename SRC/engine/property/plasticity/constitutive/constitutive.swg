@@ -26,6 +26,7 @@ class PlasticConstitutiveRule {
 }
 
 class PowerLawConstitutiveRule : public PlasticConstitutiveRule {
+public:
   PowerLawConstitutiveRule(double);
 }
 
