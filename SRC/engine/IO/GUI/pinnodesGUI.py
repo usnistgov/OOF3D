@@ -27,7 +27,7 @@ from ooflib.common.IO.GUI import tooltips
 from ooflib.engine.IO import pinnodes
 
 import gtk
-from math import *
+#from math import *
 
 class PinnedNodesToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     def __init__(self, pinnodestoolbox):
@@ -275,14 +275,14 @@ And Ctrl-click to toggle.""")
     def acceptEvent(self, eventtype):
         return eventtype in ('move', 'up')
 
-    def up(self, x, y, button, shift, ctrl):
+    def up(self, x, y, buttons):
         debug.mainthreadTest()
         if config.dimension() == 2:
-            self.up2(x, y, shift, ctrl)
+            self.up2(x, y, buttons)
         else:
-            self.up3(x, y, button, shift, ctrl)
+            self.up3(x, y, buttons)
 
-    def up2(self, x, y, shift, ctrl):
+    def up2(self, x, y, buttons):
         thepoint = primitives.Point(x,y)
         skelctxt = self.getSkeletonContext()
         if thepoint is not None: 
@@ -310,10 +310,10 @@ And Ctrl-click to toggle.""")
                 # instead of forcing it to re-run the nearestNode routine? 
                 
                 path = skelctxt.path()
-                if shift:
+                if buttons.shift:
                     self.toolbox.menu.UnPin(
                         skeleton=path, point = thepoint)
-                elif ctrl:
+                elif buttons.ctrl:
                     self.toolbox.menu.TogglePin(
                         skeleton=path, point = thepoint)
                 else:
@@ -322,21 +322,21 @@ And Ctrl-click to toggle.""")
 
                 gtklogger.checkpoint(self.gfxwindow().name + " Pin Nodes up")
 
-    def up3(self, x, y, button, shift, ctrl):
+    def up3(self, x, y, buttons):
         skelctxt = self.getSkeletonContext()
         if skelctxt:
             canvas = self.toolbox.gfxwindow().oofcanvas
             view = canvas.get_view()
             pt = canvas.display2Physical(view, x, y)
             path = skelctxt.path()
-            if shift:
+            if buttons.shift:
                 self.toolbox.menu.UnPin(skeleton=path, point=pt, view=view)
-            elif ctrl:
+            elif buttons.ctrl:
                 self.toolbox.menu.TogglePin(skeleton=path, point=pt, view=view)
             else:
                 self.toolbox.menu.Pin(skeleton=path, point=pt, view=view)
 
-    def move(self, x, y, button, shift, ctrl):
+    def move(self, x, y, buttons):
         # The toolbox is updated when the mouse *moves*, even before a
         # click, because it's displaying node information which helps
         # the user decide which node to click on.

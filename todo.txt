@@ -98,6 +98,10 @@ In tumble mode, view sometimes jumps on first move event.
 Soon
 ----
 
+Make Pin Nodes work like selections.  Shift-click pins without
+unpinning. Ctrl-click toggles.  Plain-click unpins all before
+pinning.  Use new generic selection machinery.
+
 There are a number of cases (in the skeleton selection couriers and
 probably elsewhere) in which the user chooses a range, setting both a
 min and a max value.  It would be convenient to have a Parameter and a
