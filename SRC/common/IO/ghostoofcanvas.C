@@ -1677,12 +1677,12 @@ void GhostOOFCanvas::restore_view(const View *view, bool clip, bool resize) {
   // data.  In that case we just assume that the window size hasn't
   // changed, which seems to work for the relevant test scripts.
   if(resize && view->size_x > 0 && view->size_y > 0) {
-#ifdef DEBUG
-    int *oldsize = render_window->GetSize();
-    oofcerr << "GhostOOFCanvas::restore_view: oldsize=" << oldsize[0]
-	    << "," << oldsize[1] << " newsize=" << view->size_x
-	    << "," << view->size_y << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     int *oldsize = render_window->GetSize();
+//     oofcerr << "GhostOOFCanvas::restore_view: oldsize=" << oldsize[0]
+// 	    << "," << oldsize[1] << " newsize=" << view->size_x
+// 	    << "," << view->size_y << std::endl;
+// #endif // DEBUG
     render_window->SetSize(view->size_x, view->size_y);
   }
   view->setCamera(renderer->GetActiveCamera()); // change active camera settings

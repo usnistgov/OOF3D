@@ -25,7 +25,6 @@ from ooflib.common.IO import whoville
 from ooflib.engine import materialmanager
 from ooflib.engine import skeletonboundary
 from ooflib.engine import skeletongroups
-from ooflib.engine import skeletonnode # this still contains the pinned nodes
 from ooflib.engine import skeletonselectable
 from ooflib.engine.IO import movenode
 import string
@@ -69,7 +68,7 @@ class SkeletonContext(whoville.WhoDoUndo):
         if config.dimension() == 3:
             self.faceselection = skeletonselectable.FaceSelection(self)
         self.elementselection = skeletonselectable.ElementSelection(self)
-        self.pinnednodes = skeletonnode.PinnedNodeSelection(self)
+        self.pinnednodes = skeletonselectable.PinnedNodeSelection(self)
 
         # These attribute names (nodegroups, segmentgroups,
         # elementgroups) are used in the generic menu callback in

@@ -94,6 +94,8 @@ implemented>".
 
 In tumble mode, view sometimes jumps on first move event.
 
+Toolbox names have inconsistent underscores.
+
 ---------------------------------------------------------------------------
 Soon
 ----

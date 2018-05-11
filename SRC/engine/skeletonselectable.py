@@ -11,6 +11,7 @@
 from ooflib.SWIG.common import config
 from ooflib.SWIG.common import lock
 from ooflib.SWIG.common import switchboard
+from ooflib.SWIG.engine import cskeletonnode2
 from ooflib.SWIG.engine import cskeletonselectable
 from ooflib.SWIG.engine import skeletonselectioncourier
 from ooflib.common import debug
@@ -121,9 +122,6 @@ class SelectionSet(SelectionSetBase):
 # selecting (or whatever).  Their __init__()s must call
 # SelectionBase.__init__() and then push an appropriate SelectionSet
 # object onto self.stack.
-
-## TODO OPT: Move SelectionBase and Selection to C++.  Also PinnedNodeSet
-## and PinnedNodeSelection in skeletonnode.py.
 
 class SelectionBase:
     def __init__(self, skeletoncontext):
@@ -376,3 +374,154 @@ class NodeSelection(Selection):
     def mode(self):
         return skeletonselmodebase.getMode("Node")
 
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# The set of pinned nodes acts much like a set of selected objects.  A
+# big difference between pinned nodes and selections is that when a
+# node is pinned the pinning doesn't propagate to parents or children
+# that are at different positions.  A deputy skeleton can have a
+# different set of pinned nodes than its sheriff or its fellow
+# deputies.
+
+class PinnedNodeSet(SelectionSetBase):
+    def __init__(self, *args, **kwargs):
+        SelectionSetBase.__init__(self, *args, **kwargs)
+
+    def implied_select(self, oldskel, newskel):
+        # Called from SelectionBase.whoChanged0() when a new
+        # Skeleton is pushed.  Creates a tracker for the new skeleton
+        # with the same pinned nodes as the old skeleton, if those
+        # nodes are at the old positions.
+        tracker = newskel.newPinnedNodeTracker()
+        self.selected[newskel] = tracker
+        if oldskel != newskel:
+            oldtracker = self.selected[oldskel]
+            tracker.implied_pin(oldtracker)
+
+    # def replace(self, oldskel, newskel):
+    #     # Called just after a SkeletonContext undo or redo by
+    #     # SkeletonContext.undoHookFn and SkeletonContext.redoHookFn.
+    #     oldtracker = self.selected[oldskel]
+    #     oldtracker.clearskeleton()
+    #     newtracker = self.selected[newskel]
+    #     newtracker.write()
+
+    def clone(self):
+        bozo = self.__class__(self.skeletoncontext)
+        for skel, tracker in self.selected.items():
+            trclone = tracker.clone()
+            bozo.selected[skel] = trclone
+        return bozo
+
+
+pinstacksize = 50
+
+class PinnedNodeSelection(SelectionBase):
+    def __init__(self, skeletoncontext):
+        SelectionBase.__init__(self, skeletoncontext)
+        self.stack = ringbuffer.RingBuffer(pinstacksize)
+        self.stack.push(PinnedNodeSet(self.skeletoncontext))
+        self.sbcallbacks.append(switchboard.requestCallback(
+            'pinnednode ringbuffer resize', self.setUndoBufferSizeCB))
+        # self.stack.overwrite = self.overwrite
+
+    # def overwrite(self, tracker):
+    #     pass
+
+    # def replace(self, oldskel, newskel):
+    #     # Called just after a SkeletonContext undo or redo by
+    #     # SkeletonContext.undoHookFn and SkeletonContext.redoHookFn.
+    #     self.stack.current().replace(oldskel, newskel)
+
+    def signal(self):
+        # signal() is called after each pinning operation (by the menu
+        # commands in the toolbox & task page).  It's also called by
+        # the generic SkeletonSelection mechanism, which is why the
+        # menu commands don't just simply issue the "new pinned nodes"
+        # message themselves.  "new pinned nodes" is caught by all the
+        # toolboxes, which relay the message to their graphics
+        # windows.
+        switchboard.notify("new pinned nodes", self.skeletoncontext)
+        switchboard.notify("redraw")
+
+    def npinned(self):
+        return len(self.retrieve())
+
+    def pin(self, node):
+        (clist, plist) = self.trackerlist()
+        node.pin(clist, plist)
+#             for partner in n.getPartners():
+#                 partner.pin(clist, plist)
+        # self.timestamp.increment()
+
+    def pinList(self, nodelist):
+        (clist, plist) = self.trackerlist()
+        for node in nodelist:
+            node.pin(clist, plist)
+        # self.timestamp.increment()
+
+    def pinSelection(self, tracker):
+        (clist, plist) = self.trackerlist()
+        cskeletonnode2.CSkeletonNode_pinSelection(tracker, clist, plist)
+        # self.timestamp.increment()
+
+    def unpinSelection(self, tracker):
+        (clist, plist) = self.trackerlist()
+        cskeletonnode2.CSkeletonNode_unpinSelection(tracker, clist, plist)
+        # self.timestamp.increment()
+
+    def pinSelectedSegments(self, tracker):
+        (clist, plist) = self.trackerlist()
+        cskeletonnode2.CSkeletonNode_pinSelectedSegments(tracker, clist, plist)
+        # self.timestamp.increment()
+
+    def pinSelectedFaces(self, tracker, skel, internal, boundary):
+        (clist, plist) = self.trackerlist()
+        cskeletonnode2.CSkeletonNode_pinSelectedFaces(
+            tracker, skel, internal, boundary, clist, plist)
+
+    def pinSelectedElements(self, tracker, skel, internal, boundary):
+        (clist, plist) = self.trackerlist()
+        cskeletonnode2.CSkeletonNode_pinSelectedElements(
+            tracker, skel, internal, boundary, clist, plist)
+        # self.timestamp.increment()
+
+    def pinInternalBoundaryNodes(self, skel):
+        (clist, plist) = self.trackerlist()
+        cskeletonnode2.CSkeletonNode_pinInternalBoundaryNodes(
+            skel, clist, plist)
+        # self.timestamp.increment()
+
+    def unpin(self, node):
+        (clist, plist) = self.trackerlist()
+        # for n in nodelist:
+        node.unpin(clist, plist)
+#             for partner in n.getPartners():
+#                 partner.unpin(clist, plist)
+        # self.timestamp.increment()
+
+    def toggle(self, node):
+        (clist, plist) = self.trackerlist()
+        # for n in nodelist:
+        if node.pinned():
+            node.unpin(clist, plist)
+        else:
+            node.pin(clist, plist)
+        # self.timestamp.increment()
+
+    def pinPoint(self, point):          # oxford
+        skel = self.skeletoncontext.getObject()
+        node = skel.nearestNode(point)
+        self.pin(node)
+
+    def unpinPoint(self, point):
+        skel = self.skeletoncontext.getObject()
+        node = skel.nearestNode(point)
+        self.unpin(node)
+                
+    def togglepinPoint(self, point):
+        skel = self.skeletoncontext.getObject()
+        node = skel.nearestNode(point)
+        self.toggle(node)

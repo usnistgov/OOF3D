@@ -67,6 +67,11 @@ public:
   static void pinSelectedSegments(CSelectionTrackerBase *tracker,
 				  CPinnedNodeTrackerVector *cvector,
 				  CPinnedNodeTrackerVector *pvector);
+  static void pinSelectedFaces(CSelectionTrackerBase *tracker,
+			       CSkeletonBase *skel,
+			       bool internal, bool boundary,
+			       CPinnedNodeTrackerVector *cvector,
+			       CPinnedNodeTrackerVector *pvector);
   static void pinSelectedElements(CSelectionTrackerBase *tracker,
 				  CSkeletonBase *skel,
 				  bool internal, bool boundary,

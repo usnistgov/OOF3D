@@ -80,30 +80,27 @@ swigfiles = [
     ]
 
 pyfiles = [
-    'analysisdomain.py', 'analysissample.py',
-    'anneal.py', 'autoskeleton.py', 'bdycondition.py', 'boundary.py',
-    'boundarybuilder.py', 'boundarymodifier.py', 'builtinprops.py',
-    'component.py', 'conjugate.py', 
-    'edgeswap.py', 'errorestimator.py', 'euler.py', 'iterationmanager.py',
-    'fieldinit.py', 'initialize.py', 'instantnodemove.py',
-    'interfaceplugin.py', 'coverage.py',
-    'materialmanager.py', 'materialplugin.py', 'mergetriangles.py', 'mesh.py',
-    'meshcrosssection.py', 'meshmod.py', 'meshstatus.py',
-    'outputschedule.py', 'pinnodesmodifier.py', 'pixelselect.py',
-    'problem.py', 'profile.py', 'profilefunction.py',
+    'analysisdomain.py', 'analysissample.py', 'anneal.py', 'autoskeleton.py',
+    'bdycondition.py', 'boundary.py', 'boundarybuilder.py',
+    'boundarymodifier.py', 'builtinprops.py', 'component.py',
+    'conjugate.py', 'coverage.py', 'edgeswap.py', 'errorestimator.py',
+    'euler.py', 'fieldinit.py', 'initialize.py', 'instantnodemove.py',
+    'interfaceplugin.py', 'iterationmanager.py', 'materialmanager.py',
+    'materialplugin.py', 'mergetriangles.py', 'mesh.py', 'meshcrosssection.py',
+    'meshmod.py', 'meshstatus.py', 'outputschedule.py', 'pinnodesmodifier.py',
+    'pixelselect.py', 'problem.py', 'profile.py', 'profilefunction.py',
     'propertyregistration.py', 'pyproperty.py', 'rationalize.py',
     'rationalsharp.py', 'rationalshort.py', 'rationalwide.py',
-    'relaxation.py', 'rk.py',
-    'scpatch.py', 'skeleton.py', 'skeletonboundary.py',
-    'skeletoncontext.py', 'skeletondiff.py', 'skeletonelement.py',
-    'skeletongroups.py', 'skeletonnode.py',
-    'skeletonsegment.py', 'skeletonselectable.py', 'skeletonselection.py',
+    'relaxation.py', 'rk.py', 'scpatch.py', 'skeleton.py',
+    'skeletonboundary.py', 'skeletoncontext.py', 'skeletondiff.py',
+    'skeletonelement.py', 'skeletongroups.py', 'skeletonsegment.py',
+    'skeletonselectable.py', 'skeletonselection.py',
     'skeletonselectionmethod.py', 'skeletonselectionmod.py',
     'skeletonselectionmodes.py', 'skeletonselmodebase.py', 'snapnode.py',
-    'snaprefine.py', 'snaprefinemethod.py', 'splitquads.py', 'ss22.py',
-    'subproblemcontext.py', 'subproblemtype.py', 'symstate.py',
-    'timestepper.py', 'twostep.py', 'solvermode.py'
-    ]
+    'snaprefine.py', 'snaprefinemethod.py', 'solvermode.py',
+    'splitquads.py', 'ss22.py', 'subproblemcontext.py', 'subproblemtype.py',
+    'symstate.py', 'timestepper.py', 'twostep.py'
+]
 
 swigpyfiles = [
     'cskeleton2.spy','cskeletonmodifier.spy', 'cfiddlenodes.spy', 'crefine.spy',

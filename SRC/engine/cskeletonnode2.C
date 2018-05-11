@@ -446,23 +446,30 @@ void CDeputyPinnedNodeTracker::unpinParents(
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // Utility functions used when pinning nodes of a set of elements.
-// TODO MER: These functions are duplicates of ones in SkeletonContext:
-// exteriorNodesOfElementSet, etc.  Do we need both?
+// TODO MER: These functions are duplicates of ones in
+// SkeletonContext: exteriorNodesOfElementSet, etc.  Do we need both?
+// The ones in SkeletonContext are in python and should probably call
+// these.  These also overlap a lot with NodesFromFacesCourier, et al.
+// The couriers work differently but can probably call these
+// functions.
 
-static void getAllElementNodes(const CSkeletonSelectableSet *els,
-			       CSkeletonNodeSet &nodes) 
-{
-  CSkeletonElement *el;
+
+static CSkeletonNodeSet getAllNodesOfSet(const CSkeletonSelectableSet *els) {
+  // This works for sets of segments, faces, and elements.
+  CSkeletonNodeSet nodes;
   for(CSkeletonSelectableSet::iterator it=els->begin(); it!=els->end(); ++it) {
-    el = (dynamic_cast<CSkeletonElement*>(*it));
-    for(unsigned int i=0; i<el->nnodes(); ++i)
-      nodes.insert(el->getNode(i));
+    const CSkeletonMultiNodeSelectable *sel
+      = dynamic_cast<const CSkeletonMultiNodeSelectable*>(*it);
+    assert(sel != nullptr);
+    for(unsigned int i=0; i < sel->nnodes(); ++i)
+      nodes.insert(sel->getNode(i));
   }
+  return nodes;
 }
 
-static void getBoundaryNodes(const CSkeletonBase *skel,
-			     const CSkeletonSelectableSet *els,
-			     CSkeletonNodeSet &nodes)
+static CSkeletonNodeSet getExteriorNodesOfElements(
+					   const CSkeletonBase *skel,
+					   const CSkeletonSelectableSet *els)
 {
   // The boundary nodes are on exterior faces.  Exterior faces are
   // faces that have only one element in the given set.
@@ -483,6 +490,7 @@ static void getBoundaryNodes(const CSkeletonBase *skel,
   }
   // Loop over the faces that are only on one element and put their
   // nodes in the node set.
+  CSkeletonNodeSet nodes;
   for(FaceCounts::iterator fi = facecounts.begin(); fi!=facecounts.end(); ++fi)
     {
       if((*fi).second == 1) {	// face is external
@@ -492,18 +500,67 @@ static void getBoundaryNodes(const CSkeletonBase *skel,
 	}
       }
     }
+  return nodes;
 }
 
-static void getInternalNodes(const CSkeletonBase *skel,
-			     const CSkeletonSelectableSet *els,
-			     CSkeletonNodeSet &nodes)
+static CSkeletonSegmentSet getExteriorSegmentsOfFaces(
+				      const CSkeletonBase *skel,
+				      const CSkeletonSelectableSet *faces)
 {
-  CSkeletonNodeSet all, boundary;
-  getAllElementNodes(els, all);
-  getBoundaryNodes(skel, els, boundary);
+  // A segment is on an exterior boundary of a set of faces if the
+  // segment is on only one face in the set.
+  std::multiset<CSkeletonSegment*> segcounts;
+  for(const CSkeletonSelectable *f : *faces) {
+    const CSkeletonFace *face = dynamic_cast<const CSkeletonFace*>(f);
+    for(int i=0; i<face->nnodes(); i++)
+      segcounts.insert(face->getSegment(skel, i));
+  }
+  CSkeletonSegmentSet segments;
+  for(CSkeletonSegment *seg : segcounts)
+    if(segcounts.count(seg) == 1)
+      segments.insert(seg);
+  return segments;
+}
+
+static CSkeletonNodeSet getExteriorNodesOfFaces(
+					const CSkeletonBase *skel,
+					const CSkeletonSelectableSet *faces)
+{
+  // Exterior nodes are those that belong to a segment that belongs to
+  // just one face in the given set.
+  CSkeletonSegmentSet segments = getExteriorSegmentsOfFaces(skel, faces);
+  CSkeletonNodeSet nodes;
+  for(CSkeletonSegment *segment : segments) {
+    nodes.insert(segment->getNode(0));
+    nodes.insert(segment->getNode(1));
+  }
+  return nodes;
+}
+
+static CSkeletonNodeSet getInternalNodesOfElements(
+					   const CSkeletonBase *skel,
+					   const CSkeletonSelectableSet *els)
+{
+  CSkeletonNodeSet all = getAllNodesOfSet(els);
+  CSkeletonNodeSet boundary = getExteriorNodesOfElements(skel, els);
+  CSkeletonNodeSet nodes;
   std::set_difference(all.begin(), all.end(), boundary.begin(), boundary.end(),
    		      std::inserter(nodes, nodes.end()),
 		      CSkeletonNodeSet::key_compare());
+  return nodes;
+}
+
+static CSkeletonNodeSet getInternalNodesOfFaces(
+					const CSkeletonBase *skel,
+					const CSkeletonSelectableSet *faces)
+{
+  CSkeletonNodeSet all = getAllNodesOfSet(faces);
+  CSkeletonNodeSet boundary = getExteriorNodesOfFaces(skel, faces);
+  CSkeletonNodeSet nodes;
+  std::set_difference(all.begin(), all.end(), boundary.begin(), boundary.end(),
+		      std::inserter(nodes, nodes.end()),
+		      CSkeletonNodeSet::key_compare());
+  return nodes;
 }
 
 
@@ -589,6 +646,29 @@ void CSkeletonNode::pinSelectedSegments(CSelectionTrackerBase *tracker,
 }
 
 // static
+void CSkeletonNode::pinSelectedFaces(CSelectionTrackerBase *tracker, 
+				     CSkeletonBase *skel,
+				     bool internal, bool boundary,
+				     CPinnedNodeTrackerVector *cvector,
+				     CPinnedNodeTrackerVector *pvector) 
+{
+  CSkeletonNodeSet nodes;
+  if(internal and boundary)
+    nodes = getAllNodesOfSet(tracker->get());
+  else if(not internal and boundary)
+    nodes = getExteriorNodesOfFaces(skel, tracker->get());
+  else if(internal and not boundary)
+    nodes = getInternalNodesOfFaces(skel, tracker->get());
+  // if(internal and boundary)
+  //   getAllNodesOfSet(tracker->get(), nodes);
+  // else if(not internal and boundary)
+  //   getExteriorNodesOfElements(skel, tracker->get(), nodes);
+  // else if(internal and not boundary)
+  //   getInternalNodesOfElements(skel, tracker->get(), nodes);
+  pinSet(&nodes, cvector, pvector);
+}
+
+// static
 void CSkeletonNode::pinSelectedElements(CSelectionTrackerBase *tracker, 
 					CSkeletonBase *skel,
 					bool internal, bool boundary,
@@ -597,11 +677,11 @@ void CSkeletonNode::pinSelectedElements(CSelectionTrackerBase *tracker,
 {
   CSkeletonNodeSet nodes;
   if(internal and boundary)
-    getAllElementNodes(tracker->get(), nodes);
+    nodes = getAllNodesOfSet(tracker->get());
   else if(not internal and boundary)
-    getBoundaryNodes(skel, tracker->get(), nodes);
+    nodes = getExteriorNodesOfElements(skel, tracker->get());
   else if(internal and not boundary)
-    getInternalNodes(skel, tracker->get(), nodes);
+    nodes = getInternalNodesOfElements(skel, tracker->get());
   pinSet(&nodes, cvector, pvector);
 }
 

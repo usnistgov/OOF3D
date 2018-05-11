@@ -26,130 +26,13 @@ from ooflib.engine import pinnodesmodifier
 # they're not boundary conditions.  Pinned nodes are treated much like
 # Skeleton Selectables, and share a lot of code with them.
 
+# The PinnedNodes toolbox is *not* derived from GenericSelectToolbox
+# because it doesn't require different kinds of mousehandlers for
+# different selection methods. 
+
 class PinnedNodesToolbox(toolbox.Toolbox):
     def __init__(self, gfxwindow):
         toolbox.Toolbox.__init__(self, 'Pin_Nodes', gfxwindow)
-        self.skeleton_param = whoville.WhoParameter(
-            'skeleton', whoville.getClass('Skeleton'),
-            tip=parameter.emptyTipString)
-                   
-    def makeMenu(self, menu):
-        self.menu = menu
-        if config.dimension() == 2:
-            pinparams = [self.skeleton_param,
-                         pointparameter.PointParameter('point',
-                                                       tip='Target point.')]
-        else:                   # 3D
-            pinparams = [self.skeleton_param,
-                         pointparameter.PointParameter('point',
-                                                       tip='Target point'),
-                         view.ViewParameter('view')]
-
-
-        menu.addItem(oofmenu.OOFMenuItem(
-            'Pin',
-            callback = self.pin,
-            params=pinparams,
-            help="Pin the node closest to the given point.",
-            discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/pin.xml')
-            ))
-        menu.addItem(oofmenu.OOFMenuItem(
-            'UnPin',
-            callback = self.unpin,
-            params=pinparams,
-            help="Unpin the node closest to the given point.",
-            discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/unpin.xml')
-            ))
-        menu.addItem(oofmenu.OOFMenuItem(
-            'TogglePin',
-            callback=self.togglepin,
-            params=pinparams,
-            help="Toggle the pinnedness of the node closest to the given point.",
-            discussion=xmlmenudump.loadFile(
-                'DISCUSSIONS/engine/menu/toggle_pin.xml')
-            ))
-        menu.addItem(oofmenu.OOFMenuItem(
-            'UnPinAll',
-            callback = pinnodesmodifier.unpinall,
-            params=[self.skeleton_param],
-            help="Unpin all nodes.",
-            discussion=xmlmenudump.loadFile(
-                'DISCUSSIONS/engine/menu/unpin_all.xml')
-            ))
-        menu.addItem(oofmenu.OOFMenuItem(
-            'Invert',
-            callback = pinnodesmodifier.invert,
-            params=[self.skeleton_param],
-            help="Invert pinned nodes.",
-            discussion=xmlmenudump.loadFile(
-                'DISCUSSIONS/engine/menu/invert_pin.xml')
-            ))
-
-        menu.addItem(oofmenu.OOFMenuItem(
-            'Undo',
-            callback=pinnodesmodifier.undo,
-            params=[self.skeleton_param],
-            help="Undo the latest pin.",
-            discussion=xmlmenudump.loadFile(
-                'DISCUSSIONS/engine/menu/undo_pin.xml')
-            ))
-        menu.addItem(oofmenu.OOFMenuItem(
-            'Redo',
-            callback=pinnodesmodifier.redo,
-            params=[self.skeleton_param],
-            help="Redo the latest undone pin.",
-            discussion=xmlmenudump.loadFile(
-                'DISCUSSIONS/engine/menu/redo_pin.xml')
-            ))
-
-    if config.dimension() == 2:
-        def pin(self, menuitem, skeleton, point):
-            skelcontext = skeletoncontext.skeletonContexts[skeleton]
-            skelcontext.pinnednodes.start()
-            skelcontext.pinnednodes.pinPoint(point)
-            skelcontext.pinnednodes.signal()
-
-        def unpin(self, menuitem, skeleton, point):
-            skelcontext = skeletoncontext.skeletonContexts[skeleton]
-            skelcontext.pinnednodes.start()
-            skelcontext.pinnednodes.unpinPoint(point)
-            skelcontext.pinnednodes.signal()
-
-        def togglepin(self, menuitem, skeleton, point):
-            skelcontext = skeletoncontext.skeletonContexts[skeleton]
-            skelcontext.pinnednodes.start()
-            skelcontext.pinnednodes.togglepinPoint(point)
-            skelcontext.pinnednodes.signal()
-    else:                       # 3D
-        def pin(self, menuitem, skeleton, point, view):
-            skelcontext = skeletoncontext.skeletonContexts[skeleton]
-            if not skelcontext:
-                return
-            pt = self.gfxwindow().findClickedPoint(skelcontext, point, view)
-            if pt is not None:
-                skelcontext.pinnednodes.start()
-                skelcontext.pinnednodes.pinPoint(pt)
-                skelcontext.pinnednodes.signal()
-
-        def unpin(self, menuitem, skeleton, point, view):
-            skelcontext = skeletoncontext.skeletonContexts[skeleton]
-            if not skelcontext:
-                return
-            pt = self.gfxwindow().findClickedPoint(skelcontext, point, view)
-            if pt is not None:
-                skelcontext.pinnednodes.start()
-                skelcontext.pinnednodes.unpinPoint(pt)
-                skelcontext.pinnednodes.signal()
-
-        def togglepin(self, menuitem, skeleton, point, view):
-            skelcontext = skeletoncontext.skeletonContexts[skeleton]
-            if not skelcontext:
-                return
-            pt = self.gfxwindow().findClickedPoint(skelcontext, point, view)
-            if pt is not None:
-                skelcontext.pinnednodes.start()
-                skelcontext.pinnednodes.togglepinPoint(pt)
-                skelcontext.pinnednodes.signal()
 
     tip="Pin nodes."
 
