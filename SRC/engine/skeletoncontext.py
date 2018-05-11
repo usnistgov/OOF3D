@@ -350,9 +350,12 @@ class SkeletonContext(whoville.WhoDoUndo):
 
     # Simple utilities used when operating on groups and selections.
     # These return a list of the actual objects in the group or
-    # selection.
-    ## TODO OPT: All functions that use them probably should be using
-    ## couriers and not dealing with python lists of swigged objects.
+    # selection.  They are used in boundarybuilder.py, and in widgets
+    # defined in skeletongroupwidgets.py that are used in
+    # boundarybuilderGUI.py.
+    ## TODO OPT: All functions that use these methods probably should
+    ## be using couriers and not dealing with python lists of swigged
+    ## objects.
 
     def nodes_from_node_aggregate(self, group):
         if group == placeholder.selection:
@@ -369,7 +372,7 @@ class SkeletonContext(whoville.WhoDoUndo):
             return self.faceselection.retrieve()
         return self.facegroups.get_group(group)
 
-    def elements_from_el_aggregate(self, group):
+    def elements_from_el_aggregate(self, group): 
         if group == placeholder.selection:
             return self.elementselection.retrieve()
         return self.elementgroups.get_group(group)
@@ -380,6 +383,14 @@ class SkeletonContext(whoville.WhoDoUndo):
 
     ## TODO MER: Write the 2D equivalents of these methods and use them in
     ## boundarybuilder.py and skeletonselectionmod.py.
+
+    ## TODO: These methods could use getExteriorNodesOfElements() and
+    ## other functions defined in cskeletonselectable.C instead of
+    ## re-implementing those functions in python here.  The methods
+    ## here are only used in boundarybuilder.py (if at all).  If
+    ## boundarybuilder used couriers and did all of its work in C++,
+    ## it could just call the cskeletonselectable methods directly and
+    ## these wouldn't be needed at all.
 
     # Get the faces on the exterior of a set of elements.
     def exteriorFacesOfElementSet(self, elements):
@@ -393,10 +404,10 @@ class SkeletonContext(whoville.WhoDoUndo):
         bdyfaces = set(face for face, count in facecounts.items() if count==1)
         return bdyfaces
     
-    def exteriorFacesOfSelectedElements(self):
+    def exteriorFacesOfSelectedElements(self): # Not used?
         return self.exteriorFacesOfElementSet(self.elementselection.retrieve())
 
-    def exteriorSegmentsOfElementSet(self, elements):
+    def exteriorSegmentsOfElementSet(self, elements): # Not used?
         # A segment is on the exterior of a set of elements if it's on
         # an exterior face of the set.
         faces = self.exteriorFacesOfElementSet(elements)
@@ -406,12 +417,12 @@ class SkeletonContext(whoville.WhoDoUndo):
             segs.update(skel.getFaceSegments(face))
         return segs
 
-    def exteriorSegmentsOfSelectedElements(self):
+    def exteriorSegmentsOfSelectedElements(self): # Not used?
         return self.exteriorSegmentsOfElementSet(
             self.elementselection.retrieve())
 
     # Get the nodes on the exterior of a given set of elements.
-    def exteriorNodesOfElementSet(self, elements):
+    def exteriorNodesOfElementSet(self, elements): # Used in boundarybuilder.py
         nodes = set()
         # A node is on the exterior of the element set if it's on a
         # exterior face of the element set. 
@@ -420,7 +431,7 @@ class SkeletonContext(whoville.WhoDoUndo):
             nodes.update(face.getNodes())
         return nodes
 
-    def exteriorSegmentsOfFaceSet(self, faces):
+    def exteriorSegmentsOfFaceSet(self, faces): # Used in boundarybuilder.py
         # A segment is on the exterior of the face set if only one of
         # the segment's faces is in the set.
         skel = self.getObject()
@@ -431,20 +442,20 @@ class SkeletonContext(whoville.WhoDoUndo):
         return utils.OrderedSet(seg for seg,count in segcounts.items()
                                 if count == 1)
 
-    def exteriorSegmentsOfSelectedFaces(self):
+    def exteriorSegmentsOfSelectedFaces(self): # Not used?
         return self.exteriorSegmentsOfFaceSet(self.faceselection.retrieve())
         
     # Like the above, but for all objects, not just the boundaries, of
     # the given set.
 
-    def allFacesOfElementSet(self, elements):
+    def allFacesOfElementSet(self, elements): # Not used?
         faces = set()
         skel = self.getObject()
         for element in elements:
             faces.update(skel.getElementFaces(element))
         return faces
 
-    def allNodesOfElementSet(self, elements):
+    def allNodesOfElementSet(self, elements): # Used in boundarybuilder.py
         nodes = set()
         for element in elements:
             nodes.update(element.getNodes())
