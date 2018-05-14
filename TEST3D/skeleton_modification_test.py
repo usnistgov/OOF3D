@@ -778,73 +778,34 @@ class Skeleton_Save(unittest.TestCase):
 	      for no in self.skelContext(skelname).nodeselection.retrieve()]
     self.assertEqual(beforenods, loadednods)
     
-  def selectComponents(self, skelname):
-    OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
-	skeleton=skelname,
-	points=[Point(5.07279,5.311717,21.2376)],
-	view=View(cameraPosition=Coord(5,5,34.2583),
-		  focalPoint=Coord(5,5,5),
-		  up=Coord(0,1,0), angle=30,
-		  clipPlanes=[], invertClip=0, size_x=694, size_y=671),
-	shift=0, ctrl=0)
-    OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton=skelname, 
-            points=[Point(-15.6761,18.8259,20.2608)],
-            view=View(cameraPosition=Coord(-15.7316,18.862,20.3001),
-                      focalPoint=Coord(5,5,5), 
-                      up=Coord(0.217668,0.851693,-0.476696), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
-    OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
-	skeleton=skelname,
-	points=[Point(0.236924,19.8997,26.4638)],
-	view=View(cameraPosition=Coord(-0.0410486,21.1544,28.8678),
-		  focalPoint=Coord(5,5,5),
-		  up=Coord(-0.00161767,0.827986,-0.560746), angle=30,
-		  clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-	shift=0, ctrl=0)
-    OOF.Graphics_1.Toolbox.Select_Node.Single_Node(
-	skeleton=skelname,
-	points=[Point(2.2182,13.9491,18.2603)],
-	view=View(cameraPosition=Coord(-0.0410486,21.1544,28.8678),
-		  focalPoint=Coord(5,5,5),
-		  up=Coord(-0.00161767,0.827986,-0.560746), angle=30,
-		  clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-	shift=0, ctrl=0)
-	
+  def selectComponents1(self, skelname):
+      # Select components from the unrefined 4x4x4 skeleton
+      OOF.ElementSelection.Select(
+          skeleton=skelname,
+          method=SingleElementSelect(element=215,operator=Select()))
+      OOF.FaceSelection.Select(
+           skeleton=skelname,
+          method=SingleFaceSelect(nodes=[79, 104, 103],operator=Select()))
+      OOF.SegmentSelection.Select(
+          skeleton=skelname,
+          method=SingleSegmentSelect(nodes=[103, 108],operator=Select()))
+      OOF.NodeSelection.Select(
+          skeleton=skelname,
+          method=SingleNodeSelect(point=Coord(5,5,5),operator=Select()))
+
   def selectComponentsRefined(self, skelname):
-    OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
-	skeleton=skelname,
-	points=[Point(5.37437,5.53555,21.2376)],
-	view=View(cameraPosition=Coord(5,5,34.2583),
-		  focalPoint=Coord(5,5,5),
-		  up=Coord(0,1,0), angle=30,
-		  clipPlanes=[], invertClip=0, size_x=694, size_y=671),
-	shift=0, ctrl=0)
-    OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton=skelname, 
-            points=[Point(-15.6761,18.8259,20.2608)],
-            view=View(cameraPosition=Coord(-15.7316,18.862,20.3001),
-                      focalPoint=Coord(5,5,5), 
-                      up=Coord(0.217668,0.851693,-0.476696), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
-    OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
-	skeleton=skelname,
-	points=[Point(0.236924,19.8997,26.4638)],
-	view=View(cameraPosition=Coord(-0.0410486,21.1544,28.8678),
-		  focalPoint=Coord(5,5,5),
-		  up=Coord(-0.00161767,0.827986,-0.560746), angle=30,
-		  clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-	shift=0, ctrl=0)
-    OOF.Graphics_1.Toolbox.Select_Node.Single_Node(
-	skeleton=skelname,
-	points=[Point(2.2182,13.9491,18.2603)],
-	view=View(cameraPosition=Coord(-0.0410486,21.1544,28.8678),
-		  focalPoint=Coord(5,5,5),
-		  up=Coord(-0.00161767,0.827986,-0.560746), angle=30,
-		  clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-	shift=0, ctrl=0)
+      OOF.ElementSelection.Select(
+          skeleton=skelname,
+          method=SingleElementSelect(element=583,operator=Select()))
+      OOF.SegmentSelection.Select(
+          skeleton=skelname,
+          method=SingleSegmentSelect(nodes=[470, 108],operator=Select()))
+      OOF.FaceSelection.Select(
+          skeleton=skelname,
+          method=SingleFaceSelect(nodes=[79, 632, 307],operator=Select()))
+      OOF.NodeSelection.Select(
+          skeleton=skelname,
+          method=SingleNodeSelect(point=Coord(5,5,5),operator=Select()))
 	
   def configureGroups(self, skelname):
     OOF.ElementGroup.New_Group(
@@ -861,49 +822,15 @@ class Skeleton_Save(unittest.TestCase):
             name='nogroup')
                    
   def groupComponents(self, skelname):
-    OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
-	skeleton=skelname,
-	points=[Point(5.07279,5.311717,21.2376)],
-	view=View(cameraPosition=Coord(5,5,34.2583),
-		  focalPoint=Coord(5,5,5),
-		  up=Coord(0,1,0), angle=30,
-		  clipPlanes=[], invertClip=0, size_x=694, size_y=671),
-	shift=0, ctrl=0)
-    OOF.ElementGroup.Add_to_Group(
-            skeleton=skelname, group='elgroup')
-            
-    OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton=skelname, 
-            points=[Point(-15.6761,18.8259,20.2608)],
-            view=View(cameraPosition=Coord(-15.7316,18.862,20.3001),
-                      focalPoint=Coord(5,5,5), 
-                      up=Coord(0.217668,0.851693,-0.476696), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
-    OOF.FaceGroup.Add_to_Group(
-            skeleton=skelname, group='fagroup')
-            
-    OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
-	skeleton=skelname,
-	points=[Point(0.236924,19.8997,26.4638)],
-	view=View(cameraPosition=Coord(-0.0410486,21.1544,28.8678),
-		  focalPoint=Coord(5,5,5),
-		  up=Coord(-0.00161767,0.827986,-0.560746), angle=30,
-		  clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-	shift=0, ctrl=0)
-    OOF.SegmentGroup.Add_to_Group(
-            skeleton=skelname, group='segroup')
-    
-    OOF.Graphics_1.Toolbox.Select_Node.Single_Node(
-	skeleton=skelname,
-	points=[Point(2.2182,13.9491,18.2603)],
-	view=View(cameraPosition=Coord(-0.0410486,21.1544,28.8678),
-		  focalPoint=Coord(5,5,5),
-		  up=Coord(-0.00161767,0.827986,-0.560746), angle=30,
-		  clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-	shift=0, ctrl=0)
-    OOF.NodeGroup.Add_to_Group(
-            skeleton=skelname, group='nogroup')
+      self.selectComponents1(skelname)
+      OOF.ElementGroup.Add_to_Group(
+          skeleton=skelname, group='elgroup')
+      OOF.FaceGroup.Add_to_Group(
+          skeleton=skelname, group='fagroup')
+      OOF.SegmentGroup.Add_to_Group(
+          skeleton=skelname, group='segroup')
+      OOF.NodeGroup.Add_to_Group(
+          skeleton=skelname, group='nogroup')
             
   def groupComponentsRefined(self, skelname):
     OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
@@ -983,20 +910,28 @@ class Skeleton_Save(unittest.TestCase):
   def OneSkeletonSelectRefine(self):
       self.oneSkeletonStep1()
       OOF.Windows.Graphics.New()
-      self.selectComponents('onemicrostructure:oneskeleton')
-      self.assertEqual(self.selectedElements("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedFaces("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedSegments("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedNodes("onemicrostructure:oneskeleton"), 1)
+      self.selectComponents1('onemicrostructure:oneskeleton')
+      self.assertEqual(
+          self.selectedElements("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedFaces("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedSegments("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedNodes("onemicrostructure:oneskeleton"), 1)
       OOF.Skeleton.Modify(
           skeleton='onemicrostructure:oneskeleton',
           modifier=Refine(targets=CheckAllElements(),
                           criterion=Unconditionally(),
                           alpha=0.3))
-      self.assertEqual(self.selectedElements("onemicrostructure:oneskeleton"), 8)
-      self.assertEqual(self.selectedFaces("onemicrostructure:oneskeleton"), 4)
-      self.assertEqual(self.selectedSegments("onemicrostructure:oneskeleton"), 2)
-      self.assertEqual(self.selectedNodes("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedElements("onemicrostructure:oneskeleton"), 8)
+      self.assertEqual(
+          self.selectedFaces("onemicrostructure:oneskeleton"), 4)
+      self.assertEqual(
+          self.selectedSegments("onemicrostructure:oneskeleton"), 2)
+      self.assertEqual(
+          self.selectedNodes("onemicrostructure:oneskeleton"), 1)
       savedElements = self.elements("onemicrostructure:oneskeleton")
       savedFaces = self.faces("onemicrostructure:oneskeleton")
       savedSegments = self.segments("onemicrostructure:oneskeleton")
@@ -1014,10 +949,14 @@ class Skeleton_Save(unittest.TestCase):
       OOF.File.Load.Data(
           filename=reference_file("skeleton_data", "oneskeleton_selectrefine"))
       OOF.Windows.Graphics.New()
-      self.assertEqual(self.selectedElements("onemicrostructure:oneskeleton"), 8)
-      self.assertEqual(self.selectedFaces("onemicrostructure:oneskeleton"), 4)
-      self.assertEqual(self.selectedSegments("onemicrostructure:oneskeleton"), 2)
-      self.assertEqual(self.selectedNodes("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedElements("onemicrostructure:oneskeleton"), 8)
+      self.assertEqual(
+          self.selectedFaces("onemicrostructure:oneskeleton"), 4)
+      self.assertEqual(
+          self.selectedSegments("onemicrostructure:oneskeleton"), 2)
+      self.assertEqual(
+          self.selectedNodes("onemicrostructure:oneskeleton"), 1)
       self.assertSavedEqual2Loaded(
           "onemicrostructure:oneskeleton", savedElements, savedFaces,
           savedSegments, savedNodes)
@@ -1032,10 +971,14 @@ class Skeleton_Save(unittest.TestCase):
           modifier=Refine(targets=CheckAllElements(),
           criterion=Unconditionally(),alpha=0.3))
       self.selectComponentsRefined('onemicrostructure:oneskeleton')
-      self.assertEqual(self.selectedElements("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedFaces("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedSegments("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedNodes("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedElements("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedFaces("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedSegments("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedNodes("onemicrostructure:oneskeleton"), 1)
       savedElements = self.elements("onemicrostructure:oneskeleton")
       savedFaces = self.faces("onemicrostructure:oneskeleton")
       savedSegments = self.segments("onemicrostructure:oneskeleton")
@@ -1054,11 +997,17 @@ class Skeleton_Save(unittest.TestCase):
       OOF.File.Load.Data(filename=reference_file("skeleton_data", 
                                                  "oneskeleton_refineselect"))
       OOF.Windows.Graphics.New()
-      self.assertEqual(self.selectedElements("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedFaces("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedSegments("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedNodes("onemicrostructure:oneskeleton"), 1)    
-      self.assertSavedEqual2Loaded("onemicrostructure:oneskeleton", savedElements, savedFaces, savedSegments, savedNodes)
+      self.assertEqual(
+          self.selectedElements("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedFaces("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedSegments("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedNodes("onemicrostructure:oneskeleton"), 1)
+      self.assertSavedEqual2Loaded("onemicrostructure:oneskeleton",
+                                   savedElements, savedFaces, savedSegments,
+                                   savedNodes)
       OOF.Graphics_1.File.Close()
       
   @memorycheck.check("onemicrostructure")
@@ -1067,15 +1016,23 @@ class Skeleton_Save(unittest.TestCase):
       OOF.Windows.Graphics.New()
       self.configureGroups('onemicrostructure:oneskeleton')
       self.groupComponents('onemicrostructure:oneskeleton')
-      self.selectComponents('onemicrostructure:oneskeleton')
-      self.assertEqual(self.selectedElements("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedFaces("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedSegments("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedNodes("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.elementsGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.facesGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.segmentsGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.nodesGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.selectComponents1('onemicrostructure:oneskeleton')
+      self.assertEqual(
+          self.selectedElements("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedFaces("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedSegments("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedNodes("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.elementsGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.facesGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.segmentsGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.nodesGroupSize("onemicrostructure:oneskeleton"), 1)
       savedElements = self.elements("onemicrostructure:oneskeleton")
       savedFaces = self.faces("onemicrostructure:oneskeleton")
       savedSegments = self.segments("onemicrostructure:oneskeleton")
@@ -1094,14 +1051,22 @@ class Skeleton_Save(unittest.TestCase):
       OOF.File.Load.Data(filename=reference_file("skeleton_data",
                                                  "oneskeleton_groupselect"))
       OOF.Windows.Graphics.New()
-      self.assertEqual(self.selectedElements("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedFaces("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedSegments("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedNodes("onemicrostructure:oneskeleton"), 1) 
-      self.assertEqual(self.elementsGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.facesGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.segmentsGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.nodesGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedElements("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedFaces("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedSegments("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedNodes("onemicrostructure:oneskeleton"), 1) 
+      self.assertEqual(
+          self.elementsGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.facesGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.segmentsGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.nodesGroupSize("onemicrostructure:oneskeleton"), 1)
       self.assertSavedEqual2Loaded(
           "onemicrostructure:oneskeleton",
           savedElements, savedFaces, savedSegments, savedNodes)
@@ -1113,19 +1078,27 @@ class Skeleton_Save(unittest.TestCase):
       OOF.Windows.Graphics.New()
       self.configureGroups('onemicrostructure:oneskeleton')
       self.groupComponents('onemicrostructure:oneskeleton')
-      self.assertEqual(self.elementsGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.facesGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.segmentsGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.nodesGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.elementsGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.facesGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.segmentsGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.nodesGroupSize("onemicrostructure:oneskeleton"), 1)
       OOF.Skeleton.Modify(
           skeleton='onemicrostructure:oneskeleton',
           modifier=Refine(targets=CheckAllElements(),
           criterion=Unconditionally(),alpha=0.3))
       self.selectComponentsRefined('onemicrostructure:oneskeleton')
-      self.assertEqual(self.selectedElements("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedFaces("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedSegments("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedNodes("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedElements("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedFaces("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedSegments("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedNodes("onemicrostructure:oneskeleton"), 1)
       savedElements = self.elements("onemicrostructure:oneskeleton")
       savedFaces = self.faces("onemicrostructure:oneskeleton")
       savedSegments = self.segments("onemicrostructure:oneskeleton")
@@ -1144,13 +1117,20 @@ class Skeleton_Save(unittest.TestCase):
       OOF.File.Load.Data(filename=reference_file(
           "skeleton_data", "oneskeleton_grouprefineselect"))
       OOF.Windows.Graphics.New()
-      self.assertEqual(self.selectedElements("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedFaces("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedSegments("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedNodes("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.elementsGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.facesGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.segmentsGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedElements("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedFaces("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedSegments("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedNodes("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.elementsGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.facesGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.segmentsGroupSize("onemicrostructure:oneskeleton"), 1)
       self.assertEqual(self.nodesGroupSize("onemicrostructure:oneskeleton"), 1)
       self.assertSavedEqual2Loaded(
           "onemicrostructure:oneskeleton",
@@ -1163,15 +1143,23 @@ class Skeleton_Save(unittest.TestCase):
       OOF.Windows.Graphics.New()
       self.configureGroups('onemicrostructure:oneskeleton')
       self.groupComponents('onemicrostructure:oneskeleton')
-      self.assertEqual(self.elementsGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.facesGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.segmentsGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.nodesGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.selectComponents('onemicrostructure:oneskeleton')
-      self.assertEqual(self.selectedElements("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedFaces("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedSegments("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.selectedNodes("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.elementsGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.facesGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.segmentsGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.nodesGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.selectComponents1('onemicrostructure:oneskeleton')
+      self.assertEqual(
+          self.selectedElements("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedFaces("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedSegments("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedNodes("onemicrostructure:oneskeleton"), 1)
       OOF.Skeleton.Modify(
           skeleton='onemicrostructure:oneskeleton',
           modifier=Refine(targets=CheckAllElements(),
@@ -1194,239 +1182,27 @@ class Skeleton_Save(unittest.TestCase):
       OOF.File.Load.Data(filename=reference_file(
           "skeleton_data", "oneskeleton_grouprefineselect"))
       OOF.Windows.Graphics.New()
-      self.assertEqual(self.selectedElements("onemicrostructure:oneskeleton"), 8)
-      self.assertEqual(self.selectedFaces("onemicrostructure:oneskeleton"), 4)
-      self.assertEqual(self.selectedSegments("onemicrostructure:oneskeleton"), 2)
-      self.assertEqual(self.selectedNodes("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.elementsGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.facesGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.segmentsGroupSize("onemicrostructure:oneskeleton"), 1)
-      self.assertEqual(self.nodesGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.selectedElements("onemicrostructure:oneskeleton"), 8)
+      self.assertEqual(
+          self.selectedFaces("onemicrostructure:oneskeleton"), 4)
+      self.assertEqual(
+          self.selectedSegments("onemicrostructure:oneskeleton"), 2)
+      self.assertEqual(
+          self.selectedNodes("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.elementsGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.facesGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.segmentsGroupSize("onemicrostructure:oneskeleton"), 1)
+      self.assertEqual(
+          self.nodesGroupSize("onemicrostructure:oneskeleton"), 1)
       self.assertSavedEqual2Loaded(
           "onemicrostructure:oneskeleton",
           savedElements, savedFaces, savedSegments, savedNodes)
       OOF.Graphics_1.File.Close()
       
-  @memorycheck.check("twomicrostructure1", "twomicrostructure2")
-  def TwoSkeletonsSelectRefine(self):
-      self.twoSkeletonsStep1()
-      OOF.Windows.Graphics.New()
-      OOF.Graphics_1.Layer.New(category='Skeleton', what='twomicrostructure1:twoskeleton1', 
-          how=SkeletonEdgeDisplay(color=Gray(value=0.0),width=1,filter=NullFilter()))
-      OOF.Graphics_1.Layer.New(category='Skeleton', what='twomicrostructure2:twoskeleton2', 
-          how=SkeletonEdgeDisplay(color=Gray(value=0.0),width=1,filter=NullFilter()))
-      self.selectComponents('twomicrostructure1:twoskeleton1')
-      self.assertEqual(self.selectedElements("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.selectedFaces("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.selectedSegments("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.selectedNodes("twomicrostructure1:twoskeleton1"), 1)
-      self.selectComponents('twomicrostructure2:twoskeleton2')
-      self.assertEqual(self.selectedElements("twomicrostructure2:twoskeleton2"), 1)
-      self.assertEqual(self.selectedFaces("twomicrostructure2:twoskeleton2"), 1)
-      self.assertEqual(self.selectedSegments("twomicrostructure2:twoskeleton2"), 1)
-      self.assertEqual(self.selectedNodes("twomicrostructure2:twoskeleton2"), 0)
-      OOF.Skeleton.Modify(
-          skeleton='twomicrostructure1:twoskeleton1',
-          modifier=Refine(targets=CheckAllElements(),
-          criterion=Unconditionally(),alpha=0.3))
-      OOF.Skeleton.Modify(
-          skeleton='twomicrostructure2:twoskeleton2',
-          modifier=Refine(targets=CheckAllElements(),
-          criterion=Unconditionally(),alpha=0.3))
-      savedElements1 = self.elements("twomicrostructure1:twoskeleton1")
-      savedFaces1 = self.faces("twomicrostructure1:twoskeleton1")
-      savedSegments1 = self.segments("twomicrostructure1:twoskeleton1")
-      savedNodes1 = self.nodes("twomicrostructure1:twoskeleton1")
-      savedElements2 = self.elements("twomicrostructure2:twoskeleton2")
-      savedFaces2 = self.faces("twomicrostructure2:twoskeleton2")
-      savedSegments2 = self.segments("twomicrostructure2:twoskeleton2")
-      savedNodes2 = self.nodes("twomicrostructure2:twoskeleton2")
-      OOF.File.Save.Skeleton(filename="twoskeleton_save",
-          mode="w", format="ascii",
-          skeleton="twomicrostructure1:twoskeleton1")
-      self.assert_(file_utils.fp_file_compare(
-           "twoskeleton_save",
-           os.path.join("skeleton_data", "twoskeleton_selectrefine1"),
-           1.e-9))
-      file_utils.remove("twoskeleton_save")
-      OOF.File.Save.Skeleton(filename="twoskeleton_save",
-          mode="w", format="ascii",
-          skeleton="twomicrostructure2:twoskeleton2")
-      self.assert_(file_utils.fp_file_compare(
-           "twoskeleton_save",
-           os.path.join("skeleton_data", "twoskeleton_selectrefine2"),
-           1.e-9))
-      file_utils.remove("twoskeleton_save")
-      OOF.Graphics_1.File.Close()
-      OOF.Skeleton.Delete(skeleton="twomicrostructure1:twoskeleton1")
-      OOF.Microstructure.Delete(microstructure='twomicrostructure1')
-      OOF.Skeleton.Delete(skeleton="twomicrostructure2:twoskeleton2")
-      OOF.Microstructure.Delete(microstructure='twomicrostructure2')
-      OOF.File.Load.Data(filename=reference_file("skeleton_data", "twoskeleton_selectrefine1"))
-      OOF.File.Load.Data(filename=reference_file("skeleton_data", "twoskeleton_selectrefine2"))
-      OOF.Windows.Graphics.New()
-      OOF.Graphics_1.Layer.New(category='Skeleton', what='twomicrostructure1:twoskeleton1', 
-          how=SkeletonEdgeDisplay(color=Gray(value=0.0),width=1,filter=NullFilter()))
-      OOF.Graphics_1.Layer.New(category='Skeleton', what='twomicrostructure2:twoskeleton2', 
-          how=SkeletonEdgeDisplay(color=Gray(value=0.0),width=1,filter=NullFilter()))
-      self.assertEqual(self.selectedElements("twomicrostructure1:twoskeleton1"), 8)
-      self.assertEqual(self.selectedFaces("twomicrostructure1:twoskeleton1"), 4)
-      self.assertEqual(self.selectedSegments("twomicrostructure1:twoskeleton1"), 2)
-      self.assertEqual(self.selectedNodes("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.selectedElements("twomicrostructure2:twoskeleton2"), 8)
-      self.assertEqual(self.selectedFaces("twomicrostructure2:twoskeleton2"), 4)
-      self.assertEqual(self.selectedSegments("twomicrostructure2:twoskeleton2"), 2)
-      self.assertEqual(self.selectedNodes("twomicrostructure2:twoskeleton2"), 0)
-      self.assertSavedEqual2Loaded("twomicrostructure1:twoskeleton1", savedElements1, savedFaces1, savedSegments1, savedNodes1)
-      self.assertSavedEqual2Loaded("twomicrostructure2:twoskeleton2", savedElements2, savedFaces2, savedSegments2, savedNodes2)
-      OOF.Graphics_1.File.Close()
-      OOF.Skeleton.Delete(skeleton="twomicrostructure1:twoskeleton1")
-      OOF.Microstructure.Delete(microstructure='twomicrostructure1')
-      OOF.Skeleton.Delete(skeleton="twomicrostructure2:twoskeleton2")
-      OOF.Microstructure.Delete(microstructure='twomicrostructure2')
-      OOF.File.Load.Data(filename=reference_file("skeleton_data", "twoskeleton_selectrefine2"))
-      OOF.File.Load.Data(filename=reference_file("skeleton_data", "twoskeleton_selectrefine1"))
-      OOF.Windows.Graphics.New()
-      self.assertEqual(self.selectedElements("twomicrostructure1:twoskeleton1"), 8)
-      self.assertEqual(self.selectedFaces("twomicrostructure1:twoskeleton1"), 4)
-      self.assertEqual(self.selectedSegments("twomicrostructure1:twoskeleton1"), 2)
-      self.assertEqual(self.selectedNodes("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.selectedElements("twomicrostructure2:twoskeleton2"), 8)
-      self.assertEqual(self.selectedFaces("twomicrostructure2:twoskeleton2"), 4)
-      self.assertEqual(self.selectedSegments("twomicrostructure2:twoskeleton2"), 2)
-      self.assertEqual(self.selectedNodes("twomicrostructure2:twoskeleton2"), 0)
-      self.assertSavedEqual2Loaded("twomicrostructure1:twoskeleton1", savedElements1, savedFaces1, savedSegments1, savedNodes1)
-      self.assertSavedEqual2Loaded("twomicrostructure2:twoskeleton2", savedElements2, savedFaces2, savedSegments2, savedNodes2)
-      OOF.Graphics_1.File.Close()
-      # OOF.Skeleton.Delete(skeleton="twomicrostructure1:twoskeleton1")
-      # OOF.Microstructure.Delete(microstructure='twomicrostructure1')
-      # OOF.Skeleton.Delete(skeleton="twomicrostructure2:twoskeleton2")
-      # OOF.Microstructure.Delete(microstructure='twomicrostructure2')
-      
-  @memorycheck.check("twomicrostructure1", "twomicrostructure2")
-  def TwoSkeletonsGroupSelectRefine(self):
-      self.twoSkeletonsStep1()
-      OOF.Windows.Graphics.New()
-      OOF.Graphics_1.Layer.New(category='Skeleton', what='twomicrostructure1:twoskeleton1', 
-          how=SkeletonEdgeDisplay(color=Gray(value=0.0),width=1,filter=NullFilter()))
-      OOF.Graphics_1.Layer.New(category='Skeleton', what='twomicrostructure2:twoskeleton2', 
-          how=SkeletonEdgeDisplay(color=Gray(value=0.0),width=1,filter=NullFilter()))
-      self.configureGroups('twomicrostructure1:twoskeleton1')
-      self.groupComponents('twomicrostructure1:twoskeleton1')
-      self.assertEqual(self.elementsGroupSize("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.facesGroupSize("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.segmentsGroupSize("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.nodesGroupSize("twomicrostructure1:twoskeleton1"), 1)
-      self.selectComponents('twomicrostructure1:twoskeleton1')
-      self.assertEqual(self.selectedElements("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.selectedFaces("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.selectedSegments("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.selectedNodes("twomicrostructure1:twoskeleton1"), 1)
-      self.configureGroups('twomicrostructure2:twoskeleton2')
-      self.groupComponents('twomicrostructure2:twoskeleton2')
-      self.assertEqual(self.elementsGroupSize("twomicrostructure2:twoskeleton2"), 0)
-      self.assertEqual(self.facesGroupSize("twomicrostructure2:twoskeleton2"), 1)
-      self.assertEqual(self.segmentsGroupSize("twomicrostructure2:twoskeleton2"), 1)
-      self.assertEqual(self.nodesGroupSize("twomicrostructure2:twoskeleton2"), 0)
-      self.selectComponents('twomicrostructure2:twoskeleton2')
-      self.assertEqual(self.selectedElements("twomicrostructure2:twoskeleton2"), 1)
-      self.assertEqual(self.selectedFaces("twomicrostructure2:twoskeleton2"), 1)
-      self.assertEqual(self.selectedSegments("twomicrostructure2:twoskeleton2"), 1)
-      self.assertEqual(self.selectedNodes("twomicrostructure2:twoskeleton2"), 0)
-      OOF.Skeleton.Modify(
-          skeleton='twomicrostructure1:twoskeleton1',
-          modifier=Refine(targets=CheckAllElements(),
-          criterion=Unconditionally(),alpha=0.3))
-      OOF.Skeleton.Modify(
-          skeleton='twomicrostructure2:twoskeleton2',
-          modifier=Refine(targets=CheckAllElements(),
-          criterion=Unconditionally(),alpha=0.3))
-      savedElements1 = self.elements("twomicrostructure1:twoskeleton1")
-      savedFaces1 = self.faces("twomicrostructure1:twoskeleton1")
-      savedSegments1 = self.segments("twomicrostructure1:twoskeleton1")
-      savedNodes1 = self.nodes("twomicrostructure1:twoskeleton1")
-      savedElements2 = self.elements("twomicrostructure2:twoskeleton2")
-      savedFaces2 = self.faces("twomicrostructure2:twoskeleton2")
-      savedSegments2 = self.segments("twomicrostructure2:twoskeleton2")
-      savedNodes2 = self.nodes("twomicrostructure2:twoskeleton2")
-      OOF.File.Save.Skeleton(filename="twoskeleton_save",
-          mode="w", format="ascii",
-          skeleton="twomicrostructure1:twoskeleton1")
-      self.assert_(file_utils.fp_file_compare(
-           "twoskeleton_save",
-           os.path.join("skeleton_data", "twoskeleton_groupselectrefine1"),
-           1.e-9))
-      file_utils.remove("twoskeleton_save")
-      OOF.File.Save.Skeleton(filename="twoskeleton_save",
-          mode="w", format="ascii",
-          skeleton="twomicrostructure2:twoskeleton2")
-      self.assert_(file_utils.fp_file_compare(
-           "twoskeleton_save",
-           os.path.join("skeleton_data", "twoskeleton_groupselectrefine2"),
-           1.e-9))
-      file_utils.remove("twoskeleton_save")
-      OOF.Graphics_1.File.Close()
-      OOF.Skeleton.Delete(skeleton="twomicrostructure1:twoskeleton1")
-      OOF.Microstructure.Delete(microstructure='twomicrostructure1')
-      OOF.Skeleton.Delete(skeleton="twomicrostructure2:twoskeleton2")
-      OOF.Microstructure.Delete(microstructure='twomicrostructure2')
-      OOF.File.Load.Data(filename=reference_file("skeleton_data", "twoskeleton_groupselectrefine1"))
-      OOF.File.Load.Data(filename=reference_file("skeleton_data", "twoskeleton_groupselectrefine2"))
-      OOF.Windows.Graphics.New()
-      OOF.Graphics_1.Layer.New(category='Skeleton', what='twomicrostructure1:twoskeleton1', 
-          how=SkeletonEdgeDisplay(color=Gray(value=0.0),width=1,filter=NullFilter()))
-      OOF.Graphics_1.Layer.New(category='Skeleton', what='twomicrostructure2:twoskeleton2', 
-          how=SkeletonEdgeDisplay(color=Gray(value=0.0),width=1,filter=NullFilter()))
-      self.assertEqual(self.elementsGroupSize("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.facesGroupSize("twomicrostructure1:twoskeleton1"), 4)
-      self.assertEqual(self.segmentsGroupSize("twomicrostructure1:twoskeleton1"), 2)
-      self.assertEqual(self.nodesGroupSize("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.selectedElements("twomicrostructure1:twoskeleton1"), 8)
-      self.assertEqual(self.selectedFaces("twomicrostructure1:twoskeleton1"), 4)
-      self.assertEqual(self.selectedSegments("twomicrostructure1:twoskeleton1"), 2)
-      self.assertEqual(self.selectedNodes("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.elementsGroupSize("twomicrostructure2:twoskeleton2"), 0)
-      self.assertEqual(self.facesGroupSize("twomicrostructure2:twoskeleton2"), 4)
-      self.assertEqual(self.segmentsGroupSize("twomicrostructure2:twoskeleton2"), 2)
-      self.assertEqual(self.nodesGroupSize("twomicrostructure2:twoskeleton2"), 0)
-      self.assertEqual(self.selectedElements("twomicrostructure2:twoskeleton2"), 8)
-      self.assertEqual(self.selectedFaces("twomicrostructure2:twoskeleton2"), 4)
-      self.assertEqual(self.selectedSegments("twomicrostructure2:twoskeleton2"), 2)
-      self.assertEqual(self.selectedNodes("twomicrostructure2:twoskeleton2"), 0)
-      self.assertSavedEqual2Loaded("twomicrostructure1:twoskeleton1", savedElements1, savedFaces1, savedSegments1, savedNodes1)
-      self.assertSavedEqual2Loaded("twomicrostructure2:twoskeleton2", savedElements2, savedFaces2, savedSegments2, savedNodes2)
-      OOF.Graphics_1.File.Close()
-      OOF.Skeleton.Delete(skeleton="twomicrostructure1:twoskeleton1")
-      OOF.Microstructure.Delete(microstructure='twomicrostructure1')
-      OOF.Skeleton.Delete(skeleton="twomicrostructure2:twoskeleton2")
-      OOF.Microstructure.Delete(microstructure='twomicrostructure2')
-      OOF.File.Load.Data(filename=reference_file("skeleton_data", "twoskeleton_groupselectrefine2"))
-      OOF.File.Load.Data(filename=reference_file("skeleton_data", "twoskeleton_groupselectrefine1"))
-      OOF.Windows.Graphics.New()
-      self.assertEqual(self.elementsGroupSize("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.facesGroupSize("twomicrostructure1:twoskeleton1"), 4)
-      self.assertEqual(self.segmentsGroupSize("twomicrostructure1:twoskeleton1"), 2)
-      self.assertEqual(self.nodesGroupSize("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.selectedElements("twomicrostructure1:twoskeleton1"), 8)
-      self.assertEqual(self.selectedFaces("twomicrostructure1:twoskeleton1"), 4)
-      self.assertEqual(self.selectedSegments("twomicrostructure1:twoskeleton1"), 2)
-      self.assertEqual(self.selectedNodes("twomicrostructure1:twoskeleton1"), 1)
-      self.assertEqual(self.elementsGroupSize("twomicrostructure2:twoskeleton2"), 0)
-      self.assertEqual(self.facesGroupSize("twomicrostructure2:twoskeleton2"), 4)
-      self.assertEqual(self.segmentsGroupSize("twomicrostructure2:twoskeleton2"), 2)
-      self.assertEqual(self.nodesGroupSize("twomicrostructure2:twoskeleton2"), 0)
-      self.assertEqual(self.selectedElements("twomicrostructure2:twoskeleton2"), 8)
-      self.assertEqual(self.selectedFaces("twomicrostructure2:twoskeleton2"), 4)
-      self.assertEqual(self.selectedSegments("twomicrostructure2:twoskeleton2"), 2)
-      self.assertEqual(self.selectedNodes("twomicrostructure2:twoskeleton2"), 0)
-      self.assertSavedEqual2Loaded("twomicrostructure1:twoskeleton1", savedElements1, savedFaces1, savedSegments1, savedNodes1)
-      self.assertSavedEqual2Loaded("twomicrostructure2:twoskeleton2", savedElements2, savedFaces2, savedSegments2, savedNodes2)
-      OOF.Graphics_1.File.Close()
-      # OOF.Skeleton.Delete(skeleton="twomicrostructure1:twoskeleton1")
-      # OOF.Microstructure.Delete(microstructure='twomicrostructure1')
-      # OOF.Skeleton.Delete(skeleton="twomicrostructure2:twoskeleton2")
-      # OOF.Microstructure.Delete(microstructure='twomicrostructure2')
-
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # Refine the central tet in a 1x1x1 Skeleton, after selecting various
@@ -1448,7 +1224,7 @@ class Refine(unittest.TestCase):
         OOF.Settings.Random_Seed(seed=17)
         OOF.Windows.Graphics.New()
 
-    def refine1x1(self, clickpoints, filename):
+    def refine1x1(self, segments, filename):
         OOF.Microstructure.New(
             name='microstructure',
             width=1.0, height=1.0, depth=1.0,
@@ -1460,20 +1236,27 @@ class Refine(unittest.TestCase):
             skeleton_geometry=TetraSkeleton(arrangement='moderate'))
         skelctxt = skeletoncontext.skeletonContexts["microstructure:skeleton"]
 
-        for i,point in enumerate(clickpoints):
-            OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
+        for i,nodeNos in enumerate(segments):
+            print "nodeNos=", nodeNos
+            OOF.SegmentSelection.Select(
                 skeleton='microstructure:skeleton',
-                points=[point],
-                view=View(cameraPosition=Coord(0.5,0.5,3.42583),
-                          focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0),
-                          angle=30, clipPlanes=[], invertClip=0),
-                shift=(i!=0), ctrl=False)
+                method=SingleSegmentSelect(
+                    nodes=nodeNos,
+                    operator=(Select() if i==0 else AddSelection())))
+
+            # OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
+            #     skeleton='microstructure:skeleton',
+            #     points=[point],
+            #     view=View(cameraPosition=Coord(0.5,0.5,3.42583),
+            #               focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0),
+            #               angle=30, clipPlanes=[], invertClip=0),
+            #     shift=(i!=0), ctrl=False)
         
-        # This ensures that the segments to be refined were actually
-        # selected.  It's a test of the test setup, rather than of the
-        # refinement.
-        segsel = skelctxt.segmentselection
-        self.assertEqual(segsel.retrieveSize(), len(clickpoints))
+        # # This ensures that the segments to be refined were actually
+        # # selected.  It's a test of the test setup, rather than of the
+        # # refinement.
+        # segsel = skelctxt.segmentselection
+        # self.assertEqual(segsel.retrieveSize(), len(clickpoints))
 
         OOF.Skeleton.Modify(
             skeleton='microstructure:skeleton', 
@@ -1500,87 +1283,62 @@ class Refine(unittest.TestCase):
     @memorycheck.check("microstructure")
     def OneEdge(self):
         # Check refinement rule tet1Edge1Div
-        self.refine1x1([Point(0.538422,0.531436,0.999939)],
+        self.refine1x1([[7,1]],
                        "oneedge.skel")
     
     @memorycheck.check("microstructure")
     def TwoEdgeAdjacent(self):
         # Check refinement rule tet2Edges1DivAdjacent
-        self.refine1x1([Point(0.661165,0.999983,0.659328),
-                        Point(0.803224,0.807684,0.999966)],
+        self.refine1x1([[7,4], [7,1]],
                        "twoedgeadj.skel")
 
     @memorycheck.check("microstructure")
     def TwoEdgeOpposite(self):
         # Check refinement rule tet2EdgesDivOpposite
-        self.refine1x1([Point(0.345294,0.999954,0.350306),
-                        Point(0.213343,1.24664e-05,0.780723)],
+        self.refine1x1([[7,4], [1,2]],
                        "twoedgeopp.skel")
 
     @memorycheck.check("microstructure")
     def ThreeEdgeTriangle(self):
         # Check refinement rule tet3Edges1DivTriangle
-        self.refine1x1([Point(0.999986,0.351059,0.386388),
-                        Point(0.632675,3.94726e-06,0.376928),
-                        Point(0.591624,0.596353,0.99996)],
+        self.refine1x1([[1,2], [1,7], [7,2]],
                        "threeedgetri.skel")
 
     @memorycheck.check("microstructure")
     def ThreeEdgeZigZag(self):
         # Check refinement rule tet3Edges1DivZigZag
-        self.refine1x1([Point(0.643208,0.657179,0.999963),
-                        Point(0.999984,0.368772,0.376219),
-                        Point(0.816672,0.181002,1.14032e-05)],
+        self.refine1x1([[1,7], [7,2], [2,4]],
                        'zigzag.skel')
     @memorycheck.check("microstructure")
     def ThreeEdgeZagZig(self):
         # Check refinement rule tet3Edges1DivZigZag.  The refined
         # segments are the mirror image of the ones used in ZigZag,
         # above.
-        self.refine1x1([Point(0.564035,0.561707,0.999986),
-                        Point(0.392825,0.999969,0.392313),
-                        Point(0.312015,0.720794,2.10878e-06)],
+        self.refine1x1([[1,7], [7,4], [4,2]],
                        'zagzig.skel')
     @memorycheck.check("microstructure")
     def ThreeEdgeNode(self):
         # Check refinement rule tet3Edges1Div1Node
-        self.refine1x1([Point(0.879875,0.999988,0.883597),
-                        Point(0.999986,0.858338,0.859375),
-                        Point(0.861608,0.862923,0.99997)],
+        self.refine1x1([[7,4], [7,2], [7,1]],
                        "threeedgenode.skel")
     @memorycheck.check("microstructure")
     def Tet4Edges1(self):
         # Check refinement rule tet4Edges1Div1
-        self.refine1x1([Point(0.820698,0.827544,0.999966),
-                        Point(0.999979,0.772363,0.764227),
-                        Point(0.232344,5.21585e-05,0.773537),
-                        Point(1.08432e-05,0.303361,0.716899)],
+        self.refine1x1([[1,2], [7,1], [7,2], [1,4]],
                        'tet4edges1.skel')
     @memorycheck.check("microstructure")
     def Tet4Edges2(self):
         # Check refinement rule tet4Edges1Div2
-        self.refine1x1([Point(0.725326,0.718596,0.999984),
-                        Point(0.999973,0.700917,0.691323),
-                        Point(0.247531,0.758057,2.66712e-05),
-                        Point(1.23673e-05,0.68682,0.313486)], 
+        self.refine1x1([[1,4], [2,4], [7,2], [1,7]], 
                        "tet4edges2.skel")
     @memorycheck.check("microstructure")
     def FiveEdge(self):
         # Check refinement rule tet5Edges1Div
-        self.refine1x1([Point(0.404078,0.999998,0.406418),
-                        Point(0.966666,0.969702,0.999988),
-                        Point(0.999958,0.931135,0.932699),
-                        Point(0.681265,0.313984,3.00333e-06),
-                        Point(0.877549,9.32378e-06,0.125163)],
+        self.refine1x1([[1,2], [7,1], [2,4], [7,4], [7,2]],
                        "fiveedges.skel")
     @memorycheck.check("microstructure")
     def SixEdge(self):
-        self.refine1x1([Point(0.311402,0.999995,0.318129),
-                        Point(8.53565e-06,0.758053,0.238139),
-                        Point(0.657923,0.689256,0.999975),
-                        Point(0.726175,0.273126,2.38409e-05),
-                        Point(0.999974,0.132562,0.134016),
-                        Point(0.91033,2.60601e-05,0.0910574)],
+        self.refine1x1([[1,2], [7,1], [2,4], [7,4], [7,2], [1,4]],
                        "sixedges.skel")
 
     @memorycheck.check("microstructure")
@@ -1614,9 +1372,10 @@ class Refine(unittest.TestCase):
         alpha = 0.5
         prob = 0.5
         for i in range(iters):
-            OOF.SegmentSelection.Select_Randomly(
+            OOF.SegmentSelection.Select(
                 skeleton='microstructure:skeleton',
-                probability=prob)
+                method=RandomSegments(probability=prob,
+                                      operator=Select()))
             OOF.Skeleton.Modify(
                 skeleton='microstructure:skeleton',
                 modifier=Refine(targets=CheckSelectedEdges(),
@@ -1758,7 +1517,7 @@ class Skeleton_Undo(unittest.TestCase):
     # smallBuffer(), which does the testing.
     @memorycheck.check("skeltest")
     def SmallBufferAnneal(self):
-        def anneal():
+        def anneal(*dummy):
             OOF.Skeleton.Modify(
                 skeleton='skeltest:skeleton',
                 modifier=Anneal(targets=AllNodes(),
@@ -1770,16 +1529,10 @@ class Skeleton_Undo(unittest.TestCase):
 
     @memorycheck.check("skeltest")
     def SmallBufferRefine(self):
-        def refine():
-            # Only refine a single selected element to save time.
-            # This will be iterated.
-            OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
+        def refine(element):
+            OOF.ElementSelection.Select(
                 skeleton='skeltest:skeleton',
-                points=[Point(9.43279,11.0488,42.4752)],
-                view=View(cameraPosition=Coord(10,10,68.5167),
-                          focalPoint=Coord(10,10,10), up=Coord(0,1,0), angle=30,
-                          clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-                shift=0, ctrl=0)
+                method=SingleElementSelect(element=element,operator=Select()))
             OOF.Skeleton.Modify(
                 skeleton='skeltest:skeleton',
                 modifier=Refine(targets=CheckSelectedElements(),
@@ -1793,7 +1546,15 @@ class Skeleton_Undo(unittest.TestCase):
             microstructure='skeltest',
             x_elements=4, y_elements=4, z_elements=4, 
             skeleton_geometry=TetraSkeleton(arrangement='moderate'))
-        modifierfn()
+        # The argument to modifierfn is used in SmallBufferRefine but
+        # not SmallBufferAnneal.  It's the index of the element that's
+        # being refined at each iteration.  modifierfn didn't need an
+        # argument in the original version of these tests, because the
+        # scripted element selection command used in SmallBufferRefine
+        # refined the element at a given point, not with a given
+        # index.  Then we changed the arguments of the command and
+        # broke the test.  The result is clumsy but not worth fixing.
+        modifierfn(195)
         OOF.File.Save.Skeleton(
             filename="skeleton.dat",
             mode="w", format="ascii",
@@ -1802,9 +1563,9 @@ class Skeleton_Undo(unittest.TestCase):
             "skeleton.dat",
             os.path.join("skeleton_data", reffile+"1"),
             1.e-9))
-        modifierfn()
-        modifierfn()
-        modifierfn()
+        modifierfn(32)
+        modifierfn(275)
+        modifierfn(112)
         OOF.File.Save.Skeleton(
             filename="skeleton.dat",
             mode="w", format="ascii",
@@ -1867,8 +1628,6 @@ test_set = [
     Skeleton_Save("OneSkeletonRefineSelect"),
     Skeleton_Save("OneSkeletonGroupSelect"),
     Skeleton_Save("OneSkeletonGroupRefineSelect"),
-    Skeleton_Save("TwoSkeletonsSelectRefine"),
-    Skeleton_Save("TwoSkeletonsGroupSelectRefine"),
 
     Refine("OneEdge"),
     Refine("TwoEdgeAdjacent"),
@@ -1890,5 +1649,9 @@ test_set = [
 ]
 
 # test_set = [
+#     Skeleton_Undo("Undo"),
+#     Skeleton_Undo("Redo"),
+#     Skeleton_Undo("UndoRedo2"),
+#     Skeleton_Undo("SmallBufferAnneal"),
 #     Skeleton_Undo("SmallBufferRefine")
 # ]

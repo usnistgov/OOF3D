@@ -354,9 +354,8 @@ CSkeletonNodeSet NodesFromFacesCourier::exteriorNodes() const {
     int nn = face->nnodes();
     for(int i=0; i<nn; i++) {
       CSkeletonSegment *segment = face->getSegment(skeleton, i);
-      // const CSkeletonNode *n0 = face->getNode(i);
-      // const CSkeletonNode *n1 = face->getNode((i+1)%nn);
-      // CSkeletonSegment *segment = skeleton->findExistingSegment(n0, n1);
+      // TODO: NO--- faces can be in only one or two elements, but
+      // segments can be in many faces! 
       if(segments.count(segment) == 0)
 	segments.insert(segment);
       else
@@ -698,6 +697,9 @@ SegmentHomogeneityCourier::SegmentHomogeneityCourier(
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Random segment selection is used in
+// skeleton_modification_test.py. It's probably not useful elsewhere.
 
 RandomSegmentCourier::RandomSegmentCourier(const CSkeletonBase *skel,
 					   double prob,
