@@ -3200,7 +3200,51 @@ class Node_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
             method=NodeFromSelectedFaces(coverage='Exterior',
                                          operator=Select()))
         self.assertEqual(self.selectionIDs(), [5, 11, 17, 23])
-        
+
+    @memorycheck.check("skeltest")
+    def SelectFromMultipleFaces(self):
+        # Select nodes on sets of faces that are joined in a
+        # complicated fashion, not forming a simple sheet.
+        self.makeSkeleton(2, 2, 2)
+        # Select the faces of two elements that touch at a corner, and
+        # one of the faces that joins the two elements.
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleElementSelect(element=26,
+                                       operator=Select()))
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleElementSelect(element=6,
+                                       operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=FaceFromSelectedElements(coverage='Exterior',
+                                            operator=Select()))
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleFaceSelect(nodes=[11, 14, 23],
+                                    operator=AddSelection()))
+        # Select the exterior nodes of the selected faces.  There are
+        # just two -- the end points of the one segment that lies
+        # along only one selected face.
+        OOF.NodeSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=NodeFromSelectedFaces(coverage='Exterior',
+                                         operator=Select()))
+        self.assertEqual(self.selectionIDs(), [14, 23])
+        # Select all of the nodes of the selected faces.
+        OOF.NodeSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=NodeFromSelectedFaces(coverage='All',
+                                         operator=Select()))
+        self.assertEqual(self.selectionIDs(), [5, 11, 13, 14, 19, 20, 23])
+        # Select just the interior nodes.
+        OOF.NodeSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=NodeFromSelectedFaces(coverage='Interior',
+                                         operator=Select()))
+        self.assertEqual(self.selectionIDs(), [5, 11, 13, 19, 20])
+
     @memorycheck.check('skeltest')
     def Save(self):
         self.makeSkeleton(2, 2, 2)
@@ -3510,11 +3554,16 @@ face_set2 = [
     Face_Selection_BlueGreen50("SelectFromSegments"),
 ]
 
-test_set = (element_set + face_set + segment_set + node_set +
-            element_set2 + node_set2 + segment_set2 + face_set2)
+# These tests rely on tests in set2.
 
-#test_set = face_set2
-test_set = [
-    Face_Selection_BlueGreen50("UnselectGroup"),
-
+node_set3 = [
+    Node_Selection_BlueGreen50("SelectFromMultipleFaces")
 ]
+
+    
+
+test_set = (element_set + face_set + segment_set + node_set +
+            element_set2 + node_set2 + segment_set2 + face_set2 +
+            node_set3)
+
+#test_set = node_set3

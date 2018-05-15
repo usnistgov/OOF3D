@@ -309,12 +309,12 @@ CSkeletonNodeSet NodesFromElementsCourier::exteriorNodes() const
   CSkeletonFaceSet faces;	// exterior faces
   // Loop over the selected elements, and put each face in faces if
   // it's not already there.  If it is already there, it's not a
-  // boundary face, so take it out.
+  // boundary face, so take it out.  Faces can't be part of more than
+  // two elements.
   for(const CSkeletonSelectable *elmnt : *elements) {
     const CSkeletonElement *el = dynamic_cast<const CSkeletonElement*>(elmnt);
     for( int i=0; i<el->getNumberOfFaces(); i++) {
       CSkeletonFace *face = skeleton->getFace(el->getFaceKey(i));
-      // If a face is already in exet
       if(faces.count(face) == 0) {
 	faces.insert(face);
       }
@@ -345,27 +345,22 @@ NodesFromFacesCourier::NodesFromFacesCourier(
 
 CSkeletonNodeSet NodesFromFacesCourier::exteriorNodes() const {
   // Exterior nodes are the nodes that are on segments belonging to
-  // only one face in the set of selected faces.  Otherwise this is
-  // just like NodesFromElementsCourier::exteriorNodes().
+  // only one face in the set of selected faces. 
   const CSkeletonSelectableSet *faces = otherTracker->get();
-  CSkeletonSegmentSet segments; // exterior segments
+  std::multiset<CSkeletonSegment*> segcounts;
   for(const CSkeletonSelectable *f : *faces) {
     const CSkeletonFace *face = dynamic_cast<const CSkeletonFace*>(f);
     int nn = face->nnodes();
     for(int i=0; i<nn; i++) {
-      CSkeletonSegment *segment = face->getSegment(skeleton, i);
-      // TODO: NO--- faces can be in only one or two elements, but
-      // segments can be in many faces! 
-      if(segments.count(segment) == 0)
-	segments.insert(segment);
-      else
-	segments.erase(segment);
+      segcounts.insert(face->getSegment(skeleton, i));
     }
   }
   CSkeletonNodeSet extnodes;
-  for(CSkeletonSegment *segment : segments) {
-    const CSkeletonNodeVector *segnodes = segment->getNodes();
-    extnodes.insert(segnodes->begin(), segnodes->end());
+  for(CSkeletonSegment *segment : segcounts) {
+    if(segcounts.count(segment) == 1) {
+      const CSkeletonNodeVector *segnodes = segment->getNodes();
+      extnodes.insert(segnodes->begin(), segnodes->end());
+    }
   }
   return extnodes;
 }
