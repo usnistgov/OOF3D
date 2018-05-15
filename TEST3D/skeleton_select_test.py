@@ -80,7 +80,6 @@ class Skeleton_Selection(unittest.TestCase):
 class Skeleton_Selection_5Color(Skeleton_Selection):
     def setUp(self):
         Skeleton_Selection.setUp(self)
-        OOF.Windows.Graphics.New()
         OOF.Microstructure.Create_From_ImageFile(
             filenames=ThreeDImagePattern(
                 directory=reference_file("ms_data","5color"),
@@ -97,7 +96,6 @@ class Skeleton_Selection_5Color(Skeleton_Selection):
             material='thing2', microstructure='skeltest', pixels='#f3f359')
 
     def tearDown(self):
-        OOF.Graphics_1.File.Close()
         OOF.Material.Delete(name="thing1")
         OOF.Material.Delete(name="thing2")
 
@@ -107,7 +105,6 @@ class Skeleton_Selection_BlueGreen50(Skeleton_Selection):
     # z half is green (#a1fc93).
     def setUp(self):
         Skeleton_Selection.setUp(self)
-        OOF.Windows.Graphics.New()
         OOF.Microstructure.Create_From_ImageFile(
             filenames=ThreeDImageDirectory(
                 directory=reference_file('ms_data','bluegreen50'),
@@ -115,8 +112,6 @@ class Skeleton_Selection_BlueGreen50(Skeleton_Selection):
             microstructure_name='skeltest',
             height=automatic, width=automatic, depth=automatic)
         OOF.Image.AutoGroup(image="skeltest:bluegreen50", name_template='%c')
-    def tearDown(self):
-        OOF.Graphics_1.File.Close()
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -2212,14 +2207,6 @@ class Segment_Selection_BlueGreen50(Skeleton_Selection_BlueGreen50,
             skeleton='skeltest:skeleton',
             method=SingleSegmentSelect(nodes=[14, 5],
                                        operator=Select()))
-        # OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
-        #     skeleton='skeltest:skeleton',
-        #     points=[Point(3.40077,5.95853,21.9826)],
-        #     view=View(cameraPosition=Coord(5,5,34.2583), 
-        #               focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30, 
-        #               clipPlanes=[], invertClip=0,
-        #               size_x=691, size_y=652), 
-        #     shift=0, ctrl=0)
         self.assertEqual(self.selectionIDs(), [79])
         # Try to remove it from the blue group
         OOF.SegmentGroup.Remove_from_Group(
