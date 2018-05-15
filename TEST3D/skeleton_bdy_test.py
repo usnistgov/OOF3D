@@ -49,9 +49,10 @@ class Skeleton_Boundary(unittest.TestCase):
             else:
                 self.assert_(all(f in real_faces for f in facedict))
             for bdyname, faces in facedict.items():
-                OOF.FaceSelection.Select_Named_Boundary(
+                OOF.FaceSelection.Select(
                     skeleton='skeltest:skeleton',
-                    boundary = bdyname)
+                    method=SelectNamedBoundaryFaces(boundary=bdyname,
+                                                    operator=Select()))
                 self.assertEqual(
                     selection_utils.selectedFaceIDs(self.skelctxt), faces)
 
@@ -62,9 +63,10 @@ class Skeleton_Boundary(unittest.TestCase):
             else:
                 self.assert_(all(e in real_edges for e in edgedict))
             for bdyname, edges in edgedict.items():
-                OOF.SegmentSelection.Select_Named_Boundary(
+                OOF.SegmentSelection.Select(
                     skeleton='skeltest:skeleton',
-                    boundary=bdyname)
+                    method=SelectNamedBoundarySegments(boundary=bdyname,
+                                                       operator=Select()))
                 self.assertEqual(
                     selection_utils.selectedSegmentIDs(self.skelctxt), edges)
 
@@ -75,9 +77,10 @@ class Skeleton_Boundary(unittest.TestCase):
             else:
                 self.assert_(all(n in real_points for n in nodedict))
             for bdyname, points in nodedict.items():
-                OOF.NodeSelection.Select_Named_Boundary(
+                OOF.NodeSelection.Select(
                     skeleton='skeltest:skeleton',
-                    boundary=bdyname)
+                    method=SelectNamedBoundaryNodes(boundary=bdyname,
+                                                    operator=Select()))
                 self.assertEqual(
                     selection_utils.selectedNodeIDs(self.skelctxt), points)
 
@@ -111,117 +114,78 @@ class Skeleton_Boundary(unittest.TestCase):
 
     # Select the nodes at x=0,5,10; y=5; z=10
     def selectThreeNodes(self, shift=0):
-        OOF.Graphics_1.Toolbox.Select_Node.Single_Node(
+        OOF.NodeSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(2.4725,5.03027,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=shift, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Node.Single_Node(
+            method=SingleNodeSelect(
+                point=Coord(0,5,10),
+                operator=(AddSelection() if shift else Select())))
+        OOF.NodeSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(4.98487,4.94955,21.9826)], 
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Node.Single_Node(
+            method=SingleNodeSelect(point=Coord(5,5,10),
+                                    operator=AddSelection()))
+        OOF.NodeSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(7.49723,5,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
+            method=SingleNodeSelect(point=Coord(10,5,10),
+                                    operator=AddSelection()))
 
     # Select the nodes at x=0,5,10; y=10, z=10
     def selectThreeTopNodes(self, shift=0):
-        OOF.Graphics_1.Toolbox.Select_Node.Single_Node(
-            skeleton='skeltest:skeleton', 
-            points=[Point(2.34052,7.63273,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583), 
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=shift, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Node.Single_Node(
+        OOF.NodeSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(5.01605,7.63273,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583), 
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Node.Single_Node(
-            skeleton='skeltest:skeleton', 
-            points=[Point(7.67018,7.64343,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30, 
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
+            method=SingleNodeSelect(
+                point=Coord(0,10,10),
+                operator=(AddSelection() if shift else Select())))
+        OOF.NodeSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleNodeSelect(point=Coord(5,10,10),
+                                    operator=AddSelection()))
+        OOF.NodeSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleNodeSelect(point=Coord(10,10,10),
+                                    operator=AddSelection()))
 
     # Select the nodes at x=0,5,10; y=0, z=10
     def selectThreeBottomNodes(self):
-        OOF.SegmentSelection.Select_Named_Boundary(
-            skeleton='skeltest:skeleton', boundary='YminZmax')
-        OOF.NodeSelection.Select_from_Selected_Segments(
-            skeleton='skeltest:skeleton')
-        OOF.SegmentSelection.Clear(skeleton='skeltest:skeleton')
+        OOF.SegmentSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SelectNamedBoundarySegments(boundary='YminZmax',
+                                               operator=Select()))
+        OOF.NodeSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=NodeFromSelectedSegments(operator=Select()))
 
     def selectThreeSegments(self):
-        OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
-            skeleton='skeltest:skeleton', 
-            points=[Point(3.97588,4.98991,21.9826)], 
-            view=View(cameraPosition=Coord(5,5,34.2583), 
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30, 
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
-            skeleton='skeltest:skeleton', 
-            points=[Point(4.99496,4.6065,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583), 
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652), 
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
+        OOF.SegmentSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(5.9434,2.66926,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
+            method=SingleSegmentSelect(nodes=[11, 14],
+                                       operator=Select()))
+        OOF.SegmentSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleSegmentSelect(nodes=[5, 14],
+                                       operator=AddSelection()))
+        OOF.SegmentSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleSegmentSelect(nodes=[5, 7],
+                                       operator=AddSelection()))
     
     def selectThreeFaces(self):
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton='skeltest:skeleton', 
-            points=[Point(-13.118,18.4998,23.4669)],
-            view=View(cameraPosition=Coord(-13.165,18.5331,23.5186), 
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.202236,0.874558,-0.440737), angle=30, 
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(-13.1157,18.5031,23.4668)],
-            view=View(cameraPosition=Coord(-13.165,18.5331,23.5186),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.202236,0.874558,-0.440737), angle=30, 
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[10, 11, 19],
+                                    operator=Select()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(-13.1227,18.4971,23.4643)],
-            view=View(cameraPosition=Coord(-13.165,18.5331,23.5186), 
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.202236,0.874558,-0.440737), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
+            method=SingleFaceSelect(nodes=[11, 20, 19],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleFaceSelect(nodes=[20, 23, 19],
+                                    operator=AddSelection()))
 
     def selectOneElement(self):
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
-            skeleton='skeltest:skeleton', 
-            points=[Point(3.58238,6.92715,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30, 
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652), 
-            shift=0, ctrl=0)
+        OOF.ElementSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleElementSelect(element=26,operator=Select()))
 
     def selectThreeElements(self):
         OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
@@ -459,28 +423,19 @@ class Skeleton_Boundary(unittest.TestCase):
     def ConstructEdgeLoopFromSegments(self):
         self.selectThreeSegments()
         # Select three more segments, to make a closed loop.
-        OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
-            skeleton='skeltest:skeleton', 
-            points=[Point(5.55846,2.94406,22.2326)], 
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30, 
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
+        OOF.SegmentSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(4.34269,2.94406,22.2326)],
-            view=View(cameraPosition=Coord(5,5,34.2583), 
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652), 
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
+            method=SingleSegmentSelect(nodes=[11, 1],
+                                       operator=AddSelection()))
+        OOF.SegmentSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(2.83039,3.46793,22.2326)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        
+            method=SingleSegmentSelect(nodes=[4, 1],
+                                       operator=AddSelection()))
+        OOF.SegmentSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleSegmentSelect(nodes=[7, 4],
+                                       operator=AddSelection()))
+
         OOF.Skeleton.Boundary.Construct(
             skeleton='skeltest:skeleton', 
             name='ccw', 
@@ -518,13 +473,10 @@ class Skeleton_Boundary(unittest.TestCase):
         self.checkNodeOrder("boundary2", [26, 23, 20])
 
         # Add another node (10, 5, 10) which makes the sequence ambiguous
-        OOF.Graphics_1.Toolbox.Select_Node.Single_Node(
+        OOF.NodeSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(7.68089,4.9786,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
+            method=SingleNodeSelect(point=Coord(10,5,10),
+                                    operator=AddSelection()))
         self.assertRaises(
             ooferror.ErrUserError,
             OOF.Skeleton.Boundary.Construct,
@@ -533,13 +485,10 @@ class Skeleton_Boundary(unittest.TestCase):
             constructor=EdgeFromNodes(group=selection,direction=
                                       '-X to +X'))
         # Add another (10, 0, 10) to to resolve the ambiguity
-        OOF.Graphics_1.Toolbox.Select_Node.Single_Node(
-            skeleton='skeltest:skeleton', 
-            points=[Point(7.68089,2.33517,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
+        OOF.NodeSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleNodeSelect(point=Coord(10,0,10),
+                                    operator=AddSelection()))
         OOF.Skeleton.Boundary.Construct(
             skeleton='skeltest:skeleton',
             name='boundary3', 
@@ -556,13 +505,10 @@ class Skeleton_Boundary(unittest.TestCase):
         self.checkBoundaries(edgedict={'boundary4' : [132, 197, 245, 246]})
         self.checkNodeOrder("boundary4", [8, 17, 26, 23, 20])
         # Add a point (0, 0, 0) that can't be connected
-        OOF.Graphics_1.Toolbox.Select_Node.Single_Node(
-            skeleton='skeltest:skeleton', 
-            points=[Point(3.10037,3.10572,21.2376)], 
-            view=View(cameraPosition=Coord(5,5,34.2583), 
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30, 
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
+        OOF.NodeSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleNodeSelect(point=Coord(0,0,0),
+                                    operator=AddSelection()))
         self.assertRaises(
             ooferror.ErrUserError,
             OOF.Skeleton.Boundary.Construct,
@@ -578,13 +524,10 @@ class Skeleton_Boundary(unittest.TestCase):
         self.selectThreeTopNodes(shift=1)
         self.selectThreeNodes(shift=1)
         # but not the middle one
-        OOF.Graphics_1.Toolbox.Select_Node.Single_Node(
-            skeleton='skeltest:skeleton', 
-            points=[Point(5.01513,4.98991,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30, 
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=1)
+        OOF.NodeSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleNodeSelect(point=Coord(5,5,10),
+                                    operator=Toggle()))
         OOF.Skeleton.Boundary.Construct(
             skeleton='skeltest:skeleton', name='boundary',
             constructor=EdgeFromNodes(group=selection,
@@ -593,13 +536,10 @@ class Skeleton_Boundary(unittest.TestCase):
                                        [67, 69, 132, 133, 196, 197, 245, 246]})
         self.checkNodeOrder('boundary', [2, 11, 20, 23, 26, 17, 8, 5])
         # Select the middle node of the face, making the set unsequenceable.
-        OOF.Graphics_1.Toolbox.Select_Node.Single_Node(
+        OOF.NodeSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(4.98517,5,22.2326)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
+            method=SingleNodeSelect(point=Coord(5,5,10),
+                                    operator=AddSelection()))
         self.assertRaises(
             ooferror.ErrUserError,
             OOF.Skeleton.Boundary.Construct,
@@ -657,9 +597,10 @@ class Skeleton_Boundary(unittest.TestCase):
         # Select faces that form a closed surface and create a face
         # boundary from them.
         self.selectOneElement()
-        OOF.FaceSelection.Select_from_Selected_Elements(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            coverage='Exterior')
+            method=FaceFromSelectedElements(coverage='Exterior',
+                                            operator=Select()))
         OOF.Skeleton.Boundary.Construct(
             skeleton='skeltest:skeleton',
             name='b1',
@@ -683,13 +624,10 @@ class Skeleton_Boundary(unittest.TestCase):
         self.selectThreeFaces()
         # Select a face that shares a node, but not an edge, with the
         # previously selected faces.
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton='skeltest:skeleton', 
-            points=[Point(6.10767,5.33177,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583), 
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleFaceSelect(nodes=[1, 10, 9],
+                                    operator=AddSelection()))
         self.assertRaises(
             ooferror.ErrUserError,
             OOF.Skeleton.Boundary.Construct,
@@ -701,16 +639,14 @@ class Skeleton_Boundary(unittest.TestCase):
 
         # Select the faces surrounding an element, plus one more.
         self.selectOneElement()
-        OOF.FaceSelection.Select_from_Selected_Elements(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            coverage='Exterior')
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton='skeltest:skeleton', 
-            points=[Point(6.10767,5.33177,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583), 
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
+            method=FaceFromSelectedElements(coverage='Exterior',
+                                            operator=Select()))
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleFaceSelect(nodes=[11, 14, 23],
+                                    operator=AddSelection()))
         self.assertRaises(
             ooferror.ErrUserError,
             OOF.Skeleton.Boundary.Construct,
@@ -724,9 +660,10 @@ class Skeleton_Boundary(unittest.TestCase):
         # boundary with the wrong type of direction.  
 
         # Closed boundary with an open direction:
-        OOF.FaceSelection.Select_from_Selected_Elements(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            coverage='Exterior')
+            method=FaceFromSelectedElements(coverage='Exterior',
+                                            operator=Select()))
         self.assertRaises(
             ooferror.ErrUserError,
             OOF.Skeleton.Boundary.Construct,
@@ -753,152 +690,78 @@ class Skeleton_Boundary(unittest.TestCase):
 
     @memorycheck.check("skeltest")
     def Moebius(self):
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(-21.8765,5.55065,16.3917)],
-            view=View(cameraPosition=Coord(-21.9309,5.54845,16.4225),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.00575824,0.999391,-0.0344091), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 5.0, 0]], invertClip=1,
-                      size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[23, 14, 13],
+                                    operator=Select()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(-21.8755,5.55297,16.394)],
-            view=View(cameraPosition=Coord(-21.9309,5.54845,16.4225),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.00575824,0.999391,-0.0344091), angle=30,
-                      clipPlanes=[[1.0, 0.0, 0.0, 5.0, 0]], invertClip=1,
-                      size_x=691, size_y=652), 
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[13, 22, 23],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(-1.60049,26.4027,-13.715)],
-            view=View(cameraPosition=Coord(-1.62947,26.4521,-13.7591),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.961381,0.273945,-0.02648), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[11, 23, 20],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(-1.60442,26.404,-13.7122)],
-            view=View(cameraPosition=Coord(-1.62947,26.4521,-13.7591),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.961381,0.273945,-0.02648), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[11, 14, 23],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(-1.61163,26.3972,-13.7174)],
-            view=View(cameraPosition=Coord(-1.62947,26.4521,-13.7591),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.961381,0.273945,-0.02648), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[23, 26, 25],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(-1.61675,26.3969,-13.7158)],
-            view=View(cameraPosition=Coord(-1.62947,26.4521,-13.7591),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.961381,0.273945,-0.02648), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[23, 25, 22],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(-23.7214,9.41775,7.86405)],
-            view=View(cameraPosition=Coord(-23.7789,9.41921,7.88042),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.135776,0.979819,-0.146694), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[11, 20, 19],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(-23.7214,9.41421,7.86921)],
-            view=View(cameraPosition=Coord(-23.7789,9.41921,7.88042),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.135776,0.979819,-0.146694), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[10, 11, 19],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(-23.7209,9.41194,7.87735)],
-            view=View(cameraPosition=Coord(-23.7789,9.41921,7.88042),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.135776,0.979819,-0.146694), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[10, 19, 9],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(-23.7197,9.41707,7.88126)],
-            view=View(cameraPosition=Coord(-23.7789,9.41921,7.88042),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.135776,0.979819,-0.146694), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[19, 18, 9],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(2.82905,8.23523,22.9884)],
-            view=View(cameraPosition=Coord(4.19942,7.51999,34.1386),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.112517,0.990215,-0.0825451), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[18, 21, 9],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(3.86972,7.38555,23.0905)],
-            view=View(cameraPosition=Coord(4.19942,7.51999,34.1386),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.112517,0.990215,-0.0825451), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[21, 12, 9],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(5.07639,7.11611,23.1469)],
-            view=View(cameraPosition=Coord(4.19942,7.51999,34.1386),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.112517,0.990215,-0.0825451), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[15, 12, 21],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(5.93782,7.89159,23.1035)],
-            view=View(cameraPosition=Coord(4.19942,7.51999,34.1386),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.112517,0.990215,-0.0825451), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[24, 15, 21],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(24.1008,5.03397,6.28131)],
-            view=View(cameraPosition=Coord(34.1342,2.3668,4.43828),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.0850631,0.979783,-0.18108), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[15, 24, 25],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(24.025,4.36682,5.47844)],
-            view=View(cameraPosition=Coord(34.1342,2.3668,4.43828),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.0850631,0.979783,-0.18108), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[25, 16, 15],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(23.9671,4.01208,4.13759)],
-            view=View(cameraPosition=Coord(34.1342,2.3668,4.43828),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.0850631,0.979783,-0.18108), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[17, 16, 25],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(24.003,4.60091,3.23981)],
-            view=View(cameraPosition=Coord(34.1342,2.3668,4.43828),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(0.0850631,0.979783,-0.18108), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
+            method=SingleFaceSelect(nodes=[26, 17, 25],
+                                    operator=AddSelection()))
 
         OOF.FaceGroup.New_Group(
             skeleton='skeltest:skeleton',
@@ -931,20 +794,16 @@ class Skeleton_Boundary(unittest.TestCase):
                              self.original_nodes, complete=True)
 
         # checkBoundaries changed the selection.  Reselect the moebius strip.
-        OOF.FaceSelection.Select_Group(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            group='moebius')
+            method=FaceSelectGroup(group='moebius',operator=Select()))
 
         # Deselecting one of the faces should make the surface
         # orientable, and boundary creation should work.
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
-            skeleton='skeltest:skeleton', 
-            points=[Point(5.67654,15.7085,24.6481)],
-            view=View(cameraPosition=Coord(5.5354,19.6928,30.296), 
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(-0.167783,0.853998,-0.49248), angle=30, 
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=1)
+        OOF.FaceSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=SingleFaceSelect(nodes=[11, 14, 23],
+                                    operator=Unselect()))
         OOF.Skeleton.Boundary.Construct(
             skeleton='skeltest:skeleton',
             name='boundary', 
@@ -953,9 +812,8 @@ class Skeleton_Boundary(unittest.TestCase):
                 direction='-X to +X'))
         self.checkBoundaries(
             facedict={
-                'boundary' : 
-                [160, 170, 178, 179, 185, 186, 194, 201, 204, 212, 219, 224,
-                 233, 235, 251, 253, 259]})
+                'boundary' : [160, 178, 179, 185, 193, 201, 204, 209, 212,
+                              219, 234, 235, 238, 250, 251, 256, 259]})
 
     @memorycheck.check("skeltest")
     def ConstructFaceFromElements(self):
@@ -996,9 +854,9 @@ class Skeleton_Boundary(unittest.TestCase):
                 direction='-X to +X'))
 
         # Select a second adjacent element.
-        OOF.ElementSelection.Expand(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            mode='Faces')
+            method=ExpandElementSelection(mode='Faces'))
 
         # Create a boundary.
         OOF.Skeleton.Boundary.Construct(
@@ -1016,14 +874,10 @@ class Skeleton_Boundary(unittest.TestCase):
                                                   207: [13, 19, 23],
                                                   211: [11, 19, 13]})
         # Select a third non-adjacent element.
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
+        OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(-14.3998,-16.685,2.5804)],
-            view=View(cameraPosition=Coord(-14.432,-16.7396,2.5839),
-                      focalPoint=Coord(5,5,5),
-                      up=Coord(-0.738119,0.634189,0.230185), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
+            method=SingleElementSelect(element=32,
+                                       operator=AddSelection()))
         self.assertRaises(
             ooferror.ErrUserError,
             OOF.Skeleton.Boundary.Construct,
@@ -1090,13 +944,10 @@ class Skeleton_Boundary(unittest.TestCase):
     @memorycheck.check("skeltest")
     def RemoveSegments(self):
         # Remove a single segment from an edge boundary.
-        OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
+        OOF.SegmentSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(7.51741,6.85652,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
+            method=SingleSegmentSelect(nodes=[26, 17],
+                                       operator=Select()))
         OOF.Skeleton.Boundary.Modify(
             skeleton='skeltest:skeleton',
             boundary='XmaxZmax',
@@ -1105,13 +956,6 @@ class Skeleton_Boundary(unittest.TestCase):
         self.checkNodeOrder('XmaxZmax', [8, 17])
         # Try to remove the selected segment from a boundary that it's
         # not part of.
-        OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
-            skeleton='skeltest:skeleton',
-            points=[Point(7.51741,6.85652,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
         OOF.Skeleton.Boundary.Modify(
             skeleton='skeltest:skeleton',
             boundary='XminZmax',
@@ -1120,20 +964,14 @@ class Skeleton_Boundary(unittest.TestCase):
         self.checkNodeOrder('XminZmax', [2, 11, 20])
         # Select two segments, and remove them from a boundary that
         # contains only one of them.
-        OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
+        OOF.SegmentSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(5.98376,7.52245,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
+            method=SingleSegmentSelect(nodes=[23, 26],
+                                       operator=Select()))
+        OOF.SegmentSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(5.9434,7.35092,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
+            method=SingleSegmentSelect(nodes=[26, 17],
+                                       operator=AddSelection()))
         OOF.Skeleton.Boundary.Modify( 
             skeleton='skeltest:skeleton',
             boundary='YmaxZmax',
@@ -1175,13 +1013,10 @@ class Skeleton_Boundary(unittest.TestCase):
     @memorycheck.check("skeltest")
     def RemoveFaces(self):
         # Select a single face and remove it from a boundary.
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(6.59923,3.15357,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
+            method=SingleFaceSelect(nodes=[5, 8, 17],
+                                    operator=Select()))
         OOF.Skeleton.Boundary.Modify( 
             skeleton='skeltest:skeleton',
             boundary='Zmax', 
@@ -1206,20 +1041,14 @@ class Skeleton_Boundary(unittest.TestCase):
             facedict={"Xmax" :[112, 128, 138, 151, 219, 235, 251, 259],})
         # Select two faces, and remove them from a boundary that
         # contains only one of them.
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(16.492,6.04252,23.962)],
-            view=View(cameraPosition=Coord(20.0692,5,30.0793),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[5, 8, 17],
+                                    operator=Select()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(16.9513,5.95516,23.686)],
-            view=View(cameraPosition=Coord(20.0692,5,30.0793),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
+            method=SingleFaceSelect(nodes=[23, 17, 26],
+                                    operator=AddSelection()))
         OOF.Skeleton.Boundary.Modify(
             skeleton='skeltest:skeleton',
             boundary='Zmax', 
@@ -1338,11 +1167,13 @@ class Skeleton_Boundary(unittest.TestCase):
                             alpha=0.3))
         # Create a new point boundary on the refined skeleton,
         # consisting of the five nodes on the top front edge.
-        OOF.SegmentSelection.Select_Named_Boundary(
+        OOF.SegmentSelection.Select(
             skeleton='skeltest:skeleton',
-            boundary='YmaxZmax')
-        OOF.NodeSelection.Select_from_Selected_Segments(
-            skeleton='skeltest:skeleton')
+            method=SelectNamedBoundarySegments(boundary='YmaxZmax',
+                                               operator=Select()))
+        OOF.NodeSelection.Select(
+            skeleton='skeltest:skeleton',
+            method=NodeFromSelectedSegments(operator=Select()))
         OOF.Skeleton.Boundary.Construct(
             skeleton='skeltest:skeleton',
             name='ptbdy',
@@ -1351,48 +1182,30 @@ class Skeleton_Boundary(unittest.TestCase):
 
         # Create a new edge boundary, including the equivalents of
         # some complete and some incomplete unrefined segments.
-        OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
+        OOF.SegmentSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(2.31911,4.30436,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
+            method=SingleSegmentSelect(nodes=[111, 11],
+                                       operator=Select()))
+        OOF.SegmentSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(2.46894,5.16053,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
+            method=SingleSegmentSelect(nodes=[69, 11],
+                                       operator=AddSelection()))
+        OOF.SegmentSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(4.57727,7.29026,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
+            method=SingleSegmentSelect(nodes=[23, 69],
+                                       operator=AddSelection()))
+        OOF.SegmentSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(5.41203,7.27956,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
+            method=SingleSegmentSelect(nodes=[103, 23],
+                                       operator=AddSelection()))
+        OOF.SegmentSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(6.80331,5.86687,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Segment.Single_Segment(
+            method=SingleSegmentSelect(nodes=[103, 17],
+                                       operator=AddSelection()))
+        OOF.SegmentSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(7.67018,4.44349,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
+            method=SingleSegmentSelect(nodes=[17, 114],
+                                       operator=AddSelection()))
         OOF.Skeleton.Boundary.Construct(
             skeleton='skeltest:skeleton',
             name='edgebdy',
@@ -1402,55 +1215,34 @@ class Skeleton_Boundary(unittest.TestCase):
             edgedict={'edgebdy' : [848, 867, 1799, 1809, 2180, 2256]})
 
         # Ditto for faces.
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(2.7579,7.20464,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=0, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[69, 97, 102],
+                                    operator=Select()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(3.18599,6.80866,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[11, 97, 69],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(2.88633,6.11302,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[11, 69, 67],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(4.05286,7.18324,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[67, 69, 68],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(3.53916,5.74915,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[67, 68, 20],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(4.64148,6.68024,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(
+            method=SingleFaceSelect(nodes=[69, 23, 68],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
             skeleton='skeltest:skeleton',
-            points=[Point(4.33112,6.08092,21.2376)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
+            method=SingleFaceSelect(nodes=[69, 102, 23],
+                                    operator=AddSelection()))
         OOF.Skeleton.Boundary.Construct(
             skeleton='skeltest:skeleton',
             name='facebdy', 

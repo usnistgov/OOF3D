@@ -96,6 +96,8 @@ In tumble mode, view sometimes jumps on first move event.  Laptop only!
 
 Toolbox names have inconsistent underscores.
 
+Skeleton boundary display isn't working.
+
 ---------------------------------------------------------------------------
 Soon
 ----
