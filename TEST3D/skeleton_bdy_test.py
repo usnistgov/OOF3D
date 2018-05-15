@@ -23,7 +23,6 @@ class Skeleton_Boundary(unittest.TestCase):
         from ooflib.SWIG.engine import cskeletonselectable
         selection_utils.initialize()
         OOF.Settings.Random_Seed(seed=17)
-        OOF.Windows.Graphics.New()
         OOF.Microstructure.Create_From_ImageFile(
             filenames=ThreeDImageDirectory(
                 directory=reference_file('ms_data', 'bluegreen'),
@@ -36,9 +35,6 @@ class Skeleton_Boundary(unittest.TestCase):
             x_elements=2, y_elements=2, z_elements=2,
             skeleton_geometry=TetraSkeleton(arrangement='moderate'))
         self.skelctxt = skeletoncontext.skeletonContexts['skeltest:skeleton']
-
-    def tearDown(self):
-        OOF.Graphics_1.File.Close()
 
     def checkBoundaries(self, facedict=None, edgedict=None, nodedict=None,
                         complete=False):
@@ -186,29 +182,6 @@ class Skeleton_Boundary(unittest.TestCase):
         OOF.ElementSelection.Select(
             skeleton='skeltest:skeleton',
             method=SingleElementSelect(element=26,operator=Select()))
-
-    def selectThreeElements(self):
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
-            skeleton='skeltest:skeleton', 
-            points=[Point(3.58238,6.92715,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30, 
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652), 
-            shift=0, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
-            skeleton='skeltest:skeleton',
-            points=[Point(4.36939,6.36212,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583), 
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
-            skeleton='skeltest:skeleton', 
-            points=[Point(5.7416,6.24105,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583), 
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=691, size_y=652),
-            shift=1, ctrl=0)
 
     #=--=##=--=##=--=##=--=#
 
