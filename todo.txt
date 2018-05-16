@@ -98,6 +98,8 @@ Toolbox names have inconsistent underscores.
 
 Skeleton boundary display isn't working.
 
+Rename PixelGroup menu to VoxelGroup.
+
 ---------------------------------------------------------------------------
 Soon
 ----
