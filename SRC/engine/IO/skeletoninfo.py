@@ -58,7 +58,7 @@ class SkeletonInfoToolbox(genericinfotoolbox.GenericInfoToolbox):
     whoClassName = 'Skeleton'
     def __init__(self, gfxwindow):
         genericinfotoolbox.GenericInfoToolbox.__init__(
-            self, gfxwindow, 'Skeleton_Info', self.makeInfoModes())
+            self, gfxwindow, 'Skeleton Info', self.makeInfoModes())
 
     def makeInfoModes(self):
         modes = [SkeletonElementInfoMode(self),

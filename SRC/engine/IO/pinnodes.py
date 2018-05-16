@@ -32,7 +32,7 @@ from ooflib.engine import pinnodesmodifier
 
 class PinnedNodesToolbox(toolbox.Toolbox):
     def __init__(self, gfxwindow):
-        toolbox.Toolbox.__init__(self, 'Pin_Nodes', gfxwindow)
+        toolbox.Toolbox.__init__(self, 'Pin Nodes', gfxwindow)
 
     tip="Pin nodes."
 

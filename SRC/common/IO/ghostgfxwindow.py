@@ -1899,6 +1899,8 @@ class GhostGfxWindow:
         self.acquireGfxLock()
         canvaslayers = [layer.canvaslayer for layer in layers
                         if layer.pickable()]
+        if not canvaslayers:
+            return (None, None)
         try:
             result = mainthread.runBlock(
                 clickErrorHandler,
@@ -2350,7 +2352,8 @@ class GhostGfxWindow:
         tb = tbclass(self)              # constructs toolbox
         self.toolboxes.append(tb)
         menu = self.toolboxmenu.addItem(
-            OOFMenuItem(tb.name(), help=tb.tip, discussion=tb.discussion))
+            OOFMenuItem(utils.space2underscore(tb.name()), help=tb.tip,
+                        discussion=tb.discussion))
         menu.data = tb
         tb.makeMenu(menu)
 

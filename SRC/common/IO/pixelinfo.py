@@ -27,9 +27,9 @@ from ooflib.common.IO import reporter
 
 def toolboxName():
     if config.dimension() == 2:
-        return "Pixel_Info"
+        return "Pixel Info"
     else:
-        return "Voxel_Info"
+        return "Voxel Info"
     
 
 class PixelInfoToolbox(toolbox.Toolbox):

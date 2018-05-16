@@ -98,7 +98,9 @@ Toolbox names have inconsistent underscores.
 
 Skeleton boundary display isn't working.
 
-Rename PixelGroup menu to VoxelGroup.
+Box widget should not be startable if there are no selectable layers.
+Doing so leads to a hung thread.  What if layer is deleted while
+widget is active?
 
 ---------------------------------------------------------------------------
 Soon
@@ -155,6 +157,11 @@ gtk event loop, so that we can use VTK interactors and widgets.
 
 Warn when saving a Mesh that only contains empty elements.  Maybe
 don't allow any operations at all on such a Mesh.
+
+Adding the super-cautious destructor to SubDimensionalSet in
+edgeset.spy removed some shut-down warnings about FaceSet when running
+scheduled_output_test.py in the regression tests.  Does that mean that
+there's a memory leak and some FaceSets aren't being deleted properly?
 
 ----------------------------------------------------------------------------
 At Some Later Time
@@ -351,3 +358,7 @@ Selection page.
 Voxel section methods are crashing when the click is outside the
 microstructure.
 ** Fixed: 2018-05-01
+
+Clicking on an empty canvas with the voxel selection toolbox active
+crashes the program.  
+** Fixed: 2018-05-16

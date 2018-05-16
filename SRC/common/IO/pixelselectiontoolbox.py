@@ -28,9 +28,9 @@ from ooflib.common.IO import pixelselectionmenu
 
 def toolboxName():
     if config.dimension() == 3:
-        return 'Voxel_Selection'
+        return 'Voxel Selection'
     else:
-        return 'Pixel_Selection'
+        return 'Pixel Selection'
     
 
 class PixelSelectToolbox(genericselecttoolbox.GenericSelectToolbox):

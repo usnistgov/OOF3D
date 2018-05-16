@@ -67,7 +67,7 @@ class SelectedNode:
 
 class MoveNodeToolbox(toolbox.Toolbox):
     def __init__(self, gfxwindow):
-        toolbox.Toolbox.__init__(self, 'Move_Nodes', gfxwindow)
+        toolbox.Toolbox.__init__(self, 'Move Nodes', gfxwindow)
         self.whoset = ('Skeleton',)
         self.selectednode = SelectedNode()
         self.allow_illegal = False

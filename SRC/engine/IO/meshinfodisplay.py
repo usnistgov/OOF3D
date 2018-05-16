@@ -148,7 +148,7 @@ class MeshInfoDisplay(display.DisplayMethod):
         return layer
 
     def setParams(self):
-        toolbox = self.gfxwindow.getToolboxByName("Mesh_Info")
+        toolbox = self.gfxwindow.getToolboxByName("Mesh Info")
         querymode = toolbox.currentMode()
         if querymode is not None:
             for lname in self.layerNames:
@@ -165,7 +165,7 @@ class MeshInfoDisplay(display.DisplayMethod):
                     layer.set_pointSize(self.node_size)
 
     def queryCB(self):          # sb (gfxwindow, "query Mesh")
-        toolbox = self.gfxwindow.getToolboxByName("Mesh_Info")
+        toolbox = self.gfxwindow.getToolboxByName("Mesh Info")
         if toolbox.meshlayer:
             # The queried object or peeked objects may have changed, which
             # changes the color assignments, so call setParams.
@@ -187,7 +187,7 @@ class MeshInfoDisplay(display.DisplayMethod):
         self.canvaslayer.clear() # clear all sublayers
 
     def peekCB(self, peekmode): # sb (gfxwindow, "peek Mesh")
-        toolbox = self.gfxwindow.getToolboxByName("Mesh_Info")
+        toolbox = self.gfxwindow.getToolboxByName("Mesh Info")
         if toolbox.meshlayer:
             meshctxt = self.who().resolve(self.gfxwindow)
             if meshctxt:
@@ -204,7 +204,7 @@ class MeshInfoDisplay(display.DisplayMethod):
     def meshDataChangedCB(self, meshctxt):
         if meshctxt is self.who().resolve(self.gfxwindow):
             self.queryCB()
-            toolbox = self.gfxwindow.getToolboxByName("Mesh_Info")
+            toolbox = self.gfxwindow.getToolboxByName("Mesh Info")
             for mode in toolbox.allPeekModes():
                 self.peekCB(mode)
 

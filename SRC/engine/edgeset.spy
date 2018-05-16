@@ -129,3 +129,17 @@ def _SubDimensionalIterator_next(self):
     
 SubDimensionalIteratorPtr.next = _SubDimensionalIterator_next
 
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Adding the super-cautious destructor here removes shut-down errors
+# when running scheduled_output_test.py in the regression tests.
+#     Exception TypeError: "'NoneType' object is not callable" in
+#     <bound method FaceSet.__del__ of
+#     <C FaceSet instance at _7f99f5c83350_FaceSet_p>> ignored
+# TODO: Does that mean that some FaceSets aren't being deleted when
+# they ought to be?
+
+def SubDimensionalSet_ptr_del(self, destruct=edgesetc.delete_SubDimensionalSet):
+    if getattr(self, 'thisown', 0):
+        destruct(self)
+SubDimensionalSetPtr.__del__ = SubDimensionalSet_ptr_del
