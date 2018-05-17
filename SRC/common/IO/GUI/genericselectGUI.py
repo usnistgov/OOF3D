@@ -179,7 +179,8 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
         menuitem = self.toolbox.menuitem
         buttons = self.currentMouseHandler.buttons
         # Assume that the first argument is the Microstructure,
-        # Skeleton, or whatever, and find its name.
+        # Skeleton, or whatever, and find its name (the name of the
+        # argument, not the value of the argument!).
         sourceargname = menuitem.params[0].name
         argdict = {sourceargname : who.path(), 'method' : method}
         menuitem.callWithDefaults(**argdict)

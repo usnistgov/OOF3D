@@ -161,16 +161,26 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         ## from the Registration.
 
         operator = self.toolbox.getParamValues('operator')
-        
-        self.toolbox.invokeMenuItem(
-            self.toolbox.getSelectionSource(),
-            pixelselectionmethod.RectangularPrismSelector(
-                self.voxelbox.lowerleftback(),
-                self.voxelbox.upperrightfront(),
-                operator))
-        # There's no need to redraw, since the menu item will do it.
-        # self.gfxwindow().oofcanvas.render()
-        
+
+        source = self.toolbox.getSelectionSource()
+        # If there were no appropriate graphics layers when the Done
+        # button was clicked, then 'source' could be None.  It's not
+        # possible to test for this earlier, because layers could have
+        # been deleted after the Start button was clicked.
+        if source is not None:
+            self.toolbox.invokeMenuItem(
+                self.toolbox.getSelectionSource(),
+                pixelselectionmethod.RectangularPrismSelector(
+                    self.voxelbox.lowerleftback(),
+                    self.voxelbox.upperrightfront(),
+                    operator))
+            # There's no need to redraw, since the menu item will do it.
+            # self.gfxwindow().oofcanvas.render()
+        else:
+            # The menu item wasn't called, so redrawing may be
+            # necessary to clean up the widget state.
+            self.gfxwindow().oofcanvas.render()
+            
     def cancel(self):
         if self._editing:
             self._editing = False

@@ -90,10 +90,6 @@ In tumble mode, view sometimes jumps on first move event.  Laptop only!
 
 Skeleton boundary display isn't working.
 
-Box widget should not be startable if there are no selectable layers.
-Doing so leads to a hung thread.  What if layer is deleted while
-widget is active?
-
 ---------------------------------------------------------------------------
 Soon
 ----
@@ -361,3 +357,10 @@ Toolbox names have inconsistent underscores.
 Update tests that broke when selection method parameters were
 changed.
 ** Done: 2018-05-17
+
+Box widget should not be startable if there are no selectable layers.
+Doing so leads to a hung thread.  What if layer is deleted while
+widget is active?
+** Fixed, I think.  2018-05-17.  The widget is still startable, but
+the menuitem isn't invoked if there are no layers.  This solves the
+problem when layers are deleted while the widget is up.
