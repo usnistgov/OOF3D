@@ -75,9 +75,6 @@ selection operations.
 
 Use couriers for all Active Volume modifications.
 
-Bug: Voxels selected at the time a graphics window is opened aren't
-highlighted.
-
 Prev and Next buttons in the Skeleton Selection page aren't working.
 Check the Voxel Selection page.
 
@@ -364,3 +361,7 @@ widget is active?
 ** Fixed, I think.  2018-05-17.  The widget is still startable, but
 the menuitem isn't invoked if there are no layers.  This solves the
 problem when layers are deleted while the widget is up.
+
+Bug: Voxels selected at the time a graphics window is opened aren't
+highlighted.
+** Fixed: 2018-05-17

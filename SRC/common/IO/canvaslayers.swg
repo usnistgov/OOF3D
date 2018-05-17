@@ -53,6 +53,7 @@ public:
 class OOFCanvasLayer : public OOFCanvasLayerBase { 
 public:
   void setEmpty(bool);
+  bool getEmpty();
   void setModified();
   void installContourMap();
 };

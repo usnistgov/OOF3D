@@ -151,6 +151,7 @@ public:
   // setEmpty should be called when nothing will be drawn.  See the
   // comment in the .C file.
   void setEmpty(bool);
+  bool getEmpty() const { return empty_; } // for debugging
 
   virtual void show(bool);
   virtual void hide(bool);

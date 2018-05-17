@@ -98,6 +98,7 @@ class PixelSelectionDisplay(display.DisplayMethod):
         who = self.who().resolve(self.gfxwindow)
         if who:
             self.filter.setMicrostructure(who.getMicrostructure())
+            self.canvaslayer.setEmpty(self.selectionContext().empty())
 
 defaultPixelSelectionColor = color.RGBColor(1.0, 0.22, 0.09)
 defaultOpacity = 0.9
