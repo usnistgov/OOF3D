@@ -14,6 +14,7 @@
 #include "common/coord.h"
 #include "common/threadstate.h"
 #include "common/trace.h"
+#include "common/smallmatrix.h"
 #include "engine/property/plasticity/plasticity.h"
 #include "engine/property/plasticity/constitutive/constitutive.h"
 #include "engine/IO/propertyoutput.h"
@@ -37,6 +38,8 @@ Plasticity::Plasticity(PyObject *reg, const std::string &name,
 {
   displacement = dynamic_cast<ThreeVectorField*>(Field::getField("Displacement"));
   stress_flux = dynamic_cast<SymmetricTensorFlux*>(Flux::getFlux("Stress"));
+  //
+
 }
 
 
@@ -68,6 +71,23 @@ int Plasticity::integration_order(const CSubProblem *sp,
   return el->shapefun_degree();
 }
 
+// Utility function, takes a normal and a slip direction, normalizes
+// them, and computes their outer product -- this is how one makes
+// Schmid tensors.  TODO: Might be handier if it could take
+// initializers as arguments, which I think is a C++11 thing.
+SmallMatrix *Plasticity::_normalized_outer(double *norm, double *slip) {
+  double nmag = sqrt(norm[0]*norm[0]+norm[1]*norm[1]+norm[2]*norm[2]);
+  double smag = sqrt(slip[0]*slip[0]+slip[1]*slip[1]+slip[2]*slip[2]);
+  double norm_norm[3] = {norm[0]/nmag, norm[1]/nmag, norm[2]/nmag};
+  double norm_slip[3] = {slip[0]/smag, slip[1]/smag, slip[2]/smag};
+  
+  SmallMatrix *res = new SmallMatrix(3);
+  for(unsigned int i=0;i<3;++i)
+    for(unsigned int j=0;j<3;++j)
+      (*res)(i,j) = 0.5*(norm_norm[i]*norm_slip[j]+norm_norm[j]*norm_slip[i]);
+  return res;
+
+}
 
 // Evaluates itself.  "Static" unclear in the context of
 // an intrinsically quasistatic property.
@@ -100,5 +120,59 @@ FCCPlasticity::FCCPlasticity(PyObject *reg, const std::string &nm,
   : Plasticity(reg,nm,c,r) {
 
   std::cerr << xtal_cijkl_ << std::endl;
-  // Crystallography-specific slip system stuff goes here.
+  //
+  // Populate the schmid_tensor data member.
+  schmid_tensors.resize(12); // 12 slip systems in FCC.
+  //
+  double n[3];
+  double s[3];
+  //
+  // 1 1 1 planes.
+  n[0]=1.0; n[1]=1.0; n[2]=1.0;
+  //
+  s[0]=-1.0; s[1]=0.0; s[2]=1.0;
+  schmid_tensors[0]=_normalized_outer(n,s);
+  //
+  s[0]=0.0; s[1]=-1.0; s[2]=1.0;
+  schmid_tensors[1]=_normalized_outer(n,s);
+  //
+  s[0]=-1.0; s[1]=1.0; s[2]=0.0;
+  schmid_tensors[2]=_normalized_outer(n,s);
+  //
+  // 1 -1 1 planes
+  n[0]=1.0; n[1]=-1.0; n[2]=1.0;
+  //
+  s[0]=-1.0; s[1]=0.0; s[2]=1.0;
+  schmid_tensors[3]=_normalized_outer(n,s);
+  //
+  s[0]=0.0; s[1]=1.0; s[2]=1.0;
+  schmid_tensors[4]=_normalized_outer(n,s);
+  //
+  s[0]=1.0; s[1]=1.0; s[2]=0.0;
+  schmid_tensors[5]=_normalized_outer(n,s);
+  //
+  // -1 1 1 planes
+  n[0]=-1.0; n[1]=1.0; n[2]=1.0;
+  //
+  s[0]=1.0; s[1]=0.0; s[2]=1.0;
+  schmid_tensors[6]=_normalized_outer(n,s);
+  //
+  s[0]=0.0; s[1]=-1.0; s[2]=1.0;
+  schmid_tensors[7]=_normalized_outer(n,s);
+  //
+  s[0]=1.0; s[1]=1.0; s[2]=0.0;
+  schmid_tensors[8]=_normalized_outer(n,s);
+  //
+  // 1 1 -1 planes
+  n[0]=1.0; n[1]=1.0; n[2]=-1.0;
+  //
+  s[0]=1.0; s[1]=0.0; s[2]=1.0;
+  schmid_tensors[9]=_normalized_outer(n,s);
+  //
+  s[0]=0.0; s[1]=1.0; s[2]=1.0;
+  schmid_tensors[10]=_normalized_outer(n,s);
+  //
+  s[0]=-1.0; s[1]=1.0; s[2]=0.0;
+  schmid_tensors[11]=_normalized_outer(n,s);
+
 }

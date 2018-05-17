@@ -68,6 +68,7 @@ class TwoVectorField;
 class ThreeVectorField;
 class SmallSystem;
 class PlasticConstitutiveRule;
+class SmallMatrix;
 
 class OrientationPropBase;
 
@@ -97,13 +98,16 @@ public:
   const Cijkl cijkl(const FEMesh*, const Element*,
 		    const MasterPosition&);
 
-  
   // Outputs -- plastic strain at gpts, total strain, elastic strain...
   
 protected:
   // TODO: 2D version?
   ThreeVectorField *displacement;
   SymmetricTensorFlux *stress_flux;
+  std::vector<SmallMatrix*> schmid_tensors;
+  SmallMatrix *_normalized_outer(double*, double*);
+
+  
 protected:
   const OrientationPropBase *orientation;
   const Cijkl xtal_cijkl_;
@@ -117,6 +121,7 @@ public:
   FCCPlasticity(PyObject *rg, const std::string &nm,
 		const Cijkl &c, PlasticConstitutiveRule *rule);
   virtual ~FCCPlasticity() {}
+  //
 };
 
 
