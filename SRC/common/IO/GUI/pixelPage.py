@@ -153,8 +153,6 @@ class SelectionPage(oofGUI.MainPage):
                                             self.mswidgetCB),
             switchboard.requestCallbackMain('pixel selection changed',
                                             self.selectionChanged),
-            switchboard.requestCallbackMain('modified pixel selection',
-                                            self.updateHistory),
             switchboard.requestCallbackMain(
                 pixelselectionmod.VoxelSelectionModifier,
                 self.updateSelectionModifiers),
@@ -267,10 +265,6 @@ class SelectionPage(oofGUI.MainPage):
         self.nextmethodbutton.set_sensitive(self.historian.nextSensitive())
         self.prevmethodbutton.set_sensitive(self.historian.prevSensitive())
 
-    def updateHistory(self, selectionModifier): # sb 'modified pixel selection'
-        if selectionModifier is not None:
-            self.historian.record(selectionModifier)
-
     def undoCB(self, button):
         mainmenu.OOF.VoxelSelection.Undo(microstructure=self.getCurrentMSName())
     def redoCB(self, button):
@@ -287,6 +281,14 @@ class SelectionPage(oofGUI.MainPage):
         reg = self.selectionModFactory.getRegistration()
         modmeth = self.selectionModFactory.get_value()
         reg.callMenuItem(self.getCurrentMSName(), modmeth)
+        # The historian used to be updated via a switchboard
+        # notification from the menu callback, but now the same menu
+        # callback is used for selection modifications from the
+        # graphics window, which shouldn't be recorded by this
+        # historian. The disadvantage of updating the historian here
+        # is that scripted commands aren't recorded, but that's
+        # probably ok.
+        self.historian.record(modmeth)
 
 ####################################
         

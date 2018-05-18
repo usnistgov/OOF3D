@@ -33,7 +33,6 @@ class ElementSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             name="Element",
             methodclass=skeletonselection.ElementSelectionMethod,
             modifierclass=skeletonselection.ElementSelectionModifier,
-            modifierappliedsignal="element selection modified",
             changedselectionsignal="changed element selection",
             allCourier = skeletonselectioncourier.AllElementsCourier,
             groupmenu=skeletongroupmenu.elementgroupmenu,
@@ -56,7 +55,6 @@ class NodeSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             name="Node",
             methodclass=skeletonselection.NodeSelectionMethod,
             modifierclass=skeletonselection.NodeSelectionModifier,
-            modifierappliedsignal="node selection modified",
             changedselectionsignal="changed node selection",
             allCourier = skeletonselectioncourier.AllNodesCourier,
             groupmenu=skeletongroupmenu.nodegroupmenu)
@@ -76,7 +74,6 @@ class SegmentSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             name="Segment",
             methodclass=skeletonselection.SegmentSelectionMethod,
             modifierclass=skeletonselection.SegmentSelectionModifier,
-            modifierappliedsignal="segment selection modified",
             changedselectionsignal="changed segment selection",
             allCourier = skeletonselectioncourier.AllSegmentsCourier,
             groupmenu=skeletongroupmenu.segmentgroupmenu,
@@ -101,7 +98,6 @@ class FaceSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             name="Face",
             methodclass=skeletonselection.FaceSelectionMethod,
             modifierclass=skeletonselection.FaceSelectionModifier,
-            modifierappliedsignal="face selection modified",
             changedselectionsignal="changed face selection",
             allCourier = skeletonselectioncourier.AllFacesCourier,
             groupmenu=skeletongroupmenu.facegroupmenu)

@@ -61,7 +61,7 @@ class ModeData:
         return self.mode.getGroupMenu()
     def getGroups(self, skeletoncontext):
         return self.mode.getGroups(skeletoncontext)
-    def modifierApplied(self, modifier): # sb: mode.modifierappliedsignal
+    def modifierApplied(self, modifier): 
         if self.historybox is not None:
             if modifier is not None:
                 self.historybox.historian.record(modifier)
@@ -140,9 +140,6 @@ class SkeletonSelectionPage(oofGUI.MainPage):
             switchboard.requestCallbackMain(
                 modedata.mode.changedselectionsignal,
                 self.newSelection, mode=modedata)
-            switchboard.requestCallbackMain(
-                modedata.mode.modifierappliedsignal,
-                self.modifiedSelection, mode=modedata)
         firstbutton.set_active(1)
 
         self.mainpane = gtk.HPaned()
@@ -271,15 +268,6 @@ class SkeletonSelectionPage(oofGUI.MainPage):
         self.leftbox.show_all()
         self.groupgui.show()
         self.selectiongui.show()
-
-    # switchboard callback for mode.modifierappliedsignal
-    def modifiedSelection(self, modifier, mode):
-        if mode is self.activemode:
-            self.groupgui.sensitize()
-            self.selectiongui.sensitize()
-            # self.update must come last, so that the checkpoint is
-            # issued after everything has changed.
-            self.update()
 
     # switchboard callback for mode.changedselectionsignal
     def newSelection(self, mode, selection):
@@ -798,9 +786,6 @@ class SelectionGUI:
                                     modeobj.name()+"History")
             modeobj.factory.set_callback(
                 modeobj.historybox.historian.stateChangeCB)
-            # Sensitize the history stuff when the selections are modified.
-            switchboard.requestCallbackMain(modeobj.mode.modifierappliedsignal,
-                                            modeobj.modifierApplied)
             switchboard.requestCallbackMain(('validity', modeobj.factory),
                                             modeobj.validityChangeCB)
 
@@ -899,6 +884,7 @@ class SelectionGUI:
         reg = self.activemode().factory.getRegistration()
         modmeth = self.activemode().factory.get_value()
         reg.callMenuItem(self.parent.getCurrentSkeletonName(), modmeth)
+        self.activemode().modifierApplied(modmeth)
         
     # Called when the historian switches to a new object. 
     def setCB(self, object):
