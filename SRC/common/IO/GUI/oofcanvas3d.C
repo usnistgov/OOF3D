@@ -372,8 +372,8 @@ void OOFCanvas3D::mouse_eventCB(GtkWidget *item, GdkEvent *event) {
 			   rescaleFudgeFactor*event->button.x,
 			   rescaleFudgeFactor*event->button.y, 
 			   buttonNumber, shift, ctrl);
-      last_x = event->button.x;
-      last_y = event->button.y;
+      last_x = rescaleFudgeFactor*event->button.x;
+      last_y = rescaleFudgeFactor*event->button.y;
       mousedown = true;
       break;
     case GDK_BUTTON_RELEASE:

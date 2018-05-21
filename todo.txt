@@ -83,8 +83,6 @@ click.  Node groups aren't reported in Skeleton Info toolbox.  Segment
 groups aren't reported either, but the widget says "<Not yet
 implemented>".
 
-In tumble mode, view sometimes jumps on first move event.  Laptop only!
-
 Skeleton boundary display isn't working.
 
 ---------------------------------------------------------------------------
@@ -365,3 +363,7 @@ problem when layers are deleted while the widget is up.
 Bug: Voxels selected at the time a graphics window is opened aren't
 highlighted.
 ** Fixed: 2018-05-17
+
+In tumble mode, view sometimes jumps on first move event.  Laptop only!
+** Fixed: 2018-05-20.  rescaleFudgeFactor wasn't being used everywhere
+it should have been in oofcanvas3D.C.
