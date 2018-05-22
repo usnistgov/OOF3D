@@ -82,8 +82,6 @@ implemented>".
 
 Skeleton boundary display isn't working.
 
-Selecting elements by dominant pixel when there is no image or
-microstructure displayed isn't working.
 
 Display an image and select some voxels.  Hide the image.  The
 selected voxels are still displayed, but the display doesn't update
@@ -376,3 +374,11 @@ it should have been in oofcanvas3D.C.
 Prev and Next buttons in the Skeleton Selection page aren't working.
 Check the Voxel Selection page.
 ** Fixed: 2018-05-22
+
+Selecting elements by dominant pixel when there is no image or
+microstructure displayed isn't working.
+** 2018-05-22: Added "if msorimage is not None" to
+PixelElementSelectorGUI.up, which sort of avoids the problem without
+fixing it. The menu item is never called if the click doesn't select a
+voxel.  Also fixed GhostGfxWindow.findClickedCellCenterMulti, which
+wasn't releasing the gfx lock if no voxel was clicked.

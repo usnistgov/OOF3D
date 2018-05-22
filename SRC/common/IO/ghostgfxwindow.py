@@ -1896,12 +1896,12 @@ class GhostGfxWindow:
             self.releaseGfxLock()
 
     def findClickedCellCenterMulti(self, layers, point, view):
-        self.acquireGfxLock()
-        canvaslayers = [layer.canvaslayer for layer in layers
-                        if layer.pickable()]
-        if not canvaslayers:
-            return (None, None)
         try:
+            self.acquireGfxLock()
+            canvaslayers = [layer.canvaslayer for layer in layers
+                            if layer.pickable()]
+            if not canvaslayers:
+                return (None, None)
             result = mainthread.runBlock(
                 clickErrorHandler,
                 (self.oofcanvas.findClickedCellCenterMulti,
@@ -1911,7 +1911,6 @@ class GhostGfxWindow:
                 return (None, None)
             pos, which = result
             return (layers[which].who(), pos)
-            
         finally:
             self.releaseGfxLock()
 

@@ -138,6 +138,13 @@ class ElementSelectorGUI(SingleClickSkelSelectionMethodGUI):
                     who, skeletonselectionmethod.SingleElementSelect(
                         element.getIndex(), operator))
                         
+## TODO: PixelElementSelectorGUI selects elements whose dominant pixel
+## is in the same category as the clicked voxel.  This can be
+## counterintuitive, since it selects elements from a clicked voxel,
+## and therefore fails if no Microstructure or Image is displayed.  A
+## different way to implement it would be to select all elements whose
+## dominant pixel is the same as the clicked _element's_ dominant
+## pixel.
 
 @genericselectGUI.selectionGUIfor(skeletonselectionmethod.PixelElementSelect)
 class PixelElementSelectorGUI(SingleClickSkelSelectionMethodGUI):
@@ -145,9 +152,11 @@ class PixelElementSelectorGUI(SingleClickSkelSelectionMethodGUI):
         who = self.toolbox.getSelectionSource()
         if who is not None:
             msorimage, voxel = self.getClickedVoxel(x, y)
-            ms = msorimage.getMicrostructure()
-            category = ms.category(ms.pixelFromPoint(voxel))
-            operator = selectionoperators.getSelectionOperator(buttons)
-            self.toolbox.invokeMenuItem(
-                who,
-                skeletonselectionmethod.PixelElementSelect(category, operator))
+            if msorimage is not None:
+                ms = msorimage.getMicrostructure()
+                category = ms.category(ms.pixelFromPoint(voxel))
+                operator = selectionoperators.getSelectionOperator(buttons)
+                self.toolbox.invokeMenuItem(
+                    who,
+                    skeletonselectionmethod.PixelElementSelect(
+                        category, operator))
