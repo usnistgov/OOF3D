@@ -788,6 +788,8 @@ class SelectionGUI:
                 modeobj.historybox.historian.stateChangeCB)
             switchboard.requestCallbackMain(('validity', modeobj.factory),
                                             modeobj.validityChangeCB)
+            switchboard.requestCallbackMain(modeobj.mode.modifierappliedsignal,
+                                            modeobj.modifierApplied)
 
         # Slightly misleading name, includes undo, redo and clear.
         self.undoredoline = gtk.HBox()
@@ -884,7 +886,6 @@ class SelectionGUI:
         reg = self.activemode().factory.getRegistration()
         modmeth = self.activemode().factory.get_value()
         reg.callMenuItem(self.parent.getCurrentSkeletonName(), modmeth)
-        self.activemode().modifierApplied(modmeth)
         
     # Called when the historian switches to a new object. 
     def setCB(self, object):

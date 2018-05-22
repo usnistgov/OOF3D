@@ -15,6 +15,7 @@ from ooflib.SWIG.common import config
 from ooflib.SWIG.common import geometry
 from ooflib.SWIG.common import pixelselectioncourier
 from ooflib.common import debug
+from ooflib.common import pixelselection
 from ooflib.common import selectionoperators
 from ooflib.common import selectionshape
 from ooflib.common.IO import parameter
@@ -25,75 +26,9 @@ from ooflib.common.IO import xmlmenudump
 import ooflib.common.microstructure
 import ooflib.common.units
 
-# I don't usually like "from x.y.z import p,d,q" but these names are too long.
-
-from ooflib.common.pixelselection import \
-    SimpleVoxelSelectionModRegistration, \
-    VoxelSelectionModifier, \
-    VoxelSelectionModRegistration
-
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# Simple selection modifiers that don't take any parameters other than
-# a Microstructure or Image should be registered using
-# SimpleVoxelSelectionModRegistration, which will automatically create
-# a menu item for them.  The subclasses need to have a static select()
-# method which takes a PixelSelectionContext arg.
-
-# Other selection modifiers are registered with
-# VoxelSelectionModRegistration.  When used, an instance of the
-# subclass is passed as the 'method' argument to
-# OOF.VoxelSelection.Select.
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-# Simple selection methods
-
-# All of the Registrations are secret because the methods have buttons
-# and don't need to be in the RCF.
-
-class ClearVoxelSelection(VoxelSelectionModifier):
-    @staticmethod
-    def select(selection):
-        selection.start()
-        selection.clear()
-
-SimpleVoxelSelectionModRegistration(
-    'Clear', ClearVoxelSelection, ordering=0, secret=1,
-    discussion="<para>Unselect all voxels.</para>")
-
-class InvertVoxelSelection(VoxelSelectionModifier):
-    @staticmethod
-    def select(selection):
-        selection.start()
-        selection.invert()
-        
-SimpleVoxelSelectionModRegistration(
-    'Invert', InvertVoxelSelection, ordering=0.1, secret=1,
-    discussion="""<para>
-    Selected voxels will be unselected and unselelcted ones will be
-    selected.</para>"""
-)
-
-class UndoVoxelSelection(VoxelSelectionModifier):
-    @staticmethod
-    def select(selection):
-        selection.undo()
-
-SimpleVoxelSelectionModRegistration('Undo', UndoVoxelSelection, ordering=-1,
-                                    secret=True)
-
-class RedoVoxelSelection(VoxelSelectionModifier):
-    @staticmethod
-    def select(selection):
-        selection.redo()
-
-SimpleVoxelSelectionModRegistration('Redo', RedoVoxelSelection, ordering=-1,
-                                    secret=True)
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-class GroupSelector(VoxelSelectionModifier):
+class GroupSelector(pixelselection.VoxelSelectionModifier):
     def __init__(self, group, operator):
         self.group = group
         self.operator = operator
@@ -104,7 +39,7 @@ class GroupSelector(VoxelSelectionModifier):
                 selection,
                 pixelselectioncourier.GroupSelection(ms.getObject(), group))
 
-VoxelSelectionModRegistration(
+pixelselection.VoxelSelectionModRegistration(
     'Group',
     GroupSelector,
     ordering=1,
@@ -148,7 +83,7 @@ couriers[selectionshape.EllipseSelectionShape] = _elps_courier
 
 #=--=##=--=##=--=##=--=##=--=#
 
-class RegionSelector(VoxelSelectionModifier):
+class RegionSelector(pixelselection.VoxelSelectionModifier):
     def __init__(self, shape, units, operator):
         self.shape = shape
         self.units = units
@@ -158,7 +93,7 @@ class RegionSelector(VoxelSelectionModifier):
         courier = couriers[self.shape.__class__](scaled, ms.getObject())
         self.operator.operate(selection, courier)
 
-VoxelSelectionModRegistration(
+pixelselection.VoxelSelectionModRegistration(
     "Region",
     RegionSelector,
     ordering=1.5,
@@ -178,14 +113,14 @@ VoxelSelectionModRegistration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-class Despeckle(VoxelSelectionModifier):
+class Despeckle(pixelselection.VoxelSelectionModifier):
     def __init__(self, neighbors):
         self.neighbors = neighbors
     def select(self, ms, selection):
         selection.select(pixelselectioncourier.DespeckleSelection(
             ms.getObject(), selection.getPixelSet(), self.neighbors))
         
-class Elkcepsed(VoxelSelectionModifier):
+class Elkcepsed(pixelselection.VoxelSelectionModifier):
     def __init__(self, neighbors):
         self.neighbors = neighbors
     def select(self, ms, selection):
@@ -206,7 +141,7 @@ else:
     elkcepsedRange = (1, 13)
     elkcepsedDefault = 9
 
-VoxelSelectionModRegistration(
+pixelselection.VoxelSelectionModRegistration(
     'Despeckle',
     Despeckle,
     ordering=2.0,
@@ -218,7 +153,7 @@ VoxelSelectionModRegistration(
     discussion=xmlmenudump.loadFile('DISCUSSIONS/common/menu/despeckle.xml')
     )
 
-VoxelSelectionModRegistration(
+pixelselection.VoxelSelectionModRegistration(
     'Elkcepsed',
     Elkcepsed,
     ordering=2.1,
@@ -232,14 +167,14 @@ VoxelSelectionModRegistration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-class Expand(VoxelSelectionModifier):
+class Expand(pixelselection.VoxelSelectionModifier):
     def __init__(self, radius):
         self.radius = radius
     def select(self, ms, selection):
         selection.select(pixelselectioncourier.ExpandSelection(
             ms.getObject(), selection.getPixelSet(), self.radius))
 
-class Shrink(VoxelSelectionModifier):
+class Shrink(pixelselection.VoxelSelectionModifier):
     def __init__(self, radius):
         self.radius = radius
     def select(self, ms, selection):
@@ -249,7 +184,7 @@ class Shrink(VoxelSelectionModifier):
 ## TODO 3.1: Allow radius to be set in either physical or pixel units
 ## by adding a "units" parameter.
 
-VoxelSelectionModRegistration(
+pixelselection.VoxelSelectionModRegistration(
     'Expand',
     Expand,
     ordering=3.0,
@@ -262,7 +197,7 @@ VoxelSelectionModRegistration(
     discussion=xmlmenudump.loadFile("DISCUSSIONS/common/menu/expand_pixsel.xml")
     )
 
-VoxelSelectionModRegistration(
+pixelselection.VoxelSelectionModRegistration(
     'Shrink',
     Shrink,
     ordering=3.1,
@@ -277,7 +212,7 @@ VoxelSelectionModRegistration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-class CopyPixelSelection(VoxelSelectionModifier):
+class CopyPixelSelection(pixelselection.VoxelSelectionModifier):
     def __init__(self, source, operator):
         self.source = source
         self.operator = operator
@@ -288,7 +223,7 @@ class CopyPixelSelection(VoxelSelectionModifier):
             sourceMS.getObject().pixelselection.getPixelSet())
         self.operator.operate(selection, courier)
 
-VoxelSelectionModRegistration(
+pixelselection.VoxelSelectionModRegistration(
     'Copy',
     CopyPixelSelection,
     ordering=4.0,

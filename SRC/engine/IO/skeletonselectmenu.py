@@ -8,22 +8,16 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov. 
 
-# The menu for node-selection modification operations, automatically
-# added via switchboard callback.
-
 from ooflib.SWIG.common import config
-from ooflib.SWIG.common import lock
-from ooflib.SWIG.common import switchboard
 from ooflib.common import debug
-from ooflib.common import utils
 from ooflib.common.IO import mainmenu
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
 from ooflib.common.IO import whoville
 from ooflib.common.IO import xmlmenudump
-from ooflib.common.microstructure import getMicrostructure
 from ooflib.engine import skeletoncontext
-from ooflib.engine import skeletonselection
+from ooflib.engine import skeletonselmodebase
+from ooflib.engine import skeletonselectionmodes
 import types
 
 nodeselectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
@@ -100,65 +94,53 @@ elementselectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+# Generic selection modifiers that work on Elements, Faces, Segments,
+# and Nodes.  These don't appear in the RegisteredClassFactories in
+# the skeleton selection page or toolbox.  They have buttons instead.
+
 ## TODO: The voxel versions of these routine, in
 ## pixelselectionmenu.py, call selection.reserve() and
 ## selection.cancel_reservation().  Why don't these routines?  Is it
 ## required or not?
 
-## TODO: The voxel versions of these routines are defined with
-## subclasses of VoxelSelectionModifier and simpleSelectionCB, which
-## is a bit more complex organizationally but reduces some code
-## duplication.  Both the skeleton and voxel versions should work the
-## same way.
+def undo(selection):
+    selection.undo()
 
-def _undo(menuitem, skeleton):
-    skelc = skeletoncontext.skeletonContexts[skeleton]
-    selection = getattr(skelc, menuitem.data)
-    selection.begin_writing()
-    try:
-        selection.undo()
-    finally:
-        selection.end_writing()
-    selection.signal()
+def redo(selection):
+    selection.redo()
 
-def _redo(menuitem, skeleton):
-    skelc = skeletoncontext.skeletonContexts[skeleton]
-    selection = getattr(skelc, menuitem.data)
-    selection.begin_writing()
-    try:
-        selection.redo()
-    finally:
-        selection.end_writing()
-    selection.signal()
+def invert(selection):
+    selection.start()
+    selection.invert()
 
-def _clear(menuitem, skeleton):
-    skelc = skeletoncontext.skeletonContexts[skeleton]
-    selection = getattr(skelc, menuitem.data)
-    selection.begin_writing()
-    try:
-        selection.start() # Clear should be undoable.
-        selection.clear()
-    finally:
-        selection.end_writing()
-    selection.signal()
+def clear(selection):
+    selection.start()
+    selection.clear()
 
-def _invert(menuitem, skeleton):
-    skelc = skeletoncontext.skeletonContexts[skeleton]
-    selection = getattr(skelc, menuitem.data)
-    selection.begin_writing()
-    try:
-        selection.start() # Invert should be undoable.
-        selection.invert()
-    finally:
-        selection.end_writing()
-    selection.signal()
+class SimpleSelectionCB(object):
+    def __init__(self, mode, func):
+        self.mode = mode        # SkeletonSelectionMode instance
+        self.func = func        # one of the four functions defined above
+    def __call__(self, menuitem, skeleton):
+        skelctxt = skeletoncontext.skeletonContexts[skeleton]
+        selection = self.mode.getSelectionContext(skelctxt)
+        selection.begin_writing()
+        try:
+            self.func(selection)
+        finally:
+            selection.end_writing()
+        selection.signal()
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # select is the menu callback for all selection operations that are
 # defined by a XXXXSelectionModifier or XXXXSelectionMethod.
 
 def select(menuitem, skeleton, method):
     skelc = skeletoncontext.skeletonContexts[skeleton]
-    selection = getattr(skelc, menuitem.data)
+    # menuitem.data is set to the SkeletonSelectionMode when the menu
+    # is constructed.
+    selection = menuitem.data.getSelectionContext(skelc)
     # selection.reserve()
     selection.begin_writing()
     try:
@@ -172,9 +154,9 @@ def select(menuitem, skeleton, method):
         selection.end_writing()
         # selection.cancel_reservation()
     selection.signal() # sends switchboard "node selection changed", eg.
+    method.notify(menuitem.data)   
     
-    
-def makeMenu(menu, selection_name, methodclass, modifierclass):
+def makeMenu_(mode):
     # methodclass is the registered class for the selection methods,
     # NodeSelectionMethod, FaceSelectionMethod, etc, that are invoked via
     # the Skeleton Selection graphics toolbox and mouse interaction.
@@ -182,87 +164,35 @@ def makeMenu(menu, selection_name, methodclass, modifierclass):
     # modifiers, NodeSelectionModifier, FaceSelectionModifier, etc,
     # that are called from the Skeleton Selection page and don't
     # involve the mouse.
+    menu = mode.getSelectionMenu()
     menu.clearMenu()
 
-    objname = selection_name[:-9] # 'node', 'segment', 'face', or 'element'
+    whoparam = whoville.WhoParameter('skeleton',
+                                     whoville.getClass('Skeleton'),
+                                     tip=parameter.emptyTipString)
 
-    undo_item = menu.addItem(oofmenu.OOFMenuItem(
-        "Undo", callback=_undo,
-        params = [
-        whoville.WhoParameter("skeleton",
-                              whoville.getClass('Skeleton'),
-                              tip=parameter.emptyTipString)],
-        help="Undo the latest Skeleton %s selection operation." % objname,
-        discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/%s_undo.xml'
-                                        % objname)))
-    undo_item.data = selection_name
-
-    redo_item = menu.addItem(oofmenu.OOFMenuItem(
-        "Redo", callback=_redo,
-              params = [
-        whoville.WhoParameter("skeleton",
-                              whoville.getClass('Skeleton'),
-                              tip=parameter.emptyTipString)],
-        help="Redo the latest undone Skeleton %s selection operation."\
-        % objname,
-        discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/%s_redo.xml'
-                                        % objname)))
-    redo_item.data = selection_name
-
-    clear_item = menu.addItem(oofmenu.OOFMenuItem(
-        "Clear", callback=_clear,
-        params = [
-        whoville.WhoParameter("skeleton",
-                              whoville.getClass('Skeleton'),
-                              tip=parameter.emptyTipString)],
-        help="Clear the current Skeleton %s selection." % objname,
-        discussion="<para>Unselect all %ss in the &skel;.</para>" % objname))
-    clear_item.data = selection_name
-
-    invert_item = menu.addItem(oofmenu.OOFMenuItem(
-        "Invert",
-        callback=_invert,
-        params = [
-        whoville.WhoParameter("skeleton",
-                              whoville.getClass('Skeleton'),
-                              tip=parameter.emptyTipString)],
-        help="Invert the current Skeleton %s selection." % objname,
-        discussion="""<para>
-        Select the unselected %ss, and unselect the selected %ss in the &skel;.
-        </para>""" % (objname, objname)))
-    invert_item.data = selection_name
+    for i, func in enumerate((undo, redo, invert, clear)):
+        menu.addItem(oofmenu.OOFMenuItem(
+            func.__name__.capitalize(),
+            params=[whoparam],
+            ordering=0.1*i,
+            callback=SimpleSelectionCB(mode, func)))
 
     select_item = menu.addItem(oofmenu.OOFMenuItem(
         "Select",
         callback=select,
         params = [
-            whoville.WhoParameter("skeleton",
-                                  whoville.getClass('Skeleton'),
-                                  tip=parameter.emptyTipString),
+            whoparam,
             parameter.MultiRegisteredParameter(
                 'method',
-                (methodclass, modifierclass),
-                tip="How the %ss will be selected." % objname)
+                (mode.methodclass, mode.modifierclass),
+                tip="How the %ss will be selected." % mode.name)
             ],
-        help="Select some %ss." % objname))
-    select_item.data = selection_name
-        
-makeMenu(nodeselectmenu,
-         "nodeselection",
-         skeletonselection.NodeSelectionMethod,
-         skeletonselection.NodeSelectionModifier)
+        help="Select some %ss." % mode.name))
+    select_item.data = mode
 
-makeMenu(segmentselectmenu,
-         "segmentselection",
-         skeletonselection.SegmentSelectionMethod,
-         skeletonselection.SegmentSelectionModifier)
-            
-makeMenu(faceselectmenu,
-         "faceselection",
-         skeletonselection.FaceSelectionMethod,
-         skeletonselection.FaceSelectionModifier)
+skeletonselectionmodes.initialize()
 
-makeMenu(elementselectmenu,
-         "elementselection",
-         skeletonselection.ElementSelectionMethod,
-         skeletonselection.ElementSelectionModifier)
+for mode in skeletonselmodebase.SkeletonSelectionMode.modes:
+    makeMenu_(mode)
+    

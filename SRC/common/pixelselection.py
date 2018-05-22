@@ -18,6 +18,7 @@
 # so that they can find their active areas.
 
 from ooflib.SWIG.common import config
+from ooflib.SWIG.common import switchboard
 from ooflib.common import debug
 from ooflib.common import genericselection
 from ooflib.common import registeredclass
@@ -108,7 +109,7 @@ pixelselectionWhoClass = whoville.WhoDoUndoClass(
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# Infrastructure for voxel selection methods.
+# RegisteredClasses and Registrations for voxel selection methods.
 
 # There are two (poorly named) main classes of voxel selection methods.
 
@@ -117,27 +118,16 @@ pixelselectionWhoClass = whoville.WhoDoUndoClass(
 # graphics windows.
 
 # VoxelSelectionModifier is the registered class for the selection
-# tools that appear in the RCF on the PixelPage.  There are two kinds
-# of VoxelSelectionModifiers: simple ones that don't take any
-# arguments other than the name of the Microstructure or Image that
-# they're operating on.  They should be registered with
-# SimpleVoxelSelectionModRegistration, which automatically create a
-# menu item for them. The registered subclasses need to have a static
-# "select" method which takes a PixelSelectionContext arg.
+# tools that appear in the RCF on the PixelPage.
 
-# More complicated selection operations that require arguments are all
-# handled by a single menu item which takes a VoxelSelectionModifier
-# or VoxelSelectionMethod arg as well as the name of the
-# Microstructure or Image.  They should be registered with
+# All selection operations other than Undo, Redo, Clear, and Invert
+# are handled by a single menu item which takes a
+# VoxelSelectionModifier or VoxelSelectionMethod arg as well as the
+# name of the Microstructure or Image.  They should be registered with
 # VoxelSelectionMethodRegistration or VoxelSelectionModRegistration.
-# The subclasses need to have a non-static "select" method that takes
-# a source and a selection argument.  source is the name of an Image
-# or Microstructure.
-
-## TODO: SimpleVoxelSelectionModRegistration isn't really
-## necessary. It's only used for Undo, Redo, Clear, and Invert, and
-## those can be implemented directly as menu commands, as in
-## skeletonselectmenu.py.
+# The subclasses need to have a "select" method that takes a "source"
+# and a "selection" argument.  The value of "source" is the name of an
+# Image or Microstructure.
 
 class VoxelSelectionMethod(genericselection.GenericSelectionMethod):
     registry = []
@@ -149,6 +139,8 @@ class VoxelSelectionMethod(genericselection.GenericSelectionMethod):
     def select(self, source, selection, operator):
         raise ooferror.ErrPyProgrammingError(
             "'select' isn't defined for " + self.registration.name)
+    def notify(self):
+        pass
 
     
 class VoxelSelectionMethodRegistration(registeredclass.Registration):
@@ -163,38 +155,13 @@ class VoxelSelectionMethodRegistration(registeredclass.Registration):
             secret=secret,
             **kwargs)
 
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class VoxelSelectionModifier(registeredclass.RegisteredClass):
     registry = []
-
+    def notify(self):
+        self.getRegistration().notify(self)
     
-class SimpleVoxelSelectionModRegistration(registeredclass.Registration):
-    def __init__(self, name, subclass, ordering, secret=0, **kwargs):
-        registeredclass.Registration.__init__(
-            self,
-            name=name,
-            registeredclass=VoxelSelectionModifier,
-            subclass=subclass,
-            ordering=ordering,
-            params=[],
-            secret=secret,
-            **kwargs)
-        from ooflib.common.IO import pixelselectionmenu
-        self.menuitem = pixelselectionmenu.selectmenu.addItem(
-            oofmenu.OOFMenuItem(
-                name,
-                params=[whoville.WhoParameter(
-                    'microstructure',
-                    whoville.getClass('Microstructure'),
-                    tip=parameter.emptyTipString)],
-                ordering=ordering,
-                callback=pixelselectionmenu.simpleSelectionCB))
-        self.menuitem.data = subclass
-        
-    def callMenuItem(self, microstructure, selectionModifier):
-        # Called by PixelPage when the OK button is pressed
-        self.menuitem.callWithDefaults(microstructure=microstructure)
-
 class VoxelSelectionModRegistration(registeredclass.Registration):
     def __init__(self, name, subclass, ordering, params, secret=0, **kwargs):
         registeredclass.Registration.__init__(
@@ -213,4 +180,7 @@ class VoxelSelectionModRegistration(registeredclass.Registration):
         # Called by PixelPage when the OK button is pressed
         self.menuitem.callWithDefaults(source=microstructure,
                                        method=selectionModifier)
-
+    def notify(self, modifier):
+        # This signal is caught by the pixel selection page and used
+        # to update its Historian.
+        switchboard.notify("voxel selection modifier applied", modifier)

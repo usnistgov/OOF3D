@@ -34,6 +34,7 @@ class ElementSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             methodclass=skeletonselection.ElementSelectionMethod,
             modifierclass=skeletonselection.ElementSelectionModifier,
             changedselectionsignal="changed element selection",
+            modifierappliedsignal="element selection modifier applied",
             allCourier = skeletonselectioncourier.AllElementsCourier,
             groupmenu=skeletongroupmenu.elementgroupmenu,
             materialsallowed = material.MATERIALTYPE_BULK)
@@ -56,6 +57,7 @@ class NodeSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             methodclass=skeletonselection.NodeSelectionMethod,
             modifierclass=skeletonselection.NodeSelectionModifier,
             changedselectionsignal="changed node selection",
+            modifierappliedsignal="node selection modifier applied",
             allCourier = skeletonselectioncourier.AllNodesCourier,
             groupmenu=skeletongroupmenu.nodegroupmenu)
     def getSelectionContext(self, skeletoncontext):
@@ -75,6 +77,7 @@ class SegmentSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             methodclass=skeletonselection.SegmentSelectionMethod,
             modifierclass=skeletonselection.SegmentSelectionModifier,
             changedselectionsignal="changed segment selection",
+            modifierappliedsignal="segment selection modifier applied",
             allCourier = skeletonselectioncourier.AllSegmentsCourier,
             groupmenu=skeletongroupmenu.segmentgroupmenu,
             ## Materials are *not* allowed to be assigned directly to
@@ -99,6 +102,7 @@ class FaceSelectionMode(skeletonselmodebase.SkeletonSelectionMode):
             methodclass=skeletonselection.FaceSelectionMethod,
             modifierclass=skeletonselection.FaceSelectionModifier,
             changedselectionsignal="changed face selection",
+            modifierappliedsignal="face selection modifier applied",
             allCourier = skeletonselectioncourier.AllFacesCourier,
             groupmenu=skeletongroupmenu.facegroupmenu)
     def getSelectionContext(self, skeletoncontext):

@@ -27,7 +27,8 @@ from ooflib.common.IO import xmlmenudump
 class SkeletonSelectionMode:
     modes = []
     def __init__(self, name, methodclass, modifierclass,
-                 changedselectionsignal, groupmenu,
+                 changedselectionsignal, modifierappliedsignal,
+                 groupmenu,
                  allCourier,
                  materialsallowed=None):
         self.name = name
@@ -43,8 +44,12 @@ class SkeletonSelectionMode:
         self.modifierclass = modifierclass
 
         # changedselectionsignal is sent when any change is made in
-        # a selection.
+        # a selection.  It indicates which selection was changed, but
+        # not how.
         self.changedselectionsignal = changedselectionsignal
+        # modifierappliedsignal is sent when a selection modifier is
+        # uses.  The modifier is sent as an argument.
+        self.modifierappliedsignal = modifierappliedsignal
 
         # groupmenu is the menu of commands for manipulating groups of
         # the object.

@@ -75,15 +75,20 @@ selection operations.
 
 Use couriers for all Active Volume modifications.
 
-Prev and Next buttons in the Skeleton Selection page aren't working.
-Check the Voxel Selection page.
-
 Segment Info toolbox isn't working.  Wrong segment is queried by mouse
 click.  Node groups aren't reported in Skeleton Info toolbox.  Segment
 groups aren't reported either, but the widget says "<Not yet
 implemented>".
 
 Skeleton boundary display isn't working.
+
+Selecting elements by dominant pixel when there is no image or
+microstructure displayed isn't working.
+
+Display an image and select some voxels.  Hide the image.  The
+selected voxels are still displayed, but the display doesn't update
+when the selection is modified.  Either they voxels shoudn't be
+displayed, or they should be updated.
 
 ---------------------------------------------------------------------------
 Soon
@@ -367,3 +372,7 @@ highlighted.
 In tumble mode, view sometimes jumps on first move event.  Laptop only!
 ** Fixed: 2018-05-20.  rescaleFudgeFactor wasn't being used everywhere
 it should have been in oofcanvas3D.C.
+
+Prev and Next buttons in the Skeleton Selection page aren't working.
+Check the Voxel Selection page.
+** Fixed: 2018-05-22

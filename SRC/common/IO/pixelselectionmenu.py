@@ -33,32 +33,49 @@ selectmenu = mainmenu.OOF.addItem(oofmenu.OOFMenuItem(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# Generic selection menu callbacks.
-
-
 # Menu item for simple voxel selection operations.  The callback does
 # *not* call PixelSelectionContext.start(), because then the Undo and
 # Redo commands couldn't use the callbacks.  The "select" methods in
 # the VoxelSelectionMethod and VoxelSelectionModifier subclasses have
 # to call selection.start().
 
+class SimpleVoxelSelectionCB(object):
+    def __init__(self, func):
+        self.func = func
+    def __call__(self, menuitem, microstructure):
+        ms = ooflib.common.microstructure.microStructures[microstructure]
+        selection = ms.getSelectionContext()
+        selection.reserve()
+        selection.begin_writing()
+        try:
+            self.func(selection)
+        finally:
+            selection.end_writing()
+            selection.cancel_reservation()
+        switchboard.notify('pixel selection changed', selection)
+        switchboard.notify('redraw')
 
-def simpleSelectionCB(menuitem, microstructure):
-    ms = ooflib.common.microstructure.microStructures[microstructure]
-    selection = ms.getSelectionContext()
-    selection.reserve()
-    selection.begin_writing()
-    try:
-        # SimpleVoxelSelectionModRegistration sets menuitem.data to a
-        # VoxelSelectionModifier subclass, which has a static select()
-        # method.
-        menuitem.data.select(selection)
-    finally:
-        selection.end_writing()
-        selection.cancel_reservation()
-    switchboard.notify('pixel selection changed', selection)
-    switchboard.notify('redraw')
+def undo(selection):
+    selection.undo()
 
+def redo(selection):
+    selection.redo()
+
+def invert(selection):
+    selection.start()
+    selection.invert()
+
+def clear(selection):
+    selection.start()
+    selection.clear()
+
+for i, func in enumerate((undo, redo, invert, clear)):
+    selectmenu.addItem(oofmenu.OOFMenuItem(
+        func.__name__.capitalize(),
+        params=[whoville.AnyWhoParameter('microstructure',
+                                         tip=parameter.emptyTipString)],
+        callback=SimpleVoxelSelectionCB(func),
+        ordering=0.1*i))
 
 # Menu item for complex voxel selection operations.  This one *does*
 # call PixelSelectionContext.start(), so the subclasses should not
@@ -83,7 +100,13 @@ def select(menuitem, source, method):
     finally:
         selection.end_writing()
         selection.cancel_reservation()
+    # "pixel selection changed" tells UI components that reflect the
+    # pixel selection status to update themselves.
     switchboard.notify('pixel selection changed', selection)
+    # The notify method for some selection methods sends a switchboard
+    # message indicating that the method has been used, so that it can
+    # be recorded in the voxel selection page's historian, for example.
+    method.notify()
     switchboard.notify('redraw')
     
 

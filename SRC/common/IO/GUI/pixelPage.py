@@ -156,6 +156,8 @@ class SelectionPage(oofGUI.MainPage):
             switchboard.requestCallbackMain(
                 pixelselectionmod.VoxelSelectionModifier,
                 self.updateSelectionModifiers),
+            switchboard.requestCallbackMain("voxel selection modifier applied",
+                                            self.recordModifier),
             switchboard.requestCallbackMain(('validity',
                                              self.selectionModFactory),
                                             self.validityChangeCB),
@@ -254,7 +256,8 @@ class SelectionPage(oofGUI.MainPage):
         mainthread.runBlock(set_button_sensitivity, (u,r,c))
         mainthread.runBlock(set_ok_sensitivity, (selection,) )
         
-
+    def recordModifier(self, modifier):
+        self.historian.record(modifier)
 
     def updateSelectionModifiers(self): # SB: New selection modifier created
         self.selectionModFactory.update(
@@ -281,14 +284,6 @@ class SelectionPage(oofGUI.MainPage):
         reg = self.selectionModFactory.getRegistration()
         modmeth = self.selectionModFactory.get_value()
         reg.callMenuItem(self.getCurrentMSName(), modmeth)
-        # The historian used to be updated via a switchboard
-        # notification from the menu callback, but now the same menu
-        # callback is used for selection modifications from the
-        # graphics window, which shouldn't be recorded by this
-        # historian. The disadvantage of updating the historian here
-        # is that scripted commands aren't recorded, but that's
-        # probably ok.
-        self.historian.record(modmeth)
 
 ####################################
         

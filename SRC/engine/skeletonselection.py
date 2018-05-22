@@ -13,6 +13,7 @@
 # skeletonselectionmethod.py and skeletonselectionmod.py.
 
 from ooflib.SWIG.common import config
+from ooflib.SWIG.common import switchboard
 from ooflib.common import registeredclass
 from ooflib.common import genericselection
 
@@ -23,7 +24,12 @@ from ooflib.common import genericselection
 # Selection toolbox.
 
 class SkeletonSelectionModifier(genericselection.GenericSelectionModifier):
-    pass
+    # notify() is called by the Select menu callback after a selection
+    # modifier or selection method is applied.  Methods and modifiers
+    # do different things.  In the modifier case, here, the signal
+    # tells the selection page's historian to update itself.
+    def notify(self, mode):
+        switchboard.notify(mode.modifierappliedsignal, self)
 
 class NodeSelectionModifier(SkeletonSelectionModifier):
     registry = []
@@ -125,9 +131,11 @@ class SkeletonSelectionMethodRegistration(registeredclass.Registration):
             secret=secret,
             **kwargs)
                                             
+class SkeletonSelectionMethod(genericselection.GenericSelectionMethod):
+    def notify(self, *args):
+        pass
 
-
-class NodeSelectionMethod(genericselection.GenericSelectionMethod):
+class NodeSelectionMethod(SkeletonSelectionMethod):
     registry = []
     
 class NodeSelectionMethodRegistration(SkeletonSelectionMethodRegistration):
@@ -145,7 +153,7 @@ class NodeSelectionMethodRegistration(SkeletonSelectionMethodRegistration):
         self.menuitem = skeletonselectmenu.nodeselectmenu.Select
 
         
-class SegmentSelectionMethod(genericselection.GenericSelectionMethod):
+class SegmentSelectionMethod(SkeletonSelectionMethod):
     registry = []
 
 class SegmentSelectionMethodRegistration(SkeletonSelectionMethodRegistration):
@@ -163,7 +171,7 @@ class SegmentSelectionMethodRegistration(SkeletonSelectionMethodRegistration):
         self.menuitem = skeletonselectmenu.segmentselectmenu.Select
 
 
-class FaceSelectionMethod(genericselection.GenericSelectionMethod):
+class FaceSelectionMethod(SkeletonSelectionMethod):
     registry = []
     def select(self, skeletoncontext, pointlist, selector):
         pass
@@ -183,7 +191,7 @@ class FaceSelectionMethodRegistration(SkeletonSelectionMethodRegistration):
         from ooflib.engine.IO import skeletonselectmenu
         self.menuitem = skeletonselectmenu.faceselectmenu.Select
 
-class ElementSelectionMethod(genericselection.GenericSelectionMethod):
+class ElementSelectionMethod(SkeletonSelectionMethod):
     registry = []
     def select(self, *args, **kwargs):
         pass
