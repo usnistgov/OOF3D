@@ -17,7 +17,7 @@ from ooflib.common import subthread
 from ooflib.common import mainthread
 from ooflib.common import debug
 from ooflib.common import microstructure
-from ooflib.common import pixelselectionmod
+from ooflib.common import pixelselection
 from ooflib.common.IO import mainmenu
 from ooflib.common.IO.GUI import fixedwidthtext
 from ooflib.common.IO.GUI import gtklogger
@@ -88,7 +88,7 @@ class SelectionPage(oofGUI.MainPage):
         vbox = gtk.VBox()
         modframe.add(vbox)
         self.selectionModFactory = regclassfactory.RegisteredClassFactory(
-            pixelselectionmod.VoxelSelectionModifier.registry, title="Method:",
+            pixelselection.VoxelSelectionModifier.registry, title="Method:",
             scope=self, name="Method")
         vbox.pack_start(self.selectionModFactory.gtk, expand=1, fill=1)
         self.historian = historian.Historian(self.selectionModFactory.set,
@@ -154,7 +154,7 @@ class SelectionPage(oofGUI.MainPage):
             switchboard.requestCallbackMain('pixel selection changed',
                                             self.selectionChanged),
             switchboard.requestCallbackMain(
-                pixelselectionmod.VoxelSelectionModifier,
+                pixelselection.VoxelSelectionModifier,
                 self.updateSelectionModifiers),
             switchboard.requestCallbackMain("voxel selection modifier applied",
                                             self.recordModifier),
@@ -261,7 +261,7 @@ class SelectionPage(oofGUI.MainPage):
 
     def updateSelectionModifiers(self): # SB: New selection modifier created
         self.selectionModFactory.update(
-            pixelselectionmod.VoxelSelectionModifier.registry)
+            pixelselection.VoxelSelectionModifier.registry)
 
     def sensitizeHistory(self):
         debug.mainthreadTest()
