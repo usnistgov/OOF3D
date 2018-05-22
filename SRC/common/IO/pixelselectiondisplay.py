@@ -66,6 +66,17 @@ class PixelSelectionDisplay(display.DisplayMethod):
                 self.canvaslayer.set_filter(self.filter)
                 self.setMicrostructure()
                 break
+        else:
+            # No BitmapDisplayMethod was found. Don't display
+            # anything.
+            ## TODO: Using setEmpty isn't really the right thing to
+            ## call here, but it works.  We can't use hide() or show()
+            ## because the user might have explicitly hidden the
+            ## layer.  The problem with setEmpty is just that it was
+            ## introduced as a hack, and if the need for the hack goes
+            ## away, setEmpty might go away too.
+            self.canvaslayer.setEmpty(True)
+
         # Returning True here tells GhostGfxWindow.incorporateLayer to
         # call setParams.
         return True

@@ -82,12 +82,6 @@ implemented>".
 
 Skeleton boundary display isn't working.
 
-
-Display an image and select some voxels.  Hide the image.  The
-selected voxels are still displayed, but the display doesn't update
-when the selection is modified.  Either they voxels shoudn't be
-displayed, or they should be updated.
-
 ---------------------------------------------------------------------------
 Soon
 ----
@@ -382,3 +376,10 @@ PixelElementSelectorGUI.up, which sort of avoids the problem without
 fixing it. The menu item is never called if the click doesn't select a
 voxel.  Also fixed GhostGfxWindow.findClickedCellCenterMulti, which
 wasn't releasing the gfx lock if no voxel was clicked.
+
+Display an image and select some voxels.  Hide the image.  The
+selected voxels are still displayed, but the display doesn't update
+when the selection is modified.  Either they voxels shoudn't be
+displayed, or they should be updated.
+** Fixed: 2018-05-22 PixelSelectionDisplay.whoChanged calls setEmpty
+if there's nothing to display.
