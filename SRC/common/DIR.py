@@ -113,7 +113,7 @@ else:                           # DIM == 3
         'color.py', 'debug.py', 'excepthook.py', 'garbage.py',
         'oof_getopt.py', 'oofversion.py', 'parallel_enable.py', 'quit.py',
         'subthread.py', 'thread_enable.py', 'utils.py', 'worker.py',
-        'threadmanager.py', 'selectionshape.py',
+        'threadmanager.py', 'selectionshape.py', 'selectionoperators.py'
         ]
 
     swigpyfiles = [

@@ -204,51 +204,6 @@ void OOFCanvasLayer::removeAllProps() {
   empty_ = true;
 }
 
-// void OOFCanvasLayer::raise_layer(int h) {
-//   canvas->raise_layer(this, h);
-// }
-
-// void GhostOOFCanvas::raise_layer(OOFCanvasLayer *layer, int h) {
-//   for(DisplayLayerList::iterator it=layers.begin(); it!=layers.end(); ++it) {
-//     if(*it == layer) {
-//       layers.erase(it);
-//       layers.insert(it+h, layer);
-//       return;
-//     }
-//   }
-// }
-
-// void OOFCanvasLayer::raise_to_top() {
-//   canvas->raise_layer_to_top(this);
-//   // if(rendered_) 
-//   //   remove_from_renderer();
-//   if(showing)
-//     add_to_renderer();
-// }
-
-// void GhostOOFCanvas::raise_layer_to_top(OOFCanvasLayer *layer) {
-//   for(DisplayLayerList::iterator it=layers.begin(); it!=layers.end(); ++it) {
-//     if(*it == layer) {
-//       layers.erase(it);
-//       layers.push_back(layer);
-//       return;
-//     }
-//   }
-// }
-
-// void OOFCanvasLayer::lower_layer(int h) {
-//   canvas->lower_layer(this, h);
-// }
-
-// void GhostOOFCanvas::lower_layer(OOFCanvasLayer *layer, int h) {
-//   for(DisplayLayerList::iterator it=layers.begin(); it!=layers.end(); ++it) {
-//     if(*it == layer) {
-//       layers.erase(it);
-//       layers.insert(it-h, layer);
-//       return;
-//     }
-//   }
-// }
 
 // setPropVisibility toggles the vtkProp's visibilities, without
 // touching the OOFCanvasLayer flags that say whether or not the layer
@@ -261,15 +216,20 @@ void OOFCanvasLayer::setPropVisibility(bool visible) {
     // If the new value is the same as the old one, don't call
     // SetVisibility because it'll update the vtk modification time
     // unnecessarily.
-    if((bool) props[i]->GetVisibility() != visible)
+    if((bool) props[i]->GetVisibility() != visible) {
       props[i]->SetVisibility(visible);
+    }
   }
 }
+
+// TODO: Do we need the 'forced' arg for show and hide?  It seems to
+// always be false.
 
 void OOFCanvasLayer::show(bool forced) {
   if(!showing_ || forced) {
     setPropVisibility(true);
     showing_ = true;
+    // setModified();
   }
 }
 
@@ -277,6 +237,7 @@ void OOFCanvasLayer::hide(bool forced) {
   if(showing_ || forced) {
     setPropVisibility(false);
     showing_ = false;
+    // setModified();
   }
 }
 
@@ -369,6 +330,13 @@ vtkSmartPointer<vtkTableBasedClipDataSet> getClipper(
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// The PlaneAndArrowLayer is used when interactively editing clipping
+// planes, and possibly other sorts of planes too.  It's probably
+// redundant with the vtkImplicitPlaneWidget, but in order to use VTK
+// widgets we probably would have to use VTK's interactor event loop
+// instead of the gtk2 event loop.  That would be possible, and maybe
+// should be considered.
 
 PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas,
 				       const std::string &nm,
@@ -493,14 +461,6 @@ vtkSmartPointer<vtkActorCollection> PlaneAndArrowLayer::get_pickable_actors() {
   return actors;
 }
 
-void PlaneAndArrowLayer::set_visibility(bool visible) {
-  // Sets whether or not the vtk plane and arrow are to be visible
-  // once the renderer is called.
-  planeActor->SetVisibility(int(visible));
-  arrowActor->SetVisibility(int(visible));
-  setModified();
-}
-
 void PlaneAndArrowLayer::set_arrowShaftRadius(double radius) {
   arrowSource->SetShaftRadius(radius);
 }
@@ -532,14 +492,19 @@ void PlaneAndArrowLayer::set_planeColor(const CColor& color) {
 				      color.getBlue());
 }
 
+// TODO: Change set_planeOpacity to set_opacity.
 void PlaneAndArrowLayer::set_planeOpacity(double opacity) {
   planeActor->GetProperty()->SetOpacity(opacity);
+  arrowActor->GetProperty()->SetOpacity(opacity/2.); // it has two sides
  }
 
-void PlaneAndArrowLayer::rotate(const Coord3D *axisOfRotation, double angleOfRotation) {
+void PlaneAndArrowLayer::rotate(const Coord3D *axisOfRotation,
+				double angleOfRotation)
+{
   vtkSmartPointer<vtkTransform> new_rotation =
     vtkSmartPointer<vtkTransform>::New();
-  new_rotation->RotateWXYZ(-angleOfRotation, (*axisOfRotation)[0], (*axisOfRotation)[1], (*axisOfRotation)[2]);
+  new_rotation->RotateWXYZ(-angleOfRotation, (*axisOfRotation)[0],
+			   (*axisOfRotation)[1], (*axisOfRotation)[2]);
 
   // Concatenate the new rotation after the current rotation. 
   rotation->PostMultiply();
@@ -599,7 +564,8 @@ Coord3D *PlaneAndArrowLayer::get_center() {
   // same coordinates as the center of the plane.
   double center_double[3];
   translation->GetPosition(center_double);
-  Coord3D *center = new Coord3D(center_double[0], center_double[1], center_double[2]);
+  Coord3D *center =
+    new Coord3D(center_double[0], center_double[1], center_double[2]);
   return center;
 }
 
@@ -622,7 +588,8 @@ CUnitVectorDirection *PlaneAndArrowLayer::get_normal() {
   rotation->TransformPoint(unitX, normal_double);
 
   CUnitVectorDirection *normal = 
-    new CUnitVectorDirection(normal_double[0], normal_double[1], normal_double[2]);
+    new CUnitVectorDirection(normal_double[0], normal_double[1],
+			     normal_double[2]);
 
   return normal;
 }
@@ -675,7 +642,8 @@ void PlaneAndArrowLayer::set_normal(const CDirection *direction) {
   // Reset the transform controling the rotation of the plane and the
   // direction of the arrow.
   rotation->Identity();
-  rotation->RotateWXYZ(angleOfRotation, axisOfRotation[0], axisOfRotation[1], axisOfRotation[2]);
+  rotation->RotateWXYZ(angleOfRotation,
+		       axisOfRotation[0], axisOfRotation[1], axisOfRotation[2]);
 
   setModified();
 
@@ -708,30 +676,29 @@ void PlaneAndArrowLayer::setCoincidentTopologyParams(double factor,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// TODO: Add arrowParity, as in PlaneAndArrowLayer.
+// BoxWidgetLayer could be replaced by vtkBoxWidget if we were using
+// the VTK event loop.
 
-BoxAndArrowLayer::BoxAndArrowLayer(GhostOOFCanvas *canvas, const std::string &nm)
+BoxWidgetLayer::BoxWidgetLayer(GhostOOFCanvas *canvas, const std::string &nm)
   : OOFCanvasLayer(canvas, nm),
     grid(vtkSmartPointer<vtkUnstructuredGrid>::New()),
     points(vtkSmartPointer<vtkPoints>::New()),
-    arrowSource(vtkSmartPointer<vtkArrowSource>::New()),  
-    arrowScaling(vtkSmartPointer<vtkTransform>::New()),
-    arrowRotation(vtkSmartPointer<vtkTransform>::New()),
-    arrowTranslation(vtkSmartPointer<vtkTransform>::New()),
-    arrowTransform(vtkSmartPointer<vtkTransform>::New()),
-    arrowFilter(vtkSmartPointer<vtkTransformPolyDataFilter>::New()),
     boxMapper(vtkSmartPointer<vtkDataSetMapper>::New()),
-    arrowMapper(vtkSmartPointer<vtkPolyDataMapper>::New()),
     boxActor(vtkSmartPointer<vtkActor>::New()),
-    arrowActor(vtkSmartPointer<vtkActor>::New()),
     locator(vtkSmartPointer<oofCellLocator>::New())
 {
   points->Initialize();
   points->SetNumberOfPoints(8);
-  
-  for (int i = 0; i < 8; i++) {
-    points->SetPoint(i, double(i % 2), double((i / 2) % 2), double((i / 4) % 2));
-  }
+
+  // for (int i = 0; i < 8; i++) {
+  //   points->SetPoint(i, double(i % 2),
+  // 		     double((i / 2) % 2),
+  // 		     double((i / 4) % 2));
+  // }
+
+  // Node, edge, and face indexing follows the VTK_VOXEL convention.
+  // TODO: Perhaps VTK_HEXAHEDRON would be better if the sides of the
+  // box aren't going to always be orthogonal.
 
   grid->Initialize();
   grid->Allocate(26, 26);
@@ -739,8 +706,7 @@ BoxAndArrowLayer::BoxAndArrowLayer(GhostOOFCanvas *canvas, const std::string &nm
 
   for (int i = 0; i < 8; i++) {
     // Store the 8 vertices of the box.
-    vtkIdType ptID;
-    ptID = i;
+    vtkIdType ptID = i;
     grid->InsertNextCell(VTK_VERTEX, 1, &ptID);
   }
 
@@ -809,75 +775,54 @@ BoxAndArrowLayer::BoxAndArrowLayer(GhostOOFCanvas *canvas, const std::string &nm
     grid->InsertNextCell(VTK_QUAD, 4, face_ptIDs[i]);
   }
   
-  arrowSource->SetTipResolution(12);
-  arrowSource->SetShaftResolution(12);
-  arrowSource->Update();
-
-  arrowScaling->Identity();
-  arrowScaling->Scale(-0.25, -0.25, -0.25);
-
-  arrowRotation->Identity();
-  arrowTranslation->Identity();
-  arrowTransform->Concatenate(arrowTranslation);
-  arrowTransform->Concatenate(arrowRotation);
-  arrowTransform->Concatenate(arrowScaling);
-
-  arrowFilter->SetInputConnection(arrowSource->GetOutputPort());
-  arrowFilter->SetTransform(arrowTransform);
-
   boxMapper->SetInputData(grid);
-  arrowMapper->SetInputConnection(arrowFilter->GetOutputPort());
-
   boxActor->SetMapper(boxMapper);
   boxActor->GetProperty()->SetEdgeVisibility(true);
-  arrowActor->SetMapper(arrowMapper);
 
-  this->set_totalVisibility(false);
-  this->set_arrowVisibility(false);
+  hide(false);
 
   addProp(boxActor);
-  addProp(arrowActor);
-
   locator->LazyEvaluationOn();
 }
 
-BoxAndArrowLayer::~BoxAndArrowLayer() {}
+BoxWidgetLayer::~BoxWidgetLayer() {}
 
-const std::string &BoxAndArrowLayer::classname() const {
-  static const std::string nm("BoxAndArrowLayer");
+const std::string &BoxWidgetLayer::classname() const {
+  static const std::string nm("BoxWidgetLayer");
   return nm;
 }
 
-void BoxAndArrowLayer::start_clipping() { }
+void BoxWidgetLayer::start_clipping() { }
 
-void BoxAndArrowLayer::stop_clipping() { }
+void BoxWidgetLayer::stop_clipping() { }
 
-void BoxAndArrowLayer::set_clip_parity(bool b) { }
+void BoxWidgetLayer::set_clip_parity(bool b) { }
 
-void BoxAndArrowLayer::setModified() {
+void BoxWidgetLayer::setModified() {
   grid->Modified();
 }
 
-vtkSmartPointer<vtkDataSet> BoxAndArrowLayer::get_pickable_dataset() {
-  return boxMapper->GetInput();
+vtkSmartPointer<vtkDataSet> BoxWidgetLayer::get_pickable_dataset() {
+  return grid;
 }
 
-vtkSmartPointer<vtkProp3D> BoxAndArrowLayer::get_pickable_prop3d() {
+vtkSmartPointer<vtkProp3D> BoxWidgetLayer::get_pickable_prop3d() {
   return boxActor;
 }
 
-vtkSmartPointer<vtkPoints> BoxAndArrowLayer::get_pickable_points() {
+vtkSmartPointer<vtkPoints> BoxWidgetLayer::get_pickable_points() {
   return points;
 }
 
-vtkSmartPointer<vtkAbstractCellLocator> BoxAndArrowLayer::get_locator() {
+vtkSmartPointer<vtkAbstractCellLocator> BoxWidgetLayer::get_locator() {
   locator->Initialize();
   locator->SetDataSet(grid);
   return locator;
 }
 
-// TODO: Define this to work for cell types other than VTK_QUAD.
-Coord3D *BoxAndArrowLayer::get_cellCenter(vtkIdType cellID) {
+// TODO: Define this to work for cell types other than VTK_QUAD.  Is
+// there a vtk function that does this?
+Coord3D *BoxWidgetLayer::get_cellCenter(vtkIdType cellID) {
   int cellType = grid->GetCellType(cellID);
   if (cellType == VTK_QUAD) {
     vtkIdType *pointIDs;
@@ -898,7 +843,7 @@ Coord3D *BoxAndArrowLayer::get_cellCenter(vtkIdType cellID) {
 }
 
 // TODO: Define this to work for cell types other than VTK_QUAD.
-Coord3D *BoxAndArrowLayer::get_cellNormal_Coord3D(vtkIdType cellID) {
+Coord3D *BoxWidgetLayer::get_cellNormal_Coord3D(vtkIdType cellID) {
   // Returns the "normal" vector to the cell. If the cell is a
   // VTK_QUAD (a box face), this is straightforward, since the normal
   // vector is just the normal vector of [the plane in which [the face
@@ -935,73 +880,56 @@ Coord3D *BoxAndArrowLayer::get_cellNormal_Coord3D(vtkIdType cellID) {
   return NULL;
 }
 
-void BoxAndArrowLayer::set_box(const Coord3D *point) {
-  // Resets the box to a rectangular prism with one corner at (0, 0,
-  // 0) and the opposite corner at the position specified by point.
-  double dimensions[3];
-  dimensions[0] = (*point)[0];
-  dimensions[1] = (*point)[1];
-  dimensions[2] = (*point)[2];
-  for (int i = 0; i < 8; i++) {
-    points->SetPoint(i, dimensions[0] * double(i % 2), dimensions[1] * double((i / 2) % 2), dimensions[2] * double((i / 4) % 2));
-  }
+void BoxWidgetLayer::set_box(const Coord3D *point) {
+  // Resets the box to a rectangular prism with one corner at the
+  // origin and the opposite corner at point.
+  CRectangularPrism JSandCPE(Coord3D(0.0, 0.0, 0.0), *point); // Bachs
+  set_box(&JSandCPE);
 }
 
-void BoxAndArrowLayer::set_totalVisibility(bool visible) {
-  // Sets whether or not the box is visible, and whether or not the
-  // vtk arrow is allowed to be visible, once the renderer is called.
-  totalVisibility = visible;
-  boxActor->SetVisibility(int(visible));
-  arrowActor->SetVisibility(int(visible && arrowVisibility));
+void BoxWidgetLayer::set_box(const CRectangularPrism *box) {
+  Coord3D corner0(box->lowerleftback());
+  Coord3D corner1(box->upperrightfront());
+  points->SetPoint(0, corner0[0], corner0[1], corner0[2]);
+  points->SetPoint(1, corner1[0], corner0[1], corner0[2]);
+  points->SetPoint(2, corner0[0], corner1[1], corner0[2]);
+  points->SetPoint(3, corner1[0], corner1[1], corner0[2]);
+  points->SetPoint(4, corner0[0], corner0[1], corner1[2]);
+  points->SetPoint(5, corner1[0], corner0[1], corner1[2]);
+  points->SetPoint(6, corner0[0], corner1[1], corner1[2]);
+  points->SetPoint(7, corner1[0], corner1[1], corner1[2]);
+  points->Modified();
 }
 
-void BoxAndArrowLayer::set_arrowVisibility(bool visible) {
-  // This sets whether or not the vtk arrow is to be visible whenever
-  // the totalVisibility is true. If totalVisibility is false, then
-  // the arrow will not be visible.
-  arrowVisibility = visible;
-  arrowActor->SetVisibility(int(visible && totalVisibility));
+CRectangularPrism *BoxWidgetLayer::get_box() const {
+  Coord3D pt0(points->GetPoint(0));
+  Coord3D pt1(points->GetPoint(7));
+  return new CRectangularPrism(pt0, pt1);
 }
 
-void BoxAndArrowLayer::set_arrowShaftRadius(double radius) {
-  arrowSource->SetShaftRadius(radius);
-}
-
-void BoxAndArrowLayer::set_arrowTipRadius(double radius) {
-  arrowSource->SetTipRadius(radius);
-}
-
-void BoxAndArrowLayer::set_arrowLength(double length) {
-  arrowScaling->Identity();
-  arrowScaling->Scale(-length, -length, -length);
-}
-
-void BoxAndArrowLayer::set_arrowColor(const CColor& color) {
-  arrowActor->GetProperty()->SetColor(color.getRed(), color.getGreen(), 
-				      color.getBlue());
-}
-
-void BoxAndArrowLayer::set_pointSize(float size) {
+void BoxWidgetLayer::set_pointSize(float size) {
   boxActor->GetProperty()->SetPointSize(size);
 }
 
-void BoxAndArrowLayer::set_lineWidth(float width) {
+void BoxWidgetLayer::set_lineWidth(float width) {
   boxActor->GetProperty()->SetLineWidth(width);
 }
 
-void BoxAndArrowLayer::set_lineColor(const CColor &color) {
-  boxActor->GetProperty()->SetEdgeColor(color.getRed(), color.getGreen(), color.getBlue());
+void BoxWidgetLayer::set_lineColor(const CColor &color) {
+  boxActor->GetProperty()->SetEdgeColor(
+			color.getRed(), color.getGreen(), color.getBlue());
 }
 
-void BoxAndArrowLayer::set_faceColor(const CColor &color) {
-  boxActor->GetProperty()->SetColor(color.getRed(), color.getGreen(), color.getBlue());
+void BoxWidgetLayer::set_faceColor(const CColor &color) {
+  boxActor->GetProperty()->SetColor(
+		    color.getRed(), color.getGreen(), color.getBlue());
 }
 
-void BoxAndArrowLayer::set_faceOpacity(double opacity) {
+void BoxWidgetLayer::set_opacity(double opacity) {
   boxActor->GetProperty()->SetOpacity(opacity);
 }
 
-void BoxAndArrowLayer::set_position(const Coord3D *point) {
+void BoxWidgetLayer::set_position(const Coord3D *point) {
   // Sets the position of the 0th point of the box to the specified
   // location.
 
@@ -1025,10 +953,11 @@ void BoxAndArrowLayer::set_position(const Coord3D *point) {
     }
     points->SetPoint(i, temp);
   }
+  points->Modified();
 }
 
 // TODO: Define this to work for cell types other than VTK_QUAD.
-void BoxAndArrowLayer::offset_cell(vtkIdType cellID, double offset) {
+void BoxWidgetLayer::offset_cell(vtkIdType cellID, double offset) {
   // Offsets the cell by the given amount in the direction of its
   // "normal".
   int cellType = grid->GetCellType(cellID);
@@ -1045,7 +974,8 @@ void BoxAndArrowLayer::offset_cell(vtkIdType cellID, double offset) {
     Coord3D vectors[2];
     vectors[0] = corners[1] - corners[0];
     vectors[1] = corners[2] - corners[1];
-    Coord3D *normal = new Coord3D();
+    Coord3D *normal = new Coord3D(); // TODO: Why use a pointer?
+    // TODO: Use vtk methods to get the normal
     *normal = cross(vectors[0], vectors[1]);
     double norm = sqrt(norm2(*normal));
     if (norm == 0) {
@@ -1056,18 +986,18 @@ void BoxAndArrowLayer::offset_cell(vtkIdType cellID, double offset) {
     *normal *= offset;
     for (int i = 0; i < 4; i++) {
       corners[i] += *normal;
-      points->SetPoint(pointIDs[i], corners[i][0], corners[i][1], corners[i][2]);
+      points->SetPoint(pointIDs[i],
+		       corners[i][0], corners[i][1], corners[i][2]);
     }
+    points->Modified();
     delete normal;
   } 
 }
 
-void BoxAndArrowLayer::setCoincidentTopologyParams(double factor, double units)
+void BoxWidgetLayer::setCoincidentTopologyParams(double factor, double units)
 {
   boxMapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor,
 								  units);
-  arrowMapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor,
-								    units);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1552,14 +1482,11 @@ void LineSegmentLayer::addSegment(const Coord *a, const Coord *b) {
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // The pipeline is:
-// Image -> oofImageToGrid -> 
-//    overlayers -> oofExcludeVoxels -> Clipper -> Mapper
-// Overlayers, oofExcludeVoxels, and Clipper are all optional but must
-// occur in that order if they're used.  There may be more than one
-// instance of oofOverlayVoxels, or other similar operations, in the
-// overlayers list.
+// Image -> oofImageToGrid -> oofExcludeVoxels -> Clipper -> Mapper
+// oofExcludeVoxels and Clipper are all optional but must
+// occur in that order if they're used.
 
-// oofImageToGrid and oofOverlayVoxels are vtkRectilinearGridAlgorithms.
+// oofImageToGrid is a vtkRectilinearGridAlgorithm.
 // oofExcludeVoxels and Clipper are vtkUnstructuredGridAlgorithms.
 // vtkAlgorithm is a base class for Mapper, too.
 
@@ -1579,17 +1506,14 @@ ImageCanvasLayer::ImageCanvasLayer(
     locator(vtkSmartPointer<vtkCellLocator>::New()),
     mapper(vtkSmartPointer<vtkDataSetMapper>::New()),
     actor(vtkSmartPointer<vtkActor>::New()),
-    filter(0),
-    bottomOverlayer(0),
-    topOverlayer(0)
+    filter(0)
 {
   addProp(actor);
   actor->SetMapper(mapper);
   locator->LazyEvaluationOn();
-
   // Build the initial pipeline, with no image and no excluded voxels.
   pipelineLock.acquire();
-  downstreamSocket()->SetInputConnection(gridifier->GetOutputPort());
+  mapper->SetInputConnection(gridifier->GetOutputPort());
   pipelineLock.release();
   set_clipping(canvas->clipping(), canvas->invertedClipping());
 }
@@ -1624,64 +1548,21 @@ void ImageCanvasLayer::set_image(const ImageBase *img, const Coord *location,
   }
 }
 
-// TODO: Does opacity work?
+vtkSmartPointer<vtkAlgorithmOutput> ImageCanvasLayer::griddedImage() {
+  return gridifier->GetOutputPort();
+}
+
 void ImageCanvasLayer::set_opacity(double opacity) {
   actor->GetProperty()->SetOpacity(opacity);
-}
-
-void ImageCanvasLayer::noOverlayers() {
-  // There are no overlayers.  Connect the grid directly to the
-  // downstream pipeline socket.
-  if(topOverlayer) {
-    topOverlayer = 0;
-    downstreamSocket()->SetInputConnection(gridifier->GetOutputPort());
-  }
-}
-
-void ImageCanvasLayer::connectBottomOverlayer(ImageCanvasOverlayer *overlayer) {
-  vtkSmartPointer<vtkAlgorithmOutput> gridOut = gridifier->GetOutputPort();
-  if(overlayer != bottomOverlayer || bottomOverlayer->input != gridOut) {
-    if(bottomOverlayer) {
-      bottomOverlayer->disconnect();
-    }
-    bottomOverlayer = overlayer;
-    overlayer->connectToAlgorithm(gridOut);
-  }
-}
-
-void ImageCanvasLayer::connectTopOverlayer(ImageCanvasOverlayer *overlayer) {
-  if(overlayer != topOverlayer) {
-    topOverlayer = overlayer;
-    downstreamSocket()->SetInputConnection(overlayer->output());
-  }
-}
-
-vtkSmartPointer<vtkAlgorithm> ImageCanvasLayer::downstreamSocket() const {
-  // Return the object that the downstream end of the overlayer
-  // pipeline should be plugged into.
-  if(excluder.GetPointer() != 0)
-    return excluder;
-  if(clipper.GetPointer() != 0)
-    return clipper;
-  return mapper;
-}
-
-vtkSmartPointer<vtkAlgorithmOutput> ImageCanvasLayer::overlayerOutput() {
-  if(topOverlayer)
-    return topOverlayer->output();
-  return gridifier->GetOutputPort();
 }
 
 vtkSmartPointer<vtkAlgorithmOutput> ImageCanvasLayer::clipperInput() {
   if(excluder.GetPointer() != 0)
     return excluder->GetOutputPort();
-  return overlayerOutput();
+  return gridifier->GetOutputPort();
 }
 
 void ImageCanvasLayer::set_filter(VoxelFilter *condition) {
-  // Voxel exclusion needs to be applied downstream from the
-  // overlayers, because it creates a unstructured grid, but the
-  // overlayers work on a rectilinear grid.
   pipelineLock.acquire();
 
   vtkSmartPointer<vtkAlgorithm> socket; // what the excluder connects to
@@ -1694,8 +1575,7 @@ void ImageCanvasLayer::set_filter(VoxelFilter *condition) {
     if(excluder.GetPointer() == 0) {
       // Create and connect a new excluder.
       excluder = vtkSmartPointer<oofExcludeVoxels>::New();
-      // connect last overlay or grid to excluder input
-      excluder->SetInputConnection(overlayerOutput());
+      excluder->SetInputConnection(gridifier->GetOutputPort());
       // connect excluder output to clipper or mapper
       socket->SetInputConnection(excluder->GetOutputPort());
     } 
@@ -1708,8 +1588,7 @@ void ImageCanvasLayer::set_filter(VoxelFilter *condition) {
       // Remove existing excluder
       filter = 0;
       excluder = vtkSmartPointer<oofExcludeVoxels>();
-      // connect last overlay or grid to clipper or mapper
-      socket->SetInputConnection(overlayerOutput());
+      socket->SetInputConnection(gridifier->GetOutputPort());
     }
   }
   pipelineLock.release();
@@ -1781,75 +1660,93 @@ void ImageCanvasLayer::setCoincidentTopologyParams(double factor, double units)
     
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-ImageCanvasOverlayer::ImageCanvasOverlayer(
-	   GhostOOFCanvas *canvas, const std::string &nm,
-	   vtkSmartPointer<vtkRectilinearGridAlgorithm> alg)
-  : OOFCanvasLayerBase(canvas, nm),
-    algorithm(alg),
-    input(vtkSmartPointer<vtkAlgorithmOutput>())
+// MonochromeVoxelLayer connects to an existing ImageCanvasLayer and
+// uses its gridifier output to draw voxels, all of which are the same
+// color, but may be translucent.  It's used to display the set of
+// selected voxels.  To be useful in that context, the vtk coincident
+// object resolution machinery must put this layer "above" the image
+// that it's based on, and this layer must be filtered to display only
+// selected voxels.
+
+MonochromeVoxelLayer::MonochromeVoxelLayer(GhostOOFCanvas *canvas,
+				       const std::string &nm)
+  : OOFCanvasLayer(canvas, nm),
+    imageLayer(0),
+    excluder(vtkSmartPointer<oofExcludeVoxels>::New()),
+    mapper(vtkSmartPointer<vtkDataSetMapper>::New()),
+    actor(vtkSmartPointer<vtkActor>::New())
 {
-  // oofcerr << "ImageCanvasOverlayer::ctor: " << this << " " << name()
-  // 	  << std::endl;
+  // Pipeline is
+  //   image gridifier -> excluder -> clipper (optional) -> mapper
+  // Unlike ImageCanvasLayer, there is always an excluder.
+  addProp(actor);
+  actor->SetMapper(mapper);
+  mapper->ScalarVisibilityOff();
+  set_clipping(canvas->clipping(), canvas->invertedClipping());
+  // excluder->DebugOn();
 }
 
-ImageCanvasOverlayer::~ImageCanvasOverlayer() {}
+MonochromeVoxelLayer::~MonochromeVoxelLayer() {}
 
-void ImageCanvasOverlayer::setModified() {
-  algorithm->Modified();
-}
-
-void ImageCanvasOverlayer::disconnect() {
-  if(input.GetPointer() != 0) {
-    algorithm->RemoveAllInputs();
-    input = vtkSmartPointer<vtkAlgorithmOutput>();
-  }
-}
-
-void ImageCanvasOverlayer::connectToAlgorithm(
-			      vtkSmartPointer<vtkAlgorithmOutput> inp)
-{
-  if(inp != input) {
-    disconnect();
-    algorithm->SetInputConnection(inp);
-    input = inp;
-  }
-}
-
-void ImageCanvasOverlayer::connectToOverlayer(ImageCanvasOverlayer *other) {
-  connectToAlgorithm(other->output());
-}
-
-vtkSmartPointer<vtkAlgorithmOutput> ImageCanvasOverlayer::output() {
-  return algorithm->GetOutputPort();
-}
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-OverlayVoxels::OverlayVoxels(GhostOOFCanvas *canvas, const std::string &name)
-  : ImageCanvasOverlayer(canvas, name, vtkSmartPointer<oofOverlayVoxels>::New())
-{}
-
-const std::string &OverlayVoxels::classname() const {
-  static const std::string nm("OverlayVoxels");
+const std::string &MonochromeVoxelLayer::classname() const {
+  static const std::string nm("MonochromeVoxelLayer");
   return nm;
 }
 
-void OverlayVoxels::setTintOpacity(double opacity) {
-  oofOverlayVoxels::SafeDownCast(algorithm)->SetOpacity(opacity);
+void MonochromeVoxelLayer::setModified() {
+  imageLayer->setModified();
 }
 
-void OverlayVoxels::setColor(const CColor *color) {
-  double r = color->getRed();
-  double g = color->getGreen();
-  double b = color->getBlue();
-  double x[] = {r, g, b};
-  oofOverlayVoxels::SafeDownCast(algorithm)->SetColor(x);
+void MonochromeVoxelLayer::set_opacity(double opacity) {
+  actor->GetProperty()->SetOpacity(opacity);
 }
 
-void OverlayVoxels::setPixelSet(PixelSet *pixset) {
-  oofOverlayVoxels::SafeDownCast(algorithm)->SetPixelSet(pixset);
+void MonochromeVoxelLayer::set_color(const CColor &color) {
+  actor->GetProperty()->SetColor(color.getRed(), color.getGreen(),
+				 color.getBlue());
 }
 
-void OverlayVoxels::clearPixelSet() {
-  oofOverlayVoxels::SafeDownCast(algorithm)->SetPixelSet(0);
+void MonochromeVoxelLayer::set_image_layer(ImageCanvasLayer *newImageLayer) {
+  if(imageLayer) {
+    // Disconnect old image layer
+    excluder->RemoveAllInputs();
+  }
+  excluder->SetInputConnection(newImageLayer->griddedImage());
+  imageLayer = newImageLayer;
 }
+
+void MonochromeVoxelLayer::set_filter(VoxelFilter *philtre) {
+  // When used in the PixelSelectionDisplay, the filter will allow
+  // only the selected voxels to be shown.  See
+  // common/IO/pixelselectiondisplay.py.
+  filter = philtre;
+  filter->setCanvasLayer(this);
+  excluder->SetFilter(filter);
+  setModified();
+}
+
+void MonochromeVoxelLayer::start_clipping() {
+  clipper = getClipper(this);
+  clipper->SetInputConnection(excluder->GetOutputPort());
+  mapper->SetInputConnection(clipper->GetOutputPort());
+}
+
+void MonochromeVoxelLayer::stop_clipping() {
+  if(clipState == CLIP_ON) {
+    clipper->RemoveAllInputs();
+    clipper = vtkSmartPointer<vtkTableBasedClipDataSet>(); // null object
+  }
+  mapper->SetInputConnection(excluder->GetOutputPort());
+}
+
+void MonochromeVoxelLayer::set_clip_parity(bool inverted) {
+  clipper->SetInsideOut(!inverted);
+}
+
+void MonochromeVoxelLayer::setCoincidentTopologyParams(double factor,
+						       double units)
+{
+  mapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor, units);
+}
+
+

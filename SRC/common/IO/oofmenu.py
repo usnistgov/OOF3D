@@ -525,6 +525,7 @@ class OOFMenuItem:
     def addItem(self, item):            # add a menu item to this menu
         for i in range(len(self.items)): # see if new item replaces an old one
             if item.name == self.items[i].name:
+                debug.fmsg("Replacing", item, "in menu", self)
                 self.items[i] = item    # replace an old item
                 break
         else:

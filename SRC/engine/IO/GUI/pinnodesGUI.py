@@ -25,67 +25,31 @@ from ooflib.common.IO.GUI import mousehandler
 from ooflib.common.IO.GUI import toolboxGUI
 from ooflib.common.IO.GUI import tooltips
 from ooflib.engine.IO import pinnodes
+from ooflib.engine.IO import pinnodesmenu
 
 import gtk
-from math import *
 
 class PinnedNodesToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     def __init__(self, pinnodestoolbox):
         debug.mainthreadTest()
 
-        toolboxGUI.GfxToolbox.__init__(self, "Pin Nodes", pinnodestoolbox)
+        toolboxGUI.GfxToolbox.__init__(self, pinnodestoolbox)
         mainbox = gtk.VBox()
         self.gtk.add(mainbox)
 
         infoframe = gtk.Frame()
         mainbox.pack_start(infoframe, expand=0, fill=0)
-        info = gtk.Label("""Click a node to pin it,
-Shift-click to unpin it,
-And Ctrl-click to toggle.""")
+        info = gtk.Label("""Click a node to pin it.
+Shift-click to pin additional nodes.
+Ctrl-click to toggle a node.
+Shift-ctrl-click to unpin a node.""")
         infoframe.add(info)
             
         self.updateLock = lock.Lock()
        
-        if config.dimension() == 2:
-            self.table = gtk.Table(columns=3, rows=5)
-            r = 2  # variable used to make 2D and 3D code overlap better
-        elif config.dimension() == 3:
-            self.table = gtk.Table(columns=3, rows=4)
-            r = 0
+        self.table = gtk.Table(columns=3, rows=4)
+        r = 0
         mainbox.pack_start(self.table, expand=0, fill=0)
-
-        if config.dimension() == 2:
-            label = gtk.Label('Mouse')
-            label.set_alignment(1.0, 0.5)
-            self.table.attach(label, 0,1, 0,r, xpadding=2, xoptions=0)
-
-            label = gtk.Label('x=')
-            label.set_alignment(1.0, 0.5)
-            self.table.attach(label, 1,2, 0,1, xpadding=2, xoptions=gtk.FILL)
-            self.xtext = gtk.Entry()
-            gtklogger.setWidgetName(self.xtext,"Mouse X")
-            self.xtext.set_size_request(12*guitop.top().digitsize, -1)
-            self.xtext.set_editable(0)
-            self.table.attach(self.xtext, 2,3, 0,1,
-                              xpadding=2, xoptions=gtk.EXPAND|gtk.FILL)
-            #tooltips.set_tooltip_text(self.xtext, "x position of the mouse")
-            self.xtext.set_tooltip_text("x position of the mouse")
-
-            label = gtk.Label('y=')
-            label.set_alignment(1.0, 0.5)
-            self.table.attach(label, 1,2, 1,2, xpadding=2, xoptions=gtk.FILL)
-            self.ytext = gtk.Entry()
-            gtklogger.setWidgetName(self.ytext,"Mouse Y")
-            self.ytext.set_size_request(12*guitop.top().digitsize, -1)
-            self.ytext.set_editable(0)
-            self.table.attach(self.ytext, 2,3, 1,2,
-                              xpadding=2, xoptions=gtk.EXPAND|gtk.FILL)
-            #tooltips.set_tooltip_text(self.ytext, "y position of the mouse")
-            self.ytext.set_tooltip_text("y position of the mouse")
-            
-            self.table.set_row_spacing(r-1, 5)
-
-
 
         label = gtk.Label("Node")
         label.set_alignment(1.0, 0.5)
@@ -114,17 +78,16 @@ And Ctrl-click to toggle.""")
                           xpadding=2, xoptions=gtk.EXPAND|gtk.FILL)
         r += 1
 
-        if config.dimension() == 3:
-            label = gtk.Label('z=')
-            label.set_alignment(1.0, 0.5)
-            self.table.attach(label, 1,2, r,r+1, xpadding=2, xoptions=gtk.FILL)
-            self.nodeztext = gtk.Entry()
-            gtklogger.setWidgetName(self.nodeztext,"Node Z")
-            self.nodeztext.set_size_request(12*guitop.top().digitsize, -1)        
-            self.nodeztext.set_editable(0)
-            self.table.attach(self.nodeztext, 2,3, r,r+1,
-                              xpadding=2, xoptions=gtk.EXPAND|gtk.FILL)
-            r += 1
+        label = gtk.Label('z=')
+        label.set_alignment(1.0, 0.5)
+        self.table.attach(label, 1,2, r,r+1, xpadding=2, xoptions=gtk.FILL)
+        self.nodeztext = gtk.Entry()
+        gtklogger.setWidgetName(self.nodeztext,"Node Z")
+        self.nodeztext.set_size_request(12*guitop.top().digitsize, -1)        
+        self.nodeztext.set_editable(0)
+        self.table.attach(self.nodeztext, 2,3, r,r+1,
+                          xpadding=2, xoptions=gtk.EXPAND|gtk.FILL)
+        r += 1
             
         self.pintext = gtk.Label()
         gtklogger.setWidgetName(self.pintext,"Pin Label")
@@ -212,7 +175,7 @@ And Ctrl-click to toggle.""")
         self.invertbutton.set_sensitive(skelctxt is not None)
 
         gtklogger.checkpoint(self.gfxwindow().name + " " +
-                             self._name + " updated")
+                             self.name() + " updated")
 
     def currentSkeleton(self):
         return self.gfxwindow().topwho('Skeleton')
@@ -257,8 +220,7 @@ And Ctrl-click to toggle.""")
         debug.mainthreadTest();
         self.nodextext.set_text("%-11.4g" % point[0])
         self.nodeytext.set_text("%-11.4g" % point[1])
-        if config.dimension() == 3:
-            self.nodeztext.set_text("%-11.4g" % point[2])
+        self.nodeztext.set_text("%-11.4g" % point[2])
         if pinned:
             self.pintext.set_text('pinned')
         else:
@@ -266,8 +228,7 @@ And Ctrl-click to toggle.""")
     def showNoNodePosition(self):
         self.nodextext.set_text('')
         self.nodeytext.set_text('')
-        if config.dimension() == 3:
-            self.nodeztext.set_text('')
+        self.nodeztext.set_text('')
         self.pintext.set_text('')
 
     #=--=##=--=##=--=##=--=##=--=##=--=#
@@ -275,68 +236,31 @@ And Ctrl-click to toggle.""")
     def acceptEvent(self, eventtype):
         return eventtype in ('move', 'up')
 
-    def up(self, x, y, button, shift, ctrl):
+    def up(self, x, y, buttons):
         debug.mainthreadTest()
-        if config.dimension() == 2:
-            self.up2(x, y, shift, ctrl)
-        else:
-            self.up3(x, y, button, shift, ctrl)
-
-    def up2(self, x, y, shift, ctrl):
-        thepoint = primitives.Point(x,y)
-        skelctxt = self.getSkeletonContext()
-        if thepoint is not None: 
-            self.showPosition(thepoint) # no-op in 3D
-            # Perhaps shift and ctrl should be handled by the menu
-            # commands, as they are in pixel selection.
-            if skelctxt:
-
-                # We need to establish that there is a current node being
-                # operated on before we call the menu item -- the menu
-                # item may change that nodes selection state, and if so,
-                # the selection-state text will be updated in "update" in
-                # response to the "new pinned nodes" switchboard callback.
-                # The reason for not just doing that call here is that it
-                # gives rise to a race condition -- the menu item is
-                # threaded, and so is the switchboard callback, this
-                # routine can complete before the node's state has been
-                # changed.
-                ## TODO 3.1: Is that comment still relevant?
-
-                skel = skelctxt.getObject()
-                node = skel.nearestNode(thepoint)
-                
-                # TODO OPT: Can we pass "node" in to the menu item,
-                # instead of forcing it to re-run the nearestNode routine? 
-                
-                path = skelctxt.path()
-                if shift:
-                    self.toolbox.menu.UnPin(
-                        skeleton=path, point = thepoint)
-                elif ctrl:
-                    self.toolbox.menu.TogglePin(
-                        skeleton=path, point = thepoint)
-                else:
-                    self.toolbox.menu.Pin(
-                        skeleton=path, point = thepoint)
-
-                gtklogger.checkpoint(self.gfxwindow().name + " Pin Nodes up")
-
-    def up3(self, x, y, button, shift, ctrl):
         skelctxt = self.getSkeletonContext()
         if skelctxt:
-            canvas = self.toolbox.gfxwindow().oofcanvas
+            canvas = self.gfxwindow().oofcanvas
             view = canvas.get_view()
             pt = canvas.display2Physical(view, x, y)
-            path = skelctxt.path()
-            if shift:
-                self.toolbox.menu.UnPin(skeleton=path, point=pt, view=view)
-            elif ctrl:
-                self.toolbox.menu.TogglePin(skeleton=path, point=pt, view=view)
-            else:
-                self.toolbox.menu.Pin(skeleton=path, point=pt, view=view)
+            subthread.execute(self.up_subthread, (view, buttons, pt))
 
-    def move(self, x, y, shift, ctrl):
+    def up_subthread(self, view, buttons, pt):
+        # findClickedPoint must be run on a subthread
+        skelctxt = self.getSkeletonContext()
+        point = self.gfxwindow().findClickedPoint(skelctxt, pt, view)
+        if point is not None:
+            path = skelctxt.path()
+            if buttons.shift and buttons.ctrl:
+                pinnodesmenu.pinnodesmenu.UnPin(skeleton=path, node=point)
+            elif buttons.ctrl:
+                pinnodesmenu.pinnodesmenu.TogglePin(skeleton=path, node=point)
+            elif buttons.shift:
+                pinnodesmenu.pinnodesmenu.AddPin(skeleton=path, node=point)
+            else:
+                pinnodesmenu.pinnodesmenu.Pin(skeleton=path, node=point)
+
+    def move(self, x, y, buttons):
         # The toolbox is updated when the mouse *moves*, even before a
         # click, because it's displaying node information which helps
         # the user decide which node to click on.
@@ -346,25 +270,10 @@ And Ctrl-click to toggle.""")
         ## should be cached whenever they change.  A previous attempt
         ## to do that missed some changes, so the caching was removed.
         skelctxt = self.getSkeletonContext()
-        if config.dimension() == 2:
-            self.move2(skelctxt, x, y)
-        else:
-            view = self.toolbox.gfxwindow().oofcanvas.get_view()
-            canvas = self.toolbox.gfxwindow().oofcanvas
-            pt = canvas.display2Physical(view, x, y)
-            subthread.execute(self.move3, (skelctxt, view, pt))
-
-    def move2(self, skelctxt, x, y):
-        if skelctxt is not None:
-            point = primitives.Point(x,y)
-            self.showPosition(point)
-            if point is not None:
-                node = skelctxt.getObject().nearestNode(point)
-                if node:
-                    self.showNodePosition(node.position(), node.pinned())
-                    return
-        self.showNodePosition()
-        gtklogger.checkpoint(self.gfxwindow().name + " Pin Nodes move 2D")
+        view = self.toolbox.gfxwindow().oofcanvas.get_view()
+        canvas = self.toolbox.gfxwindow().oofcanvas
+        pt = canvas.display2Physical(view, x, y)
+        subthread.execute(self.move3, (skelctxt, view, pt))
 
     def move3(self, skelctxt, view, pt):
         debug.subthreadTest()
@@ -389,16 +298,16 @@ And Ctrl-click to toggle.""")
     # there is no skeleton context, so it's safe to use
     # getSkeletonPath.
     def invertCB(self, button):
-        self.toolbox.menu.Invert(skeleton=self.getSkeletonPath())
+        pinnodesmenu.pinnodesmenu.Invert(skeleton=self.getSkeletonPath())
     
     def undoCB(self, button):
-        self.toolbox.menu.Undo(skeleton=self.getSkeletonPath())
+        pinnodesmenu.pinnodesmenu.Undo(skeleton=self.getSkeletonPath())
 
     def unpinallCB(self, button):
-        self.toolbox.menu.UnPinAll(skeleton=self.getSkeletonPath())
+        pinnodesmenu.pinnodesmenu.UnPinAll(skeleton=self.getSkeletonPath())
 
     def redoCB(self, button):
-        self.toolbox.menu.Redo(skeleton=self.getSkeletonPath())
+        pinnodesmenu.pinnodesmenu.Redo(skeleton=self.getSkeletonPath())
 
 def _makeGUI(self):
     return PinnedNodesToolboxGUI(self)

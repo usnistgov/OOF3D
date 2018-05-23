@@ -21,6 +21,7 @@
 #include "common/IO/bitoverlay.h"
 
 class ActiveArea;
+class SimpleCellLayer;
 
 class CPixelSelection {
 protected:

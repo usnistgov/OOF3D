@@ -16,7 +16,9 @@ COrientedPlanePtr.__repr__ = (lambda self:"COrientedPlane(normal=%s, offset=%g)"
 # CRectanglePtr.__repr__ = lambda self:"CRectangle(Coord(%g, %g), Coord(%g, %g))"\
 #                          % (self.xmin(), self.ymin(), self.xmax(), self.ymax())
 
-## if config.dimension() == 3:
-##     CRectangularPrismPtr.__repr__ = lambda self:"CRectangularPrism(Coord(%g, %g, %g), Coord(%g, %g, %g))"\
-##                          % (self.xmin(), self.ymin(), self.zmin(), self.xmax(), self.ymax(), self.zmax())
+def CRectangularPrism__repr__(self):
+    return "CRectangularPrism((%s, %s, %s), (%s, %s, %s))" % \
+        (self.xmin(), self.ymin(), self.zmin(),
+         self.xmax(), self.ymax(), self.zmax())
 
+CRectangularPrismPtr.__repr__= CRectangularPrism__repr__

@@ -20,29 +20,81 @@ Use Eigen?  Use DPF's sparse_matrix_optimization branch?
 
 Remove opacity param from MicrostructureMaterialDisplay?  Is it used?
 It's passed through to vtkActor::GetProperty()->SetOpacity(), but it
-doesn't have any effect on what's displayed.  Also, there's a TODO
-asking if ImageCanvasLayer::set_opacity() works.
+doesn't have any effect on what's displayed.  [Also, there's a TODO
+asking if ImageCanvasLayer::set_opacity() works. -- Fixed]
 
 Fix bug: Using upper-right corner arrows for switching views sometimes
 draws the canvas in the wrong location.
 
-Fix bug: Typing to select a line in the file chooser isn't working on Mac.
+Fix bug: Typing to select a line in the file chooser isn't working on
+Mac.  Upgrade to gtk+3 required?
 
-Fix bug or badly designed feature: Select voxels or skeleton
-components while a clipping plane plane-and-arrow widget is displayed.
-It's not clear whether clicking on the widget should be interpreted as
-a selection operation or not.   Probably the widget should not be
-visible unless the Viewer toolbox is active.
+The Box widget for selecting voxels shouldn't be visible unless the
+Voxel Selection method is set to Box, and should be dimmed when its
+toolbox isn't active.  Mouse-down on one side of the box should
+highlight that side, so the user knows which side has been clicked.
+Should image and/or microstructure layers automatically become
+translucent when the box widget is active?  Maybe there should be
+options for making the image translucent, and for dimming or hiding
+the box when the widget isn't active.  Should the voxels on the faces
+of the box be drawn?
 
 Fix bug?  Drag and drop on layer list on Mac/Cocoa can result in
 duplicate entries in list, and the layers aren't actually reordered.
 The signal for deleting the list entry isn't being sent.  Doing
 anything that forces the list to be redrawn fixes it.
 
+Fix bug: load5color.log; open graphics window; add clipping plane
+w/default values (x, offset=0); drag clipping plane to right.  Front
+face of image is not rendered.  Modifying the view in any way fixes
+it.
+
+Add an 'editable' keyword argument to all Parameters, with default
+value True.  Parameters that aren't editable appear in ParameterTable
+but can't be edited by the user.  Make the Point parameters in
+selection toolboxes uneditable, since they should come only from the
+canvas and the user shouldn't type in them.  Doing this will require
+changing all Parameter classes, so it should be done only after all
+the other selection gui changes to keep the git commits reasonable.
+
+When a click doesn't result in a selection because it went to a layer
+that can't handle it, display a warning.
+
+Remove the BitmapOverlay class.  It's not used for graphics
+anymore. It's only used to provide a quick way to see if a voxel is
+selected, but an array of bools would suffice there.
+
+Change the abaqus element type in skeleton output to C3D4.  In mesh
+abaqus output it should be C3D4 or C3D10.
+
+Opacity works for Image layers but not Microstructure Material
+displays. ?
+
+Make sure that Active Volumes are respected for all voxel & skeleton
+selection operations.
+
+Use couriers for all Active Volume modifications.
+
+Segment Info toolbox isn't working.  Wrong segment is queried by mouse
+click.  Node groups aren't reported in Skeleton Info toolbox.  Segment
+groups aren't reported either, but the widget says "<Not yet
+implemented>".
+
+Skeleton boundary display isn't working.
 
 ---------------------------------------------------------------------------
 Soon
 ----
+
+Make Pin Nodes work like selections.  Shift-click pins without
+unpinning. Ctrl-click toggles.  Plain-click unpins all before
+pinning.  Use new generic selection machinery.
+
+There are a number of cases (in the skeleton selection couriers and
+probably elsewhere) in which the user chooses a range, setting both a
+min and a max value.  It would be convenient to have a Parameter and a
+Widget for this.  The widget would ensure that min <= max.  Probably
+there should be two Parameters whose widgets communicate with each other.
 
 Add a surface-smoothness-energy so surface smoothing works better.
 
@@ -79,6 +131,17 @@ done in all.
 Change AutoWidgets so that they return automatic.automatic if the text
 box is empty.  Get rid of the check button.  See TODO in
 parameterwidgets.py.
+
+Upgrade to gtk3.  Possibly switch to the VTK event loop instead of the
+gtk event loop, so that we can use VTK interactors and widgets.
+
+Warn when saving a Mesh that only contains empty elements.  Maybe
+don't allow any operations at all on such a Mesh.
+
+Adding the super-cautious destructor to SubDimensionalSet in
+edgeset.spy removed some shut-down warnings about FaceSet when running
+scheduled_output_test.py in the regression tests.  Does that mean that
+there's a memory leak and some FaceSets aren't being deleted properly?
 
 ----------------------------------------------------------------------------
 At Some Later Time
@@ -230,3 +293,93 @@ get the error "Parameter value out of range for phi".
 **  Fixed.  2018-01-31  atan2 returns -180->180 angles, but
 AngleDirection was expecting 0->360.
 
+Fix bug or badly designed feature: Select voxels or skeleton
+components while a clipping plane plane-and-arrow widget is displayed.
+It's not clear whether clicking on the widget should be interpreted as
+a selection operation or not.   Probably the widget should not be
+visible unless the Viewer toolbox is active, or should be drawn
+faintly (without its arrow?).  Maybe there should be auto-dim and
+auto-hide options in the layer plane-and-arrow settings.
+** Done: 2018-02-02
+
+Fix this: When both an Image and a Microstructure material layer are
+displayed, and one or both has a filter applied so that both should be
+visible, only the top one is visible.
+BitmapDisplayMethod.layersChanged hides all but the topmost image
+layer, and applies the overlayer pipeline to it.  This is wrong.
+Probably we should display all images and replace the overlayer
+pipeline with separate translucent vtk layers and rely on vtk's
+coincident object resolution.  Will that be too slow for drawing
+selected voxels?
+** Done: 2018-04-05
+
+Restore Skeleton selection toolboxes.
+Fix sensitization of undo/redo buttons in selection toolboxes.
+** Done: 2018-04=29
+
+Fix the Skeleton Info toolbox.
+** Done: 2018-04-30.  Hadn't been updated for new mousehandler args.
+
+Fix selection commands in the Pixel Page, which broke when the menu
+items were changed for the pixel selection toolbox.
+** Done? 2018-04-30  It seems to work.  Not sure what prompted this TODO.
+
+Fix this: Display only the white voxel group.  Clicking to select a
+single pixel on some faces (faces with normals in the +x, +y, or +z
+directions?) of the group selects the neighboring voxel instead.
+** Done: 2018-05-01.  GhostOOFCanvas::findClickedCellCenterMulti
+wasn't actually computing the cell center. Copied cell center
+computation from findClickedCellCenter.
+
+Add an "Invert" button to the Voxel Selection page, as in the Skeleton
+Selection page.
+** Done: 2018-05-01
+
+Voxel section methods are crashing when the click is outside the
+microstructure.
+** Fixed: 2018-05-01
+
+Clicking on an empty canvas with the voxel selection toolbox active
+crashes the program.  
+** Fixed: 2018-05-16
+
+Toolbox names have inconsistent underscores.
+** Fixed: 2018-05-16
+
+Update tests that broke when selection method parameters were
+changed.
+** Done: 2018-05-17
+
+Box widget should not be startable if there are no selectable layers.
+Doing so leads to a hung thread.  What if layer is deleted while
+widget is active?
+** Fixed, I think.  2018-05-17.  The widget is still startable, but
+the menuitem isn't invoked if there are no layers.  This solves the
+problem when layers are deleted while the widget is up.
+
+Bug: Voxels selected at the time a graphics window is opened aren't
+highlighted.
+** Fixed: 2018-05-17
+
+In tumble mode, view sometimes jumps on first move event.  Laptop only!
+** Fixed: 2018-05-20.  rescaleFudgeFactor wasn't being used everywhere
+it should have been in oofcanvas3D.C.
+
+Prev and Next buttons in the Skeleton Selection page aren't working.
+Check the Voxel Selection page.
+** Fixed: 2018-05-22
+
+Selecting elements by dominant pixel when there is no image or
+microstructure displayed isn't working.
+** 2018-05-22: Added "if msorimage is not None" to
+PixelElementSelectorGUI.up, which sort of avoids the problem without
+fixing it. The menu item is never called if the click doesn't select a
+voxel.  Also fixed GhostGfxWindow.findClickedCellCenterMulti, which
+wasn't releasing the gfx lock if no voxel was clicked.
+
+Display an image and select some voxels.  Hide the image.  The
+selected voxels are still displayed, but the display doesn't update
+when the selection is modified.  Either they voxels shoudn't be
+displayed, or they should be updated.
+** Fixed: 2018-05-22 PixelSelectionDisplay.whoChanged calls setEmpty
+if there's nothing to display.

@@ -35,7 +35,7 @@ class MoveNodeDisplay(display.DisplayMethod):
         display.DisplayMethod.destroy(self, destroy_canvaslayer)
 
     def draw(self, gfxwindow, device):
-        toolbox = gfxwindow.getToolboxByName("Move_Nodes")
+        toolbox = gfxwindow.getToolboxByName("Move Nodes")
         node = toolbox.selectednode.node()
         if node and toolbox.selectednode.visible:
             device.set_lineColor(self.color)
@@ -48,7 +48,7 @@ class MoveNodeDisplay(display.DisplayMethod):
     #                toolbox.selectednode.getTimeStamp())
 
     def newLayer(self):
-        self.movenodeToolbox = self.gfxwindow.getToolboxByName("Move_Nodes")
+        self.movenodeToolbox = self.gfxwindow.getToolboxByName("Move Nodes")
         self.tbcallbacks = [
             switchboard.requestCallbackMain(
                 ("node selected", self.movenodeToolbox), self.nodeSelectedCB)

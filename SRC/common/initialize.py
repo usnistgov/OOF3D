@@ -21,13 +21,13 @@ import ooflib.common.IO.clipplaneclickanddragdisplay
 import ooflib.common.IO.automatic
 import ooflib.common.IO.automaticdoc
 import ooflib.common.IO.bitmapdisplay
-import ooflib.common.IO.bitoverlaydisplay
 import ooflib.common.IO.colormap
 import ooflib.common.IO.menudump
 import ooflib.common.IO.microstructuremenu
 import ooflib.common.IO.pixelgroupmenu
 import ooflib.common.IO.pixelinfo
 import ooflib.common.IO.pixelinfodisplay
+import ooflib.common.IO.pixelselectiondisplay
 import ooflib.common.IO.pixelselectionmenu
 import ooflib.common.IO.pixelselectiontoolbox
 import ooflib.common.IO.progressbar

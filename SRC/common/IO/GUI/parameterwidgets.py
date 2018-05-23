@@ -10,6 +10,7 @@
 
 # GTK widgets for inputting Parameter objects.
 from ooflib.SWIG.common import config
+from ooflib.SWIG.common import coord
 from ooflib.SWIG.common import guitop
 from ooflib.SWIG.common import ooferror
 from ooflib.SWIG.common import switchboard
@@ -19,6 +20,7 @@ from ooflib.common import primitives
 from ooflib.common import strfunction
 from ooflib.common import utils
 from ooflib.common.IO import parameter
+from ooflib.common.IO import pointparameter
 from ooflib.common.IO.GUI import gtklogger
 from ooflib.common.IO.GUI import tooltips
 from ooflib.common.IO.GUI import widgetscope
@@ -622,6 +624,18 @@ def _NonNegativeIntParameter_makeWidget(self, scope=None, verbose=False):
 parameter.NonNegativeIntParameter.makeWidget = \
                                           _NonNegativeIntParameter_makeWidget
 
+class ListOfIntsWidget(GenericWidget):
+    def get_value(self):
+        x = GenericWidget.get_value(self)
+        if x is not None:
+            return x
+        return []
+    def validValue(self, string):
+        return 1
+
+def _ListOfIntsParameter_makeWidget(self, scope=None, verbose=False):
+    return ListOfIntsWidget(self, scope=scope, name=self.name, verbose=verbose)
+parameter.ListOfIntsParameter.makeWidget = _ListOfIntsParameter_makeWidget
 
 #######################
 
@@ -696,6 +710,10 @@ class ParameterTable(ParameterWidget, widgetscope.WidgetScope):
         self.showLabels = showLabels
         self.labels = []
         self.widgets = []
+        # Widgets that aren't actually displayed won't receive the gtk
+        # destoy signal and have to be destroyed explicitly, so a list
+        # of them has to be kept.
+        self.hiddenWidgets = []
         self.sbcallbacks = []           # switchboard callbacks
         self.subscopes = []             # Widgetscopes for ParameterGroups
         self.set_values()
@@ -741,6 +759,9 @@ class ParameterTable(ParameterWidget, widgetscope.WidgetScope):
             widget.verbose = True
         self.widgets.append(widget)
 
+        if param.get_data('passiveWidget'):
+            widget.gtk.set_sensitive(False)
+
         # if self.verbose:
         #     debug.fmsg("requesting callback 2")
         self.sbcallbacks.append(
@@ -759,7 +780,8 @@ class ParameterTable(ParameterWidget, widgetscope.WidgetScope):
         # if self.verbose:
         #     debug.fmsg("validity =", self.validities[tablepos])
 
-        if widget.faceless:
+        if widget.faceless or param.get_data('hiddenWidget'):
+            self.hiddenWidgets.append(widget)
             return
 
         label = gtk.Label(param.name + ' =')
@@ -780,6 +802,7 @@ class ParameterTable(ParameterWidget, widgetscope.WidgetScope):
         # if self.verbose:
         #     debug.fmsg("done")
     def get_values(self):
+        # Copy values from the widgets into the Parameters
         debug.mainthreadTest()
         exceptions = []
         for param, widget in zip(self.params, self.widgets):
@@ -792,6 +815,24 @@ class ParameterTable(ParameterWidget, widgetscope.WidgetScope):
                 exceptions.append(exception)
         if exceptions:
             raise exceptions[0]
+    def setParamValues(self, **kwargs):
+        # Set the values of the widgets for the given parameters
+        if debug.debug():
+            names = [param.name for param in self.params]
+            for name in kwargs:
+                if not name in names:
+                    raise ooferror.ErrPyProgrammingError(
+                        "No parameter named '%s' in ParameterTable!" % name)
+        for param, widget in zip(self.params, self.widgets):
+            try:
+                value = kwargs[param.name]
+            except KeyError:
+                # Not all of the params in the table are being set.
+                # That's ok.
+                pass
+            else:
+                widget.set_value(value)
+
     def vcheck(self, widgetnumber, validity):
         # callback for ('validity', widget).  This just stores the
         # validity value.  The subsequent widget changed switchboard
@@ -823,8 +864,12 @@ class ParameterTable(ParameterWidget, widgetscope.WidgetScope):
     def cleanUp(self):
         # Make sure we don't have any circular references...
         map(switchboard.removeCallback, self.sbcallbacks)
+        for widget in self.hiddenWidgets:
+            # Hidden widgets don't receive the gtk "destroy" signal.
+            widget.destroy()
         self.params = []
         self.widgets = []
+        self.hiddenWidgets = []
         ParameterWidget.cleanUp(self)
         self.destroyScope()
         self.destroySubScopes()
@@ -1190,7 +1235,7 @@ parameter.AutomaticValueSetParameter.makeWidget = _makeAVSPWidget
 
 #######################################################################
 
-class PointWidget(ParameterWidget):
+class PointWidgetBase(ParameterWidget):
     def __init__(self, param, scope=None, name=None, verbose=False):
         debug.mainthreadTest()
         
@@ -1207,8 +1252,10 @@ class PointWidget(ParameterWidget):
             label.set_alignment(1.0, 0.5)
             table.attach(label, 0,1, i,i+1, xpadding=3,
                          xoptions=gtk.FILL, yoptions=0)
-            p = parameter.FloatParameter(labels[i], 0.0) 
-            widget = FloatWidget(p, name=labels[i]+"Componenent")
+            # parameterClass and widgetClass are data members defined
+            # in the subclasses.
+            p = self.parameterClass(labels[i], 0) 
+            widget = self.widgetClass(p, name=labels[i]+"Componenent")
             self.componentWidgets.append(widget)
             table.attach(widget.gtk, 1,2, i,i+1, xpadding=3,
                          xoptions=gtk.EXPAND|gtk.FILL, yoptions=0)
@@ -1221,11 +1268,13 @@ class PointWidget(ParameterWidget):
         valid = all(w.isValid() for w in self.componentWidgets)
         self.widgetChanged(valid, interactive=0)
     def set_value(self, point):
-        for i in range(config.dimension()):
-            self.componentWidgets[i].set_value(point[i])
+        if point is not None:
+            for i in range(config.dimension()):
+                self.componentWidgets[i].set_value(point[i])
     def get_value(self):
         components = tuple(w.get_value() for w in self.componentWidgets)
-        return primitives.Point(*components)
+        # valueClass is defined in the subclasses.
+        return self.valueClass(*components)
     def widgetChangeCB(self, interactive):
         self.widgetChanged(all(w.isValid() for w in self.componentWidgets),
                            interactive)
@@ -1233,8 +1282,35 @@ class PointWidget(ParameterWidget):
         map(switchboard.removeCallback, self.sbcallbacks)
         ParameterWidget.cleanUp(self)
 
+class PointWidget(PointWidgetBase):
+    parameterClass = parameter.FloatParameter
+    widgetClass = FloatWidget
+    valueClass = primitives.Point
+
+class iPointWidget(PointWidgetBase):
+    parameterClass = parameter.IntParameter
+    widgetClass = IntWidget
+    valueClass = primitives.iPoint
+
 def _PointParameter_makeWidget(self, scope=None, verbose=False):
     return PointWidget(self, scope=scope, name=self.name, verbose=verbose)
 
-primitives.PointParameter.makeWidget = _PointParameter_makeWidget
+pointparameter.PointParameter.makeWidget = _PointParameter_makeWidget
+
+def _iPointParameter_makeWidget(self, scope=None, verbose=False):
+    return iPointWidget(self, scope=scope, name=self.name, verbose=verbose)
+
+pointparameter.iPointParameter.makeWidget = _iPointParameter_makeWidget
+
+
+class CoordWidget(PointWidget):
+    def get_value(self):
+        pt = PointWidget.get_value(self)
+        if pt is not None:
+            return coord.Coord(pt[0], pt[1], pt[2])
+
+def _CoordParameter_makeWidget(self, scope=None, verbose=False):
+    return CoordWidget(self, scope=scope, name=self.name, verbose=verbose)
+
+coord.CoordParameter.makeWidget = _CoordParameter_makeWidget
  

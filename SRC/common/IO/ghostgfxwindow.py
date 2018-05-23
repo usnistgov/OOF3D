@@ -46,6 +46,7 @@ from ooflib.common.IO import mainmenu
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
 from ooflib.common.IO import placeholder
+from ooflib.common.IO import pointparameter
 from ooflib.common.IO import whoville
 from ooflib.common.IO import xmlmenudump
 from ooflib.engine.IO import meshparameters
@@ -862,7 +863,7 @@ class GhostGfxWindow:
                 'InFocussed',
                 callback=self.zoomInFocussed,
                 secret=1,
-                params=[primitives.PointParameter(
+                params=[pointparameter.PointParameter(
                             'focus', tip='Point to magnify about.')],
                 help='Magnify the image about a mouse click.',
                 discussion="""<para>
@@ -884,7 +885,7 @@ class GhostGfxWindow:
                 'OutFocussed',
                 callback=self.zoomOutFocussed,
                 secret=1,
-                params=[primitives.PointParameter(
+                params=[pointparameter.PointParameter(
                             'focus', tip='Point to demagnify about.')],
                 help='Magnify the image about a mouse click.',
                 discussion="""<para>
@@ -1244,9 +1245,8 @@ class GhostGfxWindow:
     def shutdownGfx_menu(self):
         # The non-gui part of the gfx window shutdown procedure.
         debug.mainthreadTest()
-        # To prevent timiing issues, the whole window shutdown
-        # sequence is on the main thread, so the gfxLock isn't
-        # acquired here.
+        # To prevent timing issues, the whole window shutdown sequence
+        # is on the main thread, so the gfxLock isn't acquired here.
 
         self.oofcanvas = None   # calls the OOFCanvas3D destructor
 
@@ -1689,6 +1689,12 @@ class GhostGfxWindow:
                     break
         return layerlist
 
+    def allWhoClassLayers(self, *whoclasses):
+        return [layer for layer in self.layers
+                if (not layer.hidden
+                    and (layer.who().getClassName() in whoclasses)
+                    and not isinstance(layer.who(), whoville.WhoProxy))]
+
     def topmost(self, *whoclasses):
         # Find the topmost layer whose 'who' belongs to the given
         # whoclass.  Eg, topmost('Image') returns the topmost image.
@@ -1701,6 +1707,14 @@ class GhostGfxWindow:
             for method in displaymethods:
                 if isinstance(self.layers[i], method):
                     return self.layers[i]
+
+    def allWhoClassNames(self):
+        whoclasses = set()
+        for layer in self.layers:
+            who = layer.who()
+            if (not isinstance(who, whoville.WhoProxy) and not layer.hidden):
+                whoclasses.add(who.getClassName())
+        return whoclasses
 
     #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -1881,6 +1895,25 @@ class GhostGfxWindow:
         finally:
             self.releaseGfxLock()
 
+    def findClickedCellCenterMulti(self, layers, point, view):
+        try:
+            self.acquireGfxLock()
+            canvaslayers = [layer.canvaslayer for layer in layers
+                            if layer.pickable()]
+            if not canvaslayers:
+                return (None, None)
+            result = mainthread.runBlock(
+                clickErrorHandler,
+                (self.oofcanvas.findClickedCellCenterMulti,
+                 point, view, canvaslayers))
+            if result is None:
+                # Nothing was clicked
+                return (None, None)
+            pos, which = result
+            return (layers[which].who(), pos)
+        finally:
+            self.releaseGfxLock()
+
     def findClickedPosition(self, who, point, view):
         self.acquireGfxLock()
         try:
@@ -2058,8 +2091,8 @@ class GhostGfxWindow:
                     layer.setParams()
                 if autoselect:
                     self.selectLayer(self.layerID(layer))
-            
-            self.newLayerMembers()
+
+                self.newLayerMembers()
             self.sensitize_menus()
         finally:
             if lock:
@@ -2218,7 +2251,7 @@ class GhostGfxWindow:
 
     def dumpLayers(self, menuitem):
         for i, layer in enumerate(self.layers):
-            print i, layer.__class__.__name__
+            print i, layer.__class__.__name__, layer.who()
 
     def listedLayers(self):             # for testing
         result = []
@@ -2242,8 +2275,8 @@ class GhostGfxWindow:
     # the previous center.  The control key says to set the center to
     # the focal point.
 
-    def computeTumbleCenter(self, shift, ctrl):
-        if shift:
+    def computeTumbleCenter(self, buttons):
+        if buttons.shift:
             renderer = self.oofcanvas.get_renderer()
             bbox = None
             for layer in self.layers:
@@ -2257,7 +2290,7 @@ class GhostGfxWindow:
                             bbox.swallowPrism(layerbbox)
             if bbox is not None:
                 self.oofcanvas.setTumbleCenter(bbox.center())
-        elif ctrl:
+        elif buttons.ctrl:
             self.oofcanvas.setTumbleAroundFocalPoint()
                 
 
@@ -2318,7 +2351,8 @@ class GhostGfxWindow:
         tb = tbclass(self)              # constructs toolbox
         self.toolboxes.append(tb)
         menu = self.toolboxmenu.addItem(
-            OOFMenuItem(tb.name(), help=tb.tip, discussion=tb.discussion))
+            OOFMenuItem(utils.space2underscore(tb.name()), help=tb.tip,
+                        discussion=tb.discussion))
         menu.data = tb
         tb.makeMenu(menu)
 

@@ -42,6 +42,8 @@ typedef std::vector<CGroupTrackerBase*> CGroupTrackerVector;
 // inefficient. A map has all the qualities we need. (Maybe a std::set?)
 typedef std::list<CSkeletonSelectable*> CSkeletonSelectableList;
 
+typedef std::vector<CSkeletonSelectable*> CSkeletonSelectableVector;
+
 // Various useful typedefs for derived classes of
 // CSkeletonSelectable. The different classes interact with each other
 // containing these types, so it is useful to define them here.

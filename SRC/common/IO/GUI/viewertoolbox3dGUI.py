@@ -45,18 +45,13 @@ ndigits = 10
 ## TODO: When a clipping plane is set using Angles, it should stay
 ## in Angles after it's been edited by the plane and arrow widget.
 
-## TODO: When the parameter for the PlaneAndArrowLayer are modified,
-## the layer disappears until the clipping plane is deselected and
-## reselected in the list.
-
-## TODO: The plane in the PlaneAndArrowLayer is drawn in the wrong color.
-
 ## TODO: If the arrow in the PlaneAndArrowLayer is ctrl-dragged to a
 ## new position, a second plane is selected, and the first plane is
 ## reselected, the new arrow position is lost.
 
 ## TODO: Continuous rotation mode.  Set angular velocity and axis
-## direction.
+## direction.  Like vtk joystick interactor?  Toggle between joystick
+## and trackball modes?
 
 ## TODO: Rocker mode: rock back and forth on an axis.  Set axis
 ## direction, frequency, and amplitude.
@@ -79,7 +74,7 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     def __init__(self, vwrtoolbox):
         debug.mainthreadTest()
 
-        toolboxGUI.GfxToolbox.__init__(self, "Viewer", vwrtoolbox)
+        toolboxGUI.GfxToolbox.__init__(self, vwrtoolbox)
         mainbox = gtk.VBox(spacing=3)
         self.gtk.add(mainbox)
 
@@ -670,10 +665,6 @@ To deselect a plane, Ctrl+Click the plane in the list."""
     # Clipping
     ############################################################
 
-    ## TODO 3.1: Edit clipping planes graphically using
-    ## vtkImplicitPlaneWidget.  Or add a comment explaining why the
-    ## ClipPlaneClickAndDragDisplay is better.
-
     def renderEnableCell(self, column, cell_renderer, model, iter):
         debug.mainthreadTest()
         plane = model[iter][0]
@@ -1048,39 +1039,40 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
         # miniThreadManager.
         self.eventThread = subthread.execute_immortal(
             self.processEvents_subthread)
-        
-    def up(self, x, y, button, shift, ctrl):
+
+    ## TODO: Use ThreadedMouseHandler instead of an explicit eventThread.
+    def up(self, x, y, buttons):
         self.datalock.logNewEvent_acquire()
         try:
             self.downed = False
-            self.eventlist.append(('up', x, y, shift, ctrl))
+            self.eventlist.append(('up', x, y, buttons.shift, buttons.ctrl))
         finally:
             self.datalock.logNewEvent_release()
         
-    def down(self, x, y, button, shift, ctrl):
+    def down(self, x, y, buttons):
         self.datalock.logNewEvent_acquire()
         try:
             self.downed = True
-            self.eventlist.append(('down', x, y, shift, ctrl))
+            self.eventlist.append(('down', x, y, buttons.shift, buttons.ctrl))
         finally:
             self.datalock.logNewEvent_release()
 
-    def move(self, x, y, button, shift, ctrl):
+    def move(self, x, y, buttons):
         self.datalock.logNewEvent_acquire()
         try:
             num_events = len(self.eventlist)
             if num_events == 0:
                 # All events have been processed so far. Append the
                 # new move event to the list.
-               self.eventlist.append(('move', x, y, shift, ctrl))
+               self.eventlist.append(('move', x, y, buttons.shift, buttons.ctrl))
             elif self.eventlist[num_events - 1][0] == 'down':
                 # Previous event was a down event. Append the new move
                 # event to the list.
-                self.eventlist.append(('move', x, y, shift, ctrl))
+                self.eventlist.append(('move', x, y, buttons.shift, buttons.ctrl))
             elif self.eventlist[num_events - 1][0] == 'move':
                 # Previous event was a move event. Overwrite that
                 # event with the new move event.
-                self.eventlist[num_events - 1] = ('move', x, y, shift, ctrl)
+                self.eventlist[num_events - 1] = ('move', x, y, buttons.shift, buttons.ctrl)
         finally:
             self.datalock.logNewEvent_release()
 
@@ -1138,7 +1130,7 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
             # clicked.
             (self.click_pos, self.layer) = \
                   self.gfxwindow.findClickedPositionOnActor_nolock(
-                      clipplaneclickanddragdisplay.ClipPlaneClickAndDragDisplay,
+                      clipplaneclickanddragdisplay.ClippingPlaneWidget,
                       point, 
                       viewobj)
             if self.click_pos is not None:
@@ -1151,7 +1143,7 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
 
             # Find the vtkActors that have been clicked upon.
             (actors, self.layer) = self.gfxwindow.findClickedActors_nolock(
-                clipplaneclickanddragdisplay.ClipPlaneClickAndDragDisplay,
+                clipplaneclickanddragdisplay.ClippingPlaneWidget,
                 point, 
                 viewobj)
             if actors is not None:

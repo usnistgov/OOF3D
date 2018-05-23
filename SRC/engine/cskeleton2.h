@@ -21,6 +21,7 @@
 #include "engine/cskeletonboundary.h"
 #include "engine/cskeletonface.h"
 #include "engine/cskeletonselectable_i.h"
+#include "engine/homogeneity.h"
 
 #include <vtkSmartPointer.h>
 #include <set>
@@ -268,10 +269,14 @@ public:
   virtual void elementsAddGroupsDown(CGroupTrackerVector*) = 0;
 
   // connectivity
+  // TODO: Many of these methods should be rewritten to just
+  // return a std container, instead of returning the result in an
+  // argument.
   void getSegmentElements(const CSkeletonSegment *segment,
 			  CSkeletonElementVector &) const;
   void getConstSegmentElements(const CSkeletonSegment *segment,
 			       ConstCSkeletonElementVector &) const;
+  CSkeletonElementVector getSegmentElements(const CSkeletonSegment*) const;
   void getSegmentFaces(const CSkeletonSegment*, CSkeletonFaceVector&) const;
   void getFaceElements(const CSkeletonFace*, CSkeletonElementVector&) const;
   void getFaceElements(const CSkeletonFace*, ConstCSkeletonElementVector&)
@@ -314,12 +319,13 @@ public:
   const CSkeletonSegment* nearestSegment(Coord *point);
   CSkeletonSegment* findExistingSegment(const CSkeletonNode *n1,
 					const CSkeletonNode *n2) const;
+  CSkeletonSegment *findExistingSegmentByIds(const std::vector<int>*) const;
   bool doesSegmentExist(const CSkeletonNode *n1, const CSkeletonNode *n2) const;
   virtual bool inSegmentMap(const CSkeletonMultiNodeKey &h) const = 0;
   const CSkeletonFace* nearestFace(Coord *point);
   CSkeletonFace* findExistingFace(CSkeletonNode *n1, CSkeletonNode *n2,
 				  CSkeletonNode *n3) const;
-  CSkeletonFace* findExistingFaceByIds(vtkSmartPointer<vtkIdList>) const;
+  CSkeletonFace *findExistingFaceByIds(const std::vector<int>*) const;
   OrientedCSkeletonFace *createOrientedFace(CSkeletonNode *n1,
 					    CSkeletonNode *n2,
 					    CSkeletonNode *n3) const;

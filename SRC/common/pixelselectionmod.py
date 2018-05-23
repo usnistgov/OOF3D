@@ -12,228 +12,45 @@
 # and hence aren't in the image module.
 
 from ooflib.SWIG.common import config
+from ooflib.SWIG.common import geometry
 from ooflib.SWIG.common import pixelselectioncourier
-from ooflib.SWIG.common import switchboard
-from ooflib.common import color
 from ooflib.common import debug
-from ooflib.common import enum
-from ooflib.common import primitives
-from ooflib.common import registeredclass
+from ooflib.common import pixelselection
+from ooflib.common import selectionoperators
 from ooflib.common import selectionshape
-from ooflib.common.IO import colordiffparameter
 from ooflib.common.IO import parameter
 from ooflib.common.IO import pixelgroupparam
-from ooflib.common.IO import reporter
+from ooflib.common.IO import pixelselectionmenu
 from ooflib.common.IO import whoville
 from ooflib.common.IO import xmlmenudump
 import ooflib.common.microstructure
 import ooflib.common.units
 
-# First, some basic methods: Clear, Undo, Redo
-# These are no longer called from the generic toolbox, but they are
-# still set as menu callbacks in the selectionmodmenu, in common/IO.
-
-def clear(menuitem, microstructure):
-    ms = ooflib.common.microstructure.microStructures[microstructure]
-    selection = ms.getSelectionContext()
-    selection.reserve()
-    selection.begin_writing()
-    try:
-        selection.start()
-        selection.clear()
-    finally:
-        selection.end_writing()
-        selection.cancel_reservation()
-    switchboard.notify('pixel selection changed', selection)
-    switchboard.notify('redraw')
-
-def undo(menuitem, microstructure):
-    ms = ooflib.common.microstructure.microStructures[microstructure]
-    selection = ms.getSelectionContext()
-    selection.reserve()
-    selection.begin_writing()
-    try:
-        selection.undo()
-    finally:
-        selection.end_writing()
-        selection.cancel_reservation()
-    switchboard.notify('pixel selection changed', selection)
-    switchboard.notify('redraw')
-
-def redo(menuitem, microstructure):
-    ms = ooflib.common.microstructure.microStructures[microstructure]
-    selection = ms.getSelectionContext()
-    selection.reserve()
-    selection.begin_writing()
-    try:
-        selection.redo()
-    finally:
-        selection.end_writing()
-        selection.cancel_reservation()
-    switchboard.notify('pixel selection changed', selection)
-    switchboard.notify('redraw')
-
-
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# Selection methods derived from SelectionModifier are automatically
-# put into the PixelSelection menu, via a switchboard call in their
-# Registration's __init__.
-
-class SelectionModifier(registeredclass.RegisteredClass):
-    registry = []
-    def __call__(self):
-        pass
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-# OOFMenu callback, installed automatically for each SelectionModifier
-# class by the switchboard callback invoked when the class is
-# registered.
-
-def doSelectionMod(menuitem, microstructure, **params):
-    registration = menuitem.data
-    # create the SelectionModifier
-    selectionModifier = registration(**params)
-    # apply the SelectionModifier
-    ms = ooflib.common.microstructure.microStructures[microstructure].getObject()
-    selection = ms.pixelselection
-    selection.reserve()
-    selection.begin_writing()
-    try:
-        selectionModifier(ms, selection)
-    finally:
-        selection.end_writing()
-        selection.cancel_reservation()
-    # Switchboard signals:
-
-    # "pixel selection changed" is caught by GUI components that
-    # display the number of selected pixels, or the selected pixels
-    # themselves, or contain widgets whose sensitivity depends on the
-    # selection state.
-    switchboard.notify('pixel selection changed', selection)
-    # "modified pixel selection" indicates that a pixel selection
-    # modifier has been applied.  It's caught by the Pixel Page to
-    # update its historian.
-    switchboard.notify('modified pixel selection', selectionModifier)
-    # "new pixel selection" is similar to "modified pixel selection",
-    # except that it's used by the pixel selection toolbox.
-    ## TODO OPT: Do we really need both "pixel selection changed" and
-    ## "modified pixel selection"?
-    switchboard.notify('new pixel selection', None, None)
-
-    switchboard.notify('redraw')
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-class Invert(SelectionModifier):
-    def __call__(self, ms, selection):
-        selection.start()
-        selection.invert()
-
-registeredclass.Registration(
-    'Invert',
-    SelectionModifier,
-    Invert,
-    ordering=0.0,
-    tip="Select all unselected pixels and unselect all selected pixels.",
-    discussion="""<para>
-    Selected pixels will be unselected and unselelcted ones will be
-    selected.</para>""")
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-# Different ways that groups and shapes can be used when modifying
-# selections.
-
-## TODO 3.1: Can these be used in Skeleton selection operations as well?
-
-class PixelSelectionOperator(registeredclass.RegisteredClass):
-    registry = []
-
-class Select(PixelSelectionOperator):
-    def operate(self, selection, courier):
-        selection.select(courier)
-
-class SelectOnly(PixelSelectionOperator):
-    def operate(self, selection, courier):
-        selection.clearAndSelect(courier)
-
-class Unselect(PixelSelectionOperator):
-    def operate(self, selection, courier):
-        selection.unselect(courier)
-
-class Intersect(PixelSelectionOperator):
-    def operate(self, selection, courier):
-        # The selection needs to be cloned before calling
-        # clearAndSelect, or else it will be empty by the time the
-        # intersection is actually computed.  The clone has to be
-        # stored in a variable here, so that it won't be garbage
-        # collected until the calculation is complete.
-        selgrp = selection.getSelectionAsGroup().clone()
-        selection.clearAndSelect(
-            pixelselectioncourier.IntersectSelection(
-                courier.getMicrostructure(), selgrp, courier))
-
-registeredclass.Registration(
-    'Select',
-    PixelSelectionOperator,
-    Select,
-    ordering=0,
-    tip="Select new objects, leaving the old ones selected.")
-
-registeredclass.Registration(
-    "Select Only",
-    PixelSelectionOperator,
-    SelectOnly,
-    ordering=1,
-    tip="Select new objects after deselecting the old ones.")
-
-registeredclass.Registration(
-    "Unselect",
-    PixelSelectionOperator,
-    Unselect,
-    ordering=2,
-    tip="Unselect only the given objects, leaving others selected.")
-
-registeredclass.Registration(
-    "Intersect",
-    PixelSelectionOperator,
-    Intersect,
-    ordering=3,
-    tip="Unselect all objects that are not in the given set.")
-
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-class GroupSelector(SelectionModifier):
+class GroupSelector(pixelselection.VoxelSelectionModifier):
     def __init__(self, group, operator):
         self.group = group
         self.operator = operator
-    def __call__(self, ms, selection):
-        group = ms.findGroup(self.group)
+    def select(self, ms, selection):
+        group = ms.getObject().findGroup(self.group)
         if group is not None:
-            selection.start()
             self.operator.operate(
-                selection, pixelselectioncourier.GroupSelection(ms, group))
+                selection,
+                pixelselectioncourier.GroupSelection(ms.getObject(), group))
 
-registeredclass.Registration(
+pixelselection.VoxelSelectionModRegistration(
     'Group',
-    SelectionModifier,
     GroupSelector,
     ordering=1,
     params=[
         pixelgroupparam.PixelGroupParameter('group',
                                             tip='Pixel group to work with.'),
-        parameter.RegisteredParameter(
-            'operator', PixelSelectionOperator,
-            tip="How to use the group to modify the current selection.")],
+        selectionoperators.SelectionOperatorParam('operator')],
     tip="Modify the current selection via boolean operations"
     " with the pixels in a pixel group.")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-## Geometrical selection.  These will have GUI counterparts
-## when we figure out how to click and drag on the 3D canvas.
 
 # The selection methods operate upon sets of pixels defined by shapes
 # from the SelectionShape class.  The SelectionShape subclasses don't
@@ -252,7 +69,7 @@ couriers = {}
 
 def _box_courier(shape, ms):
     return pixelselectioncourier.BoxSelection(
-        ms, shape.point0, shape.point1)
+        ms, geometry.CRectangularPrism(shape.point0, shape.point1))
 couriers[selectionshape.BoxSelectionShape] = _box_courier
 
 def _circ_courier(shape, ms):
@@ -266,20 +83,18 @@ couriers[selectionshape.EllipseSelectionShape] = _elps_courier
 
 #=--=##=--=##=--=##=--=##=--=#
 
-class RegionSelector(SelectionModifier):
+class RegionSelector(pixelselection.VoxelSelectionModifier):
     def __init__(self, shape, units, operator):
         self.shape = shape
         self.units = units
         self.operator = operator
-    def __call__(self, ms, selection):
-        selection.start()
-        scaled = self.units.scale(ms, self.shape)
-        courier = couriers[self.shape.__class__](scaled, ms)
+    def select(self, ms, selection):
+        scaled = self.units.scale(ms.getObject(), self.shape)
+        courier = couriers[self.shape.__class__](scaled, ms.getObject())
         self.operator.operate(selection, courier)
 
-registeredclass.Registration(
+pixelselection.VoxelSelectionModRegistration(
     "Region",
-    SelectionModifier,
     RegionSelector,
     ordering=1.5,
     params=[
@@ -290,9 +105,7 @@ registeredclass.Registration(
             'units', ooflib.common.units.UnitsRC,
             value=ooflib.common.units.PhysicalUnits(),
             tip="The units for the shape's length parameters."),
-        parameter.RegisteredParameter(
-            'operator', PixelSelectionOperator,
-            tip="How to use the region to modify the current selection.")
+        selectionoperators.SelectionOperatorParam('operator')
         ],
     tip="Modify the current selection via boolean operations using the pixels"
     " within a given geometrically defined region."
@@ -300,21 +113,19 @@ registeredclass.Registration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-class Despeckle(SelectionModifier):
+class Despeckle(pixelselection.VoxelSelectionModifier):
     def __init__(self, neighbors):
         self.neighbors = neighbors
-    def __call__(self, ms, selection):
-        selection.start()
+    def select(self, ms, selection):
         selection.select(pixelselectioncourier.DespeckleSelection(
-            ms, selection.getSelectionAsGroup(), self.neighbors))
+            ms.getObject(), selection.getPixelSet(), self.neighbors))
         
-class Elkcepsed(SelectionModifier):
+class Elkcepsed(pixelselection.VoxelSelectionModifier):
     def __init__(self, neighbors):
         self.neighbors = neighbors
-    def __call__(self, ms, selection):
-        selection.start()
+    def select(self, ms, selection):
         selection.unselect(pixelselectioncourier.ElkcepsedSelection(
-            ms, selection.getSelectionAsGroup(), self.neighbors))
+            ms.getObject(), selection.getPixelSet(), self.neighbors))
 
 # The allowed ranges for the parameters are determined by geometry.
 # Settings outside of the allowed ranges either select all pixels or
@@ -330,9 +141,8 @@ else:
     elkcepsedRange = (1, 13)
     elkcepsedDefault = 9
 
-registeredclass.Registration(
+pixelselection.VoxelSelectionModRegistration(
     'Despeckle',
-    SelectionModifier,
     Despeckle,
     ordering=2.0,
     params=[parameter.IntRangeParameter(
@@ -343,9 +153,8 @@ registeredclass.Registration(
     discussion=xmlmenudump.loadFile('DISCUSSIONS/common/menu/despeckle.xml')
     )
 
-registeredclass.Registration(
+pixelselection.VoxelSelectionModRegistration(
     'Elkcepsed',
-    SelectionModifier,
     Elkcepsed,
     ordering=2.1,
     params=[parameter.IntRangeParameter(
@@ -358,28 +167,25 @@ registeredclass.Registration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-class Expand(SelectionModifier):
+class Expand(pixelselection.VoxelSelectionModifier):
     def __init__(self, radius):
         self.radius = radius
-    def __call__(self, ms, selection):
-        selection.start()
+    def select(self, ms, selection):
         selection.select(pixelselectioncourier.ExpandSelection(
-            ms, selection.getSelectionAsGroup(), self.radius))
+            ms.getObject(), selection.getPixelSet(), self.radius))
 
-class Shrink(SelectionModifier):
+class Shrink(pixelselection.VoxelSelectionModifier):
     def __init__(self, radius):
         self.radius = radius
-    def __call__(self, ms, selection):
-        selection.start()
+    def select(self, ms, selection):
         selection.unselect(pixelselectioncourier.ShrinkSelection(
-            ms, selection.getSelectionAsGroup(), self.radius))
+            ms.getObject(), selection.getPixelSet(), self.radius))
 
 ## TODO 3.1: Allow radius to be set in either physical or pixel units
 ## by adding a "units" parameter.
 
-registeredclass.Registration(
+pixelselection.VoxelSelectionModRegistration(
     'Expand',
-    SelectionModifier,
     Expand,
     ordering=3.0,
     params=[
@@ -391,9 +197,8 @@ registeredclass.Registration(
     discussion=xmlmenudump.loadFile("DISCUSSIONS/common/menu/expand_pixsel.xml")
     )
 
-registeredclass.Registration(
+pixelselection.VoxelSelectionModRegistration(
     'Shrink',
-    SelectionModifier,
     Shrink,
     ordering=3.1,
     params=[
@@ -407,23 +212,28 @@ registeredclass.Registration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-class CopyPixelSelection(SelectionModifier):
-    def __init__(self, source):
+class CopyPixelSelection(pixelselection.VoxelSelectionModifier):
+    def __init__(self, source, operator):
         self.source = source
-    def __call__(self, ms, selection):
-        selection.start()
+        self.operator = operator
+    def select(self, ms, selection):
         sourceMS = ooflib.common.microstructure.microStructures[self.source]
-        selection.selectFromGroup(
-            sourceMS.getObject().pixelselection.getSelectionAsGroup())
+        courier = pixelselectioncourier.GroupSelection(
+            ms.getObject(),
+            sourceMS.getObject().pixelselection.getPixelSet())
+        self.operator.operate(selection, courier)
 
-registeredclass.Registration(
+pixelselection.VoxelSelectionModRegistration(
     'Copy',
-    SelectionModifier,
     CopyPixelSelection,
     ordering=4.0,
     params=[
-    whoville.WhoParameter('source', ooflib.common.microstructure.microStructures,
-                          tip="Copy the current selection from this Microstructure.")],
+        whoville.WhoParameter(
+            'source',
+            ooflib.common.microstructure.microStructures,
+            tip="Copy the current selection from this Microstructure."),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     tip="Copy the current selection from another Microstructure.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/common/menu/copy_pixsel.xml')
     )

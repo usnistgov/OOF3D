@@ -35,14 +35,13 @@ class OOF_Subproblem(unittest.TestCase):
                 no_material=Gray(value=0.0),
                 no_color=RGBColor(red=0.00000,green=0.00000,blue=1.00000),
                 filter=AllVoxels()))
-
-        OOF.PixelSelection.Region(
-            microstructure='subptest', 
-            shape=BoxSelectionShape(point0=Point(0,0,0),
-                                    point1=Point(0.4,0.4,1)),
-            units=PhysicalUnits(),
-            operator=Select())
-
+        OOF.VoxelSelection.Select(
+            source='subptest',
+            method=RegionSelector(
+                shape=BoxSelectionShape(point0=Point(0.0, 0.0, 0.0),
+                                        point1=Point(0.4, 0.4, 1)),
+                units=PhysicalUnits(),
+                operator=Select()))
         OOF.PixelGroup.New(name='corner', microstructure='subptest')
         OOF.PixelGroup.AddSelection(microstructure='subptest', group='corner')
         OOF.Material.New(name='salami', material_type='bulk')
@@ -207,34 +206,38 @@ class OOF_Subproblem_Varieties(unittest.TestCase):
             name='subptest',
             width=1.0, height=1.0, depth=1.0,
             width_in_pixels=15, height_in_pixels=15, depth_in_pixels=15)
-        OOF.PixelSelection.Region(
-            microstructure='subptest',
-            shape=CircleSelectionShape(
-                center=Point(0.25, 0.25, 0.75),
-                radius=0.2),
-            units=PhysicalUnits(),
-            operator=Select())
+        OOF.VoxelSelection.Select(
+            source='subptest',
+            method=RegionSelector(
+                shape=CircleSelectionShape(
+                    center=Point(0.25, 0.25, 0.75),
+                    radius=0.2),
+                units=PhysicalUnits(),
+                operator=Select()))
         OOF.PixelGroup.New(name='spot1', microstructure='subptest')
         OOF.PixelGroup.AddSelection(microstructure='subptest', group='spot1')
 
-        OOF.PixelSelection.Clear(microstructure='subptest')
-        OOF.PixelSelection.Region(
-            microstructure='subptest',
-            shape=CircleSelectionShape(
-                center=Point(0.75, 0.75, 0.25),
-                radius=0.2),
-            units=PhysicalUnits(),
-            operator=Select())
+        OOF.VoxelSelection.Clear(microstructure='subptest')
+        OOF.VoxelSelection.Select(
+            source='subptest',
+            method=RegionSelector(
+                shape=CircleSelectionShape(
+                    center=Point(0.75, 0.75, 0.25),
+                    radius=0.2),
+                units=PhysicalUnits(),
+                operator=Select()))
         OOF.PixelGroup.New(name='spot2', microstructure='subptest')
         OOF.PixelGroup.AddSelection(microstructure='subptest', group='spot2')
 
-        OOF.PixelSelection.Clear(microstructure='subptest')
-        OOF.PixelSelection.Region(
-            microstructure='subptest', 
-            shape=BoxSelectionShape(point0=Point(0,0,0),
-                                    point1=Point(0.25,0.25,1)),
-            units=PhysicalUnits(),
-            operator=SelectOnly())
+        OOF.VoxelSelection.Clear(microstructure='subptest')
+        OOF.VoxelSelection.Select(
+            source='subptest',
+            method=RegionSelector(
+                shape=BoxSelectionShape(
+                    point0=Point(0.0, 0.0, 0.0),
+                    point1=Point(0.25, 0.25, 1.0)),
+                units=PhysicalUnits(),
+                operator=Select()))
         OOF.PixelGroup.New(
             name='box', microstructure='subptest')
         OOF.PixelGroup.AddSelection(
@@ -290,12 +293,14 @@ class OOF_Subproblem_Varieties(unittest.TestCase):
 
         # Check that modifying a pixelgroup changes both the
         # pixelgroup subproblem and the union subproblem.
-        OOF.PixelSelection.Region(
-            microstructure='subptest',
-            shape=BoxSelectionShape(point0=Point(0,0,0),
-                                    point1=Point(0.1,0.1,0.1)),
-            units=PhysicalUnits(),
-            operator=SelectOnly())
+        OOF.VoxelSelection.Select(
+            source='subptest',
+            method=RegionSelector(
+                shape=BoxSelectionShape(
+                    point0=Point(0.0, 0.0, 0.0),
+                    point1=Point(0.1, 0.1, 0.1)),
+                units=PhysicalUnits(),
+                operator=Select()))
         OOF.PixelGroup.AddSelection(
             microstructure='subptest', group='spot1')
         self.assertEqual(self.get_subproblem('spot1').nelements(), 610)
@@ -352,10 +357,10 @@ class OOF_Subproblem_Varieties(unittest.TestCase):
         self.assertEqual(self.get_subproblem('comp').nelements(), 16305)
         # Check that adding more pixels to the pixel group changes the
         # complement subproblem.
-        OOF.PixelSelection.Group(
-            microstructure='subptest',
-            group='spot2',
-            operator=SelectOnly())
+        OOF.VoxelSelection.Select(
+            source='subptest',
+            method=GroupSelector(group='spot2',
+                                 operator=Select()))
         OOF.PixelGroup.AddSelection(
             microstructure='subptest',
             group='spot1')

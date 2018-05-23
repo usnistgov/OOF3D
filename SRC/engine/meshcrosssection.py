@@ -15,8 +15,8 @@
 # others.
 
 from ooflib.common import registeredclass
-from ooflib.common import primitives
 from ooflib.common.IO import parameter
+from ooflib.common.IO import pointparameter
 from ooflib.common.IO import xmlmenudump
 
 # Anticipating lots of different sorts of these, we make CrossSection
@@ -38,8 +38,8 @@ class StraightCrossSection(MeshCrossSection):
 
 registeredclass.Registration(
     'Straight', MeshCrossSection, StraightCrossSection, 1,
-    params=[primitives.PointParameter('start', tip="Starting point."),
-            primitives.PointParameter('end', tip="Ending point.")],
+    params=[pointparameter.PointParameter('start', tip="Starting point."),
+            pointparameter.PointParameter('end', tip="Ending point.")],
     tip="Cross section defined by two points.",
     discussion="""<para>
     A Cross Section which is a straight line, defined by its endpoints.

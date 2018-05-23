@@ -16,3 +16,4 @@ import ooflib.image.initialize
 import ooflib.image.IO.GUI.imagePage
 import ooflib.image.IO.GUI.pixelinfoGUI
 import ooflib.image.IO.GUI.newimageGUI
+import ooflib.image.IO.GUI.pixelselectionmethodGUI

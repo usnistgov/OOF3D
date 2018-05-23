@@ -41,7 +41,6 @@ int oofExcludeVoxels::RequestData(vtkInformation *info,
 				   vtkInformationVector **inputVector,
 				   vtkInformationVector *outputVector)
 {
-  vtkDebugMacro(<< "Excluding");
   vtkRectilinearGrid *input =
     vtkRectilinearGrid::SafeDownCast(this->GetInput());
 

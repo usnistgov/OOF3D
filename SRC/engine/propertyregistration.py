@@ -71,10 +71,6 @@ OOF.addItem(oofmenu.OOFMenuItem(
     </para>"""
     ))
 
-OOF.LoadData.addItem(oofmenu.OOFMenuItem(
-    'Property'
-    ))
-
 #=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=##=-=#
 
 # MenuKey objects are used to identify the various menus that are

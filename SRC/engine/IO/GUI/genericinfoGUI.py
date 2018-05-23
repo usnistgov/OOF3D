@@ -122,8 +122,9 @@ class GenericInfoModeGUI(object):
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class GenericInfoToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
+    ## TODO: Remove 'name' arg from constructor
     def __init__(self, name, infotb):
-        toolboxGUI.GfxToolbox.__init__(self, name, infotb)
+        toolboxGUI.GfxToolbox.__init__(self, infotb)
         self.mainbox = gtk.VBox()
         self.gtk.add(self.mainbox)
 
@@ -264,7 +265,7 @@ class GenericInfoToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     def acceptEvent(self, eventtype):
         return eventtype == 'up'
 
-    def up(self, x, y, button, shift, ctrl):
+    def up(self, x, y, buttons):
         canvas = self.toolbox.gfxwindow().oofcanvas
         view = canvas.get_view()
         realpt = canvas.display2Physical(view, x, y)

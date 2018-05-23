@@ -190,7 +190,7 @@ def buildTests():
                gridsample,
                'xtemp_direct_voxsel',
                commands=[
-                   "OOF.PixelSelection.Region(microstructure='microstructure', shape=BoxSelectionShape(point0=Point(0,0,0),point1=Point(5,5,5)), units=PhysicalUnits(),operator=Select())"
+                   "OOF.VoxelSelection.Select(source='microstructure', method=RegionSelector(shape=BoxSelectionShape(point0=Point(0,0,0), point1=Point(5, 5, 5)), units=PhysicalUnits(), operator=Select()))"
                    ],
                skip=skip)
     OutputTest('xtemp',
@@ -200,8 +200,8 @@ def buildTests():
                gridsample,
                'xtemp_direct_voxsel2',
                commands=[
-                   "OOF.PixelSelection.Region(microstructure='microstructure', shape=BoxSelectionShape(point0=Point(0,0,0),point1=Point(5,5,5)),units=PhysicalUnits(), operator=Select())",
-                   "OOF.PixelSelection.Region(microstructure='microstructure', shape=BoxSelectionShape(point0=Point(1,1,1),point1=Point(4,4,4)),units=PhysicalUnits(), operator=Unselect())"
+                   "OOF.VoxelSelection.Select(source='microstructure', method=RegionSelector(shape=BoxSelectionShape(point0=Point(0,0,0), point1=Point(5, 5, 5)), units=PhysicalUnits(), operator=Select()))",
+                   "OOF.VoxelSelection.Select(source='microstructure', method=RegionSelector(shape=BoxSelectionShape(point0=Point(1,1,1), point1=Point(4,4,4)), units=PhysicalUnits(), operator=Unselect()))"
                    ],
                skip=skip)
 

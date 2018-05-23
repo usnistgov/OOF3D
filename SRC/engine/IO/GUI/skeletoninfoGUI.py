@@ -433,11 +433,13 @@ class SegmentModeGUI(SkeletonInfoModeGUI):
     def findObjectIndex(self, position, view):
         skelctxt = self.getContext()
         if skelctxt is not None:
-            pt = self.gfxtoolbox.gfxwindow().findClickedSegment(
+            endPtIds = self.gfxtoolbox.gfxwindow().findClickedSegment(
                 skelctxt, position, view)
-            sgmt = pt is not None and skelctxt.getObject().nearestSegment(pt)
-            if sgmt:
-                return sgmt.uiIdentifier()
+            if endPtIds is not None:
+                sgmt = skelctxt.getObject().getSegmentByNodeIndices(
+                    endPtIds[0], endPtIds[1])
+                if sgmt:
+                    return sgmt.uiIdentifier()
 
     def activateOutputs(self, ok):
         self.elem.gtk.set_sensitive(ok)

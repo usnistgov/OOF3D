@@ -15,7 +15,7 @@
 #define CANVASLAYERS_H
 
 // Classes defined in this file:
-class BoxAndArrowLayer;
+class BoxWidgetLayer;
 class FilledGridCanvasLayer;
 class ImageCanvasLayer;
 class ImageCanvasOverlayer;
@@ -99,6 +99,7 @@ public:
   virtual bool showing() const { return false; }
   virtual void setCoincidentTopologyParams(double, double) = 0;
 
+  // TODO: Why isn't pickable() const?
   virtual bool pickable() { return false; }
 
   const GhostOOFCanvas *getCanvas() const { return canvas; }
@@ -140,10 +141,6 @@ public:
   OOFCanvasLayer(GhostOOFCanvas*, const std::string&);
   virtual ~OOFCanvasLayer();
 
-  void raise_layer(int);
-  void raise_to_top();
-  void lower_layer(int);
-
   void installContourMap();
   void updateContourMap();
   virtual vtkScalarsToColors *get_lookupTable();
@@ -154,6 +151,7 @@ public:
   // setEmpty should be called when nothing will be drawn.  See the
   // comment in the .C file.
   void setEmpty(bool);
+  bool getEmpty() const { return empty_; } // for debugging
 
   virtual void show(bool);
   virtual void hide(bool);
@@ -209,7 +207,6 @@ public:
   vtkSmartPointer<vtkActor> get_arrowActor();
   virtual bool pickable() { return true; }
   virtual vtkSmartPointer<vtkActorCollection> get_pickable_actors();
-  void set_visibility(bool);
   void set_arrowShaftRadius(double);
   void set_arrowTipRadius(double);
   void set_arrowLength(double);
@@ -232,26 +229,16 @@ public:
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-class BoxAndArrowLayer : public OOFCanvasLayer {
+class BoxWidgetLayer : public OOFCanvasLayer {
 protected:
   vtkSmartPointer<vtkUnstructuredGrid> grid;
   vtkSmartPointer<vtkPoints> points;
-  vtkSmartPointer<vtkArrowSource> arrowSource;
-  vtkSmartPointer<vtkTransform> arrowScaling;
-  vtkSmartPointer<vtkTransform> arrowRotation;
-  vtkSmartPointer<vtkTransform> arrowTranslation;
-  vtkSmartPointer<vtkTransform> arrowTransform;
-  vtkSmartPointer<vtkTransformPolyDataFilter> arrowFilter;
   vtkSmartPointer<vtkDataSetMapper> boxMapper;
-  vtkSmartPointer<vtkPolyDataMapper> arrowMapper;
   vtkSmartPointer<vtkActor> boxActor;
-  vtkSmartPointer<vtkActor> arrowActor;
   vtkSmartPointer<oofCellLocator> locator;
-  bool totalVisibility;
-  bool arrowVisibility;
 public:
-  BoxAndArrowLayer(GhostOOFCanvas*, const std::string&);
-  ~BoxAndArrowLayer();
+  BoxWidgetLayer(GhostOOFCanvas*, const std::string&);
+  ~BoxWidgetLayer();
   virtual void start_clipping();
   virtual void stop_clipping();
   virtual void set_clip_parity(bool);
@@ -266,17 +253,13 @@ public:
   Coord3D *get_cellNormal_Coord3D(vtkIdType);
   void reset();
   void set_box(const Coord3D*);
-  void set_totalVisibility(bool);
-  void set_arrowVisibility(bool);
-  void set_arrowShaftRadius(double);
-  void set_arrowTipRadius(double);
-  void set_arrowLength(double);
-  void set_arrowColor(const CColor&);
+  void set_box(const CRectangularPrism*);
+  CRectangularPrism *get_box() const;
   void set_pointSize(float);
   void set_lineWidth(float);
   void set_lineColor(const CColor&);
   void set_faceColor(const CColor&);
-  void set_faceOpacity(double);
+  void set_opacity(double);
   void set_position(const Coord3D*);
   void offset_cell(vtkIdType, double);
   virtual void setCoincidentTopologyParams(double, double);
@@ -465,19 +448,9 @@ protected:
   virtual void stop_clipping();
   virtual void set_clip_parity(bool);
 
-  // downstreamSocket() returns the vtkAlgorithm that the downstream end
-  // of the overlayer pipeline should be connected to.
-  vtkSmartPointer<vtkAlgorithm> downstreamSocket() const;
-  // overlayerOutput() returns the vtkAlgorithmOutput that is the
-  // result of the overlayer pipeline.  If there are no overlayers,
-  // it's the vtkRectilinearGrid produced by the gridifier.
-  vtkSmartPointer<vtkAlgorithmOutput> overlayerOutput();
   // clipperInput() returns the vtkAlgorithmOutput that should be
-  // plugged into the clipper.  It's the same as overlayerOutput()
-  // unless there's an excluder.
+  // plugged into the clipper.
   vtkSmartPointer<vtkAlgorithmOutput> clipperInput();
-  vtkSmartPointer<vtkAlgorithmOutput> connectOverlayers(
-					vtkSmartPointer<vtkAlgorithmOutput>);
 public:
   ImageCanvasLayer(GhostOOFCanvas*, const std::string&);
   virtual ~ImageCanvasLayer();
@@ -488,9 +461,6 @@ public:
   void set_image(const ImageBase*, const Coord *location, const Coord *size);
   void set_filter(VoxelFilter*);
   void unset_filter();
-  void connectBottomOverlayer(ImageCanvasOverlayer*);
-  void connectTopOverlayer(ImageCanvasOverlayer*);
-  void noOverlayers();
   void set_opacity(double);
 
   virtual vtkSmartPointer<vtkProp3D> get_pickable_prop3d();
@@ -501,36 +471,34 @@ public:
 				  CRectangularPrism*) const;
 
   virtual void setCoincidentTopologyParams(double, double);
+
+  vtkSmartPointer<vtkAlgorithmOutput> griddedImage();
 };
 
-class ImageCanvasOverlayer : public OOFCanvasLayerBase {
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+class MonochromeVoxelLayer : public OOFCanvasLayer {
 protected:
-  vtkSmartPointer<vtkRectilinearGridAlgorithm> algorithm;
-  vtkSmartPointer<vtkAlgorithmOutput> input;
-  virtual void start_clipping() {}
-  virtual void stop_clipping() {}
-  virtual void set_clip_parity(bool) {}
+  ImageCanvasLayer *imageLayer;
+  vtkSmartPointer<oofExcludeVoxels> excluder;
+  vtkSmartPointer<vtkTableBasedClipDataSet> clipper;
+  vtkSmartPointer<vtkDataSetMapper> mapper;
+  vtkSmartPointer<vtkActor> actor;
+  VoxelFilter *filter;
 public:
-  ImageCanvasOverlayer(GhostOOFCanvas*, const std::string &,
-		       vtkSmartPointer<vtkRectilinearGridAlgorithm>);
-  virtual ~ImageCanvasOverlayer();
-  virtual void setModified();
-  virtual void disconnect();
-  virtual void connectToOverlayer(ImageCanvasOverlayer*);
-  virtual void connectToAlgorithm(vtkSmartPointer<vtkAlgorithmOutput>);
-  virtual vtkSmartPointer<vtkAlgorithmOutput> output();
-  virtual void setCoincidentTopologyParams(double, double) {}
-  friend class ImageCanvasLayer;
-};
-
-class OverlayVoxels : public ImageCanvasOverlayer {
-public:
-  OverlayVoxels(GhostOOFCanvas*, const std::string&);
+  MonochromeVoxelLayer(GhostOOFCanvas*, const std::string&);
+  virtual ~MonochromeVoxelLayer();
   virtual const std::string &classname() const;
-  void setTintOpacity(double);
-  void setColor(const CColor*);
-  void setPixelSet(PixelSet*);
-  void clearPixelSet();
+  virtual void setModified();
+  void set_opacity(double);
+  void set_color(const CColor&);
+  void set_filter(VoxelFilter*);
+  void set_image_layer(ImageCanvasLayer*);
+  virtual void start_clipping();
+  virtual void stop_clipping();
+  virtual void set_clip_parity(bool);
+  virtual void setCoincidentTopologyParams(double, double);
+  virtual bool pickable() { return false; }
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

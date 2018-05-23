@@ -133,24 +133,21 @@ class RingBuffer:
             self.top = (self.top + 1) % len(self.data)
             self.ndata += 1
 
-## pop() is commented out because it's not used, and it's not clear
-## whether or not it ought to call overwrite() on the datum that is
-## being popped.  Perhaps if there's a need to use it, there will be a
-## way of deciding the issue.
-##            
-##    def pop(self):
-##        if self.ndata == 0:
-##            raise IndexError
-##        obj = self.current()
-##        if self.currentpos == self.bottom:
-##            obj = self.current()
-##            self.clear()
-##        else:
-##            self.prev()
-##            newtop = (self.currentpos+1) % len(self.data)
-##            self.clearRange(newtop, self.top)  # calls overwrite
-##            self.top = newtop
-##        return obj
+    def pop(self):
+        if self.ndata == 0:
+            raise IndexError
+        obj = self.current()
+        if self.currentpos == self.bottom:
+            obj = self.current()
+            self.clear()
+        else:
+            self.prev()
+            newtop = (self.currentpos+1) % len(self.data)
+            self.clearRange(newtop, self.top)  # calls overwrite
+            self.top = newtop
+        if self.overwrite:
+            self.overwrite(obj)
+        return obj
 
     def current(self):
         if self.ndata == 0:

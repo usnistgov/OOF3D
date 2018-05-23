@@ -26,7 +26,7 @@ import gtk
 class VoxelInfoToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     def __init__(self, pixelinfotoolbox):
         debug.mainthreadTest()
-        toolboxGUI.GfxToolbox.__init__(self, "Voxel Info", pixelinfotoolbox)
+        toolboxGUI.GfxToolbox.__init__(self, pixelinfotoolbox)
         mainbox = gtk.VBox()
         self.gtk.add(mainbox)
 
@@ -135,7 +135,7 @@ class VoxelInfoToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     # outside the image/microstructure.  In this case, do nothing --
     # the behavior is then the same as if you click outside the drawn
     # area.
-    def up(self, x, y, button, shift, ctrl):
+    def up(self, x, y, buttons):
         msOrImage = self.gfxwindow().topmost('Microstructure', 'Image')
         if msOrImage:
             if config.dimension() == 3:
@@ -202,7 +202,7 @@ class VoxelInfoToolboxGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
             self.ztsignal.unblock()
 
         gtklogger.checkpoint(self.gfxwindow().name + " " +
-                             self._name + " updated")
+                             self.name() + " updated")
 
     def updateButtonCB(self, button):
         debug.mainthreadTest()

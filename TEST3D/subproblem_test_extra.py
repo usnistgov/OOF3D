@@ -34,12 +34,12 @@ class OOF_Subproblem_Extra(unittest.TestCase):
             microstructure='microstructure',
             pixels=every)
 
-        OOF.PixelSelection.Region(
-            microstructure='microstructure', 
-            shape=BoxSelectionShape(
-                point0=Point(0.3,0,0), point1=Point(0.7,1,1)),
-            units=PhysicalUnits(),
-            operator=Select())
+        OOF.VoxelSelection.Select(
+            source='microstructure',
+            method=RegionSelector(
+                shape=BoxSelectionShape(point0=Point(0.3, 0, 0),
+                                        point1=Point(0.7, 1, 1)),
+                units=PhysicalUnits(), operator=Select()))
         OOF.PixelGroup.New(
             name='stripe', 
             microstructure='microstructure')
@@ -47,7 +47,7 @@ class OOF_Subproblem_Extra(unittest.TestCase):
             microstructure='microstructure',
             group='stripe')
 
-        OOF.PixelSelection.Invert(
+        OOF.VoxelSelection.Invert(
             microstructure='microstructure')
         OOF.PixelGroup.New(
             name='edges',
@@ -61,16 +61,11 @@ class OOF_Subproblem_Extra(unittest.TestCase):
             x_elements=5, y_elements=5, z_elements=5,
             skeleton_geometry=TetraSkeleton(
                 arrangement='moderate'))
-        OOF.Windows.Graphics.New()
-        OOF.Graphics_1.Toolbox.Select_Node.Single_Node(
-            skeleton='microstructure:skeleton', 
-            points=[Point(0.446106,0.768333,2.12376)], 
-            view=View(cameraPosition=Coord(0.5,0.5,3.42583),
-                      focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, suppressClip=0,
-                      size_x=621, size_y=615),
-            shift=0, ctrl=0)
-        OOF.Graphics_1.File.Close()
+        # OOF.Windows.Graphics.New()
+        OOF.NodeSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleNodeSelect(point=Coord(0.4,1,1),
+                                    operator=Select()))
         OOF.Skeleton.Boundary.Construct(
             skeleton='microstructure:skeleton',
             name='midtop',

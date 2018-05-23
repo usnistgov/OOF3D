@@ -9,6 +9,8 @@
  * oof_manager@nist.gov. 
  */
 
+// TODO:  Delete all brushstyle code.
+
 #ifndef BRUSHSTYLE_H
 #define BRUSHSTYLE_H
 

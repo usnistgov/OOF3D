@@ -135,13 +135,10 @@ class OOF_Mesh(OOF_Mesh_Base):
         msh = mesh.meshes["meshtest:skeleton:test"]
         self.assertEqual(msh.nelements(), 320)
         # Select and refine a skeleton element.
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
+        OOF.ElementSelection.Select(
             skeleton='meshtest:skeleton',
-            points=[Point(4.53162,5.35128,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=690, size_y=618),
-            shift=0, ctrl=0)
+            method=SingleElementSelect(element=196,
+                                       operator=Select()))
         OOF.Skeleton.Modify(
             skeleton='meshtest:skeleton',
             modifier=Refine(targets=CheckSelectedElements(),

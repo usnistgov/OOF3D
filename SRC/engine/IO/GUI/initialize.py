@@ -10,6 +10,7 @@
 
 # engine specific GUI initialization code
 
+import sys
 from ooflib.SWIG.common import config
 from ooflib.common import debug
     
@@ -72,3 +73,4 @@ import ooflib.engine.IO.GUI.solverPage
 if config.dimension() == 2:
     import ooflib.engine.IO.GUI.interfacePage #Interface branch
 
+import ooflib.engine.IO.GUI.skeletonselectionmethodGUI

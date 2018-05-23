@@ -16,12 +16,14 @@
 %module ghostoofcanvas
 %include "common/typemaps.swg"
 %extern "common/coord.swg"
+%extern "common/IO/vtkutils.swg"
 %pragma(python) code="from ooflib.SWIG.common.coord import CoordPtr"
 %extern "common/IO/view.swg"
 %pragma(python) code="from ooflib.SWIG.common.IO.view import ViewPtr"
 %pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkCellPtrPtr"
 %pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkActorPtrPtr"
 %pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkActorCollectionPtrPtr"
+%pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkIdListPtrPtr"
 
 class vtkActorCollectionPtr;
 class vtkActorPtr;
@@ -33,7 +35,53 @@ class ImageFormat;
 #include "common/IO/ghostoofcanvas.h"
 #include "common/IO/view.h"
 #include "common/IO/vtkutils.h"
+typedef std::vector<OOFCanvasLayer*> CanvasLayerVec;
 %}
+
+%typemap(python, in) CanvasLayerVec *layerVec (CanvasLayerVec v) {
+  // typemap(python, in) CanvasLayerVec *layerVec
+  if(!PyList_Check($source)) {
+    PyErr_SetString(PyExc_TypeError,
+		    "Type error in ICoordVec typemap. Python list required.");
+    return NULL;
+  }
+  CanvasLayerVec::size_type sz = Py_SAFE_DOWNCAST(
+		  PyList_Size($source), Py_ssize_t, CanvasLayerVec::size_type);
+  v.resize(sz);
+  for(CanvasLayerVec::size_type i=0; i<sz; i++) {
+    OOFCanvasLayer *layer;
+    PyObject *swigstr =
+      PyObject_GetAttrString(PyList_GET_ITEM($source, (Py_ssize_t) i), "this");
+    if(!swigstr)
+      return 0;
+    char *str = PyString_AsString(swigstr);
+    SWIG_GetPtr(str, (void**)&layer, "_OOFCanvasLayer_p");
+    v[i] = layer;
+  }
+  $target = &v;
+}
+
+%typemap(python, out) CoordAndInt* {
+  // typemap(python, out) CoordAndInt*
+  char _ptemp[128];
+  static PyObject *coordClass = 0;
+  static PyObject *pyOne = 0;
+  if(!coordClass) {
+    PyObject *module = PyImport_ImportModule("ooflib.SWIG.common.coord");
+    coordClass = PyObject_GetAttrString(module, "CoordPtr");
+    Py_XDECREF(module);
+    if(!coordClass) return 0;
+    pyOne = PyInt_FromLong(1);
+  }
+  SWIG_MakePtr(_ptemp, (void*)(&$source->coord), "_Coord_p");
+  PyObject *swigthis = Py_BuildValue("(s)", _ptemp);
+  PyObject *coord = PyObject_CallObject(coordClass, swigthis);
+  Py_XDECREF(swigthis);
+  PyObject_SetAttrString(coord, "thisown", pyOne);
+
+  $target = PyTuple_Pack(2, coord, PyInt_FromLong($source->val));
+}
+
 
 class GhostOOFCanvas {
 public:
@@ -161,8 +209,11 @@ public:
   %new Coord *findClickedCellCenter(Coord *Point, View*, OOFCanvasLayer*);
   %new Coord *findClickedPosition(Coord *Point, View*, OOFCanvasLayer*);
   %new Coord *findClickedPoint(Coord *Point, View*, OOFCanvasLayer*);
-  %new Coord *findClickedSegment(Coord *Point, View*, OOFCanvasLayer*);
+  vtkIdListPtr findClickedSegment(Coord *Point, View*, OOFCanvasLayer*);
   vtkIdListPtr findClickedFace(Coord *Point, View*, OOFCanvasLayer*);
+
+  %new CoordAndInt *findClickedCellCenterMulti(Coord *Point, View*,
+					       CanvasLayerVec *layerVec);
 
   Coord display2Physical(View*, double, double);
 

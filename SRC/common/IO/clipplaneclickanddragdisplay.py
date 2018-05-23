@@ -32,13 +32,17 @@ from ooflib.common.IO import xmlmenudump
 
 import math
 
-# The ClipPlaneClickAndDragDisplay class is an extension of the
-# DisplayMethod class. The ClipPlaneClickAndDragDisplay controls a 3D
-# graphical representation of a clipping plane that the user has
-# currently selected in the "Viewer" toolbox.  This 3D graphical
-# representation can be clicked and dragged to allow easy editing of
-# clipping planes. It uses the class PlaneAndArrowLayer (described in
-# the next paragraph) for the 3D graphical representation.
+# The ClippingPlaneWidget class is an extension of the DisplayMethod
+# class. The ClippingPlaneWidget controls a 3D graphical
+# representation of a clipping plane that the user has currently
+# selected in the "Viewer" toolbox.  This 3D graphical representation
+# can be clicked and dragged to allow easy editing of clipping
+# planes. It uses the class PlaneAndArrowLayer (described in the next
+# paragraph) for the 3D graphical representation.
+
+# ClippingPlaneWidget used to be called ClipPlaneClickAndDragDisplay,
+# which was too long.  Some of the internal names in this file haven't
+# been updated, though.
 
 # An object of class PlaneAndArrowLayer contains two vtk actors: a
 # plane, and an arrow which points out of the plane and represents the
@@ -48,26 +52,28 @@ import math
 # the functions defined in canvaslayers.swg. The PlaneAndArrowLayer
 # class is specified in canvaslayers.h.
 
-class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
+class ClippingPlaneWidget(display.DisplayMethod):
     def __init__(self, arrow_color, arrow_tip_radius, arrow_length,
-                 plane_color, plane_opacity):
+                 plane_color, plane_opacity,
+                 hide_inactive, dim_inactive):
         self.arrow_color = arrow_color
         self.arrow_tip_radius = arrow_tip_radius
         self.arrow_length = arrow_length;
         self.plane_color = plane_color
         self.plane_opacity = plane_opacity
+        self.hide_inactive = hide_inactive
+        self.dim_inactive = dim_inactive
 
         # suppressClip indicates whether or not clipping is
         # suppressed.
         self.suppressClip = False
         
-        self.sbcallbacks = None
+        self.sbcallbacks = []
         display.DisplayMethod.__init__(self)
 
     def destroy(self, destroy_canvaslayer):
-        if self.sbcallbacks is not None:
-            map(switchboard.removeCallback, self.sbcallbacks)
-            self.sbcallbacks = None
+        map(switchboard.removeCallback, self.sbcallbacks)
+        self.sbcallbacks = []
         display.DisplayMethod.destroy(self, destroy_canvaslayer)
 
     def newLayer(self):
@@ -75,19 +81,25 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
 
         # The following switchboard callbacks are used for updating
         # what is displayed in the layer.
-        self.sbcallbacks = [
+        self.sbcallbacks.extend([
             switchboard.requestCallbackMain(
                 (self.toolbox, "clip selection changed"),
                 self.setPlane),
             switchboard.requestCallbackMain(
-                "view almost changed", self.updateScale)
-        ]
+                "view almost changed", self.updateScale),
+            switchboard.requestCallbackMain("toolbox activated Viewer",
+                                            self.activatedCB),
+            switchboard.requestCallbackMain("toolbox deactivated Viewer",
+                                            self.deactivatedCB)
+        ])
 
         # Create an object of class PlaneAndArrowLayer.  The "False"
         # says that the arrow is oriented opposite to the positive
         # plane normal.
-        return canvaslayers.PlaneAndArrowLayer(self.gfxwindow.oofcanvas,
+        layer = canvaslayers.PlaneAndArrowLayer(self.gfxwindow.oofcanvas,
                                                "PlaneAndArrow", False)
+        layer.setEmpty(False)
+        return layer
 
     def arrowSign(self, plane):
         # The arrow is flipped if the plane is flipped or if all
@@ -96,8 +108,16 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
             return -1
         return 1
 
+    def planeExists(self):
+        return not (self.suppressClip or
+                    self.toolbox.currentClipPlane() is None)
+
+    def opacityFactor(self):      # multiplies opacity when inactive
+        if self.toolbox.active:
+            return 1.0
+        return 1. - self.dim_inactive
+    
     def setParams(self):
-        self.canvaslayer.set_visibility(False);
         self.canvaslayer.set_arrowColor(self.arrow_color)
         self.canvaslayer.set_arrowTipRadius(self.arrow_tip_radius)
         if self.toolbox is not None:
@@ -105,8 +125,24 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
             self.canvaslayer.set_arrowLength(direction * self.arrow_length)
         self.canvaslayer.set_arrowShaftRadius(0.3 * self.arrow_tip_radius)
         self.canvaslayer.set_planeColor(self.plane_color)
-        self.canvaslayer.set_planeOpacity(self.plane_opacity)
+        self.canvaslayer.set_planeOpacity(
+            self.plane_opacity*self.opacityFactor())
+        self.setVisibility(
+            (self.toolbox.active or not self.hide_inactive) and
+            self.planeExists())
         self.canvaslayer.setModified()
+
+    def activatedCB(self, gfxwindow):
+        if gfxwindow is self.gfxwindow:
+            self.setVisibility(self.planeExists())
+            self.canvaslayer.set_planeOpacity(self.plane_opacity)
+
+    def deactivatedCB(self, gfxwindow):
+        if gfxwindow is self.gfxwindow:
+            self.setVisibility(not self.hide_inactive and self.planeExists())
+            self.canvaslayer.set_planeOpacity(
+                self.plane_opacity*self.opacityFactor())
+            
 
     def setPlane(self, plane):
         # Switchboard callback for "clip selection changed".
@@ -114,7 +150,7 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
             # Display the selected plane even if it's not enabled.
             # The user may want to see what it will do.  This used to
             # check plane.enabled() and only display enabled planes.
-            self.canvaslayer.set_visibility(True)
+            self.setVisibility(True)
             normal = plane.normal()
             offset = plane.offset()
             self.canvaslayer.set_normal(normal)
@@ -124,7 +160,7 @@ class ClipPlaneClickAndDragDisplay(display.DisplayMethod):
             self.canvaslayer.setModified()
             return
         # There is no visible clipping plane.
-        self.canvaslayer.set_visibility(False)
+        self.setVisibility(False)
 
     def updateScale(self, gfxwindow):
         # Callback for "view almost changed". Updates the scale of the
@@ -144,11 +180,18 @@ defaultClipPlaneClickAndDragArrowTipRadius = 0.1
 defaultClipPlaneClickAndDragArrowLength = 0.5
 defaultClipPlaneClickAndDragColor = color.red
 defaultClipPlaneClickAndDragOpacity = 0.85
+defaultHideInactive = False
+defaultDimInactive = 0.5
 radiusRange = (0, 0.2, 0.02)
 lengthRange = (0.2, 1, 0.05)
 opacityRange = (0, 1, 0.05)
 
-def _setDefaultClipPlaneClickAndDragParams(menuitem, arrow_color, arrow_tip_radius, arrow_length, plane_color, plane_opacity):
+
+def _setDefaultClipPlaneClickAndDragParams(menuitem,
+                                           arrow_color, arrow_tip_radius,
+                                           arrow_length,
+                                           plane_color, plane_opacity,
+                                           hide_inactive, dim_inactive):
     global defaultClipPlaneClickAndDragArrowColor
     defaultClipPlaneClickAndDragArrowColor = arrow_color
     global defaultClipPlaneClickAndDragArrowTipRadius
@@ -159,6 +202,11 @@ def _setDefaultClipPlaneClickAndDragParams(menuitem, arrow_color, arrow_tip_radi
     defaultClipPlaneClickAndDragColor = plane_color
     global defaultClipPlaneClickAndDragOpacity
     defaultClipPlaneClickAndDragOpacity = plane_opacity
+    global defaultHideInactive
+    defaultHideInactive = hide_inactive
+    global defaultDimInactive
+    defaultDimInactive = dim_inactive
+    
 
 # Sizing and coloring options for the plane-arrow pair, which can be
 # set in the graphics defaults menu.
@@ -175,17 +223,24 @@ clipplaneclickanddragparams = [
     parameter.FloatRangeParameter(
         'arrow_length', 
         lengthRange,
-        defaultClipPlaneClickAndDragArrowLength,                                        
-        tip="Length of the arrow relative to the plane"),                         
+        defaultClipPlaneClickAndDragArrowLength,
+        tip="Length of the arrow relative to the plane"),
     color.ColorParameter(
         'plane_color', 
-        defaultClipPlaneClickAndDragColor,                                             
+        defaultClipPlaneClickAndDragColor,
         tip="Color of the plane."),                   
     parameter.FloatRangeParameter(
         'plane_opacity', 
         opacityRange,                                                 
-        defaultClipPlaneClickAndDragOpacity,                                             
-        tip="Opacity of the plane.")]
+        defaultClipPlaneClickAndDragOpacity,
+        tip="Opacity of the plane."),
+    parameter.BooleanParameter(
+        'hide_inactive', defaultHideInactive,
+        tip='Hide the widget when the toolbox is inactive'),
+    parameter.FloatRangeParameter(
+        'dim_inactive', opacityRange, defaultDimInactive,
+        tip="Factor by which to decrease the opacity of an inactive widget.")
+]
 
 mainmenu.gfxdefaultsmenu.Clipping_Planes.addItem(oofmenu.OOFMenuItem(
     "Click_And_Drag_Editing",
@@ -194,16 +249,14 @@ mainmenu.gfxdefaultsmenu.Clipping_Planes.addItem(oofmenu.OOFMenuItem(
     params=clipplaneclickanddragparams,
     help="Set default parameters for viewing and click-and-drag editing of clipping planes.",
     discussion="""<para>
-
-    Set default parameters for <link linkend="RegisteredClass:ClipPlaneClickAndDragDisplay"><classname>ClipPlaneClickAndDragDisplays</classname></link>.
-    See <xref linkend="RegisteredClass:ClipPlaneClickAndDragDisplay"/> for the details.
-
+    Set default parameters for <link linkend="RegisteredClass:ClippingPlaneWidget"><classname>ClippingPlaneWidget</classname></link>.
+    See <xref linkend="RegisteredClass:ClippingPlaneWidget"/> for the details.
     </para>"""))
 
 clipPlaneClickAndDragDisplay = registeredclass.Registration(
     'Clipping Plane Click-and-Drag Editor',
     display.DisplayMethod,
-    ClipPlaneClickAndDragDisplay,
+    ClippingPlaneWidget,
     params=clipplaneclickanddragparams,
     ordering=3.0,
     layerordering=display.Celestial,
@@ -217,14 +270,16 @@ from ooflib.common.IO import whoville
 
 def predefinedClipPlaneClickAndDragLayer():
     # When a new graphics window is opened, a
-    # ClipPlaneClickAndDragDisplay will be automatically created with
+    # ClippingPlaneWidget will be automatically created with
     # the default sizing and coloring options.
-    return ClipPlaneClickAndDragDisplay(
+    return ClippingPlaneWidget(
         arrow_color = defaultClipPlaneClickAndDragArrowColor,
         arrow_tip_radius = defaultClipPlaneClickAndDragArrowTipRadius,
         arrow_length = defaultClipPlaneClickAndDragArrowLength,
         plane_color = defaultClipPlaneClickAndDragColor,
-        plane_opacity = defaultClipPlaneClickAndDragOpacity)
+        plane_opacity = defaultClipPlaneClickAndDragOpacity,
+        hide_inactive = defaultHideInactive,
+        dim_inactive = defaultDimInactive)
 
 ghostgfxwindow.PredefinedLayer('Microstructure', '<topmost>',
                                predefinedClipPlaneClickAndDragLayer)

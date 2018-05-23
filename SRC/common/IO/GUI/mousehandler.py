@@ -14,6 +14,8 @@
 # install new MouseHandlers.  The base class defined here does
 # nothing.
 
+## TODO: This is obsolete but still used.  Replace all occurences with
+## common.IO.mousehandler
 
 class MouseHandler(object):
     def acceptEvent(self, eventtype):
@@ -24,12 +26,15 @@ class MouseHandler(object):
 	  return True
 	else:
 	  return False
-    def up(self, x, y, button, shift, ctrl):
+    def up(self, x, y, buttons):
         pass
-    def down(self, x, y, button, shift, ctrl):
+    def down(self, x, y, buttons):
         pass
-    def move(self, x, y, button, shift, ctrl):
+    def move(self, x, y, buttons):
         pass
 
     
 nullHandler = MouseHandler()            # doesn't do anything
+
+# Hack to tide us over until this file is removed.
+from ooflib.common.IO.mousehandler import MouseButtons

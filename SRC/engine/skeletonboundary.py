@@ -59,19 +59,20 @@ class SkelContextBoundary:
         ## elsewhere?
         self.timestamp = timestamp.TimeStamp()
 
+    ## TODO: boundary() and getBoundarySet() are identical except for
+    ## the try/except in boundary().  Get rid of one of them.
     def getBoundarySet(self, skeleton):
         return self.boundaryset[self.skelcontext.resolveCSkeleton(
                 skeleton.sheriffSkeleton())]
-
-    def size(self, skeleton):
-        return self.boundary(skeleton).size()
-
     def boundary(self, skeleton):
         try:
             return self.boundaryset[
                 self.skelcontext.resolveCSkeleton(skeleton.sheriffSkeleton())]
         except KeyError:        # TODO 3.1: Is this still necessary?
             pass                # temporary kludge
+
+    def size(self, skeleton):
+        return self.boundary(skeleton).size()
 
     def current_size(self):
         skel = self.skelcontext.getObject()

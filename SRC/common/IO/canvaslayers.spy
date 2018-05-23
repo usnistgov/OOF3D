@@ -64,14 +64,17 @@ class ComboCanvasLayer(object):
         return False
 
     def visibleBoundingBox(self, renderer):
-        bbox = geometry.CRectangularPrism()
+        bbox = None
         ok = False
         for sublayer in self.sublayers.values():
             if sublayer.showing():
                 subok, subbbox = sublayer.visibleBoundingBox(renderer)
                 if subok:
-                    bbox.swallowPrism(subbbox)
-                    ok = subok
+                    if bbox is None:
+                        bbox = subbox
+                    else:
+                        bbox.swallowPrism(subbbox)
+                    ok = True
         return ok, bbox
     
     def writeVTK(self, filename):
@@ -85,3 +88,4 @@ class ComboCanvasLayer(object):
     # or this:
     def getSublayers(self):
         return self.sublayers.values()
+

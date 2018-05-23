@@ -72,7 +72,7 @@ PixelGroup::PixelGroup(const std::string &name, const ICoord *geometry,
 
 PixelSet::PixelSet(const PixelSet &other)
   : id_(ngroups++),
-    weeded(false),
+    weeded(other.weeded),
     geometry(other.geometry),
     microstructure(other.microstructure)
 {
@@ -179,6 +179,11 @@ void PixelSet::add(const ICoord &pixel) {
     weeded = false;
     member_lock.release();
   }
+}
+
+void PixelSet::addWithoutCheck(const ICoord &pixel) {
+  members_.push_back(pixel);
+  weeded = false;
 }
 
 void PixelGroup::add(const ICoord &pixel) {

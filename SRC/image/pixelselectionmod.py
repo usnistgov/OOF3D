@@ -12,39 +12,46 @@
 
 from ooflib.SWIG.image import pixelselectioncourieri
 from ooflib.common import color
-from ooflib.common import pixelselectionmod
+from ooflib.common import pixelselection
 from ooflib.common import registeredclass
+from ooflib.common import selectionoperators
 from ooflib.common.IO import colordiffparameter
 from ooflib.common.IO import parameter
 from ooflib.common.IO import whoville
 
-class ColorRange(pixelselectionmod.SelectionModifier):
-    def __init__(self, image, reference, range):
+# TODO: Add operatorParam
+
+class ColorRange(pixelselection.VoxelSelectionModifier):
+    def __init__(self, image, reference, range, operator):
         self.image = image
         self.reference = reference
         self.range = range
-    def __call__(self, ms, selection):
+        self.operator = operator
+    def select(self, ms, selection):
         curselection = selection.getObject()
         # 'cause my teeth are perly...
         image = whoville.getClass('Image')[self.image]
         imageobj = image.getObject()
         ms = image.getMicrostructure()
-        selection.start()
-        selection.clearAndSelect(
+        self.operator.operate(
+            selection,
             pixelselectioncourieri.ColorSelection(ms, imageobj,
                                                   self.reference, self.range))
 
-registeredclass.Registration(
+pixelselection.VoxelSelectionModRegistration(
     'Color Range',
-    pixelselectionmod.SelectionModifier,
     ColorRange,
     ordering=3.14,
-    params=[whoville.WhoParameter('image', whoville.getClass('Image'),
-                                  tip=parameter.emptyTipString),
-            color.NewColorParameter('reference', tip='Reference color.'),
-            colordiffparameter.ColorDifferenceParameter('range',
-                                 tip='Deviation from the reference color.')
-            ],
+    params=[
+        whoville.WhoParameter(
+            'image', whoville.getClass('Image'),
+            tip=parameter.emptyTipString),
+        color.NewColorParameter(
+            'reference', tip='Reference color.'),
+        colordiffparameter.ColorDifferenceParameter(
+            'range', tip='Deviation from the reference color.'),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
     tip="Select all pixels similar to a reference color.",
     discussion= """<para>
 

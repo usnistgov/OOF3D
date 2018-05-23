@@ -52,21 +52,17 @@ class ActiveArea(unittest.TestCase):
         return microstructure.getMicrostructure("active")
 
     # Utility function for making a pixel selection.
-    def select_pixels(self):
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
+    def select_voxel(self):
+        OOF.VoxelSelection.Select(
             source='active:5color',
-            points=[Point(10.0749,10.5779,42.4752)],
-            view=View(cameraPosition=Coord(10,10,68.5167), 
-                      focalPoint=Coord(10,10,10),
-                      up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0),
-            shift=0, ctrl=0)
-
-        # OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-        #     source="active:5color",
-        #     points=[Point(8.8,7.3333,5.5)],
-        #     shift=0,ctrl=0)
-
+            method=PointSelector(point=iPoint(8,10,19),
+                                 operator=Select()))
+    def select_different_voxel(self):
+        OOF.VoxelSelection.Select(
+            source='active:5color',
+            method=PointSelector(point=iPoint(8,15,19),
+                                 operator=Select()))
+        
     # Finds the blue and magenta (red) groups.  In principle, it could
     # find all of them, if that were needed.  (Why not just use the
     # hex names that we know from the image?  Was this necessary
@@ -97,7 +93,7 @@ class ActiveArea(unittest.TestCase):
     # Simplest nontrivial action is to activate a pixel selection.
     @memorycheck.check("active")
     def Activate_Selection_Only(self):
-        self.select_pixels()
+        self.select_voxel()
         OOF.ActiveArea.Activate_Selection_Only(microstructure="active")
         self.assertEqual(self.getMS().activearea.size(), 7999)
 
@@ -112,25 +108,17 @@ class ActiveArea(unittest.TestCase):
         
     @memorycheck.check("active")
     def Activate_Selection(self):
-        self.select_pixels()
+        self.select_voxel()
         OOF.ActiveArea.Activate_Selection_Only(microstructure="active")
         OOF.ActiveArea.Override(override=True, microstructure="active")
-        OOF.Graphics_1.Toolbox.Pixel_Select.Point(
-            source='active:5color',
-            points=[Point(5.0,10.,42.)],
-            view=View(cameraPosition=Coord(10,10,68.5167), 
-                      focalPoint=Coord(10,10,10),
-                      up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0),
-            shift=0, ctrl=0)
-
+        self.select_different_voxel()
         OOF.ActiveArea.Activate_Selection(microstructure="active")
         OOF.ActiveArea.Override(override=False, microstructure="active")
         self.assertEqual(self.getMS().activearea.size(), 7998)
 
     @memorycheck.check("active")
     def Activate_All(self):
-        self.select_pixels()
+        self.select_voxel()
         OOF.ActiveArea.Activate_Selection_Only(microstructure="active")
         OOF.ActiveArea.Activate_All(microstructure="active")
         self.assertEqual(self.getMS().activearea.size(), 0)
@@ -160,7 +148,7 @@ class ActiveArea(unittest.TestCase):
                 
     @memorycheck.check("active")
     def Deactivate_Selection(self):
-        self.select_pixels()
+        self.select_voxel()
         OOF.ActiveArea.Deactivate_Selection(microstructure="active")
         self.assertEqual(self.getMS().activearea.size(), 1)
 
@@ -190,7 +178,7 @@ class ActiveArea(unittest.TestCase):
         
     @memorycheck.check("active")
     def Invert(self):
-        self.select_pixels()
+        self.select_voxel()
         OOF.ActiveArea.Activate_Selection_Only(microstructure="active")
         OOF.ActiveArea.Invert(microstructure="active")
         self.assertEqual(self.getMS().activearea.size(), 1)
@@ -198,7 +186,7 @@ class ActiveArea(unittest.TestCase):
     # Copies between microstructures.
     @memorycheck.check("active", "copy")
     def Copy(self):
-        self.select_pixels()
+        self.select_voxel()
         OOF.ActiveArea.Activate_Selection_Only(microstructure="active")
         OOF.Microstructure.Copy(microstructure="active", name="copy")
         cms = microstructure.getMicrostructure("copy")
@@ -211,7 +199,7 @@ class ActiveArea(unittest.TestCase):
     @memorycheck.check("active")
     def Undo(self):
         aa1 = self.getMS().activearea.getObject()
-        self.select_pixels()
+        self.select_voxel()
         OOF.ActiveArea.Activate_Selection_Only(microstructure="active")
         aa2 = self.getMS().activearea.getObject()
         OOF.ActiveArea.Undo(microstructure="active")
@@ -222,7 +210,7 @@ class ActiveArea(unittest.TestCase):
     @memorycheck.check("active")
     def Redo(self):
         aa1 = self.getMS().activearea.getObject()
-        self.select_pixels()
+        self.select_voxel()
         OOF.ActiveArea.Activate_Selection_Only(microstructure="active")
         aa2 = self.getMS().activearea.getObject()
         OOF.ActiveArea.Undo(microstructure="active")
@@ -236,7 +224,7 @@ class ActiveArea(unittest.TestCase):
     # Construction operations.
     @memorycheck.check("active")
     def Store(self):
-        self.select_pixels()
+        self.select_voxel()
         OOF.ActiveArea.Activate_Selection_Only(microstructure="active")
         OOF.ActiveArea.Store(microstructure="active", name="test")
         OOF.ActiveArea.Undo(microstructure="active")
@@ -248,7 +236,7 @@ class ActiveArea(unittest.TestCase):
 
     @memorycheck.check("active")
     def Restore(self):
-        self.select_pixels()
+        self.select_voxel()
         OOF.ActiveArea.Activate_Selection_Only(microstructure="active")
         OOF.ActiveArea.Store(microstructure="active", name="test")
         OOF.ActiveArea.Undo(microstructure="active")
@@ -260,7 +248,7 @@ class ActiveArea(unittest.TestCase):
 
     @memorycheck.check("active")
     def Rename(self):
-        self.select_pixels()
+        self.select_voxel()
         OOF.ActiveArea.Activate_Selection_Only(microstructure="active")
         OOF.ActiveArea.Store(microstructure="active", name="test")
         aa1 = self.getMS().namedActiveAreas[0]
@@ -273,7 +261,7 @@ class ActiveArea(unittest.TestCase):
         
     @memorycheck.check("active")
     def Delete(self):
-        self.select_pixels()
+        self.select_voxel()
         OOF.ActiveArea.Activate_Selection_Only(microstructure="active")
         OOF.ActiveArea.Store(microstructure="active", name="test")
         aa1 = self.getMS().namedActiveAreas[0]

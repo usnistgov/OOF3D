@@ -23,11 +23,13 @@
 #include "common/IO/canvaslayers.h"
 #include "common/IO/vtkutils.h"
 #include "common/pixelgroup.h"
+#include "common/geometry.h"
 %}
 
 %pragma(python) include="canvaslayers.spy"
 %pragma(python) code="from ooflib.SWIG.common.coord import CoordPtr"
 %pragma(python) code="from ooflib.SWIG.common.direction import CUnitVectorDirectionPtr"
+%pragma(python) code="from ooflib.SWIG.common.geometry import CRectangularPrismPtr"
 
 %typemap(python, out) OOFCanvasLayerBase* {
   $target = $source->pythonObject();
@@ -50,12 +52,8 @@ public:
 
 class OOFCanvasLayer : public OOFCanvasLayerBase { 
 public:
-  // void raise_layer(int);
-  // void raise_to_top();
-  // void lower_layer(int);
-  // void add_to_renderer();
-  // void remove_from_renderer();
   void setEmpty(bool);
+  bool getEmpty();
   void setModified();
   void installContourMap();
 };
@@ -65,7 +63,6 @@ public:
   PlaneAndArrowLayer(GhostOOFCanvas*, const char*, bool);
   vtkActorPtr get_planeActor();
   vtkActorPtr get_arrowActor();
-  void set_visibility(bool);
   void set_arrowShaftRadius(double);
   void set_arrowTipRadius(double);
   void set_arrowLength(double);
@@ -88,24 +85,19 @@ public:
   void set_center(Coord* Point);
 };
 
-class BoxAndArrowLayer : public OOFCanvasLayer {
+class BoxWidgetLayer : public OOFCanvasLayer {
 public:
-  BoxAndArrowLayer(GhostOOFCanvas*, const char*);
+  BoxWidgetLayer(GhostOOFCanvas*, const char*);
   %new Coord *get_cellCenter(int);
   %new Coord *get_cellNormal_Coord3D(int);
   void reset();
-  void set_box(Coord *Point);
-  void set_totalVisibility(bool);
-  void set_arrowVisibility(bool);
-  void set_arrowShaftRadius(double);
-  void set_arrowTipRadius(double);
-  void set_arrowLength(double);
-  void set_arrowColor(const CColor&);
+  void set_box(CRectangularPrism*);
+  CRectangularPrism *get_box();
   void set_pointSize(float);
   void set_lineWidth(float);
   void set_lineColor(const CColor&);
   void set_faceColor(const CColor&);
-  void set_faceOpacity(double);
+  void set_opacity(double);
   void set_position(Coord *Point);
   void offset_cell(int, double); 
 };
@@ -157,26 +149,16 @@ public:
   void set_image(ImageBase*, Coord *Point, Coord *Point);
   void set_filter(VoxelFilter*);
   void filterModified();
-  void connectBottomOverlayer(ImageCanvasOverlayer*);
-  void connectTopOverlayer(ImageCanvasOverlayer*);
-  void noOverlayers();
   void set_opacity(double);
 };
 
-class ImageCanvasOverlayer : public OOFCanvasLayerBase {
+class MonochromeVoxelLayer : public OOFCanvasLayer {
 public:
-  ~ImageCanvasOverlayer();
-  void connectToOverlayer(ImageCanvasOverlayer*);
-  void disconnect();
-};
-
-class OverlayVoxels : public ImageCanvasOverlayer {
-public:
-  OverlayVoxels(GhostOOFCanvas*, const char*);
-  void setTintOpacity(double);
-  void setColor(CColor*);
-  void setPixelSet(PixelSet*);
-  void clearPixelSet();
+  MonochromeVoxelLayer(GhostOOFCanvas*, const char*);
+  void set_image_layer(ImageCanvasLayer*);
+  void set_filter(VoxelFilter*);
+  void set_opacity(double);
+  void set_color(CColor&);
 };
 
 class GlyphedLayer : public SimpleCellLayer {

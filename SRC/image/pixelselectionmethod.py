@@ -8,46 +8,53 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov.
 
+# See NOTES/selection_machinery.txt
+
 from ooflib.SWIG.common import config
-from ooflib.SWIG.common.IO import vtkutils
 from ooflib.SWIG.image import pixelselectioncourieri
 from ooflib.common import debug
-from ooflib.common import pixelselectionmethod
-from ooflib.common import primitives
+from ooflib.common import pixelselection
+from ooflib.common import selectionoperators
 from ooflib.common.IO import colordiffparameter
+from ooflib.common.IO import parameter
+from ooflib.common.IO import pointparameter
 from ooflib.common.IO import xmlmenudump
 
-class ColorSelector(pixelselectionmethod.SelectionMethod):
-    def __init__(self, range):
+class ColorSelector(pixelselection.VoxelSelectionMethod):
+    def __init__(self, point, range, operator):
+        self.point = point
         self.range = range
-    def select(self, immidge, gfxwindow, pointlist, view, selector):
-        ms = immidge.getMicrostructure()
-        if config.dimension() == 2:
-            isize = ms.sizeInPixels()
-            psize = primitives.Point(*ms.sizeOfPixels())
-            pt = ms.pixelFromPoint(pointlist[0])
-        else:                   # 3D
-            cell = gfxwindow.findClickedCell(immidge, pointlist[0], view)
-            if cell is not None:
-                coord = vtkutils.cell2coord(cell)
-                pt = ms.pixelFromPoint(coord)
-            else:
-                return
-        pic = immidge.getObject()
-        pic.update() 
-        ref_color = pic[pt]
-        selector(pixelselectioncourieri.ColorSelection(ms, pic, ref_color,
-                                                       self.range))
+        self.operator = operator
+    def select(self, source, selection):
+        ms = source.getMicrostructure()
+        image = source.getObject() # OOFImage3D
+        ref_color = image[self.point]
+        self.operator.operate(
+            selection,
+            pixelselectioncourieri.ColorSelection(ms, image,
+                                                  ref_color, self.range))
 
-pixelselectionmethod.PixelSelectionRegistration(
+pixelselection.VoxelSelectionMethodRegistration(
     'Color',
     ColorSelector,
     ordering=0.6,
     events=['up'],
-    params=[colordiffparameter.ColorDifferenceParameter('range',
-                                                        tip='Acceptable deviation from the reference color.')],
+    params=[
+        parameter.passive(
+            pointparameter.iPointParameter(
+                'point', tip="Where the mouse was clicked.",)),
+        colordiffparameter.ColorDifferenceParameter(
+            'range', tip='Acceptable deviation from the reference color.'),
+        selectionoperators.SelectionOperatorParam('operator', passive=1)
+    ],
     whoclasses=['Image'],
-    tip="Select pixels whose color is close to that of a reference pixel.",
+    tip="""\
+Select voxels whose color is close
+to that of a selected reference voxel.
+Click to select just the target voxels.
+Shift click to retain previously selected voxels.
+Control click to toggle the target voxels.
+Shift-control click to deselect the target voxels.""",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/image/reg/colorselect.xml')
     )
 

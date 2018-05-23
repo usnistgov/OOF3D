@@ -18,13 +18,11 @@
 %{
 #include "common/IO/ghostoofcanvas.h"
 #include "common/IO/GUI/oofcanvas3d.h"
-#include "common/IO/GUI/rubberband3d.h"
   //#include "vtkPythonUtil.h"
 #include "vtkUnstructuredGrid.h"
 %}
 
 %pragma(python) code="from ooflib.SWIG.common.IO.ghostoofcanvas import GhostOOFCanvasPtr"
-%pragma(python) code="from ooflib.SWIG.common.IO.GUI.rubberband3d import RubberBandPtr"
 
 class OOFCanvas3D : public GhostOOFCanvas {
 public:
@@ -38,9 +36,6 @@ public:
   void mouse_tumble(double x, double y);
   void mouse_track(double x, double y);
   void mouse_dolly(double x, double y);
-
-  void set_rubberband(RubberBand*);
-
 };
 
 

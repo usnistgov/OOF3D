@@ -9,9 +9,9 @@
 # oof_manager@nist.gov. 
 
 from ooflib.SWIG.common import config
-from ooflib.common import primitives
 from ooflib.common import registeredclass
 from ooflib.common.IO import parameter
+from ooflib.common.IO import pointparameter
 
 class SelectionShape(registeredclass.RegisteredClass):
     registry = []
@@ -29,9 +29,9 @@ registeredclass.Registration(
     SelectionShape,
     BoxSelectionShape,
     ordering=0,
-    params=[primitives.PointParameter(
+    params=[pointparameter.PointParameter(
             "point0", tip="One corner of the box."),
-            primitives.PointParameter(
+            pointparameter.PointParameter(
             "point1", tip="The diagonally opposite corner of the box.")
             ],
     tip="Select a rectangular region defined by diagonally opposing corners.")
@@ -53,7 +53,7 @@ registeredclass.Registration(
     SelectionShape,
     CircleSelectionShape,
     ordering=1,
-    params=[primitives.PointParameter("center",
+    params=[pointparameter.PointParameter("center",
                                       tip="The center of the circle."),
             parameter.FloatParameter("radius", 0.0)],
     tip="Select a circular or spherical region.")
@@ -71,9 +71,9 @@ registeredclass.Registration(
     SelectionShape,
     EllipseSelectionShape,
     ordering=2,
-    params=[primitives.PointParameter(
+    params=[pointparameter.PointParameter(
             "point0", tip="One corner of the bounding box."),
-            primitives.PointParameter(
+            pointparameter.PointParameter(
             "point1",
             tip="The diagonally opposite corner of the bounding box.")],
     tip="Select an elliptical region.")

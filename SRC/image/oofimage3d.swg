@@ -23,7 +23,6 @@
 %}
 
 %pragma(python) include="oofimage3d.spy"
-%extern "common/IO/bitoverlay.swg"
 %extern "common/ccolor.swg"
 %extern "common/timestamp.swg"
 %extern "common/ooferror.swg"

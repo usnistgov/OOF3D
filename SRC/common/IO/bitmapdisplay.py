@@ -47,18 +47,6 @@ class BitmapDisplayMethod(display.DisplayMethod):
         layer.setEmpty(False)
         return layer
 
-    def layersChanged(self):
-        overlayers = self.gfxwindow.getOverlayers()
-        topImage = self.gfxwindow.topImage()
-        if topImage is self:
-            self.canvaslayer.show(False) # hidden layers are never the top image
-            if not overlayers:
-                self.canvaslayer.noOverlayers()
-            else:
-                self.canvaslayer.connectTopOverlayer(overlayers[-1].canvaslayer)
-        else:
-            self.canvaslayer.hide(False)
-
     def whoChanged(self):
         # The who object itself has been modified, or a new one
         # assigned.  This is the switchboard callback for "who

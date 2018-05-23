@@ -26,11 +26,11 @@ from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.common.IO import view
 from ooflib.common import debug
 from ooflib.common import parallel_enable
-from ooflib.common import primitives
 from ooflib.common import ringbuffer
 from ooflib.common import toolbox
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
+from ooflib.common.IO import pointparameter
 from ooflib.common.IO import xmlmenudump
 from ooflib.engine import skeletondiff
 
@@ -67,7 +67,7 @@ class SelectedNode:
 
 class MoveNodeToolbox(toolbox.Toolbox):
     def __init__(self, gfxwindow):
-        toolbox.Toolbox.__init__(self, 'Move_Nodes', gfxwindow)
+        toolbox.Toolbox.__init__(self, 'Move Nodes', gfxwindow)
         self.whoset = ('Skeleton',)
         self.selectednode = SelectedNode()
         self.allow_illegal = False
@@ -93,7 +93,7 @@ class MoveNodeToolbox(toolbox.Toolbox):
                 params=[
                     parameter.IntParameter(
                         'node', tip='Index of the node to be moved.'),
-                        primitives.PointParameter(
+                        pointparameter.PointParameter(
                         'destination', tip=parameter.emptyTipString)],
                 help="Move a node to another positon.",
                 discussion=xmlmenudump.loadFile(
@@ -103,7 +103,7 @@ class MoveNodeToolbox(toolbox.Toolbox):
                 'SelectNode',
                 callback = self.selectNode,
                 params=[
-                    primitives.PointParameter(
+                    pointparameter.PointParameter(
                         'position', tip=parameter.emptyTipString),
                     view.ViewParameter('view')],
                 help="Select a node to move.",

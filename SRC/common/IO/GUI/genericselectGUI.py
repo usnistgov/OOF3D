@@ -9,76 +9,48 @@
 # oof_manager@nist.gov. 
 
 # Base class for Selection toolboxes.
+# See NOTES/selection_machinery.txt
 
 from ooflib.SWIG.common import config
-from ooflib.SWIG.common import switchboard
-from ooflib.SWIG.common import ooferror
-from ooflib.SWIG.common.IO.GUI import rubberband3d as rubberband
-from ooflib.common import debug
 from ooflib.SWIG.common import guitop
-from ooflib.common import primitives
-from ooflib.common import subthread
+from ooflib.SWIG.common import ooferror
+from ooflib.SWIG.common import switchboard
+from ooflib.common import debug
 from ooflib.common import mainthread
-from ooflib.common import utils
+from ooflib.common import pixelselectionmod
+from ooflib.common import subthread
+from ooflib.common.IO import mousehandler
 from ooflib.common.IO.GUI import gtklogger
-from ooflib.common.IO.GUI import gtkutils
-from ooflib.common.IO.GUI import historian
-from ooflib.common.IO.GUI import mousehandler
+from ooflib.common.IO.GUI import parameterwidgets
+from ooflib.common.IO.GUI import regclassfactory
 from ooflib.common.IO.GUI import toolboxGUI
 from ooflib.common.IO.GUI import tooltips
+
 import gtk, sys
 
-class HistoricalSelection:
-    def __init__(self, selectionMethod, points):
-        # Store a copy of the selection method.
-        self.selectionMethod = selectionMethod
-        self.points = points            # mouse coordinates
-    def __repr__(self):
-        return "HistoricalSelection(%s, %s)" %\
-               (self.selectionMethod, self.points)
-
-
-# Base class common to all selection toolboxes.  Needs access to the
-# selectionmethod registry in order to build the
-# registeredclassfactory.
-
-# Subclasses *must* provide:
-#  getSource()  returns the Who object within which the selection is made
-#  finish_up()  completes the selection operation
-#  undoCB()     gtk callback for undo button
-#  redoCB()
-#  clearCB()
-#  invertCB()
-#  methodFactory()  Returns a RegisteredClassFactory for the
-#                                                 appropriate registry.
-
-class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
-                              mousehandler.MouseHandler):
-    def __init__(self, name, toolbox, method):
+class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox):
+    def __init__(self, toolbox, method):
         debug.mainthreadTest()
-        toolboxGUI.GfxToolbox.__init__(self, name, toolbox)
+        toolboxGUI.GfxToolbox.__init__(self, toolbox)
         self.method = method            # RegisteredClass of selection methods
-        self.points = []                # locations of mouse events
-        # Was a modifier key pressed during the last button event?
-        self.shift = 0                 
-        self.ctrl = 0
+        self.currentGUI = None
+        self.currentMouseHandler = mousehandler.nullHandler
 
         outerbox = gtk.VBox(spacing=2)
         self.gtk.add(outerbox)
 
-##        scroll = gtk.ScrolledWindow()
-##        scroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-##        outerbox.pack_start(scroll, expand=1, fill=1)
+        # Create an instance of each SelectionMethod's
+        # SelectionMethodGUI and store it in a dictionary keyed by the
+        # method's registration.
+        self.methodGUIs = {reg.subclass : reg.gui(self)
+                           for reg in method.registry if hasattr(reg, 'gui')}
 
-        # Retrieve the registered class factory from the subclass.
-        self.selectionMethodFactory = self.methodFactory()
-        # self.selectionMethodFactory = regclassfactory.RegisteredClassFactory(
-        #     method.registry, title="Method:", name="Method")
-##        scroll.add_with_viewport(self.selectionMethodFactory.gtk)
+        self.selectionMethodFactory = regclassfactory.RegisteredClassFactory(
+            method.registry, title="Method:", name="Method",
+            scope=self, callback=self.changedSelectionMethod,
+            widgetdict=self.methodGUIs)
+        
         outerbox.pack_start(self.selectionMethodFactory.gtk, expand=1, fill=1)
-        self.historian = historian.Historian(self.setHistory,
-                                             self.sensitizeHistory)
-        self.selectionMethodFactory.set_callback(self.historian.stateChangeCB)
 
         # Undo, Redo, Clear, and Invert buttons.  The callbacks for
         # these have to be defined in the derived classes.
@@ -111,76 +83,6 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
             self.invertbutton,
             "Select all unselected objects, and deselect all selected objects.")
 
-        # Selection history
-        frame = gtk.Frame('History')
-        frame.set_shadow_type(gtk.SHADOW_IN)
-        outerbox.pack_start(frame, expand=0, fill=0)
-        vbox = gtk.VBox()
-
-        frame.add(vbox)
-        
-        table = gtk.Table(rows=2, columns=3)
-        vbox.pack_start(table, expand=0, fill=0)
-        table.attach(gtk.Label('down'), 0,1, 0,1, xoptions=0, yoptions=0)
-        table.attach(gtk.Label('up'), 0,1, 1,2, xoptions=0, yoptions=0)
-
-        self.xdownentry = gtk.Entry()
-        self.ydownentry = gtk.Entry()
-        self.xupentry = gtk.Entry()
-        self.yupentry = gtk.Entry()
-        gtklogger.setWidgetName(self.xdownentry, 'xdown')
-        gtklogger.setWidgetName(self.ydownentry, 'ydown')
-        gtklogger.setWidgetName(self.xupentry, 'xup')
-        gtklogger.setWidgetName(self.yupentry, 'yup') # yessirree, Bob!
-        entries = [self.xdownentry, self.ydownentry, self.xupentry,
-                   self.yupentry]
-        if config.dimension() == 3:
-            self.zdownentry = gtk.Entry()  
-            self.zupentry = gtk.Entry()
-            gtklogger.setWidgetName(self.zdownentry, 'zdown')  
-            gtklogger.setWidgetName(self.zdownentry, 'zup')
-            entries.append(self.zdownentry)
-            entries.append(self.zupentry)
-        self.entrychangedsignals = []
-        for entry in entries:
-            entry.set_size_request(12*guitop.top().digitsize, -1)
-            self.entrychangedsignals.append(
-                gtklogger.connect(entry, "changed", self.poschanged))
-        table.attach(self.xdownentry, 1,2, 0,1)
-        table.attach(self.ydownentry, 2,3, 0,1)
-        table.attach(self.xupentry, 1,2, 1,2)
-        table.attach(self.yupentry, 2,3, 1,2)
-        if config.dimension() == 3:
-            table.attach(self.zdownentry, 3,4, 0,1)
-            table.attach(self.zupentry, 3,4, 1,2)
-        hbox = gtk.HBox(spacing=2)
-        vbox.pack_start(hbox, expand=0, fill=0)
-        self.prevmethodbutton = gtkutils.prevButton()
-        self.repeatbutton = gtkutils.StockButton(gtk.STOCK_REFRESH, 'Repeat')
-        gtklogger.setWidgetName(self.repeatbutton, 'Repeat')
-        self.nextmethodbutton = gtkutils.nextButton()
-        hbox.pack_start(self.prevmethodbutton, expand=0, fill=0)
-        hbox.pack_start(self.repeatbutton, expand=1, fill=0)
-        hbox.pack_start(self.nextmethodbutton, expand=0, fill=0)
-        gtklogger.connect(self.repeatbutton, 'clicked', self.repeatCB)
-        gtklogger.connect(self.repeatbutton, 'button-release-event',
-                          self.repeateventCB)
-        gtklogger.connect(self.prevmethodbutton, 'clicked',
-                          self.historian.prevCB)
-        gtklogger.connect(self.nextmethodbutton, 'clicked',
-                         self.historian.nextCB)
-        tooltips.set_tooltip_text(self.prevmethodbutton,
-              "Recall the settings and mouse coordinates for the previous"
-             " selection method.")
-        tooltips.set_tooltip_text(self.nextmethodbutton,
-              "Recall the settings and mouse coordinates for the next"
-              " selection method.")
-        tooltips.set_tooltip_text(self.repeatbutton,
-              "Execute the selection method as if the mouse had been clicked"
-              " at the above coordinates.  Hold the shift key to retain the"
-              " previous selection.  Hold the control key to toggle the"
-              " selection state of the selected pixels.")
-        
 
         # Selection information
         hbox = gtk.HBox()
@@ -197,74 +99,130 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
         self.sbcallbacks = [
             switchboard.requestCallbackMain(method,
                                             self.updateSelectionMethods),
-            switchboard.requestCallback((self.toolbox.gfxwindow(),
+            switchboard.requestCallback((self.gfxwindow(),
                                          'layers changed'),
-                                        self.setInfo_subthread)
+                                        self.setInfo_subthread),
+            switchboard.requestCallbackMain((self.gfxwindow(),
+                                             'layers changed'),
+                                            self.layerChangeCB)
         ]
+
+        # Make sure that the initial state is self-consistent
+        self.changedSelectionMethod(
+            self.selectionMethodFactory.getRegistration())
+
+    def changedSelectionMethod(self, registration): # Chooser callback
+        if registration is None:
+            return
+        # currentGUI can be None if the subclass doesn't have a GUI
+        if self.currentGUI is not None:
+            self.currentGUI.uninstall()
+            self.currentGUI.setCurrentRegistration(None)
+        self.currentGUI = self.methodGUIs.get(registration.subclass, None)
+        if self.currentGUI is not None:
+            self.currentGUI.setCurrentRegistration(registration)
+            self.currentGUI.install()
+        self.installMouseHandler()
 
     def activate(self):
         if not self.active:
-            toolboxGUI.GfxToolbox.activate(self)
+            super(GenericSelectToolboxGUI, self).activate()
+            if self.currentGUI is not None:
+                self.currentGUI.activate()
             self.sensitize()
-            self.sensitizeHistory()
             self.setInfo()
-
-            # self.gfxwindow().setMouseHandler(self)
+            self.installMouseHandler()
+            self.layerChangeCB()
             if config.dimension() == 3:
                 self.gfxwindow().toolbar.setSelect()
+            self.activecallbacks = [
+                # changeSignal is defined as class-level data in the
+                # derived classes.
+                switchboard.requestCallbackMain(self.changeSignal,
+                                                self.changedSelection)
+            ]
 
-    # def deactivate(self):
-    #     if self.active:
-    #         # self.gfxwindow().setRubberband(rubberband.NoRubberBand())
-    #         toolboxGUI.GfxToolbox.deactivate(self)
+    def deactivate(self):
+        if self.active:
+            super(GenericSelectToolboxGUI, self).deactivate()
+            map(switchboard.removeCallback, self.activecallbacks)
+            self.activecallbacks = []
+            self.currentMouseHandler.stop()
+            if self.currentGUI is not None:
+                self.currentGUI.deactivate()
 
     def installMouseHandler(self):
-        self.gfxwindow().setMouseHandler(self)
+        self.currentMouseHandler.stop()
+        if self.currentGUI is not None:
+            self.currentMouseHandler = self.currentGUI.mouseHandler()
+        else:
+            self.currentMouseHandler = mousehandler.nullHandler
+        self.gfxwindow().setMouseHandler(self.currentMouseHandler)
+        self.currentMouseHandler.start()
 
     def close(self):
         map(switchboard.removeCallback, self.sbcallbacks)
+        self.currentMouseHandler.stop()
+        for gui in self.methodGUIs.values():
+            if gui is not None:
+                gui.close()
         toolboxGUI.GfxToolbox.close(self)
 
+    def getSelectionSource(self):
+        return self.toolbox.getSelectionSource()
+
     def getSourceName(self):
-        source = self.getSource()
-        if source is not None:
-            return source.path()
+        return self.toolbox.getSourceName()
+
+    def invokeMenuItem(self, who, method):
+        # method is a SelectionMethod subclass
+        menuitem = self.toolbox.menuitem
+        buttons = self.currentMouseHandler.buttons
+        # Assume that the first argument is the Microstructure,
+        # Skeleton, or whatever, and find its name (the name of the
+        # argument, not the value of the argument!).
+        sourceargname = menuitem.params[0].name
+        argdict = {sourceargname : who.path(), 'method' : method}
+        menuitem.callWithDefaults(**argdict)
+
+    def getParamValues(self, *paramnames):
+        # Return the values of the given parameters from the
+        # RegisteredClassFactory.  If just one is given, return it.
+        # If there's more than one, return a tuple.
+        mainthread.runBlock(self.selectionMethodFactory.set_defaults)
+        reg = self.selectionMethodFactory.getRegistration()
+        values = [reg.getParameter(name).value for name in paramnames]
+        if len(paramnames) == 1:
+            return values[0]
+        return values
+
+    def setParamValues(self, **kwargs):
+        # Set the values of the given parameters in the
+        # RegisteredClassFactory.
+        mainthread.runBlock(
+            self.selectionMethodFactory.setParamValues, (), kwargs)
 
     def layerChangeCB(self):
         # Called when layers have been added, removed, or moved in the gfxwindow
+        self.updateSelectionMethods()
         self.sensitize()
 
-    def newSelection(self, selectionMethod, pointlist): # switchboard callback
-        debug.mainthreadTest()
-        if selectionMethod is not None:
-            self.historian.record(HistoricalSelection(selectionMethod,
-                                                      pointlist))
-            self.setCoordDisplay(selectionMethod.getRegistration(), pointlist)
-            self.selectionMethodFactory.setByRegistration(
-                selectionMethod.getRegistration())
-            self.sensitize()
-
-    def changedSelection(self, selection): # switchboard callback
+    def changedSelection(self, selection): # switchboard callback sb
+        # callback for 'changed <something> selection'.  The precise
+        # wording of the signal is stored in the toolboxGUI subclass
+        # as 'changeSignal'
         self.sensitize()
         self.setInfo()
 
-    def poschanged(self, *args):
-        self.sensitizeHistory()
-            
-    def setHistory(self, historicalSelection):
-        self.selectionMethodFactory.set(historicalSelection.selectionMethod,
-                                        interactive=1)
-        self.setCoordDisplay(
-            historicalSelection.selectionMethod.getRegistration(),
-            historicalSelection.points)
-
     def sensitize(self):
+        if self.currentGUI is not None:
+            self.currentGUI.sensitize()
         subthread.execute(self.sensitize_subthread)
 
     def sensitize_subthread(self):
         debug.subthreadTest()
 
-        source = self.getSource()
+        source = self.getSelectionSource()
         try:        # The source may not have been completely built yet...
             selection = source.getSelectionContext(**self.toolbox.extrakwargs)
         except AttributeError:
@@ -281,7 +239,8 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
             finally:
                 selection.end_reading()
         mainthread.runBlock(self._set_button_sensitivities, (u,r,c,i))
-        #gtklogger.checkpoint(self.gfxwindow().name + " " + self._name + " sensitized")
+        # gtklogger.checkpoint(self.gfxwindow().name + " " + self.name()
+        #                      + " sensitized")
         
     def _set_button_sensitivities(self, u,r,c,i):
         debug.mainthreadTest()
@@ -289,14 +248,6 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
         self.redobutton.set_sensitive(r)
         self.clearbutton.set_sensitive(c)
         self.invertbutton.set_sensitive(i)
-        self.sensitizeHistory()
-
-    def sensitizeHistory(self):
-        debug.mainthreadTest()
-        self.nextmethodbutton.set_sensitive(self.historian.nextSensitive())
-        self.prevmethodbutton.set_sensitive(self.historian.prevSensitive())
-        self.repeatbutton.set_sensitive(len(self.historian) > 0
-                                        and self.repeatable())
 
     def setInfo(self):
         debug.mainthreadTest()
@@ -305,7 +256,7 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
     def setInfo_subthread(self):
         debug.subthreadTest()
             
-        source = self.getSource()
+        source = self.getSelectionSource()
         if source is not None:
             source.begin_reading()
             try:
@@ -334,187 +285,121 @@ class GenericSelectToolboxGUI(toolboxGUI.GfxToolbox,
         self.sizetext.set_text(txt)
         
     def updateSelectionMethods(self):
-        selmeth = self.selectionMethodFactory.getRegistration().name()
+        reg = self.selectionMethodFactory.getRegistration()
+        if reg:
+            selmeth = self.selectionMethodFactory.getRegistration().name()
+        else:
+            selmeth = None
         self.selectionMethodFactory.update(self.method.registry, obj=selmeth)
 
-    ###################################
+    #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-    # Command history
+    def _runSimpleMenuCommand(self, menuitem):
+        # Call the Undo, Redo, Clear, or Invert menu items.  They all
+        # take a single argument which might have different names but
+        # whose value is always the Who object whose selection is
+        # being cleared.
+        assert menuitem.nargs() == 1
+        menuitem.params[0].value = self.getSourceName()
+        menuitem.callWithDefaults()
+
+    def undoCB(self, button):
+        self._runSimpleMenuCommand(self.toolbox.menu.Undo)
+
+    def redoCB(self, button):
+        self._runSimpleMenuCommand(self.toolbox.menu.Redo)
+
+    def clearCB(self, button):
+        self._runSimpleMenuCommand(self.toolbox.menu.Clear)
+
+    def invertCB(self, button):
+        self._runSimpleMenuCommand(self.toolbox.menu.Invert)
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# SelectionMethodGUI is the base class for the GUIs for particular
+# selection methods.  Each selection method that has non-trivial gui
+# requirements has an associated SelectionMethodGUI.  The
+# SelectionMethodGUIs handle or delegate the construction of the gtk
+# widgets in the toolbox (the contents of the toolbox's
+# RegisteredClassFactory for a selection method), specify the
+# low-level and high-level mouse handlers, and interact with the vtk
+# display layer that's providing user feedback.
+
+# SelectionMethodGUIs are associated with SelectionMethods with this
+# decorator, which is applied to the SelectionMethodGUI class. The
+# argument(s) of the decorator are the GenericSelectionMethods that
+# the gui applies to.  The decorator adds a "gui" member to the
+# SelectionMethod's registration.
+
+def selectionGUIfor(*_selectorClasses):
+    def decorator(guicls):
+        for cls in _selectorClasses:
+            cls.registration.gui = guicls
+        return guicls
+    return decorator
     
-    def repeatCB(self, button):
-        debug.mainthreadTest()
-        selmeth = self.selectionMethodFactory.getRegistration()
-        if selmeth is not None:
-            # Get the coordinates of the points from the widgets.  If
-            # the selection method uses 'move' events, then those
-            # points have to come from the Historian, because there's
-            # no widget for them.
-            if 'move' in selmeth.events:
-                points = self.historian.current().points[:]
-            else:
-                points = [None]         # dummy array, will be filled later
-            # Also, the list of points from the Historian might not
-            # have the right length. 
-            if 'up' in selmeth.events and 'down' in selmeth.events:
-                # need two points, at least
-                if len(points) == 1:
-                    points.append(None)
-            # Get the (possibly) edited values from the widgets
-            try:
-                if 'down' in selmeth.events:
-                    if config.dimension() == 2:
-                        points[0] = primitives.Point(
-                            utils.OOFeval(self.xdownentry.get_text()),
-                            utils.OOFeval(self.ydownentry.get_text()))
-                    elif config.dimension() == 3:
-                        points[0] = primitives.Point(
-                            utils.OOFeval(self.xdownentry.get_text()),
-                            utils.OOFeval(self.ydownentry.get_text()),
-                            utils.OOFeval(self.zdownentry.get_text()))
-                if 'up' in selmeth.events:
-                    if config.dimension() == 2:
-                        points[-1] = primitives.Point(
-                            utils.OOFeval(self.xupentry.get_text()),
-                            utils.OOFeval(self.yupentry.get_text()))
-                    elif config.dimension() == 3:
-                        points[-1] = primitives.Point(
-                            utils.OOFeval(self.xupentry.get_text()),
-                            utils.OOFeval(self.yupentry.get_text()),
-                            utils.OOFeval(self.zupentry.get_text()))
-            except:        # Shouldn't happen, if sensitization is working
-                raise "Can't evaluate coordinates!"
-            actual_who = self.getSource()
-            if actual_who:
-                self.selectionMethodFactory.set_defaults()
-                menuitem = getattr(self.toolbox.menu, selmeth.name())
-                self.toolbox.setSourceParams(menuitem, actual_who)
-                menuitem.callWithDefaults(points=points,
-                                          shift=self.shift, ctrl=self.ctrl)
-
-    def repeateventCB(self, button, gdkevent):
-        # Callback for 'button-release-event' on the 'Repeat' button.
-        # This function is called before repeatCB and stores the
-        # modifier key state.  This function is called whenever the
-        # mouse is released as long as it was pushed on the 'Repeat'
-        # button, so it can't be used as the actual button callback.
-        # repeatCB is called only if the mouse is actually released on
-        # the button, but doesn't have access to the modifier keys
-        # like repeateventCB does.
-        self.shift = (gdkevent.state & gtk.gdk.SHIFT_MASK != 0)
-        self.ctrl = (gdkevent.state & gtk.gdk.CONTROL_MASK != 0)
-
-    def repeatable(self):
-        # Check that the mouse coord entry widgets contain appropriate
-        # data.
-        debug.mainthreadTest()
-        selmeth = self.selectionMethodFactory.getRegistration()
-        try:
-            if 'down' in selmeth.events:
-                # OOFeval raises exceptions if the text is not a valid
-                # Python expression
-                utils.OOFeval(self.xdownentry.get_text())
-                utils.OOFeval(self.ydownentry.get_text())
-                if config.dimension() == 3:
-                    utils.OOFeval(self.zdownentry.get_text())
-            if 'up' in selmeth.events:
-                utils.OOFeval(self.xupentry.get_text())
-                utils.OOFeval(self.yupentry.get_text())
-                if config.dimension() == 3:
-                    utils.OOFeval(self.zupentry.get_text())
-        except:
-            return 0
-        return 1
-
-    def setCoordDisplay(self, selectionMethodReg, points):
-        debug.mainthreadTest()
-        for sig in self.entrychangedsignals:
-            sig.block()
-        try:
-            if 'down' in selectionMethodReg.events:
-                self.xdownentry.set_text(("%-8g" % points[0].x).rstrip())
-                self.ydownentry.set_text(("%-8g" % points[0].y).rstrip())
-                if config.dimension() == 3:
-                    self.zdownentry.set_text(("%-8g" % points[0].z).rstrip())
-            else:
-                self.xdownentry.set_text('--')
-                self.ydownentry.set_text('--')
-                if config.dimension() == 3:
-                    self.zdownentry.set_text('--')
-            if 'up' in selectionMethodReg.events:
-                self.xupentry.set_text(("%-8g" % points[-1].x).rstrip())
-                self.yupentry.set_text(("%-8g" % points[-1].y).rstrip())
-                if config.dimension() == 3:
-                    self.zupentry.set_text(("%-8g" % points[-1].z).rstrip())
-            else:
-                self.xupentry.set_text('--')
-                self.yupentry.set_text('--')
-                if config.dimension() == 3:
-                    self.zdownentry.set_text('--')
-        except IndexError:
-            pass
-        finally:
-            for sig in self.entrychangedsignals:
-                sig.unblock()
 
 
-    ###################################
-        
-    # MouseHandler functions
+
+class SelectionMethodGUI(mousehandler.MouseHandler):
+    # Base class for PointSelctorGUI, RectangularPrismSelectorGUI, etc.
+    def __init__(self, toolbox):
+        self.toolbox = toolbox
+        # When this GUI is active, methodRegistration is set to the
+        # Registration of the SelectionMethod that it's constructing.
+        self.methodRegistration = None
+    def gfxwindow(self):
+        return self.toolbox.gfxwindow()
     
-    def down(self, x, y, button, shift, ctrl):  # mouse down
-        debug.mainthreadTest()
-        self.selmeth = self.selectionMethodFactory.getRegistration()
-        self.selectionMethodFactory.set_defaults()
-        # self.gfxwindow().setRubberband(self.selmeth.getRubberBand(self.selmeth))
-        # Start collecting points
-        self.points = [primitives.Point(x,y)]
+    def __call__(self, params, scope=None, name=None, verbose=False):
+        # This function may be redefined for derived classes.  It
+        # should return a ParameterWidget of some sort.  It must be
+        # called __call__ because it's called by
+        # RegisteredClassFactory.makeWidget, which thinks it's
+        # instantiating an object of a class.  The default version
+        # here does what RegisteredClassFactory does if it doesn't a
+        # specialized widget isn't defined.
+        return parameterwidgets.ParameterTable(params,
+                                               scope=scope,
+                                               name=name,
+                                               showLabels=True,
+                                               verbose=verbose)
+    
+    # def cancel(self):
+    #     # This function should be redefined for derived classes. It
+    #     # should be used to notify a SelectionMethodGUI to cancel any
+    #     # subthreads it started, and should be called when the
+    #     # SelectionMethodGUI's toolboxGUI is being closed.
+    #     pass
 
-    def move(self, x, y, button, shift, ctrl):  # mouse move
-        # Continue the collection of points, if it's been started...
-        if self.points:
-            self.points.append(primitives.Point(x,y))
+    def setCurrentRegistration(self, reg):
+        self.methodRegistration = reg
 
-    def up(self, x, y, button, shift, ctrl):    # mouse up
-        debug.mainthreadTest()
-        # Finish the collection of points
-        self.points.append(primitives.Point(x,y))
-        if self.selmeth is not None:
-            # Construct the list of points that the method needs
-            ptlist = []
-            if 'down' in self.selmeth.events:
-                ptlist.append(self.points[0])
-            if 'move' in self.selmeth.events and len(self.points) > 2:
-                ptlist.extend(self.points[1:-2])
-            if 'up' in self.selmeth.events:
-                ptlist.append(self.points[-1])
+    def mouseHandler(self):
+        return mousehandler.NullMouseHandler()
 
-            source = self.getSource()
+    def close(self):
+        # close() is called when the toolbox is closing.  It should
+        # do any necessary cleanup.  It can assume that the
+        # mousehandler (if any) has already been stopped.
+        pass
 
-            canvas = self.toolbox.gfxwindow().oofcanvas
-            view = canvas.get_view()
-            ## TODO OPT: display2Physical is potentially expensive, since
-            ## it calls set_view.  If more than one point is being
-            ## processed, they should all be processed in one call to
-            ## display2Physical.
-            realptlist = [canvas.display2Physical(view, pt.x, pt.y)
-                          for pt in ptlist]
+    # Install and uninstall are called when the toolbox switches to or
+    # away from this SelectionMethod.
+    def install(self):
+        pass
+    def uninstall(self):
+        pass
 
-            if source:
-                # We've done as much generic work as we can do --
-                # we have a mouse-up event, a set of points,
-                # a selection method, and a who.
-                # Child classes know what to do next.
-                ## TODO MER: In 3D, are all finish_up routines actually
-                ## identical except for calling a different menu item?
-                ## Maybe they can be all done inline here, despite
-                ## what the comment says.
-                self.finish_up(realptlist, view, shift, ctrl, self.selmeth)
-                
-            self.points = []            # get ready for next event
-            
-    def acceptEvent(self, eventtype): #L ocked the validation for just these three events.
-        if eventtype == 'up' or eventtype == 'down' or eventtype == 'move':
-	  return True
-	else:
-	  return False
+    # activate() and deactivate() are called when the toolbox is
+    # activated and deactivated.
+    def activate(self):
+        pass
+    def deactivate(self):
+        pass
+
+    def sensitize(self):
+        pass
 

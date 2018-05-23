@@ -49,6 +49,20 @@ class View;
 class ImageFormat;
 class OOFCanvasLayer;
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// This class is just used to make it easy to return a Coord and an
+// int together from C++ to Python. 
+class CoordAndInt {
+public:
+  CoordAndInt(const Coord &c, int i) : coord(c), val(i) {}
+  const Coord coord;
+  const int val;
+};
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+
 class GhostOOFCanvas {
 protected:
   static bool initialized;	// has pygtk been initialized?
@@ -90,6 +104,10 @@ protected:
   void fixScreenCoord(const Coord*, double &x, double &y) const;
   void findClickedCell_(const Coord*, const View*, OOFCanvasLayer*,
 			vtkSmartPointer<vtkCell>&, Coord&, vtkIdType&, int&);
+  int findClickedCellMulti_(const Coord*, const View*,
+			    const std::vector<OOFCanvasLayer*>*,
+			    vtkSmartPointer<vtkCell>&,
+			    Coord&, vtkIdType&, int&);
   vtkSmartPointer<vtkUnstructuredGrid> getFrustumSubgrid(
 		 double x, double y, const View*, OOFCanvasLayer*);
 
@@ -179,9 +197,13 @@ public:
 			      Coord*);
   Coord *findClickedCellCenter(const Coord*, const View*, OOFCanvasLayer*);
   Coord *findClickedPoint(const Coord*, const View*, OOFCanvasLayer*);
-  Coord *findClickedSegment(const Coord*, const View*, OOFCanvasLayer*);
+  vtkSmartPointer<vtkIdList> findClickedSegment(const Coord*, const View*,
+				       OOFCanvasLayer*);
   vtkSmartPointer<vtkIdList> findClickedFace(const Coord*, const View*,
    					     OOFCanvasLayer*);
+
+  CoordAndInt *findClickedCellCenterMulti(const Coord*, const View*,
+					 const std::vector<OOFCanvasLayer*>*);
 
   // camera info
   Coord *get_camera_position_v2() const;
