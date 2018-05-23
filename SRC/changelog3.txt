@@ -13,11 +13,7 @@
  * oof_manager@nist.gov. 
  */
 
-
-3.1.2
-
-Fixed a bug that was making the Microstructure recalculate voxel
-categories far too often.
+3.2.0
 
 Added the Relax Skeleton modifier.
 
@@ -58,6 +54,29 @@ Fixed the pixel, skeleton, and mesh info displays.
 Right-clicking on the layer list in the graphics window brings up the
 layer editing menu.  Layers can be rearranged by drag and drop on the
 list (but maybe not reliably on macOS).
+
+Added a interactive method for selecting a rectangular region of
+voxels.  Restructured the various Select menu commands so that the new
+method fits more naturally.   Now all selections are made in the main
+menu, like this:
+   OOF.ElementSelection.Select(skeleton='ms:skel', method=...)
+instead of begin split between teh main menu and a graphics toolbox
+menu.  The commands now refer explicitly to the objects being
+selected, instead of containing cryptic information about the mouse
+position and view parameters.
+
+3.1.2
+
+Fixed a bug that was making the Microstructure recalculate voxel
+categories far too often.
+
+Saving a large Mesh in abaqus format is now much faster.
+
+Fixed a race condition that could cause errors if a Mesh was created
+while its Skeleton was still computing its homogeneity.
+
+Fixed a bug that generated warning messages when drawing the
+coordinate axes if a Microstructure had a large aspect ratio.
 
 3.1.1.1
 
