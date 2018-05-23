@@ -57,9 +57,6 @@ canvas and the user shouldn't type in them.  Doing this will require
 changing all Parameter classes, so it should be done only after all
 the other selection gui changes to keep the git commits reasonable.
 
-When a click doesn't result in a selection because it went to a layer
-that can't handle it, display a warning.
-
 Remove the BitmapOverlay class.  It's not used for graphics
 anymore. It's only used to provide a quick way to see if a voxel is
 selected, but an array of bools would suffice there.
@@ -383,3 +380,7 @@ when the selection is modified.  Either they voxels shoudn't be
 displayed, or they should be updated.
 ** Fixed: 2018-05-22 PixelSelectionDisplay.whoChanged calls setEmpty
 if there's nothing to display.
+
+When a click doesn't result in a selection because it went to a layer
+that can't handle it, display a warning.
+** Done: 2018-05-23

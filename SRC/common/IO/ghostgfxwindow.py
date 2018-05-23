@@ -47,6 +47,7 @@ from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
 from ooflib.common.IO import placeholder
 from ooflib.common.IO import pointparameter
+from ooflib.common.IO import reporter
 from ooflib.common.IO import whoville
 from ooflib.common.IO import xmlmenudump
 from ooflib.engine.IO import meshparameters
@@ -2454,6 +2455,7 @@ def clickErrorHandler(findClickedObj, *args, **kwargs):
     try:
         return findClickedObj(*args, **kwargs)
     except ooferror.ErrClickError:
+        reporter.warn("Mouse click failed!\n Please try again.")
         return None
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
