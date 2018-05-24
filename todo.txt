@@ -77,11 +77,7 @@ click.  Node groups aren't reported in Skeleton Info toolbox.  Segment
 groups aren't reported either, but the widget says "<Not yet
 implemented>".
 
-Cloning a graphics window raises an assertion error in
-pixelselectionmethodGUI.py, even if nothing is displayed in the
-window.
-
----------------------------------------------------------------------------
+--------------------------------------------------------------------------
 Soon
 ----
 
@@ -380,7 +376,7 @@ Display an image and select some voxels.  Hide the image.  The
 selected voxels are still displayed, but the display doesn't update
 when the selection is modified.  Either they voxels shoudn't be
 displayed, or they should be updated.
-** Fixed: 2018-05-22 PixelSelectionDisplay.whoChanged calls setEmpty
+** Fixed: 2018-05-22. PixelSelectionDisplay.whoChanged calls setEmpty
 if there's nothing to display.
 
 When a click doesn't result in a selection because it went to a layer
@@ -389,3 +385,9 @@ that can't handle it, display a warning.
 
 Skeleton boundary display isn't working.
 ** Fixed: 2018-05-24
+
+Cloning a graphics window raises an assertion error in
+pixelselectionmethodGUI.py, even if nothing is displayed in the
+window.
+** Fixed: 20-05-24. RectangularPrismSelectorGUI no longer assumes that
+its VoxelRegionSelectionDisplay already exists.

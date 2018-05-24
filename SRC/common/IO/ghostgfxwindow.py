@@ -1224,6 +1224,7 @@ class GhostGfxWindow:
             if self.selectedLayer is not None:
                 newwindow.selectLayer(self.layerID(self.selectedLayer))
             view = mainthread.runBlock(self.oofcanvas.get_view)
+            newwindow.setLayerOffsetParameters()
             newwindow.draw()
             newwindow.viewCB(None, view)
             ## TODO 3.1: Clone the view history.
@@ -1589,8 +1590,8 @@ class GhostGfxWindow:
     def nlayers(self):
         return len(self.layers)
 
-    def getLayer(self, layerNumber): # only used by layer editor, will go away
-        return self.layers[layerNumber]
+    # def getLayer(self, layerNumber): # only used by layer editor, will go away
+    #     return self.layers[layerNumber]
 
     # Returns the topmost layer of the given class.
     def getLayerByClass(self, classinfo):
@@ -1855,33 +1856,32 @@ class GhostGfxWindow:
         finally:
             self.releaseGfxLock()
 
-    def findClickedCellIDByLayerClass_nolock(self, classinfo, point, view):
+    def findClickedCellIDByLayer_nolock(self, layer, point, view):
         # This assumes that the gfxlock has already been acquired by
         # the caller. It also differs from findClickedCell in that
-        # it takes a layer class (e.g. VoxelRegionSelectionDisplay)
+        # it takes a layer (e.g. VoxelRegionSelectionDisplay)
         # instead of a who as its argument (classinfo).
-        layer = self.getLayerByClass(classinfo)
-        if layer is not None:
-            if layer.pickable():
-                rval = mainthread.runBlock(
-                    clickErrorHandler,
-                    (self.oofcanvas.findClickedCellID,
-                     point, view, layer.canvaslayer))
-                if rval is None:
-                    return (None, None, layer)
-                # If the layer has a filter, then vtk's cell ID is
-                # different than the mesh's index.
-                try:
-                    fltr = layer.filter
-                except AttributeError:
-                    return (rval[0], rval[1], layer)
-                cellidx = fltr.getCellIndex(rval[0])
-                if cellidx == -1:
-                    # This shouldn't happen...
-                    raise ooferror.ErrPyProgrammingError(
-                        "Filter failure in findClickedCellID")
-                return (cellidx, rval[1], layer)
-        return (None, None, None)
+        assert layer is not None
+        if layer.pickable():
+            rval = mainthread.runBlock(
+                clickErrorHandler,
+                (self.oofcanvas.findClickedCellID,
+                 point, view, layer.canvaslayer))
+            if rval is None:
+                return (None, None)
+            # If the layer has a filter, then vtk's cell ID is
+            # different than the mesh's index.
+            try:
+                fltr = layer.filter
+            except AttributeError:
+                return (rval[0], rval[1])
+            cellidx = fltr.getCellIndex(rval[0])
+            if cellidx == -1:
+                # This shouldn't happen...
+                raise ooferror.ErrPyProgrammingError(
+                    "Filter failure in findClickedCellID")
+            return (cellidx, rval[1], layer)
+        return (None, None)
         
     def findClickedCellCenter(self, who, point, view):
         self.acquireGfxLock()

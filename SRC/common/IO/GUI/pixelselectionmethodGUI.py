@@ -103,10 +103,9 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         self.last_y = None
 
         # The VoxelRegionSelectionDisplay canvas layer that's being
-        # updated.
-        self.layer = toolbox.gfxwindow().getLayerByClass(
-            voxelregionselectiondisplay.VoxelRegionSelectionDisplay)
-        assert self.layer is not None
+        # updated.  It's not set here because if the window is being
+        # cloned, the layer may not exist yet.
+        self._layer = None
         
         # This flag will be True whenever the user is currently using
         # the mouse on the canvas to edit the dimensions of the box
@@ -131,20 +130,30 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
     def mouseHandler(self):
         return mousehandler.KangarooMouseHandler(self, ("up", "move", "down"))
 
+    def getLayer(self):
+        # Return the VoxelRegionSelectionDisplay canvas layer that's being
+        # updated.
+        if self._layer is None:
+            self._layer = self.toolbox.gfxwindow().getLayerByClass(
+                voxelregionselectiondisplay.VoxelRegionSelectionDisplay)
+            assert self._layer is not None
+        return self._layer
+
     def start(self):
         # Called by VoxelRegionSelectWidget.startCB, in response to
         # the 'Start' button.
+        layer = self.getLayer()
         self._editing = True
-        self.layer.start()
+        layer.start()
         self.sensitize()
         self.gfxwindow().oofcanvas.render()
-        self.voxelbox = self.layer.get_box()
+        self.voxelbox = layer.get_box()
         self.setPointWidgets()
 
     def done(self):
         # Call the menu item that actually makes the selection.
         self._editing = False
-        self.layer.stop()
+        self.getLayer().stop()
         self.sensitize()
         ## TODO: Converting from CRectangularPrism to Coords here is
         ## clumsy. The Coords are converted back to a
@@ -184,15 +193,16 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
     def cancel(self):
         if self._editing:
             self._editing = False
-            self.layer.stop()
+            self.getLayer().stop()
             self.sensitize()
             self.gfxwindow().oofcanvas.render()
 
     def reset(self):
         if self._editing:
-            self.layer.reset()
+            layer = self.getLayer()
+            layer.reset()
             self.gfxwindow().oofcanvas.render()
-            self.voxelbox = self.layer.get_box()
+            self.voxelbox = layer.get_box()
             self.setPointWidgets()
 
     # install and uninstall are called by the toolbox when switching
@@ -208,9 +218,9 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
     # editing session in this toolbox, but it temporarily dims the vtk
     # widget.
     def activate(self):
-        self.layer.activate()
+        self.getLayer().activate()
     def deactivate(self):
-        self.layer.deactivate()
+        self.getLayer().deactivate()
 
     def setPointWidgets(self):
         # Copy coordinates from self.voxelbox (the vtk box in the
@@ -236,22 +246,22 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
                                     (viewobj, x, y))
         # Get the clicked position on the box widget and the ID of the
         # clicked cell.
-        ## TODO: We know the layer, so use a (new) findClickedCell
-        ## method that takes a layer arg instead of a layer class arg.
-        (self.cellID, click_pos, self.layer) = \
-               self.gfxwindow().findClickedCellIDByLayerClass_nolock(
-                   voxelregionselectiondisplay.VoxelRegionSelectionDisplay,
-                   point, viewobj)
-        self.last_x = x;
-        self.last_y = y;
-        self.voxelbox = self.layer.get_box()
-        self.setPointWidgets()
+        layer = self.getLayer()
+        if layer is not None:
+            (self.cellID, click_pos) = \
+                   self.gfxwindow().findClickedCellIDByLayer_nolock(
+                       layer, point, viewobj)
+            self.last_x = x;
+            self.last_y = y;
+            self.voxelbox = layer.get_box()
+            self.setPointWidgets()
         
 
     def move(self, x, y, buttons):
         # cellID is None if we haven't seen a down event.
         if not self._editing or self.cellID is None:
             return
+        layer = self.getLayer()
         viewobj = mainthread.runBlock(self.gfxwindow().oofcanvas.get_view)
         last_mouse_coords = mainthread.runBlock(
             self.gfxwindow().oofcanvas.display2Physical, (viewobj, self.last_x,
@@ -263,10 +273,10 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         if diff_size == 0:
             return
         diff = diff / diff_size
-        normal = self.layer.canvaslayer.get_cellNormal_Coord3D(self.cellID)
+        normal = layer.canvaslayer.get_cellNormal_Coord3D(self.cellID)
         if (normal is None):
             return
-        center = self.layer.canvaslayer.get_cellCenter(self.cellID)
+        center = layer.canvaslayer.get_cellCenter(self.cellID)
         camera_pos = mainthread.runBlock(
             self.gfxwindow().oofcanvas.get_camera_position_v2)
         dist = math.sqrt((camera_pos - center) ** 2)
@@ -278,11 +288,11 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
                               (y - self.last_y) ** 2) / canvas_size[1])
         
         # Update the canvaslayer.
-        self.layer.canvaslayer.offset_cell(self.cellID, offset)
-        self.layer.canvaslayer.setModified()
+        layer.canvaslayer.offset_cell(self.cellID, offset)
+        layer.canvaslayer.setModified()
 
         self.last_x = x;
         self.last_y = y;
         mainthread.runBlock(self.gfxwindow().oofcanvas.render)
-        self.voxelbox = self.layer.get_box()
+        self.voxelbox = layer.get_box()
         self.setPointWidgets()
