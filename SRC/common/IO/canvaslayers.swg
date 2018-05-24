@@ -188,6 +188,7 @@ class PointGlyphLayer : public GlyphedLayer {
 public:
   PointGlyphLayer(GhostOOFCanvas*, const char*);
   void set_sphereGeometry(double, int);
+  void doneAddingCells();
 };
 
 

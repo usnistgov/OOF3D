@@ -287,7 +287,7 @@ public:
   virtual void setModified();
   virtual void newGrid(vtkSmartPointer<vtkPoints>, int ncells);
   virtual void addCell(VTKCellType type, vtkSmartPointer<vtkIdList> ptIds);
-  void clear();
+  virtual void clear();
   void set_color(const CColor&);
   void set_opacity(double);
   virtual void set_size(double);
@@ -390,6 +390,7 @@ public:
   void set_glyphColor(const CColor*);
   virtual void setModified();
   virtual void recomputeDirections() {}
+  virtual void clear();
 };
 
 class ConeGlyphLayer : public GlyphedLayer {
@@ -425,6 +426,7 @@ public:
   PointGlyphLayer(GhostOOFCanvas*, const std::string&);
   virtual const std::string &classname() const;
   void set_sphereGeometry(double size, int resolution);
+  void doneAddingCells();	// call this after calls to addCell()
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

@@ -1038,10 +1038,10 @@ class GhostGfxWindow:
         # include only a subset of them.  This loop is done in a
         # clumsy way so that it's easy to narrow down the set of
         # layers that are included.
-        ## npre = len(PredefinedLayer.allPredefinedLayers)
+        npre = len(PredefinedLayer.allPredefinedLayers)
         ## debug.fmsg("npre=", npre)
         minpre = 0
-        maxpre = -1
+        maxpre = npre
         for predeflayer in PredefinedLayer.allPredefinedLayers[minpre:maxpre]:
             layer, who = predeflayer.createLayer(self)
             # The gfxlock has been acquired already, so we call

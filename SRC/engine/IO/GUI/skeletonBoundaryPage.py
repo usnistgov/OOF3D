@@ -309,15 +309,15 @@ class SkeletonBoundaryPage(oofGUI.MainPage):
 
         skelctxt = skeletoncontext.skeletonContexts[
             self.skelwidget.get_value()]
-        bdyobj = skelctxt.getBoundary(self.boundarylist.get_value())
-
-        dialog_extra = {'boundary' : bdyobj}
-        
-        if parameterwidgets.getParameters(
-            modparam, title="Boundary modifier", scope=self,
-            dialog_data=dialog_extra):
-            menuitem.callWithDefaults(skeleton=self.skelwidget.get_value(),
-                                      boundary=self.boundarylist.get_value())
+        bdyname = self.boundarylist.get_value()
+        if bdyname is not None:
+            bdyobj = skelctxt.getBoundary(self.boundarylist.get_value())
+            dialog_extra = {'boundary' : bdyobj}
+            if parameterwidgets.getParameters(
+                modparam, title="Boundary modifier", scope=self,
+                dialog_data=dialog_extra):
+                menuitem.callWithDefaults(skeleton=self.skelwidget.get_value(),
+                                          boundary=bdyname)
 
     def renameBoundaryCB(self, gtkobj): # button callback
         menuitem = boundarymenu.boundarymenu.Rename

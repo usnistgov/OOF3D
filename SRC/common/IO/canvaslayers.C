@@ -25,6 +25,7 @@
 
 #include <vtkAlgorithmOutput.h>
 #include <vtkCellType.h>
+#include <vtkExecutive.h>
 #include <vtkPointData.h>	// required implicitly by GetPointData
 #include <vtkPolyDataMapper.h>
 #include <vtkProperty.h>
@@ -1246,8 +1247,7 @@ GlyphedLayer::GlyphedLayer(GhostOOFCanvas *canvas, const std::string &name)
   glyphCenters = centerFinder->GetOutput();
   glyph->SetInputData(glyphCenters);
   glyphDirections->SetNumberOfComponents(3);
-  // addProp(glyphActor) is not called here because the input to
-  // centerFinder can't be set until newGrid is called.
+  addProp(glyphActor);
 
   // The mapper is not built here.  It's created by start_clipping()
   // or stop_clipping(), because the clipping state determines what
@@ -1264,12 +1264,16 @@ void GlyphedLayer::newGrid(vtkSmartPointer<vtkPoints> pts, int n) {
   glyphDirections->Reset();	// resize to empty, without freeing memory
   centerFinder->SetInputData(grid);
   glyphCenters->GetPointData()->SetNormals(glyphDirections);
-  addProp(glyphActor);
 }
 
 void GlyphedLayer::setModified() {
   SimpleCellLayer::setModified();
   recomputeDirections();
+}
+
+void GlyphedLayer::clear() {
+  glyphCenters->Initialize();
+  SimpleCellLayer::clear();
 }
 
 void GlyphedLayer::addDirectedCell(VTKCellType type, vtkIdList *ptIds,
@@ -1335,7 +1339,7 @@ void ConeGlyphLayer::stop_clipping() {
     
 void ConeGlyphLayer::recomputeDirections() {
   if(glyphDirections->GetSize() > 0) {
-    // glyphCenters->Update();
+    centerFinder->GetExecutive()->Update();
     glyphCenters->GetPointData()->SetNormals(glyphDirections);
   }
 }
@@ -1362,7 +1366,6 @@ EdgeGlyphLayer::EdgeGlyphLayer(GhostOOFCanvas *canvas, const std::string &name)
   : ConeGlyphLayer(canvas, name)
 {
   actor->GetProperty()->SetRepresentationToWireframe();
-  // actor->GetProperty()->SetRepresentationToSurface();
   glyph->OrientOn();
   glyph->SetVectorModeToUseNormal(); // glyph->SetVectorModeToUseVector() ?
   set_clipping(canvas->clipping(), canvas->invertedClipping());
@@ -1399,8 +1402,12 @@ const std::string &PointGlyphLayer::classname() const {
 void PointGlyphLayer::set_sphereGeometry(double size, int resolution) {
   sphereSource->SetRadius(0.5*size);
   sphereSource->SetThetaResolution(resolution); // azimuth (!?)
-  sphereSource->SetPhiResolution(resolution > 4? resolution/2 : 2); 
- }
+  sphereSource->SetPhiResolution(resolution > 4? resolution/2 : 2);
+}
+
+void PointGlyphLayer::doneAddingCells() {
+  centerFinder->GetExecutive()->Update();
+}
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
