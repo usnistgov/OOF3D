@@ -43,8 +43,8 @@
 // newfree      string*
 // out		CColor		CColor -> RGBColor
 // out		Coord		Coord -> Point
-// out		Coord&		Coord& -> Point
-// out		Coord*		Coord* -> Point
+// out		Coord&		Coord& -> Point  COMMENTED OUT
+// out		Coord*		Coord* -> Point  COMMENTED OUT
 // out		CoordVec*	std::vector<Coord*>* -> [Coord]
 // newfree      CoordVec*
 // out		DoubleList*	std::vector<double>* -> [Float]

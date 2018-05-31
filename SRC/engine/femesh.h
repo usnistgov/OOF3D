@@ -16,6 +16,7 @@
 #define FEMESH_H
 
 class FEMesh;
+class NodeIndexMap;		// used in abaqus output
 
 #include "common/coord_i.h"
 #include "common/lock.h"
@@ -142,7 +143,6 @@ public:
 
   typedef std::map<const ElementShape*, int> ElementShapeCountMap;
   ElementShapeCountMap *getElementShapeCounts() const;
-  typedef std::map<const Coord3D, int> NodeIndexMap;
   NodeIndexMap *getNodeIndexMap() const;
 
 
@@ -385,5 +385,20 @@ private:
 };				// FEMesh
 
 long get_globalFEMeshCount();
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+class NodeIndexMap {
+private:
+  typedef std::map<const Coord3D, int> MapType;
+  MapType map;			// node position -> abaqus index
+  std::vector<Coord3D> invmap;	// abaqus index -> node position
+public:
+  NodeIndexMap(int);
+  void add(const Coord3D&);
+  int index(const Coord3D *p) const;
+  const Coord3D position(int i) const;
+  int size() const;
+};
 
 #endif // FEMESH_H

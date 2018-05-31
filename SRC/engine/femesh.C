@@ -394,28 +394,6 @@ FEMesh::ElementShapeCountMap *FEMesh::getElementShapeCounts() const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// Used in abaqus output in meshIO.py
-
-FEMesh::NodeIndexMap *FEMesh::getNodeIndexMap() const {
-  FEMesh::NodeIndexMap *nodemap = new FEMesh::NodeIndexMap();
-  int nodeindex = 0;
-  for(ElementIterator ei=element_iterator(); !ei.end(); ++ei) {
-    Element *el = ei.element();
-    if(el->material()) {
-      for(ElementNodeIterator ni=el->node_iterator(); !ni.end(); ++ni) {
-	Coord3D pos = ni.position();
-	if(nodemap->count(pos) == 0) {
-	  (*nodemap)[pos] = nodeindex;
-	  ++nodeindex;
-	}
-      }
-    }
-  }
-  return nodemap;
-}
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
 void FEMesh::refreshMaterials(CSkeletonBase *skeleton) {
   for(ElementIterator ei=element_iterator(); !ei.end(); ++ei) {
     Element *el = ei.element();
@@ -913,5 +891,49 @@ vtkSmartPointer<vtkDataArray> FEMesh::getMaterialCellData(
     }
   }
   return vtkSmartPointer<vtkDataArray>(array.GetPointer());
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Used in abaqus output in meshIO.py
+
+NodeIndexMap *FEMesh::getNodeIndexMap() const {
+  NodeIndexMap *nodemap = new NodeIndexMap(nnodes());
+  for(ElementIterator ei=element_iterator(); !ei.end(); ++ei) {
+    Element *el = ei.element();
+    if(el->material()) {
+      for(ElementNodeIterator ni=el->node_iterator(); !ni.end(); ++ni) {
+	nodemap->add(ni.position());
+      }
+    }
+  }
+  return nodemap;
+}
+
+NodeIndexMap::NodeIndexMap(int size) {
+  invmap.reserve(size);
+}
+  
+void NodeIndexMap::add(const Coord3D &p) {
+  if(map.count(p) == 0) {
+    // Push p into invmap *first*, because abaqus indices start at 1, not 0.
+    invmap.push_back(p);
+    map[p] = invmap.size();
+  }
+}
+
+int NodeIndexMap::index(const Coord3D *p) const {
+  auto it = map.find(*p);
+  if(it != map.end())
+    return it->second;
+  return 0;	    // indicates node not found. abaqus indices are > 0
+}
+
+const Coord3D NodeIndexMap::position(int i) const {
+  return invmap[i];
+}
+
+int NodeIndexMap::size() const {
+  return invmap.size();
 }
 
