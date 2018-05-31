@@ -1826,7 +1826,7 @@ class GhostGfxWindow:
         finally:
             self.releaseGfxLock()
 
-    def findClickedCellID(self, who, point, view):
+    def findClickedCellID(self, who, point, view, warn=True):
         self.acquireGfxLock()
         try:
             ## TODO: Why did this have limit=1?
@@ -1836,7 +1836,8 @@ class GhostGfxWindow:
                     rval = mainthread.runBlock(
                         clickErrorHandler,
                         (self.oofcanvas.findClickedCellID,
-                         point, view, layer.canvaslayer))
+                         point, view, layer.canvaslayer),
+                        {"warn":warn})
                     if rval is None:
                         # findClickedCellID returns cellID, clickPosition
                         return (None, None)
@@ -1915,7 +1916,7 @@ class GhostGfxWindow:
         finally:
             self.releaseGfxLock()
 
-    def findClickedPosition(self, who, point, view):
+    def findClickedPosition(self, who, point, view, warn=True):
         self.acquireGfxLock()
         try:
             layerlist = self.allwholayers(who)
@@ -1924,11 +1925,12 @@ class GhostGfxWindow:
                     return mainthread.runBlock(
                         clickErrorHandler,
                         (self.oofcanvas.findClickedPosition,
-                         point, view, layer.canvaslayer))
+                         point, view, layer.canvaslayer),
+                        {"warn":warn})
         finally:
             self.releaseGfxLock()
 
-    def findClickedPoint(self, who, point, view):
+    def findClickedPoint(self, who, point, view, warn=True):
         self.acquireGfxLock()
         try:
             layerlist = self.allwholayers(who)
@@ -1937,11 +1939,12 @@ class GhostGfxWindow:
                     return mainthread.runBlock(
                         clickErrorHandler,
                         (self.oofcanvas.findClickedPoint,
-                         point, view, layer.canvaslayer))
+                         point, view, layer.canvaslayer),
+                        {"warn":warn})
         finally:
             self.releaseGfxLock()
 
-    def findClickedSegment(self, who, point, view):
+    def findClickedSegment(self, who, point, view, warn=True):
         self.acquireGfxLock()
         try:
             layerlist = self.allwholayers(who)
@@ -1950,7 +1953,8 @@ class GhostGfxWindow:
                     return mainthread.runBlock(
                         clickErrorHandler,
                         (self.oofcanvas.findClickedSegment,
-                         point, view, layer.canvaslayer))
+                         point, view, layer.canvaslayer),
+                        {"warn":warn})
         finally:
             self.releaseGfxLock()
 
@@ -2452,10 +2456,16 @@ mainmenu.gfxdefaultsmenu.addItem(oofmenu.CheckOOFMenuItem(
 # on the main thread before returning control to the subthread.
 
 def clickErrorHandler(findClickedObj, *args, **kwargs):
+    if "warn" in kwargs:
+        warn = kwargs["warn"]
+        del kwargs["warn"]
+    else:
+        warn = True
     try:
         return findClickedObj(*args, **kwargs)
     except ooferror.ErrClickError:
-        reporter.warn("Mouse click failed!\n Please try again.")
+        if warn:
+            reporter.warn("Mouse click failed!\n Please try again.")
         return None
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#

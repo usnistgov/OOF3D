@@ -152,9 +152,7 @@ class ElementModeGUI(SkeletonInfoModeGUI):
         skelctxt = self.getContext()
         if skelctxt is not None:
             (cellID, clickpos) = self.gfxtoolbox.gfxwindow().findClickedCellID(
-                skelctxt, position, view)
-            if cellID is None:
-                debug.fmsg("findClickedCellID returned None")
+                skelctxt, position, view, warn=False)
             return cellID
 
     def activateOutputs(self, ok):
@@ -301,8 +299,8 @@ class NodeModeGUI(SkeletonInfoModeGUI):
     def findObjectIndex(self, position, view):
         skelctxt = self.getContext()
         if skelctxt is not None:
-            pt = self.gfxtoolbox.gfxwindow().findClickedPoint(skelctxt,
-                                                              position, view)
+            pt = self.gfxtoolbox.gfxwindow().findClickedPoint(
+                skelctxt, position, view, warn=False)
             node = pt is not None and skelctxt.getObject().nearestNode(pt)
             if node:
                 return node.uiIdentifier()
@@ -434,7 +432,7 @@ class SegmentModeGUI(SkeletonInfoModeGUI):
         skelctxt = self.getContext()
         if skelctxt is not None:
             endPtIds = self.gfxtoolbox.gfxwindow().findClickedSegment(
-                skelctxt, position, view)
+                skelctxt, position, view, warn=False)
             if endPtIds is not None:
                 sgmt = skelctxt.getObject().getSegmentByNodeIndices(
                     endPtIds[0], endPtIds[1])
@@ -546,7 +544,7 @@ class FaceModeGUI(SkeletonInfoModeGUI):
         skelctxt = self.getContext()
         if skelctxt is not None:
             pt = self.gfxtoolbox.gfxwindow().findClickedPosition(
-                skelctxt, position, view)
+                skelctxt, position, view, warn=False)
             face = pt is not None and skelctxt.getObject().nearestFace(pt)
             if face:
                 return face.uiIdentifier()
