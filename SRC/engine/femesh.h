@@ -142,6 +142,10 @@ public:
 
   typedef std::map<const ElementShape*, int> ElementShapeCountMap;
   ElementShapeCountMap *getElementShapeCounts() const;
+  typedef std::map<const Coord3D, int> NodeIndexMap;
+  NodeIndexMap *getNodeIndexMap() const;
+
+
 
   Node *newMapNode(const Coord&); // the only way to make a Node
   FuncNode *newFuncNode(const Coord&); // the only way to make a FuncNode

@@ -394,6 +394,28 @@ FEMesh::ElementShapeCountMap *FEMesh::getElementShapeCounts() const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// Used in abaqus output in meshIO.py
+
+FEMesh::NodeIndexMap *FEMesh::getNodeIndexMap() const {
+  FEMesh::NodeIndexMap *nodemap = new FEMesh::NodeIndexMap();
+  int nodeindex = 0;
+  for(ElementIterator ei=element_iterator(); !ei.end(); ++ei) {
+    Element *el = ei.element();
+    if(el->material()) {
+      for(ElementNodeIterator ni=el->node_iterator(); !ni.end(); ++ni) {
+	Coord3D pos = ni.position();
+	if(nodemap->count(pos) == 0) {
+	  (*nodemap)[pos] = nodeindex;
+	  ++nodeindex;
+	}
+      }
+    }
+  }
+  return nodemap;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 void FEMesh::refreshMaterials(CSkeletonBase *skeleton) {
   for(ElementIterator ei=element_iterator(); !ei.end(); ++ei) {
     Element *el = ei.element();
@@ -892,3 +914,4 @@ vtkSmartPointer<vtkDataArray> FEMesh::getMaterialCellData(
   }
   return vtkSmartPointer<vtkDataArray>(array.GetPointer());
 }
+

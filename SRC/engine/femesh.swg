@@ -50,6 +50,42 @@
      }
 }
 
+%typemap(python, newfree) ElementShapeCountMap* {
+  // typemap(python, newfree) ElementShapeCountMap*
+  delete $source;
+}
+
+%typemap(python, out) NodeIndexMap* {
+  // typemap(python, out) NodeIndexMap*
+  static PyObject *pointClass = 0;
+  if(!pointClass) {
+    PyObject *module = PyImport_ImportModule("ooflib.common.primitives");
+    pointClass = PyObject_GetAttrString(module, "Point");
+    Py_XDECREF(module);
+    if(!pointClass) return 0;
+  }
+
+  $target = PyDict_New();
+
+  for(FEMesh::NodeIndexMap::const_iterator i=$source->begin();
+      i!=$source->end(); ++i)
+    {
+      const Coord3D &coord = i->first;
+      PyObject *xyargs = Py_BuildValue("ddd", coord[0], coord[1], coord[2]);
+      PyObject *point = PyObject_CallObject(pointClass, xyargs);
+      Py_XDECREF(xyargs);
+      if(!point)
+	return 0;
+      PyDict_SetItem($target, point, PyInt_FromLong(i->second));
+      Py_XDECREF(point);	// TODO: Is this correct?
+    }
+}
+
+%typemap(python, newfree) NodeIndexMap* {
+  // typemap(python, newfree) NodeIndexMap*
+  delete $source;
+}
+
 %{
 #include "common/IO/vtkutils.h"
 #include "engine/csubproblem.h"
@@ -59,6 +95,7 @@
 #include "engine/nodalequation.h"
 #include "engine/meshiterator.h"
 typedef FEMesh::ElementShapeCountMap ElementShapeCountMap;
+typedef FEMesh::NodeIndexMap NodeIndexMap;
 %}
 
 %pragma(python) include="femesh.spy"
@@ -95,6 +132,7 @@ public:
   int nelements();
   int nnodes();
   %new ElementShapeCountMap *getElementShapeCounts();
+  %new NodeIndexMap *getNodeIndexMap();
 
   void addInterfaceElement(Element*);
   int nedgements();

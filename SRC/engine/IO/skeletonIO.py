@@ -962,7 +962,15 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
 
         buffer="*HEADING\nABAQUS-style file created by OOF3D on %s from a skeleton " % (datetime.datetime.today())
         buffer+="of the microstructure %s.\n" % skeleton.getMicrostructure().name()
-
+        buffer += \
+"""** NOTE: Search for ABAQUSELEMENTTYPE in this file and replace it with an
+** appropriate abaqus element type.  This file was created from an OOF3D
+** Skeleton, and therefore all nodes are at the corners of elements.
+** To create an abaqus mesh with higher order elements create an OOF3D Mesh
+** with higher order elements and save it in abaqus format.
+**
+"""
+                   
         # Build dictionary (instead of using index()) for elements and nodes
         #  as was done in previous writeXXX() methods
         nodedict = {}
@@ -977,11 +985,11 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
             elementdict[el] = i
             i += 1
 
-        # Collect elements with the same dominant material together in a
-        #  dictionary, with a key given by the material name.
-        #  Some elements may not have a material assigned and
-        #  these should not be included in the dictionary(?). Have a feeling
-        #  something like this has been done in the OOF universe.
+        # Collect elements with the same dominant material together in
+        # a dictionary, with a key given by the material name.  Some
+        # elements may not have a material assigned and these should
+        # not be included in the dictionary(?). Have a feeling
+        # something like this has been done in the OOF universe.
         materiallist={}
         elementlist={}
         for el in skeleton.getElements():
@@ -995,15 +1003,14 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                     elementlist[matname] = [elindex]
                     materiallist[matname] = matl
 
-        buffer+="** Materials defined by OOF2:\n"
-        for matname, details in materiallist.items():
-            buffer+="**   %s:\n" % (matname)
-            for prop in details.properties():
-                for param in prop.registration().params:
-                    buffer+="**     %s: %s\n" % (param.name,param.value)
+        if materiallist:
+            buffer+="** Materials defined by OOF2:\n"
+            for matname, details in materiallist.items():
+                buffer+="**   %s:\n" % (matname)
+                for prop in details.properties():
+                    for param in prop.registration().params:
+                        buffer+="**     %s: %s\n" % (param.name,param.value)
 
-        buffer+="** Notes:\n**   The nodes for a skeleton are always located at vertices or corners.\n"
-        buffer+="**   More information may be obtained by saving ABAQUS from a mesh.\n"
 
         listbuf=["*NODE\n"]
         for node in skeleton.getNodes():
@@ -1012,8 +1019,9 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
 
         # Only expecting 3 or 4 noded skeleton elements
         for numnodes in [3,4]:
-            listbuf=["** The element type provided for ABAQUS is only a guess " \
-                     "and may have to be modified by the user to be meaningful.\n*ELEMENT, TYPE=CPS%d\n" % numnodes]
+            listbuf=["**  OOF3D elements with %d nodes. Change "
+                     "ABAQUSELEMENTTYPE to an appropriate abaqus element." 
+                     "\n*ELEMENT, TYPE=ABAQUSELEMENTTYPE\n" % numnodes]
             for el in skeleton.getElements():
                 if el.nnodes()==numnodes:
                     listbuf2=["%d" % (elementdict[el])]
@@ -1087,10 +1095,13 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
                     face = oface.get_face()
                     for node in face.getNodes():
                         nodeset.add(nodedict[node])
+                # Sort the nodes so that the order is repeatable in tests.
+                nodelist = list(nodeset)
+                nodelist.sort()
                 buffer += "*NSET, NSET=%s" % fbname
                 listbuf = []
                 i = 0
-                for node in nodeset:
+                for node in nodelist:
                     if i%16 == 0:
                         listbuf.append("\n%d" % node)
                     else:
