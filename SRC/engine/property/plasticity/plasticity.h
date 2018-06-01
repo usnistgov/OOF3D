@@ -104,14 +104,14 @@ protected:
   // TODO: 2D version?
   ThreeVectorField *displacement;
   SymmetricTensorFlux *stress_flux;
-  std::vector<SmallMatrix*> schmid_tensors;
-  SmallMatrix *_normalized_outer(double*, double*);
+  SmallMatrix *_normalized_outer_product(double*, double*);
+  SmallMatrix *_rotate_schmid_tensor(SmallMatrix*, const COrientation *);
 
-  
-protected:
   const OrientationPropBase *orientation;
   const Cijkl xtal_cijkl_;
-  const Cijkl lab_cijkl_;
+  Cijkl lab_cijkl_;
+  std::vector<SmallMatrix*> xtal_schmid_tensors;
+  std::vector<SmallMatrix*> lab_schmid_tensors;
   const PlasticConstitutiveRule *rule;
 };
 
