@@ -65,6 +65,8 @@ menu.  The commands now refer explicitly to the objects being
 selected, instead of containing cryptic information about the mouse
 position and view parameters.
 
+Much faster abaqus output from Meshes, again.
+
 3.1.2
 
 Fixed a bug that was making the Microstructure recalculate voxel

@@ -61,9 +61,6 @@ Remove the BitmapOverlay class.  It's not used for graphics
 anymore. It's only used to provide a quick way to see if a voxel is
 selected, but an array of bools would suffice there.
 
-Change the abaqus element type in skeleton output to C3D4.  In mesh
-abaqus output it should be C3D4 or C3D10.
-
 Opacity works for Image layers but not Microstructure Material
 displays. ?
 
@@ -76,6 +73,10 @@ Segment Info toolbox isn't working.  Wrong segment is queried by mouse
 click.  Node groups aren't reported in Skeleton Info toolbox.  Segment
 groups aren't reported either, but the widget says "<Not yet
 implemented>".
+
+Skeleton Info toolbox is raising incorrect warning message when
+clicking on an element.  Fixed, sort of.. It should raise the warning
+only for the active mode.
 
 --------------------------------------------------------------------------
 Soon
@@ -389,5 +390,13 @@ Skeleton boundary display isn't working.
 Cloning a graphics window raises an assertion error in
 pixelselectionmethodGUI.py, even if nothing is displayed in the
 window.
-** Fixed: 20-05-24. RectangularPrismSelectorGUI no longer assumes that
+** Fixed: 2018-05-24. RectangularPrismSelectorGUI no longer assumes that
 its VoxelRegionSelectionDisplay already exists.
+
+Abaqus output for Meshes is still slow.
+** Fixed: 2018-05-31.  Moved node indexing to C++.
+
+Change the abaqus element type in skeleton output to C3D4.  In mesh
+abaqus output it should be C3D4 or C3D10.
+** Avoided: changed the comments in the files and don't guess at abaqus
+element types at all.
