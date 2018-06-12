@@ -69,11 +69,6 @@ selection operations.
 
 Use couriers for all Active Volume modifications.
 
-Segment Info toolbox isn't working.  Wrong segment is queried by mouse
-click.  Node groups aren't reported in Skeleton Info toolbox.  Segment
-groups aren't reported either, but the widget says "<Not yet
-implemented>".
-
 Skeleton Info toolbox is raising incorrect warning message when
 clicking on an element.  Fixed, sort of.. It should raise the warning
 only for the active mode.
@@ -400,3 +395,11 @@ Change the abaqus element type in skeleton output to C3D4.  In mesh
 abaqus output it should be C3D4 or C3D10.
 ** Avoided: changed the comments in the files and don't guess at abaqus
 element types at all.
+
+Segment Info toolbox isn't working.  Wrong segment is queried by mouse
+click.  Node groups aren't reported in Skeleton Info toolbox.  Segment
+groups aren't reported either, but the widget says "<Not yet
+implemented>".  The various "groups" fields aren't updated when group
+membership changes.
+** Fixed: 2018-06-12, except for the wrong segment being queried,
+which seems to have been fixed already.
