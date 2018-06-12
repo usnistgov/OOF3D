@@ -18,11 +18,6 @@ Use Eigen?  Use DPF's sparse_matrix_optimization branch?
   solver_test.py/static_quadratic_set was negligible.
 
 
-Remove opacity param from MicrostructureMaterialDisplay?  Is it used?
-It's passed through to vtkActor::GetProperty()->SetOpacity(), but it
-doesn't have any effect on what's displayed.  [Also, there's a TODO
-asking if ImageCanvasLayer::set_opacity() works. -- Fixed]
-
 Fix bug: Using upper-right corner arrows for switching views sometimes
 draws the canvas in the wrong location.
 
@@ -403,3 +398,10 @@ implemented>".  The various "groups" fields aren't updated when group
 membership changes.
 ** Fixed: 2018-06-12, except for the wrong segment being queried,
 which seems to have been fixed already.
+
+Remove opacity param from MicrostructureMaterialDisplay?  Is it used?
+It's passed through to vtkActor::GetProperty()->SetOpacity(), but it
+doesn't have any effect on what's displayed.  [Also, there's a TODO
+asking if ImageCanvasLayer::set_opacity() works. -- Fixed]
+** Fixed: 2018-06-12  MicrostructureMaterialDisplay was redefing too
+much of BitMapDisplayMethod.
