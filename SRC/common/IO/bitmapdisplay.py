@@ -22,10 +22,13 @@ from ooflib.common.IO import xmlmenudump
 class BitmapDisplayMethod(display.DisplayMethod):
     def __init__(self, filter, opacity):
         self.filter = filter
+        self.autodimmed = False
+        self.autodimFactor = 0.5 # TODO: Make this settable?
         self.opacity = opacity
         self.sbcallbacks = [
             switchboard.requestCallback("voxel filter changed",
-                                        self.filterChanged)
+                                        self.filterChanged),
+            switchboard.requestCallback("autodim", self.autodimCB)
         ]
         display.DisplayMethod.__init__(self)
 
@@ -58,8 +61,15 @@ class BitmapDisplayMethod(display.DisplayMethod):
 
     def setParams(self):
         self.canvaslayer.set_filter(self.filter)
-        self.canvaslayer.set_opacity(self.opacity)
+        self.canvaslayer.set_opacity(self.getOpacity())
         self.setMicrostructure()
+
+    def getOpacity(self):
+        if self.autodimmed:
+            return self.opacity * self.autodimFactor
+        else:
+            return self.opacity
+        
 
     def filterChanged(self, filter, *args, **kwargs):
         if filter == self.filter:
@@ -75,6 +85,11 @@ class BitmapDisplayMethod(display.DisplayMethod):
 
     def isImage(self):
         return True
+
+    def autodimCB(self, gfxwindow, dim):
+        if gfxwindow is self.gfxwindow:
+            self.autodimmed = dim
+            self.canvaslayer.set_opacity(self.getOpacity())
     
 defaultImageOpacity = 1.0
 opacityRange = (0, 1, 0.05)

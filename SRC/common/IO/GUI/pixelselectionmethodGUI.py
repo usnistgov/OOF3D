@@ -16,6 +16,7 @@
 
 from ooflib.SWIG.common import config
 from ooflib.SWIG.common import ooferror
+from ooflib.SWIG.common import switchboard
 from ooflib.common import debug
 from ooflib.common import mainthread
 from ooflib.common import pixelselectionmethod
@@ -145,6 +146,7 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         layer = self.getLayer()
         self._editing = True
         layer.start()
+        switchboard.notify("autodim", self.gfxwindow(), True)
         self.sensitize()
         self.gfxwindow().oofcanvas.render()
         self.voxelbox = layer.get_box()
@@ -154,6 +156,7 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         # Call the menu item that actually makes the selection.
         self._editing = False
         self.getLayer().stop()
+        switchboard.notify("autodim", self.gfxwindow(), False)
         self.sensitize()
         ## TODO: Converting from CRectangularPrism to Coords here is
         ## clumsy. The Coords are converted back to a
@@ -194,6 +197,7 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         if self._editing:
             self._editing = False
             self.getLayer().stop()
+            switchboard.notify("autodim", self.gfxwindow(), False)
             self.sensitize()
             self.gfxwindow().oofcanvas.render()
 
@@ -216,10 +220,12 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
     # activate and deactivate are called when switching between
     # toolboxes.  Switching to a different toolbox doesn't halt the
     # editing session in this toolbox, but it temporarily dims the vtk
-    # widget.
+    # widget and un-autodims other layers.
     def activate(self):
+        switchboard.notify("autodim", self.gfxwindow(), self._editing)
         self.getLayer().activate()
     def deactivate(self):
+        switchboard.notify("autodim", self.gfxwindow(), False)
         self.getLayer().deactivate()
 
     def setPointWidgets(self):
