@@ -132,6 +132,8 @@ public:
   virtual double minval() const { return vmin; }
   virtual double maxval() const { return vmax; }
 
+  void set_opacity(double);
+
   virtual void start_clipping() = 0;
   virtual void stop_clipping() = 0;
   virtual void set_clip_parity(bool);

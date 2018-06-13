@@ -264,13 +264,15 @@ class SkelMeshDisplayMethod(display.DisplayMethod):
 class SkeletonDisplayMethod(SkelMeshDisplayMethod):
     def __init__(self, filter):
         SkelMeshDisplayMethod.__init__(self, filter)
-        self.skelDataChangedSignal = switchboard.requestCallback(
-            "Skeleton changed", self.skelDataChangedCB)
+        self.sbsignals.append(
+            switchboard.requestCallback(
+                "Skeleton changed", self.skelDataChangedCB))
+        # self.skelDataChangedSignal = switchboard.requestCallback(
+        #     "Skeleton changed", self.skelDataChangedCB)
 
-    def destroy(self, destroy_canvaslayer):
-        switchboard.removeCallback(self.skelDataChangedSignal)
-        super(SkeletonDisplayMethod, self).destroy(destroy_canvaslayer)
-        # SkelMeshDisplayMethod.destroy(self, destroy_canvaslayer)
+    # def destroy(self, destroy_canvaslayer):
+    #     # switchboard.removeCallback(self.skelDataChangedSignal)
+    #     super(SkeletonDisplayMethod, self).destroy(destroy_canvaslayer)
 
     def polygons(self, gfxwindow, skelcontext): # used only in 2D
         skeleton = skelcontext.getObject()
@@ -840,6 +842,12 @@ if runtimeflags.surface_mode:
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 class SolidFillMeshDisplay(object):  # For Skeletons too.
+    def __init__(self):
+        self.sbcallback = switchboard.requestCallback("autoopacity",
+                                                      self.autoOpacityCB)
+    def destroy(self, destroy_canvaslayer):
+        switchboard.removeCallback(self.sbcallback)
+        super(SolidFillMeshDisplay, self).destroy(destroy_canvaslayer)
     def newLayer(self):
         self.source = self.vtkSource()
         canvaslayer = gridlayers.SolidFilledGridCanvasLayer(
@@ -857,7 +865,6 @@ class SolidFillMeshDisplay(object):  # For Skeletons too.
         self.setCellData(themesh)
         self.setLUT()
         return True
-
     def setLUT(self):
         # Subclasses must define getLUT(), which returns the color
         # lookup table, and getRange(), which returns the min and max
@@ -871,6 +878,9 @@ class SolidFillMeshDisplay(object):  # For Skeletons too.
         mainthread.runBlock(
             self.canvaslayer.set_lookupTable,
             (self.getLUT(themesh), dmin, dmax))
+    def autoOpacityCB(self, gfxwindow, factor):
+        if gfxwindow is self.gfxwindow:
+            self.canvaslayer.set_opacity(factor)
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -951,8 +961,8 @@ class SkeletonMaterialDisplay(MaterialDisplay, SkeletonDisplayMethod):
                  filter=defaultSkeletonFilter):
         MaterialDisplay.__init__(self, no_material, no_color)
         SkeletonDisplayMethod.__init__(self, filter)
-    def destroy(self, destroy_canvaslayer):
-        super(SkeletonMaterialDisplay, self).destroy(destroy_canvaslayer)
+    # def destroy(self, destroy_canvaslayer):
+    #     super(SkeletonMaterialDisplay, self).destroy(destroy_canvaslayer)
     def materials(self, gfxwindow, skelctxt): # 2D only
         skel = skelctxt.getObject()
         return [element.material(skel) for element in skel.element_iterator()]
@@ -966,8 +976,8 @@ class MeshMaterialDisplay(MaterialDisplay, MeshDisplayMethod):
         self.where = where
         MaterialDisplay.__init__(self, no_material, no_color)
         MeshDisplayMethod.__init__(self, filter, when)
-    def destroy(self, destroy_canvaslayer):
-        super(MeshMaterialDisplay, self).destroy(destroy_canvaslayer)
+    # def destroy(self, destroy_canvaslayer):
+    #     super(MeshMaterialDisplay, self).destroy(destroy_canvaslayer)
     def cellData(self, meshctxt):
         return meshctxt.getObject().getMaterialCellData(
             meshctxt.getObject().skeleton, self.filter)
@@ -1030,8 +1040,8 @@ class SkeletonQualityDisplay(SolidFillMeshDisplay, SkeletonDisplayMethod):
         SolidFillMeshDisplay.__init__(self)
         SkeletonDisplayMethod.__init__(self, filter)
 
-    def destroy(self, destroy_canvaslayer):
-        super(SkeletonQualityDisplay, self).destroy(destroy_canvaslayer)
+    # def destroy(self, destroy_canvaslayer):
+    #     super(SkeletonQualityDisplay, self).destroy(destroy_canvaslayer)
 
     def contour_capable(self):
         return True

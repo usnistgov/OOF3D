@@ -15,10 +15,7 @@
 # See NOTES/selection_machinery.txt
 
 from ooflib.SWIG.common import config
-#from ooflib.SWIG.common import coord
-#from ooflib.SWIG.common import direction
 from ooflib.SWIG.common import geometry
-#from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.common.IO import canvaslayers
 from ooflib.common import color
 from ooflib.common import debug
@@ -65,7 +62,7 @@ import math
 
 class VoxelRegionSelectionDisplay(display.DisplayMethod):
     def __init__(self, point_size, line_width, line_color,
-                 face_color, face_opacity,
+                 face_color, face_opacity, other_opacity,
                  hide_inactive, dim_inactive):
         # Display parameters
         self.point_size = point_size
@@ -73,6 +70,7 @@ class VoxelRegionSelectionDisplay(display.DisplayMethod):
         self.line_color = line_color
         self.face_color = face_color
         self.face_opacity = face_opacity
+        self.other_opacity = other_opacity
         self.hide_inactive = hide_inactive
         self.dim_inactive = dim_inactive
 
@@ -166,14 +164,16 @@ defaultVoxelRegionSelectionPointSize = 5.0
 defaultVoxelRegionSelectionLineWidth = 3.0
 defaultVoxelRegionSelectionLineColor = color.blue
 defaultVoxelRegionSelectionFaceColor = color.blue
-defaultVoxelRegionSelectionFaceOpacity = 0.85
+defaultVoxelRegionSelectionFaceOpacity = 1.00
+defaultVoxelRegionSelectionOtherOpacity = 0.70
 defaultHideInactive = False
 defaultDimInactive = 0.5
 pointSizeRange = (0, 15, 1)
 lineWidthRange = (1, 10, 1)
 opacityRange = (0, 1, 0.05)
 
-def _setDefaultVoxelRegionSelectionParams(menuitem, plane_color, plane_opacity,
+def _setDefaultVoxelRegionSelectionParams(menuitem, plane_color,
+                                          plane_opacity, other_opacity,
                                           hide_inactive, dim_inactive):
     global defaultVoxelRegionSelectionPointSize
     defaultVoxelRegionSelectionPointSize = point_size
@@ -185,6 +185,8 @@ def _setDefaultVoxelRegionSelectionParams(menuitem, plane_color, plane_opacity,
     defaultVoxelRegionSelectionFaceColor = face_color
     global defaultVoxelRegionSelectionFaceOpacity
     defaultVoxelRegionSelectionFaceOpacity = face_opacity
+    global defaultVoxelRegionSelectionOtherOpacity
+    defaultVoxelRegionSelectionOtherOpacity = other_opacity
     global defaultHideInactive
     defaultHideInactive = hide_inactive
     global defaultDimInactive
@@ -215,7 +217,12 @@ voxelregionselectionparams = [
         'face_opacity', 
         opacityRange,                                                 
         defaultVoxelRegionSelectionFaceOpacity,
-        tip="Opacity of the faces of the box."),
+        tip="Opacity of the faces of the box.  Probably best left at 1.0."),
+    parameter.FloatRangeParameter(
+        'other_opacity',
+        opacityRange,
+        defaultVoxelRegionSelectionOtherOpacity,
+        tip="Opacity of other objects while editing the box."),
     parameter.BooleanParameter(
         'hide_inactive', defaultHideInactive,
         tip='Hide the widget when the toolbox is inactive.'),
@@ -263,6 +270,7 @@ def predefinedVoxelRegionSelectionLayer():
         line_color=defaultVoxelRegionSelectionLineColor,
         face_color=defaultVoxelRegionSelectionFaceColor,
         face_opacity=defaultVoxelRegionSelectionFaceOpacity,
+        other_opacity=defaultVoxelRegionSelectionOtherOpacity,
         hide_inactive=defaultHideInactive,
         dim_inactive=defaultDimInactive)
 

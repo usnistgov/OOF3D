@@ -146,7 +146,8 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         layer = self.getLayer()
         self._editing = True
         layer.start()
-        switchboard.notify("autodim", self.gfxwindow(), True)
+        switchboard.notify("autoopacity", self.gfxwindow(),
+                           self.getLayer().other_opacity)
         self.sensitize()
         self.gfxwindow().oofcanvas.render()
         self.voxelbox = layer.get_box()
@@ -156,7 +157,7 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         # Call the menu item that actually makes the selection.
         self._editing = False
         self.getLayer().stop()
-        switchboard.notify("autodim", self.gfxwindow(), False)
+        switchboard.notify("autoopacity", self.gfxwindow(), 1.0)
         self.sensitize()
         ## TODO: Converting from CRectangularPrism to Coords here is
         ## clumsy. The Coords are converted back to a

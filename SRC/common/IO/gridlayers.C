@@ -379,6 +379,10 @@ void FilledGridCanvasLayer::setCoincidentTopologyParams(double factor,
   mapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor, units);
 }
 
+void FilledGridCanvasLayer::set_opacity(double opacity) {
+  actor->GetProperty()->SetOpacity(opacity);
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 SolidFilledGridCanvasLayer::SolidFilledGridCanvasLayer(
