@@ -2076,10 +2076,10 @@ class GhostGfxWindow:
                     # callbacks.
                     self.selectedLayer = layer
                     self.sortedLayers = False
-                    self.sortLayers()
                     layer.build(self)
                     if layer.setWho(who):
                         layer.setParams()
+                    self.sortLayers()
                     # Don't destroy the old layer until after the new
                     # one is in place.  Its C++ guts may need to be
                     # disconnected when the new layer is being
@@ -2090,10 +2090,10 @@ class GhostGfxWindow:
                 # the layer list.
                 self.layers.append(layer)
                 self.sortedLayers = False
-                self.sortLayers()
                 layer.build(self)
                 if layer.setWho(who):
                     layer.setParams()
+                self.sortLayers()
                 if autoselect:
                     self.selectLayer(self.layerID(layer))
 
