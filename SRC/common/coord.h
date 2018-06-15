@@ -325,11 +325,19 @@ inline double dot(const Coord3D &c1, const Coord3D &c2) {
   return c1[0]*c2[0] + c1[1]*c2[1] + c1[2]*c2[2];
 }
 
+inline double dot(const Coord3D *c1, const Coord3D *c2) { // for swig
+  return dot(*c1, *c2);
+}
+
 inline Coord3D cross(const Coord3D &c1, const Coord3D &c2) {
   Coord3D temp((c1[1]*c2[2]-c1[2]*c2[1]),
 	       (c1[2]*c2[0]-c1[0]*c2[2]),
 	       (c1[0]*c2[1]-c1[1]*c2[0]));
   return temp;
+}
+
+inline Coord3D cross(const Coord3D *c1, const Coord3D *c2) { // for swig
+  return cross(*c1, *c2);
 }
 
 inline bool operator==(const Coord3D &a, const Coord3D &b) {
@@ -346,6 +354,10 @@ inline Coord3D operator%(const Coord3D &c1, const Coord3D &c2) {
 
 inline double norm2(const Coord3D &c) {
   return dot(c, c);
+}
+
+inline double norm2(const Coord3D *c) {
+  return dot(*c, *c);
 }
 
 const Coord3D &axisVector(unsigned int dir);

@@ -74,10 +74,11 @@ public:
   void translate(Coord *Point);
   void offset(double);
   void scale(double);
+  void resetTransforms();
   
-  %new Coord *get_center();
-  %new Coord *get_normal_Coord3D();
-  %new CUnitVectorDirection *get_normal();
+  Coord get_center();
+  Coord get_normal_Coord3D();
+  CUnitVectorDirection get_normal();
   double get_offset();
 
   void set_scale(double);

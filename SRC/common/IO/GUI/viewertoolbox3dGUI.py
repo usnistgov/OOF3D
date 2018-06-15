@@ -702,6 +702,43 @@ To deselect a plane, Ctrl+Click the plane in the list."""
 
     def newClipCB(self, button):
         menuitem = self.toolbox.menu.Clip.New
+        # Set the default value of the offset to 1/4 of the width of
+        # the Microstructure.  Starting with a zero offset is
+        # confusing because it removes the entire Microstructure, and
+        # also does something strange to vtk.  Setting it to half the
+        # size of the Microstructure is confusing (if the default View
+        # hasn't changed) because the initial clipping plane will be
+        # seen edge on.  Setting it to 3/4 of the width makes the
+        # plane invisible because of the perspective in the default
+        # view.
+        # Find the screen x direction
+        view = mainthread.runBlock(self.gfxwindow().oofcanvas.get_view)
+        right = coord.cross(view.up, view.pos-view.focal)
+        right = right/math.sqrt(coord.norm2(right))
+
+        # Find the min and max coords of the corners of the
+        # Microstructure in the screen x direction.
+        who = self.gfxwindow().topwho('Microstructure', 'Image', 'Skeleton',
+                                      'Mesh')
+        msSize = who.getMicrostructure().size()
+        xvals = [coord.dot(primitives.Point(x, y, z), right)
+                 for x in (0, msSize.x)
+                 for y in (0, msSize.y)
+                 for z in (0, msSize.z)]
+        xmin = min(xvals)
+        xmax = max(xvals)
+        offset = xmin + 0.25*(xmax - xmin)
+        
+        # # Find the size of the Microstructure in this direction
+        # width = coord.dot(right, who.getMicrostructure().size())
+        # offset = 0.25*width
+        
+        offsetarg = menuitem.get_arg("offset")
+        offsetarg.set(offset)
+        normalarg = menuitem.get_arg("normal")
+        normalarg.set(direction.VectorDirection(right.x, right.y, right.z))
+        
+        # offsetarg.set(0.25 * who.getMicrostructure().size().x)
         if parameterwidgets.getParameters(title="New Clipping Plane",
                                           *menuitem.params):
             menuitem.callWithDefaults()

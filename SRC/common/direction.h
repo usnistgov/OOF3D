@@ -66,6 +66,7 @@ public:
   CUnitVectorDirection(double x, double y, double z);
   CUnitVectorDirection(const DoubleVec*);
   CUnitVectorDirection(const Coord*);
+  CUnitVectorDirection(const Coord&);
   virtual const std::string &classname() const;
   virtual CUnitVectorDirection unitVector() const { return *this; }
   virtual CAngleDirection angles() const;

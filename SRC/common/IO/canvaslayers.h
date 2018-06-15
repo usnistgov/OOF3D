@@ -217,9 +217,10 @@ public:
   void translate(const Coord3D*);
   void offset(double);
   void scale(double);
-  Coord3D *get_center();
-  Coord3D *get_normal_Coord3D();
-  CUnitVectorDirection *get_normal();
+  void resetTransforms();
+  Coord3D get_center();
+  Coord3D get_normal_Coord3D();
+  CUnitVectorDirection get_normal();
   double get_offset();
   void set_scale(double);
   void set_normal(const CDirection*);

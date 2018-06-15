@@ -153,8 +153,9 @@ class ClippingPlaneWidget(display.DisplayMethod):
             self.setVisibility(True)
             normal = plane.normal()
             offset = plane.offset()
+            self.canvaslayer.resetTransforms()
             self.canvaslayer.set_normal(normal)
-            self.canvaslayer.offset(offset - self.canvaslayer.get_offset())
+            self.canvaslayer.offset(offset)
             self.canvaslayer.set_arrowLength(
                 self.arrowSign(plane) * self.arrow_length)
             self.canvaslayer.setModified()

@@ -48,6 +48,7 @@ class Direction(registeredclass.ConvertibleRegisteredClass):
             return DirectionY()
         if isinstance(direction, CDirectionZPtr):
             return DirectionZ()
+        debug.fmsg("rewrap failed! direction=", direction)
         raise ooferror.ErrPyProgrammingError("Direction.rewrap failed!")
 
 class DirectionRegistration(registeredclass.ConvertibleRegistration):
@@ -151,3 +152,12 @@ DirectionRegistration(
     from_base=_XYZ_from_base,
     tip="The Z direction."
 )
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# For debugging.  SWIG adds its own useless reprs in each derived
+# class, so we can't simply monkeypatch the base class.
+def _CDirection__repr__(self):
+    return "(" + self.identifier() + ")"
+CUnitVectorDirectionPtr.__repr__ = _CDirection__repr__
+

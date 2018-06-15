@@ -386,22 +386,7 @@ PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas,
   arrowSource->SetShaftResolution(12);
   arrowSource->Update();
 
-  scaling->Identity();
-  rotation->Identity();
-  translation->Identity();
-  planeTransform->Identity();
-  planeTransform->Concatenate(translation);
-  planeTransform->Concatenate(rotation);
-  planeTransform->Concatenate(scaling);
-
-  // Scales the arrow by one half the sidelength of the plane.
-  // arrowParity is set by the "inverted" constructor arg, which
-  // should be chosen so that the arrow is visible.  When using this
-  // widget to define a clipping plane, for example, the arrow should
-  // be on the clipped (hidden) side of the plane.
-  arrowScaling->Identity();
-  double s = arrowParity*0.5;
-  arrowScaling->Scale(s, s, s);
+  resetTransforms();
 
   arrowTransform->Identity();
   arrowTransform->Concatenate(planeTransform);
@@ -425,6 +410,25 @@ PlaneAndArrowLayer::PlaneAndArrowLayer(GhostOOFCanvas *canvas,
 }
 
 PlaneAndArrowLayer::~PlaneAndArrowLayer() {}
+
+void PlaneAndArrowLayer::resetTransforms() {
+  scaling->Identity();
+  rotation->Identity();
+  translation->Identity();
+  planeTransform->Identity();
+  planeTransform->Concatenate(translation);
+  planeTransform->Concatenate(rotation);
+  planeTransform->Concatenate(scaling);
+
+  // Scales the arrow by one half the sidelength of the plane.
+  // arrowParity is set by the "inverted" constructor arg, which
+  // should be chosen so that the arrow is visible.  When using this
+  // widget to define a clipping plane, for example, the arrow should
+  // be on the clipped (hidden) side of the plane.
+  arrowScaling->Identity();
+  double s = arrowParity*0.5;
+  arrowScaling->Scale(s, s, s);
+}
 
 const std::string &PlaneAndArrowLayer::classname() const {
   static const std::string nm("PlaneAndArrowLayer");
@@ -516,27 +520,21 @@ void PlaneAndArrowLayer::rotate(const Coord3D *axisOfRotation,
 void PlaneAndArrowLayer::translate(const Coord3D *translationVector) {
   // Shifts the plane and arrow by the specified displacement vector.
 
-  double translationX = (*translationVector)[0];
-  double translationY = (*translationVector)[1];
-  double translationZ = (*translationVector)[2];
-
   // Concatenate the new translation onto the current
   // translation.
-  translation->Translate(translationX, translationY, translationZ);
+  translation->Translate(*translationVector);
   setModified();
 }
 
 void PlaneAndArrowLayer::offset(double offset) {
   // Offsets the plane and arrow by the specified amount along the
   // plane's normal.
-
   double unitX[3] = {1, 0, 0};
   double normal_double[3];
 
   rotation->TransformPoint(unitX, normal_double);
 
   Coord3D normal(normal_double);
-  
   // We multiply the normal vector by the offset in order to get the
   // vector representing the plane's displacement from the
   // origin. This will be the coordinates of our translation.
@@ -560,52 +558,34 @@ void PlaneAndArrowLayer::scale(double scale) {
   setModified();
 }
 
-Coord3D *PlaneAndArrowLayer::get_center() {
+Coord3D PlaneAndArrowLayer::get_center() {
   // Returns the world coordinates of the arrow base, which are the
   // same coordinates as the center of the plane.
-  double center_double[3];
-  translation->GetPosition(center_double);
-  Coord3D *center =
-    new Coord3D(center_double[0], center_double[1], center_double[2]);
-  return center;
+  return Coord3D(translation->GetPosition());
 }
 
-Coord3D *PlaneAndArrowLayer::get_normal_Coord3D() {
+Coord3D PlaneAndArrowLayer::get_normal_Coord3D() {
   // Returns the normal vector as a Coord3D*.
   double unitX[3] = {1, 0, 0};
   double normal_double[3];
 
   rotation->TransformPoint(unitX, normal_double);
-
-  Coord3D *normal = new Coord3D(normal_double);
-  return normal;
+  return Coord3D(normal_double);
 }
 
-CUnitVectorDirection *PlaneAndArrowLayer::get_normal() {
+CUnitVectorDirection PlaneAndArrowLayer::get_normal() {
   // Returns the normal vector as a CUnitVectorDirection*.
   double unitX[3] = {1, 0, 0};
-  double normal_double[3];
-
-  rotation->TransformPoint(unitX, normal_double);
-
-  CUnitVectorDirection *normal = 
-    new CUnitVectorDirection(normal_double[0], normal_double[1],
-			     normal_double[2]);
-
+  const Coord3D normCoord(rotation->TransformPoint(unitX));
+  CUnitVectorDirection normal(normCoord);
   return normal;
 }
 
 double PlaneAndArrowLayer::get_offset() {
-  Coord3D center;
-  translation->GetPosition(center.xpointer());
+  Coord3D center(translation->GetPosition());
 
   double unitX[3] = {1, 0, 0};
-  double normal_double[3];
-
-  rotation->TransformPoint(unitX, normal_double);
-
-  Coord3D normal(normal_double);
-
+  Coord3D normal(rotation->TransformPoint(unitX));
   return dot(center, normal);
 }
 
@@ -638,14 +618,16 @@ void PlaneAndArrowLayer::set_normal(const CDirection *direction) {
   // rotation about by taking the cross product of the the two
   // vectors.
   double angleOfRotation = (180 / M_PI) * acos(dot(*normalVector, xVector));
-  Coord3D axisOfRotation = cross(xVector, *normalVector); 
+  Coord3D axisOfRotation;
+  if(angleOfRotation == 0. || angleOfRotation == 180.)
+    axisOfRotation = Coord3D(0, 1, 0);
+  else
+    axisOfRotation = cross(xVector, *normalVector);
 
-  // Reset the transform controling the rotation of the plane and the
+  // Reset the transform controlling the rotation of the plane and the
   // direction of the arrow.
   rotation->Identity();
-  rotation->RotateWXYZ(angleOfRotation,
-		       axisOfRotation[0], axisOfRotation[1], axisOfRotation[2]);
-
+  rotation->RotateWXYZ(angleOfRotation, axisOfRotation);
   setModified();
 
   // Free allocated memory.
@@ -657,12 +639,8 @@ void PlaneAndArrowLayer::set_center(const Coord3D *position) {
   // specified position, while while keeping the plane and arrow
   // facing in their current direction and sized at their current
   // scale.
-  double position0 = (*position)[0];
-  double position1 = (*position)[1];
-  double position2 = (*position)[2];
-
   translation->Identity();
-  translation->Translate(position0, position1, position2);
+  translation->Translate(*position);
   setModified();
 }
 

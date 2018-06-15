@@ -65,7 +65,9 @@ public:
   }
 }
 
-double dot(Coord&, Coord&);
+double dot(Coord *Point, Coord *Point);
+Coord cross(Coord *Point, Coord *Point);
+double norm2(Coord *Point);
 
 class ICoord {
 public:

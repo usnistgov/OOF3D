@@ -56,9 +56,6 @@ Remove the BitmapOverlay class.  It's not used for graphics
 anymore. It's only used to provide a quick way to see if a voxel is
 selected, but an array of bools would suffice there.
 
-Opacity works for Image layers but not Microstructure Material
-displays. ?
-
 Make sure that Active Volumes are respected for all voxel & skeleton
 selection operations.
 
@@ -410,3 +407,7 @@ Fix Bug: Last gfx layer created isn't included in loop in
 setLayerOffsetParameters().  Is it being called too soon?
 ** Fixed: 2018-06-13.  sortLayers() was being called before
 layer.build() in GhostGfxWindow.
+
+Opacity works for Image layers but not Microstructure Material
+displays. ?
+** Fixed at some point, apparently.  It works now. 
