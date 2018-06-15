@@ -134,6 +134,9 @@ class ToolBar:
     def setSelect(self):
         self.selectbutton.set_active(True)
 
+    def getSelect(self):
+        return self.selectbutton.get_active()
+
     def selectCB(self, button):
         # In "select" mode, the specific toolbox's mouse handler is in
         # charge.

@@ -840,9 +840,14 @@ To deselect a plane, Ctrl+Click the plane in the list."""
         # handler to self.
         if plane is not None:
             self.selectClipPlane(plane)
-            # Put the toolbox in "Select" mode, so that the new plane
-            # can be edited.
-            self.gfxwindow().toolbar.setSelect() # installs mouse handler
+            # Put the toolbox in "Select" mode, if necessary, so that
+            # the new plane can be edited.
+            if not self.gfxwindow().toolbar.getSelect():
+                self.gfxwindow().toolbar.setSelect()
+            else:
+                # The mouse handler might have been removed when an
+                # earlier clipping plane was deleted.
+                self.installMouseHandler()
         else:
             self.selectClipPlane(None)
             self.gfxwindow().removeMouseHandler()

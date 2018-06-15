@@ -71,6 +71,9 @@ The default parameters for new clipping planes put the plane in a more
 sensible location.  Fixed a bug in the positioning of new planes whose
 normals weren't in the +x direction.
 
+Fixed a bug that made the clipping plane widget unresponsive after a
+plane was deleted.
+
 3.1.2
 
 Fixed a bug that was making the Microstructure recalculate voxel
