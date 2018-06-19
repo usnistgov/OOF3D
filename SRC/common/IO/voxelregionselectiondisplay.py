@@ -58,8 +58,6 @@ import math
 
 # TODO: Rotate the box using option-click?
 
-# TODO: Opacity isn't correct when box is first drawn.
-
 class VoxelRegionSelectionDisplay(display.DisplayMethod):
     def __init__(self, point_size, line_width, line_color,
                  face_color, face_opacity, other_opacity,
