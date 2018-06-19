@@ -107,6 +107,7 @@ SemiPlanar = LayerOrdering(1.)          # partially filled meshes or images
 Linear = LayerOrdering(2.)              # mesh boundaries
 SemiLinear = LayerOrdering(3.)          # partial mesh boundaries
 PointLike = LayerOrdering(4.)           # single pixels or nodes
+Celestial = LayerOrdering(1000.)        # always on top
 
 ############
 
@@ -170,29 +171,29 @@ class DisplayMethod(registeredclass.RegisteredClass):
         
         self.gridSize = 0
 
-    # From cvs messages: DisplayMethod.destroy() wasn't being called,
-    # which was leaving some switchboard signals in place after their
-    # callback functions were destroyed when a graphics window was
-    # closed.  Explicitly destroying the layers in
-    # GhostGfxWindow.close() fixed the problem, except that it crashed
-    # the program if a graphics window was closed via the window
-    # manager (as opposed to closing it via the File menu).  This was
-    # due to a race condition: gtk was sending 'destroy' events to all
-    # of the window components while the Close() menu item was
-    # running.  The solution was to pass an extra argument to
-    # DisplayMethod.destroy() indicating whether or not the gtk
-    # shutdown procedure has begun.  All calls to destroy() should have
-    # destroy_canvaslayer=True, except for calls from
-    # GhostGfxWindow.close().
-
     def destroy(self, destroy_canvaslayer=True):
-        self.gfxwindow = None   # TODO OPT: Is this necessary?
         if self.whoChangedSignal:
             switchboard.removeCallback(self.whoChangedSignal)
             switchboard.removeCallback(self.whoRenamedSignal)
+
+        # If the graphics window is being closed, the layers are
+        # destroyed *after* the gtk 'destroy' signal is sent to the
+        # gtk objects.  This is unavoidable, because the window's
+        # destruction may have been triggered by the window manager's
+        # close button, which sends the signal.  In that case, the
+        # window that the objects are using has already been
+        # destroyed, and the OOFCanvasLayer calls that remove items
+        # from the window will fail with an X11 BadDrawable error.  So
+        # if the window is being destroyed, 'destroy_canvaslayer'
+        # should be set to False, and we don't bother removing objects
+        # from the window.
         if destroy_canvaslayer and self.canvaslayer is not None:
+            # This is called on a subthread when removing a single
+            # layer, but on the main thread if the graphics window is
+            # being closed, so mainthread.runBlock is required.
             mainthread.runBlock(self.canvaslayer.destroy)
             self.canvaslayer = None
+        self.gfxwindow = None  # Is this necessary?  It's not harmful.
 
     # Derived classes must redefine this (2D only):
     def draw(self, canvas):
@@ -413,14 +414,13 @@ class DisplayMethod(registeredclass.RegisteredClass):
         ## force a redraw.
         self.canvaslayer.setModified()
 
-    # TODO MERGE: raise_layer and lower_layer don't make sense in 3D.
-    # The 2D version will have to do something here.
-    if config.dimension() == 2:
-        def raise_layer(self, howfar=1):
-            pass
+    def raise_layer(self, howfar=1):
+        ## TODO: This.
+        debug.fmsg("Display.raise_layer is not yet implemented!")
 
-        def lower_layer(self, howfar=1):
-            pass
+    def lower_layer(self, howfar=1):
+        ## TODO: This.
+        debug.fmsg("Display.lower_layer is not yet implemented!")
 
     def layerordering(self):
         return self.getRegistration().layerordering

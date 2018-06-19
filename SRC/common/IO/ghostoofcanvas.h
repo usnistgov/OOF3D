@@ -24,6 +24,7 @@ class GhostOOFCanvas;
 #include "common/clip.h"
 #include "common/coord_i.h"
 #include "common/direction.h"
+#include "common/geometry.h"
 #include "common/lock.h"
 #include "common/IO/canvaslayers.h"
 
@@ -36,29 +37,43 @@ class GhostOOFCanvas;
 #include <vtkScalarsToColors.h>
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
-#include <vtkXOpenGLRenderWindow.h>
+
+// #include <vtkXOpenGLRenderWindow.h>
+#ifdef OOF_USE_COCOA
+#include <vtkCocoaRenderWindow.h>
+#else
+#include <vtkRenderWindow.h>
+#endif // OOF_USE_COCOA
 
 class View;
 class ImageFormat;
 class OOFCanvasLayer;
-class OOFCanvasLayerBase;
-
 
 class GhostOOFCanvas {
 protected:
   static bool initialized;	// has pygtk been initialized?
   bool created;			// used by OOFCanvas3D::realize
   bool exposed;
-  bool rendered;
   bool axes_showing;		// axes are actually drawn
-  bool deactivated;		// suppress redraws when shutting down
-  vtkSmartPointer<vtkXOpenGLRenderWindow> render_window;
+  bool antialiasing;		// has antialiasing been turned on?
+
+  bool fixScalingBug; // set to true if vtk canvas is 1/2 size and mispositioned
+  
+  // TODO: Use vtkNew instead of vtkSmartPointer here, and remove the
+  // lines that initialize the vtkSmartPointers in the GhostOOFCanvas
+  // constructor.  Doing this requires vtk8, though.
+#ifdef OOF_USE_COCOA
+  vtkSmartPointer<vtkCocoaRenderWindow> render_window;
+#else
+  vtkSmartPointer<vtkRenderWindow> render_window;
+#endif // OOF_USE_COCOA
   vtkSmartPointer<vtkRenderer> renderer;
   vtkSmartPointer<vtkAxesActor> axes;
   vtkSmartPointer<vtkScalarBarActor> contourMapActor;
   bool contourmap_requested;
   bool contourmap_showing;
   OOFCanvasLayer *contour_layer;
+  virtual void repositionRenderWindow() {}
 
   ClippingPlaneList clipPlanes;	// typedef in common/clip.h
   bool clipInverted;
@@ -66,6 +81,9 @@ protected:
   vtkSmartPointer<vtkPlanes> vClipPlanes;
   CanvasLayerList layers;
   SLock viewLock;
+
+  Coord3D tumbleCenter;
+  bool tumbleAroundFocalPoint;
 
   double margin;
   void makeAllUnpickable() const;
@@ -75,31 +93,38 @@ protected:
   vtkSmartPointer<vtkUnstructuredGrid> getFrustumSubgrid(
 		 double x, double y, const View*, OOFCanvasLayer*);
 
+  // Set and restore the View.  The first bool indicates whether or
+  // clipping planes should be set.  The second indicates whether or
+  // not the render window should be resized.  When interpreting saved
+  // mouse clicks, the window size matters.  These methods are
+  // protected.  set_view is unprotected and is the only one that
+  // should be used externally.
+  View *set_view_nolock(const View*, bool, bool);
+  void restore_view(const View*, bool, bool);
+  
 #ifdef DEBUGSELECTIONS
   vtkSmartPointer<vtkActor> tempActor;
 #endif // DEBUGSELECTIONS
 
 public:
   GhostOOFCanvas();
-  ~GhostOOFCanvas();
+  virtual ~GhostOOFCanvas();
 
   // newLayer() and removeLayer() are called by the OOFCanvasLayerBase
   // constructor and destructor.
-  void newLayer(OOFCanvasLayerBase *);
-  void removeLayer(OOFCanvasLayerBase*);
+  void newLayer(OOFCanvasLayer*);
+  void removeLayer(OOFCanvasLayer*);
 
   void reset();
 
   // This should only be called from python and only with mainthread.run
   void render();
-  // deactivate() suppresses redrawing.  It should be called at the
-  // start of the graphics window shut down sequence.
-  void deactivate();
 
   void set_bgColor(const CColor);
   void set_margin(double f) { margin = f; }
   
   void setAntiAlias(bool);
+  //void setFXAAOptions(double, double, double, double, int, bool);
 
   void setAxisOffset(const Coord*);
   void setAxisLength(const Coord*);
@@ -133,6 +158,8 @@ public:
   void zoom(double a);
   void zoom_fill();
   void recenter();
+  void setTumbleCenter(Coord3D*);
+  void setTumbleAroundFocalPoint();
 
   // TODO: These should all be const, but it might not be possible.
   // They have to call set_view.
@@ -141,8 +168,9 @@ public:
 				    OOFCanvasLayer*);
   vtkSmartPointer<vtkActor> findClickedActor(const Coord*, const View*,
 					     OOFCanvasLayer*);
-  vtkSmartPointer<vtkActorCollection> findClickedActors(const Coord*, const View*,
-					     OOFCanvasLayer*);
+  vtkSmartPointer<vtkActorCollection> findClickedActors(const Coord*,
+							const View*,
+							OOFCanvasLayer*);
   vtkSmartPointer<vtkCell> findClickedCell(const Coord*, const View*,
 					   OOFCanvasLayer*);
   Coord *findClickedPosition(const Coord*, const View*,
@@ -165,10 +193,11 @@ public:
   void set_camera_focal_point(double x, double y, double z) const;
   void get_camera_view_up(double *p) const;
   void get_camera_direction_of_projection(double *p) const;
-
   double get_camera_distance() const;
   double get_camera_view_angle() const;
   const ClippingPlaneList &getClipPlanes() const { return clipPlanes; }
+  vtkSmartPointer<vtkRenderer> get_renderer() { return renderer; }
+  
   bool clipping() const;
   vtkSmartPointer<vtkPlanes> getVTKClipPlanes() const { return vClipPlanes; }
   bool invertedClipping() const { return clipInverted; }
@@ -179,8 +208,6 @@ public:
   void physical2Display(const Coord&, double&, double&) const;
   
 
-  vtkSmartPointer<vtkRenderer> get_renderer() { return renderer; }
-
   // Views
   View *get_view() const;
   // set_view acquires viewLock, calls set_view_nolock, and releases
@@ -188,26 +215,25 @@ public:
   // the old view before releasing the lock, acquire the lock
   // explicitly and use set_view_nolock.  See findClickedCell_ et al.
   View *set_view(const View*, bool);
-  View *set_view_nolock(const View*, bool);
-  void restore_view(const View*, bool);
-
-  Coord get_visible_center() const;
-  Coord get_visible_size() const;
 
   ICoord get_size() const;
   void set_size(int, int);
+
+  virtual void setFixCanvasScaleBug(bool) {}
 
   SLock renderLock;
 
   void save_canvas(const std::string &filename, const ImageFormat*) const;
 
+  void dumpProps();		// debugging
+
   friend class OOFCanvasLayer;
-};
+};				// end GhostOOFCanvas
 
 bool findSegLineDistance(const Coord&, const Coord&, const Coord&, const Coord&,
 			 double &, double&);
 
-#endif
+#endif // GHOSTOOFCANVAS_H
 
 
 

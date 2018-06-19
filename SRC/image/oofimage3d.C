@@ -30,6 +30,7 @@
 
 #include <vtkBMPReader.h>
 #include <vtkBMPWriter.h>
+#include <vtkExecutive.h>
 #include <vtkImageAppendComponents.h>
 #include <vtkImageExport.h>
 #include <vtkImageExtractComponents.h>
@@ -37,6 +38,7 @@
 #include <vtkImageGaussianSmooth.h>
 #include <vtkImageImport.h>
 #include <vtkImageLuminance.h>
+#include <vtkImageMapToColors.h>
 #include <vtkImageMathematics.h>
 #include <vtkImageMedian3D.h>
 #include <vtkImagePermute.h>
@@ -49,11 +51,14 @@
 #include <vtkPNMWriter.h>
 #include <vtkPointData.h>
 #include <vtkPostScriptWriter.h>
+#include <vtkScalarsToColors.h>
 #include <vtkStringArray.h>
 #include <vtkTIFFReader.h>
 #include <vtkTIFFWriter.h>
+#include <vtkTrivialProducer.h>
 #include <vtk_tiff.h>		// for ORIENTATION_BOTLEFT
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 OOFImage3D::OOFImage3D(const std::string &name,
 		       const std::vector<std::string> *files, 
@@ -153,32 +158,40 @@ OOFImage3D::OOFImage3D(const std::string &name,
   // crashing.
 
   imageReader->SetDataScalarTypeToUnsignedChar();
-  image = imageReader->GetOutput();
+  vtkSmartPointer<vtkImageAlgorithm> pipelineTail = imageReader;
 
-  image->Update();		// The actual reading takes place here.
 
   // For certain image formats such as PNG, the bit depth may be
   // greater than 8 and the reader will return a vtkImageData object
   // with a scalar type other than unsigned char.  We need to scale
   // the data and make it an unsigned char type.
+  image = pipelineTail->GetOutput();
   if(image->GetScalarType() != VTK_UNSIGNED_CHAR) {
     vtkSmartPointer<vtkImageShiftScale> shiftscale = 
       vtkSmartPointer<vtkImageShiftScale>::New();
-    shiftscale->SetInput(image);
     shiftscale->SetShift(0);
     shiftscale->SetScale(255.0/image->GetScalarTypeMax());
     shiftscale->SetOutputScalarTypeToUnsignedChar();
-    image = shiftscale->GetOutput();
-    image->Update();
+    shiftscale->SetInputConnection(pipelineTail->GetOutputPort());
+    pipelineTail = shiftscale;
   }
-  // Make sure that the image has three channels.  TODO OPT: If this uses
-  // too much memory, we could allow gray scale images to have only
-  // one channel, but we'd either have to do something clever in
-  // oofOverlayVoxels.C, or require that the overlay color also be
-  // gray.  Also, getPixels() would be need to be smarter.
-  image = ImageBase::getRGB(image);
-  image->Update();
-} // end OOFImage constructor
+
+  int numcomponents = image->GetNumberOfScalarComponents();
+  if(numcomponents == 1) {
+    pipelineTail = convertToRGB(pipelineTail);
+  }
+  else if(numcomponents == 4) {
+    // TODO: Get rid of alpha channel?
+  }
+  pipelineTail->GetExecutive()->Update();
+  image = pipelineTail->GetOutput();
+  
+  // oofcerr << "OOFImage3D::ctor: image size=";
+  // for(int i=0; i<3; i++)
+  //   oofcerr << " " << image->GetDimensions()[i];
+  // oofcerr << std::endl;
+  
+} // end OOFImage3D constructor
 
 
 OOFImage3D::~OOFImage3D() {}
@@ -193,15 +206,14 @@ OOFImage3D::OOFImage3D(const std::string &name)
 // Constructor that takes color values from a vector of unsigned
 // chars.  Used when loading images embedded in an OOF data file.
 
-OOFImage3D::OOFImage3D(const std::string &name,
+OOFImage3DFromData::OOFImage3DFromData(const std::string &name,
 		       const Coord &size, const ICoord &isize,
 		       const std::vector<unsigned char> *data) 
-  : name_(name)
+  : OOFImage3D(name),
+    importer(vtkSmartPointer<vtkImageImport>::New())
 {
   assert((int) data->size() == 3*isize[0]*isize[1]*isize[2]);
 
-  vtkSmartPointer<vtkImageImport> importer =
-    vtkSmartPointer<vtkImageImport>::New();
   importer->SetDataSpacing(
 		   size[0]/isize[0], size[1]/isize[1], size[2]/isize[2]);
   importer->SetDataOrigin(0, 0, 0);
@@ -211,11 +223,10 @@ OOFImage3D::OOFImage3D(const std::string &name,
   importer->SetNumberOfScalarComponents(3);
   importer->CopyImportVoidPointer((void*)(&(*data)[0]), data->size());
   image = importer->GetOutput();
-  // TODO OPT: Check that importer is being destroyed.  Would
-  // image->ShallowCopy(importer->GetOutput()) help?
-  image->Update();
+  importer->GetExecutive()->Update();
   getPixelSizeFromImage();	// sets sizeInPixels_
   setSize(&size);		// sets size_ and adjusts spacing
+
 }
 
 // Wrapper for the above constructor, so that we can call it from
@@ -226,7 +237,7 @@ OOFImage3D *newImageFromData(const std::string &name,
 			     const ICoord *isize,
 			     const std::vector<unsigned char> *data)
 {
-  return new OOFImage3D(name, *size, *isize, data);
+  return new OOFImage3DFromData(name, *size, *isize, data);
 }
 
 // getPixels() is the inverse of newImageFromData().
@@ -236,10 +247,9 @@ std::vector<unsigned char> *OOFImage3D::getPixels() {
   std::vector<unsigned char> *pxls = new std::vector<unsigned char>(n);
   vtkSmartPointer<vtkImageExport> exporter =
     vtkSmartPointer<vtkImageExport>::New();
-  exporter->SetInputConnection(image->GetProducerPort());
+  exporter->SetInputData(image);
   exporter->ImageLowerLeftOn();
   exporter->Export(&(*pxls)[0]);
-  // TODO OPT: Check that exporter is being destroyed.
   return pxls;
 }
 
@@ -279,7 +289,7 @@ OOFImage3D *OOFImage3D::clone(const std::string &nm) const {
   OOFImage3D *copy = new OOFImage3D(nm);
   copy->image = vtkSmartPointer<vtkImageData>::New();
   copy->image->DeepCopy(image);
-  copy->image->Update();
+  // copy->image->Update();
   copy->getPixelSizeFromImage();	 
   copy->size_ = size_;
   copy->setMicrostructure(microstructure);
@@ -305,12 +315,18 @@ void OOFImage3D::save(const std::string &filepattern, const std::string &format)
     throw ErrUserError("Unrecognized image format!");
 
   writer->SetFilePattern(filepattern.c_str());
-  writer->SetInputConnection(image->GetProducerPort());
-  //writer->Update();		// is this necessary?
+  writer->SetInputData(image);
   writer->Write();
 }
 
 const CColor OOFImage3D::operator[](const ICoord &c) const {
+  // // Slow version for debugging
+  // CColor col(image->GetScalarComponentAsDouble(c[0], c[1], c[2], 0),
+  // 	     image->GetScalarComponentAsDouble(c[0], c[1], c[2], 1),
+  // 	     image->GetScalarComponentAsDouble(c[0], c[1], c[2], 2));
+  // // oofcerr << "OOFImage3D::operator[]: " << c << " " << col << std::endl;
+  // return col;
+  
   // It's important to cast to unsigned char* and then to
   // double. Casting directly to double* will give the wrong value.
   unsigned char* ptr = (unsigned char*)
@@ -354,45 +370,39 @@ void OOFImage3D::imageChanged() {
 
 // Modifiers.  These operate in-place on OOFImage3D::image.
 
+
 void OOFImage3D::gray() {
   vtkSmartPointer<vtkImageLuminance> luminance 
     = vtkSmartPointer<vtkImageLuminance>::New();
-  luminance->SetInputConnection(image->GetProducerPort());
-  image = luminance->GetOutput();
-  image->Update();
+  luminance->SetInputData(image);
+  // Convert back to three channel data.  See comment in constructor
+  // about making life easy for oofOverlayVoxels.
+  vtkSmartPointer<vtkImageAlgorithm> converter = convertToRGB(luminance);
+  converter->GetExecutive()->Update();
+  image = converter->GetOutput(0);
   imageChanged();
 }
 
 void OOFImage3D::threshold(double T) {
-
-  // TODO: This crashes if the image has already been converted to
-  // gray or previously thresholded.  On Linux there's an error
-  // message about vtkImageLuminance needing 3 components and getting
-  // just one.  On Mac it just spews bits to std::cerr.  However,
-  // image->GetDataDimension() returns 3 in all cases, so I don't
-  // really know what's going on.
-  
-  // std::cerr << "OOFImage3D::threshold: data dimension="
-  // 	    << image->GetDataDimension() << std::endl;
+    int ncomponents = image->GetNumberOfScalarComponents();
+  assert(ncomponents == 3);
+  // Convert to gray scale before thresholding.
   vtkSmartPointer<vtkImageLuminance> luminance 
     = vtkSmartPointer<vtkImageLuminance>::New();
-  luminance->SetInputConnection(image->GetProducerPort());
-  vtkSmartPointer<vtkImageData> gray = luminance->GetOutput();
-	
-  vtkSmartPointer<vtkImageThreshold> thold1 =
+  luminance->SetInputData(image);
+  	
+  vtkSmartPointer<vtkImageThreshold> thresh =
     vtkSmartPointer<vtkImageThreshold>::New();
-  thold1->ThresholdByUpper(T*255);
-  thold1->SetOutValue(0);
-  thold1->SetInputConnection(gray->GetProducerPort());
-	
-  vtkSmartPointer<vtkImageThreshold> thold2 = 
-    vtkSmartPointer<vtkImageThreshold>::New();
-  thold2->ThresholdByLower(T*255);
-  thold2->SetOutValue(255);
-  thold2->SetInputConnection(thold1->GetOutputPort());
+  thresh->ThresholdByUpper(T*255); // values above T are "in"
+  thresh->SetOutValue(0);	   // replacement value for "out" pixels
+  thresh->SetInValue(255);	   // replacement value for "in" pixels
+  thresh->ReplaceInOn();	   // replace "in" pixels
+  thresh->ReplaceOutOn();	   // replace "out" pixels
+  thresh->SetInputConnection(luminance->GetOutputPort());
 
-  image = thold2->GetOutput();
-  image->Update();
+  vtkSmartPointer<vtkImageAlgorithm> converter = convertToRGB(thresh);
+  converter->GetExecutive()->Update();
+  image = converter->GetOutput();
   imageChanged();
 }
 
@@ -402,9 +412,9 @@ void OOFImage3D::blur(double radius, double sigma) {
     = vtkSmartPointer<vtkImageGaussianSmooth>::New();
   gauss->SetRadiusFactors(radius, radius, radius);
   gauss->SetStandardDeviation(sigma, sigma, sigma);
-  gauss->SetInputConnection(image->GetProducerPort());
+  gauss->SetInputData(image);
   image = gauss->GetOutput();
-  image->Update();
+  gauss->GetExecutive()->Update();
   imageChanged();
 }
 
@@ -414,10 +424,10 @@ void OOFImage3D::dim(double factor) {
     = vtkSmartPointer<vtkImageMathematics>::New();
   dimmer->SetOperationToMultiplyByK();
   dimmer->SetConstantK(factor);
-  dimmer->SetInputConnection(image->GetProducerPort());
+  dimmer->SetInputData(image);
   image = dimmer->GetOutput();
-  image->SetScalarTypeToUnsignedChar();
-  image->Update();
+  // image->SetScalarTypeToUnsignedChar();
+  dimmer->GetExecutive()->Update();
   imageChanged();
 }
 
@@ -426,7 +436,7 @@ void OOFImage3D::fade(double factor) {
     vtkSmartPointer<vtkImageMathematics>::New();
   fade1->SetOperationToMultiplyByK();
   fade1->SetConstantK(1.0-factor);
-  fade1->SetInputConnection(image->GetProducerPort());
+  fade1->SetInputData(image);
 	
   vtkSmartPointer<vtkImageMathematics> fade2 = 
     vtkSmartPointer<vtkImageMathematics>::New();
@@ -435,8 +445,8 @@ void OOFImage3D::fade(double factor) {
   fade2->SetInputConnection(fade1->GetOutputPort());
 	
   image = fade2->GetOutput();
-  image->SetScalarTypeToUnsignedChar();
-  image->Update();
+  // image->SetScalarTypeToUnsignedChar();
+  fade2->GetExecutive()->Update();
   imageChanged();
 }
 
@@ -446,7 +456,7 @@ void OOFImage3D::negate(double dummy) {
     vtkSmartPointer<vtkImageMathematics>::New();
   negator->SetOperationToMultiplyByK();
   negator->SetConstantK(-1.0);
-  negator->SetInputConnection(image->GetProducerPort());
+  negator->SetInputData(image);
 
   vtkSmartPointer<vtkImageMathematics> corrector =
     vtkSmartPointer<vtkImageMathematics>::New();
@@ -455,8 +465,8 @@ void OOFImage3D::negate(double dummy) {
   corrector->SetInputConnection(negator->GetOutputPort());
 
   image = corrector->GetOutput();
-  image->SetScalarTypeToUnsignedChar();
-  image->Update();
+  // image->SetScalarTypeToUnsignedChar();
+  corrector->GetExecutive()->Update();
   imageChanged();
 }
 
@@ -467,10 +477,10 @@ void OOFImage3D::medianFilter(int radius) {
     = vtkSmartPointer<vtkImageMedian3D>::New();
 
   median->SetKernelSize(radius*2, radius*2, radius*2);
-  median->SetInputConnection(image->GetProducerPort());
+  median->SetInputData(image);
 	
   image = median->GetOutput();
-  image->Update();
+  median->GetExecutive()->Update();
   imageChanged();
 }
 
@@ -481,7 +491,7 @@ void OOFImage3D::normalize() {
   for(int i=0; i<3; i++) {
     vtkSmartPointer<vtkImageExtractComponents> extractor =
       vtkSmartPointer<vtkImageExtractComponents>::New();
-    extractor->SetInputConnection(image->GetProducerPort());
+    extractor->SetInputData(image);
     extractor->SetComponents(i);
     extractor->Update();
 		
@@ -509,13 +519,13 @@ void OOFImage3D::normalize() {
     else {
       mult->SetConstantK(1.0);
     }
-    mult->GetOutput()->SetScalarTypeToUnsignedChar();
+    // mult->GetOutput()->SetScalarTypeToUnsignedChar();
 
     appender->AddInputConnection(mult->GetOutputPort());
   }
 
   image = appender->GetOutput();
-  image->Update();
+  appender->GetExecutive()->Update();
   imageChanged();
 }
 
@@ -533,14 +543,14 @@ void OOFImage3D::contrast(double factor) {
 
   vtkSmartPointer<vtkImageShiftScale> scale 
     = vtkSmartPointer<vtkImageShiftScale>::New();
-  scale->SetInput(image);
+  scale->SetInputData(image);
   scale->SetShift(shift); 
   scale->SetScale(factor);
   scale->ClampOverflowOn();
   scale->SetOutputScalarTypeToUnsignedChar();
   
   image = scale->GetOutput();
-  image->Update();
+  scale->GetExecutive()->Update();
   imageChanged();
 }
 	
@@ -550,9 +560,9 @@ void OOFImage3D::flip(const std::string &axis) {
     vtkSmartPointer<vtkImageFlip> flipper =
       vtkSmartPointer<vtkImageFlip>::New();
     flipper->SetFilteredAxis((int)axis[i]-(int)'x');
-    flipper->SetInputConnection(image->GetProducerPort());
+    flipper->SetInputData(image);
     image = flipper->GetOutput();
-    image->Update();
+    flipper->GetExecutive()->Update();
   }
   imageChanged();
 }
@@ -568,9 +578,9 @@ void OOFImage3D::permuteAxes(const std::string &axes) {
   vtkSmartPointer<vtkImagePermute> permute =
     vtkSmartPointer<vtkImagePermute>::New();
   permute->SetFilteredAxes(iaxes);
-  permute->SetInputConnection(image->GetProducerPort());
+  permute->SetInputData(image);
   image = permute->GetOutput();
-  image->Update();
+  permute->GetExecutive()->Update();
   imageChanged();
 }
 
@@ -599,4 +609,30 @@ void OOFImage3D::getColorPoints(const CColor &ref,
 
 }
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// Utility function that converts gray scale to RGB by duplicating the
+// channels.  We assume elsewhere (oofOverlayVoxels.C and getPixels())
+// that the image data always has three channels.
+
+// TODO OPT: If this uses too much memory, we could allow grayscale
+// images to have only one channel, but we'd either have to do
+// something clever in oofOverlayVoxels.C, or require that the overlay
+// color also be gray.  Also, getPixels() would be need to be smarter.
+
+vtkSmartPointer<vtkImageAlgorithm> convertToRGB(
+				vtkSmartPointer<vtkImageAlgorithm> input)
+{
+  vtkSmartPointer<vtkImageMapToColors> rgbconv =
+    vtkSmartPointer<vtkImageMapToColors>::New();
+  vtkSmartPointer<vtkScalarsToColors> clut =
+    vtkSmartPointer<vtkScalarsToColors>::New();
+  // The default behavior for vtkScalarsToColors is to replicate
+  // input in output.  TODO: This is what we want if
+  // numcomponents==1, but what if numcomponents == 4?  We should
+  // copy the first three components and ignore the 4th.
+  rgbconv->SetOutputFormatToRGB();
+  rgbconv->SetLookupTable(clut);
+  rgbconv->SetInputConnection(input->GetOutputPort());
+  return rgbconv;
+}

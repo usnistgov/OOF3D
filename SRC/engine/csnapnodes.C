@@ -191,28 +191,109 @@ CSkeletonBase* SnapNodes::apply(CSkeletonBase *skeleton) {
 
       }
   
-    // loop over the snappers in the order of priority
+    // loop over the snappers in the order of priority (old code)
 
     // TODO 3.1: After snapping a node, snap its neighbors if they're
     // scheduled to be snapped, recursively, before going back to the
     // list.
+    // IndexSet *movedNodes = new IndexSet;
+    // OOFRandomNumberGenerator r;
+    // for(psi=prioritizedSnappers.begin(); psi!=prioritizedSnappers.end(); ++psi)
+    //   {
+    // 	oofshuffle((*psi).second->begin(), (*psi).second->end(), r);
+    // 	i = 0;
+    // 	for(SnapperVector::iterator svit = (*psi).second->begin();
+    // 	    svit != (*psi).second->end(); ++svit, ++i) 
+    // 	  {
+    // 	    (*svit)->apply(newSkeleton, criterion, movedNodes);
+    // 	    progress->setFraction(1.0*(i+1)/(*psi).second->size());
+    // 	    progress->setMessage("SnapNode Type " + to_string((*psi).first) +
+    // 				 ": " + to_string(i+1) + "/" +
+    // 				 to_string((*psi).second->size()));
+    // 	  }
+    //   }
+    // numSnapped = movedNodes->size();
+
     IndexSet *movedNodes = new IndexSet;
+    IndexSet *curMoveNodesAffected = new IndexSet;
+    AllMovesVector allMoves;
+    NextMovesQueue nextMoves;
     OOFRandomNumberGenerator r;
+    //Make vector of every move, ordered by priority and shuffled within priority levels
     for(psi=prioritizedSnappers.begin(); psi!=prioritizedSnappers.end(); ++psi)
       {
 	oofshuffle((*psi).second->begin(), (*psi).second->end(), r);
-	i = 0;
-	for(SnapperVector::iterator svit = (*psi).second->begin();
-	    svit != (*psi).second->end(); ++svit, ++i) 
+	allMoves.insert(
+			allMoves.end(),
+			std::make_move_iterator((*psi).second->begin()),
+			std::make_move_iterator((*psi).second->end())
+			);
+	psi->second->clear();
+      }
+
+    //Info used in progress bar
+    int numMoves = allMoves.size();
+    int movesAttempted = 0;
+
+    //Keep going until all the moves in allMoves have been deleted
+    while (allMoves.size() > 0)
+      {
+	//Transfer first move from allMoves list to nextMoves queue
+	nextMoves.push(allMoves[0]);
+	allMoves.erase(allMoves.begin());
+
+	//Get moves from the queue until the queue becomes empty
+	while (nextMoves.size() > 0)
 	  {
-	    (*svit)->apply(newSkeleton, criterion, movedNodes);
-	    progress->setFraction(1.0*(i+1)/(*psi).second->size());
-	    progress->setMessage("SnapNode Type " + to_string((*psi).first) +
-				 ": " + to_string(i+1) + "/" +
-				 to_string((*psi).second->size()));
+	    //Attempt the move at the front of the queue and pop it
+	    curMoveNodesAffected->clear();
+	    NodeSnapperBase *curMove = nextMoves.front();
+	    nextMoves.pop();
+	    curMove->apply(newSkeleton, criterion, movedNodes, curMoveNodesAffected);
+	    movesAttempted++;
+	    //If the move succeeds, go through the rest of allMoves looking for moves whose
+	    //element has been affected by the current move. Since these moves become a priority,
+	    //we add them to the queue of moves to perform next.
+	    if (curMoveNodesAffected->size() > 0)
+	      {
+		int movesLeft = allMoves.size();
+		std::vector<int> neighborNodeIndices;
+		for (int i = 0; i < movesLeft; i++)
+		  {
+		    //Get indices of nodes of element involved in the future move we're looking at
+		    IndexSet* futureMoveNodeIndices =
+		      new IndexSet(allMoves[i]->getElement()->getNodesIndexSet());
+						   
+		    //Get the node index intersection of current move affected nodes and future move nodes
+		    std::vector<int> common_affected_nodes;
+		    set_intersection(curMoveNodesAffected->begin(),
+				     curMoveNodesAffected->end(),
+				     futureMoveNodeIndices->begin(),
+				     futureMoveNodeIndices->end(),
+				     std::back_inserter(common_affected_nodes));
+		    //If intersection large enough, add i to neighborNodeIndices and indicesToDelete
+		    //The index is used later to transfer this move from the allMoves list to the queue
+		    if (common_affected_nodes.size() > 0)
+		      {
+		      neighborNodeIndices.push_back(i);
+		      } 
+		  }
+		//Transfer the "neighbor" moves from allMoves list to nextMoves queue
+		for (unsigned int i = 0, offset = 0; i < neighborNodeIndices.size(); i++, offset++)
+		  {
+		    nextMoves.push(allMoves[neighborNodeIndices[i] - offset]);
+		    allMoves.erase(allMoves.begin() + (neighborNodeIndices[i] - offset));
+		  }
+	      }
+	    //Update progress bar
+	    progress->setFraction(1.0*(movesAttempted)/numMoves);
+	    progress->setMessage("Attempted to snap node " + to_string(movesAttempted)
+			 + "/" + to_string(numMoves));
 	  }
       }
-    numSnapped = movedNodes->size();
+    //Get information about the total number of nodes moved
+    //(this is passed on to the reporter in the .spy file)
+      numSnapped = movedNodes->size();
     
     // delete the coords that were created above after they have all been used.
     for(TransitionPointMap::iterator tpit = stored_tps.begin();
@@ -228,13 +309,16 @@ CSkeletonBase* SnapNodes::apply(CSkeletonBase *skeleton) {
 	delete (*psi).second;
       }
     delete movedNodes;
+    delete curMoveNodesAffected;
     progress->finish();
+    
     return newSkeleton;
   }
   catch (...) {
     progress->finish();
     throw;
   }
+  
 } // SnapNodes::apply
 
 
@@ -309,7 +393,8 @@ void SnapNodes::createSnapperMapper() {
 }
 
 void NodeSnapperBase::apply(CDeputySkeleton *skeleton,
-			    CSkelModCriterion *criterion, IndexSet *movedNodes)
+			    CSkelModCriterion *criterion, IndexSet *movedNodes,
+			    IndexSet *curMoveNodesAffected)
 {
   SnapMoveVector *moves = get_movelist(movedNodes);
   ProvisionalChangesVector *changes = new ProvisionalChangesVector;
@@ -331,8 +416,10 @@ void NodeSnapperBase::apply(CDeputySkeleton *skeleton,
 	// oofcerr << (*nodeit).position[0] << " " << (*nodeit).position[1]
 	// 	<< " " << (*nodeit).position[2] << std::endl;
 	movedNodes->insert((*nodeit).node->getIndex());
+	curMoveNodesAffected->insert((*nodeit).node->getIndex());
       }
   }
+
   for(ProvisionalChangesVector::iterator pcvit=changes->begin();
       pcvit!=changes->end(); ++pcvit)
     {

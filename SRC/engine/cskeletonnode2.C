@@ -87,17 +87,16 @@ CSkeletonNode *CSkeletonNode::new_child(int idx, vtkSmartPointer<vtkPoints> pts)
   return child;
 }
 
-// CSkeletonNode *CSkeletonNode::copy_child(int idx,
-// 					 vtkSmartPointer<vtkPoints> pts)
-// {
-//   CSkeletonNode *child = dynamic_cast<CSkeletonNode*>(
-// 			      CSkeletonSelectable::copy_child(idx, pts));
-//   child->nodemoved = nodemoved;
-//   child->lastmoved = lastmoved;
-//   for(int i=0; i<DIM; i++)
-//     child->last_position[i] = last_position[i];
-//   return child;
-// }
+CSkeletonNode *CSkeletonNode::copy_child(int idx,
+					 vtkSmartPointer<vtkPoints> pts)
+{
+  CSkeletonNode *child = dynamic_cast<CSkeletonNode*>(
+			      CSkeletonSelectable::copy_child(idx, pts));
+  child->nodemoved = nodemoved;
+  child->lastmoved = lastmoved;
+  child->last_position = last_position;
+  return child;
+}
 
 void CSkeletonNode::setMobilityX(bool mob) {
   if(mob)
@@ -701,6 +700,17 @@ void CSkeletonNode::unconstrainedMoveTo(const Coord &pos) {
    for(CSkeletonElementIterator it=elements->begin(); it!=elements->end(); ++it)
      (*it)->revertHomogeneity();
  }
+
+//Don't change lastmoved
+//Increment nodemoved
+void CSkeletonNode::moveBackScaled(double scalingFactor) {
+  if (scalingFactor <=0 || scalingFactor > 1) {return;}
+  if (scalingFactor == 1) {moveBack(); return;}
+  Coord targetPos = scalingFactor * last_position + (1 - scalingFactor) * position();
+  points->SetPoint(index, targetPos);
+  ++nodemoved;
+
+}
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 

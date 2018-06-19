@@ -251,7 +251,7 @@ Coord Smooth::getPosition(const CDeputySkeleton *skeleton,
 			  const CSkeletonNode *node)
   const
 {
-  return skeleton->averageNeighborPosition(node);
+  return skeleton->averageConstrainedNbrPosition(node);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -289,7 +289,7 @@ Coord SurfaceSmooth::getPosition(const CDeputySkeleton *skeleton,
   
   // If neighborNodes is empty, averageNeighborPosition just returns
   // the position of node.
-  Coord z = skeleton->averageNeighborPosition(node, neighborNodes);
+  Coord z = skeleton->averageConstrainedNbrPosition(node, neighborNodes);
   Coord y = node->position();
   return y + gamma*(z - y);
 }

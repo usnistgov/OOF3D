@@ -11,6 +11,7 @@
 
 #include <oofconfig.h>
 
+#include "common/IO/canvaslayers.h"
 #include "common/IO/ghostoofcanvas.h"
 #include "common/IO/gridlayers.h"
 #include "common/IO/gridsourcebase.h"
@@ -50,6 +51,10 @@ WireGridCanvasLayer::WireGridCanvasLayer(GhostOOFCanvas *c,
   edgeActor->GetProperty()->SetRepresentationToWireframe();
   // edgeActor->GetProperty()->SetAmbient(1.0);
 
+  // TODO: Turning on RenderLinesAsTubes creates shader error messages
+  // when the grid is drawn.  (vtk 8.1.0.rc2, OS X, Cocoa)
+  //edgeActor->GetProperty()->SetRenderLinesAsTubes(true);
+
   faceActor->SetMapper(faceMapper);
   faceActor->GetProperty()->SetRepresentationToSurface();
   // Draw the displayed tets almost invisibly, since they haven't
@@ -60,16 +65,17 @@ WireGridCanvasLayer::WireGridCanvasLayer(GhostOOFCanvas *c,
   vtkSmartPointer<vtkUnstructuredGrid> grid = gridsource->GetOutput();
 
   locator->LazyEvaluationOn();
-  locator->SetDataSet(grid);
+  locator->SetDataSet(grid);	// TODO: Does this update when grid updates?
 
   // vtkExtractEdges has to operate on the original grid, not the
   // clipped grid, because clipping introduces new internal edges when
   // it tetrahedralizes the clipped cells.  We need to extract the
   // edges because the wireframe rendering of the original grid omits
   // all internal edges.
-  edgeExtractor->SetInputConnection(grid->GetProducerPort());
+  edgeExtractor->SetInputConnection(gridsrc->GetOutputPort());
 
-  // set_clipping finishes building the pipeline.
+  // set_clipping finishes building the pipeline by calling
+  // start_clipping or stop_clipping.
   set_clipping(canvas->clipping(), canvas->invertedClipping());
 }
 
@@ -109,7 +115,6 @@ void WireGridCanvasLayer::start_clipping() {
   //* draw them only once, and to give different properties to the
   //* intersections drawn on the clipping planes.
 
-  vtkSmartPointer<vtkPolyData> edges = edgeExtractor->GetOutput();
   cutActor = vtkSmartPointer<vtkActor>::New();
   cutActor->SetProperty(edgeActor->GetProperty());
   cutMapper = vtkSmartPointer<vtkDataSetMapper>::New();
@@ -120,6 +125,8 @@ void WireGridCanvasLayer::start_clipping() {
   cutMapper->SetInputConnection(faceClipper->GetOutputPort());
   faceMapper->SetInputConnection(faceClipper->GetOutputPort());
   edgeClipper = getClipper(this);
+  // edgeExtractor is a vtkExtractEdges <- vtkPolyDataAlgorithm <- vtkAlgorithm
+  // edgeClipper is a vtkTableBasedClipDataSet <- vtkUnstructuredGridAlgorithm
   edgeClipper->SetInputConnection(edgeExtractor->GetOutputPort());
   edgeMapper->SetInputConnection(edgeClipper->GetOutputPort());
 }
@@ -132,8 +139,10 @@ void WireGridCanvasLayer::stop_clipping() {
   }
   cutActor = vtkSmartPointer<vtkActor>();
   cutMapper = vtkSmartPointer<vtkDataSetMapper>();
-  faceMapper->SetInput(gridsource->GetOutput());
-  edgeMapper->SetInput(edgeExtractor->GetOutput());
+  // gridsource is a GridSource <- vtkUnstructuredGridAlgorithm <- vtkAlgorithm
+  // faceMapper is a vtkDataSetMapper.
+  faceMapper->SetInputConnection(gridsource->GetOutputPort());
+  edgeMapper->SetInputConnection(edgeExtractor->GetOutputPort());
 }
 
 void WireGridCanvasLayer::set_clip_parity(bool inverted) {
@@ -164,6 +173,22 @@ vtkSmartPointer<vtkAbstractCellLocator> WireGridCanvasLayer::get_locator() {
   locator->Initialize();
   locator->SetDataSet(gridsource->GetOutput());
   return locator;
+}
+
+bool WireGridCanvasLayer::visibleBoundingBox(
+				     vtkSmartPointer<vtkRenderer> renderer,
+				     CRectangularPrism *bbox)
+  const
+{
+  return getVisibleBoundingBox(edgeMapper->GetInput(), renderer, bbox);
+}
+
+void WireGridCanvasLayer::setCoincidentTopologyParams(double factor,
+						      double units)
+{
+  edgeMapper->SetRelativeCoincidentTopologyLineOffsetParameters(factor, units);
+  // Since the faces aren't drawn to be seen, don't adjust their offset.
+  //faceMapper->SetRelativeCoincidentTopologyLineOffsetParameters(factor,units);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -212,7 +237,7 @@ void SegmentGridCanvasLayer::start_clipping() {
   edgeClipper = getClipper(this);
   // gridsource->GetOutput()->GetProducerPort() looks wrong to me, but
   // I'm just copying old code...
-  edgeClipper->SetInputConnection(gridsource->GetOutput()->GetProducerPort());
+  edgeClipper->SetInputConnection(gridsource->GetOutputPort());
   edgeMapper->SetInputConnection(edgeClipper->GetOutputPort());
 }
 
@@ -220,11 +245,25 @@ void SegmentGridCanvasLayer::stop_clipping() {
   if(clipState == CLIP_ON) {
     edgeClipper = vtkSmartPointer<vtkTableBasedClipDataSet>();
   }
-  edgeMapper->SetInput(gridsource->GetOutput());
+  edgeMapper->SetInputConnection(gridsource->GetOutputPort());
 }
 
 void SegmentGridCanvasLayer::set_clip_parity(bool inverted) {
   edgeClipper->SetInsideOut(!inverted);
+}
+
+bool SegmentGridCanvasLayer::visibleBoundingBox(
+					vtkSmartPointer<vtkRenderer> renderer,
+					CRectangularPrism *bbox)
+  const
+{
+  return getVisibleBoundingBox(edgeMapper->GetInput(), renderer, bbox);
+}
+
+void SegmentGridCanvasLayer::setCoincidentTopologyParams(double factor,
+							 double units)
+{
+  edgeMapper->SetRelativeCoincidentTopologyLineOffsetParameters(factor, units);
 }
 
 // vtkSmartPointer<vtkProp3D> SegmentGridCanvasLayer::get_pickable_prop3d() {
@@ -324,6 +363,20 @@ vtkSmartPointer<vtkAbstractCellLocator> FilledGridCanvasLayer::get_locator() {
   locator->Initialize();
   locator->SetDataSet(gridsource->GetOutput());
   return locator;
+}
+
+bool FilledGridCanvasLayer::visibleBoundingBox(
+				       vtkSmartPointer<vtkRenderer> renderer,
+				       CRectangularPrism *bbox)
+  const
+{
+  return getVisibleBoundingBox(mapper->GetInput(), renderer, bbox);
+}
+
+void FilledGridCanvasLayer::setCoincidentTopologyParams(double factor,
+							double units)
+{
+  mapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor, units);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -473,4 +526,18 @@ void ContourGridCanvasLayer::writeVTK(const std::string &filename) {
   writer->SetFileName(filename.c_str());
   writer->SetDataModeToAscii();
   writer->Write();
+}
+
+bool ContourGridCanvasLayer::visibleBoundingBox(
+					vtkSmartPointer<vtkRenderer> renderer,
+					CRectangularPrism *bbox)
+  const
+{
+  return getVisibleBoundingBox(mapper->GetInput(), renderer, bbox);
+}
+
+void ContourGridCanvasLayer::setCoincidentTopologyParams(double factor,
+							 double units)
+{
+  mapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor, units);
 }

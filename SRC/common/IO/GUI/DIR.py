@@ -96,7 +96,12 @@ if not DIM_3:
     ]
 
 else:
-    cfiles = ['oofcanvas3d.C', 'rubberband3d.C', 'progressGUI.C']
+    
+    cfiles = ['rubberband3d.C', 'progressGUI.C']
+    if USE_COCOA:
+        cfiles.append('oofcanvas3d.mm')
+    else:
+        cfiles.append('oofcanvas3d.C')
 
     swigfiles = ['oofcanvas3d.swg', 'rubberband3d.swg', 'progressGUI.swg']
 

@@ -405,9 +405,9 @@ public:
   void drawGridCell(vtkSmartPointer<GridSource>, SimpleCellLayer*) const;
 #endif	// DIM==3
 
-
-
   Node* getCornerNode(int i) const;
+  FuncNode* getCornerFuncNode(int) const;
+  
   void setMaterial(const Material* pMat){matl=pMat;}
 
   //These definitions won't be (shouldn't be) used.

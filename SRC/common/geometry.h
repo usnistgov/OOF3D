@@ -24,6 +24,7 @@
 #include "common/coord.h"
 #include "common/ooferror.h"
 #include <iostream>
+#include <limits>
 #include <vector>
 #include <math.h>
 
@@ -218,12 +219,21 @@ protected:
   CTYPE lowleftback;
   CTYPE size_;
 public:
-  CRectangularPrism_() {}
+  CRectangularPrism_() {
+    // The null constructor creates an "uninitialized" prism, with its
+    // min and max reversed.  When it swallows its first point or
+    // prism it will contain only that point or prism.
+    uprightfront = CTYPE(-std::numeric_limits<VTYPE>::max(),
+			 -std::numeric_limits<VTYPE>::max(),
+			 -std::numeric_limits<VTYPE>::max());
+    lowleftback = CTYPE(std::numeric_limits<VTYPE>::max(),
+			std::numeric_limits<VTYPE>::max(),
+			std::numeric_limits<VTYPE>::max());
+  }
   CRectangularPrism_(const CTYPE &a, const CTYPE &b) {
     uprightfront = a;
     lowleftback = a;
     swallow(b);
-    size_ = uprightfront - lowleftback;
   }
   CRectangularPrism_(const std::vector<CTYPE> &vec) {
     // construct the bounding box of the points in vec
@@ -242,6 +252,7 @@ public:
   inline const CTYPE &upperright() const { return uprightfront; }
   inline const CTYPE &lowerleftback() const { return lowleftback; }
   inline const CTYPE &upperrightfront() const { return uprightfront; }
+  inline const CTYPE center() const { return 0.5*(lowleftback+uprightfront); }
   template <class CTYPE2>
   void swallow(const CTYPE2 &pt) {
     if(uprightfront[0] < pt[0]) uprightfront[0] = pt[0];
@@ -344,6 +355,7 @@ public:
 
 class CRectangularPrism: public CRectangularPrism_<double, Coord> {
 public:
+  CRectangularPrism() {}
   CRectangularPrism(const Coord &a, const Coord &b)
     : CRectangularPrism_<double, Coord>(a,b)
   {}

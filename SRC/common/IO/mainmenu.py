@@ -586,6 +586,12 @@ debugmenu.addItem(CheckOOFMenuItem(
     discussion=xmlmenudump.loadFile('DISCUSSIONS/common/menu/verbosesb.xml')
     ))
 
+debugmenu.addItem(OOFMenuItem(
+    "Dump_Switchboard",
+    callback=switchboard.dump,
+    params=[filenameparam.WriteFileNameParameter("filename")]
+))
+
 if config.debug():
     # Debug data dump functions are only defined if the C++ code was
     # built in DEBUG mode.
@@ -913,3 +919,12 @@ debugmenu.addItem(OOFMenuItem(
     'DoubleVec',
     callback=_doublevectest,
     secret=not debug.debug()))
+
+def _vtkLeakCheck(menuitem):
+    cdebug.vtkLeakCheck()
+
+debugmenu.addItem(OOFMenuItem(
+    'vtkLeakCheck',
+    callback=_vtkLeakCheck,
+    secret = not debug.debug(),
+    help="For debugging"))

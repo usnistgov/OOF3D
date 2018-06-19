@@ -14,8 +14,9 @@
 #ifndef CREFINEMENTCRETERION_H
 #define CREFINEMENTCRETERION_H
 
-#include "engine/cskeletonselectable_i.h"
 #include "engine/cskeletonmodifier.h"
+#include "engine/cskeletonnode2.h"
+#include "engine/cskeletonselectable_i.h"
 
 // For now, in the 3D code, there is no RefinementDegree object and no
 // ruleset object as only bisection is implemented and we only have
@@ -76,16 +77,18 @@ public:
  class RefinementTargets {
  protected:
    SegmentMarks segmentMarks;
+   CSkeletonMultiNodeKeySet unmarkable;
+   void mark_(CSkeletonMultiNodeKey&, short);
  public:
    RefinementTargets();
    virtual ~RefinementTargets() {}
-   virtual void createSegmentMarks(CSkeletonBase *skeleton,
-				   RefinementCriterion *criterion, short d) = 0;
-   void markSegment(CSkeletonSegment *segment, short d);
-   void markElement(CSkeletonElement *element, short d);
-   void mark(CSkeletonNode *n1, CSkeletonNode *n2, short d);
-   void signature(const CSkeletonElement *element, RefinementSignature *sig)
-     const;
+   virtual void createSegmentMarks(CSkeletonBase*, RefinementCriterion*, short)
+   = 0;
+   void findUnmarkableSegments(CSkeletonBase*);
+   void markSegment(CSkeletonSegment*, short);
+   void markElement(CSkeletonElement*, short);
+   void mark(CSkeletonNode*, CSkeletonNode*, short);
+   void signature(const CSkeletonElement*, RefinementSignature*) const;
  };
 
  class CheckAllElements : public RefinementTargets {
@@ -148,6 +151,15 @@ public:
   virtual void createSegmentMarks(CSkeletonBase*, RefinementCriterion*, short);
 };
 
+class CheckLongSegments : public RefinementTargets {
+private:
+  double factor;
+public:
+  CheckLongSegments(double f) : factor(f) {}
+  virtual ~CheckLongSegments() {}
+  virtual void createSegmentMarks(CSkeletonBase*, RefinementCriterion*, short);
+};
+
 class CheckSegmentsInGroup : public RefinementTargets {
 private:
   const std::string group;
@@ -190,9 +202,11 @@ public:
 
 class Unconditionally : public RefinementCriterion {
 public:
-  Unconditionally() : RefinementCriterion() {}
+  Unconditionally()
+    : RefinementCriterion()
+  {}
   ~Unconditionally() {}
-  virtual bool isGood(CSkeletonBase *skeleton, CSkeletonMultiNodeSelectable *selectable) const
+  virtual bool isGood(CSkeletonBase*, CSkeletonMultiNodeSelectable*) const
   {
     return true;
   }
@@ -203,10 +217,13 @@ private:
   double threshold;
   std::string units;
 public:
-  MinimumVolume(double t, std::string *u) : RefinementCriterion(), threshold(t), units(*u) {};
-  MinimumVolume(double t) : RefinementCriterion(), threshold(t) {}
+  MinimumVolume(double t, std::string *u)
+    : RefinementCriterion(), threshold(t), units(*u)
+  {}
+  MinimumVolume(double t)
+    : RefinementCriterion(), threshold(t) {}
   ~MinimumVolume() {}
-  virtual bool isGood(CSkeletonBase *skeleton, CSkeletonMultiNodeSelectable *selectable) const;
+  virtual bool isGood(CSkeletonBase*, CSkeletonMultiNodeSelectable*) const;
 };
 
 class MinimumArea : public RefinementCriterion {
@@ -214,10 +231,14 @@ private:
   double threshold;
   std::string units;
 public:
-  MinimumArea(double t, std::string *u) : RefinementCriterion(), threshold(t), units(*u) {};
-  MinimumArea(double t) : RefinementCriterion(), threshold(t) {}
+  MinimumArea(double t, std::string *u)
+    : RefinementCriterion(), threshold(t), units(*u)
+  {}
+  MinimumArea(double t)
+    : RefinementCriterion(), threshold(t)
+  {}
   ~MinimumArea() {}
-  virtual bool isGood(CSkeletonBase *skeleton, CSkeletonMultiNodeSelectable *selectable) const;
+  virtual bool isGood(CSkeletonBase*, CSkeletonMultiNodeSelectable*) const;
 };
 
 class MinimumLength : public RefinementCriterion {
@@ -225,10 +246,14 @@ private:
   double threshold;
   std::string units;
 public:
-  MinimumLength(double t, std::string *u) : RefinementCriterion(), threshold(t), units(*u) {};
-  MinimumLength(double t) : RefinementCriterion(), threshold(t) {}
+  MinimumLength(double t, std::string *u)
+    : RefinementCriterion(), threshold(t), units(*u)
+  {}
+  MinimumLength(double t)
+    : RefinementCriterion(), threshold(t)
+  {}
   ~MinimumLength() {}
-  virtual bool isGood(CSkeletonBase *skeleton, CSkeletonMultiNodeSelectable *selectable) const;
+  virtual bool isGood(CSkeletonBase*, CSkeletonMultiNodeSelectable*) const;
 };
 
 #endif	// CREFINEMENTCRETERION_H

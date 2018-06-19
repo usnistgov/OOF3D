@@ -16,6 +16,7 @@
 %include "common/typemaps.swg"
 %extern "common/coord.swg"
 %extern "common/direction.swg"
+%extern "common/geometry.swg"
 
 %{
 #include "common/ccolor.h"
@@ -40,7 +41,11 @@ public:
   void show(bool);
   void hide(bool);
   bool pickable();
+  bool showing();
   void writeVTK(char*);
+
+  bool visibleBoundingBox(vtkRendererPtr, CRectangularPrism *outPrism);
+  void setCoincidentTopologyParams(double, double);
 };
 
 class OOFCanvasLayer : public OOFCanvasLayerBase { 
@@ -50,6 +55,7 @@ public:
   // void lower_layer(int);
   // void add_to_renderer();
   // void remove_from_renderer();
+  void setEmpty(bool);
   void setModified();
   void installContourMap();
 };
@@ -113,7 +119,6 @@ public:
   void set_color(const CColor&);
   void set_opacity(double);
   void clear();
-  long get_gridsize();
 };
 
 class SimpleFilledCellLayer : public SimpleCellLayer {

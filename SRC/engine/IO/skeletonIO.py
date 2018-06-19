@@ -23,6 +23,7 @@
 ## TODO 3.1: Add a progress bar for saving Skeletons.
 
 from ooflib.SWIG.common import config
+from ooflib.SWIG.common import progress
 from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.engine import cskeletonboundary
 from ooflib.SWIG.engine import cskeletonface
@@ -134,12 +135,18 @@ skelmenu.addItem(OOFMenuItem(
 ## meshIO.py.
 
 def _loadNodes(menuitem, skeleton, points):
-##    debug.fmsg()
     # read nodes as (x,y) tuples of floats
     skelcontext = skeletoncontext.skeletonContexts[skeleton]
     skeleton = skelcontext.getObject()
-    for node in points:
-        skeleton.addNode(node)
+    npts = len(points)
+    prog = progress.getProgress("Loading nodes", progress.DEFINITE)
+    try:
+        for i, node in enumerate(points):
+            prog.setMessage("%d/%d" % (i, npts))
+            prog.setFraction(float(i)/npts)
+            skeleton.addNode(node)
+    finally:
+        prog.finish()
     if config.dimension() == 2:
         skelcontext.updateGroupsAndSelections()
     switchboard.notify(('who changed', 'Skeleton'), skelcontext)
@@ -195,12 +202,18 @@ skelmenu.addItem(OOFMenuItem(
 ###
 
 def _loadElements(menuitem, skeleton, nodes):
-##    debug.fmsg()
     # read elements as tuples of node indices
     skelcontext = skeletoncontext.skeletonContexts[skeleton]
     skeleton = skelcontext.getObject()
-    for nodelist in nodes:
-        skeleton.loadElement(nodelist)
+    nel = len(nodes)
+    prog = progress.getProgress("Loading elements", progress.DEFINITE)
+    try:
+        for i, nodelist in enumerate(nodes):
+            prog.setMessage("%d/%d" % (i, nel))
+            prog.setFraction(float(i)/nel)
+            skeleton.loadElement(nodelist)
+    finally:
+        prog.finish()
     # skelcontext.getTimeStamp(None).increment()
     if config.dimension() == 2:
         skelcontext.updateGroupsAndSelections()
@@ -224,7 +237,6 @@ skelmenu.addItem(OOFMenuItem(
 ###
 
 def _loadPinnedNodes(menuitem, skeleton, nodes):
-##    debug.fmsg()
     # "nodes" is a list of integer indices into skeleton.nodes
     skelcontext = skeletoncontext.skeletonContexts[skeleton]
     skeleton = skelcontext.getObject()
@@ -250,7 +262,6 @@ skelmenu.addItem(OOFMenuItem(
 ###
     
 def _loadPointBoundary(menuitem, skeleton, name, nodes, exterior):
-##    debug.fmsg()
     # "nodes" is a list of integer indices into skeleton.nodes
     skelcontext = skeletoncontext.skeletonContexts[skeleton]
     skeleton = skelcontext.getObject()
@@ -364,7 +375,6 @@ skelmenu.addItem(OOFMenuItem(
 ######
 
 def _loadNodeGroup(menuitem, skeleton, name, nodes):
-##    debug.fmsg()
     # nodes is a list of integer indices into skeleton.nodes.
     skelcontext = skeletoncontext.skeletonContexts[skeleton]
     skeleton = skelcontext.getObject()
@@ -386,7 +396,6 @@ skelmenu.addItem(OOFMenuItem(
         ))
 
 def _loadElementGroup(menuitem, skeleton, name, elements):
-##    debug.fmsg()
     # elements is a list of integer indices into skeleton.elements.
     skelcontext = skeletoncontext.skeletonContexts[skeleton]
     skel = skelcontext.getObject()
@@ -410,7 +419,6 @@ skelmenu.addItem(OOFMenuItem(
         ))
 
 def _loadSegmentGroup(menuitem, skeleton, name, segments):
-##    debug.fmsg()
     # segments is a list of tuples of integer indices into skeleton.nodes.
     skelcontext = skeletoncontext.skeletonContexts[skeleton]
     skel = skelcontext.getObject()
@@ -480,12 +488,16 @@ def _loadElementSelection(menuitem, skeleton, elements):
     skel = skelcontext.getObject()
     trackerlist = skelcontext.elementselection.currentSelection()
     tracker = trackerlist.selected[skel]
-    for elementSource in elements:
-      for elementReference in skelcontext.elementselection.get_objects():
-	if elementSource == elementReference.getIndex():
-	  tracker.add(elementReference)
-	  break
-    tracker.write()
+    prog = progress.getProgress("Loading element selection", progress.DEFINITE)
+    n = len(elements)
+    try:
+        for i, elementSource in enumerate(elements):
+            prog.setMessage("%d/%d" % (i, n))
+            prog.setFraction(float(i)/n)
+            tracker.add(skel.getElement(elementSource))
+        tracker.write()
+    finally:
+        prog.finish()
     switchboard.notify(
         skelcontext.elementselection.mode().changedselectionsignal,
         selection=skelcontext.elementselection)
@@ -507,15 +519,22 @@ def _loadFaceSelection(menuitem, skeleton, faces):
     skel = skelcontext.getObject()
     trackerlist = skelcontext.faceselection.currentSelection()
     tracker = trackerlist.selected[skel]
-    for (i, j, k) in faces:
-      tracker.add(skel.getFaceByNodeIndices(i, j, k))
-    tracker.write()
+    n = len(faces)
+    prog = progress.getProgress("Loading face selection", progress.DEFINITE)
+    try:
+        for f, (i, j, k) in enumerate(faces):
+            prog.setMessage("%d/%d" % (f, n))
+            prog.setFraction(float(f)/n)
+            tracker.add(skel.getFaceByNodeIndices(i, j, k))
+        tracker.write()
+    finally:
+        prog.finish()
     switchboard.notify(
         skelcontext.faceselection.mode().changedselectionsignal,
         selection=skelcontext.faceselection)
 
 skelmenu.addItem(OOFMenuItem(
-        'FaceSelection',
+       'FaceSelection',
         callback=_loadFaceSelection,
         params=[
             whoville.WhoParameter('skeleton', skeletoncontext.skeletonContexts,
@@ -531,9 +550,16 @@ def _loadSegmentSelection(menuitem, skeleton, segments):
     skel = skelcontext.getObject()
     trackerlist = skelcontext.segmentselection.currentSelection()
     tracker = trackerlist.selected[skel]
-    for (i, j) in segments:
-      tracker.add(skel.getSegmentByNodeIndices(i, j))
-    tracker.write()
+    n = len(segments)
+    prog = progress.getProgress("Loading segment selection", progress.DEFINITE)
+    try:
+        for s, (i, j) in enumerate(segments):
+            prog.setMessage("%d/%d" % (s, n))
+            prog.setFraction(float(s)/n)
+            tracker.add(skel.getSegmentByNodeIndices(i, j))
+        tracker.write()
+    finally:
+        prog.finish()
     switchboard.notify(
         skelcontext.segmentselection.mode().changedselectionsignal,
         selection=skelcontext.segmentselection)
@@ -555,12 +581,16 @@ def _loadNodeSelection(menuitem, skeleton, nodes):
     skel = skelcontext.getObject()
     trackerlist = skelcontext.nodeselection.currentSelection()
     tracker = trackerlist.selected[skel]
-    for nodeSource in nodes:
-      for nodeReference in skelcontext.nodeselection.get_objects():
-	if nodeSource == nodeReference.getIndex():
-	  tracker.add(nodeReference)
-	  break
-    tracker.write()
+    prog = progress.getProgress("Loading node selection", progress.DEFINITE)
+    ntotal = len(nodes)
+    try:
+        for n, nodeSource in enumerate(nodes):
+            prog.setMessage("%d/%d" % (n, ntotal))
+            prog.setFraction(float(n)/ntotal)
+            tracker.add(skel.getNode(nodeSource))
+        tracker.write()
+    finally:
+        prog.finish()
     switchboard.notify(
         skelcontext.nodeselection.mode().changedselectionsignal,
         selection=skelcontext.nodeselection)

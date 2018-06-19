@@ -42,7 +42,7 @@ linkend='RegisteredClass:SkeletonModifier'/> is applied to a
 &skel;.
 </para>"""
 
-allReg = cregisteredclass.Registration(
+cregisteredclass.Registration(
     'All Elements',
     CSkelModTargetsPtr,
     AllElements, 0,
@@ -55,7 +55,7 @@ allReg = cregisteredclass.Registration(
     It specifies that all &elems; of a &skel; are to be modified.
     </para>""")
 
-selectedReg = cregisteredclass.Registration(
+cregisteredclass.Registration(
     'Selected Elements',
     CSkelModTargetsPtr,
     SelectedElements, 1,
@@ -69,7 +69,7 @@ selectedReg = cregisteredclass.Registration(
     are to be modified.
     </para>""")
 
-badReg = cregisteredclass.Registration(
+cregisteredclass.Registration(
     'Badly Shaped Elements',
     CSkelModTargetsPtr,
     BadlyShapedElements, 3,
@@ -88,7 +88,21 @@ badReg = cregisteredclass.Registration(
      <varname>threshold</varname> will be modified.
      </para>""")
 
-susReg = cregisteredclass.Registration(
+cregisteredclass.Registration(
+    'Illegal Elements',
+    CSkelModTargetsPtr,
+    IllegalElements, 4,
+    params=[],
+    tip='Modify illegal elements.',
+    discussion = """<para>
+     <classname>SuspectElements</classname> is a <xref
+     linkend='RegisteredClass:SkelModTargets'/> subclass, used as the
+     <varname>targets</varname> parameter in <link
+     linkend='RegisteredClass:SkeletonModifier'><classname>SkeletonModifiers</classname></link>. It
+     specifies that only the &elems; that are illegal will be modified.
+     </para>""")
+
+cregisteredclass.Registration(
     'Suspect Elements',
     CSkelModTargetsPtr,
     SuspectElements, 4,
@@ -100,6 +114,21 @@ susReg = cregisteredclass.Registration(
      <varname>targets</varname> parameter in <link
      linkend='RegisteredClass:SkeletonModifier'><classname>SkeletonModifiers</classname></link>. It
      specifies that only the &elems; that are nearly illegal will be modified.
+     </para>""")
+
+cregisteredclass.Registration(
+    'Suspect or Illegal Elements',
+    CSkelModTargetsPtr,
+    SuspectOrIllegalElements, 4.5,
+    params=[],
+    tip='Modify suspect or illegal elements.',
+    discussion = """<para>
+     <classname>SuspectElements</classname> is a <xref
+     linkend='RegisteredClass:SkelModTargets'/> subclass, used as the
+     <varname>targets</varname> parameter in <link
+     linkend='RegisteredClass:SkeletonModifier'><classname>SkeletonModifiers</classname></link>. It
+     specifies that only the &elems; that are illegal or nearly illegal
+     will be modified.
      </para>""")
 
 #########################

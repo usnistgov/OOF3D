@@ -29,7 +29,7 @@ cfiles = [
     'cskeletonsegment.C', 'cskeletonelement.C', 'cskeletongroups.C',
     'cfiddlenodes.C', 'crefine.C', 'crefinementcriterion.C', 'csnapnodes.C',
     'csnaprefine.C', 
-    'crationalizers.C', 'elementshape.C',
+    'crationalizers.C', 'elementshape.C', 'homogeneity.C',
     'angle2color.C', 'bdyanalysis.C', 'boundarycond.C', 'cskeletonboundary.C',
     'cconjugate.C', 'celectricfield.C', 'cmatrixmethods.C',
     'compoundsubproblem.C', 'contourcell.C',
@@ -158,10 +158,10 @@ hfiles = [
 
 if DIM_3:
     pyfiles.extend(["faceselectdisplay.py"])
-    hfiles.extend(["cskeletonface.h", "skeletonfilter.h"])
-    cfiles.extend(["cskeletonface.C", "skeletonfilter.C"])
-    swigfiles.extend(["cskeletonface.swg", "skeletonfilter.swg"])
-    swigpyfiles.extend(["skeletonfilter.spy"])
+    hfiles.extend(["cskeletonface.h", "relaxation.h", "skeletonfilter.h"])
+    cfiles.extend(["cskeletonface.C", "relaxation.C", "skeletonfilter.C"])
+    swigfiles.extend(["cskeletonface.swg", "relaxation.swg", "skeletonfilter.swg"])
+    swigpyfiles.extend(["relaxation.spy", "skeletonfilter.spy"])
 
 
 def set_clib_flags(clib):

@@ -40,6 +40,10 @@ Rationalizer::~Rationalizer() {
   // oofcerr << "Rationalizer::dtor: " << this << std::endl;
 }
 
+// Rationalize::rationalize is called by
+// Rationalizer::findAndRationalize and Rationalizer::rationalizeAll,
+// both of which are defined in crationalizers.swg.
+
 void Rationalizer::rationalize(CSkeleton *skel, CSkelModTargets *targets,
 			       CSkelModCriterion *criterion,
 			       FixerFunction fixer)
@@ -58,10 +62,11 @@ void Rationalizer::rationalize(CSkeleton *skel, CSkelModTargets *targets,
     oofshuffle(elements.begin(), elements.end(), r);
 
 #ifdef DEBUG
-    int nel = elements.size(); 
+    unsigned int nel = elements.size(); 
 #endif
 
-    for(CSkeletonElementIterator it=elements.begin(); it!=elements.end();
+    for(CSkeletonElementIterator it=elements.begin();
+	it!=elements.end() && !progress->stopped();
 	++it, ++count) 
       {
 	assert(elements.size() == nel);
@@ -213,7 +218,7 @@ void RemoveBadTetrahedra::findAngles(const CSkeletonElement *element,
       small_dihedral_angles.push_back( i );
   }
 
-}
+} // RemoveBadTetrahedra::findAngles
 
 ProvisionalChangesVector *RemoveBadTetrahedra::findAndFix(
 				  CSkeleton *skel, 
@@ -247,15 +252,15 @@ ProvisionalChangesVector* RemoveBadTetrahedra::fixAll(
 
 // Helper functions
 
- static void getCentroidAndMidpoints(const CSkeletonFace *face,
-				     Coord midpoints[3], Coord& centroid)
- {
+static void getCentroidAndMidpoints(const CSkeletonFace *face,
+				    Coord midpoints[3], Coord& centroid)
+{
 
-   for(int i=0; i<3; ++i) 
-     midpoints[i] = 0.5*(face->getNode(i)->position() + 
-			 face->getNode((i+1)%3)->position());
-   centroid = face->center();
- }
+  for(int i=0; i<3; ++i) 
+    midpoints[i] = 0.5*(face->getNode(i)->position() + 
+			face->getNode((i+1)%3)->position());
+  centroid = face->center();
+}
 
  // gets what the mobility for node should be if it is moved to the
  // centroid of nodes.
@@ -880,6 +885,13 @@ static void removeFlat(CSkeleton *skel, short segidx1, short segidx2,
   // joined at a point near where the old edges nearly
   // intersected. All of the neighbor elements that share one of the
   // old edges will have to be bisected through the junction point.
+
+  // TODO: If one of the segments with a large dihedral has only two
+  // other elements (other than the flat element) and those two
+  // elements share a face, then it's possible to remove the flat tet
+  // without adding an extra node.  Replace the two neighbor elements
+  // with two formed with the other large dihedral edge.
+  
   CSkeletonSegment *seg1 = skel->getElementSegment(el, segidx1);
   CSkeletonSegment *seg2 = skel->getElementSegment(el, segidx2);
   // oofcerr << "removeFlat: seg1= " << *seg1 << std::endl;
@@ -953,8 +965,8 @@ static void removeFlat(CSkeleton *skel, short segidx1, short segidx2,
 	changes->push_back(change);
       else
 	delete change;
-    }
-  for(int i=0; i<callbacks.size(); i++)
+  }
+  for(unsigned int i=0; i<callbacks.size(); i++)
     delete callbacks[i];
 } // end removeFlat
 
@@ -1143,6 +1155,8 @@ ProvisionalChangesVector* RemoveBadTetrahedra::fix(CSkeleton *skel,
   {
     CSkeletonNodePairSet node_pairs;
     for(unsigned int i=0; i<acute_angles.size(); ++i) {
+      // acute_angles[i] contains the face and corner index of an
+      // acute angle on a face.
       CSkeletonNode *node0 = element->getFaceNode(acute_angles[i].first,
 						  (acute_angles[i].second+1)%3);
       CSkeletonNode *node1 = element->getFaceNode(acute_angles[i].first,
@@ -1176,20 +1190,19 @@ ProvisionalChangesVector* RemoveBadTetrahedra::fix(CSkeleton *skel,
     for(unsigned int i=0; i<obtuse_angles.size(); ++i)
       angles.insert(vtkTetra::GetFaceArray(
 			   obtuse_angles[i].first)[obtuse_angles[i].second]);
-    for(std::set<short>::iterator it = angles.begin(); it != angles.end(); ++it)
-      {
-	int nodeId = *it;
-	int oppFaceId = CSkeletonElement::oppFace[nodeId];
-	CSkeletonFace *oppFace = skel->getFace(element->getFaceKey(oppFaceId));
-	CSkeletonElement *other_el = skel->getSister(element, oppFace);
-	if(other_el != NULL) {
-	  tetTetSplit(skel, nodeId, oppFace, element, other_el, changes);
-	}
-	else {
-	  tetNoneSplit(skel, element->getNode(nodeId), oppFace, element,
-	   	       changes);
-	}
+    for(std::set<short>::iterator it=angles.begin(); it!=angles.end(); ++it) {
+      int nodeId = *it;
+      int oppFaceId = CSkeletonElement::oppFace[nodeId];
+      CSkeletonFace *oppFace = skel->getFace(element->getFaceKey(oppFaceId));
+      CSkeletonElement *other_el = skel->getSister(element, oppFace);
+      if(other_el != NULL) {
+	tetTetSplit(skel, nodeId, oppFace, element, other_el, changes);
       }
+      else {
+	tetNoneSplit(skel, element->getNode(nodeId), oppFace, element,
+		     changes);
+      }
+    }
   }
 
   // Flatten tets with two large dihedral angles on opposite segments
@@ -1215,7 +1228,7 @@ ProvisionalChangesVector* RemoveBadTetrahedra::fix(CSkeleton *skel,
   }
   // oofcerr << "RemoveBadTetrahedra::fix: done" << std::endl;
   return changes;
-}
+} // end RemoveBadTetrahedra::fix
 
 
 // autorationalizebug9 fails when using only tetTetSplit with only the

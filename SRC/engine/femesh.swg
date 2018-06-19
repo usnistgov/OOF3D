@@ -26,7 +26,7 @@
 %extern "engine/meshiterator.swg"
 %extern "engine/node.swg"
 
-%pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkIntArrayPtrPtr"
+%pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkDataArrayPtrPtr"
 %pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkUnstructuredGridPtrPtr"
 %pragma(python) code="from ooflib.SWIG.common.lock import LockPtr"
 %pragma(python) code="from ooflib.SWIG.common.lock import RWLockPtr"
@@ -129,7 +129,7 @@ public:
   %new StringVec *getFieldSetByID(int);
 
   void getGrid(double, CSkeletonBase*, SkeletonFilter*, vtkUnstructuredGridPtr);
-  vtkIntArrayPtr getMaterialCellData(CSkeletonBase*, SkeletonFilter*);
+  vtkDataArrayPtr getMaterialCellData(CSkeletonBase*, SkeletonFilter*);
 
   void setDataCache(MeshDataCache*);
   void replaceDataCache(MeshDataCache*);

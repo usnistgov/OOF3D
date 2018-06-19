@@ -36,11 +36,9 @@ public:
     return image; 
   }
   void modified() const { image->Modified(); }
-  void update() const { image->Update(); }
-
-  // These are building blocks for other functions.
-  static vtkSmartPointer<vtkImageData> getRGB(vtkSmartPointer<vtkImageData>);
-  //static vtkSmartPointer<vtkImageData> getRGBA(vtkSmartPointer<vtkImageData>);
+  void update() const {
+    // TODO: Get rid of this method?
+  }
 };
 
 

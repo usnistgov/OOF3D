@@ -151,11 +151,20 @@ protected:
   mutable int illegalCount;
   mutable int suspectCount;
   mutable double homogeneityIndex;
+  mutable double unweightedHomogIndex;
+  mutable double unweightedShapeEnergy;
+  mutable double weightedShapeEnergy;
   mutable TimeStamp homogeneity_index_computation_time;
-  // TimeStamp most_recent_geometry_change;
+  mutable TimeStamp unweighted_homogeneity_computation_time;
+  mutable TimeStamp unweighted_shape_energy_computation_time;
+  mutable TimeStamp weighted_shape_energy_computation_time;
+  mutable TimeStamp illegality_computation_time;
   mutable TimeStamp illegal_count_computation_time;
   mutable TimeStamp suspect_count_computation_time;
-  TimeStamp timestamp;
+  TimeStamp geometry_timestamp;
+  // If more timestamps and other such data is added here, make sure
+  // that CSkeleton::completeCopy() copies them.
+
   static const std::string modulename_;
   OuterFaceID onOuterFace_(const CSkeletonNodeVector*, bool boundary[6]) 
     const;
@@ -241,7 +250,7 @@ public:
 
   bool illegal() const { return illegal_; }
   void setIllegal() { illegal_= true; }
-  void checkIllegality();
+  bool checkIllegality();
   void backdateIllegalityTimeStamp();
   int getIllegalCount();
   void getIllegalElements(CSkeletonElementVector &) const;
@@ -287,6 +296,8 @@ public:
   Coord averageNeighborPosition(const CSkeletonNode*, const CSkeletonNodeSet&)
     const;
   Coord averageConstrainedNbrPosition(const CSkeletonNode*) const;
+  Coord averageConstrainedNbrPosition(const CSkeletonNode*,
+				      const CSkeletonNodeSet&) const;
 
   // convenience functions for boundary building
   CSkeletonElement *getOrientedSegmentElement(OrientedCSkeletonSegment *seg);
@@ -323,9 +334,13 @@ public:
   bool checkExteriorSegments(const CSkeletonSegmentVector*) const;
   bool checkExteriorFaces(const CSkeletonFaceVector*) const;
 
-  // homogeneity
+  // homogeneity and shape energy
   double getHomogeneityIndex() const;
   void calculateHomogeneityIndex() const;
+  double getUnweightedHomogeneity() const;
+  void calculateUnweightedHomogeneity() const;
+  double getUnweightedShapeEnergy() const;
+  double getWeightedShapeEnergy() const;
   double energyTotal(double alpha) const;
   double clippedCategoryVolume(unsigned int,
 			       const CRectangularPrism&,
@@ -989,6 +1004,7 @@ public:
 // #endif
 
   virtual bool illegal() = 0;
+  virtual bool suspect() = 0;
   // deltaE() is not const because it may need to call moveNode.
   virtual double deltaE(double alpha) = 0;
   virtual void moveNode(CSkeletonNode *node, const Coord &x, bool *mob=NULL) = 0;
@@ -1017,6 +1033,7 @@ public:
   virtual void moveNode(CSkeletonNode *node, const Coord &x, bool *mob=NULL);
   virtual void accept();
   virtual bool illegal();
+  virtual bool suspect();
   void makeNodeMove();
   void moveNodeBack();
   virtual void removeAddedNodes() {};
@@ -1056,6 +1073,7 @@ public:
   CSkeletonSelectablePairSet& getSubstitutions() { return substitutions; }
   CSkeletonElementSet& getRemoved() { return removed; }
   virtual bool illegal();
+  virtual bool suspect();
   virtual void moveNode(CSkeletonNode *node, const Coord &x, bool *mob=NULL);
   virtual void makeNodeMove();
   virtual void moveNodeBack();

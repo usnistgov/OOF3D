@@ -179,8 +179,10 @@ class MeshInfoDisplay(display.DisplayMethod):
                         if lname == querymode.targetName: # draw query sublayer
                             meshsrc = toolbox.meshlayer.source
                             queryobj.drawGridCell(meshsrc, layer)
+                            layer.setEmpty(False)
                         else:
                             layer.clear() # clear peek sublayers
+                            layer.setEmpty(True)
                     return
         self.canvaslayer.clear() # clear all sublayers
 
@@ -194,8 +196,10 @@ class MeshInfoDisplay(display.DisplayMethod):
                 if peekobj:
                     meshsrc = toolbox.meshlayer.source
                     peekobj.drawGridCell(meshsrc, sublayer)
+                    sublayer.setEmpty(False)
                 else:
                     sublayer.clear()
+                    sublayer.setEmpty(True)
 
     def meshDataChangedCB(self, meshctxt):
         if meshctxt is self.who().resolve(self.gfxwindow):

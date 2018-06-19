@@ -71,6 +71,20 @@ public:
   virtual CSkeletonElementVector &getTargets(CSkeletonBase *skeleton);
 };
 
+class IllegalElements : public CSkelModTargets {
+public:
+  IllegalElements() {}
+  virtual ~IllegalElements() {}
+  virtual CSkeletonElementVector &getTargets(CSkeletonBase *skeleton);
+};
+
+class SuspectOrIllegalElements : public CSkelModTargets {
+public:
+  SuspectOrIllegalElements() {}
+  virtual ~SuspectOrIllegalElements() {}
+  virtual CSkeletonElementVector &getTargets(CSkeletonBase *skeleton);
+};
+
 // class ElementsInGroup : public CSkelModTargets {
 // private:
 //   CSkeletonGroup *group;
@@ -97,6 +111,7 @@ public:
   virtual bool isChangeGood(ProvisionalChangesBase*, CSkeletonBase*) const = 0;
   bool hopeless() { return false; }
   double getAlpha() { return alpha; }
+  void cleanUp(ProvisionalChangesVector*, ProvisionalChangesBase*) const;
 };
 
 class LimitedSkelModCriterion : public CSkelModCriterion {

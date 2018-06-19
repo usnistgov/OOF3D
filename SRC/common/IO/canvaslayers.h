@@ -30,6 +30,7 @@ class PlaneAndArrowLayer;
 #include "common/IO/oofCellLocator.h"
 
 class CColor;
+class CRectangularPrism;
 class GhostOOFCanvas;
 class ImageBase;
 class oofImageToGrid;
@@ -66,7 +67,7 @@ class VoxelFilter;
 
 #include <vector>
 
-typedef std::vector<OOFCanvasLayerBase*> CanvasLayerList;
+typedef std::vector<OOFCanvasLayer*> CanvasLayerList;
 
 enum ClipState {CLIP_OFF, CLIP_ON, CLIP_UNKNOWN};
 
@@ -95,10 +96,23 @@ public:
 
   virtual void show(bool) {}
   virtual void hide(bool) {}
+  virtual bool showing() const { return false; }
+  virtual void setCoincidentTopologyParams(double, double) = 0;
 
   virtual bool pickable() { return false; }
 
   const GhostOOFCanvas *getCanvas() const { return canvas; }
+
+  // visibleBoundingBox returns false if none of the layer is visible
+  // inside the given camera frustum.  It returns true and sets the
+  // CRectangularPrism to the bounding box of the visible region if
+  // any of the layer is within the frustum.
+  //    visibleBoundingBox is used to choose the center of rotation for
+  // view modifications.  Layers that don't display anything relevant
+  // for that purpose don't have to redefine it.  The base class
+  // implementation just returns false.
+  virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
+				  CRectangularPrism*) const;
 
   virtual void writeVTK(const std::string &) {}
 };
@@ -114,11 +128,18 @@ typedef std::vector< vtkSmartPointer<vtkProp> > PropVec;
 
 class OOFCanvasLayer : public OOFCanvasLayerBase {
 private:
+   // showing_ is set by show() and hide(), which also toggle the vtk
+   // Visibility flags.
   bool showing_;
+  bool empty_;
   PropVec props;
+  // setPropVisibility toggles vtk visibility, without touching the
+  // OOFCanvasLayer state.
+  void setPropVisibility(bool);
 public:
   OOFCanvasLayer(GhostOOFCanvas*, const std::string&);
   virtual ~OOFCanvasLayer();
+
   void raise_layer(int);
   void raise_to_top();
   void lower_layer(int);
@@ -130,10 +151,13 @@ public:
   void addProp(vtkSmartPointer<vtkProp>);
   void removeProp(vtkSmartPointer<vtkProp>);
   void removeAllProps();
+  // setEmpty should be called when nothing will be drawn.  See the
+  // comment in the .C file.
+  void setEmpty(bool);
 
   virtual void show(bool);
   virtual void hide(bool);
-  bool showing() const { return showing_; }
+  virtual bool showing() const { return showing_; }
   virtual void destroy();
 
   // Machinery to allow mouse selections.
@@ -203,6 +227,7 @@ public:
   void set_scale(double);
   void set_normal(const CDirection*);
   void set_center(const Coord3D*);
+  virtual void setCoincidentTopologyParams(double, double);
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -254,6 +279,7 @@ public:
   void set_faceOpacity(double);
   void set_position(const Coord3D*);
   void offset_cell(vtkIdType, double);
+  virtual void setCoincidentTopologyParams(double, double);
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -270,7 +296,6 @@ protected:
   vtkSmartPointer<vtkActor> actor;
   vtkSmartPointer<vtkDataSetMapper> mapper;
   vtkSmartPointer<vtkTableBasedClipDataSet> clipper;
-  int number_cells;
   virtual void start_clipping();
   virtual void stop_clipping();
   virtual void set_clip_parity(bool);
@@ -283,7 +308,9 @@ public:
   void set_color(const CColor&);
   void set_opacity(double);
   virtual void set_size(double);
-  int get_gridsize() const;
+  virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
+				  CRectangularPrism*) const;
+  virtual void setCoincidentTopologyParams(double, double);
 };
 
 class SimpleFilledCellLayer : public SimpleCellLayer {
@@ -469,6 +496,11 @@ public:
   virtual vtkSmartPointer<vtkProp3D> get_pickable_prop3d();
   virtual vtkSmartPointer<vtkAbstractCellLocator> get_locator();
   virtual vtkSmartPointer<vtkDataSet> get_pickable_dataset();
+
+  virtual bool visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
+				  CRectangularPrism*) const;
+
+  virtual void setCoincidentTopologyParams(double, double);
 };
 
 class ImageCanvasOverlayer : public OOFCanvasLayerBase {
@@ -487,6 +519,7 @@ public:
   virtual void connectToOverlayer(ImageCanvasOverlayer*);
   virtual void connectToAlgorithm(vtkSmartPointer<vtkAlgorithmOutput>);
   virtual vtkSmartPointer<vtkAlgorithmOutput> output();
+  virtual void setCoincidentTopologyParams(double, double) {}
   friend class ImageCanvasLayer;
 };
 
@@ -504,4 +537,6 @@ public:
 
 vtkSmartPointer<vtkTableBasedClipDataSet> getClipper(const OOFCanvasLayer*);
 
+bool getVisibleBoundingBox(vtkDataSet*, vtkSmartPointer<vtkRenderer>,
+			   CRectangularPrism*);
 #endif // CANVASLAYERS_H

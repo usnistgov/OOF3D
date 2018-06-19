@@ -16,6 +16,7 @@ from ooflib.common import debug
 from ooflib.common import mainthread
 from ooflib.common import pixelselectionmethod
 from ooflib.common import subthread
+from ooflib.common import thread_enable
 from ooflib.common.IO import voxelregionselectiondisplay
 from ooflib.common.IO.GUI import mousehandler
 from ooflib.common.IO.GUI import pixelselectparamwidgets
@@ -149,8 +150,11 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
         # Start the event-processing subthread.  See the comment in
         # viewertoolbox3dGUI.py about why execute_immortal is used
         # here.
-        self.eventThread = subthread.execute_immortal(
-            self.processEvents_subthread)
+        if thread_enable.query():
+            self.eventThread = subthread.execute_immortal(
+                self.processEvents_subthread)
+        else:
+            self.eventThread = None
         
     def __call__(self, params, scope=None, name=None, verbose=False):
         # This function creates a VoxelRegionSelectWidget and
@@ -295,13 +299,14 @@ class RectangularPrismSelectorGUI(SelectionMethodGUI):
                 self.gfxwindow.releaseGfxLock()
 
     def cancel(self):
-        self.datalock.logNewEvent_acquire()
-        try:
-            ## TODO: See TODO in similar code in viewertoolbox3dGUI.py.
-            self.eventlist = [('exit', None, None, None, None)]
-        finally:
-            self.datalock.logNewEvent_release()
-        self.eventThread.join()
+        if self.eventThread is not None:
+            self.datalock.logNewEvent_acquire()
+            try:
+                ## TODO: See TODO in similar code in viewertoolbox3dGUI.py.
+                self.eventlist = [('exit', None, None, None, None)]
+            finally:
+                self.datalock.logNewEvent_release()
+            self.eventThread.join()
         
     def acceptEvent(self, eventtype):
         return (eventtype == 'down' or

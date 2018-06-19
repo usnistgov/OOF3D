@@ -30,11 +30,13 @@ private:
   PyObject *mouse_callback;
   guint mouse_handler_id; //, config_handler_id;
   RubberBand *rubberband;
+  int rescaleFudgeFactor;
+  std::vector<gulong> g_handlers; // gtk signal handler ids
 protected:
   GtkWidget *drawing_area;
 
 public:
-  OOFCanvas3D();
+  OOFCanvas3D(bool rescale);
   ~OOFCanvas3D();
 
   PyObject *widget();
@@ -43,17 +45,20 @@ public:
   // Separate callbacks for mouse events and resize events.
   void set_mouse_callback(PyObject*);
 
-  // Callback functions
-  static void gtk_destroy(GtkWidget*, gpointer);
-  void destroy();
   static gboolean gtk_realize(GtkWidget*, gpointer);
   gboolean realize();
   static gboolean gtk_configure(GtkWidget*, GdkEventConfigure*, gpointer);
-  gboolean configure(GdkEventConfigure*);
+  void configure(int x, int y, int w, int h);
+  static gboolean gtk_configure_after(GtkWidget*, GdkEventConfigure*, gpointer);
+  gboolean configure_after(GdkEventConfigure*);
   static gboolean gtk_expose(GtkWidget*, GdkEventExpose*, gpointer);
   gboolean expose();
   static gint mouse_event(GtkWidget*, GdkEvent*, gpointer);
   void mouse_eventCB(GtkWidget*, GdkEvent*);
+
+  static gboolean gtk_redrawIdle(gpointer);
+  gboolean redrawIdle();
+  virtual void repositionRenderWindow();
 
   // movements
   void mouse_tumble(double x, double y);
@@ -61,6 +66,8 @@ public:
   void mouse_dolly(double x, double y);
 
   void set_rubberband(RubberBand*);
+
+  virtual void setFixCanvasScaleBug(bool);
 
   friend class RubberBand;
 

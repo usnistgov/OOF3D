@@ -18,7 +18,7 @@ from ooflib.common import utils
 from ooflib.common.IO.GUI import gtklogger
 from ooflib.engine.IO import skeletoninfo
 from ooflib.engine.IO.GUI import genericinfoGUI
-
+from ooflib.SWIG.engine import ooferror2
 import gtk
 
 ## Nodes and Elements are identified by index, because they can be
@@ -151,12 +151,11 @@ class ElementModeGUI(SkeletonInfoModeGUI):
     def findObjectIndex(self, position, view):
         skelctxt = self.getContext()
         if skelctxt is not None:
-            clickdata = self.gfxtoolbox.gfxwindow().findClickedCellID(
+            (cellID, clickpos) = self.gfxtoolbox.gfxwindow().findClickedCellID(
                 skelctxt, position, view)
-            if clickdata is not None:
-                cellID, clickpos = clickdata
-                return cellID
-            debug.fmsg("findClickedCellID returned None")
+            if cellID is None:
+                debug.fmsg("findClickedCellID returned None")
+            return cellID
 
     def activateOutputs(self, ok):
         self.type.set_sensitive(ok)

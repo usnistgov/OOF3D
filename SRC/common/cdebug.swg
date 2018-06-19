@@ -25,6 +25,8 @@ void segfault();
 %}
 %pragma(python) include="cdebug.spy"
 
+void setDebugMode(bool);
+
 void initDebug(PyObject*);
 void segfault(int);
 void throwException();
@@ -36,6 +38,7 @@ void writeDebugFile_(char*, char*, int);
 void closeDebugFile();
 
 void spinCycle(int);
+void vtkLeakCheck();
 
 #ifdef PROFILER
 void ProfilerStart(char*);

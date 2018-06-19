@@ -295,6 +295,9 @@ std::vector<std::string> *ListAttribute::names(
 				       const CMicrostructure *microstructure,
 				       int cat, PxlAttributeRegistration *reg)
 {
+  if(cat == UNKNOWN_CATEGORY) {
+    throw ErrProgrammingError("Unknown voxel category!", __FILE__, __LINE__);
+  }
   ListAttribute *list = 
     dynamic_cast<ListAttribute*>(microstructure->getAttributeFromCategory(
 							  cat, reg->index()));

@@ -76,7 +76,7 @@ void Burner::burn_nbrs(const OOFImage &image,
 void Burner::burn(const OOFImage3D &image, const ICoord *spark,
 		  BoolArray &burned)
 {
-  image.getVTKImageData()->Update();
+  // image.getVTKImageData()->Update();
   // Initialize the data structures.
   int nburnt = 0;
   startcolor = image[spark];

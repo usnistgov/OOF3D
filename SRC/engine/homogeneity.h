@@ -14,8 +14,6 @@
 
 #include <oofconfig.h>
 
-#define UNKNOWN_CATEGORY -1
-
 class HomogeneityData {
 private:
   double homogeneity;
@@ -26,12 +24,8 @@ private:
   //   : homogeneity(hom), dominantpixel(cat), homog_energy(nrg)
   // {}
 public:
-  HomogeneityData(double hom, int cat)
-    : homogeneity(hom), dominantpixel(cat), homog_energy(1.0-hom)
-  {}
-  HomogeneityData()
-    : homogeneity(0), dominantpixel(UNKNOWN_CATEGORY), homog_energy(0)
-  {}
+  HomogeneityData(double hom, int cat);
+  HomogeneityData();
   double get_homogeneity() const { return homogeneity; }
   int get_dominantpixel() const { return dominantpixel; }
   double get_energy() const { return homog_energy; }

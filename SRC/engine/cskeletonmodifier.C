@@ -52,14 +52,41 @@ CSkeletonElementVector &BadlyShapedElements::getTargets(
   return elements;
 }
 
+CSkeletonElementVector& IllegalElements::getTargets(CSkeletonBase *skeleton) {
+  elements.clear();
+  int count=0;
+  for(CSkeletonElementIterator elit = skeleton->beginElements();
+      elit != skeleton->endElements(); ++elit, ++count)
+    {
+      if((*elit)->illegal())
+	elements.push_back((*elit));
+    }
+  return elements;
+}
+
 CSkeletonElementVector& SuspectElements::getTargets(CSkeletonBase *skeleton) {
   elements.clear();
   int count=0;
   for(CSkeletonElementIterator elit = skeleton->beginElements();
-      elit != skeleton->endElements(); ++elit, ++count) {
-    if((*elit)->suspect())
-      elements.push_back((*elit));
-  }
+      elit != skeleton->endElements(); ++elit, ++count)
+    {
+      if((*elit)->suspect())
+	elements.push_back((*elit));
+    }
+  return elements;
+}
+
+CSkeletonElementVector& SuspectOrIllegalElements::getTargets(
+						     CSkeletonBase *skeleton)
+{
+  elements.clear();
+  int count=0;
+  for(CSkeletonElementIterator elit = skeleton->beginElements();
+      elit != skeleton->endElements(); ++elit, ++count)
+    {
+      if((*elit)->suspect() || (*elit)->illegal())
+	elements.push_back((*elit));
+    }
   return elements;
 }
 
@@ -126,61 +153,64 @@ ProvisionalChangesBase* AverageEnergy::getBestChange(
 					     ProvisionalChangesVector *changes,
 					     CSkeletonBase *skeleton)
 {
+  // Find the change that decreases the average energy the most.  If
+  // no change decreases the energy, return null.  bestE is
+  // initialized to 0 so that only negative E will be accepted.
   double bestE = 0.0;
-  ProvisionalChangesBase *bestchange = NULL;
-  for(ProvisionalChangesVector::iterator pcvit=changes->begin();
-      pcvit!=changes->end(); ++pcvit)
-    {
-      if(*pcvit && !(*pcvit)->illegal()) {
-	double diff = (*pcvit)->deltaE(alpha);
-	if(diff <= bestE) {
-	  bestchange = *pcvit;
-	  bestE = diff;
-	}
+  ProvisionalChangesBase *bestChange = nullptr;
+  for(ProvisionalChangesBase *change : *changes) {
+    if(change && !change->illegal() && !change->suspect()) {
+      double diff = change->deltaE(alpha);
+      if(diff <= bestE) {
+	bestChange = change;
+	bestE = diff;
       }
     }
-  for(ProvisionalChangesVector::iterator pcvit=changes->begin();
-      pcvit!=changes->end(); ++pcvit) 
-    {
-      if(*pcvit && *pcvit != bestchange) 
-	(*pcvit)->removeAddedNodes();
+  }
+  cleanUp(changes, bestChange);
+  return bestChange;
+}
+
+void CSkelModCriterion::cleanUp(ProvisionalChangesVector *changes,
+				ProvisionalChangesBase *bestChange)
+  const
+{
+  for(ProvisionalChangesBase *change : *changes) {
+    if(change && change != bestChange)
+      change->removeAddedNodes();
       // There's no need to clean up faces and segments here, since
       // CSkeleton::cleanUp will do that.  Is it even necessary to
       // clean up the nodes here?
-    }
-  return bestchange;
+  }
 }
 
 bool AverageEnergy::isChangeGood(ProvisionalChangesBase *change,
 				 CSkeletonBase *skeleton) const 
 {
-  return change && !change->illegal() && change->deltaE(alpha) <= 0.0;
+  return (change && !change->illegal() && !change->suspect()
+	  && change->deltaE(alpha) <= 0.0);
 }
 
 ProvisionalChangesBase* Unconditional::getBestChange(
 					     ProvisionalChangesVector *changes,
 					     CSkeletonBase *skeleton)
 {
-  double bestE = 0.0;
-  ProvisionalChangesBase *bestchange = NULL;  
-  for(ProvisionalChangesVector::iterator pcvit=changes->begin();
-      pcvit!=changes->end(); ++pcvit) 
-    {
-      if(*pcvit && !(*pcvit)->illegal()) {
-	double diff = (*pcvit)->deltaE(alpha);
-	if(!bestchange || diff <= bestE) {
-	  bestchange = *pcvit;
-	  bestE = diff;
-	}
+  // Find the change with the lowest energy, even if that energy is
+  // higher than the initial energy.  bestE is initialized to max so
+  // that any finite E will be accepted.
+  double bestE = std::numeric_limits<double>::max();
+  ProvisionalChangesBase *bestChange = nullptr;
+  for(ProvisionalChangesBase *change : *changes) {
+    if(change && !change->illegal() && !change->suspect()) {
+      double diff = change->deltaE(alpha);
+      if(diff <= bestE) {
+	bestChange = change;
+	bestE = diff;
       }
     }
-  for(ProvisionalChangesVector::iterator pcvit=changes->begin();
-      pcvit!=changes->end(); ++pcvit) 
-    {
-      if((*pcvit) != NULL && (*pcvit) != bestchange) 
-	(*pcvit)->removeAddedNodes();
-    }
-  return bestchange;
+  }
+  cleanUp(changes, bestChange);
+  return bestChange;
 }
 
 
@@ -188,7 +218,7 @@ bool Unconditional::isChangeGood(ProvisionalChangesBase *change,
 				 CSkeletonBase *skeleton) 
   const
 {
-  return change && !change->illegal();
+  return change && !change->illegal() && !change->suspect();
 }
 
 ProvisionalChangesBase* LimitedAverageEnergy::getBestChange(
@@ -196,32 +226,27 @@ ProvisionalChangesBase* LimitedAverageEnergy::getBestChange(
 					    CSkeletonBase *skeleton)
 {
   double bestE = 0.0;
-  ProvisionalChangesBase *bestchange = 0;
-  for(ProvisionalChangesVector::iterator pcvit=changes->begin();
-      pcvit!=changes->end(); ++pcvit) 
-    {
-      if(*pcvit && !(*pcvit)->illegal() && withinTheLimit(*pcvit, skeleton)) {
-	double diff = (*pcvit)->deltaE(alpha);
-	if(diff<=bestE) {
-	  bestchange = (*pcvit);
+  ProvisionalChangesBase *bestChange = nullptr;
+  for(ProvisionalChangesBase *change : *changes) {
+    if(change && !change->illegal() && !change->suspect()
+       && withinTheLimit(change, skeleton))
+      {
+	double diff = change->deltaE(alpha);
+	if(diff <= bestE) {
+	  bestChange = change;
 	  bestE = diff;
 	}
       }
-    }
-  for(ProvisionalChangesVector::iterator pcvit=changes->begin();
-      pcvit!=changes->end(); ++pcvit) 
-    {
-      if(*pcvit && *pcvit != bestchange) 
-	(*pcvit)->removeAddedNodes();
-    }
-  return bestchange;
+  }
+  cleanUp(changes, bestChange);
+  return bestChange;
 }
 
 bool LimitedAverageEnergy::isChangeGood(ProvisionalChangesBase *change,
 					CSkeletonBase *skeleton) const 
 {
   return (change &&
-	  !change->illegal() &&
+	  !change->illegal() && !change->suspect() &&
 	  withinTheLimit(change, skeleton) &&
 	  change->deltaE(alpha) <= 0.0);
 }
@@ -230,26 +255,23 @@ ProvisionalChangesBase* LimitedUnconditional::getBestChange(
 					    ProvisionalChangesVector *changes, 
 					    CSkeletonBase *skeleton)
 {
-  double bestE = 0.0;
-  ProvisionalChangesBase *bestchange = 0;  
-  for(ProvisionalChangesVector::iterator pcvit=changes->begin();
-      pcvit!=changes->end(); ++pcvit) 
-    {
-      if(*pcvit && !(*pcvit)->illegal() && withinTheLimit(*pcvit, skeleton)) {
-	double diff = (*pcvit)->deltaE(alpha);
-	if(!bestchange || diff <= bestE) {
-	  bestchange = *pcvit;
+  // bestE is initialized to max because we accept changes with
+  // positive E.
+  double bestE = std::numeric_limits<double>::max();
+  ProvisionalChangesBase *bestChange = nullptr;
+  for(ProvisionalChangesBase *change : *changes) {
+    if(change && !change->illegal() && !change->suspect()
+       && withinTheLimit(change, skeleton))
+      {
+	double diff = change->deltaE(alpha);
+	if(diff <= bestE) {
+	  bestChange = change;
 	  bestE = diff;
 	}
       }
-    }
-  for(ProvisionalChangesVector::iterator pcvit=changes->begin();
-      pcvit != changes->end(); ++pcvit) 
-    {
-      if(*pcvit && *pcvit != bestchange) 
-	(*pcvit)->removeAddedNodes();
-    }
-  return bestchange;
+  }
+  cleanUp(changes, bestChange);
+  return bestChange;
 }
 
 
@@ -257,5 +279,6 @@ bool LimitedUnconditional::isChangeGood(ProvisionalChangesBase *change,
 					CSkeletonBase *skeleton)
   const
 {
-  return change && !change->illegal() && withinTheLimit(change, skeleton);
+  return (change && !change->illegal() && !change->suspect()
+	  && withinTheLimit(change, skeleton));
 }

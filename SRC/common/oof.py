@@ -356,6 +356,9 @@ def front_end(no_interp=None):
         # calls to mainthread.run(), because mainthread.run() is
         # redefined when mainthreadGUI.py is loaded (by
         # common/IO/GUI/initialize.py)
+        from ooflib.SWIG.common.IO import vtkutils
+        vtkutils.initialize_X11()
+        vtkutils.initialize_vtk()
         import ooflib.common.IO.GUI.initialize
         import ooflib.engine.IO.GUI.initialize
         import ooflib.image.IO.GUI.initialize

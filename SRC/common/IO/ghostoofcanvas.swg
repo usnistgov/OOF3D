@@ -45,6 +45,7 @@ public:
   void set_bgColor(const CColor);
   void set_margin(double f);
   void setAntiAlias(bool);
+  // void setFXAAOptions(double, double, double, double, int, bool);
 
   void setAxisOffset(Coord *Point);
   void setAxisLength(Coord *Point);
@@ -61,7 +62,6 @@ public:
   void setContourMapPosition(float, float);
 
   void reset();
-  void deactivate();
   void render();
 
   void orthogonalize_view_up();
@@ -144,10 +144,13 @@ public:
   %new Coord *get_camera_position_v2();
   Coord get_camera_direction_of_projection_v2();
 
+  vtkRendererPtr get_renderer();
   double get_camera_distance();
   double get_camera_view_angle();
   void set_camera_position(double, double, double);
   void set_camera_focal_point(double, double, double);
+  void setTumbleCenter(Coord *Point);
+  void setTumbleAroundFocalPoint();
 
   Coord findRayThroughPoint(const Coord *Point);
   %new Coord *findClickedPositionOnActor(Coord *Point, View*, OOFCanvasLayer*);
@@ -163,9 +166,7 @@ public:
 
   Coord display2Physical(View*, double, double);
 
-  // Coord get_bounds();
-  Coord get_visible_center();
-  Coord get_visible_size();
+  void setFixCanvasScaleBug(bool);
 
   // views
   %new View *get_view();
@@ -176,6 +177,8 @@ public:
   
 // save
   void save_canvas(char *filename, ImageFormat*);
+
+  void dumpProps();		// debugging
 
 };
 

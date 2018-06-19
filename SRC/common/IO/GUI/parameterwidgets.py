@@ -588,6 +588,41 @@ def _IntParameter_makeWidget(self, scope=None, verbose=False):
 
 parameter.IntParameter.makeWidget = _IntParameter_makeWidget
 
+
+class PositiveIntWidget(IntWidget):
+    def validValue(self, val):
+        try:
+            if type(val) is StringType:
+                ival = utils.OOFeval(val)
+                return type(ival) is IntType and ival > 0
+            else:
+                return isinstance(val, (IntType)) and val > 0
+        except:
+            return False
+
+def _PositiveIntParameter_makeWidget(self, scope=None, verbose=False):
+    return PositiveIntWidget(self, scope=scope, name=self.name,
+                             verbose=verbose)
+parameter.PositiveIntParameter.makeWidget = _PositiveIntParameter_makeWidget
+
+class NonNegativeIntWidget(IntWidget):
+    def validValue(self, val):
+        try:
+            if type(val) is StringType:
+                ival = utils.OOFeval(val)
+                return type(ival) is IntType and ival >= 0
+            else:
+                return isinstance(val, IntType) and val >= 0
+        except:
+            return False
+
+def _NonNegativeIntParameter_makeWidget(self, scope=None, verbose=False):
+    return NonNegativeIntWidget(self, scope=scope, name=self.name,
+                                verbose=verbose)
+parameter.NonNegativeIntParameter.makeWidget = \
+                                          _NonNegativeIntParameter_makeWidget
+
+
 #######################
 
 class XYStrFunctionWidget(GenericWidget):
@@ -754,7 +789,6 @@ class ParameterTable(ParameterWidget, widgetscope.WidgetScope):
                 val = widget.get_value()
                 param.value = val
             except (Exception, ooferror.ErrError), exception:
-                print >> sys.stderr, "Error reading widget", param, widget
                 exceptions.append(exception)
         if exceptions:
             raise exceptions[0]

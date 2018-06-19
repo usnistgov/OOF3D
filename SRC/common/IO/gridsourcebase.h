@@ -22,7 +22,7 @@
 
 class GridSource : public vtkUnstructuredGridAlgorithm {
 public:
-  vtkTypeRevisionMacro(GridSource, vtkUnstructuredGridAlgorithm);
+  vtkTypeMacro(GridSource, vtkUnstructuredGridAlgorithm);
   void PrintSelf(std::ostream&, vtkIndent);
   vtkSetObjectMacro(PointData, vtkDoubleArray);
   vtkSetObjectMacro(CellData, vtkDataArray);

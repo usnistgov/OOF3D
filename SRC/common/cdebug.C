@@ -27,6 +27,20 @@
 #include <string>
 #include <unistd.h>
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+static bool debugMode_ = false;
+
+void setDebugMode(bool mode) {
+  debugMode_ = mode;
+}
+
+bool debug() {
+  return debugMode_;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 static PyObject *python_dumper;
 
 static void handler(int sig) {
@@ -217,4 +231,12 @@ void spinCycle(int nCycles) {
     progress->setFraction((float) i/nCycles);
   }
   progress->finish();
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+#include <vtkDebugLeaks.h>
+
+void vtkLeakCheck() {
+  vtkDebugLeaks::PrintCurrentLeaks();
 }

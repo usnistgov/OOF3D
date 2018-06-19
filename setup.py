@@ -83,6 +83,9 @@ from types import *
 # Tell distutils that .C is a C++ file suffix.
 from distutils.ccompiler import CCompiler
 CCompiler.language_map['.C'] = 'c++'
+CCompiler.language_map['.mm'] = 'objc'
+from distutils import unixccompiler
+unixccompiler.UnixCCompiler.src_extensions.append('.mm')
 
 ## needed to save installation log to a saved variable before
 calledFromInstall = False # checks if build is being called from oof_install
@@ -430,19 +433,36 @@ def findvtk(*basenames):
     for base in basenames:
         # First look for basename/include/vtk*
         incdir = os.path.join(base, 'include')
-        files = os.listdir(incdir)
-        vtkname = None
-        for f in files:
-            ## This may fail if there is more than one version of vtk
-            ## installed.  listdir returns files in arbitrary order, and
-            ## the first one found will be used.
-            if f.startswith('vtk'):
-                vtkname = f
-                incvtk = os.path.join(base, 'include', vtkname)
-                libvtk = os.path.join(base, 'lib', vtkname)
-                if os.path.isdir(incvtk) and os.path.isdir(libvtk):
-                    return (incvtk, libvtk)
+        if os.path.isdir(incdir):
+            files = os.listdir(incdir)
+            vtkname = None
+            for f in files:
+                ## This may fail if there is more than one version of vtk
+                ## installed.  listdir returns files in arbitrary order, and
+                ## the first one found will be used.
+                if f.startswith('vtk'):
+                    vtkname = f
+                    incvtk = os.path.join(base, 'include', vtkname)
+                    libvtk = os.path.join(base, 'lib')
+                    if os.path.isdir(incvtk) and os.path.isdir(libvtk):
+                        global vtksuffix
+                        vtksuffix = vtkname[3:] # all but the 'vtk'
+                        ## TODO: Extract actual vtk version number
+                        ## from incvtk/vtkVersionMacros.h.  It's in a
+                        ## line like #define VTK_VERSION "7.1.1"
+#grep VTK_VERSION /usr/local/include/vtk-7.1/vtkVersionMacros.h |cut -d \" -f 2
+                        print >> sys.stderr, "Using", vtkname,"in", incvtk
+                        print >> sys.stderr, "VTK library directory is", libvtk
+                        return (incvtk, libvtk)
+    print >> sys.stderr, "Did not find vtk!"
     return (None, None)
+
+# addVTKlibs is used in the DIR.py files to specify which vtk libraries
+# need to be linked to each OOF3D shared library.
+
+def addVTKlibs(clib, libnames):
+    for libname in libnames:
+        clib.externalLibs.append(libname + vtksuffix)
 
 #########
 
@@ -452,9 +472,16 @@ def findvtk(*basenames):
 # oof_build_xxxx contains the routines that are being added to both
 # build_ext and build_shlib.
 
-_dependencies_checked = 0
+_dependencies_checked = False
+_oofconfig_checked = False
+
 class oof_build_xxxx:
     def make_oofconfig(self):
+        global _oofconfig_checked
+        if _oofconfig_checked:
+            return
+        _oofconfig_checked = True
+        
         cfgfilename = os.path.normpath(os.path.join(self.build_temp,
                                                     'SRC/oofconfig.h'))
         includedir = os.path.join('include', OOFNAME)
@@ -463,7 +490,7 @@ class oof_build_xxxx:
         # forced to.  It would require everything that depends on it
         # to be recompiled unnecessarily.
         if self.force or not os.path.exists(cfgfilename):
-            print "creating", cfgfilename
+            print "Creating config file:", cfgfilename
             if not self.dry_run:
                 os.system('mkdir -p %s' % os.path.join(self.build_temp, 'SRC'))
                 cfgfile = open(cfgfilename, "w")
@@ -473,6 +500,7 @@ class oof_build_xxxx:
 // Re-run setup.py to change the options.
 #ifndef OOFCONFIG_H
 #define OOFCONFIG_H
+#include <Python.h>
                 """
                 if HAVE_PETSC:
                     print >> cfgfile, '#define HAVE_PETSC 1'
@@ -505,17 +533,13 @@ class oof_build_xxxx:
                     else:
                         print >> sys.stderr, "Can't find perftools!"
                         sys.exit(1)
-                # Python pre-2.5 compatibility
-                print >> cfgfile, """\
-#include <Python.h>
-#if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
-typedef int Py_ssize_t;
-#define PY_SSIZE_T_MAX INT_MAX
-#define PY_SSIZE_T_MIN INT_MIN
-#endif /* PY_VERSION_HEX check */
-"""
+                if USE_COCOA:
+                    print >> cfgfile, "#define OOF_USE_COCOA"
+                    
                 print >> cfgfile, "#endif"
                 cfgfile.close()
+        else:
+            print "Reusing config file:", cfgfilename
 
     def check_header(self, headername):
         # Check that a c++ header file exists on the system.
@@ -711,7 +735,7 @@ typedef int Py_ssize_t;
         if not _dependencies_checked:
             depdict = self.find_dependencies()
             self.clean_targets(depdict)
-            _dependencies_checked = 1
+            _dependencies_checked = True
 
 
 # This does the swigging.
@@ -1078,14 +1102,16 @@ def get_global_args():
     # hasn't been called yet.
 
     global HAVE_MPI, HAVE_OPENMP, HAVE_PETSC, DEVEL, NO_GUI, \
-        ENABLE_SEGMENTATION, PROFILER, \
+        ENABLE_SEGMENTATION, PROFILER, USE_COCOA, \
         DIM_3, DATADIR, DOCDIR, OOFNAME, SWIGDIR, NANOHUB, vtkdir
+
     HAVE_MPI = _get_oof_arg('--enable-mpi')
     HAVE_PETSC = _get_oof_arg('--enable-petsc')
     DEVEL = _get_oof_arg('--enable-devel')
     NO_GUI = _get_oof_arg('--disable-gui')
     ENABLE_SEGMENTATION = _get_oof_arg('--enable-segmentation')
     DIM_3 = _get_oof_arg('--3D')
+    USE_COCOA = _get_oof_arg('--cocoa')
     NANOHUB = _get_oof_arg('--nanoHUB')
     HAVE_OPENMP = _get_oof_arg('--enable-openmp')
     vtkdir = _get_oof_arg('--vtkdir')
@@ -1191,7 +1217,7 @@ def set_platform_values():
             ## wrong.  If and when pkgconfig acquires a more robust
             ## way of finding its files, use it.
             pkgpath = "/opt/local/Library/Frameworks/Python.framework/Versions/%d.%d/lib/pkgconfig/" % (sys.version_info[0], sys.version_info[1])
-            print >> sys.stdout, "Adding", pkgpath
+            print >> sys.stdout, "Adding", pkgpath, "to PKG_CONFIG_PATH"
             extend_path("PKG_CONFIG_PATH", pkgpath)
         # Enable C++11
         platform['extra_compile_args'].append('-Wno-c++11-extensions')
@@ -1202,6 +1228,9 @@ def set_platform_values():
             platform['extra_compile_args'].append('-Wno-self-assign')
             platform['extra_compile_args'].append(
                 '-Wno-tautological-constant-out-of-range-compare')
+            # This is because vtk 7.1.1 uses VTK_OVERRIDE inconsistently
+            platform['extra_compile_args'].append(
+                '-Wno-inconsistent-missing-override')
         if PROFILER:
             # Disable Address Space Layout Randomization
             # http://stackoverflow.com/questions/10562280/line-number-in-google-perftools-cpu-profiler-on-macosx

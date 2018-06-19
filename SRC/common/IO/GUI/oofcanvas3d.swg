@@ -28,11 +28,11 @@
 
 class OOFCanvas3D : public GhostOOFCanvas {
 public:
-  OOFCanvas3D();
+  OOFCanvas3D(bool);
+  ~OOFCanvas3D();
   PyObject *widget();
 
   void set_mouse_callback(PyObject *pythonCallable);
-
   void show();
 
   void mouse_tumble(double x, double y);

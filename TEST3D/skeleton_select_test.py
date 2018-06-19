@@ -19,6 +19,9 @@
 
 ## TODO 3.1: Add tests using active areas.
 
+## TODO: Add tests for saving and restoring selections on modified
+## skeletons, where the node indexing might have changed.
+
 import unittest, os
 import memorycheck
 from UTILS import file_utils 

@@ -247,7 +247,7 @@ public:
   // For visualization
   void getGrid(double, const CSkeletonBase*, SkeletonFilter*,
 	       vtkUnstructuredGrid*) const;
-  vtkSmartPointer<vtkIntArray> getMaterialCellData(const CSkeletonBase*,
+  vtkSmartPointer<vtkDataArray> getMaterialCellData(const CSkeletonBase*,
 						   const SkeletonFilter*) const;
   
 private:

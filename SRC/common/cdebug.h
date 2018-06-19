@@ -20,6 +20,9 @@
 #include <string>
 #include <vector>
 
+void setDebugMode(bool);
+bool debug();
+
 void initDebug(PyObject*);
 void installSignals_();
 void restoreSignals_();
@@ -51,5 +54,6 @@ void closeDebugFile_();
 #endif // DEBUG
 
 void spinCycle(int);
+void vtkLeakCheck();
 
 #endif // CDEBUG_H

@@ -200,7 +200,6 @@ bool ElementQualityFilter::acceptable(const CSkeletonSelectable *selectable,
   // acceptable E, then the selectable should be drawn.
   ConstCSkeletonElementVector els;
   selectable->getElements(skeleton, els);
-  const CMicrostructure *ms = skeleton->getMicrostructure();
   for(ConstCSkeletonElementVector::iterator i=els.begin(); i<els.end(); ++i) {
     double e = (*i)->energyTotal(skeleton, alpha);
     if(e >= min && e <= max) {

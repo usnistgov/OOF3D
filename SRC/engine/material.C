@@ -40,6 +40,7 @@
 #include <vector>
 #include <map>
 
+#include <vtkExecutive.h>
 #include <vtkImageMapToColors.h>
 
 
@@ -622,7 +623,8 @@ public:
   {
     vtkSmartPointer<vtkLookupTable> lut = 
       vtkSmartPointer<vtkLookupTable>::New();
-    lut->SetNumberOfColors(microstructure->nCategories());
+    lut->SetNumberOfTableValues(microstructure->nCategories());
+    lut->SetTableRange(0, microstructure->nCategories()-1);
     for(int i=0; i<microstructure->nCategories(); ++i) {
       const Material *mat = getMaterialFromCategory(microstructure, i);
       if(mat) {
@@ -859,6 +861,8 @@ TimeStamp getMaterialTimeStamp(const CMicrostructure *ms) {
 const Material *getMaterialFromCategory(const CMicrostructure *ms,
 					int category)
 {
+  if(category == UNKNOWN_CATEGORY)
+    throw ErrProgrammingError("Unknown voxel category!", __FILE__, __LINE__);
   MaterialAttribute *m = dynamic_cast<MaterialAttribute*>
     (ms->getAttributeFromCategory(category, reg->index()));
   return m->get();
@@ -884,15 +888,18 @@ MaterialImage::MaterialImage(CMicrostructure *ms,
     noMaterial(*noMaterial),
     noColor(*noColor)
 {
-  
   sizeInPixels_ = microstructure->sizeInPixels();
   size_ = microstructure->size();
 
   vtkSmartPointer<vtkImageData> mImage = vtkSmartPointer<vtkImageData>::New();
   mImage->SetDimensions(sizeInPixels_);
-  mImage->SetScalarTypeToUnsignedChar();
-  mImage->SetNumberOfScalarComponents(1);
-  mImage->AllocateScalars();
+  // Using unsigned char here is ok if there are fewer than 257 voxel
+  // categories.  If it's changed to int, make sure to change the type
+  // of ptr in the loop below.
+  // mImage->SetScalarTypeToUnsignedChar();
+  // mImage->SetNumberOfScalarComponents(1);
+  // mImage->AllocateScalars();
+  mImage->AllocateScalars(VTK_UNSIGNED_CHAR, 1);
 
   Coord pixelSize = microstructure->sizeOfPixels();
   mImage->SetSpacing(pixelSize);
@@ -907,8 +914,7 @@ MaterialImage::MaterialImage(CMicrostructure *ms,
 				   i.coord()[0], i.coord()[1], i.coord()[2]);
       *ptr = microstructure->category(i.coord());
     }
-
-  mImage->Update();
+  // mImage->Update();
 
   vtkSmartPointer<vtkLookupTable> lut = 
     getMaterialColorLookupTable(microstructure, noColor, noMaterial);
@@ -916,7 +922,8 @@ MaterialImage::MaterialImage(CMicrostructure *ms,
     vtkSmartPointer<vtkImageMapToColors>::New();
   map->SetLookupTable(lut);
   map->SetOutputFormatToRGBA();
-  map->SetInputConnection(mImage->GetProducerPort());
+  map->SetInputData(mImage);
+  map->GetExecutive()->Update();
   image = map->GetOutput();
 }
 

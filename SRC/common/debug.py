@@ -12,6 +12,7 @@ import string
 import sys, re, gc
 import types
 import ooflib.SWIG.common.lock
+from ooflib.SWIG.common import cdebug
 from ooflib.SWIG.common import threadstate
 from ooflib.common import parallel_enable
 from ooflib.common import thread_enable
@@ -30,10 +31,12 @@ lock = ooflib.SWIG.common.lock.SLock()
 def set_debug_mode():
     global _debug_mode
     _debug_mode = 1
+    cdebug.setDebugMode(True)
 
 def clear_debug_mode():
     global _debug_mode
     _debug_mode = 0
+    cdebug.setDebugMode(False)
 
 def debug():
     return _debug_mode

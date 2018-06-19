@@ -65,7 +65,10 @@ class ToolBar:
         gtklogger.connect(tumblebutton, 'clicked', self.tumbleCB)
         tooltips.set_tooltip_text(
             tumblebutton,
-            "Click and drag on the graphics window to rotate the view.")
+            "Click and drag on the graphics window to rotate the view."
+            " Hold 'shift' to rotate about the center of the visible region."
+            " Hold 'control' to rotate about the focal point."
+            " Using no keys rotates about the previous axis.")
 
         dollybutton = gtk.RadioButton(label='Dolly', group=self.selectbutton)
         buttonrow.pack_start(dollybutton, expand=0, fill=0)
@@ -203,6 +206,10 @@ class ViewManipulatorMouseHandler(mousehandler.MouseHandler):
 
 
 class TumbleMouseHandler(ViewManipulatorMouseHandler):
+    def down(self, x, y, button, shift, ctrl):
+        ViewManipulatorMouseHandler.down(self, x, y, button, shift, ctrl)
+        self.gfxwindow.computeTumbleCenter(shift, ctrl)
+        
     def move(self, x, y, button, shift, ctrl):
         self.gfxwindow.oofcanvas.mouse_tumble(x,y)
         self.gfxwindow.updateview()

@@ -35,7 +35,9 @@ class PixelGroup;
 // TODO: Use unsigned ints for voxel categories.  It's inconsistent
 // now.  MicrostructureAttributes::getCategory returns an unsigned
 // int, but everything else seems to use int.  That's because
-// UNKNOWN_CAT is defined as -1 in engine/homogeneity.h.
+// UNKNOWN_CAT is defined as -1.
+
+#define UNKNOWN_CATEGORY -1
 
 // Some operations, such as finding the pixels under an element,
 // require marking pixels in the microstructure.  Neither the

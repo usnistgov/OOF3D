@@ -1,6 +1,5 @@
 # -*- python -*-
 
-
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
 # Recipients of this software assume all responsibilities associated
@@ -13,8 +12,6 @@
 # The GhostGfxWindow is the underlying non-GUI representation of a
 # graphics window.  The actual graphics window, GfxWindow, is derived
 # from GhostGfxWindow and overrides some of its functions.
-
-## TODO 3.1: Hidden layers aren't being hidden in cloned windows.
 
 ## TODO 3.1: Synchronize the view parameters in multiple gfx windows,
 ## so that changes in one are reflected automatically in all the
@@ -215,6 +212,8 @@ class GfxSettings:
                                         automatic.automatic,
                                         automatic.automatic)
         axisoffset = RelativeAxisOffset(*defaultOffset)
+        # work around for macOS canvas size bug on laptop
+        fixCanvasScaleBug = False 
         
     def __init__(self):
         # Copy all default (class) values into local (instance) variables.
@@ -273,7 +272,11 @@ class GhostGfxWindow:
         if not hasattr(self, 'settings'):
             self.settings = GfxSettings()
 
-        self.gtk_destruction_in_progress = False # see GfxWindowBase.destroyCB
+        # Flag that tells when the window is being destroyed.  See
+        # comments in GfxWindowBase.closeMenuCB,
+        # GfxWindowBase.runShutdownSequence, and
+        # DisplayMethod.destroy.
+        self.unfenestrating = False
 
         self.menu = OOF.addItem(OOFMenuItem(
             self.name,
@@ -392,8 +395,9 @@ class GhostGfxWindow:
 
         filemenu.addItem(OOFMenuItem(
             'Close',
-            callback=self.close,
+            callback=self.closeMenuCB,
             accel='w',
+            threadable=oofmenu.UNTHREADABLE,
             help="Close the graphics window.",
             discussion="<para>Close the graphics window.</para>"))
         filemenu.addItem(OOFMenuItem(
@@ -405,6 +409,7 @@ class GhostGfxWindow:
             discussion="""<para>
             See <xref linkend='MenuItem:OOF.File.Quit'/>.
             </para>"""))
+        
         self.toolboxmenu = self.menu.addItem(OOFMenuItem(
             'Toolbox',
             cli_only=1,
@@ -526,91 +531,96 @@ class GhostGfxWindow:
                 </para>"""
                 ))
 
-            ## TODO 3.1: It's not clear that layer ordering has any
-            ## meaning in 3D, so the menu items for raising, lowering,
-            ## and sorting the layers aren't included in 3D.
-            raisemenu = layermenu.addItem(OOFMenuItem(
-                'Raise',
-                help='Make a layer more visible.',
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/raiselayer.xml')
-                ))
-            raisemenu.addItem(OOFMenuItem(
-                'One_Level',
-                callback=self.raiseLayer,
-                accel='r',
-                params=[IntParameter('n', 0, tip="Layer index.")],
-                help="Raise the selected graphics layer.",
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/raiseone.xml')
-                ))
-            raisemenu.addItem(OOFMenuItem(
-                'To_Top',
-                callback=self.raiseToTop,
-                accel='t',
-                params=[IntParameter('n', 0, tip="Layer index.")],
-                help=\
-                "Draw the selected graphics layer on top of all other layers.",
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/raisetop.xml')
-                ))
-            raisemenu.addItem(OOFMenuItem(
-                'By',
-                callback=self.raiseBy,
-                cli_only = 1,
-                params=[IntParameter('n', 0, tip="Layer index."),
-                        IntParameter('howfar', 1,
-                                     tip="How far to raise the layer.")
-                        ],
-                help="Raise the selected graphics layer over"
-                " a given number of other layers.",
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/raiseby.xml')
-                ))
-            lowermenu = layermenu.addItem(OOFMenuItem(
-                'Lower',
-                help='Make a layer less visible.',
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/lowerlayer.xml')
-                ))
-            lowermenu.addItem(OOFMenuItem(
-                'One_Level',
-                callback=self.lowerLayer,
-                accel='l',
-                params=[IntParameter('n', 0, tip="Layer index.")],
-                help="Lower the selected graphics layer.",
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/lowerone.xml')
-                ))
-            lowermenu.addItem(OOFMenuItem(
-                'To_Bottom',
-                callback=self.lowerToBottom,
-                accel='b',
-                params=[IntParameter('n', 0, tip="Layer index.")],
-                help="Draw the selected graphics layer below all other layers.",
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/lowerbtm.xml')
-                ))
-            lowermenu.addItem(OOFMenuItem(
-                'By',
-                callback=self.lowerBy,
-                cli_only = 1,
-                params=[IntParameter('n', 0, tip="Layer index."),
-                        IntParameter('howfar', 1,
-                                     tip="How far to lower the layer.")
-                        ],
-                help="Lower the selected graphics layer under"
-                " a given number of other layers.",
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/lowerby.xml')
-                ))
+        raisemenu = layermenu.addItem(OOFMenuItem(
+            'Raise',
+            help='Make a layer more visible.',
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/raiselayer.xml')
+            ))
+        raisemenu.addItem(OOFMenuItem(
+            'One_Level',
+            callback=self.raiseLayer,
+            accel='r',
+            params=[IntParameter('n', 0, tip="Layer index.")],
+            help="Raise the selected graphics layer.",
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/raiseone.xml')
+            ))
+        raisemenu.addItem(OOFMenuItem(
+            'To_Top',
+            callback=self.raiseToTop,
+            accel='t',
+            params=[IntParameter('n', 0, tip="Layer index.")],
+            help=\
+            "Draw the selected graphics layer on top of all other layers.",
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/raisetop.xml')
+            ))
+        raisemenu.addItem(OOFMenuItem(
+            'By',
+            callback=self.raiseBy,
+            cli_only = 1,
+            params=[IntParameter('n', 0, tip="Layer index."),
+                    IntParameter('howfar', 1,
+                                 tip="How far to raise the layer.")
+                    ],
+            help="Raise the selected graphics layer over"
+            " a given number of other layers.",
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/raiseby.xml')
+            ))
+        lowermenu = layermenu.addItem(OOFMenuItem(
+            'Lower',
+            help='Make a layer less visible.',
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/lowerlayer.xml')
+            ))
+        lowermenu.addItem(OOFMenuItem(
+            'One_Level',
+            callback=self.lowerLayer,
+            accel='l',
+            params=[IntParameter('n', 0, tip="Layer index.")],
+            help="Lower the selected graphics layer.",
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/lowerone.xml')
+            ))
+        lowermenu.addItem(OOFMenuItem(
+            'To_Bottom',
+            callback=self.lowerToBottom,
+            accel='b',
+            params=[IntParameter('n', 0, tip="Layer index.")],
+            help="Draw the selected graphics layer below all other layers.",
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/lowerbtm.xml')
+            ))
+        lowermenu.addItem(OOFMenuItem(
+            'By',
+            callback=self.lowerBy,
+            cli_only = 1,
+            params=[IntParameter('n', 0, tip="Layer index."),
+                    IntParameter('howfar', 1,
+                                 tip="How far to lower the layer.")
+                    ],
+            help="Lower the selected graphics layer under"
+            " a given number of other layers.",
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/lowerby.xml')
+            ))
+        layermenu.addItem(OOFMenuItem(
+            'Reorder_All',
+            callback=self.reorderLayers,
+            help="Put the graphics layers in their default order.",
+            discussion=xmlmenudump.loadFile(
+                    'DISCUSSIONS/common/menu/reorderlayers.xml')
+            ))
+
+        if debug.debug():
             layermenu.addItem(OOFMenuItem(
-                'Reorder_All',
-                callback=self.reorderLayers,
-                help="Put the graphics layers in their default order.",
-                discussion=xmlmenudump.loadFile(
-                        'DISCUSSIONS/common/menu/reorderlayers.xml')
+                'Dump_Layers',
+                callback=self.dumpLayers,
+                help="Print a list of the current graphics layers."
                 ))
+
         settingmenu = self.menu.addItem(OOFMenuItem(
             'Settings',
             help='Control Graphics window behavior.',
@@ -626,11 +636,51 @@ class GhostGfxWindow:
                 callback=self.toggleAntialias,
                 value=self.settings.antialias,
                 threadable=oofmenu.THREADABLE,
-                help=
-                "Use antialiased rendering.",
+                help="Use antialiased rendering.",
                 discussion=xmlmenudump.loadFile(
                         'DISCUSSIONS/common/menu/antialias.xml')
                 ))
+
+## For FXAA antialiasing
+ #        settingmenu.addItem(OOFMenuItem(
+ #            'Antialias_Parameters',
+ #            callback=self.setAntialiasOptions,
+ #            threadable=oofmenu.THREADABLE,
+ #            params=[
+ #                parameter.FloatRangeParameter(
+ #                    'RelativeContrastThreshold', (0.,1.,0.01), value=0.125,
+ #                    tip="""Threshold for applying FXAA to a pixel, relative to the maximum luminosity of its 4 immediate neighbors.
+ # 1/3: Too little
+ # 1/4: Low quality
+ # 1/8: High quality (default)
+ # 1/16: Overkill"""),
+ #                parameter.FloatRangeParameter(
+ #                    'HardContrastThreshold', (0.,1.,0.01), value=0.0625,
+ #                    tip="""If the contrast of the current pixel and it's 4 immediate NSWE neighbors is less than HardContrastThreshold, the pixel is not considered aliased and will not be affected by FXAA.
+ # 1/32: Visible limit
+ # 1/16: High quality (default)
+ # 1/12: Upper limit (start of visible unfiltered edges)"""),
+ #                parameter.FloatRangeParameter(
+ #                    'SubpixelBlendLimit', (0.,1.,0.01), value=0.75,
+ #                    tip="This parameter sets an upper limit to the amount of subpixel blending to prevent the image from simply getting blurred."),
+ #                parameter.FloatRangeParameter(
+ #                    'SubpixelContrastThreshold', (0.,1.,0.01), value=0.25,
+ #                    tip="""Minimum amount of subpixel aliasing required for subpixel antialiasing to be applied.
+ # 1/2: Low subpixel aliasing removal
+ # 1/3: Medium subpixel aliasing removal
+ # 1/4: Default subpixel aliasing removal
+ # 1/8: High subpixel aliasing removal
+ # 0: Complete subpixel aliasing removal"""
+ #                ),
+ #                parameter.NonNegativeIntParameter(
+ #                    'EndpointSearchIterations', value=12,
+ #                    tip="Increasing this value will increase runtime, but also properly detect longer edges. The current implementation steps one pixel in both the positive and negative directions per iteration. The default value is 12, which will resolve endpoints of edges < 25 pixels long."),
+ #                parameter.BooleanParameter(
+ #                    'UseHighQualityEndpoints', value=1,
+ #                    tip="Use an improved edge endpoint detection algorithm.")
+ #                ],
+ #            help="Set various parameters for vtk's FXAA antialiasing"))
+ 
         if config.dimension() == 3:
             axesmenu = settingmenu.addItem(OOFMenuItem('Axes'))
             axesmenu.addItem(CheckOOFMenuItem(
@@ -908,6 +958,14 @@ class GhostGfxWindow:
                     'DISCUSSIONS/common/menu/margin.xml')
             ))
 
+        settingmenu.addItem(CheckOOFMenuItem(
+            'Fix_Scaling_Bug',
+            callback=self.fixScalingBug,
+            value=self.settings.fixCanvasScaleBug,
+            threadable=oofmenu.THREADABLE,
+            help="Fix a factor of two error in canvas size and position. (NOT OUR FAULT!)"
+            ))
+
         if config.dimension() == 2:
             scrollmenu = settingmenu.addItem(OOFMenuItem(
                 'Scroll',
@@ -974,13 +1032,26 @@ class GhostGfxWindow:
         self.switchboardCallbacks.extend(callbacks)
 
     def createPredefinedLayers(self):
+        # if 1:
+        #     debug.fmsg("NOT CREATING PREDEFINED LAYERS")
+        #     return
+
         # Create pre-defined layers.  These are in all graphics
         # windows, regardless of whether or not they are drawable at
         # the moment.
-        for predeflayer in PredefinedLayer.allPredefinedLayers:
+
+        # For debugging predefined layers, it's sometimes useful to
+        # include only a subset of them.  This loop is done in a
+        # clumsy way so that it's easy to narrow down the set of
+        # layers that are included.
+        ## npre = len(PredefinedLayer.allPredefinedLayers)
+        ## debug.fmsg("npre=", npre)
+        minpre = 0
+        maxpre = -1
+        for predeflayer in PredefinedLayer.allPredefinedLayers[minpre:maxpre]:
+            layer, who = predeflayer.createLayer(self)
             # The gfxlock has been acquired already, so we call
             # incorporateLayer with lock=False.
-            layer, who = predeflayer.createLayer(self)
             self.incorporateLayer(layer, who, autoselect=False, lock=False)
         
         # Create default layers if possible.  One layer is created for
@@ -1065,22 +1136,22 @@ class GhostGfxWindow:
                 self.menu.Layer.Freeze.enable()
                 self.menu.Layer.Unfreeze.disable()
 
-            if config.dimension() == 2:
-                if self.selectedLayer.hidden:
-                    self.menu.Layer.Show.enable()
-                    self.menu.Layer.Hide.disable()
-                else:
-                    self.menu.Layer.Show.disable()
-                    self.menu.Layer.Hide.enable()
-                if self.layerID(self.selectedLayer) == 0:
-                    self.menu.Layer.Lower.disable()
-                else:
-                    self.menu.Layer.Lower.enable()
-                if self.layerID(self.selectedLayer) == self.nlayers()-1:
-                    self.menu.Layer.Raise.disable()
-                else:
-                    self.menu.Layer.Raise.enable()
+            if self.selectedLayer.hidden:
+                self.menu.Layer.Show.enable()
+                self.menu.Layer.Hide.disable()
+            else:
+                self.menu.Layer.Show.disable()
+                self.menu.Layer.Hide.enable()
+            if self.layerID(self.selectedLayer) == 0:
+                self.menu.Layer.Lower.disable()
+            else:
+                self.menu.Layer.Lower.enable()
+            if self.layerID(self.selectedLayer) == self.nlayers()-1:
+                self.menu.Layer.Raise.disable()
+            else:
+                self.menu.Layer.Raise.enable()
 
+            if config.dimension() == 2:
                 self.menu.Layer.Show_Contour_Map.disable()
                 self.menu.Layer.Hide_Contour_Map.disable()
                 if self.selectedLayer.contour_capable():
@@ -1162,61 +1233,49 @@ class GhostGfxWindow:
             newwindow.draw()
             newwindow.viewCB(None, view)
             ## TODO 3.1: Clone the view history.
-
-            ## TODO: After cloning a window containing only a hidden
-            ## image layer and showing the layer in the clone, the
-            ## image is drawn at the wrong size and with a black
-            ## border. Making any change to the view fixes it. 
         finally:
             self.releaseGfxLock()
 
-    def close(self, menuitem, *args):
-        # Before acquiring the gfx lock, kill all subthreads, or
-        # this may deadlock!
-        #self.device.destroy()
-
-        if self.oofcanvas is not None:
-            self.oofcanvas.deactivate()
-            
-        self.acquireGfxLock()
-        try:
-            self.gfxmanager.closeWindow(self)
-            
-            # Things can be shut down via several pathways (ie, from
-            # scripts or gtk events), so at each step we have to make sure
-            # that the step won't be repeated.  This function has been
-            # called from the menus, so here we turn off the menu
-            # callback.
-            menuitem.callback = None
-
-            for callback in self.switchboardCallbacks:
-                switchboard.removeCallback(callback)
-            self.switchboardCallbacks = []
-
+    def removeAllLayers(self):
+        if self.layers:
             for layer in self.layers[:]:
-                layer.destroy(not self.gtk_destruction_in_progress)
+                layer.destroy(not self.unfenestrating)
             self.layers = []
 
-            for toolbox in self.toolboxes:
-                toolbox.close()
+    def closeMenuCB(self, menuitem, *args):
+        # This method is redefined in gfxwindowbase.py in GUI mode
+        debug.mainthreadTest()
+        self.unfenestrating = True 
+        self.removeAllLayers()
+        self.shutdownGfx_menu()
 
-            # cleanup to prevent possible circular references
-            ## del self.display
-            del self.gfxmanager
-            self.menu.clearMenu()
-            OOF.Windows.Graphics.removeItem(self.name)
-            OOF.removeItem(self.name)
-            self.menu = None
-            del self.selectedLayer
-            del self.toolboxes
-        finally:
-            # Although the window is closing, it's important to
-            # release the lock so that any remaining drawing threads
-            # can finish.  They won't actually try to draw anything,
-            # because of the device.destroy call, above.  TODO 3.1:
-            # Fix this comment.  There's no device.destroy call. Could
-            # the threads actually try to draw something?
-            self.releaseGfxLock()
+    def shutdownGfx_menu(self):
+        # The non-gui part of the gfx window shutdown procedure.
+        debug.mainthreadTest()
+        # To prevent timiing issues, the whole window shutdown
+        # sequence is on the main thread, so the gfxLock isn't
+        # acquired here.
+
+        self.oofcanvas = None   # calls the OOFCanvas3D destructor
+
+        self.gfxmanager.closeWindow(self)
+
+        for callback in self.switchboardCallbacks:
+            switchboard.removeCallback(callback)
+        self.switchboardCallbacks = []
+
+        for toolbox in self.toolboxes:
+            toolbox.close()
+
+        # cleanup to prevent possible circular references
+        ## del self.display
+        del self.gfxmanager
+        self.menu.clearMenu()
+        OOF.Windows.Graphics.removeItem(self.name)
+        OOF.removeItem(self.name)
+        self.menu = None
+        del self.selectedLayer
+        del self.toolboxes
 
     def clear(self, *args, **kwargs):
         # Remove all user specified layers from the display.
@@ -1245,7 +1304,6 @@ class GhostGfxWindow:
             self.releaseGfxLock()
 
     def drawAtTime(self, *args, **kwargs):
-        debug.fmsg("drawAtTime calling _draw on subthread")
         subthread.execute(self._draw, args, kwargs)
 
     def animate(self, *args, **kwargs):
@@ -1272,18 +1330,38 @@ class GhostGfxWindow:
                 layer.modified()
         finally:
             self.releaseGfxLock()
-        
+
     def redraw(self, menuitem):
         for layer in self.layers:
             if not layer.frozen:
-                layer.redraw()
-        # self.backdate()                    # backdates timestamps
+                layer.redraw()  # sets vtk Modified flag for layer
         self.draw()
 
     def toggleAntialias(self, menuitem, antialias):
         self.settings.antialias = antialias
         mainthread.runBlock(self.oofcanvas.setAntiAlias, (antialias,))
         self.draw()
+
+    def fixScalingBug(self, menuitem, fixit):
+        self.settings.fixCanvasScaleBug = fixit
+        mainthread.runBlock(self.oofcanvas.setFixCanvasScaleBug, (fixit,))
+        
+    # def setAntialiasOptions(self, menuitem,
+    #                         RelativeContrastThreshold,
+    #                         HardContrastThreshold,
+    #                         SubpixelBlendLimit,
+    #                         SubpixelContrastThreshold,
+    #                         EndpointSearchIterations,
+    #                         UseHighQualityEndpoints):
+    #     mainthread.runBlock(self.oofcanvas.setFXAAOptions,
+    #                         (RelativeContrastThreshold,
+    #                          HardContrastThreshold,
+    #                          SubpixelBlendLimit,
+    #                          SubpixelContrastThreshold,
+    #                          EndpointSearchIterations,
+    #                          UseHighQualityEndpoints))
+    #     self.draw()
+        
 
     def toggleListAll(self, menuitem, listall):
         self.acquireGfxLock()
@@ -1528,26 +1606,41 @@ class GhostGfxWindow:
                 return layer
         return None
 
-    ## TODO 3.1: It's not clear that layer ordering has any meaning in
-    ## 3D, so the menu items for raising, lowering, and sorting the
-    ## layers aren't included in 3D.  HOWEVER, if the layers aren't
-    ## sorted in the canonical order when they're first constructed in
-    ## 3D, the selected voxels don't appear, so sortLayers() *always*
-    ## runs in 3D.
-
     def sortLayers(self, forced=False):
-        if forced or config.dimension() == 3 or self.settings.autoreorder:
+        if forced or self.settings.autoreorder:
             self.layers.sort(display.layercomparator)
             self.sortedLayers = True
+            self.setLayerOffsetParameters()
 
+    def setLayerOffsetParameters(self):
+        # Adjust the coincident topology offset parameters that vtk
+        # uses to determine how to draw coincident objects.  Objects
+        # with more negative offsets hide those with more positive
+        # ones.  It's not really clear (to me) what the parameters
+        # mean, but the first one, "factor", is some sort of slope,
+        # and the second, "units", is a constant offset.  I don't know
+        # what the slope multiplies, or what "units" is supposed to
+        # mean.
+        if self.nlayers() < 2:
+            return
+        delta = -10./self.nlayers() # negative!
+        factor = 0.
+        units = 0.
+        for layer in self.layers:
+            if layer.canvaslayer is not None:
+                layer.canvaslayer.setCoincidentTopologyParams(factor, units)
+            factor += delta
+            units += delta
+            
     def raise_layer_by(self, n, howfar):
         ## TODO OPT: Lock?
         if n < self.nlayers()-howfar:
             thislayer = self.layers[n]
-            for i in range(howfar): # TODO OPT: Use slice copy instead of loop
-                self.layers[n+i] = self.layers[n+i+1]
+            self.layers[n:n+howfar] = self.layers[n+1:n+howfar+1]
+            # for i in range(howfar): # TODO OPT: Use slice copy instead of loop
+            #     self.layers[n+i] = self.layers[n+i+1]
             self.layers[n+howfar] = thislayer
-            thislayer.raise_layer(howfar) # Currently a no-op!
+            self.setLayerOffsetParameters()
             self.sortedLayers = False
             # self.layerChangeTime.increment()
     def raise_layer(self, n):
@@ -1559,10 +1652,11 @@ class GhostGfxWindow:
         ## TODO OPT: Lock?
         if n >= howfar:
             thislayer = self.layers[n]
-            for i in range(howfar): # TODO OPT: Use slice copy instead of loop
-                self.layers[n-i] = self.layers[n-i-1]
+            self.layers[n-howfar+1:n+1] = self.layers[n-howfar:n]
+            # for i in range(howfar): # TODO OPT: Use slice copy instead of loop
+            #     self.layers[n-i] = self.layers[n-i-1]
             self.layers[n-howfar] = thislayer
-            thislayer.lower_layer(howfar) # Currently a no-op!
+            self.setLayerOffsetParameters()
             self.sortedLayers = False
             # self.layerChangeTime.increment()
     def lower_layer(self, n):
@@ -1638,7 +1732,8 @@ class GhostGfxWindow:
                              point, view, layer.canvaslayer)
                             ),
                         layer
-                        )  
+                        )
+            return (None, None)
         finally:
             self.releaseGfxLock()
 
@@ -1656,6 +1751,7 @@ class GhostGfxWindow:
                         ),
                     layer
                     )
+        return (None, None)
 
     def findClickedActor(self, classinfo, point, view):
         self.acquireGfxLock()
@@ -1670,7 +1766,8 @@ class GhostGfxWindow:
                              point, view, layer.canvaslayer)
                             ),
                         layer
-                        )  
+                        )
+            return (None, None)
         finally:
             self.releaseGfxLock()
 
@@ -1688,6 +1785,7 @@ class GhostGfxWindow:
                             ),
                         layer
                         )
+            return (None, None)
         finally:
             self.releaseGfxLock()
 
@@ -1705,6 +1803,7 @@ class GhostGfxWindow:
                         ),
                     layer
                     )
+        return (None, None)
 
     def findClickedCell(self, who, point, view):
         self.acquireGfxLock()
@@ -1744,8 +1843,8 @@ class GhostGfxWindow:
                         # This shouldn't happen...
                         raise ooferror.ErrPyProgrammingError(
                             "Filter failure in findClickedCellID")
-                        # return (None, None)
                     return (cellidx, rval[1])
+            return (None, None)
         finally:
             self.releaseGfxLock()
 
@@ -1775,6 +1874,7 @@ class GhostGfxWindow:
                     raise ooferror.ErrPyProgrammingError(
                         "Filter failure in findClickedCellID")
                 return (cellidx, rval[1], layer)
+        return (None, None, None)
         
     def findClickedCellCenter(self, who, point, view):
         self.acquireGfxLock()
@@ -2124,6 +2224,10 @@ class GhostGfxWindow:
         self.newLayerMembers()
         self.draw()
 
+    def dumpLayers(self, menuitem):
+        for i, layer in enumerate(self.layers):
+            print i, layer.__class__.__name__
+
     def listedLayers(self):             # for testing
         result = []
         for layer in self.layers:
@@ -2135,6 +2239,37 @@ class GhostGfxWindow:
         pass
                 
     #####################################
+
+    # computeTumbleCenter is called by the TumbleMouseHandler (in
+    # toolbarGUI.py) when the mouse button is pressed.  It has to find
+    # the point about which to rotate the camera and focal plane.
+
+    # If the shift key was pressed at mouse-down, then a new center of
+    # rotation is computed from the bounding box of the visible
+    # objects.  This can be slow to compute, so the default is to use
+    # the previous center.  The control key says to set the center to
+    # the focal point.
+
+    def computeTumbleCenter(self, shift, ctrl):
+        if shift:
+            renderer = self.oofcanvas.get_renderer()
+            bbox = None
+            for layer in self.layers:
+                if layer.canvaslayer.showing():
+                    ok, layerbbox = layer.canvaslayer.visibleBoundingBox(
+                        renderer)
+                    if ok:
+                        if bbox is None:
+                            bbox = layerbbox
+                        else:
+                            bbox.swallowPrism(layerbbox)
+            if bbox is not None:
+                self.oofcanvas.setTumbleCenter(bbox.center())
+        elif ctrl:
+            self.oofcanvas.setTumbleAroundFocalPoint()
+                
+
+    #####################################    
     
     def findAnimationTimes(self):
         # Return a lsit of all possible tiems that can appear in an
@@ -2185,6 +2320,9 @@ class GhostGfxWindow:
         self.draw()
         
     def newToolboxClass(self, tbclass):
+        # if True:
+        #     debug.fmsg("NOT CREATING TOOLBOXES")
+        #     return
         tb = tbclass(self)              # constructs toolbox
         self.toolboxes.append(tb)
         menu = self.toolboxmenu.addItem(
@@ -2238,6 +2376,8 @@ class PredefinedLayer:
 
 ################################################
 
+# Global defaults
+
 ## Set default values for the gfx window size.  This isn't handled by
 ## GfxSettings, because the window size isn't set in the window's own
 ## settings menu.
@@ -2258,6 +2398,19 @@ mainmenu.gfxdefaultsmenu.addItem(oofmenu.OOFMenuItem(
                                    tip="Window height in pixels.")],
     help="Set the initial size of graphics windows.",
     discussion="<para> Set the initial size of graphics windows. </para>"
+    ))
+
+
+def _fixScalingBug(menuitem, fixit):
+    GfxSettings.fixCanvasScaleBug = fixit
+    
+mainmenu.gfxdefaultsmenu.addItem(oofmenu.CheckOOFMenuItem(
+    "Fix_Scaling_Bug",
+    callback=_fixScalingBug,
+    ordering=100,
+    value=GfxSettings.fixCanvasScaleBug,
+    threadable=oofmenu.THREADABLE,
+    help="Work around a bug in window scaling. (NOT OUR FAULT!)"
     ))
 
 

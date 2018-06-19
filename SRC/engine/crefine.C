@@ -208,17 +208,23 @@ void Refine::getElementSignatures(CSkeletonBase *skeleton,
 
 CSkeletonBase* Refine::refine(CSkeletonBase *skeleton, CSkeleton *newSkeleton)
 {
-
+#ifdef TESTCOVERAGE
+  oofcerr << "*** Running Refine::refine() with TESTCOVERAGE defined."
+	  << std::endl;
+  oofcerr << "*** Change it in crefine.h if that's not what you meant to do."
+	  << std::endl;
+#endif // TESTCOVERAGE
   DefiniteProgress *progress = 
     dynamic_cast<DefiniteProgress*>(getProgress("Refine", DEFINITE));
   try {
-    //TODO MER: need additional marking for certain 2D cases
+    targets->findUnmarkableSegments(skeleton);
     targets->createSegmentMarks(skeleton, criterion, divisions);
     CSkeletonMultiNodeKeySet segmentSet;
     CSkeletonMultiNodeKeySet faceSet;
 
     // getElementSignatures creates vector of pairs of elements and
     // signatures.  It is randomized, with the deadlockable cases first.
+    // TODO: In C++11 getElementSignatures can return the vector.
     ElementSignatureVector elements; 
     getElementSignatures(skeleton, newSkeleton, elements);
 
@@ -248,6 +254,16 @@ CSkeletonBase* Refine::refine(CSkeletonBase *skeleton, CSkeleton *newSkeleton)
 	// std::cerr << "Refine::refinement: refinement=" << refinement->rule
 	// 		<< std::endl;
 #ifdef DEBUG
+	for(CSkeletonElement *el : *newElements) {
+	  if(el->suspect()) {
+	    oofcerr << "Refine::refine: "
+#ifdef TESTCOVERAGE
+		    << refinement->rule
+#endif // TESTCOVERAGE
+		    << " created suspect element " << *el << std::endl;
+	    el->printAngles();
+	  }
+	}
 	// check that the volume of the original element is the same
 	// (within a small tolerance) of the total volume of the new
 	// elements.
@@ -366,45 +382,6 @@ ElementEdgeNodes *Refine::getElementEdgeNodes(CSkeletonElement *element,
   return elementEdgeNodes;
 }
 
-// TODO: Why are the isGood methods here instead of in
-// crefinementcriterion.C?
-
-bool MinimumVolume::isGood(CSkeletonBase *skeleton, CSkeletonMultiNodeSelectable *selectable)
-  const
-{
-   if(units == "Voxel")
-     return ((dynamic_cast<CSkeletonElement*> (selectable))->volumeInVoxelUnits(skeleton->getMicrostructure()) > threshold);
-   else if(units == "Physical")
-     return ((dynamic_cast<CSkeletonElement*> (selectable))->volume() > threshold);
-   else if(units == "Fractional")
-     return ((dynamic_cast<CSkeletonElement*> (selectable))->volumeInFractionalUnits(skeleton->getMicrostructure()) > threshold);
-   else return false;
-}
-
-bool MinimumArea::isGood(CSkeletonBase *skeleton, CSkeletonMultiNodeSelectable *selectable)
-  const
-{  
-   if(units == "Voxel")
-     return ((dynamic_cast<CSkeletonFace*> (selectable))->areaInVoxelUnits(skeleton->getMicrostructure()) > threshold);
-   else if(units == "Physical")
-     return ((dynamic_cast<CSkeletonFace*> (selectable))->area() > threshold);
-   else if(units == "Fractional")
-     return ((dynamic_cast<CSkeletonFace*> (selectable))->areaInFractionalUnits(skeleton->getMicrostructure()) > threshold);
-   else return false;
-}
-
-bool MinimumLength::isGood(CSkeletonBase *skeleton, CSkeletonMultiNodeSelectable *selectable)
-  const
-{  
-   if(units == "Voxel")
-     return ((dynamic_cast<CSkeletonSegment*> (selectable))->lengthInVoxelUnits(skeleton->getMicrostructure()) > threshold);
-   else if(units == "Physical")
-     return ((dynamic_cast<CSkeletonSegment*> (selectable))->length() > threshold);
-   else if(units == "Fractional")
-     return ((dynamic_cast<CSkeletonSegment*> (selectable))->lengthInFractionalUnits(skeleton->getMicrostructure()) > threshold);
-   else return false;
-}
-
 ProvisionalRefinement::ProvisionalRefinement(CSkeletonElementVector *els,
 #ifdef TESTCOVERAGE
 					     const std::string &rool
@@ -518,8 +495,8 @@ static ProvisionalRefinement *getBestRefinement(
 				double alpha,
 				CSkeletonElementSet *xtras=0)
 {
-  double energy_min = 1000;
-  ProvisionalRefinement *bestRefinement = 0;
+  double energy_min = std::numeric_limits<double>::max();
+  ProvisionalRefinement *bestRefinement = nullptr;
 
 // #ifdef DEBUG
 //   DoubleVec energies;
@@ -546,7 +523,7 @@ static ProvisionalRefinement *getBestRefinement(
 //   }
 // #endif // DEBUG
 
-  if(bestRefinement == 0) {
+  if(bestRefinement == nullptr) {
     std::cerr << "num refinements " << refinements.size() << std::endl;
     throw ErrProgrammingError("CRefine: could not find a refinement",
 			      __FILE__, __LINE__);
@@ -561,34 +538,29 @@ static ProvisionalRefinement *getBestRefinement(
   // element counts go to zero.
 
   CSkeletonElementSet doomed;
-  for(ProvisionalRefinementVector::iterator it=refinements.begin(); 
-      it!=refinements.end(); ++it) 
-    {
-      if((*it) != bestRefinement) {
-	CSkeletonElementVector *ev = (*it)->getElements();
-	for(CSkeletonElementVector::iterator i=ev->begin(); i!=ev->end(); ++i) {
-	  if(*i != NULL)
-	    doomed.insert(*i);
-	}
-	delete *it;
+  for(ProvisionalRefinement *refinement : refinements) {
+    if(refinement != bestRefinement) {
+      for(CSkeletonElement *el : *refinement->getElements()) {
+	doomed.insert(el);
       }
+      delete refinement;
     }
+  }
 
   // xtras contains additional elements that the refinement rule
   // created, but might not have been used in any
   // ProvisionalRefinement.
   if(xtras)
-    for(CSkeletonElementSet::iterator it=xtras->begin(); it!=xtras->end(); ++it)
-      doomed.insert(*it);
+    doomed.insert(xtras->begin(), xtras->end());
 
-  for(CSkeletonElementSet::iterator e=doomed.begin(); e!= doomed.end(); ++e) {
-    if(!bestRefinement->hasElement(*e))
-      delete (*e);
+  for(CSkeletonElement *e : doomed) {
+    if(!bestRefinement->hasElement(e))
+      delete e;
   }
 
   bestRefinement->accept(skeleton);
   return bestRefinement;
-}
+} // end getBestRefinement()
 
 
 /************************************************************
@@ -656,8 +628,8 @@ ProvisionalRefinement *Refine::tet1Edge1Div(CSkeletonElement *element,
   delete edgeNodes;
 
   ProvisionalRefinement *pr = new ProvisionalRefinement(els, name);
-  pr->accept(newSkeleton);
-  return pr;
+  ProvisionalRefinementVector refinements({pr});
+  return getBestRefinement(newSkeleton, refinements, alpha);
 } // end tet1Edge1Div
 
 // --------
@@ -794,8 +766,8 @@ ProvisionalRefinement *Refine::tet2Edges1DivOpposite(CSkeletonElement *element,
   delete edgeNodes;
 
   ProvisionalRefinement *pr = new ProvisionalRefinement(els, name);
-  pr->accept(newSkeleton);
-  return pr;
+  ProvisionalRefinementVector refinements({pr});
+  return getBestRefinement(newSkeleton, refinements, alpha);
 } // end tet2Edges1DivOpposite
 
 // --------
@@ -837,8 +809,8 @@ ProvisionalRefinement *Refine::tet3Edges1DivTriangle(CSkeletonElement *element,
   delete edgeNodes;
 
   ProvisionalRefinement *pr = new ProvisionalRefinement(els, name);
-  pr->accept(newSkeleton);
-  return pr;
+  ProvisionalRefinementVector refinements({pr});
+  return getBestRefinement(newSkeleton, refinements, alpha);
 } // end tet3Edges1DivTriangle
 
 // --------
@@ -1789,7 +1761,7 @@ ProvisionalRefinement *Refine::tet6Edges1Div(CSkeletonElement *element,
   } // end loop over refinements i
   delete edgeNodes;
   return getBestRefinement(newSkeleton, refinements, alpha);
-}
+} // end Refine::tet6Edges1Div
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 

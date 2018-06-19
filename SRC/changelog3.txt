@@ -13,6 +13,55 @@
  * oof_manager@nist.gov. 
  */
 
+3.2.0
+
+Fixed a bug that was making the Microstructure recalculate voxel
+categories far too often.
+
+Added the Relax Skeleton modifier.
+
+Added a RefinementTarget to split the long edges of a Skeleton
+element.
+
+Loading Skeleton node and element selections from data files is now
+much faster.
+
+Fixed a bug that was preventing compilation on gcc 7.
+
+Modified the "Tumble" method, so that objects are rotated about the
+center of the visible region if "shift" is pressed when clicking the
+mouse.  If "control" is pressed, objects are rotated around the focal
+point.  If neither is pressed, the previous pivot point is used.
+
+Fixed a bug with the "Recenter" button in the Translate group in the
+Viewer toolbox.
+
+Fixed a bug that was making the Material Color display layer for
+Microstructures show incorrect colors.
+
+Fixed a bug in saving 3D images as a set of files.
+
+Upgraded vtk from 5.10.1 to 7.1.1.  Probably everybody will need to
+build vtk by hand now.  Apple users should build vtk to use Cocoa
+instead of X11 and build oof3d with the --cocoa argument.
+
+Fixed the Threshold function for images.
+
+Fixed a bug in the widgets for choosing Skeleton groups when used as
+command arguments. 
+
+Fixed errors in updating filtered skeleton and mesh displays.
+
+Fixed the pixel, skeleton, and mesh info displays.
+
+Right-clicking on the layer list in the graphics window brings up the
+layer editing menu.
+
+Fixed a bug that made it impossible to save files after loading images
+using the "Listed Files" option.
+
+Improved initial parameters for clipping planes.
+
 3.1.2
 
 Fixed errors that made saving a large Mesh in abaqus format take far
@@ -26,9 +75,6 @@ before its Skeleton had finished computing its homogeneity.
 
 Fixed a bug in which the coordinate axes were drawn badly if a
 Microstructure had an extreme aspect ratio.
-
-Fixed a bug that made it impossible to save files after loading images
-using the "Listed Files" option.
 
 3.1.1.1
 

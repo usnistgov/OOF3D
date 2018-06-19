@@ -39,6 +39,63 @@
 // TODO 3.1: When multiple intersecting clipping planes are used, the
 // Skeleton isn't clipped correctly.  See clipbug2.log in TEST3D.
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Compute the bounding box of the part of the data that's within the
+// frustum.  The frustum is the volume that's visible to the camera.
+// This is used to find the center of the visible objects on the
+// canvas, which is used by OOFCanvas3D::mouse_tumble.  mouse_tumble
+// would use vtkRenderer::ComputeVisiblePropBounds instead, except
+// that ComputeVisiblePropBounds includes all the points in a grid,
+// not just the ones that are in the drawn cells.  As a result, all
+// tumbles are centered on the center of the Microstructure, making it
+// impossible to rotate a small cluster of elements.
+
+bool getVisibleBoundingBox(vtkDataSet *data,
+			   vtkSmartPointer<vtkRenderer> renderer,
+			   CRectangularPrism *bbox)
+{
+  vtkIdType ncells = data->GetNumberOfCells();
+  if(ncells == 0)
+    return false;
+  CRectangularPrism layerbbox;	// "uninitialized", with max < min
+  int foundSomething = false;
+  for(vtkIdType c=0; c<ncells; c++) {
+    vtkCell *cell = data->GetCell(c); // not thread safe! Should be ok if locked
+    vtkIdType npts = cell->GetNumberOfPoints();
+    for(vtkIdType i=0; i<npts; i++) {
+      // Is this point visible?  Rather than compute the frustum
+      // planes and check that the point is on the correct side of all
+      // of them, it's easier to covert the point to ViewPort
+      // coordinates.  The visible part of the ViewPort is defined by
+      // -1<x<1, -1<y<1, and z between the clipping planes. But I
+      // can't seem to get sensible values for the clipping planes
+      // from vtkCamera::GetClippingRange, so we're ignoring z values
+      // here.
+      Coord3D pt(data->GetPoint(cell->GetPointId(i)));
+      double x = pt[0];
+      double y = pt[1];
+      double z = pt[2];
+      renderer->WorldToView(x, y, z); // converts values in place
+      // I don't understand the values returned by GetClippingRange,
+      // so we're just ignoring them.
+      if(x >= -1 && x <= 1 && y >= -1 && y <= 1
+	 //	 && z >= zmin && z <= zmax
+	 )
+	{
+	  layerbbox.swallow(pt);
+	  foundSomething = true;
+	}
+    } // end loop over points i in cell
+  } // end loop over cells c
+  if(foundSomething) {
+    *bbox = layerbbox;
+  }
+  return foundSomething;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 const std::string &OOFCanvasLayerBase::modulename() const {
   static const std::string modname("ooflib.SWIG.common.IO.canvaslayer");
   return modname;
@@ -49,13 +106,11 @@ OOFCanvasLayerBase::OOFCanvasLayerBase(GhostOOFCanvas *c, const std::string &nm)
     name_(nm),
     clipState(CLIP_UNKNOWN)
 {
-  c->newLayer(this);
   // oofcerr << "OOFCanvasLayerBase::ctor: " << this << " " << name() 
   // 	  << std::endl;
 }
 
 OOFCanvasLayerBase::~OOFCanvasLayerBase() {
-  canvas->removeLayer(this);
 }
 
 void OOFCanvasLayerBase::set_clipping(bool clip, bool inverted) {
@@ -71,21 +126,59 @@ void OOFCanvasLayerBase::set_clipping(bool clip, bool inverted) {
     set_clip_parity(inverted);
 }
 
+bool OOFCanvasLayerBase::visibleBoundingBox(vtkSmartPointer<vtkRenderer>,
+					    CRectangularPrism*)
+  const
+{
+  return false;
+}
+
 std::ostream &operator<<(std::ostream &os, const OOFCanvasLayerBase &layer) {
   return os << layer.name();
 }
 
 OOFCanvasLayer::OOFCanvasLayer(GhostOOFCanvas *c, const std::string &nm)
   : OOFCanvasLayerBase(c, nm),
-    showing_(false)
-{}
+    showing_(false),
+    empty_(true)
+{
+  c->newLayer(this);
+}
 
 OOFCanvasLayer::~OOFCanvasLayer() {
+  canvas->removeLayer(this);
 }
 
 void OOFCanvasLayer::addProp(vtkSmartPointer<vtkProp> prop) {
   props.push_back(prop);
   canvas->renderer->AddViewProp(prop);
+}
+
+void OOFCanvasLayer::setEmpty(bool empty) {
+  // This is a hack to avoid a peculiarity in vtk (in versions 7.1.1
+  // and 8.0.1, at least).  vtkDataSetMapper::Render creates a
+  // vtkDataSetSurfaceFilter when the mapper's input type isn't
+  // VTK_POLY_DATA, and this filter raises a warning when its input
+  // contains no cells, although the empty input actually causes no
+  // errors.  We often have input data with no cells, such as the
+  // selection layers when nothing is selected.  To avoid filling the
+  // screen with ignorable warnings, those layers should call
+  // setEmpty(true) when they become empty.
+
+  // setEmpty(true) does *not* mean that there are no vtkProps.  It
+  // means that the props won't result in anything being drawn.
+
+  // Layers that don't use a vtkDataSetMapper or always pass
+  // VTK_POLY_DATA to it can probably get away with just calling
+  // setEmpty(false) in newLayer() and ignoring it thereafter.
+
+  if(empty != empty_) {
+    empty_ = empty;
+    if(empty_)
+      setPropVisibility(false);
+    else
+      setPropVisibility(showing_);
+  }
 }
 
 void OOFCanvasLayer::removeProp(vtkSmartPointer<vtkProp> prop) {
@@ -108,6 +201,7 @@ void OOFCanvasLayer::removeAllProps() {
     }
   }
   props.resize(0);
+  empty_ = true;
 }
 
 // void OOFCanvasLayer::raise_layer(int h) {
@@ -127,7 +221,7 @@ void OOFCanvasLayer::removeAllProps() {
 // void OOFCanvasLayer::raise_to_top() {
 //   canvas->raise_layer_to_top(this);
 //   // if(rendered_) 
-//   //   remove_from_renderer);
+//   //   remove_from_renderer();
 //   if(showing)
 //     add_to_renderer();
 // }
@@ -156,18 +250,32 @@ void OOFCanvasLayer::removeAllProps() {
 //   }
 // }
 
+// setPropVisibility toggles the vtkProp's visibilities, without
+// touching the OOFCanvasLayer flags that say whether or not the layer
+// *should* be visible.
+
+void OOFCanvasLayer::setPropVisibility(bool visible) {
+  if(empty_)
+    visible = false;
+  for(unsigned int i=0; i<props.size(); i++) {
+    // If the new value is the same as the old one, don't call
+    // SetVisibility because it'll update the vtk modification time
+    // unnecessarily.
+    if((bool) props[i]->GetVisibility() != visible)
+      props[i]->SetVisibility(visible);
+  }
+}
+
 void OOFCanvasLayer::show(bool forced) {
   if(!showing_ || forced) {
-    for(unsigned int i=0; i<props.size(); i++)
-      props[i]->VisibilityOn();
+    setPropVisibility(true);
     showing_ = true;
   }
 }
 
 void OOFCanvasLayer::hide(bool forced) {
   if(showing_ || forced) {
-    for(unsigned int i=0; i<props.size(); i++)
-      props[i]->VisibilityOff();
+    setPropVisibility(false);
     showing_ = false;
   }
 }
@@ -589,6 +697,15 @@ void PlaneAndArrowLayer::set_center(const Coord3D *position) {
   setModified();
 }
 
+void PlaneAndArrowLayer::setCoincidentTopologyParams(double factor,
+						     double units)
+{
+  planeMapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor,
+								    units);
+  arrowMapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor,
+								    units);
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // TODO: Add arrowParity, as in PlaneAndArrowLayer.
@@ -708,7 +825,7 @@ BoxAndArrowLayer::BoxAndArrowLayer(GhostOOFCanvas *canvas, const std::string &nm
   arrowFilter->SetInputConnection(arrowSource->GetOutputPort());
   arrowFilter->SetTransform(arrowTransform);
 
-  boxMapper->SetInputConnection(grid->GetProducerPort());
+  boxMapper->SetInputData(grid);
   arrowMapper->SetInputConnection(arrowFilter->GetOutputPort());
 
   boxActor->SetMapper(boxMapper);
@@ -945,6 +1062,14 @@ void BoxAndArrowLayer::offset_cell(vtkIdType cellID, double offset) {
   } 
 }
 
+void BoxAndArrowLayer::setCoincidentTopologyParams(double factor, double units)
+{
+  boxMapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor,
+								  units);
+  arrowMapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor,
+								    units);
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -966,12 +1091,10 @@ void SimpleCellLayer::setModified() {
 
 void SimpleCellLayer::clear() {
   grid->Initialize();
-  number_cells = 0;
 }
 
 void SimpleCellLayer::newGrid(vtkSmartPointer<vtkPoints> pts, int ncells) {
   grid->Initialize();
-  number_cells = ncells;
   if(ncells > 0)
     grid->Allocate(ncells, ncells);
   grid->SetPoints(pts);
@@ -979,7 +1102,7 @@ void SimpleCellLayer::newGrid(vtkSmartPointer<vtkPoints> pts, int ncells) {
 
 void SimpleCellLayer::start_clipping() {
   clipper = getClipper(this);
-  clipper->SetInputConnection(grid->GetProducerPort());
+  clipper->SetInputData(grid);
   mapper->SetInputConnection(clipper->GetOutputPort());
 }
 
@@ -988,7 +1111,21 @@ void SimpleCellLayer::stop_clipping() {
     clipper->RemoveAllInputs();
     clipper = vtkSmartPointer<vtkTableBasedClipDataSet>();
   }
-  mapper->SetInputConnection(grid->GetProducerPort());
+
+  // When not clipping and connecting the grid directly to the mapper,
+  // if there are no cells being drawn vtk7 (and vtk8) prints:
+  
+  // Warning: In ... Filters/Geometry/vtkDataSetSurfaceFilter.cxx, line 166
+  // vtkDataSetSurfaceFilter: Number of cells is zero, no data to process.
+
+  // The vtkDataSetSurfaceFilter is the GeometryExtractor of the
+  // vtkDataSetMapper, and is used when the input data isn't
+  // VTK_POLY_DATA.
+
+  // If the grid is clipped, the vtkDataSetSurfaceFilter, isn't used,
+  // and whatever is used doesn't complain about getting no data.
+
+  mapper->SetInputData(grid);
 }
 
 void SimpleCellLayer::set_clip_parity(bool inverted) {
@@ -1015,8 +1152,16 @@ void SimpleCellLayer::set_opacity(double opacity) {
   actor->GetProperty()->SetOpacity(opacity);
 }
 
-int SimpleCellLayer::get_gridsize() const {
-  return number_cells;
+bool SimpleCellLayer::visibleBoundingBox(vtkSmartPointer<vtkRenderer> renderer,
+					 CRectangularPrism *bbox) const
+{
+  return getVisibleBoundingBox(grid, renderer, bbox);
+}
+
+void SimpleCellLayer::setCoincidentTopologyParams(double factor, double units) {
+  mapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor, units);
+  mapper->SetRelativeCoincidentTopologyLineOffsetParameters(factor, units);
+  mapper->SetRelativeCoincidentTopologyPointOffsetParameter(units);
 }
 
 //=\\=//=\\=//=\\=//=\\=//
@@ -1094,11 +1239,11 @@ void SimpleWireframeCellLayer::setup() {
   actor->GetProperty()->SetRepresentationToWireframe();
   if(extract) {
     edgeExtractor = vtkSmartPointer<vtkExtractEdges>::New();
-    edgeExtractor->SetInputConnection(grid->GetProducerPort());
+    edgeExtractor->SetInputData(grid);
     mapper->SetInputConnection(edgeExtractor->GetOutputPort());
   }
   else {
-    mapper->SetInputConnection(grid->GetProducerPort());
+    mapper->SetInputData(grid);
   }
   // set_clipping() completes the pipeline
   set_clipping(canvas->clipping(), canvas->invertedClipping());
@@ -1110,7 +1255,7 @@ void SimpleWireframeCellLayer::start_clipping() {
   if(extract)
     clipper->SetInputConnection(edgeExtractor->GetOutputPort());
   else
-    clipper->SetInputConnection(grid->GetProducerPort());
+    clipper->SetInputData(grid);
   mapper->SetInputConnection(clipper->GetOutputPort());
 }
 
@@ -1123,7 +1268,7 @@ void SimpleWireframeCellLayer::stop_clipping() {
   if(extract)
     mapper->SetInputConnection(edgeExtractor->GetOutputPort());
   else
-    mapper->SetInputConnection(grid->GetProducerPort());
+    mapper->SetInputData(grid);
 }
 
 void SimpleWireframeCellLayer::set_clip_parity(bool inverted) {
@@ -1169,7 +1314,7 @@ GlyphedLayer::GlyphedLayer(GhostOOFCanvas *canvas, const std::string &name)
     centerFinder(vtkSmartPointer<vtkCellCenters>::New())
 {
   glyphCenters = centerFinder->GetOutput();
-  glyph->SetInput(glyphCenters);
+  glyph->SetInputData(glyphCenters);
   glyphDirections->SetNumberOfComponents(3);
   // addProp(glyphActor) is not called here because the input to
   // centerFinder can't be set until newGrid is called.
@@ -1187,7 +1332,7 @@ void GlyphedLayer::set_glyphColor(const CColor *color) {
 void GlyphedLayer::newGrid(vtkSmartPointer<vtkPoints> pts, int n) {
   SimpleCellLayer::newGrid(pts, n);
   glyphDirections->Reset();	// resize to empty, without freeing memory
-  centerFinder->SetInputConnection(grid->GetProducerPort());
+  centerFinder->SetInputData(grid);
   glyphCenters->GetPointData()->SetNormals(glyphDirections);
   addProp(glyphActor);
 }
@@ -1201,7 +1346,7 @@ void GlyphedLayer::addDirectedCell(VTKCellType type, vtkIdList *ptIds,
 				   double direction[3]) 
 {
   SimpleCellLayer::addCell(type, ptIds);
-  glyphDirections->InsertNextTupleValue(direction);
+  glyphDirections->InsertNextTuple(direction);
 }
 
 void GlyphedLayer::start_clipping() {
@@ -1239,7 +1384,7 @@ ConeGlyphLayer::ConeGlyphLayer(GhostOOFCanvas *canvas, const std::string &name)
   : GlyphedLayer(canvas, name),
     coneSource(vtkSmartPointer<vtkConeSource>::New())
 {
-  glyph->SetSource(coneSource->GetOutput());
+  glyph->SetSourceConnection(coneSource->GetOutputPort());
 }
 
 void ConeGlyphLayer::set_coneGeometry(double len, int resolution) {
@@ -1260,7 +1405,7 @@ void ConeGlyphLayer::stop_clipping() {
     
 void ConeGlyphLayer::recomputeDirections() {
   if(glyphDirections->GetSize() > 0) {
-    glyphCenters->Update();
+    // glyphCenters->Update();
     glyphCenters->GetPointData()->SetNormals(glyphDirections);
   }
 }
@@ -1312,7 +1457,7 @@ PointGlyphLayer::PointGlyphLayer(GhostOOFCanvas *canvas,
   glyph->ScalingOn();
   glyph->SetScaleFactor(1);
   glyph->OrientOff();
-  glyph->SetSource(sphereSource->GetOutput());
+  glyph->SetSourceConnection(sphereSource->GetOutputPort());
   set_clipping(canvas->clipping(), canvas->invertedClipping());
 }
 
@@ -1390,7 +1535,6 @@ const std::string &LineSegmentLayer::classname() const {
 
 void LineSegmentLayer::set_nSegs(int nseg) {
   grid->Initialize();
-  number_cells = nseg;
   if(nseg > 0)
     grid->Allocate(nseg, nseg);
   grid->SetPoints(vtkSmartPointer<vtkPoints>::New());
@@ -1442,7 +1586,7 @@ ImageCanvasLayer::ImageCanvasLayer(
   addProp(actor);
   actor->SetMapper(mapper);
   locator->LazyEvaluationOn();
-  
+
   // Build the initial pipeline, with no image and no excluded voxels.
   pipelineLock.acquire();
   downstreamSocket()->SetInputConnection(gridifier->GetOutputPort());
@@ -1475,8 +1619,7 @@ void ImageCanvasLayer::set_image(const ImageBase *img, const Coord *location,
   if(image != img) {
     pipelineLock.acquire();
     image = img;
-    image->getVTKImageData()->Update();
-    gridifier->SetInputConnection(image->getVTKImageData()->GetProducerPort());
+    gridifier->SetInputData(image->getVTKImageData());
     pipelineLock.release();
   }
 }
@@ -1622,6 +1765,18 @@ vtkSmartPointer<vtkAbstractCellLocator> ImageCanvasLayer::get_locator() {
 vtkSmartPointer<vtkDataSet> ImageCanvasLayer::get_pickable_dataset() {
   // mapper->Update();
   return mapper->GetInput();
+}
+
+bool ImageCanvasLayer::visibleBoundingBox(vtkSmartPointer<vtkRenderer> renderer,
+					  CRectangularPrism *bbox)
+  const
+{
+  return getVisibleBoundingBox(mapper->GetInput(), renderer, bbox);
+}
+
+void ImageCanvasLayer::setCoincidentTopologyParams(double factor, double units)
+{
+  mapper->SetRelativeCoincidentTopologyPolygonOffsetParameters(factor, units);
 }
     
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

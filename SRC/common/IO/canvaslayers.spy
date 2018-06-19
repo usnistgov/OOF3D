@@ -10,6 +10,7 @@
 
 from ooflib.common import debug
 from ooflib.common import utils
+from ooflib.SWIG.common import geometry
 
 class ComboCanvasLayer(object):
     def __init__(self):
@@ -42,6 +43,10 @@ class ComboCanvasLayer(object):
         for sublayer in self.sublayers.values():
             sublayer.hide(forced)
 
+    def setCoincidentTopologyParams(self, factor, units):
+        for sublayer in self.sublayers.values():
+            sublayer.setCoincidentTopologyParams(factor, units)
+
     # def recompute(self):
     #     for sublayer in self.sublayers.values():
     #         sublayer.recompute()
@@ -51,7 +56,23 @@ class ComboCanvasLayer(object):
 
     def pickable(self):
         return False
-    
+
+    def showing(self):
+        for sublayer in self.sublayers.values():
+            if sublayer.showing():
+                return True
+        return False
+
+    def visibleBoundingBox(self, renderer):
+        bbox = geometry.CRectangularPrism()
+        ok = False
+        for sublayer in self.sublayers.values():
+            if sublayer.showing():
+                subok, subbbox = sublayer.visibleBoundingBox(renderer)
+                if subok:
+                    bbox.swallowPrism(subbbox)
+                    ok = subok
+        return ok, bbox
     
     def writeVTK(self, filename):
         for sublayer in self.sublayers.values():

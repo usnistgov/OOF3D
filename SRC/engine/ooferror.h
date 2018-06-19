@@ -141,6 +141,18 @@ public:
   }
 };
 
+
+class ErrHomogeneityNotCalculable: public ErrUserErrorBase<ErrHomogeneityNotCalculable> {
+public:
+  ErrHomogeneityNotCalculable():
+    ErrUserErrorBase<ErrHomogeneityNotCalculable>("")
+  {}
+  virtual const std::string pythonequiv() const {
+    return "ErrHomogeneityNotCalculable()";
+  }
+};
+
+
 // class ErrSearchFailure : public ErrErrorBase<ErrSearchFailure> {
 // public:
 //   virtual const std::string pythonequiv() const {

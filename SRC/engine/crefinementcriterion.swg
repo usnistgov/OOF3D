@@ -90,6 +90,11 @@ public:
   CheckSegmentsInGroup(char*);
 };
 
+class CheckLongSegments : public RefinementTargets {
+public:
+  CheckLongSegments(double);
+}
+
 class CheckSelectedFaces : public RefinementTargets {
 public:
   CheckSelectedFaces();

@@ -12,6 +12,7 @@ from ooflib.SWIG.common import switchboard
 from ooflib.common import debug
 from ooflib.common import utils
 from ooflib.common.IO import placeholder
+from ooflib.common.IO import whoville
 from ooflib.common.IO.GUI import chooser
 from ooflib.common.IO.GUI import gtklogger
 from ooflib.common.IO.GUI import parameterwidgets
@@ -31,8 +32,8 @@ from ooflib.engine.IO.GUI import bdymodparamwidget
 # other examples could include "all", "none", and possibly others.
 
 class SkeletonGroupWidget(parameterwidgets.ParameterWidget):
-    def __init__(self, groups=[], defaults=utils.OrderedSet(), scope=None,
-                 name=None, verbose=False):
+    def __init__(self, param, groups=[], defaults=utils.OrderedSet(),
+                 scope=None, name=None, verbose=False):
         self.defaults = defaults
         self.widget = chooser.ChooserWidget(groups, self.selectCB,
                                             name=name)
@@ -46,6 +47,8 @@ class SkeletonGroupWidget(parameterwidgets.ParameterWidget):
         self.sbcallbacks = [switchboard.requestCallbackMain(self.skelmeshwidget,
                                                             self.skelwidgetCB)]
         self.update()
+        if param.value is not None:
+            self.set_value(param.value)
         self.sbcallbacks += [
             switchboard.requestCallbackMain("groupset member added",
                                             self.grpCB),
@@ -57,6 +60,8 @@ class SkeletonGroupWidget(parameterwidgets.ParameterWidget):
 
     def get_value(self):
         return self.widget.get_value()
+    def set_value(self, groupname):
+        self.widget.set_state(groupname)
 
     def selectCB(self, gtkobj, result):
         self.widgetChanged(self.widget.nChoices() > 0, interactive=1)
@@ -76,6 +81,12 @@ class SkeletonGroupWidget(parameterwidgets.ParameterWidget):
             return None
 
     def update(self):
+        ## TODO: If this widget is being used to define a display
+        ## layer, it's possible that getSkeleton can return a
+        ## WhoProxy, which will be unresolvable because the widget
+        ## doesn't know the gfxwindow.  Currently the redraw methods
+        ## check for and ignore a WhoProxy, but maybe there's
+        ## something more intelligent to do.
         self.redraw(self.getSkeleton())
 
     def cleanUp(self):
@@ -101,11 +112,12 @@ faceExtractor = {}
 
 class NodeGroupWidget(SkeletonGroupWidget):
     def __init__(self, param, groups=[], scope=None, name=None, verbose=False):
-        SkeletonGroupWidget.__init__(self, groups, scope=scope, name=name,
-                                     verbose=verbose)
+        SkeletonGroupWidget.__init__(self, param, groups, scope=scope,
+                                     name=name, verbose=verbose)
 
     def redraw(self, skeletoncontext):
-        if skeletoncontext:
+        if skeletoncontext and not isinstance(skeletoncontext,
+                                              whoville.WhoProxy):
             self.widget.update(list(
                 self.defaults.union(skeletoncontext.nodegroups.allGroups())))
         else:
@@ -120,7 +132,7 @@ skeletongroupparams.NodeGroupParameter.makeWidget = _makeNodeGroupWidget
 class NodeAggregateWidget(SkeletonAggregateWidget, NodeGroupWidget):
     def __init__(self, param, groups=[], scope=None, name=None, verbose=False):
         SkeletonGroupWidget.__init__(
-            self, groups,
+            self, param, groups,
             defaults=utils.OrderedSet([placeholder.selection.IDstring]),
             scope=scope, name=name, verbose=verbose)
         
@@ -137,11 +149,12 @@ segmentExtractor[NodeAggregateWidget] = \
 
 class SegmentGroupWidget(SkeletonGroupWidget):
     def __init__(self, param, groups=[], scope=None, name=None, verbose=False):
-        SkeletonGroupWidget.__init__(self, groups, scope=scope, name=name,
-                                     verbose=verbose)
+        SkeletonGroupWidget.__init__(self, param, groups, scope=scope,
+                                     name=name, verbose=verbose)
 
     def redraw(self, skeletoncontext):
-        if skeletoncontext:
+        if skeletoncontext and not isinstance(skeletoncontext,
+                                              whoville.WhoProxy):
             self.widget.update(list(
                 self.defaults.union(skeletoncontext.segmentgroups.allGroups())))
         else:
@@ -158,7 +171,7 @@ skeletongroupparams.SegmentGroupParameter.makeWidget = _makeSegmentGroupWidget
 class SegmentAggregateWidget(SkeletonAggregateWidget, SegmentGroupWidget):
     def __init__(self, param, groups=[], scope=None, name=None, verbose=False):
         SkeletonGroupWidget.__init__(
-            self, groups,
+            self, param, groups,
             defaults=utils.OrderedSet(
                 [placeholder.selection.IDstring]),
             scope=scope, name=name, verbose=verbose)
@@ -233,11 +246,12 @@ segmentExtractor[BdyModSegmentAggregateWidget] = \
 
 class FaceGroupWidget(SkeletonGroupWidget):
     def __init__(self, param, groups=[], scope=None, name=None, verbose=False):
-        SkeletonGroupWidget.__init__(self, groups, scope=scope, name=name,
-                                     verbose=verbose)
+        SkeletonGroupWidget.__init__(self, param, groups, scope=scope,
+                                     name=name, verbose=verbose)
 
     def redraw(self, skeletoncontext):
-        if skeletoncontext:
+        if skeletoncontext and not isinstance(skeletoncontext,
+                                              whoville.WhoProxy):
             self.widget.update(list(
                 self.defaults.union(skeletoncontext.facegroups.allGroups())))
         else:
@@ -252,7 +266,7 @@ skeletongroupparams.FaceGroupParameter.makeWidget = _makeFaceGroupWidget
 class FaceAggregateWidget(SkeletonAggregateWidget, FaceGroupWidget):
     def __init__(self, param, groups=[], scope=None, name=None, verbose=False):
         SkeletonGroupWidget.__init__(
-            self, groups,
+            self, param, groups,
             defaults=utils.OrderedSet(
                 [placeholder.selection.IDstring]),
             scope=scope, name=name, verbose=verbose)
@@ -312,11 +326,13 @@ faceExtractor[BdyModFaceAggregateWidget] = \
 
 class ElementGroupWidget(SkeletonGroupWidget):
     def __init__(self, param, groups=[], scope=None, name=None, verbose=False):
-        SkeletonGroupWidget.__init__(self, groups, defaults=utils.OrderedSet(),
+        SkeletonGroupWidget.__init__(self, param, groups,
+                                     defaults=utils.OrderedSet(),
                                      scope=scope, name=name, verbose=verbose)
 
     def redraw(self, skeletoncontext):
-        if skeletoncontext:
+        if skeletoncontext and not isinstance(skeletoncontext,
+                                              whoville.WhoProxy):
             self.widget.update(list(
                 self.defaults.union(skeletoncontext.elementgroups.allGroups())))
         else:
@@ -332,7 +348,7 @@ skeletongroupparams.ElementGroupParameter.makeWidget = _makeElementGroupWidget
 class ElementAggregateWidget(SkeletonAggregateWidget, ElementGroupWidget):
     def __init__(self, param, groups=[], scope=None, name=None, verbose=False):
         SkeletonGroupWidget.__init__(
-            self, groups,
+            self, param, groups,
             defaults=utils.OrderedSet(
                 [placeholder.selection.IDstring]),
             scope=scope, name=name,
@@ -399,7 +415,7 @@ class SkeletonBoundaryWidgetBase(parameterwidgets.ParameterWidget):
         self.redraw(skel)
 
     def redraw(self, skel):
-        if skel:
+        if skel and not isinstance(skel, whoville.WhoProxy):
             self.widget.update(self.names(skel))
         else:
             self.widget.update([])

@@ -82,7 +82,7 @@ registeredclass.Registration(
     IterationManager,
     FixedIteration, 0,
     params=[
-    parameter.IntParameter('iterations', 5,
+    parameter.PositiveIntParameter('iterations', 5,
                         tip='Number of iterations to perform.  Each node is addressed once per iteration.')],
     tip="Repeat operation a fixed number of times.",
     discussion="""<para>
@@ -252,7 +252,7 @@ registeredclass.Registration(
                                   tip='Which exit condition to use.'),
     parameter.IntParameter('extra', 0,
                            tip="Number of extra steps to take to ensure that the condition is met."),
-    parameter.IntParameter('maximum', 100,
+    parameter.PositiveIntParameter('maximum', 100,
                         tip="Maximum number of iterations, despite the exit condition.")],
     tip='Iteration stops when a given condition is satisfied.',
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/conditional_iteration.xml'))

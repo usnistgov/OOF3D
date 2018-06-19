@@ -22,12 +22,44 @@ typedef class CPolygon<double, Coord> CPolygonCoord;
 %pragma(python) include="geometry.spy"
 %include "common/typemaps.swg"
 
+%typemap(python, argout) CRectangularPrism *outPrism {
+  // typemap(python, argout) CRectangularPrism *outPrism
+  char _ptemp[128];
+  static PyObject *prismClass = 0;
+  static PyObject *pyOne = 0;
+  if(!prismClass) {
+    PyObject *module = PyImport_ImportModule("ooflib.SWIG.common.geometry");
+    prismClass = PyObject_GetAttrString(module, "CRectangularPrismPtr");
+    Py_XDECREF(module);
+    if(!prismClass) return 0;
+    pyOne = PyInt_FromLong(1);
+  }
+  SWIG_MakePtr(_ptemp, (void*) $source, "_CRectangularPrism_p");
+  PyObject *swigthis = Py_BuildValue("(s)", _ptemp);
+  PyObject *prism = PyObject_CallObject(prismClass, swigthis);
+  Py_XDECREF(swigthis);
+  PyObject_SetAttrString(prism, "thisown", pyOne);
+
+  if(!PyList_Check($target)) {
+    PyObject *retval = $target;
+    $target = PyList_New((Py_ssize_t) 0);
+    PyList_Append($target, retval);
+    Py_XDECREF(retval);
+  }
+  PyList_Append($target, prism);
+}
+
+%typemap(python, ignore) CRectangularPrism *outPrism {
+  // typemap(python, ignore) CRectangularPrism *outPrism
+  $target = new CRectangularPrism();
+}
+   
 
 class CPolygonCoord {};
 
 class CRectangularPrism : public CPolygonCoord {
 public:
-  CRectangularPrism(const Coord&, const Coord&);
+  CRectangularPrism();
   double xmin();
   double xmax();
   double ymin();
@@ -38,6 +70,8 @@ public:
   double width();
   double depth();
   void expand(double factor);
+  Coord center();
+  void swallowPrism(CRectangularPrism&);
 };
 
 class COrientedPlane {

@@ -30,7 +30,7 @@ virtual void Setskeleton(CSkeletonBase*) = 0;
 
 class SkeletonGridSource : public SkelMeshSource {
 public:
-  vtkTypeRevisionMacro(SkeletonGridSource, SkelMeshSource);
+  vtkTypeMacro(SkeletonGridSource, SkelMeshSource);
   void PrintSelf(std::ostream&, vtkIndent);
   static SkeletonGridSource *New();
   
@@ -54,7 +54,7 @@ private:
 
 class MeshGridSource : public SkelMeshSource {
 public:
-  vtkTypeRevisionMacro(MeshGridSource, SkelMeshSource);
+  vtkTypeMacro(MeshGridSource, SkelMeshSource);
   void PrintSelf(std::ostream&, vtkIndent);
   static MeshGridSource *New();
   
@@ -98,7 +98,7 @@ typedef vtkSmartPointer<MeshGridSource> MeshGridSourcePtr;
 
 class SkeletonSegmentGridSource : public SkelMeshSource {
 public:
-  vtkTypeRevisionMacro(SkeletonSegmentGridSource, SkelMeshSource);
+  vtkTypeMacro(SkeletonSegmentGridSource, SkelMeshSource);
   void PrintSelf(std::ostream&, vtkIndent);
   static SkeletonSegmentGridSource *New();
   vtkSetMacro(skeleton, CSkeletonBase*);
@@ -122,7 +122,7 @@ typedef vtkSmartPointer<SkeletonSegmentGridSource> SkeletonSegmentGridSourcePtr;
 
 class SkeletonEdgeDiffGridSource : public SkelMeshSource {
 public:
-  vtkTypeRevisionMacro(SkeletonEdgeDiffGridSource, SkelMeshSource);
+  vtkTypeMacro(SkeletonEdgeDiffGridSource, SkelMeshSource);
   void PrintSelf(std::ostream&, vtkIndent);
   static SkeletonEdgeDiffGridSource *New();
   vtkSetMacro(skeleton, CSkeletonBase*);

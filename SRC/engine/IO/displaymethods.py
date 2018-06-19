@@ -230,7 +230,37 @@ class SkelMeshDisplayMethod(display.DisplayMethod):
     def __init__(self, filter):
         self.filter = filter
         display.DisplayMethod.__init__(self)
-
+        self.sbsignals = [
+            switchboard.requestCallback(
+                "skeleton filter changed", self.filterChangedCB)
+            ]
+    def destroy(self, destroy_canvaslayer):
+        map(switchboard.removeCallback, self.sbsignals)
+        super(SkelMeshDisplayMethod, self).destroy(destroy_canvaslayer)
+    def filterChangedCB(self, filter, *args, **kwargs):
+        # "skeleton filter changed" is called whenever the output of a
+        # filter has been changed.  If the filter itself has changed,
+        # the layer will already be updated because its parameters
+        # have changed.  But if the filter is selecting only one
+        # group, for example, and the group's content changes, then
+        # the filter itself won't change but its output will.  In that
+        # case, the filter's Registration should have requested a
+        # callback when groups change, and will issue "skeleton filter
+        # changed" when it's notified.  See skeletonfilter.spy.
+        
+        ## TODO: when any filter of the same subclass as self.filter
+        ## changes, this method will be called for *all* filters of
+        ## that subclass, because the SkeletonFilterRegistration
+        ## mechanism that sent the "skeleton filter changed" signal
+        ## has no way to know which filters are affected. This method
+        ## should somehow use use self.filter, args, and kwargs to
+        ## determine if setModified really needs to be called.  args
+        ## and kwargs are switchboard arguments that were forwarded
+        ## from the original switchboard message caught by the
+        ## Registration.
+        if filter == self.filter:
+            filter.setModified()
+            
 class SkeletonDisplayMethod(SkelMeshDisplayMethod):
     def __init__(self, filter):
         SkelMeshDisplayMethod.__init__(self, filter)
@@ -282,17 +312,13 @@ class MeshDisplayMethod(display.AnimationLayer, SkelMeshDisplayMethod):
         self.freezetime = None
         display.AnimationLayer.__init__(self, when)
         SkelMeshDisplayMethod.__init__(self, filter)
-        self.sbsignals = [
-            switchboard.requestCallback(
+        self.sbsignals.extend(
+            [switchboard.requestCallback(
                 "mesh data changed", self.meshDataChangedCB),
-            switchboard.requestCallback(
-                "femesh replaced", self.femeshReplacedCB)
-        ]
+             switchboard.requestCallback(
+                 "femesh replaced", self.femeshReplacedCB)
+            ])
 
-    def destroy(self, destroy_canvaslayer):
-        map(switchboard.removeCallback, self.sbsignals)
-        super(MeshDisplayMethod, self).destroy(destroy_canvaslayer)
-        # SkelMeshDisplayMethod.destroy(self, destroy_canvaslayer)
     def incomputable(self):
         themesh = self.who().resolve(self.gfxwindow)
         return (display.DisplayMethod.incomputable(self) or
@@ -521,6 +547,7 @@ class EdgeDisplay(object):
         self.source = self.vtkSource()
         canvaslayer = gridlayers.WireGridCanvasLayer(
             self.gfxwindow.oofcanvas, self.name(), self.source)
+        canvaslayer.setEmpty(False)
         return canvaslayer
     def setParams(self):
         self.setSource()
@@ -623,6 +650,7 @@ class SkeletonEdgeOnlyDisplay(EdgeDisplay, SkeletonDisplayMethod):
         self.source = self.vtkSource()
         canvaslayer = gridlayers.SegmentGridCanvasLayer(
             self.gfxwindow.oofcanvas, self.name(), self.source)
+        canvaslayer.setEmpty(False)
         return canvaslayer
 
 class SkeletonEdgeDiffDisplay(EdgeDisplay, SkeletonDisplayMethod):
@@ -642,6 +670,7 @@ class SkeletonEdgeDiffDisplay(EdgeDisplay, SkeletonDisplayMethod):
         self.source = self.vtkSource()
         canvaslayer = gridlayers.SegmentGridCanvasLayer(
             self.gfxwindow.oofcanvas, self.name(), self.source)
+        canvaslayer.setEmpty(False)
         return canvaslayer
 
 if debug.debug():
@@ -815,6 +844,7 @@ class SolidFillMeshDisplay(object):  # For Skeletons too.
         self.source = self.vtkSource()
         canvaslayer = gridlayers.SolidFilledGridCanvasLayer(
             self.gfxwindow.oofcanvas, self.name(), self.source)
+        canvaslayer.setEmpty(False)
         return canvaslayer
     def whoChanged(self):
         # setSource() is defined in SkeletonDisplayMethod or
@@ -894,6 +924,8 @@ class MaterialDisplay(SolidFillMeshDisplay):
  
     def setParams(self):
         self.setSource()
+        # If the filter has changed, the cell data will be different
+        self.setCellData(self.who().resolve(self.gfxwindow))
         self.setLUT()
 
     def getLUT(self, themesh):
@@ -1088,7 +1120,6 @@ class SkeletonQualityDisplay(SolidFillMeshDisplay, SkeletonDisplayMethod):
                 #self.setSource()
                 self.setCellData(skelctxt)
                 self.setLUT()
-                self.source.Modified()
         
 registeredclass.Registration(
     'SkeletonQuality',
@@ -1143,9 +1174,11 @@ class ElementVoxelCategoryIntersectionEdges(display.DisplayMethod):
         display.DisplayMethod.__init__(self)
 
     def newLayer(self):
-        return canvaslayers.LineSegmentLayer(
+        layer = canvaslayers.LineSegmentLayer(
             self.gfxwindow.oofcanvas,
             "ElementVoxelCategoryIntersectionEdges")
+        layer.setEmpty(False)
+        return layer
 
     def setParams(self):
         self.canvaslayer.set_color(self.color)
@@ -1169,9 +1202,10 @@ class DrawLinesFromFile(display.DisplayMethod):
         self.line_width = line_width
         display.DisplayMethod.__init__(self)
     def newLayer(self):
-        return canvaslayers.LineSegmentLayer(
-            self.gfxwindow.oofcanvas,
-            "DrawLinesFromFile")
+        layer = canvaslayers.LineSegmentLayer(self.gfxwindow.oofcanvas,
+                                              "DrawLinesFromFile")
+        layer.setEmpty(False)
+        return layer
     def setParams(self):
         self.canvaslayer.set_color(self.color)
         self.canvaslayer.set_lineWidth(self.line_width)
@@ -1197,9 +1231,10 @@ class DrawLinesFromFiles(display.DisplayMethod):
         self.line_width = line_width
         display.DisplayMethod.__init__(self)
     def newLayer(self):
-        return canvaslayers.LineSegmentLayer(
-            self.gfxwindow.oofcanvas,
-            "DrawLinesFromFiles")
+        layer = canvaslayers.LineSegmentLayer(self.gfxwindow.oofcanvas,
+                                              "DrawLinesFromFiles")
+        layer.setEmpty(False)
+        return layer
     def setParams(self):
         self.canvaslayer.set_color(self.color)
         self.canvaslayer.set_lineWidth(self.line_width)

@@ -28,10 +28,14 @@ class CDirection;
 #include <vtkLookupTable.h>
 #include <vtkPlane.h>
 #include <vtkPoints.h>
+#include <vtkRenderer.h>
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
 
 #include <vector>
+
+void initialize_vtk();
+void initialize_X11();
 
 vtkSmartPointer<vtkDoubleArray> fillDataArray(const std::vector<double>*);
 void getDataArrayRange(vtkSmartPointer<vtkDataArray>, double*);
@@ -50,6 +54,7 @@ typedef vtkSmartPointer<vtkDoubleArray> vtkDoubleArrayPtr;
 typedef vtkSmartPointer<vtkIdList> vtkIdListPtr;
 typedef vtkSmartPointer<vtkIntArray> vtkIntArrayPtr;
 typedef vtkSmartPointer<vtkPoints> vtkPointsPtr;
+typedef vtkSmartPointer<vtkRenderer> vtkRendererPtr;
 typedef vtkSmartPointer<vtkUnstructuredGrid> vtkUnstructuredGridPtr;
 typedef vtkSmartPointer<vtkPlane> vtkPlanePtr;
 

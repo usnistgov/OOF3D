@@ -524,6 +524,8 @@ bool pixelGroupQueryPixel(const CMicrostructure &microstructure,
 bool pixelGroupQueryCategory(const CMicrostructure &microstructure,
 			     int cat, const PixelGroup *group)
 {
+  if(cat == UNKNOWN_CATEGORY)
+    throw ErrProgrammingError("Unknown voxel category!", __FILE__, __LINE__);
   ListAttribute *list =
     dynamic_cast<ListAttribute*>(microstructure.getAttributeFromCategory(
 							 cat, reg->index()));

@@ -22,6 +22,7 @@ from ooflib.common.IO import gfxmanager
 from ooflib.common.IO import ghostgfxwindow
 from ooflib.common.IO import mainmenu
 from ooflib.common.IO.GUI import chooser
+from ooflib.common.IO.GUI import gfxmenu
 from ooflib.common.IO.GUI import gfxwindowbase
 from ooflib.common.IO.GUI import gtklogger
 from ooflib.common.IO.GUI import mousehandler
@@ -29,20 +30,16 @@ from ooflib.common.IO.GUI import quit
 from ooflib.common.IO.GUI import subWindow
 from ooflib.common.IO.GUI import toolbarGUI
 
-# # during_callback() is called (by CanvasOutput.show()) only in
-# # non-threaded mode, so we don't worry about the thread-safety of a
-# # global variable here.  It may not be necessary with the vtk canvas
-# # at all.
-# _during_callback = 0
-# def during_callback():
-#     return _during_callback
+## TODO: Much of the code in preinitialize and postinitialize is the
+## same for 2D and 3D, and so it should be in GfxWindowBase and not
+## here.  The current situation is a mess.
 
 class GfxWindow3D(gfxwindowbase.GfxWindowBase):
     initial_height = 800
     initial_width = 1000
 
     def preinitialize(self, name, gfxmanager, clone):
-        # postinitialize is called by GfxWindowBase.__init__ on the
+        # preinitialize is called by GfxWindowBase.__init__ on the
         # main thread *before* GhostGfxWindow.__init__ is called.
         debug.mainthreadTest()
         self.gtk = None
@@ -66,6 +63,15 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         # Pane dividing upper pane horizontally into 2 parts.
         self.paned1 = gtk.HPaned()
         gtklogger.setWidgetName(self.paned1, "Pane2")
+
+        # "resize=True" here means that when the window is resized
+        # vertically, the canvas and toolboxes will resize, but the
+        # layer list won't.  It also makes the layer list compact when
+        # the window is first opened.  This is what we want. However,
+        # on some systems (those using Unity WM, maybe) the layer list
+        # is completely collapsed in the initial window, which is
+        # unfriendly but not fatal.  Ubuntu 17.10 doesn't have the
+        # problem so it's not going to be fixed.
         self.mainpane.pack1(self.paned1, resize=True)
         gtklogger.connect_passive(self.paned1, 'size-allocate')
 
@@ -123,11 +129,6 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
 
         self.paned1.pack2(self.canvasBox, resize=True)
 
-        # HACK.  Set the position of the toolbox/canvas divider.  This
-        # prevents the toolbox pane from coming up minimized.
-        ##self.paned1.set_position(300)
-
-
         # Bottom part of main pane is a list of layers.  The actual
         # DisplayLayer objects are stored in self.display.
 
@@ -149,6 +150,11 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
 
         gtklogger.adoptGObject(self.layerList, self.layerListView,
                               access_method=self.layerListView.get_model)
+
+        # Handle right-clicks on the layer list.  They pop up the
+        # Layer menu.
+        gtklogger.connect(self.layerListView, 'button-press-event',
+                          self.layerListButtonCB)
 
         # The row-deleted and row-inserted signals are used to detect
         # when the user has reordered rows manually.  When the program
@@ -221,10 +227,10 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         layermenu.Delete.add_gui_callback(self.deleteLayer_gui)
         layermenu.Hide.add_gui_callback(self.hideLayer_gui)
         layermenu.Show.add_gui_callback(self.showLayer_gui)
-#         layermenu.Raise.One_Level.add_gui_callback(self.raiseLayer_gui)
-#         layermenu.Raise.To_Top.add_gui_callback(self.raiseToTop_gui)
-#         layermenu.Lower.One_Level.add_gui_callback(self.lowerLayer_gui)
-#         layermenu.Lower.To_Bottom.add_gui_callback(self.lowerToBottom_gui)
+        layermenu.Raise.One_Level.add_gui_callback(self.raiseLayer_gui)
+        layermenu.Raise.To_Top.add_gui_callback(self.raiseToTop_gui)
+        layermenu.Lower.One_Level.add_gui_callback(self.lowerLayer_gui)
+        layermenu.Lower.To_Bottom.add_gui_callback(self.lowerToBottom_gui)
         settingmenu = self.menu.Settings
         toolboxmenu = self.menu.Toolbox
 
@@ -236,6 +242,9 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         self.toolbar.gtk.show()
         self.timebox = self.makeTimeBox()
         self.toolbarBox.pack_start(self.timebox, expand=False, fill=False)
+
+        self.layerpopup = gfxmenu.gtkOOFPopUpMenu(self.menu.Layer,
+                                                  self.layerListView)
 
         # Construct gui's for toolboxes.  This must be done after the
         # base class is constructed so that *all* non-gui toolboxes
@@ -256,7 +265,10 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         # and .mainbox is a gtk.VBox that holds the menu bar.
         windowname = utils.underscore2space("OOF3D " + name)
         subWindow.SubWindow.__init__(self, windowname, menu=self.menu)
-
+        # This 'destroy' signal is for the window itself.  The
+        # SubWindwo constructor installs a handler for the 'destroy'
+        # signal from the top OOF3D window, so that this window will
+        # close when the top window closes.
         self.gtk.connect('destroy', self.destroyCB)
         self.gtk.connect_after('realize', self.realizeCB)
         self.gtk.set_default_size(GfxWindow3D.initial_width,
@@ -283,7 +295,7 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         self.oofcanvas.setContourMapPosition(
             self.settings.contourmap_position[0],
             self.settings.contourmap_position[1])
-        
+
         self.gtk.show_all()    # calls realizeCB(), which calls drawAtTime()
 
         self.updateToolboxChooser()
@@ -302,11 +314,12 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
             view = self.oofcanvas.get_view()
             self.oofcanvas.widget().destroy()
 
-        self.oofcanvas = oofcanvas3d.OOFCanvas3D() #self.settings)
+        self.oofcanvas = oofcanvas3d.OOFCanvas3D(
+            self.settings.fixCanvasScaleBug)
         self.oofcanvas.set_bgColor(self.settings.bgcolor)
         self.canvasFrame.add(self.oofcanvas.widget())
-        
-        # Retrieving the drawing area and initiating the logging.
+
+        # Retrieve the drawing area and initiate logging.
         canvasdrawingarea = self.oofcanvas.widget()
         init_canvas_logging(canvasdrawingarea) 
         # Since the drawing area isn't a gtk widget it must be adopted
@@ -314,9 +327,7 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         gtklogger.adoptGObject(canvasdrawingarea, self.canvasFrame,
                                access_function=findCanvasDrawingArea,
                                access_kwargs={"windowname":self.name})
-        # Setting the connection.
         gtklogger.connect_passive(canvasdrawingarea, "event")
-        
         self.oofcanvas.set_mouse_callback(self.mouseCB)
 
         # self.oofcanvas.widget().connect("configure-event",
@@ -374,7 +385,6 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
     def show_contourmap_info(self):
         # TODO MERGE: This is only used in 2D and will go away when 2D
         # uses vtk for contouring.
-        debug.fmsg()
         if not self.gtk:
             return
         current_contourmethod = self.current_contourmap_method

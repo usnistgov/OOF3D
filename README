@@ -92,11 +92,12 @@ Details:
     Python (2.6 or 2.7)      http://www.python.org 
     gtk+-2.0 (2.6 or later)  http://www.gtk.org/download/   
     pygtk2 (2.6 or later)    http://www.pygtk.org
-    vtk	(5.10 or later)      http://www.vtk.org
+    vtk	(7.1 or later)       http://www.vtk.org
 
    Please note that the words "or later" do not include later major
-   versions.  OOF3D will not work with Python 3.x, gtk+ 3.x, or vtk
-   6.x.
+   versions.  OOF3D will not work with Python 3.x or gtk+ 3.x.  It
+   won't work with vtk 5 or earlier, and might not work with vtk 6 or
+   8. 
 
    Macintosh OS X users will need to install an X11 server: 
    http://xquartz.macosforge.org/
@@ -148,14 +149,10 @@ Procedure:
    need to add --vtkdir=<vtkprefix> to the command line, replacing
    <vtkprefix> with the base of the directory tree containing vtk.
    For example, if the vtk files are located in
-   /usr/unusual/include/vtk-5.10 and /usr/unusual/lib/vtk-5.10, then
+   /usr/unusual/include/vtk-7.1.1 and /usr/unusual/lib, then
    you'd build OOF3D this way:
 
      % python setup.py build --3D --vtkdir=/usr/unusual
-
-   If you need to do this, you probably also need to add
-   /usr/unusual/lib/vtk-5.10 to LD_LIBRARY_PATH.  See Section 2.1,
-   below.
 
 1.1 Getting more control over the build
 
@@ -297,9 +294,8 @@ Procedure:
 
     If <prefix>/lib is not in the list of directories that the dynamic
     linker searches for libraries, you'll have to add it by setting
-    the LD_LIBRARY_PATH environment variable.  You may also need to
-    add the vtk library directory (see Section 1, above).  Setting
-    LD_LIBRARY_PATH is not necessary on Macintosh OS X.
+    the LD_LIBRARY_PATH environment variable.  Setting LD_LIBRARY_PATH
+    is not necessary on Macintosh OS X.
 
     If <prefix>/lib/python2.x/site-packages is not in your Python
     path, you'll have to add it to the PYTHONPATH environment
@@ -313,12 +309,11 @@ Procedure:
 
      export PATH=<prefix>/bin:$PATH
      export PYTHONPATH=<prefix>/lib/python2.<x>/site-packages:$PYTHONPATH 
-     export LD_LIBRARY_PATH=<prefix>/lib:<vtkprefix>/lib/vtk-5.10:$LD_LIBRARY_PATH
+     export LD_LIBRARY_PATH=<prefix>/lib:$LD_LIBRARY_PATH
 
-    replacing <prefix>, <vtkprefix>, and python2.<x> with the
-    appropriate values.  To find out if you're using the bash shell,
-    type "echo $SHELL" in a terminal window.  If it replies
-    "/bin/bash", you're using bash.
+    replacing <prefix> and python2.<x> with the appropriate values.
+    To find out if you're using the bash shell, type "echo $SHELL" in
+    a terminal window.  If it replies "/bin/bash", you're using bash.
 
     Setting environment variables in .profile doesn't actually change
     their values in your current terminal session.  To start using the

@@ -38,24 +38,71 @@ std::ostream& operator<<(std::ostream &o, const RefinementSignature &s) {
 // in-line in crefinementcriterion.h.
 RefinementTargets::RefinementTargets() {}
 
+void RefinementTargets::mark_(CSkeletonMultiNodeKey &h, short d) {
+  if(unmarkable.count(h) == 0) {
+    // TODO: do we need to search here?  Can't we just insert into the
+    // map and let the map figure it out?
+    SegmentMarks::iterator it = segmentMarks.find(h);
+    if(it == segmentMarks.end())
+      segmentMarks.insert(SegmentMarkDatum(h,d));
+  }
+  //TODO 3.1: take care of partners too
+}
+
 void RefinementTargets::mark(CSkeletonNode *n1, CSkeletonNode *n2, short d) {
   // Mark the segment from n1 to n2 for refinement d times.
-  CSkeletonMultiNodeKey h(n1,n2);
-  SegmentMarks::iterator it = segmentMarks.find(h);
-  if(it == segmentMarks.end())
-    segmentMarks.insert(SegmentMarkDatum(h,d));
+  CSkeletonMultiNodeKey h(n1, n2);
+  mark_(h, d);
 }
 
 void RefinementTargets::markSegment(CSkeletonSegment *segment, short d) {
-  const CSkeletonNodeVector *ns = segment->getNodes();
-  mark((*ns)[0],(*ns)[1],d);
-  //TODO 3.1: take care of partners too
+  CSkeletonMultiNodeKey h(segment);
+  mark_(h, d);
 }
 
 void RefinementTargets::markElement(CSkeletonElement *element, short d) {
   for(unsigned int i=0; i<element->getNumberOfSegments(); ++i) {
     mark(element->getSegmentNode(i,0), element->getSegmentNode(i,1), d);
   }
+}
+
+#define UNMARKABLE_TOLERANCE SUSPECT_COS_TOLERANCE*SUSPECT_COS_TOLERANCE
+void RefinementTargets::findUnmarkableSegments(CSkeletonBase *skeleton) {
+  // If refining a segment would create a suspect element, put the
+  // segment in the "unmarkable" set, so that it won't be refined.
+  // Since we don't know the possible results of the refinement here,
+  // this procedure is inexact.
+  for(CSkeletonElementIterator elit=skeleton->beginElements();
+      elit!=skeleton->endElements(); ++elit)
+    {
+      CSkeletonElement *el = *elit;
+      // Loop over edges of the element by looping over pairs of nodes
+      for(unsigned int n0=0; n0<NUM_TET_NODES-1; n0++) {
+	for(unsigned int n1=n0+1; n1<NUM_TET_NODES; n1++) {
+	  double len2, diam2;
+	  el->edgeLengthAndDiameter2(n0, n1, len2, diam2);
+	  
+	  // If the edge length is small compared to the diameter
+	  // (distance from the midpoint of the edge to the midpoint
+	  // of the opposite edge) mark the edge as unrefinable.
+	  // Ditto if the diameter is small compared to the edge
+	  // length. Use the same tolerance that's used in
+	  // CSkeletonElement::suspect().
+	  if(len2 < UNMARKABLE_TOLERANCE*diam2 ||
+	     diam2 < UNMARKABLE_TOLERANCE*len2)
+	    {
+	      CSkeletonNode *node0 = el->getNode(n0);
+	      CSkeletonNode *node1 = el->getNode(n1);
+	      unmarkable.insert(CSkeletonMultiNodeKey(node0, node1));
+#ifdef DEBUG
+	      oofcerr << "RefinementTargets:findUnmarkableSegments: "
+		      << " n0=" << n0 << " n1=" << n1
+		      << " " << *el << std::endl;
+#endif // DEBUG
+	    }
+	} // end loop over nodes n1
+      }	// end loop over nodes n0
+    } // end loop over elements
 }
 
 void RefinementTargets::signature(const CSkeletonElement *element, 
@@ -71,6 +118,46 @@ void RefinementTargets::signature(const CSkeletonElement *element,
       sig->push_back(RefinementSignaturePair(i, (*it).second));
   }
 }
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+bool MinimumVolume::isGood(CSkeletonBase *skeleton, CSkeletonMultiNodeSelectable *selectable)
+  const
+{
+   if(units == "Voxel")
+     return ((dynamic_cast<CSkeletonElement*> (selectable))->volumeInVoxelUnits(skeleton->getMicrostructure()) > threshold);
+   else if(units == "Physical")
+     return ((dynamic_cast<CSkeletonElement*> (selectable))->volume() > threshold);
+   else if(units == "Fractional")
+     return ((dynamic_cast<CSkeletonElement*> (selectable))->volumeInFractionalUnits(skeleton->getMicrostructure()) > threshold);
+   else return false;
+}
+
+bool MinimumArea::isGood(CSkeletonBase *skeleton, CSkeletonMultiNodeSelectable *selectable)
+  const
+{  
+   if(units == "Voxel")
+     return ((dynamic_cast<CSkeletonFace*> (selectable))->areaInVoxelUnits(skeleton->getMicrostructure()) > threshold);
+   else if(units == "Physical")
+     return ((dynamic_cast<CSkeletonFace*> (selectable))->area() > threshold);
+   else if(units == "Fractional")
+     return ((dynamic_cast<CSkeletonFace*> (selectable))->areaInFractionalUnits(skeleton->getMicrostructure()) > threshold);
+   else return false;
+}
+
+bool MinimumLength::isGood(CSkeletonBase *skeleton, CSkeletonMultiNodeSelectable *selectable)
+  const
+{  
+   if(units == "Voxel")
+     return ((dynamic_cast<CSkeletonSegment*> (selectable))->lengthInVoxelUnits(skeleton->getMicrostructure()) > threshold);
+   else if(units == "Physical")
+     return ((dynamic_cast<CSkeletonSegment*> (selectable))->length() > threshold);
+   else if(units == "Fractional")
+     return ((dynamic_cast<CSkeletonSegment*> (selectable))->lengthInFractionalUnits(skeleton->getMicrostructure()) > threshold);
+   else return false;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 void CheckAllElements::createSegmentMarks(CSkeletonBase *skeleton,
 					  RefinementCriterion *criterion,
@@ -202,7 +289,7 @@ void CheckHeterogeneousEdges::createSegmentMarks(CSkeletonBase *skeleton,
       if(criterion->isGood(skeleton,(*it)) &&
 	 (*it)->homogeneity(skeleton) < threshold)
 	{
-	markSegment((*it),d);
+	  markSegment((*it),d);
 	}
     }
 }
@@ -230,6 +317,32 @@ void CheckSegmentsInGroup::createSegmentMarks(CSkeletonBase *skeleton,
     {
       if(criterion->isGood(skeleton,(*it).second) && (*it).second->active(skeleton) && (*it).second->is_in_group(group))
 	markSegment((*it).second,d);
+    }
+}
+
+void CheckLongSegments::createSegmentMarks(CSkeletonBase *skeleton,
+					   RefinementCriterion *criterion,
+					   short d)
+{
+  for(CSkeletonElementIterator it = skeleton->beginElements();
+      it!=skeleton->endElements(); ++it)
+    {
+      if(criterion->isGood(skeleton, *it) && (*it)->active(skeleton)) {
+	CSkeletonElement *el = *it;
+	std::vector<double> lengths(el->getNumberOfSegments());
+	double shortest = std::numeric_limits<double>::max();
+	for(unsigned int i=0; i<el->getNumberOfSegments(); i++) {
+	  Coord3D disp = (el->getSegmentNode(i, 0)->position() -
+			  el->getSegmentNode(i, 1)->position());
+	  lengths[i] = sqrt(norm2(disp));
+	  if(lengths[i] < shortest)
+	    shortest = lengths[i];
+	}
+	for(unsigned int i=0; i<el->getNumberOfSegments(); i++) {
+	  if(lengths[i] > factor*shortest)
+	    mark(el->getSegmentNode(i,0), el->getSegmentNode(i,1), d);
+	}
+      }
     }
 }
 
