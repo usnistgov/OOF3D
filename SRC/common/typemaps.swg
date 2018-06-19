@@ -43,8 +43,8 @@
 // newfree      string*
 // out		CColor		CColor -> RGBColor
 // out		Coord		Coord -> Point
-// out		Coord&		Coord& -> Point
-// out		Coord*		Coord* -> Point
+// out		Coord&		Coord& -> Point  COMMENTED OUT
+// out		Coord*		Coord* -> Point  COMMENTED OUT
 // out		CoordVec*	std::vector<Coord*>* -> [Coord]
 // newfree      CoordVec*
 // out		DoubleList*	std::vector<double>* -> [Float]
@@ -410,7 +410,7 @@ using std::string;
   $target = &argh;
 }
 
-// This is an example of the Right Way To Do Copy-Out Typemaps:
+// This is an example of the Right Way To Do Copy-Out Typemaps:  (Really?)
 // The wrapped function should return a pointer to a vector of 
 // pointers to the things being passed out.  Ownership of the
 // objects will pass to Python, and the vector itself will be
@@ -425,6 +425,9 @@ using std::string;
   char _ptemp[128];
   for(std::vector<Coord*>::size_type i=0; i<$source->size();i++) {
     SWIG_MakePtr(_ptemp, (char*)(*$source)[i], "_Coord_p");
+    // TODO: This creates a list of strings containing the swigged
+    // pointer info.  Don't we want to call CoordPtr with the strings
+    // as an argument?
     PyList_SET_ITEM($target, (Py_ssize_t) i, Py_BuildValue("s",_ptemp));
   }
 }

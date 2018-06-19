@@ -14,6 +14,8 @@
 # used should be imported here.  Using OOFexec makes the names
 # available in the __main__ environment in text mode.
 
+import sys
+
 from ooflib.common import debug
 from ooflib.common import parallel_enable
 from ooflib.common import utils
@@ -32,6 +34,7 @@ import ooflib.engine.builtinprops
 # elif config.dimension() == 3:
 #     import ooflib.engine.skeleton3d
 import ooflib.engine.skeletoncontext
+import ooflib.engine.skeletonselection
 import ooflib.engine.skeletonselectionmodes
 import ooflib.SWIG.engine.masterelement
 import ooflib.SWIG.engine.material
@@ -134,3 +137,4 @@ import ooflib.common.runtimeflags
 if config.dimension() == 2 and ooflib.common.runtimeflags.surface_mode:
     #Interface branch
     import ooflib.engine.IO.interfacemenu
+

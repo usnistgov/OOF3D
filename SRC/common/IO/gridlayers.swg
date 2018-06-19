@@ -46,6 +46,7 @@ public:
 class FilledGridCanvasLayer : public OOFCanvasLayer {
 public:
   void set_lookupTable(vtkLookupTablePtr, double, double);
+  void set_opacity(double);
 };
 
 class SolidFilledGridCanvasLayer : public FilledGridCanvasLayer {

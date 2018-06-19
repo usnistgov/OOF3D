@@ -8,13 +8,11 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov. 
 
-import gobject
-import gtk
-
+from ooflib.SWIG.common import config
 from ooflib.SWIG.common import guitop
+from ooflib.SWIG.common import ooferror
 from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.common.IO.GUI import oofcanvas3d 
-#from ooflib.SWIG.common.IO.GUI import rubberband3d as rubberband
 from ooflib.common import debug
 from ooflib.common import mainthread
 from ooflib.common import utils
@@ -29,6 +27,10 @@ from ooflib.common.IO.GUI import mousehandler
 from ooflib.common.IO.GUI import quit
 from ooflib.common.IO.GUI import subWindow
 from ooflib.common.IO.GUI import toolbarGUI
+
+import gobject
+import gtk
+import sys
 
 ## TODO: Much of the code in preinitialize and postinitialize is the
 ## same for 2D and 3D, and so it should be in GfxWindowBase and not
@@ -50,7 +52,6 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         self.zoomed = 0
         self.settings = ghostgfxwindow.GfxSettings()
         self.mouseHandler = mousehandler.nullHandler # doesn't do anything
-        # self.rubberband = rubberband.NoRubberBand()
 
         # Build all the GTK objects for the interior of the box.  These
         # actually get added to the window itself after the SubWindow
@@ -333,7 +334,6 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         # self.oofcanvas.widget().connect("configure-event",
         #                                 self.canvasConfigureCB)
 
-        #self.oofcanvas.set_rubberband(self.rubberband)
         #if view is not None:
         #    self.oofcanvas.set_view(view)
 
@@ -344,30 +344,30 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
 
     ################################################
 
-    ## TODO: Have a dictionary of mouse handlers keyed by (button,
-    ## shift, ctrl).  Each handler knows which events ('up', 'down',
-    ## 'move') it accepts.  How to decide which handlers to remove
-    ## when new ones are installed?  Does each toolbox also need to
-    ## remove its own mouse handlers?  Should there be a stack of
-    ## handlers?
-
     def mouseCB(self, eventtype, x, y, button, shift, ctrl):
         debug.mainthreadTest()
         if self.mouseHandler.acceptEvent(eventtype):
-            if eventtype == 'up':
-                self.mouseHandler.up(x,y, button, shift, ctrl)
-            elif eventtype == 'down':
-                self.mouseHandler.down(x,y, button, shift, ctrl)
-            elif eventtype == 'move':
-                # On the Mac laptop, move events seem to always have
-                # button==1.  Moves always go with the previous down,
-                # so the button is irrelevant.
-                self.mouseHandler.move(x,y, button, shift, ctrl)
-            elif eventtype == 'scroll':
-                pass
-                # debug.fmsg("scroll: direction=", button, "pos=", x, y,
-                #            "shift=", shift, "ctrl=", ctrl)
-
+            try:
+                buttons = mousehandler.MouseButtons(button, shift, ctrl)
+                if eventtype == 'up':
+                    self.mouseHandler.up(x,y, buttons)
+                elif eventtype == 'down':
+                    self.mouseHandler.down(x,y, buttons)
+                elif eventtype == 'move':
+                    # On the Mac laptop, move events seem to always have
+                    # button==1.  Moves always go with the previous down,
+                    # so the button is irrelevant.
+                    self.mouseHandler.move(x,y, buttons)
+                elif eventtype == 'scroll':
+                    pass
+                    # debug.fmsg("scroll: direction=", button, "pos=", x, y,
+                    #            "shift=", shift, "ctrl=", ctrl)
+                elif eventtype == 'modkeys':
+                    self.mouseHandler.modkeys(buttons)
+            except:
+                print >> sys.stderr, \
+                    "Failure calling mousehandler", self.mouseHandler
+                raise
     
     ################################################
 
@@ -410,11 +410,6 @@ class GfxWindow3D(gfxwindowbase.GfxWindowBase):
         finally:
             self.releaseGfxLock()
 
-    def setRubberband(self, rubberband):
-        pass
-        # self.rubberband = rubberband
-        # self.oofcanvas.set_rubberband(rubberband)
-       
     def marginCB(self, menuitem, fraction):
         ghostgfxwindow.GhostGfxWindow.marginCB(self, menuitem, fraction)
         self.oofcanvas.set_margin(fraction)

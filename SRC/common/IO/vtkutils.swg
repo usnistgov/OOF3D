@@ -89,6 +89,11 @@ public:
 class vtkIdListPtr {
 public:
   ~vtkIdListPtr();
+public:
+  %addmethods {
+    int size() { return (*self)->GetNumberOfIds(); }
+    int __getitem__(int i) { return (*self)->GetId(i); }
+  }
 };
 
 class vtkCellPtr {

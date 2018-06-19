@@ -16,7 +16,7 @@
 #define FEMESH_H
 
 class FEMesh;
-class AbaqusMeshData;		// used when saving mesh in abaqus format
+class NodeIndexMap;		// used in abaqus output
 
 #include "common/coord_i.h"
 #include "common/lock.h"
@@ -105,19 +105,6 @@ public:
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// AbaqusMeshData holds data that has to be passed back to Python to
-// complete the abaqus file.
-class AbaqusMeshData {
-public:
-  typedef std::map<Coord, int> NodeDict;
-  friend class FEMesh;
-  int getAbaqusIndex(const Coord *pt) const;
-private:
-  NodeDict nodeDict;	// maps oof node position to abaqus node index
-};
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
 class FEMesh {    // : public PythonExportable<FEMesh> {
   // FEMesh used to be derived from PythonExportable so that it could
   // be used as an argument in switchboard messages.
@@ -156,6 +143,9 @@ public:
 
   typedef std::map<const ElementShape*, int> ElementShapeCountMap;
   ElementShapeCountMap *getElementShapeCounts() const;
+  NodeIndexMap *getNodeIndexMap() const;
+
+
 
   Node *newMapNode(const Coord&); // the only way to make a Node
   FuncNode *newFuncNode(const Coord&); // the only way to make a FuncNode
@@ -326,9 +316,6 @@ public:
   bool isEmptyCache() const;
   int dataCacheSize() const;
 
-  AbaqusMeshData *writeAbaqus(const std::string &filename,
-		   const std::vector<std::string> *masterElementTypes) const;
-
 private:
   friend class Equation::FindAllEquationWrappers;
   friend class Field::FindAllFieldWrappers;
@@ -398,5 +385,20 @@ private:
 };				// FEMesh
 
 long get_globalFEMeshCount();
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+class NodeIndexMap {
+private:
+  typedef std::map<const Coord3D, int> MapType;
+  MapType map;			// node position -> abaqus index
+  std::vector<Coord3D> invmap;	// abaqus index -> node position
+public:
+  NodeIndexMap(int);
+  void add(const Coord3D&);
+  int index(const Coord3D *p) const;
+  const Coord3D position(int i) const;
+  int size() const;
+};
 
 #endif // FEMESH_H

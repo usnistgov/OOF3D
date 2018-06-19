@@ -64,12 +64,7 @@ class MicrostructureMaterialDisplay(bitmapdisplay.BitmapDisplayMethod):
         matlimage = material.MaterialImage(microstructure, self.no_material,
                                            self.no_color)
         self.canvaslayer.set_image(matlimage, coord.origin, matlimage.size())
-        self.canvaslayer.set_filter(self.filter)
-        self.setMicrostructure()
-        return False            # don't call setParams
-
-    def setParams(self):
-        self.whoChanged()
+        return True   # call setParams
 
     def matMSChangedCB(self, microstructure):
         context = self.who()

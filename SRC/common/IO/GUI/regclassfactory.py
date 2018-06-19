@@ -240,6 +240,10 @@ class RegisteredClassFactory(RCFBase):
         # if self.verbose:
         #     debug.fmsg("done")
 
+    def set_value(self, obj):
+        # For compatibility with other ParameterWidgets
+        self.set(obj, interactive=False)
+
     # Returns the currently-selected registration, or None.
     def getRegistration(self):
         return self.currentOption
@@ -295,6 +299,12 @@ class RegisteredClassFactory(RCFBase):
         #         debug.fmsg("not included!")
         # if self.verbose:
         #     debug.fmsg("done")
+
+    def setParamValues(self, **kwargs):
+        # Set the values of the given parameters, which must be
+        # parameters in the current registration.
+        debug.mainthreadTest()
+        self.paramWidget.setParamValues(**kwargs)
 
     def cleanUp(self):
         if self.widgetcallback is not None:
@@ -448,6 +458,7 @@ class RegisteredClassFactory(RCFBase):
 
     def set_defaults(self):
         # Read widgets and set values in Registration, w/out creating object
+        ## TODO: Rename this method.
         if self.currentOption is not None:
             self.paramWidget.get_values()
 

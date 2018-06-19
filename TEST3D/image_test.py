@@ -353,11 +353,9 @@ class OOF_Image(unittest.TestCase):
                         "imagemod_test:5color"].getObject()
                     im2 = imagecontext.imageContexts[
                         "comparison:"+datadirname].getObject()
-                    # Tolerance is 1./65535., which is the level of
-                    # "quantization noise" for 16-bit color channels.
-                    ## TODO 3.1: For vtk images, tolerance should be
-                    ## 1./255.  Why does 1./65535 work?  Does 0 work?
-                    self.assert_(im1.compare(im2, 0./65535.))
+                    # Tolerance is 1./255., which is the level of
+                    # "quantization noise" for 8-bit color channels.
+                    self.assert_(im1.compare(im2, 1./255.))
                     
                     OOF.Microstructure.Delete(
                         microstructure="comparison")
@@ -423,15 +421,11 @@ image_modify_args = {"Gray" : [ ("gray", {}) ],
                                 ("flip_xyz", {"axis" : "xyz"})],
                      "Fade" : [ ("fade", {"factor" : 0.3}) ],
                      "Dim"  : [ ("dim", {"factor" : 0.7}) ],
-                     ## Blur and Normalize fail though the output
-                     ## appears correct. Either these methods are VTK
-                     ## version dependent, system dependent, or
-                     ## something.
-                     #"Blur" : [ ("blur*", {"radius" : 1.0, "sigma" : 3.0} ) ],
+                     "Blur" : [ ("blur", {"radius" : 1.0, "sigma" : 3.0} ) ],
                      "Contrast" : [("contrast", {"factor" : 1.6})],
                      "MedianFilter" : [ ("median", {"radius" : 1}) ],
                      "Negate" : [("negate", {})],
-                     #"Normalize" : [("normalize*", {})],
+                     "Normalize" : [("normalize", {})],
                      "ThresholdImage" : [("threshold", {"T" : 0.5})],
                      }
 

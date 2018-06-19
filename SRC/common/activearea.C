@@ -71,8 +71,7 @@ ActiveArea::~ActiveArea() {}
 // TODO OPT: Can named ActiveAreas be stored implicitly via the
 // PixelAttributes in the Microstructure?  Unless they're actually
 // being used, there's really no need to waste memory on the PixelSet
-// and BitmapOverlay that are stored in the CPixelSelection part of
-// the ActiveArea.
+// that is stored in the CPixelSelection part of the ActiveArea.
 
 ActiveArea *ActiveArea::named_clone(const std::string &name) const { 
   ActiveArea *aa = new ActiveArea(*this); // copies pixset and bitmap

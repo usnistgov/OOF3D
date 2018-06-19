@@ -342,7 +342,7 @@ def _assignmat(material, microstructure, pixels):
         themat.assignToAllPixels(ms)
     else:
         if pxls == placeholder.selection:
-            group = ms.pixelselection.getSelectionAsGroup()
+            group = ms.pixelselection.getPixelSet()
         else:
             group = ms.findGroup(pixels)
         if group:
@@ -371,7 +371,7 @@ def _removemat(menuitem, microstructure, pixels):
         ooflib.SWIG.engine.material.removeAllMaterials(ms)
     else:
         if pixels == placeholder.selection:
-            group = ms.pixelselection.getSelectionAsGroup()
+            group = ms.pixelselection.getPixelSet()
         else:
             group = ms.findGroup(pixels)
         if group:

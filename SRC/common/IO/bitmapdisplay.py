@@ -22,10 +22,12 @@ from ooflib.common.IO import xmlmenudump
 class BitmapDisplayMethod(display.DisplayMethod):
     def __init__(self, filter, opacity):
         self.filter = filter
+        self.autoOpacityFactor = 1.0
         self.opacity = opacity
         self.sbcallbacks = [
             switchboard.requestCallback("voxel filter changed",
-                                        self.filterChanged)
+                                        self.filterChanged),
+            switchboard.requestCallback("autoopacity", self.autoOpacityCB)
         ]
         display.DisplayMethod.__init__(self)
 
@@ -47,18 +49,6 @@ class BitmapDisplayMethod(display.DisplayMethod):
         layer.setEmpty(False)
         return layer
 
-    def layersChanged(self):
-        overlayers = self.gfxwindow.getOverlayers()
-        topImage = self.gfxwindow.topImage()
-        if topImage is self:
-            self.canvaslayer.show(False) # hidden layers are never the top image
-            if not overlayers:
-                self.canvaslayer.noOverlayers()
-            else:
-                self.canvaslayer.connectTopOverlayer(overlayers[-1].canvaslayer)
-        else:
-            self.canvaslayer.hide(False)
-
     def whoChanged(self):
         # The who object itself has been modified, or a new one
         # assigned.  This is the switchboard callback for "who
@@ -70,8 +60,11 @@ class BitmapDisplayMethod(display.DisplayMethod):
 
     def setParams(self):
         self.canvaslayer.set_filter(self.filter)
-        self.canvaslayer.set_opacity(self.opacity)
+        self.canvaslayer.set_opacity(self.getOpacity())
         self.setMicrostructure()
+
+    def getOpacity(self):
+        return self.opacity * self.autoOpacityFactor
 
     def filterChanged(self, filter, *args, **kwargs):
         if filter == self.filter:
@@ -87,6 +80,11 @@ class BitmapDisplayMethod(display.DisplayMethod):
 
     def isImage(self):
         return True
+
+    def autoOpacityCB(self, gfxwindow, factor):
+        if gfxwindow is self.gfxwindow:
+            self.autoOpacityFactor = factor
+            self.canvaslayer.set_opacity(self.getOpacity())
     
 defaultImageOpacity = 1.0
 opacityRange = (0, 1, 0.05)

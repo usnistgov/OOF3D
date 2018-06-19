@@ -105,6 +105,7 @@ GhostOOFCanvas::GhostOOFCanvas()
   axes->GetXAxisCaptionActor2D()->GetCaptionTextProperty()->ShadowOff();
   axes->GetYAxisCaptionActor2D()->GetCaptionTextProperty()->ShadowOff();
   axes->GetZAxisCaptionActor2D()->GetCaptionTextProperty()->ShadowOff();
+  axes->PickableOff();
 
   axes->GetXAxisCaptionActor2D()->GetProperty()->
     SetDisplayLocationToBackground();
@@ -985,16 +986,12 @@ vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
 } // end GhostOOFCanvas::findClickedActors
 
 
-
 void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
 				      OOFCanvasLayer *layer,
 				      vtkSmartPointer<vtkCell> &cell, 
 				      Coord &pos, vtkIdType &cellId,
 				      int &subId) 
 {
-  // oofcerr << "GhostOOFCanvas::findClickedCell_: click=" << *click
-  // 	  << std::endl;
-  
   // TODO MERGE: click is a Coord although it really should be an ICoord.
   // This is because in *2D* the conversion from screen to physical
   // coords is done by the canvas before invoking any mouse callbacks.
@@ -1014,8 +1011,6 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
 
   vtkSmartPointer<vtkProp3D> prop = layer->get_pickable_prop3d();
   assert(prop.GetPointer() != 0);
-  // oofcerr << "GhostOOFCanvas::findClickedCell_: prop=" << prop.GetPointer()
-  // 	  << std::endl;
 
   // Sometimes the selecting is done on an object that's not actually
   // displayed.  To be clickable, the vtkProp3D has to be added to the
@@ -1037,21 +1032,23 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
     // The locator and dataset must be obtained *after* the view is
     // set.
     vtkSmartPointer<vtkDataSet> dataset = layer->get_pickable_dataset();
-    // dataset->Update();
+    // oofcerr << "GhostOOFCanvas::findClickedCell_: dataset=" << std::endl;
+    // dataset->Print(std::cerr);
     vtkSmartPointer<vtkAbstractCellLocator> locator = layer->get_locator();
+    // oofcerr << "GhostOOFCanvas::findClickedCell_: locator=" << std::endl;
+    // locator->Print(std::cerr);
+    
     assert(locator.GetPointer() != 0);
     vtkSmartPointer<vtkCellPicker> picker = 
       vtkSmartPointer<vtkCellPicker>::New();
-    picker->AddLocator(locator);	// requires vtk >= 5.6
+    picker->AddLocator(locator);
 
     prop->PickableOn();
 
     // Compute the display coordinates of the click.
     double x, y;
     physical2Display(*click, x, y);
-    // oofcerr << "GhostOOFCanvas::findClickedCell_: x=" << x << " y=" << y 
-    // 	    << std::endl;
-
+    
     // Try to pick something.
     if(picker->Pick(x, y, 0.0, renderer)) {
       vtkSmartPointer<vtkProp3DCollection> props = picker->GetProp3Ds();
@@ -1104,6 +1101,8 @@ void GhostOOFCanvas::findClickedCell_(const Coord *click, const View *view,
     // }
   }
   catch(...) {
+    oofcerr << "GhostOOFCanvas::findClickedCell_: caught an error!"
+	    << std::endl;
     if(!propIsRendered) {
       renderer->RemoveViewProp(prop);
     }
@@ -1156,7 +1155,6 @@ Coord *GhostOOFCanvas::findClickedCellCenter(
   vtkIdType cellId;
   int subId;
   findClickedCell_(click, view, layer, cell, pos, cellId, subId);
-  
   Coord pcenter;		// parametric center
   cell->GetParametricCenter(pcenter);
   Coord center;
@@ -1224,6 +1222,71 @@ vtkSmartPointer<vtkIdList> GhostOOFCanvas::findClickedFace(
   tetlayer.destroy();
   return cell->GetPointIds();
 } // GhostOOFCanvas::findClickedFace
+
+
+// findClickedCellMulti_ is like findClickedCell_, but it searches
+// through a list of OOFCanvasLayers and returns the index of the
+// layer with the closest hit, or -1 if no hits were found.
+
+int GhostOOFCanvas::findClickedCellMulti_(
+			  const Coord *click, const View *view,
+			  const std::vector<OOFCanvasLayer*> *layers,
+			  vtkSmartPointer<vtkCell> &cell, 
+			  Coord &pos, vtkIdType &cellId, int &subId)
+{
+  assert(mainthread_query());
+  assert(!layers->empty());
+  double bestdist2 = std::numeric_limits<double>::max();
+  int best = -1;
+  // The layers are listed from bottom to top in the window's layer ordering.
+  for(unsigned int i=0; i<layers->size(); i++) {
+    vtkSmartPointer<vtkCell> thisCell;
+    Coord thisPos;
+    vtkIdType thisCellId;
+    int thisSubId;
+    try {
+      findClickedCell_(click, view, (*layers)[i], thisCell, thisPos, thisCellId,
+		       thisSubId);
+    }
+    catch (ErrClickError&) {
+      continue;
+    }
+    double dist2 = norm2(view->pos - thisPos);
+    // Use <= here so that if two layers have clickable points at the
+    // same position, the topmost layer will be selected.
+    if(dist2 <= bestdist2) {
+      bestdist2 = dist2;
+      best = i;
+      cell = thisCell;
+      pos = thisPos;
+      cellId = thisCellId;
+      subId = thisSubId;
+    }
+  }
+  if(best == -1)
+    throw ErrClickError();
+  return best;
+}
+
+CoordAndInt *GhostOOFCanvas::findClickedCellCenterMulti(
+				     const Coord *click, const View *view,
+				     const std::vector<OOFCanvasLayer*> *layers)
+{
+  vtkSmartPointer<vtkCell> cell;
+  vtkIdType cellId;
+  int subId;
+  Coord pos;
+  int which = findClickedCellMulti_(click, view, layers, cell,
+				    pos, cellId, subId);
+  Coord pcenter;
+  cell->GetParametricCenter(pcenter);
+  double weights[cell->GetNumberOfPoints()];
+  Coord center;
+  cell->EvaluateLocation(subId, pcenter, center, weights);
+  return new CoordAndInt(center, which);
+}
+
+
 
 vtkSmartPointer<vtkUnstructuredGrid> GhostOOFCanvas::getFrustumSubgrid(
 	       double x, double y, const View *view, OOFCanvasLayer *layer)
@@ -1352,8 +1415,8 @@ Coord *GhostOOFCanvas::findClickedPoint(const Coord *click, const View *view,
 // click in 2D screen coordinates to a 3D Coord that's on or near a
 // segment in the given layer's vtkCells.  
 
-Coord *GhostOOFCanvas::findClickedSegment(const Coord *click, const View *view,
-					  OOFCanvasLayer *layer)
+vtkSmartPointer<vtkIdList> GhostOOFCanvas::findClickedSegment(
+	      const Coord *click, const View *view, OOFCanvasLayer *layer)
 {
   assert(mainthread_query());
   vtkSmartPointer<vtkDataSet> edges;
@@ -1425,6 +1488,7 @@ Coord *GhostOOFCanvas::findClickedSegment(const Coord *click, const View *view,
   // to the camera (dot product of nearest point with ray is smallest).
   double smallestDistance2 = std::numeric_limits<double>::max();
   Coord closestPoint;
+  Coord closestEndPtA, closestEndPtB;
   bool found = false;
   vtkIdType nCells = edges->GetNumberOfCells();
   // oofcerr << "GhostOOFCanvas::findClickedSegment: nCells=" << nCells
@@ -1448,6 +1512,8 @@ Coord *GhostOOFCanvas::findClickedSegment(const Coord *click, const View *view,
 	// 	<< " ptB=" << ptB << " d2=" << d2 << std::endl;
 	smallestDistance2 = d2;
 	closestPoint = (1-alpha)*ptA + alpha*ptB;
+	closestEndPtA = ptA;
+	closestEndPtB = ptB;
 	found = true;
       }
       else if(found && d2 == smallestDistance2) {
@@ -1456,12 +1522,23 @@ Coord *GhostOOFCanvas::findClickedSegment(const Coord *click, const View *view,
 	if(dot(candidate, ray) < dot(closestPoint, ray)) {
 	  smallestDistance2 = d2;
 	  closestPoint = candidate;
+	  closestEndPtA = ptA;
+	  closestEndPtB = ptB;
 	}
       }
     } // end if findSegLineDistance(...)
   }
-  if(found)
-    return new Coord(closestPoint);
+  if(found) {
+    // The endpoints were found in a different grid with different
+    // points, so to find the right ids, we have to search in the
+    // layer's points.
+    vtkSmartPointer<vtkDataSet> dataset = layer->get_pickable_dataset();
+    vtkSmartPointer<vtkIdList> pts = vtkSmartPointer<vtkIdList>::New();
+    pts->SetNumberOfIds(2);
+    pts->InsertId(0, dataset->FindPoint(closestEndPtA));
+    pts->InsertId(1, dataset->FindPoint(closestEndPtB));
+    return pts;
+  }
   throw ErrClickError();
 } // GhostOOFCanvas::findClickedSegment
 
@@ -1604,12 +1681,12 @@ void GhostOOFCanvas::restore_view(const View *view, bool clip, bool resize) {
   // data.  In that case we just assume that the window size hasn't
   // changed, which seems to work for the relevant test scripts.
   if(resize && view->size_x > 0 && view->size_y > 0) {
-#ifdef DEBUG
-    int *oldsize = render_window->GetSize();
-    oofcerr << "GhostOOFCanvas::restore_view: oldsize=" << oldsize[0]
-	    << "," << oldsize[1] << " newsize=" << view->size_x
-	    << "," << view->size_y << std::endl;
-#endif // DEBUG
+// #ifdef DEBUG
+//     int *oldsize = render_window->GetSize();
+//     oofcerr << "GhostOOFCanvas::restore_view: oldsize=" << oldsize[0]
+// 	    << "," << oldsize[1] << " newsize=" << view->size_x
+// 	    << "," << view->size_y << std::endl;
+// #endif // DEBUG
     render_window->SetSize(view->size_x, view->size_y);
   }
   view->setCamera(renderer->GetActiveCamera()); // change active camera settings

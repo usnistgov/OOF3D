@@ -60,6 +60,7 @@ public:
   virtual void add(const ICoordVector*);
   virtual void addWithoutCheck(const ICoordVector*); // ignore active area
   virtual void add(const ICoord&);
+  void addWithoutCheck(const ICoord&);
   void remove(CPixelSelection *sel);
   void remove(PixelSet *set);
   void removeWithoutCheck(CPixelSelection *sel);

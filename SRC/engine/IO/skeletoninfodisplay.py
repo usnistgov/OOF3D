@@ -81,7 +81,7 @@ class SkeletonInfoDisplay(display.DisplayMethod):
         return layer
 
     def setParams(self):
-        toolbox = self.gfxwindow.getToolboxByName("Skeleton_Info")
+        toolbox = self.gfxwindow.getToolboxByName("Skeleton Info")
         querymode = toolbox.currentMode()
         if querymode is not None:
             for lname in self.layerNames:
@@ -98,7 +98,7 @@ class SkeletonInfoDisplay(display.DisplayMethod):
                     layer.set_pointSize(self.node_size)
                 
     def queryCB(self):
-        toolbox = self.gfxwindow.getToolboxByName("Skeleton_Info")
+        toolbox = self.gfxwindow.getToolboxByName("Skeleton Info")
         # The queried object or peeked objects may have changed, which
         # changes the color assignments, so call setParams.
         self.setParams()
@@ -123,7 +123,7 @@ class SkeletonInfoDisplay(display.DisplayMethod):
         self.canvaslayer.clear() # clear all sublayers
 
     def peekCB(self, peekmode):
-        toolbox = self.gfxwindow.getToolboxByName("Skeleton_Info")
+        toolbox = self.gfxwindow.getToolboxByName("Skeleton Info")
         skelctxt = self.who().resolve(self.gfxwindow)
         if skelctxt:
             peekobj = toolbox.getPeekObject(peekmode)

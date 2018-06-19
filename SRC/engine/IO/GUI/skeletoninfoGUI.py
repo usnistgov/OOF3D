@@ -31,19 +31,24 @@ import gtk
 
 class SkeletonInfoModeGUI(genericinfoGUI.GenericInfoModeGUI):
 
+    def __init__(self, gfxtoolbox):
+        genericinfoGUI.GenericInfoModeGUI.__init__(self, gfxtoolbox)
+        self.sbcallbacks.extend([
+            switchboard.requestCallback("groupset member resized",
+                                        self.groupsChangedCB),
+            switchboard.requestCallback("groupset member added",
+                                        self.groupsChangedCB),
+            switchboard.requestCallback("groupset member renamed",
+                                        self.groupsChangedCB),
+            switchboard.requestCallback("groupset changed",
+                                        self.groupsChangedCB)
+            ])
+
     def updateNodeList(self, chsr, objlist, element=None):
-        if element is None or config.dimension() == 3:
-            namelist = ["Node %d at %s" 
-                        % (obj.uiIdentifier(), 
-                           genericinfoGUI.posString(obj.position()))
-                        for obj in objlist]
-        else:
-            # 2D, element given.  Include angle info.
-            namelist = ["Node %d at %s (angle: %g)"
-                        % (obj.uiIdentifier(), 
-                           genericinfoGUI.posString(obj.position()),
-                           element.getRealAngle(element.nodes.index(obj)))
-                        for obj in objlist]
+        namelist = ["Node %d at %s" 
+                    % (obj.uiIdentifier(), 
+                       genericinfoGUI.posString(obj.position()))
+                    for obj in objlist]
         mainthread.runBlock(chsr.update, (objlist, namelist))
 
     def updateElementList(self, chsr, objlist):
@@ -77,6 +82,15 @@ class SkeletonInfoModeGUI(genericinfoGUI.GenericInfoModeGUI):
         else:
             self.menu.Query(mode=self.targetName, index=indx)
 
+    def groupsChangedCB(self, skelctxt, groupset, *args, **kwargs):
+        if (self.gfxtoolbox.getSkeletonContext() is skelctxt and
+            groupset is self.getGroupSet()):
+            try:
+                indx = utils.OOFeval(self.index.get_text())
+            except:
+                pass
+            else:
+                self.update(indx)
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -148,13 +162,14 @@ class ElementModeGUI(SkeletonInfoModeGUI):
         gtklogger.setWidgetName(self.material,"Material")
         row += 1
 
+    def getGroupSet(self):
+        return self.getContext().elementgroups
+
     def findObjectIndex(self, position, view):
         skelctxt = self.getContext()
         if skelctxt is not None:
             (cellID, clickpos) = self.gfxtoolbox.gfxwindow().findClickedCellID(
-                skelctxt, position, view)
-            if cellID is None:
-                debug.fmsg("findClickedCellID returned None")
+                skelctxt, position, view, warn=False)
             return cellID
 
     def activateOutputs(self, ok):
@@ -203,20 +218,16 @@ class ElementModeGUI(SkeletonInfoModeGUI):
                     earea = "%g" % element.area()
                 if not element.illegal():
                     domCat = element.dominantPixel(skeleton)
-                    pixGrp = pixelgroup.pixelGroupNames(microstructure,
-                                                        domCat)
-                    #pixgrps = ", ".join(pixGrp)
                     hom = "%f" % element.homogeneity(skeleton)
                     eshape = "%f" % element.energyShape()
                     mat = element.material(skeleton)
-                    egrps = ','.join(element.groupNames())
+                    egrps = ", ".join(element.groupNames())
                     if mat:
                         matname = mat.name()
                     else:
                         matname = "<No material>"
                 else:           # illegal element
                     domCat = "Not Computed"
-                    #pixgrps = "???"
                     egrps = "???"
                     hom = "???"
                     eshape = "???"
@@ -233,7 +244,7 @@ class ElementModeGUI(SkeletonInfoModeGUI):
                             ("", "", "", "", "", "", "", ""))
         mainthread.runBlock(self.clearObjLists)
         
-    def update_thread(self, etype, eid, earea, pixgrps, egrps, hom, eshape,
+    def update_thread(self, etype, eid, earea, domCat, egrps, hom, eshape,
                       matname):
         debug.mainthreadTest()
         self.activateOutputs(True)
@@ -242,12 +253,11 @@ class ElementModeGUI(SkeletonInfoModeGUI):
         self.index.set_text(eid)
         self.indexChangedSignal.unblock()
         self.area.set_text(earea)
-        self.domin.set_text(pixgrps)
+        self.domin.set_text(domCat)
         self.homog.set_text(hom)
         self.shape.set_text(eshape)
         self.material.set_text(matname)
         self.group.set_text(egrps)
-                    
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -298,11 +308,14 @@ class NodeModeGUI(SkeletonInfoModeGUI):
         gtklogger.setWidgetName(self.bndy, "Boundary")
         row += 1
 
+    def getGroupSet(self):
+        return self.getContext().nodegroups
+        
     def findObjectIndex(self, position, view):
         skelctxt = self.getContext()
         if skelctxt is not None:
-            pt = self.gfxtoolbox.gfxwindow().findClickedPoint(skelctxt,
-                                                              position, view)
+            pt = self.gfxtoolbox.gfxwindow().findClickedPoint(
+                skelctxt, position, view, warn=False)
             node = pt is not None and skelctxt.getObject().nearestNode(pt)
             if node:
                 return node.uiIdentifier()
@@ -334,45 +347,47 @@ class NodeModeGUI(SkeletonInfoModeGUI):
                 nuid = `indx`
                 npos = genericinfoGUI.posString(node.position())
                 
-                movabilities = [node.movable_x(), node.movable_y()]
-                if config.dimension() == 3:
-                    movabilities.append(node.movable_z())
-                    nmobile = sum(movabilities)
-                    if nmobile == config.dimension():
-                        mobstr = "free"
-                    elif nmobile == 0:
-                        if node.pinned():
-                            mobstr = "pinned"
-                        else:
-                            mobstr = "fixed"
-                    else:       # nmobile = 1 or 2
-                        # mobstr is something like "x only" or "x and y only"
-                        m = ["xyz"[i] for i in range(config.dimension())
-                             if movabilities[i]]
-                        mobstr = " and ". join(m) + " only"
+                movabilities = [node.movable_x(), node.movable_y(),
+                                node.movable_z()]
+                nmobile = sum(movabilities)
+                if nmobile == config.dimension():
+                    mobstr = "free"
+                elif nmobile == 0:
+                    if node.pinned():
+                        mobstr = "pinned"
+                    else:
+                        mobstr = "fixed"
+                else:       # nmobile = 1 or 2
+                    # mobstr is something like "x only" or "x and y only"
+                    m = ["xyz"[i] for i in range(config.dimension())
+                         if movabilities[i]]
+                    mobstr = " and ".join(m) + " only"
 
                 bdynames = [nm for (nm, bdy) in skelctxt.pointboundaries.items()
                             if bdy.current_boundary().hasNode(node)]
 
-                ## TODO 3.1: node groups
+                grpnames = node.groupNames()
+                
                 mainthread.runBlock(self.update_thread,
                                     (nuid, npos, mobstr,
+                                     ", ".join(grpnames),
                                      ", ".join(bdynames)))
                 return
             finally:
                 skelctxt.end_reading()
         # end if indx is not None
         # Nothing to display
-        mainthread.runBlock(self.update_thread, ("", "", "", ""))
+        mainthread.runBlock(self.update_thread, ("", "", "", "", ""))
         mainthread.runBlock(self.clearObjLists)
 
-    def update_thread(self, nuid, npos, mobstr, bdynames):
+    def update_thread(self, nuid, npos, mobstr, grpnames, bdynames):
         self.activateOutputs(True)
         debug.mainthreadTest()
         self.indexChangedSignal.block()
         self.index.set_text(nuid)
         self.indexChangedSignal.unblock()
         self.pos.set_text(npos)
+        self.group.set_text(grpnames)
         self.mobility.set_text(mobstr)
         self.bndy.set_text(bdynames)
 
@@ -418,7 +433,6 @@ class SegmentModeGUI(SkeletonInfoModeGUI):
         self.labelmaster((0,1), (row,row+1), 'segment groups=')
         self.group = self.entrymaster((1,2), (row,row+1))
         gtklogger.setWidgetName(self.group, "Groups")
-        self.group.set_sensitive(False) # TODO: remove this line when implemented
         row += 1
 
         self.labelmaster((0,1), (row,row+1), 'boundary=')
@@ -430,14 +444,19 @@ class SegmentModeGUI(SkeletonInfoModeGUI):
 #         self.material = self.entrymaster((1,2), (row,row+1))
 #         gtklogger.setWidgetName(self.material, "Material")
 
+    def getGroupSet(self):
+        return self.getContext().segmentgroups
+
     def findObjectIndex(self, position, view):
         skelctxt = self.getContext()
         if skelctxt is not None:
-            pt = self.gfxtoolbox.gfxwindow().findClickedSegment(
-                skelctxt, position, view)
-            sgmt = pt is not None and skelctxt.getObject().nearestSegment(pt)
-            if sgmt:
-                return sgmt.uiIdentifier()
+            endPtIds = self.gfxtoolbox.gfxwindow().findClickedSegment(
+                skelctxt, position, view, warn=False)
+            if endPtIds is not None:
+                sgmt = skelctxt.getObject().getSegmentByNodeIndices(
+                    endPtIds[0], endPtIds[1])
+                if sgmt:
+                    return sgmt.uiIdentifier()
 
     def activateOutputs(self, ok):
         self.elem.gtk.set_sensitive(ok)
@@ -473,8 +492,7 @@ class SegmentModeGUI(SkeletonInfoModeGUI):
                     bdynames = [nm
                                 for (nm, bdy) in skelctxt.edgeboundaries.items()
                                 if bdy.current_boundary().hasSegment(segment)]
-                    # TODO 3.1: List relevant  groups.
-                    groups = ["<Not yet implemented>"]
+                    groups = segment.groupNames()
                     # TODO 3.1: List interface material
                     mainthread.runBlock(self.update_thread,
                                         (`indx`, length, homog,
@@ -534,17 +552,19 @@ class FaceModeGUI(SkeletonInfoModeGUI):
         self.labelmaster((0,1), (6,7), 'face groups=')
         self.group = self.entrymaster((1,2), (6,7))
         gtklogger.setWidgetName(self.group, "Groups")
-        self.group.set_sensitive(False) # TODO 3.1: remove this when implemented
 
         self.labelmaster((0,1), (7,8), 'boundary=')
         self.bndy = self.entrymaster((1,2), (7,8))
         gtklogger.setWidgetName(self.bndy, "Boundary")
 
+    def getGroupSet(self):
+        return self.getContext().facegroups
+
     def findObjectIndex(self, position, view):
         skelctxt = self.getContext()
         if skelctxt is not None:
             pt = self.gfxtoolbox.gfxwindow().findClickedPosition(
-                skelctxt, position, view)
+                skelctxt, position, view, warn=False)
             face = pt is not None and skelctxt.getObject().nearestFace(pt)
             if face:
                 return face.uiIdentifier()
@@ -586,8 +606,8 @@ class FaceModeGUI(SkeletonInfoModeGUI):
                                 for (nm, bdy) in skelctxt.faceboundaries.items()
                                 if bdy.current_boundary().hasFace(face)]
 
-                    ## TODO 3.1: Display groups and materials.
-                    groupnames = ["<Not yet implemented.>"]
+                    groupnames = face.groupNames()
+                    ## TODO 3.1: display interface materials
 
                     mainthread.runBlock(self.update_thread,
                                         (`indx`, area, homog,
@@ -647,8 +667,7 @@ class SkeletonInfoToolboxGUI(genericinfoGUI.GenericInfoToolboxGUI):
                     'materials changed in microstructure', self.matChangedCB),
                 switchboard.requestCallback(
                     'materials changed in skeleton', self.matChangedSkelCB)
-                ## TODO 3.1: add callbacks for skeleton group changes of all sorts
-                ])
+        ])
 
     def modeClassDict(self):
         return _modes
@@ -664,6 +683,9 @@ class SkeletonInfoToolboxGUI(genericinfoGUI.GenericInfoToolboxGUI):
     def getSkeletonContext(self):
         return self.toolbox.context
 
+    ## TODO: Why do we need grpChangedCB, grpsChangedCB, and
+    ## grpRenamedCB?  They're called in response to *pixel* group
+    ## chnages.
     def grpChangedCB(self, group, msname):
         skel = self.getSkeletonContext()
         if skel and skel.getMicrostructure().name() == msname:

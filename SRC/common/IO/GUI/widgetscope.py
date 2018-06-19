@@ -41,7 +41,7 @@
 
 from ooflib.common import debug
 
-class WidgetScope:
+class WidgetScope(object):
     def __init__(self, parent):
         self.parent = parent            # another WidgetScope, or None
         self.children = []              # WidgetScopes

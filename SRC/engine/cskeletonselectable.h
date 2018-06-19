@@ -354,4 +354,20 @@ public:
   }
 };
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Geometrical utilties
+
+CSkeletonNodeSet getAllNodesOfSet(const CSkeletonSelectableSet*);
+CSkeletonNodeSet getExteriorNodesOfElements(const CSkeletonBase*,
+					    const CSkeletonSelectableSet*);
+CSkeletonSegmentSet getExteriorSegmentsOfFaces(const CSkeletonBase*,
+					       const CSkeletonSelectableSet*);
+CSkeletonNodeSet getExteriorNodesOfFaces(const CSkeletonBase*,
+					 const CSkeletonSelectableSet*);
+CSkeletonNodeSet getInternalNodesOfElements(const CSkeletonBase*,
+					    const CSkeletonSelectableSet*);
+CSkeletonNodeSet getInternalNodesOfFaces(const CSkeletonBase*,
+					 const CSkeletonSelectableSet*);
+
 #endif	// CSKELETONSELECTABLE_H

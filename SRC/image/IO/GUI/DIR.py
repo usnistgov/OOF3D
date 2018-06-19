@@ -14,6 +14,7 @@ pyfiles = [
     'imagePage.py',
     'initialize.py',
     'newimageGUI.py',
-    'pixelinfoGUI.py'
+    'pixelinfoGUI.py',
+    'pixelselectionmethodGUI.py'
     ]
 

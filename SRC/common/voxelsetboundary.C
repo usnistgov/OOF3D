@@ -30,7 +30,10 @@
 // Microstructure is split into subregions and a graph is constructed
 // for each subregion.  This allows the expensive graph clipping
 // operation to be skipped for large parts of the Microstructure when
-// computing an Element's homogeneiety.
+// computing an Element's homogeneity.  Because the size of the
+// subregions is determined by the size of the Elements, the VSBs are
+// constructed by a Skeleton method, CSkeletonBase::buildVSBs(), not
+// by a Microstructure method.
 
 // There are three main parts to the calculation.
 // (1) Constructing the graph representation of the VSB.
@@ -89,7 +92,7 @@
 // depends on the voxel geometry, which is known to the ProtoVSBNode
 // subclass.
 
-// After creating the ProtoVSBNodes, CMicrostructure::categorize()
+// After creating the ProtoVSBNodes, CSkeletonBase::buildVSBs()
 // calls ProtoVSBNode::connect() to set the nodes' neighbor pointers.
 // If a ProtoVSBNode needs a neighbor in the +x, +y, or +z direction
 // (in real space), categorize() finds the next ProtoVSBNode in that
@@ -3415,7 +3418,7 @@ double VoxelSetBoundary::clippedVolume(
 {
   assert(!planes.empty());
   double vol = 0.0;
-  // TODO: Instead of looping over all bins, compute which bvins to
+  // TODO: Instead of looping over all bins, compute which bins to
   // use, since we know their sizes.  Or perhaps use an octree
   // structure for the bins so that we can find the bins containing
   // the corners of the element bounding box quickly, and then examine

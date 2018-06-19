@@ -46,6 +46,8 @@ from ooflib.common.IO import mainmenu
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
 from ooflib.common.IO import placeholder
+from ooflib.common.IO import pointparameter
+from ooflib.common.IO import reporter
 from ooflib.common.IO import whoville
 from ooflib.common.IO import xmlmenudump
 from ooflib.engine.IO import meshparameters
@@ -870,7 +872,7 @@ class GhostGfxWindow:
                 'InFocussed',
                 callback=self.zoomInFocussed,
                 secret=1,
-                params=[primitives.PointParameter(
+                params=[pointparameter.PointParameter(
                             'focus', tip='Point to magnify about.')],
                 help='Magnify the image about a mouse click.',
                 discussion="""<para>
@@ -892,7 +894,7 @@ class GhostGfxWindow:
                 'OutFocussed',
                 callback=self.zoomOutFocussed,
                 secret=1,
-                params=[primitives.PointParameter(
+                params=[pointparameter.PointParameter(
                             'focus', tip='Point to demagnify about.')],
                 help='Magnify the image about a mouse click.',
                 discussion="""<para>
@@ -1044,10 +1046,10 @@ class GhostGfxWindow:
         # include only a subset of them.  This loop is done in a
         # clumsy way so that it's easy to narrow down the set of
         # layers that are included.
-        ## npre = len(PredefinedLayer.allPredefinedLayers)
+        npre = len(PredefinedLayer.allPredefinedLayers)
         ## debug.fmsg("npre=", npre)
         minpre = 0
-        maxpre = -1
+        maxpre = npre
         for predeflayer in PredefinedLayer.allPredefinedLayers[minpre:maxpre]:
             layer, who = predeflayer.createLayer(self)
             # The gfxlock has been acquired already, so we call
@@ -1230,6 +1232,7 @@ class GhostGfxWindow:
             if self.selectedLayer is not None:
                 newwindow.selectLayer(self.layerID(self.selectedLayer))
             view = mainthread.runBlock(self.oofcanvas.get_view)
+            newwindow.setLayerOffsetParameters()
             newwindow.draw()
             newwindow.viewCB(None, view)
             ## TODO 3.1: Clone the view history.
@@ -1252,9 +1255,8 @@ class GhostGfxWindow:
     def shutdownGfx_menu(self):
         # The non-gui part of the gfx window shutdown procedure.
         debug.mainthreadTest()
-        # To prevent timiing issues, the whole window shutdown
-        # sequence is on the main thread, so the gfxLock isn't
-        # acquired here.
+        # To prevent timing issues, the whole window shutdown sequence
+        # is on the main thread, so the gfxLock isn't acquired here.
 
         self.oofcanvas = None   # calls the OOFCanvas3D destructor
 
@@ -1596,8 +1598,8 @@ class GhostGfxWindow:
     def nlayers(self):
         return len(self.layers)
 
-    def getLayer(self, layerNumber): # only used by layer editor, will go away
-        return self.layers[layerNumber]
+    # def getLayer(self, layerNumber): # only used by layer editor, will go away
+    #     return self.layers[layerNumber]
 
     # Returns the topmost layer of the given class.
     def getLayerByClass(self, classinfo):
@@ -1697,6 +1699,12 @@ class GhostGfxWindow:
                     break
         return layerlist
 
+    def allWhoClassLayers(self, *whoclasses):
+        return [layer for layer in self.layers
+                if (not layer.hidden
+                    and (layer.who().getClassName() in whoclasses)
+                    and not isinstance(layer.who(), whoville.WhoProxy))]
+
     def topmost(self, *whoclasses):
         # Find the topmost layer whose 'who' belongs to the given
         # whoclass.  Eg, topmost('Image') returns the topmost image.
@@ -1709,6 +1717,14 @@ class GhostGfxWindow:
             for method in displaymethods:
                 if isinstance(self.layers[i], method):
                     return self.layers[i]
+
+    def allWhoClassNames(self):
+        whoclasses = set()
+        for layer in self.layers:
+            who = layer.who()
+            if (not isinstance(who, whoville.WhoProxy) and not layer.hidden):
+                whoclasses.add(who.getClassName())
+        return whoclasses
 
     #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -1818,7 +1834,7 @@ class GhostGfxWindow:
         finally:
             self.releaseGfxLock()
 
-    def findClickedCellID(self, who, point, view):
+    def findClickedCellID(self, who, point, view, warn=True):
         self.acquireGfxLock()
         try:
             ## TODO: Why did this have limit=1?
@@ -1828,7 +1844,8 @@ class GhostGfxWindow:
                     rval = mainthread.runBlock(
                         clickErrorHandler,
                         (self.oofcanvas.findClickedCellID,
-                         point, view, layer.canvaslayer))
+                         point, view, layer.canvaslayer),
+                        {"warn":warn})
                     if rval is None:
                         # findClickedCellID returns cellID, clickPosition
                         return (None, None)
@@ -1848,33 +1865,32 @@ class GhostGfxWindow:
         finally:
             self.releaseGfxLock()
 
-    def findClickedCellIDByLayerClass_nolock(self, classinfo, point, view):
+    def findClickedCellIDByLayer_nolock(self, layer, point, view):
         # This assumes that the gfxlock has already been acquired by
         # the caller. It also differs from findClickedCell in that
-        # it takes a layer class (e.g. VoxelRegionSelectionDisplay)
+        # it takes a layer (e.g. VoxelRegionSelectionDisplay)
         # instead of a who as its argument (classinfo).
-        layer = self.getLayerByClass(classinfo)
-        if layer is not None:
-            if layer.pickable():
-                rval = mainthread.runBlock(
-                    clickErrorHandler,
-                    (self.oofcanvas.findClickedCellID,
-                     point, view, layer.canvaslayer))
-                if rval is None:
-                    return (None, None, layer)
-                # If the layer has a filter, then vtk's cell ID is
-                # different than the mesh's index.
-                try:
-                    fltr = layer.filter
-                except AttributeError:
-                    return (rval[0], rval[1], layer)
-                cellidx = fltr.getCellIndex(rval[0])
-                if cellidx == -1:
-                    # This shouldn't happen...
-                    raise ooferror.ErrPyProgrammingError(
-                        "Filter failure in findClickedCellID")
-                return (cellidx, rval[1], layer)
-        return (None, None, None)
+        assert layer is not None
+        if layer.pickable():
+            rval = mainthread.runBlock(
+                clickErrorHandler,
+                (self.oofcanvas.findClickedCellID,
+                 point, view, layer.canvaslayer))
+            if rval is None:
+                return (None, None)
+            # If the layer has a filter, then vtk's cell ID is
+            # different than the mesh's index.
+            try:
+                fltr = layer.filter
+            except AttributeError:
+                return (rval[0], rval[1])
+            cellidx = fltr.getCellIndex(rval[0])
+            if cellidx == -1:
+                # This shouldn't happen...
+                raise ooferror.ErrPyProgrammingError(
+                    "Filter failure in findClickedCellID")
+            return (cellidx, rval[1], layer)
+        return (None, None)
         
     def findClickedCellCenter(self, who, point, view):
         self.acquireGfxLock()
@@ -1889,7 +1905,26 @@ class GhostGfxWindow:
         finally:
             self.releaseGfxLock()
 
-    def findClickedPosition(self, who, point, view):
+    def findClickedCellCenterMulti(self, layers, point, view):
+        try:
+            self.acquireGfxLock()
+            canvaslayers = [layer.canvaslayer for layer in layers
+                            if layer.pickable()]
+            if not canvaslayers:
+                return (None, None)
+            result = mainthread.runBlock(
+                clickErrorHandler,
+                (self.oofcanvas.findClickedCellCenterMulti,
+                 point, view, canvaslayers))
+            if result is None:
+                # Nothing was clicked
+                return (None, None)
+            pos, which = result
+            return (layers[which].who(), pos)
+        finally:
+            self.releaseGfxLock()
+
+    def findClickedPosition(self, who, point, view, warn=True):
         self.acquireGfxLock()
         try:
             layerlist = self.allwholayers(who)
@@ -1898,11 +1933,12 @@ class GhostGfxWindow:
                     return mainthread.runBlock(
                         clickErrorHandler,
                         (self.oofcanvas.findClickedPosition,
-                         point, view, layer.canvaslayer))
+                         point, view, layer.canvaslayer),
+                        {"warn":warn})
         finally:
             self.releaseGfxLock()
 
-    def findClickedPoint(self, who, point, view):
+    def findClickedPoint(self, who, point, view, warn=True):
         self.acquireGfxLock()
         try:
             layerlist = self.allwholayers(who)
@@ -1911,11 +1947,12 @@ class GhostGfxWindow:
                     return mainthread.runBlock(
                         clickErrorHandler,
                         (self.oofcanvas.findClickedPoint,
-                         point, view, layer.canvaslayer))
+                         point, view, layer.canvaslayer),
+                        {"warn":warn})
         finally:
             self.releaseGfxLock()
 
-    def findClickedSegment(self, who, point, view):
+    def findClickedSegment(self, who, point, view, warn=True):
         self.acquireGfxLock()
         try:
             layerlist = self.allwholayers(who)
@@ -1924,7 +1961,8 @@ class GhostGfxWindow:
                     return mainthread.runBlock(
                         clickErrorHandler,
                         (self.oofcanvas.findClickedSegment,
-                         point, view, layer.canvaslayer))
+                         point, view, layer.canvaslayer),
+                        {"warn":warn})
         finally:
             self.releaseGfxLock()
 
@@ -2046,10 +2084,10 @@ class GhostGfxWindow:
                     # callbacks.
                     self.selectedLayer = layer
                     self.sortedLayers = False
-                    self.sortLayers()
                     layer.build(self)
                     if layer.setWho(who):
                         layer.setParams()
+                    self.sortLayers()
                     # Don't destroy the old layer until after the new
                     # one is in place.  Its C++ guts may need to be
                     # disconnected when the new layer is being
@@ -2060,14 +2098,14 @@ class GhostGfxWindow:
                 # the layer list.
                 self.layers.append(layer)
                 self.sortedLayers = False
-                self.sortLayers()
                 layer.build(self)
                 if layer.setWho(who):
                     layer.setParams()
+                self.sortLayers()
                 if autoselect:
                     self.selectLayer(self.layerID(layer))
-            
-            self.newLayerMembers()
+
+                self.newLayerMembers()
             self.sensitize_menus()
         finally:
             if lock:
@@ -2226,7 +2264,7 @@ class GhostGfxWindow:
 
     def dumpLayers(self, menuitem):
         for i, layer in enumerate(self.layers):
-            print i, layer.__class__.__name__
+            print i, layer.__class__.__name__, layer.who()
 
     def listedLayers(self):             # for testing
         result = []
@@ -2250,8 +2288,8 @@ class GhostGfxWindow:
     # the previous center.  The control key says to set the center to
     # the focal point.
 
-    def computeTumbleCenter(self, shift, ctrl):
-        if shift:
+    def computeTumbleCenter(self, buttons):
+        if buttons.shift:
             renderer = self.oofcanvas.get_renderer()
             bbox = None
             for layer in self.layers:
@@ -2265,7 +2303,7 @@ class GhostGfxWindow:
                             bbox.swallowPrism(layerbbox)
             if bbox is not None:
                 self.oofcanvas.setTumbleCenter(bbox.center())
-        elif ctrl:
+        elif buttons.ctrl:
             self.oofcanvas.setTumbleAroundFocalPoint()
                 
 
@@ -2326,7 +2364,8 @@ class GhostGfxWindow:
         tb = tbclass(self)              # constructs toolbox
         self.toolboxes.append(tb)
         menu = self.toolboxmenu.addItem(
-            OOFMenuItem(tb.name(), help=tb.tip, discussion=tb.discussion))
+            OOFMenuItem(utils.space2underscore(tb.name()), help=tb.tip,
+                        discussion=tb.discussion))
         menu.data = tb
         tb.makeMenu(menu)
 
@@ -2425,9 +2464,16 @@ mainmenu.gfxdefaultsmenu.addItem(oofmenu.CheckOOFMenuItem(
 # on the main thread before returning control to the subthread.
 
 def clickErrorHandler(findClickedObj, *args, **kwargs):
+    if "warn" in kwargs:
+        warn = kwargs["warn"]
+        del kwargs["warn"]
+    else:
+        warn = True
     try:
         return findClickedObj(*args, **kwargs)
     except ooferror.ErrClickError:
+        if warn:
+            reporter.warn("Mouse click failed!\n Please try again.")
         return None
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#

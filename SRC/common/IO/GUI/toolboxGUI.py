@@ -9,6 +9,7 @@
 # oof_manager@nist.gov. 
 
 from ooflib.SWIG.common import config
+from ooflib.SWIG.common import switchboard
 from ooflib.common import debug
 from ooflib.common import mainthread
 from ooflib.common import toolbox
@@ -19,23 +20,40 @@ import gtk
 import sys
 
 class GfxToolbox(widgetscope.WidgetScope):
-    def __init__(self, name, toolbox):
+    def __init__(self, toolbox):
         debug.mainthreadTest()
         self.toolbox = toolbox          # non-GUI toolbox
         self.gtk = gtk.Frame()          # root of toolbox's gtk widget tree
-        gtklogger.setWidgetName(self.gtk, name)
+        gtklogger.setWidgetName(self.gtk, self.toolbox.displayName())
         self.gtk.set_shadow_type(gtk.SHADOW_NONE)
         self.active = 0
-        self._name = name
         widgetscope.WidgetScope.__init__(self, parent=None)
     def name(self):
-        return self._name
+        return self.toolbox.name()
+    def displayName(self):
+        return self.toolbox.displayName()
     def close(self):
         pass
+
+    def show(self):
+        # Redefine in derived classes if this is the wrong thing to
+        # do.
+        self.gtk.show_all()
+
     def activate(self):
+        ## TODO: active should only be in the Toolbox class.  No need
+        ## to store it in GfxToolbox as well.  There may be places in
+        ## the code that assume it's in GfxToolbox, which should be
+        ## changed.
         self.active = True
+        self.toolbox.active = True
+        switchboard.notify("toolbox activated " + self.name(),
+                           self.toolbox.gfxwindow())
     def deactivate(self):
         self.active = False
+        self.toolbox.active = False
+        switchboard.notify("toolbox deactivated " + self.name(),
+                           self.toolbox.gfxwindow())
     def gfxwindow(self):
         return self.toolbox.gfxwindow()
     def installMouseHandler(self):

@@ -135,13 +135,10 @@ class OOF_Mesh(OOF_Mesh_Base):
         msh = mesh.meshes["meshtest:skeleton:test"]
         self.assertEqual(msh.nelements(), 320)
         # Select and refine a skeleton element.
-        OOF.Graphics_1.Toolbox.Select_Element.Single_Element(
+        OOF.ElementSelection.Select(
             skeleton='meshtest:skeleton',
-            points=[Point(4.53162,5.35128,21.9826)],
-            view=View(cameraPosition=Coord(5,5,34.2583),
-                      focalPoint=Coord(5,5,5), up=Coord(0,1,0), angle=30,
-                      clipPlanes=[], invertClip=0, size_x=690, size_y=618),
-            shift=0, ctrl=0)
+            method=SingleElementSelect(element=196,
+                                       operator=Select()))
         OOF.Skeleton.Modify(
             skeleton='meshtest:skeleton',
             modifier=Refine(targets=CheckSelectedElements(),
@@ -1483,15 +1480,28 @@ class OOF_Mesh_Special(OOF_Mesh_Base):
         OOF.Material.Delete(name="material")
         OOF.Material.Delete(name="material<2>")
 
-    # Check abaqus output
-    @memorycheck.check("solve_test")
+    # Check abaqus output for both Skeletons and Meshes.  The Skeleton
+    # check could be done earlier, but we don't have a great place for
+    # it at the moment.
+    @memorycheck.check("skeltest")
     def AbaqusFormat(self):
         OOF.File.LoadStartUp.Data(
             filename=reference_file('mesh_data', 'solveable'))
-        OOF.File.Save.Mesh(filename='solveable.abq', mode='w', format='abaqus',
-                           mesh='solve_test:skeleton:mesh')
+        OOF.File.Save.Skeleton(filename='solveable_skel.abq', mode='w',
+                               format='abaqus',
+                               skeleton='skeltest:skeleton')
         # Use fp_file_compare because it can ignore dates in files,
         # and the abaqus output contains the date in the header.
+        self.assert_(
+            file_utils.fp_file_compare(
+                'solveable_skel.abq',
+                os.path.join('mesh_data', 'solveable_skel.abq'),
+                tolerance=1.e-8, ignoretime=True))
+        file_utils.remove('solveable_skel.abq')
+
+        
+        OOF.File.Save.Mesh(filename='solveable.abq', mode='w', format='abaqus',
+                           mesh='skeltest:skeleton:mesh')
         self.assert_(
             file_utils.fp_file_compare(
                 'solveable.abq',
@@ -1648,7 +1658,7 @@ special_set = [
     OOF_Mesh_Special("Skel_Mod_Mesh_Delete2"),
     OOF_Mesh_Special("Copy_BC_Init"),
     #OOF_Mesh_Special("Rebuild"),
-    #OOF_Mesh_Special("AbaqusFormat")
+    OOF_Mesh_Special("AbaqusFormat")
     ]
 
 
@@ -1658,9 +1668,5 @@ test_set = (basic_set + field_equation_set + extra_set + bc_set + file_set
             # + crosssection_set
             + special_set
             )
-# test_set = [OOF_Mesh_Interpolate_Quadratic("Derivative_Constant"),
-#             OOF_Mesh_Interpolate_Quadratic("Derivative_Linear"),
-#             OOF_Mesh_Interpolate_Quadratic("Derivative_Quadratic")]
 
-#test_set = low_dimension_set
-#test_set = [OOF_Mesh_Triangle_Linear("Derivative_Constant")]
+#test_set = [OOF_Mesh_Special("AbaqusFormat")]

@@ -80,14 +80,15 @@ class VSB_ConfigTest(unittest.TestCase):
         return ps.getObject().len()
 
     def selectVoxel(self, i, j, k):
-        OOF.PixelSelection.Region(
-            microstructure='microstructure',
-            shape=BoxSelectionShape(point0=Point(i,j,k)+Point(1,1,1),
-                                    point1=Point(i,j,k)+Point(2,2,2)),
-            units=PixelUnits(), operator=Select())
+        OOF.VoxelSelection.Select(
+            source='microstructure',
+            method=RegionSelector(
+                shape=BoxSelectionShape(point0=Point(i,j,k)+Point(1,1,1),
+                                        point1=Point(i,j,k)+Point(2,2,2)),
+                units=PixelUnits(), operator=AddSelection()))
 
     def selectSig(self, sig):
-        OOF.PixelSelection.Clear(
+        OOF.VoxelSelection.Clear(
             microstructure='microstructure')
         OOF.PixelGroup.Clear(
             microstructure='microstructure',

@@ -345,21 +345,32 @@ bool OOFImage3D::compare(const OOFImage3D &other, double tol) const {
     return false;
   }
 
+  int nok = 0;
+  int nbad = 0;
   for(int i=0;i<sizeInPixels_[0];i++) {
     for(int j=0;j<sizeInPixels_[1];j++) {
       for(int k=0;j<sizeInPixels_[2];j++) {
 	CColor c0 = (*this)[ICoord(i,j,k)];
 	CColor c1 = other[ICoord(i,j,k)];
 	if (!c0.compare(c1, tol)) {
-	  oofcerr << "OOFImage3D::compare: color mismatch: " 
-		  << ICoord(i,j,k) << " " << c0 << " != " << c1
-		  << std::endl;
-	  return false;
+	  if(nbad < 10) 
+	    oofcerr << "OOFImage3D::compare: color mismatch: " 
+		    << ICoord(i,j,k) << " " << c0 << " != " << c1
+		    << std::endl;
+	  ++nbad;
 	}
+	else
+	  ++nok;
       }
     }
   }
-  return true;
+  if(nbad == 0)
+    return true;
+  if(nbad > 10)
+    oofcerr << "OOFImage3D::compare: ... " << std::endl;
+  oofcerr << "OOFImage3D::compare: " << nok << " voxels agree, "
+	  << nbad << " voxels differ." << std::endl;
+  return false;
 }
 
 void OOFImage3D::imageChanged() {
@@ -472,11 +483,11 @@ void OOFImage3D::negate(double dummy) {
 
 void OOFImage3D::medianFilter(int radius) {
   // This can be slow. Could use a progress bar.
-  // padImage(-1);
   vtkSmartPointer<vtkImageMedian3D> median
     = vtkSmartPointer<vtkImageMedian3D>::New();
 
-  median->SetKernelSize(radius*2, radius*2, radius*2);
+  // kernel size has to be odd for results to make sense.
+  median->SetKernelSize(radius*2+1, radius*2+1, radius*2+1);
   median->SetInputData(image);
 	
   image = median->GetOutput();

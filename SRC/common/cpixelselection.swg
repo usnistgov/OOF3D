@@ -20,14 +20,10 @@
 #include "common/cpixelselection.h"
 %}
 %include "common/typemaps.swg"
-// %extern "common/timestamp.swg"
 %extern "common/pixelgroup.swg"
-%extern "common/IO/bitoverlay.swg"
 %extern "common/coord.swg"
-// %pragma(python) code="from ooflib.SWIG.common.timestamp import TimeStampPtr"
 %pragma(python) code="from ooflib.SWIG.common.pixelgroup import PixelGroupPtr"
 %pragma(python) code="from ooflib.SWIG.common.pixelgroup import PixelSetPtr"
-%pragma(python) code="from ooflib.SWIG.common.IO.bitoverlay import BitmapOverlayPtr"
 %pragma(python) code="from ooflib.SWIG.common.coord import CoordPtr"
 %pragma(python) code="from ooflib.SWIG.common.coord import ICoordPtr"
 
@@ -65,9 +61,7 @@ public:
 
   bool isSelected(ICoord *iPoint);
   void setFromGroup(PixelSet*);
-  // TimeStamp *getTimeStamp();
   PixelSet *getPixelGroup();
-  BitmapOverlay *getBitmap();
   int len();
   bool empty();
   void getBounds(ICoord &ICoordOut, ICoord &ICoordOut);

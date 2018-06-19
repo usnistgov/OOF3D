@@ -79,48 +79,140 @@ class OOF_SimpleFloat(unittest.TestCase):
             schedule=Periodic(delay=0.0,interval=0.1), 
             destination=OutputStream(filename='right.out',mode='w'))
 
-        # Select faces through the middle of the Skeleton, construct a
-        # Boundary on those faces, and measure the average temperature
-        # on it, in order to have a check that's *not* on the floating
-        # BC.
-        OOF.Windows.Graphics.New()
-        OOF.Graphics_1.Toolbox.Viewer.Clip.New(
-            normal=VectorDirection(x=1.0,y=0.0,z=0.0), 
-            offset=0.499)
-        OOF.Graphics_1.Toolbox.Viewer.Restore_Named_View(
-            view='Left')
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.543102,0.45989)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=0, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.540382,0.465056)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.535488,0.484092)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.542286,0.491162)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.544461,0.505575)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.534944,0.515908)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.535216,0.534128)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.543646,0.54283)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.511557,0.545277)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.518084,0.529777)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.518084,0.518356)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.510198,0.506934)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.509926,0.49361)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.51754,0.481644)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.519715,0.465056)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.508566,0.453091)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.494969,0.45853)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.484364,0.46696)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.48246,0.48382)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.491162,0.493066)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.491706,0.506934)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.484092,0.516452)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.48246,0.536847)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.493066,0.546637)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.456082,0.545005)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.464784,0.534672)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.4656,0.515092)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.457714,0.506119)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.45853,0.490346)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.467232,0.484364)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.467776,0.460977)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
-        OOF.Graphics_1.Toolbox.Select_Face.Single_Face(skeleton='microstructure:skeleton', points=[Point(-2.11376,0.456626,0.456354)], view=View(cameraPosition=Coord(-2.42583,0.5,0.5), focalPoint=Coord(0.5,0.5,0.5), up=Coord(0,1,0), angle=30, clipPlanes=[[1.0, 0.0, 0.0, 0.499, 0]], invertClip=1, size_x=621, size_y=615), shift=1, ctrl=0)
+        # Select faces through the middle of the Skeleton at x=0.5,
+        # construct a Boundary on those faces, and measure the average
+        # temperature on it, in order to have a check that's *not* on
+        # the floating BC.
+        
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[89, 114, 113],
+                                    operator=Select()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[88, 89, 113],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[88, 113, 87],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[113, 112, 87],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[87, 112, 111],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[86, 87, 111],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[86, 111, 85],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[111, 110, 85],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[60, 61, 85],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[61, 86, 85],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[87, 86, 61],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[62, 87, 61],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[62, 63, 87],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[63, 88, 87],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[89, 88, 63],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[64, 89, 63],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[39, 64, 63],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[38, 39, 63],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[38, 63, 37],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[63, 62, 37],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[37, 62, 61],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[36, 37, 61],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[36, 61, 35],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[61, 60, 35],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[11, 36, 35],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[10, 11, 35],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[37, 36, 11],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[12, 37, 11],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[12, 13, 37],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[13, 38, 37],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[39, 38, 13],
+                                    operator=AddSelection()))
+        OOF.FaceSelection.Select(
+            skeleton='microstructure:skeleton',
+            method=SingleFaceSelect(nodes=[14, 39, 13],
+                                    operator=AddSelection()))
+
         OOF.Skeleton.Boundary.Construct(
             skeleton='microstructure:skeleton',
             name='midfield',
@@ -211,7 +303,6 @@ class OOF_SimpleFloat(unittest.TestCase):
         from ooflib.engine.IO import outputdestination
         outputdestination.forgetTextOutputStreams()
         OOF.Material.Delete(name='material')
-        OOF.Graphics_1.File.Close()
 
     def linearSolver(self):
         OOF.Subproblem.Set_Solver(

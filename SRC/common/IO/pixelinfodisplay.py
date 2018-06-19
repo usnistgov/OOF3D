@@ -38,7 +38,7 @@ class PixelInfoDisplay(display.DisplayMethod):
         display.DisplayMethod.destroy(self, destroy_canvaslayer)
 
     def draw(self, gfxwindow, device): # 2D only
-        toolbox = gfxwindow.getToolboxByName("Pixel_Info")
+        toolbox = gfxwindow.getToolboxByName("Pixel Info")
         pixel = toolbox.currentPixel()
         if pixel is not None:
             microstructure = toolbox.findMicrostructure()
@@ -78,7 +78,7 @@ class PixelInfoDisplay(display.DisplayMethod):
     #                toolbox.getTimeStamp())
 
     def newLayer(self):
-        toolbox = self.gfxwindow.getToolboxByName("Voxel_Info")
+        toolbox = self.gfxwindow.getToolboxByName("Voxel Info")
         self.tbcallback = switchboard.requestCallbackMain(toolbox, self.update)
         return canvaslayers.SingleVoxelLayer(self.gfxwindow.oofcanvas,
                                              "PixelInfo")
@@ -87,7 +87,7 @@ class PixelInfoDisplay(display.DisplayMethod):
         self.canvaslayer.set_lineWidth(self.line_width)
 
     def update(self):
-        toolbox = self.gfxwindow.getToolboxByName("Voxel_Info")
+        toolbox = self.gfxwindow.getToolboxByName("Voxel Info")
         pixel = toolbox.currentPixel()
         if pixel is not None:
             microstructure = toolbox.findMicrostructure()
@@ -98,7 +98,6 @@ class PixelInfoDisplay(display.DisplayMethod):
                 return
         self.canvaslayer.clear()
         self.canvaslayer.setEmpty(True)
-
         
 defaultPixelInfoColor = color.blue
 if config.dimension() == 2:
@@ -149,6 +148,9 @@ pixelInfoDisplay = registeredclass.Registration(
     )
 
 ########################
+
+## TODO: Move TopBitmap into its own file.  It's used in
+## pixelselectiondisplay too.
 
 # In order to have a single layer that displays pixel info for *both*
 # Images and Microstructures, we create a new WhoClass that contains

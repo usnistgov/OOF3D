@@ -28,7 +28,7 @@ def _CSelectionTracker___ne__(self, other):
 CSelectionTrackerPtr.__ne__ = _CSelectionTracker___ne__
 
 def _CSelectionTracker___repr__(self):
-    return "CSelectionTracker(%s)" % self.uid()
+    return "CSelectionTracker(%s)" % self.size()
 
 CSelectionTrackerPtr.__repr__ = _CSelectionTracker___repr__
 

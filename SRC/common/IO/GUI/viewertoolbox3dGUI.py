@@ -45,18 +45,13 @@ ndigits = 10
 ## TODO: When a clipping plane is set using Angles, it should stay
 ## in Angles after it's been edited by the plane and arrow widget.
 
-## TODO: When the parameter for the PlaneAndArrowLayer are modified,
-## the layer disappears until the clipping plane is deselected and
-## reselected in the list.
-
-## TODO: The plane in the PlaneAndArrowLayer is drawn in the wrong color.
-
 ## TODO: If the arrow in the PlaneAndArrowLayer is ctrl-dragged to a
 ## new position, a second plane is selected, and the first plane is
 ## reselected, the new arrow position is lost.
 
 ## TODO: Continuous rotation mode.  Set angular velocity and axis
-## direction.
+## direction.  Like vtk joystick interactor?  Toggle between joystick
+## and trackball modes?
 
 ## TODO: Rocker mode: rock back and forth on an axis.  Set axis
 ## direction, frequency, and amplitude.
@@ -79,7 +74,7 @@ class ViewerToolbox3DGUI(toolboxGUI.GfxToolbox, mousehandler.MouseHandler):
     def __init__(self, vwrtoolbox):
         debug.mainthreadTest()
 
-        toolboxGUI.GfxToolbox.__init__(self, "Viewer", vwrtoolbox)
+        toolboxGUI.GfxToolbox.__init__(self, vwrtoolbox)
         mainbox = gtk.VBox(spacing=3)
         self.gtk.add(mainbox)
 
@@ -670,10 +665,6 @@ To deselect a plane, Ctrl+Click the plane in the list."""
     # Clipping
     ############################################################
 
-    ## TODO 3.1: Edit clipping planes graphically using
-    ## vtkImplicitPlaneWidget.  Or add a comment explaining why the
-    ## ClipPlaneClickAndDragDisplay is better.
-
     def renderEnableCell(self, column, cell_renderer, model, iter):
         debug.mainthreadTest()
         plane = model[iter][0]
@@ -711,6 +702,43 @@ To deselect a plane, Ctrl+Click the plane in the list."""
 
     def newClipCB(self, button):
         menuitem = self.toolbox.menu.Clip.New
+        # Set the default value of the offset to 1/4 of the width of
+        # the Microstructure.  Starting with a zero offset is
+        # confusing because it removes the entire Microstructure, and
+        # also does something strange to vtk.  Setting it to half the
+        # size of the Microstructure is confusing (if the default View
+        # hasn't changed) because the initial clipping plane will be
+        # seen edge on.  Setting it to 3/4 of the width makes the
+        # plane invisible because of the perspective in the default
+        # view.
+        # Find the screen x direction
+        view = mainthread.runBlock(self.gfxwindow().oofcanvas.get_view)
+        right = coord.cross(view.up, view.pos-view.focal)
+        right = right/math.sqrt(coord.norm2(right))
+
+        # Find the min and max coords of the corners of the
+        # Microstructure in the screen x direction.
+        who = self.gfxwindow().topwho('Microstructure', 'Image', 'Skeleton',
+                                      'Mesh')
+        msSize = who.getMicrostructure().size()
+        xvals = [coord.dot(primitives.Point(x, y, z), right)
+                 for x in (0, msSize.x)
+                 for y in (0, msSize.y)
+                 for z in (0, msSize.z)]
+        xmin = min(xvals)
+        xmax = max(xvals)
+        offset = xmin + 0.25*(xmax - xmin)
+        
+        # # Find the size of the Microstructure in this direction
+        # width = coord.dot(right, who.getMicrostructure().size())
+        # offset = 0.25*width
+        
+        offsetarg = menuitem.get_arg("offset")
+        offsetarg.set(offset)
+        normalarg = menuitem.get_arg("normal")
+        normalarg.set(direction.VectorDirection(right.x, right.y, right.z))
+        
+        # offsetarg.set(0.25 * who.getMicrostructure().size().x)
         if parameterwidgets.getParameters(title="New Clipping Plane",
                                           *menuitem.params):
             menuitem.callWithDefaults()
@@ -812,9 +840,14 @@ To deselect a plane, Ctrl+Click the plane in the list."""
         # handler to self.
         if plane is not None:
             self.selectClipPlane(plane)
-            # Put the toolbox in "Select" mode, so that the new plane
-            # can be edited.
-            self.gfxwindow().toolbar.setSelect() # installs mouse handler
+            # Put the toolbox in "Select" mode, if necessary, so that
+            # the new plane can be edited.
+            if not self.gfxwindow().toolbar.getSelect():
+                self.gfxwindow().toolbar.setSelect()
+            else:
+                # The mouse handler might have been removed when an
+                # earlier clipping plane was deleted.
+                self.installMouseHandler()
         else:
             self.selectClipPlane(None)
             self.gfxwindow().removeMouseHandler()
@@ -1048,39 +1081,40 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
         # miniThreadManager.
         self.eventThread = subthread.execute_immortal(
             self.processEvents_subthread)
-        
-    def up(self, x, y, button, shift, ctrl):
+
+    ## TODO: Use ThreadedMouseHandler instead of an explicit eventThread.
+    def up(self, x, y, buttons):
         self.datalock.logNewEvent_acquire()
         try:
             self.downed = False
-            self.eventlist.append(('up', x, y, shift, ctrl))
+            self.eventlist.append(('up', x, y, buttons.shift, buttons.ctrl))
         finally:
             self.datalock.logNewEvent_release()
         
-    def down(self, x, y, button, shift, ctrl):
+    def down(self, x, y, buttons):
         self.datalock.logNewEvent_acquire()
         try:
             self.downed = True
-            self.eventlist.append(('down', x, y, shift, ctrl))
+            self.eventlist.append(('down', x, y, buttons.shift, buttons.ctrl))
         finally:
             self.datalock.logNewEvent_release()
 
-    def move(self, x, y, button, shift, ctrl):
+    def move(self, x, y, buttons):
         self.datalock.logNewEvent_acquire()
         try:
             num_events = len(self.eventlist)
             if num_events == 0:
                 # All events have been processed so far. Append the
                 # new move event to the list.
-               self.eventlist.append(('move', x, y, shift, ctrl))
+               self.eventlist.append(('move', x, y, buttons.shift, buttons.ctrl))
             elif self.eventlist[num_events - 1][0] == 'down':
                 # Previous event was a down event. Append the new move
                 # event to the list.
-                self.eventlist.append(('move', x, y, shift, ctrl))
+                self.eventlist.append(('move', x, y, buttons.shift, buttons.ctrl))
             elif self.eventlist[num_events - 1][0] == 'move':
                 # Previous event was a move event. Overwrite that
                 # event with the new move event.
-                self.eventlist[num_events - 1] = ('move', x, y, shift, ctrl)
+                self.eventlist[num_events - 1] = ('move', x, y, buttons.shift, buttons.ctrl)
         finally:
             self.datalock.logNewEvent_release()
 
@@ -1138,7 +1172,7 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
             # clicked.
             (self.click_pos, self.layer) = \
                   self.gfxwindow.findClickedPositionOnActor_nolock(
-                      clipplaneclickanddragdisplay.ClipPlaneClickAndDragDisplay,
+                      clipplaneclickanddragdisplay.ClippingPlaneWidget,
                       point, 
                       viewobj)
             if self.click_pos is not None:
@@ -1151,7 +1185,7 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
 
             # Find the vtkActors that have been clicked upon.
             (actors, self.layer) = self.gfxwindow.findClickedActors_nolock(
-                clipplaneclickanddragdisplay.ClipPlaneClickAndDragDisplay,
+                clipplaneclickanddragdisplay.ClippingPlaneWidget,
                 point, 
                 viewobj)
             if actors is not None:

@@ -16,7 +16,6 @@
 
 class OOFCanvas3D;
 
-#include "common/IO/GUI/rubberband3d.h"
 #include "common/IO/ghostoofcanvas.h"
 #include "common/ccolor.h"
 
@@ -29,7 +28,6 @@ private:
   double last_x, last_y;
   PyObject *mouse_callback;
   guint mouse_handler_id; //, config_handler_id;
-  RubberBand *rubberband;
   int rescaleFudgeFactor;
   std::vector<gulong> g_handlers; // gtk signal handler ids
 protected:
@@ -65,12 +63,7 @@ public:
   void mouse_track(double x, double y);
   void mouse_dolly(double x, double y);
 
-  void set_rubberband(RubberBand*);
-
   virtual void setFixCanvasScaleBug(bool);
-
-  friend class RubberBand;
-
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

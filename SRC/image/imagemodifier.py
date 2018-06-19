@@ -231,10 +231,12 @@ registeredclass.Registration(
     ImageModifier,
     BlurImage,
     ordering=2.00,
-    params=[parameter.PositiveFloatParameter('radius', 1.0,
-      tip="Radius of the Gaussian kernel, in pixels(?)."),
+    params=[parameter.PositiveFloatParameter(
+        'radius', 1.0,
+        tip="Radius of the Gaussian kernel, in voxel units."
+        "The convolution kernel is zero beyond this radius."),
             parameter.PositiveFloatParameter('sigma', 1.0,
-      tip="Standard deviation of the Gaussian, in pixels(?).")
+      tip="Standard deviation of the Gaussian, in voxel units.")
     ],
     tip="Blur an image by convolving it with a Gaussian operator of the given radius and standard deviation (sigma).",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/image/reg/blurimage.xml')
@@ -351,8 +353,10 @@ if config.dimension() == 2:
     filterparam =[parameter.FloatParameter('radius', 1.0,
                                            tip="Radius of the filter.")]
 elif config.dimension() == 3:
-    filterparam =[parameter.IntParameter('radius', 1,
-                                           tip="Radius of the filter.")]
+    filterparam =[parameter.IntParameter(
+        'radius', 1,
+        tip="Radius of the filter in voxels."
+        " The kernel is a cube with 2*r+1 voxels on a side.")]
     
 registeredclass.Registration(
     'MedianFilter',

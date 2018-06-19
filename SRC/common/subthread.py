@@ -53,7 +53,10 @@ class MiniThread(threading.Thread):
             try:
                 self.threadstate = threadstate.OOFThreadState()
                 hook = excepthook.assign_excepthook(excepthook.OOFexceptHook())
+                # debug.fmsg("Starting thread %s: %s" %
+                #            (self.id(), self.function))
                 self.function(*self.args, **self.kwargs)
+                # debug.fmsg("Finished thread", self.id())
                 excepthook.remove_excepthook(hook)
             except StopThread:
                 excepthook.remove_excepthook(hook)
@@ -71,7 +74,7 @@ class MiniThread(threading.Thread):
 
     def stop_it(self):
         if not self.immortal:
-            debug.fmsg("Canceling", self.threadstate.id())
+            # debug.fmsg("Canceling", self.threadstate.id())
             threadstate.cancelThread(self.threadstate)
 
 def execute(function, args=(), kwargs={}):

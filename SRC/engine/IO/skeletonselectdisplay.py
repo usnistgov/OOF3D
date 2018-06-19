@@ -34,9 +34,6 @@ class SkeletonSelectionDisplay(display.DisplayMethod):
         self.mode = mode
         self.tbcallbacks = [] 
         
-    def nameClass(self):
-      return "SkeletonSelectionDisplay"
-
     def draw(self, gfxwindow, canvas): # This is only used in 2D
         skel = self.who().resolve(gfxwindow)
         if skel is not None:
@@ -96,9 +93,6 @@ class SkeletonSelectionDisplay(display.DisplayMethod):
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# The default opacity for selected elements is 1.0, because if it's
-# less than that they (sometimes) don't show up when superimposed on
-# an opaque image.
 defaultSelectedElementColor = color.RGBColor(0.88, 0.14, 0.07)
 defaultSelectedElementOpacity = 0.7
 
@@ -113,9 +107,6 @@ class SkeletonElementSelectionDisplay(SkeletonSelectionDisplay):
         self.setupSignals()
         return canvaslayers.SimpleFilledCellLayer(self.gfxwindow.oofcanvas, 
                                                   "SkeletonSelectedElement")
-
-    def nameClass(self):
-      return "SkeletonElementSelectionDisplay"
 
     def setParams(self):
         self.canvaslayer.set_color(self.color)

@@ -81,7 +81,7 @@ class ActivateOnlySelection(ActiveAreaModifier):
         activearea.start()
         activearea.clear()              # everything is active
         activearea.invert()             # everything is inactive
-        pixgrp = pixelselection.getSelectionAsGroup()
+        pixgrp = pixelselection.getPixelSet()
         courier = GroupSelection(microstructure, pixgrp)
         activearea.activate(courier)
 
@@ -100,7 +100,7 @@ class ActivateSelection(ActiveAreaModifier):
         activearea = microstructure.activearea
         pixelselection = microstructure.pixelselection
         activearea.start()
-        pixgrp = pixelselection.getSelectionAsGroup()
+        pixgrp = pixelselection.getPixelSet()
         activearea.activate(GroupSelection(microstructure, pixgrp))
 
 registeredclass.Registration(
@@ -183,7 +183,7 @@ class DeactivateSelection(ActiveAreaModifier):
         activearea = microstructure.activearea
         pixelselection = microstructure.pixelselection
         activearea.start()
-        pixgrp = pixelselection.getSelectionAsGroup()
+        pixgrp = pixelselection.getPixelSet()
         activearea.deactivate(GroupSelection(microstructure, pixgrp))
         
 
@@ -228,7 +228,7 @@ class ExpandActiveArea(ActiveAreaModifier):
     def __call__(self, microstructure):
         activearea = microstructure.activearea
         activearea.start()
-        activegrp = activearea.getSelectionAsGroup()
+        activegrp = activearea.getPixelSet()
         activearea.activate(
             pixelselectioncourier.ShrinkSelection(microstructure,
                                                   activegrp, self.radius))
@@ -255,7 +255,7 @@ class ShrinkActiveArea(ActiveAreaModifier):
     def __call__(self, microstructure):
         activearea = microstructure.activearea
         activearea.start()
-        activegrp = activearea.getSelectionAsGroup()
+        activegrp = activearea.getPixelSet()
         activearea.deactivate(
             pixelselectioncourier.ExpandSelection(microstructure,
                                                   activegrp, self.radius))
@@ -371,7 +371,7 @@ class CopyActiveArea(ActiveAreaModifier):
         sourceMS = ooflib.common.microstructure.microStructures[self.source]
         microstructure.activearea.start()
         microstructure.activearea.getObject().setFromGroup(
-            sourceMS.getObject().activearea.getSelectionAsGroup())
+            sourceMS.getObject().activearea.getPixelSet())
         ## TODO OPT: Does this have to send "pixel selection changed"?
 
 registeredclass.Registration(

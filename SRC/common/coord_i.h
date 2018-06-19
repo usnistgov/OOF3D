@@ -24,7 +24,7 @@
 // Coord2D if DIM==2 and Coord3D if DIM==3.  If DIM==2, only Coord2D
 // is derived from Position.
 
-#include "engine/ooferror.h"
+#include "common/ooferror.h"
 #include <vector>
 
 class Coord2D;

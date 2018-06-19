@@ -31,7 +31,7 @@ class MeshInfoToolbox(genericinfotoolbox.GenericInfoToolbox):
     whoClassName = 'Mesh'
     def __init__(self, gfxwindow):
         genericinfotoolbox.GenericInfoToolbox.__init__(
-            self, gfxwindow, 'Mesh_Info', self.makeInfoModes())
+            self, gfxwindow, 'Mesh Info', self.makeInfoModes())
 
         # The mesh info toolbox has a special attribute, "meshlayer",
         # which refers to the display layer in which the referred-to

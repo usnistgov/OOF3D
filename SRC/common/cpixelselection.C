@@ -20,13 +20,16 @@
 #include "common/printvec.h"
 #include "common/IO/oofcerr.h"
 
-// TODO OPT: Do we still need to store the bitmap representation of the
-// pixel selection?  The BitmapOverlayDisplayMethod no longer needs
-// it.  The other thing it is useful for is to quickly compute the
-// complement of the selected pixels, but that can be done quickly by
-// simultaneously looping over all the pixels in the ms and a sorted
-// list of selected pixels.  If the pixels were stored in a set
-// instead of a list, this would be easy.  NO -- it's used by isSelected().
+// TODO OPT: Do we still need to store the bitmap representation of
+// the pixel selection?  The BitmapOverlayDisplayMethod no longer
+// needs it.  The other thing it is useful for is to quickly compute
+// the complement of the selected pixels, but that can be done quickly
+// by simultaneously looping over all the pixels in the ms and a
+// sorted list of selected pixels.  If the pixels were stored in a set
+// instead of a list, this would be easy.  NO -- it's used by
+// isSelected().  TODO: Give PixelSet the ability to determine
+// efficiently if a pixel is selected, and get rid of the
+// BitmapOverlay class entirely.
 
 CPixelSelection::CPixelSelection(const ICoord *pxlsize, const Coord *size,
 				 CMicrostructure *ms)

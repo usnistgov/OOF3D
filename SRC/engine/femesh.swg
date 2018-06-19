@@ -28,6 +28,7 @@
 
 %pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkDataArrayPtrPtr"
 %pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkUnstructuredGridPtrPtr"
+%pragma(python) code="from ooflib.SWIG.common.coord import CoordPtr"
 %pragma(python) code="from ooflib.SWIG.common.lock import LockPtr"
 %pragma(python) code="from ooflib.SWIG.common.lock import RWLockPtr"
 %pragma(python) code="from ooflib.SWIG.engine.element import ElementPtr"
@@ -50,6 +51,42 @@
      }
 }
 
+%typemap(python, newfree) ElementShapeCountMap* {
+  // typemap(python, newfree) ElementShapeCountMap*
+  delete $source;
+}
+
+// %typemap(python, out) NodeIndexMap* {
+//   // typemap(python, out) NodeIndexMap*
+//   static PyObject *pointClass = 0;
+//   if(!pointClass) {
+//     PyObject *module = PyImport_ImportModule("ooflib.common.primitives");
+//     pointClass = PyObject_GetAttrString(module, "Point");
+//     Py_XDECREF(module);
+//     if(!pointClass) return 0;
+//   }
+
+//   $target = PyDict_New();
+
+//   for(FEMesh::NodeIndexMap::const_iterator i=$source->begin();
+//       i!=$source->end(); ++i)
+//     {
+//       const Coord3D &coord = i->first;
+//       PyObject *xyargs = Py_BuildValue("ddd", coord[0], coord[1], coord[2]);
+//       PyObject *point = PyObject_CallObject(pointClass, xyargs);
+//       Py_XDECREF(xyargs);
+//       if(!point)
+// 	return 0;
+//       PyDict_SetItem($target, point, PyInt_FromLong(i->second));
+//       Py_XDECREF(point);	// TODO: Is this correct?
+//     }
+// }
+
+// %typemap(python, newfree) NodeIndexMap* {
+//   // typemap(python, newfree) NodeIndexMap*
+//   delete $source;
+// }
+
 %{
 #include "common/IO/vtkutils.h"
 #include "engine/csubproblem.h"
@@ -59,13 +96,17 @@
 #include "engine/nodalequation.h"
 #include "engine/meshiterator.h"
 typedef FEMesh::ElementShapeCountMap ElementShapeCountMap;
+//typedef FEMesh::NodeIndexMap NodeIndexMap;
 %}
 
 %pragma(python) include="femesh.spy"
 
-class AbaqusMeshData {
+class NodeIndexMap {
 public:
-  int getAbaqusIndex(Coord *Point);
+  ~NodeIndexMap();
+  int index(Coord *Point);
+  Coord position(int);
+  int size();
 };
 
 
@@ -99,6 +140,7 @@ public:
   int nelements();
   int nnodes();
   %new ElementShapeCountMap *getElementShapeCounts();
+  %new NodeIndexMap *getNodeIndexMap();
 
   void addInterfaceElement(Element*);
   int nedgements();
@@ -145,8 +187,6 @@ public:
   bool atLatest();
   bool isEmptyCache();
   int dataCacheSize();
-
-  %new AbaqusMeshData *writeAbaqus(char*, StringVec*);
 };				// class FEMesh
 
 long get_globalFEMeshCount();

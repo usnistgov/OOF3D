@@ -17,7 +17,7 @@ from ooflib.common import subthread
 from ooflib.common import mainthread
 from ooflib.common import debug
 from ooflib.common import microstructure
-from ooflib.common import pixelselectionmod
+from ooflib.common import pixelselection
 from ooflib.common.IO import mainmenu
 from ooflib.common.IO.GUI import fixedwidthtext
 from ooflib.common.IO.GUI import gtklogger
@@ -87,14 +87,10 @@ class SelectionPage(oofGUI.MainPage):
         mainpane.pack2(modframe, resize=0, shrink=0)
         vbox = gtk.VBox()
         modframe.add(vbox)
-##        scroll = gtk.ScrolledWindow()
-##        scroll.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-##        vbox.add(scroll)
         self.selectionModFactory = regclassfactory.RegisteredClassFactory(
-            pixelselectionmod.SelectionModifier.registry, title="Method:",
+            pixelselection.VoxelSelectionModifier.registry, title="Method:",
             scope=self, name="Method")
         vbox.pack_start(self.selectionModFactory.gtk, expand=1, fill=1)
-##        scroll.add_with_viewport(self.selectionModFactory.gtk)
         self.historian = historian.Historian(self.selectionModFactory.set,
                                              self.sensitizeHistory,
                                              setCBkwargs={'interactive':1})
@@ -122,7 +118,7 @@ class SelectionPage(oofGUI.MainPage):
         tooltips.set_tooltip_text(self.nextmethodbutton,
                         "Recall the next selection modification operation.")
 
-        # Undo, Redo, and Clear buttons
+        # Undo, Redo, Clear, and Invert buttons
         hbox = gtk.HBox()
         vbox.pack_start(hbox, expand=0, fill=0, padding=2)
         self.undobutton = gtk.Button(stock=gtk.STOCK_UNDO)
@@ -145,17 +141,23 @@ class SelectionPage(oofGUI.MainPage):
         gtklogger.connect(self.clearbutton, 'clicked', self.clearCB)
         tooltips.set_tooltip_text(self.clearbutton,
                                   "Unselect all %ss."%pixstring)
+        self.invertbutton = gtk.Button('Invert')
+        hbox.pack_start(self.invertbutton, expand=1, fill=0)
+        gtklogger.setWidgetName(self.invertbutton, "Invert")
+        gtklogger.connect(self.invertbutton, 'clicked', self.invertCB)
+        tooltips.set_tooltip_text(self.invertbutton,
+                                  "Toggle the current selection.")
 
         self.sbcallbacks = [
             switchboard.requestCallbackMain(self.mswidget,
                                             self.mswidgetCB),
             switchboard.requestCallbackMain('pixel selection changed',
                                             self.selectionChanged),
-            switchboard.requestCallbackMain('modified pixel selection',
-                                            self.updateHistory),
             switchboard.requestCallbackMain(
-                pixelselectionmod.SelectionModifier,
+                pixelselection.VoxelSelectionModifier,
                 self.updateSelectionModifiers),
+            switchboard.requestCallbackMain("voxel selection modifier applied",
+                                            self.recordModifier),
             switchboard.requestCallbackMain(('validity',
                                              self.selectionModFactory),
                                             self.validityChangeCB),
@@ -254,41 +256,34 @@ class SelectionPage(oofGUI.MainPage):
         mainthread.runBlock(set_button_sensitivity, (u,r,c))
         mainthread.runBlock(set_ok_sensitivity, (selection,) )
         
-
+    def recordModifier(self, modifier):
+        self.historian.record(modifier)
 
     def updateSelectionModifiers(self): # SB: New selection modifier created
         self.selectionModFactory.update(
-            pixelselectionmod.SelectionModifier.registry)
+            pixelselection.VoxelSelectionModifier.registry)
 
     def sensitizeHistory(self):
         debug.mainthreadTest()
         self.nextmethodbutton.set_sensitive(self.historian.nextSensitive())
         self.prevmethodbutton.set_sensitive(self.historian.prevSensitive())
 
-    def updateHistory(self, selectionModifier): # sb 'modified pixel selection'
-        if selectionModifier is not None:
-            self.historian.record(selectionModifier)
-
     def undoCB(self, button):
-        mainmenu.OOF.PixelSelection.Undo(microstructure=self.getCurrentMSName())
+        mainmenu.OOF.VoxelSelection.Undo(microstructure=self.getCurrentMSName())
     def redoCB(self, button):
-        mainmenu.OOF.PixelSelection.Redo(microstructure=self.getCurrentMSName())
+        mainmenu.OOF.VoxelSelection.Redo(microstructure=self.getCurrentMSName())
     def clearCB(self, button):
-        mainmenu.OOF.PixelSelection.Clear(
+        mainmenu.OOF.VoxelSelection.Clear(
+            microstructure=self.getCurrentMSName())
+    def invertCB(self, button):
+        mainmenu.OOF.VoxelSelection.Invert(
             microstructure=self.getCurrentMSName())
 
     def okbuttonCB(self, *args):
         # Actually perform the current selection modification operation.
-        modmeth = self.selectionModFactory.getRegistration()
-        if modmeth is not None:
-            # Copy parameters from widgets to the registration.
-            self.selectionModFactory.set_defaults()
-            # Invoke the method by calling the corresponding menu
-            # item.  The menu item and method registration share a
-            # parameter list.
-            menuitem = getattr(mainmenu.OOF.PixelSelection,
-                               utils.space2underscore(modmeth.name()))
-            menuitem.callWithDefaults(microstructure=self.getCurrentMSName())
+        reg = self.selectionModFactory.getRegistration()
+        modmeth = self.selectionModFactory.get_value()
+        reg.callMenuItem(self.getCurrentMSName(), modmeth)
 
 ####################################
         

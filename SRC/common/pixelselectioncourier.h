@@ -59,9 +59,9 @@ public:
 // Point
 class PointSelection : public PixelSelectionCourier {
 private:
-  const Coord mousepoint;
+  const ICoord mousepoint;
 public:
-  PointSelection(CMicrostructure *ms, const Coord *mp);
+  PointSelection(CMicrostructure *ms, const ICoord *mp);
   virtual ~PointSelection() {}
   virtual void start() {}
   virtual ICoord currentPoint() const;
@@ -99,7 +99,7 @@ private:
   ICoord ur;
   ICoord currentpt;
 public:
-  BoxSelection(CMicrostructure *ms, const Coord *pt0, const Coord *pt1);
+  BoxSelection(CMicrostructure *ms, const CRectangularPrism*);
   virtual ~BoxSelection() {}
   virtual void start();
   virtual ICoord currentPoint() const;
@@ -166,7 +166,7 @@ public:
 // Intersect
 class IntersectSelection : public PixelSelectionCourier {
 private:
-  const PixelSet *selpix;
+  const PixelSet selpix;
   PixelSet courpix;
   PixelSelectionCourier *courier;
   ICoordVector::const_iterator sel_iter;

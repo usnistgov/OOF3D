@@ -114,15 +114,19 @@ class SkeletonBdyDisplayBase(display.DisplayMethod):
     # buildXXXXLayer() is called by buildDisplayLayer() in the
     # subclasses of SkelContextBoundary.
     def buildFaceLayer(self, bdy, skelctxt, canvaslayer):
+        # canvaslayer is a FaceGlyphLayer
         skel = skelctxt.getObject()
         b = bdy.boundary(skel)
         faces = b.getFaces()
         self._buildDirectedLayer(faces, canvaslayer)
+        canvaslayer.setEmpty(not faces)
     def buildEdgeLayer(self, bdy, skelctxt, canvaslayer):
+        # canvaslayer is an EdgeGlyphLayer
         skel = skelctxt.getObject()
         b = bdy.boundary(skel)
         edges = b.getOrientedSegments()
         self._buildDirectedLayer(edges, canvaslayer)
+        canvaslayer.setEmpty(not edges)
     def _buildDirectedLayer(self, parts, canvaslayer):
         ## TODO OPT: Move this method to C++.  Then there would be no
         ## need to swig OrientedCSkeletonFaceSet, et al.
@@ -131,6 +135,7 @@ class SkeletonBdyDisplayBase(display.DisplayMethod):
                                         part.getPointIds(),
                                         part.get_direction_vector())
     def buildPointLayer(self, bdy, skelctxt, canvaslayer):
+        # canvaslayer is a PointGlyphLayer
         skel = skelctxt.getObject()
         b = bdy.boundary(skel)
         points = b.getNodes()
@@ -138,6 +143,8 @@ class SkeletonBdyDisplayBase(display.DisplayMethod):
         ## need to swig OrientedCSkeletonFaceSet, et al.
         for pt in points:
             canvaslayer.addCell(pt.getCellType(), pt.getPointIds())
+        canvaslayer.doneAddingCells();
+        canvaslayer.setEmpty(not points)
     
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -196,7 +203,12 @@ class SkeletonBoundaryDisplay(SkeletonBdyDisplayBase):
         skelctxt = self.who().resolve(self.gfxwindow)
         if not skelctxt:
             self.canvaslayer.clear()
-            return
+            return False
+        return True             # True => call setParams
+
+    def setParams(self):
+        super(SkeletonBoundaryDisplay, self).setParams()
+        skelctxt = self.who().resolve(self.gfxwindow)
         skelobj = skelctxt.getObject()
         # Get total number of faces, edges, and nodes in the chosen bdys.
         counts = {}
@@ -224,11 +236,6 @@ class SkeletonBoundaryDisplay(SkeletonBdyDisplayBase):
             sublayer = self.canvaslayer.getSublayer(bdy.boundaryType())
             bdy.buildDisplayLayer(self, skelctxt, sublayer)
             sublayer.recomputeDirections()
-
-        # setParams needs to be run when who changes because the glyph
-        # size might be computed automatically from the element size.
-        self.setParams()
-        return False
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -280,10 +287,10 @@ class SelectedSkeletonBoundaryDisplay(SkeletonBdyDisplayBase):
                 layer.recomputeDirections()
             else:
                 layer.clear()
-        # setParams needs to be run when who changes because the glyph
-        # size might be computed automatically from the element size.
-        self.setParams()
-        return False
+        # Return True so that setParams will be called.  It needs to
+        # be run when 'who' changes because the glyph size might be
+        # computed automatically from the element size.
+        return True 
         
     def draw(self, gfxwindow, canvas): # 2D only
         skel = self.who().resolve(gfxwindow)
@@ -418,7 +425,6 @@ def defaultSelectedSkeletonBoundaryDisplay():
         linewidth=defaultSkelBdyLineWidth,
         glyphsize=defaultSkelBdyGlyphSize,
         resolution=defaultSkelBdyGlyphResolution)
-
 
 ghostgfxwindow.PredefinedLayer('Skeleton', '<topmost>',
                                defaultSelectedSkeletonBoundaryDisplay)

@@ -1338,6 +1338,15 @@ CSkeletonSegment* CSkeletonBase::findExistingSegment(const CSkeletonNode *n1,
   return getSegment(h);
 }
 
+CSkeletonSegment *CSkeletonBase::findExistingSegmentByIds(
+					  const std::vector<int> *pointIds)
+  const
+{
+  CSkeletonNode *n0 = getNode((*pointIds)[0]);
+  CSkeletonNode *n1 = getNode((*pointIds)[1]);
+  return findExistingSegment(n0, n1);
+}
+
 CSkeletonSegment* CSkeleton::getSegment(const CSkeletonMultiNodeKey &h) const {
   CSkeletonSegmentMap::const_iterator it;
   it = segments.find(h);
@@ -1417,12 +1426,12 @@ CSkeletonFace* CSkeletonBase::findExistingFace(CSkeletonNode *n1,
 }
 
 CSkeletonFace *CSkeletonBase::findExistingFaceByIds(
-				    vtkSmartPointer<vtkIdList> pointIds)
+					    const std::vector<int> *pointIds)
   const
 {
-  CSkeletonNode *n0 = getNode(pointIds->GetId(0));
-  CSkeletonNode *n1 = getNode(pointIds->GetId(1));
-  CSkeletonNode *n2 = getNode(pointIds->GetId(2));
+  CSkeletonNode *n0 = getNode((*pointIds)[0]);
+  CSkeletonNode *n1 = getNode((*pointIds)[1]);
+  CSkeletonNode *n2 = getNode((*pointIds)[2]);
   return findExistingFace(n0, n1, n2);
 }
 
@@ -1545,6 +1554,18 @@ void CSkeletonBase::getConstSegmentElements(const CSkeletonSegment *segment,
   (*nodes)[0]->getElements(this, els0);
   (*nodes)[1]->getElements(this, els1);
   selectable_vector_intersection(&els0, &els1, &result);
+}
+
+CSkeletonElementVector CSkeletonBase::getSegmentElements(
+					 const CSkeletonSegment *segment)
+  const
+{
+  CSkeletonElementVector elems;
+  const CSkeletonNodeVector *nodes = segment->getNodes();
+  CSkeletonElementVector *els0 = (*nodes)[0]->getElements();
+  CSkeletonElementVector *els1 = (*nodes)[1]->getElements();
+  selectable_vector_intersection(els0, els1, &elems);
+  return elems;
 }
 
 void CSkeletonBase::getSegmentFaces(const CSkeletonSegment *segment,

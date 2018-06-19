@@ -134,6 +134,9 @@ class ToolBar:
     def setSelect(self):
         self.selectbutton.set_active(True)
 
+    def getSelect(self):
+        return self.selectbutton.get_active()
+
     def selectCB(self, button):
         # In "select" mode, the specific toolbox's mouse handler is in
         # charge.
@@ -189,13 +192,13 @@ class ViewManipulatorMouseHandler(mousehandler.MouseHandler):
         self.gfxwindow = gfxwindow
         self.downed = False
 
-    def up(self, x, y, button, shift, ctrl):
+    def up(self, x, y, buttons):
         self.downed = False
         # The View menuitem callback is viewCB in ghostgfxwindow.py.
         self.gfxwindow.menu.Settings.Camera.View(
             view=self.gfxwindow.oofcanvas.get_view())
 
-    def down(self, x, y, button, shift, ctrl):
+    def down(self, x, y, buttons):
         self.downed = True
 
     def acceptEvent(self, eventtype):
@@ -206,17 +209,17 @@ class ViewManipulatorMouseHandler(mousehandler.MouseHandler):
 
 
 class TumbleMouseHandler(ViewManipulatorMouseHandler):
-    def down(self, x, y, button, shift, ctrl):
-        ViewManipulatorMouseHandler.down(self, x, y, button, shift, ctrl)
-        self.gfxwindow.computeTumbleCenter(shift, ctrl)
+    def down(self, x, y, buttons):
+        ViewManipulatorMouseHandler.down(self, x, y, buttons)
+        self.gfxwindow.computeTumbleCenter(buttons)
         
-    def move(self, x, y, button, shift, ctrl):
+    def move(self, x, y, buttons):
         self.gfxwindow.oofcanvas.mouse_tumble(x,y)
         self.gfxwindow.updateview()
 
 
 class DollyMouseHandler(ViewManipulatorMouseHandler):
-    def move(self, x, y, button, shift, ctrl):
+    def move(self, x, y, buttons):
         self.gfxwindow.oofcanvas.mouse_dolly(x,y)
         self.gfxwindow.updateview()
 
@@ -226,7 +229,7 @@ class DollyMouseHandler(ViewManipulatorMouseHandler):
         
 
 class TrackMouseHandler(ViewManipulatorMouseHandler):
-    def move(self, x, y, button, shift, ctrl):
+    def move(self, x, y, buttons):
         self.gfxwindow.oofcanvas.mouse_track(x,y)
         self.gfxwindow.updateview()
 

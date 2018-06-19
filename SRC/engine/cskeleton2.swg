@@ -149,10 +149,11 @@ public:
   CSkeletonSegment *getSegmentByUid(uidtype);
   CSkeletonFace *getFaceByUid(uidtype);
   CSkeletonSegment* findExistingSegment(CSkeletonNode*, CSkeletonNode*);
+  CSkeletonSegment* findExistingSegmentByIds(IntVec*);
   bool doesSegmentExist(CSkeletonNode*, CSkeletonNode*);
   CSkeletonFace *findExistingFace(CSkeletonNode*, CSkeletonNode*,
 				  CSkeletonNode*);
-  CSkeletonFace *findExistingFaceByIds(vtkIdListPtr);
+  CSkeletonFace *findExistingFaceByIds(IntVec*);
   OrientedCSkeletonFace *createOrientedFace(CSkeletonNode*, CSkeletonNode*,
 					    CSkeletonNode*);
 

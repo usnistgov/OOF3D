@@ -58,6 +58,8 @@ CSkeletonSelectableSet* CGroupTracker::get_group(const std::string &name) const
 {
   // "return data[name]" doesn't work, because operator[] isn't const.
   CGroupMap::const_iterator it = data.find(name);
+  if(it == data.end())
+    throw ErrUserError("There is no group named " + name);
   return (*it).second;
 }
 

@@ -58,6 +58,16 @@ import weakref
 ## GenericGroupSet is derived.  SelectionSetBase and Selection should
 ## be treated the same way, at the same time.  The current scheme
 ## sometimes requires loops over possibly long lists in Python.
+### TODO? Is that really necessary?  The trackers store the long lists
+### of objects in C++ already.  If addToGroup, et al, were changed to
+### use couriers, then there would be no long python loops.
+
+## TODO: The switchboard signals for group operations are a mess.
+## Straighten them out.  "groupset changed" is sent when a group is
+## deleted, and also by SkeletonContext.updateGroupsAndSelections when
+## modifications are made to the Skeleton stack, for some reason.  On
+## the other hand, "groupset member added" is called when a group is
+## added.
 
 class GenericGroupSet(object):
     def __init__(self, skeletoncontext, groupset=[]):

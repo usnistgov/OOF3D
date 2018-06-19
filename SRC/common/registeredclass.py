@@ -74,6 +74,8 @@ class Registration(object):
 
         self._name = name
         self.subclass = subclass
+        # Store the registration in the subclass for easy access.
+        self.subclass.registration = self
         if type(registeredclass) in (ListType, TupleType):
             self.registeredclasses = tuple(registeredclass[:])
         else:

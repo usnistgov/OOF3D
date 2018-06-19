@@ -11,32 +11,21 @@
 
 
 # There is one set of selected pixels for each Microstructure.  It's
-# maintained as a list of iPoints and as a BitmapOverlay for quick
-# drawing.  It's created by CMicrostructure.__init__, as modified in
-# cmicrostructure.spy.
+# maintained as a list of iPoints.  It's created by
+# CMicrostructure.__init__, as modified in cmicrostructure.spy.
 
 # PixelSelections have to know their Microstructures at the C++ level
 # so that they can find their active areas.
 
 from ooflib.SWIG.common import config
-from ooflib.common import color
+from ooflib.SWIG.common import switchboard
 from ooflib.common import debug
-from ooflib.common.IO import bitoverlaydisplay
-from ooflib.common.IO import ghostgfxwindow
-from ooflib.common.IO import mainmenu
+from ooflib.common import genericselection
+from ooflib.common import registeredclass
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
 from ooflib.common.IO import whoville
-from ooflib.common.IO import topwho       # required for '<top microstructure>'
-import types
-
-# class PixelSelection(cpixelselection.CPixelSelection):
-#     def __repr__(self):
-#         return "PixelSelection(%s)" % len(self)
-#     def getMicrostructure(self):
-#         return self.getCMicrostructure()
-#         # Find which Microstructure corresponds to this CMicrostructure.
-#         #return common.microstructure.microStructures[cms.name()]
+from ooflib.SWIG.common import pixelselectioncourier
 
 #####################################
 
@@ -70,8 +59,6 @@ class PixelSelectionContext(whoville.WhoDoUndo):
         self.getObject().invert()
     def getSelection(self):
         return self.getObject().members()
-    def getSelectionAsGroup(self):
-        return self.getObject().getPixelGroup()
     def undo(self):
         self.undoModification()
     def redo(self):
@@ -89,8 +76,8 @@ class PixelSelectionContext(whoville.WhoDoUndo):
     def empty(self):
         obj = self.getObject()
         return obj is None or obj.empty()
-    def getBitmap(self):        # TODO OPT: Is this still needed?
-        return self.getObject().getBitmap()
+    # def getBitmap(self):        # TODO OPT: Is this still needed?
+    #     return self.getObject().getBitmap()
     def getPixelSet(self):
         obj = self.getObject()
         if obj is not None:
@@ -99,6 +86,16 @@ class PixelSelectionContext(whoville.WhoDoUndo):
         obj = self.getObject()
         if obj is not None:
             return self.getObject().getBounds()
+
+    def intersectionCourier(self, courier):
+        # intersectionCourier is used by selectionoperators.Intersect,
+        # which needs to fetch a different kind of IntersectSelection
+        # courier when selecting different kinds of objects.  It
+        # returns a courier that computes the intersection of the
+        # given group with selection represented by the given courier.
+        currentPxls = self.getPixelSet()
+        return pixelselectioncourier.IntersectSelection(
+            self.getMicrostructure(), currentPxls, courier)
 
 ##################
     
@@ -109,49 +106,81 @@ pixelselectionWhoClass = whoville.WhoDoUndoClass(
     secret=0,
     proxyClasses=['<top microstructure>'])
 
-###################
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-defaultPixelSelectionColor = color.RGBColor(1.0, 0.22, 0.09)
-defaultTintOpacity = 0.9
+# RegisteredClasses and Registrations for voxel selection methods.
 
-def _setDefaultPixelSelectionParams(menuitem, color, tintOpacity):
-    global defaultPixelSelectionColor
-    global defaultTintOpacity
-    defaultPixelSelectionColor = color
-    defaultTintOpacity = tintopacity
+# There are two (poorly named) main classes of voxel selection methods.
 
+# VoxelSelectionMethod is the registered class for mouse-based
+# selection methods that appear in the Select Voxels toolbox in
+# graphics windows.
 
-colorparams=[
-    color.ColorParameter(
-        'color',
-        defaultPixelSelectionColor,
-        tip='Color of selected pixels.'),
-    parameter.FloatRangeParameter(
-        'tintOpacity',
-        (0., 1., 0.01), defaultTintOpacity,
-        tip='Opacity of tint of selected pixels.'
-        '  0 is transparent, 1 is opaque.')
-    ]
+# VoxelSelectionModifier is the registered class for the selection
+# tools that appear in the RCF on the PixelPage.
 
+# All selection operations other than Undo, Redo, Clear, and Invert
+# are handled by a single menu item which takes a
+# VoxelSelectionModifier or VoxelSelectionMethod arg as well as the
+# name of the Microstructure or Image.  They should be registered with
+# VoxelSelectionMethodRegistration or VoxelSelectionModRegistration.
+# The subclasses need to have a "select" method that takes a "source"
+# and a "selection" argument.  The value of "source" is the name of an
+# Image or Microstructure.
 
-mainmenu.gfxdefaultsmenu.Pixels.addItem(oofmenu.OOFMenuItem(
-    'Pixel_Selection',
-    callback=_setDefaultPixelSelectionParams,
-    params = colorparams,
-    help="Set default parameters for displaying selected pixels.",
-    discussion="""<para>
+class VoxelSelectionMethod(genericselection.GenericSelectionMethod):
+    registry = []
+    # Source is a Microstructure or Image.  Selection is the
+    # Microstructure's PixelSelection object. Operator is a
+    # PixelSelectionOperator, from selectionoperators.py.  Called from
+    # pixelselectionmenu.select(), which is the callback for the menu
+    # item OOF.VOxelSelection.Select.
+    def select(self, source, selection, operator):
+        raise ooferror.ErrPyProgrammingError(
+            "'select' isn't defined for " + self.registration.name)
+    def notify(self):
+        pass
 
-    Set default parameters for the <xref
-    linkend="RegisteredClass:BitmapOverlayDisplayMethod"/> that is used
-    to display <link linkend="Section:Concepts:Microstructure:PixelSelection">pixel selections</link>.
-    This command can be put in the &oof2rc; file to set defaults for all
-    &oof2; sessions.
+    
+class VoxelSelectionMethodRegistration(registeredclass.Registration):
+    def __init__(self, name, subclass, ordering, params=[], secret=0, **kwargs):
+        registeredclass.Registration.__init__(
+            self,
+            name=name,
+            registeredclass=VoxelSelectionMethod,
+            subclass=subclass,
+            ordering=ordering,
+            params=params,
+            secret=secret,
+            **kwargs)
 
-    </para>"""))
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-def predefinedPixelSelectionLayer():
-    return bitoverlaydisplay.bitmapOverlay(color=defaultPixelSelectionColor,
-                                           tintOpacity=defaultTintOpacity)
-
-ghostgfxwindow.PredefinedLayer('Pixel Selection', '<top microstructure>',
-                               predefinedPixelSelectionLayer)
+class VoxelSelectionModifier(registeredclass.RegisteredClass):
+    registry = []
+    def notify(self):
+        self.getRegistration().notify(self)
+    
+class VoxelSelectionModRegistration(registeredclass.Registration):
+    def __init__(self, name, subclass, ordering, params, secret=0, **kwargs):
+        registeredclass.Registration.__init__(
+            self,
+            name=name,
+            registeredclass=VoxelSelectionModifier,
+            subclass=subclass,
+            ordering=ordering,
+            params=params,
+            secret=secret,
+            **kwargs)
+        from ooflib.common.IO import pixelselectionmenu
+        self.menuitem = pixelselectionmenu.selectmenu.Select
+        
+    def callMenuItem(self, microstructure, selectionModifier):
+        # Called by PixelPage when the OK button is pressed
+        self.menuitem.callWithDefaults(source=microstructure,
+                                       method=selectionModifier)
+    def notify(self, modifier):
+        # This signal is caught by the pixel selection page and used
+        # to update its Historian.
+        switchboard.notify("voxel selection modifier applied", modifier)

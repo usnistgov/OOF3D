@@ -21,6 +21,9 @@ class Timer:
     def start(self):
         self.on = 1
         self.starttime = time.clock()
+    def restart(self):
+        self.elapsed_time = 0.
+        self.start()
     def stop(self):
         self.on = 0
         dt = time.clock() - self.starttime

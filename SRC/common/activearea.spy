@@ -30,7 +30,6 @@ from ooflib.common.IO import oofmenu
 from ooflib.common.IO import parameter
 from ooflib.common.IO import whoville
 from ooflib.common.IO import ghostgfxwindow
-from ooflib.common.IO import bitoverlaydisplay
 from ooflib.common.IO import topwho            # defines <top activearea>
 
 ## TODO MER: The NamedActiveArea class isn't needed in OOF3D, because
@@ -106,9 +105,6 @@ class ActiveAreaContext(whoville.WhoDoUndo):
         return self._override
     def isActive(self, pixel):
         return self.getObject().isActive(pixel)
-    def getBitmap(self):        # TODO OPT: Is this still needed?
-        if not self._override:
-            return self.getObject().getBitmap()
     def getPixelSet(self):
         if not self._override:
             aa = self.getObject()
@@ -129,54 +125,14 @@ activeareaWhoClass = whoville.WhoDoUndoClass(
     secret=(config.dimension() == 3),
     proxyClasses=['<top activearea>'])
 
-if config.dimension() == 2:
-    defaultActiveAreaColor = color.white
-    defaultActiveAreaOpacity = 0.8
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+# In 3D, there's no active area display.  Filters can be used to
+# display only active voxels.  Just dimming active voxels would make
+# them clickable, which they shouldn't be, unless we significantly
+# modified the selection machinery.
 
-    def _setDefaultActiveAreaParams(menuitem, color, opacity):
-        global defaultActiveAreaColor
-        global defaultActiveAreaOpacity
-        defaultActiveAreaColor = color
-        defaultActiveAreaOpacity = opacity
-
-    mainmenu.gfxdefaultsmenu.Pixels.addItem(oofmenu.OOFMenuItem(
-        'Active_Area',
-        callback=_setDefaultActiveAreaParams,
-        ordering=3,
-        params=[
-                color.ColorParameter(
-                    'color',
-                    defaultActiveAreaColor,
-                    tip='Color of inactive pixels.'),
-                parameter.FloatRangeParameter(
-                    'opacity',
-                    (0., 1., 0.01), defaultActiveAreaOpacity,
-                    tip=
-                    'Opacity of inactive pixels. 0 is transparent, 1 is opaque.'
-                    )
-                ],
-        help="Set default parameters for displaying active areas.",
-        discussion="""<para>
-
-        Set default parameters for the <xref
-        linkend="RegisteredClass:BitmapOverlayDisplayMethod"/> that is
-        used to display <link
-        linkend="Section:Concepts:Microstructure:ActiveArea">active
-        areas</link>.  This command can be put in the &oof2rc; file to
-        set defaults for all &oof2; sessions.
-
-        </para>"""))
-
-    def predefinedActiveAreaLayer():
-        return bitoverlaydisplay.bitmapOverlay(
-            color=defaultActiveAreaColor,
-            tintOpacity=defaultActiveAreaOpacity)
-
-    ghostgfxwindow.PredefinedLayer('Active Area', '<top activearea>',
-                                   predefinedActiveAreaLayer)
-
-#####
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#    
 
 # Create the one and only ActiveAreasAttributeRegistration object.
 aa_attr_reg = ActiveAreasAttributeRegistration()

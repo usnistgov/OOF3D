@@ -52,7 +52,7 @@ static void normalize(double &x, double &y, double &z) {
 }
 
 CUnitVectorDirection::CUnitVectorDirection(double x, double y, double z)
-  : vec(3)
+  : vec(DIM)
 {
   vec[0] = x;
   vec[1] = y;
@@ -66,12 +66,24 @@ CUnitVectorDirection::CUnitVectorDirection(const DoubleVec *xyz)
   normalize(vec[0], vec[1], vec[2]);
 }
 
-CUnitVectorDirection::CUnitVectorDirection(const Coord *coord) {
+CUnitVectorDirection::CUnitVectorDirection(const Coord *coord)
+  : vec(DIM)
+{
   vec[0] = coord->x[0];
   vec[1] = coord->x[1];
 #if DIM==3
   vec[2] = coord->x[2];
 #endif	// DIM==3
+}
+
+CUnitVectorDirection::CUnitVectorDirection(const Coord &coord)
+  : vec(DIM)
+{
+  vec[0] = coord[0];
+  vec[1] = coord[1];
+#if DIM==3
+  vec[2] = coord[2];
+#endif // DIM==3
 }
 
 const std::string &CUnitVectorDirection::classname() const {

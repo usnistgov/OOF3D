@@ -15,8 +15,17 @@
 #    python setup.py install     # installs in the default location
 #    python setup.py install --prefix=/some/other/place
 #    python setup.py [build [--debug]] install --prefix ...
-#  The flags --3D, --enable-mpi, --enable-petsc, and --enable-devel
-#  can occur anywhere after 'setup.py' in the command line.
+
+#  The flags --3D, --cocoa, and --makedepend can occur anywhere after
+#  'setup.py' in the command line:
+#     --3D is required when building OOF3D.
+#     --cocoa builds a version of OOF3D that uses the Apple windowing
+#        system (Cocoa/Quartz) instead of X11.  It requires that the
+#        gtk and vtk libraries have also been built for cocoa.
+#     --makedepend forces the dependencies to be recomputed.  This
+#        must be provided if include C++ include statements have been
+#        changed or new source files have been added since the last
+#        time OOF3D was built.
 
 ## TODO: When not building in debug mode, append "-O" to the first
 ## line of the top oof2 and oof3d scripts.
@@ -733,7 +742,21 @@ class oof_build_xxxx:
     def clean_dependencies(self):
         global _dependencies_checked
         if not _dependencies_checked:
-            depdict = self.find_dependencies()
+            # Read dependencies from a file unless MAKEDEPEND has been
+            # defined by providing the --makedepend command line
+            # option, or if the file doesn't exist.
+            depfilename = os.path.join(self.build_temp, 'depend')
+            if not MAKEDEPEND and os.path.exists(depfilename):
+                locals = {}
+                print "Loading dependencies from", depfilename
+                execfile(depfilename, globals(), locals)
+                depdict = locals['depdict']
+            else:
+                depdict = self.find_dependencies()
+                print "Saving dependencies in", depfilename
+                depfile = open(depfilename, "w")
+                print >> depfile, "depdict=", depdict
+                depfile.close()
             self.clean_targets(depdict)
             _dependencies_checked = True
 
@@ -1101,8 +1124,12 @@ def get_global_args():
     # any distutils calls can possibly be made, because distutils.core
     # hasn't been called yet.
 
+    ## TODO: Get rid of obsolete options.  HAVE_MPI, HAVE_PETSC,
+    ## DEVEL, ENABLE_SEGMENTATION, PROFILER, DATADIR, DOCDIR, and
+    ## NANOHUB aren't used (I think).
+
     global HAVE_MPI, HAVE_OPENMP, HAVE_PETSC, DEVEL, NO_GUI, \
-        ENABLE_SEGMENTATION, PROFILER, USE_COCOA, \
+        ENABLE_SEGMENTATION, PROFILER, USE_COCOA, MAKEDEPEND, \
         DIM_3, DATADIR, DOCDIR, OOFNAME, SWIGDIR, NANOHUB, vtkdir
 
     HAVE_MPI = _get_oof_arg('--enable-mpi')
@@ -1112,6 +1139,7 @@ def get_global_args():
     ENABLE_SEGMENTATION = _get_oof_arg('--enable-segmentation')
     DIM_3 = _get_oof_arg('--3D')
     USE_COCOA = _get_oof_arg('--cocoa')
+    MAKEDEPEND = _get_oof_arg('--makedepend')
     NANOHUB = _get_oof_arg('--nanoHUB')
     HAVE_OPENMP = _get_oof_arg('--enable-openmp')
     vtkdir = _get_oof_arg('--vtkdir')

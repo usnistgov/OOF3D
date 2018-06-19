@@ -26,8 +26,10 @@ from ooflib.common.IO import xmlmenudump
 
 class SkeletonSelectionMode:
     modes = []
-    def __init__(self, name, methodclass, modifierclass, newselectionsignal,
-                 modifierappliedsignal, changedselectionsignal, groupmenu,
+    def __init__(self, name, methodclass, modifierclass,
+                 changedselectionsignal, modifierappliedsignal,
+                 groupmenu,
+                 allCourier,
                  materialsallowed=None):
         self.name = name
 
@@ -41,19 +43,22 @@ class SkeletonSelectionMode:
         # SkeletonSelectionPage.
         self.modifierclass = modifierclass
 
-        # newselectionsignal is sent along with a selection method and
-        # pointlist when a new selection is made.
         # changedselectionsignal is sent when any change is made in
-        # the selection at all.
-        # modifierappliedsignal is sent along with a selection
-        # modifier when the selection is modified.
-        self.modifierappliedsignal = modifierappliedsignal
-        self.newselectionsignal = newselectionsignal
+        # a selection.  It indicates which selection was changed, but
+        # not how.
         self.changedselectionsignal = changedselectionsignal
+        # modifierappliedsignal is sent when a selection modifier is
+        # uses.  The modifier is sent as an argument.
+        self.modifierappliedsignal = modifierappliedsignal
 
         # groupmenu is the menu of commands for manipulating groups of
         # the object.
         self.groupmenu = groupmenu
+
+        # allCourier is a SkeletonSelectionCourier class that can be
+        # used to loop over all objects of this category in the
+        # Skeleton.
+        self.allCourier = allCourier
 
         # materialsallowed is either None or a MaterialType instance.
         # If not None, it indicates what kinds of material may be
@@ -71,7 +76,8 @@ class SkeletonSelectionMode:
             name,
             callback=self.setUndoBufferSize,
             params=_stacksize_params, # global, see below
-            help="Set the history buffer size for Skeleton %s selections" % name,
+            help="Set the history buffer size for Skeleton %s selections"
+            % name,
             discussion=xmlmenudump.loadFile(
                 'DISCUSSIONS/engine/menu/skelbufsize.xml',
                 lambda text,obj: text.replace('CLASS', name))
@@ -79,26 +85,35 @@ class SkeletonSelectionMode:
         
 
         SkeletonSelectionMode.modes.append(self)
-        switchboard.notify(SkeletonSelectionMode, self)
+
     def toolboxName(self):
-        return "Select_" + self.name
-    def modifierApplied(self, modifier):
-        switchboard.notify(self.modifierappliedsignal, modifier)
+        return "Select_" + self.name + "s"
 
     def getSelectionContext(self, skeletoncontext):
-        raise ooferror.ErrPyProgrammingError("SkeletonSelectionMode.getSelectionContext() needs to be redefined in class " + self.__class__.__name__)
+        raise ooferror.ErrPyProgrammingError(
+            "SkeletonSelectionMode.getSelectionContext() needs to be redefined"
+            " in class " + self.__class__.__name__)
     def getGroups(self, skeletoncontext):
-        raise ooferror.ErrPyProgrammingError("SkeletonSelectionMode.getGroups() needs to be redefined in class " + self.__class__.__name__)
+        raise ooferror.ErrPyProgrammingError(
+            "SkeletonSelectionMode.getGroups() needs to be redefined in class "
+            + self.__class__.__name__)
     def getSelectionMenu(self):
-        raise ooferror.ErrPyProgrammingError("SkeletonSelectionMode.getSelectionMenu() needs to be redefined in class " + self.__class__.__name__)
+        raise ooferror.ErrPyProgrammingError(
+            "SkeletonSelectionMode.getSelectionMenu() needs to be redefined"
+            " in class " + self.__class__.__name__)
     def getGroupMenu(self):
-        raise ooferror.ErrPyProgrammingError("SkeletonSelectionMode.getGroupMenu() needs to be redefined in class " + self.__class__.__name__)
+        raise ooferror.ErrPyProgrammingError(
+            "SkeletonSelectionMode.getGroupMenu() needs to be redefined"
+            " in class " + self.__class__.__name__)
 
     def setUndoBufferSize(self, menuitem, size):
         self.stacksize = size+1         # affects future Selection objects
         # Change buffer size for all existing Skeletons
         switchboard.notify(('skelselection ringbuffer resize', self.name),
                            size+1)
+
+    def __repr__(self):
+        return "SkeletonSelectionMode('%s')" % self.name
 
 def getMode(name):
     for mode in SkeletonSelectionMode.modes:
