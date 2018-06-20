@@ -45,8 +45,10 @@
 
 #include <oofconfig.h>
 #include "engine/property.h"
+#include "engine/element.h"
 #include "engine/property/elasticity/cijkl.h"
 #include "common/pythonexportable.h"
+#include "common/smallmatrix.h"
 #include "engine/property/plasticity/constitutive/constitutive.h"
 #include <string>
 
@@ -75,7 +77,7 @@ class OrientationPropBase;
 class Plasticity : public FluxProperty {
 public:
   Plasticity(PyObject *rg, const std::string &nm,
-	     const Cijkl &c, PlasticConstitutiveRule *r);
+	     const Cijkl &c, PlasticConstitutiveRule *r, const int slips);
   virtual ~Plasticity() {}
   virtual void begin_element(const CSubProblem*, const Element*); 
   virtual void flux_matrix(const FEMesh *mesh,
@@ -101,6 +103,7 @@ public:
   // Outputs -- plastic strain at gpts, total strain, elastic strain...
   
 protected:
+  const int nslips;
   // TODO: 2D version?
   ThreeVectorField *displacement;
   SymmetricTensorFlux *stress_flux;
@@ -124,5 +127,38 @@ public:
   //
 };
 
+
+//-------------------------------------------------------------------//
+// Data containers.
+//-------------------------------------------------------------------//
+
+class GptPlasticData {
+public:
+  GptPlasticData();
+
+  SmallMatrix ft;
+  SmallMatrix fpt;
+  SmallMatrix f_tau;
+  SmallMatrix fp_tau;
+  SmallMatrix fe_tau;
+  SmallMatrix cauchy;
+  SmallMatrix s_star;
+  SmallMatrix d_ep;
+  Cijkl w_mat;
+};
+  
+
+class PlasticData : public ElementData {
+public:
+  PlasticData(Element *e);
+  std::vector<GptPlasticData> fp;
+  std::vector<GptPlasticData> gptdata;
+};
+
+// class SlipData : public ElementData {
+// public:
+//   SlipData(const std::string &name, Element *e);
+//   std::vector<GptSlipData> gptslipdata;
+// };
 
 #endif // PLASTICITY_H

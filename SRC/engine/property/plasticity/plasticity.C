@@ -33,8 +33,10 @@
 
 
 Plasticity::Plasticity(PyObject *reg, const std::string &name,
-		       const Cijkl &c, PlasticConstitutiveRule *r)
-  : FluxProperty(name, reg), orientation(0), xtal_cijkl_(c), rule(r)
+		       const Cijkl &c, PlasticConstitutiveRule *r,
+		       const int slips)
+  : FluxProperty(name, reg), nslips(slips), orientation(0),
+    xtal_cijkl_(c), rule(r)
 {
   displacement = dynamic_cast<ThreeVectorField*>(Field::getField("Displacement"));
   stress_flux = dynamic_cast<SymmetricTensorFlux*>(Flux::getFlux("Stress"));
@@ -62,16 +64,20 @@ void Plasticity::precompute(FEMesh*) {
     lab_cijkl_ = xtal_cijkl_.transform(orientation->orientation());
     // Also do the slip systems.
 
-    unsigned int sz = lab_schmid_tensors.size();
-    lab_schmid_tensors.resize(sz);
-    for(unsigned int i=0; i<sz; ++i)
+    lab_schmid_tensors.resize(nslips);
+    for(unsigned int i=0; i<(unsigned)nslips; ++i)
       xtal_schmid_tensors[i]=_rotate_schmid_tensor(xtal_schmid_tensors[i],
 						   orientation->orientation());
 	  
   }
 }
 
-void Plasticity::begin_element(const CSubProblem *c, const Element *e) {}
+void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
+
+  ElementData *ed = e->getDataByName("plastic_data");
+  // ElementData *eds = e->getDataByName("slip_data");
+  
+}
 
 int Plasticity::integration_order(const CSubProblem *sp,
 				  const Element *el) const {
@@ -139,13 +145,12 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
 
 FCCPlasticity::FCCPlasticity(PyObject *reg, const std::string &nm,
 			     const Cijkl &c, PlasticConstitutiveRule *r)
-  : Plasticity(reg,nm,c,r) {
+  : Plasticity(reg,nm,c,r, 12) {
 
   std::cerr << xtal_cijkl_ << std::endl;
   //
   // Populate the schmid_tensor data member.
-  xtal_schmid_tensors.resize(12); // 12 slip systems in FCC.
-  //
+  xtal_schmid_tensors.resize(nslips); // Relayed through the base constructor.
   double n[3];
   double s[3];
   //
@@ -198,3 +203,36 @@ FCCPlasticity::FCCPlasticity(PyObject *reg, const std::string &nm,
   xtal_schmid_tensors[11]=_normalized_outer_product(n,s);
 
 }
+
+
+//--------------------------------------------------------------------//
+
+
+GptPlasticData::GptPlasticData() :
+  ft(3),fpt(3),f_tau(3),fp_tau(3),fe_tau(3),cauchy(3),s_star(3),d_ep(3)
+{
+  ft(0,0) = ft(1,1) = ft(2,2) = 1.0;
+  fpt(0,0) = fpt(1,1) = fpt(2,2) = 1.0;
+  f_tau(0,0) = f_tau(1,1) = f_tau(2,2) = 1.0;
+}
+
+// Makes use of the fact that the integration order is the shapefunction
+// degree, which is an assumption of the plasticity class. It's
+// possible the order should actually be passed through.
+PlasticData::PlasticData(Element *el) :
+  ElementData("plastic_data") {
+  for (GaussPointIterator gpt = el->integrator(el->shapefun_degree());
+       !gpt.end(); ++gpt) {
+    GptPlasticData gppd = GptPlasticData();
+    fp.push_back(gppd);
+    gptdata.push_back(gppd);
+  }
+}
+
+
+// SlipData::SlipData(const std::string &name, Element *e) : ElementData("slip_data") {
+//  for (std::vector<GaussPoint*>::iterator gpti = el->gptable.begin(); gpti!=el->gptable.end(); ++gpti) {
+    // GptSlipData gpslip = GptSlipData(cm,mi);
+    // gptslipdata.push_back(gpslip);
+//  }
+//}
