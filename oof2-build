@@ -99,6 +99,7 @@ sys.argv.pop(0)
 
 build_type = sys.argv.pop(0)
 build_args = []
+install_args = []
 
 if build_type == 'devel':
     build_args.append("--enable-devel="+sys.argv.pop(0))
@@ -137,6 +138,10 @@ while sys.argv:
         build_args.append('--enable-petsc')
     elif arg == 'pg':
         os.putenv('CFLAGS', '-pg')
+    elif arg == 'macports':
+        # Hack. If we really need install_args, we should have a way
+        # of passing command line arguments to it.
+        install_args.append('--skip-install-name-tool')
 
 # Where to put everything?
 installdir = os.getenv("OOFINSTALL")
@@ -188,8 +193,9 @@ try:
         print "Removing", fnames[0]
         os.remove(fnames[0])
 
-    build_cmd = "python setup.py build %s install --prefix=%s" \
+    build_cmd = "python setup.py build %s install %s --prefix=%s" \
                 % (string.join(build_args),
+                   string.join(install_args),
                    os.path.join(stowdir, stowsubdir))
     print build_cmd
     result = os.system(build_cmd)

@@ -29,9 +29,10 @@ class install_shlib(Command):
     user_options = [
         ('install-dir=', 'd', "directory to install to"),
         ('build-dir=', 'b', "build directory (where to install from)"),
-        ('skip-build', None, "skip the build steps")
+        ('skip-build', None, "skip the build steps"),
+        ('skip-install-name-tool', None, "don't run install_name_tool on Mac")
         ]
-    boolean_options = ['skip-build']
+    boolean_options = ['skip-build', 'skip-install-name-tool']
 
     def initialize_options(self):
         self.install_dir = None
@@ -39,11 +40,15 @@ class install_shlib(Command):
         self.outfiles = []
         self.shlibs = self.distribution.shlibs
         self.skip_build = None
+        self.skip_install_name_tool = None
 
     def finalize_options(self):
-        self.set_undefined_options('install',
-                                   ('install_shlib', 'install_dir'),
-                                   ('skip_build', 'skip_build'))
+        self.set_undefined_options(
+            'install',
+            ('install_shlib', 'install_dir'),
+            ('skip_build', 'skip_build'),
+            ('skip_install_name_tool', 'skip_install_name_tool')
+        )
         self.set_undefined_options('build_shlib',
                                    ('build_shlib', 'build_dir'))
 
@@ -65,7 +70,7 @@ class install_shlib(Command):
             ## alternative is to force users to set DYLD_LIBRARY_PATH.
             ## Neither should be necessary if the installation is in a
             ## standard location.
-            if sys.platform == "darwin":
+            if sys.platform == "darwin" and not self.skip_install_name_tool:
                 for ofile in outfiles:
                     name = os.path.split(ofile)[1]
                     cmd = "install_name_tool -id %(of)s %(of)s" % dict(of=ofile)

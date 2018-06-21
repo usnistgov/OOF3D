@@ -171,7 +171,7 @@ try:
     else:
         # The branch already exists.  Check it out, and merge the
         # current master into it.  There *should* be no conflicts in
-        # the merge, since nobod
+        # the merge, since nobod [y finished writing this comment!]
         newbranch = False
         osCall('git', 'checkout', tag)
         print >> sys.stderr, "Merging master branch into", tag

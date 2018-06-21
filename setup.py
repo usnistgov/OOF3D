@@ -1067,6 +1067,16 @@ class oof_build_scripts(build_scripts.build_scripts):
 ###################################################
 
 class oof_install(install.install):
+    user_options = install.install.user_options + [
+        ('skip-install-name-tool', None, "don't run install_name_tool on Mac")
+        ]
+    boolean_options = install.install.boolean_options + \
+        ['skip-install-name-tool']
+
+    def initialize_options(self):
+        install.install.initialize_options(self)
+        self.skip_install_name_tool = None
+        
     def run(self):
 	global calledFromInstall
 	calledFromInstall = True
@@ -1130,7 +1140,8 @@ def get_global_args():
 
     global HAVE_MPI, HAVE_OPENMP, HAVE_PETSC, DEVEL, NO_GUI, \
         ENABLE_SEGMENTATION, PROFILER, USE_COCOA, MAKEDEPEND, \
-        DIM_3, DATADIR, DOCDIR, OOFNAME, SWIGDIR, NANOHUB, vtkdir
+        DIM_3, DATADIR, DOCDIR, OOFNAME, SWIGDIR, NANOHUB, vtkdir, \
+        portdir
 
     HAVE_MPI = _get_oof_arg('--enable-mpi')
     HAVE_PETSC = _get_oof_arg('--enable-petsc')
@@ -1143,6 +1154,7 @@ def get_global_args():
     NANOHUB = _get_oof_arg('--nanoHUB')
     HAVE_OPENMP = _get_oof_arg('--enable-openmp')
     vtkdir = _get_oof_arg('--vtkdir')
+    portdir = _get_oof_arg('--portdir', '/opt/local')
     PROFILER = _get_oof_arg('--enable-profiler')
 
     # The following determine some secondary installation directories.
@@ -1161,7 +1173,7 @@ def get_global_args():
         SWIGDIR = "SWIG3D"           # root dir for swig output, inside SRC
 
 
-def _get_oof_arg(arg):
+def _get_oof_arg(arg, default=0):
     # Search for an argument which begins like "arg" -- if found,
     # return the trailing portion if any, or 1 if none, and remove the
     # argument from sys.argv.
@@ -1172,7 +1184,7 @@ def _get_oof_arg(arg):
             if len(splits) > 1:         # found an =
                 return splits[1]
             return 1                    # just a plain arg
-    return 0                            # didn't find arg
+    return default                      # didn't find arg
         
 platform = {}
 
@@ -1230,9 +1242,12 @@ def set_platform_values():
             platform['incdirs'].append('/usr/X11/include/')
             platform['incdirs'].append('/usr/X11R6/include/')
         if os.path.exists('/opt') and DIM_3: # macports
-            platform['incdirs'].append('/opt/local/include')
-            platform['libdirs'].append('/opt/local/lib')
-            vtkinc, vtklib = findvtk(home, '/opt/local', '/usr/local')
+            # When building from macports that's not in a standard
+            # location, use --portdir=${prefix} in the oof3d Portfile.
+            global portdir
+            platform['incdirs'].append(os.path.join(portdir, 'include'))
+            platform['libdirs'].append(os.path.join(portdir, 'lib'))
+            vtkinc, vtklib = findvtk(home, portdir, '/usr/local')
             if vtkinc is not None:
                 platform['libdirs'].append(vtklib)
                 platform['incdirs'].append(vtkinc)
@@ -1244,7 +1259,10 @@ def set_platform_values():
             ## TODO: Having to encode such a long path here seems
             ## wrong.  If and when pkgconfig acquires a more robust
             ## way of finding its files, use it.
-            pkgpath = "/opt/local/Library/Frameworks/Python.framework/Versions/%d.%d/lib/pkgconfig/" % (sys.version_info[0], sys.version_info[1])
+            pkgpath = os.path.join(
+                portdir,
+                "Library/Frameworks/Python.framework/Versions/%d.%d/lib/pkgconfig/"
+                % (sys.version_info[0], sys.version_info[1]))
             print >> sys.stdout, "Adding", pkgpath, "to PKG_CONFIG_PATH"
             extend_path("PKG_CONFIG_PATH", pkgpath)
         # Enable C++11
