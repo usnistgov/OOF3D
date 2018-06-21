@@ -49,7 +49,6 @@
 #include "engine/property/elasticity/cijkl.h"
 #include "common/pythonexportable.h"
 #include "common/smallmatrix.h"
-#include "engine/property/plasticity/constitutive/constitutive.h"
 #include <string>
 
 // TODO: cijkl is in a different hierarchy, needs to be higher?
@@ -73,6 +72,8 @@ class PlasticConstitutiveRule;
 class SmallMatrix;
 
 class OrientationPropBase;
+
+class PlasticConstitutiveRule;
 
 class Plasticity : public FluxProperty {
 public:
@@ -150,15 +151,23 @@ public:
 
 class PlasticData : public ElementData {
 public:
-  PlasticData(Element *e);
+  PlasticData(int o,Element *e);
+  int order;
   std::vector<GptPlasticData> fp;
   std::vector<GptPlasticData> gptdata;
 };
 
-// class SlipData : public ElementData {
-// public:
-//   SlipData(const std::string &name, Element *e);
-//   std::vector<GptSlipData> gptslipdata;
-// };
+
+// Base class for constitutive-rule-specific info.
+class GptSlipData {
+};
+
+
+class SlipData : public ElementData {
+public:
+  SlipData(int o, PlasticConstitutiveRule *r, Element *e);
+  int order;
+  std::vector<GptSlipData*> gptslipdata;
+};
 
 #endif // PLASTICITY_H

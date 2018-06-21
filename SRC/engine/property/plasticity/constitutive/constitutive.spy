@@ -20,7 +20,24 @@ Registration = cregisteredclass.Registration
 
 powerlawreg = Registration('PowerLaw',PlasticConstitutiveRulePtr,
                            PowerLawConstitutiveRule,1,
-                           [parameter.FloatParameter('exponent', 1.0,
-                                                     tip=parameter.emptyTipString)])
+                           [parameter.FloatParameter('w1', 1.0,
+                                                     tip=parameter.emptyTipString),
+                            parameter.FloatParameter('w2', 1.0,
+                                                     tip=parameter.emptyTipSTring),
+                            parameter.FloatParameter('ss', 1.0,
+                                                     tip=parameter.emptyTipSTring), 
+                            parameter.FloatParameter('a', 1.0,
+                                                     tip=parameter.emptyTipSTring),
+                            parameter.FloatParameter('h0', 1.0,
+                                                     tip=parameter.emptyTipSTring),
+                            parameter.FloatParameter('m', 1.0,
+                                                     tip=parameter.emptyTipSTring),
+                            parameter.FloatParameter('g0dot', 1.0,
+                                                     tip=parameter.emptyTipSTring),
+                            parameter.FloatParameter('dt', 1.0,
+                                                     tip=parameter.emptyTipSTring),
+                            parameter.FloatParameter('init_res', 1.0,
+                                                     tip=parameter.emptyTipSTring)
+                           ])
 
     

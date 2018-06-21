@@ -13,3 +13,16 @@
 #include "engine/property/plasticity/constitutive/constitutive.h"
 
 // Nothing yet.
+
+PowerLawSlipData::PowerLawSlipData(int slips, double initial_r) {
+  for(int i=0;i<slips;++i) {
+    res.push_back(initial_r);
+    dgam.push_back(0.0);
+    dgam_dta.push_back(0.0);
+    tau_alpha.push_back(0.0);
+  }
+}
+
+GptSlipData *PowerLawConstitutiveRule::getSlipData() {
+  return new PowerLawSlipData(slip_systems, init_res);
+}

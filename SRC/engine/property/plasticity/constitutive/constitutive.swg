@@ -27,7 +27,8 @@ class PlasticConstitutiveRule {
 
 class PowerLawConstitutiveRule : public PlasticConstitutiveRule {
 public:
-  PowerLawConstitutiveRule(double);
+  PowerLawConstitutiveRule(double,double,double,double,double,
+			   double,double,double,double);
 }
 
 %pragma(python) include="constitutive.spy"

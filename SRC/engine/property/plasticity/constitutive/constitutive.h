@@ -20,12 +20,23 @@
 #ifndef CONSTITUTIVE_H
 #define CONSTITUTIVE_H
 
+#include "engine/property/plasticity/plasticity.h"
 #include <oofconfig.h>
 
+
+class PowerLawSlipData : public GptSlipData {
+public:
+  PowerLawSlipData(int slips, double res);
+  std::vector<double> res;
+  std::vector<double> dgam;
+  std::vector<double> dgam_dta;
+  std::vector<double> tau_alpha;
+};
 
 class PlasticConstitutiveRule {
 public:
   virtual void set_slip_systems(int n) { slip_systems = n; }
+  virtual GptSlipData *getSlipData() = 0;
 protected:
   int slip_systems;
 
@@ -33,9 +44,20 @@ protected:
 
 class PowerLawConstitutiveRule : public PlasticConstitutiveRule {
 public:
-  PowerLawConstitutiveRule(double exp) : exponent(exp) {}
+  PowerLawConstitutiveRule(double w1,
+			   double w2,
+			   double ss,
+			   double a,
+			   double h0,
+			   double m,
+			   double g0dot,
+			   double dt,
+			   double init_res) :
+    w1(w1),w2(w2),ss(ss),a(a),h0(h0),m(m),g0dot(g0dot),dt(dt),init_res(init_res)
+  {}
+  virtual GptSlipData *getSlipData();
 private:
-  double exponent;
+  double w1,w2,ss,a,h0,m,g0dot,dt,init_res;
   
 };
 

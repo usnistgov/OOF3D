@@ -75,8 +75,12 @@ void Plasticity::precompute(FEMesh*) {
 void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 
   ElementData *ed = e->getDataByName("plastic_data");
-  // ElementData *eds = e->getDataByName("slip_data");
-  
+  ElementData *eds = e->getDataByName("slip_data");
+
+  // Construction scheme:
+  // PlasticData(integration_order(c,e),e);
+
+  // SlipData(integration_order(c,e),rule,e);
 }
 
 int Plasticity::integration_order(const CSubProblem *sp,
@@ -219,9 +223,9 @@ GptPlasticData::GptPlasticData() :
 // Makes use of the fact that the integration order is the shapefunction
 // degree, which is an assumption of the plasticity class. It's
 // possible the order should actually be passed through.
-PlasticData::PlasticData(Element *el) :
-  ElementData("plastic_data") {
-  for (GaussPointIterator gpt = el->integrator(el->shapefun_degree());
+PlasticData::PlasticData(int ord, Element *el) :
+  ElementData("plastic_data"), order(ord) {
+  for (GaussPointIterator gpt = el->integrator(order);
        !gpt.end(); ++gpt) {
     GptPlasticData gppd = GptPlasticData();
     fp.push_back(gppd);
@@ -230,9 +234,12 @@ PlasticData::PlasticData(Element *el) :
 }
 
 
-// SlipData::SlipData(const std::string &name, Element *e) : ElementData("slip_data") {
-//  for (std::vector<GaussPoint*>::iterator gpti = el->gptable.begin(); gpti!=el->gptable.end(); ++gpti) {
-    // GptSlipData gpslip = GptSlipData(cm,mi);
-    // gptslipdata.push_back(gpslip);
-//  }
-//}
+SlipData::SlipData(int ord, PlasticConstitutiveRule *r,
+		   Element *e) : ElementData("slip_data"), order(ord)
+{
+  for (GaussPointIterator gpti = e->integrator(order);
+       !gpti.end(); ++gpti) {
+    GptSlipData *gpslip = r->getSlipData();
+    gptslipdata.push_back(gpslip);
+  }
+}
