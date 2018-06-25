@@ -1055,17 +1055,6 @@ class oof_build_py(build_py.build_py):
 
 ###################################################
 
-# Modify "build_scripts" so that it copies only oof2 or oof3d, but not
-# both.  Both are in the scripts list so that they're both
-# distributed, but only one should be installed.
-
-class oof_build_scripts(build_scripts.build_scripts):
-    def finalize_options(self):
-        build_scripts.build_scripts.finalize_options(self)
-        self.scripts = [OOFNAME]
-
-###################################################
-
 class oof_install(install.install):
     user_options = install.install.user_options + [
         ('skip-install-name-tool', None, "don't run install_name_tool on Mac")
@@ -1543,13 +1532,11 @@ if __name__ == '__main__':
         author = 'The NIST OOF Team',
         author_email = 'oof_manager@nist.gov',
         url = "http://www.ctcms.nist.gov/oof/oof3d/",
-        # If more scripts are added here, change oof_build_scripts too.
-        scripts = ['oof2', 'oof3d'],
+        scripts = [ OOFNAME ],
         cmdclass = {"build" : oof_build,
                     "build_ext" : oof_build_ext,
                     "build_py" : oof_build_py,
                     "build_shlib": oof_build_shlib,
-                    "build_scripts" : oof_build_scripts,
                     "install_lib": oof2installlib.oof_install_lib,
                     "clean" : oof_clean,
                     "install" : oof_install},

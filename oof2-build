@@ -207,7 +207,10 @@ try:
         except IOError:
             laststow = None
         os.chdir(stowdir)
-        if laststow is None:
+        # The "switchto" script in the stow directory has a 'none'
+        # option which unstows everything and writes 'none' in the
+        # laststowfile.
+        if laststow is None or laststow == 'none':
             print "Stowing", stowsubdir
             stowcmd = "stow " + stowsubdir
             os.system(stowcmd)
