@@ -1145,7 +1145,7 @@ def get_global_args():
     NANOHUB = _get_oof_arg('--nanoHUB')
     HAVE_OPENMP = _get_oof_arg('--enable-openmp')
     vtkdir = _get_oof_arg('--vtkdir')
-    portdir = _get_oof_arg('--portdir', '/opt/local')
+    portdir = _get_oof_arg('--port-dir', '/opt/local')
     PROFILER = _get_oof_arg('--enable-profiler')
 
     # The following determine some secondary installation directories.
@@ -1234,7 +1234,7 @@ def set_platform_values():
             platform['incdirs'].append('/usr/X11R6/include/')
         if os.path.exists('/opt') and DIM_3: # macports
             # When building from macports that's not in a standard
-            # location, use --portdir=${prefix} in the oof3d Portfile.
+            # location, use --port-dir=${prefix} in the oof3d Portfile.
             global portdir
             platform['incdirs'].append(os.path.join(portdir, 'include'))
             platform['libdirs'].append(os.path.join(portdir, 'lib'))
