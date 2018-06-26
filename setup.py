@@ -1057,7 +1057,8 @@ class oof_build_py(build_py.build_py):
 
 class oof_install(install.install):
     user_options = install.install.user_options + [
-        ('skip-install-name-tool', None, "don't run install_name_tool on Mac")
+        ('skip-install-name-tool', None, "don't run install_name_tool on Mac"),
+        ('dest-dir', None, "intermediate installation directory for staged installs"),
         ]
     boolean_options = install.install.boolean_options + \
         ['skip-install-name-tool']
@@ -1065,6 +1066,7 @@ class oof_install(install.install):
     def initialize_options(self):
         install.install.initialize_options(self)
         self.skip_install_name_tool = None
+        self.dest_dir = None
         
     def run(self):
 	global calledFromInstall

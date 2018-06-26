@@ -28,6 +28,7 @@ class install_shlib(Command):
 
     user_options = [
         ('install-dir=', 'd', "directory to install to"),
+        ('dest-dir=', None, "intermediate installation directory"),
         ('build-dir=', 'b', "build directory (where to install from)"),
         ('skip-build', None, "skip the build steps"),
         ('skip-install-name-tool', None, "don't run install_name_tool on Mac")
@@ -37,6 +38,7 @@ class install_shlib(Command):
     def initialize_options(self):
         self.install_dir = None
         self.build_dir = None
+        self.dest_dir = None
         self.outfiles = []
         self.shlibs = self.distribution.shlibs
         self.skip_build = None
@@ -46,6 +48,7 @@ class install_shlib(Command):
         self.set_undefined_options(
             'install',
             ('install_shlib', 'install_dir'),
+            ('dest_dir', 'dest_dir'),
             ('skip_build', 'skip_build'),
             ('skip_install_name_tool', 'skip_install_name_tool')
         )
@@ -63,7 +66,8 @@ class install_shlib(Command):
 
     def install(self):
         if os.path.isdir(self.build_dir):
-            outfiles = self.copy_tree(self.build_dir, self.install_dir)
+            dest = self.install_dir if self.dest_dir is None else self.dest_dir
+            outfiles = self.copy_tree(self.build_dir, dest)
             ## On OS X, we have to run install_name_tool here, since
             ## dylibs contain info about their own location and the
             ## locations of the libraries they link to.  The

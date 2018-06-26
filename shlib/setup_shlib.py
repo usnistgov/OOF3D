@@ -119,11 +119,14 @@ oldinstall = install.install
 class Install(oldinstall):
     
     user_options = oldinstall.user_options + [
-        ('install-shlib=', None, 'installation directory for shared libraries')
+        ('install-shlib=', None, 'installation directory for shared libraries'),
+        ('dest-dir=', None,
+         'intermediate installation directory for staged installs')
         ]
     def initialize_options(self):
         oldinstall.initialize_options(self)
         self.install_shlib = None
+        self.dest_dir = None
     def finalize_options(self):
         oldinstall.finalize_options(self)
         self.convert_paths('shlib')
