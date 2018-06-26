@@ -36,7 +36,7 @@ public:
 class PlasticConstitutiveRule {
 public:
   virtual void set_slip_systems(int n) { slip_systems = n; }
-  virtual GptSlipData *getSlipData() = 0;
+  virtual GptSlipData *getSlipData() const = 0;
 protected:
   int slip_systems;
 
@@ -55,7 +55,7 @@ public:
 			   double init_res) :
     w1(w1),w2(w2),ss(ss),a(a),h0(h0),m(m),g0dot(g0dot),dt(dt),init_res(init_res)
   {}
-  virtual GptSlipData *getSlipData();
+  virtual GptSlipData *getSlipData() const;
 private:
   double w1,w2,ss,a,h0,m,g0dot,dt,init_res;
   

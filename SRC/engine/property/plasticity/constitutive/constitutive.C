@@ -23,6 +23,6 @@ PowerLawSlipData::PowerLawSlipData(int slips, double initial_r) {
   }
 }
 
-GptSlipData *PowerLawConstitutiveRule::getSlipData() {
+GptSlipData *PowerLawConstitutiveRule::getSlipData() const {
   return new PowerLawSlipData(slip_systems, init_res);
 }

@@ -77,10 +77,37 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
   ElementData *ed = e->getDataByName("plastic_data");
   ElementData *eds = e->getDataByName("slip_data");
 
-  // Construction scheme:
-  // PlasticData(integration_order(c,e),e);
+  // # of slips is available in local data "nslips".
+  // Integration order is a function, integration_order(c,e).
 
-  // SlipData(integration_order(c,e),rule,e);
+  PlasticData *pd;
+  SlipData *sd;
+  
+  if (ed==0) {
+    pd = new PlasticData(integration_order(c,e),e);
+    e->setDataByName(pd);  // Element extracts the name.
+  }
+  else {
+    pd = dynamic_cast<PlasticData*>(ed);
+
+    for (unsigned int ig=0;ig<pd->gptdata.size();++ig) {
+      pd->gptdata[ig].ft = pd->gptdata[ig].f_tau;
+      pd->gptdata[ig].fpt = pd->gptdata[ig].fp_tau;
+    }
+  }
+    
+  if (eds==0) {
+    sd = new SlipData(integration_order(c,e),rule,e);
+    e->setDataByName(sd);
+  }
+  else {
+    sd = dynamic_cast<SlipData*>(eds);
+  }
+
+  // At this point, pd and sd are set to the relevant PlasticData and
+  // SlipData objects, respectively, and we're ready to do some physics.
+
+  // ...
 }
 
 int Plasticity::integration_order(const CSubProblem *sp,
@@ -223,7 +250,7 @@ GptPlasticData::GptPlasticData() :
 // Makes use of the fact that the integration order is the shapefunction
 // degree, which is an assumption of the plasticity class. It's
 // possible the order should actually be passed through.
-PlasticData::PlasticData(int ord, Element *el) :
+PlasticData::PlasticData(int ord, const Element *el) :
   ElementData("plastic_data"), order(ord) {
   for (GaussPointIterator gpt = el->integrator(order);
        !gpt.end(); ++gpt) {
@@ -234,8 +261,8 @@ PlasticData::PlasticData(int ord, Element *el) :
 }
 
 
-SlipData::SlipData(int ord, PlasticConstitutiveRule *r,
-		   Element *e) : ElementData("slip_data"), order(ord)
+SlipData::SlipData(int ord, const PlasticConstitutiveRule *r,
+		   const Element *e) : ElementData("slip_data"), order(ord)
 {
   for (GaussPointIterator gpti = e->integrator(order);
        !gpti.end(); ++gpti) {

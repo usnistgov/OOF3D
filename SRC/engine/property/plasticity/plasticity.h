@@ -149,9 +149,16 @@ public:
 };
   
 
+static std::string elementdataname_plastic = "PlasticData";
+static std::string elementdataname_slip = "SlipData";
+static std::string plasticitymodulename = "plasticity";
+
+
 class PlasticData : public ElementData {
 public:
-  PlasticData(int o,Element *e);
+  PlasticData(int o,const Element *e);
+  virtual const std::string &classname() const { return elementdataname_plastic; }
+  virtual const std::string &modulename() const { return plasticitymodulename; }
   int order;
   std::vector<GptPlasticData> fp;
   std::vector<GptPlasticData> gptdata;
@@ -165,7 +172,9 @@ class GptSlipData {
 
 class SlipData : public ElementData {
 public:
-  SlipData(int o, PlasticConstitutiveRule *r, Element *e);
+  SlipData(int o, const PlasticConstitutiveRule *r, const Element *e);
+  virtual const std::string &classname() const { return elementdataname_slip; }
+  virtual const std::string &modulename() const { return plasticitymodulename; }
   int order;
   std::vector<GptSlipData*> gptslipdata;
 };
