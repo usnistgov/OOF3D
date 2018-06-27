@@ -150,6 +150,14 @@ class build_shlib(Command):
                                    ('debug', 'debug'),
                                    ('force', 'force'))
 
+        # --prefix is necessary on darwin because the build phase sets
+        # the install_name of the libraries.
+        # Get prefix from install if if wasn't found in build.
+        self.set_undefined_options('install',
+                                   ('prefix', 'prefix'))
+        if sys.platform == "darwin" and self.prefix is None:
+            raise DistutilsSetupError("--prefix must be specified!")
+
         # Much of the following is copied from build_ext
         if self.include_dirs is None:
             self.include_dirs = self.distribution.include_dirs or []

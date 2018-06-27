@@ -30,10 +30,9 @@ class install_shlib(Command):
         ('install-dir=', 'd', "directory to install to"),
         ('dest-dir=', None, "intermediate installation directory"),
         ('build-dir=', 'b', "build directory (where to install from)"),
-        ('skip-build', None, "skip the build steps"),
-        ('skip-install-name-tool', None, "don't run install_name_tool on Mac")
+        ('skip-build', None, "skip the build steps")
         ]
-    boolean_options = ['skip-build', 'skip-install-name-tool']
+    boolean_options = ['skip-build']
 
     def initialize_options(self):
         self.install_dir = None
@@ -69,39 +68,6 @@ class install_shlib(Command):
             dest = (self.install_dir if self.dest_dir is None
                     else os.path.join(self.dest_dir, "lib"))
             outfiles = self.copy_tree(self.build_dir, dest)
-            ## On OS X, we have to run install_name_tool here, since
-            ## dylibs contain info about their own location and the
-            ## locations of the libraries they link to.  The
-            ## alternative is to force users to set DYLD_LIBRARY_PATH.
-            ## Neither should be necessary if the installation is in a
-            ## standard location.
-            if sys.platform == "darwin" and not self.skip_install_name_tool:
-                for ofile in outfiles:
-                    name = os.path.split(ofile)[1]
-                    cmd = ("install_name_tool -id %s %s"
-                           % (os.path.join(dest, name), ofile))
-                    log.info(cmd)
-                    errorcode = os.system(cmd)
-                    if errorcode:
-                        raise DistutilsExecError("command failed: %s" % cmd)
-                    # See what other dylibs it links to.  If they're
-                    # ours, then we have to make sure they link to the
-                    # final location.
-                    f = os.popen('otool -L %s' % ofile)
-                    for line in f.readlines():
-                        l = line.lstrip()
-                        if l.startswith("build"): # it's one of ours
-                            dylib = l.split()[0] # full path in build dir
-                            dylibname = os.path.split(dylib)[1]
-                            cmd = 'install_name_tool -change %s %s %s' % (
-                                dylib,
-                                os.path.join(dest, dylibname),
-                                ofile)
-                            log.info(cmd)
-                            errorcode = os.system(cmd)
-                            if errorcode:
-                                raise DistutilsExecError("command failed: %s"
-                                                         % cmd)
         else:
             self.warn("'%s' does not exist! no shared libraries to install"
                       % self.build_dir)
