@@ -260,7 +260,7 @@ class build_shlib(Command):
             outputfilename = ("lib" +
                               self.compiler.shared_object_filename(shlib.name))
 
-            extra_link_args = shlib.extra_link_args
+            extra_link_args = shlib.extra_link_args[:]
 
             if sys.platform == "darwin":
                 extra_link_args.append(
