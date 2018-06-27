@@ -66,7 +66,8 @@ class install_shlib(Command):
 
     def install(self):
         if os.path.isdir(self.build_dir):
-            dest = self.install_dir if self.dest_dir is None else self.dest_dir
+            dest = (self.install_dir if self.dest_dir is None
+                    else os.path.join(self.dest_dir, "lib"))
             outfiles = self.copy_tree(self.build_dir, dest)
             ## On OS X, we have to run install_name_tool here, since
             ## dylibs contain info about their own location and the
@@ -77,7 +78,8 @@ class install_shlib(Command):
             if sys.platform == "darwin" and not self.skip_install_name_tool:
                 for ofile in outfiles:
                     name = os.path.split(ofile)[1]
-                    cmd = "install_name_tool -id %(of)s %(of)s" % dict(of=ofile)
+                    cmd = ("install_name_tool -id %s %s"
+                           % (os.path.join(dest, name), ofile))
                     log.info(cmd)
                     errorcode = os.system(cmd)
                     if errorcode:
@@ -93,7 +95,7 @@ class install_shlib(Command):
                             dylibname = os.path.split(dylib)[1]
                             cmd = 'install_name_tool -change %s %s %s' % (
                                 dylib,
-                                os.path.join(self.install_dir, dylibname),
+                                os.path.join(dest, dylibname),
                                 ofile)
                             log.info(cmd)
                             errorcode = os.system(cmd)
