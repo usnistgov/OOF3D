@@ -104,6 +104,7 @@ class build_shlib(Command):
     description = "build C/C++ shared libraries used by Python extensions"
     sep_by = " (separated by '%s')" % os.pathsep
     user_options = [
+        ('prefix', None, "installation prefix"),
         ('build-temp', 't', "directory to put temporary build by-products"),
         ('debug', 'g', "compile with debugging information"),
         ('force', 'f', "forcibly build everything (ignore file timestamps)"),
@@ -127,6 +128,7 @@ class build_shlib(Command):
 
     
     def initialize_options(self):
+        self.prefix = None
         self.build_temp = None
         self.build_shlib = None         # destination dir
         self.shlibs = None              # list of libraries to build
@@ -142,6 +144,7 @@ class build_shlib(Command):
 
     def finalize_options(self):
         self.set_undefined_options('build',
+                                   ('prefix', 'prefix'),
                                    ('build_temp', 'build_temp'),
                                    ('compiler', 'compiler'),
                                    ('debug', 'debug'),
@@ -246,27 +249,34 @@ class build_shlib(Command):
             # files in a temporary build directory.)
             language = shlib.language or self.compiler.detect_language(sources)
 
-#            print "build_shlib.py: sources=", sources
+            objects = self.compiler.compile(
+                sources,
+                output_dir=self.build_temp,
+                macros=shlib.macros,
+                include_dirs=shlib.include_dirs,
+                extra_postargs=shlib.extra_compile_args,
+                debug=self.debug)
 
-            objects = self.compiler.compile(sources,
-                                            output_dir=self.build_temp,
-                                            macros=shlib.macros,
-                                            include_dirs=shlib.include_dirs,
-                                            extra_postargs=shlib.extra_compile_args,
-                                            debug=self.debug)
+            outputfilename = ("lib" +
+                              self.compiler.shared_object_filename(shlib.name))
 
-#            print "build_shlib.py: objects=", objects
+            extra_link_args = shlib.extra_link_args
+
+            if sys.platform == "darwin":
+                extra_link_args.append(
+                    "--install_name=" +
+                    os.path.join(self.prefix, "lib", outputfilename))
             
             self.compiler.link(
                 target_desc=self.compiler.SHARED_LIBRARY,
                 objects=objects,
-                output_filename="lib"+
-                    self.compiler.shared_object_filename(shlib.name),
+                output_filename=outputfilename,
                 output_dir=self.build_shlib,
                 libraries=shlib.libraries,
                 library_dirs=shlib.library_dirs,
                 extra_preargs=shlib.extra_compile_args,
-                extra_postargs=shlib.extra_link_args,
+                # extra_postargs=shlib.extra_link_args,
+                extra_postargs=extra_link_args,
                 debug=self.debug,
                 target_lang=language
                 )

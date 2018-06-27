@@ -800,17 +800,20 @@ class oof_build_ext(build_ext.build_ext, oof_build_xxxx):
 
 class oof_build_shlib(build_shlib.build_shlib, oof_build_xxxx):
     user_options = build_shlib.build_shlib.user_options + [
+        ('prefix=', None, "installation prefix"),
         ('with-swig=', None, "non-standard swig executable"),
         ('blas-libraries=', None, "libraries for blas and lapack"),
         ('blas-link-args=', None, "link arguments required for blas and lapack")
         ]
     def initialize_options(self):
+        self.prefix = None
         self.with_swig = None
         self.blas_libraries = None
         self.blas_link_args = None
         build_shlib.build_shlib.initialize_options(self)
     def finalize_options(self):
         self.set_undefined_options('build',
+                                   ('prefix', 'prefix'),
                                    ('with_swig', 'with_swig'),
                                    ('blas_libraries', 'blas_libraries'),
                                    ('blas_link_args', 'blas_link_args'),
@@ -927,6 +930,7 @@ class oof_build_shlib(build_shlib.build_shlib, oof_build_xxxx):
 class oof_build(build.build):
     sep_by = " (separated by '%s')" % os.pathsep
     user_options = build.build.user_options + [
+        ('prefix=', None, 'installation prefix'),
         ('with-swig=', None, "non-standard swig executable"),
         ('libraries=', None, 'external libraries to link with'),
         ('library-dirs=', None,
@@ -934,6 +938,7 @@ class oof_build(build.build):
         ('blas-libraries=', None, "libraries for blas and lapack"),
         ('blas-link-args=', None, "link args for blas and lapack")]
     def initialize_options(self):
+        self.prefix = None
         self.libraries = None
         self.library_dirs = None
         self.blas_libraries = None
