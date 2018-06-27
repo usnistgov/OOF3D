@@ -263,9 +263,11 @@ class build_shlib(Command):
             extra_link_args = shlib.extra_link_args[:]
 
             if sys.platform == "darwin":
-                extra_link_args.append(
-                    "--install_name=" +
-                    os.path.join(self.prefix, "lib", outputfilename))
+                extra_link_args.extend([
+                    "--install_name",
+                    os.path.join(self.prefix, "lib", outputfilename)])
+
+            log.info("linking '%s' library", shlib.name)
             
             self.compiler.link(
                 target_desc=self.compiler.SHARED_LIBRARY,
