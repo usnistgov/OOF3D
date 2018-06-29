@@ -31,7 +31,7 @@
 
 // Constitutive models know how to compute the slip increment given
 // the stress, and have additional per-time-step gausspoint-specific
-// data about the state of the hardening variables.
+// data about the state of various local variables, like hardening.
 
 // At the moment, there's no top-level "generic" way of doing this,
 // but there probably should be.  That's a TODO.
@@ -133,6 +133,9 @@ public:
 // Data containers.
 //-------------------------------------------------------------------//
 
+// Per-gaussponit plastic data, generally needed by all constitutive
+// rules. This is the per-gausspoint object contained in the the
+// PlasticData container.  It' snot expected to be subclassed.
 class GptPlasticData {
 public:
   GptPlasticData();
@@ -149,6 +152,14 @@ public:
 };
   
 
+// The ElementData class is a PythonExportable, and in the case where
+// it's SWIGged, requires class and module metadata so that Python can
+// access derived-class objects from a wrapped base-class pointer.  We
+// don't actually do this here, but we might, so an alternate
+// mechanism has not been constructed.  These static variables are
+// here because the return value of the module and class name
+// functions is a reference to a string, and if you just use a
+// literal, you end up returning a reference to a temporary.
 static std::string elementdataname_plastic = "PlasticData";
 static std::string elementdataname_slip = "SlipData";
 static std::string plasticitymodulename = "plasticity";
@@ -165,7 +176,9 @@ public:
 };
 
 
-// Base class for constitutive-rule-specific info.
+// Base class for constitutive-rule-specific info.  The SlipData
+// container has pointers to the base class, individual constitutive
+// rules define derived classes that have the relevant data.
 class GptSlipData {
 };
 
@@ -173,6 +186,7 @@ class GptSlipData {
 class SlipData : public ElementData {
 public:
   SlipData(int o, const PlasticConstitutiveRule *r, const Element *e);
+  ~SlipData();
   virtual const std::string &classname() const { return elementdataname_slip; }
   virtual const std::string &modulename() const { return plasticitymodulename; }
   int order;

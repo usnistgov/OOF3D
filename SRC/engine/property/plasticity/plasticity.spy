@@ -33,7 +33,8 @@ reg = PropertyRegistration(
         tip=parameter.emptyTipString),
      parameter.RegisteredParameter('constitutive rule',
                                    constitutive.PlasticConstitutiveRule,
-                                   constitutive.PowerLawConstitutiveRule(1.0))
+                                   constitutive.PowerLawConstitutiveRule(
+                                       1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0))
     ],
     outputs=[],
     propertyType="Plasticity",

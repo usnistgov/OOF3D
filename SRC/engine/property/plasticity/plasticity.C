@@ -174,6 +174,7 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
 }
 
 
+// The magic 12 is the number of slip systems in FCC.
 FCCPlasticity::FCCPlasticity(PyObject *reg, const std::string &nm,
 			     const Cijkl &c, PlasticConstitutiveRule *r)
   : Plasticity(reg,nm,c,r, 12) {
@@ -181,7 +182,7 @@ FCCPlasticity::FCCPlasticity(PyObject *reg, const std::string &nm,
   std::cerr << xtal_cijkl_ << std::endl;
   //
   // Populate the schmid_tensor data member.
-  xtal_schmid_tensors.resize(nslips); // Relayed through the base constructor.
+  xtal_schmid_tensors.resize(nslips); // Base class knows nslips at this point.
   double n[3];
   double s[3];
   //
@@ -247,9 +248,8 @@ GptPlasticData::GptPlasticData() :
   f_tau(0,0) = f_tau(1,1) = f_tau(2,2) = 1.0;
 }
 
-// Makes use of the fact that the integration order is the shapefunction
-// degree, which is an assumption of the plasticity class. It's
-// possible the order should actually be passed through.
+// The order selects which gpt array to iterate over.  It's passed in,
+// but it's very important that this be done consistently.
 PlasticData::PlasticData(int ord, const Element *el) :
   ElementData("plastic_data"), order(ord) {
   for (GaussPointIterator gpt = el->integrator(order);
@@ -268,5 +268,13 @@ SlipData::SlipData(int ord, const PlasticConstitutiveRule *r,
        !gpti.end(); ++gpti) {
     GptSlipData *gpslip = r->getSlipData();
     gptslipdata.push_back(gpslip);
+  }
+}
+
+// We own the pointed-to GtpSlipData objects -- clean them up when we die.
+SlipData::~SlipData() {
+  for (std::vector<GptSlipData*>::iterator i = gptslipdata.begin();
+       i!=gptslipdata.end(); ++i) {
+    delete (*i);
   }
 }

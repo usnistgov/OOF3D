@@ -24,6 +24,9 @@
 #include <oofconfig.h>
 
 
+// Constitutive-rule-specific stored at the gausspoints to preserve
+// local state across time iterations.  Stored in the SlipData object,
+// managed by the Plasticity property class.
 class PowerLawSlipData : public GptSlipData {
 public:
   PowerLawSlipData(int slips, double res);
