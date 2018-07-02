@@ -119,20 +119,19 @@ oldinstall = install.install
 class Install(oldinstall):
     
     user_options = oldinstall.user_options + [
-        ('install-shlib=', None, 'installation directory for shared libraries'),
-        ('dest-dir=', None,
-         'intermediate installation directory for staged installs')
+        ('install-shlib=', None, 'installation directory for shared libraries')
         ]
     def initialize_options(self):
         oldinstall.initialize_options(self)
         self.install_shlib = None
-        self.dest_dir = None
     def finalize_options(self):
         oldinstall.finalize_options(self)
+        print >> sys.stderr, "Install.finalize_options: original install_shlib=", self.install_shlib
         self.convert_paths('shlib')
         if self.root is not None:
-            self.change_roots('shlib')
-
+            self.change_roots('install_shlib')
+        print >> sys.stderr, "Install.finalize_options: modifired install_shlib=", self.install_shlib
+        sys.exit(1)
     def expand_dirs(self):
         oldinstall.expand_dirs(self)
         self._expand_attrs(['install_shlib'])

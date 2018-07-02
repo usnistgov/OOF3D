@@ -1059,13 +1059,10 @@ class oof_build_py(build_py.build_py):
 ###################################################
 
 class oof_install(install.install):
-    user_options = install.install.user_options + [
-        ('dest-dir=', None, "intermediate installation directory for staged installs")
-        ]
+    #user_options = install.install.user_options
 
     def initialize_options(self):
         install.install.initialize_options(self)
-        self.dest_dir = None
         
     def run(self):
 	global calledFromInstall
