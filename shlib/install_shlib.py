@@ -28,7 +28,6 @@ class install_shlib(Command):
 
     user_options = [
         ('install-dir=', 'd', "directory to install to"),
-        ('dest-dir=', None, "intermediate installation directory"),
         ('build-dir=', 'b', "build directory (where to install from)"),
         ('skip-build', None, "skip the build steps")
         ]
@@ -37,22 +36,19 @@ class install_shlib(Command):
     def initialize_options(self):
         self.install_dir = None
         self.build_dir = None
-        self.dest_dir = None
         self.outfiles = []
         self.shlibs = self.distribution.shlibs
         self.skip_build = None
-        self.skip_install_name_tool = None
 
     def finalize_options(self):
         self.set_undefined_options(
             'install',
             ('install_shlib', 'install_dir'),
-            ('dest_dir', 'dest_dir'),
-            ('skip_build', 'skip_build'),
-            ('skip_install_name_tool', 'skip_install_name_tool')
+            ('skip_build', 'skip_build')
         )
         self.set_undefined_options('build_shlib',
                                    ('build_shlib', 'build_dir'))
+
 
     def run(self):
         self.build()
@@ -65,9 +61,7 @@ class install_shlib(Command):
 
     def install(self):
         if os.path.isdir(self.build_dir):
-            dest = (self.install_dir if self.dest_dir is None
-                    else os.path.join(self.dest_dir, "lib"))
-            outfiles = self.copy_tree(self.build_dir, dest)
+            outfiles = self.copy_tree(self.build_dir, self.install_dir)
         else:
             self.warn("'%s' does not exist! no shared libraries to install"
                       % self.build_dir)

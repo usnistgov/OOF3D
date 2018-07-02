@@ -99,7 +99,7 @@ sys.argv.pop(0)
 
 build_type = sys.argv.pop(0)
 build_args = []
-install_args = []
+#install_args = []
 
 if build_type == 'devel':
     build_args.append("--enable-devel="+sys.argv.pop(0))
@@ -138,10 +138,10 @@ while sys.argv:
         build_args.append('--enable-petsc')
     elif arg == 'pg':
         os.putenv('CFLAGS', '-pg')
-    elif arg == 'macports':
-        # Hack. If we really need install_args, we should have a way
-        # of passing command line arguments to it.
-        install_args.append('--skip-install-name-tool')
+    # elif arg == 'macports':
+    #     # Hack. If we really need install_args, we should have a way
+    #     # of passing command line arguments to it.
+    #     install_args.append('--skip-install-name-tool')
 
 # Where to put everything?
 installdir = os.getenv("OOFINSTALL")
@@ -193,10 +193,13 @@ try:
         print "Removing", fnames[0]
         os.remove(fnames[0])
 
-    build_cmd = "python setup.py build %s install %s --prefix=%s" \
+    build_cmd = "python setup.py build %s install --prefix=%s" \
                 % (string.join(build_args),
-                   string.join(install_args),
                    os.path.join(stowdir, stowsubdir))
+    # build_cmd = "python setup.py build %s install %s --prefix=%s" \
+    #             % (string.join(build_args),
+    #                string.join(install_args),
+    #                os.path.join(stowdir, stowsubdir))
     print build_cmd
     result = os.system(build_cmd)
     if not result:                      # successful
@@ -207,10 +210,7 @@ try:
         except IOError:
             laststow = None
         os.chdir(stowdir)
-        # The "switchto" script in the stow directory has a 'none'
-        # option which unstows everything and writes 'none' in the
-        # laststowfile.
-        if laststow is None or laststow == 'none':
+        if laststow is None:
             print "Stowing", stowsubdir
             stowcmd = "stow " + stowsubdir
             os.system(stowcmd)

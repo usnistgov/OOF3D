@@ -72,8 +72,6 @@ from distutils import log
 from distutils.dir_util import remove_tree
 from distutils.sysconfig import get_config_var
 
-import oof2installlib
-
 import shlib # adds build_shlib and install_shlib to the distutils command set
 from shlib import build_shlib
 
@@ -1032,8 +1030,8 @@ class oof_build_py(build_py.build_py):
               platform['extra_compile_args']
         print >> cfgscript, 'include_dirs =', idirs
         print >> cfgscript, 'library_dirs =', [install_shlib.install_dir]
-        oof2installlib.shared_libs = [lib.name for lib in install_shlib.shlibs]
-        print >> cfgscript, 'libraries =', oof2installlib.shared_libs
+        print >> cfgscript, 'libraries =', \
+            [lib.name for lib in install_shlib.shlibs]
         print >> cfgscript, 'extra_link_args =', platform['extra_link_args']
         print >> cfgscript, "import sys; sys.path.append(root)"
         cfgscript.close()
@@ -1067,7 +1065,6 @@ class oof_install(install.install):
 
     def initialize_options(self):
         install.install.initialize_options(self)
-        self.skip_install_name_tool = None
         self.dest_dir = None
         
     def run(self):
@@ -1128,7 +1125,7 @@ def get_global_args():
     # hasn't been called yet.
 
     ## TODO: Get rid of obsolete options.  HAVE_MPI, HAVE_PETSC,
-    ## DEVEL, ENABLE_SEGMENTATION, PROFILER, DATADIR, DOCDIR, and
+    ## DEVEL, ENABLE_SEGMENTATION, PROFILER, DOCDIR, and
     ## NANOHUB aren't used (I think).
 
     global HAVE_MPI, HAVE_OPENMP, HAVE_PETSC, DEVEL, NO_GUI, \
@@ -1518,6 +1515,15 @@ if __name__ == '__main__':
                   if not phile.endswith('~') and
                   os.path.isfile(os.path.join(dirpath, phile))]))
 
+    testfiles = []
+    for dirpath, dirnames, filenames in os.walk('TEST3D'):
+        if filenames:
+            testfiles.append(
+                (os.path.join(datadir, dirpath),
+                 [os.path.join(dirpath, phile) for file in filenames
+                  if not phile.endswith('~') and
+                  os.path.isfile(os.path.join(dirpath, phile))]))
+
     # If this script is being used to create a frozen executable, the
     # Python path has to be set the same way it is during actual
     # execution.
@@ -1541,14 +1547,13 @@ if __name__ == '__main__':
                     "build_ext" : oof_build_ext,
                     "build_py" : oof_build_py,
                     "build_shlib": oof_build_shlib,
-                    "install_lib": oof2installlib.oof_install_lib,
                     "clean" : oof_clean,
                     "install" : oof_install},
         packages = pkgs,
         package_dir = {OOFNAME+'.ooflib':'SRC'},
         shlibs = shlibs,
         ext_modules = extensions,
-        data_files = examplefiles
+        data_files = examplefiles + testfiles
         )
 
     # 'options' is a valid keyword arg in python 2.6 and above, and in
