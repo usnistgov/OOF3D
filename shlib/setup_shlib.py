@@ -139,6 +139,10 @@ class Install(oldinstall):
     def has_shlib(self):
         return self.distribution.has_shared_libraries()
 
+    def select_scheme(self, scheme): # just for debugging
+        print >> sys.stderr, "Install.select_scheme: scheme=", scheme
+        oldinstall.select_scheme(self, scheme)
+
     sub_commands = [('install_shlib', has_shlib)] + oldinstall.sub_commands
 
 install.install = Install
