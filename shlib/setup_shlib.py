@@ -127,10 +127,12 @@ class Install(oldinstall):
     def finalize_options(self):
         oldinstall.finalize_options(self)
         print >> sys.stderr, "Install.finalize_options: original install_shlib=", self.install_shlib
+        print >> sys.stderr, "Install.finalize_options: root=", self.root
         self.convert_paths('shlib')
         if self.root is not None:
             self.change_roots('install_shlib')
-        print >> sys.stderr, "Install.finalize_options: modifired install_shlib=", self.install_shlib
+        print >> sys.stderr, "Install.finalize_options: modified install_shlib=", self.install_shlib
+        print >> sys.stderr, "config_vars=", self.config_vars
         sys.exit(1)
     def expand_dirs(self):
         oldinstall.expand_dirs(self)
@@ -139,9 +141,9 @@ class Install(oldinstall):
     def has_shlib(self):
         return self.distribution.has_shared_libraries()
 
-    def select_scheme(self, scheme): # just for debugging
-        print >> sys.stderr, "Install.select_scheme: scheme=", scheme
-        oldinstall.select_scheme(self, scheme)
+    # def select_scheme(self, scheme): # just for debugging
+    #     print >> sys.stderr, "Install.select_scheme: scheme=", scheme
+    #     oldinstall.select_scheme(self, scheme)
 
     sub_commands = [('install_shlib', has_shlib)] + oldinstall.sub_commands
 
