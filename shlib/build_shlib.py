@@ -106,6 +106,7 @@ class build_shlib(Command):
     user_options = [
         ('prefix', None, "installation prefix"),
         ('build-temp', 't', "directory to put temporary build by-products"),
+        ('install-dir', None, 'directory in which libraries will be installed'),
         ('debug', 'g', "compile with debugging information"),
         ('force', 'f', "forcibly build everything (ignore file timestamps)"),
         ('compiler=', 'c', "specify the compiler type"),
@@ -131,6 +132,7 @@ class build_shlib(Command):
         self.prefix = None
         self.build_temp = None
         self.build_shlib = None         # destination dir
+        self.install_dir = None
         self.shlibs = None              # list of libraries to build
         self.define = None              # macros to define
         self.undef = None               # macros to undefine
@@ -149,6 +151,8 @@ class build_shlib(Command):
                                    ('compiler', 'compiler'),
                                    ('debug', 'debug'),
                                    ('force', 'force'))
+        self.set_undefined_options('install',
+                                   ('install_shlib', 'install_dir'))
 
         # --prefix is necessary on darwin because the build phase sets
         # the install_name of the libraries.
@@ -273,7 +277,7 @@ class build_shlib(Command):
             if sys.platform == "darwin":
                 extra_link_args.extend([
                     "-install_name",
-                    os.path.join(self.prefix, "lib", outputfilename)])
+                    os.path.join(self.install_dir, outputfilename)])
 
             log.info("linking '%s' library", shlib.name)
             

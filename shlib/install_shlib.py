@@ -41,6 +41,8 @@ class install_shlib(Command):
         self.skip_build = None
 
     def finalize_options(self):
+        # install_shlib is added to the install.install options when
+        # the class is monkeypatched in setup_shlib.py.
         self.set_undefined_options(
             'install',
             ('install_shlib', 'install_dir'),
