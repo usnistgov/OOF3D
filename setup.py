@@ -1501,6 +1501,8 @@ if __name__ == '__main__':
     allpkgs.add(OOFNAME)
 
     pkgs = [pkg.replace(OOFNAME, OOFNAME+'.ooflib') for pkg in allpkgs]
+    pkg_dir = {OOFNAME + '.ooflib' : 'SRC'}
+    pkg_data = {}
 
     # Find example files that have to be installed.
     examplefiles = []
@@ -1512,25 +1514,32 @@ if __name__ == '__main__':
                   if not phile.endswith('~') and
                   os.path.isfile(os.path.join(dirpath, phile))]))
 
-    testfiles = []
-    for dirpath, dirnames, filenames in os.walk('TEST3D'):
-        if filenames:
-            testfiles.append(
-                (os.path.join(datadir, dirpath),
-                 [os.path.join(dirpath, phile) for file in filenames
-                  if not phile.endswith('~') and
-                  os.path.isfile(os.path.join(dirpath, phile))]))
+    # Add the testing files.  The 'TEST3D' directory becomes the
+    # 'ooftests' module when oof3d is installed. 
+    pkgs.extend([OOFNAME + '.ooftests', OOFNAME+'.ooftests.UTILS'])
+    pkg_dir[OOFNAME + '.ooftests'] = 'TEST3D'
+    pkg_data[OOFNAME + '.ooftests'] = ['aniso_data/*',
+                                       'bc_data/*',
+                                       'fundamental_data/*',
+                                       'image_data/*',
+                                       'matprop_data/*',
+                                       'matrix_data/*',
+                                       'mesh_data/*',
+                                       'ms_data/*',
+                                       'output_data/*',
+                                       'skeleton_data/*',
+                                       'vsb_data/*']
 
-    # If this script is being used to create a frozen executable, the
-    # Python path has to be set the same way it is during actual
-    # execution.
-    py2app_options = dict(argv_emulation=True)
-    sys.path.append('SRC')                  # so that py2app can find imports
-    try:
-        import pygtk
-        pygtk.require("2.0")
-    except:
-        pass
+    # # If this script is being used to create a frozen executable, the
+    # # Python path has to be set the same way it is during actual
+    # # execution.
+    # py2app_options = dict(argv_emulation=True)
+    # sys.path.append('SRC')                  # so that py2app can find imports
+    # try:
+    #     import pygtk
+    #     pygtk.require("2.0")
+    # except:
+    #     pass
     
     setupargs = dict(
         name = OOFNAME,
@@ -1547,10 +1556,11 @@ if __name__ == '__main__':
                     "clean" : oof_clean,
                     "install" : oof_install},
         packages = pkgs,
-        package_dir = {OOFNAME+'.ooflib':'SRC'},
+        package_dir = pkg_dir,
+        package_data = pkg_data,
         shlibs = shlibs,
         ext_modules = extensions,
-        data_files = examplefiles + testfiles
+        data_files = examplefiles
         )
 
     # 'options' is a valid keyword arg in python 2.6 and above, and in
