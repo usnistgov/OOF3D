@@ -1,0 +1,28 @@
+#!python
+# -*- python -*-
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+# This is the start up script for the oof3d regression test suite.  It
+# just wraps regression.py.  There's no difference between running
+# this script and running "python regression.py" in the TEST3D
+# directory except that with this script the user doesn't have to know
+# how to find regression.py.  (Hint: TEST3D is installed as 'ooftests'
+# in the oof3d directory in site-packages, whereever that might be.)
+
+import sys
+import os
+
+import oof3d
+sys.path.append(os.path.dirname(oof3d.__file__))
+import ooftests
+from ooftests import regression
+homedir = os.path.dirname(regression.__file__)
+regression.run(homedir)
+

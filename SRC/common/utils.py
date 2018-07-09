@@ -205,6 +205,9 @@ class PrintableClass(type):
 
 mainmodule = sys.modules['__main__']
 
+def OOFglobals():
+    return mainmodule.__dict__
+
 def OOFexec(command):
     exec(command, mainmodule.__dict__)
 

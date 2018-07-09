@@ -105,7 +105,10 @@ def run_modules(test_module_names, oofglobals, backwards):
                         return False
     return True
 
-if __name__=="__main__":
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+def run(homedir):
+    global test_module_names
     try:
         opts,args = getopt.getopt(sys.argv[1:],"f:a:t:o:d",
                                   ["from=", "after=", "to=", "oofargs=",
@@ -196,7 +199,6 @@ if __name__=="__main__":
     # during the tests won't clobber or be clobbered by files written
     # by another test being run in the same file system.
     import tempfile
-    homedir = os.path.realpath(sys.path[0]) # where we are now.
     sys.path[0] = os.path.realpath(sys.path[0])
     tmpdir = tempfile.mkdtemp(prefix='oof3temp_')
     print >> sys.stderr, "Using temp dir", tmpdir
@@ -206,13 +208,14 @@ if __name__=="__main__":
     from UTILS import file_utils
     file_utils.set_reference_dir(homedir)
 
-    # globals() contains OOF namespace objects that we will be making
-    # available to each test script.  If test scripts modify globals
-    # (eg, by using utils.OOFdefine or the scriptloader), we don't
-    # want those modifications to affect later test scripts.
-    # Therefore we create a pristine copy of globals now, and use it
-    # instead of globals() later.
-    oofglobals = copy.copy(globals())
+    # utils.OOFglobals() returns OOF namespace objects that we will be
+    # making available to each test script.  If test scripts modify
+    # globals (eg, by using utils.OOFdefine or the scriptloader), we
+    # don't want those modifications to affect later test scripts.
+    # Therefore we create a pristine copy of the values now, and use
+    # it instead of utils.OOFglobals() later.
+    from ooflib.common import utils
+    oofglobals = copy.copy(utils.OOFglobals())
     ok = False
     try:
         if forever:
@@ -224,7 +227,6 @@ if __name__=="__main__":
                     "iteration%s"%("s"*(count>1)), "*******"
         else:
             ok = run_modules(test_module_names, oofglobals, backwards)
-        OOF.File.Quit()
     finally:
         if ok:
             print >> sys.stderr, "All tests completed successfully!"
@@ -234,3 +236,11 @@ if __name__=="__main__":
             print >> sys.stderr, "Tests failed."
         if noclean or not ok:
             print >> sys.stderr, "Temp dir", tmpdir, "was not removed."
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+if __name__=="__main__":
+    homedir = os.path.realpath(sys.path[0])
+    run(homedir)
+    OOF.File.Quit()
+        
