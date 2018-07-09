@@ -107,7 +107,33 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
   // At this point, pd and sd are set to the relevant PlasticData and
   // SlipData objects, respectively, and we're ready to do some physics.
 
-  // ...
+  // Prototype code does:
+  // Constructs XYZ, which is reference location of all nodes.
+  // Constructs xyz, which is current location of all nodes.
+  // (I think we don't need these?  We have access through
+  // the node iterators.
+  //
+  // Allocate space for 3x3 A matrix, 3x3 B and C matrices
+  // 
+  // For each gausspoint:
+  //   Retrieve the local plastic data and slip data
+  //   Compute F(tau) from current u field..
+  //   Compute S_trial.
+  //   Compute the A matrix from F(tau) and Fp(t)
+  //   Compute the B and C matrix sets.
+  //
+  //   Set S(tau) = S_trial
+  //   Iterate:
+  //     Call the constitutive rule with S(tau) and the slip data,
+  //        get back delta-gamma for each slip system, and
+  //        derivatives of delta-gamma wrt 2nd PK stress..
+  //     Do NR until S converges.
+  //   Update Fp(tau) from the Asaro equation.
+  //   Compute local elasto-plastic tangent, store it in the plastic data.
+  //   
+  //   (Update the plasticdata and slipdata objects?  Or not until final
+  //      outer loop convergence?)
+  
 }
 
 int Plasticity::integration_order(const CSubProblem *sp,
@@ -271,7 +297,7 @@ SlipData::SlipData(int ord, const PlasticConstitutiveRule *r,
   }
 }
 
-// We own the pointed-to GtpSlipData objects -- clean them up when we die.
+// We own the pointed-to GptSlipData objects -- clean them up when we die.
 SlipData::~SlipData() {
   for (std::vector<GptSlipData*>::iterator i = gptslipdata.begin();
        i!=gptslipdata.end(); ++i) {

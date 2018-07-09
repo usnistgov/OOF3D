@@ -160,16 +160,18 @@ public:
 // here because the return value of the module and class name
 // functions is a reference to a string, and if you just use a
 // literal, you end up returning a reference to a temporary.
-static std::string elementdataname_plastic = "PlasticData";
-static std::string elementdataname_slip = "SlipData";
+static std::string elementdataclassname_plastic = "PlasticData";
+static std::string elementdataclassname_slip = "SlipData";
 static std::string plasticitymodulename = "plasticity";
 
 
 class PlasticData : public ElementData {
 public:
   PlasticData(int o,const Element *e);
-  virtual const std::string &classname() const { return elementdataname_plastic; }
-  virtual const std::string &modulename() const { return plasticitymodulename; }
+  virtual const std::string &classname() const {
+    return elementdataclassname_plastic; }
+  virtual const std::string &modulename() const {
+    return plasticitymodulename; }
   int order;
   std::vector<GptPlasticData> fp;
   std::vector<GptPlasticData> gptdata;
@@ -187,8 +189,10 @@ class SlipData : public ElementData {
 public:
   SlipData(int o, const PlasticConstitutiveRule *r, const Element *e);
   ~SlipData();
-  virtual const std::string &classname() const { return elementdataname_slip; }
-  virtual const std::string &modulename() const { return plasticitymodulename; }
+  virtual const std::string &classname() const {
+    return elementdataclassname_slip; }
+  virtual const std::string &modulename() const {
+    return plasticitymodulename; }
   int order;
   std::vector<GptSlipData*> gptslipdata;
 };
