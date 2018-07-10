@@ -1,0 +1,24 @@
+Changes to the selection commands from version 3.1.2 to 3.2.
+
+The OOF.PixelSelection menu is now OOF.VoxelSelection.
+
+Menu commands that used to be in OOF.Graphics_XXX.Toolbox.Pixel_Select
+are now in OOF.VoxelSelection.  The selection menu commands no longer
+are dependent on the view parameters in whichever graphics window
+they're started from.
+
+Except for Undo, Redo, Clear, and Invert,
+selection methods that used to be subcommands in the menu are now all
+done with the Select subcommand, which takes a 'method' argument.
+
+Most methods take an 'operator' argument, which can take the values
+Select(), AddSelection(), Unselect(), Toggle(), and Intersect().
+Some methods used operators previously.  The old SelectOnly() is now
+Select().  The old Select() is now AddSelection().
+
+The argument for OOF.VoxelSelection.Clear, Invert, Undo, Redo is
+'microstructure'.  When invoked from a graphics toolbox the command
+used to be OOF.Graphics_XXX.Pixel_Select.Clear(source=<image name>).
+
+When selecting elements by homogeneity or shape energy, both min and
+max thresholds can now be set.
