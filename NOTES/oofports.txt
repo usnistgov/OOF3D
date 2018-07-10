@@ -91,7 +91,7 @@ The binary distribution installs into /opt/oofports, so the
 
 sudo mv /opt/oofports /opt/oofports-build
 
-Unpack the binary distribution.
+Unpack the binary distribution by double clicking on the mpkg file.
 Unset PYTHONPATH.
 export PATH=/opt/oofports/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
