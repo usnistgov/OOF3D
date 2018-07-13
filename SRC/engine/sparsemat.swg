@@ -111,6 +111,4 @@ public:
 
 void mmadump(char *filename, char *mtxname, SparseMat); // mathematica format
 
-long nSparseMatCores();
-
 #endif // SPARSEMAT_SWG
