@@ -80,7 +80,7 @@ Details:
 0. What You Should Already Have:
 
    A computer running a variant of the Unix operating system,
-   including Linux and Macintosh OS X, and an X11 server. 
+   including Linux and macOS (Macintosh OS X).
 
    A C++ compiler.
    
@@ -92,16 +92,14 @@ Details:
     Python (2.6 or 2.7)      http://www.python.org 
     gtk+-2.0 (2.6 or later)  http://www.gtk.org/download/   
     pygtk2 (2.6 or later)    http://www.pygtk.org
-    vtk	(7.1 or later)       http://www.vtk.org
+    vtk	(8.1.1 or later)     http://www.vtk.org
 
    Please note that the words "or later" do not include later major
-   versions.  OOF3D will not work with Python 3.x or gtk+ 3.x.  It
-   won't work with vtk 5 or earlier, and might not work with vtk 6 or
-   8. 
+   versions.  OOF3D will not work with Python 3.x or gtk+ 3.x. 
 
-   Macintosh OS X users will need to install an X11 server: 
-   http://xquartz.macosforge.org/
-
+   Linux users should already have an X11 server.  Macintosh users can
+   build OOF3D either to use X11 or native Mac graphics.
+   
    You should also have the ability to run lapack and the blas basic
    linear algebra subroutines.  On Macintosh OS X, they are built in
    to the Accelerate framework in the OS, and no special libraries are
@@ -126,7 +124,7 @@ Procedure:
 
 0. Unpack
 
-   Unpack the .tar.gz file.  The usual way is to run "tar -xzf" on the
+   Unpack the .tar.gz file.  The usual way is to run "tar -xf" on the
    file you want to unpack.  This will create a subdirectory named
    "oof2-<version>" in the directory where you run tar.
 
@@ -136,11 +134,16 @@ Procedure:
 
      % python setup.py build --3D
 
+   Macintosh users who prefer not to use X11 should add "--cocoa" to
+   the command line ("cocoa" being the name of the Apple GUI API):
+
+     % python setup.py build --3D --cocoa
+
    The build command will create a "build" subdirectory in the top
    OOF2 directory.  Within "build" it will create subdirectories with
    system-dependent names.
 
-   There are two options to the build command that are special to
+   There are three options to the build command that are special to
    OOF3D and aren't discussed with the generic build options below.
 
    (a) --3D must be provided.
@@ -149,10 +152,13 @@ Procedure:
    need to add --vtkdir=<vtkprefix> to the command line, replacing
    <vtkprefix> with the base of the directory tree containing vtk.
    For example, if the vtk files are located in
-   /usr/unusual/include/vtk-7.1.1 and /usr/unusual/lib, then
+   /usr/unusual/include/vtk-8.1.1 and /usr/unusual/lib, then
    you'd build OOF3D this way:
 
      % python setup.py build --3D --vtkdir=/usr/unusual
+
+   (c) As mentioned above, --cocoa must be provided to build a macOS
+   version that uses native Mac graphics instead of X11.
 
 1.1 Getting more control over the build
 
@@ -221,14 +227,14 @@ Procedure:
 
    --with-swig       Specify the name of the swig executable.  Swig is
                      a tool that generates the code that allows
-                     communication between python and C++.  OOF2 now
+                     communication between python and C++.  OOF3D 
                      ships with a modified copy of swig, because we
                      rely on an old version (swig 1.1 build 883, to be
                      precise).  If you have another version of swig
                      that you'd like to use, you can name it here,
                      like this:
                         pyton setup.py build --with-swig=myswig
-                     Be advised that it probably won't work with the oof2
+                     Be advised that it probably won't work with the OOF3D
                      source code. 
 
    --swig, --swig-cpp, --swig-opts
@@ -265,18 +271,19 @@ Procedure:
 
           % python setup.py install --3D --prefix=<prefix>
 
-    where <prefix> is a directory that you can write to.  The default
-    value of <prefix> is usually /usr/local.  On OS X it may be
-    something like /Library/Frameworks/Python.framework/Versions/2.7
-    if you're using the system Python, or something in /sw or
-    /opt/local if you're using fink or macports.
+    where <prefix> is a directory that you can write to, such as your
+    home directory.  
 
     The installation procedure will create an executable script called
     "oof3d" in <prefix>/bin, a bunch of shared libraries called
     "liboof3d*.so" or "liboof3d*.dylib" in <prefix>/lib, a directory
     called "oof3d" in <prefix>/lib/python2.x/site-packages (where 2.x
     is your python version number), and some example files in
-    <prefix>/share/oof3d/examples. 
+    <prefix>/share/oof3d/examples.  The default value of <prefix>, if
+    you haven't used --prefix, is usually /usr/local.  On OS X it may
+    be something like /Library/Frameworks/Python.framework/Versions/2.7
+    if you're using the system Python, or something in /sw or
+    /opt/local if you're using fink or macports.
 
     (It's possible to use --home=<home> instead of --prefix when
     installing oof3d.  The only difference is that --home will put the

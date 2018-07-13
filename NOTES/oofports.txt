@@ -1,0 +1,120 @@
+Notes on creating a separate MacPorts installation for building a
+binary distribution of OOF3D
+
+sudo mkdir /opt/oofports
+
+# Clear PATH:
+export PATH=/oofports/bin:/bin:/sbin:/usr/bin:/usr/sbin
+
+---
+Build MacPorts
+
+# Download latest MacPorts and rename the top directory to OOFPorts
+cd OOFPorts
+./configure --prefix=/opt/oofports --with-applications-dir=/opt/oofports/Applications --without-startupitems
+make
+sudo make install
+
+---
+Add oof3d and vtk8 ports
+
+# Edit /opt/oofports/etc/macports/sources.conf to insert
+#   file:///Users/langer/ports
+# before the rsync://rsync.macports.org line
+
+# Edit /opt/oofports/etc/macports/variants.conf to add the line
+#   -x11 +no_x11 +quartz
+# at the end
+
+mkdir -p ~/ports/graphics/vtk8/files
+# Put the vtk8 Portfile in ~/ports/graphics/vtk8 and the
+# patch-antialias.diff in ~/ports/graphics/vtk8/files.
+
+mkdir -p ~/ports/science/oof3d
+# Put the oof3d Portfile there.
+
+# Until the glib2 bug is fixed... We need to build glib2 as if it's
+# using the +x11 variant.  port mpkg will always use the +quartz
+# variant, so we need to hack the Portfile to make the +quartz variant
+# the same as the +x11 variant.
+mkdir -p ~/ports/devel/glib2/files
+cp $(port file glib2) ~/ports/devel/glib2
+cp $(port dir glib2)/files/* ~/ports/devel/glib2/files
+# Edit ~/ports/devel/glib2/Portfile to change
+# "--with-appinfo-impl=native" to "--with-appinfo-impl=generic" in the
+# "variant quartz" block.
+
+
+cd ~/ports
+sudo portindex
+
+sudo port selfupate
+#sudo port install glib2 +x11 -quartz
+sudo port install oof3d
+
+
+---------------
+
+To build a binary distribution:
+
+Make sure that the current version is pushed to github.
+
+Run ./make_dist.
+
+Either put the .tar.gz file on the CTCMS server or on a local web
+server.  Adjust the master_sites line in the oof3d Portfile
+accordingly.
+
+cd ~/stow
+./switchto oof2-none
+./switchto3d oof3d-none
+
+sudo use-ports none
+
+In a window in which PYTHONPATH is unset
+ export PATH=/opt/oofports/bin:/usr/bin:/bin:/usr/sbin:/sbin
+ sudo port uninstall oof3d
+ sudo port clean --all oof3d
+ sudo port install oof3d
+ sudo port mpkg oof3d
+ sudo cp \
+ /opt/oofports/var/macports/build/_Users_langer_ports_science_oof3d/oof3d/work/oof3d-3.1.99.mpkg
+ ~/Desktop
+
+
+----------------
+
+To install and test the binary distribution
+
+The binary distribution installs into /opt/oofports, so the
+/opt/oofports in which the distribution was built has to be moved away:
+
+sudo mv /opt/oofports /opt/oofports-build
+
+Unpack the binary distribution by double clicking on the mpkg file.
+Unset PYTHONPATH.
+export PATH=/opt/oofports/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+Run /opt/oofports/bin/oof3d or /opt/oofports/bin/oof3dtest
+
+--------------------------
+
+${destroot} =
+/opt/oofports/var/macports/build/_Users_langer_ports_science_oof3d/oof3d/work/destroot
+
+
+${destroot}${prefix} =
+/opt/oofports/var/macports/build/_Users_langer_ports_science_oof3d/oof3d/work/destroot/opt/oofports 
+
+
+For a macports build, final installation prefix should be sys.prefix.
+"python setup.py install" should put files into ${destroot}${prefix}
+but should use sys.prefix in install_name_tool.
+
+For a non-macports build, final installation prefix should be set from
+--prefix, which should also be used in install_name_tool.
+
+
+Don't use DESTDIR when setting --prefix.
+Always set install_name using --prefix only.
+Only when moving files, move them to DESTDIR/prefix.

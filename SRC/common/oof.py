@@ -45,11 +45,6 @@ from ooflib.SWIG.common import threadstate
 # switchboard is used for communication between modules
 import ooflib.SWIG.common.switchboard
 
-# utils must be imported next because it inserts some code into
-# __builtins__.
-from ooflib.common import utils
-
-
 # These can be imported in any order.
 from ooflib.SWIG.common import config
 from ooflib.SWIG.common import crandom
@@ -65,6 +60,7 @@ from ooflib.common import parallel_enable
 from ooflib.common import runtimeflags
 from ooflib.common import subthread
 from ooflib.common import thread_enable
+from ooflib.common import utils
 from ooflib.common.IO import automatic
 from ooflib.common.IO import progressbar
 from ooflib.common.IO import reporter

@@ -89,12 +89,9 @@ SparseMatPtr.__div__ = _SparseMat__div__
 from ooflib.common import debug
 
 def _SparseMatIterator_next(self):
-    debug.fmsg()
     if self.done():
-        debug.fmsg("done!")
         raise StopIteration
     result = (self.row(), self.col(), self.value())
-    debug.fmsg("incrementing")
     self.increment()
     return result
 SparseMatIteratorPtr.next = _SparseMatIterator_next

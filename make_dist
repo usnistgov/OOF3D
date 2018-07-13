@@ -172,7 +172,7 @@ try:
     else:
         # The branch already exists.  Check it out, and merge the
         # current master into it.  There *should* be no conflicts in
-        # the merge, since nobod
+        # the merge, since nobod [y finished writing this comment!]
         newbranch = False
         osCall('git', 'checkout', tag)
         print >> sys.stderr, "Merging master branch into", tag
@@ -369,7 +369,8 @@ try:
     #     print >> sys.stderr, "tar failed!"
     #     sys.exit(status)
     print >> sys.stderr, "Moving", distfilename, "to", startdir
-    os.rename(distfilename, os.path.join(startdir, distfilename))
+    finaldistfilename = os.path.join(startdir, distfilename)
+    os.rename(distfilename, finaldistfilename)
 
 finally:
     if not noclean:
@@ -384,3 +385,6 @@ print >> sys.stderr, \
 """To publish it, copy it to WEBPAGES/%(dist)s/source and edit
 WEBPAGES/%(dist)s/index.html.  Remember to check that the README file in
 WEBPAGES/%(dist)s/source is up to date.""" % {'dist':distname.distname}
+osCall("openssl", "dgst", "-md5", finaldistfilename)
+osCall("openssl", "dgst", "-rmd160", finaldistfilename)
+osCall("openssl", "dgst", "-sha256", finaldistfilename)

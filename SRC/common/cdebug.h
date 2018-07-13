@@ -18,7 +18,6 @@
 // stack before bailing out.
 
 #include <string>
-#include <vector>
 
 void setDebugMode(bool);
 bool debug();

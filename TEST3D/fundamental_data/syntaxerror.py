@@ -1,4 +1,4 @@
 import ooflib.common.utils
 utils.OOFdefine('bandersnatch', 'frumious')
-'Twas brillig, and the slithy toves did gyre and gimble in the wabe.
+'To test the OOF parser, this file contains a syntax error right here --> 
 utils.OOFdefine('borogoves', 'mimsy')

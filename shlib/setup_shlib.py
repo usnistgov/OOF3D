@@ -129,7 +129,6 @@ class Install(oldinstall):
         self.convert_paths('shlib')
         if self.root is not None:
             self.change_roots('shlib')
-
     def expand_dirs(self):
         oldinstall.expand_dirs(self)
         self._expand_attrs(['install_shlib'])

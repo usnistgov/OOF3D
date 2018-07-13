@@ -72,8 +72,6 @@ from distutils import log
 from distutils.dir_util import remove_tree
 from distutils.sysconfig import get_config_var
 
-import oof2installlib
-
 import shlib # adds build_shlib and install_shlib to the distutils command set
 from shlib import build_shlib
 
@@ -800,17 +798,20 @@ class oof_build_ext(build_ext.build_ext, oof_build_xxxx):
 
 class oof_build_shlib(build_shlib.build_shlib, oof_build_xxxx):
     user_options = build_shlib.build_shlib.user_options + [
+        ('prefix=', None, "installation prefix"),
         ('with-swig=', None, "non-standard swig executable"),
         ('blas-libraries=', None, "libraries for blas and lapack"),
         ('blas-link-args=', None, "link arguments required for blas and lapack")
         ]
     def initialize_options(self):
+        self.prefix = None
         self.with_swig = None
         self.blas_libraries = None
         self.blas_link_args = None
         build_shlib.build_shlib.initialize_options(self)
     def finalize_options(self):
         self.set_undefined_options('build',
+                                   ('prefix', 'prefix'),
                                    ('with_swig', 'with_swig'),
                                    ('blas_libraries', 'blas_libraries'),
                                    ('blas_link_args', 'blas_link_args'),
@@ -927,6 +928,7 @@ class oof_build_shlib(build_shlib.build_shlib, oof_build_xxxx):
 class oof_build(build.build):
     sep_by = " (separated by '%s')" % os.pathsep
     user_options = build.build.user_options + [
+        ('prefix=', None, 'installation prefix'),
         ('with-swig=', None, "non-standard swig executable"),
         ('libraries=', None, 'external libraries to link with'),
         ('library-dirs=', None,
@@ -934,6 +936,7 @@ class oof_build(build.build):
         ('blas-libraries=', None, "libraries for blas and lapack"),
         ('blas-link-args=', None, "link args for blas and lapack")]
     def initialize_options(self):
+        self.prefix = None
         self.libraries = None
         self.library_dirs = None
         self.blas_libraries = None
@@ -1027,8 +1030,8 @@ class oof_build_py(build_py.build_py):
               platform['extra_compile_args']
         print >> cfgscript, 'include_dirs =', idirs
         print >> cfgscript, 'library_dirs =', [install_shlib.install_dir]
-        oof2installlib.shared_libs = [lib.name for lib in install_shlib.shlibs]
-        print >> cfgscript, 'libraries =', oof2installlib.shared_libs
+        print >> cfgscript, 'libraries =', \
+            [lib.name for lib in install_shlib.shlibs]
         print >> cfgscript, 'extra_link_args =', platform['extra_link_args']
         print >> cfgscript, "import sys; sys.path.append(root)"
         cfgscript.close()
@@ -1055,18 +1058,12 @@ class oof_build_py(build_py.build_py):
 
 ###################################################
 
-# Modify "build_scripts" so that it copies only oof2 or oof3d, but not
-# both.  Both are in the scripts list so that they're both
-# distributed, but only one should be installed.
-
-class oof_build_scripts(build_scripts.build_scripts):
-    def finalize_options(self):
-        build_scripts.build_scripts.finalize_options(self)
-        self.scripts = [OOFNAME]
-
-###################################################
-
 class oof_install(install.install):
+    #user_options = install.install.user_options
+
+    def initialize_options(self):
+        install.install.initialize_options(self)
+        
     def run(self):
 	global calledFromInstall
 	calledFromInstall = True
@@ -1125,12 +1122,13 @@ def get_global_args():
     # hasn't been called yet.
 
     ## TODO: Get rid of obsolete options.  HAVE_MPI, HAVE_PETSC,
-    ## DEVEL, ENABLE_SEGMENTATION, PROFILER, DATADIR, DOCDIR, and
+    ## DEVEL, ENABLE_SEGMENTATION, PROFILER, DOCDIR, and
     ## NANOHUB aren't used (I think).
 
     global HAVE_MPI, HAVE_OPENMP, HAVE_PETSC, DEVEL, NO_GUI, \
         ENABLE_SEGMENTATION, PROFILER, USE_COCOA, MAKEDEPEND, \
-        DIM_3, DATADIR, DOCDIR, OOFNAME, SWIGDIR, NANOHUB, vtkdir
+        DIM_3, DATADIR, DOCDIR, OOFNAME, SWIGDIR, NANOHUB, vtkdir, \
+        portdir
 
     HAVE_MPI = _get_oof_arg('--enable-mpi')
     HAVE_PETSC = _get_oof_arg('--enable-petsc')
@@ -1143,6 +1141,7 @@ def get_global_args():
     NANOHUB = _get_oof_arg('--nanoHUB')
     HAVE_OPENMP = _get_oof_arg('--enable-openmp')
     vtkdir = _get_oof_arg('--vtkdir')
+    portdir = _get_oof_arg('--port-dir', '/opt/local')
     PROFILER = _get_oof_arg('--enable-profiler')
 
     # The following determine some secondary installation directories.
@@ -1161,7 +1160,7 @@ def get_global_args():
         SWIGDIR = "SWIG3D"           # root dir for swig output, inside SRC
 
 
-def _get_oof_arg(arg):
+def _get_oof_arg(arg, default=0):
     # Search for an argument which begins like "arg" -- if found,
     # return the trailing portion if any, or 1 if none, and remove the
     # argument from sys.argv.
@@ -1172,7 +1171,7 @@ def _get_oof_arg(arg):
             if len(splits) > 1:         # found an =
                 return splits[1]
             return 1                    # just a plain arg
-    return 0                            # didn't find arg
+    return default                      # didn't find arg
         
 platform = {}
 
@@ -1230,9 +1229,12 @@ def set_platform_values():
             platform['incdirs'].append('/usr/X11/include/')
             platform['incdirs'].append('/usr/X11R6/include/')
         if os.path.exists('/opt') and DIM_3: # macports
-            platform['incdirs'].append('/opt/local/include')
-            platform['libdirs'].append('/opt/local/lib')
-            vtkinc, vtklib = findvtk(home, '/opt/local', '/usr/local')
+            # When building from macports that's not in a standard
+            # location, use --port-dir=${prefix} in the oof3d Portfile.
+            global portdir
+            platform['incdirs'].append(os.path.join(portdir, 'include'))
+            platform['libdirs'].append(os.path.join(portdir, 'lib'))
+            vtkinc, vtklib = findvtk(home, portdir, '/usr/local')
             if vtkinc is not None:
                 platform['libdirs'].append(vtklib)
                 platform['incdirs'].append(vtkinc)
@@ -1244,7 +1246,10 @@ def set_platform_values():
             ## TODO: Having to encode such a long path here seems
             ## wrong.  If and when pkgconfig acquires a more robust
             ## way of finding its files, use it.
-            pkgpath = "/opt/local/Library/Frameworks/Python.framework/Versions/%d.%d/lib/pkgconfig/" % (sys.version_info[0], sys.version_info[1])
+            pkgpath = os.path.join(
+                portdir,
+                "Library/Frameworks/Python.framework/Versions/%d.%d/lib/pkgconfig/"
+                % (sys.version_info[0], sys.version_info[1]))
             print >> sys.stdout, "Adding", pkgpath, "to PKG_CONFIG_PATH"
             extend_path("PKG_CONFIG_PATH", pkgpath)
         # Enable C++11
@@ -1496,6 +1501,8 @@ if __name__ == '__main__':
     allpkgs.add(OOFNAME)
 
     pkgs = [pkg.replace(OOFNAME, OOFNAME+'.ooflib') for pkg in allpkgs]
+    pkg_dir = {OOFNAME + '.ooflib' : 'SRC'}
+    pkg_data = {}
 
     # Find example files that have to be installed.
     examplefiles = []
@@ -1507,16 +1514,33 @@ if __name__ == '__main__':
                   if not phile.endswith('~') and
                   os.path.isfile(os.path.join(dirpath, phile))]))
 
-    # If this script is being used to create a frozen executable, the
-    # Python path has to be set the same way it is during actual
-    # execution.
-    py2app_options = dict(argv_emulation=True)
-    sys.path.append('SRC')                  # so that py2app can find imports
-    try:
-        import pygtk
-        pygtk.require("2.0")
-    except:
-        pass
+    # Add the testing files.  The 'TEST3D' directory becomes the
+    # 'ooftests' module when oof3d is installed. 
+    pkgs.extend([OOFNAME + '.ooftests', OOFNAME+'.ooftests.UTILS'])
+    pkg_dir[OOFNAME + '.ooftests'] = 'TEST3D'
+    pkg_data[OOFNAME + '.ooftests'] = ['aniso_data/*',
+                                       'bc_data/*',
+                                       'fundamental_data/*',
+                                       'image_data/*', 'image_data/*/*',
+                                       'matprop_data/*',
+                                       'matrix_data/*',
+                                       'mesh_data/*',
+                                       'ms_data/*', 'ms_data/*/*',
+                                       'ms_data/*/*/*',
+                                       'output_data/*',
+                                       'skeleton_data/*',
+                                       'vsb_data/*']
+
+    # # If this script is being used to create a frozen executable, the
+    # # Python path has to be set the same way it is during actual
+    # # execution.
+    # py2app_options = dict(argv_emulation=True)
+    # sys.path.append('SRC')                  # so that py2app can find imports
+    # try:
+    #     import pygtk
+    #     pygtk.require("2.0")
+    # except:
+    #     pass
     
     setupargs = dict(
         name = OOFNAME,
@@ -1525,18 +1549,16 @@ if __name__ == '__main__':
         author = 'The NIST OOF Team',
         author_email = 'oof_manager@nist.gov',
         url = "http://www.ctcms.nist.gov/oof/oof3d/",
-        # If more scripts are added here, change oof_build_scripts too.
-        scripts = ['oof2', 'oof3d'],
+        scripts = [ OOFNAME, OOFNAME+'test' ],
         cmdclass = {"build" : oof_build,
                     "build_ext" : oof_build_ext,
                     "build_py" : oof_build_py,
                     "build_shlib": oof_build_shlib,
-                    "build_scripts" : oof_build_scripts,
-                    "install_lib": oof2installlib.oof_install_lib,
                     "clean" : oof_clean,
                     "install" : oof_install},
         packages = pkgs,
-        package_dir = {OOFNAME+'.ooflib':'SRC'},
+        package_dir = pkg_dir,
+        package_data = pkg_data,
         shlibs = shlibs,
         ext_modules = extensions,
         data_files = examplefiles

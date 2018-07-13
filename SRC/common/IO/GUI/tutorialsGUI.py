@@ -49,14 +49,17 @@ import os
 ## sensitized Next button.  Fix that.
 
 boldtag = "BOLD("
-imagetag = "IMAGE("
 lenboldtag = len(boldtag)
-lenimagetag = len(imagetag)
 delimexpr = re.compile(r'[^\\]\)')      # finds ')' not preceded by '\'
 nondelimexpr = re.compile(r'\\\)')      # finds '\)'
 parasplit = re.compile(r'\n\s*\n')      # finds lines with only white space
 endline = re.compile(r'\s*\n\s*')
-imagespath = os.getcwd()+'/SRC/tutorials/images/'
+
+## TODO: Fix machinery for displaying images, or get rid of it.  It's
+## not used in any of the current tutorials, so I've commented it out.
+# imagetag = "IMAGE("
+# imagespath = os.getcwd()+'/SRC/tutorials/images/'   ## Wrong!
+# lenimagetag = len(imagetag)
 
 
 ## This is ugly.  It should be rewritten to take advantage of pango markup.
@@ -79,7 +82,7 @@ class Comment:
             # a single font, by looking for BOLD(...).
             while para:
                 index_bold = string.find(para, boldtag)
-                index_image = string.find(para, imagetag)
+                # index_image = string.find(para, imagetag)
                 if index_bold != -1:
 		    self.commentList.append(para[:index_bold])
 		    self.fontList.append(0)
@@ -96,22 +99,22 @@ class Comment:
 		    self.fontList.append('bold')
 		    self.pixList.append(0)
 		    para = para[endmatch.end():]
-                elif index_image != -1:
-		    self.commentList.append(para[:index_image])
-		    self.pixList.append(0)
-		    self.fontList.append(0)
-		    para = para[index_image + lenimagetag:]
-		    # look for closing ')'
-		    endmatch = delimexpr.search(para)
-		    if not endmatch:
-			raise ooferror.ErrPyProgrammingError(
-			    "Missing delimeter for IMAGE tag in tutorial!")
-		    imagename = para[:endmatch.start()+1]
-		    # replace all occurences of '\)' with ')'
-		    self.commentList.append(nondelimexpr.sub(')', imagename))
-		    self.pixList.append('image')
-		    self.fontList.append(0)
-		    para = para[endmatch.end():]
+                # elif index_image != -1:
+		#     self.commentList.append(para[:index_image])
+		#     self.pixList.append(0)
+		#     self.fontList.append(0)
+		#     para = para[index_image + lenimagetag:]
+		#     # look for closing ')'
+		#     endmatch = delimexpr.search(para)
+		#     if not endmatch:
+		# 	raise ooferror.ErrPyProgrammingError(
+		# 	    "Missing delimeter for IMAGE tag in tutorial!")
+		#     imagename = para[:endmatch.start()+1]
+		#     # replace all occurences of '\)' with ')'
+		#     self.commentList.append(nondelimexpr.sub(')', imagename))
+		#     self.pixList.append('image')
+		#     self.fontList.append(0)
+		#     para = para[endmatch.end():]
                 else:
 		    self.commentList.append(para)
 		    self.fontList.append(0)
@@ -123,8 +126,8 @@ class Comment:
 
     def isBold(self, index):
         return self.fontList[index]
-    def isImage(self, index):
-	return self.pixList[index]
+    # def isImage(self, index):
+    #     return self.pixList[index]
     def __len__(self):
         return len(self.commentList)
     def __getitem__(self, i):
@@ -292,17 +295,17 @@ class TutorialClassGUI(subWindow.SubWindow):
         for i in range(len(comments)):
             comment = comments[i]
             font = comments.isBold(i)
-            image = comments.isImage(i)
+            # image = comments.isImage(i)
             if font:
                 bfr.insert_with_tags(bfr.get_end_iter(), comment, self.boldTag)
-            elif image:
-		pixbuf = gtk.gdk.pixbuf_new_from_file(imagespath+comment)
-		if pixbuf.get_width() > width:
-		   width = pixbuf.get_width()
+            # elif image:
+	    #     pixbuf = gtk.gdk.pixbuf_new_from_file(imagespath+comment)
+	    #     if pixbuf.get_width() > width:
+	    #        width = pixbuf.get_width()
 		   
-		if pixbuf.get_height() > height:
-		   height = pixbuf.get_height()
-		bfr.insert_pixbuf(bfr.get_end_iter(), pixbuf)
+	    #     if pixbuf.get_height() > height:
+	    #        height = pixbuf.get_height()
+	    #     bfr.insert_pixbuf(bfr.get_end_iter(), pixbuf)
             else:
                 bfr.insert(bfr.get_end_iter(), comment)
                 lines = lines + 1

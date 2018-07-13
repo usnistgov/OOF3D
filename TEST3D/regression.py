@@ -105,16 +105,41 @@ def run_modules(test_module_names, oofglobals, backwards):
                         return False
     return True
 
-if __name__=="__main__":
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+def printhelp():
+    print "Usage: %s [options] [test names]" % os.path.split(sys.argv[0])[1]
+    print \
+"""
+If test names are provided, only those tests will be run.
+Without test names or options, all tests will be run.
+The options are:
+   --list               List test names in order, but don't perform any tests.
+   --from=  testname    Start with the given test.
+   --after= testname    Start after the given test.
+   --to=    testname    Stop at the given test.
+   --forever            Start over again after finishing the last test.
+   --backwards          Run tests in reverse order.
+   --dryrun             Just pretend to run the tests.
+   --oofargs=args       Pass arguments to oof3d.
+   --debug              Run oof3d in debug mode.
+   --noclean            Don't delete temporary files after running tests.
+   --help               Print this message.
+The options --from, --after, and --to cannot be used if test names are
+explicitly listed after the options."""
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+def run(homedir):
+    global test_module_names
     try:
-        opts,args = getopt.getopt(sys.argv[1:],"f:a:t:o:d",
+        opts,args = getopt.getopt(sys.argv[1:],"f:a:t:o:dlh",
                                   ["from=", "after=", "to=", "oofargs=",
                                    "forever", "debug", "backwards", "noclean",
-                                   "dryrun"])
+                                   "dryrun", "list", "help"])
     except getopt.GetoptError, err:
         print str(err)
-        print "Usage: regression.py [--from <starttest> | --after <starttest>] [--to <endtest>] [--forever] [--oofargs <oofargs>] [--debug] [--noclean] [--backwards] [tests]"
-        print "       Don't use --from or --to if tests are listed explicitly."
+        printhelp()
         sys.exit(2)
 
     oofargs = []
@@ -125,6 +150,7 @@ if __name__=="__main__":
     debug = False
     backwards = False
     noclean = False
+    listtests = False
 
     global dryrun
     dryrun = False
@@ -164,14 +190,22 @@ if __name__=="__main__":
             noclean = True
         elif o in ("-d", "--dryrun"):
             dryrun = True
-
+        elif o in ("-l", "--list"):
+            listtests = True
+        elif o in ("-h", "--help"):
+            printhelp()
+            sys.exit(0)
+            
     if fromtogiven:
         if args:
             print "You can't explicitly list the tests *and* use --from, --after, or --to."
             sys.exit(1)
     elif args:
         test_module_names = [stripdotpy(a) for a in args]
-        
+
+    if listtests:
+        print ", ".join(test_module_names)
+        sys.exit(0)
 
     # Effectively pass these through.
     sys.argv = [sys.argv[0]] + oofargs
@@ -196,7 +230,6 @@ if __name__=="__main__":
     # during the tests won't clobber or be clobbered by files written
     # by another test being run in the same file system.
     import tempfile
-    homedir = os.path.realpath(sys.path[0]) # where we are now.
     sys.path[0] = os.path.realpath(sys.path[0])
     tmpdir = tempfile.mkdtemp(prefix='oof3temp_')
     print >> sys.stderr, "Using temp dir", tmpdir
@@ -206,13 +239,14 @@ if __name__=="__main__":
     from UTILS import file_utils
     file_utils.set_reference_dir(homedir)
 
-    # globals() contains OOF namespace objects that we will be making
-    # available to each test script.  If test scripts modify globals
-    # (eg, by using utils.OOFdefine or the scriptloader), we don't
-    # want those modifications to affect later test scripts.
-    # Therefore we create a pristine copy of globals now, and use it
-    # instead of globals() later.
-    oofglobals = copy.copy(globals())
+    # utils.OOFglobals() returns OOF namespace objects that we will be
+    # making available to each test script.  If test scripts modify
+    # globals (eg, by using utils.OOFdefine or the scriptloader), we
+    # don't want those modifications to affect later test scripts.
+    # Therefore we create a pristine copy of the values now, and use
+    # it instead of utils.OOFglobals() later.
+    from ooflib.common import utils
+    oofglobals = copy.copy(utils.OOFglobals())
     ok = False
     try:
         if forever:
@@ -224,7 +258,6 @@ if __name__=="__main__":
                     "iteration%s"%("s"*(count>1)), "*******"
         else:
             ok = run_modules(test_module_names, oofglobals, backwards)
-        OOF.File.Quit()
     finally:
         if ok:
             print >> sys.stderr, "All tests completed successfully!"
@@ -234,3 +267,11 @@ if __name__=="__main__":
             print >> sys.stderr, "Tests failed."
         if noclean or not ok:
             print >> sys.stderr, "Temp dir", tmpdir, "was not removed."
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+if __name__=="__main__":
+    homedir = os.path.realpath(sys.path[0])
+    run(homedir)
+    OOF.File.Quit()
+        

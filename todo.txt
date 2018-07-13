@@ -24,25 +24,11 @@ draws the canvas in the wrong location.
 Fix bug: Typing to select a line in the file chooser isn't working on
 Mac.  Upgrade to gtk+3 required?
 
-The Box widget for selecting voxels shouldn't be visible unless the
-Voxel Selection method is set to Box, and should be dimmed when its
-toolbox isn't active.  Mouse-down on one side of the box should
-highlight that side, so the user knows which side has been clicked.
-Should image and/or microstructure layers automatically become
-translucent when the box widget is active?  Maybe there should be
-options for making the image translucent, and for dimming or hiding
-the box when the widget isn't active.  Should the voxels on the faces
-of the box be drawn?
-
 Fix bug?  Drag and drop on layer list on Mac/Cocoa can result in
 duplicate entries in list, and the layers aren't actually reordered.
 The signal for deleting the list entry isn't being sent.  Doing
 anything that forces the list to be redrawn fixes it.
 
-Fix bug: load5color.log; open graphics window; add clipping plane
-w/default values (x, offset=0); drag clipping plane to right.  Front
-face of image is not rendered.  Modifying the view in any way fixes
-it.
 
 Add an 'editable' keyword argument to all Parameters, with default
 value True.  Parameters that aren't editable appear in ParameterTable
@@ -125,6 +111,15 @@ Adding the super-cautious destructor to SubDimensionalSet in
 edgeset.spy removed some shut-down warnings about FaceSet when running
 scheduled_output_test.py in the regression tests.  Does that mean that
 there's a memory leak and some FaceSets aren't being deleted properly?
+
+Draw voxels on the faces of the box widget when selecting voxel
+regions.  Maybe.
+
+Fix bug: load5color.log; open graphics window; add clipping plane
+w/default values (x, offset=0); drag clipping plane to right.  Front
+face of image is not rendered.  Modifying the view in any way fixes
+it.  Currently avoided this problem by choosing different default
+values for the clipping plane.
 
 ----------------------------------------------------------------------------
 At Some Later Time
@@ -411,3 +406,13 @@ layer.build() in GhostGfxWindow.
 Opacity works for Image layers but not Microstructure Material
 displays. ?
 ** Fixed at some point, apparently.  It works now. 
+
+The Box widget for selecting voxels shouldn't be visible unless the
+Voxel Selection method is set to Box, and should be dimmed when its
+toolbox isn't active.  Mouse-down on one side of the box should
+highlight that side, so the user knows which side has been clicked.
+Should image and/or microstructure layers automatically become
+translucent when the box widget is active?  Maybe there should be
+options for making the image translucent, and for dimming or hiding
+the box when the widget isn't active.
+** Done.
