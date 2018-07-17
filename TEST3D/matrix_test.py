@@ -242,7 +242,7 @@ class Vector_Ops(unittest.TestCase):
                                      os.path.join(datadir, 'vec_init'),
                                      1.e-8))
         
-        vec.unit()
+        vec.ones()
         saveVector(vec, 'vector.out')
         self.assert_(fp_file_compare('vector.out',
                                      os.path.join(datadir, 'vec_unit'),

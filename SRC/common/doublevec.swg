@@ -29,6 +29,7 @@ public:
   int size() const;
   void resize(int size, double val=0);
   void zero();
+  void ones();
 
   double norm() const;
 

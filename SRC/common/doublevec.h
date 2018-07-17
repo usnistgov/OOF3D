@@ -40,6 +40,7 @@ public:
   int size() const { return data.size(); }
   void resize(int size, double val=0) { data.setConstant(size, val); }
   void zero() { data.setZero(); }
+  void ones() { data.setOnes(); }
   double& operator[](int index) { return data[index]; }
   const double& operator[](int index) const { return data[index]; }
   DoubleVec segment(int pos, int n) const;
