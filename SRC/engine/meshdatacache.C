@@ -11,7 +11,7 @@
 
 #include <oofconfig.h>
 
-#include "common/vectormath.h"
+// #include "common/vectormath.h"
 #include "common/tostring.h"
 #include "common/IO/oofcerr.h"
 #include "engine/femesh.h"
@@ -85,8 +85,8 @@ bool MeshDataCache::interpolate(double time) {
   // list of times, but it's probably not worth the effort.
   double larger = std::numeric_limits<double>::max();
   double smaller = -larger;
-  DoubleVec *times = allTimes();
-  for(DoubleVec::iterator i=times->begin(); i<times->end(); ++i) {
+  std::vector<double> *times = allTimes();
+  for(auto i=times->begin(); i<times->end(); ++i) {
     if(*i > smaller && *i < time)
       smaller = *i;
     if(*i < larger and *i > time) 
@@ -99,12 +99,15 @@ bool MeshDataCache::interpolate(double time) {
      smaller == -std::numeric_limits<double>::max())
     return false;
   
-  DoubleVec &data0 = fetchOne(smaller); // retrieve from cache
-  DoubleVec &data1 = fetchOne(larger);  // retrieve from cache
+  std::vector<double> &data0 = fetchOne(smaller); // retrieve from cache
+  std::vector<double> &data1 = fetchOne(larger);  // retrieve from cache
   if(data0.size() < data1.size())
     data0.resize(data1.size(), 0.0);
   double frac = (time - smaller)/(larger - smaller);
-  interpolant = (1.-frac)*data0 + frac*data1;
+  interpolant.resize(data0.size());
+  // TODO: Use BLAS, though this probably won't be done too often.
+  for(unsigned int j=0; j<data0.size(); j++)
+    interpolant[j] = (1.-frac)*data0[j] + frac*data1[j];
 
   saveLatest();
   mesh->dofvalues = &interpolant;
@@ -160,14 +163,12 @@ void MeshDataCache::transfer(MeshDataCache *other) {
   bool atlatest = (latest == 0);
   double time = mesh->getCurrentTime();
   clear();
-  const DoubleVec *othertimes = other->times();
+  const std::vector<double> *othertimes = other->times();
   if(!othertimes->empty()) {
-    for(DoubleVec::const_iterator t=othertimes->begin(); 
-	t<othertimes->end(); ++t)
-      {
-	other->restore_(*t);	// read from other cache
-	record();		// save to this cache
-      }
+    for(auto t=othertimes->begin(); t<othertimes->end(); ++t) {
+      other->restore_(*t);	// read from other cache
+      record();		// save to this cache
+    }
     if(atlatest)
       restoreLatest();
     else
@@ -186,14 +187,14 @@ bool MemoryDataCache::checkTime(double time) const {
   return (i != cache.end());
 }
 
-DoubleVec *MemoryDataCache::allTimes() const {
-  DoubleVec *times = new DoubleVec;
+std::vector<double> *MemoryDataCache::allTimes() const {
+  std::vector<double> *times = new std::vector<double>;
   for(DataCache::const_iterator i=cache.begin(); i!= cache.end(); ++i)
     times->push_back((*i).first);
   return times;
 }
 
-DoubleVec &MemoryDataCache::fetchOne(double time) {
+std::vector<double> &MemoryDataCache::fetchOne(double time) {
   DataCache::iterator i = cache.find(time);
   if(i == cache.end())
     throw ErrProgrammingError(
@@ -203,7 +204,7 @@ DoubleVec &MemoryDataCache::fetchOne(double time) {
 }
 
 void MemoryDataCache::restore_(double time) {
-  DoubleVec &dofs = fetchOne(time);
+  std::vector<double> &dofs = fetchOne(time);
   unsigned int n = mesh->dofvalues->size();
   if(n < dofs.size())
     // Fields have been deleted since this data was cached.  We can't
@@ -230,7 +231,7 @@ void MemoryDataCache::record() {
   // to check.
   DataCache::iterator i = cache.find(time);
   if(i == cache.end()) {
-    cache[time] = DoubleVec();
+    cache[time] = std::vector<double>();
     storedofs(cache[time]);
     add_time(time);
   }
@@ -239,7 +240,7 @@ void MemoryDataCache::record() {
   }
 }
 
-void MemoryDataCache::storedofs(DoubleVec& dofs) {
+void MemoryDataCache::storedofs(std::vector<double>& dofs) {
   // Copy data out of mesh and into the given vector.
   unsigned int n = mesh->dofvalues->size();
   dofs.resize(n);
@@ -317,14 +318,14 @@ bool DiskDataCache::checkTime(double time) const {
   return (i != fileDict.end());
 }
 
-DoubleVec *DiskDataCache::allTimes() const {
-  DoubleVec *times = new DoubleVec;
+std::vector<double> *DiskDataCache::allTimes() const {
+  std::vector<double> *times = new std::vector<double>;
   for(FileDict::const_iterator i = fileDict.begin(); i != fileDict.end(); ++i)
     times->push_back((*i).first);
   return times;
 }
 
-DoubleVec& DiskDataCache::fetchOne(double time) {
+std::vector<double>& DiskDataCache::fetchOne(double time) {
   unsigned int n = mesh->dofvalues->size();
   // Find the name of the file storing data for this time.
   FileDict::const_iterator i = fileDict.find(time);

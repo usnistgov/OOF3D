@@ -22,7 +22,6 @@
 #include "common/tostring.h"
 #include "common/trace.h"
 #include "common/IO/oofcerr.h"
-#include "common/vectormath.h"
 #include "engine/cconjugate.h"
 #include "engine/cnonlinearsolver.h"
 #include "engine/csubproblem.h"
@@ -1657,7 +1656,7 @@ DoubleVec *CSubProblem::zz_L2_weights(const Flux *fluks,
 				      const double &top)
 {
   DoubleVec *weights = new DoubleVec;
-  DoubleVec values;
+  std::vector<double> values;
 
   int dim = fluks->ndof();
   bool first = true;
@@ -1720,8 +1719,9 @@ DoubleVec *CSubProblem::zz_L2_weights(const Flux *fluks,
   double lower = min + (max-min)*bottom;
   double diff = upper - lower;
   double sum = upper + lower;
+  weights->resize(values.size());
   for(DoubleVec::size_type i=0; i<values.size(); i++)
-    weights->push_back(0.5*erf(M_E*(2*values[i]-sum)/diff)+0.5);
+    (*weights)[i] = (0.5*erf(M_E*(2*values[i]-sum)/diff)+0.5);
   return weights;
 }
 

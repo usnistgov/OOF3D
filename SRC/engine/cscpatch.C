@@ -13,7 +13,6 @@
 #include <iostream>
 #include "common/doublevec.h"
 #include "common/printvec.h"
-#include "common/vectormath.h"
 #include "common/coord.h"
 #include "engine/cscpatch.h"
 #include "engine/csubproblem.h"

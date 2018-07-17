@@ -16,29 +16,30 @@
 #include "common/doublevec.h"
 #include <map>
 #include <set>
+#include <vector>
 
 class FEMesh;
 
 class MeshDataCache {
 private:
-  DoubleVec times_;
-  DoubleVec interpolant;
+  std::vector<double> times_;
+  std::vector<double> interpolant;
 protected:
   FEMesh *mesh;
   void clear_times();
   void add_time(double);
   // latest stores original mesh dofs when cached data is installed
-  DoubleVec *latest;
+  std::vector<double> *latest;
   double latesttime;
   void saveLatest();
-  virtual DoubleVec &fetchOne(double) = 0;
+  virtual std::vector<double> &fetchOne(double) = 0;
   virtual bool checkTime(double) const = 0;
-  virtual DoubleVec *allTimes() const = 0;
+  virtual std::vector<double> *allTimes() const = 0;
 public:
   MeshDataCache();
   virtual ~MeshDataCache();
   void setMesh(FEMesh *mesh);
-  virtual const DoubleVec *times() const { return &times_; }
+  virtual const std::vector<double> *times() const { return &times_; }
   void restore(double);		// restore data to mesh, if needed
   bool interpolate(double);
   virtual void restoreLatest();
@@ -50,7 +51,7 @@ public:
   // double latestCachedTime() const;
   void transfer(MeshDataCache*);
   int size() const { return times_.size(); }
-  bool empty() const { return times_.empty(); }
+  bool empty() const { return times_.size() == 0; }
 
   bool atLatest() const { 
     // If the data in the mesh is the most recent, then that data is
@@ -63,12 +64,12 @@ public:
 
 class MemoryDataCache : public MeshDataCache {
 private:
-  typedef std::map<double, DoubleVec> DataCache;
+  typedef std::map<double, std::vector<double>> DataCache;
   DataCache cache;
-  void storedofs(DoubleVec&); // get data from mesh
-  virtual DoubleVec &fetchOne(double);
+  void storedofs(std::vector<double>&); // get data from mesh
+  virtual std::vector<double> &fetchOne(double);
   virtual bool checkTime(double) const;
-  virtual DoubleVec *allTimes() const;
+  virtual std::vector<double> *allTimes() const;
 public:
   MemoryDataCache();
   ~MemoryDataCache();
@@ -88,12 +89,12 @@ private:
   static bool initialized;
   int cacheID;
   typedef std::map<double, std::string> FileDict;
-  DoubleVec localdata;
+  std::vector<double> localdata;
   FileDict fileDict; // maps ints to file names
   void clear_(bool force);
-  virtual DoubleVec &fetchOne(double);
+  virtual std::vector<double> &fetchOne(double);
   virtual bool checkTime(double) const;
-  virtual DoubleVec *allTimes() const;
+  virtual std::vector<double> *allTimes() const;
 public:
   DiskDataCache();
   ~DiskDataCache();

@@ -9,107 +9,88 @@
  * oof_manager@nist.gov. 
  */
 
-#include <oofconfig.h>
-#include <iostream>
-
-// A reference counted sparse matrix class, loosely based on the NIST
-// sparse blas.  The basic construction call is
-//    SparseMat::insert(i, j, x)
-// which *adds* x to the i,j component.
-
-// Data is stored as a vector of pointers to vectors of pairs.
-// There's one vector of pairs for each row.  Each pair contains a
-// column index and a value.  Repeated column indices are allowed
-// during matrix construction, but should be consolidated (by calling
-// consolidate()) before doing any computations.
-
-// This class intentionally does not have any way of extracting a
-// single entry, since that shouldn't be necessary, and is
-// inefficient.  It does have a way of extracting a submatrix, though,
-// and a const iterator for looping over all values.
-
-#include <vector>
-#include <deque>
-
-class SparseMat;
-class SparseMatConstIterator;
-class SparseMatIterator;
-class SparseMatRowConstIterator;
-class SparseMatRowIterator;
-
 #ifndef SPARSEMAT_H
 #define SPARSEMAT_H
 
+#include <oofconfig.h>
+#include <sstream>
+#include "eigen/Eigen/SparseCore"
+#include "common/doublevec.h"
+
 class DoFMap;
-class DoubleVec;
+template<typename MT, typename VT> class SparseMatIterator;
+template<typename MT, typename VT> class SparseMatRowConstIterator;
+template<typename MT, typename VT> class SparseMatRowIterator;
+enum class Precond;
+template<typename Derived> class IterativeSolver;
+template<typename Derived> class DirectSolver;
+
+typedef Eigen::Triplet<double> Triplet;
+typedef Eigen::SparseMatrix<double, Eigen::ColMajor> ESMat;
+
+/* SparseMat class wraps Eigen's SparseMatrix */
 
 class SparseMat {
+private:
+  ESMat data;   // Eigen's sparse matrix 
+
 public:
-  class Entry {
-  public:
-    unsigned int col;		// column
-    double val;		// value
-    Entry() : col(123456789), val(-123.) {}
-    Entry(unsigned int col, double val) : col(col), val(val) {}
-    Entry(const Entry &other) : col(other.col), val(other.val) {}
-  };
+  typedef ESMat::InnerIterator InnerIter;
 
-  typedef std::vector<Entry> SparseMatRow;
-
-  SparseMat();
-  SparseMat(unsigned int nr, unsigned int nc);
-  // Construct by extraction from an existing matrix.
+  SparseMat() = default;
+  SparseMat(unsigned int nr, unsigned int nc) : data(nr, nc) {}
   SparseMat(const SparseMat&, const DoFMap&, const DoFMap&);
   SparseMat(const SparseMat&) = default;
   SparseMat(SparseMat&&) = default; // move constructor
   SparseMat& operator=(const SparseMat&) = default;
   SparseMat& operator=(SparseMat&&) = default; // move assignment
   ~SparseMat() = default;
+  SparseMat clone() const { return *this; }
+  void set_from_triplets(std::vector<Triplet>&);
 
-  SparseMat clone() const;
+  // TODO(lizhong): inline possible methods
 
-  // Matrix construction functions
+  /* Matrix property methods */
 
-  // nrows() and ncols() might not always do what you expect them to
-  // do. The nominal size of the matrix is determined by the maxium of
-  // (1) the sizes passed in to the constructor or to resize(), (2)
-  // the DoFMaps passed into the constructor, or (3) the indices used
-  // in calls to insert(i,j,x).
-  unsigned int nrows() const { return nrows_; }
-  unsigned int ncols() const { return ncols_; }
-  unsigned int nnonzeros() const { return nnz_; }
-  void resize(unsigned int, unsigned int);
-  void insert(unsigned int, unsigned int, double);
-  void consolidate_row(unsigned int);    // Helper for consolidate().
-  void consolidate();		// call after insertion has finished
-  bool consolidated() const { return consolidated_; }
-  // set_consolidated() is used in a few situations when it's known
-  // whether a matrix is consolidated or not, but its consolidated_
-  // flag isn't set properly for some reason.
-  void set_consolidated(bool cons) { consolidated_ = cons; }
+  int nrows() const { return data.rows(); }
+  int ncols() const { return data.cols(); }
+  int nnonzeros() const { return data.nonZeros(); }
+  void resize(int nr, int nc) { data.resize(nr, nc); }
+  void reserve(int size) { data.reserve(size); }
+  void insert(int ir, int ic, double val) { data.coeffRef(ir, ic) += val; }
+  bool empty() const { return data.nonZeros() == 0; }
+  double coeff(int ir, int ic) { return data.coeff(ir, ic); }
+  double& coeff_ref(int ir, int ic) { return data.coeffRef(ir, ic); }
+  void make_compressed() { data.makeCompressed(); }
+  bool is_compressed() { return data.isCompressed(); }
+  bool is_nonempty_row(int) const;
+  bool is_nonempty_col(int) const;
 
-  // Matrix operations
+  SparseMat lower() const;
+  SparseMat unit_lower() const;
+  SparseMat upper() const;
+  SparseMat unit_upper() const;
 
+  /* Arithmetic operations */
+
+  double norm() const { return data.norm(); }
   SparseMat transpose() const;
-  
-  SparseMat &operator*=(double);
-  SparseMat &operator+=(const SparseMat&);
-  SparseMat &add(double, const SparseMat&); // scale and add
 
-  // Matrix-vector multiplication.  These return a new object, which
-  // may not be desirable in some situations.
-  DoubleVec operator*(const DoubleVec&) const;
-  DoubleVec trans_mult(const DoubleVec&) const;
-  // In-place matrix vector multiplication, ala blas.  This adds
-  // alpha*M*x to y.
-  void axpy(double alpha, const DoubleVec &x, DoubleVec &y) const;
-  // This adds alpha*transpose(M)*x to y.
-  void axpy_trans(double alpha, const DoubleVec &x, DoubleVec &y) const;
+  SparseMat& operator*=(double);
+  SparseMat& operator/=(double);
 
-  // Matrix-matrix multiplication.
+  SparseMat& operator+=(const SparseMat&);
+  SparseMat& operator-=(const SparseMat&);
+  SparseMat operator*(double scalar) const;
   SparseMat operator*(const SparseMat&) const;
+  DoubleVec operator*(const DoubleVec&) const;
 
-  double norm() const;
+  SparseMat &add(double, const SparseMat&); // scale and add
+  DoubleVec trans_mult(const DoubleVec&) const;
+
+  // In-place matrix vector multiplication, ala blas.
+  void axpy(double alpha, const DoubleVec &x, DoubleVec &y) const;
+  void axpy_trans(double alpha, const DoubleVec &x, DoubleVec &y) const;
 
   // Triangular solvers.
   void solve_lower_triangle(const DoubleVec&, DoubleVec&) const;
@@ -119,216 +100,105 @@ public:
   void solve_upper_triangle(const DoubleVec&, DoubleVec&) const;
   void solve_upper_triangle_trans(const DoubleVec&, DoubleVec&) const;
 
-  // Merge multiple matrices at once, which is more efficient
-  // than adding them together one by one.
-  // Assuming the matrix merging to is empty (no entries).
-  void merge(const std::vector<SparseMat>& ms);
+  void tile(int, int, const SparseMat&);
 
-  void tile(unsigned int i, unsigned int j, const SparseMat &other);
+  /* Iterators */
 
-  // It's assumed that the callers of is_nonempty_row and
-  // is_nonempty_col know the nominal size of the matrix they're working
-  // with, so if an index is out of range we just assume that it's an
-  // empty row or column that the matrix doesn't know about.
-  bool is_nonempty_row(unsigned int) const;
-  bool is_nonempty_col(unsigned int) const;
-  bool empty() const { return nnonzeros() == 0; }
-
-  // Iterators
-
-  typedef SparseMatConstIterator const_iterator;
+  // TODO(lizhong): Iterator only works with compressed matrix?
+  friend class SparseMatIterator<SparseMat, double>;
+  friend class SparseMatIterator<const SparseMat, const double>;
+  typedef SparseMatIterator<SparseMat, double> iterator;
+  typedef SparseMatIterator<const SparseMat, const double> const_iterator;
+  iterator begin();
+  iterator end();
   const_iterator begin() const;
   const_iterator end() const;
 
-  typedef SparseMatIterator iterator;
-  iterator begin();
-  iterator end();
+  /* Debugging routines. */
 
-  typedef SparseMatRowConstIterator const_row_iterator;
-  const_row_iterator begin(unsigned int) const;
-  const_row_iterator end(unsigned int) const;
-
-  typedef SparseMatRowIterator row_iterator;
-  row_iterator begin(unsigned int);
-  row_iterator end(unsigned int);
-
-  // Debugging routines.  
-
-  // diag==true means the diagonal is present.
   bool is_lower_triangular(bool diag) const;
   bool is_upper_triangular(bool diag) const;
-  bool unique_indices() const;
   bool is_symmetric(double tolerance) const;
+  /*
+  bool unique_indices() const;
   DoubleVec inefficient_get_column(unsigned int) const;
-  // void sanityCheck() const;
 
-private:
-  // data is stored as a vector of rows.
-  std::vector<SparseMatRow> data;
-  // nonempty_col keeps track of which columns have data in them.
-  std::vector<bool> nonempty_col;
+  //void merge(const std::vector<SparseMat>& ms);
+  //void tile(unsigned int i, unsigned int j, const SparseMat &other);
+  */
 
-  // nnz_ is the number of entries, which is only equal to the number
-  // of nonzeros after consolidate() has been called.
-  unsigned int nnz_; 
-  unsigned int nrows_, ncols_;
-  bool consolidated_;
+  const std::string str() const;
 
-  friend class SparseMatConstIterator;
-  friend class SparseMatIterator;
-  friend class SparseMatRowConstIterator;
-  friend class SparseMatRowIterator;
-  friend std::ostream &operator<<(std::ostream&, const SparseMat&);
-  friend std::ostream &operator<<(std::ostream&, const SparseMatIterator&);
-  friend std::ostream &operator<<(std::ostream&, const SparseMatConstIterator&);
-  friend std::ostream &operator<<(std::ostream&, const SparseMatRowIterator&);
-  friend std::ostream &operator<<(std::ostream&, const SparseMatRowConstIterator&);
+  template<typename Derived> friend class IterativeSolver;
+  template<typename Derived> friend class DirectSolver;
+  friend std::ostream& operator<<(std::ostream&, const SparseMat&);
+  friend bool load_market_mat(SparseMat& mat, const std::string& filename);
+  friend bool save_market_mat(const SparseMat&, const std::string&, int);
 };
 
-SparseMat operator*(const SparseMat&, double);
-SparseMat operator*(double, const SparseMat&);
-
-void mmadump(const std::string &filename, const std::string &mtxname, 
-	     const SparseMat&);	// for debugging
+SparseMat identityMatrix(int);
+bool save_mat(const SparseMat& mat, const std::string& filename,
+              int precision=13, int sym = 0);
+bool load_mat(SparseMat& mat, const std::string& filename);
+bool save_market_mat(const SparseMat& mat, const std::string& filename,
+		     int sym = 0);
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// Iterator classes
-
-// TODO: SparseMatIterator and SparseMatConstIterator share a lot of
-// mostly trivial code.  Is it worth giving them a common base class?
-// Same for SparseMatRowIterator and SparseMatRowConstIterator.
-
+// TODO(lizhong): guess value type from matrix type
+template<typename MT, typename VT>
 class SparseMatIterator {
 private:
-  SparseMat& mat;
-  std::vector<SparseMat::SparseMatRow>::iterator rowiter;
-  SparseMat::SparseMatRow::iterator coliter;
+  MT& mat;
+
+  // This iterator is implemented based on the storage scheme of compressed
+  // sparse matrices (row or column major) in Eigen.
+  // The compressed sparse matrix consist of three compact arrays:
+  // - Values: stores the coefficient values of the non-zeros.
+  // - InnerIndices: stores the row (resp. column) indices of the non-zeros.
+  // - OuterStarts: stores for each column (resp. row) the index of the
+  //                first non-zero in the previous two arrays.
+
+  // Note: Currently, in order to use this iterator, the reference
+  // sparse matrix has to be compressed first.
+  // TODO(lizhong): make it work with uncompressed sparse matrix.
+
+  VT* val_ptr;     // pointer of the Values array
+  int* in_ptr;     // pointer of the InnerIndices array 
+  int* out_ptr;    // pointer of the OuterStarts array
+  int  in_idx;     // current index in the InnerIndices
+  int  out_idx;    // current index in the OuterIndeces
+
 public:
-  SparseMatIterator(SparseMat&);
-  ~SparseMatIterator();
-  SparseMatIterator &operator++();
-  unsigned int row() const;
-  unsigned int col() const;
-  double &value() const;
+  SparseMatIterator(MT&);
+
+  int row() const;
+  int col() const;
+  VT& value() const;
   bool done() const;
-  double &operator*() const { return value(); }
+
+  SparseMatIterator& operator++();
+  // SparseMatIterator& operator--();
+  VT& operator*() const;
+
   bool operator==(const SparseMatIterator&) const;
   bool operator!=(const SparseMatIterator&) const;
   bool operator<(const SparseMatIterator&) const;
-  bool operator>=(const SparseMatIterator&) const;
-  bool operator==(const SparseMatConstIterator&) const;
-  bool operator!=(const SparseMatConstIterator&) const;
-  bool operator<(const SparseMatConstIterator&) const;
-  bool operator>=(const SparseMatConstIterator&) const;
-  friend class SparseMat;
-  friend class SparseMatRowIterator;
-  friend class SparseMatConstIterator;
-  friend std::ostream& operator<<(std::ostream&, const SparseMatIterator&);
-};
+  //bool operator>=(const SparseMatIterator&) const;
 
-class SparseMatConstIterator {
+  /* Debug */
+
+  void print_indices() const; // print the three compact array.
+
+  friend class SparseMat;
+  friend std::ostream& operator<<(std::ostream& os,
+    const SparseMatIterator<MT, VT>& it) {
+    os << it.row() << " " << it.col() << " " << it.value();
+    return os;
+  }
+
 private:
-  const SparseMat& mat;
-  std::vector<SparseMat::SparseMatRow>::const_iterator rowiter;
-  SparseMat::SparseMatRow::const_iterator coliter;
-public:
-  SparseMatConstIterator(const SparseMat&);
-  ~SparseMatConstIterator();
-  SparseMatConstIterator &operator++();
-  unsigned int row() const;
-  unsigned int col() const;
-  double value() const;
-  bool done() const { return *this == mat.end(); }
-  double operator*() const { return value(); }
-  bool operator==(const SparseMatConstIterator&) const;
-  bool operator!=(const SparseMatConstIterator&) const;
-  bool operator<(const SparseMatConstIterator&) const;
-  bool operator>=(const SparseMatConstIterator&) const;
-  bool operator==(const SparseMatIterator&) const;
-  bool operator!=(const SparseMatIterator&) const;
-  bool operator<(const SparseMatIterator&) const;
-  bool operator>=(const SparseMatIterator&) const;
-  friend class SparseMat;
-  friend class SparseMatRowConstIterator;
-  friend class SparseMatIterator;
-  friend std::ostream& operator<<(std::ostream&, const SparseMatConstIterator&);
+  void to_end();
 };
 
-class SparseMatRowIterator {
-private:
-  SparseMat& mat;
-  unsigned int row_;
-  SparseMat::SparseMatRow::iterator coliter;
-public:
-  SparseMatRowIterator(SparseMat& mat, unsigned int r);
-  // When initialized with a SparseMatIterator, the row iterator
-  // starts at the given iterator's position and goes to the end of
-  // the row.
-  SparseMatRowIterator(SparseMatIterator&);
-  ~SparseMatRowIterator();
-  SparseMatRowIterator &operator++();
-  SparseMatRowIterator &operator--();
-  unsigned int row() const { return row_; }
-  unsigned int col() const;
-  double &value();
-  bool done() const;
-  double &operator*() { return value(); }
-  bool operator==(const SparseMatRowIterator&) const;
-  bool operator!=(const SparseMatRowIterator&) const;
-  bool operator<(const SparseMatRowIterator&) const;
-  bool operator>=(const SparseMatRowIterator&) const;
-  bool operator==(const SparseMatRowConstIterator&) const;
-  bool operator!=(const SparseMatRowConstIterator&) const;
-  bool operator<(const SparseMatRowConstIterator&) const;
-  bool operator>=(const SparseMatRowConstIterator&) const;
-  friend class SparseMat;
-  friend class SparseMatRowConstIterator;
-  friend std::ostream& operator<<(std::ostream&, const SparseMatRowIterator&);
-};
-
-class SparseMatRowConstIterator {
-private:
-  const SparseMat& mat;
-  unsigned int row_;
-  SparseMat::SparseMatRow::const_iterator coliter;
-public:
-  SparseMatRowConstIterator(const SparseMat& mat, unsigned int r);
-  // When initialized with a SparseMatIterator, the row iterator
-  // starts at the given iterator's position and goes to the end of
-  // the row.
-  SparseMatRowConstIterator(const SparseMatConstIterator&);
-  ~SparseMatRowConstIterator();
-  SparseMatRowConstIterator &operator++();
-  SparseMatRowConstIterator &operator--();
-  unsigned int row() const { return row_; }
-  unsigned int col() const;
-  double value() const;
-  bool done() const { return *this == mat.end(row_); }
-  double operator*() const { return value(); }
-  bool operator==(const SparseMatRowConstIterator&) const;
-  bool operator!=(const SparseMatRowConstIterator&) const;
-  bool operator<(const SparseMatRowConstIterator&) const;
-  bool operator>=(const SparseMatRowConstIterator&) const;
-  bool operator==(const SparseMatRowIterator&) const;
-  bool operator!=(const SparseMatRowIterator&) const;
-  bool operator<(const SparseMatRowIterator&) const;
-  bool operator>=(const SparseMatRowIterator&) const;
-  friend class SparseMat;
-  friend class SparseMatRowIterator;
-  friend std::ostream& operator<<(std::ostream&,
-				  const SparseMatRowConstIterator&);
-};
-
-std::ostream& operator<<(std::ostream&, const SparseMatIterator&);
-std::ostream& operator<<(std::ostream&, const SparseMatConstIterator&);
-std::ostream& operator<<(std::ostream&, const SparseMatRowIterator&);
-std::ostream& operator<<(std::ostream&, const SparseMatRowConstIterator&);
-std::ostream& operator<<(std::ostream&, const SparseMat::Entry&);
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-SparseMat identityMatrix(unsigned int);
-SparseMat mistakenIdentityMatrix(unsigned int);
-
-#endif // SPARSEMAT_H
+#endif // SPARSEMAT_H_

@@ -113,7 +113,7 @@ private:
   const CSkeletonBase * skeleton;
   RWLock *rwlock;
   static long globalFEMeshCount;
-  DoubleVec *dofvalues;
+  std::vector<double> *dofvalues; // NOT an Eigen vector.
   double time;		       // max time attained by all subproblems
   CSubProblem *currentSubProblem_;
 

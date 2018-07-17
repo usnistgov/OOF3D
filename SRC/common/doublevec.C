@@ -9,196 +9,232 @@
  * oof_manager@nist.gov. 
  */
 
-#include <oofconfig.h>
+#include "eigen/unsupported/Eigen/SparseExtra" // for saveMarketVector
 #include "common/doublevec.h"
-#include "common/lock.h"
-#include "common/vectormath.h"
-#include "common/IO/oofcerr.h"
-#include <iostream>
+#include <sstream>
+#include <fstream>
 
-// This file is completely unnecessary except when debugging.  It just
-// adds debugging code to the python-wrapped std::vector<double>.
+DoubleVec DoubleVec::segment(int pos, int n) const {
+  // Extract the n coeffs in the range [pos : pos+n-1]
+  assert((pos+n-1) < data.size()); 
+  DoubleVec part;
+  part.data = data.segment(pos, n);
+  return part;
+} 
 
-#define VDEBUG DEBUG
-
-#ifdef DEBUG
-// printVecSizes and DoubleVec::total are inside DEBUG blocks and not
-// VDEBUG blocks so that we don't have to change doublevec.h when
-// VDEBUG changes.
-#include <stdlib.h>
-long DoubleVec::total = 0;
-
-#include <set>
-static std::set<DoubleVec*> allVecs;
-void DoubleVec::addVec(DoubleVec *vec) {
-  std::set<DoubleVec*>::iterator i = allVecs.find(vec);
-  assert(i == allVecs.end());
-  allVecs.insert(vec);
+DoubleVec DoubleVec::subvec(int start, int end) const {
+  // Extract the n coeffs in the range [start : end-1]
+  assert(start<=end && end<=data.size());
+  DoubleVec part;
+  part.data = data.segment(start, end-start);
+  return part;
 }
 
-void DoubleVec::removeVec(DoubleVec *vec) {
-  std::set<DoubleVec*>::iterator i = allVecs.find(vec);
-  assert(i != allVecs.end());
-  allVecs.erase(i);
-}
-
-void printVecSizes(const std::string &msg) {
-#if VDEBUG
-  static long lastsize = 0;
-  long diff = DoubleVec::total  - lastsize;
-  oofcerr << "**** Total of all DoubleVec sizes "<< msg << ": "
-  	  << DoubleVec::total
-  	  << " (" << (diff < 0? "" : "+") << diff << ") ****" << std::endl;
-  lastsize = DoubleVec::total;
-#endif
-}
-
-#if VDEBUG
-void printAtExit() {
-  printVecSizes("at exit");
-  oofcerr << "**** There are " << allVecs.size() << " remaining DoubleVecs.  ****" << std::endl;
-}
-#endif // VDEBUG
-#endif // DEBUG
-
-
-DoubleVec::DoubleVec() {
-#if VDEBUG
-  addVec(this);
-#endif
-}
-
-DoubleVec::DoubleVec(DoubleVec::size_type n)
-  : std::vector<double>(n, 0.0)
+void DoubleVec::segment_copy(int toPos, const DoubleVec& other, int pos,
+			     int size)
 {
-#if VDEBUG
-  static bool initialized = false;
-  if(!initialized) {
-    initialized = true;
-    atexit(printAtExit);
-  }
-  addTotal(n);
-  addVec(this);
-#endif // VDEBUG
+  // Copy other's [pos, pos+size) to this [toPos, toPos+size)
+  assert(pos >= 0 && pos + size <= other.data.size());
+  assert(toPos >= 0 && toPos + size <= data.size());
+  data.segment(toPos, size) = other.data.segment(pos, size);
 }
 
-DoubleVec::DoubleVec(DoubleVec::size_type n, const double &x)
-  : std::vector<double>(n, x)
-{
-#if VDEBUG
-  addTotal(n);
-  addVec(this);
-#endif // VDEBUG
-}
-
-DoubleVec::DoubleVec(const std::vector<double> &vec)
-  : std::vector<double>(vec)
-{
-#if VDEBUG
-  addTotal(size());
-  addVec(this);
-#endif // VDEBUG
-}
-
-DoubleVec::DoubleVec(const DoubleVec &other)
-  : std::vector<double>(other)
-{
-#if VDEBUG
-  addTotal(size());
-  addVec(this);
-#endif // VDEBUG
-}
-
-DoubleVec &DoubleVec::operator=(const DoubleVec &other) {
-#if VDEBUG
-  addTotal(other.size() - size());
-#endif // VDEBUG
-  std::vector<double>::operator=(other);
+DoubleVec& DoubleVec::operator+=(const DoubleVec& other) {
+  data += other.data; 
   return *this;
 }
 
-DoubleVec::~DoubleVec() {
-#if VDEBUG
-  addTotal(-size());
-  removeVec(this);
-#endif // VDEBUG
+DoubleVec& DoubleVec::operator-=(const DoubleVec& other) {
+  data -= other.data;
+  return *this;
 }
 
-void DoubleVec::clear() {
-#if VDEBUG
-  addTotal(-size());
-#endif	// VDEBUG
-  std::vector<double>::clear();
+DoubleVec& DoubleVec::operator*=(double alpha) {
+  data *= alpha;
+  return *this;
 }
 
-void DoubleVec::resize(DoubleVec::size_type n, double x) {
-#if VDEBUG
-  int oldsize = size();
-#endif	// VDEBUG
-  std::vector<double>::resize(n, x);
-#if VDEBUG
-  addTotal(size() - oldsize);
-#endif // VDEBUG
+DoubleVec& DoubleVec::operator/=(double alpha) {
+  data /= alpha;
+  return *this;
 }
 
-void DoubleVec::push_back(const double &x) {
-  std::vector<double>::push_back(x);
-#if VDEBUG
-  addTotal(1);
-#endif // VDEBUG
+void DoubleVec::scale(double alpha) {
+  data *= alpha;
 }
 
-DoubleVec::iterator DoubleVec::erase(DoubleVec::iterator it) {
-#if VDEBUG
-  int oldsize = size();
-#endif // VDEBUG
-  DoubleVec::iterator res = std::vector<double>::erase(it);
-#if VDEBUG
-  addTotal(size() - oldsize);
-#endif	// VDEBUG
-  return res;
+void DoubleVec::axpy(double alpha, const DoubleVec& x) {
+  data += alpha * x.data;
 }
 
-DoubleVec::iterator DoubleVec::erase(DoubleVec::iterator f,
-				     DoubleVec::iterator l)
-{
-#if VDEBUG
-  int oldsize = size();
-#endif // VDEBUG
-  DoubleVec::iterator res = std::vector<double>::erase(f, l);
-#if VDEBUG
-  addTotal(size() - oldsize);
-#endif	// VDEBUG
-  return res;
+DoubleVec DoubleVec::operator+(const DoubleVec& other) const {
+  DoubleVec rst;
+  rst.data = data + other.data;
+  return rst;
 }
 
-void DoubleVec::pop_back() {
-#if VDEBUG
-  int oldsize = size();
-#endif // VDEBUG
-  std::vector<double>::pop_back();
-#if VDEBUG
-  addTotal(size() - oldsize);
-#endif	// VDEBUG
+DoubleVec DoubleVec::operator-(const DoubleVec& other) const {
+  DoubleVec rst;
+  rst.data = data - other.data;
+  return rst;
 }
 
-double DoubleVec::norm() const {
-  return sqrt(dot(*this, *this));
+DoubleVec DoubleVec::operator*(double alpha) const {
+  DoubleVec rst;
+  rst.data = data * alpha;
+  return rst;
 }
 
-#ifdef DEBUG
-#include <iomanip>
-#include <sstream>
-std::string DoubleVec::addr() const {
+DoubleVec DoubleVec::operator/(double alpha) const {
+  DoubleVec rst;
+  rst.data = data / alpha;
+  return rst;
+}
+
+// Friend method of DoubleVec, return the result of (scalar * vec)
+DoubleVec operator*(double alpha, const DoubleVec& mat) {
+  DoubleVec rst;
+  rst.data = alpha * mat.data;
+  return rst;
+}
+
+double DoubleVec::dot(const DoubleVec& other) const {
+  return data.dot(other.data); 
+}
+
+double dot(const DoubleVec& x, const DoubleVec& y) {
+  return x.dot(y);
+}
+
+double DoubleVec::operator*(const DoubleVec& other) const {
+  return data.dot(other.data); 
+}
+
+DoubleVec::iterator DoubleVec::begin() {
+  return iterator(*this);
+}
+
+DoubleVec::iterator DoubleVec::end() {
+  iterator it(*this);
+  it.to_end();
+  return it;
+}
+
+DoubleVec::const_iterator DoubleVec::begin() const {
+  return const_iterator(*this);
+}
+
+DoubleVec::const_iterator DoubleVec::end() const {
+  const_iterator it(*this);
+  it.to_end();
+  return it;
+}
+
+const std::string DoubleVec::str() const {
   std::ostringstream os;
-  os << std::hex << this;
+  os << data;
   return os.str();
 }
 
-void DoubleVec::addTotal(int n) {
-  static SLock lock;
-  lock.acquire();
-  DoubleVec::total += n;
-  lock.release();
+std::ostream& operator<<(std::ostream& os, const DoubleVec& vec) {
+  os << vec.data;  
+  return os;
 }
-#endif	// DEBUG
+
+bool save_market_vec(const DoubleVec& vec, const std::string& filename) {
+  return Eigen::saveMarketVector(vec.data, filename);
+}
+
+bool load_market_vec(DoubleVec& vec, const std::string& filename) {
+  return Eigen::loadMarketVector(vec.data, filename);
+}
+
+bool save_vec(const DoubleVec& vec, const std::string& filename) {
+  int precision = 13;
+  std::ofstream fs(filename); 
+  // floatfield set to scientific
+  fs.setf(std::ios::scientific, std::ios::floatfield);
+  fs.precision(precision);
+
+  int size = vec.size();
+  fs << vec.size() << std::endl;
+  for (int i = 0; i < size; i++) {
+    fs << vec.data[i] << std::endl;
+  }
+  return true;
+}
+
+bool load_vec(DoubleVec& vec, const std::string& filename) {
+  std::ifstream fs(filename);
+  std::string line;
+  
+  // Ignore the comments at the begining of file
+  while (!fs.eof()) {
+    std::getline(fs, line);
+    // '#' is the comment flag
+    if (line[0] != '#')
+      break;
+  }
+
+  // extract vector size info
+  int size;
+  std::stringstream ss;
+  ss << line;
+  ss >> size;
+
+  vec.resize(size);
+
+  // read vector
+  double val;
+  for (int i = 0; i < size; i++) {
+    fs >> val;
+    vec.data[i] = val;
+  }
+
+  return true;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+template<typename VT, typename ET>
+DoubleVecIterator<VT, ET>& DoubleVecIterator<VT, ET>::operator++() {
+  assert(index + 1 <= vec.data.size());
+  index += 1;
+  return *this;
+}
+
+template<typename VT, typename ET>
+ET& DoubleVecIterator<VT, ET>::operator*() {
+  assert(!done());
+  return vec.data[index];
+}
+
+template<typename VT, typename ET>
+bool DoubleVecIterator<VT, ET>::operator==(const DoubleVecIterator& other) const
+{
+ // TODO: Is there some subtle reason that this line isn't simply
+ // return &vec==&other.vec && index==other.index;  ?
+  return (&vec==&other.vec && index==other.index) ? true : false;
+}
+
+template<typename VT, typename ET>
+bool DoubleVecIterator<VT, ET>::operator!=(const DoubleVecIterator& other) const
+{
+  return (&vec==&other.vec && index!=other.index) ? true : false;
+}
+
+template<typename VT, typename ET>
+bool DoubleVecIterator<VT, ET>::operator<(const DoubleVecIterator& other) const
+{
+  return (&vec==&other.vec && index<other.index) ? true : false;
+}
+
+template<typename VT, typename ET>
+bool DoubleVecIterator<VT, ET>::done() const {
+  return index < vec.data.size() ? false : true;
+}
+
+// Instantiate the DoubleVecIterator template.
+template class DoubleVecIterator<DoubleVec, double>;
+template class DoubleVecIterator<const DoubleVec, const double>;
+

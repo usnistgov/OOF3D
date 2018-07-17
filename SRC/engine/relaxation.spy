@@ -1,34 +1,33 @@
 # -*- python -*-
 
+
+from ooflib.SWIG.common import progress 
+from ooflib.SWIG.common import switchboard 
+from ooflib.SWIG.common import threadstate 
+from ooflib.SWIG.engine import cskeletonmodifier 
+from ooflib.SWIG.engine import equation 
+from ooflib.SWIG.engine import field 
+from ooflib.SWIG.engine import masterelement 
+from ooflib.SWIG.engine.property.elasticity.iso import iso 
+from ooflib.SWIG.engine.property.skeletonrelaxationrate import \
+    skeletonrelaxationrate 
 from ooflib.common import cregisteredclass 
 from ooflib.common import debug 
 from ooflib.common.IO import parameter 
-from ooflib.common.IO import xmlmenudump 
 from ooflib.common.IO import reporter 
-from ooflib.SWIG.engine import cskeletonmodifier 
-from ooflib.SWIG.common import switchboard 
-from ooflib.SWIG.common import progress 
+from ooflib.common.IO import xmlmenudump 
 from ooflib.engine import bdycondition 
-from ooflib.SWIG.engine import field 
-from ooflib.SWIG.engine import masterelement 
-from ooflib.engine import materialmanager 
-from ooflib.SWIG.engine.property.elasticity.iso import iso 
-from ooflib.SWIG.engine.property.skeletonrelaxationrate \
-import skeletonrelaxationrate 
-from ooflib.engine.IO import isocijkl 
-from ooflib.SWIG.engine import equation 
-from ooflib.engine import profile 
-from ooflib.SWIG.common import threadstate 
+from ooflib.engine import evolve 
 from ooflib.engine import fieldinit 
-from ooflib.engine.IO import meshmenu 
+from ooflib.engine import materialmanager 
+from ooflib.engine import matrixmethod 
+from ooflib.engine import nonlinearsolver
+from ooflib.engine import preconditioner
+from ooflib.engine import profile 
 from ooflib.engine import solvermode 
 from ooflib.engine import staticstep 
-from ooflib.engine import nonlinearsolver 
-from ooflib.engine import matrixmethod 
-from ooflib.SWIG.engine import preconditioner 
-from ooflib.engine import evolve 
-#from ooflib.engine import propertyregistration
-#line above needed for lines that are currently commented out
+from ooflib.engine.IO import isocijkl 
+from ooflib.engine.IO import meshmenu 
 import ooflib.engine.mesh 
 
 #Class registration for classes related to Rescale Settings

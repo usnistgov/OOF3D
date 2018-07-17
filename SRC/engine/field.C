@@ -666,7 +666,7 @@ void SymmetricTensorField::setValueFromOutputValue
   assert(pd.hasField(*this));
   const SymmMatrix3 &sym_v = 
     dynamic_cast<const SymmMatrix3&>(v->valueRef());
-  DoubleVec *vvec = sym_v.value_list();
+  std::vector<double> *vvec = sym_v.value_list();
   for(int i=0;i<6;++i) 
     (*this)(pd,i)->value(m) = (*vvec)[i];
   free(vvec);

@@ -12,7 +12,6 @@
 #include <oofconfig.h>
 
 #include "common/cleverptr.h"
-#include "common/vectormath.h"
 #include "engine/edgeset.h"
 #include "engine/element.h"
 #include "engine/femesh.h"

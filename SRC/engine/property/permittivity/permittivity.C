@@ -15,7 +15,6 @@
 
 #include "common/coord.h"
 #include "common/doublevec.h"
-#include "common/vectormath.h"
 #include "engine/IO/propertyoutput.h"
 #include "engine/celectricfield.h"
 #include "engine/element.h"

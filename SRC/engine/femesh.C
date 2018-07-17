@@ -47,7 +47,6 @@
 #include "engine/node.h"
 #include "engine/ooferror.h"
 #include "engine/outputval.h"
-#include "engine/preconditioner.h"
 #include "engine/property.h"
 #include "engine/skeletonfilter.h"
 
@@ -65,7 +64,7 @@ FEMesh::FEMesh(CSkeletonBase *skel)
   : microstructure(skel->getMicrostructure()),
     skeleton(skel),
     rwlock(0),
-    dofvalues(new DoubleVec),
+    dofvalues(new std::vector<double>),
     time(0.0),
     currentSubProblem_(0),
     dataCache(0),

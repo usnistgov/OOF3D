@@ -84,9 +84,9 @@ def _doublevec___idiv__(self, factor):
     return NotImplemented
 DoubleVecPtr.__idiv__ = _doublevec___idiv__
 
-def _doublevec__neg__(self):
+def _doublevec___neg__(self):
     result = self.clone()
     result *= -1.0
     return result
-DoubleVecPtr.__neg__ = _doublevec__neg__
+DoubleVecPtr.__neg__ = _doublevec___neg__
 

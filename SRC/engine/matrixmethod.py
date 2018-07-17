@@ -10,7 +10,7 @@
 
 from ooflib.SWIG.engine import cmatrixmethods
 from ooflib.SWIG.engine import ooferror2
-from ooflib.SWIG.engine import preconditioner
+from ooflib.engine import preconditioner
 from ooflib.common import debug
 from ooflib.common import registeredclass
 from ooflib.common.IO import mainmenu
@@ -28,9 +28,6 @@ import math
 # and returns a tuple containing the number of iterations taken and
 # the final residual.
 
-## TODO OPT: MAYBE Cache the preconditioners in the LinearizedSystem
-## so they can be re-used if the matrix hasn't changed.
-
 class MatrixMethod(registeredclass.RegisteredClass):
     registry = []
     def shortrepr(self):
@@ -47,16 +44,26 @@ class PreconditionedMatrixMethod(MatrixMethod):
                            self.preconditioner.shortrepr())
 
 class SymmetricMatrixMethodParam(parameter.RegisteredParameter):
-    def __init__(self, name, value=None, default=None, tip=None, auxData={}):
+    def __init__(self, name, value=None, default=None, tip=None):
         super(SymmetricMatrixMethodParam, self).__init__(
-            name, MatrixMethod, value=value, default=default, tip=tip,
-            auxData=auxData)
+            name, MatrixMethod, value=value, default=default, tip=tip)
 
 class AsymmetricMatrixMethodParam(parameter.RegisteredParameter):
-    def __init__(self, name, value=None, default=None, tip=None, auxData={}):
+    def __init__(self, name, value=None, default=None, tip=None):
         super(AsymmetricMatrixMethodParam, self).__init__(
-            name, MatrixMethod, value=value, default=default, tip=tip,
-            auxData=auxData)
+            name, MatrixMethod, value=value, default=default, tip=tip)
+
+solver_map = {}
+solver_map["CG"] = {}
+solver_map["CG"]["Un"] = cmatrixmethods.CG_Unpre
+solver_map["CG"]["Diag"] = cmatrixmethods.CG_Diag
+solver_map["CG"]["ILUT"] = cmatrixmethods.CG_ILUT
+solver_map["CG"]["ILU"] = cmatrixmethods.CG_ILUT
+solver_map["BiCGStab"] = {}
+solver_map["BiCGStab"]["Un"] = cmatrixmethods.BiCGStab_Unpre
+solver_map["BiCGStab"]["Diag"] = cmatrixmethods.BiCGStab_Diag
+solver_map["BiCGStab"]["ILUT"] = cmatrixmethods.BiCGStab_ILUT
+solver_map["BiCGStab"]["ILU"] = cmatrixmethods.BiCGStab_ILUT
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -70,6 +77,9 @@ class ConjugateGradient(PreconditionedMatrixMethod):
         self.preconditioner = preconditioner
         self.tolerance = tolerance
         self.max_iterations = max_iterations
+        self.solver = solver_map["CG"][preconditioner.name]()
+        self.solver.set_max_iterations(max_iterations)
+        self.solver.set_tolerance(tolerance)
     def solveMatrix(self, matrix, rhs, solution):
         if _check_symmetry:
             import sys
@@ -78,12 +88,12 @@ class ConjugateGradient(PreconditionedMatrixMethod):
                 raise ooferror2.ErrPyProgrammingError(
                     "%dx%d CG matrix is not symmetric!" %
                     (matrix.nrows(), matrix.ncols()))
-#         debug.fmsg("matrix=\n%s" % matrix)
-#         debug.fmsg("rhs=", rhs)
-        pc = self.preconditioner.create_preconditioner(matrix)
-        return cmatrixmethods.solveCG(
-            matrix, rhs, pc,
-            self.max_iterations, self.tolerance, solution)
+        succ = self.solver.solve(matrix, rhs, solution)
+        if succ != cmatrixmethods.SUCCESS: 
+            if succ == cmatrixmethods.NOCONVERG:
+                raise ooferror2.ErrPyProgrammingError(
+                    "Iterative procedure did not converge")
+        return self.solver.iterations(), self.solver.error()
 
 registeredclass.Registration(
     "CG",
@@ -94,7 +104,7 @@ registeredclass.Registration(
     params=[
         parameter.RegisteredParameter(
             "preconditioner",
-            preconditioner.PreconditionerPtr,
+            preconditioner.PreconditionerBase,
             tip="Black magic for making the matrix more easily solvable."),
         parameter.FloatParameter(
             "tolerance", 1.e-13,
@@ -118,39 +128,6 @@ mainmenu.debugmenu.addItem(
         help='Verify matrix symmetry before using Conjugate Gradient.',
         discussion="<para>For debugging.  Slow.</para>"))
 
-#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
-
-class BiConjugateGradient(PreconditionedMatrixMethod):
-    def __init__(self, preconditioner, tolerance, max_iterations):
-        self.preconditioner = preconditioner
-        self.tolerance = tolerance
-        self.max_iterations = max_iterations
-    def solveMatrix(self, matrix, rhs, solution):
-        pc = self.preconditioner.create_preconditioner(matrix)
-        return cmatrixmethods.solveBiCG(
-            matrix, rhs, pc,
-            self.max_iterations, self.tolerance, solution)
-
-registeredclass.Registration(
-    "BiCG",
-    MatrixMethod,
-    BiConjugateGradient,
-    ordering=2,
-    symmetricOnly=False,
-    params=[
-        parameter.RegisteredParameter(
-            "preconditioner",
-            preconditioner.PreconditionerPtr,
-            tip="Black magic for making the matrix more easily solvable."),
-        parameter.FloatParameter(
-            "tolerance", 1.e-13,
-            tip="Largest acceptable relative error in the matrix solution."),
-        parameter.IntParameter(
-            "max_iterations", 1000,
-            tip="Maximum number of iterations to perform.")],
-    tip="Bi-conjugate gradient method for iteratively solving non-symmetric matrices.",
-    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/bicg.xml')
-)
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -159,11 +136,16 @@ class StabilizedBiConjugateGradient(PreconditionedMatrixMethod):
         self.preconditioner = preconditioner
         self.tolerance = tolerance
         self.max_iterations = max_iterations
+        self.solver = solver_map["BiCGStab"][preconditioner.name]()
+        self.solver.set_max_iterations(max_iterations)
+        self.solver.set_tolerance(tolerance)
     def solveMatrix(self, matrix, rhs, solution):
-        pc = self.preconditioner.create_preconditioner(matrix)
-        return cmatrixmethods.solveBiCGStab(
-            matrix, rhs, pc,
-            self.max_iterations, self.tolerance, solution)
+        succ = self.solver.solve(matrix, rhs, solution)
+        if succ != cmatrixmethods.SUCCESS: 
+            if succ == cmatrixmethods.NOCONVERG:
+                raise ooferror2.ErrPyProgrammingError(
+                    "Iterative procedure did not converge")
+        return self.solver.iterations(), self.solver.error()
 
 registeredclass.Registration(
     "BiCGStab",
@@ -174,7 +156,7 @@ registeredclass.Registration(
     params=[
         parameter.RegisteredParameter(
             "preconditioner",
-            preconditioner.PreconditionerPtr,
+            preconditioner.PreconditionerBase,
             tip="Black magic for making the matrix more easily solvable."),
         parameter.FloatParameter(
             "tolerance", 1.e-13,
@@ -188,61 +170,149 @@ registeredclass.Registration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-class GeneralizedMinResidual(PreconditionedMatrixMethod):
-    def __init__(self, preconditioner, tolerance, max_iterations,
-                 krylov_dimension):
-        self.preconditioner = preconditioner
-        self.tolerance = tolerance
-        self.max_iterations = max_iterations
-        self.krylov_dimension = krylov_dimension
-    def solveMatrix(self, matrix, rhs, solution):
-        pc = self.preconditioner.create_preconditioner(matrix)
-        return cmatrixmethods.solveGMRes(
-            matrix, rhs, pc,
-            self.max_iterations, self.krylov_dimension, self.tolerance,
-            solution)
+## Preserve this method for backward compitability, which actually
+## inherts BiCGStab.
+class BiConjugateGradient(StabilizedBiConjugateGradient):
+    def __init__(self, preconditioner, tolerance, max_iterations):
+        StabilizedBiConjugateGradient.__init__(
+            self, preconditioner, tolerance, max_iterations)
 
 registeredclass.Registration(
-    "GMRES",
+    "BiCG",
     MatrixMethod,
-    GeneralizedMinResidual,
-    ordering=3,
+    BiConjugateGradient,
+    ordering=2,
     symmetricOnly=False,
     params=[
         parameter.RegisteredParameter(
             "preconditioner",
-            preconditioner.PreconditionerPtr,
+            preconditioner.PreconditionerBase,
             tip="Black magic for making the matrix more easily solvable."),
         parameter.FloatParameter(
             "tolerance", 1.e-13,
             tip="Largest acceptable relative error in the matrix solution."),
         parameter.IntParameter(
             "max_iterations", 1000,
-            tip="Maximum number of iterations to perform."),
-        parameter.IntParameter(
-            "krylov_dimension", 100,
-            tip="Making the Krylov dimension bigger will improve convergence but use more memory.")],
-    tip="Generalized Minimal Residual method for iteratively solving non-symmetric matrices.",
-    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/gmres.xml')
+            tip="Maximum number of iterations to perform.")],
+    tip="Bi-conjugate gradient method for iteratively solving non-symmetric matrices.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/bicg.xml')
 )
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+# Direct linear solvers 
+
+## Preserve this method for backward compitability, which actually
+## calls SparseLU. 
 class DirectMatrixSolver(MatrixMethod):
+    def __init__(self):
+        self.solver = cmatrixmethods.SparseLU()
     def solveMatrix(self, matrix, rhs, solution):
-        cmatrixmethods.solveDirect(matrix, rhs, solution)
+        succ = self.solver.solve(matrix, rhs, solution)
+        if succ != cmatrixmethods.SUCCESS: 
+            if succ == cmatrixmethods.NUMERICAL:
+                raise ooferror2.ErrPyProgrammingError(
+                    "The provided data did not satisfy the prerequisites.")
+            elif succ == cmatrixmethods.INVALID_INPUT:
+                raise ooferror2.ErrPyProgrammingError(
+                    "The inputs are invalid, or the algorithm has been improperly called.")
+        return (1, 0)
+
+class SimplicialLLT(MatrixMethod):
+    def __init__(self):
+        self.solver = cmatrixmethods.SimplicialLLT()
+    def solveMatrix(self, matrix, rhs, solution):
+        succ = self.solver.solve(matrix, rhs, solution)
+        if succ != cmatrixmethods.SUCCESS: 
+            if succ == cmatrixmethods.NUMERICAL:
+                raise ooferror2.ErrPyProgrammingError(
+                    "The provided data did not satisfy the prerequisites.")
+            elif succ == cmatrixmethods.INVALID_INPUT:
+                raise ooferror2.ErrPyProgrammingError(
+                    "The inputs are invalid, or the algorithm has been improperly called.")
+        return (1, 0)
+
+class SimplicialLDLT(MatrixMethod):
+    def __init__(self):
+        self.solver = cmatrixmethods.SimplicialLDLT()
+    def solveMatrix(self, matrix, rhs, solution):
+        succ = self.solver.solve(matrix, rhs, solution)
+        if succ != cmatrixmethods.SUCCESS: 
+            if succ == cmatrixmethods.NUMERICAL:
+                raise ooferror2.ErrPyProgrammingError(
+                    "The provided data did not satisfy the prerequisites.")
+            elif succ == cmatrixmethods.INVALID_INPUT:
+                raise ooferror2.ErrPyProgrammingError(
+                    "The inputs are invalid, or the algorithm has been improperly called.")
+        return (1, 0)
+
+class SparseLU(MatrixMethod):
+    def __init__(self):
+        self.solver = cmatrixmethods.SparseLU()
+    def solveMatrix(self, matrix, rhs, solution):
+        succ = self.solver.solve(matrix, rhs, solution)
+        if succ != cmatrixmethods.SUCCESS: 
+            if succ == cmatrixmethods.NUMERICAL:
+                raise ooferror2.ErrPyProgrammingError(
+                    "The provided data did not satisfy the prerequisites.")
+            elif succ == cmatrixmethods.INVALID_INPUT:
+                raise ooferror2.ErrPyProgrammingError(
+                    "The inputs are invalid, or the algorithm has been improperly called.")
+        return (1, 0)
+
+class SparseQR(MatrixMethod):
+    def __init__(self):
+        self.solver = cmatrixmethods.SparseQR()
+    def solveMatrix(self, matrix, rhs, solution):
+        succ = self.solver.solve(matrix, rhs, solution)
+        if succ != cmatrixmethods.SUCCESS: 
+            if succ == cmatrixmethods.NUMERICAL:
+                raise ooferror2.ErrPyProgrammingError(
+                    "The provided data did not satisfy the prerequisites.")
+            elif succ == cmatrixmethods.INVALID_INPUT:
+                raise ooferror2.ErrPyProgrammingError(
+                    "The inputs are invalid, or the algorithm has been improperly called.")
         return (1, 0)
 
 registeredclass.Registration(
-    "Direct",
+    "DirectMatrixSolver",
     MatrixMethod,
     DirectMatrixSolver,
-    ordering=400,
-    symmetricOnly=False,
-    tip="A non-iterative non-sparse matrix solver using LU decomposition.  Uses a lot of memory.  Not recommended if the finite element mesh is large.",
-    discussion=xmlmenudump.loadFile("DISCUSSIONS/engine/reg/directmatrix.xml"))
+    ordering=204,
+    symmetricOnly=True,
+    tip="An obsolete matrix solver preserved for compitability.")
 
-## TODO 3.1: Add a PETSc method?
+registeredclass.Registration(
+    "SimplicialLLT",
+    MatrixMethod,
+    SimplicialLLT,
+    ordering=201,
+    symmetricOnly=True,
+    tip="A direct sparse matrix solver using LLT Cholesky factorizations for sparse positive definite matrices.")
+
+registeredclass.Registration(
+    "SimplicialLDLT",
+    MatrixMethod,
+    SimplicialLDLT,
+    ordering=200,
+    symmetricOnly=True,
+    tip="A direct sparse matrix solver using LDLt Cholesky factorizations for sparse positive definite matrices. Recommended for very sparse and not too large problems.")
+
+registeredclass.Registration(
+    "SparseLU",
+    MatrixMethod,
+    SparseLU,
+    ordering=202,
+    symmetricOnly=False,
+    tip="A direct sparse matrix solver using LU factorizations for square matrices.")
+
+registeredclass.Registration(
+    "SparseQR",
+    MatrixMethod,
+    SparseQR,
+    ordering=203,
+    symmetricOnly=False,
+    tip="A direct sparse matrix solver using QR factorizations for any type of matrices.")
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -259,14 +329,13 @@ class BasicDirect(BasicMatrixMethod):
     def shortrepr(self):
         return "Direct"
     def resolve_symmetric(self, existingSolver):
-        if isinstance(existingSolver, DirectMatrixSolver):
+        if isinstance(existingSolver, SimplicialLDLT):
             return existingSolver
-        return DirectMatrixSolver()
+        return SimplicialLDLT()
     def resolve_asymmetric(self, existingSolver):
-        if isinstance(existingSolver, DirectMatrixSolver):
+        if isinstance(existingSolver, SparseQR):
             return existingSolver
-        return DirectMatrixSolver()
-
+        return SparseQR()
 
 class BasicIterative(BasicMatrixMethod):
     def __init__(self, tolerance, max_iterations):
@@ -277,26 +346,23 @@ class BasicIterative(BasicMatrixMethod):
             existingSolver.tolerance == self.tolerance and
             existingSolver.max_iterations == self.max_iterations and
             isinstance(existingSolver.preconditioner,
-                       preconditioner.ILUPreconditioner)):
+                       preconditioner.JacobiPreconditioner)):
             return existingSolver
         return ConjugateGradient(
-            preconditioner=preconditioner.ILUPreconditioner(),
+            preconditioner=preconditioner.JacobiPreconditioner(),
             tolerance=self.tolerance,
             max_iterations=self.max_iterations)
     def resolve_asymmetric(self, subproblemcontext, existingSolver):
-        krylov_guess = 30;    # Guess the krylov dimension for GMRES. 
-        if (isinstance(existingSolver, GeneralizedMinResidual) and
+        if (isinstance(existingSolver, StabilizedConjugateGradient) and
             existingSolver.tolerance == self.tolerance and
             existingSolver.max_iterations == self.max_iterations and
-            existingSolver.krylov_dimension == krylov_guess and
             isinstance(existingSolver.preconditioner,
-                       preconditioner.ILUPreconditioner)):
+                       preconditioner.JacobiPreconditioner)):
             return existingSolver
-        return GeneralizedMinResidual(
-            preconditioner=preconditioner.ILUPreconditioner(),
+        return StabilizedConjugateGradient(
+            preconditioner=preconditioner.JacobiPreconditioner(),
             tolerance=self.tolerance,
-            max_iterations=self.max_iterations,
-            krylov_dimension=krylov_guess)
+            max_iterations=self.max_iterations)
     def shortrepr(self):
         return "Iterative"
 
@@ -324,3 +390,4 @@ registeredclass.Registration(
     tip='Solve matrix equations with a direct method.  Not recommended for large problems.',
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/basicdirect.xml'))
                 
+

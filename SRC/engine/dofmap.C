@@ -13,7 +13,6 @@
 
 #include "common/doublevec.h"
 #include "common/printvec.h"
-#include "common/vectormath.h"
 #include "engine/dofmap.h"
 #include "engine/ooferror.h"
 

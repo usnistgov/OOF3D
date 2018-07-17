@@ -132,8 +132,8 @@ double &ScalarOutputVal::operator[](const IndexP&) {
   return val;
 }
 
-DoubleVec *ScalarOutputVal::value_list() const {
-  return new DoubleVec(1, val);
+std::vector<double> *ScalarOutputVal::value_list() const {
+  return new std::vector<double>(1, val);
 }
 
 
@@ -203,7 +203,7 @@ VectorOutputVal::VectorOutputVal(const VectorOutputVal &other)
   : data(other.data)
 {}
 
-VectorOutputVal::VectorOutputVal(const DoubleVec &vec)
+VectorOutputVal::VectorOutputVal(const std::vector<double> &vec)
   : data(vec)
 {}
 
@@ -217,12 +217,8 @@ VectorOutputVal::VectorOutputVal(const Coord &coord)
 #endif // DIM==3
 }
 
-DoubleVec *VectorOutputVal::value_list() const {
-  DoubleVec *res = new DoubleVec(data);
-  // res->reserve(size_);
-  // for(unsigned int i=0; i<size_; i++)
-  //   res->push_back(data[i]);
-  return res;
+std::vector<double> *VectorOutputVal::value_list() const {
+  return new std::vector<double>(data);
 }
 
 OutputVal *VectorOutputVal::clone() const {
@@ -241,6 +237,15 @@ OutputVal *VectorOutputVal::one() const {
 }
 
 double VectorOutputVal::dot(const DoubleVec &other) const {
+  assert(size() == other.size());
+  // TODO:  Use blas?  Probably not worth the effort.
+  double sum = 0;
+  for(unsigned int i=0; i<size(); i++)
+    sum += data[i]*other[i];
+  return sum;
+}
+
+double VectorOutputVal::dot(const std::vector<double> &other) const {
   assert(size() == other.size());
   double sum = 0;
   for(unsigned int i=0; i<size(); i++)

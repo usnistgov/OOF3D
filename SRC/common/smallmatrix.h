@@ -1,5 +1,3 @@
-/// -*- C++ -*-
-
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
  * Recipients of this software assume all responsibilities associated
@@ -9,80 +7,70 @@
  * oof_manager@nist.gov. 
  */
 
-#include <oofconfig.h>
-#include <iostream>
-
-// The "SmallMatrix" class is a general (i.e. not symmetric or
-// positive-definite or anything) real-valued matrix which stores its
-// data internally in column-ordered LAPACK-friendly format.  For
-// maximum speed, routines which require "utility" linear-algebra
-// operations should construct one of these directly.
-
-
 #ifndef SMALLMATRIX_H
 #define SMALLMATRIX_H
 
-#include "common/doublevec.h"
-#include "common/coord.h"
+#include <oofconfig.h>
+#include <iostream>
 
-class Cijkl;
+#include "common/doublevec.h"
+#include "eigen/Eigen/Dense"
+
+class Coord3D;
+
+// The "SmallMatrix" class is a general (i.e. not symmetric or
+// positive-definite or anything) real-valued dense matrix.
 
 class SmallMatrix {
 protected:
-  unsigned int nrows, ncols;
-  DoubleVec data;
+  Eigen::MatrixXd data;
 public:
-  SmallMatrix(unsigned int size); // Makes a square matrix, not a vector.
-  SmallMatrix(unsigned int rows, unsigned int cols);
-  SmallMatrix(const SmallMatrix&);
-  // TODO:  Add a move constructor.
-  SmallMatrix(const Cijkl*);	// for SCPR
-  virtual ~SmallMatrix();
-  
-  void clear();  // Sets all entries to zero, doesn't resize.
-  void resize(unsigned int rows, unsigned int cols);
-  
-  unsigned int rows() const { return nrows; }
-  unsigned int cols() const { return ncols; }
+  SmallMatrix() : data(0, 0) {}
+  SmallMatrix(int size);
+  SmallMatrix(int rows, int cols); 
+  SmallMatrix(const SmallMatrix& other) : data(other.data) {}
+  virtual ~SmallMatrix() {}
 
-  virtual double &operator()(unsigned int row, unsigned int col);
-  virtual const double &operator()(unsigned int row, unsigned int col) const;
+  /* Matrix property methods */
 
-  SmallMatrix &operator=(const SmallMatrix&);
+  void resize(int rows, int cols);
+  int rows() const { return data.rows(); }
+  int cols() const { return data.cols(); }
+  void clear() { data.setZero(data.rows(), data.cols()); }
+  virtual double& operator()(int row, int col);
+  virtual const double& operator()(int row, int col) const;
 
-  SmallMatrix &operator+=(const SmallMatrix&);
-  SmallMatrix &operator-=(const SmallMatrix&);
-  SmallMatrix &operator*=(double);
+  /* Arithmetic operations */
+
+  SmallMatrix& operator+=(const SmallMatrix&);
+  SmallMatrix& operator-=(const SmallMatrix&);
+  SmallMatrix& operator*=(double);
+  SmallMatrix operator+(const SmallMatrix&) const;
+  SmallMatrix operator-(const SmallMatrix&) const;
+  SmallMatrix operator*(double) const;
+  SmallMatrix operator*(const SmallMatrix&) const;
+  DoubleVec operator*(const DoubleVec&) const;
+  Coord3D operator*(const Coord3D&) const;
+
+  void transpose();  // Transpose in-place.
+  double norm() { return data.norm(); }
+
+  // The solve routine is fast, but corrupts the contents
+  // of both the matrix and the passed-in rhs.  Matrix on which
+  // "solve" is called must be square.  Return value is 0 on success.
+  int solve(SmallMatrix&) const;
+
+  // Perform a local inverse, assuming that the matrix is symmetric.
+  int symmetric_invert();
 
   // Functions used by the python interface.  If we write the python
   // arithmetic operators in the 'obvious' way, then swig generates
   // code that copies the matrices more than necessary.  By swigging
   // these functions, we can eliminate the extra copies.
-  void scale(double x) { *this *= x; }
-  void madd(const SmallMatrix &other) { *this += other; }
-  void msub(const SmallMatrix &other) { *this -= other; }
-
-  // Transpose in-place.
-  void transpose();
-
-  // The solve routine is fast, but corrupts the contents
-  // of both the matrix and the passed-in rhs.  Matrix on which
-  // "solve" is called must be square.  Return value is 0 on success.
-  int solve(SmallMatrix&);
-
-  // Perform a local inverse, assuming that the matrix is symmetric.
-  int symmetric_invert();
-
-  friend SmallMatrix operator*(const SmallMatrix&, const SmallMatrix &);
-  friend DoubleVec operator*(const SmallMatrix&, const DoubleVec&);
-  friend Coord3D operator*(const SmallMatrix&, const Coord3D&);
-  friend DoubleVec operator+(const DoubleVec&, const SmallMatrix&);
-  friend DoubleVec operator+(const SmallMatrix&, const DoubleVec&);
+  void scale(double x) { data *= x; }
+  void madd(const SmallMatrix& other) { data += other.data; }
+  void msub(const SmallMatrix& other) { data -= other.data; }
 };
-
-SmallMatrix operator+(const SmallMatrix&, const SmallMatrix&);
-SmallMatrix operator-(const SmallMatrix&, const SmallMatrix&);
-SmallMatrix operator*(const SmallMatrix&, double);
 
 std::ostream &operator<<(std::ostream&, const SmallMatrix&);
 

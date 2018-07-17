@@ -135,13 +135,13 @@ class VoigtComponent(enum.EnumClass(*voigtNames)): pass
 def _SymmMatrix3_voigtValues(self):
     return [self.get(*voigtIndices[i]) for i in range(6)]
 
-SymmMatrix3.voigtValues = _SymmMatrix3_voigtValues
+SymmMatrix3Ptr.voigtValues = _SymmMatrix3_voigtValues
 
 def _SymmMatrix3___repr__(self):
     args = ["%s=%s" % nv for nv in zip(voigtNames, self.voigtValues())]
     return "SymmMatrix3(%s)" % string.join(args, ',')
 
-SymmMatrix3.__repr__ = _SymmMatrix3___repr__
+SymmMatrix3Ptr.__repr__ = _SymmMatrix3___repr__
 
 def _SymmMatrix3_component(self, component): # used in Output, below
     # component is a VoigtComponent Enum object

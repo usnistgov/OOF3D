@@ -41,6 +41,10 @@
 #  Set your LD_LIBRARY_PATH to include $OOFINSTALL/lib.  This isn't
 #  necessary on OS X.
 
+## TODO: Copy the modifications to the oof2 version of this script
+## that merge oof2-build oof2-clean into one script, and encode the
+## state of the cocoa flag in the build and stow directory names.
+
 ## TODO: The oof2 and oof3d versions of this script have diverged a
 ## bit... Ideally they should be identical except for the next line.
 ## Perhaps that line should be in a separate local config file that is

@@ -16,7 +16,6 @@
 #include "common/ooferror.h"
 #include "common/smallmatrix.h"
 #include "common/trace.h"
-#include "common/vectormath.h"
 #include "engine/cnonlinearsolver.h"
 #include "engine/cstrain.h"
 #include "engine/csubproblem.h"

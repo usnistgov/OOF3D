@@ -14,7 +14,6 @@
 #include "common/doublevec.h"
 #include "common/smallmatrix.h"
 #include "common/tostring.h"
-#include "common/vectormath.h"
 #include "engine/cnonlinearsolver.h"
 #include "engine/csubproblem.h"
 #include "engine/element.h"

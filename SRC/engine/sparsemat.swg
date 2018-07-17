@@ -15,100 +15,85 @@
 %module sparsemat
 
 %include "engine/typemaps.swg"
-%extern "common/doublevec.swg"
-%pragma(python) code="from ooflib.SWIG.common.doublevec import DoubleVecPtr"
-%pragma(python) include="engine/sparsemat.spy"
 
 %{
-#include "common/tostring.h"
-#include "engine/dofmap.h"
-#include "common/doublevec.h"
+#define SWIG_FILE_WITH_INIT
 #include "engine/sparsemat.h"
-#include <iostream>
-#include <vector>
-%}
+#include "engine/dofmap.h"
+#include <string>
+#include <cstring>
+%} 
 
-class SparseMatIterator;
-class SparseMatRowIterator;
+%pragma(python) include="engine/sparsemat.spy"
 
 class SparseMat {
 public:
-  SparseMat(int, int);
+  SparseMat(int nr, int nc);
   ~SparseMat();
-  int nrows();
-  int ncols();
-  int nnonzeros();
-  void insert(int, int, double);
-  void consolidate();
-  bool consolidated();
-  bool empty();
+  SparseMat clone() const;
 
-  // The C++ code generated for the clone() function does an additional
-  // copy of the result. This is ok, because of the reference
-  // counting.  The extra copy only copies the wrapper.
-  SparseMat clone();
-  SparseMat &add(double, SparseMat&);
-//   DoubleVec trans_mult(DoubleVec&); // not needed? See __rmul__ in sparsemat.spy
-  void axpy(double a, DoubleVec &x, DoubleVec &y); // y += a*self*x
-  void axpy_trans(double, DoubleVec&, DoubleVec&);
+  // TODO(lizhong): inline possible methods
 
-  void solve_lower_triangle(DoubleVec&, DoubleVec&);
-  void solve_lower_triangle_unitd(DoubleVec&, DoubleVec&);
-  void solve_lower_triangle_trans(DoubleVec&, DoubleVec&);
-  void solve_lower_triangle_trans_unitd(DoubleVec&, DoubleVec&);
-  void solve_upper_triangle(DoubleVec&, DoubleVec&);
-  void solve_upper_triangle_trans(DoubleVec&, DoubleVec&);
+  /* Matrix property methods */
 
-  double norm();
+  int nrows() const;
+  int ncols() const;
+  int nnonzeros() const;
+  void resize(int nr, int nc);
+  void reserve(int size);
+  void insert(int ir, int ic, double val);
+  bool empty() const;
+  bool is_nonempty_row(unsigned int) const;
+  bool is_nonempty_col(unsigned int) const;
+  SparseMat lower() const;
+  SparseMat unit_lower() const;
+  SparseMat upper() const;
+  SparseMat unit_upper() const;
 
-  DoubleVec inefficient_get_column(int);
-  bool unique_indices();
-  bool is_symmetric(double tolerance); // uses inefficient_get_column!
-  // void sanityCheck();
+  /* Arithmetic operations */
 
-  SparseMat transpose();
+  double norm() const;
+  SparseMat transpose() const;
+
+  SparseMat &add(double, const SparseMat&); // scale and add
+  DoubleVec trans_mult(const DoubleVec&) const;
+
+  // In-place matrix vector multiplication, ala blas.
+  void axpy(double alpha, const DoubleVec &x, DoubleVec &y) const;
+  void axpy_trans(double alpha, const DoubleVec &x, DoubleVec &y) const;
+
+  // Triangular solvers.
+  void solve_lower_triangle(const DoubleVec&, DoubleVec&) const;
+  void solve_lower_triangle_unitd(const DoubleVec&, DoubleVec&) const;
+  void solve_lower_triangle_trans(const DoubleVec&, DoubleVec&) const;
+  void solve_lower_triangle_trans_unitd(const DoubleVec&, DoubleVec&) const;
+  void solve_upper_triangle(const DoubleVec&, DoubleVec&) const;
+  void solve_upper_triangle_trans(const DoubleVec&, DoubleVec&) const;
+
+  /* Debugging routines. */
+
+  bool is_lower_triangular(bool diag) const;
+  bool is_upper_triangular(bool diag) const;
+  bool is_symmetric(double tolerance) const;
+
+  const std::string str() const;
 
   %addmethods {
     void scale(double a) { *self *= a; }
     SparseMat matrixmultiply(SparseMat &m) { return (*self)*m; }
-    SparseMatRowIterator row(int i) { 
-//       std::cerr << "SparseMat::row(" << i << "): core=" << self->core
-// 		<< std::endl;
-      return self->begin(i); }
-    SparseMatIterator __iter__() { return self->begin(); }
-    %new const string *__repr__() { return new std::string(to_string(*self)); }
-    SparseMat submatrix(const DoFMap &rows, const DoFMap &cols) {
-      return SparseMat(*self, rows, cols);
+
+    const char* __repr__() {
+      return (*self).str().c_str();
+    }
+
+    bool save(const char *filename) {
+      return save_mat(*self, std::string(filename));
+    }
+ 
+    bool load(const char *filename) {
+      return load_mat(*self, std::string(filename));
     }
   }
 };
-
-class SparseMatIterator {
-public:
-  ~SparseMatIterator();
-  int row();
-  int col();
-  double value();
-  bool done();
-  %addmethods {
-    // SparseMatIterator *__iter__() { return self; }
-    void increment() { ++*self; }
-  }
-};
-
-class SparseMatRowIterator {
-public:
-  ~SparseMatRowIterator();
-  int row();
-  int col();
-  double value();
-  bool done();
-  %addmethods {
-    //SparseMatRowIterator *__iter__() { return self; }
-    void increment() { ++*self; }
-  }
-};
-
-void mmadump(char *filename, char *mtxname, SparseMat); // mathematica format
 
 #endif // SPARSEMAT_SWG

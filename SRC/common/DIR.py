@@ -93,7 +93,7 @@ else:                           # DIM == 3
         'random.C', 'swiglib.C', 'switchboard.C', 'threadstate.C',
         'timestamp.C', 'sincos.C', 'pythonlock.C', 'progress.C',
         'vtkColorLUT.C', 'guitop.C', 'direction.C', 'clip.C', 'voxelfilter.C',
-        'geometry.C', 'doublevec.C', 'vectormath.C', 'smallmatrix.C',
+        'geometry.C', 'doublevec.C', 'smallmatrix.C',
         'corientation.C', 'voxelsetboundary.C'
         ]
 
@@ -128,7 +128,7 @@ else:                           # DIM == 3
         'imagebase.h', 'activearea.h', 'argv.h', 'boolarray.h', 'cdebug.swg',
         'ccolor.h', 'cmicrostructure.h', 'colordifference.h', 'coord.h',
         'cpixelselection.h', 'doublearray.h', 'geometry.h', 'identification.h',
-        'lock.h', 'guitop.h', 'bitmask.h', 'doublevec.h', 'vectormath.h',
+        'lock.h', 'guitop.h', 'bitmask.h', 'doublevec.h',
         'ooferror.h', 'pixelattribute.h', 'pixelgroup.h',
         'pixelselectioncourier.h', 'random.h',
         'swiglib.h', 'switchboard.h', 'threadstate.h', 'timestamp.h',

@@ -66,6 +66,8 @@ public:
   friend SymmMatrix operator*(double, const SymmMatrix&);
   friend SymmMatrix operator*(const SymmMatrix&, double);
   friend DoubleVec operator*(const SymmMatrix&, const DoubleVec&);
+  friend std::vector<double> operator*(const SymmMatrix&,
+				       const std::vector<double>&);
 };
 
 class SymmMatrix3 : public OutputVal, public SymmMatrix {
@@ -120,7 +122,7 @@ public:
     for(int i=0;i<6;i++)
       data[i] = fabs(data[i]);
   }
-  virtual DoubleVec *value_list() const;
+  virtual std::vector<double> *value_list() const;
 
   OutputVal &operator*=(double x) {
     dirtyeigs_ = true;

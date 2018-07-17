@@ -90,11 +90,16 @@ private:
 
   // Matrices stored in subproblem index order.
   SparseMat K_, C_, M_, J_;
-  // The free and independent parts of the matrices.  These are
+  // The free and independent parts of the matrices. 
   // TODO MAP OPT: these should be SparseSubMats
   SparseMat K_indfree_, C_indfree_, M_indfree_, J_indfree_;
   SparseMat K_indfixed_, M_indfixed_, C_indfixed_;
 
+  // Using vector of triplets (row, col, value) during the construction
+  // of matrices. Because SparseMat is in compressed row/column storage
+  // format which is not efficient for matrix construction (make linear
+  // system).
+  std::vector<Triplet> KTri_, CTri_, MTri_, JTri_;
 
   // Each map level operates on the output from the previous level.
   // The domain of level x is the range of level x-1.

@@ -60,7 +60,6 @@ class SS22(timestepper.SecondOrderStepper, timestepper.LinearStepper,
         A = M.clone()
         A.add(self.theta1*dt, C)
         A.add(0.5*self.theta2*dt*dt, K)
-        A.consolidate()
 
         x  = linsys.rhs_MCK() # x = rhs(t_n)
         x *= (1.0 - self.theta1)        # x = (1-theta1) rhs(t_n)

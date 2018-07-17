@@ -29,7 +29,10 @@
 #include <vector>
 
 class SmallSparseMatrix : public SmallMatrix {
-
+  // SmallSparseMatrix doesn't bother storing its values in a sparse
+  // data structure, because it's small.  What it does do is to keep
+  // track of which values have been used, so that when it's used to
+  // build a large sparse matrix only the nonzeros will contribute.
 private:
   std::vector<bool> nonzero_;
 

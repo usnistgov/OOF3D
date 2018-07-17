@@ -6,12 +6,6 @@ Before Next Release
 
 Optimize categoryVolumes?
 
-Merge branches
-  Ryan's 3D widgets  (Needs to be finished for voxel selection)
-  Lizhong's solvers.
-
-Use tcmalloc (already in Lizhong's branch?)
-
 Use Eigen?  Use DPF's sparse_matrix_optimization branch?
   On 7/17/17, merged origin/development into
   sparse_matrix_optimization.  The difference in performance on
@@ -114,6 +108,9 @@ there's a memory leak and some FaceSets aren't being deleted properly?
 
 Draw voxels on the faces of the box widget when selecting voxel
 regions.  Maybe.
+
+Select ellipsoidal and spherical regions interactively.
+Tilt axes of box and ellipsoidal selection regions.
 
 Fix bug: load5color.log; open graphics window; add clipping plane
 w/default values (x, offset=0); drag clipping plane to right.  Front

@@ -112,17 +112,18 @@ EdgeSetIterator::EdgeSetIterator(const EdgeSet *b)
   : SubDimensionalIterator(b),
     length(0.0)
 {
-  cumulength_.reserve(bdy->size());
+  cumulength_.resize(bdy->size());
 
   // Loop over all the edges in the EdgeSet, and total up their
   // lengths.  At the end, cumulength[i] is the length of all the
   // previous edges up to but not including the edge indexed by i.
   const EdgeSet *eset = dynamic_cast<const EdgeSet*>(bdy);
-  for (std::vector<Element*>::const_iterator i=eset->parts.begin();
-       i!=eset->parts.end(); ++i) 
+  unsigned int i = 0;
+  for (std::vector<Element*>::const_iterator it=eset->parts.begin();
+       it!=eset->parts.end(); ++it, ++i) 
     {
-      cumulength_.push_back(length);
-      length += (*i)->span();
+      cumulength_[i] = length;
+      length += (*it)->span();
     }
 }
 

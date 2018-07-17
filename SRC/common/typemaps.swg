@@ -105,7 +105,7 @@ typedef std::vector<Coord*> CoordVec;
 typedef std::vector<Coord> PointVec;
 typedef std::vector<ICoord> ICoordVec;
 typedef std::vector<char*> CharPtrVec;
-typedef DoubleVec DoubleList;
+typedef std::vector<double> DoubleList;
 typedef std::vector<int> IntVec;
 typedef std::vector<std::string> StringVec;
 typedef std::vector<unsigned short> ShortVec;

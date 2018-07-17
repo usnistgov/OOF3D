@@ -8,41 +8,40 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov. 
 
-from ooflib.common import debug
 from ooflib.SWIG.common import doublevec
 import types
 
-def _SparseMat_size(self):
+def _sparsemat___size__(self):
     return (self.nrows(), self.ncols())
-SparseMatPtr.size = _SparseMat_size
+SparseMatPtr.size = _sparsemat___size__
 
-def _SparseMat___iadd__(self, other):
+def _sparsemat___iadd__(self, other):
     if isinstance(other, SparseMatPtr):
         self.add(1.0, other)
         return self
     return NotImplemented
-SparseMatPtr.__iadd__ = _SparseMat___iadd__
+SparseMatPtr.__iadd__ = _sparsemat___iadd__
 
-def _SparseMat___add__(self, other):
+def _sparsemat___add__(self, other):
     result = self.clone()
     result += other
     return result
-SparseMatPtr.__add__ = _SparseMat___add__
+SparseMatPtr.__add__ = _sparsemat___add__
 
-def _SparseMat___isub__(self, other):
+def _sparsemat___isub__(self, other):
     if isinstance(other, SparseMatPtr):
         self.add(-1.0, other)
         return self
     return NotImplemented
-SparseMatPtr.__isub__ = _SparseMat___isub__
+SparseMatPtr.__isub__ = _sparsemat___isub__
 
-def _SparseMat___sub__(self, other):
+def _sparsemat___sub__(self, other):
     result = self.clone()
     result -= other
     return result
-SparseMatPtr.__sub__ = _SparseMat___sub__
+SparseMatPtr.__sub__ = _sparsemat___sub__
 
-def _SparseMat___mul__(self, x):
+def _sparsemat___mul__(self, x):
     if isinstance(x, SparseMatPtr):
         return self.matrixmultiply(x)
     if isinstance(x, doublevec.DoubleVecPtr):
@@ -52,9 +51,9 @@ def _SparseMat___mul__(self, x):
     result = self.clone()
     result *= x
     return result
-SparseMatPtr.__mul__ = _SparseMat___mul__
+SparseMatPtr.__mul__ = _sparsemat___mul__
 
-def _SparseMat___rmul__(self, x):
+def _sparsemat___rmul__(self, x):
     if isinstance(x, doublevec.DoubleVecPtr):
         result = doublevec.DoubleVec(self.nrows())
         self.axpy_trans(1.0, x, result)
@@ -62,56 +61,27 @@ def _SparseMat___rmul__(self, x):
     result = self.clone()
     result *= x
     return result
-SparseMatPtr.__rmul__ = _SparseMat___rmul__
+SparseMatPtr.__rmul__ = _sparsemat___rmul__
 
-def _SparseMat___imul__(self, x):
+def _sparsemat___imul__(self, x):
+    import types
     if type(x) is types.FloatType or type(x) is types.IntType:
-        self.scale(x)               # defined in sparsemat.swg only
+        self.scale(x)
         return self
     return NotImplemented
-SparseMatPtr.__imul__ = _SparseMat___imul__
+SparseMatPtr.__imul__ = _sparsemat___imul__
 
-def _SparseMat___idiv__(self, x):
+def _sparsemat___idiv__(self, x):
+    import types
     if type(x) is types.FloatType or type(x) is types.IntType:
-        self.scale(1./x)            # defined in sparsemat.swg only
+        self.scale(1./x)
         return self
     return NotImplemented
-SparseMatPtr.__idiv__ = _SparseMat___idiv__
+SparseMatPtr.__idiv__ = _sparsemat___idiv__
 
-def _SparseMat__div__(self, x):
-    result = self.clone()
-    result /= x
-    return result
-SparseMatPtr.__div__ = _SparseMat__div__
-    
-################################################
-
-from ooflib.common import debug
-
-def _SparseMatIterator_next(self):
-    if self.done():
-        raise StopIteration
-    result = (self.row(), self.col(), self.value())
-    self.increment()
-    return result
-SparseMatIteratorPtr.next = _SparseMatIterator_next
-SparseMatRowIteratorPtr.next = _SparseMatIterator_next
-
-def _SparseMatIterator_iter(self):
-    return self
-SparseMatIteratorPtr.__iter__ = _SparseMatIterator_iter
-SparseMatRowIteratorPtr.__iter__ = _SparseMatIterator_iter
-
-
-def _SparseMat_diagonal(self):
-    # This is just for debugging.  We've worked really hard to make it
-    # difficult to get at the individual entries in a SparseMat or
-    # DoubleVec, so we have to work really hard to get them here.
-    diag = [0]*self.nrows()
-    for i in range(self.nrows()):
-        unit = doublevec.DoubleVec(self.nrows())
-        unit.increment(i, 1.0)
-        diag[i] = unit.dot(self.inefficient_get_column(i))
-    return diag
-SparseMatPtr.stupid_diagonal = _SparseMat_diagonal
+def _sparsemat___div__(self, x):
+        result = self.clone()
+        result /= x
+        return result
+SparseMatPtr.__div__ = _sparsemat___div__
 

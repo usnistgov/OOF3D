@@ -64,7 +64,7 @@ public:
   virtual void component_square() = 0;
   virtual void component_sqrt() = 0;
   virtual void component_abs() = 0;
-  virtual DoubleVec *value_list() const = 0;
+  virtual std::vector<double> *value_list() const = 0;
   virtual double magnitude() const = 0;
 
   // The generic dot product a (dot) b is a.dot(b).  The double
@@ -136,7 +136,7 @@ public:
   virtual OutputVal *dotVector(const VectorOutputVal&) const;
   virtual OutputVal *dotSymmMatrix3(const SymmMatrix3&) const;
 
-  virtual DoubleVec *value_list() const;
+  virtual std::vector<double> *value_list() const;
   virtual double magnitude() const { return fabs(val); }
   double value() const { return val; }
   double &value() { return val; }
@@ -166,12 +166,12 @@ ScalarOutputVal operator/(ScalarOutputVal&, double);
 
 class VectorOutputVal : public OutputVal {
 private:
-  DoubleVec data;
+  std::vector<double> data;
   static std::string classname_;
 public:
   VectorOutputVal(int n);
   VectorOutputVal(const VectorOutputVal&);
-  VectorOutputVal(const DoubleVec&);
+  VectorOutputVal(const std::vector<double>&);
   VectorOutputVal(const Coord&);
   virtual ~VectorOutputVal() {}
   virtual const std::string &classname() const { return classname_; }
@@ -185,7 +185,7 @@ public:
   virtual OutputVal &operator+=(const OutputVal &other) {
     const VectorOutputVal &another = 
       dynamic_cast<const VectorOutputVal&>(other);
-    for(unsigned int i=0; i<data.size(); i++)
+    for(unsigned int i=0; i<size(); i++)
       data[i] += another.data[i];
     return *this;
   }
@@ -220,6 +220,7 @@ public:
   }
 
   double dot(const DoubleVec&) const;
+  double dot(const std::vector<double>&) const;
 #if DIM==3
   double dot(const Coord&) const;
 #endif // DIM==3
@@ -228,8 +229,9 @@ public:
   virtual OutputVal *dotVector(const VectorOutputVal&) const;
   virtual OutputVal *dotSymmMatrix3(const SymmMatrix3&) const;
 
-  virtual DoubleVec *value_list() const;
-  const DoubleVec &value() const { return data; }
+  virtual std::vector<double> *value_list() const;
+  const std::vector<double> &value() const { return data; }
+  
   double operator[](int i) const { return data[i]; }
   double &operator[](int i) { return data[i]; }
   virtual double operator[](const IndexP &p) const;

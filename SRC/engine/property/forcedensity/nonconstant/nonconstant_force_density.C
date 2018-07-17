@@ -14,7 +14,6 @@
 #include "common/coord.h"
 #include "common/ooferror.h"
 #include "common/trace.h"
-#include "common/vectormath.h"
 #include "engine/csubproblem.h"
 #include "engine/element.h"
 #include "engine/elementnodeiterator.h"
