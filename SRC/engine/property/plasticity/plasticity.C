@@ -11,6 +11,7 @@
 
 #include <oofconfig.h>
 #include "engine/property/elasticity/cijkl.h"
+#include "common/cleverptr.h"
 #include "common/coord.h"
 #include "common/threadstate.h"
 #include "common/trace.h"
@@ -28,6 +29,8 @@
 #include "engine/indextypes.h"
 #include "engine/material.h"
 #include "engine/ooferror.h"
+#include "engine/outputval.h"
+#include "engine/planarity.h"
 #include "engine/smallsystem.h"
 #include "engine/property/orientation/orientation.h"
 
@@ -58,7 +61,10 @@ void Plasticity::cross_reference(Material *mtl) {
   }
 }
 
-void Plasticity::precompute(FEMesh*) {
+void Plasticity::precompute(FEMesh* f) {
+
+  mesh = f; // Presumed to be re-set if another mesh is run.
+  
   // Do the orientation thing.
   if(orientation && orientation->constant_in_space()) {
     lab_cijkl_ = xtal_cijkl_.transform(orientation->orientation());
@@ -82,9 +88,11 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 
   PlasticData *pd;
   SlipData *sd;
+
+  int ig_order = integration_order(c,e);
   
   if (ed==0) {
-    pd = new PlasticData(integration_order(c,e),e);
+    pd = new PlasticData(ig_order,e);
     e->setDataByName(pd);  // Element extracts the name.
   }
   else {
@@ -97,7 +105,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
   }
     
   if (eds==0) {
-    sd = new SlipData(integration_order(c,e),rule,e);
+    sd = new SlipData(ig_order,rule,e);
     e->setDataByName(sd);
   }
   else {
@@ -133,7 +141,42 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
   //   
   //   (Update the plasticdata and slipdata objects?  Or not until final
   //      outer loop convergence?)
+
+  SmallMatrix f_tau(3);
   
+  int gptdx = 0;
+  for (GaussPointIterator gpt = e->integrator(ig_order);
+       !gpt.end(); ++gptdx,++gpt) {
+    const GaussPoint agpt = gpt.gausspoint(); // Actual gausspoint.
+
+    f_tau.clear();
+
+    // CleverPtr for scope management.  The control sequence here
+    // resembles Element::outputFieldDeriv, which we should maybe use
+    // directly?  Not doing this because I think I need to own the
+    // node loop, but this might not be true.
+    for (CleverPtr<ElementFuncNodeIterator> efi(e->funcnode_iterator());
+	 !(efi->end()); ++(*efi)) {
+      OutputValue dval = displacement->newOutputValue();
+      // Reference-state derivatives.
+      double dshapedx = efi->dshapefunction(0,agpt);
+      double dshapedy = efi->dshapefunction(1,agpt);
+      double dshapedz = efi->dshapefunction(2,agpt);
+
+      // Vector value of the displacement at the node.
+      dval += displacement->output(mesh, *efi);
+
+      for (IteratorP ip = displacement->iterator(ALL_INDICES);
+	   !ip.end(); ++ip) {
+	f_tau(ip.integer(),0) += dval[ip]*dshapedx;
+	f_tau(ip.integer(),1) += dval[ip]*dshapedy;
+	f_tau(ip.integer(),2) += dval[ip]*dshapedz;
+	f_tau(ip.integer(), ip.integer()) += 1.0;
+      }
+    }
+    // f_tau is now populated.
+    
+  }
 }
 
 int Plasticity::integration_order(const CSubProblem *sp,

@@ -104,6 +104,7 @@ public:
   // Outputs -- plastic strain at gpts, total strain, elastic strain...
   
 protected:
+  FEMesh *mesh; // Set in precompute, used in begin_element.
   const int nslips;
   // TODO: 2D version?
   ThreeVectorField *displacement;
