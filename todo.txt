@@ -51,6 +51,10 @@ Skeleton Info toolbox is raising incorrect warning message when
 clicking on an element.  Fixed, sort of.. It should raise the warning
 only for the active mode.
 
+Bug?  Stop a SnapNodes operation part way through, then try to save
+the Skeleton.  Crash?  Load LOGO3D/oof3d-nT2l6n.py and then try to
+save the Skeleton.  Maybe not related to interrupting SnapNodes.
+
 --------------------------------------------------------------------------
 Soon
 ----
