@@ -9,6 +9,7 @@
  * oof_manager@nist.gov. 
  */
 
+#include "common/IO/oofcerr.h"
 #include "engine/sparsemat.h"
 #include "engine/dofmap.h"
 #include "eigen/unsupported/Eigen/SparseExtra"
@@ -20,11 +21,23 @@
 #include <sstream>
 #endif // HAVE_SSTREAM
 
+SparseMat::SparseMat() {
+  // oofcerr << "SparseMat::ctor 0: " << this << std::endl;
+}
+
+SparseMat::SparseMat(unsigned int nr, unsigned int nc)
+  : data(nr, nc)
+{
+  // oofcerr << "SparseMat::ctor 1: " << this << std::endl;
+}
+
 // Construct by extraction from an existing matrix.
 SparseMat::SparseMat(const SparseMat& source,
                      const DoFMap& rowmap,
                      const DoFMap& colmap) 
-  : data(rowmap.range(), colmap.range()) {
+  : data(rowmap.range(), colmap.range())
+{
+  // oofcerr << "SparseMat::ctor 2: this=" << this << std::endl;
 
   // rowmap[i] is the row of the submatrix corresponding to row i of
   // mat. If rowmap[i] == -1, then row i should not be included in the
@@ -47,6 +60,22 @@ SparseMat::SparseMat(const SparseMat& source,
     }
   }
   make_compressed();
+}
+
+SparseMat::SparseMat(const SparseMat &x)
+  : data(x.data)
+{
+  // oofcerr << "SparseMat::copy ctor: " << &x << " --> " << this << std::endl;
+}
+
+SparseMat::SparseMat(SparseMat &&x)
+  : data(std::move(x.data))
+{
+  // oofcerr << "SparseMat::move ctor: " << &x << " --> " << this << std::endl;
+}
+
+SparseMat::~SparseMat() {
+  // oofcerr << "SparseMat::dtor: this=" << this << std::endl;
 }
 
 void SparseMat::set_from_triplets(std::vector<Triplet>& tris) {
@@ -320,8 +349,8 @@ std::ostream& operator<<(std::ostream& os, const SparseMat& smat) {
   for (int k = 0; k < mat.outerSize(); ++k) {
     for (SparseMat::InnerIter it(mat, k); it; ++it)
       os << it.row() << " " << it.col() << " "
-        << it.value() << std::endl;
-  } 
+         << it.value() << std::endl;
+  }
   return os;
 }
 

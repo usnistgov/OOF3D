@@ -36,7 +36,7 @@ public:
   void axpy(double alpha, const DoubleVec& x);
   void scale(double alpha);
   double dot(const DoubleVec&);
-
+  void eval();
   const std::string str() const;
 };
 

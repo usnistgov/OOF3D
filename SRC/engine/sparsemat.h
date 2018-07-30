@@ -37,14 +37,14 @@ private:
 public:
   typedef ESMat::InnerIterator InnerIter;
 
-  SparseMat() = default;
-  SparseMat(unsigned int nr, unsigned int nc) : data(nr, nc) {}
+  SparseMat(); // = default;
+  SparseMat(unsigned int nr, unsigned int nc); // : data(nr, nc) {}
   SparseMat(const SparseMat&, const DoFMap&, const DoFMap&);
-  SparseMat(const SparseMat&) = default;
-  SparseMat(SparseMat&&) = default; // move constructor
+  SparseMat(const SparseMat&); //  = default;
+  SparseMat(SparseMat&&); // = default; // move constructor
   SparseMat& operator=(const SparseMat&) = default;
   SparseMat& operator=(SparseMat&&) = default; // move assignment
-  ~SparseMat() = default;
+  ~SparseMat(); // = default;
   SparseMat clone() const { return *this; }
   void set_from_triplets(std::vector<Triplet>&);
 

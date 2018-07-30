@@ -103,7 +103,7 @@ class SS22(timestepper.SecondOrderStepper, timestepper.LinearStepper,
         data = NLDataSS22(subproblem, linsys, endtime,
                           dt, unknowns, self.theta1, self.theta2)
 
-        alpha = doublevec.DoubleVec(linsys.n_unknowns_MCK()) # not MCKd
+        alpha = doublevec.DoubleVec(linsys.n_unknowns_MCK(), 0.0) # not MCKd
 
         nonlinearMethod.solve(subproblem.matrix_method(_asymmetric, subproblem),
                               self.precomputeNL,
@@ -124,7 +124,7 @@ class SS22(timestepper.SecondOrderStepper, timestepper.LinearStepper,
                                       endValues=endValues, linsys=linsys)
 
 
-    def precomputeNL(self, data, alphas, nlsolver): 
+    def precomputeNL(self, data, alphas, nlsolver):
         values = doublevec.DoubleVec(data.linsys.n_unknowns_MCKd())
         data.linsys.set_fields_MCKd(data.a11+(0.5*data.dt*data.dt)*alphas,
                                     values)
@@ -141,7 +141,6 @@ class SS22(timestepper.SecondOrderStepper, timestepper.LinearStepper,
         data.Mstar = data.Mstar0.clone()
         data.Mstar.add(self.theta1, data.M1)
         data.Mstar.add(data.dt*self.theta2, data.C1)
-
 
     def compute_residual(self, data, soln, nlsolver):
         # soln is the proposed solution from the nonlinear solver

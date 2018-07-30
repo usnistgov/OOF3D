@@ -11,6 +11,7 @@
 
 #include "eigen/unsupported/Eigen/SparseExtra" // for saveMarketVector
 #include "common/doublevec.h"
+#include "common/tostring.h"
 #include <sstream>
 #include <fstream>
 
@@ -131,13 +132,31 @@ DoubleVec::const_iterator DoubleVec::end() const {
 }
 
 const std::string DoubleVec::str() const {
+  // return to_string(*this);
   std::ostringstream os;
-  os << data;
+  os << *this;
   return os.str();
 }
 
 std::ostream& operator<<(std::ostream& os, const DoubleVec& vec) {
-  os << vec.data;  
+  int n = vec.size();
+  std::cerr << "****** operator<<(DoubleVec): n=" << n << std::endl;
+  if(n > 0) {
+    int prec = os.precision();
+    os << std::setprecision(PRECISION); // PRECISION defined in printvec.h
+    for(unsigned int i=0; i<n; i++) {
+      os << vec.data[i];
+      if((i+1)%10 == 0)
+	os << std::endl;
+      else
+	os << " ";
+    }
+    os << std::setprecision(prec);
+  }
+  else {
+    os << "(empty)";
+  }
+  //  os << vec.data;
   return os;
 }
 

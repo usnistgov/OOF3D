@@ -1014,7 +1014,10 @@ class SubProblemContext(whoville.Who):
             self.time_stepper.set_derivs_part('C', linsys, u1dot, unknowns)
 
     def computeStaticFieldsNL(self, linsys, unknowns):
-        # Initialize "static" fields for nonlinear problems. 
+        # Initialize "static" fields for nonlinear problems.
+        debug.fmsg("derivOrder=", self.time_stepper.derivOrder(),
+                   "lenK=", linsys.n_unknowns_part('K'),
+                   "lenC=", linsys.n_unknowns_part('C'))
         if linsys.n_unknowns_part('K')==0 and linsys.n_unknowns_part('C')==0:
             return
 
@@ -1041,11 +1044,29 @@ class SubProblemContext(whoville.Who):
             u1dot = self.time_stepper.get_derivs_part('C', linsys, unknowns)
             u2dot = self.time_stepper.get_derivs_part('M', linsys, unknowns)
 
+            print >> sys.stderr, "**** Writing ss22dump.vecs ****"
+            phile = open("ss22dump.vecs", "w")
+            print >> phile, "u1dot", u1dot.size(), "\n", u1dot
+            print >> phile, "u2dot", u2dot.size(), "\n", u2dot
+            
+            debug.fmsg("Getting C11")
             C11 = linsys.C_submatrix('C', 'C')
+            debug.fmsg("Got C11")
             C12 = linsys.C_submatrix('C', 'M')
             # rhs = -F(u) - C12*u2dot
             rhs = -linsys.static_residual_ind_part('C')
             C12.axpy(-1.0, u2dot, rhs)
+            
+            print >> sys.stderr, "**** Writing ss22dump ****"
+            rhs.eval()
+            print >> phile, "rhs", rhs.size(), "\n", rhs
+            phile.close()
+            phile = open("ss22dump.mat", "w")
+            print >> phile, "C11\n", C11
+            phile.close()
+            sys.exit(1)
+
+            debug.fmsg("Solving C11")
             self.matrix_method(self.asymmetricC).solve(C11, rhs, u1dot)
             self.time_stepper.set_derivs_part('C', linsys, u1dot, unknowns)
 

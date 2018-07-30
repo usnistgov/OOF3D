@@ -641,6 +641,9 @@ elastic_set = [
 
 test_set = diffusion_set + elastic_set
 
-#test_set = elastic_set
+test_set = [
+#    OOF_LinearDiffusion("CN"),
+    OOF_LinearDiffusion("SS22")]
+
     
     

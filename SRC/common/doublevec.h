@@ -47,6 +47,8 @@ public:
   DoubleVec subvec(int start, int end) const;
   void segment_copy(int, const DoubleVec&, int, int);
 
+  void eval() { data.eval(); }
+
   typedef int size_type;
 
   /* Arithmetic operations */

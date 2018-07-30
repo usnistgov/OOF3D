@@ -703,8 +703,7 @@ class oof_build_xxxx:
             pyfile = os.path.normpath(os.path.join(swigroot, base+'.py'))
             depdict.setdefault(cfile, []).append(phile)
             depdict.setdefault(pyfile, []).append(phile)
-        # Add in the implicit dependencies on
-# This does the swigging. the .spy files.
+        # Add in the implicit dependencies on the .spy files.
         for underpyfile in allFiles('swigpyfiles'):
             base = os.path.splitext(underpyfile)[0] # drop .spy
             pyfile = os.path.normpath(os.path.join(swigroot,base[6:]+'.py'))
@@ -1518,7 +1517,9 @@ if __name__ == '__main__':
                   os.path.isfile(os.path.join(dirpath, phile))]))
 
     # Add the testing files.  The 'TEST3D' directory becomes the
-    # 'ooftests' module when oof3d is installed. 
+    # 'ooftests' module when oof3d is installed.
+    ## TODO: Use the DIR.py mechanism or something like it to include
+    ## these files?  Having to list them here is asking for trouble.
     pkgs.extend([OOFNAME + '.ooftests', OOFNAME+'.ooftests.UTILS'])
     pkg_dir[OOFNAME + '.ooftests'] = 'TEST3D'
     pkg_data[OOFNAME + '.ooftests'] = ['aniso_data/*',

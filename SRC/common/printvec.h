@@ -16,7 +16,7 @@
 
 // std::vector<> and friends need output operators.  Using a template
 // argument for the stream allows these to be used by both
-// std::ostream and oofcerr.
+// std::ostream and oofcerr.  EXCEPT that it doesn't work for oofcerr...
 
 #include <iomanip>
 #include <iostream>
