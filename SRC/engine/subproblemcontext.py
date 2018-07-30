@@ -1057,17 +1057,17 @@ class SubProblemContext(whoville.Who):
             rhs = -linsys.static_residual_ind_part('C')
             C12.axpy(-1.0, u2dot, rhs)
             
-            print >> sys.stderr, "**** Writing ss22dump ****"
+            print >> sys.stderr, "**** Writing ss22dump.mat ****"
             rhs.eval()
             print >> phile, "rhs", rhs.size(), "\n", rhs
             phile.close()
             phile = open("ss22dump.mat", "w")
             print >> phile, "C11\n", C11
             phile.close()
-            sys.exit(1)
 
             debug.fmsg("Solving C11")
             self.matrix_method(self.asymmetricC).solve(C11, rhs, u1dot)
+            debug.fmsg("Got C11")
             self.time_stepper.set_derivs_part('C', linsys, u1dot, unknowns)
 
     ## Time stepping utilities

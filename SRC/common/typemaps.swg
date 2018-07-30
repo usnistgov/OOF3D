@@ -114,7 +114,10 @@ using std::string;
 %}
 
 
-
+%typemap(python, out) string* {
+  // typemap(python, out) string*
+  $target = PyString_FromString($source->c_str());
+}
 
 %typemap(python,out) string& {
   // typemap(python, out) string&

@@ -11,7 +11,7 @@
 
 #include "eigen/unsupported/Eigen/SparseExtra" // for saveMarketVector
 #include "common/doublevec.h"
-#include "common/tostring.h"
+#include "common/printvec.h"
 #include <sstream>
 #include <fstream>
 
@@ -131,16 +131,17 @@ DoubleVec::const_iterator DoubleVec::end() const {
   return it;
 }
 
-const std::string DoubleVec::str() const {
-  // return to_string(*this);
+const std::string *DoubleVec::str() const {
   std::ostringstream os;
   os << *this;
-  return os.str();
+  // TODO: Is there a way of doing this without making a copy?  We
+  // have to return a pointer to a new'd string to avoid swig
+  // problems.
+  return new std::string(os.str());
 }
 
 std::ostream& operator<<(std::ostream& os, const DoubleVec& vec) {
   int n = vec.size();
-  std::cerr << "****** operator<<(DoubleVec): n=" << n << std::endl;
   if(n > 0) {
     int prec = os.precision();
     os << std::setprecision(PRECISION); // PRECISION defined in printvec.h

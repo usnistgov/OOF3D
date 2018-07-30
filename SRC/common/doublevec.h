@@ -91,7 +91,7 @@ public:
 
   /* Miscellaneous */
 
-  const std::string str() const;
+  const std::string *str() const;
 
   friend SparseMat;
   friend SmallMatrix;

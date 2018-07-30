@@ -12,6 +12,8 @@
 #ifndef DOUBLEVEC_SWG
 #define DOUBLEVEC_SWG
 
+%include "common/typemaps.swg"
+
 %module doublevec
 
 %{
@@ -37,12 +39,11 @@ public:
   void scale(double alpha);
   double dot(const DoubleVec&);
   void eval();
-  const std::string str() const;
 };
 
 %addmethods DoubleVec {
-  const char* __repr__() {
-    return (*self).str().c_str();
+  %new const string *__repr__() {
+     return (*self).str();
   }
 
   void copy_inplace(DoubleVec *x) {
