@@ -28,6 +28,7 @@
 #include <limits>
 
 class CMicrostructure;
+class CRectangularPrism;
 class CSkeleton;
 class CSkeletonBase;
 class LineIntersectionPoint;
@@ -214,6 +215,7 @@ public:
   CSkeletonNodeVector *get_node_children();
   virtual Coord center() const;
   void printNodes(ostream&) const;
+  CRectangularPrism boundingBox() const;
 };
 
 

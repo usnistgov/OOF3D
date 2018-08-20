@@ -133,10 +133,18 @@ class AxisLength(registeredclass.RegisteredClass):
         if ms is None:
             return primitives.Point(1, 1, 1)
         msize = ms.size()
-        return primitives.Point(
-            self.resolve1(self.x, msize.x),
-            self.resolve1(self.y, msize.y),
-            self.resolve1(self.z, msize.z))
+        lx = self.resolve1(self.x, msize.x)
+        ly = self.resolve1(self.y, msize.y)
+        lz = self.resolve1(self.z, msize.z)
+        # Ensure that the smallest axis length is not less than a
+        # given fraction of the largest, to ensure that all axes are
+        # visible.
+        lmax = max(lx, ly, lz)
+        minl = 0.1 * lmax
+        lx = max(lx, minl)
+        ly = max(ly, minl)
+        lz = max(lz, minl)
+        return primitives.Point(lx, ly, lz)
 
 lengthparams = [
     parameter.AutoNumericParameter('x'),

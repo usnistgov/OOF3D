@@ -1,0 +1,16 @@
+# When changes to the code are causing skeleton refinements to differ
+# from the reference files in trivial ways, skeldiff1.log and
+# skeldiff2.log can help to see the differences between the skeletons
+# saved by skeleton_modification_test.py and its reference files.  Run
+# oof3d --de --da <test output file> --sc skeldiff1.log --da <test reference file> --sc skeldiff2.log
+
+
+# OOF version (unreleased)
+OOF.Microstructure.Rename(microstructure='5color', name='test')
+OOF.Windows.Graphics.New()
+OOF.ElementSelection.Clear(skeleton='test:skeleton')
+OOF.FaceSelection.Clear(skeleton='test:skeleton')
+OOF.SegmentSelection.Clear(skeleton='test:skeleton')
+OOF.NodeSelection.Clear(skeleton='test:skeleton')
+OOF.Graphics_1.Layer.Select(n=2)
+OOF.Graphics_1.Layer.Edit(n=2, category='Image', what='test:5color', how=BitmapDisplayMethod(filter=VoxelGroupFilter(group='#fefefe'),opacity=1))

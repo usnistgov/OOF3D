@@ -15,6 +15,9 @@
 
 3.2.0
 
+Fixed a bug that was making the Microstructure recalculate voxel
+categories far too often.
+
 Added the Relax Skeleton modifier.
 
 Added a RefinementTarget to split the long edges of a Skeleton
@@ -87,6 +90,25 @@ while its Skeleton was still computing its homogeneity.
 Fixed a bug that generated warning messages when drawing the
 coordinate axes if a Microstructure had a large aspect ratio.
 
+Fixed a bug that made it impossible to save files after loading images
+using the "Listed Files" option.
+
+Improved initial parameters for clipping planes.
+
+3.1.2
+
+Fixed errors that made saving a large Mesh in abaqus format take far
+too long, and also moved the bulk of the code from Python to C++.
+
+Fixed an error that made creating a large Skeleton take too long
+because it was recalculating the homogeneity unnecessarily.
+
+Fixed a race condition that caused problems when a Mesh was created
+before its Skeleton had finished computing its homogeneity.
+
+Fixed a bug in which the coordinate axes were drawn badly if a
+Microstructure had an extreme aspect ratio.
+
 3.1.1.1
 
 Minor changes to make the old gcc 4.7 compilers happy.
@@ -121,6 +143,8 @@ after some Undo and Redo operations.
 Fixed the behavior of the progress bars when automatically creating
 voxel groups. They weren't able to interrupt long computations
 effectively.
+
+Added quadratic tetrahedral elements.
 
 Implemented a new and vastly superior method for calculating element
 homogeneity.  It's faster and more robust.
