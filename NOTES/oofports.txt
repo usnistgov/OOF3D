@@ -4,7 +4,7 @@ binary distribution of OOF3D
 sudo mkdir /opt/oofports
 
 # Clear PATH:
-export PATH=/oofports/bin:/bin:/sbin:/usr/bin:/usr/sbin
+export PATH=/opt/oofports/bin:/bin:/sbin:/usr/bin:/usr/sbin
 
 ---
 Build MacPorts
@@ -14,6 +14,7 @@ cd OOFPorts
 ./configure --prefix=/opt/oofports --with-applications-dir=/opt/oofports/Applications --without-startupitems
 make
 sudo make install
+sudo port selfupdate
 
 ---
 Add oof3d and vtk8 ports
@@ -44,9 +45,16 @@ cp $(port dir glib2)/files/* ~/ports/devel/glib2/files
 # "--with-appinfo-impl=native" to "--with-appinfo-impl=generic" in the
 # "variant quartz" block.
 
-
 cd ~/ports
 sudo portindex
+
+# Set the version line in ~/ports/science/oof3d/Portfile. 
+
+# Put the oof3d tar file in either localhost/~langer/oof/oof3d/source
+# or www.ctcms.nist.gov/oof/oof3d/source, and set the master_sites
+# line in the Portfile accordingly.  The tar file must be named
+# oof3d-${version}.tar.gz, where ${version} is the version string from
+# the version line in the Portfile.
 
 sudo port selfupate
 #sudo port install glib2 +x11 -quartz
