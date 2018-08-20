@@ -67,7 +67,7 @@ solver_map["BiCGStab"]["ILU"] = cmatrixmethods.BiCGStab_ILUT
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-_check_symmetry = False #debug.debug()
+_check_symmetry = debug.debug()
 
 ## The routines in cmatrixmethods return the number of iterations and
 ## the residual. 
@@ -88,11 +88,20 @@ class ConjugateGradient(PreconditionedMatrixMethod):
                 raise ooferror2.ErrPyProgrammingError(
                     "%dx%d CG matrix is not symmetric!" %
                     (matrix.nrows(), matrix.ncols()))
+            elif not matrix.is_positive_definite():
+                raise ooferror2.ErrPyProgrammingError(
+                    "CG matrix is not positive definite!")
+            else:
+                debug.fmsg("Matrix is positive definite.")
         succ = self.solver.solve(matrix, rhs, solution)
         if succ != cmatrixmethods.SUCCESS: 
             if succ == cmatrixmethods.NOCONVERG:
+                debug.fmsg("tolerance=", self.tolerance,
+                           "max_iterations=", self.max_iterations,
+                           "preconditioner=", self.preconditioner.name,
+                           "solver=", self.solver)
                 raise ooferror2.ErrPyProgrammingError(
-                    "Iterative procedure did not converge")
+                    "ConjugateGradient solver did not converge")
         return self.solver.iterations(), self.solver.error()
 
 registeredclass.Registration(
@@ -144,7 +153,7 @@ class StabilizedBiConjugateGradient(PreconditionedMatrixMethod):
         if succ != cmatrixmethods.SUCCESS: 
             if succ == cmatrixmethods.NOCONVERG:
                 raise ooferror2.ErrPyProgrammingError(
-                    "Iterative procedure did not converge")
+                    "StabilizedBiConjugateGradient solver did not converge")
         return self.solver.iterations(), self.solver.error()
 
 registeredclass.Registration(

@@ -1044,10 +1044,10 @@ class SubProblemContext(whoville.Who):
             u1dot = self.time_stepper.get_derivs_part('C', linsys, unknowns)
             u2dot = self.time_stepper.get_derivs_part('M', linsys, unknowns)
 
-            print >> sys.stderr, "**** Writing ss22dump.vecs ****"
-            phile = open("ss22dump.vecs", "w")
-            print >> phile, "u1dot", u1dot.size(), "\n", u1dot
-            print >> phile, "u2dot", u2dot.size(), "\n", u2dot
+            # print >> sys.stderr, "**** Writing ss22dump.vecs ****"
+            # phile = open("ss22dump.vecs", "w")
+            # print >> phile, "u1dot", u1dot.size(), "\n", u1dot
+            # print >> phile, "u2dot", u2dot.size(), "\n", u2dot
             
             debug.fmsg("Getting C11")
             C11 = linsys.C_submatrix('C', 'C')
@@ -1057,17 +1057,16 @@ class SubProblemContext(whoville.Who):
             rhs = -linsys.static_residual_ind_part('C')
             C12.axpy(-1.0, u2dot, rhs)
             
-            print >> sys.stderr, "**** Writing ss22dump.mat ****"
-            rhs.eval()
-            print >> phile, "rhs", rhs.size(), "\n", rhs
-            phile.close()
-            phile = open("ss22dump.mat", "w")
-            print >> phile, "C11\n", C11
-            phile.close()
+            # print >> sys.stderr, "**** Writing ss22dump.mat ****"
+            # print >> phile, "rhs", rhs.size(), "\n", rhs
+            # phile.close()
+            # phile = open("ss22dump.mat", "w")
+            # print >> phile, "C11\n", C11
+            # phile.close()
 
             debug.fmsg("Solving C11")
             self.matrix_method(self.asymmetricC).solve(C11, rhs, u1dot)
-            debug.fmsg("Got C11")
+            debug.fmsg("Solved C11")
             self.time_stepper.set_derivs_part('C', linsys, u1dot, unknowns)
 
     ## Time stepping utilities

@@ -66,6 +66,8 @@ public:
   bool is_nonempty_row(int) const;
   bool is_nonempty_col(int) const;
 
+  bool is_positive_definite() const;
+
   SparseMat lower() const;
   SparseMat unit_lower() const;
   SparseMat upper() const;

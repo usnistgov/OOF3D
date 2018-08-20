@@ -328,6 +328,14 @@ bool SparseMat::is_symmetric(double tolerance) const {
   return true;
 }
 
+bool SparseMat::is_positive_definite() const {
+  // The LL' decomposition (Cholesky decomposition) fails if the
+  // matrix is not positive definite, and Eigen will detect that.
+  // This is probably a time consuming test.
+  Eigen::SimplicialLLT<ESMat> llt(data);
+  return llt.info() != Eigen::NumericalIssue;
+}
+
 const std::string SparseMat::str() const {
   std::ostringstream os;
   os << *this;

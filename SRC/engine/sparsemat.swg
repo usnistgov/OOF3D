@@ -45,6 +45,7 @@ public:
   bool empty() const;
   bool is_nonempty_row(unsigned int) const;
   bool is_nonempty_col(unsigned int) const;
+  bool is_positive_definite() const;
   SparseMat lower() const;
   SparseMat unit_lower() const;
   SparseMat upper() const;
@@ -92,6 +93,10 @@ public:
  
     bool load(const char *filename) {
       return load_mat(*self, std::string(filename));
+    }
+
+    SparseMat __neg__() {
+      return (*self)*(-1.);
     }
   }
 };
