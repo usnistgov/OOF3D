@@ -308,7 +308,6 @@ try:
     getFiles(distdir, manifest)   
     manifest.close()
 
-<<<<<<< HEAD
     # Check all the modifications into git, and tag with the version
     # number.  It's necessary to go back to the distribution directory
     # to use git.
@@ -353,8 +352,6 @@ try:
         print >> sys.stderr, '*** git tag', tag
         print >> sys.stderr, '*** git push origin'
         print >> sys.stderr, '*** git push origin %s' % tag
-=======
->>>>>>> development
     
     # Build the distribution.
     distfilename = distdir + ".tar.gz"
