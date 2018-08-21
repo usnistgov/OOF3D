@@ -308,63 +308,12 @@ try:
     getFiles(distdir, manifest)   
     manifest.close()
 
-    # Check all the modifications into git, and tag with the version
-    # number.  It's necessary to go back to the distribution directory
-    # to use git.
-    print >> sys.stderr, "Changing directory to", distdir
-    os.chdir(distdir)
-    osCall('git', 'add', 'SRC/common/oofversion.py', 'setup.py')
-        
-    commit_msg = ("Building " + distname.distname + " release version " +
-                  version)
-    if comment:
-        commit_msg += " -- " + comment
-    tag = distname.distname + "-" + version
-    if comment:
-        oldtag = tag
-        comment.replace(' ', '-')
-        tag += "--" + comment
-    # Check and/or fix the tag if it's not legal
-    proc = subprocess.Popen(['git', 'check-ref-format', '--normalize',
-                             '--allow-onelevel', tag],
-                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdoutdata, stderrdata = proc.communicate()
-    if proc.returncode == 0:    # success
-        tag = stdoutdata.strip()
-    else:
-        print >> sys.stderr, "Failed to convert '%s' to a legal tag." % tag
-        print >> sys.stderr, "Using '%s' instead." % oldtag
-        tag = oldtag
-    
-    if not dryrun:
-        # If there's nothing to commit, this call to "git commit" will
-        # fail unless we give the --allow-empty option.  There will be
-        # nothing to commit if setup.py and oofversion.py haven't
-        # changed, which will be the case if this is not the first
-        # attempt to package this version.
-        osCall('git', 'commit', '-m', '"'+commit_msg+'"', "--allow-empty")
-        osCall('git', 'tag', tag)
-        osCall('git', 'push', 'origin')        
-        osCall('git', 'push', 'origin', tag)
-    else:
-        print >> sys.stderr, "Dry run! Not running:"
-        print >> sys.stderr, '*** git commit -m %s --allow-empty' % commit_msg
-        print >> sys.stderr, '*** git tag', tag
-        print >> sys.stderr, '*** git push origin'
-        print >> sys.stderr, '*** git push origin %s' % tag
-    
     # Build the distribution.
     distfilename = distdir + ".tar.gz"
     print >> sys.stderr, "Distribution file is", distfilename
 
-    
     cmd = ['tar', '-T', os.path.join(distdir, 'MANIFEST'), '-czf', distfilename]
     osCall(*cmd)
-    # print >> sys.stderr, ' '.join(cmd)
-    # status = subprocess.call(cmd)
-    # if status != 0:
-    #     print >> sys.stderr, "tar failed!"
-    #     sys.exit(status)
     print >> sys.stderr, "Moving", distfilename, "to", startdir
     finaldistfilename = os.path.join(startdir, distfilename)
     os.rename(distfilename, finaldistfilename)
