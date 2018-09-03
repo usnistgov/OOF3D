@@ -35,6 +35,42 @@
 #include "engine/property/orientation/orientation.h"
 
 
+// Utility function -- inverts a 3x3 SmallMatrix "manually".
+// TODO: Make this a sub-class of SmallMatrix class, which should
+// use dgetri function, to avoid the determinant?  Our determinants
+// are near unity, so we are probably OK.
+//
+// Method cribbed from:
+// http://www.mathcentre.ac.uk/resources/uploaded/sigma-matrices11-2009-1.pdf
+SmallMatrix sm_invert3(SmallMatrix x) {
+  if ((x.rows()!=3) || (x.cols()!=3)) {
+      throw ErrProgrammingError("invert3 called with non-3x3 SmallMatrix.",
+				__FILE__,__LINE__);
+    }
+  else {
+    SmallMatrix res(3);
+    // Cofactors
+    res(0,0) = x(1,1)*x(2,2)-x(1,2)*x(2,1);
+    res(0,1) = -(x(1,0)*x(2,2)-x(1,2)*x(2,0));
+    res(0,2) = x(1,0)*x(2,1)-x(1,1)*x(2,0);
+    //
+    res(1,0) = -(x(0,1)*x(2,2)-x(0,2)*x(2,1));
+    res(1,1) = x(0,0)*x(2,2)-x(0,2)*x(2,0);
+    res(1,2) = -(x(0,0)*x(2,1)-x(0,1)*x(2,0));
+    //
+    res(2,0) = x(0,1)*x(1,2)-x(0,2)*x(1,1);
+    res(2,1) = -(x(0,0)*x(1,2)-x(1,2)*x(1,0));
+    res(2,2) = x(0,0)*x(1,1)-x(0,1)*x(1,0);
+    //
+    double dtmt = x(0,0)*res(0,0)+x(0,1)*res(0,1)+x(0,2)*res(0,2);
+    //
+    // Inverse is adjoint divided by determinant.
+    res.transpose();
+    //
+    return res*(1.0/dtmt);
+  }
+}
+
 Plasticity::Plasticity(PyObject *reg, const std::string &name,
 		       const Cijkl &c, PlasticConstitutiveRule *r,
 		       const int slips)
@@ -143,6 +179,16 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
   //      outer loop convergence?)
 
   SmallMatrix f_tau(3);
+  SmallMatrix a_mtx(3);
+  SmallMatrix s_trial(3);
+
+  // TODO: Some kind of smart container, for memory management?
+  std::vector<SmallMatrix*> b_mtx(nslips),c_mtx(nslips);
+  for (int i=0;i<nslips;++i) {
+    b_mtx[i]=new SmallMatrix(3);
+    c_mtx[i]=new SmallMatrix(3);
+  }
+  
   
   int gptdx = 0;
   for (GaussPointIterator gpt = e->integrator(ig_order);
@@ -168,14 +214,48 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 
       for (IteratorP ip = displacement->iterator(ALL_INDICES);
 	   !ip.end(); ++ip) {
-	f_tau(ip.integer(),0) += dval[ip]*dshapedx;
-	f_tau(ip.integer(),1) += dval[ip]*dshapedy;
-	f_tau(ip.integer(),2) += dval[ip]*dshapedz;
-	f_tau(ip.integer(), ip.integer()) += 1.0;
+	int idx = ip.integer();
+	f_tau(idx,0) += dval[ip]*dshapedx;
+	f_tau(idx,1) += dval[ip]*dshapedy;
+	f_tau(idx,2) += dval[ip]*dshapedz;
+	f_tau(idx, idx) += 1.0;
       }
     }
-    // f_tau is now populated.
+    // f_tau is now populated for the current gausspoint.
+    // Plastic fp is in pd->gptdata[gptdx].fpt
+    SmallMatrix fp_t = pd->gptdata[gptdx].fpt;
+    SmallMatrix fp_t_i = sm_invert3(fp_t);
+    SmallMatrix f_tau_t = f_tau; f_tau_t.transpose();
+    SmallMatrix fp_t_i_t = fp_t_i; fp_t_i_t.transpose();
     
+    a_mtx = ((fp_t_i_t*f_tau_t)*f_tau)*fp_t_i;
+
+    SmallMatrix elastic_estimate = a_mtx;
+    for (int i=0;i<3;++i) { elastic_estimate(i,i) -= 1.0; }
+
+    s_trial.clear();
+    for (int i=0;i<3;++i)
+      for (int j=0;j<3;++j)
+	for (int k=0;k<3;++k)
+	  for (int l=0;l<3;++l)
+	    s_trial(i,j) += 0.5*lab_cijkl_(i,j,k,l)*elastic_estimate(k,l);
+    
+    // At this point we have the A matrix and trial stress for this gpt.
+    // Slip systems are in lab_schmid_tensors, std::vector<SmallMatrix*>.
+
+    // Populate b and c matrix vectors.
+    for(int si=0;si<nslips;++si) {
+      SmallMatrix mn = (*lab_schmid_tensors[si]);
+      SmallMatrix mn_t = mn; mn_t.transpose();
+      *(b_mtx[si]) = a_mtx*mn+mn_t*a_mtx;
+      c_mtx[si]->clear();
+      for(int i=0;i<3;++i)
+	for(int j=0;j<3;++j)
+	  for(int k=0;k<3;++k)
+	    for(int l=0;l<3;++l)
+	      (*(c_mtx[si]))(i,j) += 0.5*lab_cijkl_(i,j,k,l)*(*(b_mtx[si]))(k,l);
+    }
+    // A, B, and C matrix sets are built.  Iterate.
   }
 }
 
