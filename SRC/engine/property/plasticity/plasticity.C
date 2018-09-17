@@ -44,7 +44,7 @@
 // http://www.mathcentre.ac.uk/resources/uploaded/sigma-matrices11-2009-1.pdf
 SmallMatrix sm_invert3(SmallMatrix x) {
   if ((x.rows()!=3) || (x.cols()!=3)) {
-      throw ErrProgrammingError("invert3 called with non-3x3 SmallMatrix.",
+      throw ErrProgrammingError("sm_invert3 called with non-3x3 SmallMatrix.",
 				__FILE__,__LINE__);
     }
   else {
@@ -70,6 +70,51 @@ SmallMatrix sm_invert3(SmallMatrix x) {
     return res*(1.0/dtmt);
   }
 }
+
+
+// Cayley-Hamilton trickery to compute the square root of a
+// passed-in matrix.
+// http://www.unthank.xyz/2017/03/04/
+//    square-roots-of-a-matrix-from-cayley-hamilton-theorem/
+SmallMatrix sm_sqrt3(SmallMatrix x) {
+  if ((x.rows()!=3) || (x.cols()!=3)) {
+      throw ErrProgrammingError("sm_sqrt3 called with non-3x3 SmallMatrix.",
+				__FILE__,__LINE__);
+    }
+  else {
+    SmallMatrix res(3);
+    SmallMatrix ident(3);
+    ident(0,0) = 1.0; ident(1,1) = 1.0; ident(2,2) = 2.0;
+    
+    double tol = 1.0e-16; // How to pick?  Machine precision?
+    
+    // Invariants.
+    SmallMatrix c2 = x*x;
+    double ic = x(0,0)+x(1,1)+x(2,2);
+    double iic = 0.5*(ic*ic-(c2(0,0)+c2(1,1)+c2(2,2)));
+    double iiic = x(0,0)*( x(1,1)*x(2,2)-x(1,2)*x(2,1))+
+      x(0,1)*(-(x(1,0)*x(2,2)-x(1,2)*x(2,0)))+
+      x(0,2)*(x(1,0)*x(2,1)-x(1,1)*x(2,0));
+    double ik = ic*ic-3.0*iic;
+
+    if (ik < tol) {
+      double lmda = pow(ic/3.0, 0.5);
+      return ident*lmda;
+    }
+    // else...
+    double big_ev = ic*ic*(ic-4.5*iic)+13.5*iiic;
+    double phi = acos(big_ev/pow(ik,1.5));
+    double l2 = (1.0/3.0)*(ic+2.0*pow(ik,(1.0/3.0))*cos(phi/3.0));
+
+    double iiiu = sqrt(iiic);
+    double iu = sqrt(l2)+sqrt(-l2+ic+2*iiiu/sqrt(l2));
+    double iiu = 0.5*(iu*iu-ic);
+
+    res = (1.0/(iu*iiu-iiiu))*(ident*(iu*iiu)+x*(iu*iu-iiu)-c2);
+    return res;
+  }
+}
+
 
 Plasticity::Plasticity(PyObject *reg, const std::string &name,
 		       const Cijkl &c, PlasticConstitutiveRule *r,
@@ -178,6 +223,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
   //   (Update the plasticdata and slipdata objects?  Or not until final
   //      outer loop convergence?)
 
+  
   SmallMatrix f_tau(3);
   SmallMatrix a_mtx(3);
   SmallMatrix s_trial(3);
@@ -195,6 +241,9 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
        !gpt.end(); ++gptdx,++gpt) {
     const GaussPoint agpt = gpt.gausspoint(); // Actual gausspoint.
 
+    SmallMatrix f_t = pd->gptdata[gptdx].ft;  // Save prior time-step's F.
+
+    // Build the current time-step's version.
     f_tau.clear();
 
     // CleverPtr for scope management.  The control sequence here
@@ -255,7 +304,46 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 	    for(int l=0;l<3;++l)
 	      (*(c_mtx[si]))(i,j) += 0.5*lab_cijkl_(i,j,k,l)*(*(b_mtx[si]))(k,l);
     }
-    // A, B, and C matrix sets are built.  Iterate.
+    // A, B, and C matrix sets are built, and S_trial is populated.
+    // Call the constitutive rule -- given the current S and
+    // current plastic state at this gausspoint (encapsulated
+    // in plasticdata and slipdata), it should return a new S,
+    // a delta-gamma for each slip system, and a two-index object
+    // containing the derivaggtive of the delta-gamma with respect
+    // to the current stress.  Do NR iterations until this converges.
+
+    // Once it's converged, make another call to update the
+    // local plastic state in plasticdata and slipdata.
+
+    // ********  MAGIC **********
+
+    // Then compute the four-index W object at this gausspoint.
+
+
+    // These are "stubs" for now.  The real ones come from
+    // the NR loop through the constitutive rule.
+    SmallMatrix s_tau(3);
+    SmallMatrix fp_tau(3);
+    
+    // At this point, we have the value of s_tau, the 2nd PK stress
+    // at the current time increment, as well as fp_tau, the plastic
+    // strain at the current time, computed from the delta-gammas
+    // and the Asaro equation.
+
+    // Construct the increment matrix, f_nc.
+    SmallMatrix f_t_i = sm_invert3(f_t);
+    SmallMatrix f_nc(3);  // The increment matrix.
+    for(int i=0;i<3;++i)
+      for(int j=0;j<3;++j)
+	for(int k=0;k<3;++k)
+	  f_nc(i,j) += f_tau(i,k)*f_t_i(k,j);
+
+    // Construct the polar decomposition of f_nc.
+    // f_nc = r_nc.u_nc, where u_nc is the square root of f_nc_t.f_nc.
+    
+    // Construct derivative matrix s4 = dfE(tau)/dUt
+    // Construct derivative matrix q4 = dS(tau)/dUt
+    // Combine into four-index object w.
   }
 }
 
