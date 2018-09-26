@@ -73,6 +73,9 @@ Either put the .tar.gz file on the CTCMS server or on a local web
 server.  Adjust the master_sites line in the oof3d Portfile
 accordingly.
 
+Set the checksums lines in the Portfile according to the values
+printed by make_dist.
+
 cd ~/stow
 ./switchto oof2-none
 ./switchto3d oof3d-none
@@ -121,8 +124,3 @@ but should use sys.prefix in install_name_tool.
 
 For a non-macports build, final installation prefix should be set from
 --prefix, which should also be used in install_name_tool.
-
-
-Don't use DESTDIR when setting --prefix.
-Always set install_name using --prefix only.
-Only when moving files, move them to DESTDIR/prefix.
