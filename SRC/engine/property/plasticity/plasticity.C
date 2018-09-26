@@ -39,7 +39,9 @@
 // TODO: Make this a sub-class of SmallMatrix class, which should
 // use dgetri function, to avoid the determinant?  Our determinants
 // are near unity, so we are probably OK.
-//
+// SmallMatrix has a "symmetric_invert" routine already, but that
+// requires the matrix to be symmetric.
+// 
 // Method cribbed from:
 // http://www.mathcentre.ac.uk/resources/uploaded/sigma-matrices11-2009-1.pdf
 SmallMatrix sm_invert3(SmallMatrix x) {
@@ -73,16 +75,16 @@ SmallMatrix sm_invert3(SmallMatrix x) {
 
 
 // Cayley-Hamilton trickery to compute the square root of a
-// passed-in matrix.
-// http://www.unthank.xyz/2017/03/04/
-//    square-roots-of-a-matrix-from-cayley-hamilton-theorem/
-SmallMatrix sm_sqrt3(SmallMatrix x) {
+// passed-in matrix.  Returns the 'U' matrix and its inverse.
+// https://scholarworks.gsu.edu/cgi/viewcontent.cgi?article=1023&context=math_theses
+
+std::pair<SmallMatrix,SmallMatrix> sm_sqrt3(SmallMatrix x) {
   if ((x.rows()!=3) || (x.cols()!=3)) {
       throw ErrProgrammingError("sm_sqrt3 called with non-3x3 SmallMatrix.",
 				__FILE__,__LINE__);
     }
   else {
-    SmallMatrix res(3);
+    std::pair<SmallMatrix,SmallMatrix> res(SmallMatrix(3),SmallMatrix(3));
     SmallMatrix ident(3);
     ident(0,0) = 1.0; ident(1,1) = 1.0; ident(2,2) = 2.0;
     
@@ -99,7 +101,9 @@ SmallMatrix sm_sqrt3(SmallMatrix x) {
 
     if (ik < tol) {
       double lmda = pow(ic/3.0, 0.5);
-      return ident*lmda;
+      res.first = ident*lmda;
+      res.second = ident*(1.0/lmda);
+      return res;
     }
     // else...
     double big_ev = ic*ic*(ic-4.5*iic)+13.5*iiic;
@@ -107,10 +111,11 @@ SmallMatrix sm_sqrt3(SmallMatrix x) {
     double l2 = (1.0/3.0)*(ic+2.0*pow(ik,(1.0/3.0))*cos(phi/3.0));
 
     double iiiu = sqrt(iiic);
-    double iu = sqrt(l2)+sqrt(-l2+ic+2*iiiu/sqrt(l2));
+    double iu = sqrt(l2)+sqrt(-l2+ic+2.0*iiiu/sqrt(l2));
     double iiu = 0.5*(iu*iu-ic);
 
-    res = (1.0/(iu*iiu-iiiu))*(ident*(iu*iiu)+x*(iu*iu-iiu)-c2);
+    res.first = (1.0/(iu*iiu-iiiu))*(ident*(iu*iiu)+x*(iu*iu-iiu)-c2);
+    res.second = (ident*iiu-(res.first)*iu+x)*(1.0/iiiu);
     return res;
   }
 }
@@ -316,6 +321,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     // local plastic state in plasticdata and slipdata.
 
     // ********  MAGIC **********
+    
 
     // Then compute the four-index W object at this gausspoint.
 
@@ -323,23 +329,40 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     // These are "stubs" for now.  The real ones come from
     // the NR loop through the constitutive rule.
     SmallMatrix s_tau(3);
-    SmallMatrix fp_tau(3);
+    std::vector<double> delta_g(nslips);
+    std::vector<SmallMatrix*> dgamma_ds(nslips);
+    for (int i=0; i<nslips; ++i)
+      dgamma_ds[i] = new SmallMatrix(3);
+
+    // fp_tau is derived, fp_t*(I + sum delta_g *lab_schmid_tensor)
+    SmallMatrix fp_tau(3); 
     
     // At this point, we have the value of s_tau, the 2nd PK stress
     // at the current time increment, as well as fp_tau, the plastic
     // strain at the current time, computed from the delta-gammas
     // and the Asaro equation.
 
-    // Construct the increment matrix, f_nc.
+    // Construct the increment matrix, f_nc, and it's transpose.
     SmallMatrix f_t_i = sm_invert3(f_t);
-    SmallMatrix f_nc(3);  // The increment matrix.
+    SmallMatrix f_nc(3);   // The increment matrix.
+    SmallMatrix f_nc_t(3); // It's transpose.
     for(int i=0;i<3;++i)
-      for(int j=0;j<3;++j)
-	for(int k=0;k<3;++k)
+      for(int j=0;j<3;++j) {
+	for(int k=0;k<3;++k) 
 	  f_nc(i,j) += f_tau(i,k)*f_t_i(k,j);
-
+	f_nc_t(j,i) = f_nc(i,j);
+      }
+    
     // Construct the polar decomposition of f_nc.
     // f_nc = r_nc.u_nc, where u_nc is the square root of f_nc_t.f_nc.
+    SmallMatrix f2 = f_nc_t * f_nc;
+    std::pair<SmallMatrix,SmallMatrix> uui = sm_sqrt3(f2);
+    SmallMatrix u = uui.first;
+    SmallMatrix r = f_nc * uui.second;  // f-increment * u-inverse
+
+
+    
+    
     
     // Construct derivative matrix s4 = dfE(tau)/dUt
     // Construct derivative matrix q4 = dS(tau)/dUt
@@ -514,4 +537,46 @@ SlipData::~SlipData() {
        i!=gptslipdata.end(); ++i) {
     delete (*i);
   }
+}
+
+
+
+Rank4_3DTensor::Rank4_3DTensor(SmallMatrix &s) {
+  if ((s.rows()!=9) || (s.cols()!=9))
+    throw ErrProgrammingError("Attempt to construct Rank4_3DTensor with malformed SmallMatrix.", __FILE__,__LINE__);
+
+  for(int i=0;i<3;++i)
+    for(int j=0;j<3;++j)
+      for(int k=0;k<3;++k)
+	for(int l=0;l<3;++l) {
+	  data[_index(i,j,k,l)] = s(voigt9[i][j],voigt9[k][l]);
+	};
+}
+  
+
+SmallMatrix Rank4_3DTensor::as_smallmatrix() {
+  SmallMatrix res = SmallMatrix(9);
+  for(int i=0;i<3;++i)
+    for(int j=0;j<3;++j)
+      for(int k=0;k<3;++k)
+	for(int l=0;l<3;++l) {
+	  res(voigt9[i][j],voigt9[k][l]) = data[_index(i,j,k,l)];
+	};
+  return res;
+}
+
+void Rank4_3DTensor::clear() {
+  for(std::vector<double>::iterator di = data.begin();
+      di!=data.end(); ++di)
+    (*di) = 0.0;
+}  
+
+double &Rank4_3DTensor::operator()(unsigned int i, unsigned int j,
+				   unsigned int k, unsigned int l) {
+  return data[_index(i,j,k,l)];
+}
+
+const double &Rank4_3DTensor::operator()(unsigned int i, unsigned int j,
+				   unsigned int k, unsigned int l) const {
+  return data[_index(i,j,k,l)];
 }

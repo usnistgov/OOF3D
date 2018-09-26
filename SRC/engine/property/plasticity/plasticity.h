@@ -198,4 +198,29 @@ public:
   std::vector<GptSlipData*> gptslipdata;
 };
 
+
+static std::vector<std::vector<int> > voigt9 = {{0,5,4},{8,1,3},{7,6,2}};
+
+
+// Utility class, definitely needs optimization, probably should
+// be in a different file. 
+class Rank4_3DTensor {
+private:
+  std::vector<double> data;
+  static int _index(unsigned int i, unsigned int j,
+		    unsigned int k, unsigned int l) {
+    return  ((i*3+j)*3+k)*3+l;
+  };
+public:
+  Rank4_3DTensor() : data(81) { this->clear(); };
+  Rank4_3DTensor(SmallMatrix &s);
+  void clear();
+  double &operator()(unsigned int i, unsigned int j,
+		     unsigned int k, unsigned int l);
+  const double &operator()(unsigned int i, unsigned int j,
+			   unsigned int k, unsigned int l) const;
+  SmallMatrix as_smallmatrix(); // 9x9?  Or 6x6 with magic inner product?
+  // Arithmetic ?
+};
+
 #endif // PLASTICITY_H

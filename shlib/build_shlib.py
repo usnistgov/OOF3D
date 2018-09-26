@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: build_shlib.py,v $
-# $Revision: 1.9.36.5 $
-# $Author: langer $
-# $Date: 2014/09/27 22:35:16 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -108,7 +104,9 @@ class build_shlib(Command):
     description = "build C/C++ shared libraries used by Python extensions"
     sep_by = " (separated by '%s')" % os.pathsep
     user_options = [
+        ('prefix', None, "installation prefix"),
         ('build-temp', 't', "directory to put temporary build by-products"),
+        ('install-dir', None, 'directory in which libraries will be installed'),
         ('debug', 'g', "compile with debugging information"),
         ('force', 'f', "forcibly build everything (ignore file timestamps)"),
         ('compiler=', 'c', "specify the compiler type"),
@@ -131,8 +129,10 @@ class build_shlib(Command):
 
     
     def initialize_options(self):
+        self.prefix = None
         self.build_temp = None
         self.build_shlib = None         # destination dir
+        self.install_dir = None
         self.shlibs = None              # list of libraries to build
         self.define = None              # macros to define
         self.undef = None               # macros to undefine
@@ -146,10 +146,21 @@ class build_shlib(Command):
 
     def finalize_options(self):
         self.set_undefined_options('build',
+                                   ('prefix', 'prefix'),
                                    ('build_temp', 'build_temp'),
                                    ('compiler', 'compiler'),
                                    ('debug', 'debug'),
                                    ('force', 'force'))
+        self.set_undefined_options('install',
+                                   ('install_shlib', 'install_dir'))
+
+        # --prefix is necessary on darwin because the build phase sets
+        # the install_name of the libraries.
+        # Get prefix from install if if wasn't found in build.
+        self.set_undefined_options('install',
+                                   ('prefix', 'prefix'))
+        if sys.platform == "darwin" and self.prefix is None:
+            raise DistutilsSetupError("--prefix must be specified!")
 
         # Much of the following is copied from build_ext
         if self.include_dirs is None:
@@ -250,27 +261,36 @@ class build_shlib(Command):
             # files in a temporary build directory.)
             language = shlib.language or self.compiler.detect_language(sources)
 
-#            print "build_shlib.py: sources=", sources
+            objects = self.compiler.compile(
+                sources,
+                output_dir=self.build_temp,
+                macros=shlib.macros,
+                include_dirs=shlib.include_dirs,
+                extra_postargs=shlib.extra_compile_args,
+                debug=self.debug)
 
-            objects = self.compiler.compile(sources,
-                                            output_dir=self.build_temp,
-                                            macros=shlib.macros,
-                                            include_dirs=shlib.include_dirs,
-                                            extra_postargs=shlib.extra_compile_args,
-                                            debug=self.debug)
+            outputfilename = ("lib" +
+                              self.compiler.shared_object_filename(shlib.name))
 
-#            print "build_shlib.py: objects=", objects
+            extra_link_args = shlib.extra_link_args[:]
+
+            if sys.platform == "darwin":
+                extra_link_args.extend([
+                    "-install_name",
+                    os.path.join(self.install_dir, outputfilename)])
+
+            log.info("linking '%s' library", shlib.name)
             
             self.compiler.link(
                 target_desc=self.compiler.SHARED_LIBRARY,
                 objects=objects,
-                output_filename="lib"+
-                    self.compiler.shared_object_filename(shlib.name),
+                output_filename=outputfilename,
                 output_dir=self.build_shlib,
                 libraries=shlib.libraries,
                 library_dirs=shlib.library_dirs,
                 extra_preargs=shlib.extra_compile_args,
-                extra_postargs=shlib.extra_link_args,
+                # extra_postargs=shlib.extra_link_args,
+                extra_postargs=extra_link_args,
                 debug=self.debug,
                 target_lang=language
                 )

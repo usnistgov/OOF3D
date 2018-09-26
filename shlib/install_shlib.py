@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: install_shlib.py,v $
-# $Revision: 1.5.36.1 $
-# $Author: langer $
-# $Date: 2014/09/27 22:35:17 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -45,11 +41,16 @@ class install_shlib(Command):
         self.skip_build = None
 
     def finalize_options(self):
-        self.set_undefined_options('install',
-                                   ('install_shlib', 'install_dir'),
-                                   ('skip_build', 'skip_build'))
+        # install_shlib is added to the install.install options when
+        # the class is monkeypatched in setup_shlib.py.
+        self.set_undefined_options(
+            'install',
+            ('install_shlib', 'install_dir'),
+            ('skip_build', 'skip_build')
+        )
         self.set_undefined_options('build_shlib',
                                    ('build_shlib', 'build_dir'))
+
 
     def run(self):
         self.build()
@@ -63,38 +64,6 @@ class install_shlib(Command):
     def install(self):
         if os.path.isdir(self.build_dir):
             outfiles = self.copy_tree(self.build_dir, self.install_dir)
-            ## On OS X, we have to run install_name_tool here, since
-            ## dylibs contain info about their own location and the
-            ## locations of the libraries they link to.  The
-            ## alternative is to force users to set DYLD_LIBRARY_PATH.
-            ## Neither should be necessary if the installation is in a
-            ## standard location.
-            if sys.platform == "darwin":
-                for ofile in outfiles:
-                    name = os.path.split(ofile)[1]
-                    cmd = "install_name_tool -id %(of)s %(of)s" % dict(of=ofile)
-                    log.info(cmd)
-                    errorcode = os.system(cmd)
-                    if errorcode:
-                        raise DistutilsExecError("command failed: %s" % cmd)
-                    # See what other dylibs it links to.  If they're
-                    # ours, then we have to make sure they link to the
-                    # final location.
-                    f = os.popen('otool -L %s' % ofile)
-                    for line in f.readlines():
-                        l = line.lstrip()
-                        if l.startswith("build"): # it's one of ours
-                            dylib = l.split()[0] # full path in build dir
-                            dylibname = os.path.split(dylib)[1]
-                            cmd = 'install_name_tool -change %s %s %s' % (
-                                dylib,
-                                os.path.join(self.install_dir, dylibname),
-                                ofile)
-                            log.info(cmd)
-                            errorcode = os.system(cmd)
-                            if errorcode:
-                                raise DistutilsExecError("command failed: %s"
-                                                         % cmd)
         else:
             self.warn("'%s' does not exist! no shared libraries to install"
                       % self.build_dir)

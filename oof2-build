@@ -20,8 +20,8 @@
 # The stow directory name is constructed from the build version, the
 # cvs branch name (if any) and the local directory name.  This allows
 # multiple built versions to coexist, even if they're on the same cvs
-# branch.  If the local directory names begins with 'OOF2', only the
-# part after 'OOF2' is used.
+# branch.  If the local directory names begins with 'OOF3D', only the
+# part after 'OOF3D' is used.
 
 # In addition, the 'pg' argument turns on profiling in the C++ code.
 # It won't work unless you're using a python that was built with -pg.
@@ -41,7 +41,17 @@
 #  Set your LD_LIBRARY_PATH to include $OOFINSTALL/lib.  This isn't
 #  necessary on OS X.
 
-import sys, string, os, subprocess
+## TODO: The oof2 and oof3d versions of this script have diverged a
+## bit... Ideally they should be identical except for the next line.
+## Perhaps that line should be in a separate local config file that is
+## imported here.  The --3D flag and other dimension-specific data
+## should be in that file too.  Then we wouldn't need separate build
+## targets for 2d and 3d -- running "oof2-build debug" in an oof2
+## directory would build oof2, and running it in a oof3d directory
+## would build oof3d.
+oofname = "oof3d"
+
+import sys, string, os, subprocess, glob
 
 pyversion = string.join(map(str, sys.version_info[:2]),".")
 
@@ -50,13 +60,16 @@ pyversion = string.join(map(str, sys.version_info[:2]),".")
 #   devel  (must be followed by an integer devel level)
 #   debug
 
-# To make it possible to build OOF2 on different git branches, the
+# To make it possible to build OOF3D on different git branches, the
 # output for the branches needs to go into distinct directories.  We
-# derive the directory names from the git branch name. 
+# derive the directory names from the git branch name.
+
 proc = subprocess.Popen(['git', 'symbolic-ref', '--short', 'HEAD'],
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 stdoutdata, stderrdata = proc.communicate()
 if stderrdata:
+    # TODO: This happens when git is in 'detached HEAD' state.
+    # Something smarter should be done in that case.
     print "*** Failed to get git branch name!", stderrdata.strip()
     branchtag = ""
 else:
@@ -64,14 +77,16 @@ else:
 
 
 # To make it possible to build different versions of the *same* branch
-# of OOF2 (for example, one that is up-to-date with cvs and one that
+# of OOF3D (for example, one that is up-to-date with git and one that
 # is locally modified), the stow directory name also includes the name
-# of the local directory, after 'OOF2'. 
+# of the local directory, after 'OOF3D'. 
 localdir = os.path.split(os.getcwd())[1]
-if localdir.startswith('OOF2'):
-    localdir = localdir[4:]
+if localdir.startswith(oofname) or localdir.startswith(oofname.upper()):
+    localdir = localdir[len(oofname):]
 
-build_types = ('dist', 'devel', 'debug', 'profile', 'dist3d', 'debug3d', 'profile3d')
+build_types_2D = ('dist', 'devel', 'debug', 'profile')
+build_types_3D = ('dist3d', 'debug3d', 'profile3d')
+build_types = build_types_2D + build_types_3D
 
 if len(sys.argv) < 2:
     print "You must provide a build type"
@@ -84,6 +99,7 @@ sys.argv.pop(0)
 
 build_type = sys.argv.pop(0)
 build_args = []
+#install_args = []
 
 if build_type == 'devel':
     build_args.append("--enable-devel="+sys.argv.pop(0))
@@ -100,7 +116,15 @@ elif build_type == 'debug3d':
 elif build_type == 'profile3d':
     build_args.append("--3D")
     build_args.append("--debug")
-    os.putenv('CFLAGS', '-g -fno-inline')
+    build_args.append("--enable-profiler")
+    # build_args.append('--libraries=profiler')
+    # os.putenv('CFLAGS', '-g -fno-inline')
+
+# if build_type in build_types_2D:
+#     buildname = 'oof2'
+# else:
+#     buildname = 'oof3d'
+buildname = oofname
 
 while sys.argv:
     arg = sys.argv.pop(0)
@@ -114,6 +138,10 @@ while sys.argv:
         build_args.append('--enable-petsc')
     elif arg == 'pg':
         os.putenv('CFLAGS', '-pg')
+    # elif arg == 'macports':
+    #     # Hack. If we really need install_args, we should have a way
+    #     # of passing command line arguments to it.
+    #     install_args.append('--skip-install-name-tool')
 
 # Where to put everything?
 installdir = os.getenv("OOFINSTALL")
@@ -123,9 +151,10 @@ if not installdir:
 stowdir = os.path.join(installdir, 'stow')
 builddir =  "-".join(["builddir", branchtag, build_type])
 if localdir:
-    stowsubdir = "-".join(["oof2", branchtag, localdir, build_type, pyversion])
+    stowsubdir = "-".join([buildname, branchtag, localdir, build_type,
+                           pyversion])
 else:
-    stowsubdir = "-".join(["oof2", branchtag, build_type, pyversion])
+    stowsubdir = "-".join([buildname, branchtag, build_type, pyversion])
 if build_type in ['dist3d', 'debug3d', 'profile3d']:
     laststowfile = os.path.join(stowdir, '.last_oof3d_install')
 else:
@@ -134,15 +163,43 @@ startdir = os.getcwd()
 
 # Move builddir to build
 try:
+    print "oof2-build: Using build directory", builddir
     os.rename(builddir, 'build')
 except OSError:
     print "Directory %s not found, creating new build directory." % builddir
     os.mkdir('build')
+    # On OS X, prevent the build directory from being backed up.  This
+    # attribute is attached to the directory, not its path, and sticks
+    # to it when the directory is moved.
+    if sys.platform == 'darwin':
+        subprocess.check_call(['tmutil', 'addexclusion',
+                               os.path.abspath('build')])
+
+# After moving builddir-whatever to build, everything else we do must
+# be inside this try/finally block, so that build is guaranteed to be
+# moved back to builddir-whatever at the end.
 
 try:
+    # Hack.  Remove the oof2 or oof3d script from the build/script*
+    # directory, if it exists.  setup.py will rebuild it trivally if
+    # it's missing.  It has to be rebuilt if the python version has
+    # changed, but the setup.py script won't notice that.
+    fnames = glob.glob(os.path.join('build', 'script*', oofname))
+    if len(fnames) > 1:
+        print "Expected to find one script named", oofname, "but found",\
+            len(fnames), "!"
+        sys.exit()
+    elif len(fnames) == 1:
+        print "Removing", fnames[0]
+        os.remove(fnames[0])
+
     build_cmd = "python setup.py build %s install --prefix=%s" \
                 % (string.join(build_args),
                    os.path.join(stowdir, stowsubdir))
+    # build_cmd = "python setup.py build %s install %s --prefix=%s" \
+    #             % (string.join(build_args),
+    #                string.join(install_args),
+    #                os.path.join(stowdir, stowsubdir))
     print build_cmd
     result = os.system(build_cmd)
     if not result:                      # successful

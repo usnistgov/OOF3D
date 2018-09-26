@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: setup_shlib.py,v $
-# $Revision: 1.4.36.2 $
-# $Author: langer $
-# $Date: 2014/09/27 22:35:17 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -133,7 +129,6 @@ class Install(oldinstall):
         self.convert_paths('shlib')
         if self.root is not None:
             self.change_roots('shlib')
-
     def expand_dirs(self):
         oldinstall.expand_dirs(self)
         self._expand_attrs(['install_shlib'])

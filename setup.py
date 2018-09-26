@@ -1,8 +1,4 @@
 # -*- python -*-
-# $RCSfile: setup.py,v $
-# $Revision: 1.100.2.26 $
-# $Author: langer $
-# $Date: 2014/11/07 22:31:18 $
 
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
@@ -19,8 +15,22 @@
 #    python setup.py install     # installs in the default location
 #    python setup.py install --prefix=/some/other/place
 #    python setup.py [build [--debug]] install --prefix ...
-#  The flags --3D, --enable-mpi, --enable-petsc, and --enable-devel
-#  can occur anywhere after 'setup.py' in the command line.
+
+#  The flags --3D, --cocoa, and --makedepend can occur anywhere after
+#  'setup.py' in the command line:
+#     --3D is required when building OOF3D.
+#     --cocoa builds a version of OOF3D that uses the Apple windowing
+#        system (Cocoa/Quartz) instead of X11.  It requires that the
+#        gtk and vtk libraries have also been built for cocoa.
+#     --makedepend forces the dependencies to be recomputed.  This
+#        must be provided if include C++ include statements have been
+#        changed or new source files have been added since the last
+#        time OOF3D was built.
+
+## TODO: When not building in debug mode, append "-O" to the first
+## line of the top oof2 and oof3d scripts.
+
+## TODO: The --record option for install is broken.
 
 
 # Required version numbers of required external libraries.  These
@@ -40,6 +50,11 @@ try:
         PYGOBJECT_VERSION = "2.6"
 except ImportError:
     PYGOBJECT_VERSION = "2.6"
+
+# The make_dist script edits the following line when a distribution is
+# built.  Don't change it by hand.  On the git master branch,
+# "(unreleased)" is replaced by the version number.
+version_from_make_dist = "3.1.2"
     
 # will need to add vtk
 
@@ -56,8 +71,6 @@ from distutils import errors
 from distutils import log
 from distutils.dir_util import remove_tree
 from distutils.sysconfig import get_config_var
-
-import oof2installlib
 
 import shlib # adds build_shlib and install_shlib to the distutils command set
 from shlib import build_shlib
@@ -77,6 +90,9 @@ from types import *
 # Tell distutils that .C is a C++ file suffix.
 from distutils.ccompiler import CCompiler
 CCompiler.language_map['.C'] = 'c++'
+CCompiler.language_map['.mm'] = 'objc'
+from distutils import unixccompiler
+unixccompiler.UnixCCompiler.src_extensions.append('.mm')
 
 ## needed to save installation log to a saved variable before
 calledFromInstall = False # checks if build is being called from oof_install
@@ -224,8 +240,8 @@ class CLibInfo:
                         platform['extra_compile_args'],
                     include_dirs = self.includeDirs + platform['incdirs'],
                     library_dirs = self.externalLibDirs + platform['libdirs'],
-                    libraries = [self.libname] + self.externalLibs,
-                                                        # + platform['libs'],
+                    libraries = ([self.libname] + self.externalLibs +
+                                 platform['libs']),
                     extra_link_args = self.extra_link_args + \
                         platform['extra_link_args']
                     )
@@ -240,7 +256,7 @@ class CLibInfo:
                 sources=self.dirdata['cfiles'],
                 extra_compile_args=platform['extra_compile_args'],
                 include_dirs=self.includeDirs + platform['incdirs'],
-                libraries=self.externalLibs,# + platform['libs'],
+                libraries=self.externalLibs + platform['libs'],
                 library_dirs=self.externalLibDirs +
                 platform['libdirs'],
                 extra_link_args=platform['extra_link_args'])
@@ -381,6 +397,8 @@ def swig_clibs(dry_run, force, debug, build_temp, with_swig=None):
     extra_args = platform['extra_swig_args']
     if debug:
         extra_args.append('-DDEBUG')
+    if PROFILER:
+        extra_args.append('-DPROFILER')
     for clib in allCLibs.values():
         for swigfile in clib.dirdata['swigfiles']:
             # run_swig requires a src dir and an input file path
@@ -413,28 +431,45 @@ def modification_time(phile):
 # us where to find the directories, and their names change from
 # version to version.
 
-def findvtk(basename):
+def findvtk(*basenames):
     global vtkdir
+
     if vtkdir:
-        base = os.path.expanduser(vtkdir)
-    else:
-        base = basename
-        
-    # First look for basename/include/vtk*
-    incdir = os.path.join(base, 'include')
-    files = os.listdir(incdir)
-    vtkname = None
-    for f in files:
-        ## This may fail if there is more than one version of vtk
-        ## installed.  listdir returns files in arbitrary order, and
-        ## the first one found will be used.
-        if f.startswith('vtk'):
-            vtkname = f
-            incvtk = os.path.join(base, 'include', vtkname)
-            libvtk = os.path.join(base, 'lib', vtkname)
-            if os.path.isdir(incvtk) and os.path.isdir(libvtk):
-                return (incvtk, libvtk)
+        basenames = (os.path.expanduser(vtkdir),)
+
+    for base in basenames:
+        # First look for basename/include/vtk*
+        incdir = os.path.join(base, 'include')
+        if os.path.isdir(incdir):
+            files = os.listdir(incdir)
+            vtkname = None
+            for f in files:
+                ## This may fail if there is more than one version of vtk
+                ## installed.  listdir returns files in arbitrary order, and
+                ## the first one found will be used.
+                if f.startswith('vtk'):
+                    vtkname = f
+                    incvtk = os.path.join(base, 'include', vtkname)
+                    libvtk = os.path.join(base, 'lib')
+                    if os.path.isdir(incvtk) and os.path.isdir(libvtk):
+                        global vtksuffix
+                        vtksuffix = vtkname[3:] # all but the 'vtk'
+                        ## TODO: Extract actual vtk version number
+                        ## from incvtk/vtkVersionMacros.h.  It's in a
+                        ## line like #define VTK_VERSION "7.1.1"
+#grep VTK_VERSION /usr/local/include/vtk-7.1/vtkVersionMacros.h |cut -d \" -f 2
+                        print >> sys.stderr, "Using", vtkname,"in", incvtk
+                        print >> sys.stderr, "VTK library directory is", libvtk
+                        return (incvtk, libvtk)
+    print >> sys.stderr, "Did not find vtk!"
     return (None, None)
+
+# addVTKlibs is used in the DIR.py files to specify which vtk libraries
+# need to be linked to each OOF3D shared library.
+
+def addVTKlibs(clib, libnames):
+    for libname in libnames:
+        clib.externalLibs.append(libname + vtksuffix)
 
 #########
 
@@ -444,9 +479,16 @@ def findvtk(basename):
 # oof_build_xxxx contains the routines that are being added to both
 # build_ext and build_shlib.
 
-_dependencies_checked = 0
+_dependencies_checked = False
+_oofconfig_checked = False
+
 class oof_build_xxxx:
     def make_oofconfig(self):
+        global _oofconfig_checked
+        if _oofconfig_checked:
+            return
+        _oofconfig_checked = True
+        
         cfgfilename = os.path.normpath(os.path.join(self.build_temp,
                                                     'SRC/oofconfig.h'))
         includedir = os.path.join('include', OOFNAME)
@@ -455,16 +497,17 @@ class oof_build_xxxx:
         # forced to.  It would require everything that depends on it
         # to be recompiled unnecessarily.
         if self.force or not os.path.exists(cfgfilename):
-            print "creating", cfgfilename
+            print "Creating config file:", cfgfilename
             if not self.dry_run:
                 os.system('mkdir -p %s' % os.path.join(self.build_temp, 'SRC'))
                 cfgfile = open(cfgfilename, "w")
                 print >> cfgfile, """\
-// This file was created automatically by the oof2 setup script.
+// This file was created automatically by the oof3d setup script.
 // Do not edit it.
 // Re-run setup.py to change the options.
 #ifndef OOFCONFIG_H
 #define OOFCONFIG_H
+#include <Python.h>
                 """
                 if HAVE_PETSC:
                     print >> cfgfile, '#define HAVE_PETSC 1'
@@ -491,17 +534,19 @@ class oof_build_xxxx:
                         print >> cfgfile, '#define VTK_EXCLUDE_STRSTREAM_HEADERS'
                 else:
                     print >> cfgfile, '// #define HAVE_SSTREAM'
-                # Python pre-2.5 compatibility
-                print >> cfgfile, """\
-#include <Python.h>
-#if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
-typedef int Py_ssize_t;
-#define PY_SSIZE_T_MAX INT_MAX
-#define PY_SSIZE_T_MIN INT_MIN
-#endif /* PY_VERSION_HEX check */
-"""
+                if PROFILER:
+                    if self.check_header("<gperftools/profiler.h>"):
+                        print >> cfgfile, '#include <gperftools/profiler.h>'
+                    else:
+                        print >> sys.stderr, "Can't find perftools!"
+                        sys.exit(1)
+                if USE_COCOA:
+                    print >> cfgfile, "#define OOF_USE_COCOA"
+                    
                 print >> cfgfile, "#endif"
                 cfgfile.close()
+        else:
+            print "Reusing config file:", cfgfilename
 
     def check_header(self, headername):
         # Check that a c++ header file exists on the system.
@@ -512,7 +557,7 @@ typedef int Py_ssize_t;
         #include %s
         int main(int, char**) { return 1; }
         """ % headername
-        tmpfile.flush()
+        tmpfile.close()
         try:
             try:
                 ofiles = self.compiler.compile(
@@ -564,7 +609,7 @@ typedef int Py_ssize_t;
             ## tells gcc to add missing headers to the dependency
             ## list, and then we weed them out later.  At least this
             ## way, the "missing" headers don't cause errors.
-            cmd = 'gcc -MM -MG -MT %(target)s -ISRC -I%(builddir)s -I%(buildsrc)s %(file)s' \
+            cmd = '/usr/bin/gcc -MM -MG -MT %(target)s -ISRC -I%(builddir)s -I%(buildsrc)s %(file)s' \
               % {'file' : phile,
                  'target': os.path.splitext(phile)[0] + ".o",
                  'builddir' : self.build_temp,
@@ -595,14 +640,15 @@ typedef int Py_ssize_t;
                 ## all be outside of our directory hierarchy, so we
                 ## just ignore any dependency that doesn't begin with
                 ## "SRC/".
-                if source.startswith('SRC/'):
+                if (source.startswith('SRC/') or
+                    source.startswith(self.build_temp)):
                     depdict.setdefault(realtarget, []).append(source)
 
         # .C and.py files in the SWIG directory depend on those in the
         # SRC directory.  Run gcc -MM on the swig source files.
         print "Finding dependencies for .swg files."
         for phile in allFiles('swigfiles'):
-            cmd = 'gcc -MM -MG -MT %(target)s -x c++ -I. -ISRC -I%(builddir)s %(file)s'\
+            cmd = '/usr/bin/gcc -MM -MG -MT %(target)s -x c++ -I. -ISRC -I%(builddir)s %(file)s'\
               % {'file' : phile,
                  'target': os.path.splitext(phile)[0] + '.o',
                  'builddir' : self.build_temp
@@ -628,7 +674,8 @@ typedef int Py_ssize_t;
             targetpy = os.path.normpath(
                 os.path.join(swigroot, targetbase + '.py'))
             for source in files[1:]:
-                if source.startswith('SRC/'):
+                if (source.startswith('SRC/') or
+                    source.startswith(self.build_temp)):
                     depdict.setdefault(targetc, []).append(source)
                     depdict.setdefault(targetpy,[]).append(source)
 
@@ -693,9 +740,23 @@ typedef int Py_ssize_t;
     def clean_dependencies(self):
         global _dependencies_checked
         if not _dependencies_checked:
-            depdict = self.find_dependencies()
+            # Read dependencies from a file unless MAKEDEPEND has been
+            # defined by providing the --makedepend command line
+            # option, or if the file doesn't exist.
+            depfilename = os.path.join(self.build_temp, 'depend')
+            if not MAKEDEPEND and os.path.exists(depfilename):
+                locals = {}
+                print "Loading dependencies from", depfilename
+                execfile(depfilename, globals(), locals)
+                depdict = locals['depdict']
+            else:
+                depdict = self.find_dependencies()
+                print "Saving dependencies in", depfilename
+                depfile = open(depfilename, "w")
+                print >> depfile, "depdict=", depdict
+                depfile.close()
             self.clean_targets(depdict)
-            _dependencies_checked = 1
+            _dependencies_checked = True
 
 
 # This does the swigging.
@@ -716,6 +777,8 @@ class oof_build_ext(build_ext.build_ext, oof_build_xxxx):
         self.compiler.add_include_dir(os.path.join(self.build_temp, 'SRC'))
         self.compiler.add_include_dir('SRC')
         self.compiler.add_library_dir(self.build_lib)
+        for incdir in platform['incdirs']:
+            self.compiler.add_include_dir(incdir)
 
         if self.debug:
             self.compiler.define_macro('DEBUG')
@@ -735,17 +798,20 @@ class oof_build_ext(build_ext.build_ext, oof_build_xxxx):
 
 class oof_build_shlib(build_shlib.build_shlib, oof_build_xxxx):
     user_options = build_shlib.build_shlib.user_options + [
+        ('prefix=', None, "installation prefix"),
         ('with-swig=', None, "non-standard swig executable"),
         ('blas-libraries=', None, "libraries for blas and lapack"),
         ('blas-link-args=', None, "link arguments required for blas and lapack")
         ]
     def initialize_options(self):
+        self.prefix = None
         self.with_swig = None
         self.blas_libraries = None
         self.blas_link_args = None
         build_shlib.build_shlib.initialize_options(self)
     def finalize_options(self):
         self.set_undefined_options('build',
+                                   ('prefix', 'prefix'),
                                    ('with_swig', 'with_swig'),
                                    ('blas_libraries', 'blas_libraries'),
                                    ('blas_link_args', 'blas_link_args'),
@@ -753,12 +819,14 @@ class oof_build_shlib(build_shlib.build_shlib, oof_build_xxxx):
                                    ('library_dirs', 'library_dirs'))
         build_shlib.build_shlib.finalize_options(self)
     def build_libraries(self, libraries):
-        self.make_oofconfig()
-        self.clean_dependencies()
         self.compiler.add_include_dir(os.path.join(self.build_temp, 'SRC'))
         self.compiler.add_include_dir('SRC')
+        for incdir in platform['incdirs']:
+            self.compiler.add_include_dir(incdir)
         if self.debug:
             self.compiler.define_macro('DEBUG')
+        self.make_oofconfig()
+        self.clean_dependencies()
 
         # The blas libs and arguments weren't actually put into the
         # SharedLibrary objects when they were created, because we
@@ -779,6 +847,7 @@ class oof_build_shlib(build_shlib.build_shlib, oof_build_xxxx):
         
         for library in libraries:
             library.libraries.extend(blaslibs)
+            library.libraries.extend(platform['libs'])
             library.extra_link_args.extend(blasargs)
 
         ## TODO: Add extra libraries (python2.x) for cygwin?
@@ -859,6 +928,7 @@ class oof_build_shlib(build_shlib.build_shlib, oof_build_xxxx):
 class oof_build(build.build):
     sep_by = " (separated by '%s')" % os.pathsep
     user_options = build.build.user_options + [
+        ('prefix=', None, 'installation prefix'),
         ('with-swig=', None, "non-standard swig executable"),
         ('libraries=', None, 'external libraries to link with'),
         ('library-dirs=', None,
@@ -866,6 +936,7 @@ class oof_build(build.build):
         ('blas-libraries=', None, "libraries for blas and lapack"),
         ('blas-link-args=', None, "link args for blas and lapack")]
     def initialize_options(self):
+        self.prefix = None
         self.libraries = None
         self.library_dirs = None
         self.blas_libraries = None
@@ -959,8 +1030,8 @@ class oof_build_py(build_py.build_py):
               platform['extra_compile_args']
         print >> cfgscript, 'include_dirs =', idirs
         print >> cfgscript, 'library_dirs =', [install_shlib.install_dir]
-        oof2installlib.shared_libs = [lib.name for lib in install_shlib.shlibs]
-        print >> cfgscript, 'libraries =', oof2installlib.shared_libs
+        print >> cfgscript, 'libraries =', \
+            [lib.name for lib in install_shlib.shlibs]
         print >> cfgscript, 'extra_link_args =', platform['extra_link_args']
         print >> cfgscript, "import sys; sys.path.append(root)"
         cfgscript.close()
@@ -987,18 +1058,12 @@ class oof_build_py(build_py.build_py):
 
 ###################################################
 
-# Modify "build_scripts" so that it copies only oof2 or oof3d, but not
-# both.  Both are in the scripts list so that they're both
-# distributed, but only one should be installed.
-
-class oof_build_scripts(build_scripts.build_scripts):
-    def finalize_options(self):
-        build_scripts.build_scripts.finalize_options(self)
-        self.scripts = [OOFNAME]
-
-###################################################
-
 class oof_install(install.install):
+    #user_options = install.install.user_options
+
+    def initialize_options(self):
+        install.install.initialize_options(self)
+        
     def run(self):
 	global calledFromInstall
 	calledFromInstall = True
@@ -1056,18 +1121,28 @@ def get_global_args():
     # any distutils calls can possibly be made, because distutils.core
     # hasn't been called yet.
 
+    ## TODO: Get rid of obsolete options.  HAVE_MPI, HAVE_PETSC,
+    ## DEVEL, ENABLE_SEGMENTATION, PROFILER, DOCDIR, and
+    ## NANOHUB aren't used (I think).
+
     global HAVE_MPI, HAVE_OPENMP, HAVE_PETSC, DEVEL, NO_GUI, \
-        ENABLE_SEGMENTATION, \
-        DIM_3, DATADIR, DOCDIR, OOFNAME, SWIGDIR, NANOHUB, vtkdir
+        ENABLE_SEGMENTATION, PROFILER, USE_COCOA, MAKEDEPEND, \
+        DIM_3, DATADIR, DOCDIR, OOFNAME, SWIGDIR, NANOHUB, vtkdir, \
+        portdir
+
     HAVE_MPI = _get_oof_arg('--enable-mpi')
     HAVE_PETSC = _get_oof_arg('--enable-petsc')
     DEVEL = _get_oof_arg('--enable-devel')
     NO_GUI = _get_oof_arg('--disable-gui')
     ENABLE_SEGMENTATION = _get_oof_arg('--enable-segmentation')
     DIM_3 = _get_oof_arg('--3D')
+    USE_COCOA = _get_oof_arg('--cocoa')
+    MAKEDEPEND = _get_oof_arg('--makedepend')
     NANOHUB = _get_oof_arg('--nanoHUB')
     HAVE_OPENMP = _get_oof_arg('--enable-openmp')
     vtkdir = _get_oof_arg('--vtkdir')
+    portdir = _get_oof_arg('--port-dir', '/opt/local')
+    PROFILER = _get_oof_arg('--enable-profiler')
 
     # The following determine some secondary installation directories.
     # They will be created within the main installation directory
@@ -1085,7 +1160,7 @@ def get_global_args():
         SWIGDIR = "SWIG3D"           # root dir for swig output, inside SRC
 
 
-def _get_oof_arg(arg):
+def _get_oof_arg(arg, default=0):
     # Search for an argument which begins like "arg" -- if found,
     # return the trailing portion if any, or 1 if none, and remove the
     # argument from sys.argv.
@@ -1096,9 +1171,11 @@ def _get_oof_arg(arg):
             if len(splits) > 1:         # found an =
                 return splits[1]
             return 1                    # just a plain arg
-    return 0                            # didn't find arg
+    return default                      # didn't find arg
         
 platform = {}
+
+home = os.path.expanduser('~')
 
 def set_platform_values():
     ## Set platform-specific flags that don't specifically depend on
@@ -1109,10 +1186,17 @@ def set_platform_values():
     platform['blas_libs'] = []
     platform['blas_link_args'] = []
     platform['libdirs'] = []
+    platform['libs'] = []
     platform['incdirs'] = [get_config_var('INCLUDEPY')]
     platform['extra_link_args'] = []
     platform['prelink_suppression_arg'] = []
     platform['extra_swig_args'] = []
+
+    # Not really platform-specific, but this is a convenient spot to
+    # set these options...
+    if PROFILER:
+        platform['libs'].append('profiler')
+        platform['extra_compile_args'].append('-DPROFILER')
 
     if os.path.exists('/usr/local/lib'):
         platform['libdirs'].append('/usr/local/lib')
@@ -1136,7 +1220,7 @@ def set_platform_values():
         platform['extra_link_args'].append('-headerpad_max_install_names')
         if os.path.exists('/sw') and DIM_3: # fink
             platform['incdirs'].append('/sw/include')
-            vtkinc, vtklib = findvtk('/sw')
+            vtkinc, vtklib = findvtk(home, '/sw', '/usr/local')
             if vtkinc is not None:
                 platform['libdirs'].append(vtklib)
                 platform['incdirs'].append(vtkinc)
@@ -1145,8 +1229,12 @@ def set_platform_values():
             platform['incdirs'].append('/usr/X11/include/')
             platform['incdirs'].append('/usr/X11R6/include/')
         if os.path.exists('/opt') and DIM_3: # macports
-            platform['incdirs'].append('/opt/local/include')
-            vtkinc, vtklib = findvtk('/opt/local')
+            # When building from macports that's not in a standard
+            # location, use --port-dir=${prefix} in the oof3d Portfile.
+            global portdir
+            platform['incdirs'].append(os.path.join(portdir, 'include'))
+            platform['libdirs'].append(os.path.join(portdir, 'lib'))
+            vtkinc, vtklib = findvtk(home, portdir, '/usr/local')
             if vtkinc is not None:
                 platform['libdirs'].append(vtklib)
                 platform['incdirs'].append(vtkinc)
@@ -1158,13 +1246,28 @@ def set_platform_values():
             ## TODO: Having to encode such a long path here seems
             ## wrong.  If and when pkgconfig acquires a more robust
             ## way of finding its files, use it.
-            pkgpath = "/opt/local/Library/Frameworks/Python.framework/Versions/%d.%d/lib/pkgconfig/" % (sys.version_info[0], sys.version_info[1])
-            print >> sys.stdout, "Adding", pkgpath
+            pkgpath = os.path.join(
+                portdir,
+                "Library/Frameworks/Python.framework/Versions/%d.%d/lib/pkgconfig/"
+                % (sys.version_info[0], sys.version_info[1]))
+            print >> sys.stdout, "Adding", pkgpath, "to PKG_CONFIG_PATH"
             extend_path("PKG_CONFIG_PATH", pkgpath)
-        # If we're using clang, we want to suppress some warnings
-        # about oddities in swig-generated code:
+        # Enable C++11
+        platform['extra_compile_args'].append('-Wno-c++11-extensions')
+        platform['extra_compile_args'].append('-std=c++11')
         if 'clang' in get_config_var('CC'):
+            # If we're using clang, we want to suppress some warnings
+            # about oddities in swig-generated code:
             platform['extra_compile_args'].append('-Wno-self-assign')
+            platform['extra_compile_args'].append(
+                '-Wno-tautological-constant-out-of-range-compare')
+            # This is because vtk 7.1.1 uses VTK_OVERRIDE inconsistently
+            platform['extra_compile_args'].append(
+                '-Wno-inconsistent-missing-override')
+        if PROFILER:
+            # Disable Address Space Layout Randomization
+            # http://stackoverflow.com/questions/10562280/line-number-in-google-perftools-cpu-profiler-on-macosx
+            platform['extra_link_args'].append('-Wl,-no_pie')
             
     elif sys.platform.startswith('linux'):
         # g2c isn't included here, because it's not always required.
@@ -1173,8 +1276,9 @@ def set_platform_values():
         # library on the command line.  The check is done later,just
         # before platform['blas_libs'] is used.
         platform['blas_libs'].extend(['lapack', 'blas', 'm'])
+        platform['extra_compile_args'].append('-std=c++11')
         if DIM_3:
-            vtkinc, vtklib = findvtk('/usr')
+            vtkinc, vtklib = findvtk(home, '/usr', '/usr/local')
             if vtkinc is not None:
                 platform['incdirs'].append(vtkinc)
                 platform['libdirs'].append(vtklib)
@@ -1397,6 +1501,8 @@ if __name__ == '__main__':
     allpkgs.add(OOFNAME)
 
     pkgs = [pkg.replace(OOFNAME, OOFNAME+'.ooflib') for pkg in allpkgs]
+    pkg_dir = {OOFNAME + '.ooflib' : 'SRC'}
+    pkg_data = {}
 
     # Find example files that have to be installed.
     examplefiles = []
@@ -1408,36 +1514,51 @@ if __name__ == '__main__':
                   if not phile.endswith('~') and
                   os.path.isfile(os.path.join(dirpath, phile))]))
 
-    # If this script is being used to create a frozen executable, the
-    # Python path has to be set the same way it is during actual
-    # execution.
-    py2app_options = dict(argv_emulation=True)
-    sys.path.append('SRC')                  # so that py2app can find imports
-    try:
-        import pygtk
-        pygtk.require("2.0")
-    except:
-        pass
+    # Add the testing files.  The 'TEST3D' directory becomes the
+    # 'ooftests' module when oof3d is installed. 
+    pkgs.extend([OOFNAME + '.ooftests', OOFNAME+'.ooftests.UTILS'])
+    pkg_dir[OOFNAME + '.ooftests'] = 'TEST3D'
+    pkg_data[OOFNAME + '.ooftests'] = ['aniso_data/*',
+                                       'bc_data/*',
+                                       'fundamental_data/*',
+                                       'image_data/*', 'image_data/*/*',
+                                       'matprop_data/*',
+                                       'matrix_data/*',
+                                       'mesh_data/*',
+                                       'ms_data/*', 'ms_data/*/*',
+                                       'ms_data/*/*/*',
+                                       'output_data/*',
+                                       'skeleton_data/*',
+                                       'vsb_data/*']
+
+    # # If this script is being used to create a frozen executable, the
+    # # Python path has to be set the same way it is during actual
+    # # execution.
+    # py2app_options = dict(argv_emulation=True)
+    # sys.path.append('SRC')                  # so that py2app can find imports
+    # try:
+    #     import pygtk
+    #     pygtk.require("2.0")
+    # except:
+    #     pass
     
     setupargs = dict(
         name = OOFNAME,
-        version = "unreleased",
+        version = version_from_make_dist,
         description = "Analysis of material microstructures, from NIST.",
         author = 'The NIST OOF Team',
         author_email = 'oof_manager@nist.gov',
         url = "http://www.ctcms.nist.gov/oof/oof3d/",
-        # If more scripts are added here, change oof_build_scripts too.
-        scripts = ['oof2', 'oof3d'],
+        scripts = [ OOFNAME, OOFNAME+'test' ],
         cmdclass = {"build" : oof_build,
                     "build_ext" : oof_build_ext,
                     "build_py" : oof_build_py,
                     "build_shlib": oof_build_shlib,
-                    "build_scripts" : oof_build_scripts,
-                    "install_lib": oof2installlib.oof_install_lib,
                     "clean" : oof_clean,
                     "install" : oof_install},
         packages = pkgs,
-        package_dir = {OOFNAME+'.ooflib':'SRC'},
+        package_dir = pkg_dir,
+        package_data = pkg_data,
         shlibs = shlibs,
         ext_modules = extensions,
         data_files = examplefiles
