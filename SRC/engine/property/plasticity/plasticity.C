@@ -283,7 +283,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     SmallMatrix fp_att_i_t = fp_att_i; fp_att_i_t.transpose();
 
     // Handy place to construct the elastic deformation at prior time t.
-    SmallMatrix fe_att = fp_att_i*f_att;
+    SmallMatrix fe_att = f_att*fp_att_i;
     SmallMatrix fe_att_t = fe_att; fe_att_t.transpose();
     
     a_mtx = ((fp_att_i_t*f_attau_t)*f_attau)*fp_att_i;
@@ -386,6 +386,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 	      }
 
     // Member objects:  lab_schmid_tensors, nslips.
+    // Local objects -- c_mtx is std::vector<SmallMatrix*>, by slips.
     
     // Construct derivative matrix s4 = dfE(tau)/dUt
     // Construct derivative matrix q4 = dS(tau)/dUt
