@@ -229,7 +229,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
   //      outer loop convergence?)
 
   
-  SmallMatrix f_tau(3);
+  SmallMatrix f_attau(3);
   SmallMatrix a_mtx(3);
   SmallMatrix s_trial(3);
 
@@ -246,10 +246,10 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
        !gpt.end(); ++gptdx,++gpt) {
     const GaussPoint agpt = gpt.gausspoint(); // Actual gausspoint.
 
-    SmallMatrix f_t = pd->gptdata[gptdx].ft;  // Save prior time-step's F.
+    SmallMatrix f_att = pd->gptdata[gptdx].ft;  // Save prior time-step's F.
 
     // Build the current time-step's version.
-    f_tau.clear();
+    f_attau.clear();
 
     // CleverPtr for scope management.  The control sequence here
     // resembles Element::outputFieldDeriv, which we should maybe use
@@ -269,20 +269,24 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
       for (IteratorP ip = displacement->iterator(ALL_INDICES);
 	   !ip.end(); ++ip) {
 	int idx = ip.integer();
-	f_tau(idx,0) += dval[ip]*dshapedx;
-	f_tau(idx,1) += dval[ip]*dshapedy;
-	f_tau(idx,2) += dval[ip]*dshapedz;
-	f_tau(idx, idx) += 1.0;
+	f_attau(idx,0) += dval[ip]*dshapedx;
+	f_attau(idx,1) += dval[ip]*dshapedy;
+	f_attau(idx,2) += dval[ip]*dshapedz;
+	f_attau(idx, idx) += 1.0;
       }
     }
-    // f_tau is now populated for the current gausspoint.
+    // f_attau is now populated for the current gausspoint.
     // Plastic fp is in pd->gptdata[gptdx].fpt
-    SmallMatrix fp_t = pd->gptdata[gptdx].fpt;
-    SmallMatrix fp_t_i = sm_invert3(fp_t);
-    SmallMatrix f_tau_t = f_tau; f_tau_t.transpose();
-    SmallMatrix fp_t_i_t = fp_t_i; fp_t_i_t.transpose();
+    SmallMatrix fp_att = pd->gptdata[gptdx].fpt;
+    SmallMatrix fp_att_i = sm_invert3(fp_att);
+    SmallMatrix f_attau_t = f_attau; f_attau_t.transpose();
+    SmallMatrix fp_att_i_t = fp_att_i; fp_att_i_t.transpose();
+
+    // Handy place to construct the elastic deformation at prior time t.
+    SmallMatrix fe_att = fp_att_i*f_att;
+    SmallMatrix fe_att_t = fe_att; fe_att_t.transpose();
     
-    a_mtx = ((fp_t_i_t*f_tau_t)*f_tau)*fp_t_i;
+    a_mtx = ((fp_att_i_t*f_attau_t)*f_attau)*fp_att_i;
 
     SmallMatrix elastic_estimate = a_mtx;
     for (int i=0;i<3;++i) { elastic_estimate(i,i) -= 1.0; }
@@ -328,14 +332,14 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 
     // These are "stubs" for now.  The real ones come from
     // the NR loop through the constitutive rule.
-    SmallMatrix s_tau(3);
+    SmallMatrix s_attau(3);
     std::vector<double> delta_g(nslips);
     std::vector<SmallMatrix*> dgamma_ds(nslips);
     for (int i=0; i<nslips; ++i)
       dgamma_ds[i] = new SmallMatrix(3);
 
-    // fp_tau is derived, fp_t*(I + sum delta_g *lab_schmid_tensor)
-    SmallMatrix fp_tau(3); 
+    // fp_attau is derived, fp_att*(I + sum delta_g *lab_schmid_tensor)
+    SmallMatrix fp_attau(3); 
     
     // At this point, we have the value of s_tau, the 2nd PK stress
     // at the current time increment, as well as fp_tau, the plastic
@@ -343,26 +347,45 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     // and the Asaro equation.
 
     // Construct the increment matrix, f_nc, and it's transpose.
-    SmallMatrix f_t_i = sm_invert3(f_t);
-    SmallMatrix f_nc(3);   // The increment matrix.
-    SmallMatrix f_nc_t(3); // It's transpose.
+    SmallMatrix f_att_i = sm_invert3(f_att);
+    SmallMatrix f_inc(3);   // The increment matrix.
+    SmallMatrix f_inc_t(3); // Its transpose.
     for(int i=0;i<3;++i)
       for(int j=0;j<3;++j) {
 	for(int k=0;k<3;++k) 
-	  f_nc(i,j) += f_tau(i,k)*f_t_i(k,j);
-	f_nc_t(j,i) = f_nc(i,j);
+	  f_inc(i,j) += f_attau(i,k)*f_att_i(k,j);
+	f_inc_t(j,i) = f_inc(i,j);
       }
     
-    // Construct the polar decomposition of f_nc.
-    // f_nc = r_nc.u_nc, where u_nc is the square root of f_nc_t.f_nc.
-    SmallMatrix f2 = f_nc_t * f_nc;
+    // Construct the polar decomposition of f_inc.
+    // f_inc = r_inc.u_inc, where u_inc is the square root of f_inc_t.f_inc.
+    SmallMatrix f2 = f_inc_t * f_inc;
     std::pair<SmallMatrix,SmallMatrix> uui = sm_sqrt3(f2);
     SmallMatrix u = uui.first;
-    SmallMatrix r = f_nc * uui.second;  // f-increment * u-inverse
+    SmallMatrix r = f_inc * uui.second;  // f-increment * u-inverse
 
+    // Now we have fe_att_t, fe_att, and u.  Build Balasubramian's L.
+    Rank4_3DTensor bsb_l;
+    for(int i=0;i<3;++i)
+      for(int j=0;j<3;++j)
+	for(int n=0;n<3;++n)
+	  for(int o=0;o<3;++o)
+	    for(int idx=0;idx<3;++idx) {
+	      bsb_l(i,j,n,o) += fe_att_t(i,n)*u(o,idx)*fe_att(idx,j);
+	      bsb_l(i,j,n,o) += fe_att_t(i,idx)*u(idx,n)*fe_att(o,j);
+	    };
 
-    
-    
+    Rank4_3DTensor bsb_d;
+    for(int i=0;i<3;++i)
+      for(int j=0;j<3;++j)
+	for(int k=0;k<3;++k)
+	  for(int l=0;l<3;++l)
+	    for(int n=0;n<3;++n)
+	      for(int o=0;o<3;++o) {
+		bsb_d(i,j,n,o) += 0.5*lab_cijkl_(i,j,k,l)*bsb_l(k,l,n,o);
+	      }
+
+    // Member objects:  lab_schmid_tensors, nslips.
     
     // Construct derivative matrix s4 = dfE(tau)/dUt
     // Construct derivative matrix q4 = dS(tau)/dUt

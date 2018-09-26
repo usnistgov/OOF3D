@@ -141,15 +141,15 @@ class GptPlasticData {
 public:
   GptPlasticData();
 
-  SmallMatrix ft;
-  SmallMatrix fpt;
-  SmallMatrix f_tau;
-  SmallMatrix fp_tau;
-  SmallMatrix fe_tau;
-  SmallMatrix cauchy;
-  SmallMatrix s_star;
-  SmallMatrix d_ep;
-  Cijkl w_mat;
+  SmallMatrix ft;       // Deformation tensor at prior time t
+  SmallMatrix fpt;      // Plastic part of F at prior time t.
+  SmallMatrix f_tau;    // Deformation tensor at current time tau.
+  SmallMatrix fp_tau;   // Plastic part of F at current time tau.
+  SmallMatrix fe_tau;   // Elastic part of F at current time tau.
+  SmallMatrix cauchy;   // Cauchy stress (time tau?)
+  SmallMatrix s_star;   // 2nd PK stress at time tau?
+  SmallMatrix d_ep;     // Elastoplastic modules D.
+  Cijkl w_mat;          // Elastoplastic tangent.
 };
   
 
@@ -197,6 +197,7 @@ public:
   int order;
   std::vector<GptSlipData*> gptslipdata;
 };
+
 
 
 static std::vector<std::vector<int> > voigt9 = {{0,5,4},{8,1,3},{7,6,2}};
