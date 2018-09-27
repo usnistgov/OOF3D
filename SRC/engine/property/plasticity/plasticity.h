@@ -215,13 +215,14 @@ private:
 public:
   Rank4_3DTensor() : data(81) { this->clear(); };
   Rank4_3DTensor(SmallMatrix &s);
+  Rank4_3DTensor(const Rank4_3DTensor&);
   void clear();
   double &operator()(unsigned int i, unsigned int j,
 		     unsigned int k, unsigned int l);
   const double &operator()(unsigned int i, unsigned int j,
 			   unsigned int k, unsigned int l) const;
   SmallMatrix as_smallmatrix(); // 9x9?  Or 6x6 with magic inner product?
-  // Arithmetic ?
+
 };
 
 #endif // PLASTICITY_H

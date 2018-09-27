@@ -364,6 +364,10 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     SmallMatrix u = uui.first;
     SmallMatrix r = f_inc * uui.second;  // f-increment * u-inverse
 
+    // ----------------------------------------------------
+    //           Build the Q matrix, bsb_q.
+    // ----------------------------------------------------
+    
     // Now we have fe_att_t, fe_att, and u.  Build Balasubramian's L.
     Rank4_3DTensor bsb_l;
     for(int i=0;i<3;++i)
@@ -385,11 +389,84 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 		bsb_d(i,j,n,o) += 0.5*lab_cijkl_(i,j,k,l)*bsb_l(k,l,n,o);
 	      }
 
+    std::vector<Rank4_3DTensor> bsb_g(nslips);
+    for(int alpha=0;alpha<nslips;++alpha)
+      for(int k=0;k<3;++k)
+	for(int l=0;l<3;++l)
+	  for(int m=0;m<3;++m)
+	    for(int n=0;n<3;++n)
+	      for(int o=0;o<3;++o) {
+		bsb_g[alpha](k,l,n,o) = \
+		  bsb_l(k,m,n,o)*(*(lab_schmid_tensors[alpha]))(m,l) \
+		  + (*(lab_schmid_tensors[alpha]))(m,k)*bsb_l(m,l,n,o);
+	      };
+
+    std::vector<Rank4_3DTensor> bsb_t(nslips);
+    for(int alpha=0;alpha<nslips;++alpha)
+      for(int i=0;i<3;++i)
+	for(int j=0;j<3;++j)
+	  for(int k=0;k<3;++k)
+	    for(int l=0;l<3;++l)
+	      for(int n=0;n<3;++n)
+		for(int o=0;o<3;++o) {
+		  bsb_t[alpha](i,j,n,o) = \
+		    0.5*lab_cijkl_(i,j,k,l)*bsb_g[alpha](k,l,n,o);
+		}
+		  
     // Member objects:  lab_schmid_tensors, nslips.
+    // Slip increments std::vector<double> delta_g
     // Local objects -- c_mtx is std::vector<SmallMatrix*>, by slips.
+    // Slip dervatives std::vector<SmallMatrix*> dgamma_ds
+    
+    // TODO OPT: This uses 9x9 matrices, but can probably get away
+    // with 6x6 and the magic inner product.  Also, the Rank4_3DTensor
+    // class should probably have arithmetic operations that operate
+    // on the linear array, for better performance, although the
+    // compiler might unroll the loops.
+    Rank4_3DTensor lhs;
+    Rank4_3DTensor rhs = bsb_d;
+    
+    for(int alpha=0;alpha<nslips;++alpha)
+      for(int i=0;i<3;++i)
+	for(int j=0;j<3;++j)
+	  for(int k=0;k<3;++k)
+	    for(int l=0;l<3;++l) {
+	      rhs(i,j,k,l) -= delta_g[alpha]*bsb_t[alpha](i,j,k,l);
+	    }
+
+    for(int i=0;i<3;++i)
+      for(int j=0;j<3;++j)
+	for(int m=0;m<3;++m)
+	  for(int n=0;n<3;++n) {
+	    if ((i==m) && (j==n)) {
+	      lhs(i,j,m,n)=1.0;
+	      for(int alpha=0;alpha<nslips;++alpha) {
+		lhs(i,j,m,n) += (*dgamma_ds[alpha])(m,n)*(*c_mtx[alpha])(i,j);
+	      }
+	    }
+	  }
+    // The actual equation for bsb_q is
+    //      lhs(i,j,m,n)*bsb_q(m,n,k,l) = rhs(i,j,k,l).
+    // Do this by linear algebra with the SmallMatrix class.
+    SmallMatrix lhs_sm = lhs.as_smallmatrix();
+    SmallMatrix rhs_sm = rhs.as_smallmatrix();
+
+    int retcode = lhs_sm.solve(rhs_sm);
+    if (retcode != 0) {
+      throw ErrProgrammingError("Plasticity Q matrix computation failed",
+				__FILE__,__LINE__);
+    };
+
+    // "Solve" puts the solution in the RHS matrix.
+    SmallMatrix bsb_q(rhs_sm);
+
+    // ----------------------------------------
+    //  Now build the S matrix..
+    // ----------------------------------------
+
+    
     
     // Construct derivative matrix s4 = dfE(tau)/dUt
-    // Construct derivative matrix q4 = dS(tau)/dUt
     // Combine into four-index object w.
   }
 }
@@ -577,6 +654,9 @@ Rank4_3DTensor::Rank4_3DTensor(SmallMatrix &s) {
 	};
 }
   
+Rank4_3DTensor::Rank4_3DTensor(const Rank4_3DTensor& other) {
+  data = other.data;
+}
 
 SmallMatrix Rank4_3DTensor::as_smallmatrix() {
   SmallMatrix res = SmallMatrix(9);
