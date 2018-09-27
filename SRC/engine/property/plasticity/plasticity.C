@@ -458,14 +458,48 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     };
 
     // "Solve" puts the solution in the RHS matrix.
-    SmallMatrix bsb_q(rhs_sm);
+    Rank4_3DTensor bsb_q(rhs_sm);
 
     // ----------------------------------------
     //  Now build the S matrix..
     // ----------------------------------------
+    // Ingredients include the "r" matrix, fe_att,
+    // std::vector<SmallMatrix*> dgamma_ds, nslips,
+    Rank4_3DTensor bsb_s;
+    for(int i=0;i<3;++i)
+      for(int j=0;j<3;++j)
+	for(int m=0;m<3;++m)
+	  for(int n=0;n<3;++n)
+	    for(int o=0;o<3;++o) {
+	      double v1 = r(i,n)*fe_att(o,m);
+	      if (m==j) bsb_s(i,j,n,o) += v1;
+	      double v2=0.0;
+	      for(int alpha=0;alpha<nslips;++alpha) {
+		v2 -= delta_g[alpha]*(*lab_schmid_tensors[alpha])(m,j);
+	      }
+	      bsb_s(i,j,n,o) += v1*v2;
+	    }
 
+    // If some of these loops are independent, they should probably be
+    // done separately, e.g. the p and q loops?
+    for(int i=0;i<3;++i)
+      for(int j=0;j<3;++j)
+	for(int k=0;k<3;++k)
+	  for(int l=0;l<3;++l)
+	    for(int m=0;m<3;++m)
+	      for(int n=0;n<3;++n)
+		for(int o=0;o<3;++o)
+		  for(int p=0;p<3;++p)
+		    for(int q=0;q<3;++q)
+		      for(int alpha=0;alpha<nslips;++alpha) {
+			bsb_s(i,j,n,o) -=		\
+			  r(i,k)*u(k,l)*fe_att(l,m)*   \ 
+			  (*dgamma_ds[alpha])(p,q)*			\
+			  bsb_q(p,q,n,o)* \
+			  (*lab_schmid_tensors[alpha])(m,j);
+		      }
     
-    
+		  
     // Construct derivative matrix s4 = dfE(tau)/dUt
     // Combine into four-index object w.
   }
