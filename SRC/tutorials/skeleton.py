@@ -499,7 +499,7 @@ TutorialClass(
     comments=
 
     """Open the BOLD(Skeleton Selection) page and select elements by
-    homogeneity with the BOLD(threshold) being BOLD(0.9).
+    homogeneity with the BOLD(max_homogeneity) being BOLD(0.9).
 
     There should be very few elements selected.  (Because of
     randomness in some modification methods, your results may vary.)
@@ -526,8 +526,8 @@ TutorialClass(
     We'll now turn our attention to elements' quality, more precisely,
     their shape.
 
-    The tools for improving the skeleton's quality include BOLD(Smooth
-    ), and BOLD(Surface Smooth).
+    The tools for improving the skeleton's quality include
+    BOLD(Smooth) and BOLD(Surface Smooth).
 
     These tools, however, can potentially affect material boundaries
     that have been established already.  Thus, we need to be extra
@@ -564,7 +564,8 @@ TutorialClass(
     that instead of picking node positions randomly, it moves each
     node to the average position of its neighbors.
 
-    Select BOLD(Smooth) for the modification method.
+    Select BOLD(Smooth) for the modification method on the
+    BOLD(Skeleton) page.
 
     Select BOLD(All Nodes) for BOLD(targets).
 
