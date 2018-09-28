@@ -71,8 +71,8 @@ pixelselection.VoxelSelectionMethodRegistration(
     'Box',
     RectangularPrismSelector,
     ordering=0.2,
-    params=[pointparameter.PointParameter('corner0'),
-            pointparameter.PointParameter('corner1'),
+    params=[parameter.passive(pointparameter.PointParameter('corner0')),
+            parameter.passive(pointparameter.PointParameter('corner1')),
             selectionoperators.SelectionOperatorParam('operator')],
     whoclasses=['Microstructure', 'Image'],
     tip="Click to select a box-shaped region."

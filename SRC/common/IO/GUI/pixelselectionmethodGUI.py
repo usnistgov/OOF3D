@@ -198,7 +198,7 @@ class RectangularPrismSelectorGUI(genericselectGUI.SelectionMethodGUI):
         if self._editing:
             self._editing = False
             self.getLayer().stop()
-            switchboard.notify("autodim", self.gfxwindow(), False)
+            switchboard.notify("autoopacity", self.gfxwindow(), 1.0)
             self.sensitize()
             self.gfxwindow().oofcanvas.render()
 
