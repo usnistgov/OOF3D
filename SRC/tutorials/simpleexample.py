@@ -122,7 +122,8 @@ TutorialClass(subject="A Simple Example",
 
     Once it's been highlighted, click the BOLD(Rename) button in the
     column to the left of the Voxel Groups list (not the Rename button
-    below the New buttons, which will rename the Microstructure).
+    above the Microstructure Info, which will rename the
+    Microstructure).
 
     Delete the old name and type in BOLD(yellow), which is the actual
     color of the group.  (Triple-clicking on the old name in the
@@ -206,7 +207,7 @@ TutorialClass(subject="A Simple Example",
     Type in BOLD(yellow_elasticity) and click BOLD(OK).  Note that
     Property names must begin with a letter and can only contain
     letters, numerals, and underscores (they must be legal Python
-    variable names). """,
+    variable names). Hyphens are not allowed!""",
     signal = "new property"
     ),
     
@@ -278,7 +279,18 @@ TutorialClass(subject="A Simple Example",
     Make sure that the Materials contain the correct Properties before
     you move on.  Select a Property in the BOLD(Material) pane and use
     the BOLD(Remove Property from Material) button if you've made a
-    mistake.  """,
+    mistake. 
+
+    Please note!  A common mistake is to think that you can change the
+    parameters of a Property that you've added to one Material and
+    then apply it to another Material.  You can do this, but it might
+    not do what you expect.  You will have given the same Property to
+    two Materials, and its parameters will be whatever you used last.
+    Changing the parameters of a Property affects all Materials that
+    use that Property.  To give different Properties to two Materials,
+    you need to make copies of the Properties, as we did above.
+
+    """,
         
     signal= "prop_added_to_material"
     ),
@@ -359,22 +371,23 @@ TutorialClass(subject="A Simple Example",
     BOLD(what) attribute. For example you might have many
     microstructures and will have to point BOLD(what) to the one you
     want to use. Finally the BOLD(how) allows you to define how you
-    want to display your object in the Graphics canvas. The filter
-    component allows you to select sub-parts of the objects
-    (selections, group, etc...) or display the results of simple
-    operations (union, intersection, complement, etc...).
-    
+    want to display your object in the Graphics canvas.
+
     Select the BOLD(Microstructure) in the category menu then make
     sure BOLD(what) is pointed at BOLD(cyallow). By default
     BOLD(Material) is selected, meaning you will create a display
     layer showing the Material colors.  Below Material you can specify
     the color to use to display voxels that have no assigned material
     BOLD(no_material) or have a material, but one that does not
-    contain a color property BOLD(no_color).
+    contain a color property BOLD(no_color).  This method, like Many
+    OOF3D display methods, has a filter parameter that allows you to
+    display only sub-parts of the objects (selections, group, etc...) or
+    display the results of simple operations (union, intersection,
+    complement, etc...).
 
     Since we have only two materials that we want to display and they
-    cover the entire microstructure, ignore both parameters for now 
-    and click the BOLD(OK) button.
+    cover the entire microstructure, ignore all the other parameters
+    for now and click the BOLD(OK) button.
     
     This will create the layer and add it to the layers list.
 
@@ -428,7 +441,7 @@ TutorialClass(subject="A Simple Example",
     Open the BOLD(Skeleton) page in the main OOF3D window.
 
     Since we have such a simple microstructure, creating a reasonable
-    skeleton is going to be short and sweet.
+    skeleton is going to be quick.
 
     Click the BOLD(New) button to open up a skeleton initializer.
 
@@ -445,10 +458,8 @@ TutorialClass(subject="A Simple Example",
     comments=
 
     """The Skeleton is now displayed on top of the Microstructure in the
-    graphics window.  (If you can't see the Skeleton, click on the
-    BOLD(Tumble) button above the graphics canvas and use the mouse to
-    rotate the image slightly.  The filled 3D volume of the Material
-    display sometimes hides the lines of the Skeleton display.)
+    graphics window. Click on the BOLD(Tumble) button above the
+    graphics canvas and use the mouse to rotate the display.
 
     The second row of elements (from the bottom) contains both
     BOLD(cyan) and BOLD(yellow), while other elements contain only one

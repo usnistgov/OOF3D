@@ -9,7 +9,6 @@
 # oof_manager@nist.gov. 
 
 
-#TODO: Is there really a 3D version of this? Can someone load a mesh with some non tetrahedron structures?
 from ooflib.tutorials import tutorial
 TutoringItem = tutorial.TutoringItem
 TutorialClass = tutorial.TutorialClass
@@ -214,8 +213,11 @@ TutorialClass(
     boundary from the BOLD(Boundaries) pane. Now, if you go to the
     graphics window, you will see that the selected face boundary is
     displayed by orange arrow points sticking through the element
-    faces.  What we're going to do is to remove the faces of the
-    BOLD(ivory) elements from this boundary.
+    faces.  (You may need to BOLD(Tumble) the graphics window to see
+    them clearly).  What we're going to do is to remove the faces of
+    the BOLD(ivory) elements from this boundary.  Unselect the
+    boundary by control-clicking on its name in the BOLD(Boundaries)
+    pane.  (On Macs in non-X11 mode, use command-click.)
 
     First, select the ivory elements.  Open the BOLD(Skeleton
     Selection) toolbox in the graphics window.  Select BOLD(Element)
@@ -223,14 +225,14 @@ TutorialClass(
     selection method. Now select all the elements that belong to
     BOLD(ivory) elements boundaries by clicking on that area.
 
-    Next, select the outside faces of the ivory elements by putting
-    the BOLD(Skeleton Selection) page in the main OOF3D window into
-    BOLD(Faces) mode, and using the BOLD(Select from Selected
-    Elements) operation with BOLD(coverage) set to BOLD(exterior).
-    Click BOLD(OK).
+    Next, select the outside faces of the ivory elements.  Put the
+    BOLD(Skeleton Selection) page in the main OOF3D window into
+    BOLD(Faces) mode.  Set BOLD(Method) to BOLD(From Selected
+    Elements), with BOLD(coverage) set to BOLD(Exterior) and
+    BOLD(operator) set to BOLD(Select).  Click BOLD(OK).
     """,
         
-    signal = "face selection modified"
+    signal = "face selection modifier applied"
     ),
 
     TutoringItem(
@@ -319,8 +321,8 @@ TutorialClass(
     BOLD(Force_Balance).
  
     The first B.C. deals with displacement in the BOLD(x)-direction,
-    so select BOLD(x) for both BOLD(Displacement) and
-    BOLD(Force_Balance).
+    so select BOLD(x) for both BOLD(field_component) and
+    BOLD(eqn_component).
 
     The BOLD(profile) is the functional form of the Field along the
     boundary.  Set BOLD(profile) to BOLD(Constant Profile) with BOLD(value) = 0.
@@ -340,9 +342,12 @@ TutorialClass(
     to create all the BCs before you move on to the next slide.
 
     (If you get back to this page and discover that the BOLD(Next)
-    button is disabled, just edit one of the boundary conditions.  You
-    don't actually have to change it, you just have to trick the
-    tutorial machinery into thinking you've changed something.)""",
+    button is disabled, just edit one of the boundary conditions by
+    double clicking it or using the BOLD(Edit) button.  You don't
+    actually have to change the boundary condition, you just have to
+    trick the tutorial machinery into thinking you've changed
+    something.)
+    """,
     
     signal = "boundary conditions changed"
     ),

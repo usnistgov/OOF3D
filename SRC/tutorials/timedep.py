@@ -162,7 +162,8 @@ The new Output is listed in the window.  If we had given a value to
 the BOLD(name) parameter in the dialog box, then that name would
 appear in the Output column.  Instead, it contains the generic name,
 "GraphicsUpdate".
-"""),
+""",
+            signal="new scheduled output"),
 
         TutoringItem(
             subject="Schedule Data Output",
@@ -172,24 +173,25 @@ of the Xmax boundary in a file. We will be averaging in both
 time and space. 
 
 Click the BOLD(New) button in the BOLD(Output) column to define a new
-output operation.  This time, in the dialog box set "output" to
-"Analysis".  Set the BOLD(data) group to be the value of the
-displacement field. For "operation", choose "Average". For the
-"domain", select "Face Boundary", set the "boundary" to "Xmax", and
-leave the normal direction set to FRONT. Set the "sampling"
-to be "Integrate", and use the default (automatic) integration
-order.
+output operation.  This time, in the dialog box set BOLD(output) to
+BOLD(Analysis).  Set the BOLD(data) group to be the value of the
+displacement field. For BOLD(operation), choose BOLD(Average). For the
+BOLD(domain), select BOLD(Face Boundary), set the BOLD(boundary) to
+BOLD(Xmax_, and leave the BOLD(side) set to BOLD(FRONT). Set
+BOLD(sampling) to be BOLD(Integrate), and use the default (automatic)
+integration BOLD(order).
 
-For the schedule, set it up the same way you did for the graphics
-window updates -- Absolute and Periodic, with a delay of 0.0 and an
-interval of 0.1.
+For the BOLD(schedule), set it up the same way you did for the
+graphics window updates -- BOLD(Absolute) and BOLD(Periodic), with a
+BOLD(delay) of 0.0 and an BOLD(interval) of 0.1.
 
 Now we'll set up an output stream to send this data to a file.
-Change the "destination" output to be "Output Stream", and 
+Change the BOLD(destination) output to be BOLD(Output Stream), and 
 type a file name in the input box.
 
 Click BOLD(OK) to create your second output.
-"""),
+""",
+            signal="new scheduled output"),
 
         TutoringItem(
             subject="Schedule Data Output, continued",
@@ -215,12 +217,13 @@ depend on what has been selected in another pane. For example, if
 BOLD(Operation) is set to "Direct Output", BOLD(Sampling) can't be set
 to "Integrate".
 
-To give these settings a name, click the BOLD(Create) button in the
-BOLD(Named Analysis) box in the lower left corner of the page.  Either
-click BOLD(OK) to accept the default name (which is "analysis"), or
-click the checkbox next to the name and type a new name.  Click
-BOLD(OK) to accept the new name.
-""",
+To give these settings a name, click the BOLD(Create/Delete/etc)
+button in the BOLD(Named Analysis) box in the lower left corner of the
+page.  This isn't really a button -- for some reason it's a pull down
+menu.  Select BOLD(Create) and either click BOLD(OK) to accept the
+default name (which is "analysis"), or click the checkbox next to the
+name and type a new name.  Click BOLD(OK) to accept the new name.
+ """,
             signal="named analyses changed"),
 
         TutoringItem(
@@ -240,7 +243,7 @@ for the previous output.
 Click BOLD(OK).  The new Output now appears in the lists.  Its name is
 the name that you assigned to the Named Analyis.
 """,
-            signal="scheduled outputs changed"),
+            signal="new scheduled output"),
         
         TutoringItem(
             subject="The Solver Page",
@@ -260,7 +263,7 @@ button itself, and a BOLD(Status) box.  The "current time" box shows
 the Mesh's current time, which is determined by the time evolution.
 It can be reset when Fields are initialized.
 
-"end time" is the target time for a time-dependent solution.  You
+BOLD(end time) is the target time for a time-dependent solution.  You
 should set it before clicking BOLD(Solve). 
 
 The BOLD(Status) box briefly describes the state of the solution of
@@ -286,34 +289,36 @@ going on.)
 The BOLD(Solver) column shows the solution method that will be used on
 each Subproblem.  If it says "<none>" that Subproblem won't be solved,
 even if its BOLD(Solve?) checkbox is checked.  Click on the "default"
-Subproblem line to select it, and click the BOLD(Set Solver) button
+Subproblem line to select it, and click the BOLD(Set) button just below
 (or double-click the line).  A dialog box opens that lets you choose a
 solution method.
 
 The solver can be specified either in BOLD(Basic) mode or
-BOLD(Advanced) mode.  In Basic mode, OOF3D makes many decisions for
-you.  Set the "solver_mode" parameter to BOLD(Advanced).
+BOLD(Advanced) mode.  In BOLD(Basic) mode, OOF3D makes many decisions for
+you.  Set the BOLD(solver_mode) parameter to BOLD(Advanced).
 
-The "time_stepper" parameter determines which time-stepping algorithm
-to use.  If it's set to "Static" no time stepping will be done,
-(although if the end time is greater than the start time, the system
-will be solved quasistaticly).  "Uniform" takes time steps with a
-fixed size, and "Adaptive" adjusts the time steps to achieve a given
-accuracy.  Set "time stepper" to "Adaptive", with tolerance=0.0001,
-initialstep=0.1, minstep=1.e-5, errorscaling=Absolute, and
-stepper=TwoStep.  Set the TwoStep parameters to singlestep=SS22 with
-both theta1 and theta2 equal to 0.5.
+The BOLDtime_stepper) parameter determines which time-stepping
+algorithm to use.  If it's set to BOLD(Static) no time stepping will
+be done, (although if the end time is greater than the start time, the
+system will be solved quasistaticly).  BOLD(Uniform) takes time steps
+with a fixed size, and BOLD(Adaptive) adjusts the time steps to
+achieve a given accuracy.  Set BOLD(time stepper) to BOLD(Adaptive),
+with BOLD(tolerance)=0.0001, BOLD(initialstep)=0.1,
+BOLD(minstep)=1.e-5, BOLD(errorscaling)=Absolute, and
+BOLD(stepper)=BOLD(TwoStep).  Set the BOLD(TwoStep) parameters to
+BOLD(singlestep)=BOLD(SS22) with both BOLD(theta1) and BOLD(theta2)
+equal to 0.5.
 
-Leave the "nonlinear_solver" parameter set to "None".  You'd only use
-a different value if you were solving a microstructure that had
-nonlinear material properties.
+Leave the BOLD(nonlinear_solver) parameter set to BOLD(None).  You'd
+only use a different value if you were solving a microstructure that
+had nonlinear material properties.
 
-The "symmetric_solver" parameter governs how OOF3D solves the symmetric
+The BOLD(symmetric_solver) parameter governs how OOF3D solves the symmetric
 matrix equations that arise from discretizing the equations of motion.
-Set it to "CG" (conjugate gradient) with preconditioner=ILU,
-tolerance=1e-13, and max_iterations=1000.
+Set it to BOLD(CG) (conjugate gradient) with BOLD(preconditioner)=BOLD(ILU),
+BOLD(tolerance)=1e-13, and BOLD(max_iterations)=1000.
 
-The "asymmetric_solver" parameter governs how OOF3D solves asymmetric
+The BOLD(asymmetric_solver) parameter governs how OOF3D solves asymmetric
 matrix equations, if they arise.  This example won't create any
 asymmetric matrices, so the setting of this parameter is unimportant.
 
@@ -330,18 +335,18 @@ was defined on the BOLD(Fields & Equations) page.  Its time
 derivative, Displacement_t, appears because the Force_Balance equation
 is second order in time (the material has a MassDensity property) and
 we've chosen a non-static time stepping method.  If we had set
-time_stepping=Static in the previous tutorial page, then
+BOLD(time_stepping)=BOLD(Static) in the previous tutorial page, then
 Displacement_t would not need to be initialized.
 
-Select the "Displacement" link in the BOLD(Field Initialization) list
-and click on the BOLD(Set) button, or double click on the line.  A
-dialog box appears for setting the initialization method for the
-components of the field.  The components can be initialized to
+Select the "Displacement" line in the BOLD(Field Initialization) list
+and click on the BOLD(Set) button below the list, or double click on
+the line.  A dialog box appears for setting the initialization method
+for the components of the field.  The components can be initialized to
 constant values, to functions of x, y, z, and t, or by copying from
-another Mesh.  For this example, choose "XYZTFunction" and set "fx"
-and "fz" to 0.0 and "fy" to 0.1*x*y*z.  Click BOLD(OK).
+another Mesh.  For this example, choose BOLD(XYZTFunction) and set BOLD(fx)
+and BOLD(fz) to 0.0 and BOLD(fy)0.1 to 0.1*x*y*z.  Click BOLD(OK).
 
-Initialize the time derivative field, Displacement_t, to "Constant"
+Initialize the time derivative field, Displacement_t, to BOLD(Constant)
 with all three components set to 0.0.
 """,
             signal="field initializer set"),
@@ -433,7 +438,10 @@ to 0.0 and click BOLD(OK).  Change BOLD(end time) back to 6.
 
 Click BOLD(Solve) again to recompute the time evolution with the new
 parameters.  (Note that the solution is completely unphysical because
-it's using linear elasticity with large displacements.)
+it's using linear elasticity with large displacements, as was the
+previous solution.  This system should also use quadratic finite
+elements.)
+
 """),
 
         TutoringItem(

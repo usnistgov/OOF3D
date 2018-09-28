@@ -199,7 +199,7 @@ TutorialClass(
     BOLD(threshold) to be BOLD(1.0), meaning any heterogeneous
     elements will be refined.  (All elements with a BOLD(homogeneity)
     less than 1.0 will be refined.  The BOLD(homogeneity) is the
-    largest fraction of an element's area belonging to a single voxel
+    largest fraction of an element's volume belonging to a single voxel
     type.)
     
     The second parameter BOLD(criterion) determines whether to accept
@@ -224,9 +224,9 @@ TutorialClass(
     """ The refined skeleton should be displayed in the graphics
     window.
 
-    Every element (except one in the top-right corner) has been
-    divided into more elements.  As a result, a larger fraction of the
-    Microstructure's area is covered by homogeneous elements.
+    Most of the elements have been divided into more elements.  As a
+    result, a larger fraction of the Microstructure's area is covered
+    by homogeneous elements.
 
     At the bottom of the BOLD(Skeleton Status) pane in the
     BOLD(Skeleton) page, there is a BOLD(Homogeneity Index).  This
@@ -238,7 +238,7 @@ TutorialClass(
     Click BOLD(Undo) and BOLD(Redo), while checking out Homogeneity
     Index.
 
-    The number has been increased from BOLD(0.7878) to BOLD(0.8845).
+    The number has been increased from BOLD(0.7878) to BOLD(0.8837).
     """ ),
     
     TutoringItem(
@@ -281,9 +281,9 @@ TutorialClass(
     approach to the heterogeneity issue, the BOLD(node motion) tools
     deal with the issue directly.
 
-    OOF3D provides different methods of moving nodes in adapting
-    to material boundaries -- BOLD(Snap Nodes), BOLD(Anneal), and
-    BOLD(Move Nodes).
+    OOF3D provides different methods of moving nodes in adapting to
+    material boundaries -- BOLD(Snap Nodes), BOLD(Anneal),
+    BOLD(Smooth), and BOLD(Move Nodes).
 
     BOLD(Snap Nodes) first looks for boundary points -- intersections
     between material boundaries and element edges -- and moves nodes
@@ -338,7 +338,7 @@ TutorialClass(
     shapes next.)
 
     Click BOLD(OK) to make changes.  The BOLD(Homogeneity Index)
-    increases from 0.946 to 0.978.""",
+    increases from 0.945 to 0.978.""",
         
     signal = "Skeleton modified"
     ),
@@ -391,9 +391,10 @@ TutorialClass(
     Set BOLD(Selection Mode) to BOLD(Elements).
 
     From the BOLD(Element Selection Operations) pane in the right side
-    of the page, select BOLD(Select By Homogeneity) for the parameter
-    BOLD(Action) and set its BOLD(threshold) to be BOLD(0.9), to
-    select all elements less than 90% homogeneous.
+    of the page, select BOLD(By Homogeneity) for the parameter
+    BOLD(Method) and set its BOLD(min_homogeneity) to BOLD(0) and
+    BOLD(max_homogeneity) to be BOLD(0.9), to select all elements less
+    than 90% homogeneous.
 
     We will apply the next modification only to the selected elements.
         
@@ -463,7 +464,7 @@ TutorialClass(
     comments=
     
     """Open the BOLD(Skeleton Selection) page and select elements by
-    homogeneity with BOLD(threshold) = BOLD(0.9).
+    homogeneity with BOLD(max_homogeneity) = BOLD(0.9).
 
     You will notice that the number of elements selected is
     significantly reduced.  """,

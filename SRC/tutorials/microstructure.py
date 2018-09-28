@@ -12,10 +12,11 @@ from ooflib.tutorials import tutorial
 TutoringItem = tutorial.TutoringItem
 TutorialClass = tutorial.TutorialClass
 
-TutorialClass(subject="Microstructure",
-              ordering=1,
-
-              lessons = [
+TutorialClass(
+    subject="Microstructure",
+    ordering=1,
+    
+    lessons = [
     TutoringItem(
     subject="Introduction",
     comments=
@@ -194,9 +195,10 @@ TutorialClass(subject="Microstructure",
     Select BOLD(Point) in the BOLD(Method) pull-down menu.
 
     Click on a voxel in the Image to select it.  The selected voxel
-    will be marked in BOLD(red).
+    will be marked in BOLD(red), and its location (in voxel
+    coordinates) will be displayed in the toolbox.
     """,
-    signal= "new pixel selection"
+    signal= "pixel selection changed"
     ),
 
     TutoringItem(
@@ -206,9 +208,13 @@ TutorialClass(subject="Microstructure",
     """You can accumulate the selected voxels by holding the
     BOLD(shift) key while clicking the mouse on the image.
 
-    Try selecting multiple voxels by using this feature.
+    Try selecting multiple voxels by using this feature.  Notice that
+    the content of the BOLD(operator) field in the toolbox changes
+    when you press the shift key.  Experiment with the the
+    BOLD(control) key and with the BOLD(control)/BOLD(shift)
+    combination.
     """,
-    signal= "new pixel selection"
+    signal= "pixel selection changed"
     ),
 
     TutoringItem(
@@ -293,7 +299,7 @@ TutorialClass(subject="Microstructure",
     Now, we need to provide a reference color by clicking on a voxel.
     Click on any BOLD(black) voxel.
     """,
-    signal= "new pixel selection"
+    signal= "pixel selection changed"
     ),
 
     TutoringItem(
@@ -365,7 +371,42 @@ TutorialClass(subject="Microstructure",
     Hold the shift key as you click on a black region to select
     multiple islands.
     """,
-    signal= "new pixel selection"
+    signal= "pixel selection changed"
+    ),
+
+    TutoringItem(
+    subject="Selecting a Box of Voxels",
+    comments=
+    """Select BOLD(Box) in the BOLD(Voxel Selection) toolbox. 
+
+    This tool allows you to interactively select a rectangular region
+    of voxels.
+        
+    Click the BOLD(Start) button.  A blue box appears surrounding the
+    entire image.  The voxels inside the box will be selected when you
+    click the BOLD(Done) button.
+
+    You can adjust the box's sides by clicking and dragging on them,
+    but it's hard to do unless you first rotate the image.  Select
+    BOLD(Tumble) mode at the top of the graphics window, and click and
+    drag to rotate the image.  Then reselect BOLD(Select) mode, and
+    click and drag the sides of the box.  The image is translucent so
+    that you can see the box when its sides are inside the image.
+
+    The BOLD(operator) field in the toolbox
+    controls what happens when you click BOLD(Done).  Choosing
+    BOLD(Select) selects the voxels inside the box and deselects all
+    others.  Choosing BOLD(Add Selection) selects the voxels inside
+    the box without deselecting any previously selected voxels.
+    Choosing BOLD(Unselect) unselects the voxels inside the box.
+    Choosing BOLD(Intersect) unselects all voxels outside the box (ie,
+    it selects the intersection of the box and the previously selected
+    voxels).  Choosing BOLD(Toggle) flips unselects the selected
+    voxels inside the box, and selects the unselected ones.
+
+    When the box is where you want it, click BOLD(Done) to actually
+    make the selection, or click BOLD(Cancel) to cancel.
+    """
     ),
 
     TutoringItem(
@@ -435,13 +476,18 @@ TutorialClass(subject="Microstructure",
     should be shown. It's called BOLD(Show) for this reason.  Try
     alternately showing the two image layers to see the effect of our
     undo operations in the graphics window.  When both layers are
-    enabled, there's an ambiguity as to which should be shown -- the
-    graphics "layer" paradigm is stretched to the breaking point, and
-    the actual display depends on implementation details outside of
-    user control. You can always selectively show and hide layers to
-    get what you want, in this case to either admire the purity of the
-    original image, or examine the highly useful normalized and
-    contrast-enhanced image."""
+    enabled, the one higher in the Layer List is visible.  Generally,
+    when two objects occupy the same space, the one higher in the list
+    is visible.  You can always selectively show and hide layers to
+    change which is visible, or you can move layers up and down in the
+    list by selecting a layer and using commands in the BOLD(Layer)
+    menu.  The same commands are available by right-clicking on a
+    layer in the list. 
+
+    On some systems, you can reorder the list by clicking and dragging
+    entries in it.
+    
+    """
     ),
     
     TutoringItem(
@@ -461,15 +507,14 @@ TutorialClass(subject="Microstructure",
     Image.  Note how many voxels have been selected, in the box at the
     bottom of the BOLD(Voxel Selection) toolbox.
 
-    Using the BOLD(Layer List) show controls, switch to the other version of the
-    Image.
-    Notice that the selection hasn't changed, since you
-    haven't changed Microstructures.
+    Using the BOLD(Layer List) show controls, switch to the other
+    version of the Image.  Notice that the selection hasn't changed,
+    since you haven't changed Microstructures.
 
-    Click on the BOLD(Repeat) button in the toolbox.  This repeats the
-    previous mouse click, but this time the selection method will act
-    on the other Image.  Notice that a different set of voxels have
-    been selected."""
+    Click on the image again, in roughly the same spot.  Notice that a
+    different set of voxels has been selected, because the selection
+    method is operating on a different image.
+    """
     ),
     
 
@@ -487,9 +532,9 @@ TutorialClass(subject="Microstructure",
     Select BOLD(Group) in the BOLD(Method) pull-down menu in
     the Voxel Selection Modification pane.
 
-    Select BOLD(white) for the voxel BOLD(group), BOLD(Select Only)
-    for the operator, and click BOLD(OK).  """,
-    signal= "new pixel selection"
+    Select BOLD(white) for the voxel BOLD(group), BOLD(Select)
+    for the BOLD(operator), and click BOLD(OK).  """,
+    signal= "pixel selection changed"
     ),
 
     TutoringItem(
@@ -500,11 +545,10 @@ TutorialClass(subject="Microstructure",
     you only need to invert the current selection.
 
     Click BOLD(Invert) in the BOLD(Voxel Selection) toolbox in the
-    graphics window, or, equivalently, select BOLD(Invert) in the
-    BOLD(Method) menu in the BOLD(Voxel Selection) page and click
-    BOLD(OK).
+    graphics window or, equivalently, in the BOLD(Voxel Selection
+    Modification) pane in the BOLD(Voxel Selection) page.
     """,
-    signal= "new pixel selection"
+    signal= "pixel selection changed"
     ),
 
     TutoringItem(
@@ -576,8 +620,8 @@ TutorialClass(subject="Microstructure",
     Furthermore, they are not subject to round-off errors from
     converting numbers to text, and cannot contain arbitrary Python
     code.  Their one disadvantage is that they are not easily
-    editable.  Binary data files can be loaded into OOF3D with the
-    BOLD(Load/Data) command in the BOLD(File) menu.
+    editable.  Binary data files can also be loaded into OOF3D with
+    the BOLD(Load/Data) command in the BOLD(File) menu.
 
     Select BOLD(Save/Microstructure) from the BOLD(File) menu again.
     Enter a file name, select a data format and click BOLD(OK).

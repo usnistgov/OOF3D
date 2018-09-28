@@ -36,7 +36,8 @@ TutorialClass(subject="Basics",
     Use the BOLD(Save) button to save a tutorial session in a file so
     that you can resume it later.  To resume a session, load the saved
     file with the BOLD(Load Script) command in the BOLD(File) menu in
-    the main OOF3D window."""
+    the main OOF3D window, or start OOF3D by typing "oof3d --script filename".
+    """
     ),
 
     TutoringItem(
@@ -72,7 +73,8 @@ TutorialClass(subject="Basics",
 
     BOLD(Mesh): A full finite element mesh, including information
     about element type, which fields are defined, which equations are
-    being solved, boundary conditions, etc.
+    being solved, boundary conditions, etc.  A single Skeleton can
+    contain many Meshes.
 
     BOLD(Subproblem): A part of a finite element mesh.  A mesh can
     contain many subproblems.  Subproblems can differ in the mesh
@@ -86,11 +88,13 @@ TutorialClass(subject="Basics",
     TutoringItem(
     subject="A Note on Units",
     comments=
-    """OOF3D has BOLD(no) preferred set of units.  Enter data in any
-    set of units that you prefer, and the output will be in those
-    units.  Of course, at NIST we prefer that you use SI units
-    (kilograms, meters, and seconds, etc), but if you use slugs,
-    furlongs, and fortnights instead, OOF3D will not complain."""
+    """OOF3D has BOLD(no) preferred set of units.  Enter data in any set
+    of units that you prefer, and the output will be in those
+    units. BOLD(All) data, including material parameters, image
+    dimensions, and time steps, must be in the same set of units.  At
+    NIST we prefer that you use SI units (kilograms, meters, and
+    seconds, etc), but if you use slugs, furlongs, and fortnights
+    instead, OOF3D will not complain."""
     ),
 
     TutoringItem(
@@ -367,6 +371,11 @@ TutorialClass(subject="Basics",
     where "myoof.log" is the name you assigned to the log file.
     Loading the script will re-execute all the commands that you
     performed, and thus duplicate your OOF3D session.
+
+    If you are reporting a bug without using the BOLD(Report) button
+    in the error dialog, sending us a script that illustrates the
+    error is extremely helpful.  It is almost impossible for us to fix
+    a bug that we cannot reproduce.
 
     To recover an OOF3D session without repeating all the commands, you
     need to save and reload the data (Microstructure, Skeleton, etc.)

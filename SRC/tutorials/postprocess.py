@@ -156,14 +156,15 @@ TutorialClass(
 
     Double clicking on a node in the list of nodes in the toolbox will
     switch it into Node mode for the selected node.
-    
-    To query BOLD(Displacement) or BOLD(Stress) data, use the
-    BOLD(Mesh Data) window.  [Not available in 3.0.0.]  The BOLD(Mesh
-    Data) results are calculated at the mouse point, and are updated
-    each time the mouse is clicked on the Mesh when the Mesh Info
-    toolbox is active.  Note that to query points inside the Mesh, you
-    need to set a clipping plane in the BOLD(Viewer) toolbox.
-    """),
+    """
+    # To query BOLD(Displacement) or BOLD(Stress) data, use the
+    # BOLD(Mesh Data) window.  [Not available in 3.0.0.]  The BOLD(Mesh
+    # Data) results are calculated at the mouse point, and are updated
+    # each time the mouse is clicked on the Mesh when the Mesh Info
+    # toolbox is active.  Note that to query points inside the Mesh, you
+    # need to set a clipping plane in the BOLD(Viewer) toolbox.
+    # """
+    ),
     
     TutoringItem(
     subject="Clearing up",
