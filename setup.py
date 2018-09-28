@@ -1255,6 +1255,9 @@ def set_platform_values():
         # Enable C++11
         platform['extra_compile_args'].append('-Wno-c++11-extensions')
         platform['extra_compile_args'].append('-std=c++11')
+        # After upgrading to High Sierra, deprecated register warnings
+        # started coming from the python header files.
+        platform['extra_compile_args'].append('-Wno-deprecated-register')
         if 'clang' in get_config_var('CC'):
             # If we're using clang, we want to suppress some warnings
             # about oddities in swig-generated code:
