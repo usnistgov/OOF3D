@@ -22,7 +22,7 @@ OOF3D was written at the National Institute of Standards and Technology in Gaith
 
 OOF3D includes a lot of code from OOF2.  Contributors have included R. Edwin Garcia, Rhonald C. Lua, Seung-Ill Haan, and Eric Ma.
 
-OOF2 is a product of the NIST Information Technology Laboratory and the Center for Theoretical and Computational Materials Science in the NIST Material Measurement Laboratory.
+OOF3D is a product of the NIST Information Technology Laboratory and the Center for Theoretical and Computational Materials Science in the NIST Material Measurement Laboratory.
 
 Thanks to Ed Fuller, W. Craig Carter, Panos Charalambides, Zi-Kui Liu, and Andy Roosen for their support.
 
@@ -46,13 +46,13 @@ OOF3D was produced by NIST, an agency of the U.S. government, and by statute is 
 
 -*- -*- -*- -*-
 
-Programs and libraries written elsewhere and incorporated in OOF2 have their own copyright and licensing terms, which are summarized below.  For details, see the listed URLs, or (where applicable) the full copyright statements in the OOF source code distribution.
+Programs and libraries written elsewhere and incorporated in OOF3D have their own copyright and licensing terms, which are summarized below.  For details, see the listed URLs, or (where applicable) the full copyright statements in the OOF source code distribution.
 
-Python:  The Python programming language (http://www.python.org) copyright is held by the Python Software Foundation.  Python is freely redistributable.  Its license may be found at http://www.python.org/license.html.  OOF2 requires Python version 2.3 or later.
+Python:  The Python programming language (http://www.python.org) copyright is held by the Python Software Foundation.  Python is freely redistributable.  Its license may be found at http://www.python.org/license.html.  OOF3D requires Python version 2.7.
 
 GTK+:  The GTK+ graphics toolkit (http://www.gtk.org) is licensed under the GNU LGPL (http://www.gnu.org/copyleft/lesser.html).  OOF2 currently requires GTK+ version 2.6 and libgnomecanvas2 version 2.6 or later.
 
-VTK:  VTK (http://www.vtk.org) is an open-source toolkit licensed under the BSD license.
+VTK:  VTK (http://www.vtk.org) is an open-source toolkit licensed under the BSD license.  OOF3D requires VTK version 8.1.1 or later.
 
 IML++ and SparseLib++:  The IML++ library of iterative matrix methods in C++ and the SparseLib++ library for sparse matrix computations are available from NIST at http://math.nist.gov/iml++/ and http://math.nist.gov/sparselib++/.  They are freely redistributable.
 
