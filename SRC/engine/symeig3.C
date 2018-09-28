@@ -22,8 +22,6 @@
 #include "engine/eigenvalues.h"
 #include "engine/symeig3.h"
 
-static const double thirdtwopi = 2*M_PI/3;
-
 template <class MATRIX>
 void swaprows(MATRIX &m, int i, int j) {
   for(int k=0; k<3; k++) {
@@ -249,7 +247,6 @@ void getEigenvalues(const MATRIX &mat, EigenValues &eig) {
   double a11 = mat(1,1);
   double a12 = mat(1,2);
   double a22 = mat(2,2);
-
   // coeffiecients of the characteristic equation
   // lambda^3 + a*lambda^2 + b*lambda + c = 0
   double a = -(a00 + a11 + a22);
@@ -273,6 +270,8 @@ void getEigenvalues(const MATRIX &mat, EigenValues &eig) {
   
   double thirda = a/3;
   double thirdtheta = theta/3;
+  double thirdtwopi = 2*M_PI/3;
+
   eig = EigenValues(-2*sqrtQ*cos(thirdtheta) - thirda,
 		    -2*sqrtQ*cos(thirdtheta + thirdtwopi) - thirda,
 		    -2*sqrtQ*cos(thirdtheta - thirdtwopi) - thirda);
