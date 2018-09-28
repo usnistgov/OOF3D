@@ -13,6 +13,13 @@
  * oof_manager@nist.gov. 
  */
 
+3.2.1
+
+Fixed a few problems in the tutorials, and updated some of them.
+
+Skeleton selection displays are updated during annealing and other
+iterative skeleton modifications.
+
 3.2.0
 
 Fixed a bug that was making the Microstructure recalculate voxel

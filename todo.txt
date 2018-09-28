@@ -21,8 +21,6 @@ boundary page when graphics window is open causes a vtk warning:
   no  data to process.
 Same warning occurs when selecting a new boundary.
 
-Fix bug: Selected element display layer is not updated during annealing.
-
 
 
 
@@ -439,3 +437,8 @@ translucent when the box widget is active?  Maybe there should be
 options for making the image translucent, and for dimming or hiding
 the box when the widget isn't active.
 ** Done.
+
+Fix bug: Selected element display layer is not updated during
+annealing after the first step, or at the end.
+** Done 2018-09-28
+

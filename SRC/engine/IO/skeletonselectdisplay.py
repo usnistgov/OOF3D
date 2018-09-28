@@ -57,6 +57,8 @@ class SkeletonSelectionDisplay(display.DisplayMethod):
     def setupSignals(self):
         self.tbcallbacks.append(switchboard.requestCallbackMain(
                 self.mode.changedselectionsignal, self.changedSelectionCB))
+        self.tbcallbacks.append(switchboard.requestCallbackMain(
+            "Skeleton changed", self.changedSkeletonCB))
 
     def changedSelectionCB(self, selection):
         skel = self.who().resolve(self.gfxwindow)
@@ -69,6 +71,11 @@ class SkeletonSelectionDisplay(display.DisplayMethod):
             # self.canvaslayer.newGrid(skel.getObject().getPoints(), numCells)
             # for s in selectables:
             #     self.canvaslayer.addCell(s.getCellType(), s.getPointIds())
+
+    def changedSkeletonCB(self, path):
+        if (self.canvaslayer is not None and
+            self.who().resolve(self.gfxwindow).path() == path):
+            self.canvaslayer.setModified()
 
     def whoChanged(self):
         skel = self.who().resolve(self.gfxwindow)
