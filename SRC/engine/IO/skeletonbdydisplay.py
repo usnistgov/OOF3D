@@ -227,6 +227,7 @@ class SkeletonBoundaryDisplay(SkeletonBdyDisplayBase):
                 layer.newGrid(points, n)
             else:
                 layer.clear()
+                layer.setEmpty(True)
         # Create the cells in the grids.
         for bdyname in self.boundaries:
             bdy = skelctxt.getBoundary(bdyname)
@@ -254,17 +255,27 @@ class SelectedSkeletonBoundaryDisplay(SkeletonBdyDisplayBase):
                                         self.bdySelectedCB),
             switchboard.requestCallback("boundary unselected",
                                         self.bdyUnselectedCB)])
+        self.currentBdyType = None
 
     def newLayer(self):
         return self._newLayer("SelectedSkeletonBoundary")
     
     def bdySelectedCB(self, skelctxt, bdyname): # sb "boundary selected"
         if skelctxt is self.who().resolve(self.gfxwindow):
+            self.clearCurrentLayer()
             self.whoChanged()
             self.setParams()             # recomputes automatic glyph size
-    def bdyUnselectedCB(self, skelctxt): # sb "boundary unselected"
+            bdy = skelctxt.getBoundary(bdyname)
+            self.currentBdyType = bdy.boundaryType()
+    def bdyUnselectedCB(self, skelctxt, bdyname): # sb "boundary unselected"
         if skelctxt is self.who().resolve(self.gfxwindow):
-            self.canvaslayer.clear()
+            self.clearCurrentLayer()
+    def clearCurrentLayer(self):
+        if self.currentBdyType is not None:
+            sublayer = self.canvaslayer.getSublayer(self.currentBdyType)
+            sublayer.clear()
+            sublayer.setEmpty(True)
+            self.currentBdyType = None
 
     def whoChanged(self):
         skelctxt = self.who().resolve(self.gfxwindow)

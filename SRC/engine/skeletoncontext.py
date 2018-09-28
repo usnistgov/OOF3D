@@ -727,9 +727,10 @@ class SkeletonContext(whoville.WhoDoUndo):
         switchboard.notify('redraw')
     def unselectBoundary(self):
         if self.selectedBdyName is not None:
+            bdyname = self.selectedBdyName
             self.selectedBdyName = None
             self.bdyselected.increment()
-            switchboard.notify("boundary unselected", self)
+            switchboard.notify("boundary unselected", self, bdyname)
             switchboard.notify('redraw')
     def getSelectedBoundaryName(self):
         return self.selectedBdyName

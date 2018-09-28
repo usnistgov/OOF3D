@@ -257,7 +257,7 @@ class SkeletonBoundaryPage(oofGUI.MainPage):
             self.updateInfo()
             self.sensitize()
             gtklogger.checkpoint("boundary page updated")
-    def bdyUnselectedCB(self, skelctxt): # sb "boundary unselected"
+    def bdyUnselectedCB(self, skelctxt, name): # sb "boundary unselected"
         if skelctxt is self.currentSkeletonContext():
             self.inhibitSignals()
             self.boundarylist.set_selection(None)

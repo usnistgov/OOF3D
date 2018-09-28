@@ -8,18 +8,8 @@ Use macports lapack instead of Accelerate framework?  See
    https://github.com/opencollab/arpack-ng/issues/149#issuecomment-419715128
    http://octave.1599824.n4.nabble.com/Issues-with-eigs-td4689314.html#a4689334
 
-When using the Box voxel selector, clicking "Done" leaves the image
-translucent.  The corner0 and corner1 fields should not be active, or
-editing them should change the box.
-
 Resurrect the Mesh Data Viewer and restore the toolbox.
 
-Fix bug: Deselecting (control-click) a boundary in the skeleton
-boundary page when graphics window is open causes a vtk warning:
-  Warning: In /Users/langer/UTIL/VTK/VTK-8.1.1/Filters/Geometry/vtkDataSetSurfaceFilter.cxx, line 169
-  vtkDataSetSurfaceFilter (0x7fbe4cc4d160): Number of cells is zero,
-  no  data to process.
-Same warning occurs when selecting a new boundary.
 
 
 
@@ -442,3 +432,16 @@ Fix bug: Selected element display layer is not updated during
 annealing after the first step, or at the end.
 ** Done 2018-09-28
 
+When using the Box voxel selector, clicking "Done" or "Cancel"
+sometimes leaves the image translucent.  Also, the corner0 and corner1
+fields should not be active, or editing them should change the box.
+** Fixed 2018-09-28
+
+Fix bug: Deselecting (control-click) a boundary in the skeleton
+boundary page when graphics window is open causes a vtk warning:
+  Warning: In /Users/langer/UTIL/VTK/VTK-8.1.1/Filters/Geometry/vtkDataSetSurfaceFilter.cxx, line 169
+  vtkDataSetSurfaceFilter (0x7fbe4cc4d160): Number of cells is zero,
+  no  data to process.
+Same warning occurs when selecting a new boundary if the new one is of
+a different type than the previous one.
+** Fixed 2018-09-28.  CanvasLayer.setEmpty wasn't being called.
