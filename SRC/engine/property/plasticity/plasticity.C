@@ -73,6 +73,29 @@ SmallMatrix sm_invert3(SmallMatrix x) {
   }
 }
 
+double sm_determinant3(SmallMatrix &x) {
+ if ((x.rows()!=3) || (x.cols()!=3)) {
+      throw ErrProgrammingError("sm_determinant3 called with non-3x3 SmallMatrix.",
+				__FILE__,__LINE__);
+    }
+  else {
+    SmallMatrix res(3);
+    // Cofactors
+    res(0,0) = x(1,1)*x(2,2)-x(1,2)*x(2,1);
+    res(0,1) = -(x(1,0)*x(2,2)-x(1,2)*x(2,0));
+    res(0,2) = x(1,0)*x(2,1)-x(1,1)*x(2,0);
+    //
+    res(1,0) = -(x(0,1)*x(2,2)-x(0,2)*x(2,1));
+    res(1,1) = x(0,0)*x(2,2)-x(0,2)*x(2,0);
+    res(1,2) = -(x(0,0)*x(2,1)-x(0,1)*x(2,0));
+    //
+    res(2,0) = x(0,1)*x(1,2)-x(0,2)*x(1,1);
+    res(2,1) = -(x(0,0)*x(1,2)-x(1,2)*x(1,0));
+    res(2,2) = x(0,0)*x(1,1)-x(0,1)*x(1,0);
+    //
+    return x(0,0)*res(0,0)+x(0,1)*res(0,1)+x(0,2)*res(0,2);
+  }
+}
 
 // Cayley-Hamilton trickery to compute the square root of a
 // passed-in matrix.  Returns the 'U' matrix and its inverse.
@@ -339,7 +362,11 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
       dgamma_ds[i] = new SmallMatrix(3);
 
     // fp_attau is derived, fp_att*(I + sum delta_g *lab_schmid_tensor)
-    SmallMatrix fp_attau(3); 
+    SmallMatrix fp_attau(3);
+    // Decompose into elastic and plastic parts.
+    SmallMatrix fp_attau_i = sm_invert3(fp_attau);
+    SmallMatrix fe_attau = fp_attau_i*f_attau;
+    SmallMatrix fe_attau_i = sm_invert3(fe_attau);
     
     // At this point, we have the value of s_tau, the 2nd PK stress
     // at the current time increment, as well as fp_tau, the plastic
@@ -493,16 +520,42 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 		    for(int q=0;q<3;++q)
 		      for(int alpha=0;alpha<nslips;++alpha) {
 			bsb_s(i,j,n,o) -=		\
-			  r(i,k)*u(k,l)*fe_att(l,m)*   \ 
-			  (*dgamma_ds[alpha])(p,q)*			\
+			  r(i,k)*u(k,l)*fe_att(l,m)*    \
+			  (*dgamma_ds[alpha])(p,q)*	\
 			  bsb_q(p,q,n,o)* \
 			  (*lab_schmid_tensors[alpha])(m,j);
 		      }
     
-		  
-    // Construct derivative matrix s4 = dfE(tau)/dUt
-    // Combine into four-index object w.
-  }
+
+    Rank4_3DTensor w_mat;
+
+    double fe_attau_d = sm_determinant3(fe_attau);
+    
+    SmallMatrix ess_fei(3);
+    for (int k=0;k<3;++k)
+      for (int l=0;l<3;++l)
+	for(int p=0;p<3;++p)
+	  for(int q=0;q<3;++q) {
+	    ess_fei(k,l) = bsb_s(p,q,k,l)*fe_attau_i(q,p);
+	  }
+    for(int i=0;i<3;++i)
+      for(int j=0;j<3;++j)
+	for(int k=0;k<3;++k)
+	  for(int l=0;l<3;++l)
+	    for(int m=0;m<3;++m)
+	      for(int n=0;n<3;++n) {
+		double wval = bsb_s(i,j,k,l)*s_attau(m,n)*fe_attau(j,n) \
+		  + fe_attau(i,m)*bsb_q(m,n,k,l)*fe_attau(j,n) \
+		  + fe_attau(i,m)*s_attau(m,n)*bsb_s(j,n,k,l) \
+		  - fe_attau(i,m)*s_attau(m,n)*fe_attau(j,n)*ess_fei(k,l);
+		w_mat(i,j,k,l) = wval/fe_attau_d;
+	      }
+
+    
+    // Is it sufficiently symmetric for a Cijkl object?
+
+    pd->gptdata[gptdx].w_mat = w_mat;
+  } // End of the gausspoint loop (!).
 }
 
 int Plasticity::integration_order(const CSubProblem *sp,
@@ -636,7 +689,7 @@ FCCPlasticity::FCCPlasticity(PyObject *reg, const std::string &nm,
 
 
 GptPlasticData::GptPlasticData() :
-  ft(3),fpt(3),f_tau(3),fp_tau(3),fe_tau(3),cauchy(3),s_star(3),d_ep(3)
+  ft(3),fpt(3),f_tau(3),fp_tau(3),fe_tau(3),cauchy(3),s_star(3)
 {
   ft(0,0) = ft(1,1) = ft(2,2) = 1.0;
   fpt(0,0) = fpt(1,1) = fpt(2,2) = 1.0;

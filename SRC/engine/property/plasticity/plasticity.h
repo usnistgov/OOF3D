@@ -71,6 +71,30 @@ class SmallSystem;
 class PlasticConstitutiveRule;
 class SmallMatrix;
 
+
+// Utility class, definitely needs optimization, probably should
+// be in a different file. 
+class Rank4_3DTensor {
+private:
+  std::vector<double> data;
+  static int _index(unsigned int i, unsigned int j,
+		    unsigned int k, unsigned int l) {
+    return  ((i*3+j)*3+k)*3+l;
+  };
+public:
+  Rank4_3DTensor() : data(81) { this->clear(); };
+  Rank4_3DTensor(SmallMatrix &s);
+  Rank4_3DTensor(const Rank4_3DTensor&);
+  void clear();
+  double &operator()(unsigned int i, unsigned int j,
+		     unsigned int k, unsigned int l);
+  const double &operator()(unsigned int i, unsigned int j,
+			   unsigned int k, unsigned int l) const;
+  SmallMatrix as_smallmatrix(); // 9x9?  Or 6x6 with magic inner product?
+
+};
+
+
 class OrientationPropBase;
 
 class PlasticConstitutiveRule;
@@ -148,8 +172,7 @@ public:
   SmallMatrix fe_tau;   // Elastic part of F at current time tau.
   SmallMatrix cauchy;   // Cauchy stress (time tau?)
   SmallMatrix s_star;   // 2nd PK stress at time tau?
-  SmallMatrix d_ep;     // Elastoplastic modules D.
-  Cijkl w_mat;          // Elastoplastic tangent.
+  Rank4_3DTensor w_mat;          // Elastoplastic tangent.
 };
   
 
@@ -202,27 +225,4 @@ public:
 
 static std::vector<std::vector<int> > voigt9 = {{0,5,4},{8,1,3},{7,6,2}};
 
-
-// Utility class, definitely needs optimization, probably should
-// be in a different file. 
-class Rank4_3DTensor {
-private:
-  std::vector<double> data;
-  static int _index(unsigned int i, unsigned int j,
-		    unsigned int k, unsigned int l) {
-    return  ((i*3+j)*3+k)*3+l;
-  };
-public:
-  Rank4_3DTensor() : data(81) { this->clear(); };
-  Rank4_3DTensor(SmallMatrix &s);
-  Rank4_3DTensor(const Rank4_3DTensor&);
-  void clear();
-  double &operator()(unsigned int i, unsigned int j,
-		     unsigned int k, unsigned int l);
-  const double &operator()(unsigned int i, unsigned int j,
-			   unsigned int k, unsigned int l) const;
-  SmallMatrix as_smallmatrix(); // 9x9?  Or 6x6 with magic inner product?
-
-};
-
-#endif // PLASTICITY_H
+#endif
