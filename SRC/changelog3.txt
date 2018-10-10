@@ -20,6 +20,11 @@ Fixed a few problems in the tutorials, and updated some of them.
 Skeleton selection displays are updated during annealing and other
 iterative skeleton modifications.
 
+After cancelling the Box voxel selector, image opacity is restored
+correctly.
+
+Fixed a warning when deselecting a boundary in the Skeleton Boundary page.
+
 3.2.0
 
 Fixed a bug that was making the Microstructure recalculate voxel
