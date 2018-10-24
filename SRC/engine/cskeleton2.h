@@ -982,11 +982,16 @@ typedef std::set<FaceSubstitution, FaceSubstitutionLT> FaceSubstitutionSet;
 typedef std::vector<MoveNode> MoveNodeVector;
 typedef std::map<CSkeletonElement*, HomogeneityData> HomogeneityDataMap;
 
-#ifndef HAVE_SSTREAM
-#include <strstream.h>
-#else
-#include <sstream>
-#endif
+
+// #ifdef HAVE_SSTREAM
+// #include <sstream>
+// #else
+// #ifdef HAVE_STRSTREAM
+// #include <strstream>
+// #else
+// #include <strstream.h>
+// #endif
+// #endif 
 
 class ProvisionalChangesBase {
 protected:

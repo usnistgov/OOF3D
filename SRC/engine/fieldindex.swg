@@ -19,11 +19,6 @@
 %{
 #include "engine/fieldindex.h"
 #include "common/tostring.h"
-#ifndef HAVE_SSTREAM
-#include <strstream.h>
-#else 
-#include <sstream>	
-#endif // HAVE_SSTREAM
 %}
 
 %pragma(python) include="engine/fieldindex.spy"

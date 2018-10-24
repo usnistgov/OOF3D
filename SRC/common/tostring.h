@@ -27,7 +27,12 @@
 
 #ifndef HAVE_SSTREAM	// old fashioned version
 
+#ifdef HAVE_STRSTREAM
+#include <strstream>		// half-assed RH version
+#else
 #include <strstream.h>
+#endif // HAVE_STRSTREAM
+
 template <class TYPE> 
 std::string to_string(const TYPE &x) {
   std::ostrstream os;

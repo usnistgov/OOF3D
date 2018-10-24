@@ -534,6 +534,11 @@ class oof_build_xxxx:
                         print >> cfgfile, '#define VTK_EXCLUDE_STRSTREAM_HEADERS'
                 else:
                     print >> cfgfile, '// #define HAVE_SSTREAM'
+                    # RHEL 7.5 provides <strstream> but not the modern
+                    # <sstream> or the traditional <strstream.h>.  WTF RH?
+                    if self.check_header('<strstream>'):
+                        print >> cfgfile, '#define HAVE_STRSTREAM'
+                        
                 if PROFILER:
                     if self.check_header("<gperftools/profiler.h>"):
                         print >> cfgfile, '#include <gperftools/profiler.h>'
@@ -1521,18 +1526,25 @@ if __name__ == '__main__':
     # 'ooftests' module when oof3d is installed. 
     pkgs.extend([OOFNAME + '.ooftests', OOFNAME+'.ooftests.UTILS'])
     pkg_dir[OOFNAME + '.ooftests'] = 'TEST3D'
-    pkg_data[OOFNAME + '.ooftests'] = ['aniso_data/*',
-                                       'bc_data/*',
-                                       'fundamental_data/*',
-                                       'image_data/*', 'image_data/*/*',
-                                       'matprop_data/*',
-                                       'matrix_data/*',
-                                       'mesh_data/*',
-                                       'ms_data/*', 'ms_data/*/*',
-                                       'ms_data/*/*/*',
-                                       'output_data/*',
-                                       'skeleton_data/*',
-                                       'vsb_data/*']
+
+    # This slurps up all of the files in all of the *_data
+    # subdirectories of TEST3D and schedules them to be installed into
+    # ooftests.  We used to just do this:
+    #    pkg_data[OOFNAME + '.ooftests'] = ['aniso_data/*',
+    #                                       'image_data/*', 'image_data/*/*',
+    #                                       etc.]
+    # but RHEL got confused by the */*.  Apparently they're distributing
+    # their own version of distutils again.
+    
+    testdatafiles = []
+    for dirpath, dirnames, filenames in os.walk('TEST3D'):
+        path = os.path.split(dirpath)
+        if dirpath.endswith('_data'):
+            pathend = os.path.join(*path[1:]) # not including 'TEST3D'
+            print "pathend=",pathend
+            for fname in filenames:
+                testdatafiles.append(os.path.join(pathend, fname))
+    pkg_data[OOFNAME + '.ooftests'] = testdatafiles
 
     # # If this script is being used to create a frozen executable, the
     # # Python path has to be set the same way it is during actual
