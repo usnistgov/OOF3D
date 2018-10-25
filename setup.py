@@ -1541,7 +1541,6 @@ if __name__ == '__main__':
         path = os.path.split(dirpath)
         if dirpath.endswith('_data'):
             pathend = os.path.join(*path[1:]) # not including 'TEST3D'
-            print "pathend=",pathend
             for fname in filenames:
                 testdatafiles.append(os.path.join(pathend, fname))
     pkg_data[OOFNAME + '.ooftests'] = testdatafiles
