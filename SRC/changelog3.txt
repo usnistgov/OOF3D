@@ -13,6 +13,10 @@
  * oof_manager@nist.gov. 
  */
 
+3.2.2
+
+Minor changes for compatibility with gcc 8.2.0.
+
 3.2.1
 
 Fixed a few problems in the tutorials, and updated some of them.
