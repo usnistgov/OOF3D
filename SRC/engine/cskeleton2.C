@@ -3831,7 +3831,7 @@ bool SegSubstitutionLT::operator()(const SegmentSubstitution &ss0,
 				   const SegmentSubstitution &ss1)
   const
 {
-  CSkeletonSelectableLTUid comparator;
+  CSkeletonSelectableLTUid<CSkeletonMultiNodeSelectable> comparator;
   if(comparator(ss0.substitutee, ss1.substitutee)) return true;
   if(comparator(ss1.substitutee, ss0.substitutee)) return false;
   CSkeletonMultiNodeKey key0(ss0.node0, ss0.node1);
@@ -3843,7 +3843,7 @@ bool FaceSubstitutionLT::operator()(const FaceSubstitution &fs0,
 				    const FaceSubstitution &fs1)
   const
 {
-  CSkeletonSelectableLTUid comparator;
+  CSkeletonSelectableLTUid<CSkeletonMultiNodeSelectable> comparator;
   if(comparator(fs0.substitutee, fs1.substitutee)) return true;
   if(comparator(fs1.substitutee, fs0.substitutee)) return false;
   CSkeletonMultiNodeKey key0(fs0.node0, fs0.node1, fs0.node2);

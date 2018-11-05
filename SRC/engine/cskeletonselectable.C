@@ -869,13 +869,6 @@ LineIntersectionPoint *CSkeletonSelectable::nextIntersection(
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-bool CSkeletonSelectableLTUid::operator()(const CSkeletonSelectable *s1,
-					  const CSkeletonSelectable *s2)
-  const
-{
-  return *s1 < *s2;
-}
-
 bool CSkeletonSelectablePairLTUid::operator()(const CSkeletonSelectablePair &a,
 					      const CSkeletonSelectablePair &b)
   const
@@ -973,7 +966,7 @@ CSkeletonSegmentSet getExteriorSegmentsOfFaces(
   std::multiset<CSkeletonSegment*> segcounts;
   for(const CSkeletonSelectable *f : *faces) {
     const CSkeletonFace *face = dynamic_cast<const CSkeletonFace*>(f);
-    for(int i=0; i<face->nnodes(); i++)
+    for(unsigned int i=0; i<face->nnodes(); i++)
       segcounts.insert(face->getSegment(skel, i));
   }
   CSkeletonSegmentSet segments;

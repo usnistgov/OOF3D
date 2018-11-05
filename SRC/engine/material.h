@@ -109,12 +109,12 @@ private:
 
   // list of all Properties that contribute to a Flux
   std::vector<FluxPropList> fluxprop;
-  typedef std::map<const Flux*, FluxPropList, ltidobject> FluxPropMap;
+  typedef std::map<const Flux*, FluxPropList, ltidobject<Flux>> FluxPropMap;
   FluxPropMap fluxpropmap;
 
   // list of all Properties that contribute directoy to an equation.
   std::vector<EqnPropList> eqnprop;
-  typedef std::map<const Equation*, EqnPropList, ltidobject> EqnPropMap;
+  typedef std::map<const Equation*, EqnPropList, ltidobject<Equation>> EqnPropMap;
   EqnPropMap eqnpropmap;
 
   // // Lists of active fluxes and equations for the current subproblem.

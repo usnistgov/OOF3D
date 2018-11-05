@@ -52,7 +52,7 @@ class SmallSystem;
 int countEquations();
 Equation *getEquationByIndex(int);
 
-typedef std::map<Flux*, SmallSystem*, ltidobject> FluxSysMap;
+typedef std::map<Flux*, SmallSystem*, ltidobject<Flux>> FluxSysMap;
 
 class Equation : public IdentifiedObject, public PythonExportable<Equation> {
 protected:

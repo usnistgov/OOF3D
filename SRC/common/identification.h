@@ -36,8 +36,9 @@ bool operator==(const IdentifiedObject&, const IdentifiedObject&);
 // When IdentifiedObjects are used as keys in STL maps and sets, they
 // can use this comparator:
 
+template <class IDENTIFIABLE>
 struct ltidobject {
-  bool operator()(const IdentifiedObject *obj1, const IdentifiedObject *obj2)
+  bool operator()(const IDENTIFIABLE *obj1, const IDENTIFIABLE *obj2)
     const
   {
     return obj1->objectid() < obj2->objectid();

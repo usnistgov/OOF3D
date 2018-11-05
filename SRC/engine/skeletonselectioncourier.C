@@ -47,7 +47,7 @@ CSkeletonFaceSet exteriorFacesOfElements(const CSkeletonBase *skeleton,
   CSkeletonFaceSet faces;
   for(const CSkeletonSelectable *ell : *els) {
     const CSkeletonElement *el = dynamic_cast<const CSkeletonElement*>(ell);
-    for(int i=0; i<4; i++) {
+    for(unsigned int i=0; i<4; i++) {
       const CSkeletonMultiNodeKey fkey = el->getFaceKey(i);
       CSkeletonFace *face = skeleton->getFace(fkey);
       // Faces can't be part of more than two elements, so if this
@@ -313,7 +313,7 @@ CSkeletonNodeSet NodesFromElementsCourier::exteriorNodes() const
   // two elements.
   for(const CSkeletonSelectable *elmnt : *elements) {
     const CSkeletonElement *el = dynamic_cast<const CSkeletonElement*>(elmnt);
-    for( int i=0; i<el->getNumberOfFaces(); i++) {
+    for(unsigned int i=0; i<el->getNumberOfFaces(); i++) {
       CSkeletonFace *face = skeleton->getFace(el->getFaceKey(i));
       if(faces.count(face) == 0) {
 	faces.insert(face);
@@ -350,8 +350,8 @@ CSkeletonNodeSet NodesFromFacesCourier::exteriorNodes() const {
   std::multiset<CSkeletonSegment*> segcounts;
   for(const CSkeletonSelectable *f : *faces) {
     const CSkeletonFace *face = dynamic_cast<const CSkeletonFace*>(f);
-    int nn = face->nnodes();
-    for(int i=0; i<nn; i++) {
+    unsigned int nn = face->nnodes();
+    for(unsigned int i=0; i<nn; i++) {
       segcounts.insert(face->getSegment(skeleton, i));
     }
   }
@@ -520,7 +520,7 @@ CSkeletonSegmentSet SegmentsFromElementsCourier::allSegments() const {
   const CSkeletonSelectableSet *others = otherTracker->get(); // selected els
   for(const CSkeletonSelectable *other : *others) {
     const CSkeletonElement *el = dynamic_cast<const CSkeletonElement*>(other);
-    for(int i=0; i<6; i++) {
+    for(unsigned int i=0; i<6; i++) {
       CSkeletonMultiNodeKey segkey = el->getSegmentKey(i);
       CSkeletonSegment *segment = skeleton->getSegment(segkey);
       segments.insert(segment);
@@ -536,8 +536,8 @@ CSkeletonSegmentSet SegmentsFromElementsCourier::exteriorSegments() const {
   CSkeletonFaceSet exteriorFaces = exteriorFacesOfElements(skeleton, elements);
   CSkeletonSegmentSet segments;
   for(CSkeletonFace *face : exteriorFaces) {
-    int nn = face->nnodes();
-    for(int i=0; i<nn; i++) { 	// loop over segments
+    unsigned int nn = face->nnodes();
+    for(unsigned int i=0; i<nn; i++) { 	// loop over segments
       segments.insert(face->getSegment(skeleton, i));
     }
   }
@@ -560,7 +560,7 @@ CSkeletonSegmentSet SegmentsFromFacesCourier::allSegments() const {
   const CSkeletonSelectableSet *others = otherTracker->get(); // selected faces
   for(const CSkeletonSelectable *other : *others) {
     const CSkeletonFace *face = dynamic_cast<const CSkeletonFace*>(other);
-    for(int i=0; i<face->nnodes(); i++)
+    for(unsigned int i=0; i<face->nnodes(); i++)
       segments.insert(face->getSegment(skeleton, i));
   }
   return segments;
@@ -573,7 +573,7 @@ CSkeletonSegmentSet SegmentsFromFacesCourier::exteriorSegments() const {
   std::multiset<CSkeletonSegment*> segcounts;
   for(const CSkeletonSelectable *f : *faces) {
     const CSkeletonFace *face = dynamic_cast<const CSkeletonFace*>(f);
-    for(int i=0; i<face->nnodes(); i++) {
+    for(unsigned int i=0; i<face->nnodes(); i++) {
       segcounts.insert(face->getSegment(skeleton, i));
     }
   }
@@ -641,7 +641,7 @@ InternalBoundarySegmentsCourier::InternalBoundarySegmentsCourier(
   // categories.
   CSkeletonFaceSet faces = internalBoundaryFaces(skeleton);
   for(CSkeletonFace *face : faces) {
-    for(int i=0; i<face->nnodes(); i++)
+    for(unsigned int i=0; i<face->nnodes(); i++)
       selectedObjects.insert(face->getSegment(skeleton, i));
   }
 }
@@ -779,7 +779,7 @@ CSkeletonFaceSet FacesFromElementsCourier::allFaces(
   const CSkeletonSelectableSet *elements = tracker->get();
   for(const CSkeletonSelectable *e : *elements) {
     const CSkeletonElement *el = dynamic_cast<const CSkeletonElement*>(e);
-    for(int i=0; i<4; i++) {
+    for(unsigned int i=0; i<4; i++) {
       const CSkeletonMultiNodeKey fkey = el->getFaceKey(i);
       CSkeletonFace *face = skeleton->getFace(fkey);
       faces.insert(face);
@@ -1148,7 +1148,7 @@ ElementsFromSegmentsCourier::ElementsFromSegmentsCourier(
 	if(examinedAlready.count(element) == 0) {
 	  examinedAlready.insert(element);
 	  int nSelected = 0;
-	  for(int i=0; i<6; i++) {
+	  for(unsigned int i=0; i<6; i++) {
 	    CSkeletonMultiNodeKey segkey = element->getSegmentKey(i);
 	    CSkeletonSegment *segment = skeleton->getSegment(segkey);
 	    if(segment->isSelected())
@@ -1191,7 +1191,7 @@ ElementsFromFacesCourier::ElementsFromFacesCourier(
 	if(examinedAlready.count(element) == 0) {
 	  examinedAlready.insert(element);
 	  int nSelected = 0;
-	  for(int i=0; i<4; i++) {
+	  for(unsigned int i=0; i<4; i++) {
 	    CSkeletonMultiNodeKey facekey = element->getFaceKey(i);
 	    CSkeletonFace *face = skeleton->getFace(facekey);
 	    if(face->isSelected())
@@ -1227,7 +1227,7 @@ ExpandElementSelectionCourier::ExpandElementSelectionCourier(
       }
     }
     else if(*mode == std::string("Segments")) {
-      for(int i=0; i<6; i++) {
+      for(unsigned int i=0; i<6; i++) {
 	CSkeletonMultiNodeKey segkey = element->getSegmentKey(i);
 	CSkeletonSegment *seg = skeleton->getSegment(segkey);
 	CSkeletonElementVector elements = skeleton->getSegmentElements(seg);
@@ -1237,7 +1237,7 @@ ExpandElementSelectionCourier::ExpandElementSelectionCourier(
     else {
       assert(*mode == std::string("Faces"));
       // Would it be better to use exteriorFacesOfElements here?
-      for(int i=0; i<4; i++) {
+      for(unsigned int i=0; i<4; i++) {
 	CSkeletonMultiNodeKey fkey = element->getFaceKey(i);
 	CSkeletonFace *face = skeleton->getFace(fkey);
 	CSkeletonElementVector elements;

@@ -77,17 +77,20 @@ typedef CSkeletonElementVector::const_iterator CSkeletonElementIterator;
 typedef std::vector<const CSkeletonElement*> ConstCSkeletonElementVector;
 
 // functor used by sorting algorithm for containers of pointers
+template <class SELECTABLE>
 struct CSkeletonSelectableLTUid {
-  bool operator()(const CSkeletonSelectable*, const CSkeletonSelectable*) const;
+  bool operator()(const SELECTABLE *s1, const SELECTABLE *s2) const {
+    return *s1 < *s2;
+  }
 };
 
 
-typedef std::set<CSkeletonSelectable*, CSkeletonSelectableLTUid> CSkeletonSelectableSet;
-typedef std::set<CSkeletonNode*, CSkeletonSelectableLTUid> CSkeletonNodeSet;
-typedef std::set<CSkeletonSegment*, CSkeletonSelectableLTUid> CSkeletonSegmentSet;
-typedef std::set<CSkeletonFace*, CSkeletonSelectableLTUid> CSkeletonFaceSet;
-typedef std::set<CSkeletonElement*, CSkeletonSelectableLTUid> CSkeletonElementSet;
-typedef std::set<const CSkeletonElement*, CSkeletonSelectableLTUid> ConstCSkeletonElementSet;
+typedef std::set<CSkeletonSelectable*, CSkeletonSelectableLTUid<CSkeletonSelectable>> CSkeletonSelectableSet;
+typedef std::set<CSkeletonNode*, CSkeletonSelectableLTUid<CSkeletonNode>> CSkeletonNodeSet;
+typedef std::set<CSkeletonSegment*, CSkeletonSelectableLTUid<CSkeletonSegment>> CSkeletonSegmentSet;
+typedef std::set<CSkeletonFace*, CSkeletonSelectableLTUid<CSkeletonFace>> CSkeletonFaceSet;
+typedef std::set<CSkeletonElement*, CSkeletonSelectableLTUid<CSkeletonElement>> CSkeletonElementSet;
+typedef std::set<const CSkeletonElement*, CSkeletonSelectableLTUid<const CSkeletonElement>> ConstCSkeletonElementSet;
 
 // vectors of pairs are used for substitutions in ProvisionalChanges
 typedef std::pair<CSkeletonSelectable*, CSkeletonSelectable*> CSkeletonSelectablePair;
