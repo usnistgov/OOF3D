@@ -355,6 +355,8 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 
     // These are "stubs" for now.  The real ones come from
     // the NR loop through the constitutive rule.
+    // The const. rule is available through the "r" member, which is
+    // of type "PlasticConstitutiveRule *".
     SmallMatrix s_attau(3);
     std::vector<double> delta_g(nslips);
     std::vector<SmallMatrix*> dgamma_ds(nslips);
@@ -556,6 +558,12 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 
     pd->gptdata[gptdx].w_mat = w_mat;
   } // End of the gausspoint loop (!).
+  // At this point, every gausspoint has a populated gptdata object
+  // with the current W matrix, which is the dervative of the Cauchy
+  // stress with respect to the strain.  This object is used to
+  // construct the flux matrix, which wants derivatives of the
+  // Cauchy stress wrt the actual DOFs.  TODO: It's the Cauchy
+  // stress, right?
 }
 
 int Plasticity::integration_order(const CSubProblem *sp,
