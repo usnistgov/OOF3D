@@ -50,6 +50,7 @@
 #include "common/pythonexportable.h"
 #include "common/smallmatrix.h"
 #include <string>
+#include <map>
 
 // TODO: cijkl is in a different hierarchy, needs to be higher?
 // Or, plasticity should be a sub-type of elasticity, logically
@@ -197,6 +198,7 @@ public:
   virtual const std::string &modulename() const {
     return plasticitymodulename; }
   int order;
+  std::map<MasterCoord,int> mctogpi_map;
   std::vector<GptPlasticData> fp;
   std::vector<GptPlasticData> gptdata;
 };

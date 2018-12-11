@@ -605,7 +605,8 @@ SmallMatrix *Plasticity::_rotate_schmid_tensor(SmallMatrix *m,
 }
 
 // Evaluates itself.  "Static" unclear in the context of
-// an intrinsically quasistatic property.
+// an intrinsically quasistatic property.  Maybe we actually
+// want flux_offset?  It's not NR, so maybe not.
 void Plasticity::static_flux_value(const FEMesh *mesh,
 				   const Element *element,
 				   const Flux *flux,
@@ -613,6 +614,12 @@ void Plasticity::static_flux_value(const FEMesh *mesh,
 				   double time, SmallSystem *fluxdata)
   const
 {
+  // Cauchy stress is available at gausspoints, but we are
+  // given a master-coord.  For now: Look it up in the
+  // custom map I'm going to implement.  TODO later:
+  // Override Property::make_flux_contributions to do this
+  // differently?
+  
 }
 
 
@@ -711,6 +718,8 @@ PlasticData::PlasticData(int ord, const Element *el) :
   for (GaussPointIterator gpt = el->integrator(order);
        !gpt.end(); ++gpt) {
     GptPlasticData gppd = GptPlasticData();
+    MasterCoord mc = gpt.gausspoint().mastercoord();
+    mctogpi_map[mc]=gpt.index(); // Fuck.  Not ordered.
     fp.push_back(gppd);
     gptdata.push_back(gppd);
   }

@@ -60,6 +60,8 @@ public:
 
 std::ostream &operator<<(std::ostream&, const MasterPosition&);
 
+
+
 class MasterCoord : public MasterPosition {
 protected:
   double x[DIM];
@@ -117,7 +119,7 @@ public:
 #endif // DEBUG
    return x[i];
   }
-  
+
   virtual double shapefunction(const ShapeFunction&, ShapeFunctionIndex) const;
   virtual double mdshapefunction(const ShapeFunction&, ShapeFunctionIndex,
 				SpaceIndex) const;
@@ -186,11 +188,14 @@ inline bool operator==(const MasterCoord &a, const MasterCoord &b) {
 #endif	// DIM == 3
 }
 
-#if DIM == 2
 inline bool operator<(const MasterCoord &a, const MasterCoord &b) {
+#if DIM == 2
   return (a[0] < b[0]) || (a[0] == b[0] && a[1] < b[1]);
+#elif DIM == 3
+  return (a[0] < b[0]) || ((a[0] == b[0]) && (a[1] < b[1])) ||
+    ((a[0] == b[0]) && (a[1] == b[1]) && (a[2] < b[2]));
+#endif // DIM == 3
 }
-#endif	// DIM == 2
 
 inline double dot(const MasterCoord &c1, const MasterCoord &c2) {
 #if DIM == 2

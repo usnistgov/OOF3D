@@ -1,4 +1,4 @@
--*- text -*-
+tatic*- text -*-
 # $RCSfile: solver_sequence_td.txt,v $
 # $Revision: 1.1.2.1 $
 # $Author: langer $
