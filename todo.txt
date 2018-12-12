@@ -132,6 +132,20 @@ face of image is not rendered.  Modifying the view in any way fixes
 it.  Currently avoided this problem by choosing different default
 values for the clipping plane.
 
+Draw selected and pinned nodes as spheres instead of circles?  This
+might make them more visible, especially at nodes with lots of edges.
+Would it be too slow?
+
+Ellipsoid selection via mouse.
+
+Rubberband drawing.
+
+GUI interface for moving nodes
+
+Display perimeter
+
+Axis tick marks, numerical labels?
+
 ----------------------------------------------------------------------------
 At Some Later Time
 ------------------
