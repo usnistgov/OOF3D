@@ -117,4 +117,10 @@ public:
   ~ShrinkSelection();
 };
 
+class RandomSelection : public PixelSelectionCourier {
+public:
+  RandomSelection(CMicrostructure*, double);
+  ~RandomSelection();
+};
+
 #endif // PIXELSELECTIONCOURIER_SWG

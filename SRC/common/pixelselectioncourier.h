@@ -253,7 +253,23 @@ public:
   virtual ICoord currentPoint() const;
   virtual void next();
   virtual void print(std::ostream &os) const;
-};     
+};
+
+
+class RandomSelection : public PixelSelectionCourier {
+private:
+  const double p;
+  Array<int>::const_iterator iter;
+  Array<int>::const_iterator enditer;
+  void advance();
+public:
+  RandomSelection(CMicrostructure *ms, double p);
+  virtual ~RandomSelection() {}
+  virtual void start();
+  virtual ICoord currentPoint() const;
+  virtual void next();
+  virtual void print(std::ostream &os) const;
+};
 
 std::ostream &operator<<(std::ostream&, const PixelSelectionCourier&);
 

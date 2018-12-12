@@ -240,3 +240,21 @@ pixelselection.VoxelSelectionModRegistration(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+class RandomPixelSelection(pixelselection.VoxelSelectionModifier):
+    def __init__(self, p, operator):
+        self.p = p
+        self.operator = operator
+    def select(self, ms, selection):
+        courier = pixelselectioncourier.RandomSelection(ms.getObject(), self.p)
+        self.operator.operate(selection, courier)
+
+pixelselection.VoxelSelectionModRegistration(
+    "Random",
+    RandomPixelSelection,
+    ordering=10.,
+    params=[
+        parameter.FloatRangeParameter('p', (0., 1., 0.01), value=0.5,
+                                      tip="Probability of selecting a voxel"),
+        selectionoperators.SelectionOperatorParam('operator')
+    ],
+    tip="Select pixels randomly")

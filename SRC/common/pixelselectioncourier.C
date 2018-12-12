@@ -14,6 +14,7 @@
 #include "common/cmicrostructure.h"
 #include "common/pixelselectioncourier.h"
 #include "common/printvec.h"
+#include "common/random.h"
 #include "common/IO/oofcerr.h"
 #if DIM==2
 #include "common/brushstyle.h"
@@ -448,7 +449,8 @@ ExpandSelection::ExpandSelection(CMicrostructure *ms,
     pgroup(group),
     radius(radius),
     selected(ms->sizeInPixels(), false),
-    sel_iter(selected.begin()) {}
+    sel_iter(selected.begin())
+{}
 
 void ExpandSelection::start() {
   pgroup->expand(radius, selected);  // get the pixel array
@@ -481,7 +483,8 @@ ShrinkSelection::ShrinkSelection(CMicrostructure *ms,
     pgroup(group),
     radius(radius),
     selected(ms->sizeInPixels(), false),
-    sel_iter(selected.begin()) {}
+    sel_iter(selected.begin())
+{}
 
 void ShrinkSelection::start() {
   pgroup->shrink(radius, selected);  // get the pixel array
@@ -502,6 +505,37 @@ void ShrinkSelection::advance() {
 void ShrinkSelection::next() {
   advance();
   while(!*sel_iter && !done_) 
+    advance();
+}
+
+///////////
+
+RandomSelection::RandomSelection(CMicrostructure *ms, double p)
+  : PixelSelectionCourier(ms),
+    p(p)
+{}
+
+void RandomSelection::start() {
+  iter = ms->getCategoryMapRO()->begin();
+  enditer = ms->getCategoryMapRO()->end();
+  while(rndm() > p && !done_)
+    advance();
+}
+
+ICoord RandomSelection::currentPoint() const {
+  return iter.coord();
+}
+
+void RandomSelection::advance() {
+  if(iter == enditer)
+    done_ = true;
+  else
+    ++iter;
+}
+
+void RandomSelection::next() {
+  advance();
+  while(rndm() > p && !done_)
     advance();
 }
 
@@ -562,4 +596,8 @@ void ExpandSelection::print(std::ostream &os) const {
 
 void ShrinkSelection::print(std::ostream &os) const {
   os << "ShrinkSelection()";
+}
+
+void RandomSelection::print(std::ostream &os) const {
+  os << "RandomSelection()";
 }
