@@ -662,7 +662,6 @@ def _compareSkeletons(menuitem, skeleton1, skeleton2, tolerance):
         reporter.report("Skeleton comparison succeeded.")
 
 
-from ooflib.common.IO import mainmenu
 mainmenu.debugmenu.addItem(oofmenu.OOFMenuItem(
         'Compare_Skeletons',
         callback=_compareSkeletons,
@@ -675,3 +674,28 @@ mainmenu.debugmenu.addItem(oofmenu.OOFMenuItem(
             parameter.FloatParameter('tolerance', 1.e-13)],
         secret = not debug.debug()
         ))
+
+
+def _checkCategoryVolumes(menuitem, skeleton, iteration):
+    skel = skeletoncontext.skeletonContexts[skeleton].getObject()
+    data = skel.checkCategoryVolumes()
+    catnames = ", ".join(["cat%d" % c for c in range(data.nCategories())])
+    caterrs = ["%7.4g" % data.catError(c) for c in range(data.nCategories())]
+    if iteration == 0:
+        reporter.data("CategoryVolume errors: overall, rms, max,", catnames)
+    reporter.data("%4d %7.4g\t%7.4g\t%7.4g\t" %
+                  (iteration, data.avgError(), data.rmsError(),
+                   data.maxError()),
+                  "\t".join(caterrs))
+
+
+mainmenu.debugmenu.addItem(oofmenu.OOFMenuItem(
+    "Check_CategoryVolumes",
+    callback=_checkCategoryVolumes,
+    ordering=101,
+    params=[
+        whoville.WhoParameter('skeleton',
+                              skeletoncontext.skeletonContexts),
+        parameter.IntParameter('iteration', tip="Prepended to output lines")],
+    secret = not debug.debug()
+    ))

@@ -599,6 +599,13 @@ HomogeneityData CSkeletonElement::c_homogeneity(const CSkeletonBase *skel) const
   // off error in categoryVolumes can't make the homogeneity of a
   // single-category element less than 1.0.
   double homogeneity = maxvolume/totalVolume;
+
+#ifdef DEBUG
+  double dV = totalVolume - volumeInVoxelUnits(skel->getMicrostructure());
+  if(abs(dV) > 1.e-10)
+    oofcerr << "CSkeletonElement::c_homogeneity: deltaV=" << dV << "!"
+	    << std::endl;
+#endif // DEBUG
   
   // oofcerr << "CSkeletonElement::c_homogeneity: element=" << getIndex()
   // 	   << " homogeneity=" << homogeneity
@@ -871,7 +878,7 @@ std::vector<COrientedPlane> CSkeletonElement::getPlanes(
 // VOLTOL is the allowed fractional error in the sum of the volumes of
 // the voxel categories relative to the total volume of the element.
 //#define VOLTOL 5.e-4
-#define VOLTOL 1.e-6
+#define VOLTOL 1.e-10
 
 // categoryVolumes returns a vector containing the volume of the
 // intersection of this element with each voxel category.  It's used
@@ -897,9 +904,9 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CSkeletonBase *skel)
 
   try {
     for(unsigned int cat=0; cat<ncat; cat++) {
-#ifdef DEBUG
-	setVerboseVSB(index == 0 && cat == 1);
-#endif // DEBUG
+// #ifdef DEBUG
+// 	setVerboseVSB(index == 0 && cat == 1);
+// #endif // DEBUG
       double vol = skel->clippedCategoryVolume(cat, bbox, planes);
       totalVol += vol;
       result[cat] = vol;

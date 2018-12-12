@@ -18,6 +18,7 @@
 %module cskeleton
 
 %include "engine/typemaps.swg"
+%extern "engine/catvoldata.swg"
 %extern "engine/cskeletonselectable.swg"
 %extern "engine/cskeletonnode2.swg"
 %extern "engine/cskeletonsegment.swg"
@@ -48,6 +49,7 @@
 %pragma(python) code="from ooflib.SWIG.common.IO.vtkutils import vtkUnstructuredGridPtrPtr"
 %pragma(python) code="from ooflib.SWIG.common.cmicrostructure import CMicrostructurePtr"
 %pragma(python) code="from ooflib.SWIG.common.timestamp import TimeStampPtr"
+%pragma(python) code="from ooflib.SWIG.engine.catvoldata import CategoryVolumesDataPtr"
 %pragma(python) code="from ooflib.SWIG.engine.cskeletonboundary import CSkeletonEdgeBoundaryPtr"
 %pragma(python) code="from ooflib.SWIG.engine.cskeletonboundary import CSkeletonFaceBoundaryPtr"
 %pragma(python) code="from ooflib.SWIG.engine.cskeletonboundary import CSkeletonPointBoundaryPtr"
@@ -295,7 +297,7 @@ public:
   bool checkExteriorSegments(CSkeletonSegmentVector*);
   bool checkExteriorFaces(CSkeletonFaceVector*);
 
-  bool checkCategoryVolumes(double);
+  %new CategoryVolumesData *checkCategoryVolumes();
   bool checkVSB(unsigned int);
   void dumpVSB(unsigned int, char*);
   void dumpVSBLines(unsigned int, char*);

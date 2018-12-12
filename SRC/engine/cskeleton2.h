@@ -17,6 +17,7 @@
 #include "common/coord_i.h"
 #include "common/geometry.h"
 #include "common/pythonexportable.h"
+#include "engine/catvoldata.h"
 #include "engine/cskeleton2_i.h"
 #include "engine/cskeletonboundary.h"
 #include "engine/cskeletonface.h"
@@ -359,7 +360,7 @@ public:
   }
   ICoord3D getDefaultVSBbinSize() const; // guesses a reasonable size
   // Routines for testing and debugging VSBs
-  bool checkCategoryVolumes(double) const;
+  CategoryVolumesData *checkCategoryVolumes() const;
   bool checkVSB(unsigned int) const;
   void dumpVSB(unsigned int, const std::string&) const;// save VSB graph to file
   void dumpVSBLines(unsigned int, const std::string&) const; // plot VSB edge

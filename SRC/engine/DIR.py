@@ -77,6 +77,7 @@ swigfiles = [
     'properties.swg', 'pypropertywrapper.swg', 'rank3tensor.swg',
     'smallsystem.swg', 'sparsemat.swg', 'skeletonselectioncourier.swg',
     'steperrorscaling.swg', 'symmmatrix.swg', 'materialvoxelfilter.swg',
+    'catvoldata.swg',
     ]
 
 pyfiles = [
@@ -150,7 +151,8 @@ hfiles = [
     'shapefunction.h', 'shapefunctioncache.h', 'smalltensor.h',
     'smallsystem.h', 'sparsemat.h', 'steperrorscaling.h', 'symeig3.h',
     'symmmatrix.h', 'materialvoxelfilter.h', 'cskeletonselectable_i.h',
-    'cskeleton2_i.h', 'masterelement_i.h', 'skeletonselectioncourier.h'
+    'cskeleton2_i.h', 'masterelement_i.h', 'skeletonselectioncourier.h',
+    'catvoldata.h'
 ]
 
 

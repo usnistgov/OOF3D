@@ -4436,48 +4436,62 @@ double CSkeletonBase::clippedCategoryVolume(
 // elements, is the same as the volume of the voxels in the category.
 // Return true if the test passes.
 
-bool CSkeletonBase::checkCategoryVolumes(double tolerance) const {
+CategoryVolumesData *CSkeletonBase::checkCategoryVolumes() const {
   const CMicrostructure *ms = getMicrostructure();
   unsigned int ncat = ms->nCategories();
   buildVSBs();
   DoubleVec volumes(ncat, 0.0);
+  double avgerr = 0;
+  double avgerr2 = 0;
+  double maxabserr = 0.0;
+
+  CategoryVolumesData *data = new CategoryVolumesData;
+  
   for(CSkeletonElementIterator elit = beginElements();
       elit!=endElements(); ++elit)
     {
+      double evol = 0.0;	// element volume from sum of category volumes
       DoubleVec evols = (*elit)->categoryVolumes(this);
-      for(unsigned int c=0; c<ncat; c++)
+      for(unsigned int c=0; c<ncat; c++) {
 	volumes[c] += evols[c];
+	evol += evols[c];
+      }
+      // Accumulate statistics on error in element volume.
+      double vol = (*elit)->volumeInVoxelUnits(ms);
+      assert(vol > 0.0);
+      double err = (evol - vol)/vol;
+      avgerr += fabs(err);
+      avgerr2 += err*err;
+      if(fabs(err) > maxabserr)
+	maxabserr = fabs(err);
     }
+  avgerr /= nelements();
+  data->avgerr = avgerr;
+  data->rmserr = sqrt(avgerr2/nelements() - avgerr*avgerr);
+  data->maxerr = maxabserr;
+  data->catVolumes = volumes;
+
   // Count voxels in each category
-  std::vector<int> catCounts(ncat, 0);
+  data->catCounts.resize(ncat, 0);
+  data->catErrors.resize(ncat, 0);
   const Array<int> *catMap = ms->getCategoryMap();
   for(Array<int>::const_iterator i=catMap->begin(); i!=catMap->end(); ++i) {
-    catCounts[*i]++;
+    data->catCounts[*i]++;
   }
   // Since categoryVolumes returns volumes in voxel units, the total
   // volume of each category should be the number of voxels in the
   // category.
-  bool ok = true;
   for(unsigned int c=0; c<ncat; c++) {
-    if(catCounts[c] == 0) {
-      if(volumes[c] != 0) {
-	oofcerr << "CSkeletonBase::checkCategoryVolumes: category="
-		<< c << " volume=" << volumes[c] << " #voxels=" << catCounts[c]
-		<< " error=infinite!" << std::endl;
-	ok = false;
-      }
+    // oofcerr << "CSkeletonBase::checkCategoryVolumes: category="
+    // 	    << c << " volume=" << volumes[c] << " #voxels=" << catCounts[c];
+    if(data->catCounts[c] != 0) {
+      data->catErrors[c] =
+	fabs(data->catCounts[c] - volumes[c])/data->catCounts[c];
+      //      oofcerr << " error=" << err;
     }
-    else {
-      double err = fabs(catCounts[c] - volumes[c])/catCounts[c];
-      if(err > tolerance) {
-	oofcerr << "CSkeletonBase::checkCategoryVolumes: category="
-		<< c << " volume=" << volumes[c] << " #voxels=" << catCounts[c]
-		<< " error=" << err << std::endl;
-	ok = false;
-      }
-    }
+    //    oofcerr << std::endl;
   }
-  return ok;
+  return data;
 } // end CSkeletonBase::checkCategoryVolumes
 
 bool CSkeletonBase::checkVSB(unsigned int cat) const {
