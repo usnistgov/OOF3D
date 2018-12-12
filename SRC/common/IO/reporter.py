@@ -25,12 +25,14 @@ import sys
 import traceback
 
 
-# List of allowed message classes.
-messageclasses = ["Log", "Warning", "Report", "Query", "Error"]
+# List of allowed message classes.  They appear in this order at the
+# top of Message windows.
+messageclasses = ["Report", "Data", "Log", "Query", "Warning", "Error"]
 
 messagedescriptions = {
     "Log" : "menu commands which have been executed.",
     "Warning": "messages indicating risky or undefined behavior.",
+    "Data": "computed results",
     "Report": "supplementary data about the state of a command.",
     "Query": "questions posed to you by OOF, and your answers.",
     "Error": "reasons why OOF was unable to complete a task."}
@@ -176,6 +178,9 @@ class MessageManager:
     def report(self, *args):
         self._append("Report", *args)
 
+    def data(self, *args):
+        self._append("Data", *args)
+
     # Arguments for this are different, this wraps the questioner.
     def query(self, question, *answers, **kwargs):
         ans = questioner.questioner(question, *answers, **kwargs)
@@ -192,6 +197,9 @@ messagemanager = MessageManager()
 # Convenience, make functions available at the module level.
 def report(*args):
     messagemanager.report(*args)
+
+def data(*args):
+    messagemanager.data(*args)
 
 def log(*args):
     messagemanager.log(*args)

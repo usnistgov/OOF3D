@@ -92,7 +92,7 @@ class MessageWindow(subWindow.SubWindow):
 
         self.button_dict = {}
         self.signal_dict = {}
-        for m in reporter.messageclasses:
+        for m in reversed(reporter.messageclasses):
             button = gtk.CheckButton(m)
             gtklogger.setWidgetName(button, m)
             buttonbox.pack_end(button, fill=0, expand=0, padding=2)
@@ -101,6 +101,7 @@ class MessageWindow(subWindow.SubWindow):
             self.button_dict[m] = button
             tooltips.set_tooltip_text(button,
                 "Show or hide "+ reporter.messagedescriptions[m])
+        buttonbox.pack_end(gtk.Label("Show:"), fill=0, expand=0, padding=2)
 
         messagepane = gtk.ScrolledWindow()
         ## The ScrolledWindow's scrollbars are *not* logged in the
