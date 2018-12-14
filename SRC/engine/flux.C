@@ -151,6 +151,7 @@ IndexP VectorFlux::divergence_getIndex(const std::string&) const {
   return IndexP(new ScalarFieldIndex);
 }
 
+// TODO: Get rid of planarity argument for 3D.
 IteratorP SymmetricTensorFlux::iterator(Planarity planarity) const {
 #if DIM==2
   if(planarity == IN_PLANE)

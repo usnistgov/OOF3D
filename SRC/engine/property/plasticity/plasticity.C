@@ -614,12 +614,17 @@ void Plasticity::static_flux_value(const FEMesh *mesh,
 				   double time, SmallSystem *fluxdata)
   const
 {
-  // Cauchy stress is available at gausspoints, but we are
-  // given a master-coord.  For now: Look it up in the
-  // custom map I'm going to implement.  TODO later:
-  // Override Property::make_flux_contributions to do this
+  // Cauchy stress is available at gausspoints, but we are given a
+  // master-coord.  For now: Look it up in the custom map.  TODO
+  // later: Override Property::make_flux_contributions to do this
   // differently?
-  
+  PlasticData *pd = dynamic_cast<PlasticData*>
+    (element->getDataByName("plastic_data"));
+  int gptidx = (pd->mctogpi_map)[mpt.mastercoord()];
+  const SmallMatrix &cchy = (pd->gptdata[gptidx]).cauchy;
+  for(SymTensorIterator ij; !ij.end(); ++ij) {
+    fluxdata->flux_vector_element(ij) = cchy(ij.row(),ij.col());
+  }
 }
 
 
@@ -634,6 +639,10 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
 			     SmallSystem *fluxmtx)
   const
 {
+  PlasticData *pd = dynamic_cast<PlasticData*>
+    (element->getDataByName("plastic_data"));
+  int gptidx = (pd->mctogpi_map)[mpt.mastercoord()];
+  const Rank4_3DTensor &w = (pd->gptdata[gptidx]).w_mat;
 }
 
 
@@ -719,7 +728,7 @@ PlasticData::PlasticData(int ord, const Element *el) :
        !gpt.end(); ++gpt) {
     GptPlasticData gppd = GptPlasticData();
     MasterCoord mc = gpt.gausspoint().mastercoord();
-    mctogpi_map[mc]=gpt.index(); // Fuck.  Not ordered.
+    mctogpi_map[mc]=gpt.index();
     fp.push_back(gppd);
     gptdata.push_back(gppd);
   }
