@@ -554,7 +554,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 	      }
 
     
-    // Is it sufficiently symmetric for a Cijkl object?
+    // Is it sufficiently symmetric for a Cijkl object?  SK says yes.
 
     pd->gptdata[gptdx].w_mat = w_mat;
   } // End of the gausspoint loop (!).
@@ -632,7 +632,7 @@ void Plasticity::static_flux_value(const FEMesh *mesh,
 // displacement dofs.
 void Plasticity::flux_matrix(const FEMesh *mesh,
 			     const Element *element,
-			     const ElementFuncNodeIterator&,
+			     const ElementFuncNodeIterator& node,
 			     const Flux *flux,
 			     const MasterPosition &mpt,
 			     double time,
@@ -643,6 +643,38 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
     (element->getDataByName("plastic_data"));
   int gptidx = (pd->mctogpi_map)[mpt.mastercoord()];
   const Rank4_3DTensor &w = (pd->gptdata[gptidx]).w_mat;
+
+  // TODO: Store f_tau_i in the PlasticData object.
+  // Or, alternatively, store b_inverse there.
+  SmallMatrix f_tau = (pd->gptdata[gptidx]).f_tau;
+  SmallMatrix f_tau_i = sm_invert3(f_tau);
+  SmallMatrix b_inverse(3);
+  for(int k=0;k<3;++k) {
+    for(int m=0;m<3;++m) {
+      double res = 0.0;
+      for(int n = 0; n<3; ++n) {
+	res += f_tau_i(n,k)*f_tau_i(n,m);
+      }
+      b_inverse(k,m) = res;
+    }
+  }
+
+  double displacedsfdvs[3];
+  for(int idx=0; idx<3; ++idx) {
+    displacedsfdvs[idx]=node.displacedsfderiv(element,idx,mpt,mesh);
+  }
+
+  for(SymTensorIterator ij; !ij.end(); ++ij) {
+    for(IteratorP kay = displacement->iterator(); !kay.end(); ++kay) {
+      for(int ell = 0; ell < 3; ++ell) {
+	for(int emm = 0; emm < 3; ++emm) {
+	  fluxmtx->stiffness_matrix_element( ij, displacement, kay, node) +=
+	    w(ij.row(),ij.col(),ell,emm)*
+	    b_inverse(kay.integer(),emm)*displacedsfdvs[ell];
+	}
+      }
+    }
+  }
 }
 
 
