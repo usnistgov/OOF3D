@@ -167,9 +167,9 @@ public:
   void deactivate_fluxes(CSubProblem*);
 };
 
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// divergence of flux = body force
 class DivergenceEquation : public FluxEquation {
 public:
   DivergenceEquation(const std::string &name, Flux &flx, int d); 
@@ -202,6 +202,32 @@ public:
 };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Real-space divergence of flux = body force.
+class DeformedDivergenceEquation : public DivergenceEquation {
+public:
+  DeformedDivergenceEquation(const std::string &name, Flux &flx, int d);
+  
+  virtual void make_linear_system(const CSubProblem*, const Element*,
+				  const GaussPoint&,
+				  const std::vector<int>&,
+				  FluxSysMap&,
+				  SmallSystem*,
+				  const CNonlinearSolver*,
+				  LinearizedSystem&) const;
+
+  virtual void boundary_integral(const CSubProblem*, LinearizedSystem*,
+				 const Flux*, const Element*,
+				 const GaussPoint&, const FluxNormal*) const;   
+
+  virtual const std::string &classname() const;
+
+};
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+
+
 
 class PlaneFluxEquation : public FluxEquation {
 public:

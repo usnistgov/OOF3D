@@ -139,6 +139,47 @@ SmallSystem *Equation::initializeSystem(const Element *e) {
   return new SmallSystem(dim_, e->ndof());
 }
 
+#include "engine/masterelement.h"
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Call sequence is as for DivergenceEquation, below.
+
+void
+DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
+				       const Element *element,
+				       const GaussPoint &gpt,
+				       const std::vector<int> &dofmap,
+				       FluxSysMap &fluxdata,
+				       SmallSystem *eqndata,
+				       const CNonlinearSolver *nlsolver,
+				       LinearizedSystem &linsys) const
+{
+}
+
+void DeformedDivergenceEquation::boundary_integral(const CSubProblem*,
+						   LinearizedSystem*,
+						   const Flux*,
+						   const Element*,
+						   const GaussPoint&,
+						   const FluxNormal*) const
+
+{
+}
+
+const std::string &DeformedDivergenceEquation::classname() const {
+  static std::string name_("DeformedDivergenceEquation");
+  return name_;
+}
+
+DeformedDivergenceEquation::DeformedDivergenceEquation(
+						       const std::string &name,
+						       Flux &flx,
+						       int d)
+  : DivergenceEquation(name,flx,d)
+{}
+
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // Equation::make_linear_system is called by
@@ -146,7 +187,7 @@ SmallSystem *Equation::initializeSystem(const Element *e) {
 // flux matrix for the Flux at the current GaussPoint.
 // Equation::make_linear_system has to use the flux matrix to compute
 // the GaussPoints contribution to the global stiffness matrix.
-#include "engine/masterelement.h"
+
 void
 DivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 				       const Element *element,
