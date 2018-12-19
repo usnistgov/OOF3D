@@ -155,6 +155,46 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 				       const CNonlinearSolver *nlsolver,
 				       LinearizedSystem &linsys) const
 {
+  double weight = gpt.weight();
+
+  // TODO: The plasticity stuff is quasi-static, and Picard-like, so
+  // this info is probably not relevant, but in the general case, this
+  // stuff should be right.
+  bool needResidual = nlsolver->needsResidual();
+  bool needJacobian = nlsolver->needsJacobian();
+
+  for(CleverPtr <ElementFuncNodeIterator> mu (element->funcnode_iterator());
+      !mu->end(); ++(*mu)) {
+    double sf = mu->shapefunction(gpt);
+    double dsf[DIM];
+    for(int i=0;i<DIM;++i) {
+      dsf[i] = mu->displacedsfderiv(element,i,gpt,subproblem->mesh);
+    }
+    for(int eqcomp=0; eqcomp<dim(); ++eqcomp) {
+      int global_row = nodaleqn( *mu->funcnode(), eqcomp)->ndq_index();
+
+      // This scope is a particular row of the global matrix.
+
+      FluxSysMap::iterator fi = fluxdata.find(fflux);
+      // fi->first is a Flux*, fi->second is a SmallSystem*,
+      // points to the flux matrix.
+      std::vector<int> cmap = (*fi).first->contraction_map(eqcomp);
+      
+      if( !(*fi).second->k_clean ) {
+	const SmallSparseMatrix &k = (*fi).second->kMatrix;
+	for(int ldof =0;ldof<element->ndof(); ++ldof) {
+	  // DOFmap maps local indices to global.
+	  int global_col = dofmap[ldof];
+
+	  // TODO: Clarity about the objects.  Dammit.
+	}
+	
+      }
+      
+    }
+  }
+	
+  
 }
 
 void DeformedDivergenceEquation::boundary_integral(const CSubProblem*,
