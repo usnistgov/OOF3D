@@ -206,11 +206,6 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
   }
   else {
     pd = dynamic_cast<PlasticData*>(ed);
-
-    for (unsigned int ig=0;ig<pd->gptdata.size();++ig) {
-      pd->gptdata[ig].ft = pd->gptdata[ig].f_tau;
-      pd->gptdata[ig].fpt = pd->gptdata[ig].fp_tau;
-    }
   }
     
   if (eds==0) {
@@ -252,6 +247,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
   //      outer loop convergence?)
 
   
+  
   SmallMatrix f_attau(3);
   SmallMatrix a_mtx(3);
   SmallMatrix s_trial(3);
@@ -269,7 +265,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
        !gpt.end(); ++gptdx,++gpt) {
     const GaussPoint agpt = gpt.gausspoint(); // Actual gausspoint.
 
-    SmallMatrix f_att = pd->gptdata[gptdx].ft;  // Save prior time-step's F.
+    SmallMatrix f_att = pd->gptdata[gptdx]->ft;  // Save prior time-step's F.
 
     // Build the current time-step's version.
     f_attau.clear();
@@ -299,8 +295,8 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
       }
     }
     // f_attau is now populated for the current gausspoint.
-    // Plastic fp is in pd->gptdata[gptdx].fpt
-    SmallMatrix fp_att = pd->gptdata[gptdx].fpt;
+    // Plastic fp is in pd->gptdata[gptdx]->fpt
+    SmallMatrix fp_att = pd->gptdata[gptdx]->fpt;
     SmallMatrix fp_att_i = sm_invert3(fp_att);
     SmallMatrix f_attau_t = f_attau; f_attau_t.transpose();
     SmallMatrix fp_att_i_t = fp_att_i; fp_att_i_t.transpose();
@@ -341,14 +337,27 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     // current plastic state at this gausspoint (encapsulated
     // in plasticdata and slipdata), it should return a new S,
     // a delta-gamma for each slip system, and a two-index object
-    // containing the derivaggtive of the delta-gamma with respect
+    // containing the derivative of the delta-gamma with respect
     // to the current stress.  Do NR iterations until this converges.
 
     // Once it's converged, make another call to update the
     // local plastic state in plasticdata and slipdata.
 
-    // ********  MAGIC **********
-    
+    // -------------------------
+    // Constitutive part is here
+    // -------------------------
+    rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
+		 
+    // The plastic constitutive rule is pointed to by "rule".
+    // Inputs are:
+    // The current GptPlasticData* object:
+    // pd->gptdata[gptdx],
+    //
+    // Slip data, a SlipData* pointer to a specific sub-class.
+    // sd->gptslipdata[gptdx].
+
+
+    // Once you have the answer back:
 
     // Then compute the four-index W object at this gausspoint.
 
@@ -556,7 +565,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     
     // Is it sufficiently symmetric for a Cijkl object?  SK says yes.
 
-    pd->gptdata[gptdx].w_mat = w_mat;
+    pd->gptdata[gptdx]->w_mat = w_mat;
   } // End of the gausspoint loop (!).
   // At this point, every gausspoint has a populated gptdata object
   // with the current W matrix, which is the dervative of the Cauchy
@@ -621,7 +630,7 @@ void Plasticity::static_flux_value(const FEMesh *mesh,
   PlasticData *pd = dynamic_cast<PlasticData*>
     (element->getDataByName("plastic_data"));
   int gptidx = (pd->mctogpi_map)[mpt.mastercoord()];
-  const SmallMatrix &cchy = (pd->gptdata[gptidx]).cauchy;
+  const SmallMatrix &cchy = (pd->gptdata[gptidx])->cauchy;
   for(SymTensorIterator ij; !ij.end(); ++ij) {
     fluxdata->flux_vector_element(ij) = cchy(ij.row(),ij.col());
   }
@@ -642,11 +651,11 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
   PlasticData *pd = dynamic_cast<PlasticData*>
     (element->getDataByName("plastic_data"));
   int gptidx = (pd->mctogpi_map)[mpt.mastercoord()];
-  const Rank4_3DTensor &w = (pd->gptdata[gptidx]).w_mat;
+  const Rank4_3DTensor &w = (pd->gptdata[gptidx])->w_mat;
 
   // TODO: Store f_tau_i in the PlasticData object.
   // Or, alternatively, store b_inverse there.
-  SmallMatrix f_tau = (pd->gptdata[gptidx]).f_tau;
+  SmallMatrix f_tau = (pd->gptdata[gptidx])->f_tau;
   SmallMatrix f_tau_i = sm_invert3(f_tau);
   SmallMatrix b_inverse(3);
   for(int k=0;k<3;++k) {
@@ -758,10 +767,9 @@ PlasticData::PlasticData(int ord, const Element *el) :
   ElementData("plastic_data"), order(ord) {
   for (GaussPointIterator gpt = el->integrator(order);
        !gpt.end(); ++gpt) {
-    GptPlasticData gppd = GptPlasticData();
+    GptPlasticData *gppd = new GptPlasticData();
     MasterCoord mc = gpt.gausspoint().mastercoord();
     mctogpi_map[mc]=gpt.index();
-    fp.push_back(gppd);
     gptdata.push_back(gppd);
   }
 }
@@ -772,7 +780,7 @@ SlipData::SlipData(int ord, const PlasticConstitutiveRule *r,
 {
   for (GaussPointIterator gpti = e->integrator(order);
        !gpti.end(); ++gpti) {
-    GptSlipData *gpslip = r->getSlipData();
+    GptSlipData *gpslip = r->getSlipData(); // Pointer to new object.
     gptslipdata.push_back(gpslip);
   }
 }

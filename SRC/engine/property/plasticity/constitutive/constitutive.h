@@ -31,8 +31,8 @@ class PowerLawSlipData : public GptSlipData {
 public:
   PowerLawSlipData(int slips, double res);
   std::vector<double> res;
-  std::vector<double> dgam;
-  std::vector<double> dgam_dta;
+  std::vector<double> dgam;        // Delta-gamma.
+  std::vector<double> dgam_dta;   
   std::vector<double> tau_alpha;
 };
 
@@ -40,9 +40,9 @@ class PlasticConstitutiveRule {
 public:
   virtual void set_slip_systems(int n) { slip_systems = n; }
   virtual GptSlipData *getSlipData() const = 0;
+  virtual void evolve(GptPlasticData *, GptSlipData*) = 0;
 protected:
   int slip_systems;
-
 };
 
 class PowerLawConstitutiveRule : public PlasticConstitutiveRule {
@@ -59,6 +59,7 @@ public:
     w1(w1),w2(w2),ss(ss),a(a),h0(h0),m(m),g0dot(g0dot),dt(dt),init_res(init_res)
   {}
   virtual GptSlipData *getSlipData() const;
+  virtual void evolve(GptPlasticData *, GptSlipData*);
 private:
   double w1,w2,ss,a,h0,m,g0dot,dt,init_res;
   

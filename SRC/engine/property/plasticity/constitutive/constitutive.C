@@ -26,3 +26,10 @@ PowerLawSlipData::PowerLawSlipData(int slips, double initial_r) {
 GptSlipData *PowerLawConstitutiveRule::getSlipData() const {
   return new PowerLawSlipData(slip_systems, init_res);
 }
+
+void PowerLawConstitutiveRule::evolve(GptPlasticData *gptpd,
+				      GptSlipData *gptsd) {
+  // GptSlipData is not polymorphic (has no functions at all, in fact),
+  // it's a data class, so static cast is right.
+  PowerLawSlipData *plsd = static_cast<PowerLawSlipData*>(gptsd);
+}

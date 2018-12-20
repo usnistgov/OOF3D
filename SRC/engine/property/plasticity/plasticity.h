@@ -142,7 +142,7 @@ protected:
   Cijkl lab_cijkl_;
   std::vector<SmallMatrix*> xtal_schmid_tensors;
   std::vector<SmallMatrix*> lab_schmid_tensors;
-  const PlasticConstitutiveRule *rule;
+  PlasticConstitutiveRule *rule;
 };
 
 
@@ -199,8 +199,7 @@ public:
     return plasticitymodulename; }
   int order;
   std::map<MasterCoord,int> mctogpi_map;
-  std::vector<GptPlasticData> fp;
-  std::vector<GptPlasticData> gptdata;
+  std::vector<GptPlasticData*> gptdata;
 };
 
 
