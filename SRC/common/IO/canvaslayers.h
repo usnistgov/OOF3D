@@ -25,12 +25,12 @@ class PlaneAndArrowLayer;
 
 #include "common/clip.h"
 #include "common/coord_i.h"
+#include "common/cprism_i.h"
 #include "common/lock.h"
 #include "common/pythonexportable.h"
 #include "common/IO/oofCellLocator.h"
 
 class CColor;
-class CRectangularPrism;
 class GhostOOFCanvas;
 class ImageBase;
 class oofImageToGrid;

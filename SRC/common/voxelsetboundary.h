@@ -23,7 +23,7 @@ class VSBGraph;
 class VSBNode;
 
 #include "common/coord.h"
-#include "common/geometry.h"
+#include "common/cprism_i.h"
 class CMicrostructure;
 class COrientedPlane;
 class LineSegmentLayer;

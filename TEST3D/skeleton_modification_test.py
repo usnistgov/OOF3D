@@ -39,7 +39,8 @@ class SkeletonModify(unittest.TestCase):
             filename="skeleton_mod_test",
             mode="w", format="ascii",
             skeleton=skelname)
-        self.assert_(skelc.getObject().checkCategoryVolumes(1.e-10))
+        errdata = skelc.getObject().checkCategoryVolumes()
+        self.assert_(errdata.avgError() < 1.e-10)
 
         ## Keep this commented-out block, which might be useful if the
         ## homogeneity calculation changes again.  CSkeleton::compare2

@@ -12,6 +12,7 @@
 #include <oofconfig.h>
 #include "common/coord.h"
 #include "common/geometry.h"
+#include "common/cprism_i.h"
 
 void CRectangle::expand(double howmuch) {
   double mid = 0.5*(lowleft[0] + upright[0]);
@@ -32,35 +33,6 @@ std::ostream& operator<<(std::ostream &os, const CRectangle &rect) {
 
 std::ostream& operator<<(std::ostream &os, const ICRectangle &rect) {
   os << "ICRectangle(" << rect.lowleft << ", " << rect.upright << ")";
-  return os;
-}
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-void CRectangularPrism::expand(double howmuch) {
-  double mid = 0.5*(lowleftback[0] + uprightfront[0]);
-  double size = 0.5*(uprightfront[0] - lowleftback[0])*(1 + howmuch);
-  lowleftback[0] = mid - size;
-  uprightfront[0] = mid + size;
-  mid = 0.5*(lowleftback[1] + uprightfront[1]);
-  size = 0.5*(uprightfront[1] - lowleftback[1])*(1 + howmuch);
-  lowleftback[1] = mid - size;
-  uprightfront[1] = mid + size;
-  mid = 0.5*(lowleftback[2] + uprightfront[2]);
-  size = 0.5*(uprightfront[2] - lowleftback[2])*(1 + howmuch);
-  lowleftback[2] = mid - size;
-  uprightfront[2] = mid + size;
-  size_ = uprightfront - lowleftback;
-}
-
-std::ostream& operator<<(std::ostream &os, const CRectangularPrism &rect) {
-  os << "CRectangularPrism(" << rect.lowleftback << ", "
-     << rect.uprightfront << ")";
-  return os;
-}
-
-std::ostream& operator<<(std::ostream &os, const ICRectangularPrism &rect) {
-  os << "ICRectangularPrism(" << rect.lowleftback << ", "
-     << rect.uprightfront << ")";
   return os;
 }
 
