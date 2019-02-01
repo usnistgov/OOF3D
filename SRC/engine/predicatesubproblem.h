@@ -44,7 +44,7 @@ template <class PRDCT> class PredicateSubProblemFuncNodeIterator;
 // each time.
 
 struct NodeCompare {
-  bool operator()(const Node* n1, const Node* n2) {
+  bool operator()(const Node* n1, const Node* n2) const {
     return n1->index() < n2->index();
   }
 };
