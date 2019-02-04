@@ -1,4 +1,3 @@
-
 # -*- python -*- 
 
 
@@ -11,7 +10,7 @@
 # oof_manager@nist.gov. 
 
 dirname = 'common'
-subdirs = ['IO', 'EXTRA']
+subdirs = ['IO', 'EXTRA', 'VSB']
 if not DIM_3:
     clib = 'oof2common'
 else:

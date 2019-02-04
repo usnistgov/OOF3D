@@ -123,6 +123,7 @@ public:
   }
   virtual int ncorners() const { return 8; }
   virtual CTYPE operator[](int i) const {
+    assert(i > 0 && i < 8);
     switch(i) {
     case 0:
       return lowleftback;
@@ -138,10 +139,8 @@ public:
       return CTYPE(lowleftback[0], uprightfront[1], uprightfront[2]);
     case 6:
       return CTYPE(lowleftback[0], lowleftback[1], uprightfront[2]);
-    case 7:
-      return CTYPE(uprightfront[0], lowleftback[1], uprightfront[2]);
     };
-    throw ErrBadIndex(i, __FILE__, __LINE__);
+    return CTYPE(uprightfront[0], lowleftback[1], uprightfront[2]);
   }
   // 
   void restrict(const CRectangularPrism_<VTYPE, CTYPE> &limits) {

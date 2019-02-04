@@ -245,6 +245,7 @@
 #include "common/voxelsetboundary.h"
 #include "common/cmicrostructure.h"
 #include "common/printvec.h"
+#include "common/VSB/vsb.h"
 #include <limits>
 
 #define swap(x, y) { auto temp = (x); x = (y); y = temp; }
@@ -255,72 +256,6 @@ void setVerboseVSB(bool f) { verbose = f; }
 bool verboseVSB() { return verbose; }
 #endif // DEBUG
 
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-VoxelEdgeDirection::VoxelEdgeDirection(unsigned int ax, int d)
-  : axis(ax),
-    dir(d)
-{
-  assert(axis >=0 && axis <= 2);
-  assert(dir == 1 || dir == -1);
-}
-
-VoxelEdgeDirection::VoxelEdgeDirection(const Coord3D &vec) {
-  // This constructor uses Coord3D instead of ICoord3D because its
-  // caller gets positions out of VSBNodes, and those positions can be
-  // nonintegers.  When this is used, however, we expect the values to
-  // be integers.
-  assert((vec[0] != 0 && vec[1] == 0 && vec[2] == 0) ||
-	 (vec[0] == 0 && vec[1] != 0 && vec[2] == 0) ||
-	 (vec[0] == 0 && vec[1] == 0 && vec[2] != 0));
-  for(unsigned int c=0; c<3; c++) {
-    if(vec[c] != 0) {
-      axis = c;
-      dir = (vec[c] > 0 ? 1 : -1);
-      return;
-    }
-  }
-}
-
-VoxelEdgeDirection VoxelEdgeDirection::reverse() const {
-  return VoxelEdgeDirection(axis, -dir);
-}
-
-// Which of the two given ICoord3Ds has the larger component in this
-// direction?  Return 1 if i0 is greater, -1 if i1 is greater, and 0
-// if they're the same.
-
-int VoxelEdgeDirection::compare(const ICoord3D &i0, const ICoord3D &i1) const {
-  int d = (i0[axis] - i1[axis]) * dir;
-  return d == 0 ? 0 : (d > 0 ? 1 : -1);
-}
-
-static const VoxelEdgeDirection posX(0, 1);
-static const VoxelEdgeDirection negX(0, -1);
-static const VoxelEdgeDirection posY(1, 1);
-static const VoxelEdgeDirection negY(1, -1);
-static const VoxelEdgeDirection posZ(2, 1);
-static const VoxelEdgeDirection negZ(2, -1);
-
-static VoxelEdgeList allDirs({posX, negX, posY, negY, posZ, negZ});
-
-std::ostream &operator<<(std::ostream &os, const VoxelEdgeDirection &dir) {
-  if(dir == posX)
-    os << "posX";
-  else if(dir == posY)
-    os << "posY";
-  else if(dir == posZ)
-    os << "posZ";
-  else if(dir == negX)
-    os << "negX";
-  else if(dir == negY)
-    os << "negY";
-  else if(dir == negZ)
-    os << "negZ";
-  else
-    os << "VoxelEdgeDirection(" << dir.axis << "," << dir.dir << ")";
-  return os;
-}
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -453,7 +388,7 @@ VoxelEdgeDirection VoxRot::toReference(const VoxelEdgeDirection &d) const
 			    __FILE__, __LINE__);
 }
 
-static const VoxRot noRotation(posX, posY, posZ);
+//static const VoxRot noRotation(posX, posY, posZ);
 
 std::ostream &operator<<(std::ostream &os, const VoxRot &rotation) {
   os << "[" << rotation.actualAxes[0] << "," << rotation.actualAxes[1]

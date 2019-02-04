@@ -16,45 +16,16 @@
 
 #include <set>
 #include <vector>
-
-class ProtoVSBNode;
-class VoxelSetBoundary;
-class VSBGraph;
-class VSBNode;
+#include "common/VSB/vsb.h"
 
 #include "common/coord.h"
 #include "common/cprism_i.h"
+
 class CMicrostructure;
 class COrientedPlane;
 class LineSegmentLayer;
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// Predefined voxel signatures for the 8 individual voxels.
-extern unsigned char vox000, vox100, vox010, vox110,
-  vox001, vox101, vox011, vox111;
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-class VoxelEdgeDirection {
-public:
-  VoxelEdgeDirection(unsigned int a, int d);
-  VoxelEdgeDirection(const Coord3D&);
-  unsigned int axis;		// 0, 1, or 2
-  int dir;			// 1 or -1
-  VoxelEdgeDirection reverse() const;
-  bool operator==(const VoxelEdgeDirection &other) const {
-    return axis == other.axis && dir == other.dir;
-  }
-  // Compare the positions of two points in this direction.  Return 1
-  // if the first point is past the second point, -1 if it's the other
-  // way around, and 0 if they're at the same position.
-  int compare(const ICoord3D&, const ICoord3D&) const;
-};
-
-std::ostream &operator<<(std::ostream&, const VoxelEdgeDirection&);
-
-typedef std::vector<VoxelEdgeDirection> VoxelEdgeList;
 
 class VoxRot {
 private:
@@ -229,7 +200,6 @@ class VSBNode {
 };
 
 std::ostream &operator<<(std::ostream&, const VSBNode&);
-
 
 class VSBGraph {
  private:

@@ -25,7 +25,7 @@
 // .h files.  This file is included in other .h files.
 
 #include "common/coord.h"
-#include "common/cprism.h"
+#include "common/VSB/cprism.h"
 typedef CRectPrism<Coord3D> CRectangularPrism;
 typedef ICRectPrism<ICoord3D> ICRectangularPrism;
 
