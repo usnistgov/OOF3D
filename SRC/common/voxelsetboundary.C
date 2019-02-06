@@ -239,6 +239,7 @@
 //   is very slow (o(N^3)) and should only be run for small graphs, or
 //   if you have a lot of free time.
 
+#include "common/coord.h"
 #include "common/IO/canvaslayers.h"
 #include "common/IO/oofcerr.h"
 #include "common/geometry.h"
@@ -255,11 +256,16 @@ bool verboseVSB() { return verbose; }
 #endif // DEBUG
 
 void initializeVSB() {
-  initializeProtoNodes<Coord3D, ICoord3d>();
+  initializeProtoNodes<Coord3D, ICoord3D>();
 }
 
 
-
+VoxelSetBoundary::VoxelSetBoundary(const CMicrostructure *ms,
+				   const std::vector<ICRectangularPrism> &bins,
+				   unsigned int cat)
+  : VoxelSetBdy<Coord3D, ICoord3D, unsigned int>(ms->volumeOfVoxels(), bins,
+						 cat)
+{}
 
 
 
@@ -277,8 +283,7 @@ void initializeVSB() {
 
 
 
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
+#ifdef OLD
 
 void VSBGraph::dumpLines(std::ostream &os, const CMicrostructure *ms) const {
 }
@@ -345,3 +350,5 @@ void VoxelSetBoundary::dumpLines(const std::string &filename) const {
     os.close();
   }
 }
+
+#endif // OLD

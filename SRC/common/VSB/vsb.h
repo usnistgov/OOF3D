@@ -36,6 +36,7 @@
 #ifndef VSB_H
 #define VSB_H
 
+#include <fstream>
 #include <set>
 #include <vector>
 
@@ -254,11 +255,10 @@ public:
       if(allowed == dir)
 	return;
     }
-    oofcerr << "ProtoVSBNode::checkDir: this=" << *this
-	    << " dir=" << dir << std::endl;
-    oofcerr << "ProtoVSBNode::checkDir: connectDirs=";
-    std::cerr << connectDirs();
-    oofcerr << std::endl;
+    std::cerr << "ProtoVSBNode::checkDir: this=" << *this
+	      << " dir=" << dir << std::endl;
+    std::cerr << "ProtoVSBNode::checkDir: connectDirs=" << connectDirs()
+	      << std::endl;
     assert(false);
   }
 #else
@@ -435,9 +435,9 @@ public:
     for(Node *newNode : newNodes) {
       // #ifdef DEBUG
       //     if(verbose)
-      //       oofcerr << "VSBGraph::connectClippedNodes: newNode=" << *newNode
+      //       std::cerr << "VSBGraph::connectClippedNodes: newNode=" << *newNode
       // 	      << std::endl;
-      //     OOFcerrIndent indent(2);
+      //     Std::CerrIndent indent(2);
       // #endif // DEBUG
       Node *vcur = newNode;
       Node *vnext = newNode->getNeighbor(0);
@@ -450,14 +450,14 @@ public:
 	vnext = vtemp;
 	// #ifdef DEBUG
 	//       if(verbose)
-	// 	oofcerr << "VSBGraph::connectClippedNodes: vcur=" << *vcur << std::endl;
+	// 	std::cerr << "VSBGraph::connectClippedNodes: vcur=" << *vcur << std::endl;
 	// #endif // DEBUG
       } while(vcur->getNeighbor(1) != nullptr);
       vcur->setNeighbor(1, newNode);
       newNode->setNeighbor(2, vcur);
       // #ifdef DEBUG
       //     if(verbose)
-      //       oofcerr << "VSBGraph::connectClippedNodes: connected "
+      //       std::cerr << "VSBGraph::connectClippedNodes: connected "
       // 	      << *vcur << " " << *newNode << std::endl;
       // #endif // DEBUG
     }
@@ -492,7 +492,7 @@ public:
       dists.push_back(d);
       // #ifdef DEBUG
       //     if(verbose)
-      //       oofcerr << "getDistances: vertex=" << vertex->index << " "
+      //       std::cerr << "getDistances: vertex=" << vertex->index << " "
       // 	      << vertex->position << " " << "d=" << d << std::endl;
       // #endif // DEBUG
       if(d > dmax)
@@ -585,7 +585,7 @@ public:
   std::vector<Node*> removeDegenerateFaces(std::vector<Node*> &newNodes)
     const
   {
-    // oofcerr << "VSBGraph::removeDegenerateFaces: nNew=" << newNodes.size()
+    // std::cerr << "VSBGraph::removeDegenerateFaces: nNew=" << newNodes.size()
     // 	  << std::endl;
     if(newNodes.empty())
       return newNodes;
@@ -616,7 +616,7 @@ public:
 	}
       }
     }
-    // oofcerr << "VSBGraph::removeDegenerateFaces: nremoved=" << nremoved
+    // std::cerr << "VSBGraph::removeDegenerateFaces: nremoved=" << nremoved
     // 	  << std::endl;
     if(nremoved == 0)
       return newNodes;
@@ -730,12 +730,12 @@ public:
   void clipInPlace(const Plane &plane) {
     // Modeled after r3d_clip, more or less. This is more like it than
     // copyAndClip is.
-    // oofcerr << "VSBGraph::clipInPlace" << std::endl;
+    // std::cerr << "VSBGraph::clipInPlace" << std::endl;
     double dmin, dmax;
     std::vector<double> distance = getDistances(plane, dmin, dmax);
     // #ifdef DEBUG
     //   if(verbose)
-    //     oofcerr << "VSBGraph::clipInPlace: dmin=" << dmin << " dmax=" << dmax
+    //     std::cerr << "VSBGraph::clipInPlace: dmin=" << dmin << " dmax=" << dmax
     // 	    << std::endl;
     // #endif // DEBUG
     if(dmax < 0) {
@@ -764,7 +764,7 @@ public:
 	    COORD p = (thisvert->position*d1 - nbr->position*d0)/(d1 - d0);
 	    // #ifdef DEBUG
 	    // 	  if(verbose) {
-	    // 	    oofcerr << "VSBGraph::clipInPlace: clipping! thisvert=" << *thisvert
+	    // 	    std::cerr << "VSBGraph::clipInPlace: clipping! thisvert=" << *thisvert
 	    // 		    << " nbr=" << *nbr << std::endl;
 	    // 	  }
 	    // #endif // DEBUG
@@ -774,9 +774,9 @@ public:
 	    newNode->setNeighbor(0, thisvert);
 	    // #ifdef DEBUG
 	    // 	  if(verbose) {
-	    // 	    oofcerr << "VSBGraph::clipInPlace: newNode=" << *newNode
+	    // 	    std::cerr << "VSBGraph::clipInPlace: newNode=" << *newNode
 	    // 		    << std::endl;
-	    // 	    oofcerr << "VSBGraph::clipInPlace: after clipping, thisvert="
+	    // 	    std::cerr << "VSBGraph::clipInPlace: after clipping, thisvert="
 	    // 		    << *thisvert << std::endl;
 	    // 	  }
 	    // #endif // DEBUG
@@ -785,12 +785,12 @@ public:
       } // end if v0 is being kept
     } // end loop over vertices v0
 
-    // oofcerr << "VSBGraph::clipInPlace: clipped" << std::endl;
+    // std::cerr << "VSBGraph::clipInPlace: clipped" << std::endl;
     // Connect the new nodes to one another.
     connectClippedNodes(newNodes);
-    // oofcerr << "VSBGraph::clipInPlace: connected" << std::endl;
+    // std::cerr << "VSBGraph::clipInPlace: connected" << std::endl;
     std::vector<Node*> realNewNodes = removeDegenerateFaces(newNodes);
-    // oofcerr << "VSBGraph::clipInPlace: removed degenerate" << std::endl;
+    // std::cerr << "VSBGraph::clipInPlace: removed degenerate" << std::endl;
 
     // Delete the nodes that were removed.  This invalidates
     // VSBNode::index for each node.
@@ -802,7 +802,7 @@ public:
 	vertices[nkept++] = vertices[v0];
     }
     vertices.resize(nkept);
-    // oofcerr << "VSBGraph::clipInPlace: removed" << std::endl;
+    // std::cerr << "VSBGraph::clipInPlace: removed" << std::endl;
     // Fix VSBNode::index for the retained nodes.
     for(unsigned int i=0; i<vertices.size(); i++) {
       vertices[i]->index = i;
@@ -855,9 +855,9 @@ public:
 	  
 	    // #ifdef DEBUG
 	    // 	  if(emarks[prev->index][prev->neighborIndex(cur)]) {
-	    // 	    oofcerr << "VSBGraph::volume: attempt to reuse an edge!"
+	    // 	    std::cerr << "VSBGraph::volume: attempt to reuse an edge!"
 	    // 		    << std::endl;
-	    // 	    oofcerr << "VSBGraph::volume: startNode=" << *startNode
+	    // 	    std::cerr << "VSBGraph::volume: startNode=" << *startNode
 	    // 		    << " prev=" << *prev << " cur=" << *cur << std::endl;
 	    // 	    throw ErrProgrammingError("VSBGraph::volume failed!", __FILE__,
 	    // 				      __LINE__);
@@ -888,7 +888,7 @@ public:
     return ctr/vertices.size();
   }
   
-  const CRectangularPrism &bbox() const { return bounds; }
+  const CRectPrism<COORD> &bbox() const { return bounds; }
   
   bool checkEdges() const  {
     bool result = true;
@@ -928,7 +928,7 @@ public:
 	}
       }
     }
-    // oofcerr << "VSBGraph::checkEdges: ok!" << std::endl;
+    // std::cerr << "VSBGraph::checkEdges: ok!" << std::endl;
     return result;
   } // end VSBGraph::checkEdges
   
@@ -1027,16 +1027,16 @@ public:
 	      std::cerr << "VSBGraph::checkConnectivity: nodeA=" << *nodeA
 			<< " nodeB=" << *nodeB << std::endl;
 	      // for(const VSBNode *node : *reg) {
-	      //   oofcerr << "VSBGraph::checkConnectivity: index=" << node->index
+	      //   std::cerr << "VSBGraph::checkConnectivity: index=" << node->index
 	      // 	    << " position=" << node->position
 	      // 	    << " nbrs=[" << node->getNeighbor(0)->index << ", "
 	      // 	    << node->getNeighbor(1)->index << ", "
 	      // 	    << node->getNeighbor(2)->index << "]";
 	      //   if(node == nodeA)
-	      //     oofcerr << " A";
+	      //     std::cerr << " A";
 	      //   else if(node == nodeB)
-	      //     oofcerr << " B";
-	      //   oofcerr << std::endl;
+	      //     std::cerr << " B";
+	      //   std::cerr << std::endl;
 	      // }
 	      okreg = false;	// go to next region
 	      ok = false;
@@ -1157,7 +1157,7 @@ public:
 private:
   const unsigned int category;	// for debugging only
   //  const CMicrostructure *microstructure;
-  const COORD voxelVolume;	// volume of a single voxel
+  const double voxelVolume;	// volume of a single voxel
   // There's one VSBGraph for each subregion in the image. 
   std::vector<Graph> graphs;
   CRectPrism<COORD> *bbox_;
@@ -1165,7 +1165,7 @@ public:
   // First constructor arg is the size of a single voxel in physical
   // units.  It used to be a pointer to a CMicrostructure, which was
   // only used to get the volume of the voxel.
-  VoxelSetBdy(const COORD voxVol,
+  VoxelSetBdy(double voxVol,
 	      const std::vector<ICRectPrism<ICOORD>> &subregions,
 	      const IMAGEVAL &cat)
     : category(cat),
@@ -1227,7 +1227,7 @@ public:
     }
   }
   
-  const CRectangularPrism &bounds() const {
+  const CRectPrism<COORD> &bounds() const {
     return *bbox_;
   }
 
@@ -1281,7 +1281,7 @@ public:
     return ok;
   }
   
-  void dump(std::ostream &os, const std::vector<ICRectangularPrism>&) const;
+  void dump(std::ostream &os, const std::vector<ICRectPrism<ICOORD>>&) const;
   void dumpLines(const std::string&) const;
 
   void saveClippedVSB(const std::vector<Plane> &planes,
@@ -1436,7 +1436,7 @@ public:
   }
 
   virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     Node *othernode = otherproto->connectBack(this, this->vsbNode);
     // The neighbors are in the +x, +y, and +z directions, so
@@ -1446,7 +1446,7 @@ public:
   }
 
   virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     this->vsbNode->setNeighbor(dir.axis, othernode);
     return this->vsbNode;
@@ -1487,7 +1487,7 @@ public:
   }
 
   virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     Node *othernode = otherproto->connectBack(this, this->vsbNode);
     // The neighbors are in the +x, +y, and +z directions, but
@@ -1498,7 +1498,7 @@ public:
   }
 
   virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     this->vsbNode->setNeighbor(2-dir.axis, othernode);
     return this->vsbNode;
@@ -1559,7 +1559,7 @@ public:
    */
 
   virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     // The edges of vox000 connect to vsbNode0 and the edges of
     // vox110 to vsbNode1.  vox000's edges are negY, negX, negZ, in
@@ -1603,7 +1603,7 @@ public:
   }
 
   virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     if(dir == negX || dir == negY) {
       this->vsbNode0->setNeighbor(1-dir.axis, othernode);
@@ -1621,7 +1621,7 @@ public:
 				 Node *&node0, Node *&node1)
   {
 #ifdef DEBUG
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     assert(dir == negZ);
 #endif // DEBUG
     bool ordered = this->voxelOrder(vox000, vox110);
@@ -1665,7 +1665,7 @@ public:
     // simply say that the edges on vox000 connect to vsbNode0, and
     // the edges on vox111 connect to vsbNode1.  There's no
     // consistency to maintain at the other end of a doubled edge.
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     if(dir.dir == -1) {		// negX, negY, or negZ
       Node *othernode = otherproto->connectBack(this, this->vsbNode0);
       // The edges around vox000 in CW order when viewed from +x+y+z
@@ -1682,7 +1682,7 @@ public:
 
   virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode)
   {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     if(dir.dir == -1) {
       this->vsbNode0->setNeighbor(2-dir.axis, othernode);
       return this->vsbNode0;
@@ -1724,7 +1724,7 @@ public:
   }
 
   virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     // The edges on vox100 connect to vsbNode0 and the edges on vox010
     // connect to vsbNode1.  Edges on vox100 are posX, negY, negZ.
@@ -1750,7 +1750,7 @@ public:
   }
 
   virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     if(dir == posX || dir == negY) {
       this->vsbNode0->setNeighbor(dir.axis, othernode);
@@ -1768,7 +1768,7 @@ public:
 				 Node *&node0, Node *&node1)
   {
 #ifdef DEBUG
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     assert(dir == negZ);
 #endif // DEBUG
     bool ordered = this->voxelOrder(vox100, vox010);
@@ -1813,7 +1813,7 @@ public:
     // to vsbNode0, and the edges on vox111 (also a hole) connect to
     // vsbNode1.  There's no consistency to maintain at the other end
     // of a doubled edge.
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     if(dir.dir == -1) {		// negX, negY, or negZ
       Node *othernode = otherproto->connectBack(this, this->vsbNode0);
       // The edges around vox000 in CW order when viewed from -x-y-z
@@ -1829,7 +1829,7 @@ public:
   }
 
   virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     if(dir.dir == -1) {
       this->vsbNode0->setNeighbor(dir.axis, othernode);
       return this->vsbNode0;
@@ -1871,14 +1871,14 @@ public:
   }
 
   virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     Node *othernode = otherproto->connectBack(this, this->vsbNode);
     this->vsbNode->setNeighbor(dir.axis, othernode);
   }
 
   virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     this->vsbNode->setNeighbor(dir.axis, othernode);
     return this->vsbNode;
@@ -1916,14 +1916,14 @@ public:
   }
 
   virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     Node *othernode = otherproto->connectBack(this, this->vsbNode);
     this->vsbNode->setNeighbor(2-dir.axis, othernode);
   }
 
   virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     this->vsbNode->setNeighbor(2-dir.axis, othernode);
     return this->vsbNode;
@@ -1971,7 +1971,7 @@ public:
   }
 
   virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     // See comments in TwoVoxelsByEdge.  This is similar, but the
     // edges on vox110 are different, and its VSBNode will only be
@@ -2008,7 +2008,7 @@ public:
   }
 
   virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     if(dir == negX || dir == negY) {
       this->vsbNode0->setNeighbor(1-dir.axis, othernode);
@@ -2018,9 +2018,9 @@ public:
       this->vsbNode1->setNeighbor(0, othernode);
       return this->vsbNode1;
     }
-    throw ErrProgrammingError(
-		      "Unexpected direction in ThreeTwoOne::connectBack!",
-		      __FILE__, __LINE__);
+    std::cerr << "Unexpected direction in ThreeTwoOne::connectBack!"
+	      << std::endl;
+    assert(false);
   }
 
   virtual void connectDoubleBack(const ProtoNode *otherproto,
@@ -2028,7 +2028,7 @@ public:
 				 Node *&node0, Node *&node1)
   {
 #ifdef DEBUG
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     assert(dir == negZ);
 #endif // DEBUG
     bool ordered = this->voxelOrder(vox000, vox110);
@@ -2093,7 +2093,7 @@ public:
   }
 
   virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     // vsbNode0 connects the negY, negZ edges of vox100 and vsbNode1
     // connects the negX, negZ edges of vox010.  Both also connect to
@@ -2127,7 +2127,7 @@ public:
   }
 
   virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     if(dir == negX) {
       this->vsbNode1->setNeighbor(0, othernode);
@@ -2149,7 +2149,7 @@ public:
 				 Node *&node0, Node *&node1)
   {
 #ifdef DEBUG
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     assert(dir == negZ);
 #endif // DEBUG
     bool ordered = this->voxelOrder(vox100, vox010);
@@ -2197,7 +2197,7 @@ public:
   }
 
   virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     // The reference configuration is vox110 + vox011 + vox101.
     // There are doubled edges in the +x, +y, and +z directions and
@@ -2263,7 +2263,7 @@ public:
   } // end connect()
 
   virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     if(dir == negX) {
       this->vsbNode2->setNeighbor(0, othernode);
@@ -2277,17 +2277,16 @@ public:
       this->vsbNode0->setNeighbor(0, othernode);
       return this->vsbNode0;
     }
+    std::cerr << "Unexpected direction in ThreeVoxByEdges::connectBack!"
+	      << std::endl;
     assert(false);
-    throw ErrProgrammingError(
-		      "Unexpected direction in ThreeVoxByEdges::connectBack!",
-		      __FILE__, __LINE__);
   }
 
   virtual void connectDoubleBack(const ProtoNode *otherproto,
 				 Node *othernode0, Node *othernode1,
 				 Node *&node0, Node *&node1)
   {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     if(dir == posX) {
       bool ordered = this->voxelOrder(vox110, vox101);
       node0 = this->vsbNode0;
@@ -2364,7 +2363,7 @@ public:
   }
 
   virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     // The reference configuration is ~(vox110|vox011|vox101).  There
     // are doubled edges in the +x, +y, and +z directions and single
@@ -2424,7 +2423,7 @@ public:
   } // end connect()
 
   virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     if(dir == negX) {
       this->vsbNodes[3]->setNeighbor(0, othernode);
@@ -2438,16 +2437,16 @@ public:
       this->vsbNodes[5]->setNeighbor(0, othernode);
       return this->vsbNodes[5];
     }
-    throw ErrProgrammingError(
-		      "Unexpected direction in FiveVoxByEdges::connectBack!",
-		      __FILE__, __LINE__);
+    std::cerr << "Unexpected direction in FiveVoxByEdges::connectBack!"
+	      << std::endl;
+    assert(false);
   }
 
   virtual void connectDoubleBack(const ProtoNode *otherproto,
 				 Node *othernode0, Node *othernode1,
 				 Node *&node0, Node *&node1)
   {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     if(dir == posX) {
       bool ordered = this->voxelOrder(vox100, vox111);
       node0 = this->vsbNodes[0];
@@ -2522,7 +2521,7 @@ public:
   }
 
   virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     // Connect posX and negZ to vsbNode0, and negX and posZ to vsbNode1.
     // The two VSBNodes are already connected by a dummy edge, in makeVSBNodes.
@@ -2548,7 +2547,7 @@ public:
   }
 
   virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     if(dir == posX) {
       this->vsbNode0->setNeighbor(2, othernode);
@@ -2566,8 +2565,8 @@ public:
       this->vsbNode0->setNeighbor(1, othernode);
       return this->vsbNode0;
     }
-    throw ErrProgrammingError("Unexpected direction in ChiralR::connectBack!",
-			      __FILE__, __LINE__);
+    std::cerr << "Unexpected direction in ChiralR::connectBack!" << std::endl;
+    assert(false);
   }
 
 #ifdef DEBUG
@@ -2607,7 +2606,7 @@ public:
   }
 
   virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     // Connect posX and negZ to vsbNode0, and negX and posZ to vsbNode1.
     // The two VSBNodes are already connected by a dummy edge, in makeVSBNodes.
@@ -2633,7 +2632,7 @@ public:
   }
 
   virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     if(dir == posX) {
       this->vsbNode0->setNeighbor(1, othernode);
@@ -2714,14 +2713,14 @@ public:
   }
 
   virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     unsigned int i = hexDirIndex(dir);
     Node *othernode = otherproto->connectBack(this, this->vsbNodes[i]);
     this->vsbNodes[i]->setNeighbor(0, othernode);
   }
 
   virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     unsigned int i = hexDirIndex(dir);
     this->vsbNodes[i]->setNeighbor(0, othernode);
     return this->vsbNodes[i];
@@ -2763,7 +2762,7 @@ public:
     // vox001, and 3 for vox111.  The assignment of neighbor indices
     // for the VSBNodes is arbitrary but consistent (and gets them all
     // CW, hopefully!)
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     if(dir == posX) {
       // The posX edge is between voxels 100 and 111, so it connects
       // to vsbNodes 0 and 3.
@@ -2852,7 +2851,7 @@ public:
 				 Node *othernode0, Node *othernode1,
 				 Node *&node0, Node *&node1)
   {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     // See comments in CheckerBoard::connect.
     if(dir == posX) {
       bool ordered = this->voxelOrder(vox100, vox111);
@@ -2962,7 +2961,7 @@ public:
     // Neighbor indexing for the edges of the single voxel at vox111
     // is posZ, posX, posY.  For the inside corner of the L it's negZ,
     // posX, posY.
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     this->checkDir(dir);
     if(dir == posZ) {
       Node *othernode = otherproto->connectBack(this, this->vsbNode1);
@@ -2998,7 +2997,7 @@ public:
   virtual Node *connectBack(const ProtoNode *otherproto,
 			       Node *othernode)
   {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     if(dir == posZ) {
       this->vsbNode1->setNeighbor(0, othernode);
       return this->vsbNode1;
@@ -3014,7 +3013,7 @@ public:
 				 Node *othernode0, Node *othernode1,
 				 Node *&node0, Node *&node1)
   {
-    VoxelEdgeDirection dir = getReferenceDir(otherproto);
+    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
     if(dir == posX) {
       bool ordered = this->voxelOrder(vox100, vox111);
       node0 = ordered ? this->vsbNode0 : this->vsbNode1;
@@ -3045,8 +3044,8 @@ public:
 // Build the table of ProtoNode classes
 
 template <class COORD, class ICOORD>
-std::vector<const ProtoVSBNode<COORD, ICOORD>> &getProtoNodeTable() {
-  static std::vector<const ProtoVSBNode<COORD, ICOORD>*> table(256, nullptr);
+std::vector<ProtoVSBNode<COORD, ICOORD>*> &getProtoNodeTable() {
+  static std::vector<ProtoVSBNode<COORD, ICOORD>*> table(256, nullptr);
   return table;
 }
 
@@ -3057,16 +3056,15 @@ ProtoVSBNode<COORD, ICOORD> *fetchProtoNode(unsigned char signature) {
 
 
 template <class COORD, class ICOORD>
-void pn(unsigned char signature, const ProtoVSBNode<COORD, ICOORD> *protoNode)
+void pn(unsigned char signature, ProtoVSBNode<COORD, ICOORD> *protoNode)
 {
   assert(protoNode != nullptr);
 #ifdef DEBUG
   protoNode->setSignature(signature);
   if(getProtoNodeTable<COORD, ICOORD>()[signature] != nullptr) {
-    oofcerr << "Duplicate signature! " << signature << " "
+    std::cerr << "Duplicate signature! " << signature << " "
 	    << printSig(signature) << std::endl;
-    throw ErrProgrammingError("Duplicate ProtoVSBNode signature!",
-			      __FILE__, __LINE__);
+    assert(false);
   }
 #endif // DEBUG
   getProtoNodeTable<COORD, ICOORD>()[signature] = protoNode;

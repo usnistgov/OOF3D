@@ -25,8 +25,11 @@ class CMicrostructure;
 class COrientedPlane;
 class LineSegmentLayer;
 
-class VoxelSetBoundary : public VoxelSetBdy<Coord3D, ICoord3D, int> {
+class VoxelSetBoundary : public VoxelSetBdy<Coord3D, ICoord3D, unsigned int> {
 public:
+  VoxelSetBoundary(const CMicrostructure *ms,
+		   const std::vector<ICRectangularPrism> &bins,
+		   unsigned int cat);
 };
 
 
