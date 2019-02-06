@@ -14,8 +14,8 @@
 // argument COORD is a coordinate class, which must be based on
 // doubles for CRectPrism and ints for ICRectPrism.
 
-#ifndef CPRISM_H
-#define CPRISM_H
+#ifndef VSB_CPRISM_H
+#define VSB_CPRISM_H
 
 #include <iostream>
 #include <limits>
@@ -221,4 +221,4 @@ public:
 #undef min_
 #undef max_
 
-#endif // CPRISM_H
+#endif // VSB_CPRISM_H
