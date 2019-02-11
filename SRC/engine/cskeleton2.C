@@ -4338,7 +4338,8 @@ void CSkeletonBase::buildVSBs() const {
 #ifdef DEBUG
 	      bool found = false;
 #endif // DEBUG
-	      for(unsigned int k=here[c]+1; k<msSize[c]+1; k++) {
+	      unsigned int kmax = bin.upperrightfront()[c];
+	      for(unsigned int k=here[c]+1; k<=kmax; k++) {
 		ICoord3D there = here;
 		there[c] = k;
 		if(protoNodes[there] != nullptr) { // found the next node
