@@ -186,7 +186,7 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 	  // DOFmap maps local indices to global.
 	  int global_col = dofmap[ldof];
 
-	  // TODO: Clarity about the objects.  Dammit.
+	  // TASK 3:  Get clarity about the objects, finish this.
 	}
 	
       }

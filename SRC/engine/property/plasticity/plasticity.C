@@ -346,6 +346,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     // -------------------------
     // Constitutive part is here
     // -------------------------
+    // This is the "TASK 1" of the constititive rule file.
     rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
 		 
     // The plastic constitutive rule is pointed to by "rule".

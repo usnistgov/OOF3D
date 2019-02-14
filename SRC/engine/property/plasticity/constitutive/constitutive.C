@@ -12,7 +12,7 @@
 #include <oofconfig.h>
 #include "engine/property/plasticity/constitutive/constitutive.h"
 
-// Nothing yet.
+
 
 PowerLawSlipData::PowerLawSlipData(int slips, double initial_r) {
   for(int i=0;i<slips;++i) {
@@ -33,3 +33,8 @@ void PowerLawConstitutiveRule::evolve(GptPlasticData *gptpd,
   // it's a data class, so static cast is right.
   PowerLawSlipData *plsd = static_cast<PowerLawSlipData*>(gptsd);
 }
+
+// TASK 1:
+// Write the "evolve" function that takes the Cauchy stress from
+// the outer loop and returns the plastic strain increments
+// and their derivatives wrt the strain.
