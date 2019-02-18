@@ -159,11 +159,15 @@ double ShapeFunction::displacedderiv(const Element *el,
 				     const GaussPoint &g,
 				     const FEMesh *mesh) const
 {
-  // TASK 2:  Fill this in correctly.
+  // TASK 2:  Optimize, recomputes too much, no caching, magic "3".
   // Thing we want to transform is masterdriv(n, component, g).
   // el->deformation_jacobian(SpaceIndex, SpaceIndex, gpt, mesh)
   // is the ... master-space derivs of the shape fns.
-  return 0.0;
+  double res = 0.0;
+  for(SpaceIndex cdx=0; cdx<3;++cdx) {
+    res += el->deformation_jacobian(i,cdx,g,mesh)*masterderiv(n,cdx,g);
+  }
+  return res;
 }
 
 // Current config.
@@ -172,8 +176,11 @@ double ShapeFunction::displacedderiv(const Element *el,
 				     const MasterCoord &mc,
 				     const FEMesh *mesh) const
 {
-  // ALSO HERE OF COURSE
-  return 0.0;
+  double res = 0.0;
+  for(SpaceIndex cdx=0; cdx<3;++cdx) {
+    res += el->deformation_jacobian(i,cdx,mc,mesh)*masterderiv(n,cdx,mc);
+  }
+  return res;
 }
 
 
