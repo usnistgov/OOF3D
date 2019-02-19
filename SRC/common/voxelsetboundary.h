@@ -9,6 +9,9 @@
  * oof_manager@nist.gov. 
  */
 
+// OOF3D-specific wrapper for the generic voxel set boundary code in
+// VSB/vsb.h.
+
 #include <oofconfig.h>
 
 #ifndef VOXELSETBOUNDARY_H
@@ -19,68 +22,44 @@
 #include "common/VSB/vsb.h"
 
 #include "common/coord.h"
-#include "common/cprism_i.h"
+#include "common/VSB/cprism.h"
+#include "common/VSB/cplane.h"
+
+typedef ICRectPrism<ICoord3D> VoxelBin;
+typedef std::vector<VoxelBin> BinList;
 
 class CMicrostructure;
-class COrientedPlane;
 class LineSegmentLayer;
 
-class VoxelSetBoundary : public VoxelSetBdy<Coord3D, ICoord3D, unsigned int> {
+
+// TODO: Why isn't VoxelSetBoundary derived from VoxelSetBdy instead
+// of containing a pointer to one?
+
+class VoxelSetBoundary {
+private:
+  const CMicrostructure *microstructure;
+  VoxelSetBdy<Coord3D, ICoord3D, int> *vsb;
 public:
-  VoxelSetBoundary(const CMicrostructure *ms,
-		   const std::vector<ICRectangularPrism> &bins,
-		   unsigned int cat);
+  VoxelSetBoundary(const CMicrostructure *ms, const BinList &bins, int cat);
+  ~VoxelSetBoundary();
+  unsigned int size() const { return vsb->size(); }
+  double clippedVolume(const BinList &bins,
+		       const CRectPrism<Coord3D> &bbox,
+		       const std::vector<VSBPlane<Coord3D>> &planes) const;
+  bool checkEdges() const;
+  void dump(std::ostream &os, const std::vector<ICRectPrism<ICoord3D>>&) const;
+  void dumpLines(const std::string&) const;
+  void saveClippedVSB(const std::vector<VSBPlane<Coord3D>>&,
+ 		      const std::string&) const;
+  void drawClippedVSB(const std::vector<VSBPlane<Coord3D>>&,
+ 		      LineSegmentLayer*) const;
+  VoxelSetBdy<Coord3D, ICoord3D, int>::EdgeIterator iterator() const;
 };
 
 
-// class VoxelSetBoundary {
-// private:
-//   const unsigned int category;	// for debugging only
-//   const CMicrostructure *microstructure;
-//   // There's one VSBGraph for each subregion in the CMicrostructure. 
-//   std::vector<VSBGraph> graphs;
-//   CRectangularPrism *bbox_;
-// public:
-//   VoxelSetBoundary(const CMicrostructure *ms,
-// 		   const std::vector<ICRectangularPrism>&,
-// 		   unsigned int cat);
-//   ProtoVSBNode *protoVSBNodeFactory(unsigned int, unsigned char,
-// 				    const ICoord3D&);
-//   void addEdge(const ICoord3D&, const ICoord3D&);
-//   void fixTwoFoldNodes(unsigned int s) { graphs[s].fixTwoFoldNodes(); }
-//   // void find_boundaries();
-
-//   unsigned int size() const;
-//   double volume() const;
-//   void findBBox();
-//   const CRectangularPrism &bounds() const { return *bbox_; }
-
-//   double clippedVolume(const std::vector<ICRectangularPrism>&,
-// 		       const CRectangularPrism&,
-// 		       const std::vector<COrientedPlane>&) const;
-
-//   VSBEdgeIterator iterator() const { return VSBEdgeIterator(this); }
-
-//   bool checkEdges() const;
-//   bool checkConnectivity() const;
-//   void dump(std::ostream &os, const std::vector<ICRectangularPrism>&) const;
-//   void dumpLines(const std::string&) const;
-//   void saveClippedVSB(const std::vector<COrientedPlane>&,
-// 		      const std::string&) const;
-//   void drawClippedVSB(const std::vector<COrientedPlane>&,
-// 		      LineSegmentLayer*) const;
-
-//   friend class VSBEdgeIterator;
-// };
-
-void initializeProtoNodes();
+void initializeVSB();
 
 void printHomogRegionStats();
 std::string &printSig(unsigned char);
-
-#ifdef DEBUG
-void setVerboseVSB(bool);
-bool verboseVSB();
-#endif // DEBUG
 
 #endif // VOXELSETBOUNDARY_H

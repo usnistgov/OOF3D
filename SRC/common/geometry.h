@@ -216,24 +216,18 @@ double triangleArea(const Coord&, const Coord&, const Coord&);
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-class COrientedPlane {
-public:
-  const Coord3D normal; // unit normal
-  const double offset;		    // distance from origin to plane
-				    // in normal direction
-  COrientedPlane(const Coord3D &norm, double d)
-    : normal(norm), offset(d)
-  {}
-  COrientedPlane(const Coord *norm, double d)
-    : normal(*norm), offset(d)
-  {}
-  // Distance from arg to the plane. It's positive if the point is in
-  // the +normal direction.
-  double distance(const Coord3D&) const;
-  COrientedPlane reversed() const;
-};
+// To make the VSB code distributable independently from the rest of
+// OOF3D, it needed its own oriented plane class.  So COrientedPlane,
+// which used to be defined here, was turned into a template, renamed
+// to VSBPlane, and moved to VSB/cplane.h.  Here we just create an
+// instance of the template and call it COrientedPlane.
+
+#include "common/VSB/cplane.h"
+typedef VSBPlane<Coord3D> COrientedPlane;
 
 std::ostream &operator<<(std::ostream&, const COrientedPlane&);
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 #undef min_
 #undef max_

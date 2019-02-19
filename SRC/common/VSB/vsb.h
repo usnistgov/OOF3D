@@ -9,29 +9,364 @@
  * oof_manager@nist.gov. 
  */
 
-// Classes for computing the intersection of a set of voxels with a
-// convex polyhedron.  Derived from the OOF3D code, but independent of
-// it.
+// Classes for finding, storing, and clipping a voxel set boundary
+// (VSB).  See "USAGE", below, for the details.
 
-// Externally visible template arguments:
-//  COORD: a class representing a 3D coordinate with float components
-//  with member functions
-//         COORD(double, double, double)          constructor
-//         double COORD::operator[](int) const    read a component
-//         double & COORD:operator[](int)         read/write a component
-//         COORD &operator+=(const COORD&)        vector addition in place
-//  and non-member functions
-//         double dot(const COORD&, const COORD&) dot product
-//         COORD cross(const COORD&, const COORD&) cross product
-//         COORD operator+(const COORD&, const COORD&) vector addition
-//         COORD operator*(const COORD&, double)       scalar multiplication
-//         COORD operator/(const COORD&, double)       scalar division
+// OVERVIEW
 
-// ICOORD: a class representing a 3D coordinate with integer components
-// with member functions
-//         ICOORD(int, int, int)                 constructor
-//         int ICOORD::operator[](int) const     read a component
-//         int & ICOORD::operator[](int)         read/write a component
+// This code was developed for OOF3D but is independent of it.  OOF3D
+// needs to compute the volume of the intersection of a group of
+// voxels (3D pixels) with a finite element (a convex polyhedron).
+// These routines compute the shape and volume of the intersection of
+// any convex polyhedron with any set of voxels.  The computation is
+// robust -- small errors in the calculation of the positions of
+// geometrical intersections lead only to small errors in the computed
+// volume, which is not true for many simpler methods.
+
+// Computing the intersection voxel by voxel is too slow. This method
+// instead uses the boundary (B) of the voxel set (VS), hence the name
+// "vsb.h".
+
+// This documentation refers to "images", but the image need not be a
+// conventional image.  It is just a three dimensional regionl,
+// divided into a rectangular array of identically sized rectangular
+// regions (voxels), with a value (category) assigned to each voxel.
+// A voxel set consists of all voxels in the image with the same
+// category.
+
+// All classes used here are templates, so that they can work with
+// existing image and coordinate classes.  (For simplicity the template
+// arguments are omitted in most of the documentation.)
+
+// The VSB is a polyhedron which need not be either convex or simply
+// connected.  It's represented by a graph, where each node of the
+// graph corresponds to a corner of the polyhedron, and each edge of
+// the graph connects the two nodes that correspond to the endpoints
+// of an edge of the polyhedron.  There is no class representing
+// edges, but each node knows its neighbors, as well as its position
+// in space.  Each node has exactly 3 neighbors.  Where the polyhedron
+// has corners with more than three edges, the graph contains multiple
+// nodes with the same position.
+
+// Actually, the VSB is represented by a bunch of graphs.  The image
+// is split into subregions and a separate graph is constructed for
+// each subregion.  This allows the expensive graph clipping operation
+// to be skipped for large parts of the volume when its known that the
+// voxel set only occupies a small part of the volume.  Because the
+// optimal size of the subregions depends on the application, the
+// regions are passed in as an argument.
+
+// There are three main parts to the calculation.
+// (1) Constructing the graph representation of the VSB.
+// (2) Clipping the VSB by planes (the faces of the convex polyhedron).
+// (3) Computing the volume of the clipped polyhedron.
+
+// The graphs are VSBGraph objects, and are contained in a
+// VoxelSetBoundary object.  (The VoxelSetBoundary contains a bit more
+// information than the VSBGraphs, but pretty much passes all of its
+// work to the graphs.)  The graphs are constructed by buildVSB(),
+// which creates a 3D array, protoNodes, of ProtoVSBNode pointers at
+// the corners of every voxel in each graph's subregion of the
+// Microstructure.  Each point in protoNodes is the center of a 2x2x2
+// cube of voxels, but only some of the 8 voxels are occupied (ie, in
+// the voxel set). (The 2x2x2 cubes on the edges of the image always
+// contain some unoccupied voxels.)  At the locations in the array
+// where the configuration of voxels in the 2x2x2 cube defines a
+// corner of the polyhedron, an instance of a ProtoVSBNode subclass is
+// created.
+
+// ProtoVSBNodes are different from VSBNodes.  There is never more
+// than one ProtoVSBNode at a point, and ProtoVSBNodes may have up to
+// six ProtoVSBNode neighbors.  VSBNodes always have three neighbors,
+// but there may be more than one (up to seven!) VSBNodes at a point.
+// There is only one type of VSBNode, but there are many different
+// subclasses of ProtoNode.
+
+// There are different subclasses of ProtoVSBNode for different
+// configurations of voxels in the local 2x2x2 cube.  To avoid having
+// to code all 256 possibilities, voxel arrangements that can be
+// rotated into one another are in the same subclass, and each
+// ProtoVSBNode instance contains a rotation (VoxRot instance) that
+// maps its reference space axes (VoxelEdgeDirection instances) to the
+// real space axes.  The occupied/unoccupied status of the voxels in
+// the cube is encoded in the bits of an unsigned char (called a voxel
+// signature), which is used to look up the ProtoVSBNode type and
+// orientation in a table.  VoxelSetBoundary::protoVSBNodeFactory()
+// returns a pointer to a new ProtoVSBNode of the correct type.  It
+// returns nullptr if the arrangement of voxels doesn't define a
+// corner of the polyhedron.
+
+// The voxel signatures of the eight single voxel configurations are
+// predefined and named "vox000", "vox100", etc, up to "vox111".  The
+// three digits in the names are the xyz coordinates of the voxel.
+// vox000 is on the negative x, negative y, negative z side of the
+// 2x2x2 cube.  vox111 is diagonally opposite.  The signature of any
+// multi-voxel configuration can be constructed by the bitwise-or of
+// the signatures of its individual voxels, so the configurations are
+// referred to as "vox000|vox110", etc.
+
+// When each ProtoVSBNode is created, it creates one or more VSBNodes
+// in the VSBGraph, which stores pointers to them in a std::vector.
+// It *doesn't* use a 3D array -- there may be more than one VSBNode
+// at any point, and the geometrical organization isn't needed after
+// graph construction is complete.  The number of VSBNodes per
+// ProtoVSBNode depends on the voxel geometry, which is known to the
+// ProtoVSBNode subclass.
+
+// After creating the ProtoVSBNodes, buildVSB() calls
+// ProtoVSBNode::connect() to set the nodes' neighbor pointers.  If a
+// ProtoVSBNode needs a neighbor in the +x, +y, or +z direction (in
+// real space), buildVSB() finds the next ProtoVSBNode in that
+// direction and calls connect().  Each ProtoVSBNode subtype knows in
+// which directions its neighbors lie, and how to arrange them so that
+// they're ordered correctly for the clipping and volume calculations.
+// (See below.)  The rule is that the neighbors (edges) of a VSBNode
+// must be ordered clockwise when viewed from the outside of the
+// polyhedron.
+
+// In the simplest situations (ProtoVSBNode subclasses SingleVoxel,
+// SevenVoxels, etc), ProtoVSBNode::connect() works by passing its
+// VSBNode* to the other ProtoVSBNode's connectBack() method, which
+// returns the other ProtoVSBNode's VSBNode*.  The two ProtoVSBNodes
+// can thereby insert the neighboring VSBNode pointers in their local
+// VSBNodes' neighbor lists.
+
+// One subtlety in connecting neighbors occurs when two occupied
+// voxels in the 2x2x2 cube share an edge but not a face.  For
+// example, the two voxels in configuration "vox000|vox110" share the
+// edge in the negative z direction.  In these cases (TwoVoxelsByEdge,
+// SixVoxelsByEdge, etc), there will be at least two VSBNodes at the
+// center of the cube, and at least two VSBNodes in the next
+// ProtoVSBNode in the direction of the shared edge.  It's important
+// to connect the correct VSBNodes to each other at either end of the
+// edge, or else the graph won't correctly represent the polyhedron,
+// and the clipping and volume routines will fail.  For this,
+// ProtoVSBNode::connect calls the neighboring ProtoVSBNode's
+// connectDoubleBack method, passing in two VSBNode*s and getting two
+// in return.  connect() and connectDoubleBack() use
+// ProtoVSBNode::voxelOrder() to ensure that the neighbors are paired
+// correctly.  voxelOrder() takes two single-voxel signatures in the
+// ProtoVSBNode's reference space, rotates them into real space, and
+// returns true if the first voxel's location in the 2x2x2 cube is
+// greater than the second one's.  The voxels defining the doubled
+// edge must have the same relative real space positions in both
+// ProtoVSBNodes, so voxelOrder()s return value indicates if the
+// arguments or return values of connectDoubleBack need to be swapped.
+
+// The second subtlety in connecting neighbors concerns how multiple
+// VSBNodes are arranged in a single ProtoNode.  The simplest
+// non-trivial situation is when two voxels touch at a corner
+// (TwoVoxelsByCorner, signature vox000|vox111 and equivalents).  In
+// this case, there are two completely independent VSBNodes.  One
+// connects to the +x, +y, and +z neighbors and one to the -x, -y, and
+// -z neighbors.  The case vox000|vox110 (TwoVoxelsByEdge) also has
+// two independent VSBNodes, but they share a doubled edge in the -z
+// direction.  In more complicated cases, two VSBNodes may actually
+// need to be neighbors of each other.  For example,
+// vox000|vox100|vox010|vox011 (ChiralR) has four outgoing edges, so
+// it needs two VSBNodes that are connected to each other.  There are
+// configurations (Pyramid, FiveVoxByEdges) with six outgoing edges,
+// which require six VSBNodes arranged in an infinitesimal hexagon, each
+// connected to two co-located VSBNodes.
+
+// Finally, there is one set of configurations (ThreeTwoOne,
+// vox000|vox110|vox111) which is most conveniently resolved by
+// creating a VSBNode with only two neighbors, and removing that node
+// later.  This is because this configuration consists of one edge
+// that passes straight through the 2x2x2 cube (-z and +z) and another
+// edge that coincides with the first edge in the -z direction but
+// joins the -x and -y edges instead of passing through.  All such
+// VSBNodes with only two neighbors are stored in the VoxelSetBoundary
+// when they're created and are cleaned up after all connections are
+// made.
+
+// After all the VSBNodes are connected, the ProtoVSBNodes are
+// deleted.
+
+// The second main part of the computation is using the VSBGraph to
+// compute the graph of a clipped polyhedron, This is more or less a
+// straight implementation of Powell and Abel's r3d algorithm.  See
+// git@github.com:devonmpowell/r3d.git.  The differences are:
+
+// * We're using C++ instead of C.
+// * We don't have a fixed maximum size for the graph, but use dynamic
+//   allocation.
+// * Instead of manipulating vectors of integer indices, we use
+//   vectors of pointers to VSBNodes, mostly.
+// * We want to be able to clip the same graph multiple times to
+//   compute its intersection with many polyhedra, so instead of just
+//   clipping in place, we have two methods, VSBGraph::copyAndClip()
+//   and VSBGraph::clipInPlace().  copyAndClip() is used to clip to
+//   the first polyhedron face, and clipInPlace() is used for the rest.
+// * For the same reason, we don't store the distances from the nodes
+//   to the clipping plane in the VSBNodes.
+
+// The clipping algorithm is
+// * Compute signed distances from all VSBNodes to the clipping plane.
+//   Nodes with distance < 0 are to be kept.
+// * For each edge with one node on each side of the plane (distance <
+//   0 for one and distance >= 0 for the other) create a new node on
+//   the plane by interpolating the positions of two endpoints.
+//   Connect the new node to the one being kept, and discard the other
+//   one.
+// * Discard all other nodes with distance >= 0.
+// * The new nodes now have only one neighbor.  They're at the
+//   perimeter of one or more "holes" where a bunch of nodes have been
+//   clipped out of the graph.  Because the neighbors stored in each
+//   VSBNode are ordered (going CW around the node as viewed from
+//   outside the polyhedron), it's possible to start at one new node
+//   and trace through the graph to find the next new node (ie, the
+//   next node with fewer than 3 neighbors) on the perimeter of the
+//   same hole, by always leaving a node on the edge that's CCW from
+//   the incoming edge.  Connect each new node with the next one.
+
+// The actual clipping routines, copyAndClip() and clipInPlace() are a
+// bit more complex because they have to some bookkeeping that's not
+// described here.
+
+// If the initial unclipped polyhedron is not convex, then clipped
+// polyhedron can include incorrect edges.  However, these edges will
+// be part of oppositely oriented coplanar faces, so they have no
+// effect on the computed volume.
+
+// Finding the volume of a polyhedron relies on the same CW neighbor
+// ordering that's used by the clipping routines.
+
+// * Pick an unused node and edge of the polyhedron.
+// * By choosing an exit edge that's CCW from the entrance edge, move
+//   from node to node until you get back to where you started.  This
+//   traces out a facet of the polyhedron.  Mark all the (node, exit
+//   edge) pairs as "used".
+// * Compute the area vector of the facet by taking cross products of
+//   edges.
+// * Compute the facet's contribution to the volume from the dot
+//   product of the area vector with the a vector from the center of
+//   the polyhedron to the facet.
+
+
+// USAGE
+
+// To construct the boundary of a voxel set, call the template
+// function buildVSB(), which returns a VoxelSetBdy object.  To
+// compute the volume of the intersection of a VoxelSetBdy with a set
+// of planes, call its clippedVolume method.
+
+// buildVSB()
+//
+// template <class COORD, class ICOORD, class IMAGE, class IMAGEVAL>
+// VoxelSetBdy<COORD, ICOORD, IMAGEVAL> *buildVSB(
+//    const IMAGE &image, IMAGEVAL &imageVal,
+//    double voxelVolume,
+//    const std::vector<ICRectPrism<ICOORD> &bins);
+//
+// The arguments are:
+//     image -- a 3D array of voxels
+//     imageVal -- the value of the voxels in the voxel set
+//     voxelVolume -- the volume of a voxel
+//     bins -- a set of 3D regions of the image.  A separate graph will
+//       be build in each region.  ICRectPrism is defined in cprism.h
+//
+// Template arguments:
+//   COORD: A coordinate or vector in 3 dimensional space with
+//     floating point compenents.  The following member and non-member
+//     functions must supported: 
+//       COORD(double x, double y, double z)       -- constructor
+//       double COORD::operator[](int) const       -- read component
+//       double &COORD::operator[](int)            -- read/write component
+//       COORD &COORD::operator+=(const COORD&)    -- addition in place
+//       double dot(const COORD&, const COORD&)    -- dot product
+//       COORD cross(const COORD&, const COORD&)   -- cross product
+//       COORD operator+(const COORD&, const COORD&) -- vector addition
+//       COORD operator*(const COORD&, double)     -- scalar multiplication
+//       COORD operator/(const COORD&, double)     -- scalar division
+//
+//   ICOORD: Just like COORD, but with integer components.  Used to
+//     identify voxels.  The following member and non-member
+//     functions must be supported:
+//       ICOORD(int, int, int)                     -- constructor
+//       int ICOORD::operator[](int) const         -- read component
+//       int & ICOORD::operator[](int)             -- read/write a component
+//       bool operator==(const ICOORD&, const ICOORD&)  -- equality
+//       bool operator!=(const ICOORD&, const ICOORD&)  -- inequality
+//       ICOORD operator+(const ICOORD&, const ICOORD&) -- vector addition
+//       ICOORD operator-(const ICOORD&, const ICOORD&) -- vector subtraction
+//
+//   IMAGE: A 3D array of voxels.  It must allow a voxel value to be
+//   extracted, given the voxel coordinate as an ICOORD:
+//       const IMAGEVAL &IMAGE::operator[](const ICOORD&) const
+//
+//   IMAGEVAL: The value of a voxel in the image.  It needs an == operator.
+//       bool operator==(const IMAGEVAL&, const IMAGEVAL&)
+//
+// The return value of buildVSB is a pointer to a newly allocated
+// VoxelSetBdy object.  The pointer must be deleted when the caller is
+// done with it.
+
+// VoxelSetBdy
+//
+// VoxelSetBdy is a templated class.  The template arguments are
+// COORD, ICOORD, and IMAGEVAL, in that order, with the meanings given
+// above.  The following methods can be used:
+//
+// * double VoxelSetBdy::volume()  -- the volume of the voxel set.
+//
+// * double VoxelSetBdy::clippedVolume(
+//      const std::vector<ICRectPrism<ICOORD>> &bins,
+//      const CRectPrism<COORD> &bbox,
+//      const std::vector<VoxelSetBdy::Plane> &planes)
+//   Return the volume of the polyhedron formed by clipping with all
+//   of the given planes.  bins is a list of subregions, as in
+//   buildVSB().  bbox is the bounding box of the region defined by
+//   the planes.  Only subregions that intersect the bounding box will
+//   be considered.  If bbox is too large, the routine will work but
+//   may be slow.
+
+// There are also some debugging routines:
+
+// * bool checkEdges()
+//   just checks that each node has three neighbors, and that if A is
+//   a neighbor of B, then B is a neighbor of A.  It returns true if
+//   test passes.
+
+// * bool checkConnectivity()
+//   checks that the graph has three-vertex connectivity, which means
+//   that removing two vertices from the graph doesn't divide it into
+//   two disconnected parts.  Because the graph is allowed to have
+//   disconnected portions, this test applies to each disconnected
+//   subgraph individually.  Three-vertex connectivity is necessary
+//   for a well formed graph for a CONVEX polygon.  I don't know if
+//   it's sufficient.  checkConnectivity() is very slow (o(N^3)) and
+//   should only be run for small graphs, or if you have a lot of free
+//   time.  checkConnectivity() returns true if the test passes.
+
+// * void dump(std::ostream&, const std::vector<ICRectPrism<ICOORD>>&)
+//   writes raw data to the given output stream.  The second argument
+//   is a set of subregions, like the bins argument to clippedVolume
+//   and buildVSB.
+
+// * void dumpLines(const std::string &filename, CONVERTER &conv)
+//   writes the edges of the VSB to the given file in a format that
+//   the author found useful for plotting:
+//     (x0, y0, z0), (x0, y0, z0) # index0 index1
+//   CONVERTER is a template argument, and must be a callable type
+//   that converts a COORD in voxel units to whatever format you'd
+//   like in the output.
+
+// * void saveClippedVSB(const std::vector<Plane> &planes,
+//                       CONVERTER &converter,
+//                       const std::string &filenamebase)
+//   clips the VSB with the given planes, and writes the lines of the
+//   clipped graphs to two files, filenamebase.dat and
+//   filenamebase.lines.  The first file is the same as the file
+//   produced by dump(), and the second the same as dumpLines().
+
+// * void drawClippedVSB(const std::vector<Plane> &planes,
+//                       PLOTTER &plotter)
+//   clips the VSB with the given planes and then passes each graph to
+//   the given plotter object.  PLOTTER must be callable, with an
+//   operator() taking a single argument which is a pointer to a
+//       VoxelSetBdy<COORD, ICOORD, int>::Graph.
+
 
 #ifndef VSB_H
 #define VSB_H
@@ -40,6 +375,7 @@
 #include <set>
 #include <vector>
 
+#include "array3d.h"
 #include "cprism.h"
 #include "cplane.h"
 
@@ -55,8 +391,8 @@ template<class COORD, class ICOORD>
   ProtoVSBNode<COORD, ICOORD> *fetchProtoNode(unsigned char);
 
 // A lot of classes here all need to define the same typedefs.
-// typedefs in a template class's base class don't seem to be visible
-// to the derived class.
+// typedefs in a template class's base class aren't visible
+// to the derived class, so these get repeated often.
 #define TEMPLATE_TYPEDEFS \
   typedef VSBNode<COORD, ICOORD> Node; \
   typedef ProtoVSBNode<COORD, ICOORD> ProtoNode; \
@@ -64,7 +400,8 @@ template<class COORD, class ICOORD>
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// Predefined voxel signatures for the 8 individual voxels.
+// Predefined voxel signatures for the 8 individual voxels, for all 8
+// together, and none of them.
 extern unsigned char vox000, vox100, vox010, vox110,
   vox001, vox101, vox011, vox111, voxelALL, voxelNONE;
 
@@ -137,6 +474,51 @@ public:
 };
 
 std::ostream &operator<<(std::ostream&, const VoxRot&);
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+template <class IMAGE, class IMAGEVALUE, class ICOORD, class IPRISM>
+unsigned char voxelSignature(const IMAGE image, ICOORD &pos, IMAGEVALUE val,
+			     const IPRISM &region)
+{
+  // The voxelSignature indicates which of the eight voxels
+  // surrounding a voxel corner in a given subregion of an image
+  // have the given value.
+  // The inputs are:
+  //  image: The image containing the voxels.  
+  //  pos: The position of the corner, in voxel units.
+  //  val: The value of the voxels that we're interested in.
+  //  pt0 and pt1: Two opposite corners of the subregion of the image.
+  //  
+  // pos is the lower-left-back corner of a voxel, so the components
+  // of the coordinates of the other voxels at pos are one less.
+
+  // A bit of the signature is 1 if the voxel corresponding to the bit
+  // is in the category, cat.  The correspondence is
+  // Bit          Position relative to pos
+  // (0 is LSB)   
+  // 0  0x1       (-1, -1, -1)
+  // 1  0x2       (0, -1, -1)
+  // 2  0x4       (-1, 0, -1)
+  // 3  0x8       (0, 0, -1)
+  // 4  0x10      (-1, -1, 0)
+  // 5  0x20      (0, -1, 0)
+  // 6  0x40      (-1, 0, 0)
+  // 7  0x80      (0, 0, 0)
+  unsigned char sig = 0;
+  unsigned char b = 1;
+  for(int k=0; k<2; k++) {
+    for(int j=0; j<2; j++) {
+      for(int i=0; i<2; i++) {
+	ICOORD offset = pos + ICOORD(i-1, j-1, k-1);
+	if(region.contains(offset) && image[offset] == val)
+	  sig |= b;
+	b <<= 1;
+      }
+    }
+  }
+  return sig;
+}
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -424,7 +806,7 @@ public:
   // and need to be fixed later.  They're stored here:
   std::set<Node*> twoFoldNodes;
 
-  void connectClippedNodes(const std::vector<Node**>&newNodes)
+  void connectClippedNodes(const std::vector<Node*> &newNodes)
     const
   {
     // Each node in newNodes has exactly one neighbor, in slot 0.
@@ -433,12 +815,6 @@ public:
     // new node, and connect to it.  We know when we've found the next
     // new node because it won't have a neighbor in slot 1.
     for(Node *newNode : newNodes) {
-      // #ifdef DEBUG
-      //     if(verbose)
-      //       std::cerr << "VSBGraph::connectClippedNodes: newNode=" << *newNode
-      // 	      << std::endl;
-      //     Std::CerrIndent indent(2);
-      // #endif // DEBUG
       Node *vcur = newNode;
       Node *vnext = newNode->getNeighbor(0);
       do {
@@ -448,18 +824,9 @@ public:
 	Node *vtemp = vnext->nextCWNeighbor(vcur);
 	vcur = vnext;
 	vnext = vtemp;
-	// #ifdef DEBUG
-	//       if(verbose)
-	// 	std::cerr << "VSBGraph::connectClippedNodes: vcur=" << *vcur << std::endl;
-	// #endif // DEBUG
       } while(vcur->getNeighbor(1) != nullptr);
       vcur->setNeighbor(1, newNode);
       newNode->setNeighbor(2, vcur);
-      // #ifdef DEBUG
-      //     if(verbose)
-      //       std::cerr << "VSBGraph::connectClippedNodes: connected "
-      // 	      << *vcur << " " << *newNode << std::endl;
-      // #endif // DEBUG
     }
   } // end VSBGraph::connectClippedNodes
 
@@ -490,11 +857,6 @@ public:
     for(const Node *vertex : vertices) {
       double d = plane.distance(vertex->position);
       dists.push_back(d);
-      // #ifdef DEBUG
-      //     if(verbose)
-      //       std::cerr << "getDistances: vertex=" << vertex->index << " "
-      // 	      << vertex->position << " " << "d=" << d << std::endl;
-      // #endif // DEBUG
       if(d > dmax)
 	dmax = d;
       if(d < dmin)
@@ -733,11 +1095,6 @@ public:
     // std::cerr << "VSBGraph::clipInPlace" << std::endl;
     double dmin, dmax;
     std::vector<double> distance = getDistances(plane, dmin, dmax);
-    // #ifdef DEBUG
-    //   if(verbose)
-    //     std::cerr << "VSBGraph::clipInPlace: dmin=" << dmin << " dmax=" << dmax
-    // 	    << std::endl;
-    // #endif // DEBUG
     if(dmax < 0) {
       // Entire graph is within the clipping region.  There's nothing to do.
       return;
@@ -762,24 +1119,10 @@ public:
 	  if(d1 >= 0) {
 	    // The neighbor needs to be clipped.
 	    COORD p = (thisvert->position*d1 - nbr->position*d0)/(d1 - d0);
-	    // #ifdef DEBUG
-	    // 	  if(verbose) {
-	    // 	    std::cerr << "VSBGraph::clipInPlace: clipping! thisvert=" << *thisvert
-	    // 		    << " nbr=" << *nbr << std::endl;
-	    // 	  }
-	    // #endif // DEBUG
 	    Node *newNode = new Node(p);
 	    newNodes.push_back(newNode);
 	    thisvert->replaceNeighbor(n, newNode);
 	    newNode->setNeighbor(0, thisvert);
-	    // #ifdef DEBUG
-	    // 	  if(verbose) {
-	    // 	    std::cerr << "VSBGraph::clipInPlace: newNode=" << *newNode
-	    // 		    << std::endl;
-	    // 	    std::cerr << "VSBGraph::clipInPlace: after clipping, thisvert="
-	    // 		    << *thisvert << std::endl;
-	    // 	  }
-	    // #endif // DEBUG
 	  }
 	}	// end loop over neighbors n of v0
       } // end if v0 is being kept
@@ -1066,13 +1409,17 @@ public:
     }
   }
 
-  // Write out the edges in a plottable form
-  void dumpLines(std::ostream &os, COORD (*converter)(const COORD&)) const {
+  // Write out the edges in a plottable form. 
+  // CONVERTER is a callable object that takes a COORD and returns a
+  // different COORD, in case you want output that's not in voxel
+  // units.
+  template <typename CONVERTER>
+  void dumpLines(std::ostream &os, CONVERTER converter) const {
     for(const Node *vertex : vertices) {
       for(Node *nbr : vertex->neighbors) {
 	if(nbr && vertex->index < nbr->index)
-	  os << (*converter)(vertex->position) << ", "
-	     << (*converter)(nbr->position) << " # "
+	  os << converter(vertex->position) << ", "
+	     << converter(nbr->position) << " # "
 	     << vertex->index << " " << nbr->index << std::endl;
       }
     }
@@ -1154,6 +1501,7 @@ public:
   typedef VSBGraph<COORD, ICOORD> Graph;
   typedef VSBPlane<COORD> Plane;
   typedef IMAGEVAL ImageVal;
+  typedef VSBEdgeIterator<VoxelSetBdy<COORD, ICOORD, IMAGEVAL>> EdgeIterator;
 private:
   const unsigned int category;	// for debugging only
   //  const CMicrostructure *microstructure;
@@ -1231,9 +1579,11 @@ public:
     return *bbox_;
   }
 
-  // VoxelSetBdy::clippedVolume is the core of the element
-  // homogeneity calculation.  In OOF3D, it's called by
-  // CSkeletonElement::categoryVolumes().
+  // VoxelSetBdy::clippedVolume computes the volume of the voxels that
+  // is inside the volume defined by the given planes.
+  //  * bins is a set of prisms that tiles the image.
+  //  * ebbox is the bounding box of the region delimited by the planes.
+  //  * planes is the clipping planes.
   double clippedVolume(const std::vector<ICRectPrism<ICOORD>> &bins,
 		       const CRectPrism<COORD> &ebbox,
 		       const std::vector<Plane> &planes)
@@ -1246,6 +1596,10 @@ public:
     // structure for the bins so that we can find the bins containing
     // the corners of the element bounding box quickly, and then examine
     // only the bins between the corners.
+
+    // TODO: Graphs know their subregions so there's no need to pass
+    // them in the argument list.
+    
     for(unsigned int s=0; s<bins.size(); s++) { // loop over bins
       if(!graphs[s].empty() && bins[s].intersects(ebbox)) {
 	++nRegionsUsed;
@@ -1281,12 +1635,35 @@ public:
     return ok;
   }
   
-  void dump(std::ostream &os, const std::vector<ICRectPrism<ICOORD>>&) const;
-  void dumpLines(const std::string&) const;
+  void dump(std::ostream &os, const std::vector<ICRectPrism<ICOORD>> &bins)
+    const
+  {
+    for(unsigned int s=0; s<graphs.size(); s++) {
+      os << "Subregion " << s << " " << bins[s] << std::endl;
+      graphs[s].dump(os);
+    }
+  }
 
+  // CONVERTER is a callable object that takes a COORD and returns a
+  // different COORD, in case you want output that's not in voxel
+  // units.
+  template <class CONVERTER>
+  void dumpLines(const std::string &filename, CONVERTER &converter) const {
+    for(unsigned int s=0; s<graphs.size(); s++) {
+      std::string fname = filename + '_' + std::to_string(s);
+      std::cerr << "# Writing subregion " << s << " to file " << fname
+		<< std::endl;
+      std::ofstream os(fname);
+      graphs[s].dumpLines(os, converter);
+      os.close();
+    }
+  }
+
+  template <class CONVERTER>
   void saveClippedVSB(const std::vector<Plane> &planes,
-		      COORD (*converter)(const COORD&),
-		      const std::string &filenamebase) const
+		      CONVERTER &converter,
+		      const std::string &filenamebase)
+    const
   {
     std::ofstream f(filenamebase+".dat");
     std::ofstream f2(filenamebase+".lines");
@@ -1302,2118 +1679,135 @@ public:
     f.close();
     f2.close();
   }
+
+  template <class PLOTTER>
+  void drawClippedVSB(const std::vector<Plane> &planes,
+		      PLOTTER &plotter)
+    const
+  {
+    for(const Graph &graph : graphs) {
+      Graph *clippedGraph = graph.copyAndClip(planes[0]);
+      for(unsigned int i=1; i<planes.size(); i++)
+	clippedGraph->clipInPlace(planes[i]);
+      plotter(clippedGraph);
+      delete clippedGraph;
+    }
+  }
   
-  //  friend class VSBEdgeIterator<COORD, ICOORD>;
+  friend class VSBEdgeIterator<VoxelSetBdy>;
 };				// end template class VoxelSetBdy
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// Intermediate ProtoVSBNode classes.  SingleNode is a ProtoVSBNode
-// that isn't split into multiple VSBNodes.  DoubleNode is split into
-// two VSBNodes.  TripleNode is split into three.  MultiNode is split
-// into more than three.
-
-template <class COORD, class ICOORD>
-class SingleNode : public ProtoVSBNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-protected:
-  Node *vsbNode;
-public:
-  SingleNode(const VoxRot &rot)
-    : ProtoVSBNode<COORD, ICOORD>(rot),
-      vsbNode(nullptr)
-  {}
-  virtual void makeVSBNodes(Graph *graph, const ICOORD &here) {
-    vsbNode = new Node(here);
-    graph->addNode(vsbNode);
-  }
-  virtual const COORD &position() const {
-    assert(vsbNode != nullptr);
-    return vsbNode->position;
-  }
-};
-
-template <class COORD, class ICOORD>
-class DoubleNode : public ProtoVSBNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-protected:
-  Node *vsbNode0, *vsbNode1;
-public:
-  DoubleNode(const VoxRot &rot)
-    : ProtoVSBNode<COORD, ICOORD>(rot),
-      vsbNode0(nullptr), vsbNode1(nullptr)
-  {}
-  virtual void makeVSBNodes(Graph *graph, const ICOORD &here) {
-    vsbNode0 = new Node(here);
-    vsbNode1 = new Node(here);
-    graph->addNode(vsbNode0);
-    graph->addNode(vsbNode1);
-  }
-  virtual const COORD &position() const {
-    assert(vsbNode0 != nullptr);
-    return vsbNode0->position;
-  }
-};
-
-template <class COORD, class ICOORD>
-class TripleNode : public ProtoVSBNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-protected:
-  Node *vsbNode0, *vsbNode1, *vsbNode2;
-public:
-  TripleNode(const VoxRot &rot)
-    : ProtoVSBNode<COORD, ICOORD>(rot),
-      vsbNode0(nullptr), vsbNode1(nullptr), vsbNode2(nullptr)
-  {}
-  virtual void makeVSBNodes(VSBGraph<COORD, ICOORD> *graph,
-			    const ICOORD &here)
-  {
-    vsbNode0 = new Node(here);
-    vsbNode1 = new Node(here);
-    vsbNode2 = new Node(here);
-    graph->addNode(vsbNode0);
-    graph->addNode(vsbNode1);
-    graph->addNode(vsbNode2);
-  }
-  virtual const COORD &position() const {
-    assert(vsbNode0 != nullptr);
-    return vsbNode0->position;
-  }
-};
-
-template <class COORD, class ICOORD>
-class MultiNode : public ProtoVSBNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  // For more than three, give up on writing them out explicitly;
-protected:
-  std::vector<Node*> vsbNodes;
-public:
-  MultiNode(unsigned int n, const VoxRot &rot)
-    : ProtoVSBNode<COORD, ICOORD>(rot),
-      vsbNodes(n, nullptr)
-  {}
-  virtual void makeVSBNodes(Graph *graph, const ICOORD &here) {
-    for(unsigned int i=0; i<vsbNodes.size(); i++) {
-      vsbNodes[i] = new Node(here);
-      graph->addNode(vsbNodes[i]);
-    }
-  }
-  virtual const COORD &position() const {
-    assert(vsbNodes[0] != nullptr);
-    return vsbNodes[0]->position;
-  }
-};
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// Concrete subclasses of ProtoVSBNode
-
-
-// For a node at the corner of a single voxel, the reference
-// configuration in the 2x2x2 cube has the voxel in the +x, +y, +z
-// corner (vox111) and the neighbors in the +x, +y, +z directions.
-
-template <class COORD, class ICOORD>
-class SingleVoxel : public SingleNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  SingleVoxel(const VoxRot &rot)
-    : SingleNode<COORD, ICOORD>(rot)
-  {}
-
-  ProtoNode *clone() const {
-    return new SingleVoxel<COORD, ICOORD>(this->rotation);
-  }
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    static const VoxelEdgeList v({posX, posY, posZ});
-    return v;
-  }
-
-  virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    Node *othernode = otherproto->connectBack(this, this->vsbNode);
-    // The neighbors are in the +x, +y, and +z directions, so
-    // inserting them in the neighbor list in that order puts them
-    // CW when viewed from outside (from the -x, -y, -z side).
-    this->vsbNode->setNeighbor(dir.axis, othernode);
-  }
-
-  virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    this->vsbNode->setNeighbor(dir.axis, othernode);
-    return this->vsbNode;
-  }
-
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "SingleVoxel(" << printSig(this->signature) << ", " << this->rotation
-       << ")";
-  }
-#endif // DEBUG
-};
- 
-//--------
-
-// Seven voxels are just like one, except the "outside" is on the
-// other side.  The only difference between SevenVoxels and
-// SingleVoxel is that we need to ensure that the order of the +xyz
-// axes is CCW, so the args to ensureClockwise are in a different
-// order.
-
-template <class COORD, class ICOORD>
-class SevenVoxels : public SingleNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  SevenVoxels(const VoxRot &rot)
-    : SingleNode<COORD, ICOORD>(rot)
-  {}
-
-  virtual ProtoNode *clone() const {
-    return new SevenVoxels<COORD, ICOORD>(this->rotation);
-  }
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    static const VoxelEdgeList v({posX, posY, posZ});
-    return v;
-  }
-
-  virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    Node *othernode = otherproto->connectBack(this, this->vsbNode);
-    // The neighbors are in the +x, +y, and +z directions, but
-    // inserting them in the neighbor list in otherproto order would puts
-    // them CCW when viewed from outside (from the +x, +y, +z side).
-    // They're supposed to be CW, so switch 0 and 2.
-    this->vsbNode->setNeighbor(2-dir.axis, othernode);
-  }
-
-  virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    this->vsbNode->setNeighbor(2-dir.axis, othernode);
-    return this->vsbNode;
-  }
-
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "SevenVoxels(" << printSig(this->signature) << ", "
-       << this->rotation << ")";
-  }
-#endif // DEBUG
-};
-
-//--------
-
-// Two voxels that share an edge.
-
-template <class COORD, class ICOORD>
-class TwoVoxelsByEdge : public DoubleNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  TwoVoxelsByEdge(const VoxRot &rot)
-    : DoubleNode<COORD, ICOORD>(rot)
-  {}
-
-  virtual ProtoNode *clone() const {
-    return new TwoVoxelsByEdge<COORD, ICOORD>(this->rotation);
-  }
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    // The reference configuration is vox000 + vox110.  There are
-    // edges in the posX, negX, posY, negY, and negZ directions.
-    static const VoxelEdgeList v({posX, negX, posY, negY, negZ});
-    return v;
-  }
-
-  /*
-                 posZ  ^        ^  posY
-                       |       /
-                       |      /
-                       |      
-                            +--------+        The edges coming in to the 
-                           /        /|        central vertex (X) are labeled 
-                         0/        / |        with their neighbor indices.
-                     1   /  1     /  |
-    negX <---  ---------X--------+   +   --> posX
-              /        /|        |  /
-             /       0/ |2       | /
-            /        /  |        |/ vox110
-           +--------+   +--------+
-           |        |  / 
-           |        | /  
-    vox000 |        |/   |
-           +--------+    |
-                         V negZ
-                         
-   */
-
-  virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    // The edges of vox000 connect to vsbNode0 and the edges of
-    // vox110 to vsbNode1.  vox000's edges are negY, negX, negZ, in
-    // that order (CW as viewed from outside (from +x+y+z).
-    // Similarly, vox110's edges are posY, posX, negZ.
-    if(dir == negX || dir == negY) {
-      // Connect to vox000's edges, using vsbNode0.
-      Node *othernode = otherproto->connectBack(this, this->vsbNode0);
-      // Since dir.axis is 0 or 1, 1-dir.axis gives us the order we want.
-      this->vsbNode0->setNeighbor(1-dir.axis, othernode); 
-    }
-    else if(dir == posX || dir == posY) {
-      // Connect to vox110's edges, using vsbNode1.
-      Node *othernode = otherproto->connectBack(this, this->vsbNode1);
-      this->vsbNode1->setNeighbor(1-dir.axis, othernode);
-    }
-    else {
-      // Both vsbNode0 and vsbNode1 connect in the negZ direction
-      // along a doubled edge.  We need to ensure that the two split
-      // nodes at the far end of the edge are connected to the
-      // corresponding split nodes here.  If we think of the split
-      // nodes as being separated slightly, we need to connect two
-      // nodes that are separated in the same direction.
-
-      // voxelOrder takes two voxels (assumed to be neighbors) and
-      // returns a geometrically deduced bool.  If the voxels at the
-      // other end of a doubled edge have the same relative position,
-      // then voxelOrder will return the same bool for them.  When
-      // connecting to split nodes, passing the nodes to
-      // connectDoubleBack in the order in which voxelOrder is true
-      // will guarantee that the connection is done correctly.
-      assert(dir == negZ);
-      bool ordered = this->voxelOrder(vox000, vox110);
-      Node *othernode0, *othernode1;
-      Node *node0 = ordered ? this->vsbNode0 : this->vsbNode1;
-      Node *node1 = ordered ? this->vsbNode1 : this->vsbNode0;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      node0->setNeighbor(2, othernode0);
-      node1->setNeighbor(2, othernode1);
-    }
-  }
-
-  virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    if(dir == negX || dir == negY) {
-      this->vsbNode0->setNeighbor(1-dir.axis, othernode);
-      return this->vsbNode0;
-    }
-    if(dir == posX || dir == posY) {
-      this->vsbNode1->setNeighbor(1-dir.axis, othernode);
-      return this->vsbNode1;
-    }
-    assert(false); // "Unexpected direction in TwoVoxelsByEdge::connectBack!",
-  }
-
-  virtual void connectDoubleBack(const ProtoNode *otherproto,
-				 Node *othernode0, Node *othernode1,
-				 Node *&node0, Node *&node1)
-  {
-#ifdef DEBUG
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    assert(dir == negZ);
-#endif // DEBUG
-    bool ordered = this->voxelOrder(vox000, vox110);
-    node0 = ordered ? this->vsbNode0 : this->vsbNode1;
-    node1 = ordered ? this->vsbNode1 : this->vsbNode0;
-    node0->setNeighbor(2, othernode0);
-    node1->setNeighbor(2, othernode1);
-  }
-
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "TwoVoxelsByEdge(" << printSig(this->signature) << ", "
-       << this->rotation << ")";
-  }
-#endif // DEBUG
-};  // end class TwoVoxelsByEdge
-
-//-------------
-
-// Two voxels that touch at a corner.
-
-template <class COORD, class ICOORD>
-class TwoVoxelsByCorner : public DoubleNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  TwoVoxelsByCorner(const VoxRot &rot)
-    : DoubleNode<COORD, ICOORD>(rot)
-  {}
-
-  virtual ProtoNode *clone() const {
-    return new TwoVoxelsByCorner<COORD, ICOORD>(this->rotation);}
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    return allDirs;
-  }
-  
-  virtual void connect(ProtoNode *otherproto) {
-    // TwoVoxelsByCorner is easier than TwoVoxelsByEdge, because there
-    // aren't two connections going out in the same direction.  We can
-    // simply say that the edges on vox000 connect to vsbNode0, and
-    // the edges on vox111 connect to vsbNode1.  There's no
-    // consistency to maintain at the other end of a doubled edge.
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    if(dir.dir == -1) {		// negX, negY, or negZ
-      Node *othernode = otherproto->connectBack(this, this->vsbNode0);
-      // The edges around vox000 in CW order when viewed from +x+y+z
-      // are negZ, negY, negX. 
-      this->vsbNode0->setNeighbor(2-dir.axis, othernode);
-    }
-    else {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode1);
-      // The edges around vox111 in CW order when viewed from -x-y-z
-      // are posX, posY, pozY.
-      this->vsbNode1->setNeighbor(dir.axis, othernode);
-    }
-  }
-
-  virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode)
-  {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    if(dir.dir == -1) {
-      this->vsbNode0->setNeighbor(2-dir.axis, othernode);
-      return this->vsbNode0;
-    }
-    this->vsbNode1->setNeighbor(dir.axis, othernode);
-    return this->vsbNode1;
-  }
-
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "TwoVoxelsByCorner(" << printSig(this->signature) << ", "
-       << this->rotation << ")";
-  }
-#endif // DEBUG
-};	// end class TwoVoxelsByCorner
-
-//--------
-
-// SixVoxelsByEdge is the inverse of TwoVoxelsByEdge
-
-template <class COORD, class ICOORD>
-class SixVoxelsByEdge : public DoubleNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  SixVoxelsByEdge(const VoxRot &rot)
-    : DoubleNode<COORD, ICOORD>(rot)
-  {}
-
-  virtual ProtoNode *clone() const {
-    return new SixVoxelsByEdge<COORD, ICOORD>(this->rotation); }
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    // The reference configuration all voxels *except* vox000 and
-    // vox110.  There are edges in the posX, negX, posY, negY, and
-    // negZ directions.
-    static const VoxelEdgeList v({posX, negX, posY, negY, negZ});
-    return v;
-  }
-
-  virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    // The edges on vox100 connect to vsbNode0 and the edges on vox010
-    // connect to vsbNode1.  Edges on vox100 are posX, negY, negZ.
-    // Edges on vox010 are negX, posY, negZ.
-    if(dir == posX || dir == negY) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode0);
-      this->vsbNode0->setNeighbor(dir.axis, othernode); 
-    }
-    else if(dir == negX || dir == posY) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode1);
-      this->vsbNode1->setNeighbor(dir.axis, othernode);
-    }
-    else {
-      assert(dir == negZ);
-      bool ordered = this->voxelOrder(vox100, vox010);
-      Node *othernode0, *othernode1;
-      Node *node0 = ordered? this->vsbNode0 : this->vsbNode1;
-      Node *node1 = ordered? this->vsbNode1 : this->vsbNode0;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      node0->setNeighbor(2, othernode0);
-      node1->setNeighbor(2, othernode1);
-    }
-  }
-
-  virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    if(dir == posX || dir == negY) {
-      this->vsbNode0->setNeighbor(dir.axis, othernode);
-      return this->vsbNode0;
-    }
-    else if(dir == negX || dir == posY) {
-      this->vsbNode1->setNeighbor(dir.axis, othernode);
-      return this->vsbNode1;
-    }
-    assert(false); // Unexpected direction in SixVoxelsByEdge::connectBack!
-  }
-
-  virtual void connectDoubleBack(const ProtoNode *otherproto,
-				 Node *othernode0, Node *othernode1,
-				 Node *&node0, Node *&node1)
-  {
-#ifdef DEBUG
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    assert(dir == negZ);
-#endif // DEBUG
-    bool ordered = this->voxelOrder(vox100, vox010);
-    node0 = ordered ? this->vsbNode0 : this->vsbNode1;
-    node1 = ordered ? this->vsbNode1 : this->vsbNode0;
-    node0->setNeighbor(2, othernode0);
-    node1->setNeighbor(2, othernode1);
-  }
-
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "SixVoxelsByEdge(" << printSig(this->signature) << ", "
-       << this->rotation << ")";
-  }
-#endif // DEBUG
-};  // end class SixVoxelsByEdge
-
-//--------
-
-// SixVoxelsByCorner is the inverse of TwoVoxelsByCorner
-
-template <class COORD, class ICOORD>
-class SixVoxelsByCorner : public DoubleNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  SixVoxelsByCorner(const VoxRot &rot)
-    : DoubleNode<COORD, ICOORD>(rot)
-  {}
-  virtual ProtoNode *clone() const {
-    return new SixVoxelsByCorner<COORD, ICOORD>(this->rotation);
-  }
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    return allDirs;
-  }
-
-  virtual void connect(ProtoNode *otherproto) {
-    // SixVoxelsByCorner is easier than SixVoxelsByEdge, because there
-    // aren't two connections going out in the same direction.  We can
-    // simply say that the edges on vox000 (which is a hole) connect
-    // to vsbNode0, and the edges on vox111 (also a hole) connect to
-    // vsbNode1.  There's no consistency to maintain at the other end
-    // of a doubled edge.
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    if(dir.dir == -1) {		// negX, negY, or negZ
-      Node *othernode = otherproto->connectBack(this, this->vsbNode0);
-      // The edges around vox000 in CW order when viewed from -x-y-z
-      // are negX, negY, negZ. 
-      this->vsbNode0->setNeighbor(dir.axis, othernode);
-    }
-    else {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode1);
-      // The edges around vox111 in CW order when viewed from +x+y+z
-      // are posZ, posY, pozX.
-      this->vsbNode1->setNeighbor(2-dir.axis, othernode);
-    }
-  }
-
-  virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    if(dir.dir == -1) {
-      this->vsbNode0->setNeighbor(dir.axis, othernode);
-      return this->vsbNode0;
-    }
-    this->vsbNode1->setNeighbor(2-dir.axis, othernode);
-    return this->vsbNode1;
-  }
-
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "SixVoxelsByCorner(" << printSig(this->signature) << ", "
-       << this->rotation << ")";
-  }
-#endif // DEBUG
-};     // end SixVoxelsByCorner
-
-//----------
-
-// Three voxels in an L configuration.  The node does not need to be
-// split.  The reference configuration is vox000, vox100,
-// vox010, with edges posX, posY, negZ in that order.
-
-template <class COORD, class ICOORD>
-class ThreeVoxL : public SingleNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  ThreeVoxL(const VoxRot &rot)
-    : SingleNode<COORD, ICOORD>(rot)
-  {}
-
-  ProtoNode *clone() const {
-    return new ThreeVoxL<COORD, ICOORD>(this->rotation);
-  }
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    static const VoxelEdgeList v({negZ, posX, posY});
-    return v;
-  }
-
-  virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    Node *othernode = otherproto->connectBack(this, this->vsbNode);
-    this->vsbNode->setNeighbor(dir.axis, othernode);
-  }
-
-  virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    this->vsbNode->setNeighbor(dir.axis, othernode);
-    return this->vsbNode;
-  }
-
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "ThreeVoxL(" << printSig(this->signature) << ", "
-       << this->rotation << ")";
-  }
-#endif // DEBUG
-};     // end ThreeVoxL
-
-// ----------
-
-// FiveVoxL is the inverse of ThreeVoxL.  The connections are
-// the same, but the order is reversed.
-
-template <class COORD, class ICOORD>
-class FiveVoxL : public SingleNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  FiveVoxL(const VoxRot &rot)
-    : SingleNode<COORD, ICOORD>(rot)
-  {}
-
-  ProtoNode *clone() const {
-    return new FiveVoxL<COORD, ICOORD>(this->rotation);
-  }
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    static const VoxelEdgeList v({negZ, posX, posY});
-    return v;
-  }
-
-  virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    Node *othernode = otherproto->connectBack(this, this->vsbNode);
-    this->vsbNode->setNeighbor(2-dir.axis, othernode);
-  }
-
-  virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    this->vsbNode->setNeighbor(2-dir.axis, othernode);
-    return this->vsbNode;
-  }
-
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "FiveVoxL(" << printSig(this->signature) << ", "
-       << this->rotation << ")";
-  }
-#endif // DEBUG
-};     // end FiveVoxL
-
-//---------
-
-// ThreeTwoOne is three voxels, two stacked face to face and a third
-// connected to one of the other two along an edge.  There are 24
-// orientations.  The reference configuration contains voxels 000,
-// 111, and 110.
-
-template <class COORD, class ICOORD>
-class ThreeTwoOne : public DoubleNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  ThreeTwoOne(const VoxRot &rot)
-    : DoubleNode<COORD, ICOORD>(rot)
-  {}
-  
-  virtual ProtoNode *clone() const {
-    return new ThreeTwoOne<COORD, ICOORD>(this->rotation);
-  }
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    static const VoxelEdgeList v({negY, negX, negZ, posZ});
-    return v;
-  }
-
-  void makeVSBNodes(Graph *graph, const ICOORD &here) {
-    this->vsbNode0 = new Node(here);
-    this->vsbNode1 = new Node(here);
-    graph->addNode(this->vsbNode0);
-    graph->twoFoldNode(this->vsbNode1);
-    // Don't add vsbNode1 to the graph! It's not a real node.
-  }
-
-  virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    // See comments in TwoVoxelsByEdge.  This is similar, but the
-    // edges on vox110 are different, and its VSBNode will only be
-    // connected to two edges, so we have to tell the VSB about it.
-    // VSBNode0 is the 3-fold node, with edges on vox000 in the negX,
-    // negY, and negZ directions.  VSBNode1 is the 2-fold node, on
-    // vox110 and vox111, with edges negZ and posZ.
-    
-    if(dir == negX || dir == negY) {
-      // Connecting to the edges on vox000
-      Node *othernode = otherproto->connectBack(this, this->vsbNode0);
-      this->vsbNode0->setNeighbor(1-dir.axis, othernode);
-    }
-    else if(dir==posZ) {
-      // Connecting to the edges on vox110
-      Node *othernode = otherproto->connectBack(this, this->vsbNode1);
-      this->vsbNode1->setNeighbor(0, othernode);
-    }
-    else {
-      // The double edge coming in on negZ.  To ensure compatibility
-      // with the other ends of edge, use voxelOrder to determine the
-      // order of the input and output args to connectDoubleBack.
-      assert(dir == negZ);
-      bool ordered = this->voxelOrder(vox000, vox110);
-      Node *node0 = ordered ? this->vsbNode0 : this->vsbNode1;
-      Node *node1 = ordered ? this->vsbNode1 : this->vsbNode0;
-      Node *othernode0, *othernode1;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      if(!ordered)
-	swap(othernode0, othernode1);
-      this->vsbNode0->setNeighbor(2, othernode0);
-      this->vsbNode1->setNeighbor(1, othernode1);
-    }
-  }
-
-  virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    if(dir == negX || dir == negY) {
-      this->vsbNode0->setNeighbor(1-dir.axis, othernode);
-      return this->vsbNode0;
-    }
-    if(dir == posZ) {
-      this->vsbNode1->setNeighbor(0, othernode);
-      return this->vsbNode1;
-    }
-    std::cerr << "Unexpected direction in ThreeTwoOne::connectBack!"
-	      << std::endl;
-    assert(false);
-  }
-
-  virtual void connectDoubleBack(const ProtoNode *otherproto,
-				 Node *othernode0, Node *othernode1,
-				 Node *&node0, Node *&node1)
-  {
-#ifdef DEBUG
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    assert(dir == negZ);
-#endif // DEBUG
-    bool ordered = this->voxelOrder(vox000, vox110);
-    if(ordered) {
-      node0 = this->vsbNode0;
-      node1 = this->vsbNode1;
-      this->vsbNode0->setNeighbor(2, othernode0);
-      this->vsbNode1->setNeighbor(1, othernode1);
-    }
-    else {
-      node0 = this->vsbNode1;
-      node1 = this->vsbNode0;
-      this->vsbNode0->setNeighbor(2, othernode1);
-      this->vsbNode1->setNeighbor(1, othernode0);
-    }
-  }
-
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "ThreeTwoOne(" << printSig(this->signature) << ", "
-       << this->rotation << ")";
-  }
-#endif // DEBUG
-};     // end class ThreeTwoOne
-
-//---------
-
-// FiveTwoOne is the inverse of ThreeTwoOne.  The reference
-// configuration contains all voxels except vox000, vox111, and
-// vox110.  That means that vox100 and vox010 touch along an edge.
-// The case is treated completely differently from ThreeTwoOne,
-// because it's not possible to resolve the doubled edge in a unique
-// way.  So here we add an extra (third) node and avoid a doubled
-// edge.  It's not possible to resolve ThreeTwoOne in this way because
-// it would lead to an insufficiently connected graph.
-
-template <class COORD, class ICOORD>
-class FiveTwoOne : public TripleNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  FiveTwoOne(const VoxRot &rot)
-    : TripleNode<COORD, ICOORD>(rot)
-  {
-  }
-  
-  virtual ProtoNode *clone() const {
-    return new FiveTwoOne<COORD, ICOORD>(this->rotation);
-  }
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    static const VoxelEdgeList v({negY, negX, negZ, posZ});
-    return v;
-  }
-
-  void makeVSBNodes(Graph *graph, const ICOORD &here) {
-    TripleNode<COORD, ICOORD>::makeVSBNodes(graph, here);
-    this->vsbNode0->setNeighbor(2, this->vsbNode2);
-    this->vsbNode1->setNeighbor(1, this->vsbNode2);
-    this->vsbNode2->setNeighbor(2, this->vsbNode0);
-    this->vsbNode2->setNeighbor(1, this->vsbNode1);
-  }
-
-  virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    // vsbNode0 connects the negY, negZ edges of vox100 and vsbNode1
-    // connects the negX, negZ edges of vox010.  Both also connect to
-    // vsbNode2, which connects the posZ edge as well.
-    
-    if(dir == negX) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode1);
-      this->vsbNode1->setNeighbor(0, othernode);
-    }
-    else if(dir == negY) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode0);
-      this->vsbNode0->setNeighbor(0, othernode);
-    }
-    else if(dir==posZ) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode2);
-      this->vsbNode2->setNeighbor(0, othernode);
-    }
-    else {
-      // The double edge coming in on negZ.
-      assert(dir == negZ);
-      bool ordered = this->voxelOrder(vox100, vox010);
-      Node *node0 = ordered ? this->vsbNode0 : this->vsbNode1;
-      Node *node1 = ordered ? this->vsbNode1 : this->vsbNode0;
-      Node *othernode0, *othernode1;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      if(!ordered)
-	swap(othernode0, othernode1);
-      this->vsbNode0->setNeighbor(1, othernode0);
-      this->vsbNode1->setNeighbor(2, othernode1);
-    }
-  }
-
-  virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    if(dir == negX) {
-      this->vsbNode1->setNeighbor(0, othernode);
-      return this->vsbNode1;
-    }
-    if(dir == negY) {
-      this->vsbNode0->setNeighbor(0, othernode);
-      return this->vsbNode0;
-    }
-    if(dir == posZ) {
-      this->vsbNode2->setNeighbor(0, othernode);
-      return this->vsbNode2;
-    }
-    assert(false);  // Unexpected direction in FiveTwoOne::connectBack
-  }
-
-  virtual void connectDoubleBack(const ProtoNode *otherproto,
-				 Node *othernode0, Node *othernode1,
-				 Node *&node0, Node *&node1)
-  {
-#ifdef DEBUG
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    assert(dir == negZ);
-#endif // DEBUG
-    bool ordered = this->voxelOrder(vox100, vox010);
-    if(ordered) {
-      node0 = this->vsbNode0;
-      node1 = this->vsbNode1;
-      this->vsbNode0->setNeighbor(1, othernode0);
-      this->vsbNode1->setNeighbor(2, othernode1);
-    }
-    else {
-      node0 = this->vsbNode1;
-      node1 = this->vsbNode0;
-      this->vsbNode0->setNeighbor(1, othernode1);
-      this->vsbNode1->setNeighbor(2, othernode0);
-    }
-  }
-
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "FiveTwoOne(" << printSig(this->signature) << ", "
-       << this->rotation << ")";
-  }
-#endif // DEBUG
-};				// end class FiveTwoOne
-
-//--------
-
-// Three voxels that each share an edge with both of the others.  
-
-template <class COORD, class ICOORD>
-class ThreeVoxByEdges : public TripleNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  ThreeVoxByEdges(const VoxRot &rot)
-    : TripleNode<COORD, ICOORD>(rot)
-  {}
-
-  virtual ProtoNode *clone() const {
-    return new ThreeVoxByEdges<COORD, ICOORD>(this->rotation);
-  }
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    return allDirs;
-  }
-
-  virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    // The reference configuration is vox110 + vox011 + vox101.
-    // There are doubled edges in the +x, +y, and +z directions and
-    // single edges in the -x, -y, and -z directions.  We use vsbNode0
-    // for the edges of vox110, vsbNode1 for 101, and vsbNode2 for
-    // 011.
-    if(dir == negX) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode2);
-      this->vsbNode2->setNeighbor(0, othernode);
-    }
-    else if(dir == negY) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode1);
-      this->vsbNode1->setNeighbor(0, othernode);
-    }
-    else if(dir == negZ) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode0);
-      this->vsbNode0->setNeighbor(0, othernode);
-    }
-    else if(dir == posX) {
-      // Two edges between vox110 (vsbNode0) and vox101 (vsbNode1)
-      bool ordered = this->voxelOrder(vox110, vox101);
-      Node *node0 = ordered ? this->vsbNode0 : this->vsbNode1;
-      Node *node1 = ordered ? this->vsbNode1 : this->vsbNode0;
-      Node *othernode0, *othernode1;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      if(!ordered)
-	swap(othernode0, othernode1);
-      // The edges on vsbNode0 (vox110) are (negZ, posY, posX),
-      // CW.  This is posX, so it goes in slot 2.
-      this->vsbNode0->setNeighbor(2, othernode0);
-      // The edges on vsbNode1 (vox101) are (negY, posX, posZ),
-      // CW.  This is posX, so it goes in slot 1.
-      this->vsbNode1->setNeighbor(1, othernode1);
-    }
-    else if(dir == posY) {
-      // Two edges between vox110 (vsbNode0) and vox011 (vsbNode2)
-      bool ordered = this->voxelOrder(vox110, vox011);
-      Node *node0 = ordered ? this->vsbNode0 : this->vsbNode2;
-      Node *node1 = ordered ? this->vsbNode2 : this->vsbNode0;
-      Node *othernode0, *othernode1;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      if(!ordered)
-	swap(othernode0, othernode1);
-      // Edges are (negZ, posY, posX).
-      this->vsbNode0->setNeighbor(1, othernode0);
-      // Edges are (negX, posZ, posY)
-      this->vsbNode2->setNeighbor(2, othernode1);
-    }
-    else if(dir == posZ) {
-      // Two edges between vox101 (vsbNode1) and vox011 (vsbNode2)
-      bool ordered = this->voxelOrder(vox101, vox011);
-      Node *node0 = ordered ? this->vsbNode1 : this->vsbNode2;
-      Node *node1 = ordered ? this->vsbNode2 : this->vsbNode1;
-      Node *othernode0, *othernode1;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      if(!ordered)
-	swap(othernode0, othernode1);
-      // Edges are (negY, posX, posZ)
-      this->vsbNode1->setNeighbor(2, othernode0);
-      // Edges are (negX, posZ, posY)
-      this->vsbNode2->setNeighbor(1, othernode1);
-    }
-  } // end connect()
-
-  virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    if(dir == negX) {
-      this->vsbNode2->setNeighbor(0, othernode);
-      return this->vsbNode2;
-    }
-    if(dir == negY) {
-      this->vsbNode1->setNeighbor(0, othernode);
-      return this->vsbNode1;
-    }
-    if(dir == negZ) {
-      this->vsbNode0->setNeighbor(0, othernode);
-      return this->vsbNode0;
-    }
-    std::cerr << "Unexpected direction in ThreeVoxByEdges::connectBack!"
-	      << std::endl;
-    assert(false);
-  }
-
-  virtual void connectDoubleBack(const ProtoNode *otherproto,
-				 Node *othernode0, Node *othernode1,
-				 Node *&node0, Node *&node1)
-  {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    if(dir == posX) {
-      bool ordered = this->voxelOrder(vox110, vox101);
-      node0 = this->vsbNode0;
-      node1 = this->vsbNode1;
-      if(!ordered) {
-	swap(othernode0, othernode1);
-	swap(node0, node1);
-      }
-      this->vsbNode0->setNeighbor(2, othernode0);
-      this->vsbNode1->setNeighbor(1, othernode1);
-    }
-    else if(dir == posY) {
-      bool ordered = this->voxelOrder(vox110, vox011);
-      node0 = this->vsbNode0;
-      node1 = this->vsbNode2;
-      if(!ordered) {
-	swap(othernode0, othernode1);
-	swap(node0, node1);
-      }
-      this->vsbNode0->setNeighbor(1, othernode0);
-      this->vsbNode2->setNeighbor(2, othernode1);
-    }
-    else if(dir == posZ) {
-      bool ordered = this->voxelOrder(vox101, vox011);
-      node0 = this->vsbNode1;
-      node1 = this->vsbNode2;
-      if(!ordered) {
-	swap(othernode0, othernode1);
-	swap(node0, node1);
-      }
-      this->vsbNode1->setNeighbor(2, othernode0);
-      this->vsbNode2->setNeighbor(1, othernode1);
-    }
-  }
-
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "ThreeVoxByEdges(" << printSig(this->signature) << ", "
-       << this->rotation << ")";
-  }
-#endif // DEBUG
-};				// end class ThreeVoxByEdges
-
-//-----------
-
-// FiveVoxByEdges is the inverse of ThreeVoxByEdges, but has to be
-// treated more like Pyramid with an extra voxel.  The reference
-// configuration is all voxels except vox110, vox011, and vox101.
-
-template <class COORD, class ICOORD>
-class FiveVoxByEdges : public MultiNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  FiveVoxByEdges(const VoxRot &rot)
-    : MultiNode<COORD, ICOORD>(7, rot)
-  {}
-
-  virtual ProtoNode *clone() const {
-    return new FiveVoxByEdges<COORD, ICOORD>(this->rotation);
-  }
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    return allDirs;
-  }
-
-  virtual void makeVSBNodes(Graph *graph, const ICOORD &here) {
-    MultiNode<COORD, ICOORD>::makeVSBNodes(graph, here);
-    for(unsigned int i=0; i<6; i++) {
-      // Same as Pyramid::makeVSBNodes()
-      this->vsbNodes[i]->setNeighbor(2, this->vsbNodes[(i+5)%6]);
-      this->vsbNodes[i]->setNeighbor(1, this->vsbNodes[(i+1)%6]);
-    }
-  }
-
-  virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    // The reference configuration is ~(vox110|vox011|vox101).  There
-    // are doubled edges in the +x, +y, and +z directions and single
-    // edges in the -x, -y, and -z directions.  Nodes vsbNodes[0]
-    // through vsbNodes[5] form an infinitesimal hexagon at the
-    // junction of voxels 100, 001, and 010.  vsbNodes[6] links the
-    // edges of vox111, which are coincident the the +x, +y, and +z
-    // edges of the other voxels.
-    if(dir == negX) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNodes[3]);
-      this->vsbNodes[3]->setNeighbor(0, othernode);
-    }
-    else if(dir == negY) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNodes[1]);
-      this->vsbNodes[1]->setNeighbor(0, othernode);
-    }
-    else if(dir == negZ) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNodes[5]);
-      this->vsbNodes[5]->setNeighbor(0, othernode);
-    }
-    else if(dir == posX) {
-      // Two edges between vox100 and vox111
-      bool ordered = this->voxelOrder(vox100, vox111);
-      Node *node0 = ordered ? this->vsbNodes[0] : this->vsbNodes[6];
-      Node *node1 = ordered ? this->vsbNodes[6] : this->vsbNodes[0];
-      Node *othernode0, *othernode1;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      if(!ordered)
-	swap(othernode0, othernode1);
-      this->vsbNodes[0]->setNeighbor(0, othernode0);
-      this->vsbNodes[6]->setNeighbor(0, othernode1);
-    }
-    else if(dir == posY) {
-      // Two edges between vox010 and vox111
-      bool ordered = this->voxelOrder(vox010, vox111);
-      Node *node0 = ordered ? this->vsbNodes[4] : this->vsbNodes[6];
-      Node *node1 = ordered ? this->vsbNodes[6] : this->vsbNodes[4];
-      Node *othernode0, *othernode1;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      if(!ordered)
-	swap(othernode0, othernode1);
-      this->vsbNodes[4]->setNeighbor(0, othernode0);
-      this->vsbNodes[6]->setNeighbor(1, othernode1);
-    }
-    else if(dir == posZ) {
-      // Two edges between vox001 and vox111
-      bool ordered = this->voxelOrder(vox001, vox111);
-      Node *node0 = ordered ? this->vsbNodes[2] : this->vsbNodes[6];
-      Node *node1 = ordered ? this->vsbNodes[6] : this->vsbNodes[2];
-      Node *othernode0, *othernode1;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      if(!ordered)
-	swap(othernode0, othernode1);
-      this->vsbNodes[2]->setNeighbor(0, othernode0);
-      this->vsbNodes[6]->setNeighbor(2, othernode1);
-    }
-  } // end connect()
-
-  virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    if(dir == negX) {
-      this->vsbNodes[3]->setNeighbor(0, othernode);
-      return this->vsbNodes[3];
-    }
-    if(dir == negY) {
-      this->vsbNodes[1]->setNeighbor(0, othernode);
-      return this->vsbNodes[1];
-    }
-    if(dir == negZ) {
-      this->vsbNodes[5]->setNeighbor(0, othernode);
-      return this->vsbNodes[5];
-    }
-    std::cerr << "Unexpected direction in FiveVoxByEdges::connectBack!"
-	      << std::endl;
-    assert(false);
-  }
-
-  virtual void connectDoubleBack(const ProtoNode *otherproto,
-				 Node *othernode0, Node *othernode1,
-				 Node *&node0, Node *&node1)
-  {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    if(dir == posX) {
-      bool ordered = this->voxelOrder(vox100, vox111);
-      node0 = this->vsbNodes[0];
-      node1 = this->vsbNodes[6];
-      if(!ordered) {
-	swap(othernode0, othernode1);
-	swap(node0, node1);
-      }
-      this->vsbNodes[0]->setNeighbor(0, othernode0);
-      this->vsbNodes[6]->setNeighbor(0, othernode1);
-    }
-    else if(dir == posY) {
-      bool ordered = this->voxelOrder(vox010, vox111);
-      node0 = this->vsbNodes[4];
-      node1 = this->vsbNodes[6];
-      if(!ordered) {
-	swap(othernode0, othernode1);
-	swap(node0, node1);
-      }
-      this->vsbNodes[4]->setNeighbor(0, othernode0);
-      this->vsbNodes[6]->setNeighbor(1, othernode1);
-    }
-    else if(dir == posZ) {
-      bool ordered = this->voxelOrder(vox001, vox111);
-      node0 = this->vsbNodes[2];
-      node1 = this->vsbNodes[6];
-      if(!ordered) {
-	swap(othernode0, othernode1);
-	swap(node0, node1);
-      }
-      this->vsbNodes[2]->setNeighbor(0, othernode0);
-      this->vsbNodes[6]->setNeighbor(2, othernode1);
-    }
-  }
-
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "FiveVoxByEdges(" << printSig(this->signature) << ", "
-       << this->rotation << ")";
-  }
-#endif // DEBUG
-};				// end FiveVoxByEdges
-
-//--------------
-
-// Four voxels in the shape of two perpendicular stacks of two voxels.
-// This configuration is chiral and requires an additional node to be
-// created, although there are no multiply connected edges.
-
-template <class COORD, class ICOORD>
-class ChiralR : public DoubleNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  ChiralR(const VoxRot &rot)
-    : DoubleNode<COORD, ICOORD>(rot)
-  {}
-
-  ProtoNode *clone() const {
-    return new ChiralR<COORD, ICOORD>(this->rotation);
-  }
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    static const VoxelEdgeList v({posX, negX, posZ, negZ});
-    return v;
-  }
-
-  virtual void makeVSBNodes(Graph *graph, const ICOORD &here) {
-    DoubleNode<COORD, ICOORD>::makeVSBNodes(graph, here);
-    this->vsbNode0->setNeighbor(0, this->vsbNode1);
-    this->vsbNode1->setNeighbor(0, this->vsbNode0);
-  }
-
-  virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    // Connect posX and negZ to vsbNode0, and negX and posZ to vsbNode1.
-    // The two VSBNodes are already connected by a dummy edge, in makeVSBNodes.
-    // vsbNode0's CW edges are [dummy], negZ, posX.
-    // vsbNode1's CW edges are [dummy], negX, posZ.
-    // The order of the edges is the reverse of the order in ChiralL.
-    if(dir == posX) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode0);
-      this->vsbNode0->setNeighbor(2, othernode);
-    }
-    else if(dir == negX) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode1);
-      this->vsbNode1->setNeighbor(1, othernode);
-    }
-    else if(dir == posZ) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode1);
-      this->vsbNode1->setNeighbor(2, othernode);
-    }
-    else if(dir == negZ) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode0);
-      this->vsbNode0->setNeighbor(1, othernode);
-    }
-  }
-
-  virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    if(dir == posX) {
-      this->vsbNode0->setNeighbor(2, othernode);
-      return this->vsbNode0;
-    }
-    if(dir == negX) {
-      this->vsbNode1->setNeighbor(1, othernode);
-      return this->vsbNode1;
-    }
-    if(dir == posZ) {
-      this->vsbNode1->setNeighbor(2, othernode);
-      return this->vsbNode1;
-    }
-    if(dir == negZ) {
-      this->vsbNode0->setNeighbor(1, othernode);
-      return this->vsbNode0;
-    }
-    std::cerr << "Unexpected direction in ChiralR::connectBack!" << std::endl;
-    assert(false);
-  }
-
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "ChiralR(" << printSig(this->signature) << ", "
-       << this->rotation << ")";
-  }
-#endif // DEBUG
-};     // end ChiralR
-
-//--------------
-
-// The mirror image of ChiralR is ChiralL
-
-template <class COORD, class ICOORD>
-class ChiralL : public DoubleNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  ChiralL(const VoxRot &rot)
-    : DoubleNode<COORD, ICOORD>(rot)
-  {}
-
-  ProtoNode *clone() const {
-    return new ChiralL<COORD, ICOORD>(this->rotation);
-  }
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    static const VoxelEdgeList v({posX, negX, posZ, negZ});
-    return v;
-  }
-
-  virtual void makeVSBNodes(Graph *graph, const ICOORD &here) {
-    DoubleNode<COORD, ICOORD>::makeVSBNodes(graph, here);
-    this->vsbNode0->setNeighbor(0, this->vsbNode1);
-    this->vsbNode1->setNeighbor(0, this->vsbNode0);
-  }
-
-  virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    // Connect posX and negZ to vsbNode0, and negX and posZ to vsbNode1.
-    // The two VSBNodes are already connected by a dummy edge, in makeVSBNodes.
-    // vsbNode0's CW edges are [dummy], posX, negZ.
-    // vsbNode1's CW edges are [dummy], posZ, negX.
-    // The order of the edges is the reverse of the order in ChiralR.
-    if(dir == posX) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode0);
-      this->vsbNode0->setNeighbor(1, othernode);
-    }
-    else if(dir == negX) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode1);
-      this->vsbNode1->setNeighbor(2, othernode);
-    }
-    else if(dir == posZ) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode1);
-      this->vsbNode1->setNeighbor(1, othernode);
-    }
-    else if(dir == negZ) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode0);
-      this->vsbNode0->setNeighbor(2, othernode);
-    }
-  }
-
-  virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    if(dir == posX) {
-      this->vsbNode0->setNeighbor(1, othernode);
-      return this->vsbNode0;
-    }
-    if(dir == negX) {
-      this->vsbNode1->setNeighbor(2, othernode);
-      return this->vsbNode1;
-    }
-    if(dir == posZ) {
-      this->vsbNode1->setNeighbor(1, othernode);
-      return this->vsbNode1;
-    }
-    if(dir == negZ) {
-      this->vsbNode0->setNeighbor(2, othernode);
-      return this->vsbNode0;
-    }
-    assert(false);    // Unexpected direction in ChiralL::connectBack
-  }
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "ChiralL(" << printSig(this->signature) << ", "
-       << this->rotation << ")";
-  }
-#endif // DEBUG
-};     // end ChiralL
-
-//------------
-
-// The Pyramid is 4 voxels stacked in a sort of skewed pyramid.  It
-// contains one central voxel and the voxels on each of its faces.  An
-// infinitesimal hexagonal face is inserted in the corner to convert
-// the 6-fold vertex into 6 3-fold vertices.
-
-template <class COORD, class ICOORD>
-class Pyramid : public MultiNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  Pyramid(const VoxRot &rot)
-    : MultiNode<COORD, ICOORD>(6, rot)
-  {}
-
-  virtual ProtoNode *clone() const {
-    return new Pyramid<COORD, ICOORD>(this->rotation);
-  }
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    return allDirs;
-  }
-
-  virtual void makeVSBNodes(Graph *graph, const ICOORD &here) {
-    MultiNode<COORD, ICOORD>::makeVSBNodes(graph, here);
-    for(unsigned int i=0; i<6; i++) {
-      // Neighbor 1 is the previous node in the hexagonal face.
-      this->vsbNodes[i]->setNeighbor(1, this->vsbNodes[(i+5)%6]);
-      // Neighbor 2 is the next node in the hexagonal face.
-      this->vsbNodes[i]->setNeighbor(2, this->vsbNodes[(i+1)%6]);
-    }
-  }
-
-  // hexDirIndex maps the directions to the nodes of the hexagon.  The
-  // edge in direction dir intersects the hexagon at
-  // vsbNodes[hexDirIndex(dir)].
-  unsigned int hexDirIndex(const VoxelEdgeDirection &dir) const {
-    if(dir == posX)
-      return 0;
-    if(dir == negZ)
-      return 1;
-    if(dir == posY)
-      return 2;
-    if(dir == negX)
-      return 3;
-    if(dir == posZ)
-      return 4;
-    assert(dir == negY);
-    return 5;
-  }
-
-  virtual void connect(ProtoNode *otherproto) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    unsigned int i = hexDirIndex(dir);
-    Node *othernode = otherproto->connectBack(this, this->vsbNodes[i]);
-    this->vsbNodes[i]->setNeighbor(0, othernode);
-  }
-
-  virtual Node *connectBack(const ProtoNode *otherproto, Node *othernode) {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    unsigned int i = hexDirIndex(dir);
-    this->vsbNodes[i]->setNeighbor(0, othernode);
-    return this->vsbNodes[i];
-  }
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "Pyramid(" << printSig(this->signature) << ", "
-       << this->rotation << ")";
-  }
-#endif // DEBUG
-};     // end Pyramid
-
-//----------
-
-// Four voxels arranged in a checkerboard pattern, each sharing an
-// edge with all of the others.  Each edge becomes a split edge, and
-// there's one VSBNode for the inside corner of each voxel.
-
-template <class COORD, class ICOORD>
-class CheckerBoard : public MultiNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  CheckerBoard(const VoxRot &rot)
-    : MultiNode<COORD, ICOORD>(4, rot)
-  {}
-
-  ProtoNode *clone() const {
-    return new CheckerBoard<COORD, ICOORD>(this->rotation);
-  }
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    return allDirs;
-  }
-
-  virtual void connect(ProtoNode *otherproto) {
-    // The reference configuration is vox100 + vox010 + vox001 +
-    // vox111.  Use VSBnodes[0] for vox100, 1 for vox010, 2 for
-    // vox001, and 3 for vox111.  The assignment of neighbor indices
-    // for the VSBNodes is arbitrary but consistent (and gets them all
-    // CW, hopefully!)
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    if(dir == posX) {
-      // The posX edge is between voxels 100 and 111, so it connects
-      // to vsbNodes 0 and 3.
-      bool ordered = this->voxelOrder(vox100, vox111);
-      Node *node0 = ordered ? this->vsbNodes[0] : this->vsbNodes[3];
-      Node *node1 = ordered ? this->vsbNodes[3] : this->vsbNodes[0];
-      Node *othernode0, *othernode1;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      if(!ordered)
-	swap(othernode0, othernode1);
-      this->vsbNodes[0]->setNeighbor(0, othernode0);
-      this->vsbNodes[3]->setNeighbor(2, othernode1);
-    }
-    else if(dir == negX) {
-      // negX is between voxels 001 and 010, connecting to vsbNodes 2
-      // and 1.
-      bool ordered = this->voxelOrder(vox001, vox010);
-      Node *node0 = ordered ? this->vsbNodes[2] : this->vsbNodes[1];
-      Node *node1 = ordered ? this->vsbNodes[1] : this->vsbNodes[2];
-      Node *othernode0, *othernode1;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      if(!ordered)
-	swap(othernode0, othernode1);
-      this->vsbNodes[2]->setNeighbor(1, othernode0);
-      this->vsbNodes[1]->setNeighbor(0, othernode1);
-    }
-    else if(dir == posY) {
-      // posY is between voxels 010 and 111, connecting to vsbNodes 1
-      // and 3.
-      bool ordered = this->voxelOrder(vox010, vox111);
-      Node *node0 = ordered ? this->vsbNodes[1] : this->vsbNodes[3];
-      Node *node1 = ordered ? this->vsbNodes[3] : this->vsbNodes[1];
-      Node *othernode0, *othernode1;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      if(!ordered)
-	swap(othernode0, othernode1);
-      this->vsbNodes[1]->setNeighbor(1, othernode0);
-      this->vsbNodes[3]->setNeighbor(0, othernode1);
-    }
-    else if(dir == negY) {
-      // negY is between voxels 001 and 100, connecting to vsbNodes 2
-      // and 0.
-      bool ordered = this->voxelOrder(vox001, vox100);
-      Node *node0 = ordered ? this->vsbNodes[2] : this->vsbNodes[0];
-      Node *node1 = ordered ? this->vsbNodes[0] : this->vsbNodes[2];
-      Node *othernode0, *othernode1;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      if(!ordered)
-	swap(othernode0, othernode1);
-      this->vsbNodes[2]->setNeighbor(2, othernode0);
-      this->vsbNodes[0]->setNeighbor(1, othernode1);
-    }
-    else if(dir == posZ) {
-      // posZ is between voxels 001 and 111, connecting to vsbNodes 2
-      // and 3.
-      bool ordered = this->voxelOrder(vox001, vox111);
-      Node *node0 = ordered ? this->vsbNodes[2] : this->vsbNodes[3];
-      Node *node1 = ordered ? this->vsbNodes[3] : this->vsbNodes[2];
-      Node *othernode0, *othernode1;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      if(!ordered)
-	swap(othernode0, othernode1);
-      this->vsbNodes[2]->setNeighbor(0, othernode0);
-      this->vsbNodes[3]->setNeighbor(1, othernode1);
-    }
-    else if(dir == negZ) {
-      // negZ is between voxels 100 and 010, connecting to vsbNodes 0
-      // and 1.
-      bool ordered = this->voxelOrder(vox100, vox010);
-      Node *node0 = ordered ? this->vsbNodes[0] : this->vsbNodes[1];
-      Node *node1 = ordered ? this->vsbNodes[1] : this->vsbNodes[0];
-      Node *othernode0, *othernode1;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      if(!ordered)
-	swap(othernode0, othernode1);
-      this->vsbNodes[0]->setNeighbor(2, othernode0);
-      this->vsbNodes[1]->setNeighbor(2, othernode1);
-    }
-  } // end CheckerBoard::connect
-
-  virtual Node *connectBack(const ProtoNode*, Node*) {
-    assert(false);  // CheckerBoard::connectBack should not be called!
-  }
-
-  virtual void connectDoubleBack(const ProtoNode *otherproto,
-				 Node *othernode0, Node *othernode1,
-				 Node *&node0, Node *&node1)
-  {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    // See comments in CheckerBoard::connect.
-    if(dir == posX) {
-      bool ordered = this->voxelOrder(vox100, vox111);
-      node0 = this->vsbNodes[0];
-      node1 = this->vsbNodes[3];
-      if(!ordered) {
-	swap(othernode0, othernode1);
-	swap(node0, node1);
-      }
-      this->vsbNodes[0]->setNeighbor(0, othernode0);
-      this->vsbNodes[3]->setNeighbor(2, othernode1);
-    }
-    else if(dir == negX) {
-      bool ordered = this->voxelOrder(vox001, vox010);
-      node0 = this->vsbNodes[2];
-      node1 = this->vsbNodes[1];
-      if(!ordered) {
-	swap(othernode0, othernode1);
-	swap(node0, node1);
-      }
-      this->vsbNodes[2]->setNeighbor(1, othernode0);
-      this->vsbNodes[1]->setNeighbor(0, othernode1);
-    }
-    else if(dir == posY) {
-      bool ordered = this->voxelOrder(vox010, vox111);
-      node0 = this->vsbNodes[1];
-      node1 = this->vsbNodes[3];
-      if(!ordered) {
-	swap(othernode0, othernode1);
-	swap(node0, node1);
-      }
-      this->vsbNodes[1]->setNeighbor(1, othernode0);
-      this->vsbNodes[3]->setNeighbor(0, othernode1);
-    }
-    else if(dir == negY) {
-      bool ordered = this->voxelOrder(vox001, vox100);
-      node0 = this->vsbNodes[2];
-      node1 = this->vsbNodes[0];
-      if(!ordered) {
-	swap(othernode0, othernode1);
-	swap(node0, node1);
-      }
-      this->vsbNodes[2]->setNeighbor(2, othernode0);
-      this->vsbNodes[0]->setNeighbor(1, othernode1);
-    }
-    else if(dir == posZ) {
-      bool ordered = this->voxelOrder(vox001, vox111);
-      node0 = this->vsbNodes[2];
-      node1 = this->vsbNodes[3];
-      if(!ordered) {
-	swap(othernode0, othernode1);
-	swap(node0, node1);
-      }
-      this->vsbNodes[2]->setNeighbor(0, othernode0);
-      this->vsbNodes[3]->setNeighbor(1, othernode1);
-    }
-    else if(dir == negZ) {
-      bool ordered = this->voxelOrder(vox100, vox010);
-      node0 = this->vsbNodes[0];
-      node1 = this->vsbNodes[1];
-      if(!ordered) {
-	swap(othernode0, othernode1);
-	swap(node0, node1);
-      }
-      this->vsbNodes[0]->setNeighbor(2, othernode0);
-      this->vsbNodes[1]->setNeighbor(2, othernode1);
-    }
-  }
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "CheckerBoard(" << printSig(this->signature) << ", "
-       << this->rotation << ")";
-  }
-#endif // DEBUG
-};     // end CheckerBoard
-
-//-------------
-
-// FourThreeOne is three voxels in an L with one more voxel out of the
-// plane of the L and over the gap.
-
-template <class COORD, class ICOORD>
-class FourThreeOne : public DoubleNode<COORD, ICOORD> {
-public:
-  TEMPLATE_TYPEDEFS;
-  
-  FourThreeOne(const VoxRot &rot)
-    : DoubleNode<COORD, ICOORD>(rot)
-  {}
-
-  ProtoNode *clone() const {
-    return new FourThreeOne<COORD, ICOORD>(this->rotation);
-  }
-
-  virtual const VoxelEdgeList &connectDirs() const {
-    static const VoxelEdgeList v({posX, posY, posZ, negZ});
-    return v;
-  }
-
-  virtual void connect(ProtoNode *otherproto) {
-    // The reference configuration is three voxels in the Z=0 plane,
-    // vox000, vox100 and vox010, just like ThreeVoxL, plus one voxel
-    // at vox111.  The three in the L are connected to vsbNode0 and
-    // the single voxel is connected to vsbNode1.  The edges in the
-    // posX and posY directions are doubled.
-
-    // Neighbor indexing for the edges of the single voxel at vox111
-    // is posZ, posX, posY.  For the inside corner of the L it's negZ,
-    // posX, posY.
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    this->checkDir(dir);
-    if(dir == posZ) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode1);
-      this->vsbNode1->setNeighbor(0, othernode);
-    }
-    else if(dir == negZ) {
-      Node *othernode = otherproto->connectBack(this, this->vsbNode0);
-      this->vsbNode0->setNeighbor(0, othernode);
-    }
-    else if(dir == posX) {
-      bool ordered = this->voxelOrder(vox100, vox111);
-      Node *othernode0, *othernode1;
-      Node *node0 = ordered ? this->vsbNode0 : this->vsbNode1;
-      Node *node1 = ordered ? this->vsbNode1 : this->vsbNode0;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      // Conveniently the posX and posY neighbor indexing is the same
-      // for both nodes.
-      node0->setNeighbor(1, othernode0);
-      node1->setNeighbor(1, othernode1);
-    }
-    else {
-      assert(dir == posY);
-      bool ordered = this->voxelOrder(vox010, vox111);
-      Node *othernode0, *othernode1;
-      Node *node0 = ordered ? this->vsbNode0 : this->vsbNode1;
-      Node *node1 = ordered ? this->vsbNode1 : this->vsbNode0;
-      otherproto->connectDoubleBack(this, node0, node1, othernode0, othernode1);
-      node0->setNeighbor(2, othernode0);
-      node1->setNeighbor(2, othernode1);
-    }
-  }
-
-  virtual Node *connectBack(const ProtoNode *otherproto,
-			       Node *othernode)
-  {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    if(dir == posZ) {
-      this->vsbNode1->setNeighbor(0, othernode);
-      return this->vsbNode1;
-    }
-    if(dir == negZ) {
-      this->vsbNode0->setNeighbor(0, othernode);
-      return this->vsbNode0;
-    }
-    assert(false); // Unexpected direction in FourThreeOne::connectBack
-  }
-
-  virtual void connectDoubleBack(const ProtoNode *otherproto,
-				 Node *othernode0, Node *othernode1,
-				 Node *&node0, Node *&node1)
-  {
-    VoxelEdgeDirection dir = this->getReferenceDir(otherproto);
-    if(dir == posX) {
-      bool ordered = this->voxelOrder(vox100, vox111);
-      node0 = ordered ? this->vsbNode0 : this->vsbNode1;
-      node1 = ordered ? this->vsbNode1 : this->vsbNode0;
-      node0->setNeighbor(1, othernode0);
-      node1->setNeighbor(1, othernode1);
-    }
-    else if(dir == posY) {
-      bool ordered = this->voxelOrder(vox010, vox111);
-      node0 = ordered ? this->vsbNode0 : this->vsbNode1;
-      node1 = ordered ? this->vsbNode1 : this->vsbNode0;
-      node0->setNeighbor(2, othernode0);
-      node1->setNeighbor(2, othernode1);
-    }
-    assert(false); // Unexpected direction in FourThreeOne::connectDoubleBack
-  }
-
-#ifdef DEBUG
-  virtual void print(std::ostream &os) const {
-    os << "FourThreeOne(" << printSig(this->signature) << ", "
-       << this->rotation << ")";
-  }
-#endif // DEBUG
-};	// end FourThreeOne
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// Build the table of ProtoNode classes
-
-template <class COORD, class ICOORD>
-std::vector<ProtoVSBNode<COORD, ICOORD>*> &getProtoNodeTable() {
-  static std::vector<ProtoVSBNode<COORD, ICOORD>*> table(256, nullptr);
-  return table;
-}
-
-template <class COORD, class ICOORD>
-ProtoVSBNode<COORD, ICOORD> *fetchProtoNode(unsigned char signature) {
-  return getProtoNodeTable<COORD, ICOORD>()[signature];
-}
-
-
-template <class COORD, class ICOORD>
-void pn(unsigned char signature, ProtoVSBNode<COORD, ICOORD> *protoNode)
+// Given an image and the value of a voxel in the image, build a
+// VoxelSetBdy that includes all voxels with that value.
+
+template <class COORD, class ICOORD, class IMAGE, class IMAGEVAL>
+VoxelSetBdy<COORD, ICOORD, IMAGEVAL>
+*buildVSB(const IMAGE &image,
+	  const IMAGEVAL &imageVal,
+	  double voxelVolume,
+	  const std::vector<ICRectPrism<ICOORD>> &bins)
 {
-  assert(protoNode != nullptr);
-#ifdef DEBUG
-  protoNode->setSignature(signature);
-  if(getProtoNodeTable<COORD, ICOORD>()[signature] != nullptr) {
-    std::cerr << "Duplicate signature! " << signature << " "
-	    << printSig(signature) << std::endl;
-    assert(false);
-  }
-#endif // DEBUG
-  getProtoNodeTable<COORD, ICOORD>()[signature] = protoNode;
-}
+  // for(auto &bin : bins)
+  //   std::cerr << "buildVSB:   bin=" << bin << std::endl;
+  typedef typename VoxelSetBdy<COORD, ICOORD, IMAGEVAL>::ProtoNode ProtoNode;
+  auto *vsb =
+    new VoxelSetBdy<COORD, ICOORD, IMAGEVAL>(voxelVolume, bins, imageVal);
 
-// This version is for voxel configurations that don't create a
-// vertex.  The template arguments have to be given explicitly when
-// this is used.
-template <class COORD, class ICOORD>
-void pn(unsigned char signature) {
-  getProtoNodeTable<COORD, ICOORD>()[signature] = nullptr;
-}
+  for(unsigned int s=0; s<bins.size(); s++) { // loop over bins
+    // bin is a subregion of the image
+    const ICRectPrism<ICOORD> &bin = bins[s];
+    // Create an array of ProtoVSBNodes in the bin.  A ProtoVSBNode is
+    // the precursor to the actual VSBNodes.  There's a ProtoVSBNode
+    // at each corner of each voxel, but neighboring voxels share
+    // ProtoVSBNodes.  The array of protonodes is one larger in each
+    // dimension than the array of voxels.
+    ICRectPrism<ICOORD>
+      expanded(bin.lowerleftback(), bin.upperrightfront()+ICOORD(1,1,1));
+    Array3D<ProtoNode*, ICOORD, ICRectPrism<ICOORD>>
+      protoNodes(expanded, nullptr);
+    for(auto i=protoNodes.begin(); i!=protoNodes.end(); ++i) {
+      // The type of ProtoVSBNode depends on which of the 8 voxels
+      // surrounding the corner point are in the current category.
+      // The bits in the signature indicate which voxels are in the
+      // category.
+      char signature = voxelSignature(image, i.coord(), imageVal, bin);
+      // protoVSBNodeFactory returns a ProtoNode and also creates the
+      // VSBNodes in the graph, but it doesn't connect them.  That can
+      // be done only after all the ProtoNodes are constructed.
+      *i = vsb->protoVSBNodeFactory(s, signature, i.coord());
+    }
+    // Loop over protonodes, connecting each one to the next protoNode
+    // in the x, y, and z directions.
+    for(auto i=protoNodes.begin(); i!=protoNodes.end(); ++i) {
+      ICOORD here = i.coord();
+      ProtoNode *pnode = protoNodes[here];
+      if(pnode != nullptr) {
+	// Get the reference space directions in which this ProtoNode
+	// needs to find neighbors.
+	const std::vector<VoxelEdgeDirection> &dirs(pnode->connectDirs());
+	for(const VoxelEdgeDirection &dir : dirs) {
+	  // Convert the reference space directions to real space.
+	  VoxelEdgeDirection actualDir = pnode->rotation.toActual(dir);
+	  // It's only necessary to look in the positive directions
+	  // because the connections in the negative directions are
+	  // checked when examining the other node of the edge.
+	  if(actualDir.dir == 1) {
+	    unsigned int c = actualDir.axis;
+	    // Look for the next protoNode in this direction
+#ifndef NDEBUG
+	    bool found = false;
+#endif // NDEBUG
+	    for(unsigned int k=here[c]+1; k<=bin.upperrightfront()[c]; k++) {
+	      ICOORD there = here;
+	      there[c] = k;
+	      if(protoNodes[there] != nullptr) { // found the next node
+#ifndef NDEBUG
+		found = true;
+#endif // NDEBUG
+		protoNodes[here]->connect(protoNodes[there]);
+		break;		// done with this direction at this point
+	      }
+	    } // end sesarch for protoNode in direction c
+#ifndef NDEBUG
+	    if(!found) {
+	      std::cerr << "buildVSB: failed to find next node!" << std::endl;
+	      std::cerr << "buildVSB: here=" << here << "c=" << c
+			<< " val=" << imageVal << std::endl;
+	      assert(false);
+	    }
+#endif // NDEBUG
+	  } // end if actualDir is positive
 
-// This function must be called before anything else.
-template <class COORD, class ICOORD>
-void initializeProtoNodes() {
-  // Create an instance of each ProtoVSBNode class in each orientation
-  // and store it in a table indexed by the voxel signature for that
-  // configuration.  The table is used to create the ProtoVSBNodes
-  // when a CMicrostructure is computing voxel set boundaries.
+	} // end loop over connection directions
+      }	  // end if pnode != nullptr
+    }	  // end loop over array of protoNodes
 
-  static bool done = false;
-  if(done)
-    return;
-  done = true;
+    // Remove the 2-fold connected nodes
+    vsb->fixTwoFoldNodes(s);
 
-  // First, the configurations that *don't* define a vertex.
-  // Including these explicitly just helps us to be sure that we
-  // covered all the cases.
-  
-  // The trivial cases:
-  pn<COORD, ICOORD>(voxelNONE); // no voxels
-  pn<COORD, ICOORD>(voxelALL); // all 8 voxels
+    // Delete the protoNodes.
+    for(auto i=protoNodes.begin(); i!=protoNodes.end(); ++i)
+      delete *i;
 
-  // Two adjacent voxels sharing a face (the butterstick
-  // configurations) don't define a vertex.  There are 12
-  // possibilities:
-  pn<COORD, ICOORD>(vox000|vox001);
-  pn<COORD, ICOORD>(vox010|vox011);
-  pn<COORD, ICOORD>(vox100|vox101);
-  pn<COORD, ICOORD>(vox110|vox111);
-  pn<COORD, ICOORD>(vox000|vox010);
-  pn<COORD, ICOORD>(vox001|vox011);
-  pn<COORD, ICOORD>(vox100|vox110);
-  pn<COORD, ICOORD>(vox101|vox111);
-  pn<COORD, ICOORD>(vox000|vox100);
-  pn<COORD, ICOORD>(vox001|vox101);
-  pn<COORD, ICOORD>(vox010|vox110);
-  pn<COORD, ICOORD>(vox011|vox111);
-  // Ditto for the 12 inverse buttersticks (two holes sharing a face).
-  pn<COORD, ICOORD>(~(vox000|vox001));
-  pn<COORD, ICOORD>(~(vox010|vox011));
-  pn<COORD, ICOORD>(~(vox100|vox101));
-  pn<COORD, ICOORD>(~(vox110|vox111));
-  pn<COORD, ICOORD>(~(vox000|vox010));
-  pn<COORD, ICOORD>(~(vox001|vox011));
-  pn<COORD, ICOORD>(~(vox100|vox110));
-  pn<COORD, ICOORD>(~(vox101|vox111));
-  pn<COORD, ICOORD>(~(vox000|vox100));
-  pn<COORD, ICOORD>(~(vox001|vox101));
-  pn<COORD, ICOORD>(~(vox010|vox110));
-  pn<COORD, ICOORD>(~(vox011|vox111));
+  } // end loop over bins
 
-  // Four voxels in one plane don't define a vertex.  There are 6
-  // configurations:
-  pn<COORD, ICOORD>(vox000|vox001|vox010|vox011); // x=0
-  pn<COORD, ICOORD>(vox100|vox101|vox110|vox111); // x=1
-  pn<COORD, ICOORD>(vox000|vox100|vox001|vox101); // y=0
-  pn<COORD, ICOORD>(vox010|vox110|vox011|vox111); // y=1
-  pn<COORD, ICOORD>(vox000|vox010|vox100|vox110); // z=0
-  pn<COORD, ICOORD>(vox001|vox011|vox101|vox111); // z=1
-  
-  // Two parallel offset stacks of two voxels don't define a vertex.
-  pn<COORD, ICOORD>(vox000|vox001|vox110|vox111);
-  pn<COORD, ICOORD>(vox100|vox101|vox010|vox011);
-  pn<COORD, ICOORD>(vox000|vox100|vox011|vox111);
-  pn<COORD, ICOORD>(vox001|vox101|vox010|vox110);
-  pn<COORD, ICOORD>(vox001|vox011|vox100|vox110);
-  pn<COORD, ICOORD>(vox000|vox010|vox101|vox111);
+  vsb->findBBox();
+  return vsb;
+} // end template function buildVSB
 
-  // Now the real cases:
-  pn(vox111, new SingleVoxel<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(vox101, new SingleVoxel<COORD, ICOORD>(VoxRot(negY, posX, posZ)));
-  pn(vox001, new SingleVoxel<COORD, ICOORD>(VoxRot(negX, negY, posZ)));
-  pn(vox011, new SingleVoxel<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-  pn(vox000, new SingleVoxel<COORD, ICOORD>(VoxRot(negY, negX, negZ)));
-  pn(vox010, new SingleVoxel<COORD, ICOORD>(VoxRot(negX, posY, negZ)));
-  pn(vox110, new SingleVoxel<COORD, ICOORD>(VoxRot(posY, posX, negZ)));
-  pn(vox100, new SingleVoxel<COORD, ICOORD>(VoxRot(posX, negY, negZ)));
-
-  pn(~vox111, new SevenVoxels<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(~vox101, new SevenVoxels<COORD, ICOORD>(VoxRot(negY, posX, posZ)));
-  pn(~vox001, new SevenVoxels<COORD, ICOORD>(VoxRot(negX, negY, posZ)));
-  pn(~vox011, new SevenVoxels<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-  pn(~vox000, new SevenVoxels<COORD, ICOORD>(VoxRot(negY, negX, negZ)));
-  pn(~vox010, new SevenVoxels<COORD, ICOORD>(VoxRot(negX, posY, negZ)));
-  pn(~vox110, new SevenVoxels<COORD, ICOORD>(VoxRot(posY, posX, negZ)));
-  pn(~vox100, new SevenVoxels<COORD, ICOORD>(VoxRot(posX, negY, negZ)));
-
-  pn(vox000|vox110, new TwoVoxelsByEdge<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(vox010|vox100, new TwoVoxelsByEdge<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-  pn(vox001|vox111, new TwoVoxelsByEdge<COORD, ICOORD>(VoxRot(negY, negX, negZ)));
-  pn(vox101|vox011, new TwoVoxelsByEdge<COORD, ICOORD>(VoxRot(posX, negY, negZ)));
-  pn(vox100|vox111, new TwoVoxelsByEdge<COORD, ICOORD>(VoxRot(posZ, posY, negX)));
-  pn(vox101|vox110, new TwoVoxelsByEdge<COORD, ICOORD>(VoxRot(posY, negZ, negX)));
-  pn(vox000|vox011, new TwoVoxelsByEdge<COORD, ICOORD>(VoxRot(negY, negZ, posX)));
-  pn(vox001|vox010, new TwoVoxelsByEdge<COORD, ICOORD>(VoxRot(negZ, posY, posX)));
-  pn(vox010|vox111, new TwoVoxelsByEdge<COORD, ICOORD>(VoxRot(posX, posZ, negY)));
-  pn(vox110|vox011, new TwoVoxelsByEdge<COORD, ICOORD>(VoxRot(negZ, posX, negY)));
-  pn(vox000|vox101, new TwoVoxelsByEdge<COORD, ICOORD>(VoxRot(negZ, negX, posY)));
-  pn(vox001|vox100, new TwoVoxelsByEdge<COORD, ICOORD>(VoxRot(negX, posZ, posY)));
-
-  pn(~(vox000|vox110), new SixVoxelsByEdge<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(~(vox010|vox100), new SixVoxelsByEdge<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-  pn(~(vox001|vox111), new SixVoxelsByEdge<COORD, ICOORD>(VoxRot(negY, negX, negZ)));
-  pn(~(vox101|vox011), new SixVoxelsByEdge<COORD, ICOORD>(VoxRot(posX, negY, negZ)));
-  pn(~(vox100|vox111), new SixVoxelsByEdge<COORD, ICOORD>(VoxRot(posZ, posY, negX)));
-  pn(~(vox101|vox110), new SixVoxelsByEdge<COORD, ICOORD>(VoxRot(posY, negZ, negX)));
-  pn(~(vox000|vox011), new SixVoxelsByEdge<COORD, ICOORD>(VoxRot(negY, negZ, posX)));
-  pn(~(vox001|vox010), new SixVoxelsByEdge<COORD, ICOORD>(VoxRot(negZ, posY, posX)));
-  pn(~(vox010|vox111), new SixVoxelsByEdge<COORD, ICOORD>(VoxRot(posX, posZ, negY)));
-  pn(~(vox110|vox011), new SixVoxelsByEdge<COORD, ICOORD>(VoxRot(negZ, posX, negY)));
-  pn(~(vox000|vox101), new SixVoxelsByEdge<COORD, ICOORD>(VoxRot(negZ, negX, posY)));
-  pn(~(vox001|vox100), new SixVoxelsByEdge<COORD, ICOORD>(VoxRot(negX, posZ, posY)));
-
-  pn(vox000|vox111, new TwoVoxelsByCorner<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(vox100|vox011, new TwoVoxelsByCorner<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-  pn(vox110|vox001, new TwoVoxelsByCorner<COORD, ICOORD>(VoxRot(negX, negY, posZ)));
-  pn(vox010|vox101, new TwoVoxelsByCorner<COORD, ICOORD>(VoxRot(negY, posX, posZ)));
-
-  pn(~(vox000|vox111), new SixVoxelsByCorner<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(~(vox100|vox011), new SixVoxelsByCorner<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-  pn(~(vox110|vox001), new SixVoxelsByCorner<COORD, ICOORD>(VoxRot(negX, negY, posZ)));
-  pn(~(vox010|vox101), new SixVoxelsByCorner<COORD, ICOORD>(VoxRot(negY, posX, posZ)));
-
-  // Three voxels in the Z=0 plane
-  pn(vox000|vox100|vox010, new ThreeVoxL<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(vox000|vox100|vox110, new ThreeVoxL<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-  pn(vox100|vox110|vox010, new ThreeVoxL<COORD, ICOORD>(VoxRot(negX, negY, posZ)));
-  pn(vox000|vox010|vox110, new ThreeVoxL<COORD, ICOORD>(VoxRot(negY, posX, posZ)));
-  // Three voxels in the Z=1 plane
-  pn(vox001|vox101|vox011, new ThreeVoxL<COORD, ICOORD>(VoxRot(posY, posX, negZ)));
-  pn(vox111|vox011|vox001, new ThreeVoxL<COORD, ICOORD>(VoxRot(posX, negY, negZ)));
-  pn(vox101|vox111|vox011, new ThreeVoxL<COORD, ICOORD>(VoxRot(negY, negX, negZ)));
-  pn(vox101|vox111|vox001, new ThreeVoxL<COORD, ICOORD>(VoxRot(negX, posY, negZ)));
-  // Three voxels in the X=0 plane
-  pn(vox000|vox010|vox001, new ThreeVoxL<COORD, ICOORD>(VoxRot(posY, posZ, posX)));
-  pn(vox000|vox001|vox011, new ThreeVoxL<COORD, ICOORD>(VoxRot(negZ, posY, posX)));
-  pn(vox001|vox011|vox010, new ThreeVoxL<COORD, ICOORD>(VoxRot(negY, negZ, posX)));
-  pn(vox000|vox010|vox011, new ThreeVoxL<COORD, ICOORD>(VoxRot(posZ, negY, posX)));
-  // Three voxels in the X=1 plane
-  pn(vox100|vox101|vox110, new ThreeVoxL<COORD, ICOORD>(VoxRot(posZ, posY, negX)));
-  pn(vox111|vox101|vox100, new ThreeVoxL<COORD, ICOORD>(VoxRot(posY, negZ, negX)));
-  pn(vox101|vox111|vox110, new ThreeVoxL<COORD, ICOORD>(VoxRot(negZ, negY, negX)));
-  pn(vox111|vox110|vox100, new ThreeVoxL<COORD, ICOORD>(VoxRot(negY, posZ, negX)));
-  // Three voxels in the Y=0 plane
-  pn(vox000|vox100|vox001, new ThreeVoxL<COORD, ICOORD>(VoxRot(posZ, posX, posY)));
-  pn(vox000|vox001|vox101, new ThreeVoxL<COORD, ICOORD>(VoxRot(posX, negZ, posY)));
-  pn(vox001|vox101|vox100, new ThreeVoxL<COORD, ICOORD>(VoxRot(negZ, negX, posY)));
-  pn(vox000|vox100|vox101, new ThreeVoxL<COORD, ICOORD>(VoxRot(negX, posZ, posY)));
-  // Three voxels in the Y=1 plane
-  pn(vox110|vox010|vox011, new ThreeVoxL<COORD, ICOORD>(VoxRot(posX, posZ, negY)));
-  pn(vox111|vox011|vox010, new ThreeVoxL<COORD, ICOORD>(VoxRot(negZ, posX, negY)));
-  pn(vox111|vox011|vox110, new ThreeVoxL<COORD, ICOORD>(VoxRot(negX, negZ, negY)));
-  pn(vox110|vox010|vox111, new ThreeVoxL<COORD, ICOORD>(VoxRot(posZ, negX, negY)));
-
-  pn(~(vox100|vox101|vox110), new FiveVoxL<COORD, ICOORD>(VoxRot(posZ, posY, negX)));
-  pn(~(vox111|vox101|vox100), new FiveVoxL<COORD, ICOORD>(VoxRot(posY, negZ, negX)));
-  pn(~(vox101|vox111|vox110), new FiveVoxL<COORD, ICOORD>(VoxRot(negZ, negY, negX)));
-  pn(~(vox111|vox110|vox100), new FiveVoxL<COORD, ICOORD>(VoxRot(negY, posZ, negX)));
-  pn(~(vox000|vox010|vox001), new FiveVoxL<COORD, ICOORD>(VoxRot(posY, posZ, posX)));
-  pn(~(vox000|vox001|vox011), new FiveVoxL<COORD, ICOORD>(VoxRot(negZ, posY, posX)));
-  pn(~(vox001|vox011|vox010), new FiveVoxL<COORD, ICOORD>(VoxRot(negY, negZ, posX)));
-  pn(~(vox000|vox010|vox011), new FiveVoxL<COORD, ICOORD>(VoxRot(posZ, negY, posX)));
-  pn(~(vox110|vox010|vox011), new FiveVoxL<COORD, ICOORD>(VoxRot(posX, posZ, negY)));
-  pn(~(vox111|vox011|vox010), new FiveVoxL<COORD, ICOORD>(VoxRot(negZ, posX, negY)));
-  pn(~(vox111|vox011|vox110), new FiveVoxL<COORD, ICOORD>(VoxRot(negX, negZ, negY)));
-  pn(~(vox110|vox010|vox111), new FiveVoxL<COORD, ICOORD>(VoxRot(posZ, negX, negY)));
-  pn(~(vox000|vox100|vox001), new FiveVoxL<COORD, ICOORD>(VoxRot(posZ, posX, posY)));
-  pn(~(vox000|vox001|vox101), new FiveVoxL<COORD, ICOORD>(VoxRot(posX, negZ, posY)));
-  pn(~(vox001|vox101|vox100), new FiveVoxL<COORD, ICOORD>(VoxRot(negZ, negX, posY)));
-  pn(~(vox000|vox100|vox101), new FiveVoxL<COORD, ICOORD>(VoxRot(negX, posZ, posY)));
-  pn(~(vox001|vox101|vox011), new FiveVoxL<COORD, ICOORD>(VoxRot(posY, posX, negZ)));
-  pn(~(vox111|vox011|vox001), new FiveVoxL<COORD, ICOORD>(VoxRot(posX, negY, negZ)));
-  pn(~(vox101|vox111|vox011), new FiveVoxL<COORD, ICOORD>(VoxRot(negY, negX, negZ)));
-  pn(~(vox101|vox111|vox001), new FiveVoxL<COORD, ICOORD>(VoxRot(negX, posY, negZ)));
-  pn(~(vox000|vox100|vox010), new FiveVoxL<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(~(vox000|vox100|vox110), new FiveVoxL<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-  pn(~(vox100|vox110|vox010), new FiveVoxL<COORD, ICOORD>(VoxRot(negX, negY, posZ)));
-  pn(~(vox000|vox010|vox110), new FiveVoxL<COORD, ICOORD>(VoxRot(negY, posX, posZ)));
-
-  // Double stack in the z direction, single voxel in the z=0 plane
-  pn(vox000|vox110|vox111, new ThreeTwoOne<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(vox100|vox010|vox011, new ThreeTwoOne<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-  pn(vox000|vox110|vox001, new ThreeTwoOne<COORD, ICOORD>(VoxRot(negX, negY, posZ)));
-  pn(vox100|vox010|vox101, new ThreeTwoOne<COORD, ICOORD>(VoxRot(negY, posX, posZ)));
-  // Double stack in the z direction, single voxel in the z=1 plane
-  pn(vox001|vox110|vox111, new ThreeTwoOne<COORD, ICOORD>(VoxRot(posY, posX, negZ)));
-  pn(vox010|vox011|vox101, new ThreeTwoOne<COORD, ICOORD>(VoxRot(negX, posY, negZ)));
-  pn(vox000|vox001|vox111, new ThreeTwoOne<COORD, ICOORD>(VoxRot(negY, negX, negZ)));
-  pn(vox100|vox101|vox011, new ThreeTwoOne<COORD, ICOORD>(VoxRot(posX, negY, negZ)));
-  // Double stack in the x direction, single voxel in the x=1 plane
-  pn(vox000|vox100|vox111, new ThreeTwoOne<COORD, ICOORD>(VoxRot(negZ, negY, negX)));
-  pn(vox001|vox110|vox101, new ThreeTwoOne<COORD, ICOORD>(VoxRot(negY, posZ, negX)));
-  pn(vox100|vox011|vox111, new ThreeTwoOne<COORD, ICOORD>(VoxRot(posZ, posY, negX)));
-  pn(vox101|vox110|vox010, new ThreeTwoOne<COORD, ICOORD>(VoxRot(posY, negZ, negX)));
-  // Double stack in the x direction, single voxel in the x=0 plane
-  pn(vox000|vox100|vox011, new ThreeTwoOne<COORD, ICOORD>(VoxRot(negY, negZ, posX)));
-  pn(vox010|vox001|vox101, new ThreeTwoOne<COORD, ICOORD>(VoxRot(posZ, negY, posX)));
-  pn(vox000|vox011|vox111, new ThreeTwoOne<COORD, ICOORD>(VoxRot(posY, posZ, posX)));
-  pn(vox001|vox010|vox110, new ThreeTwoOne<COORD, ICOORD>(VoxRot(negZ, posY, posX)));
-  // Double stack in the y direction, single voxel in the x=0 plane
-  pn(vox000|vox010|vox101, new ThreeTwoOne<COORD, ICOORD>(VoxRot(negZ, negX, posY)));
-  pn(vox001|vox100|vox110, new ThreeTwoOne<COORD, ICOORD>(VoxRot(posX, negZ, posY)));
-  pn(vox000|vox101|vox111, new ThreeTwoOne<COORD, ICOORD>(VoxRot(posZ, posX, posY)));
-  pn(vox100|vox001|vox011, new ThreeTwoOne<COORD, ICOORD>(VoxRot(negX, posZ, posY)));
-  // Double stack in the y direction, single voxel in the x=1 plane
-  pn(vox000|vox010|vox111, new ThreeTwoOne<COORD, ICOORD>(VoxRot(negX, negZ, negY)));
-  pn(vox110|vox001|vox011, new ThreeTwoOne<COORD, ICOORD>(VoxRot(posZ, negX, negY)));
-  pn(vox010|vox101|vox111, new ThreeTwoOne<COORD, ICOORD>(VoxRot(posX, posZ, negY)));
-  pn(vox100|vox110|vox011, new ThreeTwoOne<COORD, ICOORD>(VoxRot(negZ, posX, negY)));
-
-  // Double stack in the z direction, single hole in the z=0 plane
-  pn(~(vox000|vox110|vox111), new FiveTwoOne<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(~(vox100|vox010|vox011), new FiveTwoOne<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-  pn(~(vox000|vox110|vox001), new FiveTwoOne<COORD, ICOORD>(VoxRot(negX, negY, posZ)));
-  pn(~(vox100|vox010|vox101), new FiveTwoOne<COORD, ICOORD>(VoxRot(negY, posX, posZ)));
-  // Double stack in the z direction, single hole in the z=1 plane
-  pn(~(vox001|vox110|vox111), new FiveTwoOne<COORD, ICOORD>(VoxRot(posY, posX, negZ)));
-  pn(~(vox010|vox011|vox101), new FiveTwoOne<COORD, ICOORD>(VoxRot(negX, posY, negZ)));
-  pn(~(vox000|vox001|vox111), new FiveTwoOne<COORD, ICOORD>(VoxRot(negY, negX, negZ)));
-  pn(~(vox100|vox101|vox011), new FiveTwoOne<COORD, ICOORD>(VoxRot(posX, negY, negZ)));
-  // Double stack in the x direction, single hole in the x=1 plane
-  pn(~(vox000|vox100|vox111), new FiveTwoOne<COORD, ICOORD>(VoxRot(negZ, negY, negX)));
-  pn(~(vox001|vox110|vox101), new FiveTwoOne<COORD, ICOORD>(VoxRot(negY, posZ, negX)));
-  pn(~(vox100|vox011|vox111), new FiveTwoOne<COORD, ICOORD>(VoxRot(posZ, posY, negX)));
-  pn(~(vox101|vox110|vox010), new FiveTwoOne<COORD, ICOORD>(VoxRot(posY, negZ, negX)));
-  // Double stack in the x direction, single hole in the x=0 plane
-  pn(~(vox000|vox100|vox011), new FiveTwoOne<COORD, ICOORD>(VoxRot(negY, negZ, posX)));
-  pn(~(vox010|vox001|vox101), new FiveTwoOne<COORD, ICOORD>(VoxRot(posZ, negY, posX)));
-  pn(~(vox000|vox011|vox111), new FiveTwoOne<COORD, ICOORD>(VoxRot(posY, posZ, posX)));
-  pn(~(vox001|vox010|vox110), new FiveTwoOne<COORD, ICOORD>(VoxRot(negZ, posY, posX)));
-  // Double stack in the y direction, single hole in the x=0 plane
-  pn(~(vox000|vox010|vox101), new FiveTwoOne<COORD, ICOORD>(VoxRot(negZ, negX, posY)));
-  pn(~(vox001|vox100|vox110), new FiveTwoOne<COORD, ICOORD>(VoxRot(posX, negZ, posY)));
-  pn(~(vox000|vox101|vox111), new FiveTwoOne<COORD, ICOORD>(VoxRot(posZ, posX, posY)));
-  pn(~(vox100|vox001|vox011), new FiveTwoOne<COORD, ICOORD>(VoxRot(negX, posZ, posY)));
-  // Double stack in the y direction, single hole in the x=1 plane
-  pn(~(vox000|vox010|vox111), new FiveTwoOne<COORD, ICOORD>(VoxRot(negX, negZ, negY)));
-  pn(~(vox110|vox001|vox011), new FiveTwoOne<COORD, ICOORD>(VoxRot(posZ, negX, negY)));
-  pn(~(vox010|vox101|vox111), new FiveTwoOne<COORD, ICOORD>(VoxRot(posX, posZ, negY)));
-  pn(~(vox100|vox110|vox011), new FiveTwoOne<COORD, ICOORD>(VoxRot(negZ, posX, negY)));
-
-  pn(vox110|vox011|vox101, new ThreeVoxByEdges<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(vox100|vox001|vox111, new ThreeVoxByEdges<COORD, ICOORD>(VoxRot(negY, posX, posZ)));
-  pn(vox000|vox101|vox011, new ThreeVoxByEdges<COORD, ICOORD>(VoxRot(negX, negY, posZ)));
-  pn(vox010|vox001|vox111, new ThreeVoxByEdges<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-
-  pn(vox111|vox100|vox010, new ThreeVoxByEdges<COORD, ICOORD>(VoxRot(posY, posX, negZ)));
-  pn(vox000|vox110|vox101, new ThreeVoxByEdges<COORD, ICOORD>(VoxRot(posX, negY, negZ)));
-  pn(vox100|vox010|vox001, new ThreeVoxByEdges<COORD, ICOORD>(VoxRot(negY, negX, negZ)));
-  pn(vox000|vox011|vox110, new ThreeVoxByEdges<COORD, ICOORD>(VoxRot(negX, posY, negZ)));
-
-  pn(~(vox110|vox011|vox101), new FiveVoxByEdges<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(~(vox100|vox001|vox111), new FiveVoxByEdges<COORD, ICOORD>(VoxRot(negY, posX, posZ)));
-  pn(~(vox000|vox101|vox011), new FiveVoxByEdges<COORD, ICOORD>(VoxRot(negX, negY, posZ)));
-  pn(~(vox010|vox001|vox111), new FiveVoxByEdges<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-
-  pn(~(vox111|vox100|vox010), new FiveVoxByEdges<COORD, ICOORD>(VoxRot(posY, posX, negZ)));
-  pn(~(vox000|vox110|vox101), new FiveVoxByEdges<COORD, ICOORD>(VoxRot(posX, negY, negZ)));
-  pn(~(vox100|vox010|vox001), new FiveVoxByEdges<COORD, ICOORD>(VoxRot(negY, negX, negZ)));
-  pn(~(vox000|vox011|vox110), new FiveVoxByEdges<COORD, ICOORD>(VoxRot(negX, posY, negZ)));
-
-  pn(vox000|vox100|vox010|vox011, new ChiralR<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(vox000|vox010|vox110|vox111, new ChiralR<COORD, ICOORD>(VoxRot(negY, posX, posZ)));
-  pn(vox100|vox010|vox110|vox101, new ChiralR<COORD, ICOORD>(VoxRot(negX, negY, posZ)));
-  pn(vox000|vox001|vox100|vox110, new ChiralR<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-
-  pn(vox000|vox001|vox011|vox111, new ChiralR<COORD, ICOORD>(VoxRot(negZ, posY, posX)));
-  pn(vox101|vox111|vox011|vox010, new ChiralR<COORD, ICOORD>(VoxRot(negZ, posX, negY)));
-  pn(vox001|vox101|vox111|vox110, new ChiralR<COORD, ICOORD>(VoxRot(negZ, negY, negX)));
-  pn(vox001|vox011|vox100|vox101, new ChiralR<COORD, ICOORD>(VoxRot(negZ, negX, posY)));
-
-  pn(vox000|vox010|vox001|vox101, new ChiralR<COORD, ICOORD>(VoxRot(posX, negZ, posY)));
-  pn(vox001|vox011|vox010|vox110, new ChiralR<COORD, ICOORD>(VoxRot(negY, negZ, posX)));
-  pn(vox100|vox110|vox111|vox011, new ChiralR<COORD, ICOORD>(VoxRot(negX, negZ, negY)));
-  pn(vox000|vox100|vox101|vox111, new ChiralR<COORD, ICOORD>(VoxRot(posY, negZ, negX)));
-
-  pn(vox000|vox001|vox010|vox110, new ChiralL<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(vox100|vox110|vox010|vox011, new ChiralL<COORD, ICOORD>(VoxRot(negY, posX, posZ)));
-  pn(vox000|vox100|vox110|vox111, new ChiralL<COORD, ICOORD>(VoxRot(negX, negY, posZ)));
-  pn(vox000|vox100|vox101|vox010, new ChiralL<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-
-  pn(vox101|vox001|vox011|vox010, new ChiralL<COORD, ICOORD>(VoxRot(negZ, posY, posX)));
-  pn(vox001|vox011|vox111|vox110, new ChiralL<COORD, ICOORD>(VoxRot(negZ, posX, negY)));
-  pn(vox100|vox101|vox111|vox011, new ChiralL<COORD, ICOORD>(VoxRot(negZ, negY, negX)));
-  pn(vox000|vox001|vox101|vox111, new ChiralL<COORD, ICOORD>(VoxRot(negZ, negX, posY)));
-
-  pn(vox000|vox100|vox001|vox011, new ChiralL<COORD, ICOORD>(VoxRot(posX, negZ, posY)));
-  pn(vox000|vox010|vox011|vox111, new ChiralL<COORD, ICOORD>(VoxRot(negY, negZ, posX)));
-  pn(vox101|vox111|vox110|vox010, new ChiralL<COORD, ICOORD>(VoxRot(negX, negZ, negY)));
-  pn(vox001|vox101|vox100|vox110, new ChiralL<COORD, ICOORD>(VoxRot(posY, negZ, negX)));
-
-  pn(vox000|vox001|vox010|vox100, new Pyramid<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(vox000|vox100|vox101|vox110, new Pyramid<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-  pn(vox111|vox110|vox010|vox100, new Pyramid<COORD, ICOORD>(VoxRot(negX, negY, posZ)));
-  pn(vox000|vox010|vox110|vox011, new Pyramid<COORD, ICOORD>(VoxRot(negY, posX, posZ)));
-
-  pn(vox111|vox110|vox101|vox011, new Pyramid<COORD, ICOORD>(VoxRot(negY, negX, negZ)));
-  pn(vox001|vox011|vox111|vox010, new Pyramid<COORD, ICOORD>(VoxRot(posX, negY, negZ)));
-  pn(vox000|vox001|vox011|vox101, new Pyramid<COORD, ICOORD>(VoxRot(posY, posX, negZ)));
-  pn(vox001|vox101|vox111|vox100, new Pyramid<COORD, ICOORD>(VoxRot(negX, posY, negZ)));
-
-  pn(vox100|vox010|vox001|vox111, new CheckerBoard<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(vox000|vox110|vox101|vox011, new CheckerBoard<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-
-  pn(vox000|vox010|vox100|vox111, new FourThreeOne<COORD, ICOORD>(VoxRot(posX, posY, posZ)));
-  pn(vox000|vox100|vox110|vox011, new FourThreeOne<COORD, ICOORD>(VoxRot(posY, negX, posZ)));
-  pn(vox100|vox010|vox110|vox001, new FourThreeOne<COORD, ICOORD>(VoxRot(negX, negY, posZ)));
-  pn(vox000|vox010|vox110|vox101, new FourThreeOne<COORD, ICOORD>(VoxRot(negY, posX, posZ)));
-
-  pn(vox000|vox001|vox011|vox110, new FourThreeOne<COORD, ICOORD>(VoxRot(negZ, posY, posX)));
-  pn(vox100|vox010|vox011|vox111, new FourThreeOne<COORD, ICOORD>(VoxRot(negZ, posX, negY)));
-  pn(vox000|vox110|vox111|vox101, new FourThreeOne<COORD, ICOORD>(VoxRot(negZ, negY, negX)));
-  pn(vox100|vox101|vox001|vox010, new FourThreeOne<COORD, ICOORD>(VoxRot(negZ, negX, posY)));
-
-  pn(vox010|vox011|vox101|vox110, new FourThreeOne<COORD, ICOORD>(VoxRot(posX, posZ, negY)));
-  pn(vox100|vox110|vox111|vox001, new FourThreeOne<COORD, ICOORD>(VoxRot(negY, posZ, negX)));
-  pn(vox000|vox100|vox101|vox011, new FourThreeOne<COORD, ICOORD>(VoxRot(negX, posZ, posY)));
-  pn(vox000|vox010|vox001|vox111, new FourThreeOne<COORD, ICOORD>(VoxRot(posY, posZ, posX)));
-
-  pn(vox000|vox001|vox101|vox110, new FourThreeOne<COORD, ICOORD>(VoxRot(posX, negZ, posY)));
-  pn(vox001|vox011|vox010|vox100, new FourThreeOne<COORD, ICOORD>(VoxRot(negY, negZ, posX)));
-  pn(vox000|vox011|vox111|vox110, new FourThreeOne<COORD, ICOORD>(VoxRot(negX, negZ, negY)));
-  pn(vox010|vox100|vox101|vox111, new FourThreeOne<COORD, ICOORD>(VoxRot(posY, negZ, negX)));
-
-  pn(vox100|vox110|vox101|vox011, new FourThreeOne<COORD, ICOORD>(VoxRot(posZ, posY, negX)));
-  pn(vox000|vox001|vox100|vox111, new FourThreeOne<COORD, ICOORD>(VoxRot(posZ, posX, posY)));
-  pn(vox000|vox010|vox011|vox101, new FourThreeOne<COORD, ICOORD>(VoxRot(posZ, negY, posX)));
-  pn(vox001|vox111|vox110|vox010, new FourThreeOne<COORD, ICOORD>(VoxRot(posZ, negX, negY)));
-
-  pn(vox001|vox011|vox111|vox100, new FourThreeOne<COORD, ICOORD>(VoxRot(posX, negY, negZ)));
-  pn(vox000|vox101|vox011|vox111, new FourThreeOne<COORD, ICOORD>(VoxRot(negY, negX, negZ)));
-  pn(vox010|vox001|vox101|vox111, new FourThreeOne<COORD, ICOORD>(VoxRot(negX, posY, negZ)));
-  pn(vox110|vox001|vox101|vox011, new FourThreeOne<COORD, ICOORD>(VoxRot(posY, posX, negZ)));
-} // end initializeProtoNodes()
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// protonodes.h defines the specific ProtoVSBNode subclasses and
+// initializers.
+
+#include "protonodes.h"
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 #undef swap
 #endif // VSB_H

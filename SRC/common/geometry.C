@@ -46,18 +46,3 @@ double triangleArea(const Coord &p1, const Coord &p2, const Coord &p3) {
   double c = norm2(p3 - p1);
   return (0.25 * sqrt(fabs(4.*a*c - (a-b+c)*(a-b+c))));
 }
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-COrientedPlane COrientedPlane::reversed() const {
-  return COrientedPlane(-normal, -offset);
-}
-
-double COrientedPlane::distance(const Coord3D &x) const {
-  return dot(x, normal) - offset;
-}
-
-std::ostream &operator<<(std::ostream &os, const COrientedPlane &plane) {
-  return os << "COrientedPlane(" << plane.normal << ", " << plane.offset
-	    << ")";
-}

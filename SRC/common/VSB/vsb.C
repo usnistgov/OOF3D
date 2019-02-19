@@ -69,14 +69,6 @@ VoxRot::VoxRot(VoxelEdgeDirection d0, VoxelEdgeDirection d1,
   : actualAxes({d0, d1, d2})
 {
   assert(d0.axis != d1.axis && d1.axis != d2.axis && d2.axis != d0.axis);
-// #ifdef DEBUG
-//   if(d0.axis == d1.axis || d1.axis == d2.axis || d2.axis == d0.axis) {
-//     oofcerr << "VoxRot::VoxRot: d0=" << d0 << " d1=" << d1 << " d2=" << d2
-// 	    << std::endl;
-//     throw ErrProgrammingError("Badly specified voxel rotation!",
-// 			      __FILE__, __LINE__);
-//   }
-// #endif // DEBUG
 }
 
 VoxelEdgeDirection VoxRot::toActual(const VoxelEdgeDirection &d) const
@@ -172,8 +164,4 @@ std::string &printSig(unsigned char sig) {
   }
   return sigdict[sig];
 }
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 

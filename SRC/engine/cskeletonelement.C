@@ -11,6 +11,7 @@
 
 #include "common/IO/canvaslayers.h"
 #include "common/IO/oofcerr.h"
+#include "common/VSB/cplane.h"
 #include "common/cdebug.h"
 #include "common/cmicrostructure.h"
 #include "common/lock.h"
@@ -847,11 +848,15 @@ unsigned int CSkeletonElement::getOtherFaceIndex(unsigned int f,
 // have different element shapes, they'll have to have different
 // getPlanes methods.
 
-std::vector<COrientedPlane> CSkeletonElement::getPlanes(
+// Uses VSBPlane<Coord3D> instead of COrientedPlane because the planes
+// are passed to the VSB code, which preserves modularity by not
+// knowing the OOF3D plane class.
+
+std::vector<VSBPlane<Coord3D>> CSkeletonElement::getPlanes(
 					const std::vector<Coord3D> &epts)
   const
 {
-  std::vector<COrientedPlane> planes;
+  std::vector<VSBPlane<Coord3D>> planes;
   planes.reserve(4);
   for(unsigned int f=0; f<NUM_TET_FACES; f++) {
     Coord3D pt0 = epts[CSkeletonElement::getFaceArray(f)[0]];
@@ -890,7 +895,7 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CSkeletonBase *skel)
   const CMicrostructure *ms = skel->getMicrostructure();
   // Get the corners and planes of the element in voxel coordinates.
   std::vector<Coord3D> epts = pixelCoords(ms);
-  std::vector<COrientedPlane> planes = getPlanes(epts);
+  std::vector<VSBPlane<Coord3D>> planes = getPlanes(epts);
   // Get the element's bounding box in voxel coordinates.
   CRectangularPrism bbox(epts[0], epts[1]);
   bbox.swallow(epts[2]);
@@ -923,17 +928,17 @@ const DoubleVec CSkeletonElement::categoryVolumes(const CSkeletonBase *skel)
 	      << " [" << result << "]"
 	      << " actual=" << actual
 	      << " (error=" << fracvol*100 << "%)" << std::endl;
-      if(verboseVSB()) {
-	oofcerr << "CSkeletonElement::categoryVolumes: saving VSBs:" << std::endl;
-	for(unsigned int cat=0; cat < ncat; cat++) {
-	  if(result[cat] > 0) {
-	    std::string filename = "vsb_" + to_string(cat);
-	    oofcerr << "CSkeletonElement::categoryVolumes: " << filename
-		    << std::endl;
-	    skel->saveClippedVSB(cat, planes, filename);
-	  }
-	}
-      }
+      // if(verboseVSB()) {
+      // 	oofcerr << "CSkeletonElement::categoryVolumes: saving VSBs:" << std::endl;
+      // 	for(unsigned int cat=0; cat < ncat; cat++) {
+      // 	  if(result[cat] > 0) {
+      // 	    std::string filename = "vsb_" + to_string(cat);
+      // 	    oofcerr << "CSkeletonElement::categoryVolumes: " << filename
+      // 		    << std::endl;
+      // 	    skel->saveClippedVSB(cat, planes, filename);
+      // 	  }
+      // 	}
+      // }
     }
     // TODONT: Throwing an exception here is incorrect.  If the Skeleton
     // contains illegal elements, it's possible that this element is
@@ -1459,7 +1464,7 @@ void CSkeletonElement::drawVoxelCategoryIntersection(LineSegmentLayer *layer,
   const CMicrostructure *ms = skel->getMicrostructure();
   ms->categorizeIfNecessary();
   std::vector<Coord3D> epts = pixelCoords(ms);
-  std::vector<COrientedPlane> planes = getPlanes(epts);
+  std::vector<VSBPlane<Coord3D>> planes = getPlanes(epts);
   const VoxelSetBoundary *vsb = skel->getVoxelSetBoundary(category);
   vsb->drawClippedVSB(planes, layer);
 }

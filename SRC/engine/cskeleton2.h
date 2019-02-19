@@ -17,6 +17,8 @@
 #include "common/coord_i.h"
 #include "common/geometry.h"
 #include "common/pythonexportable.h"
+#include "common/VSB/cplane.h"
+#include "common/VSB/cprism.h"
 #include "engine/catvoldata.h"
 #include "engine/cskeleton2_i.h"
 #include "engine/cskeletonboundary.h"
@@ -176,7 +178,7 @@ protected:
   mutable std::vector<VoxelSetBoundary*> voxelSetBdys; // one for each category.
   // The prisms that define the subregions are stored here in the
   // skeleton because they're shared by all VoxelSetBoundaries.
-  mutable std::vector<ICRectangularPrism> vsbBins;
+  mutable std::vector<ICRectPrism<ICoord3D>> vsbBins;
   mutable ICoord3D vsbBinSize;		// nominal size of bins.
   // defaultVSBbin is the size used when there's not enough
   // information to determine a good bin size.  It's set by the
@@ -351,7 +353,7 @@ public:
   double energyTotal(double alpha) const;
   double clippedCategoryVolume(unsigned int,
 			       const CRectangularPrism&,
-			       const std::vector<COrientedPlane>&) const;
+			       const std::vector<VSBPlane<Coord3D>>&) const;
   void setDefaultVSBbinSize(const CSkeletonBase*);
   void buildVSBs() const;
   void clearVSBs() const;
@@ -361,15 +363,15 @@ public:
   ICoord3D getDefaultVSBbinSize() const; // guesses a reasonable size
   // Routines for testing and debugging VSBs
   CategoryVolumesData *checkCategoryVolumes() const;
-  bool checkVSB(unsigned int) const;
-  void dumpVSB(unsigned int, const std::string&) const;// save VSB graph to file
-  void dumpVSBLines(unsigned int, const std::string&) const; // plot VSB edge
+  bool checkVSB(int) const;
+  void dumpVSB(int, const std::string&) const;// save VSB graph to file
+  void dumpVSBLines(int, const std::string&) const; // plot VSB edge
   void drawVoxelSetBoundary(LineSegmentLayer*, int) const;
-  void saveClippedVSB(unsigned int, const std::vector<COrientedPlane>&,
+  void saveClippedVSB(int, const std::vector<VSBPlane<Coord3D>>&,
 		      const std::string&) const;
-  void saveClippedVSB(unsigned int, const COrientedPlane&, const std::string&)
-    const;
-  double clipVSBVol(unsigned int, const COrientedPlane&) const;
+  void saveClippedVSB(int, const VSBPlane<Coord3D>&,
+		      const std::string&) const;
+  double clipVSBVol(int, const VSBPlane<Coord3D>&) const;
 
   // methods related to deputies and copying
   virtual CSkeleton *sheriffSkeleton() = 0;

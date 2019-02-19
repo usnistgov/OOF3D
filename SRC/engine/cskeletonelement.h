@@ -17,6 +17,7 @@
 #include "common/cachedvalue.h"
 #include "common/coord.h"
 #include "common/doublevec.h"
+#include "common/VSB/cplane.h"
 #include "engine/cskeleton2_i.h"
 #include "engine/cskeletonselectable.h"
 #include "engine/homogeneity.h"
@@ -27,7 +28,6 @@
 #include <limits>
 
 class CMicrostructure;
-class COrientedPlane;
 class CSkeleton;
 class FEMesh;
 class LineSegmentLayer;
@@ -118,7 +118,7 @@ protected:
   LineIntersectionPoint *getLineIntersectionPoint(
   			  const CSkeletonBase*, std::vector<int> &, double,
   			  const Coord&, const Coord&) const;
-  std::vector<COrientedPlane> getPlanes(const std::vector<Coord3D>&) const;
+  std::vector<VSBPlane<Coord3D>> getPlanes(const std::vector<Coord3D>&) const;
 
 public:
   // static topological info

@@ -168,8 +168,8 @@ private:
 	data[i][j] = data[i][j-1] + size[0];
       }
     }
-
   } // allocate
+  
   void resize(const ICoord &newsize) { // destroys contents
     if(newsize == size) return;
     free();			// have to do this *before* setting size!
