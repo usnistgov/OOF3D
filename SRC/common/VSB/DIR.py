@@ -11,4 +11,4 @@
 dirname = 'VSB'
 clib = 'oof3dcommon'
 cfiles = ['vsb.C']
-hfiles = ['vsb.h', 'cprism.h']
+hfiles = ['array3d.h', 'cplane.h', 'cprism.h', 'protonodes.h', 'vsb.h']

@@ -41,12 +41,11 @@ VoxelSetBoundary::~VoxelSetBoundary() {
 }
 
 double VoxelSetBoundary::clippedVolume(
-		       const BinList &bins,
 		       const CRectPrism<Coord3D> &ebbox,
 		       const std::vector<VSBPlane<Coord3D>> &planes)
   const
 {
-  return vsb->clippedVolume(bins, ebbox, planes);
+  return vsb->clippedVolume(ebbox, planes);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -57,11 +56,8 @@ bool VoxelSetBoundary::checkEdges() const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-void VoxelSetBoundary::dump(std::ostream &os,
-			    const std::vector<ICRectPrism<ICoord3D>> &bins)
-  const
-{
-  vsb->dump(os, bins);
+void VoxelSetBoundary::dump(std::ostream &os) const {
+  vsb->dump(os);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

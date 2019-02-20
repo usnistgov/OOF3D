@@ -264,7 +264,7 @@
 //     imageVal -- the value of the voxels in the voxel set
 //     voxelVolume -- the volume of a voxel
 //     bins -- a set of 3D regions of the image.  A separate graph will
-//       be build in each region.  ICRectPrism is defined in cprism.h
+//       be build in each region.  ICRectPrism is defined in cprism.h.
 //
 // Template arguments:
 //   COORD: A coordinate or vector in 3 dimensional space with
@@ -311,15 +311,13 @@
 // * double VoxelSetBdy::volume()  -- the volume of the voxel set.
 //
 // * double VoxelSetBdy::clippedVolume(
-//      const std::vector<ICRectPrism<ICOORD>> &bins,
 //      const CRectPrism<COORD> &bbox,
 //      const std::vector<VoxelSetBdy::Plane> &planes)
 //   Return the volume of the polyhedron formed by clipping with all
-//   of the given planes.  bins is a list of subregions, as in
-//   buildVSB().  bbox is the bounding box of the region defined by
-//   the planes.  Only subregions that intersect the bounding box will
-//   be considered.  If bbox is too large, the routine will work but
-//   may be slow.
+//   of the given planes. bbox is the bounding box of the region
+//   defined by the planes.  Only subregions that intersect the
+//   bounding box will be considered.  If bbox is too large, the
+//   routine will work but may be slow.
 
 // There are also some debugging routines:
 
@@ -339,10 +337,8 @@
 //   should only be run for small graphs, or if you have a lot of free
 //   time.  checkConnectivity() returns true if the test passes.
 
-// * void dump(std::ostream&, const std::vector<ICRectPrism<ICOORD>>&)
-//   writes raw data to the given output stream.  The second argument
-//   is a set of subregions, like the bins argument to clippedVolume
-//   and buildVSB.
+// * void dump(std::ostream&)
+//   writes raw data to the given output stream. 
 
 // * void dumpLines(const std::string &filename, CONVERTER &conv)
 //   writes the edges of the VSB to the given file in a format that
@@ -895,6 +891,10 @@ public:
     
   VSBGraph(const VSBGraph<COORD, ICOORD>&&) = delete;
 
+  const ICRectPrism<ICOORD> &subregion() const {
+    return domain;
+  }
+
   unsigned int size() const {
     return vertices.size();
   }
@@ -1432,9 +1432,12 @@ public:
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // VSBEdgeIterator can be used to loop over the edges of a clipped
-// voxel set boundary, for debugging and graphics.
-// Use it like this:
-//    VSBEdgeIterator<Coord, ICoord> iter = vsb->iterator();
+// voxel set boundary, for debugging and graphics.  Its template
+// argument is the VoxelSetBdy class that it's iterating over.  Use
+// the EdgeIterator typedef in VoxelSetBdy instead of writing it all
+// out.
+// Use the iterator like this:
+//    VoxelSetBdy<COORD,ICOORD,IMAGEVAL>::EdgeIterator iter = vsb->iterator();
 //    while(!iter.done()) {
 //      Coord pt0 = iter.node0()->position;
 //      Coord pt1 = iter.node1()->position;
@@ -1581,11 +1584,10 @@ public:
 
   // VoxelSetBdy::clippedVolume computes the volume of the voxels that
   // is inside the volume defined by the given planes.
-  //  * bins is a set of prisms that tiles the image.
   //  * ebbox is the bounding box of the region delimited by the planes.
-  //  * planes is the clipping planes.
-  double clippedVolume(const std::vector<ICRectPrism<ICOORD>> &bins,
-		       const CRectPrism<COORD> &ebbox,
+  //  * planes is the set of clipping planes.
+
+  double clippedVolume(const CRectPrism<COORD> &ebbox,
 		       const std::vector<Plane> &planes)
     const
   {
@@ -1597,13 +1599,10 @@ public:
     // the corners of the element bounding box quickly, and then examine
     // only the bins between the corners.
 
-    // TODO: Graphs know their subregions so there's no need to pass
-    // them in the argument list.
-    
-    for(unsigned int s=0; s<bins.size(); s++) { // loop over bins
-      if(!graphs[s].empty() && bins[s].intersects(ebbox)) {
+    for(const Graph &graph : graphs) {
+      if(graph.subregion().intersects(ebbox)) {
 	++nRegionsUsed;
-	Graph *clippedGraph = graphs[s].copyAndClip(planes[0]);
+	Graph *clippedGraph = graph.copyAndClip(planes[0]);
 	for(unsigned i=1; i<planes.size(); i++) {
 	  clippedGraph->clipInPlace(planes[i]);
 	}
@@ -1635,12 +1634,11 @@ public:
     return ok;
   }
   
-  void dump(std::ostream &os, const std::vector<ICRectPrism<ICOORD>> &bins)
-    const
-  {
+  void dump(std::ostream &os) const {
     for(unsigned int s=0; s<graphs.size(); s++) {
-      os << "Subregion " << s << " " << bins[s] << std::endl;
-      graphs[s].dump(os);
+      const Graph &graph = graphs[s];
+      os << "Subregion " << s << " " << graph.subregion() << std::endl;
+      graph.dump(os);
     }
   }
 

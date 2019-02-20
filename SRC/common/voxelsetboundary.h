@@ -43,11 +43,10 @@ public:
   VoxelSetBoundary(const CMicrostructure *ms, const BinList &bins, int cat);
   ~VoxelSetBoundary();
   unsigned int size() const { return vsb->size(); }
-  double clippedVolume(const BinList &bins,
-		       const CRectPrism<Coord3D> &bbox,
+  double clippedVolume(const CRectPrism<Coord3D> &bbox,
 		       const std::vector<VSBPlane<Coord3D>> &planes) const;
   bool checkEdges() const;
-  void dump(std::ostream &os, const std::vector<ICRectPrism<ICoord3D>>&) const;
+  void dump(std::ostream &os) const;
   void dumpLines(const std::string&) const;
   void saveClippedVSB(const std::vector<VSBPlane<Coord3D>>&,
  		      const std::string&) const;

@@ -4332,7 +4332,7 @@ double CSkeletonBase::clippedCategoryVolume(
 			    const std::vector<VSBPlane<Coord3D>> &planes)
   const
 {
-  return voxelSetBdys[cat]->clippedVolume(vsbBins, ebbox, planes);
+  return voxelSetBdys[cat]->clippedVolume(ebbox, planes);
 }
 
 
@@ -4408,7 +4408,7 @@ void CSkeletonBase::dumpVSB(int cat, const std::string &file) const {
   getMicrostructure()->categorizeIfNecessary();
   buildVSBs();
   std::ofstream f(file);
-  voxelSetBdys[cat]->dump(f, vsbBins);
+  voxelSetBdys[cat]->dump(f);
 }
 
 void CSkeletonBase::dumpVSBLines(int cat, const std::string &file)
@@ -4438,7 +4438,7 @@ void CSkeletonBase::drawVoxelSetBoundary(LineSegmentLayer *layer,
     }
     iter.next();
   }
-  // vsb->dump(std::cerr, vsbBins);
+  // vsb->dump(std::cerr);
   // double vol = vsb->volume();
   // oofcerr << "CSkeletonBase::drawVoxelSetBoundary: volume=" << vol
   // 	  << std::endl;
@@ -4474,7 +4474,7 @@ double CSkeletonBase::clipVSBVol(int cat,
   buildVSBs();
   std::vector<VSBPlane<Coord3D>> planes(1, plane);
   CRectPrism<Coord3D> bbox(Coord3D(0,0,0), ms->sizeInPixels().coord());
-  return voxelSetBdys[cat]->clippedVolume(vsbBins, bbox, planes);
+  return voxelSetBdys[cat]->clippedVolume(bbox, planes);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
