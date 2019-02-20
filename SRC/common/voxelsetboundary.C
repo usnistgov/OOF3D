@@ -29,38 +29,15 @@ void initializeVSB() {
 VoxelSetBoundary::VoxelSetBoundary(const CMicrostructure *ms,
 				   const BinList &bins,
 				   int cat)
-  : microstructure(ms)
+  : VoxelSetBdy<Coord3D, ICoord3D, Array<int>, int>(
+	    *ms->getCategoryMapRO(), cat, ms->volumeOfVoxels(), bins),
+    microstructure(ms)
 {
-  vsb =
-    buildVSB<Coord3D, ICoord3D, Array<int>, int>(*ms->getCategoryMapRO(), cat,
-						 ms->volumeOfVoxels(), bins);
 }
 
-VoxelSetBoundary::~VoxelSetBoundary() {
-  delete vsb;
-}
-
-double VoxelSetBoundary::clippedVolume(
-		       const CRectPrism<Coord3D> &ebbox,
-		       const std::vector<VSBPlane<Coord3D>> &planes)
-  const
-{
-  return vsb->clippedVolume(ebbox, planes);
-}
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-bool VoxelSetBoundary::checkEdges() const {
-  return vsb->checkEdges();
-}
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-void VoxelSetBoundary::dump(std::ostream &os) const {
-  vsb->dump(os);
-}
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // Converter is a functional that converts the voxel coordinates used
 // by the VSB code to physical coordinates, so that the output of the
@@ -74,7 +51,7 @@ struct Converter {
 
 void VoxelSetBoundary::dumpLines(const std::string &filename) const {
   Converter cnv(microstructure);
-  vsb->dumpLines(filename, cnv);
+  VoxelSetBdy<Coord3D, ICoord3D, Array<int>, int>::dumpLines(filename, cnv);
 }
 
 void VoxelSetBoundary::saveClippedVSB(
@@ -83,13 +60,8 @@ void VoxelSetBoundary::saveClippedVSB(
   const
 {
   Converter cnv(microstructure);
-  vsb->saveClippedVSB(planes, cnv, filename);
-}
-
-VoxelSetBdy<Coord3D, ICoord3D, int>::EdgeIterator VoxelSetBoundary::iterator()
-  const
-{
-  return vsb->iterator();
+  VoxelSetBdy<Coord3D, ICoord3D, Array<int>, int>::saveClippedVSB(
+						  planes, cnv, filename);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -102,7 +74,9 @@ public:
   GraphPlotter(const CMicrostructure *ms, LineSegmentLayer *layer)
     : ms(ms), layer(layer)
   {}
-  void operator()(const VoxelSetBdy<Coord3D, ICoord3D, int>::Graph *graph) {
+  void operator()(
+	  const VoxelSetBdy<Coord3D, ICoord3D, Array<int>, int>::Graph *graph)
+  {
     unsigned int nsegs = (3*graph->size())/2;
     layer->set_nSegs(nsegs);
     for(unsigned int i=0; i<graph->size(); i++) {
@@ -125,7 +99,8 @@ void VoxelSetBoundary::drawClippedVSB(
   const
 {
   GraphPlotter plotter(microstructure, layer);
-  vsb->drawClippedVSB(planes, plotter);
+  VoxelSetBdy<Coord3D, ICoord3D, Array<int>, int>::drawClippedVSB(
+							  planes, plotter);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

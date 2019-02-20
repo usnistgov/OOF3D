@@ -28,11 +28,11 @@
 // "vsb.h".
 
 // This documentation refers to "images", but the image need not be a
-// conventional image.  It is just a three dimensional regionl,
-// divided into a rectangular array of identically sized rectangular
-// regions (voxels), with a value (category) assigned to each voxel.
-// A voxel set consists of all voxels in the image with the same
-// category.
+// conventional image.  It is just a three dimensional rectangular
+// volume, divided into a rectangular array of identically sized
+// rectangular regions (voxels), with a value (category) assigned to
+// each voxel.  A voxel set consists of all voxels in the image with
+// the same category.
 
 // All classes used here are templates, so that they can work with
 // existing image and coordinate classes.  (For simplicity the template
@@ -51,9 +51,9 @@
 // Actually, the VSB is represented by a bunch of graphs.  The image
 // is split into subregions and a separate graph is constructed for
 // each subregion.  This allows the expensive graph clipping operation
-// to be skipped for large parts of the volume when its known that the
-// voxel set only occupies a small part of the volume.  Because the
-// optimal size of the subregions depends on the application, the
+// to be skipped for large parts of the volume when it's known that
+// the voxel set only occupies a small part of the volume.  Because
+// the optimal size of the subregions depends on the application, the
 // regions are passed in as an argument.
 
 // There are three main parts to the calculation.
@@ -61,12 +61,12 @@
 // (2) Clipping the VSB by planes (the faces of the convex polyhedron).
 // (3) Computing the volume of the clipped polyhedron.
 
-// The graphs are VSBGraph objects, and are contained in a
-// VoxelSetBoundary object.  (The VoxelSetBoundary contains a bit more
-// information than the VSBGraphs, but pretty much passes all of its
-// work to the graphs.)  The graphs are constructed by buildVSB(),
-// which creates a 3D array, protoNodes, of ProtoVSBNode pointers at
-// the corners of every voxel in each graph's subregion of the
+// The graphs are VSBGraph objects, and are contained in a VoxelSetBdy
+// object.  (The VoxelSetBdy contains a bit more information than the
+// VSBGraphs, but pretty much passes all of its work to the graphs.)
+// The graphs are constructed by the VoxelSetBdy constructor, which
+// creates a 3D array, protoNodes, of ProtoVSBNode pointers at the
+// corners of every voxel in each graph's subregion of the
 // Microstructure.  Each point in protoNodes is the center of a 2x2x2
 // cube of voxels, but only some of the 8 voxels are occupied (ie, in
 // the voxel set). (The 2x2x2 cubes on the edges of the image always
@@ -91,7 +91,7 @@
 // real space axes.  The occupied/unoccupied status of the voxels in
 // the cube is encoded in the bits of an unsigned char (called a voxel
 // signature), which is used to look up the ProtoVSBNode type and
-// orientation in a table.  VoxelSetBoundary::protoVSBNodeFactory()
+// orientation in a table.  VoxelSetBdy::protoVSBNodeFactory()
 // returns a pointer to a new ProtoVSBNode of the correct type.  It
 // returns nullptr if the arrangement of voxels doesn't define a
 // corner of the polyhedron.
@@ -113,10 +113,10 @@
 // ProtoVSBNode depends on the voxel geometry, which is known to the
 // ProtoVSBNode subclass.
 
-// After creating the ProtoVSBNodes, buildVSB() calls
+// After creating the ProtoVSBNodes, the VoxelSetBdy constructor calls
 // ProtoVSBNode::connect() to set the nodes' neighbor pointers.  If a
 // ProtoVSBNode needs a neighbor in the +x, +y, or +z direction (in
-// real space), buildVSB() finds the next ProtoVSBNode in that
+// real space), the constructor finds the next ProtoVSBNode in that
 // direction and calls connect().  Each ProtoVSBNode subtype knows in
 // which directions its neighbors lie, and how to arrange them so that
 // they're ordered correctly for the clipping and volume calculations.
@@ -176,7 +176,7 @@
 // that passes straight through the 2x2x2 cube (-z and +z) and another
 // edge that coincides with the first edge in the -z direction but
 // joins the -x and -y edges instead of passing through.  All such
-// VSBNodes with only two neighbors are stored in the VoxelSetBoundary
+// VSBNodes with only two neighbors are stored in the VoxelSetBdy
 // when they're created and are cleaned up after all connections are
 // made.
 
@@ -196,7 +196,7 @@
 // * We want to be able to clip the same graph multiple times to
 //   compute its intersection with many polyhedra, so instead of just
 //   clipping in place, we have two methods, VSBGraph::copyAndClip()
-//   and VSBGraph::clipInPlace().  copyAndClip() is used to clip to
+//   and VSBGraph::clipInPlace().  copyAndClip() is used to clip at
 //   the first polyhedron face, and clipInPlace() is used for the rest.
 // * For the same reason, we don't store the distances from the nodes
 //   to the clipping plane in the VSBNodes.
@@ -246,27 +246,20 @@
 
 // USAGE
 
-// To construct the boundary of a voxel set, call the template
-// function buildVSB(), which returns a VoxelSetBdy object.  To
-// compute the volume of the intersection of a VoxelSetBdy with a set
-// of planes, call its clippedVolume method.
-
-// buildVSB()
-//
-// template <class COORD, class ICOORD, class IMAGE, class IMAGEVAL>
-// VoxelSetBdy<COORD, ICOORD, IMAGEVAL> *buildVSB(
-//    const IMAGE &image, IMAGEVAL &imageVal,
-//    double voxelVolume,
-//    const std::vector<ICRectPrism<ICOORD> &bins);
+// To construct the boundary of a voxel set, create an object of the
+// VoxelSetBdy class.  For example:
+//  auto *vsb = new VoxelSetBdy<COORD, ICOORD, IMAGE, IMAGEVAL>(
+//               image, imageVal, voxelVolume, subregions);
 //
 // The arguments are:
-//     image -- a 3D array of voxels
-//     imageVal -- the value of the voxels in the voxel set
-//     voxelVolume -- the volume of a voxel
-//     bins -- a set of 3D regions of the image.  A separate graph will
-//       be build in each region.  ICRectPrism is defined in cprism.h.
+//     const IMAGE &image -- a 3D array of voxels
+//     const IMAGEVAL &imageVal -- the value of the voxels in the voxel set
+//     double voxelVolume -- the volume of a voxel
+//     const std::vector<ICRectPrism<ICOORD>> &subregions --
+//            a set of 3D regions of the image.  A separate graph will
+//            be build in each region. (ICRectPrism is defined in cprism.h.)
 //
-// Template arguments:
+// The template arguments are:
 //   COORD: A coordinate or vector in 3 dimensional space with
 //     floating point compenents.  The following member and non-member
 //     functions must supported: 
@@ -298,24 +291,18 @@
 //   IMAGEVAL: The value of a voxel in the image.  It needs an == operator.
 //       bool operator==(const IMAGEVAL&, const IMAGEVAL&)
 //
-// The return value of buildVSB is a pointer to a newly allocated
-// VoxelSetBdy object.  The pointer must be deleted when the caller is
-// done with it.
-
-// VoxelSetBdy
 //
-// VoxelSetBdy is a templated class.  The template arguments are
-// COORD, ICOORD, and IMAGEVAL, in that order, with the meanings given
-// above.  The following methods can be used:
+// Once the VoxelSetBdy has been constructed, the following methods
+// are available:
 //
 // * double VoxelSetBdy::volume()  -- the volume of the voxel set.
 //
 // * double VoxelSetBdy::clippedVolume(
 //      const CRectPrism<COORD> &bbox,
 //      const std::vector<VoxelSetBdy::Plane> &planes)
-//   Return the volume of the polyhedron formed by clipping with all
-//   of the given planes. bbox is the bounding box of the region
-//   defined by the planes.  Only subregions that intersect the
+//   Returns the volume of the polyhedron formed by clipping the voxel
+//   set with all of the given planes. bbox is the bounding box of the
+//   region defined by the planes.  Only subregions that intersect the
 //   bounding box will be considered.  If bbox is too large, the
 //   routine will work but may be slow.
 
@@ -381,7 +368,9 @@ template <class COORD, class ICOORD> class ProtoVSBNode;
 template <class VOXELSETBOUNDARY> class VSBEdgeIterator;
 template <class COORD, class ICOORD> class VSBGraph;
 template <class COORD, class ICOORD> class VSBNode;
-template <class COORD, class ICOORD, class IMAGEVAL> class VoxelSetBdy;
+
+template <class COORD, class ICOORD, class IMAGE, class IMAGEVAL>
+class VoxelSetBdy;
 
 template<class COORD, class ICOORD>
   ProtoVSBNode<COORD, ICOORD> *fetchProtoNode(unsigned char);
@@ -1496,7 +1485,7 @@ public:
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-template <class COORD, class ICOORD, class IMAGEVAL>
+template <class COORD, class ICOORD, class IMAGE, class IMAGEVAL>
 class VoxelSetBdy {
 public:
   typedef ProtoVSBNode<COORD, ICOORD> ProtoNode;
@@ -1504,28 +1493,104 @@ public:
   typedef VSBGraph<COORD, ICOORD> Graph;
   typedef VSBPlane<COORD> Plane;
   typedef IMAGEVAL ImageVal;
-  typedef VSBEdgeIterator<VoxelSetBdy<COORD, ICOORD, IMAGEVAL>> EdgeIterator;
+  typedef VSBEdgeIterator<VoxelSetBdy<COORD, ICOORD, IMAGE, IMAGEVAL>> EdgeIterator;
 private:
-  const unsigned int category;	// for debugging only
+  // const IMAGEVAL category;
   //  const CMicrostructure *microstructure;
   const double voxelVolume;	// volume of a single voxel
   // There's one VSBGraph for each subregion in the image. 
   std::vector<Graph> graphs;
   CRectPrism<COORD> *bbox_;
 public:
-  // First constructor arg is the size of a single voxel in physical
-  // units.  It used to be a pointer to a CMicrostructure, which was
-  // only used to get the volume of the voxel.
-  VoxelSetBdy(double voxVol,
-	      const std::vector<ICRectPrism<ICOORD>> &subregions,
-	      const IMAGEVAL &cat)
-    : category(cat),
-      voxelVolume(voxVol),
+  VoxelSetBdy(const IMAGE &image,
+	      const IMAGEVAL &imageVal,
+	      double voxVol,
+	      const std::vector<ICRectPrism<ICOORD>> &subregions
+	      )
+    : voxelVolume(voxVol),
       bbox_(nullptr)
   {
+    // Create and populate a graph for each subregion of the image.
     graphs.reserve(subregions.size());
-    for(unsigned int s=0; s<subregions.size(); s++)
-      graphs.emplace_back(subregions[s]);
+    for(unsigned int s=0; s<subregions.size(); s++) {
+      const ICRectPrism<ICOORD> &bin = subregions[s];
+      graphs.emplace_back(bin);
+      // Create an array of ProtoVSBNodes in the bin.  A ProtoVSBNode is
+      // the precursor to the actual VSBNodes.  There's a ProtoVSBNode
+      // at each corner of each voxel, but neighboring voxels share
+      // ProtoVSBNodes.  The array of protonodes is one larger in each
+      // dimension than the array of voxels.
+      ICRectPrism<ICOORD>
+	expanded(bin.lowerleftback(), bin.upperrightfront()+ICOORD(1,1,1));
+      Array3D<ProtoNode*, ICOORD, ICRectPrism<ICOORD>>
+	protoNodes(expanded, nullptr);
+      for(auto i=protoNodes.begin(); i!=protoNodes.end(); ++i) {
+	// The type of ProtoVSBNode depends on which of the 8 voxels
+	// surrounding the corner point are in the current category.
+	// The bits in the signature indicate which voxels are in the
+	// category.
+	char signature = voxelSignature(image, i.coord(), imageVal, bin);
+	// protoVSBNodeFactory returns a ProtoNode and also creates the
+	// VSBNodes in the graph, but it doesn't connect them.  That can
+	// be done only after all the ProtoNodes are constructed.
+	*i = protoVSBNodeFactory(s, signature, i.coord());
+      }
+      // Loop over protonodes, connecting each one to the next protoNode
+      // in the x, y, and z directions.
+      for(auto i=protoNodes.begin(); i!=protoNodes.end(); ++i) {
+	ICOORD here = i.coord();
+	ProtoNode *pnode = protoNodes[here];
+	if(pnode != nullptr) {
+	  // Get the reference space directions in which this ProtoNode
+	  // needs to find neighbors.
+	  const std::vector<VoxelEdgeDirection> &dirs(pnode->connectDirs());
+	  for(const VoxelEdgeDirection &dir : dirs) {
+	    // Convert the reference space directions to real space.
+	    VoxelEdgeDirection actualDir = pnode->rotation.toActual(dir);
+	    // It's only necessary to look in the positive directions
+	    // because the connections in the negative directions are
+	    // checked when examining the other node of the edge.
+	    if(actualDir.dir == 1) {
+	      unsigned int c = actualDir.axis;
+	      // Look for the next protoNode in this direction
+#ifndef NDEBUG
+	      bool found = false;
+#endif // NDEBUG
+	      for(unsigned int k=here[c]+1; k<=bin.upperrightfront()[c]; k++) {
+		ICOORD there = here;
+		there[c] = k;
+		if(protoNodes[there] != nullptr) { // found the next node
+#ifndef NDEBUG
+		  found = true;
+#endif // NDEBUG
+		  protoNodes[here]->connect(protoNodes[there]);
+		  break;		// done with this direction at this point
+		}
+	      } // end sesarch for protoNode in direction c
+#ifndef NDEBUG
+	      if(!found) {
+		std::cerr << "buildVSB: failed to find next node!" << std::endl;
+		std::cerr << "buildVSB: here=" << here << "c=" << c
+			  << " val=" << imageVal << std::endl;
+		assert(false);
+	      }
+#endif // NDEBUG
+	    } // end if actualDir is positive
+
+	  } // end loop over connection directions
+	}	  // end if pnode != nullptr
+      }	  // end loop over array of protoNodes
+
+      // Remove the 2-fold connected nodes
+      fixTwoFoldNodes(s);
+
+      // Delete the protoNodes.
+      for(auto i=protoNodes.begin(); i!=protoNodes.end(); ++i)
+	delete *i;
+
+    } // end loop over subregions
+
+    findBBox();
   }
 
   // protoVSBNodeFactory converts a signature (2x2x2 set of bools
@@ -1614,8 +1679,10 @@ public:
     return vol;
   } // end VoxelSetBdy::clippedVolume
 
-  VSBEdgeIterator<VoxelSetBdy<COORD, ICOORD, IMAGEVAL>> iterator() const {
-    return VSBEdgeIterator<VoxelSetBdy<COORD, ICOORD, IMAGEVAL>>(this);
+  VSBEdgeIterator<VoxelSetBdy<COORD, ICOORD, IMAGE, IMAGEVAL>> iterator()
+    const
+  {
+    return VSBEdgeIterator<VoxelSetBdy<COORD, ICOORD, IMAGE, IMAGEVAL>>(this);
   }
 
   bool checkEdges() const {
@@ -1694,107 +1761,6 @@ public:
   
   friend class VSBEdgeIterator<VoxelSetBdy>;
 };				// end template class VoxelSetBdy
-
-//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
-
-// Given an image and the value of a voxel in the image, build a
-// VoxelSetBdy that includes all voxels with that value.
-
-template <class COORD, class ICOORD, class IMAGE, class IMAGEVAL>
-VoxelSetBdy<COORD, ICOORD, IMAGEVAL>
-*buildVSB(const IMAGE &image,
-	  const IMAGEVAL &imageVal,
-	  double voxelVolume,
-	  const std::vector<ICRectPrism<ICOORD>> &bins)
-{
-  // for(auto &bin : bins)
-  //   std::cerr << "buildVSB:   bin=" << bin << std::endl;
-  typedef typename VoxelSetBdy<COORD, ICOORD, IMAGEVAL>::ProtoNode ProtoNode;
-  auto *vsb =
-    new VoxelSetBdy<COORD, ICOORD, IMAGEVAL>(voxelVolume, bins, imageVal);
-
-  for(unsigned int s=0; s<bins.size(); s++) { // loop over bins
-    // bin is a subregion of the image
-    const ICRectPrism<ICOORD> &bin = bins[s];
-    // Create an array of ProtoVSBNodes in the bin.  A ProtoVSBNode is
-    // the precursor to the actual VSBNodes.  There's a ProtoVSBNode
-    // at each corner of each voxel, but neighboring voxels share
-    // ProtoVSBNodes.  The array of protonodes is one larger in each
-    // dimension than the array of voxels.
-    ICRectPrism<ICOORD>
-      expanded(bin.lowerleftback(), bin.upperrightfront()+ICOORD(1,1,1));
-    Array3D<ProtoNode*, ICOORD, ICRectPrism<ICOORD>>
-      protoNodes(expanded, nullptr);
-    for(auto i=protoNodes.begin(); i!=protoNodes.end(); ++i) {
-      // The type of ProtoVSBNode depends on which of the 8 voxels
-      // surrounding the corner point are in the current category.
-      // The bits in the signature indicate which voxels are in the
-      // category.
-      char signature = voxelSignature(image, i.coord(), imageVal, bin);
-      // protoVSBNodeFactory returns a ProtoNode and also creates the
-      // VSBNodes in the graph, but it doesn't connect them.  That can
-      // be done only after all the ProtoNodes are constructed.
-      *i = vsb->protoVSBNodeFactory(s, signature, i.coord());
-    }
-    // Loop over protonodes, connecting each one to the next protoNode
-    // in the x, y, and z directions.
-    for(auto i=protoNodes.begin(); i!=protoNodes.end(); ++i) {
-      ICOORD here = i.coord();
-      ProtoNode *pnode = protoNodes[here];
-      if(pnode != nullptr) {
-	// Get the reference space directions in which this ProtoNode
-	// needs to find neighbors.
-	const std::vector<VoxelEdgeDirection> &dirs(pnode->connectDirs());
-	for(const VoxelEdgeDirection &dir : dirs) {
-	  // Convert the reference space directions to real space.
-	  VoxelEdgeDirection actualDir = pnode->rotation.toActual(dir);
-	  // It's only necessary to look in the positive directions
-	  // because the connections in the negative directions are
-	  // checked when examining the other node of the edge.
-	  if(actualDir.dir == 1) {
-	    unsigned int c = actualDir.axis;
-	    // Look for the next protoNode in this direction
-#ifndef NDEBUG
-	    bool found = false;
-#endif // NDEBUG
-	    for(unsigned int k=here[c]+1; k<=bin.upperrightfront()[c]; k++) {
-	      ICOORD there = here;
-	      there[c] = k;
-	      if(protoNodes[there] != nullptr) { // found the next node
-#ifndef NDEBUG
-		found = true;
-#endif // NDEBUG
-		protoNodes[here]->connect(protoNodes[there]);
-		break;		// done with this direction at this point
-	      }
-	    } // end sesarch for protoNode in direction c
-#ifndef NDEBUG
-	    if(!found) {
-	      std::cerr << "buildVSB: failed to find next node!" << std::endl;
-	      std::cerr << "buildVSB: here=" << here << "c=" << c
-			<< " val=" << imageVal << std::endl;
-	      assert(false);
-	    }
-#endif // NDEBUG
-	  } // end if actualDir is positive
-
-	} // end loop over connection directions
-      }	  // end if pnode != nullptr
-    }	  // end loop over array of protoNodes
-
-    // Remove the 2-fold connected nodes
-    vsb->fixTwoFoldNodes(s);
-
-    // Delete the protoNodes.
-    for(auto i=protoNodes.begin(); i!=protoNodes.end(); ++i)
-      delete *i;
-
-  } // end loop over bins
-
-  vsb->findBBox();
-  return vsb;
-} // end template function buildVSB
-
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

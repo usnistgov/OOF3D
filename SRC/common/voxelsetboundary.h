@@ -21,6 +21,7 @@
 #include <vector>
 #include "common/VSB/vsb.h"
 
+#include "common/array.h"
 #include "common/coord.h"
 #include "common/VSB/cprism.h"
 #include "common/VSB/cplane.h"
@@ -32,27 +33,17 @@ class CMicrostructure;
 class LineSegmentLayer;
 
 
-// TODO: Why isn't VoxelSetBoundary derived from VoxelSetBdy instead
-// of containing a pointer to one?
-
-class VoxelSetBoundary {
+class VoxelSetBoundary : public VoxelSetBdy<Coord3D, ICoord3D, Array<int>, int>
+{
 private:
   const CMicrostructure *microstructure;
-  VoxelSetBdy<Coord3D, ICoord3D, int> *vsb;
 public:
   VoxelSetBoundary(const CMicrostructure *ms, const BinList &bins, int cat);
-  ~VoxelSetBoundary();
-  unsigned int size() const { return vsb->size(); }
-  double clippedVolume(const CRectPrism<Coord3D> &bbox,
-		       const std::vector<VSBPlane<Coord3D>> &planes) const;
-  bool checkEdges() const;
-  void dump(std::ostream &os) const;
   void dumpLines(const std::string&) const;
   void saveClippedVSB(const std::vector<VSBPlane<Coord3D>>&,
  		      const std::string&) const;
   void drawClippedVSB(const std::vector<VSBPlane<Coord3D>>&,
  		      LineSegmentLayer*) const;
-  VoxelSetBdy<Coord3D, ICoord3D, int>::EdgeIterator iterator() const;
 };
 
 
