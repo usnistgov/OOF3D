@@ -354,6 +354,7 @@
 #ifndef VSB_H
 #define VSB_H
 
+#include <assert.h>
 #include <fstream>
 #include <set>
 #include <vector>
@@ -1556,7 +1557,7 @@ public:
 #ifndef NDEBUG
 	      bool found = false;
 #endif // NDEBUG
-	      for(unsigned int k=here[c]+1; k<=bin.upperrightfront()[c]; k++) {
+	      for(int k=here[c]+1; k<=bin.upperrightfront()[c]; k++) {
 		ICOORD there = here;
 		there[c] = k;
 		if(protoNodes[there] != nullptr) { // found the next node
