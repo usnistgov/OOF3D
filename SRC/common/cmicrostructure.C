@@ -642,42 +642,42 @@ void CMicrostructure::recategorize() {
   // oofcerr << "Release." << std::endl;
 }
 
-unsigned char CMicrostructure::voxelSignature(const ICoord3D &pos,
-					      unsigned int cat,
-					      const ICRectangularPrism &region)
-  const
-{
-  // The voxelSignature indicates which of the eight voxels
-  // surrounding a voxel corner are in the given category.  pos is the
-  // lower-left-back corner of a voxel, so the components of the
-  // coordinates of the other voxels at pos are one less.
+// unsigned char CMicrostructure::voxelSignature(const ICoord3D &pos,
+// 					      unsigned int cat,
+// 					      const ICRectangularPrism &region)
+//   const
+// {
+//   // The voxelSignature indicates which of the eight voxels
+//   // surrounding a voxel corner are in the given category.  pos is the
+//   // lower-left-back corner of a voxel, so the components of the
+//   // coordinates of the other voxels at pos are one less.
 
-  // A bit of the signature is 1 if the voxel corresponding to the bit
-  // is in the category, cat.  The correspondence is
-  // Bit          Position relative to pos
-  // (0 is LSB)   
-  // 0  0x1       (-1, -1, -1)
-  // 1  0x2       (0, -1, -1)
-  // 2  0x4       (-1, 0, -1)
-  // 3  0x8       (0, 0, -1)
-  // 4  0x10      (-1, -1, 0)
-  // 5  0x20      (0, -1, 0)
-  // 6  0x40      (-1, 0, 0)
-  // 7  0x80      (0, 0, 0)
-  unsigned char sig = 0;
-  unsigned char b = 1;
-  for(int k=0; k<2; k++) {
-    for(int j=0; j<2; j++) {
-      for(int i=0; i<2; i++) {
-	ICoord3D offset = pos + ICoord3D(i-1, j-1, k-1);
-	if(region.contains(offset) && categorymap[offset] == cat)
-	  sig |= b;
-	b <<= 1;
-      }
-    }
-  }
-  return sig;
-}
+//   // A bit of the signature is 1 if the voxel corresponding to the bit
+//   // is in the category, cat.  The correspondence is
+//   // Bit          Position relative to pos
+//   // (0 is LSB)   
+//   // 0  0x1       (-1, -1, -1)
+//   // 1  0x2       (0, -1, -1)
+//   // 2  0x4       (-1, 0, -1)
+//   // 3  0x8       (0, 0, -1)
+//   // 4  0x10      (-1, -1, 0)
+//   // 5  0x20      (0, -1, 0)
+//   // 6  0x40      (-1, 0, 0)
+//   // 7  0x80      (0, 0, 0)
+//   unsigned char sig = 0;
+//   unsigned char b = 1;
+//   for(int k=0; k<2; k++) {
+//     for(int j=0; j<2; j++) {
+//       for(int i=0; i<2; i++) {
+// 	ICoord3D offset = pos + ICoord3D(i-1, j-1, k-1);
+// 	if(region.contains(offset) && categorymap[offset] == cat)
+// 	  sig |= b;
+// 	b <<= 1;
+//       }
+//     }
+//   }
+//   return sig;
+// }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 

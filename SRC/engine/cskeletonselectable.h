@@ -16,6 +16,7 @@
 
 
 #include "common/coord_i.h"
+#include "common/cprism_i.h"
 #include "common/lock.h"
 #include "common/pythonexportable.h"
 #include "engine/cskeletonselectable_i.h"
@@ -28,7 +29,6 @@
 #include <limits>
 
 class CMicrostructure;
-class CRectangularPrism;
 class CSkeleton;
 class CSkeletonBase;
 class LineIntersectionPoint;

@@ -26,6 +26,6 @@ unsigned char vox000, vox100, vox010, vox110, vox001, vox101, vox011, vox111;
 
 const string &printSig(unsigned char);
 void printHomogRegionStats();
-void initializeProtoNodes();
+void initializeVSB();
 
 #endif // VOXELSETBOUNDARY_SWG

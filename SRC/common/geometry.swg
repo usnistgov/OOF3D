@@ -17,6 +17,7 @@
 %{
 #include <oofconfig.h>
 #include "common/geometry.h"
+#include "common/cprism_i.h"
 typedef class CPolygon<double, Coord> CPolygonCoord;
 %}
 %pragma(python) include="geometry.spy"

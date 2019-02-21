@@ -262,8 +262,8 @@ public:
   void categorizeIfNecessary() const;
   double volumeOfCategory(unsigned int) const;
 
-  unsigned char voxelSignature(const ICoord&, unsigned int,
-			       const ICRectangularPrism&) const;
+  // unsigned char voxelSignature(const ICoord&, unsigned int,
+  // 			       const ICRectangularPrism&) const;
 
   std::vector<ICoord> *segmentPixels(const Coord&, const Coord&, bool&, bool&,
 				     bool verbose)
