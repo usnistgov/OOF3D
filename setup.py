@@ -1442,8 +1442,36 @@ if sys.hexversion > 0x02060000:
 
         return macros, objects, extra, pp_opts, build
     CCompiler._setup_compile = _setup_compile
-
     # End of monkeypatch 
+
+
+# In Python 2.7.6 and earlier, distutils doesn't allow nested
+# directories in package_data.  (CentOS 7 still contains Python
+# 2.7.5.) This monkeypatch inserts the relevant routine from Python
+# 2.7.7 and later:
+
+if sys.hexversion < 0x2070700:
+    from distutils.util import convert_path
+    from glob import glob
+
+    def _find_data_files(self, package, src_dir):
+        """Return filenames for package's data files in 'src_dir'"""
+        globs = (self.package_data.get('', [])
+                 + self.package_data.get(package, []))
+        files = []
+        for pattern in globs:
+            # Each pattern has to be converted to a platform-specific path
+            filelist = glob(os.path.join(src_dir, convert_path(pattern)))
+            # Files that match more than one pattern are only added once
+            files.extend([fn for fn in filelist if fn not in files
+                and os.path.isfile(fn)])
+        return files
+
+    build_py.build_py.find_data_files = _find_data_files
+    # End of monkeypatch
+    
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
