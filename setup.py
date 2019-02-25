@@ -1451,7 +1451,6 @@ if sys.hexversion > 0x02060000:
 # 2.7.7 and later:
 
 if sys.hexversion < 0x2070700:
-    from distutils.command.build_py import build_py
     from distutils.util import convert_path
     from glob import glob
 
@@ -1468,7 +1467,7 @@ if sys.hexversion < 0x2070700:
                 and os.path.isfile(fn)])
         return files
 
-    build_py.find_data_files = _find_data_files
+    build_py.build_py.find_data_files = _find_data_files
     # End of monkeypatch
     
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
