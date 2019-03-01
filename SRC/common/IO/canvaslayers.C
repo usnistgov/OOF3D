@@ -435,7 +435,7 @@ const std::string &PlaneAndArrowLayer::classname() const {
   return nm;
 }
 
-// The following four functions are inherited from OOFCanvasLayer and
+// The following three functions are inherited from OOFCanvasLayer and
 // need to be defined, but aren't used by this particular subclass.
 void PlaneAndArrowLayer::start_clipping() { }
 
