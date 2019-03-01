@@ -720,7 +720,16 @@ To deselect a plane, Ctrl+Click the plane in the list."""
         # Microstructure in the screen x direction.
         who = self.gfxwindow().topwho('Microstructure', 'Image', 'Skeleton',
                                       'Mesh')
-        msSize = who.getMicrostructure().size()
+        if who is not None:
+            msSize = who.getMicrostructure().size()
+        else:
+            # Just a hack to get something drawn if there is no
+            # Microstructure.  The value of 0.5 puts the clipping
+            # plane in the middle of the window if the window has the
+            # default View for a new window.
+            msSize = primitives.Point(0.5, 0.5, 0.5)
+        # Get the positions of all of the corners of the
+        # Microstructure in the screen's x direction.
         xvals = [coord.dot(primitives.Point(x, y, z), right)
                  for x in (0, msSize.x)
                  for y in (0, msSize.y)
