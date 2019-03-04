@@ -189,8 +189,6 @@ public:
   Coord findRayThroughPoint(const Coord*) const;
   Coord *findClickedPositionOnActor(const Coord*, const View*, 
 				    OOFCanvasLayer*);
-  // vtkSmartPointer<vtkActor> findClickedActor(const Coord*, const View*,
-  // 					     OOFCanvasLayer*);
   vtkSmartPointer<vtkActorCollection> findClickedActors(const Coord*,
 							const View*,
 							OOFCanvasLayer*);

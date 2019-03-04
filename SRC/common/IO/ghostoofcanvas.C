@@ -689,7 +689,8 @@ Coord *GhostOOFCanvas::findClickedPositionOnActor(const Coord *click,
   Coord *position = nullptr;
 
   try {
-    vtkSmartPointer<vtkPicker> picker = vtkSmartPointer<vtkPicker>::New();
+    vtkSmartPointer<vtkCellPicker> picker =
+      vtkSmartPointer<vtkCellPicker>::New();
     setPickableOnly(actors);
     
     // Convert the click coordinates to display coordinates.
@@ -697,6 +698,7 @@ Coord *GhostOOFCanvas::findClickedPositionOnActor(const Coord *click,
     physical2Display(*click, x, y);
 
     if (picker->Pick(x, y, 0.0, renderer)) {
+
       // Just get a single actor.  I don't know how VTK decides which
       // one to choose.
       pickedActor = picker->GetActor();  
@@ -729,111 +731,7 @@ Coord *GhostOOFCanvas::findClickedPositionOnActor(const Coord *click,
 } // end GhostOOFCanvas::findClickedPositionOnActor
 
 
-// findClickedActor isn't currently used.  If it's needed, it should
-// be rewritten to use vtkPicker instead of vtkPropPicker, like
-// findClickedActors.
 
-// vtkSmartPointer<vtkActor> GhostOOFCanvas::findClickedActor(
-// 						   const Coord *click,
-// 						   const View *view,
-// 						   OOFCanvasLayer *layer)
-// {
-//   // Returns the vtkActor that has been clicked upon in a layer for
-//   // which get_pickable_actors() is defined. click is the physical
-//   // coordinates of the mouse click, view is the current view,
-//   // layer is the OOFCanvasLayer in question.
-//   assert(mainthread_query());
-
-//   vtkSmartPointer<vtkActorCollection> actors = layer->get_pickable_actors();
-
-//   // Assert that some collection of actors was passed by the
-//   // programmer.
-//   assert(actors.GetPointer() != 0);
-
-//   int n = actors->GetNumberOfItems();
-//   bool *actorIsRendered = new bool[n];
-
-//   // Reset the Current pointer in the vtkActorCollection to the
-//   // topmost actor in the collection, so that we can begin traversing
-//   // the list.
-//   actors->InitTraversal();
-
-//   // Traverse the list, and determine whether each pickable actor is
-//   // currently rendered or not. If not, we need to render that actor
-//   // so that our vtkPropPicker can eventually pick it.
-//   vtkSmartPointer<vtkActor> currentActor = actors->GetNextActor();
-//   assert(currentActor.GetPointer() != 0);
-//   for (int i = 0; currentActor.GetPointer() != 0; i++) {
-//     actorIsRendered[i] = renderer->HasViewProp(currentActor);
-//     if (!actorIsRendered[i]) {
-//       renderer->AddViewProp(currentActor);
-//     }
-//     currentActor = actors->GetNextActor();
-//   }
-
-//   makeAllUnpickable();
-  
-//   viewLock.acquire();
-//   View *oldView = set_view_nolock(view, true, true);
-  
-//   bool clickOk = false;
-
-//   vtkSmartPointer<vtkActor> pickedActor;
-
-//   try {
-//     vtkSmartPointer<vtkPropPicker> picker = 
-//       vtkSmartPointer<vtkPropPicker>::New();
-    
-//     // Traverse the collection and make all its actors pickable.
-//     actors->InitTraversal();
-//     currentActor = actors->GetNextActor();
-//     while (currentActor.GetPointer() != 0) {
-//       currentActor->PickableOn();
-//       currentActor = actors->GetNextActor();
-//     }
-    
-//     // Convert the click coordinates to display coordinates.
-//     double x, y;
-//     physical2Display(*click, x, y);
-
-//     if (picker->Pick(x, y, 0.0, renderer)) {
-//       pickedActor = picker->GetActor();  
-//       if (pickedActor.GetPointer() != 0) {
-// 	clickOk = true;
-//       }
-//     }  
-//   }
-//   catch(...) {
-//     actors->InitTraversal();
-//     currentActor = actors->GetNextActor();
-//     for (int i = 0; currentActor.GetPointer() != 0; i++) {
-//       if (!actorIsRendered[i]) {
-// 	renderer->RemoveViewProp(currentActor);
-//       }
-//       currentActor = actors->GetNextActor();
-//     }
-
-//     restore_view(oldView, true, true);
-//     delete oldView;
-//     viewLock.release();
-//     throw;
-//   }
-//   actors->InitTraversal();
-//   currentActor = actors->GetNextActor();
-//   for (int i = 0; currentActor.GetPointer() != 0; i++) {
-//     if (!actorIsRendered[i]) {
-//       renderer->RemoveViewProp(currentActor);
-//     }
-//     currentActor = actors->GetNextActor();
-//   }
-//   restore_view(oldView, true, true);
-//   delete oldView;
-//   viewLock.release();
-//   if(!clickOk) {
-//     throw ErrClickError();
-//   }
-//   return pickedActor;
-// } // end GhostOOFCanvas::findClickedActor
 
 vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
 	      const Coord *click, const View *view, OOFCanvasLayer *layer)
@@ -859,18 +757,21 @@ vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
   vtkSmartPointer<vtkActorCollection> pickedActors =
     vtkSmartPointer<vtkActorCollection>::New();
 
-  // Use vtkPicker to choose all Prop3Ds intersected by a ray through x,y.
   try {
     // Convert the click coordinates to display coordinates.
     double x, y;
     physical2Display(*click, x, y);
-    vtkSmartPointer<vtkPicker> picker = vtkSmartPointer<vtkPicker>::New();
+    // Use vtkCellPicker instead of vtkPicker because it's more
+    // accurate.  vtkPicker doesn't always distinguish properly
+    // between multiple actors and sometimes selects the wrong one.
+    vtkSmartPointer<vtkCellPicker> picker =
+      vtkSmartPointer<vtkCellPicker>::New();
     if(picker->Pick(x, y, 0, renderer)) {
       // Get the picked vtkProp3Ds.
-      vtkSmartPointer<vtkProp3DCollection> props = picker->GetProp3Ds();
+      vtkSmartPointer<vtkProp3DCollection> pickedProps = picker->GetProp3Ds();
       // Loop over the picked vtkProp3Ds.
-      props->InitTraversal();
-      vtkSmartPointer<vtkProp3D> prop = props->GetNextProp3D();
+      pickedProps->InitTraversal();
+      vtkSmartPointer<vtkProp3D> prop = pickedProps->GetNextProp3D();
       while(prop.GetPointer() != 0) {
 	vtkSmartPointer<vtkActor> actor = vtkActor::SafeDownCast(prop);
 	if(actor.GetPointer() != 0) {
@@ -886,7 +787,7 @@ vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
 	    }
 	  }
 	}
-	prop = props->GetNextProp3D();
+	prop = pickedProps->GetNextProp3D();
       }
     }
   }

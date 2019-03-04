@@ -1028,6 +1028,11 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
         self.layer = None
 
         # Which operation should be performed (e.g. translate, rotate).
+        ## TODO: self.operation should be an object, not a string.
+        ## There should be a class for each type of operation.
+        ## Mouse-down will set self.operation to an instance of the
+        ## appropriate subclass, and mouse-move and mouse-up will just
+        ## call self.operation.move() and self.operation.up().
         self.operation = None
 
         # Previous position, in display coordinates, of the mouse.
@@ -1164,7 +1169,8 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
         # Commands which need to be run when a 'down' event is being
         # processed.  Called by processEvents_subthread on the
         # subthread.
-
+        self.operation = None
+        
         # Figure out which clip plane is being edited.
         self.planeID = self.toolbox.currentClipPlaneNo()
 
@@ -1198,22 +1204,22 @@ class ClipPlaneMouseHandler(mousehandler.MouseHandler):
                 point, 
                 viewobj)
             if actors is not None:
-                # Something has been clicked.  Decide the operation to
-                # perform based on which actors were clicked. A click
-                # on the arrow takes precedence over a click on the
-                # plane, so it is assumed that if the user clicked on
-                # the arrow through the plane, the user still intended
-                # to select the arrow, and not the plane.  This makes
-                # some sense so long as the plane is translucent (so
-                # that the arrow can be seen through it); the only
-                # time this would not be the case is if the
-                # plane_opacity setting for self.layer were set to
+                # Something has been clicked.  Decide which operation
+                # to perform based on which actors were clicked. A
+                # click on the arrow takes precedence over a click on
+                # the plane, so it is assumed that if the user clicked
+                # on the arrow through the plane, the user still
+                # intended to select the arrow, and not the plane.
+                # This makes some sense so long as the plane is
+                # translucent (so that the arrow can be seen through
+                # it); the only time this would not be the case is if
+                # the plane_opacity setting for self.layer were set to
                 # 1.0.
                 if (actors.hasActor(self.layer.canvaslayer.get_arrowActor())):
                     self.operation = 'rotate about center'
                 elif (actors.hasActor(self.layer.canvaslayer.get_planeActor())):
                     self.operation = 'translate along normal'
-     
+
     def processMove(self, x, y):
         # Commands which need to be run when a 'move' event is being
         # processed.  Called by processEvents_subthread on the
