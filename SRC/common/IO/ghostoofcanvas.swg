@@ -202,7 +202,7 @@ public:
 
   Coord findRayThroughPoint(const Coord *Point);
   %new Coord *findClickedPositionOnActor(Coord *Point, View*, OOFCanvasLayer*);
-  vtkActorPtr findClickedActor(Coord *Point, View*, OOFCanvasLayer*);
+  // vtkActorPtr findClickedActor(Coord *Point, View*, OOFCanvasLayer*);
   vtkActorCollectionPtr findClickedActors(Coord *Point, View*, OOFCanvasLayer*);
   vtkCellPtr findClickedCell(Coord *Point, View*, OOFCanvasLayer*);
   int findClickedCellID(Coord *Point, View*, OOFCanvasLayer*, Coord *outCoord);

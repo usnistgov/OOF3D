@@ -1769,23 +1769,23 @@ class GhostGfxWindow:
                     )
         return (None, None)
 
-    def findClickedActor(self, classinfo, point, view):
-        self.acquireGfxLock()
-        try:
-            layer = self.getLayerByClass(classinfo)
-            if layer is not None:
-                if layer.pickable():
-                    return (
-                        mainthread.runBlock(
-                            clickErrorHandler,
-                            (self.oofcanvas.findClickedActor,
-                             point, view, layer.canvaslayer)
-                            ),
-                        layer
-                        )
-            return (None, None)
-        finally:
-            self.releaseGfxLock()
+    # def findClickedActor(self, classinfo, point, view):
+    #     self.acquireGfxLock()
+    #     try:
+    #         layer = self.getLayerByClass(classinfo)
+    #         if layer is not None:
+    #             if layer.pickable():
+    #                 return (
+    #                     mainthread.runBlock(
+    #                         clickErrorHandler,
+    #                         (self.oofcanvas.findClickedActor,
+    #                          point, view, layer.canvaslayer)
+    #                         ),
+    #                     layer
+    #                     )
+    #         return (None, None)
+    #     finally:
+    #         self.releaseGfxLock()
 
     def findClickedActors(self, classinfo, point, view):
         self.acquireGfxLock()

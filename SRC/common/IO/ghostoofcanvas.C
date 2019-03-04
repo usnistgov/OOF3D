@@ -676,73 +676,35 @@ Coord *GhostOOFCanvas::findClickedPositionOnActor(const Coord *click,
   assert(mainthread_query());
 
   vtkSmartPointer<vtkActorCollection> actors = layer->get_pickable_actors();
-
-  // Assert that some collection of actors was passed by the
-  // programmer.
   assert(actors.GetPointer() != 0);
-
   int n = actors->GetNumberOfItems();
-  bool *actorIsRendered = new bool[n];
+  assert(n > 0);
 
-  // Reset the Current pointer in the vtkActorCollection to the
-  // topmost actor in the collection, so that we can begin traversing
-  // the list.
-  actors->InitTraversal();
-
-  // Traverse the list, and determine whether each pickable actor is
-  // currently rendered or not. If not, we need to render that actor
-  // so that our vtkPropPicker can eventually pick it.
-  vtkSmartPointer<vtkActor> currentActor = actors->GetNextActor();
-  assert(currentActor.GetPointer() != 0);
-  for (int i = 0; currentActor.GetPointer() != 0; i++) {
-    actorIsRendered[i] = renderer->HasViewProp(currentActor);
-    if (!actorIsRendered[i]) {
-      renderer->AddViewProp(currentActor);
-    }
-    currentActor = actors->GetNextActor();
-  }
-
-  makeAllUnpickable();
+  vtkSmartPointer<vtkActorCollection> unRendered = renderUnrendered(actors);
   
   viewLock.acquire();
   View *oldView = set_view_nolock(view, true, true);
   
-  bool clickOk = false;
-
   vtkSmartPointer<vtkActor> pickedActor;
-
-  Coord *position = NULL;
+  Coord *position = nullptr;
 
   try {
-    vtkSmartPointer<vtkPropPicker> picker = 
-      vtkSmartPointer<vtkPropPicker>::New();
-    
-    // Traverse the collection and make all its actors pickable.
-    actors->InitTraversal();
-    currentActor = actors->GetNextActor();
-    while (currentActor.GetPointer() != 0) {
-      currentActor->PickableOn();
-      currentActor = actors->GetNextActor();
-    }
+    vtkSmartPointer<vtkPicker> picker = vtkSmartPointer<vtkPicker>::New();
+    setPickableOnly(actors);
     
     // Convert the click coordinates to display coordinates.
     double x, y;
     physical2Display(*click, x, y);
 
-    oofcerr << "GhostOOFCanvas::findClickedPositionOnActor: picking"
-	    << std::endl;
     if (picker->Pick(x, y, 0.0, renderer)) {
-      oofcerr << "GhostOOFCanvas::findClickedPositionOnActor: picked"
-	      << std::endl;
+      // Just get a single actor.  I don't know how VTK decides which
+      // one to choose.
       pickedActor = picker->GetActor();  
       if (pickedActor.GetPointer() != 0) {
-	
 	// Get the picked position.
 	double pickPosition[3];
 	picker->GetPickPosition(pickPosition);
 	position = new Coord(pickPosition);
-
-	clickOk = true;
       }
     }
     else
@@ -750,144 +712,128 @@ Coord *GhostOOFCanvas::findClickedPositionOnActor(const Coord *click,
 	      << std::endl;
   }
   catch(...) {
-    // Unrender pickable actors that weren't initially rendered
-    actors->InitTraversal();
-    currentActor = actors->GetNextActor();
-    for (int i = 0; currentActor.GetPointer() != 0; i++) {
-      if (!actorIsRendered[i]) {
-	renderer->RemoveViewProp(currentActor);
-      }
-      currentActor = actors->GetNextActor();
-    }
-
+    unrender(unRendered); // Unrender actors that weren't initially rendered
     restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     throw;
   }
-  // Unrender pickable actors that weren't initially rendered
-  actors->InitTraversal();
-  currentActor = actors->GetNextActor();
-  for (int i = 0; currentActor.GetPointer() != 0; i++) {
-    if (!actorIsRendered[i]) {
-      renderer->RemoveViewProp(currentActor);
-    }
-    currentActor = actors->GetNextActor();
-  }
+  unrender(unRendered);	// Unrender actors that weren't initially rendered
   restore_view(oldView, true, true);
   delete oldView;
   viewLock.release();
-  if(!clickOk) {
+  if(pickedActor.GetPointer() == 0) {
     throw ErrClickError();
   }
   return position;
 } // end GhostOOFCanvas::findClickedPositionOnActor
 
 
+// findClickedActor isn't currently used.  If it's needed, it should
+// be rewritten to use vtkPicker instead of vtkPropPicker, like
+// findClickedActors.
 
-vtkSmartPointer<vtkActor> GhostOOFCanvas::findClickedActor(
-						   const Coord *click,
-						   const View *view,
-						   OOFCanvasLayer *layer)
-{
-  // Returns the vtkActor that has been clicked upon in a layer for
-  // which get_pickable_actors() is defined. click is the physical
-  // coordinates of the mouse click, view is the current view,
-  // layer is the OOFCanvasLayer in question.
-  assert(mainthread_query());
+// vtkSmartPointer<vtkActor> GhostOOFCanvas::findClickedActor(
+// 						   const Coord *click,
+// 						   const View *view,
+// 						   OOFCanvasLayer *layer)
+// {
+//   // Returns the vtkActor that has been clicked upon in a layer for
+//   // which get_pickable_actors() is defined. click is the physical
+//   // coordinates of the mouse click, view is the current view,
+//   // layer is the OOFCanvasLayer in question.
+//   assert(mainthread_query());
 
-  vtkSmartPointer<vtkActorCollection> actors = layer->get_pickable_actors();
+//   vtkSmartPointer<vtkActorCollection> actors = layer->get_pickable_actors();
 
-  // Assert that some collection of actors was passed by the
-  // programmer.
-  assert(actors.GetPointer() != 0);
+//   // Assert that some collection of actors was passed by the
+//   // programmer.
+//   assert(actors.GetPointer() != 0);
 
-  int n = actors->GetNumberOfItems();
-  bool *actorIsRendered = new bool[n];
+//   int n = actors->GetNumberOfItems();
+//   bool *actorIsRendered = new bool[n];
 
-  // Reset the Current pointer in the vtkActorCollection to the
-  // topmost actor in the collection, so that we can begin traversing
-  // the list.
-  actors->InitTraversal();
+//   // Reset the Current pointer in the vtkActorCollection to the
+//   // topmost actor in the collection, so that we can begin traversing
+//   // the list.
+//   actors->InitTraversal();
 
-  // Traverse the list, and determine whether each pickable actor is
-  // currently rendered or not. If not, we need to render that actor
-  // so that our vtkPropPicker can eventually pick it.
-  vtkSmartPointer<vtkActor> currentActor = actors->GetNextActor();
-  assert(currentActor.GetPointer() != 0);
-  for (int i = 0; currentActor.GetPointer() != 0; i++) {
-    actorIsRendered[i] = renderer->HasViewProp(currentActor);
-    if (!actorIsRendered[i]) {
-      renderer->AddViewProp(currentActor);
-    }
-    currentActor = actors->GetNextActor();
-  }
+//   // Traverse the list, and determine whether each pickable actor is
+//   // currently rendered or not. If not, we need to render that actor
+//   // so that our vtkPropPicker can eventually pick it.
+//   vtkSmartPointer<vtkActor> currentActor = actors->GetNextActor();
+//   assert(currentActor.GetPointer() != 0);
+//   for (int i = 0; currentActor.GetPointer() != 0; i++) {
+//     actorIsRendered[i] = renderer->HasViewProp(currentActor);
+//     if (!actorIsRendered[i]) {
+//       renderer->AddViewProp(currentActor);
+//     }
+//     currentActor = actors->GetNextActor();
+//   }
 
-  makeAllUnpickable();
+//   makeAllUnpickable();
   
-  viewLock.acquire();
-  View *oldView = set_view_nolock(view, true, true);
+//   viewLock.acquire();
+//   View *oldView = set_view_nolock(view, true, true);
   
-  bool clickOk = false;
+//   bool clickOk = false;
 
-  vtkSmartPointer<vtkActor> pickedActor;
+//   vtkSmartPointer<vtkActor> pickedActor;
 
-  try {
-    vtkSmartPointer<vtkPropPicker> picker = 
-      vtkSmartPointer<vtkPropPicker>::New();
+//   try {
+//     vtkSmartPointer<vtkPropPicker> picker = 
+//       vtkSmartPointer<vtkPropPicker>::New();
     
-    // Traverse the collection and make all its actors pickable.
-    actors->InitTraversal();
-    currentActor = actors->GetNextActor();
-    while (currentActor.GetPointer() != 0) {
-      currentActor->PickableOn();
-      currentActor = actors->GetNextActor();
-    }
+//     // Traverse the collection and make all its actors pickable.
+//     actors->InitTraversal();
+//     currentActor = actors->GetNextActor();
+//     while (currentActor.GetPointer() != 0) {
+//       currentActor->PickableOn();
+//       currentActor = actors->GetNextActor();
+//     }
     
-    // Convert the click coordinates to display coordinates.
-    double x, y;
-    physical2Display(*click, x, y);
+//     // Convert the click coordinates to display coordinates.
+//     double x, y;
+//     physical2Display(*click, x, y);
 
-    if (picker->Pick(x, y, 0.0, renderer)) {
-      pickedActor = picker->GetActor();  
-      if (pickedActor.GetPointer() != 0) {
-	clickOk = true;
-      }
-    }  
-  }
-  catch(...) {
-    actors->InitTraversal();
-    currentActor = actors->GetNextActor();
-    for (int i = 0; currentActor.GetPointer() != 0; i++) {
-      if (!actorIsRendered[i]) {
-	renderer->RemoveViewProp(currentActor);
-      }
-      currentActor = actors->GetNextActor();
-    }
+//     if (picker->Pick(x, y, 0.0, renderer)) {
+//       pickedActor = picker->GetActor();  
+//       if (pickedActor.GetPointer() != 0) {
+// 	clickOk = true;
+//       }
+//     }  
+//   }
+//   catch(...) {
+//     actors->InitTraversal();
+//     currentActor = actors->GetNextActor();
+//     for (int i = 0; currentActor.GetPointer() != 0; i++) {
+//       if (!actorIsRendered[i]) {
+// 	renderer->RemoveViewProp(currentActor);
+//       }
+//       currentActor = actors->GetNextActor();
+//     }
 
-    restore_view(oldView, true, true);
-    delete oldView;
-    viewLock.release();
-    throw;
-  }
-  actors->InitTraversal();
-  currentActor = actors->GetNextActor();
-  for (int i = 0; currentActor.GetPointer() != 0; i++) {
-    if (!actorIsRendered[i]) {
-      renderer->RemoveViewProp(currentActor);
-    }
-    currentActor = actors->GetNextActor();
-  }
-  restore_view(oldView, true, true);
-  delete oldView;
-  viewLock.release();
-  if(!clickOk) {
-    throw ErrClickError();
-  }
-  return pickedActor;
-} // end GhostOOFCanvas::findClickedActor
-
-
+//     restore_view(oldView, true, true);
+//     delete oldView;
+//     viewLock.release();
+//     throw;
+//   }
+//   actors->InitTraversal();
+//   currentActor = actors->GetNextActor();
+//   for (int i = 0; currentActor.GetPointer() != 0; i++) {
+//     if (!actorIsRendered[i]) {
+//       renderer->RemoveViewProp(currentActor);
+//     }
+//     currentActor = actors->GetNextActor();
+//   }
+//   restore_view(oldView, true, true);
+//   delete oldView;
+//   viewLock.release();
+//   if(!clickOk) {
+//     throw ErrClickError();
+//   }
+//   return pickedActor;
+// } // end GhostOOFCanvas::findClickedActor
 
 vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
 	      const Coord *click, const View *view, OOFCanvasLayer *layer)
@@ -898,61 +844,17 @@ vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
   // view is the current view, and layer is the OOFCanvasLayer in
   // question.
   assert(mainthread_query());
-  oofcerr << "GhostOOFCanvas::findClickedActors:" << std::endl;
-
   vtkSmartPointer<vtkActorCollection> actors = layer->get_pickable_actors();
-
-#ifdef DEBUG
-  oofcerr << "GhostOOFCanvas::findClickedActors: There are "
-	  << actors->GetNumberOfItems() << " pickable actors:";
-  actors->InitTraversal();
-  vtkSmartPointer<vtkActor> a = actors->GetNextActor();
-  while(a.GetPointer() != 0) {
-    oofcerr << " " << a;
-    a = actors->GetNextActor();
-  }
-  oofcerr << std::endl;
-  // actors->Print(std::cerr);
-
-#endif // DEBUG
-
-  // Assert that some collection of actors was passed by the
-  // programmer.
   assert(actors.GetPointer() != 0);
-
   int n = actors->GetNumberOfItems();
   assert(n > 0);
-  // bool *actorIsRendered = new bool[n];
 
-  vtkSmartPointer<vtkActorCollection> unRendered =
-    vtkSmartPointer<vtkActorCollection>::New();
+  vtkSmartPointer<vtkActorCollection> unRendered = renderUnrendered(actors);
+  setPickableOnly(actors);
 
-
-  // Traverse the list of pickable actors, and determine whether each
-  // one is currently rendered or not. If not, we need to render that
-  // actor so that our picker can eventually pick it.
-  actors->InitTraversal();
-  vtkSmartPointer<vtkActor> currentActor = actors->GetNextActor();
-  assert(currentActor.GetPointer() != 0);
-  for (int i = 0; currentActor.GetPointer() != 0; i++) {
-    if(!renderer->HasViewProp(currentActor)) {
-      renderer->AddViewProp(currentActor);
-      unRendered->AddItem(currentActor);
-    }
-    // actorIsRendered[i] = renderer->HasViewProp(currentActor);
-    // if (!actorIsRendered[i]) {
-    //   renderer->AddViewProp(currentActor);
-    // }
-    currentActor = actors->GetNextActor();
-  }
-
-  //makeAllUnpickable();
-  
   viewLock.acquire();
   View *oldView = set_view_nolock(view, true, true);
   
-  bool clickOk = false;
-
   // A container for the results.
   vtkSmartPointer<vtkActorCollection> pickedActors =
     vtkSmartPointer<vtkActorCollection>::New();
@@ -962,142 +864,46 @@ vtkSmartPointer<vtkActorCollection> GhostOOFCanvas::findClickedActors(
     // Convert the click coordinates to display coordinates.
     double x, y;
     physical2Display(*click, x, y);
-    oofcerr << "GhostOOFCanvas::findClickedActors: x, y= " << x << ", " << y
-	    << std::endl;
-
     vtkSmartPointer<vtkPicker> picker = vtkSmartPointer<vtkPicker>::New();
     if(picker->Pick(x, y, 0, renderer)) {
       // Get the picked vtkProp3Ds.
       vtkSmartPointer<vtkProp3DCollection> props = picker->GetProp3Ds();
-      oofcerr << "GhostOOFCanvas::findClickedActors: clicked on "
-	      << props->GetNumberOfItems() << " props" << std::endl;
       // Loop over the picked vtkProp3Ds.
       props->InitTraversal();
       vtkSmartPointer<vtkProp3D> prop = props->GetNextProp3D();
       while(prop.GetPointer() != 0) {
-	oofcerr << "GhostOOFCanvas::findClickedActors: prop=" << prop
-		<< std::endl;
-	OOFcerrIndent indent(2);
 	vtkSmartPointer<vtkActor> actor = vtkActor::SafeDownCast(prop);
 	if(actor.GetPointer() != 0) {
-	  oofcerr << "GhostGfxWindow::findClickedActors: got an actor: "
-		  << prop << " " << actor << std::endl;
 	  // Is this actor one of the ones we're looking for?  (TODO:
 	  // Is there a better way to seach a vtkCollection, or
 	  // compute the intersection of two of them?)
 	  actors->InitTraversal();
-	  currentActor = actors->GetNextActor();
-	  bool ok = false;
-	  while(currentActor.GetPointer() != 0) {
-	    if(currentActor.GetPointer() == actor.GetPointer()) {
-	      oofcerr << "GhostGfxWindow::findClickedActors: adding "
-		      << actor << " to pickedActors" << std::endl;
+	  vtkActor *currentActor;
+	  while((currentActor = actors->GetNextActor()) != 0) {
+	    if(currentActor == actor.GetPointer()) {
 	      pickedActors->AddItem(actor);
-	      ok = true;
 	      break;
 	    }
-	    currentActor = actors->GetNextActor();
 	  }
-	  if(!ok)
-	    oofcerr << "GhostGfxWindow::findClickedActors: not an eligible actor"
-		    << std::endl;
-	}
-	else {
-	  oofcerr <<"GhostGfxWindow::findClickedActors: not an actor "
-		  << prop << std::endl;
 	}
 	prop = props->GetNextProp3D();
       }
     }
-    else {
-      oofcerr << "GhostOOFCanvas::findClickedActors: Pick failed"
-	      << std::endl;
-    }
-
-// #ifdef OLD
-
-//     // vtkPropPicker isn't working properly in vtk 8.2.0?
-//     vtkSmartPointer<vtkPropPicker> picker = 
-//       vtkSmartPointer<vtkPropPicker>::New();
-    
-//     // Traverse the actors collection, and for each actor in the
-//     // collection, make ONLY that actor pickable, then check if it is
-//     // picked.  If it is picked, add that actor to the pickedActors
-//     // collection.
-//     actors->InitTraversal();
-//     currentActor = actors->GetNextActor();
-//     while (currentActor.GetPointer() != 0) {
-//       OOFcerrIndent indent(2);
-//       oofcerr << "GhostOOFCanvas::findClickedActors: trying to click "
-// 	      << currentActor.GetPointer() << std::endl;
-//       currentActor->PickableOn();
-//       if(picker->Pick(x, y, 0.0, renderer)) {
-// 	vtkSmartPointer<vtkActor> pickedActor = picker->GetActor();
-// 	oofcerr << "GhostOOFCanvas::findClickedActors: picked actor "
-// 		<< pickedActor.GetPointer() << std::endl;
-// 	if(pickedActor.GetPointer() != 0) {
-// 	  pickedActors->AddItem(pickedActor);
-// 	  clickOk = true;
-// 	}
-//       }
-//       else {
-// 	oofcerr << "GhostOOFCanvas::findClickedActors: Pick failed"
-// 		<< std::endl;
-//       }
-//       currentActor->PickableOff();
-//       currentActor = actors->GetNextActor();
-//     } // end loop over actors
-// #endif // OLD
-
   }
   catch(...) {
-    oofcerr << "GhostOOFCanvas::findClickedActors: caught an exception!"
-	    << std::endl;
-    // Unrender the temporarily rendered actors.
-    unRendered->InitTraversal();
-    currentActor = unRendered->GetNextActor();
-    while(currentActor.GetPointer() != 0) {
-      renderer->RemoveViewProp(currentActor);
-      currentActor = unRendered->GetNextActor();
-    }
-    // actors->InitTraversal();
-    // currentActor = actors->GetNextActor();
-    // for (int i = 0; currentActor.GetPointer() != 0; i++) {
-    //   if (!actorIsRendered[i]) {
-    // 	renderer->RemoveViewProp(currentActor);
-    //   }
-    //   currentActor = actors->GetNextActor();
-    // }
-
+    unrender(unRendered); // Unrender the temporarily rendered actors.
     restore_view(oldView, true, true);
     delete oldView;
     viewLock.release();
     throw;
   }
-  
-  // Unrender the temporarily rendered actors.
-  unRendered->InitTraversal();
-  currentActor = unRendered->GetNextActor();
-  while(currentActor.GetPointer() != 0) {
-    renderer->RemoveViewProp(currentActor);
-    currentActor = unRendered->GetNextActor();
-  }
-  // actors->InitTraversal();
-  // currentActor = actors->GetNextActor();
-  // for (int i = 0; currentActor.GetPointer() != 0; i++) {
-  //   if (!actorIsRendered[i]) {
-  //     renderer->RemoveViewProp(currentActor);
-  //   }
-  //   currentActor = actors->GetNextActor();
-  // }
+  unrender(unRendered);	  // Unrender the temporarily rendered actors.
   restore_view(oldView, true, true);
   delete oldView;
   viewLock.release();
   if(pickedActors->GetNumberOfItems() == 0) {
     throw ErrClickError();
   }
-  oofcerr << "GhostOOFCanvas::findClickedActors: returning "
-	  << pickedActors->GetNumberOfItems() << " actors" << std::endl;
   return pickedActors;
 } // end GhostOOFCanvas::findClickedActors
 
@@ -1434,6 +1240,7 @@ vtkSmartPointer<vtkUnstructuredGrid> GhostOOFCanvas::getFrustumSubgrid(
   return subgrid;
 } // GhostOOFCanvas::getFrustumSubgrid
 
+
 // findClickedPoint finds the clicked-upon point from a data set of
 // points, and returns its position.  The set of points is the
 // vtkPoints belonging to the layer being displayed. Compare to
@@ -1658,6 +1465,39 @@ vtkSmartPointer<vtkIdList> GhostOOFCanvas::findClickedSegment(
   throw ErrClickError();
 } // GhostOOFCanvas::findClickedSegment
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Utilities used by picking routines
+
+vtkSmartPointer<vtkActorCollection>
+GhostOOFCanvas::renderUnrendered(vtkSmartPointer<vtkActorCollection> actors)
+  const
+{
+  // Render all Actors in the given list that aren't already rendered,
+  // and return them.
+  vtkSmartPointer<vtkActorCollection> unrendered =
+    vtkSmartPointer<vtkActorCollection>::New();
+  actors->InitTraversal();
+  vtkSmartPointer<vtkActor> actor = actors->GetNextActor();
+  while(actor) {
+    if(!renderer->HasViewProp(actor)) {
+      renderer->AddViewProp(actor);
+      unrendered->AddItem(actor);
+    }
+    actor = actors->GetNextActor();
+  }
+  return unrendered;
+}
+
+void GhostOOFCanvas::unrender(vtkSmartPointer<vtkActorCollection> actors)
+  const
+{
+  actors->InitTraversal();
+  vtkActor *actor;
+  while((actor = actors->GetNextActor()) != 0)
+    renderer->RemoveViewProp(actor);
+}
+
 void GhostOOFCanvas::makeAllUnpickable() const {
   // Make all Actors and Volumes unpickable.
   assert(mainthread_query());
@@ -1672,6 +1512,18 @@ void GhostOOFCanvas::makeAllUnpickable() const {
   while((volume=volumes->GetNextVolume()) != 0)
     volume->PickableOff();
 }
+
+void GhostOOFCanvas::setPickableOnly(vtkSmartPointer<vtkActorCollection> actors)
+  const
+{
+  // Make only the given Actors pickable.
+  makeAllUnpickable();
+  actors->InitTraversal();
+  vtkActor *actor;
+  while((actor = actors->GetNextActor()) != 0)
+    actor->PickableOn();
+}
+
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

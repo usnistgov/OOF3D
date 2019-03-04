@@ -101,6 +101,7 @@ protected:
 
   double margin;
   void makeAllUnpickable() const;
+  void setPickableOnly(vtkSmartPointer<vtkActorCollection>) const;
   void fixScreenCoord(const Coord*, double &x, double &y) const;
   void findClickedCell_(const Coord*, const View*, OOFCanvasLayer*,
 			vtkSmartPointer<vtkCell>&, Coord&, vtkIdType&, int&);
@@ -119,6 +120,10 @@ protected:
   // should be used externally.
   View *set_view_nolock(const View*, bool, bool);
   void restore_view(const View*, bool, bool);
+
+  vtkSmartPointer<vtkActorCollection> renderUnrendered(
+			       vtkSmartPointer<vtkActorCollection>) const;
+  void unrender(vtkSmartPointer<vtkActorCollection>) const;
   
 #ifdef DEBUGSELECTIONS
   vtkSmartPointer<vtkActor> tempActor;
@@ -184,8 +189,8 @@ public:
   Coord findRayThroughPoint(const Coord*) const;
   Coord *findClickedPositionOnActor(const Coord*, const View*, 
 				    OOFCanvasLayer*);
-  vtkSmartPointer<vtkActor> findClickedActor(const Coord*, const View*,
-					     OOFCanvasLayer*);
+  // vtkSmartPointer<vtkActor> findClickedActor(const Coord*, const View*,
+  // 					     OOFCanvasLayer*);
   vtkSmartPointer<vtkActorCollection> findClickedActors(const Coord*,
 							const View*,
 							OOFCanvasLayer*);
