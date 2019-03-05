@@ -323,13 +323,9 @@ public:
       this->vsbNode0->setNeighbor(1-dir.axis, othernode);
       return this->vsbNode0;
     }
-    if(dir == posX || dir == posY) {
-      this->vsbNode1->setNeighbor(1-dir.axis, othernode);
-      return this->vsbNode1;
-    }
-    std::cerr << "Unexpected direction in TwoVoxelsByEdge::connectBack!"
-	      << std::endl;
-    assert(false); 
+    assert(dir == posX || dir == posY);
+    this->vsbNode1->setNeighbor(1-dir.axis, othernode);
+    return this->vsbNode1;
   }
 
   virtual void connectDoubleBack(const ProtoNode *otherproto,
@@ -472,13 +468,9 @@ public:
       this->vsbNode0->setNeighbor(dir.axis, othernode);
       return this->vsbNode0;
     }
-    else if(dir == negX || dir == posY) {
-      this->vsbNode1->setNeighbor(dir.axis, othernode);
-      return this->vsbNode1;
-    }
-    std::cerr << "Unexpected direction in SixVoxelsByEdge::connectBack!"
-	      << std::endl;
-    assert(false);
+    assert(dir == negX || dir == posY);
+    this->vsbNode1->setNeighbor(dir.axis, othernode);
+    return this->vsbNode1;
   }
 
   virtual void connectDoubleBack(const ProtoNode *otherproto,
@@ -732,13 +724,9 @@ public:
       this->vsbNode0->setNeighbor(1-dir.axis, othernode);
       return this->vsbNode0;
     }
-    if(dir == posZ) {
-      this->vsbNode1->setNeighbor(0, othernode);
-      return this->vsbNode1;
-    }
-    std::cerr << "Unexpected direction in ThreeTwoOne::connectBack!"
-	      << std::endl;
-    assert(false);
+    assert(dir == posZ);
+    this->vsbNode1->setNeighbor(0, othernode);
+    return this->vsbNode1;
   }
 
   virtual void connectDoubleBack(const ProtoNode *otherproto,
@@ -855,13 +843,9 @@ public:
       this->vsbNode0->setNeighbor(0, othernode);
       return this->vsbNode0;
     }
-    if(dir == posZ) {
-      this->vsbNode2->setNeighbor(0, othernode);
-      return this->vsbNode2;
-    }
-    std::cerr << "Unexpected direction in FiveTwoOne::connectBack!"
-	      << std::endl;
-    assert(false); 
+    assert(dir == posZ);
+    this->vsbNode2->setNeighbor(0, othernode);
+    return this->vsbNode2;
   }
 
   virtual void connectDoubleBack(const ProtoNode *otherproto,
@@ -993,13 +977,9 @@ public:
       this->vsbNode1->setNeighbor(0, othernode);
       return this->vsbNode1;
     }
-    if(dir == negZ) {
-      this->vsbNode0->setNeighbor(0, othernode);
-      return this->vsbNode0;
-    }
-    std::cerr << "Unexpected direction in ThreeVoxByEdges::connectBack!"
-	      << std::endl;
-    assert(false);
+    assert(dir == negZ);
+    this->vsbNode0->setNeighbor(0, othernode);
+    return this->vsbNode0;
   }
 
   virtual void connectDoubleBack(const ProtoNode *otherproto,
@@ -1153,13 +1133,9 @@ public:
       this->vsbNodes[1]->setNeighbor(0, othernode);
       return this->vsbNodes[1];
     }
-    if(dir == negZ) {
-      this->vsbNodes[5]->setNeighbor(0, othernode);
-      return this->vsbNodes[5];
-    }
-    std::cerr << "Unexpected direction in FiveVoxByEdges::connectBack!"
-	      << std::endl;
-    assert(false);
+    assert(dir == negZ);
+    this->vsbNodes[5]->setNeighbor(0, othernode);
+    return this->vsbNodes[5];
   }
 
   virtual void connectDoubleBack(const ProtoNode *otherproto,
@@ -1281,12 +1257,9 @@ public:
       this->vsbNode1->setNeighbor(2, othernode);
       return this->vsbNode1;
     }
-    if(dir == negZ) {
-      this->vsbNode0->setNeighbor(1, othernode);
-      return this->vsbNode0;
-    }
-    std::cerr << "Unexpected direction in ChiralR::connectBack!" << std::endl;
-    assert(false);
+    assert(dir == negZ);
+    this->vsbNode0->setNeighbor(1, othernode);
+    return this->vsbNode0;
   }
 
 #ifdef DEBUG
@@ -1366,12 +1339,9 @@ public:
       this->vsbNode1->setNeighbor(1, othernode);
       return this->vsbNode1;
     }
-    if(dir == negZ) {
-      this->vsbNode0->setNeighbor(2, othernode);
-      return this->vsbNode0;
-    }
-    std::cerr << "Unexpected direction in ChiralL::connectBack!" << std::endl;
-    assert(false);   
+    assert(dir == negZ);
+    this->vsbNode0->setNeighbor(2, othernode);
+    return this->vsbNode0;
   }
 #ifdef DEBUG
   virtual void print(std::ostream &os) const {
@@ -1566,6 +1536,7 @@ public:
 
   virtual Node *connectBack(const ProtoNode*, Node*) {
     assert(false);  // CheckerBoard::connectBack should not be called!
+    return nullptr; // not reached
   }
 
   virtual void connectDoubleBack(const ProtoNode *otherproto,
@@ -1723,13 +1694,9 @@ public:
       this->vsbNode1->setNeighbor(0, othernode);
       return this->vsbNode1;
     }
-    if(dir == negZ) {
-      this->vsbNode0->setNeighbor(0, othernode);
-      return this->vsbNode0;
-    }
-    std::cerr << "Unexpected direction in FourThreeOne::connectBack!"
-	      << std::endl;
-    assert(false); 
+    assert(dir == negZ);
+    this->vsbNode0->setNeighbor(0, othernode);
+    return this->vsbNode0;
   }
 
   virtual void connectDoubleBack(const ProtoNode *otherproto,
@@ -1744,17 +1711,13 @@ public:
       node0->setNeighbor(1, othernode0);
       node1->setNeighbor(1, othernode1);
     }
-    else if(dir == posY) {
+    else {
+      assert(dir == posY);
       bool ordered = this->voxelOrder(vox010, vox111);
       node0 = ordered ? this->vsbNode0 : this->vsbNode1;
       node1 = ordered ? this->vsbNode1 : this->vsbNode0;
       node0->setNeighbor(2, othernode0);
       node1->setNeighbor(2, othernode1);
-    }
-    else {
-      std::cerr << "Unexpected direction in FourThreeOne::connectDoubleBack!"
-		<< std::endl;
-      assert(false); 
     }
   }
 

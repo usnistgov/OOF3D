@@ -526,9 +526,8 @@ ICOORD singleVoxelOffset(unsigned char voxel) {
     return ICOORD(1, -1, 1);
   if(voxel == vox011)
     return ICOORD(-1, 1, 1);
-  if(voxel == vox111)
-    return ICOORD(1, 1, 1);
-  assert(false);		// bad argument to singleVoxelOffset
+  assert(voxel == vox111);
+  return ICOORD(1, 1, 1);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -743,10 +742,12 @@ class VSBNode {
   }
 
   unsigned int neighborIndex(const VSBNode<COORD, ICOORD> *nbr) const {
-    for(unsigned int i=0; i<3; i++)
-      if(neighbors[i] == nbr)
-	return i;
-    assert(false);		// VSBNode::neighborIndex failed
+    if(neighbors[0] == nbr)
+      return 0;
+    if(neighbors[1] == nbr)
+      return 1;
+    assert(neighbors[2] == nbr);
+    return 2;
   }
 
   unsigned int getIndex() const { return index; }
