@@ -157,6 +157,9 @@ OOFImage3D::OOFImage3D(const std::string &name,
   // the exception raised by vtk (if there is one) instead of
   // crashing.
 
+  // TODO: Check that the images are all the same type (format, color
+  // depth, etc) and raise an exception if they're not.
+
   imageReader->SetDataScalarTypeToUnsignedChar();
   vtkSmartPointer<vtkImageAlgorithm> pipelineTail = imageReader;
 

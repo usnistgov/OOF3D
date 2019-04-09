@@ -53,6 +53,9 @@ oofname = "oof3d"
 
 import sys, string, os, subprocess, glob
 
+def dashjoin(*args):
+    return '-'.join(x for x in args if x)
+
 pyversion = string.join(map(str, sys.version_info[:2]),".")
 
 # First argument must be a build type:
@@ -84,13 +87,15 @@ localdir = os.path.split(os.getcwd())[1]
 if localdir.startswith(oofname) or localdir.startswith(oofname.upper()):
     localdir = localdir[len(oofname):]
 
-build_types_2D = ('dist', 'devel', 'debug', 'profile')
-build_types_3D = ('dist3d', 'debug3d', 'profile3d')
-build_types = build_types_2D + build_types_3D
+if oofname is "oof2":
+    build_types = ('dist', 'devel', 'debug', 'profile')
+else:
+    build_types = ('dist3d', 'debug3d', 'profile3d')
 
 if len(sys.argv) < 2:
     print "You must provide a build type"
     sys.exit()
+
 if sys.argv[1] not in build_types:
     print "Unrecognized build type:", sys.argv[1]
     sys.exit()
@@ -120,10 +125,22 @@ elif build_type == 'profile3d':
     # build_args.append('--libraries=profiler')
     # os.putenv('CFLAGS', '-g -fno-inline')
 
-# if build_type in build_types_2D:
-#     buildname = 'oof2'
-# else:
-#     buildname = 'oof3d'
+# Are we using x11 or cocoa?
+cocoa = ""
+if sys.platform == 'darwin':
+    proc = subprocess.Popen(['port', 'installed', 'py27-pygtk'],
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdoutdata, stderrdata = proc.communicate()
+    if proc.returncode != 0:
+        print "oof2-build: couldn't find py27-pygtk variant, assuming x11"
+        print "    ", stderrdata
+    else:
+        if "quartz" in stdoutdata:
+            print "oof2-build: Using cooca"
+            cocoa = "cocoa"    # will be in stowdir and builddir names
+            build_args.append("--cocoa")
+    
+
 buildname = oofname
 
 while sys.argv:
@@ -149,15 +166,16 @@ if not installdir:
     installdir = os.getenv("HOME")
 
 stowdir = os.path.join(installdir, 'stow')
-builddir =  "-".join(["builddir", branchtag, build_type])
+builddir =  dashjoin("builddir", branchtag, build_type, cocoa)
 if localdir:
-    stowsubdir = "-".join([buildname, branchtag, localdir, build_type,
-                           pyversion])
+    stowsubdir = dashjoin(buildname, branchtag, localdir, build_type,
+                           cocoa, pyversion)
 else:
-    stowsubdir = "-".join([buildname, branchtag, build_type, pyversion])
-if build_type in ['dist3d', 'debug3d', 'profile3d']:
+    stowsubdir = dashjoin(buildname, branchtag, build_type, cocoa, pyversion)
+    
+if oofname is "oof3d":
     laststowfile = os.path.join(stowdir, '.last_oof3d_install')
-else:
+elif oofname is "oof2":
     laststowfile = os.path.join(stowdir, '.last_oof_install')
 startdir = os.getcwd()
 
@@ -166,7 +184,8 @@ try:
     print "oof2-build: Using build directory", builddir
     os.rename(builddir, 'build')
 except OSError:
-    print "Directory %s not found, creating new build directory." % builddir
+    print "oof2-build: Directory %s not found, creating new build directory." \
+        % builddir
     os.mkdir('build')
     # On OS X, prevent the build directory from being backed up.  This
     # attribute is attached to the directory, not its path, and sticks
@@ -186,11 +205,11 @@ try:
     # changed, but the setup.py script won't notice that.
     fnames = glob.glob(os.path.join('build', 'script*', oofname))
     if len(fnames) > 1:
-        print "Expected to find one script named", oofname, "but found",\
-            len(fnames), "!"
+        print "oof2-build: Expected to find one script named", oofname, \
+            "but found", len(fnames), "!"
         sys.exit()
     elif len(fnames) == 1:
-        print "Removing", fnames[0]
+        print "oof2-build: Removing", fnames[0]
         os.remove(fnames[0])
 
     build_cmd = "python setup.py build %s install --prefix=%s" \
@@ -211,14 +230,14 @@ try:
             laststow = None
         os.chdir(stowdir)
         if laststow is None:
-            print "Stowing", stowsubdir
+            print "oof2-build: Stowing", stowsubdir
             stowcmd = "stow " + stowsubdir
             os.system(stowcmd)
             lsf = file(laststowfile, "w")
             print >> lsf, stowsubdir
             lsf.close()
         elif laststow != stowsubdir:
-            print "Unstowing", laststow, "and stowing", stowsubdir
+            print "oof2-build: Unstowing", laststow, "and stowing", stowsubdir
             unstowcmd = "stow -D " + laststow
             os.system(unstowcmd)
             stowcmd = "stow " + stowsubdir
@@ -227,7 +246,7 @@ try:
             print >> lsf, stowsubdir
             lsf.close()
         else:
-            print "Restowing", stowsubdir
+            print "oof2-build: Restowing", stowsubdir
             stowcmd = "stow -R " + stowsubdir
             os.system(stowcmd)
             
