@@ -308,12 +308,12 @@
 
 // There are also some debugging routines:
 
-// * bool checkEdges()
+// * bool VoxelSetBdy::checkEdges()
 //   just checks that each node has three neighbors, and that if A is
 //   a neighbor of B, then B is a neighbor of A.  It returns true if
 //   test passes.
 
-// * bool checkConnectivity()
+// * bool VoxelSetBdy::checkConnectivity()
 //   checks that the graph has three-vertex connectivity, which means
 //   that removing two vertices from the graph doesn't divide it into
 //   two disconnected parts.  Because the graph is allowed to have
@@ -324,10 +324,10 @@
 //   should only be run for small graphs, or if you have a lot of free
 //   time.  checkConnectivity() returns true if the test passes.
 
-// * void dump(std::ostream&)
+// * void VoxelSetBdy::dump(std::ostream&)
 //   writes raw data to the given output stream. 
 
-// * void dumpLines(const std::string &filename, CONVERTER &conv)
+// * void VoxelSetBdy::dumpLines(const std::string &filename, CONVERTER &conv)
 //   writes the edges of the VSB to the given file in a format that
 //   the author found useful for plotting:
 //     (x0, y0, z0), (x0, y0, z0) # index0 index1
@@ -335,7 +335,7 @@
 //   that converts a COORD in voxel units to whatever format you'd
 //   like in the output.
 
-// * void saveClippedVSB(const std::vector<Plane> &planes,
+// * void VoxelSetBdy::saveClippedVSB(const std::vector<Plane> &planes,
 //                       CONVERTER &converter,
 //                       const std::string &filenamebase)
 //   clips the VSB with the given planes, and writes the lines of the
@@ -343,7 +343,7 @@
 //   filenamebase.lines.  The first file is the same as the file
 //   produced by dump(), and the second the same as dumpLines().
 
-// * void drawClippedVSB(const std::vector<Plane> &planes,
+// * void VoxelSetBdy::drawClippedVSB(const std::vector<Plane> &planes,
 //                       PLOTTER &plotter)
 //   clips the VSB with the given planes and then passes each graph to
 //   the given plotter object.  PLOTTER must be callable, with an
