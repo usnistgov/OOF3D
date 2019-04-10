@@ -58,6 +58,10 @@ def dashjoin(*args):
 
 pyversion = string.join(map(str, sys.version_info[:2]),".")
 
+# Is this oof2-build or oof2-clean?
+progname = sys.argv.pop(0)
+cleaning = "clean" in progname
+
 # First argument must be a build type:
 #   dist
 #   devel  (must be followed by an integer devel level)
@@ -92,15 +96,13 @@ if oofname is "oof2":
 else:
     build_types = ('dist3d', 'debug3d', 'profile3d')
 
-if len(sys.argv) < 2:
+if len(sys.argv) < 1:
     print "You must provide a build type"
     sys.exit()
 
-if sys.argv[1] not in build_types:
-    print "Unrecognized build type:", sys.argv[1]
+if sys.argv[0] not in build_types:
+    print "Unrecognized build type:", sys.argv[0]
     sys.exit()
-
-sys.argv.pop(0)
 
 build_type = sys.argv.pop(0)
 build_args = []
@@ -177,80 +179,110 @@ if oofname is "oof3d":
     laststowfile = os.path.join(stowdir, '.last_oof3d_install')
 elif oofname is "oof2":
     laststowfile = os.path.join(stowdir, '.last_oof_install')
+try:
+    lsf = file(laststowfile, "r")
+    laststow = lsf.readline().rstrip()
+    lsf.close()
+except IOError:
+    laststow = None
+
 startdir = os.getcwd()
 
-# Move builddir to build
-try:
-    print "oof2-build: Using build directory", builddir
+if not cleaning:
+    # Move builddir to build
+    try:
+        print "oof2-build: Using build directory", builddir
+        os.rename(builddir, 'build')
+    except OSError:
+        print "oof2-build: Directory %s not found, creating new build directory." \
+            % builddir
+        os.mkdir('build')
+        # On OS X, prevent the build directory from being backed up.  This
+        # attribute is attached to the directory, not its path, and sticks
+        # to it when the directory is moved.
+        if sys.platform == 'darwin':
+            subprocess.check_call(['tmutil', 'addexclusion',
+                                   os.path.abspath('build')])
+
+    # After moving builddir-whatever to build, everything else we do must
+    # be inside this try/finally block, so that build is guaranteed to be
+    # moved back to builddir-whatever at the end.
+
+    try:
+        # Hack.  Remove the oof2 or oof3d script from the build/script*
+        # directory, if it exists.  setup.py will rebuild it trivally if
+        # it's missing.  It has to be rebuilt if the python version has
+        # changed, but the setup.py script won't notice that.
+        fnames = glob.glob(os.path.join('build', 'script*', oofname))
+        if len(fnames) > 1:
+            print "oof2-build: Expected to find one script named", oofname, \
+                "but found", len(fnames), "!"
+            sys.exit()
+        elif len(fnames) == 1:
+            print "oof2-build: Removing", fnames[0]
+            os.remove(fnames[0])
+
+        build_cmd = "python setup.py build %s install --prefix=%s" \
+                    % (string.join(build_args),
+                       os.path.join(stowdir, stowsubdir))
+        # build_cmd = "python setup.py build %s install %s --prefix=%s" \
+        #             % (string.join(build_args),
+        #                string.join(install_args),
+        #                os.path.join(stowdir, stowsubdir))
+        print build_cmd
+        result = os.system(build_cmd)
+        if not result:                      # successful
+            os.chdir(stowdir)
+            if laststow is None:
+                print "oof2-build: Stowing", stowsubdir
+                stowcmd = "stow " + stowsubdir
+                os.system(stowcmd)
+                lsf = file(laststowfile, "w")
+                print >> lsf, stowsubdir
+                lsf.close()
+            elif laststow != stowsubdir:
+                print "oof2-build: Unstowing", laststow, "and stowing", stowsubdir
+                unstowcmd = "stow -D " + laststow
+                os.system(unstowcmd)
+                stowcmd = "stow " + stowsubdir
+                os.system(stowcmd)
+                lsf = file(laststowfile, "w")
+                print >> lsf, stowsubdir
+                lsf.close()
+            else:
+                print "oof2-build: Restowing", stowsubdir
+                stowcmd = "stow -R " + stowsubdir
+                os.system(stowcmd)
+
+
+    finally:
+        os.chdir(startdir)
+        os.rename('build', builddir)
+
+else:
+    # Cleaning
+    # Clean out the stow directory
+    os.chdir(stowdir)
+    try:
+        if laststow == stowsubdir:
+            print "Unstowing", stowsubdir, "from", stowdir
+            os.system('stow -D %s' % stowsubdir)
+            os.remove(laststowfile)
+        print "Emptying", os.path.join(stowdir, stowsubdir)
+        os.system('rm -rf %s' % stowsubdir) # os.removedirs is clunky.
+    finally:
+        os.chdir(startdir)
+
     os.rename(builddir, 'build')
-except OSError:
-    print "oof2-build: Directory %s not found, creating new build directory." \
-        % builddir
-    os.mkdir('build')
-    # On OS X, prevent the build directory from being backed up.  This
-    # attribute is attached to the directory, not its path, and sticks
-    # to it when the directory is moved.
-    if sys.platform == 'darwin':
-        subprocess.check_call(['tmutil', 'addexclusion',
-                               os.path.abspath('build')])
-
-# After moving builddir-whatever to build, everything else we do must
-# be inside this try/finally block, so that build is guaranteed to be
-# moved back to builddir-whatever at the end.
-
-try:
-    # Hack.  Remove the oof2 or oof3d script from the build/script*
-    # directory, if it exists.  setup.py will rebuild it trivally if
-    # it's missing.  It has to be rebuilt if the python version has
-    # changed, but the setup.py script won't notice that.
-    fnames = glob.glob(os.path.join('build', 'script*', oofname))
-    if len(fnames) > 1:
-        print "oof2-build: Expected to find one script named", oofname, \
-            "but found", len(fnames), "!"
-        sys.exit()
-    elif len(fnames) == 1:
-        print "oof2-build: Removing", fnames[0]
-        os.remove(fnames[0])
-
-    build_cmd = "python setup.py build %s install --prefix=%s" \
-                % (string.join(build_args),
-                   os.path.join(stowdir, stowsubdir))
-    # build_cmd = "python setup.py build %s install %s --prefix=%s" \
-    #             % (string.join(build_args),
-    #                string.join(install_args),
-    #                os.path.join(stowdir, stowsubdir))
-    print build_cmd
-    result = os.system(build_cmd)
-    if not result:                      # successful
-        try:
-            lsf = file(laststowfile, "r")
-            laststow = lsf.readline().rstrip()
-            lsf.close()
-        except IOError:
-            laststow = None
-        os.chdir(stowdir)
-        if laststow is None:
-            print "oof2-build: Stowing", stowsubdir
-            stowcmd = "stow " + stowsubdir
-            os.system(stowcmd)
-            lsf = file(laststowfile, "w")
-            print >> lsf, stowsubdir
-            lsf.close()
-        elif laststow != stowsubdir:
-            print "oof2-build: Unstowing", laststow, "and stowing", stowsubdir
-            unstowcmd = "stow -D " + laststow
-            os.system(unstowcmd)
-            stowcmd = "stow " + stowsubdir
-            os.system(stowcmd)
-            lsf = file(laststowfile, "w")
-            print >> lsf, stowsubdir
-            lsf.close()
-        else:
-            print "oof2-build: Restowing", stowsubdir
-            stowcmd = "stow -R " + stowsubdir
-            os.system(stowcmd)
-            
-        
-finally:
-    os.chdir(startdir)
-    os.rename('build', builddir)
+    if build_type in ('dist3d', 'debug3d', 'profile3d'):
+              os.system('python setup.py clean --most --swig --3D')
+    else:
+              os.system('python setup.py clean --most --swig')
+    if os.path.exists('build'):
+        os.rename('build', builddir)
+    else:
+        os.mkdir(builddir)
+        if sys.platform == 'darwin':
+            subprocess.check_call(['tmutil', 'addexclusion',
+                                   os.path.abspath(builddir)])
+    
