@@ -169,6 +169,8 @@ gboolean OOFCanvas3D::gtk_realize(GtkWidget*, gpointer data) {
 }
 
 gboolean OOFCanvas3D::realize() {
+  oofcerr << "OOFCanvas3D::realize: render_window="
+	  << render_window.GetPointer() << std::endl;
   assert(mainthread_query());
   if(!created) {
     gtk_widget_realize(drawing_area);
@@ -184,10 +186,18 @@ gboolean OOFCanvas3D::realize() {
     // XID pid = GDK_WINDOW_XID(gtk_widget_get_parent_window(drawing_area));
     // render_window->SetParentId((void*) pid);
 #else  // OOF_USE_COCOA
-    render_window->SetRootWindow(gtk_widget_get_root_window(drawing_area));
-    GdkWindow *gparent = gtk_widget_get_parent_window(drawing_area);
-    NSView *pid = gdk_quartz_window_get_nsview(gparent);
-    render_window->SetParentId((void*) pid);
+    NSView *nsview = gdk_quartz_window_get_nsview(
+				  gtk_widget_get_window(drawing_area));
+    // TODO: Do we want to call SetParentId with the NSView of the
+    // drawing area or of the drawing area's parent?
+    GdkWindow *parent = gtk_widget_get_parent_window(drawing_area);
+    nsview = gdk_quartz_window_get_nsview(parent);
+
+    render_window->SetParentId(nsview);
+    
+    GdkWindow *gtkrootwindow = gtk_widget_get_root_window(drawing_area);
+    NSWindow *nswindow = gdk_quartz_window_get_nswindow(gtkrootwindow);
+    render_window->SetRootWindow(nswindow);
 #endif // OOF_USE_COCOA
     created = true;
   }
