@@ -169,8 +169,6 @@ gboolean OOFCanvas3D::gtk_realize(GtkWidget*, gpointer data) {
 }
 
 gboolean OOFCanvas3D::realize() {
-  oofcerr << "OOFCanvas3D::realize: render_window="
-	  << render_window.GetPointer() << std::endl;
   assert(mainthread_query());
   if(!created) {
     gtk_widget_realize(drawing_area);
@@ -185,43 +183,14 @@ gboolean OOFCanvas3D::realize() {
     // window is closed, unless SetWindowId is also set, as above.
     // XID pid = GDK_WINDOW_XID(gtk_widget_get_parent_window(drawing_area));
     // render_window->SetParentId((void*) pid);
+
 #else  // OOF_USE_COCOA
-
-    // Neither the old or new versions of this works with vtk 8.1.2
-    // from macports on macOS High Sierra. (It crashes a clipping
-    // plane is created.) The new version works with MacPorts' vtk on
-    // Mojave (newer than High Sierra).
-
-    // Both the old and new versions work with vtk 8.1.2 compiled by
-    // hand on High Sierra.
-    
-    // Old version crashes when graphics window is created on Mojave,
-    // using vtk from MacPorts.  New version works on Mojave with vtk
-    // from MacPorts.
-    
-    // New version works on Mojave with hand built vtk 8.1.2.  Old
-    // version crashes.
-    
-    // So why does MacPorts' vtk crash on High Sierra?
-    
-//#define OLD_VERSION
-#ifdef OLD_VERSION
-    render_window->SetRootWindow(gtk_widget_get_root_window(drawing_area));
-    GdkWindow *gparent = gtk_widget_get_parent_window(drawing_area);
-    NSView *pid = gdk_quartz_window_get_nsview(gparent);
-    render_window->SetParentId((void*) pid);
-#else // NOT OLD VERSION    
     NSView *nsview = gdk_quartz_window_get_nsview(
     				  gtk_widget_get_window(drawing_area));
-    // TODO: Do we want to call SetParentId with the NSView of the
-    // drawing area or of the drawing area's parent?
-    // GdkWindow *parent = gtk_widget_get_parent_window(drawing_area);
-    // nsview = gdk_quartz_window_get_nsview(parent);
     render_window->SetParentId(nsview);
     GdkWindow *gtkrootwindow = gtk_widget_get_root_window(drawing_area);
     NSWindow *nswindow = gdk_quartz_window_get_nswindow(gtkrootwindow);
     render_window->SetRootWindow(nswindow);
-#endif // OLD_VERSION
 
 #endif // OOF_USE_COCOA
     created = true;
