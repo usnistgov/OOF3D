@@ -460,7 +460,7 @@ def findvtk(*basenames):
 #grep VTK_VERSION /usr/local/include/vtk-7.1/vtkVersionMacros.h |cut -d \" -f 2
                         print >> sys.stderr, "Using", vtkname,"in", incvtk
                         print >> sys.stderr, "VTK library directory is", libvtk
-                        return (incvtk, libvtk)
+                        return (incvtk, libvtk+"/vtk-5.10")  ## DANGER HACK ##
     print >> sys.stderr, "Did not find vtk!"
     return (None, None)
 

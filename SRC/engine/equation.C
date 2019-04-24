@@ -182,13 +182,25 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
       
       if( !(*fi).second->k_clean ) {
 	const SmallSparseMatrix &k = (*fi).second->kMatrix;
-	for(int ldof =0;ldof<element->ndof(); ++ldof) {
+	for(int ldof=0; ldof<element->ndof(); ++ldof) {
 	  // DOFmap maps local indices to global.
 	  int global_col = dofmap[ldof];
 
-	  // TASK 3:  Get clarity about the objects, finish this.
+	  // Contract the flux components with the shape fn components.
+	  bool v_is_zero = true;
+	  double v = 0.0;
+	  for(int cc=0; cc<DIM; ++cc) {
+	    if(k.nonzero(cmap[cc],ldof)) {
+	      v_is_zero = false;
+	      v -= dsf[cc]*k(cmap[cc],ldof);
+	    }
+	  }
+	  if( !v_is_zero) {
+	    linsys.insertK(global_row, global_col, v*weight);
+	    if(needJacobian)
+	      linsys.insertJ(global_row, global_col, v*weight);
+	  }
 	}
-	
       }
       
     }
