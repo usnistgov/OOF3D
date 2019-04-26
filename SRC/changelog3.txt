@@ -17,6 +17,8 @@
 
 Changes for compatibility with VTK 8.2.0.
 
+Changes for compatibility with macOS 10.14 Mojave.
+
 Minor changes for compatibility with gcc 8.2.0.
 
 Voxel/Tet intersection code is now in a stand-alone subdirectory and
