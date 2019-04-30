@@ -176,6 +176,11 @@ void FluxProperty::make_flux_contributions(const FEMesh *mesh,
   for(CleverPtr<ElementFuncNodeIterator>node(element->funcnode_iterator()); 
       !node->end(); ++*node)
     {
+      // LINSYS STEP 4 -- make_flux_contributions is called from
+      // Material::make_linear_system, which identifies fluxes and
+      // calls this routine.  For FluxProperties, which are
+      // "ordinary", we call the subclass's flux_matrix, which
+      // populates the fluxdata object.
       flux_matrix(mesh, element, *node, flux, pt, time, fluxdata);
       recurse = false;
     }

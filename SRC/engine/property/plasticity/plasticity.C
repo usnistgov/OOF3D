@@ -189,6 +189,11 @@ void Plasticity::precompute(FEMesh* f) {
 
 void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 
+  // LINSYS STEP 3, plastic version -- called from
+  // Material::begin_element, we are in element scope, and need to run
+  // our own gausspoint loop.  This class (or its subclasses) are
+  // responsible for managing the per-gausspoint data objects.
+  
   ElementData *ed = e->getDataByName("plastic_data");
   ElementData *eds = e->getDataByName("slip_data");
 
@@ -649,6 +654,9 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
 			     SmallSystem *fluxmtx)
   const
 {
+  // LINSYS STEP 4, plastic version -- called from
+  // Property::make_flux_contributions, because we are a Flux
+  // property, and need to populate the flux matrix.
   PlasticData *pd = dynamic_cast<PlasticData*>
     (element->getDataByName("plastic_data"));
   int gptidx = (pd->mctogpi_map)[mpt.mastercoord()];

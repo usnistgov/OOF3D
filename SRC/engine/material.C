@@ -271,6 +271,14 @@ Material::outputProperties(const PropertyOutput *pout) const {
 void Material::begin_element(const CSubProblem *subproblem, const Element *el)
   const
 {
+  // LINSYS STEP 3
+
+  // Called from Element::make_linear_system.  Iterates over this
+  // material's properties and calls their begin_element routines.
+  // This is a hook, it's a trivial virtual function in the property
+  // base class, not every property has one.  Plasticity has a very
+  // elaborate one.
+  
   for(std::vector<Property*>::size_type i=0;i<property.size();i++) {
     if(subproblem->currently_active_prop(property[i])) {
       property[i]->begin_element(subproblem, el);
@@ -386,6 +394,12 @@ void Material::make_linear_system(const CSubProblem *subproblem,
 				  LinearizedSystem &linearized_system)
   const
 {
+  // LINSYS STEPs 4 and 5 happen here.
+
+  // Called from Element::make_linear system, inside the element loop
+  // but after the given element's begin_element is complete.  Unlike
+  // begin_element, here we are inside the element's gausspoint loop.
+  
   // By the time we are called, we are promised that cross_reference
   // has been run, and that the material is in a consistent state.
   GaussPoint pt = gpt.gausspoint(); // current gauss pt from gauss pt iterator
@@ -393,6 +407,7 @@ void Material::make_linear_system(const CSubProblem *subproblem,
 
   FluxSysMap fluxdata;
 
+  // Iterate over the active fluxes.
   const std::vector<Flux*> &active_fluxes = subproblem->active_fluxes(this);
 
   for (std::vector<Flux*>::const_iterator fluxi = active_fluxes.begin();
@@ -416,12 +431,16 @@ void Material::make_linear_system(const CSubProblem *subproblem,
 	  // calculate its contributions to the active flux
 	  if(subproblem->currently_active_prop(*property)) {
 	    (*property)->begin_point( mesh, el, (*fluxi), pt );
+
+	    // This triggers LINSYS STEP.4.
 	    (*property)->make_flux_contributions(mesh, el, *fluxi, pt, time,
 						 nlsolver, property_flux_info);
+
 	    (*property)->end_point( mesh, el, (*fluxi), pt );
 	    
 	    // add the flux contributions of the property to the flux
-	    // small system
+	    // small system.
+	    
 	    *flux_small_sys += *property_flux_info;
 	    property_flux_info->reset();
 	  } // End of if (property active in subproblem)
@@ -477,6 +496,9 @@ void Material::make_linear_system(const CSubProblem *subproblem,
     // the contributions to the global vectors and matrices.
     // Here dofmap is the Element's localDoFmap, which maps local
     // element dof indices to global ones.
+
+    // This triggers LINSYS STEP 5, calls the equation object, which
+    // completes construction of the linearized system.
     (*eqn)->make_linear_system( subproblem, el, pt, dofmap,
 			        fluxdata, eqndata,
 				nlsolver, linearized_system );

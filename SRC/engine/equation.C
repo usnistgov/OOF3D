@@ -155,6 +155,7 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 				       const CNonlinearSolver *nlsolver,
 				       LinearizedSystem &linsys) const
 {
+  // LINSYS STEP 5, called from Material::make_linear_system.
   double weight = gpt.weight();
 
   // TODO: The plasticity stuff is quasi-static, and Picard-like, so
@@ -252,6 +253,7 @@ DivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 				       const CNonlinearSolver *nlsolver,
 				       LinearizedSystem &linsys) const
 {
+  // This is LINSYS STEP 5, for the non-deformed case.
   double weight = gpt.weight();
   // std::cerr << "DivergenceEquation::make_linear_system: element="
   // 	    << element->get_index() << std::endl;
@@ -262,7 +264,7 @@ DivergenceEquation::make_linear_system(const CSubProblem *subproblem,
   for (CleverPtr<ElementFuncNodeIterator> mu(element->funcnode_iterator());
        !mu->end(); ++*mu)
   {
-
+    
     double sf = mu->shapefunction(gpt);
     double dsf[DIM];
     for(int i=0; i<DIM; i++)

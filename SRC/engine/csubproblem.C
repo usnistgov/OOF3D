@@ -655,6 +655,16 @@ void CSubProblem::make_linear_system(LinearizedSystem *linearsystem,
     dynamic_cast<DefiniteProgress*>(getProgress("Building linear system",
 						DEFINITE));
 
+  // LINSYS STEP 1
+  
+  // This is the start of the make_linear_system call chain, which can
+  // be a bit hard to follow.  This routine is called from the Python
+  // subproblemcontext object to do the integrals and build the global
+  // matrices, which happens by populating the passed-in
+  // LinearizedSystem object.  There are various possible
+  // time-stepping algorithms that might be in play here, but all of
+  // them eventually need a linearized system. (TODO: All of them?)
+  
   // TODO 3.1: TDEP The first thing we want to do for each element is
   // determine the integration order, so we know how many gausspoints
   // there are, and then signal to all the elements, so they can

@@ -467,9 +467,15 @@ void Element::make_linear_system(const CSubProblem *const subproblem,
 				 LinearizedSystem &system)
   const
 {
+  // LINSYS STEP 2
+
+  // This is part of the make_linear_system call chain, which
+  // populates the passed-in LinearizedSystem object.  This is called
+  // from CSubProblem::make_linear_system.
   std::vector<int> dofmap = localDoFmap();
   const Material *mat = material();
   if(mat) {
+    // TODO: Material begin_element should pass the order through also.
     mat->begin_element(subproblem, this);
     // TODO OPT: iorder could be precomputed or cached, but do some
     // careful profiling before changing anything.  Preliminary tests
