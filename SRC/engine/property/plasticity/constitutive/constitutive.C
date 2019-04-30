@@ -38,3 +38,21 @@ void PowerLawConstitutiveRule::evolve(GptPlasticData *gptpd,
 // Write the "evolve" function that takes the Cauchy stress from
 // the outer loop and returns the plastic strain increments
 // and their derivatives wrt the strain.
+
+
+// ----- ELASTIC -----
+
+
+// ElasticLawSlipData -- no requirements. 
+ElasticLawSlipData::ElasticLawSlipData() {}
+
+GptSlipData *ElasticConstitutiveRule::getSlipData() const {
+  return new ElasticLawSlipData();
+}
+
+// ElasticConstitutiveRule -- needs to set the gptsd slip
+// accumulations to zero.  Somehow.
+void ElasticConstitutiveRule::evolve(GptPlasticData *gptpd,
+				     GptSlipData *gptsd) {
+  ElasticLawSlipData *elsd = static_cast<ElasticLawSlipData*>(gptsd);
+}

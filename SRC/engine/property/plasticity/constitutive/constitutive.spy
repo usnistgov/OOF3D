@@ -41,3 +41,5 @@ powerlawreg = Registration('Power Law',PlasticConstitutiveRulePtr,
                            ])
 
     
+elasticreg = Registration('Elastic',ElasticConstitutiveRulePtr,
+                          ElasticConstitutiveRule,2)

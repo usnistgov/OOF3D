@@ -32,6 +32,12 @@ public:
 			   double dt, double init_res);
 }
 
+
+class ElasticConstitutiveRule : public PlasticConstitutiveRule {
+public:
+  ElasticConstitutiveRule();
+}
+  
 %pragma(python) include="constitutive.spy"
 
 #endif // CONSTITUIVE_SWG

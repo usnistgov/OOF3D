@@ -65,6 +65,24 @@ private:
   
 };
 
+// ----- ELASTIC ------
+
+// The ElasticConstitutiveRule is a trivial constitutive rule
+// whose main role is to exercise the API.  It doesn't do any
+// plastic evolution, and its state object is trivial.
+
+class ElasticLawSlipData : public GptSlipData {
+public:
+  ElasticLawSlipData();
+};
+
+class ElasticConstitutiveRule : public PlasticConstitutiveRule {
+public:
+  ElasticConstitutiveRule() {}
+  virtual GptSlipData *getSlipData() const;
+  virtual void evolve(GptPlasticData *, GptSlipData*);
+};
+  
 
 #endif // CONSTITUTIVE_H
 
