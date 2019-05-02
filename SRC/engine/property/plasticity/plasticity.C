@@ -150,6 +150,7 @@ Plasticity::Plasticity(PyObject *reg, const std::string &name,
   : FluxProperty(name, reg), nslips(slips), orientation(0),
     xtal_cijkl_(c), rule(r)
 {
+  r->set_slip_systems(nslips);
   displacement = dynamic_cast<ThreeVectorField*>(Field::getField("Displacement"));
   stress_flux = dynamic_cast<SymmetricTensorFlux*>(Flux::getFlux("Stress"));
   //
@@ -352,8 +353,11 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     // Constitutive part is here
     // -------------------------
     // This is the "TASK 1" of the constititive rule file.
+    // Possibly the GptPlasticData container is not needed?
     rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
-		 
+
+    std::vector<double> test = sd->gptslipdata[gptdx]->dgam;
+    
     // The plastic constitutive rule is pointed to by "rule".
     // Inputs are:
     // The current GptPlasticData* object:
@@ -783,6 +787,13 @@ PlasticData::PlasticData(int ord, const Element *el) :
   }
 }
 
+
+GptSlipData::GptSlipData(int nslips) {
+  for(int i=0;i<nslips;++i) {
+    dgam.push_back(0.0);
+    dgam_dtau.push_back(0.0);
+  }
+}
 
 SlipData::SlipData(int ord, const PlasticConstitutiveRule *r,
 		   const Element *e) : ElementData("slip_data"), order(ord)

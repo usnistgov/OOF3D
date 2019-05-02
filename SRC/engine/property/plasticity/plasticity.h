@@ -207,6 +207,10 @@ public:
 // container has pointers to the base class, individual constitutive
 // rules define derived classes that have the relevant data.
 class GptSlipData {
+public:
+  std::vector<double> dgam;
+  std::vector<double> dgam_dtau;
+  GptSlipData(int nslips);
 };
 
 

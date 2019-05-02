@@ -26,14 +26,17 @@
 
 // Constitutive-rule-specific stored at the gausspoints to preserve
 // local state across time iterations.  Stored in the SlipData object,
-// managed by the Plasticity property class.
+// managed by the Plasticity property class.  Actually, some of the
+// data in here (dgam, dgam_dta) is needed for any constitutive rule,
+// so it's not special to any particular one.  The argument for
+// keeping this data here is that it reduces the number of data
+// objects that a constitutive-rule author needs to worry about.  It's
+// duplicative, though, so it's a bit ugly.
 class PowerLawSlipData : public GptSlipData {
 public:
   PowerLawSlipData(int slips, double res);
-  std::vector<double> res;
-  std::vector<double> dgam;        // Delta-gamma.
-  std::vector<double> dgam_dta;   
-  std::vector<double> tau_alpha;
+  std::vector<double> res;         // Initial slip resistance.
+  std::vector<double> tau_alpha;   // Resolved shear stress.
 };
 
 class PlasticConstitutiveRule {
@@ -41,10 +44,15 @@ public:
   virtual void set_slip_systems(int n) { slip_systems = n; }
   virtual GptSlipData *getSlipData() const = 0;
   virtual void evolve(GptPlasticData *, GptSlipData*) = 0;
+  virtual void complete(GptPlasticData *, GptSlipData*) = 0;
 protected:
   int slip_systems;
 };
 
+
+// TODO: The "dt" parameter here is the time-step size, it should not
+// be provided by users here, but should come from the solver
+// infrastructure.
 class PowerLawConstitutiveRule : public PlasticConstitutiveRule {
 public:
   PowerLawConstitutiveRule(double w1,
@@ -60,9 +68,12 @@ public:
   {}
   virtual GptSlipData *getSlipData() const;
   virtual void evolve(GptPlasticData *, GptSlipData*);
+  virtual void complete(GptPlasticData *, GptSlipData*);
 private:
   double w1,w2,ss,a,h0,m,g0dot,dt,init_res;
-  
+  std::vector<double> total_res,delta_res;
+  void _evolve_hardening(PowerLawSlipData*);
+  void _evolve_gamma(PowerLawSlipData*);
 };
 
 // ----- ELASTIC ------
@@ -73,14 +84,16 @@ private:
 
 class ElasticLawSlipData : public GptSlipData {
 public:
-  ElasticLawSlipData();
+  ElasticLawSlipData(int slips);
 };
+
 
 class ElasticConstitutiveRule : public PlasticConstitutiveRule {
 public:
   ElasticConstitutiveRule() {}
   virtual GptSlipData *getSlipData() const;
-  virtual void evolve(GptPlasticData *, GptSlipData*);
+  virtual void evolve(GptPlasticData*, GptSlipData*);
+  virtual void complete(GptPlasticData*, GptSlipData*);
 };
   
 
