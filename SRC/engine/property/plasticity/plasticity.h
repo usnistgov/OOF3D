@@ -208,8 +208,8 @@ public:
 // rules define derived classes that have the relevant data.
 class GptSlipData {
 public:
-  std::vector<double> dgam;
-  std::vector<double> dgam_dtau;
+  std::vector<double> delta_gamma;
+  std::vector<double> dgamma_dtau;
   GptSlipData(int nslips);
 };
 

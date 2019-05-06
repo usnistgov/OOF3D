@@ -27,11 +27,11 @@
 // Constitutive-rule-specific stored at the gausspoints to preserve
 // local state across time iterations.  Stored in the SlipData object,
 // managed by the Plasticity property class.  Actually, some of the
-// data in here (dgam, dgam_dta) is needed for any constitutive rule,
-// so it's not special to any particular one.  The argument for
-// keeping this data here is that it reduces the number of data
-// objects that a constitutive-rule author needs to worry about.  It's
-// duplicative, though, so it's a bit ugly.
+// data in here (delta_gamma, dgamma_dtau) is needed for any
+// constitutive rule, so it's not special to any particular one.  The
+// argument for keeping this data here is that it reduces the number
+// of data objects that a constitutive-rule author needs to worry
+// about.  It's duplicative, though, so it's a bit ugly.
 class PowerLawSlipData : public GptSlipData {
 public:
   PowerLawSlipData(int slips, double res);

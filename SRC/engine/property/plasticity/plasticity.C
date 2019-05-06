@@ -346,8 +346,9 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     // containing the derivative of the delta-gamma with respect
     // to the current stress.  Do NR iterations until this converges.
 
-    // Once it's converged, make another call to update the
-    // local plastic state in plasticdata and slipdata.
+    // Once it's converged, make another call ("complete") to update
+    // the local plastic state in slipdata. We are in charge of
+    // plasticata.
 
     // -------------------------
     // Constitutive part is here
@@ -356,7 +357,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     // Possibly the GptPlasticData container is not needed?
     rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
 
-    std::vector<double> test = sd->gptslipdata[gptdx]->dgam;
+    std::vector<double> test = sd->gptslipdata[gptdx]->delta_gamma;
     
     // The plastic constitutive rule is pointed to by "rule".
     // Inputs are:
@@ -790,8 +791,8 @@ PlasticData::PlasticData(int ord, const Element *el) :
 
 GptSlipData::GptSlipData(int nslips) {
   for(int i=0;i<nslips;++i) {
-    dgam.push_back(0.0);
-    dgam_dtau.push_back(0.0);
+    delta_gamma.push_back(0.0);
+    dgamma_dtau.push_back(0.0);
   }
 }
 

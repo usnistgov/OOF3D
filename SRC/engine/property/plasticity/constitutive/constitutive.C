@@ -57,7 +57,7 @@ void PowerLawConstitutiveRule::_evolve_hardening(PowerLawSlipData *plsd) {
 	const_qab = w2; // Latent hardening
       }
       ratio_res = 1.0-total_res[beta]/ss;
-      delta_res[alpha] += const_qab*h0*abs(plsd->dgam[beta])*(pow(ratio_res,a));
+      delta_res[alpha] += const_qab*h0*abs(plsd->delta_gamma[beta])*(pow(ratio_res,a));
     }
   }
 }
@@ -79,17 +79,17 @@ void PowerLawConstitutiveRule::_evolve_gamma(PowerLawSlipData *plsd) {
 
       m_inv = 1.0/m;
 
-      plsd->dgam[alpha] = dt*const_sign*g0dot*(pow(abs(ratio_alpha),m_inv));
+      plsd->delta_gamma[alpha] = dt*const_sign*g0dot*(pow(abs(ratio_alpha),m_inv));
 
       res_inv = 1.0/total_res[alpha];
 
       // Derivative is reason
-      plsd->dgam_dtau[alpha] = dt*res_inv*g0dot*m_inv*(pow(abs(ratio_alpha),(m_inv-1.0)));
+      plsd->dgamma_dtau[alpha] = dt*res_inv*g0dot*m_inv*(pow(abs(ratio_alpha),(m_inv-1.0)));
       
     }
     else {
-      plsd->dgam[alpha] = 0.0;
-      plsd->dgam_dtau[alpha] = 0.0;
+      plsd->delta_gamma[alpha] = 0.0;
+      plsd->dgamma_dtau[alpha] = 0.0;
     }
   }
 }
