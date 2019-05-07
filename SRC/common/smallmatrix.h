@@ -79,6 +79,7 @@ public:
   friend DoubleVec operator*(const SmallMatrix&, const DoubleVec&);
   friend DoubleVec operator+(const DoubleVec&, const SmallMatrix&);
   friend DoubleVec operator+(const SmallMatrix&, const DoubleVec&);
+  friend double dot(const SmallMatrix&, const SmallMatrix&);
 };
 
 SmallMatrix operator+(const SmallMatrix&, const SmallMatrix&);

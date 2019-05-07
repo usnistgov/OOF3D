@@ -259,10 +259,16 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
   SmallMatrix s_trial(3);
 
   // TODO: Some kind of smart container, for memory management?
-  std::vector<SmallMatrix*> b_mtx(nslips),c_mtx(nslips);
+
+  // Gtmtx is a utility matrix used to convert delta-gamma dervatives
+  // wrt to resolved shear stress to delta-gamma derivatives wrt 2nd
+  // PK stress.  TODO: These arrays should be arrays of SmallMatrix3
+  // objects, and those objects should have a default constructor.
+  std::vector<SmallMatrix*> b_mtx(nslips),c_mtx(nslips),gtmtx(nslips);
   for (int i=0;i<nslips;++i) {
     b_mtx[i]=new SmallMatrix(3);
     c_mtx[i]=new SmallMatrix(3);
+    gtmtx[i]=new SmallMatrix(3);
   }
   
   
@@ -355,9 +361,57 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     // -------------------------
     // This is the "TASK 1" of the constititive rule file.
     // Possibly the GptPlasticData container is not needed?
-    rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
 
-    std::vector<double> test = sd->gptslipdata[gptdx]->delta_gamma;
+    // Compute the resolved shear stresses for the trial stress, and
+    // put them in the slipdata container for this gausspoint.
+    for(int alpha=0;alpha<nslips;++alpha) {
+      sd->gptslipdata[gptdx]->tau_alpha[alpha] = \
+	dot(s_trial, *lab_schmid_tensors[alpha]);
+    }
+
+    // Initial call to evolve -- this populates the delta_gamma and
+    // dgamma_dtau from s_trial..
+    rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
+    
+    // Compute the first correction to the s_trial in s_star.
+    pd->gptdata[gptdx]->s_star = s_trial;
+    for(int alpha=0;alpha<nslips;++alpha) {
+      pd->gptdata[gptdx]->s_star -= (*c_mtx[alpha])*sd->gptslipdata[gptdx]->delta_gamma[alpha];
+    }
+
+    while(1) {
+      // Compute the new resolved shear stresses from s_star.
+      for(int alpha=0;alpha<nslips;++alpha) {
+	sd->gptslipdata[gptdx]->tau_alpha[alpha] =	\
+	  dot(pd->gptdata[gptdx]->s_star, *lab_schmid_tensors[alpha]);
+      }
+      
+      // TODO optimize:  Precompute gtmtx.  This transpose business is awful.
+      for(int alpha=0;alpha<nslips;++alpha) {
+	SmallMatrix lst = *lab_schmid_tensors[alpha];
+	SmallMatrix lst_t = *lab_schmid_tensors[alpha];
+	lst_t.transpose();
+	*(gtmtx[alpha]) = (lst+lst_t)*(0.5*sd->gptslipdata[gptdx]->dgamma_dtau[alpha]);
+      }
+
+      // Compute the fourth order tensor...
+      Rank4_3DTensor RJ_mtx;
+      for(int alpha=0;alpha<nslips;++alpha) {
+	for(int i=0;i<3;++i)
+	  for(int j=0;j<3;++j)
+	    for(int k=0;k<3;++k)
+	      for(int l=0;l<3;++l) {
+		RJ_mtx(i,j,k,l) = (*c_mtx[alpha])(i,j)*(*gtmtx[alpha])(k,l);
+		if ( (i==k)&&(j==l) )
+		  RJ_mtx(i,j,k,l) += 0.5;
+		if ( (i==l)&&(j==k) )
+		  RJ_mtx(i,j,k,l) += 0.5;
+	      }
+      }
+
+      SmallMatrix nr_kernel = RJ_mtx.as_smallmatrix();
+      
+    } // Constitutive while loop ends here.
     
     // The plastic constitutive rule is pointed to by "rule".
     // Inputs are:
@@ -793,6 +847,7 @@ GptSlipData::GptSlipData(int nslips) {
   for(int i=0;i<nslips;++i) {
     delta_gamma.push_back(0.0);
     dgamma_dtau.push_back(0.0);
+    tau_alpha.push_back(0.0);
   }
 }
 

@@ -172,7 +172,7 @@ public:
   SmallMatrix fp_tau;   // Plastic part of F at current time tau.
   SmallMatrix fe_tau;   // Elastic part of F at current time tau.
   SmallMatrix cauchy;   // Cauchy stress (time tau?)
-  SmallMatrix s_star;   // 2nd PK stress at time tau?
+  SmallMatrix s_star;   // 2nd PK stress at time tau.
   Rank4_3DTensor w_mat;          // Elastoplastic tangent.
 };
   
@@ -208,8 +208,9 @@ public:
 // rules define derived classes that have the relevant data.
 class GptSlipData {
 public:
-  std::vector<double> delta_gamma;
+  std::vector<double> delta_gamma; 
   std::vector<double> dgamma_dtau;
+  std::vector<double> tau_alpha; // Resolved shear stresses.
   GptSlipData(int nslips);
 };
 

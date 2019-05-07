@@ -17,6 +17,7 @@
 #include "common/vectormath.h"
 #include "common/ooferror.h"
 #include "common/tostring.h"
+#include "common/vectormath.h"
 #include <string.h>		// for memset
 
 SmallMatrix::SmallMatrix(unsigned int rows, unsigned int cols)
@@ -57,6 +58,11 @@ void SmallMatrix::clear() {
 double &SmallMatrix::operator()(unsigned int row, unsigned int col) {
   assert(row >= 0 && col >= 0 && row < nrows && col < ncols);
   return data[col*nrows+row];
+}
+
+// Dot product. 
+double dot(const SmallMatrix &s1,const SmallMatrix &s2) {
+  return dot(s1.data,s2.data);
 }
 
 // This has to have a return type of const double&, and not just
