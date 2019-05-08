@@ -34,7 +34,43 @@
 #include "engine/smallsystem.h"
 #include "engine/property/orientation/orientation.h"
 
+// TODO: Should be settable in the solver somewhere.
+#define TOLERANCE 0.001
+#define ITER_MAX 20
 
+// Utility function -- "deflates" a 3x3 SmallMatrix, converting
+// it to a 9x1 SmallMatrix.  Should ultimately be 6x6, really.
+SmallMatrix sm_deflate3(SmallMatrix x) {
+  if ((x.rows()!=3) || (x.cols()!=3)) {
+    throw ErrProgrammingError("sm_deflate3 caled with non-3x3 SmallMatrix.",
+			      __FILE__,__LINE__);
+  }
+  else {
+    SmallMatrix res(9,1);
+    for(int i=0;i<3;++i)
+      for(int j=0;j<3;++j) {
+	res(voigt9[i][j],0) = x(i,j);
+      }
+    return res;
+  }
+}
+
+// Also "reflate".
+SmallMatrix sm_inflate3(SmallMatrix x) {
+  if ((x.rows()!=9) || (x.cols()!=1)) {
+    throw ErrProgrammingError("sm_inflate3 called with non-9x1 SmallMatrix.",
+			      __FILE__,__LINE__);
+  }
+  else {
+    SmallMatrix res(3);
+    for(int i=0;i<3;++i)
+      for(int j=0;j<3;++j) {
+	res(i,j)=x(voigt9[i][j],0);
+      }
+    return res;
+  }
+}
+  
 // Utility function -- inverts a 3x3 SmallMatrix "manually".
 // TODO: Make this a sub-class of SmallMatrix class, which should
 // use dgetri function, to avoid the determinant?  Our determinants
@@ -379,12 +415,16 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
       pd->gptdata[gptdx]->s_star -= (*c_mtx[alpha])*sd->gptslipdata[gptdx]->delta_gamma[alpha];
     }
 
-    while(1) {
+    bool done = false;
+    unsigned int icount = 0;
+    while(!done) {
       // Compute the new resolved shear stresses from s_star.
       for(int alpha=0;alpha<nslips;++alpha) {
 	sd->gptslipdata[gptdx]->tau_alpha[alpha] =	\
 	  dot(pd->gptdata[gptdx]->s_star, *lab_schmid_tensors[alpha]);
       }
+
+      rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
       
       // TODO optimize:  Precompute gtmtx.  This transpose business is awful.
       for(int alpha=0;alpha<nslips;++alpha) {
@@ -409,23 +449,45 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 	      }
       }
 
+      SmallMatrix rhs = pd->gptdata[gptdx]->s_star;
+      rhs -= s_trial;
+      for(int alpha=0;alpha<nslips;++alpha) {
+	rhs += (*c_mtx[alpha])*(sd->gptslipdata[gptdx]->delta_gamma[alpha]);
+      }
+
+      // NR step involves converting the 4-index and 2-index
+      // quantities to a linear system and solving it.
       SmallMatrix nr_kernel = RJ_mtx.as_smallmatrix();
+      SmallMatrix nr_rhs = sm_deflate3(rhs);
+
+      int res = nr_kernel.solve(nr_rhs);
+      // TODO: Check the return code.
+
+      SmallMatrix delta_s_star = sm_inflate3(nr_rhs);
+
+      SmallMatrix old_s_star = pd->gptdata[gptdx]->s_star;
+      double old_s_star_size = sqrt(dot(old_s_star,old_s_star));
+
+      SmallMatrix new_s_star = old_s_star - delta_s_star;
+      double new_s_star_size = sqrt(dot(new_s_star,new_s_star));
       
+      pd->gptdata[gptdx]->s_star = new_s_star;
+
+      if ( ((new_s_star_size - old_s_star_size)/old_s_star_size) < TOLERANCE)
+	done = true;
+      icount+=1;
+      if (icount>ITER_MAX)
+	done = true;
     } // Constitutive while loop ends here.
+
+    // Compute the last set of resolved shear stresses from the last s_star.
+    for(int alpha=0;alpha<nslips;++alpha) {
+      sd->gptslipdata[gptdx]->tau_alpha[alpha] =			\
+	dot(pd->gptdata[gptdx]->s_star, *lab_schmid_tensors[alpha]);
+    }
     
-    // The plastic constitutive rule is pointed to by "rule".
-    // Inputs are:
-    // The current GptPlasticData* object:
-    // pd->gptdata[gptdx],
-    //
-    // Slip data, a SlipData* pointer to a specific sub-class.
-    // sd->gptslipdata[gptdx].
-
-
-    // Once you have the answer back:
-
-    // Then compute the four-index W object at this gausspoint.
-
+    rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
+    
 
     // These are "stubs" for now.  The real ones come from
     // the NR loop through the constitutive rule.
