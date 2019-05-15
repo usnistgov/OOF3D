@@ -248,6 +248,14 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
   }
   else {
     pd = dynamic_cast<PlasticData*>(ed);
+    int gptdx = 0;
+    for (GaussPointIterator gpt = e->integrator(ig_order);
+	 !gpt.end(); ++gptdx,++gpt) {
+      // Transfer the previous "new" data to be the current "old" data.
+      // TODO: Second layer is pointers?  Seems weird.
+      pd->gptdata[gptdx]->ft = pd->gptdata[gptdx]->f_tau;
+      pd->gptdata[gptdx]->fpt = pd->gptdata[gptdx]->fp_tau;
+    }
   }
     
   if (eds==0) {
@@ -343,6 +351,11 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
       }
     }
     // f_attau is now populated for the current gausspoint.
+
+    // Store it in the plastic-data object.
+    // TODO: Do we need this?
+    pd->gptdata[gptdx]->f_tau = f_attau;
+    
     // Plastic fp is in pd->gptdata[gptdx]->fpt
     SmallMatrix fp_att = pd->gptdata[gptdx]->fpt;
     SmallMatrix fp_att_i = sm_invert3(fp_att);
@@ -415,8 +428,8 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
       pd->gptdata[gptdx]->s_star -= (*c_mtx[alpha])*sd->gptslipdata[gptdx]->delta_gamma[alpha];
     }
 
-    bool done = false;
-    unsigned int icount = 0;
+    bool done = false;        // Set when converged or iter limit exceeded.
+    unsigned int icount = 0;  // Count interations.
     while(!done) {
       // Compute the new resolved shear stresses from s_star.
       for(int alpha=0;alpha<nslips;++alpha) {
@@ -424,6 +437,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 	  dot(pd->gptdata[gptdx]->s_star, *lab_schmid_tensors[alpha]);
       }
 
+      // Call evolve, get back new delta_gamma and dgamma_dtau values.
       rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
       
       // TODO optimize:  Precompute gtmtx.  This transpose business is awful.
@@ -488,29 +502,64 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     
     rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
     
+    rule->complete(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
 
-    // These are "stubs" for now.  The real ones come from
-    // the NR loop through the constitutive rule.
-    // The const. rule is available through the "r" member, which is
-    // of type "PlasticConstitutiveRule *".
-    SmallMatrix s_attau(3);
-    std::vector<double> delta_g(nslips);
+    
+    // Select data objects for the subsequent processing.
+    SmallMatrix s_attau = pd->gptdata[gptdx]->s_star;
+    std::vector<double> delta_g = sd->gptslipdata[gptdx]->delta_gamma;
     std::vector<SmallMatrix*> dgamma_ds(nslips);
-    for (int i=0; i<nslips; ++i)
-      dgamma_ds[i] = new SmallMatrix(3);
+    // TODO optimize: Precompute the symmetrized Schmid tensor, this
+    // transpose operation is very stupid.
+    for (int i=0; i<nslips; ++i) {
+      SmallMatrix lst = *lab_schmid_tensors[i];
+      SmallMatrix lst_t = *lab_schmid_tensors[i];
+      lst_t.transpose();
+      *(dgamma_ds[i]) = (lst+lst_t)*(0.5*(sd->gptslipdata[gptdx]->dgamma_dtau[i]));
+    }
 
-    // fp_attau is derived, fp_att*(I + sum delta_g *lab_schmid_tensor)
-    SmallMatrix fp_attau(3);
+    SmallMatrix lp(3);
+    for(int alpha=0;alpha<nslips;++alpha) {
+      lp += (sd->gptslipdata[gptdx]->delta_gamma[alpha])*(*lab_schmid_tensors[alpha]);
+    }
+
+    // TODO: Ugh.  Not in the gausspoint loop, please.
+    SmallMatrix ident(3);
+    ident(0,0)=1.0; ident(1,1)=1.0; ident(2,2)=1.0;
+
+    // The new fp is the old fp plus the Asaro equation result.
+    // This is fp_attau;
+    pd->gptdata[gptdx]->fp_tau = (pd->gptdata[gptdx]->fpt)*(ident + lp);
+    // Grab a reference to this for post-processing.
+    SmallMatrix &fp_attau = pd->gptdata[gptdx]->fp_tau;
+
+    // Normalize fp_tau.  
+    double dtmt = sm_determinant3(fp_attau);
+    fp_attau *= (1.0/pow(dtmt, 1.0/3.0));
+    
     // Decompose into elastic and plastic parts.
     SmallMatrix fp_attau_i = sm_invert3(fp_attau);
     SmallMatrix fe_attau = fp_attau_i*f_attau;
     SmallMatrix fe_attau_i = sm_invert3(fe_attau);
+
+    // Put it in the plastic data container.
+    pd->gptdata[gptdx]->fe_tau = fe_attau;
     
     // At this point, we have the value of s_tau, the 2nd PK stress
     // at the current time increment, as well as fp_tau, the plastic
     // strain at the current time, computed from the delta-gammas
     // and the Asaro equation.
 
+    SmallMatrix fe_attau_t = fe_attau;
+    fe_attau_t.transpose();
+
+    // Compute the Cauchy stress at tau.
+    pd->gptdata[gptdx]->cauchy = fe_attau*(pd->gptdata[gptdx]->s_star)*fe_attau_t;
+    double fe_dtmt = sm_determinant3(fe_attau);
+    pd->gptdata[gptdx]->cauchy *= (1.0/fe_dtmt);
+
+    // Cauchy stress is up to date.
+    
     // Construct the increment matrix, f_nc, and it's transpose.
     SmallMatrix f_att_i = sm_invert3(f_att);
     SmallMatrix f_inc(3);   // The increment matrix.
@@ -698,8 +747,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
   // with the current W matrix, which is the dervative of the Cauchy
   // stress with respect to the strain.  This object is used to
   // construct the flux matrix, which wants derivatives of the
-  // Cauchy stress wrt the actual DOFs.  TODO: It's the Cauchy
-  // stress, right?
+  // Cauchy stress wrt the actual DOFs.
 }
 
 int Plasticity::integration_order(const CSubProblem *sp,
