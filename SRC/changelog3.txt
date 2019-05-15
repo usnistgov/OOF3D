@@ -24,6 +24,8 @@ Minor changes for compatibility with gcc 8.2.0.
 Voxel/Tet intersection code is now in a stand-alone subdirectory and
 templated for general use.
 
+The graphics window can be saved in PDF format.
+
 3.2.1
 
 Fixed a few problems in the tutorials, and updated some of them.

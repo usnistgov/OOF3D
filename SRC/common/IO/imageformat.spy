@@ -14,12 +14,12 @@ from ooflib.common.IO import parameter
 cregisteredclass.registerCClass(ImageFormatPtr)
 
 ## PDF output is commented out because it doesn't work very well.
-# cregisteredclass.Registration(
-#     "PDF",
-#     ImageFormatPtr,
-#     PDFImageFormat,
-#     ordering=0,
-#     tip="Save the canvas as a PDF file.")
+cregisteredclass.Registration(
+    "PDF",
+    ImageFormatPtr,
+    PDFImageFormat,
+    ordering=0,
+    tip="Save the canvas as a PDF file.")
 
 cregisteredclass.Registration(
     "PNG",

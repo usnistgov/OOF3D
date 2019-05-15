@@ -59,9 +59,9 @@ public:
   BMPImageFormat();
 };
 
-// class PDFImageFormat : public ImageFormat {
-// public:
-//   PDFImageFormat();
-// };
+class PDFImageFormat : public ImageFormat {
+public:
+  PDFImageFormat();
+};
 
 #endif // IMAGEFORMAT_SWG

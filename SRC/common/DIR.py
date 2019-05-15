@@ -148,36 +148,29 @@ def set_clib_flags(clib):
     if HAVE_MPI:
         clib.externalLibs.append('pmpich++')
         clib.externalLibs.append('mpich')
-    if DIM_3:
-        addVTKlibs(clib, ['vtkCommonCore',
-                          'vtkCommonDataModel',
-                          'vtkCommonExecutionModel',
-                          'vtkCommonMisc',
-                          'vtkCommonTransforms',
-                          'vtkFiltersCore',
-                          'vtkFiltersExtraction',
-                          'vtkFiltersGeneral',
-                          'vtkFiltersModeling',
-                          'vtkFiltersSources',        
-                          'vtkIOImage',
-                          'vtkIOXML',
-                          'vtkImagingCore',
-                          'vtkImagingColor',
-                          'vtkImagingGeneral',
-                          'vtkRenderingAnnotation',
-                          'vtkRenderingContextOpenGL2',
-                          'vtkRenderingCore',
-                          'vtkRenderingFreeType',
-                          'vtkRenderingOpenGL2',
-                          'vtkRenderingVolumeOpenGL2'])
-
-        ## Libs included before upgrading from vtk5.
-        # clib.externalLibs.append('vtkImaging')
-        # clib.externalLibs.append('vtkCommon')
-        # clib.externalLibs.append('vtkIO')
-        # clib.externalLibs.append('vtkFiltering')
-        # clib.externalLibs.append('vtkRendering')
-        # clib.externalLibs.append('vtkVolumeRendering')
-        # clib.externalLibs.append('vtkWidgets')
-        # clib.externalLibs.append('vtkHybrid')
-
+    addVTKlibs(clib, ['vtkCommonCore',
+                      'vtkCommonDataModel',
+                      'vtkCommonExecutionModel',
+                      'vtkCommonMisc',
+                      'vtkCommonTransforms',
+                      'vtkFiltersCore',
+                      'vtkFiltersExtraction',
+                      'vtkFiltersGeneral',
+                      'vtkFiltersModeling',
+                      'vtkFiltersSources',
+                      'vtkIOExport',
+                      'vtkIOExportPDF',
+                      'vtkIOExportOpenGL2',
+                      'vtkIOImage',
+                      'vtkIOXML',
+                      'vtkImagingCore',
+                      'vtkImagingColor',
+                      'vtkImagingGeneral',
+                      'vtkRenderingAnnotation',
+                      'vtkRenderingContextOpenGL2',
+                      'vtkRenderingCore',
+                      'vtkRenderingFreeType',
+                      'vtkRenderingOpenGL2',
+                      'vtkRenderingGL2PSOpenGL2',
+                      'vtkRenderingVolumeOpenGL2'])
+        

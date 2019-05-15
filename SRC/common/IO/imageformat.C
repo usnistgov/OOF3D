@@ -15,7 +15,7 @@
 #include "common/IO/oofcerr.h"
 
 #include <vtkBMPWriter.h>
-//#include <vtkGL2PSExporter.h>
+#include <vtkGL2PSExporter.h>
 #include <vtkJPEGWriter.h>
 #include <vtkPNGWriter.h>
 #include <vtkPNMWriter.h>
@@ -127,37 +127,30 @@ vtkSmartPointer<vtkImageWriter> BMPImageFormat::writer() const {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// const std::string &PDFImageFormat::suffix() const {
-//   // This is a hack because vtkGL2PSExporter adds the suffix itself.
-//   static const std::string &sfx("");
-//   return sfx;
-// }
+const std::string &PDFImageFormat::suffix() const {
+  // This is a hack because vtkGL2PSExporter adds the suffix itself.
+  static const std::string &sfx("");
+  return sfx;
+}
 
-// void PDFImageFormat::saveCanvas(vtkSmartPointer<vtkRenderWindow> window,
-// 				const std::string &filename)
-//   const
-// {
-//   // TODO 3.1 : This doesn't work very well.  I suspect that
-//   // vtkGL2PSExporter is defective.  The parameters set below give the
-//   // best results that I could obtain for displaying both a simple
-//   // skeleton and filled contour plot, but both of them contain some
-//   // spuriously shaded faces.  Also, it crashes when run without the
-//   // GUI, even if window->Render() is called explicitly.
-
-//   // Comments on-line indicate that vtkGL2PSExporter may work better
-//   // in later versions (> 5.10.1).
-
-//   vtkSmartPointer<vtkGL2PSExporter> exporter =
-//     vtkSmartPointer<vtkGL2PSExporter>::New();
-//   exporter->SetRenderWindow(window);
-//   exporter->SetFileFormatToPDF();
-//   exporter->SetFilePrefix(filename.c_str());
-//   exporter->OcclusionCullOff();
-//   exporter->SimpleLineOffsetOff();
-//   exporter->TextOn();
-//   //exporter->SetSortToBSP();
-//   //exporter->Write3DPropsAsRasterImageOn();
-//   //exporter->DrawBackgroundOff();
-//   exporter->Write();
-// }
+void PDFImageFormat::saveCanvas(vtkSmartPointer<vtkRenderWindow> window,
+				const std::string &filename)
+  const
+{
+  // TODO: I'm not at all sure that the parameters set below are the
+  // best.  This doesn't work if the GUI's not running.
+  vtkSmartPointer<vtkGL2PSExporter> exporter =
+    vtkSmartPointer<vtkGL2PSExporter>::New();
+  exporter->SetRenderWindow(window);
+  exporter->SetFileFormatToPDF();
+  exporter->SetFilePrefix(filename.c_str());
+  exporter->SetSortToBSP();
+  exporter->CompressOn();
+  exporter->OcclusionCullOff();
+  exporter->SimpleLineOffsetOff();
+  //exporter->SimpleLineOffsetOn();
+  exporter->TextOn();
+  //exporter->Write3DPropsAsRasterImageOn();
+  exporter->Write();
+}
 

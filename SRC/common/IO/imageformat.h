@@ -81,12 +81,12 @@ public:
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// class PDFImageFormat : public ImageFormat {
-// public:
-//   PDFImageFormat() {}
-//   virtual const std::string &suffix() const;
-//   virtual void saveCanvas(vtkSmartPointer<vtkRenderWindow>, 
-// 			  const std::string&) const;
-// };
+class PDFImageFormat : public ImageFormat {
+public:
+  PDFImageFormat() {}
+  virtual const std::string &suffix() const;
+  virtual void saveCanvas(vtkSmartPointer<vtkRenderWindow>, 
+			  const std::string&) const;
+};
 
 #endif // IMAGEFORMAT_H
