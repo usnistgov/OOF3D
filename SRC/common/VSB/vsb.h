@@ -1415,7 +1415,6 @@ public:
       }
     }
   }
-  // void draw(LineSegmentLayer*, const CMicrostructure*) const;
 
 };				// end template class VSBGraph
 
@@ -1441,48 +1440,81 @@ class VSBEdgeIterator {
 private:
   const VOXELSETBOUNDARY *vsb;
   unsigned int igraph;
-  unsigned int ihere;
+  unsigned int inode;
   unsigned int inbr;
   bool finished;
-public:
-  VSBEdgeIterator(const VOXELSETBOUNDARY *vsb)
-    : vsb(vsb),
-      igraph(0),
-      ihere(0),
-      inbr(0),
-      finished(false)
-  {
-    if(vsb->graphs.empty())
-      finished = true;
-  }
-  bool done() const { return finished; }
 
-  const typename VOXELSETBOUNDARY::Node *node0() const {
-    return vsb->graphs[igraph].getNode(ihere);
+  void skipEmpty() {
+    while(igraph < vsb->graphs.size() && vsb->graphs[igraph].size() == 0)
+      igraph++;
+    finished = (igraph == vsb->graphs.size());
   }
 
-  const typename VOXELSETBOUNDARY::Node *node1() const {
-    return vsb->graphs[igraph].getNode(ihere)->getNeighbor(inbr);
-  }
-
-  void next() {
+  void next_() {
+    // Go to the next edge, even if it's been returned already with
+    // the nodes in the opposite order.
     if(inbr < 2) {
       inbr++;
       return;
     }
-    // nbr == 2
+    // inbr == 2
     inbr = 0;
-    ihere++;
-    if(ihere == vsb->graphs[igraph].size()) {
+    inode++;
+    if(inode == vsb->graphs[igraph].size()) {
+      inode = 0;
       igraph++;
-      if(igraph == vsb->graphs.size()) {
-	finished = true;
-	return;
-      }
-      ihere = 0;
+      skipEmpty(); // skip subsequent empty graphs. Sets finished if done.
     }
   }
+  
+public:
+  VSBEdgeIterator(const VOXELSETBOUNDARY *vsb)
+    : vsb(vsb),
+      igraph(0),
+      inode(0),
+      inbr(0),
+      finished(false)
+  {
+    if(vsb->graphs.empty())
+      finished = true;		// there are no graphs
+    else {
+      skipEmpty();		// skip initial empty graphs
+    }
+  }
+
+  bool done() const { return finished; }
+
+  const typename VOXELSETBOUNDARY::Node *node0() const {
+    return vsb->graphs[igraph].getNode(inode);
+  }
+
+  const typename VOXELSETBOUNDARY::Node *node1() const {
+    return vsb->graphs[igraph].getNode(inode)->getNeighbor(inbr);
+  }
+
+  void next() {
+    // Go to the next unique edge.
+    while(!finished) {
+      next_();			// current edge may not be unique
+      if(finished || node0() < node1()) // pointer comparison intended
+	return;
+    }
+  }
+
+  // For debugging
+  int graphNo() const { return igraph; }
+  int nodeNo() const { return inode; }
+  int nbrNo() const { return inbr; }
 };				// end template class VSBEdgeIterator
+
+template <class VOXELSETBOUNDARY>
+std::ostream &operator<<(std::ostream &os,
+			 const VSBEdgeIterator<VOXELSETBOUNDARY> &iter)
+{
+  os << "VSBEdgeIterator(graph=" << iter.graphNo()
+     << ", here=" << iter.nodeNo() << ", nbr=" << iter.nbrNo() << ")";
+  return os;
+}
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -1593,7 +1625,7 @@ public:
     } // end loop over subregions
 
     findBBox();
-  }
+  } // end VoxelSetBdy constructor
 
   // protoVSBNodeFactory converts a signature (2x2x2 set of bools
   // stored as a char) to a type of ProtoVSBNode and a VoxRot.  To do
@@ -1681,6 +1713,20 @@ public:
     return vol;
   } // end VoxelSetBdy::clippedVolume
 
+  // clipped() returns a pointer to a new VoxelSetBdy object, clipped
+  // by the given planes.  It does slightly more work than
+  // clippedVolume(), so don't use it if you just need the volume.
+  // It's the caller's responsibilty to delete the result.
+  
+  VoxelSetBdy *clipped(const std::vector<Plane> &planes) const {
+    VoxelSetBdy *result = new VoxelSetBdy(*this);
+    for(Graph &graph : result->graphs) {
+      for(const Plane &plane : planes)
+	graph.clipInPlace(plane);
+    }
+    return result;
+  };
+  
   VSBEdgeIterator<VoxelSetBdy<COORD, ICOORD, IMAGE, IMAGEVAL>> iterator()
     const
   {
@@ -1760,7 +1806,11 @@ public:
       delete clippedGraph;
     }
   }
-  
+
+  int nEdges() const {
+    return 3*size()/2; // each node has three edges and each edge has two nodes
+  };
+
   friend class VSBEdgeIterator<VoxelSetBdy>;
 };				// end template class VoxelSetBdy
 

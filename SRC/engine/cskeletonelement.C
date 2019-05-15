@@ -1466,7 +1466,16 @@ void CSkeletonElement::drawVoxelCategoryIntersection(LineSegmentLayer *layer,
   std::vector<Coord3D> epts = pixelCoords(ms);
   std::vector<VSBPlane<Coord3D>> planes = getPlanes(epts);
   const VoxelSetBoundary *vsb = skel->getVoxelSetBoundary(category);
-  vsb->drawClippedVSB(planes, layer);
+  auto *clipped = vsb->clipped(planes);
+  int nEdges = clipped->nEdges();
+  layer->set_nSegs(nEdges);
+  auto iter = clipped->iterator();
+  int count = 0;
+  while(!iter.done()) {
+    layer->addSegment(&iter.node0()->position, &iter.node1()->position);
+    iter.next();
+  }
+  delete clipped;
 }
 
 #endif // DEBUG
