@@ -10,8 +10,9 @@ Use macports lapack instead of Accelerate framework?  See
 
 Resurrect the Mesh Data Viewer and restore the toolbox.
 
-
-
+Find a situation in which an error or warning dialog is hidden and see
+if replacing self.window.raise_() with self.window.present() in
+SubWindow.raise_window() in common/IO/GUI/subWindow.py fixes it.
 
 
 Optimize categoryVolumes?
