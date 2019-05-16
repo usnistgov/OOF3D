@@ -558,7 +558,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     double fe_dtmt = sm_determinant3(fe_attau);
     pd->gptdata[gptdx]->cauchy *= (1.0/fe_dtmt);
 
-    // Cauchy stress is up to date.
+    // Cauchy stress is now up to date.
     
     // Construct the increment matrix, f_nc, and it's transpose.
     SmallMatrix f_att_i = sm_invert3(f_att);
@@ -610,7 +610,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 	  for(int m=0;m<3;++m)
 	    for(int n=0;n<3;++n)
 	      for(int o=0;o<3;++o) {
-		bsb_g[alpha](k,l,n,o) = \
+		bsb_g[alpha](k,l,n,o) += \
 		  bsb_l(k,m,n,o)*(*(lab_schmid_tensors[alpha]))(m,l) \
 		  + (*(lab_schmid_tensors[alpha]))(m,k)*bsb_l(m,l,n,o);
 	      };
@@ -623,7 +623,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 	    for(int l=0;l<3;++l)
 	      for(int n=0;n<3;++n)
 		for(int o=0;o<3;++o) {
-		  bsb_t[alpha](i,j,n,o) = \
+		  bsb_t[alpha](i,j,n,o) += \
 		    0.5*lab_cijkl_(i,j,k,l)*bsb_g[alpha](k,l,n,o);
 		}
 		  
@@ -652,13 +652,16 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
       for(int j=0;j<3;++j)
 	for(int m=0;m<3;++m)
 	  for(int n=0;n<3;++n) {
-	    if ((i==m) && (j==n)) {
+	    // TODO: Maybe clearer to have a 4-way Kronecker delta?
+	    if ((i==m) && (j==n)) 
 	      lhs(i,j,m,n)=1.0;
-	      for(int alpha=0;alpha<nslips;++alpha) {
-		lhs(i,j,m,n) += (*dgamma_ds[alpha])(m,n)*(*c_mtx[alpha])(i,j);
-	      }
+	    
+	    for(int alpha=0;alpha<nslips;++alpha) { 
+	      lhs(i,j,m,n) += (*dgamma_ds[alpha])(m,n)*(*c_mtx[alpha])(i,j);
 	    }
 	  }
+
+    
     // The actual equation for bsb_q is
     //      lhs(i,j,m,n)*bsb_q(m,n,k,l) = rhs(i,j,k,l).
     // Do this by linear algebra with the SmallMatrix class.
@@ -880,46 +883,46 @@ FCCPlasticity::FCCPlasticity(PyObject *reg, const std::string &nm,
   // 1 1 1 planes.
   n[0]=1.0; n[1]=1.0; n[2]=1.0;
   //
-  s[0]=-1.0; s[1]=0.0; s[2]=1.0;
+  s[0]=0.0; s[1]=1.0; s[2]=-1.0;
   xtal_schmid_tensors[0]=_normalized_outer_product(n,s);
   //
-  s[0]=0.0; s[1]=-1.0; s[2]=1.0;
+  s[0]=-1.0; s[1]=0.0; s[2]=1.0;
   xtal_schmid_tensors[1]=_normalized_outer_product(n,s);
   //
-  s[0]=-1.0; s[1]=1.0; s[2]=0.0;
+  s[0]=1.0; s[1]=-1.0; s[2]=0.0;
   xtal_schmid_tensors[2]=_normalized_outer_product(n,s);
   //
-  // 1 -1 1 planes
-  n[0]=1.0; n[1]=-1.0; n[2]=1.0;
+  // 1 -1 -1 planes
+  n[0]=1.0; n[1]=-1.0; n[2]=-1.0;
   //
-  s[0]=-1.0; s[1]=0.0; s[2]=1.0;
+  s[0]=0.0; s[1]=-1.0; s[2]=1.0;
   xtal_schmid_tensors[3]=_normalized_outer_product(n,s);
   //
-  s[0]=0.0; s[1]=1.0; s[2]=1.0;
+  s[0]=-1.0; s[1]=0.0; s[2]=-1.0;
   xtal_schmid_tensors[4]=_normalized_outer_product(n,s);
   //
   s[0]=1.0; s[1]=1.0; s[2]=0.0;
   xtal_schmid_tensors[5]=_normalized_outer_product(n,s);
   //
-  // -1 1 1 planes
-  n[0]=-1.0; n[1]=1.0; n[2]=1.0;
-  //
-  s[0]=1.0; s[1]=0.0; s[2]=1.0;
-  xtal_schmid_tensors[6]=_normalized_outer_product(n,s);
-  //
-  s[0]=0.0; s[1]=-1.0; s[2]=1.0;
-  xtal_schmid_tensors[7]=_normalized_outer_product(n,s);
-  //
-  s[0]=1.0; s[1]=1.0; s[2]=0.0;
-  xtal_schmid_tensors[8]=_normalized_outer_product(n,s);
-  //
-  // 1 1 -1 planes
-  n[0]=1.0; n[1]=1.0; n[2]=-1.0;
-  //
-  s[0]=1.0; s[1]=0.0; s[2]=1.0;
-  xtal_schmid_tensors[9]=_normalized_outer_product(n,s);
+  // -1 1 -1 planes
+  n[0]=-1.0; n[1]=1.0; n[2]=-1.0;
   //
   s[0]=0.0; s[1]=1.0; s[2]=1.0;
+  xtal_schmid_tensors[6]=_normalized_outer_product(n,s);
+  //
+  s[0]=1.0; s[1]=0.0; s[2]=-11.0;
+  xtal_schmid_tensors[7]=_normalized_outer_product(n,s);
+  //
+  s[0]=-1.0; s[1]=-1.0; s[2]=0.0;
+  xtal_schmid_tensors[8]=_normalized_outer_product(n,s);
+  //
+  // -1 -1 1 planes
+  n[0]=-1.0; n[1]=-1.0; n[2]=1.0;
+  //
+  s[0]=0.0; s[1]=-1.0; s[2]=-1.0;
+  xtal_schmid_tensors[9]=_normalized_outer_product(n,s);
+  //
+  s[0]=1.0; s[1]=0.0; s[2]=1.0;
   xtal_schmid_tensors[10]=_normalized_outer_product(n,s);
   //
   s[0]=-1.0; s[1]=1.0; s[2]=0.0;
