@@ -218,7 +218,7 @@ void Plasticity::precompute(FEMesh* f) {
 
     lab_schmid_tensors.resize(nslips);
     for(unsigned int i=0; i<(unsigned)nslips; ++i)
-      xtal_schmid_tensors[i]=_rotate_schmid_tensor(xtal_schmid_tensors[i],
+      lab_schmid_tensors[i]=_rotate_schmid_tensor(xtal_schmid_tensors[i],
 						   orientation->orientation());
 	  
   }
