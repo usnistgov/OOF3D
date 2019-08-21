@@ -16,6 +16,7 @@
 
 from ooflib.SWIG.common import config
 from ooflib.SWIG.common import ooferror
+from ooflib.SWIG.common import progress
 from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.engine import masterelement
 from ooflib.common import debug
@@ -773,182 +774,199 @@ import string
 
 def writeABAQUSfromMesh(filename, mode, meshcontext):
 
-    fp=open(filename, mode)
-    femesh=meshcontext.femesh()
+    prog = progress.getProgress("Saving Mesh", progress.DEFINITE)
+    fp = open(filename, mode)
 
-    print >> fp, "*HEADING"
-    print >> fp, ("ABAQUS-style file created by OOF3D on %s from a mesh of the microstructure %s." 
-                  % (datetime.datetime.today(),
-                     meshcontext.getSkeleton().getMicrostructure().name()))
+    try:
+        femesh=meshcontext.femesh()
 
-    # Build dictionaries of elements and nodes, giving each one a
-    # unique index. Elements and nodes already have indices, but the
-    # sets of indices may have gaps.  Abaqus require a contiguous set
-    # starting at 1.  The element dict is keyed by the oof3d element
-    # index, but the node dict is keyed by *position* so that split
-    # nodes don't appear in the abaqus output.  All oof3d nodes at the
-    # same position are represented by a single abaqus node.
-    
-    elementdict = {}  # maps oof element index to abaqus element index
-    i = 1
-    # In the same loop, get the list of materials and masterelements
-    # directly from the elements.
-    materiallist = {}
-    # masterElementList[name] is a list of elements whose
-    # MasterElement has the given name.
-    masterElementList = {}
-    for el in femesh.elements():
-        ematerial = el.material()
-        if ematerial:
-            elementdict[el.get_index()] = i
-            matname = ematerial.name()
-            if matname not in materiallist:
-                materiallist[matname] = ematerial
-            emasterelement = el.masterelement()
-            melname = emasterelement.name()
-            if melname not in masterElementList:
-                masterElementList[melname] = [el]
-            else:
-                masterElementList[melname].append(el)
-            i += 1
+        print >> fp, "*HEADING"
+        print >> fp, ("ABAQUS-style file created by OOF3D on %s from a mesh of the microstructure %s." 
+                      % (datetime.datetime.today(),
+                         meshcontext.getSkeleton().getMicrostructure().name()))
 
-    print >> fp, "** Materials defined by OOF3D:"
-    for matname, details in materiallist.items():
-        print >> fp, "**   %s:" % matname
-        for prop in details.properties():
-            for param in prop.registration().params:
-                print >> fp, "**     %s: %s" % (param.name,param.value)
+        # Build dictionaries of elements and nodes, giving each one a
+        # unique index. Elements and nodes already have indices, but the
+        # sets of indices may have gaps.  Abaqus require a contiguous set
+        # starting at 1.  The element dict is keyed by the oof3d element
+        # index, but the node dict is keyed by *position* so that split
+        # nodes don't appear in the abaqus output.  All oof3d nodes at the
+        # same position are represented by a single abaqus node.
+
+        elementdict = {}  # maps oof element index to abaqus element index
+        i = 1
+        # In the same loop, get the list of materials and masterelements
+        # directly from the elements.
+        materiallist = {}
+        # masterElementList[name] is a list of elements whose
+        # MasterElement has the given name.
+        masterElementList = {}
+        # materialDict[name] is a list of elements whose material has
+        # the given name
+        materialDict = {}
+        for el in femesh.elements():
+            ematerial = el.material()
+            if ematerial:
+                elementdict[el.get_index()] = i
+                matname = ematerial.name()
+                if matname not in materiallist:
+                    materiallist[matname] = ematerial
+                    materialDict[matname] = []
+                materialDict[matname].append(el)
+                emasterelement = el.masterelement()
+                melname = emasterelement.name()
+                if melname not in masterElementList:
+                    masterElementList[melname] = [el]
+                else:
+                    masterElementList[melname].append(el)
+                i += 1
+        nelements = i-1.0       # float
+
+        print >> fp, "** Materials defined by OOF3D:"
+        for matname, details in materiallist.items():
+            print >> fp, "**   %s:" % matname
+            for prop in details.properties():
+                for param in prop.registration().params:
+                    print >> fp, "**     %s: %s" % (param.name,param.value)
 
 
-    print >> fp, "** Master elements used in OOF3D:"
-    # Note that meshcontext.elementdict is different from elementdict
-    # we constructed above!
-    for ekey, ename in meshcontext.elementdict.items():
-        print >> fp, ("**   %s: %s, %s"
-                      % (ekey, ename.name(), ename.description()))
+        print >> fp, "** Master elements used in OOF3D:"
+        # Note that meshcontext.elementdict is different from elementdict
+        # we constructed above!
+        for ekey, ename in meshcontext.elementdict.items():
+            print >> fp, ("**   %s: %s, %s"
+                          % (ekey, ename.name(), ename.description()))
 
-    print >> fp, "** Boundary Conditions:"
-    for bcname in meshcontext.allBndyCondNames():
-        bc=meshcontext.getBdyCondition(bcname)
-        print >> fp, "**   %s: %s" % (bcname,`bc`)
+        print >> fp, "** Boundary Conditions:"
+        for bcname in meshcontext.allBndyCondNames():
+            bc=meshcontext.getBdyCondition(bcname)
+            print >> fp, "**   %s: %s" % (bcname,`bc`)
 
-    print >> fp, \
-"""** Notes:
-**   The set of nodes and elements may be different from the set
-**    created from a skeleton depending on the element type and if the
-**    mesh was refined.
-** The materials and boundary conditions provided by OOF3D should be
-**   translated into ABAQUS by the user.
-** The element type(s) *will* have to be modified by the user. Search for
-**   ABAQUSELEMENTTYPE in this file.
-** Only elements (and nodes of such elements) that have an associated
-**   material are included in this file."""
-
-    nodemap = femesh.getNodeIndexMap()
-
-    print >> fp, "*NODE"
-    # Get nodes that are associated with elements that have a material
-    # definition.  Other nodes aren't in nodedict/nodelist.
-    for i in range(nodemap.size()):
-        pos = nodemap.position(i)
-        print >> fp, ("%d, %s, %s, %s"
-                      % (i+1, pos[0], pos[1], pos[2]))
-
-    for ename, elist in masterElementList.items():
-        # Group the elements according to element type
         print >> fp, \
-"""** The OOF3D element type is %s. The ABAQUS element type will
-** have to be modified by the user to be meaningful.
-*ELEMENT, TYPE=ABAQUSELEMENTTYPE""" % ename
-        for el in elist:
-            listbuf2 = ["%d" % elementdict[el.get_index()]]
-            cornernodes = set()
-            # List corner nodes first, as preferred by abaqus
-            ## TODO: The nodedict lookup in these loops is the slow part.
-            for node in el.cornernodes():
-                nidx = nodemap.index(node.position())
-                listbuf2.append("%d" % nidx)
-                cornernodes.add(node.index())
-            # List the non-corner nodes
-            for node in el.nodes():
-                if node.index() not in cornernodes:
+    """** Notes:
+    **   The set of nodes and elements may be different from the set
+    **    created from a skeleton depending on the element type and if the
+    **    mesh was refined.
+    ** The materials and boundary conditions provided by OOF3D should be
+    **   translated into ABAQUS by the user.
+    ** The element type(s) *will* have to be modified by the user. Search for
+    **   ABAQUSELEMENTTYPE in this file.
+    ** Only elements (and nodes of such elements) that have an associated
+    **   material are included in this file."""
+
+        nodemap = femesh.getNodeIndexMap()
+
+        print >> fp, "*NODE"
+        # Get nodes that are associated with elements that have a material
+        # definition.  Other nodes aren't in nodedict/nodelist.
+        prog.setMessage("Writing nodes")
+        for i in range(nodemap.size()):
+            pos = nodemap.position(i)
+            print >> fp, ("%d, %s, %s, %s"
+                          % (i+1, pos[0], pos[1], pos[2]))
+            prog.setFraction((i+1.0)/nodemap.size())
+
+        e = 0
+        for ename, elist in masterElementList.items():
+            # Group the elements according to element type
+            print >> fp, \
+    """** The OOF3D element type is %s. The ABAQUS element type will
+    ** have to be modified by the user to be meaningful.
+    *ELEMENT, TYPE=ABAQUSELEMENTTYPE""" % ename
+            prog.setMessage("Writing elements")
+            for el in elist:
+                listbuf2 = ["%d" % elementdict[el.get_index()]]
+                cornernodes = set()
+                # List corner nodes first, as preferred by abaqus
+                ## TODO: The nodedict lookup in these loops is the slow part.
+                for node in el.cornernodes():
                     nidx = nodemap.index(node.position())
                     listbuf2.append("%d" % nidx)
-            print >> fp, ", ".join(listbuf2)
+                    cornernodes.add(node.index())
+                # List the non-corner nodes
+                for node in el.nodes():
+                    if node.index() not in cornernodes:
+                        nidx = nodemap.index(node.position())
+                        listbuf2.append("%d" % nidx)
+                print >> fp, ", ".join(listbuf2)
+                e += 1
+                prog.setFraction(e/nelements)
 
-    print >> fp, "** Point boundaries in OOF3D"
-    for pbname in meshcontext.pointBoundaryNames():
-        print >> fp, "*NSET, NSET=%s" % pbname
-        listbuf=[]
-        i=0
-        for node in femesh.getBoundary(pbname).nodeset:
-            somevalue = nodemap.index(node.position())
-            if somevalue > 0:
-                if i>0 and i%16==0:
-                    # Just in case the list does contain more than 16 nodes:)
-                    listbuf.append("\n%d" % (somevalue))
-                else:
-                    listbuf.append("%d" % (somevalue))
-                i+=1
-        print >> fp, ", ".join(listbuf)
-
-    print >> fp, "** Edge boundaries in OOF3D"
-    for ebname in meshcontext.edgeBoundaryNames():
-        print >> fp, "*NSET, NSET=%s" % (ebname)
-        listbuf=[]
-        i=0
-        for node in femesh.getBoundary(ebname).edgeset.nodes():
-            somevalue = nodemap.index(node.position())
-            if somevalue > 0:
-                # Respect the 16 item-per-row-limit of ABAQUS
-                if i>0 and i%16==0:
-                    listbuf.append("\n%d" % (somevalue))
-                else:
-                    listbuf.append("%d" % (somevalue))
-                i+=1
-        print >> fp, ", ".join(listbuf)
-
-    print >> fp, "** Face boundaries in OOF3D"
-    for fbname in meshcontext.faceBoundaryNames():
-        print >> fp, "*NSET, NSET=%s" % fbname
-        # The nodes in a face aren't sorted, but testing and
-        # debugging is easier if they files are written the same
-        # way each time, so sort the nodes.
-        nodes = []
-        for node in femesh.getBoundary(fbname).faceset.getNodes():
-            nidx = nodemap.index(node.position())
-            if nidx > 0:
-                assert nidx not in nodes
-                nodes.append(nidx)
-        nodes.sort()
-        listbuf = []
-        for i, nidx in enumerate(nodes):
-            if i>0 and i%16 == 0:
-                listbuf.append("\n%d" % nidx)
-            else:
-                listbuf.append("%d" % nidx)
-        print >> fp, ", ".join(listbuf)
-
-    # stopwatch.restart()
-    for matname in materiallist:
-        ## TODO OPT: Use a separate buffer for each material, and only
-        ## loop over elements once.
-        print >> fp, "*ELSET, ELSET=%s" % matname
-        listbuf=[]
-        i=0
-        for el in femesh.elements():
-            if el.material():
-                if el.material().name()==matname:
+        print >> fp, "** Point boundaries in OOF3D"
+        for pbname in meshcontext.pointBoundaryNames():
+            print >> fp, "*NSET, NSET=%s" % pbname
+            listbuf=[]
+            i=0
+            for node in femesh.getBoundary(pbname).nodeset:
+                somevalue = nodemap.index(node.position())
+                if somevalue > 0:
                     if i>0 and i%16==0:
-                        listbuf.append("\n%d" % elementdict[el.get_index()])
+                        # Just in case the list does contain more than 16 nodes:)
+                        listbuf.append("\n%d" % (somevalue))
                     else:
-                        listbuf.append("%d" % elementdict[el.get_index()])
+                        listbuf.append("%d" % (somevalue))
                     i+=1
-        print >> fp, ", ".join(listbuf)
-        print >> fp, "*SOLID SECTION, ELSET=%s, MATERIAL=%s" % (matname,
-                                                                matname)
-    for matname in materiallist:
-        print >> fp, ("*MATERIAL, NAME=%s** Use the information in the header to complete these fields under MATERIAL" % matname)
+            print >> fp, ", ".join(listbuf)
 
-    fp.close()
+        print >> fp, "** Edge boundaries in OOF3D"
+        for ebname in meshcontext.edgeBoundaryNames():
+            print >> fp, "*NSET, NSET=%s" % (ebname)
+            listbuf=[]
+            i=0
+            for node in femesh.getBoundary(ebname).edgeset.nodes():
+                somevalue = nodemap.index(node.position())
+                if somevalue > 0:
+                    # Respect the 16 item-per-row-limit of ABAQUS
+                    if i>0 and i%16==0:
+                        listbuf.append("\n%d" % (somevalue))
+                    else:
+                        listbuf.append("%d" % (somevalue))
+                    i+=1
+            print >> fp, ", ".join(listbuf)
+
+        print >> fp, "** Face boundaries in OOF3D"
+        for fbname in meshcontext.faceBoundaryNames():
+            if prog.stopped():
+                break
+            print >> fp, "*NSET, NSET=%s" % fbname
+            # The nodes in a face aren't sorted, but testing and
+            # debugging is easier if the files are written the same
+            # way each time, so sort the nodes.
+            nodes = []
+            prog.setMessage("Writing boundary %s" % fbname)
+            fnodes = femesh.getBoundary(fbname).faceset.getNodes()
+            for i, node in enumerate(fnodes):
+                nidx = nodemap.index(node.position())
+                if nidx > 0:
+                    assert nidx not in nodes
+                    nodes.append(nidx)
+                prog.setFraction(i/float(len(fnodes)))
+            nodes.sort()
+            listbuf = []
+            for i, nidx in enumerate(nodes):
+                if i>0 and i%16 == 0:
+                    listbuf.append("\n%d" % nidx)
+                else:
+                    listbuf.append("%d" % nidx)
+            print >> fp, ", ".join(listbuf)
+
+        for matname in materiallist:
+            print >> fp, "*ELSET, ELSET=%s" % matname
+            listbuf=[]
+            i=0
+            for el in materialDict[matname]:
+                if i>0 and i%16==0:
+                    listbuf.append("\n%d" % elementdict[el.get_index()])
+                else:
+                    listbuf.append("%d" % elementdict[el.get_index()])
+                i+=1
+            print >> fp, ", ".join(listbuf)
+            print >> fp, "*SOLID SECTION, ELSET=%s, MATERIAL=%s" % (matname,
+                                                                    matname)
+        for matname in materiallist:
+            print >> fp, ("*MATERIAL, NAME=%s** Use the information in the header to complete these fields under MATERIAL" % matname)
+            
+    finally:
+        prog.finish()
+        fp.close()
 

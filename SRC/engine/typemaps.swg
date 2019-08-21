@@ -41,7 +41,7 @@
 // newfree      MaterialVec*    deletes std::vector
 // out          MaterialSet*    std::set<Material*> -> set(original Material)
 // newfree      MaterialSet*    deletes std::set
-// out          NodeSet*        std::set<Node*> -> set(Node)
+// out          NodeSet*        std::set<Node*> -> [Node]
 // newfree      NodeSet*
 // in           ElementVec*    [Element] -> std::vector<Element*>*
 
@@ -1599,20 +1599,13 @@ typedef std::vector<Element*> ElementVec;
   // typemap(python, out) NodeSet*
   assert((int) $source->size() >= PY_SSIZE_T_MIN &&
 	 (int) $source->size() <= PY_SSIZE_T_MAX);
-  static PyObject *setType = 0;
-  if(!setType) {
-    PyObject *module = PyImport_ImportModule("ooflib.common.utils");
-    setType = PyObject_GetAttrString(module, "OrderedSet");
-    Py_XDECREF(module);
-    if(!setType) return 0;
-    Py_XINCREF(setType);
-  }
-  $target = PyObject_CallObject(setType, NULL);
+  $target = PyList_New($source->size());
+  int i = 0;
   for(NodeSet::const_iterator n=$source->begin(); n!=$source->end(); ++n) {
     PyObject *pynode = (*n)->pythonObject();
     if(!pynode) return 0;
-    if(!PyObject_CallMethod($target, (char *) "add", (char *) "(O)", pynode))
-      return 0;
+    PyList_SET_ITEM($target, (Py_ssize_t) i, pynode);
+    ++i;
   }
 }
 

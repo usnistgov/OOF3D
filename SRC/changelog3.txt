@@ -26,6 +26,9 @@ templated for general use.
 
 The graphics window can be saved in PDF format.
 
+Saving large Meshes in Abaqus format is much faster in some
+situations.  The slow bits now have progress bars.
+
 3.2.1
 
 Fixed a few problems in the tutorials, and updated some of them.

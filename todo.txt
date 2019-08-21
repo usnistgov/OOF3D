@@ -4,6 +4,8 @@ TODO LIST FOR OOF3D
 Before Next Release
 -------------------
 
+Copy statgroups image segmentation  from OOF2.
+
 Use macports lapack instead of Accelerate framework?  See
    https://github.com/opencollab/arpack-ng/issues/149#issuecomment-419715128
    http://octave.1599824.n4.nabble.com/Issues-with-eigs-td4689314.html#a4689334
