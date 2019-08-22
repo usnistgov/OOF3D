@@ -25,7 +25,8 @@ binary_file_compare = file_utils.binary_file_compare
 
 class OOF_Image(unittest.TestCase):
     def setUp(self):
-        global primitives, imagecontext
+        global color, primitives, imagecontext
+        from ooflib.common import color
         from ooflib.common import primitives
         from ooflib.image import imagecontext
 
@@ -297,7 +298,35 @@ class OOF_Image(unittest.TestCase):
         ms_images = ms.imageNames()
         self.assertEqual(len(ms_images),1)
         self.assert_("jpeg" in ms_images)
-
+        # Check a few pixel values
+        im = imagecontext.imageContexts['load_test:jpeg'].getObject()
+        self.assertEqual(im[primitives.iPoint(0,0,0)],
+                         color.RGBColor(0.054901960784313725,
+                                        0.996078431372549,
+                                        0.9921568627450981))
+        self.assertNotEqual(im[primitives.iPoint(0,0,0)],
+                         color.RGBColor(0.054901960,
+                                        0.0,
+                                        0.99215686))
+        # This voxel is selected in Direct_Pixel_Selection.Color in
+        # pixel_test.py on Mac but not Linux.  Apparently Mac and
+        # Linux use different jpeg libraries which decompress images
+        # differently. WTF?
+        ## TODO: Check that problem is avoided if vtk on Mac is
+        ## compiled with USE_SYSTEM_JPEG=OFF
+        self.assertEqual(im[primitives.iPoint(16, 9, 99)],
+                         # Linux value
+                         color.RGBColor(
+                             0.3058823529411765,
+                             0.9921568627450981,
+                             0.7215686274509804)
+                         # Mac value
+                         # color.RGBColor(
+                         #     0.2901960784313726,
+                         #     1.0,
+                         #     0.7372549019607844)
+        )
+                                        
     ## Check that an Image saved in a Microstructure data file is
     ## loaded properly.
     @memorycheck.check("5color", "original", "original<2>")
