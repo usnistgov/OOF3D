@@ -451,6 +451,8 @@ def findvtk(*basenames):
                     vtkname = f
                     incvtk = os.path.join(base, 'include', vtkname)
                     libvtk = os.path.join(base, 'lib')
+                    if not os.path.isdir(libvtk):
+                        libvtk = os.path.join(base, 'lib64')
                     if os.path.isdir(incvtk) and os.path.isdir(libvtk):
                         global vtksuffix
                         vtksuffix = vtkname[3:] # all but the 'vtk'
