@@ -1,0 +1,54 @@
+
+  September, 2019:
+
+  The Plasticity property turns out to have the feature, through 
+the nonlinearity, that it needs to make contributions to both the
+equation directly, through the geometric term proportional to the
+Cauchy stress, and to the stress divergence, through the 
+Cauchy-stress divergence and the elastoplastic tangent w.
+
+  This means it's *both* a FluxProperty and an EqnProperty.
+
+  So, the change is to collapse these two classes down to a single
+class with methods for both modes, and most properties will only 
+do one, but plasticity will do both.  This will also be valuable
+for large-deformation elasticity, when the time comes, and in 
+principle also large-deformation versions of other properties.
+
+  It looks like where this class distinction actually matters
+is primarily in the Material::make_stiffness routine, which 
+(1) iterates over all the active fluxes in a subproblem, gets
+the properties that contribute to them, and calls their 
+"make_flux_contributions" method, and (2) iterates over all
+the subproblem's active equations, finds all their equation
+properties, and calls their make_equation_contribution methods.
+
+  In the current scheme, only FluxProperty objects have 
+make_flux_contribution methods and only EqnProperty objects have
+make_eqn_contribution methods, and a given property can only appear
+in one of these lists.
+
+  In the proposed scheme, the FluxProperty and EqnProperty class
+will be collapsed into a single class, and will be provided with
+both of these methods.  The Plasticity property will be the first
+one to actually do both things, and appear in both lists.
+
+  Issues arise for:
+ - Property construction
+ - Property registration
+ - Construction of the lists by the subproblem
+
+  A lot of the action will be in the PropertyRegistration 
+class, which is Python.
+
+  It looks like property construction is trivial, the way
+the constructors are currently called from the registrations is 
+easy to modify.
+
+  Property registration features the "reg.fluxInfo" and
+"reg.eqnInfo", which is where the calling sequence that sets
+all this up starts.
+
+  ACTUAL PLAN: We are going to leave out the geometric term,
+and get it working with only the W term, and defer this until 
+after we have working plasticity code otherwise.

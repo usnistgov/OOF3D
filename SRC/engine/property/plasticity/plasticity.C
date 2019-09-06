@@ -865,6 +865,42 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
       }
     }
   }
+
+  // The fluxmtx object should also have a geometric part, whose
+  // columns are the DOF components as for the
+  // stiffness_matrix_element, but whose rows correspond to the
+  // divergence of the flux, not to the flux itself. The equation can
+  // then just insert this contribution directly into the master
+  // stiffness matrix, assuming it does the indexing correctly.
+
+  // Matrix is (dN_nu/dx_k)(dN_mu/dx_j)(sigma_ij) where sigma is the
+  // Cauchy stress.  DOF indices are nu,k; EQN indices are mu,i, and
+  // the j-index is contracted.  Cauchy stress is in
+  // (pd->gptdata[gptidx])->cauchy, and is up to date when we are
+  // called.
+
+  // TODO: Break this out into a "make_eqn_contribs" method of the
+  // property class, and get rid of the EqnProperty class.
+  SmallMatrix cauchy_stress = (pd->gptdata[gptidx])->cauchy;
+  for(CleverPtr<ElementFuncNodeIterator> nu(element->funcnode_iterator());
+      !(nu->end()); ++(*nu)) {
+    for(IteratorP dofc = displacement->iterator(ALL_INDICES);
+	!dofc.end(); ++dofc) {
+      int kdx = dofc.integer();
+      for(CleverPtr<ElementFuncNodeIterator> mu(element->funcnode_iterator());
+	  !(mu->end()); ++(*mu)) {
+	// Iterate over the equation components in the same way.  We
+	// are the property class, we know that we're symmetric.  It's
+	// the responsibility of the equation object to organize this
+	// correctly in the master stiffness matrix.
+	for(IteratorP eqnc = displacement->iterator(ALL_INDICES);
+	    !(eqnc.end()); ++eqnc) {
+	  int idx = eqnc.integer();
+	  // HERE.  Ish.
+	}
+      }
+    }
+  }
 }
 
 

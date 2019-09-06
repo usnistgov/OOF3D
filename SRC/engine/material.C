@@ -471,6 +471,8 @@ void Material::make_linear_system(const CSubProblem *subproblem,
     SmallSystem *eqndata = (*eqn)->initializeSystem( el );
     SmallSystem *property_eqn_info = (*eqn)->initializeSystem(el);
 
+    // Same deal with using "find" (standard) instead of "at" (more
+    // obvious, but not standard).
     EqnPropMap::const_iterator stupid = eqnpropmap.find(*eqn);
     const EqnPropList &eqn_prop_list = (*stupid).second;
 

@@ -256,6 +256,11 @@ public:
   //    sigma(x,u,Du) = K(x,u,Du) Du + sigma_0(x,u,Du)
   //
 
+  // NB this function is not virtual, it's the top-level function that
+  // owns the "mu" (rows of the master stiffness matrix) node loop,
+  // and calls all the functions below, swtiching on the solver type
+  // to decide whether to call static_flux_value.  Called from
+  // Material::make_linear_system.
   void make_flux_contributions(const FEMesh*, const Element*,
 			       const Flux*,
 			       const MasterPosition&, double time,
@@ -313,6 +318,9 @@ public:
     : PhysicalProperty(nm,registration)
   {};
 
+  // NB this fn is not virtual, it's a high-level function that owns
+  // the node loop, and calls all of the virtual functions below.
+  // Called from Material::make_linear_system.
   void make_equation_contributions(const FEMesh*, const Element*,
 				   const Equation*,
 				   const MasterPosition&, double time,

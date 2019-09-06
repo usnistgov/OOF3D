@@ -202,9 +202,12 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 	      linsys.insertJ(global_row, global_col, v*weight);
 	  }
 	}
-      } // Only K matrix for now.  Might have C at some point. TASK 3.
-      // NB This code is wrong, does not include the geometric term
-      // from the large-strain part.  See the notes.
+      }
+      // Only K matrix for now.  Might have C at some point. TASK 3.
+      // TODO: This code does not yet include the geometric term,
+      // which is required at high deformations.  See the
+      // "property_renvation.txt" file in the NOTES directory for the
+      // plan for that.
       
     }
   }
