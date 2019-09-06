@@ -880,27 +880,10 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
   // called.
 
   // TODO: Break this out into a "make_eqn_contribs" method of the
-  // property class, and get rid of the EqnProperty class.
-  SmallMatrix cauchy_stress = (pd->gptdata[gptidx])->cauchy;
-  for(CleverPtr<ElementFuncNodeIterator> nu(element->funcnode_iterator());
-      !(nu->end()); ++(*nu)) {
-    for(IteratorP dofc = displacement->iterator(ALL_INDICES);
-	!dofc.end(); ++dofc) {
-      int kdx = dofc.integer();
-      for(CleverPtr<ElementFuncNodeIterator> mu(element->funcnode_iterator());
-	  !(mu->end()); ++(*mu)) {
-	// Iterate over the equation components in the same way.  We
-	// are the property class, we know that we're symmetric.  It's
-	// the responsibility of the equation object to organize this
-	// correctly in the master stiffness matrix.
-	for(IteratorP eqnc = displacement->iterator(ALL_INDICES);
-	    !(eqnc.end()); ++eqnc) {
-	  int idx = eqnc.integer();
-	  // HERE.  Ish.
-	}
-      }
-    }
-  }
+  // property class, and get rid of the EqnProperty class.  See
+  // the "NOTES/property_renovation.txt" for details.
+  // 
+ 
 }
 
 
