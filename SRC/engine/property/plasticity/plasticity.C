@@ -892,7 +892,9 @@ FCCPlasticity::FCCPlasticity(PyObject *reg, const std::string &nm,
 			     const Cijkl &c, PlasticConstitutiveRule *r)
   : Plasticity(reg,nm,c,r, 12) {
 
+  std::cerr << "Crystal C_ijkl: " << std::endl;
   std::cerr << xtal_cijkl_ << std::endl;
+  std::cerr << "Done." << std::endl;
   //
   // Populate the schmid_tensor data member.
   xtal_schmid_tensors.resize(nslips); // Base class knows nslips at this point.

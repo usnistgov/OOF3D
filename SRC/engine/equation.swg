@@ -82,10 +82,16 @@ public:
   DivergenceEquation(char *name, Flux &flux, int dim);
 };
 
+class DeformedDivergenceEquation : public FluxEquation {
+public:
+  DeformedDivergenceEquation(char *name, Flux &flux, int dim);
+}
+  
 class PlaneFluxEquation : public FluxEquation {
 public:
   PlaneFluxEquation(char *name, Flux &flux, int dim);
 };
+
 
 int countEquations();
 Equation *getEquationByIndex(int);

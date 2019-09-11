@@ -103,6 +103,11 @@ if config.dimension() == 2:
         advertise(equation.PlaneFluxEquation('Plane_Stress',
                                              Stress, 3))
 
+# Large deformation only works in 3D.
+LDForceBalanceEquation = advertise(equation.DeformedDivergenceEquation(
+    'LD_Force_Balance',
+    Stress,
+    3)) 
 
 ## Define electrostatic potential
 Voltage = advertise(field.ScalarField('Voltage'))
@@ -176,6 +181,10 @@ elif config.dimension() == 3:
     conjugate.conjugatePair("Elasticity", ForceBalanceEquation, [fx, fy, fz],
                             Displacement, [u, v, w])
 
+########
+## Large-deformation force balance equation, separate object.
+
+########
 ###############################################################
 ##
 ## Heat flux equation

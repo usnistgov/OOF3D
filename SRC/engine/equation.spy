@@ -36,6 +36,8 @@ DivergenceEquationPtr.__repr__ = DivergenceEquationPtr.name
 
 PlaneFluxEquationPtr.__repr__ = PlaneFluxEquationPtr.name
 
+DeformedDivergenceEquationPtr.__repr__ = DeformedDivergenceEquationPtr.name
+
 from ooflib.SWIG.engine.nodalequation import NodalEquationPtr
 
 # AllEquations acts like a list of Equations
