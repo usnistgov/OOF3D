@@ -35,6 +35,7 @@ def evolve(meshctxt, endtime):
     global linsys_dict
     starttime = meshctxt.getObject().latestTime()
 
+    print >> sys.stderr, "Start of evolve."
     # We're solving a static problem if endtime is the same as the
     # current time, or if there are no non-static steppers and output
     # is requested at at single time.
@@ -54,7 +55,8 @@ def evolve(meshctxt, endtime):
         raise ooferror2.ErrSetupError("End time must not precede current time.")
 
     meshctxt.solver_precompute(solving=True)
-
+    print >> sys.stderr, "Back from solver_precompute."
+    
     meshctxt.setStatus(meshstatus.Solving())
     meshctxt.timeDiff = endtime - starttime # used to get next endtime in GUI
 
@@ -79,15 +81,20 @@ def evolve(meshctxt, endtime):
         for subp in subprobctxts:
             subp.resetStats()
 
+        print >> sys.stderr, "Initialized statistics."
+        
         if not continuing:
             # Initialize static fields in all subproblems.  For static
             # problems, this computes the actual solution.
             try:
+                print >> sys.stderr, "Initializing static fields."
                 linsys_dict = initializeStaticFields(subprobctxts, starttime,
                                                      prog)
                 # Initial output comes *after* solving static fields.
                 # For fully static problems, this is the only output.
+                print >> sys.stderr, "Initial output."
                 _do_output(meshctxt, starttime)
+                print >> sys.stderr, "End of initialization block."
             except ooferror2.ErrInterrupted:
                 raise
             except ooferror2.ErrError, exc:
@@ -102,6 +109,8 @@ def evolve(meshctxt, endtime):
             meshctxt.setCurrentTime(endtime, None)
             return
 
+        print >> sys.stderr, "Finished with static fields."
+        
         time = starttime
         if continuing:
             delta = meshctxt.solverDelta
@@ -191,8 +200,10 @@ def initializeStaticFields(subprobctxts, time, prog):
     for subproblem in subprobctxts:
         # This is the first call to make_linear_system for each
         # subproblem.
+        print >> sys.stderr, "First call to make_linear_system." 
         linsysDict[subproblem] = lsys = subproblem.make_linear_system(
             time, None)
+        print >> sys.stderr, "Back from make_linear_system."
         subproblem.startStep(lsys, time) # sets subproblem.startValues
         subproblem.cacheConstraints(lsys, time)
 

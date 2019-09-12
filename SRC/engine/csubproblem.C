@@ -675,7 +675,10 @@ void CSubProblem::make_linear_system(LinearizedSystem *linearsystem,
   for(ElementIterator ei=element_iterator(); !ei.end() && !progress->stopped();
       ++ei)
     {
+      std::cerr << "Element loop in CSubProblem::make_linear_system." << std::endl;
+      std::cerr << "Calling element make_linear_system." << std::endl;
       ei.element()->make_linear_system( this, time, nlsolver, *linearsystem );
+      std::cerr << "Back from element make_linear_system." << std::endl;
       progress->setFraction( float(ei.count()+1)/float(ei.size()) );
       progress->setMessage(to_string(ei.count()+1) + "/" + to_string(ei.size())
 			   + " elements"

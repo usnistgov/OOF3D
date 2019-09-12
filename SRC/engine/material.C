@@ -278,10 +278,13 @@ void Material::begin_element(const CSubProblem *subproblem, const Element *el)
   // This is a hook, it's a trivial virtual function in the property
   // base class, not every property has one.  Plasticity has a very
   // elaborate one.
-  
+
+  std::cerr << "Inside Material::begin_element." << std::endl;
   for(std::vector<Property*>::size_type i=0;i<property.size();i++) {
     if(subproblem->currently_active_prop(property[i])) {
+      std::cerr << "Calling begin_element on a property." << std::endl;
       property[i]->begin_element(subproblem, el);
+      std::cerr << "Back from property begin_element." << std::endl;
     }
   }
 }
