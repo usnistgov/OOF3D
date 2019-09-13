@@ -155,6 +155,7 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 				       const CNonlinearSolver *nlsolver,
 				       LinearizedSystem &linsys) const
 {
+  std::cerr << "DeformedDivergenceEquation::make_linear_system" << std::endl;
   // LINSYS STEP 5, called from Material::make_linear_system.
   double weight = gpt.weight();
 
@@ -166,12 +167,15 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 
   for(CleverPtr <ElementFuncNodeIterator> mu (element->funcnode_iterator());
       !mu->end(); ++(*mu)) {
+    std::cerr << "Start of node loop." << std::endl;
     double sf = mu->shapefunction(gpt);
     double dsf[DIM];
     for(int i=0;i<DIM;++i) {
       dsf[i] = mu->displacedsfderiv(element,i,gpt,subproblem->mesh);
     }
+    std::cerr << "Starting equation component loop." << std::endl;
     for(int eqcomp=0; eqcomp<dim(); ++eqcomp) {
+      std::cerr << "Start of component loop" << std::endl;
       int global_row = nodaleqn( *mu->funcnode(), eqcomp)->ndq_index();
 
       // This scope is a particular row of the global matrix.
@@ -180,13 +184,16 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
       // fi->first is a Flux*, fi->second is a SmallSystem*,
       // points to the flux matrix.
       std::vector<int> cmap = (*fi).first->contraction_map(eqcomp);
-      
+
+      std::cerr << "More!" << std::endl;
       if( !(*fi).second->k_clean ) {
 	const SmallSparseMatrix &k = (*fi).second->kMatrix;
 	for(int ldof=0; ldof<element->ndof(); ++ldof) {
+	  std::cerr << "Starting DOF loop" << std::endl;
 	  // DOFmap maps local indices to global.
 	  int global_col = dofmap[ldof];
 
+	  std::cerr << "Doing flux contraction." << std::endl;
 	  // Contract the flux components with the shape fn components.
 	  bool v_is_zero = true;
 	  double v = 0.0;
@@ -196,11 +203,19 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 	      v -= dsf[cc]*k(cmap[cc],ldof);
 	    }
 	  }
+	  std::cerr << "Finished flux contractions." << std::endl;
+	  
 	  if( !v_is_zero) {
+	    std::cerr << "Inside v-is-not-zero conditional." << std::endl;
+	    std::cerr << "Row and column: " << std::endl;
+	    std::cerr << global_row << std::endl;
+	    std::cerr << global_col << std::endl;
 	    linsys.insertK(global_row, global_col, v*weight);
+	    std::cerr << "Finished insert-k." << std::endl;
 	    if(needJacobian)
 	      linsys.insertJ(global_row, global_col, v*weight);
 	  }
+	  std::cerr << "Finished linsys insertions." << std::endl;
 	}
       }
       // Only K matrix for now.  Might have C at some point. TASK 3.

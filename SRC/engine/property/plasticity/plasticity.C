@@ -580,7 +580,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     // Put it in the plastic data container.
     pd->gptdata[gptdx]->fe_tau = fe_attau;
 
-    std::cerr << "Got s_tau and 2nd PK stress." << std::endl;
+    std::cerr << "Got s_tau, which is the 2nd PK stress." << std::endl;
     // At this point, we have the value of s_tau, the 2nd PK stress
     // at the current time increment, as well as fp_tau, the plastic
     // strain at the current time, computed from the delta-gammas
@@ -1057,6 +1057,7 @@ SlipData::~SlipData() {
 
 
 Rank4_3DTensor::Rank4_3DTensor(SmallMatrix &s) {
+  data = std::vector<double>(81,0.0);
   if ((s.rows()!=9) || (s.cols()!=9))
     throw ErrProgrammingError("Attempt to construct Rank4_3DTensor with malformed SmallMatrix.", __FILE__,__LINE__);
 

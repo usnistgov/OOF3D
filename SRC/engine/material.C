@@ -435,10 +435,12 @@ void Material::make_linear_system(const CSubProblem *subproblem,
 	  if(subproblem->currently_active_prop(*property)) {
 	    (*property)->begin_point( mesh, el, (*fluxi), pt );
 
+	    std::cerr << "Material calling make_flux_contribs." << std::endl;
 	    // This triggers LINSYS STEP.4.
 	    (*property)->make_flux_contributions(mesh, el, *fluxi, pt, time,
 						 nlsolver, property_flux_info);
-
+	    std::cerr << "Back from make_flux_contribs." << std::endl;
+	    
 	    (*property)->end_point( mesh, el, (*fluxi), pt );
 	    
 	    // add the flux contributions of the property to the flux
@@ -502,15 +504,18 @@ void Material::make_linear_system(const CSubProblem *subproblem,
     // Here dofmap is the Element's localDoFmap, which maps local
     // element dof indices to global ones.
 
+    std::cerr << "Calling Equation make_linear_system." << std::endl;
     // This triggers LINSYS STEP 5, calls the equation object, which
     // completes construction of the linearized system.
     (*eqn)->make_linear_system( subproblem, el, pt, dofmap,
 			        fluxdata, eqndata,
 				nlsolver, linearized_system );
+    std::cerr << "Back from Equation make_linaer_system." << std::endl;
     delete eqndata;
     delete property_eqn_info;
   } // End of equation loop.
 
+  std::cerr << "About to clean up fluxdata map." << std::endl;
   // Clean up fluxdata map.
   for (FluxSysMap::iterator fi = fluxdata.begin(); fi != fluxdata.end(); ++fi) {
     delete (*fi).second;

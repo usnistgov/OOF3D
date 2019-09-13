@@ -174,10 +174,14 @@ void mmadump(const std::string &filename, const std::string &mtxname,
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 void SparseMatCore::insert(unsigned int i, unsigned int j, double val) {
+  std::cerr << "SparseMatCore::insert" << std::endl;
+  std::cerr << "i,j are " << i << " , " << j << std::endl;
   Entry e(j,val);
   resize(i+1, j+1);
   assert(j < nonempty_col.size());
+  std::cerr << "Push-back" << std::endl;
   data[i]->push_back(e);
+  std::cerr << "Back from push-back" << std::endl;
   nonempty_col[j] = true;
   consolidated_ = false;
   ++nnz_;

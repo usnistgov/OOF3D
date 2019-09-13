@@ -490,8 +490,10 @@ void Element::make_linear_system(const CSubProblem *const subproblem,
     // difficult.
     for(GaussPointIterator gpt = integrator(iorder);
 	!gpt.end();++gpt) {
+      std::cerr << "Calling Material make_linear_system." << std::endl;
       mat->make_linear_system( subproblem, this, gpt, dofmap, time,
 			       nlsolver, system );
+      std::cerr << "Back from Material make_linear_system." << std::endl;
     }    
     mat->end_element(subproblem, this);
   }
