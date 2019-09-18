@@ -253,10 +253,8 @@ void LinearizedSystem::clearJacobian() {
 // TODO OPT: Mark empty*Maps as out-of-date.
 
 void LinearizedSystem::insertK(int row, int col, double x) {
-  std::cerr << "row, col to i,j" << std::endl;
   int i = subproblem->mesh2subpEqnMap[row]; // HERE OMG WTF
   int j = subproblem->mesh2subpDoFMap[col];
-  std::cerr << row << ", " << col << " to " << i << ", " << j << std::endl;
   assert(i > -1 && j > -1);
   K_.insert(i, j, x);
 }

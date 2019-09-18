@@ -178,6 +178,8 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
       std::cerr << "Start of component loop" << std::endl;
       int global_row = nodaleqn( *mu->funcnode(), eqcomp)->ndq_index();
 
+      std::cerr << "Row " << global_row << std::endl;
+      
       // This scope is a particular row of the global matrix.
 
       FluxSysMap::iterator fi = fluxdata.find(fflux);
@@ -185,15 +187,12 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
       // points to the flux matrix.
       std::vector<int> cmap = (*fi).first->contraction_map(eqcomp);
 
-      std::cerr << "More!" << std::endl;
       if( !(*fi).second->k_clean ) {
 	const SmallSparseMatrix &k = (*fi).second->kMatrix;
 	for(int ldof=0; ldof<element->ndof(); ++ldof) {
-	  std::cerr << "Starting DOF loop" << std::endl;
 	  // DOFmap maps local indices to global.
 	  int global_col = dofmap[ldof];
 
-	  std::cerr << "Doing flux contraction." << std::endl;
 	  // Contract the flux components with the shape fn components.
 	  bool v_is_zero = true;
 	  double v = 0.0;
@@ -203,19 +202,12 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 	      v -= dsf[cc]*k(cmap[cc],ldof);
 	    }
 	  }
-	  std::cerr << "Finished flux contractions." << std::endl;
 	  
 	  if( !v_is_zero) {
-	    std::cerr << "Inside v-is-not-zero conditional." << std::endl;
-	    std::cerr << "Row and column: " << std::endl;
-	    std::cerr << global_row << std::endl;
-	    std::cerr << global_col << std::endl;
 	    linsys.insertK(global_row, global_col, v*weight);
-	    std::cerr << "Finished insert-k." << std::endl;
 	    if(needJacobian)
 	      linsys.insertJ(global_row, global_col, v*weight);
 	  }
-	  std::cerr << "Finished linsys insertions." << std::endl;
 	}
       }
       // Only K matrix for now.  Might have C at some point. TASK 3.
