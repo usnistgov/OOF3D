@@ -184,6 +184,21 @@ elif config.dimension() == 3:
 ########
 ## Large-deformation force balance equation, separate object.
 
+u = fieldindex.VectorFieldIndex(0)
+v = fieldindex.VectorFieldIndex(1)
+w = fieldindex.VectorFieldIndex(2)
+
+fx = fieldindex.VectorFieldIndex(0)
+fy = fieldindex.VectorFieldIndex(1)
+fz = fieldindex.VectorFieldIndex(2)
+
+conjugate.conjugatePair("Plasticity", LDForceBalanceEquation, [fx,fy,fz],
+                        Displacement, [u,v,w])
+
+conjugate.conjugatePair("Elasticity", LDForceBalanceEquation, [fx,fy,fz],
+                        Displacement, [u,v,w])
+                        
+
 ########
 ###############################################################
 ##
