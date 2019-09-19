@@ -136,6 +136,7 @@ double sm_determinant3(SmallMatrix &x) {
 // Cayley-Hamilton trickery to compute the square root of a
 // passed-in matrix.  Returns the 'U' matrix and its inverse.
 // https://scholarworks.gsu.edu/cgi/viewcontent.cgi?article=1023&context=math_theses
+// Algo is probably broken, we don't like it...
 
 std::pair<SmallMatrix,SmallMatrix> sm_sqrt3(SmallMatrix x) {
   if ((x.rows()!=3) || (x.cols()!=3)) {
@@ -143,6 +144,9 @@ std::pair<SmallMatrix,SmallMatrix> sm_sqrt3(SmallMatrix x) {
 				__FILE__,__LINE__);
     }
   else {
+    std::cerr << "sm_sqrt3 called." << std::endl;
+    std::cerr << "Input is " << std::endl;
+    std::cerr << x << std::endl;
     std::pair<SmallMatrix,SmallMatrix> res(SmallMatrix(3),SmallMatrix(3));
     SmallMatrix ident(3);
     ident(0,0) = 1.0; ident(1,1) = 1.0; ident(2,2) = 2.0;
@@ -151,13 +155,23 @@ std::pair<SmallMatrix,SmallMatrix> sm_sqrt3(SmallMatrix x) {
     
     // Invariants.
     SmallMatrix c2 = x*x;
+    std::cerr << "C2 matrix: " << std::endl;
+    std::cerr << c2 << std::endl;
     double ic = x(0,0)+x(1,1)+x(2,2);
     double iic = 0.5*(ic*ic-(c2(0,0)+c2(1,1)+c2(2,2)));
     double iiic = x(0,0)*( x(1,1)*x(2,2)-x(1,2)*x(2,1))+
-      x(0,1)*(-(x(1,0)*x(2,2)-x(1,2)*x(2,0)))+
+      x(0,1)*(-(x(1,0)*x(2,2)+x(1,2)*x(2,0)))+
       x(0,2)*(x(1,0)*x(2,1)-x(1,1)*x(2,0));
     double ik = ic*ic-3.0*iic;
+    
+    std::cerr << "Invariants: " << std::endl;
+    std::cerr << ic << std::endl;
+    std::cerr << iic << std::endl;
+    std::cerr << iiic << std::endl;
+    std::cerr << ik << std::endl;
+    std::cerr << pow(ik,1.5) << std::endl;
 
+    // If ik is very small, then it's a "scalar matrix", do this...
     if (ik < tol) {
       double lmda = pow(ic/3.0, 0.5);
       res.first = ident*lmda;
@@ -165,16 +179,25 @@ std::pair<SmallMatrix,SmallMatrix> sm_sqrt3(SmallMatrix x) {
       return res;
     }
     // else...
-    double big_ev = ic*ic*(ic-4.5*iic)+13.5*iiic;
+    double big_ev = ic*(ic*ic-4.5*iic)+13.5*iiic;
+    std::cerr << "Acos arg: " << big_ev/pow(ik,1.5) << std::endl;
     double phi = acos(big_ev/pow(ik,1.5));
-    double l2 = (1.0/3.0)*(ic+2.0*pow(ik,(1.0/3.0))*cos(phi/3.0));
+    double l2 = (1.0/3.0)*( ic+2.0*pow(ik,(1.0/2.0))*cos(phi/3.0) );
 
+    std::cerr << "Intermediate stuff:" << std::endl;
+    std::cerr << big_ev << std::endl;
+    std::cerr << phi << std::endl;
+    std::cerr << l2 << std::endl;
+    
     double iiiu = sqrt(iiic);
     double iu = sqrt(l2)+sqrt(-l2+ic+2.0*iiiu/sqrt(l2));
     double iiu = 0.5*(iu*iu-ic);
 
     res.first = (1.0/(iu*iiu-iiiu))*(ident*(iu*iiu)+x*(iu*iu-iiu)-c2);
     res.second = (ident*iiu-(res.first)*iu+x)*(1.0/iiiu);
+    std::cerr << "sm_sqrt3 exiting." << std::endl;
+    std::cerr << res.first << std::endl;
+    std::cerr << res.second << std::endl;
     return res;
   }
 }
@@ -621,6 +644,9 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 
     std::cerr << "Building bsb_l." << std::endl;
     // Now we have fe_att_t, fe_att, and u.  Build Balasubramian's L.
+    for(int dbi = 0; dbi<3; ++dbi)
+      for(int dbj = 0; dbj<3; ++dbj)
+	std::cerr << dbi << " , " << dbj << " = " << u(dbi,dbj) << std::endl;
     Rank4_3DTensor bsb_l;
     for(int i=0;i<3;++i)
       for(int j=0;j<3;++j)
