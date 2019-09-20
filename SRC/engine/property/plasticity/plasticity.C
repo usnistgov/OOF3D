@@ -133,73 +133,94 @@ double sm_determinant3(SmallMatrix &x) {
   }
 }
 
-// Cayley-Hamilton trickery to compute the square root of a
-// passed-in matrix.  Returns the 'U' matrix and its inverse.
-// https://scholarworks.gsu.edu/cgi/viewcontent.cgi?article=1023&context=math_theses
-// Algo is probably broken, we don't like it...
+// Matrix square root algo.  Reference coming soon.
+std::pair<SmallMatrix,SmallMatrix> sm_sqrt3(SmallMatrix c) {
 
-std::pair<SmallMatrix,SmallMatrix> sm_sqrt3(SmallMatrix x) {
-  if ((x.rows()!=3) || (x.cols()!=3)) {
-      throw ErrProgrammingError("sm_sqrt3 called with non-3x3 SmallMatrix.",
-				__FILE__,__LINE__);
-    }
-  else {
-    std::cerr << "sm_sqrt3 called." << std::endl;
-    std::cerr << "Input is " << std::endl;
-    std::cerr << x << std::endl;
-    std::pair<SmallMatrix,SmallMatrix> res(SmallMatrix(3),SmallMatrix(3));
-    SmallMatrix ident(3);
-    ident(0,0) = 1.0; ident(1,1) = 1.0; ident(2,2) = 2.0;
-    
-    double tol = 1.0e-16; // How to pick?  Machine precision?
-    
-    // Invariants.
-    SmallMatrix c2 = x*x;
-    std::cerr << "C2 matrix: " << std::endl;
-    std::cerr << c2 << std::endl;
-    double ic = x(0,0)+x(1,1)+x(2,2);
-    double iic = 0.5*(ic*ic-(c2(0,0)+c2(1,1)+c2(2,2)));
-    double iiic = x(0,0)*( x(1,1)*x(2,2)-x(1,2)*x(2,1))+
-      x(0,1)*(-(x(1,0)*x(2,2)+x(1,2)*x(2,0)))+
-      x(0,2)*(x(1,0)*x(2,1)-x(1,1)*x(2,0));
-    double ik = ic*ic-3.0*iic;
-    
-    std::cerr << "Invariants: " << std::endl;
-    std::cerr << ic << std::endl;
-    std::cerr << iic << std::endl;
-    std::cerr << iiic << std::endl;
-    std::cerr << ik << std::endl;
-    std::cerr << pow(ik,1.5) << std::endl;
-
-    // If ik is very small, then it's a "scalar matrix", do this...
-    if (ik < tol) {
-      double lmda = pow(ic/3.0, 0.5);
-      res.first = ident*lmda;
-      res.second = ident*(1.0/lmda);
-      return res;
-    }
-    // else...
-    double big_ev = ic*(ic*ic-4.5*iic)+13.5*iiic;
-    std::cerr << "Acos arg: " << big_ev/pow(ik,1.5) << std::endl;
-    double phi = acos(big_ev/pow(ik,1.5));
-    double l2 = (1.0/3.0)*( ic+2.0*pow(ik,(1.0/2.0))*cos(phi/3.0) );
-
-    std::cerr << "Intermediate stuff:" << std::endl;
-    std::cerr << big_ev << std::endl;
-    std::cerr << phi << std::endl;
-    std::cerr << l2 << std::endl;
-    
-    double iiiu = sqrt(iiic);
-    double iu = sqrt(l2)+sqrt(-l2+ic+2.0*iiiu/sqrt(l2));
-    double iiu = 0.5*(iu*iu-ic);
-
-    res.first = (1.0/(iu*iiu-iiiu))*(ident*(iu*iiu)+x*(iu*iu-iiu)-c2);
-    res.second = (ident*iiu-(res.first)*iu+x)*(1.0/iiiu);
-    std::cerr << "sm_sqrt3 exiting." << std::endl;
-    std::cerr << res.first << std::endl;
-    std::cerr << res.second << std::endl;
-    return res;
+  SmallMatrix u_res(3),r_res(3);
+  if ((c.rows()!=3) || (c.cols()!=3)) {
+    throw ErrProgrammingError("sm_sqrt3 called with non-3x3 SmallMatrix.",
+			      __FILE__,__LINE__);
   }
+  else {
+    SmallMatrix ident(3);
+    ident(0,0)=1.0; ident(1,1)=1.0; ident(2,2)=1.0;
+    
+    SmallMatrix c2 = c*c;
+    double o3 = 1.0/3.0;
+    double root3 = pow(3.0,0.5);
+    
+    
+    double c1212 = c(0,1)*c(0,1);
+    double c1313 = c(0,2)*c(0,2);
+    double c2323 = c(1,2)*c(1,2);
+    double c2313 = c(1,2)*c(0,2);
+    double c1223 = c(0,1)*c(1,2);
+    double s11 = c(1,1)*c(2,2)-c2323;
+    double ui1 = o3*(c(0,0)+c(1,1)+c(2,2));
+    double ui2 = s11+c(0,0)*c(1,1)+c(2,2)*c(0,0)-c1212-c1313;
+    double ui3 = c(0,0)*s11+c(0,1)*(c2313-c(0,1)*c(2,2))+c(0,2)*(c1223-c(1,1)*c(0,2));
+    double ui1s = ui1*ui1;
+    double q = pow(-fmin((o3*ui2-ui1s),0.0),0.5);
+    double r = 0.5*(ui3-ui1*ui2)+ui1*ui1s;
+    double xmod = q*q*q;
+
+    double sign;
+    if (xmod-1.0e30 > 0.0)
+        sign = 1.0;
+    else
+        sign = -1.0;
+
+    double scl1 = 0.5 + 0.5*sign;
+
+    if (xmod-std::abs(r) > 0.0)
+        sign = 1.0;
+    else
+        sign = -1.0;
+
+    double scl2 = 0.5 + 0.5*sign;
+    double scl0 = fmin(scl1,scl2);
+    scl1 = 1.0 - scl0;
+
+    double xmodscl1;
+    if(scl1 == 0)
+        xmodscl1 = xmod;
+    else
+        xmodscl1=xmod+scl1;
+
+    double sdetm = acos(r/(xmodscl1))*o3;
+
+    q = scl0*q;
+    double ct3=q*cos(sdetm);
+    double st3=q*root3*sin(sdetm);
+    sdetm = scl1*pow(fmax(0.0,r),0.5);
+    double aa = 2.0*(ct3+sdetm)+ui1;
+    double bb = -ct3+st3-sdetm+ui1;
+    double cc = -ct3-st3-sdetm+ui1;
+    double lamda1 = pow(fmax(aa,0.0),0.5);
+    double lamda2 = pow(fmax(bb,0.0),0.5);
+    double lamda3 = pow(fmax(cc,0.0),0.5);
+
+    double Iu = lamda1 + lamda2 + lamda3;
+    double IIu = lamda1*lamda2 + lamda1*lamda3 + lamda2*lamda3;
+    double IIIu = lamda1*lamda2*lamda3;
+
+    for (int i = 0 ; i < 3 ; i++){
+        for (int j = 0 ; j < 3 ; j++){
+            u_res(i,j) = Iu*IIIu*ident(i,j)+(pow(Iu,2)-IIu)*c(i,j)-c2(i,j);
+            u_res(i,j) = u_res(i,j)/(Iu*IIu-IIIu);
+        }
+    }
+
+    for (int i = 0 ; i < 3 ; i++){
+        for (int j = 0 ; j < 3 ; j++){
+            r_res(i,j) = (IIu*ident(i,j)-Iu*u_res(i,j)+c(i,j))/IIIu;
+        }
+    }
+
+  }
+
+  return std::pair<SmallMatrix,SmallMatrix>(u_res,r_res);
+  
 }
 
 
