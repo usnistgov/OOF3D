@@ -1,0 +1,57 @@
+
+  Plasticity has special requirements for the time-stepping.
+
+  For each time-step, the first thing to do is build the stiffness
+matrix without the elasto-plastic tangent piece, just assuming
+(large-strain) elasticity.  Then, the loop you go into starts with
+solving this system, evaluating the stress, and building a new
+master stiffness matrix *with* the elasto-plastic part.
+
+  A possible challenge for OOF is that, at the start of the 
+solution process, you do not have a stiffness matrix, and there's
+no current scheme to convey to the properties that this is 
+the first pass for this time-step.  
+
+  So, we either need a special time-stepper that can pre-build
+the stiffness matrix, or speical parameters for an existing 
+stepper that tells it to do what we want.
+
+  For plasticity, we will be taking uniform steps, which in terms
+of the OOF solution sequence, means we are living in the world
+of "Uniform" step-drivers.  
+
+  In the "all-up" test-case, we've selected:
+
+  -> Uniform stepping, with delta-t of 0.001 (bad choice for quasi-static?)
+  -> Forward Euler stepping (bad choice?)
+  -> Newton nonlinear solver.
+  -> CG + ILU symmetric solver, BiCG + ILU unsymmetric solver
+
+  IMPORTANT:
+
+  Confusion about how exactly the prototype algorithm works:
+
+  Does it or does it not accumulate Fp during the NR steps?
+
+  If it does, then the initial K matrix built with the moved
+boundary conditions can create permanent spurious yielding near
+the moving boundary.  The solution to this is to use (build or find)
+an initial elastic K matrix, equilibrate with that at the start 
+of the global NR time-step, and then begin the plastic iterations
+from the elastic-equilbirated starting state.
+
+  If it does not, then it's safe to do the "naive" approach,
+just build the K you want with the squashed elements, which 
+might have condition or convergence problems, and NR-iterate
+towards a solution, which will have some amount of Fp, which
+will be the same, but maybe slower, than if you didn't do this.
+
+  Looking at the code, it suggests that we're doing the second
+thing -- the relevant datum is the fp_tau entry in the plastic
+data container for the gausspoints, which gets updated (*not*
+accumulated!) inside the "begin_element" routine of the 
+plasticity property.
+
+  Q: Is there a phase error?  The most recent fp_tau persists in 
+the gauss-point object, but it's from the last matrix construction,
+not the last solution.  How bad is this?  Feels small.

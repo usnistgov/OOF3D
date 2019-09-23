@@ -476,10 +476,10 @@ void Element::make_linear_system(const CSubProblem *const subproblem,
   const Material *mat = material();
   if(mat) {
     // TODO: Material begin_element should pass the order through also.
-    std::cerr << "Inside Element::make_linear_system." << std::endl;
-    std::cerr << "Calling Material begin_element." << std::endl;
+    // std::cerr << "Inside Element::make_linear_system." << std::endl;
+    // std::cerr << "Calling Material begin_element." << std::endl;
     mat->begin_element(subproblem, this);
-    std::cerr << "Back from Material begin_element." << std::endl;
+    // std::cerr << "Back from Material begin_element." << std::endl;
     // TODO OPT: iorder could be precomputed or cached, but do some
     // careful profiling before changing anything.  Preliminary tests
     // indicate that the time spent computing iorder is negligible.
@@ -490,10 +490,10 @@ void Element::make_linear_system(const CSubProblem *const subproblem,
     // difficult.
     for(GaussPointIterator gpt = integrator(iorder);
 	!gpt.end();++gpt) {
-      std::cerr << "Calling Material make_linear_system." << std::endl;
+      // std::cerr << "Calling Material make_linear_system." << std::endl;
       mat->make_linear_system( subproblem, this, gpt, dofmap, time,
 			       nlsolver, system );
-      std::cerr << "Back from Material make_linear_system." << std::endl;
+      // std::cerr << "Back from Material make_linear_system." << std::endl;
     }    
     mat->end_element(subproblem, this);
   }

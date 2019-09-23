@@ -18,25 +18,26 @@ PlasticConstitutiveRulePtr.registry = []
 
 Registration = cregisteredclass.Registration
 
+# TODO: Descriptions of the parameters.
 powerlawreg = Registration('Power Law',PlasticConstitutiveRulePtr,
                            PowerLawConstitutiveRule,1,
                            params=[parameter.FloatParameter('w1', 1.0,
                                                             tip=parameter.emptyTipString),
-                                   parameter.FloatParameter('w2', 1.0,
+                                   parameter.FloatParameter('w2', 1.4,
                                                             tip=parameter.emptyTipString),
-                                   parameter.FloatParameter('ss', 1.0,
+                                   parameter.FloatParameter('ss', 3.771e8,
                                                             tip=parameter.emptyTipString), 
-                                   parameter.FloatParameter('a', 1.0,
+                                   parameter.FloatParameter('a', 1.115,
                                                             tip=parameter.emptyTipString),
-                                   parameter.FloatParameter('h0', 1.0,
+                                   parameter.FloatParameter('h0', 1.501e9,
                                                             tip=parameter.emptyTipString),
-                                   parameter.FloatParameter('m', 1.0,
+                                   parameter.FloatParameter('m', 0.01,
                                                             tip=parameter.emptyTipString),
-                                   parameter.FloatParameter('g0dot', 1.0,
+                                   parameter.FloatParameter('g0dot', 2.453e7,
                                                             tip=parameter.emptyTipString),
                                    parameter.FloatParameter('dt', 1.0,
                                                             tip=parameter.emptyTipString),
-                                   parameter.FloatParameter('init_res', 1.0,
+                                   parameter.FloatParameter('init_res', 1.706e8,
                                                             tip=parameter.emptyTipString)
                            ])
 

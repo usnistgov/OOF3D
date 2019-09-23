@@ -155,7 +155,7 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 				       const CNonlinearSolver *nlsolver,
 				       LinearizedSystem &linsys) const
 {
-  std::cerr << "DeformedDivergenceEquation::make_linear_system" << std::endl;
+  // std::cerr << "DeformedDivergenceEquation::make_linear_system" << std::endl;
   // LINSYS STEP 5, called from Material::make_linear_system.
   double weight = gpt.weight();
 
@@ -167,18 +167,18 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 
   for(CleverPtr <ElementFuncNodeIterator> mu (element->funcnode_iterator());
       !mu->end(); ++(*mu)) {
-    std::cerr << "Start of node loop." << std::endl;
+    // std::cerr << "Start of node loop." << std::endl;
     double sf = mu->shapefunction(gpt);
     double dsf[DIM];
     for(int i=0;i<DIM;++i) {
       dsf[i] = mu->displacedsfderiv(element,i,gpt,subproblem->mesh);
     }
-    std::cerr << "Starting equation component loop." << std::endl;
+    // std::cerr << "Starting equation component loop." << std::endl;
     for(int eqcomp=0; eqcomp<dim(); ++eqcomp) {
-      std::cerr << "Start of component loop" << std::endl;
+      // std::cerr << "Start of component loop" << std::endl;
       int global_row = nodaleqn( *mu->funcnode(), eqcomp)->ndq_index();
 
-      std::cerr << "Row " << global_row << std::endl;
+      // std::cerr << "Row " << global_row << std::endl;
       
       // This scope is a particular row of the global matrix.
 

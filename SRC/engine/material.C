@@ -279,12 +279,12 @@ void Material::begin_element(const CSubProblem *subproblem, const Element *el)
   // base class, not every property has one.  Plasticity has a very
   // elaborate one.
 
-  std::cerr << "Inside Material::begin_element." << std::endl;
+  // std::cerr << "Inside Material::begin_element." << std::endl;
   for(std::vector<Property*>::size_type i=0;i<property.size();i++) {
     if(subproblem->currently_active_prop(property[i])) {
-      std::cerr << "Calling begin_element on a property." << std::endl;
+      // std::cerr << "Calling begin_element on a property." << std::endl;
       property[i]->begin_element(subproblem, el);
-      std::cerr << "Back from property begin_element." << std::endl;
+      // std::cerr << "Back from property begin_element." << std::endl;
     }
   }
 }
@@ -435,11 +435,11 @@ void Material::make_linear_system(const CSubProblem *subproblem,
 	  if(subproblem->currently_active_prop(*property)) {
 	    (*property)->begin_point( mesh, el, (*fluxi), pt );
 
-	    std::cerr << "Material calling make_flux_contribs." << std::endl;
+	    // std::cerr << "Material calling make_flux_contribs." << std::endl;
 	    // This triggers LINSYS STEP.4.
 	    (*property)->make_flux_contributions(mesh, el, *fluxi, pt, time,
 						 nlsolver, property_flux_info);
-	    std::cerr << "Back from make_flux_contribs." << std::endl;
+	    // std::cerr << "Back from make_flux_contribs." << std::endl;
 	    
 	    (*property)->end_point( mesh, el, (*fluxi), pt );
 	    
@@ -504,18 +504,18 @@ void Material::make_linear_system(const CSubProblem *subproblem,
     // Here dofmap is the Element's localDoFmap, which maps local
     // element dof indices to global ones.
 
-    std::cerr << "Calling Equation make_linear_system." << std::endl;
+    // std::cerr << "Calling Equation make_linear_system." << std::endl;
     // This triggers LINSYS STEP 5, calls the equation object, which
     // completes construction of the linearized system.
     (*eqn)->make_linear_system( subproblem, el, pt, dofmap,
 			        fluxdata, eqndata,
 				nlsolver, linearized_system );
-    std::cerr << "Back from Equation make_linaer_system." << std::endl;
+    // std::cerr << "Back from Equation make_linaer_system." << std::endl;
     delete eqndata;
     delete property_eqn_info;
   } // End of equation loop.
 
-  std::cerr << "About to clean up fluxdata map." << std::endl;
+  // std::cerr << "About to clean up fluxdata map." << std::endl;
   // Clean up fluxdata map.
   for (FluxSysMap::iterator fi = fluxdata.begin(); fi != fluxdata.end(); ++fi) {
     delete (*fi).second;
