@@ -55,3 +55,20 @@ plasticity property.
   Q: Is there a phase error?  The most recent fp_tau persists in 
 the gauss-point object, but it's from the last matrix construction,
 not the last solution.  How bad is this?  Feels small.
+
+  --------
+
+  Additional (minor) points of confusion:  (Sept. 24)
+
+  The uniform time-stepper with forward Euler builds the matrices
+at the start of every time-step, so there's no matrix
+construction step for the last time.  This caused brief confusion,
+because forward Euler is wrong for this problem.  (Do we even
+want a stepper?  Just use static?)
+
+  Also, in the example solution, there are no free DOFs?  It's a 
+1x1x1 mesh, so all the nodes are boundary nodes, but only x component
+is constrained by boundary conditions.  What happened to y and z?
+
+  (Request from SK:  Input/output pairs from the plasticity property,
+    i.e. incoming F, generated w)

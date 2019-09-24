@@ -119,7 +119,9 @@ def evolve(meshctxt, endtime):
         lasttime = None
 
         # Loop over output times
+        # TODO: Is t1 the target time, or is t1+delta the target time?
         for t1 in meshctxt.outputSchedule.times(endtime):
+            print >> sys.stderr, "Evaluating from time ", t1
             if t1 == lasttime:
                 raise ooferror2.ErrSetupError("Time step is zero!")
             # If t1 <= starttime, there's no evolution to be done, and
@@ -200,7 +202,8 @@ def initializeStaticFields(subprobctxts, time, prog):
     for subproblem in subprobctxts:
         # This is the first call to make_linear_system for each
         # subproblem.
-        print >> sys.stderr, "First call to make_linear_system." 
+        print >> sys.stderr, "First call to make_linear_system."
+        print >> sys.stderr, "Time is ", time
         linsysDict[subproblem] = lsys = subproblem.make_linear_system(
             time, None)
         print >> sys.stderr, "Back from make_linear_system."
@@ -297,6 +300,8 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                 # time, even if the stepper is fully implicit.  The
                 # maps have to be constructed, and they depend on the
                 # matrices.
+                print >> sys.stderr, "Evolve_to calling make_linear_system."
+                print >> sys.stderr, "Time is ", time
                 lsys = subprob.make_linear_system(
                     time, linsysDict.get(subprob, None))
                 linsysDict[subprob] = lsys

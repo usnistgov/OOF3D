@@ -857,6 +857,7 @@ class SubProblemContext(whoville.Who):
                     linsys.clearJacobian()
 
                 # **** This is the cpu intensive step: ****
+                print "SubProblemContext calling SubProblem make_linear_system."
                 self.getObject().make_linear_system(linsys, 
                                                     self.nonlinear_solver)
                 self.newMatrixCount += 1
