@@ -63,12 +63,27 @@ not the last solution.  How bad is this?  Feels small.
   The uniform time-stepper with forward Euler builds the matrices
 at the start of every time-step, so there's no matrix
 construction step for the last time.  This caused brief confusion,
-because forward Euler is wrong for this problem.  (Do we even
-want a stepper?  Just use static?)
+because forward Euler is wrong for this problem. 
+
+  I think we want a new stepper, provisionally called "Incremental", 
+which can take time-steps without generating output, and which
+could possibly have better initial guesses, because it can 
+actually do the thing where you use the prior K matrix for
+the next time-step's initial solution.
+
+  Need to get a better grip on the steppers before this
+can happen.
+
+  Meanwhile:
 
   Also, in the example solution, there are no free DOFs?  It's a 
 1x1x1 mesh, so all the nodes are boundary nodes, but only x component
 is constrained by boundary conditions.  What happened to y and z?
+(Possibly the thing is just mis-reporting?)
 
   (Request from SK:  Input/output pairs from the plasticity property,
     i.e. incoming F, generated w)
+
+  Stepper base classes are in engine/timestepper.py, except for the 
+static one, which is in staticstep.py.  F and B Euler are in 
+euler.py. 

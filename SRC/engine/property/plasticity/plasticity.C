@@ -402,10 +402,13 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 	f_attau(idx,0) += dval[ip]*dshapedx;
 	f_attau(idx,1) += dval[ip]*dshapedy;
 	f_attau(idx,2) += dval[ip]*dshapedz;
-	f_attau(idx, idx) += 1.0;
       }
     }
-    // std::cerr << "Built the F matrix." << std::endl;
+    // Diagonal part, outside the node loop.
+    f_attau(0,0) += 1.0; f_attau(1,1) += 1.0; f_attau(2,2) += 1.0;
+    
+    std::cerr << "Built the initial F matrix." << std::endl;
+    std::cerr << f_attau << std::endl;
     
     // f_attau is now populated for the current gausspoint.
 
@@ -552,7 +555,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 
       SmallMatrix new_s_star = old_s_star - delta_s_star;
       double new_s_star_size = sqrt(dot(new_s_star,new_s_star));
-      
+
       pd->gptdata[gptdx]->s_star = new_s_star;
 
       if ( ((new_s_star_size - old_s_star_size)/old_s_star_size) < TOLERANCE)
@@ -562,6 +565,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 	done = true;
     } // Constitutive while loop ends here.
     // std::cerr << "Out of the constitutive while loop." << std::endl;
+    // std::cerr << "S-star: " << pd->gptdata[gptdx]->s_star << std::endl;
     
     // Compute the last set of resolved shear stresses from the last s_star.
     for(int alpha=0;alpha<nslips;++alpha) {
@@ -576,6 +580,8 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     rule->complete(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
 
     // std::cerr << "Back from rule->complete." << std::endl;
+    // std::cerr << "s_attau is: " << std::endl;
+    // std::cerr << pd->gptdata[gptdx]->s_star << std::endl;
     
     // Select data objects for the subsequent processing.
     SmallMatrix s_attau = pd->gptdata[gptdx]->s_star;
@@ -630,6 +636,9 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     // strain at the current time, computed from the delta-gammas
     // and the Asaro equation.
 
+    // std::cerr << "Fe_attau: " << std::endl;
+    // std::cerr << fe_attau << std::endl;
+    
     SmallMatrix fe_attau_t = fe_attau;
     fe_attau_t.transpose();
 
@@ -659,6 +668,12 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     SmallMatrix u = uui.first;
     SmallMatrix r = f_inc * uui.second;  // f-increment * u-inverse
 
+    std::cerr << "Polar decomposition u: " << std::endl;
+    std::cerr << u << std::endl;
+
+    std::cerr << "Polar decomposition r: " << std::endl;
+    std::cerr << r << std::endl;
+    
     // ----------------------------------------------------
     //           Build the Q matrix, bsb_q.
     // ----------------------------------------------------
@@ -678,17 +693,33 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 	      bsb_l(i,j,n,o) += fe_att_t(i,idx)*u(idx,n)*fe_att(o,j);
 	    };
 
+    std::cerr << "BSB L" << std::endl;
+    std::cerr << bsb_l.as_smallmatrix() << std::endl;
+
+    // std::cerr << "Lab Cijkl: " << std::endl;
+    // std::cerr << lab_cijkl_ << std::endl;
+
+    std::cerr << "Zero?" << std::endl;
+    std::cerr << lab_cijkl_(1,1,0,0)-lab_cijkl_(0,0,1,1) << std::endl;
     // std::cerr << "Building bsb_d." << std::endl;
     Rank4_3DTensor bsb_d;
     for(int i=0;i<3;++i)
       for(int j=0;j<3;++j)
-	for(int k=0;k<3;++k)
-	  for(int l=0;l<3;++l)
-	    for(int n=0;n<3;++n)
-	      for(int o=0;o<3;++o) {
+	for(int n=0;n<3;++n)
+	  for(int o=0;o<3;++o)
+	    for(int k=0;k<3;++k)
+	      for(int l=0;l<3;++l) {
 		bsb_d(i,j,n,o) += 0.5*lab_cijkl_(i,j,k,l)*bsb_l(k,l,n,o);
 	      }
 
+    
+    std::cerr << "Selected BSB_D" << std::endl;
+    std::cerr << "1100: " << bsb_d(1,1,0,0) << std::endl;
+    std::cerr << "0011: " << bsb_d(0,0,1,1) << std::endl;
+    
+    std::cerr << "BSB D" << std::endl;
+    std::cerr << bsb_d.as_smallmatrix() << std::endl;
+    
     // std::cerr << "Building bsb_g." << std::endl;
     std::vector<Rank4_3DTensor> bsb_g(nslips);
     for(int alpha=0;alpha<nslips;++alpha)
@@ -702,6 +733,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 		  + (*(lab_schmid_tensors[alpha]))(m,k)*bsb_l(m,l,n,o);
 	      };
 
+    
     // std::cerr << "Building bsb_t." << std::endl;
     std::vector<Rank4_3DTensor> bsb_t(nslips);
     for(int alpha=0;alpha<nslips;++alpha)
@@ -714,7 +746,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 		  bsb_t[alpha](i,j,n,o) += \
 		    0.5*lab_cijkl_(i,j,k,l)*bsb_g[alpha](k,l,n,o);
 		}
-		  
+
     // Member objects:  lab_schmid_tensors, nslips.
     // Slip increments std::vector<double> delta_g
     // Local objects -- c_mtx is std::vector<SmallMatrix*>, by slips.
@@ -811,7 +843,6 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 			  (*lab_schmid_tensors[alpha])(m,j);
 		      }
     
-
     Rank4_3DTensor w_mat;
 
     double fe_attau_d = sm_determinant3(fe_attau);
@@ -829,17 +860,18 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 	  for(int l=0;l<3;++l)
 	    for(int m=0;m<3;++m)
 	      for(int n=0;n<3;++n) {
-		double wval = bsb_s(i,j,k,l)*s_attau(m,n)*fe_attau(j,n) \
+		double wval = bsb_s(i,m,k,l)*s_attau(m,n)*fe_attau(j,n) \
 		  + fe_attau(i,m)*bsb_q(m,n,k,l)*fe_attau(j,n) \
 		  + fe_attau(i,m)*s_attau(m,n)*bsb_s(j,n,k,l) \
 		  - fe_attau(i,m)*s_attau(m,n)*fe_attau(j,n)*ess_fei(k,l);
-		w_mat(i,j,k,l) = wval/fe_attau_d;
+		w_mat(i,j,k,l) += wval/fe_attau_d;
 	      }
 
     
     // Is it sufficiently symmetric for a Cijkl object?  SK says yes.
 
-    // std::cerr << "Writing w_mat." << std::endl;
+    std::cerr << "Writing w_mat." << std::endl;
+    std::cerr << w_mat.as_smallmatrix() << std::endl;
     pd->gptdata[gptdx]->w_mat = w_mat;
     // std::cerr << "Bottom of the gausspoint loop." << std::endl;
   } // End of the gausspoint loop (!).
