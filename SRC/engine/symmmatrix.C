@@ -485,6 +485,9 @@ double SymmMatrix3::minEigenvalue() const {
 }
 
 double &SymmMatrix3::operator[](const IndexP &p) {
+  // Converting directly from IndexP to SymTensorIndex via
+  // const SymTensorIndex &sti = dynamic_cast<const SymTensorIndex&>(p);
+  // compiles but fails at run time on some compilers.
   const FieldIndex &fi(p);
   const SymTensorIndex &sti = dynamic_cast<const SymTensorIndex&>(fi);
   dirtyeigs_ = true;
@@ -492,8 +495,11 @@ double &SymmMatrix3::operator[](const IndexP &p) {
 }
 
 double SymmMatrix3::operator[](const IndexP &p) const {
-  // const FieldIndex &fi(p);
-  const SymTensorIndex &sti = dynamic_cast<const SymTensorIndex&>(p);
+  // Converting directly from IndexP to SymTensorIndex via
+  // const SymTensorIndex &sti = dynamic_cast<const SymTensorIndex&>(p);
+  // compiles but fails at run time on some compilers.
+  const FieldIndex &fi(p);
+  const SymTensorIndex &sti = dynamic_cast<const SymTensorIndex&>(fi);
   return (*this)(sti.row(), sti.col());
 }
 
