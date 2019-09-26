@@ -696,11 +696,19 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     std::cerr << "BSB L" << std::endl;
     std::cerr << bsb_l.as_smallmatrix() << std::endl;
 
+    // For debugging, paranoia about Cijkl.
+    Rank4_3DTensor check_c;
+    for(int i=0;i<3;++i)
+      for(int j=0;j<3;++j)
+	for(int k=0;k<3;++k)
+	  for(int l=0;l<3;++l)
+	    check_c(i,j,k,l) = lab_cijkl_(i,j,k,l);
+    std::cerr << "Lab Cijkl via the tensors:" << std::endl;
+    std::cerr << check_c.as_smallmatrix() << std::endl;
+    
     // std::cerr << "Lab Cijkl: " << std::endl;
     // std::cerr << lab_cijkl_ << std::endl;
 
-    std::cerr << "Zero?" << std::endl;
-    std::cerr << lab_cijkl_(1,1,0,0)-lab_cijkl_(0,0,1,1) << std::endl;
     // std::cerr << "Building bsb_d." << std::endl;
     Rank4_3DTensor bsb_d;
     for(int i=0;i<3;++i)
@@ -712,8 +720,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 		bsb_d(i,j,n,o) += 0.5*lab_cijkl_(i,j,k,l)*bsb_l(k,l,n,o);
 	      }
 
-    
-    std::cerr << "Selected BSB_D" << std::endl;
+
     std::cerr << "1100: " << bsb_d(1,1,0,0) << std::endl;
     std::cerr << "0011: " << bsb_d(0,0,1,1) << std::endl;
     
@@ -803,6 +810,9 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     // "Solve" puts the solution in the RHS matrix.
     Rank4_3DTensor bsb_q(rhs_sm);
 
+    std::cerr << "BSB Q" << std::endl;
+    std::cerr << bsb_q.as_smallmatrix() << std::endl;
+    
     // std::cerr << "Building the S matrix." << std::endl;
     // ----------------------------------------
     //  Now build the S matrix..
@@ -842,17 +852,27 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 			  bsb_q(p,q,n,o)* \
 			  (*lab_schmid_tensors[alpha])(m,j);
 		      }
+
+    std::cerr << "BSB S" << std::endl;
+    std::cerr << bsb_s.as_smallmatrix() << std::endl;
+
     
     Rank4_3DTensor w_mat;
 
     double fe_attau_d = sm_determinant3(fe_attau);
+
+    std::cerr << "Fe_attau" << std::endl;
+    std::cerr << fe_attau << std::endl;
+
+    std::cerr << "2nd PK stress: " << std::endl;
+    std::cerr << s_attau << std::endl;
     
     SmallMatrix ess_fei(3);
     for (int k=0;k<3;++k)
       for (int l=0;l<3;++l)
 	for(int p=0;p<3;++p)
 	  for(int q=0;q<3;++q) {
-	    ess_fei(k,l) = bsb_s(p,q,k,l)*fe_attau_i(q,p);
+	    ess_fei(k,l) += bsb_s(p,q,k,l)*fe_attau_i(q,p);
 	  }
     for(int i=0;i<3;++i)
       for(int j=0;j<3;++j)
@@ -1061,7 +1081,7 @@ FCCPlasticity::FCCPlasticity(PyObject *reg, const std::string &nm,
   s[0]=0.0; s[1]=1.0; s[2]=1.0;
   xtal_schmid_tensors[6]=_normalized_outer_product(n,s);
   //
-  s[0]=1.0; s[1]=0.0; s[2]=-11.0;
+  s[0]=1.0; s[1]=0.0; s[2]=-1.0;
   xtal_schmid_tensors[7]=_normalized_outer_product(n,s);
   //
   s[0]=-1.0; s[1]=-1.0; s[2]=0.0;
