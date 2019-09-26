@@ -39,7 +39,8 @@ Mac.  Upgrade to gtk+3 required?
 Fix bug?  Drag and drop on layer list on Mac/Cocoa can result in
 duplicate entries in list, and the layers aren't actually reordered.
 The signal for deleting the list entry isn't being sent.  Doing
-anything that forces the list to be redrawn fixes it.
+anything that forces the list to be redrawn fixes it.  (Upgrade to
+gtk3 before fixing.)
 
 
 Add an 'editable' keyword argument to all Parameters, with default
@@ -172,10 +173,10 @@ setting the filter doesn't crash.
  output, but doesn't change the filter parameter of the
  FilledContourDisplay, so FilledContourDisplay.setData isn't called.
 
-
 Contour displays are incorrect when the elements are filtered.
   Same problem as above, probably.
 
+Fix the binary installer.
 
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------

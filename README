@@ -1,8 +1,4 @@
 // -*- text -*-
-// $RCSfile: README,v $
-// $Revision: 1.25.4.6 $
-// $Author: langer $
-// $Date: 2014/09/28 02:35:08 $
 
 Congratulations!  You are reading the README file for a software
 package you downloaded!  You are now officially an *advanced* software
@@ -11,7 +7,7 @@ installer.
 This is the README file for OOF3D, describing how to build and install
 it with the Python distutils utility.
 
-This README file is for OOF3D version 3.0.0 or later.
+This README file is for OOF3D version 3.2.0 or later.
 
 Disclaimer:
 ----------
@@ -135,7 +131,9 @@ Procedure:
      % python setup.py build --3D
 
    Macintosh users who prefer not to use X11 should add "--cocoa" to
-   the command line ("cocoa" being the name of the Apple GUI API):
+   the command line ("cocoa" being the name of the Apple GUI API).
+   Because we've been having trouble getting VTK to work properly with
+   X11 on recent Mac operating systems, using cocoa is recommended:
 
      % python setup.py build --3D --cocoa
 
