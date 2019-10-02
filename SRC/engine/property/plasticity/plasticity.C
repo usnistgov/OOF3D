@@ -407,8 +407,8 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     // Diagonal part, outside the node loop.
     f_attau(0,0) += 1.0; f_attau(1,1) += 1.0; f_attau(2,2) += 1.0;
     
-    std::cerr << "Built the initial F matrix." << std::endl;
-    std::cerr << f_attau << std::endl;
+    // std::cerr << "Built the initial F matrix." << std::endl;
+    // std::cerr << f_attau << std::endl;
     
     // f_attau is now populated for the current gausspoint.
 
@@ -545,7 +545,9 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
       SmallMatrix nr_kernel = RJ_mtx.as_smallmatrix();
       SmallMatrix nr_rhs = sm_deflate3(rhs);
 
+      // std::cerr << "Calling nr_kernel.solve." << std::endl;
       int res = nr_kernel.solve(nr_rhs);
+      // std::cerr << "Back from nr_kernel.solve." << std::endl;
       // TODO: Check the return code.
 
       SmallMatrix delta_s_star = sm_inflate3(nr_rhs);
@@ -602,10 +604,10 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     }
 
     // std::cerr << "Finished stupid transpose." << std::endl;
-    
+
     SmallMatrix lp(3);
     for(int alpha=0;alpha<nslips;++alpha) {
-      lp += (sd->gptslipdata[gptdx]->delta_gamma[alpha])*(*lab_schmid_tensors[alpha]);
+      lp += (*lab_schmid_tensors[alpha])*(sd->gptslipdata[gptdx]->delta_gamma[alpha]);
     }
 
     // TODO: Ugh.  Not in the gausspoint loop, please.
@@ -615,6 +617,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     // The new fp is the old fp plus the Asaro equation result.
     // This is fp_attau;
     pd->gptdata[gptdx]->fp_tau = (pd->gptdata[gptdx]->fpt)*(ident + lp);
+
     // Grab a reference to this for post-processing.
     SmallMatrix &fp_attau = pd->gptdata[gptdx]->fp_tau;
 
@@ -668,11 +671,11 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     SmallMatrix u = uui.first;
     SmallMatrix r = f_inc * uui.second;  // f-increment * u-inverse
 
-    std::cerr << "Polar decomposition u: " << std::endl;
-    std::cerr << u << std::endl;
+    // std::cerr << "Polar decomposition u: " << std::endl;
+    // std::cerr << u << std::endl;
 
-    std::cerr << "Polar decomposition r: " << std::endl;
-    std::cerr << r << std::endl;
+    // std::cerr << "Polar decomposition r: " << std::endl;
+    // std::cerr << r << std::endl;
     
     // ----------------------------------------------------
     //           Build the Q matrix, bsb_q.
@@ -693,8 +696,8 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 	      bsb_l(i,j,n,o) += fe_att_t(i,idx)*u(idx,n)*fe_att(o,j);
 	    };
 
-    std::cerr << "BSB L" << std::endl;
-    std::cerr << bsb_l.as_smallmatrix() << std::endl;
+    // std::cerr << "BSB L" << std::endl;
+    // std::cerr << bsb_l.as_smallmatrix() << std::endl;
 
     // For debugging, paranoia about Cijkl.
     Rank4_3DTensor check_c;
@@ -703,8 +706,8 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 	for(int k=0;k<3;++k)
 	  for(int l=0;l<3;++l)
 	    check_c(i,j,k,l) = lab_cijkl_(i,j,k,l);
-    std::cerr << "Lab Cijkl via the tensors:" << std::endl;
-    std::cerr << check_c.as_smallmatrix() << std::endl;
+    // std::cerr << "Lab Cijkl via the tensors:" << std::endl;
+    // std::cerr << check_c.as_smallmatrix() << std::endl;
     
     // std::cerr << "Lab Cijkl: " << std::endl;
     // std::cerr << lab_cijkl_ << std::endl;
@@ -721,11 +724,11 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 	      }
 
 
-    std::cerr << "1100: " << bsb_d(1,1,0,0) << std::endl;
-    std::cerr << "0011: " << bsb_d(0,0,1,1) << std::endl;
+    // std::cerr << "1100: " << bsb_d(1,1,0,0) << std::endl;
+    // std::cerr << "0011: " << bsb_d(0,0,1,1) << std::endl;
     
-    std::cerr << "BSB D" << std::endl;
-    std::cerr << bsb_d.as_smallmatrix() << std::endl;
+    // std::cerr << "BSB D" << std::endl;
+    // std::cerr << bsb_d.as_smallmatrix() << std::endl;
     
     // std::cerr << "Building bsb_g." << std::endl;
     std::vector<Rank4_3DTensor> bsb_g(nslips);
@@ -797,7 +800,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     SmallMatrix lhs_sm = lhs.as_smallmatrix();
     SmallMatrix rhs_sm = rhs.as_smallmatrix();
 
-    // std::cerr << "Calling the solver." << std::endl;
+    // std::cerr << "Calling the Q matrix solver." << std::endl;
     int retcode = lhs_sm.solve(rhs_sm);
     // std::cerr << "Back from the solver." << std::endl;
     if (retcode != 0) {
@@ -810,8 +813,8 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     // "Solve" puts the solution in the RHS matrix.
     Rank4_3DTensor bsb_q(rhs_sm);
 
-    std::cerr << "BSB Q" << std::endl;
-    std::cerr << bsb_q.as_smallmatrix() << std::endl;
+    // std::cerr << "BSB Q" << std::endl;
+    // std::cerr << bsb_q.as_smallmatrix() << std::endl;
     
     // std::cerr << "Building the S matrix." << std::endl;
     // ----------------------------------------
@@ -853,19 +856,19 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 			  (*lab_schmid_tensors[alpha])(m,j);
 		      }
 
-    std::cerr << "BSB S" << std::endl;
-    std::cerr << bsb_s.as_smallmatrix() << std::endl;
+    // std::cerr << "BSB S" << std::endl;
+    // std::cerr << bsb_s.as_smallmatrix() << std::endl;
 
     
     Rank4_3DTensor w_mat;
 
     double fe_attau_d = sm_determinant3(fe_attau);
 
-    std::cerr << "Fe_attau" << std::endl;
-    std::cerr << fe_attau << std::endl;
+    // std::cerr << "Fe_attau" << std::endl;
+    // std::cerr << fe_attau << std::endl;
 
-    std::cerr << "2nd PK stress: " << std::endl;
-    std::cerr << s_attau << std::endl;
+    // std::cerr << "2nd PK stress: " << std::endl;
+    // std::cerr << s_attau << std::endl;
     
     SmallMatrix ess_fei(3);
     for (int k=0;k<3;++k)
@@ -890,8 +893,8 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     
     // Is it sufficiently symmetric for a Cijkl object?  SK says yes.
 
-    std::cerr << "Writing w_mat." << std::endl;
-    std::cerr << w_mat.as_smallmatrix() << std::endl;
+    // std::cerr << "Writing w_mat." << std::endl;
+    // std::cerr << w_mat.as_smallmatrix() << std::endl;
     pd->gptdata[gptdx]->w_mat = w_mat;
     // std::cerr << "Bottom of the gausspoint loop." << std::endl;
   } // End of the gausspoint loop (!).
