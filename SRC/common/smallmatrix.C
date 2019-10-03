@@ -268,6 +268,10 @@ SmallMatrix operator*(const SmallMatrix &a, double x) {
   return res;
 }
 
+SmallMatrix operator*(double x, const SmallMatrix &a) {
+  return a*x;
+}
+
 // Matrix multiplication, accessing result matrix in column order. 
 
 DoubleVec operator*(const SmallMatrix &m, const DoubleVec &v) {

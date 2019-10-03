@@ -607,7 +607,7 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
 
     SmallMatrix lp(3);
     for(int alpha=0;alpha<nslips;++alpha) {
-      lp += (*lab_schmid_tensors[alpha])*(sd->gptslipdata[gptdx]->delta_gamma[alpha]);
+      lp += (sd->gptslipdata[gptdx]->delta_gamma[alpha])*(*lab_schmid_tensors[alpha]);
     }
 
     // TODO: Ugh.  Not in the gausspoint loop, please.

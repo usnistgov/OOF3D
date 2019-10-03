@@ -85,6 +85,7 @@ public:
 SmallMatrix operator+(const SmallMatrix&, const SmallMatrix&);
 SmallMatrix operator-(const SmallMatrix&, const SmallMatrix&);
 SmallMatrix operator*(const SmallMatrix&, double);
+SmallMatrix operator*(double, const SmallMatrix&);
 
 std::ostream &operator<<(std::ostream&, const SmallMatrix&);
 
