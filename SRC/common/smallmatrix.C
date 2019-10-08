@@ -269,7 +269,10 @@ SmallMatrix operator*(const SmallMatrix &a, double x) {
 }
 
 SmallMatrix operator*(double x, const SmallMatrix &a) {
-  return a*x;
+  // Doesn't just call the other one to avoid function-call overhead.
+  SmallMatrix res = a;
+  res*=x;
+  return res;
 }
 
 // Matrix multiplication, accessing result matrix in column order. 

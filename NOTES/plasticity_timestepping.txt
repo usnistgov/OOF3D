@@ -84,6 +84,65 @@ is constrained by boundary conditions.  What happened to y and z?
   (Request from SK:  Input/output pairs from the plasticity property,
     i.e. incoming F, generated w)
 
+  (Did this, for low delta-F, we are getting good answers.)
+
   Stepper base classes are in engine/timestepper.py, except for the 
 static one, which is in staticstep.py.  F and B Euler are in 
 euler.py. 
+
+
+  Object structure at Solve Time:
+  ------------------------------
+
+  When the solve button is pressed, several things are true.
+
+  The problem is well-posed, in the sense that fields and equations
+are defined.  Boundary conditions are defined, as a (possibly trivial)
+function of time.
+
+  There is an "Output schedule", a set of times at which outputs
+are requested.  This is not necessarily related to the step size.
+
+  There is a Solver, which contains a Time-Stepper, which in turn 
+containts a Stepper, which may define a step size.  The solver
+has a nonlinear solving algorithm (e.g. Newton or Picard), and matrix
+solvers for symmetric or unsymmetric matrices.
+
+  The "nonlinear solver" (which might be linear) attribute of the
+subproblem is the thing that takes the linear system and computes
+the DOFs at the next available time, using the stepper.
+(See below.)
+
+
+  Control flow:
+  -------------
+
+  Hitting the solve button takes you to the "Evolve" routine,
+in SRC/engine/evolve.py.
+
+  Evolve does a bunch of work at the initial time, including initializing
+the static fields, which involves building the linear system at 
+the initial time inside the "initializeStaticFields" routine in evolve.py.
+According to the comments there, it is dispatched through the 
+nonlinear solver, so nonlinearities are taken care of here.
+
+  Then, Evolve loops over the times in the output schedule at which
+the user has requested info, and for each time, calls "evolve_to" to 
+bring the (possibly multiple) sub-problems up to that time.
+  Note (again) that these times are unrelated to the stepper 
+time-step.  The enclosed steppers will take as many steps as they
+need to to hit the target time, with whatever algorithm they embody.
+ 
+  The actual evolution happens in the "stepresult = " call,
+to subproblem.nonlinear_solver.step(...)
+
+  
+  Evolve_to asks the steppers for their time-step, figures out the
+new time at which it's evaluating the system, builds the linear 
+system, and hands it off unconditionally to the nonlinear solver.
+(In the trivial case, the nonlinear solver can be linear.)
+
+  The new time is passed through to the make_linear_system call --
+this is where it should go to the properties, probably.
+
+

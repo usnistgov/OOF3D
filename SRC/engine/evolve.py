@@ -352,6 +352,8 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                         # timestepper.StepResult object.
                         # debug.fmsg("taking step from %g to %g (%g)" %
                         #            (time, targettime, targettime-time))
+                        print >> sys.stderr, "Evolve_to calling stepper."
+                        print >> sys.stderr, "Solver is: ", subproblem.nonlinear_solver
                         stepResult = subproblem.nonlinear_solver.step(
                             subproblem,
                             linsys=lsClone,
