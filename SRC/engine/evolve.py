@@ -361,6 +361,7 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                             unknowns=unknowns,
                             endtime=targettime)
                         # debug.fmsg("endValues=", stepResult.endValues)
+                        print >> sys.stderr, "Evolve_to back from stepper."
                         if stepResult.ok:
                             # endStep() sets subproblem.endValues
                             assert stepResult.linsys is not None

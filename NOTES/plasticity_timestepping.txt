@@ -136,13 +136,10 @@ need to to hit the target time, with whatever algorithm they embody.
   The actual evolution happens in the "stepresult = " call,
 to subproblem.nonlinear_solver.step(...)
 
-  
   Evolve_to asks the steppers for their time-step, figures out the
 new time at which it's evaluating the system, builds the linear 
 system, and hands it off unconditionally to the nonlinear solver.
 (In the trivial case, the nonlinear solver can be linear.)
 
-  The new time is passed through to the make_linear_system call --
-this is where it should go to the properties, probably.
-
-
+  (The new time is passed through to the make_linear_system call --
+this is where it should go to the properties, probably.)

@@ -177,6 +177,7 @@ class SubProblemContext(whoville.Who):
     asymmetric_solver = property(_getAsymmetricSolver)
 
     def matrix_method(self, asympredicate, *args, **kwargs):
+        print >> sys.stderr, "-----> Inside subProblemContext.matrix_method."
         # Use the given asympredicate to decide whether to return the
         # symmetric or asymmetric matrix solver. 
 
@@ -860,6 +861,7 @@ class SubProblemContext(whoville.Who):
                 print "SubProblemContext calling SubProblem make_linear_system."
                 self.getObject().make_linear_system(linsys, 
                                                     self.nonlinear_solver)
+                print "Back from SubProblem make_linear_system."
                 self.newMatrixCount += 1
 
             if bcsReset or rebuildMatrices or newFieldValues:
@@ -1288,6 +1290,8 @@ class MatrixSolverWrapper(object):
         self.subprobctxt = subproblemcontext
         self.solver = solver
     def solve(self, matrix, rhs, solution):
+        print >> sys.stderr, "------> MatrixSolverWrapper.solve..."
+        print >> sys.stderr, "------>", self.solver
         niters, residual = self.solver.solve(matrix, rhs, solution)
         self.subprobctxt.solverStats.matrixSolution(
             matrix.nrows(), niters, residual)

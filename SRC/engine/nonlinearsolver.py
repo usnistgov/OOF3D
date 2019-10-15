@@ -65,8 +65,8 @@ registeredclass.Registration(
 
 class NonlinearSolver(NonlinearSolverBase):
     def step(self, subprob, *args, **kwargs):
-        print >> sys.stderr, "NonlinaerSolver.step."
-        print >> sys.stderr, "Stepper is ", subprob.time_stepper
+        print >> sys.stderr, "-> NonlinaerSolver.step."
+        print >> sys.stderr, "-> Stepper is ", subprob.time_stepper
         return subprob.time_stepper.nonlinearstep(
             subprob, nonlinearMethod=self, *args, **kwargs)
     def computeStaticFields(self, subprobctxt, linsys, unknowns):
