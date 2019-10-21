@@ -66,12 +66,13 @@ void NonlinearHeatConductivityNoDeriv::static_flux_value(
   DoubleVec fieldGradient(3), fluxVector(3);
   double fieldValue;
 
-  OutputValue outputVal = element->outputField( mesh, *temperature, pt );
+  ArithmeticOutputValue outputVal =
+    element->outputField( mesh, *temperature, pt );
   fieldValue = outputVal[0];
 
   for (SpaceIndex i=0; i<DIM; ++i){
-    OutputValue outputVal = element->outputFieldDeriv(
-				      mesh, *temperature, &i, pt );
+    ArithmeticOutputValue outputVal =
+      element->outputFieldDeriv(mesh, *temperature, &i, pt );
     fieldGradient[i] = outputVal[0];
   }
 
@@ -79,8 +80,8 @@ void NonlinearHeatConductivityNoDeriv::static_flux_value(
   // if plane-flux eqn, then dT/dz is kept as a separate out_of_plane
   // field
   if ( !temperature->in_plane(mesh) ){
-    OutputValue outputVal = element->outputField(
-				 mesh, *temperature->out_of_plane(), pt );
+    ArithmeticOutputValue outputVal =
+      element->outputField(mesh, *temperature->out_of_plane(), pt );
     fieldGradient[2] = outputVal[0];
   }
 #endif
@@ -127,11 +128,13 @@ void NonlinearHeatConductivity::flux_matrix(const FEMesh  *mesh,
   double fieldValue;
   SmallMatrix fluxDerivMtx(3);
 
-  OutputValue outputVal = element->outputField( mesh, *temperature, pt );
+  ArithmeticOutputValue outputVal =
+    element->outputField( mesh, *temperature, pt );
   fieldValue = outputVal[0];
 
   for (SpaceIndex i=0; i<DIM; ++i){
-    OutputValue outputVal = element->outputFieldDeriv(mesh, *temperature,
+    ArithmeticOutputValue outputVal =
+      element->outputFieldDeriv(mesh, *temperature,
 						      &i, pt);
     fieldGradient[i] = outputVal[0];
   }
@@ -140,8 +143,8 @@ void NonlinearHeatConductivity::flux_matrix(const FEMesh  *mesh,
   // if plane-flux eqn, then dT/dz is kept as a separate out_of_plane
   // field
   if(!temperature->in_plane(mesh)) {
-    OutputValue outputVal = element->outputField(
-				 mesh, *temperature->out_of_plane(), pt );
+    ArithmeticOutputValue outputVal =
+      element->outputField(mesh, *temperature->out_of_plane(), pt );
     fieldGradient[2] = outputVal[0];
   }
 #endif

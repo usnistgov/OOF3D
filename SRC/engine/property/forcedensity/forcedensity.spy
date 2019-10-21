@@ -25,13 +25,11 @@ params = [
     parameter.FloatParameter('gx', 0.0, 
                              tip="Body force density in the x direction."),
     parameter.FloatParameter('gy', -9.8,
-                             tip="Body force density in the y direction.")
+                             tip="Body force density in the y direction."),
+    parameter.FloatParameter('gz', 0.0,
+                             tip="Body force density in the z direction.")
 ]
 
-if config.dimension() == 3:
-    params.append(
-        parameter.FloatParameter('gz', 0.0,
-                                 tip="Body force density in the z direction."))
 
 reg = propertyregistration.PropertyRegistration(
     'Mechanical:ForceDensity:ConstantForceDensity',
@@ -39,6 +37,7 @@ reg = propertyregistration.PropertyRegistration(
     "ooflib.SWIG.engine.property.forcedensity.forcedensity",
     100,
     params,
+    outputs=["Material Constants:Mechanical:Force Density F"],
     propertyType="ForceDensity",
     tip="A constant force, such as gravity, applied throughout the material.",
     discussion=xmlmenudump.loadFile(

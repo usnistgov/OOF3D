@@ -39,6 +39,8 @@ import gtk
 # ability to be put into files, and so forth. 
 
 # Base class for AnalyzePage and BoundaryAnalysisPage.
+## TODO: OOF3D merged the AnalyzePage and the BoundaryAnalysisPage, so
+## there's no need for the BaseAnalysisPage class.
 
 ## TODO 3.1: Is it possible to make the Field choosers in the various
 ## Outputs share a Parameter?  Then switching from Field/Value to
@@ -139,6 +141,16 @@ class BaseAnalysisPage(oofGUI.MainPage):
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+class DataOperationFactory(regclassfactory.RegisteredClassFactory):
+    def __init__(self, page, *args, **kwargs):
+        self.page = page
+        regclassfactory.RegisteredClassFactory.__init__(self, *args, **kwargs)
+    def includeRegistration(self, registration):
+        return (self.page.outputAllowsArithmetic() or
+                getattr(registration, 'direct', False))
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
 pshrink = False # can the HPaneds shrink below the size of their contents?
 
 class AnalyzePage(BaseAnalysisPage):
@@ -231,7 +243,7 @@ class AnalyzePage(BaseAnalysisPage):
         op_scroll = gtk.ScrolledWindow()
         gtklogger.logScrollBars(op_scroll, "Operation")
         op_scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        self.op_obj = regclassfactory.RegisteredClassFactory(
+        self.op_obj = DataOperationFactory(
             analyze.DataOperation.registry, scope=self, name="OperationRCF",
             callback = self.newOperationCB)
         self.operationframe.add(op_scroll)
@@ -281,8 +293,10 @@ class AnalyzePage(BaseAnalysisPage):
         switchboard.requestCallbackMain(self.timeWidget, self.sensitize_widgets)
         switchboard.requestCallbackMain(self.domain_obj, self.sensitize_widgets)
         switchboard.requestCallbackMain(self.op_obj, self.sensitize_widgets)
+        # switchboard.requestCallbackMain(self.output_obj,
+        #                                 self.sensitize_widgets)
         switchboard.requestCallbackMain(self.output_obj,
-                                        self.sensitize_widgets)
+                                        self.updateOperations)
         switchboard.requestCallbackMain(self.destwidget, self.sensitize_widgets)
 
         switchboard.requestCallbackMain("named analyses changed",
@@ -377,6 +391,19 @@ class AnalyzePage(BaseAnalysisPage):
         namedok = len(namedanalysis.analysisNames()) > 0
         self.sensitizeBottomRow(go_sensitive, namedok)
         self.namedAnalysisChooser.gtk.set_sensitive(namedok)
+
+    def updateOperations(self, gtkobj):
+        self.op_obj.refresh()
+        self.sensitize_widgets()
+
+    def outputAllowsArithmetic(self):
+        # Arithmetic can be performed on an output as long as neither
+        # it nor any of its ancestors have _allowsArithmetic == False.
+        outputproto = self.output_obj.get_proto()
+        try:
+            return not outputproto or outputproto.allowsArithmetic()
+        except AttributeError:
+            return True
 
     def analysesChanged(self, *args):
         self.sensitize_widgets()

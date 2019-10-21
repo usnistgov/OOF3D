@@ -44,8 +44,8 @@ public:
 			   const Flux*, const MasterPosition&,
 			   double time, SmallSystem*) const;
 
-  virtual void output(const FEMesh*, const Element*, const PropertyOutput*,
-		      const MasterPosition&, OutputVal*) const;
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
 
   virtual int integration_order(const CSubProblem*, const Element*) const;
 };
@@ -62,6 +62,8 @@ public:
   {
     return stressfreestrain_;
   }
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
 private:
   double e_;
 };
@@ -75,6 +77,8 @@ public:
   virtual void precompute(FEMesh*);
   virtual const SymmMatrix3 stressfreestrain(const FEMesh*, const Element*,
 					     const MasterPosition&) const;
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
 private:
   SymmMatrix3 e_;
   OrientationPropBase *orientation;

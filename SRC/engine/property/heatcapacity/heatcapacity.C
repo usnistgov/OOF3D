@@ -10,14 +10,11 @@
  */
 
 #include <oofconfig.h>
-#include "heatcapacity.h"
-
-
-
-#include "engine/property/massdensity/massdensity.h"
-#include "engine/smallsystem.h"
+#include "engine/IO/propertyoutput.h"
 #include "engine/elementnodeiterator.h"
 #include "engine/field.h"
+#include "engine/property/heatcapacity/heatcapacity.h"
+#include "engine/smallsystem.h"
 
 
 HeatCapacityProp::HeatCapacityProp(PyObject *registration,
@@ -49,4 +46,17 @@ void HeatCapacityProp::first_time_deriv_matrix(const FEMesh *mesh,
 int HeatCapacityProp::integration_order(const CSubProblem* subp,
 				       const Element *lmnt) const {
   return 1;
+}
+
+void HeatCapacityProp::output(FEMesh *mesh,
+			      const Element *element,
+			      const PropertyOutput *output,
+			      const MasterPosition &pos,
+			      OutputVal *data)
+{
+  const std::string &outputname = output->name();
+  if(outputname == "Material Constants:Thermal:Heat Capacity") {
+    ScalarOutputVal *sdata = dynamic_cast<ScalarOutputVal*>(data);
+    *sdata = cv_;
+  }
 }

@@ -105,6 +105,7 @@ public:
       ++(*self);
     }
   }
+  int size();
   bool end();
   FieldIterator *cloneIterator();
 };
@@ -179,6 +180,7 @@ public:
 //   IteratorP(FieldIterator*);   // DON'T SWIG THE CONSTRUCTOR
   ~IteratorP();
   bool end();
+  int size();
   IteratorP cloneIterator();
   %addmethods{
     void next() { ++(*self); }
@@ -187,12 +189,12 @@ public:
     }
     
 
-    // TODO OPT: INDEXING The swigged IteratorP should be a real Python
+    // TODO INDEXING: The swigged IteratorP should be a real Python
     // iterator, with next() and __iter__() methods.  next() should
     // raise a StopIteration exception when done.  Fixing this at this
     // late date will be a pain.
 
-    // TODO OPT: INDEXING Don't swig IteratorP and IndexP.  Make the
+    // TODO INDEXING: Don't swig IteratorP and IndexP.  Make the
     // underlying FieldIndex and FieldIterator classes
     // PythonExportable, and swig those.  Operations like
     // SymmMatrix.__getitem__ would expect a FieldIndex of the correct

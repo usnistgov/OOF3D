@@ -40,8 +40,8 @@ class GaussPoint;
 class IteratorP;
 class LinearizedSystem;
 class MasterPosition;
-class OutputVal;
-class OutputValue;
+class ArithmeticOutputVal;
+class ArithmeticOutputValue;
 class SmallMatrix;
 class SmallSystem;
 
@@ -92,42 +92,21 @@ public:
   // hand side.  This returns a 'new'd object.
   SmallSystem *initializeSystem(const Element*) const;
 
-#if DIM==2
-  virtual OutputVal *contract(const FEMesh*, const Element*,
-			      const EdgeGaussPoint&) const = 0;
-#else  // DIM==3
-  virtual OutputVal *contract(const FEMesh*, const Element*,
+  virtual ArithmeticOutputVal *contract(const FEMesh*, const Element*,
 			      const GaussPoint&) const = 0;
-#endif // DIM==3
 
   DoubleVec *evaluate(const FEMesh*, const Element*, const MasterPosition&)
     const;
 
-  OutputValue output(const FEMesh*, const Element*, const MasterPosition&)
-    const;
-  virtual OutputValue newOutputValue() const = 0;
+  ArithmeticOutputValue output(const FEMesh*, const Element*,
+			       const MasterPosition&) const;
+  virtual ArithmeticOutputValue newOutputValue() const = 0;
 
   int eqn_integration_order(const CSubProblem*, const Element*) const;
 
   virtual std::vector<int> contraction_map(int) const = 0;
   virtual const std::vector<int> &outofplane_map() const = 0;
 
-#if DIM==2
-  void boundary_integral(const CSubProblem*, LinearizedSystem*,
-			 const BoundaryEdge*, const EdgeGaussPoint&,
-			 const FluxNormal *) const;
-  // local_boundary computes the integrand for the boundary integrals
-  // in the divergence equation.
-  virtual void local_boundary(const BoundaryEdge*, EdgeNodeIterator&,
-			      const EdgeGaussPoint&, const FluxNormal *,
-			      DoubleVec&) const = 0;
-  virtual FluxNormal *BCCallback(const Coord&,
-				 double,
-				 const Coord&,
-				 const double, const double,
-				 PyObject *, const PyObject *)
-    const = 0;
-#else // DIM==3
   void boundary_integral(const CSubProblem*, LinearizedSystem*,
 			 const Element*, const GaussPoint&,
 			 const FluxNormal*) const;
@@ -141,9 +120,6 @@ public:
 				 const Coord&,
 				 PyObject *, const PyObject *)
     const = 0;
-#endif // DIM==3
-
-
 
   friend bool operator==(const Flux&, const Flux&);
   friend bool operator!=(const Flux&, const Flux&);
@@ -178,18 +154,6 @@ public:
   virtual std::vector<int> contraction_map(int) const;
   virtual const std::vector<int> &outofplane_map() const;
 
-#if DIM==2
-  virtual void local_boundary(const BoundaryEdge*, EdgeNodeIterator&,
-			      const EdgeGaussPoint&,
-			      const FluxNormal *,
-			      DoubleVec&) const;
-  virtual FluxNormal *BCCallback(const Coord&,
-				 double,
-				 const Coord&,
-				 const double, const double,
-				 PyObject *, const PyObject *)
-    const;
-#else // DIM==3
   virtual void local_boundary(const ElementFuncNodeIterator&,
 			      const GaussPoint&, const FluxNormal *,
 			      DoubleVec&) const;
@@ -198,7 +162,6 @@ public:
 				 const Coord&,
 				 PyObject *, const PyObject *)
     const;
-#endif // DIM==3
 
   virtual IteratorP iterator(Planarity) const;
   virtual IteratorP divergence_iterator() const;
@@ -209,14 +172,9 @@ public:
   virtual IndexP divergence_componenttype() const;
   virtual IndexP divergence_getIndex(const std::string&) const;
 
-#if DIM==2
-  virtual OutputVal *contract(const FEMesh*, const Element*,
-			      const EdgeGaussPoint&) const;
-#else // DIM==3
-  virtual OutputVal *contract(const FEMesh*, const Element*,
-			      const GaussPoint&) const;
-#endif // DIM==3
-  virtual OutputValue newOutputValue() const;
+  virtual ArithmeticOutputVal *contract(const FEMesh*, const Element*,
+					const GaussPoint&) const;
+  virtual ArithmeticOutputValue newOutputValue() const;
 
 };
 
@@ -246,18 +204,6 @@ public:
 
   virtual std::vector<int> contraction_map(int) const;
   virtual const std::vector<int> &outofplane_map() const;
-#if DIM==2
-  virtual void local_boundary(const BoundaryEdge*, EdgeNodeIterator&,
-			      const EdgeGaussPoint&,
-			      const FluxNormal *,
-			      DoubleVec&) const;
-  virtual FluxNormal *BCCallback(const Coord&,
-				 double,
-				 const Coord&,
-				 const double, const double,
-				 PyObject *, const PyObject *)
-    const;
-#else // DIM==3
   virtual void local_boundary(const ElementFuncNodeIterator&,
 			      const GaussPoint&, const FluxNormal*,
 			      DoubleVec&) const;
@@ -266,17 +212,11 @@ public:
 				 const Coord&,
 				 PyObject *, const PyObject *)
     const;
-#endif // DIM==3
 
-#if DIM==2
-  virtual OutputVal *contract(const FEMesh*, const Element*,
-			      const EdgeGaussPoint&) const;
-#else // DIM==3
-  virtual OutputVal *contract(const FEMesh*, const Element*,
-			      const GaussPoint&) const;
-#endif // DIM==3
+  virtual ArithmeticOutputVal *contract(const FEMesh*, const Element*,
+					const GaussPoint&) const;
 
-  virtual OutputValue newOutputValue() const;
+  virtual ArithmeticOutputValue newOutputValue() const;
 
   virtual IteratorP iterator(Planarity) const;
   virtual IteratorP divergence_iterator() const;

@@ -41,7 +41,8 @@ PyPropertyMethods::~PyPropertyMethods() {
 //=\\=//=\\=//
 
 void PyPropertyMethods::py_precompute(PyObject *referent, Property *prop,
-				      FEMesh *mesh) {
+				      FEMesh *mesh)
+{
   char _mesh_temp[128];
   PyGILState_STATE pystate = acquirePyLock();
   try {
@@ -290,12 +291,11 @@ void PyPropertyMethods::py_post_process(PyObject *referent,
 // the others, because it uses the returned value.  The C++ and Python
 // signatures are different: in C++ a pointer to an OutputVal is
 // passed in and the OutputVal is changed by the derived class
-// function, which returns void.  In Python, the OutputVal isn't
-// passed in, but the function returns an OutputVal which is added to
-// it.
+// function, which returns void.  In Python, the OutputVal is
+// returned.
 
-void PyPropertyMethods::py_output(PyObject *referent, const Property *prop,
-			       const FEMesh *mesh, const Element *el,
+void PyPropertyMethods::py_output(PyObject *referent, Property *prop,
+			       FEMesh *mesh, const Element *el,
 			       const PropertyOutput *propout,
 			       const MasterPosition &pos,
 			       OutputVal *oval)
@@ -336,7 +336,7 @@ void PyPropertyMethods::py_output(PyObject *referent, const Property *prop,
 			    "Python output() does not return an OutputVal",
 			    __FILE__, __LINE__);
 	}
-	*oval += *cresult;
+	*oval = *cresult;
       }
       Py_XDECREF(pyresult);
     }

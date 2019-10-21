@@ -582,7 +582,66 @@ output.defineOutput('Difference', AggregateDifferenceOutput, ordering=1000)
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-# Scale values to lie between 0 and 1.
+## TODO: Allow more than two outputs to be concatenated, so that it's
+## not necesary to nest the concatenations.  We'll need a Parameter
+## class for multiple Outputs, and a widget for it.
+
+## TODO: Allow concatenation of ScalarOutputs as well as
+## AggregateOutputs?  (Better would be to get rid of the distinction
+## between them, as in OOF3D.)  Simply changing
+## AggregateOutputParameter to ValueOutputParameter in
+## ConcatenateOutput's params doesn't work, because
+## ValueOutputParameter's widget needs to find an EnumWidget for
+## Scalar/Aggregate.
+
+class ConcatenatedOutputs(object):
+    # This probably doesn't need to be a full-fledged OutputVal
+    # subclass.  It just needs to provide a few of the class's
+    # methods.
+    def __init__(self, *args):
+        # args is a tuple of OutputVals
+        self.args = args
+    def value_list(self):
+        # Convert each OutputVal to a list of floats and concatenate them
+        vals = reduce(lambda a,b: a+b, [v.value_list() for v in self.args])
+        return vals
+
+def _concatenate(mesh, elements, coords, first, second):
+    firsts = first.evaluate(mesh, elements, coords)
+    seconds = second.evaluate(mesh, elements, coords)
+    return [ConcatenatedOutputs(f, s)
+            for f,s in itertools.izip(firsts, seconds)]
+
+def _concatenate_shortrepr(self):
+    return "%s and %s" % (self.resolveAlias('first').value.shortrepr(),
+                          self.resolveAlias('second').value.shortrepr())
+def _concatenate_instancefn(self):
+    return (self.resolveAlias('first').value.outputInstance(),
+            self.resolveAlias('second').value.outputInstance())
+
+def _concatenate_columnnames(self):
+    f = self.resolveAlias('first').value
+    s = self.resolveAlias('second').value
+    return f.column_names(f) + s.column_names(s)
+            
+
+ConcatenateOutput = output.Output(
+    name="concatenate",
+    callback=_concatenate,
+    otype=outputval.OutputValPtr,
+    srepr=_concatenate_shortrepr,
+    instancefn=_concatenate_instancefn,
+    column_names=_concatenate_columnnames,
+    params=[
+        output.ValueOutputParameter('first'),
+        output.ValueOutputParameter('second')],
+    tip="Print multiple quantities on each line")
+
+output.defineOutput('Concatenate', ConcatenateOutput, ordering=1001)
+
+#=-=#=-=#=-=#=-=#=-=#=-=#=-=#=-=#=-=#=-=#=-=#=-=#=-=#=-=#=-=#=-=#=-=#=-=#
+
+# Scale values to lie between two given values.
 
 def _rescaleOutput(mesh, elements, coords, minimum, maximum, inputdata):
     minval = min(inputdata)

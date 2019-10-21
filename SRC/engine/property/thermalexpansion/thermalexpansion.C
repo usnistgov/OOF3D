@@ -131,17 +131,16 @@ AnisotropicThermalExpansion::expansiontensor(const FEMesh *mesh,
   return alpha_.transform(orientation->orientation(mesh, elem, pos));
 }
 
-void ThermalExpansion::output(const FEMesh *mesh,
+void ThermalExpansion::output(FEMesh *mesh,
 			      const Element *element,
 			      const PropertyOutput *output,
 			      const MasterPosition &pos,
 			      OutputVal *data)
-  const
 {
   const std::string &outputname = output->name();
   if(outputname == "Strain") {
     // The parameter is a Python StrainType instance.  Extract its name.
-    const std::string *stype = output->getRegisteredParamName((char*) "type");
+    const std::string *stype = output->getRegisteredParamName("type");
     SymmMatrix3 *sdata = dynamic_cast<SymmMatrix3*>(data);
     // Compute alpha*T with T interpolated to position pos
     //* TODO OPT: This is baroque and may be slow.  Make a specialized
@@ -160,7 +159,7 @@ void ThermalExpansion::output(const FEMesh *mesh,
 
   if(outputname == "Energy") {
     // See comment in StressFreeStrain::output.
-    const std::string *etype = output->getEnumParam((char*) "etype");
+    const std::string *etype = output->getEnumParam("etype");
     if(*etype == "Total" || *etype == "Elastic") {
       ScalarOutputVal *edata = dynamic_cast<ScalarOutputVal*>(data);
       // 'modulus' is lab reference system stiffness
@@ -183,6 +182,11 @@ void ThermalExpansion::output(const FEMesh *mesh,
     }
     delete etype;
   } // energy output ends here
+  
+  if(outputname == "Material Constants:Couplings:Thermal Expansion T0") {
+    ScalarOutputVal *sdata = dynamic_cast<ScalarOutputVal*>(data);
+    *sdata = tzero_;
+  }
 }
 
 
@@ -204,7 +208,6 @@ IsotropicThermalExpansion::IsotropicThermalExpansion(PyObject *registry,
 {
 
 }
-
 
 void IsotropicThermalExpansion::cross_reference(Material *mat) {
   // find out which property is the elasticity
@@ -249,4 +252,53 @@ void AnisotropicThermalExpansion::cross_reference(Material *mat) {
 void AnisotropicThermalExpansion::precompute(FEMesh*) {
   if(orientation && orientation->constant_in_space())
     expansiontensor_ = alpha_.transform(orientation->orientation());
+}
+
+void IsotropicThermalExpansion::output(FEMesh *mesh,
+				       const Element *element,
+				       const PropertyOutput *output,
+				       const MasterPosition &pos,
+				       OutputVal *data)
+{
+  const std::string &outputname = output->name();
+  if(outputname == "Material Constants:Couplings:Thermal Expansion alpha") {
+    ListOutputVal *listdata = dynamic_cast<ListOutputVal*>(data);
+    std::vector<std::string> *idxstrs =
+      output->getListOfStringsParam("components");
+    for(unsigned int i=0; i<idxstrs->size(); i++) {
+      const std::string idxpair = (*idxstrs)[i];
+      if(idxpair[0] == idxpair[1])
+	(*listdata)[i] = alpha_;
+      else
+	(*listdata)[i] = 0;
+    }
+    delete idxstrs;
+  }
+  ThermalExpansion::output(mesh, element, output, pos, data);
+}
+
+void AnisotropicThermalExpansion::output(FEMesh *mesh,
+				       const Element *element,
+				       const PropertyOutput *output,
+				       const MasterPosition &pos,
+				       OutputVal *data)
+{
+  const std::string &outputname = output->name();
+  if(outputname == "Material Constants:Couplings:Thermal Expansion alpha") {
+    ListOutputVal *listdata = dynamic_cast<ListOutputVal*>(data);
+    std::vector<std::string> *idxstrs =
+      output->getListOfStringsParam("components");
+    const std::string *frame = output->getEnumParam("frame");
+    if(*frame == "Lab") {
+      precompute(mesh);
+      copyOutputVals(expansiontensor(mesh, element, pos), listdata, *idxstrs);
+    }
+    else {
+      assert(*frame == "Crystal");
+      copyOutputVals(alpha_, listdata, *idxstrs);
+    }
+    delete idxstrs;
+    delete frame;
+  }
+  ThermalExpansion::output(mesh, element, output, pos, data);
 }

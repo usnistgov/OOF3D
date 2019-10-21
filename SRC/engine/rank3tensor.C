@@ -11,11 +11,12 @@
  */
 #include <oofconfig.h>
 
-#include "common/corientation.h"
 #include "common/doublevec.h"
 #include "common/ooferror.h"
+#include "engine/corientation.h"
 #include "engine/fieldindex.h"
 #include "engine/ooferror.h"
+#include "engine/outputval.h"
 #include "engine/property/elasticity/cijkl.h"
 #include "engine/rank3tensor.h"
 #include "engine/symeig3.h"
@@ -247,4 +248,22 @@ std::ostream &operator<<(std::ostream &os, const Rank3Tensor &dd) {
   }
    os << "]";
   return os ;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Copy values from a Rank3Tensor, modulus, into a ListOutputVal,
+// listdata, given a vector, idxstrs, of strings containing the
+// indices of the desired components as one space index 1-3, and one
+// Voigt index 1-6.
+
+void copyOutputVals(const Rank3Tensor &modulus, ListOutputVal *listdata,
+		    const std::vector<std::string> &idxstrs)
+{
+  for(unsigned int i=0; i<idxstrs.size(); i++) {
+    const std::string &idxpair = idxstrs[i];
+    int j = int(idxpair[0]-'1'); // 1-3
+    SymTensorIndex kl = SpaceIndex(idxpair[1]-'1'); // Voigt, 1-6
+    (*listdata)[i] = modulus(j, kl);
+  }
 }

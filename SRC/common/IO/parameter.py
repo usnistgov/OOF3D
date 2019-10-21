@@ -36,9 +36,11 @@ from ooflib.SWIG.common import ooferror
 # from ooflib.SWIG.common import timestamp
 from ooflib.common import debug
 from ooflib.common import registeredclass
+from ooflib.common import utils
 from ooflib.common.IO import automatic
 from ooflib.common.IO.typename import typename
 from types import *
+import math
 import string
 import struct
 
@@ -434,6 +436,48 @@ class FloatRangeParameter(_RangeParameter):
         return "A real number in the range [%g, %g]." % \
                (self.range[0], self.range[1])
         
+# AngleRangeParameter is a FloatRangeParameter, but it tries to make
+# its value fit its range by adding or subtracting multiples of 2*pi.
+# It can work in either radians or degrees by setting units="degrees"
+# or units="radians" in the constructor.  The default is degrees.
+
+class AngleRangeParameter(FloatRangeParameter):
+    structfmt = ">d"
+    structsize = struct.calcsize(structfmt)
+    def __init__(self, name, range, value=None, units="degrees",
+                 default=None, tip=None):
+        if units == "degrees":
+            self.circle = 360.
+        elif units == "radians":
+            self.circle = 2*math.pi
+        else:
+            raise ooferror.ErrPyProgrammingError(
+                "Bad units in AngleRangeParameter")
+        # range must be a tuple (min, max, step)
+        _RangeParameter.__init__(self, name, range, [FloatType, IntType],
+                                 value, default, tip)
+    def set(self, value):
+        if value is not None:
+            if type(value) not in self.types:
+                raise ParameterMismatch('Got ' + `value` + ' for Parameter '
+                                        + self.name)
+            if self.range[0] > value:
+                old = value
+                n = math.ceil((self.range[0] - value)/self.circle)
+                value += n*self.circle
+                debug.fmsg("Corrected", old, "to", value)
+            elif value > self.range[1]:
+                old = value
+                n = math.ceil((value - self.range[1])/self.circle)
+                value -= n*self.circle
+                debug.fmsg("Corrected", old, "to", value)
+            if self.range[0] <= value <= self.range[1]:
+                self._value = value
+                self.timestamp.increment()
+            else:
+                raise ValueError('Parameter value out of range for '
+                                 + self.name)
+
 # Parameter class that can take a float or an integer,
 # or the special value "automatic". 
 class AutoNumericParameter(Parameter):
@@ -591,6 +635,7 @@ class FloatParameter(Parameter):
         return "A real number."
 
 class PositiveFloatParameter(FloatParameter):
+    ## TODO: Why doesn't this have type checking?
     def valueDesc(self):
         return "A positive real number."
 
@@ -614,9 +659,23 @@ class IntParameter(Parameter):
     def valueDesc(self):
         return "Integer."
 
-class PositiveIntParameter(IntParameter):
+class PositiveIntParameter(Parameter):
+    def __init__(self, name, value=None, default=1, tip=None, auxData={}):
+        Parameter.__init__(self, name, value=value, default=default, tip=tip,
+                           auxData=auxData)
+    def checker(self, x):
+        if type(x) is not IntType or x <= 0:
+            raiseTypeError(x, "a positive integer")
+    def binaryRepr(self, datafile, value):
+        return struct.pack(structIntFmt, value)
+    def binaryRead(self, parser):
+        b = parser.getBytes(structIntSize)
+        (val,) = struct.unpack(structIntFmt, b)
+        return val
+    def __repr__(self):
+        return "PositiveIntParameter(%s,%s)" % (`self.name`, `self.value`)
     def valueDesc(self):
-        return "A positive integer."
+        return "Positive integer."
 
 class NonNegativeIntParameter(IntParameter):
     def valueDesc(self):
@@ -777,6 +836,20 @@ class ListOfTuplesOfIntsParameter(Parameter):
         return "List of variably sized Tuples of Ints"
     def valueDesc(self):
         return "A list of tuples of integers.  The tuples do not all have to have the same size."
+
+class ListOfStringIntTuplesParameter(Parameter):
+    def checker(self, x):
+        if type(x) is not ListType:
+            raise TypeError("Expected a List of (String,Int) tuples!")
+        for t in x:
+            if (type(t) is not TupleType or len(t) != 2 or
+                type(t[0]) is not StringType or
+                type(t[1]) is not IntType):
+                raise TypeError("Expected a List of (String,Int) tuples!")
+    def valueRepr(self):
+        return "List of (String, Int) tuples"
+    def valueDesc(self):
+        return "A list of tuples, each containing a string and an integer."
 
 class ListOfListOfIntsParameter(Parameter):
     # The binary repr for this parameter assumes that all the sublists
@@ -1121,8 +1194,66 @@ class RegisteredListParameter(RegisteredParameter):
         "A list of objects of the <link linkend='RegisteredClass-%s'><classname>%s</classname></link> class." \
         % (self.regname(), self.regname())
 
+# The value of a MetaRegisteredParameter is a subclass of a given
+# RegisteredClass, as opposed to a RegisteredParameter, whose value is
+# an instance of a subclass.
 
+class MetaRegisteredParameter(Parameter):
+    def __init__(self, name, regclass, value=None, default=None, tip=None):
+        # MetaRegisteredParameter requires its class to use the
+        # PrintableClass metaclass.
+        assert(regclass.__metaclass__ is utils.PrintableClass)
 
+        self.registry = regclass.registry
+        self.reg = regclass
+        Parameter.__init__(self, name, value, default, tip)
+    def clone(self):
+        return self.__class__(self.name, self.reg,
+                              self.value, self.default, self.tip)
+    def set(self, value):
+        # value can either be a subclass or the Registration for a
+        # subclass, because it's the Registrations that are defined in
+        # the main OOF namespace.
+        if value is None:
+            self._value = None
+            return
+        # Check for a Registration. This is the more likely case.
+        if isinstance(value, registeredclass.Registration):
+            for registration in self.registry:
+                if value == registration:
+                    self._value = value.subclass
+                    self.timestamp.increment()
+                    return
+        # Check for a subclass.  If it's not a class at all, then
+        # issubclass will raise a TypeError.  With new style classes,
+        # there doesn't seem to be an easy way to check ahead of time
+        # if an object is a class.
+        try:
+            for registration in self.registry:
+                if issubclass(value, registration.subclass):
+                    self._value = value
+                    self.timestamp.increment()
+                    return
+        except TypeError:
+            pass
+        raise TypeError(
+            'Bad type for MetaRegisteredParameter!  Got %s\nExpected one of %s'
+            % (value, [reg.subclass for reg in self.registry]))
+    def __repr__(self):
+        return self.value.__name__
+    def binaryRepr(self, datafile, value):
+        nm = self.value.__name__
+        length = len(nm)
+        return struct.pack(structIntFmt, length) + nm
+    def binaryRead(self, parser):
+        b = parser.getBytes(structIntSize)
+        (length,) = struct.unpack(structIntFmt, b)
+        nm = parser.getBytes(length)
+        return utils.OOFeval(nm)
+    def valueDesc(self):
+        from ooflib.common.IO import xmlmenudump # delayed to avoid import loops
+        nm = xmlmenudump.stripPtr(self.reg.__name__)
+        return "A subclass of the <link linkend='RegisteredClass-%s'><classname>%s</classname></link> class." % (nm, nm)
 
 
 # The AutomaticNameParameter can be set to either a string or the
@@ -1380,6 +1511,7 @@ class Comparable:
         if type(other) != InstanceType or self.__class__ != other.__class__:
             return 0
 
+        ## TODO: Use getattr and dir instead of __dict__
         for (k,v) in self.__dict__.items():
             if v != other.__dict__[k]:
                 return 0

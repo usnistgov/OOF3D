@@ -25,7 +25,6 @@ class CUnitVectorDirection;
 
 #include "common/doublevec.h"
 
-class COrientation;
 class SmallMatrix;
 
 class CDirection : public PythonExportable<CDirection> {

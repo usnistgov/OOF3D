@@ -27,17 +27,10 @@ void findElectricField(const FEMesh *mesh, const Element *element,
     dynamic_cast<ScalarField*>(Field::getField("Voltage"));;
 
   for(SpaceIndex j=0; j<DIM; ++j) {
-    OutputValue vderiv = element->outputFieldDeriv(mesh, *voltage, &j, pos);
+    ArithmeticOutputValue vderiv = element->outputFieldDeriv(mesh, *voltage,
+							     &j, pos);
     efield[j] = -vderiv[0];
   }
-#if DIM==2
-  static Field *voltage_z = voltage->out_of_plane();
-  bool inplane = voltage->in_plane(mesh);
-  if(!inplane) {
-    OutputValue vz = element->outputField(mesh, *voltage_z, pos);
-    efield[2] = -vz[0];
-  }
-#endif // DIM==2
 }
 
 

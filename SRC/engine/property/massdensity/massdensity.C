@@ -10,10 +10,11 @@
  */
 
 #include <oofconfig.h>
-#include "engine/property/massdensity/massdensity.h"
-#include "engine/smallsystem.h"
+#include "engine/IO/propertyoutput.h"
 #include "engine/elementnodeiterator.h"
 #include "engine/field.h"
+#include "engine/property/massdensity/massdensity.h"
+#include "engine/smallsystem.h"
 
 
 MassDensityProp::MassDensityProp(PyObject *registration,
@@ -46,3 +47,15 @@ int MassDensityProp::integration_order(const CSubProblem* subp,
   return 1;
 }
 
+oid MassDensityProp::output(FEMesh *mesh,
+			     const Element *element,
+			     const PropertyOutput *output,
+			     const MasterPosition &pos,
+			     OutputVal *data)
+{
+  const std::string &outputname = output->name();
+  if(outputname == "Material Constants:Mechanical:Mass Density") {
+    ScalarOutputVal *sdata = dynamic_cast<ScalarOutputVal*>(data);
+    *sdata = rho_;
+  }
+}

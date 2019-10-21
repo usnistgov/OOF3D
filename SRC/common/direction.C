@@ -13,7 +13,6 @@
 
 #include "common/IO/oofcerr.h"
 #include "common/coord.h"
-#include "common/corientation.h"
 #include "common/differ.h"
 #include "common/direction.h"
 #include "common/ooferror.h"
@@ -21,10 +20,6 @@
 #include "common/tostring.h"
 
 #include <math.h>
-
-// CUnitVectorDirection Direction::rotate(const COrientation &orientation) const {
-//   return rotate(orientation.rotation());
-// }
 
 const std::string &CDirection::modulename() const {
   static const std::string name("ooflib.SWIG.common.direction");

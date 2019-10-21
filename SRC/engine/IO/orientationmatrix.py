@@ -1,5 +1,6 @@
 # -*- python -*-
 
+
 # This software was produced by NIST, an agency of the U.S. government,
 # and by statute is not subject to copyright in the United States.
 # Recipients of this software assume all responsibilities associated
@@ -18,22 +19,25 @@
 # think about how to make CRegisteredClasses Convertible, and to
 # handle the conversion from degrees (used in the UI) to radians (used
 # internally in COrientation subclasses).
-# TODO 3.1: Use Convertible CRegisteredClasses instead.
 
-# TODO 3.1: Move this file to common/IO or common?
+# TODO: Use Convertible CRegisteredClasses instead.
 
+from ooflib.SWIG.common import ooferror
+from ooflib.SWIG.engine import corientation
 from ooflib.common import debug
+from ooflib.common import enum
 from ooflib.common import registeredclass
 from ooflib.common import utils
 from ooflib.common.IO import parameter
 from ooflib.common.IO import xmlmenudump
-from ooflib.SWIG.common import corientation
 import math
 
 FloatParameter = parameter.FloatParameter
 FloatRangeParameter = parameter.FloatRangeParameter
+AngleRangeParameter = parameter.AngleRangeParameter
 
-# TODO 3.1: Do the *_from_base functions need to check the type of their
+
+# TODO: Do the *_from_base functions need to check the type of their
 # argument?  Some of them, before COrientation, used to accept either
 # an EulerAngle or a matrix.
 
@@ -43,15 +47,19 @@ FloatRangeParameter = parameter.FloatRangeParameter
 class Orientation(registeredclass.ConvertibleRegisteredClass):
     __metaclass__ = utils.PrintableClass
     registry = []
-    # Orientation needs a special equality checker, because
-    # its value is not a composite Python object, as assumed by
-    # RegisteredClass.  TODO 3.1: Is this still needed?
+    # Orientation needs a special equality checker, because its value
+    # is not a composite Python object, as assumed by RegisteredClass.
+    # TODO: Is this still needed?
     def __eq__(self, other):
         return other is not None and other.corient==self.corient
     def __ne__(self, other):
         return not self==other
     def to_base(self):
         return self.corient
+
+    def misorientation(self, other, lattice_system):
+        return math.degrees(self.corient.misorientation(other.corient,
+                                                        lattice_system))
 
     tip = "The orientation of a three dimensional object."
 
@@ -86,7 +94,13 @@ class Orientation(registeredclass.ConvertibleRegisteredClass):
         args = reg.from_base(reg, newabg)
         reg.setDefaultParams(args)
         return reg()
-        
+
+# Enum class for choosing an orientation representation, generated
+# automatically by the registrations for the Orientation subclasses.
+# This allows a subclass to be passeed in to C++.
+
+class OrientationEnum(enum.EnumClass()):
+    tip="Various ways to specify an Orientation"
 
 # Registration object hosts the "call points" for to_base
 # routines.  These are used by the GUI when switching types.
@@ -101,9 +115,16 @@ class OrientationRegistration(registeredclass.ConvertibleRegistration):
             to_base=to_base,
             params=params,
             tip=tip, discussion=discussion)
+        enum.addEnumName(OrientationEnum, name, help=tip)
+    def zero(self):
+        # Computes the null rotation in the subclass's format.
+        abg = Abg(0., 0., 0.)
+        if self.subclass is Abg:
+            return abg
+        return self.subclass(*self.from_base(self, abg))
 
 ## The base representation for the ConvertibleRegisteredClass
-## mechansim (which is not the same thing as the base class) is the
+## mechanism (which is not the same thing as the base class) is the
 ## Abg subclass.  corient_to_base converts any COrientation subclass
 ## to an Abg object.
 
@@ -128,7 +149,6 @@ class Abg(Orientation):
         return map(math.degrees, (alpha, beta, gamma))
     def rotateXY(self, angle):
         return Abg(self.alpha, self.beta, self.gamma+angle)
-        
 
 def _abg_to_base(reg, vlist = None):
     vset = vlist or reg.getParamValues()
@@ -143,11 +163,11 @@ OrientationRegistration(
     1,
     from_base=_abg_from_base,
     to_base=_abg_to_base,
-    params=[FloatRangeParameter('alpha', (0, 180., 0.1), 0.0, ## 'c-axis tilt'
+    params=[AngleRangeParameter('alpha', (0, 180., 0.1), 0.0, ## 'c-axis tilt'
                           tip='second rotation, about the y-axis, in degrees.'),
-            FloatRangeParameter('beta', (-180., 180., 0.1), 0.0, ##  c-axis rot.
+            AngleRangeParameter('beta', (-180., 180., 0.1), 0.0, ##  c-axis rot.
                           tip='first rotation, about the z-axis, in degrees.'),
-            FloatRangeParameter('gamma', (-180., 180., 0.1), 0.0, ## z-axis rot
+            AngleRangeParameter('gamma', (-180., 180., 0.1), 0.0, ## z-axis rot
                           tip='third rotation, about the z-axis, in degrees.')],
     tip='Euler angles (alpha, beta, gamma) are applied: first beta about the z axis, then alpha about the y, and finally gamma about z. This operation brings the crystal axes into coincidence with the lab axes.',
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/abg.xml')
@@ -184,11 +204,11 @@ OrientationRegistration(
     2,
     from_base=_x_from_base,
     to_base=_x_to_base,
-    params=[FloatRangeParameter('phi', (-180., 180., 0.1), 0.0,
+    params=[AngleRangeParameter('phi', (-180., 180., 0.1), 0.0,
                               tip="First rotation, about z axis, in degrees."),
-            FloatRangeParameter('theta', (0., 180., 0.1), 0.0,
+            AngleRangeParameter('theta', (0., 180., 0.1), 0.0,
                               tip="Second rotation, about x axis, in degrees."),
-            FloatRangeParameter('psi', (-180., 180., 0.1), 0.0,
+            AngleRangeParameter('psi', (-180., 180., 0.1), 0.0,
                               tip="Third rotation, about z axis, in degrees.")],
     tip="Goldstein's X convention for 3D orientations, using rotations which bring the crystal axes into coincidence with the lab axes, in the order z, x, z.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/x.xml')
@@ -224,11 +244,11 @@ OrientationRegistration(
     'XYZ', XYZ, 3,
     from_base=_xyz_from_base,
     to_base=_xyz_to_base,
-    params=[FloatRangeParameter('phi', (-180., 180., 0.1), 0.0,
+    params=[AngleRangeParameter('phi', (-180., 180., 0.1), 0.0,
                             tip="Initial rotation about x axis, in degrees."),
-            FloatRangeParameter('theta', (0., 180., 0.1), 0.0,
+            AngleRangeParameter('theta', (0., 180., 0.1), 0.0,
                             tip="Second rotation, about y axis, in degrees."),
-            FloatRangeParameter('psi', (-180., 180., 0.1), 0.0,
+            AngleRangeParameter('psi', (-180., 180., 0.1), 0.0,
                             tip="Third rotation, about z axis, in degrees.")],
     tip='The "aerodynamic" XYZ convention for specifying an orientation.  Rotation by phi about x, then theta about y, then psi about z, brings the crystal axes into coincidence with the lab axes.',
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/xyz.xml')
@@ -250,11 +270,16 @@ OrientationRegistration(
 
 class Quaternion(Orientation):
     def __init__(self, e0, e1, e2, e3):
-        self.e0 = e0
-        self.e1 = e1
-        self.e2 = e2
-        self.e3 = e3
-        self.corient = corientation.COrientQuaternion(e0, e1, e2, e3)
+        # Make sure it's normalized.
+        norm = math.sqrt(e0*e0 + e1*e1 + e2*e2 + e3*e3)
+        if norm == 0.0:
+            raise ooferror.ErrUserError("Quaternion cannot be normalized!")
+        self.e0 = e0/norm
+        self.e1 = e1/norm
+        self.e2 = e2/norm
+        self.e3 = e3/norm
+        self.corient = corientation.COrientQuaternion(
+            self.e0, self.e1, self.e2, self.e3)
     @staticmethod
     def radians2Degrees(e0, e1, e2, e3):
         return e0, e1, e2, e3
@@ -278,7 +303,7 @@ OrientationRegistration(
     params=[FloatParameter('e0', 0.0, tip="Cosine of half the rotation angle.",),
             FloatParameter('e1', 0.0, tip="Rotation axis x-component times sine of half the rotation angle."),
             FloatParameter('e2', 0.0, tip="Rotation axis y-component times sine of half the rotation angle."),
-            FloatParameter('e3', 0.0, tip="Rotation axis z-component times sine of half the rotation angle.")],
+            FloatParameter('e3', 1.0, tip="Rotation axis z-component times sine of half the rotation angle.")],
     tip="The Quaternion representation for 3D orientations.  e0 is the cosine of the half-angle of the rotation, and e1 through e3 are the x, y, and z components of the rotation axis times the sine of the half-angle.  The rotation brings the crystal axes into coincidence with the lab axes.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/quaternion.xml')
     )
@@ -321,7 +346,7 @@ OrientationRegistration(
     4,
     from_base=_axis_from_base,
     to_base=_axis_to_base,
-    params=[FloatRangeParameter('angle', (-180., 180., 0.1), 0.0,
+    params=[AngleRangeParameter('angle', (-180., 180., 0.1), 0.0,
                                 tip='Rotation angle, in degrees.'),
             FloatParameter('x', 0.0, tip='x component of rotation axis.'),
             FloatParameter('y', 0.0, tip='y component of rotation axis.'),
@@ -403,11 +428,11 @@ OrientationRegistration(
     'Bunge', Bunge, 7,
     from_base=_bunge_from_base,
     to_base=_bunge_to_base,
-    params=[FloatRangeParameter('phi1', (-180., 180., 0.1), 0.0,
+    params=[AngleRangeParameter('phi1', (-180., 180., 0.1), 0.0,
                              tip="First rotation, about z axis, in degrees."),
-            FloatRangeParameter('theta', (0., 180., 0.1), 0.0,
+            AngleRangeParameter('theta', (0., 180., 0.1), 0.0,
                              tip="Second rotation, about x axis, in degrees."),
-            FloatRangeParameter('phi2', (-180., 180, 0.1), 0.0,
+            AngleRangeParameter('phi2', (-180., 180, 0.1), 0.0,
                              tip="Third rotation, about z axis, in degrees.")],
     tip="Bunge angles for defining a rotation which operates on the lab axes, bringing them into coincidence with the crystal axes, in the order z, x, z.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/bunge.xml') )

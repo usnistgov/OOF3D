@@ -23,12 +23,11 @@ class OutputValue;
 #include "common/coord_i.h"
 #include "common/doublevec.h"
 #include "common/pythonexportable.h"
+#include "engine/fieldindex.h"
 
 #include <iostream>
 #include <math.h>
 
-class IndexP;
-class IteratorP;
 class SymmMatrix3;
 
 // The OutputVal classes defined here are used to ferry values from
@@ -43,75 +42,95 @@ class SymmMatrix3;
 // there wouldn't be much effort saved.
 
 class OutputVal : public PythonExportable<OutputVal> {
+private:
+  OutputVal(const OutputVal&) = delete;
 protected:
   static std::string modulename_;
   int refcount;
 public:
   OutputVal();
   virtual ~OutputVal();
+  virtual const OutputVal &operator=(const OutputVal&) = 0;
   virtual unsigned int dim() const = 0;
   virtual OutputVal *clone() const = 0;
   virtual OutputVal *zero() const = 0;
-  virtual OutputVal *one() const = 0;
   virtual const std::string &modulename() const { return modulename_; }
-  virtual double operator[](const IndexP&) const = 0;
-  virtual double &operator[](const IndexP&) = 0;
-  virtual OutputVal &operator+=(const OutputVal&) = 0;
-  virtual OutputVal &operator-=(const OutputVal&) = 0;
-  virtual OutputVal &operator*=(double) = 0;
-  // Component-wise operations.
-  virtual void component_pow(int) = 0;
-  virtual void component_square() = 0;
-  virtual void component_sqrt() = 0;
-  virtual void component_abs() = 0;
-  virtual DoubleVec *value_list() const = 0;
-  virtual double magnitude() const = 0;
-
-  // The generic dot product a (dot) b is a.dot(b).  The double
-  // dispatch routines A::dotScalar(B), A::dotVector(B), etc, compute
-  // B (dot) A.
-  virtual OutputVal *dot(const OutputVal&) const = 0;
-  virtual OutputVal *dotScalar(const ScalarOutputVal&) const = 0;
-  virtual OutputVal *dotVector(const VectorOutputVal&) const = 0;
-  virtual OutputVal *dotSymmMatrix3(const SymmMatrix3&) const = 0;
   // IO ops.
+  virtual DoubleVec *value_list() const = 0;
   virtual void print(std::ostream&) const = 0;
   // getIndex converts the string representation of a component index
   // into an IndexP object that can be used to extract a component.
   virtual IndexP getIndex(const std::string&) const = 0;
   virtual IteratorP getIterator() const = 0;
+
   friend class OutputValue;
+};
+
+class ArithmeticOutputVal : public OutputVal {
+public:
+  virtual ArithmeticOutputVal *one() const = 0;
+  virtual ArithmeticOutputVal &operator+=(const ArithmeticOutputVal&) = 0;
+  virtual ArithmeticOutputVal &operator-=(const ArithmeticOutputVal&) = 0;
+  virtual ArithmeticOutputVal &operator*=(double) = 0;
+  // Component-wise operations.
+  virtual void component_pow(int) = 0;
+  virtual void component_square() = 0;
+  virtual void component_sqrt() = 0;
+  virtual void component_abs() = 0;
+  virtual double magnitude() const = 0;
+  virtual double operator[](const IndexP&) const = 0;
+  virtual double &operator[](const IndexP&) = 0;
+
+  // The generic dot product a (dot) b is a.dot(b).  The double
+  // dispatch routines A::dotScalar(B), A::dotVector(B), etc, compute
+  // B (dot) A.
+  virtual ArithmeticOutputVal *dot(const ArithmeticOutputVal&) const = 0;
+  virtual ArithmeticOutputVal *dotScalar(const ScalarOutputVal&) const = 0;
+  virtual ArithmeticOutputVal *dotVector(const VectorOutputVal&) const = 0;
+  virtual ArithmeticOutputVal *dotSymmMatrix3(const SymmMatrix3&) const = 0;
+};
+
+class NonArithmeticOutputVal : public OutputVal {
+public:
 };
 
 std::ostream &operator<<(std::ostream &, const OutputVal&);
 
-class ScalarOutputVal : public OutputVal {
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Subclasses of ArithmeticOutputVal
+
+
+class ScalarOutputVal : public ArithmeticOutputVal {
 private:
   static std::string classname_;
   double val;
 public:
-  ScalarOutputVal(double x);
-  ScalarOutputVal(const ScalarOutputVal&);
-  virtual ~ScalarOutputVal();
+  ScalarOutputVal() : val(0.0) {}
+  ScalarOutputVal(double x) : val(x) {}
+  ScalarOutputVal(const ScalarOutputVal &a) : val(a.val) {}
+  virtual ~ScalarOutputVal() {}
+  const ScalarOutputVal &operator=(const ScalarOutputVal&);
+  virtual const ScalarOutputVal &operator=(const OutputVal&);
   virtual unsigned int dim() const { return 1; }
-  virtual OutputVal *clone() const { return new ScalarOutputVal(val); }
-  virtual OutputVal *zero() const { return new ScalarOutputVal(0.0); }
-  virtual OutputVal *one() const { return new ScalarOutputVal(1.0); }
+  virtual ScalarOutputVal *clone() const { return new ScalarOutputVal(val); }
+  virtual ScalarOutputVal *zero() const { return new ScalarOutputVal(0.0); }
+  virtual ScalarOutputVal *one() const { return new ScalarOutputVal(1.0); }
   virtual const std::string &classname() const { return classname_; }
 
-  virtual OutputVal &operator+=(const OutputVal &other) {
+  virtual ArithmeticOutputVal &operator+=(const ArithmeticOutputVal &other) {
     const ScalarOutputVal &another =
       dynamic_cast<const ScalarOutputVal&>(other);
     val += another.val;
     return *this;
   }
-  virtual OutputVal &operator-=(const OutputVal &other) {
+  virtual ArithmeticOutputVal &operator-=(const ArithmeticOutputVal &other) {
     const ScalarOutputVal &another =
       dynamic_cast<const ScalarOutputVal&>(other);
     val -= another.val;
     return *this;
   }
-  virtual OutputVal &operator*=(double a) {
+  virtual ArithmeticOutputVal &operator*=(double a) {
     val *= a;
     return *this;
   }
@@ -131,10 +150,10 @@ public:
   virtual void component_abs() {
     val = fabs(val);
   }
-  virtual OutputVal *dot(const OutputVal&) const;
-  virtual OutputVal *dotScalar(const ScalarOutputVal&) const;
-  virtual OutputVal *dotVector(const VectorOutputVal&) const;
-  virtual OutputVal *dotSymmMatrix3(const SymmMatrix3&) const;
+  virtual ArithmeticOutputVal *dot(const ArithmeticOutputVal&) const;
+  virtual ArithmeticOutputVal *dotScalar(const ScalarOutputVal&) const;
+  virtual ArithmeticOutputVal *dotVector(const VectorOutputVal&) const;
+  virtual ArithmeticOutputVal *dotSymmMatrix3(const SymmMatrix3&) const;
 
   virtual DoubleVec *value_list() const;
   virtual double magnitude() const { return fabs(val); }
@@ -164,39 +183,41 @@ ScalarOutputVal operator/(ScalarOutputVal&, double);
 // and operator*(SymmMatrix&, DoubleVec&);
 
 
-class VectorOutputVal : public OutputVal {
+class VectorOutputVal : public ArithmeticOutputVal {
 private:
   DoubleVec data;
   static std::string classname_;
 public:
+  VectorOutputVal();
   VectorOutputVal(int n);
   VectorOutputVal(const VectorOutputVal&);
   VectorOutputVal(const DoubleVec&);
   VectorOutputVal(const Coord&);
   virtual ~VectorOutputVal() {}
+  virtual const VectorOutputVal &operator=(const OutputVal&);
+  const VectorOutputVal &operator=(const VectorOutputVal&);
+  virtual unsigned int dim() const { return size(); }
+  virtual VectorOutputVal *clone() const;
+  virtual VectorOutputVal *zero() const;
+  virtual VectorOutputVal *one() const;
   virtual const std::string &classname() const { return classname_; }
   unsigned int size() const { return data.size(); }
 
-  virtual unsigned int dim() const { return size(); }
-  virtual OutputVal *clone() const;
-  virtual OutputVal *zero() const;
-  virtual OutputVal *one() const;
-
-  virtual OutputVal &operator+=(const OutputVal &other) {
+  virtual ArithmeticOutputVal &operator+=(const ArithmeticOutputVal &other) {
     const VectorOutputVal &another = 
       dynamic_cast<const VectorOutputVal&>(other);
     for(unsigned int i=0; i<data.size(); i++)
       data[i] += another.data[i];
     return *this;
   }
-  virtual OutputVal &operator-=(const OutputVal &other) {
+  virtual ArithmeticOutputVal &operator-=(const ArithmeticOutputVal &other) {
     const VectorOutputVal &another = 
       dynamic_cast<const VectorOutputVal&>(other);
     for(unsigned int i=0; i<size(); i++)
       data[i] -= another.data[i];
     return *this;
   }
-  virtual OutputVal &operator*=(double a) {
+  virtual ArithmeticOutputVal &operator*=(double a) {
     for(unsigned int i=0; i<size(); i++)
       data[i] *= a;
     return *this;
@@ -220,13 +241,11 @@ public:
   }
 
   double dot(const DoubleVec&) const;
-#if DIM==3
   double dot(const Coord&) const;
-#endif // DIM==3
-  virtual OutputVal *dot(const OutputVal&) const;
-  virtual OutputVal *dotScalar(const ScalarOutputVal&) const;
-  virtual OutputVal *dotVector(const VectorOutputVal&) const;
-  virtual OutputVal *dotSymmMatrix3(const SymmMatrix3&) const;
+  virtual ArithmeticOutputVal *dot(const ArithmeticOutputVal&) const;
+  virtual ArithmeticOutputVal *dotScalar(const ScalarOutputVal&) const;
+  virtual ArithmeticOutputVal *dotVector(const VectorOutputVal&) const;
+  virtual ArithmeticOutputVal *dotSymmMatrix3(const SymmMatrix3&) const;
 
   virtual DoubleVec *value_list() const;
   const DoubleVec &value() const { return data; }
@@ -246,6 +265,100 @@ VectorOutputVal operator*(const VectorOutputVal&, double);
 VectorOutputVal operator*(double, const VectorOutputVal&);
 VectorOutputVal operator/(VectorOutputVal&, double);
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Subclasses of NonArithmeticOutputVal
+
+// ListOutputVal is just a list of values without any specific
+// structure, so the labels for its components need to be supplied
+// externally.
+
+// TODO: Use DoubleVec as in VectorOutputVal.  This uses double*
+// because it was copied from OOF2, which uses double* in
+// VectorOutputVal too.  OOF2 should switch to DoubleVec.
+
+class ListOutputVal : public NonArithmeticOutputVal {
+private:
+  unsigned int size_;
+  double *data;
+  const std::vector<std::string> labels; 
+  static std::string classname_;
+public:
+  ListOutputVal(const std::vector<std::string>*);
+  ListOutputVal(const std::vector<std::string>*, const std::vector<double>&);
+  ListOutputVal(const ListOutputVal&);
+  virtual ~ListOutputVal();
+  virtual const std::string &classname() const { return classname_; }  
+  virtual const ListOutputVal &operator=(const OutputVal&);
+  const ListOutputVal &operator=(const ListOutputVal&);
+  virtual unsigned int dim() const { return size_; }
+  unsigned int size() const { return size_; }  
+  virtual ListOutputVal *zero() const;
+  virtual ListOutputVal *clone() const;
+  double &operator[](int i) { return data[i]; }
+  double operator[](int i) const { return data[i]; }
+  virtual double operator[](const IndexP &p) const;
+  virtual double &operator[](const IndexP &p);
+  virtual IteratorP getIterator() const;
+  virtual IndexP getIndex(const std::string&) const;
+  virtual std::vector<double> *value_list() const;
+  virtual void print(std::ostream&) const;
+  const std::string &label(int i) const { return labels[i]; }
+  friend class ListOutputValIndex;
+};
+
+// ListOutputValIndex has to be a FieldIndex so that it can be used to
+// index ListOutputVal, but it doesn't really belong in FieldIndex
+// because the in_plane method doesn't make any sense for it (in 2D).
+// We're over-using the FieldIndex class.
+
+// TODO: OutputVal should use some other kind of Index, and FieldIndex
+// should be derived from that.
+
+class ListOutputValIndex : virtual public FieldIndex {
+protected:
+  int max_;
+  int index_;
+  const ListOutputVal *ov_;
+public:
+  ListOutputValIndex(const ListOutputVal *ov)
+    : max_(ov->size_), index_(0), ov_(ov)
+  {}
+  ListOutputValIndex(const ListOutputVal *ov, int i)
+    : max_(ov->size_), index_(i), ov_(ov)
+  {}
+  ListOutputValIndex(const ListOutputValIndex &o)
+    : max_(o.max_), index_(o.index_), ov_(o.ov_)
+  {}
+  virtual FieldIndex *cloneIndex() const {
+    return new ListOutputValIndex(*this);
+  }
+  virtual int integer() const { return index_; }
+  virtual void set(const std::vector<int>*);
+  virtual std::vector<int>* components() const;
+  virtual void print(std::ostream &os) const;
+  virtual const std::string &shortstring() const;
+};
+
+
+class ListOutputValIterator : public ListOutputValIndex,
+				   public FieldIterator
+{
+public:
+  ListOutputValIterator(const ListOutputVal *ov)
+    : ListOutputValIndex(ov)
+  {}
+  ListOutputValIterator(const ListOutputValIterator &o)
+    : ListOutputValIndex(o)
+  {}
+  virtual void operator++() { index_++; }
+  virtual bool end() const { return index_ == max_; }
+  virtual void reset() { index_ = 0; }
+  virtual int size() const { return max_; }
+  virtual FieldIterator *cloneIterator() const {
+    return new ListOutputValIterator(*this);
+  }
+};
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -255,14 +368,14 @@ VectorOutputVal operator/(VectorOutputVal&, double);
 // when the reference count goes to zero.
 
 class OutputValue {
-private:
+protected:
   OutputVal *val;
   static long count;
 public:
   OutputValue();
   OutputValue(OutputVal*);
   OutputValue(const OutputValue&);
-  ~OutputValue();
+  virtual ~OutputValue();
 
   unsigned int dim() const { return val->dim(); }
 
@@ -278,6 +391,25 @@ public:
   // function's responsibility to see that the copy is deleted.
   OutputVal *valueClone() const { return val->clone(); }
 
+  int nrefcount() { return (*val).refcount; } // for debugging
+  friend std::ostream &operator<<(std::ostream&, const OutputValue&);
+  friend long get_globalOutputValueCount();
+};
+
+class NonArithmeticOutputValue : public OutputValue {
+  // This class doesn't do anything that's not already in OutputValue,
+  // but all the other ArithmeticOutput* classes have a corresponding
+  // NonArithmeticOutput* class, so this one should also.
+public:
+  NonArithmeticOutputValue() {}
+  NonArithmeticOutputValue(NonArithmeticOutputVal*);
+};
+
+class ArithmeticOutputValue : public OutputValue {
+public:
+  ArithmeticOutputValue() {}
+  ArithmeticOutputValue(ArithmeticOutputVal*);
+
   const OutputValue &operator+=(const OutputValue &other) {
     *val += *other.val;
     return *this;
@@ -290,22 +422,23 @@ public:
     *val *= x;
     return *this;
   }
+  // TODO: Shouldn't operator[] be in the base class?
   double operator[](const IndexP &p) const { return (*val)[p]; }
   double &operator[](const IndexP &p) { return (*val)[p]; }
-  int nrefcount() { return (*val).refcount; } // for debugging
-  friend std::ostream &operator<<(std::ostream&, const OutputValue&);
-  friend long get_globalOutputValueCount();
 };
+
+ArithmeticOutputValue operator*(double x, const ArithmeticOutputValue &ov);
+ArithmeticOutputValue operator*(const ArithmeticOutputValue &ov, double x);
+ArithmeticOutputValue operator/(const ArithmeticOutputValue &ov, double x);
+ArithmeticOutputValue operator+(const ArithmeticOutputValue &a,
+				const ArithmeticOutputValue &b);
+ArithmeticOutputValue operator-(const ArithmeticOutputValue &a,
+				const ArithmeticOutputValue &b);
+
+std::ostream &operator<<(std::ostream&, const OutputValue&);
 
 long get_globalOutputValueCount();
 
-OutputValue operator*(double x, const OutputValue &ov);
-OutputValue operator*(const OutputValue &ov, double x);
-OutputValue operator/(const OutputValue &ov, double x);
-OutputValue operator+(const OutputValue &a, const OutputValue &b);
-OutputValue operator-(const OutputValue &a, const OutputValue &b);
-
-std::ostream &operator<<(std::ostream&, const OutputValue&);
 
 // TODO OPT: Energies should not be calculated by using the properties
 // (each property contributing its part).  Instead, the Fluxes should

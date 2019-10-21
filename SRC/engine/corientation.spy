@@ -59,3 +59,46 @@ def COrientRodrigues_ptr_del(self,
         destruct(self)
 
 COrientRodriguesPtr.__del__ = COrientRodrigues_ptr_del
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+import math
+
+# __getitem__ is used when a COrientation is acting as an OutputVal,
+# and one of its components is being retrieved by the GUI
+# (particularly a MeshDataGUI object).  Since we use degrees in Python
+# and radians in C++ (whose dumb idea was that?), it's necessary to
+# convert here.  However, not all COrientation components are angles,
+# so some subclasses need specialized __getitem__ methods.  This is
+# ugly.
+
+# The default __getitem__ assumes all components are angles.
+
+def COrientation__getitem__(self, index):
+    # index is an IndexP
+    component_name = index.shortstring()
+    retrievalfn = getattr(self, component_name)
+    return math.degrees(retrievalfn())
+
+COrientationPtr.__getitem__ = COrientation__getitem__
+
+# No Quaternion or Rodrigues component is an angle.
+
+def noangles__getitem__(self, index):
+    component_name = index.shortstring()
+    retrievalfn = getattr(self, component_name)
+    return retrievalfn()
+
+COrientQuaternionPtr.__getitem__ = noangles__getitem__
+COrientRodriguesPtr.__getitem__ = noangles__getitem__
+
+# Only the 'angle' component of COrientAxis is an angle.
+
+def COrientAxis__getitem__(self, index):
+    component_name = index.shortstring()
+    retrievalfn = getattr(self, component_name)
+    if component_name == "angle":
+        return math.degrees(retrievalfn())
+    return retrievalfn()
+
+COrientAxisPtr.__getitem__ = COrientAxis__getitem__

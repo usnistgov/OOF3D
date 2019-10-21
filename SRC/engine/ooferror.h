@@ -51,10 +51,9 @@ public:
 // Trying to get a property that a Material doesn't have.
 
 class ErrNoSuchProperty : public ErrUserErrorBase<ErrNoSuchProperty> {
-private:
-  const std::string material;
 public:
   ErrNoSuchProperty(const std::string &mat, const std::string &prop);
+  const std::string material;
   const std::string propname;
   virtual const std::string pythonequiv() const;
 };

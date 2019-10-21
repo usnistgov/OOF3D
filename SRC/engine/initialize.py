@@ -29,10 +29,6 @@ utils.OOFexec('from ooflib.engine.problem import *')
 import ooflib.engine.IO.propertymenu
 import ooflib.engine.IO.materialmenu
 import ooflib.engine.builtinprops
-# if config.dimension() == 2:
-#     import ooflib.engine.skeleton
-# elif config.dimension() == 3:
-#     import ooflib.engine.skeleton3d
 import ooflib.engine.skeletoncontext
 import ooflib.engine.skeletonselection
 import ooflib.engine.skeletonselectionmodes
@@ -41,6 +37,7 @@ import ooflib.SWIG.engine.material
 import ooflib.engine.boundary
 import ooflib.engine.IO.outputDefs
 import ooflib.engine.IO.xmloutputs
+import ooflib.engine.IO.propertyoutputreg
 import ooflib.engine.IO.displaymethods
 import ooflib.engine.IO.contourdisplay
 import ooflib.engine.IO.centerfilldisplay

@@ -37,7 +37,8 @@ reg = PropertyRegistration(
                 d21=1, d22=1, d23=1, d24=1, d25=1, d26=1,
                 d31=1, d32=1, d33=1, d34=1, d35=1, d36=1),
             tip="Point group C1 (aka 1) piezoelectricity tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='C1 piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -59,7 +60,8 @@ reg = PropertyRegistration(
                                       d21=1, d22=1, d23=1, d25=1, 
                                       d34=1, d36=1),
             tip="Point group C2 (aka 2) piezoelectricity tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='C2 piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -83,7 +85,8 @@ reg = PropertyRegistration(
             tip="Point group Cs (aka m) piezoelectricity tensor."     
             # tip="point group m (with a single mirror plane) piezoelectricity tensor."
             )],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='Cs piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -103,7 +106,8 @@ reg = PropertyRegistration(
             'dijk',
             rank3tensor.D2Rank3Tensor(d14=1.0, d25=1.0, d36=1.0),
             tip="Point group D2 (aka 222) piezoelectricity tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='D2 piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -123,7 +127,8 @@ reg = PropertyRegistration(
             'dijk',
             rank3tensor.C2vRank3Tensor(d15=1, d24=1, d31=1, d32=1, d33=1),
             tip="Point group C2v (aka mm2) piezoelectricity tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='C2v piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -143,7 +148,8 @@ reg = PropertyRegistration(
             'dijk',
             rank3tensor.C4Rank3Tensor(d14=1, d15=1, d31=1, d33=1),
             tip="Point group C4 (aka 4) piezoelectricity tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='C4 piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -163,7 +169,8 @@ reg = PropertyRegistration(
             'dijk',
             rank3tensor.C4iRank3Tensor(d14=1, d15=1, d31=1, d36=1),
             tip="Point group C4i (aka bar{4}) piezoelectric tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='C4i piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -183,7 +190,8 @@ reg = PropertyRegistration(
             'dijk',
             rank3tensor.D4Rank3Tensor(d14=1),
             tip="Point group D4 (aka 422) piezoelectric tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='C4i piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -203,7 +211,8 @@ reg = PropertyRegistration(
             'dijk',
             rank3tensor.C4vRank3Tensor(d15=1.0, d31=1.0, d33=1.0),
             tip="Point group C4v (aka 4mm) piezoelectricity tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='C4v piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -223,7 +232,8 @@ reg = PropertyRegistration(
             'dijk',
             rank3tensor.D2dRank3Tensor(d14=1, d36=1),
             tip="Point group D2d (aka bar{4}2m) piezoelectric tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='D2d piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -243,7 +253,8 @@ reg = PropertyRegistration(
             'dijk',
             rank3tensor.C3Rank3Tensor(d11=1, d14=1, d15=1, d22=1, d31=1, d33=1),
             tip="Point group C3 (aka 3) piezoelectric tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='C3 piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -263,7 +274,8 @@ reg = PropertyRegistration(
             'dijk',
             rank3tensor.D3Rank3Tensor(d11=1, d14=1),
             tip="Point group D3 (aka 32) piezoelectric tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='D3 piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -283,7 +295,8 @@ reg = PropertyRegistration(
             'dijk',
             rank3tensor.C3vRank3Tensor(d15=1, d22=1, d31=1, d33=1),
             tip="Point group C3v (aka 3m) piezoelectric tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='C3v piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -303,7 +316,8 @@ reg = PropertyRegistration(
             'dijk',
             rank3tensor.C6Rank3Tensor(d14=1, d15=1.0, d31=1.0, d33=1.0),
             tip="Point group C6 (aka 6) piezoelectric tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='C6 piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -323,7 +337,8 @@ reg = PropertyRegistration(
             'dijk',
             rank3tensor.D6iRank3Tensor(d11=1, d22=1),
             tip="Point group D6i (aka bar{6}) piezoelectric tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='D6i piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -343,7 +358,8 @@ reg = PropertyRegistration(
             'dijk',
             rank3tensor.D6Rank3Tensor(d14=1),
             tip="Point group D6 (aka 622) piezoelectric tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='D6 piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -363,7 +379,8 @@ reg = PropertyRegistration(
             'dijk',
             rank3tensor.C6vRank3Tensor(d15=1.0, d31=1.0, d33=1.0),
             tip="Point group C6v (aka 6mm) piezoelectric tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='C6v piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -383,7 +400,8 @@ reg = PropertyRegistration(
             'dijk',
             rank3tensor.D3hRank3Tensor(d22=1),
             tip="Point group D3h (aka bar{6}m2) piezoelectric tensor.")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='D3h piezoelectricity.',
     discussion=xmlmenudump.loadFile(
@@ -404,7 +422,8 @@ reg = PropertyRegistration(
             rank3tensor.TdRank3Tensor(d14=1),
             tip="Point group Td (aka 23, bar{4}3m, or T) piezoelectric tensor.")
      ],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy",
+             "Material Constants:Couplings:Piezoelectric Coefficient D"],
     propertyType="PiezoElectricity",
     tip='Td piezoelectricity.',
     discussion=xmlmenudump.loadFile(

@@ -23,6 +23,7 @@ reg = ViscoElasticity = PropertyRegistration(
     [isocijkl.IsotropicCijklParameter('gijkl',
                           isocijkl.IsotropicRank4TensorCij(c11=1.0, c12=0.5),
                                             tip=parameter.emptyTipString)],
+    outputs=["Material Constants:Mechanical:Viscosity"],
     propertyType="ViscoElasticity",
     tip='Isotropic linear viscosity.',
     discussion=xmlmenudump.loadFile(

@@ -164,12 +164,11 @@ void Elasticity::geometricStrain(const FEMesh *mesh, const Element *element,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-void Elasticity::output(const FEMesh *mesh,
+void Elasticity::output(FEMesh *mesh,
 			const Element *element,
 			const PropertyOutput *output,
 			const MasterPosition &pos,
 			OutputVal *data)
-  const
 {
   const std::string &outputname = output->name();
   if(outputname == "Energy") {
@@ -178,8 +177,7 @@ void Elasticity::output(const FEMesh *mesh,
     // the ScalarPropertyOutputRegistration for "Energy" was created.
     const std::string *etype = output->getEnumParam("etype");
     if(*etype == "Total" || *etype == "Elastic") {
-      ScalarOutputVal *edata =
-	dynamic_cast<ScalarOutputVal*>(data);
+      ScalarOutputVal *edata = dynamic_cast<ScalarOutputVal*>(data);
       SymmMatrix3 strain;
       const Cijkl modulus = cijkl(mesh, element, pos);
       geometricStrain(mesh, element, pos, &strain);

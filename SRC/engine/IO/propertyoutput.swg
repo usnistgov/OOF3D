@@ -20,31 +20,59 @@
 #include "engine/IO/propertyoutput.h"
 %}
 
+%typemap(python, out) PropertyOutput* {
+  // typemap(python, out) PropertyOutput*
+  $target = $source->pythonObject();
+}
+
+%typemap(python, out) PropertyOutputInit* {
+  // typemap(python, out) PropertyOutputInit*
+  $target = $source->pythonObject();
+}
+
 %pragma(python) include="engine/IO/propertyoutput.spy"
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// OutputVal initializers
+
+class PropertyOutputValInit {
+public:
+  ~PropertyOutputValInit();
+};
+
+class DefaultPropertyOutputValInit : public PropertyOutputValInit {
+public:
+  DefaultPropertyOutputValInit(OutputVal*);
+};
 
 // PropertyOutput initializers
 
 class PropertyOutputInit {};
-
-class ScalarPropertyOutputInit : public PropertyOutputInit {
+class ArithmeticPropertyOutputInit : public PropertyOutputInit {
 public:
-  ScalarPropertyOutputInit();
+  ArithmeticPropertyOutputInit();
 };
 
-class TwoVectorPropertyOutputInit : public PropertyOutputInit {
+class NonArithmeticPropertyOutputInit : public PropertyOutputInit {
 public:
-  TwoVectorPropertyOutputInit();
+  NonArithmeticPropertyOutputInit();
 };
 
-class ThreeVectorPropertyOutputInit : public PropertyOutputInit {
-public:
-  ThreeVectorPropertyOutputInit();
-};
+// class ScalarPropertyOutputInit : public ArithmeticPropertyOutputInit {
+// public:
+//   ScalarPropertyOutputInit();
+// };
 
-class SymmMatrix3PropertyOutputInit : public PropertyOutputInit {
-public:
-  SymmMatrix3PropertyOutputInit();
-};
+// class TwoVectorPropertyOutputInit : public ArithmeticPropertyOutputInit {
+// public:
+//   TwoVectorPropertyOutputInit();
+// };
+
+// class ThreeVectorPropertyOutputInit : public ArithmeticPropertyOutputInit {
+// public:
+//   ThreeVectorPropertyOutputInit();
+// };
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -52,23 +80,39 @@ class PropertyOutput {
 public:
   ~PropertyOutput();
   const string &name();
-  %new OutputValueVec *evaluate(FEMesh*, Element*, PropertyOutputInit*,
-				MasterCoordVec*);
   double getFloatParam(char*);
   int getIntParam(char*);
+  void setInitializer(PropertyOutputValInit*);
   %new const string *getStringParam(char*);
   %new const string *getEnumParam(char*);
   %new const string *getRegisteredParamName(char*);
+  %new StringVec *getListOfStringsParam(char*);
+};
+
+class ArithmeticPropertyOutput : public PropertyOutput {
+public:
+  %new ArithmeticOutputValueVec *evaluate(
+				  FEMesh*, Element*,
+				  MasterCoordVec*);
+};
+
+class NonArithmeticPropertyOutput : public PropertyOutput {
+public:
+  %new NonArithmeticOutputValueVec *evaluate(
+				  FEMesh*, Element*,
+				  MasterCoordVec*);
 };
 
 class PropertyOutputRegistration {
 public:
-  PropertyOutputRegistration(char*, PropertyOutputInit*);
+  PropertyOutputRegistration(char*);
   ~PropertyOutputRegistration();
   const string &name();
-  const PropertyOutputInit *initializer();
-  %new PropertyOutput *instantiate(PyObject*);
+  %new PropertyOutput *instantiateArithmetic(char*, PyObject*);
+  %new PropertyOutput *instantiateNonArithmetic(char*, PyObject*);
+  // const PropertyOutputInit *initializer();
+  //%new PropertyOutput *instantiate(char*, PyObject*);
 };
 
 
-#endif	// PROPERTYOUTPUT_SWG
+#endif

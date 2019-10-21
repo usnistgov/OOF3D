@@ -10,7 +10,7 @@
 
 # Read and write orientation map data in Microstructure data files.
 
-from ooflib.SWIG.common import corientation
+from ooflib.SWIG.engine import corientation
 from ooflib.SWIG.orientationmap import orientmapdata
 from ooflib.common.IO import microstructureIO
 from ooflib.common.IO import oofmenu

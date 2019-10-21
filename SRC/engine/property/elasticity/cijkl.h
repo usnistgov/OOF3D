@@ -15,9 +15,12 @@
 
 #include "engine/symmmatrix.h"
 #include <iostream>
+#include <string>
+#include <vector>
 
 class SymTensorIndex;
 class COrientation;
+class ListOutputVal;
 
 class Cijkl {
 private:
@@ -41,6 +44,9 @@ public:
 
   friend std::ostream &operator<<(std::ostream&, const Cijkl&);
 };
+
+void copyOutputVals(const Cijkl&, ListOutputVal*,
+		    const std::vector<std::string>&);
 
 
 #endif

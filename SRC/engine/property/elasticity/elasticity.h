@@ -56,8 +56,8 @@ public:
   virtual const Cijkl cijkl(const FEMesh*, const Element*,
 			    const MasterPosition&) const = 0;
 
-  virtual void output(const FEMesh*, const Element*, const PropertyOutput*,
-		      const MasterPosition&, OutputVal*) const;
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
 
   virtual void geometricStrain(const FEMesh*, const Element*,
 			       const MasterPosition&, SymmMatrix3*) const;

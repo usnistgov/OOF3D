@@ -11,16 +11,17 @@
 
 #include <oofconfig.h>
 
+#include "common/IO/oofcerr.h"
 #include "common/coord.h"
 #include "common/doublevec.h"
 #include "common/lock.h"
-#include "common/IO/oofcerr.h"
 #include "engine/fieldindex.h"
-#include "engine/symmmatrix.h"
+#include "engine/ooferror.h"
 #include "engine/outputval.h"
+#include "engine/symmmatrix.h"
+#include <map>
 #include <math.h>
 #include <string.h>		// for memcpy
-#include <map>
 
 std::string OutputVal::modulename_("ooflib.SWIG.engine.outputval");
 std::string ScalarOutputVal::classname_("ScalarOutputVal");
@@ -28,6 +29,7 @@ std::string VectorOutputVal::classname_("VectorOutputVal");
 
 long OutputValue::count = 0;
 SLock outputValueLock;
+long get_globalOutputValueCount() { return OutputValue::count; }
 
 OutputValue::OutputValue()
   : val(0)
@@ -72,34 +74,92 @@ OutputValue::~OutputValue() {
 #endif // DEBUG
 }
 
-long get_globalOutputValueCount() { return OutputValue::count; }
+ArithmeticOutputValue::ArithmeticOutputValue(ArithmeticOutputVal *v)
+  : OutputValue(v)
+{}
 
-OutputValue operator*(double x, const OutputValue &ov) {
-  OutputValue result(ov);
+NonArithmeticOutputValue::NonArithmeticOutputValue(NonArithmeticOutputVal *v)
+  : OutputValue(v)
+{}
+
+ArithmeticOutputValue::ArithmeticOutputValue(ArithmeticOutputVal *v)
+  : OutputValue(v)
+{}
+
+NonArithmeticOutputValue::NonArithmeticOutputValue(NonArithmeticOutputVal *v)
+  : OutputValue(v)
+{}
+
+const ArithmeticOutputValue &ArithmeticOutputValue::operator+=(
+				       const ArithmeticOutputValue &other)
+{
+  ArithmeticOutputVal *thisval = dynamic_cast<ArithmeticOutputVal*>(val);
+  const ArithmeticOutputVal *thatval =
+    dynamic_cast<const ArithmeticOutputVal*>(other.val);
+  *thisval += *thatval;
+  return *this;
+}
+
+// Arithmetic operations on instances of ArithmeticOutputValue, the
+// wrapper class.
+
+const ArithmeticOutputValue &ArithmeticOutputValue::operator-=(
+				       const ArithmeticOutputValue &other)
+{
+  ArithmeticOutputVal *thisval = dynamic_cast<ArithmeticOutputVal*>(val);
+  const ArithmeticOutputVal *thatval =
+    dynamic_cast<const ArithmeticOutputVal*>(other.val);
+  *thisval -= *thatval;
+  return *this;
+}
+
+const ArithmeticOutputValue &ArithmeticOutputValue::operator*=(double x) {
+  ArithmeticOutputVal *thisval = dynamic_cast<ArithmeticOutputVal*>(val);
+  *thisval *= x;
+  return *this;
+}
+
+double ArithmeticOutputValue::operator[](const IndexP &p) const {
+  const ArithmeticOutputVal *thisval =
+    dynamic_cast<const ArithmeticOutputVal*>(val);
+  return (*thisval)[p];
+}
+
+double &ArithmeticOutputValue::operator[](const IndexP &p) {
+  ArithmeticOutputVal *thisval = dynamic_cast<ArithmeticOutputVal*>(val);
+  return (*thisval)[p];
+}
+
+ArithmeticOutputValue operator*(double x, const ArithmeticOutputValue &ov) {
+  ArithmeticOutputValue result(ov);
   result *= x;
   return result;
 }
 
-OutputValue operator*(const OutputValue &ov, double x) {
-  OutputValue result(ov);
+ArithmeticOutputValue operator*(const ArithmeticOutputValue &ov, double x) {
+  ArithmeticOutputValue result(ov);
   result *= x;
   return result;
 }
 
-OutputValue operator/(const OutputValue &ov, double x) {
-  OutputValue result(ov);
+ArithmeticOutputValue operator/(const ArithmeticOutputValue &ov, double x) {
+  ArithmeticOutputValue result(ov);
   result *= 1./x;
   return result;
 }
 
-OutputValue operator+(const OutputValue &a, const OutputValue &b) {
-  OutputValue result(a);
+ArithmeticOutputValue operator+(const ArithmeticOutputValue &a,
+				const ArithmeticOutputValue &b)
+{
+  ArithmeticOutputValue result(a);
   result += b;
   return result;
 }
 
-OutputValue operator-(const OutputValue &a, const OutputValue &b) {
-  OutputValue result(a);
+ArithmeticOutputValue operator-(const ArithmeticOutputValue &a,
+				const ArithmeticOutputValue &b)
+{
+  ArithmeticOutputValue result(a);
   result -= b;
   return result;
 }
@@ -114,15 +174,16 @@ OutputVal::~OutputVal() {}
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-ScalarOutputVal::ScalarOutputVal(double x)
-  : val(x)
-{}
+const ScalarOutputVal &ScalarOutputVal::operator=(const OutputVal &other) {
+  *this = dynamic_cast<const ScalarOutputVal&>(other);
+  return *this;
+}
 
-ScalarOutputVal::ScalarOutputVal(const ScalarOutputVal &other)
-  : val(other.val)
-{}
-
-ScalarOutputVal::~ScalarOutputVal() {}
+const ScalarOutputVal &ScalarOutputVal::operator=(const ScalarOutputVal &other)
+{
+  val = other.val;
+  return *this;
+}
 
 double ScalarOutputVal::operator[](const IndexP&) const {
   return val;
@@ -175,25 +236,33 @@ ScalarOutputVal operator/(const ScalarOutputVal &a, double b) {
   return result;
 }
 
-OutputVal *ScalarOutputVal::dot(const OutputVal &ov) const {
+ArithmeticOutputVal *ScalarOutputVal::dot(const ArithmeticOutputVal &ov) const
+{
   return ov.dotScalar(*this);
 }
 
-OutputVal *ScalarOutputVal::dotScalar(const ScalarOutputVal &ov) const {
+ArithmeticOutputVal *ScalarOutputVal::dotScalar(const ScalarOutputVal &ov) const
+{
   return new ScalarOutputVal(ov.value()*val);
 }
 
-OutputVal *ScalarOutputVal::dotVector(const VectorOutputVal &ov) const {
+ArithmeticOutputVal *ScalarOutputVal::dotVector(const VectorOutputVal &ov) const
+{
   VectorOutputVal *result = new VectorOutputVal(ov);
   *result *= val;
   return result;
 }
 
-OutputVal *ScalarOutputVal::dotSymmMatrix3(const SymmMatrix3 &ov) const {
+ArithmeticOutputVal *ScalarOutputVal::dotSymmMatrix3(const SymmMatrix3 &ov)
+  const
+{
   return ov.dotScalar(*this);
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+VectorOutputVal::VectorOutputVal()
+{}
 
 VectorOutputVal::VectorOutputVal(int n)
   : data(n, 0.0)
@@ -212,28 +281,34 @@ VectorOutputVal::VectorOutputVal(const Coord &coord)
 {
   data[0] = coord[0];
   data[1] = coord[1];
-#if DIM==3
   data[2] = coord[2];
-#endif // DIM==3
+}
+
+const VectorOutputVal &VectorOutputVal::operator=(const OutputVal &other) {
+  *this = dynamic_cast<const VectorOutputVal&>(other);
+  return *this;
+}
+
+const VectorOutputVal &VectorOutputVal::operator=(const VectorOutputVal &other)
+{
+  data = other.data;
+  return *this;
 }
 
 DoubleVec *VectorOutputVal::value_list() const {
   DoubleVec *res = new DoubleVec(data);
-  // res->reserve(size_);
-  // for(unsigned int i=0; i<size_; i++)
-  //   res->push_back(data[i]);
   return res;
 }
 
-OutputVal *VectorOutputVal::clone() const {
+VectorOutputVal *VectorOutputVal::clone() const {
   return new VectorOutputVal(*this);
 }
 
-OutputVal *VectorOutputVal::zero() const {
+VectorOutputVal *VectorOutputVal::zero() const {
   return new VectorOutputVal(size());
 }
 
-OutputVal *VectorOutputVal::one() const {
+VectorOutputVal *VectorOutputVal::one() const {
   VectorOutputVal *won = new VectorOutputVal(size());
   for(unsigned int i=0; i<size(); i++)
     won->data[i] = 1.0;
@@ -248,7 +323,6 @@ double VectorOutputVal::dot(const DoubleVec &other) const {
   return sum;
 }
 
-#if DIM==3
 double VectorOutputVal::dot(const Coord &x) const {
   assert(size() == 3);
   double sum = 0;
@@ -257,26 +331,30 @@ double VectorOutputVal::dot(const Coord &x) const {
   return sum;
 }
 
-OutputVal *VectorOutputVal::dot(const OutputVal &ov) const {
+ArithmeticOutputVal *VectorOutputVal::dot(const OutputVal &ov) const {
   return ov.dotVector(*this);
 }
 
-OutputVal *VectorOutputVal::dotScalar(const ScalarOutputVal &ov) const {
+ArithmeticOutputVal *VectorOutputVal::dotScalar(const ScalarOutputVal &ov)
+  const
+{
   VectorOutputVal *result = new VectorOutputVal(*this);
   *result *= ov.value();
   return result;
 }
 
-OutputVal *VectorOutputVal::dotVector(const VectorOutputVal &ov) const {
+ArithmeticOutputVal *VectorOutputVal::dotVector(const VectorOutputVal &ov)
+  const
+{
   double d = dot(ov.data);
   return new ScalarOutputVal(d);
 }
 
-OutputVal *VectorOutputVal::dotSymmMatrix3(const SymmMatrix3 &ov) const {
+ArithmeticOutputVal *VectorOutputVal::dotSymmMatrix3(const SymmMatrix3 &ov)
+  const
+{
   return ov.dotVector(*this);
 }
-
-#endif // DIM==3
 
 double VectorOutputVal::operator[](const IndexP &p) const {
   return data[p.integer()];
@@ -336,6 +414,107 @@ VectorOutputVal operator/(const VectorOutputVal &a, double b) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+std::string ListOutputVal::classname_("ListOutputVal");
+
+ListOutputVal::ListOutputVal(const std::vector<std::string> *lbls)
+  : size_(lbls->size()),
+    data(new double[lbls->size()]),
+    labels(*lbls) 
+{
+  for(unsigned int i=0; i<size_; i++)
+    data[i] = 0.0;
+}
+
+ListOutputVal::ListOutputVal(const std::vector<std::string> *lbls,
+			     const std::vector<double> &vec)
+  : size_(vec.size()),
+    data(new double[size_]),
+    labels(*lbls)
+{
+  (void) memcpy(data, vec.data(), size_*sizeof(double));
+}
+
+ListOutputVal::ListOutputVal(const ListOutputVal &other)
+  : size_(other.size()),
+    data(new double[other.size()]),
+    labels(other.labels)
+{
+  (void) memcpy(data, other.data, size_*sizeof(double));
+}
+
+ListOutputVal::~ListOutputVal() {
+  delete [] data;
+}
+
+double ListOutputVal::operator[](const IndexP &p) const {
+  return data[p.integer()];
+}
+  
+double &ListOutputVal::operator[](const IndexP &p) {
+  return data[p.integer()];
+}
+
+const ListOutputVal &ListOutputVal::operator=(const OutputVal &other) {
+  *this = dynamic_cast<const ListOutputVal&>(other);
+  return *this;
+}
+
+const ListOutputVal &ListOutputVal::operator=(const ListOutputVal &other) {
+  delete [] data;
+  size_ = other.size();
+  data = new double[size_];
+  (void) memcpy(data, other.data, size_*sizeof(double));
+  return *this;
+}
+
+ListOutputVal *ListOutputVal::zero() const {
+  return new ListOutputVal(&labels);
+}
+
+ListOutputVal *ListOutputVal::clone() const {
+  return new ListOutputVal(*this);
+}
+
+std::vector<double> *ListOutputVal::value_list() const {
+  std::vector<double> *res = new std::vector<double>(size_);
+  memcpy(res->data(), data, size_*sizeof(data));
+  return res;
+}
+
+IteratorP ListOutputVal::getIterator() const {
+  return IteratorP(new ListOutputValIterator(this));
+}
+
+IndexP ListOutputVal::getIndex(const std::string &s) const {
+  for(int i=0; i<size(); i++) {
+    if(labels[i] == s)
+      return IndexP(new ListOutputValIndex(this, i));
+  }
+  throw ErrProgrammingError("Bad index '" + s + "'", __FILE__, __LINE__);
+}
+
+void ListOutputValIndex::set(const std::vector<int> *vals) {
+  assert(vals->size() == 1);
+  assert((*vals)[0] < max_);
+  index_ = (*vals)[0];
+}
+
+std::vector<int> *ListOutputValIndex::components() const {
+  std::vector<int> *result = new std::vector<int>(1);
+  (*result)[0] = index_;
+  return result;
+}
+
+const std::string &ListOutputValIndex::shortstring() const {
+  return ov_->labels[index_];
+}
+
+void ListOutputValIndex::print(std::ostream &os) const {
+  os << "ListOutputValIndex(" << index_ << ")";
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 std::ostream &operator<<(std::ostream &os, const OutputVal &ov) {
   ov.print(os);
   return os;
@@ -350,9 +529,22 @@ void ScalarOutputVal::print(std::ostream &os) const {
 }
 
 void VectorOutputVal::print(std::ostream &os) const {
-  os << "VectorOutputVal(" << data[0];
-  for(unsigned int i=1; i<size(); i++) {
-    os << ", " << data[i];
+  os << "VectorOutputVal(";
+  if(!data.empty()) {
+    os << data[0];
+    for(unsigned int i=1; i<size(); i++) {
+      os << ", " << data[i];
+    }
+  }
+  os << ")";
+}
+
+void ListOutputVal::print(std::ostream &os) const {
+  os << "ListOutputVal(";
+  if(size_ > 0) {
+    os << data[0];
+    for(unsigned int i=1; i<size_; i++)
+      os << ", " << data[i];
   }
   os << ")";
 }

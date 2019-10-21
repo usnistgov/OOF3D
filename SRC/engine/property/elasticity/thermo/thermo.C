@@ -38,7 +38,7 @@ const Cijkl ThermoElasticityProp::cijkl(const FEMesh *mesh, const Element *e,
   // Get local temperature
   //* TODO OPT: This is baroque and may be slow.  Make a specialized
   //* function for getting the value of a scalar field. temperature(e, x)?
-  const OutputValue tfield = e->outputField(mesh, *temperature, x);
+  const ArithmeticOutputValue tfield = e->outputField(mesh, *temperature, x);
   const ScalarOutputVal *tval =
     dynamic_cast<const ScalarOutputVal*>(tfield.valuePtr());
   double temp = tval->value();

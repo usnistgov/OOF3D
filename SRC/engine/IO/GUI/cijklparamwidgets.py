@@ -13,10 +13,13 @@ from ooflib.common import debug
 from ooflib.common import utils
 from ooflib.common.IO import parameter
 from ooflib.common.IO.GUI import gtklogger
+from ooflib.common.IO.GUI import matrixparamwidgets 
 from ooflib.common.IO.GUI import regclassfactory
-from ooflib.common.IO.GUI.matrixparamwidgets import SymmetricMatrixInput
 from ooflib.engine.IO import anisocijkl
 from ooflib.engine.IO import isocijkl
+from ooflib.engine.IO import outputDefs
+
+SymmetricMatrixInput = matrixparamwidgets.SymmetricMatrixInput
 
 CubicRank4TensorCij = anisocijkl.CubicRank4TensorCij
 HexagonalRank4TensorCij = anisocijkl.HexagonalRank4TensorCij
@@ -35,30 +38,30 @@ class CijIsoCijklWidget(SymmetricMatrixInput):
     def __init__(self, params, base, scope=None, name=None, verbose=False):
         debug.mainthreadTest()
         self.params = params
-        SymmetricMatrixInput.__init__(self, 'C', 6,6, value=None, scope=scope,
+        SymmetricMatrixInput.__init__(self, 6,6, value=None, scope=scope,
                                       name=name, verbose=verbose)
         # Block the appropriate ones, and hook up callbacks
         # to handle the c11/c12/c44 synchronization.
-        for (k,f) in self.floats.items():
+        for (k,f) in self.widgets.items():
             if k!=(0,0) and k!=(0,1) and k!=(3,3):
                 f.gtk.set_editable(0)
                 f.gtk.set_sensitive(0)
                 
         # Callbacks to cross-connect things so that c44 can be
         # entered, and gets maintained correctly.
-        gtklogger.connect(self.floats[(0,0)].gtk, "activate",
+        gtklogger.connect(self.widgets[(0,0)].gtk, "activate",
                           self.new_c11_or_c12,None)
-        gtklogger.connect(self.floats[(0,0)].gtk, "focus_out_event",
+        gtklogger.connect(self.widgets[(0,0)].gtk, "focus_out_event",
                           self.new_c11_or_c12)
         #
-        gtklogger.connect(self.floats[(0,1)].gtk, "activate",
+        gtklogger.connect(self.widgets[(0,1)].gtk, "activate",
                           self.new_c11_or_c12,None)
-        gtklogger.connect(self.floats[(0,1)].gtk, "focus_out_event",
+        gtklogger.connect(self.widgets[(0,1)].gtk, "focus_out_event",
                           self.new_c11_or_c12)
         #
-        gtklogger.connect(self.floats[(3,3)].gtk, "activate",
+        gtklogger.connect(self.widgets[(3,3)].gtk, "activate",
                           self.new_c44,None)
-        gtklogger.connect(self.floats[(3,3)].gtk, "focus_out_event",
+        gtklogger.connect(self.widgets[(3,3)].gtk, "focus_out_event",
                           self.new_c44)
 
         self.set_values()
@@ -74,17 +77,17 @@ class CijIsoCijklWidget(SymmetricMatrixInput):
             self.values = [c11, c12]
             c44 = 0.5*(c11-c12)
             #
-            self.floats[(0,0)].set_value(c11)
-            self.floats[(1,1)].set_value(c11)
-            self.floats[(2,2)].set_value(c11)
+            self.widgets[(0,0)].set_value(c11)
+            self.widgets[(1,1)].set_value(c11)
+            self.widgets[(2,2)].set_value(c11)
             #
-            self.floats[(0,1)].set_value(c12)
-            self.floats[(0,2)].set_value(c12)
-            self.floats[(1,2)].set_value(c12)
+            self.widgets[(0,1)].set_value(c12)
+            self.widgets[(0,2)].set_value(c12)
+            self.widgets[(1,2)].set_value(c12)
             #
-            self.floats[(3,3)].set_value(c44)
-            self.floats[(4,4)].set_value(c44)
-            self.floats[(5,5)].set_value(c44)
+            self.widgets[(3,3)].set_value(c44)
+            self.widgets[(4,4)].set_value(c44)
+            self.widgets[(5,5)].set_value(c44)
         finally:
             self.unblock_signals()
         
@@ -110,8 +113,8 @@ class CijIsoCijklWidget(SymmetricMatrixInput):
         c11 = self.params[0].value
         c12 = self.params[1].value
         try:
-            c11 = self.floats[(0,0)].get_value()
-            c12 = self.floats[(0,1)].get_value()
+            c11 = self.widgets[(0,0)].get_value()
+            c12 = self.widgets[(0,1)].get_value()
         finally:
             self.draw_values(c11,c12)
 
@@ -119,8 +122,8 @@ class CijIsoCijklWidget(SymmetricMatrixInput):
         c11 = self.params[0].value
         c12 = self.params[1].value
         try:
-            c11 = self.floats[(0,0)].get_value()
-            c44 = self.floats[(3,3)].get_value()
+            c11 = self.widgets[(0,0)].get_value()
+            c44 = self.widgets[(3,3)].get_value()
             c12 = c11-2.0*c44
         finally:
             self.draw_values(c11,c12)
@@ -139,11 +142,11 @@ class CijCubicCijklWidget(SymmetricMatrixInput):
     def __init__(self, params, base, scope=None, name=None, verbose=False):
         debug.mainthreadTest()
         self.params = params
-        SymmetricMatrixInput.__init__(self, 'C',6,6, value=None, scope=scope,
+        SymmetricMatrixInput.__init__(self, 6,6, value=None, scope=scope,
                                       name=name, verbose=verbose)
         # Block the appropriate ones, and hook up callbacks
         # to handle the c11/c12/c44 synchronization.
-        for (k,f) in self.floats.items():
+        for (k,f) in self.widgets.items():
             if k==(0,0) or k==(0,1) or k==(3,3):
                 pass
             else:
@@ -152,14 +155,14 @@ class CijCubicCijklWidget(SymmetricMatrixInput):
                 
         # Callbacks to cross-connect things so that c44 can be
         # entered, and gets maintained correctly.
-        gtklogger.connect(self.floats[(0,0)].gtk, "activate", self.new_c, None)
-        gtklogger.connect(self.floats[(0,0)].gtk, "focus_out_event", self.new_c)
+        gtklogger.connect(self.widgets[(0,0)].gtk, "activate", self.new_c, None)
+        gtklogger.connect(self.widgets[(0,0)].gtk, "focus_out_event", self.new_c)
         #
-        gtklogger.connect(self.floats[(0,1)].gtk, "activate", self.new_c, None)
-        gtklogger.connect(self.floats[(0,1)].gtk, "focus_out_event", self.new_c)
+        gtklogger.connect(self.widgets[(0,1)].gtk, "activate", self.new_c, None)
+        gtklogger.connect(self.widgets[(0,1)].gtk, "focus_out_event", self.new_c)
         #
-        gtklogger.connect(self.floats[(3,3)].gtk, "activate", self.new_c, None)
-        gtklogger.connect(self.floats[(3,3)].gtk, "focus_out_event", self.new_c)
+        gtklogger.connect(self.widgets[(3,3)].gtk, "activate", self.new_c, None)
+        gtklogger.connect(self.widgets[(3,3)].gtk, "focus_out_event", self.new_c)
         #
         self.set_values()
 
@@ -173,17 +176,17 @@ class CijCubicCijklWidget(SymmetricMatrixInput):
         try:
             self.values = [c11, c12, c44]
             #
-            self.floats[(0,0)].set_value(c11)
-            self.floats[(1,1)].set_value(c11)
-            self.floats[(2,2)].set_value(c11)
+            self.widgets[(0,0)].set_value(c11)
+            self.widgets[(1,1)].set_value(c11)
+            self.widgets[(2,2)].set_value(c11)
             #
-            self.floats[(0,1)].set_value(c12)
-            self.floats[(0,2)].set_value(c12)
-            self.floats[(1,2)].set_value(c12)
+            self.widgets[(0,1)].set_value(c12)
+            self.widgets[(0,2)].set_value(c12)
+            self.widgets[(1,2)].set_value(c12)
             #
-            self.floats[(3,3)].set_value(c44)
-            self.floats[(4,4)].set_value(c44)
-            self.floats[(5,5)].set_value(c44)
+            self.widgets[(3,3)].set_value(c44)
+            self.widgets[(4,4)].set_value(c44)
+            self.widgets[(5,5)].set_value(c44)
         finally:
             self.unblock_signals()
     # This widget understands its "values" to be c11, c12, and c44,
@@ -202,9 +205,9 @@ class CijCubicCijklWidget(SymmetricMatrixInput):
         c12 = self.params[1].value
         c44 = self.params[2].value
         try:
-            c11 = self.floats[(0,0)].get_value()
-            c12 = self.floats[(0,1)].get_value()
-            c44 = self.floats[(3,3)].get_value()
+            c11 = self.widgets[(0,0)].get_value()
+            c12 = self.widgets[(0,1)].get_value()
+            c44 = self.widgets[(3,3)].get_value()
         finally:
             self.draw_values(c11,c12,c44)
 
@@ -233,11 +236,11 @@ class AnisoWidgetBase(SymmetricMatrixInput):
         debug.mainthreadTest()
         self.params = params
         self.kset = kset
-        SymmetricMatrixInput.__init__(self, 'C', 6,6, value=None, scope=scope,
+        SymmetricMatrixInput.__init__(self, 6,6, value=None, scope=scope,
                                       name=name, verbose=verbose)
         #
         # Make default blocks according to the kset dictionary.
-        for (k,f) in self.floats.items():
+        for (k,f) in self.widgets.items():
             if k in self.kset:
                 pass
             else:
@@ -248,8 +251,8 @@ class AnisoWidgetBase(SymmetricMatrixInput):
         # additional callbacks.
         for k in self.kset:
             # "activate" needs a dummy argument for the "event" slot.
-            gtklogger.connect(self.floats[k].gtk, "activate",self.new_c,None)
-            gtklogger.connect(self.floats[k].gtk, "focus_out_event",self.new_c)
+            gtklogger.connect(self.widgets[k].gtk, "activate",self.new_c,None)
+            gtklogger.connect(self.widgets[k].gtk, "focus_out_event",self.new_c)
 
     # If no default value is set in the registration entry for the
     # property which has this as a value, then this will get called
@@ -275,7 +278,7 @@ class AnisoWidgetBase(SymmetricMatrixInput):
             v_dict[v] = getattr(self.params.value, v)
         try:
             for (k,v) in self.kset.items():
-                v_dict[v] = self.floats[k].get_value()
+                v_dict[v] = self.widgets[k].get_value()
         finally:
             self.draw_values(v_dict)
 
@@ -296,13 +299,13 @@ class HexagonalCijklWidget(AnisoWidgetBase):
                                  verbose=verbose)
         #
         # Base class will have blocked c66, so unblock it.
-        self.floats[(5,5)].gtk.set_editable(1)
-        self.floats[(5,5)].gtk.set_sensitive(1)
+        self.widgets[(5,5)].gtk.set_editable(1)
+        self.widgets[(5,5)].gtk.set_sensitive(1)
             
         #  ... and connect a special callback.
-        gtklogger.connect(self.floats[(5,5)].gtk, "activate",
+        gtklogger.connect(self.widgets[(5,5)].gtk, "activate",
                           self.new_c66, None)
-        gtklogger.connect(self.floats[(5,5)].gtk, "focus_out_event",
+        gtklogger.connect(self.widgets[(5,5)].gtk, "focus_out_event",
                           self.new_c66)
         #
         self.set_values()
@@ -318,13 +321,13 @@ class HexagonalCijklWidget(AnisoWidgetBase):
         self.block_signals()
         try:
             for (k,v) in self.kset.items():
-                self.floats[k].set_value(var_dict[v])
+                self.widgets[k].set_value(var_dict[v])
 
             # Then do the extra, special ones.
-            self.floats[(1,1)].set_value(var_dict['c11'])
-            self.floats[(1,2)].set_value(var_dict['c13'])
-            self.floats[(4,4)].set_value(var_dict['c44'])
-            self.floats[(5,5)].set_value(0.5*(var_dict['c11']-var_dict['c12']))
+            self.widgets[(1,1)].set_value(var_dict['c11'])
+            self.widgets[(1,2)].set_value(var_dict['c13'])
+            self.widgets[(4,4)].set_value(var_dict['c44'])
+            self.widgets[(5,5)].set_value(0.5*(var_dict['c11']-var_dict['c12']))
         finally:
             self.unblock_signals()
     def new_c66(self,gtk,event):
@@ -333,9 +336,9 @@ class HexagonalCijklWidget(AnisoWidgetBase):
             v_dict[v] = getattr(self.params.value, v)
         try:
             for (k,v) in self.kset.items():
-                v_dict[v] = self.floats[k].get_value()
+                v_dict[v] = self.widgets[k].get_value()
             c11 = v_dict['c11']
-            c66 = self.floats[(5,5)].get_value()
+            c66 = self.widgets[(5,5)].get_value()
             v_dict['c12'] = c11-2.0*c66
         finally:
             self.draw_values(v_dict)
@@ -373,13 +376,13 @@ class TetragonalCijklWidget(AnisoWidgetBase):
         self.block_signals()
         try:
             for (k,v) in self.kset.items():
-                self.floats[k].set_value(var_dict[v])
+                self.widgets[k].set_value(var_dict[v])
 
             # Then do the extra, special ones.
-            self.floats[(1,1)].set_value(var_dict['c11'])
-            self.floats[(1,2)].set_value(var_dict['c13'])
-            self.floats[(4,4)].set_value(var_dict['c44'])
-            self.floats[(1,5)].set_value(-var_dict['c16'])
+            self.widgets[(1,1)].set_value(var_dict['c11'])
+            self.widgets[(1,2)].set_value(var_dict['c13'])
+            self.widgets[(4,4)].set_value(var_dict['c44'])
+            self.widgets[(1,5)].set_value(-var_dict['c16'])
         finally:
             self.unblock_signals()
 def TetCijklParam_makeWidget(self, scope, verbose=False):
@@ -398,12 +401,12 @@ class TrigonalACijklWidget(AnisoWidgetBase):
         AnisoWidgetBase.__init__(self, params, kset, scope=scope, name=name,
                                  verbose=verbose)
         #
-        self.floats[(5,5)].gtk.set_editable(1)
-        self.floats[(5,5)].gtk.set_sensitive(1)
+        self.widgets[(5,5)].gtk.set_editable(1)
+        self.widgets[(5,5)].gtk.set_sensitive(1)
         #
-        gtklogger.connect(self.floats[(5,5)].gtk, "activate",
+        gtklogger.connect(self.widgets[(5,5)].gtk, "activate",
                           self.new_c66, None)
-        gtklogger.connect(self.floats[(5,5)].gtk, "focus_out_event",
+        gtklogger.connect(self.widgets[(5,5)].gtk, "focus_out_event",
                           self.new_c66)
         #
         self.set_values()
@@ -420,21 +423,21 @@ class TrigonalACijklWidget(AnisoWidgetBase):
         self.block_signals()
         try:
             for (k,v) in self.kset.items():
-                self.floats[k].set_value(var_dict[v])
+                self.widgets[k].set_value(var_dict[v])
 
             # Then do the extra, special ones.
-            self.floats[(1,1)].set_value(var_dict['c11'])
-            self.floats[(1,2)].set_value(var_dict['c13'])
-            self.floats[(4,4)].set_value(var_dict['c44'])
+            self.widgets[(1,1)].set_value(var_dict['c11'])
+            self.widgets[(1,2)].set_value(var_dict['c13'])
+            self.widgets[(4,4)].set_value(var_dict['c44'])
             # Propagate c14 to the subsidiary entries.
-            self.floats[(1,3)].set_value(-var_dict['c14'])
-            self.floats[(4,5)].set_value(var_dict['c14'])
+            self.widgets[(1,3)].set_value(-var_dict['c14'])
+            self.widgets[(4,5)].set_value(var_dict['c14'])
             # And similarly, c15.
-            self.floats[(1,4)].set_value(-var_dict['c15'])
-            self.floats[(3,5)].set_value(-var_dict['c15'])
+            self.widgets[(1,4)].set_value(-var_dict['c15'])
+            self.widgets[(3,5)].set_value(-var_dict['c15'])
             #
             c66=0.5*(var_dict['c11']-var_dict['c12'])
-            self.floats[(5,5)].set_value(c66)
+            self.widgets[(5,5)].set_value(c66)
         finally:
             self.unblock_signals()
 
@@ -444,9 +447,9 @@ class TrigonalACijklWidget(AnisoWidgetBase):
             v_dict[v] = getattr(self.params.value, v)
         try:
             for (k,v) in self.kset.items():
-                v_dict[v] = self.floats[k].get_value()
+                v_dict[v] = self.widgets[k].get_value()
             c11 = v_dict['c11']
-            c66 = self.floats[(5,5)].get_value()
+            c66 = self.widgets[(5,5)].get_value()
             v_dict['c12'] = c11-2.0*c66
         finally:
             self.draw_values(v_dict)
@@ -469,12 +472,12 @@ class TrigonalBCijklWidget(AnisoWidgetBase):
         AnisoWidgetBase.__init__(self, params, kset, scope=scope, name=name,
                                  verbose=verbose)
         #
-        self.floats[(5,5)].gtk.set_editable(1)
-        self.floats[(5,5)].gtk.set_sensitive(1)
+        self.widgets[(5,5)].gtk.set_editable(1)
+        self.widgets[(5,5)].gtk.set_sensitive(1)
         #
-        gtklogger.connect(self.floats[(5,5)].gtk, "activate",
+        gtklogger.connect(self.widgets[(5,5)].gtk, "activate",
                           self.new_c66, None)
-        gtklogger.connect(self.floats[(5,5)].gtk, "focus_out_event",
+        gtklogger.connect(self.widgets[(5,5)].gtk, "focus_out_event",
                           self.new_c66)
         #
         self.set_values()
@@ -490,18 +493,18 @@ class TrigonalBCijklWidget(AnisoWidgetBase):
         self.block_signals()
         try:
             for (k,v) in self.kset.items():
-                self.floats[k].set_value(var_dict[v])
+                self.widgets[k].set_value(var_dict[v])
 
             # Then do the extra, special ones.
-            self.floats[(1,1)].set_value(var_dict['c11'])
-            self.floats[(1,2)].set_value(var_dict['c13'])
-            self.floats[(4,4)].set_value(var_dict['c44'])
+            self.widgets[(1,1)].set_value(var_dict['c11'])
+            self.widgets[(1,2)].set_value(var_dict['c13'])
+            self.widgets[(4,4)].set_value(var_dict['c44'])
             # Propagate c14 to the subsidiary entries.
-            self.floats[(1,3)].set_value(-var_dict['c14'])
-            self.floats[(4,5)].set_value(var_dict['c14'])
+            self.widgets[(1,3)].set_value(-var_dict['c14'])
+            self.widgets[(4,5)].set_value(var_dict['c14'])
             #
             c66=0.5*(var_dict['c11']-var_dict['c12'])
-            self.floats[(5,5)].set_value(c66)
+            self.widgets[(5,5)].set_value(c66)
         finally:
             self.unblock_signals()
 
@@ -511,9 +514,9 @@ class TrigonalBCijklWidget(AnisoWidgetBase):
             v_dict[v] = getattr(self.params.value, v)
         try:
             for (k,v) in self.kset.items():
-                v_dict[v] = self.floats[k].get_value()
+                v_dict[v] = self.widgets[k].get_value()
             c11 = v_dict['c11']
-            c66 = self.floats[(5,5)].get_value()
+            c66 = self.widgets[(5,5)].get_value()
             v_dict['c12'] = c11-2.0*c66
         finally:
             self.draw_values(v_dict)
@@ -551,7 +554,7 @@ class OrthorhombicCijklWidget(AnisoWidgetBase):
         self.block_signals()
         try:
             for (k,v) in self.kset.items():
-                self.floats[k].set_value(var_dict[v])
+                self.widgets[k].set_value(var_dict[v])
         finally:
             self.unblock_signals()
 
@@ -589,7 +592,7 @@ class MonoclinicCijklWidget(AnisoWidgetBase):
         self.block_signals()
         try:
             for (k,v) in self.kset.items():
-                self.floats[k].set_value(var_dict[v])
+                self.widgets[k].set_value(var_dict[v])
         finally:
             self.unblock_signals()
         
@@ -635,7 +638,7 @@ class TriclinicCijklWidget(AnisoWidgetBase):
         self.block_signals()
         try:
             for (k,v) in self.kset.items():
-                self.floats[k].set_value(var_dict[v])
+                self.widgets[k].set_value(var_dict[v])
         finally:
             self.unblock_signals()
         
@@ -643,4 +646,44 @@ def TriCijklParam_makeWidget(self, scope, verbose=False):
     return TriclinicCijklWidget(self, scope, verbose=verbose)
 
 anisocijkl.TriclinicCijklParameter.makeWidget = TriCijklParam_makeWidget
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# CijklBoolWidget displays a bool for each entry in Cijkl. It's value
+# is a list of strings, each of which is a pair of Voigt indices in
+# [1,6].
+
+class CijklBoolWidget(matrixparamwidgets.SymmetricMatrixBoolInput):
+    def __init__(self, param, scope=None, name=None, verbose=False):
+        matrixparamwidgets.SymmetricMatrixBoolInput.__init__(
+            self, 6, 6, value=None, scope=scope, name=name, verbose=verbose)
+        self.param = param
+        self.set_value()
+    def draw_values(self, vvlist):
+        self.block_signals()
+        try:
+            for r in range(6):
+                for c in range(r, 6):
+                    self.widgets[(r,c)].set_value(False)
+            for vv in vvlist:
+                self.widgets[(int(vv[0])-1, int(vv[1])-1)].set_value(True)
+        finally:
+            self.unblock_signals()
+
+    def set_value(self, value=None):
+        val = value or []
+        self.draw_values(val)
+
+    def get_value(self):
+        vals = []
+        for r in range(6):
+            for c in range(r, 6):
+                if self.widgets[(r,c)].get_value():
+                    vals.append("%d%d" % (r+1, c+1))
+        return vals
+
+def VoigtPairListParam_makeWidget(self, scope):
+    return CijklBoolWidget(self, scope=scope, name=self.name)
+
+outputDefs.VoigtPairListParameter.makeWidget = VoigtPairListParam_makeWidget
 

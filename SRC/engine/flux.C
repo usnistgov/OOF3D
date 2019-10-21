@@ -1,6 +1,5 @@
 // -*- C++ -*-
 
-
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
  * Recipients of this software assume all responsibilities associated
@@ -112,10 +111,6 @@ const std::string &SymmetricTensorFlux::classname() const {
 IteratorP VectorFlux::iterator(Planarity planarity) const {
   int maxdim = 3;
   int mindim = 0;
-#if DIM==2
-  if(planarity == IN_PLANE) maxdim = 2;
-  if(planarity == OUT_OF_PLANE) mindim = 2;
-#endif	// DIM==2
   return IteratorP(new VectorFieldIterator(mindim, maxdim));
 }
 
@@ -148,12 +143,6 @@ IndexP VectorFlux::divergence_getIndex(const std::string&) const {
 }
 
 IteratorP SymmetricTensorFlux::iterator(Planarity planarity) const {
-#if DIM==2
-  if(planarity == IN_PLANE)
-    return IteratorP(new SymTensorInPlaneIterator);
-  if(planarity == OUT_OF_PLANE)
-    return IteratorP(new SymTensorOutOfPlaneIterator);
-#endif	// DIM==2
   return IteratorP(new SymTensorIterator);
 }
 
@@ -228,22 +217,6 @@ int Flux::eqn_integration_order(const CSubProblem *subp, const Element *el)
 // Flux boundary condition uses the same mechanism as the stiffness
 // matrix, only it makes its contribution to the boundary right-hand-side,
 // rather than to the global stiffness matrix.
-#if DIM==2
-void Flux::boundary_integral(const CSubProblem *subp, LinearizedSystem *ls,
-			     const BoundaryEdge *ed,
-			     const EdgeGaussPoint &egp,
-			     const FluxNormal *flxnormal)
-  const 
-{
-  for(std::vector<Equation*>::size_type i=0; i<eqnlist.size(); i++) {
-    Equation *eq = eqnlist[i];
-    if(subp->is_active_equation(*eq)) {
-      eq->boundary_integral(subp, ls, this, ed, egp, flxnormal);
-    }
-  }
-}
-
-#else // DIM==3
 void Flux::boundary_integral(const CSubProblem *subp, LinearizedSystem *ls,
 			 const Element *el, const GaussPoint &gpt,
 			 const FluxNormal *flxnormal)
@@ -258,7 +231,6 @@ void Flux::boundary_integral(const CSubProblem *subp, LinearizedSystem *ls,
       }
     }
 }
-#endif // DIM==3
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -371,28 +343,6 @@ const std::vector<int> &VectorFlux::outofplane_map() const {
 // is that the components of the equation will match up with
 // components of the flux normal in the obvious way, so that the sizes
 // will match and the assignment will be straightforward.
-#if DIM==2
-void SymmetricTensorFlux::local_boundary(const BoundaryEdge *ed,
-					 EdgeNodeIterator& edi,
-					 const EdgeGaussPoint &egp,
-					 const FluxNormal *flxnormal,
-					 DoubleVec& rhs) 
-  const
-{
-
-  const SymTensorFluxNormal *flxn =
-    dynamic_cast<const SymTensorFluxNormal*>(flxnormal);
-  // Check size of rhs -- has to be 2 for this flux.
-  int rhssize = rhs.size();
-  if (rhssize == SYMTEN_DIV_DIM) {
-    if (flxn->size() == rhssize) { // Simple case, do the obvious.
-      double sfvalue = edi.shapefunction(egp);
-      rhs[0] = sfvalue * flxn->val[0];
-      rhs[1] = sfvalue * flxn->val[1];
-    }
-  }
-}
-#else // DIM==3
 void SymmetricTensorFlux::local_boundary(const ElementFuncNodeIterator& efni,
 					 const GaussPoint &gpt,
 					 const FluxNormal *flxnormal,
@@ -412,48 +362,16 @@ void SymmetricTensorFlux::local_boundary(const ElementFuncNodeIterator& efni,
   // oofcerr << "SymmetricTensorFlux::local_boundary: rhs = "
   // 	  << rhs[0] << " " << rhs[1] << " " << rhs[2] << std::endl;
 }
-#endif // DIM==3
 
 
 // Evaluate the dot product of the flux with the normal at
 // the indicated edge gauss point.
-#if DIM==2
-OutputVal *SymmetricTensorFlux::contract(const FEMesh *mesh,
-					 const Element *elmt,
-					 const EdgeGaussPoint &egpt)
-  const
- {
-   OutputValue value = output( mesh, elmt, egpt );
-   const SymmMatrix3 &valueRef =
-     dynamic_cast<const SymmMatrix3&>(value.valueRef());
-   Coord normal2 = egpt.normal();
-   // Pretend the normal is a 3-vector so that we can dot it with the flux.
-   DoubleVec normal3(3, 0.0);
-   normal3[0] = normal2[0];
-   normal3[1] = normal2[1];
-   // Take the dot product.
-   DoubleVec resultvec(valueRef*normal3);
-   // Convert the result into an OutputVal, dropping the z-component.
-   VectorOutputVal *result = new VectorOutputVal(2);
-   (*result)[0] = resultvec[0];
-   (*result)[1] = resultvec[1];
-   return result;
-//   DoubleVec *value = evaluate(mesh, elmt, egpt);
-//   // voigt order, 00, 11, 22, 12, 02, 01
-//   DoubleVec *result = new DoubleVec(divdim, 0.0);
-//   Coord normal = egpt.normal();
-//   (*result)[0] = (*value)[0]*normal[0] + (*value)[5]*normal[1];
-//   (*result)[1] = (*value)[5]*normal[0] + (*value)[1]*normal[1];
-//   delete value;  // deleting new'd DoubleVec from "evaluate".
-//   return result;
-}
-#else  // DIM==3
 OutputVal *SymmetricTensorFlux::contract(const FEMesh *mesh,
 					 const Element *elmt,
 					 const GaussPoint &gpt)
   const
 {
-  OutputValue value = output(mesh, elmt, gpt);
+  ArithmeticOutputValue value = output(mesh, elmt, gpt);
   const SymmMatrix3 &valueRef =
     dynamic_cast<const SymmMatrix3&>(value.valueRef());
   Coord normal = findNormal(elmt, gpt);
@@ -464,56 +382,7 @@ OutputVal *SymmetricTensorFlux::contract(const FEMesh *mesh,
   (*result)[2] = resultVec[2];
   return result;
 }
-#endif // DIM==3
 
-#if DIM==2
-FluxNormal *SymmetricTensorFlux::BCCallback(const Coord &pos,
-					    double time,
-					    const Coord &nrm,
-					    const double distance,
-					    const double fraction,
-					    PyObject *wrapper,
-					    const PyObject *pyfunction)
-  const {
-
-  PyObject *args;
-  PyObject *result;
-  Coord cres;
-
-  PyGILState_STATE pystate = acquirePyLock();
-  // Call the wrapper function, which is flux_locator, in bdycondition.py.
-  args = Py_BuildValue((char*) "(Oddddddd)", pyfunction, pos[0], pos[1], time,
-		       nrm[0], nrm[1], distance, fraction);
-  result = PyEval_CallObject(wrapper, args);
-  Py_DECREF(args);
-  if(result) {
-    if(PyTuple_Check(result)) {
-      if(PyTuple_Size(result) == (Py_ssize_t) 2) {
-	cres[0] = PyFloat_AsDouble(PyTuple_GetItem(result, (Py_ssize_t) 0));
-	cres[1] = PyFloat_AsDouble(PyTuple_GetItem(result, (Py_ssize_t) 1));
-      }
-      else {
-	// Only one "release" per possible control-flow path.
-	releasePyLock(pystate);
-	throw
-	  ErrSetupError(
-		       "SymmetricTensorFlux::BCCallback: Wrong size of tuple.");
-      }
-    }
-    else {
-      releasePyLock(pystate);
-      throw ErrSetupError("SymmetricTensorFlux::BCCallback: Expected a tuple.");
-    }
-  }
-  else {			// !result.  PyEval_CallObject failed.
-    releasePyLock(pystate);
-    pythonErrorRelay();
-  }
-  releasePyLock(pystate);
-  Py_XDECREF(result);
-  return new SymTensorFluxNormal(cres[0],cres[1]);
-}
-#else // DIM==3
 FluxNormal *SymmetricTensorFlux::BCCallback(const Coord &pos,
 					    double time,
 					    const Coord &nrm,
@@ -561,14 +430,13 @@ FluxNormal *SymmetricTensorFlux::BCCallback(const Coord &pos,
   Py_XDECREF(result);
   return new SymTensorFluxNormal(cres);
 }
-#endif // DIM==3
 
-OutputValue Flux::output(const FEMesh *mesh, const Element *el,
+ArithmeticOutputValue Flux::output(const FEMesh *mesh, const Element *el,
 			 const MasterPosition &pos) const
 {
   // std::cerr << "Flux::output: pos=" << pos << " el=" << *el << std::endl;
   DoubleVec *fluxvals = evaluate( mesh, el, pos );
-  OutputValue ov = newOutputValue();
+  ArithmeticOutputValue ov = newOutputValue();
   for(IteratorP it = iterator(ALL_INDICES); !it.end(); ++it) {
     ov[it] = (*fluxvals)[it.integer()];
   }
@@ -576,15 +444,15 @@ OutputValue Flux::output(const FEMesh *mesh, const Element *el,
   return ov;
 }
 
-OutputValue SymmetricTensorFlux::newOutputValue() const {
-  return OutputValue(new SymmMatrix3());
+ArithmeticOutputValue SymmetricTensorFlux::newOutputValue() const {
+  return ArithmeticOutputValue(new SymmMatrix3());
 }
 
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-OutputValue VectorFlux::newOutputValue() const {
-  return OutputValue(new VectorOutputVal(ndof()));
+ArithmeticOutputValue VectorFlux::newOutputValue() const {
+  return ArithmeticOutputValue(new VectorOutputVal(ndof()));
 }
 
 
@@ -592,24 +460,6 @@ OutputValue VectorFlux::newOutputValue() const {
 // for its callback, and assumes the components match up
 // trivially, in the absence of indications otherwise from
 // the equation.
-#if DIM==2
-void VectorFlux::local_boundary(const BoundaryEdge *ed,
-				EdgeNodeIterator& edi,
-				const EdgeGaussPoint &egp,
-				const FluxNormal *flxnormal,
-				DoubleVec& rhs)
-  const 
-{
-  const VectorFluxNormal *flxn =
-    dynamic_cast<const VectorFluxNormal*>(flxnormal);
-  int rhssize = rhs.size();
-  if (rhssize == VEC_DIV_DIM) {
-    if (flxn->size() == rhssize) {
-      rhs[0] = edi.shapefunction(egp) * flxn->value();
-    }
-  }
-}
-#else // DIM==3
 void VectorFlux::local_boundary(const ElementFuncNodeIterator& efni,
 				const GaussPoint &gpt,
 				const FluxNormal *flxnormal,
@@ -623,93 +473,22 @@ void VectorFlux::local_boundary(const ElementFuncNodeIterator& efni,
   assert(rhssize == flxn->size());
   rhs[0] = efni.shapefunction(gpt) * flxn->value();
 }
-#endif // DIM==3
-
 
 // Evalute the dot product of the flux with the normal at the
 // indicated gauss point.
-#if DIM==2
-OutputVal *VectorFlux::contract(const FEMesh *mesh,
-				const Element *elmt,
-				const EdgeGaussPoint &egpt)
-  const
-{
-  OutputValue value = output( mesh, elmt, egpt );
-  const VectorOutputVal &valueRef =
-    dynamic_cast<const VectorOutputVal&>(value.valueRef());
-  Coord normal = egpt.normal();
-  DoubleVec normalvec(3);
-  normalvec[0] = normal[0];
-  normalvec[1] = normal[1];
-  normalvec[2] = 0.0;
-  return new ScalarOutputVal(valueRef.dot(normalvec));
-//   DoubleVec *value = evaluate(mesh, elmt, egpt);
-//   Coord normal = egpt.normal();
-//   DoubleVec *result = new DoubleVec(divdim, 0.0);
-//   (*result)[0] = (*value)[0]*normal[0] + (*value)[1]*normal[1];
-//   return result;
-}
-#else  // DIM==3
 OutputVal *VectorFlux::contract(const FEMesh *mesh,
 				const Element *elmt,
 				const GaussPoint &gpt)
   const
 {
-  // TODO: Why doesn't this return an OutputValue?
-  OutputValue value = output(mesh, elmt, gpt);
+  // TODO: Why doesn't this return an ArithmeticOutputValue?
+  ArithmeticOutputValue value = output(mesh, elmt, gpt);
   const VectorOutputVal &valueRef =
     dynamic_cast<const VectorOutputVal&>(value.valueRef());
   Coord normal = findNormal(elmt, gpt);
   return new ScalarOutputVal(valueRef.dot(normal));
 }
-#endif // DIM==3
 
-
-#if DIM==2
-FluxNormal *VectorFlux::BCCallback(const Coord &pos,
-				   double time,
-				   const Coord &nrm,
-				   const double distance,
-				   const double fraction,
-				   PyObject *wrapper,
-				   const PyObject *pyfunction)
-  const 
-{
-  PyObject *args;
-  PyObject *result;
-  double dres = 0.0;
-
-  PyGILState_STATE pystate = acquirePyLock();
-  args = Py_BuildValue((char*) "(Oddddddd)",pyfunction, pos[0], pos[1], time,
-		       nrm[0], nrm[1], distance, fraction);
-  // Call the wrapper function, which is flux_locator, in bdycondition.py.
-  result = PyEval_CallObject(wrapper, args);
-  Py_DECREF(args);
-
-  if(result) {
-    if(PyTuple_Check(result)) {
-      if(PyTuple_Size(result)==1) {
-	dres = PyFloat_AsDouble(PyTuple_GET_ITEM(result, (Py_ssize_t) 0));
-      }
-      else {
-	// Only one "release" per possible control-flow path.
-	releasePyLock(pystate);
-	throw
-	  ErrSetupError("VectorFlux::BCCallback: Wrong size of tuple.");
-      }
-    }
-    else {
-      releasePyLock(pystate);
-      throw ErrSetupError("VectorFlux::BCCallback: Expected a tuple.");
-    }
-  }
-
-  Py_XDECREF(result);
-  releasePyLock(pystate);
-
-  return new VectorFluxNormal(dres);
-}
-#else // DIM==3
 FluxNormal *VectorFlux::BCCallback(const Coord &pos,
 				   double time,
 				   const Coord &nrm,
@@ -754,4 +533,3 @@ FluxNormal *VectorFlux::BCCallback(const Coord &pos,
 
   return new VectorFluxNormal(dres);
 }
-#endif	// DIM==3

@@ -10,20 +10,37 @@
 
 # Widgets for displaying OutputVals.
 
+# These are used in the MeshDataGUI.  They just display the value, not
+# the name of the Output. TODO: They probably should display the name
+# too, so that the Concatenate output is less confusing.
+
+from ooflib.SWIG.common import switchboard
+from ooflib.SWIG.engine import corientation
 from ooflib.SWIG.engine import fieldindex
 from ooflib.SWIG.engine import outputval
 from ooflib.SWIG.engine import symmmatrix
 from ooflib.common import debug
 from ooflib.common.IO.GUI import gtklogger
+from ooflib.engine.IO import outputClones
 import gtk
+
+# The generic output value widget just prints the value.
+
+## TODO: Widgets should have labels that display the Output's
+## shortrepr().  The problem is that the widget is created by the
+## OutputVal, not the Output.
 
 class GenericOVWidget:
     def __init__(self, val):
         debug.mainthreadTest()
-        self.gtk = gtk.Entry()
-        gtklogger.setWidgetName(self.gtk, 'generic')
-        self.gtk.set_editable(False)
-        self.gtk.set_text(`val`)
+        if val is not None:
+            self.gtk = gtk.Entry()
+            gtklogger.setWidgetName(self.gtk, 'generic')
+            self.gtk.set_editable(False)
+            self.gtk.set_text(`val`)
+        else:
+            self.gtk = gtk.Label("No data")
+            self.gtk.set_sensitive(False)
     def destroy(self):
         debug.mainthreadTest()
         self.gtk.destroy()
@@ -36,20 +53,25 @@ class GenericOVWidget:
 class VectorWidget:
     def __init__(self, val):
         debug.mainthreadTest()
-        self.gtk = gtk.Table(rows=val.size(), columns=2)
         iterator = val.getIterator()
-        row = 0
-        while not iterator.end():
-            label = gtk.Label(iterator.shortrepr()+':')
-            label.set_alignment(1.0, 0.5)
-            self.gtk.attach(label, 0,1, row,row+1, xoptions=gtk.FILL)
-            entry = gtk.Entry()
-            gtklogger.setWidgetName(entry, iterator.shortrepr())
-            entry.set_editable(False)
-            entry.set_text("%-13.6g" % val[iterator])
-            self.gtk.attach(entry, 1,2, row,row+1, xoptions=gtk.EXPAND|gtk.FILL)
-            row += 1
-            iterator.next()
+        if iterator.size() != 0:
+            self.gtk = gtk.Table(rows=iterator.size(), columns=3)
+            row = 0
+            while not iterator.end():
+                label = gtk.Label(iterator.shortrepr()+':')
+                label.set_alignment(1.0, 0.5)
+                self.gtk.attach(label, 0,1, row,row+1, xoptions=gtk.FILL)
+                entry = gtk.Entry()
+                gtklogger.setWidgetName(entry, iterator.shortrepr())
+                entry.set_editable(False)
+                entry.set_text("%-13.6g" % val[iterator])
+                self.gtk.attach(entry, 1,2, row,row+1,
+                                xoptions=gtk.EXPAND|gtk.FILL)
+                row += 1
+                iterator.next()
+        else:
+            self.gtk = gtk.Label("No data")
+            self.gtk.set_sensitive(False)
     def show(self):
         debug.mainthreadTest()
         self.gtk.show_all()
@@ -61,7 +83,10 @@ def _VectorOutputVal_makeWidget(self):
     return VectorWidget(self)
 
 outputval.VectorOutputValPtr.makeWidget = _VectorOutputVal_makeWidget
-        
+
+outputval.ListOutputValPtr.makeWidget = _VectorOutputVal_makeWidget
+corientation.COrientationPtr.makeWidget = _VectorOutputVal_makeWidget
+
 ####################
 
 # There is another SymmMatrix3Widget object in tensorwidgets.py, but
@@ -111,6 +136,42 @@ def _SymmMatrix_makeWidget(self):
 
 symmmatrix.SymmMatrix3Ptr.makeWidget = _SymmMatrix_makeWidget
                 
+
+####################
+
+class ConcatenatedOutputsWidget:
+    def __init__(self, val):
+        self.gtk = gtk.VBox()
+        debug.fmsg("val=", val)
+        # Use makeWidget(v) instead of v.makeWidget() so that
+        # GenericOVWidget will be used if needed for subwidgets.
+        self.widgets = [makeWidget(v) for v in val.args]
+        first = True
+        self.sbcallbacks = []
+        for w in self.widgets:
+            if not first:
+                self.gtk.pack_start(gtk.HSeparator(),
+                                    expand=0, fill=0, padding=0)
+            first = False
+            self.gtk.pack_start(w.gtk, expand=0, fill=1, padding=2)
+            self.sbcallbacks.append(
+                switchboard.requestCallbackMain(w.gtk, self.subWidgetChanged))
+    def cleanUp(self):
+        map(switchboard.removeCallback, self.sbcallbacks)
+    def show(self):
+        debug.mainthreadTest()
+        self.gtk.show_all()
+    def destroy(self):
+        debug.mainthreadTest()
+        self.gtk.destroy()
+    def subWidgetChanged(self, interactive):
+        switchboard.notify(self)
+
+def _ConcatenatedOutputs_makeWidget(self):
+    return ConcatenatedOutputsWidget(self)
+        
+outputClones.ConcatenatedOutputs.makeWidget = _ConcatenatedOutputs_makeWidget
+
 
 ####################
 

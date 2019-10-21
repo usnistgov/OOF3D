@@ -48,7 +48,7 @@
 //   return OutputValue(resultptr);
 // }
 
-OutputValue integrateFlux(const FEMesh *mesh, const Flux *flux, 
+ArithmeticOutputValue integrateFlux(const FEMesh *mesh, const Flux *flux, 
 			  const SubDimensionalSet *s)
 {
   // s is either an EdgeSet or a FaceSet.
@@ -72,13 +72,13 @@ OutputValue integrateFlux(const FEMesh *mesh, const Flux *flux,
 	}
       }
     }
-  return OutputValue(resultptr);
+  return ArithmeticOutputValue(resultptr);
 }
 
-OutputValue averageField(const FEMesh *m, const Field *field,
+ArithmeticOutputValue averageField(const FEMesh *m, const Field *field,
 			 const SubDimensionalSet *es)
 {
-  OutputValue result(field->newOutputValue());
+  ArithmeticOutputValue result(field->newOutputValue());
   double weight = 0.0;
   // for(EdgeSetIterator esi=EdgeSetIterator(es); !esi.end(); ++esi) {
   for(CleverPtr<SubDimensionalIterator> i(es->iterator()); !i->end(); ++(*i)) {

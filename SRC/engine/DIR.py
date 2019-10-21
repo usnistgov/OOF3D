@@ -23,12 +23,12 @@ if HAVE_PETSC:
     subdirs.append('PETSc')
 
 cfiles = [
-    'canonicalorder.C', 'cnonlinearsolver.C',
+    'canonicalorder.C', 'cnonlinearsolver.C', 'corientation.C',
     'cskeleton2.C', 'cskeletonselectable.C', 'cskeletonmodifier.C', 
     'cskeletonnode2.C', 'crystalsymmetry.C',
     'cskeletonsegment.C', 'cskeletonelement.C', 'cskeletongroups.C',
     'cfiddlenodes.C', 'crefine.C', 'crefinementcriterion.C', 'csnapnodes.C',
-    'csnaprefine.C', 
+    'csnaprefine.C',
     'crationalizers.C', 'elementshape.C', 'homogeneity.C',
     'angle2color.C', 'bdyanalysis.C', 'boundarycond.C', 'cskeletonboundary.C',
     'cconjugate.C', 'celectricfield.C', 'cmatrixmethods.C',
@@ -56,7 +56,8 @@ swigfiles = [
     'cskeleton2.swg','cskeletonselectable.swg','cskeletonmodifier.swg', 
     'cskeletonnode2.swg', 'cnonlinearsolver.swg', 'crystalsymmetry.swg',
     'cskeletonsegment.swg', 'cskeletonelement.swg', 'cskeletongroups.swg',
-    'cfiddlenodes.swg', 'crefine.swg', 'crefinementcriterion.swg', 'csnapnodes.swg', 'csnaprefine.swg',
+    'cfiddlenodes.swg', 'crefine.swg', 'crefinementcriterion.swg',
+    'csnapnodes.swg', 'csnaprefine.swg', 'corientation.swg',
     'crationalizers.swg', 'elementshape.swg',
     'angle2color.swg', 'bdyanalysis.swg', 'boundarycond.swg',
     'cconjugate.swg', 'cmatrixmethods.swg', 'compoundsubproblem.swg',
@@ -105,7 +106,9 @@ pyfiles = [
 
 swigpyfiles = [
     'cskeleton2.spy','cskeletonmodifier.spy', 'cfiddlenodes.spy', 'crefine.spy',
-    'crefinementcriterion.spy', 'angle2color.spy', 'compoundsubproblem.spy', 'csnapnodes.spy', 
+    'crefinementcriterion.spy', 'angle2color.spy', 'compoundsubproblem.spy',
+    'corientation.spy',
+    'csnapnodes.spy', 
     'csnaprefine.spy', 'crystalsymmetry.spy',
     'cskeletongroups.spy','cskeletonelement.spy', 'cskeletonnode2.spy',
     'cskeletonboundary.spy', 'elementshape.spy',
@@ -123,7 +126,7 @@ swigpyfiles = [
     ]
 
 hfiles = [
-    'canonicalorder.h', 'cnonlinearsolver.h',
+    'canonicalorder.h', 'cnonlinearsolver.h', 'corientation.h',
     'cskeleton2.h', 'cskeletonselectable.h', 'cskeletonmodifier.h',
     'cskeletonnode2.h', 'crystalsymmetry.h',
     'cskeletonsegment.h', 'cskeletonelement.h', 'cskeletongroups.h',

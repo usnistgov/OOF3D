@@ -25,6 +25,7 @@ reg = PropertyRegistration(
     modulename="ooflib.SWIG.engine.property.massdensity.massdensity",
     ordering=100,
     params=[parameter.FloatParameter('rho', 1.0, tip="Mass density")],
+    outputs=["Material Constants:Mechanical:Mass Density"],
     propertyType="MassDensity",
     tip="Uniform mass density.",
     discussion=xmlmenudump.loadFile(

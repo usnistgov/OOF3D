@@ -28,7 +28,7 @@ reg = IsotropicElasticity = PropertyRegistration(
     [isocijkl.IsotropicCijklParameter('cijkl',
                           isocijkl.IsotropicRank4TensorCij(c11=1.0, c12=0.5),
                                             tip=parameter.emptyTipString)],
-    outputs=["Energy"],
+    outputs=["Energy", "Material Constants:Mechanical:Elastic Modulus C"],
     propertyType="Elasticity",
     tip='Isotropic linear elasticity.',
     discussion=xmlmenudump.loadFile(

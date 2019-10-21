@@ -37,6 +37,8 @@ public:
   virtual bool constant_in_space() const { return false; }
   virtual void precompute(FEMesh*);
   virtual void clear_mesh_data(FEMesh*, void*) const;
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
 };
 
 #endif // ORIENTMAPPROPERTY_H

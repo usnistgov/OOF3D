@@ -9,9 +9,9 @@
 # oof_manager@nist.gov. 
 
 from ooflib.SWIG.common import config
-from ooflib.SWIG.common import corientation
 from ooflib.SWIG.common import ooferror
 from ooflib.SWIG.common import progress
+from ooflib.SWIG.engine import corientation
 from ooflib.SWIG.orientationmap import orientmapdata
 from ooflib.common import debug
 from ooflib.common import primitives

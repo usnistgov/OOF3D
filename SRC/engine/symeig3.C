@@ -270,7 +270,7 @@ void getEigenvalues(const MATRIX &mat, EigenValues &eig) {
   
   double thirda = a/3;
   double thirdtheta = theta/3;
-  double thirdtwopi = 2*M_PI/3;
+  static const double thirdtwopi = 2*M_PI/3;
 
   eig = EigenValues(-2*sqrtQ*cos(thirdtheta) - thirda,
 		    -2*sqrtQ*cos(thirdtheta + thirdtwopi) - thirda,

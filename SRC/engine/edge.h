@@ -79,12 +79,8 @@ public:
   std::vector<Coord*>* position_(const std::vector<double>*) const;
   // Evaluate a Field at a bunch of positions along the edge.  The
   // positions are doubles between 0 and 1.
-  std::vector<OutputValue>* outputFields(const FEMesh*, const Field&,
-					 const std::vector<double>*) const;
-//   // Evaluate a field even if it's not defined on the mesh (in which
-//   // case it evaluates to zero).
-//   std::vector<OutputValue>* outputFieldsAnyway(const CSubProblem*, const Field&,
-// 					 const std::vector<double>*) const;
+  std::vector<ArithmeticOutputValue>* outputFields(
+	   const FEMesh*, const Field&, const std::vector<double>*) const;
   MasterCoord startpt() const { return start; }
   MasterCoord endpt() const { return end; }
   int order();

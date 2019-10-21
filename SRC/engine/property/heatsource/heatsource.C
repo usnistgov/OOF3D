@@ -53,3 +53,16 @@ void HeatSourceProp::force_value(const FEMesh *mesh, const Element *element,
 {
   eqndata->force_vector_element(0) -= qdot_;
 }
+
+void HeatSourceProp::output(FEMesh *mesh,
+			    const Element *element,
+			    const PropertyOutput *output,
+			    const MasterPosition &pos,
+			    OutputVal *data)
+{
+  const std::string &outputname = output->name();
+  if(outputname == "Material Constants:Thermal:Heat Source") {
+    ScalarOutputVal *sdata = dynamic_cast<ScalarOutputVal*>(data);
+    *sdata = qdot_;
+  }
+}

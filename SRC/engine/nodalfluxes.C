@@ -71,13 +71,13 @@ void NodalFluxes::add_flux_value(const Material *mat, const Flux *fluks,
   }
 } 
 
-OutputValue NodalFluxes::get_flux_output(const Material *mat,
+ArithmeticOutputValue NodalFluxes::get_flux_output(const Material *mat,
 					 const Flux *fluks)
 {
   int imat = mat_index(mat);
   int iflux = flux_index(fluks);
   DoubleVec *fv = (*(flux_values[imat]))[iflux]->get_flux_value();
-  OutputValue output = fluks->newOutputValue();
+  ArithmeticOutputValue output = fluks->newOutputValue();
   for(IteratorP it = fluks->iterator(ALL_INDICES); !it.end(); ++it) {
     output[it] = (*fv)[it.integer()];
   }

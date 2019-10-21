@@ -12,6 +12,7 @@
 #include <oofconfig.h>
 
 #include "common/cmicrostructure.h"
+#include "engine/IO/propertyoutput.h"
 #include "engine/property/orientation/orientation.h"
 
 OrientationProp::OrientationProp(PyObject *registry, const std::string &nm,
@@ -34,3 +35,15 @@ const COrientation *OrientationProp::orientation(const CMicrostructure*,
   return orient;
 }
 
+void OrientationProp::output(FEMesh *mesh,
+			     const Element *element,
+			     const PropertyOutput *output,
+			     const MasterPosition &pos,
+			     OutputVal *data)
+{
+  const std::string &outputname = output->name();
+  if(outputname == "Material Constants:Orientation") {
+    COrientation *odata = dynamic_cast<COrientation*>(data);
+    *odata = *orient;
+  }
+}

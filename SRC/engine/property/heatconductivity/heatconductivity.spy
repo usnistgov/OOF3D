@@ -25,6 +25,7 @@ reg = PropertyRegistration(
     ordering=97,
     params=[parameter.FloatParameter('kappa',
                                      1.0, tip=parameter.emptyTipString)],
+    outputs=["Material Constants:Thermal:Conductivity K"],
     propertyType="ThermalConductivity",
     tip="Isotropic thermal conductivity.",
     discussion=xmlmenudump.loadFile(
@@ -44,6 +45,7 @@ reg = PropertyRegistration(
     'kappa',
     symmmatrix.TriclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
     tip=parameter.emptyTipString)],
+    outputs=["Material Constants:Thermal:Conductivity K"],
     propertyType="ThermalConductivity",
     tip="Triclinic thermal conductivity",
     discussion=xmlmenudump.loadFile(
@@ -62,6 +64,7 @@ reg = PropertyRegistration(
     'kappa',
     symmmatrix.MonoclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
     tip=parameter.emptyTipString)],
+    outputs=["Material Constants:Thermal:Conductivity K"],
     propertyType="ThermalConductivity",
     tip="Monoclinic thermal conductivity.",
     discussion=xmlmenudump.loadFile(
@@ -80,6 +83,7 @@ reg = PropertyRegistration(
     'kappa',
     symmmatrix.OrthorhombicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
     tip=parameter.emptyTipString)],
+    outputs=["Material Constants:Thermal:Conductivity K"],
     propertyType="ThermalConductivity",
     tip="Orthorhombic thermal conductivity.",
     discussion=xmlmenudump.loadFile(
@@ -98,6 +102,7 @@ reg = PropertyRegistration(
     'kappa',
     symmmatrix.TetragonalRank2Tensor(xx=1.0, zz=0.5),
     tip=parameter.emptyTipString)],
+    outputs=["Material Constants:Thermal:Conductivity K"],
     propertyType="ThermalConductivity",
     tip="Tetragonal thermal conductivity.",
     discussion=xmlmenudump.loadFile(
@@ -116,6 +121,7 @@ reg = PropertyRegistration(
     'kappa',
     symmmatrix.TrigonalRank2Tensor(xx=1.0, zz=0.5),
     tip=parameter.emptyTipString)],
+    outputs=["Material Constants:Thermal:Conductivity K"],
     propertyType="ThermalConductivity",
     tip="Trigonal thermal conductivity.",
     discussion=xmlmenudump.loadFile(
@@ -134,6 +140,7 @@ reg = PropertyRegistration(
     'kappa',
     symmmatrix.HexagonalRank2Tensor(xx=1.0, zz=0.5),
     tip=parameter.emptyTipString)],
+    outputs=["Material Constants:Thermal:Conductivity K"],
     propertyType="ThermalConductivity",
     tip="Hexagonal thermal conductivity.",
     discussion=xmlmenudump.loadFile(
@@ -152,6 +159,7 @@ reg = PropertyRegistration(
             'kappa',
             symmmatrix.CubicRank2Tensor(xx=1.0),
             tip=parameter.emptyTipString)],
+    outputs=["Material Constants:Thermal:Conductivity K"],
     propertyType="ThermalConductivity",
     tip="Cubic thermal conductivity.",
     discussion=xmlmenudump.loadFile(

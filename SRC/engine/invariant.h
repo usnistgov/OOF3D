@@ -14,37 +14,37 @@
 #ifndef INVARIANT_H
 #define INVARIANT_H
 
-class OutputVal;
+class ArithmeticOutputVal;
 
 class Invariant {
 public:
   virtual ~Invariant() {}
-  virtual double operator()(const OutputVal&) const = 0;
+  virtual double operator()(const ArithmeticOutputVal&) const = 0;
 };
 
 class Magnitude : public Invariant {
 public:
-  virtual double operator()(const OutputVal&) const;
+  virtual double operator()(const ArithmeticOutputVal&) const;
 };
 
 class MatrixTrace : public Invariant {
 public:
-  virtual double operator()(const OutputVal&) const;
+  virtual double operator()(const ArithmeticOutputVal&) const;
 };
 
 class Determinant : public Invariant {
 public:
-  virtual double operator()(const OutputVal&) const;
+  virtual double operator()(const ArithmeticOutputVal&) const;
 };
 
 class SecondInvariant : public Invariant {
 public:
-  virtual double operator()(const OutputVal&) const;
+  virtual double operator()(const ArithmeticOutputVal&) const;
 };
 
 class Deviator : public Invariant {
 public:
-  virtual double operator()(const OutputVal&) const;
+  virtual double operator()(const ArithmeticOutputVal&) const;
 };
 
 enum EigenValueRank {MAX_EIGENVALUE, MID_EIGENVALUE, MIN_EIGENVALUE};
@@ -54,7 +54,7 @@ private:
   const EigenValueRank which_;			
 public:
   Eigenvalue(EigenValueRank *w) : which_(*w) {}
-  virtual double operator()(const OutputVal&) const;
+  virtual double operator()(const ArithmeticOutputVal&) const;
 };
 
 #endif // INVARIANT_H

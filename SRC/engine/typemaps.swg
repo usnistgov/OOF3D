@@ -32,7 +32,10 @@
 // out		SymmMatrix3StarVec* std::vector<SymmMatrix3*> -> [SymmMatrix3]
 // out		Flux*		Flux* -> Flux derived class obj
 // out		EdgeVec*	std::vector<Edge*> -> [Edge]
-// out		OutputValueVec* std::vector<OutputValue>* -> [OutputVal]
+// out		ArithmeticOutputValueVec*
+//                              std::vector<OutputValue>* -> [OutputVal]
+// out		NonArithmeticOutputValueVec*
+//                              std::vector<OutputValue>* -> [OutputVal]
 // out		DOUBLELIST*	DOUBLELIST* -> [double]
 // newfree      DOUBLELIST*
 // out		CompoundFieldVec* std::vector<CompoundField*>* ->[CompoundField]
@@ -117,7 +120,6 @@ typedef std::vector<GaussPoint*> GaussPointVec;
     pyOne = PyInt_FromLong(1);
   }
   GaussPointVec::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
   $target = PyList_New((Py_ssize_t) sz);
   char _ptemp[128];
   for(std::vector<GaussPoint*>::size_type i=0; i<sz; i++) {
@@ -164,7 +166,6 @@ typedef std::vector<GaussPoint*> GaussPointVec;
 //     pyOne = PyInt_FromLong(1);
 //   }
 //   MasterCoordVec::size_type sz = $source->size();
-//   assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
 //   $target = PyList_New((Py_ssize_t) sz);
 //   char _ptemp[128];
 //   for(std::vector<MasterCoord*>::size_type i=0; i<sz; i++) {
@@ -241,7 +242,6 @@ typedef std::vector<GaussPoint*> GaussPointVec;
 // %typemap(python, out) VecVec* {
 //   // typemap(python, out) VecVec*
 //   VecVec::size_type sz = $source->size();
-//   assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
 //   $target = PyList_New((Py_ssize_t) sz);
 //   for(std::vector<std::vector<double>*>::size_type i=0; i<sz; i++) {
 //     std::vector<double>::size_type dofs = (*$source)[i]->size();
@@ -270,7 +270,6 @@ typedef std::vector<GaussPoint*> GaussPointVec;
 // %typemap(python, out) DoubleStarVec* {
 //   // typemap(python, out) DoubleStarVec*
 //   DoubleStarVec::size_type sz = $source->size();
-//   assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
 //   $target = PyList_New((Py_ssize_t) sz);
 //   for(std::vector<const double*>::size_type i=0; i<sz; i++) {
 //     PyList_SET_ITEM($target, (Py_ssize_t) i,
@@ -306,7 +305,6 @@ typedef std::vector<GaussPoint*> GaussPointVec;
     pyOne = PyInt_FromLong(1);
   }
   SymmMatrix3StarVec::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
   $target = PyList_New((Py_ssize_t) sz);
   char _ptemp[128];
   for(std::vector<SymmMatrix3*>::size_type i=0; i<sz; i++) {
@@ -490,7 +488,6 @@ typedef std::vector<Element*> ElementVec;
 %typemap(python, out) EquationVec * {
   // typemap(python, out) EquationVec*
   EquationVec::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
   $target = PyList_New((Py_ssize_t) sz);
   for(std::vector<Equation*>::size_type i=0; i<sz; i++) {
     // pythonObject() returns a new reference and PyList_SET_ITEM steals it.
@@ -523,7 +520,6 @@ typedef std::vector<Element*> ElementVec;
 %typemap(python, out) FluxVec * {
   // typemap(python, out) FluxVec*
   FluxVec::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
   $target = PyList_New((Py_ssize_t) sz);
   for(FluxVec::size_type i=0; i<sz; i++) {
     PyObject *flux = (*$source)[i]->pythonObject();
@@ -560,7 +556,6 @@ typedef std::vector<Element*> ElementVec;
     pyOne = PyInt_FromLong(1);
   }
   EdgeVec::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
   $target = PyList_New((Py_ssize_t) sz);
   char _ptemp[128];
   for(std::vector<Edge*>::size_type i=0; i<sz; i++) {
@@ -586,19 +581,19 @@ typedef std::vector<Element*> ElementVec;
 // ownership of the objects to Python.
 
 %{
-  typedef std::vector<OutputValue> OutputValueVec;
+  typedef std::vector<ArithmeticOutputValue> ArithmeticOutputValueVec;
+  typedef std::vector<NonArithmeticOutputValue> NonArithmeticOutputValueVec;
 %}
 
-%typemap(python, out) OutputValueVec* {
-  // typemap(python, out) OutputValueVec*
+%typemap(python, out) ArithmeticOutputValueVec* {
+  // typemap(python, out) ArithmeticOutputValueVec*
   static PyObject *pyOne = 0;
   if(!pyOne) {
     pyOne = PyInt_FromLong(1);
   }
-  OutputValueVec::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
+  ArithmeticOutputValueVec::size_type sz = $source->size();
   $target = PyList_New((Py_ssize_t) sz);
-  for(OutputValueVec::size_type i=0; i<sz; i++) {
+  for(ArithmeticOutputValueVec::size_type i=0; i<sz; i++) {
     // Don't use valuePtr() or valueRef() here, because the OutputVals
     // copied into the Python list will outlive the OutputValues that
     // they're copied from.  valueClone() makes an independent copy.
@@ -610,8 +605,33 @@ typedef std::vector<Element*> ElementVec;
   }
 }
 
-%typemap(python, newfree) OutputValueVec* {
-  // typemap(python, newfree) OutputValueVec*
+%typemap(python, out) NonArithmeticOutputValueVec* {
+  // typemap(python, out) NonArithmeticOutputValueVec*
+  static PyObject *pyOne = 0;
+  if(!pyOne) {
+    pyOne = PyInt_FromLong(1);
+  }
+  NonArithmeticOutputValueVec::size_type sz = $source->size();
+  $target = PyList_New((Py_ssize_t) sz);
+  for(NonArithmeticOutputValueVec::size_type i=0; i<sz; i++) {
+    // Don't use valuePtr() or valueRef() here, because the OutputVals
+    // copied into the Python list will outlive the OutputValues that
+    // they're copied from.  valueClone() makes an independent copy.
+    PyObject *obj = (*$source)[i].valueClone()->pythonObject();
+    if(!obj)
+      return 0;
+    PyObject_SetAttrString(obj, "thisown", pyOne); // take ownership
+    PyList_SET_ITEM($target, (Py_ssize_t) i, obj);
+  }
+}
+
+%typemap(python, newfree) ArithmeticOutputValueVec* {
+  // typemap(python, newfree) ArithmeticOutputValueVec*
+  delete $source;
+}
+
+%typemap(python, newfree) NonArithmeticOutputValueVec* {
+  // typemap(python, newfree) NonArithmeticOutputValueVec*
   delete $source;
 }
 
@@ -686,7 +706,6 @@ typedef std::vector<Element*> ElementVec;
     Py_XINCREF(getMaterial);
   }
   MaterialVec::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
   $target = PyList_New((Py_ssize_t) sz);
   for(std::vector<const Material*>::size_type i=0; i<$source->size(); i++) {
     PyObject *name = Py_BuildValue("(s)", (*$source)[i]->name().c_str());
@@ -856,7 +875,6 @@ typedef std::vector<Element*> ElementVec;
 %typemap(python,out) CSkeletonNodeVector* {
   // typemap(python, out) CSkeletonNodeVector*
   CSkeletonNodeVector::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
   $target = PyList_New((Py_ssize_t) sz);
   for(CSkeletonNodeVector::size_type i=0; i<sz; i++) {
     // Create wrapped swig object.  Do NOT take ownership.
@@ -874,7 +892,6 @@ typedef std::vector<Element*> ElementVec;
 %typemap(python,out) CSkeletonFaceVector* {
   // typemap(python, out) CSkeletonFaceVector*
   CSkeletonFaceVector::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
   $target = PyList_New((Py_ssize_t) sz);
   for(CSkeletonFaceVector::size_type i=0; i<sz; i++) {
     // Create wrapped swig object.  Do NOT take ownership.
@@ -891,7 +908,6 @@ typedef std::vector<Element*> ElementVec;
 %typemap(python,out) CSkeletonSegmentVector* {
   // typemap(python, out) CSkeletonSegmentVector*
   CSkeletonSegmentVector::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
   $target = PyList_New((Py_ssize_t) sz);
   for(CSkeletonSegmentVector::size_type i=0; i<sz; i++) {
     // Create wrapped swig object.  Do NOT take ownership.
@@ -909,7 +925,6 @@ typedef std::vector<Element*> ElementVec;
 
 %typemap(python,out) CSkeletonElementVector* {
   CSkeletonElementVector::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
   // std::cerr << "********* CSkeletonElementVector typemap: " << sz 
   // 	    << " elements *********" << std::endl;
   $target = PyList_New((Py_ssize_t) sz);
@@ -928,7 +943,6 @@ typedef std::vector<Element*> ElementVec;
 
 %typemap(python,out) CSkeletonSegmentMap* {
   CSkeletonSegmentMap::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
   $target = PyList_New((Py_ssize_t) sz);
   int i = 0;
   for(CSkeletonSegmentMap::iterator it=$source->begin(); it!=$source->end();
@@ -953,7 +967,6 @@ typedef std::vector<Element*> ElementVec;
 
 %typemap(python,out) CSkeletonFaceMap* {
   CSkeletonFaceMap::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
   $target = PyList_New((Py_ssize_t) sz);
   //char _ptemp[128];
   int i=0;
@@ -1015,7 +1028,6 @@ typedef std::vector<Element*> ElementVec;
 
 // %typemap(python,out) CSkeletonSelectableSet* {
 //   CSkeletonSelectableSet::size_type sz = $source->size();
-//   assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
 
 //   // For Python 2.4 and earlier, we build the set "manually".
 //   static PyObject *setType = 0;
@@ -1055,7 +1067,6 @@ typedef std::vector<Element*> ElementVec;
 %typemap(python,out) CSkeletonSelectableSet* {
   // typemap(python,out) CSkeletonSelectableSet*
   CSkeletonSelectableSet::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
   $target = PyList_New((Py_ssize_t) sz);
   int i=0;
   for(CSkeletonSelectableSet::iterator it=$source->begin(); it!=$source->end(); ++it, ++i) {
@@ -1079,7 +1090,6 @@ typedef std::vector<Element*> ElementVec;
 %typemap(python,out) CSkeletonSelectableList* {
   // typemap(python,out) CSkeletonSelectableList*
   CSkeletonSelectableList::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
   $target = PyList_New((Py_ssize_t) sz);
   int i=0;
   for(CSkeletonSelectableList::iterator it=$source->begin(); it!=$source->end(); ++it, ++i) {
@@ -1209,7 +1219,6 @@ typedef std::vector<Element*> ElementVec;
 
 // %typemap(python,out) CDeputySkeletonList* {
 //   CDeputySkeletonList::size_type sz = $source->size();
-//   assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
 //   $target = PyList_New((Py_ssize_t) sz);
 //   //char _ptemp[128];
 //   int i=0;
@@ -1258,7 +1267,6 @@ typedef std::vector<Element*> ElementVec;
 %typemap(python,out) CSkeletonElementSet* {
   // typemap(python,out) CSkeletonElementSet* 
   CSkeletonElementSet::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
   $target = PyList_New((Py_ssize_t) sz); 
   //char _ptemp[128];
   int i=0;
@@ -1436,7 +1444,6 @@ typedef std::vector<Element*> ElementVec;
     pyOne = PyInt_FromLong(1);
   }
   OrientedCSkeletonSegmentVector::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
   $target = PyList_New((Py_ssize_t) sz);
   char _ptemp[128];
   for(OrientedCSkeletonSegmentVector::size_type i=0; i<sz; i++) {
@@ -1469,7 +1476,6 @@ typedef std::vector<Element*> ElementVec;
   }
 
   OrientedCSkeletonSegmentSet::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
 
   // For Python 2.4 and earlier, we build the set "manually".
   static PyObject *setType = 0;
@@ -1525,7 +1531,6 @@ typedef std::vector<Element*> ElementVec;
   }
 
   OrientedCSkeletonFaceSet::size_type sz = $source->size();
-  assert((int)sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
 
   // For Python 2.4 and earlier, we build the set "manually".
   static PyObject *setType = 0;

@@ -45,7 +45,8 @@ class Output(object):
                  srepr=None,
                  instancefn=None, column_names=None,
                  bulk_only=False, surface_only=False,
-                 parent=None):
+                 parent=None,
+                 **kwargs):
         # otype is the type of the output.
 
         # inputs is a list of Parameters specifying the names and
@@ -97,6 +98,8 @@ class Output(object):
 
         if srepr is not None:
             self.srepr = srepr      # short repr
+
+        self.__dict__.update(kwargs)
 
         # 'instancefn' is a function that returns an instance of the
         # OutputVal subclass that this Output will produce.  If it's
@@ -207,7 +210,7 @@ class Output(object):
         try:
             return getattr(self.parent, name)
         except AttributeError:
-            raise AttributeError("Output %s has no attribute named '%s'"
+            raise AttributeError("Output '%s' has no attribute named '%s'"
                                  % (self.name, name))
 
         
@@ -628,6 +631,18 @@ class Output(object):
             strings.append(pvalue.binaryRepr(datafile,pvalue.value))
         return string.join(strings,'')
 
+
+    def allowsArithmetic(self):
+        # _allowsArithmetic is set by PropertyOutputs in
+        # ArithmeticPropertyOutputRegistration and
+        # NonArithmeticPropertyOutputRegistration.  Outputs that don't
+        # allow arithmetic can be printed but not averaged, for
+        # example.
+        try:
+            return self._allowsArithmetic
+        except AttributeError:
+            return True
+
     def dump(self, indent=""):
         if indent=="":
             print "Output dump"
@@ -701,7 +716,8 @@ def defineScalarOutput(path, output, ordering=0):
 #################################################################
 
 class OutputParameter(parameter.Parameter):
-    pass
+    def incomputable(self, context):
+        return self.value is None or self.value.incomputable(context)
 
 # A Parameter whose value is an Output whose value is a scalar.
 class ScalarOutputParameter(OutputParameter):
@@ -713,7 +729,7 @@ class ScalarOutputParameter(OutputParameter):
         return "An <link linkend='Section-Output-Scalar'><classname>Output</classname></link> object whose value is a real number."
 
 # Parameter for outputs which are not positionOutputs, but rather are
-# the values of things.  This class mainly has the valueDesc string.
+# the values of things. 
 class ValueOutputParameter(OutputParameter):
     def checker(self, x):
         if not isinstance(x, Output):

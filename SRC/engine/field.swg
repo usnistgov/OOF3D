@@ -34,7 +34,7 @@ typedef double (*INITFUNC)(const Coord &position, int dof, void *clientdata);
 %pragma(python) code="from ooflib.SWIG.engine.fieldindex import IteratorPPtr"
 %pragma(python) code="from ooflib.SWIG.engine.fieldindex import IndexPPtr"
 %extern "engine/outputval.swg"
-%pragma(python) code="from ooflib.SWIG.engine.outputval import OutputValuePtr"
+%pragma(python) code="from ooflib.SWIG.engine.outputval import ArithmeticOutputValuePtr"
 
 
 // This fails because of the complicated Field virtual inheritance scheme.
@@ -92,8 +92,8 @@ class Field {
   }
   IndexP componenttype();
   IndexP getIndex(char *);	// convert from "x", "xy", etc.
-  OutputValue newOutputValue();
-  OutputValue output(FEMesh*, PointData&);
+  ArithmeticOutputValue newOutputValue();
+  ArithmeticOutputValue output(FEMesh*, PointData&);
 };
 
 

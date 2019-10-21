@@ -29,9 +29,9 @@ MatrixInput = matrixparamwidgets.MatrixInput
 class Rank3TensorWidget(MatrixInput):
     def __init__(self, param, scope=None, name=None, verbose=False):
         debug.mainthreadTest()
-        MatrixInput.__init__(self, "", 3,6, value=None, scope=scope, name=name,
+        MatrixInput.__init__(self, 3,6, value=None, scope=scope, name=name,
                              verbose=verbose)
-        for (k,f) in self.floats.items():
+        for (k,f) in self.widgets.items():
             if k not in self.excluded:
                 f.gtk.set_editable(0)
                 f.gtk.set_sensitive(0)
@@ -49,14 +49,14 @@ class C1Rank3TensorWidget(Rank3TensorWidget):
     # list is too long.
     def __init__(self, param, scope=None, name=None, verbose=False):
         debug.mainthreadTest()
-        MatrixInput.__init__(self, "", 3, 6, value=None, scope=scope, name=name,
+        MatrixInput.__init__(self, 3, 6, value=None, scope=scope, name=name,
                              verbose=verbose)
             
         for i in range(3):
             for j in range(6):
-                gtklogger.connect(self.floats[(i, j)].gtk, 
+                gtklogger.connect(self.widgets[(i, j)].gtk, 
                                   "activate", self.new_value, None)
-                gtklogger.connect(self.floats[(i, j)].gtk,
+                gtklogger.connect(self.widgets[(i, j)].gtk,
                                   "focus_out_event", self.new_value)
         
         self.set_values(param.value)
@@ -67,26 +67,26 @@ class C1Rank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(0,0)].set_value(self.value.get(0,0, 0))
-                self.floats[(0,1)].set_value(self.value.get(0,1, 1))
-                self.floats[(0,2)].set_value(self.value.get(0,2, 2))
-                self.floats[(0,3)].set_value(self.value.get(0, 2, 1))
-                self.floats[(0,4)].set_value(self.value.get(0,0, 2))
-                self.floats[(0,5)].set_value(self.value.get(0,0, 1))
+                self.widgets[(0,0)].set_value(self.value.get(0,0, 0))
+                self.widgets[(0,1)].set_value(self.value.get(0,1, 1))
+                self.widgets[(0,2)].set_value(self.value.get(0,2, 2))
+                self.widgets[(0,3)].set_value(self.value.get(0, 2, 1))
+                self.widgets[(0,4)].set_value(self.value.get(0,0, 2))
+                self.widgets[(0,5)].set_value(self.value.get(0,0, 1))
                 ##
-                self.floats[(1,0)].set_value(self.value.get(1,0, 0))
-                self.floats[(1,1)].set_value(self.value.get(1,1, 1))
-                self.floats[(1,2)].set_value(self.value.get(1,2, 2))
-                self.floats[(1,3)].set_value(self.value.get(1, 2, 1))
-                self.floats[(1,4)].set_value(self.value.get(1,0, 2))
-                self.floats[(1,5)].set_value(self.value.get(1,0, 1))
+                self.widgets[(1,0)].set_value(self.value.get(1,0, 0))
+                self.widgets[(1,1)].set_value(self.value.get(1,1, 1))
+                self.widgets[(1,2)].set_value(self.value.get(1,2, 2))
+                self.widgets[(1,3)].set_value(self.value.get(1, 2, 1))
+                self.widgets[(1,4)].set_value(self.value.get(1,0, 2))
+                self.widgets[(1,5)].set_value(self.value.get(1,0, 1))
                 ##
-                self.floats[(2,0)].set_value(self.value.get(2,0, 0))
-                self.floats[(2,1)].set_value(self.value.get(2,1, 1))
-                self.floats[(2,2)].set_value(self.value.get(2,2, 2))
-                self.floats[(2,3)].set_value(self.value.get(2, 2, 1))
-                self.floats[(2,4)].set_value(self.value.get(2,0, 2))
-                self.floats[(2,5)].set_value(self.value.get(2,0, 1))
+                self.widgets[(2,0)].set_value(self.value.get(2,0, 0))
+                self.widgets[(2,1)].set_value(self.value.get(2,1, 1))
+                self.widgets[(2,2)].set_value(self.value.get(2,2, 2))
+                self.widgets[(2,3)].set_value(self.value.get(2, 2, 1))
+                self.widgets[(2,4)].set_value(self.value.get(2,0, 2))
+                self.widgets[(2,5)].set_value(self.value.get(2,0, 1))
             finally:
                 self.unblock_signals()
         self.gtk.show_all()
@@ -94,24 +94,24 @@ class C1Rank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.C1Rank3Tensor(
-                d11= self.floats[(0,0)].get_value(),
-                d12 = self.floats[(0,1)].get_value(),
-                d13 = self.floats[(0,2)].get_value(),
-                d14 = self.floats[(0,3)].get_value(),
-                d15 = self.floats[(0,4)].get_value(),
-                d16 = self.floats[(0,5)].get_value(),
-                d21 = self.floats[(1,0)].get_value(),
-                d22 = self.floats[(1,1)].get_value(),
-                d23 = self.floats[(1,2)].get_value(),
-                d24 = self.floats[(1,3)].get_value(),
-                d25 = self.floats[(1,4)].get_value(),
-                d26 = self.floats[(1,5)].get_value(),
-                d31 = self.floats[(2,0)].get_value(),
-                d32 = self.floats[(2,1)].get_value(),
-                d33 = self.floats[(2,2)].get_value(),
-                d34 = self.floats[(2,3)].get_value(),
-                d35 = self.floats[(2,4)].get_value(),
-                d36 = self.floats[(2,5)].get_value()
+                d11= self.widgets[(0,0)].get_value(),
+                d12 = self.widgets[(0,1)].get_value(),
+                d13 = self.widgets[(0,2)].get_value(),
+                d14 = self.widgets[(0,3)].get_value(),
+                d15 = self.widgets[(0,4)].get_value(),
+                d16 = self.widgets[(0,5)].get_value(),
+                d21 = self.widgets[(1,0)].get_value(),
+                d22 = self.widgets[(1,1)].get_value(),
+                d23 = self.widgets[(1,2)].get_value(),
+                d24 = self.widgets[(1,3)].get_value(),
+                d25 = self.widgets[(1,4)].get_value(),
+                d26 = self.widgets[(1,5)].get_value(),
+                d31 = self.widgets[(2,0)].get_value(),
+                d32 = self.widgets[(2,1)].get_value(),
+                d33 = self.widgets[(2,2)].get_value(),
+                d34 = self.widgets[(2,3)].get_value(),
+                d35 = self.widgets[(2,4)].get_value(),
+                d36 = self.widgets[(2,5)].get_value()
                 )
         finally:
             self.set_values(result)
@@ -132,16 +132,16 @@ class C2Rank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(0,3)].set_value(self.value.get(0, 2, 1))
-                self.floats[(0,5)].set_value(self.value.get(0,0, 1))
+                self.widgets[(0,3)].set_value(self.value.get(0, 2, 1))
+                self.widgets[(0,5)].set_value(self.value.get(0,0, 1))
                 ##
-                self.floats[(1,0)].set_value(self.value.get(1,0, 0))
-                self.floats[(1,1)].set_value(self.value.get(1,1, 1))
-                self.floats[(1,2)].set_value(self.value.get(1,2, 2))
-                self.floats[(1,4)].set_value(self.value.get(1,0, 2))
+                self.widgets[(1,0)].set_value(self.value.get(1,0, 0))
+                self.widgets[(1,1)].set_value(self.value.get(1,1, 1))
+                self.widgets[(1,2)].set_value(self.value.get(1,2, 2))
+                self.widgets[(1,4)].set_value(self.value.get(1,0, 2))
                 ##
-                self.floats[(2,3)].set_value(self.value.get(2, 2, 1))
-                self.floats[(2,5)].set_value(self.value.get(2,0, 1))
+                self.widgets[(2,3)].set_value(self.value.get(2, 2, 1))
+                self.widgets[(2,5)].set_value(self.value.get(2,0, 1))
             finally:
                 self.unblock_signals()
         self.gtk.show_all()
@@ -149,14 +149,14 @@ class C2Rank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.C2Rank3Tensor(
-                d14 = self.floats[(0,3)].get_value(),
-                d16 = self.floats[(0,5)].get_value(),
-                d21 = self.floats[(1,0)].get_value(),
-                d22 = self.floats[(1,1)].get_value(),
-                d23 = self.floats[(1,2)].get_value(),
-                d25 = self.floats[(1,4)].get_value(),
-                d34 = self.floats[(2,3)].get_value(),
-                d36 = self.floats[(2,5)].get_value()
+                d14 = self.widgets[(0,3)].get_value(),
+                d16 = self.widgets[(0,5)].get_value(),
+                d21 = self.widgets[(1,0)].get_value(),
+                d22 = self.widgets[(1,1)].get_value(),
+                d23 = self.widgets[(1,2)].get_value(),
+                d25 = self.widgets[(1,4)].get_value(),
+                d34 = self.widgets[(2,3)].get_value(),
+                d36 = self.widgets[(2,5)].get_value()
                 )
         finally:
             self.set_values(result)
@@ -178,18 +178,18 @@ class CsRank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(0,0)].set_value(self.value.get(0,0, 0))
-                self.floats[(0,1)].set_value(self.value.get(0,1, 1))
-                self.floats[(0,2)].set_value(self.value.get(0,2, 2))
-                self.floats[(0,4)].set_value(self.value.get(0,0, 2))
+                self.widgets[(0,0)].set_value(self.value.get(0,0, 0))
+                self.widgets[(0,1)].set_value(self.value.get(0,1, 1))
+                self.widgets[(0,2)].set_value(self.value.get(0,2, 2))
+                self.widgets[(0,4)].set_value(self.value.get(0,0, 2))
                 ##
-                self.floats[(1,3)].set_value(self.value.get(1, 2, 1))
-                self.floats[(1,5)].set_value(self.value.get(1,0, 1))
+                self.widgets[(1,3)].set_value(self.value.get(1, 2, 1))
+                self.widgets[(1,5)].set_value(self.value.get(1,0, 1))
                 ##
-                self.floats[(2,0)].set_value(self.value.get(2,0, 0))
-                self.floats[(2,1)].set_value(self.value.get(2,1, 1))
-                self.floats[(2,2)].set_value(self.value.get(2,2, 2))
-                self.floats[(2,4)].set_value(self.value.get(2,0, 2))
+                self.widgets[(2,0)].set_value(self.value.get(2,0, 0))
+                self.widgets[(2,1)].set_value(self.value.get(2,1, 1))
+                self.widgets[(2,2)].set_value(self.value.get(2,2, 2))
+                self.widgets[(2,4)].set_value(self.value.get(2,0, 2))
             finally:
                 self.unblock_signals()
         self.gtk.show_all()
@@ -197,16 +197,16 @@ class CsRank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.CsRank3Tensor(
-                d11= self.floats[(0,0)].get_value(),
-                d12 = self.floats[(0,1)].get_value(),
-                d13 = self.floats[(0,2)].get_value(),
-                d15 = self.floats[(0,4)].get_value(),
-                d24 = self.floats[(1,3)].get_value(),
-                d26 = self.floats[(1,5)].get_value(),
-                d31 = self.floats[(2,0)].get_value(),
-                d32 = self.floats[(2,1)].get_value(),
-                d33 = self.floats[(2,2)].get_value(),
-                d35 = self.floats[(2,4)].get_value()
+                d11= self.widgets[(0,0)].get_value(),
+                d12 = self.widgets[(0,1)].get_value(),
+                d13 = self.widgets[(0,2)].get_value(),
+                d15 = self.widgets[(0,4)].get_value(),
+                d24 = self.widgets[(1,3)].get_value(),
+                d26 = self.widgets[(1,5)].get_value(),
+                d31 = self.widgets[(2,0)].get_value(),
+                d32 = self.widgets[(2,1)].get_value(),
+                d33 = self.widgets[(2,2)].get_value(),
+                d35 = self.widgets[(2,4)].get_value()
                 )
         finally:
             self.set_values(result)
@@ -227,9 +227,9 @@ class D2Rank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(0,3)].set_value(self.value.get(0, 2, 1))
-                self.floats[(1,4)].set_value(self.value.get(1,0, 2))
-                self.floats[(2,5)].set_value(self.value.get(2,0, 1))
+                self.widgets[(0,3)].set_value(self.value.get(0, 2, 1))
+                self.widgets[(1,4)].set_value(self.value.get(1,0, 2))
+                self.widgets[(2,5)].set_value(self.value.get(2,0, 1))
             finally:
                 self.unblock_signals()
         self.gtk.show_all()
@@ -237,9 +237,9 @@ class D2Rank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.D2Rank3Tensor(
-                d14 = self.floats[(0,3)].get_value(),
-                d25 = self.floats[(1,4)].get_value(),
-                d36 = self.floats[(2,5)].get_value()
+                d14 = self.widgets[(0,3)].get_value(),
+                d25 = self.widgets[(1,4)].get_value(),
+                d36 = self.widgets[(2,5)].get_value()
                 )
         finally:
             self.set_values(result)
@@ -259,11 +259,11 @@ class C2vRank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(0,4)].set_value(self.value.get(0,0, 2))
-                self.floats[(1,3)].set_value(self.value.get(1, 2, 1))
-                self.floats[(2,0)].set_value(self.value.get(2,0, 0))
-                self.floats[(2,1)].set_value(self.value.get(2,1, 1))
-                self.floats[(2,2)].set_value(self.value.get(2,2, 2))
+                self.widgets[(0,4)].set_value(self.value.get(0,0, 2))
+                self.widgets[(1,3)].set_value(self.value.get(1, 2, 1))
+                self.widgets[(2,0)].set_value(self.value.get(2,0, 0))
+                self.widgets[(2,1)].set_value(self.value.get(2,1, 1))
+                self.widgets[(2,2)].set_value(self.value.get(2,2, 2))
             finally:
                 self.unblock_signals()
         self.gtk.show_all()
@@ -271,11 +271,11 @@ class C2vRank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.C2vRank3Tensor(
-                d15 = self.floats[(0,4)].get_value(),
-                d24 = self.floats[(1,3)].get_value(),
-                d31 = self.floats[(2,0)].get_value(),
-                d32 = self.floats[(2,1)].get_value(),
-                d33 = self.floats[(2,2)].get_value()
+                d15 = self.widgets[(0,4)].get_value(),
+                d24 = self.widgets[(1,3)].get_value(),
+                d31 = self.widgets[(2,0)].get_value(),
+                d32 = self.widgets[(2,1)].get_value(),
+                d33 = self.widgets[(2,2)].get_value()
                 )
         finally:
             self.set_values(result)
@@ -293,10 +293,10 @@ class C4Rank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.C4Rank3Tensor(
-                d14 = self.floats[(0,3)].get_value(),
-                d15 = self.floats[(0,4)].get_value(),
-                d31 = self.floats[(2,0)].get_value(),
-                d33 = self.floats[(2,2)].get_value() )
+                d14 = self.widgets[(0,3)].get_value(),
+                d15 = self.widgets[(0,4)].get_value(),
+                d31 = self.widgets[(2,0)].get_value(),
+                d33 = self.widgets[(2,2)].get_value() )
         finally:
             self.set_values(result)
     def set_values(self, value): 
@@ -305,16 +305,16 @@ class C4Rank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(0,3)].set_value(self.value.get(0, 2, 1))
-                self.floats[(1,4)].set_value(-self.value.get(0,2,1))
+                self.widgets[(0,3)].set_value(self.value.get(0, 2, 1))
+                self.widgets[(1,4)].set_value(-self.value.get(0,2,1))
                 ##
-                self.floats[(2,0)].set_value(self.value.get(2,0, 0))
-                self.floats[(2,1)].set_value(self.value.get(2,0, 0))
+                self.widgets[(2,0)].set_value(self.value.get(2,0, 0))
+                self.widgets[(2,1)].set_value(self.value.get(2,0, 0))
                 ##
-                self.floats[(0,4)].set_value(self.value.get(0,0, 2))
-                self.floats[(1,3)].set_value(self.value.get(0,0, 2))
+                self.widgets[(0,4)].set_value(self.value.get(0,0, 2))
+                self.widgets[(1,3)].set_value(self.value.get(0,0, 2))
                 ##
-                self.floats[(2,2)].set_value(self.value.get(2,2, 2))
+                self.widgets[(2,2)].set_value(self.value.get(2,2, 2))
             finally:
                 self.unblock_signals()
         self.gtk.show_all()
@@ -334,16 +334,16 @@ class C4iRank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(0,3)].set_value(self.value.get(0, 2, 1))
-                self.floats[(1,4)].set_value(self.value.get(0,2,1))
+                self.widgets[(0,3)].set_value(self.value.get(0, 2, 1))
+                self.widgets[(1,4)].set_value(self.value.get(0,2,1))
                 ##
-                self.floats[(2,0)].set_value(self.value.get(2,0, 0))
-                self.floats[(2,1)].set_value(-self.value.get(2,0, 0))
+                self.widgets[(2,0)].set_value(self.value.get(2,0, 0))
+                self.widgets[(2,1)].set_value(-self.value.get(2,0, 0))
                 ##
-                self.floats[(0,4)].set_value(self.value.get(0,0, 2))
-                self.floats[(1,3)].set_value(-self.value.get(0,0, 2))
+                self.widgets[(0,4)].set_value(self.value.get(0,0, 2))
+                self.widgets[(1,3)].set_value(-self.value.get(0,0, 2))
                 ##
-                self.floats[(2,5)].set_value(self.value.get(2,0, 1))
+                self.widgets[(2,5)].set_value(self.value.get(2,0, 1))
             finally:
                 self.unblock_signals()
         self.gtk.show_all()
@@ -351,10 +351,10 @@ class C4iRank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.C4iRank3Tensor(
-                d14 = self.floats[(0,3)].get_value(),
-                d15 = self.floats[(0,4)].get_value(),
-                d31 = self.floats[(2,0)].get_value(),
-                d36 = self.floats[(2,5)].get_value()
+                d14 = self.widgets[(0,3)].get_value(),
+                d15 = self.widgets[(0,4)].get_value(),
+                d31 = self.widgets[(2,0)].get_value(),
+                d36 = self.widgets[(2,5)].get_value()
                 )
         finally:
             self.set_values(result)
@@ -375,8 +375,8 @@ class D4Rank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(0,3)].set_value(self.value.get(0, 2, 1))
-                self.floats[(1,4)].set_value(-self.value.get(0,2,1))
+                self.widgets[(0,3)].set_value(self.value.get(0, 2, 1))
+                self.widgets[(1,4)].set_value(-self.value.get(0,2,1))
             finally:
                 self.unblock_signals()
             ##
@@ -385,7 +385,7 @@ class D4Rank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.D4Rank3Tensor(
-                d14 = self.floats[(0,3)].get_value()
+                d14 = self.widgets[(0,3)].get_value()
                 )
         finally:
             self.set_values(result)
@@ -406,11 +406,11 @@ class C4vRank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(2,0)].set_value(self.value.get(2,0, 0))
-                self.floats[(2,1)].set_value(self.value.get(2,0, 0))
-                self.floats[(2,2)].set_value(self.value.get(2,2,2))
-                self.floats[(0,4)].set_value(self.value.get(0,0,2))
-                self.floats[(1,3)].set_value(self.value.get(1,1,2))
+                self.widgets[(2,0)].set_value(self.value.get(2,0, 0))
+                self.widgets[(2,1)].set_value(self.value.get(2,0, 0))
+                self.widgets[(2,2)].set_value(self.value.get(2,2,2))
+                self.widgets[(0,4)].set_value(self.value.get(0,0,2))
+                self.widgets[(1,3)].set_value(self.value.get(1,1,2))
             finally:
                 self.unblock_signals()
         self.gtk.show_all()
@@ -418,9 +418,9 @@ class C4vRank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.C4vRank3Tensor(
-                d15 = self.floats[(0,4)].get_value(),
-                d31= self.floats[(2,0)].get_value(),
-                d33 = self.floats[(2,2)].get_value())
+                d15 = self.widgets[(0,4)].get_value(),
+                d31= self.widgets[(2,0)].get_value(),
+                d33 = self.widgets[(2,2)].get_value())
         finally:
             self.set_values(result)
 
@@ -440,9 +440,9 @@ class D2dRank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(0,3)].set_value(self.value.get(0, 2, 1))
-                self.floats[(1,4)].set_value(self.value.get(0,2,1))
-                self.floats[(2,5)].set_value(self.value.get(2,0, 1))
+                self.widgets[(0,3)].set_value(self.value.get(0, 2, 1))
+                self.widgets[(1,4)].set_value(self.value.get(0,2,1))
+                self.widgets[(2,5)].set_value(self.value.get(2,0, 1))
             finally:
                 self.unblock_signals()
 
@@ -451,8 +451,8 @@ class D2dRank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.D2dRank3Tensor(
-                d14 = self.floats[(0,3)].get_value(),
-                d36 = self.floats[(2,5)].get_value()
+                d14 = self.widgets[(0,3)].get_value(),
+                d36 = self.widgets[(2,5)].get_value()
                 )
         finally:
             self.set_values(result)
@@ -472,19 +472,19 @@ class C3Rank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(0,0)].set_value(self.value.get(0, 0, 0)) # d11
-                self.floats[(0,1)].set_value(-self.value.get(0, 0, 0)) # -d11
-                self.floats[(1,5)].set_value(-2*self.value.get(0, 0, 0)) # 2*d11
-                self.floats[(0,3)].set_value(self.value.get(0, 2, 1)) # d14
-                self.floats[(1,4)].set_value(-self.value.get(0, 2, 1)) #-d14
-                self.floats[(0,4)].set_value(self.value.get(0, 0, 2)) # d15
-                self.floats[(1,3)].set_value(self.value.get(0, 0, 2)) # d15
-                self.floats[(1,1)].set_value(self.value.get(1,1,1)) # d22
-                self.floats[(1,0)].set_value(-self.value.get(1,1,1)) # -d22
-                self.floats[(0,5)].set_value(-2.0*self.value.get(1,1,1)) #-2*d22
-                self.floats[(2,0)].set_value(self.value.get(2,0,0)) # d31
-                self.floats[(2,1)].set_value(self.value.get(2,0,0)) # d31
-                self.floats[(2,2)].set_value(self.value.get(2,2,2)) # d33
+                self.widgets[(0,0)].set_value(self.value.get(0, 0, 0)) # d11
+                self.widgets[(0,1)].set_value(-self.value.get(0, 0, 0)) # -d11
+                self.widgets[(1,5)].set_value(-2*self.value.get(0, 0, 0))# 2*d11
+                self.widgets[(0,3)].set_value(self.value.get(0, 2, 1)) # d14
+                self.widgets[(1,4)].set_value(-self.value.get(0, 2, 1)) #-d14
+                self.widgets[(0,4)].set_value(self.value.get(0, 0, 2)) # d15
+                self.widgets[(1,3)].set_value(self.value.get(0, 0, 2)) # d15
+                self.widgets[(1,1)].set_value(self.value.get(1,1,1)) # d22
+                self.widgets[(1,0)].set_value(-self.value.get(1,1,1)) # -d22
+                self.widgets[(0,5)].set_value(-2.0*self.value.get(1,1,1))#-2*d22
+                self.widgets[(2,0)].set_value(self.value.get(2,0,0)) # d31
+                self.widgets[(2,1)].set_value(self.value.get(2,0,0)) # d31
+                self.widgets[(2,2)].set_value(self.value.get(2,2,2)) # d33
             finally:
                 self.unblock_signals()
         self.gtk.show_all()
@@ -492,12 +492,12 @@ class C3Rank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.C3Rank3Tensor(
-                d11 = self.floats[(0,0)].get_value(),
-                d14 = self.floats[(0,3)].get_value(),
-                d15 = self.floats[(0,4)].get_value(),
-                d22 = self.floats[(1,1)].get_value(),
-                d31 = self.floats[(2,0)].get_value(),
-                d33 = self.floats[(2,2)].get_value()
+                d11 = self.widgets[(0,0)].get_value(),
+                d14 = self.widgets[(0,3)].get_value(),
+                d15 = self.widgets[(0,4)].get_value(),
+                d22 = self.widgets[(1,1)].get_value(),
+                d31 = self.widgets[(2,0)].get_value(),
+                d33 = self.widgets[(2,2)].get_value()
                 )
         finally:
             self.set_values(result)
@@ -517,11 +517,11 @@ class D3Rank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(0,0)].set_value(self.value.get(0, 0, 0)) ## d11
-                self.floats[(0,1)].set_value(-self.value.get(0, 0, 0)) ## -d11
-                self.floats[(1,5)].set_value(-2*self.value.get(0, 0, 0))## 2*d11
-                self.floats[(0,3)].set_value(self.value.get(0, 2, 1)) ## d14
-                self.floats[(1,4)].set_value(-self.value.get(0, 2, 1))##-d14
+                self.widgets[(0,0)].set_value(self.value.get(0, 0, 0)) # d11
+                self.widgets[(0,1)].set_value(-self.value.get(0, 0, 0)) # -d11
+                self.widgets[(1,5)].set_value(-2*self.value.get(0, 0, 0))# 2*d11
+                self.widgets[(0,3)].set_value(self.value.get(0, 2, 1)) # d14
+                self.widgets[(1,4)].set_value(-self.value.get(0, 2, 1)) #-d14
             finally:
                 self.unblock_signals()
         self.gtk.show_all()
@@ -529,8 +529,8 @@ class D3Rank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.D3Rank3Tensor(
-                d11 = self.floats[(0,0)].get_value(),
-                d14 = self.floats[(0,3)].get_value()
+                d11 = self.widgets[(0,0)].get_value(),
+                d14 = self.widgets[(0,3)].get_value()
                 )
         finally:
             self.set_values(result)
@@ -552,14 +552,14 @@ class C3vRank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(0,4)].set_value(self.value.get(0, 0, 2)) ## d15
-                self.floats[(1,3)].set_value(self.value.get(0, 0, 2)) ## d15
-                self.floats[(1,1)].set_value(self.value.get(1,1,1)) ## d22
-                self.floats[(1,0)].set_value(-self.value.get(1,1,1)) ## -d22
-                self.floats[(0,5)].set_value(-2.0*self.value.get(1,1,1))##-2*d22
-                self.floats[(2,0)].set_value(self.value.get(2,0,0)) ## d31
-                self.floats[(2,1)].set_value(self.value.get(2,0,0)) ## d31
-                self.floats[(2,2)].set_value(self.value.get(2,2,2)) ## d33
+                self.widgets[(0,4)].set_value(self.value.get(0, 0, 2)) ## d15
+                self.widgets[(1,3)].set_value(self.value.get(0, 0, 2)) ## d15
+                self.widgets[(1,1)].set_value(self.value.get(1,1,1)) ## d22
+                self.widgets[(1,0)].set_value(-self.value.get(1,1,1)) ## -d22
+                self.widgets[(0,5)].set_value(-2.0*self.value.get(1,1,1))##-2*d22
+                self.widgets[(2,0)].set_value(self.value.get(2,0,0)) ## d31
+                self.widgets[(2,1)].set_value(self.value.get(2,0,0)) ## d31
+                self.widgets[(2,2)].set_value(self.value.get(2,2,2)) ## d33
             finally:
                 self.unblock_signals()
         self.gtk.show_all()
@@ -567,10 +567,10 @@ class C3vRank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.C3vRank3Tensor(
-                d15 = self.floats[(0,4)].get_value(),
-                d22 = self.floats[(1,1)].get_value(),
-                d31 = self.floats[(2,0)].get_value(),
-                d33 = self.floats[(2,2)].get_value()
+                d15 = self.widgets[(0,4)].get_value(),
+                d22 = self.widgets[(1,1)].get_value(),
+                d31 = self.widgets[(2,0)].get_value(),
+                d33 = self.widgets[(2,2)].get_value()
                 )
         finally:
             self.set_values(result)
@@ -591,13 +591,13 @@ class C6Rank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(2,0)].set_value(self.value.get(2,0, 0))
-                self.floats[(2,1)].set_value(self.value.get(2,0, 0))
-                self.floats[(2,2)].set_value(self.value.get(2,2,2))
-                self.floats[(0,4)].set_value(self.value.get(0,0,2))
-                self.floats[(1,3)].set_value(self.value.get(1,1,2))
-                self.floats[(0,3)].set_value(self.value.get(0,2,1))
-                self.floats[(1,4)].set_value(-self.value.get(0,2,1))
+                self.widgets[(2,0)].set_value(self.value.get(2,0, 0))
+                self.widgets[(2,1)].set_value(self.value.get(2,0, 0))
+                self.widgets[(2,2)].set_value(self.value.get(2,2,2))
+                self.widgets[(0,4)].set_value(self.value.get(0,0,2))
+                self.widgets[(1,3)].set_value(self.value.get(1,1,2))
+                self.widgets[(0,3)].set_value(self.value.get(0,2,1))
+                self.widgets[(1,4)].set_value(-self.value.get(0,2,1))
             finally:
                 self.unblock_signals()
         self.gtk.show_all()
@@ -605,10 +605,10 @@ class C6Rank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.C6Rank3Tensor(
-                d14 = self.floats[(0,3)].get_value(),
-                d15 = self.floats[(0,4)].get_value(),
-                d31 = self.floats[(2,0)].get_value(),
-                d33 = self.floats[(2,2)].get_value()
+                d14 = self.widgets[(0,3)].get_value(),
+                d15 = self.widgets[(0,4)].get_value(),
+                d31 = self.widgets[(2,0)].get_value(),
+                d33 = self.widgets[(2,2)].get_value()
                 )
         finally:
             self.set_values(result)
@@ -630,13 +630,13 @@ class D6iRank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(0,0)].set_value(self.value.get(0, 0, 0)) ## d11
-                self.floats[(0,1)].set_value(-self.value.get(0, 0, 0)) ## -d11
-                self.floats[(1,5)].set_value(-2*self.value.get(0, 0, 0))## 2*d11
+                self.widgets[(0,0)].set_value(self.value.get(0, 0, 0)) # d11
+                self.widgets[(0,1)].set_value(-self.value.get(0, 0, 0)) # -d11
+                self.widgets[(1,5)].set_value(-2*self.value.get(0, 0, 0))# 2*d11
 
-                self.floats[(1,1)].set_value(self.value.get(1,1,1)) ## d22
-                self.floats[(1,0)].set_value(-self.value.get(1,1,1)) ## -d22
-                self.floats[(0,5)].set_value(-2.0*self.value.get(1,1,1))##-2*d22
+                self.widgets[(1,1)].set_value(self.value.get(1,1,1)) # d22
+                self.widgets[(1,0)].set_value(-self.value.get(1,1,1)) # -d22
+                self.widgets[(0,5)].set_value(-2.0*self.value.get(1,1,1))#-2*d22
             finally:
                 self.unblock_signals()
         self.gtk.show_all()
@@ -644,8 +644,8 @@ class D6iRank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.D6iRank3Tensor(
-                d11 = self.floats[(0,0)].get_value(),
-                d22 = self.floats[(1,1)].get_value()
+                d11 = self.widgets[(0,0)].get_value(),
+                d22 = self.widgets[(1,1)].get_value()
                 )
         finally:
             self.set_values(result)
@@ -668,8 +668,8 @@ class D6Rank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(0,3)].set_value(self.value.get(0,2,1))
-                self.floats[(1,4)].set_value(-self.value.get(0,2,1))
+                self.widgets[(0,3)].set_value(self.value.get(0,2,1))
+                self.widgets[(1,4)].set_value(-self.value.get(0,2,1))
             finally:
                 self.unblock_signals()
         self.gtk.show_all()
@@ -677,7 +677,7 @@ class D6Rank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.D6Rank3Tensor(
-                d14 = self.floats[(0,3)].get_value()
+                d14 = self.widgets[(0,3)].get_value()
                 )
         finally:
             self.set_values(result)
@@ -700,11 +700,11 @@ class C6vRank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(2,0)].set_value(self.value.get(2,0, 0))
-                self.floats[(2,1)].set_value(self.value.get(2,0, 0))
-                self.floats[(2,2)].set_value(self.value.get(2,2,2))
-                self.floats[(0,4)].set_value(self.value.get(0,0,2))
-                self.floats[(1,3)].set_value(self.value.get(1,1,2))
+                self.widgets[(2,0)].set_value(self.value.get(2,0, 0))
+                self.widgets[(2,1)].set_value(self.value.get(2,0, 0))
+                self.widgets[(2,2)].set_value(self.value.get(2,2,2))
+                self.widgets[(0,4)].set_value(self.value.get(0,0,2))
+                self.widgets[(1,3)].set_value(self.value.get(1,1,2))
             finally:
                 self.unblock_signals()
         self.gtk.show_all()
@@ -712,9 +712,9 @@ class C6vRank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.C6vRank3Tensor(
-                d15 = self.floats[(0,4)].get_value(),
-                d31= self.floats[(2,0)].get_value(),
-                d33 = self.floats[(2,2)].get_value()   )
+                d15 = self.widgets[(0,4)].get_value(),
+                d31= self.widgets[(2,0)].get_value(),
+                d33 = self.widgets[(2,2)].get_value()   )
         finally:
             self.set_values(result)
 
@@ -735,9 +735,9 @@ class D3hRank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(1,1)].set_value(self.value.get(1,1,1)) ## d22
-                self.floats[(1,0)].set_value(-self.value.get(1,1,1)) ## -d22
-                self.floats[(0,5)].set_value(-2.0*self.value.get(1,1,1))##-2*d22
+                self.widgets[(1,1)].set_value(self.value.get(1,1,1)) # d22
+                self.widgets[(1,0)].set_value(-self.value.get(1,1,1)) # -d22
+                self.widgets[(0,5)].set_value(-2.0*self.value.get(1,1,1))#-2*d22
             finally:
                 self.unblock_signals()
 
@@ -746,7 +746,7 @@ class D3hRank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.D3hRank3Tensor(
-                d22 = self.floats[(1,1)].get_value()
+                d22 = self.widgets[(1,1)].get_value()
                 )
         finally:
             self.set_values(result)
@@ -767,9 +767,9 @@ class TdRank3TensorWidget(Rank3TensorWidget):
         if value is not None:
             self.block_signals()
             try:
-                self.floats[(0,3)].set_value(self.value.get(0,2,1))
-                self.floats[(1,4)].set_value(self.value.get(0,2,1))
-                self.floats[(2,5)].set_value(self.value.get(0,2,1))
+                self.widgets[(0,3)].set_value(self.value.get(0,2,1))
+                self.widgets[(1,4)].set_value(self.value.get(0,2,1))
+                self.widgets[(2,5)].set_value(self.value.get(0,2,1))
             finally:
                 self.unblock_signals()
         self.gtk.show_all()
@@ -780,7 +780,7 @@ class TdRank3TensorWidget(Rank3TensorWidget):
         result = self.value
         try:
             result = rank3tensor.TdRank3Tensor(
-                d14 = self.floats[(0,3)].get_value()
+                d14 = self.widgets[(0,3)].get_value()
                 )
         finally:
             self.set_values(result)

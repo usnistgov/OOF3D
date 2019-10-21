@@ -18,6 +18,7 @@ from ooflib.common import debug
 from ooflib.common import microstructure
 from ooflib.common import runtimeflags
 from ooflib.engine import materialmanager
+from ooflib.engine import mesh
 from ooflib.engine import subproblemcontext
 
 
@@ -51,6 +52,13 @@ class MaterialMSPlugIn(microstructure.MicrostructurePlugIn):
             for subppath in subppaths:
                 subpctxt = subproblemcontext.subproblems[[msname]+subppath]
                 subpctxt.changed("Material properties changed.")
-                
+            # Also tell everything that cares whether the mesh data
+            # has changed.  This includes PropertyOutputs that may be
+            # displayed in a mesh data viewer.
+            meshpaths = mesh.meshes.keys(base=msname)
+            for meshpath in meshpaths:
+                meshctxt = mesh.meshes[[msname]+meshpath]
+                switchboard.notify("mesh data changed", meshctxt)
+                  
 
 microstructure.registerMicrostructurePlugIn(MaterialMSPlugIn, "Material")

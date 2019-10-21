@@ -38,7 +38,7 @@ reg = PropertyRegistration(
                                                                    c12=0.5,
                                                                    c44=0.25),
                                     tip=parameter.emptyTipString)],
-    outputs=["Energy"],
+    outputs=["Energy", "Material Constants:Mechanical:Elastic Modulus C"],
     propertyType="Elasticity",
     tip="Cubic linear elasticity.",
     discussion=xmlmenudump.loadFile(
@@ -62,7 +62,7 @@ reg = PropertyRegistration(
                                                 c12=0.5, c13=0.5,
                                                 c33=1.0, c44=0.25),
     tip=parameter.emptyTipString)],
-    outputs=["Energy"],
+    outputs=["Energy", "Material Constants:Mechanical:Elastic Modulus C"],
     propertyType="Elasticity",
     tip="Hexagonal linear elasticity.",
     discussion=xmlmenudump.loadFile(
@@ -86,7 +86,7 @@ reg = PropertyRegistration(
                 c11=1.0, c12=0.5, c13=0.5,
                 c33=1.0, c44=0.25, c66=0.25, c16=0.0),
             tip=parameter.emptyTipString)],
-    outputs=["Energy"],
+    outputs=["Energy", "Material Constants:Mechanical:Elastic Modulus C"],
     propertyType="Elasticity",
     tip="Tetragonal linear elasticity.",
     discussion=xmlmenudump.loadFile(
@@ -108,7 +108,7 @@ reg = PropertyRegistration(
                                         anisocijkl.TrigonalARank4TensorCij(
     c11=1.0, c12=0.5, c13=0.5, c33=1.0, c44=0.25, c14=0.0, c15=0.0),
                                         tip=parameter.emptyTipString)],
-    outputs=["Energy"],
+    outputs=["Energy", "Material Constants:Mechanical:Elastic Modulus C"],
     propertyType="Elasticity",
     tip="Trigonal-A linear elasticity.",
     discussion=xmlmenudump.loadFile(
@@ -130,7 +130,7 @@ reg = PropertyRegistration(
             'cijkl', anisocijkl.TrigonalBRank4TensorCij(
                 c11=1.0, c12=0.5,c13=0.5,c33=1.0,c44=0.25,c14=0.0),
             tip=parameter.emptyTipString)],
-    outputs=["Energy"],
+    outputs=["Energy", "Material Constants:Mechanical:Elastic Modulus C"],
     propertyType="Elasticity",
     tip="Trigonal-B linear elasticity.",
     discussion=xmlmenudump.loadFile(
@@ -154,7 +154,7 @@ reg = PropertyRegistration(
                                       c22=1.0, c23=0.5, c33=1.0,
                                       c44=0.25, c55=0.25, c66=0.25),
     tip=parameter.emptyTipString)],
-    outputs=["Energy"],
+    outputs=["Energy", "Material Constants:Mechanical:Elastic Modulus C"],
     propertyType="Elasticity",
     tip="Orthorhombic linear elasticity.",
     discussion=xmlmenudump.loadFile(
@@ -179,7 +179,7 @@ reg = PropertyRegistration(
                                         c33=0.25, c35=0.0, c44=0.25,
                                         c46=0.0, c55=0.25, c66=0.25),
     tip=parameter.emptyTipString)],
-    outputs=["Energy"],
+    outputs=["Energy", "Material Constants:Mechanical:Elastic Modulus C"],
     propertyType="Elasticity",
     tip="Monoclinic linear elasticity.",
     discussion=xmlmenudump.loadFile(
@@ -206,7 +206,7 @@ reg = PropertyRegistration(
                                    c45=0.0, c46=0.0, c55=0.25, c56=0.0,
                                    c66=0.25),
     tip=parameter.emptyTipString)],
-    outputs=["Energy"],
+    outputs=["Energy", "Material Constants:Mechanical:Elastic Modulus C"],
     propertyType="Elasticity",
     tip="Triclinic linear elasticity.",
     discussion=xmlmenudump.loadFile(

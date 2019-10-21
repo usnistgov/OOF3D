@@ -77,7 +77,7 @@ std::vector<Coord*> *Edge::position_(const std::vector<double> *x) const {
 // between 0 and 1, return a list of lists of field components. The
 // lists will be deleted by Python.
 
-std::vector<OutputValue>*
+std::vector<ArithmeticOutputValue>*
 Edge::outputFields(const FEMesh *mesh, const Field &field,
 		   const std::vector<double> *positions)
   const
@@ -87,16 +87,6 @@ Edge::outputFields(const FEMesh *mesh, const Field &field,
     mcpos[i] = MasterCoord(start + (*positions)[i]*director);
   return el->outputFields(mesh, field, mcpos);
 }
-
-// std::vector<OutputValue>*
-// Edge::outputFieldsAnyway(const CSubProblem *mesh, const Field &field,
-// 			 const DoubleVec *positions) const
-// {
-//   std::vector<MasterCoord> mcpos(positions->size());
-//   for(std::vector<MasterCoord>::size_type i=0; i<mcpos.size(); i++)
-//     mcpos[i] = MasterCoord(start + (*positions)[i]*director);
-//   return el->outputFieldsAnyway(mesh, field, mcpos);
-// }
 
 int Edge::order() {
   return el->mapfun_degree();

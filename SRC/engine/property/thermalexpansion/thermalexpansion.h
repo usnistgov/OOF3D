@@ -56,8 +56,8 @@ public:
   virtual void flux_offset(const FEMesh*, const Element*,
 			   const Flux*, const MasterPosition&,
 			   double time, SmallSystem*) const;
-  virtual void output(const FEMesh*, const Element*, const PropertyOutput*,
-		      const MasterPosition&, OutputVal*) const;
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
 
   virtual int integration_order(const CSubProblem*, const Element*) const;
 
@@ -76,6 +76,8 @@ public:
 			    double t0);
   virtual void cross_reference(Material*);
   virtual void precompute(FEMesh*);
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
   virtual const SymmMatrix3 expansiontensor(const FEMesh*, const Element*,
 					     const MasterPosition&) const;
 private:
@@ -89,6 +91,8 @@ public:
 			      SymmMatrix3 *alpha, double t0);
   virtual void cross_reference(Material*); // finds Orientation
   virtual void precompute(FEMesh*);
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
   virtual const SymmMatrix3 expansiontensor(const FEMesh*, const Element*,
 					     const MasterPosition&) const;
 private:

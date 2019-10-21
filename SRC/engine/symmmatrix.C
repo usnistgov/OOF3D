@@ -11,9 +11,9 @@
 #include <oofconfig.h>
 
 #include "common/coord.h"
-#include "common/corientation.h"
 #include "common/doublevec.h"
 #include "common/ooferror.h"
+#include "engine/corientation.h"
 #include "engine/fieldindex.h"
 #include "engine/ooferror.h"
 #include "engine/symeig3.h"
@@ -292,6 +292,12 @@ SymmMatrix3::SymmMatrix3(double v00, double v11, double v22,
   operator()(0,1) = v01;
 }
 
+const SymmMatrix3 &SymmMatrix3::operator=(const OutputVal &other) {
+  const SymmMatrix3 &othr = dynamic_cast<const SymmMatrix3&>(other);
+  *this = othr;
+  return *this;
+}
+
 OutputVal *SymmMatrix3::clone() const {
   return new SymmMatrix3(*this);
 }
@@ -300,7 +306,7 @@ OutputVal *SymmMatrix3::zero() const {
   return new SymmMatrix3();
 }
 
-OutputVal *SymmMatrix3::one() const {
+SymmMatrix3 *SymmMatrix3::one() const {
   return new SymmMatrix3(1.0, 1.0, 1.0, 1.0, 1.0, 1.0);
 }
 
@@ -526,8 +532,8 @@ IteratorP SymmMatrix3::getIterator() const {
   return IteratorP(new SymTensorIterator());
 }
 
-OutputValue *newSymTensorOutputValue() {
-  return new OutputValue(new SymmMatrix3());
+ArithmeticOutputValue *newSymTensorOutputValue() {
+  return new ArithmeticOutputValue(new SymmMatrix3());
 }
 
 DoubleVec *SymmMatrix3::value_list() const {
@@ -540,4 +546,30 @@ DoubleVec *SymmMatrix3::value_list() const {
   res->push_back(m[2][0]);
   res->push_back(m[1][0]);
   return res;
+}
+
+SymmMatrix3 *SymmMatrix3PropertyOutputInit::operator()(
+					       const ArithmeticPropertyOutput*,
+					       const FEMesh*,
+					       const Element*,
+					       const MasterCoord&) const
+{
+  return new SymmMatrix3();
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Copy values from a SymmMatrix3, modulus, into a ListOutputVal,
+// listdata, given a vector, idxstrs, of strings containing the
+// indices of the desired components as pairs of ints from 1 to 3.
+
+void copyOutputVals(const SymmMatrix3 &modulus, ListOutputVal *listdata,
+		    const std::vector<std::string> &idxstrs)
+{
+  for(unsigned int i=0; i<idxstrs.size(); i++) {
+    const std::string &idxpair = idxstrs[i];
+    int j = int(idxpair[0] - '1');
+    int k = int(idxpair[1] - '1');
+    (*listdata)[i] = modulus(j,k);
+  }
 }

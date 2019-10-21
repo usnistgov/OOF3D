@@ -53,3 +53,34 @@ const Cijkl CAnisoElasticity::cijkl(const FEMesh *mesh, const Element *el,
 const Cijkl &CAnisoElasticity::crystal_cijkl() const {
   return crystal_cijkl_;
 }
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+void CAnisoElasticity::output(FEMesh *mesh,
+			      const Element *element,
+			      const PropertyOutput *output,
+			      const MasterPosition &pos,
+			      OutputVal *data)
+{
+  const std::string &outputname = output->name();
+  if(outputname == "Material Constants:Mechanical:Elastic Modulus C") {
+    ListOutputVal *listdata = dynamic_cast<ListOutputVal*>(data);
+    std::vector<std::string> *idxstrs =
+      output->getListOfStringsParam("components");
+    assert(idxstrs->size() <= listdata->size());
+    const std::string *frame = output->getEnumParam("frame"); // Lab or Crystal
+    
+    if(*frame == "Lab") {
+      // TODO: Use a timestamp and only precompute when necessary.
+      precompute(mesh);
+      copyOutputVals(cijkl(mesh, element, pos), listdata, *idxstrs);
+    }
+    else {
+      assert(*frame == "Crystal");
+      copyOutputVals(crystal_cijkl(), listdata, *idxstrs);
+    }
+    delete idxstrs;
+    delete frame;
+  }
+  Elasticity::output(mesh, element, output, pos, data);
+}

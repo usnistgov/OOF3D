@@ -65,6 +65,8 @@ public:
 					       const MasterPosition&) const;
 private:
   double kappa_;
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
 };
 
 
@@ -78,6 +80,8 @@ public:
 private:
   SymmMatrix3 kappa_;
   OrientationPropBase *orientation;
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
 };
 
 #endif	// HEATCONDUCTIVITY_H

@@ -25,7 +25,7 @@ reg = PropertyRegistration(
     ordering=98,
     params=[parameter.FloatParameter('epsilon',
                                      1.0, tip=parameter.emptyTipString)],
-    outputs=["Energy"],
+    outputs=["Energy", "Material Constants:Electric:Dielectric Permittivity epsilon"],
     propertyType="DielectricPermittivity",
     tip="Isotropic dielectric permittivity.",
     discussion=xmlmenudump.loadFile(
@@ -41,10 +41,11 @@ reg = PropertyRegistration(
     'Electric:DielectricPermittivity:Anisotropic:Triclinic',
     AnisoDielectricPermittivity,
     "ooflib.SWIG.engine.property.permittivity.permittivity",105,
-    [symmmatrix.TriclinicRank2TensorParameter(
-    'epsilon',
-    symmmatrix.TriclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
-    tip=parameter.emptyTipString)],
+    params=[symmmatrix.TriclinicRank2TensorParameter(
+        'epsilon',
+        symmmatrix.TriclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+        tip=parameter.emptyTipString)],
+    outputs=["Energy", "Material Constants:Electric:Dielectric Permittivity epsilon"],   
     propertyType="DielectricPermittivity",
     tip="Triclinic dielectric permittivity",
     discussion=xmlmenudump.loadFile(
@@ -59,10 +60,11 @@ reg = PropertyRegistration(
     'Electric:DielectricPermittivity:Anisotropic:Monoclinic',
     AnisoDielectricPermittivity,
     "ooflib.SWIG.engine.property.permittivity.permittivity",104,
-    [symmmatrix.MonoclinicRank2TensorParameter(
-    'epsilon',
-    symmmatrix.MonoclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
-    tip=parameter.emptyTipString)],
+    params=[symmmatrix.MonoclinicRank2TensorParameter(
+        'epsilon',
+        symmmatrix.MonoclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+        tip=parameter.emptyTipString)],
+    outputs=["Energy", "Material Constants:Electric:Dielectric Permittivity epsilon"],
     propertyType="DielectricPermittivity",
     tip="Monoclinic dielectric permittivity.",
     discussion=xmlmenudump.loadFile(
@@ -77,10 +79,11 @@ reg = PropertyRegistration(
     'Electric:DielectricPermittivity:Anisotropic:Orthorhombic',
     AnisoDielectricPermittivity,
     "ooflib.SWIG.engine.property.permittivity.permittivity",103,
-    [symmmatrix.OrthorhombicRank2TensorParameter(
-    'epsilon',
-    symmmatrix.OrthorhombicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
-    tip=parameter.emptyTipString)],
+    params=[symmmatrix.OrthorhombicRank2TensorParameter(
+        'epsilon',
+        symmmatrix.OrthorhombicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+        tip=parameter.emptyTipString)],
+    outputs=["Energy", "Material Constants:Electric:Dielectric Permittivity epsilon"],
     propertyType="DielectricPermittivity",
     tip="Orthorhombic dielectric permittivity.",
     discussion=xmlmenudump.loadFile(
@@ -95,10 +98,11 @@ reg = PropertyRegistration(
     'Electric:DielectricPermittivity:Anisotropic:Tetragonal',
     AnisoDielectricPermittivity,
     "ooflib.SWIG.engine.property.permittivity.permittivity",101,
-    [symmmatrix.TetragonalRank2TensorParameter(
-    'epsilon',
-    symmmatrix.TetragonalRank2Tensor(xx=1.0, zz=1.0),
-    tip=parameter.emptyTipString)],
+    params=[symmmatrix.TetragonalRank2TensorParameter(
+        'epsilon',
+        symmmatrix.TetragonalRank2Tensor(xx=1.0, zz=1.0),
+        tip=parameter.emptyTipString)],
+    outputs=["Energy", "Material Constants:Electric:Dielectric Permittivity epsilon"],
     propertyType="DielectricPermittivity",
     tip="Tetragonal dielectric permittivity.",
     discussion=xmlmenudump.loadFile(
@@ -113,10 +117,11 @@ reg = PropertyRegistration(
     'Electric:DielectricPermittivity:Anisotropic:Trigonal',
     AnisoDielectricPermittivity,
     "ooflib.SWIG.engine.property.permittivity.permittivity",102,
-    [symmmatrix.TrigonalRank2TensorParameter(
-    'epsilon',
-    symmmatrix.TrigonalRank2Tensor(xx=1.0, zz=0.5),
-    tip=parameter.emptyTipString)],
+    params=[symmmatrix.TrigonalRank2TensorParameter(
+        'epsilon',
+        symmmatrix.TrigonalRank2Tensor(xx=1.0, zz=0.5),
+        tip=parameter.emptyTipString)],
+    outputs=["Energy", "Material Constants:Electric:Dielectric Permittivity epsilon"],
     propertyType="DielectricPermittivity",
     tip="Trigonal dielectric permittivity",
     discussion=xmlmenudump.loadFile(
@@ -131,10 +136,11 @@ reg = PropertyRegistration(
     'Electric:DielectricPermittivity:Anisotropic:Hexagonal',
     AnisoDielectricPermittivity,
     "ooflib.SWIG.engine.property.permittivity.permittivity",100,
-    [symmmatrix.HexagonalRank2TensorParameter(
-    'epsilon',
-    symmmatrix.HexagonalRank2Tensor(xx=1.0, zz=0.5),
-    tip=parameter.emptyTipString)],
+    params=[symmmatrix.HexagonalRank2TensorParameter(
+        'epsilon',
+        symmmatrix.HexagonalRank2Tensor(xx=1.0, zz=0.5),
+        tip=parameter.emptyTipString)],
+    outputs=["Energy", "Material Constants:Electric:Dielectric Permittivity epsilon"],
     propertyType="DielectricPermittivity",
     tip="Hexagonal dielectric permittivity",
     discussion=xmlmenudump.loadFile(
@@ -149,10 +155,11 @@ reg = PropertyRegistration(
     'Electric:DielectricPermittivity:Anisotropic:Cubic',
     AnisoDielectricPermittivity,
     "ooflib.SWIG.engine.property.permittivity.permittivity",99,
-    [symmmatrix.CubicRank2TensorParameter(
-    'epsilon',
-    symmmatrix.CubicRank2Tensor(xx=1.0),
-    tip=parameter.emptyTipString)],
+    params=[symmmatrix.CubicRank2TensorParameter(
+        'epsilon',
+        symmmatrix.CubicRank2Tensor(xx=1.0),
+        tip=parameter.emptyTipString)],
+    outputs=["Energy", "Material Constants:Electric:Dielectric Permittivity epsilon"],
     propertyType="DielectricPermittivity",
     tip="Cubic dielectric permittivity",
     discussion=xmlmenudump.loadFile(
@@ -166,9 +173,10 @@ reg.fluxInfo(fluxes=[problem.Total_Polarization], fields=[problem.Voltage],
 reg = PropertyRegistration(
     'Electric:SpaceCharge', ChargeDensity,
     "ooflib.SWIG.engine.property.permittivity.permittivity",150,
-    [
+    params=[
         parameter.FloatParameter('charge', 0.0, 
                                  tip="electrostatic charge density")],
+    outputs=["Material Constants:Electric:Space Charge"],
     propertyType="ChargeDensity",
     tip="Spatial charge density",
     discussion=xmlmenudump.loadFile(

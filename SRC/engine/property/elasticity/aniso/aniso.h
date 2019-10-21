@@ -37,6 +37,8 @@ public:
   virtual const Cijkl cijkl(const FEMesh*, const Element*,
 			    const MasterPosition&) const;
   virtual const Cijkl &crystal_cijkl() const;
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
 private:
   const OrientationPropBase *orientation;
   virtual void precompute(FEMesh*);

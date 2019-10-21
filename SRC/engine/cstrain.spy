@@ -11,7 +11,7 @@
 from ooflib.SWIG.engine import fieldindex
 from ooflib.SWIG.engine import planarity
 from ooflib.SWIG.engine import symmmatrix
-from ooflib.SWIG.engine.IO import propertyoutput
+from ooflib.SWIG.engine.IO import propertyoutputreg
 from ooflib.common import debug
 from ooflib.common import enum
 from ooflib.common import registeredclass
@@ -144,7 +144,7 @@ class StrainTypeParameter(parameter.RegisteredParameter):
         return StrainTypeParameter(self.name, self.value, self.default,
                                    self.tip)
 
-propertyoutput.SymmMatrix3PropertyOutputRegistration(
+propertyoutputreg.SymmMatrix3PropertyOutputRegistration(
     "Strain",
     initializer=POInitGeometricStrain(),
     parameters=[StrainTypeParameter("type", default=GeometricStrain(),

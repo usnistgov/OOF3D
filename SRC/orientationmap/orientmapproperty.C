@@ -12,7 +12,8 @@
 #include <oofconfig.h>
 
 #include "common/cmicrostructure.h"
-#include "common/corientation.h"
+#include "engine/IO/propertyoutput.h"
+#include "engine/corientation.h"
 #include "engine/element.h"
 #include "engine/femesh.h"
 #include "engine/mastercoord.h"
@@ -28,9 +29,9 @@ OrientationMapProp::~OrientationMapProp() {}
 
 class OrientMapMeshData {
 public:
-  const CMicrostructure *microstructure;
+  CMicrostructure *microstructure;
   OrientMap *odata;
-  OrientMapMeshData(const CMicrostructure *ms, OrientMap *orientmap)
+  OrientMapMeshData(CMicrostructure *ms, OrientMap *orientmap)
     : microstructure(ms),
       odata(orientmap)
   {}
@@ -38,7 +39,7 @@ public:
 
 void OrientationMapProp::precompute(FEMesh *mesh) {
   if(mesh) {
-    const CMicrostructure *microstructure = mesh->get_microstructure();
+    CMicrostructure *microstructure = mesh->get_microstructure();
     OrientMap *orientmap = getOrientMap(microstructure->name());
     if(orientmap == 0)
       throw ErrUserError("Microstructure does not have an Orientation Map!");
@@ -64,6 +65,19 @@ const COrientation *OrientationMapProp::orientation(const FEMesh *mesh,
   // 	    << " ornt= " << ornt << " " << *ornt << std::endl;
   // return ornt;
   return &meshdata->odata->angle(pxl);
+}
+
+void OrientationMapProp::output(FEMesh *mesh,
+				const Element *element,
+				const PropertyOutput *output,
+				const MasterPosition &pos,
+				OutputVal *data)
+{
+  const std::string &outputname = output->name();
+  if(outputname == "Material Constants:Orientation") {
+    COrientation *odata = dynamic_cast<COrientation*>(data);
+    *odata = *orientation(mesh, element, pos);
+  }
 }
 
 const COrientation *OrientationMapProp::orientation() const {

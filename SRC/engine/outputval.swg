@@ -36,6 +36,7 @@ typedef OutputVal NewOutputVal;
 // For transferring ownership to Python.  %new is supposed to add
 // thisown=1 to the wrapper, but it doesn't seem to work if there's
 // also an "out" typemap.
+//** TODO: Does OOF2 need this? Presumably yes.
 %typemap(python, out) NewOutputVal* {
   // typemap(python, out) NewOutputVal*
   $target = $source->pythonObject();
@@ -55,21 +56,30 @@ public:
   int dim();
   NewOutputVal *clone();
   NewOutputVal *zero();
+  %new DoubleList *value_list();
+};
+
+class NonArithmeticOutputVal : public OutputVal {
+public:
+};
+
+class ArithmeticOutputVal : public OutputVal {
+public:
   NewOutputVal *one();
   NewOutputVal *dot(OutputVal&);
   void component_pow(int);
   void component_square();
   void component_sqrt();
   void component_abs();
-  %new DoubleList *value_list();
   %addmethods {
+    // TODO: Shouldn't this be in the base class?
     double __getitem__(const IndexP &i) const {
       return (*self)[i];
     }
   }
 };
 
-class ScalarOutputVal : public OutputVal {
+class ScalarOutputVal : public ArithmeticOutputVal {
 public:
   ScalarOutputVal(double);
   double value();
@@ -97,7 +107,7 @@ public:
   }
 };
 
-class VectorOutputVal : public OutputVal {
+class VectorOutputVal : public ArithmeticOutputVal {
 public:
   int size();
   VectorOutputVal(int);
@@ -135,6 +145,22 @@ public:
   }
 };
 
+class ListOutputVal : public NonArithmeticOutputVal {
+public:
+  ListOutputVal(StringVec*);
+  int size();
+  %addmethods {
+    double __getitem__(const IndexP &i) const {
+      return (*self)[i];
+    }
+    void __setitem__(const IndexP &i, double x) {
+      (*self)[i] = x;
+    }
+  }
+};
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 class OutputValue {
 public:
   ~OutputValue();
@@ -142,11 +168,18 @@ public:
   OutputValue(const OutputValue&);
   int dim();
   NewOutputVal *valueClone();
+};
+
+class NonArithmeticOutputValue : public OutputValue {
+};
+
+class ArithmeticOutputValue : public OutputValue {
+public:
   %addmethods {
      double __getitem__(const IndexP &i) const {
        return (*self)[i];
      }
-     void _add(const OutputValue &other) {
+     void _add(const ArithmeticOutputValue &other) {
        (*self) += other;
      }
      void _mul(double other) {

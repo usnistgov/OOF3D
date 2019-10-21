@@ -19,6 +19,7 @@ reg = propertyregistration.PropertyRegistration(
     "ooflib.SWIG.engine.property.damping.damping",
     1010,
     [parameter.FloatParameter('damping', 1.0, tip="The damping coefficient.")],
+    outputs=["Material Constants:Mechanical:Damping"],
     propertyType="Damping",
     tip="Isotropic linear damping (probably unphysical).",
     discussion=xmlmenudump.loadFile(

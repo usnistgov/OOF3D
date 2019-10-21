@@ -1,6 +1,5 @@
 // -*- C++ -*-
 
-
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
  * Recipients of this software assume all responsibilities associated
@@ -24,7 +23,7 @@
 %extern "engine/IO/gridsource.swg"
 %extern "engine/mastercoord.swg"
 %extern "engine/outputval.swg"
-%pragma(python) code="from ooflib.SWIG.engine.outputval import OutputValuePtr"
+%pragma(python) code="from ooflib.SWIG.engine.outputval import ArithmeticOutputValuePtr"
 %pragma(python) code="from ooflib.SWIG.engine.cskeletonelement import CSkeletonElementPtr"
 
 %pragma(python) include="element.spy"
@@ -151,12 +150,11 @@ public:
 
   void refreshMaterial(const CSkeletonBase*);
 
-  OutputValue outputField(FEMesh*, Field&, MasterPosition&);
-  %new OutputValueVec *outputFields(FEMesh*, Field&, MasterCoordVec*);
-  %new OutputValueVec *outputFieldDerivs(FEMesh*, Field&, SpaceIndex*,
+  ArithmeticOutputValue outputField(FEMesh*, Field&, MasterPosition&);
+  %new ArithmeticOutputValueVec *outputFields(FEMesh*, Field&, MasterCoordVec*);
+  %new ArithmeticOutputValueVec *outputFieldDerivs(FEMesh*, Field&, SpaceIndex*,
 					 MasterCoordVec*);
-  // OutputValue outputFlux(FEMesh*, Flux&, MasterPosition&);
-  %new OutputValueVec *outputFluxes(FEMesh*, Flux&, MasterCoordVec*);
+  %new ArithmeticOutputValueVec *outputFluxes(FEMesh*, Flux&, MasterCoordVec*);
 
 //   void begin_material_computation(FEMesh*);
 //   void end_material_computation(FEMesh*);
@@ -192,7 +190,7 @@ class EdgeBoundaryElement : public Element {
 
 #ifdef DIM_3
 Coord findNormal(ElementBase*, MasterPosition&);
-%new OutputValueVec *findNormals(ElementBase*, MasterCoordVec*);
+%new ArithmeticOutputValueVec *findNormals(ElementBase*, MasterCoordVec*);
 #endif // DIM_3
 
 %typemap(python,out) EdgeVec*;

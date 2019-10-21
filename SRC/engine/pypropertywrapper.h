@@ -48,7 +48,7 @@ public:
   virtual void py_post_process(PyObject*, const Property*, 
 			       CSubProblem *, const Element*) const;
   virtual bool py_constant_in_space(PyObject*, const Property*) const;
-  virtual void py_output(PyObject*, const Property*, const FEMesh*,
+  virtual void py_output(PyObject*, Property*, FEMesh*,
 			 const Element*,
 			 const PropertyOutput*,
 			 const MasterPosition&, OutputVal*) const;
@@ -112,9 +112,10 @@ public:
   virtual bool constant_in_space() const {
     return PyPropertyMethods::py_constant_in_space(referent_, this);
   }
-  virtual void output(const FEMesh *m, const Element *e, 
+  virtual void output(FEMesh *m, const Element *e, 
 		      const PropertyOutput *po,
-		      const MasterPosition &p, OutputVal *ov) const {
+		      const MasterPosition &p, OutputVal *ov)
+  {
     PyPropertyMethods::py_output(referent_, this, m, e, po, p, ov);
   }
   virtual int integration_order(const CSubProblem *sb, const Element *e) const {
@@ -179,9 +180,10 @@ public:
   virtual bool constant_in_space() const {
     return PyPropertyMethods::py_constant_in_space(referent_, this);
   }
-  virtual void output(const FEMesh *m, const Element *e, 
+  virtual void output(FEMesh *m, const Element *e, 
 		      const PropertyOutput *po,
-		      const MasterPosition &p, OutputVal *ov) const {
+		      const MasterPosition &p, OutputVal *ov)
+  {
     PyPropertyMethods::py_output(referent_, this, m, e, po, p, ov);
   }
   virtual int integration_order(const CSubProblem *sb, const Element *e) const {

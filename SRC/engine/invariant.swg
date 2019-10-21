@@ -25,7 +25,7 @@
 class Invariant {
 public:
   %addmethods{
-    double __call__(OutputVal &ov) {
+    double __call__(ArithmeticOutputVal &ov) {
       return (*self)(ov);
     }
   }

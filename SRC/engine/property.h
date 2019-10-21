@@ -143,7 +143,8 @@ public:
   // it's unsuccessful.
   virtual void cross_reference(Material*) {}
 
-  // compute things that don't depend on Element
+  // compute things that don't depend on Element.  The argument is
+  // non-const so that FEMesh::set_property_data can be used.
   virtual void precompute(FEMesh*) {}
 
   virtual bool constant_in_space() const = 0;
@@ -172,9 +173,9 @@ public:
 
 
   // Output function.
-  virtual void output(const FEMesh*, const Element*, const PropertyOutput*,
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
 		      const MasterPosition&, OutputVal*)
-    const { return; }
+  { return; }
 
   virtual bool is_symmetric_K(const CSubProblem*) const;
   virtual bool is_symmetric_C(const CSubProblem*) const;

@@ -16,6 +16,7 @@ propertyregistration.PropertyRegistration(
     "ooflib.SWIG.orientationmap.orientmapproperty",
     1010,
     [],
+    outputs=["Material Constants:Orientation"],
     propertyType="Orientation",
     tip="Get orientation data from the Microstructure's orientation map.",
     discussion="""<para>

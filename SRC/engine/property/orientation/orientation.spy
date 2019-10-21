@@ -14,17 +14,18 @@ from ooflib.engine import propertyregistration
 from ooflib.engine.IO import orientationmatrix
 
 orientationReg = propertyregistration.PropertyRegistration(
-   'Orientation',
+    'Orientation',
     OrientationProp,
-   "ooflib.SWIG.engine.property.orientation.orientation",
+    "ooflib.SWIG.engine.property.orientation.orientation",
     1000,
-   [parameter.ConvertibleRegisteredParameter(
-    'angles', orientationmatrix.Orientation,
-    orientationmatrix.Abg(0.0, 0.0, 0.0), tip=parameter.emptyTipString)],
-   propertyType="Orientation",
-   tip="Orientation of the crystalline axes.",
-   discussion=xmlmenudump.loadFile(
-       'DISCUSSIONS/engine/property/orientation.xml')
-   )
+    [parameter.ConvertibleRegisteredParameter(
+        'angles', orientationmatrix.Orientation,
+        orientationmatrix.Abg(0.0, 0.0, 0.0), tip=parameter.emptyTipString)],
+    outputs=["Material Constants:Orientation"],
+    propertyType="Orientation",
+    tip="Orientation of the crystalline axes.",
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/engine/property/orientation.xml')
+)
 
 

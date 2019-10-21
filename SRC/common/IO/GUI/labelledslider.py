@@ -15,8 +15,41 @@ from ooflib.common.IO.GUI import gtklogger
 from ooflib.common.IO.GUI import tooltips
 import gtk
 
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Each LabelledSlider has a clipper that says what to do with values
+# that are outside of the slider's range.  The default clipper just
+# pegs the value to the beginning or end of the range.
+
+# A clipper must have a __call__() method that returns an object with
+# a clip() method.  __call__ takes two arguments, the min and max of
+# the range.  clip() takes one argument, the value to be clipped.  It
+# returns the value that should be used instead.
+
+# The clipper can either be a single class that sets the range in its
+# __init__ and has a clip method, or an instance of class whose
+# __call__ method returns an instance of a second class that has a
+# clip method.  See AngleClipper in common/IO/GUI/parameterwidgets.py
+# for an example.
+
+# This extra complexity is required because the LabelledSlider needs
+# to be able to reset its range, which requires changing the range of
+# the clipper.
+
+class DefaultClipper(object):
+    def __init__(self, vmin, vmax):
+        self.vmin = vmin
+        self.vmax = vmax
+    def clip(self, val):
+        val = min(val, self.vmax)
+        val = max(val, self.vmin)
+        return val
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#    
+
 class LabelledSlider:
     def __init__(self, value=None, vmin=0, vmax=1, step=0.01, callback=None,
+                 clipperclass=None,
                  name=None, immediate=True, adjustment=None):
         # "callback" is called when the user moves the slider.  If
         # immediate==True, then the callback will be called when any
@@ -28,6 +61,8 @@ class LabelledSlider:
         self.gtk = gtk.HPaned()
         if value is None:
             value = vmin
+        self.clipperclass = clipperclass or DefaultClipper
+        self.clipper = self.clipperclass(vmin, vmax)
         if name is not None:
             gtklogger.setWidgetName(self.gtk, name)
         self.adjustment = adjustment or gtk.Adjustment(value=value,
@@ -76,8 +111,7 @@ class LabelledSlider:
         # never call the callback function.
         debug.mainthreadTest()
         self.changed = False
-        value = max(value, self.adjustment.lower)
-        value = min(value, self.adjustment.upper)
+        value = self.clipper.clip(value)
         self.adjustmentsignal.block()
         self.entrysignal.block()
         try:
@@ -110,7 +144,7 @@ class LabelledSlider:
             pass
         else:
             self.changed = False
-            val = self.clip(v0)
+            val = self.clipper.clip(v0)
             self.adjustmentsignal.block()
             try:
                 self.adjustment.set_value(val)
@@ -126,10 +160,6 @@ class LabelledSlider:
             self.slider_from_text(obj)
         else:
             self.changed = True
-    def clip(self, v):
-        v = max(v, self.adjustment.lower)
-        v = min(v, self.adjustment.upper)
-        return v
     def parameterTableXRef(self, ptable, widgets):
         # Called after a LabelledSlider has been placed in a
         # ParameterTable.  All of the LabelledSliders in the table
@@ -156,6 +186,7 @@ class LabelledSlider:
         try:
             self.adjustment.lower = minval
             self.adjustment.upper = maxval
+            self.clipper = self.clipperclass(minval, maxval)
             if attop:
                 self.set_value(maxval)
             elif atbot:
@@ -188,7 +219,7 @@ class FloatLabelledSlider(LabelledSlider):
         self.entry.set_text(("%-8g" % val).rstrip())
     def get_value(self):
         debug.mainthreadTest()
-        return self.clip(utils.OOFeval(self.entry.get_text()))
+        return self.clipper.clip(utils.OOFeval(self.entry.get_text()))
 
 
 class IntLabelledSlider(LabelledSlider):
@@ -200,4 +231,4 @@ class IntLabelledSlider(LabelledSlider):
         self.entry.set_text("%d" % int(val))
     def get_value(self):
         debug.mainthreadTest()
-        return self.clip(int(utils.OOFeval(self.entry.get_text())))
+        return self.clipper.clip(int(utils.OOFeval(self.entry.get_text())))

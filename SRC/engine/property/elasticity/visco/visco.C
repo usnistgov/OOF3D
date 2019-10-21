@@ -94,3 +94,27 @@ void ViscoElasticityProp::flux_matrix(const FEMesh *mesh,
 #endif
   } // end loop over ij
 }
+
+void ViscoElasticityProp::output(FEMesh *mesh,
+				 const Element *element,
+				 const PropertyOutput *output,
+				 const MasterPosition &pos,
+				 OutputVal *data)
+{
+  // This is copied directly from CIsoElasticityProp::output() in
+  // engine/property/elasticity/iso/iso.C.  If we ever implement
+  // anisotropic viscosity, copy the output method from aniso/aniso.C.
+  const std::string &outputname = output->name();
+  if(outputname == "Material Constants:Mechanical:Viscosity") {
+    ListOutputVal *listdata = dynamic_cast<ListOutputVal*>(data);
+    std::vector<std::string> *idxstrs =
+      output->getListOfStringsParam("components");
+    for(unsigned int i=0; i<idxstrs->size(); i++) {
+      const std::string &voigtpair = (*idxstrs)[i];
+      SymTensorIndex idx0(int(voigtpair[0]-'1'));
+      SymTensorIndex idx1(int(voigtpair[1]-'1'));
+      (*listdata)[i] = g_ijkl(idx0, idx1);
+    }
+    delete idxstrs;
+  }
+}

@@ -23,7 +23,7 @@
 %extern "common/coord.swg"
    //%extern "common/IO/stringimage.swg"
 %extern "engine/angle2color.swg"
-%extern "common/corientation.swg"
+%extern "engine/corientation.swg"
 #ifndef DIM_3
 %extern "image/oofimage.swg"
 #endif

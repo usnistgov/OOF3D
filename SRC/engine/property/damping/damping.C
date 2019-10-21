@@ -11,9 +11,10 @@
 
 #include <oofconfig.h>
 
-#include "engine/property/damping/damping.h"
+#include "engine/IO/propertyoutput.h"
 #include "engine/elementnodeiterator.h"
 #include "engine/field.h"
+#include "engine/property/damping/damping.h"
 #include "engine/smallsystem.h"
 
 IsotropicDampingProp::IsotropicDampingProp(PyObject *registration,
@@ -50,4 +51,17 @@ int IsotropicDampingProp::integration_order(const CSubProblem*, const Element*)
   const 
 {
   return 1;
+}
+
+void IsotropicDampingProp::output(FEMesh *mesh,
+				  const Element *element,
+				  const PropertyOutput *output,
+				  const MasterPosition &pos,
+				  OutputVal *data)
+{
+  const std::string &outputname = output->name();
+  if(outputname == "Material Constants:Mechanical:Damping") {
+    ScalarOutputVal *sdata = dynamic_cast<ScalarOutputVal*>(data);
+    *sdata = coeff;
+  }
 }

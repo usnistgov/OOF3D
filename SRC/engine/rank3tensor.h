@@ -25,9 +25,10 @@ class Rank3Tensor;
 #include "engine/symmmatrix.h"
 
 
+class COrientation;
 class Cijkl; //actually, a rank 4 tensor
 class DoubleVec;
-class COrientation;
+class ListOutputVal;
 
 class Rank3Tensor : public PythonExportable<Rank3Tensor> {
 private:
@@ -86,4 +87,7 @@ Rank3Tensor operator*(const Cijkl&, const Rank3Tensor&);
 // for electrostriction 
 Rank3Tensor operator*(const Cijkl&, const DoubleVec&);
 
-#endif
+void copyOutputVals(const Rank3Tensor&, ListOutputVal*,
+		    const std::vector<std::string>&);
+
+#endif	// RANK3TENSOR_H

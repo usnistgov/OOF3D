@@ -25,12 +25,11 @@ class MasterElement;
 #include <string>
 #include <vector>
 
-#if DIM==3
 #include <vtkCellType.h>
 #include <vtkSmartPointer.h>
 #include <vtkIdList.h>
-#endif // DIM==3
 
+class ArithmeticOutputValue;
 class BoundaryEdge;
 class BoundaryFace;
 class CNonlinearSolver;
@@ -56,15 +55,12 @@ class FuncNode;
 class GridSource;
 class LinearizedSystem;
 class MasterElement;
+class MasterElement3D;
 class MasterPosition;
 class Material;
 class Node;
-class OutputValue;
 class SimpleCellLayer;
 
-#if DIM==3
-class MasterElement3D;
-#endif // DIM==3
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -152,9 +148,7 @@ public:
   GaussPointIterator integrator(int order) const;
   // int ngauss(int order);	// number of gauss points used at this order
 
-#if DIM==3
   VTKCellType getCellType() const;
-#endif // DIM==3
 
   virtual const std::string *repr() const = 0; // id string for Python
 
@@ -199,9 +193,6 @@ protected: // Nodelist needs to be visible to interface elements.
 private:
   const Material *matl;
   int index_;
-#if DIM==2
-  std::vector<ElementCornerNodeIterator> *exterior_edges;
-#endif // DIM==2
 
   // Elements have to know the SkeletonElements that created them, so
   // that when the SkeletonElement's material changes, the Element can
@@ -319,30 +310,28 @@ public:
 
   //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-  OutputValue outputField(const FEMesh*, const Field&, const MasterPosition&)
+  ArithmeticOutputValue outputField(const FEMesh*, const Field&,
+				    const MasterPosition&) const;
+
+  std::vector<ArithmeticOutputValue> *outputFields(
+	   const FEMesh*, const Field&, const std::vector<MasterCoord*>*)
     const;
 
-  std::vector<OutputValue> *outputFields(const FEMesh*, const Field&,
-					 const std::vector<MasterCoord*>*)
+  std::vector<ArithmeticOutputValue> *outputFields(
+	   const FEMesh*, const Field&, const std::vector<MasterCoord>&)
     const;
 
-  std::vector<OutputValue> *outputFields(const FEMesh*, const Field&,
-					 const std::vector<MasterCoord>&)
-    const;
-
-  std::vector<OutputValue> *outputFieldDerivs(const FEMesh*, const Field&,
-					      SpaceIndex*,
-					      const std::vector<MasterCoord*>*)
+  std::vector<ArithmeticOutputValue> *outputFieldDerivs(
+	const FEMesh*, const Field&, SpaceIndex*,
+	const std::vector<MasterCoord*>*)
     const;
   
-  OutputValue outputFieldDeriv(const FEMesh*, const Field &, SpaceIndex *,
-			       const MasterPosition &) const;
+  ArithmeticOutputValue outputFieldDeriv(const FEMesh*, const Field &,
+					 SpaceIndex *,
+					 const MasterPosition &) const;
 
-  // OutputValue outputFlux(const FEMesh*, const Flux&, const MasterPosition&)
-  //   const;
-
-  std::vector<OutputValue> *outputFluxes(const FEMesh*, const Flux &flux,
-					 const std::vector<MasterCoord*>*)
+  std::vector<ArithmeticOutputValue> *outputFluxes(
+	   const FEMesh*, const Flux &flux, const std::vector<MasterCoord*>*)
     const;
 
   //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -353,16 +342,6 @@ public:
 //   void begin_material_computation(FEMesh*) const;
 //   void end_material_computation(FEMesh*) const;
 
-#if DIM==2
-  // Identify the edge between the two given nodes as an exterior edge.
-  void set_exterior(const Node&, const Node&);
-
-  // Are two master coordinates on the same exterior edge?  An
-  // exterior edge is a geometrical boundary of the system (as opposed
-  // to a boundary where boundary conditions apply).
-  bool exterior(const MasterCoord &, const MasterCoord&) const;
-  void dump_exterior() const; // debugging
-#endif  // DIM==2
 
   //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -397,13 +376,8 @@ public:
 
   // A routine which returns Edge objects corresponding to all of the
   // edges of the element -- used to draw the element.
-#if DIM==2
-  std::vector<Edge*> *perimeter() const;
-#endif	// DIM==2
-#if DIM==3
   vtkSmartPointer<vtkIdList> getPointIds() const;
   void drawGridCell(vtkSmartPointer<GridSource>, SimpleCellLayer*) const;
-#endif	// DIM==3
 
   Node* getCornerNode(int i) const;
   FuncNode* getCornerFuncNode(int) const;
@@ -535,10 +509,7 @@ public:
   const Coord &coord() const { return coord_; }
 };
 
-#if DIM==3
 Coord findNormal(const ElementBase*, const MasterPosition&);
-std::vector<OutputValue> *findNormals(const ElementBase*,
+std::vector<ArithmeticOutputValue> *findNormals(const ElementBase*,
 				      const std::vector<MasterCoord*>*);
-#endif // DIM==3
-
 #endif	// ELEMENT_H

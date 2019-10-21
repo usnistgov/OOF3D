@@ -43,8 +43,8 @@ public:
 			   SmallSystem*) const;
 
   virtual void cross_reference(Material*) = 0;
-  virtual void output(const FEMesh*, const Element*, const PropertyOutput*,
-		      const MasterPosition&, OutputVal*) const;
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
   virtual const SymmMatrix3 permittivityTensor(const FEMesh *mesh,
 						const Element *element,
 						const MasterPosition&x)
@@ -69,6 +69,8 @@ public:
   {
     return permittivitytensor_;
   }
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
 private:
   double epsilon_;
 };
@@ -83,6 +85,8 @@ public:
   virtual const SymmMatrix3 permittivityTensor(const FEMesh *mesh,
 					       const Element *element,
 					       const MasterPosition &x) const;
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
 private:
   SymmMatrix3 epsilon_;
   OrientationPropBase *orientation;
@@ -94,16 +98,18 @@ private:
 
 class ChargeDensity : public EqnProperty {
 private:
-  double qdot_; // external heat dumped in per unit area per unit time.
+  double q_;
   VectorFlux *total_polarization;
 public:
   ChargeDensity(PyObject *registry, const std::string &name, double qd);
-  double rho() { return qdot_; }
+  double rho() { return q_; }
   virtual int integration_order(const CSubProblem*, const Element*) const;
   virtual void force_value(const FEMesh*, const Element*,
 			   const Equation*, const MasterPosition&,
 			   double time, SmallSystem *) const;
   virtual bool constant_in_space() const { return true; }
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
 };
 
 #endif	// PERMITTIVITY_H

@@ -16,32 +16,32 @@
 #include "engine/outputval.h"
 #include "engine/symmmatrix.h"
 
-double Magnitude::operator()(const OutputVal &oval) const {
-  // Don't need to do the down-cast, all OutputVal's can do magnitude.
+double Magnitude::operator()(const ArithmeticOutputVal &oval) const {
+  // Don't need to do the down-cast, all ArithmeticOutputVal's can do magnitude.
   return oval.magnitude();
 }
 
-double MatrixTrace::operator()(const OutputVal &oval) const {
+double MatrixTrace::operator()(const ArithmeticOutputVal &oval) const {
   const SymmMatrix3 &s = dynamic_cast<const SymmMatrix3&>(oval);
   return s.trace();
 }
 
-double Determinant::operator()(const OutputVal &oval) const {
+double Determinant::operator()(const ArithmeticOutputVal &oval) const {
   const SymmMatrix3 &s = dynamic_cast<const SymmMatrix3&>(oval);
   return s.determinant();
 }
 
-double SecondInvariant::operator()(const OutputVal &oval) const {
+double SecondInvariant::operator()(const ArithmeticOutputVal &oval) const {
   const SymmMatrix3 &s = dynamic_cast<const SymmMatrix3&>(oval);
   return s.secondInvariant();
 }
 
-double Deviator::operator()(const OutputVal &oval) const {
+double Deviator::operator()(const ArithmeticOutputVal &oval) const {
   const SymmMatrix3 &s = dynamic_cast<const SymmMatrix3&>(oval);
   return s.deviator();
 }
 
-double Eigenvalue::operator()(const OutputVal &oval) const {
+double Eigenvalue::operator()(const ArithmeticOutputVal &oval) const {
   const SymmMatrix3 &s = dynamic_cast<const SymmMatrix3&>(oval);
   switch(which_) {
   case MAX_EIGENVALUE:

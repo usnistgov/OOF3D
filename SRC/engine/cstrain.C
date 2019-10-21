@@ -1,5 +1,6 @@
 // -*- C++ -*-
 
+
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
  * Recipients of this software assume all responsibilities associated
@@ -51,7 +52,7 @@ void findGeometricStrain(const FEMesh *mesh, const Element *element,
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// TODO OPT: Create a non-symmetric 3x3 tensor OutputValue class and
+// TODO: Create a non-symmetric 3x3 tensor OutputValue class and
 // return it from this function, instead of passing in a SmallMatrix.
 
 void computeDisplacementGradient(const FEMesh *mesh, const Element *element,
@@ -66,7 +67,7 @@ void computeDisplacementGradient(const FEMesh *mesh, const Element *element,
   assert(grad.rows() == 3 && grad.cols() == 3);
   
   for(SpaceIndex j=0; j<DIM; ++j) { // loop over gradient components
-    OutputValue oddisp = element->outputFieldDeriv(mesh, *displacement, &j, pt);
+    ArithmeticOutputValue oddisp = element->outputFieldDeriv(mesh, *displacement, &j, pt);
     // loop over field components
     for(IteratorP i=displacement->iterator(ALL_INDICES); !i.end(); ++i)
       grad(i.integer(), j) += oddisp[i];
@@ -75,7 +76,7 @@ void computeDisplacementGradient(const FEMesh *mesh, const Element *element,
 #if DIM==2
   if(!displacement->in_plane(mesh)) {
     Field *oop = displacement->out_of_plane();
-    OutputValue oddispz = element->outputField(mesh, *oop, pt);
+    ArithmeticOutputValue oddispz = element->outputField(mesh, *oop, pt);
     for(IteratorP i=oop->iterator(ALL_INDICES); !i.end(); ++i)
       grad(i.integer(), 2) += oddispz[i]; 
   }
@@ -89,7 +90,7 @@ void computeDisplacement(const FEMesh *mesh, const Element *element,
   static CompoundField *displacement =
     dynamic_cast<CompoundField*>(Field::getField("Displacement"));
   assert(disp.size() == 3);
-  OutputValue odisp = element->outputField(mesh, *displacement, pt);
+  ArithmeticOutputValue odisp = element->outputField(mesh, *displacement, pt);
   for(IteratorP i=displacement->iterator(ALL_INDICES); !i.end(); ++i)
     disp[i.integer()] += odisp[i];
 }
@@ -98,10 +99,10 @@ void computeDisplacement(const FEMesh *mesh, const Element *element,
 
 // Initialize a PropertyOutput with the geometric strain.
 
-OutputVal *POInitGeometricStrain::operator()(const PropertyOutput *po,
-					     const FEMesh *mesh,
-					     const Element *element,
-					     const MasterCoord &pos) const
+OutputVal *POInitGeometricStrain::operator()(
+		       const PropertyOutput *po, const FEMesh *mesh,
+		       const Element *element, const MasterCoord &pos)
+  const
 {
   SymmMatrix3 *strain = new SymmMatrix3();
   // Get the Python parameter that tells which Strain is being

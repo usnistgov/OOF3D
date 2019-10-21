@@ -23,6 +23,7 @@ reg = PropertyRegistration(
     "ooflib.SWIG.engine.property.heatcapacity.heatcapacity",100,
     [parameter.FloatParameter(
             'cv', 1.0, tip="accumulated thermal energy per unit volume")],
+    outputs=["Material Constants:Thermal:Heat Capacity"],
     propertyType="HeatCapacity",
     tip="Heat capacity at constant volume.",
     discussion=xmlmenudump.loadFile(

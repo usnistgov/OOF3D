@@ -26,7 +26,7 @@ reg = PropertyRegistration(
     "ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain",
     22,
     [parameter.FloatParameter('epsilon0', 0.0, tip="StressFreeStrain")],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy", "Material Constants:Mechanical:Stress-free Strain epsilon0"],
     propertyType="StressFreeStrain",
     tip="Isotropic stress-free strain",
     discussion=xmlmenudump.loadFile(
@@ -45,7 +45,7 @@ reg = PropertyRegistration(
             'epsilon0',
             symmmatrix.CubicRank2Tensor(xx=1.0),
             tip='Stress-free strain tensor')],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy", "Material Constants:Mechanical:Stress-free Strain epsilon0"],
     propertyType="StressFreeStrain",
     tip="Cubic stress-free strain",
     discussion=xmlmenudump.loadFile(
@@ -64,7 +64,7 @@ reg = PropertyRegistration(
             'epsilon0',
             symmmatrix.HexagonalRank2Tensor(xx=1.0, zz=0.5),
             tip='Stress-free strain tensor')],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy", "Material Constants:Mechanical:Stress-free Strain epsilon0"],
     propertyType="StressFreeStrain",
     tip="Hexagonal stress-free strain",
     discussion=xmlmenudump.loadFile(
@@ -83,7 +83,7 @@ reg = PropertyRegistration(
             'epsilon0',
             symmmatrix.TrigonalRank2Tensor(xx=1.0, zz=0.5),
             tip='Stress-free strain tensor')],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy", "Material Constants:Mechanical:Stress-free Strain epsilon0"],
     propertyType="StressFreeStrain",
     tip="Trigonal stress-free strain",
     discussion=xmlmenudump.loadFile(
@@ -102,7 +102,7 @@ reg = PropertyRegistration(
             'epsilon0',
             symmmatrix.TetragonalRank2Tensor(xx=1.0, zz=0.5),
             tip='Stress-free strain tensor')],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy", "Material Constants:Mechanical:Stress-free Strain epsilon0"],
     propertyType="StressFreeStrain",
     tip="Tetragonal stress-free strain",
     discussion=xmlmenudump.loadFile(
@@ -121,7 +121,7 @@ reg = PropertyRegistration(
             'epsilon0',
             symmmatrix.OrthorhombicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
             tip='Stress-free strain tensor')],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy", "Material Constants:Mechanical:Stress-free Strain epsilon0"],
     propertyType="StressFreeStrain",
     tip="Orthorhombic stress-free strain",
     discussion=xmlmenudump.loadFile(
@@ -140,7 +140,7 @@ reg = PropertyRegistration(
             'epsilon0',
             symmmatrix.MonoclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
             tip='Stress-free strain tensor')],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy", "Material Constants:Mechanical:Stress-free Strain epsilon0"],
     propertyType="StressFreeStrain",
     tip="Monoclinic stress-free strain",
     discussion=xmlmenudump.loadFile(
@@ -159,7 +159,7 @@ reg = PropertyRegistration(
             'epsilon0',
             symmmatrix.TriclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
             tip='Stress-free strain tensor')],
-    outputs=["Strain", "Energy"],
+    outputs=["Strain", "Energy", "Material Constants:Mechanical:Stress-free Strain epsilon0"],
     propertyType="StressFreeStrain",
     tip="Triclinic stress-free strain",
     discussion=xmlmenudump.loadFile(

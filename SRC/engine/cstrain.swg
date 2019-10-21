@@ -20,11 +20,12 @@
 %}
 
 %extern "engine/IO/propertyoutput.swg"
-%pragma(python) code="from ooflib.SWIG.engine.IO.propertyoutput import PropertyOutputInitPtr"
+%pragma(python) code="from ooflib.SWIG.engine.IO.propertyoutput import PropertyOutputValInitPtr"
+  
 
 %pragma(python) include="cstrain.spy"
 
-class POInitGeometricStrain : public PropertyOutputInit {
+class POInitGeometricStrain : public PropertyOutputValInit {
 public:
   POInitGeometricStrain();
 };

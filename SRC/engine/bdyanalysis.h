@@ -14,12 +14,14 @@
 #ifndef BDYANALYSIS_H
 #define BDYANALYSIS_H
 
+class ArithmeticOutputValue;
 class FEMesh;
 class Flux;
-class OutputValue;
 class SubDimensionalSet;
 
-OutputValue averageField(const FEMesh*, const Field*, const SubDimensionalSet*);
-OutputValue integrateFlux(const FEMesh*, const Flux*, const SubDimensionalSet*);
+ArithmeticOutputValue averageField(const FEMesh*, const Field*,
+				   const SubDimensionalSet*);
+ArithmeticOutputValue integrateFlux(const FEMesh*, const Flux*,
+				    const SubDimensionalSet*);
 
 #endif // BDYANALYSIS_H

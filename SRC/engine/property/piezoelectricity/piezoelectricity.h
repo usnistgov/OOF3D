@@ -62,8 +62,8 @@ public:
 			   double time, SmallSystem*) const;
 
 
-  virtual void output(const FEMesh*, const Element*, const PropertyOutput*,
-		      const MasterPosition&, OutputVal*) const;
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
 
   virtual bool constant_in_space() const { return true; }
   virtual int integration_order(const CSubProblem*, const Element*) const;
@@ -91,6 +91,8 @@ public:
   {
     return _dijkLab;
   }
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
 
 private:
   double _dijkValue;
@@ -112,6 +114,8 @@ public:
   const Rank3Tensor dijk() const {
     return _dijkLab;
   }
+  virtual void output(FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*);
 private:
   Rank3Tensor _dijkValue;
   OrientationPropBase *orientation;

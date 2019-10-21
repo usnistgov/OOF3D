@@ -27,7 +27,6 @@
 // 'FieldFluxEquationOrOtherIndexableObjectIndex' is too long.
 
 class FieldIterator;
-class OutputValue;
 
 class FieldIndex {
 public:
@@ -44,7 +43,11 @@ public:
   virtual int integer() const = 0;
   // in_plane() is false if the index represents an out-of-plane
   // component of a field.
-  virtual bool in_plane() const = 0;
+
+  // This is not virtual just so that subclasses in which it doesn't
+  // make sense don't have to define it.  See the TODO in outputval.h.
+  virtual bool in_plane() const { return true; }
+
   // Set the value of the index by passing in a vector of ints.
   // Inefficient, but general.
   virtual void set(const std::vector<int>*) = 0;
@@ -116,7 +119,6 @@ public:
     return new OutOfPlaneVectorFieldIndex(*this);
   }
 };
-
 
 // The SymTensorIndex stores the Voigt representation of the ij index
 // of a 3x3 symmetric tensor.  i and j can be retrieved with the row()
@@ -226,6 +228,7 @@ public:
   virtual void operator++() = 0; // go to next FieldIndex value
   virtual bool end() const = 0;	// are we there yet?
   virtual void reset() = 0;
+  virtual int size() const = 0; // number of entries being iterated over
   virtual FieldIterator *cloneIterator() const = 0;
 };
 
@@ -240,6 +243,7 @@ public:
   virtual void operator++() { done = true; }
   virtual bool end() const { return done; }
   virtual void reset() { done = false; }
+  virtual int size() const { return 1; }
   virtual FieldIterator *cloneIterator() const {
     return new ScalarFieldIterator(*this);
   }
@@ -262,6 +266,7 @@ public:
   virtual void operator++() { index_++; }
   virtual bool end() const { return index_ >= max; }
   virtual void reset() { index_ = start; }
+  virtual int size() const { return max; }
   virtual FieldIterator *cloneIterator() const {
     return new VectorFieldIterator(*this);
   }
@@ -278,6 +283,7 @@ public:
   virtual void operator++() { index_++; }
   virtual bool end() const { return index_ >= max; }
   virtual void reset() { index_ = 0; }
+  virtual int size() const { return max; }
   virtual FieldIterator *cloneIterator() const {
     return new OutOfPlaneVectorFieldIterator(*this);
   }
@@ -293,6 +299,7 @@ public:
   virtual void operator++() { v++; }
   virtual bool end() const { return v > 5; }
   virtual void reset() { v = 0; }
+  virtual int size() const { return 6; }
   virtual FieldIterator *cloneIterator() const {
     return new SymTensorIterator(*this);
   }
@@ -308,7 +315,7 @@ public:
   virtual FieldIterator *cloneIterator() const {
     return new SymTensorInPlaneIterator(*this);
   }
-//   virtual int len() const { return 3; }
+  virtual int size() const { return 3; }
 };
 
 // The SymTensorOutOfPlaneIterator loops over the out-of-plane
@@ -324,6 +331,7 @@ public:
   virtual ~SymTensorOutOfPlaneIterator() {}
   virtual void operator++() { v++; }
   bool end() const { return v > 4; }
+  virtual int size() const { return 3; }
   virtual FieldIterator *cloneIterator() const {
     return new SymTensorOutOfPlaneIterator(*this);
   }
@@ -339,6 +347,7 @@ public:
   virtual void operator++() { v++; }
   virtual bool end() const { return v > 4; }
   virtual void reset() { v = 0; }
+  virtual int size() const { return 3; }
   virtual FieldIterator *cloneIterator() const {
     return new OutOfPlaneSymTensorIterator(*this);
   }
@@ -377,12 +386,12 @@ public:
   inline void operator++() { fi_->operator++(); }
   inline bool end() const { return fi_->end(); }
   inline void reset() { fi_->reset(); }
+  inline int size() const { return fi_->size(); }
   IteratorP cloneIterator() const {
     return IteratorP(fi_->cloneIterator());
   }
 };
 
 IteratorP *getSymTensorIterator(Planarity);
-OutputValue *newSymTensorOutputValue();
 
 #endif // FIELDINDEX_H

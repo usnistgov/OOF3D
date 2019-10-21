@@ -30,9 +30,8 @@ public:
   Edge(const Element *, const FuncNode*, const FuncNode*);
   ~Edge();
   %new CoordVec* position_(DoubleList*);
-  %new OutputValueVec *outputFields(const FEMesh*, const Field&, DoubleList*);
-//   %new OutputValueVec *outputFieldsAnyway(const CSubProblem*, const Field&,
-// 					  DoubleList*);
+  %new ArithmeticOutputValueVec *outputFields(const FEMesh*, const Field&,
+					      DoubleList*);
   int order();
   MasterCoord startpt();
   MasterCoord endpt();

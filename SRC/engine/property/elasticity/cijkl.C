@@ -13,12 +13,13 @@
 
 
 #include "cijkl.h"
-#include "common/corientation.h"
 #include "common/doublevec.h"
 #include "common/tostring.h"
 #include "common/trace.h"
+#include "engine/corientation.h"
 #include "engine/fieldindex.h"
 #include "engine/ooferror.h"
+#include "engine/outputval.h"
 #include <iostream>
 
 // ----------------------------------------------------------- //
@@ -150,3 +151,23 @@ SymmMatrix3 operator*(const Cijkl &cijkl, const SymmMatrix3 &m) {
   product(0,1) = rv[5];
   return product;
 }
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Copy values from a Cijkl, modulus, into a ListOutputVal, listdata,
+// given a vector, idxstrs, of strings containing the indices of the
+// desired components, as pairs of voigt indices.
+
+void copyOutputVals(const Cijkl &modulus, ListOutputVal *listdata,
+		    const std::vector<std::string> &idxstrs)
+{
+  // Helper for outputting components of Cijkl
+  for(unsigned int i=0; i<idxstrs.size(); i++) {
+    const std::string &voigtpair = idxstrs[i]; // "ab" for a,b in 1-6
+    // convert from string to int and 1-based indices to 0-based indices
+    SymTensorIndex idx0(int(voigtpair[0]-'1'));
+    SymTensorIndex idx1(int(voigtpair[1]-'1'));
+    (*listdata)[i] = modulus(idx0, idx1);
+  }
+}
+

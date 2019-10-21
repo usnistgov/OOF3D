@@ -627,14 +627,15 @@ Coord findNormal(const ElementBase *elem, const MasterPosition &position) {
   return norm/sqrt(len2);
 }
 
-std::vector<OutputValue> *findNormals(const ElementBase *elem, 
+std::vector<ArithmeticOutputValue> *findNormals(const ElementBase *elem, 
 				      const std::vector<MasterCoord*> *coords)
 {
-  std::vector<OutputValue> *results = new std::vector<OutputValue>;
+  std::vector<ArithmeticOutputValue> *results =
+    new std::vector<ArithmeticOutputValue>;
   results->reserve(coords->size());
   for(std::vector<MasterCoord*>::size_type i=0; i<coords->size(); i++) {
     Coord normal = findNormal(elem, *(*coords)[i]);
-    results->push_back(OutputValue(new VectorOutputVal(normal)));
+    results->push_back(ArithmeticOutputValue(new VectorOutputVal(normal)));
   }
   return results;
 }
@@ -654,11 +655,12 @@ const MasterCoord &Element::getMasterSCpoint(int i) const {
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 
-OutputValue Element::outputField(const FEMesh *mesh, const Field &field,
-				 const MasterPosition &pos)
+ArithmeticOutputValue Element::outputField(const FEMesh *mesh,
+					   const Field &field,
+					   const MasterPosition &pos)
   const
 {
-  OutputValue val = field.newOutputValue();
+  ArithmeticOutputValue val = field.newOutputValue();
   for(CleverPtr<ElementFuncNodeIterator> node(funcnode_iterator()); 
       !node->end(); ++*node)
     {
@@ -668,14 +670,15 @@ OutputValue Element::outputField(const FEMesh *mesh, const Field &field,
   return val;
 }
 
-std::vector<OutputValue> *
+std::vector<ArithmeticOutputValue> *
 Element::outputFields(const FEMesh *mesh, const Field &field,
 		      const std::vector<MasterCoord*> *coords) const
 {
-  std::vector<OutputValue> *results = new std::vector<OutputValue>;
+  std::vector<ArithmeticOutputValue> *results =
+    new std::vector<ArithmeticOutputValue>;
   results->reserve(coords->size());
   for(std::vector<MasterCoord*>::size_type i=0; i<coords->size(); i++) {
-    OutputValue val = field.newOutputValue();
+    ArithmeticOutputValue val = field.newOutputValue();
     for(CleverPtr<ElementFuncNodeIterator> node(funcnode_iterator()); 
 	!node->end(); ++*node) 
       {
@@ -689,32 +692,17 @@ Element::outputFields(const FEMesh *mesh, const Field &field,
   return results;
 }
 
-// std::vector<OutputValue> *
-// Element::outputFieldsAnyway(const CSubProblem *mesh, const Field &field,
-// 			    const std::vector<MasterCoord*> *coords) const
-// {
-//   // Return zero if the field isn't defined.  Don't throw an exception.
-//   if(mesh->is_defined_field(field))
-//     return outputFields(mesh, field, coords);
-//   // Field isn't defined.
-//   std::vector<OutputValue> *results = new std::vector<OutputValue>;
-//   results->reserve(coords->size());
-//   for(std::vector<MasterCoord*>::size_type i=0; i<coords->size(); i++) {
-//     results->push_back(field.newOutputValue());
-//   }
-//   return results;
-// }
-
 // This version takes a vector of MasterCoords, not MasterCoord*s, and
 // is used by Edge::outputFields.
-std::vector<OutputValue> *
+std::vector<ArithmeticOutputValue> *
 Element::outputFields(const FEMesh *mesh, const Field &field,
 		      const std::vector<MasterCoord> &coords) const
 {
-  std::vector<OutputValue> *results = new std::vector<OutputValue>;
+  std::vector<ArithmeticOutputValue> *results =
+    new std::vector<ArithmeticOutputValue>;
   results->reserve(coords.size());
   for(std::vector<MasterCoord>::size_type i=0; i<coords.size(); i++) {
-    OutputValue val = field.newOutputValue();
+    ArithmeticOutputValue val = field.newOutputValue();
     for(CleverPtr<ElementFuncNodeIterator> node(funcnode_iterator());
 	!node->end(); ++*node)
       {
@@ -728,29 +716,16 @@ Element::outputFields(const FEMesh *mesh, const Field &field,
   return results;
 }
 
-// std::vector<OutputValue> *
-// Element::outputFieldsAnyway(const CSubProblem *mesh, const Field &field,
-// 		      const std::vector<MasterCoord> &coords) const
-// {
-//   if(mesh->is_defined_field(field))
-//     return outputFields(mesh, field, coords);
-//   std::vector<OutputValue> *results = new std::vector<OutputValue>;
-//   results->reserve(coords.size());
-//   for(std::vector<MasterCoord>::size_type i=0; i<coords.size(); i++) {
-//     results->push_back(field.newOutputValue());
-//   }
-//   return results;
-// }
-
-std::vector<OutputValue> *
+std::vector<ArithmeticOutputValue> *
 Element::outputFieldDerivs(const FEMesh *mesh, const Field &field,
 			   SpaceIndex *deriv_component,
 			   const std::vector<MasterCoord*> *coords) const
 {
-  std::vector<OutputValue> *results = new std::vector<OutputValue>;
+  std::vector<ArithmeticOutputValue> *results =
+    new std::vector<ArithmeticOutputValue>;
   results->reserve(coords->size());
   for(std::vector<MasterCoord*>::size_type i=0; i<coords->size(); i++) {
-    OutputValue val = field.newOutputValue();
+    ArithmeticOutputValue val = field.newOutputValue();
     for(CleverPtr<ElementFuncNodeIterator> node(funcnode_iterator());
 	!node->end(); ++*node) 
       {
@@ -762,11 +737,12 @@ Element::outputFieldDerivs(const FEMesh *mesh, const Field &field,
   return results;
 }
 
-OutputValue Element::outputFieldDeriv(const FEMesh *mesh, const Field &field,
-				      SpaceIndex *deriv_component,
-				      const MasterPosition &pos) const
+ArithmeticOutputValue
+Element::outputFieldDeriv(const FEMesh *mesh, const Field &field,
+			  SpaceIndex *deriv_component,
+			  const MasterPosition &pos) const
 {
-  OutputValue val = field.newOutputValue();
+  ArithmeticOutputValue val = field.newOutputValue();
   for(CleverPtr<ElementFuncNodeIterator> node(funcnode_iterator());
       !node->end(); ++*node)
     {
@@ -776,17 +752,12 @@ OutputValue Element::outputFieldDeriv(const FEMesh *mesh, const Field &field,
   return val;
 }
 
-// OutputValue Element::outputFlux(const FEMesh *mesh, const Flux &flux,
-// 				const MasterPosition &pos) const
-// {
-//   return flux.output( mesh, this, pos );
-// }
-
-std::vector<OutputValue> *
+std::vector<ArithmeticOutputValue> *
 Element::outputFluxes(const FEMesh *mesh, const Flux &flux,
 		      const std::vector<MasterCoord*> *coords) const
 {
-  std::vector<OutputValue> *results = new std::vector<OutputValue>;
+  std::vector<ArithmeticOutputValue> *results =
+    new std::vector<ArithmeticOutputValue>;
   results->reserve(coords->size());
   for(std::vector<MasterCoord*>::size_type i=0; i<coords->size(); i++)
     results->push_back( flux.output( mesh, this, *(*coords)[i] ) );

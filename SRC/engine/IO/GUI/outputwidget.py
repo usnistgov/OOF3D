@@ -19,6 +19,9 @@ from ooflib.common.IO.GUI import widgetscope
 import gtk
 import sys
 
+# Widgets for Parameters whose value is an Output (not the value of an
+# Output, but the Output object itself).
+
 class OutputParameterWidget(parameterwidgets.ParameterWidget,
                             widgetscope.WidgetScope):
     def __init__(self, value, outputtree, scope=None, name=None, verbose=False):
@@ -96,6 +99,8 @@ class OutputParameterWidget(parameterwidgets.ParameterWidget,
         if self.paramtable is not None:
             self.paramtable.get_values() # copies widget values to params
         return self.output
+    def get_proto(self):
+        return self.treewidget.get_value()
     def destroyParameterTable(self):
         debug.mainthreadTest()
         if self.paramtable is not None:

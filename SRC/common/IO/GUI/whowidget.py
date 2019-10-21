@@ -57,9 +57,24 @@ class WhoWidgetBase:
 
         if scope:
             scope.addWidget(self)
+
+        # If the WidgetScope contains 'fixed whoclass' data, then the
+        # given class and its parent classes aren't allowed to be
+        # changed. Make their widgets insensitive.  The data's key is
+        # "fixed whoclass", and its value is a tuple,
+        # (WhoClass name, colon separated who path).
+        try:
+            fixedname, fixedwho = scope.findData('fixed whoclass')
+        except:
+            self.fixeddepth = -1
+        else:
+            self.fixeddepth = \
+                [w.name() for w in whoclass.hierarchy()].index(fixedname)
+        if self.fixeddepth >= 0:
+            value = fixedwho
+
         self.callback = callback
         depth = len(whoclass.hierarchy())
-        # self.proxycheck = gtk.CheckButton()
         self.proxy_names = []
         self.widgets = [None]*depth
         self.gtk = [None]*depth
@@ -108,7 +123,8 @@ class WhoWidgetBase:
                 paths = classlist[d].keys(
                     base=self.currentPath[:d],
                     condition=lambda x:
-                            self.condition(x) and whoville.excludeProxies(x) and not x.secret(),
+                            (self.condition(x) and whoville.excludeProxies(x)
+                             and not x.secret()),
                     sort=self.sort)
             except KeyError, exc:
                 names = []
@@ -152,6 +168,11 @@ class WhoWidgetBase:
                 self.gtk[d].set_sensitive(names != [])
         # end for d in range(depth)
 
+        if self.fixeddepth >= 0:
+            depth = len(self.gtk)
+            for d in range(min(self.fixeddepth+1, len(self.gtk))):
+                self.gtk[d].set_sensitive(False)
+
         # The state of other widgets may depend on the state of this
         # one.  If so, they can use the WidgetScope mechanism to find
         # this widget and listen for the following switchboard
@@ -180,6 +201,10 @@ class WhoWidgetBase:
             self.scope.removeWidget(self)
             self.scope = None
 
+    def set_sensitive(self, sense):
+        for widget in self.gtk:
+            widget.set_sensitive(sense)
+            
     def newWhoCB(self, whoname):        # switchboard ("new who", classname)
         self.buildWidgets()
     def renameWhoCB(self, oldpath, newname): # sb ("rename who", classname)
@@ -295,7 +320,7 @@ class WhoParameterWidgetBase(parameterwidgets.ParameterWidget,
             vbox.pack_start(self.whowidget.gtk[d], expand=0, fill=0)
         self.wwcallback = switchboard.requestCallbackMain(self.whowidget,
                                                           self.widgetCB)
-        self.widgetCB(0)
+        self.widgetCB(False)
     def set_value(self, value):
         self.whowidget.set_value(value)
     def get_value(self):

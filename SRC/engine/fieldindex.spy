@@ -8,14 +8,14 @@
 # versions of this software, you first contact the authors at
 # oof_manager@nist.gov. 
 
-import string
+from ooflib.common import debug
+#import string
 
 # Defining __repr__ here doesn't work, because the derived classes
 # will override it.
 
 def _shortrepr(self):
-    comps = self.components()
-    return string.join(["xyz"[x] for x in comps], '')
+    return self.shortstring()
 
 FieldIndex.shortrepr = _shortrepr
 FieldIterator.shortrepr = _shortrepr

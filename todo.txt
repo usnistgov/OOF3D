@@ -150,6 +150,9 @@ Display perimeter
 
 Axis tick marks, numerical labels?
 
+Get rid of CompoundField class.  It's not necessary in 3D.  Will
+getting rid of it make the 2D and 3D code too different?
+
 ----------------------------------------------------------------------------
 At Some Later Time
 ------------------

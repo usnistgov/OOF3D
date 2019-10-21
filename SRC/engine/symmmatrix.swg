@@ -1,5 +1,6 @@
 // -*- C++ -*-
 
+
 /* This software was produced by NIST, an agency of the U.S. government,
  * and by statute is not subject to copyright in the United States.
  * Recipients of this software assume all responsibilities associated
@@ -21,10 +22,12 @@
 
 %pragma(python) include="engine/symmmatrix.spy"
 %extern "engine/outputval.swg"
-%pragma(python) code="from ooflib.SWIG.engine.outputval import OutputValPtr"
-%pragma(python) code="from ooflib.SWIG.engine.outputval import OutputValuePtr"
+%pragma(python) code="from ooflib.SWIG.engine.outputval import ArithmeticOutputValPtr"
+%pragma(python) code="from ooflib.SWIG.engine.outputval import ArithmeticOutputValuePtr"
 %extern "engine/fieldindex.swg"
 %pragma(python) code="from ooflib.SWIG.engine.fieldindex import IteratorPPtr"
+%pragma(python) code="from ooflib.SWIG.engine.IO.propertyoutput import ArithmeticPropertyOutputInit"
+%pragma(python) code="from ooflib.SWIG.engine.outputval import OutputValuePtr"
 
 class SymmMatrix {
 public:
@@ -61,7 +64,7 @@ public:
 // SymmMatrix users must use the .get method, which takes the two
 // integers that would be in the tuple.  It would be nicer if the
 // __getitem__ were homogenous.
-class SymmMatrix3 : public OutputVal, public SymmMatrix {
+class SymmMatrix3 : public ArithmeticOutputVal, public SymmMatrix {
 public:
   SymmMatrix3(double, double, double, double, double, double);
   ~SymmMatrix3();
@@ -93,5 +96,12 @@ public:
 };
 
 %new OutputValue *newSymTensorOutputValue();
+
+class SymmMatrix3PropertyOutputInit : public PropertyOutputInit {
+public:
+  SymmMatrix3PropertyOutputInit();
+};
+
+
 
 #endif // SYMMMATRIX_SWG

@@ -19,7 +19,7 @@ class OrientMapReader;
 
 #include "common/imagebase.h"
 #include "common/array.h"
-#include "common/corientation.h"
+#include "engine/corientation.h"
 #if DIM == 2
 #include "image/oofimage.h"
 #elif DIM == 3

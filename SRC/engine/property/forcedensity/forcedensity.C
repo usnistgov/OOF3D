@@ -60,3 +60,18 @@ void ForceDensity::force_value(const FEMesh *mesh, const Element *element,
   eqndata->force_vector_element(2) += gz;
 #endif
 }
+
+void ForceDensity::output(FEMesh *mesh,
+			  const Element *element,
+			  const PropertyOutput *output,
+			  const MasterPosition &pos,
+			  OutputVal *data)
+{
+  const std::string &outputname = output->name();
+  if(outputname == "Material Constants:Mechanical:Force Density F") {
+    ListOutputVal *listdata = dynamic_cast<ListOutputVal*>(data);
+    assert(listdata->size() == 2);
+    (*listdata)[0] = gx;
+    (*listdata)[1] = gy;
+  }
+}

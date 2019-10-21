@@ -33,11 +33,11 @@ void computeDisplacementGradient(const FEMesh*, const Element*,
 void computeDisplacement(const FEMesh*, const Element*,
 			 const MasterPosition&, DoubleVec&);
 
-class POInitGeometricStrain : public SymmMatrix3PropertyOutputInit {
+class POInitGeometricStrain : public PropertyOutputValInit {
 public:
-  virtual OutputVal *operator()(const PropertyOutput*,
-				const FEMesh*, const Element*,
-				const MasterCoord&) const;
+  virtual OutputVal *operator()(const PropertyOutput*, const FEMesh*,
+				const Element*, const MasterCoord&) const;
 };
+
 
 #endif // CSTRAIN_H
