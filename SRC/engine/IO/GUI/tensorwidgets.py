@@ -244,14 +244,14 @@ def _CubicSymmParameter_makeWidget(self, scope=None, verbose=False):
 
 symmmatrix.CubicRank2TensorParameter.makeWidget = _CubicSymmParameter_makeWidget
 
-=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 # SymmTensor3BoolWidget displays a bool for each entry in a tensor.
 
 class SymmTensor3BoolWidget(matrixparamwidgets.SymmetricMatrixBoolInput):
-    def __init__(self, param, scope=None, name=None):
+    def __init__(self, param, scope=None, name=None, verbose=False):
         matrixparamwidgets.SymmetricMatrixBoolInput.__init__(
-            self, 3, 3, value=None, scope=scope, name=name)
+            self, 3, 3, value=None, scope=scope, name=name, verbose=verbose)
         self.param = param
         self.set_value()
     def draw_values(self, vlist):
@@ -276,8 +276,9 @@ class SymmTensor3BoolWidget(matrixparamwidgets.SymmetricMatrixBoolInput):
                     vals.append("%d%d" % (r+1, c+1))
         return vals
 
-def SymmIndexPairListParam_makeWidget(self, scope):
-    return SymmTensor3BoolWidget(self, scope=scope, name=self.name)
+def SymmIndexPairListParam_makeWidget(self, scope, verbose=False):
+    return SymmTensor3BoolWidget(self, scope=scope, name=self.name,
+                                 verbose=verbose)
 
 outputDefs.SymmIndexPairListParameter.makeWidget = \
     SymmIndexPairListParam_makeWidget
@@ -314,8 +315,9 @@ class Rank3TensorBoolWidget(matrixparamwidgets.MatrixBoolInput):
                     vals.append("%d%d" % (r+1, c+1))
         return vals
 
-def Rank3TensorIndexParam_makeWidget(self, scope):
-    return Rank3TensorBoolWidget(self, scope=scope, name=self.name)
+def Rank3TensorIndexParam_makeWidget(self, scope, verbose=False):
+    return Rank3TensorBoolWidget(self, scope=scope, name=self.name,
+                                 verbose=verbose)
 
 outputDefs.Rank3TensorIndexParameter.makeWidget = \
     Rank3TensorIndexParam_makeWidget

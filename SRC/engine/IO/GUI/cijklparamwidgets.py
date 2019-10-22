@@ -682,8 +682,8 @@ class CijklBoolWidget(matrixparamwidgets.SymmetricMatrixBoolInput):
                     vals.append("%d%d" % (r+1, c+1))
         return vals
 
-def VoigtPairListParam_makeWidget(self, scope):
-    return CijklBoolWidget(self, scope=scope, name=self.name)
+def VoigtPairListParam_makeWidget(self, scope, verbose=False):
+    return CijklBoolWidget(self, scope=scope, name=self.name, verbose=verbose)
 
 outputDefs.VoigtPairListParameter.makeWidget = VoigtPairListParam_makeWidget
 

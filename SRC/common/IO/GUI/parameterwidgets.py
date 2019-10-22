@@ -552,7 +552,7 @@ class _ClipperFactory(object):
         return _AngleClipper(vmin, vmax, self.circle)
 
 class AngleRangeWidget(labelledslider.FloatLabelledSlider, ParameterWidget):
-    def __init__(self, param, scope=None, name=None):
+    def __init__(self, param, scope=None, name=None, verbose=False):
         if param.value is not None:
             val = param.value
         else:
@@ -564,14 +564,15 @@ class AngleRangeWidget(labelledslider.FloatLabelledSlider, ParameterWidget):
             step=param.range[2],
             callback=self.sliderCB,
             clipperclass=_ClipperFactory(param.circle))
-        ParameterWidget.__init__(self, self.gtk, scope=scope, name=name)
+        ParameterWidget.__init__(self, self.gtk, scope=scope, name=name,
+                                 verbose=verbose)
         self.widgetChanged(1, interactive=0)
         
     def sliderCB(self, slider, val):
         self.widgetChanged(1, interactive=1)
 
-def _AngleRange_makeWidget(self, scope):
-    return AngleRangeWidget(self, scope=scope, name=self.name)
+def _AngleRange_makeWidget(self, scope, verbose=False):
+    return AngleRangeWidget(self, scope=scope, name=self.name, verbose=verbose)
 
 parameter.AngleRangeParameter.makeWidget = _AngleRange_makeWidget
         
@@ -579,7 +580,7 @@ parameter.AngleRangeParameter.makeWidget = _AngleRange_makeWidget
 
 class FloatWidget(GenericWidget):
     def __init__(self, param, scope=None, name=None, compact=False,
-                 verbose=verbose):
+                 verbose=False):
         GenericWidget.__init__(self, param=param, scope=scope, name=name,
                                compact=compact, verbose=verbose)
         if compact:

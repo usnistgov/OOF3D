@@ -168,7 +168,7 @@ class SymmetricMatrixInput(SymmetricMatrixInputBase):
 
 class MatrixBoolInput(SymmetricMatrixInputBase):
     def __init__(self, rows, cols, value=None, scope=None, name=None,
-                 verbose=verbose):
+                 verbose=False):
         MatrixInputBase.__init__(self, rows=rows, cols=cols,
                                  paramtype=parameter.BooleanParameter,
                                  paramargs=dict(value=False),
