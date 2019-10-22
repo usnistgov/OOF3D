@@ -109,6 +109,15 @@ DoubleVec::DoubleVec(const DoubleVec &other)
 #endif // VDEBUG
 }
 
+DoubleVec::DoubleVec(const std::initializer_list<double> &l)
+  : std::vector<double>(l)
+{
+#if VDEBUG
+  addTotal(size());
+  addVec(this);
+#endif // VDEBUG
+}
+
 DoubleVec &DoubleVec::operator=(const DoubleVec &other) {
 #if VDEBUG
   addTotal(other.size() - size());
