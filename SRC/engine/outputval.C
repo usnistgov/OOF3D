@@ -417,8 +417,7 @@ VectorOutputVal operator/(const VectorOutputVal &a, double b) {
 std::string ListOutputVal::classname_("ListOutputVal");
 
 ListOutputVal::ListOutputVal(const std::vector<std::string> *lbls)
-  : size_(lbls->size()),
-    data(new double[lbls->size()]),
+  : data(lbls->size()),
     labels(*lbls) 
 {
   for(unsigned int i=0; i<size_; i++)
@@ -427,23 +426,15 @@ ListOutputVal::ListOutputVal(const std::vector<std::string> *lbls)
 
 ListOutputVal::ListOutputVal(const std::vector<std::string> *lbls,
 			     const std::vector<double> &vec)
-  : size_(vec.size()),
-    data(new double[size_]),
+  : data(vec),
     labels(*lbls)
 {
-  (void) memcpy(data, vec.data(), size_*sizeof(double));
 }
 
 ListOutputVal::ListOutputVal(const ListOutputVal &other)
-  : size_(other.size()),
-    data(new double[other.size()]),
+  : data(other.data),
     labels(other.labels)
 {
-  (void) memcpy(data, other.data, size_*sizeof(double));
-}
-
-ListOutputVal::~ListOutputVal() {
-  delete [] data;
 }
 
 double ListOutputVal::operator[](const IndexP &p) const {
@@ -460,10 +451,8 @@ const ListOutputVal &ListOutputVal::operator=(const OutputVal &other) {
 }
 
 const ListOutputVal &ListOutputVal::operator=(const ListOutputVal &other) {
-  delete [] data;
-  size_ = other.size();
-  data = new double[size_];
-  (void) memcpy(data, other.data, size_*sizeof(double));
+  data = other.data;
+  labels = other.labels;
   return *this;
 }
 
@@ -475,9 +464,8 @@ ListOutputVal *ListOutputVal::clone() const {
   return new ListOutputVal(*this);
 }
 
-std::vector<double> *ListOutputVal::value_list() const {
-  std::vector<double> *res = new std::vector<double>(size_);
-  memcpy(res->data(), data, size_*sizeof(data));
+DoubleVec *ListOutputVal::value_list() const {
+  DoubleVec *res = new DoubleVec(data);
   return res;
 }
 

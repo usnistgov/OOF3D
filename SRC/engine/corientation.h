@@ -185,7 +185,7 @@ public:
   virtual unsigned int dim() const { return 3; }
   virtual COrientABG *clone() const;
   virtual COrientABG *zero() const;
-  virtual std::vector<double> *value_list() const;
+  virtual DoubleVec *value_list() const;
   static const std::vector<std::string> arguments;
   virtual IndexP getIndex(const std::string &s) const {
     return IndexP(new OIndex<COrientABG>(this, s));
@@ -217,7 +217,7 @@ public:
   virtual unsigned int dim() const { return 3; }
   virtual COrientBunge *clone() const;
   virtual COrientBunge *zero() const;
-  virtual std::vector<double> *value_list() const;
+  virtual DoubleVec *value_list() const;
   static const std::vector<std::string> arguments;
   virtual IndexP getIndex(const std::string &s) const {
     return IndexP(new OIndex<COrientBunge>(this, s));
@@ -250,7 +250,7 @@ public:
   virtual unsigned int dim() const { return 4; }
   virtual COrientQuaternion *clone() const;
   virtual COrientQuaternion *zero() const;
-  virtual std::vector<double> *value_list() const;
+  virtual DoubleVec *value_list() const;
   static const std::vector<std::string> arguments;
   virtual IndexP getIndex(const std::string &s) const {
     return IndexP(new OIndex<COrientQuaternion>(this, s));
@@ -285,7 +285,7 @@ public:
   virtual unsigned int dim() const { return 3; }
   virtual COrientX *clone() const;
   virtual COrientX *zero() const;
-  virtual std::vector<double> *value_list() const;
+  virtual DoubleVec *value_list() const;
   static const std::vector<std::string> arguments;
   virtual IndexP getIndex(const std::string &s) const {
     return IndexP(new OIndex<COrientX>(this, s));
@@ -320,7 +320,7 @@ public:
   virtual unsigned int dim() const { return 3; }
   virtual COrientXYZ *clone() const;
   virtual COrientXYZ *zero() const;
-  virtual std::vector<double> *value_list() const;
+  virtual DoubleVec *value_list() const;
   static const std::vector<std::string> arguments;
   virtual IndexP getIndex(const std::string &s) const {
     return IndexP(new OIndex<COrientXYZ>(this, s));
@@ -356,7 +356,7 @@ public:
   virtual unsigned int dim() const { return 4; }
   virtual COrientAxis *clone() const;
   virtual COrientAxis *zero() const;
-  virtual std::vector<double> *value_list() const;
+  virtual DoubleVec *value_list() const;
   static const std::vector<std::string> arguments;
   virtual IndexP getIndex(const std::string &s) const {
     return IndexP(new OIndex<COrientAxis>(this, s));
@@ -393,7 +393,7 @@ public:
   virtual unsigned int dim() const { return 3; }
   virtual COrientRodrigues *clone() const;
   virtual COrientRodrigues *zero() const;
-  virtual std::vector<double> *value_list() const;
+  virtual DoubleVec *value_list() const;
   static const std::vector<std::string> arguments;
   virtual IndexP getIndex(const std::string &s) const {
     return IndexP(new OIndex<COrientRodrigues>(this, s));

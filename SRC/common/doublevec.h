@@ -32,6 +32,9 @@ public:
   DoubleVec(size_type);
   DoubleVec(size_type, const double&);
   DoubleVec(const std::vector<double>&);
+  DoubleVec(const std::initializer_list<double> &l)
+    : std::vector<double>(l)
+  {}
 
   template <class InputIterator>
   DoubleVec(InputIterator a, InputIterator b)

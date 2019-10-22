@@ -717,9 +717,8 @@ COrientABG *COrientABG::zero() const {
   return new COrientABG(0., 0., 0.);
 }
 
-std::vector<double> *COrientABG::value_list() const {
-  return new std::vector<double>(
-			 {degrees*alpha_, degrees*beta_, degrees*gamma_});
+DoubleVec *COrientABG::value_list() const {
+  return new DoubleVec({degrees*alpha_, degrees*beta_, degrees*gamma_});
 }
 
 // ---------
@@ -740,9 +739,8 @@ COrientBunge *COrientBunge::zero() const {
   return new COrientBunge(0., 0., 0.);
 }
 
-std::vector<double> *COrientBunge::value_list() const {
-  return new std::vector<double>(
-			 {degrees*phi1_, degrees*theta_, degrees*phi2_});
+DoubleVec *COrientBunge::value_list() const {
+  return new DoubleVec({degrees*phi1_, degrees*theta_, degrees*phi2_});
 }
 
 // ---------
@@ -763,8 +761,8 @@ COrientQuaternion *COrientQuaternion::zero() const {
   return new COrientQuaternion(0., 0., 0., 0.); 
 }
 
-std::vector<double> *COrientQuaternion::value_list() const {
-  return new std::vector<double>{q[0], q[1], q[2], q[3]};
+DoubleVec *COrientQuaternion::value_list() const {
+  return new DoubleVec{q[0], q[1], q[2], q[3]};
 }
 
 // --------
@@ -784,8 +782,8 @@ COrientX *COrientX::zero() const {
   return new COrientX(0., 0., 0.);
 }
 
-std::vector<double> *COrientX::value_list() const {
-  return new std::vector<double>({degrees*phi_, degrees*theta_, degrees*psi_});
+DoubleVec *COrientX::value_list() const {
+  return new DoubleVec({degrees*phi_, degrees*theta_, degrees*psi_});
 }
 
 // ---------
@@ -805,8 +803,8 @@ COrientXYZ *COrientXYZ::zero() const {
   return new COrientXYZ(0., 0., 0.);
 }
 
-std::vector<double> *COrientXYZ::value_list() const {
-  return new std::vector<double>({degrees*phi_, degrees*theta_, degrees*psi_});
+DoubleVec *COrientXYZ::value_list() const {
+  return new DoubleVec({degrees*phi_, degrees*theta_, degrees*psi_});
 }
 
 // ---------
@@ -826,8 +824,8 @@ COrientAxis *COrientAxis::zero() const {
   return new COrientAxis(0., 0., 0., 0.);
 }
 
-std::vector<double> *COrientAxis::value_list() const {
-  return new std::vector<double>({degrees*angle_, x_, y_, z_});
+DoubleVec *COrientAxis::value_list() const {
+  return new DoubleVec({degrees*angle_, x_, y_, z_});
 }
 
 // ---------
@@ -847,8 +845,8 @@ COrientRodrigues *COrientRodrigues::zero() const {
   return new COrientRodrigues(0., 0., 0.);
 }
 
-std::vector<double> *COrientRodrigues::value_list() const {
-  return new std::vector<double>({r1_, r2_, r3_});
+DoubleVec *COrientRodrigues::value_list() const {
+  return new DoubleVec({r1_, r2_, r3_});
 }
 
 

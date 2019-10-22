@@ -64,6 +64,7 @@ public:
   virtual IteratorP getIterator() const = 0;
 
   friend class OutputValue;
+  friend class ArithmeticOutputValue;
 };
 
 class ArithmeticOutputVal : public OutputVal {
@@ -279,20 +280,18 @@ VectorOutputVal operator/(VectorOutputVal&, double);
 
 class ListOutputVal : public NonArithmeticOutputVal {
 private:
-  unsigned int size_;
-  double *data;
+  DoubleVec data;
   const std::vector<std::string> labels; 
   static std::string classname_;
 public:
   ListOutputVal(const std::vector<std::string>*);
   ListOutputVal(const std::vector<std::string>*, const std::vector<double>&);
   ListOutputVal(const ListOutputVal&);
-  virtual ~ListOutputVal();
   virtual const std::string &classname() const { return classname_; }  
   virtual const ListOutputVal &operator=(const OutputVal&);
   const ListOutputVal &operator=(const ListOutputVal&);
-  virtual unsigned int dim() const { return size_; }
-  unsigned int size() const { return size_; }  
+  virtual unsigned int dim() const { return data.size(); }
+  unsigned int size() const { return data.size(); }  
   virtual ListOutputVal *zero() const;
   virtual ListOutputVal *clone() const;
   double &operator[](int i) { return data[i]; }
@@ -301,7 +300,7 @@ public:
   virtual double &operator[](const IndexP &p);
   virtual IteratorP getIterator() const;
   virtual IndexP getIndex(const std::string&) const;
-  virtual std::vector<double> *value_list() const;
+  virtual DoubleVec *value_list() const;
   virtual void print(std::ostream&) const;
   const std::string &label(int i) const { return labels[i]; }
   friend class ListOutputValIndex;
@@ -322,10 +321,10 @@ protected:
   const ListOutputVal *ov_;
 public:
   ListOutputValIndex(const ListOutputVal *ov)
-    : max_(ov->size_), index_(0), ov_(ov)
+    : max_(ov->size()), index_(0), ov_(ov)
   {}
   ListOutputValIndex(const ListOutputVal *ov, int i)
-    : max_(ov->size_), index_(i), ov_(ov)
+    : max_(ov->size()), index_(i), ov_(ov)
   {}
   ListOutputValIndex(const ListOutputValIndex &o)
     : max_(o.max_), index_(o.index_), ov_(o.ov_)
@@ -410,21 +409,13 @@ public:
   ArithmeticOutputValue() {}
   ArithmeticOutputValue(ArithmeticOutputVal*);
 
-  const OutputValue &operator+=(const OutputValue &other) {
-    *val += *other.val;
-    return *this;
-  }
-  const OutputValue &operator-=(const OutputValue &other) {
-    *val -= *other.val;
-    return *this;
-  }
-  const OutputValue &operator *=(double x) {
-    *val *= x;
-    return *this;
-  }
+  const ArithmeticOutputValue &operator+=(const ArithmeticOutputValue &other);
+  const ArithmeticOutputValue &operator-=(const ArithmeticOutputValue &other);
+  const ArithmeticOutputValue &operator *=(double x);
+
   // TODO: Shouldn't operator[] be in the base class?
-  double operator[](const IndexP &p) const { return (*val)[p]; }
-  double &operator[](const IndexP &p) { return (*val)[p]; }
+  double operator[](const IndexP &p) const;
+  double &operator[](const IndexP &p);
 };
 
 ArithmeticOutputValue operator*(double x, const ArithmeticOutputValue &ov);
