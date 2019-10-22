@@ -33,7 +33,6 @@
 # user.
 
 from ooflib.SWIG.common import ooferror
-# from ooflib.SWIG.common import timestamp
 from ooflib.common import debug
 from ooflib.common import registeredclass
 from ooflib.common import utils
@@ -220,7 +219,6 @@ class Parameter(object):
     def __init__(self, name, value=None, default=None, tip=None, auxData={}):
         self.name = name
         self.tip = tip
-        # self.timestamp = timestamp.TimeStamp()
         self.group = None
         self.default = default  # used by Output
 
@@ -271,7 +269,6 @@ class Parameter(object):
                 raise ParameterMismatch(str(msg) + '\nfor Parameter: '
                                         + self.name)
         self._value = self.converter(value)
-        # self.timestamp.increment()
 
     # Subclasses can override converter() to ensure that stored values
     # have the correct form.
@@ -281,9 +278,6 @@ class Parameter(object):
     def __repr__(self):
         return "%s(name='%s', value=%s, default=%s)" % \
                (self.__class__.__name__, self.name, self.value, self.default)
-
-    # def getTimeStamp(self):             # When was this parameter changed?
-    #     return self.timestamp
 
     def incomputable(self, context):    # used by Output
         if self.value is None:
@@ -367,7 +361,6 @@ class BooleanParameter(Parameter):
                 raise ParameterMismatch('Got ' + `value` + ' for Parameter '
                                         + self.name)
         self._value = value
-        # self.timestamp.increment()
     def binaryRepr(self, datafile, value):
         if value:
             return "1"
@@ -393,7 +386,6 @@ class _RangeParameter(Parameter):
                                         + self.name)
             if self.range[0] <= value <= self.range[1]:
                 self._value = value
-                # self.timestamp.increment()
             else:
                 debug.fmsg("Parameter out of range: %s=%g, range=(%g,%g)"
                            % (self.name, value, self.range[0], self.range[1]))
@@ -473,7 +465,6 @@ class AngleRangeParameter(FloatRangeParameter):
                 debug.fmsg("Corrected", old, "to", value)
             if self.range[0] <= value <= self.range[1]:
                 self._value = value
-                self.timestamp.increment()
             else:
                 raise ValueError('Parameter value out of range for '
                                  + self.name)
@@ -574,7 +565,6 @@ class RestrictedStringParameter(StringParameter):
                         "Parameter '%s' cannot contain the characters '%s'"
                         % (self.name, self.exclude))
         self._value = self.converter(value)
-        # self.timestamp.increment()
     def clone(self):
         return self.__class__(self.name, self.exclude, self.value,
                               self.default, self.tip, self.auxData)
@@ -1222,7 +1212,6 @@ class MetaRegisteredParameter(Parameter):
             for registration in self.registry:
                 if value == registration:
                     self._value = value.subclass
-                    self.timestamp.increment()
                     return
         # Check for a subclass.  If it's not a class at all, then
         # issubclass will raise a TypeError.  With new style classes,
@@ -1232,7 +1221,6 @@ class MetaRegisteredParameter(Parameter):
             for registration in self.registry:
                 if issubclass(value, registration.subclass):
                     self._value = value
-                    self.timestamp.increment()
                     return
         except TypeError:
             pass
@@ -1285,7 +1273,6 @@ class AutomaticNameParameter(Parameter):
         self.default = default
         self.auxData = auxData.copy()
         
-        # self.timestamp = timestamp.TimeStamp()
         self.group = None
         self.resolver = resolver
         if value is not None:
@@ -1301,7 +1288,6 @@ class AutomaticNameParameter(Parameter):
                 raise ParameterMismatch(
                     str(msg) + "\nfor AutomaticNameParameter: " + self.name)
         self.truevalue=value
-        # self.timestamp.increment()
 
     def clone(self):
         return AutomaticNameParameter(self.name,
@@ -1346,7 +1332,6 @@ class RestrictedAutomaticNameParameter(AutomaticNameParameter):
         self.tip = tip
         self.default = default
         self.auxData = auxData.copy()
-        # self.timestamp = timestamp.TimeStamp()
         self.group = None
         self.resolver = resolver
         self.exclude = exclude
@@ -1369,7 +1354,6 @@ class RestrictedAutomaticNameParameter(AutomaticNameParameter):
                         "Parameter '%s' cannot contain the characters '%s'"
                         % (self.name, self.exclude))
         self.truevalue = value
-        # self.timestamp.increment()
     def clone(self):
         return RestrictedAutomaticNameParameter(self.name, self.exclude,
                                                 self.resolver, self.value,
