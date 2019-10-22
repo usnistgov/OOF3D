@@ -1,0 +1,968 @@
+# -*- python -*-
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.common import debug
+from ooflib.common import enum
+from ooflib.common import registeredclass
+from ooflib.common import utils
+from ooflib.common.IO import parameter
+from ooflib.common.IO import xmlmenudump
+
+class LatticeSystemName(enum.EnumClass(
+        'Cubic',
+        'Hexagonal',
+        'Rhombohedral',
+        'Trigonal',
+        'Tetragonal',
+        'Orthorhombic',
+        'Monoclinic',
+        'Triclinic')):
+    pass
+        
+class LatticeSystemParam(enum.EnumParameter):
+    def __init__(self, name, value=None, default=None, tip=None):
+        enum.EnumParameter.__init__(self, name, LatticeSystemName, value,
+                                    default, tip)
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+        
+# Output from Mathematica, edited to turn it into Python
+# In Mathematica:
+# xsys := Table[FiniteGroupData[{"CrystallographicPointGroup", i}, All][[16]], {i, 32}]
+# names := Table[FiniteGroupData[{"CrystallographicPointGroup", i}, All][[45]], {i, 32}]
+# matrices := Table[FiniteGroupData[{"CrystallographicPointGroup", i}, All][[50]], {i, 32}]
+# combo := Table[{xsys[[i]], names[[i]], matrices[[i]]} , {i, 32}]
+# Write["combo.dat", combo]
+
+# In an editor, substitute:
+#       [ => (
+#       ] => )
+#       { => [
+#       } => ]
+#    Sqrt => sqrt
+#      /2 => /2.
+# Regex substitute:
+#   Subscript("\(.*?\)", "\(.?*\)")  =>  "\1\2"
+# Add "data = \" line, and line feeds for readability.
+
+
+# Some groups have alternative names.  I've elected to keep the names
+# used by the xcore package, so some of the names used by Mathematica
+# have to be changed.
+#  S6 => C3i
+
+from math import sqrt
+
+# Improper rotation matrices with negative determinants are commented
+# out.
+
+data = [
+    ["Triclinic", "C1",
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+     ]
+    ], 
+    ["Triclinic", "Ci",
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         # [[-1, 0, 0], [0, -1, 0], [0, 0, -1]]
+     ]
+    ], 
+    ["Monoclinic", "C2",
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]]
+     ]
+    ],
+    ["Monoclinic", "Cs", 
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+         # [[1, 0, 0], [0, 1, 0], [0, 0, -1]]
+     ]
+    ], 
+    ["Monoclinic", "C2h",
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
+         # [[-1, 0, 0], [0, -1, 0], [0, 0, -1]], 
+         # [[1, 0, 0], [0, 1, 0], [0, 0, -1]]
+     ]
+    ], 
+    ["Orthorhombic", "D2",
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
+         [[-1, 0, 0], [0, 1, 0], [0, 0, -1]], 
+         [[1, 0, 0], [0, -1, 0], [0, 0, -1]]
+     ]
+    ], 
+    ["Orthorhombic", "C2v",
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
+         # [[1, 0, 0], [0, -1, 0], [0, 0, 1]], 
+         # [[-1, 0, 0], [0, 1, 0], [0, 0, 1]]
+     ]
+    ], 
+    ["Orthorhombic", "D2h",
+      [
+          [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+          [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
+          [[-1, 0, 0], [0, 1, 0], [0, 0, -1]], 
+          [[1, 0, 0], [0, -1, 0], [0, 0, -1]],
+          # [[-1, 0, 0], [0, -1, 0], [0, 0, -1]], 
+          # [[1, 0, 0], [0, 1, 0], [0, 0, -1]],
+          # [[1, 0, 0], [0, -1, 0], [0, 0, 1]], 
+          # [[-1, 0, 0], [0, 1, 0], [0, 0, 1]]
+      ]
+    ],
+    ["Tetragonal", "C4", 
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+         [[0, -1, 0], [1, 0, 0], [0, 0, 1]], 
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
+         [[0, 1, 0], [-1, 0, 0], [0, 0, 1]]
+     ]
+    ], 
+    ["Tetragonal", "S4",
+      [
+          [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+          # [[0, -1, 0], [1, 0, 0], [0, 0, -1]],
+          [[-1, 0, 0], [0, -1, 0], [0, 0, 1]], 
+          # [[0, 1, 0], [-1, 0, 0], [0, 0, -1]]
+      ]
+    ], 
+    ["Tetragonal", "C4h",
+      [
+          [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+          [[0, -1, 0], [1, 0, 0], [0, 0, 1]],
+          [[-1, 0, 0], [0, -1, 0], [0, 0, 1]], 
+          [[0, 1, 0], [-1, 0, 0], [0, 0, 1]],
+          # [[-1, 0, 0], [0, -1, 0], [0, 0, -1]], 
+          # [[0, 1, 0], [-1, 0, 0], [0, 0, -1]],
+          # [[1, 0, 0], [0, 1, 0], [0, 0, -1]], 
+          # [[0, -1, 0], [1, 0, 0], [0, 0, -1]]
+      ]
+    ],
+    ["Tetragonal", "D4", 
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+         [[0, -1, 0], [1, 0, 0], [0, 0, 1]], 
+         [[0, 1, 0], [-1, 0, 0], [0, 0, 1]],
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]], 
+         [[1, 0, 0], [0, -1, 0], [0, 0, -1]],
+         [[-1, 0, 0], [0, 1, 0], [0, 0, -1]], 
+         [[0, 1, 0], [1, 0, 0], [0, 0, -1]],
+         [[0, -1, 0], [-1, 0, 0], [0, 0, -1]]
+     ]
+    ],
+    ["Tetragonal", "C4v", 
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+         [[0, -1, 0], [1, 0, 0], [0, 0, 1]], 
+         [[0, 1, 0], [-1, 0, 0], [0, 0, 1]],
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]], 
+         # [[1, 0, 0], [0, -1, 0], [0, 0, 1]],
+         # [[-1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         # [[0, 1, 0], [1, 0, 0], [0, 0, 1]],
+         # [[0, -1, 0], [-1, 0, 0], [0, 0, 1]]
+     ]
+    ], 
+    ["Tetragonal", "D2d",
+      [
+          [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+          # [[0, -1, 0], [1, 0, 0], [0, 0, -1]],
+          # [[0, 1, 0], [-1, 0, 0], [0, 0, -1]], 
+          [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
+          [[1, 0, 0], [0, -1, 0], [0, 0, -1]], 
+          [[-1, 0, 0], [0, 1, 0], [0, 0, -1]],
+          # [[0, 1, 0], [1, 0, 0], [0, 0, 1]], 
+          # [[0, -1, 0], [-1, 0, 0], [0, 0, 1]]
+      ]
+    ], 
+    ["Tetragonal", "D4h",
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         [[0, -1, 0], [1, 0, 0], [0, 0, 1]],
+         [[0, 1, 0], [-1, 0, 0], [0, 0, 1]], 
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
+         [[1, 0, 0], [0, -1, 0], [0, 0, -1]], 
+         [[-1, 0, 0], [0, 1, 0], [0, 0, -1]],
+         [[0, 1, 0], [1, 0, 0], [0, 0, -1]], 
+         [[0, -1, 0], [-1, 0, 0], [0, 0, -1]],
+         # [[-1, 0, 0], [0, -1, 0], [0, 0, -1]],
+         # [[0, -1, 0], [1, 0, 0], [0, 0, -1]], 
+         # [[0, 1, 0], [-1, 0, 0], [0, 0, -1]],
+         # [[1, 0, 0], [0, 1, 0], [0, 0, -1]], 
+         # [[-1, 0, 0], [0, 1, 0], [0, 0, 1]],
+         # [[1, 0, 0], [0, -1, 0], [0, 0, 1]], 
+         # [[0, 1, 0], [1, 0, 0], [0, 0, 1]],
+         # [[0, -1, 0], [-1, 0, 0], [0, 0, 1]]
+     ]
+    ], 
+    ["Trigonal", "C3",
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         [[-1/2., -sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, 1]], 
+         [[-1/2., sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, 1]]
+     ]
+    ], 
+    ["Trigonal", "C3i",  # "S6"
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         [[-1/2., -sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, 1]], 
+         [[-1/2., sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, 1]], 
+         # [[-1, 0, 0], [0, -1, 0], [0, 0, -1]],
+         # [[1/2., sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, -1]],
+         # [[1/2., -sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, -1]]
+     ]
+    ],
+    ["Trigonal", "D3", 
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+         [[-1/2., -sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, 1]],
+         [[-1/2., sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, 1]],
+         [[1, 0, 0], [0, -1, 0], [0, 0, -1]], 
+         [[-1/2., -sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, -1]], 
+         [[-1/2., sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, -1]]
+     ]
+    ], 
+    ["Trigonal", "C3v",
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         [[-1/2., -sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, 1]], 
+         [[-1/2., sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, 1]], 
+         # [[1, 0, 0], [0, -1, 0], [0, 0, 1]],
+         # [[-1/2., -sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, 1]],
+         # [[-1/2., sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, 1]]
+     ]
+    ],
+    ["Trigonal", "D3d", 
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+         [[-1/2., -sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, 1]],
+         [[-1/2., sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, 1]],
+         [[1, 0, 0], [0, -1, 0], [0, 0, -1]], 
+         [[-1/2., -sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, -1]], 
+         [[-1/2., sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, -1]], 
+         # [[-1, 0, 0], [0, -1, 0], [0, 0, -1]],
+         # [[1/2., -sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, -1]],
+         # [[1/2., sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, -1]],
+         # [[-1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         # [[1/2., sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, 1]], 
+         # [[1/2., -sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, 1]]
+     ]
+    ], 
+    ["Hexagonal", "C6",
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         [[1/2., -sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, 1]], 
+         [[-1/2., -sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, 1]], 
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
+         [[-1/2., sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, 1]],
+         [[1/2., sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, 1]]
+     ]
+    ],
+    ["Hexagonal", "C3h", 
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+         [[-1/2., -sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, 1]],
+         [[-1/2., sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, 1]],
+         # [[1, 0, 0], [0, 1, 0], [0, 0, -1]], 
+         # [[-1/2., -sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, -1]], 
+         # [[-1/2., sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, -1]]
+     ]
+    ], 
+    ["Hexagonal", "C6h",
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         [[1/2., -sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, 1]], 
+         [[-1/2., -sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, 1]], 
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
+         [[-1/2., sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, 1]],
+         [[1/2., sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, 1]],
+         # [[-1, 0, 0], [0, -1, 0], [0, 0, -1]], 
+         # [[-1/2., sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, -1]], 
+         # [[1/2., sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, -1]], 
+         # [[1, 0, 0], [0, 1, 0], [0, 0, -1]],
+         # [[1/2., -sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, -1]],
+         # [[-1/2., -sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, -1]]
+     ]
+    ],
+    ["Hexagonal", "D6", 
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+         [[1/2., -sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, 1]],
+         [[1/2., sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, 1]],
+         [[-1/2., -sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, 1]],
+         [[-1/2., sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, 1]],
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]], 
+         [[1, 0, 0], [0, -1, 0], [0, 0, -1]],
+         [[-1/2., -sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, -1]],
+         [[-1/2., sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, -1]],
+         [[-1, 0, 0], [0, 1, 0], [0, 0, -1]], 
+         [[1/2., sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, -1]], 
+         [[1/2., -sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, -1]]
+     ]
+    ], 
+    ["Hexagonal", "C6v",
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         [[1/2., -sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, 1]], 
+         [[1/2., sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, 1]], 
+         [[-1/2., -sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, 1]], 
+         [[-1/2., sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, 1]], 
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
+         # [[1, 0, 0], [0, -1, 0], [0, 0, 1]], 
+         # [[-1/2., -sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, 1]], 
+         # [[-1/2., sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, 1]], 
+         # [[-1, 0, 0], [0, 1, 0], [0, 0, 1]],
+         # [[1/2., sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, 1]],
+         # [[1/2., -sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, 1]]
+     ]
+    ],
+    ["Hexagonal", "D3h", 
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+         [[-1/2., -sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, 1]],
+         [[-1/2., sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, 1]],
+         [[1, 0, 0], [0, -1, 0], [0, 0, -1]], 
+         [[-1/2., -sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, -1]], 
+         [[-1/2., sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, -1]], 
+         # [[1, 0, 0], [0, 1, 0], [0, 0, -1]],
+         # [[-1/2., -sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, -1]],
+         # [[-1/2., sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, -1]],
+         # [[1, 0, 0], [0, -1, 0], [0, 0, 1]], 
+         # [[-1/2., -sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, 1]], 
+         # [[-1/2., sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, 1]]
+     ]
+    ], 
+    ["Hexagonal", "D6h",
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         [[1/2., -sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, 1]], 
+         [[1/2., sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, 1]], 
+         [[-1/2., -sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, 1]], 
+         [[-1/2., sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, 1]], 
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
+         [[1, 0, 0], [0, -1, 0], [0, 0, -1]], 
+         [[-1/2., -sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, -1]], 
+         [[-1/2., sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, -1]], 
+         [[-1, 0, 0], [0, 1, 0], [0, 0, -1]],
+         [[1/2., sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, -1]],
+         [[1/2., -sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, -1]],
+         # [[-1, 0, 0], [0, -1, 0], [0, 0, -1]], 
+         # [[-1/2., -sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, -1]], 
+         # [[-1/2., sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, -1]], 
+         # [[1/2., -sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, -1]], 
+         # [[1/2., sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, -1]], 
+         # [[1, 0, 0], [0, 1, 0], [0, 0, -1]],
+         # [[-1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         # [[1/2., sqrt(3)/2., 0], [sqrt(3)/2., -1/2., 0], [0, 0, 1]], 
+         # [[1/2., -sqrt(3)/2., 0], [-sqrt(3)/2., -1/2., 0], [0, 0, 1]], 
+         # [[1, 0, 0], [0, -1, 0], [0, 0, 1]],
+         # [[-1/2., -sqrt(3)/2., 0], [-sqrt(3)/2., 1/2., 0], [0, 0, 1]],
+         # [[-1/2., sqrt(3)/2., 0], [sqrt(3)/2., 1/2., 0], [0, 0, 1]]
+     ]
+    ], 
+    ["Cubic", "T",
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         [[1, 0, 0], [0, -1, 0], [0, 0, -1]],
+         [[-1, 0, 0], [0, 1, 0], [0, 0, -1]], 
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
+         [[0, 0, 1], [1, 0, 0], [0, 1, 0]],
+         [[0, 0, -1], [1, 0, 0], [0, -1, 0]],
+         [[0, 0, 1], [-1, 0, 0], [0, -1, 0]], 
+         [[0, 0, -1], [-1, 0, 0], [0, 1, 0]],
+         [[0, 1, 0], [0, 0, 1], [1, 0, 0]], 
+         [[0, 1, 0], [0, 0, -1], [-1, 0, 0]],
+         [[0, -1, 0], [0, 0, -1], [1, 0, 0]], 
+         [[0, -1, 0], [0, 0, 1], [-1, 0, 0]]
+     ]
+    ],
+    ["Cubic", "Th", 
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+         [[1, 0, 0], [0, -1, 0], [0, 0, -1]], 
+         [[-1, 0, 0], [0, 1, 0], [0, 0, -1]],
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]], 
+         [[0, 0, 1], [1, 0, 0], [0, 1, 0]],
+         [[0, 0, -1], [1, 0, 0], [0, -1, 0]], 
+         [[0, 0, 1], [-1, 0, 0], [0, -1, 0]],
+         [[0, 0, -1], [-1, 0, 0], [0, 1, 0]], 
+         [[0, 1, 0], [0, 0, 1], [1, 0, 0]],
+         [[0, 1, 0], [0, 0, -1], [-1, 0, 0]], 
+         [[0, -1, 0], [0, 0, -1], [1, 0, 0]],
+         [[0, -1, 0], [0, 0, 1], [-1, 0, 0]], 
+         # [[-1, 0, 0], [0, -1, 0], [0, 0, -1]],
+         # [[-1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         # [[1, 0, 0], [0, -1, 0], [0, 0, 1]],
+         # [[1, 0, 0], [0, 1, 0], [0, 0, -1]], 
+         # [[0, -1, 0], [0, 0, -1], [-1, 0, 0]],
+         # [[0, -1, 0], [0, 0, 1], [1, 0, 0]], 
+         # [[0, 1, 0], [0, 0, 1], [-1, 0, 0]],
+         # [[0, 1, 0], [0, 0, -1], [1, 0, 0]], 
+         # [[0, 0, -1], [-1, 0, 0], [0, -1, 0]],
+         # [[0, 0, 1], [-1, 0, 0], [0, 1, 0]], 
+         # [[0, 0, -1], [1, 0, 0], [0, 1, 0]],
+         # [[0, 0, 1], [1, 0, 0], [0, -1, 0]]
+     ]
+    ], 
+    ["Cubic", "O",
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         [[0, 0, 1], [1, 0, 0], [0, 1, 0]],
+         [[0, 0, -1], [1, 0, 0], [0, -1, 0]], 
+         [[0, 0, 1], [-1, 0, 0], [0, -1, 0]],
+         [[0, 0, -1], [-1, 0, 0], [0, 1, 0]], 
+         [[0, 1, 0], [0, 0, 1], [1, 0, 0]],
+         [[0, 1, 0], [0, 0, -1], [-1, 0, 0]], 
+         [[0, -1, 0], [0, 0, -1], [1, 0, 0]],
+         [[0, -1, 0], [0, 0, 1], [-1, 0, 0]], 
+         [[1, 0, 0], [0, -1, 0], [0, 0, -1]],
+         [[-1, 0, 0], [0, 1, 0], [0, 0, -1]], 
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
+         [[0, 1, 0], [1, 0, 0], [0, 0, -1]], 
+         [[0, -1, 0], [-1, 0, 0], [0, 0, -1]],
+         [[0, 0, 1], [0, -1, 0], [1, 0, 0]], 
+         [[0, 0, -1], [0, -1, 0], [-1, 0, 0]],
+         [[-1, 0, 0], [0, 0, 1], [0, 1, 0]], 
+         [[-1, 0, 0], [0, 0, -1], [0, -1, 0]],
+         [[1, 0, 0], [0, 0, -1], [0, 1, 0]], 
+         [[0, 0, 1], [0, 1, 0], [-1, 0, 0]],
+         [[0, -1, 0], [1, 0, 0], [0, 0, 1]], 
+         [[1, 0, 0], [0, 0, 1], [0, -1, 0]],
+         [[0, 0, -1], [0, 1, 0], [1, 0, 0]], 
+         [[0, 1, 0], [-1, 0, 0], [0, 0, 1]]
+     ]
+    ],
+    ["Cubic", "Td", 
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+         [[0, 0, 1], [1, 0, 0], [0, 1, 0]], 
+         [[0, 0, -1], [1, 0, 0], [0, -1, 0]],
+         [[0, 0, 1], [-1, 0, 0], [0, -1, 0]], 
+         [[0, 0, -1], [-1, 0, 0], [0, 1, 0]],
+         [[0, 1, 0], [0, 0, 1], [1, 0, 0]], 
+         [[0, 1, 0], [0, 0, -1], [-1, 0, 0]],
+         [[0, -1, 0], [0, 0, -1], [1, 0, 0]], 
+         [[0, -1, 0], [0, 0, 1], [-1, 0, 0]],
+         [[1, 0, 0], [0, -1, 0], [0, 0, -1]], 
+         [[-1, 0, 0], [0, 1, 0], [0, 0, -1]],
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]], 
+         # [[-1, 0, 0], [0, 0, -1], [0, 1, 0]],
+         # [[0, 0, 1], [0, -1, 0], [-1, 0, 0]], 
+         # [[0, -1, 0], [1, 0, 0], [0, 0, -1]],
+         # [[-1, 0, 0], [0, 0, 1], [0, -1, 0]], 
+         # [[0, 0, -1], [0, -1, 0], [1, 0, 0]],
+         # [[0, 1, 0], [-1, 0, 0], [0, 0, -1]], 
+         # [[0, 1, 0], [1, 0, 0], [0, 0, 1]],
+         # [[0, -1, 0], [-1, 0, 0], [0, 0, 1]], 
+         # [[1, 0, 0], [0, 0, -1], [0, -1, 0]],
+         # [[0, 0, -1], [0, 1, 0], [-1, 0, 0]], 
+         # [[0, 0, 1], [0, 1, 0], [1, 0, 0]],
+         # [[1, 0, 0], [0, 0, 1], [0, 1, 0]]
+     ]
+    ], 
+    ["Cubic", "Oh",
+     [
+         [[1, 0, 0], [0, 1, 0], [0, 0, 1]], 
+         [[0, 0, 1], [1, 0, 0], [0, 1, 0]],
+         [[0, 0, -1], [1, 0, 0], [0, -1, 0]], 
+         [[0, 0, 1], [-1, 0, 0], [0, -1, 0]],
+         [[0, 0, -1], [-1, 0, 0], [0, 1, 0]], 
+         [[0, 1, 0], [0, 0, 1], [1, 0, 0]],
+         [[0, 1, 0], [0, 0, -1], [-1, 0, 0]], 
+         [[0, -1, 0], [0, 0, -1], [1, 0, 0]],
+         [[0, -1, 0], [0, 0, 1], [-1, 0, 0]], 
+         [[1, 0, 0], [0, -1, 0], [0, 0, -1]],
+         [[-1, 0, 0], [0, 1, 0], [0, 0, -1]], 
+         [[-1, 0, 0], [0, -1, 0], [0, 0, 1]],
+         [[0, 1, 0], [1, 0, 0], [0, 0, -1]], 
+         [[0, -1, 0], [-1, 0, 0], [0, 0, -1]],
+         [[0, 0, 1], [0, -1, 0], [1, 0, 0]], 
+         [[0, 0, -1], [0, -1, 0], [-1, 0, 0]],
+         [[-1, 0, 0], [0, 0, 1], [0, 1, 0]], 
+         [[-1, 0, 0], [0, 0, -1], [0, -1, 0]],
+         [[1, 0, 0], [0, 0, -1], [0, 1, 0]], 
+         [[0, 0, 1], [0, 1, 0], [-1, 0, 0]],
+         [[0, -1, 0], [1, 0, 0], [0, 0, 1]], 
+         [[1, 0, 0], [0, 0, 1], [0, -1, 0]],
+         [[0, 0, -1], [0, 1, 0], [1, 0, 0]], 
+         [[0, 1, 0], [-1, 0, 0], [0, 0, 1]],
+         # [[-1, 0, 0], [0, -1, 0], [0, 0, -1]], 
+         # [[0, -1, 0], [0, 0, -1], [-1, 0, 0]],
+         # [[0, -1, 0], [0, 0, 1], [1, 0, 0]], 
+         # [[0, 1, 0], [0, 0, 1], [-1, 0, 0]],
+         # [[0, 1, 0], [0, 0, -1], [1, 0, 0]], 
+         # [[0, 0, -1], [-1, 0, 0], [0, -1, 0]],
+         # [[0, 0, 1], [-1, 0, 0], [0, 1, 0]], 
+         # [[0, 0, -1], [1, 0, 0], [0, 1, 0]],
+         # [[0, 0, 1], [1, 0, 0], [0, -1, 0]], 
+         # [[-1, 0, 0], [0, 1, 0], [0, 0, 1]],
+         # [[1, 0, 0], [0, -1, 0], [0, 0, 1]], 
+         # [[1, 0, 0], [0, 1, 0], [0, 0, -1]],
+         # [[0, 1, 0], [1, 0, 0], [0, 0, 1]], 
+         # [[0, -1, 0], [-1, 0, 0], [0, 0, 1]],
+         # [[1, 0, 0], [0, 0, -1], [0, -1, 0]], 
+         # [[0, 0, -1], [0, 1, 0], [-1, 0, 0]],
+         # [[0, 0, 1], [0, 1, 0], [1, 0, 0]], 
+         # [[1, 0, 0], [0, 0, 1], [0, 1, 0]],
+         # [[-1, 0, 0], [0, 0, -1], [0, 1, 0]], 
+         # [[0, 0, 1], [0, -1, 0], [-1, 0, 0]],
+         # [[0, -1, 0], [1, 0, 0], [0, 0, -1]], 
+         # [[-1, 0, 0], [0, 0, 1], [0, -1, 0]],
+         # [[0, 0, -1], [0, -1, 0], [1, 0, 0]], 
+         # [[0, 1, 0], [-1, 0, 0], [0, 0, -1]]
+     ]
+    ]
+]
+
+
+# Copy symmetry matrices into C++.
+
+for (latticeSystem, schoenflies, matrices) in data:
+    for matrix in matrices:
+        addLatticeSymmetryMatrix(schoenflies, matrix)
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Connection between space group numbers and point groups.
+
+# The table was generated using the xcore package from
+# https://github.com/stefsmeets/xcore and the following script:
+#    import xcore
+#    print "spacePointDict = utils.OrderedDict(["
+#    for i in range(1, 231):
+#        spgrp = xcore.SpaceGroup(`i`)
+#        print "    (%d, ('%s', '%s'))," % (spgrp.number, spgrp.point_group,
+#                                           spgrp.schoenflies.split('^')[0])
+#    print "])"
+
+# Either xcore uses "m3" instead of "m-3" as the international symbol
+# for Schoenflies "Th", or I made an error in transcribing.  In any
+# case the various wikipedia pages use "m-3" ($m\bar3$), which is what
+# I've included below.
+
+space2PointDict = utils.OrderedDict([
+    (1,  ('1', 'C1')),
+    (2,  ('-1', 'Ci')),
+    (3,  ('2', 'C2')),
+    (4,  ('2', 'C2')),
+    (5,  ('2', 'C2')),
+    (6,  ('m', 'Cs')),
+    (7,  ('m', 'Cs')),
+    (8,  ('m', 'Cs')),
+    (9,  ('m', 'Cs')),
+    (10,  ('2/m', 'C2h')),
+    (11,  ('2/m', 'C2h')),
+    (12,  ('2/m', 'C2h')),
+    (13,  ('2/m', 'C2h')),
+    (14,  ('2/m', 'C2h')),
+    (15,  ('2/m', 'C2h')),
+    (16,  ('222', 'D2')),
+    (17,  ('222', 'D2')),
+    (18,  ('222', 'D2')),
+    (19,  ('222', 'D2')),
+    (20,  ('222', 'D2')),
+    (21,  ('222', 'D2')),
+    (22,  ('222', 'D2')),
+    (23,  ('222', 'D2')),
+    (24,  ('222', 'D2')),
+    (25,  ('mm2', 'C2v')),
+    (26,  ('mm2', 'C2v')),
+    (27,  ('mm2', 'C2v')),
+    (28,  ('mm2', 'C2v')),
+    (29,  ('mm2', 'C2v')),
+    (30,  ('mm2', 'C2v')),
+    (31,  ('mm2', 'C2v')),
+    (32,  ('mm2', 'C2v')),
+    (33,  ('mm2', 'C2v')),
+    (34,  ('mm2', 'C2v')),
+    (35,  ('mm2', 'C2v')),
+    (36,  ('mm2', 'C2v')),
+    (37,  ('mm2', 'C2v')),
+    (38,  ('mm2', 'C2v')),
+    (39,  ('mm2', 'C2v')),
+    (40,  ('mm2', 'C2v')),
+    (41,  ('mm2', 'C2v')),
+    (42,  ('mm2', 'C2v')),
+    (43,  ('mm2', 'C2v')),
+    (44,  ('mm2', 'C2v')),
+    (45,  ('mm2', 'C2v')),
+    (46,  ('mm2', 'C2v')),
+    (47,  ('mmm', 'D2h')),
+    (48,  ('mmm', 'D2h')),
+    (49,  ('mmm', 'D2h')),
+    (50,  ('mmm', 'D2h')),
+    (51,  ('mmm', 'D2h')),
+    (52,  ('mmm', 'D2h')),
+    (53,  ('mmm', 'D2h')),
+    (54,  ('mmm', 'D2h')),
+    (55,  ('mmm', 'D2h')),
+    (56,  ('mmm', 'D2h')),
+    (57,  ('mmm', 'D2h')),
+    (58,  ('mmm', 'D2h')),
+    (59,  ('mmm', 'D2h')),
+    (60,  ('mmm', 'D2h')),
+    (61,  ('mmm', 'D2h')),
+    (62,  ('mmm', 'D2h')),
+    (63,  ('mmm', 'D2h')),
+    (64,  ('mmm', 'D2h')),
+    (65,  ('mmm', 'D2h')),
+    (66,  ('mmm', 'D2h')),
+    (67,  ('mmm', 'D2h')),
+    (68,  ('mmm', 'D2h')),
+    (69,  ('mmm', 'D2h')),
+    (70,  ('mmm', 'D2h')),
+    (71,  ('mmm', 'D2h')),
+    (72,  ('mmm', 'D2h')),
+    (73,  ('mmm', 'D2h')),
+    (74,  ('mmm', 'D2h')),
+    (75,  ('4', 'C4')),
+    (76,  ('4', 'C4')),
+    (77,  ('4', 'C4')),
+    (78,  ('4', 'C4')),
+    (79,  ('4', 'C4')),
+    (80,  ('4', 'C4')),
+    (81,  ('-4', 'S4')),
+    (82,  ('-4', 'S4')),
+    (83,  ('4/m', 'C4h')),
+    (84,  ('4/m', 'C4h')),
+    (85,  ('4/m', 'C4h')),
+    (86,  ('4/m', 'C4h')),
+    (87,  ('4/m', 'C4h')),
+    (88,  ('4/m', 'C4h')),
+    (89,  ('422', 'D4')),
+    (90,  ('422', 'D4')),
+    (91,  ('422', 'D4')),
+    (92,  ('422', 'D4')),
+    (93,  ('422', 'D4')),
+    (94,  ('422', 'D4')),
+    (95,  ('422', 'D4')),
+    (96,  ('422', 'D4')),
+    (97,  ('422', 'D4')),
+    (98,  ('422', 'D4')),
+    (99,  ('4mm', 'C4v')),
+    (100,  ('4mm', 'C4v')),
+    (101,  ('4mm', 'C4v')),
+    (102,  ('4mm', 'C4v')),
+    (103,  ('4mm', 'C4v')),
+    (104,  ('4mm', 'C4v')),
+    (105,  ('4mm', 'C4v')),
+    (106,  ('4mm', 'C4v')),
+    (107,  ('4mm', 'C4v')),
+    (108,  ('4mm', 'C4v')),
+    (109,  ('4mm', 'C4v')),
+    (110,  ('4mm', 'C4v')),
+    (111,  ('-42m', 'D2d')),
+    (112,  ('-42m', 'D2d')),
+    (113,  ('-42m', 'D2d')),
+    (114,  ('-42m', 'D2d')),
+    (115,  ('-42m', 'D2d')),
+    (116,  ('-42m', 'D2d')),
+    (117,  ('-42m', 'D2d')),
+    (118,  ('-42m', 'D2d')),
+    (119,  ('-42m', 'D2d')),
+    (120,  ('-42m', 'D2d')),
+    (121,  ('-42m', 'D2d')),
+    (122,  ('-42m', 'D2d')),
+    (123,  ('4/mmm', 'D4h')),
+    (124,  ('4/mmm', 'D4h')),
+    (125,  ('4/mmm', 'D4h')),
+    (126,  ('4/mmm', 'D4h')),
+    (127,  ('4/mmm', 'D4h')),
+    (128,  ('4/mmm', 'D4h')),
+    (129,  ('4/mmm', 'D4h')),
+    (130,  ('4/mmm', 'D4h')),
+    (131,  ('4/mmm', 'D4h')),
+    (132,  ('4/mmm', 'D4h')),
+    (133,  ('4/mmm', 'D4h')),
+    (134,  ('4/mmm', 'D4h')),
+    (135,  ('4/mmm', 'D4h')),
+    (136,  ('4/mmm', 'D4h')),
+    (137,  ('4/mmm', 'D4h')),
+    (138,  ('4/mmm', 'D4h')),
+    (139,  ('4/mmm', 'D4h')),
+    (140,  ('4/mmm', 'D4h')),
+    (141,  ('4/mmm', 'D4h')),
+    (142,  ('4/mmm', 'D4h')),
+    (143,  ('3', 'C3')),
+    (144,  ('3', 'C3')),
+    (145,  ('3', 'C3')),
+    (146,  ('3', 'C3')),
+    (147,  ('-3', 'C3i')),
+    (148,  ('-3', 'C3i')),
+    (149,  ('32', 'D3')),
+    (150,  ('32', 'D3')),
+    (151,  ('32', 'D3')),
+    (152,  ('32', 'D3')),
+    (153,  ('32', 'D3')),
+    (154,  ('32', 'D3')),
+    (155,  ('32', 'D3')),
+    (156,  ('3m', 'C3v')),
+    (157,  ('3m', 'C3v')),
+    (158,  ('3m', 'C3v')),
+    (159,  ('3m', 'C3v')),
+    (160,  ('3m', 'C3v')),
+    (161,  ('3m', 'C3v')),
+    (162,  ('-3m', 'D3d')),
+    (163,  ('-3m', 'D3d')),
+    (164,  ('-3m', 'D3d')),
+    (165,  ('-3m', 'D3d')),
+    (166,  ('-3m', 'D3d')),
+    (167,  ('-3m', 'D3d')),
+    (168,  ('6', 'C6')),
+    (169,  ('6', 'C6')),
+    (170,  ('6', 'C6')),
+    (171,  ('6', 'C6')),
+    (172,  ('6', 'C6')),
+    (173,  ('6', 'C6')),
+    (174,  ('-6', 'C3h')),
+    (175,  ('6/m', 'C6h')),
+    (176,  ('6/m', 'C6h')),
+    (177,  ('622', 'D6')),
+    (178,  ('622', 'D6')),
+    (179,  ('622', 'D6')),
+    (180,  ('622', 'D6')),
+    (181,  ('622', 'D6')),
+    (182,  ('622', 'D6')),
+    (183,  ('6mm', 'C6v')),
+    (184,  ('6mm', 'C6v')),
+    (185,  ('6mm', 'C6v')),
+    (186,  ('6mm', 'C6v')),
+    (187,  ('-6m2', 'D3h')),
+    (188,  ('-6m2', 'D3h')),
+    (189,  ('-6m2', 'D3h')),
+    (190,  ('-6m2', 'D3h')),
+    (191,  ('6/mmm', 'D6h')),
+    (192,  ('6/mmm', 'D6h')),
+    (193,  ('6/mmm', 'D6h')),
+    (194,  ('6/mmm', 'D6h')),
+    (195,  ('23', 'T')),
+    (196,  ('23', 'T')),
+    (197,  ('23', 'T')),
+    (198,  ('23', 'T')),
+    (199,  ('23', 'T')),
+    (200,  ('m-3', 'Th')),
+    (201,  ('m-3', 'Th')),
+    (202,  ('m-3', 'Th')),
+    (203,  ('m-3', 'Th')),
+    (204,  ('m-3', 'Th')),
+    (205,  ('m-3', 'Th')),
+    (206,  ('m-3', 'Th')),
+    (207,  ('432', 'O')),
+    (208,  ('432', 'O')),
+    (209,  ('432', 'O')),
+    (210,  ('432', 'O')),
+    (211,  ('432', 'O')),
+    (212,  ('432', 'O')),
+    (213,  ('432', 'O')),
+    (214,  ('432', 'O')),
+    (215,  ('-43m', 'Td')),
+    (216,  ('-43m', 'Td')),
+    (217,  ('-43m', 'Td')),
+    (218,  ('-43m', 'Td')),
+    (219,  ('-43m', 'Td')),
+    (220,  ('-43m', 'Td')),
+    (221,  ('m-3m', 'Oh')),
+    (222,  ('m-3m', 'Oh')),
+    (223,  ('m-3m', 'Oh')),
+    (224,  ('m-3m', 'Oh')),
+    (225,  ('m-3m', 'Oh')),
+    (226,  ('m-3m', 'Oh')),
+    (227,  ('m-3m', 'Oh')),
+    (228,  ('m-3m', 'Oh')),
+    (229,  ('m-3m', 'Oh')),
+    (230,  ('m-3m', 'Oh'))])    # space2PointDict initialization
+
+
+# Dictionaries that reverse the mapping of space2PointDict and map
+# Schoenflies symbols to international names and v.v.
+international2SpaceDict = utils.OrderedDict()
+schoen2SpaceDict = utils.OrderedDict()
+schoen2InternationalDict = utils.OrderedDict()
+international2SchoenDict = utils.OrderedDict()
+for (spaceGrp, (ptgrp, schoen)) in space2PointDict.items():
+    # There's more than one space group for each point group. Just use
+    # the first space group.
+    if ptgrp not in international2SpaceDict:
+        international2SpaceDict[ptgrp] = spaceGrp
+        international2SchoenDict[ptgrp] = schoen
+        schoen2SpaceDict[schoen] = spaceGrp
+        schoen2InternationalDict[schoen] = ptgrp
+
+internationalGroupNames = international2SpaceDict.keys()
+schoenfliesSymbols = schoen2SpaceDict.keys()
+
+# print "internationalGroupNames=", internationalGroupNames
+# print "schoenfliesSymbols=", schoenfliesSymbols
+# print "schoen2InternationalDict=", schoen2InternationalDict
+# print "international2SchoenDict=", international2SchoenDict
+# print "international2SpaceDict=", international2SpaceDict
+# print "schoen2SpaceDict=", schoen2SpaceDict
+
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# LatticeSymmetry is the base class of a set of
+# ConvertibleRegisteredClasses for representing lattice symmetry
+# (point groups) in various notations.  Space groups are included
+# because that's what EBSD provides, although it's more informaation
+# than we need.  Many space groups are equivalent to a single point
+# group, so converting space group to point group and back to space
+# group will not necessarily return to the original group.
+
+class LatticeSymmetry(registeredclass.ConvertibleRegisteredClass):
+    registry = []
+    tip = 'Various ways of specifying lattice symmetry (ie point groups).'
+    discussion=xmlmenudump.loadFile(
+        'DISCUSSIONS/common/reg/latticesymmetry.xml')
+
+class LatticeSymmetryRegistration(registeredclass.ConvertibleRegistration):
+    def __init__(self, name, subclass, ordering,
+                 from_base, to_base, params=[], tip=None, discussion=None):
+        registeredclass.Registration.__init__(
+            self, name, LatticeSymmetry, subclass, ordering, params,
+            from_base=from_base, to_base=to_base,
+            tip=tip, discussion=discussion)
+
+#=--=##=--=##=--=##=--=#
+
+# The base representation for the convertible registered class is the
+# International (aka Hermann-Mauguin) notation for point groups (mmm,
+# et al).
+
+class InternationalName(enum.EnumClass(*internationalGroupNames)):
+    tip="The short International (Hermann-Mauguin) name for a point group."
+    discussion="""
+<para>
+
+Names allowed by <xref linkend="RegisteredClass-International"/>.  See
+  <ulink
+  url="https://en.wikipedia.org/wiki/Crystallographic_point_group#The_correspondence_between_different_notations"
+  role="external">Wikipedia</ulink> for details.</para> """
+
+def internationalFromSpaceGroup(n):
+    return InternationalName(space2PointDict[n][0])
+
+class International(LatticeSymmetry):
+    def __init__(self, name):
+        assert isinstance(name, InternationalName)
+        self.name = name        # an InternationalName Enum
+    def schoenflies(self):
+        return international2SchoenDict[self.name.name]
+
+def _international_from_base(reg, base):
+    # base is an International instance.  base.name is an Enum.
+    assert isinstance(base, International)
+    return [base.name.name]
+
+def _international_to_base(reg, values=None):
+    (grpnum,) = values or reg.getParamValues()
+    return International(grpnum)
+
+LatticeSymmetryRegistration(
+    "International",
+    International,
+    ordering = 2,
+    from_base = _international_from_base,
+    to_base = _international_to_base,
+    params = [enum.EnumParameter('name', InternationalName,
+                                 tip="Name of the point group.")],
+    tip="Use international notation to specify lattice symmetry.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/common/reg/international.xml')
+)
+    
+    
+#=--=##=--=##=--=##=--=#
+
+class SpaceGroup(LatticeSymmetry):
+    def __init__(self, number):
+        assert 0 < number <= 230
+        self.number = number
+    def schoenflies(self):
+        return schoenfliesFromSpaceGroup(self.number).name
+
+def _space_from_base(reg, base):
+    # base is an International instance. base.name is an Enum.
+    assert isinstance(base, International)
+    return [international2SpaceDict[base.name.name]]
+
+def _space_to_base(reg, values=None):
+    (grpnum,) = values or reg.getParamValues()
+    base = International(internationalFromSpaceGroup(grpnum))
+    return base
+
+LatticeSymmetryRegistration(
+    "SpaceGroup",
+    SpaceGroup,
+    ordering = 0,
+    from_base = _space_from_base,
+    to_base = _space_to_base,
+    params = [parameter.IntRangeParameter("number", (1, 230),
+                                          tip="Space group number.")],
+    tip="Use the space group number to specify lattice symmetry.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/common/reg/spacegroup.xml')
+)
+    
+#=--=##=--=##=--=##=--=#
+
+# Representation by the Schoenflies symbol
+
+class SchoenfliesName(enum.EnumClass(*schoenfliesSymbols)):
+    tip="The Schoenflies name for a point group."
+    discussion="""
+<para>Names allowed by <xref linkend="RegisteredClass-Schoenflies"/>. See
+<ulink
+  url="https://en.wikipedia.org/wiki/Crystallographic_point_group#The_correspondence_between_different_notations"
+  role="external">Wikipedia</ulink> for details.</para> """
+    
+def schoenfliesFromSpaceGroup(n):
+    return SchoenfliesName(space2PointDict[n][1])
+
+class Schoenflies(LatticeSymmetry):
+    def __init__(self, symbol):
+        assert isinstance(symbol, SchoenfliesName)
+        self.symbol = symbol    # a SchoenfliesName Enum
+    def schoenflies(self):
+        return self.symbol.name
+
+def _schoenflies_from_base(reg, base):
+    # base is an International instance.  base.name is an Enum.
+    # base.name.name is the string version of the Enum.
+    assert isinstance(base, International)
+    return [international2SchoenDict[base.name.name]]
+
+def _schoenflies_to_base(reg, values=None):
+    (schoen,) = values or reg.getParamValues() # a SchoenfliesName Enum
+    assert isinstance(schoen, SchoenfliesName)
+    return International(
+        InternationalName(schoen2InternationalDict[schoen.name]))
+
+LatticeSymmetryRegistration(
+    "Schoenflies",
+    Schoenflies,
+    ordering = 1,
+    from_base = _schoenflies_from_base,
+    to_base = _schoenflies_to_base,
+    params = [enum.EnumParameter('symbol', SchoenfliesName,
+                                 tip="Name of the point group.")],
+    tip="Use Schoenflies notation to specify the lattice symmetry.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/common/reg/schoenflies.xml')
+)
+
+#=--=##=--=##=--=##=--=#
+
+class LatticeSymmetryParameter(parameter.ConvertibleRegisteredParameter):
+    def __init__(self, name, value=SpaceGroup(1), default=SpaceGroup(1),
+                 tip=None):
+        parameter.ConvertibleRegisteredParameter.__init__(
+            self, name, LatticeSymmetry, value, default, tip)
