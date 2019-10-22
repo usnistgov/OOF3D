@@ -82,14 +82,6 @@ NonArithmeticOutputValue::NonArithmeticOutputValue(NonArithmeticOutputVal *v)
   : OutputValue(v)
 {}
 
-ArithmeticOutputValue::ArithmeticOutputValue(ArithmeticOutputVal *v)
-  : OutputValue(v)
-{}
-
-NonArithmeticOutputValue::NonArithmeticOutputValue(NonArithmeticOutputVal *v)
-  : OutputValue(v)
-{}
-
 const ArithmeticOutputValue &ArithmeticOutputValue::operator+=(
 				       const ArithmeticOutputValue &other)
 {
@@ -331,7 +323,9 @@ double VectorOutputVal::dot(const Coord &x) const {
   return sum;
 }
 
-ArithmeticOutputVal *VectorOutputVal::dot(const OutputVal &ov) const {
+ArithmeticOutputVal *VectorOutputVal::dot(const ArithmeticOutputVal &ov)
+  const
+{
   return ov.dotVector(*this);
 }
 
@@ -420,7 +414,7 @@ ListOutputVal::ListOutputVal(const std::vector<std::string> *lbls)
   : data(lbls->size()),
     labels(*lbls) 
 {
-  for(unsigned int i=0; i<size_; i++)
+  for(unsigned int i=0; i<size(); i++)
     data[i] = 0.0;
 }
 
@@ -451,8 +445,8 @@ const ListOutputVal &ListOutputVal::operator=(const OutputVal &other) {
 }
 
 const ListOutputVal &ListOutputVal::operator=(const ListOutputVal &other) {
+  assert(labels == other.labels);
   data = other.data;
-  labels = other.labels;
   return *this;
 }
 
@@ -529,9 +523,9 @@ void VectorOutputVal::print(std::ostream &os) const {
 
 void ListOutputVal::print(std::ostream &os) const {
   os << "ListOutputVal(";
-  if(size_ > 0) {
+  if(size() > 0) {
     os << data[0];
-    for(unsigned int i=1; i<size_; i++)
+    for(unsigned int i=1; i<size(); i++)
       os << ", " << data[i];
   }
   os << ")";

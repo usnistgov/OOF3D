@@ -607,10 +607,8 @@ class ConcatenatedOutputs(object):
         return vals
 
 def _concatenate(mesh, elements, coords, first, second):
-    firsts = first.evaluate(mesh, elements, coords)
-    seconds = second.evaluate(mesh, elements, coords)
     return [ConcatenatedOutputs(f, s)
-            for f,s in itertools.izip(firsts, seconds)]
+            for f,s in itertools.izip(first, second)]
 
 def _concatenate_shortrepr(self):
     return "%s and %s" % (self.resolveAlias('first').value.shortrepr(),

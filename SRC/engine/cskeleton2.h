@@ -209,7 +209,7 @@ public:
   // TODO: There's no good reason for getMicrostructure() to be virtual.
   // Move the MS pointer to CSkeletonBase.
   
-  virtual const CMicrostructure *getMicrostructure() const = 0;
+  virtual CMicrostructure *getMicrostructure() const = 0;
   virtual vtkSmartPointer<vtkUnstructuredGrid> getGrid() const = 0;
   virtual void getVtkCells(SkeletonFilter*, 
 			   vtkSmartPointer<vtkUnstructuredGrid>) = 0;
@@ -491,7 +491,7 @@ public:
 				bool flip);
 
   // basic get methods
-  virtual const CMicrostructure *getMicrostructure() const {
+  virtual CMicrostructure *getMicrostructure() const {
     return MS;
   }
   virtual vtkSmartPointer<vtkUnstructuredGrid> getGrid() const {
@@ -684,7 +684,7 @@ public:
   virtual void destroy();
 
   // basic get methods
-  virtual const CMicrostructure *getMicrostructure() const {
+  virtual CMicrostructure *getMicrostructure() const {
     return skeleton->MS;
   }
   virtual vtkSmartPointer<vtkUnstructuredGrid> getGrid() const {

@@ -366,9 +366,9 @@ void SymmetricTensorFlux::local_boundary(const ElementFuncNodeIterator& efni,
 
 // Evaluate the dot product of the flux with the normal at
 // the indicated edge gauss point.
-OutputVal *SymmetricTensorFlux::contract(const FEMesh *mesh,
-					 const Element *elmt,
-					 const GaussPoint &gpt)
+ArithmeticOutputVal *SymmetricTensorFlux::contract(const FEMesh *mesh,
+						   const Element *elmt,
+						   const GaussPoint &gpt)
   const
 {
   ArithmeticOutputValue value = output(mesh, elmt, gpt);
@@ -476,9 +476,9 @@ void VectorFlux::local_boundary(const ElementFuncNodeIterator& efni,
 
 // Evalute the dot product of the flux with the normal at the
 // indicated gauss point.
-OutputVal *VectorFlux::contract(const FEMesh *mesh,
-				const Element *elmt,
-				const GaussPoint &gpt)
+ArithmeticOutputVal *VectorFlux::contract(const FEMesh *mesh,
+					  const Element *elmt,
+					  const GaussPoint &gpt)
   const
 {
   // TODO: Why doesn't this return an ArithmeticOutputValue?

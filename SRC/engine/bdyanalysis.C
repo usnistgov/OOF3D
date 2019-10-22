@@ -52,7 +52,7 @@ ArithmeticOutputValue integrateFlux(const FEMesh *mesh, const Flux *flux,
 			  const SubDimensionalSet *s)
 {
   // s is either an EdgeSet or a FaceSet.
-  OutputVal *resultptr = 0;
+  ArithmeticOutputVal *resultptr = 0;
   for(CleverPtr<SubDimensionalIterator> si(s->iterator()); !si->end();
       ++*si) 
     {
@@ -65,7 +65,7 @@ ArithmeticOutputValue integrateFlux(const FEMesh *mesh, const Flux *flux,
 	  *resultptr *= gpt.weight();
 	}
 	else {
-	  OutputVal *r = flux->contract(mesh, el, gpt);
+	  ArithmeticOutputVal *r = flux->contract(mesh, el, gpt);
 	  *r *= gpt.weight();
 	  *resultptr += *r;
 	  delete r;

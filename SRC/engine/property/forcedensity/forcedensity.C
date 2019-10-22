@@ -11,18 +11,21 @@
 
 #include <oofconfig.h>
 #include "common/coord.h"
-#include "forcedensity.h"
+#include "common/ooferror.h"
+#include "common/trace.h"
+#include "engine/IO/propertyoutput.h"
 #include "engine/csubproblem.h"
 #include "engine/element.h"
 #include "engine/elementnodeiterator.h"
+#include "engine/equation.h"
+#include "engine/femesh.h"
 #include "engine/field.h"
 #include "engine/flux.h"
-#include "engine/equation.h"
 #include "engine/indextypes.h"
 #include "engine/material.h"
-#include "engine/femesh.h"
-#include "common/trace.h"
-#include "common/ooferror.h"
+#include "engine/outputval.h"
+#include "engine/smallsystem.h"
+#include "forcedensity.h"
 
 
 #if DIM==2

@@ -11,11 +11,11 @@
 from ooflib.SWIG.engine import fieldindex
 from ooflib.SWIG.engine import planarity
 from ooflib.SWIG.engine import symmmatrix
-from ooflib.SWIG.engine.IO import propertyoutputreg
 from ooflib.common import debug
 from ooflib.common import enum
 from ooflib.common import registeredclass
 from ooflib.common.IO import parameter
+from ooflib.engine.IO import propertyoutputreg
 
 class StrainType(registeredclass.RegisteredClass):
     registry = []

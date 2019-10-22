@@ -15,7 +15,7 @@
 #define ORIENTATION_H
 
 #include "common/coord_i.h"
-#include "common/corientation.h"
+#include "engine/corientation.h"
 #include "engine/property.h"
 #include <string>
 

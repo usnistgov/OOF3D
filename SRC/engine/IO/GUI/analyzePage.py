@@ -244,8 +244,8 @@ class AnalyzePage(BaseAnalysisPage):
         gtklogger.logScrollBars(op_scroll, "Operation")
         op_scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
         self.op_obj = DataOperationFactory(
-            analyze.DataOperation.registry, scope=self, name="OperationRCF",
-            callback = self.newOperationCB)
+            page=self, registry=analyze.DataOperation.registry,
+            scope=self, name="OperationRCF", callback=self.newOperationCB)
         self.operationframe.add(op_scroll)
 
         operation_box = gtk.VBox()

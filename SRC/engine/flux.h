@@ -93,7 +93,7 @@ public:
   SmallSystem *initializeSystem(const Element*) const;
 
   virtual ArithmeticOutputVal *contract(const FEMesh*, const Element*,
-			      const GaussPoint&) const = 0;
+					const GaussPoint&) const = 0;
 
   DoubleVec *evaluate(const FEMesh*, const Element*, const MasterPosition&)
     const;

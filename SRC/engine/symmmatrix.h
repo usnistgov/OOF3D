@@ -104,7 +104,7 @@ public:
   virtual void component_pow(int p) {
     dirtyeigs_ = true;
     double *data = m[0];
-    for(int i=0;i<6;i++)  // SymmMatrix3 guaranteed to have 6 entries.
+    for(int i=0; i<6; i++)  // SymmMatrix3 guaranteed to have 6 entries.
       data[i] = pow(data[i], p);
   }
   virtual void component_square() {
@@ -132,13 +132,13 @@ public:
     SymmMatrix::operator*=(x);
     return *this;
   }
-  ArithmeticOutputVal &operator+=(const OutputVal &x) {
+  ArithmeticOutputVal &operator+=(const ArithmeticOutputVal &x) {
     dirtyeigs_ = true;
     const SymmMatrix3 &sm = dynamic_cast<const SymmMatrix3&>(x);
     SymmMatrix::operator+=(sm);
     return *this;
   }
-  ArithmeticOutputVal &operator-=(const OutputVal &x) {
+  ArithmeticOutputVal &operator-=(const ArithmeticOutputVal &x) {
     dirtyeigs_ = true;
     const SymmMatrix3 &sm = dynamic_cast<const SymmMatrix3&>(x);
     SymmMatrix::operator-=(sm);
@@ -159,10 +159,10 @@ public:
     SymmMatrix::operator-=(x);
     return *this;
   }
-  virtual OutputVal *dot(const OutputVal&) const;
-  virtual OutputVal *dotScalar(const ScalarOutputVal&) const;
-  virtual OutputVal *dotVector(const VectorOutputVal&) const;
-  virtual OutputVal *dotSymmMatrix3(const SymmMatrix3&) const;
+  virtual ArithmeticOutputVal *dot(const ArithmeticOutputVal&) const;
+  virtual ArithmeticOutputVal *dotScalar(const ScalarOutputVal&) const;
+  virtual ArithmeticOutputVal *dotVector(const VectorOutputVal&) const;
+  virtual ArithmeticOutputVal *dotSymmMatrix3(const SymmMatrix3&) const;
 
   virtual double operator[](const IndexP&) const;
   virtual double &operator[](const IndexP&);

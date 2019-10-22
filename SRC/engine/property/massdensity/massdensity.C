@@ -47,7 +47,7 @@ int MassDensityProp::integration_order(const CSubProblem* subp,
   return 1;
 }
 
-oid MassDensityProp::output(FEMesh *mesh,
+void MassDensityProp::output(FEMesh *mesh,
 			     const Element *element,
 			     const PropertyOutput *output,
 			     const MasterPosition &pos,

@@ -38,6 +38,12 @@ structIntSize = struct.calcsize(structIntFmt)
 ## generators or iterators, unless it's guaranteed that they won't
 ## have to be interated over more than once.
 
+## NOTE Difference between OOF2 and OOF3D: If an Output A's parameter
+## list includes OutputParameters, ie, parameters whose value is are
+## Outputs, OOF2 passes the Outputs to A's callback and expects the
+## callback to evaluate them.  OOF3D evaluates the Outputs named by
+## the OutputParameters before calling A's callback.
+
 class Output(object):
     def __init__(self, name, otype, callback, inputs=[], params=[],
                  tip=parameter.emptyTipString,

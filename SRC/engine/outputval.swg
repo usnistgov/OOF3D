@@ -66,7 +66,7 @@ public:
 class ArithmeticOutputVal : public OutputVal {
 public:
   NewOutputVal *one();
-  NewOutputVal *dot(OutputVal&);
+  NewOutputVal *dot(ArithmeticOutputVal&);
   void component_pow(int);
   void component_square();
   void component_sqrt();

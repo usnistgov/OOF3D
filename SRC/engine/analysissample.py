@@ -173,14 +173,19 @@ class DiscreteSampleSet(SampleSet):
             ## MasterCoords, keyed by Elements?).  That would require
             ## extensive modification to the Output class.
 
-            ## TODO: exponent=1 should be another special case, so we
-            ## can avoid the call to __pow__.
             for sample in self.sample_list:
                 element = femesh.enclosingElement(skeleton, sample.point)
                 mcoord = element.to_master(sample.point)
                 val = output.evaluate(femesh, domain, [element], [[mcoord]])[0]
                 for power in remainingexponents:
-                    results.setdefault(power, []).append((sample, val**power))
+                    # Treat power=1 as a special case, not just to
+                    # save computation, but because val**x may not be
+                    # defined for the output type.
+                    if power==1:
+                        results.setdefault(power, []).append((sample, val))
+                    else:
+                        results.setdefault(power, []).append((sample,
+                                                              val**power))
         return results
     
     # Integration of a discrete SampleSet is just summation.

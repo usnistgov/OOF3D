@@ -365,22 +365,22 @@ SymmMatrix3 operator/(const SymmMatrix3 &a, double b) {
   return result;
 }
 
-OutputVal *SymmMatrix3::dot(const OutputVal &ov) const {
+ArithmeticOutputVal *SymmMatrix3::dot(const ArithmeticOutputVal &ov) const {
   return ov.dotSymmMatrix3(*this);
 }
 
-OutputVal *SymmMatrix3::dotScalar(const ScalarOutputVal &ov) const {
+ArithmeticOutputVal *SymmMatrix3::dotScalar(const ScalarOutputVal &ov) const {
   SymmMatrix3 *result = new SymmMatrix3(*this);
   *result *= ov.value();
   return result;
 }
 
-OutputVal *SymmMatrix3::dotVector(const VectorOutputVal &ov) const {
+ArithmeticOutputVal *SymmMatrix3::dotVector(const VectorOutputVal &ov) const {
   assert(ov.dim() == 3);
   return new VectorOutputVal((*this) * ov.value());
 }
 
-OutputVal *SymmMatrix3::dotSymmMatrix3(const SymmMatrix3 &ov) const {
+ArithmeticOutputVal *SymmMatrix3::dotSymmMatrix3(const SymmMatrix3 &ov) const {
   // This doesn't work because the product of two SymmMatrices is a
   // SmallMatrix (not necessarily symmetric), and SmallMatrix isn't an
   // OutputVal class.
@@ -389,7 +389,6 @@ OutputVal *SymmMatrix3::dotSymmMatrix3(const SymmMatrix3 &ov) const {
 	    __FILE__, __LINE__);
 }
 
-#if DIM==3
 Coord operator*(const SymmMatrix3 &a, const Coord &x) {
   Coord result;
   for(int i=0; i<3; i++) {
@@ -403,7 +402,6 @@ Coord operator*(const SymmMatrix3 &a, const Coord &x) {
 Coord operator*(const Coord &x, const SymmMatrix3 &a) {
   return a*x;
 }
-#endif // DIM==3
 
 double SymmMatrix3::trace() const {
   return operator()(0,0) + operator()(1,1) + operator()(2,2);

@@ -30,7 +30,7 @@
 %pragma(python) code="from ooflib.SWIG.common.imagebase import ImageBasePtr"
 %pragma(python) code="from ooflib.SWIG.common.coord import CoordPtr"
 %pragma(python) code="from ooflib.SWIG.common.coord import ICoordPtr"
-%pragma(python) code="from ooflib.SWIG.common.corientation import COrientABGPtr"
+%pragma(python) code="from ooflib.SWIG.engine.corientation import COrientABGPtr"
 #ifndef DIM_3
 %pragma(python) code="from ooflib.SWIG.image.oofimage import OOFImagePtr"
 #endif
