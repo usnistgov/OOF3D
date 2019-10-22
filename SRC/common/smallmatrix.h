@@ -32,6 +32,7 @@ protected:
   unsigned int nrows, ncols;
   DoubleVec data;
 public:
+  SmallMatrix();
   SmallMatrix(unsigned int size); // Makes a square matrix, not a vector.
   SmallMatrix(unsigned int rows, unsigned int cols);
   SmallMatrix(const SmallMatrix&);

@@ -16,6 +16,11 @@
 #include <math.h>
 #include <string.h>		// for memset
 
+SmallMatrix::SmallMatrix()
+  : nrows(0),
+    ncols(0)
+{}
+
 SmallMatrix::SmallMatrix(unsigned int rows, unsigned int cols)
   : nrows(rows),
     ncols(cols)
