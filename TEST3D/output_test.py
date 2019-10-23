@@ -801,7 +801,7 @@ def buildTests():
                sampling=ContinuumSampleSet(order=automatic),
                referencefile="dispmesh_difference")
 
-    # Material Constants
+    # Material Constants, Isotropic
     OutputTest(mesh="isomesh",
                operation="Direct_Output",
                output="Material Constants:Mechanical:Elastic Modulus C",
@@ -933,16 +933,79 @@ def buildTests():
                    delta_x=0.4,delta_y=0.4,delta_z=0.4,
                    show_x=True,show_y=True,show_z=True),
                referencefile='isomesh_thermexpT0')
-    OutputTest(mesh="isomesh",
-               operation="Direct_Output",
-               output="Material Constants:Couplings:Thermal Expansion T0",
-               oparams={},
-               domain=entiremesh,
-               sampling=SpacedGridSampleSet(
-                   delta_x=0.4,delta_y=0.4,delta_z=0.4,
-                   show_x=True,show_y=True,show_z=True),
-               referencefile='isomesh_thermexpT0')
-    
+
+    # Anisotropic materials constants.  anisomesh has anisotropic
+    # parameters, bu t is not rotated.  anisomeshR is rotated by 90
+    # degrees about the y axis.
+    for meshname in ("anisomesh", "anisomeshR"):
+        OutputTest(mesh=meshname,
+                   operation="Direct_Output",
+                   output="Material Constants:Mechanical:Elastic Modulus C",
+                   oparams=dict(
+                       components=['11', '12', '13', '14', '15', '16',
+                                   '22', '33', '44', '55', '66'],
+                       frame='Lab'),
+                   domain=entiremesh,
+                   sampling=SpacedGridSampleSet(
+                       delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                       show_x=True,show_y=True,show_z=True),
+                   referencefile=meshname+'_cijkl')
+        OutputTest(mesh=meshname,
+                   operation="Direct_Output",
+                   output="Material Constants:Mechanical:Stress-free Strain epsilon0",
+                   oparams=dict(
+                       components=['11','12','13','22','33'],
+                       frame='Lab'),
+                   domain=entiremesh,
+                   sampling=SpacedGridSampleSet(
+                       delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                       show_x=True,show_y=True,show_z=True),
+                   referencefile=meshname+'_stressfreestrain')
+        OutputTest(mesh=meshname,
+                   operation="Direct_Output",
+                   output="Material Constants:Thermal:Conductivity K",
+                   oparams=dict(
+                       components=['11','22','33','12','23'],
+                       frame='Lab'),
+                   domain=entiremesh,
+                   sampling=SpacedGridSampleSet(
+                       delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                       show_x=True,show_y=True,show_z=True),
+                   referencefile=meshname+'_thermalcond')
+        OutputTest(mesh=meshname,
+                   operation="Direct_Output",
+                   output="Material Constants:Electric:Dielectric Permittivity epsilon",
+                   oparams=dict(
+                       components=['11', '22', '23', '33'],
+                       frame="Lab"),
+                   domain=entiremesh,
+                   sampling=SpacedGridSampleSet(
+                       delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                       show_x=True,show_y=True,show_z=True),
+                   referencefile=meshname+'_permittivity')
+        OutputTest(mesh=meshname,
+                   operation="Direct_Output",
+                   output="Material Constants:Couplings:Thermal Expansion alpha",
+                   oparams=dict(
+                       components=['11', '13', '22', '23', '33'],
+                       frame="Lab"),
+                   domain=entiremesh,
+                   sampling=SpacedGridSampleSet(
+                       delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                       show_x=True,show_y=True,show_z=True),
+                   referencefile=meshname+'_thermexp')
+
+        for frmt in ("Abg", "X", "XYZ", "Bunge", "Quaternion", "Axis",
+                     "Rodrigues"):
+            OutputTest(mesh=meshname,
+                       operation="Direct_Output",
+                       output="Material Constants:Orientation",
+                       oparams=dict(format=frmt),
+                   domain=entiremesh,
+                   sampling=SpacedGridSampleSet(
+                       delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                       show_x=True,show_y=True,show_z=True),
+                   referencefile=meshname+'_orientation_'+frmt)
 
 class OOF_Output(unittest.TestCase):
     def setUp(self):
