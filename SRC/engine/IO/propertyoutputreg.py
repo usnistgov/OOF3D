@@ -300,6 +300,33 @@ class TwoVectorParamPropertyOutputRegistration(
         symbols = _twovector_column_names(self)
         return outputval.ListOutputVal(symbols)
                         
+def _threevector_srepr(self):
+    return self.name
+
+def _threevector_column_names(self):
+    return ["%s_%s" % (self.symbol, c) for c in "xyz"]
+
+class ThreeVectorParamPropertyOutputRegistration(
+        NonArithmeticPropertyOutputRegistration):
+    def __init__(self, name, symbol, parameters=[], initializer=None,
+                 ordering=1,tip=None, discussion=None):
+        self.symbol = symbol
+        op = output.Output(name=name,
+                           callback=self.opfunc,
+                           otype=outputval.ListOutputValPtr,
+                           instancefn=self.instancefn,
+                           srepr=_threevector_srepr,
+                           column_names=_threevector_column_names,
+                           params=parameters,
+                           tip=tip, discussion=discussion,
+                           symbol=symbol)
+        NonArithmeticPropertyOutputRegistration.__init__(self, name, op,
+                                                         initializer)
+        output.defineOutput(name, op, ordering=ordering)
+    def zeroVal(self, output):
+        symbols = _threevector_column_names(self)
+        return outputval.ListOutputVal(symbols)
+                        
 # ScalarParamOutputRegistration is used for Property parameters that
 # are scalars.  It's just like ScalarPropertyOutputRegistration, but
 # it's only in the aggregate output tree.

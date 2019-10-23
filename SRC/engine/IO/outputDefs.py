@@ -240,7 +240,7 @@ propertyoutputreg.ModulusPropertyOutputRegistration(
         ],
     ordering=11)
 
-propertyoutputreg.TwoVectorParamPropertyOutputRegistration(
+propertyoutputreg.ThreeVectorParamPropertyOutputRegistration(
     name="Material Constants:Mechanical:Force Density F",
     symbol="F",
     ordering=12)
