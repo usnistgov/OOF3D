@@ -16,7 +16,7 @@ fp_file_compare = file_utils.fp_file_compare
 reference_file = file_utils.reference_file
 # Flag that says whether to generate missing reference data files.
 # Should be false unless you really know what you're doing.
-file_utils.generate = False
+file_utils.generate = True
 
 # These tests should be run *before* solver_test so that outputs can
 # be used to verify solutions.  That means that these tests should use
@@ -24,13 +24,18 @@ file_utils.generate = False
 
 ## TODO 3.1: Add tests for managing linear and planar cross sections.
 
+# To cut down on the number of tests run while debugging new tests,
+# set skipdefault=True here, and explicitly pass skip=False to the
+# OutputTest constructor for the tests that you want to run.
+skipdefault = False
+
 from ooflib.common import utils
 meshTestDict = utils.OrderedDict() # OutputTests keyed by Mesh path
 outputTestDict = utils.OrderedDict() # OutputTests keyed by Output path
 
 class OutputTest(object):
     def __init__(self, mesh, operation, output, oparams, domain, sampling,
-                 referencefile, time=0.0, tolerance=1.e-8, skip=False,
+                 referencefile, time=0.0, tolerance=1.e-8, skip=skipdefault,
                  commands=[]):
         self.mesh = mesh        # just the Mesh part of the path
         self.operation = operation
@@ -84,7 +89,6 @@ class OutputTest(object):
 # namespace isn't available when this module is loaded.
 
 def buildTests():
-    skip = False        # set to True to reduce test set for debugging
     entiremesh = EntireMesh()
 
     # OutputTests are stored in meshTestDict when they're built, so we
@@ -108,49 +112,49 @@ def buildTests():
                entiremesh, 
                GridSampleSet(x_points=6, y_points=6, z_points=6,
                              show_x=True, show_y=True, show_z=True),
-               'xtemp_direct', skip=skip)
+               'xtemp_direct')
     OutputTest('xtemp',
                'Direct_Output',
                'Field:Value', {'field':Temperature},
                entiremesh,
                GridSampleSet(x_points=4, y_points=3, z_points=2,
                              show_x=True, show_y=True, show_z=True),
-               'xtemp_direct2', skip=skip)
+               'xtemp_direct2')
     OutputTest('xtemp',
                'Direct_Output',
                'Field:Value', {'field':Temperature},
                entiremesh,
                GridSampleSet(x_points=4, y_points=3, z_points=2,
                              show_x=False, show_y=True, show_z=True),
-               'xtemp_direct3a', skip=skip)
+               'xtemp_direct3a')
     OutputTest('xtemp',
                'Direct_Output',
                'Field:Value', {'field':Temperature},
                entiremesh,
                GridSampleSet(x_points=4, y_points=3, z_points=2,
                              show_x=True, show_y=False, show_z=False),
-               'xtemp_direct3b', skip=skip)
+               'xtemp_direct3b')
     OutputTest('xtemp',
                'Direct_Output',
                'Field:Value', {'field':Temperature},
                entiremesh,
                GridSampleSet(x_points=4, y_points=3, z_points=2,
                              show_x=True, show_y=True, show_z=False),
-               'xtemp_direct3c', skip=skip)
+               'xtemp_direct3c')
     OutputTest('xtemp',
                'Direct_Output',
                'Field:Value', {'field':Temperature},
                entiremesh,
                SpacedGridSampleSet(delta_x=3,delta_y=3,delta_z=3,
                                    show_x=True, show_y=True, show_z=True),
-               'xtemp_direct_spaced', skip=skip)
+               'xtemp_direct_spaced')
     OutputTest('xtemp',
                'Direct_Output',
                'Field:Value', {'field':Temperature},
                entiremesh,
                PixelSampleSet(show_voxel=True,show_x=False,
                               show_y=False,show_z=False),
-               'xtemp_direct_voxel', skip=skip)
+               'xtemp_direct_voxel')
     
     # Now vary the Domain, still using Direct_Output.
     gridsample = GridSampleSet(x_points=4, y_points=4, z_points=4,
@@ -160,25 +164,25 @@ def buildTests():
                'Field:Value', {'field':Temperature},
                SinglePoint(point=Point(3,4,5)),
                PointSampleSet(show_x=True,show_y=True,show_z=True),
-               'xtemp_direct_point', skip=skip)
+               'xtemp_direct_point')
     OutputTest('xtemp',
                'Direct_Output',
                'Field:Value', {'field':Temperature},
                PixelGroup(group=every),
                gridsample,
-               'xtemp_direct_every', skip=skip)
+               'xtemp_direct_every')
     OutputTest('xtemp',
                'Direct_Output',
                'Field:Value', {'field':Temperature},
                PixelGroup(group='smallx'),
                gridsample,
-               'xtemp_direct_smallx', skip=skip)
+               'xtemp_direct_smallx')
     OutputTest('xtemp',
                'Direct_Output',
                'Field:Value', {'field':Temperature},
                PixelGroup(group='largex'),
                gridsample,
-               'xtemp_direct_largex', skip=skip)
+               'xtemp_direct_largex')
 
     # Voxel selection.  These tests use commands to select voxels
     # because the voxel selection isn't (yet) saved in the
@@ -191,8 +195,7 @@ def buildTests():
                'xtemp_direct_voxsel',
                commands=[
                    "OOF.VoxelSelection.Select(source='microstructure', method=RegionSelector(shape=BoxSelectionShape(point0=Point(0,0,0), point1=Point(5, 5, 5)), units=PhysicalUnits(), operator=Select()))"
-                   ],
-               skip=skip)
+                   ])
     OutputTest('xtemp',
                'Direct_Output',
                'Field:Value', {'field':Temperature},
@@ -202,8 +205,7 @@ def buildTests():
                commands=[
                    "OOF.VoxelSelection.Select(source='microstructure', method=RegionSelector(shape=BoxSelectionShape(point0=Point(0,0,0), point1=Point(5, 5, 5)), units=PhysicalUnits(), operator=Select()))",
                    "OOF.VoxelSelection.Select(source='microstructure', method=RegionSelector(shape=BoxSelectionShape(point0=Point(1,1,1), point1=Point(4,4,4)), units=PhysicalUnits(), operator=Unselect()))"
-                   ],
-               skip=skip)
+                   ])
 
     # Linear cross sections.
     OutputTest('xtemp',
@@ -213,7 +215,7 @@ def buildTests():
                LinearGridSampleSet(npts=11,show_distance=True,
                                    show_fraction=True,
                                    show_x=True,show_y=True,show_z=True),
-               'xtemp_direct_linearcs_xyz', skip=skip)
+               'xtemp_direct_linearcs_xyz')
     OutputTest('xtemp',
                'Direct_Output',
                'Field:Value', {'field':Temperature},
@@ -221,7 +223,7 @@ def buildTests():
                LinearGridSampleSet(npts=11,show_distance=True,
                                    show_fraction=True,
                                    show_x=True,show_y=True,show_z=True),
-               'xtemp_direct_linearcs_yz', skip=skip)
+               'xtemp_direct_linearcs_yz')
 
     # There are no tests for FaceBoundary domains here, because direct
     # output isn't supported on them.
@@ -231,33 +233,33 @@ def buildTests():
                'Field:Value', {'field':Temperature},
                SkeletonPointBoundaryDomain(boundary='XminYminZmin'),
                PointSampleSet(show_x=True,show_y=True,show_z=True),
-               'xtemp_direct_point_0', skip=skip)
+               'xtemp_direct_point_0')
     OutputTest('xtemp',
                'Direct_Output',
                'Field:Value', {'field':Temperature},
                SkeletonPointBoundaryDomain(boundary='XmaxYmaxZmax'),
                PointSampleSet(show_x=True,show_y=True,show_z=True),
-               'xtemp_direct_point_1', skip=skip)
+               'xtemp_direct_point_1')
     OutputTest('xtemp',
                'Direct_Output',
                'Field:Value', {'field':Temperature},
                SkeletonPointBoundaryDomain(boundary='XmaxYminZmax'),
                PointSampleSet(show_x=True,show_y=True,show_z=True),
-               'xtemp_direct_point_2', skip=skip)
+               'xtemp_direct_point_2')
     OutputTest('xtemp',
                'Direct_Output',
                'Field:Value', {'field':Temperature},
                ElementGroup(elements='smallx'),
                GridSampleSet(x_points=10,y_points=10,z_points=10,
                              show_x=True,show_y=True,show_z=True),
-               'xtemp_direct_elgroup_smallx', skip=skip)
+               'xtemp_direct_elgroup_smallx')
     OutputTest('xtemp',
                'Direct_Output',
                'Field:Value', {'field':Temperature},
                ElementGroup(elements='largex'),
                GridSampleSet(x_points=10,y_points=10,z_points=10,
                              show_x=True,show_y=True,show_z=True),
-               'xtemp_direct_elgroup_largex', skip=skip)
+               'xtemp_direct_elgroup_largex')
     # xtemp_direct_elgroup_largex and xtemp_direct_elgroup_selection
     # should differ only in the comment specifying the domain, because
     # the selected elements and the largex group are identical.
@@ -267,7 +269,7 @@ def buildTests():
                ElementGroup(elements=selection),
                GridSampleSet(x_points=10,y_points=10,z_points=10,
                              show_x=True,show_y=True,show_z=True),
-               'xtemp_direct_elgroup_selection', skip=skip)
+               'xtemp_direct_elgroup_selection')
 
     # Test non-direct output operations, still using xtemp.dat and
     # Field:Value.
@@ -276,25 +278,25 @@ def buildTests():
                'Field:Value', {'field':Temperature},
                entiremesh,
                StatGridSampleSet(x_points=10,y_points=10,z_points=10),
-               'xtemp_range_grid', skip=skip)
+               'xtemp_range_grid')
     OutputTest('xtemp',
                'Range',
                'Field:Value', {'field':Temperature},
                ElementGroup(elements='largex'),
                StatGridSampleSet(x_points=10,y_points=10,z_points=10),
-               'xtemp_range_largex', skip=skip)
+               'xtemp_range_largex')
     OutputTest('xtemp',
                'Range',
                'Field:Value', {'field':Temperature},
                ElementGroup(elements='smallx'),
                StatGridSampleSet(x_points=10,y_points=10,z_points=10),
-               'xtemp_range_smallx', skip=skip)
+               'xtemp_range_smallx')
     OutputTest('xtemp',
                'Range',
                'Field:Value', {'field':Temperature},
                ElementGroup(elements=selection),
                StatGridSampleSet(x_points=10,y_points=10,z_points=10),
-               'xtemp_range_selection', skip=skip)
+               'xtemp_range_selection')
                
     # A bunch of non-direct-output tests for the Linear Cross Section
     # domain, which has to deal with a lot of special cases when the
@@ -336,8 +338,7 @@ def buildTests():
                    domain=LinearCrossSectionDomain(cross_section='yz'),
                    sampling=ContinuumSampleSet(order=automatic),
                    commands=cmd,
-                   referencefile='xtemp_length_linearcs'+`i`,
-                   skip=skip) 
+                   referencefile='xtemp_length_linearcs'+`i`) 
 
     # Now integrate a linear function (y).  The integral is the
     # average of y times the length of the cross section.
@@ -348,8 +349,7 @@ def buildTests():
                    domain=LinearCrossSectionDomain(cross_section='yz'),
                    sampling=ContinuumSampleSet(order=automatic),
                    commands=cmd,
-                   referencefile='xtemp_linearfn_linearcs'+`i`,
-                   skip=skip)
+                   referencefile='xtemp_linearfn_linearcs'+`i`)
     
     ## Test integration over planar cross sections
     planarDomains = [
@@ -412,8 +412,7 @@ def buildTests():
                    output='XYZFunction:Scalar', oparams={'f':'1.0'},
                    domain=plane,
                    sampling=ContinuumSampleSet(order=automatic),
-                   referencefile='xtemp_area_planarcs'+`i`,
-                   skip=skip)
+                   referencefile='xtemp_area_planarcs'+`i`)
 
     for i, plane in enumerate(planarDomains):
         OutputTest(mesh='xtemp',
@@ -422,8 +421,7 @@ def buildTests():
                    oparams={'fx':'1.0', 'fy':'x', 'fz':'x**2'},
                    domain=plane,
                    sampling=ContinuumSampleSet(order=2),
-                   referencefile='xtemp_xavgs_planarcs'+`i`,
-                   skip=skip)
+                   referencefile='xtemp_xavgs_planarcs'+`i`)
 
     # Test Face Boundary domains (which weren't tested above during
     # the Direct_Output tests).
@@ -434,8 +432,7 @@ def buildTests():
                    output='Field:Value', oparams={'field':Temperature},
                    domain=FaceBoundaryDomain(boundary=domainname, side='BACK'),
                    sampling=ContinuumSampleSet(order=2),
-                   referencefile='xtemp_faceavg_' + domainname,
-                   skip=skip)
+                   referencefile='xtemp_faceavg_' + domainname)
 
     # Now test the other output quantities, using direct evaluation on
     # a 4x4x4 linear mesh.  The displacement field is initialized to
@@ -453,72 +450,63 @@ def buildTests():
                oparams={'field':Displacement},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_disp_value',
-               skip=skip)
+               referencefile='dispmesh_disp_value')
     OutputTest(mesh='dispmesh',
                operation='Direct_Output',
                output='Field:Component', 
                oparams={'field':Displacement, 'component':'x'},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_disp_x',
-               skip=skip)
+               referencefile='dispmesh_disp_x')
     OutputTest(mesh='dispmesh',
                operation='Direct_Output',
                output='Field:Component', 
                oparams={'field':Displacement, 'component':'y'},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_disp_y',
-               skip=skip)
+               referencefile='dispmesh_disp_y')
     OutputTest(mesh='dispmesh',
                operation='Direct_Output',
                output='Field:Component', 
                oparams={'field':Displacement, 'component':'z'},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_disp_z',
-               skip=skip)
+               referencefile='dispmesh_disp_z')
     OutputTest(mesh='dispmesh',
                operation='Direct_Output',
                output='Field:Component',
                oparams={'field':Temperature, 'component':''},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_temp_component',
-               skip=skip)
+               referencefile='dispmesh_temp_component')
     OutputTest(mesh='dispmesh',
                operation='Direct_Output',
                output='Field:Derivative:Value',
                oparams={'field':Temperature, 'derivative':'x'},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_temp_deriv_x',
-               skip=skip)
+               referencefile='dispmesh_temp_deriv_x')
     OutputTest(mesh='dispmesh',
                operation='Direct_Output',
                output='Field:Derivative:Value',
                oparams={'field':Temperature, 'derivative':'y'},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_temp_deriv_y',
-               skip=skip)
+               referencefile='dispmesh_temp_deriv_y')
     OutputTest(mesh='dispmesh',
                operation='Direct_Output',
                output='Field:Derivative:Value',
                oparams={'field':Displacement, 'derivative':'y'},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_disp_deriv_y',
-               skip=skip)
+               referencefile='dispmesh_disp_deriv_y')
     OutputTest(mesh='dispmesh',
                operation='Direct_Output',
                output='Field:Derivative:Value',
                oparams={'field':Displacement, 'derivative':'z'},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_disp_deriv_z',
-               skip=skip)
+               referencefile='dispmesh_disp_deriv_z')
     OutputTest(mesh='dispmesh',
                operation='Direct_Output',
                output='Field:Derivative:Component',
@@ -526,8 +514,7 @@ def buildTests():
                         'derivative':'x'},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_disp_comp_x_deriv_x',
-               skip=skip)
+               referencefile='dispmesh_disp_comp_x_deriv_x')
     OutputTest(mesh='dispmesh',
                operation='Direct_Output',
                output='Field:Derivative:Component',
@@ -535,8 +522,7 @@ def buildTests():
                         'derivative':'y'},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_disp_comp_x_deriv_y',
-               skip=skip)
+               referencefile='dispmesh_disp_comp_x_deriv_y')
     OutputTest(mesh='dispmesh',
                operation='Direct_Output',
                output='Field:Derivative:Invariant',
@@ -544,8 +530,7 @@ def buildTests():
                         'derivative':'x'},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_disp_mag_deriv_x',
-               skip=skip)
+               referencefile='dispmesh_disp_mag_deriv_x')
     OutputTest(mesh='dispmesh',
                operation='Direct_Output',
                output='Field:Derivative:Invariant',
@@ -553,16 +538,14 @@ def buildTests():
                         'derivative':'y'},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_disp_mag_deriv_y',
-               skip=skip)
+               referencefile='dispmesh_disp_mag_deriv_y')
     OutputTest(mesh='dispmesh',
                operation='Direct_Output',
                output='Field:Invariant',
                oparams={'field':Displacement, 'invariant':Magnitude()},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_disp_mag',
-               skip=skip)
+               referencefile='dispmesh_disp_mag')
 
     # dispmesh2 initializes Displacement to 0.1*(y, z, x).  The
     # elastic modulus is the default isotropic one, so the diagonal
@@ -573,8 +556,7 @@ def buildTests():
                oparams={'flux':Stress},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_stress',
-               skip=skip)
+               referencefile='dispmesh_stress')
     # The thermal conductivity is the unit tensor and T=x, so heat
     # flux is -1 in the x direction.
     OutputTest(mesh='dispmesh2',
@@ -583,40 +565,35 @@ def buildTests():
                oparams={'flux':Heat_Flux},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_heatflux',
-               skip=skip)
+               referencefile='dispmesh_heatflux')
     OutputTest(mesh='dispmesh2',
                operation='Direct_Output',
                output='Flux:Component',
                oparams={'flux':Stress, 'component':'xx'},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_stress_xx',
-               skip=skip)
+               referencefile='dispmesh_stress_xx')
     OutputTest(mesh='dispmesh2',
                operation='Direct_Output',
                output='Flux:Component',
                oparams={'flux':Stress, 'component':'xz'},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_stress_xz',
-               skip=skip)
+               referencefile='dispmesh_stress_xz')
     OutputTest(mesh='dispmesh2',
                operation='Direct_Output',
                output='Flux:Component',
                oparams={'flux':Heat_Flux, 'component':'x'},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_heatflux_x',
-               skip=skip)
+               referencefile='dispmesh_heatflux_x')
     OutputTest(mesh='dispmesh2',
                operation='Direct_Output',
                output='Flux:Component',
                oparams={'flux':Heat_Flux, 'component':'z'},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_heatflux_z',
-               skip=skip)
+               referencefile='dispmesh_heatflux_z')
     # Stress magnitude is sqrt(6)/40.
     OutputTest(mesh='dispmesh2',
                operation='Direct_Output',
@@ -624,8 +601,7 @@ def buildTests():
                oparams={'flux':Stress, 'invariant':Magnitude()},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_stress_mag',
-               skip=skip)
+               referencefile='dispmesh_stress_mag')
     # Stress trace is 0.
     OutputTest(mesh='dispmesh2',
                operation='Direct_Output',
@@ -633,8 +609,7 @@ def buildTests():
                oparams={'flux':Stress, 'invariant':MatrixTrace()},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_stress_trace',
-               skip=skip)
+               referencefile='dispmesh_stress_trace')
     # Stress determinant is 2/(40**3).
     OutputTest(mesh='dispmesh2',
                operation='Direct_Output',
@@ -642,8 +617,7 @@ def buildTests():
                oparams={'flux':Stress, 'invariant':Determinant()},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_stress_determinant',
-               skip=skip)
+               referencefile='dispmesh_stress_determinant')
     # Stress second invariant is -3/(40**2)
     OutputTest(mesh='dispmesh2',
                operation='Direct_Output',
@@ -651,8 +625,7 @@ def buildTests():
                oparams={'flux':Stress, 'invariant':SecondInvariant()},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_stress_2ndinv',
-               skip=False)
+               referencefile='dispmesh_stress_2ndinv')
     # Stress deviator is the same as the magnitude.
     OutputTest(mesh='dispmesh2',
                operation='Direct_Output',
@@ -660,8 +633,7 @@ def buildTests():
                oparams={'flux':Stress, 'invariant':Deviator()},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_stress_deviator',
-               skip=skip)
+               referencefile='dispmesh_stress_deviator')
 
     # Flux normal, only evaluated on surfaces.
  
@@ -673,40 +645,35 @@ def buildTests():
                oparams={'flux':Stress},
                domain=FaceBoundaryDomain(boundary='Xmax', side='BACK'),
                sampling=ContinuumSampleSet(order=automatic),
-               referencefile='dispmesh_stress_normal_xmax',
-               skip=skip)
+               referencefile='dispmesh_stress_normal_xmax')
     OutputTest(mesh='dispmesh2',
                operation='Average',
                output='Flux:Normal:Value',
                oparams={'flux':Stress},
                domain=FaceBoundaryDomain(boundary='Xmin', side='BACK'),
                sampling=ContinuumSampleSet(order=automatic),
-               referencefile='dispmesh_stress_normal_xmin',
-               skip=skip)
+               referencefile='dispmesh_stress_normal_xmin')
     OutputTest(mesh='dispmesh2',
                operation='Average',
                output='Flux:Normal:Value',
                oparams={'flux':Heat_Flux},
                domain=FaceBoundaryDomain(boundary='Xmin', side='BACK'),
                sampling=ContinuumSampleSet(order=automatic),
-               referencefile='dispmesh_heatflux_normal_xmin',
-               skip=skip)
+               referencefile='dispmesh_heatflux_normal_xmin')
     OutputTest(mesh='dispmesh2',
                operation='Average',
                output='Flux:Normal:Value',
                oparams={'flux':Heat_Flux},
                domain=FaceBoundaryDomain(boundary='Xmax', side='BACK'),
                sampling=ContinuumSampleSet(order=automatic),
-               referencefile='dispmesh_heatflux_normal_xmax',
-               skip=skip)
+               referencefile='dispmesh_heatflux_normal_xmax')
     OutputTest(mesh='dispmesh2',
                operation='Average',
                output='Flux:Normal:Value',
                oparams={'flux':Heat_Flux},
                domain=FaceBoundaryDomain(boundary='Ymax', side='BACK'),
                sampling=ContinuumSampleSet(order=automatic),
-               referencefile='dispmesh_heatflux_normal_ymax',
-               skip=skip)
+               referencefile='dispmesh_heatflux_normal_ymax')
     # The magnitude of the normal component of the stress is sqrt(2)/40
     OutputTest(mesh='dispmesh2',
                operation='Average',
@@ -714,8 +681,7 @@ def buildTests():
                oparams={'flux':Stress, 'invariant':Magnitude()},
                domain=FaceBoundaryDomain(boundary='Zmax', side='BACK'),
                sampling=ContinuumSampleSet(order=automatic),
-               referencefile='dispmesh_stress_normal_mag_zmax',
-               skip=skip)
+               referencefile='dispmesh_stress_normal_mag_zmax')
 
     # Strain tests
     OutputTest(mesh='dispmesh',
@@ -724,8 +690,7 @@ def buildTests():
                oparams={'type':GeometricStrain()},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_strain_geometric',
-               skip=skip)
+               referencefile='dispmesh_strain_geometric')
     # displacement in dispmesh3 is (0.1*(x+y+z), 0.2*(x+y+z), 0.3*(x+y+z))_
     OutputTest(mesh='dispmesh3',
                operation='Direct_Output',
@@ -733,16 +698,14 @@ def buildTests():
                oparams={'type':GeometricStrain()},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_strain_geometric2',
-               skip=skip)
+               referencefile='dispmesh_strain_geometric2')
     OutputTest(mesh='dispmesh3',
                operation='Direct_Output',
                output='Strain:Component',
                oparams={'type':GeometricStrain(), 'component':'xx'},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_strain_component',
-               skip=skip)
+               referencefile='dispmesh_strain_component')
     # Thermal strain should be zero.
     OutputTest(mesh='dispmesh3',
                operation='Direct_Output',
@@ -750,8 +713,7 @@ def buildTests():
                oparams={'type':ThermalStrain()},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_strain_thermal0',
-               skip=skip)
+               referencefile='dispmesh_strain_thermal0')
     # dispmesh4 adds thermal expansion with T=x and alpha=0.01.
     # Measure geometric, thermal, and elastic strains.
     OutputTest(mesh='dispmesh4',
@@ -760,24 +722,21 @@ def buildTests():
                oparams={'type':ThermalStrain()},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_strain_thermal1',
-               skip=skip)
+               referencefile='dispmesh_strain_thermal1')
     OutputTest(mesh='dispmesh4',
                operation='Direct_Output',
                output='Strain:Value',
                oparams={'type':GeometricStrain()},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_strain_geometric3',
-               skip=skip)
+               referencefile='dispmesh_strain_geometric3')
     OutputTest(mesh='dispmesh4',
                operation='Direct_Output',
                output='Strain:Value',
                oparams={'type':ElasticStrain()},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_strain_elastic0',
-               skip=skip)
+               referencefile='dispmesh_strain_elastic0')
     # Strain invariants
     OutputTest(mesh="dispmesh3",
                operation="Range",
@@ -785,8 +744,7 @@ def buildTests():
                oparams={'invariant':MatrixTrace(), 'type':GeometricStrain()},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_strain_trace',
-               skip=skip)
+               referencefile='dispmesh_strain_trace')
     # The determinant for dispmesh3 is 0 but in a non-trivial way.
     OutputTest(mesh="dispmesh3",
                operation="Range",
@@ -794,8 +752,7 @@ def buildTests():
                oparams={'invariant':Determinant(), 'type':GeometricStrain()},
                domain=entiremesh,
                sampling=gridsample,
-               referencefile='dispmesh_strain_determinant',
-               skip=skip)
+               referencefile='dispmesh_strain_determinant')
 
     # Energy
 
@@ -808,8 +765,7 @@ def buildTests():
                oparams={'etype':'Total'},
                domain=entiremesh,
                sampling=ContinuumSampleSet(order=automatic),
-               referencefile='dispmesh_energy0',
-               skip=skip)
+               referencefile='dispmesh_energy0')
     # Set T=0 to check just the elastic energy, which should be 0.03.
     OutputTest(mesh="dispmesh5",
                operation="Integral",
@@ -820,8 +776,7 @@ def buildTests():
                commands=[
                    "OOF.Mesh.Set_Field_Initializer(mesh='microstructure:skeleton:dispmesh5', field=Temperature, initializer=ConstScalarFieldInit(value=0.0))",
                    "OOF.Mesh.Apply_Field_Initializers(mesh='microstructure:skeleton:dispmesh5')"],
-               referencefile='dispmesh_energy1',
-               skip=skip)
+               referencefile='dispmesh_energy1')
     # Set T=1 and turn off the geometric strain.  The energy is 0.0003.
     OutputTest(mesh="dispmesh5",
                operation="Integral",
@@ -833,8 +788,7 @@ def buildTests():
                    "OOF.Mesh.Set_Field_Initializer(mesh='microstructure:skeleton:dispmesh5', field=Temperature, initializer=ConstScalarFieldInit(value=1.0))",
                    "OOF.Mesh.Set_Field_Initializer(mesh='microstructure:skeleton:dispmesh5', field=Displacement, initializer=ConstThreeVectorFieldInit(cx=0.0,cy=0.0,cz=0.0))",
                    "OOF.Mesh.Apply_Field_Initializers(mesh='microstructure:skeleton:dispmesh5')"],
-               referencefile='dispmesh_energy2',
-               skip=skip)
+               referencefile='dispmesh_energy2')
     
     # Difference.  Just define two XYZ functions.
     OutputTest(mesh="dispmesh5",
@@ -845,8 +799,149 @@ def buildTests():
                    'subtrahend':getOutput('XYZFunction:Scalar',f='x*y*z')},
                domain=entiremesh,
                sampling=ContinuumSampleSet(order=automatic),
-               referencefile="dispmesh_difference",
-               skip=False)
+               referencefile="dispmesh_difference")
+
+    # Material Constants
+    OutputTest(mesh="isomesh",
+               operation="Direct_Output",
+               output="Material Constants:Mechanical:Elastic Modulus C",
+               oparams=dict(
+                   components=['11', '12', '13', '14', '15', '16',
+                               '22', '33', '44', '55', '66'],
+                   frame='Crystal'),
+               domain=entiremesh,
+               sampling=SpacedGridSampleSet(
+                   delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                   show_x=True,show_y=True,show_z=True),
+               referencefile='isomesh_cijkl')
+    OutputTest(mesh="isomesh",
+               operation="Direct_Output",
+               output="Material Constants:Mechanical:Stress-free Strain epsilon0",
+               oparams=dict(
+                   components=['11','12','13','22','33'],
+                   frame='Crystal'),
+               domain=entiremesh,
+               sampling=SpacedGridSampleSet(
+                   delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                   show_x=True,show_y=True,show_z=True),
+               referencefile='isomesh_stressfreestrain')
+    OutputTest(mesh="isomesh",
+               operation="Direct_Output",
+               output="Material Constants:Mechanical:Force Density F",
+               oparams={},
+               domain=entiremesh,
+               sampling=SpacedGridSampleSet(
+                   delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                   show_x=True,show_y=True,show_z=True),
+               referencefile='isomesh_forcedensity',
+               )
+    OutputTest(mesh="isomesh",
+               operation="Direct_Output",
+               output="Material Constants:Mechanical:Mass Density",
+               oparams={},
+               domain=entiremesh,
+               sampling=SpacedGridSampleSet(
+                   delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                   show_x=True,show_y=True,show_z=True),
+               referencefile='isomesh_massdensity')
+    OutputTest(mesh="isomesh",
+               operation="Direct_Output",
+               output="Material Constants:Mechanical:Viscosity",
+               oparams=dict(
+                   components=['11', '22', '23', '33', '66'],
+                   frame="Crystal"),
+               domain=entiremesh,
+               sampling=SpacedGridSampleSet(
+                   delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                   show_x=True,show_y=True,show_z=True),
+               referencefile='isomesh_viscosity')
+    OutputTest(mesh="isomesh",
+               operation="Direct_Output",
+               output="Material Constants:Mechanical:Damping",
+               oparams={},
+               domain=entiremesh,
+               sampling=SpacedGridSampleSet(
+                   delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                   show_x=True,show_y=True,show_z=True),
+               referencefile='isomesh_damping')
+    OutputTest(mesh="isomesh",
+               operation="Direct_Output",
+               output="Material Constants:Thermal:Conductivity K",
+               oparams=dict(
+                   components=['11','22','33','12','23'],
+                   frame='Crystal'),
+               domain=entiremesh,
+               sampling=SpacedGridSampleSet(
+                   delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                   show_x=True,show_y=True,show_z=True),
+               referencefile='isomesh_thermalcond')
+    OutputTest(mesh="isomesh",
+               operation="Direct_Output",
+               output="Material Constants:Thermal:Heat Capacity",
+               oparams={},
+               domain=entiremesh,
+               sampling=SpacedGridSampleSet(
+                   delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                   show_x=True,show_y=True,show_z=True),
+               referencefile='isomesh_heatcapacity')
+    OutputTest(mesh="isomesh",
+               operation="Direct_Output",
+               output="Material Constants:Thermal:Heat Source",
+               oparams={},
+               domain=entiremesh,
+               sampling=SpacedGridSampleSet(
+                   delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                   show_x=True,show_y=True,show_z=True),
+               referencefile='isomesh_heatsource')
+    OutputTest(mesh="isomesh",
+               operation="Direct_Output",
+               output="Material Constants:Electric:Dielectric Permittivity epsilon",
+               oparams=dict(
+                   components=['11', '22', '23', '33'],
+                   frame="Crystal"),
+               domain=entiremesh,
+               sampling=SpacedGridSampleSet(
+                   delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                   show_x=True,show_y=True,show_z=True),
+               referencefile='isomesh_permittivity')
+    OutputTest(mesh="isomesh",
+               operation="Direct_Output",
+               output="Material Constants:Electric:Space Charge",
+               oparams={},
+               domain=entiremesh,
+               sampling=SpacedGridSampleSet(
+                   delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                   show_x=True,show_y=True,show_z=True),
+               referencefile='isomesh_charge')
+    OutputTest(mesh="isomesh",
+               operation="Direct_Output",
+               output="Material Constants:Couplings:Thermal Expansion alpha",
+               oparams=dict(
+                   components=['11', '13', '22', '23', '33'],
+                   frame="Crystal"),
+               domain=entiremesh,
+               sampling=SpacedGridSampleSet(
+                   delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                   show_x=True,show_y=True,show_z=True),
+               referencefile='isomesh_thermexp')
+    OutputTest(mesh="isomesh",
+               operation="Direct_Output",
+               output="Material Constants:Couplings:Thermal Expansion T0",
+               oparams={},
+               domain=entiremesh,
+               sampling=SpacedGridSampleSet(
+                   delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                   show_x=True,show_y=True,show_z=True),
+               referencefile='isomesh_thermexpT0')
+    OutputTest(mesh="isomesh",
+               operation="Direct_Output",
+               output="Material Constants:Couplings:Thermal Expansion T0",
+               oparams={},
+               domain=entiremesh,
+               sampling=SpacedGridSampleSet(
+                   delta_x=0.4,delta_y=0.4,delta_z=0.4,
+                   show_x=True,show_y=True,show_z=True),
+               referencefile='isomesh_thermexpT0')
     
 
 class OOF_Output(unittest.TestCase):
@@ -864,6 +959,8 @@ class OOF_Output(unittest.TestCase):
         OOF.File.Load.Data(filename=reference_file('output_data',
                                                  'position_mesh'))
         OOF.Windows.Graphics.New()
+
+        ## THIS IS OUT OF DATE.  THERE IS NO LAYEREDITOR.
         OOF.LayerEditor.LayerSet.New(window='Graphics_1')
         OOF.LayerEditor.LayerSet.DisplayedObject(
             category='Mesh', object='microstructure:skeleton:mesh')
@@ -1095,9 +1192,12 @@ class OOF_NamedAnalysis(unittest.TestCase):
             
 test_set = [
     OOF_Output("Outputs"),
-    # OOF_Output("PDFOutput"), ## Skip until vtk PDF output is fixed
+#    OOF_Output("PDFOutput"), ## Skip until vtk PDF output is fixed
     OOF_BadMaterial("Analyze"),
     OOF_NamedAnalysis("CreateDelete"),
     OOF_NamedAnalysis("Save"),
     OOF_NamedAnalysis("Load"),
 ]
+
+#test_set = [OOF_Output("PDFOutput")]
+test_set = [OOF_Output("Outputs")]
