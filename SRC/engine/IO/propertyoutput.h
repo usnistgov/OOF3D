@@ -164,7 +164,6 @@ class PropertyOutputRegistration {
 private:
   const std::string name_;
   const int index_;
-  // const PropertyOutputInit *initializer_;
   static std::vector<PropertyOutputRegistration*> &allPropertyOutputRegs();
 public:
   PropertyOutputRegistration(const std::string &name);
