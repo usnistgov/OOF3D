@@ -27,12 +27,51 @@ std::string OutputVal::modulename_("ooflib.SWIG.engine.outputval");
 std::string ScalarOutputVal::classname_("ScalarOutputVal");
 std::string VectorOutputVal::classname_("VectorOutputVal");
 
-long OutputValue::count = 0;
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+// Machinery for checking for OutputVal and OutputValue memory leaks.
+// This is a bit problematic.  OutputValues are not leaked and aren't
+// a problem.  OutputVals are sometimes stored in Parameters for
+// commands and Outputs, and will persist until the Parameters are
+// reset, so counting them automatically in the test scripts is hard.
+// Testing did show that the swigged clone and zero OutputVal methods
+// were causing leaks, which is why the NewOutputVal typemap is used
+// in outputval.swg.
+
+// In DEBUG mode, OutputValue::count isn't incremented, but
+// get_globalOutputValueCount() is still defined, and returns 0, so
+// that the tests will work.
+int OutputValue::count = 0;
+int get_globalOutputValueCount() { return OutputValue::count; }
+
+#ifdef DEBUG
+#include <set>
+std::set<OutputVal*> allOutputVals;
+static int offset_ = 0;
 SLock outputValueLock;
-long get_globalOutputValueCount() { return OutputValue::count; }
+#endif // DEBUG
+
+int get_globalOutputValCount() {
+#ifdef DEBUG
+  return allOutputVals.size() - offset_;
+#else
+  return 0;
+#endif // DEBUG
+}
+
+void init_globalOutputValCount() {
+#ifdef DEBUG
+  // oofcerr << "init_globalOutputValCount" << std::endl;
+  outputValueLock.acquire();
+  offset_ = allOutputVals.size();
+  outputValueLock.release();
+#endif // DEBUG
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 OutputValue::OutputValue()
-  : val(0)
+  : val(nullptr)
 {
 #ifdef DEBUG
   outputValueLock.acquire();
@@ -160,9 +199,21 @@ ArithmeticOutputValue operator-(const ArithmeticOutputValue &a,
 
 // These are here just so that debugging lines can be added if needed.
 
-OutputVal::OutputVal() : refcount(0) {}
+OutputVal::OutputVal() : refcount(0) {
+#ifdef DEBUG
+  outputValueLock.acquire();
+  allOutputVals.insert(this);
+  outputValueLock.release();
+#endif // DEBUG
+}
 
-OutputVal::~OutputVal() {}
+OutputVal::~OutputVal() {
+#ifdef DEBUG
+  outputValueLock.acquire();
+  allOutputVals.erase(this);
+  outputValueLock.release();
+#endif // DEBUG
+}
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 

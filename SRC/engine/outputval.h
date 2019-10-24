@@ -369,7 +369,7 @@ public:
 class OutputValue {
 protected:
   OutputVal *val;
-  static long count;
+  static int count;
 public:
   OutputValue();
   OutputValue(OutputVal*);
@@ -392,7 +392,7 @@ public:
 
   int nrefcount() { return (*val).refcount; } // for debugging
   friend std::ostream &operator<<(std::ostream&, const OutputValue&);
-  friend long get_globalOutputValueCount();
+  friend int get_globalOutputValueCount();
 };
 
 class NonArithmeticOutputValue : public OutputValue {
@@ -413,7 +413,11 @@ public:
   const ArithmeticOutputValue &operator-=(const ArithmeticOutputValue &other);
   const ArithmeticOutputValue &operator *=(double x);
 
-  // TODO: Shouldn't operator[] be in the base class?
+  // In principle, operator[](IndexP) should be defined in the base
+  // classes OutputValue and OutputVal.  However, it's a bit of a pain
+  // to define them for NonArithmeticOutputVals that are indexed by
+  // strings, and they're not needed in C++.  They're defined in
+  // Python.
   double operator[](const IndexP &p) const;
   double &operator[](const IndexP &p);
 };
@@ -428,7 +432,9 @@ ArithmeticOutputValue operator-(const ArithmeticOutputValue &a,
 
 std::ostream &operator<<(std::ostream&, const OutputValue&);
 
-long get_globalOutputValueCount();
+int get_globalOutputValueCount();
+int get_globalOutputValCount();
+void init_globalOutputValCount();
 
 
 // TODO OPT: Energies should not be calculated by using the properties

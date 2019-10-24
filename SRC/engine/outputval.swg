@@ -35,8 +35,8 @@ typedef OutputVal NewOutputVal;
 
 // For transferring ownership to Python.  %new is supposed to add
 // thisown=1 to the wrapper, but it doesn't seem to work if there's
-// also an "out" typemap.
-//** TODO: Does OOF2 need this? Presumably yes.
+// also an "out" typemap.  See comments in outputval.C.
+
 %typemap(python, out) NewOutputVal* {
   // typemap(python, out) NewOutputVal*
   $target = $source->pythonObject();
@@ -72,7 +72,6 @@ public:
   void component_sqrt();
   void component_abs();
   %addmethods {
-    // TODO: Shouldn't this be in the base class?
     double __getitem__(const IndexP &i) const {
       return (*self)[i];
     }
@@ -188,6 +187,8 @@ public:
   }
 };
 
-long get_globalOutputValueCount();
+int get_globalOutputValueCount();
+int get_globalOutputValCount();
+void init_globalOutputValCount();
 
 #endif // OUTPUTVAL_SWG
