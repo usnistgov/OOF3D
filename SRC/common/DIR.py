@@ -24,7 +24,7 @@ cfiles = [
     'timestamp.C', 'sincos.C', 'pythonlock.C', 'progress.C',
     'vtkColorLUT.C', 'guitop.C', 'direction.C', 'clip.C', 'voxelfilter.C',
     'geometry.C', 'doublevec.C', 'vectormath.C', 'smallmatrix.C',
-    'voxelsetboundary.C', 'latticesystem.C'
+    'voxelsetboundary.C', 'latticesystem.C', 'trace.C'
     ]
 
 swigfiles = [
@@ -35,7 +35,7 @@ swigfiles = [
     'pixelattribute.swg', 'pixelgroup.swg', 'pixelselectioncourier.swg',
     'switchboard.swg', 'threadstate.swg', 'timestamp.swg', 'progress.swg',
     'vtkColorLUT.swg', 'guitop.swg', 'direction.swg', 'clip.swg',
-    'voxelfilter.swg', 'doublevec.swg', 'smallmatrix.swg',
+    'voxelfilter.swg', 'doublevec.swg', 'smallmatrix.swg', 'trace.swg',
     'identification.swg', 'voxelsetboundary.swg', 'latticesystem.swg'
     ]
 
@@ -64,7 +64,7 @@ hfiles = [
     'swiglib.h', 'switchboard.h', 'threadstate.h', 'timestamp.h',
     'pythonlock.h', 'progress.h', 'sincos.h', 'vtkColorLUT.h', 
     'direction.h', 'clip.h', 'differ.h', 'voxelfilter.h', 'cleverptr.h',
-    'smallmatrix.h', "pixelattribute_i.h", 'coord_i.h',
+    'smallmatrix.h', "pixelattribute_i.h", 'coord_i.h', 'trace.h',
     'setutils.h', 'derefcompare.h', 'voxelsetboundary.h', 'latticesystem.h'
     ]
 

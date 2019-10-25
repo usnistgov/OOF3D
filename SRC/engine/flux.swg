@@ -24,7 +24,7 @@
 %pragma(python) code="from ooflib.SWIG.engine.fieldindex import IteratorPPtr"
 %pragma(python) code="from ooflib.SWIG.engine.fieldindex import IndexPPtr"
 %extern "engine/outputval.swg"
-%pragma(python) code="from ooflib.SWIG.engine.outputval import OutputValuePtr"
+%pragma(python) code="from ooflib.SWIG.engine.outputval import ArithmeticOutputValuePtr"
 
 
 
@@ -46,7 +46,7 @@ public:
     }
   }
   IndexP componenttype();
-  OutputValue newOutputValue();
+  ArithmeticOutputValue newOutputValue();
 };
   
 class VectorFlux : public Flux {

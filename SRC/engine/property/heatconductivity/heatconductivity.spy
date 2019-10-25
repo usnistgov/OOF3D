@@ -41,10 +41,11 @@ reg = PropertyRegistration(
     'Thermal:Conductivity:Anisotropic:Triclinic',
     AnisoHeatConductivity,
     "ooflib.SWIG.engine.property.heatconductivity.heatconductivity",105,
-    [symmmatrix.TriclinicRank2TensorParameter(
-    'kappa',
-    symmmatrix.TriclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
-    tip=parameter.emptyTipString)],
+    params=[
+        symmmatrix.TriclinicRank2TensorParameter(
+            'kappa',
+            symmmatrix.TriclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+            tip=parameter.emptyTipString)],
     outputs=["Material Constants:Thermal:Conductivity K"],
     propertyType="ThermalConductivity",
     tip="Triclinic thermal conductivity",
@@ -60,10 +61,11 @@ reg = PropertyRegistration(
     'Thermal:Conductivity:Anisotropic:Monoclinic',
     AnisoHeatConductivity,
     "ooflib.SWIG.engine.property.heatconductivity.heatconductivity",104,
-    [symmmatrix.MonoclinicRank2TensorParameter(
-    'kappa',
-    symmmatrix.MonoclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
-    tip=parameter.emptyTipString)],
+    params=[
+        symmmatrix.MonoclinicRank2TensorParameter(
+            'kappa',
+            symmmatrix.MonoclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+            tip=parameter.emptyTipString)],
     outputs=["Material Constants:Thermal:Conductivity K"],
     propertyType="ThermalConductivity",
     tip="Monoclinic thermal conductivity.",
@@ -79,10 +81,10 @@ reg = PropertyRegistration(
     'Thermal:Conductivity:Anisotropic:Orthorhombic',
     AnisoHeatConductivity,
     "ooflib.SWIG.engine.property.heatconductivity.heatconductivity",103,
-    [symmmatrix.OrthorhombicRank2TensorParameter(
-    'kappa',
-    symmmatrix.OrthorhombicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
-    tip=parameter.emptyTipString)],
+    params=[symmmatrix.OrthorhombicRank2TensorParameter(
+        'kappa',
+        symmmatrix.OrthorhombicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+        tip=parameter.emptyTipString)],
     outputs=["Material Constants:Thermal:Conductivity K"],
     propertyType="ThermalConductivity",
     tip="Orthorhombic thermal conductivity.",
@@ -98,10 +100,10 @@ reg = PropertyRegistration(
     'Thermal:Conductivity:Anisotropic:Tetragonal',
     AnisoHeatConductivity,
     "ooflib.SWIG.engine.property.heatconductivity.heatconductivity",101,
-    [symmmatrix.TetragonalRank2TensorParameter(
-    'kappa',
-    symmmatrix.TetragonalRank2Tensor(xx=1.0, zz=0.5),
-    tip=parameter.emptyTipString)],
+    params=[symmmatrix.TetragonalRank2TensorParameter(
+        'kappa',
+        symmmatrix.TetragonalRank2Tensor(xx=1.0, zz=0.5),
+        tip=parameter.emptyTipString)],
     outputs=["Material Constants:Thermal:Conductivity K"],
     propertyType="ThermalConductivity",
     tip="Tetragonal thermal conductivity.",
@@ -117,10 +119,10 @@ reg = PropertyRegistration(
     'Thermal:Conductivity:Anisotropic:Trigonal',
     AnisoHeatConductivity,
     "ooflib.SWIG.engine.property.heatconductivity.heatconductivity",102,
-    [symmmatrix.TrigonalRank2TensorParameter(
-    'kappa',
-    symmmatrix.TrigonalRank2Tensor(xx=1.0, zz=0.5),
-    tip=parameter.emptyTipString)],
+    params=[symmmatrix.TrigonalRank2TensorParameter(
+        'kappa',
+        symmmatrix.TrigonalRank2Tensor(xx=1.0, zz=0.5),
+        tip=parameter.emptyTipString)],
     outputs=["Material Constants:Thermal:Conductivity K"],
     propertyType="ThermalConductivity",
     tip="Trigonal thermal conductivity.",
@@ -136,10 +138,10 @@ reg = PropertyRegistration(
     'Thermal:Conductivity:Anisotropic:Hexagonal',
     AnisoHeatConductivity,
     "ooflib.SWIG.engine.property.heatconductivity.heatconductivity",100,
-    [symmmatrix.HexagonalRank2TensorParameter(
-    'kappa',
-    symmmatrix.HexagonalRank2Tensor(xx=1.0, zz=0.5),
-    tip=parameter.emptyTipString)],
+    params=[symmmatrix.HexagonalRank2TensorParameter(
+        'kappa',
+        symmmatrix.HexagonalRank2Tensor(xx=1.0, zz=0.5),
+        tip=parameter.emptyTipString)],
     outputs=["Material Constants:Thermal:Conductivity K"],
     propertyType="ThermalConductivity",
     tip="Hexagonal thermal conductivity.",
@@ -155,10 +157,10 @@ reg = PropertyRegistration(
     'Thermal:Conductivity:Anisotropic:Cubic',
     AnisoHeatConductivity,
     "ooflib.SWIG.engine.property.heatconductivity.heatconductivity",99,
-    [symmmatrix.CubicRank2TensorParameter(
-            'kappa',
-            symmmatrix.CubicRank2Tensor(xx=1.0),
-            tip=parameter.emptyTipString)],
+    params=[symmmatrix.CubicRank2TensorParameter(
+        'kappa',
+        symmmatrix.CubicRank2Tensor(xx=1.0),
+        tip=parameter.emptyTipString)],
     outputs=["Material Constants:Thermal:Conductivity K"],
     propertyType="ThermalConductivity",
     tip="Cubic thermal conductivity.",
