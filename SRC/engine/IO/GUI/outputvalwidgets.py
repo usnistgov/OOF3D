@@ -170,7 +170,7 @@ class ConcatenatedOutputsWidget:
 def _ConcatenatedOutputs_makeWidget(self):
     return ConcatenatedOutputsWidget(self)
         
-outputClones.ConcatenatedOutputs.makeWidget = _ConcatenatedOutputs_makeWidget
+outputClones.ConcatenatedOutputVal.makeWidget = _ConcatenatedOutputs_makeWidget
 
 
 ####################

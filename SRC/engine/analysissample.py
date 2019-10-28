@@ -622,10 +622,8 @@ class ContinuumSample(Sample):
         wgts = [x.weight() for x in gauss_pts]
         oval = output.instancefn(output)
         zero = oval.zero()      # Zero in the appropriate OutvalVal type 
-        assert zero.thisown
         if 0 in exponents:
             one = oval.one()    # One in the appropriate OutvalVal type
-            assert one.thisown
             intgrl = reduce(lambda x,y: x+y, wgts)*one
             integrals[0] = integrals.get(0, zero) + intgrl
 
