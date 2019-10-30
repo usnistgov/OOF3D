@@ -1,0 +1,11 @@
+# Operation: Range
+# Output: Temperature and Displacement[x]
+# Domain: EntireMesh
+# Sampling: GridSampleSet(x_points=4,y_points=4,z_points=4,show_x=True,show_y=True,show_z=True)
+# Columns:
+# 1. time
+# 2. min Temperature
+# 3. min Displacement[x]
+# 4. max Temperature
+# 5. max Displacement[x]
+0.0, 0.0, 0.0, 1.0, 1.0

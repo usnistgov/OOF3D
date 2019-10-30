@@ -59,21 +59,6 @@ public:
   NonArithmeticPropertyOutputInit();
 };
 
-// class ScalarPropertyOutputInit : public ArithmeticPropertyOutputInit {
-// public:
-//   ScalarPropertyOutputInit();
-// };
-
-// class TwoVectorPropertyOutputInit : public ArithmeticPropertyOutputInit {
-// public:
-//   TwoVectorPropertyOutputInit();
-// };
-
-// class ThreeVectorPropertyOutputInit : public ArithmeticPropertyOutputInit {
-// public:
-//   ThreeVectorPropertyOutputInit();
-// };
-
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 class PropertyOutput {
@@ -110,9 +95,6 @@ public:
   const string &name();
   %new PropertyOutput *instantiateArithmetic(char*, PyObject*);
   %new PropertyOutput *instantiateNonArithmetic(char*, PyObject*);
-  // const PropertyOutputInit *initializer();
-  //%new PropertyOutput *instantiate(char*, PyObject*);
 };
 
-
-#endif
+#endif	// PROPERTYOUTPUT_SWG

@@ -1007,6 +1007,86 @@ def buildTests():
                        show_x=True,show_y=True,show_z=True),
                    referencefile=meshname+'_orientation_'+frmt)
 
+    # Concatenation.
+    OutputTest(mesh="dispmesh",
+               operation="Direct_Output",
+               output="Concatenate",
+               oparams=dict(
+                   first=getOutput('Field:Component',component='y',
+                                   field=Displacement),
+                   second=getOutput('Field:Component',component='',
+                                    field=Temperature)
+                   ),
+               domain=entiremesh,
+               sampling=gridsample,
+               referencefile="dispmesh_concat_twofields")
+    OutputTest(mesh="dispmesh",
+               operation="Direct_Output",
+               output="Concatenate",
+               oparams=dict(
+                   first=getOutput('Field:Value',field=Temperature),
+                   second=getOutput('Material Constants:Thermal:Conductivity K',
+                                   components=['11', '22'],frame='Crystal')),
+               domain=entiremesh,
+               sampling=gridsample,
+               referencefile="dispmesh_concat_field_kappa")
+
+    OutputTest(mesh="dispmesh",
+               operation="Range",
+               output="Concatenate",
+               oparams=dict(
+                   first=getOutput('Field:Value',field=Temperature),
+                   second=getOutput('Field:Component',component='x',
+                                    field=Displacement)
+               ),
+               domain=entiremesh,
+               sampling=gridsample,
+               referencefile="dispmesh_range_concat_fields")
+    OutputTest(mesh="dispmesh",
+               operation="Direct_Output",
+               output="Concatenate",
+               oparams=dict(
+                   first=getOutput('Field:Value',field=Temperature),
+                   second=getOutput('Concatenate',
+                                    first=getOutput(
+                                        'Field:Component',component='x',
+                                        field=Displacement),
+                                    second=getOutput(
+                                        'Material Constants:Mechanical:Mass Density'))),
+               domain=entiremesh,
+               sampling=gridsample,
+               referencefile="dispmesh_triple_concat_direct")
+    # Repeat the previous test with first and second reversed in the
+    # outer concatenation
+    OutputTest(mesh="dispmesh",
+               operation="Direct_Output",
+               output="Concatenate",
+               oparams=dict(
+                   second=getOutput('Field:Value',field=Temperature),
+                   first=getOutput('Concatenate',
+                                   first=getOutput(
+                                       'Field:Component',component='x',
+                                       field=Displacement),
+                                   second=getOutput(
+                                       'Material Constants:Mechanical:Mass Density'))),
+               domain=entiremesh,
+               sampling=gridsample,
+               referencefile="dispmesh_triple_concat_direct2")
+    OutputTest(mesh="dispmesh",
+               operation="Range",
+               output="Concatenate",
+               oparams=dict(
+                   first=getOutput('Field:Value',field=Temperature),
+                   second=getOutput('Concatenate',
+                                    first=getOutput(
+                                        'Field:Component',component='x',
+                                        field=Displacement),
+                                    second=getOutput(
+                                        'Material Constants:Mechanical:Mass Density'))),
+               domain=entiremesh,
+               sampling=gridsample,
+               referencefile="dispmesh_triple_concat_range")
+
 class OOF_Output(unittest.TestCase):
     def setUp(self):
         global outputdestination
