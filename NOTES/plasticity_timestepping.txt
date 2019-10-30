@@ -113,6 +113,38 @@ subproblem is the thing that takes the linear system and computes
 the DOFs at the next available time, using the stepper.
 (See below.)
 
+  The NewtonSolver is in nonlinearsolver.py.
+  The Forward Euler stepper is in euler.py.
+
+  The NewtonSolver has a "core", which has a "solve" method which
+does the actual work, which calls *out* to the passed-in 
+"compute_jacobian" routine, along with the "data".  
+
+  Following the control-flow will help, maybe?
+
+
+  General Time-stepping Design:
+  -----------------------------
+
+  Within each sub-problem, in order to reach a designated time t,
+the steppers decide how big of a time-step they can do (uniform
+steppers just use their arguments, adaptive steppers attempt
+large steps and assess error somehow), then take a step.  Each
+stepper has a "_do_step" internal routine, which has access to
+the linearized system, the static part at least of which has
+been built, and knows its method.  If it needs more data,
+e.g. the MCKa matrix at new time, it has to make calls to 
+get that -- these are dispatched through the solver, which 
+knows about the nonlinear solver, for instance.
+
+  There's metadata that contains information about what's 
+available, whether the Jacobian or the residual is needed,
+and so forth.
+
+  For the current plasticity set-up specifically, I think this is
+being done wrong. the Jacobian is not being populated -- it's 
+distinct from the K matrix in some way that I forget.
+
 
   Control flow:
   -------------
@@ -143,3 +175,27 @@ system, and hands it off unconditionally to the nonlinear solver.
 
   (The new time is passed through to the make_linear_system call --
 this is where it should go to the properties, probably.)
+
+  What happens next depends on the stepper.
+
+  To solve the system, the stepper calls back out to 
+subproblem.matrix_method, but this is apparently not e.g. the Newton 
+solver?  (Examining Forward Euler makes this confusing...)
+
+
+  Strategy:
+  --------
+
+  The thing to do is to create a new, "Incremental" stepper,
+that builds the the static matrices, and uses the NR solver to 
+do the under-the-hood linear algebra.   This will differ from 
+the other steppers, in that it's not properly stateful,
+when you do the solves, there will be stuff happening in the
+gausspoints that's not part of the DOFs.  This will affect the
+plasticity property's ability to inter-operate with other
+properties, e.g. if we later want to dissipate heat from 
+plastic work or something.
+
+  Verified that, with the NL solver, the new equation is indeed
+building the Jacobian matrix.  Messages are still strange, don't
+get why it's reporting 0x0.

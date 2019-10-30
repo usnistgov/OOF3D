@@ -207,7 +207,7 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 	    // std::cerr << "Hitting the stiffness matrix: Row "
 	    // << global_row << ", column " << global_col << std::endl;
 	    linsys.insertK(global_row, global_col, v*weight);
-	    if(needJacobian)
+	    if(needJacobian) 
 	      linsys.insertJ(global_row, global_col, v*weight);
 	  }
 	}
