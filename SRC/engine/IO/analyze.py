@@ -16,13 +16,13 @@
 from ooflib.SWIG.common import ooferror
 from ooflib.SWIG.engine import outputval
 from ooflib.common import debug
-#from ooflib.common import parallel_enable
 from ooflib.common import registeredclass
 from ooflib.common import utils
 from ooflib.common.IO import formatchars
 from ooflib.common.IO import oofmenu
 from ooflib.common.IO import xmlmenudump
 from ooflib.engine import analysissample
+from ooflib.engine.IO import outputClones
 import math
 import string
 import types
@@ -41,6 +41,12 @@ import types
 # whether they are "direct" or not -- a "direct" operation is one
 # for which the value of the output at a given sample is directly
 # output to the user.  Statistical operations are not direct.
+## TODO: Is this still necessary?  Can the new acceptsOutput method in
+## DataOperation registrations handle this?
+
+# The registrations for DataOperations can be given an outputFilter
+# argument whose value is a function of an Output.  The function
+# returns True if the DataOperation can process the Output.
 
 class DataOperation(registeredclass.RegisteredClass):
     registry = []
@@ -49,6 +55,19 @@ class DataOperation(registeredclass.RegisteredClass):
 
     def shortrepr(self):
         return self.getRegistration().name()
+
+class DataOperationRegistration(registeredclass.Registration):
+    def __init__(self, name, subclass, ordering, params=[],
+                 secret=0, tip=None, discussion=None,
+                 outputFilter=None,
+                 **kwargs):
+        self.outputFilter = outputFilter or (lambda x: True)
+        registeredclass.Registration.__init__(
+            self, name, registeredclass=DataOperation,
+            subclass=subclass, ordering=ordering, params=params,
+            secret=secret, tip=tip, discussion=discussion, **kwargs)
+    def acceptsOutput(self, output):
+        return self.outputFilter(output)
 
 # When the DataOperation functions are called, the dofs in the mesh
 # have already been set to the appropriate time.  The menu items (in
@@ -96,6 +115,243 @@ settingsmenu.addItem(oofmenu.CheckOOFMenuItem(
     callback=_dummy,
     help="Show or hide the time column in output files."
 ))
+    
+
+###############################################################################
+
+# The most basic, a direct-output class that just writes out the data
+# at all the samples.
+
+class DirectOutput(DataOperation):
+    def columnNames(self, output, sampling):
+        return sampling.get_col_names() + output.columnNames()
+    def __call__(self, time, output, domain, sampling, destination):
+        # if parallel_enable.enabled():
+        #     if mpitools.Rank()==0:
+        #         _DirectOutput_call_frontend(output,domain,sampling,
+        #                                     destination)
+        #     else:
+        #         _DirectOutput_call_backend(output,domain,sampling,
+        #                                     destination)
+        #     return
+
+        # "olist" is a list or iterable of tuples of the form (sample,
+        # value).
+        olist = sampling.evaluate(domain, output)
+        header = sampling.get_col_names()
+
+        if showTime():
+            destination.comment("time:", `time`)
+            
+        for (s,v) in olist:
+            tags = sampling.columnData(header, s)
+            if len(tags)==1:
+                for t in tags[0]: # tags[0] is a list of strings
+                    print >> destination, t,
+                for x in v.value_list():
+                    print >> destination, x,
+                print >> destination
+            else: # Multiple values -- do above for each tag-val pair.
+                for (tag, val) in zip(tags, v):
+                    for t in tag:
+                        print >> destination, t,
+                    for x in val.value_list():
+                        print >> destination, x,
+                    print >> destination
+
+# "Direct Output" is special, in that the corresponding auto-generated
+# menu item is used directly in the meshcstoolboxGUI code -- if the
+# name is changed here, it should be changed there also.
+              
+directOutput = DataOperationRegistration(
+    'Direct Output',
+    DirectOutput, 
+    ordering=0,
+    params=[],
+    tip="Write the data values directly.",
+    direct=True,
+    sampling=(analysissample.DiscreteSampleSet,),
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/directoutput.xml'))
+
+##############
+
+# There are constraints on the output types of the output objects that
+# can be processed by these functions -- they must either be Floats,
+# or they must be composite objects for which __add__ and __sub__
+# operate component-wise, __mul__ and __div__ take scalar operands,
+# and for which point-wise operations "component_square" and
+# "component_sqrt" are defined.  This is currently true of all
+# OutputValPtr subclasses, including SymmMatrix3.
+
+##############
+
+## RangeOutput doesn't make sense for anything other than
+## ScalarOutputVals and Concatenated ScalarOutputVals.  OOF2 doesn't
+## have this problem because Range isn't available for aggregate
+## outputs.
+
+class RangeOutput(OneLineDataOperation):
+    def __call__(self, time, output, domain, sampling, destination):
+        olist = sampling.evaluate(domain, output)
+        if len(olist) > 0:
+            vmin = olist[0][1].initRange()
+            vmax = olist[0][1].initRange()
+            for sample, value in olist:
+                vmin, vmax = value.expandRange(vmin, vmax)
+            self.printResults(time, utils.flatten_all([vmin, vmax]),
+                              destination)
+    def colNames(self, output):
+        cnames = output.columnNames()
+        return ["min "+x for x in cnames] + ["max " +x for x in cnames]
+
+def _rangeOutputFilter(output):
+    # Returns True if output (an Output instance) produces OutputVals
+    # that are either ScalarOutputVals or ConcatenatedOutputVals of
+    # ScalarOutputVals.
+    op = output.outputInstance()
+    return (isinstance(op, outputval.ScalarOutputValPtr) or
+            (isinstance(op, outputClones.ConcatenatedOutputVal) and
+             _rangeOutputFilter(output.resolveAlias('first').value) and
+             _rangeOutputFilter(output.resolveAlias('second').value)))
+
+DataOperationRegistration(
+    "Range",
+    RangeOutput,
+    ordering=1,
+    direct=False, 
+    sampling=(analysissample.DiscreteSampleSet,),
+    acceptsOutput=_rangeOutputFilter,
+    tip="Print the min and max values of the data over the domain.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/range.xml'))
+
+#######
+
+class AverageAndDeviation(OneLineDataOperation):
+    def __call__(self, time, output, domain, sampling, destination):
+        # areasum, integralsum, squaresum = _getMoments(sampling, domain, output,
+        #                                               (0,1,2))
+
+        integrals = sampling.integrateWithExponents(domain, output, (0, 1, 2))
+        area = integrals[0].value_list()[0] # a float
+        mean = integrals[1]/area    # an OutputVal
+        avgsquared = mean.clone()
+        avgsquared.component_square()
+        squaredavg = integrals[2]/area
+        deviation = squaredavg - avgsquared
+        deviation.component_abs()
+        deviation.component_sqrt()
+        self.printResults(
+            time,
+            utils.flatten(zip(mean.value_list(), deviation.value_list())),
+            destination)
+    def colNames(self, output):
+        return utils.flatten(
+            ["average of "+name, "standard deviation of " +name]
+            for name in output.columnNames())
+
+DataOperationRegistration(
+    "Average and Deviation",
+    AverageAndDeviation,
+    2,
+    direct=False,
+    sampling=(analysissample.SampleSet,),
+    tip="Print the average and standard deviation of the samples.",
+    discussion=xmlmenudump.loadFile(
+        "DISCUSSIONS/engine/menu/averagedeviation.xml"))
+
+########
+
+class IntegrateOutput(OneLineDataOperation):
+    def __call__(self, time, output, domain, sampling, destination):
+        # (integral,) = _getMoments(sampling, domain, output, (1,))
+        integral = sampling.integrate(domain, output)
+        self.printResults(time, integral.value_list(), destination)
+    def colNames(self, output):
+        return ["integral of "+name for name in output.columnNames()]
+
+DataOperationRegistration(
+    "Integral",
+    IntegrateOutput,
+    3.5,
+    direct=False,
+    sampling=(analysissample.ContinuumSampleSet,),
+    tip="Integrate the data over the area or volume of the samples.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/integrate.xml'))
+
+########
+
+# Integrates the output over each sample, and normalizes by the
+# power=0 version.
+
+class AverageOutput(OneLineDataOperation):
+    def __call__(self, time, output, domain, sampling, destination):
+
+        # if parallel_enable.enabled():
+        #     if mpitools.Rank()==0:
+        #         _AverageOutput_call_frontend(output,domain,sampling,
+        #                                     destination)
+        #     else:
+        #         _AverageOutput_call_backend(output,domain,sampling,
+        #                                     destination)
+        #     return
+
+        # areasum, integralsum = _getMoments(sampling, domain, output, (0, 1))
+        integrals = sampling.integrateWithExponents(domain, output, (0, 1))
+        area = integrals[0].value_list()[0]
+        result = integrals[1]/area
+        self.printResults(time, result.value_list(), destination)
+    def colNames(self, output):
+        return ["average of "+name for name in output.columnNames()]
+     
+DataOperationRegistration(
+    "Average",
+    AverageOutput,
+    3,
+    direct=False,
+    sampling=(analysissample.SampleSet,),
+    tip="Average the data over all the samples.",
+    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/average.xml')
+    )
+
+#######
+
+# Standard deviation, square root of the integral of ( (x-<x>)^2 ),
+# which is of course (<x^2>-<x>^2)^(1/2)
+
+class StdDevOutput(OneLineDataOperation):
+    def __call__(self, time, output, domain, sampling, destination):
+
+        # if parallel_enable.enabled():
+        #     if mpitools.Rank()==0:
+        #         _StdDevOutput_call_frontend(output,domain,sampling,
+        #                                     destination)
+        #     else:
+        #         _StdDevOutput_call_backend(output,domain,sampling,
+        #                                     destination)
+        #     return
+
+        # areasum, integralsum, squaresum = _getMoments(sampling, domain, output,
+        #                                               (0,1,2))
+        integrals = sampling.integrateWithExponents(domain, output, (0, 1, 2))
+        area = integrals[0].value_list()[0]
+        avgsquared = integrals[1]/area
+        avgsquared.component_square()
+        squaredavg = integrals[2]/area
+        result = squaredavg - avgsquared
+        result.component_sqrt()
+        self.printResults(time, result.value_list(), destination)
+    def colNames(self, output):
+        return ["standard deviation of "+name for name in output.columnNames()]
+
+DataOperationRegistration(
+    "Standard Deviation",
+    StdDevOutput,
+    4,
+    direct=False,
+    sampling=(analysissample.SampleSet,),
+    tip="Compute the standard deviation of the data over the samples.",
+    discussion=xmlmenudump.loadFile("DISCUSSIONS/engine/menu/deviation.xml"))
+
     
 ############################ MPI #########################################
 
@@ -414,231 +670,3 @@ settingsmenu.addItem(oofmenu.CheckOOFMenuItem(
 #         #Send output to front end (process/rank 0)
 #         mpitools.Send_String('\n'.join(outputstringlist),0)
 # # end if parallel_enable.enabled()
-
-###############################################################################
-
-# The most basic, a direct-output class that just writes out the data
-# at all the samples.
-
-class DirectOutput(DataOperation):
-    def columnNames(self, output, sampling):
-        return sampling.get_col_names() + output.columnNames()
-    def __call__(self, time, output, domain, sampling, destination):
-        # if parallel_enable.enabled():
-        #     if mpitools.Rank()==0:
-        #         _DirectOutput_call_frontend(output,domain,sampling,
-        #                                     destination)
-        #     else:
-        #         _DirectOutput_call_backend(output,domain,sampling,
-        #                                     destination)
-        #     return
-
-        # "olist" is a list or iterable of tuples of the form (sample,
-        # value).
-        olist = sampling.evaluate(domain, output)
-        header = sampling.get_col_names()
-
-        if showTime():
-            destination.comment("time:", `time`)
-            
-        for (s,v) in olist:
-            tags = sampling.columnData(header, s)
-            if len(tags)==1:
-                for t in tags[0]: # tags[0] is a list of strings
-                    print >> destination, t,
-                for x in v.value_list():
-                    print >> destination, x,
-                print >> destination
-            else: # Multiple values -- do above for each tag-val pair.
-                for (tag, val) in zip(tags, v):
-                    for t in tag:
-                        print >> destination, t,
-                    for x in val.value_list():
-                        print >> destination, x,
-                    print >> destination
-
-# "Direct Output" is special, in that the corresponding auto-generated
-# menu item is used directly in the meshcstoolboxGUI code -- if the
-# name is changed here, it should be changed there also.
-              
-directOutput = registeredclass.Registration(
-    'Direct Output', DataOperation, DirectOutput, 
-    ordering=0,
-    params=[],
-    tip="Write the data values directly.",
-    direct=True,
-    sampling=(analysissample.DiscreteSampleSet,),
-    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/directoutput.xml'))
-
-##############
-
-# There are constraints on the output types of the output objects that
-# can be processed by these functions -- they must either be Floats,
-# or they must be composite objects for which __add__ and __sub__
-# operate component-wise, __mul__ and __div__ take scalar operands,
-# and for which point-wise operations "component_square" and
-# "component_sqrt" are defined.  This is currently true of all
-# OutputValPtr subclasses, including SymmMatrix3.
-
-class RangeOutput(OneLineDataOperation):
-    def __call__(self, time, output, domain, sampling, destination):
-        olist = sampling.evaluate(domain, output)
-        vmin = None
-        vmax = None
-        for sample, value in olist:
-            assert value is not None
-            v = value.value()
-            if vmin is None or vmin > v:
-                vmin = v
-            if vmax is None or vmax < v:
-                vmax = v
-        self.printResults(time, [vmin, vmax], destination)
-    def colNames(self, output):
-        cnames = output.columnNames()
-        return ["min "+x for x in cnames] + ["max " +x for x in cnames]
-
-registeredclass.Registration(
-    "Range",
-    DataOperation,
-    RangeOutput,
-    ordering=1,
-    direct=False, 
-    sampling=(analysissample.DiscreteSampleSet,),
-    tip="Print the min and max values of the data over the domain.",
-    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/range.xml'))
-
-#######
-
-class AverageAndDeviation(OneLineDataOperation):
-    def __call__(self, time, output, domain, sampling, destination):
-        # areasum, integralsum, squaresum = _getMoments(sampling, domain, output,
-        #                                               (0,1,2))
-
-        integrals = sampling.integrateWithExponents(domain, output, (0, 1, 2))
-        area = integrals[0].value_list()[0] # a float
-        mean = integrals[1]/area    # an OutputVal
-        avgsquared = mean.clone()
-        avgsquared.component_square()
-        squaredavg = integrals[2]/area
-        deviation = squaredavg - avgsquared
-        deviation.component_abs()
-        deviation.component_sqrt()
-        self.printResults(
-            time,
-            utils.flatten(zip(mean.value_list(), deviation.value_list())),
-            destination)
-    def colNames(self, output):
-        return utils.flatten(
-            ["average of "+name, "standard deviation of " +name]
-            for name in output.columnNames())
-
-registeredclass.Registration(
-    "Average and Deviation",
-    DataOperation,
-    AverageAndDeviation,
-    2,
-    direct=False,
-    sampling=(analysissample.SampleSet,),
-    tip="Print the average and standard deviation of the samples.",
-    discussion=xmlmenudump.loadFile(
-        "DISCUSSIONS/engine/menu/averagedeviation.xml"))
-
-########
-
-class IntegrateOutput(OneLineDataOperation):
-    def __call__(self, time, output, domain, sampling, destination):
-        # (integral,) = _getMoments(sampling, domain, output, (1,))
-        integral = sampling.integrate(domain, output)
-        self.printResults(time, integral.value_list(), destination)
-    def colNames(self, output):
-        return ["integral of "+name for name in output.columnNames()]
-
-registeredclass.Registration(
-    "Integral",
-    DataOperation,
-    IntegrateOutput,
-    3.5,
-    direct=False,
-    sampling=(analysissample.ContinuumSampleSet,),
-    tip="Integrate the data over the area or volume of the samples.",
-    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/integrate.xml'))
-
-########
-
-# Integrates the output over each sample, and normalizes by the
-# power=0 version.
-
-class AverageOutput(OneLineDataOperation):
-    def __call__(self, time, output, domain, sampling, destination):
-
-        # if parallel_enable.enabled():
-        #     if mpitools.Rank()==0:
-        #         _AverageOutput_call_frontend(output,domain,sampling,
-        #                                     destination)
-        #     else:
-        #         _AverageOutput_call_backend(output,domain,sampling,
-        #                                     destination)
-        #     return
-
-        # areasum, integralsum = _getMoments(sampling, domain, output, (0, 1))
-        integrals = sampling.integrateWithExponents(domain, output, (0, 1))
-        area = integrals[0].value_list()[0]
-        result = integrals[1]/area
-        self.printResults(time, result.value_list(), destination)
-    def colNames(self, output):
-        return ["average of "+name for name in output.columnNames()]
-     
-registeredclass.Registration(
-    "Average",
-    DataOperation,
-    AverageOutput,
-    3,
-    direct=False,
-    sampling=(analysissample.SampleSet,),
-    tip="Average the data over all the samples.",
-    discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/average.xml')
-    )
-
-#######
-
-# Standard deviation, square root of the integral of ( (x-<x>)^2 ),
-# which is of course (<x^2>-<x>^2)^(1/2)
-
-class StdDevOutput(OneLineDataOperation):
-    def __call__(self, time, output, domain, sampling, destination):
-
-        # if parallel_enable.enabled():
-        #     if mpitools.Rank()==0:
-        #         _StdDevOutput_call_frontend(output,domain,sampling,
-        #                                     destination)
-        #     else:
-        #         _StdDevOutput_call_backend(output,domain,sampling,
-        #                                     destination)
-        #     return
-
-        # areasum, integralsum, squaresum = _getMoments(sampling, domain, output,
-        #                                               (0,1,2))
-        integrals = sampling.integrateWithExponents(domain, output, (0, 1, 2))
-        area = integrals[0].value_list()[0]
-        avgsquared = integrals[1]/area
-        avgsquared.component_square()
-        squaredavg = integrals[2]/area
-        result = squaredavg - avgsquared
-        result.component_sqrt()
-        self.printResults(time, result.value_list(), destination)
-    def colNames(self, output):
-        return ["standard deviation of "+name for name in output.columnNames()]
-
-registeredclass.Registration(
-    "Standard Deviation",
-    DataOperation,
-    StdDevOutput,
-    4,
-    direct=False,
-    sampling=(analysissample.SampleSet,),
-    tip="Compute the standard deviation of the data over the samples.",
-    discussion=xmlmenudump.loadFile("DISCUSSIONS/engine/menu/deviation.xml"))
-
-    
-#########################
-

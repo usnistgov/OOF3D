@@ -146,8 +146,7 @@ class DataOperationFactory(regclassfactory.RegisteredClassFactory):
         self.page = page
         regclassfactory.RegisteredClassFactory.__init__(self, *args, **kwargs)
     def includeRegistration(self, registration):
-        return (self.page.outputAllowsArithmetic() or
-                getattr(registration, 'direct', False))
+        return registration.acceptsOutput(self.page.getOutput())
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
@@ -404,6 +403,9 @@ class AnalyzePage(BaseAnalysisPage):
             return not outputproto or outputproto.allowsArithmetic()
         except AttributeError:
             return True
+
+    def getOutput(self):
+        return self.output_obj.get_value()
 
     def analysesChanged(self, *args):
         self.sensitize_widgets()

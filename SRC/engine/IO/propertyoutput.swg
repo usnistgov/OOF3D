@@ -97,5 +97,4 @@ public:
   %new PropertyOutput *instantiateNonArithmetic(char*, PyObject*);
 };
 
-
-#endif
+#endif	// PROPERTYOUTPUT_SWG

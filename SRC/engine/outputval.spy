@@ -136,7 +136,31 @@ def _ScalarOutputValPtr__rdiv__(self, other):
     return other * (1.0/self.value())
 
 ScalarOutputValPtr.__rdiv__ = _ScalarOutputValPtr__rdiv__
-    
+
+##############################
+
+# Range is only meaningful for scalars.
+
+def _ScalarOutputValPtr_expandRange(self, vmin, vmax):
+    v = self.value()
+    # assert(vmin is None or type(vmin) is type(1) or type(vmin) is type(1.))
+    # assert(vmax is None or type(vmax) is type(1) or type(vmax) is type(1.))
+    if vmin is not None:
+        vmin = min(vmin, v)
+    else:
+        vmin = v
+    if vmax is not None:
+        vmax = max(vmax, v)
+    else:
+        vmax = v
+    return (vmin, vmax)
+
+ScalarOutputValPtr.expandRange = _ScalarOutputValPtr_expandRange
+
+def _ScalarOutputValPtr_initRange(self):
+    return None
+
+ScalarOutputValPtr.initRange = _ScalarOutputValPtr_initRange
 
 ##############################
 

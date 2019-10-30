@@ -11,6 +11,7 @@
 
 #include <oofconfig.h>
 
+#include "common/IO/oofcerr.h"
 #include "common/printvec.h"	// for debugging
 #include "common/pythonlock.h"
 #include "engine/IO/propertyoutput.h"
@@ -234,8 +235,8 @@ PropertyOutput::getListOfStringsParam(const char *name) const {
     if(!obj)
       pythonErrorRelay();
     // obj is a Python list or tuple
+    assert(PySequence_Check(obj));
     Py_ssize_t n = PySequence_Size(obj);
-    assert(n >= 0);
     for(Py_ssize_t i=0; i<n; i++) {
       PyObject *item = PySequence_GetItem(obj, i);
       if(!item)

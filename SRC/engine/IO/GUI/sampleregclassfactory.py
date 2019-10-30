@@ -64,10 +64,9 @@ class SampleRCF(regclassfactory.RegisteredClassFactory):
                                                 self.domainCB))
         else:                   # domainClass was specified
             # Find the registration for the class
-            for reg in analysisdomain.Domain.registry:
-                if reg.subclass is domainClass:
-                    self.domainSampleTypes = reg.sampling
-                    break
+            domain_reg = self.domainClass.getRegistration()
+            if domain_reg:
+                self.domainSampleTypes = domain_reg.sampling
 
         # Ditto for the operationClass.
         if operationClass is None:
@@ -80,11 +79,10 @@ class SampleRCF(regclassfactory.RegisteredClassFactory):
                 switchboard.requestCallbackMain(self.operationWidget,
                                                 self.operationCB))
         else: # operationClass is not None, set directness accordingly
-            for reg in analyze.DataOperation.registry:
-                if reg.subclass is operationClass:
-                    self.directness = reg is analyze.directOutput
-                    self.operationSampleTypes = reg.sampling
-                    break
+            operation_reg = self.operationClass.getRegistration()
+            if operation_reg:
+                self.directness = operation_reg is analyze.directOutput
+                self.operationSampleTypes = operation_reg.sampling
         self.refresh(obj)
 
     def cleanUp(self):
