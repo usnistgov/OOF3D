@@ -194,8 +194,7 @@ class RangeOutput(OneLineDataOperation):
     def __call__(self, time, output, domain, sampling, destination):
         olist = sampling.evaluate(domain, output)
         if len(olist) > 0:
-            vmin = olist[0][1].initRange()
-            vmax = olist[0][1].initRange()
+            vmin = vmax = olist[0][1].initRange()
             for sample, value in olist:
                 vmin, vmax = value.expandRange(vmin, vmax)
             self.printResults(time, utils.flatten_all([vmin, vmax]),
