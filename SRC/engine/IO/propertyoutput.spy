@@ -56,7 +56,7 @@ class _PORegBase(PropertyOutputRegistration):
         if self.initializer is not None:
             self.initObj = self.initializer
         else:
-            self.zeroObj = self.zeroVal(po)
+            self.zeroObj = self.zeroVal(params)
             self.initObj = DefaultPropertyOutputValInit(self.zeroObj)
                         
         po.setInitializer(self.initObj)
@@ -74,17 +74,21 @@ class _PORegBase(PropertyOutputRegistration):
     def convert(self, results):
         return results
 
-    def zeroVal(self, propout):
+    def zeroVal(self, argdict):
         # Subclasses must define this method, which returns "zero" in
-        # the format desired for the output.  The argument is the
-        # PropertyOutput object.
-        ## TODO: Instead of passing the PropertyOutput, can we just
-        ## pass in the parameter values?  An extra PropertyOutput is
-        ## being created.
+        # the format desired for the output.  The argument is a
+        # dictionary containing the Parameter values keyed by
+        # Parameter name.
         raise ErrPyProgrammingError("%s.zeroVal is not defined!"
                                     % self.__class__.__name__)
-    ## TODO: Do we need both zeroVal and instancefn? 
     def instancefn(self, output):
+        # Return an instance of the OutputVal class that this Output
+        # will produce when run.  This is non-trivial because the
+        # OutputVal class may depend on the parameters.  This is
+        # called when the Output is run, but also used to build GUI
+        # widgets, so it can't assume that _instaniate has already
+        # been called.
+        
         # output is an Output that was built from a PropertyOutput.
         # Its params is a dict of Parameter objects keyed by name.  It
         # has to be converted into a dict of parameter values keyed by
@@ -92,10 +96,8 @@ class _PORegBase(PropertyOutputRegistration):
         # PropertyOutputRegistration for instantiation of the
         # PropertyOutput.
         pdict = {name:param.value for name,param in output.params.items()}
-        propoutput = self._instantiate(self.name(), pdict)
-        ## TODO: Can we just return propoutput?  Why are we calling
-        ## zeroVal?
-        return self.zeroVal(propoutput)
+        # Get an OutputVal representing zero
+        return self.zeroVal(pdict)
 
 class ArithmeticPropertyOutputRegistration(_PORegBase):
     def __init__(self, name, output, initializer=None):
