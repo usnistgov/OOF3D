@@ -637,17 +637,30 @@ class Output(object):
             strings.append(pvalue.binaryRepr(datafile,pvalue.value))
         return string.join(strings,'')
 
-
     def allowsArithmetic(self):
-        # _allowsArithmetic is set by PropertyOutputs in
-        # ArithmeticPropertyOutputRegistration and
-        # NonArithmeticPropertyOutputRegistration.  Outputs that don't
-        # allow arithmetic can be printed but not averaged, for
-        # example.
+        # Does the Output allow arithmetic to be performed on its
+        # values?  Outputs that don't allow arithmetic can be printed
+        # but not averaged, for example.
+
+        # Whether or not arithmetic is allowed can be set in two ways:
         try:
+            # _allowsArithmetic is set by PropertyOutputs in
+            # ArithmeticPropertyOutputRegistration and
+            # NonArithmeticPropertyOutputRegistration.
             return self._allowsArithmetic
         except AttributeError:
-            return True
+            pass
+        try:
+            # See if filterfn was set in the registration.  It's a
+            # function that takes the Output as an argument.
+            filterfn = self.arithmeticFilter
+        except AttributeError:
+            pass
+        else:
+            return filterfn(self)
+        # Neither _allowsArithmetic or arithmeticFilter was found.
+        # Assume that arithmetic is allowed.
+        return True
 
     def dump(self, indent=""):
         if indent=="":

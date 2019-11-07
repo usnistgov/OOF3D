@@ -395,15 +395,6 @@ class AnalyzePage(BaseAnalysisPage):
         self.op_obj.refresh()
         self.sensitize_widgets()
 
-    def outputAllowsArithmetic(self):
-        # Arithmetic can be performed on an output as long as neither
-        # it nor any of its ancestors have _allowsArithmetic == False.
-        outputproto = self.output_obj.get_proto()
-        try:
-            return not outputproto or outputproto.allowsArithmetic()
-        except AttributeError:
-            return True
-
     def getOutput(self):
         return self.output_obj.get_value()
 

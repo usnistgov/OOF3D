@@ -122,11 +122,11 @@ using std::string;
 }
 
 %typemap(python,out) string {
-  // This typemap should not be used, since swig will use "new string"
-  // to copy the output, and won't delete it.  Swigged routines should
-  // probably return const string&.
-
   // typemap(python, out) string
+  // This typemap should not be used, since swig will use "new string"
+  // to copy the output, and won't delete it.  Perhaps this is because
+  // we're using an ancient version of swig.
+
   //$target = PyString_FromString($source->c_str());
   $target = do_not_return_plain_strings_from_c_to_python();
 }

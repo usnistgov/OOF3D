@@ -523,7 +523,10 @@ def _difference_shortrepr(self):
                       self.resolveAlias('subtrahend').value.shortrepr())
 
 def _difference_instancefn(self):
-    return self.resolveAlias('minuend').value.outputInstance()
+    minuend = self.resolveAlias('minuend').value
+    if minuend is None:
+        return
+    return minuend.outputInstance()
 
 
 ScalarDifferenceOutput = output.Output(
@@ -654,15 +657,23 @@ def _concatenate_shortrepr(self):
     return "%s and %s" % (self.resolveAlias('first').value.shortrepr(),
                           self.resolveAlias('second').value.shortrepr())
 def _concatenate_instancefn(self):
-    return ConcatenatedOutputVal(
-        self.resolveAlias('first').value.outputInstance(),
-        self.resolveAlias('second').value.outputInstance())
+    first = self.resolveAlias('first').value
+    second = self.resolveAlias('second').value
+    if first is None or second is None:
+        return
+    return ConcatenatedOutputVal(first.outputInstance(),
+                                 second.outputInstance())
 
 def _concatenate_columnnames(self):
     f = self.resolveAlias('first').value
     s = self.resolveAlias('second').value
     return f.column_names(f) + s.column_names(s)
-            
+
+def _concatenate_allowsArithmetic(self):
+    f = self.resolveAlias('first').value
+    s = self.resolveAlias('second').value
+    return (f is not None and s is not None and
+            f.allowsArithmetic() and s.allowsArithmetic())
 
 ConcatenateOutput = output.Output(
     name="concatenate",
@@ -671,6 +682,7 @@ ConcatenateOutput = output.Output(
     srepr=_concatenate_shortrepr,
     instancefn=_concatenate_instancefn,
     column_names=_concatenate_columnnames,
+    arithmeticFilter=_concatenate_allowsArithmetic,
     params=[
         output.ValueOutputParameter('first'),
         output.ValueOutputParameter('second')],

@@ -222,9 +222,6 @@ int PropertyOutput::getIntParam(const char *name) const {
   return x;
 }
 
-// TODO: These getParam methods should just return strings or vectors,
-// not pointers.
-
 std::vector<std::string>*
 PropertyOutput::getListOfStringsParam(const char *name) const {
   std::vector<std::string> *x = new std::vector<std::string>;

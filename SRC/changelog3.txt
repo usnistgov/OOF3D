@@ -13,6 +13,14 @@
  * oof_manager@nist.gov. 
  */
 
+3.2.3
+
+Almost all material properties can now be included in output files
+using a new Material Constants branch of the Outputs tree.
+
+More than one type of output can be printed on one line of an output
+file, by using the Concatenate output.
+  
 3.2.2
 
 Changes for compatibility with VTK 8.2.0.

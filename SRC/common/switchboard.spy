@@ -151,20 +151,19 @@ class _Switchboard:
         self.taskdict[msgname] = tasklist
         return tasklist
     def notify(self, msgname, *args, **kwargs):
+        self.lock.acquire()
         try:
-            self.lock.acquire()
-            try:
-                task = self.taskdict[msgname]
-            finally:
-                self.lock.release()
+            task = self.taskdict[msgname]
         except KeyError:
-            pass
-        else:
-            if self.verbose:
-                debug.fmsg('performing', msgname, args, kwargs)
-            task.perform(*args, **kwargs)
-            if self.verbose:
-                debug.fmsg('done', msgname)
+            return
+        finally:
+            self.lock.release()
+            
+        if self.verbose:
+            debug.fmsg('performing', msgname, args, kwargs)
+        task.perform(*args, **kwargs)
+        if self.verbose:
+            debug.fmsg('done', msgname)
 
     def cnotify(self, oofmessage):
         # Messages passed from C++ may be either simple strings or

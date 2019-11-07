@@ -37,16 +37,16 @@ import types
 # things to outputs, like writing them gridwise to files,
 # evaluating them along cross-sections, and so forth.
 
-# Data operation objects need to specify at registration time
-# whether they are "direct" or not -- a "direct" operation is one
-# for which the value of the output at a given sample is directly
-# output to the user.  Statistical operations are not direct.
-## TODO: Is this still necessary?  Can the new acceptsOutput method in
-## DataOperation registrations handle this?
+# Data operation objects need to specify at registration time whether
+# they are "direct" or not -- a "direct" operation is one for which
+# the value of the output at a given sample is directly output to the
+# user.  Statistical operations are not direct.  This is used by the
+# SampleRCF class to decide which sampling methods are applicable.
 
 # The registrations for DataOperations can be given an outputFilter
-# argument whose value is a function of an Output.  The function
-# returns True if the DataOperation can process the Output.
+# argument that determines which Outputs the DataOperation can be
+# applied to.  The filter is a boolean valued function of an Output
+# that returns True if the DataOperation can process the Output.
 
 class DataOperation(registeredclass.RegisteredClass):
     registry = []
@@ -175,6 +175,11 @@ directOutput = DataOperationRegistration(
 
 ##############
 
+def _arithmeticOutputFilter(output):
+    return output.allowsArithmetic()
+
+##############
+
 # There are constraints on the output types of the output objects that
 # can be processed by these functions -- they must either be Floats,
 # or they must be composite objects for which __add__ and __sub__
@@ -189,6 +194,9 @@ directOutput = DataOperationRegistration(
 ## ScalarOutputVals and Concatenated ScalarOutputVals.  OOF2 doesn't
 ## have this problem because Range isn't available for aggregate
 ## outputs.
+
+# RangeOutput is registered with direct=True because it doesn't modify
+# the Output values, although it doesn't print them all.
 
 class RangeOutput(OneLineDataOperation):
     def __call__(self, time, output, domain, sampling, destination):
@@ -219,7 +227,7 @@ DataOperationRegistration(
     ordering=1,
     direct=False, 
     sampling=(analysissample.DiscreteSampleSet,),
-    acceptsOutput=_rangeOutputFilter,
+    outputFilter=_rangeOutputFilter,
     tip="Print the min and max values of the data over the domain.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/range.xml'))
 
@@ -253,6 +261,7 @@ DataOperationRegistration(
     AverageAndDeviation,
     2,
     direct=False,
+    outputFilter=_arithmeticOutputFilter,
     sampling=(analysissample.SampleSet,),
     tip="Print the average and standard deviation of the samples.",
     discussion=xmlmenudump.loadFile(
@@ -273,6 +282,7 @@ DataOperationRegistration(
     IntegrateOutput,
     3.5,
     direct=False,
+    outputFilter=_arithmeticOutputFilter,
     sampling=(analysissample.ContinuumSampleSet,),
     tip="Integrate the data over the area or volume of the samples.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/integrate.xml'))
@@ -307,6 +317,7 @@ DataOperationRegistration(
     AverageOutput,
     3,
     direct=False,
+    outputFilter=_arithmeticOutputFilter,
     sampling=(analysissample.SampleSet,),
     tip="Average the data over all the samples.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/menu/average.xml')
@@ -347,6 +358,7 @@ DataOperationRegistration(
     StdDevOutput,
     4,
     direct=False,
+    outputFilter=_arithmeticOutputFilter,
     sampling=(analysissample.SampleSet,),
     tip="Compute the standard deviation of the data over the samples.",
     discussion=xmlmenudump.loadFile("DISCUSSIONS/engine/menu/deviation.xml"))
