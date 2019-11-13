@@ -94,6 +94,7 @@ class Newton(nonlinearsolvercore.Newton, NonlinearSolver):
     def __init__(self, *args, **kwargs):
         nonlinearsolvercore.Newton.__init__(self, *args, **kwargs)
     def solve(self, *args, **kwargs):
+        print >> sys.stderr, "** Newton.solve"
         niters, residual = nonlinearsolvercore.Newton.solve(
             self, *args, **kwargs)
         self.subproblem.solverStats.nonlinearSolution(niters, residual)

@@ -23,6 +23,7 @@ from ooflib.SWIG.engine import ooferror2
 from ooflib.common import debug
 from ooflib.engine import matrixmethod
 
+import sys
 import math
 
 # TODO OPT: MAYBE compute_residual() returns a new vector every time
@@ -224,6 +225,7 @@ class Newton(NLSolver):
     def solve(self, matrix_method, precompute, compute_residual,
               compute_jacobian, compute_linear_coef_mtx, data, values):
 
+        print >> sys.stderr, "** Newton core solve." 
         # matrix_method is function that takes a matrix A, a rhs b and
         # a vector of unknows x and sets x so that A*x = b.
 

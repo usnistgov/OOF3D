@@ -199,3 +199,19 @@ plastic work or something.
   Verified that, with the NL solver, the new equation is indeed
 building the Jacobian matrix.  Messages are still strange, don't
 get why it's reporting 0x0.
+
+  Minor(?) confusion -- the "initialize static fields" flow does not
+go through the MatrixSolverWrapper.
+  
+  ---------
+  
+  The thing we want is a replacement for the stepper, where
+the current script is just using forward Euler.  We want an essentially
+static thing, but where the next state depends on data from the 
+previous state, because the properties we have are giving us deltas
+which depend on the pre-existing values in the system.
+
+  Q: Are there other, non-plasticity properties like this, in
+principle?  Fluid flow might be like this.
+
+  So "incremental" stepper...

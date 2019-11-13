@@ -109,7 +109,7 @@ def evolve(meshctxt, endtime):
             meshctxt.setCurrentTime(endtime, None)
             return
 
-        print >> sys.stderr, "Finished with static fields."
+        print >> sys.stderr, "------- Finished with static fields -------"
         
         time = starttime
         if continuing:
@@ -202,6 +202,7 @@ def initializeStaticFields(subprobctxts, time, prog):
     for subproblem in subprobctxts:
         # This is the first call to make_linear_system for each
         # subproblem.
+        print >> sys.stderr, "Inside initializeStaticFields subp loop."
         print >> sys.stderr, "First call to make_linear_system."
         print >> sys.stderr, "Time is ", time
         linsysDict[subproblem] = lsys = subproblem.make_linear_system(
@@ -216,6 +217,7 @@ def initializeStaticFields(subprobctxts, time, prog):
         for subproblem in subprobctxts:
             newconstraints = True
             while newconstraints and not prog.stopped():
+                print >> sys.stderr, "initializeStaticFields calling out to the subproblem."
                 subproblem.initializeStaticFields(linsysDict[subproblem])
                 subproblem.solutiontimestamp.increment()
                 newconstraints = subproblem.applyConstraints(

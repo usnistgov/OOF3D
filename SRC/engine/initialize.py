@@ -124,6 +124,7 @@ import ooflib.engine.IO.analyzemenu
 import ooflib.engine.evolve
 import ooflib.engine.timestepper
 import ooflib.engine.euler
+import ooflib.engine.incremental
 import ooflib.engine.rk
 import ooflib.engine.ss22
 import ooflib.engine.twostep
