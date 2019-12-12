@@ -257,7 +257,8 @@ class Newton(NLSolver):
 
         # debug.fmsg("initial values=", values.norm())
         n = values.size()
-
+        print >> sys.stderr, "** Values.size is ", n
+        
         update   = doublevec.DoubleVec(n)
 
         # compute the residual = -K*startValues + rhs
@@ -275,16 +276,21 @@ class Newton(NLSolver):
         target_res = self.relative_tolerance*res_norm0 + self.absolute_tolerance
         if res_norm0 > target_res:
             prog.setRange(res_norm0, target_res)
+        print >> sys.stderr, "** Entering the try block."
         try:
             # compute Newton updates while residual is large and
             # self.maximum_iterations is not exceeded
             s = 1.
             i = 0
+            print >> sys.stderr, "** Residual norm: ", res_norm
+            print >> sys.stderr, "** Target: ", target_res
             while (res_norm > target_res and i < self.maximum_iterations
                    and not prog.stopped()):
                 # debug.fmsg("iter =", i, ",  res =", res_norm, " s =", s)
                 update.zero()
                 # solve for the Newton step:  Jacobian * update = -residual
+                print >> sys.stderr, " -!-!-! Calling out to the Jacobian: ",
+                compute_jacobian
                 J = compute_jacobian(data, self)
                 # debug.fmsg("J=\n", J.norm())
                 residual *= -1.0
@@ -332,6 +338,7 @@ class Newton(NLSolver):
                 'Nonlinear solver - Newton iterations', self.maximum_iterations)
         # debug.fmsg("final values=", values)
         # debug.fmsg("-------------------")
+        print >> sys.stderr, "** Exiting solver."
         return i, res_norm
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#

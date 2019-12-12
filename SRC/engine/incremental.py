@@ -44,11 +44,8 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
     def shortrepr(self):
         return "Incremental"
 
-    # Linear and nonlinear versions just differ in how they evaluate
-    # the static residual part.  The linear version uses K*u-f.  The
-    # nonlinear version doesn't.  linearstep and nonlinearstep both
-    # call _do_step to do the work, but pass it different functions
-    # to compute the residual.
+    # TODO: Linear and nonlinear might be the same?  We care
+    # about the residual.  Compare with ForwardEuler, for example.
 
     def linearstep(self, subproblem, linsys, time, unknowns, endtime):
         return self._do_step(subproblem, linsys, time, unknowns, endtime,
@@ -79,9 +76,24 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # This involves, firstly, using the previous K matrix to
         # do an initial solve to get your first guess for u, and then
         # using those u's to build the subsequent matrix, which
-        # you solve by NR.  Incremental problems are always nonlinear.
+        # you solve by NR.  Incremental problems are always "logically"
+        # nonlinear, even if they're not actually nonlinear.
+        #
+        # Steps:
+        # 1: Set up the current boundary conditions, and do an
+        #    initial solve with the previous K matrix.  This is
+        #    just linear algebra, no NR.
+        # 2: Use the resulting DOFs as the starting guess for a
+        #    full NR iteration, including of course rebuilding  the
+        #    DOF-dependent K matrix. 
+        # 3: Once 2 is converged, we're done. 
 
-        # Below here is obsolete.
+        # get_res is self._nonlinear_residual, which is actually
+        # implemented above.  
+        
+        # Below here is obsolete, retained for diagnostic purposes.
+        #
+        #
         # Solve C(u_{n+1} - u_n) = dt*(f - K u_n)
         # C and K are effective matrices, coming from the reduction of
         # a second order problem to a system of first order problems.
@@ -113,8 +125,11 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         print >> sys.stderr, "----> Calling matrix method.solve:"
         subproblem.matrix_method(_asymmetricFE, subproblem, linsys).solve(
             C, v, x )
+        print >> sys.stderr, "----> Back from matrix method solve."
         linsys.inject_MCa_dofs(x, endValues)
+        print >> sys.stderr, "----> Back from linsys modification."
 
+        
         endValues += unknowns
 
         if staticEqns:

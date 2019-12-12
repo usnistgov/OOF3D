@@ -214,4 +214,28 @@ which depend on the pre-existing values in the system.
   Q: Are there other, non-plasticity properties like this, in
 principle?  Fluid flow might be like this.
 
-  So "incremental" stepper...
+  Copied over the ForwardEuler stepper, and made an Incremental
+stepper, it shows up in the menus and gets called, so that's good.
+
+  Oddity:  In testing, the residual norm is always zero, so the
+matrix call-back is never triggered.  This might be because of bad
+metadata in the stepper?  But it's tagged as nonlinear.  Possibly
+the old explicit Euler code is actually handing it the C matrix?  
+
+  Probably yes.  Writing a new stepper is totally the right move.
+ 
+  The Question:
+
+  The stepper needs to start from the old fields, so it needs
+to do a thing where the first pass on the NR solver is to solve
+the *old* matrix with the *new* boundary conditions without doing
+any plasticity (which is done during matrix construction, so using
+the old matrix is automatic in this case), and *then* start the NR
+iterations, including matrix construction, with this solution as
+the initial guess.
+  So it matters very deeply how the boundary conditions are
+handled, as well as the time.
+
+  This is done in the linearized system, I think?
+
+  That's the next thing to look at.

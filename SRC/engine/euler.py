@@ -53,9 +53,6 @@ class ForwardEuler(timestepper.LinearStepper, timestepper.NonLinearStepper,
 
     def nonlinearstep(self, subproblem, linsys, time, unknowns, endtime,
                       nonlinearMethod):
-        print >> sys.stderr, "---> ForwardEuler.nonlinearstep."
-        print >> sys.stderr, "---> Calling _do_step."
-        print >> sys.stderr, "---> NL method is ", nonlinearMethod
         return self._do_step(subproblem, linsys, time, unknowns, endtime,
                              self._nonlinear_residual)
 
@@ -71,7 +68,6 @@ class ForwardEuler(timestepper.LinearStepper, timestepper.NonLinearStepper,
         return (-dt)*linsys.static_residual_MCa(unknowns)
 
     def _do_step(self, subproblem, linsys, time, unknowns, endtime, get_res):
-        print >> sys.stderr, "----> Inside ForwardEuler _do_step."
         # Solve C(u_{n+1} - u_n) = dt*(f - K u_n)
         # C and K are effective matrices, coming from the reduction of
         # a second order problem to a system of first order problems.
@@ -100,7 +96,6 @@ class ForwardEuler(timestepper.LinearStepper, timestepper.NonLinearStepper,
         endValues.zero()
 
         x = linsys.extract_MCa_dofs(endValues)
-        print >> sys.stderr, "----> Calling matrix method.solve:"
         subproblem.matrix_method(_asymmetricFE, subproblem, linsys).solve(
             C, v, x )
         linsys.inject_MCa_dofs(x, endValues)
