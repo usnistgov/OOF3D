@@ -177,7 +177,7 @@ class SubProblemContext(whoville.Who):
     asymmetric_solver = property(_getAsymmetricSolver)
 
     def matrix_method(self, asympredicate, *args, **kwargs):
-        print >> sys.stderr, "-----> Inside subProblemContext.matrix_method."
+        print >> sys.stderr, "SCPY-MM:-----> Inside subProblemContext.matrix_method."
         # Use the given asympredicate to decide whether to return the
         # symmetric or asymmetric matrix solver. 
 
@@ -192,10 +192,10 @@ class SubProblemContext(whoville.Who):
         # that the subproblem can accumulate statistics on the
         # solution process.
         if asympredicate(*args, **kwargs):
-            print >> sys.stderr, "-----> Calling asymmetric solver."
+            print >> sys.stderr, "SCPY-MM: -----> Calling asymmetric solver."
             result = MatrixSolverWrapper(self, self.asymmetric_solver)
         else:
-            print >> sys.stderr, "-----> Calling symmetric solver."
+            print >> sys.stderr, "SCPY-MM: -----> Calling symmetric solver."
             result = MatrixSolverWrapper(self, self.symmetric_solver)
         return result
 
@@ -860,10 +860,10 @@ class SubProblemContext(whoville.Who):
                     linsys.clearJacobian()
 
                 # **** This is the cpu intensive step: ****
-                print "SubProblemContext calling SubProblem make_linear_system."
+                print "SCPY-MLS: SubProblemContext calling SubProblem make_linear_system."
                 self.getObject().make_linear_system(linsys, 
                                                     self.nonlinear_solver)
-                print "Back from SubProblem make_linear_system."
+                print "SCPY-MLS: Back from SubProblem make_linear_system."
                 self.newMatrixCount += 1
 
             if bcsReset or rebuildMatrices or newFieldValues:
@@ -921,7 +921,7 @@ class SubProblemContext(whoville.Who):
     # explicitly.
 
     def initializeStaticFields(self, linsys):
-        print >> sys.stderr, "Subproblem.initializeStaticFields."
+        print >> sys.stderr, "SCPY-IS: Subproblem.initializeStaticFields."
         # This is called by initializeStaticFields in evolve.py.  It
         # won't ever be called if solver_mode or time_stepper is None.
         derivOrder = self.time_stepper.derivOrder()
@@ -931,7 +931,7 @@ class SubProblemContext(whoville.Who):
             self.installValues(linsys, unknowns, linsys.time())
 
     def computeStaticFields(self, linsys, unknowns):
-        print >> sys.stderr, "Subproblem.computeStaticFields."
+        print >> sys.stderr, "SCPY-CS: Subproblem.computeStaticFields."
         # Initialize "static" fields.  "static" fields are active
         # fields whose time derivatives don't appear in the equations,
         # or whose highest time derivative is of lower order than the
@@ -1014,7 +1014,7 @@ class SubProblemContext(whoville.Who):
             self.time_stepper.set_derivs_part('C', linsys, u1dot, unknowns)
 
     def computeStaticFieldsNL(self, linsys, unknowns):
-        print >> sys.stderr, "Subproblem.computeStaticFieldsNL."
+        print >> sys.stderr, "SCPY-CSNL: Subproblem.computeStaticFieldsNL."
         # Initialize "static" fields for nonlinear problems. 
         if linsys.n_unknowns_part('K')==0 and linsys.n_unknowns_part('C')==0:
             return
@@ -1025,12 +1025,12 @@ class SubProblemContext(whoville.Who):
         u1 = self.time_stepper.get_unknowns_part('C', linsys, unknowns)
 
         if len(u0) > 0:
-            print >> sys.stderr, "** Static solution step."
+            print >> sys.stderr, "SCPY-CSNL: ** Static solution step."
             # Solve for u0 -- static dofs that don't appear in C or M.
             nlfuncs = StaticNLFuncs(unknowns)
-            print >> sys.stderr, "** NL solver is ", self.nonlinear_solver
-            print >> sys.stderr, self.nonlinear_solver.__class__
-            print >> sys.stderr, "** Calling solve on it."
+            print >> sys.stderr, "SCPY-CSNL:** NL solver is ", self.nonlinear_solver
+            print >> sys.stderr, "SCPY-CSNL: ", self.nonlinear_solver.__class__
+            print >> sys.stderr, "SCPY-CSNL: ** Calling solve on it."
             self.nonlinear_solver.solve(
                 self.matrix_method(self.asymmetricK),
                 nlfuncs.precompute,
@@ -1038,7 +1038,7 @@ class SubProblemContext(whoville.Who):
                 nlfuncs.compute_jacobian,
                 nlfuncs.compute_linear_coef_mtx,
                 data, u0)
-            print >> sys.stderr, "** Back from solve."
+            print >> sys.stderr, "SCPY_CSNL:** Back from solve."
             self.time_stepper.set_unknowns_part('K', linsys, u0, unknowns)
 
         if len(u1) > 0 and self.time_stepper.derivOrder() > 1:
@@ -1298,12 +1298,12 @@ consistencyTolerance = 1.e-6
 
 class MatrixSolverWrapper(object):
     def __init__(self, subproblemcontext, solver):
-        print >> sys.stderr, "MatrixSolverWrapper init." 
+        print >> sys.stderr, "SCPY-MS: MatrixSolverWrapper init." 
         self.subprobctxt = subproblemcontext
         self.solver = solver
     def solve(self, matrix, rhs, solution):
-        print >> sys.stderr, "------> MatrixSolverWrapper.solve..."
-        print >> sys.stderr, "------>", self.solver
+        print >> sys.stderr, "SCPY-MS:------> MatrixSolverWrapper.solve..."
+        print >> sys.stderr, "SCPY-MS:------>", self.solver
         niters, residual = self.solver.solve(matrix, rhs, solution)
         self.subprobctxt.solverStats.matrixSolution(
             matrix.nrows(), niters, residual)

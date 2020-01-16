@@ -230,12 +230,40 @@ the old explicit Euler code is actually handing it the C matrix?
 to do a thing where the first pass on the NR solver is to solve
 the *old* matrix with the *new* boundary conditions without doing
 any plasticity (which is done during matrix construction, so using
-the old matrix is automatic in this case), and *then* start the NR
-iterations, including matrix construction, with this solution as
-the initial guess.
-  So it matters very deeply how the boundary conditions are
-handled, as well as the time.
+the old matrix is automatic in this case).
+  NB this is a linear step, just one pass. 
+  *Then* start the NR iterations, including matrix construction, 
+with this solution as the initial guess.
 
-  This is done in the linearized system, I think?
+  So it matters very deeply how the time-dependent boundary values
+are handled.  These live in the Linearized System, maybe?
 
-  That's the next thing to look at.
+  --------------------
+
+  Q's: How exactly do the solvers work, and what do they work on?
+  Does our subproblem have a linear solver?  If so, what is it? 
+
+  Trace notes:
+  
+  EPY -> evolve.py
+  EPY-IS -> Initialize static fields in evolve.py
+  EPY-ET -> Evolve_to in evolve.py
+
+  IS-NL -> Incremental stepper, nonlinear step, incremental.py
+  IS-DS -> Incremental stepper, _do_step routine, incremental.py
+
+  SCPY-MM: subproblemcontext.py, matrix_method function.
+  SCPY-IS: subproblemcontext.py, initialize static fields.
+  SCPY-CS: subproblemcontext.py, compute static fields.
+  SCPY-CSNL: subproblemcontext.py, compute nonlinear static fields.
+  SCPY-MLS: subproblemcontext.py, make_linear_system.
+
+  CSP: csubproblem.C.
+  
+  NLS-NLS: nonlinearsolver.py, NonlinearSolver class "step" method.
+  NLS-N: nonlinearsolver.py, Newton class "solve" method. 
+  
+  NLSC-S: Nonlinear solver core, Newton "solve" method.
+  
+  TS-UD: timestepper.py, UniformDriver's nonlinearstep method.
+

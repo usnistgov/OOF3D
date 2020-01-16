@@ -53,9 +53,9 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
 
     def nonlinearstep(self, subproblem, linsys, time, unknowns, endtime,
                       nonlinearMethod):
-        print >> sys.stderr, "---> Incremental.nonlinearstep."
-        print >> sys.stderr, "---> Calling _do_step."
-        print >> sys.stderr, "---> NL method is ", nonlinearMethod
+        print >> sys.stderr, "IS-NL: ---> Incremental.nonlinearstep."
+        print >> sys.stderr, "IS-NL: ---> Calling _do_step."
+        print >> sys.stderr, "IS-NL: ---> NL method is ", nonlinearMethod
         return self._do_step(subproblem, linsys, time, unknowns, endtime,
                              self._nonlinear_residual)
 
@@ -71,7 +71,7 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         return (-dt)*linsys.static_residual_MCa(unknowns)
 
     def _do_step(self, subproblem, linsys, time, unknowns, endtime, get_res):
-        print >> sys.stderr, "----> Inside Incremental _do_step."
+        print >> sys.stderr, "IS_DS----> Inside Incremental _do_step."
         # TODO: Do the incremental thing.
         # This involves, firstly, using the previous K matrix to
         # do an initial solve to get your first guess for u, and then
@@ -90,14 +90,27 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
 
         # get_res is self._nonlinear_residual, which is actually
         # implemented above.  
-        
-        # Below here is obsolete, retained for diagnostic purposes.
-        #
-        #
-        # Solve C(u_{n+1} - u_n) = dt*(f - K u_n)
-        # C and K are effective matrices, coming from the reduction of
-        # a second order problem to a system of first order problems.
 
+        # Following the example of the "rk" stepper, it's apparently
+        # OK to just directly call the linearized-system?
+        # It does an update thus:
+        # > subprobctxt.installValues(linsys,y,halftime)
+        # > linsys = subprobctxt.make_linear_system(halftime, linsys)
+        # > if staticEqns:
+        # >   subprobctxt.computeStaticFields(linsys,y)
+
+        # Implies that the time (and in particular the time-dependent
+        # values of Dirichlet boundary conditions) are in the
+        # linearized system?
+
+        # Also, we sometimes want a linear solver, and sometimes want
+        # a nonlinear one -- e.g. for the initial guess, we want to
+        # linearly solve the previous time-step's K, but after that,
+        # we want to nonlinearly generate and solve the current
+        # time-step's K.
+        
+        # Obsolete below this line.
+        
         # If C has empty rows, the static solution of those rows has
         # already been computed by initializeStaticFields() or by a
         # previous Euler step, and we only have to solve the remaining
@@ -122,12 +135,12 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         endValues.zero()
 
         x = linsys.extract_MCa_dofs(endValues)
-        print >> sys.stderr, "----> Calling matrix method.solve:"
+        print >> sys.stderr, "IS_DS:----> Calling matrix method.solve:"
         subproblem.matrix_method(_asymmetricFE, subproblem, linsys).solve(
             C, v, x )
-        print >> sys.stderr, "----> Back from matrix method solve."
+        print >> sys.stderr, "IS-DS:----> Back from matrix method solve."
         linsys.inject_MCa_dofs(x, endValues)
-        print >> sys.stderr, "----> Back from linsys modification."
+        print >> sys.stderr, "IS-DS:----> Back from linsys modification."
 
         
         endValues += unknowns

@@ -225,7 +225,7 @@ class Newton(NLSolver):
     def solve(self, matrix_method, precompute, compute_residual,
               compute_jacobian, compute_linear_coef_mtx, data, values):
 
-        print >> sys.stderr, "** Newton core solve." 
+        print >> sys.stderr, "NLSC-S: ** Newton core solve." 
         # matrix_method is function that takes a matrix A, a rhs b and
         # a vector of unknows x and sets x so that A*x = b.
 
@@ -257,7 +257,7 @@ class Newton(NLSolver):
 
         # debug.fmsg("initial values=", values.norm())
         n = values.size()
-        print >> sys.stderr, "** Values.size is ", n
+        print >> sys.stderr, "NLSC-S: ** Values.size is ", n
         
         update   = doublevec.DoubleVec(n)
 
@@ -276,14 +276,14 @@ class Newton(NLSolver):
         target_res = self.relative_tolerance*res_norm0 + self.absolute_tolerance
         if res_norm0 > target_res:
             prog.setRange(res_norm0, target_res)
-        print >> sys.stderr, "** Entering the try block."
+        print >> sys.stderr, "NLSC-S: ** Entering the try block."
         try:
             # compute Newton updates while residual is large and
             # self.maximum_iterations is not exceeded
             s = 1.
             i = 0
-            print >> sys.stderr, "** Residual norm: ", res_norm
-            print >> sys.stderr, "** Target: ", target_res
+            print >> sys.stderr, "NLSC-S: ** Residual norm: ", res_norm
+            print >> sys.stderr, "NLSC-S:** Target: ", target_res
             while (res_norm > target_res and i < self.maximum_iterations
                    and not prog.stopped()):
                 # debug.fmsg("iter =", i, ",  res =", res_norm, " s =", s)
@@ -338,7 +338,7 @@ class Newton(NLSolver):
                 'Nonlinear solver - Newton iterations', self.maximum_iterations)
         # debug.fmsg("final values=", values)
         # debug.fmsg("-------------------")
-        print >> sys.stderr, "** Exiting solver."
+        print >> sys.stderr, "NLSC-S: ** Exiting solver."
         return i, res_norm
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#

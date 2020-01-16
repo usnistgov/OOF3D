@@ -35,7 +35,7 @@ def evolve(meshctxt, endtime):
     global linsys_dict
     starttime = meshctxt.getObject().latestTime()
 
-    print >> sys.stderr, "Start of evolve."
+    print >> sys.stderr, "EPY: Start of evolve."
     # We're solving a static problem if endtime is the same as the
     # current time, or if there are no non-static steppers and output
     # is requested at at single time.
@@ -55,7 +55,7 @@ def evolve(meshctxt, endtime):
         raise ooferror2.ErrSetupError("End time must not precede current time.")
 
     meshctxt.solver_precompute(solving=True)
-    print >> sys.stderr, "Back from solver_precompute."
+    print >> sys.stderr, "EPY: Back from solver_precompute."
     
     meshctxt.setStatus(meshstatus.Solving())
     meshctxt.timeDiff = endtime - starttime # used to get next endtime in GUI
@@ -81,20 +81,20 @@ def evolve(meshctxt, endtime):
         for subp in subprobctxts:
             subp.resetStats()
 
-        print >> sys.stderr, "Initialized statistics."
+        print >> sys.stderr, "EPY: Initialized statistics."
         
         if not continuing:
             # Initialize static fields in all subproblems.  For static
             # problems, this computes the actual solution.
             try:
-                print >> sys.stderr, "Initializing static fields."
+                print >> sys.stderr, "EPY: Initializing static fields."
                 linsys_dict = initializeStaticFields(subprobctxts, starttime,
                                                      prog)
                 # Initial output comes *after* solving static fields.
                 # For fully static problems, this is the only output.
-                print >> sys.stderr, "Initial output."
+                print >> sys.stderr, "EPY: Initial output."
                 _do_output(meshctxt, starttime)
-                print >> sys.stderr, "End of initialization block."
+                print >> sys.stderr, "EPY: End of initialization block, evolve.py"
             except ooferror2.ErrInterrupted:
                 raise
             except ooferror2.ErrError, exc:
@@ -109,7 +109,7 @@ def evolve(meshctxt, endtime):
             meshctxt.setCurrentTime(endtime, None)
             return
 
-        print >> sys.stderr, "------- Finished with static fields -------"
+        print >> sys.stderr, "EPY: ------- Finished with static fields -------"
         
         time = starttime
         if continuing:
@@ -119,9 +119,9 @@ def evolve(meshctxt, endtime):
         lasttime = None
 
         # Loop over output times
-        # TODO: Is t1 the target time, or is t1+delta the target time?
+        # t1 is the target time for the next scheduled output.
         for t1 in meshctxt.outputSchedule.times(endtime):
-            print >> sys.stderr, "Evaluating from time ", t1
+            print >> sys.stderr, "EPY: Evaluating to time ", t1
             if t1 == lasttime:
                 raise ooferror2.ErrSetupError("Time step is zero!")
             # If t1 <= starttime, there's no evolution to be done, and
@@ -202,12 +202,12 @@ def initializeStaticFields(subprobctxts, time, prog):
     for subproblem in subprobctxts:
         # This is the first call to make_linear_system for each
         # subproblem.
-        print >> sys.stderr, "Inside initializeStaticFields subp loop."
-        print >> sys.stderr, "First call to make_linear_system."
-        print >> sys.stderr, "Time is ", time
+        print >> sys.stderr, "EPY-IS: Inside initializeStaticFields subp loop."
+        print >> sys.stderr, "EPY-IS: First call to make_linear_system."
+        print >> sys.stderr, "EPY-IS: Time is ", time
         linsysDict[subproblem] = lsys = subproblem.make_linear_system(
             time, None)
-        print >> sys.stderr, "Back from make_linear_system."
+        print >> sys.stderr, "EPY-IS: Back from make_linear_system, evovle.py"
         subproblem.startStep(lsys, time) # sets subproblem.startValues
         subproblem.cacheConstraints(lsys, time)
 
@@ -217,7 +217,7 @@ def initializeStaticFields(subprobctxts, time, prog):
         for subproblem in subprobctxts:
             newconstraints = True
             while newconstraints and not prog.stopped():
-                print >> sys.stderr, "initializeStaticFields calling out to the subproblem."
+                print >> sys.stderr, "EPY-IS: initializeStaticFields calling out to the subproblem."
                 subproblem.initializeStaticFields(linsysDict[subproblem])
                 subproblem.solutiontimestamp.increment()
                 newconstraints = subproblem.applyConstraints(
@@ -302,8 +302,10 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                 # time, even if the stepper is fully implicit.  The
                 # maps have to be constructed, and they depend on the
                 # matrices.
-                print >> sys.stderr, "Evolve_to calling make_linear_system."
-                print >> sys.stderr, "Time is ", time
+                print >> sys.stderr, "EPY-ET: Evolve_to at top of loop, calling make_linear_system."
+                print >> sys.stderr, "EPY-ET: Time is ", time
+                # Call the make_linear_system in subproblemcontext.py.
+                # TODO: Redundant with static stuff?  Cached?
                 lsys = subprob.make_linear_system(
                     time, linsysDict.get(subprob, None))
                 linsysDict[subprob] = lsys
@@ -354,8 +356,8 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                         # timestepper.StepResult object.
                         # debug.fmsg("taking step from %g to %g (%g)" %
                         #            (time, targettime, targettime-time))
-                        print >> sys.stderr, "Evolve_to calling stepper."
-                        print >> sys.stderr, "Solver is: ", subproblem.nonlinear_solver
+                        print >> sys.stderr, "EPY-ET: Evolve_to calling stepper."
+                        print >> sys.stderr, "EPY-ET: Solver is: ", subproblem.nonlinear_solver
                         stepResult = subproblem.nonlinear_solver.step(
                             subproblem,
                             linsys=lsClone,
@@ -363,7 +365,7 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                             unknowns=unknowns,
                             endtime=targettime)
                         # debug.fmsg("endValues=", stepResult.endValues)
-                        print >> sys.stderr, "Evolve_to back from stepper."
+                        print >> sys.stderr, "EPY-ET: Evolve_to back from stepper."
                         if stepResult.ok:
                             # endStep() sets subproblem.endValues
                             assert stepResult.linsys is not None

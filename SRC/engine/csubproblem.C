@@ -655,7 +655,7 @@ void CSubProblem::make_linear_system(LinearizedSystem *linearsystem,
     dynamic_cast<DefiniteProgress*>(getProgress("Building linear system",
 						DEFINITE));
 
-  std::cerr << "Inside CSubProblem::make_linear_system, in the C code."
+  std::cerr << "CSP: Inside CSubProblem::make_linear_system, in the C code."
 	    << std::endl;
   // LINSYS STEP 1
   
