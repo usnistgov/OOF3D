@@ -91,6 +91,20 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # get_res is self._nonlinear_residual, which is actually
         # implemented above.  
 
+        # HERE
+        # Problem(?): The boundary conditions are manipulated inside
+        # the subproblemcontext, but we have a special requirement to
+        # move the Dirichlet boundaries without updating the matrix so
+        # we can build a good initial condition for our NR lop.  See
+        # the BC code in subproblemcontext.make_linear_system for
+        # clues.
+        # Maybe:
+        # mesh = subproblem.getParent()
+        # femesh = mesh.getObject()
+        # (?) femesh.setCurrentSubProblem(subproblem.getObject())
+        # femesh.invoke_fixed_bcs(subproblem.getObject(),
+        #                         linsys, target_time)
+        
         # Following the example of the "rk" stepper, it's apparently
         # OK to just directly call the linearized-system?
         # It does an update thus:

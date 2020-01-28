@@ -768,6 +768,8 @@ class SubProblemContext(whoville.Who):
             newFieldValues = (max(self.fieldsInstalled, mesh.fieldsInitialized)
                               > linsysComputed) or always
             newTime = linsys is None or linsys.time() != time or always
+            #
+            # AHA! BC's are managed from here.
             newBdys = (mesh.boundariesChanged > linsysComputed
                        or (newTime and self.timeDependentBCs())
                        ## TODO 3.1: Check for field dependent boundary

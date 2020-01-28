@@ -54,14 +54,18 @@ def evolve(meshctxt, endtime):
     if starttime > endtime:
         raise ooferror2.ErrSetupError("End time must not precede current time.")
 
+    # Precompute checks for matrix symmetry.  Doesn't do any
+    # time-depedendent stuff.  Doesn't set BCs.
     meshctxt.solver_precompute(solving=True)
     print >> sys.stderr, "EPY: Back from solver_precompute."
-    
+
+    # Syncrhonizes the mesh geometry with the skeleton, if necessary.
     meshctxt.setStatus(meshstatus.Solving())
     meshctxt.timeDiff = endtime - starttime # used to get next endtime in GUI
 
     # Make sure that the starting point has been cached.
     ## TODO OPT: Is it necessary to call cacheCurrentData here?
+    # TODO: BC's at t=0 are set where?  How?
     meshctxt.restoreLatestData()
     meshctxt.cacheCurrentData()
     meshctxt.releaseLatestData()
@@ -110,6 +114,12 @@ def evolve(meshctxt, endtime):
             return
 
         print >> sys.stderr, "EPY: ------- Finished with static fields -------"
+        # DATAFLOW: At this point, the initialized static data for the
+        # DOFs is in the mesh, it was put there by the "installValues"
+        # call in the initializeStaticFields method of the
+        # subproblemcontext.  Q about scope: How big is this vector?
+        # What if the subproblem is a geographic subset, does it only
+        # do the ones it "owns"?
         
         time = starttime
         if continuing:
@@ -205,9 +215,11 @@ def initializeStaticFields(subprobctxts, time, prog):
         print >> sys.stderr, "EPY-IS: Inside initializeStaticFields subp loop."
         print >> sys.stderr, "EPY-IS: First call to make_linear_system."
         print >> sys.stderr, "EPY-IS: Time is ", time
+        # BC's are set at the start of make_linear_system.
         linsysDict[subproblem] = lsys = subproblem.make_linear_system(
             time, None)
         print >> sys.stderr, "EPY-IS: Back from make_linear_system, evovle.py"
+        # Loads values for this time into the subproblem.
         subproblem.startStep(lsys, time) # sets subproblem.startValues
         subproblem.cacheConstraints(lsys, time)
 
@@ -305,7 +317,9 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                 print >> sys.stderr, "EPY-ET: Evolve_to at top of loop, calling make_linear_system."
                 print >> sys.stderr, "EPY-ET: Time is ", time
                 # Call the make_linear_system in subproblemcontext.py.
-                # TODO: Redundant with static stuff?  Cached?
+                # TODO: For quasi-static problems, this is redundant,
+                # but the logic at the start of the call chain means
+                # no extra work is done.
                 lsys = subprob.make_linear_system(
                     time, linsysDict.get(subprob, None))
                 linsysDict[subprob] = lsys
