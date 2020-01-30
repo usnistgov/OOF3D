@@ -49,7 +49,7 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
 
     def linearstep(self, subproblem, linsys, time, unknowns, endtime):
         return self._do_step(subproblem, linsys, time, unknowns, endtime,
-                             self._linear_residual)
+                             self._linear_residual, None)
 
     def nonlinearstep(self, subproblem, linsys, time, unknowns, endtime,
                       nonlinearMethod):
@@ -57,7 +57,7 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         print >> sys.stderr, "IS-NL: ---> Calling _do_step."
         print >> sys.stderr, "IS-NL: ---> NL method is ", nonlinearMethod
         return self._do_step(subproblem, linsys, time, unknowns, endtime,
-                             self._nonlinear_residual)
+                             self._nonlinear_residual, nonlinearMethod)
 
     def _linear_residual(self, linsys, dt, unknowns):
         v = dt*linsys.rhs_MCa()
@@ -70,7 +70,8 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
     def _nonlinear_residual(self, linsys, dt, unknowns):
         return (-dt)*linsys.static_residual_MCa(unknowns)
 
-    def _do_step(self, subproblem, linsys, time, unknowns, endtime, get_res):
+    def _do_step(self, subproblem, linsys, time, unknowns, endtime,
+                 get_res, nlmethod):
         print >> sys.stderr, "IS_DS----> Inside Incremental _do_step."
         # TODO: Do the incremental thing.
         # This involves, firstly, using the previous K matrix to
@@ -91,7 +92,6 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # get_res is self._nonlinear_residual, which is actually
         # implemented above.  
 
-        # HERE
         # Problem(?): The boundary conditions are manipulated inside
         # the subproblemcontext, but we have a special requirement to
         # move the Dirichlet boundaries without updating the matrix so
@@ -104,6 +104,43 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # (?) femesh.setCurrentSubProblem(subproblem.getObject())
         # femesh.invoke_fixed_bcs(subproblem.getObject(),
         #                         linsys, target_time)
+        
+        # Then, figure out how to actually do a linear solve with
+        # the bc's for the target time of this step, but the linearized
+        # system from the previous step (or from the static part, if
+        # it's the first iteration.)
+
+        # The RK stepper does something like this:
+        # subprobctxt.matrix_method(_assymetricIC,
+        # subprobctxt,linsys).solve(A,b,x), which solves Ax=b for x.
+        # This is the linear solver, either symmetric or asymmetric,
+        # depending on the precompute result.  The "_assymetricIC" is
+        # defined at the bottom of this file, it assesses the symmetry
+        # of the relevant problem.
+
+        # The matrix we want is the K matrix from the linsys object.
+        # What is b? It's (probably) just linsys.rhs_MCa(). 
+
+        # Then, once we have X, install it in the subproblem
+        # (with subproblemcontext.installValues()?).
+
+        # Then, finally, solve the system at the target time.
+        # See the "nonlinearstep" method of backward Euler.
+
+        # If the problem is nonlinear, do this:
+        # nlmethod.solve(...).
+
+        # TODO: Get more clarity of the subproblem methods, and also the
+        # linearized system methods.
+
+        # Otherwise, just call the linear solver?  Or throw an excpetion?
+
+        # Then return the time-step result.
+        
+        
+        # HERE
+        
+        # RK commentary below here:
         
         # Following the example of the "rk" stepper, it's apparently
         # OK to just directly call the linearized-system?
@@ -168,7 +205,7 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         return timestepper.StepResult(endTime=endtime, nextStep=dt,
                                       endValues=endValues, linsys=linsys)
 
-def _asymmetricFE(subproblem, linsys):
+def _asymmetricIC(subproblem, linsys):
     # If the problem has second order time derivatives, then we'll be
     # using C_eff, which is symmetric if M and C are both symmetric
     # and if C21 is zero.
