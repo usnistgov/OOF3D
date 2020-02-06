@@ -70,6 +70,11 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
     def _nonlinear_residual(self, linsys, dt, unknowns):
         return (-dt)*linsys.static_residual_MCa(unknowns)
 
+    # TODO: At the moment, both lienarstep and nonlinearstep call this
+    # _do_step routine, but this might not be right -- nonlinear
+    # methods need the "nlmethod" arg, which is just "None" for the
+    # linear call, which is broken.  The linear case is just static,
+    # so it can be separate, it's (probably) much easier.
     def _do_step(self, subproblem, linsys, time, unknowns, endtime,
                  get_res, nlmethod):
         print >> sys.stderr, "IS_DS----> Inside Incremental _do_step."
@@ -98,68 +103,54 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # we can build a good initial condition for our NR lop.  See
         # the BC code in subproblemcontext.make_linear_system for
         # clues.
-        # Maybe:
+        #
+        # To start, apply the bc's and do a linear solve:
         # mesh = subproblem.getParent()
         # femesh = mesh.getObject()
-        # (?) femesh.setCurrentSubProblem(subproblem.getObject())
-        # femesh.invoke_fixed_bcs(subproblem.getObject(),
-        #                         linsys, target_time)
+        # femesh.setCurrentSubProblem(subproblem.getObject())
+        # femesh.invoke_fixed_bcs(subproblem.getObject(),linsys, target_time)
+        # This builds the index maps in the linsys, but actually sets
+        # the values in the FEMesh object's dofvalues array.
+        # Q: Maybe we want to re-apply all the bc's?  
+        # If so:  BC code at line 817 of subproblemcontext.py.
+        # Break it out into a separate function, be careful about the time.
         
-        # Then, figure out how to actually do a linear solve with
+        # Then, actually do a linear solve with
         # the bc's for the target time of this step, but the linearized
         # system from the previous step (or from the static part, if
         # it's the first iteration.)
+        
+        # subprobctxt.matrix_method(_assymetricIC,subprobctxt,linsys).solve(A,b,x)
 
-        # The RK stepper does something like this:
-        # subprobctxt.matrix_method(_assymetricIC,
-        # subprobctxt,linsys).solve(A,b,x), which solves Ax=b for x.
-        # This is the linear solver, either symmetric or asymmetric,
-        # depending on the precompute result.  The "_assymetricIC" is
-        # defined at the bottom of this file, it assesses the symmetry
-        # of the relevant problem.
+        # This solves Ax=b for x, it's linear.
 
         # The matrix we want is the K matrix from the linsys object.
-        # What is b? It's (probably) just linsys.rhs_MCa(). 
+        # Get K from linsys.K_MCK(). 
+        # What is b? It's just linsys.rhs_MCK(), this problem looks like
+        # a static problem from the point of view of the linearized system.
 
+        # This does not include the fixed BC contribution to the RHS
+        # -- how to do that?
+        
         # Then, once we have X, install it in the subproblem
         # (with subproblemcontext.installValues()?).
+        
 
         # Then, finally, solve the system at the target time.
         # See the "nonlinearstep" method of backward Euler.
+        # Call is:
+        # nlmethod.solve(subproblem.matrixmethod(_asymmetricIC, subproblem),
+        #                self.precomputeNL, self.compute_residual,
+        #                self.compute_linear_coef_matrix, data, endValues)
+        # TODO: Figure out if we have these arguments, and where the
+        # data goes.
 
-        # If the problem is nonlinear, do this:
-        # nlmethod.solve(...).
-
-        # TODO: Get more clarity of the subproblem methods, and also the
-        # linearized system methods.
-
-        # Otherwise, just call the linear solver?  Or throw an excpetion?
-
-        # Then return the time-step result.
+        # Then:
+        # return timestepper.StepResults(endTime=?, nextStep=dt,
+        #                                endValues=endValues,
+        #                                linsys=linsys)
         
-        
-        # HERE
-        
-        # RK commentary below here:
-        
-        # Following the example of the "rk" stepper, it's apparently
-        # OK to just directly call the linearized-system?
-        # It does an update thus:
-        # > subprobctxt.installValues(linsys,y,halftime)
-        # > linsys = subprobctxt.make_linear_system(halftime, linsys)
-        # > if staticEqns:
-        # >   subprobctxt.computeStaticFields(linsys,y)
 
-        # Implies that the time (and in particular the time-dependent
-        # values of Dirichlet boundary conditions) are in the
-        # linearized system?
-
-        # Also, we sometimes want a linear solver, and sometimes want
-        # a nonlinear one -- e.g. for the initial guess, we want to
-        # linearly solve the previous time-step's K, but after that,
-        # we want to nonlinearly generate and solve the current
-        # time-step's K.
-        
         # Obsolete below this line.
         
         # If C has empty rows, the static solution of those rows has
