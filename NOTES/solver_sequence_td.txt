@@ -167,3 +167,85 @@ spatial degrees of freedom.
 rows and columns, and not do the gauss-point weight multiplication,
 since they are not doing an integral.
 
+
+  ------------------------
+
+  Object descriptions:
+
+  The linearized system is populated as described above.
+
+  The object itself is in the linearizedsystem files, which
+have h, C, spy, and swg extensions.
+
+  The linearized system is mostly a data container, but it has some
+special accessor methods customized for various problem types.
+
+  The comments at the start of linearizedsystem.h are a good start.
+
+  Matrices are M, C, K, and J, from the basic equation scheme:
+
+  M x'' + C x' + K x + f = 0, where primes are time derivatives.
+
+  J is the Jacobian, it's the derivative of the static equilibrium
+equation with respect to the field DOFs.  For some classes of problems
+(linear static, at least), J and K are numerically identical.
+
+  There are also vectors, body_rhs, force_bndy_rhs, and fix_bndy_rhs,
+which contain contributions to the rhs from non-property entities.
+For instance, I think body_rhs is contributed to by the thermal
+expansion? 
+
+  Matrices and vectors are stored in index order -- I think this means
+mesh index, which is the same order as subproblem index, but the 
+subproblem index set is a subset of the mesh index set.
+
+  Accessor functions:
+
+  There are three schemes, "plain" (no suffix), augmented (suffix a),
+and time-derivative (suffix d).  "Augmennted" routines assume (and operate
+on) DOF vectors that are the regular DOFs followed by their time 
+derivatives.  "Plain" routines just do the ordinary thing, and 
+"derivative" routines return (or set) the time derivatives of the DOFs.
+
+  The DOF accessor functions respect these suffixes, so that e.g. C_MCKa 
+gets the augmented matrix  [[ K 0 ] [ 0 C]] (or whatever) that is the
+effective-K matrix for the augmented DOF vector. 
+
+  When you build up the matrix during the build_linear_system 
+call chain, you call the various insertion routines, which populate
+the corresponding data objects.
+
+  At solution time, you can retreive various things.
+
+  For the plasticity problem in particular, we care about:
+
+ - The sub-part of the J matrix corresponding to independent eqns and
+      free DOFs.
+ - The RHS part that includes the contributions of the fixed BCs.
+
+  The first one comes from J_MCK, although I think K_MCK is numerically 
+the same.
+
+  The second one comes from rhs_MCK().
+
+  There is a routine, find_fixed_bndy_rhs, which takes a list of DOFs
+and builds the linearizedsystem's internal data object -- we need this
+to be up to date for our "mixed-time" K-solving trick.
+
+  In our stepper, we call femesh.invoke_fixed_bcs with a new time.
+Does this set up the linearized system correctly?
+  
+  Call chain:
+
+  Stepper (engine/incremental.py):  femesh.invoke_fixed_bcs.
+  FEMesh (engine/femesh.spy):  _invoke_fixed_bcs loops over boundaries,
+                              calls their invokeFixed() routine.
+  Boundary: (engine/boundary.py): invokeFixed loops over bc's, and 
+                              calls "applyBC" on the bc.
+  B Condition: (bdycondition.py): Calls linsys routines which manipulate 
+                                   the indices, setting the value in
+                                   the field.
+
+  Actual answer:  We need to run the subproblemcontext's BC
+machinery to get all of this right.
+
