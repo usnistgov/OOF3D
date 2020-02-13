@@ -703,6 +703,62 @@ class SubProblemContext(whoville.Who):
 
     #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
+    # Moved from the main code, basically just copied out.
+    def apply_bcs(self, time, linsys, bcsReset, newFieldValues):
+        subpobj = self.getObject()
+        mesh    = self.getParent()
+        femesh  = mesh.getObject()
+        
+        if bcsReset:
+            # reset_bcs() calls Boundary.reset for all Boundaries in
+            # the mesh, which resets all FloatBCs on the boundaries.
+            femesh.reset_bcs()
+
+            femesh.createAuxiliaryBCs() # Converts periodic to float BCs.
+
+            ## TODO 3.1: Restore this after split nodes are implemented on
+            ## interface elements.  Search for SPLIT NODES to find
+            ## related TODOs that have to be done at the same time.
+            #femesh.createInterfaceFloatBCs(self) # jump conds --> FloatBCs
+            
+            # Find intersecting floating boundary conditions, and
+            # arrange them into a tree structure.  This must be done
+            # *before* fixed boundary conditions are applied so that
+            # intersecting fixed and floating bcs are treated
+            # correctly.
+            femesh.floatBCResolve(subpobj, time)
+             
+            # LinearizedSystem::force_bndy_rhs is used by
+            # invoke_flux_bcs and invoke_force_bcs, and must be
+            # cleared before either of them is called.
+            linsys.clearForceBndyRhs()
+            
+            femesh.invoke_flux_bcs(subpobj, linsys, time)
+
+        # Apply Dirichlet BCs.  If new values have been assigned to
+        # the Fields, the old Dirichlet BCs may have been overwritten,
+        # so they have to be reapplied.
+        if bcsReset or newFieldValues:
+            linsys.resetFieldFlags()
+            femesh.invoke_fixed_bcs(subpobj, linsys, time)
+            
+        if bcsReset:
+            femesh.invoke_force_bcs(subpobj, linsys, time)
+            # Set initial values of DoFs used in FloatBCs that
+            # intersect fixedBCs.
+            femesh.fix_float_bcs(subpobj, linsys, time)
+
+        # TODO: This function doens't do floating boundary conditions,
+        # because they necessarily come after the matrix construction
+        # step. This means that the incremental stepper, which uses
+        # this separate function, can't be used with floating boundary
+        # conditions.  An alternative is possibly to have two
+        # functions, a pre- and post- matrix construciton version, and
+        # e.g. the incremental stepper, which does not want to rebuild
+        # the matrices, could call the pre and post functions but not
+        # the linear system construction, if that turns out to make
+        # sense.
+            
     def make_linear_system(self, time, linsys):
         # Construct a LinearizedSystem object containing the
         # globally-indexed K, C, and M matrices, and the rhs vectors,
@@ -813,12 +869,15 @@ class SubProblemContext(whoville.Who):
             # conditions.
 
             bcsReset = newLinSys or newBdys
-            if bcsReset:
+            self.apply_bcs(time, linsys, bcsReset, newFieldValues)
+
+            # bcsReset = newLinSys or newBdys
+            # if bcsReset:
                 # reset_bcs() calls Boundary.reset for all Boundaries in
                 # the mesh, which resets all FloatBCs on the boundaries.
-                femesh.reset_bcs()
+                # femesh.reset_bcs()
 
-                femesh.createAuxiliaryBCs() # convert PeriodicBCs --> FloatBCs
+                # femesh.createAuxiliaryBCs() # convert PeriodicBCs --> FloatBCs
 
                 ## TODO 3.1: Restore this after split nodes are implemented on
                 ## interface elements.  Search for SPLIT NODES to find
@@ -830,28 +889,30 @@ class SubProblemContext(whoville.Who):
                 # *before* fixed boundary conditions are applied so that
                 # intersecting fixed and floating bcs are treated
                 # correctly.
-                femesh.floatBCResolve(subpobj, time)
+                # femesh.floatBCResolve(subpobj, time)
 
                 # LinearizedSystem::force_bndy_rhs is used by
                 # invoke_flux_bcs and invoke_force_bcs, and must be
                 # cleared before either of them is called.
-                linsys.clearForceBndyRhs()
+                # linsys.clearForceBndyRhs()
 
-                femesh.invoke_flux_bcs(subpobj, linsys, time)
+                # femesh.invoke_flux_bcs(subpobj, linsys, time)
 
+            
             # Apply Dirichlet BCs.  If new values have been assigned to
             # the Fields, the old Dirichlet BCs may have been overwritten,
             # so they have to be reapplied.
-            if bcsReset or newFieldValues:
-                linsys.resetFieldFlags()
-                femesh.invoke_fixed_bcs(subpobj, linsys, time)
+            # if bcsReset or newFieldValues:
+            #     linsys.resetFieldFlags()
+            #     femesh.invoke_fixed_bcs(subpobj, linsys, time)
 
-            if bcsReset:
-                femesh.invoke_force_bcs(subpobj, linsys, time)
-                # Set initial values of DoFs used in FloatBCs that
-                # intersect fixedBCs.
-                femesh.fix_float_bcs(subpobj, linsys, time)
+            # if bcsReset:
+            #     femesh.invoke_force_bcs(subpobj, linsys, time)
+            #     # Set initial values of DoFs used in FloatBCs that
+            #     # intersect fixedBCs.
+            #     femesh.fix_float_bcs(subpobj, linsys, time)
 
+                
             if rebuildMatrices:
                 # Assemble vectors and matrices of the linearized system.
                 linsys.clearMatrices()
@@ -894,7 +955,7 @@ class SubProblemContext(whoville.Who):
                 femesh.float_contrib_rhs(self.getObject(), linsys)
 
             femesh.clearCurrentSubProblem()
-            linsys.computed.increment()
+            linsys.computed.increment()  # ?
 
         finally:
             mesh.releaseLatestData()

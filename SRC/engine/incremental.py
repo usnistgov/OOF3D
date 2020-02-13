@@ -108,12 +108,9 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # mesh = subproblem.getParent()
         # femesh = mesh.getObject()
         # femesh.setCurrentSubProblem(subproblem.getObject())
-        # femesh.invoke_fixed_bcs(subproblem.getObject(),linsys, target_time)
+        # subproblem.apply_bcs(time,linsys,True,False)
         # This builds the index maps in the linsys, but actually sets
         # the values in the FEMesh object's dofvalues array.
-        # Q: Maybe we want to re-apply all the bc's?  
-        # If so:  BC code at line 817 of subproblemcontext.py.
-        # Break it out into a separate function, be careful about the time.
         
         # Then, actually do a linear solve with
         # the bc's for the target time of this step, but the linearized
@@ -124,6 +121,8 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
 
         # This solves Ax=b for x, it's linear.
 
+        # Q's:  How to retrieve our data?
+        
         # The matrix we want is the K matrix from the linsys object.
         # Get K from linsys.K_MCK(). 
         # What is b? It's just linsys.rhs_MCK(), this problem looks like
@@ -178,7 +177,7 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
 
         x = linsys.extract_MCa_dofs(endValues)
         print >> sys.stderr, "IS_DS:----> Calling matrix method.solve:"
-        subproblem.matrix_method(_asymmetricFE, subproblem, linsys).solve(
+        subproblem.matrix_method(_asymmetricIC, subproblem, linsys).solve(
             C, v, x )
         print >> sys.stderr, "IS-DS:----> Back from matrix method solve."
         linsys.inject_MCa_dofs(x, endValues)
