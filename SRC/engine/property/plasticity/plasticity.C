@@ -578,7 +578,12 @@ void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
     rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
 
     // std::cerr << "Calling rule->complete." << std::endl;
-    
+
+    // It's OK to do this update inside the outermost NR loop
+    // controlled by the stepper, the constitutive rule will back off
+    // on the plastic contributions where appropriate within the loop.
+    // Keeping the increments promotes faster convergence, which is
+    // good for a process that's already slow.
     rule->complete(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
 
     // std::cerr << "Back from rule->complete." << std::endl;

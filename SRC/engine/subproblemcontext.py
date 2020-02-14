@@ -955,7 +955,7 @@ class SubProblemContext(whoville.Who):
                 femesh.float_contrib_rhs(self.getObject(), linsys)
 
             femesh.clearCurrentSubProblem()
-            linsys.computed.increment()  # ?
+            linsys.computed.increment()  # Timestamp.
 
         finally:
             mesh.releaseLatestData()

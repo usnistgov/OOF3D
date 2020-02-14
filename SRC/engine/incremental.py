@@ -108,33 +108,27 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # mesh = subproblem.getParent()
         # femesh = mesh.getObject()
         # femesh.setCurrentSubProblem(subproblem.getObject())
+        
+        # Args are, boundarys are reset, but field values are not changed.
         # subproblem.apply_bcs(time,linsys,True,False)
-        # This builds the index maps in the linsys, but actually sets
-        # the values in the FEMesh object's dofvalues array.
+        
+        # This builds the index maps in the linsys.
         
         # Then, actually do a linear solve with
         # the bc's for the target time of this step, but the linearized
         # system from the previous step (or from the static part, if
         # it's the first iteration.)
-        
+
+        # A is linsys.K_MCK(), it's the K matrix from last time.
+        # b is linsys.rhs_MCK(), which includes the boundary RHS contributions.
         # subprobctxt.matrix_method(_assymetricIC,subprobctxt,linsys).solve(A,b,x)
-
-        # This solves Ax=b for x, it's linear.
-
-        # Q's:  How to retrieve our data?
-        
-        # The matrix we want is the K matrix from the linsys object.
-        # Get K from linsys.K_MCK(). 
-        # What is b? It's just linsys.rhs_MCK(), this problem looks like
-        # a static problem from the point of view of the linearized system.
-
-        # This does not include the fixed BC contribution to the RHS
-        # -- how to do that?
         
         # Then, once we have X, install it in the subproblem
-        # (with subproblemcontext.installValues()?).
+        # subproblem.installValues(linsys, X, time) ... but this is maybe wrong?
+        # Maybe:
+        # subproblem.set_mesh_dofs(allvals,time), where
+        # allvals = self.set_unknowns(linsys, X, startValues) ... ?
         
-
         # Then, finally, solve the system at the target time.
         # See the "nonlinearstep" method of backward Euler.
         # Call is:
@@ -144,6 +138,13 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # TODO: Figure out if we have these arguments, and where the
         # data goes.
 
+        # Q: We need to tell the property that the new time is
+        # finished, how do we do that?  Part of the higher-level
+        # self-consistency?  For the straightforward case where the
+        # stepper succeeds, it's not actually required to do this.  If
+        # there are multiple sub-problems and we need
+        # self-consistency, that's different.
+    
         # Then:
         # return timestepper.StepResults(endTime=?, nextStep=dt,
         #                                endValues=endValues,
