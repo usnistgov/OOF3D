@@ -258,6 +258,10 @@ class Newton(NLSolver):
         # debug.fmsg("initial values=", values.norm())
         n = values.size()
         print >> sys.stderr, "NLSC-S: ** Values.size is ", n
+
+        print >> sys.stderr, "NLSC-S: precompute is ", precompute
+        print >> sys.stderr, "NLSC-S: compute_residual is ", compute_residual
+        print >> sys.stderr, "NLSC-S: compute_jacboian is ", compute_jacobian
         
         update   = doublevec.DoubleVec(n)
 

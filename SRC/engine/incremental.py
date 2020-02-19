@@ -123,14 +123,21 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # b is linsys.rhs_MCK(), which includes the boundary RHS contributions.
         # subprobctxt.matrix_method(_assymetricIC,subprobctxt,linsys).solve(A,b,x)
         
-        # Then, once we have X, install it in the subproblem
-        # subproblem.installValues(linsys, X, time) ... but this is maybe wrong?
-        # Maybe:
-        # subproblem.set_mesh_dofs(allvals,time), where
-        # allvals = self.set_unknowns(linsys, X, startValues) ... ?
+        # Then, once we have X, install it in the subproblem.
+        # Needs linsys for the index maps, presuambly.
+        # subproblem.installValues(linsys, X, time)
+
+        # -----
+        # NR loop below here.
         
         # Then, finally, solve the system at the target time.
         # See the "nonlinearstep" method of backward Euler.
+        # Need to figure out what these arguments are:
+        # self.precomputeNL
+        # self.compute_linear_coef_matrix
+        # data
+        # endValues
+        # 
         # Call is:
         # nlmethod.solve(subproblem.matrixmethod(_asymmetricIC, subproblem),
         #                self.precomputeNL, self.compute_residual,
