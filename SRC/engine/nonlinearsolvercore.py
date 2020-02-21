@@ -298,6 +298,7 @@ class Newton(NLSolver):
                 J = compute_jacobian(data, self)
                 # debug.fmsg("J=\n", J.norm())
                 residual *= -1.0
+                # Solves Ax=b where A is first arg, b is 2nd, x is 3rd.
                 matrix_method.solve( J, residual, update )
                 # debug.fmsg("update=", update.norm())
 

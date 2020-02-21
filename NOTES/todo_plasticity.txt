@@ -1,0 +1,35 @@
+
+  Feb. 21, 2020 --
+
+  Closing in on plasticity, but starting to side-line a few 
+important issues.  They're collected here.
+
+  - In the equation construciton process, we're still not doing
+     the geometrically-nonlinear piece, the equation is the standard
+     OOF equation with a nonlinear constitutive rule.
+ 
+  - There is an implicit assumption that there are only displacement
+     DOFs in the subproblem.  This is likely to be true for real
+     problems, but should maybe be more robust.
+
+  - In the OOF NR solution process, there's a "choose_step_size"
+     operation that implements this "parabolic model with Armijo",
+     which looks like it will do multiple re-evaluations of the
+     stiffness matrix via the make_linear_system call chain -- this
+     is dangerous for plastiicty, which accumulates plastic strain
+     when this call-chain is exercised.
+
+  - We do not yet have a mechanism for passing the time through to 
+     the properties -- for plasticity, we will eventually want this
+     so that delta-t does not have to be specified as a parameter
+     in the user interface.
+
+  - Possibly the property should be smarter about its statefullness,
+     if it knew it was being evaluated "again" at a time-step, it
+     could save some work and/or retrieve old data?
+
+  - The OOF infrastructure is built for a general nonlinear solver,
+     which might be either Newton or Picard -- they differ in what
+     functions they call to retreive data, we should investigate
+     if it makes sense to plasticity and Picard solvers.
+     (TODO 1st: Review how Picard solvers work...)

@@ -134,13 +134,36 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # See the "nonlinearstep" method of backward Euler.
         # Need to figure out what these arguments are:
         # self.precomputeNL
-        # self.compute_linear_coef_matrix
-        # data
-        # endValues
-        # 
+
+        # self.precompute -> takes as arguments "data", "values",
+        #    and the solver.  The solvers promise to call this before
+        #    calling compute_residual or compute_jacobian -- this is
+        #    the place to put the call to make_linear_system.
+        
+        # self.compute_residual -> takes as arguments "data",
+        #    "values", and the solver, and needs to return the values of
+        #    the free equations for the current set of DOFs.
+
+        # self.compute_jacobian -> takes as arguments "data", and
+        #     the solver, and returns the matrix of derivatives of the
+        #     independent equations with respect to the free dofs.
+        
+        # self.compute_linear_coef_matrix is used by the Picard solver
+        #  but not by the Newton solver, it can be the Jacobian thing
+        #  for now, but TODO figure this out.
+        
+        # data -> NLData object, see timestepper.py for the base class. 
+    
+        # endValues -> Candidate solution at input?  (Initial state?)
+
+        # See the StaticNLFuncs object in subproblemcontext.py for clues.
+        # What we actually want is more or less the static solution,
+        # since we're a quasi-static stepper.
+        
         # Call is:
         # nlmethod.solve(subproblem.matrixmethod(_asymmetricIC, subproblem),
         #                self.precomputeNL, self.compute_residual,
+        #                self.compute_jacobian,
         #                self.compute_linear_coef_matrix, data, endValues)
         # TODO: Figure out if we have these arguments, and where the
         # data goes.
