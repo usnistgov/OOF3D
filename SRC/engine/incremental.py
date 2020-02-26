@@ -44,47 +44,46 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
     def shortrepr(self):
         return "Incremental"
 
-    # TODO: Linear and nonlinear might be the same?  We care
-    # about the residual.  Compare with ForwardEuler, for example.
+    # Currently only does anything meaningful for the nonlinear case,
+    # the linear stuff is stubbed out.  We can fix this later on once
+    # we know what a linear incremental time-step actually is.
 
     def linearstep(self, subproblem, linsys, time, unknowns, endtime):
-        return self._do_step(subproblem, linsys, time, unknowns, endtime,
-                             self._linear_residual, None)
+        pass
 
+
+    def _nonlinear_residual(self, linsys, dt, unknowns):
+        return (-dt)*linsys.static_residual_MCa(unknowns) # ?
+    
     def nonlinearstep(self, subproblem, linsys, time, unknowns, endtime,
                       nonlinearMethod):
         print >> sys.stderr, "IS-NL: ---> Incremental.nonlinearstep."
         print >> sys.stderr, "IS-NL: ---> Calling _do_step."
         print >> sys.stderr, "IS-NL: ---> NL method is ", nonlinearMethod
-        return self._do_step(subproblem, linsys, time, unknowns, endtime,
-                             self._nonlinear_residual, nonlinearMethod)
+        return self._do_nonlinear_step(subproblem, linsys, time,
+                                       unknowns, endtime,
+                                       self._nonlinear_residual,
+                                       nonlinearMethod)
 
-    def _linear_residual(self, linsys, dt, unknowns):
-        v = dt*linsys.rhs_MCa()
-        # K_MCa is really (MCa)x(MCKa), so we can multiply by
-        # unknowns, which includes the K part.
-        K = linsys.K_MCa()       # really (MCa)x(MCKa)
-        K.axpy(-dt, unknowns, v) # v = dt*(f - K u)
-        return v
 
-    def _nonlinear_residual(self, linsys, dt, unknowns):
-        return (-dt)*linsys.static_residual_MCa(unknowns)
-
-    # TODO: At the moment, both lienarstep and nonlinearstep call this
-    # _do_step routine, but this might not be right -- nonlinear
-    # methods need the "nlmethod" arg, which is just "None" for the
-    # linear call, which is broken.  The linear case is just static,
-    # so it can be separate, it's (probably) much easier.
-    def _do_step(self, subproblem, linsys, time, unknowns, endtime,
-                 get_res, nlmethod):
-        print >> sys.stderr, "IS_DS----> Inside Incremental _do_step."
+    # Nonlinear case is more complicated, you need to advance the bc's
+    # and then do the NR loop with the initial guess that is the
+    # linear solution of the prior K with the new BC.
+    def _do_nonlinear_step(self, subproblem, linsys, time, unknowns, endtime,
+                           get_res, nlmethod):
+        print >> sys.stderr, "IS_DS----> Inside Incremental _do_nonlinear_step."
         # TODO: Do the incremental thing.
         # This involves, firstly, using the previous K matrix to
         # do an initial solve to get your first guess for u, and then
         # using those u's to build the subsequent matrix, which
         # you solve by NR.  Incremental problems are always "logically"
         # nonlinear, even if they're not actually nonlinear.
-        #
+
+        # dt is endtime - time.  There are issues passing the time
+        # through to the properties, the code doesn't do this but should.
+
+        dt = endtime - time
+        
         # Steps:
         # 1: Set up the current boundary conditions, and do an
         #    initial solve with the previous K matrix.  This is
@@ -105,12 +104,13 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # clues.
         #
         # To start, apply the bc's and do a linear solve:
-        # mesh = subproblem.getParent()
-        # femesh = mesh.getObject()
-        # femesh.setCurrentSubProblem(subproblem.getObject())
+        mesh = subproblem.getParent()
+        femesh = mesh.getObject()
+        femesh.setCurrentSubProblem(subproblem.getObject())
         
-        # Args are, boundarys are reset, but field values are not changed.
-        # subproblem.apply_bcs(time,linsys,True,False)
+        # First boolean argument indicates boundaries have been reset.
+        # Second boolean argument says field values are not changed.
+        subproblem.apply_bcs(time,linsys,True,False)
         
         # This builds the index maps in the linsys.
         
@@ -121,21 +121,33 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
 
         # A is linsys.K_MCK(), it's the K matrix from last time.
         # b is linsys.rhs_MCK(), which includes the boundary RHS contributions.
-        # subprobctxt.matrix_method(_assymetricIC,subprobctxt,linsys).solve(A,b,x)
+        Amtx = linsys.K_MCK()
+        bvec = linsys.rhs_MCK()
+
+        # Xvec needs to be allocated with the right size.  This is a
+        # dumb way to do this, but it's easy.
+        xvec = linsys.rhs_MCK()
+        
+        subproblem.matrix_method(_asymmetricIC,subproblem,linsys).solve(
+            Amtx,bvec,xvec)
         
         # Then, once we have X, install it in the subproblem.
         # Needs linsys for the index maps, presuambly.
-        # subproblem.installValues(linsys, X, time)
+        subproblem.installValues(linsys, xvec, time)
 
+        ilfuncs = IncrementalNLFuncs(xvec)
+        ildata = IncrementalNLData(subproblem,linsys,time)
+        
+        # assert(False)
+        
         # -----
         # NR loop below here.
         
-        # Then, finally, solve the system at the target time.
-        # See the "nonlinearstep" method of backward Euler.
-        # Need to figure out what these arguments are:
-        # self.precomputeNL
+        # Actually do the NR loop.
 
-        # self.precompute -> takes as arguments "data", "values",
+        # Modeled after the StaticNLFuncs.
+
+        # self.precomputeNL -> takes as arguments "data", "values",
         #    and the solver.  The solvers promise to call this before
         #    calling compute_residual or compute_jacobian -- this is
         #    the place to put the call to make_linear_system.
@@ -152,8 +164,6 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         #  but not by the Newton solver, it can be the Jacobian thing
         #  for now, but TODO figure this out.
         
-        # data -> NLData object, see timestepper.py for the base class. 
-    
         # endValues -> Candidate solution at input?  (Initial state?)
 
         # See the StaticNLFuncs object in subproblemcontext.py for clues.
@@ -161,12 +171,15 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # since we're a quasi-static stepper.
         
         # Call is:
-        # nlmethod.solve(subproblem.matrixmethod(_asymmetricIC, subproblem),
-        #                self.precomputeNL, self.compute_residual,
-        #                self.compute_jacobian,
-        #                self.compute_linear_coef_matrix, data, endValues)
-        # TODO: Figure out if we have these arguments, and where the
-        # data goes.
+        nlmethod.solve(subproblem.matrixmethod(_asymmetricIC, subproblem),
+                       ilfuncs.precompute, ilfunc.compute_residual,
+                       ilfuncs.compute_jacobian,
+                       ilfuncs.compute_linear_coef_matrix, data, endValues)
+
+        # TODO: Build these arguments. "data" is an object which will
+        # get populated by the linearized system during precompute,
+        # and compute_jacobian and compute_residual will retrieve
+        # stuff.
 
         # Q: We need to tell the property that the new time is
         # finished, how do we do that?  Part of the higher-level
@@ -176,70 +189,51 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # self-consistency, that's different.
     
         # Then:
-        # return timestepper.StepResults(endTime=?, nextStep=dt,
-        #                                endValues=endValues,
-        #                                linsys=linsys)
+        return timestepper.StepResults(endTime=endtime, nextStep=dt,
+                                       endValues=endValues,
+                                       linsys=linsys)
         
 
-        # Obsolete below this line.
-        
-        # If C has empty rows, the static solution of those rows has
-        # already been computed by initializeStaticFields() or by a
-        # previous Euler step, and we only have to solve the remaining
-        # nonempty rows here.  Unlike GeneralizedEuler, here we're
-        # solving an unmodified C, so it can't contain empty rows.
-        staticEqns = linsys.n_unknowns_part('K') > 0
-        
-        dt = endtime - time
-        # v = dt * linsys.rhs_MCa() # v = dt*f 
-
-        # # K_MCa is really (MCa)x(MCKa), so we can multiply by
-        # # unknowns, which includes the K part.
-        # K = linsys.K_MCa()
-        # K.axpy(-dt, unknowns, v) # v = dt*(f - K u)
-        v = get_res(linsys, dt, unknowns)
-
-        C = linsys.C_MCa()
-        # solve() stores u_{n+1}-u_n in endValues.  Before calling
-        # solve, set endValues to a good guess for u_{n+1}-u_n.
-        # Assuming that the step size is small, a good guess is zero.
-        endValues = doublevec.DoubleVec(unknowns.size())
-        endValues.zero()
-
-        x = linsys.extract_MCa_dofs(endValues)
-        print >> sys.stderr, "IS_DS:----> Calling matrix method.solve:"
-        subproblem.matrix_method(_asymmetricIC, subproblem, linsys).solve(
-            C, v, x )
-        print >> sys.stderr, "IS-DS:----> Back from matrix method solve."
-        linsys.inject_MCa_dofs(x, endValues)
-        print >> sys.stderr, "IS-DS:----> Back from linsys modification."
-
-        
-        endValues += unknowns
-
-        if staticEqns:
-            # Re-solve the static equations at endtime.
-            subproblem.installValues(linsys, endValues, endtime)
-            linsys = subproblem.make_linear_system(endtime, linsys)
-            subproblem.computeStaticFields(linsys, endValues)
-
-        return timestepper.StepResult(endTime=endtime, nextStep=dt,
-                                      endValues=endValues, linsys=linsys)
+        # Old version:
+        # return timestepper.StepResult(endTime=endtime, nextStep=dt,
+        #                               endValues=endValues, linsys=linsys)
 
 def _asymmetricIC(subproblem, linsys):
-    # If the problem has second order time derivatives, then we'll be
-    # using C_eff, which is symmetric if M and C are both symmetric
-    # and if C21 is zero.
-    
-    # If the problem has no second order time derivatives, we'll just
-    # be using C.  M's symstate will be INCONSISTENT and C21 will be
-    # empty.
-    
-    return (subproblem.matrix_symmetry_M == symstate.ASYMMETRIC or
-            subproblem.matrix_symmetry_C == symstate.ASYMMETRIC or
-            linsys.C21_nonempty())
+    # Incremental problems are quasi-static and only involve
+    # the K matrix.  If it's asymmetric, then the problem is,
+    # nothing else matters.
+    return (subproblem.matrix_symmetry_K == symstate.ASYMMETRIC)
 
+class IncrementalNLFuncs(object):
+    def __init__(self, unknowns):
+        self.unknowns = unknowns
 
+    def precompute(self, data, values, solver):
+        # debug.fmsg("requireJacobian=", solver.needsJacobian(),
+        #            "requireResidual=", solver.needsResidual())
+        data.subproblem.time_stepper.set_unknowns_part('K', data.linsys, values,
+                                                       self.unknowns)
+        data.subproblem.installValues(data.linsys, self.unknowns, data.time)
+        data.linsys = data.subproblem.make_linear_system(data.time, data.linsys)
+
+    def compute_residual(self, data, soln, nlsolver):
+        # debug.fmsg()
+        return data.linsys.static_residual_ind_part('K')
+
+    def compute_jacobian(self, data, nlsolver):
+        # debug.fmsg()
+        return data.linsys.J_submatrix('K', 'K')
+
+    def compute_linear_coef_mtx(self, data, nlsolver):
+        # debug.fmsg()
+        return data.linsys.K_submatrix('K', 'K')
+
+class IncrementalNLData(object):
+    def __init__(self,subproblem,linsys,time):
+        self.subproblem = subproblem
+        self.linsys = linsys
+        self.time = time
+        
 registeredclass.Registration(
     'Incremental',
     timestepper.TimeStepper,
