@@ -227,6 +227,8 @@ class GeneralizedEuler(timestepper.LinearStepper, timestepper.NonLinearStepper,
 
         data = NLDataGE(subproblem, linsys, endtime, dt, unknowns, self.theta)
         endValues = unknowns.clone()
+        # TODO: Bug?  _asymemtricGE will only get one arg, but wants two.
+        # Fix is to add "linsys" to the arguments to matrix_method.
         nonlinearMethod.solve(subproblem.matrix_method(_asymmetricGE,
                                                        subproblem),
                               self.precomputeNL,

@@ -169,12 +169,14 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # See the StaticNLFuncs object in subproblemcontext.py for clues.
         # What we actually want is more or less the static solution,
         # since we're a quasi-static stepper.
-        
+
+        endValues = unknowns.clone()
         # Call is:
-        nlmethod.solve(subproblem.matrixmethod(_asymmetricIC, subproblem),
-                       ilfuncs.precompute, ilfunc.compute_residual,
+        nlmethod.solve(subproblem.matrix_method(_asymmetricIC, subproblem,
+                                                linsys),
+                       ilfuncs.precompute, ilfuncs.compute_residual,
                        ilfuncs.compute_jacobian,
-                       ilfuncs.compute_linear_coef_matrix, data, endValues)
+                       ilfuncs.compute_linear_coef_mtx, ildata, endValues)
 
         # TODO: Build these arguments. "data" is an object which will
         # get populated by the linearized system during precompute,
@@ -189,9 +191,9 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # self-consistency, that's different.
     
         # Then:
-        return timestepper.StepResults(endTime=endtime, nextStep=dt,
-                                       endValues=endValues,
-                                       linsys=linsys)
+        return timestepper.StepResult(endTime=endtime, nextStep=dt,
+                                      endValues=endValues,
+                                      linsys=linsys)
         
 
         # Old version:
