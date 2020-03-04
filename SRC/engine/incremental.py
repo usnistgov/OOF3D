@@ -81,9 +81,10 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
 
         # dt is endtime - time.  There are issues passing the time
         # through to the properties, the code doesn't do this but should.
-
+        # The uniform driver promises us a fixed step size.
         dt = endtime - time
-        
+
+        print >> sys.stderr, "Incremental nonlinear step, dt = ", dt
         # Steps:
         # 1: Set up the current boundary conditions, and do an
         #    initial solve with the previous K matrix.  This is
@@ -215,6 +216,7 @@ class IncrementalNLFuncs(object):
         #            "requireResidual=", solver.needsResidual())
         data.subproblem.time_stepper.set_unknowns_part('K', data.linsys, values,
                                                        self.unknowns)
+        # This step puts the values into the mesh.
         data.subproblem.installValues(data.linsys, self.unknowns, data.time)
         data.linsys = data.subproblem.make_linear_system(data.time, data.linsys)
 

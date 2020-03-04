@@ -55,7 +55,8 @@ def evolve(meshctxt, endtime):
         raise ooferror2.ErrSetupError("End time must not precede current time.")
 
     # Precompute checks for matrix symmetry.  Doesn't do any
-    # time-depedendent stuff.  Doesn't set BCs.
+    # time-depedendent stuff.  Doesn't set BCs.  Doesn't read or write
+    # DOF data.
     meshctxt.solver_precompute(solving=True)
     print >> sys.stderr, "EPY: Back from solver_precompute."
 
@@ -65,8 +66,9 @@ def evolve(meshctxt, endtime):
 
     # Make sure that the starting point has been cached.
     ## TODO OPT: Is it necessary to call cacheCurrentData here?
+    # Sets the time and data, if available in the cache, in the femesh object.
     # TODO: BC's at t=0 are set where?  How?
-    meshctxt.restoreLatestData()
+    meshctxt.restoreLatestData() # May write to DOFs, if there's cached data.
     meshctxt.cacheCurrentData()
     meshctxt.releaseLatestData()
 
@@ -216,10 +218,12 @@ def initializeStaticFields(subprobctxts, time, prog):
         print >> sys.stderr, "EPY-IS: First call to make_linear_system."
         print >> sys.stderr, "EPY-IS: Time is ", time
         # BC's are set at the start of make_linear_system.
+        # time is the start time.  Second argument is an optional
+        # passed-in linearized system.
         linsysDict[subproblem] = lsys = subproblem.make_linear_system(
             time, None)
         print >> sys.stderr, "EPY-IS: Back from make_linear_system, evovle.py"
-        # Loads values for this time into the subproblem.
+        # Loads values for this time into the subproblem from the mesh.
         subproblem.startStep(lsys, time) # sets subproblem.startValues
         subproblem.cacheConstraints(lsys, time)
 
@@ -230,6 +234,8 @@ def initializeStaticFields(subprobctxts, time, prog):
             newconstraints = True
             while newconstraints and not prog.stopped():
                 print >> sys.stderr, "EPY-IS: initializeStaticFields calling out to the subproblem."
+                # Actually solves the system at the initial time and
+                # puts the DOF values in the mesh.
                 subproblem.initializeStaticFields(linsysDict[subproblem])
                 subproblem.solutiontimestamp.increment()
                 newconstraints = subproblem.applyConstraints(
@@ -372,6 +378,7 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                         #            (time, targettime, targettime-time))
                         print >> sys.stderr, "EPY-ET: Evolve_to calling stepper."
                         print >> sys.stderr, "EPY-ET: Solver is: ", subproblem.nonlinear_solver
+                        # Calls the nonlinearsolver, which calls the stepper.
                         stepResult = subproblem.nonlinear_solver.step(
                             subproblem,
                             linsys=lsClone,

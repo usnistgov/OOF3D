@@ -5,31 +5,47 @@
 important issues.  They're collected here.
 
   - In the equation construciton process, we're still not doing
-     the geometrically-nonlinear piece, the equation is the standard
-     OOF equation with a nonlinear constitutive rule.
+      the geometrically-nonlinear piece, the equation is the standard
+      OOF equation with a nonlinear constitutive rule.
  
   - There is an implicit assumption that there are only displacement
-     DOFs in the subproblem.  This is likely to be true for real
-     problems, but should maybe be more robust.
+      DOFs in the subproblem.  This is likely to be true for real
+      problems, but should maybe be more robust.
 
   - In the OOF NR solution process, there's a "choose_step_size"
-     operation that implements this "parabolic model with Armijo",
-     which looks like it will do multiple re-evaluations of the
-     stiffness matrix via the make_linear_system call chain -- this
-     is dangerous for plastiicty, which accumulates plastic strain
-     when this call-chain is exercised.
+      operation that implements this "parabolic model with Armijo",
+      which looks like it will do multiple re-evaluations of the
+      stiffness matrix via the make_linear_system call chain -- this
+      is dangerous for plasticity, which accumulates plastic strain
+      when this call-chain is exercised.
 
   - We do not yet have a mechanism for passing the time through to 
-     the properties -- for plasticity, we will eventually want this
-     so that delta-t does not have to be specified as a parameter
-     in the user interface.
+      the properties -- for plasticity, we will eventually want this
+      so that delta-t does not have to be specified as a parameter
+      in the user interface.
 
   - Possibly the property should be smarter about its statefullness,
-     if it knew it was being evaluated "again" at a time-step, it
-     could save some work and/or retrieve old data?
+      if it knew it was being evaluated "again" at a time-step, it
+      could save some work and/or retrieve old data?
+    This involves adding the time to the GptData object, and a check
+      to notice new times.
+    Allows the time-step to be nonuniform, also, which is handy.
 
   - The OOF infrastructure is built for a general nonlinear solver,
-     which might be either Newton or Picard -- they differ in what
-     functions they call to retreive data, we should investigate
-     if it makes sense to plasticity and Picard solvers.
-     (TODO 1st: Review how Picard solvers work...)
+      which might be either Newton or Picard -- they differ in what
+      functions they call to retreive data, we should investigate
+      if it makes sense to plasticity and Picard solvers.
+      (TODO 1st: Review how Picard solvers work...)
+
+  - The NR solver requires the residual to be computed -- 
+      double-check that the new equation class is actually doing this
+      in the right way.
+ 
+  - We may have assumed that IncrementalStepper increments and the 
+      requested outputs are commensurate, so we never have to take
+      a partial step?  Check this.
+
+  - The currently-coded incremental stepper is incapable of taking
+      a linear step.  Incremental linear steps are trivial, you just
+      statically evaluate at the new time.  This is a weird thing to 
+      want, so we're deferring implementation of this.
