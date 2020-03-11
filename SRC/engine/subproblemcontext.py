@@ -1005,13 +1005,14 @@ class SubProblemContext(whoville.Who):
         # in the equations, but not a second derivative.
         derivOrder = self.time_stepper.derivOrder()
         if derivOrder == 0 or self.lowestTimeDerivative() < derivOrder:
-            # Call either computeStaticFieldsL or
+            # Dispatch: call either computeStaticFieldsL or
             # computeStaticFieldsNL depending on whether or not we're
             # using a nonlinear solver and whether or not the
             # FluxProperties provide the K matrix.
             self.nonlinear_solver.computeStaticFields(self, linsys, unknowns)
                 
     def computeStaticFieldsL(self, linsys, unknowns):
+        # Called via dispatch from the NoNonLinearSolver.
         # Initialize "static" fields for linear problems. 
         if linsys.n_unknowns_part('K')==0 and linsys.n_unknowns_part('C')==0:
             return
@@ -1077,6 +1078,7 @@ class SubProblemContext(whoville.Who):
             self.time_stepper.set_derivs_part('C', linsys, u1dot, unknowns)
 
     def computeStaticFieldsNL(self, linsys, unknowns):
+        # Called via dispatch from the nonlinear solver.
         print >> sys.stderr, "SCPY-CSNL: Subproblem.computeStaticFieldsNL."
         # Initialize "static" fields for nonlinear problems. 
         if linsys.n_unknowns_part('K')==0 and linsys.n_unknowns_part('C')==0:

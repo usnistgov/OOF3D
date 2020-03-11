@@ -49,3 +49,9 @@ important issues.  They're collected here.
       a linear step.  Incremental linear steps are trivial, you just
       statically evaluate at the new time.  This is a weird thing to 
       want, so we're deferring implementation of this.
+ 
+  - What does it actually really mean for the time-stepper to 
+      return stepOK?  Does it mean it reached the target, or just
+      that it took a single step successfully?
+ 
+  - Double-check the caching, see if we're doing too much work.
