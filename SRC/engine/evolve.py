@@ -122,7 +122,8 @@ def evolve(meshctxt, endtime):
         # subproblemcontext.  Q about scope: How big is this vector?
         # What if the subproblem is a geographic subset, does it only
         # do the ones it "owns"?
-        
+
+        print >> sys.stderr, "EPY: Solver delta is ", meshctxt.solverDelta
         time = starttime
         if continuing:
             delta = meshctxt.solverDelta
@@ -130,6 +131,8 @@ def evolve(meshctxt, endtime):
             delta = None
         lasttime = None
 
+        print >> sys.stderr, "EPY: Delta is now ", delta
+        
         # Loop over output times
         # t1 is the target time for the next scheduled output.
         for t1 in meshctxt.outputSchedule.times(endtime):
@@ -142,10 +145,13 @@ def evolve(meshctxt, endtime):
             if t1 - starttime > max(t1, starttime)*10.*utils.machine_epsilon:
                 if t1 > endtime:
                     t1 = endtime
+                # Loop over the steppers, set global delta to the
+                # smallest initial delta that any stepper can do.
                 if delta is None:
                     delta = min(
                         [subp.time_stepper.initial_stepsize(t1-starttime)
                          for subp in subprobctxts])
+                    print >> sys.stderr, "EPY: Delta has been set, ", delta
                 try:
                     time, delta, linsys_dict = evolve_to(
                         meshctxt, subprobctxts,
@@ -322,6 +328,7 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                 # matrices.
                 print >> sys.stderr, "EPY-ET: Evolve_to at top of loop, calling make_linear_system."
                 print >> sys.stderr, "EPY-ET: Time is ", time
+                print >> sys.stderr, "EPY-ET: Delta is ", delta
                 # Call the make_linear_system in subproblemcontext.py.
                 # TODO: For quasi-static problems, this is redundant,
                 # but the logic at the start of the call chain means
@@ -388,6 +395,7 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                         # debug.fmsg("endValues=", stepResult.endValues)
                         print >> sys.stderr, "EPY-ET: Evolve_to back from stepper."
                         if stepResult.ok:
+                            # Adaptive steps might not be OK.  Others are.
                             # endStep() sets subproblem.endValues
                             assert stepResult.linsys is not None
                             newlinsys[subproblem] = stepResult.linsys
@@ -453,6 +461,7 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                 if truncated_step:
                     meshctxt.setCurrentTime(time, None)
                 else:
+                    # Sets meshctxt.solverDelta.
                     meshctxt.setCurrentTime(time, mindelta)
 
             ## End of consistency loop.

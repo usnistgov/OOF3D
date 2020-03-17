@@ -79,12 +79,13 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # you solve by NR.  Incremental problems are always "logically"
         # nonlinear, even if they're not actually nonlinear.
 
-        # dt is endtime - time.  There are issues passing the time
-        # through to the properties, the code doesn't do this but should.
-        # The uniform driver promises us a fixed step size.
-        dt = endtime - time
+        # endtime is the target time from evolve_to, it's generally
+        # large, and is not related to our step-size capability, which
+        # is set by our driver, which will usually be the
+        # UniformDriver.
 
-        print >> sys.stderr, "Incremental nonlinear step, dt = ", dt
+
+        print >> sys.stderr, "Incremental nonlinear step, dt = ", endtime - time
         # Steps:
         # 1: Set up the current boundary conditions, and do an
         #    initial solve with the previous K matrix.  This is
@@ -192,7 +193,8 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # self-consistency, that's different.
     
         # Then:
-        return timestepper.StepResult(endTime=endtime, nextStep=dt,
+        # The UniformDriver will fill in the nextStep attribute.
+        return timestepper.StepResult(endTime=endtime,
                                       endValues=endValues,
                                       linsys=linsys)
         
