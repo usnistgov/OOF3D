@@ -94,6 +94,7 @@ class Newton(nonlinearsolvercore.Newton, NonlinearSolver):
     def __init__(self, *args, **kwargs):
         nonlinearsolvercore.Newton.__init__(self, *args, **kwargs)
     def solve(self, *args, **kwargs):
+        # Call the parent class solve routine from here.
         print >> sys.stderr, "NLS-N: ** Newton.solve"
         niters, residual = nonlinearsolvercore.Newton.solve(
             self, *args, **kwargs)

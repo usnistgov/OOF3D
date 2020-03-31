@@ -154,6 +154,7 @@ class SubProblemContext(whoville.Who):
                 self, self._time_stepper)
             return self._time_stepper
     def _getNonlinearSolver(self):
+        print >> sys.stderr, "SPC: In _getNonlinearSolver."
         if self._solver_mode:
             self._nonlinear_solver = self._solver_mode.get_nonlinear_solver(
                 self, self._nonlinear_solver)

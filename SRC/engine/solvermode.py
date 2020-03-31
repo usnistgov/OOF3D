@@ -21,6 +21,7 @@ from ooflib.engine import matrixmethod
 from ooflib.engine import nonlinearsolver
 from ooflib.engine import timestepper
 
+import sys
 
 class SolverMode(registeredclass.RegisteredClass):
     registry = []
@@ -86,6 +87,7 @@ class AdvancedSolverMode(SolverMode):
     def get_time_stepper(self, *args):
         return self.time_stepper
     def get_nonlinear_solver(self, *args):
+        print >> sys.stderr, "SM: In AdvancedSolverMode.get_nonlinear_solver."
         return self.nonlinear_solver
     def get_symmetric_solver(self, *args):
         return self.symmetric_solver
