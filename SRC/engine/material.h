@@ -164,7 +164,7 @@ public:
   void remove1Property(Property*);
   void clear_xref();
   void cprecompute(CSubProblem*); // only precomputes computable properties
-  void begin_element(const CSubProblem*, const Element*)
+  void begin_element(const CSubProblem*, double time, const Element*)
     const;
   void end_element(const CSubProblem*, const Element*) const;
 

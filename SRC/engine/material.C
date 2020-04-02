@@ -268,7 +268,8 @@ Material::outputProperties(const PropertyOutput *pout) const {
 // these can only be called once per element.  The reason they're
 // here is because the Material is the one with the handy-dandy
 // list of properties.
-void Material::begin_element(const CSubProblem *subproblem, const Element *el)
+void Material::begin_element(const CSubProblem *subproblem,
+			     double time, const Element *el)
   const
 {
   // LINSYS STEP 3
@@ -283,7 +284,7 @@ void Material::begin_element(const CSubProblem *subproblem, const Element *el)
   for(std::vector<Property*>::size_type i=0;i<property.size();i++) {
     if(subproblem->currently_active_prop(property[i])) {
       // std::cerr << "Calling begin_element on a property." << std::endl;
-      property[i]->begin_element(subproblem, el);
+      property[i]->begin_element(subproblem, time, el);
       // std::cerr << "Back from property begin_element." << std::endl;
     }
   }

@@ -44,7 +44,8 @@ int SimpleTension::integration_order(const CSubProblem*,
 // iterators, almost certainly.
 
 
-void SimpleTension::begin_element(const CSubProblem *pSubp, 
+void SimpleTension::begin_element(const CSubProblem *pSubp,
+				  double time, 
 				  const Element *pElem) {
   
   FuncNode *n0,*nn;

@@ -35,7 +35,7 @@ public:
   virtual ~SimpleTension() {}
   virtual int integration_order(const CSubProblem*, const Element*) const;
   virtual bool constant_in_space() const { return true; }
-  virtual void begin_element(const CSubProblem*, const Element*);
+  virtual void begin_element(const CSubProblem*, double time, const Element*);
   virtual void end_element(const CSubProblem*, const Element*);
 
   virtual void cross_reference(Material*);

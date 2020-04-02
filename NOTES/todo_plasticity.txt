@@ -30,6 +30,9 @@ important issues.  They're collected here.
     This involves adding the time to the GptData object, and a check
       to notice new times.
     Allows the time-step to be nonuniform, also, which is handy.
+    A possible mechanism for this is, if are being called for a
+      time t and deformation F that you have seen before, just
+      return the data you already have.
 
   - The OOF infrastructure is built for a general nonlinear solver,
       which might be either Newton or Picard -- they differ in what
@@ -55,3 +58,4 @@ important issues.  They're collected here.
       that it took a single step successfully?
  
   - Double-check the caching, see if we're doing too much work.
+

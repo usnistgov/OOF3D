@@ -105,7 +105,8 @@ public:
   Plasticity(PyObject *rg, const std::string &nm,
 	     const Cijkl &c, PlasticConstitutiveRule *r, const int slips);
   virtual ~Plasticity() {}
-  virtual void begin_element(const CSubProblem*, const Element*); 
+  virtual void begin_element(const CSubProblem*, double time,
+			     const Element*); 
   virtual void flux_matrix(const FEMesh *mesh,
 			   const Element *element,
 			   const ElementFuncNodeIterator &nu,
@@ -161,7 +162,7 @@ public:
 
 // Per-gaussponit plastic data, generally needed by all constitutive
 // rules. This is the per-gausspoint object contained in the the
-// PlasticData container.  It' snot expected to be subclassed.
+// PlasticData container.  It's not expected to be subclassed.
 class GptPlasticData {
 public:
   GptPlasticData();

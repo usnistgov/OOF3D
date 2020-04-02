@@ -268,7 +268,8 @@ void Plasticity::precompute(FEMesh* f) {
   }
 }
 
-void Plasticity::begin_element(const CSubProblem *c, const Element *e) {
+void Plasticity::begin_element(const CSubProblem *c,
+			       double time, const Element *e) {
 
   // LINSYS STEP 3, plastic version -- called from
   // Material::begin_element, we are in element scope, and need to run

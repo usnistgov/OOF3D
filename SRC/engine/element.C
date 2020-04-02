@@ -478,7 +478,7 @@ void Element::make_linear_system(const CSubProblem *const subproblem,
     // TODO: Material begin_element should pass the order through also.
     // std::cerr << "Inside Element::make_linear_system." << std::endl;
     // std::cerr << "Calling Material begin_element." << std::endl;
-    mat->begin_element(subproblem, this);
+    mat->begin_element(subproblem, time, this);
     // std::cerr << "Back from Material begin_element." << std::endl;
     // TODO OPT: iorder could be precomputed or cached, but do some
     // careful profiling before changing anything.  Preliminary tests

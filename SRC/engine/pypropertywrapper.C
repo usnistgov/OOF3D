@@ -110,6 +110,7 @@ void PyPropertyMethods::py_cross_reference(PyObject *referent, Property *prop,
 
 void PyPropertyMethods::py_begin_element(PyObject *referent, Property *prop,
 					 const CSubProblem *m,
+					 const double time,
 					 const Element *el)
 {
   char _element_temp[128];
@@ -117,7 +118,7 @@ void PyPropertyMethods::py_begin_element(PyObject *referent, Property *prop,
   PyGILState_STATE pystate = acquirePyLock();
   try {
     if(!PyObject_HasAttrString(referent, (char*) "begin_element")) {
-      prop->Property::begin_element(m, el);
+      prop->Property::begin_element(m, time, el);
     }
     else {
       PyObject *func = PyObject_GetAttrString(referent,

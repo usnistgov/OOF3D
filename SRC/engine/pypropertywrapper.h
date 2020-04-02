@@ -46,7 +46,7 @@ public:
   virtual void py_precompute(PyObject*, Property*, FEMesh*);
   virtual void py_cross_reference(PyObject*, Property*, Material*);
   virtual void py_begin_element(PyObject*, Property*, const CSubProblem*,
-				const Element*);
+				const double, const Element*);
   virtual void py_end_element(PyObject*, Property*,
 			      const CSubProblem*, const Element*);
   virtual void py_post_process(PyObject*, const Property*, 
@@ -100,8 +100,9 @@ public:
   virtual void cross_reference(Material *m) { 
     PyPropertyMethods::py_cross_reference(referent_, this, m);
   }
-  virtual void begin_element(const CSubProblem *sb, const Element *e) {
-    PyPropertyMethods::py_begin_element(referent_, this, sb, e);
+  virtual void begin_element(const CSubProblem *sb, const double time,
+			     const Element *e) {
+    PyPropertyMethods::py_begin_element(referent_, this, sb, time, e);
   }
   virtual void end_element(const CSubProblem *sb, const Element *e) {
     PyPropertyMethods::py_end_element(referent_, this, sb, e);
@@ -171,8 +172,9 @@ public:
   virtual void cross_reference(Material *m) { 
     PyPropertyMethods::py_cross_reference(referent_, this, m);
   }
-  virtual void begin_element(const CSubProblem *sb, const Element *e) {
-    PyPropertyMethods::py_begin_element(referent_, this, sb, e);
+  virtual void begin_element(const CSubProblem *sb, const double time,
+			     const Element *e) {
+    PyPropertyMethods::py_begin_element(referent_, this, sb, time, e);
   }
   virtual void end_element(const CSubProblem *sb, const Element *e) {
     PyPropertyMethods::py_end_element(referent_, this, sb, e);

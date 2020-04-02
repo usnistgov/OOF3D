@@ -925,6 +925,7 @@ class SubProblemContext(whoville.Who):
 
                 # **** This is the cpu intensive step: ****
                 print "SCPY-MLS: SubProblemContext calling SubProblem make_linear_system."
+                print "SCPY-MLS: Object is ", self.getObject()
                 self.getObject().make_linear_system(linsys, 
                                                     self.nonlinear_solver)
                 print "SCPY-MLS: Back from SubProblem make_linear_system."
