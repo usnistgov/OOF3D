@@ -289,6 +289,16 @@ void Plasticity::begin_element(const CSubProblem *c,
   PlasticData *pd;
   SlipData *sd;
 
+  // TODO: For time-stepping, the PlasticData object should have
+  // time-step-specific info, and here, we should notice if we
+  // are being asked to evaluate at a new time, and if so,
+  // create a new time data in the PlasticData object, and
+  // do the increment.  If not, re-do the old increment.
+
+  // Q: Is this right?  The prior algorithm computes new iterations
+  // from the result of the last iteration; the new scheme would
+  // do it from the prior time-step.  This is probably more work,
+  // and maybe wrong.
   int ig_order = integration_order(c,e);
   
   if (ed==0) {
@@ -298,6 +308,7 @@ void Plasticity::begin_element(const CSubProblem *c,
   else {
     pd = dynamic_cast<PlasticData*>(ed);
     int gptdx = 0;
+    // TODO: pd->set_time(time)
     for (GaussPointIterator gpt = e->integrator(ig_order);
 	 !gpt.end(); ++gptdx,++gpt) {
       // Transfer the previous "new" data to be the current "old" data.
@@ -1124,6 +1135,8 @@ GptPlasticData::GptPlasticData() :
 
 // The order selects which gpt array to iterate over.  It's passed in,
 // but it's very important that this be done consistently.
+
+// Constructor should make two time-steps, "new" and "old".
 PlasticData::PlasticData(int ord, const Element *el) :
   ElementData("plastic_data"), order(ord) {
   for (GaussPointIterator gpt = el->integrator(order);
@@ -1136,6 +1149,16 @@ PlasticData::PlasticData(int ord, const Element *el) :
 }
 
 
+
+// PlasticData::set_time(double time) {
+//   if (time!=current_time) {
+//     prior_time = current_time;
+//     current_time = time;
+//     de-allocate the prior_gtpdata
+//     prior_gptdata = current_gptdata;
+//     current_gptdata = (construct a new object)
+//   }
+// }
 GptSlipData::GptSlipData(int nslips) {
   for(int i=0;i<nslips;++i) {
     delta_gamma.push_back(0.0);

@@ -191,6 +191,9 @@ static std::string elementdataclassname_slip = "SlipData";
 static std::string plasticitymodulename = "plasticity";
 
 
+// PlasticData needs to know about time.  It should have a
+// notion of a current time and a previous time, and a way
+// of noticing if it's working at a new time.
 class PlasticData : public ElementData {
 public:
   PlasticData(int o,const Element *e);
@@ -201,6 +204,8 @@ public:
   int order;
   std::map<MasterCoord,int> mctogpi_map;
   std::vector<GptPlasticData*> gptdata;
+  // std::vector<GptPlasticData*> current_gptdata;
+  // std::vector<GptPlasticData*> prior_gptdata;
 };
 
 

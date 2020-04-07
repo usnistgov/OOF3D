@@ -8,6 +8,11 @@ important issues.  They're collected here.
       the geometrically-nonlinear piece, the equation is the standard
       OOF equation with a nonlinear constitutive rule.
  
+  - The OOF constitutive rule is written in terms of all 9 elements
+      of the strain and stress.  Once we're happy with the numbers,
+      it should be re-written in terms of the strain six-vector,
+      where possible.
+
   - There is an implicit assumption that there are only displacement
       DOFs in the subproblem.  This is likely to be true for real
       problems, but should maybe be more robust.
