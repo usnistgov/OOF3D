@@ -27,7 +27,8 @@ GptSlipData *PowerLawConstitutiveRule::getSlipData() const {
 }
 
 void PowerLawConstitutiveRule::evolve(GptPlasticData *gptpd,
-				      GptSlipData *gptsd) {
+				      GptSlipData *gptsd,
+				      double delta_t) {
   // GptSlipData is not polymorphic (has no functions at all, in fact),
   // it's a data class, so static cast is right.
   PowerLawSlipData *plsd = static_cast<PowerLawSlipData*>(gptsd);
@@ -37,7 +38,7 @@ void PowerLawConstitutiveRule::evolve(GptPlasticData *gptpd,
   for(int alpha=0;alpha<slip_systems;++alpha) {
     total_res[alpha] += delta_res[alpha];
   }
-  _evolve_gamma(plsd);
+  _evolve_gamma(plsd,delta_t);
 }
 
 // Updates delta_res.
@@ -62,7 +63,8 @@ void PowerLawConstitutiveRule::_evolve_hardening(PowerLawSlipData *plsd) {
   }
 }
 
-void PowerLawConstitutiveRule::_evolve_gamma(PowerLawSlipData *plsd) {
+void PowerLawConstitutiveRule::_evolve_gamma(PowerLawSlipData *plsd,
+					     double delta_t) {
   double ratio_alpha = 0.0;
   double const_sign = 0.0;
   double m_inv = 0.0;
@@ -79,12 +81,12 @@ void PowerLawConstitutiveRule::_evolve_gamma(PowerLawSlipData *plsd) {
 
       m_inv = 1.0/m;
 
-      plsd->delta_gamma[alpha] = dt*const_sign*g0dot*(pow(abs(ratio_alpha),m_inv));
+      plsd->delta_gamma[alpha] = delta_t*const_sign*g0dot*(pow(abs(ratio_alpha),m_inv));
 
       res_inv = 1.0/total_res[alpha];
 
       // Derivative is reason
-      plsd->dgamma_dtau[alpha] = dt*res_inv*g0dot*m_inv*(pow(abs(ratio_alpha),(m_inv-1.0)));
+      plsd->dgamma_dtau[alpha] = delta_t*res_inv*g0dot*m_inv*(pow(abs(ratio_alpha),(m_inv-1.0)));
       
     }
     else {
@@ -116,7 +118,8 @@ GptSlipData *ElasticConstitutiveRule::getSlipData() const {
 // ElasticConstitutiveRule -- needs to set the gptsd slip
 // accumulations to zero.  Somehow.
 void ElasticConstitutiveRule::evolve(GptPlasticData *gptpd,
-				     GptSlipData *gptsd) {
+				     GptSlipData *gptsd,
+				     double delta_t) {
   ElasticLawSlipData *elsd = static_cast<ElasticLawSlipData*>(gptsd);
   // Done!  The slip data is initialized to zeros, and is still zero,
   // which is the right answer for elasticity, so there's nothing to

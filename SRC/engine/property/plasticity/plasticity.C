@@ -308,7 +308,7 @@ void Plasticity::begin_element(const CSubProblem *c,
   else {
     pd = dynamic_cast<PlasticData*>(ed);
     int gptdx = 0;
-    // TODO: pd->set_time(time)
+    pd->set_time(time); // Sets dt internally.
     for (GaussPointIterator gpt = e->integrator(ig_order);
 	 !gpt.end(); ++gptdx,++gpt) {
       // Transfer the previous "new" data to be the current "old" data.
@@ -318,6 +318,8 @@ void Plasticity::begin_element(const CSubProblem *c,
     }
   }
 
+  // This is used in the calls to the constitutive evolve() method.
+  double delta_t = pd->dt;
   // std::cerr << "Initialized the pd object." << std::endl;
   
   if (eds==0) {
@@ -496,7 +498,7 @@ void Plasticity::begin_element(const CSubProblem *c,
     // std::cerr << "Calling constitutive rule's evolve." << std::endl;
     // Initial call to evolve -- this populates the delta_gamma and
     // dgamma_dtau from s_trial..
-    rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
+    rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx],delta_t);
 
     // std::cerr << "Back from evolve." << std::endl;
     
@@ -517,7 +519,7 @@ void Plasticity::begin_element(const CSubProblem *c,
       }
 
       // Call evolve, get back new delta_gamma and dgamma_dtau values.
-      rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
+      rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx],delta_t);
       
       // TODO optimize:  Precompute gtmtx.  This transpose business is awful.
       for(int alpha=0;alpha<nslips;++alpha) {
@@ -587,7 +589,7 @@ void Plasticity::begin_element(const CSubProblem *c,
 	dot(pd->gptdata[gptdx]->s_star, *lab_schmid_tensors[alpha]);
     }
     
-    rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx]);
+    rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx],delta_t);
 
     // std::cerr << "Calling rule->complete." << std::endl;
 
@@ -1138,7 +1140,8 @@ GptPlasticData::GptPlasticData() :
 
 // Constructor should make two time-steps, "new" and "old".
 PlasticData::PlasticData(int ord, const Element *el) :
-  ElementData("plastic_data"), order(ord) {
+  ElementData("plastic_data"), order(ord), current_time(0.0), dt(0.0)
+{
   for (GaussPointIterator gpt = el->integrator(order);
        !gpt.end(); ++gpt) {
     GptPlasticData *gppd = new GptPlasticData();
@@ -1150,15 +1153,17 @@ PlasticData::PlasticData(int ord, const Element *el) :
 
 
 
-// PlasticData::set_time(double time) {
-//   if (time!=current_time) {
-//     prior_time = current_time;
-//     current_time = time;
-//     de-allocate the prior_gtpdata
-//     prior_gptdata = current_gptdata;
-//     current_gptdata = (construct a new object)
-//   }
-// }
+double PlasticData::set_time(double time) {
+  if (time!=current_time) {
+    dt = time-current_time;
+    current_time = time;
+    return dt;
+  }
+  else {
+    return dt;
+  }
+}
+
 GptSlipData::GptSlipData(int nslips) {
   for(int i=0;i<nslips;++i) {
     delta_gamma.push_back(0.0);

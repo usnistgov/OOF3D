@@ -204,8 +204,9 @@ public:
   int order;
   std::map<MasterCoord,int> mctogpi_map;
   std::vector<GptPlasticData*> gptdata;
-  // std::vector<GptPlasticData*> current_gptdata;
-  // std::vector<GptPlasticData*> prior_gptdata;
+  double dt;
+  double current_time;
+  double set_time(double);
 };
 
 

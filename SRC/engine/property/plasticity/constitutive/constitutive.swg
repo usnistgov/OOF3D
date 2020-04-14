@@ -29,7 +29,7 @@ class PowerLawConstitutiveRule : public PlasticConstitutiveRule {
 public:
   PowerLawConstitutiveRule(double w1, double w2, double ss, double a,
 			   double h0, double m, double g0dot,
-			   double dt, double init_res);
+			   double init_res);
 }
 
 

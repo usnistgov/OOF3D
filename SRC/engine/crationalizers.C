@@ -68,7 +68,9 @@ void Rationalizer::rationalize(CSkeleton *skel, CSkelModTargets *targets,
     for(CSkeletonElementIterator it=elements.begin(); it!=elements.end();
 	++it, ++count) 
       {
+#ifdef DEBUG
 	assert(elements.size() == nel);
+#endif
 	if(!processed.count((*it)->getUid()) && (*it)->active(skel)) {
 	  assert(!(*it)->is_defunct());
 	  // fixer is either Rationalizer::findAndFix or

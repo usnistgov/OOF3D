@@ -43,16 +43,14 @@ class PlasticConstitutiveRule {
 public:
   virtual void set_slip_systems(int n) { slip_systems = n; }
   virtual GptSlipData *getSlipData() const = 0;
-  virtual void evolve(GptPlasticData *, GptSlipData*) = 0;
+  virtual void evolve(GptPlasticData *, GptSlipData*,double) = 0;
   virtual void complete(GptPlasticData *, GptSlipData*) = 0;
 protected:
   int slip_systems;
 };
 
 
-// TODO: The "dt" parameter here is the time-step size, it should not
-// be provided by users here, but should come from the solver
-// infrastructure.
+// Get dt from the caller to the evolve_gamma method.
 class PowerLawConstitutiveRule : public PlasticConstitutiveRule {
 public:
   PowerLawConstitutiveRule(double w1,
@@ -62,18 +60,17 @@ public:
 			   double h0,
 			   double m,
 			   double g0dot,
-			   double dt,
 			   double init_res) :
-    w1(w1),w2(w2),ss(ss),a(a),h0(h0),m(m),g0dot(g0dot),dt(dt),init_res(init_res)
+    w1(w1),w2(w2),ss(ss),a(a),h0(h0),m(m),g0dot(g0dot),init_res(init_res)
   {}
   virtual GptSlipData *getSlipData() const;
-  virtual void evolve(GptPlasticData *, GptSlipData*);
+  virtual void evolve(GptPlasticData *, GptSlipData*,double);
   virtual void complete(GptPlasticData *, GptSlipData*);
 private:
-  double w1,w2,ss,a,h0,m,g0dot,dt,init_res;
+  double w1,w2,ss,a,h0,m,g0dot,init_res;
   std::vector<double> total_res,delta_res;
   void _evolve_hardening(PowerLawSlipData*);
-  void _evolve_gamma(PowerLawSlipData*);
+  void _evolve_gamma(PowerLawSlipData*,double);
 };
 
 // ----- ELASTIC ------
@@ -92,7 +89,7 @@ class ElasticConstitutiveRule : public PlasticConstitutiveRule {
 public:
   ElasticConstitutiveRule() {}
   virtual GptSlipData *getSlipData() const;
-  virtual void evolve(GptPlasticData*, GptSlipData*);
+  virtual void evolve(GptPlasticData*, GptSlipData*,double);
   virtual void complete(GptPlasticData*, GptSlipData*);
 };
   

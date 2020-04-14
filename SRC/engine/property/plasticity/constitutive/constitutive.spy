@@ -35,8 +35,6 @@ powerlawreg = Registration('Power Law',PlasticConstitutiveRulePtr,
                                                             tip=parameter.emptyTipString),
                                    parameter.FloatParameter('g0dot', 2.453e7,
                                                             tip=parameter.emptyTipString),
-                                   parameter.FloatParameter('dt', 1.0,
-                                                            tip=parameter.emptyTipString),
                                    parameter.FloatParameter('init_res', 1.706e8,
                                                             tip=parameter.emptyTipString)
                            ])
