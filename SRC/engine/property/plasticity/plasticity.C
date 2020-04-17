@@ -617,11 +617,18 @@ void Plasticity::begin_element(const CSubProblem *c,
       SmallMatrix lst = *lab_schmid_tensors[i];
       SmallMatrix lst_t = *lab_schmid_tensors[i];
       lst_t.transpose();
+      // std::cerr << "Incorporating constitutive data:" << std::endl; 
+      // std::cerr << lst << std::endl;
+      // std::cerr << lst_t << std::endl;
+      // std::cerr << sd->gptslipdata[gptdx]->dgamma_dtau[i] << std::endl;
       SmallMatrix dgds = (lst+lst_t)*(0.5*(sd->gptslipdata[gptdx]->dgamma_dtau[i]));
       // TODO: De-allocate this somewhere?  Use a smart pointer?
       dgamma_ds[i] = new SmallMatrix(dgds);
     }
 
+    // std::cerr << "Dgamma_Ds[0]:" << std::endl;
+    // std::cerr << *(dgamma_ds[0]) << std::endl;
+    
     // std::cerr << "Finished stupid transpose." << std::endl;
 
     SmallMatrix lp(3);
@@ -762,8 +769,9 @@ void Plasticity::begin_element(const CSubProblem *c,
 		  + (*(lab_schmid_tensors[alpha]))(m,k)*bsb_l(m,l,n,o);
 	      };
 
-    
-    // std::cerr << "Building bsb_t." << std::endl;
+    // std::cerr << "BSB_G:" << std::endl;
+    // std::cerr << bsb_g[0].as_smallmatrix() << std::endl;
+
     std::vector<Rank4_3DTensor> bsb_t(nslips);
     for(int alpha=0;alpha<nslips;++alpha)
       for(int i=0;i<3;++i)
@@ -776,6 +784,9 @@ void Plasticity::begin_element(const CSubProblem *c,
 		    0.5*lab_cijkl_(i,j,k,l)*bsb_g[alpha](k,l,n,o);
 		}
 
+    // std::cerr << "BSB_T:" << std::endl;
+    // std::cerr << bsb_t[0].as_smallmatrix() << std::endl;
+    
     // Member objects:  lab_schmid_tensors, nslips.
     // Slip increments std::vector<double> delta_g
     // Local objects -- c_mtx is std::vector<SmallMatrix*>, by slips.
@@ -819,6 +830,12 @@ void Plasticity::begin_element(const CSubProblem *c,
     SmallMatrix lhs_sm = lhs.as_smallmatrix();
     SmallMatrix rhs_sm = rhs.as_smallmatrix();
 
+    // std::cerr << "Linear algebra components:" << std::endl;
+    // std::cerr << "LHS:" << std::endl;
+    // std::cerr << lhs_sm << std::endl;
+    // std::cerr << "RHS:" << std::endl;
+    // std::cerr << rhs_sm << std::endl;
+    
     // std::cerr << "Calling the Q matrix solver." << std::endl;
     int retcode = lhs_sm.solve(rhs_sm);
     // std::cerr << "Back from the solver." << std::endl;
@@ -883,6 +900,7 @@ void Plasticity::begin_element(const CSubProblem *c,
 
     double fe_attau_d = sm_determinant3(fe_attau);
 
+    
     // std::cerr << "Fe_attau" << std::endl;
     // std::cerr << fe_attau << std::endl;
 
@@ -896,6 +914,7 @@ void Plasticity::begin_element(const CSubProblem *c,
 	  for(int q=0;q<3;++q) {
 	    ess_fei(k,l) += bsb_s(p,q,k,l)*fe_attau_i(q,p);
 	  }
+
     for(int i=0;i<3;++i)
       for(int j=0;j<3;++j)
 	for(int k=0;k<3;++k)
@@ -909,7 +928,7 @@ void Plasticity::begin_element(const CSubProblem *c,
 		w_mat(i,j,k,l) += wval/fe_attau_d;
 	      }
 
-    
+
     // Is it sufficiently symmetric for a Cijkl object?  SK says yes.
 
     // std::cerr << "Writing w_mat." << std::endl;
