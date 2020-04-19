@@ -252,7 +252,6 @@ public:
   virtual vtkSmartPointer<vtkAbstractCellLocator> get_locator();
   Coord3D *get_cellCenter(vtkIdType);
   Coord3D *get_cellNormal_Coord3D(vtkIdType);
-  void reset();
   void set_box(const Coord3D*);
   void set_box(const CRectangularPrism*);
   CRectangularPrism *get_box() const;

@@ -91,7 +91,6 @@ public:
   BoxWidgetLayer(GhostOOFCanvas*, const char*);
   %new Coord *get_cellCenter(int);
   %new Coord *get_cellNormal_Coord3D(int);
-  void reset();
   void set_box(CRectangularPrism*);
   CRectangularPrism *get_box();
   void set_pointSize(float);
