@@ -16,6 +16,7 @@
 #include "common/smallmatrix.h"
 #include "engine/corientation.h"
 #include "engine/ooferror.h"
+#include <limits>
 #include <math.h>
 
 COrientation::COrientation()
