@@ -61,15 +61,10 @@ void Rationalizer::rationalize(CSkeleton *skel, CSkelModTargets *targets,
     OOFRandomNumberGenerator r;
     oofshuffle(elements.begin(), elements.end(), r);
 
-#ifdef DEBUG
-    unsigned int nel = elements.size(); 
-#endif
-
     for(CSkeletonElementIterator it=elements.begin();
 	it!=elements.end() && !progress->stopped();
 	++it, ++count) 
       {
-	assert(elements.size() == nel);
 	if(!processed.count((*it)->getUid()) && (*it)->active(skel)) {
 	  assert(!(*it)->is_defunct());
 	  // fixer is either Rationalizer::findAndFix or
