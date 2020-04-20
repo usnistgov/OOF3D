@@ -16,8 +16,11 @@ Find a situation in which an error or warning dialog is hidden and see
 if replacing self.window.raise_() with self.window.present() in
 SubWindow.raise_window() in common/IO/GUI/subWindow.py fixes it.
 
+Check for an X11 connection before running anything that might fail if
+there is no connection, so that a useful error message can be
+provided.  The first failure may be in widgetFontSizes in gtktuils.py.
 
-Optimize categoryVolumes?
+Optimize categoryVolumes?  Use bins the way OOF2 does.
 
 Merge branches
   Lizhong's solvers.
