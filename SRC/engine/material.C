@@ -272,6 +272,7 @@ void Material::begin_element(const CSubProblem *subproblem,
 			     double time, const Element *el)
   const
 {
+  // std::cerr << "Material::begin_element starting." << std::endl;
   // LINSYS STEP 3
 
   // Called from Element::make_linear_system.  Iterates over this

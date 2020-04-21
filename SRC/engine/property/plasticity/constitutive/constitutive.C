@@ -83,6 +83,13 @@ void PowerLawConstitutiveRule::_evolve_gamma(PowerLawSlipData *plsd,
 
       plsd->delta_gamma[alpha] = delta_t*const_sign*g0dot*(pow(abs(ratio_alpha),m_inv));
 
+      std::cerr << "Constitutive rule: dt, delta-gamma:" << std::endl;
+      std::cerr << "Dt: " << delta_t << std::endl;
+      std::cerr << "alpha, delta_gamma: " << alpha << " , " << 
+	plsd->delta_gamma[alpha] << std::endl;
+      std::cerr << "Total res, tau_alpha: " << total_res[alpha] << " , " <<
+	plsd->tau_alpha[alpha] << std::endl;
+      
       res_inv = 1.0/total_res[alpha];
 
       // Derivative is reason
@@ -90,6 +97,7 @@ void PowerLawConstitutiveRule::_evolve_gamma(PowerLawSlipData *plsd,
 	
     }
     else {
+      std::cerr << "Constitutive rule: Trivial case." << std::endl;
       plsd->delta_gamma[alpha] = 0.0;
       plsd->dgamma_dtau[alpha] = 0.0;
     }

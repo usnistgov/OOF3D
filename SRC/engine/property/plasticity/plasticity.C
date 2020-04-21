@@ -271,6 +271,7 @@ void Plasticity::precompute(FEMesh* f) {
 void Plasticity::begin_element(const CSubProblem *c,
 			       double time, const Element *e) {
 
+  std::cerr << "Plasticity::begin_element starting." << std::endl;
   // LINSYS STEP 3, plastic version -- called from
   // Material::begin_element, we are in element scope, and need to run
   // our own gausspoint loop.  This class (or its subclasses) are
@@ -421,8 +422,8 @@ void Plasticity::begin_element(const CSubProblem *c,
     // Diagonal part, outside the node loop.
     f_attau(0,0) += 1.0; f_attau(1,1) += 1.0; f_attau(2,2) += 1.0;
     
-    // std::cerr << "Built the initial F matrix." << std::endl;
-    // std::cerr << f_attau << std::endl;
+    std::cerr << "Built the initial F matrix." << std::endl;
+    std::cerr << f_attau << std::endl;
     
     // f_attau is now populated for the current gausspoint.
 
@@ -451,6 +452,9 @@ void Plasticity::begin_element(const CSubProblem *c,
 	for (int k=0;k<3;++k)
 	  for (int l=0;l<3;++l)
 	    s_trial(i,j) += 0.5*lab_cijkl_(i,j,k,l)*elastic_estimate(k,l);
+
+    std::cerr << "S_trial:" << std::endl;
+    std::cerr << s_trial << std::endl;
 
     // std::cerr << "Have A matrix and trial stress." << std::endl;
     // At this point we have the A matrix and trial stress for this gpt.
@@ -493,6 +497,10 @@ void Plasticity::begin_element(const CSubProblem *c,
     for(int alpha=0;alpha<nslips;++alpha) {
       sd->gptslipdata[gptdx]->tau_alpha[alpha] = \
 	dot(s_trial, *lab_schmid_tensors[alpha]);
+      std::cerr << "Lab schmid tensor: " << std::endl;
+      std::cerr << *lab_schmid_tensors[alpha] << std::endl;
+      std::cerr << "Tau_alpha: " << std::endl;
+      std::cerr << sd->gptslipdata[gptdx]->tau_alpha[alpha] << std::endl;
     }
 
     // std::cerr << "Calling constitutive rule's evolve." << std::endl;

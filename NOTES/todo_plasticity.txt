@@ -4,6 +4,25 @@
   Closing in on plasticity, but starting to side-line a few 
 important issues.  They're collected here.
 
+
+  Done:  Time is now passed in to the stepper, the plasticity property
+         deduces dt at run-time.
+
+  Todo:
+
+  - The NR solver requires the residual to be computed -- 
+      double-check that the new equation class is actually doing this
+      in the right way.
+ 
+  - Double-check the caching, see if we're doing too much work.
+
+  - In the OOF NR solution process, there's a "choose_step_size"
+      operation that implements this "parabolic model with Armijo",
+      which looks like it will do multiple re-evaluations of the
+      stiffness matrix via the make_linear_system call chain -- this
+      is dangerous for plasticity, which accumulates plastic strain
+      when this call-chain is exercised.
+
   - In the equation construciton process, we're still not doing
       the geometrically-nonlinear piece, the equation is the standard
       OOF equation with a nonlinear constitutive rule.
@@ -16,18 +35,6 @@ important issues.  They're collected here.
   - There is an implicit assumption that there are only displacement
       DOFs in the subproblem.  This is likely to be true for real
       problems, but should maybe be more robust.
-
-  - In the OOF NR solution process, there's a "choose_step_size"
-      operation that implements this "parabolic model with Armijo",
-      which looks like it will do multiple re-evaluations of the
-      stiffness matrix via the make_linear_system call chain -- this
-      is dangerous for plasticity, which accumulates plastic strain
-      when this call-chain is exercised.
-
-  - We do not yet have a mechanism for passing the time through to 
-      the properties -- for plasticity, we will eventually want this
-      so that delta-t does not have to be specified as a parameter
-      in the user interface.
 
   - Possibly the property should be smarter about its statefullness,
       if it knew it was being evaluated "again" at a time-step, it
@@ -45,10 +52,6 @@ important issues.  They're collected here.
       if it makes sense to plasticity and Picard solvers.
       (TODO 1st: Review how Picard solvers work...)
 
-  - The NR solver requires the residual to be computed -- 
-      double-check that the new equation class is actually doing this
-      in the right way.
- 
   - We may have assumed that IncrementalStepper increments and the 
       requested outputs are commensurate, so we never have to take
       a partial step?  Check this.
@@ -62,5 +65,3 @@ important issues.  They're collected here.
       return stepOK?  Does it mean it reached the target, or just
       that it took a single step successfully?
  
-  - Double-check the caching, see if we're doing too much work.
-
