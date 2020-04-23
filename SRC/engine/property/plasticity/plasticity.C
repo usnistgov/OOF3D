@@ -1104,49 +1104,49 @@ FCCPlasticity::FCCPlasticity(PyObject *reg, const std::string &nm,
   n[0]=1.0; n[1]=1.0; n[2]=1.0;
   //
   s[0]=0.0; s[1]=1.0; s[2]=-1.0;
-  xtal_schmid_tensors[0]=_normalized_outer_product(n,s);
+  xtal_schmid_tensors[0]=_normalized_outer_product(s,n);
   //
   s[0]=-1.0; s[1]=0.0; s[2]=1.0;
-  xtal_schmid_tensors[1]=_normalized_outer_product(n,s);
+  xtal_schmid_tensors[1]=_normalized_outer_product(s,n);
   //
   s[0]=1.0; s[1]=-1.0; s[2]=0.0;
-  xtal_schmid_tensors[2]=_normalized_outer_product(n,s);
+  xtal_schmid_tensors[2]=_normalized_outer_product(s,n);
   //
   // 1 -1 -1 planes
   n[0]=1.0; n[1]=-1.0; n[2]=-1.0;
   //
   s[0]=0.0; s[1]=-1.0; s[2]=1.0;
-  xtal_schmid_tensors[3]=_normalized_outer_product(n,s);
+  xtal_schmid_tensors[3]=_normalized_outer_product(s,n);
   //
   s[0]=-1.0; s[1]=0.0; s[2]=-1.0;
-  xtal_schmid_tensors[4]=_normalized_outer_product(n,s);
+  xtal_schmid_tensors[4]=_normalized_outer_product(s,n);
   //
   s[0]=1.0; s[1]=1.0; s[2]=0.0;
-  xtal_schmid_tensors[5]=_normalized_outer_product(n,s);
+  xtal_schmid_tensors[5]=_normalized_outer_product(s,n);
   //
   // -1 1 -1 planes
   n[0]=-1.0; n[1]=1.0; n[2]=-1.0;
   //
   s[0]=0.0; s[1]=1.0; s[2]=1.0;
-  xtal_schmid_tensors[6]=_normalized_outer_product(n,s);
+  xtal_schmid_tensors[6]=_normalized_outer_product(s,n);
   //
   s[0]=1.0; s[1]=0.0; s[2]=-1.0;
-  xtal_schmid_tensors[7]=_normalized_outer_product(n,s);
+  xtal_schmid_tensors[7]=_normalized_outer_product(s,n);
   //
   s[0]=-1.0; s[1]=-1.0; s[2]=0.0;
-  xtal_schmid_tensors[8]=_normalized_outer_product(n,s);
+  xtal_schmid_tensors[8]=_normalized_outer_product(s,n);
   //
   // -1 -1 1 planes
   n[0]=-1.0; n[1]=-1.0; n[2]=1.0;
   //
   s[0]=0.0; s[1]=-1.0; s[2]=-1.0;
-  xtal_schmid_tensors[9]=_normalized_outer_product(n,s);
+  xtal_schmid_tensors[9]=_normalized_outer_product(s,n);
   //
   s[0]=1.0; s[1]=0.0; s[2]=1.0;
-  xtal_schmid_tensors[10]=_normalized_outer_product(n,s);
+  xtal_schmid_tensors[10]=_normalized_outer_product(s,n);
   //
   s[0]=-1.0; s[1]=1.0; s[2]=0.0;
-  xtal_schmid_tensors[11]=_normalized_outer_product(n,s);
+  xtal_schmid_tensors[11]=_normalized_outer_product(s,n);
 
 }
 

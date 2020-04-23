@@ -71,6 +71,7 @@ void PowerLawConstitutiveRule::_evolve_gamma(PowerLawSlipData *plsd,
   double res_inv = 0.0;
 
   for(int alpha=0;alpha<slip_systems;++alpha) {
+    // Total resistance.  It's the current (possibly-hardened) CRSS.
     if (total_res[alpha] >= 1.0) {
       ratio_alpha = plsd->tau_alpha[alpha]/total_res[alpha];
 
@@ -83,8 +84,13 @@ void PowerLawConstitutiveRule::_evolve_gamma(PowerLawSlipData *plsd,
 
       plsd->delta_gamma[alpha] = delta_t*const_sign*g0dot*(pow(abs(ratio_alpha),m_inv));
 
-      std::cerr << "Constitutive rule: dt, delta-gamma:" << std::endl;
+      std::cerr << "Constitutive rule:" << std::endl;
       std::cerr << "Dt: " << delta_t << std::endl;
+      std::cerr << "const_sign: " << const_sign << std::endl;
+      std::cerr << "g0dot: " << g0dot << std::endl;
+      std::cerr << "m_inv: " << m_inv << std::endl;
+      std::cerr << "ratio_alpha: " << ratio_alpha << std::endl;
+      std::cerr << "Power term: " << pow(abs(ratio_alpha),m_inv) << std::endl;
       std::cerr << "alpha, delta_gamma: " << alpha << " , " << 
 	plsd->delta_gamma[alpha] << std::endl;
       std::cerr << "Total res, tau_alpha: " << total_res[alpha] << " , " <<
