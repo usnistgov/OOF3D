@@ -36,7 +36,6 @@ class PowerLawSlipData : public GptSlipData {
 public:
   PowerLawSlipData(int slips, double res);
   std::vector<double> res;         // Initial slip resistance.
-  std::vector<double> tau_alpha;   // Resolved shear stress.
 };
 
 class PlasticConstitutiveRule {
