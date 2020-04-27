@@ -1371,8 +1371,6 @@ class MatrixSolverWrapper(object):
     def solve(self, matrix, rhs, solution):
         print >> sys.stderr, "SCPY-MS:------> MatrixSolverWrapper.solve..."
         print >> sys.stderr, "SCPY-MS:------>", self.solver
-        print >> sys.stderr, "SCPY-MS:------> matrix: ", matrix
-        print >> sys.stderr, "SCPY-MS:------> rhs: ", rhs
         niters, residual = self.solver.solve(matrix, rhs, solution)
         self.subprobctxt.solverStats.matrixSolution(
             matrix.nrows(), niters, residual)

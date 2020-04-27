@@ -43,6 +43,11 @@ void solveCG(const SparseMat &A, const DoubleVec &rhs,
 	    const PreconditionerBase &pc, int &maxiter, double &tolerance,
 	    DoubleVec &x)
 {
+  std::cerr << "CMatrixMethids solveCG runnning." << std::endl;
+  std::cerr << "A: " << std::endl;
+  std::cerr << A << std::endl;
+  std::cerr << "rhs: " << std::endl;
+  std::cerr << rhs << std::endl;
   CG(A, x, rhs, pc, maxiter, tolerance);
 }
 

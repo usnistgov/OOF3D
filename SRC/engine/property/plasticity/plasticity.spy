@@ -27,9 +27,9 @@ reg = PropertyRegistration(
     'Mechanical:Plasticity:FCCPlasticity', FCCPlasticity,
     "ooflib.SWIG.engine.property.plasticity.plasticity",17,
     [anisocijkl.CubicCijklParameter(
-        'cijkl', anisocijkl.CubicRank4TensorCij(c11=1000.0,
-                                                c12=500.0,
-                                                c44=250.0),
+        'cijkl', anisocijkl.CubicRank4TensorCij(c11=10000.0,
+                                                c12=5000.0,
+                                                c44=2500.0),
         tip=parameter.emptyTipString),
      parameter.RegisteredParameter('constitutive rule',
                                    constitutive.PlasticConstitutiveRule,
