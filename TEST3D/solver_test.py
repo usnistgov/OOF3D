@@ -2383,10 +2383,10 @@ dynamic_thermal_quadratic_set = [
     # OOF_ThermalDiffusionTimeSteppers_Quadratic("CNdirect") must be
     # the first OOF_ThermalDiffusionTimeSteppers test.
 
-    # OOF_ThermalDiffusionTimeSteppers_Quadratic("CNdirect", tol=1.e-5),
-    # OOF_ThermalDiffusionTimeSteppers_Quadratic("SS22", tol=1.e-5),
-    # OOF_ThermalDiffusionTimeSteppers_Quadratic("CN", tol=1.e-5),
-    # OOF_ThermalDiffusionTimeSteppers_Quadratic("BE", tol=1.e-3),
+    OOF_ThermalDiffusionTimeSteppers_Quadratic("CNdirect", tol=1.e-5),
+    OOF_ThermalDiffusionTimeSteppers_Quadratic("SS22", tol=1.e-5),
+    OOF_ThermalDiffusionTimeSteppers_Quadratic("CN", tol=1.e-5),
+    OOF_ThermalDiffusionTimeSteppers_Quadratic("BE", tol=1.e-3),
 
     ## TODO: These take a very long time to run.  Reduce endtime.
     OOF_ThermalDiffusionTimeSteppers_Quadratic("RK4", tol=1.e-5, endtime=0.2, nlines=12),

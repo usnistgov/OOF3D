@@ -20,6 +20,8 @@ using a new Material Constants branch of the Outputs tree.
 
 More than one type of output can be printed on one line of an output
 file, by using the Concatenate output.
+
+Removed a debugging line that is rejected by new compilers.
   
 3.2.2
 
