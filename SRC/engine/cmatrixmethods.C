@@ -55,6 +55,11 @@ void solveBiCG(const SparseMat &A, const DoubleVec &rhs,
 	      const PreconditionerBase &pc, int &maxiter, double &tolerance,
 	      DoubleVec &x)
 {
+  std::cerr << "CMatrixMethids solveBiCG runnning." << std::endl;
+  std::cerr << "A: " << std::endl;
+  std::cerr << A << std::endl;
+  std::cerr << "rhs: " << std::endl;
+  std::cerr << rhs << std::endl;
   BiCG(A, x, rhs, pc, maxiter, tolerance);
 }
 
@@ -62,6 +67,11 @@ void solveBiCGStab(const SparseMat &A, const DoubleVec &rhs,
 		  const PreconditionerBase &pc, int &maxiter, double &tolerance,
 		  DoubleVec &x)
 {
+  std::cerr << "CMatrixMethids solveBiCGStab runnning." << std::endl;
+  std::cerr << "A: " << std::endl;
+  std::cerr << A << std::endl;
+  std::cerr << "rhs: " << std::endl;
+  std::cerr << rhs << std::endl;
   BiCGSTAB(A, x, rhs, pc, maxiter, tolerance);
 }
 
