@@ -87,6 +87,14 @@ class PixelTest(unittest.TestCase):
 #   Point, Brush, Rectangle, Circle, Ellipse, Color, Burn.
 # Selection modifiers from the same menu, Clear, Undo, Redo, Invert
 
+# Some of the tests here were failing on some systems when using the
+# 100 100x100 jpeg files in ms_data/jpeg.  That was because there are
+# different jpeg decompression algorithms, and some systems switched
+# algorithms.  Any tests that relied on particular voxel values (eg,
+# anything that selected voxels by color) would fail.  So we just
+# converted ms_data/jpeg to PNG and stored it in ms_data/megavoxel.
+# You can go back to the old tests by changing 'megavoxel' to 'jpeg'
+# in the next line.
 imagename = 'megavoxel'
 sourcename = imagename + ':' + imagename
 
@@ -202,7 +210,7 @@ class Direct_Pixel_Selection(PixelTest):
                 point=iPoint(27,24,99),
                 range=DeltaRGB(delta_red=0.3,delta_green=0.3,delta_blue=0.3),
                 operator=Select()))
-        self.assertEqual(self.selectionSize(), 314177) #315647
+        self.assertEqual(self.selectionSize(), 314177)
 
     @memorycheck.check(imagename)
     def Burn(self):
@@ -214,7 +222,7 @@ class Direct_Pixel_Selection(PixelTest):
                         color_space_norm='L1',
                         next_nearest=False,
                         operator=Select()))
-        self.assertEqual(self.selectionSize(), 349556) # 348922
+        self.assertEqual(self.selectionSize(), 349556)
         # Click on same blob with smaller flammabilities
         OOF.VoxelSelection.Select(
             source=sourcename,
@@ -224,7 +232,7 @@ class Direct_Pixel_Selection(PixelTest):
                         color_space_norm='L1',
                         next_nearest=False,
                         operator=Select()))
-        self.assertEqual(self.selectionSize(), 281880) # 280340
+        self.assertEqual(self.selectionSize(), 281880)
         # Click on different blob
         OOF.VoxelSelection.Select(
             source=sourcename,
@@ -234,7 +242,7 @@ class Direct_Pixel_Selection(PixelTest):
                         color_space_norm='L1',
                         next_nearest=False,
                         operator=Select()))
-        self.assertEqual(self.selectionSize(), 4237) # 4186
+        self.assertEqual(self.selectionSize(), 4237)
 
     # Then, mechanical ones -- Undo, Redo, Invert.
 

@@ -290,7 +290,6 @@ class OOF_Image(unittest.TestCase):
                                depth_in_pixels=100)
         OOF.File.Load.Image(
             filenames=ThreeDImageDirectory(
-                # directory=reference_file("ms_data","jpeg"),
                 directory=reference_file("ms_data","megavoxel"),
                 sort=NumericalOrder()),
             microstructure="load_test",
@@ -301,7 +300,6 @@ class OOF_Image(unittest.TestCase):
         # self.assert_("jpeg" in ms_images)
         self.assert_("megavoxel" in ms_images)
         # Check a few pixel values
-        #im = imagecontext.imageContexts['load_test:jpeg'].getObject()
         im = imagecontext.imageContexts['load_test:megavoxel'].getObject()
         self.assertEqual(im[primitives.iPoint(0,0,0)],
                          color.RGBColor(0.054901960784313725,
@@ -311,24 +309,27 @@ class OOF_Image(unittest.TestCase):
                          color.RGBColor(0.054901960,
                                         0.0,
                                         0.99215686))
-        # This voxel is selected in Direct_Pixel_Selection.Color in
-        # pixel_test.py on Mac but not Linux.  Apparently Mac and
-        # Linux use different jpeg libraries which decompress images
-        # differently. WTF?
-        # The problem is avoided if vtk on Mac is
-        # compiled with USE_SYSTEM_JPEG=OFF
+
+        # This test used to use the images in ms_data/jpeg.  Tests in
+        # pixel_test.py that also used to use those images started
+        # failing on either Mac or Linux (I forget which) when a
+        # system update changed the jpeg library. Apparently the jpeg
+        # standard isn't standard, and different libraries can
+        # decompress files differently. The test below picked out a
+        # single voxel that was read differently on the two systems.
+        # We "solved" the problem by avoiding it and switching to png
+        # files.
         self.assertEqual(im[primitives.iPoint(16, 9, 99)],
-                         # Linux value
+                         # Linux value in jpg
                          # color.RGBColor(
                          #     0.3058823529411765,
                          #     0.9921568627450981,
                          #     0.7215686274509804)
-                         # Mac value
+                         # Mac value in jpg
                          # color.RGBColor(
                          #     0.2901960784313726,
                          #     1.0,
                          #     0.7372549019607844)
-
                          # After converting to PNG
                          color.RGBColor(
                              0.2901960784313726,
