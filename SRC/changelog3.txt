@@ -13,6 +13,12 @@
  * oof_manager@nist.gov. 
  */
 
+3.2.4
+
+Changed some of the regression tests so that they use png files
+instead of jpeg.  Jpeg libraries aren't standard, apparently, and
+tests that relied on voxel values weren't portable.
+
 3.2.3
 
 Almost all material properties can now be included in output files
