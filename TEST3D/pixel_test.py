@@ -86,12 +86,16 @@ class PixelTest(unittest.TestCase):
 # OOF.Toolbox.Pixel_Select items:
 #   Point, Brush, Rectangle, Circle, Ellipse, Color, Burn.
 # Selection modifiers from the same menu, Clear, Undo, Redo, Invert
+
+imagename = 'megavoxel'
+sourcename = imagename + ':' + imagename
+
 class Direct_Pixel_Selection(PixelTest):
     def setUp(self):
-        PixelTest.setUp(self, 'jpeg')
+        PixelTest.setUp(self, imagename)
         OOF.Microstructure.Create_From_ImageFile(
             filenames=ThreeDImageDirectory(
-                directory=reference_file("ms_data","jpeg"),
+                directory=reference_file("ms_data",imagename),
                 sort=NumericalOrder()),
             microstructure_name=automatic,
             height=automatic, width=automatic, depth=automatic)
@@ -102,43 +106,43 @@ class Direct_Pixel_Selection(PixelTest):
     # # Select circle, rectangle, ellipse, point.
     # def Circle(self):
     #     OOF.Graphics_1.Toolbox.Pixel_Select.Circle(
-    #         source="jpeg:jpeg",
+    #         source=sourcename,
     #         points=[Point(66.0,55.0), Point(87.6,41.8)],
     #         shift=0, ctrl=0)
-    #     ps = pixelselection.pixelselectionWhoClass['jpeg']
+    #     ps = pixelselection.pixelselectionWhoClass[imagename]
     #     # Size should be 2000 pixels.
     #     self.assertEqual(ps.getObject().len(), 2000)
 
     def select1(self):
         OOF.VoxelSelection.Select(
-            source='jpeg:jpeg',
+            source=sourcename,
             method=PointSelector(point=iPoint(31,49,99),
                                  operator=Select()))
-    @memorycheck.check("jpeg")
+    @memorycheck.check(imagename)
     def Point(self):
         self.select1()
         # Size should be 1 pixel, of course.
         self.assertEqual(self.selectionSize(), 1)
         self.assert_(self.isSelected(31,49,99))
 
-    @memorycheck.check("jpeg")
+    @memorycheck.check(imagename)
     def PointRotated(self):
         OOF.Graphics_1.Settings.Camera.View(
             view=View(Coord(-111.325,205.675,223.124), Coord(50,50,50),
                       Coord(0.211865,0.81662,-0.536885), 30, [], 0))
         OOF.VoxelSelection.Select(
-            source='jpeg:jpeg',
+            source=sourcename,
             method=PointSelector(point=iPoint(0, 51, 51),
                                  operator=Select()))
         self.assertEqual(self.selectionSize(), 1)
         self.assert_(self.isSelected(0,51,51))
 
     # Makes and clears a selection.
-    @memorycheck.check("jpeg")
+    @memorycheck.check(imagename)
     def Clear(self):
         self.select1()
         self.assertNotEqual(self.selectionSize(), 0)
-        OOF.VoxelSelection.Clear(microstructure='jpeg')
+        OOF.VoxelSelection.Clear(microstructure=imagename)
         self.assertEqual(self.selectionSize(), 0)
 
     # Remining direct selection methods --
@@ -147,7 +151,7 @@ class Direct_Pixel_Selection(PixelTest):
     # # Brush points were recorded from an actual user session.
     # def Brush(self):
     #     OOF.Graphics_1.Toolbox.Pixel_Select.Brush(
-    #         source='jpeg:jpeg',
+    #         source=sourcename,
     #         style=CircleBrush(radius=2.0),
     #         points=[Point(19.12,61.2829), Point(19.642,61.2829),
     #                 Point(20.1639,61.2829), Point(21.2078,61.2829),
@@ -170,73 +174,73 @@ class Direct_Pixel_Selection(PixelTest):
     #                 Point(37.9106,60.239), Point(38.4325,60.239), 
     #                 Point(38.9545,60.239), Point(39.4765,60.239), 
     #                 Point(39.9984,60.239)], shift=0, ctrl=0)
-    #     ps =  pixelselection.pixelselectionWhoClass['jpeg']
+    #     ps =  pixelselection.pixelselectionWhoClass[imagename]
     #     self.assertEqual(ps.getObject().len(), 94)
 
 
     # def Rectangle(self):
     #     OOF.Graphics_1.Toolbox.Pixel_Select.Rectangle(
-    #         source='jpeg:jpeg',
+    #         source=sourcename,
     #         points=[Point(23.3,57.0), Point(123.0,24.75)],
     #         shift=0, ctrl=0)
-    #     ps = pixelselection.pixelselectionWhoClass['jpeg']
+    #     ps = pixelselection.pixelselectionWhoClass[imagename]
     #     self.assertEqual(ps.getObject().len(), 3434)
         
     # def Ellipse(self):
     #     OOF.Graphics_1.Toolbox.Pixel_Select.Ellipse(
-    #         source='jpeg:jpeg',
+    #         source=sourcename,
     #         points=[Point(23.3,57.0), Point(123.0,24.75)],
     #         shift=0, ctrl=0)
-    #     ps = pixelselection.pixelselectionWhoClass['jpeg']
+    #     ps = pixelselection.pixelselectionWhoClass[imagename]
     #     self.assertEqual(ps.getObject().len(), 2526)
 
-    @memorycheck.check("jpeg")
+    @memorycheck.check(imagename)
     def Color(self):
         OOF.VoxelSelection.Select(
-            source='jpeg:jpeg',
+            source=sourcename,
             method=ColorSelector(
                 point=iPoint(27,24,99),
                 range=DeltaRGB(delta_red=0.3,delta_green=0.3,delta_blue=0.3),
                 operator=Select()))
-        self.assertEqual(self.selectionSize(), 315647)
+        self.assertEqual(self.selectionSize(), 314177) #315647
 
-    @memorycheck.check("jpeg")
+    @memorycheck.check(imagename)
     def Burn(self):
         OOF.VoxelSelection.Select(
-            source='jpeg:jpeg',
+            source=sourcename,
             method=Burn(point=iPoint(51,49,99),
                         local_flammability=0.1,
                         global_flammability=0.2,
                         color_space_norm='L1',
                         next_nearest=False,
                         operator=Select()))
-        self.assertEqual(self.selectionSize(), 348922)
+        self.assertEqual(self.selectionSize(), 349556) # 348922
         # Click on same blob with smaller flammabilities
         OOF.VoxelSelection.Select(
-            source='jpeg:jpeg',
+            source=sourcename,
             method=Burn(point=iPoint(50,51,99),
                         local_flammability=0.05,
                         global_flammability=0.1,
                         color_space_norm='L1',
                         next_nearest=False,
                         operator=Select()))
-        self.assertEqual(self.selectionSize(), 280340)
+        self.assertEqual(self.selectionSize(), 281880) # 280340
         # Click on different blob
         OOF.VoxelSelection.Select(
-            source='jpeg:jpeg',
+            source=sourcename,
             method=Burn(point=iPoint(91,48,99),
                         local_flammability=0.05,
                         global_flammability=0.1,
                         color_space_norm='L1',
                         next_nearest=False,
                         operator=Select()))
-        self.assertEqual(self.selectionSize(), 4186)
+        self.assertEqual(self.selectionSize(), 4237) # 4186
 
     # Then, mechanical ones -- Undo, Redo, Invert.
 
-    @memorycheck.check("jpeg")
+    @memorycheck.check(imagename)
     def Undo(self):
-        ps = pixelselection.pixelselectionWhoClass['jpeg']
+        ps = pixelselection.pixelselectionWhoClass[imagename]
         self.assertEqual(self.selectionSize(), 0)
         self.assert_(not ps.undoable())
         ps_0_id = id(ps.getObject())
@@ -245,30 +249,30 @@ class Direct_Pixel_Selection(PixelTest):
         ps_1_id = id(ps.getObject())
         self.assertNotEqual(ps_0_id, ps_1_id)
         OOF.VoxelSelection.Undo(
-            microstructure="jpeg")
+            microstructure=imagename)
         ps_2_id = id(ps.getObject())
         self.assertEqual(ps_0_id, ps_2_id)
         self.assertEqual(self.selectionSize(), 0)
 
-    @memorycheck.check("jpeg")
+    @memorycheck.check(imagename)
     def Redo(self):
-         ps = pixelselection.pixelselectionWhoClass['jpeg']
+         ps = pixelselection.pixelselectionWhoClass[imagename]
          ps_0_id = id(ps.getObject())
          self.select1()
          ps_1_id = id(ps.getObject())
          OOF.VoxelSelection.Undo(
-             microstructure="jpeg")
+             microstructure=imagename)
          self.assert_(ps.redoable())
          OOF.VoxelSelection.Redo(
-             microstructure="jpeg")
+             microstructure=imagename)
          self.assertEqual(id(ps.getObject()), ps_1_id)
          self.assert_(not ps.redoable())
 
-    @memorycheck.check("jpeg")
+    @memorycheck.check(imagename)
     def Invert(self):
          self.select1()
          OOF.VoxelSelection.Invert(
-             microstructure="jpeg")
+             microstructure=imagename)
          self.assertEqual(self.selectionSize(), 999999)
          
 # Direct_Pixel_Selection2 is just like Direct_Pixel_Selection, but it
@@ -347,7 +351,7 @@ color_counts = {
 # Pixel group creation/manipulation -- assume that selections are
 # possible.  Also should test the autogroup from the image menu.
 # These tests use the 5color image, which autogroups reasonably
-# cleanly, rather than the more difficult jpeg.
+# cleanly, rather than the more difficult megapixel.
 class Pixel_Groups(PixelTest):
     def setUp(self):
         global microstructure

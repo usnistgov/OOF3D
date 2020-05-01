@@ -290,16 +290,19 @@ class OOF_Image(unittest.TestCase):
                                depth_in_pixels=100)
         OOF.File.Load.Image(
             filenames=ThreeDImageDirectory(
-                directory=reference_file("ms_data","jpeg"),
+                # directory=reference_file("ms_data","jpeg"),
+                directory=reference_file("ms_data","megavoxel"),
                 sort=NumericalOrder()),
             microstructure="load_test",
             height=automatic, width=automatic, depth=automatic)
         ms = getMicrostructure("load_test")
         ms_images = ms.imageNames()
         self.assertEqual(len(ms_images),1)
-        self.assert_("jpeg" in ms_images)
+        # self.assert_("jpeg" in ms_images)
+        self.assert_("megavoxel" in ms_images)
         # Check a few pixel values
-        im = imagecontext.imageContexts['load_test:jpeg'].getObject()
+        #im = imagecontext.imageContexts['load_test:jpeg'].getObject()
+        im = imagecontext.imageContexts['load_test:megavoxel'].getObject()
         self.assertEqual(im[primitives.iPoint(0,0,0)],
                          color.RGBColor(0.054901960784313725,
                                         0.996078431372549,
@@ -312,19 +315,25 @@ class OOF_Image(unittest.TestCase):
         # pixel_test.py on Mac but not Linux.  Apparently Mac and
         # Linux use different jpeg libraries which decompress images
         # differently. WTF?
-        ## TODO: Check that problem is avoided if vtk on Mac is
-        ## compiled with USE_SYSTEM_JPEG=OFF
+        # The problem is avoided if vtk on Mac is
+        # compiled with USE_SYSTEM_JPEG=OFF
         self.assertEqual(im[primitives.iPoint(16, 9, 99)],
                          # Linux value
-                         color.RGBColor(
-                             0.3058823529411765,
-                             0.9921568627450981,
-                             0.7215686274509804)
+                         # color.RGBColor(
+                         #     0.3058823529411765,
+                         #     0.9921568627450981,
+                         #     0.7215686274509804)
                          # Mac value
                          # color.RGBColor(
                          #     0.2901960784313726,
                          #     1.0,
                          #     0.7372549019607844)
+
+                         # After converting to PNG
+                         color.RGBColor(
+                             0.2901960784313726,
+                             1.0,
+                             0.7372549019607844)
         )
                                         
     ## Check that an Image saved in a Microstructure data file is
