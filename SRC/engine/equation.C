@@ -155,10 +155,11 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 				       const CNonlinearSolver *nlsolver,
 				       LinearizedSystem &linsys) const
 {
-  // std::cerr << "DeformedDivergenceEquation::make_linear_system" << std::endl;
+  std::cerr << "DeformedDivergenceEquation::make_linear_system" << std::endl;
   // LINSYS STEP 5, called from Material::make_linear_system.
   double weight = gpt.weight();
-
+  std::cerr << "Gauss point weight is " << weight << std::endl;
+  
   // TODO: The plasticity stuff is quasi-static, and Picard-like, so
   // this info is probably not relevant, but in the general case, this
   // stuff should be right.
@@ -167,18 +168,26 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 
   for(CleverPtr <ElementFuncNodeIterator> mu (element->funcnode_iterator());
       !mu->end(); ++(*mu)) {
-    // std::cerr << "Start of node loop." << std::endl;
+    std::cerr << "Start of node loop." << std::endl;
     double sf = mu->shapefunction(gpt);
     double dsf[DIM];
     for(int i=0;i<DIM;++i) {
       dsf[i] = mu->displacedsfderiv(element,i,gpt,subproblem->mesh);
     }
-    // std::cerr << "Starting equation component loop." << std::endl;
+    std::cerr << "Shape function derivs:" << std::endl;
+    for(int dsfdx=0;dsfdx<DIM;++dsfdx) {
+      std::cerr << dsfdx << " : " << dsf[dsfdx] << std::endl;
+    }
+    std::cerr << "vs. regular derivs:" << std::endl;
+    for(int dsfdx=0;dsfdx<DIM;++dsfdx) {
+      std::cerr << dsfdx << " : " << mu->dshapefunction(dsfdx,gpt) << std::endl;
+    }
+    std::cerr << "Starting equation component loop." << std::endl;
     for(int eqcomp=0; eqcomp<dim(); ++eqcomp) {
-      // std::cerr << "Start of component loop" << std::endl;
+      std::cerr << "Start of equation component loop" << std::endl;
       int global_row = nodaleqn( *mu->funcnode(), eqcomp)->ndq_index();
 
-      // std::cerr << "Row " << global_row << std::endl;
+      std::cerr << "Row " << global_row << std::endl;
       
       // This scope is a particular row of the global matrix.
 
@@ -189,6 +198,8 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 
       if( !(*fi).second->k_clean ) {
 	const SmallSparseMatrix &k = (*fi).second->kMatrix;
+	std::cerr << "Flux matrix: " << std::endl;
+	std::cerr << k << std::endl;
 	for(int ldof=0; ldof<element->ndof(); ++ldof) {
 	  // DOFmap maps local indices to global.
 	  int global_col = dofmap[ldof];
@@ -204,8 +215,9 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 	  }
 
 	  if( !v_is_zero) {
-	    // std::cerr << "Hitting the stiffness matrix: Row "
-	    // << global_row << ", column " << global_col << std::endl;
+	    std::cerr << "Hitting the stiffness matrix: Row "
+		      << global_row << ", column " << global_col
+		      << ", value " << v*weight << std::endl;
 	    linsys.insertK(global_row, global_col, v*weight);
 	    if(needJacobian) 
 	      linsys.insertJ(global_row, global_col, v*weight);

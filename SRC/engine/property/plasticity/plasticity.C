@@ -37,6 +37,7 @@
 // TODO: Should be settable in the solver somewhere.
 #define TOLERANCE 0.001
 #define ITER_MAX 20
+#define OLD_S_STAR_SIZE_LIMIT 0.001
 
 // Utility function -- "deflates" a 3x3 SmallMatrix, converting
 // it to a 9x1 SmallMatrix.  Should ultimately be 6x6, really.
@@ -277,7 +278,9 @@ void Plasticity::begin_element(const CSubProblem *c,
   // our own gausspoint loop.  This class (or its subclasses) are
   // responsible for managing the per-gausspoint data objects.
 
-  // std::cerr << "Inside Plasticity::begin_element." << std::endl;
+  std::cerr << "Inside Plasticity::begin_element." << std::endl;
+  std::cerr << "Element: " << std::endl;
+  std::cerr << *e << std::endl;
 
   ElementData *ed = e->getDataByName("plastic_data");
   ElementData *eds = e->getDataByName("slip_data");
@@ -497,13 +500,13 @@ void Plasticity::begin_element(const CSubProblem *c,
     for(int alpha=0;alpha<nslips;++alpha) {
       sd->gptslipdata[gptdx]->tau_alpha[alpha] = \
 	dot(s_trial, *lab_schmid_tensors[alpha]);
-      std::cerr << "Lab schmid tensor: " << std::endl;
-      std::cerr << *lab_schmid_tensors[alpha] << std::endl;
-      std::cerr << "Tau_alpha: " << std::endl;
-      std::cerr << sd->gptslipdata[gptdx]->tau_alpha[alpha] << std::endl;
+      // std::cerr << "Lab schmid tensor: " << std::endl;
+      // std::cerr << *lab_schmid_tensors[alpha] << std::endl;
+      // std::cerr << "Tau_alpha: " << std::endl;
+      // std::cerr << sd->gptslipdata[gptdx]->tau_alpha[alpha] << std::endl;
     }
 
-    // std::cerr << "Calling constitutive rule's evolve." << std::endl;
+    std::cerr << "Initial call constitutive rule's evolve." << std::endl;
     // Initial call to evolve -- this populates the delta_gamma and
     // dgamma_dtau from s_trial..
     rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx],delta_t);
@@ -527,6 +530,8 @@ void Plasticity::begin_element(const CSubProblem *c,
       }
 
       // Call evolve, get back new delta_gamma and dgamma_dtau values.
+      std::cerr << "Calling evolve in the convergence loop." << std::endl;
+      std::cerr << "Iteration count is " << icount << std::endl;
       rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx],delta_t);
       
       // TODO optimize:  Precompute gtmtx.  This transpose business is awful.
@@ -582,8 +587,12 @@ void Plasticity::begin_element(const CSubProblem *c,
 
       pd->gptdata[gptdx]->s_star = new_s_star;
 
-      if ( ((new_s_star_size - old_s_star_size)/old_s_star_size) < TOLERANCE)
+      if (old_s_star_size < OLD_S_STAR_SIZE_LIMIT)
 	done = true;
+      else 
+	if ( ((new_s_star_size - old_s_star_size)/old_s_star_size) < TOLERANCE)
+	  done = true;
+      
       icount+=1;
       if (icount>ITER_MAX)
 	done = true;
@@ -596,7 +605,8 @@ void Plasticity::begin_element(const CSubProblem *c,
       sd->gptslipdata[gptdx]->tau_alpha[alpha] =			\
 	dot(pd->gptdata[gptdx]->s_star, *lab_schmid_tensors[alpha]);
     }
-    
+
+    std::cerr << "Final call to evolve before completion." << std::endl;
     rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx],delta_t);
 
     // std::cerr << "Calling rule->complete." << std::endl;
@@ -939,8 +949,8 @@ void Plasticity::begin_element(const CSubProblem *c,
 
     // Is it sufficiently symmetric for a Cijkl object?  SK says yes.
 
-    // std::cerr << "Writing w_mat." << std::endl;
-    // std::cerr << w_mat.as_smallmatrix() << std::endl;
+    std::cerr << "Writing w_mat." << std::endl;
+    std::cerr << w_mat.as_smallmatrix() << std::endl;
     pd->gptdata[gptdx]->w_mat = w_mat;
     // std::cerr << "Bottom of the gausspoint loop." << std::endl;
   } // End of the gausspoint loop (!).
