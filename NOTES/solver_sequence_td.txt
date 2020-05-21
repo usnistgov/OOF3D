@@ -131,13 +131,14 @@ time, we have the local DOF map, which is a std::vector<int>.
 
   Iterates over active fluxes.  For each flux, it builds a 
 SmallSystem object, which consists of three SmallMatrix objects, 
-one for each degree of time-dependence (0, 1, and 2).  Then,
-for all the properties which contribute to the active flux,
-calls property->flux_matrix, and then calls property->flux_offset.
-The SmallSystem object is then put in the fluxdata map,
-indexed by the flux iterator which is looping over active fluxes.
+one for each degree of time-dependence (0, 1, and 2).  
 
-  Then iterates over equations to make the direct contributions.
+  Then, for all the properties which contribute to the active flux,
+calls property->flux_matrix, and then calls property->flux_offset.
+The SmallSystem object is then put in the fluxdata map, indexed by the
+flux iterator which is looping over active fluxes.
+
+  Then it iterates over equations to make the direct contributions.
 For each equation, build another SmallSystem object, find all
 the properties from the eqnpropmap, and for each property,
 call force_matrix and force_offset to populate the equation 
