@@ -72,6 +72,10 @@ public:
   // "solve" is called must be square.  Return value is 0 on success.
   int solve(SmallMatrix&);
 
+  // Manual determinant and inverse 3x3 SmallMatrix. TODO: 3x3 subclass?
+  SmallMatrix invert3() const;
+  double det3() const;
+  
   // Perform a local inverse, assuming that the matrix is symmetric.
   int symmetric_invert();
 

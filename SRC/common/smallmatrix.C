@@ -176,7 +176,7 @@ extern "C" {
 	      const double *b, const unsigned int *ldb,
 	      const double *beta,
 	      double *c, const unsigned int *ldc);
-};
+}
 
 
 // This routine modifies the contents both of the "host" matrix
@@ -245,6 +245,88 @@ int SmallMatrix::symmetric_invert() {
   }
 
 }
+
+// Utility function -- inverts a 3x3 SmallMatrix "manually".
+// TODO: Make this a sub-class of SmallMatrix class, which should
+// use dgetri function, to avoid the determinant?  Our determinants
+// are near unity, so we are probably OK.
+// SmallMatrix has a "symmetric_invert" routine already, but that
+// requires the matrix to be symmetric.
+// 
+// Method cribbed from:
+// http://www.mathcentre.ac.uk/resources/uploaded/sigma-matrices11-2009-1.pdf
+SmallMatrix SmallMatrix::invert3() const {
+  if ((nrows!=3) || (ncols!=3)) {
+      throw ErrProgrammingError("SmallMatrix::invert3 called with non-3x3 SmallMatrix.",
+				__FILE__,__LINE__);
+    }
+  else {
+    SmallMatrix res(3);
+    // Cofactors.
+    // Data array index is col*3+row, due to Fortran ordering.
+    // res(0,0) = x(1,1)*x(2,2)-x(1,2)*x(2,1);
+    res(0,0) = data[4]*data[8]-data[7]*data[5];
+    // res(0,1) = -(x(1,0)*x(2,2)-x(1,2)*x(2,0));
+    res(0,1) = -data[1]*data[8]+data[7]*data[2];
+    // res(0,2) = x(1,0)*x(2,1)-x(1,1)*x(2,0);
+    res(0,2) = data[1]*data[5]-data[4]*data[2];
+    //
+    // res(1,0) = -(x(0,1)*x(2,2)-x(0,2)*x(2,1));
+    res(1,0) = -data[3]*data[8]+data[6]*data[5];
+    // res(1,1) = x(0,0)*x(2,2)-x(0,2)*x(2,0);
+    res(1,1) = data[0]*data[8]-data[6]*data[2];
+    // res(1,2) = -(x(0,0)*x(2,1)-x(0,1)*x(2,0));
+    res(1,2) = -data[0]*data[5]+data[3]*data[2];
+    //
+    // res(2,0) = x(0,1)*x(1,2)-x(0,2)*x(1,1);
+    res(2,0) = data[3]*data[7]-data[6]*data[4];
+    // res(2,1) = -(x(0,0)*x(1,2)-x(0,2)*x(1,0));
+    res(2,1) = -data[0]*data[7]+data[6]*data[1];
+    // res(2,2) = x(0,0)*x(1,1)-x(0,1)*x(1,0);
+    res(2,2) = data[0]*data[4]-data[3]*data[1];
+    //
+    double dtmt = data[0]*res(0,0)+data[3]*res(0,1)+data[6]*res(0,2);
+    //
+    // Inverse is adjoint divided by determinant.
+    res.transpose();
+    //
+    return res*(1.0/dtmt);
+  }
+}
+
+
+double SmallMatrix::det3() const {
+   if ((nrows!=3) || (ncols!=3)) {
+      throw ErrProgrammingError("SmallMatrix::det33 called with non-3x3 SmallMatrix.",
+				__FILE__,__LINE__);
+    }
+  else {
+    SmallMatrix res(3);
+    // Cofactors.  Data array index is col*3+row, due to Fortran ordering.
+    // res(0,0) = x(1,1)*x(2,2)-x(1,2)*x(2,1);
+    res(0,0) = data[4]*data[8]-data[7]*data[5];
+    // res(0,1) = -(x(1,0)*x(2,2)-x(1,2)*x(2,0));
+    res(0,1) = -data[1]*data[8]+data[7]*data[2];
+    // res(0,2) = x(1,0)*x(2,1)-x(1,1)*x(2,0);
+    res(0,2) = data[1]*data[5]-data[4]*data[2];
+    //
+    // res(1,0) = -(x(0,1)*x(2,2)-x(0,2)*x(2,1));
+    res(1,0) = -data[3]*data[8]+data[6]*data[5];
+    // res(1,1) = x(0,0)*x(2,2)-x(0,2)*x(2,0);
+    res(1,1) = data[0]*data[8]-data[6]*data[2];
+    // res(1,2) = -(x(0,0)*x(2,1)-x(0,1)*x(2,0));
+    res(1,2) = -data[0]*data[5]+data[3]*data[2];
+    //
+    // res(2,0) = x(0,1)*x(1,2)-x(0,2)*x(1,1);
+    res(2,0) = data[3]*data[7]-data[6]*data[4];
+    // res(2,1) = -(x(0,0)*x(1,2)-x(0,2)*x(1,0));
+    res(2,1) = -data[0]*data[7]+data[6]*data[1];
+    // res(2,2) = x(0,0)*x(1,1)-x(0,1)*x(1,0);
+    res(2,2) = data[0]*data[4]-data[3]*data[1];
+    //
+    return  data[0]*res(0,0)+data[3]*res(0,1)+data[6]*res(0,2);
+  }
+} 
 
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
