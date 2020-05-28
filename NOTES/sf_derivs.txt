@@ -1,0 +1,64 @@
+
+  The call chain for evaluating shape function derivatives, comparing
+the reference-configuration call chain with the distorted ("current")
+configuration call-chain.
+
+  Start:  Fns in engine/elementnodeiterator.C
+
+  (ref)  ElementFuncNodeIterator::dshapefunction(index, masterpos)
+         -> calls element.master.mapfunction->
+              realderiv(el_,i_,index,masterpos)
+
+  (cur)  ElementFuncNodeIterator::displacedsfderiv(el, idx, masterpos, mesh)
+         -> calls element.master.shapefunction->
+              displacedderiv(el_, i_, idx, masterpos, mesh)
+  
+    ... where the underscore items are the element and curret index,
+  respectively, of the funcnode iterator.
+
+  ------------
+
+  Calls land in element/shapefunction.C.  This is a dispatch 
+operation -- the passed-in masterpos behaves differently depending
+on its sub-class.
+
+  (ref) Shapefunction::realderiv(el, sfdx, index, masterpos)
+        -> calls masterpos.dshapefunction(el, sf, sfdx, index)
+
+  (cur) Shapefunction::dispalcedderiv(el, sfdx, index, masterpos, mesh)
+	-> calls masterpos.displacedderiv(el,sf, mesh, sfdx, index)
+
+  --------------
+
+  Call lands mastercoord.C. 
+
+  (ref)  MasterCoord::dshapefunction(el, sf, sfdx, index)
+    -> just calls sf.realderiv(el, sfdx, index, *this)
+
+  (cur)  MasterCoord::displacedderiv(el, sf, mesh, sfdx, index)
+    -> just calls sf.displacedderiv(el, sfdx, index, *this, mesh) 
+
+  -------------
+
+  Calls back to shapefunction.C.
+
+  (ref, gpt) ShapeFunction::realderiv(el, sfdx, index, gpt)
+     Checks cache, returns result if present.
+       Otherwise contracts masterderiv(sfdx,j,gpt) with
+                              Jdmasterdx(j,index,gpt)
+                              and divides by det_jacobian
+
+  (ref, mcd) ShapeFunction::realderiv(el, sfdx, index, mcoord)
+     No cache -- unconditionally contracts masterderiv(sfdx,j,mcoord) 
+                           with Jdmasterdx(j,i,mcoord), and 
+                           divides by det_jacobian.
+
+  (cur, gpt)  ShapeFunction::displacedderiv(el, sfdx, index, gpt, mesh)
+     No cache, uncondtionally contracts el->deformation_jacobian with
+       masterderiv over space indices.
+
+  (cur, mcd)  Shapefnction::displacedderiv(el, sfdx, index, mcoord, mesh)
+     No cache, unconditionally contracts el->deformation_jacobian with
+       masterderiv, over space indices.
+
+

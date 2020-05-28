@@ -81,6 +81,8 @@ SmallMatrix sm_inflate3(SmallMatrix x) {
 // 
 // Method cribbed from:
 // http://www.mathcentre.ac.uk/resources/uploaded/sigma-matrices11-2009-1.pdf
+
+// Obsolete, use SmallMatrix.invert3().
 SmallMatrix sm_invert3(SmallMatrix x) {
   if ((x.rows()!=3) || (x.cols()!=3)) {
       throw ErrProgrammingError("sm_invert3 called with non-3x3 SmallMatrix.",
@@ -110,6 +112,7 @@ SmallMatrix sm_invert3(SmallMatrix x) {
   }
 }
 
+// Obsolete, use SmallMatrix.det3.
 double sm_determinant3(SmallMatrix &x) {
  if ((x.rows()!=3) || (x.cols()!=3)) {
       throw ErrProgrammingError("sm_determinant3 called with non-3x3 SmallMatrix.",

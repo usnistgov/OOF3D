@@ -88,6 +88,9 @@ double ShapeFunction::masterderiv(ShapeFunctionIndex n, SpaceIndex j,
   return p.mdshapefunction(*this, n, j);
 }
 
+// This is the one that's called directly from the NodeIterator.
+// Dispatches through the MasterPosition object before the
+// arithmetic happens.
 double ShapeFunction::displacedderiv(const Element *el, ShapeFunctionIndex n,
 				     SpaceIndex j, const MasterPosition &p,
 				     const FEMesh *mesh)
@@ -96,6 +99,9 @@ double ShapeFunction::displacedderiv(const Element *el, ShapeFunctionIndex n,
   return p.displacedderiv(el,*this, mesh, n, j);
 }
 
+// This is the one that's called directly from the NodeIterator.
+// Dispatches through the MasterPosition object before the
+// arithmetic happens.
 double ShapeFunction::realderiv(const ElementBase *el, ShapeFunctionIndex n,
 				SpaceIndex j, const MasterPosition &p)
   const
@@ -153,7 +159,8 @@ void ShapeFunction::precompute(const MasterElement &master) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// Current config.
+// Current config.  Dispatched on the gausspoint variable,
+// called from the MasterCoord subclass of Gausspoint.
 double ShapeFunction::displacedderiv(const Element *el,
 				     ShapeFunctionIndex n, SpaceIndex i,
 				     const GaussPoint &g,
@@ -170,7 +177,7 @@ double ShapeFunction::displacedderiv(const Element *el,
   return res;
 }
 
-// Current config.
+// Current config, MasterCoord version.
 double ShapeFunction::displacedderiv(const Element *el,
 				     ShapeFunctionIndex n, SpaceIndex i,
 				     const MasterCoord &mc,
@@ -185,6 +192,7 @@ double ShapeFunction::displacedderiv(const Element *el,
 
 
 // "Real" means reference configuration, not current configuration.
+// Called from MasterCoord subclass, dispatched on the Gausspoint argument.
 double ShapeFunction::realderiv(const ElementBase *el,
 				ShapeFunctionIndex n, SpaceIndex i,
 				const GaussPoint &g) const
@@ -207,6 +215,9 @@ double ShapeFunction::realderiv(const ElementBase *el,
   return result;
 }
 
+// Called from MasterCoord parent class, dispatched on the
+// MasterCoord argument, distinct from the MasterPosition version,
+// which is higher in the same call-chain.
 double ShapeFunction::realderiv(const ElementBase *el,
 				ShapeFunctionIndex n, SpaceIndex i,
 				const MasterCoord &mc) const
