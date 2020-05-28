@@ -33,6 +33,7 @@
 
 #include "gausspoint.h"
 #include "engine/indextypes.h"
+#include "common/smallmatrix.h"
 #include <vector>
 
 class ElementBase;

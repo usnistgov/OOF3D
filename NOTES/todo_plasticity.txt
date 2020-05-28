@@ -15,6 +15,9 @@ important issues.  They're collected here.
       in the right way.
  
   - Double-check the caching, see if we're doing too much work.
+    - Sub-item: Shape function derivs could benefit from 
+       caching answers, and knowing when the displacement field
+       has changed.
 
   - In the OOF NR solution process, there's a "choose_step_size"
       operation that implements this "parabolic model with Armijo",

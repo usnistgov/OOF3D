@@ -50,15 +50,27 @@ on its sub-class.
 
   (ref, mcd) ShapeFunction::realderiv(el, sfdx, index, mcoord)
      No cache -- unconditionally contracts masterderiv(sfdx,j,mcoord) 
-                           with Jdmasterdx(j,i,mcoord), and 
+                           with Jdmasterdx(j,index,mcoord), and 
                            divides by det_jacobian.
 
   (cur, gpt)  ShapeFunction::displacedderiv(el, sfdx, index, gpt, mesh)
-     No cache, uncondtionally contracts el->deformation_jacobian with
-       masterderiv over space indices.
+     No cache, uncondtionally constructs deformation_jacobian for
+       all indices, then inverts it and contracts over space indices
+       with masterderiv.
 
-  (cur, mcd)  Shapefnction::displacedderiv(el, sfdx, index, mcoord, mesh)
-     No cache, unconditionally contracts el->deformation_jacobian with
-       masterderiv, over space indices.
+  (cur, mcd)  ShapeFunction::displacedderiv(el, sfdx, index, mcoord, mesh)
+     No cache, uncondtionally constructs deformation_jacobian for
+       all indices, then inverts it and contracts over space indices
+       with masterderiv.
 
+  The latter two could be more efficient -- they use the 
+element machinery for the mapping part of the Jacobian, but 
+recompute the displacement part.  This could perhaps be cached,
+with the cache invalidated when the displacement field changes.
 
+  Jdmasterdx computes ElementBase::jacobian, which is just the
+sum over the mapping nodes of X_i. d(phi_i)/dX_j.  It also has
+MasterCoord and Gausspoint versions.
+
+  Jdmasterdx also apparently multiplies the inverse by the 
+Jacobian determinant, which is why it needs to be divided out again?

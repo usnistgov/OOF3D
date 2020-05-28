@@ -170,9 +170,16 @@ double ShapeFunction::displacedderiv(const Element *el,
   // Thing we want to transform is masterdriv(n, component, g).
   // el->deformation_jacobian(SpaceIndex, SpaceIndex, gpt, mesh)
   // is the ... master-space derivs of the shape fns.
+  
+  SmallMatrix djac(3); // Deformation jacobian.
+  for(SpaceIndex ii=0;ii<3;++ii)
+    for(SpaceIndex jj=0;jj<3;++jj)
+      djac(ii,jj) = el->deformation_jacobian(ii,jj,g,mesh);
+
+  SmallMatrix dmdd = djac.invert3(); // DmasterDdeformed.
   double res = 0.0;
   for(SpaceIndex cdx=0; cdx<3;++cdx) {
-    res += el->deformation_jacobian(i,cdx,g,mesh)*masterderiv(n,cdx,g);
+    res += dmdd(cdx,i)*masterderiv(n,cdx,g);
   }
   return res;
 }
@@ -183,9 +190,15 @@ double ShapeFunction::displacedderiv(const Element *el,
 				     const MasterCoord &mc,
 				     const FEMesh *mesh) const
 {
+  SmallMatrix djac(3); // Deformation jacobian.
+  for(SpaceIndex ii=0;ii<3;++ii)
+    for(SpaceIndex jj=0;jj<3;++jj)
+      djac(ii,jj) = el->deformation_jacobian(ii,jj,mc,mesh);
+
+  SmallMatrix dmdd = djac.invert3(); // Dmaster/Ddeformed.
   double res = 0.0;
   for(SpaceIndex cdx=0; cdx<3;++cdx) {
-    res += el->deformation_jacobian(i,cdx,mc,mesh)*masterderiv(n,cdx,mc);
+    res += dmdd(cdx,i)*masterderiv(n,cdx,mc);
   }
   return res;
 }
