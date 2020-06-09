@@ -276,6 +276,8 @@ class Newton(NLSolver):
                                     # with res_norm0 to judge convergence
         # debug.fmsg("initial residual:", res_norm0)
 
+        print >> sys.stderr, "NLSC-S: Initial residual: ", res_norm0
+        
         prog = progress.getProgress("Newton Solver", progress.LOGDEFINITE)
         target_res = self.relative_tolerance*res_norm0 + self.absolute_tolerance
         if res_norm0 > target_res:

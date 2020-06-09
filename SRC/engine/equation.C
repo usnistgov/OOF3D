@@ -166,6 +166,10 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
   bool needResidual = nlsolver->needsResidual();
   bool needJacobian = nlsolver->needsJacobian();
 
+  std::cerr << "DeformedDivergenceEquation::make_linear_system." << std::endl;
+  std::cerr << "Needs residual? " << needResidual << std::endl;
+  std::cerr << "Needs Jacobian? " << needJacobian << std::endl;
+  
   for(CleverPtr <ElementFuncNodeIterator> mu (element->funcnode_iterator());
       !mu->end(); ++(*mu)) {
     std::cerr << "Start of node loop." << std::endl;
@@ -224,6 +228,8 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 	  }
 	}
       }
+      // TODO: Check "needsResidual" and do the residual!
+      
       // Only K matrix for now.  Might have C at some point. TASK 3.
       // TODO: This code does not yet include the geometric term,
       // which is required at high deformations.  See the

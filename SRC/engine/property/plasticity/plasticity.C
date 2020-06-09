@@ -420,6 +420,8 @@ void Plasticity::begin_element(const CSubProblem *c,
       for (IteratorP ip = displacement->iterator(ALL_INDICES);
 	   !ip.end(); ++ip) {
 	int idx = ip.integer();
+	std::cerr << "Displacement component " << ip << " is "
+		  << dval[ip] << std::endl;
 	f_attau(idx,0) += dval[ip]*dshapedx;
 	f_attau(idx,1) += dval[ip]*dshapedy;
 	f_attau(idx,2) += dval[ip]*dshapedz;

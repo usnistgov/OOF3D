@@ -10,6 +10,9 @@ important issues.  They're collected here.
 
   Todo:
 
+  - Are we doing the integrals correctly?  With the right
+      Jacobian?
+
   - The NR solver requires the residual to be computed -- 
       double-check that the new equation class is actually doing this
       in the right way.
