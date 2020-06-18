@@ -1019,6 +1019,7 @@ void Plasticity::static_flux_value(const FEMesh *mesh,
   // master-coord.  For now: Look it up in the custom map.  TODO
   // later: Override Property::make_flux_contributions to do this
   // differently?
+  // This is used to construct the residual in the NR loop.
   PlasticData *pd = dynamic_cast<PlasticData*>
     (element->getDataByName("plastic_data"));
   int gptidx = (pd->mctogpi_map)[mpt.mastercoord()];

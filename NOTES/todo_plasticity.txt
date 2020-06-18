@@ -16,7 +16,17 @@ important issues.  They're collected here.
   - The NR solver requires the residual to be computed -- 
       double-check that the new equation class is actually doing this
       in the right way.
+    In particular:  The property is populating a "static flux value"
+      member of the fluxdata object, which goes into the "residual"
+      data member of the LinearizedSystem class, but it's not the
+      residual, it's the flux, which is combined with the applied
+      forces when it's pulled out.
  
+  - The NR solver has this tricky business where it selects an 
+      optimal step size.  But extra evaluations of make_linear_system
+      trigger physical changes by adding additional plastic strain.
+      Is this OK?
+
   - Double-check the caching, see if we're doing too much work.
     - Sub-item: Shape function derivs could benefit from 
        caching answers, and knowing when the displacement field

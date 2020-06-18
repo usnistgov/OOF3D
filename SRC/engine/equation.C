@@ -228,13 +228,29 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 	  }
 	}
       }
-      // TODO: Check "needsResidual" and do the residual!
-      
+
       // Only K matrix for now.  Might have C at some point. TASK 3.
       // TODO: This code does not yet include the geometric term,
       // which is required at high deformations.  See the
       // "property_renvation.txt" file in the NOTES directory for the
       // plan for that.
+
+      // Populate the residual. DSFs here are already the deformed ones.
+      if ( !(*fi).second->flux_clean && needResidual) {
+	const DoubleVec &flux = (*fi).second->fluxVector();
+	double sum = 0.0;
+	bool nonzero = false;
+	for (int cc = 0; cc < DIM; ++cc) {
+	  double flx = flux[cmap[cc]];
+	  if(flx != 0.0) {
+	    nonzero = true;
+	    sum += -dsf[cc] * flx;
+	  }
+	}
+	if(nonzero)
+	  linsys.insert_static_residual(global_row, sum*weight);
+      } // End of residual.
+      
       
     }
   }
