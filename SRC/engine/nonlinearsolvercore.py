@@ -293,6 +293,10 @@ class Newton(NLSolver):
             while (res_norm > target_res and i < self.maximum_iterations
                    and not prog.stopped()):
 
+                update.zero()
+                J = compute_jacobian(data, self)
+                residual *= -1.0
+                
                 matrix_method.solve( J, residual, update )
                 # debug.fmsg("update=", update.norm())
 
@@ -303,9 +307,9 @@ class Newton(NLSolver):
                 # extra calls to make_linear_system update the history.
                 # Removed for now, but this maybe breaks other flows?
                 # Make optional.
-                # s, residual = self.choose_step_size(
-                #     data, values, update, res_norm,
-                #     precompute, compute_residual)
+                s, residual = self.choose_step_size(
+                    data, values, update, res_norm,
+                    precompute, compute_residual)
                 # debug.fmsg("s=", s)
                 # correct the soln with the Newton update
                 values += s * update
