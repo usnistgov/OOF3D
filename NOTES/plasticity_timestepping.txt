@@ -267,3 +267,73 @@ are handled.  These live in the Linearized System, maybe?
   
   TS-UD: timestepper.py, UniformDriver's nonlinearstep method.
 
+ 
+  The full time-evolution call chain for the incremental stepper
+with Newton-Raphson nonlinear solver, with filenames:
+
+  File evolve.py, function evolve is called from the menu item.
+  - Do some subproblem book-keeping.
+  - Call meshctxt.solver_precompute()
+  - Call meshctxt.setStatus() -- comment says to sync geometry.
+  - Try:
+    - Initialize statistics
+    - Check if it's a continuation, if not:
+      - call initializeStaticFields (local)
+        File evolve.py, function initializeStaticFields()
+        - Loop over subproblems:
+          - Call make_linear_system at the current time.
+          - Subproblem book-keeping -- startstep, cacheconstraints.
+        - Subproblem consistency while-loop:
+          - Loop over subproblems:
+            - Call subproblem.initializeStaticFields
+              File subproblemcontext.py, funciton initializeStaticFields
+              - Check self.time_stepper's derivOrder.
+              - If static fields make sense:
+                - Get the unknowns from the linearized system
+                - Call self.computeStaticFields
+                   File subproblemcontext.py, function computeStaticFields
+                   - Check derivOrder again.
+                   - Call self.nonlinear_solver.computeStaticFields()
+                     File nonlinearsolver.py, function NonlinearSolver.computeStaticFields():
+                     - Call subprobctxt.computeStaticFieldsNL(..)
+                       File subproblemcontext.py, funciton computeStaticFieldsNL():
+                       - Call time_stepper.get_unknowns for data.
+                       - Build nlfuncs object.
+                       - Call self.nonlinear_solver.solve w/ self.matrix_method
+                         File: nonlinearsolver.py, function Newton.solve()
+                         - Call nonlinearsolvercore.Newton.solve()
+                           File: nonlinearsolvercore.py
+                           Function: Newton.solve
+                           - set requireResidual, requireJacobian
+                           - call precompute, get residual
+                             HERE 
+                         - Update stats.
+                - Call self.installValues 
+                    HERE
+            - Increment subproblem timestamp
+            - Check consistency -- did the subproblems change?
+        - Return dictionary of linearized systems.
+      - Do the initial output.
+    - Check if problem is static, exits if it is.
+  - Do some book-keeping about the time-step delta.
+  - Loop over requested output times: (Or more often, if delta small?)
+    - Loop subproblem steppers, find minimum delta.
+    - Call evolve_to with the subproblems and a target time (local)
+      File evolve.py, function evolve_to()
+      - Try:
+        - While not finished or commanded to stop:
+          - End-time book-keeping.
+          - Loop over subproblems:
+            - Run make_linear_system on a subproblem.
+            - startstep, cacheconstraints.
+          - Subproblem consistency loop:
+            - Subproblem loop:
+              - Clone the linearized system, grab the unknowns
+              - Call subproblem.nonlinear_solver.step.
+                  HERE
+              - If result is OK, update linearized system.
+            - Check consistency.
+      - Return from evolve_to() with consistent subproblems.
+    - Book-keeping checks for possible errors
+    - Possible conditional outputs
+  - Run post-compute operations, update stats, exit.
