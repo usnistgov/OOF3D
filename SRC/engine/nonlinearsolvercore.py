@@ -293,10 +293,16 @@ class Newton(NLSolver):
             while (res_norm > target_res and i < self.maximum_iterations
                    and not prog.stopped()):
 
+                # debug.fmsg("iter =", i, ",  res =", res_norm, " s =", s)
                 update.zero()
+                # solve for the Newton step:  Jacobian * update = -residual
+                print >> sys.stderr, "NLSC_S: Calling out to the Jacobian: ",compute_jacobian
                 J = compute_jacobian(data, self)
+                # debug.fmsg("J=\n", J.norm())
                 residual *= -1.0
                 
+                # Solves Ax=b where A is first arg, b is 2nd, x is 3rd.
+
                 matrix_method.solve( J, residual, update )
                 # debug.fmsg("update=", update.norm())
 
