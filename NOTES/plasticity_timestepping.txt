@@ -304,9 +304,20 @@ with Newton-Raphson nonlinear solver, with filenames:
                          - Call nonlinearsolvercore.Newton.solve()
                            File: nonlinearsolvercore.py
                            Function: Newton.solve
+                           The precompute, compute_residual, 
+                               compute_jacobian fns are passed in.
                            - set requireResidual, requireJacobian
                            - call precompute, get residual
-                             HERE 
+                           - Compute the residual, find the norm.
+                           - While norm is large and icount in-bounds:
+                             - Zero-out the update data
+                             - Compute the jacobian
+                             - Negate the residual
+                             - Call matrix_method.solve to get updates.
+                             - Select increment size (disabled for us!)
+                             - Add "update" to "values". 
+                             - Reocmpute residual, get norm.
+                             - Re-run precompute, passing values.
                          - Update stats.
                 - Call self.installValues 
                     HERE

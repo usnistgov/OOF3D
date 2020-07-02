@@ -112,6 +112,7 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         
         # First boolean argument indicates boundaries have been reset.
         # Second boolean argument says field values are not changed.
+        print >> sys.stderr, "IS_DS----> Applying bcs at time ", time
         subproblem.apply_bcs(time,linsys,True,False)
         
         # This builds the index maps in the linsys.
@@ -129,14 +130,17 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # Xvec needs to be allocated with the right size.  This is a
         # dumb way to do this, but it's easy.
         xvec = linsys.rhs_MCK()
-        
+
+        print >> sys.stderr, "IS_DS----> Calling linear solver."
         subproblem.matrix_method(_asymmetricIC,subproblem,linsys).solve(
             Amtx,bvec,xvec)
-        
+
         # Then, once we have X, install it in the subproblem.
         # Needs linsys for the index maps, presuambly.
+        print >> sys.stderr, "IS_DS----> Installing linear solution."
         subproblem.installValues(linsys, xvec, time)
 
+        print >> sys.stderr, "IS_DS----> Back from installing linear soln."
         ilfuncs = IncrementalNLFuncs(xvec)
         ildata = IncrementalNLData(subproblem,linsys,time)
         

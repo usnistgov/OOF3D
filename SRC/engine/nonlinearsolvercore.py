@@ -268,8 +268,11 @@ class Newton(NLSolver):
         # compute the residual = -K*startValues + rhs
         self.requireResidual(True)
         self.requireJacobian(True)
+        print >> sys.stderr, "NLSC-S: Calling precompute."
         precompute(data, values, self)
+        print >> sys.stderr, "NLSC-S: alling compute_residual."
         residual = compute_residual(data, values, self)
+        print >> sys.stderr, "NLSC-S: Back from compute_residual."
 
         res_norm0 = residual.norm() # norm of the initial residual
         res_norm  = res_norm0       # we will keep comparing current residual
@@ -303,6 +306,8 @@ class Newton(NLSolver):
                 
                 # Solves Ax=b where A is first arg, b is 2nd, x is 3rd.
 
+                print >> sys.stderr, "NLSC-S: Calling matrix_method.solver."
+                print >> sys.stderr, "NLSC-S: Method is ", matrix_method
                 matrix_method.solve( J, residual, update )
                 # debug.fmsg("update=", update.norm())
 
@@ -313,9 +318,9 @@ class Newton(NLSolver):
                 # extra calls to make_linear_system update the history.
                 # Removed for now, but this maybe breaks other flows?
                 # Make optional.
-                s, residual = self.choose_step_size(
-                    data, values, update, res_norm,
-                    precompute, compute_residual)
+                # s, residual = self.choose_step_size(
+                #     data, values, update, res_norm,
+                #     precompute, compute_residual)
                 # debug.fmsg("s=", s)
                 # correct the soln with the Newton update
                 values += s * update
