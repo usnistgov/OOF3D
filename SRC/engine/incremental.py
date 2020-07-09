@@ -143,8 +143,10 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         print >> sys.stderr, "IS_DS----> Back from installing linear soln."
         ilfuncs = IncrementalNLFuncs(xvec)
         ildata = IncrementalNLData(subproblem,linsys,time)
-        
-        # assert(False)
+
+        # TODO: We need to convince the linsys or subproblem to
+        # start again from here before going on.
+        # Possibly: femesh.cacheCurrentData() ... ?
         
         # -----
         # NR loop below here.

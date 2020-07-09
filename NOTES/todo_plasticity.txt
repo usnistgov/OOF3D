@@ -10,6 +10,11 @@ important issues.  They're collected here.
 
   Todo:
 
+  - Stepper is malfunctioning, it's doing the linear pre-solution
+      part correctly, but then when it starts the nonlinear solution,
+      it starts from the prior time-step data, not the 
+      linear solution.  This breaks the plasticity algorithm.
+
   - Are we doing the integrals correctly?  With the right
       Jacobian?
 
@@ -25,19 +30,12 @@ important issues.  They're collected here.
   - The NR solver has this tricky business where it selects an 
       optimal step size.  But extra evaluations of make_linear_system
       trigger physical changes by adding additional plastic strain.
-      Is this OK?
+      Is this OK?  (Temporarily disabled.)
 
   - Double-check the caching, see if we're doing too much work.
     - Sub-item: Shape function derivs could benefit from 
        caching answers, and knowing when the displacement field
        has changed.
-
-  - In the OOF NR solution process, there's a "choose_step_size"
-      operation that implements this "parabolic model with Armijo",
-      which looks like it will do multiple re-evaluations of the
-      stiffness matrix via the make_linear_system call chain -- this
-      is dangerous for plasticity, which accumulates plastic strain
-      when this call-chain is exercised.
 
   - In the equation construciton process, we're still not doing
       the geometrically-nonlinear piece, the equation is the standard
