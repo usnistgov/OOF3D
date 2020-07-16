@@ -139,15 +139,12 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # Needs linsys for the index maps, presuambly.
         print >> sys.stderr, "IS_DS----> Installing linear solution."
         subproblem.installValues(linsys, xvec, time)
-
         print >> sys.stderr, "IS_DS----> Back from installing linear soln."
+
+
         ilfuncs = IncrementalNLFuncs(xvec)
         ildata = IncrementalNLData(subproblem,linsys,time)
 
-        # TODO: We need to convince the linsys or subproblem to
-        # start again from here before going on.
-        # Possibly: femesh.cacheCurrentData() ... ?
-        
         # -----
         # NR loop below here.
         
@@ -178,7 +175,14 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # What we actually want is more or less the static solution,
         # since we're a quasi-static stepper.
 
-        endValues = unknowns.clone()
+        # TODO: Are these the bad ones?
+        # endValues = unknowns.clone() -> old way.
+        # endValues = linsys.get_unknowns_MCA(xvec) -> right?
+        
+        # Start the nonlinear step from the prior linear solution/
+        # TODO: Why does this work?
+        endValues = xvec
+        
         # Call is:
         nlmethod.solve(subproblem.matrix_method(_asymmetricIC, subproblem,
                                                 linsys),

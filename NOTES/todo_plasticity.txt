@@ -5,8 +5,15 @@
 important issues.  They're collected here.
 
 
-  Done:  Time is now passed in to the stepper, the plasticity property
-         deduces dt at run-time.
+  Done:  
+    Time is now passed in to the stepper, the plasticity property
+      deduces dt at run-time.
+
+  Pending: 
+  - The NR solver has this tricky business where it selects an 
+      optimal step size.  But extra evaluations of make_linear_system
+      trigger physical changes by adding additional plastic strain.
+      Is this OK?  (Temporarily disabled.)
 
   Todo:
 
@@ -27,20 +34,15 @@ important issues.  They're collected here.
       residual, it's the flux, which is combined with the applied
       forces when it's pulled out.
  
-  - The NR solver has this tricky business where it selects an 
-      optimal step size.  But extra evaluations of make_linear_system
-      trigger physical changes by adding additional plastic strain.
-      Is this OK?  (Temporarily disabled.)
+  - In the equation construciton process, we're still not doing
+      the geometrically-nonlinear piece, the equation is the standard
+      OOF equation with a nonlinear constitutive rule.
 
   - Double-check the caching, see if we're doing too much work.
     - Sub-item: Shape function derivs could benefit from 
        caching answers, and knowing when the displacement field
        has changed.
 
-  - In the equation construciton process, we're still not doing
-      the geometrically-nonlinear piece, the equation is the standard
-      OOF equation with a nonlinear constitutive rule.
- 
   - The OOF constitutive rule is written in terms of all 9 elements
       of the strain and stress.  Once we're happy with the numbers,
       it should be re-written in terms of the strain six-vector,

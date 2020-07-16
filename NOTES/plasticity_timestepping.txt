@@ -296,7 +296,7 @@ with Newton-Raphson nonlinear solver, with filenames:
                    - Call self.nonlinear_solver.computeStaticFields()
                      File nonlinearsolver.py, function NonlinearSolver.computeStaticFields():
                      - Call subprobctxt.computeStaticFieldsNL(..)
-                       File subproblemcontext.py, funciton computeStaticFieldsNL():
+                       File subproblemcontext.py, function computeStaticFieldsNL():
                        - Call time_stepper.get_unknowns for data.
                        - Build nlfuncs object.
                        - Call self.nonlinear_solver.solve w/ self.matrix_method
@@ -324,6 +324,7 @@ with Newton-Raphson nonlinear solver, with filenames:
             - Increment subproblem timestamp
             - Check consistency -- did the subproblems change?
         - Return dictionary of linearized systems.
+      - (Return from initializeStaticFields)
       - Do the initial output.
     - Check if problem is static, exits if it is.
   - Do some book-keeping about the time-step delta.
