@@ -1,0 +1,12 @@
+
+  July 2020:  This is intended to be an update and revision
+to the "timestepping.txt" file in this directory.  It's both 
+about how time-steppers work, and how they relate to the 
+evolution process, as well the operational model they use
+for subproblems, solvers, and the linearized system.
+
+  This is motivated by the implementation of the crystal plasticity,
+which might break some of these assumptions, and/or leverage 
+them.
+
+

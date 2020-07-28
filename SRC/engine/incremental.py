@@ -129,7 +129,7 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
 
         # Xvec needs to be allocated with the right size.  This is a
         # dumb way to do this, but it's easy.
-        xvec = linsys.rhs_MCK()
+        xvec = bvec.clone()
 
         print >> sys.stderr, "IS_DS----> Calling linear solver."
         subproblem.matrix_method(_asymmetricIC,subproblem,linsys).solve(
@@ -176,13 +176,14 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # since we're a quasi-static stepper.
 
         # TODO: Are these the bad ones?
-        # endValues = unknowns.clone() -> old way.
-        # endValues = linsys.get_unknowns_MCA(xvec) -> right?
+        endValues = unknowns.clone()  # -> old way.
         
-        # Start the nonlinear step from the prior linear solution/
-        # TODO: Why does this work?
-        endValues = xvec
-        
+        # endValues = subproblem.get_unknowns(linsys)
+        # endValues = xvec.clone()
+
+        print >> sys.stderr, "Endvalues: ", endValues
+
+        print >> sys.stderr, "Incremental calling nlmethod, ", nlmethod
         # Call is:
         nlmethod.solve(subproblem.matrix_method(_asymmetricIC, subproblem,
                                                 linsys),
