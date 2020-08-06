@@ -25,6 +25,8 @@ from ooflib.common.IO import reporter
 from ooflib.common.IO import xmlmenudump
 import math
 
+import sys
+
 ################
 
 # The ScheduleType class determines how an output schedule behaves.
@@ -412,6 +414,7 @@ class OutputSchedule(object):
         
 
     def perform(self, time):
+        print >> sys.stderr, "OPY: OutputSchedule.perform."
         # perform() can be called before self.nexttime if there are
         # conditional outputs, so we have to check the time here.
         if time == self.nexttime:

@@ -31,7 +31,7 @@ reg = PropertyRegistration(
                                                 c12=50000000000.0,
                                                 c44=25000000000.0),
         tip=parameter.emptyTipString),
-     parameter.RegisteredParameter('constitutive rule',
+     parameter.RegisteredParameter('constitutive_rule',
                                    constitutive.PlasticConstitutiveRule,
                                    constitutive.PowerLawConstitutiveRule(
                                        1.0,1.4,3.771e8,1.115,

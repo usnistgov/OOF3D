@@ -8,6 +8,12 @@ important issues.  They're collected here.
   Done:  
     Time is now passed in to the stepper, the plasticity property
       deduces dt at run-time.
+ 
+    Stepper appears to be operating correctly, but differs from the
+      prototype code due to the prototype's use of a different
+      method (the "penalty method") to do the fixed BCs.  
+
+    Integrals are done correctly with the right Jacobian.
 
   Pending: 
   - The NR solver has this tricky business where it selects an 
@@ -16,14 +22,6 @@ important issues.  They're collected here.
       Is this OK?  (Temporarily disabled.)
 
   Todo:
-
-  - Stepper is malfunctioning, it's doing the linear pre-solution
-      part correctly, but then when it starts the nonlinear solution,
-      it starts from the prior time-step data, not the 
-      linear solution.  This breaks the plasticity algorithm.
-
-  - Are we doing the integrals correctly?  With the right
-      Jacobian?
 
   - The NR solver requires the residual to be computed -- 
       double-check that the new equation class is actually doing this
@@ -37,6 +35,15 @@ important issues.  They're collected here.
   - In the equation construciton process, we're still not doing
       the geometrically-nonlinear piece, the equation is the standard
       OOF equation with a nonlinear constitutive rule.
+
+  - We need to do outputs.  The output machinery may be assuming
+      that the problem state is entirely encapsulated in the 
+      DOFs, but we have gausspoint data.  Also the output machinery
+      may assume you can evaluate everything at arbitrary points
+      in space by interpolation, but again, we have gausspoint data.
+    Do we, in fact, want to build machinery to evaluate gausspoint
+      fields at arbitrary points in space?  We'll need this for
+      derivatives, eventually.
 
   - Double-check the caching, see if we're doing too much work.
     - Sub-item: Shape function derivs could benefit from 

@@ -173,6 +173,7 @@ def evolve(meshctxt, endtime):
                 if not meshctxt.outputSchedule.isConditional():
                     # If there are conditional outputs, _do_output was
                     # already called by evolve_to().
+                    print >> sys.stderr, "EPY: Calling _do_output."
                     _do_output(meshctxt, t1)
                 if t1 == endtime:
                     meshctxt.setStatus(meshstatus.Solved())
@@ -532,6 +533,8 @@ class ProgressData:
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
 def _do_output(meshctxt, time):
+    print >> sys.stderr, "EPY: MeshContext _do_output called."
+    print >> sys.stderr, "EPY: outputSchdule is ", meshctxt.outputSchedule
     meshctxt.cacheCurrentData()
     meshctxt.pause_writing()
     try:
