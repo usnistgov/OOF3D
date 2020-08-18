@@ -1,0 +1,42 @@
+
+  The general structure of outputs:
+
+  (Possibly specific to the OOF3D plasticity branch at this point....)
+
+  There's a base Output class, in SRC/engine/IO/output.py, which 
+has actual outputs as sub-classes.
+  
+  Output specializations have an "otype" (scalar, vector, tensor).
+
+  They don't appear to be tied to a particular femesh.
+
+  Outputs are in general chainable, i.e. you can create a new
+output that has other outputs as inputs, for doing things like
+arithmetic or statistics(?) on mesh-derived quantities.
+
+
+  For some outputs, the knowledge of how to produce them from
+field data is only known to properties -- e.g. energy is like this,
+as is stress (of course).  Some coupling properties (e.g.
+thermalexpansion, piezoelectricity) have a "Strain" output 
+type.
+
+  These "derived" output types are known at property 
+registration time.
+
+  I think there is an assumption that these can be evaluated at 
+any point in space.
+
+  The base property class has a C "output" method, which takes as
+an argument the output object, which it can query to see what 
+type it is (ugh), and populate it appropriately.
+
+  See, e.g., the output method in elasticity.C for a simple
+demo of how this works.
+
+  Q: If you ask for an output and no property can do it, 
+what happens?  Can you even pose this query?
+
+  Q2: Are the flux values saved in the subproblems somewhere
+and just retrieved at output-time, or are they recomputed?
+For plasticity, recomputation might be bad.
