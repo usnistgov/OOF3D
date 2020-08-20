@@ -325,6 +325,13 @@ class Newton(NLSolver):
                 # correct the soln with the Newton update
                 values += s * update
 
+                print >> sys.stderr, "A2020 Updating values:", values
+                # Dumb hack for dumping a DoubleVec.
+                for i in range(values.size()):
+                    u = doublevec.DoubleVec(values.size())
+                    u.unit(i)
+                    print >> sys.stderr, i, " : ", values.dot(u)
+                    
                 res_norm = residual.norm()
                 if res_norm <= target_res:
                     break

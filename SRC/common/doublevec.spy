@@ -93,4 +93,3 @@ def _doublevec__neg__(self):
     result *= -1.0
     return result
 DoubleVecPtr.__neg__ = _doublevec__neg__
-

@@ -72,6 +72,7 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
     def _do_nonlinear_step(self, subproblem, linsys, time, unknowns, endtime,
                            get_res, nlmethod):
         print >> sys.stderr, "IS_DS----> Inside Incremental _do_nonlinear_step."
+        print >> sys.stderr, "A2020 Stepper entrance, targeting ", endtime
         # TODO: Do the incremental thing.
         # This involves, firstly, using the previous K matrix to
         # do an initial solve to get your first guess for u, and then
@@ -112,8 +113,10 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         
         # First boolean argument indicates boundaries have been reset.
         # Second boolean argument says field values are not changed.
-        print >> sys.stderr, "IS_DS----> Applying bcs at time ", time
-        subproblem.apply_bcs(time,linsys,True,False)
+        print >> sys.stderr, "A2020 Applying bcs."
+        print >> sys.stderr, "IS_DS----> Applying bcs at time ", endtime
+        # Apparently not working?
+        subproblem.apply_bcs(endtime,linsys,True,False)
         
         # This builds the index maps in the linsys.
         
@@ -176,10 +179,10 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # since we're a quasi-static stepper.
 
         # TODO: Are these the bad ones?
-        endValues = unknowns.clone()  # -> old way.
+        # endValues = unknowns.clone()  # -> old way.
         
         # endValues = subproblem.get_unknowns(linsys)
-        # endValues = xvec.clone()
+        endValues = xvec.clone()
 
         print >> sys.stderr, "Endvalues: ", endValues
 
@@ -205,14 +208,17 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
     
         # Then:
         # The UniformDriver will fill in the nextStep attribute.
+        print >> sys.stderr, "A2020 stepper exit targeting ", endtime
+        print >> sys.stderr, "Endvalues: ", endValues
+        for i in range(endValues.size()):
+                    u = doublevec.DoubleVec(endValues.size())
+                    u.unit(i)
+                    print >> sys.stderr, i, " : ", endValues.dot(u)
         return timestepper.StepResult(endTime=endtime,
                                       endValues=endValues,
                                       linsys=linsys)
         
 
-        # Old version:
-        # return timestepper.StepResult(endTime=endtime, nextStep=dt,
-        #                               endValues=endValues, linsys=linsys)
 
 def _asymmetricIC(subproblem, linsys):
     # Incremental problems are quasi-static and only involve
