@@ -704,7 +704,9 @@ class SubProblemContext(whoville.Who):
 
     #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-    # Moved from the main code, basically just copied out.
+    # Moved out of make_linear_system, because the incremental stepper
+    # needs to manipulate the BCs without rebuilding the linearized
+    # system.
     def apply_bcs(self, time, linsys, bcsReset, newFieldValues):
         subpobj = self.getObject()
         mesh    = self.getParent()
@@ -740,6 +742,7 @@ class SubProblemContext(whoville.Who):
         # the Fields, the old Dirichlet BCs may have been overwritten,
         # so they have to be reapplied.
         if bcsReset or newFieldValues:
+            print >> sys.stderr, "SPCT: Setting fixed BCs."
             linsys.resetFieldFlags()
             femesh.invoke_fixed_bcs(subpobj, linsys, time)
             
@@ -870,7 +873,10 @@ class SubProblemContext(whoville.Who):
             # conditions.
 
             bcsReset = newLinSys or newBdys
+
+            # Call the new function.
             self.apply_bcs(time, linsys, bcsReset, newFieldValues)
+
 
             # bcsReset = newLinSys or newBdys
             # if bcsReset:

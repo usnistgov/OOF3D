@@ -116,9 +116,14 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         print >> sys.stderr, "A2020 Applying bcs."
         print >> sys.stderr, "IS_DS----> Applying bcs at time ", endtime
         # Apparently not working?
+        # You might want the earlier time, because that's the
+        # time associated with the matrix, or maybe the later one,
+        # because that's the target for this step?
         subproblem.apply_bcs(endtime,linsys,True,False)
-        
-        # This builds the index maps in the linsys.
+
+        # Actually compute a new brhs object in the linsys. (?)
+        linsys.find_fix_bndy_rhs(subproblem.getObject().get_meshdofs())
+        # TODO: This is another place where float-bcs fail.
         
         # Then, actually do a linear solve with
         # the bc's for the target time of this step, but the linearized
@@ -141,12 +146,12 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # Then, once we have X, install it in the subproblem.
         # Needs linsys for the index maps, presuambly.
         print >> sys.stderr, "IS_DS----> Installing linear solution."
-        subproblem.installValues(linsys, xvec, time)
+        subproblem.installValues(linsys, xvec, endtime)
         print >> sys.stderr, "IS_DS----> Back from installing linear soln."
 
 
         ilfuncs = IncrementalNLFuncs(xvec)
-        ildata = IncrementalNLData(subproblem,linsys,time)
+        ildata = IncrementalNLData(subproblem,linsys,endtime)
 
         # -----
         # NR loop below here.

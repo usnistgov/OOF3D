@@ -41,6 +41,8 @@ from ooflib.engine.IO import meshparameters
 import ooflib.engine.mesh
 import string
 
+import sys
+
 # It's useful in the editor if all the BC's have shared
 # parameters, to the greatest degree possible.
 
@@ -353,7 +355,8 @@ class DirichletBC(BC):
             return
 
         value = self.profile(location)
-
+        print >> sys.stderr, "A2020: ApplyBC got value ", value
+        
         # checkFixedVal returns True if the DoF is already fixed, and
         # False if it's not.  It issues a warning if the DoF is
         # already fixed but has the wrong value.  (It doesn't raise an

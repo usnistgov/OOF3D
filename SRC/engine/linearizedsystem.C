@@ -1178,7 +1178,7 @@ void LinearizedSystem::find_fix_bndy_rhs(const DoubleVec *dofvalues) {
   }
 }
 
-// Extract subvectors of the rhs.  These use nonEmptyXRowMaps innstead
+// Extract subvectors of the rhs.  These use nonEmptyXRowMaps instead
 // of subp2nonEmptyXRowMaps because rhs_ind is indexed by independent
 // equation number, not by subproblem equation number.
 
