@@ -23,6 +23,10 @@ important issues.  They're collected here.
 
   Todo:
 
+  - In the NR solver, it would be useful to provide it with an
+      initial guess for the delta for the first iteration.
+    SK says he does this with the deltas from the static step?
+
   - The NR solver requires the residual to be computed -- 
       double-check that the new equation class is actually doing this
       in the right way.
