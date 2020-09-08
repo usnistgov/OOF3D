@@ -79,6 +79,7 @@ void solveBiCGStab(const SparseMat &A, const DoubleVec &rhs,
   BiCGSTAB(A, x, rhs, pc, maxiter, tolerance);
   std::cerr << "Solution x:" << std::endl;
   std::cerr << x << std::endl;
+  std::cerr << "Tolerance at exit: " << tolerance << std::endl;
 }
 
 void solveGMRes(const SparseMat &A, const DoubleVec &rhs,
@@ -96,6 +97,12 @@ void solveDirect(const SparseMat &A, const DoubleVec &rhs, DoubleVec &x) {
 // 	    << " rhs " << rhs.size() << " x " << x.size() << std::endl;
 //   std::cerr << "solveDirect: rhs=" << rhs << std::endl;
 //   std::cerr << "solveDirect: A=" << A << std::endl;
+
+  std::cerr << "CMatrixMethds solveDirect running." << std::endl;
+  std::cerr << "A: " << std::endl;
+  std::cerr << A << std::endl;
+  std::cerr << "rhs: " << std::endl;
+  std::cerr << rhs << std::endl;
 
   // Copy sparse matrix into dense matrix.
   SmallMatrix small_m(A.nrows(), A.ncols());
@@ -116,10 +123,8 @@ void solveDirect(const SparseMat &A, const DoubleVec &rhs, DoubleVec &x) {
 
   // double r = 0.0;
   if(rcode == 0) {		// success
-    // // compute residual
-    // DoubleVec resid(rhs);
-    // A.axpy(-1.0, x, resid);	// resid = -A*x + rhs
-    // r = resid*resid;
+    std::cerr << "Solution x:" << std::endl;
+    std::cerr << x << std::endl;
   }
   else				// failure
     throw ErrUserError(

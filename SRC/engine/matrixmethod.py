@@ -24,6 +24,8 @@ from ooflib.common.IO import xmlmenudump
 
 import math
 
+import sys
+
 # Methods for solving SparseMat matrix equations.  Subclasses need to
 # have a (Python) 'solveMatrix' method which takes four non-self arguments:
 #   a SparseMat matrix
@@ -164,6 +166,7 @@ class StabilizedBiConjugateGradient(PreconditionedMatrixMethod):
         self.tolerance = tolerance
         self.max_iterations = max_iterations
     def solveMatrix(self, matrix, rhs, solution):
+        print >> sys.stderr, "MMPY-SBCG: Solving!"
         pc = self.preconditioner.create_preconditioner(matrix)
         return cmatrixmethods.solveBiCGStab(
             matrix, rhs, pc,

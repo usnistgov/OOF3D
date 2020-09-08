@@ -149,7 +149,8 @@ std::ostream &operator<<(std::ostream &os, const SparseMatCore &m) {
   else {
     os << m.nrows() << "x" << m.ncols() << " SparseMatCore" << std::endl;
     for(SparseMat::const_iterator ij=m.begin(); ij!=m.end(); ++ij)
-      os << "     " << ij.row() << " " << ij.col() << " " << *ij << std::endl;
+      os << "     " << ij.row() << " " << ij.col() << " " <<
+	std::setprecision(20) << *ij << std::endl;
   }
   return os;
 }
