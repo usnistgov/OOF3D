@@ -270,7 +270,7 @@ class Newton(NLSolver):
         self.requireJacobian(True)
         print >> sys.stderr, "NLSC-S: Calling precompute."
         precompute(data, values, self)
-        print >> sys.stderr, "NLSC-S: alling compute_residual."
+        print >> sys.stderr, "NLSC-S: Calling compute_residual."
         residual = compute_residual(data, values, self)
         print >> sys.stderr, "NLSC-S: Back from compute_residual."
 

@@ -98,7 +98,7 @@ void PowerLawConstitutiveRule::_evolve_gamma(PowerLawSlipData *plsd,
       
       res_inv = 1.0/total_res[alpha];
 
-      // Derivative is reason
+      // Also need the derivative.
       plsd->dgamma_dtau[alpha] = delta_t*res_inv*g0dot*m_inv*(pow(abs(ratio_alpha),(m_inv-1.0)));
 	
     }

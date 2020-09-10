@@ -322,9 +322,13 @@ void Plasticity::begin_element(const CSubProblem *c,
       // TODO: Second layer is pointers?  Seems weird.
       pd->gptdata[gptdx]->ft = pd->gptdata[gptdx]->f_tau;
       pd->gptdata[gptdx]->fpt = pd->gptdata[gptdx]->fp_tau;
+      std::cerr << "Updated gptdata." << std::endl;
+      std::cerr << *(pd->gptdata[gptdx]) << std::endl;
     }
   }
+  
 
+  
   // This is used in the calls to the constitutive evolve() method.
   double delta_t = pd->dt;
   // std::cerr << "Initialized the pd object." << std::endl;
@@ -654,6 +658,8 @@ void Plasticity::begin_element(const CSubProblem *c,
     
     // std::cerr << "Finished stupid transpose." << std::endl;
 
+    // This is where the constitutive rule's delta-gamma gets
+    // incorporated into the accumulated plastic strain.
     SmallMatrix lp(3);
     for(int alpha=0;alpha<nslips;++alpha) {
       lp += (sd->gptslipdata[gptdx]->delta_gamma[alpha])*(*lab_schmid_tensors[alpha]);
@@ -667,6 +673,9 @@ void Plasticity::begin_element(const CSubProblem *c,
     // This is fp_attau;
     pd->gptdata[gptdx]->fp_tau = (pd->gptdata[gptdx]->fpt)*(ident + lp);
 
+    std::cerr << "Incremented fp_tau." << std::endl;
+    std::cerr << *(pd->gptdata[gptdx]) << std::endl;
+    
     // Grab a reference to this for post-processing.
     SmallMatrix &fp_attau = pd->gptdata[gptdx]->fp_tau;
 
@@ -1195,14 +1204,26 @@ PlasticData::PlasticData(int ord, const Element *el) :
 }
 
 
+std::ostream &operator<<(std::ostream &o, const GptPlasticData &gppd) {
+  o << "GptPlasticData: " << std::endl;
+  o << "- ft = " << gppd.ft;
+  o << "- fpt = " << gppd.fpt; 
+  o << "- f_tau = " << gppd.f_tau;
+  o << "- fp_tau = " << gppd.fp_tau;
+  o << std::endl;
+}
+
 
 double PlasticData::set_time(double time) {
+  std::cerr << "PlasticData set_time called with " << time << std::endl;
   if (time!=current_time) {
     dt = time-current_time;
     current_time = time;
+    std::cerr << "PD set_time updating current time, delta is " << dt << std::endl;
     return dt;
   }
   else {
+    std::cerr << "PD set_time Not updating current time." << std::endl;
     return dt;
   }
 }

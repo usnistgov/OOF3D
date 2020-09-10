@@ -175,8 +175,10 @@ public:
   SmallMatrix cauchy;   // Cauchy stress (time tau?)
   SmallMatrix s_star;   // 2nd PK stress at time tau.
   Rank4_3DTensor w_mat;          // Elastoplastic tangent.
+
+  friend std::ostream &operator<<(std::ostream&, const GptPlasticData&); 
 };
-  
+
 
 // The ElementData class is a PythonExportable, and in the case where
 // it's SWIGged, requires class and module metadata so that Python can
