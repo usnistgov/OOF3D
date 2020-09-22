@@ -34,6 +34,10 @@ void PowerLawConstitutiveRule::evolve(GptPlasticData *gptpd,
   PowerLawSlipData *plsd = static_cast<PowerLawSlipData*>(gptsd);
 
   total_res = plsd->res;
+  std::cerr << "On entry to constititive evolve, slip resistance:" << std::endl;
+  for(int alphadx=0;alphadx<slip_systems;++alphadx) {
+    std::cerr << total_res[alphadx] << std::endl;
+  }
   _evolve_hardening(plsd);
   for(int alpha=0;alpha<slip_systems;++alpha) {
     total_res[alpha] += delta_res[alpha];
@@ -78,23 +82,23 @@ void PowerLawConstitutiveRule::_evolve_gamma(PowerLawSlipData *plsd,
       if (plsd->tau_alpha[alpha]>=0.0)
 	const_sign = 1.0;
       else
-	const_sign = 0.0;
+	const_sign = -1.0;
 
       m_inv = 1.0/m;
 
       plsd->delta_gamma[alpha] = delta_t*const_sign*g0dot*(pow(abs(ratio_alpha),m_inv));
 
       std::cerr << "Constitutive rule:" << std::endl;
-      std::cerr << "Dt: " << delta_t << std::endl;
-      std::cerr << "const_sign: " << const_sign << std::endl;
-      std::cerr << "g0dot: " << g0dot << std::endl;
-      std::cerr << "m_inv: " << m_inv << std::endl;
-      std::cerr << "ratio_alpha: " << ratio_alpha << std::endl;
-      std::cerr << "Power term: " << pow(abs(ratio_alpha),m_inv) << std::endl;
-      std::cerr << "alpha, delta_gamma: " << alpha << " , " << 
-	plsd->delta_gamma[alpha] << std::endl;
-      std::cerr << "Total res, tau_alpha: " << total_res[alpha] << " , " <<
-	plsd->tau_alpha[alpha] << std::endl;
+      // std::cerr << "Dt: " << delta_t << std::endl;
+      // std::cerr << "const_sign: " << const_sign << std::endl;
+      // std::cerr << "g0dot: " << g0dot << std::endl;
+      // std::cerr << "m_inv: " << m_inv << std::endl;
+      // std::cerr << "ratio_alpha: " << ratio_alpha << std::endl;
+      // std::cerr << "Power term: " << pow(abs(ratio_alpha),m_inv) << std::endl;
+      // std::cerr << "alpha, delta_gamma: " << alpha << " , " << 
+      // 	plsd->delta_gamma[alpha] << std::endl;
+      // std::cerr << "Total res, tau_alpha: " << total_res[alpha] << " , " <<
+      // 	plsd->tau_alpha[alpha] << std::endl;
       
       res_inv = 1.0/total_res[alpha];
 

@@ -276,6 +276,7 @@ void Plasticity::begin_element(const CSubProblem *c,
 			       double time, const Element *e) {
 
   std::cerr << "Plasticity::begin_element starting." << std::endl;
+  std::cerr << "Time is " << time << std::endl;
   // LINSYS STEP 3, plastic version -- called from
   // Material::begin_element, we are in element scope, and need to run
   // our own gausspoint loop.  This class (or its subclasses) are
@@ -327,10 +328,13 @@ void Plasticity::begin_element(const CSubProblem *c,
     }
   }
   
-
+  // HACK for testing the plasticity rule.
+  pd->set_time(0.0001);
+  // end of HACK.
   
   // This is used in the calls to the constitutive evolve() method.
   double delta_t = pd->dt;
+  std::cerr << "Retrieved delta_t, it's " << delta_t << std::endl;
   // std::cerr << "Initialized the pd object." << std::endl;
   
   if (eds==0) {
@@ -433,6 +437,13 @@ void Plasticity::begin_element(const CSubProblem *c,
     }
     // Diagonal part, outside the node loop.
     f_attau(0,0) += 1.0; f_attau(1,1) += 1.0; f_attau(2,2) += 1.0;
+
+    // HACK: Overwrite f_attau with known values, for debugging.
+    f_attau.clear();
+    f_attau(0,0)=1.0037;
+    f_attau(1,1)=0.998513888;
+    f_attau(2,2)=0.998513888;
+    // End of HACK.
     
     std::cerr << "Built the initial F matrix." << std::endl;
     std::cerr << f_attau << std::endl;
@@ -442,6 +453,18 @@ void Plasticity::begin_element(const CSubProblem *c,
     // Store it in the plastic-data object.
     // TODO: Do we need this?
     pd->gptdata[gptdx]->f_tau = f_attau;
+
+    // HACK: Overwrite plastidata values, anticipating const. rule.
+    pd->gptdata[gptdx]->ft.clear();
+    pd->gptdata[gptdx]->ft(0,0) = 1.0036;
+    pd->gptdata[gptdx]->ft(0,0) = 0.9985547565;
+    pd->gptdata[gptdx]->ft(0,0) = 0.9985547565;
+
+    pd->gptdata[gptdx]->fpt.clear();
+    pd->gptdata[gptdx]->fpt(0,0)=1.0000197;
+    pd->gptdata[gptdx]->fpt(1,1)=0.999990128;
+    pd->gptdata[gptdx]->fpt(2,2)=0.999990128;
+    // End of HACK.
     
     // Plastic fp is in pd->gptdata[gptdx]->fpt
     SmallMatrix fp_att = pd->gptdata[gptdx]->fpt;
@@ -465,7 +488,7 @@ void Plasticity::begin_element(const CSubProblem *c,
 	  for (int l=0;l<3;++l)
 	    s_trial(i,j) += 0.5*lab_cijkl_(i,j,k,l)*elastic_estimate(k,l);
 
-    std::cerr << "S_trial:" << std::endl;
+    std::cerr << std::endl << "S_trial:" << std::endl;
     std::cerr << s_trial << std::endl;
 
     // std::cerr << "Have A matrix and trial stress." << std::endl;
@@ -473,9 +496,12 @@ void Plasticity::begin_element(const CSubProblem *c,
     // Slip systems are in lab_schmid_tensors, std::vector<SmallMatrix*>.
 
     // Populate b and c matrix vectors.
+    std::cerr << "Constructing B and C. mn outupt inline." << std::endl;
     for(int si=0;si<nslips;++si) {
       SmallMatrix mn = (*lab_schmid_tensors[si]);
+      std::cerr << mn << std::endl;
       SmallMatrix mn_t = mn; mn_t.transpose();
+      std::cerr << mn_t << std::endl;
       *(b_mtx[si]) = a_mtx*mn+mn_t*a_mtx;
       c_mtx[si]->clear();
       for(int i=0;i<3;++i)
@@ -484,7 +510,6 @@ void Plasticity::begin_element(const CSubProblem *c,
 	    for(int l=0;l<3;++l)
 	      (*(c_mtx[si]))(i,j) += 0.5*lab_cijkl_(i,j,k,l)*(*(b_mtx[si]))(k,l);
     }
-    // std::cerr << "Have B and C matrices now." << std::endl;
     
     // A, B, and C matrix sets are built, and S_trial is populated.
     // Call the constitutive rule -- given the current S and
@@ -518,6 +543,7 @@ void Plasticity::begin_element(const CSubProblem *c,
     std::cerr << "Initial call constitutive rule's evolve." << std::endl;
     // Initial call to evolve -- this populates the delta_gamma and
     // dgamma_dtau from s_trial..
+    std::cerr << "Calling evolve, delta_t is " << delta_t << std::endl;
     rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx],delta_t);
 
     // std::cerr << "Back from evolve." << std::endl;
@@ -536,12 +562,19 @@ void Plasticity::begin_element(const CSubProblem *c,
       for(int alpha=0;alpha<nslips;++alpha) {
 	sd->gptslipdata[gptdx]->tau_alpha[alpha] =	\
 	  dot(pd->gptdata[gptdx]->s_star, *lab_schmid_tensors[alpha]);
+	std::cerr << "Resolved shear stress and resistance:" << std::endl;
+	std::cerr << sd->gptslipdata[gptdx]->tau_alpha[alpha] << std::endl;
       }
 
       // Call evolve, get back new delta_gamma and dgamma_dtau values.
       std::cerr << "Calling evolve in the convergence loop." << std::endl;
       std::cerr << "Iteration count is " << icount << std::endl;
       rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx],delta_t);
+
+      std::cerr << "Iterating constitutive evolve method." << std::endl;
+      for(int alphadx = 0; alphadx<nslips; ++alphadx) {
+	std::cerr << "Delta-gamma " << alphadx << ": " << sd->gptslipdata[gptdx]->delta_gamma[alphadx] << std::endl;
+      }
       
       // TODO optimize:  Precompute gtmtx.  This transpose business is awful.
       for(int alpha=0;alpha<nslips;++alpha) {
@@ -586,6 +619,7 @@ void Plasticity::begin_element(const CSubProblem *c,
       // std::cerr << "Back from nr_kernel.solve." << std::endl;
       // TODO: Check the return code.
 
+      // HERE.
       SmallMatrix delta_s_star = sm_inflate3(nr_rhs);
 
       SmallMatrix old_s_star = pd->gptdata[gptdx]->s_star;
@@ -709,6 +743,8 @@ void Plasticity::begin_element(const CSubProblem *c,
     pd->gptdata[gptdx]->cauchy *= (1.0/fe_dtmt);
 
     // Cauchy stress is now up to date.
+    std::cerr << "Cauchy stress: " << std::endl;
+    std::cerr << pd->gptdata[gptdx]->cauchy << std::endl;
     
     // Construct the increment matrix, f_nc, and it's transpose.
     SmallMatrix f_att_i = sm_invert3(f_att);
@@ -985,7 +1021,7 @@ int Plasticity::integration_order(const CSubProblem *sp,
 // them, and computes their outer product -- this is how one makes
 // Schmid tensors.  TODO: Might be handier if it could take
 // initializers as arguments, which I think is a C++11 thing.
-SmallMatrix *Plasticity::_normalized_outer_product(double *norm, double *slip) {
+SmallMatrix *Plasticity::_normalized_outer_product(double *slip, double *norm) {
   double nmag = sqrt(norm[0]*norm[0]+norm[1]*norm[1]+norm[2]*norm[2]);
   double smag = sqrt(slip[0]*slip[0]+slip[1]*slip[1]+slip[2]*slip[2]);
   double norm_norm[3] = {norm[0]/nmag, norm[1]/nmag, norm[2]/nmag};
@@ -994,7 +1030,7 @@ SmallMatrix *Plasticity::_normalized_outer_product(double *norm, double *slip) {
   SmallMatrix *res = new SmallMatrix(3);
   for(unsigned int i=0;i<3;++i)
     for(unsigned int j=0;j<3;++j)
-      (*res)(i,j) = 0.5*(norm_norm[i]*norm_slip[j]+norm_norm[j]*norm_slip[i]);
+      (*res)(i,j) = norm_slip[i]*norm_norm[j];
   return res;
 
 }
