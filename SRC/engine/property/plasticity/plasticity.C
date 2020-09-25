@@ -553,8 +553,9 @@ void Plasticity::begin_element(const CSubProblem *c,
     for(int alpha=0;alpha<nslips;++alpha) {
       pd->gptdata[gptdx]->s_star -= (*c_mtx[alpha])*sd->gptslipdata[gptdx]->delta_gamma[alpha];
     }
-    // std::cerr << "First correction computed." << std::endl;
-
+    std::cerr << "First correction computed." << std::endl;
+    std::cerr << pd->gptdata[gptdx]->s_star << std::endl;
+    
     bool done = false;        // Set when converged or iter limit exceeded.
     unsigned int icount = 0;  // Count interations.
     while(!done) {
@@ -571,9 +572,10 @@ void Plasticity::begin_element(const CSubProblem *c,
       std::cerr << "Iteration count is " << icount << std::endl;
       rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx],delta_t);
 
-      std::cerr << "Iterating constitutive evolve method." << std::endl;
+      std::cerr << "Back from constitutive evolve method." << std::endl;
       for(int alphadx = 0; alphadx<nslips; ++alphadx) {
 	std::cerr << "Delta-gamma " << alphadx << ": " << sd->gptslipdata[gptdx]->delta_gamma[alphadx] << std::endl;
+	std::cerr << "Dgamma-dtau " << alphadx << ": " << sd->gptslipdata[gptdx]->dgamma_dtau[alphadx] << std::endl;
       }
       
       // TODO optimize:  Precompute gtmtx.  This transpose business is awful.
@@ -581,27 +583,42 @@ void Plasticity::begin_element(const CSubProblem *c,
 	SmallMatrix lst = *lab_schmid_tensors[alpha];
 	SmallMatrix lst_t = *lab_schmid_tensors[alpha];
 	lst_t.transpose();
+	std::cerr << "Schmid tensor and transpose:" << std::endl;
+	std::cerr << lst << std::endl;
+	std::cerr << lst_t << std::endl;
 	*(gtmtx[alpha]) = (lst+lst_t)*(0.5*sd->gptslipdata[gptdx]->dgamma_dtau[alpha]);
+      }
+
+      std::cerr << "Gtmtx:" << std::endl;
+      for(int alphadx=0;alphadx<nslips;++alphadx) {
+	std::cerr << "Alpha: " << alphadx << std::endl;
+	std::cerr << *(gtmtx[alphadx]) << std::endl;
+      }
+
+      std::cerr << "Cmtx:" << std::endl;
+      for(int alphadx=0;alphadx<nslips;++alphadx) {
+	std::cerr << *(c_mtx[alphadx]) << std::endl;
       }
 
       // std::cerr << "Finished with the S loop." << std::endl;
       
       // Compute the fourth order tensor...
       Rank4_3DTensor RJ_mtx;
-      for(int alpha=0;alpha<nslips;++alpha) {
-	for(int i=0;i<3;++i)
-	  for(int j=0;j<3;++j)
-	    for(int k=0;k<3;++k)
-	      for(int l=0;l<3;++l) {
-		RJ_mtx(i,j,k,l) = (*c_mtx[alpha])(i,j)*(*gtmtx[alpha])(k,l);
-		if ( (i==k)&&(j==l) )
-		  RJ_mtx(i,j,k,l) += 0.5;
-		if ( (i==l)&&(j==k) )
-		  RJ_mtx(i,j,k,l) += 0.5;
+      for(int i=0;i<3;++i)
+	for(int j=0;j<3;++j)
+	  for(int k=0;k<3;++k)
+	    for(int l=0;l<3;++l) {
+	      for(int alpha=0;alpha<nslips;++alpha) {
+		RJ_mtx(i,j,k,l) += (*c_mtx[alpha])(i,j)*(*gtmtx[alpha])(k,l);
 	      }
-      }
+	      if ( (i==k)&&(j==l) )
+		RJ_mtx(i,j,k,l) += 0.5;
+	      if ( (i==l)&&(j==k) )
+		RJ_mtx(i,j,k,l) += 0.5;
+	    }
 
-      // std::cerr << "Built the RJ_mtx object." << std::endl;
+      std::cerr << "Built the RJ_mtx object." << std::endl;
+      std::cerr << RJ_mtx << std::endl;
       
       SmallMatrix rhs = pd->gptdata[gptdx]->s_star;
       rhs -= s_trial;
@@ -622,6 +639,9 @@ void Plasticity::begin_element(const CSubProblem *c,
       // HERE.
       SmallMatrix delta_s_star = sm_inflate3(nr_rhs);
 
+      std::cerr << "Delta s_star:" << std::endl;
+      std::cerr << delta_s_star << std::endl;
+      
       SmallMatrix old_s_star = pd->gptdata[gptdx]->s_star;
       double old_s_star_size = sqrt(dot(old_s_star,old_s_star));
 
@@ -1334,4 +1354,14 @@ double &Rank4_3DTensor::operator()(unsigned int i, unsigned int j,
 const double &Rank4_3DTensor::operator()(unsigned int i, unsigned int j,
 				   unsigned int k, unsigned int l) const {
   return data[_index(i,j,k,l)];
+}
+
+std::ostream& operator<<(std::ostream &o, const Rank4_3DTensor &t) {
+  for(int i=0;i<3;++i)
+    for(int j=0;j<3;++j)
+      for(int k=0;k<3;++k)
+	for(int l=0;l<3;++l)
+	  o << i << ", " << j << ", " << k << ", " << l <<
+	    ": " << t.data[t._index(i,j,k,l)] << std::endl;
+  return o;
 }
