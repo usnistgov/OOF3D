@@ -35,7 +35,7 @@
 #include "engine/property/orientation/orientation.h"
 
 // TODO: Should be settable in the solver somewhere.
-#define TOLERANCE 0.001
+#define TOLERANCE 0.00001
 #define ITER_MAX 20
 #define OLD_S_STAR_SIZE_LIMIT 0.001
 
@@ -56,6 +56,7 @@ SmallMatrix sm_deflate3(SmallMatrix x) {
   }
 }
 
+
 // Also "reflate".
 SmallMatrix sm_inflate3(SmallMatrix x) {
   if ((x.rows()!=9) || (x.cols()!=1)) {
@@ -71,7 +72,47 @@ SmallMatrix sm_inflate3(SmallMatrix x) {
     return res;
   }
 }
+
+// Also 3x3 to 6-vector, forward and reverse.
+
+//#################  Reduce 2nd order 3*3 tensor to 1st 6 vector ########
+SmallMatrix sm_6vec(SmallMatrix x) {
+
+  SmallMatrix res(6,1);
   
+  for(int i = 0 ; i < 3 ; i++)
+    res(i,0) = x(i,i);
+    
+  res(3,0) = 0.5*(x(0,1)+x(1,0));
+  res(4,0) = 0.5*(x(1,2)+x(2,1));
+  res(5,0) = 0.5*(x(0,2)+x(2,0));
+  
+  return res;
+  
+}
+
+
+//######### Inflate 1st 6 vector to 2nd 3*3 tensor ################
+SmallMatrix sm_6tensor(SmallMatrix x) {
+
+  SmallMatrix res(3);
+  
+  for(int i = 0 ; i < 3 ; i++)
+    res(i,i) = x(i,0);
+  
+  res(0,1) = x(3,0);
+  res(1,2) = x(4,0);
+  res(0,2) = x(5,0);
+  
+  res(1,0) = x(3,0);
+  res(2,1) = x(4,0);
+  res(2,0) = x(5,0);
+  
+  return res;
+    
+}
+
+
 // Utility function -- inverts a 3x3 SmallMatrix "manually".
 // TODO: Make this a sub-class of SmallMatrix class, which should
 // use dgetri function, to avoid the determinant?  Our determinants
@@ -601,6 +642,7 @@ void Plasticity::begin_element(const CSubProblem *c,
       }
 
       // std::cerr << "Finished with the S loop." << std::endl;
+
       
       // Compute the fourth order tensor...
       Rank4_3DTensor RJ_mtx;
@@ -626,19 +668,31 @@ void Plasticity::begin_element(const CSubProblem *c,
 	rhs += (*c_mtx[alpha])*(sd->gptslipdata[gptdx]->delta_gamma[alpha]);
       }
 
+      std::cerr << "Built the rhs object." << std::endl;
+      std::cerr << rhs << std::endl;
+      
       // NR step involves converting the 4-index and 2-index
       // quantities to a linear system and solving it.
-      SmallMatrix nr_kernel = RJ_mtx.as_smallmatrix();
-      SmallMatrix nr_rhs = sm_deflate3(rhs);
-
+      // SmallMatrix nr_kernel = RJ_mtx.as_smallmatrix();
+      // SmallMatrix nr_rhs = sm_deflate3(rhs);
+      SmallMatrix nr_kernel = RJ_mtx.as_6matrix();
+      SmallMatrix nr_rhs = sm_6vec(rhs);
+      
+      std::cerr << "Matrix: " << std::endl;
+      std::cerr << nr_kernel << std::endl;
+      
       // std::cerr << "Calling nr_kernel.solve." << std::endl;
       int res = nr_kernel.solve(nr_rhs);
       // std::cerr << "Back from nr_kernel.solve." << std::endl;
       // TODO: Check the return code.
+      std::cerr << "Linear algebra return code: " << res << std::endl;
 
-      // HERE.
-      SmallMatrix delta_s_star = sm_inflate3(nr_rhs);
-
+      std::cerr << "Linear algebra answer:" << std::endl;
+      std::cerr << nr_rhs << std::endl;
+      
+      // SmallMatrix delta_s_star = sm_inflate3(nr_rhs);
+      SmallMatrix delta_s_star = sm_6tensor(nr_rhs);
+      
       std::cerr << "Delta s_star:" << std::endl;
       std::cerr << delta_s_star << std::endl;
       
@@ -648,12 +702,17 @@ void Plasticity::begin_element(const CSubProblem *c,
       SmallMatrix new_s_star = old_s_star - delta_s_star;
       double new_s_star_size = sqrt(dot(new_s_star,new_s_star));
 
+      std::cerr << "New s_star at the bottom of the while loop:" << std::endl;
+      std::cerr << new_s_star << std::endl;
+      
       pd->gptdata[gptdx]->s_star = new_s_star;
 
+      std::cerr << "Fractional tolerance check:" << std::endl;
+      std::cerr << ((new_s_star_size - old_s_star_size)/old_s_star_size) << std::endl;
       if (old_s_star_size < OLD_S_STAR_SIZE_LIMIT)
 	done = true;
       else 
-	if ( ((new_s_star_size - old_s_star_size)/old_s_star_size) < TOLERANCE)
+	if ( fabs((new_s_star_size - old_s_star_size)/old_s_star_size) < TOLERANCE)
 	  done = true;
       
       icount+=1;
@@ -1020,6 +1079,7 @@ void Plasticity::begin_element(const CSubProblem *c,
     // Is it sufficiently symmetric for a Cijkl object?  SK says yes.
 
     std::cerr << "Writing w_mat." << std::endl;
+    std::cerr << w_mat << std::endl;
     std::cerr << w_mat.as_smallmatrix() << std::endl;
     pd->gptdata[gptdx]->w_mat = w_mat;
     // std::cerr << "Bottom of the gausspoint loop." << std::endl;
@@ -1337,6 +1397,44 @@ SmallMatrix Rank4_3DTensor::as_smallmatrix() {
 	for(int l=0;l<3;++l) {
 	  res(voigt9[i][j],voigt9[k][l]) = data[_index(i,j,k,l)];
 	};
+  return res;
+}
+
+SmallMatrix Rank4_3DTensor::as_6matrix() {
+    
+  SmallMatrix res = SmallMatrix(6);
+    
+  for(int i = 0 ; i < 3 ; i++){
+    for(int j = 0 ; j < 3 ; j++){
+      res(i,j) = data[_index(i,i,j,j)];
+    }
+  }
+    
+  for(int i = 0 ; i < 3 ; i++){
+    res(i,3) = data[_index(i,i,0,1)]+data[_index(i,i,1,0)];
+    res(i,4) = data[_index(i,i,1,2)]+data[_index(i,i,2,1)];
+    res(i,5) = data[_index(i,i,0,2)]+data[_index(i,i,2,0)];
+  }
+    
+    
+  for(int j = 0 ; j < 3 ; j++){
+    res(3,j) = data[_index(0,1,j,j)];
+    res(4,j) = data[_index(1,2,j,j)];
+    res(5,j) = data[_index(0,2,j,j)];
+  }
+    
+  res(3,3) = data[_index(0,1,0,1)]+data[_index(0,1,1,0)];
+  res(3,4) = data[_index(0,1,1,2)]+data[_index(0,1,2,1)];
+  res(3,5) = data[_index(0,1,0,2)]+data[_index(0,1,2,0)];
+
+  res(4,3) = data[_index(1,2,0,1)]+data[_index(1,2,1,0)];
+  res(4,4) = data[_index(1,2,1,2)]+data[_index(1,2,2,1)];
+  res(4,5) = data[_index(1,2,0,2)]+data[_index(1,2,2,0)];
+  
+  res(5,3) = data[_index(0,2,0,1)]+data[_index(0,2,1,0)];
+  res(5,4) = data[_index(0,2,1,2)]+data[_index(0,2,2,1)];
+  res(5,5) = data[_index(0,2,0,2)]+data[_index(0,2,2,0)];
+  
   return res;
 }
 
