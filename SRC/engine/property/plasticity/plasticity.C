@@ -370,7 +370,7 @@ void Plasticity::begin_element(const CSubProblem *c,
   }
   
   // HACK for testing the plasticity rule.
-  pd->set_time(0.0001);
+  // pd->set_time(0.0001);
   // end of HACK.
   
   // This is used in the calls to the constitutive evolve() method.
@@ -446,6 +446,13 @@ void Plasticity::begin_element(const CSubProblem *c,
 
     const GaussPoint agpt = gpt.gausspoint(); // Actual gausspoint.
 
+    // HACK: Overwrite prior time-step F matrix.
+    // pd->gptdata[gptdx]->ft.clear();
+    // pd->gptdata[gptdx]->ft(0,0) = 1.0036;
+    // pd->gptdata[gptdx]->ft(1,1) = 0.9985547565;
+    // pd->gptdata[gptdx]->ft(2,2) = 0.9985547565;
+    // End of HACK.
+    
     SmallMatrix f_att = pd->gptdata[gptdx]->ft;  // Save prior time-step's F.
 
     // Build the current time-step's version.
@@ -480,10 +487,10 @@ void Plasticity::begin_element(const CSubProblem *c,
     f_attau(0,0) += 1.0; f_attau(1,1) += 1.0; f_attau(2,2) += 1.0;
 
     // HACK: Overwrite f_attau with known values, for debugging.
-    f_attau.clear();
-    f_attau(0,0)=1.0037;
-    f_attau(1,1)=0.998513888;
-    f_attau(2,2)=0.998513888;
+    // f_attau.clear();
+    // f_attau(0,0)=1.0037;
+    // f_attau(1,1)=0.998513888;
+    // f_attau(2,2)=0.998513888;
     // End of HACK.
     
     std::cerr << "Built the initial F matrix." << std::endl;
@@ -495,16 +502,11 @@ void Plasticity::begin_element(const CSubProblem *c,
     // TODO: Do we need this?
     pd->gptdata[gptdx]->f_tau = f_attau;
 
-    // HACK: Overwrite plastidata values, anticipating const. rule.
-    pd->gptdata[gptdx]->ft.clear();
-    pd->gptdata[gptdx]->ft(0,0) = 1.0036;
-    pd->gptdata[gptdx]->ft(0,0) = 0.9985547565;
-    pd->gptdata[gptdx]->ft(0,0) = 0.9985547565;
-
-    pd->gptdata[gptdx]->fpt.clear();
-    pd->gptdata[gptdx]->fpt(0,0)=1.0000197;
-    pd->gptdata[gptdx]->fpt(1,1)=0.999990128;
-    pd->gptdata[gptdx]->fpt(2,2)=0.999990128;
+    // HACK: Overwrite plastic data values.
+    // pd->gptdata[gptdx]->fpt.clear();
+    // pd->gptdata[gptdx]->fpt(0,0)=1.0000197;
+    // pd->gptdata[gptdx]->fpt(1,1)=0.999990128;
+    // pd->gptdata[gptdx]->fpt(2,2)=0.999990128;
     // End of HACK.
     
     // Plastic fp is in pd->gptdata[gptdx]->fpt
@@ -719,8 +721,8 @@ void Plasticity::begin_element(const CSubProblem *c,
       if (icount>ITER_MAX)
 	done = true;
     } // Constitutive while loop ends here.
-    // std::cerr << "Out of the constitutive while loop." << std::endl;
-    // std::cerr << "S-star: " << pd->gptdata[gptdx]->s_star << std::endl;
+    std::cerr << "Out of the constitutive while loop." << std::endl;
+    std::cerr << "S-star: " << pd->gptdata[gptdx]->s_star << std::endl;
     
     // Compute the last set of resolved shear stresses from the last s_star.
     for(int alpha=0;alpha<nslips;++alpha) {
@@ -829,6 +831,9 @@ void Plasticity::begin_element(const CSubProblem *c,
     SmallMatrix f_att_i = sm_invert3(f_att);
     SmallMatrix f_inc(3);   // The increment matrix.
     SmallMatrix f_inc_t(3); // Its transpose.
+    std::cerr << "Inputs to f_inc, f_att_i and f_attau." << std::endl;
+    std::cerr << f_att_i << std::endl;
+    std::cerr << f_attau << std::endl;
     for(int i=0;i<3;++i)
       for(int j=0;j<3;++j) {
 	for(int k=0;k<3;++k) 
@@ -836,6 +841,10 @@ void Plasticity::begin_element(const CSubProblem *c,
 	f_inc_t(j,i) = f_inc(i,j);
       }
 
+    std::cerr << "Increment matrix:" << std::endl;
+    std::cerr << f_inc << std::endl;
+    std::cerr << f_inc_t << std::endl;
+    
     // std::cerr << "About to do polar decomposition." << std::endl;
     // Construct the polar decomposition of f_inc.
     // f_inc = r_inc.u_inc, where u_inc is the square root of f_inc_t.f_inc.
@@ -844,16 +853,19 @@ void Plasticity::begin_element(const CSubProblem *c,
     SmallMatrix u = uui.first;
     SmallMatrix r = f_inc * uui.second;  // f-increment * u-inverse
 
-    // std::cerr << "Polar decomposition u: " << std::endl;
-    // std::cerr << u << std::endl;
+    std::cerr << "Polar decomposition u: " << std::endl;
+    std::cerr << u << std::endl;
 
-    // std::cerr << "Polar decomposition r: " << std::endl;
-    // std::cerr << r << std::endl;
+    std::cerr << "Polar decomposition r: " << std::endl;
+    std::cerr << r << std::endl;
     
     // ----------------------------------------------------
     //           Build the Q matrix, bsb_q.
     // ----------------------------------------------------
 
+    std::cerr << "Fe_att:" << std::endl;
+    std::cerr << fe_att << std::endl;
+    
     // std::cerr << "Building bsb_l." << std::endl;
     // Now we have fe_att_t, fe_att, and u.  Build Balasubramian's L.
     // for(int dbi = 0; dbi<3; ++dbi)
@@ -869,8 +881,8 @@ void Plasticity::begin_element(const CSubProblem *c,
 	      bsb_l(i,j,n,o) += fe_att_t(i,idx)*u(idx,n)*fe_att(o,j);
 	    };
 
-    // std::cerr << "BSB L" << std::endl;
-    // std::cerr << bsb_l.as_smallmatrix() << std::endl;
+    std::cerr << "BSB L" << std::endl;
+    std::cerr << bsb_l  << std::endl;
 
     // For debugging, paranoia about Cijkl.
     Rank4_3DTensor check_c;
@@ -1090,7 +1102,7 @@ void Plasticity::begin_element(const CSubProblem *c,
   // stress with respect to the strain.  This object is used to
   // construct the flux matrix, which wants derivatives of the
   // Cauchy stress wrt the actual DOFs.
-}
+} // End of begin_element.
 
 int Plasticity::integration_order(const CSubProblem *sp,
 				  const Element *el) const {
