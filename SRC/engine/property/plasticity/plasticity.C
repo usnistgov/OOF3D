@@ -452,6 +452,9 @@ void Plasticity::begin_element(const CSubProblem *c,
     // pd->gptdata[gptdx]->ft(1,1) = 0.9985547565;
     // pd->gptdata[gptdx]->ft(2,2) = 0.9985547565;
     // End of HACK.
+
+    std::cerr << "Input to the constitutive process:  Ft:" << std::endl;
+    std::cerr << pd->gptdata[gptdx]->ft << std::endl;
     
     SmallMatrix f_att = pd->gptdata[gptdx]->ft;  // Save prior time-step's F.
 
@@ -493,7 +496,7 @@ void Plasticity::begin_element(const CSubProblem *c,
     // f_attau(2,2)=0.998513888;
     // End of HACK.
     
-    std::cerr << "Built the initial F matrix." << std::endl;
+    std::cerr << "Built the initial F matrix at time tau:" << std::endl;
     std::cerr << f_attau << std::endl;
     
     // f_attau is now populated for the current gausspoint.
@@ -508,6 +511,7 @@ void Plasticity::begin_element(const CSubProblem *c,
     // pd->gptdata[gptdx]->fpt(1,1)=0.999990128;
     // pd->gptdata[gptdx]->fpt(2,2)=0.999990128;
     // End of HACK.
+
     
     // Plastic fp is in pd->gptdata[gptdx]->fpt
     SmallMatrix fp_att = pd->gptdata[gptdx]->fpt;
@@ -515,9 +519,15 @@ void Plasticity::begin_element(const CSubProblem *c,
     SmallMatrix f_attau_t = f_attau; f_attau_t.transpose();
     SmallMatrix fp_att_i_t = fp_att_i; fp_att_i_t.transpose();
 
+    std::cerr << "Other input: Fp at t:" << std::endl;
+    std::cerr << fp_att << std::endl;
+    
     // Handy place to construct the elastic deformation at prior time t.
     SmallMatrix fe_att = f_att*fp_att_i;
     SmallMatrix fe_att_t = fe_att; fe_att_t.transpose();
+
+    std::cerr << "Elastic deformation at t:" << std::endl;
+    std::cerr << fe_att << std::endl;
     
     a_mtx = ((fp_att_i_t*f_attau_t)*f_attau)*fp_att_i;
 
@@ -733,7 +743,7 @@ void Plasticity::begin_element(const CSubProblem *c,
     std::cerr << "Final call to evolve before completion." << std::endl;
     rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx],delta_t);
 
-    // std::cerr << "Calling rule->complete." << std::endl;
+    std::cerr << "Calling rule->complete." << std::endl;
 
     // It's OK to do this update inside the outermost NR loop
     // controlled by the stepper, the constitutive rule will back off
@@ -824,7 +834,7 @@ void Plasticity::begin_element(const CSubProblem *c,
     pd->gptdata[gptdx]->cauchy *= (1.0/fe_dtmt);
 
     // Cauchy stress is now up to date.
-    std::cerr << "Cauchy stress: " << std::endl;
+    std::cerr << "Constitutive output: Cauchy stress: " << std::endl;
     std::cerr << pd->gptdata[gptdx]->cauchy << std::endl;
     
     // Construct the increment matrix, f_nc, and it's transpose.

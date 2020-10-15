@@ -86,6 +86,7 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # UniformDriver.
 
 
+        print >> sys.stderr, "Incremental stepper, from ", time, " to ", endtime
         print >> sys.stderr, "Incremental nonlinear step, dt = ", endtime - time
         # Steps:
         # 1: Set up the current boundary conditions, and do an
@@ -130,6 +131,9 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # system from the previous step (or from the static part, if
         # it's the first iteration.)
 
+        # Debugging:  Dump everything.
+        linsys.dumpAll("lsys_20201015",endtime,"")
+        
         # A is linsys.K_MCK(), it's the K matrix from last time.
         # b is linsys.rhs_MCK(), which includes the boundary RHS contributions.
         Amtx = linsys.K_MCK()
