@@ -327,10 +327,11 @@ class Newton(NLSolver):
 
                 print >> sys.stderr, "A2020 Updating values:", values
                 # Dumb hack for dumping a DoubleVec.
-                for i in range(values.size()):
+                # Don't use i, it's the iteration counter!!!!!
+                for idx in range(values.size()):
                     u = doublevec.DoubleVec(values.size())
-                    u.unit(i)
-                    print >> sys.stderr, i, " : ", values.dot(u)
+                    u.unit(idx)
+                    print >> sys.stderr, idx, " : ", values.dot(u)
                     
                 res_norm = residual.norm()
                 if res_norm <= target_res:
@@ -349,6 +350,8 @@ class Newton(NLSolver):
                 prog.setMessage("%g/%g" % (res_norm, target_res))
                 prog.setFraction(res_norm)
 
+                print >> sys.stderr, "NLSC-S: Incrementing i from ", i
+                print >> sys.stderr, "Max is ", self.maximum_iterations
                 i += 1
                 # end of Newton iterations
 
@@ -359,9 +362,9 @@ class Newton(NLSolver):
         finally:
             prog.finish()
         # raise error if Newton's method did not converge in maximum_iterations
-        if i >= self.maximum_iterations and res_norm > target_res:
-            raise ooferror2.ErrConvergenceFailure(
-                'Nonlinear solver - Newton iterations', self.maximum_iterations)
+        # if i >= self.maximum_iterations and res_norm > target_res:
+        #     raise ooferror2.ErrConvergenceFailure(
+        #         'Nonlinear solver - Newton iterations', self.maximum_iterations)
         # debug.fmsg("final values=", values)
         # debug.fmsg("-------------------")
         print >> sys.stderr, "NLSC-S: ** Exiting solver."
