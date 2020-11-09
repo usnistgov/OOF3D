@@ -142,6 +142,7 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # Xvec needs to be allocated with the right size.  This is a
         # dumb way to do this, but it's easy.
         xvec = bvec.clone()
+        xvec.zero()
 
         print >> sys.stderr, "IS_DS----> Calling linear solver."
         subproblem.matrix_method(_asymmetricIC,subproblem,linsys).solve(
