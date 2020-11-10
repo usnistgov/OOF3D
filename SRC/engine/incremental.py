@@ -139,11 +139,11 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         Amtx = linsys.K_MCK()
         bvec = linsys.rhs_MCK()
 
-        # Xvec needs to be allocated with the right size.  This is a
-        # dumb way to do this, but it's easy.
-        xvec = bvec.clone()
-        xvec.zero()
-
+        # Xvec needs to be allocated with the right size, and we
+        # should give the CG a good starting guess.
+        # TODO: Is this a memory leak?
+        xvec = subproblem.get_unknowns(linsys)
+        
         print >> sys.stderr, "IS_DS----> Calling linear solver."
         subproblem.matrix_method(_asymmetricIC,subproblem,linsys).solve(
             Amtx,bvec,xvec)

@@ -48,6 +48,8 @@ void solveCG(const SparseMat &A, const DoubleVec &rhs,
   std::cerr << A << std::endl;
   std::cerr << "rhs: " << std::endl;
   std::cerr << rhs << std::endl;
+  std::cerr << "Starting guess: " << std::endl;
+  std::cerr << x << std::endl;
   CG(A, x, rhs, pc, maxiter, tolerance);
   std::cerr << "Solution x:" << std::endl;
   std::cerr << x << std::endl;
