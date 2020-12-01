@@ -71,7 +71,7 @@ class ThreeVectorField;
 class SmallSystem;
 class PlasticConstitutiveRule;
 class SmallMatrix;
-
+class SmallMatrix3;
 
 // Utility class, definitely needs optimization, probably should
 // be in a different file. 
@@ -141,14 +141,14 @@ protected:
   // TODO: 2D version?
   ThreeVectorField *displacement;
   SymmetricTensorFlux *stress_flux;
-  SmallMatrix *_normalized_outer_product(double*, double*);
-  SmallMatrix *_rotate_schmid_tensor(SmallMatrix*, const COrientation *);
+  SmallMatrix3 *_normalized_outer_product(double*, double*);
+  SmallMatrix3 *_rotate_schmid_tensor(SmallMatrix3*, const COrientation *);
 
   const OrientationPropBase *orientation;
   const Cijkl xtal_cijkl_;
   Cijkl lab_cijkl_;
-  std::vector<SmallMatrix*> xtal_schmid_tensors;
-  std::vector<SmallMatrix*> lab_schmid_tensors;
+  std::vector<SmallMatrix3*> xtal_schmid_tensors;
+  std::vector<SmallMatrix3*> lab_schmid_tensors;
   PlasticConstitutiveRule *rule;
 };
 
@@ -173,13 +173,13 @@ class GptPlasticData {
 public:
   GptPlasticData();
 
-  SmallMatrix ft;       // Deformation tensor at prior time t
-  SmallMatrix fpt;      // Plastic part of F at prior time t.
-  SmallMatrix f_tau;    // Deformation tensor at current time tau.
-  SmallMatrix fp_tau;   // Plastic part of F at current time tau.
-  SmallMatrix fe_tau;   // Elastic part of F at current time tau.
-  SmallMatrix cauchy;   // Cauchy stress (time tau?)
-  SmallMatrix s_star;   // 2nd PK stress at time tau.
+  SmallMatrix3 ft;       // Deformation tensor at prior time t
+  SmallMatrix3 fpt;      // Plastic part of F at prior time t.
+  SmallMatrix3 f_tau;    // Deformation tensor at current time tau.
+  SmallMatrix3 fp_tau;   // Plastic part of F at current time tau.
+  SmallMatrix3 fe_tau;   // Elastic part of F at current time tau.
+  SmallMatrix3 cauchy;   // Cauchy stress (time tau?)
+  SmallMatrix3 s_star;   // 2nd PK stress at time tau.
   Rank4_3DTensor w_mat;          // Elastoplastic tangent.
 
   friend std::ostream &operator<<(std::ostream&, const GptPlasticData&); 

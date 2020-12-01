@@ -123,7 +123,7 @@ SmallMatrix sm_6tensor(SmallMatrix x) {
 // Method cribbed from:
 // http://www.mathcentre.ac.uk/resources/uploaded/sigma-matrices11-2009-1.pdf
 
-// Obsolete, use SmallMatrix.invert3().
+// Obsolete, use SmallMatrix3.invert().
 SmallMatrix sm_invert3(SmallMatrix x) {
   if ((x.rows()!=3) || (x.cols()!=3)) {
       throw ErrProgrammingError("sm_invert3 called with non-3x3 SmallMatrix.",
@@ -153,7 +153,7 @@ SmallMatrix sm_invert3(SmallMatrix x) {
   }
 }
 
-// Obsolete, use SmallMatrix.det3.
+// Obsolete, use SmallMatrix3.det3.
 double sm_determinant3(SmallMatrix &x) {
  if ((x.rows()!=3) || (x.cols()!=3)) {
       throw ErrProgrammingError("sm_determinant3 called with non-3x3 SmallMatrix.",
@@ -308,7 +308,7 @@ void Plasticity::precompute(FEMesh* f) {
     lab_schmid_tensors.resize(nslips);
     for(unsigned int i=0; i<(unsigned)nslips; ++i)
       lab_schmid_tensors[i]=_rotate_schmid_tensor(xtal_schmid_tensors[i],
-						   orientation->orientation());
+						  orientation->orientation());
 	  
   }
 }
@@ -420,9 +420,9 @@ void Plasticity::begin_element(const CSubProblem *c,
 
   
   
-  SmallMatrix f_attau(3);
-  SmallMatrix a_mtx(3);
-  SmallMatrix s_trial(3);
+  SmallMatrix3 f_attau;
+  SmallMatrix3 a_mtx;
+  SmallMatrix3 s_trial;
 
   // TODO: Some kind of smart container, for memory management?
 
@@ -430,11 +430,11 @@ void Plasticity::begin_element(const CSubProblem *c,
   // wrt to resolved shear stress to delta-gamma derivatives wrt 2nd
   // PK stress.  TODO: These arrays should be arrays of SmallMatrix3
   // objects, and those objects should have a default constructor.
-  std::vector<SmallMatrix*> b_mtx(nslips),c_mtx(nslips),gtmtx(nslips);
+  std::vector<SmallMatrix3*> b_mtx(nslips),c_mtx(nslips),gtmtx(nslips);
   for (int i=0;i<nslips;++i) {
-    b_mtx[i]=new SmallMatrix(3);
-    c_mtx[i]=new SmallMatrix(3);
-    gtmtx[i]=new SmallMatrix(3);
+    b_mtx[i]=new SmallMatrix3();
+    c_mtx[i]=new SmallMatrix3();
+    gtmtx[i]=new SmallMatrix3();
   }
   
   
@@ -456,7 +456,7 @@ void Plasticity::begin_element(const CSubProblem *c,
     std::cerr << "Input to the constitutive process:  Ft:" << std::endl;
     std::cerr << pd->gptdata[gptdx]->ft << std::endl;
     
-    SmallMatrix f_att = pd->gptdata[gptdx]->ft;  // Save prior time-step's F.
+    SmallMatrix3 f_att = pd->gptdata[gptdx]->ft;  // Save prior time-step's F.
 
     // Build the current time-step's version.
     f_attau.clear();
@@ -514,24 +514,24 @@ void Plasticity::begin_element(const CSubProblem *c,
 
     
     // Plastic fp is in pd->gptdata[gptdx]->fpt
-    SmallMatrix fp_att = pd->gptdata[gptdx]->fpt;
-    SmallMatrix fp_att_i = sm_invert3(fp_att);
-    SmallMatrix f_attau_t = f_attau; f_attau_t.transpose();
-    SmallMatrix fp_att_i_t = fp_att_i; fp_att_i_t.transpose();
+    SmallMatrix3 fp_att = pd->gptdata[gptdx]->fpt;
+    SmallMatrix3 fp_att_i = fp_att.invert();
+    SmallMatrix3 f_attau_t = f_attau; f_attau_t.transpose();
+    SmallMatrix3 fp_att_i_t = fp_att_i; fp_att_i_t.transpose();
 
     std::cerr << "Other input: Fp at t:" << std::endl;
     std::cerr << fp_att << std::endl;
     
     // Handy place to construct the elastic deformation at prior time t.
-    SmallMatrix fe_att = f_att*fp_att_i;
-    SmallMatrix fe_att_t = fe_att; fe_att_t.transpose();
+    SmallMatrix3 fe_att = f_att*fp_att_i;
+    SmallMatrix3 fe_att_t = fe_att; fe_att_t.transpose();
 
     std::cerr << "Elastic deformation at t:" << std::endl;
     std::cerr << fe_att << std::endl;
     
     a_mtx = ((fp_att_i_t*f_attau_t)*f_attau)*fp_att_i;
 
-    SmallMatrix elastic_estimate = a_mtx;
+    SmallMatrix3 elastic_estimate = a_mtx;
     for (int i=0;i<3;++i) { elastic_estimate(i,i) -= 1.0; }
 
     s_trial.clear();
@@ -551,9 +551,9 @@ void Plasticity::begin_element(const CSubProblem *c,
     // Populate b and c matrix vectors.
     std::cerr << "Constructing B and C. mn outupt inline." << std::endl;
     for(int si=0;si<nslips;++si) {
-      SmallMatrix mn = (*lab_schmid_tensors[si]);
+      SmallMatrix3 mn = (*lab_schmid_tensors[si]);
       std::cerr << mn << std::endl;
-      SmallMatrix mn_t = mn; mn_t.transpose();
+      SmallMatrix3 mn_t = mn; mn_t.transpose();
       std::cerr << mn_t << std::endl;
       *(b_mtx[si]) = a_mtx*mn+mn_t*a_mtx;
       c_mtx[si]->clear();
@@ -633,8 +633,8 @@ void Plasticity::begin_element(const CSubProblem *c,
       
       // TODO optimize:  Precompute gtmtx.  This transpose business is awful.
       for(int alpha=0;alpha<nslips;++alpha) {
-	SmallMatrix lst = *lab_schmid_tensors[alpha];
-	SmallMatrix lst_t = *lab_schmid_tensors[alpha];
+	SmallMatrix3 lst = *lab_schmid_tensors[alpha];
+	SmallMatrix3 lst_t = *lab_schmid_tensors[alpha];
 	lst_t.transpose();
 	std::cerr << "Schmid tensor and transpose:" << std::endl;
 	std::cerr << lst << std::endl;
@@ -757,25 +757,25 @@ void Plasticity::begin_element(const CSubProblem *c,
     // std::cerr << pd->gptdata[gptdx]->s_star << std::endl;
     
     // Select data objects for the subsequent processing.
-    SmallMatrix s_attau = pd->gptdata[gptdx]->s_star;
+    SmallMatrix3 s_attau = pd->gptdata[gptdx]->s_star;
     std::vector<double> delta_g = sd->gptslipdata[gptdx]->delta_gamma;
-    std::vector<SmallMatrix*> dgamma_ds(nslips);
+    std::vector<SmallMatrix3*> dgamma_ds(nslips);
 
     // std::cerr << "Retrieved data objects." << std::endl;
     
     // TODO optimize: Precompute the symmetrized Schmid tensor, this
     // transpose operation is very stupid.
     for (int i=0; i<nslips; ++i) {
-      SmallMatrix lst = *lab_schmid_tensors[i];
-      SmallMatrix lst_t = *lab_schmid_tensors[i];
+      SmallMatrix3 lst = *lab_schmid_tensors[i];
+      SmallMatrix3 lst_t = *lab_schmid_tensors[i];
       lst_t.transpose();
       // std::cerr << "Incorporating constitutive data:" << std::endl; 
       // std::cerr << lst << std::endl;
       // std::cerr << lst_t << std::endl;
       // std::cerr << sd->gptslipdata[gptdx]->dgamma_dtau[i] << std::endl;
-      SmallMatrix dgds = (lst+lst_t)*(0.5*(sd->gptslipdata[gptdx]->dgamma_dtau[i]));
+      SmallMatrix3 dgds = (lst+lst_t)*(0.5*(sd->gptslipdata[gptdx]->dgamma_dtau[i]));
       // TODO: De-allocate this somewhere?  Use a smart pointer?
-      dgamma_ds[i] = new SmallMatrix(dgds);
+      dgamma_ds[i] = new SmallMatrix3(dgds);
     }
 
     // std::cerr << "Dgamma_Ds[0]:" << std::endl;
@@ -785,13 +785,13 @@ void Plasticity::begin_element(const CSubProblem *c,
 
     // This is where the constitutive rule's delta-gamma gets
     // incorporated into the accumulated plastic strain.
-    SmallMatrix lp(3);
+    SmallMatrix3 lp;
     for(int alpha=0;alpha<nslips;++alpha) {
       lp += (sd->gptslipdata[gptdx]->delta_gamma[alpha])*(*lab_schmid_tensors[alpha]);
     }
 
     // TODO: Ugh.  Not in the gausspoint loop, please.
-    SmallMatrix ident(3);
+    SmallMatrix3 ident;
     ident(0,0)=1.0; ident(1,1)=1.0; ident(2,2)=1.0;
 
     // The new fp is the old fp plus the Asaro equation result.
@@ -802,16 +802,16 @@ void Plasticity::begin_element(const CSubProblem *c,
     std::cerr << *(pd->gptdata[gptdx]) << std::endl;
     
     // Grab a reference to this for post-processing.
-    SmallMatrix &fp_attau = pd->gptdata[gptdx]->fp_tau;
+    SmallMatrix3 &fp_attau = pd->gptdata[gptdx]->fp_tau;
 
     // Normalize fp_tau.  
     double dtmt = sm_determinant3(fp_attau);
     fp_attau *= (1.0/pow(dtmt, 1.0/3.0));
     
     // Decompose into elastic and plastic parts.
-    SmallMatrix fp_attau_i = sm_invert3(fp_attau);
-    SmallMatrix fe_attau = fp_attau_i*f_attau;
-    SmallMatrix fe_attau_i = sm_invert3(fe_attau);
+    SmallMatrix3 fp_attau_i = fp_attau.invert();
+    SmallMatrix3 fe_attau = fp_attau_i*f_attau;
+    SmallMatrix3 fe_attau_i = fe_attau.invert();
 
     // Put it in the plastic data container.
     pd->gptdata[gptdx]->fe_tau = fe_attau;
@@ -825,7 +825,7 @@ void Plasticity::begin_element(const CSubProblem *c,
     // std::cerr << "Fe_attau: " << std::endl;
     // std::cerr << fe_attau << std::endl;
     
-    SmallMatrix fe_attau_t = fe_attau;
+    SmallMatrix3 fe_attau_t = fe_attau;
     fe_attau_t.transpose();
 
     // Compute the Cauchy stress at tau.
@@ -838,9 +838,9 @@ void Plasticity::begin_element(const CSubProblem *c,
     std::cerr << pd->gptdata[gptdx]->cauchy << std::endl;
     
     // Construct the increment matrix, f_nc, and it's transpose.
-    SmallMatrix f_att_i = sm_invert3(f_att);
-    SmallMatrix f_inc(3);   // The increment matrix.
-    SmallMatrix f_inc_t(3); // Its transpose.
+    SmallMatrix3 f_att_i = f_att.invert();
+    SmallMatrix3 f_inc(3);   // The increment matrix.
+    SmallMatrix3 f_inc_t(3); // Its transpose.
     std::cerr << "Inputs to f_inc, f_att_i and f_attau." << std::endl;
     std::cerr << f_att_i << std::endl;
     std::cerr << f_attau << std::endl;
@@ -1123,24 +1123,25 @@ int Plasticity::integration_order(const CSubProblem *sp,
 // them, and computes their outer product -- this is how one makes
 // Schmid tensors.  TODO: Might be handier if it could take
 // initializers as arguments, which I think is a C++11 thing.
-SmallMatrix *Plasticity::_normalized_outer_product(double *slip, double *norm) {
+SmallMatrix3 *Plasticity::_normalized_outer_product(double *slip,
+						    double *norm) {
   double nmag = sqrt(norm[0]*norm[0]+norm[1]*norm[1]+norm[2]*norm[2]);
   double smag = sqrt(slip[0]*slip[0]+slip[1]*slip[1]+slip[2]*slip[2]);
   double norm_norm[3] = {norm[0]/nmag, norm[1]/nmag, norm[2]/nmag};
   double norm_slip[3] = {slip[0]/smag, slip[1]/smag, slip[2]/smag};
   
-  SmallMatrix *res = new SmallMatrix(3);
+  SmallMatrix3 *res = new SmallMatrix3();
   for(unsigned int i=0;i<3;++i)
     for(unsigned int j=0;j<3;++j)
       (*res)(i,j) = norm_slip[i]*norm_norm[j];
   return res;
-
 }
 
-SmallMatrix *Plasticity::_rotate_schmid_tensor(SmallMatrix *m,
-					       const COrientation *o) {
+SmallMatrix3 *Plasticity::_rotate_schmid_tensor(SmallMatrix3 *m,
+						const COrientation *o) {
+  // TODO: Probably this should be a SmallMatrix3 also, eventually.
   SmallMatrix rtmtx = o->rotation();
-  SmallMatrix *res = new SmallMatrix(3);
+  SmallMatrix3 *res = new SmallMatrix3();
   
   for(unsigned int i=0; i<3; i++)
     for(unsigned int j=0; j<3; j++) {
@@ -1170,7 +1171,7 @@ void Plasticity::static_flux_value(const FEMesh *mesh,
   PlasticData *pd = dynamic_cast<PlasticData*>
     (element->getDataByName("plastic_data"));
   int gptidx = (pd->mctogpi_map)[mpt.mastercoord()];
-  const SmallMatrix &cchy = (pd->gptdata[gptidx])->cauchy;
+  const SmallMatrix3 &cchy = (pd->gptdata[gptidx])->cauchy;
   for(SymTensorIterator ij; !ij.end(); ++ij) {
     fluxdata->flux_vector_element(ij) = cchy(ij.row(),ij.col());
   }
@@ -1198,9 +1199,9 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
 
   // TODO: Store f_tau_i in the PlasticData object.
   // Or, alternatively, store b_inverse there.
-  SmallMatrix f_tau = (pd->gptdata[gptidx])->f_tau;
-  SmallMatrix f_tau_i = sm_invert3(f_tau);
-  SmallMatrix b_inverse(3);
+  SmallMatrix3 f_tau = (pd->gptdata[gptidx])->f_tau;
+  SmallMatrix3 f_tau_i = f_tau.invert();
+  SmallMatrix3 b_inverse;
   for(int k=0;k<3;++k) {
     for(int m=0;m<3;++m) {
       double res = 0.0;
@@ -1318,7 +1319,9 @@ FCCPlasticity::FCCPlasticity(PyObject *reg, const std::string &nm,
 
 
 GptPlasticData::GptPlasticData() :
-  ft(3),fpt(3),f_tau(3),fp_tau(3),fe_tau(3),cauchy(3),s_star(3)
+  ft(),fpt(),f_tau(),fp_tau(),fe_tau(),cauchy(),s_star()
+  // Constructors above not needed now that SmallMatrix3 exist
+  // and has a default constructor.
 {
   ft(0,0) = ft(1,1) = ft(2,2) = 1.0;
   fpt(0,0) = fpt(1,1) = fpt(2,2) = 1.0;
@@ -1488,7 +1491,7 @@ std::ostream& operator<<(std::ostream &o, const Rank4_3DTensor &t) {
 
 
 /////////////////////////////////////////////////
-// Outputs!
+// Outputs! Coming soon!
 
 void Plasticity::output(const FEMesh* mesh,
 			const Element *e,

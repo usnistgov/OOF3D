@@ -42,7 +42,9 @@ public:
   virtual ~SmallMatrix();
   
   void clear();  // Sets all entries to zero, doesn't resize.
+  // TODO: Resize should be virtual, throw exception in SmallMatrix3.
   void resize(unsigned int rows, unsigned int cols);
+
   
   unsigned int rows() const { return nrows; }
   unsigned int cols() const { return ncols; }
@@ -73,8 +75,8 @@ public:
   int solve(SmallMatrix&);
 
   // Manual determinant and inverse 3x3 SmallMatrix. TODO: 3x3 subclass?
-  SmallMatrix invert3() const;
-  double det3() const;
+  // SmallMatrix invert3() const;
+  // double det3() const;
   
   // Perform a local inverse, assuming that the matrix is symmetric.
   // Uses LAPACK/BLAS dsytrf and dsytri calls, returns dsytri output code.
@@ -85,6 +87,7 @@ public:
   friend DoubleVec operator+(const DoubleVec&, const SmallMatrix&);
   friend DoubleVec operator+(const SmallMatrix&, const DoubleVec&);
   friend double dot(const SmallMatrix&, const SmallMatrix&);
+
 };
 
 SmallMatrix operator+(const SmallMatrix&, const SmallMatrix&);
@@ -93,5 +96,18 @@ SmallMatrix operator*(const SmallMatrix&, double);
 SmallMatrix operator*(double, const SmallMatrix&);
 
 std::ostream &operator<<(std::ostream&, const SmallMatrix&);
+
+
+class SmallMatrix3 : public SmallMatrix {
+public:
+  SmallMatrix3();
+  SmallMatrix3(const SmallMatrix3&);
+  SmallMatrix3(const SmallMatrix&);
+  SmallMatrix3 invert() const;
+  double det() const;
+  // TODO: Logarithm, for true strain.  Also trace.
+  
+};
+
 
 #endif	// SMALLMATRIX_H

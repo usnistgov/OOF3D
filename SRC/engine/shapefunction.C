@@ -16,6 +16,7 @@
 #include <oofconfig.h>
 #include "common/coord.h"
 #include "common/doublevec.h"
+#include "common/smallmatrix.h"
 #include "common/tostring.h"
 #include "common/trace.h"
 #include "engine/element.h"
@@ -171,12 +172,12 @@ double ShapeFunction::displacedderiv(const Element *el,
   // el->deformation_jacobian(SpaceIndex, SpaceIndex, gpt, mesh)
   // is the ... master-space derivs of the shape fns.
   
-  SmallMatrix djac(3); // Deformation jacobian.
+  SmallMatrix3 djac; // Deformation jacobian.
   for(SpaceIndex ii=0;ii<3;++ii)
     for(SpaceIndex jj=0;jj<3;++jj)
       djac(ii,jj) = el->deformation_jacobian(ii,jj,g,mesh);
 
-  SmallMatrix dmdd = djac.invert3(); // DmasterDdeformed.
+  SmallMatrix3 dmdd = djac.invert(); // DmasterDdeformed.
   double res = 0.0;
   for(SpaceIndex cdx=0; cdx<3;++cdx) {
     res += dmdd(cdx,i)*masterderiv(n,cdx,g);
@@ -190,12 +191,12 @@ double ShapeFunction::displacedderiv(const Element *el,
 				     const MasterCoord &mc,
 				     const FEMesh *mesh) const
 {
-  SmallMatrix djac(3); // Deformation jacobian.
+  SmallMatrix3 djac; // Deformation jacobian.
   for(SpaceIndex ii=0;ii<3;++ii)
     for(SpaceIndex jj=0;jj<3;++jj)
       djac(ii,jj) = el->deformation_jacobian(ii,jj,mc,mesh);
 
-  SmallMatrix dmdd = djac.invert3(); // Dmaster/Ddeformed.
+  SmallMatrix dmdd = djac.invert(); // Dmaster/Ddeformed.
   double res = 0.0;
   for(SpaceIndex cdx=0; cdx<3;++cdx) {
     res += dmdd(cdx,i)*masterderiv(n,cdx,mc);
