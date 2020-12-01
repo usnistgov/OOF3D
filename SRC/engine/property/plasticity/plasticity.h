@@ -132,6 +132,8 @@ public:
 		    const MasterPosition&);
 
   // Outputs -- plastic strain at gpts, total strain, elastic strain...
+  virtual void output(const FEMesh*, const Element*, const PropertyOutput*,
+		      const MasterPosition&, OutputVal*) const;
   
 protected:
   FEMesh *mesh; // Set in precompute, used in begin_element.

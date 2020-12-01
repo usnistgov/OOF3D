@@ -39,4 +39,17 @@ what happens?  Can you even pose this query?
 
   Q2: Are the flux values saved in the subproblems somewhere
 and just retrieved at output-time, or are they recomputed?
-For plasticity, recomputation might be bad.
+For plasticity, recomputation might be bad, as it may re-run the
+increment when it shouldn't. 
+
+   --------
+ 
+  Step 1: Figure out how to extract ElementData sub-units 
+from a subproblem.
+
+  Step 2: Figure out how to extract the stress, with special
+attention to whether we are re-evaluating steps or not.
+ 
+  Step 3: Figure out how to do an integral -- new sampler/domain?
+    Reference vs. deformed configuration as the domain?
+

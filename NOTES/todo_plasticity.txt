@@ -21,8 +21,34 @@ important issues.  They're collected here.
       trigger physical changes by adding additional plastic strain.
       Is this OK?  (Temporarily disabled.)
 
+  - The NR solver also bombs out if it exceeds its allotted step
+      count, but in plasticity, general practice is that a small
+      number of steps is OK.  Currently, it's modified to continue
+      after exceeding the step count, but what we really want is
+      a better convergence criterion, probably.
+
   Todo:
 
+  - Build output machinery for plasticity-specific outputs,
+      which are more or less all of them.
+    Start with engine/IO/propertyoutput.h
+    Strain is done e.g. in engine/cstrain.[h|C|swg|spy], but only
+      for the geometric part.  A useful special case is e.g. 
+      the stress-free strain property, which subtracts itself
+      off from the elastic strain it gets passed in?
+    Related: As currently set up, it computes the "stress", 
+      is it appropriate for the property to determine the 
+      type/meaning of the stress? 
+
+  - The NR solver in OOF differs from the prototype code in that
+      it's computing very high stresses for the initial time steps.
+      It's not obvious why it should do this, but the initial stress
+      looks very much like it's maybe some kind of purely elastic
+      number?
+    First guess is that the the starting K at the start of each
+      time-step is somehow the initial K?  Probably the prior K 
+      matrix is not being saved.
+      
   - In the NR solver, it would be useful to provide it with an
       initial guess for the delta for the first iteration.
     SK says he does this with the deltas from the static step?
@@ -76,7 +102,7 @@ important issues.  They're collected here.
   - The OOF infrastructure is built for a general nonlinear solver,
       which might be either Newton or Picard -- they differ in what
       functions they call to retreive data, we should investigate
-      if it makes sense to plasticity and Picard solvers.
+      if it makes sense to plasticity to use the Picard solvers.
       (TODO 1st: Review how Picard solvers work...)
 
   - We may have assumed that IncrementalStepper increments and the 

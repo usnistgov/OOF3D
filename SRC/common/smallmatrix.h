@@ -77,6 +77,7 @@ public:
   double det3() const;
   
   // Perform a local inverse, assuming that the matrix is symmetric.
+  // Uses LAPACK/BLAS dsytrf and dsytri calls, returns dsytri output code.
   int symmetric_invert();
 
   friend SmallMatrix operator*(const SmallMatrix&, const SmallMatrix &);

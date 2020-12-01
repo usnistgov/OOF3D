@@ -1485,3 +1485,15 @@ std::ostream& operator<<(std::ostream &o, const Rank4_3DTensor &t) {
 	    ": " << t.data[t._index(i,j,k,l)] << std::endl;
   return o;
 }
+
+
+/////////////////////////////////////////////////
+// Outputs!
+
+void Plasticity::output(const FEMesh* mesh,
+			const Element *e,
+			const PropertyOutput *po,
+			const MasterPosition &pos,
+			OutputVal *v) const {
+  return;
+}
