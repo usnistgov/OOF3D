@@ -39,35 +39,7 @@
 #define ITER_MAX 20
 #define OLD_S_STAR_SIZE_LIMIT 0.001
 
-// Utility function -- "deflates" a 3x3 SmallMatrix, converting
-// it to a 9x1 SmallMatrix.  Should ultimately be 6x6, really.
-SmallMatrix sm_deflate3(SmallMatrix3 x) {
-  SmallMatrix res(9,1);
-  for(int i=0;i<3;++i)
-    for(int j=0;j<3;++j) {
-      res(voigt9[i][j],0) = x(i,j);
-    }
-  return res;
-}
-
-
-// Also "reflate".
-SmallMatrix3 sm_inflate3(SmallMatrix x) {
-  if ((x.rows()!=9) || (x.cols()!=1)) {
-    throw ErrProgrammingError("sm_inflate3 called with non-9x1 SmallMatrix.",
-			      __FILE__,__LINE__);
-  }
-  else {
-    SmallMatrix3 res;
-    for(int i=0;i<3;++i)
-      for(int j=0;j<3;++j) {
-	res(i,j)=x(voigt9[i][j],0);
-      }
-    return res;
-  }
-}
-
-// Also 3x3 to 6-vector, forward and reverse.
+// Conversion of 3x3 matrix to 6-vector, forward and reverse.
 
 //#################  Reduce 2nd order 3*3 tensor to 1st 6 vector ########
 SmallMatrix sm_6vec(SmallMatrix3 x) {
@@ -523,8 +495,6 @@ void Plasticity::begin_element(const CSubProblem *c,
       
       // NR step involves converting the 4-index and 2-index
       // quantities to a linear system and solving it.
-      // SmallMatrix nr_kernel = RJ_mtx.as_smallmatrix();
-      // SmallMatrix nr_rhs = sm_deflate3(rhs);
       SmallMatrix nr_kernel = RJ_mtx.as_6matrix();
       SmallMatrix nr_rhs = sm_6vec(rhs);
       
@@ -540,7 +510,6 @@ void Plasticity::begin_element(const CSubProblem *c,
       std::cerr << "Linear algebra answer:" << std::endl;
       std::cerr << nr_rhs << std::endl;
       
-      // SmallMatrix delta_s_star = sm_inflate3(nr_rhs);
       SmallMatrix3 delta_s_star = sm_6tensor(nr_rhs);
       
       std::cerr << "Delta s_star:" << std::endl;
