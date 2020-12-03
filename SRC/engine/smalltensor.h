@@ -18,6 +18,9 @@
 #define SMALLTENSOR_H
 
 
+// TODO: These appear to be used in the general nonlinear
+// elasticity, and nowhere else.
+
 class SmallTensor3{
 protected:
   double data[3][3][3];

@@ -49,6 +49,7 @@
 #include "engine/property/elasticity/cijkl.h"
 #include "common/pythonexportable.h"
 #include "common/smallmatrix.h"
+#include "engine/smallmatrix3.h"
 #include <string>
 #include <map>
 

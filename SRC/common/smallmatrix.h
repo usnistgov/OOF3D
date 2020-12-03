@@ -43,7 +43,7 @@ public:
   virtual ~SmallMatrix();
   
   void clear();  // Sets all entries to zero, doesn't resize.
-  // TODO: Resize should be virtual, throw exception in SmallMatrix3.
+  // Resize is virtual so it can throw an exception in subclasses.
   virtual void resize(unsigned int rows, unsigned int cols);
 
   
@@ -97,22 +97,6 @@ SmallMatrix operator*(const SmallMatrix&, double);
 SmallMatrix operator*(double, const SmallMatrix&);
 
 std::ostream &operator<<(std::ostream&, const SmallMatrix&);
-
-
-class SmallMatrix3 : public SmallMatrix {
-public:
-  SmallMatrix3();
-  SmallMatrix3(const SmallMatrix3&);
-  SmallMatrix3(const SmallMatrix&);
-  SmallMatrix3 invert() const;
-  double det() const;
-  // Polar decomposition.
-  std::pair<SmallMatrix3,SmallMatrix3> sqrt() const;
-  // Over-ride resizing to disallow it.
-  virtual void resize(unsigned int,unsigned int);
-  // TODO: Logarithm, for true strain.  Also trace.
-  
-};
 
 
 #endif	// SMALLMATRIX_H

@@ -23,6 +23,7 @@
 #include "engine/masterelement.h"
 #include "engine/shapefunction.h"
 #include "engine/shapefunctioncache.h"
+#include "engine/smallmatrix3.h"
 
 #if DIM==3
 #include <vtkMath.h>

@@ -51,7 +51,7 @@ cfiles = [
     'pixelselectioncouriere.C', 'pointdata.C', 'preconditioner.C',
     'property.C', 'pypropertywrapper.C', 'rank3tensor.C',
     'recoveredflux.C', 'shapefunction.C', 'shapefunctioncache.C',
-    'smallsystem.C', 'sparsemat.C', 'steperrorscaling.C',
+    'smallmatrix3.C', 'smallsystem.C', 'sparsemat.C', 'steperrorscaling.C',
     'symeig3.C', 'symmmatrix.C', 'materialvoxelfilter.C'
 ]
 
@@ -155,7 +155,8 @@ hfiles = [
     'preconditioner.h', 'predicatesubproblem.h', 'property.h',
     'pypropertywrapper.h', 'rank3tensor.h', 'recoveredflux.h', 
     'shapefunction.h', 'shapefunctioncache.h', 'smalltensor.h',
-    'smallsystem.h', 'sparsemat.h', 'steperrorscaling.h', 'symeig3.h',
+    'smallmatrix3.h', 'smallsystem.h', 'sparsemat.h', 'steperrorscaling.h', 
+    'symeig3.h',
     'symmmatrix.h', 'materialvoxelfilter.h', 'cskeletonselectable_i.h',
     'cskeleton2_i.h'
 ]

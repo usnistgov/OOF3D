@@ -32,6 +32,7 @@
 #include "engine/outputval.h"
 #include "engine/planarity.h"
 #include "engine/smallsystem.h"
+#include "engine/smallmatrix3.h"
 #include "engine/property/orientation/orientation.h"
 
 // TODO: Should be settable in the solver somewhere.
