@@ -41,30 +41,24 @@
 
 // Utility function -- "deflates" a 3x3 SmallMatrix, converting
 // it to a 9x1 SmallMatrix.  Should ultimately be 6x6, really.
-SmallMatrix sm_deflate3(SmallMatrix x) {
-  if ((x.rows()!=3) || (x.cols()!=3)) {
-    throw ErrProgrammingError("sm_deflate3 caled with non-3x3 SmallMatrix.",
-			      __FILE__,__LINE__);
-  }
-  else {
-    SmallMatrix res(9,1);
-    for(int i=0;i<3;++i)
-      for(int j=0;j<3;++j) {
-	res(voigt9[i][j],0) = x(i,j);
-      }
-    return res;
-  }
+SmallMatrix sm_deflate3(SmallMatrix3 x) {
+  SmallMatrix res(9,1);
+  for(int i=0;i<3;++i)
+    for(int j=0;j<3;++j) {
+      res(voigt9[i][j],0) = x(i,j);
+    }
+  return res;
 }
 
 
 // Also "reflate".
-SmallMatrix sm_inflate3(SmallMatrix x) {
+SmallMatrix3 sm_inflate3(SmallMatrix x) {
   if ((x.rows()!=9) || (x.cols()!=1)) {
     throw ErrProgrammingError("sm_inflate3 called with non-9x1 SmallMatrix.",
 			      __FILE__,__LINE__);
   }
   else {
-    SmallMatrix res(3);
+    SmallMatrix3 res;
     for(int i=0;i<3;++i)
       for(int j=0;j<3;++j) {
 	res(i,j)=x(voigt9[i][j],0);
@@ -76,7 +70,7 @@ SmallMatrix sm_inflate3(SmallMatrix x) {
 // Also 3x3 to 6-vector, forward and reverse.
 
 //#################  Reduce 2nd order 3*3 tensor to 1st 6 vector ########
-SmallMatrix sm_6vec(SmallMatrix x) {
+SmallMatrix sm_6vec(SmallMatrix3 x) {
 
   SmallMatrix res(6,1);
   
@@ -93,9 +87,9 @@ SmallMatrix sm_6vec(SmallMatrix x) {
 
 
 //######### Inflate 1st 6 vector to 2nd 3*3 tensor ################
-SmallMatrix sm_6tensor(SmallMatrix x) {
+SmallMatrix3 sm_6tensor(SmallMatrix x) {
 
-  SmallMatrix res(3);
+  SmallMatrix3 res;
   
   for(int i = 0 ; i < 3 ; i++)
     res(i,i) = x(i,0);
@@ -110,162 +104,6 @@ SmallMatrix sm_6tensor(SmallMatrix x) {
   
   return res;
     
-}
-
-
-// Utility function -- inverts a 3x3 SmallMatrix "manually".
-// TODO: Make this a sub-class of SmallMatrix class, which should
-// use dgetri function, to avoid the determinant?  Our determinants
-// are near unity, so we are probably OK.
-// SmallMatrix has a "symmetric_invert" routine already, but that
-// requires the matrix to be symmetric.
-// 
-// Method cribbed from:
-// http://www.mathcentre.ac.uk/resources/uploaded/sigma-matrices11-2009-1.pdf
-
-// Obsolete, use SmallMatrix3.invert().
-SmallMatrix sm_invert3(SmallMatrix x) {
-  if ((x.rows()!=3) || (x.cols()!=3)) {
-      throw ErrProgrammingError("sm_invert3 called with non-3x3 SmallMatrix.",
-				__FILE__,__LINE__);
-    }
-  else {
-    SmallMatrix res(3);
-    // Cofactors
-    res(0,0) = x(1,1)*x(2,2)-x(1,2)*x(2,1);
-    res(0,1) = -(x(1,0)*x(2,2)-x(1,2)*x(2,0));
-    res(0,2) = x(1,0)*x(2,1)-x(1,1)*x(2,0);
-    //
-    res(1,0) = -(x(0,1)*x(2,2)-x(0,2)*x(2,1));
-    res(1,1) = x(0,0)*x(2,2)-x(0,2)*x(2,0);
-    res(1,2) = -(x(0,0)*x(2,1)-x(0,1)*x(2,0));
-    //
-    res(2,0) = x(0,1)*x(1,2)-x(0,2)*x(1,1);
-    res(2,1) = -(x(0,0)*x(1,2)-x(0,2)*x(1,0));
-    res(2,2) = x(0,0)*x(1,1)-x(0,1)*x(1,0);
-    //
-    double dtmt = x(0,0)*res(0,0)+x(0,1)*res(0,1)+x(0,2)*res(0,2);
-    //
-    // Inverse is adjoint divided by determinant.
-    res.transpose();
-    //
-    return res*(1.0/dtmt);
-  }
-}
-
-// Obsolete, use SmallMatrix3.det3.
-double sm_determinant3(SmallMatrix &x) {
- if ((x.rows()!=3) || (x.cols()!=3)) {
-      throw ErrProgrammingError("sm_determinant3 called with non-3x3 SmallMatrix.",
-				__FILE__,__LINE__);
-    }
-  else {
-    SmallMatrix res(3);
-    // Cofactors
-    res(0,0) = x(1,1)*x(2,2)-x(1,2)*x(2,1);
-    res(0,1) = -(x(1,0)*x(2,2)-x(1,2)*x(2,0));
-    res(0,2) = x(1,0)*x(2,1)-x(1,1)*x(2,0);
-    //
-    res(1,0) = -(x(0,1)*x(2,2)-x(0,2)*x(2,1));
-    res(1,1) = x(0,0)*x(2,2)-x(0,2)*x(2,0);
-    res(1,2) = -(x(0,0)*x(2,1)-x(0,1)*x(2,0));
-    //
-    res(2,0) = x(0,1)*x(1,2)-x(0,2)*x(1,1);
-    res(2,1) = -(x(0,0)*x(1,2)-x(0,2)*x(1,0));
-    res(2,2) = x(0,0)*x(1,1)-x(0,1)*x(1,0);
-    //
-    return x(0,0)*res(0,0)+x(0,1)*res(0,1)+x(0,2)*res(0,2);
-  }
-}
-
-// Matrix square root algo.  Reference coming soon.
-std::pair<SmallMatrix,SmallMatrix> sm_sqrt3(SmallMatrix c) {
-
-  SmallMatrix u_res(3),r_res(3);
-  if ((c.rows()!=3) || (c.cols()!=3)) {
-    throw ErrProgrammingError("sm_sqrt3 called with non-3x3 SmallMatrix.",
-			      __FILE__,__LINE__);
-  }
-  else {
-    SmallMatrix ident(3);
-    ident(0,0)=1.0; ident(1,1)=1.0; ident(2,2)=1.0;
-    
-    SmallMatrix c2 = c*c;
-    double o3 = 1.0/3.0;
-    double root3 = pow(3.0,0.5);
-    
-    
-    double c1212 = c(0,1)*c(0,1);
-    double c1313 = c(0,2)*c(0,2);
-    double c2323 = c(1,2)*c(1,2);
-    double c2313 = c(1,2)*c(0,2);
-    double c1223 = c(0,1)*c(1,2);
-    double s11 = c(1,1)*c(2,2)-c2323;
-    double ui1 = o3*(c(0,0)+c(1,1)+c(2,2));
-    double ui2 = s11+c(0,0)*c(1,1)+c(2,2)*c(0,0)-c1212-c1313;
-    double ui3 = c(0,0)*s11+c(0,1)*(c2313-c(0,1)*c(2,2))+c(0,2)*(c1223-c(1,1)*c(0,2));
-    double ui1s = ui1*ui1;
-    double q = pow(-fmin((o3*ui2-ui1s),0.0),0.5);
-    double r = 0.5*(ui3-ui1*ui2)+ui1*ui1s;
-    double xmod = q*q*q;
-
-    double sign;
-    if (xmod-1.0e30 > 0.0)
-        sign = 1.0;
-    else
-        sign = -1.0;
-
-    double scl1 = 0.5 + 0.5*sign;
-
-    if (xmod-std::abs(r) > 0.0)
-        sign = 1.0;
-    else
-        sign = -1.0;
-
-    double scl2 = 0.5 + 0.5*sign;
-    double scl0 = fmin(scl1,scl2);
-    scl1 = 1.0 - scl0;
-
-    double xmodscl1;
-    if(scl1 == 0)
-        xmodscl1 = xmod;
-    else
-        xmodscl1=xmod+scl1;
-
-    double sdetm = acos(r/(xmodscl1))*o3;
-
-    q = scl0*q;
-    double ct3=q*cos(sdetm);
-    double st3=q*root3*sin(sdetm);
-    sdetm = scl1*pow(fmax(0.0,r),0.5);
-    double aa = 2.0*(ct3+sdetm)+ui1;
-    double bb = -ct3+st3-sdetm+ui1;
-    double cc = -ct3-st3-sdetm+ui1;
-    double lamda1 = pow(fmax(aa,0.0),0.5);
-    double lamda2 = pow(fmax(bb,0.0),0.5);
-    double lamda3 = pow(fmax(cc,0.0),0.5);
-
-    double Iu = lamda1 + lamda2 + lamda3;
-    double IIu = lamda1*lamda2 + lamda1*lamda3 + lamda2*lamda3;
-    double IIIu = lamda1*lamda2*lamda3;
-
-    for (int i = 0 ; i < 3 ; i++){
-        for (int j = 0 ; j < 3 ; j++){
-            u_res(i,j) = Iu*IIIu*ident(i,j)+(pow(Iu,2)-IIu)*c(i,j)-c2(i,j);
-            u_res(i,j) = u_res(i,j)/(Iu*IIu-IIIu);
-        }
-    }
-
-    for (int i = 0 ; i < 3 ; i++){
-        for (int j = 0 ; j < 3 ; j++){
-            r_res(i,j) = (IIu*ident(i,j)-Iu*u_res(i,j)+c(i,j))/IIIu;
-        }
-    }
-
-  }
-
-  return std::pair<SmallMatrix,SmallMatrix>(u_res,r_res);
-  
 }
 
 
@@ -674,7 +512,7 @@ void Plasticity::begin_element(const CSubProblem *c,
       std::cerr << "Built the RJ_mtx object." << std::endl;
       std::cerr << RJ_mtx << std::endl;
       
-      SmallMatrix rhs = pd->gptdata[gptdx]->s_star;
+      SmallMatrix3 rhs = pd->gptdata[gptdx]->s_star;
       rhs -= s_trial;
       for(int alpha=0;alpha<nslips;++alpha) {
 	rhs += (*c_mtx[alpha])*(sd->gptslipdata[gptdx]->delta_gamma[alpha]);
@@ -703,15 +541,15 @@ void Plasticity::begin_element(const CSubProblem *c,
       std::cerr << nr_rhs << std::endl;
       
       // SmallMatrix delta_s_star = sm_inflate3(nr_rhs);
-      SmallMatrix delta_s_star = sm_6tensor(nr_rhs);
+      SmallMatrix3 delta_s_star = sm_6tensor(nr_rhs);
       
       std::cerr << "Delta s_star:" << std::endl;
       std::cerr << delta_s_star << std::endl;
       
-      SmallMatrix old_s_star = pd->gptdata[gptdx]->s_star;
+      SmallMatrix3 old_s_star = pd->gptdata[gptdx]->s_star;
       double old_s_star_size = sqrt(dot(old_s_star,old_s_star));
 
-      SmallMatrix new_s_star = old_s_star - delta_s_star;
+      SmallMatrix3 new_s_star = old_s_star - delta_s_star;
       double new_s_star_size = sqrt(dot(new_s_star,new_s_star));
 
       std::cerr << "New s_star at the bottom of the while loop:" << std::endl;
@@ -805,7 +643,7 @@ void Plasticity::begin_element(const CSubProblem *c,
     SmallMatrix3 &fp_attau = pd->gptdata[gptdx]->fp_tau;
 
     // Normalize fp_tau.  
-    double dtmt = sm_determinant3(fp_attau);
+    double dtmt = fp_attau.det();
     fp_attau *= (1.0/pow(dtmt, 1.0/3.0));
     
     // Decompose into elastic and plastic parts.
@@ -830,7 +668,7 @@ void Plasticity::begin_element(const CSubProblem *c,
 
     // Compute the Cauchy stress at tau.
     pd->gptdata[gptdx]->cauchy = fe_attau*(pd->gptdata[gptdx]->s_star)*fe_attau_t;
-    double fe_dtmt = sm_determinant3(fe_attau);
+    double fe_dtmt = fe_attau.det();
     pd->gptdata[gptdx]->cauchy *= (1.0/fe_dtmt);
 
     // Cauchy stress is now up to date.
@@ -858,8 +696,8 @@ void Plasticity::begin_element(const CSubProblem *c,
     // std::cerr << "About to do polar decomposition." << std::endl;
     // Construct the polar decomposition of f_inc.
     // f_inc = r_inc.u_inc, where u_inc is the square root of f_inc_t.f_inc.
-    SmallMatrix f2 = f_inc_t * f_inc;
-    std::pair<SmallMatrix,SmallMatrix> uui = sm_sqrt3(f2);
+    SmallMatrix3 f2 = f_inc_t * f_inc;
+    std::pair<SmallMatrix3,SmallMatrix3> uui = f2.sqrt();
     SmallMatrix u = uui.first;
     SmallMatrix r = f_inc * uui.second;  // f-increment * u-inverse
 
@@ -1067,7 +905,7 @@ void Plasticity::begin_element(const CSubProblem *c,
     
     Rank4_3DTensor w_mat;
 
-    double fe_attau_d = sm_determinant3(fe_attau);
+    double fe_attau_d = fe_attau.det();
 
     
     // std::cerr << "Fe_attau" << std::endl;

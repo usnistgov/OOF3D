@@ -16,6 +16,7 @@
 #include <oofconfig.h>
 #include <iostream>
 
+
 // The "SmallMatrix" class is a general (i.e. not symmetric or
 // positive-definite or anything) real-valued matrix which stores its
 // data internally in column-ordered LAPACK-friendly format.  For
@@ -43,7 +44,7 @@ public:
   
   void clear();  // Sets all entries to zero, doesn't resize.
   // TODO: Resize should be virtual, throw exception in SmallMatrix3.
-  void resize(unsigned int rows, unsigned int cols);
+  virtual void resize(unsigned int rows, unsigned int cols);
 
   
   unsigned int rows() const { return nrows; }
@@ -105,6 +106,10 @@ public:
   SmallMatrix3(const SmallMatrix&);
   SmallMatrix3 invert() const;
   double det() const;
+  // Polar decomposition.
+  std::pair<SmallMatrix3,SmallMatrix3> sqrt() const;
+  // Over-ride resizing to disallow it.
+  virtual void resize(unsigned int,unsigned int);
   // TODO: Logarithm, for true strain.  Also trace.
   
 };
