@@ -192,6 +192,9 @@ std::pair<SmallMatrix3,SmallMatrix3> SmallMatrix3::ch_sqrt() const {
 
 //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//
 
+std::string SmallMatrix3::classname_("SmallMatrix3");
+std::string SmallMatrix3::modulename_("ooflib.SWIG.engine.smallmatrix3");
+  
 SmallMatrix3::SmallMatrix3() : SmallMatrix(3) {}
 
 SmallMatrix3::SmallMatrix3(const SmallMatrix3 &sm3) : SmallMatrix(sm3) {}
