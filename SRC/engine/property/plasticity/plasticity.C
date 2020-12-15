@@ -265,7 +265,7 @@ void Plasticity::begin_element(const CSubProblem *c,
     // End of HACK.
 
     std::cerr << "Input to the constitutive process:  Ft:" << std::endl;
-    std::cerr << pd->gptdata[gptdx]->ft << std::endl;
+    std::cerr << (pd->gptdata[gptdx]->ft) << std::endl;
     
     SmallMatrix3 f_att = pd->gptdata[gptdx]->ft;  // Save prior time-step's F.
 
@@ -667,7 +667,7 @@ void Plasticity::begin_element(const CSubProblem *c,
     // Construct the polar decomposition of f_inc.
     // f_inc = r_inc.u_inc, where u_inc is the square root of f_inc_t.f_inc.
     SmallMatrix3 f2 = f_inc_t * f_inc;
-    std::pair<SmallMatrix3,SmallMatrix3> uui = f2.sqrt();
+    std::pair<SmallMatrix3,SmallMatrix3> uui = f2.ch_sqrt();
     SmallMatrix u = uui.first;
     SmallMatrix r = f_inc * uui.second;  // f-increment * u-inverse
 

@@ -156,7 +156,8 @@ public:
   virtual OutputVal *dotScalar(const ScalarOutputVal&) const;
   virtual OutputVal *dotVector(const VectorOutputVal&) const;
   virtual OutputVal *dotSymmMatrix3(const SymmMatrix3&) const;
-
+  virtual OutputVal *dotSmallMatrix3(const SmallMatrix3&) const;
+  
   virtual double operator[](const IndexP&) const;
   virtual double &operator[](const IndexP&);
   double operator[](const SymTensorIndex&) const;

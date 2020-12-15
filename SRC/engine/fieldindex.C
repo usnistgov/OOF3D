@@ -67,6 +67,16 @@ void SymTensorIndex::set(const std::vector<int> *component) {
   v = ij2voigt((*component)[0], (*component)[1]);
 }
 
+// Inits for static members of TensorIndex.
+std::vector<int> const TensorIndex::vrow {0,1,2,1,0,0,2,2,1};
+std::vector<int> const TensorIndex::vcol {0,1,2,2,2,1,1,0,0};
+std::vector<std::vector<int>> const TensorIndex::voigt9 = {{0,5,4},{8,1,3},{7,6,2}};
+
+
+void TensorIndex::set(const std::vector<int> *comps) {
+  v = voigt9[(*comps)[0]][(*comps)[1]];
+}
+
 std::vector<int> *SymTensorIndex::components() const {
   std::vector<int> *c = new std::vector<int>(2);
   (*c)[0] = rowset[v];
@@ -74,11 +84,25 @@ std::vector<int> *SymTensorIndex::components() const {
   return c;
 }
 
+std::vector<int> *TensorIndex::components() const {
+  std::vector<int> *res = new std::vector<int>(2);
+  (*res)[0] = row();
+  (*res)[1] = col();
+  return res;
+}
+
 const std::string &SymTensorIndex::shortstring() const {
   // It looks like the conversion from char to string is handled
   // automatically here...
   static const std::string voigt[] = {"xx", "yy", "zz", "yz", "xz", "xy"};
   return voigt[v];
+}
+
+const std::string &TensorIndex::shortstring() const {
+  static const std::string voigtstrings[] = {"xx", "yy", "zz",
+					     "yz", "xz", "yz",
+					     "zy", "zx", "yz"};
+  return voigtstrings[v];
 }
 
 std::ostream &operator<<(std::ostream &os, const FieldIndex &fi) {
@@ -96,6 +120,10 @@ void VectorFieldIndex::print(std::ostream &os) const {
 
 void SymTensorIndex::print(std::ostream &os) const {
   os << "SymTensorIndex(" << row() << "," << col() << ")";
+}
+
+void TensorIndex::print(std::ostream &os) const {
+  os << "TensorIndex(" << row() << "," << col() << ")";
 }
 
 std::ostream &operator<<(std::ostream &os, const IndexP &ip) {

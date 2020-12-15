@@ -34,6 +34,7 @@ class OutputValue;
 class IndexP;
 class IteratorP;
 class SymmMatrix3;
+class SmallMatrix3;
 
 // The OutputVal classes defined here are used to ferry values from
 // the finite element mesh out to the Python output machinery. The
@@ -78,6 +79,7 @@ public:
   virtual OutputVal *dotScalar(const ScalarOutputVal&) const = 0;
   virtual OutputVal *dotVector(const VectorOutputVal&) const = 0;
   virtual OutputVal *dotSymmMatrix3(const SymmMatrix3&) const = 0;
+  virtual OutputVal *dotSmallMatrix3(const SmallMatrix3&) const = 0;
   // IO ops.
   virtual void print(std::ostream&) const = 0;
   // getIndex converts the string representation of a component index
@@ -139,7 +141,8 @@ public:
   virtual OutputVal *dotScalar(const ScalarOutputVal&) const;
   virtual OutputVal *dotVector(const VectorOutputVal&) const;
   virtual OutputVal *dotSymmMatrix3(const SymmMatrix3&) const;
-
+  virtual OutputVal *dotSmallMatrix3(const SmallMatrix3&) const;
+  
   virtual DoubleVec *value_list() const;
   virtual double magnitude() const { return fabs(val); }
   double value() const { return val; }
@@ -231,7 +234,8 @@ public:
   virtual OutputVal *dotScalar(const ScalarOutputVal&) const;
   virtual OutputVal *dotVector(const VectorOutputVal&) const;
   virtual OutputVal *dotSymmMatrix3(const SymmMatrix3&) const;
-
+  virtual OutputVal *dotSmallMatrix3(const SmallMatrix3&) const;
+  
   virtual DoubleVec *value_list() const;
   const DoubleVec &value() const { return data; }
   double operator[](int i) const { return data[i]; }

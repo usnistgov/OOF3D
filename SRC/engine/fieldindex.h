@@ -174,6 +174,36 @@ public:
   virtual int integer() const { return v - 2; }
 };
 
+// TensorIndex is implicitly 3x3.  Possibly this should
+// be a subclass or other close relative of the SymTensorIndex?
+// Does not have an OutOfPlane counterpart, we are assuming
+// we'll be sticking with 3D for this codebase.
+class TensorIndex : virtual public FieldIndex {
+protected:
+  int v;  // "Extended voigt", 00 11 22 12 01 01 21 20 10
+public:
+  static std::vector<int> const vrow;
+  static std::vector<int> const vcol;
+  static std::vector<std::vector<int>> const voigt9;
+  TensorIndex() : v(0) {}
+  TensorIndex(SpaceIndex i) : v(i) {}
+  TensorIndex(SpaceIndex i, SpaceIndex j) : v(voigt9[i][j]) {}
+  TensorIndex(const TensorIndex &o) : v(o.v) {}
+  virtual ~TensorIndex() {}
+  virtual FieldIndex *cloneIndex() const { return new TensorIndex(*this); }
+  virtual int integer() const { return v; }
+  int row() const { return vrow[v]; }
+  int col() const { return vcol[v]; }
+  bool diagonal() const { return v<3; }
+  virtual void set(const std::vector<int>*);
+  virtual std::vector<int> *components() const;
+  virtual bool in_plane() const { return vrow[v]<2 && vcol[v]<2; }
+  virtual void print(std::ostream&) const;
+  virtual const std::string &shortstring() const;
+  static int str2voigt9(const std::string &s) {
+    return voigt9[s[0]-'x'][s[1]-'x'];
+  }
+};
 
 // Wrapper class so that Fluxes and Fields can return an appropriate
 // type of FieldIndex, other classes don't have to worry about
@@ -345,6 +375,20 @@ public:
   virtual void reset() { v = 0; }
   virtual FieldIterator *cloneIterator() const {
     return new OutOfPlaneSymTensorIterator(*this);
+  }
+};
+
+class TensorIterator : public TensorIndex, public FieldIterator {
+public:
+  TensorIterator() {}
+  TensorIterator(SpaceIndex i) : TensorIndex(i) {}
+  TensorIterator(SpaceIndex r, SpaceIndex c) : TensorIndex(r,c) {}
+  virtual ~TensorIterator() {}
+  virtual void operator++() { ++v; }
+  virtual bool end() const { return v >= 9; }
+  virtual void reset() { v=0; }
+  virtual FieldIterator *cloneIterator() const {
+    return new TensorIterator(*this);
   }
 };
 

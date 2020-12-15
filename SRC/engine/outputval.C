@@ -21,6 +21,7 @@
 #include "common/IO/oofcerr.h"
 #include "engine/fieldindex.h"
 #include "engine/symmmatrix.h"
+#include "engine/smallmatrix3.h"
 #include "engine/outputval.h"
 #include <math.h>
 #include <string.h>		// for memcpy
@@ -197,6 +198,10 @@ OutputVal *ScalarOutputVal::dotSymmMatrix3(const SymmMatrix3 &ov) const {
   return ov.dotScalar(*this);
 }
 
+OutputVal *ScalarOutputVal::dotSmallMatrix3(const SmallMatrix3 &ov) const {
+  return ov.dotScalar(*this);
+}
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 VectorOutputVal::VectorOutputVal(int n)
@@ -277,6 +282,10 @@ OutputVal *VectorOutputVal::dotVector(const VectorOutputVal &ov) const {
 }
 
 OutputVal *VectorOutputVal::dotSymmMatrix3(const SymmMatrix3 &ov) const {
+  return ov.dotVector(*this);
+}
+
+OutputVal *VectorOutputVal::dotSmallMatrix3(const SmallMatrix3 &ov) const {
   return ov.dotVector(*this);
 }
 

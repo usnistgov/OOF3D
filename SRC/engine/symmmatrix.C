@@ -379,11 +379,16 @@ OutputVal *SymmMatrix3::dotVector(const VectorOutputVal &ov) const {
 }
 
 OutputVal *SymmMatrix3::dotSymmMatrix3(const SymmMatrix3 &ov) const {
-  // This doesn't work because the product of two SymmMatrices is a
-  // SmallMatrix (not necessarily symmetric), and SmallMatrix isn't an
-  // OutputVal class.
+  // This could be done now, but is lower on the TODO list
+  // than some other things.
   throw ErrProgrammingError(
 	    "SymmMatrix dot SymmMatrix not yet implemented as an OutputVal",
+	    __FILE__, __LINE__);
+}
+
+OutputVal *SymmMatrix3::dotSmallMatrix3(const SmallMatrix3 &ov) const {
+  throw ErrProgrammingError(
+	  "SymmMatrix dot SmallMatrix not yet implemented as an OutputVal",
 	    __FILE__, __LINE__);
 }
 

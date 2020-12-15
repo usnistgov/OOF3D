@@ -1,5 +1,5 @@
 // -*- C++ -*-
-// $RCSfile: smallmatrix.C,v $
+// $RCSfile: smallmatrix3.C,v $
 // $Revision: 1.9.4.4 $
 // $Author: langer $
 // $Date: 2014/10/15 20:53:44 $
@@ -13,14 +13,14 @@
  * oof_manager@nist.gov. 
  */
 
+#include <string.h>
+#include <math.h>
 #include "common/smallmatrix.h"
 #include "common/vectormath.h"
 #include "common/ooferror.h"
 #include "common/tostring.h"
 #include "common/vectormath.h"
 #include "engine/smallmatrix3.h"
-#include <string.h>		// for memset
-
 
 void SmallMatrix3::resize(unsigned int r, unsigned int c) {
   throw ErrProgrammingError("Attempt to resize SmallMatrix3.",
@@ -99,10 +99,11 @@ double SmallMatrix3::det() const {
 }
 
 
-std::pair<SmallMatrix3,SmallMatrix3> SmallMatrix3::sqrt() const {
-
+std::pair<SmallMatrix3,SmallMatrix3> SmallMatrix3::ch_sqrt() const {
+// Cayley-Hamilton matrix square root algorithm.
 // Compile-time element retrieval wtih no bounds checking.
 #define DATA(r,c) data[c*3+r]
+
   
   SmallMatrix3 u_res,r_res;
   SmallMatrix3 ident;
@@ -202,4 +203,145 @@ SmallMatrix3::SmallMatrix3(const SmallMatrix &sm) : SmallMatrix(sm) {
       __FILE__,__LINE__);
   }
   // Otherwise there's nothing to do.
+}
+
+
+/////////////////////////////////////////
+// OutputVal functionality below here. //
+/////////////////////////////////////////
+
+OutputVal *SmallMatrix3::clone() const {
+  return new SmallMatrix3(*this);
+}
+
+OutputVal *SmallMatrix3::zero() const {
+  // TODO Opt: 
+  SmallMatrix3 *res = new SmallMatrix3();
+  res->clear();
+  return res;
+}
+
+OutputVal *SmallMatrix3::one() const {
+  // TODO: Really?  Not the identity?
+  // NB SymmMatrix3 does the same thing.
+  SmallMatrix3 *res = new SmallMatrix3();
+  for(unsigned int i=0;i<9;++i) {
+    res->data[i]=1.0;
+  }
+  return res;
+}
+
+
+OutputVal &SmallMatrix3::operator+=(const OutputVal &a) {
+  const SmallMatrix3 &reala = dynamic_cast<const SmallMatrix3&>(a);
+  return dynamic_cast<OutputVal&>(SmallMatrix::operator+=(reala));
+}
+
+OutputVal &SmallMatrix3::operator-=(const OutputVal &a) {
+  const SmallMatrix3 &reala = dynamic_cast<const SmallMatrix3&>(a);
+  return dynamic_cast<OutputVal&>(SmallMatrix::operator-=(reala));
+}
+
+
+OutputVal &SmallMatrix3::operator*=(double d) {
+  return dynamic_cast<OutputVal&>(SmallMatrix::operator*=(d));
+}
+
+// Doubly-overloaded, to disambiguate from OutputVal versions.
+SmallMatrix3 &SmallMatrix3::operator+=(const SmallMatrix3 &s) {
+  return dynamic_cast<SmallMatrix3&>(SmallMatrix::operator+=(s));
+}
+
+SmallMatrix3 &SmallMatrix3::operator-=(const SmallMatrix3 &s) {
+  return dynamic_cast<SmallMatrix3&>(SmallMatrix::operator-=(s));
+}
+
+double SmallMatrix3::operator[](const IndexP& ip) const {
+  return data[ip.integer()];
+}
+
+double &SmallMatrix3::operator[](const IndexP& ip) {
+  return data[ip.integer()];
+}
+
+void SmallMatrix3::component_pow(int p) {
+  for(DoubleVec::iterator di = data.begin(); di!=data.end(); ++di)
+    (*di) = pow(*di,p);
+}
+
+void SmallMatrix3::component_square() {
+  for(DoubleVec::iterator di = data.begin(); di!=data.end(); ++di)
+    (*di) = (*di)*(*di);
+}
+
+
+void SmallMatrix3::component_sqrt() {
+  for(DoubleVec::iterator di = data.begin(); di!=data.end(); ++di)
+    (*di) = sqrt(*di);
+}
+
+void SmallMatrix3::component_abs() {
+  for(DoubleVec::iterator di = data.begin(); di!=data.end(); ++di)
+    (*di) = fabs(*di);
+}
+
+DoubleVec *SmallMatrix3::value_list() const {
+  DoubleVec *res = new DoubleVec(data);
+  return res;
+}
+
+double SmallMatrix3::magnitude() const {
+  double sum = 0.0;
+  for(DoubleVec::const_iterator di = data.begin(); di!=data.end(); ++di)
+    sum += (*di)*(*di);
+  return sqrt(sum);
+}
+
+
+IteratorP SmallMatrix3::getIterator() const {
+  return IteratorP(new TensorIterator());
+}
+
+void SmallMatrix3::print(std::ostream& o) const {
+  // Need to cast to use the Smallmatrix's output, and not
+  // the OutputVal one.
+  const SmallMatrix &sm = dynamic_cast<const SmallMatrix&>(*this);
+  o << sm; 
+}
+
+IndexP SmallMatrix3::getIndex(const std::string &str) const {
+  return IndexP(new TensorIndex(TensorIndex::str2voigt9(str)));
+}
+
+// Dot products use a dispatch trick.
+OutputVal *SmallMatrix3::dot(const OutputVal &ov) const {
+  return ov.dotSmallMatrix3(*this);
+}
+
+OutputVal *SmallMatrix3::dotScalar(const ScalarOutputVal &ov) const {
+  SmallMatrix3 *result = new SmallMatrix3(*this);
+  (*result) *= ov.value();
+  return result;
+}
+
+OutputVal *SmallMatrix3::dotVector(const VectorOutputVal &ov) const {
+  assert(ov.dim()==3);
+  return new VectorOutputVal((*this)* ov.value());
+}
+
+OutputVal *SmallMatrix3::dotSymmMatrix3(const SymmMatrix3 &ov) const {
+  throw ErrProgrammingError(
+     "Smallmatrix3 dot SymmMatrix not yet implemented as an OutputVal",
+      __FILE__, __LINE__);
+}
+
+OutputVal *SmallMatrix3::dotSmallMatrix3(const SmallMatrix3 &ov) const {
+  throw ErrProgrammingError(
+      "SmallMatrix3 dot SmallMatrix3 not yet implemented as an OutputVal.",
+       __FILE__,__LINE__);
+}
+
+std::ostream &operator<<(std::ostream& o, const SmallMatrix3& s) {
+  const SmallMatrix &sm = dynamic_cast<const SmallMatrix&>(s);
+  return o << sm;
 }
