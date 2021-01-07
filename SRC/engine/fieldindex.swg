@@ -154,9 +154,33 @@ class OutOfPlaneSymTensorIterator:
   public OutOfPlaneSymTensorIndex, public FieldIterator
 {
   OutOfPlaneSymTensorIterator();
-}
+};
 
 
+class TensorIndex: public FieldIndex {
+public:
+  TensorIndex(int,int);
+  int row();
+  int col();
+  bool diagonal();
+  %addmethods {
+    %new const string *__repr__() {
+      return new std::string(to_string(*self));
+    }
+  }
+};
+
+class TensorIterator: public TensorIndex, public FieldIterator
+{
+public:
+  TensorIterator();
+  %addmethods {
+    %new const string *__repr__() {
+    return new std::string(to_string(*self));
+    }
+  }
+};
+  
 // IndexP and IteratorP objects should NOT be created directly in
 // Python, because it leads to arguments over whose job it is to
 // delete the enclosed FieldIndex or FieldIterator object.
@@ -210,5 +234,7 @@ public:
 };
 
 %new IteratorP *getSymTensorIterator(Planarity);
+
+%new IteratorP *getTensorIterator();
 
 #endif // FIELDINDEX_SWG

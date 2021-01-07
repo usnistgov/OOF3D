@@ -66,6 +66,12 @@ public:
 			const Element*, const MasterCoord&) const;
 };
 
+class SmallMatrix3PropertyOutputInit : public PropertyOutputInit {
+public:
+  OutputVal *operator()(const PropertyOutput*, const FEMesh*,
+			const Element*, const MasterCoord&) const;
+};
+
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 class PropertyOutput {

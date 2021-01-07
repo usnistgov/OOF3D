@@ -9,24 +9,24 @@
  * oof_manager@nist.gov. 
  */
 
-#ifndef SMALLMATRIX3_SWG
-#define SMALLMATRIX3_SWG
+#ifndef DEFORMATION_SWG
+#define DEFORMATION_SWG
 
-%module smallmatrix3
+%module deformation
 %include "engine/typemaps.swg"
-
 %{
-#include "engine/smallmatrix3.h"
+#include "engine/deformation.h"
+#include "engine/IO/propertyoutput.h"
 %}
 
-class SmallMatrix3 : public OutputVal {
+%extern "engine/IO/propertyoutput.swg"
+%pragma(python) code="from ooflib.SWIG.engine.IO.propertyoutput import PropertyOutputInitPtr"
+
+%pragma(python) include="deformation.spy"
+
+class POInitDeformation : public PropertyOutputInit {
 public:
-  SmallMatrix3();
-  ~SmallMatrix3();
+  POInitDeformation();
 };
 
-// Need to swig all the arithmetic and stuff also.
-
-%new OutputValue *newSmallMatrix3OutputValue();
-
-#endif SMALLMATRIX3_SWG
+#endif // DEFORMATION_SWG

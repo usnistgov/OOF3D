@@ -433,4 +433,6 @@ public:
 IteratorP *getSymTensorIterator(Planarity);
 OutputValue *newSymTensorOutputValue();
 
+IteratorP *getTensorIterator();
+
 #endif // FIELDINDEX_H

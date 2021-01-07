@@ -348,3 +348,9 @@ std::ostream &operator<<(std::ostream& o, const SmallMatrix3& s) {
   const SmallMatrix &sm = dynamic_cast<const SmallMatrix&>(s);
   return o << sm;
 }
+
+
+OutputValue *newSmallMatrix3OutputValue() {
+  return new OutputValue(new SmallMatrix3());
+}
+

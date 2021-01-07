@@ -88,5 +88,6 @@ public:
 std::ostream &operator<<(std::ostream&, const SmallMatrix3&);
 
 
+OutputValue *newSmallMatrix3OutputValue();
 
 #endif	// SMALLMATRIX3_H

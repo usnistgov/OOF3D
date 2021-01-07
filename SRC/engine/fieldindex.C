@@ -141,3 +141,7 @@ IteratorP *getSymTensorIterator(Planarity planarity) {
 #endif
   return new IteratorP(new SymTensorIterator());
 }
+
+IteratorP *getTensorIterator() {
+  return new IteratorP(new TensorIterator());
+}

@@ -24,6 +24,7 @@
 #include "engine/outputval.h"
 #include "engine/property.h"
 #include "engine/symmmatrix.h"
+#include "engine/smallmatrix3.h"
 
 // TODO 3.1: PropertyOutputs should NOT be computed by the
 // Properties directly.  That is, there should not be a
@@ -280,4 +281,12 @@ OutputVal *SymmMatrix3PropertyOutputInit::operator()(const PropertyOutput*,
 						     const MasterCoord&) const
 {
   return new SymmMatrix3();
+}
+
+OutputVal *SmallMatrix3PropertyOutputInit::operator()(const PropertyOutput*,
+						      const FEMesh*,
+						      const Element*,
+						      const MasterCoord&) const
+{
+  return new SmallMatrix3();
 }
