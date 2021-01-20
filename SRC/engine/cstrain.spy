@@ -69,7 +69,7 @@ registeredclass.Registration(
     NonlinearGeometricStrain,
     ordering=0.1,
     tip="Rotationally invariant symmetric derivative of the displacement field.",
-    discussion=r"""
+    discussion="""
     <para>
       The nonlinear geometric strain is the rotationally invariant
       form of the <xref linkend="RegisteredClass-GeometricStrain"/>.

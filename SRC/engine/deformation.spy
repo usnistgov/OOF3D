@@ -31,3 +31,27 @@ class DeformationType(registeredclass.RegisteredClass):
     deformation varieties.
     </para>"""
  
+
+
+class GeometricDeformation(DeformationType):
+    _name="Geometric"
+
+registeredclass.Registration(
+    "Geometric Deformation",
+    DeformationType,
+    GeometricDeformation,
+    ordering=0,
+    tip="The F matrix of the displaced system.",
+    discussion="""<para>This is mostly really a stunt class to demo the 
+    class hierarchy.""")
+    
+
+class DeformationTypeParameter(parameter.RegisteredParameter):
+    def __init__(self, name, value=None, default=None, tip=None, auxData={}):
+        parameter.RegisteredParameter.__init__(self,name, DeformationType,
+                                               value, default, tip, auxData)
+    def clone(self):
+        return DeformationTypeParameter(self.name, self.value,
+                                        self.defaut, self.tip)
+
+    
