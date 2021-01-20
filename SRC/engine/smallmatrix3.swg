@@ -25,8 +25,11 @@ public:
   ~SmallMatrix3();
 };
 
-// Need to swig all the arithmetic and stuff also.
+// HERE:
+// Need to swig all the arithmetic and stuff also,
+// following the example from SymmMatrix3.
+
 
 %new OutputValue *newSmallMatrix3OutputValue();
 
-#endif SMALLMATRIX3_SWG
+#endif // SMALLMATRIX3_SWG

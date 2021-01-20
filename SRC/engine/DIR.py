@@ -81,7 +81,8 @@ swigfiles = [
     'pixelselectioncouriere.swg', 'planarity.swg', 'preconditioner.swg',
     'pointdata.swg',
     'properties.swg', 'pypropertywrapper.swg', 'rank3tensor.swg',
-    'smallsystem.swg', 'sparsemat.swg',
+    'smallsystem.swg', 'smallmatrix3.swg',
+    'sparsemat.swg',
     'steperrorscaling.swg', 'symmmatrix.swg', 'materialvoxelfilter.swg'
     ]
 
