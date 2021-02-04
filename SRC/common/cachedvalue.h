@@ -55,6 +55,7 @@ public:
   void clear() {
     timestamp_.backdate();
     savedtime.backdate();
+  }
 };
 
 #endif // CACHEDVALUE_H
