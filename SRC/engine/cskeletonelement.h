@@ -120,6 +120,9 @@ protected:
   			  const Coord&, const Coord&) const;
   std::vector<VSBPlane<Coord3D>> getPlanes(const std::vector<Coord3D>&) const;
 
+  HomogeneityData c_homogeneity_robust(const CSkeletonBase*) const;
+  HomogeneityData c_homogeneity_fast(const CSkeletonBase*) const;
+
 public:
   // static topological info
   static const unsigned int faceEdges[4][3];
@@ -204,6 +207,7 @@ public:
   void setHomogeneityData(const HomogeneityData &hd) {
     homogeneity_data.copy(hd);
   }
+  void resetHomogeneity(); // force findHomogeneityAndDominantPixel to recompute
   double energyShape() const;
   static double energyShape(const Coord*);
   const Material *material(const CSkeletonBase*) const;

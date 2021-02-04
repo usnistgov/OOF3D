@@ -119,6 +119,35 @@
   $target = &arr;
  }
 
+// Convert the Python HomogeneityAlgorithm Enum from cskeleton2.spy to
+// a C++ HomogeneityAlgorithm enum from cskeleton2.h.
+
+%typemap(python, in) HomogeneityAlgorithm* (HomogeneityAlgorithm ha) {
+  // typemap(python, in) HomogeneityAlgorithm*
+  static PyObject *HomogeneityAlgorithmClass = 0;
+  if(!HomogeneityAlgorithmClass) {
+    PyObject *module = PyImport_ImportModule("ooflib.SWIG.engine.cskeleton2");
+    HomogeneityAlgorithmClass = PyObject_GetAttrString(module,
+						       "HomogeneityAlgorithm");
+    Py_XDECREF(module);
+    if(!HomogeneityAlgorithmClass) return 0;
+  }
+  if(PyObject_IsInstance($source, HomogeneityAlgorithmClass)) {
+    PyObject *enum_name = PyObject_GetAttrString($source, "name");
+    std::string s = PyString_AsString(enum_name);
+    if(s == "robust")
+      ha = HOMOGENEITY_ROBUST;
+    else if(s == "fast")
+      ho = HOMOGENEITY_FAST;
+    else {
+      PyErr_SetString(PyExc_TypeError,
+		      "Type error in HomogeneityAlgorithm* typemap.");
+      return NULL;
+    }
+  }
+  $target = &ha;
+}
+
 typedef unsigned long uidtype;
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -379,13 +408,8 @@ CDeputySkeleton *newCDeputySkeleton(CSkeletonBase*);
 
 // class DeputyProvisionalChanges {
 
-// public:
-//   DeputyProvisionalChanges(CDeputySkeleton *deputy);
-//   bool illegal();
-//   void removeAddedNodes();
-//   double deltaE(double alpha);
-//   void accept();
-// };
+
+void setHomogeneityAlgorithm(HomogeneityAlgorithm*);
 
 #endif
 

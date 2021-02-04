@@ -77,6 +77,18 @@ enum TetArrangement {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+// Methods of doing the homogeneity calculation. Must also agree with
+// the Python Enum defined in cskeleton2.swg.
+
+enum HomogeneityAlgorithm {
+  HOMOGENEITY_ROBUST,		// The voxel-set-boundary graph method
+  HOMOGENEITY_FAST		// Just count voxel centers
+};
+
+extern HomogeneityAlgorithm homogeneityAlgorithm;
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 // OuterFaceID and OuterEdgeID objects are used to identify the face
 // boudaries and edge boundaries when doing certain manipulations,
 // such as detecting different situations in the rationalization
@@ -348,6 +360,7 @@ public:
   void calculateHomogeneityIndex() const;
   double getUnweightedHomogeneity() const;
   void calculateUnweightedHomogeneity() const;
+  virtual void resetHomogeneity() = 0;
   double getUnweightedShapeEnergy() const;
   double getWeightedShapeEnergy() const;
   double energyTotal(double alpha) const;
@@ -651,6 +664,8 @@ public:
   virtual void facesAddGroupsDown(CGroupTrackerVector*);
   virtual void elementsAddGroupsDown(CGroupTrackerVector*);
 
+  virtual void resetHomogeneity();
+
   // real meshes
   //virtual FEMesh* femesh();
   virtual void populate_femesh(FEMesh *fem, const MasterElement*,
@@ -906,6 +921,8 @@ public:
     return skeleton->getFaceBoundaries();
   }
 
+  virtual void resetHomogeneity() {}
+
   // real meshes
   //virtual FEMesh* femesh() {return skeleton->femesh();}
   virtual void populate_femesh(FEMesh *fem, const MasterElement *me,
@@ -1120,5 +1137,9 @@ public:
   void addNode(CSkeletonNode *n) { added_nodes.push_back(n); }
   virtual void removeAddedNodes();
 };
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
+void setHomogeneityAlgorithm(HomogeneityAlgorithm*);
 
 #endif //CSKELETON2_H

@@ -711,3 +711,16 @@ def _getElements(self):
     return PySkeletonElementIterator(self)
 CSkeletonBasePtr.getElements = _getElements
 
+#=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
+
+# Ways of doing the homogeneity calculation.  The members of this
+# class must correspond to the members of the C++ HomogeneityAlgorithm
+# class defined in cskeleton2.h. The correspondence is created by the
+# HomogeneityAlgorithm typemap in cskeleton2.swg.
+
+class HomogeneityAlgorithm(
+        enum.EnumClass(('robust', 'Guaranteed to give the right answer'),
+                       ('fast', 'Might be faster, certainly wronger.'))):
+    tip = "How to compute element homogeneity"
+utils.OOFdefine('HomogeneityAlgorithm', HomogeneityAlgorithm)
+

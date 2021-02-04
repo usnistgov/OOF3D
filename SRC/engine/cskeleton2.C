@@ -63,6 +63,12 @@ unsigned long CSkeletonBase::uidbase = 0;
 #define DEFAULT_VSB_BIN 20
 #define MIN_VSB_BINSIZE 5
 
+// Global flag controlling the homogeneity calculation method.
+HomogeneityAlgorithm homogeneityAlgorithm = HOMOGENEITY_ROBUST;
+
+void setHomogeneityAlgorithm(HomogeneityAlgorithm *alg) {
+  homogeneityAlgorithm = *alg;
+}
 
 CSkeletonBase::CSkeletonBase()
   : illegal_(false),
@@ -967,6 +973,14 @@ void CSkeletonBase::calculateHomogeneityIndex() const {
     throw;
   }
   progress->finish();
+}
+
+void CSkeleton::resetHomogeneity() {
+  for(CSkeletonElement *element : elements) {
+    element->resetHomogeneity();
+  }
+  homogeneity_index_computation_time.backdate();
+  unweighted_homogeneity_computation_time.backdate();
 }
 
 // Gets average homogeneity, not weighted by volume

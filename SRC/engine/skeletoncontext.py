@@ -345,7 +345,10 @@ class SkeletonContext(whoville.WhoDoUndo):
             self.zombieSheriff = skeleton
         skeleton.destroy()
 
-        
+    def resetHomogeneity(self):
+        for skel in self.undobuffer:
+            skel.resetHomogeneity()
+            
     # ## ### #### ##### ###### ####### ####### ###### ##### #### ### ## #
 
     # Simple utilities used when operating on groups and selections.

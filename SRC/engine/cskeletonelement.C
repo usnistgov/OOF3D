@@ -500,49 +500,50 @@ void CSkeletonElement::edgeLengthAndDiameter2(unsigned int n0, unsigned int n1,
 }
 
 
- CSkeletonMultiNodeKey CSkeletonElement::getSegmentKey(int segidx) const {
-   return CSkeletonMultiNodeKey(getSegmentNode(segidx,0),
-				getSegmentNode(segidx,1));
- }
+CSkeletonMultiNodeKey CSkeletonElement::getSegmentKey(int segidx) const {
+  return CSkeletonMultiNodeKey(getSegmentNode(segidx,0),
+			       getSegmentNode(segidx,1));
+}
 
- CSkeletonMultiNodeKey CSkeletonElement::getFaceKey(int faceidx) const {
-   return CSkeletonMultiNodeKey(getFaceNode(faceidx,0),
-				getFaceNode(faceidx,1),
-				getFaceNode(faceidx,2));
- }
+CSkeletonMultiNodeKey CSkeletonElement::getFaceKey(int faceidx) const {
+  return CSkeletonMultiNodeKey(getFaceNode(faceidx,0),
+			       getFaceNode(faceidx,1),
+			       getFaceNode(faceidx,2));
+}
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
- void CSkeletonElement::findHomogeneityAndDominantPixel(
+void CSkeletonElement::findHomogeneityAndDominantPixel(
 						const CSkeletonBase *skel)
    const 
- {
-   // writeDebugFile("computing el=" + to_string(getUid()) +
-   // 		 " hd=" + to_string(homogeneity_data.timestamp()) + 
-   // 		 " nodes=");
-   // for(unsigned int i=0; i<nodes->size(); ++i)
-   //   writeDebugFile(" " + to_string((*nodes)[i]->getUid()) +
-   // 		   " " + to_string((*nodes)[i]->nodemoved));
-
-   const CMicrostructure *MS = skel->getMicrostructure();
-   if(homogeneity_data.timestamp() > MS->getTimeStamp()) {
-     bool uptodate = true;
-     // oofcerr << "CSkeletonElement::findHomogeneityAndDominantPixel: el="
-     // 	      << getUid() << " nodes= ";
-     for(unsigned int i=0; i<nodes->size() && uptodate; ++i) {
-       // oofcerr << (*nodes)[i]->getUid() << " " << (*nodes)[i]->nodemoved
-       // 		<< " ";
-       if(homogeneity_data.timestamp() < (*nodes)[i]->nodemoved) {
-	 uptodate = false;
-	 break;
-       }
-     }
-     // writeDebugFile(uptodate? " up-to-date\n" : " out-of-date\n");
-     if(uptodate) {
-       return;    
-     }
-   } // end homogeneity timestamp > microstructure timestamp
-   // else
-   //   writeDebugFile(" out-of-date\n");
+{
+  // writeDebugFile("computing el=" + to_string(getUid()) +
+  // 		 " hd=" + to_string(homogeneity_data.timestamp()) + 
+  // 		 " nodes=");
+  // for(unsigned int i=0; i<nodes->size(); ++i)
+  //   writeDebugFile(" " + to_string((*nodes)[i]->getUid()) +
+  // 		   " " + to_string((*nodes)[i]->nodemoved));
+  
+  const CMicrostructure *MS = skel->getMicrostructure();
+  if(homogeneity_data.timestamp() > MS->getTimeStamp()) {
+    bool uptodate = true;
+    // oofcerr << "CSkeletonElement::findHomogeneityAndDominantPixel: el="
+    // 	      << getUid() << " nodes= ";
+    for(unsigned int i=0; i<nodes->size() && uptodate; ++i) {
+      // oofcerr << (*nodes)[i]->getUid() << " " << (*nodes)[i]->nodemoved
+      // 		<< " ";
+      if(homogeneity_data.timestamp() < (*nodes)[i]->nodemoved) {
+	uptodate = false;
+	break;
+      }
+    }
+    // writeDebugFile(uptodate? " up-to-date\n" : " out-of-date\n");
+    if(uptodate) {
+      return;    
+    }
+  } // end homogeneity timestamp > microstructure timestamp
+  // else
+  //   writeDebugFile(" out-of-date\n");
 
 // #ifdef DEBUG
 //    if(debug()) {
@@ -556,9 +557,15 @@ void CSkeletonElement::edgeLengthAndDiameter2(unsigned int n0, unsigned int n1,
 //      oofcerr << std::endl;
 //    }
 // #endif // DEBUG
-   skel->buildVSBs();
-   homogeneity_data.set_value(c_homogeneity(skel));
- }
+  skel->buildVSBs();
+  homogeneity_data.set_value(c_homogeneity(skel));
+}
+
+void CSkeletonElement::resetHomogeneity() {
+  // Force homogeneity to be recomputed the next time
+  // findHomogeneityAndDominantPixel is called.
+  homogeneity_data.clear();
+}
 
 HomogeneityData CSkeletonElement::c_homogeneity(const CSkeletonBase *skel) const
 {
@@ -578,6 +585,18 @@ HomogeneityData CSkeletonElement::c_homogeneity(const CSkeletonBase *skel) const
   //   const CMicrostructure *ms = skel->getMicrostructure();
   //   return HomogeneityData(1.0/(ms->nCategories()+1), UNKNOWN_CATEGORY);
   // }
+  
+  if(homogeneityAlgorithm == HOMOGENEITY_ROBUST)
+    return c_homogeneity_robust(skel);
+  assert(homogeneityAlgorithm == HOMOGENEITY_FAST);
+  return c_homogeneity_fast(skel);
+}
+
+HomogeneityData CSkeletonElement::c_homogeneity_robust(
+					       const CSkeletonBase *skel) const
+{
+  // Compute homogeneity by finding the intersection of this element
+  // with the polyhedra formed by the voxels in each voxel category.
   
   // writeDebugFile("computing homogeneity for element "+to_string(getUid())+"\n");
 
@@ -617,6 +636,68 @@ HomogeneityData CSkeletonElement::c_homogeneity(const CSkeletonBase *skel) const
   return HomogeneityData(homogeneity, category);
 }
 
+HomogeneityData CSkeletonElement::c_homogeneity_fast(const CSkeletonBase *skel)
+  const
+{
+  // Compute the homogeneity by counting the number of voxels in each
+  // voxel category whose centers are within the element.  This is
+  // faster than homogeneity_robust (maybe) but will be less accurate,
+  // especially for small elements.
+  
+  const CMicrostructure *ms = skel->getMicrostructure();
+  Coord3D voxsize= ms->sizeOfPixels();
+  unsigned int ncat = ms->nCategories();
+  std::vector<int> counts(ncat, 0); // # of voxels in each category in the elmt
+  
+  // Get the corners of the element in voxel coordinates.
+  std::vector<Coord3D> epts = pixelCoords(ms);
+  // Get the element's bounding box in voxel coordinates.
+  ICRectangularPrism bbox(ms->pixelFromPoint((*nodes)[0]->position()),
+			  ms->pixelFromPoint((*nodes)[1]->position()));
+  bbox.swallow(ms->pixelFromPoint((*nodes)[2]->position()));
+  bbox.swallow(ms->pixelFromPoint((*nodes)[3]->position()));
+
+  // Loop over voxels
+  bool foundone = false;
+  for(unsigned int x=bbox.xmin(); x<=bbox.xmax(); x++)
+    for(unsigned int y=bbox.ymin(); y<=bbox.ymax(); y++)
+      for(unsigned int z=bbox.zmin(); z<=bbox.zmax(); z++)
+	{
+	  ICoord3D voxel(x, y, z);
+	  Coord3D center = voxel + Coord3D(0.5, 0.5, 0.5);
+	  Coord3D realcenter(center[0]*voxsize[0], center[1]*voxsize[1],
+			     center[2]*voxsize[2]);
+	  if(interior(&realcenter)) {
+	    ++counts[ms->category(voxel)];
+	    foundone = true;
+	  }
+	}
+
+  if(foundone) {
+    int total = 0;
+    int topcount = -1;
+    int category = -1;
+    for(int i=0; i<counts.size(); i++) {
+      int c = counts[i];
+      total += c;
+      if(c > topcount) {
+	topcount = c;
+	category = i;
+      }
+    }
+    double homogeneity = topcount/((double) total);
+    return HomogeneityData(homogeneity, category);
+  }
+
+  // No voxel centers were found inside the element.  The algorithm is
+  // obviously failing.  Set the homogeneity to 1.0 and the category
+  // to the category of the voxel at the center of the element.  
+  Coord3D center = 0.25*(epts[0] + epts[1] + epts[2] + epts[3]);
+  ICoord3D voxel = ms->pixelFromPoint(center);
+  return HomogeneityData(1.0, ms->category(voxel));
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // It is convenient to store some topological information which all
 // tets share in static variables.  This can save us some expensive
@@ -1470,7 +1551,6 @@ void CSkeletonElement::drawVoxelCategoryIntersection(LineSegmentLayer *layer,
   int nEdges = clipped->nEdges();
   layer->set_nSegs(nEdges);
   auto iter = clipped->iterator();
-  int count = 0;
   while(!iter.done()) {
     layer->addSegment(&iter.node0()->position, &iter.node1()->position);
     iter.next();

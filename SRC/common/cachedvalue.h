@@ -23,7 +23,6 @@ private:
   TYPE savedValue;
   TimeStamp timestamp_;
   TimeStamp savedtime;
-  bool set_;
 public:
   CachedValue() {
     timestamp_.backdate();	// out of date!
@@ -53,6 +52,9 @@ public:
     val = other.value();
     timestamp_ = other.timestamp().clone();
   }
+  void clear() {
+    timestamp_.backdate();
+    savedtime.backdate();
 };
 
 #endif // CACHEDVALUE_H
