@@ -133,7 +133,7 @@ public:
       return CTYPE(uprightfront[0], uprightfront[1], lowleftback[2]);
     case 3:
       return CTYPE(lowleftback[0], uprightfront[1], lowleftback[2]);
-		case 4:
+    case 4:
       return uprightfront;
     case 5:
       return CTYPE(lowleftback[0], uprightfront[1], uprightfront[2]);
