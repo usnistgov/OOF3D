@@ -53,6 +53,8 @@ const std::string CDeputySkeleton::classname_("CDeputySkeleton");
 
 unsigned long CSkeletonBase::uidbase = 0;
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 // Values used when setting the size of the bins used in
 // VoxelSetBoundary construction.  The nominal linear size of the bins
 // is the cube root of average element volume time VSB_FUDGE, but not
@@ -63,12 +65,24 @@ unsigned long CSkeletonBase::uidbase = 0;
 #define DEFAULT_VSB_BIN 20
 #define MIN_VSB_BINSIZE 5
 
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
+
 // Global flag controlling the homogeneity calculation method.
 HomogeneityAlgorithm homogeneityAlgorithm = HOMOGENEITY_ROBUST;
+TimeStamp homogeneityAlgorithmChanged;
 
 void setHomogeneityAlgorithm(HomogeneityAlgorithm *alg) {
-  homogeneityAlgorithm = *alg;
+  if(*alg != homogeneityAlgorithm) {
+    ++homogeneityAlgorithmChanged;
+    homogeneityAlgorithm = *alg;
+  }
 }
+
+HomogeneityAlgorithm getHomogeneityAlgorithm() {
+  return homogeneityAlgorithm;
+}
+
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 CSkeletonBase::CSkeletonBase()
   : illegal_(false),
@@ -906,17 +920,21 @@ bool CSkeletonBase::checkExteriorFaces(const CSkeletonFaceVector *faces)
 }
 
 
-//Returns (weighted) homogeneity index, which is the default
+// Returns (weighted) homogeneity index, which is the default
+
 double CSkeletonBase::getHomogeneityIndex() const {
-//Only recalculate if skeleton has changed since last time it was calculated
-  if(homogeneity_index_computation_time < getTimeStamp()) {
-    try {
-      calculateHomogeneityIndex();
+  // Only recalculate if skeleton has changed since last time it was
+  // calculated
+  if(homogeneity_index_computation_time < getTimeStamp() ||
+     homogeneity_index_computation_time < homogeneityAlgorithmChanged)
+    {
+      try {
+	calculateHomogeneityIndex();
+      }
+      catch (...) {
+	throw ErrHomogeneityNotCalculable();
+      }
     }
-    catch (...) {
-      throw ErrHomogeneityNotCalculable();
-    }
-  }
   return homogeneityIndex;
 }
 

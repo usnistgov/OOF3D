@@ -655,18 +655,20 @@ class SkeletonInfoToolboxGUI(genericinfoGUI.GenericInfoToolboxGUI):
         genericinfoGUI.GenericInfoToolboxGUI.__init__(self, "Skeleton Info",
                                                       skelinfotb)
         self.sbcallbacks.extend([
-                switchboard.requestCallback('changed pixel group',
-                                            self.grpChangedCB),
-                switchboard.requestCallback('changed pixel groups',
-                                            self.grpsChangedCB),
-                switchboard.requestCallback('destroy pixel group',
-                                            self.grpChangedCB),
-                switchboard.requestCallback('renamed pixel group',
-                                            self.grpRenamedCB),
-                switchboard.requestCallback(
-                    'materials changed in microstructure', self.matChangedCB),
-                switchboard.requestCallback(
-                    'materials changed in skeleton', self.matChangedSkelCB)
+            switchboard.requestCallback('changed pixel group',
+                                        self.grpChangedCB),
+            switchboard.requestCallback('changed pixel groups',
+                                        self.grpsChangedCB),
+            switchboard.requestCallback('destroy pixel group',
+                                        self.grpChangedCB),
+            switchboard.requestCallback('renamed pixel group',
+                                        self.grpRenamedCB),
+            switchboard.requestCallback(
+                'materials changed in microstructure', self.matChangedCB),
+            switchboard.requestCallback(
+                'materials changed in skeleton', self.matChangedSkelCB),
+            switchboard.requestCallback("homogeneity algorithm changed",
+                                        self.update)
         ])
 
     def modeClassDict(self):
@@ -685,7 +687,7 @@ class SkeletonInfoToolboxGUI(genericinfoGUI.GenericInfoToolboxGUI):
 
     ## TODO: Why do we need grpChangedCB, grpsChangedCB, and
     ## grpRenamedCB?  They're called in response to *pixel* group
-    ## chnages.
+    ## changes.  (Because they can affect the dominant pixel?)
     def grpChangedCB(self, group, msname):
         skel = self.getSkeletonContext()
         if skel and skel.getMicrostructure().name() == msname:

@@ -17,6 +17,7 @@
 #include "common/coord_i.h"
 #include "common/geometry.h"
 #include "common/pythonexportable.h"
+#include "common/timestamp.h"
 #include "common/VSB/cplane.h"
 #include "common/VSB/cprism.h"
 #include "engine/catvoldata.h"
@@ -40,7 +41,6 @@ class Material;
 class ProvisionalMerge;
 class SegmentSubstitution;
 class SkeletonFilter;
-class TimeStamp;
 class VoxelSetBoundary;
 
 class vtkCellLocator;
@@ -84,8 +84,6 @@ enum HomogeneityAlgorithm {
   HOMOGENEITY_ROBUST,		// The voxel-set-boundary graph method
   HOMOGENEITY_FAST		// Just count voxel centers
 };
-
-extern HomogeneityAlgorithm homogeneityAlgorithm;
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
@@ -639,7 +637,6 @@ public:
   void deputize(CDeputySkeleton* deputy);
   virtual void needsHash();
   CDeputySkeleton* deputySkeleton() { return deputy; }
-  const CDeputySkeletonList *getDeputyList() const { return &deputy_list; }
   void removeDeputy(CDeputySkeleton *dep);
   virtual int nDeputies() const { return deputy_list.size(); }
 
@@ -1141,5 +1138,9 @@ public:
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 void setHomogeneityAlgorithm(HomogeneityAlgorithm*);
+HomogeneityAlgorithm *getHomogeneityAlgorithmPtr();
+HomogeneityAlgorithm getHomogeneityAlgorithm();
+extern TimeStamp homogeneityAlgorithmChanged;
+
 
 #endif //CSKELETON2_H

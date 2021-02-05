@@ -704,25 +704,19 @@ mainmenu.debugmenu.addItem(oofmenu.OOFMenuItem(
 
 def _setHomogeneityAlgorithm(menuitem, algorithm):
     # Set the global C++ flag that tells future calculations which
-    # method to use.
+    # method to use, and update its timestamp.
     cskeleton2.setHomogeneityAlgorithm(algorithm)
-
-    # Tell all Skeletons and Elements that their homogeneity needs to be
-    # recalculated.
-    for skelctxt in skeletoncontext.skeletonContexts:
-        skelctxt.resetHomogeneity()
-        switchboard.notify("Skeleton changed", skelctxt.path())
-    
-    
+    switchboard.notify("homogeneity algorithm changed")
 
 skelsettingsmenu = mainmenu.settingsmenu.addItem(oofmenu.OOFMenuItem(
-    "Skeleton Defaults"))
+    "Skeleton_Defaults"))
 
 skelsettingsmenu.addItem(oofmenu.OOFMenuItem(
-    "Homogoneity Algorithm",
+    "Homogoneity_Algorithm",
     callback=_setHomogeneityAlgorithm,
     params=[
-        enum.EnumParameter("algorithm", cskeleton2.HomogeneityAlgorithm)
+        enum.EnumParameter("algorithm", cskeleton2.HomogeneityAlgorithm,
+                           value=cskeleton2.getHomogeneityAlgorithm())
         ],
     help="Set the method used to calculate element homogeneity."
     ))

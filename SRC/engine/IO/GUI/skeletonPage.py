@@ -28,6 +28,7 @@ from ooflib.common.IO.GUI import regclassfactory
 from ooflib.common.IO.GUI import tooltips
 from ooflib.common.IO.GUI import whowidget
 from ooflib.engine import skeletoncontext
+from ooflib.engine.IO import skeletonmenu
 from ooflib.SWIG.engine import cskeletonmodifier
 from ooflib.SWIG.engine import ooferror2
 import gtk
@@ -38,8 +39,6 @@ import pango
 ## for homogeneity?
 
 # Define some convenience variables.
-OOF = mainmenu.OOF
-skeletonmenu = mainmenu.OOF.Skeleton
 SkeletonModifier = cskeletonmodifier.CSkeletonModifier
 itORthem = ["it", "them"]
 
@@ -226,6 +225,8 @@ class SkeletonPage(oofGUI.MainPage):
                                             self.newMicrostructure),
             switchboard.requestCallback(("new who", 'Skeleton'),
                                         self.newSkeleton),
+            switchboard.requestCallback("homogeneity algorithm changed",
+                                        self.skel_update),
             # Pages should catch the signal from updates to the widget
             # which don't originate on this page, e.g. deletions via
             # menu command.
@@ -531,33 +532,33 @@ class SkeletonPage(oofGUI.MainPage):
 
     def new_skeleton_CB(self, gtkobj): # gtk callback for "New..." button
         paramset = filter(lambda x: x.name!='microstructure',
-                          skeletonmenu.New.params)
+                          skeletonmenu.skeletonmenu.New.params)
         if parameterwidgets.getParameters(title='New skeleton', *paramset):
-            skeletonmenu.New.callWithDefaults(
+            skeletonmenu.skeletonmenu.New.callWithDefaults(
                 microstructure=self.currentMSName())
 
     def simple_skeleton_CB(self, gtkobj): # gtk callback for "Simple..." button
         paramset = filter(lambda x: x.name!='microstructure',
-                          skeletonmenu.Simple.params)
+                          skeletonmenu.skeletonmenu.Simple.params)
         if parameterwidgets.getParameters(title='Simple skeleton', *paramset):
-            skeletonmenu.Simple.callWithDefaults(
+            skeletonmenu.skeletonmenu.Simple.callWithDefaults(
                 microstructure=self.currentMSName())
     def autoCB(self, gtkobj):           # gtk callback for "Auto..." button
         paramset = filter(lambda x: x.name!='microstructure',
-                          skeletonmenu.Auto.params)
+                          skeletonmenu.skeletonmenu.Auto.params)
         if parameterwidgets.getParameters(title='Automatic skeleton',
                                           *paramset):
-            skeletonmenu.Auto.callWithDefaults(
+            skeletonmenu.skeletonmenu.Auto.callWithDefaults(
                 microstructure=self.currentMSName())
 
     def copy_skeleton_CB(self, gtkobj): # gtk callback for "Copy..." button
-        menuitem = skeletonmenu.Copy
+        menuitem = skeletonmenu.skeletonmenu.Copy
         namearg = menuitem.get_arg('name')
         if parameterwidgets.getParameters(namearg, title='Copy skeleton'):
             menuitem.callWithDefaults(skeleton=self.skelwidget.get_value())
 
     def rename_skeleton_CB(self, gtkobj): # gtk callback for "Rename..." button
-        menuitem = skeletonmenu.Rename
+        menuitem = skeletonmenu.skeletonmenu.Rename
         namearg = menuitem.get_arg('name')
         namearg.value = labeltree.makePath(self.skelwidget.get_value())[-1]
         if parameterwidgets.getParameters(namearg, title='Rename skeleton'):
@@ -567,7 +568,7 @@ class SkeletonPage(oofGUI.MainPage):
         skelname = self.currentSkeletonName()
         if reporter.query("Delete skeleton %s?" % skelname,
                           "OK", "Cancel", default="OK")=="OK":
-            menuitem = skeletonmenu.Delete
+            menuitem = skeletonmenu.skeletonmenu.Delete
             menuitem.callWithDefaults(skeleton=self.skelwidget.get_value())
 
     def getSkeletonAvailability(self):
@@ -646,7 +647,7 @@ class SkeletonPage(oofGUI.MainPage):
         path = self.skelwidget.get_value()
         modifier = self.skelmod.get_value()
         if path and modifier:
-            OOF.Skeleton.Modify(skeleton=path, modifier=modifier)
+            mainmenu.OOF.Skeleton.Modify(skeleton=path, modifier=modifier)
         else:
             reporter.report("Can't modify!!!!")
 
@@ -658,11 +659,11 @@ class SkeletonPage(oofGUI.MainPage):
 
     def undoskelmod(self,gtkobj):
         path = self.skelwidget.get_value()
-        OOF.Skeleton.Undo(skeleton = path)
+        mainmenu.OOF.Skeleton.Undo(skeleton = path)
 
     def redoskelmod(self,gtkobj):
         path = self.skelwidget.get_value()
-        OOF.Skeleton.Redo(skeleton = path)
+        mainmenu.OOF.Skeleton.Redo(skeleton = path)
 
     def save_skeletonCB(self, button):
         menuitem = mainmenu.OOF.File.Save.Skeleton
@@ -676,18 +677,19 @@ class SkeletonPage(oofGUI.MainPage):
 skeletonpage = SkeletonPage()
 
 ############################################
-#Items related to skeleton display settings in the mainmenu
 
-#Add menu for display options
-displaymenu = mainmenu.OOF.Settings.addItem(oofmenu.OOFMenuItem(
-    'Skeleton_Display',
-    help = "Options for what information to display on the skeleton page."))
+# Items related to skeleton display settings in the mainmenu
 
+displaymenu = mainmenu.OOF.Settings.Skeleton_Defaults.addItem(
+    oofmenu.OOFMenuItem(
+        'Skeleton_Display',
+        help = "Options for what information to display on the skeleton page."))
 
-#Returns true if user has checked the option to show weighted homogeneity index (default)
+# Returns true if user has checked the option to show weighted
+# homogeneity index (default)
 def showHomogIndex():
     return displaymenu.Show_Homogeneity_Index.value
-#Creates menu item for weighted homogeneity index option
+# Creates menu item for weighted homogeneity index option
 displaymenu.addItem(oofmenu.CheckOOFMenuItem(
     'Show_Homogeneity_Index',
     value=True,
@@ -695,10 +697,11 @@ displaymenu.addItem(oofmenu.CheckOOFMenuItem(
     help='Show or hide the average homogeneity, weighted by element volume (recommended).'
 ))
 
-#Returns true if user has checked the option to display unweighted homogeneity index
+# Returns true if user has checked the option to display unweighted
+# homogeneity index
 def showUnweightedHomogIndex():
     return displaymenu.Show_Unweighted_Homogeneity_Index.value
-#Creates menu option for unweighted homogeneity index option
+
 displaymenu.addItem(oofmenu.CheckOOFMenuItem(
     'Show_Unweighted_Homogeneity_Index',
     value=False,
@@ -706,10 +709,11 @@ displaymenu.addItem(oofmenu.CheckOOFMenuItem(
     help='Show or hide the unweighted average homogeneity.'
 ))
 
-#Returns true if user has checked the option to show unweighted shape energy
+# Returns true if user has checked the option to show unweighted shape
+# energy
 def showAverageShapeEnergy():
     return displaymenu.Show_Average_Shape_Energy.value
-#Creates menu item for unweighted shape energy option
+
 displaymenu.addItem(oofmenu.CheckOOFMenuItem(
     'Show_Average_Shape_Energy',
     value=False,
@@ -717,10 +721,10 @@ displaymenu.addItem(oofmenu.CheckOOFMenuItem(
     help='Show or hide the average shape energy on the skeleton page.'
 ))
 
-#Returns true if user has checked the option to show weighted shape energy
+# Returns true if user has checked the option to show weighted shape energy
 def showWeightedAverageShapeEnergy():
     return displaymenu.Show_Weighted_Average_Shape_Energy.value
-#Creates menu item for weighted shape energy option
+
 displaymenu.addItem(oofmenu.CheckOOFMenuItem(
     'Show_Weighted_Average_Shape_Energy',
     value=False,

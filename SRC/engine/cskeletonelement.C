@@ -525,23 +525,25 @@ void CSkeletonElement::findHomogeneityAndDominantPixel(
   // 		   " " + to_string((*nodes)[i]->nodemoved));
   
   const CMicrostructure *MS = skel->getMicrostructure();
-  if(homogeneity_data.timestamp() > MS->getTimeStamp()) {
-    bool uptodate = true;
-    // oofcerr << "CSkeletonElement::findHomogeneityAndDominantPixel: el="
-    // 	      << getUid() << " nodes= ";
-    for(unsigned int i=0; i<nodes->size() && uptodate; ++i) {
-      // oofcerr << (*nodes)[i]->getUid() << " " << (*nodes)[i]->nodemoved
-      // 		<< " ";
-      if(homogeneity_data.timestamp() < (*nodes)[i]->nodemoved) {
-	uptodate = false;
-	break;
+  if(homogeneity_data.timestamp() > MS->getTimeStamp() &&
+     homogeneity_data.timestamp() > homogeneityAlgorithmChanged)
+    {
+      bool uptodate = true;
+      // oofcerr << "CSkeletonElement::findHomogeneityAndDominantPixel: el="
+      // 	      << getUid() << " nodes= ";
+      for(unsigned int i=0; i<nodes->size() && uptodate; ++i) {
+	// oofcerr << (*nodes)[i]->getUid() << " " << (*nodes)[i]->nodemoved
+	// 		<< " ";
+	if(homogeneity_data.timestamp() < (*nodes)[i]->nodemoved) {
+	  uptodate = false;
+	  break;
+	}
       }
-    }
-    // writeDebugFile(uptodate? " up-to-date\n" : " out-of-date\n");
-    if(uptodate) {
-      return;    
-    }
-  } // end homogeneity timestamp > microstructure timestamp
+      // writeDebugFile(uptodate? " up-to-date\n" : " out-of-date\n");
+      if(uptodate) {
+	return;    
+      }
+    } // end homogeneity timestamp > microstructure timestamp
   // else
   //   writeDebugFile(" out-of-date\n");
 
@@ -585,11 +587,14 @@ HomogeneityData CSkeletonElement::c_homogeneity(const CSkeletonBase *skel) const
   //   const CMicrostructure *ms = skel->getMicrostructure();
   //   return HomogeneityData(1.0/(ms->nCategories()+1), UNKNOWN_CATEGORY);
   // }
-  
-  if(homogeneityAlgorithm == HOMOGENEITY_ROBUST)
+  switch(getHomogeneityAlgorithm()) {
+  case HOMOGENEITY_ROBUST:
     return c_homogeneity_robust(skel);
-  assert(homogeneityAlgorithm == HOMOGENEITY_FAST);
-  return c_homogeneity_fast(skel);
+  case HOMOGENEITY_FAST:
+    return c_homogeneity_fast(skel);
+  }
+  throw ErrProgrammingError("Bad homogeneity algorithm type",
+			    __FILE__, __LINE__);
 }
 
 HomogeneityData CSkeletonElement::c_homogeneity_robust(

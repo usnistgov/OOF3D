@@ -66,32 +66,6 @@
 %pragma(python) code="from ooflib.SWIG.engine.cskeletonselectable import CSkeletonSelectablePtr"
 %pragma(python) code="from ooflib.SWIG.engine.femesh import FEMeshPtr"
 
-// Convert a C++ std::list of CDeputySkeletons to a python list.
-%typemap(python,out) CDeputySkeletonList* {
-  // typemap(python, out) CDeputySkeletonList*
-  static PyObject *cDeputySkeletonClass = 0;
-  if(!cDeputySkeletonClass) {
-    PyObject *module = PyImport_ImportModule("ooflib.SWIG.engine.cskeleton2");
-    cDeputySkeletonClass = PyObject_GetAttrString(module, "CDeputySkeletonPtr");
-    Py_XDECREF(module);
-    if(!cDeputySkeletonClass) return 0;
-  }
-  CDeputySkeletonList::size_type sz = $source->size();
-  assert((int) sz >= PY_SSIZE_T_MIN && (int)sz <= PY_SSIZE_T_MAX);
-  $target = PyList_New((Py_ssize_t) sz);
-  char _ptemp[128];
-  int i=0;
-  for(CDeputySkeletonList::iterator it=$source->begin(); it!=$source->end();
-      ++it, ++i) 
-    {
-      SWIG_MakePtr(_ptemp, (char*)(*it), "_CDeputySkeleton_p");
-      PyObject *swigthis = Py_BuildValue("(s)", _ptemp);
-      PyObject *cds = PyObject_CallObject(cDeputySkeletonClass, swigthis);
-      Py_XDECREF(swigthis);
-      PyList_SET_ITEM($target, (Py_ssize_t)i, cds);
-    }
-}
-
 // Convert the Python Arrangement Enum (cskeleton2.spy) to a C++
 // TetArrangement enum (cskeleton2.h).
 %typemap(python, in) TetArrangement* (TetArrangement arr) {
@@ -138,7 +112,7 @@
     if(s == "robust")
       ha = HOMOGENEITY_ROBUST;
     else if(s == "fast")
-      ho = HOMOGENEITY_FAST;
+      ha = HOMOGENEITY_FAST;
     else {
       PyErr_SetString(PyExc_TypeError,
 		      "Type error in HomogeneityAlgorithm* typemap.");
@@ -146,6 +120,31 @@
     }
   }
   $target = &ha;
+}
+
+%typemap(python, out) HomogeneityAlgorithm {
+  // typemap(python, out) HomogeneityAlgorithm
+  static PyObject *HomogeneityAlgorithmClass = 0;
+  if(!HomogeneityAlgorithmClass) {
+    PyObject *module = PyImport_ImportModule("ooflib.SWIG.engine.cskeleton2");
+    HomogeneityAlgorithmClass = PyObject_GetAttrString(module,
+						       "HomogeneityAlgorithm");
+    Py_XDECREF(module);
+    if(!HomogeneityAlgorithmClass) return 0;
+  }
+  std::string name;
+  if(*$source == HOMOGENEITY_FAST)
+    name = "fast";
+  else if(*$source == HOMOGENEITY_ROBUST)
+    name = "robust";
+  else {
+    PyErr_SetString(PyExc_TypeError,
+		    "Type error in HomogeneityAlgorithm* out typemap.");
+    return NULL;
+  }
+  PyObject *pname = Py_BuildValue("(s)", name.c_str());
+  $target = PyObject_CallObject(HomogeneityAlgorithmClass, pname);
+  Py_XDECREF(pname);
 }
 
 typedef unsigned long uidtype;
@@ -377,7 +376,6 @@ public:
   void removeBoundary(char *name);
   void renameBoundary(char *oldname, char *newname);
 
-  CDeputySkeletonList *getDeputyList();
   void removeDeputy(CDeputySkeleton *dep);
 
 }; // class CSkeleton
@@ -404,12 +402,15 @@ public:
   }
 };
 
+void setHomogeneityAlgorithm(HomogeneityAlgorithm*);
+// Swigging a function that returns an object instead of a pointer
+// creates an extra copy of the object, but we don't care here.
+HomogeneityAlgorithm getHomogeneityAlgorithm();
+
 CDeputySkeleton *newCDeputySkeleton(CSkeletonBase*);
 
-// class DeputyProvisionalChanges {
-
-
-void setHomogeneityAlgorithm(HomogeneityAlgorithm*);
+%typemap(python, out) HomogeneityAlgorithm*;
+%typemap(python, in) HomogeneityAlgorithm*;
 
 #endif
 
