@@ -68,18 +68,19 @@ unsigned long CSkeletonBase::uidbase = 0;
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // Global flag controlling the homogeneity calculation method.
-HomogeneityAlgorithm homogeneityAlgorithm = HOMOGENEITY_ROBUST;
+static HomogeneityAlgorithm _homogeneityAlgorithm = HOMOGENEITY_ROBUST;
 TimeStamp homogeneityAlgorithmChanged;
 
 void setHomogeneityAlgorithm(HomogeneityAlgorithm *alg) {
-  if(*alg != homogeneityAlgorithm) {
+  oofcerr << "setHomogeneityAlgorithm: " << *alg << std::endl;
+  if(*alg != _homogeneityAlgorithm) {
     ++homogeneityAlgorithmChanged;
-    homogeneityAlgorithm = *alg;
+    _homogeneityAlgorithm = *alg;
   }
 }
 
 HomogeneityAlgorithm getHomogeneityAlgorithm() {
-  return homogeneityAlgorithm;
+  return _homogeneityAlgorithm;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

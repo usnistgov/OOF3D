@@ -559,7 +559,6 @@ void CSkeletonElement::findHomogeneityAndDominantPixel(
 //      oofcerr << std::endl;
 //    }
 // #endif // DEBUG
-  skel->buildVSBs();
   homogeneity_data.set_value(c_homogeneity(skel));
 }
 
@@ -605,6 +604,8 @@ HomogeneityData CSkeletonElement::c_homogeneity_robust(
   
   // writeDebugFile("computing homogeneity for element "+to_string(getUid())+"\n");
 
+  skel->buildVSBs();
+  
   double maxvolume = -std::numeric_limits<double>::max();
   double totalVolume = 0;
   int category = 0;

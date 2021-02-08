@@ -406,6 +406,7 @@ void setHomogeneityAlgorithm(HomogeneityAlgorithm*);
 // Swigging a function that returns an object instead of a pointer
 // creates an extra copy of the object, but we don't care here.
 HomogeneityAlgorithm getHomogeneityAlgorithm();
+void initializeHomogeneityAlgorithm();
 
 CDeputySkeleton *newCDeputySkeleton(CSkeletonBase*);
 

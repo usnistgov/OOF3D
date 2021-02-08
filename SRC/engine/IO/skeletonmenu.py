@@ -720,3 +720,28 @@ skelsettingsmenu.addItem(oofmenu.OOFMenuItem(
         ],
     help="Set the method used to calculate element homogeneity."
     ))
+
+def _printHomogeneities(menuitem, comment, skeleton):
+    oldalgorithm = cskeleton2.getHomogeneityAlgorithm()
+    skel = skeletoncontext.skeletonContexts[skeleton].getObject()
+
+    cskeleton2.setHomogeneityAlgorithm("fast")
+    fasthom = skel.getHomogeneityIndex()
+    cskeleton2.setHomogeneityAlgorithm("robust")
+    robusthom = skel.getHomogeneityIndex()
+
+    cskeleton2.setHomogeneityAlgorithm(oldalgorithm)
+
+    print "%s: fast=%g, robust=%g, delta=%g" \
+        % (comment, fasthom, robusthom, (fasthom-robusthom)/robusthom)
+
+skeletonmenu.addItem(oofmenu.OOFMenuItem(
+    "PrintHomogeneities",
+    callback=_printHomogeneities,
+    params=[
+        parameter.StringParameter("comment"),
+        whoville.WhoParameter('skeleton', skeletoncontext.skeletonContexts)
+        ],
+    secret=True
+    ))
+    
