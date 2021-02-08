@@ -36,7 +36,7 @@ structIntSize = struct.calcsize(structIntFmt)
 
 ## TODO OPT: Use iterables instead of lists, maybe.  Do NOT use
 ## generators or iterators, unless it's guaranteed that they won't
-## have to be interated over more than once.
+## have to be iterated over more than once.
 
 ## NOTE Difference between OOF2 and OOF3D: If an Output A's parameter
 ## list includes OutputParameters, ie, parameters whose value is are
