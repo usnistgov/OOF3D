@@ -96,7 +96,7 @@
 // Convert the Python HomogeneityAlgorithm Enum from cskeleton2.spy to
 // a C++ HomogeneityAlgorithm enum from cskeleton2.h.
 
-%typemap(python, in) HomogeneityAlgorithm* (HomogeneityAlgorithm ha) {
+%typemap(python, in) HomogeneityAlgorithm* (HomogeneityAlgorithm homalg) {
   // typemap(python, in) HomogeneityAlgorithm*
   static PyObject *HomogeneityAlgorithmClass = 0;
   if(!HomogeneityAlgorithmClass) {
@@ -110,16 +110,16 @@
     PyObject *enum_name = PyObject_GetAttrString($source, "name");
     std::string s = PyString_AsString(enum_name);
     if(s == "robust")
-      ha = HOMOGENEITY_ROBUST;
+      homalg = HOMOGENEITY_ROBUST;
     else if(s == "fast")
-      ha = HOMOGENEITY_FAST;
+      homalg = HOMOGENEITY_FAST;
     else {
       PyErr_SetString(PyExc_TypeError,
 		      "Type error in HomogeneityAlgorithm* typemap.");
       return NULL;
     }
   }
-  $target = &ha;
+  $target = &homalg;
 }
 
 %typemap(python, out) HomogeneityAlgorithm {
@@ -406,7 +406,6 @@ void setHomogeneityAlgorithm(HomogeneityAlgorithm*);
 // Swigging a function that returns an object instead of a pointer
 // creates an extra copy of the object, but we don't care here.
 HomogeneityAlgorithm getHomogeneityAlgorithm();
-void initializeHomogeneityAlgorithm();
 
 CDeputySkeleton *newCDeputySkeleton(CSkeletonBase*);
 

@@ -725,9 +725,12 @@ def _printHomogeneities(menuitem, comment, skeleton):
     oldalgorithm = cskeleton2.getHomogeneityAlgorithm()
     skel = skeletoncontext.skeletonContexts[skeleton].getObject()
 
-    cskeleton2.setHomogeneityAlgorithm("fast")
+    fast = cskeleton2.HomogeneityAlgorithm("fast")
+    robust = cskeleton2.HomogeneityAlgorithm("robust")
+
+    cskeleton2.setHomogeneityAlgorithm(fast)
     fasthom = skel.getHomogeneityIndex()
-    cskeleton2.setHomogeneityAlgorithm("robust")
+    cskeleton2.setHomogeneityAlgorithm(robust)
     robusthom = skel.getHomogeneityIndex()
 
     cskeleton2.setHomogeneityAlgorithm(oldalgorithm)

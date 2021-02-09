@@ -72,7 +72,6 @@ static HomogeneityAlgorithm _homogeneityAlgorithm = HOMOGENEITY_ROBUST;
 TimeStamp homogeneityAlgorithmChanged;
 
 void setHomogeneityAlgorithm(HomogeneityAlgorithm *alg) {
-  oofcerr << "setHomogeneityAlgorithm: " << *alg << std::endl;
   if(*alg != _homogeneityAlgorithm) {
     ++homogeneityAlgorithmChanged;
     _homogeneityAlgorithm = *alg;

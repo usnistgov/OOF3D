@@ -720,7 +720,7 @@ CSkeletonBasePtr.getElements = _getElements
 
 class HomogeneityAlgorithm(
         enum.EnumClass(('robust', 'Guaranteed to give the right answer'),
-                       ('fast', 'Might be faster, certainly wronger.'))):
+                       ('fast', 'Maybe faster, certainly wronger.'))):
     tip = "How to compute element homogeneity"
 utils.OOFdefine('HomogeneityAlgorithm', HomogeneityAlgorithm)
 

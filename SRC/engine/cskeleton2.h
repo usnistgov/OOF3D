@@ -78,7 +78,8 @@ enum TetArrangement {
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // Methods of doing the homogeneity calculation. Must also agree with
-// the Python Enum defined in cskeleton2.swg.
+// the Python Enum defined in cskeleton2.spy and the swig typemaps in
+// cskeleton2.swg.
 
 enum HomogeneityAlgorithm {
   HOMOGENEITY_ROBUST,		// The voxel-set-boundary graph method
