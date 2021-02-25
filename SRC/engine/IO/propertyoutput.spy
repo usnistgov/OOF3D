@@ -231,7 +231,7 @@ def _smallmatrix3_column_names(self):
         it.next()
     return names
 
-# HERE -- is SmallMatrix3PropertyOutputInit callable?
+# HERE -- is SmallMatrix3PropertyOutputInit callable from Python?
 class SmallMatrix3PropertyOutputRegistration(MatrixPropertyOutputRegistration):
     def __init__(self,name,initializer,parameters,ordering,strepr,
                  tip,discussion):

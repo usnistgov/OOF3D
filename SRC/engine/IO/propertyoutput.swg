@@ -50,6 +50,11 @@ public:
   SymmMatrix3PropertyOutputInit();
 };
 
+class SmallMatrix3PropertyOutputInit : public PropertyOutputInit {
+public:
+  SmallMatrix3PropertyOutputInit();
+}
+  
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 class PropertyOutput {

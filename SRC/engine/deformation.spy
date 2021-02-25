@@ -55,3 +55,20 @@ class DeformationTypeParameter(parameter.RegisteredParameter):
                                         self.defaut, self.tip)
 
     
+
+# Registering this as a PropertyOutput with the right
+# output type makes it potentially available in the GUI.
+# Except maybe we need a DeformationTypeWidget in parallel
+# with the StrainTypeWidget?
+propertyoutput.SmallMatrix3PropertyOutputRegistration(
+    "Deformation",
+    initializer=POInitDeformation(),
+    parameters=[DeformationTypeParameter("type",
+                                         default=GeometricDeformation(),
+                                         tip="Type of deformation")],
+    ordering=5,
+    tip="Deformation output",
+    srepr=lambda s: s.resolveAlais("type").value.name() + " Deformation",
+    discussion="""
+    <para>Discussion coming soon.</para>
+    """)

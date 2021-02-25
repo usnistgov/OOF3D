@@ -26,8 +26,7 @@ public:
 };
 
 // HERE:
-// Need to swig all the arithmetic and stuff also,
-// following the example from SymmMatrix3.
+// Swig additional stuff following the example from SymmMatrix3?
 
 
 %new OutputValue *newSmallMatrix3OutputValue();
