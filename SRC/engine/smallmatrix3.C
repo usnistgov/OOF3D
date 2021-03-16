@@ -345,6 +345,7 @@ OutputVal *SmallMatrix3::dotSmallMatrix3(const SmallMatrix3 &ov) const {
 }
 
 std::ostream &operator<<(std::ostream& o, const SmallMatrix3& s) {
+  // Use the matrix version, not the OutputVal one.
   const SmallMatrix &sm = dynamic_cast<const SmallMatrix&>(s);
   return o << sm;
 }

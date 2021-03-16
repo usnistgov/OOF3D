@@ -132,6 +132,7 @@ import ooflib.engine.staticstep
 import ooflib.engine.IO.animationtimes
 
 import ooflib.SWIG.engine.cstrain
+import ooflib.SWIG.engine.deformation
 
 import ooflib.common.runtimeflags
 

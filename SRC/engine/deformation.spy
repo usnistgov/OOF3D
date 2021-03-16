@@ -17,6 +17,8 @@ from ooflib.common import enum
 from ooflib.common import registeredclass
 from ooflib.common.IO import parameter
 
+# Not currently being imported.
+
 class DeformationType(registeredclass.RegisteredClass):
     registry = []
     def name(self):
@@ -52,7 +54,7 @@ class DeformationTypeParameter(parameter.RegisteredParameter):
                                                value, default, tip, auxData)
     def clone(self):
         return DeformationTypeParameter(self.name, self.value,
-                                        self.defaut, self.tip)
+                                        self.default, self.tip)
 
     
 
@@ -68,7 +70,7 @@ propertyoutput.SmallMatrix3PropertyOutputRegistration(
                                          tip="Type of deformation")],
     ordering=5,
     tip="Deformation output",
-    srepr=lambda s: s.resolveAlais("type").value.name() + " Deformation",
+    srepr=lambda s: s.resolveAlias("type").value.name() + " Deformation",
     discussion="""
     <para>Discussion coming soon.</para>
     """)
