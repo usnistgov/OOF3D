@@ -17,7 +17,7 @@ from ooflib.common import enum
 from ooflib.common import registeredclass
 from ooflib.common.IO import parameter
 
-# Not currently being imported.
+# Imported from engine/initialize.py.
 
 class DeformationType(registeredclass.RegisteredClass):
     registry = []
