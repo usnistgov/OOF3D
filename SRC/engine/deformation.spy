@@ -25,6 +25,8 @@ class DeformationType(registeredclass.RegisteredClass):
         return self._name
     def iterator(self):
         return fieldindex.getTensorIterator()
+    def iterator_all(self):
+        return fieldindex.getTensorIterator()
     def newOutputValue(self):
         return smallmatrix3.newSmallMatrix3OutputValue()
     tip="Tip coming soon."
