@@ -65,8 +65,6 @@ class OutputParameterWidget(parameterwidgets.ParameterWidget,
             self.treewidget.set_value(value.getPrototype())
             self.makeParameterTable(value, interactive=0)
     def makeParameterTable(self, value, interactive):
-        print >> sys.stderr, "OutputParameterWidget.makeParameterTable called."
-        print >> sys.stderr, "Value is ", value
 
         # 'value' is an Output prototype.  The parameter table is
         # rebuilt every time the Output changes.
@@ -79,41 +77,28 @@ class OutputParameterWidget(parameterwidgets.ParameterWidget,
         # its pipeline component.  The Parameters' widgets can use
         # this data if necessary (see invariantwidget.py).
         self.output = value.clone()
-        print >> sys.stderr, "Completed clone operation."
 
         # get the hierarchical list of the settable parameters
         paramhier = self.output.listAllParametersHierarchically(onlySettable=1)
-        print >> sys.stderr, "Got the param hierarchy."
-        print >> sys.stderr, paramhier
 
         
         self.params = utils.flatten_all(paramhier)
-        print >> sys.stderr, "Got the params."
-        print >> sys.stderr, self.params
         
         if self.params:
-            print >> sys.stderr, "Param loop."
             for param in self.params:
-                print >> sys.stderr, param
                 if param.value is None:
                     param.value = param.default
-            print >> sys.stderr, "Exited param loop."
             # Bombing in this function somewhere.
             self.paramtable = parameterwidgets.HierParameterTable(
                 paramhier, scope=self)
-            print >> sys.stderr, "Built param table."
             self.parambox.pack_start(self.paramtable.gtk, expand=0, fill=0)
-            print >> sys.stderr, "Added it to the parambox."
             self.widgetChanged(self.paramtable.isValid(), interactive)
-            print >> sys.stderr, "Back from widgetChanged callback."
             self.paramtable.show()
-            print >> sys.stderr, "Showed param table."
             self.sbcallback = switchboard.requestCallbackMain(
                 self.paramtable, self.tableChangedCB)
         else:
             self.paramtable = None
             self.widgetChanged(1, interactive)
-        print >> sys.stderr, "OutputParameterWidget.makeParameterTable exiting."
     def get_value(self):
         if self.paramtable is not None:
             self.paramtable.get_values() # copies widget values to params
