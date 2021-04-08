@@ -23,7 +23,7 @@
 #include "engine/material.h"
 #include "engine/outputval.h"
 #include "engine/property.h"
-#include "engine/symmmatrix.h"
+#include "engine/symmmatrix3.h"
 #include "engine/smallmatrix3.h"
 
 // TODO 3.1: PropertyOutputs should NOT be computed by the

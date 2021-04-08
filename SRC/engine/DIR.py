@@ -53,7 +53,7 @@ cfiles = [
     'property.C', 'pypropertywrapper.C', 'rank3tensor.C',
     'recoveredflux.C', 'shapefunction.C', 'shapefunctioncache.C',
     'smallmatrix3.C', 'smallsystem.C', 'sparsemat.C', 'steperrorscaling.C',
-    'symeig3.C', 'symmmatrix.C', 'materialvoxelfilter.C'
+    'symeig3.C', 'symmmatrix.C', 'symmmatrix3.C', 'materialvoxelfilter.C'
 ]
 
 swigfiles = [
@@ -83,7 +83,8 @@ swigfiles = [
     'properties.swg', 'pypropertywrapper.swg', 'rank3tensor.swg',
     'smallsystem.swg', 'smallmatrix3.swg',
     'sparsemat.swg',
-    'steperrorscaling.swg', 'symmmatrix.swg', 'materialvoxelfilter.swg'
+    'steperrorscaling.swg', 'symmmatrix.swg', 'symmmatrix3.swg', 
+    'materialvoxelfilter.swg'
     ]
 
 pyfiles = [
@@ -130,7 +131,8 @@ swigpyfiles = [
     'meshdatacache.spy', 'node.spy', 'ooferror2.spy', 'outputval.spy',
     'pixelgroupsubproblem.spy', 'preconditioner.spy', 'property.spy',
     'pypropertywrapper.spy', 'rank3tensor.spy', 
-    'steperrorscaling.spy', 'symmmatrix.spy', 'entiremeshsubproblem.spy',
+    'steperrorscaling.spy', 'symmmatrix.spy', 'symmmatrix3.spy', 
+    'entiremeshsubproblem.spy',
     'materialvoxelfilter.spy'
     ]
 
@@ -165,7 +167,8 @@ hfiles = [
     'shapefunction.h', 'shapefunctioncache.h', 'smalltensor.h',
     'smallmatrix3.h', 'smallsystem.h', 'sparsemat.h', 'steperrorscaling.h', 
     'symeig3.h',
-    'symmmatrix.h', 'materialvoxelfilter.h', 'cskeletonselectable_i.h',
+    'symmmatrix.h', 'symmmatrix3.h', 'materialvoxelfilter.h', 
+    'cskeletonselectable_i.h',
     'cskeleton2_i.h'
 ]
 

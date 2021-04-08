@@ -19,6 +19,8 @@ from ooflib.common.IO.GUI import regclassfactory
 from ooflib.engine.IO import outputClones
 from ooflib.engine.IO.GUI import meshparamwidgets
 
+import sys
+
 class InvariantParameterWidgetBase(regclassfactory.RegisteredClassFactory):
     def __init__(self, value, scope, name, verbose=False):
         self.sbcallbacks = []

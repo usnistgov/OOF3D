@@ -35,7 +35,7 @@
 #include "engine/ooferror.h"
 #include "engine/outputval.h"
 #include "engine/smallsystem.h"
-#include "engine/symmmatrix.h"
+#include "engine/symmmatrix3.h"
 
 const std::string Flux::modulename_("ooflib.SWIG.engine.flux");
 

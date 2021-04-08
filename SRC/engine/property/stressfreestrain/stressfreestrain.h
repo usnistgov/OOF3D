@@ -19,7 +19,7 @@
 #include <oofconfig.h>
 
 #include "engine/property.h"
-#include "engine/symmmatrix.h"
+#include "engine/symmmatrix3.h"
 #include <string>
 
 class Elasticity;

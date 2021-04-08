@@ -15,6 +15,7 @@
 from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.engine import outputval
 from ooflib.SWIG.engine import symmmatrix
+from ooflib.SWIG.engine import smallmatrix3
 from ooflib.common import cregisteredclass
 from ooflib.common import debug
 from ooflib.common.IO import parameter

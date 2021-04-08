@@ -18,7 +18,7 @@
 
 #include "engine/invariant.h"
 #include "engine/outputval.h"
-#include "engine/symmmatrix.h"
+#include "engine/symmmatrix3.h"
 
 double Magnitude::operator()(const OutputVal &oval) const {
   // Don't need to do the down-cast, all OutputVal's can do magnitude.

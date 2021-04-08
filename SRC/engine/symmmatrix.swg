@@ -56,46 +56,4 @@ public:
   } 
 };
 
-// This particular inheritance is a problem for indexing -- both
-// SymmMatrix and OutputVal have __getitem__ overrides, and the order
-// in which the classes appear here dictates which one gets found by
-// Python.  This is a problem because they take different arguments --
-// the OutputVal wants an IndexP, and the SymmMatrix wants a tuple of
-// integers.  Currently, the OutputVal __getitem__ is privileged, and
-// SymmMatrix users must use the .get method, which takes the two
-// integers that would be in the tuple.  It would be nicer if the
-// __getitem__ were homogenous.
-class SymmMatrix3 : public OutputVal, public SymmMatrix {
-public:
-  SymmMatrix3(double, double, double, double, double, double);
-  ~SymmMatrix3();
-  double trace();
-  double determinant();
-  double secondInvariant();
-  double deviator();
-  double maxEigenvalue();
-  double midEigenvalue();
-  double minEigenvalue();
-  double contract(SymmMatrix3&);
-  IteratorP getIterator();
-  
-  // Because of maintenance-of-ownership requirements for OutputVal
-  // subclasses, these routines should operate in-place on the object
-  // and not return anything.  This prevents SWIG from automatically
-  // making new "Ptr" objects of dubious provenance.
-  %addmethods {
-    void _add(const SymmMatrix3 &other) {
-      (*self) += other;
-    }
-    void _sub(const SymmMatrix3 &other) {
-      (*self) -= other;
-    }
-    void _mul(double other) {
-      (*self) *= other;
-    }
-  }
-};
-
-%new OutputValue *newSymTensorOutputValue();
-
 #endif // SYMMMATRIX_SWG

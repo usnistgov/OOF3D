@@ -23,6 +23,7 @@
 #include "engine/field.h"
 #include "engine/mastercoord.h"
 #include "engine/symmmatrix.h"
+#include "engine/symmmatrix3.h"
 
 
 // The following function adds the local geometrical strain at a given

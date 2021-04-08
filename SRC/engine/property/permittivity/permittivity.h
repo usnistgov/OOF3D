@@ -20,7 +20,7 @@
 
 
 #include "engine/property.h"
-#include "engine/symmmatrix.h"
+#include "engine/symmmatrix3.h"
 #include "common/pythonexportable.h"
 #include "engine/smallsystem.h"
 #include <string>

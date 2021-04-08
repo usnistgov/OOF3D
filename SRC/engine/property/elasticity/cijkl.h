@@ -17,7 +17,7 @@
 #ifndef CIJKL_H
 #define CIJKL_H
 
-#include "engine/symmmatrix.h"
+#include "engine/symmmatrix3.h"
 #include <iostream>
 
 class SymTensorIndex;

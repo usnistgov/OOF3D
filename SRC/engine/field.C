@@ -32,7 +32,7 @@
 #include "engine/outputval.h"
 #include "engine/pointdata.h"
 #include "engine/property.h"
-#include "engine/symmmatrix.h"
+#include "engine/symmmatrix3.h"
 #include <iostream>
 #include <vector>
 

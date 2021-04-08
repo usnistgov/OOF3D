@@ -20,7 +20,7 @@
 #include "common/lock.h"
 #include "common/IO/oofcerr.h"
 #include "engine/fieldindex.h"
-#include "engine/symmmatrix.h"
+#include "engine/symmmatrix3.h"
 #include "engine/smallmatrix3.h"
 #include "engine/outputval.h"
 #include <math.h>
