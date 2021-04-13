@@ -16,7 +16,7 @@
 
 from ooflib.SWIG.engine import fieldindex
 from ooflib.SWIG.engine import outputval
-from ooflib.SWIG.engine import symmmatrix
+from ooflib.SWIG.engine import symmmatrix3
 from ooflib.common import debug
 from ooflib.common.IO.GUI import gtklogger
 import gtk
@@ -113,7 +113,7 @@ class SymmMatrix3Widget:
 def _SymmMatrix_makeWidget(self):
     return SymmMatrix3Widget(self)
 
-symmmatrix.SymmMatrix3Ptr.makeWidget = _SymmMatrix_makeWidget
+symmmatrix3.SymmMatrix3Ptr.makeWidget = _SymmMatrix_makeWidget
                 
 
 ####################

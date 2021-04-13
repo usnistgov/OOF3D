@@ -21,7 +21,7 @@
 
 %include "common/typemaps.swg"
 %include "engine/propertyhdr.swg"
-%extern "engine/symmmatrix.swg"
+%extern "engine/symmmatrix3.swg"
 
 %pragma(python) include="heatconductivity.spy"
 

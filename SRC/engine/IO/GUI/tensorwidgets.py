@@ -14,10 +14,10 @@
 
 # Contains size-specific descendants of SymmetricMatrixInput,
 # which have as values objects of the SymmMatrix type
-# from SWIG.engine.SymmMatrix.
+# from SWIG.engine.SymmMatrix3.
 
 from ooflib.SWIG.engine import fieldindex
-from ooflib.SWIG.engine import symmmatrix
+from ooflib.SWIG.engine import symmmatrix3
 from ooflib.common import debug
 from ooflib.common.IO.GUI import gtklogger
 from ooflib.common.IO.GUI import parameterwidgets
@@ -28,7 +28,7 @@ from ooflib.common.IO.GUI.matrixparamwidgets import SymmetricMatrixInput
 # primarily used for display of values.  It's sufficiently different
 # that combining the two is probably not useful.
 class SymmMatrix3Widget(SymmetricMatrixInput):
-    settable = symmmatrix.voigtIndices
+    settable = symmmatrix3.voigtIndices
     def __init__(self, param, scope=None, name=None, verbose=False):
         debug.mainthreadTest()
         SymmetricMatrixInput.__init__(self,"",3,3,value=None,scope=scope,
@@ -47,7 +47,7 @@ class SymmMatrix3Widget(SymmetricMatrixInput):
         if value is not None:
             self.block_signals()
             try:
-                for i in symmmatrix.voigtIndices:
+                for i in symmmatrix3.voigtIndices:
                     self.floats[i].set_value(self.value.get(*i))
             finally:
                 self.unblock_signals()
@@ -57,16 +57,16 @@ class SymmMatrix3Widget(SymmetricMatrixInput):
     def new_value(self, gtk, event):
         result = self.value
         try:
-            result = symmmatrix.SymmMatrix3(
+            result = symmmatrix3.SymmMatrix3(
                 *[self.floats[i].get_value() for i in \
-                  symmmatrix.voigtIndices] )
+                  symmmatrix3.voigtIndices] )
         finally:
             self.set_values(result)
 
 def _SymmMatrix3Parameter_makeWidget(self, scope=None, verbose=False):
     return SymmMatrix3Widget(self, scope, name=self.name, verbose=verbose)
 
-symmmatrix.SymmMatrix3Parameter.makeWidget = _SymmMatrix3Parameter_makeWidget
+symmmatrix3.SymmMatrix3Parameter.makeWidget = _SymmMatrix3Parameter_makeWidget
 
 # For properties, we want a widget that will return a
 # TriclinicRank2Tensor object, but otherwise behaves identically to
@@ -76,8 +76,8 @@ class TriclinicRank2TensorParameterWidget(SymmMatrix3Widget):
     def new_value(self, gtk, event):
         result = self.value
         try:
-            result = symmmatrix.TriclinicRank2Tensor(
-                *[self.floats[i].get_value() for i in symmmatrix.voigtIndices] )
+            result = symmmatrix3.TriclinicRank2Tensor(
+                *[self.floats[i].get_value() for i in symmmatrix3.voigtIndices] )
         finally:
             self.set_values(result)
               
@@ -85,7 +85,7 @@ def _TR2TP_makeWidget(self, scope=None, verbose=False):
     return TriclinicRank2TensorParameterWidget(self, scope, name=self.name,
                                                verbose=verbose)
 
-symmmatrix.TriclinicRank2TensorParameter.makeWidget = _TR2TP_makeWidget
+symmmatrix3.TriclinicRank2TensorParameter.makeWidget = _TR2TP_makeWidget
 
 
 
@@ -108,7 +108,7 @@ class MonoclinicSymmWidget(SymmMatrix3Widget):
     def new_value(self, gtk, event):
         result = self.value
         try:
-            result = symmmatrix.MonoclinicRank2Tensor(
+            result = symmmatrix3.MonoclinicRank2Tensor(
                 self.floats[(0,0)].get_value(),
                 self.floats[(1,1)].get_value(),
                 self.floats[(2,2)].get_value(),
@@ -119,7 +119,7 @@ class MonoclinicSymmWidget(SymmMatrix3Widget):
 def _MonoclinicSymmParameter_makeWidget(self, scope=None, verbose=False):
     return MonoclinicSymmWidget(self, scope, name=self.name, verbose=verbose)
 
-symmmatrix.MonoclinicRank2TensorParameter.makeWidget = _MonoclinicSymmParameter_makeWidget
+symmmatrix3.MonoclinicRank2TensorParameter.makeWidget = _MonoclinicSymmParameter_makeWidget
 
 
 ## for symmetric orthorhombic rank two tensors
@@ -140,7 +140,7 @@ class OrthorhombicSymmWidget(SymmMatrix3Widget):
     def new_value(self, gtk, event):
         result = self.value
         try:
-            result = symmmatrix.OrthorhombicRank2Tensor(
+            result = symmmatrix3.OrthorhombicRank2Tensor(
                 self.floats[(0,0)].get_value(),
                 self.floats[(1,1)].get_value(),
                 self.floats[(2,2)].get_value())
@@ -150,7 +150,7 @@ class OrthorhombicSymmWidget(SymmMatrix3Widget):
 def _OrthorhombicSymmParameter_makeWidget(self, scope=None, verbose=False):
     return OrthorhombicSymmWidget(self, scope, name=self.name, verbose=verbose)
 
-symmmatrix.OrthorhombicRank2TensorParameter.makeWidget = _OrthorhombicSymmParameter_makeWidget
+symmmatrix3.OrthorhombicRank2TensorParameter.makeWidget = _OrthorhombicSymmParameter_makeWidget
 
 
 ## For Tetragonal, Trigonal, Hexagonal symmetric rank two tensors
@@ -184,36 +184,36 @@ def _IsotropicPlaneSymmParameter_makeWidget(self, scope=None, verbose=False):
     return IsotropicPlaneSymmWidget(self, scope, name=self.name, 
                                     verbose=verbose)
 
-symmmatrix.IsotropicPlaneParameter.makeWidget = _IsotropicPlaneSymmParameter_makeWidget
+symmmatrix3.IsotropicPlaneParameter.makeWidget = _IsotropicPlaneSymmParameter_makeWidget
 
 # Nearly-trivial subclasses, which have functions which can generate a
 # tensor of the appropriate type.
 class TetragonalSymmWidget(IsotropicPlaneSymmWidget):
     def make_tensor(self, xx, zz):
-        return symmmatrix.TetragonalRank2Tensor(xx=xx,zz=zz)
+        return symmmatrix3.TetragonalRank2Tensor(xx=xx,zz=zz)
 
 def _TetragonalSymmParameter_makeWidget(self, scope=None, verbose=False):
     return TetragonalSymmWidget(self, scope, name=self.name, verbose=verbose)
 
-symmmatrix.TetragonalRank2TensorParameter.makeWidget = _TetragonalSymmParameter_makeWidget
+symmmatrix3.TetragonalRank2TensorParameter.makeWidget = _TetragonalSymmParameter_makeWidget
 
 class TrigonalSymmWidget(IsotropicPlaneSymmWidget):
     def make_tensor(self, xx, zz):
-        return symmmatrix.TrigonalRank2Tensor(xx=xx,zz=zz)
+        return symmmatrix3.TrigonalRank2Tensor(xx=xx,zz=zz)
 
 def _TrigonalSymmParameter_makeWidget(self, scope=None, verbose=False):
     return TrigonalSymmWidget(self, scope, name=self.name, verbose=verbose)
 
-symmmatrix.TrigonalRank2TensorParameter.makeWidget = _TrigonalSymmParameter_makeWidget
+symmmatrix3.TrigonalRank2TensorParameter.makeWidget = _TrigonalSymmParameter_makeWidget
 
 class HexagonalSymmWidget(IsotropicPlaneSymmWidget):
     def make_tensor(self, xx, zz):
-        return symmmatrix.HexagonalRank2Tensor(xx=xx,zz=zz)
+        return symmmatrix3.HexagonalRank2Tensor(xx=xx,zz=zz)
 
 def _HexagonalSymmParameter_makeWidget(self, scope=None, verbose=False):
     return HexagonalSymmWidget(self, scope, name=self.name, verbose=verbose)
 
-symmmatrix.HexagonalRank2TensorParameter.makeWidget = _HexagonalSymmParameter_makeWidget
+symmmatrix3.HexagonalRank2TensorParameter.makeWidget = _HexagonalSymmParameter_makeWidget
 
 ## For CUBIC symmetric rank two tensors
 class CubicSymmWidget(SymmMatrix3Widget):
@@ -221,7 +221,7 @@ class CubicSymmWidget(SymmMatrix3Widget):
     def new_value(self, gtk, event):
         result = self.value
         try:
-            result = symmmatrix.CubicRank2Tensor(
+            result = symmmatrix3.CubicRank2Tensor(
                 self.floats[(0,0)].get_value() )
         finally:
             self.set_values(result)
@@ -242,4 +242,4 @@ class CubicSymmWidget(SymmMatrix3Widget):
 def _CubicSymmParameter_makeWidget(self, scope=None, verbose=False):
     return CubicSymmWidget(self, scope, name=self.name, verbose=verbose)
 
-symmmatrix.CubicRank2TensorParameter.makeWidget = _CubicSymmParameter_makeWidget
+symmmatrix3.CubicRank2TensorParameter.makeWidget = _CubicSymmParameter_makeWidget

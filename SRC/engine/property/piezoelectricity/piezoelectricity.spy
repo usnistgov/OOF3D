@@ -14,7 +14,7 @@
 
 
 from ooflib.SWIG.engine import rank3tensor
-from ooflib.SWIG.engine import symmmatrix
+# from ooflib.SWIG.engine import symmmatrix3
 from ooflib.common import utils
 from ooflib.common.IO import parameter
 from ooflib.common.IO import xmlmenudump

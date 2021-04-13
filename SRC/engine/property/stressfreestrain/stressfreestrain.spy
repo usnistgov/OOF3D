@@ -13,7 +13,7 @@
 # oof_manager@nist.gov. 
 
 
-from ooflib.SWIG.engine import symmmatrix
+from ooflib.SWIG.engine import symmmatrix3
 from ooflib.common import utils
 from ooflib.common.IO import parameter
 from ooflib.common.IO import xmlmenudump
@@ -45,9 +45,9 @@ reg = PropertyRegistration(
     AnisotropicStressFreeStrain,
     "ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain",
     23,
-    [symmmatrix.CubicRank2TensorParameter(
+    [symmmatrix3.CubicRank2TensorParameter(
             'epsilon0',
-            symmmatrix.CubicRank2Tensor(xx=1.0),
+            symmmatrix3.CubicRank2Tensor(xx=1.0),
             tip='Stress-free strain tensor')],
     outputs=["Strain", "Energy"],
     propertyType="StressFreeStrain",
@@ -64,9 +64,9 @@ reg = PropertyRegistration(
     AnisotropicStressFreeStrain,
     "ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain",
     24,
-    [symmmatrix.HexagonalRank2TensorParameter(
+    [symmmatrix3.HexagonalRank2TensorParameter(
             'epsilon0',
-            symmmatrix.HexagonalRank2Tensor(xx=1.0, zz=0.5),
+            symmmatrix3.HexagonalRank2Tensor(xx=1.0, zz=0.5),
             tip='Stress-free strain tensor')],
     outputs=["Strain", "Energy"],
     propertyType="StressFreeStrain",
@@ -83,9 +83,9 @@ reg = PropertyRegistration(
     AnisotropicStressFreeStrain,
     "ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain",
     25,
-    [symmmatrix.TrigonalRank2TensorParameter(
+    [symmmatrix3.TrigonalRank2TensorParameter(
             'epsilon0',
-            symmmatrix.TrigonalRank2Tensor(xx=1.0, zz=0.5),
+            symmmatrix3.TrigonalRank2Tensor(xx=1.0, zz=0.5),
             tip='Stress-free strain tensor')],
     outputs=["Strain", "Energy"],
     propertyType="StressFreeStrain",
@@ -102,9 +102,9 @@ reg = PropertyRegistration(
     AnisotropicStressFreeStrain,
     "ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain",
     26,
-    [symmmatrix.TetragonalRank2TensorParameter(
+    [symmmatrix3.TetragonalRank2TensorParameter(
             'epsilon0',
-            symmmatrix.TetragonalRank2Tensor(xx=1.0, zz=0.5),
+            symmmatrix3.TetragonalRank2Tensor(xx=1.0, zz=0.5),
             tip='Stress-free strain tensor')],
     outputs=["Strain", "Energy"],
     propertyType="StressFreeStrain",
@@ -121,9 +121,9 @@ reg = PropertyRegistration(
     AnisotropicStressFreeStrain,
     "ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain",
     27,
-    [symmmatrix.OrthorhombicRank2TensorParameter(
+    [symmmatrix3.OrthorhombicRank2TensorParameter(
             'epsilon0',
-            symmmatrix.OrthorhombicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+            symmmatrix3.OrthorhombicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
             tip='Stress-free strain tensor')],
     outputs=["Strain", "Energy"],
     propertyType="StressFreeStrain",
@@ -140,9 +140,9 @@ reg = PropertyRegistration(
     AnisotropicStressFreeStrain,
     "ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain",
     26,
-    [symmmatrix.MonoclinicRank2TensorParameter(
+    [symmmatrix3.MonoclinicRank2TensorParameter(
             'epsilon0',
-            symmmatrix.MonoclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+            symmmatrix3.MonoclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
             tip='Stress-free strain tensor')],
     outputs=["Strain", "Energy"],
     propertyType="StressFreeStrain",
@@ -159,9 +159,9 @@ reg = PropertyRegistration(
     AnisotropicStressFreeStrain,
     "ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain",
     26,
-    [symmmatrix.TriclinicRank2TensorParameter(
+    [symmmatrix3.TriclinicRank2TensorParameter(
             'epsilon0',
-            symmmatrix.TriclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+            symmmatrix3.TriclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
             tip='Stress-free strain tensor')],
     outputs=["Strain", "Energy"],
     propertyType="StressFreeStrain",

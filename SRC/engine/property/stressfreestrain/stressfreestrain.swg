@@ -24,8 +24,8 @@
 
 %include "common/typemaps.swg"
 %include "engine/propertyhdr.swg"
-%pragma(python) code="from ooflib.SWIG.engine.symmmatrix import SymmMatrix3Ptr"
-%extern "engine/symmmatrix.swg"
+%pragma(python) code="from ooflib.SWIG.engine.symmmatrix3 import SymmMatrix3Ptr"
+%extern "engine/symmmatrix3.swg"
 
 
 class IsotropicStressFreeStrain : public Property {

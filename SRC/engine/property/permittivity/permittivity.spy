@@ -18,7 +18,7 @@ from ooflib.common.IO import parameter
 from ooflib.common.IO import xmlmenudump
 from ooflib.engine import problem
 from ooflib.engine import propertyregistration
-from ooflib.SWIG.engine import symmmatrix
+from ooflib.SWIG.engine import symmmatrix3
 
 PropertyRegistration = propertyregistration.PropertyRegistration
 
@@ -45,9 +45,9 @@ reg = PropertyRegistration(
     'Electric:DielectricPermittivity:Anisotropic:Triclinic',
     AnisoDielectricPermittivity,
     "ooflib.SWIG.engine.property.permittivity.permittivity",105,
-    [symmmatrix.TriclinicRank2TensorParameter(
+    [symmmatrix3.TriclinicRank2TensorParameter(
     'epsilon',
-    symmmatrix.TriclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+    symmmatrix3.TriclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
     tip=parameter.emptyTipString)],
     propertyType="DielectricPermittivity",
     tip="Triclinic dielectric permittivity",
@@ -63,9 +63,9 @@ reg = PropertyRegistration(
     'Electric:DielectricPermittivity:Anisotropic:Monoclinic',
     AnisoDielectricPermittivity,
     "ooflib.SWIG.engine.property.permittivity.permittivity",104,
-    [symmmatrix.MonoclinicRank2TensorParameter(
+    [symmmatrix3.MonoclinicRank2TensorParameter(
     'epsilon',
-    symmmatrix.MonoclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+    symmmatrix3.MonoclinicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
     tip=parameter.emptyTipString)],
     propertyType="DielectricPermittivity",
     tip="Monoclinic dielectric permittivity.",
@@ -81,9 +81,9 @@ reg = PropertyRegistration(
     'Electric:DielectricPermittivity:Anisotropic:Orthorhombic',
     AnisoDielectricPermittivity,
     "ooflib.SWIG.engine.property.permittivity.permittivity",103,
-    [symmmatrix.OrthorhombicRank2TensorParameter(
+    [symmmatrix3.OrthorhombicRank2TensorParameter(
     'epsilon',
-    symmmatrix.OrthorhombicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
+    symmmatrix3.OrthorhombicRank2Tensor(xx=1.0, yy=1.0, zz=1.0),
     tip=parameter.emptyTipString)],
     propertyType="DielectricPermittivity",
     tip="Orthorhombic dielectric permittivity.",
@@ -99,9 +99,9 @@ reg = PropertyRegistration(
     'Electric:DielectricPermittivity:Anisotropic:Tetragonal',
     AnisoDielectricPermittivity,
     "ooflib.SWIG.engine.property.permittivity.permittivity",101,
-    [symmmatrix.TetragonalRank2TensorParameter(
+    [symmmatrix3.TetragonalRank2TensorParameter(
     'epsilon',
-    symmmatrix.TetragonalRank2Tensor(xx=1.0, zz=1.0),
+    symmmatrix3.TetragonalRank2Tensor(xx=1.0, zz=1.0),
     tip=parameter.emptyTipString)],
     propertyType="DielectricPermittivity",
     tip="Tetragonal dielectric permittivity.",
@@ -117,9 +117,9 @@ reg = PropertyRegistration(
     'Electric:DielectricPermittivity:Anisotropic:Trigonal',
     AnisoDielectricPermittivity,
     "ooflib.SWIG.engine.property.permittivity.permittivity",102,
-    [symmmatrix.TrigonalRank2TensorParameter(
+    [symmmatrix3.TrigonalRank2TensorParameter(
     'epsilon',
-    symmmatrix.TrigonalRank2Tensor(xx=1.0, zz=0.5),
+    symmmatrix3.TrigonalRank2Tensor(xx=1.0, zz=0.5),
     tip=parameter.emptyTipString)],
     propertyType="DielectricPermittivity",
     tip="Trigonal dielectric permittivity",
@@ -135,9 +135,9 @@ reg = PropertyRegistration(
     'Electric:DielectricPermittivity:Anisotropic:Hexagonal',
     AnisoDielectricPermittivity,
     "ooflib.SWIG.engine.property.permittivity.permittivity",100,
-    [symmmatrix.HexagonalRank2TensorParameter(
+    [symmmatrix3.HexagonalRank2TensorParameter(
     'epsilon',
-    symmmatrix.HexagonalRank2Tensor(xx=1.0, zz=0.5),
+    symmmatrix3.HexagonalRank2Tensor(xx=1.0, zz=0.5),
     tip=parameter.emptyTipString)],
     propertyType="DielectricPermittivity",
     tip="Hexagonal dielectric permittivity",
@@ -153,9 +153,9 @@ reg = PropertyRegistration(
     'Electric:DielectricPermittivity:Anisotropic:Cubic',
     AnisoDielectricPermittivity,
     "ooflib.SWIG.engine.property.permittivity.permittivity",99,
-    [symmmatrix.CubicRank2TensorParameter(
+    [symmmatrix3.CubicRank2TensorParameter(
     'epsilon',
-    symmmatrix.CubicRank2Tensor(xx=1.0),
+    symmmatrix3.CubicRank2Tensor(xx=1.0),
     tip=parameter.emptyTipString)],
     propertyType="DielectricPermittivity",
     tip="Cubic dielectric permittivity",

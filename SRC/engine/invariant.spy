@@ -14,7 +14,7 @@
 
 from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.engine import outputval
-from ooflib.SWIG.engine import symmmatrix
+from ooflib.SWIG.engine import symmmatrix3
 from ooflib.SWIG.engine import smallmatrix3
 from ooflib.common import cregisteredclass
 from ooflib.common import debug
@@ -54,7 +54,7 @@ cregisteredclass.Registration(
     Magnitude,
     ordering=0,
     sources=[outputval.VectorOutputValPtr,
-             symmmatrix.SymmMatrix3Ptr],
+             symmmatrix3.SymmMatrix3Ptr],
     tip="Magnitude (L2 or Frobenius norm) of a vector or tensor.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/invariant.xml'))
 
@@ -63,7 +63,7 @@ cregisteredclass.Registration(
     InvariantPtr,
     MatrixTrace,
     ordering=1,
-    sources=[symmmatrix.SymmMatrix3Ptr],
+    sources=[symmmatrix3.SymmMatrix3Ptr],
     tip="Trace of a symmetric tensor.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/trace.xml'))
 
@@ -72,7 +72,7 @@ cregisteredclass.Registration(
     InvariantPtr,
     SecondInvariant,
     ordering=2,
-    sources=[symmmatrix.SymmMatrix3Ptr],
+    sources=[symmmatrix3.SymmMatrix3Ptr],
     tip="Second invariant of a symmetric tensor.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/2nd_invariant.xml'))
 
@@ -81,7 +81,7 @@ cregisteredclass.Registration(
     InvariantPtr,
     Determinant,
     ordering=2,
-    sources=[symmmatrix.SymmMatrix3Ptr],
+    sources=[symmmatrix3.SymmMatrix3Ptr],
     tip="Determinant of a symmetric tensor.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/determinant.xml'))
 
@@ -90,7 +90,7 @@ cregisteredclass.Registration(
     InvariantPtr,
     Deviator,
     ordering=3,
-    sources=[symmmatrix.SymmMatrix3Ptr],
+    sources=[symmmatrix3.SymmMatrix3Ptr],
     tip="Magnitude of deviatoric part of a symmetric tensor.",
     discussion=xmlmenudump.loadFile('DISCUSSIONS/engine/reg/deviator.xml'))
 

@@ -24,8 +24,9 @@
 
 %include "common/typemaps.swg"
 %include "engine/propertyhdr.swg"
-%pragma(python) code="from ooflib.SWIG.engine.symmmatrix import SymmMatrix3Ptr"
-%extern "engine/symmmatrix.swg"
+ // Is symmmatrix3 even used here?  It's all Rank3Tensor stuff, probably.
+%pragma(python) code="from ooflib.SWIG.engine.symmmatrix3 import SymmMatrix3Ptr"
+%extern "engine/symmmatrix3.swg"
 %pragma(python) code="from ooflib.SWIG.engine.rank3tensor import Rank3TensorPtr"
 %extern "engine/rank3tensor.swg"
 
