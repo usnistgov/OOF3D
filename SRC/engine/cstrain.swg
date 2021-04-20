@@ -20,6 +20,7 @@
 %include "engine/typemaps.swg"
 %{
 #include "engine/cstrain.h"
+#include "engine/symmmatrix3.h"
 #include "engine/IO/propertyoutput.h"
 %}
 

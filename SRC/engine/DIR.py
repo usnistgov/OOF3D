@@ -75,6 +75,7 @@ swigfiles = [
     'gausspoint.swg',
     'icpre.swg', 'ilupre.swg', 'invariant.swg', 'linearizedsystem.swg',
     'mastercoord.swg', 'masterelement.swg', 'material.swg',
+    'matrix3.swg',
     'materialsubproblem.swg', 'meshdatacache.swg', 'meshiterator.swg',
     'nodalequation.swg', 'node.swg', 'ooferror2.swg',
     'orientationimage.swg', 'outputval.swg', 'pixelgroupsubproblem.swg',
@@ -166,7 +167,7 @@ hfiles = [
     'pypropertywrapper.h', 'rank3tensor.h', 'recoveredflux.h', 
     'shapefunction.h', 'shapefunctioncache.h', 'smalltensor.h',
     'smallmatrix3.h', 'smallsystem.h', 'sparsemat.h', 'steperrorscaling.h', 
-    'symeig3.h',
+    'symeig3.h',"matrix3.h",
     'symmmatrix.h', 'symmmatrix3.h', 'materialvoxelfilter.h', 
     'cskeletonselectable_i.h',
     'cskeleton2_i.h'

@@ -26,10 +26,10 @@
 #include "common/smallmatrix.h"
 #include "common/pythonexportable.h"
 #include "engine/fieldindex.h"
-#include "engine/outputval.h"
+#include "engine/matrix3.h"
 
 
-class SmallMatrix3 : public OutputVal, public SmallMatrix {
+class SmallMatrix3 : public Matrix3, public SmallMatrix {
 private:
   static std::string classname_;  // Induced by PythonExportable.
   static std::string modulename_;
@@ -38,7 +38,7 @@ public:
   SmallMatrix3(const SmallMatrix3&);
   SmallMatrix3(const SmallMatrix&);
   SmallMatrix3 invert() const;
-  double det() const;
+
   // Polar decomposition.
   std::pair<SmallMatrix3,SmallMatrix3> ch_sqrt() const;
   // Over-ride resizing to disallow it.
@@ -61,6 +61,14 @@ public:
   virtual OutputVal &operator-=(const OutputVal&);
   virtual OutputVal &operator*=(double);
 
+  // Invariants.
+  virtual double trace() const;
+  virtual double determinant() const;
+  virtual double secondInvariant() const;
+  virtual double maxEigenvalue() const;
+  virtual double midEigenvalue() const;
+  virtual double minEigenvalue() const;
+  
   SmallMatrix3 &operator+=(const SmallMatrix3&);
   SmallMatrix3 &operator-=(const SmallMatrix3&);
   

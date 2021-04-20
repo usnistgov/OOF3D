@@ -613,7 +613,7 @@ void Plasticity::begin_element(const CSubProblem *c,
     SmallMatrix3 &fp_attau = pd->gptdata[gptdx]->fp_tau;
 
     // Normalize fp_tau.  
-    double dtmt = fp_attau.det();
+    double dtmt = fp_attau.determinant();
     fp_attau *= (1.0/pow(dtmt, 1.0/3.0));
     
     // Decompose into elastic and plastic parts.
@@ -638,7 +638,7 @@ void Plasticity::begin_element(const CSubProblem *c,
 
     // Compute the Cauchy stress at tau.
     pd->gptdata[gptdx]->cauchy = fe_attau*(pd->gptdata[gptdx]->s_star)*fe_attau_t;
-    double fe_dtmt = fe_attau.det();
+    double fe_dtmt = fe_attau.determinant();
     pd->gptdata[gptdx]->cauchy *= (1.0/fe_dtmt);
 
     // Cauchy stress is now up to date.
@@ -875,7 +875,7 @@ void Plasticity::begin_element(const CSubProblem *c,
     
     Rank4_3DTensor w_mat;
 
-    double fe_attau_d = fe_attau.det();
+    double fe_attau_d = fe_attau.determinant();
 
     
     // std::cerr << "Fe_attau" << std::endl;

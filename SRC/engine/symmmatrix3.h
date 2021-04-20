@@ -23,16 +23,18 @@ class SymmMatrix3;
 #include <iostream>
 #include <math.h>
 #include "common/coord_i.h"
-#include "common/smallmatrix.h"
+
 #include "engine/eigenvalues.h"
 #include "engine/fieldindex.h"
 #include "engine/outputval.h"
 #include "engine/symmmatrix.h"
 
+#include "engine/matrix3.h"
+
 class COrientation;
 class IndexP;
 
-class SymmMatrix3 : public OutputVal, public SymmMatrix {
+class SymmMatrix3 : public Matrix3, public SymmMatrix {
 // OutputVal is a PythonExportable class, and must be the first base
 // class listed so that the PythonExportable dynamic classes work.
 // This doesn't feel right...

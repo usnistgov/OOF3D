@@ -71,7 +71,7 @@ SmallMatrix3 SmallMatrix3::invert() const {
 }
 
 
-double SmallMatrix3::det() const {
+double SmallMatrix3::determinant() const {
   SmallMatrix3 res;
   // Cofactors.  Data array index is col*3+row, due to Fortran ordering.
   // res(0,0) = x(1,1)*x(2,2)-x(1,2)*x(2,1);
@@ -98,6 +98,26 @@ double SmallMatrix3::det() const {
   return  data[0]*res(0,0)+data[3]*res(0,1)+data[6]*res(0,2);
 }
 
+double SmallMatrix3::trace() const {
+  return data[0]+data[4]+data[8];
+}
+
+// TODO: Write these.  Eigenvalues are cached.
+double SmallMatrix3::secondInvariant() const {
+  return 0.0;
+}
+
+double SmallMatrix3::maxEigenvalue() const {
+  return 0.0;
+}
+
+double SmallMatrix3::midEigenvalue() const {
+  return 0.0;
+}
+
+double SmallMatrix3::minEigenvalue() const {
+  return 0.0;
+}
 
 std::pair<SmallMatrix3,SmallMatrix3> SmallMatrix3::ch_sqrt() const {
 // Cayley-Hamilton matrix square root algorithm.

@@ -9,26 +9,25 @@
  * oof_manager@nist.gov. 
  */
 
-#ifndef SMALLMATRIX3_SWG
-#define SMALLMATRIX3_SWG
 
-%module smallmatrix3
+// This can be super-basic, it justneeds to exist so that
+// Python instances of the base classes have the right
+// class structure.   This might change if we decide we
+// need to call invariant methods from Python.
+
+#ifndef MATRIX3_SWG
+#define MATRIX3_SWG
+
+%module matrix3
 %include "engine/typemaps.swg"
 
 %{
-#include "engine/smallmatrix3.h"
+#include "engine/matrix3.h"
 %}
 
-class SmallMatrix3 : public Matrix3 {
-public:
-  SmallMatrix3();
-  ~SmallMatrix3();
-};
+class Matrix3 : public OutputVal {
+}
 
-// HERE:
-// Swig additional stuff following the example from SymmMatrix3?
+// Constructor makes no sense, it has virtual fns.
 
-
-%new OutputValue *newSmallMatrix3OutputValue();
-
-#endif // SMALLMATRIX3_SWG
+#endif // MATRIX3_SWG
