@@ -13,7 +13,7 @@
 # oof_manager@nist.gov.
 
 from ooflib.SWIG.engine import outputval
-from ooflib.SWIG.engine import symmmatrix
+from ooflib.SWIG.engine import symmmatrix3
 from ooflib.SWIG.engine import smallmatrix3
 from ooflib.common import debug
 from ooflib.common import utils
@@ -197,7 +197,7 @@ class MatrixPropertyOutputRegistration(PORegBase):
 
 
 def _symmmatrix3_instancefn(self):
-    return symmmatrix.SymmMatrix3(0.,0.,0.,0.,0.,0.)
+    return symmmatrix3.SymmMatrix3(0.,0.,0.,0.,0.,0.)
 
 def _symmmatrix3_column_names(self):
     sr = self.shortrepr()

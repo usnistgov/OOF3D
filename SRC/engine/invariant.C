@@ -19,6 +19,7 @@
 #include "engine/invariant.h"
 #include "engine/outputval.h"
 #include "engine/symmmatrix3.h"
+#include "engine/matrix3.h"
 
 double Magnitude::operator()(const OutputVal &oval) const {
   // Don't need to do the down-cast, all OutputVal's can do magnitude.
@@ -26,17 +27,17 @@ double Magnitude::operator()(const OutputVal &oval) const {
 }
 
 double MatrixTrace::operator()(const OutputVal &oval) const {
-  const SymmMatrix3 &s = dynamic_cast<const SymmMatrix3&>(oval);
+  const Matrix3 &s = dynamic_cast<const Matrix3&>(oval);
   return s.trace();
 }
 
 double Determinant::operator()(const OutputVal &oval) const {
-  const SymmMatrix3 &s = dynamic_cast<const SymmMatrix3&>(oval);
+  const Matrix3 &s = dynamic_cast<const Matrix3&>(oval);
   return s.determinant();
 }
 
 double SecondInvariant::operator()(const OutputVal &oval) const {
-  const SymmMatrix3 &s = dynamic_cast<const SymmMatrix3&>(oval);
+  const Matrix3 &s = dynamic_cast<const Matrix3&>(oval);
   return s.secondInvariant();
 }
 
