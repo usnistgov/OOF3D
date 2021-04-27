@@ -116,6 +116,7 @@ void SmallMatrix::transpose() {
 }
 
 extern "C" {
+  // Ax=b solver.
   // Arguments: N, # of columns of A.
   //            NRHS, # of right-hand-sides to solve for.
   //            A, the matrix
@@ -127,7 +128,8 @@ extern "C" {
   void dgesv_(unsigned int*n, unsigned int*nrhs, double*a, unsigned int*lda,
 	      int*ipiv, double*b, unsigned int*ldb, int*info);
 
-  
+
+  // Factorization of symmetric matrix by Bunch-Kaufman pivoting.
   // Arguments: UL, character saying which triangle to refer to.
   //            N, the order of the matrix.
   //            A, the matrix.
@@ -139,7 +141,8 @@ extern "C" {
   void dsytrf_(char*ul, int*n, double*a, int*lda, int*ipiv,
 	       double*work, int *lwork, int*info);
 
-  
+
+  // Inverse of a real symmetric matrx.
   // Arguments: UL, character saying which triangle to use.
   //            N, the order of A.
   //            A, the matrix.
@@ -150,6 +153,7 @@ extern "C" {
   void dsytri_(char *ul, int*n, double*a, int*lda, int*ipiv, 
 	       double*work, int*info);
 
+  // Matrix-matrix and matrix-vector multiply, no symmetry constraints.
   // y <- alpha Ax + beta y
   // Arguments:
   //    trans: 'n' or 't', for 'no transpose' or 'transpose'
@@ -197,6 +201,7 @@ int SmallMatrix::solve(SmallMatrix &rhs) {
   return info; 
 }
 
+// TODO: Does anybody ever call this?
 int SmallMatrix::symmetric_invert() {
   // This method assumes that the matrix is symmetric, and only
   // examines the upper triangle in order to compute the inverse.  You

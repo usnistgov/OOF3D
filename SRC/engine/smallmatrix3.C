@@ -33,7 +33,8 @@ void SmallMatrix3::resize(unsigned int r, unsigned int c) {
 // Should it use the use dgetrf/dgetri, to avoid the determinant?
 // Our determinants are near unity, so we are probably OK.
 // SmallMatrix has a "symmetric_invert" routine already, but that
-// requires the matrix to be symmetric.
+// requires the matrix to be symmetric, and is not specialized
+// to the 3x3 case. 
 // 
 // Method cribbed from:
 // http://www.mathcentre.ac.uk/resources/uploaded/sigma-matrices11-2009-1.pdf
@@ -102,28 +103,20 @@ double SmallMatrix3::trace() const {
   return data[0]+data[4]+data[8];
 }
 
-// TODO: Write these.  Eigenvalues are cached.
+// Useful macro for the below. Non-bounds-checked
+// compile-time element retrieval.
+#define DATA(r,c) data[c*3+r]
+
 double SmallMatrix3::secondInvariant() const {
-  return 0.0;
-}
-
-double SmallMatrix3::maxEigenvalue() const {
-  return 0.0;
-}
-
-double SmallMatrix3::midEigenvalue() const {
-  return 0.0;
-}
-
-double SmallMatrix3::minEigenvalue() const {
-  return 0.0;
+  // Match sign with the SymmMatrix3 one.  Same as Wikipedia,
+  // opposite of Wolfram.
+  return DATA(0,0)*DATA(1,1) + DATA(1,1)*DATA(2,2) + DATA(0,0)*DATA(2,2) \
+    - DATA(0,1)*DATA(1,0) - DATA(1,2)*DATA(2,1) - DATA(0,2)*DATA(2,0);
 }
 
 std::pair<SmallMatrix3,SmallMatrix3> SmallMatrix3::ch_sqrt() const {
 // Cayley-Hamilton matrix square root algorithm.
 // Compile-time element retrieval wtih no bounds checking.
-#define DATA(r,c) data[c*3+r]
-
   
   SmallMatrix3 u_res,r_res;
   SmallMatrix3 ident;

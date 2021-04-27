@@ -65,9 +65,6 @@ public:
   virtual double trace() const;
   virtual double determinant() const;
   virtual double secondInvariant() const;
-  virtual double maxEigenvalue() const;
-  virtual double midEigenvalue() const;
-  virtual double minEigenvalue() const;
   
   SmallMatrix3 &operator+=(const SmallMatrix3&);
   SmallMatrix3 &operator-=(const SmallMatrix3&);
@@ -80,7 +77,6 @@ public:
   virtual DoubleVec *value_list() const;
   virtual double magnitude() const;
 
-  // TODO: Add dotSmallMatrix3 to this set.
   virtual OutputVal *dot(const OutputVal &) const;
   virtual OutputVal *dotScalar(const ScalarOutputVal &) const;
   virtual OutputVal *dotVector(const VectorOutputVal &) const;
