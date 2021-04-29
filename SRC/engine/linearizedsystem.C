@@ -461,7 +461,7 @@ void LinearizedSystem::build_MCK_maps() {
 
 void LinearizedSystem::dumpMaps(const std::string &filename) const {
   if(filename.size() > 0) {
-    ofstream os(filename.c_str());
+    std::ofstream os(filename.c_str());
     do_dumpMaps(os);
     os.close();
   }

@@ -13,9 +13,79 @@
 #include <limits>
 
 #if VTK_MAJOR_VERSION >= 9
+
+// Module initiation in VTK 9.
+
+// Since we're not using cmake to build OOF3D, we have to do some
+// things by hand.
+
+// (1) Use FindNeededModules.py (in Utilities/Maintenance in the VTK
+// source) to find which VTK modules need to be included.  % python
+
+// FindNeededModules.py -j path/to/modules.json -s path/to/OOF3D
+
+// path/to/modules.json is in the VTK9 *build* directory.
+// path/to/OOF3D is a directory containing OOF3D source.  VTK expects
+// C++ files to have a .cxx suffix, so I copied the .C and .h files to
+// FLAT, appended .cxx to the .C file names, and ran FindNeededModules
+// on FLAT.
+
+// Grepping for all of the VTK include statements, putting htem in a
+// file, and running FindNeededModules on *that* gave a different
+// result.
+
+// (2) The output from FindNeededModules looks like
+// find_package(VTK
+//  COMPONENTS
+//      CommonCore
+//      CommonDataModel
+//      [etc]
+//  )
+// Put the modules listed there into a CMakeLists.txt file:
+//   project(vtktest C CXX)
+//   [ The find_package lines ]
+//   add_library(foo dummy.cxx)
+//   # I don't know if this is needed or how to find which libraries to include
+//   target_link_libraries(foo vtkCommonCore-9.0 [others libraries])
+//   vtk_module_autoinit(TARGETS foo
+//     MODULES
+//       VTK::CommonCore
+//       VTK::CommonDataModel
+//       [same modules as in find_package, but with VTK:: prepended]
+//    )
+
+// (3) Create dummy.cxx in the same directory as CMakeLists.txt.  I
+// just wrote hello world.  I don't know if it has to actually use
+// vtk.
+
+// (4) Create a build directory in the directory.  cd to it and run
+// "cmake ..".
+
+// (5) There should be a subdirectory called CMakeFiles containing a
+// file called vtkModuleAutoInit_[somesortofhash].h.  This contains a
+// bunch of #defines.  Include the #defines in this file, followed by
+// #include <vtkAutoInit.h>.
+
+
+// Found by grepping all "#include <vtk*>" lines from all OOF3D files,
+// putting hthem in vtkincludes.h, and running FindNeededModules on
+// that.
+#define vtkIOExport_AUTOINIT 1(vtkIOExportPDF)
 #define vtkIOExportGL2PS_AUTOINIT 1(vtkIOExportGL2PS)
+#define vtkRenderingContext2D_AUTOINIT 1(vtkRenderingContextOpenGL2)
 #define vtkRenderingCore_AUTOINIT 4(vtkInteractionStyle,vtkRenderingFreeType,vtkRenderingOpenGL2,vtkRenderingUI)
 #define vtkRenderingOpenGL2_AUTOINIT 1(vtkRenderingGL2PSOpenGL2)
+#define vtkRenderingVolume_AUTOINIT 1(vtkRenderingVolumeOpenGL2)
+
+// Found by copying all OOF3D .C and .h files to FLAT, renaming .C to
+// .cxx, and running FindNeededModules.py on FLAT.
+
+// #define vtkIOExportGL2PS_AUTOINIT 1(vtkIOExportGL2PS)
+// #define vtkRenderingCore_AUTOINIT 4(vtkInteractionStyle,vtkRenderingFreeType,vtkRenderingOpenGL2,vtkRenderingUI)
+// #define vtkRenderingOpenGL2_AUTOINIT 1(vtkRenderingGL2PSOpenGL2)
+
+
+
 #endif // VTK_MAJOR_VERSION >= 9
 
 #include <vtkAutoInit.h>

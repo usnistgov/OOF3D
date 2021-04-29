@@ -616,7 +616,7 @@ ProvisionalRefinement *Refine::tet1Edge1Div(CSkeletonElement *element,
   getElementChildrenNodes(element, &baseNodes);
   CSkeletonElementVector *els = new CSkeletonElementVector(2);
   ElementEdgeNodes *edgeNodes = getElementEdgeNodes(element, newSkeleton);
-  int *idxs = CSkeletonElement::getEdgeArray((*sig)[0].first);
+  const IDTYPE *idxs = CSkeletonElement::getEdgeArray((*sig)[0].first);
 
   CSkeletonNodeVector *newnodes0 = new CSkeletonNodeVector(baseNodes);
   (*newnodes0)[idxs[0]] = (*(*edgeNodes)[(*sig)[0].first])[0];
@@ -743,8 +743,8 @@ ProvisionalRefinement *Refine::tet2Edges1DivOpposite(CSkeletonElement *element,
   ElementEdgeNodes *edgeNodes = getElementEdgeNodes(element, newSkeleton);
   CSkeletonNode *n0 = (*(*edgeNodes)[(*sig)[0].first])[0];
   CSkeletonNode *n1 = (*(*edgeNodes)[(*sig)[1].first])[0];
-  int *idxs0 = CSkeletonElement::getEdgeArray((*sig)[0].first);
-  int *idxs1 = CSkeletonElement::getEdgeArray((*sig)[1].first);
+  const IDTYPE *idxs0 = CSkeletonElement::getEdgeArray((*sig)[0].first);
+  const IDTYPE *idxs1 = CSkeletonElement::getEdgeArray((*sig)[1].first);
 
   CSkeletonNodeVector *newnodes0 = new CSkeletonNodeVector(baseNodes);
   (*newnodes0)[idxs0[0]] = n0;
@@ -1714,7 +1714,7 @@ ProvisionalRefinement *Refine::tet6Edges1Div(CSkeletonElement *element,
     CSkeletonNodeVector *newnodes = new CSkeletonNodeVector(baseNodes);
     for(int j=0; j<3; ++j) {
       int edge_idx = CSkeletonElement::getNodeEdgeIndex(i,j);
-      int *edgenode_idxs = CSkeletonElement::getEdgeArray(edge_idx);
+      const IDTYPE *edgenode_idxs = CSkeletonElement::getEdgeArray(edge_idx);
       int node_idx = (edgenode_idxs[0]==i?edgenode_idxs[1]:edgenode_idxs[0]);
       (*newnodes)[node_idx] = (*(*edgeNodes)[edge_idx])[0];
     }
