@@ -11,6 +11,7 @@
 
 #include "common/IO/ghostoofcanvas.h"
 #include "common/IO/oofcerr.h"
+#include "common/IO/vtkutils.h"
 #include "common/VSB/vsb.h"
 #include "common/cdebug.h"
 #include "common/cmicrostructure.h"
@@ -44,7 +45,7 @@
 #include <vtkPointData.h>
 #include <vtkTetra.h>
 #include <vtkUnstructuredGrid.h>
-
+#include <vtkVersionMacros.h>
 
 // Names needed for PythonExportable base class
 const std::string CSkeletonBase::modulename_("ooflib.SWIG.engine.cskeleton2");
@@ -388,13 +389,13 @@ void CSkeleton::createTetra(const TetArrangement *arrangement,
 void CSkeleton::addElement(CSkeletonElement *element, vtkIdType *ids) {
   elements.push_back(element);
   for(int i=0; i<6; ++i) {
-    int *ptIds = vtkTetra::GetEdgeArray(i);
+    const IDTYPE *ptIds = vtkTetra::GetEdgeArray(i);
     CSkeletonSegment *s = getOrCreateSegment(nodes[ids[ptIds[0]]],
 					     nodes[ids[ptIds[1]]]);
     s->increment_nelements();
   }
   for(int i=0; i<4; ++i) {
-    int *ptIds = vtkTetra::GetFaceArray(i);
+    const IDTYPE *ptIds = vtkTetra::GetFaceArray(i);
     CSkeletonFace *f = getOrCreateFace(nodes[ids[ptIds[0]]],
 				       nodes[ids[ptIds[1]]],
 				       nodes[ids[ptIds[2]]]);
@@ -1388,13 +1389,21 @@ bool CSkeleton::inSegmentMap(const CSkeletonMultiNodeKey &h) const {
 const CSkeletonSegment* CSkeletonBase::nearestSegment(Coord *point) {
   cleanUp();
   vtkIdType cellId = enclosingElement(point)->getIndex();
-  vtkIdType *ptIds;
-  vtkIdType num=4;
   double bcoords[4];
   Coord x[4];
+#if VTK_MAJOR_VERSION < 9
+  vtkIdType *ptIds;
+  vtkIdType num=4;
   getGrid()->GetCellPoints(cellId, num, ptIds);
   for(int i=0; i<num; ++i)
     getPoints()->GetPoint(ptIds[i],x[i].xpointer());
+#else // VTK_MAJOR_VERSION >= 9
+  auto ptIds = vtkSmartPointer<vtkIdList>::New();
+  getGrid()->GetCellPoints(cellId, ptIds);
+  int i=0;
+  for(auto ptId : *ptIds)
+    getPoints()->GetPoint(ptId, x[i++].xpointer());
+#endif // VTK_MAJOR_VERSION >= 9
   vtkTetra::BarycentricCoords(point->xpointer(), x[0].xpointer(),
 			      x[1].xpointer(), x[2].xpointer(), x[3].xpointer(),
 			      bcoords);
@@ -1414,7 +1423,13 @@ const CSkeletonSegment* CSkeletonBase::nearestSegment(Coord *point) {
       maxIdx2=i;
     }
   }
+#if VTK_MAJOR_VERSION < 9
   return findExistingSegment(getNode(ptIds[maxIdx1]), getNode(ptIds[maxIdx2]));
+#else // VTK_MAJOR_VERSION >= 9
+  return findExistingSegment(getNode(ptIds->GetId(maxIdx1)),
+			     getNode(ptIds->GetId(maxIdx2)));
+				     
+#endif // VTK_MAJOR_VERSION >= 9
 }
 
 CSkeletonFace* CSkeletonBase::findExistingFace(CSkeletonNode *n1,
@@ -1472,40 +1487,53 @@ CSkeletonFace* CSkeleton::getFaceByUid(uidtype i) const {
 
 const CSkeletonFace* CSkeletonBase::nearestFace(Coord *point) {
   cleanUp();
-  int i;
   vtkIdType cellId = enclosingElement(point)->getIndex();
-  vtkIdType *ptIds;
   vtkIdType num=4;
   double bcoords[4]/*, p[3]*/;
   Coord x[4];
   //point->writePointer(p);
   // TODO 3.1: See vtk docs about the thread-safety of
   // vtkUnstructuredGrid::GetCellPoints().
+#if VTK_MAJOR_VERSION < 9
+  vtkIdType *ptIds;
   getGrid()->GetCellPoints(cellId,num,ptIds);
-  for(i=0; i<num; ++i)
+  for(int i=0; i<num; ++i)
     getPoints()->GetPoint(ptIds[i],x[i].xpointer());
+#else // VTK_MAJOR_VERSION >= 9
+  auto ptIds = vtkSmartPointer<vtkIdList>::New();
+  getGrid()->GetCellPoints(cellId, ptIds);
+  int ii=0;
+  for(auto ptId : *ptIds)
+    getPoints()->GetPoint(ptId, x[ii++].xpointer());
+#endif // VTK_MAJOR_VERSION >= 9
   vtkTetra::BarycentricCoords(
       point->xpointer(),
       x[0].xpointer(), x[1].xpointer(), x[2].xpointer(), x[3].xpointer(),
       bcoords);
   double min=bcoords[0];
   int minIdx=0;
-  for(i=1; i<4; ++i) {
+  for(int i=1; i<4; ++i) {
     if(bcoords[i]<min){
       min=bcoords[i];
       minIdx=i;
     }
   }
   int j, idxs[3];
-  for(i=0, j=0; i<4; ++i) {
+  for(int i=0, j=0; i<4; ++i) {
     if(i!=minIdx) {
       idxs[j]=i;
       ++j;
     }
   }
+#if VTK_MAJOR_VERSION < 9
   return findExistingFace(getNode(ptIds[idxs[0]]),
 			  getNode(ptIds[idxs[1]]),
 			  getNode(ptIds[idxs[2]]));
+#else // VTK_MAJOR_VERSION >= 9
+  return findExistingFace(getNode(ptIds->GetId(idxs[0])),
+			  getNode(ptIds->GetId(idxs[1])),
+			  getNode(ptIds->GetId(idxs[2])));
+#endif // VTK_MAJOR_VERSION >= 9
 }
 
 // std::set_intersection doesn't work with unsorted vectors of
@@ -1667,11 +1695,10 @@ void CSkeletonBase::getNodeFaces(const CSkeletonNode *node,
   const
 {
   // This assumes that we have only triangular faces.
-  int i, *ptIds;
   CSkeletonElementVector *els = node->getElements();
   for(CSkeletonElementIterator it = els->begin(); it != els->end(); ++it) {
-    for(i=0; i<4; ++i) {
-      ptIds = vtkTetra::GetFaceArray(i);
+    for(int i=0; i<4; ++i) {
+      const IDTYPE *ptIds = vtkTetra::GetFaceArray(i);
       if((*(*it)->getNode(ptIds[0])) == *node || 
 	 (*(*it)->getNode(ptIds[1])) == *node ||
 	 (*(*it)->getNode(ptIds[2])) == *node)
@@ -1721,7 +1748,7 @@ CSkeletonSegment *CSkeletonBase::getElementSegment(const CSkeletonElement *el,
 						   int idx)
   const 
 {
-  int *ptIds = vtkTetra::GetEdgeArray(idx);
+  const IDTYPE *ptIds = vtkTetra::GetEdgeArray(idx);
   return findExistingSegment(el->getNode(ptIds[0]), el->getNode(ptIds[1]));
 }
 
@@ -1732,7 +1759,7 @@ CSkeletonSegmentVector *CSkeletonBase::getElementSegments(
   CSkeletonSegmentVector *vec =
     new CSkeletonSegmentVector(el->getNumberOfSegments());
   for(unsigned int idx=0; idx<el->getNumberOfSegments(); idx++) {
-    int *ptIds = vtkTetra::GetEdgeArray(idx);
+    const IDTYPE *ptIds = vtkTetra::GetEdgeArray(idx);
     (*vec)[idx] = findExistingSegment(el->getNode(ptIds[0]), 
 				      el->getNode(ptIds[1]));
   }
@@ -1744,7 +1771,7 @@ CSkeletonFace *CSkeletonBase::getElementFace(const CSkeletonElement *el,
   const 
 {
   // TODO 3.1: This assumes triangular faces.
-  int *ptIds = vtkTetra::GetFaceArray(idx);
+  const IDTYPE *ptIds = vtkTetra::GetFaceArray(idx);
   return findExistingFace(el->getNode(ptIds[0]), el->getNode(ptIds[1]),
 			  el->getNode(ptIds[2]));
 }
@@ -1755,7 +1782,7 @@ CSkeletonFaceVector *CSkeletonBase::getElementFaces(const CSkeletonElement *el)
   // TODO 3.1: This assumes triangular faces.
   CSkeletonFaceVector *vec = new CSkeletonFaceVector(el->getNumberOfFaces());
   for(unsigned int idx=0; idx<el->getNumberOfFaces(); idx++) {
-    int *ptIds = vtkTetra::GetFaceArray(idx);
+    const IDTYPE *ptIds = vtkTetra::GetFaceArray(idx);
     (*vec)[idx] = findExistingFace(el->getNode(ptIds[0]), el->getNode(ptIds[1]),
 				el->getNode(ptIds[2]));
   }

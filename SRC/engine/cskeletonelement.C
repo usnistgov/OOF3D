@@ -11,6 +11,7 @@
 
 #include "common/IO/canvaslayers.h"
 #include "common/IO/oofcerr.h"
+#include "common/IO/vtkutils.h"
 #include "common/VSB/cplane.h"
 #include "common/cdebug.h"
 #include "common/cmicrostructure.h"
@@ -285,7 +286,7 @@ static SLock globalElementCountLock;
    Coord s0;
    Coord s1;
    positionPointer(x);
-   int *facePtIds = vtkTetra::GetFaceArray(fid);
+   const IDTYPE *facePtIds = vtkTetra::GetFaceArray(fid);
    // TODO OPT: Some of this dereferencing can be moved out of the loop.
    for(unsigned int i=0; i<3; i++) {
      s0[i] = x[facePtIds[(cid+3-1)%3]][i] - x[facePtIds[cid]][i];
@@ -312,7 +313,7 @@ static SLock globalElementCountLock;
  {
    Coord x[4];
    positionPointer(x);
-   int *facePtIds = vtkTetra::GetFaceArray(fid);
+   const IDTYPE *facePtIds = vtkTetra::GetFaceArray(fid);
    Coord s0 = x[facePtIds[(cid+2)%3]] - x[facePtIds[cid]];
    Coord s1 = x[facePtIds[(cid+1)%3]] - x[facePtIds[cid]];
    double dist02 = norm2(s0);
@@ -335,7 +336,7 @@ static SLock globalElementCountLock;
    // Trans. Biom. Eng., Vol BME-30, No 2, 1983) and gives the tangent
    // of half of the solid angle.
    Coord c = (*nodes)[corner]->position();
-   int *ptIds = vtkTetra::GetFaceArray(oppFace[corner]);
+   const IDTYPE *ptIds = vtkTetra::GetFaceArray(oppFace[corner]);
    Coord x;
    Coord n;
    Coord s[3];
@@ -367,7 +368,7 @@ static SLock globalElementCountLock;
    Coord x[4];
    for(unsigned int i=0; i<4; ++i)
      x[i] = (*nodes)[i]->position();
-   int *ptIds = vtkTetra::GetFaceArray(face1);
+   const IDTYPE *ptIds = vtkTetra::GetFaceArray(face1);
    vtkTriangle::ComputeNormal(x[ptIds[0]].xpointer(),
 			      x[ptIds[1]].xpointer(),
 			      x[ptIds[2]].xpointer(),
@@ -626,11 +627,11 @@ HomogeneityData CSkeletonElement::c_homogeneity(const CSkeletonBase *skel) const
 // defining an edge.  vtkTetra::GetFaceArray(int) returns the point
 // ids defining a face.
 
-int *CSkeletonElement::getEdgeArray(int i) { // static method
+const IDTYPE *CSkeletonElement::getEdgeArray(int i) { // static method
   return vtkTetra::GetEdgeArray(i);
 }
 
-int *CSkeletonElement::getFaceArray(int i) { // static method
+const IDTYPE *CSkeletonElement::getFaceArray(int i) { // static method
   return vtkTetra::GetFaceArray(i);
 }
 
@@ -1028,7 +1029,7 @@ double CSkeletonElement::energyShape() const {
 double CSkeletonElement::energyShape(const Coord *x) {
   double sum_area2 = 0;
   for(unsigned int i=0; i<4; ++i) {
-    int *facePtIds = vtkTetra::GetFaceArray(i);
+    const IDTYPE *facePtIds = vtkTetra::GetFaceArray(i);
     sum_area2 += triangleArea2(x[facePtIds[0]],
 			       x[facePtIds[1]],
 			       x[facePtIds[2]]);

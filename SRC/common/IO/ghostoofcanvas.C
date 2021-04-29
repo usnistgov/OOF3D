@@ -151,7 +151,13 @@ void GhostOOFCanvas::render() {
     
     renderLock.acquire();
     try {
-      if(render_window->IsDrawable()) {
+      // VTK 9 says IsDrawable is deprecated.  The docs say that
+      // checking IsDrawable is only an issue on Mac OS X Cocoa where
+      // rendering to an invalid drawable results in all OpenGL calls
+      // failing with an "invalid framebuffer operation".  I'm not
+      // sure what one is supposed to do instead, if IsDrawable is
+      // deprecated.
+      if(true /*render_window->IsDrawable()*/) {
 #ifdef DEBUG
 	// oofcerr << "GhostOOFCanvas::render: calling Render " << std::endl;
 	// oofcerr << "GhostOOFCanvas::render: actors are:";

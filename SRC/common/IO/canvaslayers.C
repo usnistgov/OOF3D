@@ -32,6 +32,10 @@
 #include <vtkType.h>
 #include <vtkVoxel.h>
 
+#if VTK_MAJOR_VERSION >= 9
+#include <vtkIdList.h>
+#endif // VTK_MAJOR_VERSION >= 9
+
 #include <math.h>
 
 // TODO 3.1: Give each layer a flag indicating whether or not it should be
@@ -803,17 +807,25 @@ vtkSmartPointer<vtkAbstractCellLocator> BoxWidgetLayer::get_locator() {
 Coord3D *BoxWidgetLayer::get_cellCenter(vtkIdType cellID) {
   int cellType = grid->GetCellType(cellID);
   if (cellType == VTK_QUAD) {
+    Coord3D *center = new Coord3D(0, 0, 0);
+#if VTK_MAJOR_VERSION < 9
     vtkIdType *pointIDs;
     vtkIdType npts;
     grid->GetCellPoints(cellID, npts, pointIDs);
-    Coord3D corners[4];
-    Coord3D *center = new Coord3D(0, 0, 0);
-    for (int i = 0; i < 4; i++) {
-      double temp[3]; 
+    for(int i=0; i<4; i++) {
+      double temp[3];
       points->GetPoint(pointIDs[i], temp);
-      corners[i] = Coord3D(temp);
-      *center += corners[i];
+      *center += Coord3D(temp);
     }
+#else // VTK_MAJOR_VERSION >= 9
+    auto pointIDs = vtkSmartPointer<vtkIdList>::New();
+    grid->GetCellPoints(cellID, pointIDs);
+    for(auto pointID : *pointIDs) {
+      double temp[3];
+      points->GetPoint(pointID, temp);
+      *center += Coord3D(temp);
+    }
+#endif	// VTK_MAJOR_VERSION >= 9
     *center /= 4;
     return center;
   }
@@ -833,15 +845,27 @@ Coord3D *BoxWidgetLayer::get_cellNormal_Coord3D(vtkIdType cellID) {
   // opposite corner] to [the corner in question].
   int cellType = grid->GetCellType(cellID);
   if (cellType == VTK_QUAD) {
+    std::vector<Coord3D> corners;
+    corners.reserve(4);
+#if VTK_MAJOR_VERSION < 9
     vtkIdType *pointIDs;
     vtkIdType npts;
     grid->GetCellPoints(cellID, npts, pointIDs);
-    Coord3D corners[4];
     for (int i = 0; i < 4; i++) {
       double temp[3];
       points->GetPoint(pointIDs[i], temp);
-      corners[i] = Coord3D(temp);
+      corners.emplace_back(temp);
     }
+#else  // VTK_MAJOR_VERSION >= 9
+    auto pointIDs = vtkSmartPointer<vtkIdList>::New();
+    grid->GetCellPoints(cellID, pointIDs);
+    for(auto pointID : *pointIDs) {
+      double temp[3];
+      points->GetPoint(pointID, temp);
+      corners.emplace_back(temp);
+    }
+#endif // VTK_MAJOR_VERSION >= 9
+
     Coord3D vectors[2];
     vectors[0] = corners[1] - corners[0];
     vectors[1] = corners[2] - corners[1];
@@ -940,6 +964,9 @@ void BoxWidgetLayer::offset_cell(vtkIdType cellID, double offset) {
   // "normal".
   int cellType = grid->GetCellType(cellID);
   if (cellType == VTK_QUAD) {
+    std::vector<Coord3D> corners;
+    corners.reserve(4);
+#if VTK_MAJOR_VERSION < 9
     vtkIdType *pointIDs;
     vtkIdType npts;
     grid->GetCellPoints(cellID, npts, pointIDs);
@@ -947,28 +974,41 @@ void BoxWidgetLayer::offset_cell(vtkIdType cellID, double offset) {
     for (int i = 0; i < 4; i++) {
       double temp[3]; 
       points->GetPoint(pointIDs[i], temp);
-      corners[i] = Coord3D(temp);
+      corners.emplace_back(temp);
     }
+#else // VTK_MAJOR_VERSION >= 9
+    auto pointIDs = vtkSmartPointer<vtkIdList>::New();
+    grid->GetCellPoints(cellID, pointIDs);
+    for(auto pointID : *pointIDs) {
+      double temp[3];
+      points->GetPoint(pointID, temp);
+      corners.emplace_back(temp);
+    }
+#endif
     Coord3D vectors[2];
     vectors[0] = corners[1] - corners[0];
     vectors[1] = corners[2] - corners[1];
-    Coord3D *normal = new Coord3D(); // TODO: Why use a pointer?
     // TODO: Use vtk methods to get the normal
-    *normal = cross(vectors[0], vectors[1]);
-    double norm = sqrt(norm2(*normal));
+    Coord3D normal = cross(vectors[0], vectors[1]);
+    double norm = sqrt(norm2(normal));
     if (norm == 0) {
-      delete normal;
       return; 
     }
-    *normal /= norm;
-    *normal *= offset;
+    normal /= norm;
+    normal *= offset;
+#if VTK_MAJOR_VERSION < 9
     for (int i = 0; i < 4; i++) {
-      corners[i] += *normal;
-      points->SetPoint(pointIDs[i],
-		       corners[i][0], corners[i][1], corners[i][2]);
+      Coord3D pt = corners[i] + normal;
+      points->SetPoint(pointIDs[i], pt.xpointer());
     }
+#else // VTK_MAJOR_VERSION >= 9
+    int i = 0;
+    for(auto pointID : *pointIDs) {
+      Coord3D pt = corners[i++] + normal;
+      points->SetPoint(pointID, pt.xpointer());
+    }
+#endif // VTK_MAJOR_VERSION >= 9
     points->Modified();
-    delete normal;
   } 
 }
 

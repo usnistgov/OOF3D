@@ -11,11 +11,22 @@
 
 #include <oofconfig.h>
 #include <limits>
+
+#if VTK_MAJOR_VERSION >= 9
+#define vtkIOExportGL2PS_AUTOINIT 1(vtkIOExportGL2PS)
+#define vtkRenderingCore_AUTOINIT 4(vtkInteractionStyle,vtkRenderingFreeType,vtkRenderingOpenGL2,vtkRenderingUI)
+#define vtkRenderingOpenGL2_AUTOINIT 1(vtkRenderingGL2PSOpenGL2)
+#endif // VTK_MAJOR_VERSION >= 9
+
+#include <vtkAutoInit.h>
+#include <vtkVersionMacros.h>
+#include <vtkMapper.h>
+
 #include "common/IO/oofcerr.h"
 #include "common/IO/vtkutils.h"
 #include "common/coord.h"
 
-#include <vtkMapper.h>
+//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
 // Copy a std::vector of doubles into a new vtkDoubleArray, and return
 // a vtkSmartPointer to the array.
@@ -52,9 +63,6 @@ Coord cell2coord(vtkSmartPointer<vtkCell> cell) {
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-#include <vtkAutoInit.h>
-#include <vtkVersionMacros.h>
-
 // Call this before any other vtk code runs.
 // See https://www.vtk.org/Wiki/VTK/Build_System_Migration
 // Run-time messages like
@@ -73,12 +81,15 @@ void initialize_vtk() {
 #ifdef DEBUG
     oofcerr << "Using vtk version " << VTK_VERSION << std::endl;
 #endif // DEBUG
+
+#if VTK_MAJOR_VERSION < 9
     VTK_MODULE_INIT(vtkRenderingOpenGL2);
     VTK_MODULE_INIT(vtkRenderingContextOpenGL2);
     VTK_MODULE_INIT(vtkRenderingVolumeOpenGL2);
     VTK_MODULE_INIT(vtkRenderingFreeType);
     VTK_MODULE_INIT(vtkIOExportOpenGL2);
     VTK_MODULE_INIT(vtkRenderingGL2PSOpenGL2);
+#endif // VTK_MAJOR_VERSION < 9
     
     vtkMapper::SetResolveCoincidentTopologyToPolygonOffset();
   }

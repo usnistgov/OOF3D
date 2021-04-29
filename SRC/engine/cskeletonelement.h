@@ -17,6 +17,7 @@
 #include "common/cachedvalue.h"
 #include "common/coord.h"
 #include "common/doublevec.h"
+#include "common/IO/vtkutils.h"
 #include "common/VSB/cplane.h"
 #include "engine/cskeleton2_i.h"
 #include "engine/cskeletonselectable.h"
@@ -215,8 +216,8 @@ public:
   unsigned int nnodes() const { return 4; }
   unsigned int getNumberOfNodes() const { return 4; }
   unsigned int getNumberOfFaces() const { return 4; }
-  static int *getEdgeArray(int);
-  static int *getFaceArray(int);
+  static const IDTYPE *getEdgeArray(int);
+  static const IDTYPE *getFaceArray(int);
   CSkeletonNode *getSegmentNode(int segidx, int nodeidx) const {
     return (*nodes)[vtkTetra::GetEdgeArray(segidx)[nodeidx]];
   }

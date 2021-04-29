@@ -58,4 +58,11 @@ typedef vtkSmartPointer<vtkRenderer> vtkRendererPtr;
 typedef vtkSmartPointer<vtkUnstructuredGrid> vtkUnstructuredGridPtr;
 typedef vtkSmartPointer<vtkPlane> vtkPlanePtr;
 
+// For some functions that returned int* in vtk8 and vtkIdType in vtk9.
+#if VTK_MAJOR_VERSION < 9
+#define IDTYPE int
+#else
+#define IDTYPE vtkIdType
+#endif 
+
 #endif // VTKUTILS_H

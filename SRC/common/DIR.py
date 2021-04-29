@@ -91,7 +91,7 @@ def set_clib_flags(clib):
                       'vtkFiltersSources',
                       'vtkIOExport',
                       'vtkIOExportPDF',
-                      'vtkIOExportOpenGL2',
+                      # 'vtkIOExportOpenGL2',  # Not available in VTK 9
                       'vtkIOImage',
                       'vtkIOXML',
                       'vtkImagingCore',
