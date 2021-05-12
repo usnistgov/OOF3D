@@ -54,9 +54,13 @@ except ImportError:
 # The make_dist script edits the following line when a distribution is
 # built.  Don't change it by hand.  On the git master branch,
 # "(unreleased)" is replaced by the version number.
-version_from_make_dist = "3.1.2"
+version_from_make_dist = "(unreleased)"
     
-# will need to add vtk
+# These are the version numbers of the installed version of VTK.
+# They're detected by findvtk().
+VTK_MAJOR = None
+VTK_MINOR = None
+VTK_BUILD = None
 
 ###############################
 
@@ -456,11 +460,25 @@ def findvtk(*basenames):
                     if os.path.isdir(incvtk) and os.path.isdir(libvtk):
                         global vtksuffix
                         vtksuffix = vtkname[3:] # all but the 'vtk'
-                        ## TODO: Extract actual vtk version number
-                        ## from incvtk/vtkVersionMacros.h.  It's in a
-                        ## line like #define VTK_VERSION "7.1.1"
-#grep VTK_VERSION /usr/local/include/vtk-7.1/vtkVersionMacros.h |cut -d \" -f 2
-                        print >> sys.stderr, "Using", vtkname,"in", incvtk
+
+                        # Get actual version number from vtkVersionMacros.h
+                        # It's in a line like #define VTK_VERSION "7.1.1"
+                        mfilename = os.path.join(incvtk, 'vtkVersionMacros.h')
+                        mf = open(mfilename, "r")
+                        for line in mf:
+                            if line.startswith("#define VTK_VERSION "):
+                                # This space is important. Keep it.^
+                                vstr = line.split()[2][1:-1] # drop quotes
+                                global VTK_MAJOR, VTK_MINOR, VTK_BUILD
+                                VTK_MAJOR,VTK_MINOR,VTK_BUILD = \
+                                                      map(int, vstr.split("."))
+                                break
+                        else:
+                            raise errors.DistutilsExecError(
+                                "Found VTK but can't find its version number!")
+                        
+                        print >> sys.stderr, "Using VTK %d.%d.%d in %s" % (
+                            VTK_MAJOR, VTK_MINOR, VTK_BUILD, incvtk)
                         print >> sys.stderr, "VTK library directory is", libvtk
                         return (incvtk, libvtk)
     print >> sys.stderr, "Did not find vtk!"

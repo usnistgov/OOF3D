@@ -79,48 +79,47 @@ def set_clib_flags(clib):
     if HAVE_MPI:
         clib.externalLibs.append('pmpich++')
         clib.externalLibs.append('mpich')
-    addVTKlibs(clib, [
-        ## TODO: This needs to work for both vtk8 and vtk9
-        ## libs for vtk9
-        ## libs from the #defines created by FindNeededModules
-        'vtkIOExportPDF',
-        'vtkIOExportGL2PS',
-        #'vtkRenderingContextOpenGL2', # doesn't exist
-        'vtkInteractionStyle',
-        'vtkRenderingFreeType',
-        'vtkRenderingOpenGL2',
-        'vtkRenderingUI',
-        'vtkRenderingGL2PSOpenGL2',
-        'vtkRenderingVolumeOpenGL2',
-        ## Added due to 'undefined symbol' messages at run time
-        'vtkFiltersExtraction',
-        'vtkRenderingAnnotation',
-        
-        ## Libs included w/ vtk8
-        # 'vtkCommonCore',
-        # 'vtkCommonDataModel',
-        # 'vtkCommonExecutionModel',
-        # 'vtkCommonMisc',
-        # 'vtkCommonTransforms',
-        # 'vtkFiltersCore',
-        # 'vtkFiltersExtraction',
-        # 'vtkFiltersGeneral',
-        # 'vtkFiltersModeling',
-        # 'vtkFiltersSources',
-        # 'vtkIOExport',
-        # 'vtkIOExportPDF',
-        # 'vtkIOExportOpenGL2',
-        # 'vtkIOImage',
-        # 'vtkIOXML',
-        # 'vtkImagingCore',
-        # 'vtkImagingColor',
-        # 'vtkImagingGeneral',
-        # 'vtkRenderingAnnotation',
-        # 'vtkRenderingContextOpenGL2',
-        # 'vtkRenderingCore',
-        # 'vtkRenderingFreeType',
-        # 'vtkRenderingOpenGL2',
-        # 'vtkRenderingGL2PSOpenGL2',
-        # 'vtkRenderingVolumeOpenGL2'
-    ])
+    if VTK_MAJOR >= 9:
+        addVTKlibs(clib, [
+            ## libs from the #defines created by FindNeededModules
+            ## See comments in SRC/common/IO/vtkutils.h
+            'vtkIOExportPDF',
+            'vtkIOExportGL2PS',
+            'vtkInteractionStyle',
+            'vtkRenderingFreeType',
+            'vtkRenderingOpenGL2',
+            'vtkRenderingUI',
+            'vtkRenderingGL2PSOpenGL2',
+            'vtkRenderingVolumeOpenGL2',
+            ## Added due to 'undefined symbol' messages at run time
+            'vtkFiltersExtraction',
+            'vtkRenderingAnnotation'])
+    else:
+        # VTK_MAJOR <= 8
+        addVTKlibs(clib, [
+            'vtkCommonCore',
+            'vtkCommonDataModel',
+            'vtkCommonExecutionModel',
+            'vtkCommonMisc',
+            'vtkCommonTransforms',
+            'vtkFiltersCore',
+            'vtkFiltersExtraction',
+            'vtkFiltersGeneral',
+            'vtkFiltersModeling',
+            'vtkFiltersSources',
+            'vtkIOExport',
+            'vtkIOExportPDF',
+            'vtkIOExportOpenGL2',
+            'vtkIOImage',
+            'vtkIOXML',
+            'vtkImagingCore',
+            'vtkImagingColor',
+            'vtkImagingGeneral',
+            'vtkRenderingAnnotation',
+            'vtkRenderingContextOpenGL2',
+            'vtkRenderingCore',
+            'vtkRenderingFreeType',
+            'vtkRenderingOpenGL2',
+            'vtkRenderingGL2PSOpenGL2',
+            'vtkRenderingVolumeOpenGL2'])
         

@@ -970,7 +970,6 @@ void BoxWidgetLayer::offset_cell(vtkIdType cellID, double offset) {
     vtkIdType *pointIDs;
     vtkIdType npts;
     grid->GetCellPoints(cellID, npts, pointIDs);
-    Coord3D corners[4];
     for (int i = 0; i < 4; i++) {
       double temp[3]; 
       points->GetPoint(pointIDs[i], temp);
