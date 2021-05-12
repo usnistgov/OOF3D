@@ -56,7 +56,8 @@
 
 // (3) Create dummy.cxx in the same directory as CMakeLists.txt.  I
 // just wrote hello world.  I don't know if it has to actually use
-// vtk.
+// vtk.  Adding a few lines of trivial vtk calls didn't change the
+// results.
 
 // (4) Create a build directory in the directory.  cd to it and run
 // "cmake ..".
@@ -66,10 +67,21 @@
 // bunch of #defines.  Include the #defines in this file, followed by
 // #include <vtkAutoInit.h>.
 
+// (6) For each of the #defines from FindNeededModules, add the
+// corresponding library to the list in set_clib_flags in
+// SRC/common/DIR.py.  Some of the #define don't have a corresponding
+// library.
 
-// Found by grepping all "#include <vtk*>" lines from all OOF3D files,
-// putting hthem in vtkincludes.h, and running FindNeededModules on
-// that.
+// (7) Run the program. If there are "undefined symbol" messages, use
+// nm to find the symbols in the vtk libraries and add the libraries
+// to the list in DIR.py.
+
+// (8) Hope that that all worked.
+
+
+// #defines found by grepping all "#include <vtk*>" lines from all
+// OOF3D files, putting them in vtkincludes.h, and running
+// FindNeededModules on that.
 #define vtkIOExport_AUTOINIT 1(vtkIOExportPDF)
 #define vtkIOExportGL2PS_AUTOINIT 1(vtkIOExportGL2PS)
 #define vtkRenderingContext2D_AUTOINIT 1(vtkRenderingContextOpenGL2)
@@ -77,8 +89,9 @@
 #define vtkRenderingOpenGL2_AUTOINIT 1(vtkRenderingGL2PSOpenGL2)
 #define vtkRenderingVolume_AUTOINIT 1(vtkRenderingVolumeOpenGL2)
 
-// Found by copying all OOF3D .C and .h files to FLAT, renaming .C to
-// .cxx, and running FindNeededModules.py on FLAT.
+// #defines found by copying all OOF3D .C and .h files to FLAT,
+// renaming FLAT/*.C to FLAT/*.cxx, and running FindNeededModules.py
+// on FLAT.
 
 // #define vtkIOExportGL2PS_AUTOINIT 1(vtkIOExportGL2PS)
 // #define vtkRenderingCore_AUTOINIT 4(vtkInteractionStyle,vtkRenderingFreeType,vtkRenderingOpenGL2,vtkRenderingUI)
