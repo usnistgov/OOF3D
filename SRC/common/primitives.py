@@ -246,6 +246,9 @@ class iPoint(Point):
             Point.__init__(self, int(math.floor(x)), int(math.floor(y)),
                            int(math.floor(z)))
     def __repr__(self):
+        ## This was used to generate some debugging output but it
+        ## breaks the regression tests.
+        #return "(%d, %d, %d)" % tuple(self)
         fmt = ",".join(("%d",)*config.dimension()) 
         return "iPoint(" + fmt%self.asTuple() + ")"
 
