@@ -70,6 +70,7 @@ unsigned long CSkeletonBase::uidbase = 0;
 // Global flag controlling the homogeneity calculation method.
 static HomogeneityAlgorithm _homogeneityAlgorithm = HOMOGENEITY_ROBUST;
 TimeStamp homogeneityAlgorithmChanged;
+TimeStamp vsbBinFactorChanged;
 
 void setHomogeneityAlgorithm(HomogeneityAlgorithm *alg) {
   if(*alg != _homogeneityAlgorithm) {
@@ -80,6 +81,16 @@ void setHomogeneityAlgorithm(HomogeneityAlgorithm *alg) {
 
 HomogeneityAlgorithm getHomogeneityAlgorithm() {
   return _homogeneityAlgorithm;
+}
+
+static double vsbBinFactor = 1.0;
+void setVSBbinFactor(double f) {
+  vsbBinFactor = f;
+  ++vsbBinFactorChanged;
+}
+
+double getVSBbinFactor() {
+  return vsbBinFactor;
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
@@ -950,10 +961,12 @@ void CSkeletonBase::calculateHomogeneityIndex() const {
     dynamic_cast<DefiniteProgress*>(getProgress("Calculating homogeneity index",
 						DEFINITE));
   try {
-    buildVSBs();
+    if(getHomogeneityAlgorithm() == HOMOGENEITY_ROBUST)
+      buildVSBs();
     double vtot = 0.0;		// total volume
     for(CSkeletonElementIterator elit = beginElements(); 
-	elit != endElements(); ++elit)
+	elit != endElements() && !progress->stopped();
+	++elit)
       {
 	//If element isn't illegal, add its info to the homogeneity calculation
 	if(!(*elit)->illegal()) {
@@ -981,10 +994,12 @@ void CSkeletonBase::calculateHomogeneityIndex() const {
     // crucial.  The problem isn't due to the presence of illegal
     // elements.
     // homogeneityIndex /= volume();
-    homogeneityIndex /= vtot;
-    ++homogeneity_index_computation_time;
-    ++illegal_count_computation_time;
-    ++suspect_count_computation_time;
+    if(!progress->stopped()) {
+      homogeneityIndex /= vtot;
+      ++homogeneity_index_computation_time;
+      ++illegal_count_computation_time;
+      ++suspect_count_computation_time;
+    }
   }
   catch (...) {
     progress->finish();
@@ -3421,7 +3436,7 @@ const std::string *CSkeletonBase::sanityCheck() const {
 	   #                 reporter.report("   partners are at",
 	   #                                 [(ptnr.position(), ptnr.index())
 	   #                                  for ptnr in node.getPartners()])
-	   #                 sane = False
+	   #                 sane = false
 	   #         if self.y_periodicity and (y == 0.0 or y == ymax):
 	   #             p = node.getDirectedPartner('y')
 	   #             if not p or ((y == 0.0 and p.position().y != ymax) or
@@ -3434,7 +3449,7 @@ const std::string *CSkeletonBase::sanityCheck() const {
 	   #                                  for ptnr in node.getPartners()])
 	   #                 reporter.report([ptnr.position()-primitives.Point(x, ymax)
 	   #                                  for ptnr in node.getPartners()])
-	   #                 sane = False
+	   #                 sane = false
 	   #         # Check self consistency of partner lists
 	   #         for partner in node.getPartners():
 	   #             if node not in partner.getPartners():
@@ -4227,11 +4242,16 @@ void CSkeletonBase::clearVSBs() const {
   for(VoxelSetBoundary *vsb : voxelSetBdys)
     delete vsb;
   voxelSetBdys.clear();
+  vsbTimeStamp.backdate();	// force VSBs to be recomputed
 }
 
-void CSkeletonBase::buildVSBs() const {
-  if(vsbTimeStamp > getTimeStamp())
-    return;
+bool CSkeletonBase::buildVSBs() const {
+  // buildVSBs return true if it actually built the VSBs.  The return
+  // value is used when timing the algorithm, to make sure that only
+  // the real calls are counted.
+  if(vsbTimeStamp > getTimeStamp() && vsbBinFactorChanged < vsbTimeStamp) {
+    return false;
+  }
   // Get the bin size from the average element volume.  Each bin is a
   // rectangular region of the microstructure.  A VSBGraph is computed
   // in each bin for each voxel category, instead of constructing one
@@ -4252,19 +4272,24 @@ void CSkeletonBase::buildVSBs() const {
   // categories have changed.
   const CMicrostructure *ms = getMicrostructure();
   if(newBinSize == vsbBinSize && vsbTimeStamp > ms->getTimeStamp()) {
-    return;
+    return false;
   }
 
   vsbBinSize = newBinSize;
   ICoord3D msSize = ms->sizeInPixels();
-  
-  // Find out how many bins to use.  
-  unsigned int nbins[3];
+
+  // Find out how many bins to use.
+  ICoord3D newNbins;
   for(unsigned int c=0; c<3; c++) {
-    nbins[c] = msSize[c]/vsbBinSize[c]; // integer division
-    if(nbins[c] == 0)
-      nbins[c] = 1;
+    newNbins[c] = msSize[c]/vsbBinSize[c]; // integer division
+    if(newNbins[c] == 0)
+      newNbins[c] = 1;
   }
+
+  if(newNbins == nVSBbins && vsbTimeStamp > getTimeStamp()) {
+    return false;
+  }
+  nVSBbins = newNbins;
 
   // Compute how large each bin should be in each direction.  They
   // won't all be the same and the actual sizes of some bins will be
@@ -4273,23 +4298,23 @@ void CSkeletonBase::buildVSBs() const {
   std::vector<std::vector<unsigned int>> sizes(3); // size of each bin
   std::vector<std::vector<unsigned int>> sumsizes(3); // cumulative sum of sizes
   for(unsigned int c=0; c<3; c++) {
-    int subsize = msSize[c]/nbins[c]; // integer division.
-    int extra = msSize[c] - subsize*nbins[c]; // remainder
+    int subsize = msSize[c]/nVSBbins[c]; // integer division.
+    int extra = msSize[c] - subsize*nVSBbins[c]; // remainder
     sizes[c].clear();
-    sizes[c].resize(nbins[c], subsize);
+    sizes[c].resize(nVSBbins[c], subsize);
     if(extra > 0) {
       for(int i=0; i<extra; i++)
 	sizes[c][i] += 1;
     }
     // sumsizes gives the starting and ending voxels for each bin
     int sum = 0;
-    sumsizes[c].resize(nbins[c]+1);
-    for(unsigned int i=0; i<nbins[c]; i++) {
+    sumsizes[c].resize(nVSBbins[c]+1);
+    for(unsigned int i=0; i<nVSBbins[c]; i++) {
       sumsizes[c][i] = sum;
       sum += sizes[c][i];
     }
     assert(sum == msSize[c]);
-    sumsizes[c][nbins[c]] = msSize[c];
+    sumsizes[c][nVSBbins[c]] = msSize[c];
   }
       
   // Make the bins.  They're stored here rather than in the
@@ -4299,10 +4324,10 @@ void CSkeletonBase::buildVSBs() const {
   // and store their VSBGraphs.  The order doesn't matter as long as
   // the CSkeletonBase and VoxelSetBoundaries agree on it.
   vsbBins.clear();
-  vsbBins.reserve(nbins[0]*nbins[1]*nbins[2]);
-  for(unsigned int ix=0; ix<nbins[0]; ix++) {
-    for(unsigned int iy=0; iy<nbins[1]; iy++) {
-      for(unsigned int iz=0; iz<nbins[2]; iz++) {
+  vsbBins.reserve(nVSBbins[0]*nVSBbins[1]*nVSBbins[2]);
+  for(unsigned int ix=0; ix<nVSBbins[0]; ix++) {
+    for(unsigned int iy=0; iy<nVSBbins[1]; iy++) {
+      for(unsigned int iz=0; iz<nVSBbins[2]; iz++) {
 	vsbBins.emplace_back(
 	     ICoord3D(sumsizes[0][ix], sumsizes[1][iy], sumsizes[2][iz]),
 	     ICoord3D(sumsizes[0][ix+1], sumsizes[1][iy+1], sumsizes[2][iz+1]));
@@ -4321,8 +4346,8 @@ void CSkeletonBase::buildVSBs() const {
   } // end loop over categories
 
   ++vsbTimeStamp;
+  return true;
 } // end CSkeletonBase::buildVSBs
-
 
 void CSkeletonBase::setDefaultVSBbinSize(const CSkeletonBase *other) {
   // Compute a new bin size from the other Skeleton.  The other
@@ -4353,9 +4378,9 @@ ICoord3D CSkeletonBase::getDefaultVSBbinSize() const {
   avgsize /= nelements();
   Coord3D voxelsize = ms->sizeOfPixels();
 #define MAX(a,b) (a > b ? a : b)
-  return ICoord3D(MAX(avgsize[0]/voxelsize[0], MIN_VSB_BINSIZE),
-		  MAX(avgsize[1]/voxelsize[1], MIN_VSB_BINSIZE),
-		  MAX(avgsize[2]/voxelsize[2], MIN_VSB_BINSIZE));
+  return ICoord3D(MAX(vsbBinFactor*avgsize[0]/voxelsize[0], MIN_VSB_BINSIZE),
+		  MAX(vsbBinFactor*avgsize[1]/voxelsize[1], MIN_VSB_BINSIZE),
+		  MAX(vsbBinFactor*avgsize[2]/voxelsize[2], MIN_VSB_BINSIZE));
 }
 
 

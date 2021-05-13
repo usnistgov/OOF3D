@@ -355,60 +355,45 @@ int CMicrostructure::nGroups() const {
 // Convert a Coord in the physical space to pixel coordinates (without
 // rounding to the nearest integer).
 Coord CMicrostructure::physical2Pixel(const Coord &pt) const {
-#if DIM == 2
-  return Coord(pt[0]/delta_[0], pt[1]/delta_[1]);
-#elif DIM == 3
   return Coord(pt[0]/delta_[0], pt[1]/delta_[1], pt[2]/delta_[2]);
-#endif
 }
 
 // Return the physical space coordinates of the lower-left corner of a
 // pixel.
 Coord CMicrostructure::pixel2Physical(const ICoord &pxl) const {
-#if DIM == 2
-  return Coord(pxl[0]*delta_[0], pxl[1]*delta_[1]);
-#elif DIM == 3
   return Coord(pxl[0]*delta_[0], pxl[1]*delta_[1], pxl[2]*delta_[2]);
-#endif
 }
 
 // Return the physical space coordinates of a given non-integer
 // coordinate in pixel space.
 Coord CMicrostructure::pixel2Physical(const Coord &pt) const {
-#if DIM == 2
-  return Coord(pt[0]*delta_[0], pt[1]*delta_[1]);
-#elif DIM == 3
   return Coord(pt[0]*delta_[0], pt[1]*delta_[1], pt[2]*delta_[2]);
-#endif
+}
+
+// Convert a point in pixel coordinates to the index of the pixel
+// containing the point.
+ICoord CMicrostructure::roundToPixel(const Coord &pt) const {
+  int xx = (int) floor(pt[0]);
+  if(xx >= pxlsize_[0])
+    --xx;
+  int yy = (int) floor(pt[1]);
+  if(yy >= pxlsize_[1])
+    --yy;
+  int zz = (int) floor(pt[2]);
+  if(zz >= pxlsize_[2])
+    --zz;
+  return ICoord(xx, yy, zz);
 }
 
 // Return the coordinates of the pixel that contains the given point.
 ICoord CMicrostructure::pixelFromPoint(const Coord &pt) const {
-  Coord p = physical2Pixel(pt);
-  int xx = (int) floor(p[0]);
-  int yy = (int) floor(p[1]);
-  if(xx >= pxlsize_[0])
-    --xx;
-  if(yy >= pxlsize_[1])
-    --yy;
-#if DIM == 2
-  return ICoord(xx, yy);
-#elif DIM == 3
-  int zz = (int) floor(p[2]);
-  if(zz >= pxlsize_[2])
-    --zz;
-  return ICoord(xx, yy, zz);
-#endif
+  return roundToPixel(physical2Pixel(pt));
 }
 
 // Is the given point inside the microstructure?
 bool CMicrostructure::contains(const ICoord &ip) const {
-#if DIM==2
-  return ((ip[0]>=0 && ip[0]<pxlsize_[0]) && (ip[1]>=0 && ip[1]<pxlsize_[1]));
-#elif DIM==3
   return ((ip[0]>=0 && ip[0]<pxlsize_[0]) && (ip[1]>=0 && ip[1]<pxlsize_[1])
 	  && (ip[2]>=0 && ip[2]<pxlsize_[2]));
-#endif	// DIM==3
 }
 
 // Is the given point (given as a Coord but in pixel coordinates)
@@ -416,12 +401,8 @@ bool CMicrostructure::contains(const ICoord &ip) const {
 // as contains(pixelFromPoint(x)), since pixelFromPoint rounds off
 // input values that are out of bounds.
 bool CMicrostructure::containsPixelCoord(const Coord &pt) const {
-#if DIM==2
-  return ((pt[0]>=0 && pt[0]<=pxlsize_[0]) && (pt[1]>=0 && pt[1]<=pxlsize_[1]));
-#elif DIM==3
   return ((pt[0]>=0 && pt[0]<=pxlsize_[0]) && (pt[1]>=0 && pt[1]<=pxlsize_[1])
 	  && (pt[2]>=0 && pt[2]<=pxlsize_[2]));
-#endif	// DIM==3
 }
 
 bool CMicrostructure::isSelected(const ICoord *x) const {

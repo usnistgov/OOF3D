@@ -95,6 +95,7 @@
 #include <oofconfig.h>
 #include "coord.h"		// for ICoord
 #include "common/cprism_i.h"	// for ICRectangularPrism
+#include "common/IO/oofcerr.h"
 #include <iostream>
 #include <string.h>		// for memcpy
 #include <assert.h>
@@ -317,22 +318,34 @@ public:
   
   inline TYPE &operator[](const ICoord &z) {
 #ifdef DEBUG
-    assert(z[0] < bounds_.xmax());
-    assert(z[1] < bounds_.ymax());
-    assert(z[0] >= bounds_.xmin());
-    assert(z[1] >= bounds_.ymin());
-    assert(z[2] < bounds_.zmax());
-    assert(z[2] >= bounds_.zmin());
-#endif	
+    if(z[0] >= bounds_.xmax() ||
+       z[1] >= bounds_.ymax() ||
+       z[2] >= bounds_.zmax() ||
+       z[0] < bounds_.xmin() ||
+       z[1] < bounds_.ymin() ||
+       z[2] < bounds_.zmin())
+      {
+	oofcerr << "Array::operator[]: z=" << z << " bounds_=" << bounds_
+		<< std::endl;
+	throw ErrBoundsError("Array index out of bounds!");
+      }
+#endif	// DEBUG
     return dataptr->get(z);
   }
   inline const TYPE &operator[](const ICoord &z) const {
 #ifdef DEBUG
-    assert(z[0] < bounds_.xmax());
-    assert(z[1] < bounds_.ymax());
-    assert(z[0] >= bounds_.xmin());
-    assert(z[1] >= bounds_.ymin());
-#endif	
+    if(z[0] >= bounds_.xmax() ||
+       z[1] >= bounds_.ymax() ||
+       z[2] >= bounds_.zmax() ||
+       z[0] < bounds_.xmin() ||
+       z[1] < bounds_.ymin() ||
+       z[2] < bounds_.zmin())
+      {
+	oofcerr << "Array::operator[]: z=" << z << " bounds_=" << bounds_
+		<< std::endl;
+	throw ErrBoundsError("Array index out of bounds!");
+      }
+#endif	// DEBUG
     return dataptr->get(z);
   }
 

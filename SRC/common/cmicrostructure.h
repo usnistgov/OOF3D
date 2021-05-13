@@ -201,6 +201,7 @@ public:
   double volume() const { return size_.x[0]*size_.x[1]*size_.x[2]; }
 #endif
   Coord physical2Pixel(const Coord&) const; // real space to pixel coords
+  ICoord roundToPixel(const Coord&) const; // pixel coord to pixel index
   Coord pixel2Physical(const ICoord&) const;
   Coord pixel2Physical(const Coord&) const;
   ICoord pixelFromPoint(const Coord&) const; // pixel containing the given point

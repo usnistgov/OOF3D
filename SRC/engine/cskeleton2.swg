@@ -239,6 +239,13 @@ public:
   CSkeletonSegment* nearestSegment(Coord *Point);
   CSkeletonFace* nearestFace(Coord *Point);
 
+  // buildVSBs and clearVSBs are swigged so that buildVSBs can be
+  // easily separated from the rest of the homogeneity calculation and
+  // timed.  In normal usage they don't have to be called explicitly.
+  bool buildVSBs();
+  void clearVSBs();
+  void dummy();			// for establishing a timing baseline
+
   %addmethods {
     // we need to return pointers here, instead of references
 
@@ -332,6 +339,8 @@ public:
   void drawVoxelSetBoundary(LineSegmentLayer*, int);
   void saveClippedVSB(unsigned int, COrientedPlane&, char*);
   double clipVSBVol(unsigned int, COrientedPlane&);
+  ICoord getVSBbinSize();
+  ICoord getVSBbinNumber();
 
   CDeputySkeleton *deputyCopy();
   CSkeleton *completeCopy();
@@ -370,6 +379,8 @@ public:
     }
   }
 
+  void resetHomogeneity();
+
   int getNodeUid(int nidx);
   int getElementUid(int eidx);
 
@@ -406,6 +417,8 @@ void setHomogeneityAlgorithm(HomogeneityAlgorithm*);
 // Swigging a function that returns an object instead of a pointer
 // creates an extra copy of the object, but we don't care here.
 HomogeneityAlgorithm getHomogeneityAlgorithm();
+void setVSBbinFactor(double);
+double getVSBbinFactor();
 
 CDeputySkeleton *newCDeputySkeleton(CSkeletonBase*);
 

@@ -880,9 +880,6 @@ public:
     }
   }
 
-  // TODO: This next line was commented out for some reason?  Does it matter?
-  VSBGraph(const VSBGraph<COORD, ICOORD>&&) = delete;
-
   const ICRectPrism<ICOORD> &subregion() const {
     return domain;
   }

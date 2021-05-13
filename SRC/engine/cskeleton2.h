@@ -190,7 +190,8 @@ protected:
   // The prisms that define the subregions are stored here in the
   // skeleton because they're shared by all VoxelSetBoundaries.
   mutable std::vector<ICRectPrism<ICoord3D>> vsbBins;
-  mutable ICoord3D vsbBinSize;		// nominal size of bins.
+  mutable ICoord3D vsbBinSize;	// nominal size of bins.
+  mutable ICoord3D nVSBbins; // actual number of bins in each direction
   // defaultVSBbin is the size used when there's not enough
   // information to determine a good bin size.  It's set by the
   // constructor to DEFAULT_VSB_BIN, and reset by
@@ -367,8 +368,11 @@ public:
 			       const CRectangularPrism&,
 			       const std::vector<VSBPlane<Coord3D>>&) const;
   void setDefaultVSBbinSize(const CSkeletonBase*);
-  void buildVSBs() const;
+  ICoord3D getVSBbinSize() const { return vsbBinSize; }
+  ICoord3D getVSBbinNumber() const { return nVSBbins; }
+  bool buildVSBs() const;
   void clearVSBs() const;
+  void dummy() const {}		// for establishing a timing baseline
   const VoxelSetBoundary *getVoxelSetBoundary(int cat) const {
     return voxelSetBdys[cat];
   }
@@ -1142,6 +1146,12 @@ void setHomogeneityAlgorithm(HomogeneityAlgorithm*);
 HomogeneityAlgorithm *getHomogeneityAlgorithmPtr();
 HomogeneityAlgorithm getHomogeneityAlgorithm();
 extern TimeStamp homogeneityAlgorithmChanged;
+// Set a scale factor for the VSB bin size.  When using the robust
+// algorithm, the microstructure is divided into bins before the VSB
+// graphs are computed.  The bin size is the scale factor times the
+// average size of an element.
+void setVSBbinFactor(double);
+double getVSBbinFactor();
 
 
 #endif //CSKELETON2_H

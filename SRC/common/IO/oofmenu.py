@@ -375,7 +375,6 @@ from ooflib.common import utils
 from ooflib.common import worker
 from ooflib.common.IO import menuparser
 from ooflib.common.IO import parameter
-from ooflib.common.IO import reporter
 import string
 import types
 import weakref

@@ -586,6 +586,7 @@ HomogeneityData CSkeletonElement::c_homogeneity(const CSkeletonBase *skel) const
   //   const CMicrostructure *ms = skel->getMicrostructure();
   //   return HomogeneityData(1.0/(ms->nCategories()+1), UNKNOWN_CATEGORY);
   // }
+  
   switch(getHomogeneityAlgorithm()) {
   case HOMOGENEITY_ROBUST:
     return c_homogeneity_robust(skel);
@@ -697,9 +698,10 @@ HomogeneityData CSkeletonElement::c_homogeneity_fast(const CSkeletonBase *skel)
 
   // No voxel centers were found inside the element.  The algorithm is
   // obviously failing.  Set the homogeneity to 1.0 and the category
-  // to the category of the voxel at the center of the element.  
-  Coord3D center = 0.25*(epts[0] + epts[1] + epts[2] + epts[3]);
-  ICoord3D voxel = ms->pixelFromPoint(center);
+  // to the category of the voxel at the center of the element.
+  // epts is already in pixel units, although it's not a pixel index
+  Coord center = 0.25*(epts[0] + epts[1] + epts[2] + epts[3]);
+  ICoord voxel = ms->roundToPixel(center);
   return HomogeneityData(1.0, ms->category(voxel));
 }
 
@@ -962,10 +964,10 @@ std::vector<VSBPlane<Coord3D>> CSkeletonElement::getPlanes(
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
-// categoryVolumes is the core of the homogeneity calculation. It
-// calculates the volume intersection of a tetrahedral element with a
-// voxelized region representing a material category in a
-// microstructure.
+// categoryVolumes is the core of the robust homogeneity
+// calculation. It calculates the volume intersection of a tetrahedral
+// element with a voxelized region representing a material category in
+// a microstructure.
 
 // VOLTOL is the allowed fractional error in the sum of the volumes of
 // the voxel categories relative to the total volume of the element.
