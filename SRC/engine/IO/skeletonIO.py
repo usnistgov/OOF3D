@@ -46,6 +46,8 @@ import ooflib.common.microstructure
 #from ooflib.engine import skeletonsegment
 from ooflib.SWIG.engine import cskeleton2
 
+import sys
+
 OOFMenuItem = oofmenu.OOFMenuItem
 
 OOF = mainmenu.OOF
@@ -929,6 +931,10 @@ def rearrangeEdges(edges):
 ##########
 import datetime
 import string
+# NB the following function is specialized to the 3D case,
+# it unconditionally uses getNodes() and getElements() to retrieve
+# skeleton components.  In the event of a 2D/3D merge, this
+# will need to be protected with conditionals.
 def writeABAQUSfromSkeleton(filename, mode, skelcontext):
     skelcontext.begin_reading()
     try:
@@ -941,13 +947,14 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
         #  as was done in previous writeXXX() methods
         nodedict = {}
         i = 1
-        for node in skeleton.nodes:
+        # for node in skeleton.nodes: # Bombs, 5/20/2021.
+        for node in skeleton.getNodes():
             nodedict[node] = i
             i += 1
         # same for elements
         elementdict = {}
         i = 1
-        for el in skeleton.elements:
+        for el in skeleton.getElements():
             elementdict[el] = i
             i += 1
 
@@ -958,7 +965,7 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
         #  something like this has been done in the OOF universe.
         materiallist={}
         elementlist={}
-        for el in skeleton.elements:
+        for el in skeleton.getElements():
             matl = el.material(skeleton)
             if matl:
                 matname = matl.name()
@@ -980,7 +987,7 @@ def writeABAQUSfromSkeleton(filename, mode, skelcontext):
         buffer+="**   More information may be obtained by saving ABAQUS from a mesh.\n"
 
         listbuf=["*NODE\n"]
-        for node in skeleton.nodes:
+        for node in skeleton.getNodes():
             listbuf.append("%d, %s, %s\n" % (nodedict[node],node.position().x,node.position().y))
         buffer+=string.join(listbuf,"")
 
