@@ -222,8 +222,9 @@ if not cleaning:
             print "oof2-build: Removing", fnames[0]
             os.remove(fnames[0])
 
-        build_cmd = "python setup.py build %s install --prefix=%s" \
-                    % (string.join(build_args),
+        build_cmd = "%s setup.py build %s install --prefix=%s" \
+                    % (sys.executable,
+                       string.join(build_args),
                        os.path.join(stowdir, stowsubdir))
         # build_cmd = "python setup.py build %s install %s --prefix=%s" \
         #             % (string.join(build_args),
