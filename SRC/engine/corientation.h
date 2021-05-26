@@ -105,7 +105,7 @@ template <class ORIENT>
 class OIndex : virtual public FieldIndex {
 protected:
   const ORIENT *orient;
-  int which;
+  int which;	// TODO: Use unsigned to get rid of compiler warnings?
 public:
   OIndex(const ORIENT *o) : orient(o), which(0) {}
   OIndex(const ORIENT *o, int i) : orient(o), which(i) {}
