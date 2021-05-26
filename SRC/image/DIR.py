@@ -9,38 +9,21 @@
 # oof_manager@nist.gov. 
 
 dirname = 'image'
-if not DIM_3:
-    clib = 'oof2image'
-else:
-    clib = 'oof3dimage'
+clib = 'oof3dimage'
 clib_order = 2
 
 subdirs = ['IO']
 
-if not DIM_3:
-    
-    cfiles = ['oofimage.C', 'burn.C', 'evenlyilluminate.C',
-              'pixelselectioncourieri.C']
-    
-    swigfiles = ['oofimage.swg', 'burn.swg', 'pixelselectioncourieri.swg']
-    
-    swigpyfiles = ['oofimage.spy', 'burn.spy']
-    
+cfiles = ['oofimage3d.C', 'burn.C', 'autogroupMP.C',
+          'pixelselectioncourieri.C']
 
-    hfiles = ['oofimage.h', 'burn.h', 'pixelselectioncourieri.h']
+swigfiles = ['oofimage3d.swg', 'burn.swg', 'autogroupMP.swg',
+             'pixelselectioncourieri.swg']
 
-else:
-    
-    cfiles = ['oofimage3d.C', 'burn.C', 'autogroupMP.C',
-    'pixelselectioncourieri.C']
-    
-    swigfiles = ['oofimage3d.swg', 'burn.swg', 'autogroupMP.swg',
-    'pixelselectioncourieri.swg']
-    
-    swigpyfiles = ['oofimage3d.spy', 'burn.spy']
-    
-    hfiles = ['oofimage3d.h', 'burn.h', 'autogroupMP.h',
-    'pixelselectioncourieri.h']
+swigpyfiles = ['oofimage3d.spy', 'burn.spy']
+
+hfiles = ['oofimage3d.h', 'burn.h', 'autogroupMP.h',
+          'pixelselectioncourieri.h']
 
 
 pyfiles = ['initialize.py', 'pixelselectionmethod.py',
@@ -49,21 +32,7 @@ pyfiles = ['initialize.py', 'pixelselectionmethod.py',
 
 
 def set_clib_flags(c_lib):
-    import oof2setuputils
-    if not DIM_3:
-        if oof2setuputils.check_exec('Magick++-config'):
-            oof2setuputils.add_third_party_includes('Magick++-config --cppflags',
-                                                    c_lib)
-            oof2setuputils.add_third_party_libs('Magick++-config --ldflags --libs',
-                                                c_lib)
-        else:
-            print "Can't find Magick++-config!  Your ImageMagick installation may be defective."
-            
-        c_lib.externalLibs.append('oof2common')
-
-    else:
-        addVTKlibs(c_lib, ['vtkImagingColor',
-                           'vtkImagingGeneral'])
+    addVTKlibs(c_lib, ['vtkImagingColor', 'vtkImagingGeneral'])
         
 
 

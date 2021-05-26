@@ -10,10 +10,7 @@
 # oof_manager@nist.gov. 
 
 dirname = 'GUI'
-if not DIM_3:
-    clib = 'oof2commonGUI'
-else:
-    clib = 'oof3dcommonGUI'
+clib = 'oof3dcommonGUI'
 clib_order = 100
 
 pyfiles = [
@@ -65,49 +62,18 @@ pyfiles = [
     'workerGUI.py'
  ]
 
-if not DIM_3:
-
-    cfiles = [
-        'oofcanvas.C',
-        'rubberband.C',
-        'canvasdot.c',
-        'canvastriangle.c',
-        'gfxbrushstyle.C'
-        ]
-
-    swigfiles =[
-        'oofcanvas.swg',
-        'rubberband.swg',
-        'gfxbrushstyle.swg'
-        ]
-
-    swigpyfiles = [
-        'gfxbrushstyle.spy'
-        ]
-
-    hfiles = [
-        'canvasdot.h',
-        'canvastriangle.h',
-        'oofcanvas.h',
-        'rubberband.h',
-        'rbstipple.xbm',
-        'rbstubble.xbm',
-        'gfxbrushstyle.h'
-    ]
-
-else:
     
-    cfiles = ['progressGUI.C']
-    if USE_COCOA:
-        cfiles.append('oofcanvas3d.mm')
-    else:
-        cfiles.append('oofcanvas3d.C')
+cfiles = ['progressGUI.C']
+if USE_COCOA:
+    cfiles.append('oofcanvas3d.mm')
+else:
+    cfiles.append('oofcanvas3d.C')
 
-    swigfiles = ['oofcanvas3d.swg', 'progressGUI.swg']
+swigfiles = ['oofcanvas3d.swg', 'progressGUI.swg']
 
-    hfiles = ['oofcanvas3d.h', 'progressGUI.h']
+hfiles = ['oofcanvas3d.h', 'progressGUI.h']
 
-    swigpyfiles = ['progressGUI.spy']
+swigpyfiles = ['progressGUI.spy']
 
 
 def set_clib_flags(clib):
@@ -125,11 +91,6 @@ def set_clib_flags(clib):
     oof2setuputils.pkg_check("gtk+-2.0", GTK_VERSION, clib)
     oof2setuputils.pkg_check("pygtk-2.0", PYGTK_VERSION, clib)
     oof2setuputils.pkg_check("pygobject-2.0", PYGOBJECT_VERSION)
-    if not DIM_3:
-        oof2setuputils.pkg_check("libgnomecanvas-2.0", GNOMECANVAS_VERSION,
-                                 clib)
-        clib.externalLibs.append('oof2common')
-    else:
-        clib.externalLibs.append('oof3dcommon')
+    addOOFlibs(clib, 'oof3dcommon')
 
 

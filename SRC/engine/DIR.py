@@ -159,19 +159,17 @@ hfiles = [
 ]
 
 
-if DIM_3:
-    pyfiles.extend(["faceselectdisplay.py"])
-    hfiles.extend(["cskeletonface.h", "relaxation.h", "skeletonfilter.h"])
-    cfiles.extend(["cskeletonface.C", "relaxation.C", "skeletonfilter.C"])
-    swigfiles.extend(["cskeletonface.swg", "relaxation.swg", "skeletonfilter.swg"])
-    swigpyfiles.extend(["relaxation.spy", "skeletonfilter.spy"])
+# TODO: Merge these in with the lists above.  They were separate when
+# 2D and 3D used the same code.
+pyfiles.extend(["faceselectdisplay.py"])
+hfiles.extend(["cskeletonface.h", "relaxation.h", "skeletonfilter.h"])
+cfiles.extend(["cskeletonface.C", "relaxation.C", "skeletonfilter.C"])
+swigfiles.extend(["cskeletonface.swg", "relaxation.swg", "skeletonfilter.swg"])
+swigpyfiles.extend(["relaxation.spy", "skeletonfilter.spy"])
 
 
 def set_clib_flags(clib):
-    if not DIM_3:
-        clib.externalLibs.append('oof2common')
-    else:
-        clib.externalLibs.append('oof3dcommon')
+    addOOFlibs(clib, 'oof3dcommon')
 
 
 # if HAVE_MPI:

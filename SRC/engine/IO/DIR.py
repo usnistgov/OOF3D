@@ -10,16 +10,13 @@
 # oof_manager@nist.gov. 
 
 dirname = 'IO'
-if not DIM_3:
-    clib = 'oof2engine'
-else:
-    clib = 'oof3dengine'
+clib = 'oof3dengine'
 if not NO_GUI:
     subdirs = ['GUI']
 
-cfiles = ['contour.C', 'propertyoutput.C', 'gridsource.C'] 
+cfiles = ['propertyoutput.C', 'gridsource.C'] 
 
-swigfiles = ['contour.swg', 'propertyoutput.swg', 'gridsource.swg',]
+swigfiles = ['propertyoutput.swg', 'gridsource.swg',]
 
 pyfiles = [
     'analyze.py', 'analyzemenu.py', 'anisocijkl.py',
@@ -42,16 +39,9 @@ pyfiles = [
     'interfaceparameters.py', 'interfacemenu.py', 'genericinfotoolbox.py'] 
 
 
-swigpyfiles = ['contour.spy', 'propertyoutput.spy']
+swigpyfiles = ['propertyoutput.spy']
 
-hfiles = ['contour.h', 'propertyoutput.h', 'gridsource.h']
-
-if DIM_3:
-    cfiles.remove('contour.C')
-    swigfiles.remove('contour.swg')
-    swigpyfiles.remove('contour.spy')
-    hfiles.remove('contour.h')
-
+hfiles = ['propertyoutput.h', 'gridsource.h']
 
 if HAVE_MPI:
     pyfiles.extend([

@@ -491,6 +491,19 @@ def addVTKlibs(clib, libnames):
     for libname in libnames:
         clib.externalLibs.append(libname + vtksuffix)
 
+def addOOFlibs(clib, *libnames):
+    # If we're building with python-dbg, the shared libraries that it
+    # builds will have a "_d" added to their names, and we need to
+    # know that in order to link to them.  SHLIB_EXT is either ".so"
+    # or "_d.so".  Unfortunately, the quotation marks are included.
+    suffix = get_config_var("SHLIB_EXT")
+    # The part we want is the part coming before the dot.
+    sf = suffix.split('.')[0]
+    if sf[0] == '"':
+        sf = sf[1:]
+    for libname in libnames:
+        clib.externalList.append(libname + sf)
+
 #########
 
 # Define subclasses of the distutils build_ext and build_shlib class.

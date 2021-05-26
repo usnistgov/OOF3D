@@ -10,10 +10,7 @@
 
 dirname = 'orientationmap'
 
-if not DIM_3:
-    clib = 'oof2orientmap'
-else:
-    clib = 'oof3dorientmap'
+clib = 'oof3dorientmap'
 clib_order = 10
 
 cfiles = [
@@ -37,19 +34,7 @@ hfiles = [
     'orientmapdata.h', 'orientmapproperty.h']
 
 def set_clib_flags(c_lib):
-    import oof2setuputils
-    if not DIM_3:
-        if oof2setuputils.check_exec('Magick++-config'):
-            oof2setuputils.add_third_party_includes('Magick++-config --cppflags',
-                                                    c_lib)
-            oof2setuputils.add_third_party_libs('Magick++-config --ldflags --libs',
-                                                c_lib)
-        else:
-            print "Can't find Magick++-config!  Your ImageMagick installation may be defective."
-        c_lib.externalLibs.append('oof2common')
-    else:
-        c_lib.externalLibs.append('oof3dcommon')
-
+    addOOFlibs(c_lib, 'oof3dcommon')
 
 if not NO_GUI:
     subdirs = ['GUI']
