@@ -233,7 +233,7 @@ class CLibInfo:
                 # swig 1.3 version                
 ##                modulename = '_' + basename
 ##                sourcename = os.path.join(swigroot, basename+'_wrap.cxx')
-                
+
                 extension = distutils.core.Extension(
                     name = os.path.join(OOFNAME,"ooflib", SWIGINSTALLDIR,
                                         modulename),
@@ -244,7 +244,7 @@ class CLibInfo:
                         platform['extra_compile_args'],
                     include_dirs = self.includeDirs + platform['incdirs'],
                     library_dirs = self.externalLibDirs + platform['libdirs'],
-                    libraries = ([self.libname] + self.externalLibs +
+                    libraries = ([fixLibName(self.libname)] + self.externalLibs +
                                  platform['libs']),
                     extra_link_args = self.extra_link_args + \
                         platform['extra_link_args']
@@ -491,18 +491,21 @@ def addVTKlibs(clib, libnames):
     for libname in libnames:
         clib.externalLibs.append(libname + vtksuffix)
 
+# If we're building with python-dbg, the shared libraries that it
+# builds will have a "_d" added to their names, and we need to
+# know that in order to link to them.  SHLIB_EXT is either ".so"
+# or "_d.so".  Unfortunately, the quotation marks are included.
+
+_sfx = get_config_var("SHLIB_EXT").split('.')[0]
+if _sfx[0] == '"':
+    _sfx = _sfx[1:]
+
+def fixLibName(libname):
+    return libname + _sfx
+
 def addOOFlibs(clib, *libnames):
-    # If we're building with python-dbg, the shared libraries that it
-    # builds will have a "_d" added to their names, and we need to
-    # know that in order to link to them.  SHLIB_EXT is either ".so"
-    # or "_d.so".  Unfortunately, the quotation marks are included.
-    suffix = get_config_var("SHLIB_EXT")
-    # The part we want is the part coming before the dot.
-    sf = suffix.split('.')[0]
-    if sf[0] == '"':
-        sf = sf[1:]
     for libname in libnames:
-        clib.externalList.append(libname + sf)
+        clib.externalLibs.append(fixLibName(libname))
 
 #########
 
