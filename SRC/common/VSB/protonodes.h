@@ -1774,7 +1774,7 @@ void initializeProtoNodes() {
   // Create an instance of each ProtoVSBNode class in each orientation
   // and store it in a table indexed by the voxel signature for that
   // configuration.  The table is used to create the ProtoVSBNodes
-  // when a CMicrostructure is computing voxel set boundaries.
+  // when computing voxel set boundaries.
 
   static bool done = false;
   if(done)

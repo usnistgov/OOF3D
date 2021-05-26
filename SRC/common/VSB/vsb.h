@@ -880,8 +880,6 @@ public:
     }
   }
     
-  VSBGraph(const VSBGraph<COORD, ICOORD>&&) = delete;
-
   const ICRectPrism<ICOORD> &subregion() const {
     return domain;
   }
