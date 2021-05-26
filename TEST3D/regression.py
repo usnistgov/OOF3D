@@ -123,6 +123,7 @@ The options are:
    --dryrun             Just pretend to run the tests.
    --oofargs=args       Pass arguments to oof3d.
    --debug              Run oof3d in debug mode.
+   --unthreaded         Run oof3d in unthreaded mode.
    --noclean            Don't delete temporary files after running tests.
    --help               Print this message.
 The options --from, --after, and --to cannot be used if test names are
@@ -135,7 +136,8 @@ def run(homedir):
     try:
         opts,args = getopt.getopt(sys.argv[1:],"f:a:t:o:dlh",
                                   ["from=", "after=", "to=", "oofargs=",
-                                   "forever", "debug", "backwards", "noclean",
+                                   "forever", "debug", "unthreaded",
+                                   "backwards", "noclean",
                                    "dryrun", "list", "help"])
     except getopt.GetoptError, err:
         print str(err)
@@ -148,6 +150,7 @@ def run(homedir):
     startaftergiven = False
     forever = False
     debug = False
+    unthreaded = False
     backwards = False
     noclean = False
     listtests = False
@@ -184,6 +187,8 @@ def run(homedir):
             forever = True
         elif o == "--debug":
             debug = True
+        elif o == "--unthreaded":
+            unthreaded = True
         elif o == "--backwards":
             backwards = True
         elif o == "--noclean":
@@ -221,6 +226,8 @@ def run(homedir):
     sys.argv.extend(["--text", "--quiet", "--seed=17"])
     if debug:
         sys.argv.append("--debug")
+    if unthreaded:
+        sys.argv.append("--unthreaded")
 
     oof.run(no_interp=1)
 
