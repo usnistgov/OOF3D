@@ -36,6 +36,7 @@ def evolve(meshctxt, endtime):
     starttime = meshctxt.getObject().latestTime()
 
     print >> sys.stderr, "EPY: Start of evolve."
+    print >> sys.stderr, "EPY: Meshctxt is ", meshctxt
     # We're solving a static problem if endtime is the same as the
     # current time, or if there are no non-static steppers and output
     # is requested at at single time.
@@ -56,7 +57,8 @@ def evolve(meshctxt, endtime):
 
     # Precompute checks for matrix symmetry.  Doesn't do any
     # time-depedendent stuff.  Doesn't set BCs.  Doesn't read or write
-    # DOF data.
+    # DOF data or interact with the stepper, that's a different
+    # kind of precompute.
     meshctxt.solver_precompute(solving=True)
     print >> sys.stderr, "EPY: Back from solver_precompute."
 

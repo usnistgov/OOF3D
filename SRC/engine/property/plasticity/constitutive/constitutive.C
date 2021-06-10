@@ -34,9 +34,9 @@ void PowerLawConstitutiveRule::evolve(GptPlasticData *gptpd,
   PowerLawSlipData *plsd = static_cast<PowerLawSlipData*>(gptsd);
 
   total_res = plsd->res;
-  std::cerr << "On entry to constititive evolve, slip resistance:" << std::endl;
+  // std::cerr << "On entry to constititive evolve, slip resistance:" << std::endl;
   for(int alphadx=0;alphadx<slip_systems;++alphadx) {
-    std::cerr << total_res[alphadx] << std::endl;
+    // std::cerr << total_res[alphadx] << std::endl;
   }
   _evolve_hardening(plsd);
   for(int alpha=0;alpha<slip_systems;++alpha) {
@@ -88,7 +88,7 @@ void PowerLawConstitutiveRule::_evolve_gamma(PowerLawSlipData *plsd,
 
       plsd->delta_gamma[alpha] = delta_t*const_sign*g0dot*(pow(abs(ratio_alpha),m_inv));
 
-      std::cerr << "Constitutive rule:" << std::endl;
+      // std::cerr << "Constitutive rule:" << std::endl;
       // std::cerr << "Dt: " << delta_t << std::endl;
       // std::cerr << "const_sign: " << const_sign << std::endl;
       // std::cerr << "g0dot: " << g0dot << std::endl;
@@ -107,7 +107,7 @@ void PowerLawConstitutiveRule::_evolve_gamma(PowerLawSlipData *plsd,
 	
     }
     else {
-      std::cerr << "Constitutive rule: Trivial case." << std::endl;
+      // std::cerr << "Constitutive rule: Trivial case." << std::endl;
       plsd->delta_gamma[alpha] = 0.0;
       plsd->dgamma_dtau[alpha] = 0.0;
     }

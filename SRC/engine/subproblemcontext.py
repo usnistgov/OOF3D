@@ -516,7 +516,8 @@ class SubProblemContext(whoville.Who):
         # Called before time-stepping.  This routine precomputes
         # things that can't possibly be time-dependent.  Called by
         # Mesh.solver_precompute(), which is called by the Solve
-        # menuitem callback before calling evolve().
+        # menuitem callback before calling evolve(), and again
+        # from evolve().
         debug.subthreadTest()
         if self._precomputing:
             return

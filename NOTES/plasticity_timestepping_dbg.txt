@@ -1,0 +1,186 @@
+
+  June 2021:
+
+  Debug version of this:  Second pass to add object traffic,
+and monitor data flow.
+
+  ------------------------------------------------------------------
+
+  --------
+
+  Additional (minor) points of confusion:  (Sept. 24)
+
+  The uniform time-stepper with forward Euler builds the matrices
+at the start of every time-step, so there's no matrix
+construction step for the last time.  This caused brief confusion,
+because forward Euler is wrong for this problem. 
+
+  I think we want a new stepper, provisionally called "Incremental", 
+which can take time-steps without generating output, and which
+could possibly have better initial guesses, because it can 
+actually do the thing where you use the prior K matrix for
+the next time-step's initial solution.
+
+  Need to get a better grip on the steppers before this
+can happen.
+
+  Meanwhile:
+
+  Also, in the example solution, there are no free DOFs?  It's a 
+1x1x1 mesh, so all the nodes are boundary nodes, but only x component
+is constrained by boundary conditions.  What happened to y and z?
+(Possibly the thing is just mis-reporting?)
+
+  (Request from SK:  Input/output pairs from the plasticity property,
+    i.e. incoming F, generated w)
+
+  (Did this, for low delta-F, we are getting good answers.)
+
+  Stepper base classes are in engine/timestepper.py, except for the 
+static one, which is in staticstep.py.  F and B Euler are in 
+euler.py. 
+
+
+  Object structure at Solve Time:
+  ------------------------------
+
+  When the solve button is pressed, several things are true.
+
+  The problem is well-posed, in the sense that fields and equations
+are defined.  Boundary conditions are defined, as a (possibly trivial)
+function of time.
+
+  There is an "Output schedule", a set of times at which outputs
+are requested.  This is not necessarily related to the step size.
+
+  There is a Solver, which contains a Time-Stepper, which in turn 
+containts a Stepper, which may define a step size.  The solver
+has a nonlinear solving algorithm (e.g. Newton or Picard), and matrix
+solvers for symmetric or unsymmetric matrices.
+
+  The "nonlinear solver" (which might be linear) attribute of the
+subproblem is the thing that takes the linear system and computes
+the DOFs at the next available time, using the stepper.
+(See below.)
+
+  The NewtonSolver is in nonlinearsolver.py.
+  The Forward Euler stepper is in euler.py.
+
+  The NewtonSolver has a "core", which has a "solve" method which
+does the actual work, which calls *out* to the passed-in 
+"compute_jacobian" routine, along with the "data".  
+
+  Following the control-flow will help, maybe?
+
+
+  --------------------
+
+  Trace notes:
+  
+  EPY -> evolve.py
+  EPY-IS -> Initialize static fields in evolve.py
+  EPY-ET -> Evolve_to in evolve.py
+
+  IS-NL -> Incremental stepper, nonlinear step, incremental.py
+  IS-DS -> Incremental stepper, _do_step routine, incremental.py
+
+  SCPY-MM: subproblemcontext.py, matrix_method function.
+  SCPY-IS: subproblemcontext.py, initialize static fields.
+  SCPY-CS: subproblemcontext.py, compute static fields.
+  SCPY-CSNL: subproblemcontext.py, compute nonlinear static fields.
+  SCPY-MLS: subproblemcontext.py, make_linear_system.
+
+  CSP: csubproblem.C.
+  
+  NLS-NLS: nonlinearsolver.py, NonlinearSolver class "step" method.
+  NLS-N: nonlinearsolver.py, Newton class "solve" method. 
+  
+  NLSC-S: Nonlinear solver core, Newton "solve" method.
+  
+  TS-UD: timestepper.py, UniformDriver's nonlinearstep method.
+
+
+  High-level questions are, what's up with the MeshDataCache
+object, what's the data flow of the solution process?
+ 
+  The full time-evolution call chain for the incremental stepper
+with Newton-Raphson nonlinear solver, with filenames:
+
+  File evolve.py, function evolve is called from the menu item.
+  - Get the start time from the meshcontext. 
+  - Call meshctxt.solver_precompute()
+  - Call meshctxt.setStatus() -- comment says to sync geometry.
+  - Try:
+    - Initialize statistics
+    - Check if it's a continuation, if not:
+      - call initializeStaticFields (local)
+        File evolve.py, function initializeStaticFields()
+        - Loop over subproblems:
+          - Call make_linear_system at the current time.
+          - Subproblem book-keeping -- startstep, cacheconstraints.
+        - Subproblem consistency while-loop:
+          - Loop over subproblems:
+            - Call subproblem.initializeStaticFields
+              File subproblemcontext.py, funciton initializeStaticFields
+              - Check self.time_stepper's derivOrder.
+              - If static fields make sense:
+                - Get the unknowns from the linearized system
+                - Call self.computeStaticFields
+                   File subproblemcontext.py, function computeStaticFields
+                   - Check derivOrder again.
+                   - Call self.nonlinear_solver.computeStaticFields()
+                     File nonlinearsolver.py, function NonlinearSolver.computeStaticFields():
+                     - Call subprobctxt.computeStaticFieldsNL(..)
+                       File subproblemcontext.py, function computeStaticFieldsNL():
+                       - Call time_stepper.get_unknowns for data.
+                       - Build nlfuncs object.
+                       - Call self.nonlinear_solver.solve w/ self.matrix_method
+                         File: nonlinearsolver.py, function Newton.solve()
+                         - Call nonlinearsolvercore.Newton.solve()
+                           File: nonlinearsolvercore.py
+                           Function: Newton.solve
+                           The precompute, compute_residual, 
+                               compute_jacobian fns are passed in.
+                           - set requireResidual, requireJacobian
+                           - call precompute, get residual
+                           - Compute the residual, find the norm.
+                           - While norm is large and icount in-bounds:
+                             - Zero-out the update data
+                             - Compute the jacobian
+                             - Negate the residual
+                             - Call matrix_method.solve to get updates.
+                             - Select increment size (disabled for us!)
+                             - Add "update" to "values". 
+                             - Reocmpute residual, get norm.
+                             - Re-run precompute, passing values.
+                         - Update stats.
+                - Call self.installValues 
+                    HERE
+            - Increment subproblem timestamp
+            - Check consistency -- did the subproblems change?
+        - Return dictionary of linearized systems.
+      - (Return from initializeStaticFields)
+      - Do the initial output.
+    - Check if problem is static, exits if it is.
+  - Do some book-keeping about the time-step delta.
+  - Loop over requested output times: (Or more often, if delta small?)
+    - Loop subproblem steppers, find minimum delta.
+    - Call evolve_to with the subproblems and a target time (local)
+      File evolve.py, function evolve_to()
+      - Try:
+        - While not finished or commanded to stop:
+          - End-time book-keeping.
+          - Loop over subproblems:
+            - Run make_linear_system on a subproblem.
+            - startstep, cacheconstraints.
+          - Subproblem consistency loop:
+            - Subproblem loop:
+              - Clone the linearized system, grab the unknowns
+              - Call subproblem.nonlinear_solver.step.
+                  HERE
+              - If result is OK, update linearized system.
+            - Check consistency.
+      - Return from evolve_to() with consistent subproblems.
+    - Book-keeping checks for possible errors
+    - Possible conditional outputs
+  - Run post-compute operations, update stats, exit.

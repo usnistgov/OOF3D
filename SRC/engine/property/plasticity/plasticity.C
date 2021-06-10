@@ -127,16 +127,16 @@ void Plasticity::precompute(FEMesh* f) {
 void Plasticity::begin_element(const CSubProblem *c,
 			       double time, const Element *e) {
 
-  std::cerr << "Plasticity::begin_element starting." << std::endl;
-  std::cerr << "Time is " << time << std::endl;
+  // std::cerr << "Plasticity::begin_element starting." << std::endl;
+  // std::cerr << "Time is " << time << std::endl;
   // LINSYS STEP 3, plastic version -- called from
   // Material::begin_element, we are in element scope, and need to run
   // our own gausspoint loop.  This class (or its subclasses) are
   // responsible for managing the per-gausspoint data objects.
 
-  std::cerr << "Inside Plasticity::begin_element." << std::endl;
-  std::cerr << "Element: " << std::endl;
-  std::cerr << *e << std::endl;
+  // std::cerr << "Inside Plasticity::begin_element." << std::endl;
+  // std::cerr << "Element: " << std::endl;
+  // std::cerr << *e << std::endl;
 
   ElementData *ed = e->getDataByName("plastic_data");
   ElementData *eds = e->getDataByName("slip_data");
@@ -175,8 +175,8 @@ void Plasticity::begin_element(const CSubProblem *c,
       // TODO: Second layer is pointers?  Seems weird.
       pd->gptdata[gptdx]->ft = pd->gptdata[gptdx]->f_tau;
       pd->gptdata[gptdx]->fpt = pd->gptdata[gptdx]->fp_tau;
-      std::cerr << "Updated gptdata." << std::endl;
-      std::cerr << *(pd->gptdata[gptdx]) << std::endl;
+      // std::cerr << "Updated gptdata." << std::endl;
+      // std::cerr << *(pd->gptdata[gptdx]) << std::endl;
     }
   }
   
@@ -186,7 +186,7 @@ void Plasticity::begin_element(const CSubProblem *c,
   
   // This is used in the calls to the constitutive evolve() method.
   double delta_t = pd->dt;
-  std::cerr << "Retrieved delta_t, it's " << delta_t << std::endl;
+  // std::cerr << "Retrieved delta_t, it's " << delta_t << std::endl;
   // std::cerr << "Initialized the pd object." << std::endl;
   
   if (eds==0) {
@@ -264,8 +264,8 @@ void Plasticity::begin_element(const CSubProblem *c,
     // pd->gptdata[gptdx]->ft(2,2) = 0.9985547565;
     // End of HACK.
 
-    std::cerr << "Input to the constitutive process:  Ft:" << std::endl;
-    std::cerr << (pd->gptdata[gptdx]->ft) << std::endl;
+    // std::cerr << "Input to the constitutive process:  Ft:" << std::endl;
+    // std::cerr << (pd->gptdata[gptdx]->ft) << std::endl;
     
     SmallMatrix3 f_att = pd->gptdata[gptdx]->ft;  // Save prior time-step's F.
 
@@ -290,8 +290,7 @@ void Plasticity::begin_element(const CSubProblem *c,
       for (IteratorP ip = displacement->iterator(ALL_INDICES);
 	   !ip.end(); ++ip) {
 	int idx = ip.integer();
-	std::cerr << "Displacement component " << ip << " is "
-		  << dval[ip] << std::endl;
+	// std::cerr << "Displacement component " << ip << " is " << dval[ip] << std::endl;
 	f_attau(idx,0) += dval[ip]*dshapedx;
 	f_attau(idx,1) += dval[ip]*dshapedy;
 	f_attau(idx,2) += dval[ip]*dshapedz;
@@ -307,8 +306,8 @@ void Plasticity::begin_element(const CSubProblem *c,
     // f_attau(2,2)=0.998513888;
     // End of HACK.
     
-    std::cerr << "Built the initial F matrix at time tau:" << std::endl;
-    std::cerr << f_attau << std::endl;
+    // std::cerr << "Built the initial F matrix at time tau:" << std::endl;
+    // std::cerr << f_attau << std::endl;
     
     // f_attau is now populated for the current gausspoint.
 
@@ -330,15 +329,15 @@ void Plasticity::begin_element(const CSubProblem *c,
     SmallMatrix3 f_attau_t = f_attau; f_attau_t.transpose();
     SmallMatrix3 fp_att_i_t = fp_att_i; fp_att_i_t.transpose();
 
-    std::cerr << "Other input: Fp at t:" << std::endl;
-    std::cerr << fp_att << std::endl;
+    // std::cerr << "Other input: Fp at t:" << std::endl;
+    // std::cerr << fp_att << std::endl;
     
     // Handy place to construct the elastic deformation at prior time t.
     SmallMatrix3 fe_att = f_att*fp_att_i;
     SmallMatrix3 fe_att_t = fe_att; fe_att_t.transpose();
 
-    std::cerr << "Elastic deformation at t:" << std::endl;
-    std::cerr << fe_att << std::endl;
+    // std::cerr << "Elastic deformation at t:" << std::endl;
+    // std::cerr << fe_att << std::endl;
     
     a_mtx = ((fp_att_i_t*f_attau_t)*f_attau)*fp_att_i;
 
@@ -352,20 +351,20 @@ void Plasticity::begin_element(const CSubProblem *c,
 	  for (int l=0;l<3;++l)
 	    s_trial(i,j) += 0.5*lab_cijkl_(i,j,k,l)*elastic_estimate(k,l);
 
-    std::cerr << std::endl << "S_trial:" << std::endl;
-    std::cerr << s_trial << std::endl;
+    // std::cerr << std::endl << "S_trial:" << std::endl;
+    // std::cerr << s_trial << std::endl;
 
     // std::cerr << "Have A matrix and trial stress." << std::endl;
     // At this point we have the A matrix and trial stress for this gpt.
     // Slip systems are in lab_schmid_tensors, std::vector<SmallMatrix*>.
 
     // Populate b and c matrix vectors.
-    std::cerr << "Constructing B and C. mn outupt inline." << std::endl;
+    // std::cerr << "Constructing B and C. mn outupt inline." << std::endl;
     for(int si=0;si<nslips;++si) {
       SmallMatrix3 mn = (*lab_schmid_tensors[si]);
-      std::cerr << mn << std::endl;
+      // std::cerr << mn << std::endl;
       SmallMatrix3 mn_t = mn; mn_t.transpose();
-      std::cerr << mn_t << std::endl;
+      // std::cerr << mn_t << std::endl;
       *(b_mtx[si]) = a_mtx*mn+mn_t*a_mtx;
       c_mtx[si]->clear();
       for(int i=0;i<3;++i)
@@ -404,10 +403,10 @@ void Plasticity::begin_element(const CSubProblem *c,
       // std::cerr << sd->gptslipdata[gptdx]->tau_alpha[alpha] << std::endl;
     }
 
-    std::cerr << "Initial call constitutive rule's evolve." << std::endl;
+    // std::cerr << "Initial call constitutive rule's evolve." << std::endl;
     // Initial call to evolve -- this populates the delta_gamma and
     // dgamma_dtau from s_trial..
-    std::cerr << "Calling evolve, delta_t is " << delta_t << std::endl;
+    // std::cerr << "Calling evolve, delta_t is " << delta_t << std::endl;
     rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx],delta_t);
 
     // std::cerr << "Back from evolve." << std::endl;
@@ -417,8 +416,8 @@ void Plasticity::begin_element(const CSubProblem *c,
     for(int alpha=0;alpha<nslips;++alpha) {
       pd->gptdata[gptdx]->s_star -= (*c_mtx[alpha])*sd->gptslipdata[gptdx]->delta_gamma[alpha];
     }
-    std::cerr << "First correction computed." << std::endl;
-    std::cerr << pd->gptdata[gptdx]->s_star << std::endl;
+    // std::cerr << "First correction computed." << std::endl;
+    // std::cerr << pd->gptdata[gptdx]->s_star << std::endl;
     
     bool done = false;        // Set when converged or iter limit exceeded.
     unsigned int icount = 0;  // Count interations.
@@ -427,19 +426,19 @@ void Plasticity::begin_element(const CSubProblem *c,
       for(int alpha=0;alpha<nslips;++alpha) {
 	sd->gptslipdata[gptdx]->tau_alpha[alpha] =	\
 	  dot(pd->gptdata[gptdx]->s_star, *lab_schmid_tensors[alpha]);
-	std::cerr << "Resolved shear stress and resistance:" << std::endl;
-	std::cerr << sd->gptslipdata[gptdx]->tau_alpha[alpha] << std::endl;
+	// std::cerr << "Resolved shear stress and resistance:" << std::endl;
+	// std::cerr << sd->gptslipdata[gptdx]->tau_alpha[alpha] << std::endl;
       }
 
       // Call evolve, get back new delta_gamma and dgamma_dtau values.
-      std::cerr << "Calling evolve in the convergence loop." << std::endl;
-      std::cerr << "Iteration count is " << icount << std::endl;
+      // std::cerr << "Calling evolve in the convergence loop." << std::endl;
+      // std::cerr << "Iteration count is " << icount << std::endl;
       rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx],delta_t);
 
-      std::cerr << "Back from constitutive evolve method." << std::endl;
+      // std::cerr << "Back from constitutive evolve method." << std::endl;
       for(int alphadx = 0; alphadx<nslips; ++alphadx) {
-	std::cerr << "Delta-gamma " << alphadx << ": " << sd->gptslipdata[gptdx]->delta_gamma[alphadx] << std::endl;
-	std::cerr << "Dgamma-dtau " << alphadx << ": " << sd->gptslipdata[gptdx]->dgamma_dtau[alphadx] << std::endl;
+	// std::cerr << "Delta-gamma " << alphadx << ": " << sd->gptslipdata[gptdx]->delta_gamma[alphadx] << std::endl;
+	// std::cerr << "Dgamma-dtau " << alphadx << ": " << sd->gptslipdata[gptdx]->dgamma_dtau[alphadx] << std::endl;
       }
       
       // TODO optimize:  Precompute gtmtx.  This transpose business is awful.
@@ -447,21 +446,21 @@ void Plasticity::begin_element(const CSubProblem *c,
 	SmallMatrix3 lst = *lab_schmid_tensors[alpha];
 	SmallMatrix3 lst_t = *lab_schmid_tensors[alpha];
 	lst_t.transpose();
-	std::cerr << "Schmid tensor and transpose:" << std::endl;
-	std::cerr << lst << std::endl;
-	std::cerr << lst_t << std::endl;
+	// std::cerr << "Schmid tensor and transpose:" << std::endl;
+	// std::cerr << lst << std::endl;
+	// std::cerr << lst_t << std::endl;
 	*(gtmtx[alpha]) = (lst+lst_t)*(0.5*sd->gptslipdata[gptdx]->dgamma_dtau[alpha]);
       }
 
-      std::cerr << "Gtmtx:" << std::endl;
+      // std::cerr << "Gtmtx:" << std::endl;
       for(int alphadx=0;alphadx<nslips;++alphadx) {
-	std::cerr << "Alpha: " << alphadx << std::endl;
-	std::cerr << *(gtmtx[alphadx]) << std::endl;
+	// std::cerr << "Alpha: " << alphadx << std::endl;
+	// std::cerr << *(gtmtx[alphadx]) << std::endl;
       }
 
-      std::cerr << "Cmtx:" << std::endl;
+      // std::cerr << "Cmtx:" << std::endl;
       for(int alphadx=0;alphadx<nslips;++alphadx) {
-	std::cerr << *(c_mtx[alphadx]) << std::endl;
+	// std::cerr << *(c_mtx[alphadx]) << std::endl;
       }
 
       // std::cerr << "Finished with the S loop." << std::endl;
@@ -482,8 +481,8 @@ void Plasticity::begin_element(const CSubProblem *c,
 		RJ_mtx(i,j,k,l) += 0.5;
 	    }
 
-      std::cerr << "Built the RJ_mtx object." << std::endl;
-      std::cerr << RJ_mtx << std::endl;
+      // std::cerr << "Built the RJ_mtx object." << std::endl;
+      // std::cerr << RJ_mtx << std::endl;
       
       SmallMatrix3 rhs = pd->gptdata[gptdx]->s_star;
       rhs -= s_trial;
@@ -491,30 +490,30 @@ void Plasticity::begin_element(const CSubProblem *c,
 	rhs += (*c_mtx[alpha])*(sd->gptslipdata[gptdx]->delta_gamma[alpha]);
       }
 
-      std::cerr << "Built the rhs object." << std::endl;
-      std::cerr << rhs << std::endl;
+      // std::cerr << "Built the rhs object." << std::endl;
+      // std::cerr << rhs << std::endl;
       
       // NR step involves converting the 4-index and 2-index
       // quantities to a linear system and solving it.
       SmallMatrix nr_kernel = RJ_mtx.as_6matrix();
       SmallMatrix nr_rhs = sm_6vec(rhs);
       
-      std::cerr << "Matrix: " << std::endl;
-      std::cerr << nr_kernel << std::endl;
+      // std::cerr << "Matrix: " << std::endl;
+      // std::cerr << nr_kernel << std::endl;
       
       // std::cerr << "Calling nr_kernel.solve." << std::endl;
       int res = nr_kernel.solve(nr_rhs);
       // std::cerr << "Back from nr_kernel.solve." << std::endl;
       // TODO: Check the return code.
-      std::cerr << "Linear algebra return code: " << res << std::endl;
+      // std::cerr << "Linear algebra return code: " << res << std::endl;
 
-      std::cerr << "Linear algebra answer:" << std::endl;
-      std::cerr << nr_rhs << std::endl;
+      // std::cerr << "Linear algebra answer:" << std::endl;
+      // std::cerr << nr_rhs << std::endl;
       
       SmallMatrix3 delta_s_star = sm_6tensor(nr_rhs);
       
-      std::cerr << "Delta s_star:" << std::endl;
-      std::cerr << delta_s_star << std::endl;
+      // std::cerr << "Delta s_star:" << std::endl;
+      // std::cerr << delta_s_star << std::endl;
       
       SmallMatrix3 old_s_star = pd->gptdata[gptdx]->s_star;
       double old_s_star_size = sqrt(dot(old_s_star,old_s_star));
@@ -522,13 +521,13 @@ void Plasticity::begin_element(const CSubProblem *c,
       SmallMatrix3 new_s_star = old_s_star - delta_s_star;
       double new_s_star_size = sqrt(dot(new_s_star,new_s_star));
 
-      std::cerr << "New s_star at the bottom of the while loop:" << std::endl;
-      std::cerr << new_s_star << std::endl;
+      // std::cerr << "New s_star at the bottom of the while loop:" << std::endl;
+      // std::cerr << new_s_star << std::endl;
       
       pd->gptdata[gptdx]->s_star = new_s_star;
 
-      std::cerr << "Fractional tolerance check:" << std::endl;
-      std::cerr << ((new_s_star_size - old_s_star_size)/old_s_star_size) << std::endl;
+      // std::cerr << "Fractional tolerance check:" << std::endl;
+      // std::cerr << ((new_s_star_size - old_s_star_size)/old_s_star_size) << std::endl;
       if (old_s_star_size < OLD_S_STAR_SIZE_LIMIT)
 	done = true;
       else 
@@ -539,8 +538,8 @@ void Plasticity::begin_element(const CSubProblem *c,
       if (icount>ITER_MAX)
 	done = true;
     } // Constitutive while loop ends here.
-    std::cerr << "Out of the constitutive while loop." << std::endl;
-    std::cerr << "S-star: " << pd->gptdata[gptdx]->s_star << std::endl;
+    // std::cerr << "Out of the constitutive while loop." << std::endl;
+    // std::cerr << "S-star: " << pd->gptdata[gptdx]->s_star << std::endl;
     
     // Compute the last set of resolved shear stresses from the last s_star.
     for(int alpha=0;alpha<nslips;++alpha) {
@@ -548,10 +547,10 @@ void Plasticity::begin_element(const CSubProblem *c,
 	dot(pd->gptdata[gptdx]->s_star, *lab_schmid_tensors[alpha]);
     }
 
-    std::cerr << "Final call to evolve before completion." << std::endl;
+    // std::cerr << "Final call to evolve before completion." << std::endl;
     rule->evolve(pd->gptdata[gptdx],sd->gptslipdata[gptdx],delta_t);
 
-    std::cerr << "Calling rule->complete." << std::endl;
+    // std::cerr << "Calling rule->complete." << std::endl;
 
     // It's OK to do this update inside the outermost NR loop
     // controlled by the stepper, the constitutive rule will back off
@@ -606,8 +605,8 @@ void Plasticity::begin_element(const CSubProblem *c,
     // This is fp_attau;
     pd->gptdata[gptdx]->fp_tau = (pd->gptdata[gptdx]->fpt)*(ident + lp);
 
-    std::cerr << "Incremented fp_tau." << std::endl;
-    std::cerr << *(pd->gptdata[gptdx]) << std::endl;
+    // std::cerr << "Incremented fp_tau." << std::endl;
+    // std::cerr << *(pd->gptdata[gptdx]) << std::endl;
     
     // Grab a reference to this for post-processing.
     SmallMatrix3 &fp_attau = pd->gptdata[gptdx]->fp_tau;
@@ -642,16 +641,16 @@ void Plasticity::begin_element(const CSubProblem *c,
     pd->gptdata[gptdx]->cauchy *= (1.0/fe_dtmt);
 
     // Cauchy stress is now up to date.
-    std::cerr << "Constitutive output: Cauchy stress: " << std::endl;
-    std::cerr << pd->gptdata[gptdx]->cauchy << std::endl;
+    // std::cerr << "Constitutive output: Cauchy stress: " << std::endl;
+    // std::cerr << pd->gptdata[gptdx]->cauchy << std::endl;
     
     // Construct the increment matrix, f_nc, and it's transpose.
     SmallMatrix3 f_att_i = f_att.invert();
     SmallMatrix3 f_inc(3);   // The increment matrix.
     SmallMatrix3 f_inc_t(3); // Its transpose.
-    std::cerr << "Inputs to f_inc, f_att_i and f_attau." << std::endl;
-    std::cerr << f_att_i << std::endl;
-    std::cerr << f_attau << std::endl;
+    // std::cerr << "Inputs to f_inc, f_att_i and f_attau." << std::endl;
+    // std::cerr << f_att_i << std::endl;
+    // std::cerr << f_attau << std::endl;
     for(int i=0;i<3;++i)
       for(int j=0;j<3;++j) {
 	for(int k=0;k<3;++k) 
@@ -659,9 +658,9 @@ void Plasticity::begin_element(const CSubProblem *c,
 	f_inc_t(j,i) = f_inc(i,j);
       }
 
-    std::cerr << "Increment matrix:" << std::endl;
-    std::cerr << f_inc << std::endl;
-    std::cerr << f_inc_t << std::endl;
+    // std::cerr << "Increment matrix:" << std::endl;
+    // std::cerr << f_inc << std::endl;
+    // std::cerr << f_inc_t << std::endl;
     
     // std::cerr << "About to do polar decomposition." << std::endl;
     // Construct the polar decomposition of f_inc.
@@ -671,24 +670,24 @@ void Plasticity::begin_element(const CSubProblem *c,
     SmallMatrix u = uui.first;
     SmallMatrix r = f_inc * uui.second;  // f-increment * u-inverse
 
-    std::cerr << "Polar decomposition u: " << std::endl;
-    std::cerr << u << std::endl;
+    // std::cerr << "Polar decomposition u: " << std::endl;
+    // std::cerr << u << std::endl;
 
-    std::cerr << "Polar decomposition r: " << std::endl;
-    std::cerr << r << std::endl;
+    // std::cerr << "Polar decomposition r: " << std::endl;
+    // std::cerr << r << std::endl;
     
     // ----------------------------------------------------
     //           Build the Q matrix, bsb_q.
     // ----------------------------------------------------
 
-    std::cerr << "Fe_att:" << std::endl;
-    std::cerr << fe_att << std::endl;
+    // std::cerr << "Fe_att:" << std::endl;
+    // std::cerr << fe_att << std::endl;
     
     // std::cerr << "Building bsb_l." << std::endl;
     // Now we have fe_att_t, fe_att, and u.  Build Balasubramian's L.
     // for(int dbi = 0; dbi<3; ++dbi)
     //   for(int dbj = 0; dbj<3; ++dbj)
-    //	std::cerr << dbi << " , " << dbj << " = " << u(dbi,dbj) << std::endl;
+    // std::cerr << dbi << " , " << dbj << " = " << u(dbi,dbj) << std::endl;
     Rank4_3DTensor bsb_l;
     for(int i=0;i<3;++i)
       for(int j=0;j<3;++j)
@@ -699,8 +698,8 @@ void Plasticity::begin_element(const CSubProblem *c,
 	      bsb_l(i,j,n,o) += fe_att_t(i,idx)*u(idx,n)*fe_att(o,j);
 	    };
 
-    std::cerr << "BSB L" << std::endl;
-    std::cerr << bsb_l  << std::endl;
+    // std::cerr << "BSB L" << std::endl;
+    // std::cerr << bsb_l  << std::endl;
 
     // For debugging, paranoia about Cijkl.
     Rank4_3DTensor check_c;
@@ -908,9 +907,9 @@ void Plasticity::begin_element(const CSubProblem *c,
 
     // Is it sufficiently symmetric for a Cijkl object?  SK says yes.
 
-    std::cerr << "Writing w_mat." << std::endl;
-    std::cerr << w_mat << std::endl;
-    std::cerr << w_mat.as_smallmatrix() << std::endl;
+    // std::cerr << "Writing w_mat." << std::endl;
+    // std::cerr << w_mat << std::endl;
+    // std::cerr << w_mat.as_smallmatrix() << std::endl;
     pd->gptdata[gptdx]->w_mat = w_mat;
     // std::cerr << "Bottom of the gausspoint loop." << std::endl;
   } // End of the gausspoint loop (!).
@@ -1164,15 +1163,15 @@ std::ostream &operator<<(std::ostream &o, const GptPlasticData &gppd) {
 
 
 double PlasticData::set_time(double time) {
-  std::cerr << "PlasticData set_time called with " << time << std::endl;
+  // std::cerr << "PlasticData set_time called with " << time << std::endl;
   if (time!=current_time) {
     dt = time-current_time;
     current_time = time;
-    std::cerr << "PD set_time updating current time, delta is " << dt << std::endl;
+    // std::cerr << "PD set_time updating current time, delta is " << dt << std::endl;
     return dt;
   }
   else {
-    std::cerr << "PD set_time Not updating current time." << std::endl;
+    // std::cerr << "PD set_time Not updating current time." << std::endl;
     return dt;
   }
 }
