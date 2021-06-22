@@ -223,9 +223,11 @@ def _smallmatrix3_instancefn(self):
     return smallmatrix3.SmallMatrix3()
 
 def _smallmatrix3_column_names(self):
-    sf = self.shortrepr()
+    sr = self.shortrepr()
     names = []
     it = self.outputInstance().getIterator()
+    print >> sys.stderr, "OI is ", self.outputInstance()
+    print >> sys.stderr, "IT iterator is", it
     while not it.end():
         names.append("%s[%s]" % (sr, it.shortstring()))
         it.next()

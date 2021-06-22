@@ -181,7 +181,7 @@ public:
   SmallMatrix3 fe_tau;   // Elastic part of F at current time tau.
   SmallMatrix3 cauchy;   // Cauchy stress (time tau?)
   SmallMatrix3 s_star;   // 2nd PK stress at time tau.
-  Rank4_3DTensor w_mat;          // Elastoplastic tangent.
+  Rank4_3DTensor w_mat;          // Elastoplastic tangent, at tau, when done.
 
   friend std::ostream &operator<<(std::ostream&, const GptPlasticData&); 
 };

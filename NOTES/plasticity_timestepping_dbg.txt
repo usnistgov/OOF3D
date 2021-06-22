@@ -171,6 +171,7 @@ with Newton-Raphson nonlinear solver, with filenames:
         - While not finished or commanded to stop:
           - End-time book-keeping.
           - Loop over subproblems:
+               --> Problem call? <--
             - Run make_linear_system on a subproblem.
             - startstep, cacheconstraints.
           - Subproblem consistency loop:

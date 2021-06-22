@@ -332,6 +332,8 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                 print >> sys.stderr, "EPY-ET: Evolve_to at top of loop, calling make_linear_system."
                 print >> sys.stderr, "EPY-ET: Time is ", time
                 print >> sys.stderr, "EPY-ET: Delta is ", delta
+
+                print >> sys.stderr, "EPY-ET: Lsys is ", linsysDict[subprob]
                 # Call the make_linear_system in subproblemcontext.py.
                 # TODO: For quasi-static problems, this is redundant,
                 # but the logic at the start of the call chain means

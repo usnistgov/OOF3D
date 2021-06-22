@@ -19,15 +19,18 @@
 #include "engine/smallmatrix3.h"
 %}
 
-class SmallMatrix3 : public Matrix3 {
+%extern "engine/fieldindex.swg"
+%pragma(python) code="from ooflib.SWIG.engine.fieldindex import IteratorPPtr"
+
+class SmallMatrix3 : public Matrix3, public SmallMatrix {
 public:
   SmallMatrix3();
   ~SmallMatrix3();
+  IteratorP getIterator();
 };
 
 // HERE:
 // Swig additional stuff following the example from SymmMatrix3?
-
 
 %new OutputValue *newSmallMatrix3OutputValue();
 

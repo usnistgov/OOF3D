@@ -53,3 +53,16 @@ attention to whether we are re-evaluating steps or not.
   Step 3: Figure out how to do an integral -- new sampler/domain?
     Reference vs. deformed configuration as the domain?
 
+  ---------
+
+  Convo w/Shahriyar June 17, 2021:
+  - Wants to avoid every-time-step data.
+
+  Near-term objective is to do a stress-strain curve, for which
+we need the Cauchy stress (available in the GptPlasticData object
+at the gausspoints), and the strain, we want FtF-I, as one useful
+output, and also log(FtF), which is log(C), which is also a 
+useful thing.  FtF is called the "(right? left?) Cauchy-Green 
+deformation tensor."  FtF-I doesn't have a name(?), but it's the 
+thing that's conjugate to the 2nd PK stress.
+  
