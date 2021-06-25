@@ -562,8 +562,8 @@ FluxNormal *SymmetricTensorFlux::BCCallback(const Coord &pos,
     releasePyLock(pystate);
     pythonErrorRelay();
   }
-  releasePyLock(pystate);
   Py_XDECREF(result);
+  releasePyLock(pystate);
   return new SymTensorFluxNormal(cres);
 }
 #endif // DIM==3
