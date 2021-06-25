@@ -66,3 +66,18 @@ useful thing.  FtF is called the "(right? left?) Cauchy-Green
 deformation tensor."  FtF-I doesn't have a name(?), but it's the 
 thing that's conjugate to the 2nd PK stress.
   
+  Output call chain:  
+
+  For PropertyOutputs, it goes through the PropertyOutputRegistration's
+"opfunc", which is a base PropertyOutputRegistration object,
+which calls begin_all_subproblems for each element, which 
+calls begin_element, which might be bad, we do a lot of 
+work in begin_element, but if the time-stamp hasn't changed,
+then maybe it's OK.
+
+  The femesh.spy's "begin_all_elements" function is apparently
+called as part of the propertyoutput call sequence, but not as 
+part of the solver process?  And it's broken because of changes
+we made to begin_element?
+
+

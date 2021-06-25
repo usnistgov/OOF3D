@@ -28,6 +28,7 @@ import string
 import struct
 import types
 
+import sys
 structIntFmt = '>i'
 structIntSize = struct.calcsize(structIntFmt)
 
@@ -606,10 +607,14 @@ class Output(object):
                 argdict[paramname] = param.value
 
         if self.bulk_only:
+            print >> sys.stderr, "Output callback, bulk case."
             result = self.callback(mesh, bulk_elements, bulk_coords, **argdict)
         elif self.surface_only:
+            print >> sys.stderr, "Output callback, surface case."
             result = self.callback(mesh, surf_elements, surf_coords, **argdict)
         else:
+            print >> sys.stderr, "Output callback, general case."
+            print >> sys.stderr, "Callback: ", self.callback
             result = self.callback(mesh, elements, coords, **argdict)
         return result
 
