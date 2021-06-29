@@ -20,9 +20,9 @@
 // things by hand.
 
 // (1) Use FindNeededModules.py (in Utilities/Maintenance in the VTK
-// source) to find which VTK modules need to be included.  % python
+// source) to find which VTK modules need to be included.
 
-// FindNeededModules.py -j path/to/modules.json -s path/to/OOF3D
+// % python FindNeededModules.py -j path/to/modules.json -s path/to/OOF3D
 
 // path/to/modules.json is in the VTK9 *build* directory.
 // path/to/OOF3D is a directory containing OOF3D source.  VTK expects
@@ -30,7 +30,7 @@
 // FLAT, appended .cxx to the .C file names, and ran FindNeededModules
 // on FLAT.
 
-// Grepping for all of the VTK include statements, putting htem in a
+// Grepping for all of the VTK include statements, putting them in a
 // file, and running FindNeededModules on *that* gave a different
 // result.
 
@@ -46,7 +46,7 @@
 //   [ The find_package lines ]
 //   add_library(foo dummy.cxx)
 //   # I don't know if this is needed or how to find which libraries to include
-//   target_link_libraries(foo vtkCommonCore-9.0 [others libraries])
+//   target_link_libraries(foo vtkCommonCore-9.0 [other libraries])
 //   vtk_module_autoinit(TARGETS foo
 //     MODULES
 //       VTK::CommonCore
@@ -69,14 +69,15 @@
 
 // (6) For each of the #defines from FindNeededModules, add the
 // corresponding library to the list in set_clib_flags in
-// SRC/common/DIR.py.  Some of the #define don't have a corresponding
+// SRC/common/DIR.py.  Some of the #defines don't have a corresponding
 // library.
 
 // (7) Run the program. If there are "undefined symbol" messages, use
 // nm to find the symbols in the vtk libraries and add the libraries
 // to the list in DIR.py.
 
-// (8) Hope that that all worked.
+// (8) Hope that all of that worked. (You should probably have done
+// this step first.)
 
 
 // #defines found by grepping all "#include <vtk*>" lines from all

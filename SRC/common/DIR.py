@@ -82,7 +82,7 @@ def set_clib_flags(clib):
     if VTK_MAJOR >= 9:
         addVTKlibs(clib, [
             ## libs from the #defines created by FindNeededModules
-            ## See comments in SRC/common/IO/vtkutils.h
+            ## See comments in SRC/common/IO/vtkutils.C
             'vtkIOExportPDF',
             'vtkIOExportGL2PS',
             'vtkInteractionStyle',
@@ -93,7 +93,8 @@ def set_clib_flags(clib):
             'vtkRenderingVolumeOpenGL2',
             ## Added due to 'undefined symbol' messages at run time
             'vtkFiltersExtraction',
-            'vtkRenderingAnnotation'])
+            'vtkRenderingAnnotation',
+            'vtkImagingMath'])
     else:
         # VTK_MAJOR <= 8
         addVTKlibs(clib, [

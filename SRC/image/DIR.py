@@ -32,7 +32,8 @@ pyfiles = ['initialize.py', 'pixelselectionmethod.py',
 
 
 def set_clib_flags(c_lib):
-    addVTKlibs(c_lib, ['vtkImagingColor', 'vtkImagingGeneral'])
+    addVTKlibs(c_lib, ['vtkImagingColor', 'vtkImagingGeneral',
+                       'vtkImagingMath'])
         
 
 
