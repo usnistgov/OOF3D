@@ -166,7 +166,7 @@ public:
   void cprecompute(CSubProblem*); // only precomputes computable properties
   void begin_element(const CSubProblem*, double time, const Element*)
     const;
-  void end_element(const CSubProblem*, const Element*) const;
+  void end_element(const CSubProblem*, double time, const Element*) const;
 
   // PropertyOutputs
   void registerOutput(Property*, const std::string&);

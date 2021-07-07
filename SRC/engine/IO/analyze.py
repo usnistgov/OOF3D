@@ -439,7 +439,7 @@ class DirectOutput(DataOperation):
 
         # "olist" is a list or iterable of tuples of the form (sample,
         # value).
-        olist = sampling.evaluate(domain, output)
+        olist = sampling.evaluate(time, domain, output)
         header = sampling.get_col_names()
 
         if showTime():
@@ -486,7 +486,7 @@ directOutput = registeredclass.Registration(
 
 class RangeOutput(OneLineDataOperation):
     def __call__(self, time, output, domain, sampling, destination):
-        olist = sampling.evaluate(domain, output)
+        olist = sampling.evaluate(time, domain, output)
         vmin = None
         vmax = None
         for sample, value in olist:

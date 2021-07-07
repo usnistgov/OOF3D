@@ -48,7 +48,8 @@ public:
   virtual void py_begin_element(PyObject*, Property*, const CSubProblem*,
 				const double, const Element*);
   virtual void py_end_element(PyObject*, Property*,
-			      const CSubProblem*, const Element*);
+			      const CSubProblem*, const double,
+			      const Element*);
   virtual void py_post_process(PyObject*, const Property*, 
 			       CSubProblem *, const Element*) const;
   virtual bool py_constant_in_space(PyObject*, const Property*) const;
@@ -104,8 +105,9 @@ public:
 			     const Element *e) {
     PyPropertyMethods::py_begin_element(referent_, this, sb, time, e);
   }
-  virtual void end_element(const CSubProblem *sb, const Element *e) {
-    PyPropertyMethods::py_end_element(referent_, this, sb, e);
+  virtual void end_element(const CSubProblem *sb, double time,
+			   const Element *e) {
+    PyPropertyMethods::py_end_element(referent_, this, sb, time, e);
   }
   virtual void begin_point(const FEMesh *m, const Element *e,
 			   const Flux *f, const MasterPosition &p);
@@ -176,8 +178,9 @@ public:
 			     const Element *e) {
     PyPropertyMethods::py_begin_element(referent_, this, sb, time, e);
   }
-  virtual void end_element(const CSubProblem *sb, const Element *e) {
-    PyPropertyMethods::py_end_element(referent_, this, sb, e);
+  virtual void end_element(const CSubProblem *sb, double time,
+			   const Element *e) {
+    PyPropertyMethods::py_end_element(referent_, this, sb, time, e);
   }
   virtual void post_process(CSubProblem *sb, const Element *e) const {
     PyPropertyMethods::py_post_process(referent_, this, sb, e);

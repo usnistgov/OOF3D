@@ -522,7 +522,7 @@ class Output(object):
                 return True
         return False
 
-    def evaluate(self, mesh, domain, elements, coords):
+    def evaluate(self, mesh, time, domain, elements, coords):
         # elements is a list (or other iterable container) of Elements
         # on which to evaluate the output.  coords is a list of lists
         # of MasterCoords, one list per each Element, at which to
@@ -582,13 +582,13 @@ class Output(object):
         argdict = {}
         for inputname, inpt in self.inputs.items():
             if inpt.bulk_only:
-                argdict[inputname] = inpt.evaluate(mesh, domain,
+                argdict[inputname] = inpt.evaluate(mesh, time, domain,
                                                    bulk_elements, bulk_coords)
             elif inpt.surface_only:
-                argdict[inputname] = inpt.evaluate(mesh, domain,
+                argdict[inputname] = inpt.evaluate(mesh, time, domain,
                                                    surf_elements, surf_coords)
             else:
-                argdict[inputname] = inpt.evaluate(mesh, domain,
+                argdict[inputname] = inpt.evaluate(mesh, time, domain,
                                                    elements, coords)
         for paramname, param in self.params.items():
             # Some parameters are OutputParameters, which need to be
@@ -596,26 +596,29 @@ class Output(object):
             if isinstance(param, OutputParameter):
                 if param.value.bulk_only:
                     argdict[paramname] = param.value.evaluate(
-                        mesh, domain, bulk_elements, bulk_coords)
+                        mesh, time, domain, bulk_elements, bulk_coords)
                 elif param.value.surface_only:
                     argdict[paramname] = param.value.evaluate(
-                        mesh, domain, surf_elements, surf_coords)
+                        mesh, time, domain, surf_elements, surf_coords)
                 else:
                     argdict[paramname] = param.value.evaluate(
-                        mesh, domain, elements, coords)
+                        mesh, time, domain, elements, coords)
             else:   # just a regular Parameter, not an OutputParameter
                 argdict[paramname] = param.value
 
         if self.bulk_only:
             print >> sys.stderr, "Output callback, bulk case."
-            result = self.callback(mesh, bulk_elements, bulk_coords, **argdict)
+            result = self.callback(time, mesh,
+                                   bulk_elements, bulk_coords, **argdict)
         elif self.surface_only:
             print >> sys.stderr, "Output callback, surface case."
-            result = self.callback(mesh, surf_elements, surf_coords, **argdict)
+            result = self.callback(time, mesh,
+                                   surf_elements, surf_coords, **argdict)
         else:
             print >> sys.stderr, "Output callback, general case."
             print >> sys.stderr, "Callback: ", self.callback
-            result = self.callback(mesh, elements, coords, **argdict)
+            result = self.callback(time, mesh,
+                                   elements, coords, **argdict)
         return result
 
     def __eq__(self, other):

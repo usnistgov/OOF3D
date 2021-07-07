@@ -291,12 +291,13 @@ void Material::begin_element(const CSubProblem *subproblem,
   }
 }
 
-void Material::end_element(const CSubProblem *subproblem, const Element *el)
+void Material::end_element(const CSubProblem *subproblem,
+			   double time, const Element *el)
   const
 {
   for(std::vector<Property*>::size_type i=0;i<property.size();i++) {
     if(subproblem->currently_active_prop(property[i])) {
-      property[i]->end_element(subproblem, el);
+      property[i]->end_element(subproblem, time, el);
     }
   }
 }

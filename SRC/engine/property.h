@@ -166,7 +166,7 @@ public:
   // computations on an Element, allowing Element-dependent
   // precomputation and caching
   virtual void begin_element(const CSubProblem*, double time, const Element*) {}
-  virtual void end_element(const CSubProblem*, const Element*) {}
+  virtual void end_element(const CSubProblem*, double time, const Element*) {}
 
   // This function is called after equilibration, to allow the
   // computation of auxiliary fields which may depend on equilibrium

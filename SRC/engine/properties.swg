@@ -51,7 +51,7 @@ public:
   %name(c_is_symmetric_M) bool is_symmetric_M(const CSubProblem*);
   %name(c_constant_in_space) bool constant_in_space();
   %name(c_begin_element) void begin_element(CSubProblem*, double, Element*);
-  %name(c_end_element) void end_element(CSubProblem*, Element*);
+  %name(c_end_element) void end_element(CSubProblem*, double, Element*);
   %name(c_post_process) void post_process(CSubProblem*, Element*);
   %name(c_output) void output(const FEMesh*, Element*, PropertyOutput*,
 			      MasterPosition&, OutputVal*);

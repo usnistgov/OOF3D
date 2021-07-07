@@ -29,16 +29,17 @@ class PORegBase(PropertyOutputRegistration):
     ## Callback for all PropertyOutputs.  Outputs that need to return
     ## something other than a list of OutputVal instances should
     ## override the convert method.
-    def opfunc(self, mesh, elements, coords, **params):
+    def opfunc(self, time, mesh, elements, coords, **params):
         po = self.instantiate(params)
         mesh.precompute_all_subproblems()
         initializer = self.initializer()
         results = []
         for element, ecoords, in zip(elements, coords):
             mat = element.material()
-            mesh.begin_all_subproblems(element)
-            results.extend(po.evaluate(mesh, element, initializer, ecoords))
-            mesh.end_all_subproblems(element)
+            mesh.begin_all_subproblems(time, element)
+            results.extend(po.evaluate(time, mesh,
+                                       element, initializer, ecoords))
+            mesh.end_all_subproblems(time, element)
         return self.convert(results)
     def convert(self, results):
         return results

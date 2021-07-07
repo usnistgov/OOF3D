@@ -137,11 +137,11 @@ class DiscreteSampleSet(SampleSet):
         datalist = sample.outputData()
         return [[datalist[self.columnNames.index(x)] for x in header]]
 
-    def evaluate(self, domain, output):
-        results = self.evaluateWithExponents(domain, output, (1,))
+    def evaluate(self, time, domain, output):
+        results = self.evaluateWithExponents(time, domain, output, (1,))
         return results[1]
 
-    def evaluateWithExponents(self, domain, output, exponents):
+    def evaluateWithExponents(self, time, domain, output, exponents):
         # Return a dictionary keyed by the exponents.  Each entry is a
         # list of output values for each point in the domain,
         # appropriately exponentiated.
@@ -182,7 +182,8 @@ class DiscreteSampleSet(SampleSet):
             for sample in self.sample_list:
                 element = femesh.enclosingElement(skeleton, sample.point)
                 mcoord = element.to_master(sample.point)
-                val = output.evaluate(femesh, domain, [element], [[mcoord]])[0]
+                val = output.evaluate(femesh, time,
+                                      domain, [element], [[mcoord]])[0]
                 for power in remainingexponents:
                     results.setdefault(power, []).append((sample, val**power))
         return results

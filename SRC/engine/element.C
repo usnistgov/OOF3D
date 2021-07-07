@@ -495,7 +495,7 @@ void Element::make_linear_system(const CSubProblem *const subproblem,
 			       nlsolver, system );
       // std::cerr << "Back from Material make_linear_system." << std::endl;
     }    
-    mat->end_element(subproblem, this);
+    mat->end_element(subproblem, time, this);
   }
 }
 

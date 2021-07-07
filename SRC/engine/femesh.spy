@@ -130,20 +130,20 @@ FEMeshPtr.precompute_all_subproblems = _FEMeshPtr_precompute_all_subproblems
 # TODO: This is called as part of the output chain for
 # property outputs, but not as part of the matrix construction
 # or solution process? 
-def _FEMeshPtr_begin_all_subproblems(self, element):
+def _FEMeshPtr_begin_all_subproblems(self, time, element):
     print >> sys.stderr, "FEMesh beginning all subproblems."
     mat = element.material()
     if mat:
         for subproblem in self.parent_mesh.subproblems():
-            mat.begin_element(subproblem.getObject(), element)
+            mat.begin_element(subproblem.getObject(), time, element)
 
 FEMeshPtr.begin_all_subproblems = _FEMeshPtr_begin_all_subproblems
 
-def _FEMeshPtr_end_all_subproblems(self, element):
+def _FEMeshPtr_end_all_subproblems(self, time, element):
     mat = element.material()
     if mat:
         for subproblem in self.parent_mesh.subproblems():
-            mat.end_element(subproblem.getObject(), element)
+            mat.end_element(subproblem.getObject(), time, element)
 FEMeshPtr.end_all_subproblems = _FEMeshPtr_end_all_subproblems
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#

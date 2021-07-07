@@ -91,7 +91,7 @@ public:
   void set_consistency(bool);
   void cprecompute(CSubProblem*);
   void begin_element(CSubProblem*, double, Element*);
-  void end_element(CSubProblem*, Element*);
+  void end_element(CSubProblem*, double, Element*);
   bool contributes_to_flux(Flux*);
 
   bool cleanAttributes(CMicrostructure*);
