@@ -92,7 +92,7 @@ elif config.dimension() == 3:
 # the user shouldn't be evaluating it everywhere, but that's his or
 # her decision.
 
-def _field(mesh, elements, coords, field):
+def _field(time, mesh, elements, coords, field):
     return utils.flatten1([elem.outputFields(mesh, field, ecoords)
            for elem, ecoords in itertools.izip(elements, coords)])
 
@@ -139,7 +139,7 @@ FieldOutput = output.Output(
 
 ############
 
-def _fieldderiv(mesh, elements, coords, field, derivative):
+def _fieldderiv(time, mesh, elements, coords, field, derivative):
     return utils.flatten1(
         [elem.outputFieldDerivs(mesh, field, derivative, ecoords)
          for elem, ecoords in itertools.izip(elements, coords)])
@@ -179,7 +179,7 @@ FieldDerivOutput = output.Output(
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-def _flux(mesh, elements, coords, flux):
+def _flux(time, mesh, elements, coords, flux):
     ans = []
     prog = progress.getProgress("Evaluating flux", progress.DEFINITE)
     ## TODO OPT: elements may be a generator, and converting it to a list
@@ -194,10 +194,10 @@ def _flux(mesh, elements, coords, flux):
     try:
         ecount = 0
         for elem, ecoords in itertools.izip(elist, coords):
-            mesh.begin_all_subproblems(elem)
+            mesh.begin_all_subproblems(time,elem)
             fluxes = elem.outputFluxes(mesh, flux, ecoords)
             ans.append(fluxes)
-            mesh.end_all_subproblems(elem)
+            mesh.end_all_subproblems(time,elem)
             ecount += 1
             prog.setFraction((1.*ecount)/nel)
             prog.setMessage("%d/%d elements" % (ecount, nel))
@@ -244,7 +244,7 @@ FluxOutput = output.Output(
 # Extract a component of something indexable with an IndexP object
 # (eg, Fields and Fluxes).
 
-def _component(mesh, elements, coords, field, component):
+def _component(time, mesh, elements, coords, field, component):
     if field:
         # 'component' is a string, "x" or "xy" or the like
         firstfield = next(iter(field))

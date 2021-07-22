@@ -96,7 +96,7 @@ PropertyOutput::~PropertyOutput() {
 }
 
 std::vector<OutputValue> *
-PropertyOutput::evaluate(FEMesh *mesh, Element *element,
+PropertyOutput::evaluate(double time, FEMesh *mesh, Element *element,
 			 const PropertyOutputInit *init, 
 			 const std::vector<MasterCoord*> *mc)
 {

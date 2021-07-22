@@ -14,15 +14,15 @@
 
 %module symmmatrix
 %include "engine/typemaps.swg"
+%include "engine/matrix3.swg"
 
 %{
 #include "engine/symmmatrix3.h"
 %}
 
 %pragma(python) include="engine/symmmatrix3.spy"
-%extern "engine/outputval.swg"
-%pragma(python) code="from ooflib.SWIG.engine.outputval import OutputValPtr"
-%pragma(python) code="from ooflib.SWIG.engine.outputval import OutputValuePtr"
+%extern "engine/matrix3.swg"
+%pragma(python) code="from ooflib.SWIG.engine.matrix3 import Matrix3Ptr"
 %extern "engine/fieldindex.swg"
 %pragma(python) code="from ooflib.SWIG.engine.fieldindex import IteratorPPtr"
 

@@ -608,6 +608,7 @@ class Output(object):
 
         if self.bulk_only:
             print >> sys.stderr, "Output callback, bulk case."
+            print >> sys.stderr, "Output, calling ", self.callback
             result = self.callback(time, mesh,
                                    bulk_elements, bulk_coords, **argdict)
         elif self.surface_only:

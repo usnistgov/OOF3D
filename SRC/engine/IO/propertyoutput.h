@@ -84,7 +84,7 @@ public:
   virtual ~PropertyOutput();
   const std::string &name() const { return name_; }
   int index() const { return index_; }
-  std::vector<OutputValue> *evaluate(FEMesh*, Element*,
+  std::vector<OutputValue> *evaluate(double, FEMesh*, Element*,
 				     const PropertyOutputInit*,
 				     const std::vector<MasterCoord*>*);
 

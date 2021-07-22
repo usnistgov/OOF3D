@@ -51,6 +51,8 @@ import math
 import string
 import types
 
+import sys
+
 # Sample objects should have a "columnNames" attribute, which is a
 # list of strings which identify the columns of data which are
 # provided, and a "columnData" routine, which provides a list of
@@ -184,6 +186,8 @@ class DiscreteSampleSet(SampleSet):
                 mcoord = element.to_master(sample.point)
                 val = output.evaluate(femesh, time,
                                       domain, [element], [[mcoord]])[0]
+                print >> sys.stderr, "Got val:", val
+                print >> sys.stderr, "Type is: ", val.__class__
                 for power in remainingexponents:
                     results.setdefault(power, []).append((sample, val**power))
         return results

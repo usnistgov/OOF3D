@@ -61,7 +61,8 @@ class PropertyOutput {
 public:
   ~PropertyOutput();
   const string &name();
-  %new OutputValueVec *evaluate(FEMesh*, Element*, PropertyOutputInit*,
+  %new OutputValueVec *evaluate(double, FEMesh*, Element*,
+				PropertyOutputInit*,
 				MasterCoordVec*);
   double getFloatParam(char*);
   int getIntParam(char*);

@@ -22,6 +22,9 @@
 %extern "engine/fieldindex.swg"
 %pragma(python) code="from ooflib.SWIG.engine.fieldindex import IteratorPPtr"
 
+%extern "engine/matrix3.swg"
+%pragma(python) code="from ooflib.SWIG.engine.matrix3 import Matrix3Ptr"
+  
 class SmallMatrix3 : public Matrix3, public SmallMatrix {
 public:
   SmallMatrix3();

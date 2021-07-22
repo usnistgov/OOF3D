@@ -10,21 +10,24 @@
  */
 
 
-// This can be super-basic, it justneeds to exist so that
+// This can be super-basic, it just needs to exist so that
 // Python instances of the base classes have the right
 // class structure.   This might change if we decide we
 // need to call invariant methods from Python.
 
 #ifndef MATRIX3_SWG
-#define MATRIX3_SWG
 
 %module matrix3
+
 %include "engine/typemaps.swg"
 
 %{
 #include "engine/matrix3.h"
 %}
 
+%pragma(python) code="from ooflib.SWIG.engine.outputval import OutputValPtr"
+%extern "engine/outputval.swg"
+  
 class Matrix3 : public OutputVal {
 }
 
