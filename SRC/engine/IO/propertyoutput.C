@@ -105,7 +105,12 @@ PropertyOutput::evaluate(double time, FEMesh *mesh, Element *element,
   const Material *material = element->material();
   if(material) {
     const std::vector<Property*> &props = material->outputProperties(this);
-//     material->begin_element(mesh, element);
+
+// TODO: Hack this up so it doesn't do anything stupid, like pass
+    // a flag to no-op it, or call a wrapper, or something.
+
+// 
+//     material->begin_element(mesh, time, element);
     // Loop over points within the element.
     for(std::vector<MasterCoord*>::const_iterator i=mc->begin(); i!=mc->end();
 	++i)

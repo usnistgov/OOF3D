@@ -80,4 +80,44 @@ called as part of the propertyoutput call sequence, but not as
 part of the solver process?  And it's broken because of changes
 we made to begin_element?
 
+ --------------------
+
+  July 2021: Got the Smallmatrix3 and Symmmatrix3 output types
+working without crashing.
+
+  Next up:
+  - Hack in something to make the begin_element call a no-op for
+property outputs for properties we care about.
+  - Figure out how to register a property output that will 
+get stuff out of the Gausspoints.  In principle, this thing can
+figure out how to evaluate at arbitrary points in space,
+or maybe the callback does that?
+
+  Q1: Where is it called from? 
+    Line 110 of engine/IO/propertyoutput.C is the important one,
+      inside PropertyOutput::evaluate.  There is already an 
+      implciit element.
+    This call is currently commented out.  NB this 
+      calls *material* begin_element,
+      not the elemental one.
+    
+  Material::begin_element (line 271, engine/material.C) calls 
+    property->begin_element on all the props in the material.
+ 
+  In the solver sequence, this is called from 
+Element::make_linear_system, so this is the place to pass through
+a "no, really, do the work" flag, if necessary.
+
+  Thoughts about the architecture:
+
+  The OO way would be to have a different function for each
+of these call chains.  How to express the difference?
+
+  - begin_element_matrix
+  - begin_element_output
+
+  -> Corresponding end_element?
+  -> Do properties need this also?
+  -> Any nontrivial examples?
+  
 
