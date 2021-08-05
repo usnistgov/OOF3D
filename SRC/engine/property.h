@@ -164,10 +164,20 @@ public:
 
   // these functions are called when beginning and ending the
   // computations on an Element, allowing Element-dependent
-  // precomputation and caching
-  virtual void begin_element(const CSubProblem*, double time, const Element*) {}
-  virtual void end_element(const CSubProblem*, double time, const Element*) {}
+  // precomputation and caching.  Separate versions exist
+  // for matrix-construction vs. output.  Properties may elect
+  // to do the same stuff for both, or not, depending on their
+  // statefulness.
+  virtual void begin_element_matrix(const CSubProblem*,
+				    double time, const Element*) {}
+  virtual void end_element_matrix(const CSubProblem*,
+				  double time, const Element*) {}
+  virtual void begin_element_output(const CSubProblem*,
+				    double time, const Element*) {}
+  virtual void end_element_output(const CSubProblem*,
+				  double time, const Element*) {}
 
+  
   // This function is called after equilibration, to allow the
   // computation of auxiliary fields which may depend on equilibrium
   // fluxes -- the canoncal example is plasticity, where the

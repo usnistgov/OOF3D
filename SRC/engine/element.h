@@ -356,6 +356,9 @@ public:
 //   // Wrappers for Material::begin_element and Material::end_element,
 //   // to be called when doing material dependent computations outside
 //   // of the make_stiffness machinery.
+//   // OBSOLETE: Replaced by begin_element_matrix
+//   // (for make_stiffness stuff) and begin_element_output
+//   // (for output stuff), which are the two cases.
 //   void begin_material_computation(FEMesh*) const;
 //   void end_material_computation(FEMesh*) const;
 

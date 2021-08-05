@@ -44,9 +44,9 @@ int SimpleTension::integration_order(const CSubProblem*,
 // iterators, almost certainly.
 
 
-void SimpleTension::begin_element(const CSubProblem *pSubp,
-				  double time, 
-				  const Element *pElem) {
+void SimpleTension::begin_element_matrix(const CSubProblem *pSubp,
+					 double time, 
+					 const Element *pElem) {
   
   FuncNode *n0,*nn;
   int nnodes = pElem->nnodes();
@@ -63,7 +63,8 @@ void SimpleTension::begin_element(const CSubProblem *pSubp,
   delta_r = nn->position()-n0->position();
 }
 
-void SimpleTension::end_element(const CSubProblem* pSubp, const Element* pElem)
+void SimpleTension::end_element_matrix(const CSubProblem* pSubp,
+				       const Element* pElem)
 {}
 
 void SimpleTension::cross_reference(Material* pMat)

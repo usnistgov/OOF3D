@@ -268,8 +268,8 @@ Material::outputProperties(const PropertyOutput *pout) const {
 // these can only be called once per element.  The reason they're
 // here is because the Material is the one with the handy-dandy
 // list of properties.
-void Material::begin_element(const CSubProblem *subproblem,
-			     double time, const Element *el)
+void Material::begin_element_matrix(const CSubProblem *subproblem,
+				    double time, const Element *el)
   const
 {
   // std::cerr << "Material::begin_element starting." << std::endl;
@@ -281,23 +281,57 @@ void Material::begin_element(const CSubProblem *subproblem,
   // base class, not every property has one.  Plasticity has a very
   // elaborate one.
 
-  // std::cerr << "Inside Material::begin_element." << std::endl;
+  // std::cerr << "Inside Material::begin_element_matrix." << std::endl;
   for(std::vector<Property*>::size_type i=0;i<property.size();i++) {
     if(subproblem->currently_active_prop(property[i])) {
-      // std::cerr << "Calling begin_element on a property." << std::endl;
-      property[i]->begin_element(subproblem, time, el);
-      // std::cerr << "Back from property begin_element." << std::endl;
+      // std::cerr << "Calling begin_element_matrix on a property." << std::endl;
+      property[i]->begin_element_matrix(subproblem, time, el);
+      // std::cerr << "Back from property begin_element_matrix." << std::endl;
     }
   }
 }
 
-void Material::end_element(const CSubProblem *subproblem,
-			   double time, const Element *el)
+void Material::begin_element_output(const CSubProblem *subproblem,
+				    double time, const Element *el)
+  const
+{
+  // std::cerr << "Material::begin_element starting." << std::endl;
+  // LINSYS STEP 3
+
+  // Called from Element::make_linear_system.  Iterates over this
+  // material's properties and calls their begin_element routines.
+  // This is a hook, it's a trivial virtual function in the property
+  // base class, not every property has one.  Plasticity has a very
+  // elaborate one.
+
+  // std::cerr << "Inside Material::begin_element_output." << std::endl;
+  for(std::vector<Property*>::size_type i=0;i<property.size();i++) {
+    if(subproblem->currently_active_prop(property[i])) {
+      // std::cerr << "Calling begin_element_output on a property." << std::endl;
+      property[i]->begin_element_matrix(subproblem, time, el);
+      // std::cerr << "Back from property begin_element_output." << std::endl;
+    }
+  }
+}
+
+void Material::end_element_matrix(const CSubProblem *subproblem,
+				  double time, const Element *el)
   const
 {
   for(std::vector<Property*>::size_type i=0;i<property.size();i++) {
     if(subproblem->currently_active_prop(property[i])) {
-      property[i]->end_element(subproblem, time, el);
+      property[i]->end_element_matrix(subproblem, time, el);
+    }
+  }
+}
+
+void Material::end_element_output(const CSubProblem *subproblem,
+				  double time, const Element *el)
+  const
+{
+  for(std::vector<Property*>::size_type i=0;i<property.size();i++) {
+    if(subproblem->currently_active_prop(property[i])) {
+      property[i]->end_element_output(subproblem, time, el);
     }
   }
 }

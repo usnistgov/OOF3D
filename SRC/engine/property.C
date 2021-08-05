@@ -209,7 +209,7 @@ void FluxProperty::make_flux_contributions(const FEMesh *mesh,
 // flux_matrix and won't do the numerical differentiation done here.
 
 // TODO MER: Encapsulate 'recurse' and other Property data (everything
-// computed by begin_element or begin_point, for example) in some
+// computed by begin_element_matrix or begin_point, for example) in some
 // other class when matrix construction is parallelized. 
 
 void FluxProperty::flux_matrix(const FEMesh *mesh, const Element *element,

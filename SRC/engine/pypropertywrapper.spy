@@ -1,4 +1,4 @@
-# -*- python -*-
+]# -*- python -*-
 # $RCSfile: pypropertywrapper.spy,v $
 # $Revision: 1.18.4.1 $
 # $Author: langer $
@@ -89,19 +89,34 @@ properties.PropertyPtr.cross_reference_wrap = _cross_reference_wrap
 
 #=--=##=--=#
 
-def _begin_element_wrap(self, subp_p, element_p):
+def _begin_element_matrix_wrap(self, subp_p, element_p):
     subp = csubproblem.CSubProblemPtr(subp_p)
     elmnt = element.ElementPtr(element_p)
-    self.begin_element(subp, elmnt)
+    self.begin_element_matrix(subp, elmnt)
 
-properties.PropertyPtr.begin_element_wrap = _begin_element_wrap
+properties.PropertyPtr.begin_element_matrix_wrap = _begin_element_matrix_wrap
 
-def _end_element_wrap(self, subp_p, element_p):
+def _end_element_matrix_wrap(self, subp_p, element_p):
     subp = csubproblem.CSubProblemPtr(subp_p)
     elmnt = element.ElementPtr(element_p)
-    self.end_element(subp, elmnt)
+    self.end_element_matrix(subp, elmnt)
 
-properties.PropertyPtr.end_element_wrap = _end_element_wrap
+properties.PropertyPtr.end_element_matrix_wrap = _end_element_matrix_wrap
+
+def _begin_element_output_wrap(self, subp_p, element_p):
+    subp = csubproblem.CSubProblemPtr(subp_p)
+    elmnt = element.ElementPtr(element_p)
+    self.begin_element_output(subp, elmnt)
+
+properties.PropertyPtr.begin_element_output_wrap = _begin_element_output_wrap
+
+def _end_element_output_wrap(self, subp_p, element_p):
+    subp = csubproblem.CSubProblemPtr(subp_p)
+    elmnt = element.ElementPtr(element_p)
+    self.end_element_output(subp, elmnt)
+
+properties.PropertyPtr.end_element_output_wrap = _end_element_output_wrap
+
 
 #=--=##=--=#
 

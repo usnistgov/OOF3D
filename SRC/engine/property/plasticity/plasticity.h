@@ -110,8 +110,8 @@ public:
   Plasticity(PyObject *rg, const std::string &nm,
 	     const Cijkl &c, PlasticConstitutiveRule *r, const int slips);
   virtual ~Plasticity() {}
-  virtual void begin_element(const CSubProblem*, double time,
-			     const Element*); 
+  virtual void begin_element_matrix(const CSubProblem*, double time,
+				    const Element*); 
   virtual void flux_matrix(const FEMesh *mesh,
 			   const Element *element,
 			   const ElementFuncNodeIterator &nu,
@@ -137,7 +137,7 @@ public:
 		      const MasterPosition&, OutputVal*) const;
   
 protected:
-  FEMesh *mesh; // Set in precompute, used in begin_element.
+  FEMesh *mesh; // Set in precompute, used in begin_element_matrix.
   const int nslips;
   // TODO: 2D version?
   ThreeVectorField *displacement;

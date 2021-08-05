@@ -164,10 +164,16 @@ public:
   void remove1Property(Property*);
   void clear_xref();
   void cprecompute(CSubProblem*); // only precomputes computable properties
-  void begin_element(const CSubProblem*, double time, const Element*)
+  // There are two kinds of begin_element, one for solving and
+  // one for output.  Properties implement these, and get to decide
+  // if they're the same or not.
+  void begin_element_matrix(const CSubProblem*, double time, const Element*)
     const;
-  void end_element(const CSubProblem*, double time, const Element*) const;
-
+  void end_element_matrix(const CSubProblem*, double time, const Element*) const;
+  void begin_element_output(const CSubProblem*, double time, const Element*)
+    const;
+  void end_element_output(const CSubProblem*, double time, const Element*) const;
+  
   // PropertyOutputs
   void registerOutput(Property*, const std::string&);
   const std::vector<Property*> &outputProperties(const PropertyOutput*) const;

@@ -108,22 +108,23 @@ void PyPropertyMethods::py_cross_reference(PyObject *referent, Property *prop,
 
 //=\\=//=\\=//
 
-void PyPropertyMethods::py_begin_element(PyObject *referent, Property *prop,
-					 const CSubProblem *m,
-					 const double time,
-					 const Element *el)
+void PyPropertyMethods::py_begin_element_matrix(PyObject *referent,
+						Property *prop,
+						const CSubProblem *m,
+						const double time,
+						const Element *el)
 {
   char _element_temp[128];
   char _mesh_temp[128];
   PyGILState_STATE pystate = acquirePyLock();
   try {
-    if(!PyObject_HasAttrString(referent, (char*) "begin_element")) {
-      prop->Property::begin_element(m, time, el);
+    if(!PyObject_HasAttrString(referent, (char*) "begin_element_matrix")) {
+      prop->Property::begin_element_matrix(m, time, el);
     }
     else {
       // TODO: Build time argument here?
       PyObject *func = PyObject_GetAttrString(referent,
-					      (char*)"begin_element_wrap");
+					      (char*)"begin_element_matrix_wrap");
       SWIG_MakePtr(_mesh_temp, (char *)m, (char*)"_CSubProblem_p");
       SWIG_MakePtr(_element_temp, (char *)el, (char*)"_Element_p");
       PyObject *args = Py_BuildValue((char*) "(ss)", _mesh_temp, _element_temp);
@@ -143,21 +144,22 @@ void PyPropertyMethods::py_begin_element(PyObject *referent, Property *prop,
   releasePyLock(pystate);
 }
 
-void PyPropertyMethods::py_end_element(PyObject *referent, Property *prop,
-				       const CSubProblem *m,
-				       double time, const Element *el)
+void PyPropertyMethods::py_end_element_matrix(PyObject *referent,
+					      Property *prop,
+					      const CSubProblem *m,
+					      double time, const Element *el)
 {
   char _element_temp[128];
   char _mesh_temp[128];
   PyGILState_STATE pystate = acquirePyLock();
   try {
-    if(!PyObject_HasAttrString(referent, "end_element")) {
-      prop->Property::end_element(m, time, el);
+    if(!PyObject_HasAttrString(referent, "end_element_matrix")) {
+      prop->Property::end_element_matrix(m, time, el);
     }
     else {
       // TODO: Build time argument here?
       PyObject *func = PyObject_GetAttrString(referent,
-					      (char*) "end_element_wrap");
+					      (char*) "end_element_matrix_wrap");
       SWIG_MakePtr(_mesh_temp, (char *)m, (char*)"_CSubProblem_p");
       
       SWIG_MakePtr(_element_temp, (char *)el, (char*)"_Element_p");
@@ -177,6 +179,81 @@ void PyPropertyMethods::py_end_element(PyObject *referent, Property *prop,
   }
   releasePyLock(pystate);
 }
+
+
+void PyPropertyMethods::py_begin_element_output(PyObject *referent,
+						Property *prop,
+						const CSubProblem *m,
+						const double time,
+						const Element *el)
+{
+  char _element_temp[128];
+  char _mesh_temp[128];
+  PyGILState_STATE pystate = acquirePyLock();
+  try {
+    if(!PyObject_HasAttrString(referent, (char*) "begin_element_output")) {
+      prop->Property::begin_element_output(m, time, el);
+    }
+    else {
+      // TODO: Build time argument here?
+      PyObject *func = PyObject_GetAttrString(referent,
+					      (char*)"begin_element_output_wrap");
+      SWIG_MakePtr(_mesh_temp, (char *)m, (char*)"_CSubProblem_p");
+      SWIG_MakePtr(_element_temp, (char *)el, (char*)"_Element_p");
+      PyObject *args = Py_BuildValue((char*) "(ss)", _mesh_temp, _element_temp);
+      PyObject *k_result = PyEval_CallObject(func, args);
+      Py_XDECREF(args);
+      Py_XDECREF(func);
+      if(k_result==NULL) {
+	pythonErrorRelay();
+      }
+      Py_XDECREF(k_result);
+    }
+  }
+  catch(...) {
+    releasePyLock(pystate);
+    throw;
+  }
+  releasePyLock(pystate);
+}
+
+void PyPropertyMethods::py_end_element_output(PyObject *referent,
+					      Property *prop,
+					      const CSubProblem *m,
+					      double time, const Element *el)
+{
+  char _element_temp[128];
+  char _mesh_temp[128];
+  PyGILState_STATE pystate = acquirePyLock();
+  try {
+    if(!PyObject_HasAttrString(referent, "end_element_matrix")) {
+      prop->Property::end_element_output(m, time, el);
+    }
+    else {
+      // TODO: Build time argument here? Also, broken? 
+      PyObject *func = PyObject_GetAttrString(referent,
+					      (char*) "end_element_output_wrap");
+      SWIG_MakePtr(_mesh_temp, (char *)m, (char*)"_CSubProblem_p");
+      
+      SWIG_MakePtr(_element_temp, (char *)el, (char*)"_Element_p");
+      PyObject *args = Py_BuildValue((char*) "(ss)", _mesh_temp, _element_temp);
+      PyObject *k_result = PyEval_CallObject(func, args);
+      Py_XDECREF(args);
+      Py_XDECREF(func);
+      if(k_result==NULL) {
+	pythonErrorRelay();
+      }
+      Py_XDECREF(k_result);
+    }
+  }
+  catch(...) {
+    releasePyLock(pystate);
+    throw;
+  }
+  releasePyLock(pystate);
+}
+
+
 
 //=\\=//=\\=//
 

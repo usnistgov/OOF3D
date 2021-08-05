@@ -477,9 +477,9 @@ void Element::make_linear_system(const CSubProblem *const subproblem,
   if(mat) {
     // TODO: Material begin_element should pass the order through also.
     // std::cerr << "Inside Element::make_linear_system." << std::endl;
-    // std::cerr << "Calling Material begin_element." << std::endl;
-    mat->begin_element(subproblem, time, this);
-    // std::cerr << "Back from Material begin_element." << std::endl;
+    // std::cerr << "Calling Material begin_element_matrix." << std::endl;
+    mat->begin_element_matrix(subproblem, time, this);
+    // std::cerr << "Back from Material begin_element_matrix." << std::endl;
     // TODO OPT: iorder could be precomputed or cached, but do some
     // careful profiling before changing anything.  Preliminary tests
     // indicate that the time spent computing iorder is negligible.
@@ -495,7 +495,7 @@ void Element::make_linear_system(const CSubProblem *const subproblem,
 			       nlsolver, system );
       // std::cerr << "Back from Material make_linear_system." << std::endl;
     }    
-    mat->end_element(subproblem, time, this);
+    mat->end_element_matrix(subproblem, time, this);
   }
 }
 
@@ -1399,7 +1399,7 @@ void InterfaceElement::make_linear_system(const CSubProblem *const subproblem,
   
   if(mat) {
     // std::cerr << "Inside InterfaceElement::make_linear_system with a material." << std::endl;
-    mat->begin_element(subproblem,this);
+    mat->begin_element_matrix(subproblem,time,this);
     int iorder = mat->integrationOrder(subproblem,this);
 
     current_side = LEFT;
@@ -1420,7 +1420,7 @@ void InterfaceElement::make_linear_system(const CSubProblem *const subproblem,
    
     current_side = LEFT;  // Return stateful objects to their initial state..
 
-    mat->end_element(subproblem,this);
+    mat->end_element_matrix(subproblem,time,this);
   }
 }
 					  

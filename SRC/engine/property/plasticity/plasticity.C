@@ -124,17 +124,17 @@ void Plasticity::precompute(FEMesh* f) {
   }
 }
 
-void Plasticity::begin_element(const CSubProblem *c,
-			       double time, const Element *e) {
-
-  // std::cerr << "Plasticity::begin_element starting." << std::endl;
+void Plasticity::begin_element_matrix(const CSubProblem *c,
+				      double time, const Element *e) {
+  
+  // std::cerr << "Plasticity::begin_element_matrix starting." << std::endl;
   // std::cerr << "Time is " << time << std::endl;
   // LINSYS STEP 3, plastic version -- called from
-  // Material::begin_element, we are in element scope, and need to run
+  // Material::begin_element_matrix, we are in element scope, and need to run
   // our own gausspoint loop.  This class (or its subclasses) are
   // responsible for managing the per-gausspoint data objects.
 
-  // std::cerr << "Inside Plasticity::begin_element." << std::endl;
+  // std::cerr << "Inside Plasticity::begin_element_matrix." << std::endl;
   // std::cerr << "Element: " << std::endl;
   // std::cerr << *e << std::endl;
 
@@ -919,7 +919,7 @@ void Plasticity::begin_element(const CSubProblem *c,
   // stress with respect to the strain.  This object is used to
   // construct the flux matrix, which wants derivatives of the
   // Cauchy stress wrt the actual DOFs.
-} // End of begin_element.
+} // End of begin_element_matrix.
 
 int Plasticity::integration_order(const CSubProblem *sp,
 				  const Element *el) const {
