@@ -31,6 +31,7 @@ import math
 import string
 import types
 
+import sys
 ## TODO 3.1: For direct output, it would be useful to have separate output
 ## files for each time step.  Perhaps if the output file name
 ## contained '%n', the '%n' could be replaced with the time step number.
@@ -439,6 +440,7 @@ class DirectOutput(DataOperation):
 
         # "olist" is a list or iterable of tuples of the form (sample,
         # value).
+        print >> sys.stderr, "DirectOutput.__call__." 
         olist = sampling.evaluate(time, domain, output)
         header = sampling.get_col_names()
 

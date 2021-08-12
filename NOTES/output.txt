@@ -79,6 +79,12 @@ then maybe it's OK.
 called as part of the propertyoutput call sequence, but not as 
 part of the solver process?  And it's broken because of changes
 we made to begin_element?
+  (August 2021)
+  -> Fixed this.  The conjecture is true, this 'begin_all_elements'
+call-chain is only for outputs.  The "begin_element" call was split
+into "begin_element_matrix" and "begin_element_output", (along wiht
+end_element, of course), and the "begin_all_elements" only
+calls the output ones. 
 
  --------------------
 
@@ -120,4 +126,41 @@ of these call chains.  How to express the difference?
   -> Do properties need this also?
   -> Any nontrivial examples?
   
+  -------
+
+  Actual call-chain:
+ 
+  Starts when you hit the button (or from the scheduled
+output, which we will care about later.)
+
+  At the bottom of engine/IO/GUI/analyzePage.py, the callback for the
+menu item, with "data=" the output object.  This is a 
+DirectOutput instance in our case.
+
+  The menuitem is a Direct_Output menu item, defined on 
+line 466 of engine/IO/analyze.py. (Class is defined
+above this.)
+
+  Class hierarchy:
+   DirectOutput -> DataOperation -> RegisteredClass
+   The menu item is created on line 164 from the DataOperation
+     registered class table.
+
+  The next bit is the standard menu-item invocation, and shouldn't
+    be hard, but the weird thing here is that I am seeing some
+    output after IDing the class, and before the __call__ method
+    of the DirectOutput?
+
+  The "callWithDefaults" (line 173, common/IO/oofmenu.py)
+   ... calls callWithArgdict, which calls hireWorker, 
+   ... which builds a worker and starts it. 
+   ... and the worker (work.py, line 132-ish) runs menuitem.callback
+   ... which is _ops_callback
+   
+  *This* function calls precompute_all_subproblems, and then
+    calls the registered output object's "call" method
+    (as "operation()", which is menuitem.data(), which is the
+     registered class object.)
+
+  Takes you to Direct_Output.__call__, line 430 of engine/IO/analyze.py (?)
 

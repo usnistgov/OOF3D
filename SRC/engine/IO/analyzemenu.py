@@ -102,6 +102,7 @@ def _ops_callback(menuitem, mesh, time, data, domain, sampling, destination,
                          destination=destination)
         return
 
+    print >> sys.stderr, "Inside analyzemenu _ops_callback."
     operation = menuitem.data()  # data is a DataOperation Registration 
 
     # Set the mesh in the domain, then run the operation.

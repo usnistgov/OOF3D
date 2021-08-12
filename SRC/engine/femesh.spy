@@ -129,8 +129,10 @@ FEMeshPtr.precompute_all_subproblems = _FEMeshPtr_precompute_all_subproblems
 
 # TODO: This is called as part of the output chain for
 # property outputs, but not as part of the matrix construction
-# or solution process?  It's called from propertyoutput.py,
-# and outputClones.py, and nowhere else, so ... yes?
+# or solution process.  It's called from propertyoutput.py,
+# and outputClones.py, and nowhere else. Not clear why,
+# but this fact makes it OK to specialize to "_output"
+# versions of the element methods.
 #
 def _FEMeshPtr_begin_all_subproblems(self, time, element):
     print >> sys.stderr, "FEMesh beginning all subproblems."

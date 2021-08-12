@@ -37,6 +37,7 @@ import ooflib.engine.mesh
 
 import gtk
 
+import sys
 
 # A page on which various aspects of the solved mesh can be queried --
 # cross-section and statistical outputs will live here, with the
@@ -485,6 +486,10 @@ class AnalyzePage(BaseAnalysisPage):
         menuitem = analyzemenu.ops_menu.getItem(
             utils.space2underscore(regname))
 
+        print >> sys.stderr, "Analysis menu item is ", menuitem
+        print >> sys.stderr, "Class is ", menuitem.__class__
+        print >> sys.stderr, "Callback is ", menuitem.callback
+        
         menuitem.callWithDefaults(mesh=self.meshwidget.get_value(),
                                   time=self.timeWidget.get_value(),
                                   data=self.output_obj.get_value(),
