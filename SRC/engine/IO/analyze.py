@@ -440,8 +440,10 @@ class DirectOutput(DataOperation):
 
         # "olist" is a list or iterable of tuples of the form (sample,
         # value).
-        print >> sys.stderr, "DirectOutput.__call__." 
+        print >> sys.stderr, "DirectOutput.__call__."
+        print >> sys.stderr, "Sampling is ", sampling
         olist = sampling.evaluate(time, domain, output)
+        print >> sys.stderr, "Back from sampling.evaluate."
         header = sampling.get_col_names()
 
         if showTime():

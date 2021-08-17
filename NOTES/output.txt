@@ -162,5 +162,17 @@ above this.)
     (as "operation()", which is menuitem.data(), which is the
      registered class object.)
 
-  Takes you to Direct_Output.__call__, line 430 of engine/IO/analyze.py (?)
+  Takes you to Direct_Output.__call__, line 430 of engine/IO/analyze.py 
+  This calls sampling.evaluate, in our case a PointSampleSet.
 
+  This is the "evaluate" function at line 142 of analysissample.py.
+
+  This function calls output.evaluate.
+
+  ---------
+  
+  For strain, we want true or logarithmic strain.  Need to get
+the log of the strain tensor.  But we can start with the 
+Green-Lagrange strain vs 2nd PK stress.
+
+  

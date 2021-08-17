@@ -184,6 +184,8 @@ class DiscreteSampleSet(SampleSet):
             for sample in self.sample_list:
                 element = femesh.enclosingElement(skeleton, sample.point)
                 mcoord = element.to_master(sample.point)
+                print >> sys.stderr, "Calling output.evaluate."
+                print >> sys.stderr, "Output is ", output
                 val = output.evaluate(femesh, time,
                                       domain, [element], [[mcoord]])[0]
                 print >> sys.stderr, "Got val:", val
