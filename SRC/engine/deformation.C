@@ -12,6 +12,7 @@
 #include <oofconfig.h>
 
 #include "common/doublevec.h"
+#include "common/cleverptr.h"
 #include "engine/deformation.h"
 #include "engine/element.h"
 #include "engine/elementnodeiterator.h"
@@ -29,10 +30,41 @@ OutputVal *POInitDeformation::operator()(const PropertyOutput *po,
 					 const MasterCoord &pos) const
 {
   SmallMatrix3 *deformation = new SmallMatrix3();
+  std::cerr << "POInitDeformatoin::operator()" << std::endl;
+  std::cerr << *deformation << std::endl;
   // See cstrain.C for the model for this.
   // Switch on the sub-type of the passed-in registered class
   // name by querying on po->getRegisteredParameterName("type"), and
   // populate the deformation in different ways, depending?
   // Or, for deformation, is there only one kind?
+
+  
+  ThreeVectorField *displacement = dynamic_cast<ThreeVectorField*>(Field::getField("Displacement"));
+
+  for (CleverPtr<ElementFuncNodeIterator> efi(element->funcnode_iterator());
+       !(efi->end()); ++(*efi)) {
+    OutputValue dval = displacement->newOutputValue();
+    // Reference-state derivatives.
+    double dshapedx = efi->dshapefunction(0,pos);
+    double dshapedy = efi->dshapefunction(1,pos);
+    double dshapedz = efi->dshapefunction(2,pos);
+    
+    // Vector value of the displacement at the node.
+    dval += displacement->output(mesh, *efi);
+    
+    for (IteratorP ip = displacement->iterator(ALL_INDICES);
+	 !ip.end(); ++ip) {
+      int idx = ip.integer();
+      // std::cerr << "Displacement component " << ip << " is " << dval[ip] << std::endl;
+      (*deformation)(idx,0) += dval[ip]*dshapedx;
+      (*deformation)(idx,1) += dval[ip]*dshapedy;
+      (*deformation)(idx,2) += dval[ip]*dshapedz;
+    }
+  }
+
+  (*deformation)(0,0) += 1.0;
+  (*deformation)(1,1) += 1.0;
+  (*deformation)(2,2) += 1.0;
+  
   return deformation;
 }

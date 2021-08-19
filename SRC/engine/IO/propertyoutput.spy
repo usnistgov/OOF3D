@@ -30,9 +30,11 @@ class PORegBase(PropertyOutputRegistration):
     ## something other than a list of OutputVal instances should
     ## override the convert method.
     def opfunc(self, time, mesh, elements, coords, **params):
+        print >> sys.stderr, "Inside PORegBase.opfunc."
         po = self.instantiate(params)
         mesh.precompute_all_subproblems()
         initializer = self.initializer()
+        print >> sys.stderr, "Initializer is ", initializer
         results = []
         for element, ecoords, in zip(elements, coords):
             mat = element.material()

@@ -61,9 +61,7 @@ class DeformationTypeParameter(parameter.RegisteredParameter):
     
 
 # Registering this as a PropertyOutput with the right
-# output type makes it potentially available in the GUI.
-# Except maybe we need a DeformationTypeWidget in parallel
-# with the StrainTypeWidget?
+# output type makes it available in the GUI.
 propertyoutput.SmallMatrix3PropertyOutputRegistration(
     "Deformation",
     initializer=POInitDeformation(),

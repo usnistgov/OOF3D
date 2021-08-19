@@ -169,6 +169,24 @@ above this.)
 
   This function calls output.evaluate.
 
+  Output evaluate is in the Python base class, Output, line 525
+of engine/IO/output.py, and it calls "self.callback", which is
+(via instrumentation) a method of the PropertyOutputRegistration
+instance, specifically the "opfunc" method.
+  
+  This is the "opfunc" of the PORegBase, which is the base
+of the class hierarchy based on return type.  This
+*again* calls precompute_all_subproblems (???), and then
+calls self.initializer.
+
+  This goes into the POInitDeformation::operator(), which 
+builds a zero smallmatrix3 and returns it (only nontrivial
+method in engine/deformation.C).
+
+  The initialization is because in principle you could have
+related deformation types that add or subtract from the basic
+one in their more-specific methods, I think?
+
   ---------
   
   For strain, we want true or logarithmic strain.  Need to get
