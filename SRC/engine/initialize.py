@@ -133,6 +133,7 @@ import ooflib.engine.IO.animationtimes
 
 import ooflib.SWIG.engine.cstrain
 import ooflib.SWIG.engine.deformation
+import ooflib.SWIG.engine.glstrain
 
 import ooflib.common.runtimeflags
 

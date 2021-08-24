@@ -193,4 +193,13 @@ one in their more-specific methods, I think?
 the log of the strain tensor.  But we can start with the 
 Green-Lagrange strain vs 2nd PK stress.
 
-  
+  ---------
+
+  Green-Lagrange strain is 0.5*(F^TF-I) 
+
+  Should be easy to add?  We don't need a new output type.
+
+  - Header file, engine/glstrian.h
+  - Actual code, engine/glstrain.C
+  - Swig file, reflects h file, engine/glstrain.swg
+  - spy file, register the thing, and define the type parameter.

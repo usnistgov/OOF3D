@@ -13,22 +13,22 @@
 
 #include "common/doublevec.h"
 #include "common/cleverptr.h"
-#include "engine/deformation.h"
+#include "engine/glstrain.h"
 #include "engine/element.h"
 #include "engine/elementnodeiterator.h"
 #include "engine/femesh.h"
 #include "engine/field.h"
 #include "engine/mastercoord.h"
+#include "engine/symmmatrix3.h"
 #include "engine/smallmatrix3.h"
 
-
-OutputVal *POInitDeformation::operator()(const PropertyOutput *po,
-					 const FEMesh *mesh,
-					 const Element *element,
-					 const MasterCoord &pos) const
+OutputVal *POInitGLStrain::operator()(const PropertyOutput *po,
+				      const FEMesh *mesh,
+				      const Element *element,
+				      const MasterCoord &pos) const
 {
   SmallMatrix3 *deformation = new SmallMatrix3();
-  std::cerr << "POInitDeformatoin::operator()" << std::endl;
+  std::cerr << "POInitGLStrain::operator()" << std::endl;
   std::cerr << *deformation << std::endl;
   // See cstrain.C for the model for this.
   // Switch on the sub-type of the passed-in registered class
@@ -63,6 +63,17 @@ OutputVal *POInitDeformation::operator()(const PropertyOutput *po,
   (*deformation)(0,0) += 1.0;
   (*deformation)(1,1) += 1.0;
   (*deformation)(2,2) += 1.0;
+
+  SymmMatrix3 *glstrain = new SymmMatrix3();
   
-  return deformation;
+  for(int i=0;i<3;++i)
+    for(int j=0;j<=i;++j)
+      for(int k=0;k<3;++k)
+	(*glstrain)(i,j) += 0.5*(*deformation)(k,i)*(*deformation)(k,j);
+
+  for(int i=0;i<3;++i)
+    (*glstrain)(i,i) -= 0.5;  
+
+  // TODO: Memory leak? Who owns deformation after this?
+  return glstrain;
 }

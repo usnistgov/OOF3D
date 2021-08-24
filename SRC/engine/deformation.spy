@@ -47,7 +47,7 @@ registeredclass.Registration(
     ordering=0,
     tip="The F matrix of the displaced system.",
     discussion="""<para>This is mostly really a stunt class to demo the 
-    class hierarchy.""")
+    class hierarchy.</para>""")
     
 
 class DeformationTypeParameter(parameter.RegisteredParameter):
