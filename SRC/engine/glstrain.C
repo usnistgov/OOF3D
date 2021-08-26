@@ -74,6 +74,7 @@ OutputVal *POInitGLStrain::operator()(const PropertyOutput *po,
   for(int i=0;i<3;++i)
     (*glstrain)(i,i) -= 0.5;  
 
+  delete deformation;
   // TODO: Memory leak? Who owns deformation after this?
   return glstrain;
 }

@@ -18,7 +18,7 @@ clib = 'oof3dengine'
 
 subdirs = ['constitutive']
 
-cfiles =      ['plasticity.C']
-hfiles =      ['plasticity.h']
+cfiles =      ['plasticity.C','plasticity_data.C']
+hfiles =      ['plasticity.h','plasticity_data.h','constitutive_base.h']
 swigfiles =   ['plasticity.swg']
 swigpyfiles = ['plasticity.spy']

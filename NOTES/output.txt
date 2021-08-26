@@ -203,3 +203,14 @@ Green-Lagrange strain vs 2nd PK stress.
   - Actual code, engine/glstrain.C
   - Swig file, reflects h file, engine/glstrain.swg
   - spy file, register the thing, and define the type parameter.
+
+  ---------
+   
+  Breaking out the SlipData stuff from the plasticity -- some
+import loopage to deal with, maybe.
+
+  Also, why do properties have an "output" method? This might be
+vestigial, not sure it's useful. We can define a PropertyOutput
+directly in the file-tree and interrogate the data objects, that's
+most of what we care about, I think?
+

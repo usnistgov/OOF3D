@@ -21,6 +21,8 @@
 #define CONSTITUTIVE_H
 
 #include "engine/property/plasticity/plasticity.h"
+#include "engine/property/plasticity/plasticity_data.h"
+#include "engine/property/plasticity/constitutive_base.h"
 #include <oofconfig.h>
 
 
@@ -37,17 +39,6 @@ public:
   PowerLawSlipData(int slips, double res);
   std::vector<double> res;         // Initial slip resistance.
 };
-
-class PlasticConstitutiveRule {
-public:
-  virtual void set_slip_systems(int n) { slip_systems = n; }
-  virtual GptSlipData *getSlipData() const = 0;
-  virtual void evolve(GptPlasticData *, GptSlipData*,double) = 0;
-  virtual void complete(GptPlasticData *, GptSlipData*) = 0;
-protected:
-  int slip_systems;
-};
-
 
 // Get dt from the caller to the evolve_gamma method.
 class PowerLawConstitutiveRule : public PlasticConstitutiveRule {
