@@ -51,6 +51,10 @@ import ooflib.SWIG.engine.property.stressfreestrain.stressfreestrain
 import ooflib.SWIG.engine.property.thermalexpansion.thermalexpansion
 import ooflib.SWIG.engine.property.plasticity.plasticity
 
+# Plasticity output.  Only makes sense if plasticity is loaded,
+# as it depends on the gauss-point data classes.
+import ooflib.SWIG.engine.property.plasticity.cstress
+
 #Interface branch
 if config.dimension() == 2:
     import ooflib.SWIG.engine.property.interfaces.surfacetension.simpletension.simpletension
@@ -61,3 +65,4 @@ if config.dimension() == 2:
 import ooflib.engine.property.heatconductivity.pyheatconductivity
 import ooflib.engine.property.elasticity.pyelasticity
 import ooflib.engine.property.stressfreestrain.pystressfreestrain
+
