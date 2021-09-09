@@ -13,6 +13,7 @@
 
 #include "common/doublevec.h"
 #include "common/cleverptr.h"
+#include "engine/property/plasticity/plasticity_data.h"
 #include "engine/property/plasticity/cstress.h"
 #include "engine/element.h"
 #include "engine/elementnodeiterator.h"
@@ -31,10 +32,24 @@ OutputVal *POInitCauchyStress::operator()(const PropertyOutput *po,
   std::cerr << "POInitCauchyStress::operator()" << std::endl;
   // Get the element's plastic data object and retrieve the
   // stuff we want from it.
-
+  ElementData *ed = element->getDataByName("plastic_data");
+  PlasticData *pd = dynamic_cast<PlasticData*>(ed);
+  std::cerr << "Time: " << pd->current_time << std::endl;
+  for (size_t i=0; i<(pd->gptdata).size(); ++i) {
+    std::cerr << "Cauchy stress for gauss-point " << i << std::endl;
+    std::cout << (pd->gptdata[i])->cauchy << std::endl;
+  }
+  
   // For evaluation points which are not themselves gausspoints,
   // figure out how we want to interpolate.
-  
+
+  // Oddities: We really want an integration sampling thing, and
+  // dispatch to distinguish between gpt and non-gpt evaluation
+  // points.  Also, cauchy stress is not a symmatrix?  Also,
+  // quantitative check?
+
+  // xx-component is dominant, that's the answer, probably.
+  // yy and zz are noise, ignore the variations.
+  // 
+  std::cerr << "POInitCauchyStress::operator() exiting." << std::endl;
   return cstress;
-  
-}
