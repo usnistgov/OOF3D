@@ -68,7 +68,7 @@ public:
   
   SmallMatrix3 &operator+=(const SmallMatrix3&);
   SmallMatrix3 &operator-=(const SmallMatrix3&);
-  
+
   virtual void component_pow(int);
   virtual void component_square();
   virtual void component_sqrt();

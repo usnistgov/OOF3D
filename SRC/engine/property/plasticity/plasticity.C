@@ -979,7 +979,7 @@ void Plasticity::static_flux_value(const FEMesh *mesh,
   PlasticData *pd = dynamic_cast<PlasticData*>
     (element->getDataByName("plastic_data"));
   int gptidx = (pd->mctogpi_map)[mpt.mastercoord()];
-  const SmallMatrix3 &cchy = (pd->gptdata[gptidx])->cauchy;
+  const SymmMatrix3 &cchy = (pd->gptdata[gptidx])->cauchy;
   for(SymTensorIterator ij; !ij.end(); ++ij) {
     fluxdata->flux_vector_element(ij) = cchy(ij.row(),ij.col());
   }

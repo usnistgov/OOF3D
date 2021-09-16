@@ -15,6 +15,7 @@
 #include "engine/element.h"
 #include "common/smallmatrix.h"
 #include "engine/smallmatrix3.h"
+#include "engine/symmmatrix3.h"
 #include "engine/property/plasticity/constitutive_base.h"
 #include <string>
 #include <map>
@@ -68,7 +69,7 @@ public:
   SmallMatrix3 f_tau;    // Deformation tensor at current time tau.
   SmallMatrix3 fp_tau;   // Plastic part of F at current time tau.
   SmallMatrix3 fe_tau;   // Elastic part of F at current time tau.
-  SmallMatrix3 cauchy;   // Cauchy stress (time tau?)
+  SymmMatrix3 cauchy;   // Cauchy stress (time tau?)
   SmallMatrix3 s_star;   // 2nd PK stress at time tau.
   Rank4_3DTensor w_mat;          // Elastoplastic tangent, at tau, when done.
 

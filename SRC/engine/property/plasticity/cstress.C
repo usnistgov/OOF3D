@@ -53,3 +53,4 @@ OutputVal *POInitCauchyStress::operator()(const PropertyOutput *po,
   // 
   std::cerr << "POInitCauchyStress::operator() exiting." << std::endl;
   return cstress;
+}

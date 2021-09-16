@@ -28,6 +28,7 @@ class SymmMatrix3;
 #include "engine/fieldindex.h"
 #include "engine/outputval.h"
 #include "engine/symmmatrix.h"
+#include "engine/smallmatrix3.h"
 
 #include "engine/matrix3.h"
 
@@ -113,6 +114,14 @@ public:
   SymmMatrix3 &operator-=(const SymmMatrix3 &x) {
     dirtyeigs_ = true;
     return dynamic_cast<SymmMatrix3&>(SymmMatrix::operator-=(x));
+  }
+  void operator=(const SmallMatrix3 &x) {
+    operator()(0,0) = x(0,0);
+    operator()(1,1) = x(1,1);
+    operator()(2,2) = x(2,2);
+    operator()(0,1) = 0.5*(x(0,1)*x(1,0));
+    operator()(0,2) = 0.5*(x(0,2)*x(2,0));
+    operator()(1,2) = 0.5*(x(1,2)*x(2,1));
   }
   virtual OutputVal *dot(const OutputVal&) const;
   virtual OutputVal *dotScalar(const ScalarOutputVal&) const;
