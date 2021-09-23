@@ -24,10 +24,10 @@ class LargeStrainType(registeredclass.RegisteredClass):
     registry = []
     def name(self):
         return self._name
-    def iterator(self):
-        returnfieldindex.getTensorIterator()
+    def iterator(self,plnrty):
+        return fieldindex.getSymTensorIterator(plnrty)
     def iterator_all(self):
-        return fieldindex.getTensorIterator()
+        return fieldindex.getSymTensorIterator(planarity.ALL_INDICES)
     def newOutputValue(self):
         return symmmatrix3.newSymmMatrix3OutputValue()
     tip="Tip not yet available in your area."
@@ -65,7 +65,7 @@ propertyoutput.SymmMatrix3PropertyOutputRegistration(
                                          tip="Type of large strian")],
     ordering=6,
     tip="Large strain output",
-    srepr = lambda s: s.resolveAlias("type").value.name() + " Strain",
+    srepr = lambda s: s.resolveAlias("type").value.name() + " Large Strain",
     discussion="""
     <para>Discussion not available in your area.</para>
     """)

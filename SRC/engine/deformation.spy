@@ -23,8 +23,9 @@ class DeformationType(registeredclass.RegisteredClass):
     registry = []
     def name(self):
         return self._name
-    def iterator(self):
-        return fieldindex.getTensorIterator()
+    def iterator(self,plnrty):
+        # TODO: Is this ever called in 3D?
+        return fieldindex.getTensorIterator(plnrty)
     def iterator_all(self):
         return fieldindex.getTensorIterator()
     def newOutputValue(self):

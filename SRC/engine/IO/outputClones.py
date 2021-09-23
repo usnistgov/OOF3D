@@ -339,8 +339,10 @@ FluxCompOutput.aliasParam('field:flux', 'flux')
 
 #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#
 
-def _invariant(mesh, elements, coords, field, invariant):
+def _invariant(time,mesh, elements, coords, field, invariant):
     ## TODO OPT: Use MappedIterable?
+    print >> sys.stderr, "Inside outputClones _invariant."
+    print >> sys.stderr, invariant
     return map(outputval.ScalarOutputVal, itertools.imap(invariant, field))
 
 def _invariant_shortrepr(self):

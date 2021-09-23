@@ -618,6 +618,7 @@ class Output(object):
         else:
             print >> sys.stderr, "Output callback, general case."
             print >> sys.stderr, "Callback: ", self.callback
+            print >> sys.stderr, argdict
             result = self.callback(time, mesh,
                                    elements, coords, **argdict)
         return result

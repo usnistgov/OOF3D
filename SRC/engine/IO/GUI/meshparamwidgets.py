@@ -35,6 +35,8 @@ import string
 #Interface branch
 from ooflib.common.IO import placeholder
 
+import sys
+
 class MeshParamWidgetBase(parameterwidgets.ParameterWidget):
     # Base class for a widget that displays and allows choices from a
     # list of things from a Mesh (eg, defined Fields or active
@@ -343,6 +345,8 @@ class FieldIndexParameterWidget(parameterwidgets.ParameterWidget):
     def update(self):                   # field has changed
         itlist = []
         self.nIndices = 0
+        print >> sys.stderr, "FieldIndexParameterWidget.update."
+        print >> sys.stderr, self.fieldwidget
         field = self.fieldwidget.get_value()
         if field is not None:
             iterator = field.iterator_all()

@@ -214,3 +214,12 @@ vestigial, not sure it's useful. We can define a PropertyOutput
 directly in the file-tree and interrogate the data objects, that's
 most of what we care about, I think?
 
+ --------
+  
+  Invariant outputs were broken -- missing "time" argument
+in outputClones.py where the "_invariant" fn is defined.
+
+  Component outputs also not working, less clear why.
+Error occurs when you select the widget.  Apparently the 
+FieldWidget is not Indexable in the expected way?
+
