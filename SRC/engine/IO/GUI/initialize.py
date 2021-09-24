@@ -52,6 +52,8 @@ import ooflib.engine.IO.GUI.strainwidget
 import ooflib.engine.IO.GUI.tensorwidgets
 
 import ooflib.engine.IO.GUI.deformationwidget
+import ooflib.engine.IO.GUI.gpdatawidget
+import ooflib.engine.IO.GUI.glstrainwidget
 # Toolbox definitions
 if config.dimension() == 2:
     import ooflib.engine.IO.GUI.meshcstoolboxGUI

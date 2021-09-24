@@ -60,7 +60,7 @@ propertyoutput.SymmMatrix3PropertyOutputRegistration(
     parameters=[GaussPointDataOutputParameter("type",
                                               default=CauchyStress(),
                                               tip="Type of gauss point data")],
-    ordering=6,
+    ordering=12,
     tip="Gauss-point data output",
     srepr = lambda s: s.resolveAlias("type").value.name() + " Strain",
     discussion="""
