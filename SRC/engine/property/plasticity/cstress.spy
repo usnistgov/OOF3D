@@ -21,10 +21,10 @@ class GaussPointDataOutput(registeredclass.RegisteredClass):
     registry = []
     def name(self):
         return self._name
-    def iterator(self):
-        returnfieldindex.getTensorIterator()
+    def iterator(self,plnrty):
+        returnfieldindex.getSymTensorIterator(plnrty)
     def iterator_all(self):
-        return fieldindex.getTensorIterator()
+        return fieldindex.getSymTensorIterator(planarity.ALL_INDICES)
     def newOutputValue(self):
         return symmmatrix3.newSymmMatrix3OutputValue()
     tip="Tip not yet available in your area."
