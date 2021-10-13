@@ -116,6 +116,7 @@ public:
     return dynamic_cast<SymmMatrix3&>(SymmMatrix::operator-=(x));
   }
   void operator=(const SmallMatrix3 &x) {
+    // std::cerr << "Assigning sym from small." << std::endl;
     operator()(0,0) = x(0,0);
     operator()(1,1) = x(1,1);
     operator()(2,2) = x(2,2);

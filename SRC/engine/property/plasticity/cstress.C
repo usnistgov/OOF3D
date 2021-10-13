@@ -35,9 +35,11 @@ OutputVal *POInitCauchyStress::operator()(const PropertyOutput *po,
   ElementData *ed = element->getDataByName("plastic_data");
   PlasticData *pd = dynamic_cast<PlasticData*>(ed);
   std::cerr << "Time: " << pd->current_time << std::endl;
+  // TODO: Do something smarter about this.
   for (size_t i=0; i<(pd->gptdata).size(); ++i) {
     std::cerr << "Cauchy stress for gauss-point " << i << std::endl;
     std::cout << (pd->gptdata[i])->cauchy << std::endl;
+    (*cstress) = pd->gptdata[i]->cauchy;  // Only save the last one.
   }
   
   // For evaluation points which are not themselves gausspoints,
@@ -48,9 +50,6 @@ OutputVal *POInitCauchyStress::operator()(const PropertyOutput *po,
   // points.  Also, cauchy stress is not a symmatrix?  Also,
   // quantitative check?
 
-  // xx-component is dominant, that's the answer, probably.
-  // yy and zz are noise, ignore the variations.
-  // 
   std::cerr << "POInitCauchyStress::operator() exiting." << std::endl;
   return cstress;
 }
