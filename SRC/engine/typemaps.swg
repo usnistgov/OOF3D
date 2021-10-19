@@ -385,7 +385,7 @@ typedef std::vector<GaussPoint*> GaussPointVec;
     if(!stg)
       return NULL;
     char *str = PyString_AsString(stg);
-    SWIG_GetPtr(str, (void **)&tnode, "_CSkeletonNode_p");
+    SWIG_GetPtr(str, (void **)&tnode, "_Node_p");
     n[i] = tnode;
   }
 

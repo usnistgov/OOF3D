@@ -19,7 +19,7 @@
 #include <oofconfig.h>
 #include <Python.h>
 #include <iostream>
-#include "trace.h"
+#include "common/ooferror.h"
 #define SWIG_GLOBAL 1
 
 // ------------ SWIG generated code starts here ---------
@@ -45,7 +45,7 @@
 
 #define SWIGPYTHON
 /***********************************************************************
- * $Header: /users/langer/FE/CVSoof/OOF2/SRC/common/swiglib.C,v 1.11.18.5 2014/09/27 22:33:56 langer Exp $
+ * $Header: /users/langer/FE/CVSoof/OOF2/SRC/common/swiglib.C,v 1.16 2015/05/27 20:15:29 langer Exp $
  * swig_lib/python/python.cfg
  *
  * Contains variable linking and pointer type-checking code.
@@ -351,7 +351,6 @@ SWIG_GetPtr(const char *c, void **ptr, const char *t)
 {
   unsigned long p;
   char temp_type[256];
-  //const char *name;
   int  i, len, start, end;
   SwigPtrType *sp,*tp;
   SwigCacheType *cache;
@@ -409,7 +408,6 @@ SWIG_GetPtr(const char *c, void **ptr, const char *t)
   /* Try to find a match */
   while (start <= end) {
     if (strncmp(t,sp->name,sp->len) == 0) {
-      // name = sp->name;
       len = sp->len;
       tp = sp->next;
       /* Try to find entry for our given datatype */
@@ -436,6 +434,13 @@ SWIG_GetPtr(const char *c, void **ptr, const char *t)
     sp++;
     start++;
   }
+#ifdef DEBUG
+  if(c) {
+    std::cerr << "SWIG_GetPtr: failed!  c=" << c << ", t=" << t << "."
+	      << std::endl;
+    throw ErrProgrammingError("SWIG_GetPtr failed", __FILE__, __LINE__);
+  }
+#endif // DEBUG
   return c;
 } 
 
