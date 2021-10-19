@@ -57,6 +57,9 @@ def dashjoin(*args):
     return '-'.join(x for x in args if x)
 
 pyversion = string.join(map(str, sys.version_info[:2]),".")
+executablename = os.path.split(sys.executable)[-1]
+if executablename == 'python':
+    executablename = None
 
 # Is this oof2-build or oof2-clean?
 progname = sys.argv.pop(0)
@@ -168,12 +171,10 @@ if not installdir:
     installdir = os.getenv("HOME")
 
 stowdir = os.path.join(installdir, 'stow')
-builddir =  dashjoin("builddir", branchtag, build_type, cocoa)
-if localdir:
-    stowsubdir = dashjoin(buildname, branchtag, localdir, build_type,
-                           cocoa, pyversion)
-else:
-    stowsubdir = dashjoin(buildname, branchtag, build_type, cocoa, pyversion)
+builddir =  dashjoin("builddir", branchtag, build_type, cocoa,
+                     executablename, pyversion)
+stowsubdir = dashjoin(buildname, branchtag, localdir, build_type, cocoa,
+                      executablename, pyversion)
     
 if oofname is "oof3d":
     laststowfile = os.path.join(stowdir, '.last_oof3d_install')
