@@ -40,20 +40,33 @@
 //    PythonExportable.  The template parameter must be the name of
 //    the class derived from PythonExportable.  Each derived type must
 //    supply a classname() virtual function that returns the name of
-//    the derived class.  If the C++ derived classes will be swigged
-//    and used as base classes for Python classes, then the
-//    PythonExportable must be a *virtual* base class (see PythonNative,
-//    below).
+//    the derived class and a modulename() function that returns the
+//    name of the swigged module containing it.  If the C++ derived
+//    classes will be swigged and used as base classes for Python
+//    classes, then the PythonExportable must be a *virtual* base
+//    class (see PythonNative, below).
 //
 //    For example:
-//      class MyExportable : public PythonExportable<MyExportable> { ... }
+//      class MyExportable : public PythonExportable<MyExportable> {
+//      public:
+//         virtual const std::string &modulename() const {
+//            static const std::string modname("path.to.swigged.module");
+//            return modname;
+//         }
+//      }
 //      class Oil : public MyExportable {
 //      public:
-//         virtual const std::string &classname() const { return "Oil"; }
+//         virtual const std::string &classname() const {
+///           static const std::string name("Oil");
+//            return name;
+//         }
 //      }
 //      class Cheese : public MyExportable {
 //      public:
-//         virtual const std::string &classname() const { return "Cheese"; }
+//         virtual const std::string &classname() const {
+//            static const std::string name("Cheese");
+//            return name;
+//         }
 //      }
 
 // 2) In every swig file containing a function that returns a base
@@ -63,9 +76,7 @@
 //      $target = $source->pythonObject();
 //    }
 //    where BASECLASS is the base class of the heirarchy derived
-//    from PythonExportable.  This typemap changes the return type to
-//    a tuple containing the Python name of the derived class (classnamePtr)
-//    and the encoded address of the C++ object.
+//    from PythonExportable.  
 
 // If the C++ class heirarchy derived from PythonExportable is
 // swigged, and the swigged Python classes are extended by Python
