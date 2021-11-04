@@ -127,7 +127,8 @@ SmallMatrix Rank4_3DTensor::as_6matrix() {
       res(i,j) = data[_index(i,i,j,j)];
     }
   }
-    
+
+  // OK not to symmetrize here, summing is correct.
   for(int i = 0 ; i < 3 ; i++){
     res(i,3) = data[_index(i,i,0,1)]+data[_index(i,i,1,0)];
     res(i,4) = data[_index(i,i,1,2)]+data[_index(i,i,2,1)];

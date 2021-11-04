@@ -186,9 +186,9 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
   // end of HACK.
   
   // This is used in the calls to the constitutive evolve() method.
-  // double delta_t = pd->dt;
+  double delta_t = pd->dt;
   // HACK: Diagnosing convergence issues, override dt.
-  double delta_t = 1.0;
+  // double delta_t = 1.0;
   // end of HACK.
   std::cerr << "Retrieved delta_t, it's " << delta_t << std::endl;
   std::cerr << "Initialized the pd object." << std::endl;
@@ -401,13 +401,13 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
     for(int alpha=0;alpha<nslips;++alpha) {
       sd->gptslipdata[gptdx]->tau_alpha[alpha] = \
 	dot(s_trial, *lab_schmid_tensors[alpha]);
-      std::cerr << "Lab schmid tensor: " << std::endl;
-      std::cerr << *lab_schmid_tensors[alpha] << std::endl;
+      // std::cerr << "Lab schmid tensor: " << std::endl;
+      // std::cerr << *lab_schmid_tensors[alpha] << std::endl;
       std::cerr << "Tau_alpha: " << std::endl;
       std::cerr << sd->gptslipdata[gptdx]->tau_alpha[alpha] << std::endl;
     }
 
-    std::cerr << "Initial call constitutive rule's evolve." << std::endl;
+    std::cerr << "Initial call to constitutive rule's evolve." << std::endl;
     // Initial call to evolve -- this populates the delta_gamma and
     // dgamma_dtau from s_trial..
     std::cerr << "Calling evolve, delta_t is " << delta_t << std::endl;
@@ -450,22 +450,22 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
 	SmallMatrix3 lst = *lab_schmid_tensors[alpha];
 	SmallMatrix3 lst_t = *lab_schmid_tensors[alpha];
 	lst_t.transpose();
-	std::cerr << "Schmid tensor and transpose:" << std::endl;
-	std::cerr << lst << std::endl;
-        std::cerr << lst_t << std::endl;
+	// std::cerr << "Schmid tensor and transpose:" << std::endl;
+	// std::cerr << lst << std::endl;
+        // std::cerr << lst_t << std::endl;
 	*(gtmtx[alpha]) = (lst+lst_t)*(0.5*sd->gptslipdata[gptdx]->dgamma_dtau[alpha]);
       }
 
-      std::cerr << "Gtmtx:" << std::endl;
-      for(int alphadx=0;alphadx<nslips;++alphadx) {
-	std::cerr << "Alpha: " << alphadx << std::endl;
-	std::cerr << *(gtmtx[alphadx]) << std::endl;
-      }
+      // std::cerr << "Gtmtx:" << std::endl;
+      // for(int alphadx=0;alphadx<nslips;++alphadx) {
+      //   std::cerr << "Alpha: " << alphadx << std::endl;
+      //   std::cerr << *(gtmtx[alphadx]) << std::endl;
+      // }
 
-      std::cerr << "Cmtx:" << std::endl;
-      for(int alphadx=0;alphadx<nslips;++alphadx) {
-	std::cerr << *(c_mtx[alphadx]) << std::endl;
-      }
+      // std::cerr << "Cmtx:" << std::endl;
+      // for(int alphadx=0;alphadx<nslips;++alphadx) {
+      //   std::cerr << *(c_mtx[alphadx]) << std::endl;
+      // }
 
       std::cerr << "Finished with the S loop." << std::endl;
 
@@ -485,8 +485,8 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
 		RJ_mtx(i,j,k,l) += 0.5;
 	    }
 
-      std::cerr << "Built the RJ_mtx object." << std::endl;
-      std::cerr << RJ_mtx << std::endl;
+      // std::cerr << "Built the RJ_mtx object." << std::endl;
+      // std::cerr << RJ_mtx << std::endl;
       
       SmallMatrix3 rhs = pd->gptdata[gptdx]->s_star;
       rhs -= s_trial;
@@ -580,10 +580,10 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
       SmallMatrix3 lst = *lab_schmid_tensors[i];
       SmallMatrix3 lst_t = *lab_schmid_tensors[i];
       lst_t.transpose();
-      std::cerr << "Incorporating constitutive data:" << std::endl; 
-      std::cerr << lst << std::endl;
-      std::cerr << lst_t << std::endl;
-      std::cerr << sd->gptslipdata[gptdx]->dgamma_dtau[i] << std::endl;
+      // std::cerr << "Incorporating constitutive data:" << std::endl; 
+      // std::cerr << lst << std::endl;
+      // std::cerr << lst_t << std::endl;
+      // std::cerr << sd->gptslipdata[gptdx]->dgamma_dtau[i] << std::endl;
       SmallMatrix3 dgds = (lst+lst_t)*(0.5*(sd->gptslipdata[gptdx]->dgamma_dtau[i]));
       // TODO: De-allocate this somewhere?  Use a smart pointer?
       dgamma_ds[i] = new SmallMatrix3(dgds);
@@ -692,11 +692,11 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
     std::cerr << "Fe_att:" << std::endl;
     std::cerr << fe_att << std::endl;
     
-    std::cerr << "Building bsb_l." << std::endl;
+    // std::cerr << "Building bsb_l." << std::endl;
     // Now we have fe_att_t, fe_att, and u.  Build Balasubramian's L.
-    for(int dbi = 0; dbi<3; ++dbi)
-      for(int dbj = 0; dbj<3; ++dbj)
-	std::cerr << dbi << " , " << dbj << " = " << u(dbi,dbj) << std::endl;
+    // for(int dbi = 0; dbi<3; ++dbi)
+    //   for(int dbj = 0; dbj<3; ++dbj)
+    //     std::cerr << dbi << " , " << dbj << " = " << u(dbi,dbj) << std::endl;
     Rank4_3DTensor bsb_l;
     for(int i=0;i<3;++i)
       for(int j=0;j<3;++j)
@@ -738,8 +738,8 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
     std::cerr << "1100: " << bsb_d(1,1,0,0) << std::endl;
     std::cerr << "0011: " << bsb_d(0,0,1,1) << std::endl;
     
-    std::cerr << "BSB D" << std::endl;
-    std::cerr << bsb_d.as_smallmatrix() << std::endl;
+    // std::cerr << "BSB D" << std::endl;
+    // std::cerr << bsb_d.as_smallmatrix() << std::endl;
     
     std::cerr << "Building bsb_g." << std::endl;
     std::vector<Rank4_3DTensor> bsb_g(nslips);
@@ -754,8 +754,8 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
 		  + (*(lab_schmid_tensors[alpha]))(m,k)*bsb_l(m,l,n,o);
 	      };
 
-    std::cerr << "BSB_G:" << std::endl;
-    std::cerr << bsb_g[0].as_smallmatrix() << std::endl;
+    // std::cerr << "BSB_G:" << std::endl;
+    // std::cerr << bsb_g[0].as_smallmatrix() << std::endl;
 
     std::vector<Rank4_3DTensor> bsb_t(nslips);
     for(int alpha=0;alpha<nslips;++alpha)
@@ -769,8 +769,8 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
 		    0.5*lab_cijkl_(i,j,k,l)*bsb_g[alpha](k,l,n,o);
 		}
 
-    std::cerr << "BSB_T:" << std::endl;
-    std::cerr << bsb_t[0].as_smallmatrix() << std::endl;
+    // std::cerr << "BSB_T:" << std::endl;
+    // std::cerr << bsb_t[0].as_smallmatrix() << std::endl;
     
     // Member objects:  lab_schmid_tensors, nslips.
     // Slip increments std::vector<double> delta_g
@@ -815,11 +815,11 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
     SmallMatrix lhs_sm = lhs.as_smallmatrix();
     SmallMatrix rhs_sm = rhs.as_smallmatrix();
 
-    std::cerr << "Linear algebra components:" << std::endl;
-    std::cerr << "LHS:" << std::endl;
-    std::cerr << lhs_sm << std::endl;
-    std::cerr << "RHS:" << std::endl;
-    std::cerr << rhs_sm << std::endl;
+    // std::cerr << "Linear algebra components:" << std::endl;
+    // std::cerr << "LHS:" << std::endl;
+    // std::cerr << lhs_sm << std::endl;
+    // std::cerr << "RHS:" << std::endl;
+    // std::cerr << rhs_sm << std::endl;
     
     std::cerr << "Calling the Q matrix solver." << std::endl;
     int retcode = lhs_sm.solve(rhs_sm);
@@ -834,8 +834,8 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
     // "Solve" puts the solution in the RHS matrix.
     Rank4_3DTensor bsb_q(rhs_sm);
 
-    std::cerr << "BSB Q" << std::endl;
-    std::cerr << bsb_q.as_smallmatrix() << std::endl;
+    // std::cerr << "BSB Q" << std::endl;
+    //  std::cerr << bsb_q.as_smallmatrix() << std::endl;
     
     std::cerr << "Building the S matrix." << std::endl;
     // ----------------------------------------
@@ -877,8 +877,8 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
 			  (*lab_schmid_tensors[alpha])(m,j);
 		      }
 
-    std::cerr << "BSB S" << std::endl;
-    std::cerr << bsb_s.as_smallmatrix() << std::endl;
+    // std::cerr << "BSB S" << std::endl;
+    // std::cerr << bsb_s.as_smallmatrix() << std::endl;
 
     
     Rank4_3DTensor w_mat;

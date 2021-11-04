@@ -116,7 +116,7 @@ double SmallMatrix3::secondInvariant() const {
 
 std::pair<SmallMatrix3,SmallMatrix3> SmallMatrix3::ch_sqrt() const {
 // Cayley-Hamilton matrix square root algorithm.
-// Compile-time element retrieval wtih no bounds checking.
+// Compile-time element retrieval with no bounds checking.
   
   SmallMatrix3 u_res,r_res;
   SmallMatrix3 ident;
@@ -215,7 +215,7 @@ SmallMatrix3::SmallMatrix3(const SmallMatrix3 &sm3) : SmallMatrix(sm3) {}
 SmallMatrix3::SmallMatrix3(const SmallMatrix &sm) : SmallMatrix(sm) {
   if ((nrows!=3) || (ncols!=3)) {
     throw ErrProgrammingError(
-      "Attempt to construct Symmatrix3 from non-3x3 SmallMatrix.",
+      "Attempt to construct SmallMatrix3 from non-3x3 SmallMatrix.",
       __FILE__,__LINE__);
   }
   // Otherwise there's nothing to do.

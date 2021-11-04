@@ -41,7 +41,7 @@ public:
   const double &operator()(unsigned int i, unsigned int j,
 			   unsigned int k, unsigned int l) const;
   SmallMatrix as_smallmatrix(); // 9x9?  Or 6x6 with magic inner product?
-  SmallMatrix as_6matrix(); 
+  SmallMatrix as_6matrix();     // 6x6 version.
 
   friend std::ostream& operator<<(std::ostream &o,
 				 const Rank4_3DTensor &t);

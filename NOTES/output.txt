@@ -165,7 +165,7 @@ above this.)
   Takes you to Direct_Output.__call__, line 430 of engine/IO/analyze.py 
   This calls sampling.evaluate, in our case a PointSampleSet.
 
-  This is the "evaluate" function at line 142 of analysissample.py.
+  This is the "evaluate" function at line 141  of analysissample.py.
 
   This function calls output.evaluate.
 
@@ -222,4 +222,24 @@ in outputClones.py where the "_invariant" fn is defined.
   Component outputs also not working, less clear why.
 Error occurs when you select the widget.  Apparently the 
 FieldWidget is not Indexable in the expected way?
+
+
+  ---------
+
+  Convergence -- do diffs against the 218a6b4da check-in to see what
+changed, that's one that we are confident converged.  SymmMatrix3 and
+SmallMatrix3 are new since then, so an indexing fault seems likely.
+
+  - Does the SmallMatrix copy constructor actually make a copy?
+    Looks OK.
+
+   ----------
+  
+  Discovery: It's the output methods that are messing up the
+computation.  This should be impossible.
+
+  The "begin_element_output" fn in material.C had an error where
+it was calling "begin_element_matrix", when it shouldn't.  Fixed 
+that, but it's still not clear if things are right.
+
 

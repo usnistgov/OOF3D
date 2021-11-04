@@ -308,7 +308,8 @@ void Material::begin_element_output(const CSubProblem *subproblem,
   for(std::vector<Property*>::size_type i=0;i<property.size();i++) {
     if(subproblem->currently_active_prop(property[i])) {
       // std::cerr << "Calling begin_element_output on a property." << std::endl;
-      property[i]->begin_element_matrix(subproblem, time, el);
+      // TODO: What to do here?
+      property[i]->begin_element_output(subproblem, time, el);
       // std::cerr << "Back from property begin_element_output." << std::endl;
     }
   }
