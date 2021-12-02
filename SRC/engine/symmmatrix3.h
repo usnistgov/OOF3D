@@ -120,9 +120,9 @@ public:
     operator()(0,0) = x(0,0);
     operator()(1,1) = x(1,1);
     operator()(2,2) = x(2,2);
-    operator()(0,1) = 0.5*(x(0,1)*x(1,0));
-    operator()(0,2) = 0.5*(x(0,2)*x(2,0));
-    operator()(1,2) = 0.5*(x(1,2)*x(2,1));
+    operator()(0,1) = 0.5*(x(0,1)+x(1,0));
+    operator()(0,2) = 0.5*(x(0,2)+x(2,0));
+    operator()(1,2) = 0.5*(x(1,2)+x(2,1));
   }
   virtual OutputVal *dot(const OutputVal&) const;
   virtual OutputVal *dotScalar(const ScalarOutputVal&) const;

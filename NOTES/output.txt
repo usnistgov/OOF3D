@@ -242,4 +242,28 @@ computation.  This should be impossible.
 it was calling "begin_element_matrix", when it shouldn't.  Fixed 
 that, but it's still not clear if things are right.
 
+  Output is still having an effect, though.  Random thought:
+The stepper changes its behavior if there are scheduled outputs,
+doesn't it?  Maybe that's part of what's going on?
 
+  Compare the 218A6B4D checkout (in ~/work/OOF3D-git-ref) with the
+current plasticity HEAD.  First cut, just looking at Cauchy 
+stresses, they seem OK? 
+
+  Also, change the BC to 0.0001 x t, and set the step size to 1, 
+and run up to 60.  Yield is at about t=35 if you do this.
+(File is in "all_up_newtime.log" in the OOF3D/run/plasticity
+directory.)
+
+  Dirs are oof3d-plasticity-dist3d-2.7   -> debug output file
+           oof3d-218A6B4D-dist3d-2.7     -> reference output file
+
+  "Debug" has fewer instances of the output, exiting sooner?
+Failing to converge but bailing out?  This is a thing to check!
+
+  Want to avoid diffing the files, if possible.
+
+  --------
+
+  Might have found it, there was an error in the symmmatrix3 
+assignment operator. 
