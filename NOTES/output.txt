@@ -267,3 +267,12 @@ Failing to converge but bailing out?  This is a thing to check!
 
   Might have found it, there was an error in the symmmatrix3 
 assignment operator. 
+
+  --------
+
+  That was it!  Removed the reference dirs.  (They're still in github,
+of course.)
+
+  To do:
+  - The equation is still not fully nonlinear.
+  -

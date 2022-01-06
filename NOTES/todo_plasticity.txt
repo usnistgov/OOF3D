@@ -15,6 +15,9 @@ important issues.  They're collected here.
 
     Integrals are done correctly with the right Jacobian.
 
+    Outputs work for evaluations at gausspoints, which involved
+      most of the infrastructure.  Needs to be generalized.
+
   Pending: 
   - The NR solver has this tricky business where it selects an 
       optimal step size.  But extra evaluations of make_linear_system
@@ -29,17 +32,7 @@ important issues.  They're collected here.
 
   Todo:
 
-  - Build output machinery for plasticity-specific outputs,
-      which are more or less all of them.
-    Start with engine/IO/propertyoutput.h
-    Strain is done e.g. in engine/cstrain.[h|C|swg|spy], but only
-      for the geometric part.  A useful special case is e.g. 
-      the stress-free strain property, which subtracts itself
-      off from the elastic strain it gets passed in?
-    Related: As currently set up, it computes the "stress", 
-      is it appropriate for the property to determine the 
-      type/meaning of the stress? 
-
+  2nd:
   - The NR solver in OOF differs from the prototype code in that
       it's computing very high stresses for the initial time steps.
       It's not obvious why it should do this, but the initial stress
@@ -48,6 +41,9 @@ important issues.  They're collected here.
     First guess is that the the starting K at the start of each
       time-step is somehow the initial K?  Probably the prior K 
       matrix is not being saved.
+
+  - Outputs are basically working, but need to evaluate plastic 
+      info at arbitrary points in space, not just GPs.
       
   - In the NR solver, it would be useful to provide it with an
       initial guess for the delta for the first iteration.
@@ -62,28 +58,15 @@ important issues.  They're collected here.
       residual, it's the flux, which is combined with the applied
       forces when it's pulled out.
  
+  1st:
   - In the equation construciton process, we're still not doing
       the geometrically-nonlinear piece, the equation is the standard
       OOF equation with a nonlinear constitutive rule.
-
-  - We need to do outputs.  The output machinery may be assuming
-      that the problem state is entirely encapsulated in the 
-      DOFs, but we have gausspoint data.  Also the output machinery
-      may assume you can evaluate everything at arbitrary points
-      in space by interpolation, but again, we have gausspoint data.
-    Do we, in fact, want to build machinery to evaluate gausspoint
-      fields at arbitrary points in space?  We'll need this for
-      derivatives, eventually.
 
   - Double-check the caching, see if we're doing too much work.
     - Sub-item: Shape function derivs could benefit from 
        caching answers, and knowing when the displacement field
        has changed.
-
-  - The OOF constitutive rule is written in terms of all 9 elements
-      of the strain and stress.  Once we're happy with the numbers,
-      it should be re-written in terms of the strain six-vector,
-      where possible.
 
   - There is an implicit assumption that there are only displacement
       DOFs in the subproblem.  This is likely to be true for real

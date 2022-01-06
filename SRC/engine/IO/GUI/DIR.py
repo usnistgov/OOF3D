@@ -21,6 +21,7 @@ pyfiles = [
     'cijklparamwidgets.py', 'fieldPage.py', 'initialize.py',
     'interfacePage.py', 'interfacewidget.py' 'invariantwidget.py',
     'materialsPage.py', 'materialwidget.py', 'matrixmethodwidget.py',
+    'largestrainoutputwidget.py',
     'meshPage.py', 'meshcstoolboxGUI.py', 'meshcswidget.py',
     'meshdataGUI.py', 'meshinfoGUI.py', 'meshparamwidgets.py',
     'meshtimewidget.py', 'movenodeGUI.py', 'namedanalysiswidgets.py',
@@ -36,6 +37,4 @@ pyfiles = [
     'outputdestinationwidget.py', 'outputschedulewidget.py', 'outputwidget.py',
     'genericinfoGUI.py'
     ]
-
-
 
