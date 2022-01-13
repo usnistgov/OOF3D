@@ -1,0 +1,89 @@
+# -*- python -*-
+
+# This software was produced by NIST, an agency of the U.S. government,
+# and by statute is not subject to copyright in the United States.
+# Recipients of this software assume all responsibilities associated
+# with its operation, modification and maintenance. However, to
+# facilitate maintenance we ask that before distributing modified
+# versions of this software, you first contact the authors at
+# oof_manager@nist.gov. 
+
+from ooflib.SWIG.engine import fieldindex
+from ooflib.SWIG.engine import planarity
+from ooflib.SWIG.engine import symmmatrix3
+from ooflib.SWIG.engine.IO import propertyoutput
+from ooflib.common import debug
+from ooflib.common import enum
+from ooflib.common import registeredclass
+from ooflib.common.IO import parameter
+
+# This file should be imported directly by engine/initialize.py
+# so the stuff goes in the menus.
+
+class LargeStrainType(registeredclass.RegisteredClass):
+    registry = []
+    def name(self):
+        return self._name
+    def iterator(self,plnrty):
+        return fieldindex.getSymTensorIterator(plnrty)
+    def iterator_all(self):
+        return fieldindex.getSymTensorIterator(planarity.ALL_INDICES)
+    def newOutputValue(self):
+        return symmmatrix3.newSymmMatrix3OutputValue()
+    tip="Tip not yet available in your area."
+    discussion="""<para>
+    <classname>LargeStrainType</classname> objects are used to pick
+    large strain varieties.
+    </para>"""
+
+class GLStrain(LargeStrainType):
+    _name="Green Lagrange Strain"
+
+registeredclass.Registration(
+    "Green Lagrange Strain",
+    LargeStrainType,
+    GLStrain,
+    ordering=0,
+    tip="The FtF-I thing.",
+    discussion="""<para>The quantity 0.5*(F-transpose.F-I)</para>"""
+)
+
+    
+class LogarithmicStrain(LargeStrainType):
+    _name="Logarithmic Strain"
+
+registeredclass.Registration(
+    "Logarithmic Strain",
+    LargeStrainType,
+    LogarithmicStrain,
+    ordering=1,
+    tip="Log of FtF-I, basically.",
+    discussion="""<para>The quantity 0.5*log(F-transpose.F)</para>"""
+)
+
+
+class LargeStrainTypeParameter(parameter.RegisteredParameter):
+    def __init__(self, name, value=None, default=None, tip=None, auxData={}):
+        parameter.RegisteredParameter.__init__(self,name, LargeStrainType,
+                                               value, default, tip, auxData)
+    def clone(self):
+        return LargeStrainTypeParameter(self.name, self.value,
+                                        self.default, self.tip)
+
+
+propertyoutput.SymmMatrix3PropertyOutputRegistration(
+    "Large Strain",
+    initializer=POInitLargeStrain(),
+
+    parameters=[LargeStrainTypeParameter("type",
+                                         default=GLStrain(),
+                                         tip="Type of large strain")],
+    ordering=6,
+    tip="Large strain output",
+    srepr = lambda s: s.resolveAlias("type").value.name() + " Large Strain",
+    discussion="""
+    <para>Discussion not available in your area.</para>
+    """)
+
+
+
