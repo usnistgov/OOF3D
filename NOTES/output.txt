@@ -273,6 +273,23 @@ assignment operator.
   That was it!  Removed the reference dirs.  (They're still in github,
 of course.)
 
-  To do:
-  - The equation is still not fully nonlinear.
-  -
+
+  Logarithmic strain:
+
+  Maybe need to move it up one level?  
+
+  Looked at doing what energy does, but that's a thing where you 
+explicitly need the constituve parameters -- you can accumulate
+energy as you go (or remove it), but it doesn't work right.
+
+  Downside:  Separate things will look weird in the GUI.
+Refactor in broader scope?
+
+  Better idea: How does strain work?
+  Stuff is in engine/cstrain.h/C/spy/swg.
+  (OMG switches on the type?  Ugh.)
+
+
+  TODO: The equation nonlinearity thing.
+
+
