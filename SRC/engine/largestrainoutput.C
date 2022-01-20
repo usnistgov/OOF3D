@@ -84,10 +84,55 @@ OutputVal *POInitLargeStrain::operator()(const PropertyOutput *po,
   } 
   else {
     if (*outputtype=="Logarithmic Strain") {
-      return cmatrix; // Place-holder, actually compute logarithm.
+      SymmMatrix3 *logstrain = new SymmMatrix3();
+      // "In-place" logarithm.  Populates transient data for the
+      // symmetric eigenvalue/vector lapack function dsyev, and
+      // calls it, which gives the deconstruction A = U.D.U^T,
+      // where U is the matrix of normalized eigenvectors, D is
+      // a diagonal matrix of the eigenvalues, and U.U^T=I due
+      // to the orthonormality of the eigenvectors.  Orthogonality
+      // is promised to us by math, and normality by dsyev.
+      char jobz = 'V';
+      char uplo = 'U';
+      int n = 3;
+      double dvec[9]; // Populate upper triangle of a full 3x3 from our data.
+      for (int r=0;r<3;++r) {
+	for (int c=r;c<3;++c) {
+	  // Also convert to row-major.
+	  dvec[3*c+r] = (*cmatrix)(r,c);
+	}
+      }
+      int lda = 3;
+      double w[3];
+      double work[9]; // Docs say at >= 3*N-1.
+      int lwork = 9;
+      int info = 0;
+      
+      dsyev_(&jobz, &uplo, &n, dvec, &lda, w, work, &lwork, &info);
+      
+      if (info==0) {
+	for(int i=0;i<3;++i)
+	  w[i] = log(w[i]);  // Logs of the eigenvalues.
+	for(int r=0;r<3;++r) {
+	  for(int c=r;c<3;++c) {
+	    double res = 0.0;
+	    for(int i=0;i<3;++i) {
+	      res += 0.5*dvec[i*3+r]*w[i]*dvec[i*3+c];
+	    }
+	    (*logstrain)(r,c) = res;
+	  }
+	}
+	delete cmatrix;
+	return logstrain;
+      }
+      else {
+	throw ErrProgrammingError("Matrix logarithm failed.",
+				  __FILE__,__LINE__);
+      }
     }
     else {
-      std::cerr << "Unknown large strain type." << std::endl;
+      throw ErrProgrammingError("Unknown large-strain output type.",
+				__FILE__,__LINE__);
     }
     
   } // Bottom of switching on types.

@@ -30,5 +30,21 @@ public:
 				const MasterCoord&) const;
 };
 
-				
+extern "C" {
+  // Arguments of dsyev:
+  // jobz, character, 'V' means eigenvectors as well as eigenvalues.
+  // uplo, character, 'U' means upper triangle is stored.
+  // n, integer, order of A.
+  // a, double*, A matrix stored as described by uplo. If evs
+  //     are requested, then on output, they are in here.
+  // lda, integer, leading dimension of A.
+  // w, double, eigenvalues in ascending order.
+  // work, double, array of size lwork.
+  // lwork, > 3*N-1.
+  // info, output, 0 = success.
+  void dsyev_(char *jobz, char *uplo, int *n, double *A,
+	      int *lda, double *w, double *work, int *lwork, int *info);
+};
+
+
 #endif // LARGESTRAINOUTPUT_H
