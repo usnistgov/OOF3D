@@ -62,9 +62,12 @@ important issues.  They're collected here.
   - In the equation construciton process, we're still not doing
       the geometrically-nonlinear piece, the equation is the standard
       OOF equation with a nonlinear constitutive rule.
-    Fixing this involves re-working the property classes, 
-      no more Flux or Eqn properties, just properites that 
-      make contributions to one or the other or both.
+    Fixing this looks (relatively) easy, it involves modifying
+      the DeformedDivergenceEquation class to add the necessary
+      term given the fluxvalue output.
+    It does *not* involve collapsing the property classes, as 
+      was previously planned.
+  
 
   - Double-check the caching, see if we're doing too much work.
     - Sub-item: Shape function derivs could benefit from 
