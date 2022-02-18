@@ -54,7 +54,7 @@ except ImportError:
 # The make_dist script edits the following line when a distribution is
 # built.  Don't change it by hand.  On the git master branch,
 # "(unreleased)" is replaced by the version number.
-version_from_make_dist = "(unreleased)"
+version_from_make_dist = "3.2.4"
     
 # These are the version numbers of the installed version of VTK.
 # They're detected by findvtk().
