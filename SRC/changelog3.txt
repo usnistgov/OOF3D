@@ -15,6 +15,8 @@
 
 3.2.4
 
+Compatibility with VTK 9.
+
 Changed some of the regression tests so that they use png files
 instead of jpeg.  Jpeg libraries aren't standard, apparently, and
 tests that relied on voxel values weren't portable.
