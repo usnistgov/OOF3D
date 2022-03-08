@@ -196,7 +196,9 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
     for(int eqcomp=0; eqcomp<dim(); ++eqcomp) {
       // component 'i' is eqcomp, shape function is mu.
       int global_row = nodaleqn( *mu->funcnode(), eqcomp)->ndq_index();
-      // Get the column, do the contraction.
+      // Get the column, do the contraction.  From the fluxdata object.
+      // fluxdata is a FluxSysMap, defined in equation.h, which maps
+      // 
     }
     
     // std::cerr << "Starting equation component loop." << std::endl;

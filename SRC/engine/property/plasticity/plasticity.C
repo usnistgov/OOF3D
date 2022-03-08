@@ -1061,8 +1061,21 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
   // TODO: Break this out into a "make_eqn_contribs" method of the
   // property class, and get rid of the EqnProperty class.  See
   // the "NOTES/property_renovation.txt" for details.
-  // 
- 
+  //
+  // Altenratively, populate the SmallSystem with the flux value
+  // itself here, and hand that off to the equation to create
+  // the correct entries in the master stiffness matrix.
+
+  // Other idea: Build a new flux-matrix-like thing here that
+  // does the contraction with the flux, that only we know
+  // how to do, and hand *that* off to the equation to create
+  // the right matrix entries.  Q: Is this just the first
+  // idea again?  The thing you need to add is the thing
+  // we already have? A: Yes.
+  // Actual plan to move forward: Add the make_eqn_contribs method
+  // to the FluxProperty, to isolate the changes, and get things
+  // working.  Then fix the class hierarchy later.
+
 }
 
 

@@ -310,6 +310,57 @@ public:
   // per-evaluation-point expensive operations they want to perform,
   // they should do them in these functions.
 
+
+
+  // Equation stuff.
+  // NB this fn is not virtual, it's a high-level function that owns
+  // the node loop, and calls all of the virtual functions below.
+  // Called from Material::make_linear_system.
+  void make_equation_contributions(const FEMesh*, const Element*,
+				   const Equation*,
+				   const MasterPosition&, double time,
+				   const CNonlinearSolver*,
+				   SmallSystem*)
+    const;
+
+  // A derived class can optionally redefine any of these functions.
+  // It must redefine at least one of them. (Q: True?)
+
+  // The linearization/derivative of force with respect to field.
+  virtual void force_deriv_matrix(const FEMesh*, const Element*,
+				  const Equation*,
+				  const ElementFuncNodeIterator&,
+				  const MasterPosition&,
+				  double time, SmallSystem* )
+    const { return; }
+
+  // The value of the force at a given element and given point.
+  virtual void force_value(const FEMesh*, const Element*,
+			   const Equation*, const MasterPosition&,
+			   double time, SmallSystem* )
+    const { return; }
+
+  // Contributions to the coefficient of the 1st time-deriv of the field.
+  // An example of this is heat capacity.
+  virtual void first_time_deriv_matrix(const FEMesh*, const Element*,
+				       const Equation*,
+				       const ElementFuncNodeIterator&,
+				       const MasterPosition&,
+				       double time, SmallSystem* )
+    const { return; }
+
+
+  // Contributions to the coefficient of the 2nd time-deriv of the field.
+  // An example of this is mass density.
+  virtual void second_time_deriv_matrix(const FEMesh*, const Element*,
+					const Equation*,
+					const ElementFuncNodeIterator&,
+					const MasterPosition&,
+					double time, SmallSystem* )
+    const { return; }
+
+  
+		   
   virtual void begin_point(const FEMesh*, const Element*,
 			   const Flux*, const MasterPosition&) {}
   virtual void end_point(const FEMesh*, const Element*,
