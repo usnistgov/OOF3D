@@ -67,7 +67,7 @@ Material::Material(const std::string &nm,
     fluxpropmap[*fi] = FluxPropList();
   for(std::vector<Equation*>::const_iterator ei = Equation::all().begin();
       ei!=Equation::all().end(); ++ei)
-    eqnpropmap[*ei] = std::vector<EqnProperty*>();
+    eqnpropmap[*ei] = std::vector<PhysicalProperty*>();
 }
 
 Material::~Material() {
@@ -218,7 +218,7 @@ void Material::clear_xref() {
 void Material::registerFlux(Property *prop, const Flux *flux) {
   // This property contributes to this flux.  Called by
   // Property::bookkeeping().
-  FluxProperty *p = dynamic_cast<FluxProperty*>(prop);
+  PhysicalProperty *p = dynamic_cast<PhysicalProperty*>(prop);
   fluxprop[flux->index()].push_back(p);
   fluxpropmap[flux].push_back(p);
 }
@@ -226,7 +226,7 @@ void Material::registerFlux(Property *prop, const Flux *flux) {
 void Material::registerEqn(Property *prop, const Equation *eqn) {
   // This property contributes directly to this equation.  Called by
   // Property::bookkeeping.
-  eqnpropmap[eqn].push_back(dynamic_cast<EqnProperty*>(prop));
+  eqnpropmap[eqn].push_back(dynamic_cast<PhysicalProperty*>(prop));
 }
 
 // Routine to query whether or not this material has properties which
@@ -398,7 +398,7 @@ int Material::integrationOrder(const CSubProblem *subproblem,
     {
       EqnPropMap::const_iterator stupid = eqnpropmap.find(*eqn);
       const EqnPropList &proplist = (*stupid).second;
-      for(std::vector<EqnProperty*>::const_iterator property=proplist.begin();
+      for(std::vector<PhysicalProperty*>::const_iterator property=proplist.begin();
 	  property != proplist.end(); ++property)
 	{
 	  int order = (*property)->integration_order(subproblem, element) +
@@ -455,6 +455,9 @@ void Material::make_linear_system(const CSubProblem *subproblem,
        fluxi != active_fluxes.end(); ++fluxi)
     {
       // "SmallSystem" is a set of 3 matrices and a vector.
+      // The flux_small_sys here is an accumulator, which adds up all
+      // the contributions which are made into the property_flux_info
+      // object property by property.
       SmallSystem *flux_small_sys = (*fluxi)->initializeSystem( el );
       SmallSystem *property_flux_info = (*fluxi)->initializeSystem( el );
 	  
@@ -470,6 +473,8 @@ void Material::make_linear_system(const CSubProblem *subproblem,
 	{
 	  // if the property is active in the current subproblem,
 	  // calculate its contributions to the active flux
+	  // TODO: Scope?  Checks activity in the subproblem, but properties
+	  // are scoped to materials.  
 	  if(subproblem->currently_active_prop(*property)) {
 	    (*property)->begin_point( mesh, el, (*fluxi), pt );
 
@@ -523,7 +528,7 @@ void Material::make_linear_system(const CSubProblem *subproblem,
     // hook here to call the property with the appropriate equation.
     // If such a thing turns out to be needed, follow the begin_point
     // pattern for fluxes.
-    for(std::vector<EqnProperty*>::const_iterator property=eqn_prop_list.begin();
+    for(std::vector<PhysicalProperty*>::const_iterator property=eqn_prop_list.begin();
 	property != eqn_prop_list.end(); ++property)
       {
 	if(subproblem->currently_active_prop(*property)) {
@@ -536,7 +541,15 @@ void Material::make_linear_system(const CSubProblem *subproblem,
 	  property_eqn_info->reset();
 	}
       } // End of property loop.
-    
+
+    // Want to make FluxProperty equation contributions here.
+    // This is temporary, but hard, the problem is that the
+    // we're already inside the equation loop, but we don't
+    // know if our property contributes to the equation or not.
+    // TODO: Add metadata to the FluxProperty that says if it
+    // contributes to the equation, and interrogate that metadata
+    // for the properties and make the appropriate call.
+
     // Finally, we use the computed fluxdata and eqndata to make
     // the contributions to the global vectors and matrices.
     // Here dofmap is the Element's localDoFmap, which maps local

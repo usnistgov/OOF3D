@@ -41,7 +41,12 @@ reg = PropertyRegistration(
     propertyType="Plasticity",
     discussion=None)
 
+# Q: Both of these take a "nonlinear" arg... ?
 reg.fluxInfo(fluxes=[problem.Stress], fields=[problem.Displacement],
              time_derivs=[0])
 
-
+# In the glorious future, all properties will be capable of
+# both equation and force contributions.
+reg.eqnInfo(equations=[problem.LDForceBalanceEquation],
+            fields=[problem.Displacement],
+            time_derivs=[0])

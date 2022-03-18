@@ -195,7 +195,6 @@ void FluxProperty::make_flux_contributions(const FEMesh *mesh,
   recurse = false;
 }
 
-
 // Property equation contribs. Once the class collapse happens,
 // this will make more sense.
 void FluxProperty::make_equation_contributions(const FEMesh *mesh,
@@ -207,6 +206,7 @@ void FluxProperty::make_equation_contributions(const FEMesh *mesh,
 					       SmallSystem *eqndata)
   const
 {
+  std::cerr << "**** Hello! FluxProperty::make_equation_conributions called." << std::endl;
   for(CleverPtr<ElementFuncNodeIterator>node(element->funcnode_iterator()); 
       !node->end(); ++*node)
     {

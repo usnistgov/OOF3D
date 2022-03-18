@@ -1078,6 +1078,15 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
 
 }
 
+void Plasticity::force_deriv_matrix(const FEMesh*, const Element*,
+				  const Equation*,
+				  const ElementFuncNodeIterator&,
+				  const MasterPosition&,
+				  double time, SmallSystem* )
+  const {
+
+  std::cerr << "Hello, world!" << std::endl;
+}
 
 // The magic 12 is the number of slip systems in FCC.
 FCCPlasticity::FCCPlasticity(PyObject *reg, const std::string &nm,

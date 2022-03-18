@@ -86,6 +86,8 @@ public:
   virtual ~Plasticity() {}
   virtual void begin_element_matrix(const CSubProblem*, double time,
 				    const Element*); 
+
+  
   virtual void flux_matrix(const FEMesh *mesh,
 			   const Element *element,
 			   const ElementFuncNodeIterator &nu,
@@ -98,6 +100,15 @@ public:
 				 const MasterPosition&,
 				 double time,
 				 SmallSystem*) const;
+  // Eqn contributions for geometric nonlinearity.
+  virtual void force_deriv_matrix(const FEMesh*, const Element*,
+				  const Equation*,
+				  const ElementFuncNodeIterator&,
+				  const MasterPosition&,
+				  double time, SmallSystem* )
+    const;
+
+  
   virtual int integration_order(const CSubProblem *, const Element*) const;
   virtual bool constant_in_space() const { return true; }
   virtual void precompute(FEMesh*);

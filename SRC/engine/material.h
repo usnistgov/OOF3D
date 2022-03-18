@@ -45,6 +45,7 @@ class EqnProperty;
 class FEMesh;
 class Field;
 class Flux;
+class PhysicalProperty;
 class FluxProperty;
 class Equation;
 class LinearizedSystem;
@@ -87,7 +88,7 @@ public:
 
 // class for listing the Properties that contribute to a Flux
 
-class FluxPropList : public std::vector<FluxProperty*> {
+class FluxPropList : public std::vector<PhysicalProperty*> {
 public:
   // A Flux is active for this material if any of the Properties that
   // contribute to it are active.  A Property is active if all of the
@@ -98,7 +99,7 @@ public:
 
 // Similar class for properties that contribute to an Equation.
 
-typedef std::vector<EqnProperty*> EqnPropList;
+typedef std::vector<PhysicalProperty*> EqnPropList;
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
