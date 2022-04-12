@@ -1061,49 +1061,10 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
   // TODO: Break this out into a "make_eqn_contribs" method of the
   // property class, and get rid of the EqnProperty class.  See
   // the "NOTES/property_renovation.txt" for details.
-  //
-  // Altenratively, populate the SmallSystem with the flux value
-  // itself here, and hand that off to the equation to create
-  // the correct entries in the master stiffness matrix.
-
-  // Other idea: Build a new flux-matrix-like thing here that
-  // does the contraction with the flux, that only we know
-  // how to do, and hand *that* off to the equation to create
-  // the right matrix entries.  Q: Is this just the first
-  // idea again?  The thing you need to add is the thing
-  // we already have? A: Yes.
-  // Actual plan to move forward: Add the make_eqn_contribs method
-  // to the FluxProperty, to isolate the changes, and get things
-  // working.  Then fix the class hierarchy later.
-
+  // 
+ 
 }
 
-void Plasticity::force_deriv_matrix(const FEMesh*, const Element* el,
-				  const Equation* eq,
-				  const ElementFuncNodeIterator& efi,
-				  const MasterPosition& mp,
-				  double time, SmallSystem* eqndata)
-  const {
-  // Currently called from FluxProperty::make_equation_contributions.  This will
-  // change when the class hierarchy changes.
-  // We are already inside the gausspoint loop. First step is to retrieve the Cauchy stress:
-  PlasticData *pd = dynamic_cast<PlasticData*>(el->getDataByName("plastic_data"));
-  int gptidx = (pd->mctogpi_map)[mp.mastercoord()];
-  const SymmMatrix3 &cstress = (pd->gptdata[gptidx])->cauchy;
-
-  // The eqndata object has rows for each component of the equation, and columns for each
-  // DOF of the element.
-  // TODO: We maybe don't want this, the downstream multiplication in the equation is
-  // by the shape functions, but the geometric term is a product of shape function
-  // derivatives, with different indexing than the flux matrix.  What we want is
-  // a "geometric flux" contribution that does a different, flux-dependent,
-  // flux-matrix-like thing that isn't what the flux or equation contributions do.
-  
-  // std::cerr << cstress << std::endl;
-
-  
-  std::cerr << "Hello, world!" << std::endl;
-}
 
 // The magic 12 is the number of slip systems in FCC.
 FCCPlasticity::FCCPlasticity(PyObject *reg, const std::string &nm,

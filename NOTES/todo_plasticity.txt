@@ -32,13 +32,6 @@ important issues.  They're collected here.
 
   Todo:
 
-  Big change:  Don't collapse the classes, add the geometric
-    term in the flux property, and add a new geometric piece
-    to the SmallSystem, and contract it.
-
-  Then, maybe incorporate this in to the existing 
-    stiffness matrix.
-
   2nd:
   - The NR solver in OOF differs from the prototype code in that
       it's computing very high stresses for the initial time steps.
@@ -69,12 +62,9 @@ important issues.  They're collected here.
   - In the equation construciton process, we're still not doing
       the geometrically-nonlinear piece, the equation is the standard
       OOF equation with a nonlinear constitutive rule.
-    Fixing this looks (relatively) easy, it involves modifying
-      the DeformedDivergenceEquation class to add the necessary
-      term given the fluxvalue output.
-    It does *not* involve collapsing the property classes, as 
-      was previously planned.
-  
+    Fixing this involves re-working the property classes, 
+      no more Flux or Eqn properties, just properites that 
+      make contributions to one or the other or both.
 
   - Double-check the caching, see if we're doing too much work.
     - Sub-item: Shape function derivs could benefit from 

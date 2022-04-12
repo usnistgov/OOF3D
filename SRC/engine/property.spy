@@ -44,7 +44,6 @@ PropertyPtr.__eq__ = _Property___eq__
 
 # Property.bookkeeping is called by Material.cross_reference
 
-# This is where property registration metadata matters.
 def _Property_bookkeeping(self, material):
     material.registerPropertyType(self, self.registration().propertyType())
     for field in self.registration().fields():

@@ -186,21 +186,6 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
     for(int dsfdx=0;dsfdx<DIM;++dsfdx) {
       // std::cerr << dsfdx << " : " << mu->dshapefunction(dsfdx,gpt) << std::endl;
     }
-    // TODO: Do the geometric term here also.  Deformed divergence
-    // equations will all have a term like this, you just need to
-    // multiply the geometric kernel thing by the flux, with the
-    // appropriate contraction rule.  Deformed divergence equations
-    // can always do this, and the approach is generic.  Need to think
-    // a bit about what this means for non-tensor flux properties.
-
-    for(int eqcomp=0; eqcomp<dim(); ++eqcomp) {
-      // component 'i' is eqcomp, shape function is mu.
-      int global_row = nodaleqn( *mu->funcnode(), eqcomp)->ndq_index();
-      // Get the column, do the contraction.  From the fluxdata object.
-      // fluxdata is a FluxSysMap, defined in equation.h, which maps
-      // 
-    }
-    
     // std::cerr << "Starting equation component loop." << std::endl;
     for(int eqcomp=0; eqcomp<dim(); ++eqcomp) {
       // std::cerr << "Start of equation component loop" << std::endl;

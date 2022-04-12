@@ -230,30 +230,6 @@ public:
   // this function returns the polynomial order (in x and y) of the
   // quantity computed by fluxmatrix.
   virtual int integration_order(const CSubProblem*, const Element*) const = 0;
-
-  // Eventually the FluxProperty and EqnProperty classes will be
-  // removed and all the methods will be here.  For now, add required
-  // methods as no-op stubs to make the build work, while retaining
-  // the Flux and Eqn properties so as not to break things.
-  virtual void begin_point(const FEMesh*, const Element*,
-			   const Flux*, const MasterPosition&) {}
-  virtual void end_point(const FEMesh*, const Element*,
-			 const Flux*, const MasterPosition&) {}
-  
-  virtual void make_equation_contributions(const FEMesh*, const Element*,
-					   const Equation*,
-					   const MasterPosition&, double time,
-					   const CNonlinearSolver*,
-					   SmallSystem*)
-    const {};
-  virtual void make_flux_contributions(const FEMesh*, const Element*,
-			       const Flux*,
-			       const MasterPosition&, double time,
-			       const CNonlinearSolver*, SmallSystem*)
-    const {};
-  virtual void flux_value(const FEMesh *mesh, const Element *element,
-			  const Flux *flux, const MasterPosition &pt,
-			  double time, SmallSystem *fluxdata) const {};
 };
 
 
@@ -290,13 +266,10 @@ public:
   //    sigma(x,u,Du) = K(x,u,Du) Du + sigma_0(x,u,Du)
   //
 
-  // This function used to be a top-level coordinating function in the
-  // FluxProperty class, but it's now an over-ridable stub in the
-  // PhysicalProperty base class. Eventually the Flux and Eqn property
-  // distinction will be removed.  This function owns the "mu" (rows
-  // of the master stiffness matrix) node loop, and calls all the
-  // functions below, swtiching on the solver type to decide whether
-  // to call static_flux_value.  Called from
+  // NB this function is not virtual, it's the top-level function that
+  // owns the "mu" (rows of the master stiffness matrix) node loop,
+  // and calls all the functions below, swtiching on the solver type
+  // to decide whether to call static_flux_value.  Called from
   // Material::make_linear_system.
   void make_flux_contributions(const FEMesh*, const Element*,
 			       const Flux*,
@@ -337,58 +310,6 @@ public:
   // per-evaluation-point expensive operations they want to perform,
   // they should do them in these functions.
 
-
-
-  // Equation stuff.
-  // NB this fn is not virtual, it's a high-level function that owns
-  // the node loop, and calls all of the virtual functions below.
-  // Called from Material::make_linear_system.
-  void make_equation_contributions(const FEMesh*, const Element*,
-				   const Equation*,
-				   const MasterPosition&, double time,
-				   const CNonlinearSolver*,
-				   SmallSystem*)
-    const;
-
-  // A derived class can optionally redefine any of these functions.
-  // If you don't redefine any of them, then the property will not
-  // make any equation contributions.
-
-  // The linearization/derivative of force with respect to field.
-  virtual void force_deriv_matrix(const FEMesh*, const Element*,
-				  const Equation*,
-				  const ElementFuncNodeIterator&,
-				  const MasterPosition&,
-				  double time, SmallSystem* )
-    const { return; }
-
-  // The value of the force at a given element and given point.
-  virtual void force_value(const FEMesh*, const Element*,
-			   const Equation*, const MasterPosition&,
-			   double time, SmallSystem* )
-    const { return; }
-
-  // Contributions to the coefficient of the 1st time-deriv of the field.
-  // An example of this is heat capacity.
-  virtual void first_time_deriv_matrix(const FEMesh*, const Element*,
-				       const Equation*,
-				       const ElementFuncNodeIterator&,
-				       const MasterPosition&,
-				       double time, SmallSystem* )
-    const { return; }
-
-
-  // Contributions to the coefficient of the 2nd time-deriv of the field.
-  // An example of this is mass density.
-  virtual void second_time_deriv_matrix(const FEMesh*, const Element*,
-					const Equation*,
-					const ElementFuncNodeIterator&,
-					const MasterPosition&,
-					double time, SmallSystem* )
-    const { return; }
-
-  
-		   
   virtual void begin_point(const FEMesh*, const Element*,
 			   const Flux*, const MasterPosition&) {}
   virtual void end_point(const FEMesh*, const Element*,
@@ -407,14 +328,14 @@ public:
     : PhysicalProperty(nm,registration)
   {};
 
-  // NB this fn is a stub in the parent PhysicalProperty class, its job is to
-  // coordinate the equation contributions. The implementation owns the node loop.
+  // NB this fn is not virtual, it's a high-level function that owns
+  // the node loop, and calls all of the virtual functions below.
   // Called from Material::make_linear_system.
-  virtual void make_equation_contributions(const FEMesh*, const Element*,
-					   const Equation*,
-					   const MasterPosition&, double time,
-					   const CNonlinearSolver*,
-					   SmallSystem*)
+  void make_equation_contributions(const FEMesh*, const Element*,
+				   const Equation*,
+				   const MasterPosition&, double time,
+				   const CNonlinearSolver*,
+				   SmallSystem*)
     const;
 
   // A derived class can optionally redefine any of these functions.

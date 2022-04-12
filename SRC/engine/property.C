@@ -195,30 +195,6 @@ void FluxProperty::make_flux_contributions(const FEMesh *mesh,
   recurse = false;
 }
 
-// Property equation contribs. Once the class collapse happens,
-// this will make more sense.
-void FluxProperty::make_equation_contributions(const FEMesh *mesh,
-					       const Element *element,
-					       const Equation *eqn,
-					       const MasterPosition &pt,
-					       double time,
-					       const CNonlinearSolver *nlsolver,
-					       SmallSystem *eqndata)
-  const
-{
-  std::cerr << "**** Hello! FluxProperty::make_equation_conributions called." << std::endl;
-  for(CleverPtr<ElementFuncNodeIterator>node(element->funcnode_iterator()); 
-      !node->end(); ++*node)
-    {
-      first_time_deriv_matrix(mesh, element, eqn, *node, pt, time, eqndata);
-      second_time_deriv_matrix(mesh, element, eqn, *node, pt, time, eqndata);
-      if(nlsolver->needsJacobian())
-	force_deriv_matrix(mesh, element, eqn, *node, pt, time, eqndata);
-    }
-  force_value(mesh, element, eqn, pt, time, eqndata);
-}
-
-
 //=\\=//=\\=//=\\=//
 
 // The default version of flux_matrix assumes that static_flux_value
