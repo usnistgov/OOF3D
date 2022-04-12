@@ -95,7 +95,7 @@ void Flux::addEquation(Equation *eqn) {
 }
 
 SmallSystem *Flux::initializeSystem(const Element *el) const {
-  return new SmallSystem(dim, el->ndof());
+  return new SmallGeometricSystem(dim, divdim, el->ndof());
 }
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//

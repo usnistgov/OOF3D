@@ -397,3 +397,38 @@ void SmallSparseMatrix::operator+=(const SmallSparseMatrix &other) {
   for(unsigned int i=0; i<nonzero_.size(); i++)
     nonzero_[i] = nonzero_[i] || other.nonzero_[i];
 }
+
+
+SmallGeometricSystem::SmallGeometricSystem(int nr, int divdim, int nc) :
+  SmallSystem(nr,nc),gMatrix(divdim,nc),g_clean(true) 
+{
+  gMatrix.clear();
+}
+
+
+void SmallGeometricSystem::reset() {
+  SmallSystem::reset();
+  gMatrix.clear();
+  g_clean = true;
+}
+
+const double &SmallGeometricSystem::geometry_matrix_element(const FieldIndex& fi,
+							    const Field* fld,
+							    const FieldIndex& fldx,
+							    const ElementFuncNodeIterator&efi) const
+{
+  int row = fi.integer();
+  int col = efi.localindex(*fld, &fldx);
+  return gMatrix(row,col);
+}
+
+const double &SmallGeometricSystem::geometry_matrix_element(const FieldIndex& fi,
+							    const Field* fld,
+							    const FieldIndex& fldx,
+							    const ElementFuncNodeIterator&efi)
+{
+  g_clean = false;
+  int row = fi.integer();
+  int col = efi.localindex(*fld, &fldx);
+  return gMatrix(row,col);
+}
