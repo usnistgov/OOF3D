@@ -32,6 +32,13 @@ important issues.  They're collected here.
 
   Todo:
 
+  Big change:  Don't collapse the classes, add the geometric
+    term in the flux property, and add a new geometric piece
+    to the SmallSystem, and contract it.
+
+  Then, maybe incorporate this in to the existing 
+    stiffness matrix.
+
   2nd:
   - The NR solver in OOF differs from the prototype code in that
       it's computing very high stresses for the initial time steps.
