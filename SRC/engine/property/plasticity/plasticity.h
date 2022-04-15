@@ -70,6 +70,7 @@ class SymmetricTensorFlux;
 class TwoVectorField;
 class ThreeVectorField;
 class SmallSystem;
+class SmallGeometricSystem;
 class PlasticConstitutiveRule;
 class SmallMatrix;
 class SmallMatrix3;
@@ -92,7 +93,7 @@ public:
 			   const Flux *flux,
 			   const MasterPosition &x,
 			   double time,
-			   SmallSystem *fluxmtx) const;
+			   SmallGeometricSystem *fluxmtx) const;
   virtual void static_flux_value(const FEMesh*, const Element*,
 				 const Flux*,
 				 const MasterPosition&,

@@ -1002,7 +1002,7 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
 			     const Flux *flux,
 			     const MasterPosition &mpt,
 			     double time,
-			     SmallSystem *fluxmtx)
+			     SmallGeometricSystem *fluxmtx)
   const
 {
   // LINSYS STEP 4, plastic version -- called from
@@ -1058,10 +1058,14 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
   // (pd->gptdata[gptidx])->cauchy, and is up to date when we are
   // called.
 
-  // TODO: Break this out into a "make_eqn_contribs" method of the
-  // property class, and get rid of the EqnProperty class.  See
-  // the "NOTES/property_renovation.txt" for details.
-  // 
+  // TODO OPT: Do this at the gauss-point loop, not inside the node loop.
+  SymmMatrix3 &cauchy = (pd->gptdata[gptidx])->cauchy; 
+  for(SymTensorIterator ij; !ij.end(); ++ij) {
+    for(IteratorP kay = displacement->iterator(); !kay.end(); ++kay) {
+      fluxmtx->geometry_matrix_element( ij.row(), displacement, kay, node ) +=
+	cauchy(ij.row(),ij.col())*displacedsfdvs[ij.col()]*(ij.diagonal() ? 2.0 : 1.0);
+    }
+  }
  
 }
 

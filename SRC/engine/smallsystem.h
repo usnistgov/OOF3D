@@ -221,13 +221,13 @@ public:
   SmallSparseMatrix gMatrix;
   bool g_clean;
   virtual void reset();
-  const double &geometry_matrix_element(const FieldIndex&,
+  const double &geometry_matrix_element(const int&,
 					const Field*,
 					const FieldIndex&,
 					const ElementFuncNodeIterator&) const;
-  const double &geometry_matrix_element(const FieldIndex&,
-					const Field*,
-					const FieldIndex&,
-					const ElementFuncNodeIterator&);
+  double &geometry_matrix_element(const int&,
+				  const Field*,
+				  const FieldIndex&,
+				  const ElementFuncNodeIterator&);
   
 };

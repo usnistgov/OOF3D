@@ -227,6 +227,11 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 	}
       }
 
+      SmallGeometricSystem *geo = dynamic_cast<SmallGeometricSystem*>( (*fi).second );
+      if (!(geo->g_clean)) {
+	// Add the geometric pieces in. It's dN^nu/dx_j x G_iknu.
+      }
+      
       // Only K matrix for now.  Might have C at some point. TASK 3.
       // TODO: This code does not yet include the geometric term,
       // which is required at high deformations.  See the

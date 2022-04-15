@@ -412,23 +412,21 @@ void SmallGeometricSystem::reset() {
   g_clean = true;
 }
 
-const double &SmallGeometricSystem::geometry_matrix_element(const FieldIndex& fi,
+const double &SmallGeometricSystem::geometry_matrix_element(const int& fi,
 							    const Field* fld,
 							    const FieldIndex& fldx,
 							    const ElementFuncNodeIterator&efi) const
 {
-  int row = fi.integer();
   int col = efi.localindex(*fld, &fldx);
-  return gMatrix(row,col);
+  return gMatrix(fi,col);
 }
 
-const double &SmallGeometricSystem::geometry_matrix_element(const FieldIndex& fi,
-							    const Field* fld,
-							    const FieldIndex& fldx,
-							    const ElementFuncNodeIterator&efi)
+double &SmallGeometricSystem::geometry_matrix_element(const int& fi,
+						      const Field* fld,
+						      const FieldIndex& fldx,
+						      const ElementFuncNodeIterator&efi)
 {
   g_clean = false;
-  int row = fi.integer();
   int col = efi.localindex(*fld, &fldx);
-  return gMatrix(row,col);
+  return gMatrix(fi,col);
 }
