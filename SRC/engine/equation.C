@@ -200,34 +200,6 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
       // points to the flux matrix.
       std::vector<int> cmap = (*fi).first->contraction_map(eqcomp);
 
-      // We are inside the mu loop, eqcomp is the current equation component, and
-      // we have global_row.
-      const SmallGeometricSystem *sgs = dynamic_cast<SmallGeometricSystem*>((*fi).second);
-      if( sgs->g_clean ) {
-	const SmallSparseMatrix &g = sgs->gMatrix;
-	for(int ldof=0; ldof<element->ndof(); ++ldof) {
-	  int global_col = dofmap[ldof];
-	  double v;
-
-	  // Problem: Need to multiply by a shape function derivative
-	  // here, and for different columns of g, the appropriate
-	  // derivative changes depending on the field component
-	  // associated with the DOF.  The contraction map might know
-	  // this info. Another good answer is to cleverly populate the main
-	  // flux matrix and not separate it out, so you get the right derivative
-	  // automatically.
-	  v = 0.0*g(eqcomp,ldof);  // dsf[thing derived from ldof]
-	  
-	  // Compute the value.
-	  if( v != 0 ) {
-	    // std::cerr << "Hitting the stiffness matrix: Row " << global_row << ", column " << global_col << ", value " << v*weight << std::endl;
-	    linsys.insertK(global_row, global_col, v*weight);
-	    if(needJacobian) 
-	      linsys.insertJ(global_row, global_col, v*weight);
-	  }
-	}
-      }
-      
       if( !(*fi).second->k_clean ) {
 	const SmallSparseMatrix &k = (*fi).second->kMatrix;
 	// std::cerr << "Flux matrix: " << std::endl;
@@ -255,11 +227,6 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
 	}
       }
 
-      SmallGeometricSystem *geo = dynamic_cast<SmallGeometricSystem*>( (*fi).second );
-      if (!(geo->g_clean)) {
-	// Add the geometric pieces in. It's dN^nu/dx_j x G_iknu.
-      }
-      
       // Only K matrix for now.  Might have C at some point. TASK 3.
       // TODO: This code does not yet include the geometric term,
       // which is required at high deformations.  See the

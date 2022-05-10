@@ -209,25 +209,3 @@ inline void SmallSystem::_set_index(const FieldIndex &fluxindex,
 
 
 
-// A SmallGeometricSystem is a SmallSystem with a supplementary
-// matrix, in addition to the stiffness, damping, and mass matrices,
-// which captures some geometric info.  For fluxes, its size is
-// (divergence-of-flux) rows by (degress-of-freedom) columns.
-// It is indexed differently, and does not share the global index
-// variables of the parent class.
-class SmallGeometricSystem : public SmallSystem {
-public:
-  SmallGeometricSystem(int nr,int divdim,int nc);
-  SmallSparseMatrix gMatrix;
-  bool g_clean;
-  virtual void reset();
-  const double &geometry_matrix_element(const int&,
-					const Field*,
-					const FieldIndex&,
-					const ElementFuncNodeIterator&) const;
-  double &geometry_matrix_element(const int&,
-				  const Field*,
-				  const FieldIndex&,
-				  const ElementFuncNodeIterator&);
-  
-};
