@@ -1033,6 +1033,7 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
     displacedsfdvs[idx]=node.displacedsfderiv(element,idx,mpt,mesh);
   }
 
+  SymmMatrix3 &cauchy = (pd->gptdata[gptidx])->cauchy; 
   for(SymTensorIterator ij; !ij.end(); ++ij) {
     for(IteratorP kay = displacement->iterator(); !kay.end(); ++kay) {
       for(int ell = 0; ell < 3; ++ell) {
@@ -1041,6 +1042,9 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
 	    w(ij.row(),ij.col(),ell,emm)*
 	    b_inverse(kay.integer(),emm)*displacedsfdvs[ell];
 	}
+	// Geometric part:
+	fluxmtx->stiffness_matrix_element( ij, displacement, kay, node) -=
+	  cauchy(ij.row(),ell)*displacedsfdvs[ell];
       }
     }
   }
