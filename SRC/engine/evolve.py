@@ -155,6 +155,7 @@ def evolve(meshctxt, endtime):
                          for subp in subprobctxts])
                     print >> sys.stderr, "EPY: Delta has been set, ", delta
                 try:
+                    # Evolve-to called from here.
                     time, delta, linsys_dict = evolve_to(
                         meshctxt, subprobctxts,
                         time=time, endtime=t1, delta=delta, prog=prog,
@@ -178,6 +179,8 @@ def evolve(meshctxt, endtime):
                     print >> sys.stderr, "EPY: Calling _do_output."
                     _do_output(meshctxt, t1)
                 if t1 == endtime:
+                    # TODO STEPPER: Is this bad for the incremental stepper?
+                    # Is "endtime" the end of the whole run, or end of a step?
                     meshctxt.setStatus(meshstatus.Solved())
                     break
             # end if t1 > starttime
@@ -290,6 +293,8 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
     startdelta = delta
     truncated_step = False
 
+    do_weird_step = True
+    
     try:
         # Main loop.  There is no explicit limit to the number of
         # iterations of this loop.  Instead, the adaptive stepper's
@@ -337,13 +342,21 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                 # Call the make_linear_system in subproblemcontext.py.
                 # TODO: For quasi-static problems, this is redundant,
                 # but the logic at the start of the call chain means
-                # no extra work is done.
-                lsys = subprob.make_linear_system(
-                    time, linsysDict.get(subprob, None))
-                linsysDict[subprob] = lsys
-                subprob.startStep(lsys, time) # sets subprob.startValues
-                subprob.cacheConstraints(lsys, time)
-
+                # no extra work is done. NB we are inside the evolve_to step
+                # loop at this point.  Is this the issue for the incremental
+                # stepper?  Maybe we should ask the stepper if we should do
+                # this, instead of barging ahead and doing it? NB the
+                # time that is passed through is the beginning of the step,
+                # so it's likely that time-dependent BCs will be done
+                # incorrectly in this step.
+                if (do_weird_step):
+                    lsys = subprob.make_linear_system(
+                        time, linsysDict.get(subprob, None))
+                    linsysDict[subprob] = lsys
+                    subprob.startStep(lsys, time) # sets subprob.startValues
+                    subprob.cacheConstraints(lsys, time)
+                    do_weird_step = False # Do it once only.
+                    
             # Iterate over subprobctxts repeatedly until answers are
             # consistent.
             stepno = 0

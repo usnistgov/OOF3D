@@ -815,11 +815,11 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
     SmallMatrix lhs_sm = lhs.as_smallmatrix();
     SmallMatrix rhs_sm = rhs.as_smallmatrix();
 
-    // std::cerr << "Linear algebra components:" << std::endl;
-    // std::cerr << "LHS:" << std::endl;
-    // std::cerr << lhs_sm << std::endl;
-    // std::cerr << "RHS:" << std::endl;
-    // std::cerr << rhs_sm << std::endl;
+    std::cerr << "Linear algebra components:" << std::endl;
+    std::cerr << "LHS:" << std::endl;
+    std::cerr << lhs_sm << std::endl;
+    std::cerr << "RHS:" << std::endl;
+    std::cerr << rhs_sm << std::endl;
     
     std::cerr << "Calling the Q matrix solver." << std::endl;
     int retcode = lhs_sm.solve(rhs_sm);
@@ -834,8 +834,8 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
     // "Solve" puts the solution in the RHS matrix.
     Rank4_3DTensor bsb_q(rhs_sm);
 
-    // std::cerr << "BSB Q" << std::endl;
-    //  std::cerr << bsb_q.as_smallmatrix() << std::endl;
+    std::cerr << "BSB Q" << std::endl;
+    std::cerr << bsb_q.as_smallmatrix() << std::endl;
     
     std::cerr << "Building the S matrix." << std::endl;
     // ----------------------------------------

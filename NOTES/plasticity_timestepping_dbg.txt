@@ -54,7 +54,7 @@ function of time.
 are requested.  This is not necessarily related to the step size.
 
   There is a Solver, which contains a Time-Stepper, which in turn 
-containts a Stepper, which may define a step size.  The solver
+contains a Stepper, which may define a step size.  The solver
 has a nonlinear solving algorithm (e.g. Newton or Picard), and matrix
 solvers for symmetric or unsymmetric matrices.
 
@@ -185,3 +185,24 @@ with Newton-Raphson nonlinear solver, with filenames:
     - Book-keeping checks for possible errors
     - Possible conditional outputs
   - Run post-compute operations, update stats, exit.
+
+
+  -----------
+
+  Follow-up, June 2022:
+
+  Weird things are happening with the stepper, it's not doing the
+right matrix at the start of the time step.  Suspicion centered
+on the step taken at line 347 or so of hte evolve.py file -- inside
+evolve.py, there's a static evalution that might be wrong.
+
+  Removing the static evaluation is differently wrong, though,
+it causes the plastic constitutive rule to blow up farther down
+the line.  This too is odd, it blows up after 75 time steps, 
+well into the plastic regime, at a point where it's not obvious
+what would be different.
+
+  Doing this step only once for each call to evolve_to behaves
+the same as not doing the call at all.
+
+
