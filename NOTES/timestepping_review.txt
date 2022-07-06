@@ -1,0 +1,67 @@
+
+  Review of how the time-stepping actually works -- distinct from 
+the "timestepping.txt" document in this directory, which is about
+the initial design, which may or may not have happened.
+
+  Classes:
+
+  StepDriver, defined in engine/timestepper.py, base class
+    for ways that single time steps can be combined into
+    a full time evolution.  This is a value of the
+    "AdvancedStepDriverParameter".
+  Subclasses:
+   - AdaptiveDriver
+   - UniformDriver
+   - StaticDriver (defined in engine/staticstep.py)
+
+  Drivers have "linearstep" and "nonlinearstep" methods, which 
+    call through to the stepper methods.  
+
+
+  BasicStepDriver - base of the "basic" drivers, with few options, easy to use.
+  This is a value of the "BasicStepDriverParameter".
+  Subclasses:
+  - BasicAdaptiveDriver
+  - BasicUniformDriver
+  - BasicStaticDriver
+  The "Basic" drivers do not contain steppers directly, what they 
+    do is have "resolve" methods which interrogate the problem
+    type and return the appropriately-parametrized "advanced" 
+    (no-prefix) step driver object.
+  These things aren't real, they're just user interface wrapper classes.
+
+
+
+  TimeStepper -- base class for various ways of taking a single
+    time step.
+  Subclasses: (almost trivial)
+   - LinearStepper
+   - NonLinearStepper
+  
+  LinearStepper and NonLinearStepper base classes are very small,
+    nonlinear one has a "precompute" method, but basically these
+    are place-holders for a "linearstep" (for LinearStepper) 
+    and "nonlinearstep" (for NonlinearStepper) methods.
+  These methods return a "StepResult" object.
+
+  Nonlinear solvers call "precomputeNL" on the nonlinear
+    stepper.
+ 
+  There's also an "NLData" object that contains:
+   -> subproblem
+   -> linearized system object "linsys"
+   -> time
+
+
+  NonStaticStepper (not a subclass of TimeStepper):
+  Subclasses:
+   - FirstOrderStepper
+   - SecondOrderStepper
+
+  QCTimeStepper -- base class for "quality-controlled" (i.e. error-bounded)
+    steps. 
+  Subclasses:
+   - RKF45 (incomplete)
+   - TwoStep -> in engine/twostep.py, takes one big step and two 
+       half-size steps and compares the answer, for adaptive stepping.
+ 
