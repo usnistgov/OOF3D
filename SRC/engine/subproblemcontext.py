@@ -920,6 +920,7 @@ class SubProblemContext(whoville.Who):
             #     # intersect fixedBCs.
             #     femesh.fix_float_bcs(subpobj, linsys, time)
 
+            print "SCPY-MLS: SubProblemContext conditional, rebuildMatrices is ",rebuildMatrices
                 
             if rebuildMatrices:
                 # Assemble vectors and matrices of the linearized system.

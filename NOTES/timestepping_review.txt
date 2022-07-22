@@ -65,3 +65,94 @@ the initial design, which may or may not have happened.
    - TwoStep -> in engine/twostep.py, takes one big step and two 
        half-size steps and compares the answer, for adaptive stepping.
  
+  ------------------------------
+
+  Solvers:
+
+  Start with engine/nonlinearsolver.py. 
+
+  NonlinearSolverBase , registered class.
+  Subclasses:
+  - NoNolinearsolver (linear solver)
+  - NonlineraSolver
+    - Newton 
+    - Picard 
+
+  The nontrivial classes (NoNonlinearSolver, Newton, Picard)
+    are also subclasses of the corresponding nonlinearsolvercore
+    objects.
+  
+  The nontrivial classes have "step" and "computeStaticFields"
+    methods.  The "step" method calls out to the stepper, 
+    passing "self" as "nonlinearMethod".
+  Newton and Picard also have a "solve" method which calls
+    the core's "solve" method.
+
+  The SolverCore objects implement the actual algorithm, e.g.
+    Newton or Picard, in their "solve" methods, which is called
+    by the non-core methods, mentioned above.
+
+  Newton method interacts with the system state through the 
+    precompute, compute_residual, and compute_jacobian.
+  The methods for doing these are passed through from the 
+    call to the non-core solver, where they are just "*args, **kwargs".
+
+  ------------
+
+  Control flow note:
+
+  The call to the solver's step routine is indirect:
+  From evolve, the call is to the solver's step routine, which
+calls the stepper driver's nonlinearstep routine, which calls
+the stepper's nonlinearstep routine.
+
+  Need to know more about actual steppers.
+
+  They are in separate files:  twostep.py, rk.py, ss22.py, 
+staticstep.py, and of course incremental.py.
+
+  The incremental stepper calls "nlmethod.solve" as part of its
+"nonlinearstep" call chain.  The precompute, compute_residual, and
+compute_jacobian functions are part of an "ilfuncs" object, which 
+is of type IncrementalNLFuncs, and there's a "data" thing that's
+getting passed around also, which is an "IncrementalNLData" 
+object with the linearized system, time and subproblem in it.
+
+  This is the main loop.  
+
+  -----------------------
+
+  Subproblems:
+
+  Owns the top-level make_linear_system.
+
+  Has a solver_precompute method, check this.
+   -> Calls through to material precompute.
+  Possibly-complex state management, has a "changed" routine which
+updates book-keeping info when things have changed, like new
+fields added etc.
+  Has a "matrix_method" function which solves a linear system,
+picking a method depending on symmetry of the passed-in matrix.
+Actual call is to MatrixSolverWrapper.
+
+  Interesting: Subproblem's make_linear_system has a lot of 
+logic about what to recompute -- possibly it's making the mistake here
+and re-building K when it shouldn't?
+
+  Also has "computeStaticFields", which switches out to 
+either linear or nonlinear helper function.
+
+  ------------
+
+  First crack at the control flow -- the conditional in the 
+subproblem about rebuilding the matrix is working at least some
+of the time, we get "false" for this 2x out of 4 in a simple test.
+
+  But we don't understand the test -- it should be either 3 or 5 calls,
+we think.
+
+  Next step: Understand the context better.
+
+  Expected behavior: True from evolve, then False at the start of
+a timestep, then True within the NR loop, then False at the start
+of the next time-step, and True in the NR loop, and so on.

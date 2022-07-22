@@ -117,6 +117,7 @@ with Newton-Raphson nonlinear solver, with filenames:
         File evolve.py, function initializeStaticFields()
         - Loop over subproblems:
           - Call make_linear_system at the current time.
+              -> We think this is harmless, no increments present, t=0.
           - Subproblem book-keeping -- startstep, cacheconstraints.
         - Subproblem consistency while-loop:
           - Loop over subproblems:
@@ -160,18 +161,19 @@ with Newton-Raphson nonlinear solver, with filenames:
             - Check consistency -- did the subproblems change?
         - Return dictionary of linearized systems.
       - (Return from initializeStaticFields)
+
       - Do the initial output.
-    - Check if problem is static, exits if it is.
+    - Check if problem is static, exit if it is.
   - Do some book-keeping about the time-step delta.
   - Loop over requested output times: (Or more often, if delta small?)
-    - Loop subproblem steppers, find minimum delta.
+    - Loop over subproblem steppers, find minimum delta.
     - Call evolve_to with the subproblems and a target time (local)
       File evolve.py, function evolve_to()
       - Try:
         - While not finished or commanded to stop:
           - End-time book-keeping.
           - Loop over subproblems:
-               --> Problem call? <--
+               --> Problem call? Re-using K or not? <--
             - Run make_linear_system on a subproblem.
             - startstep, cacheconstraints.
           - Subproblem consistency loop:
