@@ -184,7 +184,7 @@ class ThreeDImagePattern(ThreeDImageSpecification):
 
         try:
             cpattern = re.compile(self.pattern)
-        except re.exception:
+        except re.error:
             raise ooferror.ErrUserError("Invalid pattern: %s" % self.pattern)
 
         matches = [f for f in os.listdir(self.directory) if cpattern.match(f)]
