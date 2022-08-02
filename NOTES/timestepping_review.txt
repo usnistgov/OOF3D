@@ -179,4 +179,8 @@ values, and the problem requires the residual.
    I suspect the moveOn call, but need to review the logic of 
 the incremental stepper to be sure.
 
+  ----------------
 
+  How does an iteration actually go, for the plasticity case?
+
+  
