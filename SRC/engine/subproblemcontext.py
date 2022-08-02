@@ -773,6 +773,7 @@ class SubProblemContext(whoville.Who):
         # previously created by this SubProblemContext, or None.  If
         # it's not None, it will be updated and reused.
 
+        print >> sys.stderr, "SPC: Entering make_linear_system."
         mesh    = self.getParent()
         femesh  = mesh.getObject()
         subpobj = self.getObject()
@@ -790,6 +791,7 @@ class SubProblemContext(whoville.Who):
                     # make_linear_system, so that's ok.
                     subproblem.set_mesh_dofs(vals, time)
 
+            print >> sys.stderr, "SPC: After subproblem consistency block."
             ## TODO OPT: Be more sophisticated here. Instead of
             ## recomputing everything, only recompute the matrices and
             ## vectors that may have changed.
@@ -825,6 +827,8 @@ class SubProblemContext(whoville.Who):
             else:
                 linsysComputed = timestamp.timeZero
 
+            print >> sys.stderr, "SPC: After linsys check."
+            
             newDefinition = self.defnChanged > linsysComputed or always
             newFieldValues = (max(self.fieldsInstalled, mesh.fieldsInitialized)
                               > linsysComputed) or always
@@ -838,9 +842,30 @@ class SubProblemContext(whoville.Who):
                        # or (newFieldValues and self.fieldDependentBCs(flds))
                        or always)
 
+            print >> sys.stderr, "SPC: After newBdy check."
+            
             newLinSys = (linsys is None) or newDefinition
 
+            print >> sys.stderr, "SPC: After newLinSys assignment."
+            
             newMaterials = mesh.materialsChanged > linsysComputed or always
+            
+            print >> sys.stderr, "SCPY-MLS: rebuildMatrices components:"
+            print >> sys.stderr, "NewLinSys: ", newLinSys
+            print >> sys.stderr, "newMateris: ", newMaterials
+            print >> sys.stderr, "Nonlinear: ",(self.nonlinear(flds) and (newBdys or newFieldValues))
+            print >> sys.stderr, "NewFields: ",(newFieldValues and self.nonlinear_solver.needsResidual())
+            needs_jacobian = (self.nonlinear_solver.needsJacobian() and 
+                              self.nonlinear_solver.jacobianRequirementChanged() > linsysComputed)
+            print >> sys.stderr, "Jacobian: ", needs_jacobian
+            needs_residual = (self.nonlinear_solver.needsResidual() and
+                              (newFieldValues or 
+                               (self.nonlinear_solver.residualRequirementChanged() > linsysComputed)))
+            print >> sys.stderr, "Residual: ", needs_residual 
+            print >> sys.stderr, "Time-dependence: ",(newTime and self.timeDependentProperties(flds))
+            print >> sys.stderr, "Always: ",always
+
+            
             rebuildMatrices = (
                 newLinSys or newMaterials
                 or (self.nonlinear(flds) and (newBdys or newFieldValues))
@@ -854,7 +879,9 @@ class SubProblemContext(whoville.Who):
                       linsysComputed)))
                 or (newTime and self.timeDependentProperties(flds))
                 or always)
-
+            
+            print >> sys.stderr, "SPC: After rebuildMatrices check, answer is ", rebuildMatrices
+            
             if newDefinition:
                 self.getObject().mapFields()
 
@@ -920,7 +947,8 @@ class SubProblemContext(whoville.Who):
             #     # intersect fixedBCs.
             #     femesh.fix_float_bcs(subpobj, linsys, time)
 
-            print "SCPY-MLS: SubProblemContext conditional, rebuildMatrices is ",rebuildMatrices
+            # HERE: Decide whether to rebuild matrices or not.
+            print >> sys.stderr, "SCPY-MLS: SubProblemContext conditional, time is ", time, "rebuildMatrices is ",rebuildMatrices
                 
             if rebuildMatrices:
                 # Assemble vectors and matrices of the linearized system.
@@ -932,11 +960,11 @@ class SubProblemContext(whoville.Who):
                     linsys.clearJacobian()
 
                 # **** This is the cpu intensive step: ****
-                print "SCPY-MLS: SubProblemContext calling SubProblem make_linear_system."
-                print "SCPY-MLS: Object is ", self.getObject()
+                print >> sys.stderr, "SCPY-MLS: SubProblemContext calling SubProblem make_linear_system."
+                print >> sys.stderr, "SCPY-MLS: Object is ", self.getObject()
                 self.getObject().make_linear_system(linsys, 
                                                     self.nonlinear_solver)
-                print "SCPY-MLS: Back from SubProblem make_linear_system."
+                print >> sys.stderr, "SCPY-MLS: Back from SubProblem make_linear_system."
                 self.newMatrixCount += 1
 
             if bcsReset or rebuildMatrices or newFieldValues:
@@ -967,6 +995,8 @@ class SubProblemContext(whoville.Who):
             femesh.clearCurrentSubProblem()
             linsys.computed.increment()  # Timestamp.
 
+        except:
+            print >> sys.stderr, "SCP: Exception in make_linear_system."
         finally:
             mesh.releaseLatestData()
 
@@ -981,6 +1011,7 @@ class SubProblemContext(whoville.Who):
         #         dumpfile = "dump"
         #     linsys.dumpAll(dumpfile, time, "")
         #     sys.exit()
+        print >> sys.stderr, "SPC: Exiting make_linear_system."
         return linsys
 
     #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#

@@ -47,10 +47,13 @@ the initial design, which may or may not have happened.
   Nonlinear solvers call "precomputeNL" on the nonlinear
     stepper.
  
-  There's also an "NLData" object that contains:
+  There's also an "NLData" object associated with individual
+steppers that that contains:
    -> subproblem
    -> linearized system object "linsys"
    -> time
+ 
+  The IncrementalStepper defines "IncrementalNLData" for this role.
 
 
   NonStaticStepper (not a subclass of TimeStepper):
@@ -156,3 +159,24 @@ we think.
   Expected behavior: True from evolve, then False at the start of
 a timestep, then True within the NR loop, then False at the start
 of the next time-step, and True in the NR loop, and so on.
+
+  -------------
+
+  July 29:  What we are seeing is that the subproblem is always
+rebuilding the matrices because it believes there are new field
+values, and the problem requires the residual. 
+
+  Q: What does "newFieldValues" actually depend on?
+    Line 829 of subproblemcontext.py:
+   newFieldValues is set when self.fieldsInstalled or mesh.fieldsInitialized
+     is greater (in time-stamp sense) than when the linear system was
+     last computed.   (Or, "always" can be set, but it's not set in 
+     our tests.)
+   (subproblem=self).fieldsInstalled is set by set_mesh_dofs.
+   Called from subproblem.installValues and subproblem.moveOn, the 
+   latter being done at the end of the time step. 
+
+   I suspect the moveOn call, but need to review the logic of 
+the incremental stepper to be sure.
+
+
