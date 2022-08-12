@@ -183,4 +183,31 @@ the incremental stepper to be sure.
 
   How does an iteration actually go, for the plasticity case?
 
-  
+
+  -------------------
+
+  Follow-up about newFieldValues:
+
+  This is set in subproblemcontext.py, line 833 or so, in make_linear_system,
+where it's true if:
+  - self.fieldsInstalled or mesh.fieldsInitialized is greater 
+       than linsysComputed
+  (or "always", but "always" is turned off for our case.)
+
+  Examining the instrumented code shows that it's the 
+"self.fieldsInstalled" that's getting incremented and motivating
+the bad answer for the matrix-rebuilding.
+ 
+  This is incremented to a new current time-stamp value (not just
+by one, because of how timestamps work!) in set_mesh_dofs. Who
+is calling set_mesh_dofs?  Mostly called from within subproblemcontext.py,
+according to a search of the source.
+
+  Called by "moveOn" (at the end of every step?), and by 
+installValues (when?).
+
+  Looks like there are possibly-redundant calls to this, that we
+used to think were harmless because overwriting the same values 
+is OK, but in fact, it changes state data, which we now are 
+sensitive to.
+

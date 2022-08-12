@@ -155,7 +155,8 @@ def evolve(meshctxt, endtime):
                          for subp in subprobctxts])
                     print >> sys.stderr, "EPY: Delta has been set, ", delta
                 try:
-                    # Evolve-to called from here.
+                    # ***** Evolve-to called from here.
+                    print >> sys.stderr, "EPY: Calling evolve_to, time is ", time, ", endtime is ", t1, "."
                     time, delta, linsys_dict = evolve_to(
                         meshctxt, subprobctxts,
                         time=time, endtime=t1, delta=delta, prog=prog,
@@ -293,8 +294,6 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
     startdelta = delta
     truncated_step = False
 
-    do_weird_step = True
-    
     try:
         # Main loop.  There is no explicit limit to the number of
         # iterations of this loop.  Instead, the adaptive stepper's
@@ -349,13 +348,11 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                 # time that is passed through is the beginning of the step,
                 # so it's likely that time-dependent BCs will be done
                 # incorrectly in this step.
-                if (do_weird_step):
-                    lsys = subprob.make_linear_system(
-                        time, linsysDict.get(subprob, None))
-                    linsysDict[subprob] = lsys
-                    subprob.startStep(lsys, time) # sets subprob.startValues
-                    subprob.cacheConstraints(lsys, time)
-                    do_weird_step = False # Do it once only.
+                lsys = subprob.make_linear_system(
+                    time, linsysDict.get(subprob, None))
+                linsysDict[subprob] = lsys
+                subprob.startStep(lsys, time) # sets subprob.startValues
+                subprob.cacheConstraints(lsys, time)
                     
             # Iterate over subprobctxts repeatedly until answers are
             # consistent.

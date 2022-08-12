@@ -122,7 +122,7 @@ with Newton-Raphson nonlinear solver, with filenames:
         - Subproblem consistency while-loop:
           - Loop over subproblems:
             - Call subproblem.initializeStaticFields
-              File subproblemcontext.py, funciton initializeStaticFields
+              File subproblemcontext.py, function initializeStaticFields
               - Check self.time_stepper's derivOrder.
               - If static fields make sense:
                 - Get the unknowns from the linearized system
@@ -152,23 +152,28 @@ with Newton-Raphson nonlinear solver, with filenames:
                              - Call matrix_method.solve to get updates.
                              - Select increment size (disabled for us!)
                              - Add "update" to "values". 
-                             - Reocmpute residual, get norm.
+                             - Recompute residual, get norm.
                              - Re-run precompute, passing values.
                          - Update stats.
+                (Back in subproblemcontext.py:initializeStaticFields)
                 - Call self.installValues 
-                    HERE
             - Increment subproblem timestamp
             - Check consistency -- did the subproblems change?
         - Return dictionary of linearized systems.
+            (from evolve.py:initializeStaticFields to evolve.py:evolve,
+                around line 100)
       - (Return from initializeStaticFields)
 
       - Do the initial output.
     - Check if problem is static, exit if it is.
+
+  ---- End of static initialization -----
+
   - Do some book-keeping about the time-step delta.
   - Loop over requested output times: (Or more often, if delta small?)
     - Loop over subproblem steppers, find minimum delta.
     - Call evolve_to with the subproblems and a target time (local)
-      File evolve.py, function evolve_to()
+      File evolve.py, function evolve_to() (line 281 or so)
       - Try:
         - While not finished or commanded to stop:
           - End-time book-keeping.
@@ -206,5 +211,17 @@ what would be different.
 
   Doing this step only once for each call to evolve_to behaves
 the same as not doing the call at all.
+
+  Note:
+  ----
+
+  The preliminary model of the issue does not make a lot of sense in
+light of the actual code -- there is no process we have written that
+will generate the elastic K matrix, so the idea that late iterations,
+by not reusing the elastoplastic K, will have artificially high
+stresses, is impossible.  They might have artificially high stresses
+for some *other* reason, or there might be some other Fp-dependent
+thing that's happening or failing to happen, but the "wrong K"
+argument is not supported by the code paths.
 
 

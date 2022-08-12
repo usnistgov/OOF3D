@@ -67,6 +67,7 @@ class SubProblemContext(whoville.Who):
         self.startTime = 0.0
         self.endTime = None
         self.installedTime = None
+        print >> sys.stderr, "SPC: Setting self.fieldsInstalled at init time."
         self.fieldsInstalled = timestamp.TimeStamp()
         self.startValues = doublevec.DoubleVec(0)
         self.endValues = doublevec.DoubleVec(0)
@@ -830,6 +831,11 @@ class SubProblemContext(whoville.Who):
             print >> sys.stderr, "SPC: After linsys check."
             
             newDefinition = self.defnChanged > linsysComputed or always
+
+            print >> sys.stderr, "SPC: newFieldValues inputs:"
+            print >> sys.stderr, "SPC: ", self.fieldsInstalled
+            print >> sys.stderr, "SPC: ", mesh.fieldsInitialized
+            print >> sys.stderr, "SPC: ", linsysComputed
             newFieldValues = (max(self.fieldsInstalled, mesh.fieldsInitialized)
                               > linsysComputed) or always
             newTime = linsys is None or linsys.time() != time or always
@@ -1232,8 +1238,11 @@ class SubProblemContext(whoville.Who):
             self.getParent().getObject().reinvoke_fixed_bcs(
                 self.getObject(), time)
         if changed:
+            print >> sys.stderr, "SPC: Incrementing self.fieldsInstalled."
+            print >> sys.stderr, "SPC: Old value is ", self.fieldsInstalled
             self.fieldsInstalled.increment()
-
+            print >> sys.stderr, "SPC: New value is ", self.fieldsInstalled
+            
         self.getParent().releaseLatestData()
 
     def interpolateValues(self, time):
