@@ -42,10 +42,10 @@ PlasticData::PlasticData(int ord, const Element *el) :
 
 std::ostream &operator<<(std::ostream &o, const GptPlasticData &gppd) {
   o << "GptPlasticData: " << std::endl;
-  o << "- ft = " << gppd.ft;
-  o << "- fpt = " << gppd.fpt; 
-  o << "- f_tau = " << gppd.f_tau;
-  o << "- fp_tau = " << gppd.fp_tau;
+  o << "- ft = " << gppd.ft << std::endl;
+  o << "- fpt = " << gppd.fpt << std::endl; 
+  o << "- f_tau = " << gppd.f_tau << std::endl;
+  o << "- fp_tau = " << gppd.fp_tau << std::endl;
   o << std::endl;
 }
 

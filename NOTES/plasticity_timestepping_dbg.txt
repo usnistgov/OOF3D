@@ -224,4 +224,7 @@ for some *other* reason, or there might be some other Fp-dependent
 thing that's happening or failing to happen, but the "wrong K"
 argument is not supported by the code paths.
 
+  Next step: Better instrumentation.
 
+  Add the time-step number, time, iteration number, element index,
+    and maybe slip system index, to all the print statements.

@@ -129,6 +129,7 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
 				      double time, const Element *e) {
   
   std::cerr << "Plasticity::begin_element_matrix starting." << std::endl;
+  std::cerr << "Element is " << e->get_index() << "." << std::endl;
   std::cerr << "Time is " << time << std::endl;
   // LINSYS STEP 3, plastic version -- called from
   // Material::begin_element_matrix, we are in element scope, and need to run
@@ -707,8 +708,8 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
 	      bsb_l(i,j,n,o) += fe_att_t(i,idx)*u(idx,n)*fe_att(o,j);
 	    };
 
-    std::cerr << "BSB L" << std::endl;
-    std::cerr << bsb_l  << std::endl;
+    // std::cerr << "BSB L" << std::endl;
+    // std::cerr << bsb_l  << std::endl;
 
     // For debugging, paranoia about Cijkl.
     Rank4_3DTensor check_c;
@@ -717,13 +718,13 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
 	for(int k=0;k<3;++k)
 	  for(int l=0;l<3;++l)
 	    check_c(i,j,k,l) = lab_cijkl_(i,j,k,l);
-    std::cerr << "Lab Cijkl via the tensors:" << std::endl;
-    std::cerr << check_c.as_smallmatrix() << std::endl;
+    // std::cerr << "Lab Cijkl via the tensors:" << std::endl;
+    // std::cerr << check_c.as_smallmatrix() << std::endl;
     
-    std::cerr << "Lab Cijkl: " << std::endl;
-    std::cerr << lab_cijkl_ << std::endl;
+    // std::cerr << "Lab Cijkl: " << std::endl;
+    // std::cerr << lab_cijkl_ << std::endl;
 
-    std::cerr << "Building bsb_d." << std::endl;
+    // std::cerr << "Building bsb_d." << std::endl;
     Rank4_3DTensor bsb_d;
     for(int i=0;i<3;++i)
       for(int j=0;j<3;++j)
@@ -735,13 +736,13 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
 	      }
 
 
-    std::cerr << "1100: " << bsb_d(1,1,0,0) << std::endl;
-    std::cerr << "0011: " << bsb_d(0,0,1,1) << std::endl;
+    // std::cerr << "1100: " << bsb_d(1,1,0,0) << std::endl;
+    // std::cerr << "0011: " << bsb_d(0,0,1,1) << std::endl;
     
     // std::cerr << "BSB D" << std::endl;
     // std::cerr << bsb_d.as_smallmatrix() << std::endl;
     
-    std::cerr << "Building bsb_g." << std::endl;
+    // std::cerr << "Building bsb_g." << std::endl;
     std::vector<Rank4_3DTensor> bsb_g(nslips);
     for(int alpha=0;alpha<nslips;++alpha)
       for(int k=0;k<3;++k)
@@ -922,7 +923,8 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
     pd->gptdata[gptdx]->w_mat = w_mat;
     std::cerr << "Bottom of the gausspoint loop." << std::endl;
   } // End of the gausspoint loop (!).
-  
+
+  std::cerr << "Exiting begin_element_matrix for element " << e->get_index() << "." << std::endl;
   // At this point, every gausspoint has a populated gptdata object
   // with the current W matrix, which is the dervative of the Cauchy
   // stress with respect to the strain.  This object is used to

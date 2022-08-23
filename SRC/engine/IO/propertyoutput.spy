@@ -141,13 +141,13 @@ class MatrixPropertyOutputRegistration(PORegBase):
     def __init__(self, name, instancefn, colnamefn,
                  initializer=None, parameters=[], ordering=0,
                  srepr=None, tip=None, discussion=None):
-        print >> sys.stderr, "MPOR__init__:"
-        print >> sys.stderr, "Name: ", name
-        print >> sys.stderr, "Instancefn: ", instancefn
-        print >> sys.stderr, "colnamefn: ", colnamefn
-        print >> sys.stderr, "Initializer: ", initializer
-        print >> sys.stderr, "Parameters: ", parameters
-        print >> sys.stderr, "Srepr: ", srepr
+        # print >> sys.stderr, "MPOR__init__:"
+        # print >> sys.stderr, "Name: ", name
+        # print >> sys.stderr, "Instancefn: ", instancefn
+        # print >> sys.stderr, "colnamefn: ", colnamefn
+        # print >> sys.stderr, "Initializer: ", initializer
+        # print >> sys.stderr, "Parameters: ", parameters
+        # print >> sys.stderr, "Srepr: ", srepr
         PropertyOutputRegistration.__init__(
             self, name, initializer)
         op = output.Output(name=name,
@@ -184,7 +184,7 @@ class MatrixPropertyOutputRegistration(PORegBase):
             compout.aliasParam('field:' + param.name, param.name)
         output.defineOutput(name+":Component", compout, ordering=ordering)
 
-        print >> sys.stderr, "Compout: ", compout
+        # print >> sys.stderr, "Compout: ", compout
         def invariantrepr(s):
             invariant = s.resolveAlias("invariant").value.shortrepr()
             # See comment above about op.shortrepr(s)
@@ -203,7 +203,7 @@ class MatrixPropertyOutputRegistration(PORegBase):
             invout.aliasParam('field:' + param.name, param.name)
         output.defineOutput(name+":Invariant", invout, ordering=ordering)
 
-        print >> sys.stderr, "Invout: ", invout
+        # print >> sys.stderr, "Invout: ", invout
 
 
 

@@ -157,10 +157,11 @@ def evolve(meshctxt, endtime):
                 try:
                     # ***** Evolve-to called from here.
                     print >> sys.stderr, "EPY: Calling evolve_to, time is ", time, ", endtime is ", t1, "."
+                    debug_str="Evolve_to, "+str(time)+" to "+str(t1)
                     time, delta, linsys_dict = evolve_to(
                         meshctxt, subprobctxts,
                         time=time, endtime=t1, delta=delta, prog=prog,
-                        linsysDict=linsys_dict)
+                        linsysDict=linsys_dict,debugstring=debug_str)
                 except ooferror2.ErrInterrupted:
                     # Interruptions shouldn't raise an error dialog
                     debug.fmsg("Interrupted!")
@@ -234,7 +235,7 @@ def initializeStaticFields(subprobctxts, time, prog):
         # time is the start time.  Second argument is an optional
         # passed-in linearized system.
         linsysDict[subproblem] = lsys = subproblem.make_linear_system(
-            time, None)
+            time, None, "Static initialization.")
         print >> sys.stderr, "EPY-IS: Back from make_linear_system, evovle.py"
         # Loads values for this time into the subproblem from the mesh.
         subproblem.startStep(lsys, time) # sets subproblem.startValues
@@ -280,7 +281,7 @@ def initializeStaticFields(subprobctxts, time, prog):
 # there are any conditional outputs.
 
 def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
-              linsysDict=None):
+              linsysDict=None,debugstring=""):
     ## debug.fmsg("--------------- time=%g endtime=%g delta=%s"
     ##            % (time, endtime, delta))
     # subprobctxts is a list of SubProblemContexts.
@@ -299,8 +300,12 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
         # iterations of this loop.  Instead, the adaptive stepper's
         # nextStepEstimate function raises an ErrTimeStepTooSmall
         # exception if the step size is too small.
+
+        icount = 0
         while time < endtime and not prog.stopped():
 
+            et_debugstring = debugstring + ", iteration "+str(icount)
+            
             # Choose the time step.  If no delta is provide, just to
             # up to endtime.  If delta is provided, go up to the
             # smaller of time+delta and endtime, unless time+delta is
@@ -333,6 +338,7 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                 # time, even if the stepper is fully implicit.  The
                 # maps have to be constructed, and they depend on the
                 # matrices.
+                print >> sys.stderr, "EPY-ET:",et_debugstring
                 print >> sys.stderr, "EPY-ET: Evolve_to at top of loop, calling make_linear_system."
                 print >> sys.stderr, "EPY-ET: Time is ", time
                 print >> sys.stderr, "EPY-ET: Delta is ", delta
@@ -349,7 +355,7 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                 # so it's likely that time-dependent BCs will be done
                 # incorrectly in this step.
                 lsys = subprob.make_linear_system(
-                    time, linsysDict.get(subprob, None))
+                    time, linsysDict.get(subprob, None), et_debugstring)
                 linsysDict[subprob] = lsys
                 subprob.startStep(lsys, time) # sets subprob.startValues
                 subprob.cacheConstraints(lsys, time)
@@ -398,6 +404,7 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                         # timestepper.StepResult object.
                         # debug.fmsg("taking step from %g to %g (%g)" %
                         #            (time, targettime, targettime-time))
+                        print >> sys.stderr, "EPY-ET:",et_debugstring
                         print >> sys.stderr, "EPY-ET: Evolve_to calling stepper."
                         epyet_solver = subproblem.nonlinear_solver
                         print >> sys.stderr, "EPY-ET: Solver is: ", epyet_solver
@@ -409,6 +416,8 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                             unknowns=unknowns,
                             endtime=targettime)
                         # debug.fmsg("endValues=", stepResult.endValues)
+
+                        print >> sys.stderr, "EPY-ET:",et_debugstring
                         print >> sys.stderr, "EPY-ET: Evolve_to back from stepper."
                         if stepResult.ok:
                             # Adaptive steps might not be OK.  Others are.
@@ -480,6 +489,7 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                     # Sets meshctxt.solverDelta.
                     meshctxt.setCurrentTime(time, mindelta)
 
+            icount += 1
             ## End of consistency loop.
 
             if not stepTaken and not prog.stopped():
