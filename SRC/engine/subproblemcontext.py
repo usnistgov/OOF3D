@@ -765,7 +765,7 @@ class SubProblemContext(whoville.Who):
         # the linear system construction, if that turns out to make
         # sense.
             
-    def make_linear_system(self, time, linsys, debugstring):
+    def make_linear_system(self, time, linsys):
         # Construct a LinearizedSystem object containing the
         # globally-indexed K, C, and M matrices, and the rhs vectors,
         # and the maps that extract submatrices and subvectors.

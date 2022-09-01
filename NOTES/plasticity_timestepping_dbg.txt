@@ -228,3 +228,11 @@ argument is not supported by the code paths.
 
   Add the time-step number, time, iteration number, element index,
     and maybe slip system index, to all the print statements.
+
+  Maybe Emacs json mode with hs minor mode? (js-mode and hs-mode, for hide-show mode)
+  Allows to expand blocks, possibly at many levels?
+
+  Outline-mode might be oK too, but it lacks the ability to e.g. have a higher
+level of the hierarchy continue after an enclosed lower-level entity has 
+"closed" and is no longer operative, it's strictly hierarchical. 
+
