@@ -116,7 +116,7 @@ public:
   FuncNodeIterator funcnode_iterator();
 
   %new LinearizedSystem *new_linear_system(double);
-  void make_linear_system(LinearizedSystem *, CNonlinearSolver*);
+  void make_linear_system(LinearizedSystem *, CNonlinearSolver*,int);
 
   %new CompoundFieldVec *all_compound_fields();
   %new EquationVec *all_equations();

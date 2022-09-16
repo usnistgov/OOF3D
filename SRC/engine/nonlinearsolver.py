@@ -65,13 +65,16 @@ registeredclass.Registration(
 
 class NonlinearSolver(NonlinearSolverBase):
     def step(self, subprob, *args, **kwargs):
+        print >> sys.stderr, "NLS-NLS: Args are", args
+        print >> sys.stderr, "NLS-NLS: Kwargs are", kwargs
         print >> sys.stderr, "NLS-NLS: -> NonlinaerSolver.step."
         print >> sys.stderr, "NLS-NLS: -> Stepper is ", subprob.time_stepper
         return subprob.time_stepper.nonlinearstep(
             subprob, nonlinearMethod=self, *args, **kwargs)
-    def computeStaticFields(self, subprobctxt, linsys, unknowns):
+    def computeStaticFields(self, subprobctxt, linsys, unknowns, debug_depth):
         # Called by SubProblemContext.initializeStaticFields.
-        return subprobctxt.computeStaticFieldsNL(linsys, unknowns)
+        return subprobctxt.computeStaticFieldsNL(linsys, unknowns,
+                                                 debug_depth+1)
 
 # Shared parameters for the nontrivial solvers.
 

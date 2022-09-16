@@ -189,7 +189,8 @@ public:
 
   LinearizedSystem *new_linear_system(double time);
   void make_linear_system(LinearizedSystem *linearsystem,
-			  const CNonlinearSolver*) const;
+			  const CNonlinearSolver*,
+			  int debug_level) const;
 
   int ndof() const;
   int neqn() const;

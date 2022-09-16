@@ -421,6 +421,8 @@ class UniformDriver(StepDriver):
         result.nextStep = self.stepsize
         return result
     def nonlinearstep(self, *args, **kwargs):
+        print >> sys.stderr, "TS-UD: Args are ", args
+        print >> sys.stderr, "TS-UD: Kwargs are ", kwargs
         print >> sys.stderr, "TS-UD: --> UniformDriver.nonlinearstep."
         print >> sys.stderr, "TS-UD: -->", self.stepper
         print >> sys.stderr, "TS-UD: --> Calling nonlinearstep."

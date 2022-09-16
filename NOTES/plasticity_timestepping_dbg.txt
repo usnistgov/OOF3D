@@ -58,17 +58,25 @@ contains a Stepper, which may define a step size.  The solver
 has a nonlinear solving algorithm (e.g. Newton or Picard), and matrix
 solvers for symmetric or unsymmetric matrices.
 
-  The "nonlinear solver" (which might be linear) attribute of the
+  The "nonlinear_solver" (which might be linear) attribute of the
 subproblem is the thing that takes the linear system and computes
 the DOFs at the next available time, using the stepper.
-(See below.)
+(See below.)  It's actually a property, implemented by a
+_getNonlinearSolver method, which refers to a "private" 
+attribute, _nonlinear_solver.  (Which also might be linear.)
 
   The NewtonSolver is in nonlinearsolver.py.
   The Forward Euler stepper is in euler.py.
+  The Incremental stepper is in incremental.py.
 
   The NewtonSolver has a "core", which has a "solve" method which
 does the actual work, which calls *out* to the passed-in 
 "compute_jacobian" routine, along with the "data".  
+
+  The subproblem has matrix methods, but apparently gets them
+from the solver definition, where they are specified by the user.
+The "set_solver" menu item is in the subproblem menu tree, so this
+is not the wrong scope, but it's weirdly indirect.
 
   Following the control-flow will help, maybe?
 

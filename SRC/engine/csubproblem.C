@@ -648,7 +648,8 @@ LinearizedSystem *CSubProblem::new_linear_system(double time) {
 }
 
 void CSubProblem::make_linear_system(LinearizedSystem *linearsystem,
-				     const CNonlinearSolver *nlsolver)
+				     const CNonlinearSolver *nlsolver,
+				     int debug_level)
   const
 {
   double time = linearsystem->time();
@@ -676,17 +677,20 @@ void CSubProblem::make_linear_system(LinearizedSystem *linearsystem,
 
   // Order of integration is implicit in the element gausspoints,
   // which have been set (along with any gpdofs) by the mesh.
+  int ecount = 0;
   for(ElementIterator ei=element_iterator(); !ei.end() && !progress->stopped();
       ++ei)
     {
-      // std::cerr << "Element loop in CSubProblem::make_linear_system." << std::endl;
-      // std::cerr << "Calling element make_linear_system." << std::endl;
+      for(int idx=0; idx<debug_level; ++idx) std::cerr << "*";
+      std::cerr << " Element loop in CSubProblem::make_linear_system, element #" << ecount << std::endl;
+      std::cerr << "Calling element make_linear_system." << std::endl;
       ei.element()->make_linear_system( this, time, nlsolver, *linearsystem );
       // std::cerr << "Back from element make_linear_system." << std::endl;
       progress->setFraction( float(ei.count()+1)/float(ei.size()) );
       progress->setMessage(to_string(ei.count()+1) + "/" + to_string(ei.size())
 			   + " elements"
 			   );
+      ecount += 1;
     }
 
   //Interface branch

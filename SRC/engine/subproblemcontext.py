@@ -765,7 +765,7 @@ class SubProblemContext(whoville.Who):
         # the linear system construction, if that turns out to make
         # sense.
             
-    def make_linear_system(self, time, linsys):
+    def make_linear_system(self, time, linsys, debug_depth=0):
         # Construct a LinearizedSystem object containing the
         # globally-indexed K, C, and M matrices, and the rhs vectors,
         # and the maps that extract submatrices and subvectors.
@@ -774,7 +774,10 @@ class SubProblemContext(whoville.Who):
         # previously created by this SubProblemContext, or None.  If
         # it's not None, it will be updated and reused.
 
-        print >> sys.stderr, "SPC: Entering make_linear_system."
+        if (debug_depth==0):
+            print >> sys.stderr, "---- Make Linear System called at depth 0!"
+            
+        print >> sys.stderr, "*"*debug_depth+" SPC: Entering make_linear_system."
         mesh    = self.getParent()
         femesh  = mesh.getObject()
         subpobj = self.getObject()
@@ -969,8 +972,9 @@ class SubProblemContext(whoville.Who):
                 print >> sys.stderr, "SCPY-MLS: SubProblemContext calling SubProblem make_linear_system."
                 print >> sys.stderr, "SCPY-MLS: Object is ", self.getObject()
                 self.getObject().make_linear_system(linsys, 
-                                                    self.nonlinear_solver)
-                print >> sys.stderr, "SCPY-MLS: Back from SubProblem make_linear_system."
+                                                    self.nonlinear_solver,
+                                                    debug_depth+1)
+                print >> sys.stderr, "SCPY-MLS: Back from SubProbl1em make_linear_system."
                 self.newMatrixCount += 1
 
             if bcsReset or rebuildMatrices or newFieldValues:
@@ -1030,18 +1034,19 @@ class SubProblemContext(whoville.Who):
     # ForwardEuler and RK, that need to solve the static equations
     # explicitly.
 
-    def initializeStaticFields(self, linsys):
-        print >> sys.stderr, "SCPY-IS: Subproblem.initializeStaticFields."
+    def initializeStaticFields(self, linsys, debug_depth):
+        print >> sys.stderr, "*"*debug_depth+" SCPY-IS: Start of subproblem.initializeStaticFields."
         # This is called by initializeStaticFields in evolve.py.  It
         # won't ever be called if solver_mode or time_stepper is None.
         derivOrder = self.time_stepper.derivOrder()
         if derivOrder == 0 or self.lowestTimeDerivative() < derivOrder:
             unknowns = self.get_unknowns(linsys)
-            self.computeStaticFields(linsys, unknowns)
+            self.computeStaticFields(linsys, unknowns,debug_depth)
             self.installValues(linsys, unknowns, linsys.time())
 
-    def computeStaticFields(self, linsys, unknowns):
+    def computeStaticFields(self, linsys, unknowns,debug_depth):
         print >> sys.stderr, "SCPY-CS: Subproblem.computeStaticFields."
+        print >> sys.stderr, "SCPY-CS: Nonlinear solver is >>>", self._nonlinear_solver, "<<<"
         # Initialize "static" fields.  "static" fields are active
         # fields whose time derivatives don't appear in the equations,
         # or whose highest time derivative is of lower order than the
@@ -1056,7 +1061,8 @@ class SubProblemContext(whoville.Who):
             # computeStaticFieldsNL depending on whether or not we're
             # using a nonlinear solver and whether or not the
             # FluxProperties provide the K matrix.
-            self.nonlinear_solver.computeStaticFields(self, linsys, unknowns)
+            self.nonlinear_solver.computeStaticFields(self, linsys,
+                                                      unknowns, debug_depth)
                 
     def computeStaticFieldsL(self, linsys, unknowns):
         # Called via dispatch from the NoNonLinearSolver.
@@ -1124,13 +1130,15 @@ class SubProblemContext(whoville.Who):
             self.matrix_method(self.asymmetricC).solve(C11, rhs, u1dot)
             self.time_stepper.set_derivs_part('C', linsys, u1dot, unknowns)
 
-    def computeStaticFieldsNL(self, linsys, unknowns):
+    def computeStaticFieldsNL(self, linsys, unknowns, debug_depth):
         # Called via dispatch from the nonlinear solver.
-        print >> sys.stderr, "SCPY-CSNL: Subproblem.computeStaticFieldsNL."
+        print >> sys.stderr, "*"*debug_depth+" SCPY-CSNL: Subproblem.computeStaticFieldsNL."
         # Initialize "static" fields for nonlinear problems. 
         if linsys.n_unknowns_part('K')==0 and linsys.n_unknowns_part('C')==0:
             return
 
+        print >> sys.stderr, "Building NLData."
+        # NB timestepper is the module, not a data member.
         data = timestepper.NLData(self, linsys, linsys.time())
 
         u0 = self.time_stepper.get_unknowns_part('K', linsys, unknowns)
@@ -1140,8 +1148,7 @@ class SubProblemContext(whoville.Who):
             print >> sys.stderr, "SCPY-CSNL: ** Static solution step."
             # Solve for u0 -- static dofs that don't appear in C or M.
             nlfuncs = StaticNLFuncs(unknowns)
-            print >> sys.stderr, "SCPY-CSNL:** NL solver is ", self.nonlinear_solver
-            print >> sys.stderr, "SCPY-CSNL: ", self.nonlinear_solver.__class__
+            print >> sys.stderr, "SCPY-CSNL:** NL solver is ", self._nonlinear_solver
             print >> sys.stderr, "SCPY-CSNL: ** Calling solve on it."
             self.nonlinear_solver.solve(
                 self.matrix_method(self.asymmetricK),
@@ -1149,8 +1156,8 @@ class SubProblemContext(whoville.Who):
                 nlfuncs.compute_residual,
                 nlfuncs.compute_jacobian,
                 nlfuncs.compute_linear_coef_mtx,
-                data, u0)
-            print >> sys.stderr, "SCPY_CSNL:** Back from solve."
+                data, u0, debug_depth+1)
+            print >> sys.stderr, "SCPY-CSNL:** Back from solve."
             self.time_stepper.set_unknowns_part('K', linsys, u0, unknowns)
 
         if len(u1) > 0 and self.time_stepper.derivOrder() > 1:

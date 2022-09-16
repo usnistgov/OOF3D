@@ -223,9 +223,10 @@ class Newton(NLSolver):
     def shortrepr(self):
         return "Newton"
     def solve(self, matrix_method, precompute, compute_residual,
-              compute_jacobian, compute_linear_coef_mtx, data, values):
+              compute_jacobian, compute_linear_coef_mtx, data, values,
+              debug_depth):
 
-        print >> sys.stderr, "NLSC-S: ** Newton core solve." 
+        print >> sys.stderr, "*"*debug_depth+" NLSC-S: ** Newton core solve." 
         # matrix_method is function that takes a matrix A, a rhs b and
         # a vector of unknows x and sets x so that A*x = b.
 

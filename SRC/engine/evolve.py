@@ -35,7 +35,8 @@ def evolve(meshctxt, endtime):
     global linsys_dict
     starttime = meshctxt.getObject().latestTime()
 
-    print >> sys.stderr, "* EPY: Start of evolve."
+    debug_depth=1
+    print >> sys.stderr, "*"*debug_depth+" EPY: Start of evolve."
     print >> sys.stderr, "EPY: Meshctxt is ", meshctxt
     # We're solving a static problem if endtime is the same as the
     # current time, or if there are no non-static steppers and output
@@ -97,7 +98,7 @@ def evolve(meshctxt, endtime):
             try:
                 print >> sys.stderr, "EPY: Initializing static fields."
                 linsys_dict = initializeStaticFields(subprobctxts, starttime,
-                                                     prog)
+                                                     prog,debug_depth=debug_depth+1)
                 # Initial output comes *after* solving static fields.
                 # For fully static problems, this is the only output.
                 print >> sys.stderr, "EPY: Initial output."
@@ -220,12 +221,13 @@ def evolve(meshctxt, endtime):
 # call through the subproblem's nonlinear solver to determine whether
 # or not it should peform a linear or nonlinear calculation.
 
-def initializeStaticFields(subprobctxts, time, prog):
+def initializeStaticFields(subprobctxts, time, prog,debug_depth=0):
     stepno = 0                  # self-consistency loop counter
     prevresults = {}
     consistent = False
     linsysDict = {}
     for subproblem in subprobctxts:
+        print >> sys.stderr, "*"*debug_depth+" EPY-IS top of subproblem loop."
         # This is the first call to make_linear_system for each
         # subproblem.
         print >> sys.stderr, "EPY-IS: Inside initializeStaticFields subp loop."
@@ -235,12 +237,13 @@ def initializeStaticFields(subprobctxts, time, prog):
         # time is the start time.  Second argument is an optional
         # passed-in linearized system.
         linsysDict[subproblem] = lsys = subproblem.make_linear_system(
-            time, None) # HERE, also add depth.
-        print >> sys.stderr, "EPY-IS: Back from make_linear_system, evovle.py"
+            time, None, debug_depth=debug_depth+1) 
+        print >> sys.stderr, "EPY-IS: Back from make_linear_system, evolve.py"
         # Loads values for this time into the subproblem from the mesh.
         subproblem.startStep(lsys, time) # sets subproblem.startValues
         subproblem.cacheConstraints(lsys, time)
 
+    print >> sys.stderr, "*"*debug_depth+" EPY-IS top of static consistency loop."
     while (stepno < maxconsistencysteps and not consistent
            and not prog.stopped()):
         stepno += 1
@@ -250,7 +253,8 @@ def initializeStaticFields(subprobctxts, time, prog):
                 print >> sys.stderr, "EPY-IS: initializeStaticFields calling out to the subproblem."
                 # Actually solves the system at the initial time and
                 # puts the DOF values in the mesh.
-                subproblem.initializeStaticFields(linsysDict[subproblem])
+                subproblem.initializeStaticFields(linsysDict[subproblem],
+                                                  debug_depth+1)
                 subproblem.solutiontimestamp.increment()
                 newconstraints = subproblem.applyConstraints(
                     subproblem.startValues, time)
@@ -354,7 +358,7 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                 # so it's likely that time-dependent BCs will be done
                 # incorrectly in this step.
                 lsys = subprob.make_linear_system(
-                    time, linsysDict.get(subprob, None)) # HERE: Add debug_depth. 
+                    time, linsysDict.get(subprob, None),debug_depth=debug_depth+1) 
                 linsysDict[subprob] = lsys
                 subprob.startStep(lsys, time) # sets subprob.startValues
                 subprob.cacheConstraints(lsys, time)
@@ -404,11 +408,13 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                         # debug.fmsg("taking step from %g to %g (%g)" %
                         #            (time, targettime, targettime-time))
                         print >> sys.stderr, "EPY-ET: Evolve_to calling stepper."
+                        # HERE
                         epyet_solver = subproblem.nonlinear_solver
                         print >> sys.stderr, "EPY-ET: Solver is: ", epyet_solver
                         # Calls the nonlinearsolver, which calls the stepper.
                         stepResult = subproblem.nonlinear_solver.step(
                             subproblem,
+                            debug_depth+1,
                             linsys=lsClone,
                             time=time,
                             unknowns=unknowns,

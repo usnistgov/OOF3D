@@ -55,23 +55,23 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
     def _nonlinear_residual(self, linsys, dt, unknowns):
         return (-dt)*linsys.static_residual_MCa(unknowns) # ?
     
-    def nonlinearstep(self, subproblem, linsys, time, unknowns, endtime,
-                      nonlinearMethod):
+    def nonlinearstep(self, subproblem, debug_depth, linsys, time, unknowns,
+                      endtime, nonlinearMethod):
         print >> sys.stderr, "IS-NL: ---> Incremental.nonlinearstep."
         print >> sys.stderr, "IS-NL: ---> Calling _do_step."
         print >> sys.stderr, "IS-NL: ---> NL method is ", nonlinearMethod
         return self._do_nonlinear_step(subproblem, linsys, time,
                                        unknowns, endtime,
                                        self._nonlinear_residual,
-                                       nonlinearMethod)
+                                       nonlinearMethod,debug_depth)
 
 
     # Nonlinear case is more complicated, you need to advance the bc's
     # and then do the NR loop with the initial guess that is the
     # linear solution of the prior K with the new BC.
     def _do_nonlinear_step(self, subproblem, linsys, time, unknowns, endtime,
-                           get_res, nlmethod):
-        print >> sys.stderr, "IS_DS----> Inside Incremental _do_nonlinear_step."
+                           get_res, nlmethod,debug_depth):
+        print >> sys.stderr, "*"*debug_depth+" IS_DS----> Inside Incremental _do_nonlinear_step."
         print >> sys.stderr, "A2020 Stepper entrance, targeting ", endtime
         # TODO: Do the incremental thing.
         # This involves, firstly, using the previous K matrix to
@@ -143,7 +143,11 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # should give the CG a good starting guess.
         # TODO: Is this a memory leak?
         xvec = subproblem.get_unknowns(linsys)
-        
+
+        # For plasticity, this is where we generate an initial guess
+        # by solving the passed-in K, which is supposed to be the
+        # previous iteration's elastoplastic tangent matrix.
+        # We think this is where it's maybe wrong. HERE.
         print >> sys.stderr, "IS_DS----> Calling linear solver."
         subproblem.matrix_method(_asymmetricIC,subproblem,linsys).solve(
             Amtx,bvec,xvec)
@@ -202,7 +206,8 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
                                                 linsys),
                        ilfuncs.precompute, ilfuncs.compute_residual,
                        ilfuncs.compute_jacobian,
-                       ilfuncs.compute_linear_coef_mtx, ildata, endValues)
+                       ilfuncs.compute_linear_coef_mtx, ildata, endValues,
+                       debug_depth+1)
 
         # TODO: Build these arguments. "data" is an object which will
         # get populated by the linearized system during precompute,
