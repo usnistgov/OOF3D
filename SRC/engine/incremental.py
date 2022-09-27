@@ -245,14 +245,16 @@ class IncrementalNLFuncs(object):
     def __init__(self, unknowns):
         self.unknowns = unknowns
 
-    def precompute(self, data, values, solver):
+    def precompute(self, debug_depth, data, values, solver):
         # debug.fmsg("requireJacobian=", solver.needsJacobian(),
         #            "requireResidual=", solver.needsResidual())
         data.subproblem.time_stepper.set_unknowns_part('K', data.linsys, values,
                                                        self.unknowns)
         # This step puts the values into the mesh.
         data.subproblem.installValues(data.linsys, self.unknowns, data.time)
-        data.linsys = data.subproblem.make_linear_system(data.time, data.linsys)
+        data.linsys = data.subproblem.make_linear_system(data.time,
+                                                         data.linsys,
+                                                         debug_depth=debug_depth)
 
     def compute_residual(self, data, soln, nlsolver):
         # debug.fmsg()

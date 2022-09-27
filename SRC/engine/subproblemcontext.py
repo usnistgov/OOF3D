@@ -861,7 +861,7 @@ class SubProblemContext(whoville.Who):
             
             print >> sys.stderr, "SCPY-MLS: rebuildMatrices components:"
             print >> sys.stderr, "NewLinSys: ", newLinSys
-            print >> sys.stderr, "newMateris: ", newMaterials
+            print >> sys.stderr, "newMaterials: ", newMaterials
             print >> sys.stderr, "Nonlinear: ",(self.nonlinear(flds) and (newBdys or newFieldValues))
             print >> sys.stderr, "NewFields: ",(newFieldValues and self.nonlinear_solver.needsResidual())
             needs_jacobian = (self.nonlinear_solver.needsJacobian() and 
@@ -1012,7 +1012,7 @@ class SubProblemContext(whoville.Who):
 
         # ## Don't remove this block.  Comment it out instead.  It's
         # ## likely to be needed later.
-        # global debugcount
+        # global debugcount3
         # debugcount += 1
         # if debugcount==3:
         #     if always:
@@ -1354,13 +1354,15 @@ class StaticNLFuncs(object):
     def __init__(self, unknowns):
         self.unknowns = unknowns
 
-    def precompute(self, data, values, solver):
+    def precompute(self, debug_depth, data, values, solver):
         # debug.fmsg("requireJacobian=", solver.needsJacobian(),
         #            "requireResidual=", solver.needsResidual())
         data.subproblem.time_stepper.set_unknowns_part('K', data.linsys, values,
                                                        self.unknowns)
         data.subproblem.installValues(data.linsys, self.unknowns, data.time)
-        data.linsys = data.subproblem.make_linear_system(data.time, data.linsys)
+        data.linsys = data.subproblem.make_linear_system(data.time,
+                                                         data.linsys,
+                                                         debug_depth=debug_depth)
 
     def compute_residual(self, data, soln, nlsolver):
         # debug.fmsg()

@@ -270,7 +270,8 @@ class Newton(NLSolver):
         self.requireResidual(True)
         self.requireJacobian(True)
         print >> sys.stderr, "NLSC-S: Calling precompute."
-        precompute(data, values, self)
+        # Precompute calls make_nonlinear_system.
+        precompute(debug_depth, data, values, self)
         print >> sys.stderr, "NLSC-S: Calling compute_residual."
         residual = compute_residual(data, values, self)
         print >> sys.stderr, "NLSC-S: Back from compute_residual."
@@ -342,7 +343,7 @@ class Newton(NLSolver):
                 self.requireJacobian(True)
                 self.requireResidual(True)
                 # debug.fmsg("norm updated values=", values.norm())
-                precompute(data, values, self)
+                precompute(debug_depth, data, values, self)
                 # compute the residual
                 residual = compute_residual(data, values, self)
                 res_norm = residual.norm()
