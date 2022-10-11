@@ -852,7 +852,9 @@ class SubProblemContext(whoville.Who):
                        or always)
 
             print >> sys.stderr, "SPC: After newBdy check."
-            
+
+            solver_object = self.nonlinear_solver 
+
             newLinSys = (linsys is None) or newDefinition
 
             print >> sys.stderr, "SPC: After newLinSys assignment."
@@ -863,13 +865,13 @@ class SubProblemContext(whoville.Who):
             print >> sys.stderr, "NewLinSys: ", newLinSys
             print >> sys.stderr, "newMaterials: ", newMaterials
             print >> sys.stderr, "Nonlinear: ",(self.nonlinear(flds) and (newBdys or newFieldValues))
-            print >> sys.stderr, "NewFields: ",(newFieldValues and self.nonlinear_solver.needsResidual())
-            needs_jacobian = (self.nonlinear_solver.needsJacobian() and 
-                              self.nonlinear_solver.jacobianRequirementChanged() > linsysComputed)
+            print >> sys.stderr, "NewFields: ",(newFieldValues and solver_object.needsResidual())
+            needs_jacobian = (solver_object.needsJacobian() and 
+                              solver_object.jacobianRequirementChanged() > linsysComputed)
             print >> sys.stderr, "Jacobian: ", needs_jacobian
-            needs_residual = (self.nonlinear_solver.needsResidual() and
-                              (newFieldValues or 
-                               (self.nonlinear_solver.residualRequirementChanged() > linsysComputed)))
+            needs_residual = (solver_object.needsResidual()  and
+                              (newFieldValues or
+                               (solver_object.residualRequirementChanged() > linsysComputed)))
             print >> sys.stderr, "Residual: ", needs_residual 
             print >> sys.stderr, "Time-dependence: ",(newTime and self.timeDependentProperties(flds))
             print >> sys.stderr, "Always: ",always
@@ -878,13 +880,13 @@ class SubProblemContext(whoville.Who):
             rebuildMatrices = (
                 newLinSys or newMaterials
                 or (self.nonlinear(flds) and (newBdys or newFieldValues))
-                or (newFieldValues and self.nonlinear_solver.needsResidual())
-                or (self.nonlinear_solver.needsJacobian() and 
-                    self.nonlinear_solver.jacobianRequirementChanged() >
+                or (newFieldValues and solver_object.needsResidual() )
+                or (solver_object.needsJacobian() and 
+                    solver_object.jacobianRequirementChanged() >
                     linsysComputed)
-                or (self.nonlinear_solver.needsResidual() and
+                or (solver_object.needsResidual() and
                     (newFieldValues or 
-                     (self.nonlinear_solver.residualRequirementChanged() >
+                     (solver_object.residualRequirementChanged() >
                       linsysComputed)))
                 or (newTime and self.timeDependentProperties(flds))
                 or always)
