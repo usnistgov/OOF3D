@@ -223,6 +223,7 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
     
         # Then:
         # The UniformDriver will fill in the nextStep attribute.
+        # TODO: Re-establish high-level context for instrumentation?
         print >> sys.stderr, "A2020 stepper exit targeting ", endtime
         print >> sys.stderr, "Endvalues: ", endValues
         for i in range(endValues.size()):

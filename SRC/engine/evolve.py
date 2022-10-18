@@ -294,6 +294,8 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
     # debug_depth is an integer used for debugging/tracing.
     assert endtime > time
     mindelta = None
+    # This check is superfluous, evolve is the caller, and passes
+    # in the linsysDict from static field initialization. (?)
     if linsysDict is None:
         linsysDict = {}
     starttime = time
@@ -357,9 +359,12 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                 # time that is passed through is the beginning of the step,
                 # so it's likely that time-dependent BCs will be done
                 # incorrectly in this step.
+
                 lsys = subprob.make_linear_system(
-                    time, linsysDict.get(subprob, None),debug_depth=debug_depth+1) 
+                    time, linsysDict.get(subprob, None),debug_depth=debug_depth+1)
                 linsysDict[subprob] = lsys
+                # HACK: Do this backwards for testing.
+                # lsys = linsysDict[subprob]
                 subprob.startStep(lsys, time) # sets subprob.startValues
                 subprob.cacheConstraints(lsys, time)
                     
@@ -412,6 +417,7 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                         epyet_solver = subproblem.nonlinear_solver
                         print >> sys.stderr, "EPY-ET: Solver is: ", epyet_solver
                         # Calls the nonlinearsolver, which calls the stepper.
+                        # StepResult class is in engine/timestepper.py.
                         stepResult = subproblem.nonlinear_solver.step(
                             subproblem,
                             debug_depth+1,
@@ -420,6 +426,9 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                             unknowns=unknowns,
                             endtime=targettime)
                         # debug.fmsg("endValues=", stepResult.endValues)
+
+                        print >> sys.stderr, '*'*debug_depth+" EPY-ET tail after step."
+                        print >> sys.stderr, "EPY-ET: Step result is ", stepResult
 
                         print >> sys.stderr, "EPY-ET: Evolve_to back from stepper."
                         if stepResult.ok:
@@ -472,6 +481,7 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                     continue # goto "while stepno < maxconsistencysteps...
 
                 # All subproblems are consistent. Go on to the next time.
+                print >> sys.stderr, "EPY-ET: Subproblems are consistent."
                 time = targettime
                 delta = mindelta
                 stepTaken = True

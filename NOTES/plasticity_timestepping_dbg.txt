@@ -171,7 +171,7 @@ with Newton-Raphson nonlinear solver, with filenames:
             (from evolve.py:initializeStaticFields to evolve.py:evolve,
                 around line 100)
       - (Return from initializeStaticFields)
-
+      - linsys_dict variable has the lsys objects from the static fields.
       - Do the initial output.
     - Check if problem is static, exit if it is.
 
@@ -181,21 +181,46 @@ with Newton-Raphson nonlinear solver, with filenames:
   - Loop over requested output times: (Or more often, if delta small?)
     - Loop over subproblem steppers, find minimum delta.
     - Call evolve_to with the subproblems and a target time (local)
+        -> pass in the linsys_dict.
       File evolve.py, function evolve_to() (line 281 or so)
       - Try:
         - While not finished or commanded to stop:
           - End-time book-keeping.
           - Loop over subproblems:
-               --> Problem call? Re-using K or not? <--
-            - Run make_linear_system on a subproblem.
+               --> Problem call? Re-using K or not? <-- (!!)
+                   If you don't do this, what K do you have?
+            - Run make_linear_system on a subproblem, populate the dict.
             - startstep, cacheconstraints.
           - Subproblem consistency loop:
             - Subproblem loop:
               - Clone the linearized system, grab the unknowns
-              - Call subproblem.nonlinear_solver.step.
-                  HERE
-              - If result is OK, update linearized system.
+                subprob.time_stepper.nonlinearstep
+              - Calls subproblem.nonlinear_solver.step
+                - Calls UniformDriver.nonlinearstep. 
+                   (TS-UD instrumentation)
+                   - Calls self.stepper.nonnlinearstep, which goes to 
+                       Incremental.nonlinearstep
+                       (IS-NL instrumentation)
+                       - Calls into Incremental._do_nonlinear_step
+                           - femesh.setCurrentSubProblem()
+                           - subproblem.apply_bcs()
+                           - linsys.find_fix_bndy_rhs 
+                           - Call subproblem.matrix_method and solve for X.
+                           - Write linear solution to the mesh (OK if K is old)
+                           - Build the IncrementalNLFunc and 
+                               IncrementalNLData objects.
+                           - Call nlmethod.solve(), which enters the 
+                               Newton-Raphson solver. 
+                             - NonlinearSolverCore.Newton.solve()
+                               - Calls precompute, builds matrices. (OK?)
+                        - Exit from Incremental._do_nonlinear_step builds
+                            the StepResult object, with the linsys in it.
+              - If result is OK, assign the linsys from the step-result
+                  object to the "newlinsys" dict (??) in evolve_to scope.
+                 (What happens to K?)
             - Check consistency.
+            - When everyone is consistent, copy state data, especially
+                newlinsys dictionary data goes into linsysDict.
       - Return from evolve_to() with consistent subproblems.
     - Book-keeping checks for possible errors
     - Possible conditional outputs
