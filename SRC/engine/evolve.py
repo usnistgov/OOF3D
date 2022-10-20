@@ -360,11 +360,10 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                 # so it's likely that time-dependent BCs will be done
                 # incorrectly in this step.
 
-                lsys = subprob.make_linear_system(
-                    time, linsysDict.get(subprob, None),debug_depth=debug_depth+1)
-                linsysDict[subprob] = lsys
+                # lsys = subprob.make_linear_system(time, linsysDict.get(subprob, None),debug_depth=debug_depth+1)
+                # linsysDict[subprob] = lsys
                 # HACK: Do this backwards for testing.
-                # lsys = linsysDict[subprob]
+                lsys = linsysDict[subprob]
                 subprob.startStep(lsys, time) # sets subprob.startValues
                 subprob.cacheConstraints(lsys, time)
                     
@@ -413,7 +412,6 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                         # debug.fmsg("taking step from %g to %g (%g)" %
                         #            (time, targettime, targettime-time))
                         print >> sys.stderr, "EPY-ET: Evolve_to calling stepper."
-                        # HERE
                         epyet_solver = subproblem.nonlinear_solver
                         print >> sys.stderr, "EPY-ET: Solver is: ", epyet_solver
                         # Calls the nonlinearsolver, which calls the stepper.

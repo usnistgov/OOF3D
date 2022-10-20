@@ -14,6 +14,7 @@
 
 from ooflib.SWIG.common import config
 from ooflib.SWIG.common import doublevec
+from ooflib.SWIG.common import ooferror
 from ooflib.SWIG.common import switchboard
 from ooflib.SWIG.common import timestamp
 from ooflib.SWIG.engine import field
@@ -1007,8 +1008,10 @@ class SubProblemContext(whoville.Who):
             femesh.clearCurrentSubProblem()
             linsys.computed.increment()  # Timestamp.
 
-        except:
+        # HERE: Get the exception and see what it is.
+        except (Exception, ooferror.ErrErrorPtr), exception:
             print >> sys.stderr, "SCP: Exception in make_linear_system."
+            print >> sys.stderr, "Exception is: ", exception
         finally:
             mesh.releaseLatestData()
 
