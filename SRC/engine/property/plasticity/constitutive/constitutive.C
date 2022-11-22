@@ -87,6 +87,8 @@ void PowerLawConstitutiveRule::_evolve_gamma(PowerLawSlipData *plsd,
       m_inv = 1.0/m;
 
       plsd->delta_gamma[alpha] = delta_t*const_sign*g0dot*(pow(abs(ratio_alpha),m_inv));
+      // Swap the line below in for elastic testing. HACK.
+      // plsd->delta_gamma[alpha] = 0.0;
 
       // std::cerr << "Constitutive rule:" << std::endl;
       // std::cerr << "Dt: " << delta_t << std::endl;
@@ -103,8 +105,10 @@ void PowerLawConstitutiveRule::_evolve_gamma(PowerLawSlipData *plsd,
       res_inv = 1.0/total_res[alpha];
 
       // Also need the derivative.
+
       plsd->dgamma_dtau[alpha] = delta_t*res_inv*g0dot*m_inv*(pow(abs(ratio_alpha),(m_inv-1.0)));
-	
+      // Swap the line below in for elastic testing.
+      // plsd->dgamma_dtau[alpha] = 0.0;
     }
     else {
       // std::cerr << "Constitutive rule: Trivial case." << std::endl;
@@ -118,7 +122,11 @@ void PowerLawConstitutiveRule::complete(GptPlasticData *gptpd,
 					GptSlipData *gptsd) {
   PowerLawSlipData *plsd = static_cast<PowerLawSlipData*>(gptsd);
 
+  // The evolution of the slip system resistance is not captured
+  // during the calls to "evolve", but is accumulated in the
+  // "total_res" variable. Capture it into the slip data here.
   plsd->res = total_res;
+  
   
 }
 // ----- ELASTIC -----

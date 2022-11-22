@@ -104,3 +104,64 @@ important issues.  They're collected here.
       return stepOK?  Does it mean it reached the target, or just
       that it took a single step successfully?
  
+  ------------
+  
+  Oct. 2022 -- diving into things a bit more.
+
+  Built a bunch of instrumentation for the code, and now using the
+"outline mode" scheme in Emacs to get a better grip on things.
+
+  Having understood the stepper sequence better, there are a couple
+of mysteries -- for the all_up_newtime_io.txt ouptut file, with the
+delta-T of 1, if you *remove* the extra K-matrix construction from
+evolve (line 365 of engine/evolve.py), the evolution gets into 
+problems around time-step 75, where the BSB Q inversion failes.
+  Tightening up the time-step fixes it.
+
+  We are doing extra work, and the newly-built K is elastic (we think?),
+so it leads to fairly high stresses, so our first guess was that by
+*removing* the spurious K, we would get more stable results, but we
+are seeing the opposite.
+
+  Maybe the elastic(?) K is doing something different?  Getting ahead
+of the stress, and somehow indirectly stabilizing the later iterations,
+so when you remove it, things get worse?  This is unintuitive.
+
+  Other q's: Impact of the large-deformation terms?  Possibly this is
+too large, we think it's larger than the prototype code's result for
+the same problem.
+
+  Things to test:
+ 
+  Try to do up to T=1000 (10% strain) with a smaller time-step and
+see if we recover convergence for both extra-K and non-extra-K cases.
+
+  Without the extra K, it seems to fall over even at delta-T=0.5.
+  With the extra K, it can go up to 10% strain without falling
+    into NANs, although the accuracy remains an open question.
+
+  ----------------
+
+  Nov. 10, 2022 --
+
+  Comparing carefully against the prototype code, we are seeing
+scary thing -- the elastic constant seems to be wrong, for one thing,
+and the power-law seems to not be happening, there's no curvature
+to the hardening part of the thing.
+
+  To do: Do some runs with the plasticity hacked out to check 
+if it's the plasticity or the solver that's screwing things up.
+
+  Also, geometric vs non-geometric?  
+  
+  Audit the stuff in the code, and find earlier versions of the code
+that do the right thing.
+
+  -------------------
+
+  Nov. 15, 2022 -- 
+
+  Stress/strain curve complicated by not being super-clear which
+strain measure we're using.  SK will re-do with GL, I will re-do
+with logarithmic.
+

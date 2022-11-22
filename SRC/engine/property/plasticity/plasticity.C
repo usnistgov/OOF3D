@@ -455,7 +455,7 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
 	// std::cerr << lst << std::endl;
         // std::cerr << lst_t << std::endl;
 	*(gtmtx[alpha]) = (lst+lst_t)*(0.5*sd->gptslipdata[gptdx]->dgamma_dtau[alpha]);
-      }
+      } 
 
       // std::cerr << "Gtmtx:" << std::endl;
       // for(int alphadx=0;alphadx<nslips;++alphadx) {
@@ -543,6 +543,7 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
       if (icount>ITER_MAX)
 	done = true;
     } // Constitutive while loop ends here.
+    
     std::cerr << "Out of the constitutive while loop." << std::endl;
     std::cerr << "S-star: " << pd->gptdata[gptdx]->s_star << std::endl;
     
