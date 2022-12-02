@@ -167,7 +167,8 @@ public:
   // There are two kinds of begin_element, one for solving and
   // one for output.  Properties implement these, and get to decide
   // if they're the same or not.
-  void begin_element_matrix(const CSubProblem*, double time, const Element*)
+  void begin_element_matrix(const CSubProblem*, double time,
+			    const Element*, int)
     const;
   void end_element_matrix(const CSubProblem*, double time, const Element*) const;
   void begin_element_output(const CSubProblem*, double time, const Element*)
@@ -188,7 +189,8 @@ public:
 			  const std::vector<int>&,
 			  double time,
 			  const CNonlinearSolver*,
-			  LinearizedSystem&) const;
+			  LinearizedSystem&,
+			  int) const;
   void find_fluxdata(const FEMesh*, const Element*, const Flux*,
 		     const MasterPosition&, SmallSystem*) const;
 

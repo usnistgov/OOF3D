@@ -51,7 +51,8 @@ public:
   %name(c_is_symmetric_M) bool is_symmetric_M(const CSubProblem*);
   %name(c_constant_in_space) bool constant_in_space();
   %name(c_begin_element_matrix) void begin_element_matrix(CSubProblem*,
-						   double, Element*);
+							  double, Element*,
+							  int);
   %name(c_end_element_matrix) void end_element_matrix(CSubProblem*,
 						      double, Element*);
   %name(c_begin_element_ouptut) void begin_element_output(CSubProblem*,

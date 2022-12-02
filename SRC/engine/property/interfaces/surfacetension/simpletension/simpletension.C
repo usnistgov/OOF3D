@@ -46,7 +46,8 @@ int SimpleTension::integration_order(const CSubProblem*,
 
 void SimpleTension::begin_element_matrix(const CSubProblem *pSubp,
 					 double time, 
-					 const Element *pElem) {
+					 const Element *pElem,
+					 int debug_depth) {
   
   FuncNode *n0,*nn;
   int nnodes = pElem->nnodes();

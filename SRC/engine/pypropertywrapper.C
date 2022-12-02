@@ -112,14 +112,15 @@ void PyPropertyMethods::py_begin_element_matrix(PyObject *referent,
 						Property *prop,
 						const CSubProblem *m,
 						const double time,
-						const Element *el)
+						const Element *el,
+						int debug_depth)
 {
   char _element_temp[128];
   char _mesh_temp[128];
   PyGILState_STATE pystate = acquirePyLock();
   try {
     if(!PyObject_HasAttrString(referent, (char*) "begin_element_matrix")) {
-      prop->Property::begin_element_matrix(m, time, el);
+      prop->Property::begin_element_matrix(m, time, el,debug_depth);
     }
     else {
       // TODO: Build time argument here?

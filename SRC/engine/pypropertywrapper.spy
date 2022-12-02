@@ -89,10 +89,10 @@ properties.PropertyPtr.cross_reference_wrap = _cross_reference_wrap
 
 #=--=##=--=#
 
-def _begin_element_matrix_wrap(self, subp_p, element_p):
+def _begin_element_matrix_wrap(self, subp_p, element_p, ddepth):
     subp = csubproblem.CSubProblemPtr(subp_p)
     elmnt = element.ElementPtr(element_p)
-    self.begin_element_matrix(subp, elmnt)
+    self.begin_element_matrix(subp, elmnt, ddepth)
 
 properties.PropertyPtr.begin_element_matrix_wrap = _begin_element_matrix_wrap
 

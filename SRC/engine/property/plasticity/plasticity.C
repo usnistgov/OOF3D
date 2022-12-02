@@ -126,19 +126,17 @@ void Plasticity::precompute(FEMesh* f) {
 }
 
 void Plasticity::begin_element_matrix(const CSubProblem *c,
-				      double time, const Element *e) {
-  
-  std::cerr << "Plasticity::begin_element_matrix starting." << std::endl;
+				      double time, const Element *e,
+				      int debug_level) {
+
+  for(int idx=0;idx<debug_level;++idx) std::cerr << "*";
+  std::cerr << " Plasticity::begin_element_matrix starting." << std::endl;
   std::cerr << "Element is " << e->get_index() << "." << std::endl;
   std::cerr << "Time is " << time << std::endl;
   // LINSYS STEP 3, plastic version -- called from
   // Material::begin_element_matrix, we are in element scope, and need to run
   // our own gausspoint loop.  This class (or its subclasses) are
   // responsible for managing the per-gausspoint data objects.
-
-  std::cerr << "Inside Plasticity::begin_element_matrix." << std::endl;
-  std::cerr << "Element: " << std::endl;
-  std::cerr << *e << std::endl;
 
   ElementData *ed = e->getDataByName("plastic_data");
   ElementData *eds = e->getDataByName("slip_data");
@@ -1046,8 +1044,8 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
 	    b_inverse(kay.integer(),emm)*displacedsfdvs[ell];
 	}
 	// Geometric part:
-	fluxmtx->stiffness_matrix_element( ij, displacement, kay, node) -=
-	  cauchy(ij.row(),ell)*displacedsfdvs[ell];
+	// fluxmtx->stiffness_matrix_element( ij, displacement, kay, node) -=
+	//   cauchy(ij.row(),ell)*displacedsfdvs[ell];
       }
     }
   }

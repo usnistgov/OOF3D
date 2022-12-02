@@ -165,3 +165,17 @@ that do the right thing.
 strain measure we're using.  SK will re-do with GL, I will re-do
 with logarithmic.
 
+  -------------
+
+  Nov. 29, 2022 --
+
+  Useful quantities:
+
+  We want to make the diagnostic data more navigable, so do that.
+
+  Start with delta-gamma.
+  If it's weird, look at tau-alpha (the resolved shear stress).
+  If *that* is weird, then S, the 2nd PK stress.  
+  If *that* is weird, then the Cauchy stress.
+  If *that* is weird, then K. 
+

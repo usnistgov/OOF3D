@@ -169,7 +169,7 @@ public:
   // to do the same stuff for both, or not, depending on their
   // statefulness.
   virtual void begin_element_matrix(const CSubProblem*,
-				    double time, const Element*) {}
+				    double time, const Element*, int) {}
   virtual void end_element_matrix(const CSubProblem*,
 				  double time, const Element*) {}
   virtual void begin_element_output(const CSubProblem*,

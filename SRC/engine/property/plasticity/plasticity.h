@@ -85,7 +85,7 @@ public:
 	     const Cijkl &c, PlasticConstitutiveRule *r, const int slips);
   virtual ~Plasticity() {}
   virtual void begin_element_matrix(const CSubProblem*, double time,
-				    const Element*); 
+				    const Element*,int); 
   virtual void flux_matrix(const FEMesh *mesh,
 			   const Element *element,
 			   const ElementFuncNodeIterator &nu,

@@ -272,7 +272,8 @@ public:
   // each "side" separately.
   void make_linear_system(const CSubProblem*, double time,
 			  const CNonlinearSolver*,
-			  LinearizedSystem &) const;
+			  LinearizedSystem &,
+			  int) const;
 
   // Post-equilibrium processing.
   void post_process(CSubProblem *) const;
@@ -498,7 +499,8 @@ public:
   virtual void make_linear_system(const CSubProblem* const,
 				  double time,
 				  const CNonlinearSolver *nlsolver,
-				  LinearizedSystem &system) const;
+				  LinearizedSystem &system,
+				  int) const;
   // Tell the Element that the Material may have changed.
   //  void refreshInterfaceMaterial(const CSkeletonBase*);
 

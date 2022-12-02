@@ -269,7 +269,8 @@ Material::outputProperties(const PropertyOutput *pout) const {
 // here is because the Material is the one with the handy-dandy
 // list of properties.
 void Material::begin_element_matrix(const CSubProblem *subproblem,
-				    double time, const Element *el)
+				    double time, const Element *el,
+				    int debug_level)
   const
 {
   // std::cerr << "Material::begin_element starting." << std::endl;
@@ -285,7 +286,7 @@ void Material::begin_element_matrix(const CSubProblem *subproblem,
   for(std::vector<Property*>::size_type i=0;i<property.size();i++) {
     if(subproblem->currently_active_prop(property[i])) {
       // std::cerr << "Calling begin_element_matrix on a property." << std::endl;
-      property[i]->begin_element_matrix(subproblem, time, el);
+      property[i]->begin_element_matrix(subproblem, time, el, debug_level);
       // std::cerr << "Back from property begin_element_matrix." << std::endl;
     }
   }
@@ -432,7 +433,8 @@ void Material::make_linear_system(const CSubProblem *subproblem,
 				  const std::vector<int> &dofmap,
 				  double time,
 				  const CNonlinearSolver *nlsolver,
-				  LinearizedSystem &linearized_system)
+				  LinearizedSystem &linearized_system,
+				  int debug_level)
   const
 {
   // LINSYS STEPs 4 and 5 happen here.

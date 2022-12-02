@@ -464,7 +464,8 @@ void Element::refreshMaterial(const CSkeletonBase *skeleton) {
 void Element::make_linear_system(const CSubProblem *const subproblem,
 				 double time,
 				 const CNonlinearSolver *nlsolver,
-				 LinearizedSystem &system)
+				 LinearizedSystem &system,
+				 int debug_level)
   const
 {
   // LINSYS STEP 2
@@ -478,7 +479,7 @@ void Element::make_linear_system(const CSubProblem *const subproblem,
     // TODO: Material begin_element should pass the order through also.
     // std::cerr << "Inside Element::make_linear_system." << std::endl;
     // std::cerr << "Calling Material begin_element_matrix." << std::endl;
-    mat->begin_element_matrix(subproblem, time, this);
+    mat->begin_element_matrix(subproblem, time, this, debug_level);
     // std::cerr << "Back from Material begin_element_matrix." << std::endl;
     // TODO OPT: iorder could be precomputed or cached, but do some
     // careful profiling before changing anything.  Preliminary tests
@@ -492,7 +493,7 @@ void Element::make_linear_system(const CSubProblem *const subproblem,
 	!gpt.end();++gpt) {
       // std::cerr << "Calling Material make_linear_system." << std::endl;
       mat->make_linear_system( subproblem, this, gpt, dofmap, time,
-			       nlsolver, system );
+			       nlsolver, system, debug_level );
       // std::cerr << "Back from Material make_linear_system." << std::endl;
     }    
     mat->end_element_matrix(subproblem, time, this);
@@ -1392,7 +1393,8 @@ std::ostream &operator<<(std::ostream &os, const InterfaceElement &ed)
 void InterfaceElement::make_linear_system(const CSubProblem *const subproblem,
 					  double time,
 					  const CNonlinearSolver *nlsolver,
-					  LinearizedSystem &system) const
+					  LinearizedSystem &system,
+					  int debug_level) const
 {
   std::vector<int> dofmap = localDoFmap();
   const Material *mat = material();
@@ -1407,7 +1409,7 @@ void InterfaceElement::make_linear_system(const CSubProblem *const subproblem,
     for(GaussPointIterator gpt = integrator(iorder);
 	!gpt.end();++gpt) {
       mat->make_linear_system( subproblem, this, gpt, dofmap, time,
-			       nlsolver, system );
+			       nlsolver, system, debug_level );
     }    
 
     current_side = RIGHT;
@@ -1415,7 +1417,7 @@ void InterfaceElement::make_linear_system(const CSubProblem *const subproblem,
     for(GaussPointIterator gpt = integrator(iorder);
 	!gpt.end();++gpt) {
       mat->make_linear_system( subproblem, this, gpt, dofmap, time,
-			       nlsolver, system );
+			       nlsolver, system, debug_level );
     }
    
     current_side = LEFT;  // Return stateful objects to their initial state..

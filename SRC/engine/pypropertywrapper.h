@@ -47,7 +47,8 @@ public:
   virtual void py_cross_reference(PyObject*, Property*, Material*);
   
   virtual void py_begin_element_matrix(PyObject*, Property*, const CSubProblem*,
-				       const double, const Element*);
+				       const double, const Element*,
+				       int);
   virtual void py_end_element_matrix(PyObject*, Property*,
 				     const CSubProblem*, const double,
 				     const Element*);
@@ -110,8 +111,9 @@ public:
   }
 
   virtual void begin_element_matrix(const CSubProblem *sb, const double time,
-				    const Element *e) {
-    PyPropertyMethods::py_begin_element_matrix(referent_, this, sb, time, e);
+				    const Element *e, int ddepth) {
+    PyPropertyMethods::py_begin_element_matrix(referent_, this, sb,
+					       time, e, ddepth);
   }
   virtual void end_element_matrix(const CSubProblem *sb, double time,
 				  const Element *e) {
@@ -192,8 +194,9 @@ public:
     PyPropertyMethods::py_cross_reference(referent_, this, m);
   }
   virtual void begin_element_matrix(const CSubProblem *sb, const double time,
-				    const Element *e) {
-    PyPropertyMethods::py_begin_element_matrix(referent_, this, sb, time, e);
+				    const Element *e, int ddepth) {
+    PyPropertyMethods::py_begin_element_matrix(referent_, this, sb,
+					       time, e, ddepth);
   }
   virtual void end_element_matrix(const CSubProblem *sb, double time,
 				  const Element *e) {

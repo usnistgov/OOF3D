@@ -684,7 +684,8 @@ void CSubProblem::make_linear_system(LinearizedSystem *linearsystem,
       for(int idx=0; idx<debug_level; ++idx) std::cerr << "*";
       std::cerr << " Element loop in CSubProblem::make_linear_system, element #" << ecount << std::endl;
       std::cerr << "Calling element make_linear_system." << std::endl;
-      ei.element()->make_linear_system( this, time, nlsolver, *linearsystem );
+      ei.element()->make_linear_system( this, time, nlsolver,
+					*linearsystem, debug_level+1);
       // std::cerr << "Back from element make_linear_system." << std::endl;
       progress->setFraction( float(ei.count()+1)/float(ei.size()) );
       progress->setMessage(to_string(ei.count()+1) + "/" + to_string(ei.size())
@@ -699,7 +700,8 @@ void CSubProblem::make_linear_system(LinearizedSystem *linearsystem,
   for(std::vector<Element*>::size_type i=0; i<n && !progress->stopped(); i++) {
     if(mesh->edgement[i]->allNodesAreInSubProblem(this)) {
       mesh->edgement[i]->make_linear_system( this, time, nlsolver, 
-					     *linearsystem );
+					     *linearsystem,
+					     debug_level+1);
     }
     progress->setFraction(double(i+1)/n);
     progress->setMessage(to_string(i+1) + "/" + to_string(n) + " edges");
