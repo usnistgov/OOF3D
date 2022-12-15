@@ -357,6 +357,9 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
     std::cerr << std::endl << "S_trial:" << std::endl;
     std::cerr << s_trial << std::endl;
 
+
+    for(int idx=0;idx<debug_level;++idx) std::cerr << "*";
+    std::cerr << " A matrix and trial stress." << std::endl;
     std::cerr << "Have A matrix and trial stress." << std::endl;
     // At this point we have the A matrix and trial stress for this gpt.
     // Slip systems are in lab_schmid_tensors, std::vector<SmallMatrix*>.
@@ -425,6 +428,8 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
     bool done = false;        // Set when converged or iter limit exceeded.
     unsigned int icount = 0;  // Count interations.
     while(!done) {
+      for(int idx=0;idx<debug_level;++idx) std::cerr << "*";
+      std::cerr << " Top of plastic convergence loop." << std::endl;
       // Compute the new resolved shear stresses from s_star.
       for(int alpha=0;alpha<nslips;++alpha) {
 	sd->gptslipdata[gptdx]->tau_alpha[alpha] =	\
@@ -541,8 +546,9 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
       if (icount>ITER_MAX)
 	done = true;
     } // Constitutive while loop ends here.
-    
-    std::cerr << "Out of the constitutive while loop." << std::endl;
+
+    for(int idx=0;idx<debug_level;++idx) std::cerr << "*";
+    std::cerr << " Out of the constitutive while loop." << std::endl;
     std::cerr << "S-star: " << pd->gptdata[gptdx]->s_star << std::endl;
     
     // Compute the last set of resolved shear stresses from the last s_star.
@@ -650,8 +656,15 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
     pd->gptdata[gptdx]->cauchy *= (1.0/fe_dtmt);
 
     // Cauchy stress is now up to date.
+    
+    for(int idx=0;idx<debug_level;++idx) std::cerr << "*";
+    std::cerr << " Cauchy stress." << std::endl;
     std::cerr << "Constitutive output: Cauchy stress: " << std::endl;
     std::cerr << pd->gptdata[gptdx]->cauchy << std::endl;
+
+        
+    for(int idx=0;idx<debug_level;++idx) std::cerr << "*";
+    std::cerr << " Post-cauchy post-processing." << std::endl;
     
     // Construct the increment matrix, f_nc, and it's transpose.
     SmallMatrix3 f_att_i = f_att.invert();

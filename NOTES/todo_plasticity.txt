@@ -179,3 +179,7 @@ with logarithmic.
   If *that* is weird, then the Cauchy stress.
   If *that* is weird, then K. 
 
+  -----------
+ 
+  Want convenient access to cauchy stress?
+

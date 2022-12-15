@@ -117,7 +117,7 @@ OutputVal *POInitLargeStrain::operator()(const PropertyOutput *po,
 	  for(int c=r;c<3;++c) {
 	    double res = 0.0;
 	    for(int i=0;i<3;++i) {
-	      res += 0.5*dvec[i*3+r]*w[i]*dvec[i*3+c];
+	      res += dvec[i*3+r]*w[i]*dvec[i*3+c];
 	    }
 	    (*logstrain)(r,c) = res;
 	  }
