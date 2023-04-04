@@ -64,6 +64,9 @@ OutputVal *POInitLargeStrain::operator()(const PropertyOutput *po,
   (*deformation)(1,1) += 1.0;
   (*deformation)(2,2) += 1.0;
 
+  // std::cerr << "### Deformation at output-time ###" << std::endl;
+  // std::cerr << deformation << std::endl;
+  
   SymmMatrix3 *cmatrix = new SymmMatrix3();
   for(int i=0;i<3;++i)
     for(int j=0;j<=i;++j)
@@ -119,7 +122,7 @@ OutputVal *POInitLargeStrain::operator()(const PropertyOutput *po,
 	    for(int i=0;i<3;++i) {
 	      res += dvec[i*3+r]*w[i]*dvec[i*3+c];
 	    }
-	    (*logstrain)(r,c) = res;
+	    (*logstrain)(r,c) = 0.5*res; // 0.5 is from log strain def'n.
 	  }
 	}
 	delete cmatrix;

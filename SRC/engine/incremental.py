@@ -201,7 +201,9 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         print >> sys.stderr, "Endvalues: ", endValues
 
         print >> sys.stderr, "Incremental calling nlmethod, ", nlmethod
-        # Call is:
+        # Call the nonlinear solver.  Note that the first argument
+        # of this call is another function call to the subproblem's
+        # linear matrix method.
         nlmethod.solve(subproblem.matrix_method(_asymmetricIC, subproblem,
                                                 linsys),
                        ilfuncs.precompute, ilfuncs.compute_residual,

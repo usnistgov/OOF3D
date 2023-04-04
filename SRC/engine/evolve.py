@@ -364,7 +364,9 @@ def evolve_to(meshctxt, subprobctxts, time, endtime, delta, prog,
                 # linsysDict[subprob] = lsys
                 # HACK: Do this backwards for testing.
                 lsys = linsysDict[subprob]
+                print >> sys.stderr, "EPY-ET: Calling startstep."
                 subprob.startStep(lsys, time) # sets subprob.startValues
+                # This is almost what we want? 
                 subprob.cacheConstraints(lsys, time)
                     
             # Iterate over subprobctxts repeatedly until answers are

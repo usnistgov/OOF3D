@@ -98,7 +98,7 @@ is not the wrong scope, but it's weirdly indirect.
   SCPY-CSNL: subproblemcontext.py, compute nonlinear static fields.
   SCPY-MLS: subproblemcontext.py, make_linear_system.
 
-  CSP: csubproblem.C.
+ CSP: csubproblem.C.
   
   NLS-NLS: nonlinearsolver.py, NonlinearSolver class "step" method.
   NLS-N: nonlinearsolver.py, Newton class "solve" method. 
@@ -190,7 +190,7 @@ with Newton-Raphson nonlinear solver, with filenames:
                --> Problem call? Re-using K or not? <-- (!!)
                    If you don't do this, what K do you have?
             - Run make_linear_system on a subproblem, populate the dict.
-            - startstep, cacheconstraints.
+            - startstep, cacheconstraints.  <-- Here? Or is this once/output?
           - Subproblem consistency loop:
             - Subproblem loop:
               - Clone the linearized system, grab the unknowns
@@ -269,3 +269,33 @@ argument is not supported by the code paths.
 level of the hierarchy continue after an enclosed lower-level entity has 
 "closed" and is no longer operative, it's strictly hierarchical. 
 
+  ----------
+ 
+  Jan. 2023 -- how to get a linear solution step into the sequence? 
+
+  Feels like something that's in subproblem scope.
+ 
+  Meat of the operation:
+
+  Subproblem has a "matrix_method" method that returns the linear solver,
+which we can use on the LinearizedSystem, I think. 
+
+  Q: What does the actual solver do?  Calls matrix_method.solve(J, res, upd),
+where "upd" is, I think, the actual answer?  (It's an "update" in the
+special case of the Newton solver.  "matrix_method" is passed in.
+
+  Gets J from "compute_jacobian" which is part of the data package,
+but of course we want it from the linear system.
+
+  LinearizedSystem has:  J_submatrix, J_MCK, etc -- which is right?
+
+  Also rhs_MCK, etc.  Need to know which is right.
+
+  --------
+
+  Feb. 10, 2023: Discovery, the stepper is already doing this 
+calculation, and putting the DOF's in the subproblem.  But, this
+only sets up the initial guess for the nonlinear solver -- the actual
+nonlinear solver's first act is to recompute the K matrix with the
+new BC's, and because there's no plasticity yet, this is giving
+rise to a large stress.

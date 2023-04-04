@@ -345,8 +345,18 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
     a_mtx = ((fp_att_i_t*f_attau_t)*f_attau)*fp_att_i;
 
     SmallMatrix3 elastic_estimate = a_mtx;
-    for (int i=0;i<3;++i) { elastic_estimate(i,i) -= 1.0; }
 
+    std::cerr << "Elastic estimate prior to adjustment:" << std::endl;
+    std::cerr << elastic_estimate << std::endl;
+    
+    for (int i=0;i<3;++i) { elastic_estimate(i,i) -= 1.0; }
+    
+    std::cerr << "Elastic estimate: " << std::endl;
+    std::cerr << elastic_estimate << std::endl;
+
+    std::cerr << "Lab Cijkl:" << std::endl;
+    std::cerr << lab_cijkl_ << std::endl;
+    
     s_trial.clear();
     for (int i=0;i<3;++i)
       for (int j=0;j<3;++j)
@@ -720,8 +730,8 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
 	      bsb_l(i,j,n,o) += fe_att_t(i,idx)*u(idx,n)*fe_att(o,j);
 	    };
 
-    // std::cerr << "BSB L" << std::endl;
-    // std::cerr << bsb_l  << std::endl;
+    std::cerr << "BSB L" << std::endl;
+    std::cerr << bsb_l  << std::endl;
 
     // For debugging, paranoia about Cijkl.
     Rank4_3DTensor check_c;
@@ -751,8 +761,8 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
     // std::cerr << "1100: " << bsb_d(1,1,0,0) << std::endl;
     // std::cerr << "0011: " << bsb_d(0,0,1,1) << std::endl;
     
-    // std::cerr << "BSB D" << std::endl;
-    // std::cerr << bsb_d.as_smallmatrix() << std::endl;
+    std::cerr << "BSB D" << std::endl;
+    std::cerr << bsb_d.as_smallmatrix() << std::endl;
     
     // std::cerr << "Building bsb_g." << std::endl;
     std::vector<Rank4_3DTensor> bsb_g(nslips);
@@ -767,8 +777,8 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
 		  + (*(lab_schmid_tensors[alpha]))(m,k)*bsb_l(m,l,n,o);
 	      };
 
-    // std::cerr << "BSB_G:" << std::endl;
-    // std::cerr << bsb_g[0].as_smallmatrix() << std::endl;
+    std::cerr << "BSB_G:" << std::endl;
+    std::cerr << bsb_g[0].as_smallmatrix() << std::endl;
 
     std::vector<Rank4_3DTensor> bsb_t(nslips);
     for(int alpha=0;alpha<nslips;++alpha)
@@ -782,8 +792,8 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
 		    0.5*lab_cijkl_(i,j,k,l)*bsb_g[alpha](k,l,n,o);
 		}
 
-    // std::cerr << "BSB_T:" << std::endl;
-    // std::cerr << bsb_t[0].as_smallmatrix() << std::endl;
+    std::cerr << "BSB_T:" << std::endl;
+    std::cerr << bsb_t[0].as_smallmatrix() << std::endl;
     
     // Member objects:  lab_schmid_tensors, nslips.
     // Slip increments std::vector<double> delta_g
@@ -890,8 +900,8 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
 			  (*lab_schmid_tensors[alpha])(m,j);
 		      }
 
-    // std::cerr << "BSB S" << std::endl;
-    // std::cerr << bsb_s.as_smallmatrix() << std::endl;
+    std::cerr << "BSB S" << std::endl;
+    std::cerr << bsb_s.as_smallmatrix() << std::endl;
 
     
     Rank4_3DTensor w_mat;

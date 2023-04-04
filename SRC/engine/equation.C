@@ -166,7 +166,7 @@ DeformedDivergenceEquation::make_linear_system(const CSubProblem *subproblem,
   bool needResidual = nlsolver->needsResidual();
   bool needJacobian = nlsolver->needsJacobian();
 
-  // std::cerr << "DeformedDivergenceEquation::make_linear_system." << std::endl;
+  std::cerr << "DeformedDivergenceEquation::make_linear_system." << std::endl;
   // std::cerr << "Needs residual? " << needResidual << std::endl;
   // std::cerr << "Needs Jacobian? " << needJacobian << std::endl;
   

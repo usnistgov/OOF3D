@@ -1026,7 +1026,7 @@ class SubProblemContext(whoville.Who):
         #         dumpfile = "dump"
         #     linsys.dumpAll(dumpfile, time, "")
         #     sys.exit()
-        print >> sys.stderr, "SPC: Exiting make_linear_system."
+        print >> sys.stderr, "*"*debug_depth+" SPC: Exiting make_linear_system."
         return linsys
 
     #=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=##=--=#

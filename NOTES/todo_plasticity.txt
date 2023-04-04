@@ -181,5 +181,47 @@ with logarithmic.
 
   -----------
  
-  Want convenient access to cauchy stress?
+  Want convenient access to cauchy stress in the output.
 
+  ---------------
+
+  Jan. 2023:
+
+  - Trying to compare the outputs with the prototype code, finally
+realized that the codes had different outputs -- now OOF is using
+the xx component of the logarithmic strain and the xx component of
+the Cauchy stress, plus there was a secondary issue where the OOF
+code was not sampling the outputs very frequently in time.  That's
+all fixed, and the current state is that we have a very good match
+in the elastic regime, but once it starts to yield, the OOF code
+stress numbers are systematically higher than the prototype code.
+
+  Now we can get into the nuts and bolts of the actual algorithm,
+our first guess is that the OOF code is using the wrong K matrix
+at the start of each step -- this plus the fact that the NR iterations
+don't necessarily converge means that the deviation can accumulate
+(although we don't know if it actually does.)
+
+  Evidence:  Looking at the instrumented code, the initial
+Cauchy stress that is being handled by the plastic constitutive
+rule is a *lot* larger in the OOF code than it is in the prototype
+code -- e.g. at t=400 in the usual output, the initial stress that
+the algorithm is seeing is 1.665 GPa, but after convergence,
+it goes to around 450 MPa.  At the same step, the prototype code
+is seeing 448 MPa, and converges to 442 MPa.  
+
+  The Cauchy stress evidence is from the Cauchy equivalent of 
+the converged 2nd PK stress after step 16 in the algorithm outline
+of the cheat-sheet (e.g. after "until S is converged.")
+
+  Q: Can we check the actual K?  That's the thing to nail down.
+
+   ------------
+
+  April 2023:  It looks like the initial static solution 
+does not actually solve the K matrix?  What's up with that?
+(Did we turn that off?)
+
+  Also, run it with a big time step -- maybe 30 or so.  If you
+also increase the # of NR iterations, you can start to get 
+something that looks like convergence.  
