@@ -225,3 +225,56 @@ does not actually solve the K matrix?  What's up with that?
   Also, run it with a big time step -- maybe 30 or so.  If you
 also increase the # of NR iterations, you can start to get 
 something that looks like convergence.  
+ 
+  Things we know related to opportunities for intervention:
+
+  - The fundamental problem is that the prototype and OOF
+codes do not have the same behavior.
+
+  - The stepper *is* doing the thing where it solves the last
+known K before starting the next step -- the code is in the
+"_do_nonlinear_step" function in SRC/engine/incremental.py.
+
+  - The "pre-construction" of the linerized system in evolve.py
+is currently turned off -- it's at line 363 of SRC/engine/evolve.py.
+The prototype code does not do this, but it should be a no-op? Need
+more clarity about this.
+
+  - With a time-step of 1.0, the current OOF code wanders 
+off the expected hardening curve, indicating some kind of serious
+bug in this code.
+
+  - Compared to the prototype code, at one point the prototype
+code had much smaller/different F's than the OOF code, but
+this was probably due to a difference in the way the problem
+was set up, the free translations were removed differently 
+in the two codes. 
+
+  - I am still suspicious of the large-strain equation 
+code, this should probably be reviewed again.  This is 
+done in line 1070 of engine/property/plasticity/plasticity.C,
+it's currently turned off, and is also turned off in the 
+prototype code.
+   
+  - Big clue: The initial S_trial in the OOF code is large
+compared to the prototype code, resulting from the Fp(?),
+and there's a big change in the S_trial from the first to the
+second iteration in a given time-step.
+
+  ---
+
+  April 11, 2023:
+
+  Follow-up: The big difference in S_trial is coming from the
+F_tau, basically -- this means the elastic estimate is too high,
+and the large percentage difference arises because a small 
+percent change in a can be a large percent in (1-a), and you 
+subtract the trace to construct the elastic estimate.
+
+  Also the F_tau differs between the prototype and the OOF code,
+which is another big clue.
+
+  Discovery: The beginning operation K_star.x = b, is writing
+the wrong value in to the boundary.  The 2nd time-step is using
+0.00025, for instance.
+
