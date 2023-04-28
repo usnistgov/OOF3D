@@ -122,6 +122,8 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # because that's the target for this step?
         subproblem.apply_bcs(endtime,linsys,True,False)
 
+        # HACK: Restart the step, so startValues reflects the new BC.
+        subproblem.startStep(linsys,endtime)
         # Actually compute a new brhs object in the linsys. (?)
         linsys.find_fix_bndy_rhs(subproblem.getObject().get_meshdofs())
         # TODO: This is another place where float-bcs fail.
@@ -141,7 +143,8 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
 
         # Xvec needs to be allocated with the right size, and we
         # should give the CG a good starting guess.
-        # TODO: Is this a memory leak?
+        # Suspect this is the problem, subproblem injects startValues
+        # into this process, but the call chain is complicated.
         xvec = subproblem.get_unknowns(linsys)
 
         # For plasticity, this is where we generate an initial guess

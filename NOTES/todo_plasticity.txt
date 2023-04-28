@@ -278,3 +278,39 @@ which is another big clue.
 the wrong value in to the boundary.  The 2nd time-step is using
 0.00025, for instance.
 
+  -------
+
+  Chasing the boundary thing down:  The boundary condition
+application triggered at the start of the _do_nonlinear_step
+operation in the incremental stepper looks OK, it eventually
+lands in line 370-ish of bdycondition.py, where the right
+value is going in to the subproblem's mesh -- there is already
+instrumentation here, "A2020: ApplyBC", and it's right.
+
+  It's getting changed somewhere?
+  
+  We are dumping the linear system state, but it's getting 
+overwritten by later time steps.
+
+  Somewhere between setting the boundary and installing the
+solver solution, things are going wrong.
+
+  ------------
+
+  Put in a thing that re-runs the "start-step" in the 
+subproblem, now we are getting the right data being written in 
+to the mesh after the initial elastic solution, according to the
+instrumentation.
+
+  But it's still wrong.
+
+  On the first step, we are seeing that the 22 and 33 components
+of the trial stress are not the same as the prototype code,
+they're like 5x bigger. Prototype code it's ~99, OOF is 469.
+
+  Noteworthy, the 22 and 33 components in the prototype code
+are not equal?
+
+  The other thing we know we are doing differently is the 
+Newton-Raphson behavior, we do not solve the final matrix, 
+but the prototype code does.  Unclear if this matters.

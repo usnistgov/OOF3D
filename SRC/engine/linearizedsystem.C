@@ -1162,6 +1162,8 @@ void LinearizedSystem::find_fix_bndy_rhs(const DoubleVec *dofvalues) {
 
   // K times vector of fixed field values.
   DoubleVec *u = subp2fixedFieldMap.extract(*dofvalues);
+  std::cerr << "DOFs at boundary-fixing time." << std::endl;
+  std::cerr << *u << std::endl;
   K_indfixed_.axpy(1.0, *u, fix_bndy_rhs);
   delete u;
 

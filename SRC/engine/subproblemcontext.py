@@ -1224,6 +1224,7 @@ class SubProblemContext(whoville.Who):
 
         allvals = self.time_stepper.set_unknowns(linsys, knowns,
                                                  self.startValues)
+        print >> sys.stderr, "SC_IV: Knowns: ", knowns
         print >> sys.stderr, "SC_IV: Got vals."
         print >> sys.stderr, allvals
         self.set_mesh_dofs(allvals, time)
