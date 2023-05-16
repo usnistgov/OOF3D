@@ -1544,6 +1544,10 @@ void LinearizedSystem::setDirichletDerivatives(
 
 //=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//=\\=//
 
+void LinearizedSystem::dumpK_stderr() const {
+  std::cerr << "K_:" << std::endl << K_ << std::endl;
+}
+
 void LinearizedSystem::dumpAll(const std::string &filename, double time, 
 			       const std::string &comment)
   const

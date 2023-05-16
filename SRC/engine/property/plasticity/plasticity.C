@@ -290,6 +290,8 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
       // Vector value of the displacement at the node.
       dval += displacement->output(mesh, *efi);
 
+      std::cerr << "Displacement: " << dval << std::endl;
+      
       for (IteratorP ip = displacement->iterator(ALL_INDICES);
 	   !ip.end(); ++ip) {
 	int idx = ip.integer();
@@ -1040,7 +1042,11 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
   // TODO: Store f_tau_i in the PlasticData object.
   // Or, alternatively, store b_inverse there.
   SmallMatrix3 f_tau = (pd->gptdata[gptidx])->f_tau;
+  std::cerr << "Plasticity::flux_matrix got f_tau." << std::endl;
+  std::cerr << f_tau << std::endl;
   SmallMatrix3 f_tau_i = f_tau.invert();
+  std::cerr << "Plasticity::flux_matrix got f_tau_i." << std::endl;
+  std::cerr << f_tau_i << std::endl;
   SmallMatrix3 b_inverse;
   for(int k=0;k<3;++k) {
     for(int m=0;m<3;++m) {
@@ -1051,6 +1057,9 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
       b_inverse(k,m) = res;
     }
   }
+
+  std::cerr << "Plasticity::flux_matrix has b_inverse." << std::endl;
+  std::cerr << b_inverse << std::endl;
 
   double displacedsfdvs[3];
   for(int idx=0; idx<3; ++idx) {
@@ -1064,7 +1073,8 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
 	for(int emm = 0; emm < 3; ++emm) {
 	  fluxmtx->stiffness_matrix_element( ij, displacement, kay, node) +=
 	    w(ij.row(),ij.col(),ell,emm)*
-	    b_inverse(kay.integer(),emm)*displacedsfdvs[ell];
+	    0.5*(b_inverse(kay.integer(),emm)*displacedsfdvs[ell]
+		 +b_inverse(ell,kay.integer())*displacedsfdvs[emm]);
 	}
 	// Geometric part:
 	// fluxmtx->stiffness_matrix_element( ij, displacement, kay, node) -=

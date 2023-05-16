@@ -116,10 +116,8 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # Second boolean argument says field values are not changed.
         print >> sys.stderr, "A2020 Applying bcs."
         print >> sys.stderr, "IS_DS----> Applying bcs at time ", endtime
-        # Apparently not working?
-        # You might want the earlier time, because that's the
-        # time associated with the matrix, or maybe the later one,
-        # because that's the target for this step?
+        # 
+        # Use the later time, that's the one associated with the step.
         subproblem.apply_bcs(endtime,linsys,True,False)
 
         # HACK: Restart the step, so startValues reflects the new BC.

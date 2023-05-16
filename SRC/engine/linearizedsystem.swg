@@ -134,6 +134,7 @@ public:
 
   void dumpMaps(char*);		      // debugging
   void dumpAll(char*, double, char*); // debugging
+  void dumpK_stderr();                // more debugging
 };
 
 int get_globalLinSysCount();

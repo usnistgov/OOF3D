@@ -314,3 +314,11 @@ are not equal?
   The other thing we know we are doing differently is the 
 Newton-Raphson behavior, we do not solve the final matrix, 
 but the prototype code does.  Unclear if this matters.
+
+  ----
+
+  May 2023: Major insight:  The constitutive rule computes
+the derivative of the 2nd PK stress wrt the Lagrange strain,
+which is not what we are treating in the main matrix, we are
+treating it as the derivative of the Cauchy stress wrt 
+the little-e strain.  This is wrong!!!

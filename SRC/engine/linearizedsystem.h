@@ -358,6 +358,7 @@ public:
   void dumpMaps(const std::string&) const;
   void dumpAll(const std::string &filename, double time,
 	       const std::string &comment) const;
+  void dumpK_stderr() const; // Dumps K matrix to stderr.
 private:
   void do_dumpMaps(std::ostream&) const;
 };
