@@ -624,9 +624,10 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
     ident(0,0)=1.0; ident(1,1)=1.0; ident(2,2)=1.0;
 
     // The new fp is the old fp plus the Asaro equation result.
-    // This is fp_attau;
-    pd->gptdata[gptdx]->fp_tau = (pd->gptdata[gptdx]->fpt)*(ident + lp);
-
+    // This is fp_attau; FIX.
+    // pd->gptdata[gptdx]->fp_tau = (pd->gptdata[gptdx]->fpt)*(ident + lp);
+    pd->gptdata[gptdx]->fp_tau = (ident + lp)*(pd->gptdata[gptdx]->fpt);
+    
     std::cerr << "Incremented fp_tau." << std::endl;
     std::cerr << *(pd->gptdata[gptdx]) << std::endl;
     
@@ -1058,12 +1059,23 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
     }
   }
 
+  // HACK: Remove b_inverse.
+  // b_inverse = SmallMatrix3();
+  // b_inverse(0,0)=1.0; b_inverse(1,1)=1.0; b_inverse(2,2)=1.0;
+  
+  double ref_to_current = f_tau.determinant();
+  
   std::cerr << "Plasticity::flux_matrix has b_inverse." << std::endl;
   std::cerr << b_inverse << std::endl;
 
+
+  std::cerr << "Element: " << *element << std::endl;
+  std::cerr << "Node: " << node << std::endl;
+  std::cerr << "Displaced sf derivs:" << std::endl;
   double displacedsfdvs[3];
   for(int idx=0; idx<3; ++idx) {
     displacedsfdvs[idx]=node.displacedsfderiv(element,idx,mpt,mesh);
+    std::cerr << "Component " << idx << ", " << displacedsfdvs[idx] << std::endl;
   }
 
   SymmMatrix3 &cauchy = (pd->gptdata[gptidx])->cauchy; 
@@ -1074,8 +1086,14 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
 	  fluxmtx->stiffness_matrix_element( ij, displacement, kay, node) +=
 	    w(ij.row(),ij.col(),ell,emm)*
 	    0.5*(b_inverse(kay.integer(),emm)*displacedsfdvs[ell]
-		 +b_inverse(ell,kay.integer())*displacedsfdvs[emm]);
+		 +b_inverse(ell,kay.integer())*displacedsfdvs[emm])*
+	    ref_to_current;
 	}
+	// HACK:
+	// The ref_to_current doesn't really belong here, it's the extra
+	// part of the Jacobian that the eq'n isn't doing.  The eq'n
+	// should do it.
+	//
 	// Geometric part:
 	// fluxmtx->stiffness_matrix_element( ij, displacement, kay, node) -=
 	//   cauchy(ij.row(),ell)*displacedsfdvs[ell];

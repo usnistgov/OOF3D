@@ -321,4 +321,41 @@ but the prototype code does.  Unclear if this matters.
 the derivative of the 2nd PK stress wrt the Lagrange strain,
 which is not what we are treating in the main matrix, we are
 treating it as the derivative of the Cauchy stress wrt 
-the little-e strain.  This is wrong!!!
+the little-e strain.  This is wrong, maybe?  Prototype
+code does not do this.
+
+  -------
+
+  More thoughts:  SK says the prototype OOF-like code and
+the legacy Fortran code have different K matrices and other 
+internal data objects, but give the same Cauchy stress and
+a good stress-strain curve, so he's not as invested as I am 
+in digging in to the detailed operation of the code.
+
+  He also doesn't think the different K we are seeing is
+the cause of the misbehavior -- he's focused on the unsteady
+character of the post-yield behavior of the stress-strain curve,
+which he thinks should be smooth even if K is systematically
+wrong.
+
+  The problem is that I don't really know what else to
+do, besides maybe write another code that I actually understand,
+that isn't OOF?  Seems like a lot of work.
+
+  Checks: Tried the unsymmetrized version of the b_inverse matrix,
+no change in behavior, suggesting the symmetry argument is actually
+a good one.  Also added instrumentation to manually check the 
+shape function derivatives, and the first one is right.
+
+  -----
+
+  More things to try:  SK has a code that builds the thing
+by just doing BT.Dep.B, where B is the shape function derivs
+wrt the current config, and Dep is the 6x6 form of w, with
+weird factors of two.  Possibly we are over/undercounting
+off-diagonal terms or something?  And interpreting w differently?
+
+  Other Q: Are we doing the element Jacobian correctly, i.e.
+using the actual volume?  Looks like maybe not?  The equation
+code is just using the gpt.weight, but that's the one for
+the current-configuration element?
