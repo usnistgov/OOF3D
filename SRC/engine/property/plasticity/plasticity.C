@@ -626,6 +626,7 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
     // The new fp is the old fp plus the Asaro equation result.
     // This is fp_attau; FIX.
     // pd->gptdata[gptdx]->fp_tau = (pd->gptdata[gptdx]->fpt)*(ident + lp);
+    // FIXED FROM STUNT CODE
     pd->gptdata[gptdx]->fp_tau = (ident + lp)*(pd->gptdata[gptdx]->fpt);
     
     std::cerr << "Incremented fp_tau." << std::endl;
@@ -664,10 +665,14 @@ void Plasticity::begin_element_matrix(const CSubProblem *c,
     
     pd->gptdata[gptdx]->cauchy = fe_attau*(pd->gptdata[gptdx]->s_star)*fe_attau_t;
     std::cerr << pd->gptdata[gptdx]->cauchy << std::endl;
-    
-    double fe_dtmt = fe_attau.determinant();
-    pd->gptdata[gptdx]->cauchy *= (1.0/fe_dtmt);
 
+   
+    // double fe_dtmt = fe_attau.determinant();
+    // pd->gptdata[gptdx]->cauchy *= (1.0/fe_dtmt);
+    // FIXED FROM STUNT CODE want det of F here.
+    double f_dtmt = f_attau.determinant();
+    pd->gptdata[gptdx]->cauchy *= (1.0/f_dtmt);
+    
     // Cauchy stress is now up to date.
     
     for(int idx=0;idx<debug_level;++idx) std::cerr << "*";
@@ -1013,10 +1018,17 @@ void Plasticity::static_flux_value(const FEMesh *mesh,
   // This is used to construct the residual in the NR loop.
   PlasticData *pd = dynamic_cast<PlasticData*>
     (element->getDataByName("plastic_data"));
+
   int gptidx = (pd->mctogpi_map)[mpt.mastercoord()];
+  
+  // FIXED FROM STUNT CODE compute ref_to_current.
+  SmallMatrix3 f_tau = (pd->gptdata[gptidx])->f_tau;
+  double ref_to_current = f_tau.determinant();
+
   const SymmMatrix3 &cchy = (pd->gptdata[gptidx])->cauchy;
   for(SymTensorIterator ij; !ij.end(); ++ij) {
-    fluxdata->flux_vector_element(ij) = cchy(ij.row(),ij.col());
+    fluxdata->flux_vector_element(ij) = cchy(ij.row(),ij.col())*(ref_to_current);
+    // FIXED FROM STUNT CODE ref_to_current mult should be hhere.
   }
 }
 
@@ -1062,6 +1074,9 @@ void Plasticity::flux_matrix(const FEMesh *mesh,
   // HACK: Remove b_inverse.
   // b_inverse = SmallMatrix3();
   // b_inverse(0,0)=1.0; b_inverse(1,1)=1.0; b_inverse(2,2)=1.0;
+
+  // FIX_FROM_STUNT_CODE, un-removed b_inverse.  w is d_sigma/d_e,
+  // but we want a cijkl-like object, which is dS/dE.
   
   double ref_to_current = f_tau.determinant();
   
