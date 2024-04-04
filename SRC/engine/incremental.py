@@ -148,7 +148,8 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # For plasticity, this is where we generate an initial guess
         # by solving the passed-in K, which is supposed to be the
         # previous iteration's elastoplastic tangent matrix.
-        # We think this is where it's maybe wrong. HERE.
+        # TODO: This is wrong, you want to compute delta-x from
+        # delta-b.  Is delta-b available?
         print >> sys.stderr, "IS_DS----> Calling linear solver."
         subproblem.matrix_method(_asymmetricIC,subproblem,linsys).solve(
             Amtx,bvec,xvec)
