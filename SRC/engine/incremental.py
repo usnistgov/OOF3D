@@ -149,7 +149,13 @@ class Incremental(timestepper.LinearStepper, timestepper.NonLinearStepper,
         # by solving the passed-in K, which is supposed to be the
         # previous iteration's elastoplastic tangent matrix.
         # TODO: This is wrong, you want to compute delta-x from
-        # delta-b.  Is delta-b available?
+        # delta-b. Delta-b does not seem to be available directly
+        # but the LinearizedSystem has a method, setDirichletDerivatives,
+        # which (for a given node, field, etc) populates a vector,
+        # dirichlet1, with the derivatives. Delta-b is this
+        # vector times delta-t, of course. Need some new
+        # call chains for this, to build it, solve it, and add
+        # the deltas. 
         print >> sys.stderr, "IS_DS----> Calling linear solver."
         subproblem.matrix_method(_asymmetricIC,subproblem,linsys).solve(
             Amtx,bvec,xvec)
